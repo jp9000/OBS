@@ -1,0 +1,34 @@
+
+-------------------------------------------------------
+
+List of features yet to be implemented:
+    * implement ability to save multiple channel/server settings
+    * add other commonly used server data to the services.xconfig file
+      (own3d, ustream, etc), need to find out their server details
+    * Option to output to mp4/avi file.  There's no way I'm going to
+      use ffmpeg for this.
+    * external hotkeys
+    * add advanced settings for things like encoding and such
+    * add video settings to allow gamma/brightness/contrast adjustment
+
+-------------------------------------------------------
+
+Things that need fixing:
+    * improve error handling and reduce CrashError usage if possible
+    * in relation to previous item, take initialization stuff out of
+      the constructors
+    * add in more speaker configuration support
+    * possibly split up OBS.cpp, not entirely decided on it yet
+
+-------------------------------------------------------
+
+Things that could use more optimization:
+    * multi-speaker downmixing
+
+-------------------------------------------------------
+
+Things that need more testing:
+    * app needs way more testing on many different audio/gpu/cpu configs
+    * need to test streaming on networks other than twitch
+
+

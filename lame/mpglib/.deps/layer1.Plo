@@ -1,0 +1,69 @@
+layer1.lo: layer1.c ../config.h \
+ d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/assert.h \
+ d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/_mingw.h \
+ d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/_mingw_mac.h \
+ d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/vadefs.h \
+ d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/sdks/_mingw_directx.h \
+ d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/sdks/_mingw_ddk.h \
+ common.h mpg123.h \
+ d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/stdio.h \
+ d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/_mingw_print_push.h \
+ d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/_mingw_off_t.h \
+ d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/sec_api/stdio_s.h \
+ d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/_mingw_print_pop.h \
+ d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/string.h \
+ d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/sec_api/string_s.h \
+ d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/signal.h \
+ d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/math.h \
+ mpglib.h ../include/lame.h \
+ d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/include/stddef.h \
+ d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/include/stdarg.h \
+ decode_i386.h layer1.h
+
+../config.h:
+
+d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/assert.h:
+
+d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/_mingw.h:
+
+d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/_mingw_mac.h:
+
+d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/vadefs.h:
+
+d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/sdks/_mingw_directx.h:
+
+d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/sdks/_mingw_ddk.h:
+
+common.h:
+
+mpg123.h:
+
+d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/stdio.h:
+
+d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/_mingw_print_push.h:
+
+d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/_mingw_off_t.h:
+
+d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/sec_api/stdio_s.h:
+
+d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/_mingw_print_pop.h:
+
+d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/string.h:
+
+d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/sec_api/string_s.h:
+
+d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/signal.h:
+
+d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/../../../../x86_64-w64-mingw32/include/math.h:
+
+mpglib.h:
+
+../include/lame.h:
+
+d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/include/stddef.h:
+
+d:\mingw32\bin\../lib/gcc/x86_64-w64-mingw32/4.5.2/include/stdarg.h:
+
+decode_i386.h:
+
+layer1.h:

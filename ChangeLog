@@ -1,0 +1,32 @@
+(yyyy-mm-dd)
+
+
+-------------------------------
+
+2012-8-28 - 0.31 (alpha)
+    * Received my video capture card, discovered a few bugs
+      in my DirectShow code that needed fixing
+    * Made DirectShow work with a few YUV planar formats
+
+-------------------------------
+
+2012-8-26 - 0.3 (alpha)
+    * Finished first version of the API DLL interface so that
+      developers can write their own plugins
+    * Finished first version of the DirectShow device plugin,
+      still needs some testing
+    * Refactored audio code and mixer due to minor code design
+      flaws I didn't forsee
+    * Completely rewrote graphics code, made a graphics wrapper
+      so that D3D11 is completely handled behind the scenes
+    * Added ability to use global sources that persist until
+      the stream ends (best used for video devices)
+    * Fixed a ton of bugs
+
+-------------------------------
+
+2012-8-10 - 0.2 (alpha)
+    * First "usable" state, still many features to be written
+
+-------------------------------
+

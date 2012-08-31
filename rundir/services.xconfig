@@ -1,0 +1,22 @@
+services : {
+  TwitchTV/JustinTV : {
+    useChannel : app
+    servers : {
+      Primary Cluster         : live.justin.tv
+      Amsterdam               : live-ams.justin.tv
+      Asia Primary            : live-sin.justin.tv
+      Asia Backup             : live-sin-backup.justin.tv
+      East Coast Primary      : live-iad.justin.tv
+      East Coast Secondary    : live-iad-backup.justin.tv
+      Frankfurt               : live-fra.justin.tv
+      London Primary          : live-lhr.justin.tv
+      London Secondary        : live-lhr-backup.justin.tv
+      Los Angeles Primary     : live-lax.justin.tv
+      Los Angeles Secondary   : live-lax-backup.justin.tv
+      Miami                   : live-mia.justin.tv
+      New York                : ive-jfk.justin.tv
+      US Central Primary      : live-dfw.justin.tv
+      US Central Secondary    : live-dfw-backup.justin.tv
+    }
+  }
+}
