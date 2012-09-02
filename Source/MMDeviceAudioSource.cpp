@@ -222,6 +222,8 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
             case KSAUDIO_SPEAKER_SURROUND:          Log(TEXT("Using basic surround speaker setup"));    break;
             case KSAUDIO_SPEAKER_5POINT1:           Log(TEXT("Using 5.1 speaker setup"));               break;
             case KSAUDIO_SPEAKER_5POINT1_SURROUND:  Log(TEXT("Using 5.1 surround speaker setup"));      break;
+            case KSAUDIO_SPEAKER_7POINT1:           Log(TEXT("Using 7.1 speaker setup"));               break;
+            case KSAUDIO_SPEAKER_7POINT1_SURROUND:  Log(TEXT("Using 7.1 surround speaker setup"));      break;
 
             default:
                 Log(TEXT("Using unknown speaker setup: 0x%lX"), inputChannelMask);
