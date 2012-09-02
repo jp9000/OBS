@@ -32,7 +32,8 @@
 
 
 LARGE_INTEGER clockFreq, startTime;
-
+LONGLONG prevElapsedTime;
+DWORD startTick;
 
 void STDCALL InputProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 void STDCALL ResetCursorClip();
@@ -47,6 +48,7 @@ void   STDCALL OSInit()
 {
     QueryPerformanceFrequency(&clockFreq);
     QueryPerformanceCounter(&startTime);
+    startTick = GetTickCount();
 }
 
 void   STDCALL OSExit()
@@ -360,20 +362,83 @@ void   STDCALL OSSleep(DWORD dwMSeconds)
 
 DWORD STDCALL OSGetTime()
 {
-    LARGE_INTEGER curTime;
+    /*LARGE_INTEGER curTime;
     QueryPerformanceCounter(&curTime);
     LONGLONG adjustedTime = curTime.QuadPart - startTime.QuadPart;
 
-    return DWORD(1000 * adjustedTime / clockFreq.QuadPart);
+    return DWORD(1000 * adjustedTime / clockFreq.QuadPart);*/
+
+    //NOTE: Credit goes to the amazingly awesome bullet physics library for this time code fix,
+    //though I think this was basically copied out of the KB274323
+
+    LARGE_INTEGER currentTime;
+    QueryPerformanceCounter(&currentTime);
+    LONGLONG elapsedTime = currentTime.QuadPart - 
+        startTime.QuadPart;
+
+    // Compute the number of millisecond ticks elapsed.
+    unsigned long msecTicks = (unsigned long)(1000 * elapsedTime / 
+        clockFreq.QuadPart);
+
+    // Check for unexpected leaps in the Win32 performance counter.  
+    // (This is caused by unexpected data across the PCI to ISA 
+    // bridge, aka south bridge.  See Microsoft KB274323.)
+    unsigned long elapsedTicks = GetTickCount() - startTick;
+    signed long msecOff = (signed long)(msecTicks - elapsedTicks);
+    if (msecOff < -100 || msecOff > 100)
+    {
+        // Adjust the starting time forwards.
+        LONGLONG msecAdjustment = MIN(msecOff * 
+            clockFreq.QuadPart / 1000, elapsedTime - 
+            prevElapsedTime);
+        startTime.QuadPart += msecAdjustment;
+        elapsedTime -= msecAdjustment;
+
+        // Recompute the number of millisecond ticks elapsed.
+        msecTicks = (unsigned long)(1000 * elapsedTime / 
+            clockFreq.QuadPart);
+    }
+
+    // Store the current elapsed time for adjustments next time.
+    prevElapsedTime = elapsedTime;
+
+    return msecTicks;
 }
 
 QWORD STDCALL OSGetTimeMicroseconds()
 {
-    LARGE_INTEGER curTime;
-    QueryPerformanceCounter(&curTime);
-    LONGLONG adjustedTime = curTime.QuadPart - startTime.QuadPart;
+    LARGE_INTEGER currentTime;
+    QueryPerformanceCounter(&currentTime);
+    LONGLONG elapsedTime = currentTime.QuadPart - 
+        startTime.QuadPart;
 
-    return QWORD(1000000 * adjustedTime / clockFreq.QuadPart);
+    // Compute the number of millisecond ticks elapsed.
+    unsigned long msecTicks = (unsigned long)(1000 * elapsedTime / 
+        clockFreq.QuadPart);
+
+    // Check for unexpected leaps in the Win32 performance counter.  
+    // (This is caused by unexpected data across the PCI to ISA 
+    // bridge, aka south bridge.  See Microsoft KB274323.)
+    unsigned long elapsedTicks = GetTickCount() - startTick;
+    signed long msecOff = (signed long)(msecTicks - elapsedTicks);
+    if (msecOff < -100 || msecOff > 100)
+    {
+        // Adjust the starting time forwards.
+        LONGLONG msecAdjustment = MIN(msecOff * 
+            clockFreq.QuadPart / 1000, elapsedTime - 
+            prevElapsedTime);
+        startTime.QuadPart += msecAdjustment;
+        elapsedTime -= msecAdjustment;
+    }
+
+    // Store the current elapsed time for adjustments next time.
+    prevElapsedTime = elapsedTime;
+
+    // Convert to microseconds.
+    unsigned long usecTicks = (unsigned long)(1000000 * elapsedTime / 
+        clockFreq.QuadPart);
+
+    return usecTicks;
 }
 
 

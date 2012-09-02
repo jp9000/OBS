@@ -133,7 +133,7 @@ class VideoEncoder
     friend class OBS;
 
 protected:
-    virtual bool Encode(LPVOID picIn, List<DataPacket> &packets)=0;
+    virtual bool Encode(LPVOID picIn, List<DataPacket> &packets, DWORD &timestamp)=0;
     virtual void GetHeaders(DataPacket &packet)=0;
 
 public:

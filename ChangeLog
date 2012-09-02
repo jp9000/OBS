@@ -3,6 +3,26 @@
 
 -------------------------------
 
+2012-9-01 - 0.32 (alpha)
+    * Fixed a crash when adding sources in some situations
+    * Fixed some crashes related to audio code, forgot to make sure
+      that the audio buffers were on a 128bit boundry before using SSE
+      instructions (happened to me as well).  Which means mics and audio
+      devices should hopefully work properly now.
+    * Fixed a potential crash with x264 (Apparently you should only really
+      query the x264 header packets before it starts encoding, otherwise
+      you risk crashing)
+    * Fixed a MAJOR bug with framerates and video smoothness, the cause
+      was due to the fact that b-frames can have a reverse timestamp after
+      p-frames, and I did not take that into account when sending packets.
+      Updated the AVC packet code, frames are now displaying at the
+      intended intervals.  Wow was that one difficult to pinpoint, as well
+      as fix.
+    * Added 7.1 speaker support, apparently I didn't actually put it in.
+      People have some nice speaker setups.
+
+-------------------------------
+
 2012-8-28 - 0.31 (alpha)
     * Received my video capture card, discovered a few bugs
       in my DirectShow code that needed fixing

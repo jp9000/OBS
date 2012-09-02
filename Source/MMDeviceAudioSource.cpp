@@ -339,7 +339,7 @@ UINT MMDeviceAudioSource::GetNextBuffer()
             float *inputTemp  = (float*)captureBuffer;
             float *outputTemp = outputBuffer;
 
-            if(App->SSE2Available())
+            if(App->SSE2Available() && (UPARAM(inputTemp) & 0xF) == 0 && (UPARAM(outputTemp) & 0xF) == 0)
             {
                 UINT alignedFloats = numFloats & 0xFFFFFFFC;
                 for(UINT i=0; i<alignedFloats; i += 4)
@@ -450,8 +450,8 @@ UINT MMDeviceAudioSource::GetNextBuffer()
                     inputTemp  += 4;
                 }
             }
-            //not sure if this works for both
-            else if(inputChannelMask == KSAUDIO_SPEAKER_5POINT1 || inputChannelMask == KSAUDIO_SPEAKER_5POINT1_SURROUND)
+            //don't think this will work for both
+            else if(inputChannelMask == KSAUDIO_SPEAKER_5POINT1)
             {
                 UINT numFloats = numAudioFrames*6;
                 float *endTemp = inputTemp+numFloats;
@@ -468,6 +468,70 @@ UINT MMDeviceAudioSource::GetNextBuffer()
                     *(outputTemp++) = right + center + lowFreq + rear;
 
                     inputTemp  += 6;
+                }
+            }
+            //todo ------------------
+            //not sure if my 5.1/7.1 downmixes are correct
+            else if(inputChannelMask == KSAUDIO_SPEAKER_5POINT1_SURROUND)
+            {
+                UINT numFloats = numAudioFrames*6;
+                float *endTemp = inputTemp+numFloats;
+
+                while(inputTemp < endTemp)
+                {
+                    float left      = inputTemp[0];
+                    float right     = inputTemp[1];
+                    float center    = inputTemp[2]*centerMix;
+                    float lowFreq   = inputTemp[3]*lowFreqMix;
+                    float sideLeft  = inputTemp[4]*dbMinus3;
+                    float sideRight = inputTemp[5]*dbMinus3;
+
+                    *(outputTemp++) = left  + center + sideLeft  + lowFreq;
+                    *(outputTemp++) = right + center + sideRight + lowFreq;
+
+                    inputTemp  += 6;
+                }
+            }
+            else if(inputChannelMask == KSAUDIO_SPEAKER_7POINT1)
+            {
+                UINT numFloats = numAudioFrames*6;
+                float *endTemp = inputTemp+numFloats;
+
+                while(inputTemp < endTemp)
+                {
+                    float left          = inputTemp[0];
+                    float right         = inputTemp[1];
+                    float center        = inputTemp[2]*(centerMix*dbMinus3);
+                    float lowFreq       = inputTemp[3]*lowFreqMix;
+                    float rear          = (inputTemp[4]+inputTemp[5])*surroundMix;
+                    float centerLeft    = inputTemp[6]*dbMinus6;
+                    float centerRight   = inputTemp[7]*dbMinus6;
+
+                    *(outputTemp++) = left  + centerLeft  + center + lowFreq - rear;
+                    *(outputTemp++) = right + centerRight + center + lowFreq + rear;
+
+                    inputTemp  += 8;
+                }
+            }
+            else if(inputChannelMask == KSAUDIO_SPEAKER_7POINT1_SURROUND)
+            {
+                UINT numFloats = numAudioFrames*6;
+                float *endTemp = inputTemp+numFloats;
+
+                while(inputTemp < endTemp)
+                {
+                    float left      = inputTemp[0];
+                    float right     = inputTemp[1];
+                    float center    = inputTemp[2]*centerMix;
+                    float lowFreq   = inputTemp[3]*lowFreqMix;
+                    float rear      = (inputTemp[4]+inputTemp[5])*(surroundMix*dbMinus3);
+                    float sideLeft  = inputTemp[6]*dbMinus6;
+                    float sideRight = inputTemp[7]*dbMinus6;
+
+                    *(outputTemp++) = left  + sideLeft + center + lowFreq - rear;
+                    *(outputTemp++) = right + sideLeft + center + lowFreq + rear;
+
+                    inputTemp  += 8;
                 }
             }
         }

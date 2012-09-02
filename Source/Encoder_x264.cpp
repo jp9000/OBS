@@ -87,7 +87,6 @@ public:
         curPreset = preset;
         LPSTR lpPreset = curPreset.CreateUTF8String();
         x264_param_default_preset(&paramData, lpPreset, "fastdecode");
-        //x264_param_apply_profile(&paramData, "baseline");
 
         Free(lpPreset);
 
@@ -100,6 +99,7 @@ public:
         //x264_param_parse(&paramData, "qcomp", "0.0");
 
         //paramData.i_threads             = 4;
+        paramData.b_vfr_input           = 1;
         paramData.i_keyint_max          = fps*5;      //keyframe every 5 sec, should make this an option
         paramData.i_width               = width;
         paramData.i_height              = height;
@@ -108,13 +108,13 @@ public:
         paramData.rc.i_rc_method        = X264_RC_CRF;
         paramData.rc.f_rf_constant      = baseCRF+float(10-quality);
 
+        //paramData.i_nal_hrd = 1;
+
         paramData.i_fps_num = fps;
         paramData.i_fps_den = 1;
-        paramData.i_timebase_num = 1; //should be set to this regardless
-        paramData.i_timebase_den = fps;
 
-        //paramData.i_timebase_num = 1;
-        //paramData.i_timebase_den = 90000;
+        paramData.i_timebase_num = 1;
+        paramData.i_timebase_den = 1000;
 
         //paramData.pf_log                = get_x264_log;
         //paramData.i_log_level           = X264_LOG_INFO;
@@ -129,6 +129,9 @@ public:
         Log(TEXT("%s"), GetInfoString().Array());
         Log(TEXT("------------------------------------------"));
 
+        DataPacket packet;
+        GetHeaders(packet);
+
         traceOut;
     }
 
@@ -142,7 +145,7 @@ public:
         traceOut;
     }
 
-    bool Encode(LPVOID picInPtr, List<DataPacket> &packets)
+    bool Encode(LPVOID picInPtr, List<DataPacket> &packets, DWORD &outputTimestamp)
     {
         traceIn(X264Encoder::Encode);
 
@@ -159,6 +162,11 @@ public:
             AppWarning(TEXT("x264 encode failed"));
             return false;
         }
+
+        int timeOffset = int(INT64(picOut.i_pts)-INT64(outputTimestamp));
+        timeOffset = htonl(timeOffset);
+
+        BYTE *timeOffsetAddr = ((BYTE*)&timeOffset)+1;
 
         for(int i=0; i<nalNum; i++)
         {
@@ -177,9 +185,7 @@ public:
 
                 newPacket->Packet[0] = ((nal.i_type == NAL_SLICE_IDR) ? 0x17 : 0x27);
                 newPacket->Packet[1] = 1;
-                newPacket->Packet[2] = 0;
-                newPacket->Packet[3] = 0;
-                newPacket->Packet[4] = 0;
+                mcpy(newPacket->Packet+2, timeOffsetAddr, 3);
                 *(DWORD*)(newPacket->Packet+5) = htonl(nal.i_payload-skipBytes);
                 mcpy(newPacket->Packet+9, nal.p_payload+skipBytes, newPayloadSize);
             }
@@ -190,9 +196,7 @@ public:
 
                 headerOut.OutputByte(0x17);
                 headerOut.OutputByte(0);
-                headerOut.OutputByte(0);
-                headerOut.OutputByte(0);
-                headerOut.OutputByte(0);
+                headerOut.Serialize(timeOffsetAddr, 3);
                 headerOut.OutputByte(1);
                 headerOut.Serialize(nal.p_payload+5, 3);
                 headerOut.OutputByte(0xff);

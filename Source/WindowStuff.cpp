@@ -69,16 +69,19 @@ INT_PTR CALLBACK OBS::EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM 
 
                         SendMessage(GetDlgItem(hwnd, IDC_NAME), WM_GETTEXT, str.Length()+1, (LPARAM)str.Array());
 
-                        XElement *sources = App->sceneElement->GetElement(TEXT("sources"));
-                        if(!sources)
-                            sources = App->sceneElement->CreateElement(TEXT("sources"));
-
-                        if(sources->GetElement(str) != NULL)
+                        if(App->sceneElement)
                         {
-                            String strExists = Str("NameExists");
-                            strExists.FindReplace(TEXT("$1"), str);
-                            MessageBox(hwnd, strExists, NULL, 0);
-                            break;
+                            XElement *sources = App->sceneElement->GetElement(TEXT("sources"));
+                            if(!sources)
+                                sources = App->sceneElement->CreateElement(TEXT("sources"));
+
+                            if(sources->GetElement(str) != NULL)
+                            {
+                                String strExists = Str("NameExists");
+                                strExists.FindReplace(TEXT("$1"), str);
+                                MessageBox(hwnd, strExists, NULL, 0);
+                                break;
+                            }
                         }
 
                         String &strOut = *(String*)GetWindowLongPtr(hwnd, DWLP_USER);

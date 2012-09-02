@@ -240,7 +240,7 @@ public:
 
         RTMPPacket packet;
         packet.m_nChannel = bAudio ? 0x5 : 0x4;
-        packet.m_headerType = RTMP_PACKET_SIZE_MEDIUM;
+        packet.m_headerType = RTMP_PACKET_SIZE_LARGE;
         packet.m_packetType = bAudio ? RTMP_PACKET_TYPE_AUDIO : RTMP_PACKET_TYPE_VIDEO;
         packet.m_nTimeStamp = timestamp;
         packet.m_nInfoField2 = 1;

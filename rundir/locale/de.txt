@@ -1,0 +1,108 @@
+﻿Add             "Hinzufügen"
+Apply           "Übernehmen"
+Browse          "Durchsuchen"
+Cancel          "Abbrechen"
+Default         "Standard"
+DeleteConfirm   "Sind sie sicher, dass sie die ausgewählten Elemente entfernen wollen?"
+Desktop         "Desktop"
+Disable         "Deaktivieren"
+EnterName       "Bitte geben sie einen Namen ein"
+GlobalSources   "Globale Quellen"
+NameExists      "'$1' ist bereits in Benutzung, bitte benutzen sie einen anderen Namen."
+OK              "OK"
+Plugins         "Plugins"
+Scene           "Szene"
+Settings        "Einstellungen"
+StreamReport    "Stream Bericht"
+
+DeleteConfirm.Title "Ausgewählte Elemente entfernen??"
+
+DesktopImageSource.CannotDuplicate  "Sie können nicht mehr als eine Desktop-Quelle hinzufügen"
+
+GlobalSources.DeleteConfirm "Wenn sie eine globale Quelle entfernen, wird diese aus allen Szenen entfernt. Sind sie sicher, dass sie fortfahren wollen?"
+
+Listbox.Add             "Füge $1 hinzu"
+Listbox.Center          "Zentrum"
+Listbox.Config          "Eigenschaften"
+Listbox.MoveDown        "Nach unten bewegen"
+Listbox.MoveToBottom    "An den unteren Rand bewegen"
+Listbox.MoveToTop       "An den oberen Rand bewegen"
+Listbox.MoveUp          "Nach oben bewegen"
+Listbox.Remove          "Entfernen"
+Listbox.Rename          "Umbenennen"
+Listbox.ResetSize       "Größe zurücksetzen"
+
+MainWindow.Exit         "Beenden"
+MainWindow.Plugins      "Plugins"
+MainWindow.SceneEditor  "Szene bearbeiten"
+MainWindow.Scenes       "Szenen:"
+MainWindow.Sources      "Quellen:"
+MainWindow.StartStream  "Streaming starten"
+MainWindow.StopStream   "Streaming stoppen"
+MainWindow.StopTest     "Test stoppen"
+MainWindow.TestStream   "Test starten"
+
+Plugins.Configure   "Konfigurieren"
+Plugins.Description "Beschreibung:"
+Plugins.Filename    "Dateiname:"
+
+Scene.MissingSources    "Konnte wegen falschen Einstellungen oder fehlenden Plugins nicht alle Bildquellen laden."
+
+Settings.Audio              "Audio"
+Settings.Encoding           "Kodierung"
+Settings.General            "Allgemein"
+Settings.Hotkeys            "Tastenkürzel"
+Settings.Info               "Diese Einstellungen werden erst übernommen, wenn sie anfangen zu streamen."
+Settings.Publish            "Übertragungseinstellungen"
+Settings.SaveChangesPrompt  "Einstellungen speichern und übernehmen?"
+Settings.SaveChangesTitle   "Einstellungen übernehmen?"
+Settings.Video              "Video"
+
+Settings.Audio.Device   "Microphone/Auxilary Audio Gerät:"
+
+Settings.Encoding.Audio "Audio Kodierung"
+Settings.Encoding.Video "Video Kodierung"
+
+Settings.Encoding.Audio.Bitrate "Bitrate:"
+Settings.Encoding.Audio.Codec   "Codec:"
+Settings.Encoding.Audio.Format  "Format:"
+
+Settings.Encoding.Video.BufferSize  "Buffer Größe (kbit):"
+Settings.Encoding.Video.MaxBitRate  "Max Bitrate (kb/s):"
+Settings.Encoding.Video.Quality     "Qualität:"
+Settings.Encoding.Video.Tradeoff    "CPU Preset:"
+Settings.Encoding.Video.UseI444     "Use YUV 4:4:4"
+
+Settings.General.Language   "Sprache:"
+Settings.General.Restart    "Um die Sprache zu ändern müssen sie OBS neustarten."
+
+Settings.Publish.ChannelName    "Channel Name:"
+Settings.Publish.Mode           "Modus:"
+Settings.Publish.Password       "Passwort (wenn benötigt):"
+Settings.Publish.Playpath       "Play Path/Stream Key (wenn benötigt):"
+Settings.Publish.Server         "Server:"
+Settings.Publish.Service        "Streaming-Plattform:"
+Settings.Publish.Username       "Benutzername (wenn benötigt):"
+
+Settings.Publish.Mode.BandwidthInfo "Bandbreiten Info"
+Settings.Publish.Mode.LiveStream    "Live Stream"
+Settings.Publish.Mode.Serve         "Local RTMP Server"
+
+Settings.Video.Custom       "Eigen:"
+Settings.Video.DisableAero  "Aero beim Start deaktivieren:"
+Settings.Video.Downscale    "Auflösungs-Verringerung:"
+Settings.Video.FPS          "FPS:"
+Settings.Video.Monitor      "Monitor:"
+Settings.Video.Recommended  "(sehr empfehlenswert, wenn sie den Desktop streamen)"
+Settings.Video.Resolution   "Basis Auflösung:"
+
+Settings.Video.Downscale.None   "Keine"
+
+Sources.BitmapSource    "Bitmap"
+Sources.DesktopSource   "Desktop Aufnahme"
+Sources.GlobalSource    "Globale Quelle"
+
+Sources.BitmapSource.Empty      "keine Bitmap angegeben.  Bitte wählen sie eine Bitmap aus."
+Sources.BitmapSource.ResetSize  "Maße zurücksetzen"
+
+Sources.DesktopSource.Monitor   "Aufnahme-Monitor:"

@@ -27,11 +27,8 @@ void rtmp_log_output(int level, const char *format, va_list vl)
     LPSTR lpTemp = (LPSTR)Allocate(size+1);
     vsprintf_s(lpTemp, size+1, format, vl);
 
-    String chi(lpTemp);
-    chi << TEXT("\r\n");
-
-    OSDebugOut(TEXT("%s"), chi);
-    Log(TEXT("%s"), chi);
+   // OSDebugOut(TEXT("%S\r\n"), lpTemp);
+    Log(TEXT("%S\r\n"), lpTemp);
 
     Free(lpTemp);
 }
@@ -89,6 +86,7 @@ class RTMPPublisher : public NetworkStream
                 if(!RTMP_IsConnected(rtmp))
                 {
                     App->PostStopMessage();
+                    bStopping = true;
                     break;
                 }
             }
@@ -243,10 +241,11 @@ public:
         packet.m_headerType = RTMP_PACKET_SIZE_LARGE;
         packet.m_packetType = RTMP_PACKET_TYPE_VIDEO;
 
+        List<BYTE> packetPadding;
+
         DataPacket mediaHeaders;
         App->GetVideoHeaders(mediaHeaders);
 
-        List<BYTE> packetPadding;
         packetPadding.SetSize(RTMP_MAX_HEADER_SIZE);
         packetPadding.AppendArray(mediaHeaders.lpPacket, mediaHeaders.size);
 
@@ -354,8 +353,8 @@ NetworkStream* CreateRTMPPublisher()
 
     RTMP *rtmp = RTMP_Alloc();
     RTMP_Init(rtmp);
-    //RTMP_LogSetCallback(rtmp_log_output);
-    //RTMP_LogSetLevel(RTMP_LOGDEBUG);
+    /*RTMP_LogSetCallback(rtmp_log_output);
+    RTMP_LogSetLevel(RTMP_LOGDEBUG2);*/
 
     LPSTR lpAnsiURL = strURL.CreateUTF8String();
 

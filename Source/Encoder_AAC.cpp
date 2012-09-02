@@ -108,7 +108,7 @@ public:
             //now we have to upscale the floats.  fortunately we almost always have SSE
             UINT floatsLeft  = numReadSamples;
             float *inputTemp = inputBuffer.Array();
-            if(App->SSE2Available())
+            if(App->SSE2Available() && (UPARAM(inputTemp) & 0xF) == 0)
             {
                 UINT alignedFloats = floatsLeft & 0xFFFFFFFC;
 

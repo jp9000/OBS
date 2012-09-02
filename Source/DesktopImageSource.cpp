@@ -290,20 +290,23 @@ bool STDCALL ConfigureDesktopSource(XElement *element, bool bInitialize)
     //do not allow more than one desktop source per scene
     if(bInitialize)
     {
-        XElement *sources = App->GetSceneElement()->GetElement(TEXT("sources"));
-        if(sources)
+        if(App->GetSceneElement())
         {
-            UINT numSources = sources->NumElements();
-            for(UINT i=0; i<numSources; i++)
+            XElement *sources = App->GetSceneElement()->GetElement(TEXT("sources"));
+            if(sources)
             {
-                XElement *source = sources->GetElementByID(i);
-                if(source == element)
-                    continue;
-
-                if(scmpi(source->GetString(TEXT("class")), TEXT("DesktopImageSource")) == 0)
+                UINT numSources = sources->NumElements();
+                for(UINT i=0; i<numSources; i++)
                 {
-                    MessageBox(hwndMain, Str("DesktopImageSource.CannotDuplicate"), NULL, 0);
-                    return false;
+                    XElement *source = sources->GetElementByID(i);
+                    if(source == element)
+                        continue;
+
+                    if(scmpi(source->GetString(TEXT("class")), TEXT("DesktopImageSource")) == 0)
+                    {
+                        MessageBox(hwndMain, Str("DesktopImageSource.CannotDuplicate"), NULL, 0);
+                        return false;
+                    }
                 }
             }
         }

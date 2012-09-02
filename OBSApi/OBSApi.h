@@ -63,7 +63,7 @@ inline void SSECopy(void *lpDest, void *lpSource, UINT size)
         register UINT numCopies = alignedSize>>4;
         while(numCopies--)
         {
-            _mm_stream_si128(mDest, *mSrc);
+            _mm_store_si128(mDest, *mSrc);
             mDest++;
             mSrc++;
         }

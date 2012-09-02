@@ -146,7 +146,7 @@ void STDCALL TraceCrashEnd()
     LogFile.WriteAsUTF8(TEXT("\r\n"));
     CloseLogFile();
 
-    OSMessageBox(TEXT("Error: Exception fault - More info in the log file.\r\n\r\n(aka send it to Jim)"));
+    OSMessageBox(TEXT("Error: Exception fault - More info in the log file.\r\n\r\nMake sure you're using the latest verison, otherwise send your log to obs.jim@gmail.com"));
 
     TraceFuncList.Clear();
     CriticalExit();

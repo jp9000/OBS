@@ -1,0 +1,17 @@
+﻿Cancel          "Abbrechen"
+ClassName       "Video-Aufnahmegerät"
+DeviceSelection "Gerätauswahl"
+OK              "OK"
+
+DeviceSelection.Config          "Konfigurieren"
+DeviceSelection.Device          "Gerät:"
+DeviceSelection.ExistsInScene   "Dieses Gerät wird bereits von einer Quelle benutzt."
+DeviceSelection.ExistsSomewhere "Dieses Gerät wird momentan in einer oder mehrerer Quellen benutzt."
+DeviceSelection.FlipImage       "Bild drehen"
+DeviceSelection.FPS             "FPS:"
+DeviceSelection.GlobalExists    "Es ist bereits eine Globale Quelle vorhanden, die dieses Gerät benutzt."
+DeviceSelection.Refresh         "Aktualisieren"
+DeviceSelection.Resolution      "Auflösung:"
+
+Plugin.Description  "Dieses Plugin erlaubt es DirectShow Video Devices zur Szene hinzuzufügen(etwa Webcams, Capturecards, etc.)"
+Plugin.Name         "DirectShow Video Device Plugin"

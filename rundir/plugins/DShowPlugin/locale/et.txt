@@ -1,0 +1,17 @@
+﻿Cancel          "Katkesta"
+ClassName       "Video lindistamise seade"
+DeviceSelection "Seadmete valik"
+OK              "OK"
+
+DeviceSelection.Config          "Kondigureeri"
+DeviceSelection.Device          "Seade:"
+DeviceSelection.ExistsInScene   "Seda allikat kasutav seade on juba olemas."
+DeviceSelection.ExistsSomewhere "Seda seadet kasutatakse juba ühe allika või stseeni poolt."
+DeviceSelection.FlipImage       "Pööra pilti"
+DeviceSelection.FPS             "FPS:"
+DeviceSelection.GlobalExists    "Globaalne allikas kasutab juba seda seadet."
+DeviceSelection.Refresh         "Värskenda"
+DeviceSelection.Resolution      "Resolutioon:"
+
+Plugin.Description  "See plugin võimaldab lisada DirectShow videoseadmeid stseenidele"
+Plugin.Name         "DirectShow videoseadme plugin"

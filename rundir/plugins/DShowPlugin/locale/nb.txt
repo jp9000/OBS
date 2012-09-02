@@ -1,0 +1,17 @@
+Cancel          "Avbryt"
+ClassName       "Filmopptaks apparat"
+DeviceSelection "Velg apparat"
+OK              "OK"
+
+DeviceSelection.Config          "Konfigurer"
+DeviceSelection.Device          "Apparat:"
+DeviceSelection.ExistsInScene   "En kilde som benytter dette apparatet eksisterer allerde"
+DeviceSelection.ExistsSomewhere "Dette apparatet blir for øyeblikket brukt som en kilde i en eller flere scener"
+DeviceSelection.FlipImage       "Snu bilde"
+DeviceSelection.FPS             "FPS:"
+DeviceSelection.GlobalExists    "En global kilde som benytter dette apparatet eksisterer allerde"
+DeviceSelection.Refresh         "Oppdater"
+DeviceSelection.Resolution      "Oppløsning:"
+
+Plugin.Description  "Denne programvareutvidelsen lar deg legge til DirectShow video apparater (webkameraer, opptakskort, osv) til scenen"
+Plugin.Name         "DirectShow Videoapparat-programvareutvidelse"

@@ -134,6 +134,8 @@ public:
     {
         packet.lpPacket = header.Array();
         packet.size = header.Num();
+
+        OSDebugOut(TEXT("testing, 123\r\n"));
     }
 
     int GetBitRate() const {return curBitRate;}

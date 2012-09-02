@@ -23,7 +23,7 @@
 class NullVideoEncoder : public VideoEncoder
 {
 public:
-    virtual bool Encode(LPVOID picIn, List<DataPacket> &packets) {return true;}
+    virtual bool Encode(LPVOID picIn, List<DataPacket> &packets, DWORD &outputTimestamp) {return true;}
     virtual void GetHeaders(DataPacket &packet) {}
     virtual int  GetBitRate() const {return 0;}
     virtual String GetInfoString() const {return String();}

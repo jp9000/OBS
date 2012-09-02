@@ -675,6 +675,8 @@ OBS::~OBS()
         pluginInfo.strFile.Clear();
     }
 
+    DestroyWindow(hwndMain);
+
     AppConfig->SetInt(TEXT("General"), TEXT("Width"),  clientWidth);
     AppConfig->SetInt(TEXT("General"), TEXT("Height"), clientHeight);
 
@@ -1199,7 +1201,6 @@ void OBS::MainCaptureLoop()
     x264_picture_t picOut;
     x264_picture_init(&picOut);
 
-
     if(bUsing444)
     {
         picOut.img.i_csp   = X264_CSP_BGRA; //although the x264 input says BGR, x264 actually will expect packed UYV
@@ -1210,6 +1211,8 @@ void OBS::MainCaptureLoop()
 
     int curPTS = 0;
     //int audioJump = 0;
+
+    DWORD test = 0;
 
     HANDLE hScaleVal = yuvScalePixelShader->GetParameterByName(TEXT("baseDimensionI"));
 
@@ -1223,6 +1226,8 @@ void OBS::MainCaptureLoop()
         bool bRenderView = !IsIconic(hwndMain);
 
         profileIn("frame");
+
+        test += 1;
 
         curStreamTime = renderStartTime-firstFrameTime;
         bufferedTimes << curStreamTime;
@@ -1394,6 +1399,9 @@ void OBS::MainCaptureLoop()
             GetD3DContext()->CopyResource(copyTexture, d3dYUV->texture);
             profileOut;
 
+            if(test == 23)
+                nop();
+
             D3D11_MAPPED_SUBRESOURCE map;
             if(SUCCEEDED(GetD3DContext()->Map(copyTexture, 0, D3D11_MAP_READ, 0, &map)))
             {
@@ -1414,9 +1422,10 @@ void OBS::MainCaptureLoop()
                     picOut.img.plane[0]    = (uint8_t*)map.pData;
                 }
 
-                picOut.i_pts = ++curPTS;//bufferedTimes[curPTS++]*90;//
+                picOut.i_pts = bufferedTimes[curPTS++];//curPTS++;//bufferedTimes[curPTS++]*90;//
 
-                videoEncoder->Encode(&picOut, videoPackets);
+                DWORD outputTimestamp = bufferedTimes[0];
+                videoEncoder->Encode(&picOut, videoPackets, outputTimestamp);
                 if(bUsing444) GetD3DContext()->Unmap(copyTexture, 0);
 
                 //DWORD relativeTimestamp = bufferedTimes[0]-lastTime;
@@ -1439,12 +1448,14 @@ void OBS::MainCaptureLoop()
 
                     network->SendPacket(packet.lpPacket, packet.size, bufferedTimes[0], false);
 
-                    //Log(TEXT("video packet timestamp: %u"), bufferedTimes[0]);
+                    //Log(TEXT("video packet timestamp: %u, buffered timestamp: %u"), outputTimestamp, bufferedTimes[0]);
                     bSentVideo = true;
                 }
 
                 if(bSentVideo)
                 {
+                    //Log(TEXT("What the first timestamp is: %d ...what it normally would be: %d"), outputTimestamp, bufferedTimes[0]);
+
                     OSEnterMutex(hSoundDataMutex);
 
                     if(pendingAudioFrames.Num())
@@ -1470,7 +1481,7 @@ void OBS::MainCaptureLoop()
 
                     lastTime = bufferedTimes[0];
 
-                    //curPTS--;
+                    curPTS--;
                     bufferedTimes.Remove(0);
                 }
             }

@@ -47,7 +47,7 @@ D3D11System::D3D11System()
     //D3D_DRIVER_TYPE_REFERENCE, D3D_DRIVER_TYPE_HARDWARE
     err = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, createFlags, &featureLevel, 1, D3D11_SDK_VERSION, &swapDesc, &swap, &d3d, &featureLevelSupported, &d3dContext);
     if(FAILED(err))
-        CrashError(TEXT("Could not create D3D11 device and swap chain"));
+        CrashError(TEXT("Could not create D3D11 device and swap chain.  If you get this error, it's likely you probably use a GPU that is old, or that is unsupported."));
 
     //------------------------------------------------------------------
 
