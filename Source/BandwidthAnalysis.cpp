@@ -42,8 +42,8 @@ public:
         String strReport;
         strReport << TEXT("Stream report:\r\n\r\n");
 
-        strReport << App->GetVideoEncoder()->GetInfoString() << TEXT("\r\n\r\n");
-        strReport << App->GetAudioEncoder()->GetInfoString() << TEXT("\r\n\r\n");
+        /*strReport << App->GetVideoEncoder()->GetInfoString() << TEXT("\r\n\r\n");
+        strReport << App->GetAudioEncoder()->GetInfoString() << TEXT("\r\n\r\n");*/
 
         strReport << TEXT("Total Bytes transmitted: ") << Int64String(totalBytesTransmitted, 10) <<
                      TEXT("\r\nTotal time of stream in seconds: ") << IntString(numSeconds) <<

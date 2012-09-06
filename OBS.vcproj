@@ -46,12 +46,10 @@
 				Optimization="0"
 				AdditionalIncludeDirectories="OBSApi;extras"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
-				MinimalRebuild="true"
 				ExceptionHandling="2"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
-				AssemblerOutput="4"
 				WarningLevel="3"
 				DebugInformationFormat="4"
 			/>

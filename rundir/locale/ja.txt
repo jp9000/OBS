@@ -17,8 +17,6 @@ StreamReport    "ストリーム情報"
 
 DeleteConfirm.Title "削除しますか?"
 
-DesktopImageSource.CannotDuplicate  "DesktopImageSourceは一個以上に追加できません"
-
 GlobalSources.DeleteConfirm "グローバル ソースを削除するとすべてのシーンから外します。続けてよろしいですか？"
 
 Listbox.Add             "$1を追加"
@@ -35,16 +33,16 @@ Listbox.ResetSize       "サイズを元に戻す"
 MainWindow.Exit         "終了"
 MainWindow.Plugins      "プラグイン"
 MainWindow.SceneEditor  "シーンを編集する"
-MainWindow.Scenes       "シーン："
-MainWindow.Sources      "ソース："
+MainWindow.Scenes       "シーン:"
+MainWindow.Sources      "ソース:"
 MainWindow.StartStream  "ストリーム開始"
 MainWindow.StopStream   "ストリーム停止"
 MainWindow.StopTest     "試しを停止"
 MainWindow.TestStream   "ストリームを試す"
 
 Plugins.Configure   "構成"
-Plugins.Description "説明："
-Plugins.Filename    "ファイル名："
+Plugins.Description "説明:"
+Plugins.Filename    "ファイル名:"
 
 Scene.MissingSources    "必要なプラグインが見つからなかったとか、ソースの設定が間違っているとかため、すべてのソースは作成できませんでした"
 
@@ -58,7 +56,7 @@ Settings.SaveChangesPrompt  "設定を保存して適用しますか？"
 Settings.SaveChangesTitle   "適用しますか？"
 Settings.Video              "動画"
 
-Settings.Audio.Device   "マイク/他のサウンド デバイス："
+Settings.Audio.Device   "マイク/他のサウンド デバイス:"
 
 Settings.Encoding.Audio "サウンド"
 Settings.Encoding.Video "動画"
@@ -98,11 +96,24 @@ Settings.Video.Resolution   "解像度:"
 
 Settings.Video.Downscale.None   "なし"
 
-Sources.BitmapSource    "ビットマップ画像"
-Sources.DesktopSource   "デスクトップ キャプチャー"
-Sources.GlobalSource    "グローバル ソース"
+Sources.BitmapSource            "ビットマップ画像"
+Sources.GlobalSource            "グローバル ソース"
+Sources.SoftwareCaptureSource   "ソフトウェア キャプチャー ソース"
 
 Sources.BitmapSource.Empty      "パスは空です。ビットマップ画像を参照して選択してください"
 Sources.BitmapSource.ResetSize  "サイズを更新する"
 
-Sources.DesktopSource.Monitor   "キャプチャー 画面:"
+Sources.SoftwareCaptureSource.EntireWindow      "ウィンドウ全部"
+Sources.SoftwareCaptureSource.InnerWindow       "ウィンドウ内部"
+Sources.SoftwareCaptureSource.Monitor           "画面:"
+Sources.SoftwareCaptureSource.MonitorCapture    "画面キャプチャー （ビデオ設定でAeroを無効にするのは大いに推奨）"
+Sources.SoftwareCaptureSource.Position          "位置:"
+Sources.SoftwareCaptureSource.Refresh           "再読み込みする"
+Sources.SoftwareCaptureSource.RegionCapture     "特定領域"
+Sources.SoftwareCaptureSource.RegionWindowText  "完了するには、EnterかEscを押し、 または他のウィンドウをクリックしてください"
+Sources.SoftwareCaptureSource.SelectRegion      "領域を選択する"
+Sources.SoftwareCaptureSource.Size              "大きさ:"
+Sources.SoftwareCaptureSource.Window            "ウィンドウ:"
+Sources.SoftwareCaptureSource.WindowCapture     "ウィンドウ キャプチャー （他のウィンドウは表示しません。FPSを向上する可能性があります）"
+Sources.SoftwareCaptureSource.WindowMinimized   "ウィンドウは最小化します"
+Sources.SoftwareCaptureSource.WindowNotFound    "ウィンドウは見つかりません"

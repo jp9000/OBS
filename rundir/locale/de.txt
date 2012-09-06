@@ -17,8 +17,6 @@ StreamReport    "Stream Bericht"
 
 DeleteConfirm.Title "Ausgewählte Elemente entfernen??"
 
-DesktopImageSource.CannotDuplicate  "Sie können nicht mehr als eine Desktop-Quelle hinzufügen"
-
 GlobalSources.DeleteConfirm "Wenn sie eine globale Quelle entfernen, wird diese aus allen Szenen entfernt. Sind sie sicher, dass sie fortfahren wollen?"
 
 Listbox.Add             "Füge $1 hinzu"
@@ -99,10 +97,7 @@ Settings.Video.Resolution   "Basis Auflösung:"
 Settings.Video.Downscale.None   "Keine"
 
 Sources.BitmapSource    "Bitmap"
-Sources.DesktopSource   "Desktop Aufnahme"
 Sources.GlobalSource    "Globale Quelle"
 
 Sources.BitmapSource.Empty      "keine Bitmap angegeben.  Bitte wählen sie eine Bitmap aus."
 Sources.BitmapSource.ResetSize  "Maße zurücksetzen"
-
-Sources.DesktopSource.Monitor   "Aufnahme-Monitor:"

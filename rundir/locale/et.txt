@@ -17,8 +17,6 @@ StreamReport    "Striimi statistika"
 
 DeleteConfirm.Title "Kustuta selekteeritud valik?"
 
-DesktopImageSource.CannotDuplicate  "Ühes stseenis pole võimalik samal ajal mitut töölaua pildiallikat kasutada."
-
 GlobalSources.DeleteConfirm "Kui kustutad globaalse allika, eemaldatakse see kõikidest stseenidest, mis seda kasutavad. Oled kindel, et tahad jätkata?"
 
 Listbox.Add             "Lisa $1"
@@ -99,10 +97,7 @@ Settings.Video.Resolution   "Baasresolutsioon:"
 Settings.Video.Downscale.None   "Puudub"
 
 Sources.BitmapSource    "Bitikaart"
-Sources.DesktopSource   "Töölaua lindistus"
 Sources.GlobalSource    "Globaalne allikas"
 
 Sources.BitmapSource.Empty      "Bitikaart pole sisestatud. Palun sisesta bitikaart."
 Sources.BitmapSource.ResetSize  "Algseadista suurus"
-
-Sources.DesktopSource.Monitor   "Lindista monitori:"

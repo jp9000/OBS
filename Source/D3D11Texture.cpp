@@ -20,6 +20,12 @@
 #include "Main.h"
 
 
+inline bool IsPow2(UINT num)
+{
+    return num >= 2 && (num & (num-1)) == 0;
+}
+
+
 const DXGI_FORMAT convertFormat[] = {DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_A8_UNORM, DXGI_FORMAT_R8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_B8G8R8X8_UNORM, DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_R16G16B16A16_FLOAT, DXGI_FORMAT_R32G32B32A32_FLOAT, DXGI_FORMAT_BC1_UNORM, DXGI_FORMAT_BC3_UNORM, DXGI_FORMAT_BC5_UNORM};
 const UINT formatPitch[] = {0, 1, 1, 4, 4, 4, 4, 8, 16, 0, 0, 0};
 
@@ -73,6 +79,12 @@ Texture* D3D11Texture::CreateTexture(unsigned int width, unsigned int height, GS
     }
 
     DXGI_FORMAT format = convertFormat[(UINT)colorFormat];
+
+    if(bGenMipMaps && (!IsPow2(width) || !IsPow2(height)))
+    {
+        AppWarning(TEXT("D3D11Texture::CreateTexture: Cannot generate mipmaps for a non-power-of-two sized texture.  Disabling mipmap generation."));
+        bGenMipMaps = FALSE;
+    }
 
     D3D11_TEXTURE2D_DESC td;
     zero(&td, sizeof(td));
@@ -137,12 +149,24 @@ Texture* D3D11Texture::CreateFromFile(CTSTR lpFile, BOOL bBuildMipMaps)
 {
     HRESULT err;
 
+    D3DX11_IMAGE_INFO ii;
+    if(FAILED(D3DX11GetImageInfoFromFile(lpFile, NULL, &ii, NULL)))
+    {
+        AppWarning(TEXT("D3D11Texture::CreateFromFile: Could not get information about texture file '%s'"), lpFile);
+        return NULL;
+    }
+
+    //------------------------------------------
+
+    if(bBuildMipMaps && (!IsPow2(ii.Width) || !IsPow2(ii.Height)))
+        bBuildMipMaps = FALSE;
+
     D3DX11_IMAGE_LOAD_INFO ili;
     ili.Width           = D3DX11_DEFAULT;
     ili.Height          = D3DX11_DEFAULT;
     ili.Depth           = D3DX11_DEFAULT;
     ili.FirstMipLevel   = D3DX11_DEFAULT;
-    ili.MipLevels       = bBuildMipMaps ? D3DX11_DEFAULT : 1;
+    ili.MipLevels       = bBuildMipMaps ? 0 : 1;
     ili.Usage           = (D3D11_USAGE)D3DX11_DEFAULT;
     ili.BindFlags       = D3DX11_DEFAULT;
     ili.CpuAccessFlags  = D3DX11_DEFAULT;
@@ -161,22 +185,9 @@ Texture* D3D11Texture::CreateFromFile(CTSTR lpFile, BOOL bBuildMipMaps)
 
     //------------------------------------------
 
-    ID3D11Texture2D *tex2d;
-    if(FAILED(err = texResource->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&tex2d)))
-    {
-        SafeRelease(texResource);
-        AppWarning(TEXT("D3D11Texture::CreateFromFile: texture '%s' is not a supported texture type, please use a two-dimensional texture"), lpFile);
-        return NULL;
-    }
-
-    D3D11_TEXTURE2D_DESC tex2dDesc;
-    tex2d->GetDesc(&tex2dDesc);
-
-    SafeRelease(tex2d);
-
     D3D11_SHADER_RESOURCE_VIEW_DESC resourceDesc;
     zero(&resourceDesc, sizeof(resourceDesc));
-    resourceDesc.Format              = tex2dDesc.Format;
+    resourceDesc.Format              = ii.Format;
     resourceDesc.ViewDimension       = D3D11_SRV_DIMENSION_TEXTURE2D;
     resourceDesc.Texture2D.MipLevels = bBuildMipMaps ? -1 : 1;
 
@@ -193,10 +204,10 @@ Texture* D3D11Texture::CreateFromFile(CTSTR lpFile, BOOL bBuildMipMaps)
     D3D11Texture *newTex = new D3D11Texture;
     newTex->resource = resource;
     newTex->texture = texResource;
-    newTex->width = tex2dDesc.Width;
-    newTex->height = tex2dDesc.Height;
+    newTex->width = ii.Width;
+    newTex->height = ii.Height;
 
-    switch(tex2dDesc.Format)
+    switch(ii.Format)
     {
         case DXGI_FORMAT_R8_UNORM:              newTex->format = GS_ALPHA;       break;
         case DXGI_FORMAT_A8_UNORM:              newTex->format = GS_GRAYSCALE;   break;

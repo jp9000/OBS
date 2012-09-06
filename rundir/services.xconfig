@@ -19,4 +19,15 @@ services : {
       US Central Secondary    : live-dfw-backup.justin.tv
     }
   }
+  Own3D : {
+    useChannel : live
+    servers : {
+      US West : live.usw.own3d.tv
+      US East : live.use.own3d.tv
+      EU : live.eu.own3d.tv
+      US West (Partner) : live.usw.pro.own3d.tv
+      US East (Partner) : live.use.pro.own3d.tv
+      EU (Partner) : live.eu.pro.own3d.tv
+    }
+  }
 }

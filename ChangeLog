@@ -3,6 +3,17 @@
 
 -------------------------------
 
+2012-9-06 - 0.33 (alpha)
+    * Fixed issue with bitmaps of non-power-of-two sizes not displaying
+    * Added region capture and window specific capture.  Window specific
+      capture seems super fast.  Was getting like 50-60 FPS average from
+      starcraft 2 for example.
+    * Fixed some other minor issues and potential bugs
+    * Added own3d with some servers to the services list
+
+
+-------------------------------
+
 2012-9-01 - 0.32 (alpha)
     * Fixed a crash when adding sources in some situations
     * Fixed some crashes related to audio code, forgot to make sure

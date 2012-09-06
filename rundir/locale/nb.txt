@@ -3,7 +3,7 @@ Apply           "Bruk"
 Browse          "Bla gjennom"
 Cancel          "Avbryt"
 Default         "Forhåndsvalg"
-DeleteConfirm   "Er du sikker på at du vil forkaste de valgte elementene?"
+DeleteConfirm   "Er du sikker pEat du vil forkaste de valgte elementene?"
 Desktop         "Skrivebord"
 Disable         "Skru av"
 EnterName       "Vennligst skriv inn ditt navn"
@@ -17,9 +17,7 @@ StreamReport    "Stream-rapportering"
 
 DeleteConfirm.Title "Slette valgte elementer?"
 
-DesktopImageSource.CannotDuplicate  "Kan ikke ha mer enn én skrivebordsbildekilde i scenen om gangen"
-
-GlobalSources.DeleteConfirm "Hvis du sletter en global kilde, vil den bli fjernet fra hvilken som helst scene som benytter den.  Er du sikker på at du vil fortsette?"
+GlobalSources.DeleteConfirm "Hvis du sletter en global kilde, vil den bli fjernet fra hvilken som helst scene som benytter den.  Er du sikker pEat du vil fortsette?"
 
 Listbox.Add             "Legg til $1"
 Listbox.Center          "Sentrer"
@@ -46,13 +44,13 @@ Plugins.Configure   "Konfigurer"
 Plugins.Description "Beskrivelse:"
 Plugins.Filename    "Filnavn:"
 
-Scene.MissingSources    "Mislyktes i å laste alle bildekildene på grunn av enten feilinnstillinger eller fraværende programvareutvidelser"
+Scene.MissingSources    "Mislyktes i Elaste alle bildekildene pEgrunn av enten feilinnstillinger eller fraværende programvareutvidelser"
 
 Settings.Audio              "Lyd"
 Settings.Encoding           "Koding"
 Settings.General            "Generelt"
 Settings.Hotkeys            "Tastatursnarveier"
-Settings.Info               "Disse instillingene vil ikke gjelde før neste gang du starter å streame"
+Settings.Info               "Disse instillingene vil ikke gjelde før neste gang du starter Estreame"
 Settings.Publish            "Instillinger for kringkasting"
 Settings.SaveChangesPrompt  "Vil du lagre og bruke dine endringer?"
 Settings.SaveChangesTitle   "Bruk instillinger?"
@@ -100,10 +98,7 @@ Settings.Video.Resolution   "Grunnoppløsning"
 Settings.Video.Downscale.None   "Ingen"
 
 Sources.BitmapSource    "Bitmap"
-Sources.DesktopSource   "Skrivebordsopptak"
 Sources.GlobalSource    "Global kilde"
 
 Sources.BitmapSource.Empty      "Ingen bitmap skrivd inn.  Vennligst bla gjennom og velg bitmap"
 Sources.BitmapSource.ResetSize  "Gjenninnstill størrelse"
-
-Sources.DesktopSource.Monitor   "Opptaksskjerm:"

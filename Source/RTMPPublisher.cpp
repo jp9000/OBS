@@ -59,8 +59,8 @@ class RTMPPublisher : public NetworkStream
         while(WaitForSingleObject(hSendSempahore, INFINITE) == WAIT_OBJECT_0 && !bStopping && RTMP_IsConnected(rtmp))
         {
             OSEnterMutex(hDataMutex);
-            if(!Packets.Num())
-                ProgramBreak();
+            /*if(!Packets.Num())
+                ProgramBreak();*/
 
             LPBYTE     data      = Packets[0].data.Array();
             UINT       size      = Packets[0].data.Num();
@@ -69,6 +69,8 @@ class RTMPPublisher : public NetworkStream
             OSLeaveMutex(hDataMutex);
 
             //--------------------------------------------
+
+            DWORD startTime = OSGetTime();
 
             RTMPPacket packet;
             packet.m_nChannel = bAudio ? 0x5 : 0x4;
@@ -90,6 +92,11 @@ class RTMPPublisher : public NetworkStream
                     break;
                 }
             }
+
+            DWORD totalTime = OSGetTime()-startTime;
+
+            /*if(totalTime > 80)
+                Log(TEXT("blocked by %u milliseconds"), totalTime);*/
 
             //--------------------------------------------
 

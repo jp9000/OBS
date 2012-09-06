@@ -17,8 +17,6 @@ StreamReport    "Stream Report"
 
 DeleteConfirm.Title "Delete selected items?"
 
-DesktopImageSource.CannotDuplicate  "Cannot have more than one Desktop Image Source in the scene at a time"
-
 GlobalSources.DeleteConfirm "If you delete a global source, it will be removed from any scene that uses it.  Are you sure you want to continue?"
 
 Listbox.Add             "Add $1"
@@ -98,11 +96,24 @@ Settings.Video.Resolution   "Base Resolution:"
 
 Settings.Video.Downscale.None   "None"
 
-Sources.BitmapSource    "Bitmap"
-Sources.DesktopSource   "Desktop Capture"
-Sources.GlobalSource    "Global Source"
+Sources.BitmapSource            "Bitmap"
+Sources.GlobalSource            "Global Source"
+Sources.SoftwareCaptureSource   "Software Capture Source"
 
 Sources.BitmapSource.Empty      "No bitmap entered.  Please browse and select a bitmap"
 Sources.BitmapSource.ResetSize  "Reset Size"
 
-Sources.DesktopSource.Monitor   "Capture Monitor:"
+Sources.SoftwareCaptureSource.EntireWindow      "Entire Window"
+Sources.SoftwareCaptureSource.InnerWindow       "Inner Window"
+Sources.SoftwareCaptureSource.Monitor           "Monitor:"
+Sources.SoftwareCaptureSource.MonitorCapture    "Monitor Capture (Disable aero in video settings to maximize FPS)"
+Sources.SoftwareCaptureSource.Position          "Position:"
+Sources.SoftwareCaptureSource.Refresh           "Refresh"
+Sources.SoftwareCaptureSource.RegionCapture     "Specific Region"
+Sources.SoftwareCaptureSource.RegionWindowText  "Press Enter, Esc, or click outside this rectangle when complete."
+Sources.SoftwareCaptureSource.SelectRegion      "Select Region"
+Sources.SoftwareCaptureSource.Size              "Size:"
+Sources.SoftwareCaptureSource.Window            "Window:"
+Sources.SoftwareCaptureSource.WindowCapture     "Window Capture (Other windows not displayed.  Can greatly increase FPS)"
+Sources.SoftwareCaptureSource.WindowMinimized   "Window is minimized"
+Sources.SoftwareCaptureSource.WindowNotFound    "Cannot find window"
