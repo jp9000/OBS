@@ -115,6 +115,6 @@ Sources.SoftwareCaptureSource.RegionWindowText  "完了するには、EnterかEs
 Sources.SoftwareCaptureSource.SelectRegion      "領域を選択する"
 Sources.SoftwareCaptureSource.Size              "大きさ:"
 Sources.SoftwareCaptureSource.Window            "ウィンドウ:"
-Sources.SoftwareCaptureSource.WindowCapture     "ウィンドウ キャプチャー （他のウィンドウは表示しません。FPSを向上する可能性があります）"
+Sources.SoftwareCaptureSource.WindowCapture     "ウィンドウ キャプチャー （他のウィンドウは表示しません。最小化してはできません）"
 Sources.SoftwareCaptureSource.WindowMinimized   "ウィンドウは最小化します"
 Sources.SoftwareCaptureSource.WindowNotFound    "ウィンドウは見つかりません"

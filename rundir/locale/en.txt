@@ -115,6 +115,6 @@ Sources.SoftwareCaptureSource.RegionWindowText  "Press Enter, Esc, or click outs
 Sources.SoftwareCaptureSource.SelectRegion      "Select Region"
 Sources.SoftwareCaptureSource.Size              "Size:"
 Sources.SoftwareCaptureSource.Window            "Window:"
-Sources.SoftwareCaptureSource.WindowCapture     "Window Capture (Other windows not displayed.  Can greatly increase FPS)"
+Sources.SoftwareCaptureSource.WindowCapture     "Window Capture (Other windows not displayed.  Cannot be minimized.  Very fast)"
 Sources.SoftwareCaptureSource.WindowMinimized   "Window is minimized"
 Sources.SoftwareCaptureSource.WindowNotFound    "Cannot find window"
