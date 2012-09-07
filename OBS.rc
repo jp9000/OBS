@@ -161,35 +161,37 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,209,28,50,14
 END
 
-IDD_CONFIGUREDESKTOPSOURCE DIALOGEX 0, 0, 379, 195
+IDD_CONFIGUREDESKTOPSOURCE DIALOGEX 0, 0, 379, 212
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Sources.SoftwareCaptureSource"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     CONTROL         "Sources.SoftwareCaptureSource.MonitorCapture",IDC_MONITORCAPTURE,
                     "Button",BS_AUTORADIOBUTTON,7,7,365,10
-    CONTROL         "Sources.SoftwareCaptureSource.WindowCapture",IDC_WINDOWCAPTURE,
-                    "Button",BS_AUTORADIOBUTTON,7,49,365,10
     RTEXT           "Sources.SoftwareCaptureSource.Monitor",IDC_STATIC,7,23,96,8
     COMBOBOX        IDC_MONITOR,107,20,36,126,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Sources.SoftwareCaptureSource.WindowCapture",IDC_WINDOWCAPTURE,
+                    "Button",BS_AUTORADIOBUTTON,7,49,365,10
     RTEXT           "Sources.SoftwareCaptureSource.Window",IDC_STATIC,7,68,96,8
     COMBOBOX        IDC_WINDOW,107,66,197,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Sources.SoftwareCaptureSource.Refresh",IDC_REFRESH,310,65,62,14
-    CONTROL         "Sources.SoftwareCaptureSource.EntireWindow",IDC_OUTERWINDOW,
-                    "Button",BS_AUTORADIOBUTTON,106,82,266,10
     CONTROL         "Sources.SoftwareCaptureSource.InnerWindow",IDC_INNERWINDOW,
+                    "Button",BS_AUTORADIOBUTTON,106,83,266,10
+    CONTROL         "Sources.SoftwareCaptureSource.EntireWindow",IDC_OUTERWINDOW,
                     "Button",BS_AUTORADIOBUTTON,106,95,266,10
-    RTEXT           "Sources.SoftwareCaptureSource.Position",IDC_STATIC,7,142,96,8
-    EDITTEXT        IDC_POSX,107,139,40,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_POSY,149,139,40,14,ES_AUTOHSCROLL
-    RTEXT           "Sources.SoftwareCaptureSource.Size",IDC_STATIC,7,159,96,8
-    EDITTEXT        IDC_SIZEX,107,157,40,14,ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        IDC_SIZEY,149,157,40,14,ES_AUTOHSCROLL | ES_NUMBER
-    DEFPUSHBUTTON   "OK",IDOK,268,174,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,322,174,50,14
-    PUSHBUTTON      "Sources.SoftwareCaptureSource.SelectRegion",IDC_SELECTREGION,193,139,77,14
+    CONTROL         "Sources.SoftwareCaptureSource.MouseCapture",IDC_CAPTUREMOUSE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,119,283,10
     CONTROL         "Sources.SoftwareCaptureSource.RegionCapture",IDC_REGIONCAPTURE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,122,235,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,132,235,10
+    RTEXT           "Sources.SoftwareCaptureSource.Position",IDC_STATIC,7,151,96,8
+    EDITTEXT        IDC_POSX,107,148,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_POSY,149,148,40,14,ES_AUTOHSCROLL
+    RTEXT           "Sources.SoftwareCaptureSource.Size",IDC_STATIC,7,168,96,8
+    EDITTEXT        IDC_SIZEX,107,166,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_SIZEY,149,166,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    PUSHBUTTON      "Sources.SoftwareCaptureSource.SelectRegion",IDC_SELECTREGION,193,148,77,14
+    DEFPUSHBUTTON   "OK",IDOK,268,191,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,322,191,50,14
 END
 
 IDD_CONFIGUREBITMAPSOURCE DIALOGEX 0, 0, 244, 65
@@ -298,7 +300,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 372
         TOPMARGIN, 7
-        BOTTOMMARGIN, 188
+        BOTTOMMARGIN, 205
     END
 
     IDD_CONFIGUREBITMAPSOURCE, DIALOG

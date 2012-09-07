@@ -1,0 +1,17 @@
+﻿Cancel          "Откажи"
+ClassName       "Устройство за записване на видео"
+DeviceSelection "Избиране на устройство"
+OK              "OK"
+
+DeviceSelection.Config          "Конфигурация"
+DeviceSelection.Device          "Устройство:"
+DeviceSelection.ExistsInScene   "Източник вече използва това устройство."
+DeviceSelection.ExistsSomewhere "Това устройство вече се ползва като източник в една или повече сцени."
+DeviceSelection.FlipImage       "Обърни картината"
+DeviceSelection.FPS             "FPS:"
+DeviceSelection.GlobalExists    "Глобален източник ползващ това устройство вече съществува."
+DeviceSelection.Refresh         "Опресни"
+DeviceSelection.Resolution      "Резолюция:"
+
+Plugin.Description  "Този плугин ви позволява да добавите DirectShow видеоустройства (уебкамери, кепчър карти и т.н) във сцената"
+Plugin.Name         "DirectShow плугин за видео устройства"

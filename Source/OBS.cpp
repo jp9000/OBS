@@ -526,7 +526,7 @@ OBS::OBS()
     // edit scene button
 
     hwndTemp = CreateWindow(TEXT("BUTTON"), Str("MainWindow.SceneEditor"),
-        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_AUTOCHECKBOX|BS_PUSHLIKE,
+        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_AUTOCHECKBOX|BS_PUSHLIKE|WS_DISABLED,
         0, 0, 0, 0, hwndMain, (HMENU)ID_SCENEEDITOR, 0, 0);
     SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 
@@ -819,6 +819,8 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
+    //Log(TEXT("test 1"));
+
     mainVertexShader    = CreateVertexShaderFromFile(TEXT("shaders/DrawTexture.vShader"));
     mainPixelShader     = CreatePixelShaderFromFile(TEXT("shaders/DrawTexture.pShader"));
 
@@ -826,6 +828,8 @@ void OBS::Start()
     solidPixelShader    = CreatePixelShaderFromFile(TEXT("shaders/DrawSolid.pShader"));
 
     //------------------------------------------------------------------
+
+    //Log(TEXT("test 2"));
 
     CTSTR lpShader = NULL;
     if(CloseFloat(downscale, 1.0))
@@ -843,6 +847,8 @@ void OBS::Start()
 
     yuvScalePixelShader = CreatePixelShaderFromFile(lpShader);
 
+    //Log(TEXT("test 3"));
+
     //-------------------------------------------------------------
 
     for(int i=0; i<NUM_RENDER_BUFFERS; i++)
@@ -850,6 +856,8 @@ void OBS::Start()
         mainRenderTextures[i] = CreateRenderTarget(baseCX, baseCY, GS_BGRA, FALSE);
         yuvRenderTextures[i]  = CreateRenderTarget(outputCX, outputCY, GS_BGRA, FALSE);
     }
+
+    //Log(TEXT("test 4"));
 
     //-------------------------------------------------------------
 
@@ -871,6 +879,8 @@ void OBS::Start()
         CrashError(TEXT("Unable to create copy texture"));
         //todo - better error handling
     }
+
+    //Log(TEXT("test 5"));
 
     //-------------------------------------------------------------
 
@@ -898,6 +908,8 @@ void OBS::Start()
             micAudio = CreateAudioSource(true, strDevice);
     }
 
+    //Log(TEXT("test 6"));
+
     //-------------------------------------------------------------
 
     UINT bitRate = (UINT)AppConfig->GetInt(TEXT("Audio Encoding"), TEXT("Bitrate"), 96);
@@ -907,6 +919,8 @@ void OBS::Start()
         audioEncoder = CreateAACEncoder(bitRate);
     else
         audioEncoder = CreateMP3Encoder(bitRate);
+
+    //Log(TEXT("test 7"));
 
     //-------------------------------------------------------------
 
@@ -940,6 +954,8 @@ void OBS::Start()
 
     if(scene && scene->HasMissingSources())
         MessageBox(hwndMain, Str("Scene.MissingSources"), NULL, 0);
+
+    //Log(TEXT("test 8"));
 
     //-------------------------------------------------------------
 
@@ -975,6 +991,8 @@ void OBS::Start()
         EnableWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), FALSE);
         SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), Str("MainWindow.StopStream"));
     }
+
+    EnableWindow(GetDlgItem(hwndMain, ID_SCENEEDITOR), TRUE);
 
     //-------------------------------------------------------------
 
@@ -1135,6 +1153,10 @@ void OBS::Stop()
         SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), Str("MainWindow.StartStream"));
         EnableWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), TRUE);
     }
+
+    bEditMode = false;
+    SendMessage(GetDlgItem(hwndMain, ID_SCENEEDITOR), BM_SETCHECK, BST_UNCHECKED, 0);
+    EnableWindow(GetDlgItem(hwndMain, ID_SCENEEDITOR), FALSE);
 
     bTestStream = false;
 

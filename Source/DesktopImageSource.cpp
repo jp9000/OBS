@@ -28,8 +28,9 @@ class DesktopImageSource : public ImageSource
     Texture *lastRendered;
 
     UINT     captureType;
-    String   strWindow;
-    BOOL     bClientCapture;
+    String   strWindow, strWindowClass;
+    BOOL     bClientCapture, bCaptureMouse;
+    HWND     hwndFoundWindow;
 
     int      width, height;
     RECT     captureRect;
@@ -47,11 +48,6 @@ public:
 
         curCaptureTexture = 0;
         this->frameTime = frameTime;
-
-        //-------------------------------------------------------
-
-        for(UINT i=0; i<NUM_CAPTURE_TEXTURES; i++)
-            renderTextures[i] = CreateGDITexture(width, height);
 
         //-------------------------------------------------------
 
@@ -85,13 +81,23 @@ public:
             ci.cbSize = sizeof(ci);
             BOOL bMouseCaptured;
 
-            bMouseCaptured = GetCursorInfo(&ci);
+            bMouseCaptured = bCaptureMouse && GetCursorInfo(&ci);
 
             bool bWindowMinimized = false, bWindowNotFound = false;
             HWND hwndCapture = NULL;
             if(captureType == 1)
             {
-                hwndCapture = FindWindow(NULL, strWindow);
+                hwndCapture = FindWindow(strWindowClass, strWindow);
+                if(!hwndCapture)
+                {
+                    if(hwndFoundWindow && IsWindow(hwndFoundWindow))
+                        hwndCapture = hwndFoundWindow;
+                    else
+                        hwndCapture = FindWindow(strWindowClass, NULL);
+                }
+
+                hwndFoundWindow = hwndCapture;
+
                 if(!hwndCapture)
                     bWindowNotFound = true;
                 if(IsIconic(hwndCapture))
@@ -211,14 +217,21 @@ public:
 
     void UpdateSettings()
     {
+        App->EnterSceneMutex();
+
+        for(int i=0; i<NUM_CAPTURE_TEXTURES; i++)
+            delete renderTextures[i];
+
         captureType     = data->GetInt(TEXT("captureType"));
         strWindow       = data->GetString(TEXT("window"));
-        bClientCapture  = data->GetInt(TEXT("innerWindow"));
+        strWindowClass  = data->GetString(TEXT("windowClass"));
+        bClientCapture  = data->GetInt(TEXT("innerWindow"), 1);
+        bCaptureMouse   = data->GetInt(TEXT("captureMouse"), 1);
 
         int x  = data->GetInt(TEXT("captureX"));
         int y  = data->GetInt(TEXT("captureY"));
-        int cx = data->GetInt(TEXT("captureCX"), 100);
-        int cy = data->GetInt(TEXT("captureCY"), 100);
+        int cx = data->GetInt(TEXT("captureCX"), 32);
+        int cy = data->GetInt(TEXT("captureCY"), 32);
 
         captureRect.left   = x;
         captureRect.top    = y;
@@ -227,6 +240,11 @@ public:
 
         width  = cx;
         height = cy;
+
+        for(UINT i=0; i<NUM_CAPTURE_TEXTURES; i++)
+            renderTextures[i] = CreateGDITexture(width, height);
+
+        App->LeaveSceneMutex();
     }
 };
 
@@ -238,9 +256,10 @@ ImageSource* STDCALL CreateDesktopSource(XElement *data)
     return new DesktopImageSource(App->GetFrameTime(), data);
 }
 
-void RefreshWindowList(HWND hwndCombobox)
+void RefreshWindowList(HWND hwndCombobox, StringList &classList)
 {
     SendMessage(hwndCombobox, CB_RESETCONTENT, 0, 0);
+    classList.Clear();
 
     HWND hwndCurrent = GetWindow(GetDesktopWindow(), GW_CHILD);
     do
@@ -290,10 +309,23 @@ void RefreshWindowList(HWND hwndCombobox)
 
                 int id = (int)SendMessage(hwndCombobox, CB_ADDSTRING, 0, (LPARAM)strWindowName.Array());
                 SendMessage(hwndCombobox, CB_SETITEMDATA, id, (LPARAM)hwndCurrent);
+
+                String strClassName;
+                strClassName.SetLength(256);
+                GetClassName(hwndCurrent, strClassName.Array(), 255);
+                strClassName.SetLength(slen(strClassName));
+
+                classList << strClassName;
             }
         }
     } while (hwndCurrent = GetNextWindow(hwndCurrent, GW_HWNDNEXT));
 }
+
+struct ConfigDesktopSourceInfo
+{
+    XElement *data;
+    StringList strClasses;
+};
 
 void SetDesktopCaptureType(HWND hwnd, UINT type)
 {
@@ -316,10 +348,19 @@ void SelectTargetWindow(HWND hwnd)
         return;
 
     String strWindow = GetCBText(hwndWindowList, windowID);
-    if(strWindow.IsEmpty())
-        return;
 
-    HWND hwndTarget = FindWindow(NULL, strWindow);
+    ConfigDesktopSourceInfo *info = (ConfigDesktopSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
+
+    HWND hwndTarget = FindWindow(info->strClasses[windowID], strWindow);
+    if(!hwndTarget)
+    {
+        HWND hwndLastKnownHWND = (HWND)SendMessage(hwndWindowList, CB_GETITEMDATA, windowID, 0);
+        if(IsWindow(hwndLastKnownHWND))
+            hwndTarget = hwndLastKnownHWND;
+        else
+            hwndTarget = FindWindow(info->strClasses[windowID], NULL);
+    }
+
     if(!hwndTarget)
         return;
 
@@ -636,7 +677,8 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
                 LocalizeWindow(hwnd);
 
-                XElement *data = (XElement*)lParam;
+                ConfigDesktopSourceInfo *info = (ConfigDesktopSourceInfo*)lParam;
+                XElement *data = info->data;
 
                 HWND hwndTemp = GetDlgItem(hwnd, IDC_MONITOR);
                 for(UINT i=0; i<App->NumMonitors(); i++)
@@ -656,21 +698,20 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 HWND hwndWindowList = GetDlgItem(hwnd, IDC_WINDOW);
 
                 CTSTR lpWindowName = data->GetString(TEXT("window"));
-                BOOL bInnerWindow = (BOOL)data->GetInt(TEXT("innerWindow"));
+                CTSTR lpWindowClass = data->GetString(TEXT("windowClass"));
+                BOOL bInnerWindow = (BOOL)data->GetInt(TEXT("innerWindow"), 1);
 
-                RefreshWindowList(hwndWindowList);
+                RefreshWindowList(hwndWindowList, info->strClasses);
 
                 UINT windowID = 0;
                 if(lpWindowName)
                     windowID = (UINT)SendMessage(hwndWindowList, CB_FINDSTRING, -1, (LPARAM)lpWindowName);
 
-                if(windowID != CB_ERR)
-                    SendMessage(hwndWindowList, CB_SETCURSEL, windowID, 0);
-                else
-                {
-                    SendMessage(hwndWindowList, CB_INSERTSTRING, 0, (LPARAM)lpWindowName);
-                    SendMessage(hwndWindowList, CB_SETCURSEL, 0, 0);
-                }
+                bool bFoundWindow = (windowID != CB_ERR);
+                if(!bFoundWindow)
+                    windowID = 0;
+
+                SendMessage(hwndWindowList, CB_SETCURSEL, windowID, 0);
 
                 if(bInnerWindow)
                     SendMessage(GetDlgItem(hwnd, IDC_INNERWINDOW), BM_SETCHECK, BST_CHECKED, 0);
@@ -679,7 +720,15 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                 //-----------------------------------------------------
 
+                bool bMouseCapture = data->GetInt(TEXT("captureMouse"), 1) != FALSE;
+                SendMessage(GetDlgItem(hwnd, IDC_CAPTUREMOUSE), BM_SETCHECK, (bMouseCapture) ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                //-----------------------------------------------------
+
                 bool bRegion = data->GetInt(TEXT("regionCapture")) != FALSE;
+                if(!bFoundWindow)
+                    bRegion = false;
+
                 SendMessage(GetDlgItem(hwnd, IDC_REGIONCAPTURE), BM_SETCHECK, (bRegion) ? BST_CHECKED : BST_UNCHECKED, 0);
                 EnableWindow(GetDlgItem(hwnd, IDC_POSX),            bRegion);
                 EnableWindow(GetDlgItem(hwnd, IDC_POSY),            bRegion);
@@ -688,19 +737,12 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 EnableWindow(GetDlgItem(hwnd, IDC_SELECTREGION),    bRegion);
 
                 int posX = 0, posY = 0, sizeX = 32, sizeY = 32;
-                if(!data->GetBaseItem(TEXT("captureX")))
+                if(!data->GetBaseItem(TEXT("captureX")) || !bFoundWindow)
                 {
                     if(captureType == 0)
                         PostMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_MONITOR, 0), 0);
                     else if(captureType == 1)
                         PostMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_WINDOW, 0), 0);
-                    else if(captureType == 2)
-                    {
-                        SetWindowText(GetDlgItem(hwnd, IDC_POSX),  IntString(posX).Array());
-                        SetWindowText(GetDlgItem(hwnd, IDC_POSY),  IntString(posY).Array());
-                        SetWindowText(GetDlgItem(hwnd, IDC_SIZEX), IntString(sizeX).Array());
-                        SetWindowText(GetDlgItem(hwnd, IDC_SIZEY), IntString(sizeY).Array());
-                    }
                 }
                 else
                 {
@@ -772,8 +814,23 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                         if(bRegion && captureType == 1)
                         {
-                            String strWindow = GetCBText(GetDlgItem(hwnd, IDC_WINDOW));
-                            regionWindowData.hwndCaptureWindow = FindWindow(NULL, strWindow);
+                            ConfigDesktopSourceInfo *info = (ConfigDesktopSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
+
+                            UINT windowID = (UINT)SendMessage(GetDlgItem(hwnd, IDC_WINDOW), CB_GETCURSEL, 0, 0);
+                            if(windowID == CB_ERR) windowID = 0;
+
+                            String strWindow = GetCBText(GetDlgItem(hwnd, IDC_WINDOW), windowID);
+
+                            regionWindowData.hwndCaptureWindow = FindWindow(info->strClasses[windowID], strWindow);
+                            if(!regionWindowData.hwndCaptureWindow)
+                            {
+                                HWND hwndLastKnownHWND = (HWND)SendMessage(GetDlgItem(hwnd, IDC_WINDOW), CB_GETITEMDATA, windowID, 0);
+                                if(IsWindow(hwndLastKnownHWND))
+                                    regionWindowData.hwndCaptureWindow = hwndLastKnownHWND;
+                                else
+                                    regionWindowData.hwndCaptureWindow = FindWindow(info->strClasses[windowID], NULL);
+                            }
+
                             if(!regionWindowData.hwndCaptureWindow)
                             {
                                 MessageBox(hwnd, Str("Sources.SoftwareCaptureSource.WindowNotFound"), NULL, 0);
@@ -840,12 +897,13 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                 case IDC_REFRESH:
                     {
-                        XElement *data = (XElement*)GetWindowLongPtr(hwnd, DWLP_USER);
+                        ConfigDesktopSourceInfo *info = (ConfigDesktopSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
+                        XElement *data = info->data;
 
                         CTSTR lpWindowName = data->GetString(TEXT("window"));
 
                         HWND hwndWindowList = GetDlgItem(hwnd, IDC_WINDOW);
-                        RefreshWindowList(hwndWindowList);
+                        RefreshWindowList(hwndWindowList, info->strClasses);
 
                         UINT windowID = 0;
                         if(lpWindowName)
@@ -874,7 +932,10 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                         UINT monitorID = (UINT)SendMessage(GetDlgItem(hwnd, IDC_MONITOR), CB_GETCURSEL, 0, 0);
                         if(monitorID == CB_ERR) monitorID = 0;
 
-                        String strWindow = GetCBText(GetDlgItem(hwnd, IDC_WINDOW));
+                        UINT windowID = (UINT)SendMessage(GetDlgItem(hwnd, IDC_WINDOW), CB_GETCURSEL, 0, 0);
+                        if(windowID == CB_ERR) windowID = 0;
+
+                        String strWindow = GetCBText(GetDlgItem(hwnd, IDC_WINDOW), windowID);
 
                         BOOL bInnerWindow = SendMessage(GetDlgItem(hwnd, IDC_INNERWINDOW), BM_GETCHECK, 0, 0) == BST_CHECKED;
 
@@ -889,17 +950,24 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                         if(sizeY < 32)
                             sizeY = 32;
 
+                        BOOL bCaptureMouse = SendMessage(GetDlgItem(hwnd, IDC_CAPTUREMOUSE), BM_GETCHECK, 0, 0) == BST_CHECKED;
+
                         //---------------------------------
 
-                        XElement *data = (XElement*)GetWindowLongPtr(hwnd, DWLP_USER);
+                        ConfigDesktopSourceInfo *info = (ConfigDesktopSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
+                        XElement *data = info->data;
+
                         data->SetInt(TEXT("captureType"),   captureType);
 
                         data->SetInt(TEXT("monitor"),       monitorID);
 
                         data->SetString(TEXT("window"),     strWindow);
+                        data->SetString(TEXT("windowClass"),info->strClasses[windowID]);
                         data->SetInt(TEXT("innerWindow"),   bInnerWindow);
 
                         data->SetInt(TEXT("regionCapture"), bRegion);
+
+                        data->SetInt(TEXT("captureMouse"),  bCaptureMouse);
 
                         data->SetInt(TEXT("captureX"),      posX);
                         data->SetInt(TEXT("captureY"),      posY);
@@ -944,7 +1012,10 @@ bool STDCALL ConfigureDesktopSource(XElement *element, bool bInitialize)
     if(!data)
         data = element->CreateElement(TEXT("data"));
 
-    if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_CONFIGUREDESKTOPSOURCE), hwndMain, ConfigDesktopSourceProc, (LPARAM)data) == IDOK)
+    ConfigDesktopSourceInfo info;
+    info.data = data;
+
+    if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_CONFIGUREDESKTOPSOURCE), hwndMain, ConfigDesktopSourceProc, (LPARAM)&info) == IDOK)
     {
         if(bInitialize)
         {

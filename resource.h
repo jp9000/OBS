@@ -53,7 +53,7 @@
 #define IDC_CHECK1                      1041
 #define IDC_USEI444                     1041
 #define IDC_RESETSIZE                   1041
-#define IDC_EXCLUSIVE                   1041
+#define IDC_CAPTUREMOUSE                1041
 #define IDC_SERVEREDIT                  1042
 #define IDC_CHANNELNAME_STATIC          1043
 #define IDC_PLAYPATH_STATIC             1044
@@ -85,7 +85,6 @@
 #define IDC_REFRESH                     1068
 #define IDC_INNERWINDOW                 1069
 #define IDC_SELECTREGION                1071
-#define IDC_CHECK2                      1072
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
