@@ -1241,7 +1241,7 @@ void OBS::MainCaptureLoop()
     desktopAudio->StartCapture();
     if(micAudio) micAudio->StartCapture();
 
-    //float timePassedThingy = 0.0f;
+    float timePassedThingy = 0.0f;
 
     while(bRunning)
     {
@@ -1288,13 +1288,13 @@ void OBS::MainCaptureLoop()
 
         SetBandwidthMeterValue(GetDlgItem(hwndMain, ID_BANDWIDTHMETER), network->GetBytesPerSec(), network->GetPacketStrain());
 
-        /*timePassedThingy += fSeconds;
+        //timePassedThingy += fSeconds;
 
-        if(timePassedThingy > 1.0f)
-        {
-            Log(TEXT("bytes per sec %u, strain %g"), network->GetBytesPerSec(), network->GetPacketStrain());
-            timePassedThingy -= 1.0f;
-        }*/
+        //if(timePassedThingy > 0.0f)
+        //{
+        //    Log(TEXT("bytes per sec %u, strain %g"), network->GetBytesPerSec(), network->GetPacketStrain());
+        //    timePassedThingy -= 1.0f;
+        //}
 
         EnableBlending(TRUE);
         BlendFunction(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA);
@@ -1484,6 +1484,8 @@ void OBS::MainCaptureLoop()
 
                 if(bSentVideo)
                 {
+                    //Log(TEXT("bytes per sec %u, strain %g"), network->GetBytesPerSec(), network->GetPacketStrain());
+
                     //Log(TEXT("What the first timestamp is: %d ...what it normally would be: %d"), outputTimestamp, bufferedTimes[0]);
 
                     OSEnterMutex(hSoundDataMutex);

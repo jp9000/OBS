@@ -83,7 +83,7 @@ class RTMPPublisher : public NetworkStream
             packetData.TransferFrom(Packets[0].data);
 
             Packets.Remove(0);
-            if(type != PacketType_Audio)
+            if(type <= PacketType_VideoHigh)
                 numVideoPackets--;
 
             OSLeaveMutex(hDataMutex);
@@ -308,8 +308,8 @@ public:
 
         packetWaitType = 0;
 
-        BFrameThreshold = 10;
-        maxVideoPackets = 50;
+        BFrameThreshold = 30; //when it starts cutting out b frames
+        maxVideoPackets = 70; //when it starts cutting out p frames
 
         traceOut;
     }
