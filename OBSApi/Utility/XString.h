@@ -153,7 +153,7 @@ public:
 
     inline int ToInt(int base=10) const
     {
-        if(lpString && *lpString <= 0x39 && *lpString >= 0x30)
+        if(lpString && ValidIntString(lpString))
             return tstring_base_to_int(lpString, NULL, base);
         else
             return 0;
@@ -161,7 +161,7 @@ public:
 
     inline float ToFloat() const
     {
-        if(lpString && *lpString <= 0x39 && *lpString >= 0x30)
+        if(lpString && ValidFloatString(lpString))
             return (float)tstof(lpString);
         else
             return 0.0f;
