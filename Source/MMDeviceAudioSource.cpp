@@ -132,13 +132,6 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
         return false;
     }
 
-    if(bMic)
-    {
-        String strName = GetDeviceName();
-        Log(TEXT("------------------------------------------"));
-        Log(TEXT("Using auxilary audio input: %s"), strName.Array());
-    }
-
     err = mmDevice->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&mmClient);
     if(FAILED(err))
     {
@@ -152,6 +145,18 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
     {
         CrashError(TEXT("MMDeviceAudioSource::Initialize(%d): Could not get mix format from audio client"), (BOOL)bMic);
         return false;
+    }
+
+    if(bMic)
+    {
+        String strName = GetDeviceName();
+        Log(TEXT("------------------------------------------"));
+        Log(TEXT("Using auxilary audio input: %s, bits per sample input is %u"), strName.Array(), pwfx->wBitsPerSample);
+    }
+    else
+    {
+        Log(TEXT("------------------------------------------"));
+        Log(TEXT("Desktop sound bits per sample input is %u"), pwfx->wBitsPerSample);
     }
 
     //the internal audio engine should always use floats (or so I read), but I suppose just to be safe better check
@@ -496,7 +501,7 @@ UINT MMDeviceAudioSource::GetNextBuffer()
             }
             else if(inputChannelMask == KSAUDIO_SPEAKER_7POINT1)
             {
-                UINT numFloats = numAudioFrames*6;
+                UINT numFloats = numAudioFrames*8;
                 float *endTemp = inputTemp+numFloats;
 
                 while(inputTemp < endTemp)
@@ -517,7 +522,7 @@ UINT MMDeviceAudioSource::GetNextBuffer()
             }
             else if(inputChannelMask == KSAUDIO_SPEAKER_7POINT1_SURROUND)
             {
-                UINT numFloats = numAudioFrames*6;
+                UINT numFloats = numAudioFrames*8;
                 float *endTemp = inputTemp+numFloats;
 
                 while(inputTemp < endTemp)

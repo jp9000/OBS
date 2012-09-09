@@ -3,6 +3,23 @@
 
 -------------------------------
 
+2012-9-08 - 0.34 (alpha)
+    * Reworked network publish code, added I-Frame-Delay algorithm to
+      automatically drop frames based upon usage if possible
+    * Added a little network control thing so users can see their
+      bandwidth usage, and to see if there's any network strain
+    * 7.1 should no longer have sound issues, but code is still
+      experimental
+    * updated x264 settings, was using a poor setting choice.  should
+      give a much better compression ratio now under most CPU presets.
+    * tweaked capture code again, didn't like the way window capture
+      would display a black box every time you minimized a window.
+      instead it now just freezes the frame.
+    * Added the ability to type in custom resolution in the directshow
+      video devices plugin.
+   
+-------------------------------
+
 2012-9-06 - 0.33 (alpha)
     * Fixed issue with bitmaps of non-power-of-two sizes not displaying
     * Added region capture and window specific capture.  Window specific

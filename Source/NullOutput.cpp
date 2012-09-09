@@ -23,7 +23,7 @@
 class NullVideoEncoder : public VideoEncoder
 {
 public:
-    virtual bool Encode(LPVOID picIn, List<DataPacket> &packets, DWORD &outputTimestamp) {return true;}
+    virtual bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp) {return true;}
     virtual void GetHeaders(DataPacket &packet) {}
     virtual int  GetBitRate() const {return 0;}
     virtual String GetInfoString() const {return String();}
@@ -42,7 +42,10 @@ public:
 
 class NullNetwork : public NetworkStream
 {
-    virtual void SendPacket(BYTE *data, UINT size, DWORD timestamp, bool bAudio) {}
+    virtual void SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type) {}
+
+    double GetPacketStrain() const {return 0;}
+    UINT GetBytesPerSec()  const {return 0;}
 };
 
 

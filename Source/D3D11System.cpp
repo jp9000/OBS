@@ -22,6 +22,8 @@
 
 D3D11System::D3D11System()
 {
+    traceIn(D3D11System::D3D11System);
+
     HRESULT err;
 
     DXGI_SWAP_CHAIN_DESC swapDesc;
@@ -74,7 +76,7 @@ D3D11System::D3D11System()
                 Log(TEXT("  Video Adapeter Shared System Memory: %u"), adapterDesc.SharedSystemMemory);
             }
             else
-                ProgramBreak();
+                AppWarning(TEXT("Could not query adapter %u"), i);
 
             giAdapter->Release();
         }
@@ -144,6 +146,8 @@ D3D11System::D3D11System()
 
     this->BlendFunction(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA, 1.0f);
     bBlendingEnabled = true;
+
+    traceOut;
 }
 
 D3D11System::~D3D11System()
@@ -205,6 +209,8 @@ LPVOID D3D11System::GetDeviceContext()
 
 void D3D11System::Init()
 {
+    traceIn(D3D11System::Init);
+
     VBData *data = new VBData;
     data->UVList.SetSize(1);
 
@@ -222,6 +228,8 @@ void D3D11System::Init()
     //------------------------------------------------------------------
 
     GraphicsSystem::Init();
+
+    traceOut;
 }
 
 

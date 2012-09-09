@@ -22,6 +22,8 @@
 
 VertexBuffer* D3D11VertexBuffer::CreateVertexBuffer(VBData *vbData, BOOL bStatic)
 {
+    traceIn(D3D11VertexBuffer::CreateVertexBuffer);
+
     if(!vbData)
     {
         AppWarning(TEXT("D3D11VertexBuffer::CreateVertexBuffer: vbData NULL"));
@@ -47,6 +49,14 @@ VertexBuffer* D3D11VertexBuffer::CreateVertexBuffer(VBData *vbData, BOOL bStatic
     buf->vertexSize = sizeof(Vect);
     bd.ByteWidth = sizeof(Vect)*buf->numVerts;
     srd.pSysMem = vbData->VertList.Array();
+
+    /*if(GS == NULL)
+        CrashError(TEXT("impossible."));
+    if(GS->GetDevice() == NULL)
+        CrashError(TEXT("this is also impossible"));
+
+    Log(TEXT("major test"));*/
+
     err = GetD3D()->CreateBuffer(&bd, &srd, &buf->vertexBuffer);
     if(FAILED(err))
     {
@@ -144,6 +154,8 @@ VertexBuffer* D3D11VertexBuffer::CreateVertexBuffer(VBData *vbData, BOOL bStatic
         buf->data = vbData;
 
     return buf;
+
+    traceOut;
 }
 
 

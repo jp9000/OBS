@@ -234,14 +234,14 @@ public:
         traceOut;
     }
 
-    void SendPacket(BYTE *data, UINT size, DWORD timestamp, bool bAudio)
+    void SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)
     {
         traceIn(RTMPServer::SendPacket);
 
         RTMPPacket packet;
-        packet.m_nChannel = bAudio ? 0x5 : 0x4;
+        packet.m_nChannel = (type == PacketType_Audio) ? 0x5 : 0x4;
         packet.m_headerType = RTMP_PACKET_SIZE_LARGE;
-        packet.m_packetType = bAudio ? RTMP_PACKET_TYPE_AUDIO : RTMP_PACKET_TYPE_VIDEO;
+        packet.m_packetType = (type == PacketType_Audio) ? RTMP_PACKET_TYPE_AUDIO : RTMP_PACKET_TYPE_VIDEO;
         packet.m_nTimeStamp = timestamp;
         packet.m_nInfoField2 = 1;
         packet.m_hasAbsTimestamp = TRUE;
@@ -271,6 +271,9 @@ public:
 
         traceOut;
     }
+
+    double GetPacketStrain() const {return 0.0;}
+    UINT GetBytesPerSec()  const {return 0;}
 };
 
 

@@ -1371,6 +1371,8 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 ShowWindow(GetDlgItem(hwndMain, ID_EXIT), SW_SHOW);
                 ShowWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), SW_SHOW);
                 ShowWindow(GetDlgItem(hwndMain, ID_GLOBALSOURCES), SW_SHOW);
+                if(App->bRunning)
+                    ShowWindow(GetDlgItem(hwndMain, ID_BANDWIDTHMETER), SW_SHOW);
             }
             break;
 

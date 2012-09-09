@@ -53,7 +53,7 @@ public:
         App->SetStreamReport(strReport);
     }
 
-    void SendPacket(BYTE *data, UINT size, DWORD timestamp, bool bAudio)
+    void SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)
     {
         DWORD curTime = OSGetTime();
 
@@ -71,6 +71,9 @@ public:
             lastTime += 1000;
         }
     }
+
+    double GetPacketStrain() const {return 0;}
+    UINT GetBytesPerSec()  const {return 0;}
 };
 
 

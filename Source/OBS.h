@@ -76,12 +76,24 @@ struct DataPacket
 
 //-------------------------------------------------------------------
 
+enum PacketType
+{
+    PacketType_VideoDisposable,
+    PacketType_VideoLow,
+    PacketType_VideoHigh,
+    PacketType_VideoHighest,
+    PacketType_Audio
+};
+
 class NetworkStream
 {
 public:
     virtual ~NetworkStream() {}
-    virtual void SendPacket(BYTE *data, UINT size, DWORD timestamp, bool bAudio)=0;
+    virtual void SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)=0;
     virtual void BeginPublishing() {}
+
+    virtual double GetPacketStrain() const=0;
+    virtual UINT GetBytesPerSec() const=0;
 };
 
 //-------------------------------------------------------------------
@@ -133,7 +145,7 @@ class VideoEncoder
     friend class OBS;
 
 protected:
-    virtual bool Encode(LPVOID picIn, List<DataPacket> &packets, DWORD &timestamp)=0;
+    virtual bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp)=0;
     virtual void GetHeaders(DataPacket &packet)=0;
 
 public:
@@ -225,6 +237,7 @@ enum
     ID_TESTSTREAM,
     ID_GLOBALSOURCES,
     ID_PLUGINS,
+    ID_BANDWIDTHMETER,
 };
 
 #define OBS_REQUESTSTOP WM_USER+1

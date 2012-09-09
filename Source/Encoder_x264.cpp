@@ -86,7 +86,7 @@ public:
 
         curPreset = preset;
         LPSTR lpPreset = curPreset.CreateUTF8String();
-        x264_param_default_preset(&paramData, lpPreset, "fastdecode");
+        x264_param_default_preset(&paramData, lpPreset, NULL);//"fastdecode"); //well, that was a dumb move on my part
 
         Free(lpPreset);
 
@@ -95,10 +95,12 @@ public:
 
         //warning: messing with x264 settings without knowing what they do can seriously screw things up
 
-        //x264_param_parse(&paramData, "ratetol", "0.1");
-        //x264_param_parse(&paramData, "qcomp", "0.0");
+        //ratetol
+        //qcomp
 
+        //paramData.i_frame_reference     = 1; //ref=1
         //paramData.i_threads             = 4;
+
         paramData.b_vfr_input           = 1;
         paramData.i_keyint_max          = fps*5;      //keyframe every 5 sec, should make this an option
         paramData.i_width               = width;
@@ -145,7 +147,7 @@ public:
         traceOut;
     }
 
-    bool Encode(LPVOID picInPtr, List<DataPacket> &packets, DWORD &outputTimestamp)
+    bool Encode(LPVOID picInPtr, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp)
     {
         traceIn(X264Encoder::Encode);
 
@@ -209,6 +211,16 @@ public:
                 headerOut.OutputByte(1);
                 headerOut.OutputWord(htons(pps.i_payload-4));
                 headerOut.Serialize(pps.p_payload+4, pps.i_payload-4);
+            }
+            else
+                continue;
+
+            switch(nal.i_ref_idc)
+            {
+                case NAL_PRIORITY_DISPOSABLE:   packetTypes << PacketType_VideoDisposable;  break;
+                case NAL_PRIORITY_LOW:          packetTypes << PacketType_VideoLow;         break;
+                case NAL_PRIORITY_HIGH:         packetTypes << PacketType_VideoHigh;        break;
+                case NAL_PRIORITY_HIGHEST:      packetTypes << PacketType_VideoHighest;     break;
             }
         }
 

@@ -4,7 +4,7 @@
 List of features yet to be implemented:
     * implement ability to save multiple channel/server settings
     * add other commonly used server data to the services.xconfig file
-      (own3d, ustream, etc), need to find out their server details
+      (ustream, etc), need to find out their server details
     * Option to output to mp4/avi file.  There's no way I'm going to
       use ffmpeg for this.
     * external hotkeys
@@ -30,5 +30,4 @@ Things that could use more optimization:
 Things that need more testing:
     * app needs way more testing on many different audio/gpu/cpu configs
     * need to test streaming on networks other than twitch
-
 

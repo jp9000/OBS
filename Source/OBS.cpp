@@ -173,6 +173,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
     ShowWindow(GetDlgItem(hwndMain, ID_EXIT), SW_HIDE);
     ShowWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), SW_HIDE);
     ShowWindow(GetDlgItem(hwndMain, ID_GLOBALSOURCES), SW_HIDE);
+    ShowWindow(GetDlgItem(hwndMain, ID_BANDWIDTHMETER), SW_HIDE);
 
     //-----------------------------------------------------
 
@@ -263,6 +264,12 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
     //-----------------------------------------------------
 
     xPos = resetXPos;
+
+    DWORD meterFlags = flags;
+    if(!bRunning)
+        meterFlags &= ~SWP_SHOWWINDOW;
+
+    SetWindowPos(GetDlgItem(hwndMain, ID_BANDWIDTHMETER), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, meterFlags);
     xPos += controlWidth;
 
     SetWindowPos(GetDlgItem(hwndMain, ID_EXIT), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
@@ -341,6 +348,7 @@ OBS::OBS()
         CrashError(TEXT("Could not initalize common shell controls"));
 
     InitVolumeControl();
+    InitBandwidthMeter();
 
     //-----------------------------------------------------
     // load locale
@@ -560,6 +568,14 @@ OBS::OBS()
     hwndTemp = CreateWindow(TEXT("BUTTON"), Str("MainWindow.Exit"),
         WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_PUSHBUTTON,
         0, 0, 0, 0, hwndMain, (HMENU)ID_EXIT, 0, 0);
+    SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
+
+    //-----------------------------------------------------
+    // bandwidth meter
+
+    hwndTemp = CreateWindow(BANDWIDTH_METER_CLASS, NULL,
+        WS_CHILDWINDOW|WS_TABSTOP|BS_TEXT|BS_PUSHBUTTON,
+        0, 0, 0, 0, hwndMain, (HMENU)ID_BANDWIDTHMETER, 0, 0);
     SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 
     //-----------------------------------------------------
@@ -819,8 +835,6 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
-    //Log(TEXT("test 1"));
-
     mainVertexShader    = CreateVertexShaderFromFile(TEXT("shaders/DrawTexture.vShader"));
     mainPixelShader     = CreatePixelShaderFromFile(TEXT("shaders/DrawTexture.pShader"));
 
@@ -828,8 +842,6 @@ void OBS::Start()
     solidPixelShader    = CreatePixelShaderFromFile(TEXT("shaders/DrawSolid.pShader"));
 
     //------------------------------------------------------------------
-
-    //Log(TEXT("test 2"));
 
     CTSTR lpShader = NULL;
     if(CloseFloat(downscale, 1.0))
@@ -847,8 +859,6 @@ void OBS::Start()
 
     yuvScalePixelShader = CreatePixelShaderFromFile(lpShader);
 
-    //Log(TEXT("test 3"));
-
     //-------------------------------------------------------------
 
     for(int i=0; i<NUM_RENDER_BUFFERS; i++)
@@ -856,8 +866,6 @@ void OBS::Start()
         mainRenderTextures[i] = CreateRenderTarget(baseCX, baseCY, GS_BGRA, FALSE);
         yuvRenderTextures[i]  = CreateRenderTarget(outputCX, outputCY, GS_BGRA, FALSE);
     }
-
-    //Log(TEXT("test 4"));
 
     //-------------------------------------------------------------
 
@@ -879,8 +887,6 @@ void OBS::Start()
         CrashError(TEXT("Unable to create copy texture"));
         //todo - better error handling
     }
-
-    //Log(TEXT("test 5"));
 
     //-------------------------------------------------------------
 
@@ -908,8 +914,6 @@ void OBS::Start()
             micAudio = CreateAudioSource(true, strDevice);
     }
 
-    //Log(TEXT("test 6"));
-
     //-------------------------------------------------------------
 
     UINT bitRate = (UINT)AppConfig->GetInt(TEXT("Audio Encoding"), TEXT("Bitrate"), 96);
@@ -919,8 +923,6 @@ void OBS::Start()
         audioEncoder = CreateAACEncoder(bitRate);
     else
         audioEncoder = CreateMP3Encoder(bitRate);
-
-    //Log(TEXT("test 7"));
 
     //-------------------------------------------------------------
 
@@ -954,8 +956,6 @@ void OBS::Start()
 
     if(scene && scene->HasMissingSources())
         MessageBox(hwndMain, Str("Scene.MissingSources"), NULL, 0);
-
-    //Log(TEXT("test 8"));
 
     //-------------------------------------------------------------
 
@@ -993,6 +993,7 @@ void OBS::Start()
     }
 
     EnableWindow(GetDlgItem(hwndMain, ID_SCENEEDITOR), TRUE);
+    ShowWindow(GetDlgItem(hwndMain, ID_BANDWIDTHMETER), SW_SHOW);
 
     //-------------------------------------------------------------
 
@@ -1157,6 +1158,7 @@ void OBS::Stop()
     bEditMode = false;
     SendMessage(GetDlgItem(hwndMain, ID_SCENEEDITOR), BM_SETCHECK, BST_UNCHECKED, 0);
     EnableWindow(GetDlgItem(hwndMain, ID_SCENEEDITOR), FALSE);
+    ShowWindow(GetDlgItem(hwndMain, ID_BANDWIDTHMETER), SW_HIDE);
 
     bTestStream = false;
 
@@ -1234,12 +1236,12 @@ void OBS::MainCaptureLoop()
     int curPTS = 0;
     //int audioJump = 0;
 
-    DWORD test = 0;
-
     HANDLE hScaleVal = yuvScalePixelShader->GetParameterByName(TEXT("baseDimensionI"));
 
     desktopAudio->StartCapture();
     if(micAudio) micAudio->StartCapture();
+
+    //float timePassedThingy = 0.0f;
 
     while(bRunning)
     {
@@ -1248,8 +1250,6 @@ void OBS::MainCaptureLoop()
         bool bRenderView = !IsIconic(hwndMain);
 
         profileIn("frame");
-
-        test += 1;
 
         curStreamTime = renderStartTime-firstFrameTime;
         bufferedTimes << curStreamTime;
@@ -1285,6 +1285,16 @@ void OBS::MainCaptureLoop()
             for(UINT i=0; i<globalSources.Num(); i++)
                 globalSources[i].source->Tick(fSeconds);
         }
+
+        SetBandwidthMeterValue(GetDlgItem(hwndMain, ID_BANDWIDTHMETER), network->GetBytesPerSec(), network->GetPacketStrain());
+
+        /*timePassedThingy += fSeconds;
+
+        if(timePassedThingy > 1.0f)
+        {
+            Log(TEXT("bytes per sec %u, strain %g"), network->GetBytesPerSec(), network->GetPacketStrain());
+            timePassedThingy -= 1.0f;
+        }*/
 
         EnableBlending(TRUE);
         BlendFunction(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA);
@@ -1421,13 +1431,11 @@ void OBS::MainCaptureLoop()
             GetD3DContext()->CopyResource(copyTexture, d3dYUV->texture);
             profileOut;
 
-            if(test == 23)
-                nop();
-
             D3D11_MAPPED_SUBRESOURCE map;
             if(SUCCEEDED(GetD3DContext()->Map(copyTexture, 0, D3D11_MAP_READ, 0, &map)))
             {
                 List<DataPacket> videoPackets;
+                List<PacketType> videoPacketTypes;
 
                 if(!bUsing444)
                 {
@@ -1446,8 +1454,7 @@ void OBS::MainCaptureLoop()
 
                 picOut.i_pts = bufferedTimes[curPTS++];//curPTS++;//bufferedTimes[curPTS++]*90;//
 
-                DWORD outputTimestamp = bufferedTimes[0];
-                videoEncoder->Encode(&picOut, videoPackets, outputTimestamp);
+                videoEncoder->Encode(&picOut, videoPackets, videoPacketTypes, bufferedTimes[0]);
                 if(bUsing444) GetD3DContext()->Unmap(copyTexture, 0);
 
                 //DWORD relativeTimestamp = bufferedTimes[0]-lastTime;
@@ -1466,9 +1473,10 @@ void OBS::MainCaptureLoop()
 
                 for(UINT i=0; i<videoPackets.Num(); i++)
                 {
-                    DataPacket &packet = videoPackets[i];
+                    DataPacket &packet  = videoPackets[i];
+                    PacketType type     = videoPacketTypes[i];
 
-                    network->SendPacket(packet.lpPacket, packet.size, bufferedTimes[0], false);
+                    network->SendPacket(packet.lpPacket, packet.size, bufferedTimes[0], type);
 
                     //Log(TEXT("video packet timestamp: %u, buffered timestamp: %u"), outputTimestamp, bufferedTimes[0]);
                     bSentVideo = true;
@@ -1488,7 +1496,7 @@ void OBS::MainCaptureLoop()
 
                             if(audioData.Num())
                             {
-                                network->SendPacket(audioData.Array(), audioData.Num(), pendingAudioFrames[0].timestamp, true);
+                                network->SendPacket(audioData.Array(), audioData.Num(), pendingAudioFrames[0].timestamp, PacketType_Audio);
                                 audioData.Clear();
                             }
 

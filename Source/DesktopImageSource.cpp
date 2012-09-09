@@ -101,7 +101,11 @@ public:
                 if(!hwndCapture)
                     bWindowNotFound = true;
                 if(IsIconic(hwndCapture))
-                    bWindowMinimized = true;
+                {
+                    captureTexture->ReleaseDC();
+                    return;
+                    //bWindowMinimized = true;
+                }
             }
 
             HDC hCaptureDC;

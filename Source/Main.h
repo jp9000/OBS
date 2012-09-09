@@ -59,7 +59,7 @@ extern HINSTANCE    hinstMain;
 extern ConfigFile   *AppConfig;
 extern OBS          *App;
 
-#define OBS_VERSION_STRING_ANSI "Open Broadcaster Software v0.33a"
+#define OBS_VERSION_STRING_ANSI "Open Broadcaster Software v0.34a"
 #define OBS_VERSION_STRING TEXT(OBS_VERSION_STRING_ANSI)
 
 inline UINT ConvertMSTo100NanoSec(UINT ms)
@@ -73,6 +73,7 @@ inline UINT ConvertMSTo100NanoSec(UINT ms)
 
 #include "../resource.h"
 #include "VolumeControl.h"
+#include "BandwidthMeter.h"
 #include "OBS.h"
 #include "WindowStuff.h"
 #include "CodeTokenizer.h"

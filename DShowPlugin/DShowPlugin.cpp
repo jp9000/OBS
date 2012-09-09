@@ -421,6 +421,9 @@ struct ConfigDialogData
             if( UINT(resolution.cx) >= outputInfo.minCX && UINT(resolution.cx) <= outputInfo.maxCX &&
                 UINT(resolution.cy) >= outputInfo.minCY && UINT(resolution.cy) <= outputInfo.maxCY )
             {
+                if(resolution.cx % outputInfo.xGranularity || resolution.cy % outputInfo.yGranularity)
+                    return false;
+
                 int minFPS = int(outputInfo.minFPS+0.5);
                 int maxFPS = int(outputInfo.maxFPS+0.5);
 
@@ -440,6 +443,36 @@ struct ConfigDialogData
         return fpsInfo.minFPS != -1;
     }
 };
+
+
+bool GetResolution(HWND hwndResolution, SIZE &resolution, BOOL bSelChange)
+{
+    String strResolution;
+    if(bSelChange)
+        strResolution = GetCBText(hwndResolution);
+    else
+        strResolution = GetEditText(hwndResolution);
+
+    if(strResolution.NumTokens('x') != 2)
+        return false;
+
+    String strCX = strResolution.GetToken(0, 'x');
+    String strCY = strResolution.GetToken(1, 'x');
+
+    if(strCX.IsEmpty() || strCX.IsEmpty() || !ValidIntString(strCX) || !ValidIntString(strCY))
+        return false;
+
+    UINT cx = strCX.ToInt();
+    UINT cy = strCY.ToInt();
+
+    if(cx < 32 || cy < 32 || cx > 4096 || cy > 4096)
+        return false;
+
+    resolution.cx = cx;
+    resolution.cy = cy;
+
+    return true;
+}
 
 
 INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -485,12 +518,10 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                     String strResolution;
                     strResolution << UIntString(cx) << TEXT("x") << UIntString(cy);
 
-                    UINT resolutionID = (UINT)SendMessage(hwndResolutionList, CB_FINDSTRING, -1, (LPARAM)strResolution.Array());
-                    if(resolutionID != CB_ERR)
-                    {
-                        SendMessage(hwndResolutionList, CB_SETCURSEL, resolutionID, 0);
-                        SendMessage(hwndFPS, UDM_SETPOS32, 0, (LPARAM)fps);
-                    }
+                    SendMessage(hwndResolutionList, WM_SETTEXT, 0, (LPARAM)strResolution.Array());
+                    ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_RESOLUTION, CBN_EDITCHANGE), (LPARAM)hwndResolutionList);
+
+                    SendMessage(hwndFPS, UDM_SETPOS32, 0, (LPARAM)fps);
                 }
 
                 break;
@@ -568,21 +599,24 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                     break;
 
                 case IDC_RESOLUTION:
-                    if(HIWORD(wParam) == CBN_SELCHANGE)
+                    if(HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE)
                     {
                         ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
 
-                        UINT curResolution = (UINT)SendMessage(GetDlgItem(hwnd, IDC_RESOLUTION), CB_GETCURSEL, 0, 0);
-                        if(curResolution == CB_ERR)
-                            break;
-
-                        SIZE &resolution = configData->resolutions[curResolution];
-
-                        FPSInfo fpsInfo;
-                        configData->GetResolutionFPSInfo(resolution, fpsInfo);
-
+                        HWND hwndResolution = (HWND)lParam;
                         HWND hwndFPS     = GetDlgItem(hwnd, IDC_FPS);
                         HWND hwndFPSEdit = GetDlgItem(hwnd, IDC_FPS_EDIT);
+
+                        SIZE resolution;
+                        FPSInfo fpsInfo;
+
+                        if(!GetResolution(hwndResolution, resolution, HIWORD(wParam) == CBN_SELCHANGE) || !configData->GetResolutionFPSInfo(resolution, fpsInfo))
+                        {
+                            SendMessage(hwndFPS, UDM_SETRANGE32, 0, 0);
+                            SendMessage(hwndFPS, UDM_SETPOS32, 0, 0);
+                            SetWindowText(hwndFPSEdit, TEXT("0"));
+                            break;
+                        }
 
                         SendMessage(hwndFPS, UDM_SETRANGE32, fpsInfo.minFPS, fpsInfo.maxFPS);
                         SendMessage(hwndFPS, UDM_SETPOS32, 0, fpsInfo.maxFPS);
@@ -631,17 +665,25 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
 
-                        UINT resolutionID = (UINT)SendMessage(GetDlgItem(hwnd, IDC_RESOLUTION), CB_GETCURSEL, 0, 0);
-                        if(resolutionID == CB_ERR)
+                        SIZE resolution;
+                        if(!GetResolution(GetDlgItem(hwnd, IDC_RESOLUTION), resolution, FALSE))
+                        {
+                            MessageBox(hwnd, PluginStr("DeviceSelection.InvalidResolution"), NULL, 0);
                             break;
+                        }
 
                         String strDevice = GetCBText(GetDlgItem(hwnd, IDC_DEVICELIST), deviceID);
-                        SIZE &resolution = configData->resolutions[resolutionID];
 
                         BOOL bUDMError;
                         UINT fps = (UINT)SendMessage(GetDlgItem(hwnd, IDC_FPS), UDM_GETPOS32, 0, (LPARAM)&bUDMError);
                         if(bUDMError)
                             break;
+
+                        if(fps == 0)
+                        {
+                            MessageBox(hwnd, PluginStr("DeviceSelection.UnsupportedResolution"), NULL, 0);
+                            break;
+                        }
 
                         if(configData->bCreating)
                         {
