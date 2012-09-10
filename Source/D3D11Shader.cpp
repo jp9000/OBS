@@ -20,7 +20,7 @@
 #include "Main.h"
 
 
-void D3D11Shader::LoadDefaults()
+void D3D10Shader::LoadDefaults()
 {
     for(UINT i=0; i<Params.Num(); i++)
     {
@@ -34,7 +34,7 @@ void D3D11Shader::LoadDefaults()
     }
 }
 
-bool D3D11Shader::ProcessData(ShaderProcessor &processor, CTSTR lpFileName)
+bool D3D10Shader::ProcessData(ShaderProcessor &processor, CTSTR lpFileName)
 {
     Params.TransferFrom(processor.Params);
     Samplers.TransferFrom(processor.Samplers);
@@ -59,13 +59,13 @@ bool D3D11Shader::ProcessData(ShaderProcessor &processor, CTSTR lpFileName)
 
     if(constantSize)
     {
-        D3D11_BUFFER_DESC bd;
+        D3D10_BUFFER_DESC bd;
         zero(&bd, sizeof(bd));
 
         bd.ByteWidth        = (constantSize+15)&0xFFFFFFF0; //align to 128bit boundry
-        bd.Usage            = D3D11_USAGE_DYNAMIC;
-        bd.BindFlags        = D3D11_BIND_CONSTANT_BUFFER;
-        bd.CPUAccessFlags   = D3D11_CPU_ACCESS_WRITE;
+        bd.Usage            = D3D10_USAGE_DYNAMIC;
+        bd.BindFlags        = D3D10_BIND_CONSTANT_BUFFER;
+        bd.CPUAccessFlags   = D3D10_CPU_ACCESS_WRITE;
 
         HRESULT err = GetD3D()->CreateBuffer(&bd, NULL, &constantBuffer);
         if(FAILED(err))
@@ -80,7 +80,7 @@ bool D3D11Shader::ProcessData(ShaderProcessor &processor, CTSTR lpFileName)
     return true;
 }
 
-Shader* D3D11VertexShader::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
+Shader* D3D10VertexShader::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
 {
     String errorString;
 
@@ -94,7 +94,7 @@ Shader* D3D11VertexShader::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
     LPSTR lpAnsiFileName = tstr_createUTF8(lpFileName);
 
     ID3D10Blob *errorMessages = NULL, *shaderBlob = NULL;
-    HRESULT err = D3DX11CompileFromMemory(lpAnsiShader, strlen(lpAnsiShader), lpAnsiFileName, NULL, NULL, "main", "vs_4_0_level_9_3", D3D10_SHADER_OPTIMIZATION_LEVEL3, 0, NULL, &shaderBlob, &errorMessages, NULL);
+    HRESULT err = D3DX10CompileFromMemory(lpAnsiShader, strlen(lpAnsiShader), lpAnsiFileName, NULL, NULL, "main", "vs_4_0_level_9_3", D3D10_SHADER_OPTIMIZATION_LEVEL3, 0, NULL, &shaderBlob, &errorMessages, NULL);
 
     Free(lpAnsiFileName);
     Free(lpAnsiShader);
@@ -118,10 +118,10 @@ Shader* D3D11VertexShader::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
 
     //-----------------------------------------------
 
-    ID3D11VertexShader *vShader;
-    ID3D11InputLayout *vShaderLayout;
+    ID3D10VertexShader *vShader;
+    ID3D10InputLayout *vShaderLayout;
 
-    err = GetD3D()->CreateVertexShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), NULL, &vShader);
+    err = GetD3D()->CreateVertexShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), &vShader);
     if(FAILED(err))
     {
         AppWarning(TEXT("Unable to create vertex shader '%s', result = %08lX"), lpFileName, err);
@@ -142,7 +142,7 @@ Shader* D3D11VertexShader::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
 
     //-----------------------------------------------
 
-    D3D11VertexShader *shader = new D3D11VertexShader;
+    D3D10VertexShader *shader = new D3D10VertexShader;
     shader->vertexShader    = vShader;
     shader->inputLayout     = vShaderLayout;
     if(!shader->ProcessData(shaderProcessor, lpFileName))
@@ -160,7 +160,7 @@ Shader* D3D11VertexShader::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
     return shader;
 }
 
-Shader* D3D11PixelShader::CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)
+Shader* D3D10PixelShader::CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)
 {
     String errorString;
 
@@ -174,7 +174,7 @@ Shader* D3D11PixelShader::CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)
     LPSTR lpAnsiFileName = tstr_createUTF8(lpFileName);
 
     ID3D10Blob *errorMessages = NULL, *shaderBlob = NULL;
-    HRESULT err = D3DX11CompileFromMemory(lpAnsiShader, strlen(lpAnsiShader), lpAnsiFileName, NULL, NULL, "main", "ps_4_0_level_9_3", D3D10_SHADER_OPTIMIZATION_LEVEL3, 0, NULL, &shaderBlob, &errorMessages, NULL);
+    HRESULT err = D3DX10CompileFromMemory(lpAnsiShader, strlen(lpAnsiShader), lpAnsiFileName, NULL, NULL, "main", "ps_4_0_level_9_3", D3D10_SHADER_OPTIMIZATION_LEVEL3, 0, NULL, &shaderBlob, &errorMessages, NULL);
 
     Free(lpAnsiFileName);
     Free(lpAnsiShader);
@@ -198,9 +198,9 @@ Shader* D3D11PixelShader::CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)
 
     //-----------------------------------------------
 
-    ID3D11PixelShader *pShader;
+    ID3D10PixelShader *pShader;
 
-    err = GetD3D()->CreatePixelShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), NULL, &pShader);
+    err = GetD3D()->CreatePixelShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), &pShader);
     if(FAILED(err))
     {
         AppWarning(TEXT("Unable to create pixel shader '%s', result = %08lX"), lpFileName, err);
@@ -212,7 +212,7 @@ Shader* D3D11PixelShader::CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)
 
     //-----------------------------------------------
 
-    D3D11PixelShader *shader = new D3D11PixelShader;
+    D3D10PixelShader *shader = new D3D10PixelShader;
     shader->pixelShader = pShader;
     if(!shader->ProcessData(shaderProcessor, lpFileName))
     {
@@ -224,7 +224,7 @@ Shader* D3D11PixelShader::CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)
 }
 
 
-D3D11Shader::~D3D11Shader()
+D3D10Shader::~D3D10Shader()
 {
     for(UINT i=0; i<Samplers.Num(); i++)
         Samplers[i].FreeData();
@@ -234,31 +234,31 @@ D3D11Shader::~D3D11Shader()
     SafeRelease(constantBuffer);
 }
 
-D3D11VertexShader::~D3D11VertexShader()
+D3D10VertexShader::~D3D10VertexShader()
 {
     SafeRelease(vertexShader);
     SafeRelease(inputLayout);
 }
 
-D3D11PixelShader::~D3D11PixelShader()
+D3D10PixelShader::~D3D10PixelShader()
 {
     SafeRelease(pixelShader);
 }
 
 
-int    D3D11Shader::NumParams() const
+int    D3D10Shader::NumParams() const
 {
     return Params.Num();
 }
 
-HANDLE D3D11Shader::GetParameter(UINT parameter) const
+HANDLE D3D10Shader::GetParameter(UINT parameter) const
 {
     if(parameter >= Params.Num())
         return NULL;
     return (HANDLE)(Params+parameter);
 }
 
-HANDLE D3D11Shader::GetParameterByName(CTSTR lpName) const
+HANDLE D3D10Shader::GetParameterByName(CTSTR lpName) const
 {
     for(UINT i=0; i<Params.Num(); i++)
     {
@@ -279,7 +279,7 @@ HANDLE D3D11Shader::GetParameterByName(CTSTR lpName) const
     }
 
 
-void   D3D11Shader::GetParameterInfo(HANDLE hObject, ShaderParameterInfo &paramInfo) const
+void   D3D10Shader::GetParameterInfo(HANDLE hObject, ShaderParameterInfo &paramInfo) const
 {
     GetValidHandle();
 
@@ -288,7 +288,7 @@ void   D3D11Shader::GetParameterInfo(HANDLE hObject, ShaderParameterInfo &paramI
 }
 
 
-void   D3D11Shader::SetBool(HANDLE hObject, BOOL bValue)
+void   D3D10Shader::SetBool(HANDLE hObject, BOOL bValue)
 {
     GetValidHandle();
 
@@ -302,7 +302,7 @@ void   D3D11Shader::SetBool(HANDLE hObject, BOOL bValue)
     }
 }
 
-void   D3D11Shader::SetFloat(HANDLE hObject, float fValue)
+void   D3D10Shader::SetFloat(HANDLE hObject, float fValue)
 {
     GetValidHandle();
 
@@ -316,7 +316,7 @@ void   D3D11Shader::SetFloat(HANDLE hObject, float fValue)
     }
 }
 
-void   D3D11Shader::SetInt(HANDLE hObject, int iValue)
+void   D3D10Shader::SetInt(HANDLE hObject, int iValue)
 {
     GetValidHandle();
 
@@ -330,27 +330,27 @@ void   D3D11Shader::SetInt(HANDLE hObject, int iValue)
     }
 }
 
-void   D3D11Shader::SetMatrix(HANDLE hObject, float *matrix)
+void   D3D10Shader::SetMatrix(HANDLE hObject, float *matrix)
 {
     SetValue(hObject, matrix, sizeof(float)*4*4);
 }
 
-void   D3D11Shader::SetVector(HANDLE hObject, const Vect &value)
+void   D3D10Shader::SetVector(HANDLE hObject, const Vect &value)
 {
     SetValue(hObject, value.ptr, sizeof(float)*3);
 }
 
-void   D3D11Shader::SetVector2(HANDLE hObject, const Vect2 &value)
+void   D3D10Shader::SetVector2(HANDLE hObject, const Vect2 &value)
 {
     SetValue(hObject, value.ptr, sizeof(Vect2));
 }
 
-void   D3D11Shader::SetVector4(HANDLE hObject, const Vect4 &value)
+void   D3D10Shader::SetVector4(HANDLE hObject, const Vect4 &value)
 {
     SetValue(hObject, value.ptr, sizeof(Vect4));
 }
 
-void   D3D11Shader::SetTexture(HANDLE hObject, BaseTexture *texture)
+void   D3D10Shader::SetTexture(HANDLE hObject, BaseTexture *texture)
 {
     GetValidHandle();
 
@@ -364,7 +364,7 @@ void   D3D11Shader::SetTexture(HANDLE hObject, BaseTexture *texture)
     }
 }
 
-void   D3D11Shader::SetValue(HANDLE hObject, const void *val, DWORD dwSize)
+void   D3D10Shader::SetValue(HANDLE hObject, const void *val, DWORD dwSize)
 {
     GetValidHandle();
 
@@ -377,7 +377,7 @@ void   D3D11Shader::SetValue(HANDLE hObject, const void *val, DWORD dwSize)
     }
 }
 
-void  D3D11Shader::UpdateParams()
+void  D3D10Shader::UpdateParams()
 {
     List<BYTE> shaderConstantData;
     bool bUpload = false;
@@ -390,7 +390,7 @@ void  D3D11Shader::UpdateParams()
         {
             if(!param.curValue.Num())
             {
-                AppWarning(TEXT("D3D11Shader::UpdateParams: shader parameter '%s' not set"), param.name.Array());
+                AppWarning(TEXT("D3D10Shader::UpdateParams: shader parameter '%s' not set"), param.name.Array());
                 bUpload = false;
                 break;
             }
@@ -415,26 +415,26 @@ void  D3D11Shader::UpdateParams()
 
     if(shaderConstantData.Num() != constantSize)
     {
-        AppWarning(TEXT("D3D11Shader::UpdateParams: invalid parameter specifications, constant size given: %d, constant size expected: %d"), shaderConstantData.Num(), constantSize);
+        AppWarning(TEXT("D3D10Shader::UpdateParams: invalid parameter specifications, constant size given: %d, constant size expected: %d"), shaderConstantData.Num(), constantSize);
         bUpload = false;
     }
 
     if(bUpload)
     {
-        D3D11_MAPPED_SUBRESOURCE map;
+        BYTE *outData;
 
         HRESULT err;
-        if(FAILED(err = GetD3DContext()->Map(constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map)))
+        if(FAILED(err = constantBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, (void**)&outData)))
         {
-            AppWarning(TEXT("D3D11Shader::UpdateParams: could not map constant buffer, result = %08lX"), err);
+            AppWarning(TEXT("D3D10Shader::UpdateParams: could not map constant buffer, result = %08lX"), err);
             return;
         }
 
         if(App->SSE2Available())
-            SSECopy(map.pData, shaderConstantData.Array(), shaderConstantData.Num());
+            SSECopy(outData, shaderConstantData.Array(), shaderConstantData.Num());
         else
-            mcpy(map.pData, shaderConstantData.Array(), shaderConstantData.Num());
+            mcpy(outData, shaderConstantData.Array(), shaderConstantData.Num());
 
-        GetD3DContext()->Unmap(constantBuffer, 0);
+        constantBuffer->Unmap();
     }
 }

@@ -619,7 +619,7 @@ OBS::OBS()
     if(numScenes)
     {
         String strScene = AppConfig->GetString(TEXT("General"), TEXT("CurrentScene"));
-        int id = (int)SendMessage(hwndTemp, LB_FINDSTRING, -1, 0);
+        int id = (int)SendMessage(hwndTemp, LB_FINDSTRINGEXACT, -1, 0);
         if(id == LB_ERR)
             id = 0;
 
@@ -751,7 +751,7 @@ ID3D10Blob* CompileShader(CTSTR lpShader, LPCSTR lpTarget)
 
     ID3D10Blob *errorMessages = NULL, *shaderBlob = NULL;
 
-    HRESULT err = D3DX11CompileFromFile(lpShader, NULL, NULL, "main", lpTarget, D3D10_SHADER_OPTIMIZATION_LEVEL3, 0, NULL, &shaderBlob, &errorMessages, NULL);
+    HRESULT err = D3DX10CompileFromFile(lpShader, NULL, NULL, "main", lpTarget, D3D10_SHADER_OPTIMIZATION_LEVEL3, 0, NULL, &shaderBlob, &errorMessages, NULL);
     if(FAILED(err))
     {
         if(errorMessages)
@@ -778,6 +778,11 @@ void OBS::Start()
     traceIn(OBS::Start);
 
     if(bRunning) return;
+
+    //-------------------------------------------------------------
+
+    fps = AppConfig->GetInt(TEXT("Video"), TEXT("FPS"), 25);
+    frameTime = 1000/fps;
 
     //-------------------------------------------------------------
 
@@ -819,9 +824,6 @@ void OBS::Start()
     outputCX = int(double(baseCX) / double(downscale)) & 0xFFFFFFFC;
     outputCY = int(double(baseCY) / double(downscale)) & 0xFFFFFFFC;
 
-    fps = AppConfig->GetInt(TEXT("Video"), TEXT("FPS"), 25);
-    frameTime = 1000/fps;
-
     //------------------------------------------------------------------
 
     Log(TEXT("  Base resolution: %ux%u"), baseCX, baseCY);
@@ -830,7 +832,7 @@ void OBS::Start()
 
     //------------------------------------------------------------------
 
-    GS = new D3D11System;
+    GS = new D3D10System;
     GS->Init();
 
     //-------------------------------------------------------------
@@ -869,7 +871,7 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
-    D3D11_TEXTURE2D_DESC td;
+    D3D10_TEXTURE2D_DESC td;
     zero(&td, sizeof(td));
     td.Width            = outputCX;
     td.Height           = outputCY;
@@ -878,8 +880,8 @@ void OBS::Start()
     td.ArraySize        = 1;
     td.SampleDesc.Count = 1;
     td.ArraySize        = 1;
-    td.Usage            = D3D11_USAGE_STAGING;
-    td.CPUAccessFlags   = D3D11_CPU_ACCESS_READ;
+    td.Usage            = D3D10_USAGE_STAGING;
+    td.CPUAccessFlags   = D3D10_CPU_ACCESS_READ;
 
     HRESULT err = GetD3D()->CreateTexture2D(&td, NULL, &copyTexture);
     if(FAILED(err))
@@ -1169,7 +1171,7 @@ inline void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
 {
     if(!CloseFloat(mulVal, 1.0))
     {
-        if(App->SSE2Available())
+        if(App->SSE2Available() && (UPARAM(buffer) & 0xF) == 0)
         {
             UINT alignedFloats = totalFloats & 0xFFFFFFFC;
             __m128 sseMulVal = _mm_set_ps1(mulVal);
@@ -1322,9 +1324,9 @@ void OBS::MainCaptureLoop()
                 transitionTexture = CreateTexture(baseCX, baseCY, GS_BGRA, NULL, FALSE, TRUE);
                 if(transitionTexture)
                 {
-                    D3D11Texture *d3dTransitionTex = static_cast<D3D11Texture*>(transitionTexture);
-                    D3D11Texture *d3dSceneTex = static_cast<D3D11Texture*>(mainRenderTextures[lastRenderTarget]);
-                    GetD3DContext()->CopyResource(d3dTransitionTex->texture, d3dSceneTex->texture);
+                    D3D10Texture *d3dTransitionTex = static_cast<D3D10Texture*>(transitionTexture);
+                    D3D10Texture *d3dSceneTex = static_cast<D3D10Texture*>(mainRenderTextures[lastRenderTarget]);
+                    GetD3D()->CopyResource(d3dTransitionTex->texture, d3dSceneTex->texture);
                 }
                 else
                     bTransitioning = false;
@@ -1412,8 +1414,11 @@ void OBS::MainCaptureLoop()
 
         //------------------------------------
 
+        if(!static_cast<D3D10System*>(GS)->swap)
+            Log(TEXT("swap is bad?"));
+
         if(bRenderView && !copyWait)
-            static_cast<D3D11System*>(GS)->swap->Present(0, 0);
+            static_cast<D3D10System*>(GS)->swap->Present(0, 0);
 
         OSLeaveMutex(hSceneMutex);
 
@@ -1427,12 +1432,12 @@ void OBS::MainCaptureLoop()
         else
         {
             profileIn("CopyResource");
-            D3D11Texture *d3dYUV = static_cast<D3D11Texture*>(yuvRenderTextures[curCopyTexture]);
-            GetD3DContext()->CopyResource(copyTexture, d3dYUV->texture);
+            D3D10Texture *d3dYUV = static_cast<D3D10Texture*>(yuvRenderTextures[curCopyTexture]);
+            GetD3D()->CopyResource(copyTexture, d3dYUV->texture);
             profileOut;
 
-            D3D11_MAPPED_SUBRESOURCE map;
-            if(SUCCEEDED(GetD3DContext()->Map(copyTexture, 0, D3D11_MAP_READ, 0, &map)))
+            D3D10_MAPPED_TEXTURE2D map;
+            if(SUCCEEDED(copyTexture->Map(0, D3D10_MAP_READ, 0, &map)))
             {
                 List<DataPacket> videoPackets;
                 List<PacketType> videoPacketTypes;
@@ -1442,7 +1447,7 @@ void OBS::MainCaptureLoop()
                     profileIn("conversion to 4:2:0");
 
                     Convert444to420((LPBYTE)map.pData, outputCX, outputCY, picOut.img.plane, SSE2Available());
-                    GetD3DContext()->Unmap(copyTexture, 0);
+                    copyTexture->Unmap(0);
 
                     profileOut;
                 }
@@ -1455,7 +1460,7 @@ void OBS::MainCaptureLoop()
                 picOut.i_pts = bufferedTimes[curPTS++];//curPTS++;//bufferedTimes[curPTS++]*90;//
 
                 videoEncoder->Encode(&picOut, videoPackets, videoPacketTypes, bufferedTimes[0]);
-                if(bUsing444) GetD3DContext()->Unmap(copyTexture, 0);
+                if(bUsing444) copyTexture->Unmap(0);
 
                 //DWORD relativeTimestamp = bufferedTimes[0]-lastTime;
 
@@ -1603,7 +1608,7 @@ void OBS::MainAudioLoop()
         UINT desktopAudioFrames, micAudioFrames;
 
         bool bDesktopMuted = (desktopVol < EPSILON);
-        bool bMicMuted     = (micAudio == NULL) || (micVol < EPSILON);
+        bool bMicMuted     = (micAudio == NULL);// || (micVol < EPSILON);
 
         while(QueryNewAudio())
         {

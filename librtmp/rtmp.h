@@ -231,6 +231,8 @@ extern "C"
         int num;
     } RTMP_METHOD;
 
+    typedef int (*CUSTOMSEND)(RTMPSockBuf*, const char *, int, void*);
+
     typedef struct RTMP
     {
         int m_inChunkSize;
@@ -250,6 +252,11 @@ extern "C"
         uint8_t m_bPlaying;
         uint8_t m_bSendEncoding;
         uint8_t m_bSendCounter;
+
+        uint8_t m_bUseNagle;
+        uint8_t m_bCustomSend;
+        void*   m_customSendParam;
+        CUSTOMSEND m_customSendFunc;
 
         int m_numInvokes;
         int m_numCalls;

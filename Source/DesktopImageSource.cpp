@@ -709,7 +709,7 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                 UINT windowID = 0;
                 if(lpWindowName)
-                    windowID = (UINT)SendMessage(hwndWindowList, CB_FINDSTRING, -1, (LPARAM)lpWindowName);
+                    windowID = (UINT)SendMessage(hwndWindowList, CB_FINDSTRINGEXACT, -1, (LPARAM)lpWindowName);
 
                 bool bFoundWindow = (windowID != CB_ERR);
                 if(!bFoundWindow)
@@ -911,7 +911,7 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                         UINT windowID = 0;
                         if(lpWindowName)
-                            windowID = (UINT)SendMessage(hwndWindowList, CB_FINDSTRING, -1, (LPARAM)lpWindowName);
+                            windowID = (UINT)SendMessage(hwndWindowList, CB_FINDSTRINGEXACT, -1, (LPARAM)lpWindowName);
 
                         if(windowID != CB_ERR)
                             SendMessage(hwndWindowList, CB_SETCURSEL, windowID, 0);

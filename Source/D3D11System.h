@@ -20,21 +20,21 @@
 #pragma once
 
 
-class D3D11VertexShader;
+class D3D10VertexShader;
 
 
 //=============================================================================
 
-class D3D11VertexBuffer : public VertexBuffer
+class D3D10VertexBuffer : public VertexBuffer
 {
-    friend class D3D11System;
+    friend class D3D10System;
     friend class OBS;
 
-    ID3D11Buffer *vertexBuffer;
-    ID3D11Buffer *normalBuffer;
-    ID3D11Buffer *colorBuffer;
-    ID3D11Buffer *tangentBuffer;
-    List<ID3D11Buffer*> UVBuffers;
+    ID3D10Buffer *vertexBuffer;
+    ID3D10Buffer *normalBuffer;
+    ID3D10Buffer *colorBuffer;
+    ID3D10Buffer *tangentBuffer;
+    List<ID3D10Buffer*> UVBuffers;
 
     UINT vertexSize;
     UINT normalSize;
@@ -48,10 +48,10 @@ class D3D11VertexBuffer : public VertexBuffer
 
     static VertexBuffer* CreateVertexBuffer(VBData *vbData, BOOL bStatic);
 
-    void MakeBufferList(D3D11VertexShader *vShader, List<ID3D11Buffer*> &bufferList, List<UINT> &strides) const;
+    void MakeBufferList(D3D10VertexShader *vShader, List<ID3D10Buffer*> &bufferList, List<UINT> &strides) const;
 
 public:
-    ~D3D11VertexBuffer();
+    ~D3D10VertexBuffer();
 
     virtual void FlushBuffers();
     virtual VBData* GetData();
@@ -59,29 +59,29 @@ public:
 
 //=============================================================================
 
-class D3D11SamplerState : public SamplerState
+class D3D10SamplerState : public SamplerState
 {
-    friend class D3D11System;
+    friend class D3D10System;
     friend class OBS;
 
-    ID3D11SamplerState *state;
+    ID3D10SamplerState *state;
 
     static SamplerState* CreateSamplerState(SamplerInfo &info);
 
 public:
-    ~D3D11SamplerState();
+    ~D3D10SamplerState();
 };
 
 //--------------------------------------------------
 
-class D3D11Texture : public Texture
+class D3D10Texture : public Texture
 {
-    friend class D3D11System;
+    friend class D3D10System;
     friend class OBS;
 
-    ID3D11Resource           *texture;
-    ID3D11ShaderResourceView *resource;
-    ID3D11RenderTargetView   *renderTarget;
+    ID3D10Texture2D          *texture;
+    ID3D10ShaderResourceView *resource;
+    ID3D10RenderTargetView   *renderTarget;
 
     UINT width, height;
     GSColorFormat format;
@@ -95,7 +95,7 @@ class D3D11Texture : public Texture
     static Texture* CreateGDITexture(unsigned int width, unsigned int height);
 
 public:
-    ~D3D11Texture();
+    ~D3D10Texture();
 
     virtual DWORD Width() const;
     virtual DWORD Height() const;
@@ -160,7 +160,7 @@ struct ShaderProcessor : CodeTokenizer
     List<ShaderSampler> Samplers;
     List<ShaderParam>   Params;
 
-    List<D3D11_INPUT_ELEMENT_DESC> generatedLayout;
+    List<D3D10_INPUT_ELEMENT_DESC> generatedLayout;
 
     bool bHasNormals;
     bool bHasColors;
@@ -195,15 +195,15 @@ struct ShaderProcessor : CodeTokenizer
 
 //--------------------------------------------------
 
-class D3D11Shader : public Shader
+class D3D10Shader : public Shader
 {
-    friend class D3D11System;
+    friend class D3D10System;
     friend class OBS;
 
     List<ShaderParam>   Params;
     List<ShaderSampler> Samplers;
 
-    ID3D11Buffer *constantBuffer;
+    ID3D10Buffer *constantBuffer;
     UINT constantSize;
 
 protected:
@@ -212,7 +212,7 @@ protected:
     void UpdateParams();
 
 public:
-    ~D3D11Shader();
+    ~D3D10Shader();
 
     virtual int    NumParams() const;
     virtual HANDLE GetParameter(UINT parameter) const;
@@ -234,14 +234,14 @@ public:
 
 //--------------------------------------------------
 
-class D3D11VertexShader : public D3D11Shader
+class D3D10VertexShader : public D3D10Shader
 {
-    friend class D3D11System;
-    friend class D3D11VertexBuffer;
+    friend class D3D10System;
+    friend class D3D10VertexBuffer;
     friend class OBS;
 
-    ID3D11VertexShader *vertexShader;
-    ID3D11InputLayout  *inputLayout;
+    ID3D10VertexShader *vertexShader;
+    ID3D10InputLayout  *inputLayout;
 
     bool bHasNormals;
     bool bHasColors;
@@ -262,23 +262,23 @@ class D3D11VertexShader : public D3D11Shader
     static Shader* CreateVertexShader(CTSTR lpShader, CTSTR lpFileName);
 
 public:
-    ~D3D11VertexShader();
+    ~D3D10VertexShader();
 
     virtual ShaderType GetType() const {return ShaderType_Vertex;}
 };
 
 //--------------------------------------------------
 
-class D3D11PixelShader : public D3D11Shader
+class D3D10PixelShader : public D3D10Shader
 {
-    friend class D3D11System;
+    friend class D3D10System;
 
-    ID3D11PixelShader *pixelShader;
+    ID3D10PixelShader *pixelShader;
 
     static Shader* CreatePixelShader(CTSTR lpShader, CTSTR lpFileName);
 
 public:
-    ~D3D11PixelShader();
+    ~D3D10PixelShader();
 
     virtual ShaderType GetType() const {return ShaderType_Pixel;}
 };
@@ -288,35 +288,34 @@ public:
 struct SavedBlendState
 {
     GSBlendType srcFactor, destFactor;
-    ID3D11BlendState *blendState;
+    ID3D10BlendState *blendState;
 };
 
-class D3D11System : public GraphicsSystem
+class D3D10System : public GraphicsSystem
 {
     friend class OBS;
 
-    ID3D11Device            *d3d;
-    ID3D11DeviceContext     *d3dContext;
+    ID3D10Device1           *d3d;
     IDXGISwapChain          *swap;
-    ID3D11RenderTargetView  *swapRenderView;
+    ID3D10RenderTargetView  *swapRenderView;
 
-    ID3D11DepthStencilState *depthState;
-    ID3D11RasterizerState   *rasterizerState;
+    ID3D10DepthStencilState *depthState;
+    ID3D10RasterizerState   *rasterizerState;
 
     //---------------------------
 
-    D3D11Texture            *curRenderTarget;
-    D3D11Texture            *curTextures[8];
-    D3D11SamplerState       *curSamplers[8];
-    D3D11VertexBuffer       *curVertexBuffer;
-    D3D11VertexShader       *curVertexShader;
-    D3D11PixelShader        *curPixelShader;
+    D3D10Texture            *curRenderTarget;
+    D3D10Texture            *curTextures[8];
+    D3D10SamplerState       *curSamplers[8];
+    D3D10VertexBuffer       *curVertexBuffer;
+    D3D10VertexShader       *curVertexShader;
+    D3D10PixelShader        *curPixelShader;
 
-    D3D11_PRIMITIVE_TOPOLOGY curTopology;
+    D3D10_PRIMITIVE_TOPOLOGY curTopology;
 
     List<SavedBlendState>   blends;
-    ID3D11BlendState        *curBlendState;
-    ID3D11BlendState        *disabledBlend;
+    ID3D10BlendState        *curBlendState;
+    ID3D10BlendState        *disabledBlend;
     BOOL                    bBlendingEnabled;
 
     //---------------------------
@@ -337,11 +336,10 @@ class D3D11System : public GraphicsSystem
     virtual void UnloadAllData();
 
 public:
-    D3D11System();
-    ~D3D11System();
+    D3D10System();
+    ~D3D10System();
 
     virtual LPVOID GetDevice();
-    virtual LPVOID GetDeviceContext();
 
     virtual void Init();
 
@@ -403,5 +401,4 @@ public:
     virtual void  DrawBox(const Vect2 &upperLeft, const Vect2 &size);
 };
 
-inline ID3D11Device*        GetD3D()        {return static_cast<ID3D11Device*>(GS->GetDevice());}
-inline ID3D11DeviceContext* GetD3DContext() {return static_cast<ID3D11DeviceContext*>(GS->GetDeviceContext());}
+inline ID3D10Device*        GetD3D()        {return static_cast<ID3D10Device*>(GS->GetDevice());}

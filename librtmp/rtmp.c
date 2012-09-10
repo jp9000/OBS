@@ -915,7 +915,8 @@ RTMP_Connect0(RTMP *r, struct sockaddr * service)
         }
     }
 
-    setsockopt(r->m_sb.sb_socket, IPPROTO_TCP, TCP_NODELAY, (char *) &on, sizeof(on));
+    if(!r->m_bUseNagle)
+        setsockopt(r->m_sb.sb_socket, IPPROTO_TCP, TCP_NODELAY, (char *) &on, sizeof(on));
 
     return TRUE;
 }
@@ -1460,6 +1461,8 @@ WriteN(RTMP *r, const char *buffer, int n)
 
         if (r->Link.protocol & RTMP_FEATURE_HTTP)
             nBytes = HTTP_Post(r, RTMPT_SEND, ptr, n);
+        else if(r->m_bCustomSend && r->m_customSendFunc)
+            nBytes = r->m_customSendFunc(&r->m_sb, ptr, n, r->m_customSendParam);
         else
             nBytes = RTMPSockBuf_Send(&r->m_sb, ptr, n);
         /*RTMP_Log(RTMP_LOGDEBUG, "%s: %d\n", __FUNCTION__, nBytes); */

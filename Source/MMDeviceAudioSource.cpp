@@ -151,12 +151,7 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
     {
         String strName = GetDeviceName();
         Log(TEXT("------------------------------------------"));
-        Log(TEXT("Using auxilary audio input: %s, bits per sample input is %u"), strName.Array(), pwfx->wBitsPerSample);
-    }
-    else
-    {
-        Log(TEXT("------------------------------------------"));
-        Log(TEXT("Desktop sound bits per sample input is %u"), pwfx->wBitsPerSample);
+        Log(TEXT("Using auxilary audio input: %s"), strName.Array());
     }
 
     //the internal audio engine should always use floats (or so I read), but I suppose just to be safe better check

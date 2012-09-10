@@ -35,10 +35,10 @@
 
 
 //-------------------------------------------
-// direct3d 11
+// direct3d 10.1
 
-#include <D3D11.h>
-#include <D3DX11.h>
+#include <D3D10_1.h>
+#include <D3DX10.h>
 #include <DXGI.h>
 
 
@@ -59,7 +59,7 @@ extern HINSTANCE    hinstMain;
 extern ConfigFile   *AppConfig;
 extern OBS          *App;
 
-#define OBS_VERSION_STRING_ANSI "Open Broadcaster Software v0.341a"
+#define OBS_VERSION_STRING_ANSI "Open Broadcaster Software v0.35a"
 #define OBS_VERSION_STRING TEXT(OBS_VERSION_STRING_ANSI)
 
 inline UINT ConvertMSTo100NanoSec(UINT ms)
@@ -77,5 +77,5 @@ inline UINT ConvertMSTo100NanoSec(UINT ms)
 #include "OBS.h"
 #include "WindowStuff.h"
 #include "CodeTokenizer.h"
-#include "D3D11System.h"
+#include "D3D10System.h"
 

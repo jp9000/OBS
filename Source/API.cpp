@@ -171,7 +171,7 @@ bool OBS::SetScene(CTSTR lpScene)
         SendMessage(hwndScenes, LB_GETTEXT, curSel, (LPARAM)strLBName.Array());
         if(!strLBName.CompareI(lpScene))
         {
-            UINT id = (UINT)SendMessage(hwndScenes, LB_FINDSTRING, -1, (LPARAM)lpScene);
+            UINT id = (UINT)SendMessage(hwndScenes, LB_FINDSTRINGEXACT, -1, (LPARAM)lpScene);
             if(id == LB_ERR)
                 return false;
 
@@ -180,7 +180,7 @@ bool OBS::SetScene(CTSTR lpScene)
     }
     else
     {
-        UINT id = (UINT)SendMessage(hwndScenes, LB_FINDSTRING, -1, (LPARAM)lpScene);
+        UINT id = (UINT)SendMessage(hwndScenes, LB_FINDSTRINGEXACT, -1, (LPARAM)lpScene);
         if(id == LB_ERR)
             return false;
 

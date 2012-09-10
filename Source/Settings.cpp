@@ -135,7 +135,7 @@ int LoadSettingComboInt(HWND hwnd, CTSTR lpConfigSection, CTSTR lpConfigName, in
 String LoadSettingComboString(HWND hwnd, CTSTR lpConfigSection, CTSTR lpConfigName, CTSTR lpDefault)
 {
     String strVal = AppConfig->GetString(lpConfigSection, lpConfigName, lpDefault);
-    int id = (int)SendMessage(hwnd, CB_FINDSTRING, 0, (LPARAM)strVal.Array());
+    int id = (int)SendMessage(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)strVal.Array());
     if(!AppConfig->HasKey(lpConfigSection, lpConfigName) || id == CB_ERR)
     {
         if(lpDefault)
@@ -144,7 +144,7 @@ String LoadSettingComboString(HWND hwnd, CTSTR lpConfigSection, CTSTR lpConfigNa
 
             if(id == CB_ERR)
             {
-                id = (int)SendMessage(hwnd, CB_FINDSTRING, -1, (LPARAM)lpDefault);
+                id = (int)SendMessage(hwnd, CB_FINDSTRINGEXACT, -1, (LPARAM)lpDefault);
                 strVal = lpDefault;
             }
         }
@@ -160,7 +160,7 @@ String LoadSettingComboString(HWND hwnd, CTSTR lpConfigSection, CTSTR lpConfigNa
 String LoadSettingTextComboString(HWND hwnd, CTSTR lpConfigSection, CTSTR lpConfigName, CTSTR lpDefault)
 {
     String strVal = AppConfig->GetString(lpConfigSection, lpConfigName, lpDefault);
-    int id = (int)SendMessage(hwnd, CB_FINDSTRING, -1, (LPARAM)strVal.Array());
+    int id = (int)SendMessage(hwnd, CB_FINDSTRINGEXACT, -1, (LPARAM)strVal.Array());
     if(!AppConfig->HasKey(lpConfigSection, lpConfigName))
     {
         if(lpDefault)

@@ -167,6 +167,9 @@ bool DeviceSource::LoadFilters()
 
     VIDEOINFOHEADER *vih = reinterpret_cast<VIDEOINFOHEADER*>(outputMediaType.pbFormat);
     vih->AvgTimePerFrame = QWORD((1000.0/double(fps))*10000.0);
+    vih->bmiHeader.biWidth  = renderCX;
+    vih->bmiHeader.biHeight = renderCY;
+    vih->bmiHeader.biSizeImage = renderCX*renderCY*(vih->bmiHeader.biBitCount>>3);
 
     if(FAILED(err = config->SetFormat(&outputMediaType)))
     {

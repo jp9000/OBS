@@ -360,7 +360,6 @@ public:
     virtual ~GraphicsSystem() {}
 
     virtual LPVOID GetDevice()=0;
-    virtual LPVOID GetDeviceContext()=0;
 
     virtual void Init();
 

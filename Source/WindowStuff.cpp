@@ -1002,7 +1002,7 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                                     {
                                         if(scmpi(data->GetString(TEXT("name")), element->GetName()) == 0)
                                         {
-                                            UINT listID = (UINT)SendMessage(hwndSources, LB_FINDSTRING, -1, (LPARAM)item->GetName());
+                                            UINT listID = (UINT)SendMessage(hwndSources, LB_FINDSTRINGEXACT, -1, (LPARAM)item->GetName());
                                             if(listID != LB_ERR)
                                                 SendMessage(hwndSources, LB_DELETESTRING, listID, 0);
 
@@ -1269,6 +1269,9 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                         if(IsWindowEnabled((HWND)lParam))
                         {
                             App->micVol = GetVolumeControlValue((HWND)lParam);
+                            if(App->micVol < EPSILON)
+                                App->micVol = 0.0f;
+
                             if(HIWORD(wParam) == VOLN_FINALVALUE)
                                 AppConfig->SetFloat(TEXT("Audio"), TEXT("MicVolume"), App->micVol);
                         }
@@ -1281,6 +1284,8 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                         if(IsWindowEnabled((HWND)lParam))
                         {
                             App->desktopVol = GetVolumeControlValue((HWND)lParam);
+                            if(App->desktopVol < EPSILON)
+                                App->desktopVol = 0.0f;
 
                             if(HIWORD(wParam) == VOLN_FINALVALUE)
                                 AppConfig->SetFloat(TEXT("Audio"), TEXT("DesktopVolume"), App->desktopVol);

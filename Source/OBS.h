@@ -267,14 +267,14 @@ class OBS
     friend class RTMPPublisher;
     friend class RTMPServer;
     friend class Connection;
-    friend class D3D11System;
+    friend class D3D10System;
     friend class OBSAPIInterface;
     friend class GlobalSource;
 
     //---------------------------------------------------
     // graphics stuff
 
-    ID3D11Texture2D *copyTexture;
+    ID3D10Texture2D *copyTexture;
 
     Texture *mainRenderTextures[NUM_RENDER_BUFFERS];
     Texture *yuvRenderTextures[NUM_RENDER_BUFFERS];

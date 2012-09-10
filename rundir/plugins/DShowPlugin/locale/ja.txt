@@ -1,4 +1,4 @@
-Cancel          "キャンセル"
+﻿Cancel          "キャンセル"
 ClassName       "ビデオ デバイス"
 DeviceSelection "デバイス選択"
 OK              "OK"
@@ -14,7 +14,7 @@ DeviceSelection.GlobalExists            "他のグローバル ソースはこ�
 DeviceSelection.InvalidResolution       "無効な解像度"
 DeviceSelection.Refresh                 "再読み込みする"
 DeviceSelection.Resolution              "解像度:"
-DeviceSelection.UnsupportedResolution   "サポートされていない解像度"
+DeviceSelection.UnsupportedResolution   "このデバイスはその解像度がサポートされていない"
 
 Plugin.Description  "このプラグインは、DirectShowでビデオ デバイス（Webカメラ、キャプチャ カードなど）をソースとしてシーンに追加することができます"
 Plugin.Name         "DirectShow ビデオ デバイス プラグイン"

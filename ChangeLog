@@ -3,6 +3,20 @@
 
 -------------------------------
 
+2012-9-10 - 0.35 (alpha)
+    * Added send buffering to the RTMP publisher (major thanks to
+      frostshocker, modnite, kendobear, and d2ultima for helping test
+      out and verify this new technique)
+    * Added a few features to the version of librtmp I use to allow
+      for custom adjustments
+    * Tweaked network settings again
+    * Fixed a directshow issue where some resolutions could cause a
+      crash (thanks to R1CH for pointing out the code directly)
+    * Switched to D3D10.1 to improve compatibility with devices
+      (thanks to d2ultima for pointing out his d3d11 incompatibility)
+
+-------------------------------
+
 2012-9-08 - 0.34 (alpha)
     * Reworked network publish code, added I-Frame-Delay algorithm to
       automatically drop frames based upon usage if possible

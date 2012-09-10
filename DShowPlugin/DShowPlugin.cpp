@@ -213,7 +213,7 @@ void FillOutListOfVideoDevices(HWND hwndCombo)
             if(SUCCEEDED(err))
             {
                 String strDeviceName = (CWSTR)valueThingy.bstrVal;
-                if(SendMessage(hwndCombo, CB_FINDSTRING, -1, 0) == CB_ERR)
+                if(SendMessage(hwndCombo, CB_FINDSTRINGEXACT, -1, 0) == CB_ERR)
                     SendMessage(hwndCombo, CB_ADDSTRING, 0, (LPARAM)strDeviceName.Array());
             }
         }
@@ -503,7 +503,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 UINT deviceID = CB_ERR;
                 if(strDevice.IsValid() && cx > 0 && cy > 0 && fps > 0)
-                    deviceID = (UINT)SendMessage(hwndDeviceList, CB_FINDSTRING, -1, (LPARAM)strDevice.Array());
+                    deviceID = (UINT)SendMessage(hwndDeviceList, CB_FINDSTRINGEXACT, -1, (LPARAM)strDevice.Array());
 
                 if(deviceID == CB_ERR)
                 {

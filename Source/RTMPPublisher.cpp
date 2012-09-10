@@ -90,8 +90,6 @@ class RTMPPublisher : public NetworkStream
 
             //--------------------------------------------
 
-            //DWORD startTime = OSGetTime();
-
             RTMPPacket packet;
             packet.m_nChannel = (type == PacketType_Audio) ? 0x5 : 0x4;
             packet.m_headerType = RTMP_PACKET_SIZE_MEDIUM;
@@ -113,8 +111,6 @@ class RTMPPublisher : public NetworkStream
                 }
             }
 
-            //DWORD totalTime = OSGetTime()-startTime;
-
             DWORD curTime = OSGetTime();
             DWORD timeElapsed = curTime-loopStartTime;
 
@@ -131,13 +127,6 @@ class RTMPPublisher : public NetworkStream
                 
 
             totalBytesSentThisSec += packetData.Num();
-
-            /*if(totalTime >= 200)
-            {
-                double blockTime = double(totalTime)*0.001;
-                double sec = double(OSGetTime()-loopStartTime)*0.001;
-                Log(TEXT("blocked by %g seconds at %g seconds into the stream by a packet trying to send %u bytes, %u packets in queue"), blockTime, sec, size, Packets.Num());
-            }*/
         }
 
         traceOut;
@@ -152,6 +141,8 @@ class RTMPPublisher : public NetworkStream
     //video packet count exceeding maximum.  find lowest priority frame to dump
     void DoIFrameDelay()
     {
+        int prevWaitType = packetWaitType;
+
         while(packetWaitType < PacketType_VideoHighest)
         {
             if(packetWaitType == PacketType_VideoHigh)
@@ -191,6 +182,9 @@ class RTMPPublisher : public NetworkStream
                     //disposing P-frames will corrupt the rest of the frame group, so you have to wait until another I-frame
                     if(!bFoundIFrame || !bFoundFrameBeforeIFrame)
                         packetWaitType = PacketType_VideoHighest;
+                    else 
+                        packetWaitType = prevWaitType;
+
                     return;
                 }
             }
@@ -287,12 +281,66 @@ class RTMPPublisher : public NetworkStream
         if(!bRemovedPacket)
             packetWaitType = prevWaitType;
     }
+
+    List<BYTE> sendBuffer;
+    int curSendBufferLen;
+
+    static int BufferedSend(RTMPSockBuf *sb, const char *buf, int len, RTMPPublisher *network)
+    {
+        int newTotal = network->curSendBufferLen+len;
+
+        //buffer full, send
+        if(newTotal >= int(network->sendBuffer.Num()))
+        {
+            int pendingBytes = newTotal-network->sendBuffer.Num();
+            int copyCount    = network->sendBuffer.Num()-network->curSendBufferLen;
+
+            mcpy(network->sendBuffer.Array()+network->curSendBufferLen, buf, copyCount);
+
+            BYTE *lpTemp = network->sendBuffer.Array();
+            int totalBytesSent = network->sendBuffer.Num();
+            while(totalBytesSent > 0)
+            {
+                int nBytes = send(sb->sb_socket, (const char*)lpTemp, totalBytesSent, 0);
+                if(nBytes < 0)
+                    return nBytes;
+                if(nBytes == 0)
+                    return 0;
+
+                totalBytesSent -= nBytes;
+                lpTemp += nBytes;
+            }
+
+            network->curSendBufferLen = pendingBytes;
+
+            if(pendingBytes)
+                mcpy(network->sendBuffer.Array(), buf+copyCount, pendingBytes);
+        }
+        else
+        {
+            if(len)
+            {
+                mcpy(network->sendBuffer.Array()+network->curSendBufferLen, buf, len);
+                network->curSendBufferLen = newTotal;
+            }
+        }
+
+        return len;
+    }
+
 public:
     RTMPPublisher(RTMP *rtmpIn)
     {
         traceIn(RTMPPublisher::RTMPPublisher);
 
         rtmp = rtmpIn;
+
+        sendBuffer.SetSize(32768);
+        curSendBufferLen = 0;
+
+        rtmp->m_customSendFunc = (CUSTOMSEND)RTMPPublisher::BufferedSend;
+        rtmp->m_customSendParam = this;
+        rtmp->m_bCustomSend = TRUE;
 
         hSendSempahore = CreateSemaphore(NULL, 0, 0x7FFFFFFFL, NULL);
         if(!hSendSempahore)
@@ -584,6 +632,8 @@ NetworkStream* CreateRTMPPublisher()
     }
 
     RTMP_EnableWrite(rtmp); //set it to publish
+
+    //rtmp->m_bUseNagle = 1;
 
     if(!RTMP_Connect(rtmp, NULL))
     {
