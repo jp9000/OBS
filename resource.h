@@ -54,6 +54,7 @@
 #define IDC_USEI444                     1041
 #define IDC_RESETSIZE                   1041
 #define IDC_CAPTUREMOUSE                1041
+#define IDC_BUFFERSENDS                 1041
 #define IDC_SERVEREDIT                  1042
 #define IDC_CHANNELNAME_STATIC          1043
 #define IDC_PLAYPATH_STATIC             1044
