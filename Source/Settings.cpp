@@ -121,7 +121,7 @@ int LoadSettingComboInt(HWND hwnd, CTSTR lpConfigSection, CTSTR lpConfigName, in
     int curVal = AppConfig->GetInt(lpConfigSection, lpConfigName, defVal);
     int id = curVal;
 
-    if(!AppConfig->HasKey(lpConfigSection, lpConfigName) || curVal < 0 || curVal > maxVal)
+    if(!AppConfig->HasKey(lpConfigSection, lpConfigName) || curVal < 0 || (maxVal != 0 && curVal > maxVal))
     {
         AppConfig->SetInt(lpConfigSection, lpConfigName, defVal);
         curVal = defVal;

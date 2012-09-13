@@ -87,10 +87,10 @@ bool DeviceSource::LoadFilters()
     bool bSucceeded = false;
 
     List<MediaOutputInfo> outputList;
-    IAMStreamConfig *config;
-    bool bAddedCapture, bAddedDevice;
+    IAMStreamConfig *config = NULL;
+    bool bAddedCapture = false, bAddedDevice = false;
     GUID expectedMediaType;
-    IPin *devicePin;
+    IPin *devicePin = NULL;
     HRESULT err;
 
     String strDevice = data->GetString(TEXT("device"));

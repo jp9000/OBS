@@ -57,6 +57,13 @@ NetworkStream* CreateNullNetwork();
 
 void Convert444to420(LPBYTE input, int width, int height, LPBYTE *output, bool bSSE2Available);
 
+
+inline BOOL CloseDouble(double f1, double f2, double precision=0.001)
+{
+    return fabs(f1-f2) <= precision;
+}
+
+
 //----------------------------
 
 WNDPROC listboxProc = NULL;
@@ -820,9 +827,12 @@ void OBS::Start()
     baseCX = MIN(MAX(baseCX, 128), 4096);
     baseCY = MIN(MAX(baseCY, 128), 4096);
 
+    scaleCX = UINT(double(baseCX) / double(downscale));
+    scaleCY = UINT(double(baseCY) / double(downscale));
+
     //align width to 128bit for fast SSE YUV4:2:0 conversion
-    outputCX = int(double(baseCX) / double(downscale)) & 0xFFFFFFFC;
-    outputCY = int(double(baseCY) / double(downscale)) & 0xFFFFFFFC;
+    outputCX = scaleCX & 0xFFFFFFFC;
+    outputCY = scaleCY & 0xFFFFFFFC;
 
     //------------------------------------------------------------------
 
@@ -1191,6 +1201,18 @@ inline void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
 
 DWORD STDCALL OBS::MainCaptureThread(LPVOID lpUnused)
 {
+    SYSTEM_INFO si;
+    GetSystemInfo(&si);
+    DWORD numProcessors = si.dwNumberOfProcessors;
+    DWORD lastProcessor = numProcessors-1;
+
+    DWORD_PTR retVal = SetThreadAffinityMask(GetCurrentThread(), 1<<lastProcessor);
+    if(retVal == 0)
+    {
+        int lastError = GetLastError();
+        nop();
+    }
+
     App->MainCaptureLoop();
     return 0;
 }
@@ -1205,9 +1227,11 @@ void OBS::MainCaptureLoop()
 {
     traceIn(OBS::MainCaptureLoop);
 
+    HANDLE hTimer = OSCreateTimer();
+
     int curRenderTarget = 0, curCopyTexture = 0;
     int copyWait = NUM_RENDER_BUFFERS-1;
-    UINT curStreamTime = 0, firstFrameTime = OSGetTime(), lastStreamTime = 0;
+    UINT curStreamTime = 0, firstFrameTime = OSGetTime(hTimer), lastStreamTime = 0;
     UINT lastTime = 0;
 
     List<UINT> bufferedTimes;
@@ -1218,6 +1242,7 @@ void OBS::MainCaptureLoop()
 
     Vect2 baseSize        = Vect2(float(baseCX), float(baseCY));
     Vect2 outputSize      = Vect2(float(outputCX), float(outputCY));
+    Vect2 scaleSize       = Vect2(float(scaleCX), float(scaleCY));
 
     int numLongFrames = 0;
     int numTotalFrames = 0;
@@ -1243,11 +1268,14 @@ void OBS::MainCaptureLoop()
     desktopAudio->StartCapture();
     if(micAudio) micAudio->StartCapture();
 
-    float timePassedThingy = 0.0f;
+    DWORD bytesPerSec = 0;
+    QWORD lastBytesSent = 0;
+    float bpsTime = 0.0f;
+    double lastStrain = 0.0f;
 
     while(bRunning)
     {
-        DWORD renderStartTime = OSGetTime();
+        DWORD renderStartTime = OSGetTime(hTimer);
 
         bool bRenderView = !IsIconic(hwndMain);
 
@@ -1288,15 +1316,28 @@ void OBS::MainCaptureLoop()
                 globalSources[i].source->Tick(fSeconds);
         }
 
-        SetBandwidthMeterValue(GetDlgItem(hwndMain, ID_BANDWIDTHMETER), network->GetBytesPerSec(), network->GetPacketStrain());
+        //------------------------------------
 
-        //timePassedThingy += fSeconds;
+        QWORD curBytesSent = network->GetCurrentSentBytes();
+        bool bUpdateBPS = false;
 
-        //if(timePassedThingy > 0.0f)
-        //{
-        //    Log(TEXT("bytes per sec %u, strain %g"), network->GetBytesPerSec(), network->GetPacketStrain());
-        //    timePassedThingy -= 1.0f;
-        //}
+        bpsTime += fSeconds;
+        if(bpsTime > 1.0f)
+        {
+            bytesPerSec = DWORD(curBytesSent - lastBytesSent);
+            bpsTime -= 1.0f;
+
+            lastBytesSent = curBytesSent;
+
+            bUpdateBPS = true;
+        }
+
+        double curStrain = network->GetPacketStrain();
+        if(bUpdateBPS || !CloseDouble(curStrain, lastStrain))
+        {
+            SetBandwidthMeterValue(GetDlgItem(hwndMain, ID_BANDWIDTHMETER), bytesPerSec, curStrain);
+            lastStrain = curStrain;
+        }
 
         EnableBlending(TRUE);
         BlendFunction(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA);
@@ -1403,14 +1444,17 @@ void OBS::MainCaptureLoop()
         Ortho(0.0f, outputSize.x, outputSize.y, 0.0f, -1.0f, 1000.0f);
         SetViewport(0.0f, 0.0f, outputSize.x, outputSize.y);
 
+        //why am I using scaleSize instead of outputSize for the texture?
+        //because outputSize can be trimmed by up to three pixels due to 128-bit alignment.
+        //using the scale function with outputSize can cause slightly inaccurate scaled images
         if(bTransitioning)
         {
             BlendFunction(GS_BLEND_ONE, GS_BLEND_ZERO);
-            DrawSpriteEx(transitionTexture, 0.0f, 0.0f, outputSize.x, outputSize.y, 0.0f, 0.0f, outputSize.x, outputSize.y);
+            DrawSpriteEx(transitionTexture, 0.0f, 0.0f, scaleSize.x, scaleSize.y, 0.0f, 0.0f, scaleSize.x, scaleSize.y);
             BlendFunction(GS_BLEND_FACTOR, GS_BLEND_INVFACTOR, transitionAlpha);
         }
 
-        DrawSpriteEx(mainRenderTextures[curRenderTarget], 0.0f, 0.0f, outputSize.x, outputSize.y, 0.0f, 0.0f, outputSize.x, outputSize.y);
+        DrawSpriteEx(mainRenderTextures[curRenderTarget], 0.0f, 0.0f, scaleSize.x, scaleSize.y, 0.0f, 0.0f, scaleSize.x, scaleSize.y);
 
         //------------------------------------
 
@@ -1462,8 +1506,6 @@ void OBS::MainCaptureLoop()
                 videoEncoder->Encode(&picOut, videoPackets, videoPacketTypes, bufferedTimes[0]);
                 if(bUsing444) copyTexture->Unmap(0);
 
-                //DWORD relativeTimestamp = bufferedTimes[0]-lastTime;
-
                 //------------------------------------
                 // upload
 
@@ -1483,16 +1525,11 @@ void OBS::MainCaptureLoop()
 
                     network->SendPacket(packet.lpPacket, packet.size, bufferedTimes[0], type);
 
-                    //Log(TEXT("video packet timestamp: %u, buffered timestamp: %u"), outputTimestamp, bufferedTimes[0]);
                     bSentVideo = true;
                 }
 
                 if(bSentVideo)
                 {
-                    //Log(TEXT("bytes per sec %u, strain %g"), network->GetBytesPerSec(), network->GetPacketStrain());
-
-                    //Log(TEXT("What the first timestamp is: %d ...what it normally would be: %d"), outputTimestamp, bufferedTimes[0]);
-
                     OSEnterMutex(hSoundDataMutex);
 
                     if(pendingAudioFrames.Num())
@@ -1546,7 +1583,7 @@ void OBS::MainCaptureLoop()
         //------------------------------------
         // frame sync
 
-        DWORD renderStopTime = OSGetTime();
+        DWORD renderStopTime = OSGetTime(hTimer);
         DWORD totalTime = renderStopTime-renderStartTime;
 
         //OSDebugOut(TEXT("Total frame time: %d\r\n"), totalTime);
@@ -1563,6 +1600,8 @@ void OBS::MainCaptureLoop()
         x264_picture_clean(&picOut);
 
     Log(TEXT("Total frames rendered: %d, number of frames that lagged: %d (%0.2f%%) (it's okay for some frames to lag)"), numTotalFrames, numLongFrames, (double(numLongFrames)/double(numTotalFrames))*100.0);
+
+    OSCloseTimer(hTimer);
 
     traceOutStop;
 }

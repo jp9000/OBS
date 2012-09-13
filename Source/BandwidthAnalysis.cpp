@@ -29,10 +29,13 @@ class BandwidthAnalyzer : public NetworkStream
 
     DWORD curBytes;
 
+    HANDLE hTimer;
+
 public:
     BandwidthAnalyzer()
     {
-        lastTime = OSGetTime();
+        hTimer = OSCreateTimer();
+        lastTime = OSGetTime(hTimer);
     }
 
     ~BandwidthAnalyzer()
@@ -51,11 +54,13 @@ public:
                      TEXT("\r\nHighest Bytes/Bits in a second: ") << IntString(highestBytes) << TEXT(", ") << IntString(highestBytes*8);
 
         App->SetStreamReport(strReport);
+
+        OSCloseTimer(hTimer);
     }
 
     void SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)
     {
-        DWORD curTime = OSGetTime();
+        DWORD curTime = OSGetTime(hTimer);
 
         curBytes += size+8;  //just assume a header of 8 bytes
 
@@ -73,7 +78,7 @@ public:
     }
 
     double GetPacketStrain() const {return 0;}
-    UINT GetBytesPerSec()  const {return 0;}
+    QWORD GetCurrentSentBytes() {return 0;}
 };
 
 

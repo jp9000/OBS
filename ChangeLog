@@ -3,6 +3,16 @@
 
 -------------------------------
 
+2012-9-12 - 0.36 (alpha)
+    * Fixed more directshow bugs
+    * Fixed bug that caused non-twitch services to be saved as twitch
+    * Attempted to fix AMD CPU issue by setting the main capture thread
+      affinity -- needs testing again.
+    * Added a message box that let's you know if the server has
+      disconnected you.
+
+-------------------------------
+
 2012-9-10 - 0.35 (alpha)
     * Added send buffering to the RTMP publisher (major thanks to
       frostshocker, modnite, kendobear, and d2ultima for helping test

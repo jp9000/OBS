@@ -69,7 +69,6 @@ D3D10System::D3D10System()
                 Log(TEXT("Adapter %u"), i);
                 Log(TEXT("  Video Adapter: %s"), adapterDesc.Description);
                 Log(TEXT("  Video Adapeter Dedicated Video Memory: %u"), adapterDesc.DedicatedVideoMemory);
-                Log(TEXT("  Video Adapeter Dedicated System Memory: %u"), adapterDesc.DedicatedSystemMemory);
                 Log(TEXT("  Video Adapeter Shared System Memory: %u"), adapterDesc.SharedSystemMemory);
             }
             else

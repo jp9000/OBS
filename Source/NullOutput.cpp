@@ -45,7 +45,7 @@ class NullNetwork : public NetworkStream
     virtual void SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type) {}
 
     double GetPacketStrain() const {return 0;}
-    UINT GetBytesPerSec()  const {return 0;}
+    QWORD GetCurrentSentBytes() {return 0;}
 };
 
 

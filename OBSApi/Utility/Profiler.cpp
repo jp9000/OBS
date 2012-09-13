@@ -142,6 +142,7 @@ struct BASE_EXPORT ProfileNodeInfo
 ProfilerNode *__curProfilerNode = NULL;
 List<ProfileNodeInfo> ProfileNodeInfo::profilerData;
 BOOL bProfilingEnabled = FALSE;
+HANDLE hProfilerTimer = NULL;
 
 
 void STDCALL EnableProfiling(BOOL bEnable, float minPercentage, float minTime)
@@ -170,6 +171,9 @@ void STDCALL FreeProfileData()
     for(unsigned int i=0; i<ProfileNodeInfo::profilerData.Num(); i++)
         ProfileNodeInfo::profilerData[i].FreeData();
     ProfileNodeInfo::profilerData.Clear();
+
+    if(hProfilerTimer)
+        OSCloseTimer(hProfilerTimer);
 }
 
 ProfilerNode::ProfilerNode(CTSTR lpName, bool bSingularize)
@@ -219,12 +223,15 @@ ProfilerNode::ProfilerNode(CTSTR lpName, bool bSingularize)
     ++info->numCalls;
 
     this->lpName = lpName;
-    startTime = OSGetTimeMicroseconds();
+
+    if(!hProfilerTimer)
+        hProfilerTimer = OSCreateTimer();
+    startTime = OSGetTimeMicroseconds(hProfilerTimer);
 }
 
 ProfilerNode::~ProfilerNode()
 {
-    QWORD newTime = OSGetTimeMicroseconds();
+    QWORD newTime = OSGetTimeMicroseconds(hProfilerTimer);
 
     //profiling was diabled when created
     if(lpName)

@@ -56,7 +56,7 @@ class RTMPPublisher : public NetworkStream
     UINT numVideoPackets;
     UINT maxVideoPackets, BFrameThreshold;
 
-    UINT bytesPerSec, totalBytesSentThisSec;
+    QWORD bytesSent;
 
     //UINT numBFramesDumped;
 
@@ -65,10 +65,34 @@ class RTMPPublisher : public NetworkStream
     {
         traceIn(RTMPPublisher::SendLoop);
 
-        DWORD loopStartTime = OSGetTime();
-
         while(WaitForSingleObject(hSendSempahore, INFINITE) == WAIT_OBJECT_0 && !bStopping && RTMP_IsConnected(rtmp))
         {
+            /*
+            //--------------------------------------------
+            // read
+
+            DWORD pendingBytes = 0;
+            ioctlsocket(rtmp->m_sb.sb_socket, FIONREAD, &pendingBytes);
+            if(pendingBytes)
+            {
+                RTMPPacket packet;
+                zero(&packet, sizeof(packet));
+
+                while(RTMP_ReadPacket(rtmp, &packet) && !RTMPPacket_IsReady(&packet) && RTMP_IsConnected(rtmp));
+
+                if(!RTMP_IsConnected(rtmp))
+                {
+                    App->PostStopMessage();
+                    bStopping = true;
+                    break;
+                }
+
+                RTMPPacket_Free(&packet);
+            }*/
+
+            //--------------------------------------------
+            // send
+
             OSEnterMutex(hDataMutex);
             if(Packets.Num() == 0)
             {
@@ -111,22 +135,7 @@ class RTMPPublisher : public NetworkStream
                 }
             }
 
-            DWORD curTime = OSGetTime();
-            DWORD timeElapsed = curTime-loopStartTime;
-
-            if(timeElapsed > 1000 && timeElapsed < 2000)
-            {
-                loopStartTime += 1000;
-                timeElapsed += 1000;
-
-                bytesPerSec = totalBytesSentThisSec;
-                totalBytesSentThisSec = 0;
-            }
-            if(timeElapsed > 1000)
-                loopStartTime = curTime;
-                
-
-            totalBytesSentThisSec += packetData.Num();
+            bytesSent += packetData.Num();
         }
 
         traceOut;
@@ -539,9 +548,9 @@ public:
         return double(numVideoPackets)/double(maxVideoPackets)*100.0;
     }
 
-    UINT GetBytesPerSec() const
+    QWORD GetCurrentSentBytes()
     {
-        return bytesPerSec;
+        return bytesSent;
     }
 };
 
@@ -626,7 +635,7 @@ NetworkStream* CreateRTMPPublisher()
 
     if(!RTMP_SetupURL(rtmp, lpAnsiURL))
     {
-        MessageBox(hwndMain, TEXT("Could not parse URL"), NULL, MB_ICONERROR);
+        MessageBox(hwndMain, Str("Connection.CouldNotParseURL"), NULL, MB_ICONERROR);
         RTMP_Free(rtmp);
         return NULL;
     }
@@ -637,14 +646,14 @@ NetworkStream* CreateRTMPPublisher()
 
     if(!RTMP_Connect(rtmp, NULL))
     {
-        MessageBox(hwndMain, TEXT("Could not connect"), NULL, MB_ICONERROR);
+        MessageBox(hwndMain, Str("Connection.CouldNotConnect"), NULL, MB_ICONERROR);
         RTMP_Free(rtmp);
         return NULL;
     }
 
     if(!RTMP_ConnectStream(rtmp, 0))
     {
-        MessageBox(hwndMain, TEXT("Invalid stream channel or playpath"), NULL, MB_ICONERROR);
+        MessageBox(hwndMain, Str("Connection.InvalidStream"), NULL, MB_ICONERROR);
         RTMP_Close(rtmp);
         RTMP_Free(rtmp);
         return NULL;

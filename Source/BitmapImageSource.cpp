@@ -112,7 +112,6 @@ ImageSource* STDCALL CreateBitmapSource(XElement *data)
 struct ConfigBitmapInfo
 {
     XElement *data;
-    bool bResetSize;
 };
 
 INT_PTR CALLBACK ConfigureBitmapProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -127,8 +126,6 @@ INT_PTR CALLBACK ConfigureBitmapProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 CTSTR lpBitmap = configInfo->data->GetString(TEXT("path"));
                 SetWindowText(GetDlgItem(hwnd, IDC_BITMAP), lpBitmap);
-
-                SendMessage(GetDlgItem(hwnd, IDC_RESETSIZE), BM_SETCHECK, BST_CHECKED, 0);
                 return TRUE;
             }
 
@@ -173,7 +170,6 @@ INT_PTR CALLBACK ConfigureBitmapProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         ConfigBitmapInfo *configInfo = (ConfigBitmapInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
                         configInfo->data->SetString(TEXT("path"), strBitmap);
-                        configInfo->bResetSize = SendMessage(GetDlgItem(hwnd, IDC_RESETSIZE), BM_GETCHECK, 0, 0) == BST_CHECKED;
                     }
 
                 case IDCANCEL:
@@ -203,7 +199,7 @@ bool STDCALL ConfigureBitmapSource(XElement *element, bool bCreating)
 
     if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_CONFIGUREBITMAPSOURCE), hwndMain, ConfigureBitmapProc, (LPARAM)&configInfo) == IDOK)
     {
-        if(bCreating || configInfo.bResetSize)
+        if(bCreating)
         {
             CTSTR lpBitmap = data->GetString(TEXT("path"));
 

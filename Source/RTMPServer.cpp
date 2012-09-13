@@ -273,7 +273,7 @@ public:
     }
 
     double GetPacketStrain() const {return 0.0;}
-    UINT GetBytesPerSec()  const {return 0;}
+    QWORD GetCurrentSentBytes() {return 0;}
 };
 
 

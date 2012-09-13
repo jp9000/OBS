@@ -25,15 +25,20 @@
 #define WIN32_LEAN_AND_MEAN
 #define ISOLATION_AWARE_ENABLED 1
 #include <windows.h>
+#include <MMSystem.h>
+
 #include "XT.h"
 
 
 
 
 
-LARGE_INTEGER clockFreq, startTime;
-LONGLONG prevElapsedTime;
-DWORD startTick;
+struct WindowsTimerInfo
+{
+    LARGE_INTEGER clockFreq, startTime;
+    LONGLONG prevElapsedTime;
+    DWORD startTick;
+};
 
 void STDCALL InputProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 void STDCALL ResetCursorClip();
@@ -46,9 +51,6 @@ HWND        hwndMainAppWindow = NULL;
 
 void   STDCALL OSInit()
 {
-    QueryPerformanceFrequency(&clockFreq);
-    QueryPerformanceCounter(&startTime);
-    startTick = GetTickCount();
 }
 
 void   STDCALL OSExit()
@@ -360,13 +362,27 @@ void   STDCALL OSSleep(DWORD dwMSeconds)
 }
 
 
-DWORD STDCALL OSGetTime()
+HANDLE STDCALL OSCreateTimer()
 {
-    /*LARGE_INTEGER curTime;
-    QueryPerformanceCounter(&curTime);
-    LONGLONG adjustedTime = curTime.QuadPart - startTime.QuadPart;
+    WindowsTimerInfo *timerInfo = new WindowsTimerInfo;
+    QueryPerformanceFrequency(&timerInfo->clockFreq);
+    QueryPerformanceCounter(&timerInfo->startTime);
+    timerInfo->startTick = GetTickCount();
+    timerInfo->prevElapsedTime = 0;
 
-    return DWORD(1000 * adjustedTime / clockFreq.QuadPart);*/
+    return timerInfo;
+}
+
+void STDCALL OSCloseTimer(HANDLE hTimer)
+{
+    WindowsTimerInfo *timerInfo = (WindowsTimerInfo*)hTimer;
+    delete timerInfo;
+}
+
+
+DWORD STDCALL OSGetTime(HANDLE hTimer)
+{
+    WindowsTimerInfo *timerInfo = (WindowsTimerInfo*)hTimer;
 
     //NOTE: Credit goes to the amazingly awesome bullet physics library for this time code fix,
     //though I think this was basically copied out of the KB274323
@@ -374,69 +390,71 @@ DWORD STDCALL OSGetTime()
     LARGE_INTEGER currentTime;
     QueryPerformanceCounter(&currentTime);
     LONGLONG elapsedTime = currentTime.QuadPart - 
-        startTime.QuadPart;
+        timerInfo->startTime.QuadPart;
 
     // Compute the number of millisecond ticks elapsed.
     unsigned long msecTicks = (unsigned long)(1000 * elapsedTime / 
-        clockFreq.QuadPart);
+        timerInfo->clockFreq.QuadPart);
 
     // Check for unexpected leaps in the Win32 performance counter.  
     // (This is caused by unexpected data across the PCI to ISA 
     // bridge, aka south bridge.  See Microsoft KB274323.)
-    unsigned long elapsedTicks = GetTickCount() - startTick;
+    unsigned long elapsedTicks = GetTickCount() - timerInfo->startTick;
     signed long msecOff = (signed long)(msecTicks - elapsedTicks);
     if (msecOff < -100 || msecOff > 100)
     {
         // Adjust the starting time forwards.
         LONGLONG msecAdjustment = MIN(msecOff * 
-            clockFreq.QuadPart / 1000, elapsedTime - 
-            prevElapsedTime);
-        startTime.QuadPart += msecAdjustment;
+            timerInfo->clockFreq.QuadPart / 1000, elapsedTime - 
+            timerInfo->prevElapsedTime);
+        timerInfo->startTime.QuadPart += msecAdjustment;
         elapsedTime -= msecAdjustment;
 
         // Recompute the number of millisecond ticks elapsed.
         msecTicks = (unsigned long)(1000 * elapsedTime / 
-            clockFreq.QuadPart);
+            timerInfo->clockFreq.QuadPart);
     }
 
     // Store the current elapsed time for adjustments next time.
-    prevElapsedTime = elapsedTime;
+    timerInfo->prevElapsedTime = elapsedTime;
 
     return msecTicks;
 }
 
-QWORD STDCALL OSGetTimeMicroseconds()
+QWORD STDCALL OSGetTimeMicroseconds(HANDLE hTimer)
 {
+    WindowsTimerInfo *timerInfo = (WindowsTimerInfo*)hTimer;
+
     LARGE_INTEGER currentTime;
     QueryPerformanceCounter(&currentTime);
     LONGLONG elapsedTime = currentTime.QuadPart - 
-        startTime.QuadPart;
+        timerInfo->startTime.QuadPart;
 
     // Compute the number of millisecond ticks elapsed.
     unsigned long msecTicks = (unsigned long)(1000 * elapsedTime / 
-        clockFreq.QuadPart);
+        timerInfo->clockFreq.QuadPart);
 
     // Check for unexpected leaps in the Win32 performance counter.  
     // (This is caused by unexpected data across the PCI to ISA 
     // bridge, aka south bridge.  See Microsoft KB274323.)
-    unsigned long elapsedTicks = GetTickCount() - startTick;
+    unsigned long elapsedTicks = GetTickCount() - timerInfo->startTick;
     signed long msecOff = (signed long)(msecTicks - elapsedTicks);
     if (msecOff < -100 || msecOff > 100)
     {
         // Adjust the starting time forwards.
         LONGLONG msecAdjustment = MIN(msecOff * 
-            clockFreq.QuadPart / 1000, elapsedTime - 
-            prevElapsedTime);
-        startTime.QuadPart += msecAdjustment;
+            timerInfo->clockFreq.QuadPart / 1000, elapsedTime - 
+            timerInfo->prevElapsedTime);
+        timerInfo->startTime.QuadPart += msecAdjustment;
         elapsedTime -= msecAdjustment;
     }
 
     // Store the current elapsed time for adjustments next time.
-    prevElapsedTime = elapsedTime;
+    timerInfo->prevElapsedTime = elapsedTime;
 
     // Convert to microseconds.
     unsigned long usecTicks = (unsigned long)(1000000 * elapsedTime / 
-        clockFreq.QuadPart);
+        timerInfo->clockFreq.QuadPart);
 
     return usecTicks;
 }

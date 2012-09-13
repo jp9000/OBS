@@ -57,9 +57,9 @@ void LogSystemStats()
     }
 
 #ifdef _WIN64
-    Log(TEXT("%s - 64bit"), OBS_VERSION_STRING);
+    Log(TEXT("%s - 64bit (Å@^É÷^)"), OBS_VERSION_STRING);
 #else
-    Log(TEXT("%s - 32bit"), OBS_VERSION_STRING);
+    Log(TEXT("%s - 32bit (ÅLÅEÉ÷ÅEÅM)"), OBS_VERSION_STRING);
 #endif
 
     Log(TEXT("-------------------------------"));

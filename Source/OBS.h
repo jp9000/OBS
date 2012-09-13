@@ -93,7 +93,7 @@ public:
     virtual void BeginPublishing() {}
 
     virtual double GetPacketStrain() const=0;
-    virtual UINT GetBytesPerSec() const=0;
+    virtual QWORD GetCurrentSentBytes()=0;
 };
 
 //-------------------------------------------------------------------
@@ -354,8 +354,9 @@ class OBS
     bool    bSSE2Available;
 
     int     lastRenderTarget;
-    int     baseCX, baseCY;
-    int     outputCX, outputCY;
+    UINT    baseCX,   baseCY;
+    UINT    scaleCX,  scaleCY;
+    UINT    outputCX, outputCY;
     float   downscale;
     UINT    frameTime, fps;
     HANDLE  hMainThread;

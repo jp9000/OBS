@@ -1426,6 +1426,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
         case OBS_REQUESTSTOP:
             App->Stop();
+            MessageBox(hwnd, Str("Connection.Disconnected"), NULL, 0);
             break;
 
         case WM_CLOSE:
