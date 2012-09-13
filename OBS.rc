@@ -1,0 +1,428 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// 日本語 resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_JPN)
+#ifdef _WIN32
+LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
+#pragma code_page(932)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_SETTINGS DIALOGEX 0, 0, 558, 315
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Settings"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,338,294,67,14
+    PUSHBUTTON      "Cancel",IDCANCEL,411,294,67,14
+    PUSHBUTTON      "Apply",IDC_APPLY,483,294,67,14
+    LISTBOX         IDC_SETTINGSLIST,3,4,118,287,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "スタティック",IDC_SUBDIALOG,"Static",SS_LEFTNOWORDWRAP | NOT WS_VISIBLE | WS_GROUP,124,5,427,287,WS_EX_STATICEDGE
+END
+
+IDD_SETTINGS_PUBLISH DIALOGEX 0, 0, 427, 287
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD | WS_SYSMENU
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    RTEXT           "Settings.Publish.Mode",IDC_STATIC,4,12,138,8,WS_DISABLED
+    COMBOBOX        IDC_MODE,144,10,126,59,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Settings.Publish.Service",IDC_SERVICE_STATIC,4,29,138,8
+    COMBOBOX        IDC_SERVICE,144,27,126,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Settings.Publish.Username",IDC_USERNAME_STATIC,4,220,138,8,NOT WS_VISIBLE
+    EDITTEXT        IDC_USERNAME,144,218,226,14,ES_AUTOHSCROLL | NOT WS_VISIBLE
+    RTEXT           "Settings.Publish.Playpath",IDC_PLAYPATH_STATIC,4,64,138,8
+    EDITTEXT        IDC_PLAYPATH,144,61,226,14,ES_PASSWORD | ES_AUTOHSCROLL
+    RTEXT           "Settings.Publish.ChannelName",IDC_CHANNELNAME_STATIC,4,47,138,8
+    EDITTEXT        IDC_CHANNELNAME,144,44,226,14,ES_AUTOHSCROLL
+    RTEXT           "Settings.Publish.Server",IDC_SERVER_STATIC,4,81,138,8
+    COMBOBOX        IDC_SERVERLIST,144,79,226,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Settings.Info",IDC_INFO,4,119,408,37,NOT WS_VISIBLE
+    EDITTEXT        IDC_SERVEREDIT,144,78,226,14,ES_AUTOHSCROLL
+    CONTROL         "Settings.Publish.BufferSends",IDC_BUFFERSENDS,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,144,98,276,10
+END
+
+IDD_SETTINGS_ENCODING DIALOGEX 0, 0, 427, 287
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD | WS_SYSMENU
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "Settings.Encoding.Video",IDC_STATIC,4,2,417,64
+    RTEXT           "Settings.Encoding.Video.Quality",IDC_STATIC,10,15,138,8
+    COMBOBOX        IDC_QUALITY,152,13,61,62,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Settings.Encoding.Video.Tradeoff",IDC_STATIC,221,15,128,8
+    COMBOBOX        IDC_PRESET,354,13,61,62,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Settings.Encoding.Video.MaxBitRate",IDC_STATIC,10,31,138,8
+    EDITTEXT        IDC_MAXBITRATE,152,29,61,14,ES_AUTOHSCROLL | ES_NUMBER
+    RTEXT           "Settings.Encoding.Video.BufferSize",IDC_STATIC,221,31,128,8
+    EDITTEXT        IDC_BUFFERSIZE,354,29,61,14,ES_AUTOHSCROLL | ES_NUMBER
+    GROUPBOX        "Settings.Encoding.Audio",IDC_STATIC,4,73,417,50
+    RTEXT           "Settings.Encoding.Audio.Codec",IDC_STATIC,10,89,138,8
+    COMBOBOX        IDC_AUDIOCODEC,152,87,61,62,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Settings.Encoding.Audio.Bitrate",IDC_STATIC,221,89,128,8
+    COMBOBOX        IDC_AUDIOBITRATE,354,87,61,62,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Settings.Encoding.Audio.Format",IDC_STATIC,10,105,138,8
+    COMBOBOX        IDC_AUDIOFORMAT,152,103,264,62,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Settings.Info",IDC_INFO,4,131,417,37,NOT WS_VISIBLE
+    CONTROL         "Settings.Encoding.Video.UseI444",IDC_USEI444,"Button",BS_AUTOCHECKBOX | BS_LEFTTEXT | NOT WS_VISIBLE | WS_TABSTOP,10,48,151,10,WS_EX_RIGHT
+END
+
+IDD_SETTINGS_VIDEO DIALOGEX 0, 0, 427, 287
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD | WS_SYSMENU
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "Settings.Video.Resolution",IDC_STATIC,4,2,418,50
+    CONTROL         "Settings.Video.Custom",IDC_USECUSTOM,"Button",BS_AUTORADIOBUTTON,22,14,116,10
+    EDITTEXT        IDC_SIZEX,144,13,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_SIZEY,186,13,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Settings.Video.Monitor",IDC_USEMONITOR,"Button",BS_AUTORADIOBUTTON,22,31,116,10
+    COMBOBOX        IDC_MONITOR,144,30,36,126,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Settings.Video.Downscale",IDC_STATIC,4,70,138,8
+    COMBOBOX        IDC_DOWNSCALE,144,68,151,126,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Settings.Video.FPS",IDC_STATIC,4,89,138,8
+    EDITTEXT        IDC_FPS_EDIT,144,86,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_FPS,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,185,86,10,14
+    LTEXT           "Settings.Info",IDC_INFO,4,123,418,37,NOT WS_VISIBLE
+    CONTROL         "Settings.Video.DisableAero",IDC_DISABLEAERO,"Button",BS_AUTOCHECKBOX | BS_LEFTTEXT | WS_TABSTOP,4,107,149,10,WS_EX_RIGHT
+    LTEXT           "Settings.Video.Recommended",IDC_STATIC,158,107,258,8
+END
+
+IDD_SETTINGS_GENERAL DIALOGEX 0, 0, 427, 287
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD | WS_SYSMENU
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    COMBOBOX        IDC_LANGUAGE,144,10,195,126,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Settings.General.Language",IDC_STATIC,4,12,138,8
+    LTEXT           "Settings.General.Restart",IDC_INFO,11,49,409,48,NOT WS_VISIBLE
+END
+
+IDD_SETTINGS_AUDIO DIALOGEX 0, 0, 427, 287
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD | WS_SYSMENU
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Settings.Info",IDC_INFO,4,44,408,37,NOT WS_VISIBLE
+    RTEXT           "Settings.Audio.Device",IDC_STATIC,4,12,138,8
+    COMBOBOX        IDC_MICDEVICES,144,10,226,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_ENTERNAME DIALOGEX 0, 0, 265, 49
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "EnterName"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    EDITTEXT        IDC_NAME,10,9,248,14,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,155,28,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,209,28,50,14
+END
+
+IDD_CONFIGUREDESKTOPSOURCE DIALOGEX 0, 0, 379, 212
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Sources.SoftwareCaptureSource"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "Sources.SoftwareCaptureSource.MonitorCapture",IDC_MONITORCAPTURE,
+                    "Button",BS_AUTORADIOBUTTON,7,7,365,10
+    RTEXT           "Sources.SoftwareCaptureSource.Monitor",IDC_STATIC,7,23,96,8
+    COMBOBOX        IDC_MONITOR,107,20,36,126,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Sources.SoftwareCaptureSource.WindowCapture",IDC_WINDOWCAPTURE,
+                    "Button",BS_AUTORADIOBUTTON,7,49,365,10
+    RTEXT           "Sources.SoftwareCaptureSource.Window",IDC_STATIC,7,68,96,8
+    COMBOBOX        IDC_WINDOW,107,66,197,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Sources.SoftwareCaptureSource.Refresh",IDC_REFRESH,310,65,62,14
+    CONTROL         "Sources.SoftwareCaptureSource.InnerWindow",IDC_INNERWINDOW,
+                    "Button",BS_AUTORADIOBUTTON,106,83,266,10
+    CONTROL         "Sources.SoftwareCaptureSource.EntireWindow",IDC_OUTERWINDOW,
+                    "Button",BS_AUTORADIOBUTTON,106,95,266,10
+    CONTROL         "Sources.SoftwareCaptureSource.MouseCapture",IDC_CAPTUREMOUSE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,119,283,10
+    CONTROL         "Sources.SoftwareCaptureSource.RegionCapture",IDC_REGIONCAPTURE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,132,235,10
+    RTEXT           "Sources.SoftwareCaptureSource.Position",IDC_STATIC,7,151,96,8
+    EDITTEXT        IDC_POSX,107,148,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_POSY,149,148,40,14,ES_AUTOHSCROLL
+    RTEXT           "Sources.SoftwareCaptureSource.Size",IDC_STATIC,7,168,96,8
+    EDITTEXT        IDC_SIZEX,107,166,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_SIZEY,149,166,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    PUSHBUTTON      "Sources.SoftwareCaptureSource.SelectRegion",IDC_SELECTREGION,193,148,77,14
+    DEFPUSHBUTTON   "OK",IDOK,268,191,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,322,191,50,14
+END
+
+IDD_CONFIGUREBITMAPSOURCE DIALOGEX 0, 0, 244, 54
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Sources.BitmapSource"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,132,33,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,186,33,50,14
+    EDITTEXT        IDC_BITMAP,12,10,170,14,ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "Browse",IDC_BROWSE,186,10,50,14
+END
+
+IDD_GLOBAL_SOURCES DIALOGEX 0, 0, 227, 195
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "GlobalSources"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,169,174,50,14
+    LISTBOX         IDC_SOURCES,7,7,130,153,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Add",IDC_ADD,143,7,77,14
+    PUSHBUTTON      "Listbox.Remove",IDC_REMOVE,143,22,77,14
+    PUSHBUTTON      "Listbox.Rename",IDC_RENAME,143,45,77,14
+    PUSHBUTTON      "Listbox.Config",IDC_CONFIG,143,69,77,14
+END
+
+IDD_PLUGINS DIALOGEX 0, 0, 402, 203
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Plugins"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LISTBOX         IDC_PLUGINS,7,7,197,170,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "",IDC_DESCRIPTION,211,7,184,170
+    PUSHBUTTON      "Plugins.Configure",IDC_CONFIG,7,182,79,14,WS_DISABLED
+    DEFPUSHBUTTON   "OK",IDOK,345,182,50,14
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_SETTINGS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 551
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 308
+    END
+
+    IDD_SETTINGS_PUBLISH, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 420
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 280
+    END
+
+    IDD_SETTINGS_ENCODING, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 420
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 280
+    END
+
+    IDD_SETTINGS_VIDEO, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 420
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 280
+    END
+
+    IDD_SETTINGS_GENERAL, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 420
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 280
+    END
+
+    IDD_SETTINGS_AUDIO, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 420
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 280
+    END
+
+    IDD_ENTERNAME, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 258
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 42
+    END
+
+    IDD_CONFIGUREDESKTOPSOURCE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 372
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 205
+    END
+
+    IDD_CONFIGUREBITMAPSOURCE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 237
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 47
+    END
+
+    IDD_GLOBAL_SOURCES, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 220
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 188
+    END
+
+    IDD_PLUGINS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 395
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 196
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON1               ICON                    "ui\\test2\\test.ico"
+IDI_SOUND_MIC           ICON                    "ui\\mic2.ico"
+IDI_SOUND_MIC_MUTED     ICON                    "ui\\mic2-muted.ico"
+IDI_SOUND_DESKTOP       ICON                    "ui\\speaker.ico"
+IDI_SOUND_DESKTOP_MUTED ICON                    "ui\\speaker-muted.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_SETTINGS_ENCODING DLGINIT
+BEGIN
+    IDC_PRESET, 0x403, 8, 0
+0x6466, 0x6673, 0x7364, 0x0066, 
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_ACCELERATOR1 ACCELERATORS 
+BEGIN
+    "C",            IDA_SOURCE_CENTER,      VIRTKEY, CONTROL, NOINVERT
+    VK_DELETE,      IDA_SOURCE_DELETE,      VIRTKEY, NOINVERT
+    VK_DOWN,        IDA_SOURCE_MOVEDOWN,    VIRTKEY, CONTROL, NOINVERT
+    VK_END,         IDA_SOURCE_MOVETOBOTTOM, VIRTKEY, CONTROL, NOINVERT
+    VK_HOME,        IDA_SOURCE_MOVETOTOP,   VIRTKEY, CONTROL, NOINVERT
+    VK_UP,          IDA_SOURCE_MOVEUP,      VIRTKEY, CONTROL, NOINVERT
+    "R",            IDA_SOURCE_RESETSIZE,   VIRTKEY, CONTROL, NOINVERT
+    "F",            IDA_SOURCE_FITTOSCREEN, VIRTKEY, CONTROL, NOINVERT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 0,3,6,0
+ PRODUCTVERSION 0,3,6,0
+ FILEFLAGSMASK 0x17L
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "041104b0"
+        BEGIN
+            VALUE "FileDescription", "Open Broadcaster Software"
+            VALUE "FileVersion", "0, 3, 6, 0"
+            VALUE "InternalName", "OBS"
+            VALUE "LegalCopyright", "Copyright (C) 2012"
+            VALUE "OriginalFilename", "OBS.exe"
+            VALUE "ProductName", "Open Broadcaster Software"
+            VALUE "ProductVersion", "0, 3, 6, 0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x411, 1200
+    END
+END
+
+#endif    // 日本語 resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

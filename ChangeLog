@@ -1,0 +1,104 @@
+(yyyy-mm-dd)
+
+
+-------------------------------
+
+2012-9-12 - 0.36 (alpha)
+    * Fixed more directshow bugs
+    * Fixed bug that caused non-twitch services to be saved as twitch
+    * Attempted to fix AMD CPU issue by setting the main capture thread
+      affinity -- needs testing again.
+    * Added a message box that let's you know if the server has
+      disconnected you.
+
+-------------------------------
+
+2012-9-10 - 0.35 (alpha)
+    * Added send buffering to the RTMP publisher (major thanks to
+      frostshocker, modnite, kendobear, and d2ultima for helping test
+      out and verify this new technique)
+    * Added a few features to the version of librtmp I use to allow
+      for custom adjustments
+    * Tweaked network settings again
+    * Fixed a directshow issue where some resolutions could cause a
+      crash (thanks to R1CH for pointing out the code directly)
+    * Switched to D3D10.1 to improve compatibility with devices
+      (thanks to d2ultima for pointing out his d3d11 incompatibility)
+
+-------------------------------
+
+2012-9-08 - 0.34 (alpha)
+    * Reworked network publish code, added I-Frame-Delay algorithm to
+      automatically drop frames based upon usage if possible
+    * Added a little network control thing so users can see their
+      bandwidth usage, and to see if there's any network strain
+    * 7.1 should no longer have sound issues, but code is still
+      experimental
+    * updated x264 settings, was using a poor setting choice.  should
+      give a much better compression ratio now under most CPU presets.
+    * tweaked capture code again, didn't like the way window capture
+      would display a black box every time you minimized a window.
+      instead it now just freezes the frame.
+    * Added the ability to type in custom resolution in the directshow
+      video devices plugin.
+   
+-------------------------------
+
+2012-9-06 - 0.33 (alpha)
+    * Fixed issue with bitmaps of non-power-of-two sizes not displaying
+    * Added region capture and window specific capture.  Window specific
+      capture seems super fast.  Was getting like 50-60 FPS average from
+      starcraft 2 for example.
+    * Fixed some other minor issues and potential bugs
+    * Added own3d with some servers to the services list
+
+
+-------------------------------
+
+2012-9-01 - 0.32 (alpha)
+    * Fixed a crash when adding sources in some situations
+    * Fixed some crashes related to audio code, forgot to make sure
+      that the audio buffers were on a 128bit boundry before using SSE
+      instructions (happened to me as well).  Which means mics and audio
+      devices should hopefully work properly now.
+    * Fixed a potential crash with x264 (Apparently you should only really
+      query the x264 header packets before it starts encoding, otherwise
+      you risk crashing)
+    * Fixed a MAJOR bug with framerates and video smoothness, the cause
+      was due to the fact that b-frames can have a reverse timestamp after
+      p-frames, and I did not take that into account when sending packets.
+      Updated the AVC packet code, frames are now displaying at the
+      intended intervals.  Wow was that one difficult to pinpoint, as well
+      as fix.
+    * Added 7.1 speaker support, apparently I didn't actually put it in.
+      People have some nice speaker setups.
+
+-------------------------------
+
+2012-8-28 - 0.31 (alpha)
+    * Received my video capture card, discovered a few bugs
+      in my DirectShow code that needed fixing
+    * Made DirectShow work with a few YUV planar formats
+
+-------------------------------
+
+2012-8-26 - 0.3 (alpha)
+    * Finished first version of the API DLL interface so that
+      developers can write their own plugins
+    * Finished first version of the DirectShow device plugin,
+      still needs some testing
+    * Refactored audio code and mixer due to minor code design
+      flaws I didn't forsee
+    * Completely rewrote graphics code, made a graphics wrapper
+      so that D3D11 is completely handled behind the scenes
+    * Added ability to use global sources that persist until
+      the stream ends (best used for video devices)
+    * Fixed a ton of bugs
+
+-------------------------------
+
+2012-8-10 - 0.2 (alpha)
+    * First "usable" state, still many features to be written
+
+-------------------------------
+

@@ -1,0 +1,17 @@
+﻿Cancel          "Отмена"
+ClassName       "Устройство Видео Захвата"
+DeviceSelection "Выбор устройства"
+OK              "OK"
+
+DeviceSelection.Config          "Настройки"
+DeviceSelection.Device          "Устройство:"
+DeviceSelection.ExistsInScene   "Источник использующийся  этим устройством уже существует."using this device already exists."
+DeviceSelection.ExistsSomewhere "Это устройство используется как источник в одной или несколких сценах."
+DeviceSelection.FlipImage       "Перевернуть Изображение"
+DeviceSelection.FPS             "FPS:"
+DeviceSelection.GlobalExists    "Глобальный источник использующий это устройство уже существует."
+DeviceSelection.Refresh         "Обновить"
+DeviceSelection.Resolution      "Разрешение:"
+
+Plugin.Description  "Этот плагин позволяет добавлять DirectShow видео устройства (вебкамеры, карты захвата, и т.д.) на сцену."
+Plugin.Name         "DirectShow Video Device Plugin"
