@@ -1,4 +1,4 @@
-﻿Add             "追加"
+Add             "追加"
 Apply           "適用"
 Browse          "参照"
 Cancel          "キャンセル"
@@ -14,6 +14,11 @@ Plugins         "プラグイン"
 Scene           "シーン"
 Settings        "設定"
 StreamReport    "ストリーム情報"
+
+Connection.CouldNotConnect  "サーバーに接続できません"
+Connection.CouldNotParseURL "URLを解析できません"
+Connection.Disconnected     "サーバーから切断されました"
+Connection.InvalidStream    "ストリームのチャンネルやプレイ パス/キーは不正です"
 
 DeleteConfirm.Title "削除しますか?"
 
@@ -100,8 +105,7 @@ Sources.BitmapSource            "ビットマップ画像"
 Sources.GlobalSource            "グローバル ソース"
 Sources.SoftwareCaptureSource   "ソフトウェア キャプチャー ソース"
 
-Sources.BitmapSource.Empty      "パスは空です。ビットマップ画像を参照して選択してください"
-Sources.BitmapSource.ResetSize  "サイズを更新する"
+Sources.BitmapSource.Empty  "パスは空です。ビットマップ画像を参照して選択してください"
 
 Sources.SoftwareCaptureSource.EntireWindow      "ウィンドウ全部"
 Sources.SoftwareCaptureSource.InnerWindow       "ウィンドウ内部"

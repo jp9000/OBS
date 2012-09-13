@@ -100,4 +100,3 @@ Sources.BitmapSource    "Bitikaart"
 Sources.GlobalSource    "Globaalne allikas"
 
 Sources.BitmapSource.Empty      "Bitikaart pole sisestatud. Palun sisesta bitikaart."
-Sources.BitmapSource.ResetSize  "Algseadista suurus"

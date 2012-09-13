@@ -100,4 +100,3 @@ Sources.BitmapSource    "Битмап"
 Sources.GlobalSource    "Глобален източник"
 
 Sources.BitmapSource.Empty      "Няма избран битмап. Моля селектирайте валиден битмап файл."
-Sources.BitmapSource.ResetSize  "Размер по подразбиране"

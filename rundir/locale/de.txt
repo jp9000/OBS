@@ -100,4 +100,3 @@ Sources.BitmapSource    "Bitmap"
 Sources.GlobalSource    "Globale Quelle"
 
 Sources.BitmapSource.Empty      "keine Bitmap angegeben.  Bitte wählen sie eine Bitmap aus."
-Sources.BitmapSource.ResetSize  "Maße zurücksetzen"

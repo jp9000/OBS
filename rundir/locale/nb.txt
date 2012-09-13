@@ -101,4 +101,3 @@ Sources.BitmapSource    "Bitmap"
 Sources.GlobalSource    "Global kilde"
 
 Sources.BitmapSource.Empty      "Ingen bitmap skrivd inn.  Vennligst bla gjennom og velg bitmap"
-Sources.BitmapSource.ResetSize  "Gjenninnstill størrelse"

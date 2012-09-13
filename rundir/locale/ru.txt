@@ -101,7 +101,6 @@ Sources.GlobalSource    "Глобальный источник"
 Sources.SoftwareCaptureSource   "Программный источник захвата"
 
 Sources.BitmapSource.Empty      "Изображение не найдено. Пожалуйста, найдите и выберите картинку."
-Sources.BitmapSource.ResetSize  "Сброс размера"
 
 Sources.SoftwareCaptureSource.EntireWindow      "Все окно"
 Sources.SoftwareCaptureSource.InnerWindow       "Часть окна"

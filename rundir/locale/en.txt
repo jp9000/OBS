@@ -15,6 +15,11 @@ Scene           "Scene"
 Settings        "Settings"
 StreamReport    "Stream Report"
 
+Connection.CouldNotConnect  "Could not connect to server"
+Connection.CouldNotParseURL "Could not parse URL"
+Connection.Disconnected     "Disconnected by server"
+Connection.InvalidStream    "Invalid stream channel or playpath"
+
 DeleteConfirm.Title "Delete selected items?"
 
 GlobalSources.DeleteConfirm "If you delete a global source, it will be removed from any scene that uses it.  Are you sure you want to continue?"
@@ -100,8 +105,7 @@ Sources.BitmapSource            "Bitmap"
 Sources.GlobalSource            "Global Source"
 Sources.SoftwareCaptureSource   "Software Capture Source"
 
-Sources.BitmapSource.Empty      "No bitmap entered.  Please browse and select a bitmap"
-Sources.BitmapSource.ResetSize  "Reset Size"
+Sources.BitmapSource.Empty  "No bitmap entered.  Please browse and select a bitmap"
 
 Sources.SoftwareCaptureSource.EntireWindow      "Entire Window"
 Sources.SoftwareCaptureSource.InnerWindow       "Inner Window"
