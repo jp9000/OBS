@@ -134,10 +134,8 @@ BASE_EXPORT void   STDCALL OSCloseMutex(HANDLE hMutex);
 
 BASE_EXPORT void   STDCALL OSSetMainAppWindow(HANDLE window);
 
-BASE_EXPORT HANDLE STDCALL OSCreateTimer();
-BASE_EXPORT void   STDCALL OSCloseTimer(HANDLE hTimer);
-BASE_EXPORT DWORD  STDCALL OSGetTime(HANDLE hTimer);
-BASE_EXPORT QWORD  STDCALL OSGetTimeMicroseconds(HANDLE hTimer);
+BASE_EXPORT DWORD  STDCALL OSGetTime();
+BASE_EXPORT QWORD  STDCALL OSGetTimeMicroseconds();
 
 BASE_EXPORT void __cdecl   OSMessageBoxva(const TCHAR *format, va_list argptr);
 BASE_EXPORT void __cdecl   OSMessageBox(const TCHAR *format, ...);

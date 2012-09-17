@@ -10,7 +10,6 @@ List of features yet to be implemented:
     * Option to output to mp4/avi file.  Not going to use ffmpeg by
       the way.  Just no way I'm going to use that thing.  I'll write
       it myself
-    * external hotkeys
     * add advanced settings for things like encoding and such
     * add video settings to allow gamma/brightness/contrast adjustment
 

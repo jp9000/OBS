@@ -57,6 +57,8 @@ NetworkStream* CreateNullNetwork();
 
 void Convert444to420(LPBYTE input, int width, int height, LPBYTE *output, bool bSSE2Available);
 
+void STDCALL SceneHotkey(DWORD hotkey, UPARAM param);
+
 
 inline BOOL CloseDouble(double f1, double f2, double precision=0.001)
 {
@@ -289,10 +291,21 @@ Scene* STDCALL CreateNormalScene(XElement *data)
     return new Scene;
 }
 
+struct HotkeyInfo
+{
+    DWORD hotkey;
+    OBSHOTKEYPROC hotkeyProc;
+    UPARAM param;
+    bool bDown;
+};
 
 class OBSAPIInterface : public APIInterface
 {
     friend class OBS;
+
+    List<HotkeyInfo> hotkeys;
+
+    void HandleHotkeys();
 
 public:
     OBSAPIInterface() {bSSE2Availabe = App->bSSE2Available;}
@@ -324,6 +337,10 @@ public:
     virtual CTSTR GetSceneName() const          {return App->GetSceneElement()->GetName();}
     virtual XElement* GetSceneElement()         {return App->GetSceneElement();}
 
+    virtual bool HotkeyExists(DWORD hotkey) const;
+    virtual bool CreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARAM param);
+    virtual void DeleteHotkey(DWORD hotkey);
+
     virtual Vect2 GetBaseSize() const           {return Vect2(float(App->baseCX), float(App->baseCY));}
     virtual Vect2 GetRenderFrameSize() const    {return Vect2(float(App->renderFrameWidth), float(App->renderFrameHeight));}
     virtual Vect2 GetOutputSize() const         {return Vect2(float(App->outputCX), float(App->outputCY));}
@@ -341,6 +358,15 @@ OBS::OBS()
     App = this;
 
     __cpuid(cpuInfo, 1);
+    BYTE cpuSteppingID  = cpuInfo[0] & 0xF;
+    BYTE cpuModel       = (cpuInfo[0]>>4) & 0xF;
+    BYTE cpuFamily      = (cpuInfo[0]>>8) & 0xF;
+    BYTE cpuType        = (cpuInfo[0]>>12) & 0x3;
+    BYTE cpuExtModel    = (cpuInfo[0]>>17) & 0xF;
+    BYTE cpuExtFamily   = (cpuInfo[0]>>21) & 0xFF;
+
+    Log(TEXT("stepping id: %u, model %u, family %u, type %u, extmodel %u, extfamily %u"), cpuSteppingID, cpuModel, cpuFamily, cpuType, cpuExtModel, cpuExtFamily);
+
     bSSE2Available = (cpuInfo[3] & (1<<26)) != 0;
 
     hSceneMutex = OSCreateMutex();
@@ -636,12 +662,22 @@ OBS::OBS()
 
     //-----------------------------------------------------
 
+    hHotkeyMutex = OSCreateMutex();
+
+    //-----------------------------------------------------
+
     API = new OBSAPIInterface;
 
     ResizeWindow(false);
     ShowWindow(hwndMain, SW_SHOW);
 
-    LPBYTE chi = LPBYTE(UPARAM(54));
+    for(UINT i=0; i<numScenes; i++)
+    {
+        XElement *scene = scenes->GetElementByID(i);
+        DWORD hotkey = scene->GetInt(TEXT("hotkey"));
+        if(hotkey)
+            API->CreateHotkey(hotkey, SceneHotkey, 0);
+    }
 
     //-----------------------------------------------------
     // load plugins
@@ -719,6 +755,8 @@ OBS::~OBS()
     delete API;
     API = NULL;
 
+    OSCloseMutex(hHotkeyMutex);
+
     traceOut;
 }
 
@@ -732,6 +770,26 @@ void OBS::ToggleCapturing()
         Stop();
 
     traceOut;
+}
+
+void STDCALL SceneHotkey(DWORD hotkey, UPARAM param)
+{
+    XElement *scenes = API->GetSceneListElement();
+    if(scenes)
+    {
+        UINT numScenes = scenes->NumElements();
+        for(UINT i=0; i<numScenes; i++)
+        {
+            XElement *scene = scenes->GetElementByID(i);
+            DWORD sceneHotkey = (DWORD)scene->GetInt(TEXT("hotkey"));
+            if(sceneHotkey == hotkey)
+            {
+                Log(TEXT("hotkey pressed for scene '%s'"), scene->GetName());
+                App->SetScene(scene->GetName());
+                return;
+            }
+        }
+    }
 }
 
 HICON OBS::GetIcon(HINSTANCE hInst, int resource)
@@ -971,17 +1029,26 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
-    hRequestAudioEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-    hSoundDataMutex = OSCreateMutex();
-    hSoundThread = OSCreateThread((XTHREAD)OBS::MainAudioThread, NULL);
-
-    //-------------------------------------------------------------
-
     int maxBitRate = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("MaxBitrate"), 1000);
     int bufferSize = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("BufferSize"), 1000);
     int quality    = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Quality"),    8);
     String preset  = AppConfig->GetString(TEXT("Video Encoding"), TEXT("Preset"),     TEXT("veryfast"));
     bUsing444      = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Use444"),     0) != 0;
+
+    bUseSyncFix    = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("UseSyncFix"), 0) != 0;
+
+    if(bUseSyncFix)
+    {
+        Log(TEXT("------------------------------------------"));
+        Log(TEXT("  Using audio/video sync fix"));
+        hTimeMutex = OSCreateMutex();
+    }
+
+    //-------------------------------------------------------------
+
+    hRequestAudioEvent = CreateSemaphore(NULL, 0, 0x7FFFFFFFL, NULL);
+    hSoundDataMutex = OSCreateMutex();
+    hSoundThread = OSCreateThread((XTHREAD)OBS::MainAudioThread, NULL);
 
     //-------------------------------------------------------------
 
@@ -1035,7 +1102,7 @@ void OBS::Stop()
 
     if(hSoundThread)
     {
-        SetEvent(hRequestAudioEvent);
+        ReleaseSemaphore(hRequestAudioEvent, 1, NULL);
         OSTerminateThread(hSoundThread, 20000);
     }
 
@@ -1064,6 +1131,11 @@ void OBS::Stop()
     desktopAudio = NULL;
     audioEncoder = NULL;
     videoEncoder = NULL;
+
+    //-------------------------------------------------------------
+
+    if(bUseSyncFix)
+        OSCloseMutex(hTimeMutex);
 
     //-------------------------------------------------------------
 
@@ -1201,17 +1273,12 @@ inline void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
 
 DWORD STDCALL OBS::MainCaptureThread(LPVOID lpUnused)
 {
-    SYSTEM_INFO si;
-    GetSystemInfo(&si);
-    DWORD numProcessors = si.dwNumberOfProcessors;
-    DWORD lastProcessor = numProcessors-1;
-
-    DWORD_PTR retVal = SetThreadAffinityMask(GetCurrentThread(), 1<<lastProcessor);
+    /*DWORD_PTR retVal = SetThreadAffinityMask(GetCurrentThread(), 1);
     if(retVal == 0)
     {
         int lastError = GetLastError();
         nop();
-    }
+    }*/
 
     App->MainCaptureLoop();
     return 0;
@@ -1227,16 +1294,14 @@ void OBS::MainCaptureLoop()
 {
     traceIn(OBS::MainCaptureLoop);
 
-    HANDLE hTimer = OSCreateTimer();
-
     int curRenderTarget = 0, curCopyTexture = 0;
     int copyWait = NUM_RENDER_BUFFERS-1;
-    UINT curStreamTime = 0, firstFrameTime = OSGetTime(hTimer), lastStreamTime = 0;
-    UINT lastTime = 0;
+    UINT curStreamTime = 0, firstFrameTime = OSGetTime(), lastStreamTime = 0;
+    UINT lastPTSVal = 0;
 
-    List<UINT> bufferedTimes;
+    bool bSentHeaders = false;
 
-    bool bFirstFrame = true;
+    bufferedTimes.Clear();
 
     //firstFrameTime -= UINT(frameTime);
 
@@ -1273,18 +1338,29 @@ void OBS::MainCaptureLoop()
     float bpsTime = 0.0f;
     double lastStrain = 0.0f;
 
+    DWORD audioResyncOffset = 0;
+
+    UINT timeAdjust = 0;
+
     while(bRunning)
     {
-        DWORD renderStartTime = OSGetTime(hTimer);
+        DWORD renderStartTime = OSGetTime();
 
         bool bRenderView = !IsIconic(hwndMain);
 
         profileIn("frame");
 
         curStreamTime = renderStartTime-firstFrameTime;
-        bufferedTimes << curStreamTime;
+        DWORD frameDelta = curStreamTime-lastStreamTime;
 
-        float fSeconds = float(curStreamTime-lastStreamTime)*0.001f;
+        if(bUseSyncFix)
+            ReleaseSemaphore(hRequestAudioEvent, 1, NULL);
+        else
+            bufferedTimes << curStreamTime;
+
+        //Log(TEXT("expected frame timing is %u, frame time: %u"), frameTime, curStreamTime-lastStreamTime);
+
+        float fSeconds = float(frameDelta)*0.001f;
 
         lastStreamTime = curStreamTime;
 
@@ -1426,7 +1502,8 @@ void OBS::MainCaptureLoop()
             {
                 Ortho(0.0f, baseSize.x, baseSize.y, 0.0f, -1.0f, 1000.0f);
 
-                scene->RenderSelections();
+                if(scene)
+                    scene->RenderSelections();
             }
         }
 
@@ -1473,6 +1550,20 @@ void OBS::MainCaptureLoop()
 
         if(copyWait)
             copyWait--;
+        else if(bUseSyncFix && (bufferedTimes.Num() < 2 || bufferedTimes[1] == 0))
+        {
+            if(bufferedTimes.Num() > 1)
+            {
+                OSEnterMutex(hTimeMutex);
+                bufferedTimes.Remove(0);
+                OSLeaveMutex(hTimeMutex);
+            }
+
+            if(curCopyTexture == (NUM_RENDER_BUFFERS-1))
+                curCopyTexture = 0;
+            else
+                curCopyTexture++;
+        }
         else
         {
             profileIn("CopyResource");
@@ -1501,40 +1592,68 @@ void OBS::MainCaptureLoop()
                     picOut.img.plane[0]    = (uint8_t*)map.pData;
                 }
 
-                picOut.i_pts = bufferedTimes[curPTS++];//curPTS++;//bufferedTimes[curPTS++]*90;//
+                //------------------------------------
+                // get timestamps
 
-                videoEncoder->Encode(&picOut, videoPackets, videoPacketTypes, bufferedTimes[0]);
+                DWORD curTimeStamp = 0;
+                DWORD curPTSVal = 0;
+
+                if(bUseSyncFix) OSEnterMutex(hTimeMutex);
+
+                curTimeStamp = bufferedTimes[0];
+                curPTSVal = bufferedTimes[curPTS++];
+
+                if(bUseSyncFix)
+                {
+                    if(curPTSVal != 0)
+                    {
+                        int toleranceVal = int(lastPTSVal+frameTime);
+                        int toleranceOffset = (int(curPTSVal)-toleranceVal);
+                        int halfFrameTime = int(frameTime/2);
+
+                        if(toleranceOffset > halfFrameTime)
+                            curPTSVal = DWORD(toleranceVal+(toleranceOffset-halfFrameTime));
+                        else if(toleranceOffset < -halfFrameTime)
+                            curPTSVal = DWORD(toleranceVal+(toleranceOffset+halfFrameTime));
+                        else
+                            curPTSVal = DWORD(toleranceVal);
+
+                        bufferedTimes[curPTS-1] = curPTSVal;
+                    }
+
+                    OSLeaveMutex(hTimeMutex);
+                }
+
+                picOut.i_pts = curPTSVal;
+
+                lastPTSVal = curPTSVal;
+
+                //------------------------------------
+                // encode
+
+                videoEncoder->Encode(&picOut, videoPackets, videoPacketTypes, curTimeStamp);
                 if(bUsing444) copyTexture->Unmap(0);
 
                 //------------------------------------
                 // upload
 
-                bool bSentVideo = false;
+                bool bSendingVideo = videoPackets.Num() > 0;
 
                 //send headers before the first frame if not yet sent
-                if(bFirstFrame && videoPackets.Num())
+                if(bSendingVideo)
                 {
-                    network->BeginPublishing();
-                    bFirstFrame = false;
-                }
+                    if(!bSentHeaders)
+                    {
+                        network->BeginPublishing();
+                        bSentHeaders = true;
+                    }
 
-                for(UINT i=0; i<videoPackets.Num(); i++)
-                {
-                    DataPacket &packet  = videoPackets[i];
-                    PacketType type     = videoPacketTypes[i];
-
-                    network->SendPacket(packet.lpPacket, packet.size, bufferedTimes[0], type);
-
-                    bSentVideo = true;
-                }
-
-                if(bSentVideo)
-                {
                     OSEnterMutex(hSoundDataMutex);
 
                     if(pendingAudioFrames.Num())
                     {
-                        while(pendingAudioFrames.Num() && pendingAudioFrames[0].timestamp < bufferedTimes[0])
+                        //Log(TEXT("pending frames %u, (in milliseconds): %u"), pendingAudioFrames.Num(), pendingAudioFrames.Last().timestamp-pendingAudioFrames[0].timestamp);
+                        while(pendingAudioFrames.Num() && pendingAudioFrames[0].timestamp < curTimeStamp)
                         {
                             List<BYTE> &audioData = pendingAudioFrames[0].audioData;
 
@@ -1553,10 +1672,19 @@ void OBS::MainCaptureLoop()
 
                     OSLeaveMutex(hSoundDataMutex);
 
-                    lastTime = bufferedTimes[0];
+                    for(UINT i=0; i<videoPackets.Num(); i++)
+                    {
+                        DataPacket &packet  = videoPackets[i];
+                        PacketType type     = videoPacketTypes[i];
+
+                        network->SendPacket(packet.lpPacket, packet.size, curTimeStamp, type);
+                    }
 
                     curPTS--;
+
+                    if(bUseSyncFix) OSEnterMutex(hTimeMutex);
                     bufferedTimes.Remove(0);
+                    if(bUseSyncFix) OSLeaveMutex(hTimeMutex);
                 }
             }
 
@@ -1578,12 +1706,13 @@ void OBS::MainCaptureLoop()
 
         //------------------------------------
         // get audio while sleeping or capturing
-        SetEvent(hRequestAudioEvent);
+        if(!bUseSyncFix)
+            ReleaseSemaphore(hRequestAudioEvent, 1, NULL);
 
         //------------------------------------
         // frame sync
 
-        DWORD renderStopTime = OSGetTime(hTimer);
+        DWORD renderStopTime = OSGetTime();
         DWORD totalTime = renderStopTime-renderStartTime;
 
         //OSDebugOut(TEXT("Total frame time: %d\r\n"), totalTime);
@@ -1600,8 +1729,6 @@ void OBS::MainCaptureLoop()
         x264_picture_clean(&picOut);
 
     Log(TEXT("Total frames rendered: %d, number of frames that lagged: %d (%0.2f%%) (it's okay for some frames to lag)"), numTotalFrames, numLongFrames, (double(numLongFrames)/double(numTotalFrames))*100.0);
-
-    OSCloseTimer(hTimer);
 
     traceOutStop;
 }
@@ -1726,7 +1853,27 @@ void OBS::MainAudioLoop()
 
         //-----------------------------------------------
 
+        if(bUseSyncFix)// && pendingAudioFrames.Num())
+        {
+            OSEnterMutex(hTimeMutex);
+            if(!pendingAudioFrames.Num())
+                bufferedTimes << 0;
+            else
+                bufferedTimes << pendingAudioFrames.Last().timestamp;
+            OSLeaveMutex(hTimeMutex);
+        }
+
+        //-----------------------------------------------
+
         OSLeaveMutex(hSoundDataMutex);
+
+        //-----------------------------------------------
+        // check hotkeys.
+        //   Why are we handling hotkeys like this?  Because RegisterHotkey and WM_HOTKEY
+        // does not work with fullscreen apps.  Therefore, we use GetKeyState once per frame
+        // instead.  We do it in this thread to keep any CPU usage out of the main capture thread.
+
+        static_cast<OBSAPIInterface*>(API)->HandleHotkeys();
     }
 
     for(UINT i=0; i<pendingAudioFrames.Num(); i++)
@@ -1758,4 +1905,143 @@ void OBS::SelectSources()
             }
         }
     }
+}
+
+void OBS::CallHotkey(DWORD hotkey)
+{
+    OBSAPIInterface *apiInterface = (OBSAPIInterface*)API;
+    OBSHOTKEYPROC hotkeyProc = NULL;
+    UPARAM param;
+
+    OSEnterMutex(hHotkeyMutex);
+
+    for(UINT i=0; i<apiInterface->hotkeys.Num(); i++)
+    {
+        HotkeyInfo &hi = apiInterface->hotkeys[i];
+        if(hi.hotkey == hotkey)
+        {
+            if(hi.hotkeyProc)
+            {
+                hotkeyProc  = hi.hotkeyProc;
+                param       = hi.param;
+            }
+            break;
+        }
+    }
+
+    OSLeaveMutex(hHotkeyMutex);
+
+    if(hotkeyProc)
+        hotkeyProc(hotkey, param);
+}
+
+bool OBSAPIInterface::HotkeyExists(DWORD hotkey) const
+{
+    OSEnterMutex(App->hHotkeyMutex);
+
+    for(UINT i=0; i<hotkeys.Num(); i++)
+    {
+        if(hotkeys[i].hotkey == hotkey)
+        {
+            OSLeaveMutex(App->hHotkeyMutex);
+            return true;
+        }
+    }
+
+    OSLeaveMutex(App->hHotkeyMutex);
+    return false;
+}
+
+bool OBSAPIInterface::CreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARAM param)
+{
+    if(!hotkey)
+        return false;
+
+    DWORD vk = LOWORD(hotkey);
+    DWORD modifier = HIWORD(hotkey);
+    DWORD fsModifiers = 0;
+
+    if(modifier & HOTKEYF_ALT)
+        fsModifiers |= MOD_ALT;
+    if(modifier & HOTKEYF_CONTROL)
+        fsModifiers |= MOD_CONTROL;
+    if(modifier & HOTKEYF_SHIFT)
+        fsModifiers |= MOD_SHIFT;
+
+    OSEnterMutex(App->hHotkeyMutex);
+    for(UINT i=0; i<hotkeys.Num(); i++)
+    {
+        if(hotkeys[i].hotkey == hotkey)
+        {
+            OSLeaveMutex(App->hHotkeyMutex);
+            return false;
+        }
+    }
+
+    HotkeyInfo &hi  = *hotkeys.CreateNew();
+    hi.hotkey       = hotkey;
+    hi.hotkeyProc   = hotkeyProc;
+    hi.param        = param;
+    hi.bDown        = false;
+    OSLeaveMutex(App->hHotkeyMutex);
+
+    return true;
+}
+
+void OBSAPIInterface::DeleteHotkey(DWORD hotkey)
+{
+    OSEnterMutex(App->hHotkeyMutex);
+    for(UINT i=0; i<hotkeys.Num(); i++)
+    {
+        if(hotkeys[i].hotkey == hotkey)
+        {
+            hotkeys.Remove(i);
+            break;
+        }
+    }
+    OSLeaveMutex(App->hHotkeyMutex);
+}
+
+void OBSAPIInterface::HandleHotkeys()
+{
+    List<DWORD> hitKeys;
+
+    DWORD modifiers = 0;
+    if(GetAsyncKeyState(VK_MENU) & 0x8000)
+        modifiers |= HOTKEYF_ALT;
+    if(GetAsyncKeyState(VK_CONTROL) & 0x8000)
+        modifiers |= HOTKEYF_CONTROL;
+    if(GetAsyncKeyState(VK_SHIFT) & 0x8000)
+        modifiers |= HOTKEYF_SHIFT;
+
+    OSEnterMutex(App->hHotkeyMutex);
+
+    for(UINT i=0; i<hotkeys.Num(); i++)
+    {
+        HotkeyInfo &info = hotkeys[i];
+
+        DWORD hotkeyVK          = LOWORD(info.hotkey);
+        DWORD hotkeyModifiers   = HIWORD(info.hotkey);
+
+        bool bModifiersMatch = (hotkeyModifiers == modifiers);
+        if(bModifiersMatch)
+        {
+            short keyState   = GetAsyncKeyState(hotkeyVK);
+            bool bDown       = (keyState & 0x8000) != 0;
+            bool bWasPressed = (keyState & 1) != 0;
+
+            if(bDown || bWasPressed)
+            {
+                if(!info.bDown)
+                    PostMessage(hwndMain, OBS_CALLHOTKEY, 0, info.hotkey);
+
+                info.bDown = bDown;
+                continue;
+            }
+        }
+
+        info.bDown = false;
+    }
+
+    OSLeaveMutex(App->hHotkeyMutex);
 }

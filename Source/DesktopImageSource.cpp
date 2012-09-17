@@ -681,6 +681,23 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
                 LocalizeWindow(hwnd);
 
+                //--------------------------------------------
+
+                HWND hwndToolTip = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL, WS_POPUP|TTS_NOPREFIX|TTS_ALWAYSTIP,
+                    CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+                    hwnd, NULL, hinstMain, NULL);
+
+                TOOLINFO ti;
+                zero(&ti, sizeof(ti));
+                ti.cbSize = sizeof(ti);
+                ti.uFlags = TTF_SUBCLASS|TTF_IDISHWND;
+                ti.hwnd = hwnd;
+
+                SendMessage(hwndToolTip, TTM_SETMAXTIPWIDTH, 0, 500);
+                SendMessage(hwndToolTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 8000);
+
+                //-----------------------------------------------------
+
                 ConfigDesktopSourceInfo *info = (ConfigDesktopSourceInfo*)lParam;
                 XElement *data = info->data;
 
@@ -694,12 +711,21 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                 //-----------------------------------------------------
 
+                hwndTemp = GetDlgItem(hwnd, IDC_MONITOR);
                 UINT monitor = data->GetInt(TEXT("monitor"));
-                SendMessage(GetDlgItem(hwnd, IDC_MONITOR), CB_SETCURSEL, monitor, 0);
+                SendMessage(hwndTemp, CB_SETCURSEL, monitor, 0);
+
+                ti.lpszText = (LPWSTR)Str("Sources.SoftwareCaptureSource.MonitorCaptureTooltip");
+                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_MONITORCAPTURE);
+                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
                 //-----------------------------------------------------
 
                 HWND hwndWindowList = GetDlgItem(hwnd, IDC_WINDOW);
+
+                ti.lpszText = (LPWSTR)Str("Sources.SoftwareCaptureSource.WindowCaptureTooltip");
+                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_WINDOWCAPTURE);
+                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
                 CTSTR lpWindowName = data->GetString(TEXT("window"));
                 CTSTR lpWindowClass = data->GetString(TEXT("windowClass"));
@@ -765,6 +791,10 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                     SetWindowText(GetDlgItem(hwnd, IDC_SIZEX), IntString(sizeX).Array());
                     SetWindowText(GetDlgItem(hwnd, IDC_SIZEY), IntString(sizeY).Array());
                 }
+
+                ti.lpszText = (LPWSTR)Str("Sources.SoftwareCaptureSource.SelectRegionTooltip");
+                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_SELECTREGION);
+                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
                 return TRUE;
             }

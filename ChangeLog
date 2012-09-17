@@ -3,6 +3,16 @@
 
 -------------------------------
 
+2012-9-16 - 0.37 (alpha)
+    * Added global hotkeys to the API interface, and scene hotkeys so
+      users can switch between scenes with the press of a key
+    * Added tooltips
+    * Added a fix for specific CPUs that have issue with timers and
+      video/audio syncing.
+    * More network code improvements and adjustments
+
+-------------------------------
+
 2012-9-12 - 0.36 (alpha)
     * Fixed more directshow bugs
     * Fixed bug that caused non-twitch services to be saved as twitch

@@ -91,7 +91,6 @@ Settings.Video.DisableAero  "Désactiver Aero au démarage:"
 Settings.Video.Downscale    "Diminuer la résolution:"
 Settings.Video.FPS          "FPS:"
 Settings.Video.Monitor      "Ecran:"
-Settings.Video.Recommended  "(Hautement recommandé pour l'enregistrement)"
 Settings.Video.Resolution   "Résolution de base:"
 
 Settings.Video.Downscale.None   "Aucune"

@@ -34,8 +34,7 @@ class BandwidthAnalyzer : public NetworkStream
 public:
     BandwidthAnalyzer()
     {
-        hTimer = OSCreateTimer();
-        lastTime = OSGetTime(hTimer);
+        lastTime = OSGetTime();
     }
 
     ~BandwidthAnalyzer()
@@ -48,19 +47,17 @@ public:
         /*strReport << App->GetVideoEncoder()->GetInfoString() << TEXT("\r\n\r\n");
         strReport << App->GetAudioEncoder()->GetInfoString() << TEXT("\r\n\r\n");*/
 
-        strReport << TEXT("Total Bytes transmitted: ") << Int64String(totalBytesTransmitted, 10) <<
-                     TEXT("\r\nTotal time of stream in seconds: ") << IntString(numSeconds) <<
-                     TEXT("\r\nAverage Bytes/Bits per second: ") << Int64String(bytesPerSec, 10) << TEXT(", ") << Int64String(bytesPerSec*8, 10) <<
-                     TEXT("\r\nHighest Bytes/Bits in a second: ") << IntString(highestBytes) << TEXT(", ") << IntString(highestBytes*8);
+        strReport << TEXT("Total Bytes transmitted: ") << UInt64String(totalBytesTransmitted, 10) <<
+                     TEXT("\r\nTotal time of stream in seconds: ") << UIntString(numSeconds) <<
+                     TEXT("\r\nAverage Bytes/Bits per second: ") << UInt64String(bytesPerSec, 10) << TEXT(", ") << UInt64String(bytesPerSec*8, 10) <<
+                     TEXT("\r\nHighest Bytes/Bits in a second: ") << UIntString(highestBytes) << TEXT(", ") << UIntString(highestBytes*8);
 
         App->SetStreamReport(strReport);
-
-        OSCloseTimer(hTimer);
     }
 
     void SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)
     {
-        DWORD curTime = OSGetTime(hTimer);
+        DWORD curTime = OSGetTime();
 
         curBytes += size+8;  //just assume a header of 8 bytes
 

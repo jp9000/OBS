@@ -241,6 +241,7 @@ enum
 };
 
 #define OBS_REQUESTSTOP WM_USER+1
+#define OBS_CALLHOTKEY  WM_USER+2
 
 //----------------------------
 
@@ -363,6 +364,12 @@ class OBS
     HANDLE  hSceneMutex;
     bool    bUsing444;
 
+    bool        bUseSyncFix;
+    HANDLE      hTimeMutex;
+    List<UINT>  bufferedTimes;
+
+    HANDLE  hHotkeyMutex;
+
     HANDLE  hSoundThread, hSoundDataMutex, hRequestAudioEvent;
     float   desktopVol, micVol;
     List<FrameAudio> pendingAudioFrames;
@@ -436,6 +443,7 @@ class OBS
     static INT_PTR CALLBACK EnterGlobalSourceNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK EnterSceneNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static INT_PTR CALLBACK SceneHotkeyDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static LRESULT CALLBACK ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static LRESULT CALLBACK RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static LRESULT CALLBACK OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -460,6 +468,8 @@ class OBS
 
     static INT_PTR CALLBACK GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static bool STDCALL ConfigGlobalSource(XElement *element, bool bCreating);
+
+    void CallHotkey(DWORD hotkey);
 
 public:
     OBS();

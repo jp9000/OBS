@@ -91,7 +91,6 @@ Settings.Video.DisableAero  "Отключить AERO:"
 Settings.Video.Downscale    "Масштабировать разрешение:"
 Settings.Video.FPS          "FPS:"
 Settings.Video.Monitor      "Монитор:"
-Settings.Video.Recommended  "(Рекомендуется)"
 Settings.Video.Resolution   "Базовое разрешение:"
 
 Settings.Video.Downscale.None   "Отсутствует"

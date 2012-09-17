@@ -23,6 +23,8 @@
 typedef LPVOID (STDCALL* OBSCREATEPROC)(XElement*); //data
 typedef bool (STDCALL* OBSCONFIGPROC)(XElement*, bool); //element, bInitializing
 
+typedef void (STDCALL* OBSHOTKEYPROC)(DWORD, UPARAM);
+
 class APIInterface
 {
     friend class OBS;
@@ -31,6 +33,8 @@ protected:
     bool bSSE2Availabe;
 
 public:
+    virtual ~APIInterface() {}
+
     virtual void EnterSceneMutex()=0;
     virtual void LeaveSceneMutex()=0;
 
@@ -47,6 +51,10 @@ public:
 
     virtual CTSTR GetSceneName() const=0;
     virtual XElement* GetSceneElement()=0;
+
+    virtual bool HotkeyExists(DWORD hotkey) const=0;
+    virtual bool CreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARAM param)=0;
+    virtual void DeleteHotkey(DWORD hotkey)=0;
 
     virtual Vect2 GetBaseSize() const=0;          //get the base scene size
     virtual Vect2 GetRenderFrameSize() const=0;   //get the render frame size

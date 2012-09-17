@@ -186,11 +186,30 @@ INT_PTR CALLBACK OBS::EncoderSettingsProc(HWND hwnd, UINT message, WPARAM wParam
 
                 //--------------------------------------------
 
+                HWND hwndToolTip = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL, WS_POPUP|TTS_NOPREFIX|TTS_ALWAYSTIP,
+                                                  CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+                                                  hwnd, NULL, hinstMain, NULL);
+
+                TOOLINFO ti;
+                zero(&ti, sizeof(ti));
+                ti.cbSize = sizeof(ti);
+                ti.uFlags = TTF_SUBCLASS|TTF_IDISHWND;
+                ti.hwnd = hwnd;
+
+                SendMessage(hwndToolTip, TTM_SETMAXTIPWIDTH, 0, 500);
+                SendMessage(hwndToolTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 8000);
+
+                //--------------------------------------------
+
                 hwndTemp = GetDlgItem(hwnd, IDC_QUALITY);
                 for(int i=0; i<=10; i++)
                     SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)IntString(i).Array());
 
                 LoadSettingComboString(hwndTemp, TEXT("Video Encoding"), TEXT("Quality"), TEXT("8"));
+
+                ti.lpszText = (LPWSTR)Str("Settings.Encoding.Video.QualityTooltip");
+                ti.uId = (UINT_PTR)hwndTemp;
+                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
                 //--------------------------------------------
 
@@ -200,10 +219,22 @@ INT_PTR CALLBACK OBS::EncoderSettingsProc(HWND hwnd, UINT message, WPARAM wParam
 
                 LoadSettingComboString(hwndTemp, TEXT("Video Encoding"), TEXT("Preset"), TEXT("veryfast"));
 
+                ti.lpszText = (LPWSTR)Str("Settings.Encoding.Video.TradeoffTooltip");
+                ti.uId = (UINT_PTR)hwndTemp;
+                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+
                 //--------------------------------------------
 
                 LoadSettingEditInt(GetDlgItem(hwnd, IDC_MAXBITRATE), TEXT("Video Encoding"), TEXT("MaxBitrate"), 2000);
                 LoadSettingEditInt(GetDlgItem(hwnd, IDC_BUFFERSIZE), TEXT("Video Encoding"), TEXT("BufferSize"), 1000);
+
+                ti.lpszText = (LPWSTR)Str("Settings.Encoding.Video.MaxBitRateTooltip");
+                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_MAXBITRATE);
+                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+
+                ti.lpszText = (LPWSTR)Str("Settings.Encoding.Video.BufferSizeTooltip");
+                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_BUFFERSIZE);
+                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
                 //--------------------------------------------
 
@@ -628,6 +659,21 @@ INT_PTR CALLBACK OBS::VideoSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
 
                 //--------------------------------------------
 
+                HWND hwndToolTip = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL, WS_POPUP|TTS_NOPREFIX|TTS_ALWAYSTIP,
+                    CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+                    hwnd, NULL, hinstMain, NULL);
+
+                TOOLINFO ti;
+                zero(&ti, sizeof(ti));
+                ti.cbSize = sizeof(ti);
+                ti.uFlags = TTF_SUBCLASS|TTF_IDISHWND;
+                ti.hwnd = hwnd;
+
+                SendMessage(hwndToolTip, TTM_SETMAXTIPWIDTH, 0, 500);
+                SendMessage(hwndToolTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 8000);
+
+                //--------------------------------------------
+
                 hwndTemp = GetDlgItem(hwnd, IDC_MONITOR);
 
                 App->monitors.Clear();
@@ -677,8 +723,14 @@ INT_PTR CALLBACK OBS::VideoSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
 
                 //--------------------------------------------
 
+                hwndTemp = GetDlgItem(hwnd, IDC_DISABLEAERO);
+
                 BOOL bDisableAero = AppConfig->GetInt(TEXT("Video"), TEXT("DisableAero"), 0);
-                SendMessage(GetDlgItem(hwnd, IDC_DISABLEAERO), BM_SETCHECK, bDisableAero ? BST_CHECKED : 0, 0);
+                SendMessage(hwndTemp, BM_SETCHECK, bDisableAero ? BST_CHECKED : 0, 0);
+
+                ti.lpszText = (LPWSTR)Str("Settings.Video.DisableAeroTooltip");
+                ti.uId = (UINT_PTR)hwndTemp;
+                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
                 //--------------------------------------------
 
@@ -696,7 +748,12 @@ INT_PTR CALLBACK OBS::VideoSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
 
                 //--------------------------------------------
 
-                App->RefreshDownscales(GetDlgItem(hwnd, IDC_DOWNSCALE), cx, cy);
+                hwndTemp = GetDlgItem(hwnd, IDC_DOWNSCALE);
+                App->RefreshDownscales(hwndTemp, cx, cy);
+
+                ti.lpszText = (LPWSTR)Str("Settings.Video.DownscaleTooltip");
+                ti.uId = (UINT_PTR)hwndTemp;
+                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
                 //--------------------------------------------
 

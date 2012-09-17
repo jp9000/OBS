@@ -296,45 +296,58 @@ class RTMPPublisher : public NetworkStream
 
     static int BufferedSend(RTMPSockBuf *sb, const char *buf, int len, RTMPPublisher *network)
     {
-        int newTotal = network->curSendBufferLen+len;
+        bool bComplete = false;
+        int fullLen = len;
 
-        //buffer full, send
-        if(newTotal >= int(network->sendBuffer.Num()))
+        do 
         {
-            int pendingBytes = newTotal-network->sendBuffer.Num();
-            int copyCount    = network->sendBuffer.Num()-network->curSendBufferLen;
+            int newTotal = network->curSendBufferLen+len;
 
-            mcpy(network->sendBuffer.Array()+network->curSendBufferLen, buf, copyCount);
-
-            BYTE *lpTemp = network->sendBuffer.Array();
-            int totalBytesSent = network->sendBuffer.Num();
-            while(totalBytesSent > 0)
+            //buffer full, send
+            if(newTotal >= int(network->sendBuffer.Num()))
             {
-                int nBytes = send(sb->sb_socket, (const char*)lpTemp, totalBytesSent, 0);
-                if(nBytes < 0)
-                    return nBytes;
-                if(nBytes == 0)
-                    return 0;
+                int pendingBytes = newTotal-network->sendBuffer.Num();
+                int copyCount    = network->sendBuffer.Num()-network->curSendBufferLen;
 
-                totalBytesSent -= nBytes;
-                lpTemp += nBytes;
+                mcpy(network->sendBuffer.Array()+network->curSendBufferLen, buf, copyCount);
+
+                BYTE *lpTemp = network->sendBuffer.Array();
+                int totalBytesSent = network->sendBuffer.Num();
+                while(totalBytesSent > 0)
+                {
+                    int nBytes = send(sb->sb_socket, (const char*)lpTemp, totalBytesSent, 0);
+                    if(nBytes < 0)
+                        return nBytes;
+                    if(nBytes == 0)
+                        return 0;
+
+                    totalBytesSent -= nBytes;
+                    lpTemp += nBytes;
+                }
+
+                network->curSendBufferLen = 0;
+
+                if(pendingBytes)
+                {
+                    buf += copyCount;
+                    len -= copyCount;
+                }
+                else
+                    bComplete = true;
             }
-
-            network->curSendBufferLen = pendingBytes;
-
-            if(pendingBytes)
-                mcpy(network->sendBuffer.Array(), buf+copyCount, pendingBytes);
-        }
-        else
-        {
-            if(len)
+            else
             {
-                mcpy(network->sendBuffer.Array()+network->curSendBufferLen, buf, len);
-                network->curSendBufferLen = newTotal;
-            }
-        }
+                if(len)
+                {
+                    mcpy(network->sendBuffer.Array()+network->curSendBufferLen, buf, len);
+                    network->curSendBufferLen = newTotal;
+                }
 
-        return len;
+                bComplete = true;
+            }
+        } while(!bComplete);
+
+        return fullLen;
     }
 
 public:
@@ -434,6 +447,7 @@ public:
                 if(numVideoPackets > BFrameThreshold)
                     DumpBFrame();
 
+                //begin dumping p frames if b frames aren't enough
                 if(numVideoPackets > maxVideoPackets)
                     DoIFrameDelay();
 
@@ -445,7 +459,7 @@ public:
             }
 
             /*RTMPPacket packet;
-            packet.m_nChannel = bAudio ? 0x5 : 0x4;
+            packet.m_nChannel = 0x4;
             packet.m_headerType = RTMP_PACKET_SIZE_MEDIUM;
             packet.m_packetType = bAudio ? RTMP_PACKET_TYPE_AUDIO : RTMP_PACKET_TYPE_VIDEO;
             packet.m_nTimeStamp = timestamp;
@@ -502,7 +516,7 @@ public:
 
         //----------------------------------------------
 
-        packet.m_nChannel = 0x04; // source channel (video)
+        packet.m_nChannel = 0x04; // source channel
         packet.m_headerType = RTMP_PACKET_SIZE_LARGE;
         packet.m_packetType = RTMP_PACKET_TYPE_VIDEO;
 
@@ -524,7 +538,7 @@ public:
 
         //----------------------------------------------
 
-        packet.m_nChannel = 0x05;     // audio channel
+        packet.m_nChannel = 0x05; // source channel
         packet.m_packetType = RTMP_PACKET_TYPE_AUDIO;
 
         App->GetAudioHeaders(mediaHeaders);
