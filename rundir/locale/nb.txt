@@ -92,7 +92,6 @@ Settings.Video.DisableAero  "Skru av Aero ved oppstart:"
 Settings.Video.Downscale    "Nedskaler oppløsning:"
 Settings.Video.FPS          "Bilder per sekund:"
 Settings.Video.Monitor      "Skjerm:"
-Settings.Video.Recommended  "(Høyt rekommendert hvis opptak)"
 Settings.Video.Resolution   "Grunnoppløsning"
 
 Settings.Video.Downscale.None   "Ingen"

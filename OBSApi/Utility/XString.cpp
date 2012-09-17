@@ -1158,6 +1158,13 @@ String IntString(int i, int radix)
     return String(lpString);
 }
 
+String UInt64String(UINT64 i, int radix)
+{
+    TCHAR lpString[50];
+    ui64tots_s(i, lpString, 49, radix);
+    return String(lpString);
+}
+
 String Int64String(INT64 i, int radix)
 {
     TCHAR lpString[50];
@@ -1833,7 +1840,7 @@ int i64tots_s(INT64 val, TCHAR *buffer, size_t bufLen, int radix)
 int ui64tots_s(UINT64 val, TCHAR *buffer, size_t bufLen, int radix)
 {
 #ifdef UNICODE
-    return _ui64tow_s((unsigned long)val, buffer, bufLen, radix);
+    return _ui64tow_s(val, buffer, bufLen, radix);
 #else
     return _ui64toa_s((unsigned long)val, buffer, bufLen, radix);
 #endif

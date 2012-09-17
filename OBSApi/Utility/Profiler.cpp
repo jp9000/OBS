@@ -171,9 +171,6 @@ void STDCALL FreeProfileData()
     for(unsigned int i=0; i<ProfileNodeInfo::profilerData.Num(); i++)
         ProfileNodeInfo::profilerData[i].FreeData();
     ProfileNodeInfo::profilerData.Clear();
-
-    if(hProfilerTimer)
-        OSCloseTimer(hProfilerTimer);
 }
 
 ProfilerNode::ProfilerNode(CTSTR lpName, bool bSingularize)
@@ -224,14 +221,12 @@ ProfilerNode::ProfilerNode(CTSTR lpName, bool bSingularize)
 
     this->lpName = lpName;
 
-    if(!hProfilerTimer)
-        hProfilerTimer = OSCreateTimer();
-    startTime = OSGetTimeMicroseconds(hProfilerTimer);
+    startTime = OSGetTimeMicroseconds();
 }
 
 ProfilerNode::~ProfilerNode()
 {
-    QWORD newTime = OSGetTimeMicroseconds(hProfilerTimer);
+    QWORD newTime = OSGetTimeMicroseconds();
 
     //profiling was diabled when created
     if(lpName)

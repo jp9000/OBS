@@ -26,6 +26,8 @@
 
 extern WNDPROC listboxProc;
 
+void STDCALL SceneHotkey(DWORD hotkey, UPARAM param);
+
 enum
 {
     ID_LISTBOX_REMOVE=1,
@@ -36,11 +38,18 @@ enum
     ID_LISTBOX_CENTER,
     ID_LISTBOX_RESETSIZE,
     ID_LISTBOX_RENAME,
+    ID_LISTBOX_HOTKEY,
     ID_LISTBOX_CONFIG,
 
     ID_LISTBOX_ADD,
 
     ID_LISTBOX_GLOBALSOURCE=5000,
+};
+
+struct SceneHotkeyInfo
+{
+    DWORD hotkey;
+    XElement *scene;
 };
 
 INT_PTR CALLBACK OBS::EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -93,6 +102,60 @@ INT_PTR CALLBACK OBS::EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM 
                     break;
             }
     }
+
+    return 0;
+}
+
+INT_PTR CALLBACK OBS::SceneHotkeyDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch(message)
+    {
+        case WM_INITDIALOG:
+            {
+                SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
+                LocalizeWindow(hwnd);
+
+                SceneHotkeyInfo *hotkeyInfo = (SceneHotkeyInfo*)lParam;
+                SendMessage(GetDlgItem(hwnd, IDC_HOTKEY), HKM_SETHOTKEY, hotkeyInfo->hotkey, 0);
+
+                return TRUE;                    
+            }
+
+        case WM_COMMAND:
+            switch(LOWORD(wParam))
+            {
+                case IDC_CLEAR:
+                    if(HIWORD(wParam) == BN_CLICKED)
+                        SendMessage(GetDlgItem(hwnd, IDC_HOTKEY), HKM_SETHOTKEY, 0, 0);
+                    break;
+
+                case IDOK:
+                    {
+                        SceneHotkeyInfo *hotkeyInfo = (SceneHotkeyInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
+
+                        DWORD hotkey = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_HOTKEY), HKM_GETHOTKEY, 0, 0);
+
+                        if(hotkey == hotkeyInfo->hotkey)
+                        {
+                            EndDialog(hwnd, IDCANCEL);
+                            break;
+                        }
+
+                        if(hotkey && API->HotkeyExists(hotkey))
+                        {
+                            MessageBox(hwnd, Str("Scene.Hotkey.AlreadyInUse"), NULL, 0);
+                            return 0;
+                        }
+
+                        hotkeyInfo->hotkey = hotkey;
+                    }
+
+                case IDCANCEL:
+                    EndDialog(hwnd, LOWORD(wParam));
+                    break;
+            }
+    }
+
     return 0;
 }
 
@@ -233,6 +296,12 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 AppendMenu(hMenu, MF_STRING, ID_LISTBOX_RENAME,         strRename);
             }
 
+            if(id == ID_SCENES && numSelected)
+            {
+                AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
+                AppendMenu(hMenu, MF_STRING, ID_LISTBOX_HOTKEY, Str("Listbox.SetHotkey"));
+            }
+
             if(id == ID_SOURCES)
             {
                 AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
@@ -300,6 +369,10 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 case ID_LISTBOX_REMOVE:
                     if(MessageBox(hwndMain, Str("DeleteConfirm"), Str("DeleteConfirm.Title"), MB_YESNO) == IDYES)
                     {
+                        DWORD hotkey = item->GetInt(TEXT("hotkey"));
+                        if(hotkey)
+                            API->DeleteHotkey(hotkey);
+
                         SendMessage(hwnd, LB_DELETESTRING, curSel, 0);
                         if(--numItems)
                         {
@@ -334,6 +407,29 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                             App->scene->UpdateSettings();
                     }
                     break;
+
+                case ID_LISTBOX_HOTKEY:
+                    {
+                        DWORD prevHotkey = item->GetInt(TEXT("hotkey"));
+                        SceneHotkeyInfo hotkeyInfo;
+                        hotkeyInfo.hotkey = prevHotkey;
+                        hotkeyInfo.scene = item;
+
+                        if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_SCENEHOTKEY), hwndMain, OBS::SceneHotkeyDialogProc, (LPARAM)&hotkeyInfo) == IDOK)
+                        {
+                            if(hotkeyInfo.hotkey)
+                            {
+                                if(!API->CreateHotkey(hotkeyInfo.hotkey, SceneHotkey, 0))
+                                    hotkeyInfo.hotkey = 0;
+                            }
+
+                            item->SetInt(TEXT("hotkey"), hotkeyInfo.hotkey);
+
+                            if(prevHotkey)
+                                API->DeleteHotkey(prevHotkey);
+                        }
+                        break;
+                    }
 
                 case ID_LISTBOX_MOVEUP:
                     if(curSel > 0)
@@ -1427,6 +1523,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
         case OBS_REQUESTSTOP:
             App->Stop();
             MessageBox(hwnd, Str("Connection.Disconnected"), NULL, 0);
+            break;
+
+        case OBS_CALLHOTKEY:
+            App->CallHotkey((DWORD)lParam);
             break;
 
         case WM_CLOSE:

@@ -1,0 +1,17 @@
+Cancel          "Ακύρωση"
+ClassName       "Συσκευή Λήψης Βίντεο"
+DeviceSelection "Επιλογή Συσκευής"
+OK              "OK"
+
+DeviceSelection.Config          "Ρυθμίσεις"
+DeviceSelection.Device          "Συσκευή:"
+DeviceSelection.ExistsInScene   "Η πηγή, που χρησιμοποιείται από αυτή τη συσκεευή, υπάρχει ήδη."
+DeviceSelection.ExistsSomewhere "Αυτή η συσκευή ήδη χρησιμοποιείτε για μια ή παραπάνω σκηνές."
+DeviceSelection.FlipImage       "Αναστροφή Εικόνας"
+DeviceSelection.FPS             "Καρέ ανά δευτερόλεπτο (FPS):"
+DeviceSelection.GlobalExists    "Η καθολική πηγή που χρησιμοποεί αυτή τη συσκεύη υπάρχει ήδη."
+DeviceSelection.Refresh         "Ανανέωση"
+DeviceSelection.Resolution      "Ανάλυση:"
+
+Plugin.Description  "Αυτό το πρόσθετο σας επιτρέπει να προσθέσετε συσκευές βίντεο DirectShow (κάμερες, κάρτες λήψης βίντεο, κτλ) στην υπάρχουσα σκηνή"
+Plugin.Name         "Πρόσθετο Λήψης Βίντεο με DirectShow"

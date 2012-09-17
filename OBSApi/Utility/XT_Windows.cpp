@@ -33,12 +33,9 @@
 
 
 
-struct WindowsTimerInfo
-{
-    LARGE_INTEGER clockFreq, startTime;
-    LONGLONG prevElapsedTime;
-    DWORD startTick;
-};
+LARGE_INTEGER clockFreq, startTime;
+LONGLONG prevElapsedTime;
+DWORD startTick;
 
 void STDCALL InputProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 void STDCALL ResetCursorClip();
@@ -51,6 +48,10 @@ HWND        hwndMainAppWindow = NULL;
 
 void   STDCALL OSInit()
 {
+    QueryPerformanceFrequency(&clockFreq);
+    QueryPerformanceCounter(&startTime);
+    startTick = GetTickCount();
+    prevElapsedTime = 0;
 }
 
 void   STDCALL OSExit()
@@ -362,99 +363,77 @@ void   STDCALL OSSleep(DWORD dwMSeconds)
 }
 
 
-HANDLE STDCALL OSCreateTimer()
+DWORD STDCALL OSGetTime()
 {
-    WindowsTimerInfo *timerInfo = new WindowsTimerInfo;
-    QueryPerformanceFrequency(&timerInfo->clockFreq);
-    QueryPerformanceCounter(&timerInfo->startTime);
-    timerInfo->startTick = GetTickCount();
-    timerInfo->prevElapsedTime = 0;
-
-    return timerInfo;
-}
-
-void STDCALL OSCloseTimer(HANDLE hTimer)
-{
-    WindowsTimerInfo *timerInfo = (WindowsTimerInfo*)hTimer;
-    delete timerInfo;
-}
-
-
-DWORD STDCALL OSGetTime(HANDLE hTimer)
-{
-    WindowsTimerInfo *timerInfo = (WindowsTimerInfo*)hTimer;
-
     //NOTE: Credit goes to the amazingly awesome bullet physics library for this time code fix,
     //though I think this was basically copied out of the KB274323
 
     LARGE_INTEGER currentTime;
     QueryPerformanceCounter(&currentTime);
     LONGLONG elapsedTime = currentTime.QuadPart - 
-        timerInfo->startTime.QuadPart;
+        startTime.QuadPart;
 
     // Compute the number of millisecond ticks elapsed.
     unsigned long msecTicks = (unsigned long)(1000 * elapsedTime / 
-        timerInfo->clockFreq.QuadPart);
+        clockFreq.QuadPart);
 
     // Check for unexpected leaps in the Win32 performance counter.  
     // (This is caused by unexpected data across the PCI to ISA 
     // bridge, aka south bridge.  See Microsoft KB274323.)
-    unsigned long elapsedTicks = GetTickCount() - timerInfo->startTick;
+    unsigned long elapsedTicks = GetTickCount() - startTick;
     signed long msecOff = (signed long)(msecTicks - elapsedTicks);
     if (msecOff < -100 || msecOff > 100)
     {
         // Adjust the starting time forwards.
         LONGLONG msecAdjustment = MIN(msecOff * 
-            timerInfo->clockFreq.QuadPart / 1000, elapsedTime - 
-            timerInfo->prevElapsedTime);
-        timerInfo->startTime.QuadPart += msecAdjustment;
+            clockFreq.QuadPart / 1000, elapsedTime - 
+            prevElapsedTime);
+        startTime.QuadPart += msecAdjustment;
         elapsedTime -= msecAdjustment;
 
         // Recompute the number of millisecond ticks elapsed.
         msecTicks = (unsigned long)(1000 * elapsedTime / 
-            timerInfo->clockFreq.QuadPart);
+            clockFreq.QuadPart);
     }
 
     // Store the current elapsed time for adjustments next time.
-    timerInfo->prevElapsedTime = elapsedTime;
+    prevElapsedTime = elapsedTime;
 
     return msecTicks;
 }
 
-QWORD STDCALL OSGetTimeMicroseconds(HANDLE hTimer)
+QWORD STDCALL OSGetTimeMicroseconds()
 {
-    WindowsTimerInfo *timerInfo = (WindowsTimerInfo*)hTimer;
-
     LARGE_INTEGER currentTime;
     QueryPerformanceCounter(&currentTime);
     LONGLONG elapsedTime = currentTime.QuadPart - 
-        timerInfo->startTime.QuadPart;
+        startTime.QuadPart;
 
     // Compute the number of millisecond ticks elapsed.
     unsigned long msecTicks = (unsigned long)(1000 * elapsedTime / 
-        timerInfo->clockFreq.QuadPart);
+        clockFreq.QuadPart);
 
     // Check for unexpected leaps in the Win32 performance counter.  
     // (This is caused by unexpected data across the PCI to ISA 
     // bridge, aka south bridge.  See Microsoft KB274323.)
-    unsigned long elapsedTicks = GetTickCount() - timerInfo->startTick;
+    unsigned long elapsedTicks = GetTickCount() - startTick;
     signed long msecOff = (signed long)(msecTicks - elapsedTicks);
     if (msecOff < -100 || msecOff > 100)
     {
         // Adjust the starting time forwards.
         LONGLONG msecAdjustment = MIN(msecOff * 
-            timerInfo->clockFreq.QuadPart / 1000, elapsedTime - 
-            timerInfo->prevElapsedTime);
-        timerInfo->startTime.QuadPart += msecAdjustment;
+            clockFreq.QuadPart / 1000, elapsedTime - 
+            prevElapsedTime);
+        startTime.QuadPart += msecAdjustment;
         elapsedTime -= msecAdjustment;
     }
 
     // Store the current elapsed time for adjustments next time.
-    timerInfo->prevElapsedTime = elapsedTime;
+    prevElapsedTime = elapsedTime;
 
     // Convert to microseconds.
     unsigned long usecTicks = (unsigned long)(1000000 * elapsedTime / 
-        timerInfo->clockFreq.QuadPart);
+        clockFreq.QuadPart);
 
     return usecTicks;
 }

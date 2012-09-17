@@ -59,7 +59,7 @@ extern HINSTANCE    hinstMain;
 extern ConfigFile   *AppConfig;
 extern OBS          *App;
 
-#define OBS_VERSION_STRING_ANSI "Open Broadcaster Software v0.36a"
+#define OBS_VERSION_STRING_ANSI "Open Broadcaster Software v0.37a"
 #define OBS_VERSION_STRING TEXT(OBS_VERSION_STRING_ANSI)
 
 inline UINT ConvertMSTo100NanoSec(UINT ms)

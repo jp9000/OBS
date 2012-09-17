@@ -21,6 +21,7 @@
 #define IDR_ACCELERATOR1                125
 #define IDD_GLOBAL_SOURCES              126
 #define IDD_PLUGINS                     129
+#define IDD_SCENEHOTKEY                 130
 #define IDC_SETTINGSLIST                1006
 #define IDC_SUBDIALOG                   1007
 #define IDC_MODE                        1008
@@ -86,6 +87,9 @@
 #define IDC_REFRESH                     1068
 #define IDC_INNERWINDOW                 1069
 #define IDC_SELECTREGION                1071
+#define IDC_HOTKEY1                     1073
+#define IDC_HOTKEY                      1073
+#define IDC_CLEAR                       1074
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -99,9 +103,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        130
+#define _APS_NEXT_RESOURCE_VALUE        131
 #define _APS_NEXT_COMMAND_VALUE         40028
-#define _APS_NEXT_CONTROL_VALUE         1073
+#define _APS_NEXT_CONTROL_VALUE         1075
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -564,7 +564,8 @@ public:
 
 BASE_EXPORT String UIntString(unsigned int ui, int radix=10);
 BASE_EXPORT String IntString(int i, int radix=10);
-BASE_EXPORT String Int64String(INT64 i, int radix);
+BASE_EXPORT String UInt64String(UINT64 i, int radix=10);
+BASE_EXPORT String Int64String(INT64 i, int radix=10);
 BASE_EXPORT String FloatString(double f);
 
 BASE_EXPORT int STDCALL GetStringLine(const TCHAR *lpStart, const TCHAR *lpOffset);
