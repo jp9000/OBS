@@ -305,8 +305,8 @@ void GetOutputList(IPin *curPin, List<MediaOutputInfo> &outputInfoList)
                         outputInfo->maxCX = pVSCC->MaxOutputSize.cx;
                         outputInfo->minCY = pVSCC->MinOutputSize.cy;
                         outputInfo->maxCY = pVSCC->MaxOutputSize.cy;
-                        outputInfo->xGranularity = pVSCC->OutputGranularityX;
-                        outputInfo->yGranularity = pVSCC->OutputGranularityY;
+                        outputInfo->xGranularity = max(pVSCC->OutputGranularityX,1);
+                        outputInfo->yGranularity = max(pVSCC->OutputGranularityY,1);
 
                         double aspect = double(outputInfo->minCX)/double(outputInfo->minCY);
                         nop();
