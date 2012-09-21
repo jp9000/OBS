@@ -80,9 +80,6 @@ struct XRect
 
 #define WAIT_INFINITE 0xFFFFFFFF
 
-BASE_EXPORT void   STDCALL OSInit();
-BASE_EXPORT void   STDCALL OSExit();
-
 BASE_EXPORT void   STDCALL OSLogSystemStats();
 BASE_EXPORT DWORD  STDCALL OSGetSysPageSize();
 BASE_EXPORT LPVOID STDCALL OSVirtualAlloc(size_t dwSize);
@@ -158,6 +155,8 @@ BASE_EXPORT void   STDCALL TraceCrashEnd();
 //Base functions
 //-----------------------------------------
 BASE_EXPORT BOOL STDCALL InitXT(CTSTR logFile=NULL, CTSTR allocatorName=NULL);
+BASE_EXPORT void STDCALL InitXTLog(CTSTR logFile);
+BASE_EXPORT void STDCALL ResetXTAllocator(CTSTR lpAllocator);
 BASE_EXPORT void STDCALL TerminateXT();
 
 BASE_EXPORT extern BOOL bDebugBreak;

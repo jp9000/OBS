@@ -57,7 +57,7 @@ NetworkStream* CreateNullNetwork();
 
 void Convert444to420(LPBYTE input, int width, int height, LPBYTE *output, bool bSSE2Available);
 
-void STDCALL SceneHotkey(DWORD hotkey, UPARAM param);
+void STDCALL SceneHotkey(DWORD hotkey, UPARAM param, bool bDown);
 
 
 inline BOOL CloseDouble(double f1, double f2, double precision=0.001)
@@ -69,11 +69,6 @@ inline BOOL CloseDouble(double f1, double f2, double precision=0.001)
 //----------------------------
 
 WNDPROC listboxProc = NULL;
-
-//----------------------------
-
-#define OBS_WINDOW_CLASS      TEXT("OBS")
-#define OBS_RENDERFRAME_CLASS TEXT("RenderFrame")
 
 //----------------------------
 
@@ -293,6 +288,7 @@ Scene* STDCALL CreateNormalScene(XElement *data)
 
 struct HotkeyInfo
 {
+    DWORD hotkeyID;
     DWORD hotkey;
     OBSHOTKEYPROC hotkeyProc;
     UPARAM param;
@@ -304,6 +300,7 @@ class OBSAPIInterface : public APIInterface
     friend class OBS;
 
     List<HotkeyInfo> hotkeys;
+    DWORD curHotkeyIDVal;
 
     void HandleHotkeys();
 
@@ -347,6 +344,9 @@ public:
 
     virtual CTSTR GetLanguage() const           {return App->strLanguage;}
 
+    virtual CTSTR GetAppDataPath() const        {return lpAppDataPath;}
+    virtual String GetPluginDataPath() const    {return String() << lpAppDataPath << TEXT("\\pluginData");}
+
     virtual HWND GetMainWindow() const          {return hwndMain;}
 };
 
@@ -389,7 +389,7 @@ OBS::OBS()
     if(!locale->LoadStringFile(TEXT("locale/en.txt")))
         AppWarning(TEXT("Could not open locale string file '%s'"), TEXT("locale/en.txt"));
 
-    strLanguage = AppConfig->GetString(TEXT("General"), TEXT("Language"), TEXT("en"));
+    strLanguage = GlobalConfig->GetString(TEXT("General"), TEXT("Language"), TEXT("en"));
     if(!strLanguage.CompareI(TEXT("en")))
     {
         String langFile;
@@ -632,8 +632,11 @@ OBS::OBS()
 
     hwndTemp = GetDlgItem(hwndMain, ID_SCENES);
 
-    if(!scenesConfig.Open(TEXT("scenes.xconfig")))
-        CrashError(TEXT("Could not open scenes.xconfig"));
+    String strScenesConfig;
+    strScenesConfig << lpAppDataPath << TEXT("\\scenes.xconfig");
+
+    if(!scenesConfig.Open(strScenesConfig))
+        CrashError(TEXT("Could not open '%s'"), strScenesConfig);
 
     XElement *scenes = scenesConfig.GetElement(TEXT("scenes"));
     if(!scenes)
@@ -712,6 +715,11 @@ OBS::OBS()
         OSFindClose(hFind);
     }
 
+    //-----------------------------------------------------
+
+    bRenderViewEnabled = true;
+    bShowFPS = AppConfig->GetInt(TEXT("General"), TEXT("ShowFPS")) != 0;
+
     traceOut;
 }
 
@@ -745,6 +753,13 @@ OBS::~OBS()
         DeleteObject(Icons[i].hIcon);
     Icons.Clear();
 
+    for(UINT i=0; i<Fonts.Num(); i++)
+    {
+        DeleteObject(Fonts[i].hFont);
+        Fonts[i].strFontFace.Clear();
+    }
+    Fonts.Clear();
+
     for(UINT i=0; i<sceneClasses.Num(); i++)
         sceneClasses[i].FreeData();
     for(UINT i=0; i<imageSourceClasses.Num(); i++)
@@ -772,8 +787,10 @@ void OBS::ToggleCapturing()
     traceOut;
 }
 
-void STDCALL SceneHotkey(DWORD hotkey, UPARAM param)
+void STDCALL SceneHotkey(DWORD hotkey, UPARAM param, bool bDown)
 {
+    if(!bDown) return;
+
     XElement *scenes = API->GetSceneListElement();
     if(scenes)
     {
@@ -784,7 +801,7 @@ void STDCALL SceneHotkey(DWORD hotkey, UPARAM param)
             DWORD sceneHotkey = (DWORD)scene->GetInt(TEXT("hotkey"));
             if(sceneHotkey == hotkey)
             {
-                Log(TEXT("hotkey pressed for scene '%s'"), scene->GetName());
+                //Log(TEXT("hotkey pressed for scene '%s'"), scene->GetName());
                 App->SetScene(scene->GetName());
                 return;
             }
@@ -800,6 +817,8 @@ HICON OBS::GetIcon(HINSTANCE hInst, int resource)
             return Icons[i].hIcon;
     }
 
+    //---------------------
+
     IconInfo ii;
     ii.hInst = hInst;
     ii.resource = resource;
@@ -808,6 +827,38 @@ HICON OBS::GetIcon(HINSTANCE hInst, int resource)
     Icons << ii;
 
     return ii.hIcon;
+}
+
+HFONT OBS::GetFont(CTSTR lpFontFace, int fontSize, int fontWeight)
+{
+    for(UINT i=0; i<Fonts.Num(); i++)
+    {
+        if(Fonts[i].strFontFace.CompareI(lpFontFace) && Fonts[i].fontSize == fontSize && Fonts[i].fontWeight == fontWeight)
+            return Fonts[i].hFont;
+    }
+
+    //---------------------
+
+    HFONT hFont = NULL;
+
+    LOGFONT lf;
+    zero(&lf, sizeof(lf));
+    scpy_n(lf.lfFaceName, lpFontFace, 31);
+    lf.lfHeight = fontSize;
+    lf.lfWeight = fontWeight;
+    lf.lfQuality = ANTIALIASED_QUALITY;
+
+    if(hFont = CreateFontIndirect(&lf))
+    {
+        FontInfo &fi = *Fonts.CreateNew();
+
+        fi.hFont = hFont;
+        fi.fontSize = fontSize;
+        fi.fontWeight = fontWeight;
+        fi.strFontFace = lpFontFace;
+    }
+
+    return hFont;
 }
 
 ID3D10Blob* CompileShader(CTSTR lpShader, LPCSTR lpTarget)
@@ -1303,8 +1354,6 @@ void OBS::MainCaptureLoop()
 
     bufferedTimes.Clear();
 
-    //firstFrameTime -= UINT(frameTime);
-
     Vect2 baseSize        = Vect2(float(baseCX), float(baseCY));
     Vect2 outputSize      = Vect2(float(outputCX), float(outputCY));
     Vect2 scaleSize       = Vect2(float(scaleCX), float(scaleCY));
@@ -1326,7 +1375,6 @@ void OBS::MainCaptureLoop()
         x264_picture_alloc(&picOut, X264_CSP_I420, outputCX, outputCY);
 
     int curPTS = 0;
-    //int audioJump = 0;
 
     HANDLE hScaleVal = yuvScalePixelShader->GetParameterByName(TEXT("baseDimensionI"));
 
@@ -1338,15 +1386,14 @@ void OBS::MainCaptureLoop()
     float bpsTime = 0.0f;
     double lastStrain = 0.0f;
 
-    DWORD audioResyncOffset = 0;
-
-    UINT timeAdjust = 0;
+    DWORD captureFPS = 0;
+    DWORD fpsCounter = 0;
 
     while(bRunning)
     {
         DWORD renderStartTime = OSGetTime();
 
-        bool bRenderView = !IsIconic(hwndMain);
+        bool bRenderView = !IsIconic(hwndMain) && bRenderViewEnabled;
 
         profileIn("frame");
 
@@ -1405,8 +1452,13 @@ void OBS::MainCaptureLoop()
 
             lastBytesSent = curBytesSent;
 
+            captureFPS = fpsCounter;
+            fpsCounter = 0;
+
             bUpdateBPS = true;
         }
+
+        fpsCounter++;
 
         double curStrain = network->GetPacketStrain();
         if(bUpdateBPS || !CloseDouble(curStrain, lastStrain))
@@ -1505,6 +1557,38 @@ void OBS::MainCaptureLoop()
                 if(scene)
                     scene->RenderSelections();
             }
+
+            if(bShowFPS && !bSizeChanging)
+            {
+                D3D10System *d3dSys = static_cast<D3D10System*>(GS);
+
+                IDXGISurface1 *surface;
+                if(SUCCEEDED(d3dSys->swap->GetBuffer(0, __uuidof(IDXGISurface1), (void**)&surface)))
+                {
+                    HDC hDC;
+                    if(SUCCEEDED(surface->GetDC(FALSE, &hDC)))
+                    {
+                        String strFPS;
+                        strFPS << TEXT("FPS: ") << UIntString(captureFPS);
+
+                        HFONT hFont = (HFONT)GetFont(TEXT("Arial"), -20, 700);
+                        HFONT hfontOld;
+                        if(hFont)
+                            hfontOld = (HFONT)SelectObject(hDC, hFont);
+
+                        SetTextColor(hDC, MAKEBGR(0xFF, 0, 0));
+                        SetBkMode(hDC, TRANSPARENT);
+                        TextOut(hDC, 4, 4, strFPS, strFPS.Length());
+
+                        if(hFont)
+                            SelectObject(hDC, hfontOld);
+
+                        surface->ReleaseDC(NULL);
+                    }
+
+                    surface->Release();
+                }
+            }
         }
 
         //------------------------------------
@@ -1534,9 +1618,6 @@ void OBS::MainCaptureLoop()
         DrawSpriteEx(mainRenderTextures[curRenderTarget], 0.0f, 0.0f, scaleSize.x, scaleSize.y, 0.0f, 0.0f, scaleSize.x, scaleSize.y);
 
         //------------------------------------
-
-        if(!static_cast<D3D10System*>(GS)->swap)
-            Log(TEXT("swap is bad?"));
 
         if(bRenderView && !copyWait)
             static_cast<D3D10System*>(GS)->swap->Present(0, 0);
@@ -1907,32 +1988,33 @@ void OBS::SelectSources()
     }
 }
 
-void OBS::CallHotkey(DWORD hotkey)
+void OBS::CallHotkey(DWORD hotkeyID, bool bDown)
 {
     OBSAPIInterface *apiInterface = (OBSAPIInterface*)API;
     OBSHOTKEYPROC hotkeyProc = NULL;
-    UPARAM param;
+    DWORD hotkey = 0;
+    UPARAM param = NULL;
 
     OSEnterMutex(hHotkeyMutex);
 
     for(UINT i=0; i<apiInterface->hotkeys.Num(); i++)
     {
         HotkeyInfo &hi = apiInterface->hotkeys[i];
-        if(hi.hotkey == hotkey)
+        if(hi.hotkeyID == hotkeyID)
         {
-            if(hi.hotkeyProc)
-            {
-                hotkeyProc  = hi.hotkeyProc;
-                param       = hi.param;
-            }
+            if(!hi.hotkeyProc)
+                return;
+
+            hotkeyProc  = hi.hotkeyProc;
+            param       = hi.param;
+            hotkey      = hi.hotkey;
             break;
         }
     }
 
     OSLeaveMutex(hHotkeyMutex);
 
-    if(hotkeyProc)
-        hotkeyProc(hotkey, param);
+    hotkeyProc(hotkey, param, bDown);
 }
 
 bool OBSAPIInterface::HotkeyExists(DWORD hotkey) const
@@ -1969,16 +2051,8 @@ bool OBSAPIInterface::CreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARA
         fsModifiers |= MOD_SHIFT;
 
     OSEnterMutex(App->hHotkeyMutex);
-    for(UINT i=0; i<hotkeys.Num(); i++)
-    {
-        if(hotkeys[i].hotkey == hotkey)
-        {
-            OSLeaveMutex(App->hHotkeyMutex);
-            return false;
-        }
-    }
-
     HotkeyInfo &hi  = *hotkeys.CreateNew();
+    hi.hotkeyID     = ++curHotkeyIDVal;
     hi.hotkey       = hotkey;
     hi.hotkeyProc   = hotkeyProc;
     hi.param        = param;
@@ -2028,19 +2102,22 @@ void OBSAPIInterface::HandleHotkeys()
         {
             short keyState   = GetAsyncKeyState(hotkeyVK);
             bool bDown       = (keyState & 0x8000) != 0;
-            bool bWasPressed = (keyState & 1) != 0;
 
-            if(bDown || bWasPressed)
+            if(bDown)
             {
                 if(!info.bDown)
-                    PostMessage(hwndMain, OBS_CALLHOTKEY, 0, info.hotkey);
+                    PostMessage(hwndMain, OBS_CALLHOTKEY, TRUE, info.hotkeyID);
 
                 info.bDown = bDown;
                 continue;
             }
         }
 
-        info.bDown = false;
+        if(info.bDown) //key up
+        {
+            PostMessage(hwndMain, OBS_CALLHOTKEY, FALSE, info.hotkeyID);
+            info.bDown = false;
+        }
     }
 
     OSLeaveMutex(App->hHotkeyMutex);

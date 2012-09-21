@@ -1,9 +1,25 @@
-Hugh "Jim" Bailey (obs.jim@gmail.com) - Primary author and currently only guy working on the project right now.  Damnit Jim!
+Author:
+  Hugh "Jim" Bailey (obs.jim@gmail.com) - Primary author.  Damnit Jim!
 
-Also, special thanks to:
+Additional Coding:
+  Richard "R1CH" Stanway                - Tons of bugfixes, and teaching the ways of git enlightenment.
 
-  Andres Lasn - Estonian translation
-  Johannes Grill and Johannes Kroker - German translation
-  August Kind Svendsen - Norwegian translation
-  Alan Antunes - French translation
-  Hath Ington - Bulgarian translation
+Translations:
+  Andres Lasn                           - Estonian translation
+  Johannes Grill and Johannes Kroker    - German translations
+  August Kind Svendsen                  - Norwegian translation
+  Alan Antunes                          - French translation
+  Hath Ington                           - Bulgarian translation
+  xuok and R3mbrant                     - Russian translations
+
+Notable super awesome testers:
+  Kyle "Kendobear" Asher - A guy who spent weeks helping pinpoint a bug
+                           specific to his system.  This guy deserves a
+                           medal for his patience.
+
+  D2Ultima/Frostshocker/Modnite - These guys helped me test the major network
+                                  code updates, as well as helped point out
+                                  compatibility issues for certain systems.
+                                  The greatly improved network code would not
+                                  have been possible without their help.
+

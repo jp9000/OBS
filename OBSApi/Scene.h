@@ -91,6 +91,7 @@ class BASE_EXPORT Scene
     friend class SceneItem;
     friend class OBS;
 
+    bool bSceneStarted;
     bool bMissingSources;
 
     List<SceneItem*> sceneItems;

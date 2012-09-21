@@ -2,6 +2,7 @@
 // Microsoft Visual C++ generated include file.
 // Used by OBS.rc
 //
+#define IDC_DEFAULTS                    3
 #define IDC_APPLY                       4
 #define IDD_SETTINGS                    101
 #define IDI_ICON1                       109
@@ -44,6 +45,7 @@
 #define IDC_LANGUAGE                    1028
 #define IDC_INFO                        1029
 #define IDC_FPS                         1030
+#define IDC_PROFILE                     1030
 #define IDC_FPS_EDIT                    1031
 #define IDC_SIZEX                       1033
 #define IDC_SIZEY                       1034
@@ -90,6 +92,7 @@
 #define IDC_HOTKEY1                     1073
 #define IDC_HOTKEY                      1073
 #define IDC_CLEAR                       1074
+#define IDC_ADDNEW                      1077
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -105,7 +108,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        131
 #define _APS_NEXT_COMMAND_VALUE         40028
-#define _APS_NEXT_CONTROL_VALUE         1075
+#define _APS_NEXT_CONTROL_VALUE         1078
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

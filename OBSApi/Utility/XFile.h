@@ -67,7 +67,6 @@ public:
         LPSTR lpFileDataUTF8 = (LPSTR)Allocate(dwFileSize+1);
         lpFileDataUTF8[dwFileSize] = 0;
         Read(lpFileDataUTF8, dwFileSize);
-        Close();
 
         strIn = String(lpFileDataUTF8);
         Free(lpFileDataUTF8);

@@ -3,6 +3,22 @@
 
 -------------------------------
 
+2012-9-20 - 0.38 (alpha)
+    * Changed the way settings are saved.  All settings are now saved
+      to the windows [user]/AppData/Roaming/OBS directory.
+    * Made it so up to 20 log files are saved at a given time, so that
+      older logs are not necessarily just overwritten.
+    * Added setting profiles so the user can have different settings
+      for different situations.
+    * Fixed a major mic mug with mono mics.  Don't know how I let that
+      one slip by me for so long.
+    * More DShow bug fixes by R1CH
+    * Added a popup menu when right clicking on the render frame that
+      lets the user see the FPS or disable the render view.
+    * Improved API hotkey code
+
+-------------------------------
+
 2012-9-16 - 0.37 (alpha)
     * Added global hotkeys to the API interface, and scene hotkeys so
       users can switch between scenes with the press of a key

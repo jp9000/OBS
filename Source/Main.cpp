@@ -19,6 +19,7 @@
 
 #include "Main.h"
 
+#include <shlobj.h>
 #include <dwmapi.h>
 
 
@@ -27,8 +28,10 @@
 HWND        hwndMain        = NULL;
 HWND        hwndRenderFrame = NULL;
 HINSTANCE   hinstMain       = NULL;
+ConfigFile  *GlobalConfig   = NULL;
 ConfigFile  *AppConfig      = NULL;
 OBS         *App            = NULL;
+TCHAR       lpAppDataPath[MAX_PATH];
 
 //----------------------------
 
@@ -82,12 +85,135 @@ void LogSystemStats()
 }
 
 
+void SetupIni()
+{
+    //first, find out which profile we're using
+
+    String strProfile = GlobalConfig->GetString(TEXT("General"), TEXT("Profile"));
+    String strIni;
+
+    //--------------------------------------------
+    // try to find and open the file, otherwise use the first one available
+
+    bool bFoundProfile = false;
+
+    if(strProfile.IsValid())
+    {
+        strIni << lpAppDataPath << TEXT("\\profiles\\") << strProfile << TEXT(".ini");
+        bFoundProfile = OSFileExists(strIni) != 0;
+    }
+
+    if(!bFoundProfile)
+    {
+        OSFindData ofd;
+
+        strIni.Clear() << lpAppDataPath << TEXT("\\profiles\\*.ini");
+        HANDLE hFind = OSFindFirstFile(strIni, ofd);
+        if(hFind)
+        {
+            do 
+            {
+                if(ofd.bDirectory) continue;
+
+                strProfile = GetPathWithoutExtension(ofd.fileName);
+                GlobalConfig->SetString(TEXT("General"), TEXT("Profile"), strProfile);
+                bFoundProfile = true;
+
+                break;
+
+            } while(OSFindNextFile(hFind, ofd));
+
+            OSFindClose(hFind);
+        }
+    }
+
+    //--------------------------------------------
+    // open, or if no profile found, create one
+
+    if(bFoundProfile)
+    {
+        strIni.Clear() << lpAppDataPath << TEXT("\\profiles\\") << strProfile << TEXT(".ini");
+
+        if(AppConfig->Open(strIni))
+            return;
+    }
+
+    strProfile = TEXT("Untitled");
+    GlobalConfig->SetString(TEXT("General"), TEXT("Profile"), strProfile);
+
+    strIni.Clear() << lpAppDataPath << TEXT("\\profiles\\") << strProfile << TEXT(".ini");
+
+    if(!AppConfig->Create(strIni))
+        CrashError(TEXT("Could not create '%s'"), strIni);
+
+    AppConfig->SetString(TEXT("Audio"),          TEXT("Device"),        TEXT("Default"));
+    AppConfig->SetFloat (TEXT("Audio"),          TEXT("MicVolume"),     1.0f);
+    AppConfig->SetFloat (TEXT("Audio"),          TEXT("DesktopVolume"), 1.0f);
+
+    AppConfig->SetInt   (TEXT("Video"),          TEXT("Monitor"),       0);
+    AppConfig->SetInt   (TEXT("Video"),          TEXT("FPS"),           25);
+    AppConfig->SetFloat (TEXT("Video"),          TEXT("Downscale"),     1.0f);
+    AppConfig->SetInt   (TEXT("Video"),          TEXT("DisableAero"),   0);
+
+    AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("BufferSize"),    1000);
+    AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("MaxBitrate"),    1000);
+    AppConfig->SetString(TEXT("Video Encoding"), TEXT("Preset"),        TEXT("veryfast"));
+    AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("Quality"),       8);
+
+    AppConfig->SetInt   (TEXT("Audio Encoding"), TEXT("Format"),        1);
+    AppConfig->SetString(TEXT("Audio Encoding"), TEXT("Bitrate"),       TEXT("128"));
+    AppConfig->SetString(TEXT("Audio Encoding"), TEXT("Codec"),         TEXT("AAC"));
+
+    AppConfig->SetInt   (TEXT("Publish"),        TEXT("Service"),       0);
+    AppConfig->SetInt   (TEXT("Publish"),        TEXT("Mode"),          0);
+};
+
+void LoadGlobalIni()
+{
+    GlobalConfig = new ConfigFile;
+
+    String strGlobalIni;
+    strGlobalIni << lpAppDataPath << TEXT("\\global.ini");
+
+    if(!GlobalConfig->Open(strGlobalIni))
+    {
+        if(!GlobalConfig->Create(strGlobalIni))
+            CrashError(TEXT("Could not create '%s'"), strGlobalIni.Array());
+
+        //----------------------
+        // first, try to set the app to the system language, defaulting to english if the language doesn't exist
+
+        DWORD bufSize = GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_SISO639LANGNAME, NULL, 0);
+
+        String str639Lang;
+        str639Lang.SetLength(bufSize);
+
+        GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_SISO639LANGNAME, str639Lang.Array(), bufSize+1);
+
+        String strLangFile;
+        strLangFile << TEXT("locale/") << str639Lang << TEXT(".txt");
+
+        if(!OSFileExists(strLangFile))
+            str639Lang = TEXT("en");
+
+        //----------------------
+
+        GlobalConfig->SetString(TEXT("General"), TEXT("Language"), str639Lang);
+        GlobalConfig->SetInt(TEXT("General"), TEXT("MaxLogs"), 20);
+    }
+}
+
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
     //make sure only one instance of the application can be open at a time
     hOBSMutex = CreateMutex(NULL, TRUE, TEXT("OBSMutex"));
     if(GetLastError() == ERROR_ALREADY_EXISTS)
     {
+        hwndMain = FindWindow(OBS_WINDOW_CLASS, NULL);
+        if(hwndMain)
+            SetForegroundWindow(hwndMain);
+
         CloseHandle(hOBSMutex);
         return 0;
     }
@@ -96,68 +222,108 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     hinstMain = hInstance;
 
-    //------------------------------------------------------------
-    // get the allocator from the config.  problem is we need an allocator to load the config
-
-    CTSTR lpAllocatorString = TEXT("FastAlloc");
-
-    MainAllocator = new DefaultAlloc;
-
-    AppConfig = new ConfigFile;
-    if(AppConfig->Open(TEXT("OBS.ini")))
-        lpAllocatorString = AppConfig->GetStringPtr(TEXT("General"), TEXT("Allocator"), TEXT("FastAlloc"));
-
-    UINT stringSize = ssize(lpAllocatorString);
-    TSTR lpAllocator = (TSTR)malloc(stringSize);
-    mcpy(lpAllocator, lpAllocatorString, stringSize);
-
-    delete AppConfig;
-    delete MainAllocator;
-
-    //------------------------------------------------------------
-
-    if(InitXT(TEXT("OBS.log"), lpAllocator))
+    if(InitXT(NULL, TEXT("FastAlloc")))
     {
         traceIn(Main);
 
+        InitSockets();
+        //CoInitializeEx(NULL, COINIT_MULTITHREADED);
+        CoInitialize(0);
         EnableProfiling(TRUE);
+
+        TSTR lpAllocator = NULL;
+
+        {
+            SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, lpAppDataPath);
+            scat_n(lpAppDataPath, TEXT("\\OBS"), 4);
+
+            if(!OSFileExists(lpAppDataPath) && !OSCreateDirectory(lpAppDataPath))
+                CrashError(TEXT("Couldn't create directory '%s'"), lpAppDataPath);
+
+            String strAppDataPath = lpAppDataPath;
+            String strProfilesPath = strAppDataPath + TEXT("\\profiles");
+            if(!OSFileExists(strProfilesPath) && !OSCreateDirectory(strProfilesPath))
+                CrashError(TEXT("Couldn't create directory '%s'"), strProfilesPath.Array());
+
+            String strLogsPath = strAppDataPath + TEXT("\\logs");
+            if(!OSFileExists(strLogsPath) && !OSCreateDirectory(strLogsPath))
+                CrashError(TEXT("Couldn't create directory '%s'"), strLogsPath.Array());
+
+            String strPluginDataPath = strAppDataPath + TEXT("\\pluginData");
+            if(!OSFileExists(strPluginDataPath) && !OSCreateDirectory(strPluginDataPath))
+                CrashError(TEXT("Couldn't create directory '%s'"), strPluginDataPath.Array());
+
+            LoadGlobalIni();
+
+            String strAllocator = GlobalConfig->GetString(TEXT("General"), TEXT("Allocator"));
+            if(strAllocator.IsValid())
+            {
+                UINT size = strAllocator.DataLength();
+                lpAllocator = (TSTR)malloc(size);
+                mcpy(lpAllocator, strAllocator.Array(), size);
+            }
+        }
+
+        if(lpAllocator)
+        {
+            delete GlobalConfig;
+
+            ResetXTAllocator(lpAllocator);
+            free(lpAllocator);
+
+            LoadGlobalIni();
+        }
+
+        //--------------------------------------------
+
+        String strDirectory;
+        UINT dirSize = GetCurrentDirectory(0, 0);
+        strDirectory.SetLength(dirSize);
+        GetCurrentDirectory(dirSize, strDirectory.Array());
+
+        GlobalConfig->SetString(TEXT("General"), TEXT("LastAppDirectory"), strDirectory.Array());
+
+        //--------------------------------------------
+
+        AppConfig = new ConfigFile;
+        SetupIni();
+
+        //--------------------------------------------
+
+        String strLogFileWildcard;
+        strLogFileWildcard << lpAppDataPath << TEXT("\\logs\\*.log");
+
+        OSFindData ofd;
+        HANDLE hFindLogs = OSFindFirstFile(strLogFileWildcard, ofd);
+        if(hFindLogs)
+        {
+            int numLogs = 0;
+            String strFirstLog;
+
+            do
+            {
+                if(ofd.bDirectory) continue;
+                if(!numLogs++)
+                    strFirstLog << lpAppDataPath << TEXT("\\logs\\") << ofd.fileName;
+            } while(OSFindNextFile(hFindLogs, ofd));
+
+            OSFindClose(hFindLogs);
+
+            if(numLogs >= GlobalConfig->GetInt(TEXT("General"), TEXT("MaxLogs"), 20))
+                OSDeleteFile(strFirstLog);
+        }
+
+        SYSTEMTIME st;
+        GetLocalTime(&st);
+
+        String strLog;
+        strLog << lpAppDataPath << FormattedString(TEXT("\\logs\\%u-%02u-%02u-%02u%02u-%02u"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond) << TEXT(".log");
+
+        InitXTLog(strLog);
 
         LogSystemStats();
 
-        //CoInitializeEx(NULL, COINIT_MULTITHREADED);
-        CoInitialize(0);
-
-        InitSockets();
-
-        AppConfig = new ConfigFile;
-        if(!AppConfig->Open(TEXT("OBS.ini")))
-        {
-            if(!AppConfig->Create(TEXT("OBS.ini")))
-                CrashError(TEXT("Could not open OBS.ini"));
-
-            AppConfig->SetString(TEXT("General"),        TEXT("Language"),      TEXT("en"));
-
-            AppConfig->SetString(TEXT("Audio"),          TEXT("Device"),        TEXT("Default"));
-            AppConfig->SetFloat (TEXT("Audio"),          TEXT("MicVolume"),     1.0f);
-            AppConfig->SetFloat (TEXT("Audio"),          TEXT("DesktopVolume"), 1.0f);
-
-            AppConfig->SetInt   (TEXT("Video"),          TEXT("Monitor"),       0);
-            AppConfig->SetInt   (TEXT("Video"),          TEXT("FPS"),           25);
-            AppConfig->SetFloat (TEXT("Video"),          TEXT("Downscale"),     1.0f);
-            AppConfig->SetInt   (TEXT("Video"),          TEXT("DisableAero"),   0);
-
-            AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("BufferSize"),    1000);
-            AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("MaxBitrate"),    1000);
-            AppConfig->SetString(TEXT("Video Encoding"), TEXT("Preset"),        TEXT("veryfast"));
-            AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("Quality"),       8);
-
-            AppConfig->SetInt   (TEXT("Audio Encoding"), TEXT("Format"),        1);
-            AppConfig->SetString(TEXT("Audio Encoding"), TEXT("Bitrate"),       TEXT("128"));
-            AppConfig->SetString(TEXT("Audio Encoding"), TEXT("Codec"),         TEXT("AAC"));
-
-            AppConfig->SetInt   (TEXT("Publish"),        TEXT("Service"),       0);
-            AppConfig->SetInt   (TEXT("Publish"),        TEXT("Mode"),          0);
-        }
+        //--------------------------------------------
 
         bDisableComposition = AppConfig->GetInt(TEXT("Video"), TEXT("DisableAero"), 0);
 
@@ -167,6 +333,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             if(bCompositionEnabled)
                 DwmEnableComposition(DWM_EC_DISABLECOMPOSITION);
         }
+
+        //--------------------------------------------
 
         App = new OBS;
 
@@ -183,7 +351,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
 
         delete App;
+
+        //--------------------------------------------
+
         delete AppConfig;
+        delete GlobalConfig;
 
         if(bDisableComposition && bCompositionEnabled)
             DwmEnableComposition(DWM_EC_ENABLECOMPOSITION);
@@ -191,11 +363,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         TerminateSockets();
 
         traceOutStop;
-
-        TerminateXT();
     }
 
-    free(lpAllocator);
+    TerminateXT();
 
     //------------------------------------------------------------
 

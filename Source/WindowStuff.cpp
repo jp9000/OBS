@@ -26,7 +26,7 @@
 
 extern WNDPROC listboxProc;
 
-void STDCALL SceneHotkey(DWORD hotkey, UPARAM param);
+void STDCALL SceneHotkey(DWORD hotkey, UPARAM param, bool bDown);
 
 enum
 {
@@ -141,10 +141,19 @@ INT_PTR CALLBACK OBS::SceneHotkeyDialogProc(HWND hwnd, UINT message, WPARAM wPar
                             break;
                         }
 
-                        if(hotkey && API->HotkeyExists(hotkey))
+                        if(hotkey)
                         {
-                            MessageBox(hwnd, Str("Scene.Hotkey.AlreadyInUse"), NULL, 0);
-                            return 0;
+                            XElement *scenes = API->GetSceneListElement();
+                            UINT numScenes = scenes->NumElements();
+                            for(UINT i=0; i<numScenes; i++)
+                            {
+                                XElement *sceneElement = scenes->GetElementByID(i);
+                                if(sceneElement->GetInt(TEXT("hotkey")) == hotkey)
+                                {
+                                    MessageBox(hwnd, Str("Scene.Hotkey.AlreadyInUse"), NULL, 0);
+                                    return 0;
+                                }
+                            }
                         }
 
                         hotkeyInfo->hotkey = hotkey;
@@ -590,11 +599,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                             }
 
                             if(App->bRunning)
-                            {
-                                OSEnterMutex(App->hSceneMutex);
                                 App->scene->AddImageSource(newSourceElement);
-                                OSLeaveMutex(App->hSceneMutex);
-                            }
 
                             UINT newID = (UINT)SendMessage(hwnd, LB_ADDSTRING, 0, (LPARAM)strName.Array());
                             PostMessage(hwnd, LB_SETCURSEL, newID, 0);
@@ -1526,7 +1531,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
             break;
 
         case OBS_CALLHOTKEY:
-            App->CallHotkey((DWORD)lParam);
+            App->CallHotkey((DWORD)lParam, wParam != 0);
             break;
 
         case WM_CLOSE:
@@ -1573,6 +1578,12 @@ ItemModifyType GetItemModifyType(const Vect2 &mousePos, const Vect2 &itemPos, co
 
     return ItemModifyType_Move;
 }
+
+enum
+{
+    ID_TOGGLERENDERVIEW=1,
+    ID_SHOWFPS,
+};
 
 LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -2066,6 +2077,30 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                 App->bMouseDown = false;
             }
         }
+    }
+    else if(message == WM_RBUTTONDOWN)
+    {
+        HMENU hPopup = CreatePopupMenu();
+        AppendMenu(hPopup, MF_STRING | (App->bRenderViewEnabled ? MF_CHECKED : 0), ID_TOGGLERENDERVIEW, Str("RenderView.EnableView"));
+        AppendMenu(hPopup, MF_STRING | (App->bShowFPS ? MF_CHECKED : 0), ID_SHOWFPS, Str("RenderView.ShowFPS"));
+
+        POINT p;
+        GetCursorPos(&p);
+
+        int ret = (int)TrackPopupMenuEx(hPopup, TPM_RETURNCMD | TPM_LEFTALIGN | TPM_RIGHTBUTTON, p.x, p.y, hwndMain, NULL);
+        switch(ret)
+        {
+            case ID_TOGGLERENDERVIEW:
+                App->bRenderViewEnabled = !App->bRenderViewEnabled;
+                break;
+
+            case ID_SHOWFPS:
+                App->bShowFPS = !App->bShowFPS;
+                AppConfig->SetInt(TEXT("General"), TEXT("ShowFPS"), App->bShowFPS ? 1 : 0);
+                break;
+        }
+
+        DestroyMenu(hPopup);
     }
 
     return DefWindowProc(hwnd, message, wParam, lParam);

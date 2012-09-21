@@ -179,6 +179,14 @@ struct IconInfo
     int resource;
 };
 
+struct FontInfo
+{
+    HFONT hFont;
+    String strFontFace;
+    int fontSize;
+    int fontWeight;
+};
+
 //-------------------------------------------------------------------
 
 struct FrameAudio
@@ -344,6 +352,8 @@ class OBS
     bool    bResizeRenderView;
 
     bool    bEditMode;
+    bool    bRenderViewEnabled;
+    bool    bShowFPS;
     bool    bMouseMoved;
     bool    bMouseDown;
     bool    bItemWasSelected;
@@ -377,6 +387,7 @@ class OBS
     String  streamReport;
 
     List<IconInfo> Icons;
+    List<FontInfo> Fonts;
 
     List<ClassInfo> sceneClasses;
     List<ClassInfo> imageSourceClasses;
@@ -469,7 +480,7 @@ class OBS
     static INT_PTR CALLBACK GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static bool STDCALL ConfigGlobalSource(XElement *element, bool bCreating);
 
-    void CallHotkey(DWORD hotkey);
+    void CallHotkey(DWORD hotkeyID, bool bDown);
 
 public:
     OBS();
@@ -499,6 +510,7 @@ public:
     inline XElement* GetSceneElement() const {return sceneElement;}
 
     virtual HICON GetIcon(HINSTANCE hInst, int resource);
+    virtual HFONT GetFont(CTSTR lpFontFace, int fontSize, int fontWeight);
 
     inline void GetVideoHeaders(DataPacket &packet) {videoEncoder->GetHeaders(packet);}
     inline void GetAudioHeaders(DataPacket &packet) {audioEncoder->GetHeaders(packet);}

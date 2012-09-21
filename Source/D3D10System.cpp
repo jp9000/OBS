@@ -33,13 +33,13 @@ D3D10System::D3D10System()
     swapDesc.BufferDesc.Width  = App->renderFrameWidth;
     swapDesc.BufferDesc.Height = App->renderFrameHeight;
     swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapDesc.Flags = 0;
+    swapDesc.Flags = DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
     swapDesc.OutputWindow = hwndRenderFrame;
     swapDesc.SampleDesc.Count = 1;
     swapDesc.Windowed = TRUE;
 
     UINT createFlags = D3D10_CREATE_DEVICE_BGRA_SUPPORT;
-    if(AppConfig->GetInt(TEXT("General"), TEXT("UseDebugD3D")))
+    if(GlobalConfig->GetInt(TEXT("General"), TEXT("UseDebugD3D")))
         createFlags |= D3D10_CREATE_DEVICE_DEBUG;
 
     //D3D10_CREATE_DEVICE_DEBUG
@@ -677,12 +677,14 @@ void D3D10System::ResetViewMatrix()
 
 void D3D10System::ResizeView()
 {
+    traceIn(D3D10System::ResizeView);
+
     LPVOID nullVal = NULL;
     d3d->OMSetRenderTargets(1, (ID3D10RenderTargetView**)&nullVal, NULL);
 
     SafeRelease(swapRenderView);
 
-    swap->ResizeBuffers(2, 0, 0, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
+    swap->ResizeBuffers(2, 0, 0, DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE);
 
     ID3D10Texture2D *backBuffer = NULL;
     HRESULT err = swap->GetBuffer(0, IID_ID3D10Texture2D, (void**)&backBuffer);
@@ -694,5 +696,7 @@ void D3D10System::ResizeView()
         CrashError(TEXT("Unable to get render view from back buffer"));
 
     backBuffer->Release();
+
+    traceOut;
 }
 

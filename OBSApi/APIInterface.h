@@ -23,7 +23,11 @@
 typedef LPVOID (STDCALL* OBSCREATEPROC)(XElement*); //data
 typedef bool (STDCALL* OBSCONFIGPROC)(XElement*, bool); //element, bInitializing
 
-typedef void (STDCALL* OBSHOTKEYPROC)(DWORD, UPARAM);
+typedef void (STDCALL* OBSHOTKEYPROC)(DWORD, UPARAM, bool);
+
+#define HOTKEY_SHIFT    0x1
+#define HOTKEY_CONTROL  0x2
+#define HOTKEY_ALT      0x4
 
 class APIInterface
 {
@@ -52,6 +56,7 @@ public:
     virtual CTSTR GetSceneName() const=0;
     virtual XElement* GetSceneElement()=0;
 
+    //low-order word is VK, high-order word is modifier.  equivalent to the value given by hotkey controls
     virtual bool HotkeyExists(DWORD hotkey) const=0;
     virtual bool CreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARAM param)=0;
     virtual void DeleteHotkey(DWORD hotkey)=0;
@@ -63,6 +68,9 @@ public:
     virtual CTSTR GetLanguage() const=0;
 
     virtual HWND GetMainWindow() const=0;
+
+    virtual CTSTR GetAppDataPath() const=0;
+    virtual String GetPluginDataPath() const=0;
 
     inline bool SSE2Available() {return bSSE2Availabe;}
 };

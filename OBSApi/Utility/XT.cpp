@@ -30,7 +30,7 @@ SafeList<DWORD>         TickList;
 Alloc                  *MainAllocator   = NULL;
 BOOL                    bBaseLoaded     = FALSE;
 BOOL                    bDebugBreak     = TRUE;
-CTSTR                   lpLogFileName   = TEXT("XT.log");
+TCHAR                   lpLogFileName[260] = TEXT("XT.log");
 XFile                   LogFile;
 StringList              TraceFuncList;
 
@@ -40,31 +40,48 @@ void STDCALL CriticalExit();
 void STDCALL OpenLogFile();
 void STDCALL CloseLogFile();
 
+void STDCALL OSInit();
+void STDCALL OSExit();
+
 BOOL STDCALL InitXT(CTSTR logFile, CTSTR allocatorName)
 {
     if(!bBaseLoaded)
     {
         if(logFile)
-            lpLogFileName = logFile;
+            scpy(lpLogFileName, logFile);
 
         OSInit();
 
-        if(scmpi(allocatorName, TEXT("DebugAlloc")) == 0)
-            MainAllocator = new DebugAlloc;
-        else if (scmpi(allocatorName, TEXT("DefaultAlloc")) == 0)
-            MainAllocator = new DefaultAlloc;
-        else if (scmpi(allocatorName, TEXT("SeriousMemoryDebuggingAlloc")) == 0)
-            MainAllocator = new SeriousMemoryDebuggingAlloc;
-        else
-            MainAllocator = new FastAlloc;
-
-        locale = new LocaleStringLookup;
+        ResetXTAllocator(allocatorName);
         bBaseLoaded = 1;
     }
 
     return TRUE;
 }
 
+
+void STDCALL InitXTLog(CTSTR logFile)
+{
+    if(logFile)
+        scpy(lpLogFileName, logFile);
+}
+
+void STDCALL ResetXTAllocator(CTSTR lpAllocator)
+{
+    delete locale;
+    delete MainAllocator;
+
+    if(scmpi(lpAllocator, TEXT("DebugAlloc")) == 0)
+        MainAllocator = new DebugAlloc;
+    else if (scmpi(lpAllocator, TEXT("DefaultAlloc")) == 0)
+        MainAllocator = new DefaultAlloc;
+    else if (scmpi(lpAllocator, TEXT("SeriousMemoryDebuggingAlloc")) == 0)
+        MainAllocator = new SeriousMemoryDebuggingAlloc;
+    else
+        MainAllocator = new FastAlloc;
+
+    locale = new LocaleStringLookup;
+}
 
 void STDCALL TerminateXT()
 {

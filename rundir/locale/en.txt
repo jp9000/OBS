@@ -50,6 +50,9 @@ Plugins.Configure   "Configure"
 Plugins.Description "Description:"
 Plugins.Filename    "File name:"
 
+RenderView.EnableView   "Enable View"
+RenderView.ShowFPS      "Show FPS"
+
 Scene.Hotkey            "Scene Hotkey"
 Scene.MissingSources    "Was unable to load all image sources due to either invalid settings or missing plugins"
 
@@ -86,8 +89,14 @@ Settings.Encoding.Video.Tradeoff            "CPU Preset:"
 Settings.Encoding.Video.TradeoffTooltip     "Setting this value higher reduces CPU usage by sacrificing certain aspects of quality.  On the other hand, setting this value lower increases quality at the cost of more CPU.\r\n\r\nRecommended: Very Fast"
 Settings.Encoding.Video.UseI444             "Use YUV 4:4:4"
 
-Settings.General.Language   "Language:"
-Settings.General.Restart    "Changing the language will require restarting OBS.\r\n\r\n..Though I suppose if you're changing the language you can't understand this"
+Settings.General.Add            "Add New"
+Settings.General.ConfirmDelete  "Are you sure you wish to remove the profile '$1'?"
+Settings.General.InvalidName    "Profile names cannot use the following characters:\r\n\\ / : * ? \" < > |"
+Settings.General.Language       "Language:"
+Settings.General.Profile        "Setting Profile:"
+Settings.General.Remove         "Remove"
+Settings.General.Rename         "Rename"
+Settings.General.Restart        "Changing the language will require restarting OBS.\r\n\r\n..Though I suppose if you're changing the language you can't understand this"
 
 Settings.Publish.ChannelName    "Channel Name:"
 Settings.Publish.Mode           "Mode:"

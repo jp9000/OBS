@@ -351,8 +351,8 @@ UINT MMDeviceAudioSource::GetNextBuffer()
                     __m128 outVal1 = _mm_unpacklo_ps(inVal, inVal);
                     __m128 outVal2 = _mm_unpackhi_ps(inVal, inVal);
 
-                    _mm_store_ps(outputTemp+(i*2), outVal1);
-                    _mm_store_ps(outputTemp+(i*2)+4, outVal1);
+                    _mm_store_ps(outputTemp+(i*2),   outVal1);
+                    _mm_store_ps(outputTemp+(i*2)+4, outVal2);
                 }
 
                 numFloats  -= alignedFloats;
@@ -580,7 +580,7 @@ UINT MMDeviceAudioSource::GetNextBuffer()
             receiveBuffer.AppendArray(resampleBuffer.Array(), data.output_frames_gen*2);
         }
         else
-            receiveBuffer.AppendArray(outputBuffer, numAudioFrames*2);
+            receiveBuffer.AppendArray(audioBuffer.Array(), numAudioFrames*2);
 
         return receiveBuffer.Num() >= (441*2) ? AudioAvailable : ContinueAudioRequest;
     }

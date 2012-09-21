@@ -48,6 +48,9 @@ public:
     BOOL  Open(CTSTR lpConfigFile, BOOL bOpenAlways=FALSE);
     void  Close();
 
+    BOOL  SaveAs(CTSTR lpPath);
+    void  SetFilePath(CTSTR lpPath);
+
     String GetString(CTSTR lpSection, CTSTR lpKey, CTSTR def=NULL);
     CTSTR GetStringPtr(CTSTR lpSection, CTSTR lpKey, CTSTR def=NULL);
     int   GetInt(CTSTR lpSection, CTSTR lpKey, int def=0);

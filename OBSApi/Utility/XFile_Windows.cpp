@@ -182,7 +182,7 @@ BOOL XFile::SetFileSize(DWORD dwSize)
     if(dwPos > dwSize)
         dwPos = dwSize;
 
-    SetPos(dwSize, FILE_BEGIN);
+    SetPos(dwSize, XFILE_BEGIN);
     return SetEndOfFile(hFile);
 
     traceOutFast;

@@ -58,7 +58,8 @@ class RTMPPublisher : public NetworkStream
 
     QWORD bytesSent;
 
-    //UINT numBFramesDumped;
+    UINT numPFramesDumped;
+    UINT numBFramesDumped;
 
     //all data sending is done in yet another separate thread to prevent blocking in the main capture thread
     void SendLoop()
@@ -219,7 +220,7 @@ class RTMPPublisher : public NetworkStream
                             packet.data.Clear();
                             Packets.Remove(i--);
                             numVideoPackets--;
-                            //numBFramesDumped++;
+                            numPFramesDumped++;
                         }
                     }
                     else if(packet.type == packetWaitType)
@@ -227,7 +228,7 @@ class RTMPPublisher : public NetworkStream
                         packet.data.Clear();
                         Packets.Remove(i--);
                         numVideoPackets--;
-                        //numBFramesDumped++;
+                        numPFramesDumped++;
 
                         bRemovedPacket = true;
                     }
@@ -267,7 +268,7 @@ class RTMPPublisher : public NetworkStream
                         packet.data.Clear();
                         Packets.Remove(i--);
                         numVideoPackets--;
-                        //numBFramesDumped++;
+                        numBFramesDumped++;
                     }
                 }
                 else if(packet.type == packetWaitType)
@@ -275,7 +276,7 @@ class RTMPPublisher : public NetworkStream
                     packet.data.Clear();
                     Packets.Remove(i--);
                     numVideoPackets--;
-                    //numBFramesDumped++;
+                    numBFramesDumped++;
 
                     bRemovedPacket = true;
                 }
@@ -401,7 +402,7 @@ public:
             Packets[i].data.Clear();
         Packets.Clear();
 
-        //Log(TEXT("num b frames dumped: %u"), numBFramesDumped);
+        Log(TEXT("Number of b-frames dropped: %u, Number of p-frames dropped: %u"), numBFramesDumped, numPFramesDumped);
 
         //--------------------------
 

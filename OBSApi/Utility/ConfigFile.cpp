@@ -35,8 +35,6 @@
 BOOL ConfigFile::Create(CTSTR lpConfigFile)
 {
     strFileName = lpConfigFile;
-    lpFileData = NULL;
-    bOpen  = 0;
 
     if(LoadFile(XFILE_CREATEALWAYS))
         LoadData();
@@ -49,8 +47,6 @@ BOOL ConfigFile::Create(CTSTR lpConfigFile)
 BOOL ConfigFile::Open(CTSTR lpConfigFile, BOOL bOpenAlways)
 {
     strFileName = lpConfigFile;
-    lpFileData = NULL;
-    bOpen  = 0;
 
     if(LoadFile(bOpenAlways ? XFILE_OPENALWAYS : XFILE_OPENEXISTING))
         LoadData();
@@ -62,15 +58,15 @@ BOOL ConfigFile::Open(CTSTR lpConfigFile, BOOL bOpenAlways)
 
 BOOL ConfigFile::LoadFile(DWORD dwOpenMode)
 {
-    if(bOpen)
-        Close();
-
     XFile file;
     if(!file.Open(strFileName, XFILE_READ, dwOpenMode))
     {
         //Log(TEXT("Couldn't load config file: \"%s\""), (TSTR)strFileName);
         return 0;
     }
+
+    if(bOpen)
+        Close();
 
     dwLength = file.GetFileSize();
 
@@ -178,6 +174,23 @@ void ConfigFile::Close()
     }
 
     bOpen = 0;
+}
+
+BOOL ConfigFile::SaveAs(CTSTR lpPath)
+{
+    XFile newFile;
+    if(!newFile.Open(lpPath, XFILE_WRITE, XFILE_CREATEALWAYS))
+        return FALSE;
+
+    strFileName = lpPath;
+    newFile.Write("\xEF\xBB\xBF", 3);
+    newFile.WriteAsUTF8(lpFileData);
+    return TRUE;
+}
+
+void ConfigFile::SetFilePath(CTSTR lpPath)
+{
+    strFileName = lpPath;
 }
 
 String ConfigFile::GetString(CTSTR lpSection, CTSTR lpKey, CTSTR def)
@@ -578,7 +591,7 @@ void ConfigFile::SetString(CTSTR lpSection, CTSTR lpKey, CTSTR lpString)
         return;
 
     if(!lpString)
-        return;
+        lpString = TEXT("");
 
     SetKey(lpSection, lpKey, lpString);
 }

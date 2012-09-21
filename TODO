@@ -4,7 +4,6 @@ More up to date list on the website
 -------------------------------------------------------
 
 List of features yet to be implemented:
-    * implement ability to save multiple channel/server settings
     * add other commonly used server data to the services.xconfig file
       (livestream, etc), need to find out their server details
     * Option to output to mp4/avi file.  Not going to use ffmpeg by
