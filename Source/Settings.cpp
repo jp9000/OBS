@@ -131,12 +131,23 @@ INT_PTR CALLBACK OBS::GeneralSettingsProc(HWND hwnd, UINT message, WPARAM wParam
             switch(LOWORD(wParam))
             {
                 case IDC_LANGUAGE:
-                    if(HIWORD(wParam) != CBN_SELCHANGE)
-                        break;
+                    {
+                        if(HIWORD(wParam) != CBN_SELCHANGE)
+                            break;
 
-                    SetWindowText(GetDlgItem(hwnd, IDC_INFO), Str("Settings.General.Restart"));
-                    ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-                    break;
+                        HWND hwndTemp = (HWND)lParam;
+
+                        SetWindowText(GetDlgItem(hwnd, IDC_INFO), Str("Settings.General.Restart"));
+                        ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
+
+                        int curSel = (int)SendMessage(hwndTemp, CB_GETCURSEL, 0, 0);
+                        if(curSel != CB_ERR)
+                        {
+                            String strLanguageCode = (CTSTR)SendMessage(hwndTemp, CB_GETITEMDATA, curSel, 0);
+                            GlobalConfig->SetString(TEXT("General"), TEXT("Language"), strLanguageCode);
+                        }
+                        break;
+                    }
 
                 case IDC_PROFILE:
                     if(HIWORD(wParam) == CBN_EDITCHANGE)
@@ -1150,23 +1161,8 @@ INT_PTR CALLBACK OBS::HotkeysSettingsProc(HWND hwnd, UINT message, WPARAM wParam
 
 void OBS::ApplySettings()
 {
-    HWND hwndTemp;
-
     switch(curSettingsSelection)
     {
-        case Settings_General:
-            {
-                hwndTemp = GetDlgItem(hwndCurrentSettings, IDC_LANGUAGE);
-
-                int curSel = (int)SendMessage(hwndTemp, CB_GETCURSEL, 0, 0);
-                if(curSel != CB_ERR)
-                {
-                    String strLanguageCode = (CTSTR)SendMessage(hwndTemp, CB_GETITEMDATA, curSel, 0);
-                    GlobalConfig->SetString(TEXT("General"), TEXT("Language"), strLanguageCode);
-                }
-                break;
-            }
-
         case Settings_Encoding:
             {
                 int quality = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_QUALITY), CB_GETCURSEL, 0, 0);
