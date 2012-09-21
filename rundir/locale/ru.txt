@@ -1,4 +1,4 @@
-Add             "Добавить"
+﻿Add             "Добавить"
 Apply           "Применить"
 Browse          "Найти"
 Cancel          "Отменить"
@@ -50,6 +50,9 @@ Plugins.Configure   "Конфигурация"
 Plugins.Description "Описание:"
 Plugins.Filename    "Имя файла:"
 
+RenderView.EnableView   "Включить предпросмотр"
+RenderView.ShowFPS      "Показывать FPS"
+
 Scene.Hotkey            "Горячая клавиша сцены"
 Scene.MissingSources    "Изображения не загружены в результате недопустимых настроек или отсутствующих плагинов."
 
@@ -86,8 +89,14 @@ Settings.Encoding.Video.Tradeoff            "CPU пресет:"
 Settings.Encoding.Video.TradeoffTooltip     "Установка более быстрого (высокого) значения уменьшает нагрузку процессора, жертвуя некоторыми акпектами качества. С другой стороны, установка медленного (низкого) значения повышает качество за счет увеличения нагрузки на процессор.\r\n\r\nРекомендуется: Very Fast"
 Settings.Encoding.Video.UseI444             "Использовать YUV 4:4:4"
 
-Settings.General.Language   "Язык:"
-Settings.General.Restart    "Для смены языка необходимо перезапустить программу."
+Settings.General.Add            "Добавить"
+Settings.General.ConfirmDelete  "Вы уверены, что хотите удалить профиль '$1'?"
+Settings.General.InvalidName    "Имя пофиля не может содержать следующие символы:\r\n\\ / : * ? \" < > |"
+Settings.General.Language      "Язык:"
+Settings.General.Profile        "Профиль:"
+Settings.General.Remove         "Удалить"
+Settings.General.Rename         "Переименовать"
+Settings.General.Restart       "Для смены языка необходимо перезапустить программу.\r\n\r\n..Хотяя пологая, что если вы меняете язык, вы не сможете понять это"
 
 Settings.Publish.ChannelName    "Имя канала:"
 Settings.Publish.Mode           "Режим:"
