@@ -1114,6 +1114,8 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                 }
 
                 SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)audioDevices);
+
+				App->SetChangedSettings(false);
                 return TRUE;
             }
 
