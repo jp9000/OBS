@@ -2082,7 +2082,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
     {
         HMENU hPopup = CreatePopupMenu();
         AppendMenu(hPopup, MF_STRING | (App->bRenderViewEnabled ? MF_CHECKED : 0), ID_TOGGLERENDERVIEW, Str("RenderView.EnableView"));
-        AppendMenu(hPopup, MF_STRING | (App->bShowFPS ? MF_CHECKED : 0), ID_SHOWFPS, Str("RenderView.ShowFPS"));
+        //AppendMenu(hPopup, MF_STRING | (App->bShowFPS ? MF_CHECKED : 0), ID_SHOWFPS, Str("RenderView.ShowFPS"));
 
         POINT p;
         GetCursorPos(&p);
@@ -2094,10 +2094,10 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                 App->bRenderViewEnabled = !App->bRenderViewEnabled;
                 break;
 
-            case ID_SHOWFPS:
+            /*case ID_SHOWFPS:
                 App->bShowFPS = !App->bShowFPS;
                 AppConfig->SetInt(TEXT("General"), TEXT("ShowFPS"), App->bShowFPS ? 1 : 0);
-                break;
+                break;*/
         }
 
         DestroyMenu(hPopup);

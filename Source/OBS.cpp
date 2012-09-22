@@ -718,7 +718,7 @@ OBS::OBS()
     //-----------------------------------------------------
 
     bRenderViewEnabled = true;
-    bShowFPS = AppConfig->GetInt(TEXT("General"), TEXT("ShowFPS")) != 0;
+    //bShowFPS = AppConfig->GetInt(TEXT("General"), TEXT("ShowFPS")) != 0;
 
     traceOut;
 }
@@ -1558,7 +1558,7 @@ void OBS::MainCaptureLoop()
                     scene->RenderSelections();
             }
 
-            if(bShowFPS && !bSizeChanging)
+            /*if(bShowFPS && !bSizeChanging)
             {
                 D3D10System *d3dSys = static_cast<D3D10System*>(GS);
 
@@ -1588,7 +1588,7 @@ void OBS::MainCaptureLoop()
 
                     surface->Release();
                 }
-            }
+            }*/
         }
 
         //------------------------------------

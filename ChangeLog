@@ -3,6 +3,13 @@
 
 -------------------------------
 
+2012-9-22 - 0.381 (alpha)
+    * Had to remove the FPS display code because it was causing a
+      notable performance drop.  do -not- set the swap chain to GDI
+      compatible.
+
+-------------------------------
+
 2012-9-20 - 0.38 (alpha)
     * Changed the way settings are saved.  All settings are now saved
       to the windows [user]/AppData/Roaming/OBS directory.

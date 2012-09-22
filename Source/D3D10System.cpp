@@ -33,7 +33,7 @@ D3D10System::D3D10System()
     swapDesc.BufferDesc.Width  = App->renderFrameWidth;
     swapDesc.BufferDesc.Height = App->renderFrameHeight;
     swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapDesc.Flags = DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
+    swapDesc.Flags = 0;
     swapDesc.OutputWindow = hwndRenderFrame;
     swapDesc.SampleDesc.Count = 1;
     swapDesc.Windowed = TRUE;
@@ -684,7 +684,7 @@ void D3D10System::ResizeView()
 
     SafeRelease(swapRenderView);
 
-    swap->ResizeBuffers(2, 0, 0, DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE);
+    swap->ResizeBuffers(2, 0, 0, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
 
     ID3D10Texture2D *backBuffer = NULL;
     HRESULT err = swap->GetBuffer(0, IID_ID3D10Texture2D, (void**)&backBuffer);
