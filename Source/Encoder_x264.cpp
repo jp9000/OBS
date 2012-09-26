@@ -109,6 +109,7 @@ public:
         paramData.rc.i_vbv_buffer_size  = bufferSize; //vbv-bufsize
         paramData.rc.i_rc_method        = X264_RC_CRF;
         paramData.rc.f_rf_constant      = baseCRF+float(10-quality);
+        paramData.vui.b_fullrange       = 0;          //specify full range input levels
 
         //paramData.i_nal_hrd = 1;
 
@@ -142,6 +143,7 @@ public:
         traceIn(X264Encoder::~X264Encoder);
 
         ClearPackets();
+        HeaderPacket.Clear ();
         x264_encoder_close(x264);
 
         traceOut;
