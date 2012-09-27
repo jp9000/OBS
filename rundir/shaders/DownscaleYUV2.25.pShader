@@ -38,7 +38,7 @@ struct VertData
 float4 main(VertData input) : SV_Target
 {
     float2 texAdjust = (input.texCoord-0.5)*2.25;
-    float2 floorVal = floor(texAdjust);
+    float2 floorVal = floor(texAdjust+0.001);
     float2 offset = (texAdjust-floorVal);
 
     float3x3 pixelMat =
@@ -94,7 +94,7 @@ float4 main(VertData input) : SV_Target
     const float4x4 yuvMat  = {0.257, -0.148,  0.439, 0.0,
                               0.504, -0.291, -0.368, 0.0,
                               0.098,  0.439, -0.071, 0.0,
-                              0.10,   0.50,   0.50,  1.0};
+                              0.0625, 0.50,   0.50,  1.0};
 
     //a nice quick colorspace conversion
     float4 yuvx = mul(float4(rgba.rgb, 1.0), yuvMat);
