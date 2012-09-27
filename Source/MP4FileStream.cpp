@@ -78,6 +78,8 @@ class MP4FileStream : public VideoFileStream
 
     UINT64 mdatStart, mdatStop;
 
+    bool bSentFirstVideoPacket;
+
     void PushBox(BufferOutputSerializer &output, DWORD boxName)
     {
         boxOffsets.Insert(0, endBuffer.Num());
@@ -679,6 +681,16 @@ public:
 
     virtual void AddPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)
     {
+        if(!bSentFirstVideoPacket && type != PacketType_Audio)
+        {
+            bSentFirstVideoPacket = true;
+
+            DataPacket seiData;
+            App->GetVideoEncoder()->GetSEI(seiData);
+
+            AddPacket(seiData.lpPacket, seiData.size, timestamp, PacketType_VideoHighest);
+        }
+
         UINT64 offset = fileOut.GetPos();
 
         if(type == PacketType_Audio)

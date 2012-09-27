@@ -1787,6 +1787,11 @@ void OBS::MainCaptureLoop()
                     {
                         network->BeginPublishing();
                         bSentHeaders = true;
+
+                        DataPacket seiPacket;
+                        videoEncoder->GetSEI(seiPacket);
+
+                        network->SendPacket(seiPacket.lpPacket, seiPacket.size, 0, PacketType_VideoHighest);
                     }
 
                     OSEnterMutex(hSoundDataMutex);

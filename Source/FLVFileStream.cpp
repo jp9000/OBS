@@ -30,6 +30,8 @@ class FLVFileStream : public VideoFileStream
     UINT64 metaDataPos;
     DWORD lastTimeStamp;
 
+    bool bSentFirstPacket;
+
     void AppendFLVPacket(LPBYTE lpData, UINT size, BYTE type, DWORD timestamp)
     {
         UINT networkDataSize  = fastHtonl(size);
@@ -103,6 +105,20 @@ public:
 
     virtual void AddPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)
     {
+        if(!bSentFirstPacket)
+        {
+            bSentFirstPacket = true;
+
+            DataPacket audioHeaders, videoHeaders, videoSEI;
+            App->GetAudioHeaders(audioHeaders);
+            App->GetAudioHeaders(videoHeaders);
+            App->GetVideoEncoder()->GetSEI(videoSEI);
+
+            AppendFLVPacket(audioHeaders.lpPacket, audioHeaders.size, 8, 0);
+            AppendFLVPacket(videoHeaders.lpPacket, videoHeaders.size, 9, 0);
+            AppendFLVPacket(videoSEI.lpPacket,     videoSEI.size, 9, 0);
+        }
+
         AppendFLVPacket(data, size, (type == PacketType_Audio) ? 8 : 9, timestamp);
     }
 };

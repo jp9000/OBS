@@ -67,6 +67,7 @@ class X264Encoder : public VideoEncoder
 
     List<VideoPacket> CurrentPackets;
     List<BYTE> HeaderPacket;
+    List<BYTE> SEIPacket;
 
     inline void ClearPackets()
     {
@@ -204,12 +205,24 @@ public:
         {
             x264_nal_t &nal = nalOut[i];
 
-            if(nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE || nal.i_type == NAL_SEI)
+            if(nal.i_type == NAL_SEI)
+            {
+                BYTE *skip = nal.p_payload;
+                while(*(skip++) != 0x1);
+                int skipBytes = (int)(skip-nal.p_payload);
+
+                int newPayloadSize = (nal.i_payload-skipBytes);
+                SEIPacket.SetSize(9+newPayloadSize);
+
+                SEIPacket[0] = 0x17;
+                SEIPacket[1] = 1;
+                mcpy(SEIPacket+2, timeOffsetAddr, 3);
+                *(DWORD*)(SEIPacket+5) = htonl(newPayloadSize);
+                mcpy(SEIPacket+9, nal.p_payload+skipBytes, newPayloadSize);
+            }
+            else if(nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE)
             {
                 VideoPacket *newPacket = CurrentPackets.CreateNew();
-
-                if(nal.i_type == NAL_SEI)
-                    nop();
 
                 BYTE *skip = nal.p_payload;
                 while(*(skip++) != 0x1);
@@ -311,6 +324,16 @@ public:
 
         packet.lpPacket = HeaderPacket.Array();
         packet.size     = HeaderPacket.Num();
+
+        traceOut;
+    }
+
+    void GetSEI(DataPacket &packet)
+    {
+        traceIn(X264Encoder::GetHeaders);
+
+        packet.lpPacket = SEIPacket.Array();
+        packet.size     = SEIPacket.Num();
 
         traceOut;
     }

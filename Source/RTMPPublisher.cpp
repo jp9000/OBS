@@ -528,14 +528,15 @@ public:
 
         //----------------------------------------------
 
-        packet.m_nChannel = 0x04; // source channel
-        packet.m_headerType = RTMP_PACKET_SIZE_LARGE;
-        packet.m_packetType = RTMP_PACKET_TYPE_VIDEO;
-
         List<BYTE> packetPadding;
-
         DataPacket mediaHeaders;
-        App->GetVideoHeaders(mediaHeaders);
+
+        //----------------------------------------------
+
+        packet.m_nChannel = 0x05; // source channel
+        packet.m_packetType = RTMP_PACKET_TYPE_AUDIO;
+
+        App->GetAudioHeaders(mediaHeaders);
 
         packetPadding.SetSize(RTMP_MAX_HEADER_SIZE);
         packetPadding.AppendArray(mediaHeaders.lpPacket, mediaHeaders.size);
@@ -550,10 +551,11 @@ public:
 
         //----------------------------------------------
 
-        packet.m_nChannel = 0x05; // source channel
-        packet.m_packetType = RTMP_PACKET_TYPE_AUDIO;
+        packet.m_nChannel = 0x04; // source channel
+        packet.m_headerType = RTMP_PACKET_SIZE_LARGE;
+        packet.m_packetType = RTMP_PACKET_TYPE_VIDEO;
 
-        App->GetAudioHeaders(mediaHeaders);
+        App->GetVideoHeaders(mediaHeaders);
 
         packetPadding.SetSize(RTMP_MAX_HEADER_SIZE);
         packetPadding.AppendArray(mediaHeaders.lpPacket, mediaHeaders.size);

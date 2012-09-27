@@ -25,6 +25,7 @@ class NullVideoEncoder : public VideoEncoder
 public:
     virtual bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp) {return true;}
     virtual void GetHeaders(DataPacket &packet) {}
+    virtual void GetSEI(DataPacket &packet) {}
     virtual int  GetBitRate() const {return 0;}
     virtual String GetInfoString() const {return String();}
 };

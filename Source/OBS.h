@@ -155,12 +155,14 @@ class VideoEncoder
 
 protected:
     virtual bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp)=0;
-    virtual void GetHeaders(DataPacket &packet)=0;
 
 public:
     virtual ~VideoEncoder() {}
 
     virtual int  GetBitRate() const=0;
+
+    virtual void GetHeaders(DataPacket &packet)=0;
+    virtual void GetSEI(DataPacket &packet)=0;
 
     virtual String GetInfoString() const=0;
 };
