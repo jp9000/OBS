@@ -906,7 +906,7 @@ bool  XConfig::Open(CTSTR lpFile)
     RootElement = new XElement(this, NULL, TEXT("Root"));
     strFileName = lpFile;
 
-    DWORD dwFileSize = file.GetFileSize();
+    DWORD dwFileSize = (DWORD)file.GetFileSize();
 
     LPSTR lpFileDataUTF8 = (LPSTR)Allocate(dwFileSize+1);
     zero(lpFileDataUTF8, dwFileSize+1);

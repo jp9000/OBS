@@ -65,6 +65,10 @@ public:
     virtual Vect2 GetRenderFrameSize() const=0;   //get the render frame size
     virtual Vect2 GetOutputSize() const=0;        //get the stream output size
 
+    virtual void GetBaseSize(UINT &width, UINT &height) const=0;
+    virtual void GetRenderFrameSize(UINT &width, UINT &height) const=0;
+    virtual void GetOutputSize(UINT &width, UINT &height) const=0;
+
     virtual CTSTR GetLanguage() const=0;
 
     virtual HWND GetMainWindow() const=0;

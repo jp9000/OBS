@@ -68,7 +68,7 @@ BOOL ConfigFile::LoadFile(DWORD dwOpenMode)
     if(bOpen)
         Close();
 
-    dwLength = file.GetFileSize();
+    dwLength = (DWORD)file.GetFileSize();
 
     LPSTR lpTempFileData = (LPSTR)Allocate(dwLength+5);
     file.Read(&lpTempFileData[2], dwLength);

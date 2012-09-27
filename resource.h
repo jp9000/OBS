@@ -23,6 +23,9 @@
 #define IDD_GLOBAL_SOURCES              126
 #define IDD_PLUGINS                     129
 #define IDD_SCENEHOTKEY                 130
+#define IDD_DIALOG1                     131
+#define IDD_RECONNECTING                131
+#define IDD_SETTINGS_ADVANCED           132
 #define IDC_SETTINGSLIST                1006
 #define IDC_SUBDIALOG                   1007
 #define IDC_MODE                        1008
@@ -58,10 +61,16 @@
 #define IDC_RESETSIZE                   1041
 #define IDC_CAPTUREMOUSE                1041
 #define IDC_BUFFERSENDS                 1041
+#define IDC_AUTORECONNECT               1041
+#define IDC_PUSHTOTALK                  1041
+#define IDC_USEVIDEOENCODERSETTINGS     1041
 #define IDC_SERVEREDIT                  1042
+#define IDC_USEVIDEOENCODERSETTINGS2    1042
+#define IDC_USESENDBUFFER               1042
 #define IDC_CHANNELNAME_STATIC          1043
 #define IDC_PLAYPATH_STATIC             1044
 #define IDC_USERNAME_STATIC             1045
+#define IDC_SAVETOFILE                  1045
 #define IDC_SERVER_STATIC               1046
 #define IDC_SERVICE_STATIC              1047
 #define IDC_NAME                        1048
@@ -91,8 +100,25 @@
 #define IDC_SELECTREGION                1071
 #define IDC_HOTKEY1                     1073
 #define IDC_HOTKEY                      1073
+#define IDC_PUSHTOTALKHOTKEY            1073
 #define IDC_CLEAR                       1074
+#define IDC_MUTEMICHOTKEY               1074
+#define IDC_MUTEDESKTOPHOTKEY           1075
 #define IDC_ADDNEW                      1077
+#define IDC_EDIT1                       1078
+#define IDC_AUTORECONNECT_TIMEOUT_EDIT  1078
+#define IDC_VIDEOENCODERSETTINGS        1078
+#define IDC_SPIN1                       1079
+#define IDC_AUTORECONNECT_TIMEOUT       1079
+#define IDC_AUTORECONNECT_TIMEOUT_STATIC 1080
+#define IDC_RECONNECTING                1081
+#define IDC_SAVEPATH                    1081
+#define IDC_SAVEPATH_STATIC             1082
+#define IDC_USESYNCFIX                  1086
+#define IDC_CLEARPUSHTOTALK             1088
+#define IDC_CLEARMUTEMIC                1089
+#define IDC_SENDBUFFERSIZE              1089
+#define IDC_CLEARMUTEDESKTOP            1090
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -106,9 +132,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        131
+#define _APS_NEXT_RESOURCE_VALUE        133
 #define _APS_NEXT_COMMAND_VALUE         40028
-#define _APS_NEXT_CONTROL_VALUE         1078
+#define _APS_NEXT_CONTROL_VALUE         1090
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

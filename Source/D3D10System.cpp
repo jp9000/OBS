@@ -631,14 +631,14 @@ void D3D10System::DrawSpriteEx(Texture *texture, float x, float y, float x2, flo
 
     VBData *data = spriteVertexBuffer->GetData();
     data->VertList[0].Set(x,  y,  0.0f);
-    data->VertList[1].Set(x2, y,  0.0f);
-    data->VertList[2].Set(x,  y2, 0.0f);
+    data->VertList[1].Set(x,  y2, 0.0f);
+    data->VertList[2].Set(x2, y,  0.0f);
     data->VertList[3].Set(x2, y2, 0.0f);
 
     List<UVCoord> &coords = data->UVList[0];
     coords[0].Set(u,  v);
-    coords[1].Set(u2, v);
-    coords[2].Set(u,  v2);
+    coords[1].Set(u,  v2);
+    coords[2].Set(u2, v);
     coords[3].Set(u2, v2);
 
     spriteVertexBuffer->FlushBuffers();

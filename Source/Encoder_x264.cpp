@@ -102,7 +102,7 @@ public:
         //paramData.i_threads             = 4;
 
         paramData.b_vfr_input           = 1;
-        paramData.i_keyint_max          = fps*5;      //keyframe every 5 sec, should make this an option
+        paramData.i_keyint_max          = fps*2;      //keyframe every 5 sec, should make this an option
         paramData.i_width               = width;
         paramData.i_height              = height;
         paramData.rc.i_vbv_max_bitrate  = maxBitRate; //vbv-maxrate
@@ -121,6 +121,35 @@ public:
 
         //paramData.pf_log                = get_x264_log;
         //paramData.i_log_level           = X264_LOG_INFO;
+
+        BOOL bUseCustomParams = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCustomSettings"));
+        if(bUseCustomParams)
+        {
+            String strCustomParams = AppConfig->GetString(TEXT("Video Encoding"), TEXT("CustomSettings"));
+
+            StringList paramList;
+            strCustomParams.GetTokenList(paramList, ' ', FALSE);
+            for(UINT i=0; i<paramList.Num(); i++)
+            {
+                String &strParam = paramList[i];
+                String strParamName = strParam.GetToken(0, '=');
+                String strParamVal  = strParam.GetToken(1, '=');
+
+                if( strParamName.CompareI(TEXT("fps")) || 
+                    strParamName.CompareI(TEXT("force-cfr")))
+                {
+                    continue;
+                }
+
+                LPSTR lpParam = strParamName.CreateUTF8String();
+                LPSTR lpVal   = strParamVal.CreateUTF8String();
+
+                x264_param_parse(&paramData, lpParam, lpVal);
+
+                Free(lpParam);
+                Free(lpVal);
+            }
+        }
 
         if(bUse444) paramData.i_csp = X264_CSP_I444;
 
@@ -143,7 +172,6 @@ public:
         traceIn(X264Encoder::~X264Encoder);
 
         ClearPackets();
-        HeaderPacket.Clear ();
         x264_encoder_close(x264);
 
         traceOut;
@@ -176,9 +204,12 @@ public:
         {
             x264_nal_t &nal = nalOut[i];
 
-            if(nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE)
+            if(nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE || nal.i_type == NAL_SEI)
             {
                 VideoPacket *newPacket = CurrentPackets.CreateNew();
+
+                if(nal.i_type == NAL_SEI)
+                    nop();
 
                 BYTE *skip = nal.p_payload;
                 while(*(skip++) != 0x1);
@@ -190,7 +221,7 @@ public:
                 newPacket->Packet[0] = ((nal.i_type == NAL_SLICE_IDR) ? 0x17 : 0x27);
                 newPacket->Packet[1] = 1;
                 mcpy(newPacket->Packet+2, timeOffsetAddr, 3);
-                *(DWORD*)(newPacket->Packet+5) = htonl(nal.i_payload-skipBytes);
+                *(DWORD*)(newPacket->Packet+5) = htonl(newPayloadSize);
                 mcpy(newPacket->Packet+9, nal.p_payload+skipBytes, newPayloadSize);
             }
             else if(nal.i_type == NAL_SPS)

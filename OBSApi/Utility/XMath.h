@@ -57,6 +57,19 @@ struct Matrix;
 struct Float16;
 
 
+union XLARGE_INT
+{
+    struct {DWORD lowVal; LONG highVal;};
+    INT64 largeVal;
+};
+
+union XLARGE_UINT
+{
+    struct {DWORD lowUVal; DWORD highVal;};
+    UINT64 largeVal;
+};
+
+
 
 /*=========================================================
     Optimized math functions
@@ -2157,6 +2170,6 @@ BASE_EXPORT float Matrix4x4Determinant(float *M1);
 BASE_EXPORT void Matrix4x4SubMatrix(float *destMatrix, float *M1, int i, int j);
 BASE_EXPORT BOOL Matrix4x4Inverse(float *destMatrix, float *M1);
 BASE_EXPORT void Matrix4x4Transpose(float *destMatrix, float *srcMatrix);
-BASE_EXPORT void Matrix4x4Ortho(float *destMatrix, float left, float right, float bottom, float top, float near, float far);
-BASE_EXPORT void Matrix4x4Frustum(float *destMatrix, float left, float right, float bottom, float top, float near, float far);
+BASE_EXPORT void Matrix4x4Ortho(float *destMatrix, double left, double right, double bottom, double top, double near, double far);
+BASE_EXPORT void Matrix4x4Frustum(float *destMatrix, double left, double right, double bottom, double top, double near, double far);
 BASE_EXPORT void Matrix4x4Perspective(float *destMatrix, float angle, float aspect, float near, float far);

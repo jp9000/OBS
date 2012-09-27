@@ -222,23 +222,32 @@ char* OBS::EncMetaData(char *enc, char *pend)
     int    audioBitRate  = GetAudioEncoder()->GetBitRate();
     CTSTR  lpAudioCodec  = GetAudioEncoder()->GetCodec();
 
+    double audioCodecID;
     const AVal *av_codecFourCC;
+
     if(scmpi(lpAudioCodec, TEXT("AAC")) == 0)
+    {
         av_codecFourCC = &av_mp4a;
+        audioCodecID = 10.0;
+    }
     else
+    {
         av_codecFourCC = &av_mp3;
+        audioCodecID = 2.0;
+    }
 
     *enc++ = AMF_OBJECT;
-    enc = AMF_EncodeNamedNumber(enc, pend, &av_duration, 0.0);
+    enc = AMF_EncodeNamedNumber(enc, pend, &av_duration,        0.0);
+    enc = AMF_EncodeNamedNumber(enc, pend, &av_fileSize,        0.0);
     enc = AMF_EncodeNamedNumber(enc, pend, &av_width,           double(outputCX));
     enc = AMF_EncodeNamedNumber(enc, pend, &av_height,          double(outputCY));
 
-    enc = AMF_EncodeNamedString(enc, pend, &av_videocodecid,    &av_avc1);//7.0);//
+    enc = AMF_EncodeNamedNumber(enc, pend, &av_videocodecid,    7.0);//&av_avc1);//
 
     enc = AMF_EncodeNamedNumber(enc, pend, &av_videodatarate,   double(maxBitRate));
     enc = AMF_EncodeNamedNumber(enc, pend, &av_framerate,       double(fps));
 
-    enc = AMF_EncodeNamedString(enc, pend, &av_audiocodecid,    av_codecFourCC);//0.0);//&justdiealready);//&av_mp4a);//2.0);//
+    enc = AMF_EncodeNamedNumber(enc, pend, &av_audiocodecid,    audioCodecID);//av_codecFourCC);//
 
     enc = AMF_EncodeNamedNumber(enc, pend, &av_audiodatarate,   double(audioBitRate)); //ex. 128kb\s
     enc = AMF_EncodeNamedNumber(enc, pend, &av_audiosamplerate, 44100.0);
@@ -246,7 +255,6 @@ char* OBS::EncMetaData(char *enc, char *pend)
     enc = AMF_EncodeNamedNumber(enc, pend, &av_audiochannels,   2.0);
     enc = AMF_EncodeNamedBoolean(enc, pend, &av_stereo,         true);
     enc = AMF_EncodeNamedString(enc, pend, &av_encoder,         &av_OBSVersion);
-    enc = AMF_EncodeNamedNumber(enc, pend, &av_fileSize,        0.0);
     *enc++ = 0;
     *enc++ = 0;
     *enc++ = AMF_OBJECT_END;

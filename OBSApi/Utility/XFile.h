@@ -38,7 +38,7 @@
 class BASE_EXPORT XFile
 {
     HANDLE hFile;
-    DWORD dwPos;
+    QWORD qwPos;
     BOOL bHasWritten;
 
 public:
@@ -63,7 +63,7 @@ public:
             return;
 
         SetPos(0, XFILE_BEGIN);
-        DWORD dwFileSize = GetFileSize();
+        DWORD dwFileSize = (DWORD)GetFileSize();
         LPSTR lpFileDataUTF8 = (LPSTR)Allocate(dwFileSize+1);
         lpFileDataUTF8[dwFileSize] = 0;
         Read(lpFileDataUTF8, dwFileSize);
@@ -73,10 +73,9 @@ public:
     }
 
     BOOL SetFileSize(DWORD dwSize);
-    DWORD GetFileSize() const;
-    UINT64 GetFileSize64() const;
-    DWORD SetPos(int iPos, DWORD dwMoveMethod);
-    inline DWORD GetPos() const {return dwPos;}
+    QWORD GetFileSize() const;
+    QWORD SetPos(INT64 iPos, DWORD dwMoveMethod);
+    inline QWORD GetPos() const {return qwPos;}
     void Close();
 };
 
@@ -132,14 +131,14 @@ public:
         }
     }
 
-    DWORD Seek(long offset, DWORD seekType=SERIALIZE_SEEK_START)
+    UINT64 Seek(INT64 offset, DWORD seekType=SERIALIZE_SEEK_START)
     {
-        DWORD ret;
+        QWORD ret;
 
         if(seekType == SERIALIZE_SEEK_START)
-            ret = file.SetPos(offset, XFILE_BEGIN);
+            ret = file.SetPos(INT64(offset), XFILE_BEGIN);
         else if(seekType == SERIALIZE_SEEK_CURRENT)
-            ret = file.SetPos(long(GetPos())+offset, XFILE_BEGIN);
+            ret = file.SetPos(INT64(GetPos())+offset, XFILE_BEGIN);
         else if(seekType == SERIALIZE_SEEK_END)
             ret = file.SetPos(offset, XFILE_END);
 
@@ -148,7 +147,7 @@ public:
         return ret;
     }
 
-    DWORD GetPos() const
+    UINT64 GetPos() const
     {
         return (file.GetPos()-bufferSize)+bufferPos;
     }
@@ -169,7 +168,8 @@ private:
 
     XFile file;
 
-    DWORD bufferPos, bufferSize, fileSize;
+    DWORD bufferPos, bufferSize;
+    UINT64 fileSize;
     BYTE Buffer[2048];
 };
 
@@ -181,8 +181,12 @@ public:
 
     BOOL IsLoading() {return FALSE;}
 
-    BOOL Open(CTSTR lpFile, DWORD dwCreationDisposition)
+    BOOL Open(CTSTR lpFile, DWORD dwCreationDisposition, DWORD bufferSize=(1024*64))
     {
+        if(!bufferSize) bufferSize = 1024*64;
+
+        this->bufferSize = bufferSize;
+        Buffer = (LPBYTE)Allocate(bufferSize);
         totalWritten = bufferPos = 0;
         return file.Open(lpFile, XFILE_WRITE, dwCreationDisposition);
     }
@@ -191,6 +195,7 @@ public:
     {
         Flush();
         file.Close();
+        Free(Buffer);
     }
 
     void Serialize(LPVOID lpData, DWORD length)
@@ -203,10 +208,10 @@ public:
 
         while(length)
         {
-            if(bufferPos == 2048)
+            if(bufferPos == bufferSize)
                 Flush();
                 
-            DWORD dwWriteSize = MIN(length, (2048-bufferPos));
+            DWORD dwWriteSize = MIN(length, (bufferSize-bufferPos));
 
             assert(dwWriteSize);
 
@@ -222,7 +227,7 @@ public:
         }
     }
 
-    DWORD Seek(long offset, DWORD seekType=SERIALIZE_SEEK_START)
+    UINT64 Seek(INT64 offset, DWORD seekType=SERIALIZE_SEEK_START)
     {
         Flush();
         if(seekType == SERIALIZE_SEEK_START)
@@ -232,15 +237,15 @@ public:
         else if(seekType == SERIALIZE_SEEK_END)
             seekType = XFILE_END;
 
-        return file.SetPos(offset, seekType);;
+        return file.SetPos(offset, seekType);
     }
 
-    DWORD GetPos() const
+    UINT64 GetPos() const
     {
         return file.GetPos()+bufferPos;
     }
 
-    inline DWORD GetTotalWritten() {return totalWritten;}
+    inline QWORD GetTotalWritten() {return totalWritten;}
 
 private:
     void Flush()
@@ -254,6 +259,9 @@ private:
 
     XFile file;
 
-    DWORD bufferPos, totalWritten;
-    BYTE Buffer[2048];
+    DWORD bufferPos;
+    DWORD bufferSize;
+
+    QWORD totalWritten;
+    LPBYTE Buffer;
 };

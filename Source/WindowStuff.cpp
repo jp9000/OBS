@@ -1339,6 +1339,93 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
 
 //----------------------------
 
+struct ReconnectInfo
+{
+    UINT_PTR timerID;
+    UINT secondsLeft;
+};
+
+INT_PTR CALLBACK OBS::ReconnectDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch(message)
+    {
+        case WM_INITDIALOG:
+            {
+                LocalizeWindow(hwnd);
+
+                ReconnectInfo *ri = new ReconnectInfo;
+                ri->secondsLeft = App->reconnectTimeout;
+                ri->timerID = 1;
+
+                if(!SetTimer(hwnd, 1, 1000, NULL))
+                {
+                    App->bReconnecting = false;
+                    EndDialog(hwnd, IDCANCEL);
+                    delete ri;
+                }
+
+                String strText;
+                if(App->bReconnecting)
+                    strText << Str("Reconnecting.Retrying") << UIntString(ri->secondsLeft);
+                else
+                    strText << Str("Reconnecting") << UIntString(ri->secondsLeft);
+
+                SetWindowText(GetDlgItem(hwnd, IDC_RECONNECTING), strText);
+
+                SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)ri);
+                return TRUE;
+            }
+
+        case WM_TIMER:
+            {
+                ReconnectInfo *ri = (ReconnectInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
+                if(wParam != 1)
+                    break;
+
+                if(!--ri->secondsLeft)
+                {
+                    SendMessage(hwndMain, OBS_RECONNECT, 0, 0);
+                    EndDialog(hwnd, IDOK);
+                }
+                else
+                {
+                    String strText;
+                    if(App->bReconnecting)
+                        strText << Str("Reconnecting.Retrying") << UIntString(ri->secondsLeft);
+                    else
+                        strText << Str("Reconnecting") << UIntString(ri->secondsLeft);
+
+                    SetWindowText(GetDlgItem(hwnd, IDC_RECONNECTING), strText);
+                }
+                break;
+            }
+
+        case WM_COMMAND:
+            if(LOWORD(wParam) == IDCANCEL)
+            {
+                App->bReconnecting = false;
+                EndDialog(hwnd, IDCANCEL);
+            }
+            break;
+
+        case WM_CLOSE:
+            App->bReconnecting = false;
+            EndDialog(hwnd, IDCANCEL);
+            break;
+
+        case WM_DESTROY:
+            {
+                ReconnectInfo *ri = (ReconnectInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
+                KillTimer(hwnd, ri->timerID);
+                delete ri;
+            }
+    }
+
+    return FALSE;
+}
+
+//----------------------------
+
 LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     traceIn(OBS::OBSProc);
@@ -1527,11 +1614,22 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
         case OBS_REQUESTSTOP:
             App->Stop();
-            MessageBox(hwnd, Str("Connection.Disconnected"), NULL, 0);
+            if(!App->bAutoReconnect)
+                MessageBox(hwnd, Str("Connection.Disconnected"), NULL, 0);
+            else
+            {
+                App->bReconnecting = false;
+                DialogBox(hinstMain, MAKEINTRESOURCE(IDD_RECONNECTING), hwnd, OBS::ReconnectDialogProc);
+            }
             break;
 
         case OBS_CALLHOTKEY:
             App->CallHotkey((DWORD)lParam, wParam != 0);
+            break;
+
+        case OBS_RECONNECT:
+            App->bReconnecting = true;
+            App->Start();
             break;
 
         case WM_CLOSE:

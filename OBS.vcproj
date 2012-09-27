@@ -411,6 +411,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Source\FLVFileStream.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Source\GetAudioDevices.cpp"
 				>
 			</File>
@@ -435,6 +439,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Source\MP4FileStream.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Source\NullOutput.cpp"
 				>
 			</File>
@@ -444,10 +452,6 @@
 			</File>
 			<File
 				RelativePath=".\Source\RTMPPublisher.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Source\RTMPServer.cpp"
 				>
 			</File>
 			<File

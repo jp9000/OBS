@@ -1464,38 +1464,38 @@ BOOL Matrix4x4Inverse(float *destMatrix, float *M1)
     return 1;
 }
 
-void Matrix4x4Ortho(float *destMatrix, float left, float right, float bottom, float top, float near, float far)
+void Matrix4x4Ortho(float *destMatrix, double left, double right, double bottom, double top, double near, double far)
 {
     float matrixOut[4][4];
     zero(matrixOut, 64);
 
-    matrixOut[0][0] =               2.0f / (right-left);
-    matrixOut[3][0] =       (left+right) / (left-right);
+    matrixOut[0][0] =          float(2.0 / (right-left));
+    matrixOut[3][0] = float((left+right) / (left-right));
 
-    matrixOut[1][1] =               2.0f / (top-bottom);
-    matrixOut[3][1] =       (bottom+top) / (bottom-top);
+    matrixOut[1][1] =          float(2.0 / (top-bottom));
+    matrixOut[3][1] = float((bottom+top) / (bottom-top));
 
-    matrixOut[2][2] =               1.0f / (far-near);
-    matrixOut[3][2] =               near / (near-far);
+    matrixOut[2][2] =          float(1.0 / (far-near));
+    matrixOut[3][2] =         float(near / (near-far));
 
     matrixOut[3][3] = 1.0f;
 
     mcpy(destMatrix, matrixOut, 64);
 }
 
-void Matrix4x4Frustum(float *destMatrix, float left, float right, float bottom, float top, float near, float far)
+void Matrix4x4Frustum(float *destMatrix, double left, double right, double bottom, double top, double near, double far)
 {
     float matrixOut[4][4];
     zero(matrixOut, 64);
 
-    matrixOut[0][0] =        (2.0f*near) / (right-left);
-    matrixOut[2][0] =       (left+right) / (left-right);
+    matrixOut[0][0] =   float((2.0*near) / (right-left));
+    matrixOut[2][0] = float((left+right) / (left-right));
 
-    matrixOut[1][1] =        (2.0f*near) / (top-bottom);
-    matrixOut[2][1] =       (top+bottom) / (bottom-top);
+    matrixOut[1][1] =   float((2.0*near) / (top-bottom));
+    matrixOut[2][1] = float((top+bottom) / (bottom-top));
 
-    matrixOut[2][2] =                far / (far-near);
-    matrixOut[3][2] =         (near*far) / (near-far);
+    matrixOut[2][2] =          float(far / (far-near));
+    matrixOut[3][2] =   float((near*far) / (near-far));
 
     matrixOut[2][3] = 1.0f;
 

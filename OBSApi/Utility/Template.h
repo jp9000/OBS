@@ -776,14 +776,14 @@ public:
         return position < bufferSize;
     }
 
-    DWORD Seek(long offset, DWORD seekType=SERIALIZE_SEEK_START)
+    UINT64 Seek(INT64 offset, DWORD seekType=SERIALIZE_SEEK_START)
     {
         long newPos = 0;
 
         if(seekType == SERIALIZE_SEEK_START)
             newPos = (long)offset;
         else
-            newPos = ((seekType == SERIALIZE_SEEK_CURRENT) ? (long)position : (long)bufferSize) + offset;
+            newPos = ((seekType == SERIALIZE_SEEK_CURRENT) ? (long)position : (long)bufferSize) + (long)offset;
 
         if(newPos > (long)bufferSize)
         {
@@ -798,12 +798,12 @@ public:
 
         position = (DWORD)newPos;
 
-        return abs(offset);
+        return abs((long)offset);
     }
 
-    DWORD GetPos() const
+    UINT64 GetPos() const
     {
-        return position;
+        return UINT64(position);
     }
 
 private:
@@ -846,13 +846,13 @@ public:
         position += length;
     }
 
-    DWORD Seek(long offset, DWORD seekType=SERIALIZE_SEEK_START)
+    UINT64 Seek(INT64 offset, DWORD seekType=SERIALIZE_SEEK_START)
     {
         long newPos = 0;
         if(seekType == SERIALIZE_SEEK_START)
-            newPos = offset;
+            newPos = (long)offset;
         else 
-            newPos = ((seekType == SERIALIZE_SEEK_CURRENT) ? (long)position : (long)Buffer.Num()) + offset;
+            newPos = ((seekType == SERIALIZE_SEEK_CURRENT) ? (long)position : (long)Buffer.Num()) + (long)offset;
 
         if(newPos < 0)
         {
@@ -862,12 +862,12 @@ public:
 
         position = (DWORD)newPos;
 
-        return abs(offset);
+        return abs((long)offset);
     }
 
-    DWORD GetPos() const
+    UINT64 GetPos() const
     {
-        return position;
+        return UINT64(position);
     }
 
 private:

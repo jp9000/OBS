@@ -30,7 +30,7 @@
 XFile::XFile()
 {
     hFile = INVALID_HANDLE_VALUE;
-    dwPos = 0;
+    qwPos = 0;
     bHasWritten = false;
 }
 
@@ -48,7 +48,7 @@ BOOL XFile::Open(CTSTR lpFile, DWORD dwAccess, DWORD dwCreationDisposition)
 {
     traceInFast(XFile::Open);
 
-    dwPos = 0;
+    qwPos = 0;
 
     assert(lpFile);
     if((hFile = CreateFile(lpFile, dwAccess, 0, NULL, dwCreationDisposition, 0, NULL)) == INVALID_HANDLE_VALUE)
@@ -75,7 +75,7 @@ DWORD XFile::Read(LPVOID lpBuffer, DWORD dwBytes)
 
     if(!hFile) return XFILE_ERROR;
 
-    dwPos += dwBytes;
+    qwPos += dwBytes;
 
     ReadFile(hFile, lpBuffer, dwBytes, &dwRet, NULL);
     return dwRet;
@@ -93,7 +93,7 @@ DWORD XFile::Write(const void *lpBuffer, DWORD dwBytes)
 
     if(!hFile) return XFILE_ERROR;
 
-    dwPos += dwBytes;
+    qwPos += dwBytes;
 
     WriteFile(hFile, lpBuffer, dwBytes, &dwRet, NULL);
 
@@ -179,8 +179,8 @@ BOOL XFile::SetFileSize(DWORD dwSize)
 
     if(!hFile) return 0;
 
-    if(dwPos > dwSize)
-        dwPos = dwSize;
+    if(qwPos > dwSize)
+        qwPos = dwSize;
 
     SetPos(dwSize, XFILE_BEGIN);
     return SetEndOfFile(hFile);
@@ -188,18 +188,9 @@ BOOL XFile::SetFileSize(DWORD dwSize)
     traceOutFast;
 }
 
-DWORD XFile::GetFileSize() const
+QWORD XFile::GetFileSize() const
 {
     traceInFast(XFile::GetFileSize);
-
-    return ::GetFileSize(hFile, NULL);
-
-    traceOutFast;
-}
-
-UINT64 XFile::GetFileSize64() const
-{
-    traceInFast(XFile::GetFileSize64);
 
     UINT64 size = 0;
     size |= ::GetFileSize(hFile, (DWORD*)(((BYTE*)&size)+4));
@@ -209,7 +200,7 @@ UINT64 XFile::GetFileSize64() const
     traceOutFast;
 }
 
-DWORD XFile::SetPos(int iPos, DWORD dwMoveMethod)  //uses the SetFilePointer 4th parameter flags
+UINT64 XFile::SetPos(INT64 iPos, DWORD dwMoveMethod)  //uses the SetFilePointer 4th parameter flags
 {
     traceInFast(XFile::SetPos);
 
@@ -234,7 +225,13 @@ DWORD XFile::SetPos(int iPos, DWORD dwMoveMethod)  //uses the SetFilePointer 4th
             break;
     }
 
-    return (dwPos = SetFilePointer(hFile, iPos, NULL, moveValue));
+    XLARGE_INT largeInt;
+    largeInt.largeVal = iPos;
+
+    DWORD newPosLow = SetFilePointer(hFile, LONG(largeInt.lowVal), &largeInt.highVal, moveValue);
+    largeInt.lowVal = newPosLow;
+
+    return largeInt.largeVal;
 
     traceOutFast;
 }

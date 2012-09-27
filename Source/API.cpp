@@ -241,7 +241,7 @@ bool OBS::SetScene(CTSTR lpScene)
         //todo: cache scenes maybe?  undecided.  not really as necessary with global sources
         OSEnterMutex(hSceneMutex);
 
-        if (scene)
+        if(scene)
             scene->EndScene();
 
         Scene *previousScene = scene;

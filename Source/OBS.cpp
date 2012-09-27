@@ -44,8 +44,8 @@ bool STDCALL ConfigureBitmapSource(XElement *element, bool bCreating);
 
 ImageSource* STDCALL CreateGlobalSource(XElement *data);
 
-NetworkStream* CreateRTMPServer();
-NetworkStream* CreateRTMPPublisher();
+//NetworkStream* CreateRTMPServer();
+NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry);
 NetworkStream* CreateBandwidthAnalyzer();
 
 void StartBlankSoundPlayback();
@@ -54,6 +54,10 @@ void StopBlankSoundPlayback();
 VideoEncoder* CreateNullVideoEncoder();
 AudioEncoder* CreateNullAudioEncoder();
 NetworkStream* CreateNullNetwork();
+
+VideoFileStream* CreateMP4FileStream(CTSTR lpFile);
+VideoFileStream* CreateFLVFileStream(CTSTR lpFile);
+//VideoFileStream* CreateAVIFileStream(CTSTR lpFile);
 
 void Convert444to420(LPBYTE input, int width, int height, LPBYTE *output, bool bSSE2Available);
 
@@ -341,6 +345,10 @@ public:
     virtual Vect2 GetBaseSize() const           {return Vect2(float(App->baseCX), float(App->baseCY));}
     virtual Vect2 GetRenderFrameSize() const    {return Vect2(float(App->renderFrameWidth), float(App->renderFrameHeight));}
     virtual Vect2 GetOutputSize() const         {return Vect2(float(App->outputCX), float(App->outputCY));}
+
+    virtual void GetBaseSize(UINT &width, UINT &height) const           {App->GetBaseSize(width, height);}
+    virtual void GetRenderFrameSize(UINT &width, UINT &height) const    {App->GetRenderFrameSize(width, height);}
+    virtual void GetOutputSize(UINT &width, UINT &height) const         {App->GetOutputSize(width, height);}
 
     virtual CTSTR GetLanguage() const           {return App->strLanguage;}
 
@@ -717,6 +725,11 @@ OBS::OBS()
 
     //-----------------------------------------------------
 
+    bAutoReconnect = AppConfig->GetInt(TEXT("Publish"), TEXT("AutoReconnect")) != 0;
+    reconnectTimeout = AppConfig->GetInt(TEXT("Publish"), TEXT("AutoReconnectTimeout"), 10);
+    if(reconnectTimeout < 5)
+        reconnectTimeout = 5;
+
     bRenderViewEnabled = true;
     //bShowFPS = AppConfig->GetInt(TEXT("General"), TEXT("ShowFPS")) != 0;
 
@@ -904,19 +917,30 @@ void OBS::Start()
 
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
 
+    bool bCanRetry = false;
+    String strError;
+
     if(bTestStream)
         network = CreateBandwidthAnalyzer();
     else
     {
         switch(networkMode)
         {
-            case 0: network = CreateRTMPPublisher(); break;
-            case 1: network = CreateRTMPServer(); break;
+            case 0: network = CreateRTMPPublisher(strError, bCanRetry); break;
+            case 1: network = CreateNullNetwork(); break;
         }
     }
 
     if(!network)
+    {
+        if(!bReconnecting || !bCanRetry)
+            MessageBox(hwndMain, strError, NULL, MB_ICONERROR);
+        else
+            DialogBox(hinstMain, MAKEINTRESOURCE(IDD_RECONNECTING), hwndMain, OBS::ReconnectDialogProc);
         return;
+    }
+
+    bReconnecting = false;
 
     //-------------------------------------------------------------
 
@@ -1097,6 +1121,27 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
+    bWriteToFile = AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile")) != 0;
+    String strOutputFile = AppConfig->GetString(TEXT("Publish"), TEXT("SavePath"));
+
+    if(OSFileExists(strOutputFile))
+    {
+        strOutputFile.FindReplace(TEXT("\\"), TEXT("/"));
+        String strFileWithoutExtension = GetPathWithoutExtension(strOutputFile);
+        String strFileExtension = GetPathExtension(strOutputFile);
+        UINT curFile = 0;
+
+        String strNewFilePath;
+        do 
+        {
+            strNewFilePath.Clear() << strFileWithoutExtension << TEXT(" (") << FormattedString(TEXT("%02u"), ++curFile) << TEXT(").") << strFileExtension;
+        } while(OSFileExists(strNewFilePath));
+
+        strOutputFile = strNewFilePath;
+    }
+
+    //-------------------------------------------------------------
+
     hRequestAudioEvent = CreateSemaphore(NULL, 0, 0x7FFFFFFFL, NULL);
     hSoundDataMutex = OSCreateMutex();
     hSoundThread = OSCreateThread((XTHREAD)OBS::MainAudioThread, NULL);
@@ -1108,6 +1153,19 @@ void OBS::Start()
     //-------------------------------------------------------------
 
     videoEncoder = CreateX264Encoder(fps, outputCX, outputCY, quality, preset, bUsing444, maxBitRate, bufferSize);
+
+    //-------------------------------------------------------------
+
+    if(!bTestStream && bWriteToFile && strOutputFile.IsValid())
+    {
+        String strFileExtension = GetPathExtension(strOutputFile);
+        if(strFileExtension.CompareI(TEXT("flv")))
+            fileStream = CreateFLVFileStream(strOutputFile);
+        else if(strFileExtension.CompareI(TEXT("mp4")))
+            fileStream = CreateMP4FileStream(strOutputFile);
+        /*else if(strFileExtension.CompareI(TEXT("avi")))
+            fileStream = CreateAVIFileStream(strOutputFile));*/
+    }
 
     hMainThread = OSCreateThread((XTHREAD)OBS::MainCaptureThread, NULL);
 
@@ -1173,13 +1231,15 @@ void OBS::Stop()
     delete micAudio;
     delete desktopAudio;
 
-    delete audioEncoder;
+    delete fileStream;
 
+    delete audioEncoder;
     delete videoEncoder;
 
     network = NULL;
     micAudio = NULL;
     desktopAudio = NULL;
+    fileStream = NULL;
     audioEncoder = NULL;
     videoEncoder = NULL;
 
@@ -1478,7 +1538,7 @@ void OBS::MainCaptureLoop()
 
         SetRenderTarget(mainRenderTextures[curRenderTarget]);
 
-        Ortho(0.0f, baseSize.x, baseSize.y, 0.0f, -1.0f, 1000.0f);
+        Ortho(0.0f, baseSize.x, baseSize.y, 0.0f, -100.0f, 100.0f);
         SetViewport(0, 0, baseSize.x, baseSize.y);
 
         if(scene)
@@ -1531,7 +1591,7 @@ void OBS::MainCaptureLoop()
             LoadVertexShader(mainVertexShader);
             LoadPixelShader(mainPixelShader);
 
-            Ortho(0.0f, renderFrameSize.x, renderFrameSize.y, 0.0f, -1.0f, 1000.0f);
+            Ortho(0.0f, renderFrameSize.x, renderFrameSize.y, 0.0f, -100.0f, 100.0f);
             SetViewport(0.0f, 0.0f, renderFrameSize.x, renderFrameSize.y);
 
             if(bTransitioning)
@@ -1543,7 +1603,7 @@ void OBS::MainCaptureLoop()
 
             DrawSprite(mainRenderTextures[curRenderTarget], 0.0f, 0.0f, renderFrameSize.x, renderFrameSize.y);
 
-            Ortho(0.0f, renderFrameSize.x, renderFrameSize.y, 0.0f, -1.0f, 1000.0f);
+            Ortho(0.0f, renderFrameSize.x, renderFrameSize.y, 0.0f, -100.0f, 100.0f);
 
             LoadVertexShader(solidVertexShader);
             LoadPixelShader(solidPixelShader);
@@ -1552,7 +1612,7 @@ void OBS::MainCaptureLoop()
             //draw selections if in edit mode
             if(bEditMode && !bSizeChanging)
             {
-                Ortho(0.0f, baseSize.x, baseSize.y, 0.0f, -1.0f, 1000.0f);
+                Ortho(0.0f, baseSize.x, baseSize.y, 0.0f, -100.0f, 100.0f);
 
                 if(scene)
                     scene->RenderSelections();
@@ -1602,7 +1662,7 @@ void OBS::MainCaptureLoop()
 
         yuvScalePixelShader->SetVector2(hScaleVal, 1.0f/baseSize);
 
-        Ortho(0.0f, outputSize.x, outputSize.y, 0.0f, -1.0f, 1000.0f);
+        Ortho(0.0f, outputSize.x, outputSize.y, 0.0f, -100.0f, 100.0f);
         SetViewport(0.0f, 0.0f, outputSize.x, outputSize.y);
 
         //why am I using scaleSize instead of outputSize for the texture?
@@ -1615,7 +1675,7 @@ void OBS::MainCaptureLoop()
             BlendFunction(GS_BLEND_FACTOR, GS_BLEND_INVFACTOR, transitionAlpha);
         }
 
-        DrawSpriteEx(mainRenderTextures[curRenderTarget], 0.0f, 0.0f, scaleSize.x, scaleSize.y, 0.0f, 0.0f, scaleSize.x, scaleSize.y);
+        DrawSpriteEx(mainRenderTextures[curRenderTarget], 0.0f, 0.0f, outputSize.x, outputSize.y, 0.0f, 0.0f, outputSize.x, outputSize.y);
 
         //------------------------------------
 
@@ -1741,6 +1801,9 @@ void OBS::MainCaptureLoop()
                             if(audioData.Num())
                             {
                                 network->SendPacket(audioData.Array(), audioData.Num(), pendingAudioFrames[0].timestamp, PacketType_Audio);
+                                if(fileStream)
+                                    fileStream->AddPacket(audioData.Array(), audioData.Num(), pendingAudioFrames[0].timestamp, PacketType_Audio);
+
                                 audioData.Clear();
                             }
 
@@ -1759,6 +1822,8 @@ void OBS::MainCaptureLoop()
                         PacketType type     = videoPacketTypes[i];
 
                         network->SendPacket(packet.lpPacket, packet.size, curTimeStamp, type);
+                        if(fileStream)
+                            fileStream->AddPacket(packet.lpPacket, packet.size, curTimeStamp, type);
                     }
 
                     curPTS--;

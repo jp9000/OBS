@@ -34,9 +34,9 @@ public:
 
     virtual void Serialize(LPVOID lpData, DWORD length)=0;
 
-    virtual DWORD Seek(long offset, DWORD seekType=SERIALIZE_SEEK_START)=0;
+    virtual UINT64 Seek(INT64 offset, DWORD seekType=SERIALIZE_SEEK_START)=0;
 
-    virtual DWORD GetPos() const=0;
+    virtual UINT64 GetPos() const=0;
 
     virtual BOOL DataPending() {return FALSE;}
 

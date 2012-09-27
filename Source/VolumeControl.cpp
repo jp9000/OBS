@@ -130,17 +130,25 @@ LRESULT CALLBACK VolumeControlProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                 short x = short(LOWORD(lParam));
                 short y = short(HIWORD(lParam));
 
+                UINT id = (UINT)GetWindowLongPtr(hwnd, GWLP_ID);
+
                 if(message == WM_LBUTTONDOWN && !control->bDisabled)
                 {
                     if(control->cy == 32 && x >= (control->cx-32))
                     {
                         if(control->curVolume < EPSILON)
+                        {
+                            if(control->lastUnmutedVol < EPSILON)
+                                control->lastUnmutedVol = 1.0f;
                             control->curVolume = control->lastUnmutedVol;
+                        }
                         else
                         {
                             control->lastUnmutedVol = control->curVolume;
                             control->curVolume = 0.0f;
                         }
+
+                        SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(id, VOLN_FINALVALUE), (LPARAM)hwnd);
                     }
                     else
                     {
@@ -153,14 +161,13 @@ LRESULT CALLBACK VolumeControlProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                         int cxAdjust = control->cx;
                         if(control->bDrawIcon) cxAdjust -= 32;
                         control->curVolume = float(x) / cxAdjust;
+
+                        SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(id, VOLN_ADJUSTING), (LPARAM)hwnd);
                     }
 
                     HDC hDC = GetDC(hwnd);
                     control->DrawVolumeControl(hDC);
                     ReleaseDC(hwnd, hDC);
-
-                    UINT id = (UINT)GetWindowLongPtr(hwnd, GWLP_ID);
-                    SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(id, VOLN_ADJUSTING), (LPARAM)hwnd);
                 }
                 else if(control->bHasCapture)
                 {
