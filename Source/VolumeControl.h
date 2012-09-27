@@ -23,6 +23,7 @@
 
 void InitVolumeControl();
 void SetVolumeControlIcons(HWND hwnd, HICON hiconPlay, HICON hiconMute);
+float ToggleVolumeControlMute(HWND hwnd);
 float SetVolumeControlValue(HWND hwnd, float fValue);
 float GetVolumeControlValue(HWND hwnd);
 

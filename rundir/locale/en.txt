@@ -125,8 +125,8 @@ Settings.Publish.Server                 "Server:"
 Settings.Publish.Service                "Streaming Service:"
 Settings.Publish.Username               "User Name (if any):"
 
-Settings.Publish.Mode.LiveStream    "Live Stream"
 Settings.Publish.Mode.FileOnly      "File Output Only"
+Settings.Publish.Mode.LiveStream    "Live Stream"
 
 Settings.Video.Custom               "Custom:"
 Settings.Video.DisableAero          "Disable Aero at startup:"

@@ -338,9 +338,8 @@ public:
     virtual CTSTR GetSceneName() const          {return App->GetSceneElement()->GetName();}
     virtual XElement* GetSceneElement()         {return App->GetSceneElement();}
 
-    virtual bool HotkeyExists(DWORD hotkey) const;
-    virtual bool CreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARAM param);
-    virtual void DeleteHotkey(DWORD hotkey);
+    virtual UINT CreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARAM param);
+    virtual void DeleteHotkey(UINT hotkeyID);
 
     virtual Vect2 GetBaseSize() const           {return Vect2(float(App->baseCX), float(App->baseCY));}
     virtual Vect2 GetRenderFrameSize() const    {return Vect2(float(App->renderFrameWidth), float(App->renderFrameHeight));}
@@ -435,6 +434,7 @@ OBS::OBS()
     wc.lpfnWndProc = (WNDPROC)OBSProc;
     wc.hIcon = LoadIcon(hinstMain, MAKEINTRESOURCE(IDI_ICON1));
     wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
+    //wc.lpszMenuName = MAKEINTRESOURCE(IDR_MAINMENU);
 
     if(!RegisterClass(&wc))
         CrashError(TEXT("Could not register main window class"));
@@ -449,6 +449,7 @@ OBS::OBS()
 
     borderXSize += GetSystemMetrics(SM_CXSIZEFRAME)*2;
     borderYSize += GetSystemMetrics(SM_CYSIZEFRAME)*2;
+    //borderYSize += GetSystemMetrics(SM_CYMENU);
     borderYSize += GetSystemMetrics(SM_CYCAPTION);
 
     clientWidth  = AppConfig->GetInt(TEXT("General"), TEXT("Width"),  700);
@@ -478,6 +479,9 @@ OBS::OBS()
         x, y, cx, cy, NULL, NULL, hinstMain, NULL);
     if(!hwndMain)
         CrashError(TEXT("Could not create main window"));
+
+    /*HMENU hMenu = GetMenu(hwndMain);
+    LocalizeMenu(hMenu);*/
 
     //-----------------------------------------------------
     // render frame
@@ -682,13 +686,37 @@ OBS::OBS()
     ResizeWindow(false);
     ShowWindow(hwndMain, SW_SHOW);
 
+    //-----------------------------------------------------
+
     for(UINT i=0; i<numScenes; i++)
     {
         XElement *scene = scenes->GetElementByID(i);
         DWORD hotkey = scene->GetInt(TEXT("hotkey"));
         if(hotkey)
-            API->CreateHotkey(hotkey, SceneHotkey, 0);
+        {
+            SceneHotkeyInfo hotkeyInfo;
+            hotkeyInfo.hotkey = hotkey;
+            hotkeyInfo.scene = scene;
+            hotkeyInfo.hotkeyID = API->CreateHotkey(hotkey, SceneHotkey, 0);
+
+            if(hotkeyInfo.hotkeyID)
+                sceneHotkeys << hotkeyInfo;
+        }
     }
+
+    bUsingPushToTalk = AppConfig->GetInt(TEXT("Audio"), TEXT("UsePushToTalk")) != 0;
+    DWORD hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey"));
+
+    if(bUsingPushToTalk && hotkey)
+        pushToTalkHotkeyID = API->CreateHotkey(hotkey, OBS::PushToTalkHotkey, NULL);
+
+    hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("MuteMicHotkey"));
+    if(hotkey)
+        muteMicHotkeyID = API->CreateHotkey(hotkey, OBS::MuteMicHotkey, NULL);
+
+    hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("MuteDesktopHotkey"));
+    if(hotkey)
+        muteDesktopHotkeyID = API->CreateHotkey(hotkey, OBS::MuteDesktopHotkey, NULL);
 
     //-----------------------------------------------------
     // load plugins
@@ -725,7 +753,7 @@ OBS::OBS()
 
     //-----------------------------------------------------
 
-    bAutoReconnect = AppConfig->GetInt(TEXT("Publish"), TEXT("AutoReconnect")) != 0;
+    bAutoReconnect = AppConfig->GetInt(TEXT("Publish"), TEXT("AutoReconnect"), 1) != 0;
     reconnectTimeout = AppConfig->GetInt(TEXT("Publish"), TEXT("AutoReconnectTimeout"), 10);
     if(reconnectTimeout < 5)
         reconnectTimeout = 5;
@@ -820,6 +848,26 @@ void STDCALL SceneHotkey(DWORD hotkey, UPARAM param, bool bDown)
             }
         }
     }
+}
+
+void STDCALL OBS::PushToTalkHotkey(DWORD hotkey, UPARAM param, bool bDown)
+{
+    App->bPushToTalkOn = bDown;
+}
+
+void STDCALL OBS::MuteMicHotkey(DWORD hotkey, UPARAM param, bool bDown)
+{
+    if(!bDown) return;
+
+    if(App->micAudio)
+        App->micVol = ToggleVolumeControlMute(GetDlgItem(hwndMain, ID_MICVOLUME));
+}
+
+void STDCALL OBS::MuteDesktopHotkey(DWORD hotkey, UPARAM param, bool bDown)
+{
+    if(!bDown) return;
+
+    App->desktopVol = ToggleVolumeControlMute(GetDlgItem(hwndMain, ID_DESKTOPVOLUME));
 }
 
 HICON OBS::GetIcon(HINSTANCE hInst, int resource)
@@ -921,7 +969,7 @@ void OBS::Start()
     String strError;
 
     if(bTestStream)
-        network = CreateBandwidthAnalyzer();
+        network = CreateNullNetwork();
     else
     {
         switch(networkMode)
@@ -1121,7 +1169,7 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
-    bWriteToFile = AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile")) != 0;
+    bWriteToFile = networkMode == 1 || AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile")) != 0;
     String strOutputFile = AppConfig->GetString(TEXT("Publish"), TEXT("SavePath"));
 
     if(OSFileExists(strOutputFile))
@@ -1907,6 +1955,8 @@ void OBS::MainAudioLoop()
 {
     traceIn(OBS::MainAudioLoop);
 
+    bPushToTalkOn = false;
+
     UINT curAudioFrame = 0;
 
     while(TRUE)
@@ -1924,8 +1974,15 @@ void OBS::MainAudioLoop()
         float *desktopBuffer, *micBuffer;
         UINT desktopAudioFrames, micAudioFrames;
 
+        float curMicVol;
+
+        if(bUsingPushToTalk)
+            curMicVol = bPushToTalkOn ? micVol : 0.0f;
+        else
+            curMicVol = micVol;
+
         bool bDesktopMuted = (desktopVol < EPSILON);
-        bool bMicMuted     = (micAudio == NULL);// || (micVol < EPSILON);
+        bool bMicEnabled   = (micAudio != NULL);
 
         while(QueryNewAudio())
         {
@@ -1937,8 +1994,8 @@ void OBS::MainAudioLoop()
             UINT totalFloats = desktopAudioFrames*2;
 
             MultiplyAudioBuffer(desktopBuffer, totalFloats, desktopVol);
-            if(!bMicMuted)
-                MultiplyAudioBuffer(micBuffer, totalFloats, micVol);
+            if(bMicEnabled)
+                MultiplyAudioBuffer(micBuffer, totalFloats, curMicVol);
 
             //-----------------
             // mix mic and desktop sound, using SSE2 if available
@@ -1948,7 +2005,7 @@ void OBS::MainAudioLoop()
                 desktopBuffer = micBuffer;
                 desktopAudioFrames = micAudioFrames;
             }
-            else if(!bMicMuted)
+            else if(bMicEnabled)
             {
                 UINT floatsLeft    = totalFloats;
                 float *desktopTemp = desktopBuffer;
@@ -2087,27 +2144,10 @@ void OBS::CallHotkey(DWORD hotkeyID, bool bDown)
     hotkeyProc(hotkey, param, bDown);
 }
 
-bool OBSAPIInterface::HotkeyExists(DWORD hotkey) const
-{
-    OSEnterMutex(App->hHotkeyMutex);
-
-    for(UINT i=0; i<hotkeys.Num(); i++)
-    {
-        if(hotkeys[i].hotkey == hotkey)
-        {
-            OSLeaveMutex(App->hHotkeyMutex);
-            return true;
-        }
-    }
-
-    OSLeaveMutex(App->hHotkeyMutex);
-    return false;
-}
-
-bool OBSAPIInterface::CreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARAM param)
+UINT OBSAPIInterface::CreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARAM param)
 {
     if(!hotkey)
-        return false;
+        return 0;
 
     DWORD vk = LOWORD(hotkey);
     DWORD modifier = HIWORD(hotkey);
@@ -2129,15 +2169,15 @@ bool OBSAPIInterface::CreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARA
     hi.bDown        = false;
     OSLeaveMutex(App->hHotkeyMutex);
 
-    return true;
+    return curHotkeyIDVal;
 }
 
-void OBSAPIInterface::DeleteHotkey(DWORD hotkey)
+void OBSAPIInterface::DeleteHotkey(UINT hotkeyID)
 {
     OSEnterMutex(App->hHotkeyMutex);
     for(UINT i=0; i<hotkeys.Num(); i++)
     {
-        if(hotkeys[i].hotkey == hotkey)
+        if(hotkeys[i].hotkeyID == hotkeyID)
         {
             hotkeys.Remove(i);
             break;
@@ -2172,6 +2212,7 @@ void OBSAPIInterface::HandleHotkeys()
         {
             short keyState   = GetAsyncKeyState(hotkeyVK);
             bool bDown       = (keyState & 0x8000) != 0;
+            bool bWasPressed = (keyState & 0x1) != 0;
 
             if(bDown)
             {
@@ -2180,6 +2221,13 @@ void OBSAPIInterface::HandleHotkeys()
 
                 info.bDown = bDown;
                 continue;
+            }
+            else if(bWasPressed)
+            {
+                if(!info.bDown)
+                    PostMessage(hwndMain, OBS_CALLHOTKEY, TRUE, info.hotkeyID);
+
+                info.bDown = true;
             }
         }
 

@@ -371,10 +371,15 @@ public:
 
         if(bUseSendBuffer)
         {
+            if(sendBufferSize != 32768)
+                Log(TEXT("Send Buffer Size: %u"), sendBufferSize);
+
             rtmp->m_customSendFunc = (CUSTOMSEND)RTMPPublisher::BufferedSend;
             rtmp->m_customSendParam = this;
             rtmp->m_bCustomSend = TRUE;
         }
+        else
+            Log(TEXT("Not using send buffering"));
 
         hSendSempahore = CreateSemaphore(NULL, 0, 0x7FFFFFFFL, NULL);
         if(!hSendSempahore)

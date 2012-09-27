@@ -461,8 +461,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,3,8,1
- PRODUCTVERSION 0,3,8,1
+ FILEVERSION 0,4,0,0
+ PRODUCTVERSION 0,4,0,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -478,17 +478,42 @@ BEGIN
         BLOCK "041104b0"
         BEGIN
             VALUE "FileDescription", "Open Broadcaster Software"
-            VALUE "FileVersion", "0, 3, 8, 1"
+            VALUE "FileVersion", "0, 4, 0, 0"
             VALUE "InternalName", "OBS"
             VALUE "LegalCopyright", "Copyright (C) 2012"
             VALUE "OriginalFilename", "OBS.exe"
             VALUE "ProductName", "Open Broadcaster Software"
-            VALUE "ProductVersion", "0, 3, 8, 1"
+            VALUE "ProductVersion", "0, 4, 0, 0"
         END
     END
     BLOCK "VarFileInfo"
     BEGIN
         VALUE "Translation", 0x411, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MAINMENU MENU 
+BEGIN
+    POPUP "MainMenu.File"
+    BEGIN
+        MENUITEM "MainMenu.File.Exit",          ID_FILE_EXIT
+    END
+    POPUP "MainMenu.Settings"
+    BEGIN
+        MENUITEM "MainMenu.Settings",           ID_SETTINGS_SETTINGS
+        MENUITEM SEPARATOR
+        MENUITEM "MainMenu.Settings.OpenConfigFolder", ID_SETTINGS_OPENCONFIGFOLDER
+        MENUITEM "MainMenu.Settings.OpenLogFolder", ID_SETTINGS_OPENLOGFOLDER
+    END
+    POPUP "MainMenu.Help"
+    BEGIN
+        MENUITEM "MainMenu.Help.Contents",      ID_HELP_CONTENTS
     END
 END
 

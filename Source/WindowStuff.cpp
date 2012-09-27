@@ -18,6 +18,7 @@
 
 
 #include "Main.h"
+#include <shellapi.h>
 
 
 //hello, you've come into the file I hate the most.
@@ -44,12 +45,6 @@ enum
     ID_LISTBOX_ADD,
 
     ID_LISTBOX_GLOBALSOURCE=5000,
-};
-
-struct SceneHotkeyInfo
-{
-    DWORD hotkey;
-    XElement *scene;
 };
 
 INT_PTR CALLBACK OBS::EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -380,7 +375,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                     {
                         DWORD hotkey = item->GetInt(TEXT("hotkey"));
                         if(hotkey)
-                            API->DeleteHotkey(hotkey);
+                            App->RemoveSceneHotkey(hotkey);
 
                         SendMessage(hwnd, LB_DELETESTRING, curSel, 0);
                         if(--numItems)
@@ -420,6 +415,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 case ID_LISTBOX_HOTKEY:
                     {
                         DWORD prevHotkey = item->GetInt(TEXT("hotkey"));
+
                         SceneHotkeyInfo hotkeyInfo;
                         hotkeyInfo.hotkey = prevHotkey;
                         hotkeyInfo.scene = item;
@@ -427,15 +423,15 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                         if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_SCENEHOTKEY), hwndMain, OBS::SceneHotkeyDialogProc, (LPARAM)&hotkeyInfo) == IDOK)
                         {
                             if(hotkeyInfo.hotkey)
-                            {
-                                if(!API->CreateHotkey(hotkeyInfo.hotkey, SceneHotkey, 0))
-                                    hotkeyInfo.hotkey = 0;
-                            }
+                                hotkeyInfo.hotkeyID = API->CreateHotkey(hotkeyInfo.hotkey, SceneHotkey, 0);
 
                             item->SetInt(TEXT("hotkey"), hotkeyInfo.hotkey);
 
                             if(prevHotkey)
-                                API->DeleteHotkey(prevHotkey);
+                                App->RemoveSceneHotkey(prevHotkey);
+
+                            if(hotkeyInfo.hotkeyID)
+                                App->sceneHotkeys << hotkeyInfo;
                         }
                         break;
                     }
@@ -1435,6 +1431,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
         case WM_COMMAND:
             switch(LOWORD(wParam))
             {
+                case ID_SETTINGS_SETTINGS:
                 case ID_SETTINGS:
                     DialogBox(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS), hwnd, (DLGPROC)OBS::SettingsDialogProc);
                     break;
@@ -1443,8 +1440,37 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     DialogBox(hinstMain, MAKEINTRESOURCE(IDD_GLOBAL_SOURCES), hwnd, (DLGPROC)OBS::GlobalSourcesProc);
                     break;
 
+                case ID_FILE_EXIT:
                 case ID_EXIT:
                     PostQuitMessage(0);
+                    break;
+
+                case ID_HELP_CONTENTS:
+                    {
+                        String strHelpPath;
+                        UINT dirSize = GetCurrentDirectory(0, 0);
+                        strHelpPath.SetLength(dirSize);
+                        GetCurrentDirectory(dirSize, strHelpPath.Array());
+
+                        strHelpPath << TEXT("\\OBSHelp.chm");
+
+                        ShellExecute(NULL, TEXT("open"), strHelpPath, 0, 0, SW_SHOWNORMAL);
+                    }
+                    break;
+
+                case ID_SETTINGS_OPENCONFIGFOLDER:
+                    {
+                        String strAppPath = API->GetAppDataPath();
+                        ShellExecute(NULL, TEXT("open"), strAppPath, 0, 0, SW_SHOWNORMAL);
+                    }
+                    break;
+
+                case ID_SETTINGS_OPENLOGFOLDER:
+                    {
+                        String strAppPath = API->GetAppDataPath();
+                        strAppPath << TEXT("\\logs");
+                        ShellExecute(NULL, TEXT("open"), strAppPath, 0, 0, SW_SHOWNORMAL);
+                    }
                     break;
 
                 case ID_PLUGINS:

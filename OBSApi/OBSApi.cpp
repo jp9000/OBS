@@ -62,6 +62,46 @@ void LocalizeWindow(HWND hwnd, LocaleStringLookup *lookup)
     }
 };
 
+void LocalizeMenu(HMENU hMenu, LocaleStringLookup *lookup)
+{
+    if(!lookup) lookup = locale;
+
+    int itemCount = GetMenuItemCount(hMenu);
+    if(itemCount == -1)
+        return;
+
+    for(int i=0; i<itemCount; i++)
+    {
+        MENUITEMINFO mii;
+        zero(&mii, sizeof(mii));
+        mii.cbSize = sizeof(mii);
+        mii.fMask = MIIM_SUBMENU|MIIM_STRING|MIIM_FTYPE;
+        GetMenuItemInfo(hMenu, i, TRUE, &mii);
+
+        if(mii.fType & MFT_SEPARATOR || mii.cch < 2)
+            continue;
+
+        HMENU hSubMenu = mii.hSubMenu;
+
+        String strLookup;
+        strLookup.SetLength(mii.cch);
+
+        mii.fMask = MIIM_STRING;
+        mii.dwTypeData = strLookup.Array();
+        mii.cch = strLookup.Length()+1;
+        GetMenuItemInfo(hMenu, i, TRUE, &mii);
+
+        String strName = lookup->LookupString(strLookup);
+
+        mii.fMask = MIIM_STRING;
+        mii.dwTypeData = strName.Array();
+        SetMenuItemInfo(hMenu, i, TRUE, &mii);
+
+        if(hSubMenu)
+            LocalizeMenu(hSubMenu);
+    }
+}
+
 String GetLBText(HWND hwndList, UINT id)
 {
     UINT curSel = (id != LB_ERR) ? id : (UINT)SendMessage(hwndList, LB_GETCURSEL, 0, 0);

@@ -26,6 +26,7 @@
 #define IDD_DIALOG1                     131
 #define IDD_RECONNECTING                131
 #define IDD_SETTINGS_ADVANCED           132
+#define IDR_MAINMENU                    133
 #define IDC_SETTINGSLIST                1006
 #define IDC_SUBDIALOG                   1007
 #define IDC_MODE                        1008
@@ -65,7 +66,6 @@
 #define IDC_PUSHTOTALK                  1041
 #define IDC_USEVIDEOENCODERSETTINGS     1041
 #define IDC_SERVEREDIT                  1042
-#define IDC_USEVIDEOENCODERSETTINGS2    1042
 #define IDC_USESENDBUFFER               1042
 #define IDC_CHANNELNAME_STATIC          1043
 #define IDC_PLAYPATH_STATIC             1044
@@ -127,13 +127,26 @@
 #define IDA_SOURCE_RESETSIZE            40023
 #define IDA_SOURCE_DELETE               40024
 #define IDA_SOURCE_FITTOSCREEN          40026
+#define ID_MAINMENU_MAINMENU            40028
+#define ID_MAINMENU_SETTINGS            40029
+#define ID_SETTINGS_MAINMENU            40030
+#define ID_SETTINGS_MAINMENU40031       40031
+#define ID_MAINMENU_MAINMENU40032       40032
+#define ID_MAINMENU_                    40033
+#define ID_MAINMENU_MAINMENU40034       40034
+#define ID_SETTINGS_OPENCONFIGFOLDER    40035
+#define ID_SETTINGS_OPENLOGFOLDER       40036
+#define ID_HELP_CONTENTS                40037
+#define ID_HELP_ABOUT                   40038
+#define ID_FILE_EXIT                    40039
+#define ID_SETTINGS_SETTINGS            40041
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        133
-#define _APS_NEXT_COMMAND_VALUE         40028
+#define _APS_NEXT_RESOURCE_VALUE        134
+#define _APS_NEXT_COMMAND_VALUE         40042
 #define _APS_NEXT_CONTROL_VALUE         1090
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

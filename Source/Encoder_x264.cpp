@@ -127,6 +127,7 @@ public:
         if(bUseCustomParams)
         {
             String strCustomParams = AppConfig->GetString(TEXT("Video Encoding"), TEXT("CustomSettings"));
+            Log(TEXT("Using custom x264 settings: \"%s\""), strCustomParams.Array());
 
             StringList paramList;
             strCustomParams.GetTokenList(paramList, ' ', FALSE);

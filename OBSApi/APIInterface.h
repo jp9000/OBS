@@ -57,9 +57,8 @@ public:
     virtual XElement* GetSceneElement()=0;
 
     //low-order word is VK, high-order word is modifier.  equivalent to the value given by hotkey controls
-    virtual bool HotkeyExists(DWORD hotkey) const=0;
-    virtual bool CreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARAM param)=0;
-    virtual void DeleteHotkey(DWORD hotkey)=0;
+    virtual UINT CreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARAM param)=0;
+    virtual void DeleteHotkey(UINT hotkeyID)=0;
 
     virtual Vect2 GetBaseSize() const=0;          //get the base scene size
     virtual Vect2 GetRenderFrameSize() const=0;   //get the render frame size

@@ -24,7 +24,7 @@ class Scene;
 #define NUM_RENDER_BUFFERS 2
 
 static const int minClientWidth  = 700;
-static const int minClientHeight = 400;
+static const int minClientHeight = 200;
 
 
 struct AudioDeviceInfo
@@ -281,6 +281,15 @@ enum ItemModifyType
 
 //----------------------------
 
+struct SceneHotkeyInfo
+{
+    DWORD hotkeyID;
+    DWORD hotkey;
+    XElement *scene;
+};
+
+//----------------------------
+
 class OBS
 {
     friend class Scene;
@@ -319,13 +328,27 @@ class OBS
 
     //---------------------------------------------------
     // video
-    Scene               *scene;
-    VideoEncoder        *videoEncoder;
-    HDC                 hCaptureDC;
-    List<MonitorInfo>   monitors;
+    Scene                   *scene;
+    VideoEncoder            *videoEncoder;
+    HDC                     hCaptureDC;
+    List<MonitorInfo>       monitors;
 
-    XConfig             scenesConfig;
-    XElement            *sceneElement;
+    XConfig                 scenesConfig;
+    List<SceneHotkeyInfo>   sceneHotkeys;
+    XElement                *sceneElement;
+
+    inline void RemoveSceneHotkey(DWORD hotkey)
+    {
+        for(UINT i=0; i<sceneHotkeys.Num(); i++)
+        {
+            if(sceneHotkeys[i].hotkey == hotkey)
+            {
+                API->DeleteHotkey(sceneHotkeys[i].hotkeyID);
+                sceneHotkeys.Remove(i);
+                break;
+            }
+        }
+    }
 
     void SelectSources();
 
@@ -401,6 +424,11 @@ class OBS
     float   desktopVol, micVol;
     List<FrameAudio> pendingAudioFrames;
 
+    bool bUsingPushToTalk, bPushToTalkOn;
+    UINT pushToTalkHotkeyID;
+    UINT muteMicHotkeyID;
+    UINT muteDesktopHotkeyID;
+
     bool bWriteToFile;
     VideoFileStream *fileStream;
 
@@ -470,6 +498,10 @@ class OBS
     bool QueryNewAudio();
     void MainAudioLoop();
     static DWORD STDCALL MainAudioThread(LPVOID lpUnused);
+
+    static void STDCALL PushToTalkHotkey(DWORD hotkey, UPARAM param, bool bDown);
+    static void STDCALL MuteMicHotkey(DWORD hotkey, UPARAM param, bool bDown);
+    static void STDCALL MuteDesktopHotkey(DWORD hotkey, UPARAM param, bool bDown);
 
     static INT_PTR CALLBACK EnterGlobalSourceNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);

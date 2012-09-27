@@ -39,6 +39,31 @@ inline VolumeControlData* GetVolumeControlData(HWND hwnd)
     return (VolumeControlData*)GetWindowLongPtr(hwnd, 0);
 }
 
+float ToggleVolumeControlMute(HWND hwnd)
+{
+    VolumeControlData *control = GetVolumeControlData(hwnd);
+    if(!control)
+        CrashError(TEXT("ToggleVolumeControlMute called on a control that's not a volume control"));
+
+    if(control->curVolume < EPSILON)
+    {
+        if(control->lastUnmutedVol < EPSILON)
+            control->lastUnmutedVol = 1.0f;
+        control->curVolume = control->lastUnmutedVol;
+    }
+    else
+    {
+        control->lastUnmutedVol = control->curVolume;
+        control->curVolume = 0.0f;
+    }
+
+    HDC hDC = GetDC(hwnd);
+    control->DrawVolumeControl(hDC);
+    ReleaseDC(hwnd, hDC);
+
+    return control->curVolume;
+}
+
 float SetVolumeControlValue(HWND hwnd, float fVal)
 {
     VolumeControlData *control = GetVolumeControlData(hwnd);
@@ -48,6 +73,10 @@ float SetVolumeControlValue(HWND hwnd, float fVal)
     float lastVal = control->curVolume;
 
     control->curVolume = fVal;
+
+    HDC hDC = GetDC(hwnd);
+    control->DrawVolumeControl(hDC);
+    ReleaseDC(hwnd, hDC);
 
     return lastVal;
 }

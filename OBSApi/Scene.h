@@ -97,6 +97,8 @@ class BASE_EXPORT Scene
     List<SceneItem*> sceneItems;
     DWORD bkColor;
 
+    UINT hotkeyID;
+
     inline void DeselectAll()
     {
         for(UINT i=0; i<sceneItems.Num(); i++)

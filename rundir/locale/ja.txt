@@ -118,9 +118,8 @@ Settings.Publish.Server                 "サーバー:"
 Settings.Publish.Service                "サービス:"
 Settings.Publish.Username               "ユーザ名 (もしあれば):"
 
-Settings.Publish.Mode.BandwidthInfo "転送の報告"
+Settings.Publish.Mode.FileOnly      "ファイル出力だけ"
 Settings.Publish.Mode.LiveStream    "ライブ ストリーム"
-Settings.Publish.Mode.Serve         "RTMP ローカル サーバー"
 
 Settings.Video.Custom               "特性:"
 Settings.Video.DisableAero          "起動した時にAeroを無効にする:"

@@ -37,6 +37,7 @@
 //-------------------------------------------
 
 BASE_EXPORT void LocalizeWindow(HWND hwnd, LocaleStringLookup *lookup=NULL);
+BASE_EXPORT void LocalizeMenu(HMENU hMenu, LocaleStringLookup *lookup=NULL);
 
 BASE_EXPORT String GetLBText(HWND hwndList, UINT id=LB_ERR);
 BASE_EXPORT String GetCBText(HWND hwndCombo, UINT id=CB_ERR);

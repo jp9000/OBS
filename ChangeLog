@@ -3,6 +3,27 @@
 
 -------------------------------
 
+2012-9-27 - 0.40 (alpha)
+    * Added the feature to save to MP4 and FLV files.  Going to delay
+      on AVI because I'm slightly lazy and because AVI files suck.
+    * Took out the RTMP server code, not necessary anymore now that
+      saving to files is in.
+    * Added a variety of hotkeys for audio, such as push to talk,
+      or muting the mic or desktop completely.
+    * Fixed network bugs, made it so that the SEI packet is transferred
+      after the video headers are sent.
+    * Fixed onMetaData not sending correctly.
+    * Fixed bugs in the downscale shaders that could cause inaccurate
+      downscales, and also made colors more accurate now that the SEI
+      packet is properly being sent
+    * Added options for automatically reconnecting to the server once
+      disconnected.
+    * Added an advanced settings section that allows users to configure
+      x264 custom parameters, as well as internal advanced options or
+      fixes for various other things if necessary
+
+-------------------------------
+
 2012-9-22 - 0.381 (alpha)
     * Had to remove the FPS display code because it was causing a
       notable performance drop.  do -not- set the swap chain to GDI
