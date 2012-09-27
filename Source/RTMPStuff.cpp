@@ -242,12 +242,12 @@ char* OBS::EncMetaData(char *enc, char *pend)
     enc = AMF_EncodeNamedNumber(enc, pend, &av_width,           double(outputCX));
     enc = AMF_EncodeNamedNumber(enc, pend, &av_height,          double(outputCY));
 
-    enc = AMF_EncodeNamedNumber(enc, pend, &av_videocodecid,    7.0);//&av_avc1);//
+    enc = AMF_EncodeNamedString(enc, pend, &av_videocodecid,    &av_avc1);//7.0);//
 
     enc = AMF_EncodeNamedNumber(enc, pend, &av_videodatarate,   double(maxBitRate));
     enc = AMF_EncodeNamedNumber(enc, pend, &av_framerate,       double(fps));
 
-    enc = AMF_EncodeNamedNumber(enc, pend, &av_audiocodecid,    audioCodecID);//av_codecFourCC);//
+    enc = AMF_EncodeNamedString(enc, pend, &av_audiocodecid,    av_codecFourCC);//audioCodecID);//
 
     enc = AMF_EncodeNamedNumber(enc, pend, &av_audiodatarate,   double(audioBitRate)); //ex. 128kb\s
     enc = AMF_EncodeNamedNumber(enc, pend, &av_audiosamplerate, 44100.0);

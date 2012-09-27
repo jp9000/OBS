@@ -505,16 +505,13 @@ public:
 
         packet.m_nChannel = 0x03;     // control channel (invoke)
         packet.m_headerType = RTMP_PACKET_SIZE_LARGE;
-        packet.m_packetType = RTMP_PACKET_TYPE_INVOKE;
+        packet.m_packetType = RTMP_PACKET_TYPE_INFO;
         packet.m_nTimeStamp = 0;
         packet.m_nInfoField2 = rtmp->m_stream_id;
         packet.m_hasAbsTimestamp = TRUE;
         packet.m_body = pbuf + RTMP_MAX_HEADER_SIZE;
 
         char *enc = packet.m_body;
-        enc = AMF_EncodeString(enc, pend, &av_send);
-        enc = AMF_EncodeNumber(enc, pend, ++rtmp->m_numInvokes);
-        *enc++ = AMF_NULL;
         enc = AMF_EncodeString(enc, pend, &av_setDataFrame);
         enc = AMF_EncodeString(enc, pend, &av_onMetaData);
         enc = App->EncMetaData(enc, pend);

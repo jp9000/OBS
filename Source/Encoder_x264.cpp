@@ -216,7 +216,9 @@ public:
 
                 SEIPacket[0] = 0x17;
                 SEIPacket[1] = 1;
-                mcpy(SEIPacket+2, timeOffsetAddr, 3);
+                SEIPacket[2] = 0;
+                SEIPacket[3] = 0;
+                SEIPacket[4] = 0;
                 *(DWORD*)(SEIPacket+5) = htonl(newPayloadSize);
                 mcpy(SEIPacket+9, nal.p_payload+skipBytes, newPayloadSize);
             }
