@@ -736,7 +736,7 @@ OBS::OBS()
                 if(hPlugin)
                 {
                     LOADPLUGINPROC loadPlugin = (LOADPLUGINPROC)GetProcAddress(hPlugin, "LoadPlugin");
-                    if(!loadPlugin || loadPlugin())
+                    if(loadPlugin && loadPlugin())
                     {
                         PluginInfo *pluginInfo = plugins.CreateNew();
                         pluginInfo->hModule = hPlugin;
