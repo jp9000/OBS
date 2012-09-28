@@ -46,7 +46,7 @@ struct VideoPacket
     inline void FreeData() {Packet.Clear();}
 };
 
-const float baseCRF = 15.0f;
+const float baseCRF = 18.0f;
 
 class X264Encoder : public VideoEncoder
 {
@@ -103,7 +103,7 @@ public:
         //paramData.i_threads             = 4;
 
         paramData.b_vfr_input           = 1;
-        paramData.i_keyint_max          = fps*2;      //keyframe every 5 sec, should make this an option
+        paramData.i_keyint_max          = fps*5;      //keyframe every 5 sec, should make this an option
         paramData.i_width               = width;
         paramData.i_height              = height;
         paramData.rc.i_vbv_max_bitrate  = maxBitRate; //vbv-maxrate
@@ -134,8 +134,11 @@ public:
             for(UINT i=0; i<paramList.Num(); i++)
             {
                 String &strParam = paramList[i];
+                if(!schr(strParam, '='))
+                    continue;
+
                 String strParamName = strParam.GetToken(0, '=');
-                String strParamVal  = strParam.GetToken(1, '=');
+                String strParamVal  = strParam.GetTokenOffset(1, '=');
 
                 if( strParamName.CompareI(TEXT("fps")) || 
                     strParamName.CompareI(TEXT("force-cfr")))

@@ -1726,7 +1726,7 @@ void OBS::ApplySettings()
                 //--------------------------------------------------
 
                 BOOL bUseSendBuffer = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USESENDBUFFER), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                String strSendBufferSize = GetCBText(GetDlgItem(hwndCurrentSettings, IDC_USESENDBUFFER));
+                String strSendBufferSize = GetCBText(GetDlgItem(hwndCurrentSettings, IDC_SENDBUFFERSIZE));
 
                 AppConfig->SetInt   (TEXT("Publish"),        TEXT("UseSendBuffer"),     bUseSendBuffer);
                 AppConfig->SetString(TEXT("Publish"),        TEXT("SendBufferSize"),    strSendBufferSize);
