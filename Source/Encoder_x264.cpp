@@ -111,6 +111,7 @@ public:
         paramData.rc.i_rc_method        = X264_RC_CRF;
         paramData.rc.f_rf_constant      = baseCRF+float(10-quality);
         paramData.vui.b_fullrange       = 0;          //specify full range input levels
+        //paramData.b_in
 
         //paramData.i_nal_hrd = 1;
 

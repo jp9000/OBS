@@ -64,6 +64,7 @@ void Convert444to420(LPBYTE input, int width, int height, LPBYTE *output, bool b
                 {
                     __m128i addVal = _mm_add_epi64(_mm_and_si128(line1, uvMask), _mm_and_si128(line2, uvMask));
                     __m128i avgVal = _mm_srai_epi16(_mm_add_epi64(addVal, _mm_shuffle_epi32(addVal, _MM_SHUFFLE(2, 3, 0, 1))), 2);
+                    avgVal = _mm_shuffle_epi32(avgVal, _MM_SHUFFLE(3, 1, 2, 0));
                     avgVal = _mm_shufflelo_epi16(avgVal, _MM_SHUFFLE(3, 1, 2, 0));
                     avgVal = _mm_packus_epi16(avgVal, avgVal);
 
