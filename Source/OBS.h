@@ -259,9 +259,13 @@ enum
     ID_BANDWIDTHMETER,
 };
 
-#define OBS_REQUESTSTOP WM_USER+1
-#define OBS_CALLHOTKEY  WM_USER+2
-#define OBS_RECONNECT   WM_USER+3
+enum
+{
+    OBS_REQUESTSTOP=WM_USER+1,
+    OBS_CALLHOTKEY,
+    OBS_RECONNECT,
+    OBS_SETSCENE,
+};
 
 //----------------------------
 
@@ -487,6 +491,7 @@ class OBS
     void MoveSourcesToTop();
     void MoveSourcesToBottom();
     void CenterItems();
+    void FitItemsToScreen();
     void ResetItemSizes();
 
     void Start();

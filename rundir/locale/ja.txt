@@ -1,4 +1,4 @@
-﻿Add             "追加"
+Add             "追加"
 Apply           "適用"
 Browse          "参照"
 Cancel          "キャンセル"
@@ -29,6 +29,7 @@ GlobalSources.DeleteConfirm "グローバル ソースが削除するなら、�
 Listbox.Add             "$1を追加"
 Listbox.Center          "中央に置く"
 Listbox.Config          "プロパティ"
+Listbox.FitToScreen     "画面に合わせる"
 Listbox.MoveDown        "下に移動"
 Listbox.MoveToBottom    "最低に移動"
 Listbox.MoveToTop       "最高に移動"

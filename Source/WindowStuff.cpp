@@ -37,6 +37,7 @@ enum
     ID_LISTBOX_MOVETOTOP,
     ID_LISTBOX_MOVETOBOTTOM,
     ID_LISTBOX_CENTER,
+    ID_LISTBOX_FITTOSCREEN,
     ID_LISTBOX_RESETSIZE,
     ID_LISTBOX_RENAME,
     ID_LISTBOX_HOTKEY,
@@ -271,6 +272,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
             String strMoveTop      = Str("Listbox.MoveToTop");
             String strMoveToBottom = Str("Listbox.MoveToBottom");
             String strCenter       = Str("Listbox.Center");
+            String strFitToScreen  = Str("Listbox.FitToScreen");
             String strResize       = Str("Listbox.ResetSize");
 
             if(id == ID_SOURCES)
@@ -281,6 +283,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 strMoveTop      << TEXT("\tCtrl-Home");
                 strMoveToBottom << TEXT("\tCtrl-End");
                 strCenter       << TEXT("\tCtrl-C");
+                strFitToScreen  << TEXT("\tCtrl-F");
                 strResize       << TEXT("\tCtrl-R");
             }
 
@@ -310,6 +313,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
             {
                 AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
                 AppendMenu(hMenu, MF_STRING, ID_LISTBOX_CENTER,         strCenter);
+                AppendMenu(hMenu, MF_STRING, ID_LISTBOX_FITTOSCREEN,    strFitToScreen);
                 AppendMenu(hMenu, MF_STRING, ID_LISTBOX_RESETSIZE,      strResize);
             }
         }
@@ -654,6 +658,10 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                     App->CenterItems();
                     break;
 
+                case ID_LISTBOX_FITTOSCREEN:
+                    App->FitItemsToScreen();
+                    break;
+
                 case ID_LISTBOX_RESETSIZE:
                     App->ResetItemSizes();
                     break;
@@ -921,6 +929,60 @@ void OBS::CenterItems()
     }
 }
 
+extern "C" double round(double val);
+
+void OBS::FitItemsToScreen()
+{
+    if(App->bRunning)
+    {
+        List<SceneItem*> selectedItems;
+        App->scene->GetSelectedItems(selectedItems);
+
+        Vect2 baseSize = App->GetBaseSize();
+        double baseAspect = double(baseSize.x)/double(baseSize.y);
+
+        for(UINT i=0; i<selectedItems.Num(); i++)
+        {
+            SceneItem *item = selectedItems[i];
+            item->pos = (baseSize*0.5f)-(item->size*0.5f);
+
+            if(item->source)
+            {
+                Vect2 itemSize = item->source->GetSize();
+
+                Vect2 pos = Vect2(0.0f, 0.0f);
+                Vect2 size = baseSize;
+
+                double sourceAspect = double(itemSize.x)/double(itemSize.y);
+                if(!CloseDouble(baseAspect, sourceAspect))
+                {
+                    if(baseAspect < sourceAspect)
+                        size.y = float(double(size.x) / sourceAspect);
+                    else
+                        size.x = float(double(size.y) * sourceAspect);
+
+                    pos = (baseSize-size)*0.5f;
+
+                    pos.x = (float)round(pos.x);
+                    pos.y = (float)round(pos.y);
+
+                    size.x = (float)round(size.x);
+                    size.y = (float)round(size.y);
+                }
+
+                item->pos  = pos;
+                item->size = size;
+
+                XElement *itemElement = item->GetElement();
+                itemElement->SetInt(TEXT("x"),  int(pos.x));
+                itemElement->SetInt(TEXT("y"),  int(pos.y));
+                itemElement->SetInt(TEXT("cx"), int(size.x));
+                itemElement->SetInt(TEXT("cy"), int(size.y));
+            }
+        }
+    }
+}
+
 void OBS::ResetItemSizes()
 {
     if(App->bRunning)
@@ -932,11 +994,13 @@ void OBS::ResetItemSizes()
         {
             SceneItem *item = selectedItems[i];
             if(item->source)
+            {
                 item->size = item->source->GetSize();
 
-            XElement *itemElement = item->GetElement();
-            itemElement->SetInt(TEXT("cx"), int(item->size.x));
-            itemElement->SetInt(TEXT("cy"), int(item->size.y));
+                XElement *itemElement = item->GetElement();
+                itemElement->SetInt(TEXT("cx"), int(item->size.x));
+                itemElement->SetInt(TEXT("cy"), int(item->size.y));
+            }
         }
     }
 }
@@ -1549,6 +1613,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     App->CenterItems();
                     break;
 
+                case IDA_SOURCE_FITTOSCREEN:
+                    App->FitItemsToScreen();
+                    break;
+
                 case IDA_SOURCE_RESETSIZE:
                     App->ResetItemSizes();
                     break;
@@ -1657,6 +1725,14 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
             App->bReconnecting = true;
             App->Start();
             break;
+
+        case OBS_SETSCENE:
+            {
+                TSTR lpScene = (TSTR)lParam;
+                App->SetScene(lpScene);
+                Free(lpScene);
+                break;
+            }
 
         case WM_CLOSE:
             PostQuitMessage(0);

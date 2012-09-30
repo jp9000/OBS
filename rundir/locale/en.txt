@@ -29,6 +29,7 @@ GlobalSources.DeleteConfirm "If you delete a global source, it will be removed f
 Listbox.Add             "Add $1"
 Listbox.Center          "Center"
 Listbox.Config          "Properties"
+Listbox.FitToScreen     "Fit to screen"
 Listbox.MoveDown        "Move Down"
 Listbox.MoveToBottom    "Move to Bottom"
 Listbox.MoveToTop       "Move to Top"

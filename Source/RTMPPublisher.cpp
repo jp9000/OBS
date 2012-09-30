@@ -644,10 +644,7 @@ NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry)
 
         XDataItem *item = servers->GetDataItem(strServer);
         if(!item)
-        {
-            failReason = TEXT("Could not find any server specified for the service specified in services.xconfig");
-            return NULL;
-        }
+            item = servers->GetDataItemByID(0);
 
         strServer = item->GetData();
     }

@@ -50,7 +50,7 @@ public:
     virtual XElement* GetSceneListElement()=0;
     virtual XElement* GetGlobalSourceListElement()=0;
 
-    virtual bool SetScene(CTSTR lpScene)=0;
+    virtual bool SetScene(CTSTR lpScene, bool bPost)=0;
     virtual Scene* GetScene() const=0;
 
     virtual CTSTR GetSceneName() const=0;

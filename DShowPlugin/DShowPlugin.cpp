@@ -296,6 +296,8 @@ void GetOutputList(IPin *curPin, List<MediaOutputInfo> &outputInfoList)
                         VIDEO_STREAM_CONFIG_CAPS *pVSCC = reinterpret_cast<VIDEO_STREAM_CONFIG_CAPS*>(capsData);
                         VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pMT->pbFormat);
 
+                        //pVih->
+
                         MediaOutputInfo *outputInfo = outputInfoList.CreateNew();
                         outputInfo->mediaType = pMT;
                         outputInfo->videoType = type;
@@ -305,11 +307,10 @@ void GetOutputList(IPin *curPin, List<MediaOutputInfo> &outputInfoList)
                         outputInfo->maxCX = pVSCC->MaxOutputSize.cx;
                         outputInfo->minCY = pVSCC->MinOutputSize.cy;
                         outputInfo->maxCY = pVSCC->MaxOutputSize.cy;
-                        outputInfo->xGranularity = max(pVSCC->OutputGranularityX,1);
-                        outputInfo->yGranularity = max(pVSCC->OutputGranularityY,1);
-
-                        double aspect = double(outputInfo->minCX)/double(outputInfo->minCY);
-                        nop();
+                        //outputInfo->xGranularity = max(pVSCC->OutputGranularityX,1);
+                        //outputInfo->yGranularity = max(pVSCC->OutputGranularityY,1);
+                        outputInfo->xGranularity = 4;
+                        outputInfo->yGranularity = 4;
                     }
                     else
                     {
@@ -421,7 +422,7 @@ struct ConfigDialogData
             if( UINT(resolution.cx) >= outputInfo.minCX && UINT(resolution.cx) <= outputInfo.maxCX &&
                 UINT(resolution.cy) >= outputInfo.minCY && UINT(resolution.cy) <= outputInfo.maxCY )
             {
-                if(resolution.cx % outputInfo.xGranularity || resolution.cy % outputInfo.yGranularity)
+                if((resolution.cx-outputInfo.minCX) % outputInfo.xGranularity || (resolution.cy-outputInfo.minCY) % outputInfo.yGranularity)
                     return false;
 
                 int minFPS = int(outputInfo.minFPS+0.5);

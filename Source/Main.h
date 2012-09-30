@@ -82,6 +82,10 @@ __forceinline QWORD fastHtonll(QWORD qw) {return QWORD_BE(qw);}
 __forceinline DWORD fastHtonl (DWORD dw) {return DWORD_BE(dw);}
 __forceinline  WORD fastHtons (WORD  w)  {return  WORD_BE(w);}
 
+inline BOOL CloseDouble(double f1, double f2, double precision=0.001)
+{
+    return fabs(f1-f2) <= precision;
+}
 
 //-------------------------------------------
 // application headers

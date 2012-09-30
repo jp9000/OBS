@@ -64,11 +64,6 @@ void Convert444to420(LPBYTE input, int width, int height, LPBYTE *output, bool b
 void STDCALL SceneHotkey(DWORD hotkey, UPARAM param, bool bDown);
 
 
-inline BOOL CloseDouble(double f1, double f2, double precision=0.001)
-{
-    return fabs(f1-f2) <= precision;
-}
-
 
 //----------------------------
 
@@ -332,7 +327,21 @@ public:
     virtual XElement* GetSceneListElement()         {return App->scenesConfig.GetElement(TEXT("scenes"));}
     virtual XElement* GetGlobalSourceListElement()  {return App->scenesConfig.GetElement(TEXT("global sources"));}
 
-    virtual bool SetScene(CTSTR lpScene)        {return App->SetScene(lpScene);}
+    virtual bool SetScene(CTSTR lpScene, bool bPost)
+    {
+        assert(lpScene && *lpScene);
+
+        if(!lpScene || !*lpScene)
+            return false;
+
+        if(bPost)
+        {
+            SendMessage(hwndMain, OBS_SETSCENE, 0, (LPARAM)sdup(lpScene));
+            return true;
+        }
+
+        return App->SetScene(lpScene);
+    }
     virtual Scene* GetScene() const             {return App->scene;}
 
     virtual CTSTR GetSceneName() const          {return App->GetSceneElement()->GetName();}
