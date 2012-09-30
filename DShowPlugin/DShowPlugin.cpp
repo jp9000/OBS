@@ -213,7 +213,7 @@ void FillOutListOfVideoDevices(HWND hwndCombo)
             if(SUCCEEDED(err))
             {
                 String strDeviceName = (CWSTR)valueThingy.bstrVal;
-                if(SendMessage(hwndCombo, CB_FINDSTRINGEXACT, -1, 0) == CB_ERR)
+                if(SendMessage(hwndCombo, CB_FINDSTRINGEXACT, -1, (LPARAM)strDeviceName.Array()) == CB_ERR)
                     SendMessage(hwndCombo, CB_ADDSTRING, 0, (LPARAM)strDeviceName.Array());
             }
         }
