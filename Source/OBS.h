@@ -432,6 +432,7 @@ class OBS
     UINT pushToTalkHotkeyID;
     UINT muteMicHotkeyID;
     UINT muteDesktopHotkeyID;
+    UINT stopStreamHotkeyID;
 
     bool bWriteToFile;
     VideoFileStream *fileStream;
@@ -503,6 +504,8 @@ class OBS
     bool QueryNewAudio();
     void MainAudioLoop();
     static DWORD STDCALL MainAudioThread(LPVOID lpUnused);
+
+    static void STDCALL StopStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
 
     static void STDCALL PushToTalkHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL MuteMicHotkey(DWORD hotkey, UPARAM param, bool bDown);

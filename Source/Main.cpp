@@ -354,6 +354,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         //--------------------------------------------
 
+        GlobalConfig->SetInt(TEXT("General"), TEXT("LastAppVersion"), OBS_VERSION);
+
         delete AppConfig;
         delete GlobalConfig;
 

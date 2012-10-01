@@ -120,6 +120,10 @@
 #define IDC_SENDBUFFERSIZE              1089
 #define IDC_CLEARMUTEDESKTOP            1090
 #define IDC_LIST1                       1090
+#define IDC_CUSTOM1                     1093
+#define IDC_STOPSTREAMHOTKEY            1093
+#define IDC_CLEARHOTKEY                 1094
+#define IDC_STOPSTREAMHOTKEY_STATIC     1095
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -148,7 +152,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        134
 #define _APS_NEXT_COMMAND_VALUE         40042
-#define _APS_NEXT_CONTROL_VALUE         1091
+#define _APS_NEXT_CONTROL_VALUE         1096
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

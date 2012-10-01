@@ -82,4 +82,5 @@ inline void SSECopy(void *lpDest, void *lpSource, UINT size)
 #include "GraphicsSystem.h"
 #include "Scene.h"
 #include "APIInterface.h"
+#include "HotkeyControlEx.h"
 

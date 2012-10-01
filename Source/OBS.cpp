@@ -291,7 +291,7 @@ struct HotkeyInfo
     DWORD hotkey;
     OBSHOTKEYPROC hotkeyProc;
     UPARAM param;
-    bool bDown;
+    bool bModifiersDown, bHotkeyDown, bDownSent;
 };
 
 class OBSAPIInterface : public APIInterface
@@ -396,6 +396,7 @@ OBS::OBS()
     if(!InitCommonControlsEx(&ecce))
         CrashError(TEXT("Could not initalize common shell controls"));
 
+    InitHotkeyExControl(hinstMain);
     InitVolumeControl();
     InitBandwidthMeter();
 
@@ -727,6 +728,10 @@ OBS::OBS()
     if(hotkey)
         muteDesktopHotkeyID = API->CreateHotkey(hotkey, OBS::MuteDesktopHotkey, NULL);
 
+    hotkey = AppConfig->GetInt(TEXT("Publish"), TEXT("StopStreamHotkey"));
+    if(hotkey)
+        stopStreamHotkeyID = API->CreateHotkey(hotkey, OBS::StopStreamHotkey, NULL);
+
     //-----------------------------------------------------
     // load plugins
 
@@ -859,10 +864,17 @@ void STDCALL SceneHotkey(DWORD hotkey, UPARAM param, bool bDown)
     }
 }
 
+void STDCALL OBS::StopStreamHotkey(DWORD hotkey, UPARAM param, bool bDown)
+{
+    if(!bDown) return;
+    App->Stop();
+}
+
 void STDCALL OBS::PushToTalkHotkey(DWORD hotkey, UPARAM param, bool bDown)
 {
     App->bPushToTalkOn = bDown;
 }
+
 
 void STDCALL OBS::MuteMicHotkey(DWORD hotkey, UPARAM param, bool bDown)
 {
@@ -2158,8 +2170,8 @@ UINT OBSAPIInterface::CreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARA
     if(!hotkey)
         return 0;
 
-    DWORD vk = LOWORD(hotkey);
-    DWORD modifier = HIWORD(hotkey);
+    DWORD vk = LOBYTE(hotkey);
+    DWORD modifier = HIBYTE(hotkey);
     DWORD fsModifiers = 0;
 
     if(modifier & HOTKEYF_ALT)
@@ -2170,12 +2182,13 @@ UINT OBSAPIInterface::CreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARA
         fsModifiers |= MOD_SHIFT;
 
     OSEnterMutex(App->hHotkeyMutex);
-    HotkeyInfo &hi  = *hotkeys.CreateNew();
-    hi.hotkeyID     = ++curHotkeyIDVal;
-    hi.hotkey       = hotkey;
-    hi.hotkeyProc   = hotkeyProc;
-    hi.param        = param;
-    hi.bDown        = false;
+    HotkeyInfo &hi      = *hotkeys.CreateNew();
+    hi.hotkeyID         = ++curHotkeyIDVal;
+    hi.hotkey           = hotkey;
+    hi.hotkeyProc       = hotkeyProc;
+    hi.param            = param;
+    hi.bModifiersDown   = false;
+    hi.bHotkeyDown      = false;
     OSLeaveMutex(App->hHotkeyMutex);
 
     return curHotkeyIDVal;
@@ -2213,8 +2226,8 @@ void OBSAPIInterface::HandleHotkeys()
     {
         HotkeyInfo &info = hotkeys[i];
 
-        DWORD hotkeyVK          = LOWORD(info.hotkey);
-        DWORD hotkeyModifiers   = HIWORD(info.hotkey);
+        DWORD hotkeyVK          = LOBYTE(info.hotkey);
+        DWORD hotkeyModifiers   = HIBYTE(info.hotkey);
 
         bool bModifiersMatch = (hotkeyModifiers == modifiers);
         if(bModifiersMatch)
@@ -2223,27 +2236,31 @@ void OBSAPIInterface::HandleHotkeys()
             bool bDown       = (keyState & 0x8000) != 0;
             bool bWasPressed = (keyState & 0x1) != 0;
 
-            if(bDown)
+            if(bDown || bWasPressed)
             {
-                if(!info.bDown)
+                if(!info.bHotkeyDown && info.bModifiersDown) //only triggers the hotkey if the actual main key was pressed second
+                {
                     PostMessage(hwndMain, OBS_CALLHOTKEY, TRUE, info.hotkeyID);
+                    info.bDownSent = true;
+                }
 
-                info.bDown = bDown;
-                continue;
-            }
-            else if(bWasPressed)
-            {
-                if(!info.bDown)
-                    PostMessage(hwndMain, OBS_CALLHOTKEY, TRUE, info.hotkeyID);
-
-                info.bDown = true;
+                info.bHotkeyDown = true;
+                if(bDown)
+                    continue;
             }
         }
 
-        if(info.bDown) //key up
+        info.bModifiersDown = bModifiersMatch;
+
+        if(info.bHotkeyDown) //key up
         {
-            PostMessage(hwndMain, OBS_CALLHOTKEY, FALSE, info.hotkeyID);
-            info.bDown = false;
+            if(info.bDownSent)
+            {
+                PostMessage(hwndMain, OBS_CALLHOTKEY, FALSE, info.hotkeyID);
+                info.bDownSent = false;
+            }
+
+            info.bHotkeyDown = false;
         }
     }
 

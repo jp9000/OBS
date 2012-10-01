@@ -116,16 +116,16 @@ public:
 
             if(bWindowMinimized || bWindowNotFound)
             {
-                CTSTR lpStr;
+                /*CTSTR lpStr;
                 if(bWindowMinimized)
                     lpStr = Str("Sources.SoftwareCaptureSource.WindowMinimized");
                 else if(bWindowNotFound)
-                    lpStr = Str("Sources.SoftwareCaptureSource.WindowNotFound");
+                    lpStr = Str("Sources.SoftwareCaptureSource.WindowNotFound");*/
 
                 RECT rc = {0, 0, width, height};
                 FillRect(hDC, &rc, (HBRUSH)GetStockObject(BLACK_BRUSH));
 
-                HFONT hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+                /*HFONT hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
                 HFONT hfontOld = (HFONT)SelectObject(hDC, hFont);
 
                 SetBkColor(hDC, 0x000000);
@@ -133,7 +133,7 @@ public:
                 SetTextAlign(hDC, TA_CENTER);
                 TextOut(hDC, width/2, height/2, lpStr, slen(lpStr));
 
-                SelectObject(hDC, hfontOld);
+                SelectObject(hDC, hfontOld);*/
             }
             else
             {

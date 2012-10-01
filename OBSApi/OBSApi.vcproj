@@ -333,6 +333,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\HotkeyControlEx.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\OBSApi.cpp"
 				>
 			</File>
@@ -352,6 +356,10 @@
 			</File>
 			<File
 				RelativePath=".\GraphicsSystem.h"
+				>
+			</File>
+			<File
+				RelativePath=".\HotkeyControlEx.h"
 				>
 			</File>
 			<File

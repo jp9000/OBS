@@ -1,4 +1,4 @@
-﻿Add             "Добавить"
+Add             "Добавить"
 Apply           "Применить"
 Browse          "Найти"
 Cancel          "Отменить"
@@ -10,6 +10,7 @@ Disable         "Отключено"
 EnterName       "Пожалуйста введите имя"
 GlobalSources   "Глобальные источники"
 NameExists      "'$1' уже занято. Пожалуйста введите другое имя"
+None            "Отсутствует"
 OK              "OK"
 Plugins         "Плагины"
 Scene           "Сцену"
@@ -69,6 +70,9 @@ Settings.SaveChangesPrompt  "Сохранить и применить измен
 Settings.SaveChangesTitle   "Применить настройки?"
 Settings.Video              "Видео"
 
+Settings.Advanced.VideoEncoderCPUTradeoff           "CPU пресет:"
+Settings.Advanced.VideoEncoderCPUTradeoffTooltip    "Установка более быстрого (высокого) значения уменьшает нагрузку процессора, жертвуя некоторыми акпектами качества. С другой стороны, установка медленного (низкого) значения повышает качество за счет увеличения нагрузки на процессор.\r\n\r\nРекомендуется: Very Fast"
+
 Settings.Audio.Device   "Микрофон:"
 
 Settings.Encoding.Audio "Кодирование Аудио"
@@ -84,9 +88,6 @@ Settings.Encoding.Video.MaxBitRate          "Максимальный битре
 Settings.Encoding.Video.MaxBitRateTooltip   "Установка максимального значения битрейта для видео. Напрямую зависит от вашей исходящей скорости интернета. Отметим, что заданный битрейт будет средним значением, но так же на него будет влиять размера буфера.\r\n\r\nВоспользуйтесь сайтом, например speedtest.net, чтобы узнать свою исходящую скорость интернета."
 Settings.Encoding.Video.Quality             "Качество:"
 Settings.Encoding.Video.QualityTooltip      "Эта опция будет подстраивать качество в зависимости от установленных битрейта и буфера. При установки высокого значения и низкого битрейта будет жертвоваться качеством в динамичных сценах в пользу статичных."
-Settings.Encoding.Video.Tradeoff            "CPU пресет:"
-Settings.Encoding.Video.TradeoffTooltip     "Установка более быстрого (высокого) значения уменьшает нагрузку процессора, жертвуя некоторыми акпектами качества. С другой стороны, установка медленного (низкого) значения повышает качество за счет увеличения нагрузки на процессор.\r\n\r\nРекомендуется: Very Fast"
-Settings.Encoding.Video.UseI444             "Использовать YUV 4:4:4"
 
 Settings.General.Add            "Добавить"
 Settings.General.ConfirmDelete  "Вы уверены, что хотите удалить профиль '$1'?"
@@ -114,8 +115,6 @@ Settings.Video.Downscale            "Масштабировать разреше
 Settings.Video.FPS                  "Кадры в секунду (FPS):"
 Settings.Video.Monitor              "Монитор:"
 Settings.Video.Resolution           "Базовое разрешение:"
-
-Settings.Video.Downscale.None   "Отсутствует"
 
 Sources.BitmapSource            "Изображение"
 Sources.GlobalSource            "Глобальный источник"
