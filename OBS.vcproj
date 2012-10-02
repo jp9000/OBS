@@ -144,7 +144,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="dwmapi.lib comctl32.lib dxgi.lib dxguid.lib d3d10_1.lib d3dx10.lib libx264.a libgcc.a ws2_32.lib Winmm.lib librtmp.lib libmp3lame-static.lib libfaac.lib libsamplerate.lib dsound.lib obsapi.lib shell32.lib"
-				Version="0.31a"
+				Version="0.41a"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="OBSApi/x64/Debug;x264/libs/64bit;librtmp/x64/debug;lame/output/64bit;libfaac/x64/debug;libsamplerate/x64/debug"
 				AdditionalManifestDependencies="type=&apos;win32&apos; name=&apos;Microsoft.Windows.Common-Controls&apos; version=&apos;6.0.0.0&apos; processorArchitecture=&apos;amd64&apos; publicKeyToken=&apos;6595b64144ccf1df&apos; language=&apos;*&apos;"
@@ -364,6 +364,10 @@
 			</File>
 			<File
 				RelativePath=".\Source\BitmapImageSource.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Source\BitmapTransitionSource.cpp"
 				>
 			</File>
 			<File

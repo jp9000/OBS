@@ -57,6 +57,43 @@ HRESULT WINAPI CopyMediaType(AM_MEDIA_TYPE *pmtTarget, const AM_MEDIA_TYPE *pmtS
 }
 
 
+VideoOutputType GetVideoOutputTypeFromFourCC(DWORD fourCC)
+{
+    VideoOutputType type = VideoOutputType_None;
+
+    // Packed RGB formats
+    if(fourCC == 0 || fourCC == '2BGR')
+        type = VideoOutputType_RGB32;
+    else if(fourCC == 'ABGR')
+        type = VideoOutputType_ARGB32;
+
+    // Planar YUV formats
+    else if(fourCC == '024I' || fourCC == 'VUYI')
+        type = VideoOutputType_I420;
+    else if(fourCC == '21VY')
+        type = VideoOutputType_YV12;
+
+    // Packed YUV formats
+    else if(fourCC == 'UYVY')
+        type = VideoOutputType_YVYU;
+    else if(fourCC == '2YUY')
+        type = VideoOutputType_YUY2;
+    else if(fourCC == 'YVYU')
+        type = VideoOutputType_UYVY;
+
+    else if(fourCC == 'V4PM' || fourCC == '2S4M')
+        type = VideoOutputType_MPEG2_VIDEO;
+
+    else if(fourCC == '462H')
+        type = VideoOutputType_H264;
+
+    else if(fourCC == 'FPJM')
+        type = VideoOutputType_MJPG;
+
+    return type;
+}
+
+
 VideoOutputType GetVideoOutputType(const AM_MEDIA_TYPE &media_type)
 {
     VideoOutputType type = VideoOutputType_None;
@@ -117,13 +154,13 @@ VideoOutputType GetVideoOutputType(const AM_MEDIA_TYPE &media_type)
 
 int inputPriority[] = 
 {
+    1,
     12,
-    12,
-    12,
-    12,
+    13,
+    13,
 
-    10,
-    10,
+    11,
+    11,
 
     -1,
     -1,

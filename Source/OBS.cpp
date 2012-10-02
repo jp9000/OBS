@@ -42,6 +42,9 @@ bool STDCALL ConfigureDesktopSource(XElement *data, bool bCreating);
 ImageSource* STDCALL CreateBitmapSource(XElement *data);
 bool STDCALL ConfigureBitmapSource(XElement *element, bool bCreating);
 
+ImageSource* STDCALL CreateBitmapTransitionSource(XElement *data);
+bool STDCALL ConfigureBitmapTransitionSource(XElement *element, bool bCreating);
+
 ImageSource* STDCALL CreateGlobalSource(XElement *data);
 
 //NetworkStream* CreateRTMPServer();
@@ -422,6 +425,7 @@ OBS::OBS()
     RegisterSceneClass(TEXT("Scene"), Str("Scene"), (OBSCREATEPROC)CreateNormalScene, NULL);
     RegisterImageSourceClass(TEXT("DesktopImageSource"), Str("Sources.SoftwareCaptureSource"), (OBSCREATEPROC)CreateDesktopSource, (OBSCONFIGPROC)ConfigureDesktopSource);
     RegisterImageSourceClass(TEXT("BitmapImageSource"), Str("Sources.BitmapSource"), (OBSCREATEPROC)CreateBitmapSource, (OBSCONFIGPROC)ConfigureBitmapSource);
+    RegisterImageSourceClass(TEXT("BitmapTransitionSource"), Str("Sources.TransitionSource"), (OBSCREATEPROC)CreateBitmapTransitionSource, (OBSCONFIGPROC)ConfigureBitmapTransitionSource);
     RegisterImageSourceClass(TEXT("GlobalSource"), Str("Sources.GlobalSource"), (OBSCREATEPROC)CreateGlobalSource, (OBSCONFIGPROC)OBS::ConfigGlobalSource);
 
     //-----------------------------------------------------

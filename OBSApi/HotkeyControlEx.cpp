@@ -20,6 +20,8 @@
 #include "OBSAPI.h"
 
 
+//basically trying to do the same as the windows default hotkey control, but with mouse button support.
+
 struct HotkeyControlExData
 {
     DWORD hotkeyVK, modifiers;
@@ -133,26 +135,25 @@ LRESULT CALLBACK HotkeyExProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
             {
                 control = GetHotkeyControlExData(hwnd);
 
-                switch(wParam)
+                if( wParam == VK_RETURN ||
+                    wParam == VK_TAB    ||
+                    wParam == VK_DELETE ||
+                    wParam == VK_ESCAPE ||
+                    wParam == VK_LWIN   ||
+                    wParam == VK_RWIN   ||
+                    wParam == VK_APPS   )
                 {
-                    case VK_RETURN:
-                    case VK_TAB:
-                    case VK_DELETE:
-                    case VK_ESCAPE:
-                    case VK_LWIN:
-                    case VK_RWIN:
-                    case VK_APPS:
-                        if(control->hotkeyVK != 0 || control->modifiers != 0)
-                        {
-                            control->hotkeyVK = 0;
-                            control->modifiers = 0;
-                            control->bExtendedKey = 0;
+                    if(control->hotkeyVK != 0 || control->modifiers != 0)
+                    {
+                        control->hotkeyVK = 0;
+                        control->modifiers = 0;
+                        control->bExtendedKey = 0;
 
-                            InvalidateRect(hwnd, NULL, TRUE);
-                            PostMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(GetDlgCtrlID(hwnd), EN_CHANGE), (LPARAM)hwnd);
-                        }
+                        InvalidateRect(hwnd, NULL, TRUE);
+                        PostMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(GetDlgCtrlID(hwnd), EN_CHANGE), (LPARAM)hwnd);
+                    }
 
-                        return DefWindowProc(hwnd, message, wParam, lParam);
+                    return DefWindowProc(hwnd, message, wParam, lParam);
                 }
 
                 DWORD hotkeyVK = 0;
@@ -265,7 +266,7 @@ LRESULT CALLBACK HotkeyExProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
         case WM_GETFONT:
             {
                 control = GetHotkeyControlExData(hwnd);
-                return control->fontHeight;
+                return (LRESULT)control->hFont;
             }
 
         case WM_SETFONT:
@@ -286,9 +287,8 @@ LRESULT CALLBACK HotkeyExProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
             }
 
         case WM_ENABLE:
-            {
-                InvalidateRect(hwnd, NULL, TRUE);
-            }
+            InvalidateRect(hwnd, NULL, TRUE);
+            //pass through
 
         default:
             return DefWindowProc(hwnd, message, wParam, lParam);
@@ -383,5 +383,5 @@ void InitHotkeyExControl(HINSTANCE hInstance)
     wnd.style = CS_OWNDC | CS_VREDRAW | CS_HREDRAW;
 
     if(!RegisterClass(&wnd))
-        CrashError(TEXT("Could not register volume control class"));
+        CrashError(TEXT("Could not register hotkey control class"));
 }

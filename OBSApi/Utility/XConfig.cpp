@@ -195,10 +195,16 @@ void  XElement::SetHex(CTSTR lpName, DWORD hex)
 }
 
 
-void  XElement::SetStringList(CTSTR lpName, List<TSTR> &StringList)
+void  XElement::SetStringList(CTSTR lpName, List<TSTR> &stringList)
 {
     RemoveItem(lpName);
-    AddStringList(lpName, StringList);
+    AddStringList(lpName, stringList);
+}
+
+void  XElement::SetStringList(CTSTR lpName, StringList &stringList)
+{
+    RemoveItem(lpName);
+    AddStringList(lpName, stringList);
 }
 
 void  XElement::SetIntList(CTSTR lpName, List<int> &IntList)
@@ -254,15 +260,27 @@ void  XElement::AddHex(CTSTR lpName, DWORD hex)
 }
 
 
-void  XElement::AddStringList(CTSTR lpName, List<TSTR> &StringList)
+void  XElement::AddStringList(CTSTR lpName, List<TSTR> &stringList)
 {
     assert(lpName);
 
-    for(DWORD i=0; i<StringList.Num(); i++)
+    for(DWORD i=0; i<stringList.Num(); i++)
     {
-        assert(StringList[i]);
+        assert(stringList[i]);
 
-        AddString(lpName, StringList[i]);
+        AddString(lpName, stringList[i]);
+    }
+}
+
+void  XElement::AddStringList(CTSTR lpName, StringList &stringList)
+{
+    assert(lpName);
+
+    for(DWORD i=0; i<stringList.Num(); i++)
+    {
+        assert(stringList[i]);
+
+        AddString(lpName, stringList[i]);
     }
 }
 

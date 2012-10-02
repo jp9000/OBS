@@ -152,7 +152,7 @@ INT_PTR CALLBACK OBS::GeneralSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                 case IDC_PROFILE:
                     if(HIWORD(wParam) == CBN_EDITCHANGE)
                     {
-                        String strText = GetEditText((HWND)lParam);
+                        String strText = GetEditText((HWND)lParam).KillSpaces();
 
                         EnableWindow(GetDlgItem(hwnd, IDC_REMOVE),  FALSE);
 
@@ -212,7 +212,11 @@ INT_PTR CALLBACK OBS::GeneralSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                     if(HIWORD(wParam) == BN_CLICKED)
                     {
                         HWND hwndProfileList = GetDlgItem(hwnd, IDC_PROFILE);
-                        String strProfile = GetEditText(hwndProfileList);
+                        String strProfile = GetEditText(hwndProfileList).KillSpaces();
+                        SetWindowText(hwndProfileList, strProfile);
+
+                        if(strProfile.IsEmpty())
+                            break;
 
                         bool bRenaming = (LOWORD(wParam) == IDC_RENAME);
 

@@ -25,14 +25,14 @@ bool DeviceSource::Init(XElement *data)
     traceIn(DeviceSource::Init);
 
     HRESULT err;
-    err = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC, (REFIID)IID_IFilterGraph, (void**)&graph);
+    err = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, (REFIID)IID_IFilterGraph, (void**)&graph);
     if(FAILED(err))
     {
         AppWarning(TEXT("DShowPlugin: Failed to build IGraphBuilder, result = %08lX"), err);
         return false;
     }
 
-    err = CoCreateInstance(CLSID_CaptureGraphBuilder2, NULL, CLSCTX_INPROC, (REFIID)IID_ICaptureGraphBuilder2, (void**)&capture);
+    err = CoCreateInstance(CLSID_CaptureGraphBuilder2, NULL, CLSCTX_INPROC_SERVER, (REFIID)IID_ICaptureGraphBuilder2, (void**)&capture);
     if(FAILED(err))
     {
         AppWarning(TEXT("DShowPlugin: Failed to build ICaptureGraphBuilder2, result = %08lX"), err);
@@ -47,7 +47,6 @@ bool DeviceSource::Init(XElement *data)
     }
 
     capture->SetFiltergraph(graph);
-    graph->QueryInterface(IID_IMediaControl, (void**)&control);
 
     this->data = data;
     UpdateSettings();
@@ -67,7 +66,6 @@ DeviceSource::~DeviceSource()
     Stop();
     UnloadFilters();
 
-    SafeRelease(control);
     SafeRelease(capture);
     SafeRelease(graph);
 
@@ -197,9 +195,19 @@ bool DeviceSource::LoadFilters()
 
     bAddedDevice = true;
 
-    if(FAILED(err = graph->Connect(devicePin, captureFilter->GetCapturePin())))
+    //THANK THE NINE DIVINES I FINALLY GOT IT WORKING
+    if(FAILED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video, deviceFilter, NULL, captureFilter)))
     {
-        AppWarning(TEXT("DShowPlugin: Failed to connect the device pin to the capture pin, result = %08lX"), err);
+        if(FAILED(err = graph->Connect(devicePin, captureFilter->GetCapturePin())))
+        {
+            AppWarning(TEXT("DShowPlugin: Failed to connect the device pin to the capture pin, result = %08lX"), err);
+            goto cleanFinish;
+        }
+    }
+
+    if(FAILED(err = graph->QueryInterface(IID_IMediaControl, (void**)&control)))
+    {
+        AppWarning(TEXT("DShowPlugin: Failed to get IMediaControl, result = %08lX"), err);
         goto cleanFinish;
     }
 
@@ -284,6 +292,8 @@ void DeviceSource::UnloadFilters()
         delete colorConvertShader;
         colorConvertShader = NULL;
     }
+
+    SafeRelease(control);
 
     traceOut;
 }

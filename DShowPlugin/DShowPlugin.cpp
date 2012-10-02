@@ -107,7 +107,7 @@ IBaseFilter* GetDeviceByName(CTSTR lpName)
     IEnumMoniker *videoDeviceEnum;
 
     HRESULT err;
-    err = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC, IID_ICreateDevEnum, (void**)&deviceEnum);
+    err = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER, IID_ICreateDevEnum, (void**)&deviceEnum);
     if(FAILED(err))
     {
         AppWarning(TEXT("GetDeviceByName: CoCreateInstance for the device enum failed, result = %08lX"), err);
@@ -176,7 +176,7 @@ void FillOutListOfVideoDevices(HWND hwndCombo)
     IEnumMoniker *videoDeviceEnum;
 
     HRESULT err;
-    err = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC, IID_ICreateDevEnum, (void**)&deviceEnum);
+    err = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER, IID_ICreateDevEnum, (void**)&deviceEnum);
     if(FAILED(err))
     {
         AppWarning(TEXT("FillOutListOfVideoDevices: CoCreateInstance for the device enum failed, result = %08lX"), err);
@@ -248,6 +248,12 @@ IPin* GetOutputPin(IBaseFilter *filter)
                             GUID pinCategory;
                             DWORD retSize;
 
+                            PIN_INFO chi;
+                            curPin->QueryPinInfo(&chi);
+
+                            if(chi.pFilter)
+                                chi.pFilter->Release();
+
                             if(SUCCEEDED(propertySet->Get(AMPROPSETID_Pin, AMPROPERTY_PIN_CATEGORY, NULL, 0, &pinCategory, sizeof(GUID), &retSize)))
                             {
                                 if(pinCategory == PIN_CATEGORY_CAPTURE)
@@ -291,31 +297,35 @@ void GetOutputList(IPin *curPin, List<MediaOutputInfo> &outputInfoList)
                 {
                     VideoOutputType type = GetVideoOutputType(*pMT);
 
-                    if(pMT->formattype == FORMAT_VideoInfo && type != VideoOutputType_None)
+                    if(pMT->formattype == FORMAT_VideoInfo)
                     {
                         VIDEO_STREAM_CONFIG_CAPS *pVSCC = reinterpret_cast<VIDEO_STREAM_CONFIG_CAPS*>(capsData);
                         VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pMT->pbFormat);
 
-                        //pVih->
+                        if(type == VideoOutputType_None)
+                            type = GetVideoOutputTypeFromFourCC(pVih->bmiHeader.biCompression);
 
-                        MediaOutputInfo *outputInfo = outputInfoList.CreateNew();
-                        outputInfo->mediaType = pMT;
-                        outputInfo->videoType = type;
-                        outputInfo->minFPS = 1000.0/(double(pVSCC->MaxFrameInterval)/10000.0);
-                        outputInfo->maxFPS = 1000.0/(double(pVSCC->MinFrameInterval)/10000.0);
-                        outputInfo->minCX = pVSCC->MinOutputSize.cx;
-                        outputInfo->maxCX = pVSCC->MaxOutputSize.cx;
-                        outputInfo->minCY = pVSCC->MinOutputSize.cy;
-                        outputInfo->maxCY = pVSCC->MaxOutputSize.cy;
-                        //outputInfo->xGranularity = max(pVSCC->OutputGranularityX,1);
-                        //outputInfo->yGranularity = max(pVSCC->OutputGranularityY,1);
-                        outputInfo->xGranularity = 4;
-                        outputInfo->yGranularity = 4;
-                    }
-                    else
-                    {
-                        FreeMediaType(*pMT);
-                        CoTaskMemFree(pMT);
+                        if(type != VideoOutputType_None)
+                        {
+                            MediaOutputInfo *outputInfo = outputInfoList.CreateNew();
+                            outputInfo->mediaType = pMT;
+                            outputInfo->videoType = type;
+                            outputInfo->minFPS = 1000.0/(double(pVSCC->MaxFrameInterval)/10000.0);
+                            outputInfo->maxFPS = 1000.0/(double(pVSCC->MinFrameInterval)/10000.0);
+                            outputInfo->minCX = pVSCC->MinOutputSize.cx;
+                            outputInfo->maxCX = pVSCC->MaxOutputSize.cx;
+                            outputInfo->minCY = pVSCC->MinOutputSize.cy;
+                            outputInfo->maxCY = pVSCC->MaxOutputSize.cy;
+                            //outputInfo->xGranularity = max(pVSCC->OutputGranularityX,1);
+                            //outputInfo->yGranularity = max(pVSCC->OutputGranularityY,1);
+                            outputInfo->xGranularity = 4;
+                            outputInfo->yGranularity = 4;
+                        }
+                        else
+                        {
+                            FreeMediaType(*pMT);
+                            CoTaskMemFree(pMT);
+                        }
                     }
                 }
             }

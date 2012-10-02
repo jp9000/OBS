@@ -27,6 +27,7 @@
 #define IDD_RECONNECTING                131
 #define IDD_SETTINGS_ADVANCED           132
 #define IDR_MAINMENU                    133
+#define IDD_CONFIGURETRANSITIONSOURCE   135
 #define IDC_SETTINGSLIST                1006
 #define IDC_SUBDIALOG                   1007
 #define IDC_MODE                        1008
@@ -82,6 +83,7 @@
 #define IDC_REMOVE                      1055
 #define IDC_PLUGINS                     1055
 #define IDC_MOVEUP                      1056
+#define IDC_REPLACE                     1056
 #define IDC_MOVEDOWN                    1057
 #define IDC_DESCRIPTION                 1057
 #define IDC_MOVETOTOP                   1058
@@ -108,8 +110,10 @@
 #define IDC_EDIT1                       1078
 #define IDC_AUTORECONNECT_TIMEOUT_EDIT  1078
 #define IDC_VIDEOENCODERSETTINGS        1078
+#define IDC_TRANSITIONTIME              1078
 #define IDC_SPIN1                       1079
 #define IDC_AUTORECONNECT_TIMEOUT       1079
+#define IDC_TRANSITIONTIME_EDIT         1079
 #define IDC_AUTORECONNECT_TIMEOUT_STATIC 1080
 #define IDC_RECONNECTING                1081
 #define IDC_SAVEPATH                    1081
@@ -120,7 +124,7 @@
 #define IDC_SENDBUFFERSIZE              1089
 #define IDC_CLEARMUTEDESKTOP            1090
 #define IDC_LIST1                       1090
-#define IDC_CUSTOM1                     1093
+#define IDC_BITMAPS                     1090
 #define IDC_STOPSTREAMHOTKEY            1093
 #define IDC_CLEARHOTKEY                 1094
 #define IDC_STOPSTREAMHOTKEY_STATIC     1095
@@ -150,9 +154,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        134
+#define _APS_NEXT_RESOURCE_VALUE        136
 #define _APS_NEXT_COMMAND_VALUE         40042
-#define _APS_NEXT_CONTROL_VALUE         1096
+#define _APS_NEXT_CONTROL_VALUE         1098
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

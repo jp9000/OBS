@@ -265,8 +265,8 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
         if(numItems && bSelected)
         {
-            String strRemove       = Str("Listbox.Remove");
-            String strRename       = Str("Listbox.Rename");
+            String strRemove       = Str("Remove");
+            String strRename       = Str("Rename");
             String strMoveUp       = Str("Listbox.MoveUp");
             String strMoveDown     = Str("Listbox.MoveDown");
             String strMoveTop      = Str("Listbox.MoveToTop");

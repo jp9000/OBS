@@ -121,7 +121,8 @@ public:
         SetHex(lpName, color);
     }
 
-    void  SetStringList(CTSTR lpName, List<TSTR> &StringList);
+    void  SetStringList(CTSTR lpName, List<TSTR> &stringList);
+    void  SetStringList(CTSTR lpName, StringList &stringList);
     void  SetIntList(CTSTR lpName, List<int> &IntList);
     void  SetFloatList(CTSTR lpName, List<float> &FloatList);
     void  SetHexList(CTSTR lpName, List<DWORD> &HexList);
@@ -139,7 +140,8 @@ public:
         AddHex(lpName, color);
     }
 
-    void  AddStringList(CTSTR lpName, List<TSTR> &StringList);
+    void  AddStringList(CTSTR lpName, List<TSTR> &stringList);
+    void  AddStringList(CTSTR lpName, StringList &stringList);
     void  AddIntList(CTSTR lpName, List<int> &IntList);
     void  AddFloatList(CTSTR lpName, List<float> &FloatList);
     void  AddHexList(CTSTR lpName, List<DWORD> &HexList);

@@ -259,7 +259,7 @@ void __cdecl AppWarning(const TCHAR *format, ...)
 
 
 //note to self:  do try not to rely on this too much.
-void __cdecl CrashError(const TCHAR *format, ...)
+void __cdecl CrashError(const TCHAR *format, ...)   
 {
     if(!format) return;
 
