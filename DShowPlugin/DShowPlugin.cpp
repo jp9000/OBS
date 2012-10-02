@@ -149,7 +149,10 @@ IBaseFilter* GetDeviceByName(CTSTR lpName)
                     IBaseFilter *filter;
                     err = deviceInfo->BindToObject(NULL, 0, IID_IBaseFilter, (void**)&filter);
                     if(FAILED(err))
-                        ProgramBreak();
+                    {
+                        AppWarning(TEXT("GetDeviceByName: deviceInfo->BindToObject failed, result = %08lX"), err);
+                        return NULL;
+                    }
 
                     SafeRelease(deviceInfo);
                     SafeRelease(videoDeviceEnum);

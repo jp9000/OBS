@@ -67,18 +67,9 @@ public:
 
     void Tick(float fSeconds)
     {
-        curTransitionTime += fSeconds;
-        if(curTransitionTime >= transitionTime)
-        {
-            curTransitionTime -= transitionTime;
-
-            curFadeValue = 0.0f;
-            bTransitioning = true;
-        }
-
         if(bTransitioning)
         {
-            curFadeValue -= fSeconds;
+            curFadeValue += fSeconds;
 
             if(curFadeValue >= fadeTime)
             {
@@ -88,6 +79,15 @@ public:
                 if(++curTexture == textures.Num())
                     curTexture = 0;
             }
+        }
+
+        curTransitionTime += fSeconds;
+        if(curTransitionTime >= transitionTime)
+        {
+            curTransitionTime -= transitionTime;
+
+            curFadeValue = 0.0f;
+            bTransitioning = true;
         }
     }
 
@@ -102,7 +102,8 @@ public:
             if(bTransitioning && textures.Num() > 1)
             {
                 UINT nextTexture = (curTexture == textures.Num()-1) ? 0 : curTexture+1;
-                BlendFunction(GS_BLEND_FACTOR, GS_BLEND_INVFACTOR, 1.0f-(curFadeValue/fadeTime));
+                BlendFunction(GS_BLEND_FACTOR, GS_BLEND_INVFACTOR, MIN(curFadeValue/fadeTime, 1.0f));
+                DrawSprite(textures[nextTexture], pos.x, pos.y, pos.x+size.x, pos.y+size.y);
             }
         }
 
@@ -121,22 +122,21 @@ public:
 
         bool bFirst = true;
 
-        UINT numBitmaps = data->NumDataItems(TEXT("bitmap"));
-        for(UINT i=0; i<numBitmaps; i++)
+        StringList bitmapList;
+        data->GetStringList(TEXT("bitmap"), bitmapList);
+        for(UINT i=0; i<bitmapList.Num(); i++)
         {
-            XDataItem *bitmapItem = data->GetDataItemByID(i);
-
-            CTSTR lpBitmap = bitmapItem->GetData();
-            if(!lpBitmap || !*lpBitmap)
+            String &strBitmap = bitmapList[i];
+            if(strBitmap.IsEmpty())
             {
                 AppWarning(TEXT("BitmapTransitionSource::UpdateSettings: Empty path"));
                 continue;
             }
 
-            Texture *texture = GS->CreateTextureFromFile(lpBitmap, TRUE);
+            Texture *texture = GS->CreateTextureFromFile(strBitmap, TRUE);
             if(!texture)
             {
-                AppWarning(TEXT("BitmapTransitionSource::UpdateSettings: could not create texture '%s'"), lpBitmap);
+                AppWarning(TEXT("BitmapTransitionSource::UpdateSettings: could not create texture '%s'"), strBitmap.Array());
                 continue;
             }
 
@@ -153,8 +153,18 @@ public:
         if(textures.Num() == 0)
             CreateErrorTexture();
 
-        curTexture = 0;
+        //------------------------------------
+
+        transitionTime = data->GetInt(TEXT("transitionTime"));
+        if(transitionTime < 5)
+            transitionTime = 5;
+        else if(transitionTime > 30)
+            transitionTime = 30;
+
+        //------------------------------------
+
         curTransitionTime = 0.0f;
+        curTexture = 0;
         bTransitioning = false;
         curFadeValue = 0.0f;
 
@@ -268,6 +278,8 @@ INT_PTR CALLBACK ConfigureBitmapTransitionProc(HWND hwnd, UINT message, WPARAM w
                             if(idExisting == LB_ERR)
                                 SendMessage(GetDlgItem(hwnd, IDC_BITMAPS), LB_ADDSTRING, 0, (LPARAM)strBitmap.Array());
                         }
+                        else
+                            MessageBox(hwnd, Str("Sources.BitmapSource.Empty"), NULL, 0);
                     }
                     break;
 
@@ -366,16 +378,8 @@ bool STDCALL ConfigureBitmapTransitionSource(XElement *element, bool bCreating)
     {
         if(bCreating)
         {
-            CTSTR lpBitmap = data->GetString(TEXT("path"));
-
-            D3DX10_IMAGE_INFO ii;
-            if(SUCCEEDED(D3DX10GetImageInfoFromFile(lpBitmap, NULL, &ii, NULL)))
-            {
-                element->SetInt(TEXT("cx"), ii.Width);
-                element->SetInt(TEXT("cy"), ii.Height);
-            }
-            else
-                AppWarning(TEXT("ConfigureBitmapTransitionSource: could not get image info for bitmap '%s'"), lpBitmap);
+            element->SetInt(TEXT("cx"), configInfo.cx);
+            element->SetInt(TEXT("cy"), configInfo.cy);
         }
 
         return true;

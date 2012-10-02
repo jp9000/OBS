@@ -26,31 +26,7 @@ D3D10System::D3D10System()
 
     HRESULT err;
 
-    DXGI_SWAP_CHAIN_DESC swapDesc;
-    zero(&swapDesc, sizeof(swapDesc));
-    swapDesc.BufferCount = 2;
-    swapDesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-    swapDesc.BufferDesc.Width  = App->renderFrameWidth;
-    swapDesc.BufferDesc.Height = App->renderFrameHeight;
-    swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapDesc.Flags = 0;
-    swapDesc.OutputWindow = hwndRenderFrame;
-    swapDesc.SampleDesc.Count = 1;
-    swapDesc.Windowed = TRUE;
-
-    UINT createFlags = D3D10_CREATE_DEVICE_BGRA_SUPPORT;
-    if(GlobalConfig->GetInt(TEXT("General"), TEXT("UseDebugD3D")))
-        createFlags |= D3D10_CREATE_DEVICE_DEBUG;
-
-    //D3D10_CREATE_DEVICE_DEBUG
-    //D3D11_DRIVER_TYPE_REFERENCE, D3D11_DRIVER_TYPE_HARDWARE
-    err = D3D10CreateDeviceAndSwapChain1(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, createFlags, D3D10_FEATURE_LEVEL_9_3, D3D10_1_SDK_VERSION, &swapDesc, &swap, &d3d);
-    if(FAILED(err))
-        CrashError(TEXT("Could not create D3D10 device and swap chain.  If you get this error, it's likely you probably use a GPU that is old, or that is unsupported."));
-
     //------------------------------------------------------------------
-
-    Log(TEXT("Loading up D3D10..."));
 
     IDXGIFactory *factory;
     if(SUCCEEDED(err = CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&factory)))
@@ -79,10 +55,34 @@ D3D10System::D3D10System()
 
         factory->Release();
     }
-    else
-        ProgramBreak();
 
     //------------------------------------------------------------------
+
+    DXGI_SWAP_CHAIN_DESC swapDesc;
+    zero(&swapDesc, sizeof(swapDesc));
+    swapDesc.BufferCount = 2;
+    swapDesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    swapDesc.BufferDesc.Width  = App->renderFrameWidth;
+    swapDesc.BufferDesc.Height = App->renderFrameHeight;
+    swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapDesc.Flags = 0;
+    swapDesc.OutputWindow = hwndRenderFrame;
+    swapDesc.SampleDesc.Count = 1;
+    swapDesc.Windowed = TRUE;
+
+    UINT createFlags = D3D10_CREATE_DEVICE_BGRA_SUPPORT;
+    if(GlobalConfig->GetInt(TEXT("General"), TEXT("UseDebugD3D")))
+        createFlags |= D3D10_CREATE_DEVICE_DEBUG;
+
+    //D3D10_CREATE_DEVICE_DEBUG
+    //D3D11_DRIVER_TYPE_REFERENCE, D3D11_DRIVER_TYPE_HARDWARE
+    err = D3D10CreateDeviceAndSwapChain1(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, createFlags, D3D10_FEATURE_LEVEL_9_3, D3D10_1_SDK_VERSION, &swapDesc, &swap, &d3d);
+    if(FAILED(err))
+        CrashError(TEXT("Could not create D3D10 device and swap chain.  If you get this error, it's likely you probably use a GPU that is old, or that is unsupported."));
+
+    //------------------------------------------------------------------
+
+    Log(TEXT("Loading up D3D10..."));
 
     D3D10_DEPTH_STENCIL_DESC depthDesc;
     zero(&depthDesc, sizeof(depthDesc));

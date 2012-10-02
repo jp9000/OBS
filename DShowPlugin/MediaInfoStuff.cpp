@@ -87,7 +87,7 @@ VideoOutputType GetVideoOutputTypeFromFourCC(DWORD fourCC)
     else if(fourCC == '462H')
         type = VideoOutputType_H264;
 
-    else if(fourCC == 'FPJM')
+    else if(fourCC == 'GPJM')
         type = VideoOutputType_MJPG;
 
     return type;
@@ -165,12 +165,12 @@ int inputPriority[] =
     -1,
     -1,
 
-    11,
-    11,
-    11,
+    10,
+    10,
+    10,
 
     7,
-    10,
+    9,
 
     5,
     5,

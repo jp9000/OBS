@@ -140,6 +140,7 @@ Settings.Video.Resolution           "Base Resolution:"
 Sources.BitmapSource            "Bitmap"
 Sources.GlobalSource            "Global Source"
 Sources.SoftwareCaptureSource   "Software Capture Source"
+Sources.TransitionSource        "Image Slide Show"
 
 Sources.BitmapSource.Empty  "No bitmap entered.  Please browse and select a bitmap"
 
@@ -161,3 +162,7 @@ Sources.SoftwareCaptureSource.WindowCapture         "Window Capture"
 Sources.SoftwareCaptureSource.WindowCaptureTooltip  "Aero can be enabled if using only window capture.  The image cannot update while minimized.  Capturing is typically much faster with this method than monitor capture.  When aero is enabled, windows on top will not appear."
 Sources.SoftwareCaptureSource.WindowMinimized       "Window is minimized"
 Sources.SoftwareCaptureSource.WindowNotFound        "Cannot find window"
+
+Sources.TransitionSource.Bitmaps            "Bitmaps:"
+Sources.TransitionSource.Empty              "There are no bitmaps entered to display."
+Sources.TransitionSource.TimeBetweenBitmaps "Time between images:"
