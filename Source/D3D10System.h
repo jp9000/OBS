@@ -304,7 +304,7 @@ class D3D10System : public GraphicsSystem
     ID3D10DepthStencilState *depthState;
     ID3D10RasterizerState   *rasterizerState;
 
-    bool bUseCompatibilityMode;
+    bool bDisableCompatibilityMode;
 
     //---------------------------
 

@@ -3,6 +3,13 @@
 
 -------------------------------
 
+2012-10-3 - 0.411 (alpha)
+    * Made D3D10_LEVEL_9_3 the default again, but still with the
+      option to turn it off.  Seems some cards relied on it more
+      than others.
+
+-------------------------------
+
 2012-10-2 - 0.41 (alpha)
     * Fixed bug with certain video devices where they stored their
       video formats in the fourCC part of the bmiHeader instead of

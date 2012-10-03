@@ -94,7 +94,7 @@ Shader* D3D10VertexShader::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
     LPSTR lpAnsiFileName = tstr_createUTF8(lpFileName);
 
     D3D10System *d3d10Sys = static_cast<D3D10System*>(GS);
-    LPCSTR lpVSType = d3d10Sys->bUseCompatibilityMode ? "vs_4_0_level_9_3" : "vs_4_0";
+    LPCSTR lpVSType = d3d10Sys->bDisableCompatibilityMode ? "vs_4_0" : "vs_4_0_level_9_3";
 
     ID3D10Blob *errorMessages = NULL, *shaderBlob = NULL;
     HRESULT err = D3DX10CompileFromMemory(lpAnsiShader, strlen(lpAnsiShader), lpAnsiFileName, NULL, NULL, "main", lpVSType, D3D10_SHADER_OPTIMIZATION_LEVEL3, 0, NULL, &shaderBlob, &errorMessages, NULL);
@@ -177,7 +177,7 @@ Shader* D3D10PixelShader::CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)
     LPSTR lpAnsiFileName = tstr_createUTF8(lpFileName);
 
     D3D10System *d3d10Sys = static_cast<D3D10System*>(GS);
-    LPCSTR lpPSType = d3d10Sys->bUseCompatibilityMode ? "ps_4_0_level_9_3" : "ps_4_0";
+    LPCSTR lpPSType = d3d10Sys->bDisableCompatibilityMode ? "ps_4_0" : "ps_4_0_level_9_3";
 
     ID3D10Blob *errorMessages = NULL, *shaderBlob = NULL;
     HRESULT err = D3DX10CompileFromMemory(lpAnsiShader, strlen(lpAnsiShader), lpAnsiFileName, NULL, NULL, "main", lpPSType, D3D10_SHADER_OPTIMIZATION_LEVEL3, 0, NULL, &shaderBlob, &errorMessages, NULL);

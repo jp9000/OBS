@@ -61,6 +61,7 @@ struct MediaOutputInfo
     UINT minCX, minCY;
     UINT maxCX, maxCY;
     UINT xGranularity, yGranularity;
+    bool bUsingFourCC;
 
     inline void FreeData()
     {

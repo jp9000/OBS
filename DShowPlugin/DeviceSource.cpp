@@ -25,14 +25,14 @@ bool DeviceSource::Init(XElement *data)
     traceIn(DeviceSource::Init);
 
     HRESULT err;
-    err = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, (REFIID)IID_IFilterGraph, (void**)&graph);
+    err = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC, (REFIID)IID_IFilterGraph, (void**)&graph);
     if(FAILED(err))
     {
         AppWarning(TEXT("DShowPlugin: Failed to build IGraphBuilder, result = %08lX"), err);
         return false;
     }
 
-    err = CoCreateInstance(CLSID_CaptureGraphBuilder2, NULL, CLSCTX_INPROC_SERVER, (REFIID)IID_ICaptureGraphBuilder2, (void**)&capture);
+    err = CoCreateInstance(CLSID_CaptureGraphBuilder2, NULL, CLSCTX_INPROC, (REFIID)IID_ICaptureGraphBuilder2, (void**)&capture);
     if(FAILED(err))
     {
         AppWarning(TEXT("DShowPlugin: Failed to build ICaptureGraphBuilder2, result = %08lX"), err);
@@ -196,7 +196,12 @@ bool DeviceSource::LoadFilters()
     bAddedDevice = true;
 
     //THANK THE NINE DIVINES I FINALLY GOT IT WORKING
-    if(FAILED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video, deviceFilter, NULL, captureFilter)))
+
+    bool bConnected = false;
+    if(bestOutput->bUsingFourCC)
+        bConnected = SUCCEEDED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video, deviceFilter, NULL, captureFilter));
+
+    if(!bConnected)
     {
         if(FAILED(err = graph->Connect(devicePin, captureFilter->GetCapturePin())))
         {
@@ -231,6 +236,7 @@ cleanFinish:
 
         SafeRelease(deviceFilter);
         SafeRelease(captureFilter);
+        SafeRelease(control);
 
         if(colorConvertShader)
         {
@@ -302,7 +308,7 @@ void DeviceSource::Start()
 {
     traceIn(DeviceSource::Start);
 
-    if(bCapturing)
+    if(bCapturing || !control)
         return;
 
     HRESULT err;

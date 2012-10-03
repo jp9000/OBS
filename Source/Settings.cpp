@@ -1485,11 +1485,11 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 //------------------------------------
 
-                bool bUseD3DCompat = AppConfig->GetInt(TEXT("Video"), TEXT("UseD3DCompatibilityMode")) != 0;
-                SendMessage(GetDlgItem(hwnd, IDC_USED3DCOMPATIBILITY), BM_SETCHECK, bUseD3DCompat ? BST_CHECKED : BST_UNCHECKED, 0);
+                bool bDisableD3DCompat = AppConfig->GetInt(TEXT("Video"), TEXT("DisableD3DCompatibilityMode")) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_DISABLED3DCOMPATIBILITY), BM_SETCHECK, bDisableD3DCompat ? BST_CHECKED : BST_UNCHECKED, 0);
 
-                ti.lpszText = (LPWSTR)Str("Settings.Advanced.UseD3DCompatibilityModeTooltip");
-                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_USED3DCOMPATIBILITY);
+                ti.lpszText = (LPWSTR)Str("Settings.Advanced.DisableD3DCompatibilityModeTooltip");
+                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_DISABLED3DCOMPATIBILITY);
                 SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
                 //------------------------------------
@@ -1529,7 +1529,7 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                     }
                     break;
 
-                case IDC_USED3DCOMPATIBILITY:
+                case IDC_DISABLED3DCOMPATIBILITY:
                     if(HIWORD(wParam) == BN_CLICKED)
                     {
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
@@ -1798,8 +1798,8 @@ void OBS::ApplySettings()
 
                 //--------------------------------------------------
 
-                BOOL bUseD3DCompat = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USED3DCOMPATIBILITY), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                AppConfig->SetInt   (TEXT("Video"), TEXT("UseD3DCompatibilityMode"), bUseD3DCompat);
+                BOOL bDisableD3DCompat = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_DISABLED3DCOMPATIBILITY), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                AppConfig->SetInt   (TEXT("Video"), TEXT("DisableD3DCompatibilityMode"), bDisableD3DCompat);
 
                 //--------------------------------------------------
 

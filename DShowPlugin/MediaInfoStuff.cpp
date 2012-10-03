@@ -159,24 +159,24 @@ int inputPriority[] =
     13,
     13,
 
-    11,
-    11,
+    10,
+    10,
 
     -1,
     -1,
 
-    10,
-    10,
-    10,
+    11,
+    11,
+    11,
 
     7,
-    9,
+    8,
 
     5,
     5,
     5,
 
-    8
+    10
 };
 
 MediaOutputInfo* GetBestMediaOutput(const List<MediaOutputInfo> &outputList, UINT width, UINT height, UINT fps)

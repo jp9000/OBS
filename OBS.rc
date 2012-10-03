@@ -287,7 +287,7 @@ BEGIN
     RTEXT           "Settings.Advanced.SendBufferSize",IDC_STATIC,5,135,138,8
     RTEXT           "Settings.Advanced.VideoEncoderCPUTradeoff",IDC_STATIC,5,14,138,8
     COMBOBOX        IDC_PRESET,145,12,82,62,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Settings.Advanced.UseD3DCompatibilityMode",IDC_USED3DCOMPATIBILITY,
+    CONTROL         "Settings.Advanced.DisableD3DCompatibilityMode",IDC_DISABLED3DCOMPATIBILITY,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,78,192,10
 END
 

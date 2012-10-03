@@ -132,6 +132,7 @@
 #define IDC_STOPSTREAMHOTKEY_STATIC     1095
 #define IDC_CHECK2                      1099
 #define IDC_USED3DCOMPATIBILITY         1099
+#define IDC_DISABLED3DCOMPATIBILITY     1099
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020

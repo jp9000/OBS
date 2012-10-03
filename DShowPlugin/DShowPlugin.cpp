@@ -107,7 +107,7 @@ IBaseFilter* GetDeviceByName(CTSTR lpName)
     IEnumMoniker *videoDeviceEnum;
 
     HRESULT err;
-    err = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER, IID_ICreateDevEnum, (void**)&deviceEnum);
+    err = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC, IID_ICreateDevEnum, (void**)&deviceEnum);
     if(FAILED(err))
     {
         AppWarning(TEXT("GetDeviceByName: CoCreateInstance for the device enum failed, result = %08lX"), err);
@@ -179,7 +179,7 @@ void FillOutListOfVideoDevices(HWND hwndCombo)
     IEnumMoniker *videoDeviceEnum;
 
     HRESULT err;
-    err = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER, IID_ICreateDevEnum, (void**)&deviceEnum);
+    err = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC, IID_ICreateDevEnum, (void**)&deviceEnum);
     if(FAILED(err))
     {
         AppWarning(TEXT("FillOutListOfVideoDevices: CoCreateInstance for the device enum failed, result = %08lX"), err);
@@ -305,8 +305,12 @@ void GetOutputList(IPin *curPin, List<MediaOutputInfo> &outputInfoList)
                         VIDEO_STREAM_CONFIG_CAPS *pVSCC = reinterpret_cast<VIDEO_STREAM_CONFIG_CAPS*>(capsData);
                         VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pMT->pbFormat);
 
+                        bool bUsingFourCC = false;
                         if(type == VideoOutputType_None)
+                        {
                             type = GetVideoOutputTypeFromFourCC(pVih->bmiHeader.biCompression);
+                            bUsingFourCC = true;
+                        }
 
                         if(type != VideoOutputType_None)
                         {
@@ -319,6 +323,7 @@ void GetOutputList(IPin *curPin, List<MediaOutputInfo> &outputInfoList)
                             outputInfo->maxCX = pVSCC->MaxOutputSize.cx;
                             outputInfo->minCY = pVSCC->MinOutputSize.cy;
                             outputInfo->maxCY = pVSCC->MaxOutputSize.cy;
+                            outputInfo->bUsingFourCC = bUsingFourCC;
 
                             //actually due to the other code in GetResolutionFPSInfo, we can have this granularity
                             // back to the way it was.  now, even if it's corrupted, it will always work
