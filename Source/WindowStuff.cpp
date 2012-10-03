@@ -2310,7 +2310,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
 
 typedef CTSTR (*GETPLUGINNAMEPROC)();
 typedef CTSTR (*GETPLUGINDESCRIPTIONPROC)();
-typedef void (*CONFIGUREPLUGINPROC)();
+typedef void (*CONFIGUREPLUGINPROC)(HWND);
 
 
 
@@ -2393,7 +2393,7 @@ INT_PTR CALLBACK OBS::PluginsDialogProc(HWND hwnd, UINT message, WPARAM wParam, 
                         //-------------------------------------
 
                         CONFIGUREPLUGINPROC configPlugin = (CONFIGUREPLUGINPROC)GetProcAddress(pluginInfo.hModule, "ConfigPlugin");
-                        configPlugin();
+                        configPlugin(hwnd);
                     }
                     break;
 
