@@ -294,6 +294,8 @@ struct SavedBlendState
 class D3D10System : public GraphicsSystem
 {
     friend class OBS;
+    friend class D3D10VertexShader;
+    friend class D3D10PixelShader;
 
     ID3D10Device1           *d3d;
     IDXGISwapChain          *swap;
@@ -301,6 +303,8 @@ class D3D10System : public GraphicsSystem
 
     ID3D10DepthStencilState *depthState;
     ID3D10RasterizerState   *rasterizerState;
+
+    bool bUseCompatibilityMode;
 
     //---------------------------
 
@@ -397,7 +401,7 @@ public:
 
     virtual void  SetViewport(float x, float y, float width, float height);
 
-    virtual void  DrawSpriteEx(Texture *texture, float x, float y, float x2 = -1.0f, float y2 = -1.0f, float u = -1.0f, float v = -1.0f, float u2 = -1.0f, float v2 = -1.0f);
+    virtual void  DrawSpriteEx(Texture *texture, DWORD color, float x, float y, float x2 = -1.0f, float y2 = -1.0f, float u = -1.0f, float v = -1.0f, float u2 = -1.0f, float v2 = -1.0f);
     virtual void  DrawBox(const Vect2 &upperLeft, const Vect2 &size);
 };
 

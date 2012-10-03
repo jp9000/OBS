@@ -70,13 +70,13 @@ Shader* GraphicsSystem::CreatePixelShaderFromFile(CTSTR lpFileName)
 }
 
 
-void GraphicsSystem::DrawSprite(Texture *texture, float x, float y, float x2, float y2)
+void GraphicsSystem::DrawSprite(Texture *texture, DWORD color, float x, float y, float x2, float y2)
 {
     traceIn(GraphicsSystem::DrawSprite);
 
     assert(texture);
 
-    DrawSpriteEx(texture, x, y, x2, y2);
+    DrawSpriteEx(texture, color, x, y, x2, y2);
 
     traceOut;
 }

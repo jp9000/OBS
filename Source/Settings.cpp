@@ -1485,6 +1485,15 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 //------------------------------------
 
+                bool bUseD3DCompat = AppConfig->GetInt(TEXT("Video"), TEXT("UseD3DCompatibilityMode")) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_USED3DCOMPATIBILITY), BM_SETCHECK, bUseD3DCompat ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                ti.lpszText = (LPWSTR)Str("Settings.Advanced.UseD3DCompatibilityModeTooltip");
+                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_USED3DCOMPATIBILITY);
+                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+
+                //------------------------------------
+
                 BOOL bUseSendBuffer = AppConfig->GetInt(TEXT("Publish"), TEXT("UseSendBuffer"), 1) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_USESENDBUFFER), BM_SETCHECK, bUseSendBuffer ? BST_CHECKED : BST_UNCHECKED, 0);
 
@@ -1515,6 +1524,14 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                         BOOL bUseVideoSyncFix = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
                         EnableWindow(GetDlgItem(hwnd, IDC_VIDEOENCODERSETTINGS), bUseVideoSyncFix);
 
+                        ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
+                        App->SetChangedSettings(true);
+                    }
+                    break;
+
+                case IDC_USED3DCOMPATIBILITY:
+                    if(HIWORD(wParam) == BN_CLICKED)
+                    {
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
                         App->SetChangedSettings(true);
                     }
@@ -1778,6 +1795,11 @@ void OBS::ApplySettings()
 
                 BOOL bUseVideoSyncFix = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USESYNCFIX), BM_GETCHECK, 0, 0) == BST_CHECKED;
                 AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("UseSyncFix"),        bUseVideoSyncFix);
+
+                //--------------------------------------------------
+
+                BOOL bUseD3DCompat = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USED3DCOMPATIBILITY), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                AppConfig->SetInt   (TEXT("Video"), TEXT("UseD3DCompatibilityMode"), bUseD3DCompat);
 
                 //--------------------------------------------------
 

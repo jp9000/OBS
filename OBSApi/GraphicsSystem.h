@@ -450,8 +450,8 @@ public:
 
     inline void  Vertex(const Vect2 &v2) {Vertex(Vect(v2));}
 
-    void DrawSprite(Texture *texture, float x, float y, float x2 = -1.0f, float y2 = -1.0f);
-    virtual void DrawSpriteEx(Texture *texture, float x, float y, float x2 = -1.0f, float y2 = -1.0f, float u = -1.0f, float v = -1.0f, float u2 = -1.0f, float v2 = -1.0f)=0;
+    void DrawSprite(Texture *texture, DWORD color, float x, float y, float x2 = -1.0f, float y2 = -1.0f);
+    virtual void DrawSpriteEx(Texture *texture, DWORD color, float x, float y, float x2 = -1.0f, float y2 = -1.0f, float u = -1.0f, float v = -1.0f, float u2 = -1.0f, float v2 = -1.0f)=0;
     virtual void DrawBox(const Vect2 &upperLeft, const Vect2 &size)=0;
 
 
@@ -570,9 +570,9 @@ inline void  Frustum(float left, float right, float top, float bottom, float zne
 
 inline void  SetViewport(float x, float y, float width, float height) {GS->SetViewport(x, y, width, height);}
 
-inline void DrawSprite(Texture *texture, float x, float y, float x2 = -1.0f, float y2 = -1.0f)
-    {GS->DrawSprite(texture, x, y, x2, y2);}
-inline void DrawSpriteEx(Texture *texture, float x, float y, float x2 = -1.0f, float y2 = -1.0f, float u = -1.0f, float v = -1.0f, float u2 = -1.0f, float v2 = -1.0f)
-    {GS->DrawSpriteEx(texture, x, y, x2, y2, u, v, u2, v2);}
+inline void DrawSprite(Texture *texture, DWORD color, float x, float y, float x2 = -1.0f, float y2 = -1.0f)
+    {GS->DrawSprite(texture, color, x, y, x2, y2);}
+inline void DrawSpriteEx(Texture *texture, DWORD color, float x, float y, float x2 = -1.0f, float y2 = -1.0f, float u = -1.0f, float v = -1.0f, float u2 = -1.0f, float v2 = -1.0f)
+    {GS->DrawSpriteEx(texture, color, x, y, x2, y2, u, v, u2, v2);}
 inline void DrawBox(const Vect2 &upperLeft, const Vect2 &size)
     {GS->DrawBox(upperLeft, size);}

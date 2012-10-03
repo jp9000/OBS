@@ -18,6 +18,7 @@
 
 
 uniform Texture2D diffuseTexture;
+uniform float4 outputColor;
 
 SamplerState textureSampler
 {
@@ -34,5 +35,5 @@ struct VertData
 
 float4 main(VertData input) : SV_Target
 {
-    return diffuseTexture.Sample(textureSampler, input.texCoord);
+    return diffuseTexture.Sample(textureSampler, input.texCoord) * outputColor;
 }

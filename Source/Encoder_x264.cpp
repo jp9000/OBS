@@ -128,32 +128,37 @@ public:
         if(bUseCustomParams)
         {
             String strCustomParams = AppConfig->GetString(TEXT("Video Encoding"), TEXT("CustomSettings"));
-            Log(TEXT("Using custom x264 settings: \"%s\""), strCustomParams.Array());
+            strCustomParams.KillSpaces();
 
-            StringList paramList;
-            strCustomParams.GetTokenList(paramList, ' ', FALSE);
-            for(UINT i=0; i<paramList.Num(); i++)
+            if(strCustomParams.IsValid())
             {
-                String &strParam = paramList[i];
-                if(!schr(strParam, '='))
-                    continue;
+                Log(TEXT("Using custom x264 settings: \"%s\""), strCustomParams.Array());
 
-                String strParamName = strParam.GetToken(0, '=');
-                String strParamVal  = strParam.GetTokenOffset(1, '=');
-
-                if( strParamName.CompareI(TEXT("fps")) || 
-                    strParamName.CompareI(TEXT("force-cfr")))
+                StringList paramList;
+                strCustomParams.GetTokenList(paramList, ' ', FALSE);
+                for(UINT i=0; i<paramList.Num(); i++)
                 {
-                    continue;
+                    String &strParam = paramList[i];
+                    if(!schr(strParam, '='))
+                        continue;
+
+                    String strParamName = strParam.GetToken(0, '=');
+                    String strParamVal  = strParam.GetTokenOffset(1, '=');
+
+                    if( strParamName.CompareI(TEXT("fps")) || 
+                        strParamName.CompareI(TEXT("force-cfr")))
+                    {
+                        continue;
+                    }
+
+                    LPSTR lpParam = strParamName.CreateUTF8String();
+                    LPSTR lpVal   = strParamVal.CreateUTF8String();
+
+                    x264_param_parse(&paramData, lpParam, lpVal);
+
+                    Free(lpParam);
+                    Free(lpVal);
                 }
-
-                LPSTR lpParam = strParamName.CreateUTF8String();
-                LPSTR lpVal   = strParamVal.CreateUTF8String();
-
-                x264_param_parse(&paramData, lpParam, lpVal);
-
-                Free(lpParam);
-                Free(lpVal);
             }
         }
 

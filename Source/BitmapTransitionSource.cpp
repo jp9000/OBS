@@ -22,12 +22,15 @@
 
 const float fadeTime = 1.5f;
 
+extern "C" double round(double val);
 
 class BitmapTransitionSource : public ImageSource
 {
     List<Texture*> textures;
 
     Vect2    fullSize;
+    double   baseAspect;
+
     XElement *data;
 
     float transitionTime;
@@ -51,12 +54,12 @@ class BitmapTransitionSource : public ImageSource
 public:
     BitmapTransitionSource(XElement *data)
     {
-        //traceIn(BitmapTransitionSource::BitmapImageSource);
+        traceIn(BitmapTransitionSource::BitmapImageSource);
 
         this->data = data;
         UpdateSettings();
 
-        //traceOut;
+        traceOut;
     }
 
     ~BitmapTransitionSource()
@@ -91,28 +94,65 @@ public:
         }
     }
 
+    void DrawBitmap(UINT texID, float alpha, const Vect2 &startPos, const Vect2 &startSize)
+    {
+        DWORD curAlpha = DWORD(alpha*255.0f);
+
+        Vect2 pos = Vect2(0.0f, 0.0f);
+        Vect2 size = fullSize;
+
+        Vect2 itemSize = Vect2((float)textures[texID]->Width(), (float)textures[texID]->Height());
+
+        double sourceAspect = double(itemSize.x)/double(itemSize.y);
+        if(!CloseDouble(baseAspect, sourceAspect))
+        {
+            if(baseAspect < sourceAspect)
+                size.y = float(double(size.x) / sourceAspect);
+            else
+                size.x = float(double(size.y) * sourceAspect);
+
+            pos = (fullSize-size)*0.5f;
+
+            pos.x = (float)round(pos.x);
+            pos.y = (float)round(pos.y);
+
+            size.x = (float)round(size.x);
+            size.y = (float)round(size.y);
+        }
+
+        pos /= fullSize;
+        pos *= startSize;
+        pos += startPos;
+        Vect2 lr;
+        lr = pos + (size/fullSize*startSize);
+
+        DrawSprite(textures[texID], (curAlpha<<24) | 0xFFFFFF, pos.x, pos.y, lr.x, lr.y);
+    }
+
     void Render(const Vect2 &pos, const Vect2 &size)
     {
-        //traceIn(BitmapTransitionSource::Render);
+        traceIn(BitmapTransitionSource::Render);
 
         if(textures.Num())
         {
-            DrawSprite(textures[curTexture], pos.x, pos.y, pos.x+size.x, pos.y+size.y);
-
             if(bTransitioning && textures.Num() > 1)
             {
+                float curAlpha = MIN(curFadeValue/fadeTime, 1.0f);
+                DrawBitmap(curTexture, 1.0f-curAlpha, pos, size);
+
                 UINT nextTexture = (curTexture == textures.Num()-1) ? 0 : curTexture+1;
-                BlendFunction(GS_BLEND_FACTOR, GS_BLEND_INVFACTOR, MIN(curFadeValue/fadeTime, 1.0f));
-                DrawSprite(textures[nextTexture], pos.x, pos.y, pos.x+size.x, pos.y+size.y);
+                DrawBitmap(nextTexture, curAlpha, pos, size);
             }
+            else
+                DrawBitmap(curTexture, 1.0f, pos, size);
         }
 
-        //traceOut;
+        traceOut;
     }
 
     void UpdateSettings()
     {
-        //traceIn(BitmapTransitionSource::UpdateSettings);
+        traceIn(BitmapTransitionSource::UpdateSettings);
 
         for(UINT i=0; i<textures.Num(); i++)
             delete textures[i];
@@ -144,6 +184,7 @@ public:
             {
                 fullSize.x = float(texture->Width());
                 fullSize.y = float(texture->Height());
+                baseAspect = double(fullSize.x)/double(fullSize.y);
                 bFirst = false;
             }
 
@@ -155,7 +196,7 @@ public:
 
         //------------------------------------
 
-        transitionTime = data->GetInt(TEXT("transitionTime"));
+        transitionTime = data->GetFloat(TEXT("transitionTime"));
         if(transitionTime < 5)
             transitionTime = 5;
         else if(transitionTime > 30)
@@ -168,7 +209,7 @@ public:
         bTransitioning = false;
         curFadeValue = 0.0f;
 
-        //traceOut;
+        traceOut;
     }
 
     Vect2 GetSize() const {return fullSize;}
@@ -227,6 +268,8 @@ INT_PTR CALLBACK ConfigureBitmapTransitionProc(HWND hwnd, UINT message, WPARAM w
 
                 EnableWindow(GetDlgItem(hwnd, IDC_REPLACE), FALSE);
                 EnableWindow(GetDlgItem(hwnd, IDC_REMOVE), FALSE);
+                EnableWindow(GetDlgItem(hwnd, IDC_MOVEUPWARD), FALSE);
+                EnableWindow(GetDlgItem(hwnd, IDC_MOVEDOWNWARD), FALSE);
 
                 return TRUE;
             }
@@ -234,29 +277,49 @@ INT_PTR CALLBACK ConfigureBitmapTransitionProc(HWND hwnd, UINT message, WPARAM w
         case WM_COMMAND:
             switch(LOWORD(wParam))
             {
-                case IDC_BROWSE:
+                case IDC_ADD:
                     {
-                        TCHAR lpFile[MAX_PATH+1];
-                        zero(lpFile, sizeof(lpFile));
+                        TSTR lpFile = (TSTR)Allocate(32*1024*sizeof(TCHAR));
+                        zero(lpFile, 32*1024*sizeof(TCHAR));
 
                         OPENFILENAME ofn;
                         zero(&ofn, sizeof(ofn));
                         ofn.lStructSize = sizeof(ofn);
                         ofn.lpstrFile = lpFile;
                         ofn.hwndOwner = hwnd;
-                        ofn.nMaxFile = MAX_PATH;
+                        ofn.nMaxFile = 32*1024*sizeof(TCHAR);
                         ofn.lpstrFilter = TEXT("All Formats (*.bmp;*.dds;*.jpg;*.png;*.gif)\0*.bmp;*.dds;*.jpg;*.png;*.gif\0");
                         ofn.nFilterIndex = 1;
-                        ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+                        ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT | OFN_EXPLORER;
 
                         TCHAR curDirectory[MAX_PATH+1];
                         GetCurrentDirectory(MAX_PATH, curDirectory);
 
                         BOOL bOpenFile = GetOpenFileName(&ofn);
+
+                        TCHAR newDirectory[MAX_PATH+1];
+                        GetCurrentDirectory(MAX_PATH, newDirectory);
+
                         SetCurrentDirectory(curDirectory);
 
                         if(bOpenFile)
-                            SetWindowText(GetDlgItem(hwnd, IDC_BITMAP), lpFile);
+                        {
+                            TSTR lpCurFile = lpFile+ofn.nFileOffset;
+
+                            while(lpCurFile && *lpCurFile)
+                            {
+                                String strPath;
+                                strPath << newDirectory << TEXT("\\") << lpCurFile;
+
+                                UINT idExisting = (UINT)SendMessage(GetDlgItem(hwnd, IDC_BITMAPS), LB_FINDSTRINGEXACT, -1, (LPARAM)strPath.Array());
+                                if(idExisting == LB_ERR)
+                                    SendMessage(GetDlgItem(hwnd, IDC_BITMAPS), LB_ADDSTRING, 0, (LPARAM)strPath.Array());
+
+                                lpCurFile += slen(lpCurFile)+1;
+                            }
+                        }
+
+                        Free(lpFile);
 
                         break;
                     }
@@ -266,37 +329,8 @@ INT_PTR CALLBACK ConfigureBitmapTransitionProc(HWND hwnd, UINT message, WPARAM w
                     {
                         EnableWindow(GetDlgItem(hwnd, IDC_REPLACE), TRUE);
                         EnableWindow(GetDlgItem(hwnd, IDC_REMOVE), TRUE);
-                    }
-                    break;
-
-                case IDC_ADD:
-                    {
-                        String strBitmap = GetEditText(GetDlgItem(hwnd, IDC_BITMAP));
-                        if(strBitmap.IsValid())
-                        {
-                            UINT idExisting = (UINT)SendMessage(GetDlgItem(hwnd, IDC_BITMAPS), LB_FINDSTRINGEXACT, -1, (LPARAM)strBitmap.Array());
-                            if(idExisting == LB_ERR)
-                                SendMessage(GetDlgItem(hwnd, IDC_BITMAPS), LB_ADDSTRING, 0, (LPARAM)strBitmap.Array());
-                        }
-                        else
-                            MessageBox(hwnd, Str("Sources.BitmapSource.Empty"), NULL, 0);
-                    }
-                    break;
-
-                case IDC_REPLACE:
-                    {
-                        String strBitmap = GetEditText(GetDlgItem(hwnd, IDC_BITMAP));
-                        if(strBitmap.IsValid())
-                        {
-                            UINT idExisting = (UINT)SendMessage(GetDlgItem(hwnd, IDC_BITMAPS), LB_FINDSTRINGEXACT, -1, (LPARAM)strBitmap.Array());
-                            if(idExisting == LB_ERR)
-                            {
-                                UINT curSel = (UINT)SendMessage(GetDlgItem(hwnd, IDC_BITMAPS), LB_GETCURSEL, 0, 0);
-                                SendMessage(GetDlgItem(hwnd, IDC_BITMAPS), LB_DELETESTRING, curSel, 0);
-                                SendMessage(GetDlgItem(hwnd, IDC_BITMAPS), LB_INSERTSTRING, curSel, (LPARAM)strBitmap.Array());
-                                PostMessage(GetDlgItem(hwnd, IDC_BITMAPS), LB_SETCURSEL, curSel, 0);
-                            }
-                        }
+                        EnableWindow(GetDlgItem(hwnd, IDC_MOVEUPWARD), TRUE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_MOVEDOWNWARD), TRUE);
                     }
                     break;
 
@@ -308,6 +342,46 @@ INT_PTR CALLBACK ConfigureBitmapTransitionProc(HWND hwnd, UINT message, WPARAM w
                             SendMessage(GetDlgItem(hwnd, IDC_BITMAPS), LB_DELETESTRING, curSel, 0);
                             EnableWindow(GetDlgItem(hwnd, IDC_REPLACE), FALSE);
                             EnableWindow(GetDlgItem(hwnd, IDC_REMOVE), FALSE);
+                            EnableWindow(GetDlgItem(hwnd, IDC_MOVEUPWARD), FALSE);
+                            EnableWindow(GetDlgItem(hwnd, IDC_MOVEDOWNWARD), FALSE);
+                        }
+                    }
+                    break;
+
+                case IDC_MOVEUPWARD:
+                    {
+                        HWND hwndBitmaps = GetDlgItem(hwnd, IDC_BITMAPS);
+                        UINT curSel = (UINT)SendMessage(hwndBitmaps, LB_GETCURSEL, 0, 0);
+                        if(curSel != LB_ERR)
+                        {
+                            if(curSel > 0)
+                            {
+                                String strText = GetLBText(hwndBitmaps, curSel);
+
+                                SendMessage(hwndBitmaps, LB_DELETESTRING, curSel, 0);
+                                SendMessage(hwndBitmaps, LB_INSERTSTRING, --curSel, (LPARAM)strText.Array());
+                                PostMessage(hwndBitmaps, LB_SETCURSEL, curSel, 0);
+                            }
+                        }
+                    }
+                    break;
+
+                case IDC_MOVEDOWNWARD:
+                    {
+                        HWND hwndBitmaps = GetDlgItem(hwnd, IDC_BITMAPS);
+
+                        UINT numBitmaps = (UINT)SendMessage(hwndBitmaps, LB_GETCOUNT, 0, 0);
+                        UINT curSel = (UINT)SendMessage(hwndBitmaps, LB_GETCURSEL, 0, 0);
+                        if(curSel != LB_ERR)
+                        {
+                            if(curSel < (numBitmaps-1))
+                            {
+                                String strText = GetLBText(hwndBitmaps, curSel);
+
+                                SendMessage(hwndBitmaps, LB_DELETESTRING, curSel, 0);
+                                SendMessage(hwndBitmaps, LB_INSERTSTRING, ++curSel, (LPARAM)strText.Array());
+                                PostMessage(hwndBitmaps, LB_SETCURSEL, curSel, 0);
+                            }
                         }
                     }
                     break;

@@ -53,11 +53,16 @@ INT_PTR CALLBACK OBS::EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM 
     switch(message)
     {
         case WM_INITDIALOG:
-            SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
-            LocalizeWindow(hwnd);
+            {
+                SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
+                LocalizeWindow(hwnd);
 
-            //SetFocus(GetDlgItem(hwnd, IDC_NAME));
-            return TRUE;
+                String &strOut = *(String*)GetWindowLongPtr(hwnd, DWLP_USER);
+                SetWindowText(GetDlgItem(hwnd, IDC_NAME), strOut);
+
+                //SetFocus(GetDlgItem(hwnd, IDC_NAME));
+                return TRUE;
+            }
 
         case WM_COMMAND:
             switch(LOWORD(wParam))
@@ -169,11 +174,15 @@ INT_PTR CALLBACK OBS::EnterSceneNameDialogProc(HWND hwnd, UINT message, WPARAM w
     switch(message)
     {
         case WM_INITDIALOG:
-            SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
-            LocalizeWindow(hwnd);
+            {
+                SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
+                LocalizeWindow(hwnd);
 
-            //SetFocus(GetDlgItem(hwnd, IDC_NAME));
-            return TRUE;
+                String &strOut = *(String*)GetWindowLongPtr(hwnd, DWLP_USER);
+                SetWindowText(GetDlgItem(hwnd, IDC_NAME), strOut);
+
+                return TRUE;
+            }
 
         case WM_COMMAND:
             switch(LOWORD(wParam))
@@ -209,6 +218,40 @@ INT_PTR CALLBACK OBS::EnterSceneNameDialogProc(HWND hwnd, UINT message, WPARAM w
             }
     }
     return 0;
+}
+
+void OBS::GetNewSceneName(String &strScene)
+{
+    XElement *scenes = App->scenesConfig.GetElement(TEXT("scenes"));
+    if(scenes)
+    {
+        String strTestName = strScene;
+
+        UINT num = 1;
+        while(scenes->GetElement(strTestName) != NULL)
+            strTestName.Clear() << strScene << FormattedString(TEXT(" %u"), ++num);
+
+        strScene = strTestName;
+    }
+}
+
+void OBS::GetNewSourceName(String &strSource)
+{
+    XElement *sceneElement = API->GetSceneElement();
+    if(sceneElement)
+    {
+        XElement *sources = sceneElement->GetElement(TEXT("sources"));
+        if(!sources)
+            sources = sceneElement->CreateElement(TEXT("sources"));
+
+        String strTestName = strSource;
+
+        UINT num = 1;
+        while(sources->GetElement(strTestName) != NULL)
+            strTestName.Clear() << strSource << FormattedString(TEXT(" %u"), ++num);
+
+        strSource = strTestName;
+    }
 }
 
 LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -267,10 +310,10 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
         {
             String strRemove       = Str("Remove");
             String strRename       = Str("Rename");
-            String strMoveUp       = Str("Listbox.MoveUp");
-            String strMoveDown     = Str("Listbox.MoveDown");
-            String strMoveTop      = Str("Listbox.MoveToTop");
-            String strMoveToBottom = Str("Listbox.MoveToBottom");
+            String strMoveUp       = Str("MoveUp");
+            String strMoveDown     = Str("MoveDown");
+            String strMoveTop      = Str("MoveToTop");
+            String strMoveToBottom = Str("MoveToBottom");
             String strCenter       = Str("Listbox.Center");
             String strFitToScreen  = Str("Listbox.FitToScreen");
             String strResize       = Str("Listbox.ResetSize");
@@ -348,7 +391,9 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 default:
                     if(ret >= ID_LISTBOX_ADD)
                     {
-                        String strName;
+                        String strName = TEXT("Scene");
+                        GetNewSceneName(strName);
+
                         if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSceneNameDialogProc, (LPARAM)&strName) == IDOK)
                         {
                             UINT classID = ret-ID_LISTBOX_ADD;
@@ -549,18 +594,29 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 default:
                     if(ret >= ID_LISTBOX_ADD)
                     {
+                        ClassInfo *ci;
+                        if(ret >= ID_LISTBOX_GLOBALSOURCE)
+                            ci = App->GetImageSourceClass(TEXT("GlobalSource"));
+                        else
+                        {
+                            UINT classID = ret-ID_LISTBOX_ADD;
+                            ci = App->imageSourceClasses+classID;
+                        }
+
                         String strName;
+                        if(ret >= ID_LISTBOX_GLOBALSOURCE)
+                        {
+                            List<CTSTR> sourceNames;
+                            App->GetGlobalSourceNames(sourceNames);
+                            strName = sourceNames[ret-ID_LISTBOX_GLOBALSOURCE];
+                        }
+                        else
+                            strName = ci->strName;
+
+                        GetNewSourceName(strName);
+
                         if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSourceNameDialogProc, (LPARAM)&strName) == IDOK)
                         {
-                            ClassInfo *ci;
-                            if(ret >= ID_LISTBOX_GLOBALSOURCE)
-                                ci = App->GetImageSourceClass(TEXT("GlobalSource"));
-                            else
-                            {
-                                UINT classID = ret-ID_LISTBOX_ADD;
-                                ci = App->imageSourceClasses+classID;
-                            }
-
                             XElement *sources = App->sceneElement->GetElement(TEXT("sources"));
                             if(!sources)
                                 sources = App->sceneElement->CreateElement(TEXT("sources"));
@@ -2381,13 +2437,11 @@ INT_PTR CALLBACK OBS::PluginsDialogProc(HWND hwnd, UINT message, WPARAM wParam, 
                 case IDC_CONFIG:
                     if(HIWORD(wParam) == BN_CLICKED)
                     {
-                        HWND hwndPlugins = GetDlgItem(hwnd, IDC_PLUGINS);
-
-                        UINT id = (UINT)SendMessage(hwndPlugins, LB_GETCURSEL, 0, 0);
+                        UINT id = (UINT)SendMessage((HWND)lParam, LB_GETCURSEL, 0, 0);
                         if(id == LB_ERR)
                             break;
 
-                        UINT pluginID = (UINT)SendMessage(hwndPlugins, LB_GETITEMDATA, id, 0);
+                        UINT pluginID = (UINT)SendMessage((HWND)lParam, LB_GETITEMDATA, id, 0);
                         PluginInfo &pluginInfo = App->plugins[pluginID];
 
                         //-------------------------------------

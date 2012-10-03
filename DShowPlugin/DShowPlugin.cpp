@@ -319,10 +319,11 @@ void GetOutputList(IPin *curPin, List<MediaOutputInfo> &outputInfoList)
                             outputInfo->maxCX = pVSCC->MaxOutputSize.cx;
                             outputInfo->minCY = pVSCC->MinOutputSize.cy;
                             outputInfo->maxCY = pVSCC->MaxOutputSize.cy;
-                            //outputInfo->xGranularity = max(pVSCC->OutputGranularityX,1);
-                            //outputInfo->yGranularity = max(pVSCC->OutputGranularityY,1);
-                            outputInfo->xGranularity = 4;
-                            outputInfo->yGranularity = 4;
+
+                            //actually due to the other code in GetResolutionFPSInfo, we can have this granularity
+                            // back to the way it was.  now, even if it's corrupted, it will always work
+                            outputInfo->xGranularity = max(pVSCC->OutputGranularityX, 1);
+                            outputInfo->yGranularity = max(pVSCC->OutputGranularityY, 1);
                         }
                         else
                         {

@@ -511,6 +511,10 @@ class OBS
     static void STDCALL MuteMicHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL MuteDesktopHotkey(DWORD hotkey, UPARAM param, bool bDown);
 
+    static void GetNewSceneName(String &strScene);
+    static void GetNewSourceName(String &strSource);
+
+
     static INT_PTR CALLBACK EnterGlobalSourceNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK EnterSceneNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);

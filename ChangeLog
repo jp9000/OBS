@@ -3,6 +3,31 @@
 
 -------------------------------
 
+2012-10-2 - 0.41 (alpha)
+    * Fixed bug with certain video devices where they stored their
+      video formats in the fourCC part of the bmiHeader instead of
+      the AM_MEDIA_TYPE subformat.  Also, I hate DirectShow.
+    * Fixed hotkey problem, and added mouse hotkey support.
+    * Made D3D10_LEVEL_9_3 an option in advanced settings rather
+      than the default.
+    * Added code to allow custom coloring/transparency in the
+      DrawSprite/DrawSpriteEx functions
+    * Added a hotkey for disconnecting.
+    * Added a slide show image source that allows a user to display
+      multiple transitioning images in a single area.
+    * Added default names to the naming dialog.  A decent temporary
+      fix until I can do the UI review.
+    * Added a "Fit to screen" option for sources that allows a user
+      to make a source fit on the screen.
+
+-------------------------------
+
+2012-9-28 - 0.401 (alpha)
+    * Fixed a bug in the 444->420 conversion function that caused it
+      to lose chroma data in the SSE code
+
+-------------------------------
+
 2012-9-27 - 0.40 (alpha)
     * Added the feature to save to MP4 and FLV files.  Going to delay
       on AVI because I'm slightly lazy and because AVI files suck.

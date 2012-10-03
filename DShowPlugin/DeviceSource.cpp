@@ -430,9 +430,9 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
             bFlip = !bFlip;
 
         if(bFlip)
-            DrawSprite(texture, pos.x, pos.y, pos.x+size.x, pos.y+size.y);
+            DrawSprite(texture, 0xFFFFFFFF, pos.x, pos.y, pos.x+size.x, pos.y+size.y);
         else
-            DrawSprite(texture, pos.x, pos.y+size.y, pos.x+size.x, pos.y);
+            DrawSprite(texture, 0xFFFFFFFF, pos.x, pos.y+size.y, pos.x+size.x, pos.y);
 
         if(colorConvertShader)
             LoadPixelShader(oldShader);

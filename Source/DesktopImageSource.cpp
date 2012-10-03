@@ -208,7 +208,7 @@ public:
         traceIn(DesktopImageSource::Render);
 
         EnableBlending(FALSE);
-        DrawSprite(lastRendered, pos.x, pos.y, pos.x+size.x, pos.y+size.y);
+        DrawSprite(lastRendered, 0xFFFFFFFF, pos.x, pos.y, pos.x+size.x, pos.y+size.y);
         EnableBlending(TRUE);
 
         traceOut;

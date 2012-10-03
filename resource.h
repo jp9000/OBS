@@ -86,7 +86,9 @@
 #define IDC_REPLACE                     1056
 #define IDC_MOVEDOWN                    1057
 #define IDC_DESCRIPTION                 1057
+#define IDC_MOVEUPWARD                  1057
 #define IDC_MOVETOTOP                   1058
+#define IDC_MOVEDOWNWARD                1058
 #define IDC_MOVETOBOTTOM                1059
 #define IDC_RENAME                      1060
 #define IDC_MONITORCAPTURE              1061
@@ -128,6 +130,8 @@
 #define IDC_STOPSTREAMHOTKEY            1093
 #define IDC_CLEARHOTKEY                 1094
 #define IDC_STOPSTREAMHOTKEY_STATIC     1095
+#define IDC_CHECK2                      1099
+#define IDC_USED3DCOMPATIBILITY         1099
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -156,7 +160,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        136
 #define _APS_NEXT_COMMAND_VALUE         40042
-#define _APS_NEXT_CONTROL_VALUE         1098
+#define _APS_NEXT_CONTROL_VALUE         1100
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

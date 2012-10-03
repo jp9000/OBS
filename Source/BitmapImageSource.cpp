@@ -59,7 +59,7 @@ public:
         traceIn(BitmapImageSource::Render);
 
         if(texture)
-            DrawSprite(texture, pos.x, pos.y, pos.x+size.x, pos.y+size.y);
+            DrawSprite(texture, 0xFFFFFFFF, pos.x, pos.y, pos.x+size.x, pos.y+size.y);
 
         traceOut;
     }

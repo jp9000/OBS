@@ -1670,11 +1670,11 @@ void OBS::MainCaptureLoop()
             if(bTransitioning)
             {
                 BlendFunction(GS_BLEND_ONE, GS_BLEND_ZERO);
-                DrawSprite(transitionTexture, 0.0f, 0.0f, renderFrameSize.x, renderFrameSize.y);
+                DrawSprite(transitionTexture, 0xFFFFFFFF, 0.0f, 0.0f, renderFrameSize.x, renderFrameSize.y);
                 BlendFunction(GS_BLEND_FACTOR, GS_BLEND_INVFACTOR, transitionAlpha);
             }
 
-            DrawSprite(mainRenderTextures[curRenderTarget], 0.0f, 0.0f, renderFrameSize.x, renderFrameSize.y);
+            DrawSprite(mainRenderTextures[curRenderTarget], 0xFFFFFFFF, 0.0f, 0.0f, renderFrameSize.x, renderFrameSize.y);
 
             Ortho(0.0f, renderFrameSize.x, renderFrameSize.y, 0.0f, -100.0f, 100.0f);
 
@@ -1744,11 +1744,11 @@ void OBS::MainCaptureLoop()
         if(bTransitioning)
         {
             BlendFunction(GS_BLEND_ONE, GS_BLEND_ZERO);
-            DrawSpriteEx(transitionTexture, 0.0f, 0.0f, scaleSize.x, scaleSize.y, 0.0f, 0.0f, scaleSize.x, scaleSize.y);
+            DrawSpriteEx(transitionTexture, 0xFFFFFFFF, 0.0f, 0.0f, scaleSize.x, scaleSize.y, 0.0f, 0.0f, scaleSize.x, scaleSize.y);
             BlendFunction(GS_BLEND_FACTOR, GS_BLEND_INVFACTOR, transitionAlpha);
         }
 
-        DrawSpriteEx(mainRenderTextures[curRenderTarget], 0.0f, 0.0f, outputSize.x, outputSize.y, 0.0f, 0.0f, outputSize.x, outputSize.y);
+        DrawSpriteEx(mainRenderTextures[curRenderTarget], 0xFFFFFFFF, 0.0f, 0.0f, outputSize.x, outputSize.y, 0.0f, 0.0f, outputSize.x, outputSize.y);
 
         //------------------------------------
 

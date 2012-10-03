@@ -70,13 +70,17 @@ D3D10System::D3D10System()
     swapDesc.SampleDesc.Count = 1;
     swapDesc.Windowed = TRUE;
 
+    bUseCompatibilityMode = AppConfig->GetInt(TEXT("Video"), TEXT("UseD3DCompatibilityMode")) != 0;
+
     UINT createFlags = D3D10_CREATE_DEVICE_BGRA_SUPPORT;
     if(GlobalConfig->GetInt(TEXT("General"), TEXT("UseDebugD3D")))
         createFlags |= D3D10_CREATE_DEVICE_DEBUG;
 
+    D3D10_FEATURE_LEVEL1 level = bUseCompatibilityMode ? D3D10_FEATURE_LEVEL_9_3 : D3D10_FEATURE_LEVEL_10_1;
+
     //D3D10_CREATE_DEVICE_DEBUG
     //D3D11_DRIVER_TYPE_REFERENCE, D3D11_DRIVER_TYPE_HARDWARE
-    err = D3D10CreateDeviceAndSwapChain1(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, createFlags, D3D10_FEATURE_LEVEL_9_3, D3D10_1_SDK_VERSION, &swapDesc, &swap, &d3d);
+    err = D3D10CreateDeviceAndSwapChain1(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, createFlags, level, D3D10_1_SDK_VERSION, &swapDesc, &swap, &d3d);
     if(FAILED(err))
         CrashError(TEXT("Could not create D3D10 device and swap chain.  If you get this error, it's likely you probably use a GPU that is old, or that is unsupported."));
 
@@ -613,13 +617,21 @@ void D3D10System::SetViewport(float x, float y, float width, float height)
 }
 
 
-void D3D10System::DrawSpriteEx(Texture *texture, float x, float y, float x2, float y2, float u, float v, float u2, float v2)
+void D3D10System::DrawSpriteEx(Texture *texture, DWORD color, float x, float y, float x2, float y2, float u, float v, float u2, float v2)
 {
+    if(!curPixelShader)
+        return;
+
     if(!texture)
     {
         AppWarning(TEXT("Trying to draw a sprite with a NULL texture"));
         return;
     }
+
+    HANDLE hColor = curPixelShader->GetParameterByName(TEXT("outputColor"));
+
+    if(hColor)
+        curPixelShader->SetColor(hColor, color);
 
     if(x2 == -1.0f) x2 = float(texture->Width());
     if(y2 == -1.0f) y2 = float(texture->Height());
