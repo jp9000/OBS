@@ -2437,11 +2437,13 @@ INT_PTR CALLBACK OBS::PluginsDialogProc(HWND hwnd, UINT message, WPARAM wParam, 
                 case IDC_CONFIG:
                     if(HIWORD(wParam) == BN_CLICKED)
                     {
-                        UINT id = (UINT)SendMessage((HWND)lParam, LB_GETCURSEL, 0, 0);
+                        HWND hwndPlugins = GetDlgItem(hwnd, IDC_PLUGINS);
+
+                        UINT id = (UINT)SendMessage(hwndPlugins, LB_GETCURSEL, 0, 0);
                         if(id == LB_ERR)
                             break;
 
-                        UINT pluginID = (UINT)SendMessage((HWND)lParam, LB_GETITEMDATA, id, 0);
+                        UINT pluginID = (UINT)SendMessage(hwndPlugins, LB_GETITEMDATA, id, 0);
                         PluginInfo &pluginInfo = App->plugins[pluginID];
 
                         //-------------------------------------

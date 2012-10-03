@@ -96,9 +96,6 @@ public:
 
         int framesEncoded = lame_get_frameNum(lgf)-framenum1;
 
-        if(framesEncoded > 1)
-            ProgramBreak();
-
         if(ret < 0)
         {
             AppWarning(TEXT("MP3 encode failed"));
