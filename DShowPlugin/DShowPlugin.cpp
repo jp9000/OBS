@@ -215,9 +215,16 @@ void FillOutListOfVideoDevices(HWND hwndCombo)
 
             if(SUCCEEDED(err))
             {
-                String strDeviceName = (CWSTR)valueThingy.bstrVal;
-                if(SendMessage(hwndCombo, CB_FINDSTRINGEXACT, -1, (LPARAM)strDeviceName.Array()) == CB_ERR)
-                    SendMessage(hwndCombo, CB_ADDSTRING, 0, (LPARAM)strDeviceName.Array());
+                IBaseFilter *filter;
+                err = deviceInfo->BindToObject(NULL, 0, IID_IBaseFilter, (void**)&filter);
+                if(SUCCEEDED(err))
+                {
+                    String strDeviceName = (CWSTR)valueThingy.bstrVal;
+                    if(SendMessage(hwndCombo, CB_FINDSTRINGEXACT, -1, (LPARAM)strDeviceName.Array()) == CB_ERR)
+                        SendMessage(hwndCombo, CB_ADDSTRING, 0, (LPARAM)strDeviceName.Array());
+
+                    SafeRelease(filter);
+                }
             }
         }
 
@@ -335,6 +342,11 @@ void GetOutputList(IPin *curPin, List<MediaOutputInfo> &outputInfoList)
                             FreeMediaType(*pMT);
                             CoTaskMemFree(pMT);
                         }
+                    }
+                    else
+                    {
+                        FreeMediaType(*pMT);
+                        CoTaskMemFree(pMT);
                     }
                 }
             }

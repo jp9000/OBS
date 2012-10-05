@@ -71,7 +71,7 @@ public:
         char *pend = metaDataBuffer+sizeof(metaDataBuffer);
 
         enc = AMF_EncodeString(enc, pend, &av_onMetaData);
-        char *endMetaData  = App->EncMetaData(enc, pend);
+        char *endMetaData  = App->EncMetaData(enc, pend, true);
         UINT  metaDataSize = endMetaData-metaDataBuffer;
 
         AppendFLVPacket((LPBYTE)metaDataBuffer, metaDataSize, 18, 0);
@@ -89,12 +89,12 @@ public:
             double doubleFileSize = double(fileSize);
             double doubleDuration = double(lastTimeStamp/1000);
 
-            file.SetPos(metaDataPos+0x24, XFILE_BEGIN);
+            file.SetPos(metaDataPos+0x28, XFILE_BEGIN);
             QWORD outputVal = *reinterpret_cast<QWORD*>(&doubleDuration);
             outputVal = fastHtonll(outputVal);
             file.Write(&outputVal, 8);
 
-            file.SetPos(metaDataPos+0x37, XFILE_BEGIN);
+            file.SetPos(metaDataPos+0x3B, XFILE_BEGIN);
             outputVal = *reinterpret_cast<QWORD*>(&doubleFileSize);
             outputVal = fastHtonll(outputVal);
             file.Write(&outputVal, 8);
@@ -111,7 +111,7 @@ public:
 
             DataPacket audioHeaders, videoHeaders, videoSEI;
             App->GetAudioHeaders(audioHeaders);
-            App->GetAudioHeaders(videoHeaders);
+            App->GetVideoHeaders(videoHeaders);
             App->GetVideoEncoder()->GetSEI(videoSEI);
 
             AppendFLVPacket(audioHeaders.lpPacket, audioHeaders.size, 8, 0);

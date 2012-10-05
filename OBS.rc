@@ -276,19 +276,19 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     GROUPBOX        "Settings.Video",IDC_STATIC,4,2,418,96
     CONTROL         "Settings.Advanced.VideoEncoderSettings",IDC_USEVIDEOENCODERSETTINGS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,30,149,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,30,260,10
     EDITTEXT        IDC_VIDEOENCODERSETTINGS,33,43,373,14,ES_AUTOHSCROLL
-    CONTROL         "Settings.Advanced.UseSyncFix",IDC_USESYNCFIX,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,63,149,10
+    CONTROL         "Settings.Advanced.UseSyncFix",IDC_USESYNCFIX,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,63,290,10
     LTEXT           "Settings.Info",IDC_INFO,4,168,418,37,NOT WS_VISIBLE
     GROUPBOX        "Settings.Advanced.Network",IDC_STATIC,4,105,418,52
     CONTROL         "Settings.Advanced.UseSendBuffer",IDC_USESENDBUFFER,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,120,149,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,120,277,10
     COMBOBOX        IDC_SENDBUFFERSIZE,145,133,158,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Settings.Advanced.SendBufferSize",IDC_STATIC,5,135,138,8
     RTEXT           "Settings.Advanced.VideoEncoderCPUTradeoff",IDC_STATIC,5,14,138,8
     COMBOBOX        IDC_PRESET,145,12,82,62,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Settings.Advanced.DisableD3DCompatibilityMode",IDC_DISABLED3DCOMPATIBILITY,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,78,192,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,78,289,10
 END
 
 IDD_CONFIGURETRANSITIONSOURCE DIALOGEX 0, 0, 338, 187

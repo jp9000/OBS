@@ -19,7 +19,7 @@
 #include "Main.h"
 
 
-void Convert444to420(LPBYTE input, int width, int height, LPBYTE *output, bool bSSE2Available)
+void Convert444to420(LPBYTE input, int width, int pitch, int height, LPBYTE *output, bool bSSE2Available)
 {
     traceIn(Convert444to420);
 
@@ -27,8 +27,6 @@ void Convert444to420(LPBYTE input, int width, int height, LPBYTE *output, bool b
     LPBYTE uPlane       = output[1];
     LPBYTE vPlane       = output[2];
     int  chrPitch       = width>>1;
-
-    UINT pitch = width*4;
 
     if(bSSE2Available)
     {

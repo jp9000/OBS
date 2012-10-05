@@ -196,11 +196,7 @@ bool DeviceSource::LoadFilters()
     bAddedDevice = true;
 
     //THANK THE NINE DIVINES I FINALLY GOT IT WORKING
-
-    bool bConnected = false;
-    if(bestOutput->bUsingFourCC)
-        bConnected = SUCCEEDED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video, deviceFilter, NULL, captureFilter));
-
+    bool bConnected = SUCCEEDED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video, deviceFilter, NULL, captureFilter));
     if(!bConnected)
     {
         if(FAILED(err = graph->Connect(devicePin, captureFilter->GetCapturePin())))

@@ -549,7 +549,7 @@ public:
     OBS();
     ~OBS();
 
-    char* EncMetaData(char *enc, char *pend);
+    char* EncMetaData(char *enc, char *pend, bool bFLVFile=false);
 
     inline void PostStopMessage() {if(hwndMain) PostMessage(hwndMain, OBS_REQUESTSTOP, 0, 0);}
 

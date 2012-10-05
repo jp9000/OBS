@@ -62,7 +62,7 @@ VideoFileStream* CreateMP4FileStream(CTSTR lpFile);
 VideoFileStream* CreateFLVFileStream(CTSTR lpFile);
 //VideoFileStream* CreateAVIFileStream(CTSTR lpFile);
 
-void Convert444to420(LPBYTE input, int width, int height, LPBYTE *output, bool bSSE2Available);
+void Convert444to420(LPBYTE input, int width, int pitch, int height, LPBYTE *output, bool bSSE2Available);
 
 void STDCALL SceneHotkey(DWORD hotkey, UPARAM param, bool bDown);
 
@@ -1038,7 +1038,7 @@ void OBS::Start()
 
     //align width to 128bit for fast SSE YUV4:2:0 conversion
     outputCX = scaleCX & 0xFFFFFFFC;
-    outputCY = scaleCY & 0xFFFFFFFC;
+    outputCY = scaleCY & 0xFFFFFFFE;
 
     //------------------------------------------------------------------
 
@@ -1795,7 +1795,7 @@ void OBS::MainCaptureLoop()
                 {
                     profileIn("conversion to 4:2:0");
 
-                    Convert444to420((LPBYTE)map.pData, outputCX, outputCY, picOut.img.plane, SSE2Available());
+                    Convert444to420((LPBYTE)map.pData, outputCX, map.RowPitch, outputCY, picOut.img.plane, SSE2Available());
                     copyTexture->Unmap(0);
 
                     profileOut;
