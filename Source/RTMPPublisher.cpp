@@ -649,8 +649,8 @@ NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry)
 
     RTMP *rtmp = RTMP_Alloc();
     RTMP_Init(rtmp);
-    RTMP_LogSetCallback(rtmp_log_output);
-    RTMP_LogSetLevel(RTMP_LOGDEBUG2);
+    /*RTMP_LogSetCallback(rtmp_log_output);
+    RTMP_LogSetLevel(RTMP_LOGDEBUG2);*/
 
     LPSTR lpAnsiURL = strURL.CreateUTF8String();
 
