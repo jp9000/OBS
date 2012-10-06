@@ -422,11 +422,14 @@ class OBS
     HANDLE      hTimeMutex;
     List<UINT>  bufferedTimes;
 
+    bool    bRecievedFirstAudioFrame;
+
     HANDLE  hHotkeyMutex;
 
     HANDLE  hSoundThread, hSoundDataMutex, hRequestAudioEvent;
     float   desktopVol, micVol;
     List<FrameAudio> pendingAudioFrames;
+    bool    bForceMicMono;
 
     bool bUsingPushToTalk, bPushToTalkOn;
     UINT pushToTalkHotkeyID;

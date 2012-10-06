@@ -31,6 +31,8 @@
 #include <math.h>
 #include <float.h>
 
+#include <typeinfo.h>
+
 #if defined(_WIN64) && !defined(C64)
     #define C64
 #endif

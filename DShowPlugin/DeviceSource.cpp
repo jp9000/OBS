@@ -142,6 +142,21 @@ bool DeviceSource::LoadFilters()
         colorConvertShader = CreatePixelShaderFromFile(TEXT("plugins/DShowPlugin/shaders/YVUToRGB.pShader"));
         colorType = DeviceOutputType_YV12;
     }
+    else if(bestOutput->videoType == VideoOutputType_YVYU)
+    {
+        colorConvertShader = CreatePixelShaderFromFile(TEXT("plugins/DShowPlugin/shaders/YVXUToRGB.pShader"));
+        colorType = DeviceOutputType_YVYU;
+    }
+    else if(bestOutput->videoType == VideoOutputType_YUY2)
+    {
+        colorConvertShader = CreatePixelShaderFromFile(TEXT("plugins/DShowPlugin/shaders/YUXVToRGB.pShader"));
+        colorType = DeviceOutputType_YUY2;
+    }
+    else if(bestOutput->videoType == VideoOutputType_UYVY)
+    {
+        colorConvertShader = CreatePixelShaderFromFile(TEXT("plugins/DShowPlugin/shaders/UYVToRGB.pShader"));
+        colorType = DeviceOutputType_UYVY;
+    }
     else
     {
         colorType = DeviceOutputType_RGB;
@@ -403,6 +418,34 @@ void DeviceSource::Preprocess()
                 if(texture->Map(lpData, pitch))
                 {
                     PackPlanar(lpData, lpImage);
+                    texture->Unmap();
+                }
+            }
+        }
+        else if(colorType == DeviceOutputType_YVYU || colorType == DeviceOutputType_YUY2)
+        {
+            if(SUCCEEDED(lastSample->GetPointer(&lpImage)))
+            {
+                LPBYTE lpData;
+                UINT pitch;
+
+                if(texture->Map(lpData, pitch))
+                {
+                    Convert422To444(lpData, lpImage, true);
+                    texture->Unmap();
+                }
+            }
+        }
+        else if(colorType == DeviceOutputType_UYVY)
+        {
+            if(SUCCEEDED(lastSample->GetPointer(&lpImage)))
+            {
+                LPBYTE lpData;
+                UINT pitch;
+
+                if(texture->Map(lpData, pitch))
+                {
+                    Convert422To444(lpData, lpImage, false);
                     texture->Unmap();
                 }
             }

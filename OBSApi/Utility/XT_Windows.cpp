@@ -179,6 +179,7 @@ void   STDCALL OSExitProgram()
 
 void   STDCALL OSCriticalExit()
 {
+    SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, 1, 0, 0);
     TerminateProcess(GetCurrentProcess(), INVALID);
 }
 

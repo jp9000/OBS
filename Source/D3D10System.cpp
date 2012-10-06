@@ -81,12 +81,10 @@ D3D10System::D3D10System()
     //D3D10_CREATE_DEVICE_DEBUG
     //D3D11_DRIVER_TYPE_REFERENCE, D3D11_DRIVER_TYPE_HARDWARE
     err = D3D10CreateDeviceAndSwapChain1(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, createFlags, level, D3D10_1_SDK_VERSION, &swapDesc, &swap, &d3d);
-    if(FAILED(err) && !bDisableCompatibilityMode)
+    if(FAILED(err))
     {
-        bDisableCompatibilityMode = true;
-        level = D3D10_FEATURE_LEVEL_10_1;
-        Log(TEXT("D3D10CreateDeviceAndSwapChain1 failed.  Retrying without compatibility mode."));
-
+        bDisableCompatibilityMode = !bDisableCompatibilityMode;
+        level = bDisableCompatibilityMode ? D3D10_FEATURE_LEVEL_10_1 : D3D10_FEATURE_LEVEL_9_3;
         err = D3D10CreateDeviceAndSwapChain1(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, createFlags, level, D3D10_1_SDK_VERSION, &swapDesc, &swap, &d3d);
     }
 

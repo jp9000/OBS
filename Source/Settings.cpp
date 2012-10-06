@@ -1104,6 +1104,8 @@ INT_PTR CALLBACK OBS::VideoSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                     SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)IntString(i+1).Array());
 
                 int monitorID = LoadSettingComboInt(hwndTemp, TEXT("Video"), TEXT("Monitor"), 0, App->monitors.Num()-1);
+                if(monitorID > (int)App->monitors.Num())
+                    monitorID = 0;
 
                 //--------------------------------------------
 
@@ -1156,10 +1158,10 @@ INT_PTR CALLBACK OBS::VideoSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                 //--------------------------------------------
 
                 hwndTemp = GetDlgItem(hwnd, IDC_FPS);
-                SendMessage(hwndTemp, UDM_SETRANGE32, 15, 60);
+                SendMessage(hwndTemp, UDM_SETRANGE32, 10, 60);
 
                 int fps = AppConfig->GetInt(TEXT("Video"), TEXT("FPS"), 25);
-                if(!AppConfig->HasKey(TEXT("Video"), TEXT("FPS")) || fps < 15 || fps > 60)
+                if(!AppConfig->HasKey(TEXT("Video"), TEXT("FPS")) || fps < 10 || fps > 60)
                 {
                     AppConfig->SetInt(TEXT("Video"), TEXT("FPS"), 25);
                     fps = 25;
@@ -1348,6 +1350,11 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
 
                 //--------------------------------------------
 
+                BOOL bForceMono = AppConfig->GetInt(TEXT("Audio"), TEXT("ForceMicMono"));
+                SendMessage(GetDlgItem(hwnd, IDC_FORCEMONO), BM_SETCHECK, bForceMono ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                //--------------------------------------------
+
                 App->SetChangedSettings(false);
                 return TRUE;
             }
@@ -1403,6 +1410,11 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                             SendMessage(GetDlgItem(hwnd, IDC_MUTEDESKTOPHOTKEY), HKM_SETHOTKEY, 0, 0);
                             App->SetChangedSettings(true);
                         }
+                        break;
+
+                    case IDC_FORCEMONO:
+                        if(HIWORD(wParam) == BN_CLICKED)
+                            App->SetChangedSettings(true);
                         break;
 
                     case IDC_MICDEVICES:
@@ -1774,6 +1786,11 @@ void OBS::ApplySettings()
 
                 if(hotkey)
                     muteDesktopHotkeyID = API->CreateHotkey(hotkey, OBS::MuteDesktopHotkey, NULL);
+
+                //------------------------------------
+
+                App->bForceMicMono = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_FORCEMONO), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                AppConfig->SetInt(TEXT("Audio"), TEXT("ForceMicMono"), bForceMicMono);
 
                 break;
             }

@@ -1,0 +1,48 @@
+/********************************************************************************
+ Copyright (C) 2012 Hugh Bailey <obs.jim@gmail.com>
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+********************************************************************************/
+
+
+uniform Texture2D diffuseTexture;
+
+SamplerState textureSampler
+{
+    AddressU  = Clamp;
+    AddressV  = Clamp;
+    Filter    = Linear;
+};
+
+struct VertData
+{
+    float4 pos      : SV_Position;
+    float2 texCoord : TexCoord0;
+};
+
+float4 main(VertData input) : SV_Target
+{
+    //a nice quick colorspace conversion
+    float4 yuvx = diffuseTexture.Sample(textureSampler, input.texCoord).ragb;
+    yuvx -= float4(0.0625, 0.5, 0.5, 0.0);
+    yuvx.r *= 1.1640625;
+
+    float4 rgbx = float4(yuvx.r + (1.58593*yuvx.b),
+                         yuvx.r - (0.81250*yuvx.b) - (0.39062*yuvx.g),
+                         yuvx.r + (2.01562*yuvx.g),
+                         1.0);
+
+    return saturate(rgbx);
+}

@@ -106,6 +106,9 @@ void OBS::ResizeRenderFrame(bool bRedrawRenderFrame)
     else
     {
         int monitorID = AppConfig->GetInt(TEXT("Video"), TEXT("Monitor"));
+        if(monitorID > (int)monitors.Num())
+            monitorID = 0;
+
         RECT &screenRect = monitors[monitorID].rect;
         int defCX = screenRect.right  - screenRect.left;
         int defCY = screenRect.bottom - screenRect.top;
@@ -1022,6 +1025,9 @@ void OBS::Start()
     //-------------------------------------------------------------
 
     int monitorID = AppConfig->GetInt(TEXT("Video"), TEXT("Monitor"));
+    if(monitorID > (int)monitors.Num())
+        monitorID = 0;
+
     RECT &screenRect = monitors[monitorID].rect;
     int defCX = screenRect.right  - screenRect.left;
     int defCY = screenRect.bottom - screenRect.top;
@@ -1215,6 +1221,10 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
+    bRecievedFirstAudioFrame = false;
+
+    bForceMicMono = AppConfig->GetInt(TEXT("Audio"), TEXT("ForceMicMono")) != 0;
+
     hRequestAudioEvent = CreateSemaphore(NULL, 0, 0x7FFFFFFFL, NULL);
     hSoundDataMutex = OSCreateMutex();
     hSoundThread = OSCreateThread((XTHREAD)OBS::MainAudioThread, NULL);
@@ -1257,6 +1267,8 @@ void OBS::Start()
     ShowWindow(GetDlgItem(hwndMain, ID_BANDWIDTHMETER), SW_SHOW);
 
     //-------------------------------------------------------------
+
+    SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, 0, 0, 0);
 
     traceOut;
 }
@@ -1428,6 +1440,8 @@ void OBS::Stop()
     EnableWindow(GetDlgItem(hwndMain, ID_SCENEEDITOR), FALSE);
     ShowWindow(GetDlgItem(hwndMain, ID_BANDWIDTHMETER), SW_HIDE);
 
+    SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, 1, 0, 0);
+
     bTestStream = false;
 
     traceOut;
@@ -1521,6 +1535,8 @@ void OBS::MainCaptureLoop()
 
     DWORD captureFPS = 0;
     DWORD fpsCounter = 0;
+
+    bool bFirstFrame = true;
 
     while(bRunning)
     {
@@ -1762,23 +1778,54 @@ void OBS::MainCaptureLoop()
 
         profileIn("video encoding and uploading");
 
-        if(copyWait)
-            copyWait--;
-        else if(bUseSyncFix && (bufferedTimes.Num() < 2 || bufferedTimes[1] == 0))
-        {
-            if(bufferedTimes.Num() > 1)
-            {
-                OSEnterMutex(hTimeMutex);
-                bufferedTimes.Remove(0);
-                OSLeaveMutex(hTimeMutex);
-            }
+        bool bEncode = true;
 
-            if(curCopyTexture == (NUM_RENDER_BUFFERS-1))
-                curCopyTexture = 0;
-            else
-                curCopyTexture++;
+        if(copyWait)
+        {
+            copyWait--;
+            bEncode = false;
         }
         else
+        {
+            if(bUseSyncFix)
+            {
+                OSEnterMutex(hTimeMutex);
+                if(bufferedTimes.Num() < 2 || bufferedTimes[1] == 0)
+                {
+                    if(bufferedTimes.Num() > 1)
+                        bufferedTimes.Remove(0);
+
+                    bEncode = false;
+                }
+                OSLeaveMutex(hTimeMutex);
+            }
+            else
+            {
+                //audio sometimes takes a bit to start -- do not start processing frames until audio has started capturing
+                if(!bRecievedFirstAudioFrame)
+                    bEncode = false;
+                else if(bFirstFrame)
+                {
+                    if(bufferedTimes.Num() > 1)
+                        bufferedTimes.RemoveRange(0, bufferedTimes.Num()-1);
+                    firstFrameTime += bufferedTimes[0];
+                    bufferedTimes[0] = 0;
+
+                    bFirstFrame = false;
+                }
+            }
+
+
+            if(!bEncode)
+            {
+                if(curCopyTexture == (NUM_RENDER_BUFFERS-1))
+                    curCopyTexture = 0;
+                else
+                    curCopyTexture++;
+            }
+        }
+
+        if(bEncode)
         {
             profileIn("CopyResource");
             D3D10Texture *d3dYUV = static_cast<D3D10Texture*>(yuvRenderTextures[curCopyTexture]);
@@ -1845,8 +1892,12 @@ void OBS::MainCaptureLoop()
                 //------------------------------------
                 // encode
 
+                profileIn("call to encoder");
+
                 videoEncoder->Encode(&picOut, videoPackets, videoPacketTypes, curTimeStamp);
                 if(bUsing444) copyTexture->Unmap(0);
+
+                profileOut;
 
                 //------------------------------------
                 // upload
@@ -2040,6 +2091,19 @@ void OBS::MainAudioLoop()
                 {
                     UINT alignedFloats = floatsLeft & 0xFFFFFFFC;
 
+                    if(bForceMicMono)
+                    {
+                        __m128 halfVal = _mm_set_ps1(0.5f);
+                        for(UINT i=0; i<alignedFloats; i += 4)
+                        {
+                            float *micInput = micTemp+i;
+                            __m128 val = _mm_load_ps(micInput);
+                            __m128 shufVal = _mm_shuffle_ps(val, val, _MM_SHUFFLE(2, 3, 0, 1));
+
+                            _mm_store_ps(micInput, _mm_mul_ps(_mm_add_ps(val, shufVal), halfVal));
+                        }
+                    }
+
                     __m128 maxVal = _mm_set_ps1(1.0f);
                     __m128 minVal = _mm_set_ps1(-1.0f);
 
@@ -2062,6 +2126,16 @@ void OBS::MainAudioLoop()
 
                 if(floatsLeft)
                 {
+                    if(bForceMicMono)
+                    {
+                        for(UINT i=0; i<floatsLeft; i += 2)
+                        {
+                            micTemp[i] += micTemp[i+1];
+                            micTemp[i] *= 0.5f;
+                            micTemp[i+1] = micTemp[i];
+                        }
+                    }
+
                     for(UINT i=0; i<floatsLeft; i++)
                     {
                         float val = desktopTemp[i]+micTemp[i];
@@ -2085,6 +2159,9 @@ void OBS::MainAudioLoop()
         }
 
         //-----------------------------------------------
+
+        if(!bRecievedFirstAudioFrame && pendingAudioFrames.Num())
+            bRecievedFirstAudioFrame = true;
 
         if(bUseSyncFix)// && pendingAudioFrames.Num())
         {

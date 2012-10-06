@@ -270,3 +270,47 @@ void DeviceSource::PackPlanar(LPBYTE convertBuffer, LPBYTE lpPlanar)
         }
     }
 }*/
+
+void DeviceSource::Convert422To444(LPBYTE convertBuffer, LPBYTE lp422, bool bLeadingY)
+{
+    LPDWORD output = (LPDWORD)convertBuffer;
+
+    //---------------------------------
+
+    UINT halfWidth = renderCX>>1;
+    DWORD size = renderCY*halfWidth*4;
+    DWORD dwDWSize = size>>2;
+    LPDWORD inputDW = (LPDWORD)lp422;
+    LPDWORD inputDWEnd = inputDW+dwDWSize;
+
+    if(bLeadingY)
+    {
+        while(inputDW < inputDWEnd)
+        {
+            register DWORD dw = *inputDW;
+
+            output[0] = dw;
+            dw &= 0xFFFFFF00;
+            dw |= BYTE(dw>>16);
+            output[1] = dw;
+
+            output += 2;
+            inputDW++;
+        }
+    }
+    else
+    {
+        while(inputDW < inputDWEnd)
+        {
+            register DWORD dw = *inputDW;
+
+            output[0] = dw;
+            dw &= 0xFFFF00FF;
+            dw |= (dw>>16) & 0xFF00;
+            output[1] = dw;
+
+            output += 2;
+            inputDW++;
+        }
+    }
+}

@@ -68,6 +68,8 @@
 #define IDC_USEVIDEOENCODERSETTINGS     1041
 #define IDC_SERVEREDIT                  1042
 #define IDC_USESENDBUFFER               1042
+#define IDC_PUSHTOTALK2                 1042
+#define IDC_FORCEMONO                   1042
 #define IDC_CHANNELNAME_STATIC          1043
 #define IDC_PLAYPATH_STATIC             1044
 #define IDC_USERNAME_STATIC             1045

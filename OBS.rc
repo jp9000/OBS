@@ -157,7 +157,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD | WS_SYSMENU
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LTEXT           "Settings.Info",IDC_INFO,4,85,408,37,NOT WS_VISIBLE
+    LTEXT           "Settings.Info",IDC_INFO,4,100,408,37,NOT WS_VISIBLE
     RTEXT           "Settings.Audio.Device",IDC_STATIC,4,12,138,8
     COMBOBOX        IDC_MICDEVICES,144,10,226,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Settings.Audio.PushToTalkHotkey",IDC_PUSHTOTALK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,31,143,10,WS_EX_RIGHT
@@ -169,6 +169,7 @@ BEGIN
     CONTROL         "カスタム1",IDC_PUSHTOTALKHOTKEY,"OBSHotkeyControlEx",WS_TABSTOP,160,29,80,14
     CONTROL         "カスタム1",IDC_MUTEMICHOTKEY,"OBSHotkeyControlEx",WS_TABSTOP,160,46,80,14
     CONTROL         "カスタム1",IDC_MUTEDESKTOPHOTKEY,"OBSHotkeyControlEx",WS_TABSTOP,160,64,80,14
+    CONTROL         "Settings.Audio.ForceMicMono",IDC_FORCEMONO,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,84,143,10,WS_EX_RIGHT
 END
 
 IDD_ENTERNAME DIALOGEX 0, 0, 265, 49
@@ -491,8 +492,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,4,1,1
- PRODUCTVERSION 0,4,1,1
+ FILEVERSION 0,4,1,2
+ PRODUCTVERSION 0,4,1,2
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -508,12 +509,12 @@ BEGIN
         BLOCK "041104b0"
         BEGIN
             VALUE "FileDescription", "Open Broadcaster Software"
-            VALUE "FileVersion", "0, 4, 1, 1"
+            VALUE "FileVersion", "0, 4, 1, 2"
             VALUE "InternalName", "OBS"
             VALUE "LegalCopyright", "Copyright (C) 2012"
             VALUE "OriginalFilename", "OBS.exe"
             VALUE "ProductName", "Open Broadcaster Software"
-            VALUE "ProductVersion", "0, 4, 1, 1"
+            VALUE "ProductVersion", "0, 4, 1, 2"
         END
     END
     BLOCK "VarFileInfo"

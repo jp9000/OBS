@@ -405,11 +405,23 @@
 			Name="Shaders"
 			>
 			<File
+				RelativePath="..\rundir\plugins\DShowPlugin\shaders\UYVToRGB.pShader"
+				>
+			</File>
+			<File
 				RelativePath="..\rundir\plugins\DShowPlugin\shaders\YUVToRGB.pShader"
 				>
 			</File>
 			<File
+				RelativePath="..\rundir\plugins\DShowPlugin\shaders\YUXVToRGB.pShader"
+				>
+			</File>
+			<File
 				RelativePath="..\rundir\plugins\DShowPlugin\shaders\YVUToRGB.pShader"
+				>
+			</File>
+			<File
+				RelativePath="..\rundir\plugins\DShowPlugin\shaders\YVXUToRGB.pShader"
 				>
 			</File>
 		</Filter>

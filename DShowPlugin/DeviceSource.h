@@ -23,8 +23,15 @@
 enum DeviceColorType
 {
     DeviceOutputType_RGB,
+
+    //planar 4:2:0
     DeviceOutputType_I420,
     DeviceOutputType_YV12,
+
+    //packed 4:2:2
+    DeviceOutputType_YVYU,
+    DeviceOutputType_YUY2,
+    DeviceOutputType_UYVY,
 };
 
 class DeviceSource : public ImageSource
@@ -57,6 +64,7 @@ class DeviceSource : public ImageSource
     //---------------------------------
 
     void PackPlanar(LPBYTE convertBuffer, LPBYTE lpPlanar);
+    void Convert422To444(LPBYTE convertBuffer, LPBYTE lp422, bool bLeadingY);
 
     void FlushSamples()
     {

@@ -366,42 +366,42 @@ public:
     inline T& GetElement(unsigned int index)
     {
         assert(index < num);
-        if(index >= num) {CrashError(TEXT("Out of range!  List::operator[](%d)"), index); return array[0];}
+        if(index >= num) {CrashError(TEXT("Out of range!  List<%S>::operator[](%d)"), typeid(T).name(), index); return array[0];}
         return array[index];
     }
 
     inline T& operator[](unsigned int index)
     {
         assert(index < num);
-        if(index >= num) {CrashError(TEXT("Out of range!  List::operator[](%d)"), index); return array[0];}
+        if(index >= num) {CrashError(TEXT("Out of range!  List<%S>::operator[](%d)"), typeid(T).name(), index); return array[0];}
         return array[index];
     }
 
     inline T& operator[](unsigned int index) const
     {
         assert(index < num);
-        if(index >= num) {CrashError(TEXT("Out of range!  List::operator[](%d)"), index); return array[0];}
+        if(index >= num) {CrashError(TEXT("Out of range!  List<%S>::operator[](%d)"), typeid(T).name(), index); return array[0];}
         return array[index];
     }
 
     inline T* operator+(unsigned int index)
     {
         assert(index < num);
-        if(index >= num) {CrashError(TEXT("Out of range!  List::operator+(%d)"), index); return NULL;}
+        if(index >= num) {CrashError(TEXT("Out of range!  List<%S>::operator[](%d)"), typeid(T).name(), index); return NULL;}
         return array+index;
     }
 
     inline T* operator+(unsigned int index) const
     {
         assert(index < num);
-        if(index >= num) {CrashError(TEXT("Out of range!  List::operator+(%d)"), index); return NULL;}
+        if(index >= num) {CrashError(TEXT("Out of range!  List<%S>::operator[](%d)"), typeid(T).name(), index); return NULL;}
         return array+index;
     }
 
     inline T* operator-(unsigned int index)
     {
         assert(index < num);
-        if(index >= num) {CrashError(TEXT("Out of range!  List::operator-(%d)"), index); return NULL;}
+        if(index >= num) {CrashError(TEXT("Out of range!  List<%S>::operator[](%d)"), typeid(T).name(), index); return NULL;}
         return array-index;
     }
 
