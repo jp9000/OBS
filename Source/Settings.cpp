@@ -1514,6 +1514,7 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("32768"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("16384"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("8192"));
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("4096"));
 
                 LoadSettingTextComboString(hwndTemp, TEXT("Publish"), TEXT("SendBufferSize"), TEXT("32768"));
 

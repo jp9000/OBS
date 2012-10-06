@@ -258,6 +258,8 @@ extern "C"
         void*   m_customSendParam;
         CUSTOMSEND m_customSendFunc;
 
+        uint8_t m_bSendChunkSizeInfo;
+
         int m_numInvokes;
         int m_numCalls;
         RTMP_METHOD *m_methodCalls;	/* remote method calls queue */

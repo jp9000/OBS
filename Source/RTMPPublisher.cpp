@@ -352,19 +352,11 @@ class RTMPPublisher : public NetworkStream
     }
 
 public:
-    RTMPPublisher(RTMP *rtmpIn)
+    RTMPPublisher(RTMP *rtmpIn, BOOL bUseSendBuffer, UINT sendBufferSize)
     {
         traceIn(RTMPPublisher::RTMPPublisher);
 
         rtmp = rtmpIn;
-
-        BOOL bUseSendBuffer = AppConfig->GetInt(TEXT("Publish"), TEXT("UseSendBuffer"), 1);
-        UINT sendBufferSize = AppConfig->GetInt(TEXT("Publish"), TEXT("SendBufferSize"), 32768);
-
-        if(sendBufferSize > 32768)
-            sendBufferSize = 32768;
-        else if(sendBufferSize < 8192)
-            sendBufferSize = 8192;
 
         sendBuffer.SetSize(sendBufferSize);
         curSendBufferLen = 0;
@@ -657,8 +649,8 @@ NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry)
 
     RTMP *rtmp = RTMP_Alloc();
     RTMP_Init(rtmp);
-    /*RTMP_LogSetCallback(rtmp_log_output);
-    RTMP_LogSetLevel(RTMP_LOGDEBUG2);*/
+    RTMP_LogSetCallback(rtmp_log_output);
+    RTMP_LogSetLevel(RTMP_LOGDEBUG2);
 
     LPSTR lpAnsiURL = strURL.CreateUTF8String();
 
@@ -672,6 +664,39 @@ NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry)
     RTMP_EnableWrite(rtmp); //set it to publish
 
     //rtmp->m_bUseNagle = 1;
+
+    rtmp->Link.swfUrl.av_len = rtmp->Link.tcUrl.av_len;
+    rtmp->Link.swfUrl.av_val = rtmp->Link.tcUrl.av_val;
+    rtmp->Link.pageUrl.av_len = rtmp->Link.tcUrl.av_len;
+    rtmp->Link.pageUrl.av_val = rtmp->Link.tcUrl.av_val;
+    rtmp->Link.flashVer.av_val = "FMLE/3.0 (compatible; FMSc/1.0)";
+    rtmp->Link.flashVer.av_len = (int)strlen(rtmp->Link.flashVer.av_val);
+
+    BOOL bUseSendBuffer = AppConfig->GetInt(TEXT("Publish"), TEXT("UseSendBuffer"), 1);
+    UINT sendBufferSize = AppConfig->GetInt(TEXT("Publish"), TEXT("SendBufferSize"), 32768);
+
+    if(sendBufferSize > 32768)
+        sendBufferSize = 32768;
+    else if(sendBufferSize < 4096)
+        sendBufferSize = 4096;
+
+    /*RTMPPacket chunkPacket;
+    zero(&chunkPacket, sizeof(chunkPacket));
+    chunkPacket.m_nChannel = 0x02;     // control channel (invoke)
+    chunkPacket.m_headerType = RTMP_PACKET_SIZE_LARGE;
+    chunkPacket.m_packetType = RTMP_PACKET_TYPE_CHUNK_SIZE;
+    chunkPacket.m_nTimeStamp = 0;
+    chunkPacket.m_nInfoField2 = rtmp->m_stream_id;
+    chunkPacket.m_hasAbsTimestamp = TRUE;
+
+    List<BYTE> padBuffer;
+    padBuffer.SetSize(RTMP_MAX_HEADER_SIZE+sizeof(DWORD));
+    *(DWORD*)(padBuffer+RTMP_MAX_HEADER_SIZE) = fastHtonl(4096);
+
+    chunkPacket.m_body = (char*)(padBuffer.Array() + RTMP_MAX_HEADER_SIZE);
+    chunkPacket.m_nBodySize = sizeof(DWORD);*/
+
+    rtmp->m_outChunkSize = 4096;
 
     if(!RTMP_Connect(rtmp, NULL))
     {
@@ -691,7 +716,7 @@ NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry)
 
     Free(lpAnsiURL);
 
-    return new RTMPPublisher(rtmp);
+    return new RTMPPublisher(rtmp, bUseSendBuffer, sendBufferSize);
 
     traceOut;
 }

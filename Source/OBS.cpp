@@ -1471,12 +1471,17 @@ inline void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
 
 DWORD STDCALL OBS::MainCaptureThread(LPVOID lpUnused)
 {
-    /*DWORD_PTR retVal = SetThreadAffinityMask(GetCurrentThread(), 1);
+    SYSTEM_INFO si;
+    GetSystemInfo(&si);
+
+    DWORD lastCoreIDMask = 1<<(si.dwNumberOfProcessors-1);
+
+    DWORD_PTR retVal = SetThreadAffinityMask(GetCurrentThread(), lastCoreIDMask);
     if(retVal == 0)
     {
         int lastError = GetLastError();
         nop();
-    }*/
+    }
 
     App->MainCaptureLoop();
     return 0;

@@ -250,6 +250,7 @@ RTMP_Init(RTMP *r)
     r->m_sb.sb_socket = -1;
     r->m_inChunkSize = RTMP_DEFAULT_CHUNKSIZE;
     r->m_outChunkSize = RTMP_DEFAULT_CHUNKSIZE;
+    r->m_bSendChunkSizeInfo = 1;
     r->m_nBufferMS = 30000;
     r->m_nClientBW = 2500000;
     r->m_nClientBW2 = 2;
@@ -1525,6 +1526,24 @@ SendConnectPacket(RTMP *r, RTMPPacket *cp)
     if (cp)
         return RTMP_SendPacket(r, cp, TRUE);
 
+    if((r->Link.protocol & RTMP_FEATURE_WRITE) && r->m_bSendChunkSizeInfo)
+    {
+        packet.m_nChannel = 0x02;
+        packet.m_headerType = RTMP_PACKET_SIZE_LARGE;
+        packet.m_packetType = RTMP_PACKET_TYPE_CHUNK_SIZE;
+        packet.m_nTimeStamp = 0;
+        packet.m_nInfoField2 = 0;
+        packet.m_hasAbsTimestamp = 0;
+        packet.m_body = pbuf + RTMP_MAX_HEADER_SIZE;
+        packet.m_nBodySize = 4;
+
+        enc = packet.m_body;
+        AMF_EncodeInt32(enc, pend, r->m_outChunkSize);
+
+        if(!RTMP_SendPacket(r, &packet, FALSE))
+            return 0;
+    }
+
     packet.m_nChannel = 0x03;	/* control channel (invoke) */
     packet.m_headerType = RTMP_PACKET_SIZE_LARGE;
     packet.m_packetType = RTMP_PACKET_TYPE_INVOKE;
@@ -1565,6 +1584,12 @@ SendConnectPacket(RTMP *r, RTMPPacket *cp)
         if (!enc)
             return FALSE;
     }
+    if (r->Link.pageUrl.av_len)
+    {
+        enc = AMF_EncodeNamedString(enc, pend, &av_pageUrl, &r->Link.pageUrl);
+        if (!enc)
+            return FALSE;
+    }
     if (!(r->Link.protocol & RTMP_FEATURE_WRITE))
     {
         enc = AMF_EncodeNamedBoolean(enc, pend, &av_fpad, FALSE);
@@ -1582,12 +1607,6 @@ SendConnectPacket(RTMP *r, RTMPPacket *cp)
         enc = AMF_EncodeNamedNumber(enc, pend, &av_videoFunction, 1.0);
         if (!enc)
             return FALSE;
-        if (r->Link.pageUrl.av_len)
-        {
-            enc = AMF_EncodeNamedString(enc, pend, &av_pageUrl, &r->Link.pageUrl);
-            if (!enc)
-                return FALSE;
-        }
     }
     if (r->m_fEncoding != 0.0 || r->m_bSendEncoding)
     {
