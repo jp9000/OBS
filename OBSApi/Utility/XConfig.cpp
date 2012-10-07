@@ -823,6 +823,7 @@ void  XConfig::WriteFileItem(XFile &file, int indent, XBaseItem *baseItem)
         if( item->strName.IsValid()                         && (
             item->strName[0] == ' '                         ||
             item->strName[0] == '\t'                        ||
+            item->strName[0] == '{'                         ||
             item->strName[item->strName.Length()-1] == ' '  ||
             item->strName[item->strName.Length()-1] == '\t' ||
             schr(item->strName, '\n')                       ||
@@ -839,6 +840,7 @@ void  XConfig::WriteFileItem(XFile &file, int indent, XBaseItem *baseItem)
         if( item->strData.IsValid()                         && (
             item->strData[0] == ' '                         ||
             item->strData[0] == '\t'                        ||
+            item->strData[0] == '{'                         ||
             item->strData[item->strData.Length()-1] == ' '  ||
             item->strData[item->strData.Length()-1] == '\t' ||
             schr(item->strData, '\n')                       ||
@@ -866,6 +868,7 @@ void  XConfig::WriteFileItem(XFile &file, int indent, XBaseItem *baseItem)
         if( element->strName.IsValid()                            && (
             element->strName[0] == ' '                            ||
             element->strName[0] == '\t'                           ||
+            element->strName[0] == '{'                            ||
             element->strName[element->strName.Length()-1] == ' '  ||
             element->strName[element->strName.Length()-1] == '\t' ||
             schr(element->strName, '\n')                          ||
@@ -952,7 +955,7 @@ bool  XConfig::Open(CTSTR lpFile)
             Close(false);
             Free(lpFileData);
 
-            CrashError(TEXT("Error parsing X file '%s'"), strFileName);
+            CrashError(TEXT("Error parsing X file '%s'"), strFileName.Array());
         }
 
         mcpy(lpComment, lpEndComment+3, slen(lpEndComment+3)+1);
@@ -966,7 +969,7 @@ bool  XConfig::Open(CTSTR lpFile)
         for(DWORD i=0; i<RootElement->SubItems.Num(); i++)
             delete RootElement->SubItems[i];
 
-        CrashError(TEXT("Error parsing X file '%s'"), strFileName);
+        CrashError(TEXT("Error parsing X file '%s'"), strFileName.Array());
 
         Free(lpFileData);
         Close(false);

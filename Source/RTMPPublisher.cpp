@@ -41,6 +41,9 @@ struct NetworkPacket
     PacketType type;
 };
 
+//max latency in milliseconds allowed when using the send buffer
+const DWORD maxBufferTime = 500;
+
 class RTMPPublisher : public NetworkStream
 {
     RTMP *rtmp;
@@ -61,6 +64,11 @@ class RTMPPublisher : public NetworkStream
     UINT numPFramesDumped;
     UINT numBFramesDumped;
 
+    UINT numVideoPacketsBuffered;
+    DWORD firstBufferedVideoFrameTimestamp;
+
+    BOOL bUseSendBuffer;
+
     //all data sending is done in yet another separate thread to prevent blocking in the main capture thread
     void SendLoop()
     {
@@ -68,8 +76,7 @@ class RTMPPublisher : public NetworkStream
 
         while(WaitForSingleObject(hSendSempahore, INFINITE) == WAIT_OBJECT_0 && !bStopping && RTMP_IsConnected(rtmp))
         {
-            /*
-            //--------------------------------------------
+            /*//--------------------------------------------
             // read
 
             DWORD pendingBytes = 0;
@@ -134,6 +141,28 @@ class RTMPPublisher : public NetworkStream
                     bStopping = true;
                     break;
                 }
+            }
+
+            //make sure to flush the send buffer if surpassing max latency to keep frame data synced up on the server
+            if(bUseSendBuffer && type != PacketType_Audio)
+            {
+                if(!numVideoPacketsBuffered)
+                    firstBufferedVideoFrameTimestamp = timestamp;
+
+                DWORD bufferedTime = timestamp-firstBufferedVideoFrameTimestamp;
+                if(bufferedTime > maxBufferTime)
+                {
+                    if(!FlushSendBuffer())
+                    {
+                        App->PostStopMessage();
+                        bStopping = true;
+                        break;
+                    }
+
+                    firstBufferedVideoFrameTimestamp = timestamp;
+                }
+
+                numVideoPacketsBuffered++;
             }
 
             bytesSent += packetData.Num();
@@ -295,28 +324,59 @@ class RTMPPublisher : public NetworkStream
     List<BYTE> sendBuffer;
     int curSendBufferLen;
 
+    int FlushSendBuffer()
+    {
+        if(!curSendBufferLen)
+            return 1;
+
+        SOCKET sb_socket = rtmp->m_sb.sb_socket;
+
+        BYTE *lpTemp = sendBuffer.Array();
+        int totalBytesSent = curSendBufferLen;
+        while(totalBytesSent > 0)
+        {
+            int nBytes = send(sb_socket, (const char*)lpTemp, totalBytesSent, 0);
+            if(nBytes < 0)
+                return nBytes;
+            if(nBytes == 0)
+                return 0;
+
+            totalBytesSent -= nBytes;
+            lpTemp += nBytes;
+        }
+
+        int prevSendBufferSize = curSendBufferLen;
+        curSendBufferLen = 0;
+
+        return prevSendBufferSize;
+    }
+
     static int BufferedSend(RTMPSockBuf *sb, const char *buf, int len, RTMPPublisher *network)
     {
-        bool bComplete = false;
         int fullLen = len;
+        bool bSentData = false;
 
-        do 
+        int newTotal = network->curSendBufferLen+len;
+
+        //would exceed buffer size, send instead.
+        if(newTotal >= int(network->sendBuffer.Num()))
         {
-            int newTotal = network->curSendBufferLen+len;
+            int nBytes;
+            //flush existing packets
+            nBytes = network->FlushSendBuffer();
+            if(nBytes < 0)
+                return nBytes;
+            if(nBytes == 0)
+                return 0;
 
-            //buffer full, send
-            if(newTotal >= int(network->sendBuffer.Num()))
+            //if packet is bigger than the send buffer, just send it straight up instead of buffering
+            if((UINT)len > network->sendBuffer.Num())
             {
-                int pendingBytes = newTotal-network->sendBuffer.Num();
-                int copyCount    = network->sendBuffer.Num()-network->curSendBufferLen;
-
-                mcpy(network->sendBuffer.Array()+network->curSendBufferLen, buf, copyCount);
-
-                BYTE *lpTemp = network->sendBuffer.Array();
-                int totalBytesSent = network->sendBuffer.Num();
+                const char *lpTemp = buf;
+                int totalBytesSent = len;
                 while(totalBytesSent > 0)
                 {
-                    int nBytes = send(sb->sb_socket, (const char*)lpTemp, totalBytesSent, 0);
+                    nBytes = send(sb->sb_socket, lpTemp, totalBytesSent, 0);
                     if(nBytes < 0)
                         return nBytes;
                     if(nBytes == 0)
@@ -326,27 +386,17 @@ class RTMPPublisher : public NetworkStream
                     lpTemp += nBytes;
                 }
 
-                network->curSendBufferLen = 0;
-
-                if(pendingBytes)
-                {
-                    buf += copyCount;
-                    len -= copyCount;
-                }
-                else
-                    bComplete = true;
+                len = 0;
             }
-            else
-            {
-                if(len)
-                {
-                    mcpy(network->sendBuffer.Array()+network->curSendBufferLen, buf, len);
-                    network->curSendBufferLen = newTotal;
-                }
 
-                bComplete = true;
-            }
-        } while(!bComplete);
+            network->numVideoPacketsBuffered = 0;
+        }
+
+        if(len > 0)
+        {
+            mcpy(network->sendBuffer.Array()+network->curSendBufferLen, buf, len);
+            network->curSendBufferLen += len;
+        }
 
         return fullLen;
     }
@@ -360,6 +410,8 @@ public:
 
         sendBuffer.SetSize(sendBufferSize);
         curSendBufferLen = 0;
+
+        this->bUseSendBuffer = bUseSendBuffer;
 
         if(bUseSendBuffer)
         {
@@ -663,12 +715,10 @@ NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry)
 
     RTMP_EnableWrite(rtmp); //set it to publish
 
-    //rtmp->m_bUseNagle = 1;
-
-    rtmp->Link.swfUrl.av_len = rtmp->Link.tcUrl.av_len;
+    /*rtmp->Link.swfUrl.av_len = rtmp->Link.tcUrl.av_len;
     rtmp->Link.swfUrl.av_val = rtmp->Link.tcUrl.av_val;
     rtmp->Link.pageUrl.av_len = rtmp->Link.tcUrl.av_len;
-    rtmp->Link.pageUrl.av_val = rtmp->Link.tcUrl.av_val;
+    rtmp->Link.pageUrl.av_val = rtmp->Link.tcUrl.av_val;*/
     rtmp->Link.flashVer.av_val = "FMLE/3.0 (compatible; FMSc/1.0)";
     rtmp->Link.flashVer.av_len = (int)strlen(rtmp->Link.flashVer.av_val);
 
@@ -680,23 +730,8 @@ NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry)
     else if(sendBufferSize < 4096)
         sendBufferSize = 4096;
 
-    /*RTMPPacket chunkPacket;
-    zero(&chunkPacket, sizeof(chunkPacket));
-    chunkPacket.m_nChannel = 0x02;     // control channel (invoke)
-    chunkPacket.m_headerType = RTMP_PACKET_SIZE_LARGE;
-    chunkPacket.m_packetType = RTMP_PACKET_TYPE_CHUNK_SIZE;
-    chunkPacket.m_nTimeStamp = 0;
-    chunkPacket.m_nInfoField2 = rtmp->m_stream_id;
-    chunkPacket.m_hasAbsTimestamp = TRUE;
-
-    List<BYTE> padBuffer;
-    padBuffer.SetSize(RTMP_MAX_HEADER_SIZE+sizeof(DWORD));
-    *(DWORD*)(padBuffer+RTMP_MAX_HEADER_SIZE) = fastHtonl(4096);
-
-    chunkPacket.m_body = (char*)(padBuffer.Array() + RTMP_MAX_HEADER_SIZE);
-    chunkPacket.m_nBodySize = sizeof(DWORD);*/
-
-    rtmp->m_outChunkSize = 4096;
+    rtmp->m_outChunkSize = 4096;//RTMP_DEFAULT_CHUNKSIZE;//
+    rtmp->m_bSendChunkSizeInfo = TRUE;
 
     if(!RTMP_Connect(rtmp, NULL))
     {

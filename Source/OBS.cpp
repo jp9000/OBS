@@ -166,7 +166,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
 
     //const int statusHeight = 50;
     const int listControlWidth = listAreaWidth/2;
-    const int listControlHeight = totalControlAreaHeight - textControlHeight /*- statusHeight*/;
+    const int listControlHeight = totalControlAreaHeight - textControlHeight - controlHeight - controlPadding;
 
     //-----------------------------------------------------
 
@@ -215,15 +215,27 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
 
     //-----------------------------------------------------
 
-    SetWindowPos(GetDlgItem(hwndMain, ID_SCENES), NULL, xPos, yPos, listControlWidth-controlPadding, listControlHeight-controlPadding, flags);
+    SetWindowPos(GetDlgItem(hwndMain, ID_SCENES), NULL, xPos, yPos, listControlWidth-controlPadding, listControlHeight, flags);
     xPos += listControlWidth;
 
-    SetWindowPos(GetDlgItem(hwndMain, ID_SOURCES), NULL, xPos, yPos, listControlWidth-controlPadding, listControlHeight-controlPadding, flags);
+    SetWindowPos(GetDlgItem(hwndMain, ID_SOURCES), NULL, xPos, yPos, listControlWidth-controlPadding, listControlHeight, flags);
     xPos += listControlWidth;
+
+    int resetXPos = xPos;
 
     //-----------------------------------------------------
 
-    int resetXPos = xPos;
+    xPos = xStart;
+    yPos += listControlHeight;
+
+    DWORD meterFlags = flags;
+    /*if(!bRunning)
+        meterFlags &= ~SWP_SHOWWINDOW;*/
+    SetWindowPos(GetDlgItem(hwndMain, ID_BANDWIDTHMETER), NULL, xPos, yPos, (listControlWidth*2)-controlPadding, controlHeight, meterFlags);
+
+    //-----------------------------------------------------
+
+    xPos = resetXPos;
     yPos = yStart;
 
     SetWindowPos(GetDlgItem(hwndMain, ID_MICVOLUME), NULL, xPos, yPos, controlWidth-controlPadding, volControlHeight, flags);
@@ -272,14 +284,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
 
     //-----------------------------------------------------
 
-    xPos = resetXPos;
-
-    DWORD meterFlags = flags;
-    if(!bRunning)
-        meterFlags &= ~SWP_SHOWWINDOW;
-
-    SetWindowPos(GetDlgItem(hwndMain, ID_BANDWIDTHMETER), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, meterFlags);
-    xPos += controlWidth;
+    xPos = resetXPos + controlWidth;
 
     SetWindowPos(GetDlgItem(hwndMain, ID_EXIT), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
     xPos += controlWidth;
@@ -1602,7 +1607,7 @@ void OBS::MainCaptureLoop()
         if(bpsTime > 1.0f)
         {
             bytesPerSec = DWORD(curBytesSent - lastBytesSent);
-            bpsTime -= 1.0f;
+            bpsTime = 0.0f;
 
             lastBytesSent = curBytesSent;
 
