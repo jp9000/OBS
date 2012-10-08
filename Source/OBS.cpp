@@ -30,6 +30,10 @@ typedef bool (*LOADPLUGINPROC)();
 typedef void (*UNLOADPLUGINPROC)();
 
 
+BOOL bLoggedSystemStats = FALSE;
+void LogSystemStats();
+
+
 VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize);
 AudioEncoder* CreateMP3Encoder(UINT bitRate);
 AudioEncoder* CreateAACEncoder(UINT bitRate);
@@ -87,7 +91,7 @@ BOOL CALLBACK MonitorInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprc
 const int controlPadding = 3;
 
 const int totalControlAreaWidth  = minClientWidth;
-const int totalControlAreaHeight = 150;
+const int totalControlAreaHeight = 156;
 
 void OBS::ResizeRenderFrame(bool bRedrawRenderFrame)
 {
@@ -166,7 +170,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
 
     //const int statusHeight = 50;
     const int listControlWidth = listAreaWidth/2;
-    const int listControlHeight = totalControlAreaHeight - textControlHeight - controlHeight - controlPadding;
+    //const int listControlHeight = totalControlAreaHeight - textControlHeight - controlHeight - controlPadding;
 
     //-----------------------------------------------------
 
@@ -202,36 +206,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
 
     //SetWindowPos(GetDlgItem(hwndMain, ID_STATUS), NULL, xPos, yPos+listControlHeight, totalWidth-controlPadding, statusHeight, 0);
 
-    //-----------------------------------------------------
-
-    SetWindowPos(GetDlgItem(hwndMain, ID_SCENES_TEXT), NULL, xPos+2, yPos, listControlWidth-controlPadding-2, textControlHeight, flags);
-    xPos += listControlWidth;
-
-    SetWindowPos(GetDlgItem(hwndMain, ID_SOURCES_TEXT), NULL, xPos+2, yPos, listControlWidth-controlPadding-2, textControlHeight, flags);
-    xPos += listControlWidth;
-
-    yPos += textControlHeight;
-    xPos  = xStart;
-
-    //-----------------------------------------------------
-
-    SetWindowPos(GetDlgItem(hwndMain, ID_SCENES), NULL, xPos, yPos, listControlWidth-controlPadding, listControlHeight, flags);
-    xPos += listControlWidth;
-
-    SetWindowPos(GetDlgItem(hwndMain, ID_SOURCES), NULL, xPos, yPos, listControlWidth-controlPadding, listControlHeight, flags);
-    xPos += listControlWidth;
-
-    int resetXPos = xPos;
-
-    //-----------------------------------------------------
-
-    xPos = xStart;
-    yPos += listControlHeight;
-
-    DWORD meterFlags = flags;
-    /*if(!bRunning)
-        meterFlags &= ~SWP_SHOWWINDOW;*/
-    SetWindowPos(GetDlgItem(hwndMain, ID_BANDWIDTHMETER), NULL, xPos, yPos, (listControlWidth*2)-controlPadding, controlHeight, meterFlags);
+    int resetXPos = xStart+listControlWidth*2;
 
     //-----------------------------------------------------
 
@@ -289,6 +264,45 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
     SetWindowPos(GetDlgItem(hwndMain, ID_EXIT), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
     xPos += controlWidth;
 
+    yPos += controlHeight;
+
+    //-----------------------------------------------------
+
+    int listControlHeight = yPos-yStart-textControlHeight;
+
+    xPos  = xStart;
+    yPos  = yStart;
+
+    SetWindowPos(GetDlgItem(hwndMain, ID_SCENES_TEXT), NULL, xPos+2, yPos, listControlWidth-controlPadding-2, textControlHeight, flags);
+    xPos += listControlWidth;
+
+    SetWindowPos(GetDlgItem(hwndMain, ID_SOURCES_TEXT), NULL, xPos+2, yPos, listControlWidth-controlPadding-2, textControlHeight, flags);
+    xPos += listControlWidth;
+
+    yPos += textControlHeight;
+    xPos  = xStart;
+
+    //-----------------------------------------------------
+
+    SetWindowPos(GetDlgItem(hwndMain, ID_SCENES), NULL, xPos, yPos, listControlWidth-controlPadding, listControlHeight, flags);
+    xPos += listControlWidth;
+
+    SetWindowPos(GetDlgItem(hwndMain, ID_SOURCES), NULL, xPos, yPos, listControlWidth-controlPadding, listControlHeight, flags);
+    xPos += listControlWidth;
+
+    //-----------------------------------------------------
+
+    xPos = xStart;
+    yPos += listControlHeight;
+
+    int meterHeight = totalControlAreaHeight-(yPos-yStart)-controlPadding;
+
+    DWORD meterFlags = flags;
+    if(!bRunning)
+        meterFlags &= ~SWP_SHOWWINDOW;
+    SetWindowPos(GetDlgItem(hwndMain, ID_BANDWIDTHMETER), NULL, xPos, yPos, totalControlAreaWidth-(controlPadding*2), meterHeight, meterFlags);
+
+    yPos += controlHeight;
 }
 
 Scene* STDCALL CreateNormalScene(XElement *data)
@@ -385,14 +399,6 @@ OBS::OBS()
     App = this;
 
     __cpuid(cpuInfo, 1);
-    BYTE cpuSteppingID  = cpuInfo[0] & 0xF;
-    BYTE cpuModel       = (cpuInfo[0]>>4) & 0xF;
-    BYTE cpuFamily      = (cpuInfo[0]>>8) & 0xF;
-    BYTE cpuType        = (cpuInfo[0]>>12) & 0x3;
-    BYTE cpuExtModel    = (cpuInfo[0]>>17) & 0xF;
-    BYTE cpuExtFamily   = (cpuInfo[0]>>21) & 0xFF;
-
-    Log(TEXT("stepping id: %u, model %u, family %u, type %u, extmodel %u, extfamily %u"), cpuSteppingID, cpuModel, cpuFamily, cpuType, cpuExtModel, cpuExtFamily);
 
     bSSE2Available = (cpuInfo[3] & (1<<26)) != 0;
 
@@ -456,7 +462,7 @@ OBS::OBS()
     wc.lpfnWndProc = (WNDPROC)OBSProc;
     wc.hIcon = LoadIcon(hinstMain, MAKEINTRESOURCE(IDI_ICON1));
     wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
-    //wc.lpszMenuName = MAKEINTRESOURCE(IDR_MAINMENU);
+    wc.lpszMenuName = MAKEINTRESOURCE(IDR_MAINMENU);
 
     if(!RegisterClass(&wc))
         CrashError(TEXT("Could not register main window class"));
@@ -471,7 +477,7 @@ OBS::OBS()
 
     borderXSize += GetSystemMetrics(SM_CXSIZEFRAME)*2;
     borderYSize += GetSystemMetrics(SM_CYSIZEFRAME)*2;
-    //borderYSize += GetSystemMetrics(SM_CYMENU);
+    borderYSize += GetSystemMetrics(SM_CYMENU);
     borderYSize += GetSystemMetrics(SM_CYCAPTION);
 
     clientWidth  = AppConfig->GetInt(TEXT("General"), TEXT("Width"),  700);
@@ -502,8 +508,8 @@ OBS::OBS()
     if(!hwndMain)
         CrashError(TEXT("Could not create main window"));
 
-    /*HMENU hMenu = GetMenu(hwndMain);
-    LocalizeMenu(hMenu);*/
+    HMENU hMenu = GetMenu(hwndMain);
+    LocalizeMenu(hMenu);
 
     //-----------------------------------------------------
     // render frame
@@ -996,6 +1002,14 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
+    if(!bLoggedSystemStats)
+    {
+        LogSystemStats();
+        bLoggedSystemStats = TRUE;
+    }
+
+    //-------------------------------------------------------------
+
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
 
     bool bCanRetry = false;
@@ -1194,15 +1208,6 @@ void OBS::Start()
     String preset  = AppConfig->GetString(TEXT("Video Encoding"), TEXT("Preset"),     TEXT("veryfast"));
     bUsing444      = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Use444"),     0) != 0;
 
-    bUseSyncFix    = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("UseSyncFix"), 0) != 0;
-
-    if(bUseSyncFix)
-    {
-        Log(TEXT("------------------------------------------"));
-        Log(TEXT("  Using audio/video sync fix"));
-        hTimeMutex = OSCreateMutex();
-    }
-
     //-------------------------------------------------------------
 
     bWriteToFile = networkMode == 1 || AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile")) != 0;
@@ -1251,8 +1256,8 @@ void OBS::Start()
             fileStream = CreateFLVFileStream(strOutputFile);
         else if(strFileExtension.CompareI(TEXT("mp4")))
             fileStream = CreateMP4FileStream(strOutputFile);
-        /*else if(strFileExtension.CompareI(TEXT("avi")))
-            fileStream = CreateAVIFileStream(strOutputFile));*/
+        //else if(strFileExtension.CompareI(TEXT("avi")))
+        //    fileStream = CreateAVIFileStream(strOutputFile));
     }
 
     hMainThread = OSCreateThread((XTHREAD)OBS::MainCaptureThread, NULL);
@@ -1332,11 +1337,6 @@ void OBS::Stop()
     fileStream = NULL;
     audioEncoder = NULL;
     videoEncoder = NULL;
-
-    //-------------------------------------------------------------
-
-    if(bUseSyncFix)
-        OSCloseMutex(hTimeMutex);
 
     //-------------------------------------------------------------
 
@@ -1476,7 +1476,7 @@ inline void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
 
 DWORD STDCALL OBS::MainCaptureThread(LPVOID lpUnused)
 {
-    SYSTEM_INFO si;
+    /*SYSTEM_INFO si;
     GetSystemInfo(&si);
 
     DWORD lastCoreIDMask = 1<<(si.dwNumberOfProcessors-1);
@@ -1486,7 +1486,7 @@ DWORD STDCALL OBS::MainCaptureThread(LPVOID lpUnused)
     {
         int lastError = GetLastError();
         nop();
-    }
+    }*/
 
     App->MainCaptureLoop();
     return 0;
@@ -1559,10 +1559,7 @@ void OBS::MainCaptureLoop()
         curStreamTime = renderStartTime-firstFrameTime;
         DWORD frameDelta = curStreamTime-lastStreamTime;
 
-        if(bUseSyncFix)
-            ReleaseSemaphore(hRequestAudioEvent, 1, NULL);
-        else
-            bufferedTimes << curStreamTime;
+        bufferedTimes << curStreamTime;
 
         //Log(TEXT("expected frame timing is %u, frame time: %u"), frameTime, curStreamTime-lastStreamTime);
 
@@ -1622,7 +1619,7 @@ void OBS::MainCaptureLoop()
         double curStrain = network->GetPacketStrain();
         if(bUpdateBPS || !CloseDouble(curStrain, lastStrain))
         {
-            SetBandwidthMeterValue(GetDlgItem(hwndMain, ID_BANDWIDTHMETER), bytesPerSec, curStrain);
+            SetBandwidthMeterValue(GetDlgItem(hwndMain, ID_BANDWIDTHMETER), bytesPerSec, NULL, captureFPS, curStrain);
             lastStrain = curStrain;
         }
 
@@ -1797,34 +1794,18 @@ void OBS::MainCaptureLoop()
         }
         else
         {
-            if(bUseSyncFix)
+            //audio sometimes takes a bit to start -- do not start processing frames until audio has started capturing
+            if(!bRecievedFirstAudioFrame)
+                bEncode = false;
+            else if(bFirstFrame)
             {
-                OSEnterMutex(hTimeMutex);
-                if(bufferedTimes.Num() < 2 || bufferedTimes[1] == 0)
-                {
-                    if(bufferedTimes.Num() > 1)
-                        bufferedTimes.Remove(0);
+                if(bufferedTimes.Num() > 1)
+                    bufferedTimes.RemoveRange(0, bufferedTimes.Num()-1);
+                firstFrameTime += bufferedTimes[0];
+                bufferedTimes[0] = 0;
 
-                    bEncode = false;
-                }
-                OSLeaveMutex(hTimeMutex);
+                bFirstFrame = false;
             }
-            else
-            {
-                //audio sometimes takes a bit to start -- do not start processing frames until audio has started capturing
-                if(!bRecievedFirstAudioFrame)
-                    bEncode = false;
-                else if(bFirstFrame)
-                {
-                    if(bufferedTimes.Num() > 1)
-                        bufferedTimes.RemoveRange(0, bufferedTimes.Num()-1);
-                    firstFrameTime += bufferedTimes[0];
-                    bufferedTimes[0] = 0;
-
-                    bFirstFrame = false;
-                }
-            }
-
 
             if(!bEncode)
             {
@@ -1869,31 +1850,8 @@ void OBS::MainCaptureLoop()
                 DWORD curTimeStamp = 0;
                 DWORD curPTSVal = 0;
 
-                if(bUseSyncFix) OSEnterMutex(hTimeMutex);
-
                 curTimeStamp = bufferedTimes[0];
                 curPTSVal = bufferedTimes[curPTS++];
-
-                if(bUseSyncFix)
-                {
-                    if(curPTSVal != 0)
-                    {
-                        int toleranceVal = int(lastPTSVal+frameTime);
-                        int toleranceOffset = (int(curPTSVal)-toleranceVal);
-                        int halfFrameTime = int(frameTime/2);
-
-                        if(toleranceOffset > halfFrameTime)
-                            curPTSVal = DWORD(toleranceVal+(toleranceOffset-halfFrameTime));
-                        else if(toleranceOffset < -halfFrameTime)
-                            curPTSVal = DWORD(toleranceVal+(toleranceOffset+halfFrameTime));
-                        else
-                            curPTSVal = DWORD(toleranceVal);
-
-                        bufferedTimes[curPTS-1] = curPTSVal;
-                    }
-
-                    OSLeaveMutex(hTimeMutex);
-                }
 
                 picOut.i_pts = curPTSVal;
 
@@ -1967,9 +1925,7 @@ void OBS::MainCaptureLoop()
 
                     curPTS--;
 
-                    if(bUseSyncFix) OSEnterMutex(hTimeMutex);
                     bufferedTimes.Remove(0);
-                    if(bUseSyncFix) OSLeaveMutex(hTimeMutex);
                 }
             }
 
@@ -1991,8 +1947,7 @@ void OBS::MainCaptureLoop()
 
         //------------------------------------
         // get audio while sleeping or capturing
-        if(!bUseSyncFix)
-            ReleaseSemaphore(hRequestAudioEvent, 1, NULL);
+        ReleaseSemaphore(hRequestAudioEvent, 1, NULL);
 
         //------------------------------------
         // frame sync
@@ -2072,10 +2027,12 @@ void OBS::MainAudioLoop()
 
         while(QueryNewAudio())
         {
-            desktopAudio->GetBuffer(&desktopBuffer, &desktopAudioFrames);
+            DWORD timestamp, nullTimestamp;
+
+            desktopAudio->GetBuffer(&desktopBuffer, &desktopAudioFrames, timestamp);
 
             if(micAudio != NULL)
-                micAudio->GetBuffer(&micBuffer, &micAudioFrames);
+                micAudio->GetBuffer(&micBuffer, &micAudioFrames, nullTimestamp);
 
             UINT totalFloats = desktopAudioFrames*2;
 
@@ -2159,11 +2116,15 @@ void OBS::MainAudioLoop()
             }
 
             DataPacket packet;
-            if(audioEncoder->Encode(desktopBuffer, totalFloats>>1, packet))
+            if(audioEncoder->Encode(desktopBuffer, totalFloats>>1, packet, timestamp))
             {
                 FrameAudio *frameAudio = pendingAudioFrames.CreateNew();
                 frameAudio->audioData.CopyArray(packet.lpPacket, packet.size);
-                frameAudio->timestamp = DWORD(double(curAudioFrame)*double(GetAudioEncoder()->GetFrameSize())/44.1);
+                //frameAudio->timestamp = DWORD(double(curAudioFrame)*double(GetAudioEncoder()->GetFrameSize())/44.1);
+                frameAudio->timestamp = timestamp;
+
+                //Log(TEXT("returned timestamp: %u, calculated timestamp: %u"), timestamp, calcTimestamp);
+
                 curAudioFrame++;
             }
         }
@@ -2172,16 +2133,6 @@ void OBS::MainAudioLoop()
 
         if(!bRecievedFirstAudioFrame && pendingAudioFrames.Num())
             bRecievedFirstAudioFrame = true;
-
-        if(bUseSyncFix)// && pendingAudioFrames.Num())
-        {
-            OSEnterMutex(hTimeMutex);
-            if(!pendingAudioFrames.Num())
-                bufferedTimes << 0;
-            else
-                bufferedTimes << pendingAudioFrames.Last().timestamp;
-            OSLeaveMutex(hTimeMutex);
-        }
 
         //-----------------------------------------------
 

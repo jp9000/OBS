@@ -45,6 +45,11 @@ class MP3Encoder : public AudioEncoder
     UINT outputFrameSize;
     UINT curBitRate;
 
+    List<DWORD> bufferedTimestamps;
+    DWORD curEncodeTimestamp;
+    DWORD frameCounter;
+    bool bFirstFrame;
+
 public:
     MP3Encoder(UINT bitRate)
     {
@@ -87,9 +92,28 @@ public:
         traceOut;
     }
 
-    bool Encode(float *input, UINT numInputFrames, DataPacket &packet)
+    bool Encode(float *input, UINT numInputFrames, DataPacket &packet, DWORD &timestamp)
     {
         traceIn(MP3Encoder::Encode);
+
+        if(bFirstFrame)
+        {
+            curEncodeTimestamp = timestamp;
+            bFirstFrame = false;
+        }
+
+        //------------------------------------------------
+
+        UINT lastSampleSize = frameCounter;
+
+        frameCounter += numInputFrames;
+        if(frameCounter > outputFrameSize)
+        {
+            frameCounter -= outputFrameSize;
+
+            bufferedTimestamps << curEncodeTimestamp;
+            curEncodeTimestamp = timestamp + ((outputFrameSize-lastSampleSize)*10/441);
+        }
 
         int framenum1 = lame_get_frameNum(lgf);
         int ret = lame_encode_buffer_interleaved_ieee_float(lgf, (float*)input, numInputFrames, MP3OutputBuffer.Array()+1, dwMP3MaxSize);
@@ -114,6 +138,9 @@ public:
             {
                 packet.lpPacket = MP3OutputBuffer.Array();
                 packet.size     = ret+1;
+
+                timestamp = bufferedTimestamps[0];
+                bufferedTimestamps.Remove(0);
             }
         }
 

@@ -22,4 +22,4 @@
 #define BANDWIDTH_METER_CLASS TEXT("OBSBandwidthMeter")
 
 void InitBandwidthMeter();
-void SetBandwidthMeterValue(HWND hwnd, UINT bytesPerSec, double strain);
+void SetBandwidthMeterValue(HWND hwnd, UINT bytesPerSec, CTSTR lpWarnings, UINT captureFPS, double strain);

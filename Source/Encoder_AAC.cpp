@@ -37,6 +37,10 @@ class AACEncoder : public AudioEncoder
     List<BYTE>  aacBuffer;
     List<BYTE>  header;
 
+    List<DWORD> bufferedTimestamps;
+    DWORD curEncodeTimestamp;
+    bool bFirstFrame;
+
 public:
     AACEncoder(UINT bitRate)
     {
@@ -76,6 +80,7 @@ public:
         free(tempHeader);
 
         bFirstPacket = true;
+        bFirstFrame  = true;
 
         Log(TEXT("------------------------------------------"));
         Log(TEXT("%s"), GetInfoString().Array());
@@ -92,14 +97,23 @@ public:
         traceOut;
     }
 
-    bool Encode(float *input, UINT numInputFrames, DataPacket &packet)
+    bool Encode(float *input, UINT numInputFrames, DataPacket &packet, DWORD &timestamp)
     {
         traceIn(AACEncoder::Encode);
 
+        if(bFirstFrame)
+        {
+            curEncodeTimestamp = timestamp;
+            bFirstFrame = false;
+        }
+
+        //------------------------------------------------
+
+        DWORD curTimestamp = timestamp;
+
+        UINT lastSampleSize = inputBuffer.Num();
         UINT numInputSamples = numInputFrames*2;
         inputBuffer.AppendArray(input, numInputSamples);
-
-        //DWORD time1 = OSGetTime();
 
         int ret = 0;
 
@@ -140,16 +154,19 @@ public:
                 {
                     packet.lpPacket = aacBuffer.Array();
                     packet.size     = ret+2;
+
+                    timestamp = bufferedTimestamps[0];
+                    bufferedTimestamps.Remove(0);
                 }
             }
             else if(ret < 0)
                 AppWarning(TEXT("aac encode error"));
 
             inputBuffer.RemoveRange(0, numReadSamples);
-        }
 
-        //DWORD encodeTime = OSGetTime()-time1;
-        //OSDebugOut(TEXT("encoding took %dms, bytes returned is %d\r\n"), encodeTime, outputBuffer.Num());
+            bufferedTimestamps << curEncodeTimestamp;
+            curEncodeTimestamp = curTimestamp + (((numReadSamples-lastSampleSize)/2)*10/441);
+        }
 
         return ret > 0;
 

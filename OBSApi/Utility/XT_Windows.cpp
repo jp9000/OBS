@@ -48,6 +48,8 @@ HWND        hwndMainAppWindow = NULL;
 
 void   STDCALL OSInit()
 {
+    timeBeginPeriod(1);
+
     QueryPerformanceFrequency(&clockFreq);
     QueryPerformanceCounter(&startTime);
     startTick = GetTickCount();
@@ -56,6 +58,7 @@ void   STDCALL OSInit()
 
 void   STDCALL OSExit()
 {
+    timeEndPeriod(1);
 }
 
 

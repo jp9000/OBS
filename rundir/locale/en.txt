@@ -40,6 +40,17 @@ Listbox.FitToScreen "Fit to screen"
 Listbox.ResetSize   "Reset Size"
 Listbox.SetHotkey   "Set Hotkey"
 
+MainMenu.File       "&File"
+MainMenu.Help       "&Help"
+MainMenu.Settings   "&Settings"
+
+MainMenu.File.Exit  "E&xit"
+
+MainMenu.Help.Contents  "&Contents"
+
+MainMenu.Settings.OpenConfigFolder  "Open &Configuration Folder"
+MainMenu.Settings.OpenLogFolder     "Open &Log Folder"
+
 MainWindow.Exit         "Exit"
 MainWindow.Plugins      "Plugins"
 MainWindow.SceneEditor  "Edit Scene"
@@ -80,9 +91,7 @@ Settings.Advanced.DisableD3DCompatibilityModeTooltip    "Disables the use of the
 Settings.Advanced.Network                               "Network"
 Settings.Advanced.SendBufferSize                        "Send Buffer Size:"
 Settings.Advanced.UseSendBuffer                         "Use Send Buffer"
-Settings.Advanced.UseSendBufferTooltip                  "The send buffer causes all network data to be buffered to specific packet sizes before sending.  Using this greatly increases network throughput, but will make the stream a bit more delayed.\r\n\r\nRecommended: On, at 32768"
-Settings.Advanced.UseSyncFix                            "Use Video/Audio Sync Fix"
-Settings.Advanced.UseSyncFixTooltip                     "In rare cases, certain CPUs and motherboards have timing bugs.  Using this fix ensures that audio/video sync will always be correct, but is less accurate than proper timing.  Due to that fact, do not use this unless you are having audio/video sync issues."
+Settings.Advanced.UseSendBufferTooltip                  "The send buffer causes all network data to be buffered up to specific packet sizes before sending.  Using this greatly increases network throughput, but will make the stream a bit more delayed.\r\n\r\nRecommended: On, at 32768"
 Settings.Advanced.VideoEncoderCPUTradeoff               "x264 CPU Preset:"
 Settings.Advanced.VideoEncoderCPUTradeoffToolTip        "Setting this value higher reduces CPU usage by sacrificing certain aspects of quality.  On the other hand, setting this value lower increases quality at the cost of more CPU.\r\n\r\nRecommended: Very Fast"
 Settings.Advanced.VideoEncoderSettings                  "Custom x264 Encoder Settings"

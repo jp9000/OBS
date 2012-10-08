@@ -47,10 +47,7 @@ void LocalizeWindow(HWND hwnd, LocaleStringLookup *lookup)
         if(strText.IsValid())
         {
             if(strText[0] == '.')
-            {
-                strText.RemoveChar(0);
-                SetWindowText(hwndChild, strText);
-            }
+                SetWindowText(hwndChild, strText.Array()+1);
             else
             {
                 if(strText.IsValid() && lookup->HasLookup(strText))
@@ -91,7 +88,13 @@ void LocalizeMenu(HMENU hMenu, LocaleStringLookup *lookup)
         mii.cch = strLookup.Length()+1;
         GetMenuItemInfo(hMenu, i, TRUE, &mii);
 
-        String strName = lookup->LookupString(strLookup);
+        String strName;
+        if(strLookup[0] == '.')
+            strName = strLookup.Array()+1;
+        else if(!lookup->HasLookup(strLookup))
+            strName = strLookup;
+        else
+            strName = lookup->LookupString(strLookup);
 
         mii.fMask = MIIM_STRING;
         mii.dwTypeData = strName.Array();

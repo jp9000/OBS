@@ -23,6 +23,8 @@ struct BandwidthMeterData
 {
     UINT    bytesPerSec;
     double  strain;
+    String  strWarnings;
+    UINT    captureFPS;
 
     long    cx,cy;
 
@@ -35,7 +37,7 @@ inline BandwidthMeterData* GetBandwidthMeterData(HWND hwnd)
     return (BandwidthMeterData*)GetWindowLongPtr(hwnd, 0);
 }
 
-void SetBandwidthMeterValue(HWND hwnd, UINT bytesPerSec, double strain)
+void SetBandwidthMeterValue(HWND hwnd, UINT bytesPerSec, CTSTR lpWarnings, UINT captureFPS, double strain)
 {
     BandwidthMeterData *control = GetBandwidthMeterData(hwnd);
     if(!control)
@@ -43,6 +45,8 @@ void SetBandwidthMeterValue(HWND hwnd, UINT bytesPerSec, double strain)
 
     control->bytesPerSec = bytesPerSec;
     control->strain = strain;
+    control->captureFPS = captureFPS;
+    control->strWarnings = lpWarnings;
 
     HDC hDC = GetDC(hwnd);
     control->Draw(hDC);
@@ -158,6 +162,13 @@ void BandwidthMeterData::Draw(HDC hDC)
     clientRect.right -= 24;
     DrawText(hdcTemp, strKBPS, strKBPS.Length(), &clientRect, DT_TOP|DT_RIGHT);
     //Ellipse(hdcTemp, cx-20, 4, cx-4, 20);
+
+    String strCaptureFPS;
+    strCaptureFPS << TEXT("Capture FPS: ") << IntString(captureFPS);
+    TextOut(hdcTemp, clientRect.right-200, 6, strCaptureFPS, strCaptureFPS.Length());
+
+    if(strWarnings.IsValid())
+        TextOut(hdcTemp, 6, 6, strCaptureFPS, strCaptureFPS.Length());
 
     RECT rc = {cx-20, 4, cx-4, 20};
     FillRect(hdcTemp, &rc, hColorBrush);

@@ -68,7 +68,6 @@
 #define IDC_USEVIDEOENCODERSETTINGS     1041
 #define IDC_SERVEREDIT                  1042
 #define IDC_USESENDBUFFER               1042
-#define IDC_PUSHTOTALK2                 1042
 #define IDC_FORCEMONO                   1042
 #define IDC_CHANNELNAME_STATIC          1043
 #define IDC_PLAYPATH_STATIC             1044
@@ -135,6 +134,7 @@
 #define IDC_CHECK2                      1099
 #define IDC_USED3DCOMPATIBILITY         1099
 #define IDC_DISABLED3DCOMPATIBILITY     1099
+#define IDC_TIMER1                      1100
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -163,7 +163,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        136
 #define _APS_NEXT_COMMAND_VALUE         40042
-#define _APS_NEXT_CONTROL_VALUE         1100
+#define _APS_NEXT_CONTROL_VALUE         1101
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

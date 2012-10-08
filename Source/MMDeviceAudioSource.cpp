@@ -50,6 +50,9 @@ class MMDeviceAudioSource : public AudioSource
 
     List<float> audioBuffer;
 
+    INT64 startTimestamp;
+    INT64 lastTimestamp;
+
     //-----------------------------------------
 
     List<float> receiveBuffer;
@@ -84,7 +87,7 @@ public:
 
     virtual UINT GetNextBuffer();
 
-    virtual bool GetBuffer(float **buffer, UINT *numFrames);
+    virtual bool GetBuffer(float **buffer, UINT *numFrames, DWORD &timestamp);
 };
 
 AudioSource* CreateAudioSource(bool bMic, CTSTR lpID)
@@ -208,6 +211,32 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
 
         resampleRatio = 44100.0 / double(inputSamplesPerSec);
         bResample = true;
+
+        //----------------------------------------------------
+        // hack to get rid
+
+        SRC_DATA data;
+        data.src_ratio = resampleRatio;
+
+        List<float> blankBuffer;
+        blankBuffer.SetSize(inputSamplesPerSec/100*2);
+
+        data.data_in = blankBuffer.Array();
+        data.input_frames = inputSamplesPerSec/100;
+
+        UINT frameAdjust = UINT((double(data.input_frames) * resampleRatio) + 1.0);
+        UINT newFrameSize = frameAdjust*2;
+
+        resampleBuffer.SetSize(newFrameSize);
+
+        data.data_out = resampleBuffer.Array();
+        data.output_frames = frameAdjust;
+
+        data.end_of_input = 0;
+
+        int err = src_process(resampler, &data);
+
+        nop();
     }
 
     //-------------------------------------------------------------------------
@@ -318,13 +347,28 @@ UINT MMDeviceAudioSource::GetNextBuffer()
         DWORD dwFlags = 0;
         UINT numAudioFrames = 0;
 
-        err = mmCapture->GetBuffer(&captureBuffer, &numAudioFrames, &dwFlags, NULL, NULL);
+        UINT64 qpcTimestamp;
+        err = mmCapture->GetBuffer(&captureBuffer, &numAudioFrames, &dwFlags, NULL, &qpcTimestamp);
         if(FAILED(err))
         {
             AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: GetBuffer failed"));
             MakeErrorBuffer();
             return AudioAvailable;
         }
+
+        lastTimestamp = qpcTimestamp/10000;
+
+        if(!startTimestamp)
+        {
+            if(dwFlags & AUDCLNT_BUFFERFLAGS_TIMESTAMP_ERROR) //literally praying to god here.
+                CrashError(TEXT("Could not get audio timestamp for first audio frame"));
+
+            startTimestamp = lastTimestamp;
+        }
+        else if(dwFlags & AUDCLNT_BUFFERFLAGS_TIMESTAMP_ERROR)
+            lastTimestamp += 10;
+
+        lastTimestamp -= startTimestamp;
 
         if(audioBuffer.Num() < numAudioFrames*2)
             audioBuffer.SetSize(numAudioFrames*2);
@@ -590,7 +634,7 @@ UINT MMDeviceAudioSource::GetNextBuffer()
     traceOut;
 }
 
-bool MMDeviceAudioSource::GetBuffer(float **buffer, UINT *numFrames)
+bool MMDeviceAudioSource::GetBuffer(float **buffer, UINT *numFrames, DWORD &timestamp)
 {
     if(receiveBuffer.Num() < (441*2))
         return false;
@@ -598,6 +642,7 @@ bool MMDeviceAudioSource::GetBuffer(float **buffer, UINT *numFrames)
     bClearSegment = true;
     *buffer = receiveBuffer.Array();
     *numFrames = 441;
+    timestamp = DWORD(lastTimestamp);
 
     return true;
 }

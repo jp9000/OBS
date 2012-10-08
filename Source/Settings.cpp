@@ -1542,6 +1542,9 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                     }
                     break;
 
+                /*case IDC_TIMER1:
+                case IDC_TIMER2:
+                case IDC_TIMER3:*/
                 case IDC_DISABLED3DCOMPATIBILITY:
                     if(HIWORD(wParam) == BN_CLICKED)
                     {

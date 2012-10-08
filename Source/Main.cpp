@@ -22,6 +22,9 @@
 #include <shlobj.h>
 #include <dwmapi.h>
 
+#include <intrin.h>
+#include <inttypes.h>
+
 
 //----------------------------
 
@@ -38,6 +41,8 @@ TCHAR       lpAppDataPath[MAX_PATH];
 
 void InitSockets();
 void TerminateSockets();
+
+void LogVideoCardStats();
 
 BOOL bCompositionEnabled = TRUE;
 BOOL bDisableComposition = FALSE;
@@ -82,6 +87,19 @@ void LogSystemStats()
     GlobalMemoryStatus(&ms);
 
     Log(TEXT("Physical Memory:  %ldMB Total, %ldMB Free"), (ms.dwTotalPhys/1048576), (ms.dwAvailPhys/1048576));
+
+    int cpuInfo[4];
+    __cpuid(cpuInfo, 1);
+    BYTE cpuSteppingID  = cpuInfo[0] & 0xF;
+    BYTE cpuModel       = (cpuInfo[0]>>4) & 0xF;
+    BYTE cpuFamily      = (cpuInfo[0]>>8) & 0xF;
+    BYTE cpuType        = (cpuInfo[0]>>12) & 0x3;
+    BYTE cpuExtModel    = (cpuInfo[0]>>17) & 0xF;
+    BYTE cpuExtFamily   = (cpuInfo[0]>>21) & 0xFF;
+
+    Log(TEXT("stepping id: %u, model %u, family %u, type %u, extmodel %u, extfamily %u"), cpuSteppingID, cpuModel, cpuFamily, cpuType, cpuExtModel, cpuExtFamily);
+
+    LogVideoCardStats();
 }
 
 
@@ -320,8 +338,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         strLog << lpAppDataPath << FormattedString(TEXT("\\logs\\%u-%02u-%02u-%02u%02u-%02u"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond) << TEXT(".log");
 
         InitXTLog(strLog);
-
-        LogSystemStats();
 
         //--------------------------------------------
 

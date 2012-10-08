@@ -19,14 +19,9 @@
 
 #include "Main.h"
 
-
-D3D10System::D3D10System()
+void LogVideoCardStats()
 {
-    traceIn(D3D10System::D3D10System);
-
     HRESULT err;
-
-    //------------------------------------------------------------------
 
     IDXGIFactory *factory;
     if(SUCCEEDED(err = CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&factory)))
@@ -36,8 +31,7 @@ D3D10System::D3D10System()
 
         while(factory->EnumAdapters(i++, &giAdapter) == S_OK)
         {
-            if(i != 0)
-                Log(TEXT("------------------------------------------"));
+            Log(TEXT("------------------------------------------"));
 
             DXGI_ADAPTER_DESC adapterDesc;
             if(err = SUCCEEDED(giAdapter->GetDesc(&adapterDesc)))
@@ -55,6 +49,14 @@ D3D10System::D3D10System()
 
         factory->Release();
     }
+}
+
+
+D3D10System::D3D10System()
+{
+    traceIn(D3D10System::D3D10System);
+
+    HRESULT err;
 
     //------------------------------------------------------------------
 

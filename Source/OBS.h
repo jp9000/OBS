@@ -123,7 +123,7 @@ public:
     virtual void StopCapture()=0;
 
     virtual UINT GetNextBuffer()=0;
-    virtual bool GetBuffer(float **buffer, UINT *numFrames)=0;
+    virtual bool GetBuffer(float **buffer, UINT *numFrames, DWORD &timestamp)=0;
 };
 
 //-------------------------------------------------------------------
@@ -133,7 +133,7 @@ class AudioEncoder
     friend class OBS;
 
 protected:
-    virtual bool    Encode(float *input, UINT numInputFrames, DataPacket &packet)=0;
+    virtual bool    Encode(float *input, UINT numInputFrames, DataPacket &packet, DWORD &timestamp)=0;
     virtual void    GetHeaders(DataPacket &packet)=0;
 
 public:
@@ -248,7 +248,7 @@ enum
     ID_SCENEEDITOR,
     ID_DESKTOPVOLUME,
     ID_MICVOLUME,
-    //ID_STATUS
+    //ID_STATUS,
     ID_SCENES,
     ID_SCENES_TEXT,
     ID_SOURCES,
@@ -418,8 +418,6 @@ class OBS
     HANDLE  hSceneMutex;
     bool    bUsing444;
 
-    bool        bUseSyncFix;
-    HANDLE      hTimeMutex;
     List<UINT>  bufferedTimes;
 
     bool    bRecievedFirstAudioFrame;
