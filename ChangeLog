@@ -3,6 +3,38 @@
 
 -------------------------------
 
+2012-10-10 - 0.42 (alpha)
+    * Added "Start Stream" hotkey
+    * Made a hotkey thread so I can have hotkeys on all the time
+    * Added a "dashboard button" someone requested
+    * Added a menubar
+    * Got rid of the bandwidth meter thing and instead replaced it
+      with a status bar control
+    * Status bar now shows dropped frames and FPS as well as any
+      potential information that the streamer may need to see
+    * Added a few features to the bitmap and bitmap transition
+      sources
+    * Fixed sync bugs, audio now uses proper timestamps provided
+      by the WASAPI
+    * Also improved the "Sync Fix" calculated timestamp option,
+      fully calculated timestamps are now much more accurate and
+      smooth when capture FPS is the same as the max FPS.
+    * Added YUV4:2:2 support to the DirectShow plugin, and improved
+      the format priority
+    * Added a "force mono" option for the mic as requested by a user
+    * Added a "mic boost" option so that mic levels can be boosted
+    * Improved compatibility with computers
+    * Got rid of the garbled screen output bug (d3d pitch wasn't
+      being used)
+    * Got rid of various bugs related to adding/removing sources,
+      as well as adding/removing global sources.  They weren't
+      entering the scene mutex as they should have been
+    * Improved network code again, made it so that packets are never
+      cut in half.  Automatically flushes packets now after 500
+      milliseconds to reduce latency issues with high buffer sizes.
+
+-------------------------------
+
 2012-10-3 - 0.411 (alpha)
     * Made D3D10_LEVEL_9_3 the default again, but still with the
       option to turn it off.  Seems some cards relied on it more

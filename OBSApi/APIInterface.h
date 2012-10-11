@@ -29,6 +29,14 @@ typedef void (STDCALL* OBSHOTKEYPROC)(DWORD, UPARAM, bool);
 #define HOTKEY_CONTROL  0x2
 #define HOTKEY_ALT      0x4
 
+enum StreamInfoPriority
+{
+    StreamInfoPriority_Low,
+    StreamInfoPriority_Medium,
+    StreamInfoPriority_High,
+    StreamInfoPriority_Critical,
+};
+
 class APIInterface
 {
     friend class OBS;
@@ -74,6 +82,11 @@ public:
 
     virtual CTSTR GetAppDataPath() const=0;
     virtual String GetPluginDataPath() const=0;
+
+    virtual UINT AddStreamInfo(CTSTR lpInfo, StreamInfoPriority priority)=0;
+    virtual void SetStreamInfo(UINT infoID, CTSTR lpInfo)=0;
+    virtual void SetStreamInfoPriority(UINT infoID, StreamInfoPriority priority)=0;
+    virtual void RemoveStreamInfo(UINT infoID)=0;
 
     inline bool SSE2Available() {return bSSE2Availabe;}
 };

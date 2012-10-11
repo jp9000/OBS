@@ -120,7 +120,7 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
     err = CoCreateInstance(CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void**)&mmEnumerator);
     if(FAILED(err))
     {
-        CrashError(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IMMDeviceEnumerator"), (BOOL)bMic);
+        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IMMDeviceEnumerator"), (BOOL)bMic);
         return false;
     }
 
@@ -131,14 +131,14 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
 
     if(FAILED(err))
     {
-        CrashError(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IMMDevice"), (BOOL)bMic);
+        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IMMDevice"), (BOOL)bMic);
         return false;
     }
 
     err = mmDevice->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&mmClient);
     if(FAILED(err))
     {
-        CrashError(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IAudioClient"), (BOOL)bMic);
+        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IAudioClient"), (BOOL)bMic);
         return false;
     }
 
@@ -146,7 +146,7 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
     err = mmClient->GetMixFormat(&pwfx);
     if(FAILED(err))
     {
-        CrashError(TEXT("MMDeviceAudioSource::Initialize(%d): Could not get mix format from audio client"), (BOOL)bMic);
+        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not get mix format from audio client"), (BOOL)bMic);
         return false;
     }
 
@@ -165,13 +165,13 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
 
         if(wfext->SubFormat != KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)
         {
-            CrashError(TEXT("MMDeviceAudioSource::Initialize(%d): Unsupported wave format"), (BOOL)bMic);
+            AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Unsupported wave format"), (BOOL)bMic);
             return false;
         }
     }
     else if(pwfx->wFormatTag != WAVE_FORMAT_IEEE_FLOAT)
     {
-        CrashError(TEXT("MMDeviceAudioSource::Initialize(%d): Unsupported wave format"), (BOOL)bMic);
+        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Unsupported wave format"), (BOOL)bMic);
         return false;
     }
 
@@ -184,14 +184,14 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
     err = mmClient->Initialize(AUDCLNT_SHAREMODE_SHARED, flags, ConvertMSTo100NanoSec(5000), 0, pwfx, NULL);
     if(FAILED(err))
     {
-        CrashError(TEXT("MMDeviceAudioSource::Initialize(%d): Could not initialize audio client"), (BOOL)bMic);
+        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not initialize audio client"), (BOOL)bMic);
         return false;
     }
 
     err = mmClient->GetService(IID_IAudioCaptureClient, (void**)&mmCapture);
     if(FAILED(err))
     {
-        CrashError(TEXT("MMDeviceAudioSource::Initialize(%d): Could not get audio capture client"), (BOOL)bMic);
+        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not get audio capture client"), (BOOL)bMic);
         return false;
     }
 
@@ -213,7 +213,8 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
         bResample = true;
 
         //----------------------------------------------------
-        // hack to get rid
+        // hack to get rid of that weird first quirky resampled packet size
+        // (always returns a non-441 sized packet on the first resample)
 
         SRC_DATA data;
         data.src_ratio = resampleRatio;

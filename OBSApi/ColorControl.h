@@ -19,7 +19,14 @@
 
 #pragma once
 
-#define BANDWIDTH_METER_CLASS TEXT("OBSBandwidthMeter")
 
-void InitBandwidthMeter();
-void SetBandwidthMeterValue(HWND hwnd, UINT bytesPerSec, CTSTR lpWarnings, UINT captureFPS, double strain);
+#define COLOR_CONTROL_CLASS TEXT("OBSColorControl")
+
+BASE_EXPORT void InitColorControl(HINSTANCE hInstance);
+
+BASE_EXPORT DWORD CCGetColor(HWND hwnd);
+BASE_EXPORT void  CCSetColor(HWND hwnd, DWORD color);
+BASE_EXPORT void  CCSetColor(HWND hwnd, const Color3 &color);
+
+
+#define CCN_CHANGED     0

@@ -38,6 +38,8 @@ class DesktopImageSource : public ImageSource
     int      curCaptureTexture;
     XElement *data;
 
+    UINT     warningID;
+
 public:
     DesktopImageSource(UINT frameTime, XElement *data)
     {
@@ -60,6 +62,9 @@ public:
 
         for(int i=0; i<NUM_CAPTURE_TEXTURES; i++)
             delete renderTextures[i];
+
+        if(warningID)
+            App->RemoveStreamInfo(warningID);
 
         traceOut;
     }
@@ -100,11 +105,27 @@ public:
 
                 if(!hwndCapture)
                     bWindowNotFound = true;
-                if(IsIconic(hwndCapture))
+                if(hwndCapture && (IsIconic(hwndCapture) || !IsWindowVisible(hwndCapture)))
                 {
                     captureTexture->ReleaseDC();
-                    return;
                     //bWindowMinimized = true;
+
+                    if(!warningID)
+                    {
+                        String strWarning;
+
+                        strWarning << Str("Sources.SoftwareCaptureSource.WindowMinimized");
+                        warningID = App->AddStreamInfo(strWarning, bWindowNotFound ? StreamInfoPriority_High : StreamInfoPriority_Medium);
+                    }
+                    return;
+                }
+                else if(!bWindowNotFound)
+                {
+                    if(warningID)
+                    {
+                        App->RemoveStreamInfo(warningID);
+                        warningID = 0;
+                    }
                 }
             }
 
@@ -114,26 +135,18 @@ public:
             else
                 hCaptureDC = GetDC(hwndCapture);
 
-            if(bWindowMinimized || bWindowNotFound)
+            if(bWindowNotFound)
             {
-                /*CTSTR lpStr;
-                if(bWindowMinimized)
-                    lpStr = Str("Sources.SoftwareCaptureSource.WindowMinimized");
-                else if(bWindowNotFound)
-                    lpStr = Str("Sources.SoftwareCaptureSource.WindowNotFound");*/
-
                 RECT rc = {0, 0, width, height};
                 FillRect(hDC, &rc, (HBRUSH)GetStockObject(BLACK_BRUSH));
 
-                /*HFONT hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
-                HFONT hfontOld = (HFONT)SelectObject(hDC, hFont);
+                if(!warningID)
+                {
+                    String strWarning;
 
-                SetBkColor(hDC, 0x000000);
-                SetTextColor(hDC, 0xFFFFFF);
-                SetTextAlign(hDC, TA_CENTER);
-                TextOut(hDC, width/2, height/2, lpStr, slen(lpStr));
-
-                SelectObject(hDC, hfontOld);*/
+                    strWarning << Str("Sources.SoftwareCaptureSource.WindowNotFound");
+                    warningID = App->AddStreamInfo(strWarning, bWindowNotFound ? StreamInfoPriority_High : StreamInfoPriority_Medium);
+                }
             }
             else
             {
@@ -207,9 +220,12 @@ public:
     {
         traceIn(DesktopImageSource::Render);
 
-        EnableBlending(FALSE);
-        DrawSprite(lastRendered, 0xFFFFFFFF, pos.x, pos.y, pos.x+size.x, pos.y+size.y);
-        EnableBlending(TRUE);
+        if(lastRendered)
+        {
+            EnableBlending(FALSE);
+            DrawSprite(lastRendered, 0xFFFFFFFF, pos.x, pos.y, pos.x+size.x, pos.y+size.y);
+            EnableBlending(TRUE);
+        }
 
         traceOut;
     }

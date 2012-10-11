@@ -267,6 +267,8 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
         if(id == ID_SCENES)
         {
+            SendMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_SCENES, LBN_SELCHANGE), (LPARAM)GetDlgItem(hwndMain, ID_SCENES));
+
             for(UINT i=0; i<App->sceneClasses.Num(); i++)
             {
                 String strAdd = Str("Listbox.Add");
@@ -278,6 +280,8 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
         {
             if(!App->sceneElement)
                 return 0;
+
+            SendMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_SOURCES, LBN_SELCHANGE), (LPARAM)GetDlgItem(hwndMain, ID_SCENES));
 
             for(UINT i=0; i<App->imageSourceClasses.Num(); i++)
             {
@@ -391,7 +395,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 default:
                     if(ret >= ID_LISTBOX_ADD)
                     {
-                        String strName = TEXT("Scene");
+                        String strName = Str("Scene");
                         GetNewSceneName(strName);
 
                         if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSceneNameDialogProc, (LPARAM)&strName) == IDOK)
@@ -567,6 +571,9 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
             if(App->scene)
                 App->scene->GetSelectedItems(selectedSceneItems);
 
+            if(selectedSceneItems.Num() < 1)
+                nop();
+
             UINT numSelected = (UINT)SendMessage(hwnd, LB_GETSELCOUNT, 0, 0);
 
             XElement *selectedElement = NULL;
@@ -655,7 +662,11 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                             }
 
                             if(App->bRunning)
+                            {
+                                App->EnterSceneMutex();
                                 App->scene->AddImageSource(newSourceElement);
+                                App->LeaveSceneMutex();
+                            }
 
                             UINT newID = (UINT)SendMessage(hwnd, LB_ADDSTRING, 0, (LPARAM)strName.Array());
                             PostMessage(hwnd, LB_SETCURSEL, newID, 0);
@@ -687,9 +698,13 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                     {
                         if(App->bRunning)
                         {
+                            App->EnterSceneMutex();
+
                             if(selectedSceneItems[0]->GetSource())
                                 selectedSceneItems[0]->GetSource()->UpdateSettings();
                             selectedSceneItems[0]->Update();
+
+                            App->LeaveSceneMutex();
                         }
                     }
                     break;
@@ -763,13 +778,13 @@ void OBS::DeleteItems()
         {
             if(selectedSceneItems.Num())
             {
-                OSEnterMutex(App->hSceneMutex);
+                App->EnterSceneMutex();
+
                 for(UINT i=0; i<selectedSceneItems.Num(); i++)
                 {
                     SceneItem *item = selectedSceneItems[i];
                     App->scene->RemoveImageSource(item);
                 }
-                OSLeaveMutex(App->hSceneMutex);
             }
             else
             {
@@ -779,6 +794,9 @@ void OBS::DeleteItems()
 
             for(UINT i=0; i<selectedIDs.Num(); i++)
                 SendMessage(hwndSources, LB_DELETESTRING, selectedIDs[i], 0);
+
+            if(selectedSceneItems.Num())
+                App->LeaveSceneMutex();
         }
     }
 }
@@ -1203,6 +1221,8 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                         if(MessageBox(hwnd, Str("GlobalSources.DeleteConfirm"), Str("DeleteConfirm.Title"), MB_YESNO) == IDNO)
                             break;
 
+                        App->EnterSceneMutex();
+
                         XElement *element = globals->GetElementByID(id);
 
                         if(App->bRunning)
@@ -1264,7 +1284,23 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
 
                         SendMessage(hwndSources, LB_DELETESTRING, id, 0);
 
+                        if(App->bRunning)
+                        {
+                            for(UINT i=0; i<App->globalSources.Num(); i++)
+                            {
+                                GlobalSourceInfo &info = App->globalSources[i];
+                                if(info.strName.CompareI(element->GetName()) && info.source)
+                                {
+                                    info.FreeData();
+                                    App->globalSources.Remove(i);
+                                    break;
+                                }
+                            }
+                        }
+
                         globals->RemoveElement(element);
+
+                        App->LeaveSceneMutex();
                         break;
                     }
 
@@ -1342,6 +1378,8 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                         ClassInfo *imageSourceClass = App->GetImageSourceClass(lpClass);
                         if(imageSourceClass && imageSourceClass->configProc && imageSourceClass->configProc(element, false))
                         {
+                            App->EnterSceneMutex();
+
                             if(App->bRunning)
                             {
                                 for(UINT i=0; i<App->scene->sceneItems.Num(); i++)
@@ -1354,7 +1392,6 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                                         {
                                             if(scmpi(data->GetString(TEXT("name")), element->GetName()) == 0)
                                             {
-
                                                 if(App->bRunning)
                                                 {
                                                     for(UINT i=0; i<App->globalSources.Num(); i++)
@@ -1371,6 +1408,8 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                                     }
                                 }
                             }
+
+                            App->LeaveSceneMutex();
                         }
 
                         break;
@@ -1578,6 +1617,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     }
                     break;
 
+                case ID_DASHBOARD:
+                    ShellExecute(NULL, TEXT("open"), App->strDashboard, 0, 0, SW_SHOWNORMAL);
+                    break;
+
                 case ID_SETTINGS_OPENCONFIGFOLDER:
                     {
                         String strAppPath = API->GetAppDataPath();
@@ -1714,8 +1757,14 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 ShowWindow(GetDlgItem(hwndMain, ID_EXIT), SW_SHOW);
                 ShowWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), SW_SHOW);
                 ShowWindow(GetDlgItem(hwndMain, ID_GLOBALSOURCES), SW_SHOW);
-                if(App->bRunning)
-                    ShowWindow(GetDlgItem(hwndMain, ID_BANDWIDTHMETER), SW_SHOW);
+            }
+            break;
+
+        case WM_DRAWITEM:
+            if(wParam == ID_STATUS)
+            {
+                DRAWITEMSTRUCT &dis = *(DRAWITEMSTRUCT*)lParam; //don't dis me bro
+                App->DrawStatusBar(dis);
             }
             break;
 
@@ -1838,7 +1887,6 @@ ItemModifyType GetItemModifyType(const Vect2 &mousePos, const Vect2 &itemPos, co
 enum
 {
     ID_TOGGLERENDERVIEW=1,
-    ID_SHOWFPS,
 };
 
 LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -2338,7 +2386,6 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
     {
         HMENU hPopup = CreatePopupMenu();
         AppendMenu(hPopup, MF_STRING | (App->bRenderViewEnabled ? MF_CHECKED : 0), ID_TOGGLERENDERVIEW, Str("RenderView.EnableView"));
-        //AppendMenu(hPopup, MF_STRING | (App->bShowFPS ? MF_CHECKED : 0), ID_SHOWFPS, Str("RenderView.ShowFPS"));
 
         POINT p;
         GetCursorPos(&p);
@@ -2349,11 +2396,6 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
             case ID_TOGGLERENDERVIEW:
                 App->bRenderViewEnabled = !App->bRenderViewEnabled;
                 break;
-
-            /*case ID_SHOWFPS:
-                App->bShowFPS = !App->bShowFPS;
-                AppConfig->SetInt(TEXT("General"), TEXT("ShowFPS"), App->bShowFPS ? 1 : 0);
-                break;*/
         }
 
         DestroyMenu(hPopup);

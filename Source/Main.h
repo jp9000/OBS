@@ -61,8 +61,8 @@ extern ConfigFile   *AppConfig;
 extern OBS          *App;
 extern TCHAR        lpAppDataPath[MAX_PATH];
 
-#define OBS_VERSION             0x000414
-#define OBS_VERSION_STRING_ANSI "Open Broadcaster Software v0.414a"
+#define OBS_VERSION             0x000420
+#define OBS_VERSION_STRING_ANSI "Open Broadcaster Software v0.42a"
 #define OBS_VERSION_STRING      TEXT(OBS_VERSION_STRING_ANSI)
 
 #define OBS_WINDOW_CLASS      TEXT("OBSWindowClass")
@@ -93,7 +93,6 @@ inline BOOL CloseDouble(double f1, double f2, double precision=0.001)
 
 #include "../resource.h"
 #include "VolumeControl.h"
-#include "BandwidthMeter.h"
 #include "OBS.h"
 #include "WindowStuff.h"
 #include "CodeTokenizer.h"

@@ -678,6 +678,8 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                     ShowWindow(GetDlgItem(hwnd, IDC_SERVER_STATIC), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT_TIMEOUT_STATIC), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT_TIMEOUT_EDIT), SW_HIDE);
+                    ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK), SW_HIDE);
+                    ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK_STATIC), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_SAVETOFILE), SW_HIDE);
 
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH_STATIC), 0, -data->fileControlOffset);
@@ -686,7 +688,15 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_STOPSTREAMHOTKEY_STATIC), 0, -data->fileControlOffset);
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_STOPSTREAMHOTKEY), 0, -data->fileControlOffset);
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_CLEARHOTKEY), 0, -data->fileControlOffset);
+                    AdjustWindowPos(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY_STATIC), 0, -data->fileControlOffset);
+                    AdjustWindowPos(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY), 0, -data->fileControlOffset);
+                    AdjustWindowPos(GetDlgItem(hwnd, IDC_CLEARHOTKEY_STARTSTREAM), 0, -data->fileControlOffset);
                 }
+
+                //--------------------------------------------
+
+                DWORD startHotkey = AppConfig->GetInt(TEXT("Publish"), TEXT("StartStreamHotkey"));
+                SendMessage(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY), HKM_SETHOTKEY, startHotkey, 0);
 
                 //--------------------------------------------
 
@@ -703,6 +713,10 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
 
                 EnableWindow(GetDlgItem(hwnd, IDC_SAVEPATH), bSaveToFile || (mode != 0));
                 EnableWindow(GetDlgItem(hwnd, IDC_BROWSE),   bSaveToFile || (mode != 0));
+
+                //--------------------------------------------
+
+                SetWindowText(GetDlgItem(hwnd, IDC_DASHBOARDLINK), App->strDashboard);
 
                 //--------------------------------------------
 
@@ -777,6 +791,9 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_STOPSTREAMHOTKEY_STATIC), 0, data->fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_STOPSTREAMHOTKEY), 0, data->fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_CLEARHOTKEY), 0, data->fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY_STATIC), 0, data->fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY), 0, data->fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_CLEARHOTKEY_STARTSTREAM), 0, data->fileControlOffset);
                             }
                             else if(mode == 1 && data->mode == 0)
                             {
@@ -786,6 +803,9 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_STOPSTREAMHOTKEY_STATIC), 0, -data->fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_STOPSTREAMHOTKEY), 0, -data->fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_CLEARHOTKEY), 0, -data->fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY_STATIC), 0, -data->fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY), 0, -data->fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_CLEARHOTKEY_STARTSTREAM), 0, -data->fileControlOffset);
                             }
 
                             data->mode = mode;
@@ -795,6 +815,8 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                             ShowWindow(GetDlgItem(hwnd, IDC_PLAYPATH_STATIC), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_CHANNELNAME_STATIC), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_SERVER_STATIC), swShowControls);
+                            ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK), swShowControls);
+                            ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK_STATIC), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT_TIMEOUT), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT_TIMEOUT_STATIC), swShowControls);
@@ -952,14 +974,31 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                             break;
                         }
 
+                    case IDC_STARTSTREAMHOTKEY:
+                    case IDC_STOPSTREAMHOTKEY:
+                    case IDC_DASHBOARDLINK:
+                        if(HIWORD(wParam) == EN_CHANGE)
+                            App->SetChangedSettings(true);
+                        break;
+
                         //case IDC_USERNAME:
                     case IDC_PLAYPATH:
                     case IDC_CHANNELNAME:
                     case IDC_SERVEREDIT:
                     case IDC_SAVEPATH:
-                    case IDC_STOPSTREAMHOTKEY:
                         if(HIWORD(wParam) == EN_CHANGE)
                             bDataChanged = true;
+                        break;
+
+                    case IDC_CLEARHOTKEY_STARTSTREAM:
+                        if(HIWORD(wParam) == BN_CLICKED)
+                        {
+                            if(SendMessage(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY), HKM_GETHOTKEY, 0, 0))
+                            {
+                                SendMessage(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY), HKM_SETHOTKEY, 0, 0);
+                                App->SetChangedSettings(true);
+                            }
+                        }
                         break;
 
                     case IDC_CLEARHOTKEY:
@@ -968,7 +1007,7 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                             if(SendMessage(GetDlgItem(hwnd, IDC_STOPSTREAMHOTKEY), HKM_GETHOTKEY, 0, 0))
                             {
                                 SendMessage(GetDlgItem(hwnd, IDC_STOPSTREAMHOTKEY), HKM_SETHOTKEY, 0, 0);
-                                bDataChanged = true;
+                                App->SetChangedSettings(true);
                             }
                         }
                         break;
@@ -1355,6 +1394,16 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
 
                 //--------------------------------------------
 
+                DWORD micBoost = AppConfig->GetInt(TEXT("Audio"), TEXT("MicBoost"), 100);
+                if(micBoost < 100)
+                    micBoost = 100;
+                else if(micBoost > 400)
+                    micBoost = 400;
+                SendMessage(GetDlgItem(hwnd, IDC_MICBOOST), UDM_SETRANGE32, 100, 400);
+                SendMessage(GetDlgItem(hwnd, IDC_MICBOOST), UDM_SETPOS32, 0, micBoost);
+
+                //--------------------------------------------
+
                 App->SetChangedSettings(false);
                 return TRUE;
             }
@@ -1381,6 +1430,7 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                         }
                         break;
 
+                    case IDC_MICBOOST_EDIT:
                     case IDC_PUSHTOTALKHOTKEY:
                     case IDC_MUTEMICHOTKEY:
                     case IDC_MUTEDESKTOPHOTKEY:
@@ -1497,12 +1547,12 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 //------------------------------------
 
-                bool bDisableD3DCompat = AppConfig->GetInt(TEXT("Video"), TEXT("DisableD3DCompatibilityMode")) != 0;
+                /*bool bDisableD3DCompat = AppConfig->GetInt(TEXT("Video"), TEXT("DisableD3DCompatibilityMode")) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_DISABLED3DCOMPATIBILITY), BM_SETCHECK, bDisableD3DCompat ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 ti.lpszText = (LPWSTR)Str("Settings.Advanced.DisableD3DCompatibilityModeTooltip");
                 ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_DISABLED3DCOMPATIBILITY);
-                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);*/
 
                 //------------------------------------
 
@@ -1534,8 +1584,8 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                 case IDC_USEVIDEOENCODERSETTINGS:
                     if(HIWORD(wParam) == BN_CLICKED)
                     {
-                        BOOL bUseVideoSyncFix = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
-                        EnableWindow(GetDlgItem(hwnd, IDC_VIDEOENCODERSETTINGS), bUseVideoSyncFix);
+                        BOOL bUseVideoEncoderSettings = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        EnableWindow(GetDlgItem(hwnd, IDC_VIDEOENCODERSETTINGS), bUseVideoEncoderSettings);
 
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
                         App->SetChangedSettings(true);
@@ -1544,14 +1594,14 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 /*case IDC_TIMER1:
                 case IDC_TIMER2:
-                case IDC_TIMER3:*/
+                case IDC_TIMER3:
                 case IDC_DISABLED3DCOMPATIBILITY:
                     if(HIWORD(wParam) == BN_CLICKED)
                     {
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
                         App->SetChangedSettings(true);
                     }
-                    break;
+                    break;*/
 
                 case IDC_USESENDBUFFER:
                     if(HIWORD(wParam) == BN_CLICKED)
@@ -1694,6 +1744,26 @@ void OBS::ApplySettings()
                 if(stopStreamHotkey)
                     App->stopStreamHotkeyID = API->CreateHotkey(stopStreamHotkey, OBS::StopStreamHotkey, NULL);
 
+                //------------------------------------------
+
+                DWORD startStreamHotkey = (DWORD)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_STARTSTREAMHOTKEY), HKM_GETHOTKEY, 0, 0);
+                AppConfig->SetInt(TEXT("Publish"), TEXT("StartStreamHotkey"), startStreamHotkey);
+
+                if(App->startStreamHotkeyID)
+                {
+                    API->DeleteHotkey(App->startStreamHotkeyID);
+                    App->startStreamHotkeyID = 0;
+                }
+
+                if(startStreamHotkey)
+                    App->startStreamHotkeyID = API->CreateHotkey(startStreamHotkey, OBS::StartStreamHotkey, NULL);
+
+                //------------------------------------------
+
+                App->strDashboard = GetEditText(GetDlgItem(hwndCurrentSettings, IDC_DASHBOARDLINK)).KillSpaces();
+                AppConfig->SetString(TEXT("Publish"), TEXT("Dashboard"), App->strDashboard);
+                ShowWindow(GetDlgItem(hwndMain, ID_DASHBOARD), App->strDashboard.IsValid() && !curSel ? SW_SHOW : SW_HIDE);
+
                 break;
             }
 
@@ -1796,6 +1866,16 @@ void OBS::ApplySettings()
                 App->bForceMicMono = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_FORCEMONO), BM_GETCHECK, 0, 0) == BST_CHECKED;
                 AppConfig->SetInt(TEXT("Audio"), TEXT("ForceMicMono"), bForceMicMono);
 
+                //------------------------------------
+
+                DWORD micBoostPercentage = (DWORD)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_MICBOOST), UDM_GETPOS32, 0, 0);
+                if(micBoostPercentage < 100)
+                    micBoostPercentage = 100;
+                else if(micBoostPercentage > 400)
+                    micBoostPercentage = 400;
+                AppConfig->SetInt(TEXT("Audio"), TEXT("MicBoost"), micBoostPercentage);
+                App->micBoost = float(micBoostPercentage)/100.0f;
+
                 break;
             }
 
@@ -1819,8 +1899,8 @@ void OBS::ApplySettings()
 
                 //--------------------------------------------------
 
-                BOOL bDisableD3DCompat = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_DISABLED3DCOMPATIBILITY), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                AppConfig->SetInt   (TEXT("Video"), TEXT("DisableD3DCompatibilityMode"), bDisableD3DCompat);
+                /*BOOL bDisableD3DCompat = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_DISABLED3DCOMPATIBILITY), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                AppConfig->SetInt   (TEXT("Video"), TEXT("DisableD3DCompatibilityMode"), bDisableD3DCompat);*/
 
                 //--------------------------------------------------
 

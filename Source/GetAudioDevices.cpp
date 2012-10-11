@@ -128,7 +128,6 @@ bool GetDefaultMicID(String &strVal)
     CWSTR wstrDefaultID;
     if(FAILED(defDevice->GetId((LPWSTR*)&wstrDefaultID)))
     {
-        CrashError(TEXT("GetDefaultMicID: Could not get default audio capture device id"));
         SafeRelease(defDevice);
         SafeRelease(mmEnumerator);
         return false;

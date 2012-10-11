@@ -56,6 +56,17 @@ struct MP4AudioFrameInfo
 #define USE_64BIT_MP4 1
 
 
+void WINAPI ProcessEvents()
+{
+    MSG msg;
+    while(PeekMessage(&msg, NULL, 0, 0, 1))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+}
+
+
 //code annoyance rating: fairly nightmarish
 
 class MP4FileStream : public VideoFileStream
@@ -79,6 +90,7 @@ class MP4FileStream : public VideoFileStream
     UINT64 mdatStart, mdatStop;
 
     bool bSentFirstVideoPacket;
+    bool bCancelMP4Build;
 
     void PushBox(BufferOutputSerializer &output, DWORD boxName)
     {
@@ -94,6 +106,30 @@ class MP4FileStream : public VideoFileStream
         *(DWORD*)(endBuffer.Array()+boxOffsets[0]) = fastHtonl(boxSize);
 
         boxOffsets.Remove(0);
+    }
+
+    static INT_PTR CALLBACK MP4ProgressDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+    {
+        switch(message)
+        {
+            case WM_INITDIALOG:
+                SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
+                return TRUE;
+
+            case WM_COMMAND:
+                switch(LOWORD(wParam))
+                {
+                    case IDCANCEL:
+                        if(MessageBox(hwnd, Str("MP4ProgressDialog.ConfirmStop"), Str("MP4ProgressDialog.ConfirmStopTitle"), MB_YESNO) == IDYES)
+                        {
+                            MP4FileStream *fileStream = (MP4FileStream*)GetWindowLongPtr(hwnd, DWLP_USER);
+                            fileStream->bCancelMP4Build = true;
+                            EndDialog(hwnd, IDCANCEL);
+                        }
+                        break;
+                }
+        }
+        return 0;
     }
 
 public:
@@ -178,6 +214,9 @@ public:
         if(!bStreamOpened)
             return;
 
+        HWND hwndProgressDialog = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_BUILDINGMP4), hwndMain, (DLGPROC)MP4ProgressDialogProc);
+        SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETRANGE32, 0, 100);
+
         mdatStop = fileOut.GetPos();
 
         BufferOutputSerializer output(endBuffer);
@@ -254,7 +293,12 @@ public:
             }
             else
                 compositionOffsets.Last().count++;
+
+            SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, (i*20)/videoFrames.Num(), 0);
+            ProcessEvents();
         }
+
+        SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 20, 0);
 
         //-------------------------------------------
         // sound descriptor thingy.  this part made me die a little inside admittedly.
@@ -437,6 +481,10 @@ public:
                         output.OutputDword(fastHtonl(decodeTimes[i].val));
                     }
                   PopBox(); //stts
+
+                  SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 30, 0);
+                  ProcessEvents();
+
                   PushBox(output, DWORD_BE('stss')); //list of keyframe (i-frame) IDs
                     output.OutputDword(0); //version and flags (none)
                     output.OutputDword(fastHtonl(IFrameIDs.Num()));
@@ -451,6 +499,10 @@ public:
                         output.OutputDword(fastHtonl(compositionOffsets[i].val));
                     }
                   PopBox(); //ctts
+
+                  SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 40, 0);
+                  ProcessEvents();
+
                   PushBox(output, DWORD_BE('stsc')); //sample to chunk list
                     output.OutputDword(0); //version and flags (none)
                     output.OutputDword(fastHtonl(videoSampleToChunk.Num()));
@@ -492,6 +544,9 @@ public:
               PopBox(); //minf
             PopBox(); //mdia
           PopBox(); //trak
+
+          SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 50, 0);
+          ProcessEvents();
 
           //------------------------------------------------------
           // audio track
@@ -599,6 +654,10 @@ public:
                         output.OutputDword(DWORD_BE(1));
                     }
                   PopBox(); //stsc
+
+                  SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 60, 0);
+                  ProcessEvents();
+
                   PushBox(output, DWORD_BE('stsz')); //sample sizes
                     output.OutputDword(0); //version and flags (none)
                     output.OutputDword(0); //block size for all (0 if differing sizes)
@@ -606,6 +665,9 @@ public:
                     for(UINT i=0; i<audioFrames.Num(); i++)
                         output.OutputDword(fastHtonl(audioFrames[i].size));
                   PopBox();
+
+                  SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 70, 0);
+                  ProcessEvents();
 
                   if(audioChunks.Num() && audioChunks.Last() > 0xFFFFFFFFLL)
                   {
@@ -629,6 +691,9 @@ public:
               PopBox(); //minf
             PopBox(); //mdia
           PopBox(); //trak
+
+          SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 80, 0);
+          ProcessEvents();
 
           //------------------------------------------------------
           // info thingy
@@ -677,6 +742,8 @@ public:
 #endif
             file.Close();
         }
+
+        DestroyWindow(hwndProgressDialog);
     }
 
     virtual void AddPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)

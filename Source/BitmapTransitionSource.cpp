@@ -40,6 +40,8 @@ class BitmapTransitionSource : public ImageSource
     float curFadeValue;
     bool  bTransitioning;
 
+    bool  bFadeInOnly;
+
     void CreateErrorTexture()
     {
         LPBYTE textureData = (LPBYTE)Allocate(32*32*4);
@@ -87,7 +89,7 @@ public:
         curTransitionTime += fSeconds;
         if(curTransitionTime >= transitionTime)
         {
-            curTransitionTime -= transitionTime;
+            curTransitionTime = 0.0f;;
 
             curFadeValue = 0.0f;
             bTransitioning = true;
@@ -138,7 +140,10 @@ public:
             if(bTransitioning && textures.Num() > 1)
             {
                 float curAlpha = MIN(curFadeValue/fadeTime, 1.0f);
-                DrawBitmap(curTexture, 1.0f-curAlpha, pos, size);
+                if(bFadeInOnly)
+                    DrawBitmap(curTexture, 1.0f, pos, size);
+                else
+                    DrawBitmap(curTexture, 1.0f-curAlpha, pos, size);
 
                 UINT nextTexture = (curTexture == textures.Num()-1) ? 0 : curTexture+1;
                 DrawBitmap(nextTexture, curAlpha, pos, size);
@@ -201,6 +206,10 @@ public:
             transitionTime = 5;
         else if(transitionTime > 30)
             transitionTime = 30;
+
+        //------------------------------------
+
+        bFadeInOnly = data->GetInt(TEXT("fadeInOnly")) != 0;
 
         //------------------------------------
 
@@ -270,6 +279,11 @@ INT_PTR CALLBACK ConfigureBitmapTransitionProc(HWND hwnd, UINT message, WPARAM w
                 EnableWindow(GetDlgItem(hwnd, IDC_REMOVE), FALSE);
                 EnableWindow(GetDlgItem(hwnd, IDC_MOVEUPWARD), FALSE);
                 EnableWindow(GetDlgItem(hwnd, IDC_MOVEDOWNWARD), FALSE);
+
+                //--------------------------
+
+                BOOL bFadeInOnly = configInfo->data->GetInt(TEXT("fadeInOnly"));
+                SendMessage(GetDlgItem(hwnd, IDC_FADEINONLY), BM_SETCHECK, bFadeInOnly ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 return TRUE;
             }
@@ -421,6 +435,9 @@ INT_PTR CALLBACK ConfigureBitmapTransitionProc(HWND hwnd, UINT message, WPARAM w
 
                         UINT transitionTime = (UINT)SendMessage(GetDlgItem(hwnd, IDC_TRANSITIONTIME), UDM_GETPOS32, 0, 0);
                         configInfo->data->SetInt(TEXT("transitionTime"), transitionTime);
+
+                        BOOL bFadeInOnly = SendMessage(GetDlgItem(hwnd, IDC_FADEINONLY), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        configInfo->data->SetInt(TEXT("fadeInOnly"), bFadeInOnly);
                     }
 
                 case IDCANCEL:

@@ -456,6 +456,10 @@ public:
         CloseHandle(hSendSempahore);
         OSCloseMutex(hDataMutex);
 
+        //flush the last of the data
+        if(bUseSendBuffer && RTMP_IsConnected(rtmp))
+            FlushSendBuffer();
+
         //--------------------------
 
         for(UINT i=0; i<Packets.Num(); i++)
@@ -518,6 +522,8 @@ public:
 
                 ReleaseSemaphore(hSendSempahore, 1, NULL);
             }
+            else
+                numBFramesDumped++;
 
             /*RTMPPacket packet;
             packet.m_nChannel = 0x4;
@@ -625,6 +631,11 @@ public:
     QWORD GetCurrentSentBytes()
     {
         return bytesSent;
+    }
+
+    DWORD NumDroppedFrames() const
+    {
+        return numBFramesDumped+numPFramesDumped;
     }
 };
 

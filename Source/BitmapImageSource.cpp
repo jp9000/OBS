@@ -27,6 +27,9 @@ class BitmapImageSource : public ImageSource
     Vect2    fullSize;
     XElement *data;
 
+    DWORD opacity;
+    DWORD color;
+
     void CreateErrorTexture()
     {
         LPBYTE textureData = (LPBYTE)Allocate(32*32*4);
@@ -59,7 +62,11 @@ public:
         traceIn(BitmapImageSource::Render);
 
         if(texture)
-            DrawSprite(texture, 0xFFFFFFFF, pos.x, pos.y, pos.x+size.x, pos.y+size.y);
+        {
+            DWORD alpha = DWORD(double(opacity)*2.55);
+            DWORD outputColor = (alpha << 24) | color&0xFFFFFF;
+            DrawSprite(texture, outputColor, pos.x, pos.y, pos.x+size.x, pos.y+size.y);
+        }
 
         traceOut;
     }
@@ -94,6 +101,11 @@ public:
 
         //------------------------------------
 
+        opacity = data->GetInt(TEXT("opacity"));
+        color = data->GetInt(TEXT("color"));
+
+        //------------------------------------
+
         traceOut;
     }
 
@@ -124,8 +136,27 @@ INT_PTR CALLBACK ConfigureBitmapProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)configInfo);
                 LocalizeWindow(hwnd);
 
+                //--------------------------
+
                 CTSTR lpBitmap = configInfo->data->GetString(TEXT("path"));
                 SetWindowText(GetDlgItem(hwnd, IDC_BITMAP), lpBitmap);
+
+                //--------------------------
+
+                int opacity = configInfo->data->GetInt(TEXT("opacity"), 100);
+                if(opacity > 100)
+                    opacity = 100;
+                else if(opacity < 0)
+                    opacity = 0;
+
+                SendMessage(GetDlgItem(hwnd, IDC_OPACITY), UDM_SETRANGE32, 0, 100);
+                SendMessage(GetDlgItem(hwnd, IDC_OPACITY), UDM_SETPOS32, 0, opacity);
+
+                //--------------------------
+
+                DWORD color = configInfo->data->GetInt(TEXT("color"), 0xFFFFFFFF);
+                CCSetColor(GetDlgItem(hwnd, IDC_COLOR), color);
+
                 return TRUE;
             }
 
@@ -170,6 +201,13 @@ INT_PTR CALLBACK ConfigureBitmapProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         ConfigBitmapInfo *configInfo = (ConfigBitmapInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
                         configInfo->data->SetString(TEXT("path"), strBitmap);
+
+                        BOOL bFailed;
+                        int opacity = (int)SendMessage(GetDlgItem(hwnd, IDC_OPACITY), UDM_GETPOS32, 0, (LPARAM)&bFailed);
+                        configInfo->data->SetInt(TEXT("opacity"), bFailed ? 100 : opacity);
+
+                        DWORD color = CCGetColor(GetDlgItem(hwnd, IDC_COLOR));
+                        configInfo->data->SetInt(TEXT("color"), color);
                     }
 
                 case IDCANCEL:

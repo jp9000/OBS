@@ -17,6 +17,7 @@ services : {
       "US Midwest: Chicago, IL"              : live-ord.justin.tv
       "US West: Los Angeles, CA"             : live-lax.justin.tv
       "US West: Los Angeles, CA (Secondary)" : live-lax-backup.justin.tv
+      "US West: San Francisco, CA"           : live.justin.tv
     }
   }
   Own3D : {

@@ -333,6 +333,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\ColorControl.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\GraphicsSystem.cpp"
 				>
 			</File>
@@ -356,6 +360,10 @@
 			>
 			<File
 				RelativePath=".\APIInterface.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ColorControl.h"
 				>
 			</File>
 			<File

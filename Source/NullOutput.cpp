@@ -47,6 +47,7 @@ class NullNetwork : public NetworkStream
 
     double GetPacketStrain() const {return 0;}
     QWORD GetCurrentSentBytes() {return 0;}
+    virtual DWORD NumDroppedFrames() const {return 0;}
 };
 
 

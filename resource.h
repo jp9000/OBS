@@ -28,6 +28,7 @@
 #define IDD_SETTINGS_ADVANCED           132
 #define IDR_MAINMENU                    133
 #define IDD_CONFIGURETRANSITIONSOURCE   135
+#define IDD_BUILDINGMP4                 137
 #define IDC_SETTINGSLIST                1006
 #define IDC_SUBDIALOG                   1007
 #define IDC_MODE                        1008
@@ -66,6 +67,8 @@
 #define IDC_AUTORECONNECT               1041
 #define IDC_PUSHTOTALK                  1041
 #define IDC_USEVIDEOENCODERSETTINGS     1041
+#define IDC_FADEINONLY                  1041
+#define IDC_OPACITY                     1041
 #define IDC_SERVEREDIT                  1042
 #define IDC_USESENDBUFFER               1042
 #define IDC_FORCEMONO                   1042
@@ -114,9 +117,12 @@
 #define IDC_AUTORECONNECT_TIMEOUT_EDIT  1078
 #define IDC_VIDEOENCODERSETTINGS        1078
 #define IDC_TRANSITIONTIME              1078
+#define IDC_OPACITY_EDIT                1078
+#define IDC_MICBOOST_EDIT               1078
 #define IDC_SPIN1                       1079
 #define IDC_AUTORECONNECT_TIMEOUT       1079
 #define IDC_TRANSITIONTIME_EDIT         1079
+#define IDC_MICBOOST                    1079
 #define IDC_AUTORECONNECT_TIMEOUT_STATIC 1080
 #define IDC_RECONNECTING                1081
 #define IDC_SAVEPATH                    1081
@@ -131,10 +137,18 @@
 #define IDC_STOPSTREAMHOTKEY            1093
 #define IDC_CLEARHOTKEY                 1094
 #define IDC_STOPSTREAMHOTKEY_STATIC     1095
+#define IDC_STARTSTREAMHOTKEY_STATIC    1096
+#define IDC_STARTSTREAMHOTKEY           1097
+#define IDC_CLEARHOTKEY_STARTSTREAM     1098
 #define IDC_CHECK2                      1099
 #define IDC_USED3DCOMPATIBILITY         1099
 #define IDC_DISABLED3DCOMPATIBILITY     1099
 #define IDC_TIMER1                      1100
+#define IDC_PROGRESS1                   1101
+#define IDC_DASHBOARDLINK_STATIC        1102
+#define IDC_DASHBOARDLINK               1103
+#define IDC_CUSTOM1                     1104
+#define IDC_COLOR                       1104
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -161,9 +175,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        136
+#define _APS_NEXT_RESOURCE_VALUE        138
 #define _APS_NEXT_COMMAND_VALUE         40042
-#define _APS_NEXT_CONTROL_VALUE         1101
+#define _APS_NEXT_CONTROL_VALUE         1105
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

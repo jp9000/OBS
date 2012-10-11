@@ -94,6 +94,7 @@ public:
 
     virtual double GetPacketStrain() const=0;
     virtual QWORD GetCurrentSentBytes()=0;
+    virtual DWORD NumDroppedFrames() const=0;
 };
 
 //-------------------------------------------------------------------
@@ -248,7 +249,7 @@ enum
     ID_SCENEEDITOR,
     ID_DESKTOPVOLUME,
     ID_MICVOLUME,
-    //ID_STATUS,
+    ID_STATUS,
     ID_SCENES,
     ID_SCENES_TEXT,
     ID_SOURCES,
@@ -256,7 +257,7 @@ enum
     ID_TESTSTREAM,
     ID_GLOBALSOURCES,
     ID_PLUGINS,
-    ID_BANDWIDTHMETER,
+    ID_DASHBOARD,
 };
 
 enum
@@ -290,6 +291,25 @@ struct SceneHotkeyInfo
     DWORD hotkeyID;
     DWORD hotkey;
     XElement *scene;
+};
+
+//----------------------------
+
+struct StreamInfo
+{
+    UINT id;
+    String strInfo;
+    StreamInfoPriority priority;
+
+    inline void FreeData() {strInfo.Clear();}
+};
+
+//----------------------------
+
+struct StatusBarDrawData
+{
+    UINT bytesPerSec;
+    double strain;
 };
 
 //----------------------------
@@ -418,6 +438,8 @@ class OBS
     HANDLE  hSceneMutex;
     bool    bUsing444;
 
+    bool        bUseSyncFix;
+    HANDLE      hTimeMutex;
     List<UINT>  bufferedTimes;
 
     bool    bRecievedFirstAudioFrame;
@@ -428,17 +450,24 @@ class OBS
     float   desktopVol, micVol;
     List<FrameAudio> pendingAudioFrames;
     bool    bForceMicMono;
+    float   micBoost;
 
+    HANDLE hHotkeyThread;
     bool bUsingPushToTalk, bPushToTalkOn;
     UINT pushToTalkHotkeyID;
     UINT muteMicHotkeyID;
     UINT muteDesktopHotkeyID;
+    UINT startStreamHotkeyID;
     UINT stopStreamHotkeyID;
+
+    bool bStartStreamHotkeyDown, bStopStreamHotkeyDown;
 
     bool bWriteToFile;
     VideoFileStream *fileStream;
 
     String  streamReport;
+
+    String  strDashboard;
 
     List<IconInfo> Icons;
     List<FontInfo> Fonts;
@@ -449,6 +478,19 @@ class OBS
     List<GlobalSourceInfo> globalSources;
 
     List<PluginInfo> plugins;
+
+    HANDLE hInfoMutex;
+    List<StreamInfo> streamInfoList;
+    UINT streamInfoIDCounter;
+
+    bool bShuttingDown;
+
+    inline void ClearStreamInfo()
+    {
+        for(UINT i=0; i<streamInfoList.Num(); i++)
+            streamInfoList[i].FreeData();
+        streamInfoList.Clear();
+    }
 
     ImageSource* AddGlobalSourceToScene(CTSTR lpName);
 
@@ -506,6 +548,7 @@ class OBS
     void MainAudioLoop();
     static DWORD STDCALL MainAudioThread(LPVOID lpUnused);
 
+    static void STDCALL StartStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL StopStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
 
     static void STDCALL PushToTalkHotkey(DWORD hotkey, UPARAM param, bool bDown);
@@ -514,6 +557,8 @@ class OBS
 
     static void GetNewSceneName(String &strScene);
     static void GetNewSourceName(String &strSource);
+
+    static DWORD STDCALL HotkeyThread(LPVOID lpUseless);
 
 
     static INT_PTR CALLBACK EnterGlobalSourceNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -545,6 +590,10 @@ class OBS
     static bool STDCALL ConfigGlobalSource(XElement *element, bool bCreating);
 
     void CallHotkey(DWORD hotkeyID, bool bDown);
+
+    static void ClearStatusBar();
+    static void SetStatusBarData(UINT bytesPerSec, CTSTR lpWarnings, UINT captureFPS, DWORD numFramesDropped, double strain);
+    static void DrawStatusBar(DRAWITEMSTRUCT &dis);
 
 public:
     OBS();
@@ -586,6 +635,12 @@ public:
     inline void GetAudioHeaders(DataPacket &packet) {audioEncoder->GetHeaders(packet);}
 
     inline void SetStreamReport(CTSTR lpStreamReport) {streamReport = lpStreamReport;}
+
+    UINT AddStreamInfo(CTSTR lpInfo, StreamInfoPriority priority);
+    void SetStreamInfo(UINT infoID, CTSTR lpInfo);
+    void SetStreamInfoPriority(UINT infoID, StreamInfoPriority priority);
+    void RemoveStreamInfo(UINT infoID);
+    String GetMostImportantInfo();
 
     //---------------------------------------------------------------------------
 
