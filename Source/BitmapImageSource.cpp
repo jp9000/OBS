@@ -101,8 +101,8 @@ public:
 
         //------------------------------------
 
-        opacity = data->GetInt(TEXT("opacity"));
-        color = data->GetInt(TEXT("color"));
+        opacity = data->GetInt(TEXT("opacity"), 100);
+        color = data->GetInt(TEXT("color"), 0xFFFFFFFF);
 
         //------------------------------------
 
