@@ -1795,13 +1795,6 @@ void OBS::MainCaptureLoop()
         fpsCounter++;
 
         double curStrain = network->GetPacketStrain();
-        if(bUpdateBPS || !CloseDouble(curStrain, lastStrain) || curFramesDropped != lastFramesDropped)
-        {
-            SetStatusBarData(bytesPerSec, strInfo, MIN(captureFPS, fps), curFramesDropped, curStrain);
-            lastStrain = curStrain;
-
-            lastFramesDropped = curFramesDropped;
-        }
 
         EnableBlending(TRUE);
         BlendFunction(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA);
@@ -2144,6 +2137,15 @@ void OBS::MainCaptureLoop()
             curRenderTarget = 0;
         else
             curRenderTarget++;
+
+        // this needs to be outside the hSceneMutex or it risks deadlocking the main thread
+        if(bUpdateBPS || !CloseDouble(curStrain, lastStrain) || curFramesDropped != lastFramesDropped)
+        {
+            SetStatusBarData(bytesPerSec, strInfo, MIN(captureFPS, fps), curFramesDropped, curStrain);
+            lastStrain = curStrain;
+
+            lastFramesDropped = curFramesDropped;
+        }
 
         profileOut;
         profileOut;
