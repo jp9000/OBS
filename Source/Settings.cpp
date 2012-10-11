@@ -839,6 +839,7 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
 
                                 SetWindowText(GetDlgItem(hwnd, IDC_CHANNELNAME), NULL);
                                 SetWindowText(GetDlgItem(hwnd, IDC_SERVEREDIT), NULL);
+                                SetWindowText(GetDlgItem(hwnd, IDC_DASHBOARDLINK), NULL);
                                 EnableWindow(GetDlgItem(hwnd, IDC_CHANNELNAME), TRUE);
                             }
                             else

@@ -110,17 +110,13 @@ bool GetDefaultMicID(String &strVal)
 
     err = CoCreateInstance(CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void**)&mmEnumerator);
     if(FAILED(err))
-    {
-        CrashError(TEXT("GetDefaultMicID: Could not create IMMDeviceEnumerator"));
         return false;
-    }
 
     //-------------------------------------------------------
 
     IMMDevice *defDevice;
     if(FAILED(mmEnumerator->GetDefaultAudioEndpoint(eCapture, eCommunications, &defDevice)))
     {
-        CrashError(TEXT("GetDefaultMicID: Could not get default audio capture device"));
         SafeRelease(mmEnumerator);
         return false;
     }
