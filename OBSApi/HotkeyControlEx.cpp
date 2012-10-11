@@ -380,7 +380,7 @@ void InitHotkeyExControl(HINSTANCE hInstance)
     wnd.lpfnWndProc = HotkeyExProc;
     wnd.lpszClassName = HOTKEY_CONTROL_EX_CLASS;
     wnd.lpszMenuName = NULL;
-    wnd.style = CS_OWNDC | CS_VREDRAW | CS_HREDRAW;
+    wnd.style = NULL;
 
     if(!RegisterClass(&wnd))
         CrashError(TEXT("Could not register hotkey control class"));
