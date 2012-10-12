@@ -96,11 +96,20 @@ public:
                 if(!hwndCapture)
                 {
                     if(hwndFoundWindow && IsWindow(hwndFoundWindow))
-                        hwndCapture = hwndFoundWindow;
+                    {
+                        TCHAR lpClassName[256];
+                        BOOL bSuccess = GetClassName(hwndFoundWindow, lpClassName, 255);
+
+                        if(bSuccess && scmpi(lpClassName, strWindowClass) == 0)
+                            hwndCapture = hwndFoundWindow;
+                        else
+                            hwndCapture = FindWindow(strWindowClass, NULL);
+                    }
                     else
                         hwndCapture = FindWindow(strWindowClass, NULL);
                 }
 
+                //note to self - hwndFoundWindow is used to make sure it doesn't pick up another window unintentionally if the title changes
                 hwndFoundWindow = hwndCapture;
 
                 if(!hwndCapture)

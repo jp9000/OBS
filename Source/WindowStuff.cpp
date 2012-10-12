@@ -1839,6 +1839,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 break;
             }
 
+        case OBS_UPDATESTATUSBAR:
+            App->SetStatusBarData();
+            break;
+
         case WM_CLOSE:
             PostQuitMessage(0);
             break;

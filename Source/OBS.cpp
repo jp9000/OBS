@@ -1368,22 +1368,23 @@ void OBS::ClearStatusBar()
     SendMessage(hwndStatusBar, SB_SETTEXT, 3, NULL);
 }
 
-void OBS::SetStatusBarData(UINT bytesPerSec, CTSTR lpWarnings, UINT captureFPS, DWORD numFramesDropped, double strain)
+void OBS::SetStatusBarData()
 {
     HWND hwndStatusBar = GetDlgItem(hwndMain, ID_STATUS);
 
-    SendMessage(hwndStatusBar, SB_SETTEXT, 0, (LPARAM)lpWarnings);
+    String strInfo = GetMostImportantInfo();
+    SendMessage(hwndStatusBar, SB_SETTEXT, 0, (LPARAM)strInfo.Array());
 
     String strDroppedFrames;
-    strDroppedFrames << Str("MainWindow.DroppedFrames") << TEXT(" ") << IntString(numFramesDropped);
+    strDroppedFrames << Str("MainWindow.DroppedFrames") << TEXT(" ") << IntString(curFramesDropped);
     SendMessage(hwndStatusBar, SB_SETTEXT, 1, (LPARAM)strDroppedFrames.Array());
 
     String strCaptureFPS;
-    strCaptureFPS << TEXT("FPS: ") << IntString(captureFPS);
+    strCaptureFPS << TEXT("FPS: ") << IntString(MIN(captureFPS, fps));
     SendMessage(hwndStatusBar, SB_SETTEXT, 2, (LPARAM)strCaptureFPS.Array());
 
     statusBarData.bytesPerSec = bytesPerSec;
-    statusBarData.strain = strain;
+    statusBarData.strain = curStrain;
     SendMessage(hwndStatusBar, SB_SETTEXT, 3 | SBT_OWNERDRAW, NULL);
 }
 
@@ -1701,18 +1702,20 @@ void OBS::MainCaptureLoop()
     desktopAudio->StartCapture();
     if(micAudio) micAudio->StartCapture();
 
-    DWORD bytesPerSec = 0;
+    bytesPerSec = 0;
+    captureFPS = 0;
+    curFramesDropped = 0;
+    curStrain = 0.0;
+    PostMessage(hwndMain, OBS_UPDATESTATUSBAR, 0, 0);
+
     QWORD lastBytesSent = 0;
     DWORD lastFramesDropped = 0;
     float bpsTime = 0.0f;
     double lastStrain = 0.0f;
 
-    DWORD captureFPS = 0;
     DWORD fpsCounter = 0;
 
     bool bFirstFrame = true;
-
-    String strInfo;
 
     while(bRunning)
     {
@@ -1776,7 +1779,7 @@ void OBS::MainCaptureLoop()
         //------------------------------------
 
         QWORD curBytesSent = network->GetCurrentSentBytes();
-        DWORD curFramesDropped = network->NumDroppedFrames();
+        curFramesDropped = network->NumDroppedFrames();
         bool bUpdateBPS = false;
 
         bpsTime += fSeconds;
@@ -1790,14 +1793,12 @@ void OBS::MainCaptureLoop()
             captureFPS = fpsCounter;
             fpsCounter = 0;
 
-            strInfo = GetMostImportantInfo();
-
             bUpdateBPS = true;
         }
 
         fpsCounter++;
 
-        double curStrain = network->GetPacketStrain();
+        curStrain = network->GetPacketStrain();
 
         EnableBlending(TRUE);
         BlendFunction(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA);
@@ -2132,10 +2133,9 @@ void OBS::MainCaptureLoop()
         else
             curRenderTarget++;
 
-        // this needs to be outside the hSceneMutex or it risks deadlocking the main thread
         if(bUpdateBPS || !CloseDouble(curStrain, lastStrain) || curFramesDropped != lastFramesDropped)
         {
-            SetStatusBarData(bytesPerSec, strInfo, MIN(captureFPS, fps), curFramesDropped, curStrain);
+            PostMessage(hwndMain, OBS_UPDATESTATUSBAR, 0, 0);
             lastStrain = curStrain;
 
             lastFramesDropped = curFramesDropped;

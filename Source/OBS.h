@@ -266,6 +266,7 @@ enum
     OBS_CALLHOTKEY,
     OBS_RECONNECT,
     OBS_SETSCENE,
+    OBS_UPDATESTATUSBAR,
 };
 
 //----------------------------
@@ -438,6 +439,11 @@ class OBS
     HANDLE  hSceneMutex;
     bool    bUsing444;
 
+    DWORD bytesPerSec;
+    DWORD captureFPS;
+    DWORD curFramesDropped;
+    double curStrain;
+
     bool        bUseSyncFix;
     List<UINT>  bufferedTimes;
 
@@ -590,8 +596,9 @@ class OBS
 
     void CallHotkey(DWORD hotkeyID, bool bDown);
 
+    void SetStatusBarData();
+
     static void ClearStatusBar();
-    static void SetStatusBarData(UINT bytesPerSec, CTSTR lpWarnings, UINT captureFPS, DWORD numFramesDropped, double strain);
     static void DrawStatusBar(DRAWITEMSTRUCT &dis);
 
 public:
