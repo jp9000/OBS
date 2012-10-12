@@ -113,6 +113,7 @@ class MP4FileStream : public VideoFileStream
         switch(message)
         {
             case WM_INITDIALOG:
+                LocalizeWindow(hwnd);
                 SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
                 return TRUE;
 

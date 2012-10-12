@@ -174,7 +174,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
 
     //-----------------------------------------------------
 
-    ShowWindow(GetDlgItem(hwndMain, ID_SCENES), SW_HIDE);
+    /*ShowWindow(GetDlgItem(hwndMain, ID_SCENES), SW_HIDE);
     ShowWindow(GetDlgItem(hwndMain, ID_SOURCES), SW_HIDE);
     ShowWindow(GetDlgItem(hwndMain, ID_SCENES_TEXT), SW_HIDE);
     ShowWindow(GetDlgItem(hwndMain, ID_SOURCES_TEXT), SW_HIDE);
@@ -186,7 +186,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
     ShowWindow(GetDlgItem(hwndMain, ID_EXIT), SW_HIDE);
     ShowWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), SW_HIDE);
     ShowWindow(GetDlgItem(hwndMain, ID_DASHBOARD), SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_GLOBALSOURCES), SW_HIDE);
+    ShowWindow(GetDlgItem(hwndMain, ID_GLOBALSOURCES), SW_HIDE);*/
 
     //-----------------------------------------------------
 
@@ -534,7 +534,7 @@ OBS::OBS()
 
     HWND hwndTemp;
     hwndTemp = CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("LISTBOX"), NULL,
-        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|LBS_HASSTRINGS|WS_VSCROLL|LBS_NOTIFY|LBS_NOINTEGRALHEIGHT,
+        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|LBS_HASSTRINGS|WS_VSCROLL|LBS_NOTIFY|LBS_NOINTEGRALHEIGHT|WS_CLIPSIBLINGS,
         0, 0, 0, 0, hwndMain, (HMENU)ID_SCENES, 0, 0);
     SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 
@@ -545,7 +545,7 @@ OBS::OBS()
     // elements listbox
 
     hwndTemp = CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("LISTBOX"), NULL,
-        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|LBS_HASSTRINGS|WS_VSCROLL|LBS_NOTIFY|LBS_NOINTEGRALHEIGHT|LBS_EXTENDEDSEL,
+        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|LBS_HASSTRINGS|WS_VSCROLL|LBS_NOTIFY|LBS_NOINTEGRALHEIGHT|LBS_EXTENDEDSEL|WS_CLIPSIBLINGS,
         0, 0, 0, 0, hwndMain, (HMENU)ID_SOURCES, 0, 0);
     SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
     SetWindowLongPtr(hwndTemp, GWLP_WNDPROC, (LONG_PTR)OBS::ListboxHook);
@@ -554,7 +554,7 @@ OBS::OBS()
     // status control
 
     hwndTemp = CreateWindowEx(0, STATUSCLASSNAME, NULL,
-        WS_CHILD|WS_VISIBLE|SBARS_SIZEGRIP,
+        WS_CHILD|WS_VISIBLE|SBARS_SIZEGRIP|WS_CLIPSIBLINGS,
         0, 0, 0, 0, hwndMain, (HMENU)ID_STATUS, 0, 0);
     SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 
@@ -562,7 +562,7 @@ OBS::OBS()
     // mic volume control
 
     hwndTemp = CreateWindow(VOLUME_CONTROL_CLASS, NULL,
-        WS_CHILDWINDOW|WS_VISIBLE,
+        WS_CHILDWINDOW|WS_VISIBLE|WS_CLIPSIBLINGS,
         0, 0, 0, 0, hwndMain, (HMENU)ID_MICVOLUME, 0, 0);
     SetVolumeControlIcons(hwndTemp, GetIcon(hinstMain, IDI_SOUND_MIC), GetIcon(hinstMain, IDI_SOUND_MIC_MUTED));
 
@@ -588,7 +588,7 @@ OBS::OBS()
     // desktop volume control
 
     hwndTemp = CreateWindow(VOLUME_CONTROL_CLASS, NULL,
-        WS_CHILDWINDOW|WS_VISIBLE,
+        WS_CHILDWINDOW|WS_VISIBLE|WS_CLIPSIBLINGS,
         0, 0, 0, 0, hwndMain, (HMENU)ID_DESKTOPVOLUME, 0, 0);
     SetVolumeControlIcons(hwndTemp, GetIcon(hinstMain, IDI_SOUND_DESKTOP), GetIcon(hinstMain, IDI_SOUND_DESKTOP_MUTED));
 
@@ -600,7 +600,7 @@ OBS::OBS()
     // settings button
 
     hwndTemp = CreateWindow(TEXT("BUTTON"), Str("Settings"),
-        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_PUSHBUTTON,
+        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_PUSHBUTTON|WS_CLIPSIBLINGS,
         0, 0, 0, 0, hwndMain, (HMENU)ID_SETTINGS, 0, 0);
     SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 
@@ -608,7 +608,7 @@ OBS::OBS()
     // start/stop stream button
 
     hwndTemp = CreateWindow(TEXT("BUTTON"), Str("MainWindow.StartStream"),
-        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_PUSHBUTTON,
+        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_PUSHBUTTON|WS_CLIPSIBLINGS,
         0, 0, 0, 0, hwndMain, (HMENU)ID_STARTSTOP, 0, 0);
     SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 
@@ -616,7 +616,7 @@ OBS::OBS()
     // edit scene button
 
     hwndTemp = CreateWindow(TEXT("BUTTON"), Str("MainWindow.SceneEditor"),
-        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_AUTOCHECKBOX|BS_PUSHLIKE|WS_DISABLED,
+        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_AUTOCHECKBOX|BS_PUSHLIKE|WS_DISABLED|WS_CLIPSIBLINGS,
         0, 0, 0, 0, hwndMain, (HMENU)ID_SCENEEDITOR, 0, 0);
     SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 
@@ -624,7 +624,7 @@ OBS::OBS()
     // global sources button
 
     hwndTemp = CreateWindow(TEXT("BUTTON"), Str("GlobalSources"),
-        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_PUSHBUTTON,
+        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_PUSHBUTTON|WS_CLIPSIBLINGS,
         0, 0, 0, 0, hwndMain, (HMENU)ID_GLOBALSOURCES, 0, 0);
     SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 
@@ -632,7 +632,7 @@ OBS::OBS()
     // test stream button
 
     hwndTemp = CreateWindow(TEXT("BUTTON"), Str("MainWindow.TestStream"),
-        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_PUSHBUTTON,
+        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_PUSHBUTTON|WS_CLIPSIBLINGS,
         0, 0, 0, 0, hwndMain, (HMENU)ID_TESTSTREAM, 0, 0);
     SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 
@@ -640,7 +640,7 @@ OBS::OBS()
     // plugins button
 
     hwndTemp = CreateWindow(TEXT("BUTTON"), Str("MainWindow.Plugins"),
-        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_PUSHBUTTON,
+        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_PUSHBUTTON|WS_CLIPSIBLINGS,
         0, 0, 0, 0, hwndMain, (HMENU)ID_PLUGINS, 0, 0);
     SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 
@@ -648,7 +648,7 @@ OBS::OBS()
     // dashboard button
 
     hwndTemp = CreateWindow(TEXT("BUTTON"), Str("MainWindow.Dashboard"),
-        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_PUSHBUTTON,
+        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_PUSHBUTTON|WS_CLIPSIBLINGS,
         0, 0, 0, 0, hwndMain, (HMENU)ID_DASHBOARD, 0, 0);
     SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 
@@ -656,7 +656,7 @@ OBS::OBS()
     // exit button
 
     hwndTemp = CreateWindow(TEXT("BUTTON"), Str("MainWindow.Exit"),
-        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_PUSHBUTTON,
+        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_PUSHBUTTON|WS_CLIPSIBLINGS,
         0, 0, 0, 0, hwndMain, (HMENU)ID_EXIT, 0, 0);
     SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 
@@ -664,7 +664,7 @@ OBS::OBS()
     // scenes text
 
     hwndTemp = CreateWindow(TEXT("STATIC"), Str("MainWindow.Scenes"),
-        WS_CHILDWINDOW|WS_VISIBLE,
+        WS_CHILDWINDOW|WS_VISIBLE|WS_CLIPSIBLINGS,
         0, 0, 0, 0, hwndMain, (HMENU)ID_SCENES_TEXT, 0, 0);
     SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 
@@ -672,7 +672,7 @@ OBS::OBS()
     // scenes text
 
     hwndTemp = CreateWindow(TEXT("STATIC"), Str("MainWindow.Sources"),
-        WS_CHILDWINDOW|WS_VISIBLE,
+        WS_CHILDWINDOW|WS_VISIBLE|WS_CLIPSIBLINGS,
         0, 0, 0, 0, hwndMain, (HMENU)ID_SOURCES_TEXT, 0, 0);
     SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 
@@ -767,12 +767,12 @@ OBS::OBS()
     if(hotkey)
         startStreamHotkeyID = API->CreateHotkey(hotkey, OBS::StartStreamHotkey, NULL);
 
-    DWORD micBoostPercentage = AppConfig->GetInt(TEXT("Audio"), TEXT("MicBoost"), 100);
-    if(micBoostPercentage < 100)
-        micBoostPercentage = 100;
-    else if(micBoostPercentage > 400)
-        micBoostPercentage = 400;
-    micBoost = float(micBoostPercentage)/100.0f;
+    DWORD micBoostPercentage = AppConfig->GetInt(TEXT("Audio"), TEXT("MicBoostMultiple"), 1);
+    if(micBoostPercentage < 1)
+        micBoostPercentage = 1;
+    else if(micBoostPercentage > 20)
+        micBoostPercentage = 20;
+    micBoost = float(micBoostPercentage);
 
     //-----------------------------------------------------
     // load plugins
@@ -1281,7 +1281,6 @@ void OBS::Start()
     {
         Log(TEXT("------------------------------------------"));
         Log(TEXT("  Using audio/video sync fix"));
-        hTimeMutex = OSCreateMutex();
     }
 
     //-------------------------------------------------------------
@@ -1499,11 +1498,6 @@ void OBS::Stop()
     fileStream = NULL;
     audioEncoder = NULL;
     videoEncoder = NULL;
-
-    //-------------------------------------------------------------
-
-    if(bUseSyncFix)
-        OSCloseMutex(hTimeMutex);
 
     //-------------------------------------------------------------
 
@@ -1735,7 +1729,16 @@ void OBS::MainCaptureLoop()
             nop();
 
         if(bUseSyncFix)
+        {
+            OSEnterMutex(hSoundDataMutex);
+            if(!pendingAudioFrames.Num())
+                bufferedTimes << 0;
+            else
+                bufferedTimes << pendingAudioFrames.Last().timestamp;
+            OSLeaveMutex(hSoundDataMutex);
+
             ReleaseSemaphore(hRequestAudioEvent, 1, NULL);
+        }
         else
             bufferedTimes << curStreamTime;
 
@@ -1937,7 +1940,6 @@ void OBS::MainCaptureLoop()
         {
             if(bUseSyncFix)
             {
-                OSEnterMutex(hTimeMutex);
                 if(bufferedTimes.Num() < 2 || bufferedTimes[1] == 0)
                 {
                     if(bufferedTimes.Num() > 1)
@@ -1945,7 +1947,6 @@ void OBS::MainCaptureLoop()
 
                     bEncode = false;
                 }
-                OSLeaveMutex(hTimeMutex);
             }
             else
             {
@@ -1963,7 +1964,6 @@ void OBS::MainCaptureLoop()
                     bFirstFrame = false;
                 }
             }
-
 
             if(!bEncode)
             {
@@ -2008,8 +2008,6 @@ void OBS::MainCaptureLoop()
                 DWORD curTimeStamp = 0;
                 DWORD curPTSVal = 0;
 
-                if(bUseSyncFix) OSEnterMutex(hTimeMutex);
-
                 curTimeStamp = bufferedTimes[0];
                 curPTSVal = bufferedTimes[curPTS++];
 
@@ -2043,8 +2041,6 @@ void OBS::MainCaptureLoop()
 
                     lastUnmodifiedPTSVal = savedPTSVal;
                     lastPTSVal = curPTSVal;
-
-                    OSLeaveMutex(hTimeMutex);
 
                     //Log(TEXT("val: %u - adjusted: %u"), savedPTSVal, curPTSVal);
                 }
@@ -2119,9 +2115,7 @@ void OBS::MainCaptureLoop()
 
                     curPTS--;
 
-                    if(bUseSyncFix) OSEnterMutex(hTimeMutex);
                     bufferedTimes.Remove(0);
-                    if(bUseSyncFix) OSLeaveMutex(hTimeMutex);
                 }
             }
 
@@ -2215,16 +2209,6 @@ void OBS::MainAudioLoop()
         //-----------------------------------------------
 
         OSEnterMutex(hSoundDataMutex);
-
-        if(bUseSyncFix)// && pendingAudioFrames.Num())
-        {
-            OSEnterMutex(hTimeMutex);
-            if(!pendingAudioFrames.Num())
-                bufferedTimes << 0;
-            else
-                bufferedTimes << pendingAudioFrames.Last().timestamp;
-            OSLeaveMutex(hTimeMutex);
-        }
 
         //-----------------------------------------------
 

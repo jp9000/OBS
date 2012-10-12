@@ -1395,12 +1395,12 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
 
                 //--------------------------------------------
 
-                DWORD micBoost = AppConfig->GetInt(TEXT("Audio"), TEXT("MicBoost"), 100);
-                if(micBoost < 100)
-                    micBoost = 100;
-                else if(micBoost > 400)
-                    micBoost = 400;
-                SendMessage(GetDlgItem(hwnd, IDC_MICBOOST), UDM_SETRANGE32, 100, 400);
+                DWORD micBoost = AppConfig->GetInt(TEXT("Audio"), TEXT("MicBoostMultiple"), 1);
+                if(micBoost < 1)
+                    micBoost = 1;
+                else if(micBoost > 20)
+                    micBoost = 20;
+                SendMessage(GetDlgItem(hwnd, IDC_MICBOOST), UDM_SETRANGE32, 1, 20);
                 SendMessage(GetDlgItem(hwnd, IDC_MICBOOST), UDM_SETPOS32, 0, micBoost);
 
                 //--------------------------------------------
@@ -1869,13 +1869,13 @@ void OBS::ApplySettings()
 
                 //------------------------------------
 
-                DWORD micBoostPercentage = (DWORD)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_MICBOOST), UDM_GETPOS32, 0, 0);
-                if(micBoostPercentage < 100)
-                    micBoostPercentage = 100;
-                else if(micBoostPercentage > 400)
-                    micBoostPercentage = 400;
-                AppConfig->SetInt(TEXT("Audio"), TEXT("MicBoost"), micBoostPercentage);
-                App->micBoost = float(micBoostPercentage)/100.0f;
+                DWORD micBoostMultiple = (DWORD)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_MICBOOST), UDM_GETPOS32, 0, 0);
+                if(micBoostMultiple < 1)
+                    micBoostMultiple = 1;
+                else if(micBoostMultiple > 20)
+                    micBoostMultiple = 20;
+                AppConfig->SetInt(TEXT("Audio"), TEXT("MicBoostMultiple"), micBoostMultiple);
+                App->micBoost = float(micBoostMultiple);
 
                 break;
             }

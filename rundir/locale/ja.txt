@@ -103,7 +103,7 @@ Settings.Advanced.VideoEncoderSettings              "x264詳細設定"
 
 Settings.Audio.Device               "マイク/他のサウンド デバイス:"
 Settings.Audio.ForceMicMono         "マイクを強制的にモノラルにする"
-Settings.Audio.MicBoost             "マイク ボリュームを上がる(パーセント):"
+Settings.Audio.MicBoost             "マイク ボリュームを上がる(倍数):"
 Settings.Audio.MuteDesktopHotkey    "デスクトップをミュートするホットキー:"
 Settings.Audio.MuteMicHotkey        "マイクをミュートするホットキー:"
 Settings.Audio.PushToTalkHotkey     "プッシュトゥートーク(PTT)を使う:"

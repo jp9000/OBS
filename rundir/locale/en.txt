@@ -108,7 +108,7 @@ Settings.Advanced.VideoEncoderSettingsTooltip           "This allows you to set 
 
 Settings.Audio.Device               "Microphone/Auxilary Audio Device:"
 Settings.Audio.ForceMicMono         "Force Microphone/Auxilary to Mono:"
-Settings.Audio.MicBoost             "Mic/Aux Boost (percentage):"
+Settings.Audio.MicBoost             "Mic/Aux Boost (multiple):"
 Settings.Audio.MuteDesktopHotkey    "Mute/Unmute Desktop Hotkey:"
 Settings.Audio.MuteMicHotkey        "Mute/Unmute Mic Hotkey:"
 Settings.Audio.PushToTalkHotkey     "Use Push-to-talk:"
