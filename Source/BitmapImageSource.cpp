@@ -103,6 +103,10 @@ public:
 
         opacity = data->GetInt(TEXT("opacity"), 100);
         color = data->GetInt(TEXT("color"), 0xFFFFFFFF);
+        if(opacity > 100)
+            opacity = 100;
+        else if(opacity < 0)
+            opacity = 0;
 
         //------------------------------------
 
@@ -204,6 +208,10 @@ INT_PTR CALLBACK ConfigureBitmapProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         BOOL bFailed;
                         int opacity = (int)SendMessage(GetDlgItem(hwnd, IDC_OPACITY), UDM_GETPOS32, 0, (LPARAM)&bFailed);
+                        if(opacity > 100)
+                            opacity = 100;
+                        else if(opacity < 0)
+                            opacity = 0;
                         configInfo->data->SetInt(TEXT("opacity"), bFailed ? 100 : opacity);
 
                         DWORD color = CCGetColor(GetDlgItem(hwnd, IDC_COLOR));

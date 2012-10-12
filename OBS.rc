@@ -85,7 +85,7 @@ BEGIN
     CONTROL         "Settings.Publish.AutoReconnect",IDC_AUTORECONNECT,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,114,145,10,WS_EX_RIGHT
     RTEXT           "Settings.Publish.AutoReconnectTimeout",IDC_AUTORECONNECT_TIMEOUT_STATIC,7,131,133,8
-    EDITTEXT        IDC_AUTORECONNECT_TIMEOUT_EDIT,143,128,40,14,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_AUTORECONNECT_TIMEOUT_EDIT,143,128,40,14,ES_AUTOHSCROLL
     CONTROL         "",IDC_AUTORECONNECT_TIMEOUT,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,185,128,11,14
     CONTROL         "Settings.Publish.SaveToFile",IDC_SAVETOFILE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,147,145,10,WS_EX_RIGHT
     RTEXT           "Settings.Publish.SavePath",IDC_SAVEPATH_STATIC,7,164,133,8
@@ -175,7 +175,7 @@ BEGIN
     PUSHBUTTON      "ClearHotkey",IDC_CLEARMUTEDESKTOP,241,64,73,14
     CONTROL         "Settings.Audio.ForceMicMono",IDC_FORCEMONO,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,83,143,10,WS_EX_RIGHT
     RTEXT           "Settings.Audio.MicBoost",IDC_STATIC,4,102,138,8
-    EDITTEXT        IDC_MICBOOST_EDIT,143,100,40,14,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_MICBOOST_EDIT,143,100,40,14,ES_AUTOHSCROLL
     CONTROL         "",IDC_MICBOOST,"msctls_updown32",UDS_SETBUDDYINT | UDS_AUTOBUDDY | UDS_ARROWKEYS,183,100,10,14
     LTEXT           "Settings.Info",IDC_INFO,4,122,408,37,NOT WS_VISIBLE
 END
@@ -231,7 +231,7 @@ BEGIN
     EDITTEXT        IDC_BITMAP,12,10,170,14,ES_AUTOHSCROLL | ES_READONLY
     PUSHBUTTON      "Browse",IDC_BROWSE,186,10,50,14
     RTEXT           "Sources.BitmapSource.Opacity",IDC_STATIC,5,45,118,8
-    EDITTEXT        IDC_OPACITY_EDIT,125,43,40,14,ES_AUTOHSCROLL | ES_READONLY | ES_NUMBER
+    EDITTEXT        IDC_OPACITY_EDIT,125,43,40,14,ES_AUTOHSCROLL | ES_NUMBER
     CONTROL         "",IDC_OPACITY,"msctls_updown32",UDS_SETBUDDYINT | UDS_AUTOBUDDY | UDS_ARROWKEYS,164,43,10,14
     DEFPUSHBUTTON   "OK",IDOK,132,64,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,186,64,50,14
@@ -522,8 +522,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,4,2,0
- PRODUCTVERSION 0,4,2,0
+ FILEVERSION 0,4,2,1
+ PRODUCTVERSION 0,4,2,1
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -539,12 +539,12 @@ BEGIN
         BLOCK "041104b0"
         BEGIN
             VALUE "FileDescription", "Open Broadcaster Software"
-            VALUE "FileVersion", "0, 4, 2, 0"
+            VALUE "FileVersion", "0, 4, 2, 1"
             VALUE "InternalName", "OBS"
             VALUE "LegalCopyright", "Copyright (C) 2012"
             VALUE "OriginalFilename", "OBS.exe"
             VALUE "ProductName", "Open Broadcaster Software"
-            VALUE "ProductVersion", "0, 4, 2, 0"
+            VALUE "ProductVersion", "0, 4, 2, 1"
         END
     END
     BLOCK "VarFileInfo"

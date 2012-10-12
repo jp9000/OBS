@@ -3,6 +3,17 @@
 
 -------------------------------
 
+2012-10-11 - 0.421 (alpha)
+    * Fixed thread lock hang caused by setting the status bar (r1ch)
+    * Fixed flickering when resizing the main window (thanks to
+      HomeWorld on teamliquid for the fix)
+    * Fixed an "out of range" crash that could happen randomly when
+      using the sync fix
+    * Changed mic boost to be a 1-20 multiplier instead of 100-400%
+    * Edit controls with scrollers are no longer read-only
+
+-------------------------------
+
 2012-10-10 - 0.42 (alpha)
     * Added "Start Stream" hotkey
     * Made a hotkey thread so I can have hotkeys on all the time
@@ -32,6 +43,8 @@
     * Improved network code again, made it so that packets are never
       cut in half.  Automatically flushes packets now after 500
       milliseconds to reduce latency issues with high buffer sizes.
+    * Fixed FLV file issue
+    * Added a progress dialog when building the MP4 files
 
 -------------------------------
 

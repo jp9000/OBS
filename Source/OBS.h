@@ -439,7 +439,6 @@ class OBS
     bool    bUsing444;
 
     bool        bUseSyncFix;
-    HANDLE      hTimeMutex;
     List<UINT>  bufferedTimes;
 
     bool    bRecievedFirstAudioFrame;
