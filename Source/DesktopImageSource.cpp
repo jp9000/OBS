@@ -264,6 +264,8 @@ public:
         for(UINT i=0; i<NUM_CAPTURE_TEXTURES; i++)
             renderTextures[i] = CreateGDITexture(width, height);
 
+        lastRendered = NULL;
+
         App->LeaveSceneMutex();
     }
 };
