@@ -1362,10 +1362,10 @@ StatusBarDrawData statusBarData;
 void OBS::ClearStatusBar()
 {
     HWND hwndStatusBar = GetDlgItem(hwndMain, ID_STATUS);
-    SendMessage(hwndStatusBar, SB_SETTEXT, 0, NULL);
-    SendMessage(hwndStatusBar, SB_SETTEXT, 1, NULL);
-    SendMessage(hwndStatusBar, SB_SETTEXT, 2, NULL);
-    SendMessage(hwndStatusBar, SB_SETTEXT, 3, NULL);
+    PostMessage(hwndStatusBar, SB_SETTEXT, 0, NULL);
+    PostMessage(hwndStatusBar, SB_SETTEXT, 1, NULL);
+    PostMessage(hwndStatusBar, SB_SETTEXT, 2, NULL);
+    PostMessage(hwndStatusBar, SB_SETTEXT, 3, NULL);
 }
 
 void OBS::SetStatusBarData()
