@@ -154,7 +154,7 @@ VideoOutputType GetVideoOutputType(const AM_MEDIA_TYPE &media_type)
     return type;
 }
 
-const int inputPriority[] = 
+const int inputPriority[] =
 {
     1,
     12,
