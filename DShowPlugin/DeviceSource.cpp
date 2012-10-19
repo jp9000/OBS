@@ -157,6 +157,11 @@ bool DeviceSource::LoadFilters()
         colorConvertShader = CreatePixelShaderFromFile(TEXT("plugins/DShowPlugin/shaders/UYVToRGB.pShader"));
         colorType = DeviceOutputType_UYVY;
     }
+    else if(bestOutput->videoType == VideoOutputType_HDYC)
+    {
+        colorConvertShader = CreatePixelShaderFromFile(TEXT("plugins/DShowPlugin/shaders/HDYCToRGB.pShader"));
+        colorType = DeviceOutputType_UYVY;
+    }
     else
     {
         colorType = DeviceOutputType_RGB;

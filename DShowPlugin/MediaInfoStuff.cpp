@@ -80,6 +80,8 @@ VideoOutputType GetVideoOutputTypeFromFourCC(DWORD fourCC)
         type = VideoOutputType_YUY2;
     else if(fourCC == 'YVYU')
         type = VideoOutputType_UYVY;
+    else if(fourCC == 'CYDH')
+        type = VideoOutputType_HDYC;
 
     else if(fourCC == 'V4PM' || fourCC == '2S4M')
         type = VideoOutputType_MPEG2_VIDEO;
@@ -152,7 +154,7 @@ VideoOutputType GetVideoOutputType(const AM_MEDIA_TYPE &media_type)
     return type;
 }
 
-int inputPriority[] = 
+const int inputPriority[] = 
 {
     1,
     12,
@@ -165,6 +167,7 @@ int inputPriority[] =
     -1,
     -1,
 
+    11,
     11,
     11,
     11,

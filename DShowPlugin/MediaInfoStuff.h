@@ -42,6 +42,7 @@ enum VideoOutputType
     VideoOutputType_YVYU,
     VideoOutputType_YUY2,
     VideoOutputType_UYVY,
+    VideoOutputType_HDYC,
 
     VideoOutputType_MPEG2_VIDEO,
     VideoOutputType_H264,
