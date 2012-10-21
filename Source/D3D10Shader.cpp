@@ -115,7 +115,7 @@ Shader* D3D10VertexShader::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
             errorMessages->Release();
         }
 
-        AppWarning(TEXT("Compilation of vertex shader '%s' failed, result = %08lX"), lpFileName, err);
+        CrashError(TEXT("Compilation of vertex shader '%s' failed, result = %08lX"), lpFileName, err);
         return NULL;
     }
 
@@ -127,7 +127,7 @@ Shader* D3D10VertexShader::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
     err = GetD3D()->CreateVertexShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), &vShader);
     if(FAILED(err))
     {
-        AppWarning(TEXT("Unable to create vertex shader '%s', result = %08lX"), lpFileName, err);
+        CrashError(TEXT("Unable to create vertex shader '%s', result = %08lX"), lpFileName, err);
         SafeRelease(shaderBlob);
         return NULL;
     }
@@ -135,7 +135,7 @@ Shader* D3D10VertexShader::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
     err = GetD3D()->CreateInputLayout(shaderProcessor.generatedLayout.Array(), shaderProcessor.generatedLayout.Num(), shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), &vShaderLayout);
     if(FAILED(err))
     {
-        AppWarning(TEXT("Unable to create vertex layout for vertex shader '%s', result = %08lX"), lpFileName, err);
+        CrashError(TEXT("Unable to create vertex layout for vertex shader '%s', result = %08lX"), lpFileName, err);
         SafeRelease(shaderBlob);
         SafeRelease(vShader);
         return NULL;
@@ -198,7 +198,7 @@ Shader* D3D10PixelShader::CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)
             errorMessages->Release();
         }
 
-        AppWarning(TEXT("Compilation of pixel shader '%s' failed, result = %08lX"), lpFileName, err);
+        CrashError(TEXT("Compilation of pixel shader '%s' failed, result = %08lX"), lpFileName, err);
         return NULL;
     }
 
@@ -209,7 +209,7 @@ Shader* D3D10PixelShader::CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)
     err = GetD3D()->CreatePixelShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), &pShader);
     if(FAILED(err))
     {
-        AppWarning(TEXT("Unable to create pixel shader '%s', result = %08lX"), lpFileName, err);
+        CrashError(TEXT("Unable to create pixel shader '%s', result = %08lX"), lpFileName, err);
         SafeRelease(shaderBlob);
         return NULL;
     }

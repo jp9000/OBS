@@ -28,7 +28,7 @@ class GraphicsCaptureSource : public ImageSource
 
     String strWindowClass;
     HWND hwndTarget, hwndSender, hwndReceiver;
-    bool bCapturing, bErrorAquiring, bFlip;
+    bool bCapturing, bErrorAcquiring, bFlip, bStretch;
     DWORD targetProcessID;
     HANDLE hProcess;
     UINT warningID;

@@ -415,8 +415,7 @@ public:
 
         if(bUseSendBuffer)
         {
-            if(sendBufferSize != 32768)
-                Log(TEXT("Send Buffer Size: %u"), sendBufferSize);
+            Log(TEXT("Send Buffer Size: %u"), sendBufferSize);
 
             rtmp->m_customSendFunc = (CUSTOMSEND)RTMPPublisher::BufferedSend;
             rtmp->m_customSendParam = this;
@@ -734,7 +733,7 @@ NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry)
     rtmp->Link.flashVer.av_len = (int)strlen(rtmp->Link.flashVer.av_val);
 
     BOOL bUseSendBuffer = AppConfig->GetInt(TEXT("Publish"), TEXT("UseSendBuffer"), 1);
-    UINT sendBufferSize = AppConfig->GetInt(TEXT("Publish"), TEXT("SendBufferSize"), 32768);
+    UINT sendBufferSize = AppConfig->GetInt(TEXT("Publish"), TEXT("SendBufferSize"), 8196);
 
     if(sendBufferSize > 32768)
         sendBufferSize = 32768;

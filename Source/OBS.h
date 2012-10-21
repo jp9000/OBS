@@ -609,13 +609,20 @@ public:
 
     inline void PostStopMessage() {if(hwndMain) PostMessage(hwndMain, OBS_REQUESTSTOP, 0, 0);}
 
-    inline Vect2 GetBaseSize()        const {return Vect2(float(baseCX), float(baseCY));}
-    inline Vect2 GetOutputSize()      const {return Vect2(float(outputCX), float(outputCY));}
-    inline Vect2 GetRenderFrameSize() const {return Vect2(float(renderFrameWidth), float(renderFrameHeight));}
+    void GetBaseSize(UINT &width, UINT &height) const;
 
-    inline void GetBaseSize(UINT &width, UINT &height) const           {width = baseCX;           height = baseCY;}
     inline void GetRenderFrameSize(UINT &width, UINT &height) const    {width = renderFrameWidth; height = renderFrameHeight;}
     inline void GetOutputSize(UINT &width, UINT &height) const         {width = outputCX;         height = outputCY;}
+
+    inline Vect2 GetBaseSize() const
+    {
+        UINT width, height;
+        GetBaseSize(width, height);
+        return Vect2(float(width), float(height));
+    }
+
+    inline Vect2 GetOutputSize()      const {return Vect2(float(outputCX), float(outputCY));}
+    inline Vect2 GetRenderFrameSize() const {return Vect2(float(renderFrameWidth), float(renderFrameHeight));}
 
     inline bool SSE2Available() const {return bSSE2Available;}
 

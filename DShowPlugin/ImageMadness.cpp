@@ -79,8 +79,6 @@ void DeviceSource::PackPlanar(LPBYTE convertBuffer, LPBYTE lpPlanar)
             inputQW = (QWORD*)(chromaPlanes[i]+(halfWidth*(y>>1)));
             inputQWEnd = inputQW+dwQWSize;
 
-            nop();
-
             while(inputQW < inputQWEnd)
             {
                 register QWORD qw = *inputQW;
@@ -176,8 +174,6 @@ void DeviceSource::PackPlanar(LPBYTE convertBuffer, LPBYTE lpPlanar)
             size = halfWidth;
             inputDW = (LPDWORD)(chromaPlanes[i]+(halfWidth*(y>>1)));
             inputDWEnd = inputDW+dwDWSize;
-
-            nop();
 
             while(inputDW < inputDWEnd)
             {

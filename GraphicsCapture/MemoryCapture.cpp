@@ -22,8 +22,10 @@
 
 MemoryCapture::~MemoryCapture()
 {
-    if(lpTextureBuffer)
-        Free(lpTextureBuffer);
+    if(sharedMemory)
+        UnmapViewOfFile(sharedMemory);
+    if(hFileMap)
+        CloseHandle(hFileMap);
 
     delete texture;
 }
@@ -33,7 +35,28 @@ bool MemoryCapture::Init(HANDLE hProcess, HWND hwndTarget, CaptureInfo &info)
     this->hwndTarget = hwndTarget;
     this->hProcess = hProcess;
     this->height = info.cy;
-    lpDataAddress = info.data;
+    this->pitch = info.pitch;
+
+    String strFileMapName;
+    strFileMapName << TEXTURE_MEMORY << UIntString(info.mapID);
+
+    hFileMap = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, strFileMapName);
+    if(hFileMap == NULL)
+    {
+        AppWarning(TEXT("MemoryCapture::Init: Could not open file mapping"));
+        return false;
+    }
+
+    sharedMemory = (LPBYTE)MapViewOfFile(hFileMap, FILE_MAP_ALL_ACCESS, 0, 0, info.mapSize);
+    if(!sharedMemory)
+    {
+        AppWarning(TEXT("MemoryCapture::Init: Could not map view of file"));
+        return false;
+    }
+
+    copyData = (MemoryCopyData*)sharedMemory;
+    textureBuffers[0] = sharedMemory+copyData->texture1Offset;
+    textureBuffers[1] = sharedMemory+copyData->texture2Offset;
 
     texture = CreateTexture(info.cx, info.cy, (GSColorFormat)info.format, NULL, NULL, FALSE);
     if(!texture)
@@ -49,65 +72,48 @@ Texture* MemoryCapture::LockTexture()
 {
     LPVOID address = NULL;
 
-    MemoryCopyData copyData;
-    if(ReadProcessMemory(hProcess, lpDataAddress, &copyData, sizeof(copyData), NULL))
+    curTexture = copyData->lastRendered;
+
+    if(curTexture < 2)
     {
-        curTexture = copyData.lastRendered;
-
-        if(curTexture < 2)
+        DWORD nextTexture = (curTexture == 1) ? 0 : 1;
+    
+        if(WaitForSingleObject(textureMutexes[curTexture], 0) == WAIT_OBJECT_0)
+            hMutex = textureMutexes[curTexture];
+        else if(WaitForSingleObject(textureMutexes[nextTexture], 0) == WAIT_OBJECT_0)
         {
-            DWORD nextTexture = (curTexture == 1) ? 0 : 1;
+            hMutex = textureMutexes[nextTexture];
+            curTexture = nextTexture;
+        }
 
-            if(WaitForSingleObject(textureMutexes[curTexture], 0) == WAIT_OBJECT_0)
-                hMutex = textureMutexes[curTexture];
-            else if(WaitForSingleObject(textureMutexes[nextTexture], 0) == WAIT_OBJECT_0)
-            {
-                hMutex = textureMutexes[nextTexture];
-                curTexture = nextTexture;
-            }
+        if(hMutex)
+        {
+            BYTE *lpData;
+            UINT texPitch;
 
-            if(hMutex)
+            if(texture->Map(lpData, texPitch))
             {
-                address = copyData.lockData[curTexture].address;
-                DWORD targetPitch = copyData.lockData[curTexture].pitch;
-                if(address)
+                if(pitch == texPitch)
+                    SSECopy(lpData, textureBuffers[curTexture], pitch*height);
+                else
                 {
-                    LPBYTE lpData;
-                    UINT pitch;
-                    if(texture->Map(lpData, pitch))
+                    UINT bestPitch = MIN(pitch, texPitch);
+                    LPBYTE input = textureBuffers[curTexture];
+                    for(UINT y=0; y<height; y++)
                     {
-                        if(pitch == targetPitch)
-                            ReadProcessMemory(hProcess, address, lpData, pitch*height, NULL);
-                        else
-                        {
-                            if(!lpTextureBuffer)
-                                lpTextureBuffer = (LPBYTE)Allocate(targetPitch*height);
+                        LPBYTE curInput  = ((LPBYTE)input)  + (pitch*y);
+                        LPBYTE curOutput = ((LPBYTE)lpData) + (texPitch*y);
 
-                            ReadProcessMemory(hProcess, address, lpTextureBuffer, targetPitch*height, NULL);
-
-                            for(UINT y=0; y<height; y++)
-                            {
-                                LPBYTE curInput  = ((LPBYTE)lpTextureBuffer) + (targetPitch*y);
-                                LPBYTE curOutput = ((LPBYTE)lpData)          + (pitch*y);
-
-                                SSECopy(curOutput, curInput, MIN(targetPitch, pitch));
-                            }
-                        }
-
-                        texture->Unmap();
+                        SSECopy(curOutput, curInput, bestPitch);
                     }
                 }
-                else
-                    nop();
-
-                ReleaseMutex(hMutex);
+                texture->Unmap();
             }
-
-            hMutex = NULL;
+            ReleaseMutex(hMutex);
         }
+
+        hMutex = NULL;
     }
-    else
-        nop();
 
     return texture; 
 }

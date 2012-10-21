@@ -24,6 +24,9 @@
 #define _WIN32_WINNT   0x0600
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+
+#pragma intrinsic(memcpy, memset, memcmp)
+
 #include <xmmintrin.h>
 #include <emmintrin.h>
 
@@ -83,17 +86,11 @@ public:
         hookFunc = hookFuncIn;
 
         DWORD oldProtect;
-        if(!VirtualProtect((LPVOID)func, 5, PAGE_READWRITE, &oldProtect))
+        if(!VirtualProtect((LPVOID)func, 5, PAGE_EXECUTE_READWRITE, &oldProtect))
             return false;
 
         memcpy(data, (const void*)func, 5);
-
-        LPBYTE addrData = (LPBYTE)func;
-        *addrData = 0xE9;
-        *(DWORD*)(addrData+1) = DWORD(UPARAM(hookFunc) - (UPARAM(func)+5));
         VirtualProtect((LPVOID)func, 5, oldProtect, &oldProtect);
-
-        bHooked = true;
 
         return true;
     }
@@ -106,9 +103,11 @@ public:
         DWORD oldProtect;
         VirtualProtect((LPVOID)func, 5, PAGE_READWRITE, &oldProtect);
 
+        DWORD offset = DWORD(UPARAM(hookFunc) - (UPARAM(func)+5));
+
         LPBYTE addrData = (LPBYTE)func;
         *addrData = 0xE9;
-        *(DWORD*)(addrData+1) = DWORD(UPARAM(hookFunc) - (UPARAM(func)+5));
+        *(DWORD*)(addrData+1) = offset;
         VirtualProtect((LPVOID)func, 5, oldProtect, &oldProtect);
 
         bHooked = true;
@@ -120,13 +119,64 @@ public:
             return;
 
         DWORD oldProtect;
-        VirtualProtect((LPVOID)func, 5, PAGE_READWRITE, &oldProtect);
+        VirtualProtect((LPVOID)func, 5, PAGE_EXECUTE_READWRITE, &oldProtect);
         memcpy((void*)func, data, 5);
         VirtualProtect((LPVOID)func, 5, oldProtect, &oldProtect);
 
         bHooked = false;
     }
 };
+
+inline FARPROC GetVTable(LPVOID ptr, UINT funcOffset)
+{
+    UPARAM *vtable = *(UPARAM**)ptr;
+    return (FARPROC)(*(vtable+funcOffset));
+}
+
+inline void SetVTable(LPVOID ptr, UINT funcOffset, FARPROC funcAddress)
+{
+    UPARAM *vtable = *(UPARAM**)ptr;
+
+    DWORD oldProtect;
+    if(!VirtualProtect((LPVOID)(vtable+funcOffset), sizeof(UPARAM), PAGE_EXECUTE_READWRITE, &oldProtect))
+        return;
+
+    *(vtable+funcOffset) = (UPARAM)funcAddress;
+
+    VirtualProtect((LPVOID)(vtable+funcOffset), sizeof(UPARAM), oldProtect, &oldProtect);
+}
+
+inline void SSECopy(void *lpDest, void *lpSource, UINT size)
+{
+    UINT alignedSize = size&0xFFFFFFF0;
+
+    if(UPARAM(lpDest)&0xF || UPARAM(lpSource)&0xF) //if unaligned revert to normal copy
+    {
+        memcpy(lpDest, lpSource, size);
+        return;
+    }
+
+    register __m128i *mDest = (__m128i*)lpDest;
+    register __m128i *mSrc  = (__m128i*)lpSource;
+
+    {
+        register UINT numCopies = alignedSize>>4;
+        while(numCopies--)
+        {
+            _mm_store_si128(mDest, *mSrc);
+            mDest++;
+            mSrc++;
+        }
+    }
+
+    {
+        UINT sizeTemp = size-alignedSize;
+        if(sizeTemp)
+            memcpy(mDest, mSrc, sizeTemp);
+    }
+}
+
+typedef ULONG (WINAPI *RELEASEPROC)(LPVOID);
 
 #include "../GlobalCaptureStuff.h"
 
@@ -135,7 +185,13 @@ enum GSColorFormat {GS_UNKNOWNFORMAT, GS_ALPHA, GS_GRAYSCALE, GS_RGB, GS_RGBA, G
 extern HWND hwndSender, hwndReceiver;
 extern HANDLE textureMutexes[2];
 extern bool bCapturing;
-extern bool bTargetAquired;
+extern bool bTargetAcquired;
+
+extern HANDLE hFileMap;
+extern LPBYTE lpSharedMemory;
+
+UINT InitializeSharedMemory(UINT textureSize, DWORD *totalSize, MemoryCopyData **copyData, LPBYTE *textureBuffers);
+void DestroySharedMemory();
 
 //memory capture APIs
 bool InitD3D9Capture();

@@ -26,7 +26,7 @@
 
 //========================================================================================================
 
-CapturePin::CapturePin(CaptureFilter* filterIn, DeviceSource *sourceIn, GUID &expectedMediaType)
+CapturePin::CapturePin(CaptureFilter* filterIn, DeviceSource *sourceIn, VideoOutputType expectedVideoType)
 : filter(filterIn), source(sourceIn), refCount(1)
 {
     connectedMediaType.majortype = MEDIATYPE_Video;
@@ -34,7 +34,7 @@ CapturePin::CapturePin(CaptureFilter* filterIn, DeviceSource *sourceIn, GUID &ex
     connectedMediaType.pbFormat  = NULL;
     connectedMediaType.cbFormat  = 0;
     connectedMediaType.pUnk      = NULL;
-    this->expectedMediaType = expectedMediaType;
+    this->expectedVideoType = expectedVideoType;
 }
 
 CapturePin::~CapturePin()
@@ -209,12 +209,22 @@ bool CapturePin::IsValidMediaType(const AM_MEDIA_TYPE *pmt) const
     if(pmt->pbFormat)
     {
         VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pmt->pbFormat);
+
         if( pVih->bmiHeader.biHeight == 0 ||
-            pVih->bmiHeader.biWidth  == 0 ||
-            pmt->subtype != expectedMediaType)
+            pVih->bmiHeader.biWidth  == 0)
         {
             return false;
         }
+
+        VideoOutputType outputType = GetVideoOutputTypeFromGUID(pmt->subtype);
+        if(outputType == VideoOutputType_None)
+        {
+            outputType = GetVideoOutputTypeFromFourCC(pVih->bmiHeader.biCompression);
+            if(outputType != expectedVideoType)
+                return false;
+        }
+        else if(outputType != expectedVideoType)
+            return false;
     }
 
     return true;
@@ -223,10 +233,10 @@ bool CapturePin::IsValidMediaType(const AM_MEDIA_TYPE *pmt) const
 
 //========================================================================================================
 
-CaptureFilter::CaptureFilter(DeviceSource *source, GUID &expectedMediaType)
+CaptureFilter::CaptureFilter(DeviceSource *source, VideoOutputType expectedVideoType)
 : state(State_Stopped), refCount(1)
 {
-    pin = new CapturePin(this, source, expectedMediaType);
+    pin = new CapturePin(this, source, expectedVideoType);
 }
 
 CaptureFilter::~CaptureFilter()

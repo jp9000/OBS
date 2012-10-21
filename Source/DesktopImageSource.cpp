@@ -92,20 +92,24 @@ public:
             HWND hwndCapture = NULL;
             if(captureType == 1)
             {
-                hwndCapture = FindWindow(strWindowClass, strWindow);
-                if(!hwndCapture)
+                if(hwndFoundWindow && IsWindow(hwndFoundWindow))
                 {
-                    if(hwndFoundWindow && IsWindow(hwndFoundWindow))
-                    {
-                        TCHAR lpClassName[256];
-                        BOOL bSuccess = GetClassName(hwndFoundWindow, lpClassName, 255);
+                    TCHAR lpClassName[256];
+                    BOOL bSuccess = GetClassName(hwndFoundWindow, lpClassName, 255);
 
-                        if(bSuccess && scmpi(lpClassName, strWindowClass) == 0)
-                            hwndCapture = hwndFoundWindow;
-                        else
+                    if(bSuccess && scmpi(lpClassName, strWindowClass) == 0)
+                        hwndCapture = hwndFoundWindow;
+                    else
+                    {
+                        hwndCapture = FindWindow(strWindowClass, strWindow);
+                        if(!hwndCapture)
                             hwndCapture = FindWindow(strWindowClass, NULL);
                     }
-                    else
+                }
+                else
+                {
+                    hwndCapture = FindWindow(strWindowClass, strWindow);
+                    if(!hwndCapture)
                         hwndCapture = FindWindow(strWindowClass, NULL);
                 }
 
@@ -150,12 +154,7 @@ public:
                 FillRect(hDC, &rc, (HBRUSH)GetStockObject(BLACK_BRUSH));
 
                 if(!warningID)
-                {
-                    String strWarning;
-
-                    strWarning << Str("Sources.SoftwareCaptureSource.WindowNotFound");
-                    warningID = App->AddStreamInfo(strWarning, bWindowNotFound ? StreamInfoPriority_High : StreamInfoPriority_Medium);
-                }
+                    warningID = App->AddStreamInfo(Str("Sources.SoftwareCaptureSource.WindowNotFound"), bWindowNotFound ? StreamInfoPriority_High : StreamInfoPriority_Medium);
             }
             else
             {

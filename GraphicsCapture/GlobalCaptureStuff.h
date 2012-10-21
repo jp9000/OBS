@@ -26,29 +26,27 @@
 #define TEXTURE_MUTEX1          TEXT("OBSTextureMutex1")
 #define TEXTURE_MUTEX2          TEXT("OBSTextureMutex2")
 
+#define TEXTURE_MEMORY          TEXT("Global\\OBSTextureMemory")
+
 #define CAPTURETYPE_MEMORY      1
 #define CAPTURETYPE_SHAREDTEX   2
 
-struct LockData
-{
-    LPVOID address;
-    DWORD pitch;
-};
-
 struct MemoryCopyData
 {
-    UINT lastRendered;
-    LockData lockData[2]; 
+    UINT    lastRendered;
+    DWORD   texture1Offset, texture2Offset;
 };
 
 struct CaptureInfo
 {
-    UINT captureType;
-    DWORD format;
-    UINT cx, cy;
-    HWND hwndSender;
-    BOOL bFlip;
-    LPVOID data;
+    UINT    captureType;
+    DWORD   format;
+    UINT    cx, cy;
+    UINT    pitch;
+    HWND    hwndSender;
+    BOOL    bFlip;
+    UINT    mapID;
+    DWORD   mapSize;
 };
 
 enum

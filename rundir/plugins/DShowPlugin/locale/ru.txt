@@ -10,8 +10,10 @@ DeviceSelection.ExistsSomewhere "Это устройство используе�
 DeviceSelection.FlipImage       "Перевернуть Изображение"
 DeviceSelection.FPS             "FPS:"
 DeviceSelection.GlobalExists    "Глобальный источник использующий это устройство уже существует."
+DeviceSelection.InvalidResolution       "Неверное разрешение"
 DeviceSelection.Refresh         "Обновить"
 DeviceSelection.Resolution      "Разрешение:"
+DeviceSelection.UnsupportedResolution   "Это устройство не поддерживает такое разрешение"
 
 Plugin.Description  "Этот плагин позволяет добавлять DirectShow видео устройства (вебкамеры, карты захвата, и т.д.) на сцену."
 Plugin.Name         "DirectShow Video Device Plugin"

@@ -34,7 +34,7 @@ class CapturePin : public IPin, public IMemInputPin
 
     long refCount;
 
-    GUID expectedMediaType;
+    VideoOutputType expectedVideoType;
     DeviceSource *source;
     CaptureFilter *filter;
     AM_MEDIA_TYPE connectedMediaType;
@@ -43,7 +43,7 @@ class CapturePin : public IPin, public IMemInputPin
     bool IsValidMediaType(const AM_MEDIA_TYPE *pmt) const;
 
 public:
-    CapturePin(CaptureFilter *filter, DeviceSource *source, GUID &expectedMediaType);
+    CapturePin(CaptureFilter *filter, DeviceSource *source, VideoOutputType expectedVideoType);
     virtual ~CapturePin();
 
     // IUnknown methods
@@ -89,7 +89,7 @@ class CaptureFilter : public IBaseFilter
     CapturePin *pin;
 
 public:
-    CaptureFilter(DeviceSource *source, GUID &expectedMediaType);
+    CaptureFilter(DeviceSource *source, VideoOutputType expectedVideoType);
     virtual ~CaptureFilter();
 
     // IUnknown methods

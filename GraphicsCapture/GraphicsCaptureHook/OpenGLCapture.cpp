@@ -39,12 +39,6 @@ typedef void GLvoid;
 typedef ptrdiff_t GLintptrARB;
 typedef ptrdiff_t GLsizeiptrARB;
 
-extern "C" {
-    WINGDIAPI void APIENTRY glReadBuffer(GLenum mode);
-    WINGDIAPI void APIENTRY glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels);
-    WINGDIAPI GLenum APIENTRY glGetError();
-};
-
 #define GL_FRONT 0x0404
 #define GL_BACK 0x0405
 
@@ -76,6 +70,37 @@ extern "C" {
 #define GL_PIXEL_PACK_BUFFER_BINDING 0x88ED
 #define GL_PIXEL_UNPACK_BUFFER_BINDING 0x88EF
 
+//------------------------------------------------
+
+typedef void   (WINAPI * GLREADBUFFERPROC)(GLenum);
+typedef void   (WINAPI * GLREADPIXELSPROC)(GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, GLvoid*);
+typedef GLenum (WINAPI * GLGETERRORPROC)();
+typedef BOOL   (WINAPI * WGLSWAPLAYERBUFFERSPROC)(HDC, UINT);
+typedef BOOL   (WINAPI * WGLDELETECONTEXTPROC)(HGLRC);
+typedef PROC   (WINAPI * WGLGETPROCADDRESSPROC)(LPCSTR);
+typedef BOOL   (WINAPI * WGLMAKECURRENTPROC)(HDC, HGLRC);
+typedef HGLRC  (WINAPI * WGLCREATECONTEXTPROC)(HDC);
+
+GLREADBUFFERPROC                pglReadBuffer       = NULL;
+GLREADPIXELSPROC                pglReadPixels       = NULL;
+GLGETERRORPROC                  pglGetError         = NULL;
+WGLSWAPLAYERBUFFERSPROC         pwglSwapLayerBuffers= NULL;
+WGLDELETECONTEXTPROC            pwglDeleteContext   = NULL;
+WGLGETPROCADDRESSPROC           pwglGetProcAddress  = NULL;
+WGLMAKECURRENTPROC              pwglMakeCurrent     = NULL;
+WGLCREATECONTEXTPROC            pwglCreateContext   = NULL;
+
+#define glReadBuffer            (*pglReadBuffer)
+#define glReadPixels            (*pglReadPixels)
+#define glGetError              (*pglGetError)
+#define jimglSwapLayerBuffers   (*pwglSwapLayerBuffers)
+#define jimglDeleteContext      (*pwglDeleteContext)
+#define jimglGetProcAddress     (*pwglGetProcAddress)
+#define jimglMakeCurrent        (*pwglMakeCurrent)
+#define jimglCreateContext      (*pwglCreateContext)
+
+//------------------------------------------------
+
 typedef void (WINAPI * GLBUFFERDATAARBPROC) (GLenum target, GLsizeiptrARB size, const GLvoid* data, GLenum usage);
 typedef void (WINAPI * GLDELETEBUFFERSARBPROC)(GLsizei n, const GLuint* buffers);
 typedef void (WINAPI * GLGENBUFFERSARBPROC)(GLsizei n, GLuint* buffers);
@@ -97,20 +122,22 @@ GLBINDBUFFERPROC        pglBindBuffer       = NULL;
 #define glUnmapBuffer   (*pglUnmapBuffer)
 #define glBindBuffer    (*pglBindBuffer)
 
-GLuint          gltextures[2] = {0, 0};
-bool            bHasTextures = false;
-HDC             hdcAquiredDC = NULL;
-HWND            hwndTarget = NULL;
+//------------------------------------------------
 
-CaptureInfo     glcaptureInfo;
+HookData                glHookSwapBuffers;
+HookData                glHookSwapLayerBuffers;
+HookData                glHookDeleteContext;
 
+GLuint                  gltextures[2] = {0, 0};
+HDC                     hdcAcquiredDC = NULL;
+HWND                    hwndTarget = NULL;
+
+extern MemoryCopyData   *copyData;
 extern LPBYTE           textureBuffers[2];
-extern MemoryCopyData   copyData;
 extern DWORD            curCapture;
+extern BOOL             bHasTextures;
 
-HookData        glHookSwapBuffers;
-HookData        glHookSwapLayerBuffers;
-HookData        glHookDeleteContext;
+CaptureInfo             glcaptureInfo;
 
 
 void KillGLTextures()
@@ -118,27 +145,15 @@ void KillGLTextures()
     if(bHasTextures)
     {
         glDeleteBuffers(2, gltextures);
-
-        WaitForMultipleObjects(2, textureMutexes, TRUE, INFINITE);
-
-        for(UINT i=0; i<2; i++)
-        {
-            if(textureBuffers[i])
-            {
-                free(textureBuffers[i]);
-                textureBuffers[i] = NULL;
-            }
-
-            ReleaseMutex(textureMutexes[i]);
-        }
-
-        bHasTextures = false;
+        bHasTextures = FALSE;
     }
+
+    DestroySharedMemory();
 }
 
 void HandleGLSceneUpdate(HDC hDC)
 {
-    if(!bTargetAquired && hdcAquiredDC == NULL)
+    if(!bTargetAcquired && hdcAcquiredDC == NULL)
     {
         PIXELFORMATDESCRIPTOR pfd;
 
@@ -149,13 +164,13 @@ void HandleGLSceneUpdate(HDC hDC)
 
         if(pfd.cColorBits == 32 && hwndTarget)
         {
-            bTargetAquired = true;
-            hdcAquiredDC = hDC;
+            bTargetAcquired = true;
+            hdcAcquiredDC = hDC;
             glcaptureInfo.format = GS_BGR;
         }
     }
 
-    if(hDC == hdcAquiredDC)
+    if(hDC == hdcAcquiredDC)
     {
         RECT rc;
         GetClientRect(hwndTarget, &rc);
@@ -167,10 +182,6 @@ void HandleGLSceneUpdate(HDC hDC)
 
             if(hwndReceiver)
             {
-                WaitForMultipleObjects(2, textureMutexes, TRUE, INFINITE);
-
-                ZeroMemory(&copyData, sizeof(copyData));
-
                 if(bHasTextures)
                     glDeleteBuffers(2, gltextures);
 
@@ -181,12 +192,10 @@ void HandleGLSceneUpdate(HDC hDC)
 
                 DWORD dwSize = glcaptureInfo.cx*glcaptureInfo.cy*4;
 
+                bool bSuccess = true;
                 for(UINT i=0; i<2; i++)
                 {
-                    if(textureBuffers[i])
-                        free(textureBuffers[i]);
-
-                    textureBuffers[i] = (LPBYTE)malloc(dwSize);
+                    UINT test = 0;
 
                     glBindBuffer(GL_PIXEL_PACK_BUFFER, gltextures[i]);
                     glBufferData(GL_PIXEL_PACK_BUFFER, dwSize, 0, GL_STREAM_READ);
@@ -194,15 +203,24 @@ void HandleGLSceneUpdate(HDC hDC)
 
                 glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 
-                ReleaseMutex(textureMutexes[0]);
-                ReleaseMutex(textureMutexes[1]);
+                if(bSuccess)
+                {
+                    glcaptureInfo.mapID = InitializeSharedMemory(dwSize, &glcaptureInfo.mapSize, &copyData, textureBuffers);
+                    if(!glcaptureInfo.mapID)
+                        bSuccess = false;
+                }
 
-                bHasTextures = true;
-                glcaptureInfo.captureType = CAPTURETYPE_MEMORY;
-                glcaptureInfo.hwndSender = hwndSender;
-                glcaptureInfo.data = &copyData;
-                glcaptureInfo.bFlip = TRUE;
-                PostMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&glcaptureInfo);
+                if(bSuccess)
+                {
+                    bHasTextures = true;
+                    glcaptureInfo.captureType = CAPTURETYPE_MEMORY;
+                    glcaptureInfo.hwndSender = hwndSender;
+                    glcaptureInfo.pitch = glcaptureInfo.cx*4;
+                    glcaptureInfo.bFlip = TRUE;
+                    PostMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&glcaptureInfo);
+                }
+                else
+                    glDeleteBuffers(2, gltextures);
             }
             else
                 KillGLTextures();
@@ -235,19 +253,13 @@ void HandleGLSceneUpdate(HDC hDC)
                     LPBYTE outData = NULL;
                     if(lastRendered != -1)
                     {
-                        LockData *pLockData = &copyData.lockData[lastRendered];
-
-                        outData = textureBuffers[lastRendered];
-                        memcpy(outData, data, pitch*glcaptureInfo.cy);
-
+                        SSECopy(textureBuffers[lastRendered], data, pitch*glcaptureInfo.cy);
+                        textureBuffers[lastRendered][0] = 0x1a;
                         ReleaseMutex(textureMutexes[lastRendered]);
-
-                        pLockData->address = outData;
-                        pLockData->pitch = pitch;
                     }
 
                     glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
-                    copyData.lastRendered = (UINT)lastRendered;
+                    copyData->lastRendered = (UINT)lastRendered;
                 }
 
                 glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
@@ -262,8 +274,8 @@ void HandleGLSceneUpdate(HDC hDC)
 
 void HandleGLSceneDestroy()
 {
-    hdcAquiredDC = NULL;
-    bTargetAquired = false;
+    hdcAcquiredDC = NULL;
+    bTargetAcquired = false;
 }
 
 
@@ -283,7 +295,7 @@ BOOL WINAPI wglSwapLayerBuffersHook(HDC hDC, UINT fuPlanes)
     HandleGLSceneUpdate(hDC);
 
     glHookSwapLayerBuffers.Unhook();
-    BOOL bResult = wglSwapLayerBuffers(hDC, fuPlanes);
+    BOOL bResult = jimglSwapLayerBuffers(hDC, fuPlanes);
     glHookSwapLayerBuffers.Rehook();
 
     return bResult;
@@ -294,7 +306,7 @@ BOOL WINAPI wglDeleteContextHook(HGLRC hRC)
     HandleGLSceneDestroy();
 
     glHookDeleteContext.Unhook();
-    BOOL bResult = wglDeleteContext(hRC);
+    BOOL bResult = jimglDeleteContext(hRC);
     glHookDeleteContext.Rehook();
 
     return bResult;
@@ -304,51 +316,75 @@ bool InitGLCapture()
 {
     bool bSuccess = false;
 
-    HDC hDC = CreateDC(TEXT("DISPLAY"), NULL, NULL, NULL);
-    if(hDC)
+    HMODULE hGL = GetModuleHandle(TEXT("opengl32.dll"));
+    if(hGL)
     {
-        PIXELFORMATDESCRIPTOR pfd;
-        ZeroMemory(&pfd, sizeof(pfd));
-        pfd.nSize = sizeof(pfd);
-        pfd.nVersion = 1;
-        pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-        pfd.iPixelType = PFD_TYPE_RGBA;
-        pfd.cColorBits = 32;
-        pfd.cDepthBits = 32;
-        pfd.cAccumBits = 32;
-        pfd.iLayerType = PFD_MAIN_PLANE;
-        SetPixelFormat(hDC, ChoosePixelFormat(hDC, &pfd), &pfd);
+        pglReadBuffer       = (GLREADBUFFERPROC)        GetProcAddress(hGL, "glReadBuffer");
+        pglReadPixels       = (GLREADPIXELSPROC)        GetProcAddress(hGL, "glReadPixels");
+        pglGetError         = (GLGETERRORPROC)          GetProcAddress(hGL, "glGetError");
+        pwglSwapLayerBuffers= (WGLSWAPLAYERBUFFERSPROC) GetProcAddress(hGL, "wglSwapLayerBuffers");
+        pwglDeleteContext   = (WGLDELETECONTEXTPROC)    GetProcAddress(hGL, "wglDeleteContext");
+        pwglGetProcAddress  = (WGLGETPROCADDRESSPROC)   GetProcAddress(hGL, "wglGetProcAddress");
+        pwglMakeCurrent     = (WGLMAKECURRENTPROC)      GetProcAddress(hGL, "wglMakeCurrent");
+        pwglCreateContext   = (WGLCREATECONTEXTPROC)    GetProcAddress(hGL, "wglCreateContext");
 
-        HGLRC hGlrc = wglCreateContext(hDC);
-        if(hGlrc)
+        if( !pglReadBuffer || !pglReadPixels || !pglGetError || !pwglSwapLayerBuffers || !pwglDeleteContext || 
+            !pwglGetProcAddress || !pwglMakeCurrent || !pwglCreateContext)
         {
-            wglMakeCurrent(hDC, hGlrc);
-
-            pglBufferData       = (GLBUFFERDATAARBPROC)     wglGetProcAddress("glBufferData");
-            pglDeleteBuffers    = (GLDELETEBUFFERSARBPROC)  wglGetProcAddress("glDeleteBuffers");
-            pglGenBuffers       = (GLGENBUFFERSARBPROC)     wglGetProcAddress("glGenBuffers");
-            pglMapBuffer        = (GLMAPBUFFERPROC)         wglGetProcAddress("glMapBuffer");
-            pglUnmapBuffer      = (GLUNMAPBUFFERPROC)       wglGetProcAddress("glUnmapBuffer");
-            pglBindBuffer       = (GLBINDBUFFERPROC)        wglGetProcAddress("glBindBuffer");
-
-            UINT lastErr = GetLastError();
-
-            if(pglBufferData && pglDeleteBuffers && pglGenBuffers && pglMapBuffer && pglUnmapBuffer && pglBindBuffer)
-            {
-                glHookSwapBuffers.Hook((FARPROC)SwapBuffers, (FARPROC)SwapBuffersHook);
-                glHookSwapLayerBuffers.Hook((FARPROC)wglSwapLayerBuffers, (FARPROC)wglSwapLayerBuffersHook);
-                glHookDeleteContext.Hook((FARPROC)wglDeleteContext, (FARPROC)wglDeleteContextHook);
-                bSuccess = true;
-            }
-
-            wglMakeCurrent(NULL, NULL);
-
-            if(bSuccess) glHookDeleteContext.Unhook();
-            wglDeleteContext(hGlrc);
-            if(bSuccess) glHookDeleteContext.Rehook();
+            return false;
         }
 
-        DeleteDC(hDC);
+        HDC hDC = CreateDC(TEXT("DISPLAY"), NULL, NULL, NULL);
+        if(hDC)
+        {
+            PIXELFORMATDESCRIPTOR pfd;
+            ZeroMemory(&pfd, sizeof(pfd));
+            pfd.nSize = sizeof(pfd);
+            pfd.nVersion = 1;
+            pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+            pfd.iPixelType = PFD_TYPE_RGBA;
+            pfd.cColorBits = 32;
+            pfd.cDepthBits = 32;
+            pfd.cAccumBits = 32;
+            pfd.iLayerType = PFD_MAIN_PLANE;
+            SetPixelFormat(hDC, ChoosePixelFormat(hDC, &pfd), &pfd);
+
+            HGLRC hGlrc = jimglCreateContext(hDC);
+            if(hGlrc)
+            {
+                jimglMakeCurrent(hDC, hGlrc);
+
+                pglBufferData       = (GLBUFFERDATAARBPROC)     jimglGetProcAddress("glBufferData");
+                pglDeleteBuffers    = (GLDELETEBUFFERSARBPROC)  jimglGetProcAddress("glDeleteBuffers");
+                pglGenBuffers       = (GLGENBUFFERSARBPROC)     jimglGetProcAddress("glGenBuffers");
+                pglMapBuffer        = (GLMAPBUFFERPROC)         jimglGetProcAddress("glMapBuffer");
+                pglUnmapBuffer      = (GLUNMAPBUFFERPROC)       jimglGetProcAddress("glUnmapBuffer");
+                pglBindBuffer       = (GLBINDBUFFERPROC)        jimglGetProcAddress("glBindBuffer");
+
+                UINT lastErr = GetLastError();
+
+                if(pglBufferData && pglDeleteBuffers && pglGenBuffers && pglMapBuffer && pglUnmapBuffer && pglBindBuffer)
+                {
+                    glHookSwapBuffers.Hook((FARPROC)SwapBuffers, (FARPROC)SwapBuffersHook);
+                    glHookSwapLayerBuffers.Hook((FARPROC)jimglSwapLayerBuffers, (FARPROC)wglSwapLayerBuffersHook);
+                    glHookDeleteContext.Hook((FARPROC)jimglDeleteContext, (FARPROC)wglDeleteContextHook);
+                    bSuccess = true;
+                }
+
+                jimglMakeCurrent(NULL, NULL);
+
+                jimglDeleteContext(hGlrc);
+
+                if(bSuccess)
+                {
+                    glHookSwapBuffers.Rehook();
+                    glHookSwapLayerBuffers.Rehook();
+                    glHookDeleteContext.Rehook();
+                }
+            }
+
+            DeleteDC(hDC);
+        }
     }
 
     return bSuccess;

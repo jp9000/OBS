@@ -1200,11 +1200,11 @@ INT_PTR CALLBACK OBS::VideoSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                 hwndTemp = GetDlgItem(hwnd, IDC_FPS);
                 SendMessage(hwndTemp, UDM_SETRANGE32, 10, 60);
 
-                int fps = AppConfig->GetInt(TEXT("Video"), TEXT("FPS"), 25);
+                int fps = AppConfig->GetInt(TEXT("Video"), TEXT("FPS"), 30);
                 if(!AppConfig->HasKey(TEXT("Video"), TEXT("FPS")) || fps < 10 || fps > 60)
                 {
-                    AppConfig->SetInt(TEXT("Video"), TEXT("FPS"), 25);
-                    fps = 25;
+                    AppConfig->SetInt(TEXT("Video"), TEXT("FPS"), 30);
+                    fps = 30;
                 }
 
                 SendMessage(hwndTemp, UDM_SETPOS32, 0, fps);
@@ -1567,7 +1567,7 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("8192"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("4096"));
 
-                LoadSettingTextComboString(hwndTemp, TEXT("Publish"), TEXT("SendBufferSize"), TEXT("32768"));
+                LoadSettingTextComboString(hwndTemp, TEXT("Publish"), TEXT("SendBufferSize"), TEXT("8196"));
 
                 ti.lpszText = (LPWSTR)Str("Settings.Advanced.UseSendBufferTooltip");
                 ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_USESENDBUFFER);
@@ -1588,6 +1588,14 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                         BOOL bUseVideoEncoderSettings = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
                         EnableWindow(GetDlgItem(hwnd, IDC_VIDEOENCODERSETTINGS), bUseVideoEncoderSettings);
 
+                        ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
+                        App->SetChangedSettings(true);
+                    }
+                    break;
+
+                case IDC_VIDEOENCODERSETTINGS:
+                    if(HIWORD(wParam) == EN_CHANGE)
+                    {
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
                         App->SetChangedSettings(true);
                     }
@@ -1787,7 +1795,7 @@ void OBS::ApplySettings()
 
                 BOOL bFailed;
                 int fps = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_FPS), UDM_GETPOS32, 0, (LPARAM)&bFailed);
-                AppConfig->SetInt(TEXT("Video"), TEXT("FPS"), (bFailed) ? 25 : fps);
+                AppConfig->SetInt(TEXT("Video"), TEXT("FPS"), (bFailed) ? 30 : fps);
 
                 curSel = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_DOWNSCALE), CB_GETCURSEL, 0, 0);
                 if(curSel != CB_ERR)

@@ -24,16 +24,19 @@
 
 HookData            d3d9EndScene;
 HookData            d3d9Reset;
-HookData            d3d9Release;
+HookData            d3d9ResetEx;
+FARPROC             oldD3D9Release = NULL;
+FARPROC             newD3D9Release = NULL;
 
 LPVOID              lpCurrentDevice = NULL;
-BOOL                bHasTextures = false;
 DWORD               d3d9Format = 0;
 UINT                captureHeight = 0, captureWidth = 0;
-LPBYTE              textureBuffers[2] = {NULL, NULL};
-MemoryCopyData      copyData = {0, {{NULL, 0}, {NULL, 0}}};
-DWORD               curCapture = 0;
 IDirect3DSurface9   *textures[2] = {NULL, NULL};
+
+MemoryCopyData      *copyData = NULL;
+LPBYTE              textureBuffers[2] = {NULL, NULL};
+DWORD               curCapture = 0;
+BOOL                bHasTextures = FALSE;
 
 CaptureInfo         d3d9CaptureInfo;
 
@@ -44,20 +47,9 @@ void ClearD3D9Data()
     for(UINT i=0; i<2; i++)
     {
         SafeRelease(textures[i]);
-
-        if(textureBuffers[i])
-        {
-            if(WaitForSingleObject(textureMutexes[i], INFINITE) == WAIT_OBJECT_0)
-            {
-                copyData.lockData[i].address = NULL;
-                free(textureBuffers[i]);
-                textureBuffers[i] = NULL;
-                ReleaseMutex(textureMutexes[i]);
-            }
-        }
-
-        textures[i] = NULL;
     }
+
+    DestroySharedMemory();
 }
 
 GSColorFormat ConvertDX9BackBufferFormat(D3DFORMAT format)
@@ -65,7 +57,7 @@ GSColorFormat ConvertDX9BackBufferFormat(D3DFORMAT format)
     switch(format)
     {
         case D3DFMT_A2B10G10R10:    return GS_R10G10B10A2;
-        case D3DFMT_A8R8G8B8:       return GS_BGRA;
+        case D3DFMT_A8R8G8B8:       return GS_BGR;
         case D3DFMT_X8R8G8B8:       return GS_BGR;
         case D3DFMT_A1R5G5B5:       return GS_B5G5R5A1;
         case D3DFMT_R5G6B5:         return GS_B5G6R5;
@@ -104,15 +96,50 @@ void SetupD3D9(IDirect3DDevice9 *device)
 
 struct D3D9Override
 {
-    HRESULT STDMETHODCALLTYPE EndScene()
+    //you may be like "wtf are you doing here, hooking the virtual function table?",
+    //but it's the only stable method of hooking this function.  do -not- mess with
+    //machine code here, just hook the vtable and call the function directly when 
+    //needed, this function can be called a zillion times a minute in tons of
+    //different threads.  do NOT do anything critical here.
+    ULONG STDMETHODCALLTYPE Release()
     {
         IDirect3DDevice9 *device = (IDirect3DDevice9*)this;
+        device->AddRef();
+        ULONG refVal = (*(RELEASEPROC)oldD3D9Release)(device);
 
-        if(lpCurrentDevice == NULL && !bTargetAquired)
+        if(bHasTextures)
+        {
+            if(refVal == 5) //clearing at 5ish is the safest bet.
+            {
+                ClearD3D9Data();
+                lpCurrentDevice = NULL;
+                bTargetAcquired = false;
+            }
+        }
+        else if(refVal == 1)
+        {
+            lpCurrentDevice = NULL;
+            bTargetAcquired = false;
+        }
+
+        return (*(RELEASEPROC)oldD3D9Release)(device);
+    }
+
+    HRESULT STDMETHODCALLTYPE EndScene()
+    {
+        d3d9EndScene.Unhook();
+
+        IDirect3DDevice9 *device = (IDirect3DDevice9*)this;
+
+        if(lpCurrentDevice == NULL && !bTargetAcquired)
         {
             lpCurrentDevice = device;
             SetupD3D9(device);
-            bTargetAquired = true;
+            bTargetAcquired = true;
+
+            oldD3D9Release = GetVTable(device, (8/4));
+            newD3D9Release = ConvertClassProcToFarproc((CLASSPROC)&D3D9Override::Release);
+            SetVTable(device, (8/4), newD3D9Release);
         }
 
         if(lpCurrentDevice == device)
@@ -127,6 +154,8 @@ struct D3D9Override
                     if(hwndReceiver)
                     {
                         bool bSuccess = true;
+                        UINT pitch;
+
                         for(UINT i=0; i<2; i++)
                         {
                             HRESULT ching;
@@ -135,6 +164,26 @@ struct D3D9Override
                                 bSuccess = false;
                                 break;
                             }
+
+                            if(i == 0)
+                            {
+                                D3DLOCKED_RECT lr;
+                                if(FAILED(textures[i]->LockRect(&lr, NULL, D3DLOCK_READONLY)))
+                                {
+                                    bSuccess = false;
+                                    break;
+                                }
+
+                                pitch = lr.Pitch;
+                                textures[i]->UnlockRect();
+                            }
+                        }
+
+                        if(bSuccess)
+                        {
+                            d3d9CaptureInfo.mapID = InitializeSharedMemory(pitch*captureHeight, &d3d9CaptureInfo.mapSize, &copyData, textureBuffers);
+                            if(!d3d9CaptureInfo.mapID)
+                                bSuccess = false;
                         }
 
                         if(bSuccess)
@@ -143,8 +192,8 @@ struct D3D9Override
                             d3d9CaptureInfo.captureType = CAPTURETYPE_MEMORY;
                             d3d9CaptureInfo.cx = captureWidth;
                             d3d9CaptureInfo.cy = captureHeight;
+                            d3d9CaptureInfo.pitch = pitch;
                             d3d9CaptureInfo.hwndSender = hwndSender;
-                            d3d9CaptureInfo.data = &copyData;
                             d3d9CaptureInfo.bFlip = FALSE;
                             PostMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d9CaptureInfo);
                         }
@@ -184,7 +233,6 @@ struct D3D9Override
                         D3DLOCKED_RECT lr;
                         if(SUCCEEDED(lastTexture->LockRect(&lr, NULL, D3DLOCK_READONLY)))
                         {
-                            LPBYTE *pTextureBuffer = NULL;
                             int lastRendered = -1;
 
                             //under no circumstances do we -ever- allow a stall
@@ -193,26 +241,14 @@ struct D3D9Override
                             else if(WaitForSingleObject(textureMutexes[nextCapture], 0) == WAIT_OBJECT_0)
                                 lastRendered = (int)nextCapture;
 
-                            LPBYTE outData = NULL;
                             if(lastRendered != -1)
                             {
-                                LockData *pLockData = &copyData.lockData[lastRendered];
-                                pTextureBuffer = &textureBuffers[lastRendered];
-
-                                if(!*pTextureBuffer)
-                                    *pTextureBuffer = (LPBYTE)malloc(lr.Pitch*captureHeight);
-
-                                outData = *pTextureBuffer;
-                                memcpy(outData, lr.pBits, lr.Pitch*captureHeight);
-
+                                memcpy(textureBuffers[lastRendered], lr.pBits, lr.Pitch*captureHeight);
                                 ReleaseMutex(textureMutexes[lastRendered]);
-
-                                pLockData->address = outData;
-                                pLockData->pitch = lr.Pitch;
                             }
 
                             lastTexture->UnlockRect();
-                            copyData.lastRendered = (UINT)lastRendered;
+                            copyData->lastRendered = (UINT)lastRendered;
                         }
                     }
 
@@ -223,7 +259,6 @@ struct D3D9Override
             }
         }
 
-        d3d9EndScene.Unhook();
         HRESULT hRes = device->EndScene();
         d3d9EndScene.Rehook();
 
@@ -232,93 +267,103 @@ struct D3D9Override
 
     HRESULT STDMETHODCALLTYPE Reset(D3DPRESENT_PARAMETERS *params)
     {
+        d3d9Reset.Unhook();
+
         IDirect3DDevice9 *device = (IDirect3DDevice9*)this;
 
-        d3d9Reset.Unhook();
         HRESULT hRes = device->Reset(params);
-        d3d9Reset.Rehook();
 
-        if(lpCurrentDevice == NULL && !bTargetAquired)
+        if(lpCurrentDevice == NULL && !bTargetAcquired)
         {
             lpCurrentDevice = device;
-            bTargetAquired = true;
+            bTargetAcquired = true;
         }
 
         if(lpCurrentDevice == device)
             SetupD3D9(device);
 
+        d3d9Reset.Rehook();
+
         return hRes;
     }
 
-    ULONG STDMETHODCALLTYPE Release()
+    HRESULT STDMETHODCALLTYPE ResetEx(D3DPRESENT_PARAMETERS *params, D3DDISPLAYMODEEX *fullscreenData)
     {
-        IDirect3DDevice9 *device = (IDirect3DDevice9*)this;
+        d3d9ResetEx.Unhook();
+        d3d9Reset.Unhook();
 
-        d3d9Release.Unhook();
+        IDirect3DDevice9Ex *device = (IDirect3DDevice9Ex*)this;
 
-        if(device == lpCurrentDevice)
+        HRESULT hRes = device->ResetEx(params, fullscreenData);
+
+        if(lpCurrentDevice == NULL && !bTargetAcquired)
         {
-            ULONG refVal;
-            device->AddRef();
-            refVal = device->Release();
-
-            if(bHasTextures)
-            {
-                if(refVal == 3) //our two textures are holding the reference up, so always clear at 3
-                {
-                    ClearD3D9Data();
-                    lpCurrentDevice = NULL;
-                    bTargetAquired = false;
-                }
-            }
-            else if(refVal == 1)
-            {
-                lpCurrentDevice = NULL;
-                bTargetAquired = false;
-            }
+            lpCurrentDevice = device;
+            bTargetAcquired = true;
         }
 
-        ULONG ref = device->Release();
-        d3d9Release.Rehook();
+        if(lpCurrentDevice == device)
+            SetupD3D9(device);
 
-        return ref;
+        d3d9Reset.Rehook();
+        d3d9ResetEx.Rehook();
+
+        return hRes;
     }
 };
+
+typedef IDirect3D9* (WINAPI*D3D9CREATEPROC)(UINT);
+typedef HRESULT (WINAPI*D3D9CREATEEXPROC)(UINT, IDirect3D9Ex**);
 
 bool InitD3D9Capture()
 {
     bool bSuccess = false;
 
-    IDirect3D9 *d3d9;
-    if(d3d9 = Direct3DCreate9(D3D_SDK_VERSION))
+    HMODULE hD3D9Dll = GetModuleHandle(TEXT("d3d9.dll"));
+    if(hD3D9Dll)
     {
-        D3DPRESENT_PARAMETERS pp;
-        ZeroMemory(&pp, sizeof(pp));
-        pp.BackBufferHeight = pp.BackBufferWidth = 2;
+        D3D9CREATEEXPROC d3d9CreateEx = (D3D9CREATEEXPROC)GetProcAddress(hD3D9Dll, "Direct3DCreate9Ex");
 
-        IDirect3DDevice9 *d3d9Device;
-        if(SUCCEEDED(d3d9->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_NULLREF, NULL, D3DCREATE_HARDWARE_VERTEXPROCESSING, &pp, &d3d9Device)))
+        IDirect3D9Ex *d3d9ex;
+        if(SUCCEEDED((*d3d9CreateEx)(D3D_SDK_VERSION, &d3d9ex)))
         {
-            bSuccess = true;
+            D3DPRESENT_PARAMETERS pp;
+            ZeroMemory(&pp, sizeof(pp));
+            pp.Windowed                 = 1;
+            pp.SwapEffect               = D3DSWAPEFFECT_FLIP;
+            pp.BackBufferFormat         = D3DFMT_A8R8G8B8;
+            pp.BackBufferCount          = 1;
+            pp.hDeviceWindow            = (HWND)hwndSender;
+            pp.PresentationInterval     = D3DPRESENT_INTERVAL_IMMEDIATE;
 
-            UPARAM *vtable = *(UPARAM**)d3d9Device;
+            HRESULT hRes;
 
-            d3d9EndScene.Hook((FARPROC)*(vtable+(168/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D9Override::EndScene));
-            d3d9Reset.Hook((FARPROC)*(vtable+(64/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D9Override::Reset));
-            d3d9Release.Hook((FARPROC)*(vtable+(8/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D9Override::Release));
+            IDirect3DDevice9Ex *deviceEx;
+            if(SUCCEEDED(hRes = d3d9ex->CreateDeviceEx(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwndSender, D3DCREATE_HARDWARE_VERTEXPROCESSING|D3DCREATE_NOWINDOWCHANGES, &pp, NULL, &deviceEx)))
+            {
+                UPARAM *vtable = *(UPARAM**)deviceEx;
 
-            d3d9Release.Unhook();
-            d3d9Device->Release();
-            d3d9Release.Rehook();
+                d3d9EndScene.Hook((FARPROC)*(vtable+(168/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D9Override::EndScene));
+                d3d9Reset.Hook((FARPROC)*(vtable+(64/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D9Override::Reset));
+                d3d9ResetEx.Hook((FARPROC)*(vtable+(528/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D9Override::ResetEx));
+
+                deviceEx->Release();
+
+                d3d9EndScene.Rehook();
+                d3d9Reset.Rehook();
+                d3d9ResetEx.Rehook();
+            }
+
+            d3d9ex->Release();
         }
     }
 
-    return true;
+    return bSuccess;
 }
 
 void FreeD3D9Capture()
 {
     d3d9EndScene.Unhook();
-    d3d9Release.Unhook();
-    d3d9Release.Unhook();
+    d3d9Reset.Unhook();
+    d3d9ResetEx.Unhook();
 }

@@ -18,9 +18,3 @@ Things that need fixing:
 
 Things that could use more optimization/work:
     * multi-speaker downmixing
-
--------------------------------------------------------
-
-Things that need more testing:
-    * need to test streaming on networks other than twitch
-

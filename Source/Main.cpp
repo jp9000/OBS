@@ -169,7 +169,7 @@ void SetupIni()
     AppConfig->SetFloat (TEXT("Audio"),          TEXT("DesktopVolume"), 1.0f);
 
     AppConfig->SetInt   (TEXT("Video"),          TEXT("Monitor"),       0);
-    AppConfig->SetInt   (TEXT("Video"),          TEXT("FPS"),           25);
+    AppConfig->SetInt   (TEXT("Video"),          TEXT("FPS"),           30);
     AppConfig->SetFloat (TEXT("Video"),          TEXT("Downscale"),     1.0f);
     AppConfig->SetInt   (TEXT("Video"),          TEXT("DisableAero"),   0);
 

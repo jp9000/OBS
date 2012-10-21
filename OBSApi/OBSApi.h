@@ -77,6 +77,21 @@ inline void SSECopy(void *lpDest, void *lpSource, UINT size)
     }
 }
 
+//big endian conversion functions
+#define QWORD_BE(val) (((val>>56)&0xFF) | (((val>>48)&0xFF)<<8) | (((val>>40)&0xFF)<<16) | (((val>>32)&0xFF)<<24) | \
+    (((val>>24)&0xFF)<<32) | (((val>>16)&0xFF)<<40) | (((val>>8)&0xFF)<<48) | ((val&0xFF)<<56))
+#define DWORD_BE(val) (((val>>24)&0xFF) | (((val>>16)&0xFF)<<8) | (((val>>8)&0xFF)<<16) | ((val&0xFF)<<24))
+#define WORD_BE(val)  (((val>>8)&0xFF) | ((val&0xFF)<<8))
+
+__forceinline QWORD fastHtonll(QWORD qw) {return QWORD_BE(qw);}
+__forceinline DWORD fastHtonl (DWORD dw) {return DWORD_BE(dw);}
+__forceinline  WORD fastHtons (WORD  w)  {return  WORD_BE(w);}
+
+inline BOOL CloseDouble(double f1, double f2, double precision=0.001)
+{
+    return fabs(f1-f2) <= precision;
+}
+
 //-------------------------------------------
 
 #include "GraphicsSystem.h"

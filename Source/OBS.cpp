@@ -157,6 +157,29 @@ void OBS::ResizeRenderFrame(bool bRedrawRenderFrame)
     }
 }
 
+
+void OBS::GetBaseSize(UINT &width, UINT &height) const
+{
+    if(bRunning)
+    {
+        width = baseCX;
+        height = baseCY;
+    }
+    else
+    {
+        int monitorID = AppConfig->GetInt(TEXT("Video"), TEXT("Monitor"));
+        if(monitorID > (int)monitors.Num())
+            monitorID = 0;
+
+        RECT &screenRect = monitors[monitorID].rect;
+        int defCX = screenRect.right  - screenRect.left;
+        int defCY = screenRect.bottom - screenRect.top;
+
+        width = AppConfig->GetInt(TEXT("Video"), TEXT("BaseWidth"),  defCX);
+        height = AppConfig->GetInt(TEXT("Video"), TEXT("BaseHeight"), defCY);
+    }
+}
+
 void OBS::ResizeWindow(bool bRedrawRenderFrame)
 {
     const int miscAreaWidth = 290;
@@ -1050,7 +1073,7 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
-    fps = AppConfig->GetInt(TEXT("Video"), TEXT("FPS"), 25);
+    fps = AppConfig->GetInt(TEXT("Video"), TEXT("FPS"), 30);
     frameTime = 1000/fps;
 
     //-------------------------------------------------------------
@@ -1380,7 +1403,7 @@ void OBS::SetStatusBarData()
     SendMessage(hwndStatusBar, SB_SETTEXT, 1, (LPARAM)strDroppedFrames.Array());
 
     String strCaptureFPS;
-    strCaptureFPS << TEXT("FPS: ") << IntString(MIN(captureFPS, fps));
+    strCaptureFPS << TEXT("FPS: ") << IntString(captureFPS);
     SendMessage(hwndStatusBar, SB_SETTEXT, 2, (LPARAM)strCaptureFPS.Array());
 
     statusBarData.bytesPerSec = bytesPerSec;
@@ -1713,6 +1736,10 @@ void OBS::MainCaptureLoop()
     float bpsTime = 0.0f;
     double lastStrain = 0.0f;
 
+    DWORD fpsTimeNumerator = 1000-(frameTime*fps);
+    DWORD fpsTimeDenominator = fps;
+    DWORD fpsTimeAdjust = 0;
+
     DWORD fpsCounter = 0;
 
     bool bFirstFrame = true;
@@ -1720,6 +1747,14 @@ void OBS::MainCaptureLoop()
     while(bRunning)
     {
         DWORD renderStartTime = OSGetTime();
+
+        DWORD frameTimeAdjust = frameTime;
+        fpsTimeAdjust += fpsTimeNumerator;
+        if(fpsTimeAdjust > fpsTimeDenominator)
+        {
+            fpsTimeAdjust -= fpsTimeDenominator;
+            ++frameTimeAdjust;
+        }
 
         bool bRenderView = !IsIconic(hwndMain) && bRenderViewEnabled;
 
@@ -1920,7 +1955,7 @@ void OBS::MainCaptureLoop()
 
         //------------------------------------
 
-        if(bRenderView && !copyWait)
+        //if(bRenderView && !copyWait)
             static_cast<D3D10System*>(GS)->swap->Present(0, 0);
 
         OSLeaveMutex(hSceneMutex);
@@ -2033,7 +2068,7 @@ void OBS::MainCaptureLoop()
                         //if the FPS is set to about the same as the capture FPS, this works pretty much flawlessly.
                         //100% calculated timestamps that are almost fully accurate with no CPU timers involved,
                         //while still fully allowing any potential unexpected frame variability.
-                        curPTSVal = lastPTSVal+frameTime;
+                        curPTSVal = lastPTSVal+frameTimeAdjust;
                         if(curPTSVal < lastUnmodifiedPTSVal)
                             curPTSVal = lastUnmodifiedPTSVal;
 
@@ -2156,13 +2191,13 @@ void OBS::MainCaptureLoop()
         DWORD totalTime = renderStopTime-renderStartTime;
 
         //OSDebugOut(TEXT("Total frame time: %d\r\n"), totalTime);
-        if(totalTime > frameTime)
+        if(totalTime > frameTimeAdjust)
             numLongFrames++;
 
         numTotalFrames++;
 
-        if(totalTime < frameTime)
-            OSSleep(frameTime-totalTime);
+        if(totalTime < frameTimeAdjust)
+            OSSleep(frameTimeAdjust-totalTime);
     }
 
     if(!bUsing444)
@@ -2577,6 +2612,7 @@ void OBS::RemoveStreamInfo(UINT infoID)
     {
         if(streamInfoList[i].id == infoID)
         {
+            streamInfoList[i].FreeData();
             streamInfoList.Remove(i);
             break;
         }

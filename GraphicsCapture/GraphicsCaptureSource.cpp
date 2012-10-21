@@ -165,7 +165,7 @@ void GraphicsCaptureSource::EndCapture()
 {
     delete capture;
     capture = NULL;
-    bErrorAquiring = false;
+    bErrorAcquiring = false;
 
     if(warningID)
     {
@@ -200,6 +200,8 @@ void GraphicsCaptureSource::BeginScene()
     if(strWindowClass.IsEmpty())
         return;
 
+    bStretch = data->GetInt(TEXT("stretchImage")) != 0;
+
     hwndReceiver = CreateWindow(RECEIVER_WINDOWCLASS, NULL, 0, 0, 0, 0, 0, 0, 0, hinstMain, this);
 
     AttemptCapture();
@@ -214,7 +216,7 @@ void GraphicsCaptureSource::AttemptCapture()
         if(!targetProcessID)
         {
             AppWarning(TEXT("GraphicsCaptureSource::BeginScene: GetWindowThreadProcessId failed, GetLastError = %u"), GetLastError());
-            bErrorAquiring = true;
+            bErrorAcquiring = true;
             return;
         }
     }
@@ -260,14 +262,14 @@ void GraphicsCaptureSource::AttemptCapture()
 
                 CloseHandle(hProcess);
                 hProcess = NULL;
-                bErrorAquiring = true;
+                bErrorAcquiring = true;
             }
         }
     }
     else
     {
         AppWarning(TEXT("GraphicsCaptureSource::BeginScene: OpenProcess failed, GetLastError = %u"), GetLastError());
-        bErrorAquiring = true;
+        bErrorAcquiring = true;
     }
 }
 
@@ -305,8 +307,19 @@ void GraphicsCaptureSource::EndScene()
 
 void GraphicsCaptureSource::Preprocess()
 {
-    if(!bCapturing && !bErrorAquiring)
+    if(!bCapturing && !bErrorAcquiring)
         AttemptCapture();
+}
+
+inline double round(double val)
+{
+    if(!_isnan(val) || !_finite(val))
+        return val;
+
+    if(val > 0.0f)
+        return floor(val+0.5);
+    else
+        return floor(val-0.5);
 }
 
 void GraphicsCaptureSource::Render(const Vect2 &pos, const Vect2 &size)
@@ -316,18 +329,70 @@ void GraphicsCaptureSource::Render(const Vect2 &pos, const Vect2 &size)
         Texture *tex = capture->LockTexture();
         if(tex)
         {
-            if(bFlip)
-                DrawSprite(tex, 0xFFFFFFFF, pos.x, pos.y+size.y, pos.x+size.x, pos.y);
+            BlendFunction(GS_BLEND_ONE, GS_BLEND_ZERO);
+
+            if(bStretch)
+            {
+                Vect2 halfSize = size*0.5f;
+                Vect2 center = pos+halfSize;
+                center.x = float(round(center.x));
+                center.y = float(round(center.y));
+
+                Vect2 texSize = Vect2(float(tex->Width()), float(tex->Height()));
+                Vect2 outSize = size, outPos = Vect2(0.0f, 0.0f);
+                Vect2 lr = pos;
+
+                double sourceAspect = double(tex->Width())/double(tex->Height());
+                double baseAspect = double(outSize.x)/double(outSize.y);
+
+                if(!CloseDouble(baseAspect, sourceAspect))
+                {
+                    if(baseAspect < sourceAspect)
+                        outSize.y = float(double(outSize.x) / sourceAspect);
+                    else
+                        outSize.x = float(double(outSize.y) * sourceAspect);
+
+                    outPos = (size-outSize)*0.5f;
+
+                    outPos.x = (float)round(outPos.x);
+                    outPos.y = (float)round(outPos.y);
+
+                    outSize.x = (float)round(size.x);
+                    outSize.y = (float)round(size.y);
+                }
+
+                outPos += pos;
+                lr += outSize;
+
+                if(bFlip)
+                    DrawSprite(tex, 0xFFFFFFFF, outPos.x, lr.y, lr.x, outPos.y);
+                else
+                    DrawSprite(tex, 0xFFFFFFFF, outPos.x, outPos.y, lr.x, lr.y);
+            }
             else
-                DrawSprite(tex, 0xFFFFFFFF, pos.x, pos.y, pos.x+size.x, pos.y+size.y);
-            capture->UnlockTexture();
+            {
+                Vect2 halfSize = size*0.5f;
+                Vect2 center = pos+halfSize;
+                center.x = float(round(center.x));
+                center.y = float(round(center.y));
+
+                Vect2 texHalfSize = Vect2(float(tex->Width()/2), float(tex->Height()/2));
+
+                if(bFlip)
+                    DrawSprite(tex, 0xFFFFFFFF, center.x-texHalfSize.x, center.y+texHalfSize.y, center.x+texHalfSize.x, center.y-texHalfSize.y);
+                else
+                    DrawSprite(tex, 0xFFFFFFFF, center.x-texHalfSize.x, center.y-texHalfSize.y, center.x+texHalfSize.x, center.y+texHalfSize.y);
+                capture->UnlockTexture();
+            }
+
+            BlendFunction(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA);
         }
     }
 }
 
 Vect2 GraphicsCaptureSource::GetSize() const
 {
-    return Vect2(float(cx), float(cy));
+    return API->GetBaseSize();
 }
 
 void GraphicsCaptureSource::UpdateSettings()

@@ -31,7 +31,7 @@ enum GSDrawMode {GS_POINTS, GS_LINES, GS_LINESTRIP, GS_TRIANGLES, GS_TRIANGLESTR
 
 //---------------------------------
 //texture formats
-enum GSColorFormat {GS_UNKNOWNFORMAT, GS_ALPHA, GS_GRAYSCALE, GS_RGB, GS_RGBA, GS_BGR, GS_BGRA, GS_RGBA16F, GS_RGBA32F, GS_DXT1, GS_DXT3, GS_DXT5};
+enum GSColorFormat {GS_UNKNOWNFORMAT, GS_ALPHA, GS_GRAYSCALE, GS_RGB, GS_RGBA, GS_BGR, GS_BGRA, GS_RGBA16F, GS_RGBA32F, GS_B5G5R5A1, GS_B5G6R5, GS_R10G10B10A2, GS_DXT1, GS_DXT3, GS_DXT5};
 
 
 //---------------------------------
@@ -388,6 +388,7 @@ public:
 
     //----------------------------------------------------
     //Texture Functions
+    virtual Texture*        CreateTextureFromSharedHandle(unsigned int width, unsigned int height, GSColorFormat colorFormat, HANDLE handle)=0;
     virtual Texture*        CreateTexture(unsigned int width, unsigned int height, GSColorFormat colorFormat, void *lpData, BOOL bBuildMipMaps, BOOL bStatic)=0;
     virtual Texture*        CreateTextureFromFile(CTSTR lpFile, BOOL bBuildMipMaps)=0;
     virtual Texture*        CreateRenderTarget(unsigned int width, unsigned int height, GSColorFormat colorFormat, BOOL bGenMipMaps)=0;

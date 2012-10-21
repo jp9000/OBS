@@ -62,8 +62,10 @@ VideoOutputType GetVideoOutputTypeFromFourCC(DWORD fourCC)
     VideoOutputType type = VideoOutputType_None;
 
     // Packed RGB formats
-    if(fourCC == 0 || fourCC == '2BGR')
+    if(fourCC == '2BGR')
         type = VideoOutputType_RGB32;
+    else if(fourCC == '4BGR')
+        type = VideoOutputType_RGB24;
     else if(fourCC == 'ABGR')
         type = VideoOutputType_ARGB32;
 
@@ -72,6 +74,8 @@ VideoOutputType GetVideoOutputTypeFromFourCC(DWORD fourCC)
         type = VideoOutputType_I420;
     else if(fourCC == '21VY')
         type = VideoOutputType_YV12;
+    else if(fourCC == 'CYDH')
+        type = VideoOutputType_HDYC;
 
     // Packed YUV formats
     else if(fourCC == 'UYVY')
@@ -80,8 +84,6 @@ VideoOutputType GetVideoOutputTypeFromFourCC(DWORD fourCC)
         type = VideoOutputType_YUY2;
     else if(fourCC == 'YVYU')
         type = VideoOutputType_UYVY;
-    else if(fourCC == 'CYDH')
-        type = VideoOutputType_HDYC;
 
     else if(fourCC == 'V4PM' || fourCC == '2S4M')
         type = VideoOutputType_MPEG2_VIDEO;
@@ -95,61 +97,57 @@ VideoOutputType GetVideoOutputTypeFromFourCC(DWORD fourCC)
     return type;
 }
 
-
-VideoOutputType GetVideoOutputType(const AM_MEDIA_TYPE &media_type)
+VideoOutputType GetVideoOutputTypeFromGUID(const GUID &guid)
 {
     VideoOutputType type = VideoOutputType_None;
 
-    if(media_type.majortype == MEDIATYPE_Video)
-    {
-        // Packed RGB formats
-        if(media_type.subtype == MEDIASUBTYPE_RGB24)
-            type = VideoOutputType_RGB24;
-        else if(media_type.subtype == MEDIASUBTYPE_RGB32)
-            type = VideoOutputType_RGB32;
-        else if(media_type.subtype == MEDIASUBTYPE_ARGB32)
-            type = VideoOutputType_ARGB32;
+    // Packed RGB formats
+    if(guid == MEDIASUBTYPE_RGB24)
+        type = VideoOutputType_RGB24;
+    else if(guid == MEDIASUBTYPE_RGB32)
+        type = VideoOutputType_RGB32;
+    else if(guid == MEDIASUBTYPE_ARGB32)
+        type = VideoOutputType_ARGB32;
 
-        // Planar YUV formats
-        else if(media_type.subtype == MEDIASUBTYPE_I420)
-            type = VideoOutputType_I420;
-        else if(media_type.subtype == MEDIASUBTYPE_IYUV)
-            type = VideoOutputType_I420;
-        else if(media_type.subtype == MEDIASUBTYPE_YV12)
-            type = VideoOutputType_YV12;
+    // Planar YUV formats
+    else if(guid == MEDIASUBTYPE_I420)
+        type = VideoOutputType_I420;
+    else if(guid == MEDIASUBTYPE_IYUV)
+        type = VideoOutputType_I420;
+    else if(guid == MEDIASUBTYPE_YV12)
+        type = VideoOutputType_YV12;
 
-        else if(media_type.subtype == MEDIASUBTYPE_Y41P)
-            type = VideoOutputType_Y41P;
-        else if(media_type.subtype == MEDIASUBTYPE_YVU9)
-            type = VideoOutputType_YVU9;
+    else if(guid == MEDIASUBTYPE_Y41P)
+        type = VideoOutputType_Y41P;
+    else if(guid == MEDIASUBTYPE_YVU9)
+        type = VideoOutputType_YVU9;
 
-        // Packed YUV formats
-        else if(media_type.subtype == MEDIASUBTYPE_YVYU)
-            type = VideoOutputType_YVYU;
-        else if(media_type.subtype == MEDIASUBTYPE_YUY2)
-            type = VideoOutputType_YUY2;
-        else if(media_type.subtype == MEDIASUBTYPE_UYVY)
-            type = VideoOutputType_UYVY;
+    // Packed YUV formats
+    else if(guid == MEDIASUBTYPE_YVYU)
+        type = VideoOutputType_YVYU;
+    else if(guid == MEDIASUBTYPE_YUY2)
+        type = VideoOutputType_YUY2;
+    else if(guid == MEDIASUBTYPE_UYVY)
+        type = VideoOutputType_UYVY;
 
-        else if(media_type.subtype == MEDIASUBTYPE_MPEG2_VIDEO)
-            type = VideoOutputType_MPEG2_VIDEO;
+    else if(guid == MEDIASUBTYPE_MPEG2_VIDEO)
+        type = VideoOutputType_MPEG2_VIDEO;
 
-        else if(media_type.subtype == MEDIASUBTYPE_H264)
-            type = VideoOutputType_H264;
+    else if(guid == MEDIASUBTYPE_H264)
+        type = VideoOutputType_H264;
 
-        else if(media_type.subtype == MEDIASUBTYPE_dvsl)
-            type = VideoOutputType_dvsl;
-        else if(media_type.subtype == MEDIASUBTYPE_dvsd)
-            type = VideoOutputType_dvsd;
-        else if(media_type.subtype == MEDIASUBTYPE_dvhd)
-            type = VideoOutputType_dvhd;
+    else if(guid == MEDIASUBTYPE_dvsl)
+        type = VideoOutputType_dvsl;
+    else if(guid == MEDIASUBTYPE_dvsd)
+        type = VideoOutputType_dvsd;
+    else if(guid == MEDIASUBTYPE_dvhd)
+        type = VideoOutputType_dvhd;
 
-        else if(media_type.subtype == MEDIASUBTYPE_MJPG)
-            type = VideoOutputType_MJPG;
+    else if(guid == MEDIASUBTYPE_MJPG)
+        type = VideoOutputType_MJPG;
 
-        else
-            nop();
-    }
+    else
+        nop();
 
     return type;
 }
@@ -157,20 +155,20 @@ VideoOutputType GetVideoOutputType(const AM_MEDIA_TYPE &media_type)
 const int inputPriority[] =
 {
     1,
+    13,
+    14,
+    14,
+
+    9,
+    9,
+
+    -1,
+    -1,
+
     12,
-    13,
-    13,
-
-    9,
-    9,
-
-    -1,
-    -1,
-
+    12,
     11,
-    11,
-    11,
-    11,
+    12,
 
     7,
     8,

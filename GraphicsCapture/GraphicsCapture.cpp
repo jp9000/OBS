@@ -25,7 +25,6 @@ extern "C" __declspec(dllexport) void UnloadPlugin();
 extern "C" __declspec(dllexport) CTSTR GetPluginName();
 extern "C" __declspec(dllexport) CTSTR GetPluginDescription();
 
-LocaleStringLookup *pluginLocale = NULL;
 HINSTANCE hinstMain = NULL;
 HANDLE textureMutexes[2] = {NULL, NULL};
 
@@ -123,11 +122,15 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 XElement *data = info->data;
 
                 SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
-                LocalizeWindow(hwnd, pluginLocale);
+                LocalizeWindow(hwnd);
 
                 //--------------------------------------------
 
                 SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_REFRESH, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDC_APPLIST));
+
+                //--------------------------------------------
+
+                SendMessage(GetDlgItem(hwnd, IDC_STRETCHTOSCREEN), BM_SETCHECK, data->GetInt(TEXT("strechImage")) ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 return TRUE;
             }
@@ -167,19 +170,11 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         if(!info->strWindowClasses.Num())
                             return 0;
 
-                        HWND hwndWindow = FindWindow(info->strWindowClasses[windowID], NULL);
-                        if(hwndWindow)
-                        {
-                            RECT rc;
-                            GetClientRect(hwndWindow, &rc);
-
-                            data->SetInt(TEXT("resolutionWidth"), rc.right);
-                            data->SetInt(TEXT("resolutionHeight"), rc.bottom);
-                        }
-
                         String strWindow = GetCBText(GetDlgItem(hwnd, IDC_APPLIST), windowID);
                         data->SetString(TEXT("window"),      strWindow);
                         data->SetString(TEXT("windowClass"), info->strWindowClasses[windowID]);
+
+                        data->SetInt(TEXT("stretchImage"), SendMessage(GetDlgItem(hwnd, IDC_STRETCHTOSCREEN), BM_GETCHECK, 0, 0) == BST_CHECKED);
                     }
 
                 case IDCANCEL:
@@ -210,8 +205,10 @@ bool STDCALL ConfigureGraphicsCaptureSource(XElement *element, bool bCreating)
 
     if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_CONFIG), API->GetMainWindow(), ConfigureDialogProc, (LPARAM)configData) == IDOK)
     {
-        element->SetInt(TEXT("cx"), data->GetInt(TEXT("resolutionWidth"), 256));
-        element->SetInt(TEXT("cy"), data->GetInt(TEXT("resolutionHeight"), 256));
+        UINT width, height;
+        API->GetBaseSize(width, height);
+        element->SetInt(TEXT("cx"), width);
+        element->SetInt(TEXT("cy"), height);
 
         delete configData;
         return true;
@@ -236,19 +233,6 @@ ImageSource* STDCALL CreateGraphicsCaptureSource(XElement *data)
 bool LoadPlugin()
 {
     traceIn(GraphicsPluginLoadPlugin);
-
-    pluginLocale = new LocaleStringLookup;
-
-    if(!pluginLocale->LoadStringFile(TEXT("plugins/GraphicsCapture/locale/en.txt")))
-        AppWarning(TEXT("Could not open locale string file '%s'"), TEXT("plugins/GraphicsCapture/locale/en.txt"));
-
-    if(scmpi(API->GetLanguage(), TEXT("en")) != 0)
-    {
-        String pluginStringFile;
-        pluginStringFile << TEXT("plugins/GraphicsCapture/locale/") << API->GetLanguage() << TEXT(".txt");
-        if(!pluginLocale->LoadStringFile(pluginStringFile))
-            AppWarning(TEXT("Could not open locale string file '%s'"), pluginStringFile.Array());
-    }
 
     WNDCLASS wc;
     zero(&wc, sizeof(wc));
@@ -277,7 +261,7 @@ bool LoadPlugin()
         return false;
     }
 
-    API->RegisterImageSourceClass(GRAPHICSCAPTURE_CLASSNAME, PluginStr("ClassName"), (OBSCREATEPROC)CreateGraphicsCaptureSource, (OBSCONFIGPROC)ConfigureGraphicsCaptureSource);
+    API->RegisterImageSourceClass(GRAPHICSCAPTURE_CLASSNAME, Str("Sources.GameCaptureSource"), (OBSCREATEPROC)CreateGraphicsCaptureSource, (OBSCONFIGPROC)ConfigureGraphicsCaptureSource);
 
     return true;
 
@@ -288,17 +272,16 @@ void UnloadPlugin()
 {
     CloseHandle(textureMutexes[0]);
     CloseHandle(textureMutexes[1]);
-    delete pluginLocale;
 }
 
 CTSTR GetPluginName()
 {
-    return PluginStr("Plugin.Name");
+    return Str("Sources.GameCaptureSource.PluginName");
 }
 
 CTSTR GetPluginDescription()
 {
-    return PluginStr("Plugin.Description");
+    return Str("Sources.GameCaptureSource.PluginDescription");
 }
 
 BOOL CALLBACK DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpBla)

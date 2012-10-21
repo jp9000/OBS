@@ -405,6 +405,10 @@
 			Name="Shaders"
 			>
 			<File
+				RelativePath="..\rundir\plugins\DShowPlugin\shaders\HDYCToRGB.pShader"
+				>
+			</File>
+			<File
 				RelativePath="..\rundir\plugins\DShowPlugin\shaders\UYVToRGB.pShader"
 				>
 			</File>

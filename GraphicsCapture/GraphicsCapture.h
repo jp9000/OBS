@@ -29,9 +29,6 @@
 extern HINSTANCE hinstMain;
 extern HANDLE textureMutexes[2];
 
-extern LocaleStringLookup *pluginLocale;
-#define PluginStr(text) pluginLocale->LookupString(TEXT2(text))
-
 //-----------------------------------------------------------
 
 class GraphicsCaptureMethod
@@ -46,6 +43,5 @@ public:
 
 //-----------------------------------------------------------
 
-#include "SharedTexCapture.h"
 #include "MemoryCapture.h"
 #include "GraphicsCaptureSource.h"

@@ -26,7 +26,7 @@ inline bool IsPow2(UINT num)
 }
 
 
-const DXGI_FORMAT convertFormat[] = {DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_A8_UNORM, DXGI_FORMAT_R8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_B8G8R8X8_UNORM, DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_R16G16B16A16_FLOAT, DXGI_FORMAT_R32G32B32A32_FLOAT, DXGI_FORMAT_BC1_UNORM, DXGI_FORMAT_BC3_UNORM, DXGI_FORMAT_BC5_UNORM};
+const DXGI_FORMAT convertFormat[] = {DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_A8_UNORM, DXGI_FORMAT_R8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_B8G8R8X8_UNORM, DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_R16G16B16A16_FLOAT, DXGI_FORMAT_R32G32B32A32_FLOAT, DXGI_FORMAT_B5G5R5A1_UNORM, DXGI_FORMAT_B5G6R5_UNORM, DXGI_FORMAT_R10G10B10A2_UNORM, DXGI_FORMAT_BC1_UNORM, DXGI_FORMAT_BC3_UNORM, DXGI_FORMAT_BC5_UNORM};
 const UINT formatPitch[] = {0, 1, 1, 4, 4, 4, 4, 8, 16, 0, 0, 0};
 
 const D3D10_TEXTURE_ADDRESS_MODE convertAddressMode[] = {D3D10_TEXTURE_ADDRESS_CLAMP, D3D10_TEXTURE_ADDRESS_WRAP, D3D10_TEXTURE_ADDRESS_MIRROR, D3D10_TEXTURE_ADDRESS_BORDER, D3D10_TEXTURE_ADDRESS_MIRROR_ONCE};
@@ -67,6 +67,70 @@ D3D10SamplerState::~D3D10SamplerState()
     SafeRelease(state);
 }
 
+
+Texture* D3D10Texture::CreateFromSharedHandle(unsigned int width, unsigned int height, GSColorFormat colorFormat, HANDLE handle)
+{
+    HRESULT err;
+
+    if(colorFormat >= GS_DXT1)
+    {
+        AppWarning(TEXT("D3D10Texture::CreateFromSharedHandle: tried to a blank DXT shared texture."));
+        return NULL;
+    }
+
+    if(!handle)
+    {
+        AppWarning(TEXT("D3D10Texture::CreateFromSharedHandle: NULL handle value."));
+        return NULL;
+    }
+
+    ID3D10Resource *tempResource;
+    if(FAILED(err = GetD3D()->OpenSharedResource(handle, __uuidof(ID3D10Resource), (void**)&tempResource)))
+    {
+        AppWarning(TEXT("D3D10Texture::CreateFromSharedHandle: Failed to open shared handle, result = 0x%08lX"), err);
+        return NULL;
+    }
+
+    ID3D10Texture2D *texVal;
+    if(FAILED(err = tempResource->QueryInterface(__uuidof(ID3D10Texture2D), (void**)&texVal)))
+    {
+        SafeRelease(tempResource);
+        AppWarning(TEXT("D3D10Texture::CreateFromSharedHandle: could not query interface, result = 0x%08lX"), err);
+        return NULL;
+    }
+
+    tempResource->Release();
+
+    //------------------------------------------
+
+    DXGI_FORMAT format = convertFormat[(UINT)colorFormat];
+
+    D3D10_SHADER_RESOURCE_VIEW_DESC resourceDesc;
+    zero(&resourceDesc, sizeof(resourceDesc));
+    resourceDesc.Format              = format;
+    resourceDesc.ViewDimension       = D3D10_SRV_DIMENSION_TEXTURE2D;
+    resourceDesc.Texture2D.MipLevels = 1;
+
+    ID3D10ShaderResourceView *resource;
+    if(FAILED(err = GetD3D()->CreateShaderResourceView(texVal, &resourceDesc, &resource)))
+    {
+        SafeRelease(texVal);
+        AppWarning(TEXT("D3D10Texture::CreateFromSharedHandle: CreateShaderResourceView failed, result = 0x%08lX"), err);
+        return NULL;
+    }
+
+    //------------------------------------------
+
+    D3D10Texture *newTex = new D3D10Texture;
+    newTex->format = colorFormat;
+    newTex->resource = resource;
+    newTex->texture = texVal;
+    newTex->bDynamic = false;
+    newTex->width = width;
+    newTex->height = height;
+
+    return newTex;
+}
 
 Texture* D3D10Texture::CreateTexture(unsigned int width, unsigned int height, GSColorFormat colorFormat, void *lpData, BOOL bGenMipMaps, BOOL bStatic)
 {
@@ -540,15 +604,17 @@ void D3D10Texture::SetImage(void *lpData, GSImageFormat imageFormat, UINT pitch)
     {
         UINT rowWidth = width*pixelBytes;
 
-        if(pitch == rowWidth && map.RowPitch == rowWidth)
+        if(pitch == map.RowPitch)
         {
             if(App->SSE2Available())
-                SSECopy(map.pData, lpData, rowWidth*height);
+                SSECopy(map.pData, lpData, pitch*height);
             else
-                mcpy(map.pData, lpData, rowWidth*height);
+                mcpy(map.pData, lpData, pitch*height);
         }
         else
         {
+            UINT bestPitch = MIN(pitch, map.RowPitch);
+
             if(App->SSE2Available())
             {
                 for(UINT y=0; y<height; y++)
@@ -556,7 +622,7 @@ void D3D10Texture::SetImage(void *lpData, GSImageFormat imageFormat, UINT pitch)
                     LPBYTE curInput  = ((LPBYTE)lpData)    + (pitch*y);
                     LPBYTE curOutput = ((LPBYTE)map.pData) + (map.RowPitch*y);
 
-                    SSECopy(curOutput, curInput, rowWidth);
+                    SSECopy(curOutput, curInput, bestPitch);
                 }
             }
             else
@@ -566,7 +632,7 @@ void D3D10Texture::SetImage(void *lpData, GSImageFormat imageFormat, UINT pitch)
                     LPBYTE curInput  = ((LPBYTE)lpData)    + (pitch*y);
                     LPBYTE curOutput = ((LPBYTE)map.pData) + (map.RowPitch*y);
 
-                    mcpy(curOutput, curInput, rowWidth);
+                    mcpy(curOutput, curInput, bestPitch);
                 }
             }
         }

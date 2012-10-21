@@ -87,7 +87,7 @@ bool DeviceSource::LoadFilters()
     List<MediaOutputInfo> outputList;
     IAMStreamConfig *config = NULL;
     bool bAddedCapture = false, bAddedDevice = false;
-    GUID expectedMediaType;
+    VideoOutputType expectedVideoType;
     IPin *devicePin = NULL;
     HRESULT err;
 
@@ -130,7 +130,7 @@ bool DeviceSource::LoadFilters()
         goto cleanFinish;
     }
 
-    expectedMediaType = bestOutput->mediaType->subtype;
+    expectedVideoType = bestOutput->videoType;
 
     if(bestOutput->videoType == VideoOutputType_I420)
     {
@@ -165,7 +165,7 @@ bool DeviceSource::LoadFilters()
     else
     {
         colorType = DeviceOutputType_RGB;
-        expectedMediaType = MEDIASUBTYPE_RGB32;
+        expectedVideoType = VideoOutputType_RGB32;
     }
 
     if(colorType != DeviceOutputType_RGB && !colorConvertShader)
@@ -197,7 +197,7 @@ bool DeviceSource::LoadFilters()
 
     FreeMediaType(outputMediaType);
 
-    captureFilter = new CaptureFilter(this, expectedMediaType);
+    captureFilter = new CaptureFilter(this, expectedVideoType);
 
     if(FAILED(err = graph->AddFilter(captureFilter, NULL)))
     {
@@ -433,6 +433,9 @@ void DeviceSource::Preprocess()
             {
                 LPBYTE lpData;
                 UINT pitch;
+
+                long chi1 = lastSample->GetSize();
+                long chi2 = lastSample->GetActualDataLength();
 
                 if(texture->Map(lpData, pitch))
                 {
