@@ -124,13 +124,13 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
                 {
                     if(InitD3D11Capture())
                         OutputDebugString(TEXT("D3D11 Present\r\n"));
-                    else if(InitD3D9Capture())
+                    if(InitD3D9Capture())
                         OutputDebugString(TEXT("D3D9 Present\r\n"));
-                    else if(InitD3D101Capture())
+                    if(InitD3D101Capture())
                         OutputDebugString(TEXT("D3D10.1 Present\r\n"));
-                    else if(InitD3D10Capture())
+                    if(InitD3D10Capture())
                         OutputDebugString(TEXT("D3D10 Present\r\n"));
-                    else if(InitGLCapture())
+                    if(InitGLCapture())
                         OutputDebugString(TEXT("GL Present\r\n"));
                     /*else if(!nitDDrawCapture())
                         OutputDebugString(TEXT("DirectDraw Present"));*/
@@ -168,7 +168,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpBlah)
         HANDLE hDllMainThread = OpenThread(THREAD_ALL_ACCESS, NULL, GetCurrentThreadId());
 
         if(!(hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)CaptureThread, (LPVOID)hDllMainThread, 0, 0)))
+        {
+            CloseHandle(hDllMainThread);
             return FALSE;
+        }
 
         CloseHandle(hThread);
     }
