@@ -2282,8 +2282,15 @@ void OBS::MainAudioLoop()
             // also, it's perfectly fine to just mix into the returned buffer
             if(bDesktopMuted)
             {
-                desktopBuffer = micBuffer;
-                desktopAudioFrames = micAudioFrames;
+                if (bMicEnabled)
+                {
+                    desktopBuffer = micBuffer;
+                    desktopAudioFrames = micAudioFrames;
+                }
+                else
+                {
+                    zero(desktopBuffer, sizeof(*desktopBuffer)*totalFloats);
+                }
             }
             else if(bMicEnabled)
             {
