@@ -117,12 +117,6 @@ void STDCALL CriticalExit()
 {
     if(bBaseLoaded)
     {
-        if(MainAllocator)
-        {
-            MainAllocator->ErrorTermination();
-            free(MainAllocator);
-        }
-
         bBaseLoaded = 0;
 
         if(LogFile.IsOpen())
