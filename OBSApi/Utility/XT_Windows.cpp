@@ -40,6 +40,7 @@ DWORD startTick;
 void STDCALL InputProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 void STDCALL ResetCursorClip();
 
+SYSTEM_INFO si;
 
 BOOL        bHidingCursor = 0;
 
@@ -49,6 +50,8 @@ HWND        hwndMainAppWindow = NULL;
 void   STDCALL OSInit()
 {
     timeBeginPeriod(1);
+
+    GetSystemInfo(&si);
 
     QueryPerformanceFrequency(&clockFreq);
     QueryPerformanceCounter(&startTime);
@@ -160,9 +163,7 @@ void  STDCALL OSFindClose(HANDLE hFind)
 
 DWORD  STDCALL OSGetSysPageSize()
 {
-    SYSTEM_INFO SI;
-    GetSystemInfo(&SI);
-    return SI.dwPageSize;
+    return si.dwPageSize;
 }
 
 LPVOID STDCALL OSVirtualAlloc(size_t dwSize)
@@ -444,6 +445,11 @@ QWORD STDCALL OSGetTimeMicroseconds()
     return usecTicks;
 }
 
+
+UINT STDCALL OSGetProcessorCount()
+{
+    return si.dwNumberOfProcessors;
+}
 
 HANDLE STDCALL OSCreateThread(XTHREAD lpThreadFunc, LPVOID param)
 {

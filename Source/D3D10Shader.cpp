@@ -276,13 +276,17 @@ HANDLE D3D10Shader::GetParameterByName(CTSTR lpName) const
     return NULL;
 }
 
-#define GetValidHandle() \
+/*#define GetValidHandle() \
     ShaderParam *param = (ShaderParam*)hObject; \
     if(!hObject) \
     { \
         AppWarning(TEXT("Invalid handle input as shader parameter")); \
         return; \
-    }
+    }*/
+#define GetValidHandle() \
+    ShaderParam *param = (ShaderParam*)hObject; \
+    if(!hObject) \
+        return;
 
 
 void   D3D10Shader::GetParameterInfo(HANDLE hObject, ShaderParameterInfo &paramInfo) const

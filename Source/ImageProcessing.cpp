@@ -19,7 +19,7 @@
 #include "Main.h"
 
 
-void Convert444to420(LPBYTE input, int width, int pitch, int height, LPBYTE *output, bool bSSE2Available)
+void Convert444to420(LPBYTE input, int width, int pitch, int height, int startY, int endY, LPBYTE *output, bool bSSE2Available)
 {
     traceIn(Convert444to420);
 
@@ -33,7 +33,7 @@ void Convert444to420(LPBYTE input, int width, int pitch, int height, LPBYTE *out
         __m128i lumMask = _mm_set1_epi32(0x0000FF00);
         __m128i uvMask = _mm_set1_epi16(0x00FF);
 
-        for(int y=0; y<height; y+=2)
+        for(int y=startY; y<endY; y+=2)
         {
             int yPos    = y*pitch;
             int chrYPos = ((y>>1)*chrPitch);
@@ -77,7 +77,7 @@ void Convert444to420(LPBYTE input, int width, int pitch, int height, LPBYTE *out
     else
     {
 #ifdef _WIN64
-        for(int y=0; y<height; y+=2)
+        for(int y=startY; y<endY; y+=2)
         {
             int yPos    = y*pitch;
             int chrYPos = ((y>>1)*chrPitch);
@@ -106,7 +106,7 @@ void Convert444to420(LPBYTE input, int width, int pitch, int height, LPBYTE *out
             }
         }
 #else
-        for(int y=0; y<height; y+=2)
+        for(int y=startY; y<endY; y+=2)
         {
             int yPos    = y*pitch;
             int chrYPos = ((y>>1)*chrPitch);

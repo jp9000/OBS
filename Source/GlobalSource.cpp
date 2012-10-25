@@ -46,6 +46,26 @@ public:
         String strName = data->GetString(TEXT("name"));
         globalSource = App->GetGlobalSource(strName);
     }
+
+    //-------------------------------------------------------------
+
+    virtual void SetFloat(CTSTR lpName, float fValue)           {globalSource->SetFloat(lpName, fValue);}
+    virtual void SetInt(CTSTR lpName, int iValue)               {globalSource->SetInt(lpName, iValue);}
+    virtual void SetString(CTSTR lpName, CTSTR lpVal)           {globalSource->SetString(lpName, lpVal);}
+    virtual void SetVector(CTSTR lpName, const Vect &value)     {globalSource->SetVector(lpName, value);}
+    virtual void SetVector2(CTSTR lpName, const Vect2 &value)   {globalSource->SetVector2(lpName, value);}
+    virtual void SetVector4(CTSTR lpName, const Vect4 &value)   {globalSource->SetVector4(lpName, value);}
+    virtual void SetMatrix(CTSTR lpName, const Matrix &mat)     {globalSource->SetMatrix(lpName, mat);}
+
+    //-------------------------------------------------------------
+
+    virtual bool GetFloat(CTSTR lpName, float &fValue)   const {return globalSource->GetFloat(lpName, fValue);}
+    virtual bool GetInt(CTSTR lpName, int &iValue)       const {return globalSource->GetInt(lpName, iValue);}
+    virtual bool GetString(CTSTR lpName, String &strVal) const {return globalSource->GetString(lpName, strVal);}
+    virtual bool GetVector(CTSTR lpName, Vect &value)    const {return globalSource->GetVector(lpName, value);}
+    virtual bool GetVector2(CTSTR lpName, Vect2 &value)  const {return globalSource->GetVector2(lpName, value);}
+    virtual bool GetVector4(CTSTR lpName, Vect4 &value)  const {return globalSource->GetVector4(lpName, value);}
+    virtual bool GetMatrix(CTSTR lpName, Matrix &mat)    const {return globalSource->GetMatrix(lpName, mat);}
 };
 
 

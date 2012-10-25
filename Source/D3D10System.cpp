@@ -72,7 +72,7 @@ D3D10System::D3D10System()
     swapDesc.SampleDesc.Count = 1;
     swapDesc.Windowed = TRUE;
 
-    bDisableCompatibilityMode = AppConfig->GetInt(TEXT("Video"), TEXT("DisableD3DCompatibilityMode"), 1) != 0;
+    bDisableCompatibilityMode = 1;//AppConfig->GetInt(TEXT("Video"), TEXT("DisableD3DCompatibilityMode"), 1) != 0;
 
     UINT createFlags = D3D10_CREATE_DEVICE_BGRA_SUPPORT;
     if(GlobalConfig->GetInt(TEXT("General"), TEXT("UseDebugD3D")))

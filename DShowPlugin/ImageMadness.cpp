@@ -19,253 +19,39 @@
 
 #include "DShowPlugin.h"
 
-#ifdef _WIN64
-
-void DeviceSource::PackPlanar(LPBYTE convertBuffer, LPBYTE lpPlanar)
-{
-    UINT halfWidth  = renderCX/2;
-    UINT halfHeight = renderCY/2;
-
-    LPBYTE output = convertBuffer;
-    LPBYTE chromaPlanes[2];
-    chromaPlanes[0] = lpPlanar+(renderCX*renderCY);
-    chromaPlanes[1] = chromaPlanes[0]+(halfWidth*halfHeight);
-
-    //----------------------------------------------------------
-    // lum val
-    DWORD size = renderCX*renderCY;
-    DWORD dwQWSize = size>>3;
-    QWORD *inputQW = (QWORD*)lpPlanar;
-    QWORD *inputQWEnd = inputQW+dwQWSize;
-
-    while(inputQW < inputQWEnd)
-    {
-        register QWORD qw = *inputQW;
-
-        *output    = BYTE(qw);
-        output[4]  = BYTE(qw>>=8);
-        output[8]  = BYTE(qw>>=8);
-        output[12] = BYTE(qw>>=8);
-        output[16] = BYTE(qw>>=8);
-        output[20] = BYTE(qw>>=8);
-        output[24] = BYTE(qw>>=8);
-        output[28] = BYTE(qw>>=8);
-
-        output += 32;
-        inputQW++;
-    }
-
-    LPBYTE input = (LPBYTE)inputQW;
-    size &= 7;
-    while(size--)
-    {
-        *output = *input;
-
-        output += 4;
-        input++;
-    }
-
-    //----------------------------------------------------------
-    // chroma 1
-
-    for(UINT i=0; i<2; i++)
-    {
-        output = convertBuffer+i+1;
-        dwQWSize = halfWidth>>3;
-
-        for(UINT y=0; y<renderCY; y++)
-        {
-            size = halfWidth;
-            inputQW = (QWORD*)(chromaPlanes[i]+(halfWidth*(y>>1)));
-            inputQWEnd = inputQW+dwQWSize;
-
-            while(inputQW < inputQWEnd)
-            {
-                register QWORD qw = *inputQW;
-
-                *output    = BYTE(qw);
-                output[4]  = BYTE(qw);
-                output[8]  = BYTE(qw>>=8);
-                output[12] = BYTE(qw);
-                output[16] = BYTE(qw>>=8);
-                output[20] = BYTE(qw);
-                output[24] = BYTE(qw>>=8);
-                output[28] = BYTE(qw);
-                output[32] = BYTE(qw>>=8);
-                output[36] = BYTE(qw);
-                output[40] = BYTE(qw>>=8);
-                output[44] = BYTE(qw);
-                output[48] = BYTE(qw>>=8);
-                output[52] = BYTE(qw);
-                output[56] = BYTE(qw>>=8);
-                output[60] = BYTE(qw);
-
-                output += 64;
-                inputQW++;
-            }
-
-            input = (LPBYTE)inputQW;
-            size &= 7;
-            while(size--)
-            {
-                register BYTE byte = *input;
-                *output   = byte;
-                output[4] = byte;
-
-                output += 8;
-                input++;
-            }
-        }
-    }
-}
-
-#else
-
-void DeviceSource::PackPlanar(LPBYTE convertBuffer, LPBYTE lpPlanar)
-{
-    UINT halfWidth  = renderCX/2;
-    UINT halfHeight = renderCY/2;
-
-    LPBYTE output = convertBuffer;
-    LPBYTE chromaPlanes[2];
-    chromaPlanes[0] = lpPlanar+(renderCX*renderCY);
-    chromaPlanes[1] = chromaPlanes[0]+(halfWidth*halfHeight);
-
-    //----------------------------------------------------------
-    // lum val
-    DWORD size = renderCX*renderCY;
-    DWORD dwDWSize = size>>2;
-    LPDWORD inputDW = (LPDWORD)lpPlanar;
-    LPDWORD inputDWEnd = inputDW+dwDWSize;
-
-    while(inputDW < inputDWEnd)
-    {
-        register DWORD dw = *inputDW;
-
-        *output    = BYTE(dw);
-        output[4]  = BYTE(dw>>=8);
-        output[8]  = BYTE(dw>>=8);
-        output[12] = BYTE(dw>>=8);
-
-        output += 16;
-        inputDW++;
-    }
-
-    LPBYTE input = (LPBYTE)inputDW;
-    size &= 3;
-    while(size--)
-    {
-        *output = *input;
-
-        output += 4;
-        input++;
-    }
-
-    //----------------------------------------------------------
-    // chroma 1
-
-    for(UINT i=0; i<2; i++)
-    {
-        output = convertBuffer+i+1;
-        dwDWSize = halfWidth>>2;
-
-        for(UINT y=0; y<renderCY; y++)
-        {
-            size = halfWidth;
-            inputDW = (LPDWORD)(chromaPlanes[i]+(halfWidth*(y>>1)));
-            inputDWEnd = inputDW+dwDWSize;
-
-            while(inputDW < inputDWEnd)
-            {
-                register DWORD dw = *inputDW;
-
-                *output    = BYTE(dw);
-                output[4]  = BYTE(dw);
-                output[8]  = BYTE(dw>>=8);
-                output[12] = BYTE(dw);
-                output[16] = BYTE(dw>>=8);
-                output[20] = BYTE(dw);
-                output[24] = BYTE(dw>>=8);
-                output[28] = BYTE(dw);
-
-                output += 32;
-                inputDW++;
-            }
-
-            input = (LPBYTE)inputDW;
-            size &= 3;
-            while(size--)
-            {
-                register BYTE byte = *input;
-                *output   = byte;
-                output[4] = byte;
-
-                output += 8;
-                input++;
-            }
-        }
-    }
-}
-
-#endif
-
-/*void DeviceSource::PackPlanar(LPBYTE lpPlanar)
+//now properly takes CPU cache into account - it's just so much faster than it was.
+void PackPlanar(LPBYTE convertBuffer, LPBYTE lpPlanar, UINT renderCX, UINT renderCY, UINT pitch, UINT startY, UINT endY)
 {
     LPBYTE output = convertBuffer;
     LPBYTE input = lpPlanar;
+    LPBYTE input2 = input+(renderCX*renderCY);
+    LPBYTE input3 = input2+(renderCX*renderCY/4);
 
-    //lum val
-    for(UINT y=0; y<renderCY; y++)
+    UINT halfStartY = startY/2;
+    UINT halfX = renderCX/2;
+    UINT halfY = endY/2;
+
+    for(UINT y=halfStartY; y<halfY; y++)
     {
-        for(UINT x=0; x<renderCX; x++)
-        {
-            *output = *input;
+        LPBYTE lpLum1 = input + y*2*renderCX;
+        LPBYTE lpLum2 = lpLum1 + renderCX;
+        LPBYTE lpChroma1 = input2 + y*halfX;
+        LPBYTE lpChroma2 = input3 + y*halfX;
+        LPDWORD output1 = (LPDWORD)(output + (y*2)*pitch);
+        LPDWORD output2 = (LPDWORD)(((LPBYTE)output1)+pitch);
 
-            output += 4;
-            input++;
+        for(UINT x=0; x<halfX; x++)
+        {
+            DWORD out = (*(lpChroma1++) << 8) | (*(lpChroma2++) << 16);
+
+            *(output1++) = *(lpLum1++) | out;
+            *(output1++) = *(lpLum1++) | out;
+
+            *(output2++) = *(lpLum2++) | out;
+            *(output2++) = *(lpLum2++) | out;
         }
     }
-
-    //chroma 1
-    output = convertBuffer+1;
-    LPBYTE plane1 = lpPlanar+(renderCX*renderCY);
-    UINT halfWidth  = renderCX/2;
-    UINT halfHeight = renderCY/2;
-
-    for(UINT y=0; y<renderCY; y++)
-    {
-        input = plane1+(halfWidth*(y/2));
-
-        for(UINT x=0; x<halfWidth; x++)
-        {
-            *output = *input;
-            output += 4;
-            *output = *input;
-            output += 4;
-
-            input++;
-        }
-    }
-
-    //chroma 1
-    output = convertBuffer+2;
-    LPBYTE plane2 = plane1+(halfWidth*halfHeight);
-
-    for(UINT y=0; y<renderCY; y++)
-    {
-        input = plane2+(halfWidth*(y/2));
-
-        for(UINT x=0; x<halfWidth; x++)
-        {
-            *output = *input;
-            output += 4;
-            *output = *input;
-            output += 4;
-
-            input++;
-        }
-    }
-}*/
+}
 
 void DeviceSource::Convert422To444(LPBYTE convertBuffer, LPBYTE lp422, bool bLeadingY)
 {

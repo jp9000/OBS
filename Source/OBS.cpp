@@ -66,7 +66,7 @@ VideoFileStream* CreateMP4FileStream(CTSTR lpFile);
 VideoFileStream* CreateFLVFileStream(CTSTR lpFile);
 //VideoFileStream* CreateAVIFileStream(CTSTR lpFile);
 
-void Convert444to420(LPBYTE input, int width, int pitch, int height, LPBYTE *output, bool bSSE2Available);
+void Convert444to420(LPBYTE input, int width, int pitch, int height, int startY, int endY, LPBYTE *output, bool bSSE2Available);
 
 void STDCALL SceneHotkey(DWORD hotkey, UPARAM param, bool bDown);
 
@@ -410,6 +410,8 @@ public:
     virtual void GetRenderFrameSize(UINT &width, UINT &height) const    {App->GetRenderFrameSize(width, height);}
     virtual void GetOutputSize(UINT &width, UINT &height) const         {App->GetOutputSize(width, height);}
 
+    virtual UINT GetMaxFPS() const              {return App->bRunning ? App->fps : AppConfig->GetInt(TEXT("Video"), TEXT("FPS"), 30);}
+
     virtual CTSTR GetLanguage() const           {return App->strLanguage;}
 
     virtual CTSTR GetAppDataPath() const        {return lpAppDataPath;}
@@ -535,7 +537,7 @@ OBS::OBS()
     int y = (fullscreenY/2)-(cy/2);
 
     hwndMain = CreateWindowEx(WS_EX_CONTROLPARENT|WS_EX_WINDOWEDGE, OBS_WINDOW_CLASS, OBS_VERSION_STRING,
-        WS_OVERLAPPED | WS_THICKFRAME | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU,
+        WS_OVERLAPPED | WS_THICKFRAME | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN,
         x, y, cx, cy, NULL, NULL, hinstMain, NULL);
     if(!hwndMain)
         CrashError(TEXT("Could not create main window"));
@@ -866,7 +868,7 @@ OBS::~OBS()
         pluginInfo.strFile.Clear();
     }
 
-    DestroyWindow(hwndMain);
+    //DestroyWindow(hwndMain);
 
     AppConfig->SetInt(TEXT("General"), TEXT("Width"),  clientWidth);
     AppConfig->SetInt(TEXT("General"), TEXT("Height"), clientHeight);
@@ -1200,11 +1202,14 @@ void OBS::Start()
     td.Usage            = D3D10_USAGE_STAGING;
     td.CPUAccessFlags   = D3D10_CPU_ACCESS_READ;
 
-    HRESULT err = GetD3D()->CreateTexture2D(&td, NULL, &copyTexture);
-    if(FAILED(err))
+    for(UINT i=0; i<2; i++)
     {
-        CrashError(TEXT("Unable to create copy texture"));
-        //todo - better error handling
+        HRESULT err = GetD3D()->CreateTexture2D(&td, NULL, &copyTextures[i]);
+        if(FAILED(err))
+        {
+            CrashError(TEXT("Unable to create copy texture"));
+            //todo - better error handling
+        }
     }
 
     //-------------------------------------------------------------
@@ -1395,20 +1400,14 @@ void OBS::SetStatusBarData()
 {
     HWND hwndStatusBar = GetDlgItem(hwndMain, ID_STATUS);
 
-    String strInfo = GetMostImportantInfo();
-    SendMessage(hwndStatusBar, SB_SETTEXT, 0, (LPARAM)strInfo.Array());
-
-    String strDroppedFrames;
-    strDroppedFrames << Str("MainWindow.DroppedFrames") << TEXT(" ") << IntString(curFramesDropped);
-    SendMessage(hwndStatusBar, SB_SETTEXT, 1, (LPARAM)strDroppedFrames.Array());
-
-    String strCaptureFPS;
-    strCaptureFPS << TEXT("FPS: ") << IntString(captureFPS);
-    SendMessage(hwndStatusBar, SB_SETTEXT, 2, (LPARAM)strCaptureFPS.Array());
-
-    statusBarData.bytesPerSec = bytesPerSec;
-    statusBarData.strain = curStrain;
+    SendMessage(hwndStatusBar, WM_SETREDRAW, 0, 0);
+    SendMessage(hwndStatusBar, SB_SETTEXT, 0 | SBT_OWNERDRAW, NULL);
+    SendMessage(hwndStatusBar, SB_SETTEXT, 1 | SBT_OWNERDRAW, NULL);
+    SendMessage(hwndStatusBar, SB_SETTEXT, 2 | SBT_OWNERDRAW, NULL);
     SendMessage(hwndStatusBar, SB_SETTEXT, 3 | SBT_OWNERDRAW, NULL);
+
+    SendMessage(hwndStatusBar, WM_SETREDRAW, 1, 0);
+    InvalidateRect(hwndStatusBar, NULL, FALSE);
 }
 
 void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
@@ -1416,49 +1415,86 @@ void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
     if(!App->bRunning)
         return;
 
-    DWORD green = 0xFF, red = 0xFF;
-
-    if(statusBarData.strain > 50.0)
-        green = DWORD(((50.0-(statusBarData.strain-50.0))/50.0)*255.0);
-
-    double redStrain = statusBarData.strain/50.0;
-    if(redStrain > 1.0)
-        redStrain = 1.0;
-
-    red = DWORD(redStrain*255.0);
-
     HDC hdcTemp = CreateCompatibleDC(dis.hDC);
     HBITMAP hbmpTemp = CreateCompatibleBitmap(dis.hDC, dis.rcItem.right-dis.rcItem.left, dis.rcItem.bottom-dis.rcItem.top);
     SelectObject(hdcTemp, hbmpTemp);
 
-    BitBlt(hdcTemp, 0, 0, dis.rcItem.right-dis.rcItem.left, dis.rcItem.bottom-dis.rcItem.top, dis.hDC, dis.rcItem.left, dis.rcItem.top, SRCCOPY);
-
     SelectObject(hdcTemp, GetCurrentObject(dis.hDC, OBJ_FONT));
 
-    //--------------------------------
+    //HBRUSH  hColorBrush = CreateSolidBrush((green<<8)|red);
 
-    HBRUSH  hColorBrush = CreateSolidBrush((green<<8)|red);
-
-    RECT rc = {0, 0, 20, 20};
-    FillRect(hdcTemp, &rc, hColorBrush);
-
-    DeleteObject(hColorBrush);
-
-    //--------------------------------
-
+    RECT rc;
     mcpy(&rc, &dis.rcItem, sizeof(rc));
-    rc.left += 22;
 
     rc.left   -= dis.rcItem.left;
     rc.right  -= dis.rcItem.left;
     rc.top    -= dis.rcItem.top;
     rc.bottom -= dis.rcItem.top;
 
-    SetBkMode(hdcTemp, TRANSPARENT);
+    FillRect(hdcTemp, &rc, (HBRUSH)(COLOR_BTNFACE+1));
 
-    String strKBPS;
-    strKBPS << IntString((statusBarData.bytesPerSec*8) >> 10) << TEXT("kb/s");
-    DrawText(hdcTemp, strKBPS, strKBPS.Length(), &rc, DT_VCENTER|DT_SINGLELINE|DT_LEFT);
+    //DeleteObject(hColorBrush);
+
+    //--------------------------------
+
+    if(dis.itemID == 3)
+    {
+        DWORD green = 0xFF, red = 0xFF;
+
+        statusBarData.bytesPerSec = App->bytesPerSec;
+        statusBarData.strain = App->curStrain;
+        //statusBarData.strain = rand()%101;
+
+        if(statusBarData.strain > 50.0)
+            green = DWORD(((50.0-(statusBarData.strain-50.0))/50.0)*255.0);
+
+        double redStrain = statusBarData.strain/50.0;
+        if(redStrain > 1.0)
+            redStrain = 1.0;
+
+        red = DWORD(redStrain*255.0);
+
+        //--------------------------------
+
+        HBRUSH  hColorBrush = CreateSolidBrush((green<<8)|red);
+
+        RECT rcBox = {0, 0, 20, 20};
+        /*rc.left += dis.rcItem.left;
+        rc.right += dis.rcItem.left;
+        rc.top += dis.rcItem.top;
+        rc.bottom += dis.rcItem.top;*/
+        FillRect(hdcTemp, &rcBox, hColorBrush);
+
+        DeleteObject(hColorBrush);
+
+        //--------------------------------
+
+        SetBkMode(hdcTemp, TRANSPARENT);
+
+        rc.left += 22;
+
+        String strKBPS;
+        strKBPS << IntString((statusBarData.bytesPerSec*8) >> 10) << TEXT("kb/s");
+        //strKBPS << IntString(rand()) << TEXT("kb/s");
+        DrawText(hdcTemp, strKBPS, strKBPS.Length(), &rc, DT_VCENTER|DT_SINGLELINE|DT_LEFT);
+    }
+    else
+    {
+        String strOutString;
+
+        switch(dis.itemID)
+        {
+            case 0: strOutString << App->GetMostImportantInfo(); break;
+            case 1: strOutString << Str("MainWindow.DroppedFrames") << TEXT(" ") << IntString(App->curFramesDropped); break;
+            case 2: strOutString << TEXT("FPS: ") << IntString(App->captureFPS); break;
+        }
+
+        if(strOutString.IsValid())
+        {
+            SetBkMode(hdcTemp, TRANSPARENT);
+            DrawText(hdcTemp, strOutString, strOutString.Length(), &rc, DT_VCENTER|DT_SINGLELINE|DT_LEFT);
+        }
+    }
 
     //--------------------------------
 
@@ -1558,7 +1594,10 @@ void OBS::Stop()
         yuvRenderTextures[i] = NULL;
     }
 
-    SafeRelease(copyTexture);
+    for(UINT i=0; i<2; i++)
+    {
+        SafeRelease(copyTextures[i]);
+    }
 
     delete transitionTexture;
     transitionTexture = NULL;
@@ -1685,11 +1724,25 @@ DWORD STDCALL OBS::MainAudioThread(LPVOID lpUnused)
     return 0;
 }
 
+struct Convert444Data
+{
+    LPBYTE input;
+    LPBYTE output[3];
+    int width, height, pitch, startY, endY;
+};
+
+DWORD STDCALL Convert444Thread(Convert444Data *data)
+{
+    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
+    Convert444to420(data->input, data->width, data->pitch, data->height, data->startY, data->endY, data->output, App->SSE2Available());
+    return 0;
+}
+
 void OBS::MainCaptureLoop()
 {
     traceIn(OBS::MainCaptureLoop);
 
-    int curRenderTarget = 0, curCopyTexture = 0;
+    int curRenderTarget = 0, curYUVTexture = 0, curCopyTexture = 0;
     int copyWait = NUM_RENDER_BUFFERS-1;
     UINT curStreamTime = 0, firstFrameTime = OSGetTime(), lastStreamTime = 0;
     UINT lastPTSVal = 0, lastUnmodifiedPTSVal = 0;
@@ -1707,16 +1760,23 @@ void OBS::MainCaptureLoop()
 
     LPVOID nullBuff = NULL;
 
-    x264_picture_t picOut;
-    x264_picture_init(&picOut);
+    x264_picture_t outPics[2];
+    x264_picture_init(&outPics[0]);
+    x264_picture_init(&outPics[1]);
 
     if(bUsing444)
     {
-        picOut.img.i_csp   = X264_CSP_BGRA; //although the x264 input says BGR, x264 actually will expect packed UYV
-        picOut.img.i_plane = 1;
+        outPics[0].img.i_csp   = X264_CSP_BGRA; //although the x264 input says BGR, x264 actually will expect packed UYV
+        outPics[0].img.i_plane = 1;
+
+        outPics[1].img.i_csp   = X264_CSP_BGRA;
+        outPics[1].img.i_plane = 1;
     }
     else
-        x264_picture_alloc(&picOut, X264_CSP_I420, outputCX, outputCY);
+    {
+        x264_picture_alloc(&outPics[0], X264_CSP_I420, outputCX, outputCY);
+        x264_picture_alloc(&outPics[1], X264_CSP_I420, outputCX, outputCY);
+    }
 
     int curPTS = 0;
 
@@ -1736,6 +1796,29 @@ void OBS::MainCaptureLoop()
     float bpsTime = 0.0f;
     double lastStrain = 0.0f;
 
+    UINT numProcessors = OSGetProcessorCount();
+    HANDLE *h420Threads = (HANDLE*)Allocate(sizeof(HANDLE)*numProcessors);
+    Convert444Data *convertInfo = (Convert444Data*)Allocate(sizeof(Convert444Data)*numProcessors);
+
+    zero(h420Threads, sizeof(HANDLE)*numProcessors);
+    zero(convertInfo, sizeof(Convert444Data)*numProcessors);
+
+    for(UINT i=0; i<numProcessors; i++)
+    {
+        convertInfo[i].width  = outputCX;
+        convertInfo[i].height = outputCY;
+
+        if(i == 0)
+            convertInfo[i].startY = 0;
+        else
+            convertInfo[i].startY = convertInfo[i-1].endY;
+
+        if(i == (numProcessors-1))
+            convertInfo[i].endY = outputCY;
+        else
+            convertInfo[i].endY = ((outputCY/numProcessors)*(i+1)) & 0xFFFFFFFE;
+    }
+
     DWORD fpsTimeNumerator = 1000-(frameTime*fps);
     DWORD fpsTimeDenominator = fps;
     DWORD fpsTimeAdjust = 0;
@@ -1743,6 +1826,8 @@ void OBS::MainCaptureLoop()
     DWORD fpsCounter = 0;
 
     bool bFirstFrame = true;
+    bool bFirst420Encode = true;
+    bool bUseThreaded420 = OSGetProcessorCount() > 1 && !bUsing444;
 
     while(bRunning)
     {
@@ -1999,36 +2084,75 @@ void OBS::MainCaptureLoop()
 
                     bFirstFrame = false;
                 }
-            }
 
-            if(!bEncode)
-            {
-                if(curCopyTexture == (NUM_RENDER_BUFFERS-1))
-                    curCopyTexture = 0;
-                else
-                    curCopyTexture++;
+                if(!bEncode)
+                {
+                    if(curYUVTexture == (NUM_RENDER_BUFFERS-1))
+                        curYUVTexture = 0;
+                    else
+                        curYUVTexture++;
+                }
             }
         }
 
         if(bEncode)
         {
+            UINT prevCopyTexture = (curCopyTexture+1) & 1;
+
+            ID3D10Texture2D *copyTexture = copyTextures[curCopyTexture];
             profileIn("CopyResource");
-            D3D10Texture *d3dYUV = static_cast<D3D10Texture*>(yuvRenderTextures[curCopyTexture]);
+
+            if(!bFirst420Encode && bUseThreaded420)
+            {
+                WaitForMultipleObjects(numProcessors, h420Threads, TRUE, INFINITE);
+                for(UINT i=0; i<numProcessors; i++)
+                {
+                    CloseHandle(h420Threads[i]);
+                    h420Threads[i] = NULL;
+                }
+                copyTexture->Unmap(0);
+            }
+
+            D3D10Texture *d3dYUV = static_cast<D3D10Texture*>(yuvRenderTextures[curYUVTexture]);
             GetD3D()->CopyResource(copyTexture, d3dYUV->texture);
             profileOut;
 
+            ID3D10Texture2D *prevTexture = copyTextures[prevCopyTexture];
+
             D3D10_MAPPED_TEXTURE2D map;
-            if(SUCCEEDED(copyTexture->Map(0, D3D10_MAP_READ, 0, &map)))
+            if(SUCCEEDED(prevTexture->Map(0, D3D10_MAP_READ, 0, &map)))
             {
                 List<DataPacket> videoPackets;
                 List<PacketType> videoPacketTypes;
+
+                x264_picture_t &picOut = outPics[prevCopyTexture];
 
                 if(!bUsing444)
                 {
                     profileIn("conversion to 4:2:0");
 
-                    Convert444to420((LPBYTE)map.pData, outputCX, map.RowPitch, outputCY, picOut.img.plane, SSE2Available());
-                    copyTexture->Unmap(0);
+                    if(bUseThreaded420)
+                    {
+                        x264_picture_t &newPicOut = outPics[curCopyTexture];
+
+                        for(UINT i=0; i<numProcessors; i++)
+                        {
+                            convertInfo[i].input     = (LPBYTE)map.pData;
+                            convertInfo[i].pitch     = map.RowPitch;
+                            convertInfo[i].output[0] = newPicOut.img.plane[0];
+                            convertInfo[i].output[1] = newPicOut.img.plane[1];
+                            convertInfo[i].output[2] = newPicOut.img.plane[2];
+                            h420Threads[i] = OSCreateThread((XTHREAD)Convert444Thread, (LPVOID)(convertInfo+i));
+                        }
+                    }
+                    else
+                    {
+                        Convert444to420((LPBYTE)map.pData, outputCX, map.RowPitch, outputCY, 0, outputCY, picOut.img.plane, SSE2Available());
+                        prevTexture->Unmap(0);
+                    }
+
+                    if(bFirst420Encode)
+                        bFirst420Encode = bEncode = false;
 
                     profileOut;
                 }
@@ -2038,127 +2162,132 @@ void OBS::MainCaptureLoop()
                     picOut.img.plane[0]    = (uint8_t*)map.pData;
                 }
 
-                //------------------------------------
-                // get timestamps
-
-                DWORD curTimeStamp = 0;
-                DWORD curPTSVal = 0;
-
-                curTimeStamp = bufferedTimes[0];
-                curPTSVal = bufferedTimes[curPTS++];
-
-                if(bUseSyncFix)
+                if(bEncode)
                 {
-                    DWORD savedPTSVal = curPTSVal;
+                    //------------------------------------
+                    // get timestamps
 
-                    if(curPTSVal != 0)
+                    DWORD curTimeStamp = 0;
+                    DWORD curPTSVal = 0;
+
+                    curTimeStamp = bufferedTimes[0];
+                    curPTSVal = bufferedTimes[curPTS++];
+
+                    if(bUseSyncFix)
                     {
-                        /*int toleranceVal = int(lastPTSVal+frameTime);
-                        int toleranceOffset = (int(curPTSVal)-toleranceVal);
-                        int halfFrameTime = int(frameTime/2);
+                        DWORD savedPTSVal = curPTSVal;
 
-                        if(toleranceOffset > halfFrameTime)
-                            curPTSVal = DWORD(toleranceVal+(toleranceOffset-halfFrameTime));
-                        else if(toleranceOffset < -halfFrameTime)
-                            curPTSVal = DWORD(toleranceVal+(toleranceOffset+halfFrameTime));
-                        else
-                            curPTSVal = DWORD(toleranceVal);*/
-
-                        //this turned out to be much better than the previous way I was doing it.
-                        //if the FPS is set to about the same as the capture FPS, this works pretty much flawlessly.
-                        //100% calculated timestamps that are almost fully accurate with no CPU timers involved,
-                        //while still fully allowing any potential unexpected frame variability.
-                        curPTSVal = lastPTSVal+frameTimeAdjust;
-                        if(curPTSVal < lastUnmodifiedPTSVal)
-                            curPTSVal = lastUnmodifiedPTSVal;
-
-                        bufferedTimes[curPTS-1] = curPTSVal;
-                    }
-
-                    lastUnmodifiedPTSVal = savedPTSVal;
-                    lastPTSVal = curPTSVal;
-
-                    //Log(TEXT("val: %u - adjusted: %u"), savedPTSVal, curPTSVal);
-                }
-
-                picOut.i_pts = curPTSVal;
-
-                //------------------------------------
-                // encode
-
-                profileIn("call to encoder");
-
-                videoEncoder->Encode(&picOut, videoPackets, videoPacketTypes, curTimeStamp);
-                if(bUsing444) copyTexture->Unmap(0);
-
-                profileOut;
-
-                //------------------------------------
-                // upload
-
-                bool bSendingVideo = videoPackets.Num() > 0;
-
-                //send headers before the first frame if not yet sent
-                if(bSendingVideo)
-                {
-                    if(!bSentHeaders)
-                    {
-                        network->BeginPublishing();
-                        bSentHeaders = true;
-
-                        DataPacket seiPacket;
-                        videoEncoder->GetSEI(seiPacket);
-
-                        network->SendPacket(seiPacket.lpPacket, seiPacket.size, 0, PacketType_VideoHighest);
-                    }
-
-                    OSEnterMutex(hSoundDataMutex);
-
-                    if(pendingAudioFrames.Num())
-                    {
-                        //Log(TEXT("pending frames %u, (in milliseconds): %u"), pendingAudioFrames.Num(), pendingAudioFrames.Last().timestamp-pendingAudioFrames[0].timestamp);
-                        while(pendingAudioFrames.Num() && pendingAudioFrames[0].timestamp < curTimeStamp)
+                        if(curPTSVal != 0)
                         {
-                            List<BYTE> &audioData = pendingAudioFrames[0].audioData;
+                            /*int toleranceVal = int(lastPTSVal+frameTime);
+                            int toleranceOffset = (int(curPTSVal)-toleranceVal);
+                            int halfFrameTime = int(frameTime/2);
 
-                            if(audioData.Num())
-                            {
-                                network->SendPacket(audioData.Array(), audioData.Num(), pendingAudioFrames[0].timestamp, PacketType_Audio);
-                                if(fileStream)
-                                    fileStream->AddPacket(audioData.Array(), audioData.Num(), pendingAudioFrames[0].timestamp, PacketType_Audio);
+                            if(toleranceOffset > halfFrameTime)
+                                curPTSVal = DWORD(toleranceVal+(toleranceOffset-halfFrameTime));
+                            else if(toleranceOffset < -halfFrameTime)
+                                curPTSVal = DWORD(toleranceVal+(toleranceOffset+halfFrameTime));
+                            else
+                                curPTSVal = DWORD(toleranceVal);*/
 
-                                audioData.Clear();
-                            }
+                            //this turned out to be much better than the previous way I was doing it.
+                            //if the FPS is set to about the same as the capture FPS, this works pretty much flawlessly.
+                            //100% calculated timestamps that are almost fully accurate with no CPU timers involved,
+                            //while still fully allowing any potential unexpected frame variability.
+                            curPTSVal = lastPTSVal+frameTimeAdjust;
+                            if(curPTSVal < lastUnmodifiedPTSVal)
+                                curPTSVal = lastUnmodifiedPTSVal;
 
-                            //Log(TEXT("audio packet timestamp: %u"), pendingAudioFrames[0].timestamp);
-
-                            pendingAudioFrames[0].audioData.Clear();
-                            pendingAudioFrames.Remove(0);
+                            bufferedTimes[curPTS-1] = curPTSVal;
                         }
+
+                        lastUnmodifiedPTSVal = savedPTSVal;
+                        lastPTSVal = curPTSVal;
+
+                        //Log(TEXT("val: %u - adjusted: %u"), savedPTSVal, curPTSVal);
                     }
 
-                    OSLeaveMutex(hSoundDataMutex);
+                    picOut.i_pts = curPTSVal;
 
-                    for(UINT i=0; i<videoPackets.Num(); i++)
+                    //------------------------------------
+                    // encode
+
+                    profileIn("call to encoder");
+
+                    videoEncoder->Encode(&picOut, videoPackets, videoPacketTypes, curTimeStamp);
+                    if(bUsing444) prevTexture->Unmap(0);
+
+                    profileOut;
+
+                    //------------------------------------
+                    // upload
+
+                    bool bSendingVideo = videoPackets.Num() > 0;
+
+                    //send headers before the first frame if not yet sent
+                    if(bSendingVideo)
                     {
-                        DataPacket &packet  = videoPackets[i];
-                        PacketType type     = videoPacketTypes[i];
+                        if(!bSentHeaders)
+                        {
+                            network->BeginPublishing();
+                            bSentHeaders = true;
 
-                        network->SendPacket(packet.lpPacket, packet.size, curTimeStamp, type);
-                        if(fileStream)
-                            fileStream->AddPacket(packet.lpPacket, packet.size, curTimeStamp, type);
+                            DataPacket seiPacket;
+                            videoEncoder->GetSEI(seiPacket);
+
+                            network->SendPacket(seiPacket.lpPacket, seiPacket.size, 0, PacketType_VideoHighest);
+                        }
+
+                        OSEnterMutex(hSoundDataMutex);
+
+                        if(pendingAudioFrames.Num())
+                        {
+                            //Log(TEXT("pending frames %u, (in milliseconds): %u"), pendingAudioFrames.Num(), pendingAudioFrames.Last().timestamp-pendingAudioFrames[0].timestamp);
+                            while(pendingAudioFrames.Num() && pendingAudioFrames[0].timestamp < curTimeStamp)
+                            {
+                                List<BYTE> &audioData = pendingAudioFrames[0].audioData;
+
+                                if(audioData.Num())
+                                {
+                                    network->SendPacket(audioData.Array(), audioData.Num(), pendingAudioFrames[0].timestamp, PacketType_Audio);
+                                    if(fileStream)
+                                        fileStream->AddPacket(audioData.Array(), audioData.Num(), pendingAudioFrames[0].timestamp, PacketType_Audio);
+
+                                    audioData.Clear();
+                                }
+
+                                //Log(TEXT("audio packet timestamp: %u"), pendingAudioFrames[0].timestamp);
+
+                                pendingAudioFrames[0].audioData.Clear();
+                                pendingAudioFrames.Remove(0);
+                            }
+                        }
+
+                        OSLeaveMutex(hSoundDataMutex);
+
+                        for(UINT i=0; i<videoPackets.Num(); i++)
+                        {
+                            DataPacket &packet  = videoPackets[i];
+                            PacketType type     = videoPacketTypes[i];
+
+                            network->SendPacket(packet.lpPacket, packet.size, curTimeStamp, type);
+                            if(fileStream)
+                                fileStream->AddPacket(packet.lpPacket, packet.size, curTimeStamp, type);
+                        }
+
+                        curPTS--;
+
+                        bufferedTimes.Remove(0);
                     }
-
-                    curPTS--;
-
-                    bufferedTimes.Remove(0);
                 }
             }
 
-            if(curCopyTexture == (NUM_RENDER_BUFFERS-1))
-                curCopyTexture = 0;
+            curCopyTexture = prevCopyTexture;
+
+            if(curYUVTexture == (NUM_RENDER_BUFFERS-1))
+                curYUVTexture = 0;
             else
-                curCopyTexture++;
+                curYUVTexture++;
         }
 
         lastRenderTarget = curRenderTarget;
@@ -2201,7 +2330,26 @@ void OBS::MainCaptureLoop()
     }
 
     if(!bUsing444)
-        x264_picture_clean(&picOut);
+    {
+        if(!bFirst420Encode && bUseThreaded420)
+        {
+            WaitForMultipleObjects(numProcessors, h420Threads, TRUE, INFINITE);
+            for(UINT i=0; i<numProcessors; i++)
+            {
+                if(h420Threads)
+                    CloseHandle(h420Threads[i]);
+                h420Threads[i] = NULL;
+            }
+
+            ID3D10Texture2D *copyTexture = copyTextures[curCopyTexture];
+            copyTexture->Unmap(0);
+        }
+        x264_picture_clean(&outPics[0]);
+        x264_picture_clean(&outPics[1]);
+    }
+
+    Free(h420Threads);
+    Free(convertInfo);
 
     Log(TEXT("Total frames rendered: %d, number of frames that lagged: %d (%0.2f%%) (it's okay for some frames to lag)"), numTotalFrames, numLongFrames, (double(numLongFrames)/double(numTotalFrames))*100.0);
 

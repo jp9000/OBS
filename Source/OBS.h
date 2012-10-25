@@ -329,7 +329,7 @@ class OBS
     //---------------------------------------------------
     // graphics stuff
 
-    ID3D10Texture2D *copyTexture;
+    ID3D10Texture2D *copyTextures[2];
 
     Texture *mainRenderTextures[NUM_RENDER_BUFFERS];
     Texture *yuvRenderTextures[NUM_RENDER_BUFFERS];

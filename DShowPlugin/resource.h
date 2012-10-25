@@ -12,6 +12,20 @@
 #define IDC_FLIPIMAGE                   1014
 #define IDC_BUTTON1                     1015
 #define IDC_CUSTOM                      1015
+#define IDC_SELECTCOLOR                 1015
+#define IDC_AUTOMATICRESOLUTION         1016
+#define IDC_CUSTOMRESOLUTION            1016
+#define IDC_USECHROMAKEY                1017
+#define IDC_USECOLORKEY                 1017
+#define IDC_COLOR                       1018
+#define IDC_BASETHRESHOLD               1019
+#define IDC_BASETHRESHOLD_EDIT          1020
+#define IDC_BASETHRESHOLD_CHI           1021
+#define IDC_BLEND_EDIT                  1021
+#define IDC_BLEND                       1022
+#define IDC_GAMMA_EDIT                  1023
+#define IDC_BASETHRESHOLD3              1024
+#define IDC_GAMMA                       1024
 
 // Next default values for new objects
 // 
@@ -19,7 +33,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        102
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1016
+#define _APS_NEXT_CONTROL_VALUE         1022
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

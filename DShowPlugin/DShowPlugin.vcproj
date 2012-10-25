@@ -280,7 +280,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="2"
+				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="../OBSApi"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;DSHOWPLUGIN_EXPORTS"
@@ -404,6 +404,34 @@
 		<Filter
 			Name="Shaders"
 			>
+			<File
+				RelativePath="..\rundir\plugins\DShowPlugin\shaders\ColorKey_HDYCToRGB.pShader"
+				>
+			</File>
+			<File
+				RelativePath="..\rundir\plugins\DShowPlugin\shaders\ColorKey_RGB.pShader"
+				>
+			</File>
+			<File
+				RelativePath="..\rundir\plugins\DShowPlugin\shaders\ColorKey_UYVToRGB.pShader"
+				>
+			</File>
+			<File
+				RelativePath="..\rundir\plugins\DShowPlugin\shaders\ColorKey_YUVToRGB.pShader"
+				>
+			</File>
+			<File
+				RelativePath="..\rundir\plugins\DShowPlugin\shaders\ColorKey_YUXVToRGB.pShader"
+				>
+			</File>
+			<File
+				RelativePath="..\rundir\plugins\DShowPlugin\shaders\ColorKey_YVUToRGB.pShader"
+				>
+			</File>
+			<File
+				RelativePath="..\rundir\plugins\DShowPlugin\shaders\ColorKey_YVXUToRGB.pShader"
+				>
+			</File>
 			<File
 				RelativePath="..\rundir\plugins\DShowPlugin\shaders\HDYCToRGB.pShader"
 				>

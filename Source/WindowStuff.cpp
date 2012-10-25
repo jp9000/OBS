@@ -258,6 +258,8 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 {
     if(message == WM_RBUTTONDOWN)
     {
+        CallWindowProc(listboxProc, hwnd, WM_LBUTTONDOWN, wParam, lParam);
+
         UINT id = (UINT)GetWindowLongPtr(hwnd, GWL_ID);
 
         HMENU hMenu = CreatePopupMenu();

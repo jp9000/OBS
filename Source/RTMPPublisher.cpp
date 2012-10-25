@@ -42,7 +42,7 @@ struct NetworkPacket
 };
 
 //max latency in milliseconds allowed when using the send buffer
-const DWORD maxBufferTime = 500;
+const DWORD maxBufferTime = 600;
 
 class RTMPPublisher : public NetworkStream
 {
@@ -57,7 +57,7 @@ class RTMPPublisher : public NetworkStream
     int packetWaitType;
     List<NetworkPacket> Packets;
     UINT numVideoPackets;
-    UINT maxVideoPackets, BFrameThreshold;
+    UINT maxVideoPackets, BFrameThreshold, revertThreshold;
 
     QWORD bytesSent;
 
@@ -67,12 +67,14 @@ class RTMPPublisher : public NetworkStream
     UINT numVideoPacketsBuffered;
     DWORD firstBufferedVideoFrameTimestamp;
 
+    bool bPacketDumpMode;
+
     BOOL bUseSendBuffer;
 
     //all data sending is done in yet another separate thread to prevent blocking in the main capture thread
     void SendLoop()
     {
-        traceIn(RTMPPublisher::SendLoop);
+        //traceIn(RTMPPublisher::SendLoop);
 
         while(WaitForSingleObject(hSendSempahore, INFINITE) == WAIT_OBJECT_0 && !bStopping && RTMP_IsConnected(rtmp))
         {
@@ -168,7 +170,7 @@ class RTMPPublisher : public NetworkStream
             bytesSent += packetData.Num();
         }
 
-        traceOut;
+        //traceOut;
     }
 
     static DWORD SendThread(RTMPPublisher *publisher)
@@ -289,7 +291,7 @@ class RTMPPublisher : public NetworkStream
                 {
                     if(packet.type >= packetWaitType)
                     {
-                        packetWaitType = PacketType_VideoDisposable;
+                        packetWaitType = (bPacketDumpMode) ? PacketType_VideoLow : PacketType_VideoDisposable;
                         break;
                     }
                     else //clear out following dependent packets of lower priority
@@ -353,30 +355,26 @@ class RTMPPublisher : public NetworkStream
 
     static int BufferedSend(RTMPSockBuf *sb, const char *buf, int len, RTMPPublisher *network)
     {
+        bool bComplete = false;
         int fullLen = len;
-        bool bSentData = false;
 
-        int newTotal = network->curSendBufferLen+len;
-
-        //would exceed buffer size, send instead.
-        if(newTotal >= int(network->sendBuffer.Num()))
+        do 
         {
-            int nBytes;
-            //flush existing packets
-            nBytes = network->FlushSendBuffer();
-            if(nBytes < 0)
-                return nBytes;
-            if(nBytes == 0)
-                return 0;
+            int newTotal = network->curSendBufferLen+len;
 
-            //if packet is bigger than the send buffer, just send it straight up instead of buffering
-            if((UINT)len > network->sendBuffer.Num())
+            //buffer full, send
+            if(newTotal >= int(network->sendBuffer.Num()))
             {
-                const char *lpTemp = buf;
-                int totalBytesSent = len;
+                int pendingBytes = newTotal-network->sendBuffer.Num();
+                int copyCount    = network->sendBuffer.Num()-network->curSendBufferLen;
+
+                mcpy(network->sendBuffer.Array()+network->curSendBufferLen, buf, copyCount);
+
+                BYTE *lpTemp = network->sendBuffer.Array();
+                int totalBytesSent = network->sendBuffer.Num();
                 while(totalBytesSent > 0)
                 {
-                    nBytes = send(sb->sb_socket, lpTemp, totalBytesSent, 0);
+                    int nBytes = send(sb->sb_socket, (const char*)lpTemp, totalBytesSent, 0);
                     if(nBytes < 0)
                         return nBytes;
                     if(nBytes == 0)
@@ -386,17 +384,27 @@ class RTMPPublisher : public NetworkStream
                     lpTemp += nBytes;
                 }
 
-                len = 0;
+                network->curSendBufferLen = 0;
+
+                if(pendingBytes)
+                {
+                    buf += copyCount;
+                    len -= copyCount;
+                }
+                else
+                    bComplete = true;
             }
+            else
+            {
+                if(len)
+                {
+                    mcpy(network->sendBuffer.Array()+network->curSendBufferLen, buf, len);
+                    network->curSendBufferLen = newTotal;
+                }
 
-            network->numVideoPacketsBuffered = 0;
-        }
-
-        if(len > 0)
-        {
-            mcpy(network->sendBuffer.Array()+network->curSendBufferLen, buf, len);
-            network->curSendBufferLen += len;
-        }
+                bComplete = true;
+            }
+        } while(!bComplete);
 
         return fullLen;
     }
@@ -404,7 +412,7 @@ class RTMPPublisher : public NetworkStream
 public:
     RTMPPublisher(RTMP *rtmpIn, BOOL bUseSendBuffer, UINT sendBufferSize)
     {
-        traceIn(RTMPPublisher::RTMPPublisher);
+        //traceIn(RTMPPublisher::RTMPPublisher);
 
         rtmp = rtmpIn;
 
@@ -440,13 +448,14 @@ public:
 
         BFrameThreshold = 30; //when it starts cutting out b frames
         maxVideoPackets = 70; //when it starts cutting out p frames
+        revertThreshold = 2;  //when it reverts to normal
 
-        traceOut;
+        //traceOut;
     }
 
     ~RTMPPublisher()
     {
-        traceIn(RTMPPublisher::~RTMPPublisher);
+        //traceIn(RTMPPublisher::~RTMPPublisher);
 
         bStopping = true;
         ReleaseSemaphore(hSendSempahore, 1, NULL);
@@ -475,12 +484,12 @@ public:
             RTMP_Free(rtmp);
         }
 
-        traceOut;
+        //traceOut;
     }
 
     void SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)
     {
-        traceIn(RTMPPublisher::SendPacket);
+        //traceIn(RTMPPublisher::SendPacket);
 
         if(!bStopping)
         {
@@ -488,18 +497,25 @@ public:
             paddedData.SetSize(size+RTMP_MAX_HEADER_SIZE);
             mcpy(paddedData.Array()+RTMP_MAX_HEADER_SIZE, data, size);
 
+            if(bPacketDumpMode && Packets.Num() <= revertThreshold)
+                bPacketDumpMode = false;
+
+            bool bAddPacket = false;
             if(type >= packetWaitType)
             {
                 if(type != PacketType_Audio)
                 {
-                    packetWaitType = PacketType_VideoDisposable;
+                    packetWaitType = (bPacketDumpMode) ? PacketType_VideoLow : PacketType_VideoDisposable;
 
                     if(type <= PacketType_VideoHigh)
                         numVideoPackets++;
                 }
 
-                //-----------------
+                bAddPacket = true;
+            }
 
+            if(bAddPacket)
+            {
                 OSEnterMutex(hDataMutex);
 
                 NetworkPacket &netPacket = *Packets.CreateNew();
@@ -509,7 +525,16 @@ public:
 
                 //begin dumping b frames if there's signs of lag
                 if(numVideoPackets > BFrameThreshold)
+                {
+                    if(!bPacketDumpMode)
+                    {
+                        bPacketDumpMode = true;
+                        if(packetWaitType == PacketType_VideoDisposable)
+                            packetWaitType = PacketType_VideoLow;
+                    }
+
                     DumpBFrame();
+                }
 
                 //begin dumping p frames if b frames aren't enough
                 if(numVideoPackets > maxVideoPackets)
@@ -546,12 +571,12 @@ public:
             }*/
         }
 
-        traceOut;
+        //traceOut;
     }
 
     void BeginPublishing()
     {
-        traceIn(RTMPPublisher::BeginPublishing);
+        //traceIn(RTMPPublisher::BeginPublishing);
 
         RTMPPacket packet;
 
@@ -619,7 +644,7 @@ public:
             return;
         }
 
-        traceOut;
+        //traceOut;
     }
 
     double GetPacketStrain() const
@@ -640,7 +665,7 @@ public:
 
 NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry)
 {
-    traceIn(CreateRTMPPublisher);
+    //traceIn(CreateRTMPPublisher);
 
     //------------------------------------------------------
     // set up URL
@@ -763,5 +788,5 @@ NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry)
 
     return new RTMPPublisher(rtmp, bUseSendBuffer, sendBufferSize);
 
-    traceOut;
+    //traceOut;
 }

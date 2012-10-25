@@ -138,8 +138,6 @@ public:
     {
         strFile = lpFile;
 
-        EnableMemoryTracking(TRUE, 8);
-
         if(!fileOut.Open(lpFile, XFILE_CREATEALWAYS, 1024*1024))
             return false;
 

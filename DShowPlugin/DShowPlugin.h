@@ -35,6 +35,7 @@ extern HINSTANCE hinstMain;
 IBaseFilter* GetDeviceByName(CTSTR lpName);
 IPin* GetOutputPin(IBaseFilter *filter);
 void GetOutputList(IPin *curPin, List<MediaOutputInfo> &outputInfoList);
+bool GetClosestResolution(List<MediaOutputInfo> &outputList, SIZE &resolution, UINT &fps);
 
 extern LocaleStringLookup *pluginLocale;
 #define PluginStr(text) pluginLocale->LookupString(TEXT2(text))

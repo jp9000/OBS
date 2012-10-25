@@ -19,6 +19,7 @@
 
 #pragma once
 
+void PackPlanar(LPBYTE convertBuffer, LPBYTE lpPlanar, UINT renderCX, UINT renderCY, UINT pitch, UINT startY, UINT endY);
 
 enum DeviceColorType
 {
@@ -32,6 +33,15 @@ enum DeviceColorType
     DeviceOutputType_YVYU,
     DeviceOutputType_YUY2,
     DeviceOutputType_UYVY,
+    DeviceOutputType_HDYC,
+};
+
+struct ConvertData
+{
+    LPBYTE input, output;
+    UINT width, height;
+    UINT pitch;
+    UINT startY, endY;
 };
 
 class DeviceSource : public ImageSource
@@ -49,9 +59,14 @@ class DeviceSource : public ImageSource
 
     DeviceColorType colorType;
 
+    String          strDevice;
     bool            bFlipVertical;
+    UINT            fps;
     UINT            renderCX, renderCY;
+    BOOL            bUseCustomResolution;
 
+    bool            bFirstFrame;
+    bool            bUseThreadedConversion;
     bool            bReadyToDraw;
 
     Texture         *texture;
@@ -59,11 +74,27 @@ class DeviceSource : public ImageSource
     XElement        *data;
     bool            bCapturing, bFiltersLoaded;
     IMediaSample    *curSample;
+    IMediaSample    *prevSample;
     Shader          *colorConvertShader;
 
     //---------------------------------
 
-    void PackPlanar(LPBYTE convertBuffer, LPBYTE lpPlanar);
+    LPBYTE          lpImageBuffer;
+    ConvertData     *convertData;
+    HANDLE          *hConvertThreads;
+
+    //---------------------------------
+
+    bool            bUseColorKey;
+    DWORD           keyColor;
+    int             keySimilarity;
+    int             keyBlend;
+    int             keyGamma;
+
+    //---------------------------------
+
+    String ChooseShader();
+
     void Convert422To444(LPBYTE convertBuffer, LPBYTE lp422, bool bLeadingY);
 
     void FlushSamples()
@@ -92,6 +123,8 @@ public:
 
     void BeginScene();
     void EndScene();
+
+    virtual void SetInt(CTSTR lpName, int iVal);
 
     Vect2 GetSize() const {return Vect2(float(renderCX), float(renderCY));}
 };

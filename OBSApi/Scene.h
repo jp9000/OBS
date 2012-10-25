@@ -36,6 +36,34 @@ public:
 
     virtual void BeginScene() {}
     virtual void EndScene() {}
+
+    virtual void SetFloat(CTSTR lpName, float fValue) {}
+    virtual void SetInt(CTSTR lpName, int iValue) {}
+    virtual void SetString(CTSTR lpName, CTSTR lpVal) {}
+    virtual void SetVector(CTSTR lpName, const Vect &value) {}
+    virtual void SetVector2(CTSTR lpName, const Vect2 &value) {}
+    virtual void SetVector4(CTSTR lpName, const Vect4 &value) {}
+    virtual void SetMatrix(CTSTR lpName, const Matrix &mat) {}
+
+    inline  void SetColor(CTSTR lpName, const Color4 &value)                        {SetVector4(lpName, value);}
+    inline  void SetColor(CTSTR lpName, float fR, float fB, float fG, float fA=1.0f){SetVector4(lpName, Color4(fR, fB, fG, fA));}
+    inline  void SetColor(CTSTR lpName, DWORD color)                                {SetVector4(lpName, RGBA_to_Vect4(color));}
+
+    inline  void SetColor3(CTSTR lpName, const Color3 &value)                       {SetVector(lpName, value);}
+    inline  void SetColor3(CTSTR lpName, float fR, float fB, float fG)              {SetVector(lpName, Color3(fR, fB, fG));}
+    inline  void SetColor3(CTSTR lpName, DWORD color)                               {SetVector(lpName, RGB_to_Vect(color));}
+    inline  void SetVector4(CTSTR lpName, float fX, float fY, float fZ, float fW)   {SetVector4(lpName, Vect4(fX, fY, fZ, fW));}
+    inline  void SetVector(CTSTR lpName, float fX, float fY, float fZ)              {SetVector(lpName, Vect(fX, fY, fZ));}
+
+    //-------------------------------------------------------------
+
+    virtual bool GetFloat(CTSTR lpName, float &fValue)   const {return false;}
+    virtual bool GetInt(CTSTR lpName, int &iValue)       const {return false;}
+    virtual bool GetString(CTSTR lpName, String &strVal) const {return false;}
+    virtual bool GetVector(CTSTR lpName, Vect &value)    const {return false;}
+    virtual bool GetVector2(CTSTR lpName, Vect2 &value)  const {return false;}
+    virtual bool GetVector4(CTSTR lpName, Vect4 &value)  const {return false;}
+    virtual bool GetMatrix(CTSTR lpName, Matrix &mat)    const {return false;}
 };
 
 
