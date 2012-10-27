@@ -20,14 +20,30 @@
 #include "GraphicsCapture.h"
 
 
-MemoryCapture::~MemoryCapture()
+void MemoryCapture::Destroy()
 {
+    bInitialized = false;
+
+    if(hMemoryMutex)
+        OSEnterMutex(hMemoryMutex);
+
+    copyData = NULL;
+    textureBuffers[0] = NULL;
+    textureBuffers[1] = NULL;
+    delete texture;
+    texture = NULL;
+
     if(sharedMemory)
         UnmapViewOfFile(sharedMemory);
+
     if(hFileMap)
         CloseHandle(hFileMap);
 
-    delete texture;
+    if(hMemoryMutex)
+    {
+        OSLeaveMutex(hMemoryMutex);
+        OSCloseMutex(hMemoryMutex);
+    }
 }
 
 bool MemoryCapture::Init(HANDLE hProcess, HWND hwndTarget, CaptureInfo &info)
@@ -54,6 +70,13 @@ bool MemoryCapture::Init(HANDLE hProcess, HWND hwndTarget, CaptureInfo &info)
         return false;
     }
 
+    hMemoryMutex = OSCreateMutex();
+    if(!hMemoryMutex)
+    {
+        AppWarning(TEXT("MemoryCapture::Init: Could not create memory mutex"));
+        return false;
+    }
+
     copyData = (MemoryCopyData*)sharedMemory;
     textureBuffers[0] = sharedMemory+copyData->texture1Offset;
     textureBuffers[1] = sharedMemory+copyData->texture2Offset;
@@ -65,12 +88,17 @@ bool MemoryCapture::Init(HANDLE hProcess, HWND hwndTarget, CaptureInfo &info)
         return false;
     }
 
+    bInitialized = true;
     return true;
 }
 
 Texture* MemoryCapture::LockTexture()
 {
     LPVOID address = NULL;
+    if(!bInitialized || !copyData || !texture)
+        return NULL;
+
+    OSEnterMutex(hMemoryMutex);
 
     curTexture = copyData->lastRendered;
 
@@ -107,17 +135,18 @@ Texture* MemoryCapture::LockTexture()
                         SSECopy(curOutput, curInput, bestPitch);
                     }
                 }
-                texture->Unmap();
             }
             ReleaseMutex(hMutex);
         }
 
         hMutex = NULL;
     }
+    OSLeaveMutex(hMemoryMutex);
 
     return texture; 
 }
 
 void MemoryCapture::UnlockTexture()
 {
+    texture->Unmap();
 }

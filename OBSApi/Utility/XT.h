@@ -120,7 +120,8 @@ BASE_EXPORT void   STDCALL OSFreeLibrary(HANDLE hLibrary);
 
 BASE_EXPORT void   STDCALL OSSleep(DWORD dwMSeconds);
 
-BASE_EXPORT UINT   STDCALL OSGetProcessorCount();
+BASE_EXPORT int    STDCALL OSGetTotalCores();
+BASE_EXPORT int    STDCALL OSGetLogicalCores();
 BASE_EXPORT HANDLE STDCALL OSCreateThread(XTHREAD lpThreadFunc, LPVOID param);
 BASE_EXPORT BOOL   STDCALL OSWaitForThread(HANDLE hThread, LPDWORD ret);
 BASE_EXPORT BOOL   STDCALL OSCloseThread(HANDLE hThread);

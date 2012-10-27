@@ -94,6 +94,57 @@ LRESULT WINAPI SenderWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     return 0;
 }
 
+bool bD3D9Hooked = false;
+bool bD3D10Hooked = false;
+bool bD3D101Hooked = false;
+bool bD3D11Hooked = false;
+bool bGLHooked = false;
+bool bDirectDrawHooked = false;
+
+inline bool AttemptToHookSomething()
+{
+    bool bFoundSomethingToHook = false;
+    if(!bD3D11Hooked && InitD3D11Capture())
+    {
+        OutputDebugString(TEXT("D3D11 Present\r\n"));
+        bFoundSomethingToHook = true;
+        bD3D11Hooked = true;
+    }
+    if(!bD3D9Hooked && InitD3D9Capture())
+    {
+        OutputDebugString(TEXT("D3D9 Present\r\n"));
+        bFoundSomethingToHook = true;
+        bD3D9Hooked = true;
+    }
+    if(!bD3D101Hooked && InitD3D101Capture())
+    {
+        OutputDebugString(TEXT("D3D10.1 Present\r\n"));
+        bFoundSomethingToHook = true;
+        bD3D101Hooked = true;
+    }
+    if(!bD3D10Hooked && InitD3D10Capture())
+    {
+        OutputDebugString(TEXT("D3D10 Present\r\n"));
+        bFoundSomethingToHook = true;
+        bD3D10Hooked = true;
+    }
+    if(!bGLHooked && InitGLCapture())
+    {
+        OutputDebugString(TEXT("GL Present\r\n"));
+        bFoundSomethingToHook = true;
+        bGLHooked = true;
+    }
+    /*
+    if(!bDirectDrawHooked && InitDDrawCapture())
+    {
+        OutputDebugString(TEXT("DirectDraw Present\r\n"));
+        bFoundSomethingToHook = true;
+        bDirectDrawfHooked = true;
+    }*/
+
+    return bFoundSomethingToHook;
+}
+
 DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
 {
     bool bSuccess = false;
@@ -122,24 +173,16 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
                 textureMutexes[1] = OpenMutex(MUTEX_ALL_ACCESS, FALSE, TEXTURE_MUTEX2);
                 if(textureMutexes[1])
                 {
-                    if(InitD3D11Capture())
-                        OutputDebugString(TEXT("D3D11 Present\r\n"));
-                    if(InitD3D9Capture())
-                        OutputDebugString(TEXT("D3D9 Present\r\n"));
-                    if(InitD3D101Capture())
-                        OutputDebugString(TEXT("D3D10.1 Present\r\n"));
-                    if(InitD3D10Capture())
-                        OutputDebugString(TEXT("D3D10 Present\r\n"));
-                    if(InitGLCapture())
-                        OutputDebugString(TEXT("GL Present\r\n"));
-                    /*else if(!nitDDrawCapture())
-                        OutputDebugString(TEXT("DirectDraw Present"));*/
+                    while(!AttemptToHookSomething())
+                        Sleep(50);
 
                     MSG msg;
                     while(GetMessage(&msg, NULL, 0, 0))
                     {
                         TranslateMessage(&msg);
                         DispatchMessage(&msg);
+
+                        AttemptToHookSomething();
                     }
 
                     CloseHandle(textureMutexes[1]);
@@ -182,6 +225,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpBlah)
         FreeD3D10Capture();
         FreeD3D101Capture();
         FreeD3D11Capture();*/
+
+        if(hwndReceiver)
+            PostMessage(hwndReceiver, RECEIVER_ENDCAPTURE, 0, 0);
 
         if(hwndSender)
             DestroyWindow(hwndSender);

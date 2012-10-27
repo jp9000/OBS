@@ -28,6 +28,7 @@ extern "C" __declspec(dllexport) CTSTR GetPluginDescription();
 HINSTANCE hinstMain = NULL;
 HANDLE textureMutexes[2] = {NULL, NULL};
 
+
 #define GRAPHICSCAPTURE_CLASSNAME TEXT("GraphicsCapture")
 
 void RefreshWindowList(HWND hwndCombobox, StringList &classList)
@@ -130,7 +131,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 //--------------------------------------------
 
-                SendMessage(GetDlgItem(hwnd, IDC_STRETCHTOSCREEN), BM_SETCHECK, data->GetInt(TEXT("strechImage")) ? BST_CHECKED : BST_UNCHECKED, 0);
+                SendMessage(GetDlgItem(hwnd, IDC_STRETCHTOSCREEN), BM_SETCHECK, data->GetInt(TEXT("stretchImage")) ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 return TRUE;
             }
@@ -232,8 +233,6 @@ ImageSource* STDCALL CreateGraphicsCaptureSource(XElement *data)
 
 bool LoadPlugin()
 {
-    traceIn(GraphicsPluginLoadPlugin);
-
     WNDCLASS wc;
     zero(&wc, sizeof(wc));
     wc.hInstance = hinstMain;
@@ -264,8 +263,6 @@ bool LoadPlugin()
     API->RegisterImageSourceClass(GRAPHICSCAPTURE_CLASSNAME, Str("Sources.GameCaptureSource"), (OBSCREATEPROC)CreateGraphicsCaptureSource, (OBSCONFIGPROC)ConfigureGraphicsCaptureSource);
 
     return true;
-
-    traceOut;
 }
 
 void UnloadPlugin()

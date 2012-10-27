@@ -23,9 +23,9 @@ BOOL WINAPI InjectLibrary(HANDLE hProcess, CTSTR lpDLL)
 {
     UPARAM procAddress;
     DWORD dwTemp,dwSize;
-    LPVOID lpStr;
+    LPVOID lpStr = NULL;
     BOOL bWorks,bRet=0;
-    HANDLE hThread;
+    HANDLE hThread = NULL;
     SIZE_T writtenSize;
 
     if(!hProcess) return 0;
@@ -129,8 +129,11 @@ void GraphicsCaptureSource::NewCapture(LPVOID address)
     if(!hProcess)
         return;
 
+    API->EnterSceneMutex();
+
     if(capture)
     {
+        capture->Destroy();
         delete capture;
         capture = NULL;
     }
@@ -138,6 +141,7 @@ void GraphicsCaptureSource::NewCapture(LPVOID address)
     CaptureInfo info;
     if(!ReadProcessMemory(hProcess, address, &info, sizeof(info), NULL))
     {
+        API->LeaveSceneMutex();
         AppWarning(TEXT("GraphicsCaptureSource::NewCapture: Could not read capture info from target process"));
         return;
     }
@@ -150,28 +154,38 @@ void GraphicsCaptureSource::NewCapture(LPVOID address)
         capture = new SharedTexCapture;*/
     else
     {
+        API->LeaveSceneMutex();
         AppWarning(TEXT("GraphicsCaptureSource::NewCapture: wtf, bad data from the target process"));
         return;
     }
 
     if(!capture->Init(hProcess, hwndTarget, info))
     {
+        capture->Destroy();
         delete capture;
         capture = NULL;
     }
+
+    API->LeaveSceneMutex();
 }
 
 void GraphicsCaptureSource::EndCapture()
 {
+    API->EnterSceneMutex();
+
+    capture->Destroy();
     delete capture;
     capture = NULL;
     bErrorAcquiring = false;
+    bCapturing = false;
 
     if(warningID)
     {
         API->RemoveStreamInfo(warningID);
         warningID = 0;
     }
+
+    API->LeaveSceneMutex();
 }
 
 bool GraphicsCaptureSource::FindSenderWindow()
@@ -224,6 +238,8 @@ void GraphicsCaptureSource::AttemptCapture()
     {
         if(!warningID)
             warningID = API->AddStreamInfo(Str("Sources.SoftwareCaptureSource.WindowNotFound"), StreamInfoPriority_High);
+
+        bCapturing = false;
 
         return;
     }
@@ -294,6 +310,7 @@ void GraphicsCaptureSource::EndScene()
 
     if(capture)
     {
+        capture->Destroy();
         delete capture;
         capture = NULL;
     }
@@ -357,12 +374,13 @@ void GraphicsCaptureSource::Render(const Vect2 &pos, const Vect2 &size)
                     outPos.x = (float)round(outPos.x);
                     outPos.y = (float)round(outPos.y);
 
-                    outSize.x = (float)round(size.x);
-                    outSize.y = (float)round(size.y);
+                    outSize.x = (float)round(outSize.x);
+                    outSize.y = (float)round(outSize.y);
                 }
 
-                outPos += pos;
                 lr += outSize;
+                lr += outPos;
+                outPos += pos;
 
                 if(bFlip)
                     DrawSprite(tex, 0xFFFFFFFF, outPos.x, lr.y, lr.x, outPos.y);
@@ -382,8 +400,9 @@ void GraphicsCaptureSource::Render(const Vect2 &pos, const Vect2 &size)
                     DrawSprite(tex, 0xFFFFFFFF, center.x-texHalfSize.x, center.y+texHalfSize.y, center.x+texHalfSize.x, center.y-texHalfSize.y);
                 else
                     DrawSprite(tex, 0xFFFFFFFF, center.x-texHalfSize.x, center.y-texHalfSize.y, center.x+texHalfSize.x, center.y+texHalfSize.y);
-                capture->UnlockTexture();
             }
+
+            capture->UnlockTexture();
 
             BlendFunction(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA);
         }

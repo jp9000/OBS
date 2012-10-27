@@ -202,7 +202,9 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
     if(inputSamplesPerSec != 44100)
     {
         int errVal;
-        resampler = src_new(SRC_SINC_FASTEST, 2, &errVal);//SRC_SINC_FASTEST//SRC_ZERO_ORDER_HOLD
+
+        int converterType = AppConfig->GetInt(TEXT("Audio"), TEXT("UseHighQualityResampling"), FALSE) ? SRC_SINC_FASTEST : SRC_LINEAR;
+        resampler = src_new(converterType, 2, &errVal);//SRC_SINC_FASTEST//SRC_ZERO_ORDER_HOLD
         if(!resampler)
         {
             CrashError(TEXT("MMDeviceAudioSource::Initialize(%d): Could not initiate resampler"), (BOOL)bMic);

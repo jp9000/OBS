@@ -17,35 +17,16 @@
 ********************************************************************************/
 
 
-#pragma once
+#include "Main.h"
 
-
-class MemoryCapture : public GraphicsCaptureMethod
+/*
+class TextOutputSource : public ImageSource
 {
-    HANDLE hMemoryMutex;
-
-    HANDLE hFileMap;
-    LPBYTE sharedMemory;
-
-    MemoryCopyData *copyData;
-    LPBYTE textureBuffers[2];
-    UINT pitch;
-
-    HWND hwndTarget;
-    HANDLE hProcess;
+    String strText;
+    String strFile;
     Texture *texture;
-    HANDLE hMutex;
-
-    bool bInitialized;
-
-    UINT height;
-    DWORD curTexture;
 
 public:
-    void Destroy();
-
-    virtual bool Init(HANDLE hProcess, HWND hwndTarget, CaptureInfo &info);
-
-    virtual Texture* LockTexture();
-    virtual void UnlockTexture();
+    
 };
+*/

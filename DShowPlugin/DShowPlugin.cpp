@@ -576,9 +576,99 @@ bool GetResolution(HWND hwndResolution, SIZE &resolution, BOOL bSelChange)
     return true;
 }
 
+struct ColorSelectionData
+{
+    HDC hdcDesktop;
+    HDC hdcDestination;
+    HBITMAP hBitmap;
+    bool bValid;
+
+    inline ColorSelectionData() : hdcDesktop(NULL), hdcDestination(NULL), hBitmap(NULL), bValid(false) {}
+    inline ~ColorSelectionData() {Clear();}
+
+    inline bool Init()
+    {
+        hdcDesktop = GetDC(NULL);
+        if(!hdcDesktop)
+            return false;
+
+        hdcDestination = CreateCompatibleDC(hdcDesktop);
+        if(!hdcDestination)
+            return false;
+
+        hBitmap = CreateCompatibleBitmap(hdcDesktop, 1, 1);
+        if(!hBitmap)
+            return false;
+
+        SelectObject(hdcDestination, hBitmap);
+        bValid = true;
+
+        return true;
+    }
+
+    inline void Clear()
+    {
+        if(hdcDesktop)
+        {
+            ReleaseDC(NULL, hdcDesktop);
+            hdcDesktop = NULL;
+        }
+
+        if(hdcDestination)
+        {
+            DeleteDC(hdcDestination);
+            hdcDestination = NULL;
+        }
+
+        if(hBitmap)
+        {
+            DeleteObject(hBitmap);
+            hBitmap = NULL;
+        }
+
+        bValid = false;
+    }
+
+    inline DWORD GetColor()
+    {
+        POINT p;
+        if(GetCursorPos(&p))
+        {
+            BITMAPINFO data;
+            zero(&data, sizeof(data));
+
+            data.bmiHeader.biSize = sizeof(data.bmiHeader);
+            data.bmiHeader.biWidth = 1;
+            data.bmiHeader.biHeight = 1;
+            data.bmiHeader.biPlanes = 1;
+            data.bmiHeader.biBitCount = 24;
+            data.bmiHeader.biCompression = BI_RGB;
+            data.bmiHeader.biSizeImage = 4;
+
+            if(BitBlt(hdcDestination, 0, 0, 1, 1, hdcDesktop, p.x, p.y, SRCCOPY|CAPTUREBLT))
+            {
+                DWORD buffer;
+                if(GetDIBits(hdcDestination, hBitmap, 0, 1, &buffer, &data, DIB_RGB_COLORS))
+                    return 0xFF000000|buffer;
+            }
+            else
+            {
+                int err = GetLastError();
+                nop();
+            }
+        }
+
+        return 0xFF000000;
+    }
+};
+
 
 INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    static bool bSelectingColor = false;
+    static bool bMouseDown = false;
+    static ColorSelectionData colorData;
+
     switch(message)
     {
         case WM_INITDIALOG:
@@ -670,6 +760,52 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 return TRUE;
             }
 
+        case WM_DESTROY:
+            if(colorData.bValid)
+            {
+                CCSetColor(GetDlgItem(hwnd, IDC_COLOR), colorData.GetColor());
+                colorData.Clear();
+            }
+            break;
+
+        case WM_LBUTTONDOWN:
+            if(bSelectingColor)
+            {
+                bMouseDown = true;
+                CCSetColor(GetDlgItem(hwnd, IDC_COLOR), colorData.GetColor());
+            }
+            break;
+
+        case WM_MOUSEMOVE:
+            if(bSelectingColor && bMouseDown)
+                CCSetColor(GetDlgItem(hwnd, IDC_COLOR), colorData.GetColor());
+            break;
+
+        case WM_LBUTTONUP:
+            if(bSelectingColor)
+            {
+                colorData.Clear();
+                ReleaseCapture();
+                bMouseDown = false;
+                bSelectingColor = false;
+            }
+            break;
+
+        case WM_CAPTURECHANGED:
+            if(bSelectingColor)
+            {
+                if(colorData.bValid)
+                {
+                    CCSetColor(GetDlgItem(hwnd, IDC_COLOR), colorData.GetColor());
+                    colorData.Clear();
+                }
+
+                ReleaseCapture();
+                bMouseDown = false;
+                bSelectingColor = false;
+            }
+            break;
+
         case WM_COMMAND:
             switch(LOWORD(wParam))
             {
@@ -702,6 +838,24 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         EnableWindow(GetDlgItem(hwnd, IDC_BLEND), bUseColorKey);
                         EnableWindow(GetDlgItem(hwnd, IDC_GAMMA_EDIT), bUseColorKey);
                         EnableWindow(GetDlgItem(hwnd, IDC_GAMMA), bUseColorKey);
+                        break;
+                    }
+
+                case IDC_SELECTCOLOR:
+                    {
+                        if(!bSelectingColor)
+                        {
+                            if(colorData.Init())
+                            {
+                                bMouseDown = false;
+                                bSelectingColor = true;
+                                SetCapture(hwnd);
+                                HCURSOR hCursor = (HCURSOR)LoadImage(hinstMain, MAKEINTRESOURCE(IDC_COLORPICKER), IMAGE_CURSOR, 32, 32, 0);
+                                SetCursor(hCursor);
+                            }
+                            else
+                                colorData.Clear();
+                        }
                         break;
                     }
 

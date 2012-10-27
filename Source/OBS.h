@@ -404,6 +404,7 @@ class OBS
 
     String  strLanguage;
     bool    bTestStream;
+    bool    bUseMultithreadedOptimizations;
     bool    bRunning;
     int     renderFrameWidth, renderFrameHeight;
     int     borderXSize, borderYSize;

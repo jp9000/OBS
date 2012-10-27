@@ -37,6 +37,8 @@ LARGE_INTEGER clockFreq, startTime;
 LONGLONG prevElapsedTime;
 DWORD startTick;
 
+int coreCount = 1, logicalCores = 1;
+
 void STDCALL InputProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 void STDCALL ResetCursorClip();
 
@@ -46,6 +48,22 @@ BOOL        bHidingCursor = 0;
 
 HWND        hwndMainAppWindow = NULL;
 
+// Helper function to count set bits in the processor mask.
+DWORD CountSetBits(ULONG_PTR bitMask)
+{
+    DWORD LSHIFT = sizeof(ULONG_PTR)*8 - 1;
+    DWORD bitSetCount = 0;
+    ULONG_PTR bitTest = (ULONG_PTR)1 << LSHIFT;    
+    DWORD i;
+
+    for (i = 0; i <= LSHIFT; ++i)
+    {
+        bitSetCount += ((bitMask & bitTest)?1:0);
+        bitTest/=2;
+    }
+
+    return bitSetCount;
+}
 
 void   STDCALL OSInit()
 {
@@ -57,6 +75,38 @@ void   STDCALL OSInit()
     QueryPerformanceCounter(&startTime);
     startTick = GetTickCount();
     prevElapsedTime = 0;
+
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION pInfo = NULL, pTemp = NULL;
+    DWORD dwLen = 0;
+    if(!GetLogicalProcessorInformation(pInfo, &dwLen))
+    {
+        if(GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+        {
+            pInfo = (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION)malloc(dwLen);
+
+            if(GetLogicalProcessorInformation(pInfo, &dwLen))
+            {
+                pTemp = pInfo;
+                DWORD dwNum = dwLen/sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
+
+                coreCount = 0;
+                logicalCores = 0;
+
+                for(UINT i=0; i<dwNum; i++)
+                {
+                    if(pTemp->Relationship == RelationProcessorCore)
+                    {
+                        coreCount++;
+                        logicalCores += CountSetBits(pTemp->ProcessorMask);
+                    }
+
+                    pTemp++;
+                }
+            }
+
+            free(pInfo);
+        }
+    }
 }
 
 void   STDCALL OSExit()
@@ -121,6 +171,17 @@ HANDLE STDCALL OSFindFirstFile(CTSTR lpFileName, OSFindData &findData)
 
     return hFind;
 }
+
+int    STDCALL OSGetTotalCores()
+{
+    return coreCount;
+}
+
+int    STDCALL OSGetLogicalCores()
+{
+    return logicalCores;
+}
+
 
 BOOL  STDCALL OSFindNextFile(HANDLE hFind, OSFindData &findData)
 {

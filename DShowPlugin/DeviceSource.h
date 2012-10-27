@@ -39,6 +39,9 @@ enum DeviceColorType
 struct ConvertData
 {
     LPBYTE input, output;
+    IMediaSample *sample;
+    HANDLE hSignalConvert, hSignalComplete;
+    bool bKillThread;
     UINT width, height;
     UINT pitch;
     UINT startY, endY;
@@ -72,9 +75,9 @@ class DeviceSource : public ImageSource
     Texture         *texture;
     HANDLE          hSampleMutex;
     XElement        *data;
+    UINT            texturePitch;
     bool            bCapturing, bFiltersLoaded;
     IMediaSample    *curSample;
-    IMediaSample    *prevSample;
     Shader          *colorConvertShader;
 
     //---------------------------------

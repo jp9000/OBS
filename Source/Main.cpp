@@ -97,7 +97,9 @@ void LogSystemStats()
     BYTE cpuExtModel    = (cpuInfo[0]>>17) & 0xF;
     BYTE cpuExtFamily   = (cpuInfo[0]>>21) & 0xFF;
 
-    Log(TEXT("stepping id: %u, model %u, family %u, type %u, extmodel %u, extfamily %u"), cpuSteppingID, cpuModel, cpuFamily, cpuType, cpuExtModel, cpuExtFamily);
+    BYTE cpuHTT         = (cpuInfo[3]>>28) & 1;
+
+    Log(TEXT("stepping id: %u, model %u, family %u, type %u, extmodel %u, extfamily %u, HTT %u, logical cores %u, total cores %u"), cpuSteppingID, cpuModel, cpuFamily, cpuType, cpuExtModel, cpuExtFamily, cpuHTT, OSGetLogicalCores(), OSGetTotalCores());
 
     LogVideoCardStats();
 }

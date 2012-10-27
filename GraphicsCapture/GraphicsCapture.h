@@ -36,6 +36,7 @@ class GraphicsCaptureMethod
 public:
     virtual ~GraphicsCaptureMethod() {}
     virtual bool Init(HANDLE hProcess, HWND hwndTarget, CaptureInfo &info)=0;
+    virtual void Destroy()=0;
 
     virtual Texture* LockTexture()=0;
     virtual void UnlockTexture()=0;

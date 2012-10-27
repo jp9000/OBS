@@ -423,6 +423,8 @@ public:
     virtual void SetStreamInfo(UINT infoID, CTSTR lpInfo)                           {App->SetStreamInfo(infoID, lpInfo);}
     virtual void SetStreamInfoPriority(UINT infoID, StreamInfoPriority priority)    {App->SetStreamInfoPriority(infoID, priority);}
     virtual void RemoveStreamInfo(UINT infoID)                                      {App->RemoveStreamInfo(infoID);}
+
+    virtual bool UseMultithreadedOptimizations() const {return App->bUseMultithreadedOptimizations;}
 };
 
 
@@ -1143,6 +1145,9 @@ void OBS::Start()
     outputCX = scaleCX & 0xFFFFFFFC;
     outputCY = scaleCY & 0xFFFFFFFE;
 
+    bUseMultithreadedOptimizations = AppConfig->GetInt(TEXT("General"), TEXT("UseMultithreadedOptimizations"), TRUE) != 0;
+    Log(TEXT("  Multithreaded optimizations: %s"), (CTSTR)(bUseMultithreadedOptimizations ? TEXT("On") : TEXT("Off")));
+
     //------------------------------------------------------------------
 
     Log(TEXT("  Base resolution: %ux%u"), baseCX, baseCY);
@@ -1728,13 +1733,23 @@ struct Convert444Data
 {
     LPBYTE input;
     LPBYTE output[3];
+    bool bKillThread;
+    HANDLE hSignalConvert, hSignalComplete;
     int width, height, pitch, startY, endY;
 };
 
 DWORD STDCALL Convert444Thread(Convert444Data *data)
 {
-    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
-    Convert444to420(data->input, data->width, data->pitch, data->height, data->startY, data->endY, data->output, App->SSE2Available());
+    do
+    {
+        WaitForSingleObject(data->hSignalConvert, INFINITE);
+        if(data->bKillThread) break;
+
+        Convert444to420(data->input, data->width, data->pitch, data->height, data->startY, data->endY, data->output, App->SSE2Available());
+
+        SetEvent(data->hSignalComplete);
+    }while(!data->bKillThread);
+
     return 0;
 }
 
@@ -1796,27 +1811,29 @@ void OBS::MainCaptureLoop()
     float bpsTime = 0.0f;
     double lastStrain = 0.0f;
 
-    UINT numProcessors = OSGetProcessorCount();
-    HANDLE *h420Threads = (HANDLE*)Allocate(sizeof(HANDLE)*numProcessors);
-    Convert444Data *convertInfo = (Convert444Data*)Allocate(sizeof(Convert444Data)*numProcessors);
+    int numThreads = MAX(OSGetTotalCores()-2, 1);
+    HANDLE *h420Threads = (HANDLE*)Allocate(sizeof(HANDLE)*numThreads);
+    Convert444Data *convertInfo = (Convert444Data*)Allocate(sizeof(Convert444Data)*numThreads);
 
-    zero(h420Threads, sizeof(HANDLE)*numProcessors);
-    zero(convertInfo, sizeof(Convert444Data)*numProcessors);
+    zero(h420Threads, sizeof(HANDLE)*numThreads);
+    zero(convertInfo, sizeof(Convert444Data)*numThreads);
 
-    for(UINT i=0; i<numProcessors; i++)
+    for(int i=0; i<numThreads; i++)
     {
         convertInfo[i].width  = outputCX;
         convertInfo[i].height = outputCY;
+        convertInfo[i].hSignalConvert  = CreateEvent(NULL, FALSE, FALSE, NULL);
+        convertInfo[i].hSignalComplete = CreateEvent(NULL, FALSE, FALSE, NULL);
 
         if(i == 0)
             convertInfo[i].startY = 0;
         else
             convertInfo[i].startY = convertInfo[i-1].endY;
 
-        if(i == (numProcessors-1))
+        if(i == (numThreads-1))
             convertInfo[i].endY = outputCY;
         else
-            convertInfo[i].endY = ((outputCY/numProcessors)*(i+1)) & 0xFFFFFFFE;
+            convertInfo[i].endY = ((outputCY/numThreads)*(i+1)) & 0xFFFFFFFE;
     }
 
     DWORD fpsTimeNumerator = 1000-(frameTime*fps);
@@ -1827,7 +1844,18 @@ void OBS::MainCaptureLoop()
 
     bool bFirstFrame = true;
     bool bFirst420Encode = true;
-    bool bUseThreaded420 = OSGetProcessorCount() > 1 && !bUsing444;
+    bool bUseThreaded420 = bUseMultithreadedOptimizations && (OSGetTotalCores() > 1) && !bUsing444;
+
+    List<HANDLE> completeEvents;
+
+    if(bUseThreaded420)
+    {
+        for(int i=0; i<numThreads; i++)
+        {
+            h420Threads[i] = OSCreateThread((XTHREAD)Convert444Thread, convertInfo+i);
+            completeEvents << convertInfo[i].hSignalComplete;
+        }
+    }
 
     while(bRunning)
     {
@@ -2104,12 +2132,7 @@ void OBS::MainCaptureLoop()
 
             if(!bFirst420Encode && bUseThreaded420)
             {
-                WaitForMultipleObjects(numProcessors, h420Threads, TRUE, INFINITE);
-                for(UINT i=0; i<numProcessors; i++)
-                {
-                    CloseHandle(h420Threads[i]);
-                    h420Threads[i] = NULL;
-                }
+                WaitForMultipleObjects(completeEvents.Num(), completeEvents.Array(), TRUE, INFINITE);
                 copyTexture->Unmap(0);
             }
 
@@ -2135,24 +2158,24 @@ void OBS::MainCaptureLoop()
                     {
                         x264_picture_t &newPicOut = outPics[curCopyTexture];
 
-                        for(UINT i=0; i<numProcessors; i++)
+                        for(int i=0; i<numThreads; i++)
                         {
                             convertInfo[i].input     = (LPBYTE)map.pData;
                             convertInfo[i].pitch     = map.RowPitch;
                             convertInfo[i].output[0] = newPicOut.img.plane[0];
                             convertInfo[i].output[1] = newPicOut.img.plane[1];
                             convertInfo[i].output[2] = newPicOut.img.plane[2];
-                            h420Threads[i] = OSCreateThread((XTHREAD)Convert444Thread, (LPVOID)(convertInfo+i));
+                            SetEvent(convertInfo[i].hSignalConvert);
                         }
+
+                        if(bFirst420Encode)
+                            bFirst420Encode = bEncode = false;
                     }
                     else
                     {
                         Convert444to420((LPBYTE)map.pData, outputCX, map.RowPitch, outputCY, 0, outputCY, picOut.img.plane, SSE2Available());
                         prevTexture->Unmap(0);
                     }
-
-                    if(bFirst420Encode)
-                        bFirst420Encode = bEncode = false;
 
                     profileOut;
                 }
@@ -2331,19 +2354,39 @@ void OBS::MainCaptureLoop()
 
     if(!bUsing444)
     {
-        if(!bFirst420Encode && bUseThreaded420)
+        if(bUseThreaded420)
         {
-            WaitForMultipleObjects(numProcessors, h420Threads, TRUE, INFINITE);
-            for(UINT i=0; i<numProcessors; i++)
+            for(int i=0; i<numThreads; i++)
             {
-                if(h420Threads)
-                    CloseHandle(h420Threads[i]);
-                h420Threads[i] = NULL;
+                if(h420Threads[i])
+                {
+                    convertInfo[i].bKillThread = true;
+                    SetEvent(convertInfo[i].hSignalConvert);
+
+                    OSTerminateThread(h420Threads[i], 10000);
+                    h420Threads[i] = NULL;
+                }
+
+                if(convertInfo[i].hSignalConvert)
+                {
+                    CloseHandle(convertInfo[i].hSignalConvert);
+                    convertInfo[i].hSignalConvert = NULL;
+                }
+
+                if(convertInfo[i].hSignalComplete)
+                {
+                    CloseHandle(convertInfo[i].hSignalComplete);
+                    convertInfo[i].hSignalComplete = NULL;
+                }
             }
 
-            ID3D10Texture2D *copyTexture = copyTextures[curCopyTexture];
-            copyTexture->Unmap(0);
+            if(!bFirst420Encode)
+            {
+                ID3D10Texture2D *copyTexture = copyTextures[curCopyTexture];
+                copyTexture->Unmap(0);
+            }
         }
+
         x264_picture_clean(&outPics[0]);
         x264_picture_clean(&outPics[1]);
     }
@@ -2388,10 +2431,6 @@ void OBS::MainAudioLoop()
         WaitForSingleObject(hRequestAudioEvent, INFINITE);
         if(!bRunning)
             break;
-
-        //-----------------------------------------------
-
-        OSEnterMutex(hSoundDataMutex);
 
         //-----------------------------------------------
 
@@ -2510,6 +2549,8 @@ void OBS::MainAudioLoop()
             DataPacket packet;
             if(audioEncoder->Encode(desktopBuffer, totalFloats>>1, packet, timestamp))
             {
+                OSEnterMutex(hSoundDataMutex);
+
                 FrameAudio *frameAudio = pendingAudioFrames.CreateNew();
                 frameAudio->audioData.CopyArray(packet.lpPacket, packet.size);
                 if(bUseSyncFix)
@@ -2521,6 +2562,8 @@ void OBS::MainAudioLoop()
                 Log(TEXT("returned timestamp: %u, calculated timestamp: %u"), timestamp, calcTimestamp);*/
 
                 curAudioFrame++;
+
+                OSLeaveMutex(hSoundDataMutex);
             }
         }
 
@@ -2528,10 +2571,6 @@ void OBS::MainAudioLoop()
 
         if(!bRecievedFirstAudioFrame && pendingAudioFrames.Num())
             bRecievedFirstAudioFrame = true;
-
-        //-----------------------------------------------
-
-        OSLeaveMutex(hSoundDataMutex);
     }
 
     for(UINT i=0; i<pendingAudioFrames.Num(); i++)

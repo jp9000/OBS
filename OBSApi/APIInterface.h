@@ -89,6 +89,8 @@ public:
     virtual void SetStreamInfoPriority(UINT infoID, StreamInfoPriority priority)=0;
     virtual void RemoveStreamInfo(UINT infoID)=0;
 
+    virtual bool UseMultithreadedOptimizations() const=0;
+
     inline bool SSE2Available() {return bSSE2Availabe;}
 
     inline ImageSource* GetSceneImageSource(CTSTR lpImageSource)

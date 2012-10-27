@@ -341,6 +341,8 @@ bool InitD3D9Capture()
             IDirect3DDevice9Ex *deviceEx;
             if(SUCCEEDED(hRes = d3d9ex->CreateDeviceEx(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwndSender, D3DCREATE_HARDWARE_VERTEXPROCESSING|D3DCREATE_NOWINDOWCHANGES, &pp, NULL, &deviceEx)))
             {
+                bSuccess = true;
+
                 UPARAM *vtable = *(UPARAM**)deviceEx;
 
                 d3d9EndScene.Hook((FARPROC)*(vtable+(168/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D9Override::EndScene));

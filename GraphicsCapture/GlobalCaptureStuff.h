@@ -26,7 +26,7 @@
 #define TEXTURE_MUTEX1          TEXT("OBSTextureMutex1")
 #define TEXTURE_MUTEX2          TEXT("OBSTextureMutex2")
 
-#define TEXTURE_MEMORY          TEXT("Global\\OBSTextureMemory")
+#define TEXTURE_MEMORY          TEXT("Local\\OBSTextureMemory")
 
 #define CAPTURETYPE_MEMORY      1
 #define CAPTURETYPE_SHAREDTEX   2

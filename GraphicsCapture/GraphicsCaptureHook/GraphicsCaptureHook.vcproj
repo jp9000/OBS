@@ -49,6 +49,7 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
+				AssemblerOutput="4"
 				WarningLevel="3"
 				DebugInformationFormat="4"
 			/>
@@ -63,7 +64,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dxgi.lib dxguid.lib d3d9.lib opengl32.lib"
+				AdditionalDependencies="dxguid.lib"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -138,7 +139,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dxgi.lib dxguid.lib d3d9.lib"
+				AdditionalDependencies="dxguid.lib"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -192,7 +193,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="2"
+				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GRAPHICSCAPTUREHOOK_EXPORTS"
 				RuntimeLibrary="0"
@@ -212,7 +213,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dxgi.lib dxguid.lib d3d9.lib"
+				AdditionalDependencies="dxguid.lib"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -269,7 +270,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="2"
+				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GRAPHICSCAPTUREHOOK_EXPORTS"
 				RuntimeLibrary="0"
@@ -289,7 +290,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dxgi.lib dxguid.lib d3d9.lib"
+				AdditionalDependencies="dxguid.lib"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -330,6 +331,18 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\D3D10.1Capture.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\D3D10Capture.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\D3D11Capture.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\D3D9Capture.cpp"
 				>
 			</File>
@@ -351,6 +364,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\DXGIStuff.h"
+				>
+			</File>
 			<File
 				RelativePath="..\GlobalCaptureStuff.h"
 				>

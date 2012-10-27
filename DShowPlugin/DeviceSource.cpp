@@ -19,6 +19,8 @@
 
 #include "DShowPlugin.h"
 
+DWORD STDCALL PackPlanarThread(ConvertData *data);
+
 
 bool DeviceSource::Init(XElement *data)
 {
@@ -48,12 +50,12 @@ bool DeviceSource::Init(XElement *data)
 
     capture->SetFiltergraph(graph);
 
-    UINT numProcessors = OSGetProcessorCount();
-    hConvertThreads = (HANDLE*)Allocate(sizeof(HANDLE)*numProcessors);
-    convertData = (ConvertData*)Allocate(sizeof(ConvertData)*numProcessors);
+    int numThreads = MAX(OSGetTotalCores()-2, 1);
+    hConvertThreads = (HANDLE*)Allocate(sizeof(HANDLE)*numThreads);
+    convertData = (ConvertData*)Allocate(sizeof(ConvertData)*numThreads);
 
-    zero(hConvertThreads, sizeof(HANDLE)*numProcessors);
-    zero(convertData, sizeof(ConvertData)*numProcessors);
+    zero(hConvertThreads, sizeof(HANDLE)*numThreads);
+    zero(convertData, sizeof(ConvertData)*numThreads);
 
     this->data = data;
     UpdateSettings();
@@ -76,8 +78,11 @@ DeviceSource::~DeviceSource()
     SafeRelease(capture);
     SafeRelease(graph);
 
-    Free(hConvertThreads);
-    Free(convertData);
+    if(hConvertThreads)
+        Free(hConvertThreads);
+
+    if(convertData)
+        Free(convertData);
 
     if(hSampleMutex)
         OSCloseMutex(hSampleMutex);
@@ -130,6 +135,8 @@ bool DeviceSource::LoadFilters()
     IPin *devicePin = NULL;
     HRESULT err;
     String strShader;
+
+    bUseThreadedConversion = API->UseMultithreadedOptimizations() && (OSGetTotalCores() > 1);
 
     //------------------------------------------------
 
@@ -192,25 +199,27 @@ bool DeviceSource::LoadFilters()
         goto cleanFinish;
     }
 
-    UINT numProcessors = OSGetProcessorCount();
-    for(UINT i=0; i<numProcessors; i++)
+    int numThreads = MAX(OSGetTotalCores()-2, 1);
+    for(int i=0; i<numThreads; i++)
     {
         convertData[i].width  = renderCX;
         convertData[i].height = renderCY;
+        convertData[i].sample = NULL;
+        convertData[i].hSignalConvert  = CreateEvent(NULL, FALSE, FALSE, NULL);
+        convertData[i].hSignalComplete = CreateEvent(NULL, FALSE, FALSE, NULL);
 
         if(i == 0)
             convertData[i].startY = 0;
         else
             convertData[i].startY = convertData[i-1].endY;
 
-        if(i == (numProcessors-1))
+        if(i == (numThreads-1))
             convertData[i].endY = renderCY;
         else
-            convertData[i].endY = ((renderCY/numProcessors)*(i+1)) & 0xFFFFFFFE;
+            convertData[i].endY = ((renderCY/numThreads)*(i+1)) & 0xFFFFFFFE;
     }
 
     bFirstFrame = true;
-    prevSample = NULL;
 
     //------------------------------------------------
 
@@ -240,9 +249,6 @@ bool DeviceSource::LoadFilters()
     else
         expectedVideoType = VideoOutputType_RGB32;
 
-    if(colorType != DeviceOutputType_RGB)
-        lpImageBuffer = (LPBYTE)Allocate(renderCX*renderCY*4);
-
     strShader = ChooseShader();
     if(strShader.IsValid())
         colorConvertShader = CreatePixelShaderFromFile(strShader);
@@ -252,6 +258,14 @@ bool DeviceSource::LoadFilters()
         AppWarning(TEXT("DShowPlugin: Could not create color space conversion pixel shader"));
         goto cleanFinish;
     }
+
+    if(colorType == DeviceOutputType_YV12 || colorType == DeviceOutputType_I420)
+    {
+        for(int i=0; i<numThreads; i++)
+            hConvertThreads[i] = OSCreateThread((XTHREAD)PackPlanarThread, convertData+i);
+    }
+
+    //------------------------------------------------
 
     if(FAILED(err = devicePin->QueryInterface(IID_IAMStreamConfig, (void**)&config)))
     {
@@ -276,6 +290,8 @@ bool DeviceSource::LoadFilters()
 
     FreeMediaType(outputMediaType);
 
+    //------------------------------------------------
+
     captureFilter = new CaptureFilter(this, expectedVideoType);
 
     if(FAILED(err = graph->AddFilter(captureFilter, NULL)))
@@ -293,6 +309,8 @@ bool DeviceSource::LoadFilters()
     }
 
     bAddedDevice = true;
+
+    //------------------------------------------------
 
     //THANK THE NINE DIVINES I FINALLY GOT IT WORKING
     bool bConnected = SUCCEEDED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video, deviceFilter, NULL, captureFilter));
@@ -365,6 +383,20 @@ cleanFinish:
         texture = CreateTexture(renderCX, renderCY, GS_RGB, textureData, FALSE, FALSE);
     }
 
+    if(bSucceeded && bUseThreadedConversion)
+    {
+        if(colorType == DeviceOutputType_I420 || colorType == DeviceOutputType_YV12)
+        {
+            LPBYTE lpData;
+            if(texture->Map(lpData, texturePitch))
+                texture->Unmap();
+            else
+                texturePitch = renderCX*4;
+
+            lpImageBuffer = (LPBYTE)Allocate(texturePitch*renderCY);
+        }
+    }
+
     Free(textureData);
 
     bFiltersLoaded = bSucceeded;
@@ -400,24 +432,36 @@ void DeviceSource::UnloadFilters()
         colorConvertShader = NULL;
     }
 
+    int numThreads = MAX(OSGetTotalCores()-2, 1);
+    for(int i=0; i<numThreads; i++)
+    {
+        if(hConvertThreads[i])
+        {
+            convertData[i].bKillThread = true;
+            SetEvent(convertData[i].hSignalConvert);
+
+            OSTerminateThread(hConvertThreads[i], 10000);
+            hConvertThreads[i] = NULL;
+        }
+
+        if(convertData[i].hSignalConvert)
+        {
+            CloseHandle(convertData[i].hSignalConvert);
+            convertData[i].hSignalConvert = NULL;
+        }
+
+        if(convertData[i].hSignalComplete)
+        {
+            CloseHandle(convertData[i].hSignalComplete);
+            convertData[i].hSignalComplete = NULL;
+        }
+    }
+
     if(lpImageBuffer)
     {
         Free(lpImageBuffer);
         lpImageBuffer = NULL;
     }
-
-    UINT numProcessors = OSGetProcessorCount();
-    for(UINT i=0; i<numProcessors; i++)
-    {
-        if(hConvertThreads[i])
-        {
-            WaitForSingleObject(hConvertThreads[i], INFINITE);
-            CloseHandle(hConvertThreads[i]);
-            hConvertThreads[i] = NULL;
-        }
-    }
-
-    SafeRelease(prevSample);
 
     SafeRelease(control);
 
@@ -491,8 +535,18 @@ void DeviceSource::Receive(IMediaSample *sample)
 
 DWORD STDCALL PackPlanarThread(ConvertData *data)
 {
-    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
-    PackPlanar(data->output, data->input, data->width, data->height, data->pitch, data->startY, data->endY);
+    do
+    {
+        WaitForSingleObject(data->hSignalConvert, INFINITE);
+        if(data->bKillThread) break;
+
+        IMediaSample *sample = data->sample;
+        PackPlanar(data->output, data->input, data->width, data->height, data->pitch, data->startY, data->endY);
+        SafeRelease(sample);
+
+        SetEvent(data->hSignalComplete);
+    }while(!data->bKillThread);
+
     return 0;
 }
 
@@ -513,7 +567,7 @@ void DeviceSource::Preprocess()
     }
     OSLeaveMutex(hSampleMutex);
 
-    UINT numProcessors = OSGetProcessorCount();
+    int numThreads = MAX(OSGetTotalCores()-2, 1);
 
     if(lastSample)
     {
@@ -525,37 +579,52 @@ void DeviceSource::Preprocess()
                 if(SUCCEEDED(lastSample->GetPointer(&lpImage)))
                     texture->SetImage(lpImage, GS_IMAGEFORMAT_BGRX, renderCX*4);
             }
-
-            lastSample->Release();
         }
         else if(colorType == DeviceOutputType_I420 || colorType == DeviceOutputType_YV12)
         {
-            if(prevSample)
+            if(bUseThreadedConversion)
             {
-                WaitForMultipleObjects(numProcessors, hConvertThreads, TRUE, INFINITE);
-                for(UINT i=0; i<numProcessors; i++)
+                if(!bFirstFrame)
                 {
-                    CloseHandle(hConvertThreads[i]);
-                    hConvertThreads[i] = NULL;
+                    List<HANDLE> events;
+                    for(int i=0; i<numThreads; i++)
+                        events << convertData[i].hSignalComplete;
+
+                    WaitForMultipleObjects(numThreads, events.Array(), TRUE, INFINITE);
+                    texture->SetImage(lpImageBuffer, GS_IMAGEFORMAT_RGBX, texturePitch);
                 }
-                prevSample->Release();
-                prevSample = NULL;
+                else
+                    bFirstFrame = false;
 
-                texture->SetImage(lpImageBuffer, GS_IMAGEFORMAT_RGBX, renderCX*4);
+                if(SUCCEEDED(lastSample->GetPointer(&lpImage)))
+                {
+                    for(int i=0; i<numThreads; i++)
+                        lastSample->AddRef();
+
+                    for(int i=0; i<numThreads; i++)
+                    {
+                        convertData[i].input    = lpImage;
+                        convertData[i].pitch    = texturePitch;
+                        convertData[i].output   = lpImageBuffer;
+                        convertData[i].sample   = lastSample;
+                        SetEvent(convertData[i].hSignalConvert);
+                    }
+                }
             }
-
-            if(SUCCEEDED(lastSample->GetPointer(&lpImage)))
+            else
             {
-                for(UINT i=0; i<numProcessors; i++)
+                if(SUCCEEDED(lastSample->GetPointer(&lpImage)))
                 {
-                    convertData[i].input    = lpImage;
-                    convertData[i].pitch    = renderCX*4;
-                    convertData[i].output   = lpImageBuffer;
-                    hConvertThreads[i] = OSCreateThread((XTHREAD)PackPlanarThread, (LPVOID)(convertData+i));
+                    LPBYTE lpData;
+                    UINT pitch;
+
+                    if(texture->Map(lpData, pitch))
+                    {
+                        PackPlanar(lpData, lpImage, renderCX, renderCY, pitch, 0, renderCY);
+                        texture->Unmap();
+                    }
                 }
             }
-
-            prevSample = lastSample;
         }
         else if(colorType == DeviceOutputType_YVYU || colorType == DeviceOutputType_YUY2)
         {
@@ -570,8 +639,6 @@ void DeviceSource::Preprocess()
                     texture->Unmap();
                 }
             }
-
-            lastSample->Release();
         }
         else if(colorType == DeviceOutputType_UYVY || colorType == DeviceOutputType_HDYC)
         {
@@ -586,9 +653,9 @@ void DeviceSource::Preprocess()
                     texture->Unmap();
                 }
             }
-
-            lastSample->Release();
         }
+
+        lastSample->Release();
 
         bReadyToDraw = true;
     }

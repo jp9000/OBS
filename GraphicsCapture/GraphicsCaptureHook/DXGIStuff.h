@@ -25,8 +25,8 @@ inline GSColorFormat ConvertGIBackBufferFormat(DXGI_FORMAT format)
     switch(format)
     {
     case DXGI_FORMAT_R10G10B10A2_UNORM: return GS_R10G10B10A2;
-    case DXGI_FORMAT_R8G8B8A8_UNORM:    return GS_RGB;
-    case DXGI_FORMAT_B8G8R8A8_UNORM:    return GS_BGR;
+    case DXGI_FORMAT_R8G8B8A8_UNORM:    return GS_RGBA;
+    case DXGI_FORMAT_B8G8R8A8_UNORM:    return GS_BGRA;
     case DXGI_FORMAT_B8G8R8X8_UNORM:    return GS_BGR;
     case DXGI_FORMAT_B5G5R5A1_UNORM:    return GS_B5G5R5A1;
     case DXGI_FORMAT_B5G6R5_UNORM:      return GS_B5G6R5;
