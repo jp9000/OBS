@@ -2,7 +2,9 @@ Author:
   Hugh "Jim" Bailey (obs.jim@gmail.com) - Primary author.  Damnit Jim!
 
 Additional Coding:
-  Richard "R1CH" Stanway                - Tons of bugfixes, and teaching the ways of git enlightenment.
+  Richard "R1CH" Stanway                - Tons of bugfixes, device support,
+                                          network fixes, and teaching the
+                                          ways of git enlightenment.
 
 Translations:
   Andres Lasn                           - Estonian translation
@@ -10,7 +12,7 @@ Translations:
   August Kind Svendsen                  - Norwegian translation
   Alan Antunes                          - French translation
   Hath Ington                           - Bulgarian translation
-  xuok and R3mbrant                     - Russian translations
+  xuok, R3mbrant, and Woona             - Russian translations
 
 Libraries:
   x264                   - fantastic open source h264 encoding library

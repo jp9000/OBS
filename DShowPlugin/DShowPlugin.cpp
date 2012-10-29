@@ -305,7 +305,7 @@ void GetOutputList(IPin *curPin, List<MediaOutputInfo> &outputInfoList)
                 AM_MEDIA_TYPE *pMT;
                 if(SUCCEEDED(config->GetStreamCaps(i, &pMT, capsData)))
                 {
-                    VideoOutputType type = GetVideoOutputTypeFromGUID(pMT->subtype);
+                     VideoOutputType type = GetVideoOutputType(*pMT);
 
                     if(pMT->formattype == FORMAT_VideoInfo)
                     {

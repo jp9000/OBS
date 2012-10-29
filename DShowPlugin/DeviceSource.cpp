@@ -131,7 +131,7 @@ bool DeviceSource::LoadFilters()
     List<MediaOutputInfo> outputList;
     IAMStreamConfig *config = NULL;
     bool bAddedCapture = false, bAddedDevice = false;
-    VideoOutputType expectedVideoType;
+    GUID expectedMediaType;
     IPin *devicePin = NULL;
     HRESULT err;
     String strShader;
@@ -230,10 +230,9 @@ bool DeviceSource::LoadFilters()
         goto cleanFinish;
     }
 
-    expectedVideoType = bestOutput->videoType;
+    expectedMediaType = bestOutput->mediaType->subtype;
 
     colorType = DeviceOutputType_RGB;
-
     if(bestOutput->videoType == VideoOutputType_I420)
         colorType = DeviceOutputType_I420;
     else if(bestOutput->videoType == VideoOutputType_YV12)
@@ -247,7 +246,10 @@ bool DeviceSource::LoadFilters()
     else if(bestOutput->videoType == VideoOutputType_HDYC)
         colorType = DeviceOutputType_HDYC;
     else
-        expectedVideoType = VideoOutputType_RGB32;
+    {
+        colorType = DeviceOutputType_RGB;
+        expectedMediaType = MEDIASUBTYPE_RGB32;
+    }
 
     strShader = ChooseShader();
     if(strShader.IsValid())
@@ -292,7 +294,7 @@ bool DeviceSource::LoadFilters()
 
     //------------------------------------------------
 
-    captureFilter = new CaptureFilter(this, expectedVideoType);
+    captureFilter = new CaptureFilter(this, expectedMediaType);
 
     if(FAILED(err = graph->AddFilter(captureFilter, NULL)))
     {
@@ -578,6 +580,8 @@ void DeviceSource::Preprocess()
             {
                 if(SUCCEEDED(lastSample->GetPointer(&lpImage)))
                     texture->SetImage(lpImage, GS_IMAGEFORMAT_BGRX, renderCX*4);
+
+                bReadyToDraw = true;
             }
         }
         else if(colorType == DeviceOutputType_I420 || colorType == DeviceOutputType_YV12)
@@ -592,6 +596,8 @@ void DeviceSource::Preprocess()
 
                     WaitForMultipleObjects(numThreads, events.Array(), TRUE, INFINITE);
                     texture->SetImage(lpImageBuffer, GS_IMAGEFORMAT_RGBX, texturePitch);
+
+                    bReadyToDraw = true;
                 }
                 else
                     bFirstFrame = false;
@@ -624,6 +630,8 @@ void DeviceSource::Preprocess()
                         texture->Unmap();
                     }
                 }
+
+                bReadyToDraw = true;
             }
         }
         else if(colorType == DeviceOutputType_YVYU || colorType == DeviceOutputType_YUY2)
@@ -639,6 +647,8 @@ void DeviceSource::Preprocess()
                     texture->Unmap();
                 }
             }
+
+            bReadyToDraw = true;
         }
         else if(colorType == DeviceOutputType_UYVY || colorType == DeviceOutputType_HDYC)
         {
@@ -653,11 +663,11 @@ void DeviceSource::Preprocess()
                     texture->Unmap();
                 }
             }
+
+            bReadyToDraw = true;
         }
 
         lastSample->Release();
-
-        bReadyToDraw = true;
     }
 
     traceOut;

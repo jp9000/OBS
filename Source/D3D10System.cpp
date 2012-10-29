@@ -647,13 +647,21 @@ void D3D10System::DrawSpriteEx(Texture *texture, DWORD color, float x, float y, 
     if(hColor)
         curPixelShader->SetColor(hColor, color);
 
-    if(x2 == -1.0f) x2 = float(texture->Width());
-    if(y2 == -1.0f) y2 = float(texture->Height());
-
-    if(u  == -1.0f) u = 0.0f;
-    if(v  == -1.0f) v = 0.0f;
-    if(u2 == -1.0f) u2 = 1.0f;
-    if(v2 == -1.0f) v2 = 1.0f;
+    if(x2 == -998.0f && y2 == -998.0f)
+    {
+        x2 = float(texture->Width());
+        y2 = float(texture->Height());
+    }
+    if(u == -998.0f && v == -998.0f)
+    {
+        u = 0.0f;
+        v = 0.0f;
+    }
+    if(u2 == -998.0f && v2 == -998.0f)
+    {
+        u2 = 1.0f;
+        v2 = 1.0f;
+    }
 
     VBData *data = spriteVertexBuffer->GetData();
     data->VertList[0].Set(x,  y,  0.0f);

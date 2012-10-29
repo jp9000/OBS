@@ -72,5 +72,5 @@ struct MediaOutputInfo
 };
 
 VideoOutputType GetVideoOutputTypeFromFourCC(DWORD fourCC);
-VideoOutputType GetVideoOutputTypeFromGUID(const GUID &guid);
+VideoOutputType GetVideoOutputType(const AM_MEDIA_TYPE &media_type);
 MediaOutputInfo* GetBestMediaOutput(const List<MediaOutputInfo> &outputList, UINT width, UINT height, UINT fps);

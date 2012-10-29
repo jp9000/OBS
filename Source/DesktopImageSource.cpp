@@ -381,6 +381,9 @@ void SelectTargetWindow(HWND hwnd)
 
     ConfigDesktopSourceInfo *info = (ConfigDesktopSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
 
+    if(windowID >= info->strClasses.Num())
+        return;
+
     HWND hwndTarget = FindWindow(info->strClasses[windowID], strWindow);
     if(!hwndTarget)
     {
@@ -879,6 +882,12 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                             UINT windowID = (UINT)SendMessage(GetDlgItem(hwnd, IDC_WINDOW), CB_GETCURSEL, 0, 0);
                             if(windowID == CB_ERR) windowID = 0;
 
+                            if(windowID >= info->strClasses.Num())
+                            {
+                                MessageBox(hwnd, Str("Sources.SoftwareCaptureSource.WindowNotFound"), NULL, 0);
+                                break;
+                            }
+
                             String strWindow = GetCBText(GetDlgItem(hwnd, IDC_WINDOW), windowID);
 
                             regionWindowData.hwndCaptureWindow = FindWindow(info->strClasses[windowID], strWindow);
@@ -995,6 +1004,11 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                         UINT windowID = (UINT)SendMessage(GetDlgItem(hwnd, IDC_WINDOW), CB_GETCURSEL, 0, 0);
                         if(windowID == CB_ERR) windowID = 0;
 
+                        ConfigDesktopSourceInfo *info = (ConfigDesktopSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
+
+                        if(windowID >= info->strClasses.Num())
+                            break;
+
                         String strWindow = GetCBText(GetDlgItem(hwnd, IDC_WINDOW), windowID);
 
                         BOOL bInnerWindow = SendMessage(GetDlgItem(hwnd, IDC_INNERWINDOW), BM_GETCHECK, 0, 0) == BST_CHECKED;
@@ -1014,7 +1028,6 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                         //---------------------------------
 
-                        ConfigDesktopSourceInfo *info = (ConfigDesktopSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
                         XElement *data = info->data;
 
                         data->SetInt(TEXT("captureType"),   captureType);

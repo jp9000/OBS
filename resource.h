@@ -29,6 +29,7 @@
 #define IDR_MAINMENU                    133
 #define IDD_CONFIGURETRANSITIONSOURCE   135
 #define IDD_BUILDINGMP4                 137
+#define IDD_CONFIGURETEXTSOURCE         139
 #define IDC_SETTINGSLIST                1006
 #define IDC_SUBDIALOG                   1007
 #define IDC_MODE                        1008
@@ -69,11 +70,16 @@
 #define IDC_USEVIDEOENCODERSETTINGS     1041
 #define IDC_FADEINONLY                  1041
 #define IDC_OPACITY                     1041
+#define IDC_USETEXTEXTENTS              1041
 #define IDC_SERVEREDIT                  1042
 #define IDC_USESENDBUFFER               1042
 #define IDC_FORCEMONO                   1042
+#define IDC_SCROLLSPEED                 1042
 #define IDC_CHANNELNAME_STATIC          1043
+#define IDC_EXTENTWIDTH_EDIT            1043
 #define IDC_PLAYPATH_STATIC             1044
+#define IDC_SCROLLSPEED3                1044
+#define IDC_EXTENTHEIGHT_EDIT           1044
 #define IDC_USERNAME_STATIC             1045
 #define IDC_SAVETOFILE                  1045
 #define IDC_SERVER_STATIC               1046
@@ -119,14 +125,20 @@
 #define IDC_TRANSITIONTIME              1078
 #define IDC_OPACITY_EDIT                1078
 #define IDC_MICBOOST_EDIT               1078
+#define IDC_TEXT                        1078
 #define IDC_SPIN1                       1079
 #define IDC_AUTORECONNECT_TIMEOUT       1079
 #define IDC_TRANSITIONTIME_EDIT         1079
 #define IDC_MICBOOST                    1079
+#define IDC_TEXTSIZE                    1079
 #define IDC_AUTORECONNECT_TIMEOUT_STATIC 1080
+#define IDC_TEXTOPACITY_EDIT            1080
 #define IDC_RECONNECTING                1081
 #define IDC_SAVEPATH                    1081
+#define IDC_SCROLLSPEED_EDIT            1081
 #define IDC_SAVEPATH_STATIC             1082
+#define IDC_EXTENTWIDTH                 1082
+#define IDC_EXTENTHEIGHT                1083
 #define IDC_USESYNCFIX                  1086
 #define IDC_CLEARPUSHTOTALK             1088
 #define IDC_CLEARMUTEMIC                1089
@@ -143,12 +155,27 @@
 #define IDC_CHECK2                      1099
 #define IDC_USED3DCOMPATIBILITY         1099
 #define IDC_DISABLED3DCOMPATIBILITY     1099
+#define IDC_USEMULTITHREADEDOPTIMIZATIONS 1099
 #define IDC_TIMER1                      1100
 #define IDC_PROGRESS1                   1101
 #define IDC_DASHBOARDLINK_STATIC        1102
 #define IDC_DASHBOARDLINK               1103
-#define IDC_CUSTOM1                     1104
 #define IDC_COLOR                       1104
+#define IDC_USEHIGHQUALITYRESAMPLING    1105
+#define IDC_USETEXT                     1106
+#define IDC_USEFILE                     1107
+#define IDC_FILE                        1108
+#define IDC_FONT                        1112
+#define IDC_TEXTSIZE_EDIT               1115
+#define IDC_SELECTFONT                  1116
+#define IDC_TEXTOPACITY                 1118
+#define IDC_WRAP                        1119
+#define IDC_EXAMPLE                     1121
+#define IDC_VERTICALSCRIPT              1122
+#define IDC_UNDERLINE                   1123
+#define IDC_ALIGN                       1124
+#define IDC_BOLD                        1126
+#define IDC_ITALIC                      1127
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -175,9 +202,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        138
+#define _APS_NEXT_RESOURCE_VALUE        140
 #define _APS_NEXT_COMMAND_VALUE         40042
-#define _APS_NEXT_CONTROL_VALUE         1105
+#define _APS_NEXT_CONTROL_VALUE         1125
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

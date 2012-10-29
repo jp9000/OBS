@@ -638,7 +638,7 @@ public:
     inline UINT GetFrameTime() const {return frameTime;}
 
     inline UINT NumMonitors()  const {return monitors.Num();}
-    inline const MonitorInfo& GetMonitor(UINT id) const {return monitors[id];}
+    inline const MonitorInfo& GetMonitor(UINT id) const {if(id < monitors.Num()) return monitors[id]; else return monitors[0];}
 
     inline XElement* GetSceneElement() const {return sceneElement;}
 

@@ -25,6 +25,8 @@
 #include <intrin.h>
 #include <inttypes.h>
 
+#include <gdiplus.h>
+
 
 //----------------------------
 
@@ -242,6 +244,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     hinstMain = hInstance;
 
+    ULONG_PTR gdipToken;
+    const Gdiplus::GdiplusStartupInput gdipInput;
+    Gdiplus::GdiplusStartup(&gdipToken, &gdipInput, NULL);
+
     if(InitXT(NULL, TEXT("FastAlloc")))
     {
         traceIn(Main);
@@ -384,6 +390,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         traceOutStop;
     }
+
+    Gdiplus::GdiplusShutdown(gdipToken);
 
     TerminateXT();
 

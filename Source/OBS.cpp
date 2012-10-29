@@ -49,6 +49,9 @@ bool STDCALL ConfigureBitmapSource(XElement *element, bool bCreating);
 ImageSource* STDCALL CreateBitmapTransitionSource(XElement *data);
 bool STDCALL ConfigureBitmapTransitionSource(XElement *element, bool bCreating);
 
+ImageSource* STDCALL CreateTextSource(XElement *data);
+bool STDCALL ConfigureTextSource(XElement *element, bool bCreating);
+
 ImageSource* STDCALL CreateGlobalSource(XElement *data);
 
 //NetworkStream* CreateRTMPServer();
@@ -110,7 +113,7 @@ void OBS::ResizeRenderFrame(bool bRedrawRenderFrame)
     else
     {
         int monitorID = AppConfig->GetInt(TEXT("Video"), TEXT("Monitor"));
-        if(monitorID > (int)monitors.Num())
+        if(monitorID >= (int)monitors.Num())
             monitorID = 0;
 
         RECT &screenRect = monitors[monitorID].rect;
@@ -168,7 +171,7 @@ void OBS::GetBaseSize(UINT &width, UINT &height) const
     else
     {
         int monitorID = AppConfig->GetInt(TEXT("Video"), TEXT("Monitor"));
-        if(monitorID > (int)monitors.Num())
+        if(monitorID >= (int)monitors.Num())
             monitorID = 0;
 
         RECT &screenRect = monitors[monitorID].rect;
@@ -477,6 +480,8 @@ OBS::OBS()
     RegisterImageSourceClass(TEXT("BitmapImageSource"), Str("Sources.BitmapSource"), (OBSCREATEPROC)CreateBitmapSource, (OBSCONFIGPROC)ConfigureBitmapSource);
     RegisterImageSourceClass(TEXT("BitmapTransitionSource"), Str("Sources.TransitionSource"), (OBSCREATEPROC)CreateBitmapTransitionSource, (OBSCONFIGPROC)ConfigureBitmapTransitionSource);
     RegisterImageSourceClass(TEXT("GlobalSource"), Str("Sources.GlobalSource"), (OBSCREATEPROC)CreateGlobalSource, (OBSCONFIGPROC)OBS::ConfigGlobalSource);
+
+    RegisterImageSourceClass(TEXT("TextSource"), Str("Sources.TextSource"), (OBSCREATEPROC)CreateTextSource, (OBSCONFIGPROC)ConfigureTextSource);
 
     //-----------------------------------------------------
     // render frame class
@@ -1124,7 +1129,7 @@ void OBS::Start()
     //-------------------------------------------------------------
 
     int monitorID = AppConfig->GetInt(TEXT("Video"), TEXT("Monitor"));
-    if(monitorID > (int)monitors.Num())
+    if(monitorID >= (int)monitors.Num())
         monitorID = 0;
 
     RECT &screenRect = monitors[monitorID].rect;
@@ -1676,6 +1681,8 @@ void OBS::Stop()
     EnableWindow(GetDlgItem(hwndMain, ID_SCENEEDITOR), FALSE);
     ClearStatusBar();
 
+    InvalidateRect(hwndRenderFrame, NULL, TRUE);
+
     SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, 1, 0, 0);
 
     bTestStream = false;
@@ -1843,6 +1850,7 @@ void OBS::MainCaptureLoop()
     DWORD fpsCounter = 0;
 
     bool bFirstFrame = true;
+    bool bFirstImage = true;
     bool bFirst420Encode = true;
     bool bUseThreaded420 = bUseMultithreadedOptimizations && (OSGetTotalCores() > 1) && !bUsing444;
 
@@ -2184,6 +2192,9 @@ void OBS::MainCaptureLoop()
                     picOut.img.i_stride[0] = map.RowPitch;
                     picOut.img.plane[0]    = (uint8_t*)map.pData;
                 }
+
+                if(bEncode && bFirstImage)
+                    bFirstImage = bEncode = false;
 
                 if(bEncode)
                 {

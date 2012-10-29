@@ -1240,6 +1240,9 @@ INT_PTR CALLBACK OBS::VideoSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                             int sel = (int)SendMessage(GetDlgItem(hwnd, IDC_MONITOR), CB_GETCURSEL, 0, 0);
                             if(sel != CB_ERR)
                             {
+                                if(sel >= (int)App->monitors.Num())
+                                    sel = 0;
+
                                 MonitorInfo &monitor = App->monitors[sel];
 
                                 int cx, cy;
@@ -1267,6 +1270,9 @@ INT_PTR CALLBACK OBS::VideoSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                             int sel = (int)SendMessage(GetDlgItem(hwnd, IDC_MONITOR), CB_GETCURSEL, 0, 0);
                             if(sel != CB_ERR)
                             {
+                                if(sel >= (int)App->monitors.Num())
+                                    sel = 0;
+
                                 MonitorInfo &monitor = App->monitors[sel];
 
                                 int cx, cy;
