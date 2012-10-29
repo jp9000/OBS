@@ -51,7 +51,8 @@ MainMenu.Settings   "&Settings"
 
 MainMenu.File.Exit  "E&xit"
 
-MainMenu.Help.Contents  "&Contents"
+MainMenu.Help.Contents      "&Contents"
+MainMenu.Help.VisitWebsite  "Visit Website"
 
 MainMenu.Settings.OpenConfigFolder  "Open &Configuration Folder"
 MainMenu.Settings.OpenLogFolder     "Open &Log Folder"
