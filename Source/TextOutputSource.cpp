@@ -21,6 +21,10 @@
 #include <gdiplus.h>
 
 
+#define ClampInt(iVal, minVal, maxVal) \
+    if(iVal < minVal) iVal = minVal; \
+    else if(iVal > maxVal) iVal = maxVal;
+
 class TextOutputSource : public ImageSource
 {
     bool        bUpdateTexture;
@@ -63,9 +67,7 @@ class TextOutputSource : public ImageSource
     {
         if(bMonitoringFileChanges)
         {
-            if(!HasOverlappedIoCompleted(&directoryChange))
-                CancelIoEx(hDirectory, &directoryChange);
-
+            CancelIoEx(hDirectory, &directoryChange);
             CloseHandle(hDirectory);
 
             bMonitoringFileChanges = false;
@@ -172,6 +174,9 @@ class TextOutputSource : public ImageSource
         textSize.cx &= 0xFFFFFFFE;
         textSize.cy &= 0xFFFFFFFE;
 
+        ClampInt(textSize.cx, 32, 2048);
+        ClampInt(textSize.cy, 32, 2048);
+
         if(textureSize.cx != textSize.cx || textureSize.cy != textSize.cy)
         {
             if(texture)
@@ -275,6 +280,7 @@ public:
         ss = CreateSamplerState(si);
 
         changeBuffer = (LPBYTE)Allocate(2048);
+        zero(changeBuffer, 2048);
     }
 
     ~TextOutputSource()
@@ -291,9 +297,7 @@ public:
 
         if(bMonitoringFileChanges)
         {
-            if(!HasOverlappedIoCompleted(&directoryChange))
-                CancelIoEx(hDirectory, &directoryChange);
-
+            CancelIoEx(hDirectory, &directoryChange);
             CloseHandle(hDirectory);
         }
     }
@@ -307,14 +311,21 @@ public:
                 bMonitoringFileChanges = false;
 
                 FILE_NOTIFY_INFORMATION *notify = (FILE_NOTIFY_INFORMATION*)changeBuffer;
+
+                String strFileName;
+                strFileName.SetLength(notify->FileNameLength);
+                scpy_n(strFileName, notify->FileName, notify->FileNameLength/2);
+                strFileName.KillSpaces();
+
                 String strFileChanged;
-                strFileChanged << strDirectory << notify->FileName;
+                strFileChanged << strDirectory << strFileName;
 
                 if(strFileChanged.CompareI(strFile))
                     bUpdateTexture = true;
 
                 DWORD test;
                 zero(&directoryChange, sizeof(directoryChange));
+                zero(changeBuffer, 2048);
 
                 if(ReadDirectoryChangesW(hDirectory, changeBuffer, 2048, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE, &test, &directoryChange, NULL))
                     bMonitoringFileChanges = true;
@@ -530,10 +541,6 @@ CTSTR GetFontFace(ConfigTextSourceInfo *configInfo, HWND hwndFontList)
     UINT actualID = (UINT)SendMessage(hwndFontList, CB_GETITEMDATA, id, 0);
     return configInfo->fontFaces[actualID];
 }
-
-#define ClampInt(iVal, minVal, maxVal) \
-    if(iVal < minVal) iVal = minVal; \
-    else if(iVal > maxVal) iVal = maxVal;
 
 INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {

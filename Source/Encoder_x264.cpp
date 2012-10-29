@@ -46,7 +46,7 @@ struct VideoPacket
     inline void FreeData() {Packet.Clear();}
 };
 
-const float baseCRF = 18.0f;
+const float baseCRF = 20.0f;
 
 class X264Encoder : public VideoEncoder
 {
@@ -90,7 +90,7 @@ public:
 
         curPreset = preset;
         LPSTR lpPreset = curPreset.CreateUTF8String();
-        x264_param_default_preset(&paramData, lpPreset, NULL);//"fastdecode"); //well, that was a dumb move on my part
+        x264_param_default_preset(&paramData, lpPreset, NULL);
 
         Free(lpPreset);
 

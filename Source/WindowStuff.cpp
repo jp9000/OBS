@@ -1606,6 +1606,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     PostQuitMessage(0);
                     break;
 
+                case ID_HELP_VISITWEBSITE:
+                    ShellExecute(NULL, TEXT("open"), TEXT("http://www.obsproject.com"), 0, 0, SW_SHOWNORMAL);
+                    break;
+
                 case ID_HELP_CONTENTS:
                     {
                         String strHelpPath;

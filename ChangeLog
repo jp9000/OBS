@@ -14,6 +14,8 @@
     * Fixed tons of bugs, especially many related to lists
     * Fixed annoying bug that caused status bar to flash when it
       updated
+    * Reverted network code to better previous code
+    * Improved frame drop mechanic
     * Still doing major R&D work on the game capture plugin
 
 -------------------------------

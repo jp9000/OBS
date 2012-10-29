@@ -630,6 +630,7 @@ BEGIN
     END
     POPUP "MainMenu.Help"
     BEGIN
+        MENUITEM "MainMenu.Help.VisitWebsite",  ID_HELP_VISITWEBSITE
         MENUITEM "MainMenu.Help.Contents",      ID_HELP_CONTENTS
     END
 END
