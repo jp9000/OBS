@@ -92,14 +92,14 @@ DeviceSource::~DeviceSource()
 
 String DeviceSource::ChooseShader()
 {
-    if(colorType == DeviceOutputType_RGB && !bUseColorKey)
+    if(colorType == DeviceOutputType_RGB && !bUseChromaKey)
         return String();
 
     String strShader;
     strShader << TEXT("plugins/DShowPlugin/shaders/");
 
-    if(bUseColorKey)
-        strShader << TEXT("ColorKey_");
+    if(bUseChromaKey)
+        strShader << TEXT("ChromaKey_");
 
     if(colorType == DeviceOutputType_I420)
         strShader << TEXT("YUVToRGB.pShader");
@@ -118,6 +118,16 @@ String DeviceSource::ChooseShader()
 
     return strShader;
 }
+
+const float yuv709Mat[16] = { 0.2126f,  0.7152f,  0.0722f, 0.0625f,
+                             -0.1150f, -0.3850f,  0.5000f, 0.50f,
+                              0.5000f, -0.4540f, -0.0460f, 0.50f,
+                              0.0f,     0.0f,     0.0f,    1.0f};
+
+const float yuvMat[16] = { 0.257f,  0.504f,  0.098f, 0.0625f,
+                          -0.148f, -0.291f,  0.439f, 0.50f,
+                           0.439f, -0.368f, -0.071f, 0.50f,
+                           0.0f,    0.0f,    0.0f,   1.0f};
 
 bool DeviceSource::LoadFilters()
 {
@@ -147,11 +157,18 @@ bool DeviceSource::LoadFilters()
 
     //------------------------------------------------
 
-    bUseColorKey = data->GetInt(TEXT("useColorKey")) != 0;
+    bUseChromaKey = data->GetInt(TEXT("useChromaKey")) != 0;
     keyColor = data->GetInt(TEXT("keyColor"), 0xFFFFFFFF);
     keySimilarity = data->GetInt(TEXT("keySimilarity"));
-    keyBlend = data->GetInt(TEXT("keyBlend"), 10);
-    keyGamma = data->GetInt(TEXT("keyGamma"));
+    keyBlend = data->GetInt(TEXT("keyBlend"), 80);
+    keySpillReduction = data->GetInt(TEXT("keySpillReduction"), 50);
+
+    if(keyBaseColor.x < keyBaseColor.y && keyBaseColor.x < keyBaseColor.z)
+        keyBaseColor -= keyBaseColor.x;
+    else if(keyBaseColor.y < keyBaseColor.x && keyBaseColor.y < keyBaseColor.z)
+        keyBaseColor -= keyBaseColor.y;
+    else if(keyBaseColor.z < keyBaseColor.x && keyBaseColor.z < keyBaseColor.y)
+        keyBaseColor -= keyBaseColor.z;
 
     //------------------------------------------------
 
@@ -179,25 +196,30 @@ bool DeviceSource::LoadFilters()
 
     //------------------------------------------------
 
+    renderCX = renderCY = 0;
+    frameInterval = 0;
+
     if(bUseCustomResolution)
     {
         renderCX = data->GetInt(TEXT("resolutionWidth"));
         renderCY = data->GetInt(TEXT("resolutionHeight"));
-        fps = data->GetInt(TEXT("fps"));
+        frameInterval = data->GetInt(TEXT("frameInterval"));
     }
     else
     {
         SIZE size;
-        GetClosestResolution(outputList, size, fps);
+        GetClosestResolution(outputList, size, frameInterval);
         renderCX = size.cx;
         renderCY = size.cy;
     }
 
-    if(!renderCX || !renderCY || !fps)
+    if(!renderCX || !renderCY || !frameInterval)
     {
         AppWarning(TEXT("DShowPlugin: Invalid size/fps specified"));
         goto cleanFinish;
     }
+
+    preferredOutputType = (data->GetInt(TEXT("usePreferredType")) != 0) ? data->GetInt(TEXT("preferredType")) : -1;
 
     int numThreads = MAX(OSGetTotalCores()-2, 1);
     for(int i=0; i<numThreads; i++)
@@ -223,11 +245,32 @@ bool DeviceSource::LoadFilters()
 
     //------------------------------------------------
 
-    MediaOutputInfo *bestOutput = GetBestMediaOutput(outputList, renderCX, renderCY, fps);
+    MediaOutputInfo *bestOutput = GetBestMediaOutput(outputList, renderCX, renderCY, preferredOutputType, frameInterval);
     if(!bestOutput)
     {
         AppWarning(TEXT("DShowPlugin: Could not find appropriate resolution to create device image source"));
         goto cleanFinish;
+    }
+
+    {
+        VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(bestOutput->mediaType->pbFormat);
+
+        String strTest = FormattedString(TEXT("   chosen type: %s, usingFourCC: %s, res: %ux%u - %ux%u, fps: %g-%g"),
+            EnumToName[(int)bestOutput->videoType],
+            bestOutput->bUsingFourCC ? TEXT("true") : TEXT("false"),
+            bestOutput->minCX, bestOutput->minCY, bestOutput->maxCX, bestOutput->maxCY,
+            10000000.0/double(bestOutput->maxFrameInterval), 10000000.0/double(bestOutput->minFrameInterval));
+
+        char fourcc[5];
+        mcpy(fourcc, &pVih->bmiHeader.biCompression, 4);
+        fourcc[4] = 0;
+
+        if(pVih->bmiHeader.biCompression > 1000)
+            strTest << FormattedString(TEXT(", fourCC: '%S'\r\n"), fourcc);
+        else
+            strTest << FormattedString(TEXT(", fourCC: %08lX\r\n"), pVih->bmiHeader.biCompression);
+
+        Log(strTest.Array());
     }
 
     expectedMediaType = bestOutput->mediaType->subtype;
@@ -269,6 +312,12 @@ bool DeviceSource::LoadFilters()
 
     //------------------------------------------------
 
+    keyBaseColor = Color4().MakeFromRGBA(keyColor);
+    Matrix4x4TransformVect(keyChroma, (colorType == DeviceOutputType_HDYC) ? (float*)yuv709Mat : (float*)yuvMat, keyBaseColor);
+    keyChroma *= 2.0f;
+
+    //------------------------------------------------
+
     if(FAILED(err = devicePin->QueryInterface(IID_IAMStreamConfig, (void**)&config)))
     {
         AppWarning(TEXT("DShowPlugin: Could not get IAMStreamConfig for device pin, result = %08lX"), err);
@@ -279,7 +328,7 @@ bool DeviceSource::LoadFilters()
     CopyMediaType(&outputMediaType, bestOutput->mediaType);
 
     VIDEOINFOHEADER *vih = reinterpret_cast<VIDEOINFOHEADER*>(outputMediaType.pbFormat);
-    vih->AvgTimePerFrame = QWORD((1000.0/double(fps))*10000.0);
+    vih->AvgTimePerFrame = frameInterval;
     vih->bmiHeader.biWidth  = renderCX;
     vih->bmiHeader.biHeight = renderCY;
     vih->bmiHeader.biSizeImage = renderCX*renderCY*(vih->bmiHeader.biBitCount>>3);
@@ -417,23 +466,6 @@ void DeviceSource::UnloadFilters()
         texture = NULL;
     }
 
-    if(bFiltersLoaded)
-    {
-        graph->RemoveFilter(captureFilter);
-        graph->RemoveFilter(deviceFilter);
-
-        SafeRelease(captureFilter);
-        SafeRelease(deviceFilter);
-
-        bFiltersLoaded = false;
-    }
-
-    if(colorConvertShader)
-    {
-        delete colorConvertShader;
-        colorConvertShader = NULL;
-    }
-
     int numThreads = MAX(OSGetTotalCores()-2, 1);
     for(int i=0; i<numThreads; i++)
     {
@@ -446,6 +478,8 @@ void DeviceSource::UnloadFilters()
             hConvertThreads[i] = NULL;
         }
 
+        convertData[i].bKillThread = false;
+
         if(convertData[i].hSignalConvert)
         {
             CloseHandle(convertData[i].hSignalConvert);
@@ -457,6 +491,23 @@ void DeviceSource::UnloadFilters()
             CloseHandle(convertData[i].hSignalComplete);
             convertData[i].hSignalComplete = NULL;
         }
+    }
+
+    if(bFiltersLoaded)
+    {
+        graph->RemoveFilter(captureFilter);
+        graph->RemoveFilter(deviceFilter);
+
+        SafeReleaseLogRef(captureFilter);
+        SafeReleaseLogRef(deviceFilter);
+
+        bFiltersLoaded = false;
+    }
+
+    if(colorConvertShader)
+    {
+        delete colorConvertShader;
+        colorConvertShader = NULL;
     }
 
     if(lpImageBuffer)
@@ -544,7 +595,7 @@ DWORD STDCALL PackPlanarThread(ConvertData *data)
 
         IMediaSample *sample = data->sample;
         PackPlanar(data->output, data->input, data->width, data->height, data->pitch, data->startY, data->endY);
-        SafeRelease(sample);
+        sample->Release();
 
         SetEvent(data->hSignalComplete);
     }while(!data->bKillThread);
@@ -643,7 +694,7 @@ void DeviceSource::Preprocess()
 
                 if(texture->Map(lpData, pitch))
                 {
-                    Convert422To444(lpData, lpImage, true);
+                    Convert422To444(lpData, lpImage, pitch, true);
                     texture->Unmap();
                 }
             }
@@ -659,7 +710,7 @@ void DeviceSource::Preprocess()
 
                 if(texture->Map(lpData, pitch))
                 {
-                    Convert422To444(lpData, lpImage, false);
+                    Convert422To444(lpData, lpImage, pitch, false);
                     texture->Unmap();
                 }
             }
@@ -684,16 +735,20 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
         {
             LoadPixelShader(colorConvertShader);
 
-            if(bUseColorKey)
+            if(bUseChromaKey)
             {
-                float fSimilarity = float(keySimilarity)/100.0f;
-                float fBlendVal = float(max(keyBlend, 1)/100.0f);
-                float fGammaVal = 1.0f+(float(keyGamma)/100.0f);
+                float fSimilarity = float(keySimilarity)/1000.0f;
+                float fBlendVal = float(max(keyBlend, 1)/1000.0f);
+                float fSpillVal = (float(max(keySpillReduction, 1))/1000.0f);
 
-                colorConvertShader->SetColor(colorConvertShader->GetParameterByName(TEXT("colorKey")),   keyColor);
-                colorConvertShader->SetFloat(colorConvertShader->GetParameterByName(TEXT("similarity")), fSimilarity);
-                colorConvertShader->SetFloat(colorConvertShader->GetParameterByName(TEXT("blend")),      fBlendVal);
-                colorConvertShader->SetFloat(colorConvertShader->GetParameterByName(TEXT("gamma")),      fGammaVal);
+                Vect2 pixelSize = 1.0f/GetSize();
+
+                colorConvertShader->SetColor  (colorConvertShader->GetParameterByName(TEXT("keyBaseColor")),    Color4(keyBaseColor));
+                colorConvertShader->SetColor  (colorConvertShader->GetParameterByName(TEXT("chromaKey")),       Color4(keyChroma));
+                colorConvertShader->SetVector2(colorConvertShader->GetParameterByName(TEXT("pixelSize")),       pixelSize);
+                colorConvertShader->SetFloat  (colorConvertShader->GetParameterByName(TEXT("keySimilarity")),   fSimilarity);
+                colorConvertShader->SetFloat  (colorConvertShader->GetParameterByName(TEXT("keyBlend")),        fBlendVal);
+                colorConvertShader->SetFloat  (colorConvertShader->GetParameterByName(TEXT("keySpill")),        fSpillVal);
             }
         }
 
@@ -718,13 +773,14 @@ void DeviceSource::UpdateSettings()
 {
     traceIn(DeviceSource::UpdateSettings);
 
-    String strNewDevice = data->GetString(TEXT("device"));
-    UINT newFPS         = data->GetInt(TEXT("fps"));
-    UINT newCX          = data->GetInt(TEXT("resolutionWidth"));
-    UINT newCY          = data->GetInt(TEXT("resolutionHeight"));
-    BOOL bNewCustom     = data->GetInt(TEXT("customResolution"));
+    String strNewDevice     = data->GetString(TEXT("device"));
+    UINT64 newFrameInterval = data->GetInt(TEXT("frameInterval"));
+    UINT newCX              = data->GetInt(TEXT("resolutionWidth"));
+    UINT newCY              = data->GetInt(TEXT("resolutionHeight"));
+    BOOL bNewCustom         = data->GetInt(TEXT("customResolution"));
+    UINT newPreferredType   = data->GetInt(TEXT("usePreferredType")) != 0 ? data->GetInt(TEXT("preferredType")) : -1;
 
-    if(renderCX != newCX || renderCY != newCY || fps != newFPS || !strDevice.CompareI(strNewDevice) || bNewCustom != bUseCustomResolution)
+    if(renderCX != newCX || renderCY != newCY || frameInterval != newFrameInterval || newPreferredType != preferredOutputType || !strDevice.CompareI(strNewDevice) || bNewCustom != bUseCustomResolution)
     {
         bool bWasCapturing = bCapturing;
         if(bWasCapturing) Stop();
@@ -742,13 +798,13 @@ void DeviceSource::SetInt(CTSTR lpName, int iVal)
 {
     if(bCapturing)
     {
-        if(scmpi(lpName, TEXT("useColorKey")) == 0)
+        if(scmpi(lpName, TEXT("useChromaKey")) == 0)
         {
             bool bNewVal = iVal != 0;
-            if(bUseColorKey != bNewVal)
+            if(bUseChromaKey != bNewVal)
             {
                 API->EnterSceneMutex();
-                bUseColorKey = bNewVal;
+                bUseChromaKey = bNewVal;
 
                 if(colorConvertShader)
                 {
@@ -772,6 +828,17 @@ void DeviceSource::SetInt(CTSTR lpName, int iVal)
         else if(scmpi(lpName, TEXT("keyColor")) == 0)
         {
             keyColor = (DWORD)iVal;
+
+            keyBaseColor = Color4().MakeFromRGBA(keyColor);
+            Matrix4x4TransformVect(keyChroma, (colorType == DeviceOutputType_HDYC) ? (float*)yuv709Mat : (float*)yuvMat, keyBaseColor);
+            keyChroma *= 2.0f;
+
+            if(keyBaseColor.x < keyBaseColor.y && keyBaseColor.x < keyBaseColor.z)
+                keyBaseColor -= keyBaseColor.x;
+            else if(keyBaseColor.y < keyBaseColor.x && keyBaseColor.y < keyBaseColor.z)
+                keyBaseColor -= keyBaseColor.y;
+            else if(keyBaseColor.z < keyBaseColor.x && keyBaseColor.z < keyBaseColor.y)
+                keyBaseColor -= keyBaseColor.z;
         }
         else if(scmpi(lpName, TEXT("keySimilarity")) == 0)
         {
@@ -781,9 +848,9 @@ void DeviceSource::SetInt(CTSTR lpName, int iVal)
         {
             keyBlend = iVal;
         }
-        else if(scmpi(lpName, TEXT("keyGamma")) == 0)
+        else if(scmpi(lpName, TEXT("keySpillReduction")) == 0)
         {
-            keyGamma = iVal;
+            keySpillReduction = iVal;
         }
     }
 }

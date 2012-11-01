@@ -54,11 +54,39 @@ enum VideoOutputType
     VideoOutputType_MJPG
 };
 
+static const CTSTR EnumToName[] =
+{
+    TEXT("None"),
+    TEXT("RGB24"),
+    TEXT("RGB32"),
+    TEXT("RGBA32"),
+
+    TEXT("I420"),
+    TEXT("YV12"),
+
+    TEXT("Y41P"),
+    TEXT("YVU9"),
+
+    TEXT("YVYU"),
+    TEXT("YUY2"),
+    TEXT("UYVY"),
+    TEXT("HDYC"),
+
+    TEXT("MPEG2_VIDEO"),
+    TEXT("H264"),
+
+    TEXT("dvsl"),
+    TEXT("dvsd"),
+    TEXT("dvhd"),
+
+    TEXT("MJPG"),
+};
+
 struct MediaOutputInfo
 {
     VideoOutputType videoType;
     AM_MEDIA_TYPE *mediaType;
-    double minFPS, maxFPS;
+    UINT64 minFrameInterval, maxFrameInterval;
     UINT minCX, minCY;
     UINT maxCX, maxCY;
     UINT xGranularity, yGranularity;
@@ -73,4 +101,5 @@ struct MediaOutputInfo
 
 VideoOutputType GetVideoOutputTypeFromFourCC(DWORD fourCC);
 VideoOutputType GetVideoOutputType(const AM_MEDIA_TYPE &media_type);
-MediaOutputInfo* GetBestMediaOutput(const List<MediaOutputInfo> &outputList, UINT width, UINT height, UINT fps);
+bool GetVideoOutputTypes(const List<MediaOutputInfo> &outputList, UINT width, UINT height, UINT64 frameInterval, List<VideoOutputType> &types);
+MediaOutputInfo* GetBestMediaOutput(const List<MediaOutputInfo> &outputList, UINT width, UINT height, UINT preferredType, UINT64 &frameInterval);

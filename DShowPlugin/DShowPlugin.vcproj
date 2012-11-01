@@ -409,31 +409,31 @@
 			Name="Shaders"
 			>
 			<File
-				RelativePath="..\rundir\plugins\DShowPlugin\shaders\ColorKey_HDYCToRGB.pShader"
+				RelativePath="..\rundir\plugins\DShowPlugin\shaders\ChromaKey_HDYCToRGB.pShader"
 				>
 			</File>
 			<File
-				RelativePath="..\rundir\plugins\DShowPlugin\shaders\ColorKey_RGB.pShader"
+				RelativePath="..\rundir\plugins\DShowPlugin\shaders\ChromaKey_RGB.pShader"
 				>
 			</File>
 			<File
-				RelativePath="..\rundir\plugins\DShowPlugin\shaders\ColorKey_UYVToRGB.pShader"
+				RelativePath="..\rundir\plugins\DShowPlugin\shaders\ChromaKey_UYVToRGB.pShader"
 				>
 			</File>
 			<File
-				RelativePath="..\rundir\plugins\DShowPlugin\shaders\ColorKey_YUVToRGB.pShader"
+				RelativePath="..\rundir\plugins\DShowPlugin\shaders\ChromaKey_YUVToRGB.pShader"
 				>
 			</File>
 			<File
-				RelativePath="..\rundir\plugins\DShowPlugin\shaders\ColorKey_YUXVToRGB.pShader"
+				RelativePath="..\rundir\plugins\DShowPlugin\shaders\ChromaKey_YUXVToRGB.pShader"
 				>
 			</File>
 			<File
-				RelativePath="..\rundir\plugins\DShowPlugin\shaders\ColorKey_YVUToRGB.pShader"
+				RelativePath="..\rundir\plugins\DShowPlugin\shaders\ChromaKey_YVUToRGB.pShader"
 				>
 			</File>
 			<File
-				RelativePath="..\rundir\plugins\DShowPlugin\shaders\ColorKey_YVXUToRGB.pShader"
+				RelativePath="..\rundir\plugins\DShowPlugin\shaders\ChromaKey_YVXUToRGB.pShader"
 				>
 			</File>
 			<File

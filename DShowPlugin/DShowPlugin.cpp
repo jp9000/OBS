@@ -324,8 +324,8 @@ void GetOutputList(IPin *curPin, List<MediaOutputInfo> &outputInfoList)
                             MediaOutputInfo *outputInfo = outputInfoList.CreateNew();
                             outputInfo->mediaType = pMT;
                             outputInfo->videoType = type;
-                            outputInfo->minFPS = 1000.0/(double(pVSCC->MaxFrameInterval)/10000.0);
-                            outputInfo->maxFPS = 1000.0/(double(pVSCC->MinFrameInterval)/10000.0);
+                            outputInfo->minFrameInterval = pVSCC->MinFrameInterval;
+                            outputInfo->maxFrameInterval = pVSCC->MaxFrameInterval;
                             outputInfo->minCX = pVSCC->MinOutputSize.cx;
                             outputInfo->maxCX = pVSCC->MaxOutputSize.cx;
                             outputInfo->minCY = pVSCC->MinOutputSize.cy;
@@ -377,22 +377,27 @@ inline bool ResolutionListHasValue(const List<SIZE> &resolutions, SIZE &size)
 }
 
 
-struct FPSInfo
+struct FPSInterval
 {
-    int minFPS, maxFPS;
+    inline FPSInterval(UINT64 minVal, UINT64 maxVal) : minFrameInterval(minVal), maxFrameInterval(maxVal) {}
+    UINT64 minFrameInterval, maxFrameInterval;
 };
 
+struct FPSInfo
+{
+    List<FPSInterval> supportedIntervals;
+};
 
-bool GetClosestResolution(List<MediaOutputInfo> &outputList, SIZE &resolution, UINT &fps)
+bool GetClosestResolution(List<MediaOutputInfo> &outputList, SIZE &resolution, UINT64 &frameInterval)
 {
     LONG width, height;
-    UINT internalFPS = API->GetMaxFPS();
+    UINT64 internalFrameInterval = 10000000/UINT64(API->GetMaxFPS());
     API->GetBaseSize((UINT&)width, (UINT&)height);
 
     LONG bestDistance = 0x7FFFFFFF;
     SIZE bestSize;
-    UINT minFPS = 0;
-    UINT bestFPS = 0;
+    UINT64 maxFrameInterval = 0;
+    UINT64 bestFrameInterval = 0xFFFFFFFFFFFFFFFFLL;
 
     for(UINT i=0; i<outputList.Num(); i++)
     {
@@ -419,13 +424,13 @@ bool GetClosestResolution(List<MediaOutputInfo> &outputList, SIZE &resolution, U
                     break;
 
                 LONG totalDist = distHeight+distWidth;
-                if((totalDist <= bestDistance) || (totalDist == bestDistance && outputInfo.maxFPS > bestFPS))
+                if((totalDist <= bestDistance) || (totalDist == bestDistance && outputInfo.minFrameInterval < bestFrameInterval))
                 {
                     bestDistance = totalDist;
                     bestSize.cx = outputWidth;
                     bestSize.cy = outputHeight;
-                    minFPS = (UINT)outputInfo.minFPS;
-                    bestFPS = (UINT)outputInfo.maxFPS;
+                    maxFrameInterval = outputInfo.maxFrameInterval;
+                    bestFrameInterval = outputInfo.minFrameInterval;
                 }
 
                 outputHeight += outputInfo.yGranularity;
@@ -440,12 +445,12 @@ bool GetClosestResolution(List<MediaOutputInfo> &outputList, SIZE &resolution, U
         resolution.cx = bestSize.cx;
         resolution.cy = bestSize.cy;
 
-        if(internalFPS < minFPS)
-            fps = minFPS;
-        else if(internalFPS > bestFPS)
-            fps = bestFPS;
+        if(internalFrameInterval > maxFrameInterval)
+            frameInterval = maxFrameInterval;
+        else if(internalFrameInterval < bestFrameInterval)
+            frameInterval = bestFrameInterval;
         else
-            fps = internalFPS;
+            frameInterval = internalFrameInterval;
         return true;
     }
 
@@ -513,8 +518,7 @@ struct ConfigDialogData
 
     bool GetResolutionFPSInfo(SIZE &resolution, FPSInfo &fpsInfo)
     {
-        fpsInfo.minFPS = -1;
-        fpsInfo.maxFPS = -1;
+        fpsInfo.supportedIntervals.Clear();
 
         for(UINT i=0; i<outputList.Num(); i++)
         {
@@ -526,23 +530,11 @@ struct ConfigDialogData
                 if((resolution.cx-outputInfo.minCX) % outputInfo.xGranularity || (resolution.cy-outputInfo.minCY) % outputInfo.yGranularity)
                     return false;
 
-                int minFPS = int(outputInfo.minFPS+0.5);
-                int maxFPS = int(outputInfo.maxFPS+0.5);
-
-                if(fpsInfo.minFPS == -1)
-                {
-                    fpsInfo.minFPS = minFPS;
-                    fpsInfo.maxFPS = maxFPS;
-                }
-                else
-                {
-                    fpsInfo.minFPS = MIN(fpsInfo.minFPS, minFPS);
-                    fpsInfo.maxFPS = MAX(fpsInfo.maxFPS, maxFPS);
-                }
+                fpsInfo.supportedIntervals << FPSInterval(outputInfo.minFrameInterval, outputInfo.maxFrameInterval);
             }
         }
 
-        return fpsInfo.minFPS != -1;
+        return fpsInfo.supportedIntervals.Num() != 0;
     }
 };
 
@@ -692,7 +684,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 String strDevice = configData->data->GetString(TEXT("device"));
                 UINT cx  = configData->data->GetInt(TEXT("resolutionWidth"));
                 UINT cy  = configData->data->GetInt(TEXT("resolutionHeight"));
-                UINT fps = configData->data->GetInt(TEXT("fps"));
+                UINT64 frameInterval = configData->data->GetInt(TEXT("frameInterval"));
 
                 BOOL bCustomResolution = configData->data->GetInt(TEXT("customResolution"));
                 SendMessage(GetDlgItem(hwnd, IDC_CUSTOMRESOLUTION), BM_SETCHECK, bCustomResolution ? BST_CHECKED : BST_UNCHECKED, 0);
@@ -701,7 +693,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 FillOutListOfVideoDevices(GetDlgItem(hwnd, IDC_DEVICELIST));
 
                 UINT deviceID = CB_ERR;
-                if(strDevice.IsValid() && cx > 0 && cy > 0 && fps > 0)
+                if(strDevice.IsValid() && cx > 0 && cy > 0 && frameInterval > 0)
                     deviceID = (UINT)SendMessage(hwndDeviceList, CB_FINDSTRINGEXACT, -1, (LPARAM)strDevice.Array());
 
                 if(deviceID == CB_ERR)
@@ -722,40 +714,47 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         SendMessage(hwndResolutionList, WM_SETTEXT, 0, (LPARAM)strResolution.Array());
                         ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_RESOLUTION, CBN_EDITCHANGE), (LPARAM)hwndResolutionList);
 
-                        SendMessage(hwndFPS, UDM_SETPOS32, 0, (LPARAM)fps);
+                        SetWindowText(hwndFPS, FloatString(10000000.0/double(frameInterval)));
                     }
                 }
 
                 ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_CUSTOMRESOLUTION, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDC_CUSTOMRESOLUTION));
 
+                HWND hwndPreferredList = GetDlgItem(hwnd, IDC_PREFERREDOUTPUT);
+
+                BOOL bUsePreferredOutput = configData->data->GetInt(TEXT("usePreferredType"));
+                EnableWindow(hwndPreferredList, bUsePreferredOutput);
+
+                SendMessage(GetDlgItem(hwnd, IDC_USEPREFERREDOUTPUT), BM_SETCHECK, bUsePreferredOutput ? BST_CHECKED : BST_UNCHECKED, 0);
+
                 //------------------------------------------
 
-                BOOL  bUseColorKey  = configData->data->GetInt(TEXT("useColorKey"), 0);
+                BOOL  bUseChromaKey = configData->data->GetInt(TEXT("useChromaKey"), 0);
                 DWORD keyColor      = configData->data->GetInt(TEXT("keyColor"), 0xFFFFFFFF);
                 UINT  similarity    = configData->data->GetInt(TEXT("keySimilarity"), 0);
-                UINT  blend         = configData->data->GetInt(TEXT("keyBlend"), 10);
-                UINT  gamma         = configData->data->GetInt(TEXT("keyGamma"), 0);
+                UINT  blend         = configData->data->GetInt(TEXT("keyBlend"), 80);
+                UINT  gamma         = configData->data->GetInt(TEXT("keySpillReduction"), 50);
 
-                SendMessage(GetDlgItem(hwnd, IDC_USECOLORKEY), BM_SETCHECK, bUseColorKey ? BST_CHECKED : BST_UNCHECKED, 0);
+                SendMessage(GetDlgItem(hwnd, IDC_USECHROMAKEY), BM_SETCHECK, bUseChromaKey ? BST_CHECKED : BST_UNCHECKED, 0);
                 CCSetColor(GetDlgItem(hwnd, IDC_COLOR), keyColor);
 
-                SendMessage(GetDlgItem(hwnd, IDC_BASETHRESHOLD), UDM_SETRANGE32, 0, 100);
+                SendMessage(GetDlgItem(hwnd, IDC_BASETHRESHOLD), UDM_SETRANGE32, 0, 1000);
                 SendMessage(GetDlgItem(hwnd, IDC_BASETHRESHOLD), UDM_SETPOS32, 0, similarity);
 
-                SendMessage(GetDlgItem(hwnd, IDC_BLEND), UDM_SETRANGE32, 0, 100);
+                SendMessage(GetDlgItem(hwnd, IDC_BLEND), UDM_SETRANGE32, 0, 1000);
                 SendMessage(GetDlgItem(hwnd, IDC_BLEND), UDM_SETPOS32, 0, blend);
 
-                SendMessage(GetDlgItem(hwnd, IDC_GAMMA), UDM_SETRANGE32, -75, 75);
-                SendMessage(GetDlgItem(hwnd, IDC_GAMMA), UDM_SETPOS32, 0, gamma);
+                SendMessage(GetDlgItem(hwnd, IDC_SPILLREDUCTION), UDM_SETRANGE32, 0, 1000);
+                SendMessage(GetDlgItem(hwnd, IDC_SPILLREDUCTION), UDM_SETPOS32, 0, gamma);
 
-                EnableWindow(GetDlgItem(hwnd, IDC_COLOR), bUseColorKey);
-                EnableWindow(GetDlgItem(hwnd, IDC_SELECTCOLOR), bUseColorKey);
-                EnableWindow(GetDlgItem(hwnd, IDC_BASETHRESHOLD_EDIT), bUseColorKey);
-                EnableWindow(GetDlgItem(hwnd, IDC_BASETHRESHOLD), bUseColorKey);
-                EnableWindow(GetDlgItem(hwnd, IDC_BLEND_EDIT), bUseColorKey);
-                EnableWindow(GetDlgItem(hwnd, IDC_BLEND), bUseColorKey);
-                EnableWindow(GetDlgItem(hwnd, IDC_GAMMA_EDIT), bUseColorKey);
-                EnableWindow(GetDlgItem(hwnd, IDC_GAMMA), bUseColorKey);
+                EnableWindow(GetDlgItem(hwnd, IDC_COLOR), bUseChromaKey);
+                EnableWindow(GetDlgItem(hwnd, IDC_SELECTCOLOR), bUseChromaKey);
+                EnableWindow(GetDlgItem(hwnd, IDC_BASETHRESHOLD_EDIT), bUseChromaKey);
+                EnableWindow(GetDlgItem(hwnd, IDC_BASETHRESHOLD), bUseChromaKey);
+                EnableWindow(GetDlgItem(hwnd, IDC_BLEND_EDIT), bUseChromaKey);
+                EnableWindow(GetDlgItem(hwnd, IDC_BLEND), bUseChromaKey);
+                EnableWindow(GetDlgItem(hwnd, IDC_SPILLREDUCTION_EDIT), bUseChromaKey);
+                EnableWindow(GetDlgItem(hwnd, IDC_SPILLREDUCTION), bUseChromaKey);
 
                 return TRUE;
             }
@@ -773,12 +772,16 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
             {
                 bMouseDown = true;
                 CCSetColor(GetDlgItem(hwnd, IDC_COLOR), colorData.GetColor());
+                ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_COLOR, CCN_CHANGED), (LPARAM)GetDlgItem(hwnd, IDC_COLOR));
             }
             break;
 
         case WM_MOUSEMOVE:
             if(bSelectingColor && bMouseDown)
+            {
                 CCSetColor(GetDlgItem(hwnd, IDC_COLOR), colorData.GetColor());
+                ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_COLOR, CCN_CHANGED), (LPARAM)GetDlgItem(hwnd, IDC_COLOR));
+            }
             break;
 
         case WM_LBUTTONUP:
@@ -788,6 +791,11 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 ReleaseCapture();
                 bMouseDown = false;
                 bSelectingColor = false;
+
+                ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
+                ImageSource *source = API->GetSceneImageSource(configData->lpName);
+                if(source)
+                    source->SetInt(TEXT("useChromaKey"), true);
             }
             break;
 
@@ -797,12 +805,18 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 if(colorData.bValid)
                 {
                     CCSetColor(GetDlgItem(hwnd, IDC_COLOR), colorData.GetColor());
+                    ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_COLOR, CCN_CHANGED), (LPARAM)GetDlgItem(hwnd, IDC_COLOR));
                     colorData.Clear();
                 }
 
                 ReleaseCapture();
                 bMouseDown = false;
                 bSelectingColor = false;
+
+                ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
+                ImageSource *source = API->GetSceneImageSource(configData->lpName);
+                if(source)
+                    source->SetInt(TEXT("useChromaKey"), true);
             }
             break;
 
@@ -816,28 +830,27 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         EnableWindow(GetDlgItem(hwnd, IDC_RESOLUTION), bCustomResolution);
                         EnableWindow(GetDlgItem(hwnd, IDC_FPS), bCustomResolution);
-                        EnableWindow(GetDlgItem(hwnd, IDC_FPS_EDIT), bCustomResolution);
                         break;
                     }
 
-                case IDC_USECOLORKEY:
+                case IDC_USECHROMAKEY:
                     {
                         HWND hwndUseColorKey = (HWND)lParam;
-                        BOOL bUseColorKey = SendMessage(hwndUseColorKey, BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        BOOL bUseChromaKey = SendMessage(hwndUseColorKey, BM_GETCHECK, 0, 0) == BST_CHECKED;
 
                         ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
                         ImageSource *source = API->GetSceneImageSource(configData->lpName);
                         if(source)
-                            source->SetInt(TEXT("useColorKey"), bUseColorKey);
+                            source->SetInt(TEXT("useChromaKey"), bUseChromaKey);
 
-                        EnableWindow(GetDlgItem(hwnd, IDC_COLOR), bUseColorKey);
-                        EnableWindow(GetDlgItem(hwnd, IDC_SELECTCOLOR), bUseColorKey);
-                        EnableWindow(GetDlgItem(hwnd, IDC_BASETHRESHOLD_EDIT), bUseColorKey);
-                        EnableWindow(GetDlgItem(hwnd, IDC_BASETHRESHOLD), bUseColorKey);
-                        EnableWindow(GetDlgItem(hwnd, IDC_BLEND_EDIT), bUseColorKey);
-                        EnableWindow(GetDlgItem(hwnd, IDC_BLEND), bUseColorKey);
-                        EnableWindow(GetDlgItem(hwnd, IDC_GAMMA_EDIT), bUseColorKey);
-                        EnableWindow(GetDlgItem(hwnd, IDC_GAMMA), bUseColorKey);
+                        EnableWindow(GetDlgItem(hwnd, IDC_COLOR), bUseChromaKey);
+                        EnableWindow(GetDlgItem(hwnd, IDC_SELECTCOLOR), bUseChromaKey);
+                        EnableWindow(GetDlgItem(hwnd, IDC_BASETHRESHOLD_EDIT), bUseChromaKey);
+                        EnableWindow(GetDlgItem(hwnd, IDC_BASETHRESHOLD), bUseChromaKey);
+                        EnableWindow(GetDlgItem(hwnd, IDC_BLEND_EDIT), bUseChromaKey);
+                        EnableWindow(GetDlgItem(hwnd, IDC_BLEND), bUseChromaKey);
+                        EnableWindow(GetDlgItem(hwnd, IDC_SPILLREDUCTION_EDIT), bUseChromaKey);
+                        EnableWindow(GetDlgItem(hwnd, IDC_SPILLREDUCTION), bUseChromaKey);
                         break;
                     }
 
@@ -852,6 +865,11 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                                 SetCapture(hwnd);
                                 HCURSOR hCursor = (HCURSOR)LoadImage(hinstMain, MAKEINTRESOURCE(IDC_COLORPICKER), IMAGE_CURSOR, 32, 32, 0);
                                 SetCursor(hCursor);
+
+                                ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
+                                ImageSource *source = API->GetSceneImageSource(configData->lpName);
+                                if(source)
+                                    source->SetInt(TEXT("useChromaKey"), false);
                             }
                             else
                                 colorData.Clear();
@@ -889,7 +907,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 case IDC_BASETHRESHOLD_EDIT:
                 case IDC_BLEND_EDIT:
-                case IDC_GAMMA_EDIT:
+                case IDC_SPILLREDUCTION_EDIT:
                     if(HIWORD(wParam) == EN_CHANGE)
                     {
                         ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
@@ -902,22 +920,29 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                                 HWND hwndVal = NULL;
                                 switch(LOWORD(wParam))
                                 {
-                                    case IDC_BASETHRESHOLD_EDIT: hwndVal = GetDlgItem(hwnd, IDC_BASETHRESHOLD); break;
-                                    case IDC_BLEND_EDIT:         hwndVal = GetDlgItem(hwnd, IDC_BLEND); break;
-                                    case IDC_GAMMA_EDIT:         hwndVal = GetDlgItem(hwnd, IDC_GAMMA); break;
+                                    case IDC_BASETHRESHOLD_EDIT:    hwndVal = GetDlgItem(hwnd, IDC_BASETHRESHOLD); break;
+                                    case IDC_BLEND_EDIT:            hwndVal = GetDlgItem(hwnd, IDC_BLEND); break;
+                                    case IDC_SPILLREDUCTION_EDIT:   hwndVal = GetDlgItem(hwnd, IDC_SPILLREDUCTION); break;
                                 }
 
                                 int val = (int)SendMessage(hwndVal, UDM_GETPOS32, 0, 0);
                                 switch(LOWORD(wParam))
                                 {
-                                    case IDC_BASETHRESHOLD_EDIT: source->SetInt(TEXT("keySimilarity"), val); break;
-                                    case IDC_BLEND_EDIT:         source->SetInt(TEXT("keyBlend"), val); break;
-                                    case IDC_GAMMA_EDIT:         source->SetInt(TEXT("keyGamma"), val); break;
+                                    case IDC_BASETHRESHOLD_EDIT:    source->SetInt(TEXT("keySimilarity"), val); break;
+                                    case IDC_BLEND_EDIT:            source->SetInt(TEXT("keyBlend"), val); break;
+                                    case IDC_SPILLREDUCTION_EDIT:   source->SetInt(TEXT("keySpillReduction"), val); break;
                                 }
                             }
                         }
                     }
                     break;
+
+                case IDC_USEPREFERREDOUTPUT:
+                    {
+                        BOOL bUsePreferredOutput = SendMessage(GetDlgItem(hwnd, IDC_USEPREFERREDOUTPUT), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        EnableWindow(GetDlgItem(hwnd, IDC_PREFERREDOUTPUT), bUsePreferredOutput);
+                        break;
+                    }
 
                 case IDC_REFRESH:
                     {
@@ -941,7 +966,6 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         {
                             EnableWindow(GetDlgItem(hwnd, IDC_RESOLUTION), FALSE);
                             EnableWindow(GetDlgItem(hwnd, IDC_FPS), FALSE);
-                            EnableWindow(GetDlgItem(hwnd, IDC_FPS_EDIT), FALSE);
                             EnableWindow(GetDlgItem(hwnd, IDC_CONFIG), FALSE);
                             EnableWindow(GetDlgItem(hwnd, IDOK), FALSE);
                         }
@@ -949,7 +973,6 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         {
                             EnableWindow(GetDlgItem(hwnd, IDC_RESOLUTION), TRUE);
                             EnableWindow(GetDlgItem(hwnd, IDC_FPS), TRUE);
-                            EnableWindow(GetDlgItem(hwnd, IDC_FPS_EDIT), TRUE);
                             EnableWindow(GetDlgItem(hwnd, IDC_CONFIG), TRUE);
                             EnableWindow(GetDlgItem(hwnd, IDOK), TRUE);
 
@@ -984,8 +1007,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                             //-------------------------------------------------
 
                             SIZE size;
-                            UINT fps;
-                            if(GetClosestResolution(configData->outputList, size, fps))
+                            UINT64 frameInterval;
+                            if(GetClosestResolution(configData->outputList, size, frameInterval))
                             {
                                 String strResolution;
                                 strResolution << UIntString(size.cx) << TEXT("x") << UIntString(size.cy);
@@ -994,7 +1017,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                                 ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_RESOLUTION, CBN_EDITCHANGE), (LPARAM)hwndResolutions);
 
                                 HWND hwndFPS = GetDlgItem(hwnd, IDC_FPS);
-                                SendMessage(hwndFPS, UDM_SETPOS32, 0, fps);
+                                SetWindowText(hwndFPS, FloatString(10000000.0/double(frameInterval)));
                             }
                             else
                             {
@@ -1012,24 +1035,136 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         HWND hwndResolution = (HWND)lParam;
                         HWND hwndFPS        = GetDlgItem(hwnd, IDC_FPS);
-                        HWND hwndFPSEdit    = GetDlgItem(hwnd, IDC_FPS_EDIT);
 
                         SIZE resolution;
                         FPSInfo fpsInfo;
 
+                        SendMessage(hwndFPS, CB_RESETCONTENT, 0, 0);
                         if(!GetResolution(hwndResolution, resolution, HIWORD(wParam) == CBN_SELCHANGE) || !configData->GetResolutionFPSInfo(resolution, fpsInfo))
                         {
-                            SendMessage(hwndFPS, UDM_SETRANGE32, 0, 0);
-                            SendMessage(hwndFPS, UDM_SETPOS32, 0, 0);
-                            SetWindowText(hwndFPSEdit, TEXT("0"));
+                            SetWindowText(hwndFPS, TEXT("0"));
                             break;
                         }
 
-                        SendMessage(hwndFPS, UDM_SETRANGE32, fpsInfo.minFPS, fpsInfo.maxFPS);
-                        SendMessage(hwndFPS, UDM_SETPOS32, 0, fpsInfo.maxFPS);
+                        //-------------------------------------------------------
 
-                        String strFPS = IntString(fpsInfo.maxFPS);
-                        SetWindowText(hwndFPSEdit, strFPS.Array());
+                        double bestFPS = 0.0f;
+                        UINT64 bestInterval = 0;
+                        for(UINT i=0; i<fpsInfo.supportedIntervals.Num(); i++)
+                        {
+                            double minFPS = 10000000.0/double(fpsInfo.supportedIntervals[i].maxFrameInterval);
+                            double maxFPS = 10000000.0/double(fpsInfo.supportedIntervals[i].minFrameInterval);
+
+                            String strFPS;
+                            if(CloseDouble(minFPS, maxFPS))
+                                strFPS << FloatString(float(minFPS));
+                            else
+                                strFPS << FloatString(float(minFPS)) << TEXT("-") << FloatString(float(maxFPS));
+
+                            int id = (int)SendMessage(hwndFPS, CB_FINDSTRINGEXACT, -1, (LPARAM)strFPS.Array());
+                            if(id == CB_ERR)
+                                SendMessage(hwndFPS, CB_ADDSTRING, 0, (LPARAM)strFPS.Array());
+
+                            if(bestFPS < minFPS)
+                            {
+                                bestFPS = minFPS;
+                                bestInterval = fpsInfo.supportedIntervals[i].maxFrameInterval;
+                            }
+                            if(bestFPS < maxFPS)
+                            {
+                                bestFPS = maxFPS;
+                                bestInterval = fpsInfo.supportedIntervals[i].minFrameInterval;
+                            }
+                        }
+
+                        SetWindowText(hwndFPS, FloatString(float(bestFPS)));
+
+                        //-------------------------------------------------------
+
+                        PostMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_FPS, CBN_EDITCHANGE), (LPARAM)GetDlgItem(hwnd, IDC_FPS));
+                    }
+                    break;
+
+                case IDC_FPS:
+                    if(HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == CBN_EDITCHANGE)
+                    {
+                        ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
+
+                        SIZE resolution;
+                        if(!GetResolution(GetDlgItem(hwnd, IDC_RESOLUTION), resolution, FALSE))
+                            break;
+
+                        FPSInfo fpsInfo;
+                        if(!configData->GetResolutionFPSInfo(resolution, fpsInfo))
+                            break;
+
+                        //--------------------------------------------
+
+                        String strFPSVal = GetEditText((HWND)lParam);
+                        if(schr(strFPSVal, '-'))
+                        {
+                            StringList tokens;
+                            strFPSVal.GetTokenList(tokens, '-', FALSE);
+                            if(tokens.Num())
+                                strFPSVal = tokens.Last();
+                            else
+                                break;
+                        }
+
+                        if(!ValidFloatString(strFPSVal))
+                            break;
+
+                        float fps = strFPSVal.ToFloat();
+                        INT64 interval = INT64(10000000.0/double(fps));
+
+                        UINT64 bestInterval;
+                        UINT64 bestDist = 0xFFFFFFFFFFFFFFFFLL;
+                        for(UINT i=0; i<fpsInfo.supportedIntervals.Num(); i++)
+                        {
+                            UINT64 maxDist = (UINT64)_abs64(INT64(fpsInfo.supportedIntervals[i].maxFrameInterval)-interval);
+                            UINT64 minDist = (UINT64)_abs64(INT64(fpsInfo.supportedIntervals[i].minFrameInterval)-interval);
+
+                            if(maxDist < bestDist)
+                            {
+                                bestDist = maxDist;
+                                bestInterval = fpsInfo.supportedIntervals[i].maxFrameInterval;
+                            }
+                            if(minDist < bestDist)
+                            {
+                                bestDist = minDist;
+                                bestInterval = fpsInfo.supportedIntervals[i].minFrameInterval;
+                            }
+                        }
+
+                        //--------------------------------------------
+
+                        HWND hwndPreferredList = GetDlgItem(hwnd, IDC_PREFERREDOUTPUT);
+                        SendMessage(hwndPreferredList, CB_RESETCONTENT, 0, 0);
+
+                        UINT preferredType = (UINT)configData->data->GetInt(TEXT("preferredType"), -1);
+
+                        List<VideoOutputType> types;
+                        if(GetVideoOutputTypes(configData->outputList, resolution.cx, resolution.cy, bestInterval, types))
+                        {
+                            int preferredID = -1;
+
+                            for(UINT i=0; i<types.Num(); i++)
+                            {
+                                CTSTR lpName = EnumToName[(UINT)types[i]];
+
+                                int id = (int)SendMessage(hwndPreferredList, CB_ADDSTRING, 0, (LPARAM)lpName);
+                                SendMessage(hwndPreferredList, CB_SETITEMDATA, id, (LPARAM)types[i]);
+
+                                if((UINT)types[i] == preferredType)
+                                {
+                                    SendMessage(hwndPreferredList, CB_SETCURSEL, id, 0);
+                                    preferredID = id;
+                                }
+                            }
+
+                            if(preferredID == -1)
+                                SendMessage(hwndPreferredList, CB_SETCURSEL, 0, 0);
+                        }
                     }
                     break;
 
@@ -1080,13 +1215,24 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         }
 
                         String strDevice = GetCBText(GetDlgItem(hwnd, IDC_DEVICELIST), deviceID);
+                        String strFPS = GetEditText(GetDlgItem(hwnd, IDC_FPS));
+                        if(schr(strFPS, '-'))
+                        {
+                            StringList tokens;
+                            strFPS.GetTokenList(tokens, '-', FALSE);
+                            if(tokens.Num())
+                                strFPS = tokens.Last();
+                            else
+                                break;
+                        }
 
-                        BOOL bUDMError;
-                        UINT fps = (UINT)SendMessage(GetDlgItem(hwnd, IDC_FPS), UDM_GETPOS32, 0, (LPARAM)&bUDMError);
-                        if(bUDMError)
-                            break;
+                        float fpsVal = 120.0f;
+                        if(ValidFloatString(strFPS))
+                            fpsVal = strFPS.ToFloat();
 
-                        if(fps == 0)
+                        UINT64 frameInterval = UINT64(10000000.0/double(fpsVal));
+
+                        if(strFPS == TEXT("0") || fpsVal == 0.0)
                         {
                             MessageBox(hwnd, PluginStr("DeviceSelection.UnsupportedResolution"), NULL, 0);
                             break;
@@ -1111,6 +1257,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                             }
                         }
 
+                        //------------------------------------------
+
                         BOOL bFlip = SendMessage(GetDlgItem(hwnd, IDC_FLIPIMAGE), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         BOOL bCustomResolution = SendMessage(GetDlgItem(hwnd, IDC_CUSTOMRESOLUTION), BM_GETCHECK, 0, 0) == BST_CHECKED;
 
@@ -1118,26 +1266,40 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         configData->data->SetInt(TEXT("customResolution"), bCustomResolution);
                         configData->data->SetInt(TEXT("resolutionWidth"), resolution.cx);
                         configData->data->SetInt(TEXT("resolutionHeight"), resolution.cy);
-                        configData->data->SetInt(TEXT("fps"), fps);
+                        configData->data->SetInt(TEXT("frameInterval"), UINT(frameInterval));
                         configData->data->SetInt(TEXT("flipImage"), bFlip);
 
-                        BOOL bUseColorKey = SendMessage(GetDlgItem(hwnd, IDC_USECOLORKEY), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        //------------------------------------------
+
+                        UINT preferredType = -1;
+                        int id = (int)SendMessage(GetDlgItem(hwnd, IDC_PREFERREDOUTPUT), CB_GETCURSEL, 0, 0);
+                        if(id != -1)
+                            preferredType = (UINT)SendMessage(GetDlgItem(hwnd, IDC_PREFERREDOUTPUT), CB_GETITEMDATA, id, 0);
+
+                        BOOL bUsePreferredType = preferredType != -1 && SendMessage(GetDlgItem(hwnd, IDC_USEPREFERREDOUTPUT), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        configData->data->SetInt(TEXT("usePreferredType"), bUsePreferredType);
+                        configData->data->SetInt(TEXT("preferredType"), preferredType);
+
+                        //------------------------------------------
+
+                        BOOL bUseChromaKey = SendMessage(GetDlgItem(hwnd, IDC_USECHROMAKEY), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         DWORD color = CCGetColor(GetDlgItem(hwnd, IDC_COLOR));
 
+                        BOOL bUDMError;
                         UINT keySimilarity = (UINT)SendMessage(GetDlgItem(hwnd, IDC_BASETHRESHOLD), UDM_GETPOS32, 0, (LPARAM)&bUDMError);
                         if(bUDMError) keySimilarity = 0;
 
                         UINT keyBlend = (UINT)SendMessage(GetDlgItem(hwnd, IDC_BLEND), UDM_GETPOS32, 0, (LPARAM)&bUDMError);
                         if(bUDMError) keyBlend = 10;
 
-                        int keyGamma = (int)SendMessage(GetDlgItem(hwnd, IDC_GAMMA), UDM_GETPOS32, 0, (LPARAM)&bUDMError);
-                        if(bUDMError) keyGamma = 0;
+                        int keySpillReduction = (int)SendMessage(GetDlgItem(hwnd, IDC_SPILLREDUCTION), UDM_GETPOS32, 0, (LPARAM)&bUDMError);
+                        if(bUDMError) keySpillReduction = 0;
 
-                        configData->data->SetInt(TEXT("useColorKey"), bUseColorKey);
+                        configData->data->SetInt(TEXT("useChromaKey"), bUseChromaKey);
                         configData->data->SetInt(TEXT("keyColor"), color);
                         configData->data->SetInt(TEXT("keySimilarity"), keySimilarity);
                         configData->data->SetInt(TEXT("keyBlend"), keyBlend);
-                        configData->data->SetInt(TEXT("keyGamma"), keyGamma);
+                        configData->data->SetInt(TEXT("keySpillReduction"), keySpillReduction);
                     }
 
                 case IDCANCEL:
@@ -1148,13 +1310,13 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         if(source)
                         {
-                            source->SetInt(TEXT("flipImage"),     configData->data->GetInt(TEXT("flipImage"), 0));
+                            source->SetInt(TEXT("flipImage"),           configData->data->GetInt(TEXT("flipImage"), 0));
 
-                            source->SetInt(TEXT("useColorKey"),   configData->data->GetInt(TEXT("useColorKey"), 0));
-                            source->SetInt(TEXT("keyColor"),      configData->data->GetInt(TEXT("keyColor"), 0xFFFFFFFF));
-                            source->SetInt(TEXT("keySimilarity"), configData->data->GetInt(TEXT("keySimilarity"), 0));
-                            source->SetInt(TEXT("keyBlend"),      configData->data->GetInt(TEXT("keyBlend"), 10));
-                            source->SetInt(TEXT("keyGamma"),      configData->data->GetInt(TEXT("keyGamma"), 0));
+                            source->SetInt(TEXT("useChromaKey"),        configData->data->GetInt(TEXT("useChromaKey"), 0));
+                            source->SetInt(TEXT("keyColor"),            configData->data->GetInt(TEXT("keyColor"), 0xFFFFFFFF));
+                            source->SetInt(TEXT("keySimilarity"),       configData->data->GetInt(TEXT("keySimilarity"), 0));
+                            source->SetInt(TEXT("keyBlend"),            configData->data->GetInt(TEXT("keyBlend"), 80));
+                            source->SetInt(TEXT("keySpillReduction"),   configData->data->GetInt(TEXT("keySpillReduction"), 50));
                         }
                     }
 

@@ -9,6 +9,8 @@
 #define IDC_FPS_EDIT                    1009
 #define IDC_FPS                         1010
 #define IDC_REFRESH                     1011
+#define IDC_FPS2                        1012
+#define IDC_USEPREFERREDOUTPUT          1012
 #define IDC_FLIPIMAGE                   1014
 #define IDC_BUTTON1                     1015
 #define IDC_CUSTOM                      1015
@@ -26,7 +28,10 @@
 #define IDC_BLEND_EDIT                  1021
 #define IDC_BLEND                       1022
 #define IDC_GAMMA_EDIT                  1023
+#define IDC_SPILLREDUCTION_EDIT         1023
 #define IDC_GAMMA                       1024
+#define IDC_SPILLREDUCTION              1024
+#define IDC_PREFERREDOUTPUT             1026
 
 // Next default values for new objects
 // 
@@ -34,7 +39,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        107
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1022
+#define _APS_NEXT_CONTROL_VALUE         1027
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

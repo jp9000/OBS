@@ -64,9 +64,10 @@ class DeviceSource : public ImageSource
 
     String          strDevice;
     bool            bFlipVertical;
-    UINT            fps;
+    UINT64          frameInterval;
     UINT            renderCX, renderCY;
     BOOL            bUseCustomResolution;
+    UINT            preferredOutputType;
 
     bool            bFirstFrame;
     bool            bUseThreadedConversion;
@@ -88,17 +89,19 @@ class DeviceSource : public ImageSource
 
     //---------------------------------
 
-    bool            bUseColorKey;
+    bool            bUseChromaKey;
     DWORD           keyColor;
+    Color4          keyChroma;
+    Color4          keyBaseColor;
     int             keySimilarity;
     int             keyBlend;
-    int             keyGamma;
+    int             keySpillReduction;
 
     //---------------------------------
 
     String ChooseShader();
 
-    void Convert422To444(LPBYTE convertBuffer, LPBYTE lp422, bool bLeadingY);
+    void Convert422To444(LPBYTE convertBuffer, LPBYTE lp422, UINT pitch, bool bLeadingY);
 
     void FlushSamples()
     {

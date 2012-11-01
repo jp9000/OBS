@@ -19,10 +19,12 @@
 
 uniform Texture2D diffuseTexture;
 uniform float4 outputColor;
-uniform float4 colorKey;
-uniform float similarity;
-uniform float blend;
-uniform float gamma;
+uniform float4 keyBaseColor;
+uniform float4 chromaKey;
+uniform float2 pixelSize;
+uniform float keySimilarity;
+uniform float keyBlend;
+uniform float keySpill;
 
 SamplerState textureSampler
 {
@@ -37,13 +39,52 @@ struct VertData
     float2 texCoord : TexCoord0;
 };
 
+float getSampleDist(float3 chromaKey, float3 rgb)
+{
+    const float4x4 yuvMat  = {0.257, -0.148,  0.439, 0.0,
+                              0.504, -0.291, -0.368, 0.0,
+                              0.098,  0.439, -0.071, 0.0,
+                              0.0625, 0.50,   0.50,  1.0};
+
+    //a nice quick colorspace conversion
+    float4 yuvx = mul(float4(rgb.rgb, 1.0), yuvMat);
+
+    return distance(chromaKey.yz, yuvx.yz*2.0);
+}
+
 float4 main(VertData input) : SV_Target
 {
     float4 rgbx = diffuseTexture.Sample(textureSampler, input.texCoord);
 
-    rgbx = saturate(rgbx);
-    float colorDiff = length(rgbx.rgb - colorKey.rgb);
-    rgbx.a = saturate(pow(max(colorDiff-similarity, 0.0)/blend, gamma));
+    //-----------------------------
+
+    float distVal = getSampleDist(chromaKey, rgbx.rgb);
+    distVal += getSampleDist(chromaKey, diffuseTexture.Sample(textureSampler, input.texCoord-pixelSize).rgb);
+    distVal += getSampleDist(chromaKey, diffuseTexture.Sample(textureSampler, input.texCoord-float2(pixelSize.x, 0.0)).rgb);
+    distVal += getSampleDist(chromaKey, diffuseTexture.Sample(textureSampler, input.texCoord-float2(pixelSize.x, -pixelSize.y)).rgb);
+
+    distVal += getSampleDist(chromaKey, diffuseTexture.Sample(textureSampler, input.texCoord-float2(0.0, pixelSize.y)).rgb);
+    distVal += getSampleDist(chromaKey, diffuseTexture.Sample(textureSampler, input.texCoord+float2(0.0, pixelSize.y)).rgb);
+
+    distVal += getSampleDist(chromaKey, diffuseTexture.Sample(textureSampler, input.texCoord+float2(pixelSize.x, -pixelSize.y)).rgb);
+    distVal += getSampleDist(chromaKey, diffuseTexture.Sample(textureSampler, input.texCoord+float2(pixelSize.x, 0.0)).rgb);
+    distVal += getSampleDist(chromaKey, diffuseTexture.Sample(textureSampler, input.texCoord+pixelSize).rgb);
+
+    distVal /= 9.0;
+
+    //-----------------------------
+
+    float baseMask = distVal - keySimilarity;
+    float fullMask = pow(saturate(baseMask/keyBlend), 1.5);
+    float spillVal = pow(saturate(baseMask/keySpill), 1.5);
+
+    //-----------------------------
+
+    rgbx.a = fullMask;
+
+    float3 spillDesaturation = rgbx.rgb-keyBaseColor.rgb;
+    spillDesaturation.rgb += (keyBaseColor.r+keyBaseColor.g+keyBaseColor.b)*0.333333333;
+    rgbx.rgb = saturate(spillDesaturation)*(1.0-spillVal) + rgbx.rgb*spillVal;
 
     return rgbx * outputColor;
 }

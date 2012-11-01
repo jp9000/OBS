@@ -19,10 +19,12 @@
 
 uniform Texture2D diffuseTexture;
 uniform float4 outputColor;
-uniform float4 colorKey;
-uniform float similarity;
-uniform float blend;
-uniform float gamma;
+uniform float4 keyBaseColor;
+uniform float4 chromaKey;
+uniform float2 pixelSize;
+uniform float keySimilarity;
+uniform float keyBlend;
+uniform float keySpill;
 
 SamplerState textureSampler
 {
@@ -37,10 +39,39 @@ struct VertData
     float2 texCoord : TexCoord0;
 };
 
+float getSampleDist(float3 chromaKey, float3 yuvx)
+{
+    return distance(chromaKey.yz, yuvx.yz*2.0);
+}
+
 float4 main(VertData input) : SV_Target
 {
-    //a nice quick colorspace conversion
     float4 yuvx = diffuseTexture.Sample(textureSampler, input.texCoord).grba;
+
+    //-----------------------------
+
+    float distVal = getSampleDist(chromaKey, yuvx.xzy);
+    distVal += getSampleDist(chromaKey, diffuseTexture.Sample(textureSampler, input.texCoord-pixelSize).grb);
+    distVal += getSampleDist(chromaKey, diffuseTexture.Sample(textureSampler, input.texCoord-float2(pixelSize.x, 0.0)).grb);
+    distVal += getSampleDist(chromaKey, diffuseTexture.Sample(textureSampler, input.texCoord-float2(pixelSize.x, -pixelSize.y)).grb);
+
+    distVal += getSampleDist(chromaKey, diffuseTexture.Sample(textureSampler, input.texCoord-float2(0.0, pixelSize.y)).grb);
+    distVal += getSampleDist(chromaKey, diffuseTexture.Sample(textureSampler, input.texCoord+float2(0.0, pixelSize.y)).grb);
+
+    distVal += getSampleDist(chromaKey, diffuseTexture.Sample(textureSampler, input.texCoord+float2(pixelSize.x, -pixelSize.y)).grb);
+    distVal += getSampleDist(chromaKey, diffuseTexture.Sample(textureSampler, input.texCoord+float2(pixelSize.x, 0.0)).grb);
+    distVal += getSampleDist(chromaKey, diffuseTexture.Sample(textureSampler, input.texCoord+pixelSize).grb);
+
+    distVal /= 9.0;
+
+    //-----------------------------
+
+    float baseMask = distVal - keySimilarity;
+    float fullMask = pow(saturate(baseMask/keyBlend), 1.5);
+    float spillVal = pow(saturate(baseMask/keySpill), 1.5);
+
+    //-----------------------------
+
     yuvx -= float4(0.0625, 0.5, 0.5, 0.0);
     yuvx.r *= 1.1640625;
 
@@ -50,8 +81,14 @@ float4 main(VertData input) : SV_Target
                          1.0);
 
     rgbx = saturate(rgbx);
-    float colorDiff = length(rgbx.rgb - colorKey.rgb);
-    rgbx.a = saturate(pow(max(colorDiff-similarity, 0.0)/blend, gamma));
+
+    //-----------------------------
+
+    float3 spillDesaturation = rgbx.rgb-keyBaseColor.rgb;
+    spillDesaturation.rgb += (keyBaseColor.r+keyBaseColor.g+keyBaseColor.b)*0.333333333;
+    rgbx.rgb = saturate(spillDesaturation)*(1.0-spillVal) + rgbx.rgb*spillVal;
+
+    //-----------------------------
 
     return rgbx * outputColor;
 }
