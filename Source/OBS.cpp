@@ -2034,13 +2034,13 @@ void OBS::MainCaptureLoop()
 
             Ortho(0.0f, renderFrameSize.x, renderFrameSize.y, 0.0f, -100.0f, 100.0f);
 
-            LoadVertexShader(solidVertexShader);
-            LoadPixelShader(solidPixelShader);
-            solidPixelShader->SetColor(solidPixelShader->GetParameter(0), 0xFFFF0000);
-
             //draw selections if in edit mode
             if(bEditMode && !bSizeChanging)
             {
+                LoadVertexShader(solidVertexShader);
+                LoadPixelShader(solidPixelShader);
+                solidPixelShader->SetColor(solidPixelShader->GetParameter(0), 0xFFFF0000);
+
                 Ortho(0.0f, baseSize.x, baseSize.y, 0.0f, -100.0f, 100.0f);
 
                 if(scene)
@@ -2726,23 +2726,41 @@ void OBSAPIInterface::HandleHotkeys()
         DWORD hotkeyModifiers   = HIBYTE(info.hotkey);
 
         bool bModifiersMatch = (hotkeyModifiers == modifiers);
-        if(bModifiersMatch)
-        {
-            short keyState   = GetAsyncKeyState(hotkeyVK);
-            bool bDown       = (keyState & 0x8000) != 0;
-            bool bWasPressed = (keyState & 0x1) != 0;
 
-            if(bDown || bWasPressed)
+        if(hotkeyModifiers && !hotkeyVK) //modifier-only hotkey
+        {
+            if((hotkeyModifiers & modifiers) == hotkeyModifiers)
             {
-                if(!info.bHotkeyDown && info.bModifiersDown) //only triggers the hotkey if the actual main key was pressed second
+                if(!info.bHotkeyDown)
                 {
                     PostMessage(hwndMain, OBS_CALLHOTKEY, TRUE, info.hotkeyID);
                     info.bDownSent = true;
+                    info.bHotkeyDown = true;
                 }
 
-                info.bHotkeyDown = true;
-                if(bDown)
-                    continue;
+                continue;
+            }
+        }
+        else
+        {
+            if(bModifiersMatch)
+            {
+                short keyState   = GetAsyncKeyState(hotkeyVK);
+                bool bDown       = (keyState & 0x8000) != 0;
+                bool bWasPressed = (keyState & 0x1) != 0;
+
+                if(bDown || bWasPressed)
+                {
+                    if(!info.bHotkeyDown && info.bModifiersDown) //only triggers the hotkey if the actual main key was pressed second
+                    {
+                        PostMessage(hwndMain, OBS_CALLHOTKEY, TRUE, info.hotkeyID);
+                        info.bDownSent = true;
+                    }
+
+                    info.bHotkeyDown = true;
+                    if(bDown)
+                        continue;
+                }
             }
         }
 

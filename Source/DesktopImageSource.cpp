@@ -32,6 +32,8 @@ class DesktopImageSource : public ImageSource
     BOOL     bClientCapture, bCaptureMouse;
     HWND     hwndFoundWindow;
 
+    Shader   *colorKeyShader;
+
     int      width, height;
     RECT     captureRect;
     UINT     frameTime;
@@ -40,10 +42,14 @@ class DesktopImageSource : public ImageSource
 
     UINT     warningID;
 
+    bool     bUseColorKey;
+    DWORD    keyColor;
+    UINT     keySimilarity, keyBlend;
+
 public:
     DesktopImageSource(UINT frameTime, XElement *data)
     {
-        traceIn(DesktopImageSource::DesktopImageSource);
+        //traceIn(DesktopImageSource::DesktopImageSource);
 
         this->data = data;
         UpdateSettings();
@@ -53,12 +59,12 @@ public:
 
         //-------------------------------------------------------
 
-        traceOut;
+        //traceOut;
     }
 
     ~DesktopImageSource()
     {
-        traceIn(DesktopImageSource::~DesktopImageSource);
+        //traceIn(DesktopImageSource::~DesktopImageSource);
 
         for(int i=0; i<NUM_CAPTURE_TEXTURES; i++)
             delete renderTextures[i];
@@ -66,12 +72,15 @@ public:
         if(warningID)
             App->RemoveStreamInfo(warningID);
 
-        traceOut;
+        if(colorKeyShader)
+            delete colorKeyShader;
+
+        //traceOut;
     }
 
     void Preprocess()
     {
-        traceIn(DesktopImageSource::Preprocess);
+        //traceIn(DesktopImageSource::Preprocess);
 
         Texture *captureTexture = renderTextures[curCaptureTexture];
 
@@ -221,21 +230,41 @@ public:
         if(++curCaptureTexture == NUM_CAPTURE_TEXTURES)
             curCaptureTexture = 0;
 
-        traceOut;
+        //traceOut;
     }
 
     void Render(const Vect2 &pos, const Vect2 &size)
     {
-        traceIn(DesktopImageSource::Render);
+        //traceIn(DesktopImageSource::Render);
 
         if(lastRendered)
         {
-            EnableBlending(FALSE);
+            Shader *lastPixelShader;
+
+            if(bUseColorKey)
+            {
+                lastPixelShader = GetCurrentPixelShader();
+                LoadPixelShader(colorKeyShader);
+
+                float fSimilarity = float(keySimilarity)*0.01f;
+                float fBlend      = float(keyBlend)*0.01f;
+
+                colorKeyShader->SetColor(colorKeyShader->GetParameter(2), keyColor);
+                colorKeyShader->SetFloat(colorKeyShader->GetParameter(3), fSimilarity);
+                colorKeyShader->SetFloat(colorKeyShader->GetParameter(4), fBlend);
+            }
+            else
+                EnableBlending(FALSE);
+
             DrawSprite(lastRendered, 0xFFFFFFFF, pos.x, pos.y, pos.x+size.x, pos.y+size.y);
-            EnableBlending(TRUE);
+
+            if(bUseColorKey)
+                LoadPixelShader(lastPixelShader);
+            else
+                EnableBlending(TRUE);
         }
 
-        traceOut;
+        //traceOut;
     }
 
     Vect2 GetSize() const
@@ -247,13 +276,11 @@ public:
     {
         App->EnterSceneMutex();
 
-        for(int i=0; i<NUM_CAPTURE_TEXTURES; i++)
-            delete renderTextures[i];
+        UINT newCaptureType     = data->GetInt(TEXT("captureType"));
+        String strNewWindow     = data->GetString(TEXT("window"));
+        String strNewWindowClass= data->GetString(TEXT("windowClass"));
+        BOOL bNewClientCapture  = data->GetInt(TEXT("innerWindow"), 1);
 
-        captureType     = data->GetInt(TEXT("captureType"));
-        strWindow       = data->GetString(TEXT("window"));
-        strWindowClass  = data->GetString(TEXT("windowClass"));
-        bClientCapture  = data->GetInt(TEXT("innerWindow"), 1);
         bCaptureMouse   = data->GetInt(TEXT("captureMouse"), 1);
 
         int x  = data->GetInt(TEXT("captureX"));
@@ -261,20 +288,84 @@ public:
         int cx = data->GetInt(TEXT("captureCX"), 32);
         int cy = data->GetInt(TEXT("captureCY"), 32);
 
-        captureRect.left   = x;
-        captureRect.top    = y;
-        captureRect.right  = x+cx;
-        captureRect.bottom = y+cy;
+        if( captureRect.left != x || captureRect.right != (x+cx) || captureRect.top != cy || captureRect.bottom != (y+cy) ||
+            newCaptureType != captureType || !strNewWindowClass.CompareI(strWindowClass) || !strNewWindow.CompareI(strWindow) ||
+            bNewClientCapture != bClientCapture)
+        {
+            for(int i=0; i<NUM_CAPTURE_TEXTURES; i++)
+                delete renderTextures[i];
 
-        width  = cx;
-        height = cy;
+            captureType        = newCaptureType;
+            strWindow          = strNewWindow;
+            strWindowClass     = strNewWindowClass;
+            bClientCapture     = bNewClientCapture;
 
-        for(UINT i=0; i<NUM_CAPTURE_TEXTURES; i++)
-            renderTextures[i] = CreateGDITexture(width, height);
+            captureRect.left   = x;
+            captureRect.top    = y;
+            captureRect.right  = x+cx;
+            captureRect.bottom = y+cy;
 
-        lastRendered = NULL;
+            width  = cx;
+            height = cy;
+
+            for(UINT i=0; i<NUM_CAPTURE_TEXTURES; i++)
+                renderTextures[i] = CreateGDITexture(width, height);
+
+            lastRendered = NULL;
+        }
+
+        bool bNewUseColorKey = data->GetInt(TEXT("useColorKey"), 0) != 0;
+        keyColor        = data->GetInt(TEXT("keyColor"), 0xFFFFFFFF);
+        keySimilarity   = data->GetInt(TEXT("keySimilarity"), 10);
+        keyBlend        = data->GetInt(TEXT("keyBlend"), 0);
+
+        if(bNewUseColorKey != bUseColorKey)
+        {
+            if(colorKeyShader)
+            {
+                delete colorKeyShader;
+                colorKeyShader = NULL;
+            }
+
+            if(bUseColorKey = bNewUseColorKey)
+                colorKeyShader = CreatePixelShaderFromFile(TEXT("shaders\\ColorKey_RGB.pShader"));
+        }
 
         App->LeaveSceneMutex();
+    }
+
+    void SetInt(CTSTR lpName, int iVal)
+    {
+        if(scmpi(lpName, TEXT("useColorKey")) == 0)
+        {
+            bool bNewVal = iVal != 0;
+            if(bUseColorKey != bNewVal)
+            {
+                API->EnterSceneMutex();
+                if(colorKeyShader)
+                {
+                    delete colorKeyShader;
+                    colorKeyShader = NULL;
+                }
+
+                if(bUseColorKey = bNewVal)
+                    colorKeyShader = CreatePixelShaderFromFile(TEXT("shaders\\ColorKey_RGB.pShader"));
+
+                API->LeaveSceneMutex();
+            }
+        }
+        else if(scmpi(lpName, TEXT("keyColor")) == 0)
+        {
+            keyColor = (DWORD)iVal;
+        }
+        else if(scmpi(lpName, TEXT("keySimilarity")) == 0)
+        {
+            keySimilarity = iVal;
+        }
+        else if(scmpi(lpName, TEXT("keyBlend")) == 0)
+        {
+            keyBlend = iVal;
+        }
     }
 };
 
@@ -353,6 +444,7 @@ void RefreshWindowList(HWND hwndCombobox, StringList &classList)
 
 struct ConfigDesktopSourceInfo
 {
+    CTSTR lpName;
     XElement *data;
     StringList strClasses;
 };
@@ -701,8 +793,98 @@ LRESULT WINAPI RegionWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
+struct ColorSelectionData
+{
+    HDC hdcDesktop;
+    HDC hdcDestination;
+    HBITMAP hBitmap;
+    bool bValid;
+
+    inline ColorSelectionData() : hdcDesktop(NULL), hdcDestination(NULL), hBitmap(NULL), bValid(false) {}
+    inline ~ColorSelectionData() {Clear();}
+
+    inline bool Init()
+    {
+        hdcDesktop = GetDC(NULL);
+        if(!hdcDesktop)
+            return false;
+
+        hdcDestination = CreateCompatibleDC(hdcDesktop);
+        if(!hdcDestination)
+            return false;
+
+        hBitmap = CreateCompatibleBitmap(hdcDesktop, 1, 1);
+        if(!hBitmap)
+            return false;
+
+        SelectObject(hdcDestination, hBitmap);
+        bValid = true;
+
+        return true;
+    }
+
+    inline void Clear()
+    {
+        if(hdcDesktop)
+        {
+            ReleaseDC(NULL, hdcDesktop);
+            hdcDesktop = NULL;
+        }
+
+        if(hdcDestination)
+        {
+            DeleteDC(hdcDestination);
+            hdcDestination = NULL;
+        }
+
+        if(hBitmap)
+        {
+            DeleteObject(hBitmap);
+            hBitmap = NULL;
+        }
+
+        bValid = false;
+    }
+
+    inline DWORD GetColor()
+    {
+        POINT p;
+        if(GetCursorPos(&p))
+        {
+            BITMAPINFO data;
+            zero(&data, sizeof(data));
+
+            data.bmiHeader.biSize = sizeof(data.bmiHeader);
+            data.bmiHeader.biWidth = 1;
+            data.bmiHeader.biHeight = 1;
+            data.bmiHeader.biPlanes = 1;
+            data.bmiHeader.biBitCount = 24;
+            data.bmiHeader.biCompression = BI_RGB;
+            data.bmiHeader.biSizeImage = 4;
+
+            if(BitBlt(hdcDestination, 0, 0, 1, 1, hdcDesktop, p.x, p.y, SRCCOPY|CAPTUREBLT))
+            {
+                DWORD buffer;
+                if(GetDIBits(hdcDestination, hBitmap, 0, 1, &buffer, &data, DIB_RGB_COLORS))
+                    return 0xFF000000|buffer;
+            }
+            else
+            {
+                int err = GetLastError();
+                nop();
+            }
+        }
+
+        return 0xFF000000;
+    }
+};
+
 INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    static bool bSelectingColor = false;
+    static bool bMouseDown = false;
+    static ColorSelectionData colorData;
+
     switch(message)
     {
         case WM_INITDIALOG:
@@ -825,8 +1007,92 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_SELECTREGION);
                 SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
+                //------------------------------------------
+
+                BOOL  bUseColorKey  = data->GetInt(TEXT("useColorKey"), 0);
+                DWORD keyColor      = data->GetInt(TEXT("keyColor"), 0xFFFFFFFF);
+                UINT  similarity    = data->GetInt(TEXT("keySimilarity"), 10);
+                UINT  blend         = data->GetInt(TEXT("keyBlend"), 0);
+
+                SendMessage(GetDlgItem(hwnd, IDC_USECOLORKEY), BM_SETCHECK, bUseColorKey ? BST_CHECKED : BST_UNCHECKED, 0);
+                CCSetColor(GetDlgItem(hwnd, IDC_COLOR), keyColor);
+
+                SendMessage(GetDlgItem(hwnd, IDC_BASETHRESHOLD), UDM_SETRANGE32, 0, 100);
+                SendMessage(GetDlgItem(hwnd, IDC_BASETHRESHOLD), UDM_SETPOS32, 0, similarity);
+
+                SendMessage(GetDlgItem(hwnd, IDC_BLEND), UDM_SETRANGE32, 0, 100);
+                SendMessage(GetDlgItem(hwnd, IDC_BLEND), UDM_SETPOS32, 0, blend);
+
+                EnableWindow(GetDlgItem(hwnd, IDC_COLOR), bUseColorKey);
+                EnableWindow(GetDlgItem(hwnd, IDC_SELECT), bUseColorKey);
+                EnableWindow(GetDlgItem(hwnd, IDC_BASETHRESHOLD_EDIT), bUseColorKey);
+                EnableWindow(GetDlgItem(hwnd, IDC_BASETHRESHOLD), bUseColorKey);
+                EnableWindow(GetDlgItem(hwnd, IDC_BLEND_EDIT), bUseColorKey);
+                EnableWindow(GetDlgItem(hwnd, IDC_BLEND), bUseColorKey);
+
                 return TRUE;
             }
+
+        case WM_DESTROY:
+            if(colorData.bValid)
+            {
+                CCSetColor(GetDlgItem(hwnd, IDC_COLOR), colorData.GetColor());
+                colorData.Clear();
+            }
+            break;
+
+        case WM_LBUTTONDOWN:
+            if(bSelectingColor)
+            {
+                bMouseDown = true;
+                CCSetColor(GetDlgItem(hwnd, IDC_COLOR), colorData.GetColor());
+                ConfigDesktopSourceProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_COLOR, CCN_CHANGED), (LPARAM)GetDlgItem(hwnd, IDC_COLOR));
+            }
+            break;
+
+        case WM_MOUSEMOVE:
+            if(bSelectingColor && bMouseDown)
+            {
+                CCSetColor(GetDlgItem(hwnd, IDC_COLOR), colorData.GetColor());
+                ConfigDesktopSourceProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_COLOR, CCN_CHANGED), (LPARAM)GetDlgItem(hwnd, IDC_COLOR));
+            }
+            break;
+
+        case WM_LBUTTONUP:
+            if(bSelectingColor)
+            {
+                colorData.Clear();
+                ReleaseCapture();
+                bMouseDown = false;
+                bSelectingColor = false;
+
+                ConfigDesktopSourceInfo *configData = (ConfigDesktopSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
+                ImageSource *source = API->GetSceneImageSource(configData->lpName);
+                if(source)
+                    source->SetInt(TEXT("useColorKey"), true);
+            }
+            break;
+
+        case WM_CAPTURECHANGED:
+            if(bSelectingColor)
+            {
+                if(colorData.bValid)
+                {
+                    CCSetColor(GetDlgItem(hwnd, IDC_COLOR), colorData.GetColor());
+                    ConfigDesktopSourceProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_COLOR, CCN_CHANGED), (LPARAM)GetDlgItem(hwnd, IDC_COLOR));
+                    colorData.Clear();
+                }
+
+                ReleaseCapture();
+                bMouseDown = false;
+                bSelectingColor = false;
+
+                ConfigDesktopSourceInfo *configData = (ConfigDesktopSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
+                ImageSource *source = API->GetSceneImageSource(configData->lpName);
+                if(source)
+                    source->SetInt(TEXT("useColorKey"), true);
+            }
+            break;
 
         case WM_COMMAND:
             switch(LOWORD(wParam))
@@ -988,6 +1254,90 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                         break;
                     }
 
+                case IDC_USECOLORKEY:
+                    {
+                        HWND hwndUseColorKey = (HWND)lParam;
+                        BOOL bUseColorKey = SendMessage(hwndUseColorKey, BM_GETCHECK, 0, 0) == BST_CHECKED;
+
+                        ConfigDesktopSourceInfo *configData = (ConfigDesktopSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
+                        ImageSource *source = API->GetSceneImageSource(configData->lpName);
+                        if(source)
+                            source->SetInt(TEXT("useColorKey"), bUseColorKey);
+
+                        EnableWindow(GetDlgItem(hwnd, IDC_COLOR), bUseColorKey);
+                        EnableWindow(GetDlgItem(hwnd, IDC_SELECT), bUseColorKey);
+                        EnableWindow(GetDlgItem(hwnd, IDC_BASETHRESHOLD_EDIT), bUseColorKey);
+                        EnableWindow(GetDlgItem(hwnd, IDC_BASETHRESHOLD), bUseColorKey);
+                        EnableWindow(GetDlgItem(hwnd, IDC_BLEND_EDIT), bUseColorKey);
+                        EnableWindow(GetDlgItem(hwnd, IDC_BLEND), bUseColorKey);
+                        break;
+                    }
+
+                case IDC_COLOR:
+                    {
+                        ConfigDesktopSourceInfo *configData = (ConfigDesktopSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
+                        ImageSource *source = API->GetSceneImageSource(configData->lpName);
+
+                        if(source)
+                        {
+                            DWORD color = CCGetColor((HWND)lParam);
+                            source->SetInt(TEXT("keyColor"), color);
+                        }
+                        break;
+                    }
+
+                case IDC_SELECT:
+                    {
+                        if(!bSelectingColor)
+                        {
+                            if(colorData.Init())
+                            {
+                                bMouseDown = false;
+                                bSelectingColor = true;
+                                SetCapture(hwnd);
+                                HCURSOR hCursor = (HCURSOR)LoadImage(hinstMain, MAKEINTRESOURCE(IDC_COLORPICKER), IMAGE_CURSOR, 32, 32, 0);
+                                SetCursor(hCursor);
+
+                                ConfigDesktopSourceInfo *configData = (ConfigDesktopSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
+                                ImageSource *source = API->GetSceneImageSource(configData->lpName);
+                                if(source)
+                                    source->SetInt(TEXT("useColorKey"), false);
+                            }
+                            else
+                                colorData.Clear();
+                        }
+                        break;
+                    }
+
+                case IDC_BASETHRESHOLD_EDIT:
+                case IDC_BLEND_EDIT:
+                    if(HIWORD(wParam) == EN_CHANGE)
+                    {
+                        ConfigDesktopSourceInfo *configData = (ConfigDesktopSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
+                        if(configData)
+                        {
+                            ImageSource *source = API->GetSceneImageSource(configData->lpName);
+
+                            if(source)
+                            {
+                                HWND hwndVal = NULL;
+                                switch(LOWORD(wParam))
+                                {
+                                    case IDC_BASETHRESHOLD_EDIT:    hwndVal = GetDlgItem(hwnd, IDC_BASETHRESHOLD); break;
+                                    case IDC_BLEND_EDIT:            hwndVal = GetDlgItem(hwnd, IDC_BLEND); break;
+                                }
+
+                                int val = (int)SendMessage(hwndVal, UDM_GETPOS32, 0, 0);
+                                switch(LOWORD(wParam))
+                                {
+                                    case IDC_BASETHRESHOLD_EDIT:    source->SetInt(TEXT("keySimilarity"), val); break;
+                                    case IDC_BLEND_EDIT:            source->SetInt(TEXT("keyBlend"), val); break;
+                                }
+                            }
+                        }
+                    }
+                    break;
+
                 case IDOK:
                     {
                         UINT captureType = 0;
@@ -1046,9 +1396,35 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                         data->SetInt(TEXT("captureY"),      posY);
                         data->SetInt(TEXT("captureCX"),     sizeX);
                         data->SetInt(TEXT("captureCY"),     sizeY);
+
+                        //---------------------------------
+
+                        BOOL  bUseColorKey  = SendMessage(GetDlgItem(hwnd, IDC_USECOLORKEY), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        DWORD keyColor      = CCGetColor(GetDlgItem(hwnd, IDC_COLOR));
+                        UINT  keySimilarity = (UINT)SendMessage(GetDlgItem(hwnd, IDC_BASETHRESHOLD), UDM_GETPOS32, 0, 0);
+                        UINT  keyBlend      = (UINT)SendMessage(GetDlgItem(hwnd, IDC_BLEND), UDM_GETPOS32, 0, 0);
+
+                        data->SetInt(TEXT("useColorKey"), bUseColorKey);
+                        data->SetInt(TEXT("keyColor"), keyColor);
+                        data->SetInt(TEXT("keySimilarity"), keySimilarity);
+                        data->SetInt(TEXT("keyBlend"), keyBlend);
                     }
 
                 case IDCANCEL:
+                    if(LOWORD(wParam) == IDCANCEL)
+                    {
+                        ConfigDesktopSourceInfo *info = (ConfigDesktopSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
+                        ImageSource *source = API->GetSceneImageSource(info->lpName);
+                        if(source)
+                        {
+                            XElement *data = info->data;
+                            source->SetInt(TEXT("useColorKey"),   data->GetInt(TEXT("useColorKey"), 0));
+                            source->SetInt(TEXT("keyColor"),      data->GetInt(TEXT("keyColor"), 0xFFFFFFFF));
+                            source->SetInt(TEXT("keySimilarity"), data->GetInt(TEXT("keySimilarity"), 10));
+                            source->SetInt(TEXT("keyBlend"),      data->GetInt(TEXT("keyBlend"), 0));
+                        }
+                    }
+
                     EndDialog(hwnd, LOWORD(wParam));
                     break;
             }
@@ -1087,6 +1463,7 @@ bool STDCALL ConfigureDesktopSource(XElement *element, bool bInitialize)
 
     ConfigDesktopSourceInfo info;
     info.data = data;
+    info.lpName = element->GetName();
 
     if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_CONFIGUREDESKTOPSOURCE), hwndMain, ConfigDesktopSourceProc, (LPARAM)&info) == IDOK)
     {

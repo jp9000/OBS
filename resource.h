@@ -44,11 +44,17 @@
 #define IDC_SERVICE                     1014
 #define IDC_DOWNSCALE                   1014
 #define IDC_MAXBITRATE                  1015
+#define IDC_COLORPICKER                 1015
 #define IDC_BUFFERSIZE                  1016
 #define IDC_AUDIOCODEC                  1017
+#define IDC_USECOLORKEY                 1017
 #define IDC_AUDIOFORMAT                 1018
 #define IDC_AUDIOBITRATE                1019
 #define IDC_MONITOR                     1019
+#define IDC_BASETHRESHOLD_EDIT          1020
+#define IDC_BASETHRESHOLD               1021
+#define IDC_BLEND_EDIT                  1022
+#define IDC_BLEND                       1023
 #define IDC_LANGUAGE                    1028
 #define IDC_INFO                        1029
 #define IDC_FPS                         1030
@@ -174,6 +180,7 @@
 #define IDC_VERTICALSCRIPT              1122
 #define IDC_UNDERLINE                   1123
 #define IDC_ALIGN                       1124
+#define IDC_SELECT                      1125
 #define IDC_BOLD                        1126
 #define IDC_ITALIC                      1127
 #define IDA_SOURCE_MOVEUP               40018
@@ -206,7 +213,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        140
 #define _APS_NEXT_COMMAND_VALUE         40044
-#define _APS_NEXT_CONTROL_VALUE         1125
+#define _APS_NEXT_CONTROL_VALUE         1126
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

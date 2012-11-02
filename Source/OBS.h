@@ -325,6 +325,7 @@ class OBS
     friend class D3D10System;
     friend class OBSAPIInterface;
     friend class GlobalSource;
+    friend class TextOutputSource;
 
     //---------------------------------------------------
     // graphics stuff

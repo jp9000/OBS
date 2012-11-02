@@ -124,6 +124,14 @@ D3D10System::D3D10System()
 
     //------------------------------------------------------------------
 
+    rasterizerDesc.ScissorEnable = TRUE;
+
+    err = d3d->CreateRasterizerState(&rasterizerDesc, &scissorState);
+    if(FAILED(err))
+        CrashError(TEXT("Unable to create scissor state"));
+
+    //------------------------------------------------------------------
+
     ID3D10Texture2D *backBuffer = NULL;
     err = swap->GetBuffer(0, IID_ID3D10Texture2D, (void**)&backBuffer);
     if(FAILED(err))
@@ -169,6 +177,7 @@ D3D10System::~D3D10System()
     for(UINT i=0; i<blends.Num(); i++)
         SafeRelease(blends[i].blendState);
 
+    SafeRelease(scissorState);
     SafeRelease(rasterizerState);
     SafeRelease(depthState);
     SafeRelease(disabledBlend);
@@ -206,6 +215,7 @@ void D3D10System::UnloadAllData()
     d3d->PSSetShader(NULL);
     d3d->VSSetShader(NULL);
     d3d->RSSetState(NULL);
+    d3d->RSSetScissorRects(0, NULL);
 }
 
 LPVOID D3D10System::GetDevice()
@@ -628,6 +638,21 @@ void D3D10System::SetViewport(float x, float y, float width, float height)
     vp.Width    = UINT(width);
     vp.Height   = UINT(height);
     d3d->RSSetViewports(1, &vp);
+}
+
+void D3D10System::SetScissorRect(XRect *pRect)
+{
+    if(pRect)
+    {
+        d3d->RSSetState(scissorState);
+        D3D10_RECT rc = {pRect->x, pRect->y, pRect->x+pRect->cx, pRect->y+pRect->cy};
+        d3d->RSSetScissorRects(1, &rc);
+    }
+    else
+    {
+        d3d->RSSetState(rasterizerState);
+        d3d->RSSetScissorRects(0, NULL);
+    }
 }
 
 

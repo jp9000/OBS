@@ -65,6 +65,8 @@ class TextOutputSource : public ImageSource
 
     void UpdateTexture()
     {
+        Gdiplus::Status stat;
+
         if(bMonitoringFileChanges)
         {
             CancelIoEx(hDirectory, &directoryChange);
@@ -138,7 +140,7 @@ class TextOutputSource : public ImageSource
             return;
 
         SIZE textSize;
-        if(bUseExtents)
+        if(bUseExtents && bWrap)
         {
             textSize.cx = extentWidth;
             textSize.cy = extentHeight;
@@ -155,13 +157,16 @@ class TextOutputSource : public ImageSource
                     format.SetFormatFlags(Gdiplus::StringFormatFlagsDirectionVertical|Gdiplus::StringFormatFlagsDirectionRightToLeft);
 
                 Gdiplus::RectF rcf;
-                graphics.MeasureString(strCurrentText, -1, &font, Gdiplus::PointF(0.0f, 0.0f), &format, &rcf);
+                stat = graphics.MeasureString(strCurrentText, -1, &font, Gdiplus::PointF(0.0f, 0.0f), &format, &rcf);
+                if(stat != Gdiplus::Ok)
+                    AppWarning(TEXT("graphics.MeasureString failed: %u"), (int)stat);
 
                 textSize.cx = long(rcf.Width+EPSILON);
                 textSize.cy = long(rcf.Height+EPSILON);
 
                 if(!textSize.cx || !textSize.cy)
                 {
+                    AppWarning(TEXT("TextSource::UpdateTexture: bad texture sizes apparently, very strange"));
                     DeleteObject(hFont);
                     return;
                 }
@@ -174,8 +179,8 @@ class TextOutputSource : public ImageSource
         textSize.cx &= 0xFFFFFFFE;
         textSize.cy &= 0xFFFFFFFE;
 
-        ClampInt(textSize.cx, 32, 2048);
-        ClampInt(textSize.cy, 32, 2048);
+        ClampInt(textSize.cx, 32, 4096);
+        ClampInt(textSize.cy, 32, 4096);
 
         if(textureSize.cx != textSize.cx || textureSize.cy != textSize.cy)
         {
@@ -191,6 +196,7 @@ class TextOutputSource : public ImageSource
 
         if(!texture)
         {
+            AppWarning(TEXT("TextSource::UpdateTexture: could not create texture"));
             DeleteObject(hFont);
             return;
         }
@@ -198,15 +204,36 @@ class TextOutputSource : public ImageSource
         HDC hDC;
         if(texture->GetDC(hDC))
         {
+            HDC hTempDC = CreateCompatibleDC(NULL);
+
+            BITMAPINFO bi;
+            zero(&bi, sizeof(bi));
+
+            void* lpBits;
+
+            BITMAPINFOHEADER &bih = bi.bmiHeader;
+            bih.biSize = sizeof(bih);
+            bih.biBitCount = 32;
+            bih.biWidth  = textureSize.cx;
+            bih.biHeight = textureSize.cy;
+            bih.biPlanes = 1;
+
+            HBITMAP hBitmap = CreateDIBSection(hTempDC, &bi, DIB_RGB_COLORS, &lpBits, NULL, 0);
+
             {
-                Gdiplus::Graphics    graphics(hDC);
+                Gdiplus::Bitmap      bmp(textureSize.cx, textureSize.cy, 4*textureSize.cx, PixelFormat32bppARGB, (BYTE*)lpBits);
+                Gdiplus::Graphics    graphics(&bmp);
                 Gdiplus::SolidBrush  *brush = new Gdiplus::SolidBrush(Gdiplus::Color(0xFF000000|color));
-                Gdiplus::Font        font(hDC, hFont);
+                Gdiplus::Font        font(hTempDC, hFont);
 
-                graphics.SetTextRenderingHint(Gdiplus::TextRenderingHintAntiAliasGridFit);
-                graphics.Clear(Gdiplus::Color(0));
+                graphics.FillRectangle(brush, 0, 0, 50, 50);
 
-                if(bUseExtents)
+                stat = graphics.SetTextRenderingHint(Gdiplus::TextRenderingHintAntiAlias);
+                if(stat != Gdiplus::Ok) AppWarning(TEXT("graphics.SetTextRenderingHint failed: %u"), (int)stat);
+                stat = graphics.Clear(Gdiplus::Color(0));
+                if(stat != Gdiplus::Ok) AppWarning(TEXT("graphics.Clear failed: %u"), (int)stat);
+
+                if(bUseExtents && bWrap)
                 {
                     Gdiplus::StringFormat format;
                     Gdiplus::PointF pos(0.0f, 0.0f);
@@ -238,13 +265,13 @@ class TextOutputSource : public ImageSource
                     if(bVertical)
                         format.SetFormatFlags(Gdiplus::StringFormatFlagsDirectionVertical|Gdiplus::StringFormatFlagsDirectionRightToLeft);
 
-                    if(bWrap)
-                    {
+                    /*if(bWrap)
+                    {*/
                         Gdiplus::RectF rcf(0.0f, 0.0f, float(textSize.cx), float(textSize.cy));
                         graphics.DrawString(strCurrentText, -1, &font, rcf, &format, brush);
-                    }
+                    /*}
                     else
-                        graphics.DrawString(strCurrentText, -1, &font, pos, &format, brush);
+                        graphics.DrawString(strCurrentText, -1, &font, pos, &format, brush);*/
                 }
                 else
                 {
@@ -253,11 +280,19 @@ class TextOutputSource : public ImageSource
                     if(bVertical)
                         format.SetFormatFlags(Gdiplus::StringFormatFlagsDirectionVertical|Gdiplus::StringFormatFlagsDirectionRightToLeft);
 
-                    graphics.DrawString(strCurrentText, -1, &font, Gdiplus::PointF(bVertical ? float(textSize.cx) : 0.0f, 0.0f), &format, brush);
+                    stat = graphics.DrawString(strCurrentText, -1, &font, Gdiplus::PointF(bVertical ? float(textSize.cx) : 0.0f, -4.0f), &format, brush);
+                    if(stat != Gdiplus::Ok) AppWarning(TEXT("Hmm, DrawString failed: %u"), (int)stat);
                 }
 
                 delete brush;
             }
+
+            HBITMAP hbmpOld = (HBITMAP)SelectObject(hTempDC, hBitmap);
+            BitBlt(hDC, 0, 0, textureSize.cx, textureSize.cy, hTempDC, 0, 0, SRCCOPY);
+
+            SelectObject(hTempDC, hbmpOld);
+            DeleteDC(hTempDC);
+            DeleteObject(hBitmap);
 
             texture->ReleaseDC();
         }
@@ -351,14 +386,48 @@ public:
             while(scrollValue < -1.0f)
                 scrollValue += 1.0f;
         }
+
+        if(showExtentTime > 0.0f)
+            showExtentTime -= fSeconds;
     }
 
     void Render(const Vect2 &pos, const Vect2 &size)
     {
         if(texture)
         {
+            //EnableBlending(FALSE);
+
             Vect2 sizeMultiplier = size/baseSize;
             Vect2 newSize = Vect2(float(textureSize.cx), float(textureSize.cy))*sizeMultiplier;
+
+            if(bUseExtents)
+            {
+                Vect2 extentVal = Vect2(float(extentWidth), float(extentHeight))*sizeMultiplier;
+                if(showExtentTime > 0.0f)
+                {
+                    Shader *pShader = GS->GetCurrentPixelShader();
+                    Shader *vShader = GS->GetCurrentVertexShader();
+
+                    Color4 rectangleColor = Color4(0.0f, 1.0f, 0.0f, 1.0f);
+                    if(showExtentTime < 1.0f)
+                        rectangleColor.w = showExtentTime;
+
+                    App->solidPixelShader->SetColor(App->solidPixelShader->GetParameter(0), rectangleColor);
+
+                    LoadVertexShader(App->solidVertexShader);
+                    LoadPixelShader(App->solidPixelShader);
+                    DrawBox(pos, extentVal);
+
+                    LoadVertexShader(vShader);
+                    LoadPixelShader(pShader);
+                }
+
+                if(!bWrap)
+                {
+                    XRect rect = {int(pos.x), int(pos.y), int(extentVal.x), int(extentVal.y)};
+                    SetScissorRect(&rect);
+                }
+            }
 
             DWORD alpha = DWORD(double(opacity)*2.55);
             DWORD outputColor = (alpha << 24) | 0xFFFFFF;
@@ -384,10 +453,14 @@ public:
                 }
 
                 LoadSamplerState(ss);
-                DrawSpriteEx(texture, outputColor, pos.x, pos.y, pos.x+newSize.x, pos.y+newSize.y, ul.x, ul.y, lr.x, lr.y);
+                DrawSpriteEx(texture, outputColor, pos.x, pos.y+newSize.y, pos.x+newSize.x, pos.y, ul.x, ul.y, lr.x, lr.y);
             }
             else
-                DrawSprite(texture, outputColor, pos.x, pos.y, pos.x+newSize.x, pos.y+newSize.y);
+                DrawSprite(texture, outputColor, pos.x, pos.y+newSize.y, pos.x+newSize.x, pos.y);
+
+            if(bUseExtents && !bWrap)
+                SetScissorRect(NULL);
+            //EnableBlending(TRUE);
         }
     }
 
@@ -461,9 +534,15 @@ public:
         else if(scmpi(lpName, TEXT("useTextExtents")) == 0)
             bUseExtents = iValue != 0;
         else if(scmpi(lpName, TEXT("extentWidth")) == 0)
+        {
+            showExtentTime = 2.0f;
             extentWidth = iValue;
+        }
         else if(scmpi(lpName, TEXT("extentHeight")) == 0)
+        {
+            showExtentTime = 2.0f;
             extentHeight = iValue;
+        }
         else if(scmpi(lpName, TEXT("align")) == 0)
             align = iValue;
         else if(scmpi(lpName, TEXT("mode")) == 0)
@@ -471,6 +550,8 @@ public:
 
         bUpdateTexture = true;
     }
+
+    inline void ResetExtentRect() {showExtentTime = 0.0f;}
 };
 
 struct ConfigTextSourceInfo
@@ -544,6 +625,8 @@ CTSTR GetFontFace(ConfigTextSourceInfo *configInfo, HWND hwndFontList)
 
 INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    static bool bInitializedDialog = false;
+
     switch(message)
     {
         case WM_INITDIALOG:
@@ -631,13 +714,20 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                 EnableWindow(GetDlgItem(hwnd, IDC_FILE), bUseFile);
                 EnableWindow(GetDlgItem(hwnd, IDC_BROWSE), bUseFile);
 
+                bInitializedDialog = true;
+
                 return TRUE;
             }
+
+        case WM_DESTROY:
+            bInitializedDialog = false;
+            break;
 
         case WM_COMMAND:
             switch(LOWORD(wParam))
             {
                 case IDC_FONT:
+                    if(bInitializedDialog)
                     {
                         if(HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == CBN_EDITCHANGE)
                         {
@@ -662,6 +752,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                     break;
 
                 case IDC_COLOR:
+                    if(bInitializedDialog)
                     {
                         DWORD color = CCGetColor((HWND)lParam);
 
@@ -678,7 +769,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                 case IDC_EXTENTHEIGHT_EDIT:
                 case IDC_TEXTOPACITY_EDIT:
                 case IDC_SCROLLSPEED_EDIT:
-                    if(HIWORD(wParam) == EN_CHANGE)
+                    if(HIWORD(wParam) == EN_CHANGE && bInitializedDialog)
                     {
                         int val = (int)SendMessage(GetWindow((HWND)lParam, GW_HWNDNEXT), UDM_GETPOS32, 0, 0);
 
@@ -706,7 +797,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                 case IDC_VERTICALSCRIPT:
                 case IDC_WRAP:
                 case IDC_USETEXTEXTENTS:
-                    if(HIWORD(wParam) == BN_CLICKED)
+                    if(HIWORD(wParam) == BN_CLICKED && bInitializedDialog)
                     {
                         BOOL bChecked = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
 
@@ -739,7 +830,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                     break;
 
                 case IDC_ALIGN:
-                    if(HIWORD(wParam) == CBN_SELCHANGE)
+                    if(HIWORD(wParam) == CBN_SELCHANGE && bInitializedDialog)
                     {
                         int align = (int)SendMessage((HWND)lParam, CB_GETCURSEL, 0, 0);
                         if(align == CB_ERR)
@@ -755,7 +846,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
                 case IDC_FILE:
                 case IDC_TEXT:
-                    if(HIWORD(wParam) == EN_CHANGE)
+                    if(HIWORD(wParam) == EN_CHANGE && bInitializedDialog)
                     {
                         String strText = GetEditText((HWND)lParam);
 
@@ -774,7 +865,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                     break;
 
                 case IDC_USEFILE:
-                    if(HIWORD(wParam) == BN_CLICKED)
+                    if(HIWORD(wParam) == BN_CLICKED && bInitializedDialog)
                     {
                         EnableWindow(GetDlgItem(hwnd, IDC_TEXT), FALSE);
                         EnableWindow(GetDlgItem(hwnd, IDC_FILE), TRUE);
@@ -788,7 +879,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                     break;
 
                 case IDC_USETEXT:
-                    if(HIWORD(wParam) == BN_CLICKED)
+                    if(HIWORD(wParam) == BN_CLICKED && bInitializedDialog)
                     {
                         EnableWindow(GetDlgItem(hwnd, IDC_TEXT), TRUE);
                         EnableWindow(GetDlgItem(hwnd, IDC_FILE), FALSE);

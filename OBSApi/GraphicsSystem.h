@@ -463,6 +463,8 @@ public:
 
     virtual void  SetViewport(float x, float y, float width, float height)=0;
 
+    virtual void  SetScissorRect(XRect *pRect=NULL)=0;
+
 protected:
     //manual coordinate generation
     VBData *vbd;
@@ -570,6 +572,7 @@ inline void  Frustum(float left, float right, float top, float bottom, float zne
     {GS->Frustum(left, right, top, bottom, znear, zfar);}
 
 inline void  SetViewport(float x, float y, float width, float height) {GS->SetViewport(x, y, width, height);}
+inline void  SetScissorRect(XRect *pRect=NULL)                        {GS->SetScissorRect(pRect);}
 
 inline void DrawSprite(Texture *texture, DWORD color, float x, float y, float x2 = -998.0f, float y2 = -998.0f)
     {GS->DrawSprite(texture, color, x, y, x2, y2);}

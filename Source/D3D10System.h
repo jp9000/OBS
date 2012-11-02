@@ -304,6 +304,7 @@ class D3D10System : public GraphicsSystem
 
     ID3D10DepthStencilState *depthState;
     ID3D10RasterizerState   *rasterizerState;
+    ID3D10RasterizerState   *scissorState;
 
     bool bDisableCompatibilityMode;
 
@@ -402,6 +403,9 @@ public:
     void  Frustum(float left, float right, float top, float bottom, float znear, float zfar);
 
     virtual void  SetViewport(float x, float y, float width, float height);
+
+    virtual void  SetScissorRect(XRect *pRect=NULL);
+
 
     virtual void  DrawSpriteEx(Texture *texture, DWORD color, float x, float y, float x2 = -1.0f, float y2 = -1.0f, float u = -1.0f, float v = -1.0f, float u2 = -1.0f, float v2 = -1.0f);
     virtual void  DrawBox(const Vect2 &upperLeft, const Vect2 &size);

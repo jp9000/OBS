@@ -102,12 +102,6 @@ LRESULT CALLBACK HotkeyExProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 control->bHasFocus = false;
                 DestroyCaret();
 
-                if(!control->hotkeyVK)
-                {
-                    control->modifiers = 0;
-                    control->bExtendedKey = false;
-                }
-
                 InvalidateRect(hwnd, NULL, TRUE);
                 break;
             }
@@ -306,24 +300,35 @@ void HotkeyControlExData::DrawHotkeyControlEx(HWND hwnd, HDC hDC)
 
     if(hotkeyVK || modifiers)
     {
+        bool bAdd = false;
         if(modifiers & HOTKEYF_CONTROL)
         {
             GetKeyNameText((LONG)MapVirtualKey(VK_CONTROL, 0) << 16, lpName, 127);
-            strText << lpName << TEXT(" + ");
+            strText << lpName;
+
+            bAdd = true;
         }
         if(modifiers & HOTKEYF_SHIFT)
         {
+            if(bAdd) strText << TEXT(" + ");
             GetKeyNameText((LONG)MapVirtualKey(VK_SHIFT, 0) << 16, lpName, 127);
-            strText << lpName << TEXT(" + ");
+            strText << lpName;
+
+            bAdd = true;
         }
         if(modifiers & HOTKEYF_ALT)
         {
+            if(bAdd) strText << TEXT(" + ");
             GetKeyNameText((LONG)MapVirtualKey(VK_MENU, 0) << 16, lpName, 127);
-            strText << lpName << TEXT(" + ");
+            strText << lpName;
+
+            bAdd = true;
         }
 
         if(hotkeyVK)
         {
+            if(bAdd) strText << TEXT(" + ");
+
             if(hotkeyVK <= VK_RBUTTON)
                 strText << TEXT("Mouse ") << UIntString(hotkeyVK);
             else if(hotkeyVK > VK_CANCEL && hotkeyVK <= VK_XBUTTON2)

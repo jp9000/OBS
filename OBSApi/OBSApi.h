@@ -44,7 +44,7 @@ BASE_EXPORT String GetCBText(HWND hwndCombo, UINT id=CB_ERR);
 BASE_EXPORT String GetEditText(HWND hwndEdit);
 
 
-//#define SafeRelease(var) if(var) {ULONG chi = var->Release(); OSDebugOut(TEXT("releasing %s, %d refs were left\r\n"), L#var, chi); var = NULL;}
+#define SafeReleaseLogRef(var) if(var) {ULONG chi = var->Release(); OSDebugOut(TEXT("releasing %s, %d refs were left\r\n"), L#var, chi); var = NULL;}
 #define SafeRelease(var) if(var) {var->Release(); var = NULL;}
 
 inline void SSECopy(void *lpDest, void *lpSource, UINT size)

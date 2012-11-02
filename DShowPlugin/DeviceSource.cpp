@@ -782,6 +782,8 @@ void DeviceSource::UpdateSettings()
 
     if(renderCX != newCX || renderCY != newCY || frameInterval != newFrameInterval || newPreferredType != preferredOutputType || !strDevice.CompareI(strNewDevice) || bNewCustom != bUseCustomResolution)
     {
+        API->EnterSceneMutex();
+
         bool bWasCapturing = bCapturing;
         if(bWasCapturing) Stop();
 
@@ -789,6 +791,8 @@ void DeviceSource::UpdateSettings()
         LoadFilters();
 
         if(bWasCapturing) Start();
+
+        API->LeaveSceneMutex();
     }
 
     traceOut;

@@ -113,7 +113,10 @@ bool STDCALL OBS::ConfigGlobalSource(XElement *element, bool bCreating)
             {
                 GlobalSourceInfo &info = App->globalSources[i];
                 if(info.strName.CompareI(lpGlobalSourceName) && info.source)
+                {
                     info.source->UpdateSettings();
+                    break;
+                }
             }
         }
     }

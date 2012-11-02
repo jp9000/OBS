@@ -2,6 +2,26 @@
 
 
 -------------------------------
+2012-11-02 - 0.432 (alpha)
+    * Fixed GDI+ output not displaying on some computers
+    * Changed text source so that text extents do not cut off
+      text
+    * Added color key option to software capture
+    * Changed color key in directshow plugin to chroma key, made
+      it not suck (thanks to muf, he pointed out important
+      equations)
+    * Changed the way framerate works in directshow plugin, it
+      now internally works on frame intervals instead of trying
+      to (incorrectly) input intervals -- will always use the
+      closest valid interval available.  FPS now functions in
+      floating point units instead of integers.
+    * Added a feature to allow the user to select the output type
+      from his/her device, which is useful is many cases
+      apparently.
+    * Changed hotkeys so that you can now bind Alt/Shift/Ctrl
+      by themselves.
+
+-------------------------------
 2012-10-28 - 0.43 (alpha)
     * Added text output source
     * Added color key option to directshow plugin
