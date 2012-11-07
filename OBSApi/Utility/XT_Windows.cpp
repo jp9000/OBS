@@ -26,7 +26,7 @@
 #define ISOLATION_AWARE_ENABLED 1
 #include <windows.h>
 #include <MMSystem.h>
-
+#include <Psapi.h>
 #include "XT.h"
 
 
@@ -543,6 +543,59 @@ BOOL   STDCALL OSTerminateThread(HANDLE hThread, DWORD waitMS)
     return 1;
 }
 
+BOOL GetLoadedModuleList(StringList &ModuleList)
+{
+    HMODULE hMods[1024];
+    DWORD count;
+
+    if (EnumProcessModules(GetCurrentProcess(), hMods, sizeof(hMods), &count))
+    {
+        for (UINT i=0; i<(count / sizeof(HMODULE)); i++)
+        {
+            TCHAR szFileName[MAX_PATH];
+
+            if (GetModuleFileName (hMods[i], szFileName, _countof(szFileName)-1))
+            {
+                TCHAR *p;
+                p = srchr(szFileName, '\\');
+                if (p)
+                {
+                    *p = 0;
+                    p++;
+                    slwr (p);
+                    ModuleList << p;
+                }
+            }
+        }
+    }
+    else
+        return 0;
+    
+    return 1;
+}
+
+BOOL   STDCALL OSIncompatibleModulesLoaded()
+{
+    StringList  moduleList;
+
+    if (!GetLoadedModuleList(moduleList))
+        return 0;
+
+    for(UINT i=0; i<moduleList.Num(); i++)
+    {
+        CTSTR moduleName = moduleList[i];
+
+        if (!scmp(moduleName, TEXT("dxtorycore.dll")) ||
+            !scmp(moduleName, TEXT("dxtorycore64.dll")) ||
+            !scmp(moduleName, TEXT("dxtorymm.dll")) ||
+            !scmp(moduleName, TEXT("dxtorymm64.dll")))
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
 
 
 #endif

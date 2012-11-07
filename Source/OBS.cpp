@@ -1095,6 +1095,15 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
+    if (OSIncompatibleModulesLoaded())
+    {
+        MessageBox(hwndMain, Str("IncompatibleModules"), NULL, MB_ICONERROR);
+        Log(TEXT("Incompatible modules detected."));
+        return;
+    }
+
+    //-------------------------------------------------------------
+
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
 
     bool bCanRetry = false;
