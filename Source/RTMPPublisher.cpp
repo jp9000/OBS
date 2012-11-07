@@ -768,6 +768,9 @@ NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry)
     rtmp->m_outChunkSize = 4096;//RTMP_DEFAULT_CHUNKSIZE;//
     rtmp->m_bSendChunkSizeInfo = TRUE;
 
+    if (!bUseSendBuffer)
+        rtmp->m_bUseNagle = TRUE;
+
     if(!RTMP_Connect(rtmp, NULL))
     {
         failReason = Str("Connection.CouldNotConnect");
