@@ -16,76 +16,105 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 ********************************************************************************/
 
-/*
+
 #include "GraphicsCapture.h"
 
 
-SharedTexCapture::~SharedTexCapture()
+void SharedTexCapture::Destroy()
 {
     for(UINT i=0; i<2; i++)
         delete sharedTextures[i];
+
+    bInitialized = false;
+
+    if(hMemoryMutex)
+        OSEnterMutex(hMemoryMutex);
+
+    texData = NULL;
+
+    if(sharedMemory)
+        UnmapViewOfFile(sharedMemory);
+
+    if(hFileMap)
+        CloseHandle(hFileMap);
+
+    if(hMemoryMutex)
+    {
+        OSLeaveMutex(hMemoryMutex);
+        OSCloseMutex(hMemoryMutex);
+    }
 }
 
 bool SharedTexCapture::Init(HANDLE hProcess, HWND hwndTarget, CaptureInfo &info)
 {
     this->hwndTarget = hwndTarget;
     this->hProcess = hProcess;
-    this->height = info.cy;
 
-    colorFormat = info.format;
-    lpDataAddress = info.data;
+    String strFileMapName;
+    strFileMapName << TEXTURE_MEMORY << UIntString(info.mapID);
 
-    SharedTextureData sharedTextureData;
-    if(!ReadProcessMemory(hProcess, lpDataAddress, &sharedTextureData, sizeof(sharedTextureData), NULL))
+    hFileMap = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, strFileMapName);
+    if(hFileMap == NULL)
+    {
+        AppWarning(TEXT("SharedTexCapture::Init: Could not open file mapping"));
         return false;
+    }
 
-    bool bSuccess = true;
+    sharedMemory = (LPBYTE)MapViewOfFile(hFileMap, FILE_MAP_ALL_ACCESS, 0, 0, info.mapSize);
+    if(!sharedMemory)
+    {
+        AppWarning(TEXT("SharedTexCapture::Init: Could not map view of file"));
+        return false;
+    }
+
+    hMemoryMutex = OSCreateMutex();
+    if(!hMemoryMutex)
+    {
+        AppWarning(TEXT("SharedTexCapture::Init: Could not create memory mutex"));
+        return false;
+    }
+
+    Log(TEXT("using shared texture capture"));
+
+    //---------------------------------------
+
+    texData = (SharedTexData*)sharedMemory;
+
     for(UINT i=0; i<2; i++)
     {
-        sharedTextures[i] = GS->CreateTextureFromSharedHandle(info.cx, info.cy, (GSColorFormat)colorFormat, sharedTextureData.sharedTextureHandles[i]);
+        sharedTextures[i] = GS->CreateTextureFromSharedHandle(info.cx, info.cy, (GSColorFormat)info.format, texData->texHandles[i]);
         if(!sharedTextures[i])
         {
-            bSuccess = false;
-            break;
+            AppWarning(TEXT("SharedTexCapture::Init: Could not create shared texture"));
+            return false;
         }
     }
 
-    if(!bSuccess)
-    {
-        for(UINT i=0; i<2; i++)
-            delete sharedTextures[i];
-
-        return false;
-    }
-
+    bInitialized = true;
     return true;
 }
 
 Texture* SharedTexCapture::LockTexture()
 {
-    SharedTextureData textureData;
-    if(ReadProcessMemory(hProcess, lpDataAddress, &textureData, sizeof(textureData), NULL))
+    curTextureID = texData->lastRendered;
+
+    if(curTextureID < 2)
     {
-        curTextureID = textureData.lastRendered;
+        DWORD nextTexture = (curTextureID == 1) ? 0 : 1;
+        bool bSuccess = false;
 
-        if(curTextureID < 2)
+        if(sharedTextures[curTextureID]->AcquireSync(0, 0) == WAIT_OBJECT_0)
+            bSuccess = true;
+        else if(sharedTextures[nextTexture]->AcquireSync(0, 0) == WAIT_OBJECT_0)
         {
-            DWORD nextTexture = (curTextureID == 1) ? 0 : 1;
-            bool bSuccess = false;
+            bSuccess = true;
+            curTextureID = nextTexture;
+        }
 
-            if(sharedTextures[curTextureID]->AcquireSync(1, 0) == WAIT_OBJECT_0)
-                bSuccess = true;
-            else if(sharedTextures[nextTexture]->AcquireSync(1, 0) == WAIT_OBJECT_0)
-            {
-                bSuccess = true;
-                curTextureID = nextTexture;
-            }
-
-            if(bSuccess)
-            {
-                curTexture = sharedTextures[curTextureID];
-                return curTexture;
-            }
+        if(bSuccess)
+        {
+            curTexture = sharedTextures[curTextureID];
+            return curTexture;
         }
     }
 
@@ -100,5 +129,3 @@ void SharedTexCapture::UnlockTexture()
         curTexture = NULL;
     }
 }
-
-*/

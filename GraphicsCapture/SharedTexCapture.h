@@ -16,29 +16,32 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 ********************************************************************************/
 
-/*
+
 #pragma once
 
 
 class SharedTexCapture : public GraphicsCaptureMethod
 {
+    HANDLE hMemoryMutex;
+
     Texture *sharedTextures[2];
     Texture *curTexture;
 
     HWND hwndTarget;
     HANDLE hProcess;
-    Texture *texture;
-    DWORD colorFormat;
 
-    UINT height;
-    LPVOID lpDataAddress;
-    DWORD curTextureID;
+    HANDLE hFileMap;
+    LPBYTE sharedMemory;
+    SharedTexData *texData;
+
+    UINT curTextureID;
+
+    bool bInitialized;
 
 public:
-    ~SharedTexCapture();
+    void Destroy();
     virtual bool Init(HANDLE hProcess, HWND hwndTarget, CaptureInfo &info);
 
     virtual Texture* LockTexture();
     virtual void UnlockTexture();
 };
-*/

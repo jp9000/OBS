@@ -348,6 +348,10 @@
 				RelativePath=".\MemoryCapture.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\SharedTexCapture.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Headers"
@@ -372,6 +376,10 @@
 			</File>
 			<File
 				RelativePath=".\resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SharedTexCapture.h"
 				>
 			</File>
 		</Filter>

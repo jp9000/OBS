@@ -2085,7 +2085,7 @@ void OBS::MainCaptureLoop()
 
         //------------------------------------
 
-        //if(bRenderView && !copyWait)
+        if(bRenderView && !copyWait)
             static_cast<D3D10System*>(GS)->swap->Present(0, 0);
 
         OSLeaveMutex(hSceneMutex);

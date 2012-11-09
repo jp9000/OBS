@@ -18,6 +18,7 @@
 
 
 #include "GraphicsCaptureHook.h"
+#include <shlobj.h>
 
 
 HINSTANCE hinstMain = NULL;
@@ -30,7 +31,56 @@ HANDLE hFileMap = NULL;
 LPBYTE lpSharedMemory = NULL;
 UINT sharedMemoryIDCounter = 0;
 
-UINT InitializeSharedMemory(UINT textureSize, DWORD *totalSize, MemoryCopyData **copyData, LPBYTE *textureBuffers)
+
+LARGE_INTEGER clockFreq, startTime;
+LONGLONG prevElapsedTime;
+DWORD startTick;
+
+void WINAPI OSInitializeTimer()
+{
+    QueryPerformanceFrequency(&clockFreq);
+    QueryPerformanceCounter(&startTime);
+    startTick = GetTickCount();
+    prevElapsedTime = 0;
+}
+
+LONGLONG WINAPI OSGetTimeMicroseconds()
+{
+    LARGE_INTEGER currentTime;
+    QueryPerformanceCounter(&currentTime);
+    LONGLONG elapsedTime = currentTime.QuadPart - 
+        startTime.QuadPart;
+
+    // Compute the number of millisecond ticks elapsed.
+    unsigned long msecTicks = (unsigned long)(1000 * elapsedTime / 
+        clockFreq.QuadPart);
+
+    // Check for unexpected leaps in the Win32 performance counter.  
+    // (This is caused by unexpected data across the PCI to ISA 
+    // bridge, aka south bridge.  See Microsoft KB274323.)
+    unsigned long elapsedTicks = GetTickCount() - startTick;
+    signed long msecOff = (signed long)(msecTicks - elapsedTicks);
+    if (msecOff < -100 || msecOff > 100)
+    {
+        // Adjust the starting time forwards.
+        LONGLONG msecAdjustment = min(msecOff * 
+            clockFreq.QuadPart / 1000, elapsedTime - 
+            prevElapsedTime);
+        startTime.QuadPart += msecAdjustment;
+        elapsedTime -= msecAdjustment;
+    }
+
+    // Store the current elapsed time for adjustments next time.
+    prevElapsedTime = elapsedTime;
+
+    // Convert to microseconds.
+    LONGLONG usecTicks = (1000000 * elapsedTime / 
+        clockFreq.QuadPart);
+
+    return usecTicks;
+}
+
+UINT InitializeSharedMemoryCPUCapture(UINT textureSize, DWORD *totalSize, MemoryCopyData **copyData, LPBYTE *textureBuffers)
 {
     UINT alignedHeaderSize = (sizeof(MemoryCopyData)+15) & 0xFFFFFFF0;
     UINT alignedTexureSize = (textureSize+15) & 0xFFFFFFF0;
@@ -57,6 +107,29 @@ UINT InitializeSharedMemory(UINT textureSize, DWORD *totalSize, MemoryCopyData *
 
     textureBuffers[0] = lpSharedMemory+alignedHeaderSize;
     textureBuffers[1] = lpSharedMemory+alignedHeaderSize+alignedTexureSize;
+
+    return sharedMemoryIDCounter;
+}
+
+UINT InitializeSharedMemoryGPUCapture(SharedTexData **texData)
+{
+    int totalSize = sizeof(SharedTexData);
+
+    wstringstream strName;
+    strName << TEXTURE_MEMORY << ++sharedMemoryIDCounter;
+    hFileMap = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, totalSize, strName.str().c_str());
+    if(!hFileMap)
+        return 0;
+
+    lpSharedMemory = (LPBYTE)MapViewOfFile(hFileMap, FILE_MAP_ALL_ACCESS, 0, 0, totalSize);
+    if(!lpSharedMemory)
+    {
+        CloseHandle(hFileMap);
+        hFileMap = NULL;
+        return 0;
+    }
+
+    *texData = (SharedTexData*)lpSharedMemory;
 
     return sharedMemoryIDCounter;
 }
@@ -106,31 +179,37 @@ inline bool AttemptToHookSomething()
     bool bFoundSomethingToHook = false;
     if(!bD3D11Hooked && InitD3D11Capture())
     {
-        OutputDebugString(TEXT("D3D11 Present\r\n"));
+        logOutput << "D3D11 Present" << endl;
         bFoundSomethingToHook = true;
         bD3D11Hooked = true;
+        bD3D101Hooked = true;
+        bD3D10Hooked = true;
     }
     if(!bD3D9Hooked && InitD3D9Capture())
     {
-        OutputDebugString(TEXT("D3D9 Present\r\n"));
+        logOutput << "D3D9 Present" << endl;
         bFoundSomethingToHook = true;
         bD3D9Hooked = true;
     }
     if(!bD3D101Hooked && InitD3D101Capture())
     {
-        OutputDebugString(TEXT("D3D10.1 Present\r\n"));
+        logOutput << "D3D10.1 Present" << endl;
         bFoundSomethingToHook = true;
+        bD3D11Hooked = true;
         bD3D101Hooked = true;
+        bD3D10Hooked = true;
     }
     if(!bD3D10Hooked && InitD3D10Capture())
     {
-        OutputDebugString(TEXT("D3D10 Present\r\n"));
+        logOutput << "D3D10 Present" << endl;
         bFoundSomethingToHook = true;
+        bD3D11Hooked = true;
+        bD3D101Hooked = true;
         bD3D10Hooked = true;
     }
     if(!bGLHooked && InitGLCapture())
     {
-        OutputDebugString(TEXT("GL Present\r\n"));
+        logOutput << "GL Present" << endl;
         bFoundSomethingToHook = true;
         bGLHooked = true;
     }
@@ -145,6 +224,9 @@ inline bool AttemptToHookSomething()
     return bFoundSomethingToHook;
 }
 
+fstream logOutput;
+
+
 DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
 {
     bool bSuccess = false;
@@ -155,6 +237,13 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
         WaitForSingleObject(hDllMainThread, INFINITE);
         CloseHandle(hDllMainThread);
     }
+
+    TCHAR lpLogPath[MAX_PATH];
+    SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, lpLogPath);
+    wcscat_s(lpLogPath, MAX_PATH, TEXT("\\OBS\\pluginData\\captureHookLog.txt"));
+
+    if(!logOutput.is_open())
+        logOutput.open(lpLogPath, ios_base::in | ios_base::out | ios_base::trunc);
 
     WNDCLASS wc;
     ZeroMemory(&wc, sizeof(wc));
@@ -237,6 +326,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpBlah)
             if(textureMutexes[i])
                 CloseHandle(textureMutexes[i]);
         }
+
+        if(logOutput.is_open())
+            logOutput.close();
     }
 
     return TRUE;

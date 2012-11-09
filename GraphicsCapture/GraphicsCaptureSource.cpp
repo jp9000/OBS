@@ -107,7 +107,7 @@ LRESULT WINAPI GraphicsCaptureSource::ReceiverWindowProc(HWND hwnd, UINT message
                 if(source)
                     source->NewCapture((LPVOID)lParam);
             }
-            break;
+            return API->GetMaxFPS();
 
         case RECEIVER_ENDCAPTURE:
             {
@@ -150,8 +150,8 @@ void GraphicsCaptureSource::NewCapture(LPVOID address)
 
     if(info.captureType == CAPTURETYPE_MEMORY)
         capture = new MemoryCapture;
-    /*else if(info.captureType == CAPTURETYPE_SHAREDTEX)
-        capture = new SharedTexCapture;*/
+    else if(info.captureType == CAPTURETYPE_SHAREDTEX)
+        capture = new SharedTexCapture;
     else
     {
         API->LeaveSceneMutex();

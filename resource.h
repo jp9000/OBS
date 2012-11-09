@@ -81,6 +81,7 @@
 #define IDC_USESENDBUFFER               1042
 #define IDC_FORCEMONO                   1042
 #define IDC_SCROLLSPEED                 1042
+#define IDC_OPACITY2                    1042
 #define IDC_CHANNELNAME_STATIC          1043
 #define IDC_EXTENTWIDTH_EDIT            1043
 #define IDC_PLAYPATH_STATIC             1044

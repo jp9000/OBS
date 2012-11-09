@@ -103,6 +103,16 @@ Texture* D3D10Texture::CreateFromSharedHandle(unsigned int width, unsigned int h
 
     //------------------------------------------
 
+    IDXGIKeyedMutex *km;
+    if(FAILED(err = texVal->QueryInterface(__uuidof(IDXGIKeyedMutex), (void**)&km)))
+    {
+        SafeRelease(texVal);
+        AppWarning(TEXT("D3D10Texture::CreateFromSharedHandle: could not query keyed mutex interface, result = 0x%08lX"), err);
+        return NULL;
+    }
+
+    //------------------------------------------
+
     DXGI_FORMAT format = convertFormat[(UINT)colorFormat];
 
     D3D10_SHADER_RESOURCE_VIEW_DESC resourceDesc;
@@ -125,6 +135,7 @@ Texture* D3D10Texture::CreateFromSharedHandle(unsigned int width, unsigned int h
     newTex->format = colorFormat;
     newTex->resource = resource;
     newTex->texture = texVal;
+    newTex->keyedMutex = km;
     newTex->bDynamic = false;
     newTex->width = width;
     newTex->height = height;
@@ -430,6 +441,7 @@ Texture* D3D10Texture::CreateGDITexture(unsigned int width, unsigned int height)
 
 D3D10Texture::~D3D10Texture()
 {
+    SafeRelease(keyedMutex);
     SafeRelease(renderTarget);
     SafeRelease(resource);
     SafeRelease(texture);
@@ -664,3 +676,18 @@ void D3D10Texture::Unmap()
 {
     texture->Unmap(0);
 }
+
+DWORD D3D10Texture::AcquireSync(UINT id, DWORD dwMS)
+{
+    if(keyedMutex)
+        return (DWORD)keyedMutex->AcquireSync((UINT64)id, dwMS);
+
+    return WAIT_FAILED;
+}
+
+void D3D10Texture::ReleaseSync(UINT id)
+{
+    if(keyedMutex)
+        keyedMutex->ReleaseSync((UINT64)id);
+}
+

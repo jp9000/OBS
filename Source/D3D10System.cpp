@@ -23,13 +23,13 @@ void LogVideoCardStats()
 {
     HRESULT err;
 
-    IDXGIFactory *factory;
-    if(SUCCEEDED(err = CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&factory)))
+    IDXGIFactory1 *factory;
+    if(SUCCEEDED(err = CreateDXGIFactory1(__uuidof(IDXGIFactory1), (void**)&factory)))
     {
         UINT i=0;
-        IDXGIAdapter *giAdapter;
+        IDXGIAdapter1 *giAdapter;
 
-        while(factory->EnumAdapters(i++, &giAdapter) == S_OK)
+        while(factory->EnumAdapters1(i++, &giAdapter) == S_OK)
         {
             Log(TEXT("------------------------------------------"));
 
@@ -58,6 +58,14 @@ D3D10System::D3D10System()
 
     HRESULT err;
 
+    IDXGIFactory1 *factory;
+    if(FAILED(err = CreateDXGIFactory1(__uuidof(IDXGIFactory1), (void**)&factory)))
+        CrashError(TEXT("Could not create dxgi factory"));
+
+    IDXGIAdapter1 *adapter;
+    if(FAILED(err = factory->EnumAdapters1(0, &adapter)))
+        CrashError(TEXT("Could not get dxgi adapter"));
+
     //------------------------------------------------------------------
 
     DXGI_SWAP_CHAIN_DESC swapDesc;
@@ -82,16 +90,19 @@ D3D10System::D3D10System()
 
     //D3D10_CREATE_DEVICE_DEBUG
     //D3D11_DRIVER_TYPE_REFERENCE, D3D11_DRIVER_TYPE_HARDWARE
-    err = D3D10CreateDeviceAndSwapChain1(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, createFlags, level, D3D10_1_SDK_VERSION, &swapDesc, &swap, &d3d);
+    err = D3D10CreateDeviceAndSwapChain1(adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, createFlags, level, D3D10_1_SDK_VERSION, &swapDesc, &swap, &d3d);
     if(FAILED(err))
     {
         bDisableCompatibilityMode = !bDisableCompatibilityMode;
         level = bDisableCompatibilityMode ? D3D10_FEATURE_LEVEL_10_1 : D3D10_FEATURE_LEVEL_9_3;
-        err = D3D10CreateDeviceAndSwapChain1(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, createFlags, level, D3D10_1_SDK_VERSION, &swapDesc, &swap, &d3d);
+        err = D3D10CreateDeviceAndSwapChain1(adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, createFlags, level, D3D10_1_SDK_VERSION, &swapDesc, &swap, &d3d);
     }
 
     if(FAILED(err))
-        CrashError(TEXT("Could not create D3D10 device and swap chain.  If you get this error, it's likely you probably use a GPU that is old, or that is unsupported."));
+        CrashError(TEXT("Could not create D3D10 device and swap chain.  If you get this error, it's likely you probably use a GPU that is unsupported or older GPU."));
+
+    adapter->Release();
+    factory->Release();
 
     //------------------------------------------------------------------
 

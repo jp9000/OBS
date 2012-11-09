@@ -207,6 +207,9 @@ public:
 
     virtual bool GetDC(HDC &hDC)=0;
     virtual void ReleaseDC()=0;
+
+    virtual DWORD AcquireSync(UINT id, DWORD dwMS)=0;
+    virtual void ReleaseSync(UINT id)=0;
 };
 
 

@@ -34,6 +34,7 @@
 
 #include <string>
 #include <sstream>
+#include <fstream>
 using namespace std;
 
 #ifdef _WIN64
@@ -97,7 +98,7 @@ public:
 
     inline void Rehook()
     {
-        if(bHooked)
+        if(bHooked || !func)
             return;
 
         DWORD oldProtect;
@@ -115,7 +116,7 @@ public:
 
     inline void Unhook()
     {
-        if(!bHooked)
+        if(!bHooked || !func)
             return;
 
         DWORD oldProtect;
@@ -190,7 +191,13 @@ extern bool bTargetAcquired;
 extern HANDLE hFileMap;
 extern LPBYTE lpSharedMemory;
 
-UINT InitializeSharedMemory(UINT textureSize, DWORD *totalSize, MemoryCopyData **copyData, LPBYTE *textureBuffers);
+extern fstream logOutput;
+
+void WINAPI OSInitializeTimer();
+LONGLONG WINAPI OSGetTimeMicroseconds();
+
+UINT InitializeSharedMemoryCPUCapture(UINT textureSize, DWORD *totalSize, MemoryCopyData **copyData, LPBYTE *textureBuffers);
+UINT InitializeSharedMemoryGPUCapture(SharedTexData **texData);
 void DestroySharedMemory();
 
 //memory capture APIs

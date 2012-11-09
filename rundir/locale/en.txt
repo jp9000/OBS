@@ -164,7 +164,7 @@ Settings.Video.Monitor              "Monitor:"
 Settings.Video.Resolution           "Base Resolution:"
 
 Sources.BitmapSource            "Bitmap"
-Sources.GameCaptureSource       "Game Capture Source"
+Sources.GameCaptureSource       "Game Capture Source [experimental]"
 Sources.GlobalSource            "Global Source"
 Sources.SoftwareCaptureSource   "Software Capture Source"
 Sources.TextSource              "Text Source"

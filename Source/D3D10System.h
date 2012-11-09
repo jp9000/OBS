@@ -86,6 +86,7 @@ class D3D10Texture : public Texture
     UINT width, height;
     GSColorFormat format;
     IDXGISurface1 *surface;
+    IDXGIKeyedMutex *keyedMutex;
     bool bGDICompatible;
     bool bDynamic;
 
@@ -108,6 +109,9 @@ public:
 
     virtual bool GetDC(HDC &hDC);
     virtual void ReleaseDC();
+
+    DWORD AcquireSync(UINT id, DWORD dwMS);
+    void ReleaseSync(UINT id);
 };
 
 //=============================================================================

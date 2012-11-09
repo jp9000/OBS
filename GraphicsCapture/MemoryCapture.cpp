@@ -77,6 +77,10 @@ bool MemoryCapture::Init(HANDLE hProcess, HWND hwndTarget, CaptureInfo &info)
         return false;
     }
 
+    //---------------------------------------
+
+    Log(TEXT("using memory capture"));
+
     copyData = (MemoryCopyData*)sharedMemory;
     textureBuffers[0] = sharedMemory+copyData->texture1Offset;
     textureBuffers[1] = sharedMemory+copyData->texture2Offset;

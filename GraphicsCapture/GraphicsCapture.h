@@ -45,4 +45,5 @@ public:
 //-----------------------------------------------------------
 
 #include "MemoryCapture.h"
+#include "SharedTexCapture.h"
 #include "GraphicsCaptureSource.h"

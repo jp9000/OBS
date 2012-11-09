@@ -255,7 +255,8 @@ bool DeviceSource::LoadFilters()
     {
         VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(bestOutput->mediaType->pbFormat);
 
-        String strTest = FormattedString(TEXT("   chosen type: %s, usingFourCC: %s, res: %ux%u - %ux%u, fps: %g-%g"),
+        String strTest = FormattedString(TEXT("   device: %s, chosen type: %s, usingFourCC: %s, res: %ux%u - %ux%u, fps: %g-%g"),
+            strDevice.Array(),
             EnumToName[(int)bestOutput->videoType],
             bestOutput->bUsingFourCC ? TEXT("true") : TEXT("false"),
             bestOutput->minCX, bestOutput->minCY, bestOutput->maxCX, bestOutput->maxCY,

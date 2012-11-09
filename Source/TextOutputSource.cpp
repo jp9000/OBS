@@ -226,7 +226,7 @@ class TextOutputSource : public ImageSource
                 Gdiplus::SolidBrush  *brush = new Gdiplus::SolidBrush(Gdiplus::Color(0xFF000000|color));
                 Gdiplus::Font        font(hTempDC, hFont);
 
-                graphics.FillRectangle(brush, 0, 0, 50, 50);
+                //graphics.FillRectangle(brush, 0, 0, 50, 50);
 
                 stat = graphics.SetTextRenderingHint(Gdiplus::TextRenderingHintAntiAlias);
                 if(stat != Gdiplus::Ok) AppWarning(TEXT("graphics.SetTextRenderingHint failed: %u"), (int)stat);
