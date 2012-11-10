@@ -76,6 +76,7 @@ typedef void   (WINAPI * GLREADBUFFERPROC)(GLenum);
 typedef void   (WINAPI * GLREADPIXELSPROC)(GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, GLvoid*);
 typedef GLenum (WINAPI * GLGETERRORPROC)();
 typedef BOOL   (WINAPI * WGLSWAPLAYERBUFFERSPROC)(HDC, UINT);
+typedef BOOL   (WINAPI * WGLSWAPBUFFERSPROC)(HDC);
 typedef BOOL   (WINAPI * WGLDELETECONTEXTPROC)(HGLRC);
 typedef PROC   (WINAPI * WGLGETPROCADDRESSPROC)(LPCSTR);
 typedef BOOL   (WINAPI * WGLMAKECURRENTPROC)(HDC, HGLRC);
@@ -85,6 +86,7 @@ GLREADBUFFERPROC                pglReadBuffer       = NULL;
 GLREADPIXELSPROC                pglReadPixels       = NULL;
 GLGETERRORPROC                  pglGetError         = NULL;
 WGLSWAPLAYERBUFFERSPROC         pwglSwapLayerBuffers= NULL;
+WGLSWAPBUFFERSPROC              pwglSwapBuffers     = NULL;
 WGLDELETECONTEXTPROC            pwglDeleteContext   = NULL;
 WGLGETPROCADDRESSPROC           pwglGetProcAddress  = NULL;
 WGLMAKECURRENTPROC              pwglMakeCurrent     = NULL;
@@ -94,6 +96,7 @@ WGLCREATECONTEXTPROC            pwglCreateContext   = NULL;
 #define glReadPixels            (*pglReadPixels)
 #define glGetError              (*pglGetError)
 #define jimglSwapLayerBuffers   (*pwglSwapLayerBuffers)
+#define jimglSwapBuffers        (*pwglSwapBuffers)
 #define jimglDeleteContext      (*pwglDeleteContext)
 #define jimglGetProcAddress     (*pwglGetProcAddress)
 #define jimglMakeCurrent        (*pwglMakeCurrent)
@@ -126,6 +129,7 @@ GLBINDBUFFERPROC        pglBindBuffer       = NULL;
 
 HookData                glHookSwapBuffers;
 HookData                glHookSwapLayerBuffers;
+HookData                glHookwglSwapBuffers;
 HookData                glHookDeleteContext;
 
 GLuint                  gltextures[2] = {0, 0};
@@ -320,6 +324,17 @@ BOOL WINAPI wglSwapLayerBuffersHook(HDC hDC, UINT fuPlanes)
     return bResult;
 }
 
+BOOL WINAPI wglSwapBuffersHook(HDC hDC)
+{
+    HandleGLSceneUpdate(hDC);
+
+    glHookwglSwapBuffers.Unhook();
+    BOOL bResult = jimglSwapBuffers(hDC);
+    glHookwglSwapBuffers.Rehook();
+
+    return bResult;
+}
+
 BOOL WINAPI wglDeleteContextHook(HGLRC hRC)
 {
     HandleGLSceneDestroy();
@@ -371,13 +386,14 @@ bool InitGLCapture()
         pglReadPixels       = (GLREADPIXELSPROC)        GetProcAddress(hGL, "glReadPixels");
         pglGetError         = (GLGETERRORPROC)          GetProcAddress(hGL, "glGetError");
         pwglSwapLayerBuffers= (WGLSWAPLAYERBUFFERSPROC) GetProcAddress(hGL, "wglSwapLayerBuffers");
+        pwglSwapBuffers=      (WGLSWAPBUFFERSPROC)      GetProcAddress(hGL, "wglSwapBuffers");
         pwglDeleteContext   = (WGLDELETECONTEXTPROC)    GetProcAddress(hGL, "wglDeleteContext");
         pwglGetProcAddress  = (WGLGETPROCADDRESSPROC)   GetProcAddress(hGL, "wglGetProcAddress");
         pwglMakeCurrent     = (WGLMAKECURRENTPROC)      GetProcAddress(hGL, "wglMakeCurrent");
         pwglCreateContext   = (WGLCREATECONTEXTPROC)    GetProcAddress(hGL, "wglCreateContext");
 
-        if( !pglReadBuffer || !pglReadPixels || !pglGetError || !pwglSwapLayerBuffers || !pwglDeleteContext || 
-            !pwglGetProcAddress || !pwglMakeCurrent || !pwglCreateContext)
+        if( !pglReadBuffer || !pglReadPixels || !pglGetError || !pwglSwapLayerBuffers || !pwglSwapBuffers ||
+            !pwglDeleteContext || !pwglGetProcAddress || !pwglMakeCurrent || !pwglCreateContext)
         {
             return false;
         }
@@ -415,6 +431,7 @@ bool InitGLCapture()
                 {
                     glHookSwapBuffers.Hook((FARPROC)SwapBuffers, (FARPROC)SwapBuffersHook);
                     glHookSwapLayerBuffers.Hook((FARPROC)jimglSwapLayerBuffers, (FARPROC)wglSwapLayerBuffersHook);
+                    glHookwglSwapBuffers.Hook((FARPROC)jimglSwapBuffers, (FARPROC)wglSwapBuffersHook);
                     glHookDeleteContext.Hook((FARPROC)jimglDeleteContext, (FARPROC)wglDeleteContextHook);
                     bSuccess = true;
                 }
@@ -429,6 +446,7 @@ bool InitGLCapture()
                 {
                     glHookSwapBuffers.Rehook();
                     glHookSwapLayerBuffers.Rehook();
+                    glHookwglSwapBuffers.Rehook();
                     glHookDeleteContext.Rehook();
 
                     DestroyWindow(hwndOpenGLSetupWindow);
@@ -450,5 +468,6 @@ void FreeGLCapture()
 {
     glHookSwapBuffers.Unhook();
     glHookSwapLayerBuffers.Unhook();
+    glHookwglSwapBuffers.Unhook();
     glHookDeleteContext.Unhook();
 }
