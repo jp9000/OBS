@@ -236,7 +236,7 @@ struct D3D10Override
                                 d3d10CaptureInfo.hwndSender = hwndSender;
                                 d3d10CaptureInfo.pitch = pitch;
                                 d3d10CaptureInfo.bFlip = FALSE;
-                                fps = SendMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d10CaptureInfo);
+                                fps = (DWORD)SendMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d10CaptureInfo);
                                 frameTime = 1000000/LONGLONG(fps);
 
                                 logOutput << "SwapPresentHook: initialization succeeded" << endl;

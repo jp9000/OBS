@@ -23,9 +23,7 @@
 #include <D3D10_1.h>
 
 
-HookData                d3d9SwapPresent;
-HookData                d3d9Present;
-HookData                d3d9PresentEx;
+HookData                d3d9EndScene;
 HookData                d3d9Reset;
 HookData                d3d9ResetEx;
 FARPROC                 oldD3D9Release = NULL;
@@ -34,11 +32,25 @@ FARPROC                 newD3D9Release = NULL;
 LPVOID                  lpCurrentDevice = NULL;
 DWORD                   d3d9Format = 0;
 
-#define                 NUM_BUFFERS 3
-#define                 NULL_ARRAY {NULL, NULL, NULL}
+CaptureInfo             d3d9CaptureInfo;
 
-IDirect3DSurface9       *textures[NUM_BUFFERS] = NULL_ARRAY;
-extern SharedTexData    *texData;
+//-----------------------------------------------------------------
+// CPU copy stuff (f*in ridiculous what you have to do to get it cpu copy working as smoothly as humanly possible)
+
+#define                 NUM_BUFFERS 3
+#define                 ZERO_ARRAY {0, 0, 0}
+
+HANDLE                  hCopyThread = NULL;
+HANDLE                  hCopyEvent = NULL;
+bool                    bKillThread = false;
+HANDLE                  dataMutexes[NUM_BUFFERS] = ZERO_ARRAY;
+void                    *pCopyData = NULL;
+DWORD                   curCPUTexture = 0;
+
+bool                    lockedTextures[NUM_BUFFERS] = ZERO_ARRAY;
+bool                    issuedQueries[NUM_BUFFERS] = ZERO_ARRAY;
+IDirect3DQuery9         *queries[NUM_BUFFERS] = ZERO_ARRAY;
+IDirect3DSurface9       *textures[NUM_BUFFERS] = ZERO_ARRAY;
 MemoryCopyData          *copyData = NULL;
 LPBYTE                  textureBuffers[2] = {NULL, NULL};
 DWORD                   curCapture = 0;
@@ -47,18 +59,20 @@ LONGLONG                frameTime = 0;
 DWORD                   fps = 0;
 DWORD                   copyWait = 0;
 LONGLONG                lastTime = 0;
-IDirect3DSurface9       *copyD3D9Textures[NUM_BUFFERS] = NULL_ARRAY;
+IDirect3DSurface9       *copyD3D9Textures[NUM_BUFFERS] = ZERO_ARRAY;
+
+//-----------------------------------------------------------------
+// GPU copy stuff (on top of being perfect and amazing, is also easy)
 
 BOOL                    bD3D9Ex = FALSE;
 IDirect3DSurface9       *copyD3D9TextureGame = NULL;
+extern SharedTexData    *texData;
 extern DXGI_FORMAT      dxgiFormat;
 extern ID3D10Device1    *shareDevice;
 extern ID3D10Resource   *copyTextureIntermediary;
 extern HANDLE           sharedHandles[2];
 extern IDXGIKeyedMutex  *keyedMutexes[2];
 extern ID3D10Resource   *sharedTextures[2];
-
-CaptureInfo             d3d9CaptureInfo;
 
 extern bool             bD3D101Hooked;
 
@@ -69,16 +83,54 @@ void ClearD3D9Data()
     if(texData)
         texData->lastRendered = -1;
 
-    for(UINT i=0; i<2; i++)
+    if(copyData)
+        copyData->lastRendered = -1;
+
+    for(int i=0; i<2; i++)
     {
         SafeRelease(keyedMutexes[i]);
         SafeRelease(sharedTextures[i]);
     }
 
-    for(UINT i=0; i<NUM_BUFFERS; i++)
+    if(hCopyThread)
     {
+        bKillThread = true;
+        SetEvent(hCopyEvent);
+        if(WaitForSingleObject(hCopyThread, 500) != WAIT_OBJECT_0)
+            TerminateThread(hCopyThread, -1);
+
+        CloseHandle(hCopyThread);
+        CloseHandle(hCopyEvent);
+
+        hCopyThread = NULL;
+        hCopyEvent = NULL;
+    }
+
+    for(int i=0; i<NUM_BUFFERS; i++)
+    {
+        if(lockedTextures[i])
+        {
+            OSEnterMutex(dataMutexes[i]);
+
+            textures[i]->UnlockRect();
+            lockedTextures[i] = false;
+
+            OSLeaveMutex(dataMutexes[i]);
+        }
+
+        issuedQueries[i] = false;
         SafeRelease(textures[i]);
         SafeRelease(copyD3D9Textures[i]);
+        SafeRelease(queries[i]);
+    }
+
+    for(int i=0; i<NUM_BUFFERS; i++)
+    {
+        if(dataMutexes[i])
+        {
+            OSCloseMutex(dataMutexes[i]);
+            dataMutexes[i] = NULL;
+        }
     }
 
     SafeRelease(copyD3D9TextureGame);
@@ -87,10 +139,14 @@ void ClearD3D9Data()
 
     DestroySharedMemory();
     texData = NULL;
+    copyData = NULL;
     copyWait = 0;
     lastTime = 0;
     fps = 0;
     frameTime = 0;
+    curCapture = 0;
+    curCPUTexture = 0;
+    pCopyData = NULL;
 }
 
 GSColorFormat ConvertDX9BackBufferFormat(D3DFORMAT format)
@@ -123,8 +179,6 @@ DXGI_FORMAT GetDXGIFormat(D3DFORMAT format)
 
 void SetupD3D9(IDirect3DDevice9 *device)
 {
-    ClearD3D9Data();
-
     IDirect3DSwapChain9 *swapChain = NULL;
     if(SUCCEEDED(device->GetSwapChain(0, &swapChain)))
     {
@@ -369,6 +423,8 @@ finishGPUHook:
         ClearD3D9Data();
 }
 
+DWORD CopyD3D9CPUTextureThread(LPVOID lpUseless);
+
 void DoD3D9CPUHook(IDirect3DDevice9 *device)
 {
     bool bSuccess = true;
@@ -377,24 +433,6 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
 
     for(UINT i=0; i<NUM_BUFFERS; i++)
     {
-        IDirect3DTexture9 *texVal;
-        if(FAILED(hErr = device->CreateTexture(d3d9CaptureInfo.cx, d3d9CaptureInfo.cy, 1, D3DUSAGE_RENDERTARGET, (D3DFORMAT)d3d9Format, D3DPOOL_DEFAULT, &texVal, NULL)))
-        {
-            logOutput << "DoD3D9CPUHook: device->CreateTexture " << i << " failed, result = " << (UINT)hErr;
-            bSuccess = false;
-            break;
-        }
-
-        if(FAILED(hErr = texVal->GetSurfaceLevel(0, &copyD3D9Textures[i])))
-        {
-            logOutput << "DoD3D9CPUHook: texVal->GetSurfaceLevel " << i << " failed, result = " << (UINT)hErr;
-            texVal->Release();
-            bSuccess = NULL;
-            break;
-        }
-
-        texVal->Release();
-
         if(FAILED(hErr = device->CreateOffscreenPlainSurface(d3d9CaptureInfo.cx, d3d9CaptureInfo.cy, (D3DFORMAT)d3d9Format, D3DPOOL_SYSTEMMEM, &textures[i], NULL)))
         {
             logOutput << "DoD3D9CPUHook: device->CreateOffscreenPlainSurface " << i << " failed, result = " << (UINT)hErr;
@@ -402,7 +440,7 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
             break;
         }
 
-        if(i == 0)
+        if(i == (NUM_BUFFERS-1))
         {
             D3DLOCKED_RECT lr;
             if(FAILED(hErr = textures[i]->LockRect(&lr, NULL, D3DLOCK_READONLY)))
@@ -414,6 +452,58 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
 
             pitch = lr.Pitch;
             textures[i]->UnlockRect();
+        }
+    }
+
+    if(bSuccess)
+    {
+        for(UINT i=0; i<NUM_BUFFERS; i++)
+        {
+            if(FAILED(hErr = device->CreateRenderTarget(d3d9CaptureInfo.cx, d3d9CaptureInfo.cy, (D3DFORMAT)d3d9Format, D3DMULTISAMPLE_NONE, 0, FALSE, &copyD3D9Textures[i], NULL)))
+            {
+                logOutput << "DoD3D9CPUHook: device->CreateTexture " << i << " failed, result = " << (UINT)hErr;
+                bSuccess = false;
+                break;
+            }
+
+            if(FAILED(hErr = device->CreateQuery(D3DQUERYTYPE_EVENT, &queries[i])))
+            {
+                logOutput << "DoD3D9CPUHook: device->CreateQuery " << i << " failed, result = " << (UINT)hErr;
+                bSuccess = false;
+                break;
+            }
+        }
+    }
+
+    if(bSuccess)
+    {
+        for(UINT i=0; i<NUM_BUFFERS; i++)
+        {
+            if(!(dataMutexes[i] = OSCreateMutex()))
+            {
+                logOutput << "DoD3D9CPUHook: OSCreateMutex " << i << " failed, GetLastError = " << GetLastError();
+                bSuccess = false;
+                break;
+            }
+        }
+    }
+
+    if(bSuccess)
+    {
+        bKillThread = false;
+
+        if(hCopyThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)CopyD3D9CPUTextureThread, NULL, 0, NULL))
+        {
+            if(!(hCopyEvent = CreateEvent(NULL, FALSE, FALSE, NULL)))
+            {
+                logOutput << "DoD3D9CPUHook: CreateEvent failed, GetLastError = " << GetLastError();
+                bSuccess = false;
+            }
+        }
+        else
+        {
+            logOutput << "DoD3D9CPUHook: CreateThread failed, GetLastError = " << GetLastError();
+            bSuccess = false;
         }
     }
 
@@ -434,13 +524,62 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
         d3d9CaptureInfo.pitch = pitch;
         d3d9CaptureInfo.hwndSender = hwndSender;
         d3d9CaptureInfo.bFlip = FALSE;
-        fps = SendMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d9CaptureInfo);
+        fps = (DWORD)SendMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d9CaptureInfo);
         frameTime = 1000000/LONGLONG(fps);
 
         logOutput << "DoD3D9CPUHook: success, fps = " << fps << ", frameTime = " << frameTime << endl;
     }
     else
         ClearD3D9Data();
+}
+
+DWORD CopyD3D9CPUTextureThread(LPVOID lpUseless)
+{
+    int sharedMemID = 0;
+
+    HANDLE hEvent = NULL;
+    if(!DuplicateHandle(GetCurrentProcess(), hCopyEvent, GetCurrentProcess(), &hEvent, NULL, FALSE, DUPLICATE_SAME_ACCESS))
+    {
+        logOutput << "CopyD3D9CPUTextureThread: couldn't duplicate handle" << endl;
+        return 0;
+    }
+
+    while(WaitForSingleObject(hEvent, INFINITE) == WAIT_OBJECT_0)
+    {
+        if(bKillThread)
+            break;
+
+        int nextSharedMemID = sharedMemID == 0 ? 1 : 0;
+
+        DWORD copyTex = curCPUTexture;
+        LPVOID data = pCopyData;
+        if(copyTex < NUM_BUFFERS && data != NULL)
+        {
+            OSEnterMutex(dataMutexes[copyTex]);
+
+            int lastRendered = -1;
+
+            //copy to whichever is available
+            if(WaitForSingleObject(textureMutexes[sharedMemID], 0) == WAIT_OBJECT_0)
+                lastRendered = (int)sharedMemID;
+            else if(WaitForSingleObject(textureMutexes[nextSharedMemID], 0) == WAIT_OBJECT_0)
+                lastRendered = (int)nextSharedMemID;
+
+            if(lastRendered != -1)
+            {
+                SSECopy(textureBuffers[lastRendered], data, d3d9CaptureInfo.pitch*d3d9CaptureInfo.cy);
+                ReleaseMutex(textureMutexes[lastRendered]);
+                copyData->lastRendered = (UINT)lastRendered;
+            }
+
+            OSLeaveMutex(dataMutexes[copyTex]);
+        }
+
+        sharedMemID = nextSharedMemID;
+    }
+
+    CloseHandle(hEvent);
+    return 0;
 }
 
 
@@ -467,7 +606,7 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
     {
         if(bCapturing)
         {
-            if(bD3D9Ex)
+            if(bD3D9Ex) //shared texture support
             {
                 DWORD nextCapture = curCapture == 0 ? 1 : 0;
 
@@ -500,14 +639,42 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
 
                 curCapture = nextCapture;
             }
-            else
+            else //slow regular d3d9, no shared textures
             {
+                //copy texture data only when GetRenderTargetData completes
+                for(UINT i=0; i<NUM_BUFFERS; i++)
+                {
+                    if(issuedQueries[i])
+                    {
+                        if(queries[i]->GetData(0, 0, 0) == S_OK)
+                        {
+                            issuedQueries[i] = false;
+
+                            IDirect3DSurface9 *targetTexture = textures[i];
+                            D3DLOCKED_RECT lockedRect;
+                            if(SUCCEEDED(targetTexture->LockRect(&lockedRect, NULL, D3DLOCK_READONLY)))
+                            {
+                                pCopyData = lockedRect.pBits;
+                                curCPUTexture = i;
+                                lockedTextures[i] = true;
+
+                                SetEvent(hCopyEvent);
+                            }
+                        }
+                    }
+                }
+
+                //--------------------------------------------------------
+                // copy from backbuffer to GPU texture first to prevent locks, then call GetRenderTargetData when safe
+
                 LONGLONG timeVal = OSGetTimeMicroseconds();
                 LONGLONG timeElapsed = timeVal-lastTime;
 
                 if(timeElapsed >= frameTime)
                 {
                     lastTime += frameTime;
+                    if(timeElapsed > frameTime*2)
+                        lastTime = timeVal;
 
                     DWORD nextCapture = (curCapture == NUM_BUFFERS-1) ? 0 : (curCapture+1);
 
@@ -522,35 +689,18 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
                             copyWait++;
                         else
                         {
-                            static int chingling = 0;
-
-                            int nextChingling = chingling == 0 ? 1 : 0;
-
                             IDirect3DSurface9 *prevSourceTexture = copyD3D9Textures[nextCapture];
                             IDirect3DSurface9 *targetTexture = textures[nextCapture];
 
-                            D3DLOCKED_RECT lr;
-                            if(SUCCEEDED(targetTexture->LockRect(&lr, NULL, D3DLOCK_READONLY)))
+                            if(lockedTextures[nextCapture])
                             {
-                                int lastRendered = -1;
-
-                                //under no circumstances do we -ever- allow a stall
-                                if(WaitForSingleObject(textureMutexes[chingling], 0) == WAIT_OBJECT_0)
-                                    lastRendered = (int)chingling;
-                                else if(WaitForSingleObject(textureMutexes[nextChingling], 0) == WAIT_OBJECT_0)
-                                    lastRendered = (int)nextChingling;
-
-                                if(lastRendered != -1)
-                                {
-                                    SSECopy(textureBuffers[lastRendered], lr.pBits, lr.Pitch*d3d9CaptureInfo.cy);
-                                    ReleaseMutex(textureMutexes[lastRendered]);
-                                    copyData->lastRendered = (UINT)lastRendered;
-                                }
+                                OSEnterMutex(dataMutexes[nextCapture]);
 
                                 targetTexture->UnlockRect();
-                            }
+                                lockedTextures[nextCapture] = false;
 
-                            IDirect3DDevice9 *device = static_cast<IDirect3DDevice9*>(lpCurrentDevice);
+                                OSLeaveMutex(dataMutexes[nextCapture]);
+                            }
 
                             HRESULT hErr;
                             if(FAILED(hErr = device->GetRenderTargetData(prevSourceTexture, targetTexture)))
@@ -558,8 +708,11 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
                                 int test = 0;
                             }
 
-                            chingling = nextChingling;
+                            queries[nextCapture]->Issue(D3DISSUE_END);
+                            issuedQueries[nextCapture] = true;
                         }
+
+                        backBuffer->Release();
                     }
 
                     curCapture = nextCapture;
@@ -582,7 +735,7 @@ struct D3D9Override
 
         if(bHasTextures)
         {
-            if(refVal == 10)
+            if(refVal == 12)
             {
                 ClearD3D9Data();
                 lpCurrentDevice = NULL;
@@ -593,17 +746,19 @@ struct D3D9Override
         {
             lpCurrentDevice = NULL;
             bTargetAcquired = false;
+
+            logOutput << "d3d9 capture terminated by the application" << endl;
         }
 
         return (*(RELEASEPROC)oldD3D9Release)(device);
     }
 
-    HRESULT STDMETHODCALLTYPE Present(const RECT *pSourceRect, const RECT *pDestRect, HWND hwndOverride, const RGNDATA *pDirtyRgn)
+    HRESULT STDMETHODCALLTYPE EndScene()
     {
-        //d3d9SwapPresent.Unhook();
-        d3d9Present.Unhook();
-
+        d3d9EndScene.Unhook();
         IDirect3DDevice9 *device = (IDirect3DDevice9*)this;
+        HRESULT hRes = device->EndScene();
+
         if(lpCurrentDevice == NULL && !bTargetAcquired)
         {
             lpCurrentDevice = device;
@@ -633,93 +788,7 @@ struct D3D9Override
             DoD3D9DrawStuff(device);
         }
 
-        HRESULT hRes = device->Present(pSourceRect, pDestRect, hwndOverride, pDirtyRgn);
-        d3d9Present.Rehook();
-        //d3d9SwapPresent.Rehook();
-
-        return hRes;
-    }
-
-    HRESULT STDMETHODCALLTYPE PresentEx(const RECT *pSourceRect, const RECT *pDestRect, HWND hwndOverride, const RGNDATA *pDirtyRgn, DWORD dwFlags)
-    {
-        //d3d9SwapPresent.Unhook();
-        d3d9Present.Unhook();
-        d3d9PresentEx.Unhook();
-
-        IDirect3DDevice9Ex *device = (IDirect3DDevice9Ex*)this;
-        if(lpCurrentDevice == NULL && !bTargetAcquired)
-        {
-            lpCurrentDevice = device;
-            SetupD3D9(device);
-            bTargetAcquired = true;
-
-            FARPROC curRelease = GetVTable(device, (8/4));
-            if(curRelease != newD3D9Release)
-            {
-                oldD3D9Release = curRelease;
-                newD3D9Release = ConvertClassProcToFarproc((CLASSPROC)&D3D9Override::Release);
-                SetVTable(device, (8/4), newD3D9Release);
-            }
-
-            bD3D9Ex = true;
-        }
-
-        if(lpCurrentDevice == device)
-        {
-            DoD3D9DrawStuff(device);
-        }
-
-        HRESULT hRes = device->PresentEx(pSourceRect, pDestRect, hwndOverride, pDirtyRgn, dwFlags);
-
-        d3d9Present.Rehook();
-        d3d9PresentEx.Rehook();
-        //d3d9SwapPresent.Rehook();
-
-        return hRes;
-    }
-
-    HRESULT STDMETHODCALLTYPE SwapPresent(const RECT *pSourceRect, const RECT *pDestRect, HWND hwndOverride, const RGNDATA *pDirtyRgn, DWORD dwFlags)
-    {
-        d3d9SwapPresent.Unhook();
-
-        IDirect3DSwapChain9 *swap = (IDirect3DSwapChain9*)this;
-        IDirect3DDevice9 *device;
-        if(SUCCEEDED(swap->GetDevice(&device)))
-        {
-            if(lpCurrentDevice == NULL && !bTargetAcquired)
-            {
-                lpCurrentDevice = device;
-                SetupD3D9(device);
-                bTargetAcquired = true;
-
-                FARPROC curRelease = GetVTable(device, (8/4));
-                if(curRelease != newD3D9Release)
-                {
-                    oldD3D9Release = curRelease;
-                    newD3D9Release = ConvertClassProcToFarproc((CLASSPROC)&D3D9Override::Release);
-                    SetVTable(device, (8/4), newD3D9Release);
-                }
-
-                IDirect3D9 *d3d;
-                if(SUCCEEDED(device->GetDirect3D(&d3d)))
-                {
-                    IDirect3D9 *d3d9ex;
-                    if(bD3D9Ex = SUCCEEDED(d3d->QueryInterface(__uuidof(IDirect3D9Ex), (void**)&d3d9ex)))
-                        d3d9ex->Release();
-                    d3d->Release();
-                }
-            }
-
-            if(lpCurrentDevice == device)
-            {
-                DoD3D9DrawStuff(device);
-            }
-
-            device->Release();
-        }
-
-        HRESULT hRes = swap->Present(pSourceRect, pDestRect, hwndOverride, pDirtyRgn, dwFlags);
-        d3d9SwapPresent.Rehook();
+        d3d9EndScene.Rehook();
 
         return hRes;
     }
@@ -729,6 +798,8 @@ struct D3D9Override
         d3d9Reset.Unhook();
 
         IDirect3DDevice9 *device = (IDirect3DDevice9*)this;
+
+        ClearD3D9Data();
 
         HRESULT hRes = device->Reset(params);
 
@@ -769,6 +840,8 @@ struct D3D9Override
         d3d9Reset.Unhook();
 
         IDirect3DDevice9Ex *device = (IDirect3DDevice9Ex*)this;
+
+        ClearD3D9Data();
 
         HRESULT hRes = device->ResetEx(params, fullscreenData);
 
@@ -830,31 +903,15 @@ bool InitD3D9Capture()
                 {
                     bSuccess = true;
 
-                    /*IDirect3DSwapChain9 *swap;
-                    bool bHasSwap = SUCCEEDED(deviceEx->GetSwapChain(0, &swap));*/
-
                     UPARAM *vtable = *(UPARAM**)deviceEx;
 
-                    d3d9PresentEx.Hook((FARPROC)*(vtable+(484/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D9Override::PresentEx));
-                    d3d9Present.Hook((FARPROC)*(vtable+(68/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D9Override::Present));
+                    d3d9EndScene.Hook((FARPROC)*(vtable+(168/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D9Override::EndScene));
                     d3d9ResetEx.Hook((FARPROC)*(vtable+(528/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D9Override::ResetEx));
                     d3d9Reset.Hook((FARPROC)*(vtable+(64/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D9Override::Reset));
 
-                    /*if(bHasSwap)
-                    {
-                        UPARAM *vtable = *(UPARAM**)swap;
-                        d3d9SwapPresent.Hook((FARPROC)*(vtable+(24/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D9Override::SwapPresent));
-
-                        swap->Release();
-                    }*/
-
                     deviceEx->Release();
 
-                    /*if(bHasSwap)
-                        d3d9SwapPresent.Rehook();*/
-
-                    d3d9PresentEx.Rehook();
-                    d3d9Present.Rehook();
+                    d3d9EndScene.Rehook();
                     d3d9Reset.Rehook();
                     d3d9ResetEx.Rehook();
                 }
@@ -875,9 +932,7 @@ bool InitD3D9Capture()
 
 void FreeD3D9Capture()
 {
-    //d3d9SwapPresent.Unhook();
-    d3d9PresentEx.Unhook();
-    d3d9Present.Unhook();
+    d3d9EndScene.Unhook();
     d3d9ResetEx.Unhook();
     d3d9Reset.Unhook();
 }

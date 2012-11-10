@@ -260,6 +260,7 @@ void GraphicsCaptureSource::AttemptCapture()
         {
             PostMessage(hwndSender, SENDER_RESTARTCAPTURE, 0, 0);
             bCapturing = true;
+            captureWaitCount = 0;
         }
         else
         {
@@ -271,7 +272,10 @@ void GraphicsCaptureSource::AttemptCapture()
             strDLL << TEXT("\\plugins\\GraphicsCapture\\GraphicsCaptureHook.dll");
 
             if(InjectLibrary(hProcess, strDLL))
+            {
+                captureWaitCount = 0;
                 bCapturing = true;
+            }
             else
             {
                 AppWarning(TEXT("GraphicsCaptureSource::BeginScene: Failed to inject library, GetLastError = %u"), GetLastError());
@@ -324,6 +328,12 @@ void GraphicsCaptureSource::EndScene()
 
 void GraphicsCaptureSource::Preprocess()
 {
+    if(bCapturing && !capture)
+    {
+        if(++captureWaitCount >= API->GetMaxFPS())
+            bCapturing = false;
+    }
+
     if(!bCapturing && !bErrorAcquiring)
         AttemptCapture();
 }

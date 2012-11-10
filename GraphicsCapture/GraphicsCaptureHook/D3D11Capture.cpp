@@ -26,6 +26,7 @@
 
 extern HookData         gi11swapResizeBuffers;
 extern HookData         gi11swapPresent;
+//HookData                gi11swapSetFullscreenState;
 FARPROC                 oldD3D11Release = NULL;
 FARPROC                 newD3D11Release = NULL;
 
@@ -301,9 +302,33 @@ struct D3D11Override
         return (*(RELEASEPROC)oldD3D11Release)(device);
     }
 
+    /*HRESULT STDMETHODCALLTYPE SwapSetFullscreenState(BOOL bFullscreen, IDXGIOutput *output)
+    {
+        IDXGISwapChain *swap = (IDXGISwapChain*)this;
+
+        ClearD3D11Data();
+
+        gi11swapSetFullscreenState.Unhook();
+        HRESULT hRes = swap->SetFullscreenState(bFullscreen, output);
+        gi11swapSetFullscreenState.Rehook();
+
+        if(lpCurrentSwap == NULL && !bTargetAcquired)
+        {
+            lpCurrentSwap = swap;
+            bTargetAcquired = true;
+        }
+
+        if(lpCurrentSwap == swap)
+            SetupD3D11(swap);
+
+        return hRes;
+    }*/
+
     HRESULT STDMETHODCALLTYPE SwapResizeBuffersHook(UINT bufferCount, UINT width, UINT height, DXGI_FORMAT giFormat, UINT flags)
     {
         IDXGISwapChain *swap = (IDXGISwapChain*)this;
+
+        ClearD3D11Data();
 
         gi11swapResizeBuffers.Unhook();
         HRESULT hRes = swap->ResizeBuffers(bufferCount, width, height, giFormat, flags);
@@ -483,6 +508,7 @@ bool InitD3D11Capture()
                 UPARAM *vtable = *(UPARAM**)swap;
                 gi11swapPresent.Hook((FARPROC)*(vtable+(32/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D11Override::SwapPresentHook));
                 gi11swapResizeBuffers.Hook((FARPROC)*(vtable+(52/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D11Override::SwapResizeBuffersHook));
+                //gi11swapSetFullscreenState.Hook((FARPROC)*(vtable+(40/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D11Override::SwapSetFullscreenState));
 
                 SafeRelease(swap);
                 SafeRelease(device);
@@ -490,6 +516,7 @@ bool InitD3D11Capture()
 
                 gi11swapPresent.Rehook();
                 gi11swapResizeBuffers.Rehook();
+                //gi11swapSetFullscreenState.Rehook();
             }
             else
                 logOutput << "InitD3D11Capture: D3D11CreateDeviceAndSwapChain failed, result = " << UINT(hErr) << endl;
