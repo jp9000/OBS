@@ -333,7 +333,7 @@ BOOL WINAPI wglDeleteContextHook(HGLRC hRC)
 
 bool InitGLCapture()
 {
-    static HWND hwndOpenGLSetupWindow;
+    static HWND hwndOpenGLSetupWindow = NULL;
     bool bSuccess = false;
 
     if(!hwndOpenGLSetupWindow)
@@ -360,7 +360,7 @@ bool InitGLCapture()
                 NULL,
                 hinstMain,
                 NULL
-            );
+                );
         }
     }
 

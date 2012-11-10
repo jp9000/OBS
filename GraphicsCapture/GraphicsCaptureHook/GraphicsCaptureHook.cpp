@@ -80,6 +80,43 @@ LONGLONG WINAPI OSGetTimeMicroseconds()
     return usecTicks;
 }
 
+HANDLE WINAPI OSCreateMutex()
+{
+    CRITICAL_SECTION *pSection = (CRITICAL_SECTION*)malloc(sizeof(CRITICAL_SECTION));
+    InitializeCriticalSection(pSection);
+
+    return (HANDLE)pSection;
+}
+
+void   WINAPI OSEnterMutex(HANDLE hMutex)
+{
+    if(hMutex)
+        EnterCriticalSection((CRITICAL_SECTION*)hMutex);
+}
+
+BOOL   WINAPI OSTryEnterMutex(HANDLE hMutex)
+{
+    if(hMutex)
+        return TryEnterCriticalSection((CRITICAL_SECTION*)hMutex);
+    return FALSE;
+}
+
+void   WINAPI OSLeaveMutex(HANDLE hMutex)
+{
+    if(hMutex)
+        LeaveCriticalSection((CRITICAL_SECTION*)hMutex);
+}
+
+void   WINAPI OSCloseMutex(HANDLE hMutex)
+{
+    if(hMutex)
+    {
+        DeleteCriticalSection((CRITICAL_SECTION*)hMutex);
+        free(hMutex);
+    }
+}
+
+
 UINT InitializeSharedMemoryCPUCapture(UINT textureSize, DWORD *totalSize, MemoryCopyData **copyData, LPBYTE *textureBuffers)
 {
     UINT alignedHeaderSize = (sizeof(MemoryCopyData)+15) & 0xFFFFFFF0;
