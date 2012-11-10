@@ -102,7 +102,7 @@ public:
             return;
 
         DWORD oldProtect;
-        VirtualProtect((LPVOID)func, 5, PAGE_READWRITE, &oldProtect);
+        VirtualProtect((LPVOID)func, 5, PAGE_EXECUTE_READWRITE, &oldProtect);
 
         DWORD offset = DWORD(UPARAM(hookFunc) - (UPARAM(func)+5));
 
@@ -184,6 +184,7 @@ typedef ULONG (WINAPI *RELEASEPROC)(LPVOID);
 enum GSColorFormat {GS_UNKNOWNFORMAT, GS_ALPHA, GS_GRAYSCALE, GS_RGB, GS_RGBA, GS_BGR, GS_BGRA, GS_RGBA16F, GS_RGBA32F, GS_B5G5R5A1, GS_B5G6R5, GS_R10G10B10A2, GS_DXT1, GS_DXT3, GS_DXT5};
 
 extern HWND hwndSender, hwndReceiver;
+extern HINSTANCE hinstMain;
 extern HANDLE textureMutexes[2];
 extern bool bCapturing;
 extern bool bTargetAcquired;

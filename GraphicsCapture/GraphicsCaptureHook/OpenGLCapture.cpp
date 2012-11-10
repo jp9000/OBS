@@ -333,10 +333,39 @@ BOOL WINAPI wglDeleteContextHook(HGLRC hRC)
 
 bool InitGLCapture()
 {
+    static HWND hwndOpenGLSetupWindow;
     bool bSuccess = false;
 
+    if(!hwndOpenGLSetupWindow)
+    {
+        WNDCLASSEX windowClass;
+
+        ZeroMemory(&windowClass, sizeof(windowClass));
+
+        windowClass.cbSize = sizeof(windowClass);
+        windowClass.style = CS_OWNDC;
+        windowClass.lpfnWndProc = DefWindowProc;
+        windowClass.lpszClassName = TEXT("OBSOGLHookClass");
+        windowClass.hInstance = hinstMain;
+
+        if(RegisterClassEx(&windowClass))
+        {
+            hwndOpenGLSetupWindow = CreateWindowEx (0,
+                TEXT("OBSOGLHookClass"),
+                TEXT("OBS OpenGL Context Window"),
+                WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
+                0, 0,
+                1, 1,
+                NULL,
+                NULL,
+                hinstMain,
+                NULL
+            );
+        }
+    }
+
     HMODULE hGL = GetModuleHandle(TEXT("opengl32.dll"));
-    if(hGL)
+    if(hGL && hwndOpenGLSetupWindow)
     {
         pglReadBuffer       = (GLREADBUFFERPROC)        GetProcAddress(hGL, "glReadBuffer");
         pglReadPixels       = (GLREADPIXELSPROC)        GetProcAddress(hGL, "glReadPixels");
@@ -353,14 +382,14 @@ bool InitGLCapture()
             return false;
         }
 
-        HDC hDC = CreateDC(TEXT("DISPLAY"), NULL, NULL, NULL);
+        HDC hDC = GetDC(hwndOpenGLSetupWindow);
         if(hDC)
         {
             PIXELFORMATDESCRIPTOR pfd;
             ZeroMemory(&pfd, sizeof(pfd));
             pfd.nSize = sizeof(pfd);
             pfd.nVersion = 1;
-            pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+            pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_GENERIC_ACCELERATED;
             pfd.iPixelType = PFD_TYPE_RGBA;
             pfd.cColorBits = 32;
             pfd.cDepthBits = 32;
@@ -394,15 +423,23 @@ bool InitGLCapture()
 
                 jimglDeleteContext(hGlrc);
 
+                ReleaseDC(hwndOpenGLSetupWindow, hDC);
+
                 if(bSuccess)
                 {
                     glHookSwapBuffers.Rehook();
                     glHookSwapLayerBuffers.Rehook();
                     glHookDeleteContext.Rehook();
+
+                    DestroyWindow(hwndOpenGLSetupWindow);
+                    hwndOpenGLSetupWindow = NULL;
+
+                    UnregisterClass(TEXT("OBSOGLHookClass"), hinstMain);
                 }
             }
 
-            DeleteDC(hDC);
+            if(hwndOpenGLSetupWindow)
+                ReleaseDC(hwndOpenGLSetupWindow, hDC);
         }
     }
 
