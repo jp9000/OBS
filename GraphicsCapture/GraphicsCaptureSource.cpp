@@ -178,6 +178,7 @@ void GraphicsCaptureSource::EndCapture()
     capture = NULL;
     bErrorAcquiring = false;
     bCapturing = false;
+    captureCheckInterval = -1.0f;
 
     if(warningID)
     {
@@ -326,7 +327,7 @@ void GraphicsCaptureSource::EndScene()
     }
 }
 
-void GraphicsCaptureSource::Preprocess()
+void GraphicsCaptureSource::Tick(float fSeconds)
 {
     if(bCapturing && !capture)
     {
@@ -335,7 +336,14 @@ void GraphicsCaptureSource::Preprocess()
     }
 
     if(!bCapturing && !bErrorAcquiring)
-        AttemptCapture();
+    {
+        captureCheckInterval += fSeconds;
+        if(captureCheckInterval >= 3.0f)
+        {
+            AttemptCapture();
+            captureCheckInterval = 0.0f;
+        }
+    }
 }
 
 inline double round(double val)

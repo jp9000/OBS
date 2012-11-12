@@ -34,6 +34,8 @@ class GraphicsCaptureSource : public ImageSource
     HANDLE hProcess;
     UINT warningID;
 
+    float captureCheckInterval;
+
     void NewCapture(LPVOID address);
     void EndCapture();
 
@@ -48,7 +50,7 @@ public:
     void BeginScene();
     void EndScene();
 
-    void Preprocess();
+    void Tick(float fSeconds);
     void Render(const Vect2 &pos, const Vect2 &size);
     Vect2 GetSize() const;
 

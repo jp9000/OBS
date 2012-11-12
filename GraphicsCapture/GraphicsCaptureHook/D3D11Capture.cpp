@@ -24,8 +24,8 @@
 #include "DXGIStuff.h"
 
 
-extern HookData         gi11swapResizeBuffers;
-extern HookData         gi11swapPresent;
+HookData                gi11swapResizeBuffers;
+HookData                gi11swapPresent;
 //HookData                gi11swapSetFullscreenState;
 FARPROC                 oldD3D11Release = NULL;
 FARPROC                 newD3D11Release = NULL;
@@ -286,7 +286,7 @@ struct D3D11Override
 
         if(bHasTextures)
         {
-            if(refVal == 5) //our two textures are holding the reference up, so always clear at 3
+            if(refVal == 8) //our two textures are holding the reference up, so always clear at 3
             {
                 ClearD3D11Data();
                 lpCurrentDevice = NULL;
@@ -485,7 +485,7 @@ bool InitD3D11Capture()
             DXGI_SWAP_CHAIN_DESC swapDesc;
             ZeroMemory(&swapDesc, sizeof(swapDesc));
             swapDesc.BufferCount = 2;
-            swapDesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+            swapDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
             swapDesc.BufferDesc.Width  = 2;
             swapDesc.BufferDesc.Height = 2;
             swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -501,7 +501,7 @@ bool InitD3D11Capture()
             D3D_FEATURE_LEVEL receivedLevel;
 
             HRESULT hErr;
-            if(SUCCEEDED(hErr = (*d3d11Create)(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, &desiredLevel, 1, D3D11_SDK_VERSION, &swapDesc, &swap, &device, &receivedLevel, &context)))
+            if(SUCCEEDED(hErr = (*d3d11Create)(NULL, D3D_DRIVER_TYPE_NULL, NULL, 0, &desiredLevel, 1, D3D11_SDK_VERSION, &swapDesc, &swap, &device, &receivedLevel, &context)))
             {
                 bSuccess = true;
 

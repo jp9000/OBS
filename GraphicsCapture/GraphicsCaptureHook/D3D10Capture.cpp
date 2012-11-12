@@ -28,38 +28,87 @@ HookData                gi1swapPresent;
 FARPROC                 oldD3D10Release = NULL;
 FARPROC                 newD3D10Release = NULL;
 
-#define                 NUM_BUFFERS 3
-#define                 NULL_ARRAY {NULL, NULL, NULL}
+LPVOID                  lpCurrentSwap;
+extern LPVOID           lpCurrentDevice;
 
 CaptureInfo             d3d10CaptureInfo;
 
-extern SharedTexData    *texData;
-extern MemoryCopyData   *copyData;
-extern DWORD            copyWait;
-extern LONGLONG         lastTime;
+//-----------------------------------------------------------------
 
-LPVOID                  lpCurrentSwap;
-extern LPVOID           lpCurrentDevice;
+#define                 NUM_BUFFERS 3
+#define                 ZERO_ARRAY {0, 0, 0}
+
+extern HANDLE           hCopyThread;
+extern HANDLE           hCopyEvent;
+extern bool             bKillThread;
+extern HANDLE           dataMutexes[NUM_BUFFERS];
+extern void             *pCopyData;
+extern DWORD            curCPUTexture;
+
+extern bool             lockedTextures[NUM_BUFFERS];
+extern bool             issuedQueries[NUM_BUFFERS];
 extern MemoryCopyData   *copyData;
 extern LPBYTE           textureBuffers[2];
 extern DWORD            curCapture;
 extern BOOL             bHasTextures;
 extern LONGLONG         frameTime;
 extern DWORD            fps;
+extern DWORD            copyWait;
+extern LONGLONG         lastTime;
 BOOL                    bIsMultisampled = FALSE;
 
+ID3D10Query             *d3d10Queries[NUM_BUFFERS] = ZERO_ARRAY;
+ID3D10Texture2D         *d3d10Textures[NUM_BUFFERS] = ZERO_ARRAY;
+ID3D10Texture2D         *copyD3D10Textures[NUM_BUFFERS] = ZERO_ARRAY;
+
 DXGI_FORMAT             dxgiFormat;
-ID3D10Texture2D         *d3d10Textures[NUM_BUFFERS] = NULL_ARRAY;
-ID3D10Texture2D         *copyD3D10Textures[NUM_BUFFERS] = NULL_ARRAY;
 
 
 void ClearD3D10Data()
 {
     bHasTextures = false;
-    for(UINT i=0; i<NUM_BUFFERS; i++)
+    if(copyData)
+        copyData->lastRendered = -1;
+
+    if(hCopyThread)
     {
+        bKillThread = true;
+        SetEvent(hCopyEvent);
+        if(WaitForSingleObject(hCopyThread, 500) != WAIT_OBJECT_0)
+            TerminateThread(hCopyThread, -1);
+
+        CloseHandle(hCopyThread);
+        CloseHandle(hCopyEvent);
+
+        hCopyThread = NULL;
+        hCopyEvent = NULL;
+    }
+
+    for(int i=0; i<NUM_BUFFERS; i++)
+    {
+        if(lockedTextures[i])
+        {
+            OSEnterMutex(dataMutexes[i]);
+
+            d3d10Textures[i]->Unmap(0);
+            lockedTextures[i] = false;
+
+            OSLeaveMutex(dataMutexes[i]);
+        }
+
+        issuedQueries[i] = false;
         SafeRelease(d3d10Textures[i]);
         SafeRelease(copyD3D10Textures[i]);
+        SafeRelease(d3d10Queries[i]);
+    }
+
+    for(int i=0; i<NUM_BUFFERS; i++)
+    {
+        if(dataMutexes[i])
+        {
+            OSCloseMutex(dataMutexes[i]);
+            dataMutexes[i] = NULL;
+        }
     }
 
     DestroySharedMemory();
@@ -68,12 +117,13 @@ void ClearD3D10Data()
     lastTime = 0;
     fps = 0;
     frameTime = 0;
+    curCapture = 0;
+    curCPUTexture = 0;
+    pCopyData = NULL;
 }
 
 void SetupD3D10(IDXGISwapChain *swapChain)
 {
-    ClearD3D10Data();
-
     DXGI_SWAP_CHAIN_DESC scd;
     if(SUCCEEDED(swapChain->GetDesc(&scd)))
     {
@@ -95,6 +145,181 @@ void SetupD3D10(IDXGISwapChain *swapChain)
     OSInitializeTimer();
 }
 
+DWORD CopyD3D10CPUTextureThread(LPVOID lpUseless);
+
+void DoD3D10Hook(ID3D10Device *device)
+{
+    bool bSuccess = true;
+    UINT pitch;
+
+    D3D10_TEXTURE2D_DESC texDesc;
+    ZeroMemory(&texDesc, sizeof(texDesc));
+    texDesc.Width  = d3d10CaptureInfo.cx;
+    texDesc.Height = d3d10CaptureInfo.cy;
+    texDesc.MipLevels = 1;
+    texDesc.ArraySize = 1;
+    texDesc.Format = dxgiFormat;
+    texDesc.SampleDesc.Count = 1;
+    texDesc.Usage = D3D10_USAGE_STAGING;
+    texDesc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
+
+    for(UINT i=0; i<NUM_BUFFERS; i++)
+    {
+        HRESULT hRes;
+        if(FAILED(hRes = device->CreateTexture2D(&texDesc, NULL, &d3d10Textures[i])))
+        {
+            logOutput << "DoD3D10Hook: creation of staging texture " << i << " failed, result = " << (UINT)hRes << endl;
+            bSuccess = false;
+            break;
+        }
+
+        if(i == 0)
+        {
+            D3D10_MAPPED_TEXTURE2D map;
+            if(FAILED(hRes = d3d10Textures[i]->Map(0, D3D10_MAP_READ, 0, &map)))
+            {
+                logOutput << "DoD3D10Hook: d3d10Textures[" << i << "]->Map failed, result = " << (UINT)hRes << endl;
+                bSuccess = false;
+                break;
+            }
+
+            pitch = map.RowPitch;
+            d3d10Textures[i]->Unmap(0);
+        }
+    }
+
+    if(bSuccess)
+    {
+        D3D10_QUERY_DESC queryDesc;
+        ZeroMemory(&queryDesc, sizeof(queryDesc));
+        queryDesc.Query = D3D10_QUERY_EVENT;
+
+        texDesc.BindFlags = D3D10_BIND_RENDER_TARGET;
+        texDesc.Usage = D3D10_USAGE_DEFAULT;
+        texDesc.CPUAccessFlags = 0;
+
+        for(UINT i=0; i<NUM_BUFFERS; i++)
+        {
+            HRESULT hRes;
+            if(FAILED(hRes = device->CreateTexture2D(&texDesc, NULL, &copyD3D10Textures[i])))
+            {
+                logOutput << "DoD3D10Hook: creation of gpu copy texture " << i << " failed, result = " << (UINT)hRes << endl;
+                bSuccess = false;
+                break;
+            }
+
+            if(FAILED(hRes = device->CreateQuery(&queryDesc, &d3d10Queries[i])))
+            {
+                logOutput << "DoD3D10Hook: creation of query " << i << " failed, result = " << (UINT)hRes << endl;
+                bSuccess = false;
+                break;
+            }
+
+            if(!(dataMutexes[i] = OSCreateMutex()))
+            {
+                logOutput << "DoD3D10Hook: OSCreateMutex " << i << " failed, GetLastError = " << GetLastError();
+                bSuccess = false;
+                break;
+            }
+        }
+    }
+
+    if(bSuccess)
+    {
+        bKillThread = false;
+
+        if(hCopyThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)CopyD3D10CPUTextureThread, NULL, 0, NULL))
+        {
+            if(!(hCopyEvent = CreateEvent(NULL, FALSE, FALSE, NULL)))
+            {
+                logOutput << "DoD3D10CPUHook: CreateEvent failed, GetLastError = " << GetLastError();
+                bSuccess = false;
+            }
+        }
+        else
+        {
+            logOutput << "DoD3D10CPUHook: CreateThread failed, GetLastError = " << GetLastError();
+            bSuccess = false;
+        }
+    }
+
+    if(bSuccess)
+    {
+        d3d10CaptureInfo.mapID = InitializeSharedMemoryCPUCapture(pitch*d3d10CaptureInfo.cy, &d3d10CaptureInfo.mapSize, &copyData, textureBuffers);
+        if(!d3d10CaptureInfo.mapID)
+        {
+            logOutput << "DoD3D10Hook: failed to create shared memory" << endl;
+            bSuccess = false;
+        }
+    }
+
+    if(bSuccess)
+    {
+        bHasTextures = true;
+        d3d10CaptureInfo.captureType = CAPTURETYPE_MEMORY;
+        d3d10CaptureInfo.hwndSender = hwndSender;
+        d3d10CaptureInfo.pitch = pitch;
+        d3d10CaptureInfo.bFlip = FALSE;
+        fps = (DWORD)SendMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d10CaptureInfo);
+        frameTime = 1000000/LONGLONG(fps);
+
+        logOutput << "DoD3D10CPUHook: success, fps = " << fps << ", frameTime = " << frameTime << endl;
+    }
+    else
+    {
+        ClearD3D10Data();
+    }
+}
+
+DWORD CopyD3D10CPUTextureThread(LPVOID lpUseless)
+{
+    int sharedMemID = 0;
+
+    HANDLE hEvent = NULL;
+    if(!DuplicateHandle(GetCurrentProcess(), hCopyEvent, GetCurrentProcess(), &hEvent, NULL, FALSE, DUPLICATE_SAME_ACCESS))
+    {
+        logOutput << "CopyD3D10CPUTextureThread: couldn't duplicate handle" << endl;
+        return 0;
+    }
+
+    while(WaitForSingleObject(hEvent, INFINITE) == WAIT_OBJECT_0)
+    {
+        if(bKillThread)
+            break;
+
+        int nextSharedMemID = sharedMemID == 0 ? 1 : 0;
+
+        DWORD copyTex = curCPUTexture;
+        LPVOID data = pCopyData;
+        if(copyTex < NUM_BUFFERS && data != NULL)
+        {
+            OSEnterMutex(dataMutexes[copyTex]);
+
+            int lastRendered = -1;
+
+            //copy to whichever is available
+            if(WaitForSingleObject(textureMutexes[sharedMemID], 0) == WAIT_OBJECT_0)
+                lastRendered = (int)sharedMemID;
+            else if(WaitForSingleObject(textureMutexes[nextSharedMemID], 0) == WAIT_OBJECT_0)
+                lastRendered = (int)nextSharedMemID;
+
+            if(lastRendered != -1)
+            {
+                SSECopy(textureBuffers[lastRendered], data, d3d10CaptureInfo.pitch*d3d10CaptureInfo.cy);
+                ReleaseMutex(textureMutexes[lastRendered]);
+                copyData->lastRendered = (UINT)lastRendered;
+            }
+
+            OSLeaveMutex(dataMutexes[copyTex]);
+        }
+
+        sharedMemID = nextSharedMemID;
+    }
+
+    CloseHandle(hEvent);
+    return 0;
+}
+
 struct D3D10Override
 {
     UINT STDMETHODCALLTYPE DeviceReleaseHook()
@@ -106,7 +331,7 @@ struct D3D10Override
 
         if(bHasTextures)
         {
-            if(refVal == 5) //our two textures are holding the reference up, so always clear at 3
+            if(refVal == 15)
             {
                 ClearD3D10Data();
                 lpCurrentDevice = NULL;
@@ -125,6 +350,8 @@ struct D3D10Override
     HRESULT STDMETHODCALLTYPE SwapResizeBuffersHook(UINT bufferCount, UINT width, UINT height, DXGI_FORMAT giFormat, UINT flags)
     {
         IDXGISwapChain *swap = (IDXGISwapChain*)this;
+
+        ClearD3D10Data();
 
         gi1swapResizeBuffers.Unhook();
         HRESULT hRes = swap->ResizeBuffers(bufferCount, width, height, giFormat, flags);
@@ -179,78 +406,35 @@ struct D3D10Override
                             hwndReceiver = FindWindow(RECEIVER_WINDOWCLASS, NULL);
 
                         if(hwndReceiver)
-                        {
-                            D3D10_TEXTURE2D_DESC texDesc;
-                            ZeroMemory(&texDesc, sizeof(texDesc));
-                            texDesc.Width  = d3d10CaptureInfo.cx;
-                            texDesc.Height = d3d10CaptureInfo.cy;
-                            texDesc.MipLevels = 1;
-                            texDesc.ArraySize = 1;
-                            texDesc.Format = dxgiFormat;
-                            texDesc.SampleDesc.Count = 1;
-                            texDesc.Usage = D3D10_USAGE_STAGING;
-                            texDesc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
-
-                            bool bSuccess = true;
-                            UINT pitch;
-
-                            for(UINT i=0; i<2; i++)
-                            {
-                                HRESULT hRes;
-                                if(FAILED(hRes = device->CreateTexture2D(&texDesc, NULL, &d3d10Textures[i])))
-                                {
-                                    logOutput << "SwapPresentHook: device->CreateTexture2D " << i << " failed, result = " << (UINT)hRes << endl;
-                                    bSuccess = false;
-                                    break;
-                                }
-
-                                if(i == 0)
-                                {
-                                    D3D10_MAPPED_TEXTURE2D map;
-                                    if(FAILED(hRes = d3d10Textures[i]->Map(0, D3D10_MAP_READ, 0, &map)))
-                                    {
-                                        logOutput << "SwapPresentHook: d3d10Textures[" << i << "]->Map failed, result = " << (UINT)hRes << endl;
-                                        bSuccess = false;
-                                        break;
-                                    }
-
-                                    pitch = map.RowPitch;
-                                    d3d10Textures[i]->Unmap(0);
-                                }
-                            }
-
-                            if(bSuccess)
-                            {
-                                d3d10CaptureInfo.mapID = InitializeSharedMemoryCPUCapture(pitch*d3d10CaptureInfo.cy, &d3d10CaptureInfo.mapSize, &copyData, textureBuffers);
-                                if(!d3d10CaptureInfo.mapID)
-                                {
-                                    logOutput << "SwapPresentHook: failed to create shared memory" << endl;
-                                    bSuccess = false;
-                                }
-                            }
-
-                            if(bSuccess)
-                            {
-                                bHasTextures = true;
-                                d3d10CaptureInfo.captureType = CAPTURETYPE_MEMORY;
-                                d3d10CaptureInfo.hwndSender = hwndSender;
-                                d3d10CaptureInfo.pitch = pitch;
-                                d3d10CaptureInfo.bFlip = FALSE;
-                                fps = (DWORD)SendMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d10CaptureInfo);
-                                frameTime = 1000000/LONGLONG(fps);
-
-                                logOutput << "SwapPresentHook: initialization succeeded" << endl;
-                            }
-                            else
-                            {
-                                ClearD3D10Data();
-                            }
-                        }
+                            DoD3D10Hook(device);
                     }
                 }
 
                 if(bHasTextures)
                 {
+                    for(UINT i=0; i<NUM_BUFFERS; i++)
+                    {
+                        if(issuedQueries[i])
+                        {
+                            if(d3d10Queries[i]->GetData(0, 0, 0) == S_OK)
+                            {
+                                issuedQueries[i] = false;
+
+                                ID3D10Texture2D *targetTexture = d3d10Textures[i];
+
+                                D3D10_MAPPED_TEXTURE2D map;
+                                if(SUCCEEDED(targetTexture->Map(0, D3D10_MAP_READ, 0, &map)))
+                                {
+                                    pCopyData = map.pData;
+                                    curCPUTexture = i;
+                                    lockedTextures[i] = true;
+
+                                    SetEvent(hCopyEvent);
+                                }
+                            }
+                        }
+                    }
+
                     if(bCapturing)
                     {
                         LONGLONG timeVal = OSGetTimeMicroseconds();
@@ -259,6 +443,8 @@ struct D3D10Override
                         if(timeElapsed >= frameTime)
                         {
                             lastTime += frameTime;
+                            if(timeElapsed > frameTime*2)
+                                lastTime = timeVal;
 
                             DWORD nextCapture = (curCapture == NUM_BUFFERS-1) ? 0 : (curCapture+1);
 
@@ -280,29 +466,20 @@ struct D3D10Override
                                     ID3D10Texture2D *prevSourceTexture = copyD3D10Textures[nextCapture];
                                     ID3D10Texture2D *targetTexture = d3d10Textures[nextCapture];
 
-                                    D3D10_MAPPED_TEXTURE2D map;
-                                    if(SUCCEEDED(targetTexture->Map(0, D3D10_MAP_READ, 0, &map)))
+                                    if(lockedTextures[nextCapture])
                                     {
-                                        LPBYTE *pTextureBuffer = NULL;
-                                        int lastRendered = -1;
-
-                                        //under no circumstances do we -ever- allow a stall
-                                        if(WaitForSingleObject(textureMutexes[curCapture], 0) == WAIT_OBJECT_0)
-                                            lastRendered = (int)curCapture;
-                                        else if(WaitForSingleObject(textureMutexes[nextCapture], 0) == WAIT_OBJECT_0)
-                                            lastRendered = (int)nextCapture;
-
-                                        if(lastRendered != -1)
-                                        {
-                                            SSECopy(textureBuffers[lastRendered], map.pData, map.RowPitch*d3d10CaptureInfo.cy);
-                                            ReleaseMutex(textureMutexes[lastRendered]);
-                                        }
+                                        OSEnterMutex(dataMutexes[nextCapture]);
 
                                         targetTexture->Unmap(0);
-                                        copyData->lastRendered = (UINT)lastRendered;
+                                        lockedTextures[nextCapture] = false;
+
+                                        OSLeaveMutex(dataMutexes[nextCapture]);
                                     }
 
                                     device->CopyResource(targetTexture, prevSourceTexture);
+
+                                    d3d10Queries[nextCapture]->End();
+                                    issuedQueries[nextCapture] = true;
                                 }
                             }
 
@@ -340,7 +517,7 @@ bool InitD3D10Capture()
             DXGI_SWAP_CHAIN_DESC swapDesc;
             ZeroMemory(&swapDesc, sizeof(swapDesc));
             swapDesc.BufferCount = 2;
-            swapDesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+            swapDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
             swapDesc.BufferDesc.Width  = 2;
             swapDesc.BufferDesc.Height = 2;
             swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -352,7 +529,7 @@ bool InitD3D10Capture()
             ID3D10Device *device;
 
             HRESULT hErr;
-            if(SUCCEEDED(hErr = (*d3d10Create)(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_SDK_VERSION, &swapDesc, &swap, &device)))
+            if(SUCCEEDED(hErr = (*d3d10Create)(NULL, D3D10_DRIVER_TYPE_NULL, NULL, 0, D3D10_SDK_VERSION, &swapDesc, &swap, &device)))
             {
                 bSuccess = true;
 

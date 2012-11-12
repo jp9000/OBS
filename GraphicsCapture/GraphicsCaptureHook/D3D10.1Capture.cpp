@@ -23,8 +23,8 @@
 #include "DXGIStuff.h"
 
 
-HookData                gi11swapResizeBuffers;
-HookData                gi11swapPresent;
+extern HookData         gi1swapResizeBuffers;
+extern HookData         gi1swapPresent;
 extern FARPROC          oldD3D10Release;
 extern FARPROC          newD3D10Release;
 
@@ -290,9 +290,9 @@ struct D3D101Override
     {
         IDXGISwapChain *swap = (IDXGISwapChain*)this;
 
-        gi11swapResizeBuffers.Unhook();
+        gi1swapResizeBuffers.Unhook();
         HRESULT hRes = swap->ResizeBuffers(bufferCount, width, height, giFormat, flags);
-        gi11swapResizeBuffers.Rehook();
+        gi1swapResizeBuffers.Rehook();
 
         if(lpCurrentSwap == NULL && !bTargetAcquired)
         {
@@ -413,9 +413,9 @@ struct D3D101Override
             device->Release();
         }
 
-        gi11swapPresent.Unhook();
+        gi1swapPresent.Unhook();
         HRESULT hRes = swap->Present(syncInterval, flags);
-        gi11swapPresent.Rehook();
+        gi1swapPresent.Rehook();
 
         return hRes;
     }
@@ -436,7 +436,7 @@ bool InitD3D101Capture()
             DXGI_SWAP_CHAIN_DESC swapDesc;
             ZeroMemory(&swapDesc, sizeof(swapDesc));
             swapDesc.BufferCount = 2;
-            swapDesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+            swapDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
             swapDesc.BufferDesc.Width  = 2;
             swapDesc.BufferDesc.Height = 2;
             swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -448,19 +448,19 @@ bool InitD3D101Capture()
             ID3D10Device1 *device;
 
             HRESULT hErr;
-            if(SUCCEEDED(hErr = (*d3d101Create)(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_FEATURE_LEVEL_10_1, D3D10_1_SDK_VERSION, &swapDesc, &swap, &device)))
+            if(SUCCEEDED(hErr = (*d3d101Create)(NULL, D3D10_DRIVER_TYPE_NULL, NULL, 0, D3D10_FEATURE_LEVEL_10_1, D3D10_1_SDK_VERSION, &swapDesc, &swap, &device)))
             {
                 bSuccess = true;
 
                 UPARAM *vtable = *(UPARAM**)swap;
-                gi11swapPresent.Hook((FARPROC)*(vtable+(32/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D101Override::SwapPresentHook));
-                gi11swapResizeBuffers.Hook((FARPROC)*(vtable+(52/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D101Override::SwapResizeBuffersHook));
+                gi1swapPresent.Hook((FARPROC)*(vtable+(32/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D101Override::SwapPresentHook));
+                gi1swapResizeBuffers.Hook((FARPROC)*(vtable+(52/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D101Override::SwapResizeBuffersHook));
 
                 SafeRelease(swap);
                 SafeRelease(device);
 
-                gi11swapPresent.Rehook();
-                gi11swapResizeBuffers.Rehook();
+                gi1swapPresent.Rehook();
+                gi1swapResizeBuffers.Rehook();
             }
             else
                 logOutput << "InitD3D101Capture: D3D10CreateDeviceAndSwapChain1 failed, result = " << UINT(hErr) << endl;
@@ -474,6 +474,6 @@ bool InitD3D101Capture()
 
 void FreeD3D101Capture()
 {
-    gi11swapPresent.Unhook();
-    gi11swapResizeBuffers.Unhook();
+    gi1swapPresent.Unhook();
+    gi1swapResizeBuffers.Unhook();
 }

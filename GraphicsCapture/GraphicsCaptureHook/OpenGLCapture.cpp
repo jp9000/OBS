@@ -132,33 +132,217 @@ HookData                glHookSwapLayerBuffers;
 HookData                glHookwglSwapBuffers;
 HookData                glHookDeleteContext;
 
-GLuint                  gltextures[2] = {0, 0};
+//2 buffers turns out to be more optimal than 3 -- seems that cache has something to do with this in GL
+#define                 NUM_BUFFERS 2
+#define                 ZERO_ARRAY {0, 0}
+
+GLuint                  gltextures[NUM_BUFFERS] = ZERO_ARRAY;
 HDC                     hdcAcquiredDC = NULL;
 HWND                    hwndTarget = NULL;
 
+extern HANDLE           hCopyThread;
+extern HANDLE           hCopyEvent;
+extern bool             bKillThread;
+HANDLE                  glDataMutexes[NUM_BUFFERS];
+extern void             *pCopyData;
+extern DWORD            curCPUTexture;
+
+bool                    glLockedTextures[NUM_BUFFERS];
 extern MemoryCopyData   *copyData;
 extern LPBYTE           textureBuffers[2];
 extern DWORD            curCapture;
 extern BOOL             bHasTextures;
 extern LONGLONG         frameTime;
 extern DWORD            fps;
+extern DWORD            copyWait;
 extern LONGLONG         lastTime;
 
 CaptureInfo             glcaptureInfo;
 
 
-void KillGLTextures()
+void ClearGLData()
 {
+    if(copyData)
+        copyData->lastRendered = -1;
+
+    if(hCopyThread)
+    {
+        bKillThread = true;
+        SetEvent(hCopyEvent);
+        if(WaitForSingleObject(hCopyThread, 500) != WAIT_OBJECT_0)
+            TerminateThread(hCopyThread, -1);
+
+        CloseHandle(hCopyThread);
+        CloseHandle(hCopyEvent);
+
+        hCopyThread = NULL;
+        hCopyEvent = NULL;
+    }
+
+    for(int i=0; i<NUM_BUFFERS; i++)
+    {
+        if(glLockedTextures[i])
+        {
+            OSEnterMutex(glDataMutexes[i]);
+
+            glBindBuffer(GL_PIXEL_PACK_BUFFER, gltextures[i]);
+            glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+            glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+
+            glLockedTextures[i] = false;
+
+            OSLeaveMutex(glDataMutexes[i]);
+        }
+    }
+
     if(bHasTextures)
     {
-        glDeleteBuffers(2, gltextures);
-        bHasTextures = FALSE;
+        glDeleteBuffers(NUM_BUFFERS, gltextures);
+        bHasTextures = false;
+
+        ZeroMemory(gltextures, sizeof(gltextures));
+    }
+
+    for(int i=0; i<NUM_BUFFERS; i++)
+    {
+        if(glDataMutexes[i])
+        {
+            OSCloseMutex(glDataMutexes[i]);
+            glDataMutexes[i] = NULL;
+        }
     }
 
     DestroySharedMemory();
+    copyData = NULL;
+    copyWait = 0;
     lastTime = 0;
     fps = 0;
     frameTime = 0;
+    curCapture = 0;
+    curCPUTexture = 0;
+    pCopyData = NULL;
+}
+
+DWORD CopyGLCPUTextureThread(LPVOID lpUseless);
+
+void DoGLCPUHook(RECT &rc)
+{
+    glcaptureInfo.cx = rc.right;
+    glcaptureInfo.cy = rc.bottom;
+
+    glGenBuffers(NUM_BUFFERS, gltextures);
+
+    DWORD dwSize = glcaptureInfo.cx*glcaptureInfo.cy*4;
+
+    bool bSuccess = true;
+    for(UINT i=0; i<NUM_BUFFERS; i++)
+    {
+        UINT test = 0;
+
+        glBindBuffer(GL_PIXEL_PACK_BUFFER, gltextures[i]);
+        glBufferData(GL_PIXEL_PACK_BUFFER, dwSize, 0, GL_STREAM_READ);
+
+        if(!(glDataMutexes[i] = OSCreateMutex()))
+        {
+            logOutput << "DoGLCPUHook: OSCreateMutex " << i << " failed, GetLastError = " << GetLastError();
+            bSuccess = false;
+            break;
+        }
+    }
+
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+
+    if(bSuccess)
+    {
+        bKillThread = false;
+
+        if(hCopyThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)CopyGLCPUTextureThread, NULL, 0, NULL))
+        {
+            if(!(hCopyEvent = CreateEvent(NULL, FALSE, FALSE, NULL)))
+            {
+                logOutput << "DoGLCPUHook: CreateEvent failed, GetLastError = " << GetLastError();
+                bSuccess = false;
+            }
+        }
+        else
+        {
+            logOutput << "DoGLCPUHook: CreateThread failed, GetLastError = " << GetLastError();
+            bSuccess = false;
+        }
+    }
+
+    if(bSuccess)
+    {
+        glcaptureInfo.mapID = InitializeSharedMemoryCPUCapture(dwSize, &glcaptureInfo.mapSize, &copyData, textureBuffers);
+        if(!glcaptureInfo.mapID)
+            bSuccess = false;
+    }
+
+    if(bSuccess)
+    {
+        bHasTextures = true;
+        glcaptureInfo.captureType = CAPTURETYPE_MEMORY;
+        glcaptureInfo.hwndSender = hwndSender;
+        glcaptureInfo.pitch = glcaptureInfo.cx*4;
+        glcaptureInfo.bFlip = TRUE;
+        fps = (DWORD)SendMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&glcaptureInfo);
+        frameTime = 1000000/LONGLONG(fps);
+
+        logOutput << "DoGLCPUHook: success, fps = " << fps << ", frameTime = " << frameTime << endl;
+
+        OSInitializeTimer();
+    }
+    else
+        ClearGLData();
+}
+
+DWORD CopyGLCPUTextureThread(LPVOID lpUseless)
+{
+    int sharedMemID = 0;
+
+    HANDLE hEvent = NULL;
+    if(!DuplicateHandle(GetCurrentProcess(), hCopyEvent, GetCurrentProcess(), &hEvent, NULL, FALSE, DUPLICATE_SAME_ACCESS))
+    {
+        logOutput << "CopyGLCPUTextureThread: couldn't duplicate handle" << endl;
+        return 0;
+    }
+
+    while(WaitForSingleObject(hEvent, INFINITE) == WAIT_OBJECT_0)
+    {
+        if(bKillThread)
+            break;
+
+        int nextSharedMemID = sharedMemID == 0 ? 1 : 0;
+
+        DWORD copyTex = curCPUTexture;
+        LPVOID data = pCopyData;
+        if(copyTex < NUM_BUFFERS && data != NULL)
+        {
+            OSEnterMutex(glDataMutexes[copyTex]);
+
+            int lastRendered = -1;
+
+            //copy to whichever is available
+            if(WaitForSingleObject(textureMutexes[sharedMemID], 0) == WAIT_OBJECT_0)
+                lastRendered = (int)sharedMemID;
+            else if(WaitForSingleObject(textureMutexes[nextSharedMemID], 0) == WAIT_OBJECT_0)
+                lastRendered = (int)nextSharedMemID;
+
+            if(lastRendered != -1)
+            {
+                SSECopy(textureBuffers[lastRendered], data, glcaptureInfo.pitch*glcaptureInfo.cy);
+                ReleaseMutex(textureMutexes[lastRendered]);
+                copyData->lastRendered = (UINT)lastRendered;
+            }
+
+            OSLeaveMutex(glDataMutexes[copyTex]);
+        }
+
+        sharedMemID = nextSharedMemID;
+    }
+
+    CloseHandle(hEvent);
+    return 0;
 }
 
 void HandleGLSceneUpdate(HDC hDC)
@@ -193,52 +377,9 @@ void HandleGLSceneUpdate(HDC hDC)
                 hwndReceiver = FindWindow(RECEIVER_WINDOWCLASS, NULL);
 
             if(hwndReceiver)
-            {
-                if(bHasTextures)
-                    glDeleteBuffers(2, gltextures);
-
-                glcaptureInfo.cx = rc.right;
-                glcaptureInfo.cy = rc.bottom;
-
-                glGenBuffers(2, gltextures);
-
-                DWORD dwSize = glcaptureInfo.cx*glcaptureInfo.cy*4;
-
-                bool bSuccess = true;
-                for(UINT i=0; i<2; i++)
-                {
-                    UINT test = 0;
-
-                    glBindBuffer(GL_PIXEL_PACK_BUFFER, gltextures[i]);
-                    glBufferData(GL_PIXEL_PACK_BUFFER, dwSize, 0, GL_STREAM_READ);
-                }
-
-                glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-
-                if(bSuccess)
-                {
-                    glcaptureInfo.mapID = InitializeSharedMemoryCPUCapture(dwSize, &glcaptureInfo.mapSize, &copyData, textureBuffers);
-                    if(!glcaptureInfo.mapID)
-                        bSuccess = false;
-                }
-
-                if(bSuccess)
-                {
-                    bHasTextures = true;
-                    glcaptureInfo.captureType = CAPTURETYPE_MEMORY;
-                    glcaptureInfo.hwndSender = hwndSender;
-                    glcaptureInfo.pitch = glcaptureInfo.cx*4;
-                    glcaptureInfo.bFlip = TRUE;
-                    fps = (DWORD)SendMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&glcaptureInfo);
-                    frameTime = 1000000/LONGLONG(fps);
-
-                    logOutput << "opengl capture initiated" << endl;
-                }
-                else
-                    glDeleteBuffers(2, gltextures);
-            }
+                DoGLCPUHook(rc);
             else
-                KillGLTextures();
+                ClearGLData();
         }
 
         if(bHasTextures)
@@ -251,38 +392,40 @@ void HandleGLSceneUpdate(HDC hDC)
                 if(timeElapsed >= frameTime)
                 {
                     lastTime += frameTime;
+                    if(timeElapsed > frameTime*2)
+                        lastTime = timeVal;
 
                     GLuint texture = gltextures[curCapture];
-                    DWORD nextCapture = curCapture == 0 ? 1 : 0;
+                    DWORD nextCapture = (curCapture == NUM_BUFFERS-1) ? 0 : (curCapture+1);
 
                     glReadBuffer(GL_BACK);
                     glBindBuffer(GL_PIXEL_PACK_BUFFER, texture);
-                    glReadPixels(0, 0, glcaptureInfo.cx, glcaptureInfo.cy, GL_BGRA, GL_UNSIGNED_BYTE, 0);
 
-                    glBindBuffer(GL_PIXEL_PACK_BUFFER, gltextures[nextCapture]);
-                    GLubyte *data = (GLubyte*)glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
-                    if(data)
+                    if(glLockedTextures[curCapture])
                     {
-                        DWORD pitch = glcaptureInfo.cx*4;
-                        int lastRendered = -1;
-
-                        //under no circumstances do we -ever- allow this function to stall
-                        if(WaitForSingleObject(textureMutexes[curCapture], 0) == WAIT_OBJECT_0)
-                            lastRendered = curCapture;
-                        else if(WaitForSingleObject(textureMutexes[nextCapture], 0) == WAIT_OBJECT_0)
-                            lastRendered = nextCapture;
-
-                        LPBYTE outData = NULL;
-                        if(lastRendered != -1)
-                        {
-                            SSECopy(textureBuffers[lastRendered], data, pitch*glcaptureInfo.cy);
-                            textureBuffers[lastRendered][0] = 0x1a;
-                            ReleaseMutex(textureMutexes[lastRendered]);
-                        }
+                        OSEnterMutex(glDataMutexes[curCapture]);
 
                         glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
-                        copyData->lastRendered = (UINT)lastRendered;
+                        glLockedTextures[curCapture] = false;
+
+                        OSLeaveMutex(glDataMutexes[curCapture]);
                     }
+
+                    glReadPixels(0, 0, glcaptureInfo.cx, glcaptureInfo.cy, GL_BGRA, GL_UNSIGNED_BYTE, 0);
+
+                    //----------------------------------
+
+                    glBindBuffer(GL_PIXEL_PACK_BUFFER, gltextures[nextCapture]);
+                    pCopyData = (void*)glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+                    if(pCopyData)
+                    {
+                        curCPUTexture = nextCapture;
+                        glLockedTextures[nextCapture] = true;
+
+                        SetEvent(hCopyEvent);
+                    }
+
+                    //----------------------------------
 
                     glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 
@@ -290,13 +433,14 @@ void HandleGLSceneUpdate(HDC hDC)
                 }
             }
             else
-                KillGLTextures();
+                ClearGLData();
         }
     }
 }
 
 void HandleGLSceneDestroy()
 {
+    ClearGLData();
     hdcAcquiredDC = NULL;
     bTargetAcquired = false;
 }
