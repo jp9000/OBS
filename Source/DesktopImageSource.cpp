@@ -29,7 +29,7 @@ class DesktopImageSource : public ImageSource
 
     UINT     captureType;
     String   strWindow, strWindowClass;
-    BOOL     bClientCapture, bCaptureMouse;
+    BOOL     bClientCapture, bCaptureMouse, bCaptureLayered;
     HWND     hwndFoundWindow;
 
     Shader   *colorKeyShader, *alphaIgnoreShader;
@@ -173,7 +173,7 @@ public:
             else
             {
                 //CAPTUREBLT causes mouse flicker.  I haven't seen anything that doesn't display without it yet, so not going to use it
-                if(!BitBlt(hDC, 0, 0, width, height, hCaptureDC, captureRect.left, captureRect.top, SRCCOPY))
+                if(!BitBlt(hDC, 0, 0, width, height, hCaptureDC, captureRect.left, captureRect.top, bCaptureLayered ? SRCCOPY|CAPTUREBLT : SRCCOPY))
                 {
                     int chi = GetLastError();
                     AppWarning(TEXT("Capture BitBlt failed..  just so you know"));
@@ -289,6 +289,7 @@ public:
         BOOL bNewClientCapture  = data->GetInt(TEXT("innerWindow"), 1);
 
         bCaptureMouse   = data->GetInt(TEXT("captureMouse"), 1);
+        bCaptureLayered = data->GetInt(TEXT("captureLayered"), 0);
 
         int x  = data->GetInt(TEXT("captureX"));
         int y  = data->GetInt(TEXT("captureY"));
@@ -954,6 +955,13 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 bool bMouseCapture = data->GetInt(TEXT("captureMouse"), 1) != FALSE;
                 SendMessage(GetDlgItem(hwnd, IDC_CAPTUREMOUSE), BM_SETCHECK, (bMouseCapture) ? BST_CHECKED : BST_UNCHECKED, 0);
 
+                bool bCaptureLayered = data->GetInt(TEXT("captureLayered"), 0) != FALSE;
+                SendMessage(GetDlgItem(hwnd, IDC_CAPTURELAYERED), BM_SETCHECK, (bCaptureLayered) ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                ti.lpszText = (LPWSTR)Str("Sources.SoftwareCaptureSource.CaptureLayeredTip");
+                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_CAPTURELAYERED);
+                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+
                 //-----------------------------------------------------
 
                 bool bRegion = data->GetInt(TEXT("regionCapture")) != FALSE;
@@ -1375,6 +1383,7 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                             sizeY = 32;
 
                         BOOL bCaptureMouse = SendMessage(GetDlgItem(hwnd, IDC_CAPTUREMOUSE), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        BOOL bCaptureLayered = SendMessage(GetDlgItem(hwnd, IDC_CAPTURELAYERED), BM_GETCHECK, 0, 0) == BST_CHECKED;
 
                         //---------------------------------
 
@@ -1391,6 +1400,8 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                         data->SetInt(TEXT("regionCapture"), bRegion);
 
                         data->SetInt(TEXT("captureMouse"),  bCaptureMouse);
+
+                        data->SetInt(TEXT("captureLayered"), bCaptureLayered);
 
                         data->SetInt(TEXT("captureX"),      posX);
                         data->SetInt(TEXT("captureY"),      posY);
