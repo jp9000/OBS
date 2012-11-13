@@ -543,18 +543,18 @@ BOOL   STDCALL OSTerminateThread(HANDLE hThread, DWORD waitMS)
     return 1;
 }
 
-BOOL GetLoadedModuleList(StringList &ModuleList)
+BOOL   STDCALL OSGetLoadedModuleList(HANDLE hProcess, StringList &ModuleList)
 {
     HMODULE hMods[1024];
     DWORD count;
 
-    if (EnumProcessModules(GetCurrentProcess(), hMods, sizeof(hMods), &count))
+    if (EnumProcessModules(hProcess, hMods, sizeof(hMods), &count))
     {
         for (UINT i=0; i<(count / sizeof(HMODULE)); i++)
         {
             TCHAR szFileName[MAX_PATH];
 
-            if (GetModuleFileName (hMods[i], szFileName, _countof(szFileName)-1))
+            if (GetModuleFileNameEx(hProcess, hMods[i], szFileName, _countof(szFileName)-1))
             {
                 TCHAR *p;
                 p = srchr(szFileName, '\\');
@@ -562,9 +562,10 @@ BOOL GetLoadedModuleList(StringList &ModuleList)
                 {
                     *p = 0;
                     p++;
-                    slwr (p);
-                    ModuleList << p;
                 }
+
+                slwr (p);
+                ModuleList << p;
             }
         }
     }
@@ -578,7 +579,7 @@ BOOL   STDCALL OSIncompatibleModulesLoaded()
 {
     StringList  moduleList;
 
-    if (!GetLoadedModuleList(moduleList))
+    if (!OSGetLoadedModuleList(GetCurrentProcess(), moduleList))
         return 0;
 
     for(UINT i=0; i<moduleList.Num(); i++)

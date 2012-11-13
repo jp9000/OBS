@@ -69,17 +69,43 @@ void RefreshWindowList(HWND hwndCombobox, StringList &classList)
                 TCHAR fileName[MAX_PATH+1];
                 scpy(fileName, TEXT("unknown"));
 
-                HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, processID);
+                HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, FALSE, processID);
                 if(hProcess)
                 {
+                    BOOL bFoundModule = FALSE;
+                    StringList moduleList;
                     BOOL bTargetProcessIsWow64 = FALSE;
                     IsWow64Process(hProcess, &bTargetProcessIsWow64);
 
                     DWORD dwSize = MAX_PATH;
                     QueryFullProcessImageName(hProcess, 0, fileName, &dwSize);
+
+                    OSGetLoadedModuleList(hProcess, moduleList);
+
                     CloseHandle(hProcess);
 
                     if(bCurrentProcessIsWow64 != bTargetProcessIsWow64)
+                        continue;
+
+                    if(moduleList.Num())
+                    {
+                        for(UINT i=0; i<moduleList.Num(); i++)
+                        {
+                            CTSTR moduleName = moduleList[i];
+
+                            if (!scmp(moduleName, TEXT("d3d9.dll")) ||
+                                !scmp(moduleName, TEXT("d3d10.dll")) ||
+                                !scmp(moduleName, TEXT("d3d10_1.dll")) ||
+                                !scmp(moduleName, TEXT("d3d11.dll")) ||
+                                !scmp(moduleName, TEXT("opengl32.dll")))
+                            {
+                                bFoundModule = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!bFoundModule)
                         continue;
                 }
 
@@ -91,7 +117,7 @@ void RefreshWindowList(HWND hwndCombobox, StringList &classList)
                 String strText;
                 strText << TEXT("[") << GetPathFileName(strFileName) << TEXT("]: ") << strWindowName;
 
-                int id = (int)SendMessage(hwndCombobox, CB_ADDSTRING, 0, (LPARAM)strWindowName.Array());
+                int id = (int)SendMessage(hwndCombobox, CB_ADDSTRING, 0, (LPARAM)strText.Array());
                 SendMessage(hwndCombobox, CB_SETITEMDATA, id, (LPARAM)hwndCurrent);
 
                 String strClassName;

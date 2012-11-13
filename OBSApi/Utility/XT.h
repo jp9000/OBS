@@ -61,7 +61,6 @@
 #endif
 
 
-
 //-----------------------------------------
 //OS-independant functions
 //-----------------------------------------
@@ -79,6 +78,8 @@ struct XRect
     int cx;
     int cy;
 };
+
+class StringList;
 
 #define WAIT_INFINITE 0xFFFFFFFF
 
@@ -145,6 +146,7 @@ BASE_EXPORT BOOL   STDCALL OSDebuggerPresent();
 BASE_EXPORT void __cdecl   OSDebugOutva(const TCHAR *format, va_list argptr);
 BASE_EXPORT void __cdecl   OSDebugOut(const TCHAR *format, ...);
 
+BASE_EXPORT BOOL   STDCALL OSGetLoadedModuleList(HANDLE hProcess, StringList &ModuleList);
 BASE_EXPORT BOOL   STDCALL OSIncompatibleModulesLoaded();
 
 BASE_EXPORT void __cdecl   Logva(const TCHAR *format, va_list argptr);
@@ -250,7 +252,6 @@ BASE_EXPORT extern BOOL bDebugBreak;
 #define RGBA_to_Color4(dw)  Color4(RGB_Rf(dw), RGB_Gf(dw), RGB_Bf(dw), RGB_Af(dw))
 #define RGB_to_Color(dw)    Color(RGB_Rf(dw), RGB_Gf(dw), RGB_Bf(dw))
 #define RGB_to_ColorExp(dw) Color((RGB_Rf(dw)-0.5f)*2.0f, (RGB_Gf(dw)-0.5f)*2.0f, (RGB_Bf(dw)-0.5f)*2.0f)
-
 
 //-----------------------------------------
 //includes
