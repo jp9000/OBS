@@ -1582,12 +1582,12 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 hwndTemp = GetDlgItem(hwnd, IDC_SENDBUFFERSIZE);
                 EnableWindow(hwndTemp, bUseSendBuffer);
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("32768"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("16384"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("8192"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("4096"));
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("11680"));
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("5840"));
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("2920"));
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("1460"));
 
-                LoadSettingTextComboString(hwndTemp, TEXT("Publish"), TEXT("SendBufferSize"), TEXT("8196"));
+                LoadSettingEditString(hwndTemp, TEXT("Publish"), TEXT("SendBufferSize"), TEXT("1460"));
 
                 ti.lpszText = (LPWSTR)Str("Settings.Advanced.UseSendBufferTooltip");
                 ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_USESENDBUFFER);
@@ -1645,7 +1645,7 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 case IDC_SENDBUFFERSIZE:
                 case IDC_PRESET:
-                    if(HIWORD(wParam) == CBN_SELCHANGE)
+                    if(HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == CBN_EDITCHANGE)
                     {
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
                         App->SetChangedSettings(true);
@@ -1939,7 +1939,7 @@ void OBS::ApplySettings()
                 //--------------------------------------------------
 
                 BOOL bUseSendBuffer = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USESENDBUFFER), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                String strSendBufferSize = GetCBText(GetDlgItem(hwndCurrentSettings, IDC_SENDBUFFERSIZE));
+                String strSendBufferSize = GetEditText(GetDlgItem(hwndCurrentSettings, IDC_SENDBUFFERSIZE));
 
                 AppConfig->SetInt   (TEXT("Publish"),        TEXT("UseSendBuffer"),     bUseSendBuffer);
                 AppConfig->SetString(TEXT("Publish"),        TEXT("SendBufferSize"),    strSendBufferSize);

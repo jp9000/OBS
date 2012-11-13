@@ -758,12 +758,12 @@ NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry)
     rtmp->Link.flashVer.av_len = (int)strlen(rtmp->Link.flashVer.av_val);
 
     BOOL bUseSendBuffer = AppConfig->GetInt(TEXT("Publish"), TEXT("UseSendBuffer"), 1);
-    UINT sendBufferSize = AppConfig->GetInt(TEXT("Publish"), TEXT("SendBufferSize"), 8196);
+    UINT sendBufferSize = AppConfig->GetInt(TEXT("Publish"), TEXT("SendBufferSize"), 1460);
 
-    if(sendBufferSize > 32768)
-        sendBufferSize = 32768;
-    else if(sendBufferSize < 4096)
-        sendBufferSize = 4096;
+    if(sendBufferSize > 32120)
+        sendBufferSize = 32120;
+    else if(sendBufferSize < 1460)
+        sendBufferSize = 1460;
 
     rtmp->m_outChunkSize = 4096;//RTMP_DEFAULT_CHUNKSIZE;//
     rtmp->m_bSendChunkSizeInfo = TRUE;
