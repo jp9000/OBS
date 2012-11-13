@@ -971,8 +971,10 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         }
                         else
                         {
-                            EnableWindow(GetDlgItem(hwnd, IDC_RESOLUTION), TRUE);
-                            EnableWindow(GetDlgItem(hwnd, IDC_FPS), TRUE);
+                            BOOL bCustomResolution = SendMessage(GetDlgItem(hwnd, IDC_CUSTOMRESOLUTION) , BM_GETCHECK, 0, 0) == BST_CHECKED;
+
+                            EnableWindow(GetDlgItem(hwnd, IDC_RESOLUTION), bCustomResolution);
+                            EnableWindow(GetDlgItem(hwnd, IDC_FPS), bCustomResolution);
                             EnableWindow(GetDlgItem(hwnd, IDC_CONFIG), TRUE);
                             EnableWindow(GetDlgItem(hwnd, IDOK), TRUE);
 
