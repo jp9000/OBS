@@ -762,8 +762,8 @@ NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry)
 
     if(sendBufferSize > 32120)
         sendBufferSize = 32120;
-    else if(sendBufferSize < 1460)
-        sendBufferSize = 1460;
+    else if(sendBufferSize < 536)
+        sendBufferSize = 536;
 
     rtmp->m_outChunkSize = 4096;//RTMP_DEFAULT_CHUNKSIZE;//
     rtmp->m_bSendChunkSizeInfo = TRUE;
