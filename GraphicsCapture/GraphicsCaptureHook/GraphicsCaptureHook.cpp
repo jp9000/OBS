@@ -120,9 +120,9 @@ void   WINAPI OSCloseMutex(HANDLE hMutex)
 UINT InitializeSharedMemoryCPUCapture(UINT textureSize, DWORD *totalSize, MemoryCopyData **copyData, LPBYTE *textureBuffers)
 {
     UINT alignedHeaderSize = (sizeof(MemoryCopyData)+15) & 0xFFFFFFF0;
-    UINT alignedTexureSize = (textureSize+15) & 0xFFFFFFF0;
+    UINT alignedTextureSize = (textureSize+15) & 0xFFFFFFF0;
 
-    *totalSize = alignedHeaderSize + alignedTexureSize*2;
+    *totalSize = alignedHeaderSize + alignedTextureSize*2;
 
     wstringstream strName;
     strName << TEXTURE_MEMORY << ++sharedMemoryIDCounter;
@@ -140,10 +140,10 @@ UINT InitializeSharedMemoryCPUCapture(UINT textureSize, DWORD *totalSize, Memory
 
     *copyData = (MemoryCopyData*)lpSharedMemory;
     (*copyData)->texture1Offset = alignedHeaderSize;
-    (*copyData)->texture2Offset = alignedHeaderSize+alignedTexureSize;
+    (*copyData)->texture2Offset = alignedHeaderSize+alignedTextureSize;
 
     textureBuffers[0] = lpSharedMemory+alignedHeaderSize;
-    textureBuffers[1] = lpSharedMemory+alignedHeaderSize+alignedTexureSize;
+    textureBuffers[1] = lpSharedMemory+alignedHeaderSize+alignedTextureSize;
 
     return sharedMemoryIDCounter;
 }

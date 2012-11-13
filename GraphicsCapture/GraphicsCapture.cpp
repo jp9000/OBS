@@ -87,21 +87,18 @@ void RefreshWindowList(HWND hwndCombobox, StringList &classList)
                     if(bCurrentProcessIsWow64 != bTargetProcessIsWow64)
                         continue;
 
-                    if(moduleList.Num())
+                    for(UINT i=0; i<moduleList.Num(); i++)
                     {
-                        for(UINT i=0; i<moduleList.Num(); i++)
-                        {
-                            CTSTR moduleName = moduleList[i];
+                        CTSTR moduleName = moduleList[i];
 
-                            if (!scmp(moduleName, TEXT("d3d9.dll")) ||
-                                !scmp(moduleName, TEXT("d3d10.dll")) ||
-                                !scmp(moduleName, TEXT("d3d10_1.dll")) ||
-                                !scmp(moduleName, TEXT("d3d11.dll")) ||
-                                !scmp(moduleName, TEXT("opengl32.dll")))
-                            {
-                                bFoundModule = true;
-                                break;
-                            }
+                        if (!scmp(moduleName, TEXT("d3d9.dll")) ||
+                            !scmp(moduleName, TEXT("d3d10.dll")) ||
+                            !scmp(moduleName, TEXT("d3d10_1.dll")) ||
+                            !scmp(moduleName, TEXT("d3d11.dll")) ||
+                            !scmp(moduleName, TEXT("opengl32.dll")))
+                        {
+                            bFoundModule = true;
+                            break;
                         }
                     }
 
