@@ -373,6 +373,9 @@ void HandleGLSceneUpdate(HDC hDC)
 
         if(!bHasTextures || rc.right != glcaptureInfo.cx || rc.bottom != glcaptureInfo.cy)
         {
+            if (!rc.right || !rc.bottom)
+                return;
+
             if(!hwndReceiver)
                 hwndReceiver = FindWindow(RECEIVER_WINDOWCLASS, NULL);
 
