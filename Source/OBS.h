@@ -668,3 +668,6 @@ public:
 };
 
 ID3D10Blob* CompileShader(CTSTR lpShader, LPCSTR lpTarget);
+
+LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo);
+

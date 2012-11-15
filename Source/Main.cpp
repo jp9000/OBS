@@ -244,6 +244,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     hinstMain = hInstance;
 
+    PVOID vectoredHandler;
+    vectoredHandler = AddVectoredExceptionHandler(0, OBSExceptionHandler);
+
     ULONG_PTR gdipToken;
     const Gdiplus::GdiplusStartupInput gdipInput;
     Gdiplus::GdiplusStartup(&gdipToken, &gdipInput, NULL);
@@ -274,6 +277,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             String strLogsPath = strAppDataPath + TEXT("\\logs");
             if(!OSFileExists(strLogsPath) && !OSCreateDirectory(strLogsPath))
                 CrashError(TEXT("Couldn't create directory '%s'"), strLogsPath.Array());
+
+            String strCrashPath = strAppDataPath + TEXT("\\crashDumps");
+            if(!OSFileExists(strCrashPath) && !OSCreateDirectory(strCrashPath))
+                CrashError(TEXT("Couldn't create directory '%s'"), strCrashPath.Array());
 
             String strPluginDataPath = strAppDataPath + TEXT("\\pluginData");
             if(!OSFileExists(strPluginDataPath) && !OSCreateDirectory(strPluginDataPath))
@@ -394,6 +401,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     Gdiplus::GdiplusShutdown(gdipToken);
 
     TerminateXT();
+
+    RemoveVectoredExceptionHandler(vectoredHandler);
 
     //------------------------------------------------------------
 
