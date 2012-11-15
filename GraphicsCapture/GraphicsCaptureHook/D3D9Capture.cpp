@@ -355,13 +355,20 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
 
     LPBYTE patchAddress = (patchType != 0) ? GetD3D9PatchAddress() : NULL;
     BYTE savedByte;
+    DWORD dwOldProtect;
 
     if(patchAddress)
     {
-        DWORD dwOldProtect;
-        VirtualProtect(patchAddress, 1, PAGE_EXECUTE_READWRITE, &dwOldProtect);
-        savedByte = *patchAddress;
-        *patchAddress = 0xEB;
+        if (VirtualProtect(patchAddress, 1, PAGE_EXECUTE_READWRITE, &dwOldProtect))
+        {
+            savedByte = *patchAddress;
+            *patchAddress = 0xEB;
+        }
+        else
+        {
+            logOutput << "DoD3D9GPUHook: unable to change memory protection, result = " << GetLastError() << endl;
+            patchAddress = NULL;
+        }
     }
         
     IDirect3DTexture9 *d3d9Tex;
@@ -372,7 +379,11 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
     }
 
     if(patchAddress)
+    {
+        DWORD dwOldProtectLast;
         *patchAddress = savedByte;
+        VirtualProtect(patchAddress, 1, dwOldProtect, &dwOldProtectLast);
+    }
 
     if(FAILED(hErr == d3d9Tex->GetSurfaceLevel(0, &copyD3D9TextureGame)))
     {

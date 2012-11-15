@@ -177,7 +177,7 @@ Sources.BitmapSource.Opacity    "Opacity:"
 Sources.GameCaptureSource.Application       "Applcation:"
 Sources.GameCaptureSource.PluginDescription "Captures frames directly from games and graphics applications by hooking into the application and reading the frames as they come in."
 Sources.GameCaptureSource.PluginName        "Game Capture Plugin"
-Sources.GameCaptureSource.StretchToScreen   "Strech image to screen"
+Sources.GameCaptureSource.StretchToScreen   "Stretch image to screen"
 
 Sources.SoftwareCaptureSource.Blend                 "Blend (1-100):"
 Sources.SoftwareCaptureSource.CaptureLayered        "Capture Layered Windows"
