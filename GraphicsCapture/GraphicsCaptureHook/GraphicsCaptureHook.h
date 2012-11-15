@@ -80,8 +80,8 @@ public:
                     return true;
                 }
             }
-            else
-                Unhook();
+
+            Unhook();
         }
 
         func = funcIn;

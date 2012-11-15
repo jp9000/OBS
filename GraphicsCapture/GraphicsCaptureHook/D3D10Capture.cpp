@@ -371,7 +371,7 @@ struct D3D10Override
                                 texData->texHandles[0] = sharedHandles[0];
                                 texData->texHandles[1] = sharedHandles[1];
                                 fps = (DWORD)SendMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d10CaptureInfo);
-                                frameTime = 1000000/LONGLONG(fps);
+                                frameTime = 1000000/LONGLONG(fps)/2;
 
                                 logOutput << "DoD3D10Hook: success";
                             }
@@ -390,11 +390,11 @@ struct D3D10Override
                         LONGLONG timeVal = OSGetTimeMicroseconds();
                         LONGLONG timeElapsed = timeVal-lastTime;
 
-                        /*if(timeElapsed >= frameTime)
+                        if(timeElapsed >= frameTime)
                         {
                             lastTime += frameTime;
                             if(timeElapsed > frameTime*2)
-                                lastTime = timeVal;*/
+                                lastTime = timeVal;
 
                             DWORD nextCapture = curCapture == 0 ? 1 : 0;
 
@@ -425,7 +425,7 @@ struct D3D10Override
                             }
 
                             curCapture = nextCapture;
-                        //}
+                        }
                     }
                     else
                         ClearD3D10Data();

@@ -29,14 +29,11 @@ typedef HRESULT (WINAPI *SWAPPRESENTPROC)(IDirect3DSwapChain9*, const RECT*, con
 HookData                d3d9EndScene;
 HookData                d3d9Reset;
 HookData                d3d9ResetEx;
+HookData                d3d9Present;
+HookData                d3d9PresentEx;
+HookData                d3d9SwapPresent;
 FARPROC                 oldD3D9Release = NULL;
 FARPROC                 newD3D9Release = NULL;
-PRESENTPROC             oldD3D9Present = NULL;
-PRESENTPROC             newD3D9Present = NULL;
-PRESENTEXPROC           oldD3D9PresentEx = NULL;
-PRESENTEXPROC           newD3D9PresentEx = NULL;
-SWAPPRESENTPROC         oldD3D9SwapPresent = NULL;
-SWAPPRESENTPROC         newD3D9SwapPresent = NULL;
 
 LPVOID                  lpCurrentDevice = NULL;
 DWORD                   d3d9Format = 0;
@@ -107,30 +104,47 @@ bool CompareMemory(const LPVOID lpVal1, const LPVOID lpVal2, UINT nBytes)
     return false;
 }
 
-BYTE compare1_32bit[12] = {0x8b, 0x89, 0xe8, 0x29, 0x00, 0x00, 0x39, 0xb9, 0x80, 0x4b, 0x00, 0x00};
+#ifdef _WIN64
+
+#define NUM_KNOWN_PATCHES 0
+#define PATCH_COMPARE_SIZE 1
+UPARAM patch_offsets[1] = {0};
+UPARAM patch_compare[1][PATCH_COMPARE_SIZE] = {{0}};
+
+#else
+
+#define NUM_KNOWN_PATCHES 3
+#define PATCH_COMPARE_SIZE 12
+UPARAM patch_offsets[NUM_KNOWN_PATCHES] = {0x79D96, 0x166A08, 0x79C9E};
+BYTE patch_compare[NUM_KNOWN_PATCHES][PATCH_COMPARE_SIZE] =
+{
+    {0x8b, 0x89, 0xe8, 0x29, 0x00, 0x00, 0x39, 0xb9, 0x80, 0x4b, 0x00, 0x00},  //win7 - 6.1.7601.17514
+    {0x8b, 0x80, 0xe8, 0x29, 0x00, 0x00, 0x39, 0x90, 0xb0, 0x4b, 0x00, 0x00},  //win8 - 6.2.9200.16384
+    {0x8b, 0x89, 0xe8, 0x29, 0x00, 0x00, 0x39, 0xb9, 0x80, 0x4b, 0x00, 0x00},  //win7 - 6.1.7600.16385
+};
+
+#endif
+
 
 int GetD3D9PatchType()
 {
     LPBYTE lpBaseAddress = (LPBYTE)hD3D9Dll;
-
-    #ifdef _WIN64
-    #else
-        if(CompareMemory(lpBaseAddress+0x79D96, compare1_32bit, 12))
-            return 1;
-    #endif
+    for(int i=0; i<NUM_KNOWN_PATCHES; i++)
+    {
+        if(CompareMemory(lpBaseAddress+patch_offsets[i], patch_compare[i], PATCH_COMPARE_SIZE))
+            return i+1;
+    }
 
     return 0;
 }
 
 LPBYTE GetD3D9PatchAddress()
 {
-    LPBYTE lpBaseAddress = (LPBYTE)hD3D9Dll;
-
-    #ifdef _WIN64
-    #else
-        if(patchType == 1)
-            return lpBaseAddress+0x79D96+12;
-    #endif
+    if(patchType)
+    {
+        LPBYTE lpBaseAddress = (LPBYTE)hD3D9Dll;
+        return lpBaseAddress+patch_offsets[patchType-1]+PATCH_COMPARE_SIZE;
+    }
 
     return NULL;
 }
@@ -359,7 +373,7 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
 
     if(patchAddress)
     {
-        if (VirtualProtect(patchAddress, 1, PAGE_EXECUTE_READWRITE, &dwOldProtect))
+        if(VirtualProtect(patchAddress, 1, PAGE_EXECUTE_READWRITE, &dwOldProtect))
         {
             savedByte = *patchAddress;
             *patchAddress = 0xEB;
@@ -367,10 +381,10 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
         else
         {
             logOutput << "DoD3D9GPUHook: unable to change memory protection, result = " << GetLastError() << endl;
-            patchAddress = NULL;
+            goto finishGPUHook;
         }
     }
-        
+
     IDirect3DTexture9 *d3d9Tex;
     if(FAILED(hErr = device->CreateTexture(d3d9CaptureInfo.cx, d3d9CaptureInfo.cy, 1, D3DUSAGE_RENDERTARGET, (D3DFORMAT)d3d9Format, D3DPOOL_DEFAULT, &d3d9Tex, &handle)))
     {
@@ -380,9 +394,8 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
 
     if(patchAddress)
     {
-        DWORD dwOldProtectLast;
         *patchAddress = savedByte;
-        VirtualProtect(patchAddress, 1, dwOldProtect, &dwOldProtectLast);
+        VirtualProtect(patchAddress, 1, dwOldProtect, &dwOldProtect);
     }
 
     if(FAILED(hErr == d3d9Tex->GetSurfaceLevel(0, &copyD3D9TextureGame)))
@@ -471,7 +484,7 @@ finishGPUHook:
         texData->texHandles[0] = sharedHandles[0];
         texData->texHandles[1] = sharedHandles[1];
         fps = (DWORD)SendMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d9CaptureInfo);
-        frameTime = 1000000/LONGLONG(fps);
+        frameTime = 1000000/LONGLONG(fps)/2;
 
         logOutput << "DoD3D9GPUHook: success" << endl;
     }
@@ -672,14 +685,14 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
         {
             if(bUseSharedTextures) //shared texture support
             {
-                /*LONGLONG timeVal = OSGetTimeMicroseconds();
+                LONGLONG timeVal = OSGetTimeMicroseconds();
                 LONGLONG timeElapsed = timeVal-lastTime;
 
                 if(timeElapsed >= frameTime)
                 {
                     lastTime += frameTime;
                     if(timeElapsed > frameTime*2)
-                        lastTime = timeVal;*/
+                        lastTime = timeVal;
 
                     DWORD nextCapture = curCapture == 0 ? 1 : 0;
 
@@ -711,7 +724,7 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
                     }
 
                     curCapture = nextCapture;
-                //}
+                }
             }
             else //slow regular d3d9, no shared textures
             {
@@ -862,42 +875,54 @@ struct D3D9Override
 
     HRESULT STDMETHODCALLTYPE Present(CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion)
     {
+        d3d9Present.Unhook();
         IDirect3DDevice9 *device = (IDirect3DDevice9*)this;
 
         if(!presentRecurse)
             DoD3D9DrawStuff(device);
 
         presentRecurse++;
-        HRESULT hRes = (*oldD3D9Present)(device, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
+
+        HRESULT hRes = device->Present(pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
+
         presentRecurse--;
+        d3d9Present.Rehook();
 
         return hRes;
     }
 
     HRESULT STDMETHODCALLTYPE PresentEx(CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion, DWORD dwFlags)
     {
-        IDirect3DDevice9 *device = (IDirect3DDevice9*)this;
+        d3d9PresentEx.Unhook();
+        IDirect3DDevice9Ex *device = (IDirect3DDevice9Ex*)this;
 
         if(!presentRecurse)
             DoD3D9DrawStuff(device);
 
         presentRecurse++;
-        HRESULT hRes = (*oldD3D9PresentEx)(device, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
+
+        HRESULT hRes = device->PresentEx(pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
+
         presentRecurse--;
+        d3d9PresentEx.Rehook();
 
         return hRes;
     }
 
     HRESULT STDMETHODCALLTYPE SwapPresent(CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion, DWORD dwFlags)
     {
+        d3d9SwapPresent.Unhook();
         IDirect3DSwapChain9 *swap = (IDirect3DSwapChain9*)this;
 
         if(!presentRecurse)
             DoD3D9DrawStuff((IDirect3DDevice9*)lpCurrentDevice);
 
         presentRecurse++;
-        HRESULT hRes = (*oldD3D9SwapPresent)(swap, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
+
+        HRESULT hRes = swap->Present(pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
+
         presentRecurse--;
+        d3d9SwapPresent.Rehook();
 
         return hRes;
     }
@@ -995,32 +1020,22 @@ void SetupD3D9(IDirect3DDevice9 *device)
             SetVTable(device, (8/4), newD3D9Release);
         }
 
-        PRESENTPROC curPresent = (PRESENTPROC)GetVTable(device, (68/4));
-        if(curPresent != newD3D9Present)
-        {
-            oldD3D9Present = curPresent;
-            newD3D9Present = (PRESENTPROC)ConvertClassProcToFarproc((CLASSPROC)&D3D9Override::Present);
-            SetVTable(device, (68/4), (FARPROC)newD3D9Present);
-        }
+        FARPROC curPresent = GetVTable(device, (68/4));
+        d3d9Present.Hook(curPresent, ConvertClassProcToFarproc((CLASSPROC)&D3D9Override::Present));
 
         if(bD3D9Ex)
         {
-            PRESENTEXPROC curPresentEx = (PRESENTEXPROC)GetVTable(device, (484/4));
-            if(curPresentEx != newD3D9PresentEx)
-            {
-                oldD3D9PresentEx = curPresentEx;
-                newD3D9PresentEx = (PRESENTEXPROC)ConvertClassProcToFarproc((CLASSPROC)&D3D9Override::PresentEx);
-                SetVTable(device, (484/4), (FARPROC)newD3D9PresentEx);
-            }
+            FARPROC curPresentEx = GetVTable(device, (484/4));
+            d3d9PresentEx.Hook(curPresentEx, ConvertClassProcToFarproc((CLASSPROC)&D3D9Override::PresentEx));
         }
 
-        SWAPPRESENTPROC curD3D9SwapPresent = (SWAPPRESENTPROC)GetVTable(swapChain, (12/4));
-        if(curD3D9SwapPresent != newD3D9SwapPresent)
-        {
-            oldD3D9SwapPresent = curD3D9SwapPresent;
-            newD3D9SwapPresent = (SWAPPRESENTPROC)ConvertClassProcToFarproc((CLASSPROC)&D3D9Override::SwapPresent);
-            SetVTable(swapChain, (12/4), (FARPROC)newD3D9SwapPresent);
-        }
+        FARPROC curD3D9SwapPresent = GetVTable(swapChain, (12/4));
+        d3d9SwapPresent.Hook(curD3D9SwapPresent, ConvertClassProcToFarproc((CLASSPROC)&D3D9Override::SwapPresent));
+        d3d9Present.Rehook();
+        d3d9SwapPresent.Rehook();
+
+        if(bD3D9Ex)
+            d3d9PresentEx.Rehook();
 
         swapChain->Release();
     }

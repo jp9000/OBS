@@ -541,7 +541,7 @@ LocaleNativeName nativeNames[] =
     {TEXT("tr"), TEXT("Türkçe")},
     {TEXT("ts"), TEXT("Xitsonga")},
     {TEXT("tt"), TEXT("татарча, tatarça, تاتارچا")},
-    {TEXT("tw"), TEXT("Twi")},
+    {TEXT("tw"), TEXT("正體中文")},
     {TEXT("ty"), TEXT("Reo Mā`ohi")},
     {TEXT("ug"), TEXT("ئۇيغۇرچە")},
     {TEXT("uk"), TEXT("українська")},
@@ -556,7 +556,7 @@ LocaleNativeName nativeNames[] =
     {TEXT("yi"), TEXT("ייִדיש")},
     {TEXT("yo"), TEXT("Yorùbá")},
     {TEXT("za"), TEXT("Saɯ cueŋ")},
-    {TEXT("zh"), TEXT("中文")},
+    {TEXT("zh"), TEXT("简体中文")},
     {TEXT("zu"), TEXT("isiZulu")},
     {NULL, NULL}
 };

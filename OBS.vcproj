@@ -375,6 +375,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Source\CrashDumpHandler.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Source\D3D10Shader.cpp"
 				>
 			</File>
@@ -392,6 +396,10 @@
 			</File>
 			<File
 				RelativePath=".\Source\D3D10VertexBuffer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Source\DelayedPublisher.cpp"
 				>
 			</File>
 			<File
@@ -485,6 +493,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Source\CrashDumpHandler.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Source\D3D10System.h"
 				>
 			</File>
@@ -498,6 +510,10 @@
 			</File>
 			<File
 				RelativePath=".\resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Source\RTMPPublisher.h"
 				>
 			</File>
 			<File

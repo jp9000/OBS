@@ -105,6 +105,8 @@ void RefreshWindowList(HWND hwndCombobox, StringList &classList)
                     if (!bFoundModule)
                         continue;
                 }
+                else
+                    continue;
 
                 //-------
 
