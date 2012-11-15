@@ -148,8 +148,8 @@ public:
                     String strParamName = strParam.GetToken(0, '=');
                     String strParamVal  = strParam.GetTokenOffset(1, '=');
 
-                    if( strParamName.CompareI(TEXT("fps")) || 
-                        strParamName.CompareI(TEXT("force-cfr")))
+                    if( strParamName.CompareI(TEXT("fps")) /*|| 
+                        strParamName.CompareI(TEXT("force-cfr"))*/)
                     {
                         continue;
                     }

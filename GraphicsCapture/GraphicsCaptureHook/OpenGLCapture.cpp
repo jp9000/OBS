@@ -368,10 +368,16 @@ void HandleGLSceneUpdate(HDC hDC)
 
     if(hDC == hdcAcquiredDC)
     {
+        if(bCapturing && bStopRequested)
+        {
+            ClearGLData();
+            bStopRequested = false;
+        }
+
         RECT rc;
         GetClientRect(hwndTarget, &rc);
 
-        if(!bHasTextures || rc.right != glcaptureInfo.cx || rc.bottom != glcaptureInfo.cy)
+        if(bCapturing && (!bHasTextures || rc.right != glcaptureInfo.cx || rc.bottom != glcaptureInfo.cy))
         {
             if (!rc.right || !rc.bottom)
                 return;

@@ -172,7 +172,7 @@ public:
             }
             else
             {
-                //CAPTUREBLT causes mouse flicker.  I haven't seen anything that doesn't display without it yet, so not going to use it
+                //CAPTUREBLT causes mouse flicker, so make capturing layered optional
                 if(!BitBlt(hDC, 0, 0, width, height, hCaptureDC, captureRect.left, captureRect.top, bCaptureLayered ? SRCCOPY|CAPTUREBLT : SRCCOPY))
                 {
                     int chi = GetLastError();
@@ -387,7 +387,7 @@ void RefreshWindowList(HWND hwndCombobox, StringList &classList)
             DWORD styles = (DWORD)GetWindowLongPtr(hwndCurrent, GWL_STYLE);
 
             if( (exStyles & WS_EX_TOOLWINDOW) == 0 && (styles & WS_CHILD) == 0 &&
-                clientRect.bottom != 0 && clientRect.right != 0 && hwndParent == NULL)
+                clientRect.bottom != 0 && clientRect.right != 0 /*&& hwndParent == NULL*/)
             {
                 String strWindowName;
                 strWindowName.SetLength(GetWindowTextLength(hwndCurrent));

@@ -13,11 +13,13 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Japanese (Japan) resources
+// Japanese (Japan)Å@resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_JPN)
+#ifdef _WIN32
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 #pragma code_page(932)
+#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -188,7 +190,7 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,209,28,50,14
 END
 
-IDD_CONFIGUREDESKTOPSOURCE DIALOGEX 0, 0, 379, 317
+IDD_CONFIGUREDESKTOPSOURCE DIALOGEX 0, 0, 379, 341
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Sources.SoftwareCaptureSource"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -208,34 +210,35 @@ BEGIN
                     "Button",BS_AUTORADIOBUTTON,106,95,266,10
     CONTROL         "Sources.SoftwareCaptureSource.MouseCapture",IDC_CAPTUREMOUSE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,113,283,10
-    CONTROL         "Sources.SoftwareCaptureSource.RegionCapture",IDC_REGIONCAPTURE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,137,235,10
-    RTEXT           "Sources.SoftwareCaptureSource.Position",IDC_STATIC,7,156,96,8
-    EDITTEXT        IDC_POSX,107,153,40,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_POSY,149,153,40,14,ES_AUTOHSCROLL
-    PUSHBUTTON      "Sources.SoftwareCaptureSource.SelectRegion",IDC_SELECTREGION,193,153,77,14
-    RTEXT           "Sources.SoftwareCaptureSource.Size",IDC_STATIC,7,173,96,8
-    EDITTEXT        IDC_SIZEX,107,171,40,14,ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        IDC_SIZEY,149,171,40,14,ES_AUTOHSCROLL | ES_NUMBER
-    GROUPBOX        "Sources.SoftwareCaptureSource.ColorKey",IDC_STATIC,7,192,274,87
-    CONTROL         "Sources.SoftwareCaptureSource.UseColorKey",IDC_USECOLORKEY,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,206,130,10,WS_EX_RIGHT
-    RTEXT           "Color",IDC_STATIC,18,224,117,8
-    CONTROL         "",IDC_COLOR,"OBSColorControl",WS_TABSTOP,138,221,28,14
-    PUSHBUTTON      "Sources.SoftwareCaptureSource.Select",IDC_SELECT,169,221,64,14
-    RTEXT           "Sources.SoftwareCaptureSource.Similarity",IDC_STATIC,18,242,117,8
-    EDITTEXT        IDC_BASETHRESHOLD_EDIT,137,240,40,14,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "",IDC_BASETHRESHOLD,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,178,236,11,14
-    RTEXT           "Sources.SoftwareCaptureSource.Blend",IDC_STATIC,17,259,117,8
-    EDITTEXT        IDC_BLEND_EDIT,137,257,40,14,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "",IDC_BLEND,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,177,253,11,14
-    RTEXT           "Sources.BitmapSource.Opacity",IDC_STATIC,7,288,96,8
-    EDITTEXT        IDC_OPACITY_EDIT,107,286,40,14,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "",IDC_OPACITY2,"msctls_updown32",UDS_SETBUDDYINT | UDS_AUTOBUDDY | UDS_ARROWKEYS,146,282,11,14
-    DEFPUSHBUTTON   "OK",IDOK,268,296,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,322,296,50,14
     CONTROL         "Sources.SoftwareCaptureSource.CaptureLayered",IDC_CAPTURELAYERED,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,125,283,10
+    GROUPBOX        "Sources.SoftwareCaptureSource.RegionCapture",IDC_STATIC,7,140,308,67
+    CONTROL         "Sources.SoftwareCaptureSource.RegionCapture",IDC_REGIONCAPTURE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,151,130,10,WS_EX_RIGHT
+    RTEXT           "Sources.SoftwareCaptureSource.Position",IDC_STATIC,17,169,116,8
+    EDITTEXT        IDC_POSX,137,166,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_POSY,179,166,40,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Sources.SoftwareCaptureSource.SelectRegion",IDC_SELECTREGION,223,166,77,14
+    RTEXT           "Sources.SoftwareCaptureSource.Size",IDC_STATIC,17,187,116,8
+    EDITTEXT        IDC_SIZEX,137,185,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_SIZEY,179,185,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    GROUPBOX        "Sources.SoftwareCaptureSource.ColorKey",IDC_STATIC,7,215,308,87
+    CONTROL         "Sources.SoftwareCaptureSource.UseColorKey",IDC_USECOLORKEY,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,230,130,10,WS_EX_RIGHT
+    RTEXT           "Color",IDC_STATIC,18,247,117,8
+    CONTROL         "",IDC_COLOR,"OBSColorControl",WS_TABSTOP,138,244,28,14
+    PUSHBUTTON      "Sources.SoftwareCaptureSource.Select",IDC_SELECT,169,244,64,14
+    RTEXT           "Sources.SoftwareCaptureSource.Similarity",IDC_STATIC,18,266,117,8
+    EDITTEXT        IDC_BASETHRESHOLD_EDIT,137,263,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_BASETHRESHOLD,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,178,263,11,14
+    RTEXT           "Sources.SoftwareCaptureSource.Blend",IDC_STATIC,17,282,117,8
+    EDITTEXT        IDC_BLEND_EDIT,137,281,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_BLEND,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,177,281,11,14
+    RTEXT           "Sources.BitmapSource.Opacity",IDC_STATIC,7,311,96,8
+    EDITTEXT        IDC_OPACITY_EDIT,107,310,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_OPACITY2,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,146,310,11,14
+    DEFPUSHBUTTON   "OK",IDOK,268,319,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,322,319,50,14
 END
 
 IDD_CONFIGUREBITMAPSOURCE DIALOGEX 0, 0, 244, 85
@@ -402,7 +405,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO
+GUIDELINES DESIGNINFO 
 BEGIN
     IDD_SETTINGS, DIALOG
     BEGIN
@@ -465,7 +468,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 372
         TOPMARGIN, 7
-        BOTTOMMARGIN, 310
+        BOTTOMMARGIN, 334
     END
 
     IDD_CONFIGUREBITMAPSOURCE, DIALOG
@@ -574,7 +577,7 @@ END
 // Accelerator
 //
 
-IDR_ACCELERATOR1 ACCELERATORS
+IDR_ACCELERATOR1 ACCELERATORS 
 BEGIN
     "C",            IDA_SOURCE_CENTER,      VIRTKEY, CONTROL, NOINVERT
     VK_DELETE,      IDA_SOURCE_DELETE,      VIRTKEY, NOINVERT
@@ -630,7 +633,7 @@ END
 // Menu
 //
 
-IDR_MAINMENU MENU
+IDR_MAINMENU MENU 
 BEGIN
     POPUP "MainMenu.File"
     BEGIN

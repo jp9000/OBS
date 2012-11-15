@@ -24,6 +24,7 @@
 HINSTANCE hinstMain = NULL;
 HWND hwndSender = NULL, hwndReceiver = NULL;
 HANDLE textureMutexes[2] = {NULL, NULL};
+bool bStopRequested = false;
 bool bCapturing = true;
 bool bTargetAcquired = false;
 
@@ -120,9 +121,9 @@ void   WINAPI OSCloseMutex(HANDLE hMutex)
 UINT InitializeSharedMemoryCPUCapture(UINT textureSize, DWORD *totalSize, MemoryCopyData **copyData, LPBYTE *textureBuffers)
 {
     UINT alignedHeaderSize = (sizeof(MemoryCopyData)+15) & 0xFFFFFFF0;
-    UINT alignedTextureSize = (textureSize+15) & 0xFFFFFFF0;
+    UINT alignedTexureSize = (textureSize+15) & 0xFFFFFFF0;
 
-    *totalSize = alignedHeaderSize + alignedTextureSize*2;
+    *totalSize = alignedHeaderSize + alignedTexureSize*2;
 
     wstringstream strName;
     strName << TEXTURE_MEMORY << ++sharedMemoryIDCounter;
@@ -140,10 +141,10 @@ UINT InitializeSharedMemoryCPUCapture(UINT textureSize, DWORD *totalSize, Memory
 
     *copyData = (MemoryCopyData*)lpSharedMemory;
     (*copyData)->texture1Offset = alignedHeaderSize;
-    (*copyData)->texture2Offset = alignedHeaderSize+alignedTextureSize;
+    (*copyData)->texture2Offset = alignedHeaderSize+alignedTexureSize;
 
     textureBuffers[0] = lpSharedMemory+alignedHeaderSize;
-    textureBuffers[1] = lpSharedMemory+alignedHeaderSize+alignedTextureSize;
+    textureBuffers[1] = lpSharedMemory+alignedHeaderSize+alignedTexureSize;
 
     return sharedMemoryIDCounter;
 }
@@ -193,8 +194,9 @@ LRESULT WINAPI SenderWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             break;
 
         case SENDER_ENDCAPTURE:
-            hwndReceiver = NULL;
+            bStopRequested = true;
             bCapturing = false;
+            hwndReceiver = NULL;
             break;
 
         default:

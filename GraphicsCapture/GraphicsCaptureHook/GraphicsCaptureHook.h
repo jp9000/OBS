@@ -37,12 +37,6 @@
 #include <fstream>
 using namespace std;
 
-#ifdef _WIN64
-typedef unsigned __int64 UPARAM;
-#else
-typedef unsigned long UPARAM;
-#endif
-
 
 #define SafeRelease(var) if(var) {var->Release(); var = NULL;}
 
@@ -55,6 +49,12 @@ inline FARPROC ConvertClassProcToFarproc(CLASSPROC val)
     return *reinterpret_cast<FARPROC*>(&val);
 }
 
+
+#ifdef _WIN64
+typedef unsigned __int64 UPARAM;
+#else
+typedef unsigned long UPARAM;
+#endif
 
 class HookData
 {
@@ -92,7 +92,7 @@ public:
             return false;
 
         memcpy(data, (const void*)func, 14);
-        VirtualProtect((LPVOID)func, 14, oldProtect, &oldProtect);
+        //VirtualProtect((LPVOID)func, 14, oldProtect, &oldProtect);
 
         return true;
     }
@@ -119,7 +119,7 @@ public:
             *(addrData++) = 0x25;
             *((LPDWORD)(addrData)) = 0;
             *((unsigned __int64*)(addrData+4)) = targetAddr;
-            VirtualProtect((LPVOID)func, 14, oldProtect, &oldProtect);
+            //VirtualProtect((LPVOID)func, 14, oldProtect, &oldProtect);
         }
         else
 #endif
@@ -129,7 +129,7 @@ public:
             LPBYTE addrData = (LPBYTE)func;
             *addrData = 0xE9;
             *(DWORD*)(addrData+1) = DWORD(offset);
-            VirtualProtect((LPVOID)func, 5, oldProtect, &oldProtect);
+            //VirtualProtect((LPVOID)func, 5, oldProtect, &oldProtect);
         }
 
         bHooked = true;
@@ -144,7 +144,7 @@ public:
         DWORD oldProtect;
         VirtualProtect((LPVOID)func, count, PAGE_EXECUTE_READWRITE, &oldProtect);
         memcpy((void*)func, data, count);
-        VirtualProtect((LPVOID)func, count, oldProtect, &oldProtect);
+        //VirtualProtect((LPVOID)func, count, oldProtect, &oldProtect);
 
         bHooked = false;
     }
@@ -166,7 +166,7 @@ inline void SetVTable(LPVOID ptr, UINT funcOffset, FARPROC funcAddress)
 
     *(vtable+funcOffset) = (UPARAM)funcAddress;
 
-    VirtualProtect((LPVOID)(vtable+funcOffset), sizeof(UPARAM), oldProtect, &oldProtect);
+    //VirtualProtect((LPVOID)(vtable+funcOffset), sizeof(UPARAM), oldProtect, &oldProtect);
 }
 
 inline void SSECopy(void *lpDest, void *lpSource, UINT size)
@@ -209,6 +209,7 @@ extern HWND hwndSender, hwndReceiver;
 extern HINSTANCE hinstMain;
 extern HANDLE textureMutexes[2];
 extern bool bCapturing;
+extern bool bStopRequested;
 extern bool bTargetAcquired;
 
 extern HANDLE hFileMap;

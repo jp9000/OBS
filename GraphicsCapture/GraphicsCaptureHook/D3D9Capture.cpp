@@ -64,8 +64,8 @@ DWORD                   curCapture = 0;
 BOOL                    bHasTextures = FALSE;
 LONGLONG                frameTime = 0;
 DWORD                   fps = 0;
-DWORD                   copyWait = 0;
 LONGLONG                lastTime = 0;
+DWORD                   copyWait = 0;
 
 IDirect3DQuery9         *queries[NUM_BUFFERS] = ZERO_ARRAY;
 IDirect3DSurface9       *textures[NUM_BUFFERS] = ZERO_ARRAY;
@@ -75,6 +75,7 @@ IDirect3DSurface9       *copyD3D9Textures[NUM_BUFFERS] = ZERO_ARRAY;
 // GPU copy stuff (on top of being perfect and amazing, is also easy)
 
 BOOL                    bD3D9Ex = FALSE;
+BOOL                    bUseSharedTextures = FALSE;
 IDirect3DSurface9       *copyD3D9TextureGame = NULL;
 extern SharedTexData    *texData;
 extern DXGI_FORMAT      dxgiFormat;
@@ -85,6 +86,54 @@ extern IDXGIKeyedMutex  *keyedMutexes[2];
 extern ID3D10Resource   *sharedTextures[2];
 
 extern bool             bD3D101Hooked;
+
+HMODULE                 hD3D9Dll = NULL;
+
+int                     patchType = 0;
+
+
+
+bool CompareMemory(const LPVOID lpVal1, const LPVOID lpVal2, UINT nBytes)
+{
+    __try
+    {
+        return memcmp(lpVal1, lpVal2, nBytes) == 0;
+    }
+    __except(GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+    {
+        return false;
+    }
+
+    return false;
+}
+
+BYTE compare1_32bit[12] = {0x8b, 0x89, 0xe8, 0x29, 0x00, 0x00, 0x39, 0xb9, 0x80, 0x4b, 0x00, 0x00};
+
+int GetD3D9PatchType()
+{
+    LPBYTE lpBaseAddress = (LPBYTE)hD3D9Dll;
+
+    #ifdef _WIN64
+    #else
+        if(CompareMemory(lpBaseAddress+0x79D96, compare1_32bit, 12))
+            return 1;
+    #endif
+
+    return 0;
+}
+
+LPBYTE GetD3D9PatchAddress()
+{
+    LPBYTE lpBaseAddress = (LPBYTE)hD3D9Dll;
+
+    #ifdef _WIN64
+    #else
+        if(patchType == 1)
+            return lpBaseAddress+0x79D96+12;
+    #endif
+
+    return NULL;
+}
 
 
 void ClearD3D9Data()
@@ -189,6 +238,7 @@ DXGI_FORMAT GetDXGIFormat(D3DFORMAT format)
 void SetupD3D9(IDirect3DDevice9 *device);
 
 typedef HRESULT (WINAPI *CREATEDXGIFACTORY1PROC)(REFIID riid, void **ppFactory);
+
 
 void DoD3D9GPUHook(IDirect3DDevice9 *device)
 {
@@ -303,12 +353,26 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
 
     //------------------------------------------------
 
+    LPBYTE patchAddress = (patchType != 0) ? GetD3D9PatchAddress() : NULL;
+    BYTE savedByte;
+
+    if(patchAddress)
+    {
+        DWORD dwOldProtect;
+        VirtualProtect(patchAddress, 1, PAGE_EXECUTE_READWRITE, &dwOldProtect);
+        savedByte = *patchAddress;
+        *patchAddress = 0xEB;
+    }
+        
     IDirect3DTexture9 *d3d9Tex;
     if(FAILED(hErr = device->CreateTexture(d3d9CaptureInfo.cx, d3d9CaptureInfo.cy, 1, D3DUSAGE_RENDERTARGET, (D3DFORMAT)d3d9Format, D3DPOOL_DEFAULT, &d3d9Tex, &handle)))
     {
         logOutput << "DoD3D9GPUHook: opening intermediary texture failed, result = " << (UINT)hErr << endl;
         goto finishGPUHook;
     }
+
+    if(patchAddress)
+        *patchAddress = savedByte;
 
     if(FAILED(hErr == d3d9Tex->GetSurfaceLevel(0, &copyD3D9TextureGame)))
     {
@@ -395,9 +459,10 @@ finishGPUHook:
         d3d9CaptureInfo.bFlip = FALSE;
         texData->texHandles[0] = sharedHandles[0];
         texData->texHandles[1] = sharedHandles[1];
-        SendMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d9CaptureInfo);
+        fps = (DWORD)SendMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d9CaptureInfo);
+        frameTime = 1000000/LONGLONG(fps);
 
-        logOutput << "DoD3D9GPUHook: success";
+        logOutput << "DoD3D9GPUHook: success" << endl;
     }
     else
         ClearD3D9Data();
@@ -415,7 +480,7 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
     {
         if(FAILED(hErr = device->CreateOffscreenPlainSurface(d3d9CaptureInfo.cx, d3d9CaptureInfo.cy, (D3DFORMAT)d3d9Format, D3DPOOL_SYSTEMMEM, &textures[i], NULL)))
         {
-            logOutput << "DoD3D9CPUHook: device->CreateOffscreenPlainSurface " << i << " failed, result = " << (UINT)hErr;
+            logOutput << "DoD3D9CPUHook: device->CreateOffscreenPlainSurface " << i << " failed, result = " << (UINT)hErr << endl;
             bSuccess = false;
             break;
         }
@@ -425,7 +490,7 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
             D3DLOCKED_RECT lr;
             if(FAILED(hErr = textures[i]->LockRect(&lr, NULL, D3DLOCK_READONLY)))
             {
-                logOutput << "DoD3D9CPUHook: textures[" << i << "]->LockRect failed, result = " << (UINT)hErr;
+                logOutput << "DoD3D9CPUHook: textures[" << i << "]->LockRect failed, result = " << (UINT)hErr << endl;
                 bSuccess = false;
                 break;
             }
@@ -441,21 +506,21 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
         {
             if(FAILED(hErr = device->CreateRenderTarget(d3d9CaptureInfo.cx, d3d9CaptureInfo.cy, (D3DFORMAT)d3d9Format, D3DMULTISAMPLE_NONE, 0, FALSE, &copyD3D9Textures[i], NULL)))
             {
-                logOutput << "DoD3D9CPUHook: device->CreateTexture " << i << " failed, result = " << (UINT)hErr;
+                logOutput << "DoD3D9CPUHook: device->CreateTexture " << i << " failed, result = " << (UINT)hErr << endl;
                 bSuccess = false;
                 break;
             }
 
             if(FAILED(hErr = device->CreateQuery(D3DQUERYTYPE_EVENT, &queries[i])))
             {
-                logOutput << "DoD3D9CPUHook: device->CreateQuery " << i << " failed, result = " << (UINT)hErr;
+                logOutput << "DoD3D9CPUHook: device->CreateQuery " << i << " failed, result = " << (UINT)hErr << endl;
                 bSuccess = false;
                 break;
             }
 
             if(!(dataMutexes[i] = OSCreateMutex()))
             {
-                logOutput << "DoD3D9CPUHook: OSCreateMutex " << i << " failed, GetLastError = " << GetLastError();
+                logOutput << "DoD3D9CPUHook: OSCreateMutex " << i << " failed, GetLastError = " << GetLastError() << endl;
                 bSuccess = false;
                 break;
             }
@@ -470,13 +535,13 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
         {
             if(!(hCopyEvent = CreateEvent(NULL, FALSE, FALSE, NULL)))
             {
-                logOutput << "DoD3D9CPUHook: CreateEvent failed, GetLastError = " << GetLastError();
+                logOutput << "DoD3D9CPUHook: CreateEvent failed, GetLastError = " << GetLastError() << endl;
                 bSuccess = false;
             }
         }
         else
         {
-            logOutput << "DoD3D9CPUHook: CreateThread failed, GetLastError = " << GetLastError();
+            logOutput << "DoD3D9CPUHook: CreateThread failed, GetLastError = " << GetLastError() << endl;
             bSuccess = false;
         }
     }
@@ -486,7 +551,7 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
         d3d9CaptureInfo.mapID = InitializeSharedMemoryCPUCapture(pitch*d3d9CaptureInfo.cy, &d3d9CaptureInfo.mapSize, &copyData, textureBuffers);
         if(!d3d9CaptureInfo.mapID)
         {
-            logOutput << "DoD3D9CPUHook: failed to initialize shared memory";
+            logOutput << "DoD3D9CPUHook: failed to initialize shared memory" << endl;
             bSuccess = false;
         }
     }
@@ -557,8 +622,15 @@ DWORD CopyD3D9CPUTextureThread(LPVOID lpUseless)
 }
 
 
+
 void DoD3D9DrawStuff(IDirect3DDevice9 *device)
 {
+    if(bStopRequested)
+    {
+        ClearD3D9Data();
+        bStopRequested = false;
+    }
+
     if(!bHasTextures && bCapturing)
     {
         if(d3d9Format)
@@ -569,6 +641,11 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
             if(hwndReceiver)
             {
                 if(bD3D9Ex)
+                    bUseSharedTextures = true;
+                else
+                    bUseSharedTextures = (patchType = GetD3D9PatchType()) != 0;
+
+                if(bUseSharedTextures)
                     DoD3D9GPUHook(device);
                 else
                     DoD3D9CPUHook(device);
@@ -576,44 +653,54 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
         }
     }
 
-    device->BeginScene();
+    //device->BeginScene();
 
     if(bHasTextures)
     {
         if(bCapturing)
         {
-            if(bD3D9Ex) //shared texture support
+            if(bUseSharedTextures) //shared texture support
             {
-                DWORD nextCapture = curCapture == 0 ? 1 : 0;
+                /*LONGLONG timeVal = OSGetTimeMicroseconds();
+                LONGLONG timeElapsed = timeVal-lastTime;
 
-                IDirect3DSurface9 *texture = textures[curCapture];
-                IDirect3DSurface9 *backBuffer = NULL;
-
-                if(SUCCEEDED(device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &backBuffer)))
+                if(timeElapsed >= frameTime)
                 {
-                    if(SUCCEEDED(device->StretchRect(backBuffer, NULL, copyD3D9TextureGame, NULL, D3DTEXF_NONE)))
+                    lastTime += frameTime;
+                    if(timeElapsed > frameTime*2)
+                        lastTime = timeVal;*/
+
+                    DWORD nextCapture = curCapture == 0 ? 1 : 0;
+
+                    IDirect3DSurface9 *texture = textures[curCapture];
+                    IDirect3DSurface9 *backBuffer = NULL;
+
+                    if(SUCCEEDED(device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &backBuffer)))
                     {
-                        ID3D10Texture2D *outputTexture = NULL;
-                        int lastRendered = -1;
-
-                        if(keyedMutexes[curCapture]->AcquireSync(0, 0) == WAIT_OBJECT_0)
-                            lastRendered = (int)curCapture;
-                        else if(keyedMutexes[nextCapture]->AcquireSync(0, 0) == WAIT_OBJECT_0)
-                            lastRendered = (int)nextCapture;
-
-                        if(lastRendered != -1)
+                        if(SUCCEEDED(device->StretchRect(backBuffer, NULL, copyD3D9TextureGame, NULL, D3DTEXF_NONE)))
                         {
-                            shareDevice->CopyResource(sharedTextures[lastRendered], copyTextureIntermediary);
-                            keyedMutexes[lastRendered]->ReleaseSync(0);
+                            ID3D10Texture2D *outputTexture = NULL;
+                            int lastRendered = -1;
+
+                            if(keyedMutexes[curCapture]->AcquireSync(0, 0) == WAIT_OBJECT_0)
+                                lastRendered = (int)curCapture;
+                            else if(keyedMutexes[nextCapture]->AcquireSync(0, 0) == WAIT_OBJECT_0)
+                                lastRendered = (int)nextCapture;
+
+                            if(lastRendered != -1)
+                            {
+                                shareDevice->CopyResource(sharedTextures[lastRendered], copyTextureIntermediary);
+                                keyedMutexes[lastRendered]->ReleaseSync(0);
+                            }
+
+                            texData->lastRendered = lastRendered;
                         }
 
-                        texData->lastRendered = lastRendered;
+                        backBuffer->Release();
                     }
 
-                    backBuffer->Release();
-                }
-
-                curCapture = nextCapture;
+                    curCapture = nextCapture;
+                //}
             }
             else //slow regular d3d9, no shared textures
             {
@@ -698,7 +785,7 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
             ClearD3D9Data();
     }
 
-    device->EndScene();
+    //device->EndScene();
 }
 
 
@@ -937,7 +1024,7 @@ bool InitD3D9Capture()
 {
     bool bSuccess = false;
 
-    HMODULE hD3D9Dll = GetModuleHandle(TEXT("d3d9.dll"));
+    hD3D9Dll = GetModuleHandle(TEXT("d3d9.dll"));
     if(hD3D9Dll)
     {
         D3D9CREATEEXPROC d3d9CreateEx = (D3D9CREATEEXPROC)GetProcAddress(hD3D9Dll, "Direct3DCreate9Ex");
