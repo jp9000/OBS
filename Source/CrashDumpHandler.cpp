@@ -76,7 +76,8 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
         return EXCEPTION_CONTINUE_SEARCH;
 
     //exception codes < 0x80000000 are typically informative only and not crash worthy
-    if (exceptionInfo->ExceptionRecord->ExceptionCode < 0x80000000)
+    //0xe06d7363 indicates a c++ exception was thrown, let's just hope it was caught.
+    if (exceptionInfo->ExceptionRecord->ExceptionCode < 0x80000000 || exceptionInfo->ExceptionRecord->ExceptionCode == 0xe06d7363)
         return EXCEPTION_CONTINUE_SEARCH;
 
     //uh oh, we're crashing inside ourselves... this is really bad!
