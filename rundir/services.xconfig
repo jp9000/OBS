@@ -1,34 +1,32 @@
 services : {
   TwitchTV/JustinTV : {
-    useChannel : app
     servers : {
-      "Global Load Balancing Service"        : live-3c.justin.tv
-      "Asia: Singapore"                      : live-sin-backup.justin.tv
-      "EU: Amsterdam, NL"                    : live-ams.justin.tv
-      "EU: Frankfurt, DE"                    : live-fra.justin.tv
-      "EU: London, UK"                       : live-lhr.justin.tv
-      "EU: London, UK (Secondary)"           : live-lhr-backup.justin.tv
-      "US Central: Dallas, TX"               : live-dfw.justin.tv
-      "US Central: San Antonio, TX"          : live-dfw-backup.justin.tv
-      "US East: Ashburn, VA"                 : live-iad.justin.tv
-      "US East: Ashburn, VA (Secondary)"     : live-iad-backup.justin.tv
-      "US East: Miami, FL"                   : live-mia.justin.tv
-      "US East: New York, NY"                : live-jfk.justin.tv
-      "US Midwest: Chicago, IL"              : live-ord.justin.tv
-      "US West: Los Angeles, CA"             : live-lax.justin.tv
-      "US West: Los Angeles, CA (Secondary)" : live-lax-backup.justin.tv
-      "US West: San Francisco, CA"           : live.justin.tv
+      "Global Load Balancing Service"        : rtmp://live-3c.justin.tv/app
+      "Asia: Singapore"                      : rtmp://live-sin-backup.justin.tv/app
+      "EU: Amsterdam, NL"                    : rtmp://live-ams.justin.tv/app
+      "EU: Frankfurt, DE"                    : rtmp://live-fra.justin.tv/app
+      "EU: London, UK"                       : rtmp://live-lhr.justin.tv/app
+      "EU: London, UK (Secondary)"           : rtmp://live-lhr-backup.justin.tv/app
+      "US Central: Dallas, TX"               : rtmp://live-dfw.justin.tv/app
+      "US Central: San Antonio, TX"          : rtmp://live-dfw-backup.justin.tv/app
+      "US East: Ashburn, VA"                 : rtmp://live-iad.justin.tv/app
+      "US East: Ashburn, VA (Secondary)"     : rtmp://live-iad-backup.justin.tv/app
+      "US East: Miami, FL"                   : rtmp://live-mia.justin.tv/app
+      "US East: New York, NY"                : rtmp://live-jfk.justin.tv/app
+      "US Midwest: Chicago, IL"              : rtmp://live-ord.justin.tv/app
+      "US West: Los Angeles, CA"             : rtmp://live-lax.justin.tv/app
+      "US West: Los Angeles, CA (Secondary)" : rtmp://live-lax-backup.justin.tv/app
+      "US West: San Francisco, CA"           : rtmp://live.justin.tv/app
     }
   }
   Own3D : {
-    useChannel : live
     servers : {
-      US West : live.usw.own3d.tv
-      US East : live.use.own3d.tv
-      EU : live.eu.own3d.tv
-      US West (Partner) : live.usw.pro.own3d.tv
-      US East (Partner) : live.use.pro.own3d.tv
-      EU (Partner) : live.eu.pro.own3d.tv
+      US West           : rtmp://live.usw.own3d.tv/live
+      US East           : rtmp://live.use.own3d.tv/live
+      EU                : rtmp://live.eu.own3d.tv/live
+      US West (Partner) : rtmp://live.usw.pro.own3d.tv/live
+      US East (Partner) : rtmp://live.use.pro.own3d.tv/live
+      EU (Partner)      : rtmp://live.eu.pro.own3d.tv/live
     }
   }
 }
