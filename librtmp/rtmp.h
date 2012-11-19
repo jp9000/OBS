@@ -289,12 +289,16 @@ extern "C"
     int RTMP_ParseURL(const char *url, int *protocol, AVal *host,
                       unsigned int *port, AVal *playpath, AVal *app);
 
+    int RTMP_ParseURL2(const char *url, int *protocol, AVal *host,
+                      unsigned int *port, AVal *app);
+
     void RTMP_ParsePlaypath(AVal *in, AVal *out);
     void RTMP_SetBufferMS(RTMP *r, int size);
     void RTMP_UpdateBufferMS(RTMP *r);
 
     int RTMP_SetOpt(RTMP *r, const AVal *opt, AVal *arg);
     int RTMP_SetupURL(RTMP *r, char *url);
+    int RTMP_SetupURL2(RTMP *r, char *url, char *playpath);
     void RTMP_SetupStream(RTMP *r, int protocol,
                           AVal *hostname,
                           unsigned int port,

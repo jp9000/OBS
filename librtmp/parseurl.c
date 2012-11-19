@@ -191,6 +191,131 @@ parsehost:
     return TRUE;
 }
 
+int RTMP_ParseURL2(const char *url, int *protocol, AVal *host, unsigned int *port,
+                  AVal *app)
+{
+    char *p, *end, *col, *ques, *slash;
+
+    RTMP_Log(RTMP_LOGDEBUG, "Parsing...");
+
+    *protocol = RTMP_PROTOCOL_RTMP;
+    *port = 0;
+    app->av_len = 0;
+    app->av_val = NULL;
+
+    /* Old School Parsing */
+
+    /* look for usual :// pattern */
+    p = strstr(url, "://");
+    if(!p)
+    {
+        RTMP_Log(RTMP_LOGERROR, "RTMP URL: No :// in url!");
+        return FALSE;
+    }
+    {
+        int len = (int)(p-url);
+
+        if(len == 4 && strncasecmp(url, "rtmp", 4)==0)
+            *protocol = RTMP_PROTOCOL_RTMP;
+        else if(len == 5 && strncasecmp(url, "rtmpt", 5)==0)
+            *protocol = RTMP_PROTOCOL_RTMPT;
+        else if(len == 5 && strncasecmp(url, "rtmps", 5)==0)
+            *protocol = RTMP_PROTOCOL_RTMPS;
+        else if(len == 5 && strncasecmp(url, "rtmpe", 5)==0)
+            *protocol = RTMP_PROTOCOL_RTMPE;
+        else if(len == 5 && strncasecmp(url, "rtmfp", 5)==0)
+            *protocol = RTMP_PROTOCOL_RTMFP;
+        else if(len == 6 && strncasecmp(url, "rtmpte", 6)==0)
+            *protocol = RTMP_PROTOCOL_RTMPTE;
+        else if(len == 6 && strncasecmp(url, "rtmpts", 6)==0)
+            *protocol = RTMP_PROTOCOL_RTMPTS;
+        else
+        {
+            RTMP_Log(RTMP_LOGWARNING, "Unknown protocol!\n");
+            goto parsehost;
+        }
+    }
+
+    RTMP_Log(RTMP_LOGDEBUG, "Parsed protocol: %d", *protocol);
+
+parsehost:
+    /* let's get the hostname */
+    p+=3;
+
+    /* check for sudden death */
+    if(*p==0)
+    {
+        RTMP_Log(RTMP_LOGWARNING, "No hostname in URL!");
+        return FALSE;
+    }
+
+    end   = p + strlen(p);
+    col   = strchr(p, ':');
+    ques  = strchr(p, '?');
+    slash = strchr(p, '/');
+
+    {
+        int hostlen;
+        if(slash)
+            hostlen = slash - p;
+        else
+            hostlen = end - p;
+        if(col && col -p < hostlen)
+            hostlen = col - p;
+
+        if(hostlen < 256)
+        {
+            host->av_val = p;
+            host->av_len = hostlen;
+            RTMP_Log(RTMP_LOGDEBUG, "Parsed host    : %.*s", hostlen, host->av_val);
+        }
+        else
+        {
+            RTMP_Log(RTMP_LOGWARNING, "Hostname exceeds 255 characters!");
+        }
+
+        p+=hostlen;
+    }
+
+    /* get the port number if available */
+    if(*p == ':')
+    {
+        unsigned int p2;
+        p++;
+        p2 = atoi(p);
+        if(p2 > 65535)
+        {
+            RTMP_Log(RTMP_LOGWARNING, "Invalid port number!");
+        }
+        else
+        {
+            *port = p2;
+        }
+    }
+
+    if(!slash)
+    {
+        RTMP_Log(RTMP_LOGWARNING, "No application or playpath in URL!");
+        return TRUE;
+    }
+    p = slash+1;
+
+    //just..  whatever.
+    app->av_val = p;
+    app->av_len = (int)strlen(p);
+
+    if(p[app->av_len-1] == '/')
+        app->av_len--;
+
+    RTMP_Log(RTMP_LOGDEBUG, "Parsed app     : %.*s", app->av_len, p);
+    p += app->av_len;
+
+    if (*p == '/')
+        p++;
+
+    return TRUE;
+}
+
 /*
  * Extracts playpath from RTMP URL. playpath is the file part of the
  * URL, i.e. the part that comes after rtmp://host:port/app/

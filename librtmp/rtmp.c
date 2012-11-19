@@ -831,6 +831,131 @@ int RTMP_SetupURL(RTMP *r, char *url)
     return TRUE;
 }
 
+int RTMP_SetupURL2(RTMP *r, char *url, char *playpath)
+{
+    AVal opt, arg;
+    char *p1, *p2, *ptr = strchr(url, ' ');
+    int ret, len;
+    unsigned int port = 0;
+
+    if (ptr)
+        *ptr = '\0';
+
+    len = (int)strlen(url);
+    ret = RTMP_ParseURL2(url, &r->Link.protocol, &r->Link.hostname,
+        &port, &r->Link.app);
+    if (!ret)
+        return ret;
+    r->Link.port = port;
+
+    if(playpath && *playpath)
+    {
+        AVal pp = {playpath, (int)strlen(playpath)};
+        RTMP_ParsePlaypath(&pp, &r->Link.playpath0);
+    }
+
+    r->Link.playpath = r->Link.playpath0;
+
+    while (ptr)
+    {
+        *ptr++ = '\0';
+        p1 = ptr;
+        p2 = strchr(p1, '=');
+        if (!p2)
+            break;
+        opt.av_val = p1;
+        opt.av_len = p2 - p1;
+        *p2++ = '\0';
+        arg.av_val = p2;
+        ptr = strchr(p2, ' ');
+        if (ptr)
+        {
+            *ptr = '\0';
+            arg.av_len = ptr - p2;
+            /* skip repeated spaces */
+            while(ptr[1] == ' ')
+                *ptr++ = '\0';
+        }
+        else
+        {
+            arg.av_len = (int)strlen(p2);
+        }
+
+        /* unescape */
+        port = arg.av_len;
+        for (p1=p2; port >0;)
+        {
+            if (*p1 == '\\')
+            {
+                unsigned int c;
+                if (port < 3)
+                    return FALSE;
+                sscanf(p1+1, "%02x", &c);
+                *p2++ = c;
+                port -= 3;
+                p1 += 3;
+            }
+            else
+            {
+                *p2++ = *p1++;
+                port--;
+            }
+        }
+        arg.av_len = p2 - arg.av_val;
+
+        ret = RTMP_SetOpt(r, &opt, &arg);
+        if (!ret)
+            return ret;
+    }
+
+    if (!r->Link.tcUrl.av_len)
+    {
+        r->Link.tcUrl.av_val = url;
+        if (r->Link.app.av_len)
+        {
+            if (r->Link.app.av_val < url + len)
+            {
+                /* if app is part of original url, just use it */
+                r->Link.tcUrl.av_len = r->Link.app.av_len + (r->Link.app.av_val - url);
+            }
+            else
+            {
+                len = r->Link.hostname.av_len + r->Link.app.av_len +
+                    sizeof("rtmpte://:65535/");
+                r->Link.tcUrl.av_val = malloc(len);
+                r->Link.tcUrl.av_len = snprintf(r->Link.tcUrl.av_val, len,
+                    "%s://%.*s:%d/%.*s",
+                    RTMPProtocolStringsLower[r->Link.protocol],
+                    r->Link.hostname.av_len, r->Link.hostname.av_val,
+                    r->Link.port,
+                    r->Link.app.av_len, r->Link.app.av_val);
+                r->Link.lFlags |= RTMP_LF_FTCU;
+            }
+        }
+        else
+        {
+            r->Link.tcUrl.av_len = (int)strlen(url);
+        }
+    }
+
+#ifdef CRYPTO
+    if ((r->Link.lFlags & RTMP_LF_SWFV) && r->Link.swfUrl.av_len)
+        RTMP_HashSWF(r->Link.swfUrl.av_val, &r->Link.SWFSize,
+        (unsigned char *)r->Link.SWFHash, r->Link.swfAge);
+#endif
+
+    if (r->Link.port == 0)
+    {
+        if (r->Link.protocol & RTMP_FEATURE_SSL)
+            r->Link.port = 443;
+        else if (r->Link.protocol & RTMP_FEATURE_HTTP)
+            r->Link.port = 80;
+        else
+            r->Link.port = 1935;
+    }
+    return TRUE;
+}
+
 static int
 add_addr_info(struct sockaddr_in *service, AVal *host, int port)
 {
