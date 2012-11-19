@@ -71,6 +71,10 @@ RTMPPublisher::RTMPPublisher(RTMP *rtmpIn, BOOL bUseSendBuffer, UINT sendBufferS
 
     packetWaitType = 0;
 
+	maxBitRate = (UINT)AppConfig->GetInt(TEXT("Video Encoding"), TEXT("MaxBitrate"), 1000);
+	bufferSize = (UINT)AppConfig->GetInt(TEXT("Video Encoding"), TEXT("BufferSize"), 1000);
+	bufferTime = (UINT)(min(1.0, float(bufferSize)/float(maxBitRate))*1000);
+
     BFrameThreshold = 30; //when it starts cutting out b frames
     maxVideoPackets = 70; //when it starts cutting out p frames
     revertThreshold = 2;  //when it reverts to normal
@@ -112,6 +116,37 @@ RTMPPublisher::~RTMPPublisher()
     //traceOut;
 }
 
+UINT RTMPPublisher::BitsPerTime(List<BitRecord> *list)
+{
+	DWORD curTime = OSGetTime();
+	// remove old bits
+	if (!bPacketDumpMode)
+	{
+		DWORD cutoffTime = curTime-bufferTime;
+
+		while((list->Num() > 0) && (list->GetElement(0).timestamp < cutoffTime))
+			list->Remove(0);
+	}
+
+	UINT accumulator = 1;
+	for(UINT i = 0; i < list->Num(); i++)
+	{
+		BitRecord bitRecord = list->GetElement(i);
+		if(bitRecord.timestamp <= curTime)
+			accumulator += bitRecord.bits;
+	}
+
+	return accumulator;
+}
+
+void RTMPPublisher::AddBits(List<BitRecord> *list, UINT bits, DWORD timestamp)
+{
+	BitRecord bitRecord;
+	bitRecord.bits = bits; 
+	bitRecord.timestamp = timestamp;
+	list->Add(bitRecord);
+}
+
 void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)
 {
     //traceIn(RTMPPublisher::SendPacket);
@@ -122,7 +157,12 @@ void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketTyp
         paddedData.SetSize(size+RTMP_MAX_HEADER_SIZE);
         mcpy(paddedData.Array()+RTMP_MAX_HEADER_SIZE, data, size);
 
-        if(bPacketDumpMode && Packets.Num() <= revertThreshold)
+		
+		bitsInPerTime = BitsPerTime(&bitsIn);
+		bitsOutPerTime = BitsPerTime(&bitsOut);
+		// debug stuff // if (bPacketDumpMode)
+		//	Log(TEXT("BitsIn: %u, BitsOut: %u"), BitsPerTime(&bitsIn, t), BitsPerTime(&bitsOut, t));
+		if(bPacketDumpMode && (bitsInPerTime <= bitsOutPerTime))
             bPacketDumpMode = false;
 
         bool bAddPacket = false;
@@ -133,7 +173,11 @@ void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketTyp
                 packetWaitType = (bPacketDumpMode) ? PacketType_VideoLow : PacketType_VideoDisposable;
 
                 if(type <= PacketType_VideoHigh)
-                    numVideoPackets++;
+				{
+					AddBits(&bitsIn, size*8, OSGetTime()); // +App->frameTime
+					
+					numVideoPackets++;
+				}
             }
 
             bAddPacket = true;
@@ -149,21 +193,20 @@ void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketTyp
             netPacket.data.TransferFrom(paddedData);
 
             //begin dumping b frames if there's signs of lag
-            if(numVideoPackets > BFrameThreshold)
-            {
-                if(!bPacketDumpMode)
-                {
-                    bPacketDumpMode = true;
-                    if(packetWaitType == PacketType_VideoDisposable)
-                        packetWaitType = PacketType_VideoLow;
-                }
+				if(bitsInPerTime > bitsOutPerTime*4) // The longer I test, the more convinced I am that 4 is the perfect factor
+				{
+					if(!bPacketDumpMode)
+					{
+						bPacketDumpMode = true;
+						if(packetWaitType == PacketType_VideoDisposable)
+							packetWaitType = PacketType_VideoLow;
+					}
+					DumpBFrame();
+				}
 
-                DumpBFrame();
-            }
-
-            //begin dumping p frames if b frames aren't enough
-            if(numVideoPackets > maxVideoPackets)
-                DoIFrameDelay();
+				//begin dumping p frames if b frames aren't enough
+				/*if(bitsInPerTime > bitsOutPerTime*5) // TODO: Tweak this
+					DoIFrameDelay();*/
 
             OSLeaveMutex(hDataMutex);
 
@@ -274,7 +317,10 @@ void RTMPPublisher::BeginPublishing()
 
 double RTMPPublisher::GetPacketStrain() const
 {
-    return double(numVideoPackets)/double(maxVideoPackets)*100.0;
+	if(bPacketDumpMode)
+		return min(1.0, double(bitsInPerTime)/double(bitsOutPerTime*3))*100.0;
+	else
+		return min(1.0, double(bitsInPerTime)/double(bitsOutPerTime*4))*100.0;
 }
 
 QWORD RTMPPublisher::GetCurrentSentBytes()
@@ -334,8 +380,10 @@ void RTMPPublisher::SendLoop()
 
         Packets.Remove(0);
         if(type <= PacketType_VideoHigh)
+		{
+			AddBits(&bitsOut, packetData.Num()*8, OSGetTime());
             numVideoPackets--;
-
+		}
         OSLeaveMutex(hDataMutex);
 
         //--------------------------------------------
@@ -432,6 +480,7 @@ void RTMPPublisher::DoIFrameDelay()
             {
                 NetworkPacket &bestPacket = Packets[bestItem];
 
+				AddBits(&bitsOut, bestPacket.data.Num()*8, OSGetTime());
                 bestPacket.data.Clear();
                 Packets.Remove(bestItem);
                 numVideoPackets--;
@@ -464,6 +513,7 @@ void RTMPPublisher::DoIFrameDelay()
                     }
                     else //clear out following dependent packets of lower priority
                     {
+						AddBits(&bitsOut, packet.data.Num()*8, OSGetTime());
                         packet.data.Clear();
                         Packets.Remove(i--);
                         numVideoPackets--;
@@ -472,6 +522,7 @@ void RTMPPublisher::DoIFrameDelay()
                 }
                 else if(packet.type == packetWaitType)
                 {
+					AddBits(&bitsOut, packet.data.Num()*8, OSGetTime());
                     packet.data.Clear();
                     Packets.Remove(i--);
                     numVideoPackets--;
@@ -512,6 +563,7 @@ void RTMPPublisher::DumpBFrame()
                 }
                 else //clear out following dependent packets of lower priority
                 {
+					AddBits(&bitsOut, packet.data.Num()*8, OSGetTime());
                     packet.data.Clear();
                     Packets.Remove(i--);
                     numVideoPackets--;
@@ -520,6 +572,7 @@ void RTMPPublisher::DumpBFrame()
             }
             else if(packet.type == packetWaitType)
             {
+				AddBits(&bitsOut, packet.data.Num()*8, OSGetTime());
                 packet.data.Clear();
                 Packets.Remove(i--);
                 numVideoPackets--;
@@ -622,7 +675,6 @@ int RTMPPublisher::BufferedSend(RTMPSockBuf *sb, const char *buf, int len, RTMPP
     return fullLen;
 }
 
-
 NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry)
 {
     //traceIn(CreateRTMPPublisher);
@@ -632,22 +684,13 @@ NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry)
 
     bCanRetry = false;
 
-    String strURL;
-
     int    serviceID    = AppConfig->GetInt   (TEXT("Publish"), TEXT("Service"));
-    String strServer    = AppConfig->GetString(TEXT("Publish"), TEXT("Server"));
-    String strChannel   = AppConfig->GetString(TEXT("Publish"), TEXT("Channel"));
+    String strURL       = AppConfig->GetString(TEXT("Publish"), TEXT("URL"));
     String strPlayPath  = AppConfig->GetString(TEXT("Publish"), TEXT("PlayPath"));
 
-    if(!strServer.IsValid())
+    if(!strURL.IsValid())
     {
         failReason = TEXT("No server specified to connect to");
-        return NULL;
-    }
-
-    if(!strChannel.IsValid())
-    {
-        failReason = TEXT("No channel specified");
         return NULL;
     }
 
@@ -681,16 +724,12 @@ NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry)
             return NULL;
         }
 
-        XDataItem *item = servers->GetDataItem(strServer);
+        XDataItem *item = servers->GetDataItem(strURL);
         if(!item)
             item = servers->GetDataItemByID(0);
 
-        strServer = item->GetData();
+        strURL = item->GetData();
     }
-
-    strURL << TEXT("rtmp://") << strServer << TEXT("/") << strChannel;
-    if(strPlayPath.IsValid())
-        strURL << TEXT("/") << strPlayPath;
 
     //------------------------------------------------------
 
@@ -700,11 +739,14 @@ NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry)
     RTMP_LogSetLevel(RTMP_LOGDEBUG2);*/
 
     LPSTR lpAnsiURL = strURL.CreateUTF8String();
+    LPSTR lpAnsiPlaypath = strPlayPath.CreateUTF8String();
 
-    if(!RTMP_SetupURL(rtmp, lpAnsiURL))
+    if(!RTMP_SetupURL2(rtmp, lpAnsiURL, lpAnsiPlaypath))
     {
         failReason = Str("Connection.CouldNotParseURL");
         RTMP_Free(rtmp);
+        Free(lpAnsiURL);
+        Free(lpAnsiPlaypath);
         return NULL;
     }
 
@@ -736,6 +778,8 @@ NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry)
         failReason = Str("Connection.CouldNotConnect");
         RTMP_Free(rtmp);
         bCanRetry = true;
+        Free(lpAnsiURL);
+        Free(lpAnsiPlaypath);
         return NULL;
     }
 
@@ -744,6 +788,8 @@ NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry)
         failReason = Str("Connection.InvalidStream");
         RTMP_Close(rtmp);
         RTMP_Free(rtmp);
+        Free(lpAnsiURL);
+        Free(lpAnsiPlaypath);
         return NULL;
     }
 

@@ -71,6 +71,7 @@
 				AdditionalLibraryDirectories="OBSApi/Debug;x264/libs/32bit;librtmp/debug;lame/output/32bit;libfaac/debug;libsamplerate/debug"
 				AdditionalManifestDependencies="type=&apos;win32&apos; name=&apos;Microsoft.Windows.Common-Controls&apos; version=&apos;6.0.0.0&apos; processorArchitecture=&apos;X86&apos; publicKeyToken=&apos;6595b64144ccf1df&apos; language=&apos;*&apos;"
 				GenerateDebugInformation="true"
+				StripPrivateSymbols="rundir\$(TargetName).pdb"
 				SubSystem="2"
 				TargetMachine="1"
 			/>
@@ -149,6 +150,7 @@
 				AdditionalLibraryDirectories="OBSApi/x64/Debug;x264/libs/64bit;librtmp/x64/debug;lame/output/64bit;libfaac/x64/debug;libsamplerate/x64/debug"
 				AdditionalManifestDependencies="type=&apos;win32&apos; name=&apos;Microsoft.Windows.Common-Controls&apos; version=&apos;6.0.0.0&apos; processorArchitecture=&apos;amd64&apos; publicKeyToken=&apos;6595b64144ccf1df&apos; language=&apos;*&apos;"
 				GenerateDebugInformation="true"
+				StripPrivateSymbols="rundir\$(TargetName).pdb"
 				SubSystem="2"
 				TargetMachine="17"
 			/>
@@ -230,6 +232,7 @@
 				AdditionalLibraryDirectories="OBSApi/Release;x264/libs/32bit;librtmp/release;lame/output/32bit;libfaac/release;libsamplerate/release"
 				AdditionalManifestDependencies="type=&apos;Win32&apos; name=&apos;Microsoft.Windows.Common-Controls&apos; version=&apos;6.0.0.0&apos; processorArchitecture=&apos;X86&apos; publicKeyToken=&apos;6595b64144ccf1df&apos; language=&apos;*&apos;"
 				GenerateDebugInformation="true"
+				StripPrivateSymbols="rundir\$(TargetName).pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -313,6 +316,7 @@
 				AdditionalLibraryDirectories="OBSApi/x64/Release;x264/libs/64bit;librtmp/x64/release;lame/output/64bit;libfaac/x64/release;libsamplerate/x64/release"
 				AdditionalManifestDependencies="type=&apos;win32&apos; name=&apos;Microsoft.Windows.Common-Controls&apos; version=&apos;6.0.0.0&apos; processorArchitecture=&apos;amd64&apos; publicKeyToken=&apos;6595b64144ccf1df&apos; language=&apos;*&apos;"
 				GenerateDebugInformation="true"
+				StripPrivateSymbols="rundir\$(TargetName).pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -439,6 +443,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Source\libnsgif.c"
+				>
+			</File>
+			<File
 				RelativePath=".\Source\Main.cpp"
 				>
 			</File>
@@ -498,6 +506,10 @@
 			</File>
 			<File
 				RelativePath=".\Source\D3D10System.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Source\libnsgif.h"
 				>
 			</File>
 			<File

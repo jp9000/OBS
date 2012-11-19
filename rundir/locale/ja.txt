@@ -1,4 +1,4 @@
-Add             "追加"
+﻿Add             "追加"
 Apply           "適用"
 Browse          "参照"
 BuildMP4Dialog  "MP4ファイルが作ります"
@@ -108,7 +108,7 @@ Settings.Audio.ForceMicMono         "マイクを強制的にモノラルにす�
 Settings.Audio.MicBoost             "マイク ボリュームを上がる(倍数):"
 Settings.Audio.MuteDesktopHotkey    "デスクトップをミュートするホットキー:"
 Settings.Audio.MuteMicHotkey        "マイクをミュートするホットキー:"
-Settings.Audio.PushToTalkHotkey     "プッシュトゥートーク(PTT)を使う:"
+Settings.Audio.PushToTalkHotkey     "プッシュツートークを使う:"
 
 Settings.Encoding.Audio "サウンド"
 Settings.Encoding.Video "動画"

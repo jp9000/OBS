@@ -673,11 +673,22 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 HWND hwndResolutionList = GetDlgItem(hwnd, IDC_RESOLUTION);
                 HWND hwndFPS            = GetDlgItem(hwnd, IDC_FPS);
                 HWND hwndFlip           = GetDlgItem(hwnd, IDC_FLIPIMAGE);
+                HWND hwndFlipHorizontal = GetDlgItem(hwnd, IDC_FLIPIMAGEH);
 
                 //------------------------------------------
 
-                bool bFlipVertical = configData->data->GetInt(TEXT("flipImage")) != 0;
+                bool bFlipVertical   = configData->data->GetInt(TEXT("flipImage")) != 0;
+                bool bFlipHorizontal = configData->data->GetInt(TEXT("flipImageHorizontal")) != 0;
+
                 SendMessage(hwndFlip, BM_SETCHECK, bFlipVertical ? BST_CHECKED : BST_UNCHECKED, 0);
+                SendMessage(hwndFlipHorizontal, BM_SETCHECK, bFlipHorizontal ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                //------------------------------------------
+
+                UINT opacity = configData->data->GetInt(TEXT("opacity"), 100);
+
+                SendMessage(GetDlgItem(hwnd, IDC_OPACITY), UDM_SETRANGE32, 0, 100);
+                SendMessage(GetDlgItem(hwnd, IDC_OPACITY), UDM_SETPOS32, 0, opacity);
 
                 //------------------------------------------
 
@@ -891,6 +902,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                     }
 
                 case IDC_FLIPIMAGE:
+                case IDC_FLIPIMAGEH:
                     if(HIWORD(wParam) == BN_CLICKED)
                     {
                         ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
@@ -900,11 +912,16 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                             HWND hwndFlip = (HWND)lParam;
                             BOOL bFlipImage = SendMessage(hwndFlip, BM_GETCHECK, 0, 0) == BST_CHECKED;
 
-                            source->SetInt(TEXT("flipImage"), bFlipImage);
+                            switch(LOWORD(wParam))
+                            {
+                                case IDC_FLIPIMAGE:  source->SetInt(TEXT("flipImage"), bFlipImage); break;
+                                case IDC_FLIPIMAGEH: source->SetInt(TEXT("flipImageHorizontal"), bFlipImage); break;
+                            }
                         }
                     }
                     break;
 
+                case IDC_OPACITY_EDIT:
                 case IDC_BASETHRESHOLD_EDIT:
                 case IDC_BLEND_EDIT:
                 case IDC_SPILLREDUCTION_EDIT:
@@ -920,6 +937,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                                 HWND hwndVal = NULL;
                                 switch(LOWORD(wParam))
                                 {
+                                    case IDC_OPACITY_EDIT:          hwndVal = GetDlgItem(hwnd, IDC_OPACITY); break;
                                     case IDC_BASETHRESHOLD_EDIT:    hwndVal = GetDlgItem(hwnd, IDC_BASETHRESHOLD); break;
                                     case IDC_BLEND_EDIT:            hwndVal = GetDlgItem(hwnd, IDC_BLEND); break;
                                     case IDC_SPILLREDUCTION_EDIT:   hwndVal = GetDlgItem(hwnd, IDC_SPILLREDUCTION); break;
@@ -928,6 +946,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                                 int val = (int)SendMessage(hwndVal, UDM_GETPOS32, 0, 0);
                                 switch(LOWORD(wParam))
                                 {
+                                    case IDC_OPACITY_EDIT:          source->SetInt(TEXT("opacity"), val); break;
                                     case IDC_BASETHRESHOLD_EDIT:    source->SetInt(TEXT("keySimilarity"), val); break;
                                     case IDC_BLEND_EDIT:            source->SetInt(TEXT("keyBlend"), val); break;
                                     case IDC_SPILLREDUCTION_EDIT:   source->SetInt(TEXT("keySpillReduction"), val); break;
@@ -1262,6 +1281,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         //------------------------------------------
 
                         BOOL bFlip = SendMessage(GetDlgItem(hwnd, IDC_FLIPIMAGE), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        BOOL bFlipHorizontal = SendMessage(GetDlgItem(hwnd, IDC_FLIPIMAGEH), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         BOOL bCustomResolution = SendMessage(GetDlgItem(hwnd, IDC_CUSTOMRESOLUTION), BM_GETCHECK, 0, 0) == BST_CHECKED;
 
                         configData->data->SetString(TEXT("device"), strDevice);
@@ -1270,6 +1290,15 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         configData->data->SetInt(TEXT("resolutionHeight"), resolution.cy);
                         configData->data->SetInt(TEXT("frameInterval"), UINT(frameInterval));
                         configData->data->SetInt(TEXT("flipImage"), bFlip);
+                        configData->data->SetInt(TEXT("flipImageHorizontal"), bFlipHorizontal);
+
+                        //------------------------------------------
+
+                        BOOL bUDMError;
+                        UINT opacity = (UINT)SendMessage(GetDlgItem(hwnd, IDC_BLEND), UDM_GETPOS32, 0, (LPARAM)&bUDMError);
+                        if(bUDMError) opacity = 100;
+
+                        configData->data->SetInt(TEXT("opacity"), opacity);
 
                         //------------------------------------------
 
@@ -1287,7 +1316,6 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         BOOL bUseChromaKey = SendMessage(GetDlgItem(hwnd, IDC_USECHROMAKEY), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         DWORD color = CCGetColor(GetDlgItem(hwnd, IDC_COLOR));
 
-                        BOOL bUDMError;
                         UINT keySimilarity = (UINT)SendMessage(GetDlgItem(hwnd, IDC_BASETHRESHOLD), UDM_GETPOS32, 0, (LPARAM)&bUDMError);
                         if(bUDMError) keySimilarity = 0;
 
@@ -1313,6 +1341,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         if(source)
                         {
                             source->SetInt(TEXT("flipImage"),           configData->data->GetInt(TEXT("flipImage"), 0));
+                            source->SetInt(TEXT("flipImageHorizontal"), configData->data->GetInt(TEXT("flipImageHorizontal"), 0));
+                            source->SetInt(TEXT("opacity"),             configData->data->GetInt(TEXT("opacity"), 100));
 
                             source->SetInt(TEXT("useChromaKey"),        configData->data->GetInt(TEXT("useChromaKey"), 0));
                             source->SetInt(TEXT("keyColor"),            configData->data->GetInt(TEXT("keyColor"), 0xFFFFFFFF));

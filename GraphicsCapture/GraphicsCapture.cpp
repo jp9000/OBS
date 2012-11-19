@@ -31,6 +31,16 @@ HANDLE textureMutexes[2] = {NULL, NULL};
 
 #define GRAPHICSCAPTURE_CLASSNAME TEXT("GraphicsCapture")
 
+inline  BOOL Is64BitWindows()
+{
+#if defined(_WIN64)
+    return TRUE;
+#elif defined(_WIN32)
+    BOOL f64 = FALSE;
+    return IsWow64Process(GetCurrentProcess(), &f64) && f64;
+#endif
+}
+
 void RefreshWindowList(HWND hwndCombobox, StringList &classList)
 {
     SendMessage(hwndCombobox, CB_RESETCONTENT, 0, 0);

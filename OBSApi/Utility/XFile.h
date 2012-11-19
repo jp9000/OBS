@@ -22,8 +22,9 @@
 
 #define XFILE_ERROR         0xFFFFFFFF
 
-#define XFILE_READ          0x80000000
-#define XFILE_WRITE         0x40000000
+#define XFILE_READ          0x1
+#define XFILE_WRITE         0x2
+#define XFILE_SHARED        0x4
 
 #define XFILE_CREATENEW     1
 #define XFILE_CREATEALWAYS  2

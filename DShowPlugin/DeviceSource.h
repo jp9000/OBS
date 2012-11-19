@@ -63,7 +63,7 @@ class DeviceSource : public ImageSource
     DeviceColorType colorType;
 
     String          strDevice;
-    bool            bFlipVertical;
+    bool            bFlipVertical, bFlipHorizontal;
     UINT64          frameInterval;
     UINT            renderCX, renderCY;
     BOOL            bUseCustomResolution;
@@ -80,6 +80,8 @@ class DeviceSource : public ImageSource
     bool            bCapturing, bFiltersLoaded;
     IMediaSample    *curSample;
     Shader          *colorConvertShader;
+
+    UINT            opacity;
 
     //---------------------------------
 

@@ -209,13 +209,13 @@ public:
             return false;
         }
 
-        /*if(!bFirstFrameProcessed && nalNum)
+        if(!bFirstFrameProcessed && nalNum)
         {
             delayTime = -picOut.i_dts;
             bFirstFrameProcessed = true;
-        }*/
+        }
 
-        int timeOffset = int(INT64(picOut.i_pts/*+delayTime*/)-INT64(outputTimestamp));
+        int timeOffset = int(INT64(picOut.i_pts+delayTime)-INT64(outputTimestamp));
         //Log(TEXT("dts: %d, pts: %d, timestamp: %d, offset: %d"), picOut.i_dts, picOut.i_pts, outputTimestamp, timeOffset);
 
         timeOffset = htonl(timeOffset);

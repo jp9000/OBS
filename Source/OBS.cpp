@@ -56,6 +56,7 @@ ImageSource* STDCALL CreateGlobalSource(XElement *data);
 
 //NetworkStream* CreateRTMPServer();
 NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry);
+NetworkStream* CreateDelayedPublisher(DWORD delayTime);
 NetworkStream* CreateBandwidthAnalyzer();
 
 void StartBlankSoundPlayback();
@@ -235,12 +236,13 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
 
     SendMessage(hwndTemp, WM_SIZE, SIZE_RESTORED, 0);
 
-    int parts[4];
-    parts[3] = -1;
-    parts[2] = clientWidth-100;
-    parts[1] = parts[2]-60;
-    parts[0] = parts[1]-150;
-    SendMessage(hwndTemp, SB_SETPARTS, 4, (LPARAM)parts);
+    int parts[5];
+    parts[4] = -1;
+    parts[3] = clientWidth-100;
+    parts[2] = parts[3]-60;
+    parts[1] = parts[2]-150;
+    parts[0] = parts[1]-80;
+    SendMessage(hwndTemp, SB_SETPARTS, 5, (LPARAM)parts);
 
     int resetXPos = xStart+listControlWidth*2;
 
@@ -1105,6 +1107,7 @@ void OBS::Start()
     //-------------------------------------------------------------
 
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
+    DWORD delayTime = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("Delay"));
 
     bool bCanRetry = false;
     String strError;
@@ -1115,7 +1118,7 @@ void OBS::Start()
     {
         switch(networkMode)
         {
-            case 0: network = CreateRTMPPublisher(strError, bCanRetry); break;
+            case 0: network = (delayTime > 0) ? CreateDelayedPublisher(delayTime) : CreateRTMPPublisher(strError, bCanRetry); break;
             case 1: network = CreateNullNetwork(); break;
         }
     }
@@ -1413,6 +1416,7 @@ void OBS::ClearStatusBar()
     PostMessage(hwndStatusBar, SB_SETTEXT, 1, NULL);
     PostMessage(hwndStatusBar, SB_SETTEXT, 2, NULL);
     PostMessage(hwndStatusBar, SB_SETTEXT, 3, NULL);
+    PostMessage(hwndStatusBar, SB_SETTEXT, 4, NULL);
 }
 
 void OBS::SetStatusBarData()
@@ -1424,6 +1428,7 @@ void OBS::SetStatusBarData()
     SendMessage(hwndStatusBar, SB_SETTEXT, 1 | SBT_OWNERDRAW, NULL);
     SendMessage(hwndStatusBar, SB_SETTEXT, 2 | SBT_OWNERDRAW, NULL);
     SendMessage(hwndStatusBar, SB_SETTEXT, 3 | SBT_OWNERDRAW, NULL);
+    SendMessage(hwndStatusBar, SB_SETTEXT, 4 | SBT_OWNERDRAW, NULL);
 
     SendMessage(hwndStatusBar, WM_SETREDRAW, 1, 0);
     InvalidateRect(hwndStatusBar, NULL, FALSE);
@@ -1456,7 +1461,7 @@ void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
 
     //--------------------------------
 
-    if(dis.itemID == 3)
+    if(dis.itemID == 4)
     {
         DWORD green = 0xFF, red = 0xFF;
 
@@ -1504,8 +1509,20 @@ void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
         switch(dis.itemID)
         {
             case 0: strOutString << App->GetMostImportantInfo(); break;
-            case 1: strOutString << Str("MainWindow.DroppedFrames") << TEXT(" ") << IntString(App->curFramesDropped); break;
-            case 2: strOutString << TEXT("FPS: ") << IntString(App->captureFPS); break;
+            case 1:
+                {
+                    DWORD streamTimeSecondsTotal = App->totalStreamTime/1000;
+                    DWORD streamTimeMinutesTotal = streamTimeSecondsTotal/60;
+                    DWORD streamTimeSeconds = streamTimeSecondsTotal%60;
+
+                    DWORD streamTimeHours = streamTimeMinutesTotal/60;
+                    DWORD streamTimeMinutes = streamTimeMinutesTotal%60;
+
+                    strOutString = FormattedString(TEXT("%u:%02u:%02u"), streamTimeHours, streamTimeMinutes, streamTimeSeconds);
+                }
+                break;
+            case 2: strOutString << Str("MainWindow.DroppedFrames") << TEXT(" ") << IntString(App->curFramesDropped); break;
+            case 3: strOutString << TEXT("FPS: ") << IntString(App->captureFPS); break;
         }
 
         if(strOutString.IsValid())
@@ -1561,6 +1578,10 @@ void OBS::Stop()
 
     //-------------------------------------------------------------
 
+    StopBlankSoundPlayback();
+
+    //-------------------------------------------------------------
+
     delete network;
 
     delete micAudio;
@@ -1577,10 +1598,6 @@ void OBS::Stop()
     fileStream = NULL;
     audioEncoder = NULL;
     videoEncoder = NULL;
-
-    //-------------------------------------------------------------
-
-    StopBlankSoundPlayback();
 
     //-------------------------------------------------------------
 
@@ -1723,18 +1740,6 @@ inline void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
 
 DWORD STDCALL OBS::MainCaptureThread(LPVOID lpUnused)
 {
-    /*SYSTEM_INFO si;
-    GetSystemInfo(&si);
-
-    DWORD lastCoreIDMask = 1<<(si.dwNumberOfProcessors-1);
-
-    DWORD_PTR retVal = SetThreadAffinityMask(GetCurrentThread(), lastCoreIDMask);
-    if(retVal == 0)
-    {
-        int lastError = GetLastError();
-        nop();
-    }*/
-
     App->MainCaptureLoop();
     return 0;
 }
@@ -1790,6 +1795,9 @@ void OBS::MainCaptureLoop()
     int numTotalFrames = 0;
 
     LPVOID nullBuff = NULL;
+
+    DWORD streamTimeStart = OSGetTime();
+    totalStreamTime = 0;
 
     x264_picture_t outPics[2];
     x264_picture_init(&outPics[0]);
@@ -1877,6 +1885,8 @@ void OBS::MainCaptureLoop()
     while(bRunning)
     {
         DWORD renderStartTime = OSGetTime();
+
+        totalStreamTime = renderStartTime-streamTimeStart;
 
         DWORD frameTimeAdjust = frameTime;
         fpsTimeAdjust += fpsTimeNumerator;
@@ -2222,21 +2232,6 @@ void OBS::MainCaptureLoop()
 
                         if(curPTSVal != 0)
                         {
-                            /*int toleranceVal = int(lastPTSVal+frameTime);
-                            int toleranceOffset = (int(curPTSVal)-toleranceVal);
-                            int halfFrameTime = int(frameTime/2);
-
-                            if(toleranceOffset > halfFrameTime)
-                                curPTSVal = DWORD(toleranceVal+(toleranceOffset-halfFrameTime));
-                            else if(toleranceOffset < -halfFrameTime)
-                                curPTSVal = DWORD(toleranceVal+(toleranceOffset+halfFrameTime));
-                            else
-                                curPTSVal = DWORD(toleranceVal);*/
-
-                            //this turned out to be much better than the previous way I was doing it.
-                            //if the FPS is set to about the same as the capture FPS, this works pretty much flawlessly.
-                            //100% calculated timestamps that are almost fully accurate with no CPU timers involved,
-                            //while still fully allowing any potential unexpected frame variability.
                             curPTSVal = lastPTSVal+frameTimeAdjust;
                             if(curPTSVal < lastUnmodifiedPTSVal)
                                 curPTSVal = lastUnmodifiedPTSVal;

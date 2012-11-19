@@ -171,7 +171,7 @@ void STDCALL OpenLogFile()
 
     if(!bLogStarted)
     {
-        LogFile.Open(lpLogFileName, XFILE_WRITE, XFILE_CREATEALWAYS);
+        LogFile.Open(lpLogFileName, XFILE_READ|XFILE_WRITE|XFILE_SHARED, XFILE_CREATEALWAYS);
         LogFile.Write("\xEF\xBB\xBF", 3);
         bLogStarted = TRUE;
     }

@@ -61,8 +61,8 @@ extern ConfigFile   *AppConfig;
 extern OBS          *App;
 extern TCHAR        lpAppDataPath[MAX_PATH];
 
-#define OBS_VERSION             0x000440
-#define OBS_VERSION_STRING_ANSI "Open Broadcaster Software v0.44a [experimental]"
+#define OBS_VERSION             0x000445
+#define OBS_VERSION_STRING_ANSI "Open Broadcaster Software v0.445a [pre-release 2]"
 #define OBS_VERSION_STRING      TEXT(OBS_VERSION_STRING_ANSI)
 
 #define OBS_WINDOW_CLASS      TEXT("OBSWindowClass")

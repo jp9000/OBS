@@ -89,29 +89,27 @@ class TextOutputSource : public ImageSource
                 strDirectory = GetPathDirectory(strDirectory);
                 strDirectory.FindReplace(TEXT("/"), TEXT("\\"));
                 strDirectory << TEXT("\\");
+            }
 
-                hDirectory = CreateFile(strDirectory, FILE_LIST_DIRECTORY, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OVERLAPPED, NULL);
-                if(hDirectory != INVALID_HANDLE_VALUE)
-                {
-                    DWORD test;
-                    zero(&directoryChange, sizeof(directoryChange));
+            hDirectory = CreateFile(strDirectory, FILE_LIST_DIRECTORY, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OVERLAPPED, NULL);
+            if(hDirectory != INVALID_HANDLE_VALUE)
+            {
+                DWORD test;
+                zero(&directoryChange, sizeof(directoryChange));
 
-                    if(ReadDirectoryChangesW(hDirectory, changeBuffer, 2048, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE, &test, &directoryChange, NULL))
-                        bMonitoringFileChanges = true;
-                    else
-                    {
-                        int err = GetLastError();
-                        CloseHandle(hDirectory);
-                    }
-                }
+                if(ReadDirectoryChangesW(hDirectory, changeBuffer, 2048, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE, &test, &directoryChange, NULL))
+                    bMonitoringFileChanges = true;
                 else
                 {
                     int err = GetLastError();
-                    nop();
+                    CloseHandle(hDirectory);
                 }
             }
             else
-                strCurrentText = TEXT("[!]");
+            {
+                int err = GetLastError();
+                nop();
+            }
         }
 
         HFONT hFont = NULL;
@@ -682,15 +680,27 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
                 //-----------------------------------------
 
-                SendMessage(GetDlgItem(hwnd, IDC_USETEXTEXTENTS), BM_SETCHECK, data->GetInt(TEXT("useTextExtents"), 0) ? BST_CHECKED : BST_UNCHECKED, 0);
+                bool bChecked = data->GetInt(TEXT("useTextExtents"), 0) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_USETEXTEXTENTS), BM_SETCHECK, bChecked ? BST_CHECKED : BST_UNCHECKED, 0);
                 ConfigureTextProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_USETEXTEXTENTS, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDC_USETEXTEXTENTS));
+
+                EnableWindow(GetDlgItem(hwnd, IDC_EXTENTWIDTH_EDIT), bChecked);
+                EnableWindow(GetDlgItem(hwnd, IDC_EXTENTHEIGHT_EDIT), bChecked);
+                EnableWindow(GetDlgItem(hwnd, IDC_EXTENTWIDTH), bChecked);
+                EnableWindow(GetDlgItem(hwnd, IDC_EXTENTHEIGHT), bChecked);
+                EnableWindow(GetDlgItem(hwnd, IDC_WRAP), bChecked);
+                EnableWindow(GetDlgItem(hwnd, IDC_ALIGN), bChecked);
 
                 SendMessage(GetDlgItem(hwnd, IDC_EXTENTWIDTH),  UDM_SETRANGE32, 32, 2048);
                 SendMessage(GetDlgItem(hwnd, IDC_EXTENTHEIGHT), UDM_SETRANGE32, 32, 2048);
                 SendMessage(GetDlgItem(hwnd, IDC_EXTENTWIDTH),  UDM_SETPOS32, 0, data->GetInt(TEXT("extentWidth"),  100));
                 SendMessage(GetDlgItem(hwnd, IDC_EXTENTHEIGHT), UDM_SETPOS32, 0, data->GetInt(TEXT("extentHeight"), 100));
 
-                SendMessage(GetDlgItem(hwnd, IDC_WRAP), BM_SETCHECK, data->GetInt(TEXT("wrap"), 0) ? BST_CHECKED : BST_UNCHECKED, 0);
+                bool bWrap = data->GetInt(TEXT("wrap"), 0) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_WRAP), BM_SETCHECK, bWrap ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                if(bChecked)
+                    EnableWindow(GetDlgItem(hwnd, IDC_ALIGN), bWrap);
 
                 HWND hwndAlign = GetDlgItem(hwnd, IDC_ALIGN);
                 SendMessage(hwndAlign, CB_ADDSTRING, 0, (LPARAM)Str("Sources.TextSource.Left"));
@@ -817,6 +827,9 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                             }
                         }
 
+                        if(LOWORD(wParam) == IDC_WRAP)
+                            EnableWindow(GetDlgItem(hwnd, IDC_ALIGN), bChecked);
+
                         if(LOWORD(wParam) == IDC_USETEXTEXTENTS)
                         {
                             EnableWindow(GetDlgItem(hwnd, IDC_EXTENTWIDTH_EDIT), bChecked);
@@ -824,7 +837,13 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                             EnableWindow(GetDlgItem(hwnd, IDC_EXTENTWIDTH), bChecked);
                             EnableWindow(GetDlgItem(hwnd, IDC_EXTENTHEIGHT), bChecked);
                             EnableWindow(GetDlgItem(hwnd, IDC_WRAP), bChecked);
+
+                            bool bWrap = SendMessage(GetDlgItem(hwnd, IDC_WRAP), BM_GETCHECK, 0, 0) == BST_CHECKED;
+
                             EnableWindow(GetDlgItem(hwnd, IDC_ALIGN), bChecked);
+
+                            if(bChecked)
+                                EnableWindow(GetDlgItem(hwnd, IDC_ALIGN), bWrap);
                         }
                     }
                     break;

@@ -589,14 +589,6 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
 
                 //--------------------------------------------
 
-                /*hwndTemp = GetDlgItem(hwnd, IDC_USERNAME);
-                LoadSettingEditString(hwndTemp, TEXT("Publish"), TEXT("Username"), NULL);
-                if(mode != 0) ShowWindow(hwndTemp, SW_HIDE);*/
-
-                hwndTemp = GetDlgItem(hwnd, IDC_CHANNELNAME);
-                LoadSettingEditString(hwndTemp, TEXT("Publish"), TEXT("Channel"), NULL);
-                if(mode != 0) ShowWindow(hwndTemp, SW_HIDE);
-
                 hwndTemp = GetDlgItem(hwnd, IDC_PLAYPATH);
                 LoadSettingEditString(hwndTemp, TEXT("Publish"), TEXT("PlayPath"), NULL);
                 if(mode != 0) ShowWindow(hwndTemp, SW_HIDE);
@@ -604,12 +596,12 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                 if(serviceID == 0) //custom
                 {
                     ShowWindow(GetDlgItem(hwnd, IDC_SERVERLIST), SW_HIDE);
-                    hwndTemp = GetDlgItem(hwnd, IDC_SERVEREDIT);
-                    LoadSettingEditString(hwndTemp, TEXT("Publish"), TEXT("Server"), NULL);
+                    hwndTemp = GetDlgItem(hwnd, IDC_URL);
+                    LoadSettingEditString(hwndTemp, TEXT("Publish"), TEXT("URL"), NULL);
                 }
                 else
                 {
-                    ShowWindow(GetDlgItem(hwnd, IDC_SERVEREDIT), SW_HIDE);
+                    ShowWindow(GetDlgItem(hwnd, IDC_URL), SW_HIDE);
                     hwndTemp = GetDlgItem(hwnd, IDC_SERVERLIST);
 
                     XElement *services = serverData.GetElement(TEXT("services"));
@@ -628,19 +620,10 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                                     SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)server->GetName());
                                 }
                             }
-
-                            CTSTR lpDefaultChannel = service->GetString(TEXT("useChannel"));
-                            if(lpDefaultChannel)
-                            {
-                                SendMessage(GetDlgItem(hwnd, IDC_CHANNELNAME), WM_SETTEXT, 0, (LPARAM)lpDefaultChannel);
-                                EnableWindow(GetDlgItem(hwnd, IDC_CHANNELNAME), FALSE);
-                            }
-                            else
-                                EnableWindow(GetDlgItem(hwnd, IDC_CHANNELNAME), TRUE);
                         }
                     }
 
-                    LoadSettingComboString(hwndTemp, TEXT("Publish"), TEXT("Server"), NULL);
+                    LoadSettingComboString(hwndTemp, TEXT("Publish"), TEXT("URL"), NULL);
                 }
 
                 if(mode != 0) ShowWindow(hwndTemp, SW_HIDE);
@@ -669,15 +652,26 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
 
                 //--------------------------------------------
 
+                hwndTemp = GetDlgItem(hwnd, IDC_DELAY);
+
+                int delayTime = AppConfig->GetInt(TEXT("Publish"), TEXT("Delay"), 0);
+
+                SendMessage(hwndTemp, UDM_SETRANGE32, 0, 900);
+                SendMessage(hwndTemp, UDM_SETPOS32, 0, delayTime);
+
+                //--------------------------------------------
+
                 if(mode != 0)
                 {
                     ShowWindow(GetDlgItem(hwnd, IDC_SERVICE_STATIC), SW_HIDE);
-                    //ShowWindow(GetDlgItem(hwnd, IDC_USERNAME_STATIC), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_PLAYPATH_STATIC), SW_HIDE);
-                    ShowWindow(GetDlgItem(hwnd, IDC_CHANNELNAME_STATIC), SW_HIDE);
+                    ShowWindow(GetDlgItem(hwnd, IDC_URL_STATIC), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_SERVER_STATIC), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT_TIMEOUT_STATIC), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT_TIMEOUT_EDIT), SW_HIDE);
+                    ShowWindow(GetDlgItem(hwnd, IDC_DELAY_STATIC), SW_HIDE);
+                    ShowWindow(GetDlgItem(hwnd, IDC_DELAY_EDIT), SW_HIDE);
+                    ShowWindow(GetDlgItem(hwnd, IDC_DELAY), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK_STATIC), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_SAVETOFILE), SW_HIDE);
@@ -763,20 +757,18 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                             int swShowControls = (mode == 0) ? SW_SHOW : SW_HIDE;
 
                             ShowWindow(GetDlgItem(hwnd, IDC_SERVICE), swShowControls);
-                            //ShowWindow(GetDlgItem(hwnd, IDC_USERNAME), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_PLAYPATH), swShowControls);
-                            ShowWindow(GetDlgItem(hwnd, IDC_CHANNELNAME), swShowControls);
 
                             int serviceID = (int)SendMessage(GetDlgItem(hwnd, IDC_SERVICE), CB_GETCURSEL, 0, 0);
                             if(serviceID == 0)
                             {
                                 ShowWindow(GetDlgItem(hwnd, IDC_SERVERLIST), SW_HIDE);
-                                ShowWindow(GetDlgItem(hwnd, IDC_SERVEREDIT), swShowControls);
+                                ShowWindow(GetDlgItem(hwnd, IDC_URL), swShowControls);
                             }
                             else
                             {
                                 ShowWindow(GetDlgItem(hwnd, IDC_SERVERLIST), swShowControls);
-                                ShowWindow(GetDlgItem(hwnd, IDC_SERVEREDIT), SW_HIDE);
+                                ShowWindow(GetDlgItem(hwnd, IDC_URL), SW_HIDE);
                             }
 
                             BOOL bSaveToFile = SendMessage(GetDlgItem(hwnd, IDC_SAVETOFILE), BM_GETCHECK, 0, 0) != BST_UNCHECKED;
@@ -811,9 +803,8 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                             data->mode = mode;
 
                             ShowWindow(GetDlgItem(hwnd, IDC_SERVICE_STATIC), swShowControls);
-                            //ShowWindow(GetDlgItem(hwnd, IDC_USERNAME_STATIC), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_PLAYPATH_STATIC), swShowControls);
-                            ShowWindow(GetDlgItem(hwnd, IDC_CHANNELNAME_STATIC), swShowControls);
+                            ShowWindow(GetDlgItem(hwnd, IDC_URL_STATIC), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_SERVER_STATIC), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK_STATIC), swShowControls);
@@ -821,6 +812,9 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                             ShowWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT_TIMEOUT), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT_TIMEOUT_STATIC), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT_TIMEOUT_EDIT), swShowControls);
+                            ShowWindow(GetDlgItem(hwnd, IDC_DELAY_STATIC), swShowControls);
+                            ShowWindow(GetDlgItem(hwnd, IDC_DELAY_EDIT), swShowControls);
+                            ShowWindow(GetDlgItem(hwnd, IDC_DELAY), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_SAVETOFILE), swShowControls);
 
                             bDataChanged = true;
@@ -835,16 +829,14 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                             if(serviceID == 0)
                             {
                                 ShowWindow(GetDlgItem(hwnd, IDC_SERVERLIST), SW_HIDE);
-                                ShowWindow(GetDlgItem(hwnd, IDC_SERVEREDIT), SW_SHOW);
+                                ShowWindow(GetDlgItem(hwnd, IDC_URL), SW_SHOW);
 
-                                SetWindowText(GetDlgItem(hwnd, IDC_CHANNELNAME), NULL);
-                                SetWindowText(GetDlgItem(hwnd, IDC_SERVEREDIT), NULL);
+                                SetWindowText(GetDlgItem(hwnd, IDC_URL), NULL);
                                 SetWindowText(GetDlgItem(hwnd, IDC_DASHBOARDLINK), NULL);
-                                EnableWindow(GetDlgItem(hwnd, IDC_CHANNELNAME), TRUE);
                             }
                             else
                             {
-                                ShowWindow(GetDlgItem(hwnd, IDC_SERVEREDIT), SW_HIDE);
+                                ShowWindow(GetDlgItem(hwnd, IDC_URL), SW_HIDE);
 
                                 hwndTemp = GetDlgItem(hwnd, IDC_SERVERLIST);
                                 ShowWindow(hwndTemp, SW_SHOW);
@@ -869,15 +861,6 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                                                     SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)server->GetName());
                                                 }
                                             }
-
-                                            CTSTR lpDefaultChannel = service->GetString(TEXT("useChannel"));
-                                            if(lpDefaultChannel)
-                                            {
-                                                SendMessage(GetDlgItem(hwnd, IDC_CHANNELNAME), WM_SETTEXT, 0, (LPARAM)lpDefaultChannel);
-                                                EnableWindow(GetDlgItem(hwnd, IDC_CHANNELNAME), FALSE);
-                                            }
-                                            else
-                                                EnableWindow(GetDlgItem(hwnd, IDC_CHANNELNAME), TRUE);
                                         }
                                     }
                                 }
@@ -886,7 +869,6 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                             }
 
                             SetWindowText(GetDlgItem(hwnd, IDC_PLAYPATH), NULL);
-                            //SetWindowText(GetDlgItem(hwnd, IDC_USERNAME), NULL);
 
                             bDataChanged = true;
                         }
@@ -907,6 +889,11 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                     case IDC_AUTORECONNECT_TIMEOUT_EDIT:
                         if(HIWORD(wParam) == EN_CHANGE)
                             App->SetChangedSettings(true);
+                        break;
+
+                    case IDC_DELAY_EDIT:
+                        if(HIWORD(wParam) == EN_CHANGE)
+                            bDataChanged = true;
                         break;
 
                     case IDC_SAVETOFILE:
@@ -982,10 +969,8 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                             App->SetChangedSettings(true);
                         break;
 
-                        //case IDC_USERNAME:
                     case IDC_PLAYPATH:
-                    case IDC_CHANNELNAME:
-                    case IDC_SERVEREDIT:
+                    case IDC_URL:
                     case IDC_SAVEPATH:
                         if(HIWORD(wParam) == EN_CHANGE)
                             bDataChanged = true;
@@ -1197,14 +1182,27 @@ INT_PTR CALLBACK OBS::VideoSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
 
                 //--------------------------------------------
 
+                BOOL bUnlockFPS = AppConfig->GetInt(TEXT("Video"), TEXT("UnlockFPS"));
+                int topFPS = bUnlockFPS ? 120 : 60;
+
                 hwndTemp = GetDlgItem(hwnd, IDC_FPS);
-                SendMessage(hwndTemp, UDM_SETRANGE32, 10, 60);
+                SendMessage(hwndTemp, UDM_SETRANGE32, 10, topFPS);
 
                 int fps = AppConfig->GetInt(TEXT("Video"), TEXT("FPS"), 30);
-                if(!AppConfig->HasKey(TEXT("Video"), TEXT("FPS")) || fps < 10 || fps > 60)
+                if(!AppConfig->HasKey(TEXT("Video"), TEXT("FPS")))
                 {
                     AppConfig->SetInt(TEXT("Video"), TEXT("FPS"), 30);
                     fps = 30;
+                }
+                else if(fps < 10)
+                {
+                    AppConfig->SetInt(TEXT("Video"), TEXT("FPS"), 10);
+                    fps = 10;
+                }
+                else if(fps > topFPS)
+                {
+                    AppConfig->SetInt(TEXT("Video"), TEXT("FPS"), topFPS);
+                    fps = topFPS;
                 }
 
                 SendMessage(hwndTemp, UDM_SETPOS32, 0, fps);
@@ -1559,6 +1557,11 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 //------------------------------------
 
+                bool bUnlockFPS = AppConfig->GetInt(TEXT("Video"), TEXT("UnlockFPS")) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_UNLOCKHIGHFPS), BM_SETCHECK, bUnlockFPS ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                //------------------------------------
+
                 /*bool bDisableD3DCompat = AppConfig->GetInt(TEXT("Video"), TEXT("DisableD3DCompatibilityMode")) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_DISABLED3DCOMPATIBILITY), BM_SETCHECK, bDisableD3DCompat ? BST_CHECKED : BST_UNCHECKED, 0);
 
@@ -1587,7 +1590,7 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("2920"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("1460"));
 
-                LoadSettingEditString(hwndTemp, TEXT("Publish"), TEXT("SendBufferSize"), TEXT("1460"));
+                LoadSettingEditString(hwndTemp, TEXT("Publish"), TEXT("SendBufferSize"), TEXT("8760"));
 
                 ti.lpszText = (LPWSTR)Str("Settings.Advanced.UseSendBufferTooltip");
                 ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_USESENDBUFFER);
@@ -1655,6 +1658,7 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                 case IDC_USEHIGHQUALITYRESAMPLING:
                 case IDC_USEMULTITHREADEDOPTIMIZATIONS:
                 case IDC_USESYNCFIX:
+                case IDC_UNLOCKHIGHFPS:
                     if(HIWORD(wParam) == BN_CLICKED)
                     {
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
@@ -1711,24 +1715,18 @@ void OBS::ApplySettings()
                 if(serviceID != CB_ERR)
                     AppConfig->SetInt(TEXT("Publish"), TEXT("Service"), serviceID);
 
-                /*String strTemp = GetEditText(GetDlgItem(hwndCurrentSettings, IDC_USERNAME));
-                AppConfig->SetString(TEXT("Publish"), TEXT("Username"), strTemp);*/
-
-                String strTemp = GetEditText(GetDlgItem(hwndCurrentSettings, IDC_CHANNELNAME));
-                AppConfig->SetString(TEXT("Publish"), TEXT("Channel"), strTemp);
-
-                strTemp = GetEditText(GetDlgItem(hwndCurrentSettings, IDC_PLAYPATH));
+                String strTemp = GetEditText(GetDlgItem(hwndCurrentSettings, IDC_PLAYPATH));
                 AppConfig->SetString(TEXT("Publish"), TEXT("PlayPath"), strTemp);
 
                 if(serviceID == 0)
                 {
-                    strTemp = GetEditText(GetDlgItem(hwndCurrentSettings, IDC_SERVEREDIT));
-                    AppConfig->SetString(TEXT("Publish"), TEXT("Server"), strTemp);
+                    strTemp = GetEditText(GetDlgItem(hwndCurrentSettings, IDC_URL));
+                    AppConfig->SetString(TEXT("Publish"), TEXT("URL"), strTemp);
                 }
                 else
                 {
                     strTemp = GetCBText(GetDlgItem(hwndCurrentSettings, IDC_SERVERLIST));
-                    AppConfig->SetString(TEXT("Publish"), TEXT("Server"), strTemp);
+                    AppConfig->SetString(TEXT("Publish"), TEXT("URL"), strTemp);
                 }
 
                 //------------------------------------------
@@ -1742,6 +1740,15 @@ void OBS::ApplySettings()
 
                 AppConfig->SetInt(TEXT("Publish"), TEXT("AutoReconnect"), App->bAutoReconnect);
                 AppConfig->SetInt(TEXT("Publish"), TEXT("AutoReconnectTimeout"), App->reconnectTimeout);
+
+                //------------------------------------------
+
+                bError = FALSE;
+                int delayTime = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_DELAY), UDM_GETPOS32, 0, (LPARAM)&bError);
+                if(bError)
+                    delayTime = 0;
+
+                AppConfig->SetInt(TEXT("Publish"), TEXT("Delay"), delayTime);
 
                 //------------------------------------------
 
@@ -1925,6 +1932,11 @@ void OBS::ApplySettings()
 
                 BOOL bUseVideoSyncFix = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USESYNCFIX), BM_GETCHECK, 0, 0) == BST_CHECKED;
                 AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("UseSyncFix"),        bUseVideoSyncFix);
+
+                //------------------------------------
+
+                BOOL bUnlockFPS = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_UNLOCKHIGHFPS), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                AppConfig->SetInt   (TEXT("Video"), TEXT("UnlockFPS"), bUnlockFPS);
 
                 //------------------------------------
 

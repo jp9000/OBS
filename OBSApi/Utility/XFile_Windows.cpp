@@ -50,8 +50,24 @@ BOOL XFile::Open(CTSTR lpFile, DWORD dwAccess, DWORD dwCreationDisposition)
 
     qwPos = 0;
 
+    DWORD dwFileAccess = 0;
+    DWORD dwShareAccess = 0;
+
+    if(dwAccess & XFILE_READ)
+    {
+        dwFileAccess |= GENERIC_READ;
+        if(dwAccess & XFILE_SHARED)
+            dwShareAccess |= FILE_SHARE_READ;
+    }
+    if(dwAccess & XFILE_WRITE)
+    {
+        dwFileAccess |= GENERIC_WRITE;
+        if(dwAccess & XFILE_SHARED)
+            dwShareAccess |= FILE_SHARE_WRITE;
+    }
+
     assert(lpFile);
-    if((hFile = CreateFile(lpFile, dwAccess, 0, NULL, dwCreationDisposition, 0, NULL)) == INVALID_HANDLE_VALUE)
+    if((hFile = CreateFile(lpFile, dwFileAccess, dwShareAccess, NULL, dwCreationDisposition, 0, NULL)) == INVALID_HANDLE_VALUE)
         return 0;
     return 1;
 

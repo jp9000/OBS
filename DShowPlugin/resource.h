@@ -31,7 +31,11 @@
 #define IDC_SPILLREDUCTION_EDIT         1023
 #define IDC_GAMMA                       1024
 #define IDC_SPILLREDUCTION              1024
+#define IDC_FLIPIMAGEH                  1025
 #define IDC_PREFERREDOUTPUT             1026
+#define IDC_OPACITY_EDIT                1027
+#define IDC_BASETHRESHOLD2              1028
+#define IDC_OPACITY                     1028
 
 // Next default values for new objects
 // 

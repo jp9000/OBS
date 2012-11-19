@@ -158,6 +158,8 @@ public:
 
     inline void GetItemsOnPoint(const Vect2 &pos, List<SceneItem*> &items) const
     {
+        items.Clear();
+
         for(UINT i=0; i<sceneItems.Num(); i++)
         {
             SceneItem *item = sceneItems[i];

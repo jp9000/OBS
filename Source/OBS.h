@@ -446,6 +446,8 @@ class OBS
     DWORD curFramesDropped;
     double curStrain;
 
+    DWORD totalStreamTime;
+
     bool        bUseSyncFix;
     List<UINT>  bufferedTimes;
 

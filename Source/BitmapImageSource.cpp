@@ -18,6 +18,25 @@
 
 
 #include "Main.h"
+#include "libnsgif.h"
+
+
+void *def_bitmap_create(int width, int height)          {return Allocate(width * height * 4);}
+void def_bitmap_set_opaque(void *bitmap, BOOL opaque)   {}
+BOOL def_bitmap_test_opaque(void *bitmap)               {return false;}
+unsigned char *def_bitmap_get_buffer(void *bitmap)      {return (unsigned char*)bitmap;}
+void def_bitmap_destroy(void *bitmap)                   {Free(bitmap);}
+void def_bitmap_modified(void *bitmap)                  {return;}
+
+gif_bitmap_callback_vt bitmap_callbacks =
+{
+    def_bitmap_create,
+    def_bitmap_destroy,
+    def_bitmap_get_buffer,
+    def_bitmap_set_opaque,
+    def_bitmap_test_opaque,
+    def_bitmap_modified
+};
 
 
 class BitmapImageSource : public ImageSource
@@ -29,6 +48,13 @@ class BitmapImageSource : public ImageSource
 
     DWORD opacity;
     DWORD color;
+
+    bool bIsAnimatedGif;
+    gif_animation gif;
+    LPBYTE lpGifData;
+    List<float> animationTimes;
+    UINT curFrame, curLoop;
+    float curTime;
 
     void CreateErrorTexture()
     {
@@ -44,22 +70,63 @@ class BitmapImageSource : public ImageSource
 public:
     BitmapImageSource(XElement *data)
     {
-        traceIn(BitmapImageSource::BitmapImageSource);
+        //traceIn(BitmapImageSource::BitmapImageSource);
 
         this->data = data;
         UpdateSettings();
 
-        traceOut;
+        //traceOut;
     }
 
     ~BitmapImageSource()
     {
+        if(bIsAnimatedGif)
+        {
+            gif_finalise(&gif);
+            Free(lpGifData);
+            lpGifData = NULL;
+        }
+            
         delete texture;
+    }
+
+    void Tick(float fSeconds)
+    {
+        if(bIsAnimatedGif)
+        {
+            UINT totalLoops = (UINT)gif.loop_count;
+            if(totalLoops >= 0xFFFF)
+                totalLoops = 0;
+
+            if(!totalLoops || curLoop < totalLoops)
+            {
+                UINT newFrame = curFrame;
+
+                curTime += fSeconds;
+                while(curTime > animationTimes[curFrame])
+                {
+                    curTime -= animationTimes[newFrame];
+                    if(++newFrame == animationTimes.Num())
+                    {
+                        if(!totalLoops || ++curLoop < totalLoops)
+                            newFrame = 0;
+                    }
+                }
+
+                if(newFrame != curFrame)
+                {
+                    gif_decode_frame(&gif, curFrame);
+                    texture->SetImage(gif.frame_image, GS_IMAGEFORMAT_RGBA, gif.width*4);
+
+                    curFrame = newFrame;
+                }
+            }
+        }
     }
 
     void Render(const Vect2 &pos, const Vect2 &size)
     {
-        traceIn(BitmapImageSource::Render);
+        //traceIn(BitmapImageSource::Render);
 
         if(texture)
         {
@@ -68,12 +135,22 @@ public:
             DrawSprite(texture, outputColor, pos.x, pos.y, pos.x+size.x, pos.y+size.y);
         }
 
-        traceOut;
+        //traceOut;
     }
 
     void UpdateSettings()
     {
-        traceIn(BitmapImageSource::UpdateSettings);
+        //traceIn(BitmapImageSource::UpdateSettings);
+
+        if(bIsAnimatedGif)
+        {
+            bIsAnimatedGif = false;
+            gif_finalise(&gif);
+            Free(lpGifData);
+            lpGifData = NULL;
+        }
+
+        animationTimes.Clear();
 
         delete texture;
         texture = NULL;
@@ -88,16 +165,76 @@ public:
 
         //------------------------------------
 
-        texture = GS->CreateTextureFromFile(lpBitmap, TRUE);
-        if(!texture)
+        if(GetPathExtension(lpBitmap).CompareI(TEXT("gif")))
         {
-            AppWarning(TEXT("BitmapImageSource::UpdateSettings: could not create texture '%s'"), lpBitmap);
-            CreateErrorTexture();
-            return;
+            bool bFail = false;
+
+            gif_create(&gif, &bitmap_callbacks);
+
+            XFile gifFile;
+            if(!gifFile.Open(lpBitmap, XFILE_READ, XFILE_OPENEXISTING))
+            {
+                AppWarning(TEXT("BitmapImageSource::UpdateSettings: could not open gif file '%s'"), lpBitmap);
+                CreateErrorTexture();
+                return;
+            }
+
+            size_t fileSize = (size_t)gifFile.GetFileSize();
+            LPBYTE lpGifData = (LPBYTE)Allocate(fileSize);
+            gifFile.Read(lpGifData, fileSize);
+
+            gif_result result;
+            do
+            {
+                result = gif_initialise(&gif, fileSize, lpGifData);
+                if(result != GIF_OK && result != GIF_WORKING)
+                {
+                    bFail = true;
+                    break;
+                }
+            }while(result != GIF_OK);
+
+            if(gif.frame_count > 1)
+            {
+                if(result == GIF_OK || result == GIF_WORKING)
+                    bIsAnimatedGif = true;
+            }
+
+            if(bIsAnimatedGif)
+            {
+                gif_decode_frame(&gif, 0);
+                texture = CreateTexture(gif.width, gif.height, GS_RGBA, gif.frame_image, FALSE, FALSE);
+
+                for(UINT i=0; i<gif.frame_count; i++)
+                    animationTimes << float(gif.frames[i].frame_delay)*0.01f;
+
+                fullSize.x = float(gif.width);
+                fullSize.y = float(gif.height);
+
+                curTime = 0.0f;
+                curFrame = 0;
+            }
+            else
+            {
+                gif_finalise(&gif);
+                Free(lpGifData);
+                lpGifData = NULL;
+            }
         }
 
-        fullSize.x = float(texture->Width());
-        fullSize.y = float(texture->Height());
+        if(!bIsAnimatedGif)
+        {
+            texture = GS->CreateTextureFromFile(lpBitmap, TRUE);
+            if(!texture)
+            {
+                AppWarning(TEXT("BitmapImageSource::UpdateSettings: could not create texture '%s'"), lpBitmap);
+                CreateErrorTexture();
+                return;
+            }
+
+            fullSize.x = float(texture->Width());
+            fullSize.y = float(texture->Height());
+        }
 
         //------------------------------------
 
@@ -110,7 +247,7 @@ public:
 
         //------------------------------------
 
-        traceOut;
+        //traceOut;
     }
 
     Vect2 GetSize() const {return fullSize;}

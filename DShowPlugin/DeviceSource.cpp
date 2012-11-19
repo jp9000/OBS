@@ -154,6 +154,9 @@ bool DeviceSource::LoadFilters()
     strDevice = data->GetString(TEXT("device"));
 
     bFlipVertical = data->GetInt(TEXT("flipImage")) != 0;
+    bFlipHorizontal = data->GetInt(TEXT("flipImageHorizontal")) != 0;
+
+    opacity = data->GetInt(TEXT("opacity"), 100);
 
     //------------------------------------------------
 
@@ -764,10 +767,25 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
         if(colorType != DeviceOutputType_RGB)
             bFlip = !bFlip;
 
-        if(bFlip)
-            DrawSprite(texture, 0xFFFFFFFF, pos.x, pos.y, pos.x+size.x, pos.y+size.y);
+        float x, x2;
+        if(bFlipHorizontal)
+        {
+            x2 = pos.x;
+            x = x2+size.x;
+        }
         else
-            DrawSprite(texture, 0xFFFFFFFF, pos.x, pos.y+size.y, pos.x+size.x, pos.y);
+        {
+            x = pos.x;
+            x2 = x+size.x;
+        }
+
+        float fOpacity = float(opacity)*0.01f;
+        DWORD opacity255 = DWORD(fOpacity*255.0f);
+
+        if(bFlip)
+            DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y);
+        else
+            DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y+size.y, x2, pos.y);
 
         if(colorConvertShader)
             LoadPixelShader(oldShader);
@@ -836,6 +854,10 @@ void DeviceSource::SetInt(CTSTR lpName, int iVal)
         {
             bFlipVertical = iVal != 0;
         }
+        else if(scmpi(lpName, TEXT("flipImageHorizontal")) == 0)
+        {
+            bFlipHorizontal = iVal != 0;
+        }
         else if(scmpi(lpName, TEXT("keyColor")) == 0)
         {
             keyColor = (DWORD)iVal;
@@ -862,6 +884,10 @@ void DeviceSource::SetInt(CTSTR lpName, int iVal)
         else if(scmpi(lpName, TEXT("keySpillReduction")) == 0)
         {
             keySpillReduction = iVal;
+        }
+        else if(scmpi(lpName, TEXT("opacity")) == 0)
+        {
+            opacity = iVal;
         }
     }
 }

@@ -67,6 +67,7 @@
 				AdditionalDependencies="winmm.lib psapi.lib"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
+				StripPrivateSymbols="..\rundir\$(TargetName).pdb"
 				SubSystem="2"
 				TargetMachine="1"
 			/>
@@ -141,6 +142,7 @@
 				AdditionalDependencies="winmm.lib psapi.lib"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
+				StripPrivateSymbols="..\rundir\$(TargetName).pdb"
 				SubSystem="2"
 				TargetMachine="17"
 			/>
@@ -216,6 +218,7 @@
 				AdditionalDependencies="winmm.lib psapi.lib"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
+				StripPrivateSymbols="..\rundir\$(TargetName).pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -295,6 +298,7 @@
 				AdditionalDependencies="winmm.lib psapi.lib"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
+				StripPrivateSymbols="..\rundir\$(TargetName).pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"

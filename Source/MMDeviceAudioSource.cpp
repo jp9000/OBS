@@ -120,7 +120,7 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
     err = CoCreateInstance(CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void**)&mmEnumerator);
     if(FAILED(err))
     {
-        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IMMDeviceEnumerator"), (BOOL)bMic);
+        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IMMDeviceEnumerator = %08lX"), (BOOL)bMic, err);
         return false;
     }
 
@@ -131,14 +131,14 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
 
     if(FAILED(err))
     {
-        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IMMDevice"), (BOOL)bMic);
+        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IMMDevice = %08lX"), (BOOL)bMic, err);
         return false;
     }
 
     err = mmDevice->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&mmClient);
     if(FAILED(err))
     {
-        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IAudioClient"), (BOOL)bMic);
+        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IAudioClient = %08lX"), (BOOL)bMic, err);
         return false;
     }
 
@@ -146,7 +146,7 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
     err = mmClient->GetMixFormat(&pwfx);
     if(FAILED(err))
     {
-        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not get mix format from audio client"), (BOOL)bMic);
+        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not get mix format from audio client = %08lX"), (BOOL)bMic, err);
         return false;
     }
 
@@ -184,14 +184,14 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
     err = mmClient->Initialize(AUDCLNT_SHAREMODE_SHARED, flags, ConvertMSTo100NanoSec(5000), 0, pwfx, NULL);
     if(FAILED(err))
     {
-        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not initialize audio client"), (BOOL)bMic);
+        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not initialize audio client, result = %08lX"), (BOOL)bMic, err);
         return false;
     }
 
     err = mmClient->GetService(IID_IAudioCaptureClient, (void**)&mmCapture);
     if(FAILED(err))
     {
-        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not get audio capture client"), (BOOL)bMic);
+        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not get audio capture client = %08lX"), (BOOL)bMic, err);
         return false;
     }
 

@@ -24,11 +24,19 @@ struct NetworkPacket
     PacketType type;
 };
 
+struct BitRecord
+{
+	UINT bits;
+	DWORD timestamp;
+};
+
 //max latency in milliseconds allowed when using the send buffer
 const DWORD maxBufferTime = 600;
 
 class RTMPPublisher : public NetworkStream
 {
+    friend class DelayedPublisher;
+
 protected:
     RTMP *rtmp;
 
@@ -40,8 +48,16 @@ protected:
 
     int packetWaitType;
     List<NetworkPacket> Packets;
+	List<BitRecord> bitsIn;
+	List<BitRecord> bitsOut;
+	UINT bitsInPerTime;
+	UINT bitsOutPerTime;
     UINT numVideoPackets;
     UINT maxVideoPackets, BFrameThreshold, revertThreshold;
+
+	UINT maxBitRate;
+	UINT bufferSize;
+	UINT bufferTime;
 
     QWORD bytesSent;
 
@@ -64,6 +80,8 @@ protected:
     static DWORD SendThread(RTMPPublisher *publisher);
     void DoIFrameDelay();
     void DumpBFrame();
+	UINT BitsPerTime(List<BitRecord> *list);
+	void AddBits(List<BitRecord> *list, UINT bits, DWORD timestamp);
 
     int FlushSendBuffer();
     static int BufferedSend(RTMPSockBuf *sb, const char *buf, int len, RTMPPublisher *network);

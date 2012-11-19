@@ -106,13 +106,64 @@ void LogSystemStats()
     LogVideoCardStats();
 }
 
+void ConvertPre445aConfig(CTSTR lpConfig)
+{
+    ConfigFile config;
+    if(config.Open(lpConfig))
+    {
+        if(config.HasKey(TEXT("Publish"), TEXT("Server")))
+        {
+            if(config.GetInt(TEXT("Publish"), TEXT("Service")) == 0)
+            {
+                String strServer    = config.GetString(TEXT("Publish"), TEXT("Server"));
+                String strChannel   = config.GetString(TEXT("Publish"), TEXT("Channel"));
+
+                String strRTMPURL;
+                strRTMPURL << TEXT("rtmp://") << strServer << TEXT("/") << strChannel;
+
+                config.SetString(TEXT("Publish"), TEXT("URL"), strRTMPURL);
+            }
+            else
+            {
+                String strServer = config.GetString(TEXT("Publish"), TEXT("Server"));
+
+                config.SetString(TEXT("Publish"), TEXT("URL"), strServer);
+            }
+        }
+    }
+}
+
 
 void SetupIni()
 {
     //first, find out which profile we're using
 
     String strProfile = GlobalConfig->GetString(TEXT("General"), TEXT("Profile"));
+    DWORD lastVersion = GlobalConfig->GetInt(TEXT("General"), TEXT("LastAppVersion"));
     String strIni;
+
+    //--------------------------------------------
+    // 0.445a fix (change server/channel to URL)
+
+    if(lastVersion < 0x445)
+    {
+        OSFindData ofd;
+
+        String strIniPath;
+        strIniPath << lpAppDataPath << TEXT("\\profiles\\");
+        HANDLE hFind = OSFindFirstFile(strIniPath + TEXT("*.ini"), ofd);
+        if(hFind)
+        {
+            do
+            {
+                if(ofd.bDirectory) continue;
+                ConvertPre445aConfig(strIniPath + ofd.fileName);
+
+            } while(OSFindNextFile(hFind, ofd));
+
+            OSFindClose(hFind);
+        }
+    }
 
     //--------------------------------------------
     // try to find and open the file, otherwise use the first one available
@@ -133,7 +184,7 @@ void SetupIni()
         HANDLE hFind = OSFindFirstFile(strIni, ofd);
         if(hFind)
         {
-            do 
+            do
             {
                 if(ofd.bDirectory) continue;
 

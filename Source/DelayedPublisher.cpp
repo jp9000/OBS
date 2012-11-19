@@ -27,24 +27,29 @@ NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry);
 class DelayedPublisher : public NetworkStream
 {
     DWORD delayTime;
+    DWORD lastTimestamp;
     List<NetworkPacket> queuedPackets;
 
-    NetworkStream *outputStream;
+    RTMPPublisher *outputStream;
 
     bool bPublishingStarted;
     bool bConnecting, bConnected;
-
+    bool bStreamEnding, bCancelEnd;
 
     static DWORD WINAPI CreateConnectionThread(DelayedPublisher *publisher)
     {
         String strFailReason;
         bool bRetry = false;
 
-        publisher->outputStream = CreateRTMPPublisher(strFailReason, bRetry);
+        publisher->outputStream = (RTMPPublisher*)CreateRTMPPublisher(strFailReason, bRetry);
         if(!publisher->outputStream)
         {
             App->SetStreamReport(strFailReason);
-            PostMessage(hwndMain, OBS_REQUESTSTOP, 0, 0);
+
+            if(!publisher->bStreamEnding)
+                PostMessage(hwndMain, OBS_REQUESTSTOP, 1, 0);
+
+            publisher->bCancelEnd = true;
         }
         else
         {
@@ -55,17 +60,26 @@ class DelayedPublisher : public NetworkStream
         return 0;
     }
 
-public:
-    ~DelayedPublisher()
+    static INT_PTR CALLBACK EndDelayProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
-        for(UINT i=0; i<queuedPackets.Num(); i++)
-            queuedPackets[i].data.Clear();
-
-        delete outputStream;
+        if(message == WM_INITDIALOG)
+        {
+            LocalizeWindow(hwnd);
+            SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
+            return TRUE;
+        }
+        else if(message == WM_COMMAND && LOWORD(wParam) == IDCANCEL)
+        {
+            DelayedPublisher *publisher = (DelayedPublisher*)GetWindowLongPtr(hwnd, DWLP_USER);
+        }
+        return 0;
     }
 
-    void SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)
+    void ProcessPackets(DWORD timestamp)
     {
+        if(bCancelEnd)
+            return;
+
         if(timestamp > delayTime)
         {
             if(!bConnected)
@@ -81,7 +95,10 @@ public:
             else
             {
                 if(!bPublishingStarted)
+                {
                     outputStream->BeginPublishing();
+                    bPublishingStarted = true;
+                }
 
                 DWORD sendTime = timestamp-delayTime;
                 for(UINT i=0; i<queuedPackets.Num(); i++)
@@ -96,22 +113,76 @@ public:
                 }
             }
         }
+    }
+
+public:
+    inline DelayedPublisher(DWORD delayTime)
+    {
+        this->delayTime = delayTime;
+    }
+
+    ~DelayedPublisher()
+    {
+        if(!outputStream || !outputStream->bStopping)
+        {
+            bStreamEnding = true;
+            HWND hwndProgressDialog = CreateDialogParam(hinstMain, MAKEINTRESOURCE(IDD_ENDINGDELAY), hwndMain, (DLGPROC)EndDelayProc, (LPARAM)this);
+            ShowWindow(hwndProgressDialog, TRUE);
+
+            DWORD totalTimeLeft = delayTime;
+
+            String strTimeLeftVal = Str("EndingDelay.TimeLeft");
+
+            DWORD firstTime = OSGetTime();
+            while(queuedPackets.Num() && !bCancelEnd)
+            {
+                DWORD timeElapsed = (OSGetTime()-firstTime);
+
+                DWORD timeLeft = (totalTimeLeft-timeElapsed)/1000;
+                DWORD timeLeftMinutes = timeLeft/60;
+                DWORD timeLeftSeconds = timeLeft%60;
+
+                String strTimeLeft = strTimeLeftVal;
+                strTimeLeft.FindReplace(TEXT("$1"), FormattedString(TEXT("%u:%02u"), timeLeftMinutes, timeLeftSeconds));
+                SetWindowText(GetDlgItem(hwndProgressDialog, IDC_TIMELEFT), strTimeLeft);
+
+                ProcessPackets(lastTimestamp+timeElapsed);
+                if(outputStream && outputStream->bStopping)
+                    bCancelEnd = true;
+
+                Sleep(10);
+            }
+
+            DestroyWindow(hwndProgressDialog);
+        }
+
+        for(UINT i=0; i<queuedPackets.Num(); i++)
+            queuedPackets[i].data.Clear();
+
+        delete outputStream;
+    }
+
+    void SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)
+    {
+        ProcessPackets(timestamp);
 
         NetworkPacket *newPacket = queuedPackets.CreateNew();
         newPacket->data.CopyArray(data, size);
         newPacket->timestamp = timestamp;
         newPacket->type = type;
+
+        lastTimestamp = timestamp;
     }
 
     void BeginPublishing() {}
 
-    double GetPacketStrain() const {return outputStream->GetPacketStrain();}
-    QWORD GetCurrentSentBytes() {return outputStream->GetCurrentSentBytes();}
-    DWORD NumDroppedFrames() const {return outputStream->NumDroppedFrames();}
+    double GetPacketStrain() const {return (outputStream) ? outputStream->GetPacketStrain() : 0;}
+    QWORD GetCurrentSentBytes() {return (outputStream) ? outputStream->GetCurrentSentBytes() : 0;}
+    DWORD NumDroppedFrames() const {return (outputStream) ? outputStream->NumDroppedFrames() : 0;}
 };
 
 
-NetworkStream* CreateDelayedPublisher()
+NetworkStream* CreateDelayedPublisher(DWORD delayTime)
 {
-    return new DelayedPublisher;
+    return new DelayedPublisher(delayTime*1000);
 }
