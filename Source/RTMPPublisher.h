@@ -48,16 +48,10 @@ protected:
 
     int packetWaitType;
     List<NetworkPacket> Packets;
-	List<BitRecord> bitsIn;
-	List<BitRecord> bitsOut;
-	UINT bitsInPerTime;
-	UINT bitsOutPerTime;
-    UINT numVideoPackets;
-    UINT maxVideoPackets, BFrameThreshold, revertThreshold;
+	List<BitRecord> bitsIn, bitsOut;
+	UINT bitsInPerTime, bitsOutPerTime, bitsQueued;
 
-	UINT maxBitRate;
-	UINT bufferSize;
-	UINT bufferTime;
+	UINT maxBitRate, bufferSize, bufferTime;
 
     QWORD bytesSent;
 
