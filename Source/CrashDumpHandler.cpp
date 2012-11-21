@@ -26,7 +26,7 @@ BOOL CALLBACK EnumerateLoadedModulesProcInfo (PCTSTR ModuleName, DWORD64 ModuleB
     moduleinfo_t *moduleInfo = (moduleinfo_t *)UserContext;
     if (moduleInfo->faultAddress >= ModuleBase && moduleInfo->faultAddress <= ModuleBase + ModuleSize)
     {
-        scpy_n(moduleInfo->moduleName, ModuleName, sizeof(moduleInfo->moduleName));
+        scpy_n(moduleInfo->moduleName, ModuleName, _countof(moduleInfo->moduleName)-1);
         return FALSE;
     }
     return TRUE;
@@ -114,7 +114,7 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
 
     fnSymSetOptions (SYMOPT_UNDNAME | SYMOPT_FAIL_CRITICAL_ERRORS | SYMOPT_LOAD_ANYTHING);
 
-    GetModuleFileName (NULL, searchPath, sizeof(searchPath));
+    GetModuleFileName (NULL, searchPath, _countof(searchPath)-1);
     p = srchr (searchPath, '\\');
     if (p)
         *p = 0;
