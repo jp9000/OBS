@@ -338,7 +338,7 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
         goto finishGPUHook;
     }
 
-    if(FAILED(hErr == d3d101Tex->QueryInterface(__uuidof(ID3D10Resource), (void**)&copyTextureIntermediary)))
+    if(FAILED(hErr = d3d101Tex->QueryInterface(__uuidof(ID3D10Resource), (void**)&copyTextureIntermediary)))
     {
         logOutput << "DoD3D9GPUHook: d3d101Tex->QueryInterface(ID3D10Resource) failed, result = " << (UINT)hErr << endl;
         d3d101Tex->Release();
@@ -398,7 +398,7 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
         VirtualProtect(patchAddress, 1, dwOldProtect, &dwOldProtect);
     }
 
-    if(FAILED(hErr == d3d9Tex->GetSurfaceLevel(0, &copyD3D9TextureGame)))
+    if(FAILED(hErr = d3d9Tex->GetSurfaceLevel(0, &copyD3D9TextureGame)))
     {
         logOutput << "DoD3D9GPUHook: d3d9Tex->GetSurfaceLevel failed, result = " << (UINT)hErr << endl;
         d3d9Tex->Release();

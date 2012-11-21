@@ -168,7 +168,7 @@ bool DoD3D101Hook(ID3D10Device *device)
         return false;
     }
 
-    if(FAILED(hErr == d3d101Tex->QueryInterface(__uuidof(ID3D10Resource), (void**)&copyD3D101TextureGame)))
+    if(FAILED(hErr = d3d101Tex->QueryInterface(__uuidof(ID3D10Resource), (void**)&copyD3D101TextureGame)))
     {
         logOutput << "DoD3D101Hook: d3d101Tex->QueryInterface(ID3D10Resource) failed, result = " << UINT(hErr) << endl;
         d3d101Tex->Release();

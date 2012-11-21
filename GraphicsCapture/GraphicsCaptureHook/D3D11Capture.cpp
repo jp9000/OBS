@@ -185,7 +185,7 @@ bool DoD3D11Hook(ID3D11Device *device)
         return false;
     }
 
-    if(FAILED(hErr == d3d11Tex->QueryInterface(__uuidof(ID3D11Resource), (void**)&copyTextureGame)))
+    if(FAILED(hErr = d3d11Tex->QueryInterface(__uuidof(ID3D11Resource), (void**)&copyTextureGame)))
     {
         logOutput << "DoD3D11Hook: d3d11Tex->QueryInterface(ID3D11Resource) failed, result = " << UINT(hErr) << endl;
         d3d11Tex->Release();
