@@ -188,7 +188,6 @@ void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketTyp
             netPacket.data.TransferFrom(paddedData);
 
             bitsQueued += netPacket.data.Num()*8;
-            Log(TEXT("bitsQueued: %u"), bitsQueued);
 
             UINT maxVidyaPackets = App->GetFPS()/10;
 
@@ -213,10 +212,7 @@ void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketTyp
 
                 //begin dumping p frames if b frames aren't enough
                 if (bitsInPerTime > bitsOutPerTime*13/10 && numVideoPacketsBuffered) // TODO: Tweak this
-                {
                     DoIFrameDelay();
-                    bDroppingPFrames = true;
-                }
             }
 
             //-----------------
@@ -402,7 +398,6 @@ void RTMPPublisher::SendLoop()
             numVideoPackets--;
         }
         bitsQueued -= packetData.Num()*8;
-        Log(TEXT("bitsQueued: %u"), bitsQueued);
         OSLeaveMutex(hDataMutex);
 
         //--------------------------------------------
@@ -501,7 +496,6 @@ void RTMPPublisher::DoIFrameDelay()
 
                 AddBits(&bitsOut, bestPacket.data.Num()*8, OSGetTime());
                 bitsQueued -= bestPacket.data.Num()*8;
-                Log(TEXT("bitsQueued: %u"), bitsQueued);
                 bestPacket.data.Clear();
                 Packets.Remove(bestItem);
                 numVideoPackets--;
@@ -540,7 +534,6 @@ void RTMPPublisher::DoIFrameDelay()
                     {
                         AddBits(&bitsOut, packet.data.Num()*8, OSGetTime());
                         bitsQueued -= packet.data.Num()*8;
-                        Log(TEXT("bitsQueued: %u"), bitsQueued);
                         packet.data.Clear();
                         Packets.Remove(i--);
                         numVideoPackets--;
@@ -554,7 +547,6 @@ void RTMPPublisher::DoIFrameDelay()
                 {
                     AddBits(&bitsOut, packet.data.Num()*8, OSGetTime());
                     bitsQueued -= packet.data.Num()*8;
-                    Log(TEXT("bitsQueued: %u"), bitsQueued);
                     packet.data.Clear();
                     Packets.Remove(i--);
                     numVideoPackets--;
@@ -600,7 +592,6 @@ void RTMPPublisher::DumpBFrame()
                 {
                     AddBits(&bitsOut, packet.data.Num()*8, OSGetTime());
                     bitsQueued -= packet.data.Num()*8;
-                    Log(TEXT("bitsQueued: %u"), bitsQueued);
                     packet.data.Clear();
                     Packets.Remove(i--);
                     numBFramesDumped++;
@@ -611,7 +602,6 @@ void RTMPPublisher::DumpBFrame()
             {
                 AddBits(&bitsOut, packet.data.Num()*8, OSGetTime());
                 bitsQueued -= packet.data.Num()*8;
-                Log(TEXT("bitsQueued: %u"), bitsQueued);
                 packet.data.Clear();
                 Packets.Remove(i--);
                 numBFramesDumped++;
