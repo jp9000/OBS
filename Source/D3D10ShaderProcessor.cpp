@@ -468,7 +468,8 @@ BOOL ShaderProcessor::AddState(SamplerInfo &info, String &stateName, String &sta
         {
             case 0: mode = &info.addressU; break;
             case 1: mode = &info.addressV; break;
-            case 2: mode = &info.addressW;
+            case 2: mode = &info.addressW; break;
+            default: CrashError(TEXT("Invalid shader address type %d"), type);
         }
 
         if(stateVal.CompareI(TEXT("Wrap")) || stateVal.CompareI(TEXT("Repeat")))
