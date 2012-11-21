@@ -66,7 +66,7 @@ end:
     if(hThread)
         CloseHandle(hThread);
     if(lpStr)
-        VirtualFreeEx(hProcess, lpStr, dwSize, MEM_RELEASE);
+        VirtualFreeEx(hProcess, lpStr, 0, MEM_RELEASE);
 
     if(!bRet)
         SetLastError(lastError);
