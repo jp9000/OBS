@@ -1590,7 +1590,7 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("2920"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("1460"));
 
-                LoadSettingEditString(hwndTemp, TEXT("Publish"), TEXT("SendBufferSize"), TEXT("8760"));
+                LoadSettingEditString(hwndTemp, TEXT("Publish"), TEXT("SendBufferSize"), TEXT("1460"));
 
                 ti.lpszText = (LPWSTR)Str("Settings.Advanced.UseSendBufferTooltip");
                 ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_USESENDBUFFER);
