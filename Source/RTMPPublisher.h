@@ -26,8 +26,8 @@ struct NetworkPacket
 
 struct BitRecord
 {
-	UINT bits;
-	DWORD timestamp;
+    UINT bits;
+    DWORD timestamp;
 };
 
 //max latency in milliseconds allowed when using the send buffer
@@ -48,11 +48,11 @@ protected:
 
     int packetWaitType;
     List<NetworkPacket> Packets;
-	List<BitRecord> bitsIn, bitsOut;
-	UINT bitsInPerTime, bitsOutPerTime, bitsQueued;
+    List<BitRecord> bitsIn, bitsOut;
+    UINT bitsInPerTime, bitsOutPerTime, bitsQueued;
 
     UINT numVideoPackets;
-	UINT maxBitRate, bufferSize, bufferTime;
+    UINT maxBitRate, bufferSize, bufferTime;
 
     QWORD bytesSent;
 
@@ -62,7 +62,7 @@ protected:
     UINT numVideoPacketsBuffered;
     DWORD firstBufferedVideoFrameTimestamp;
 
-    bool bPacketDumpMode;
+    bool bPacketDumpMode, bDroppingPFrames;
 
     BOOL bUseSendBuffer;
 
@@ -75,8 +75,8 @@ protected:
     static DWORD SendThread(RTMPPublisher *publisher);
     void DoIFrameDelay();
     void DumpBFrame();
-	UINT BitsPerTime(List<BitRecord> *list);
-	void AddBits(List<BitRecord> *list, UINT bits, DWORD timestamp);
+    UINT BitsPerTime(List<BitRecord> *list);
+    void AddBits(List<BitRecord> *list, UINT bits, DWORD timestamp);
 
     int FlushSendBuffer();
     static int BufferedSend(RTMPSockBuf *sb, const char *buf, int len, RTMPPublisher *network);

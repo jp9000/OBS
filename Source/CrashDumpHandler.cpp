@@ -34,38 +34,38 @@ BOOL CALLBACK EnumerateLoadedModulesProcInfo (PCTSTR ModuleName, DWORD64 ModuleB
 
 LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
 {
-    HANDLE	hProcess;
+    HANDLE    hProcess;
 
-    HMODULE	hDbgHelp;
+    HMODULE    hDbgHelp;
 
     MINIDUMP_EXCEPTION_INFORMATION miniInfo;
 
-    STACKFRAME64	frame = {0};
-    CONTEXT			context = *exceptionInfo->ContextRecord;
-    SYMBOL_INFO		*symInfo;
-    DWORD64			fnOffset;
-    TCHAR		    logPath[MAX_PATH];
-    TCHAR			dumpPath[MAX_PATH];
-    OSVERSIONINFOEX	osInfo;
-    SYSTEMTIME		timeInfo;
+    STACKFRAME64    frame = {0};
+    CONTEXT            context = *exceptionInfo->ContextRecord;
+    SYMBOL_INFO        *symInfo;
+    DWORD64            fnOffset;
+    TCHAR            logPath[MAX_PATH];
+    TCHAR            dumpPath[MAX_PATH];
+    OSVERSIONINFOEX    osInfo;
+    SYSTEMTIME        timeInfo;
 
-    ENUMERATELOADEDMODULES64	fnEnumerateLoadedModules64;
-    SYMSETOPTIONS				fnSymSetOptions;
-    SYMINITIALIZE				fnSymInitialize;
-    STACKWALK64					fnStackWalk64;
-    SYMFUNCTIONTABLEACCESS64	fnSymFunctionTableAccess64;
-    SYMGETMODULEBASE64			fnSymGetModuleBase64;
-    SYMFROMADDR					fnSymFromAddr;
-    SYMCLEANUP					fnSymCleanup;
-    MINIDUMPWRITEDUMP			fnMiniDumpWriteDump;
-    SYMGETMODULEINFO64	        fnSymGetModuleInfo64;
+    ENUMERATELOADEDMODULES64    fnEnumerateLoadedModules64;
+    SYMSETOPTIONS                fnSymSetOptions;
+    SYMINITIALIZE                fnSymInitialize;
+    STACKWALK64                    fnStackWalk64;
+    SYMFUNCTIONTABLEACCESS64    fnSymFunctionTableAccess64;
+    SYMGETMODULEBASE64            fnSymGetModuleBase64;
+    SYMFROMADDR                    fnSymFromAddr;
+    SYMCLEANUP                    fnSymCleanup;
+    MINIDUMPWRITEDUMP            fnMiniDumpWriteDump;
+    SYMGETMODULEINFO64            fnSymGetModuleInfo64;
 
-    DWORD						i;
-    DWORD64						InstructionPtr;
+    DWORD                        i;
+    DWORD64                        InstructionPtr;
 
-    BOOL						wantUpload = TRUE;
+    BOOL                        wantUpload = TRUE;
 
-    TCHAR						searchPath[MAX_PATH], *p;
+    TCHAR                        searchPath[MAX_PATH], *p;
 
     static BOOL                 inExceptionHandler = FALSE;
 
@@ -273,7 +273,7 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
     //generate a minidump if possible
     if (fnMiniDumpWriteDump)
     {
-        HANDLE	hFile;
+        HANDLE    hFile;
 
         tsprintf_s (dumpPath, _countof(dumpPath)-1, TEXT("%s\\crashDumps\\OBSCrashDump%.4d-%.2d-%.2d_%d.dmp"), lpAppDataPath, timeInfo.wYear, timeInfo.wMonth, timeInfo.wDay, i);
 

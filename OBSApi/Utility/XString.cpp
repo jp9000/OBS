@@ -930,7 +930,7 @@ WORD StringCRC16(CTSTR lpData)
     int len = slen(lpData);
 
     for(int i=0; i<len; i++)
-    {				
+    {                
         TCHAR val = lpData[i];
 
         for(int j=0; j<(sizeof(TCHAR)*8); j++)
@@ -943,7 +943,7 @@ WORD StringCRC16(CTSTR lpData)
         }
     }
 
-	return crc;
+    return crc;
 }
 
 WORD StringCRC16I(CTSTR lpData)
@@ -952,7 +952,7 @@ WORD StringCRC16I(CTSTR lpData)
     int len = slen(lpData);
 
     for(int i=0; i<len; i++)
-    {				
+    {                
         TCHAR val = lpData[i];
 
         if((val >= 'A') && (val <= 'Z'))
@@ -968,7 +968,7 @@ WORD StringCRC16I(CTSTR lpData)
         }
     }
 
-	return crc;
+    return crc;
 }
 
 

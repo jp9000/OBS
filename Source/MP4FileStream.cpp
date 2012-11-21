@@ -56,17 +56,6 @@ struct MP4AudioFrameInfo
 #define USE_64BIT_MP4 1
 
 
-void WINAPI ProcessEvents()
-{
-    MSG msg;
-    while(PeekMessage(&msg, NULL, 0, 0, 1))
-    {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-}
-
-
 //code annoyance rating: fairly nightmarish
 
 class MP4FileStream : public VideoFileStream

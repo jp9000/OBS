@@ -192,8 +192,8 @@
 #define IDC_DELAY_STATIC                1126
 #define IDC_ITALIC                      1127
 #define IDC_TIMELEFT                    1127
-#define IDC_CHECK3                      1128
 #define IDC_UNLOCKHIGHFPS               1128
+#define IDC_CANCEL                      1130
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -224,7 +224,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        141
 #define _APS_NEXT_COMMAND_VALUE         40044
-#define _APS_NEXT_CONTROL_VALUE         1129
+#define _APS_NEXT_CONTROL_VALUE         1132
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

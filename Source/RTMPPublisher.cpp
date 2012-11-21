@@ -71,9 +71,9 @@ RTMPPublisher::RTMPPublisher(RTMP *rtmpIn, BOOL bUseSendBuffer, UINT sendBufferS
 
     packetWaitType = 0;
 
-	maxBitRate = (UINT)AppConfig->GetInt(TEXT("Video Encoding"), TEXT("MaxBitrate"), 1000);
-	bufferSize = (UINT)AppConfig->GetInt(TEXT("Video Encoding"), TEXT("BufferSize"), 1000);
-	bufferTime = (UINT)(min(1.0, float(bufferSize)/float(maxBitRate))*1000);
+    maxBitRate = (UINT)AppConfig->GetInt(TEXT("Video Encoding"), TEXT("MaxBitrate"), 1000);
+    bufferSize = (UINT)AppConfig->GetInt(TEXT("Video Encoding"), TEXT("BufferSize"), 1000);
+    bufferTime = (UINT)(min(1.0, float(bufferSize)/float(maxBitRate))*1000);
 
     //traceOut;
 }
@@ -114,31 +114,31 @@ RTMPPublisher::~RTMPPublisher()
 
 UINT RTMPPublisher::BitsPerTime(List<BitRecord> *list)
 {
-	// remove old bits
-	if (!bPacketDumpMode)
-	{
-		DWORD cutoffTime = OSGetTime()-bufferTime;
+    // remove old bits
+    if (!bPacketDumpMode)
+    {
+        DWORD cutoffTime = OSGetTime()-bufferTime;
 
-		while((list->Num() > 0) && (list->GetElement(0).timestamp < cutoffTime))
-			list->Remove(0);
-	}
+        while((list->Num() > 0) && (list->GetElement(0).timestamp < cutoffTime))
+            list->Remove(0);
+    }
 
-	UINT accumulator = 1;
-	for(UINT i = 0; i < list->Num(); i++)
-	{
-		BitRecord bitRecord = list->GetElement(i);
-		accumulator += bitRecord.bits;
-	}
+    UINT accumulator = 1;
+    for(UINT i = 0; i < list->Num(); i++)
+    {
+        BitRecord bitRecord = list->GetElement(i);
+        accumulator += bitRecord.bits;
+    }
 
-	return accumulator;
+    return accumulator;
 }
 
 void RTMPPublisher::AddBits(List<BitRecord> *list, UINT bits, DWORD timestamp)
 {
-	BitRecord bitRecord;
-	bitRecord.bits = bits; 
-	bitRecord.timestamp = timestamp;
-	list->Add(bitRecord);
+    BitRecord bitRecord;
+    bitRecord.bits = bits; 
+    bitRecord.timestamp = timestamp;
+    list->Add(bitRecord);
 }
 
 void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)
@@ -151,14 +151,17 @@ void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketTyp
         paddedData.SetSize(size+RTMP_MAX_HEADER_SIZE);
         mcpy(paddedData.Array()+RTMP_MAX_HEADER_SIZE, data, size);
 
-		OSEnterMutex(hDataMutex);
+        OSEnterMutex(hDataMutex);
 
-		bitsInPerTime = BitsPerTime(&bitsIn);
-		bitsOutPerTime = BitsPerTime(&bitsOut);
-		// debug stuff // if (bPacketDumpMode)
-		//	Log(TEXT("BitsIn: %u, BitsOut: %u"), BitsPerTime(&bitsIn, t), BitsPerTime(&bitsOut, t));
-		if(bPacketDumpMode && (bitsInPerTime <= bitsOutPerTime))
+        bitsInPerTime = BitsPerTime(&bitsIn);
+        bitsOutPerTime = BitsPerTime(&bitsOut);
+        // debug stuff // if (bPacketDumpMode)
+        //    Log(TEXT("BitsIn: %u, BitsOut: %u"), BitsPerTime(&bitsIn, t), BitsPerTime(&bitsOut, t));
+        if(bPacketDumpMode && (bitsInPerTime <= bitsOutPerTime))
+        {
             bPacketDumpMode = false;
+            bDroppingPFrames = false;
+        }
 
         bool bAddPacket = false;
         if(type >= packetWaitType)
@@ -168,11 +171,10 @@ void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketTyp
                 packetWaitType = (bPacketDumpMode) ? PacketType_VideoLow : PacketType_VideoDisposable;
 
                 if(type <= PacketType_VideoHigh)
-				{
-					AddBits(&bitsIn, size*8, OSGetTime());
-					bitsQueued += size*8;
+                {
+                    AddBits(&bitsIn, size*8, OSGetTime());
                     numVideoPackets++;
-				}
+                }
             }
 
             bAddPacket = true;
@@ -185,38 +187,46 @@ void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketTyp
             netPacket.timestamp = timestamp;
             netPacket.data.TransferFrom(paddedData);
 
-            //begin dumping b frames if there's signs of lag
-			if (bitsQueued > sendBuffer.Num()*8 &&
-                //bitsQueued > maxBitRate*125 && bitsQueued > bitsInPerTime)
-                bitsQueued > bitsInPerTime)
-			{
-				if(bitsInPerTime > bitsOutPerTime)
-				{
-					if(!bPacketDumpMode)
-					{
-						bPacketDumpMode = true;
-						if(packetWaitType == PacketType_VideoDisposable)
-							packetWaitType = PacketType_VideoLow;
-					}
-					DumpBFrame();
-				}
+            bitsQueued += netPacket.data.Num()*8;
+            Log(TEXT("bitsQueued: %u"), bitsQueued);
 
-				//begin dumping p frames if b frames aren't enough
-				if (bitsQueued > sendBuffer.Num()*8 &&
-                    bitsInPerTime > bitsOutPerTime*2 && numVideoPacketsBuffered) // TODO: Tweak this
+            UINT maxVidyaPackets = App->GetFPS()/10;
+
+            //begin dumping b frames if there's signs of lag
+            if (bitsQueued > sendBuffer.Num()*8 &&
+                bitsQueued > bitsInPerTime &&
+                numVideoPackets > maxVidyaPackets)
+            {
+                if(bitsInPerTime > bitsOutPerTime)
                 {
-					DoIFrameDelay();
+                    if(!bPacketDumpMode)
+                    {
+                        bPacketDumpMode = true;
+                        if(packetWaitType == PacketType_VideoDisposable)
+                            packetWaitType = PacketType_VideoLow;
+                    }
+                    DumpBFrame();
+
+                    if(packetWaitType >= PacketType_VideoHigh)
+                        bDroppingPFrames = true;
                 }
-			}
+
+                //begin dumping p frames if b frames aren't enough
+                if (bitsInPerTime > bitsOutPerTime*13/10 && numVideoPacketsBuffered) // TODO: Tweak this
+                {
+                    DoIFrameDelay();
+                    bDroppingPFrames = true;
+                }
+            }
 
             //-----------------
 
             ReleaseSemaphore(hSendSempahore, 1, NULL);
         }
         else
-		{
-			AddBits(&bitsOut, size*8, OSGetTime());
-			bitsQueued -= size*8;
+        {
+            AddBits(&bitsOut, size*8, OSGetTime());
+            //bitsQueued -= size*8;
             numBFramesDumped++;
         }
 
@@ -322,12 +332,12 @@ void RTMPPublisher::BeginPublishing()
 
 double RTMPPublisher::GetPacketStrain() const
 {
-    double dBitsIn  = double(bitsInPerTime);
-    double dBitsOut = double(bitsOutPerTime);
-    double val = (dBitsIn-dBitsOut)/dBitsOut*100.0;
-    if(val < 0.0)       val = 0.0;
-    else if(val > 1.0)  val = 1.0;
-    return val*val;
+    if(bDroppingPFrames)
+        return 100.0f;
+    else if(bPacketDumpMode)
+        return 50.f;
+
+    return 0.0f;
 }
 
 QWORD RTMPPublisher::GetCurrentSentBytes()
@@ -387,11 +397,12 @@ void RTMPPublisher::SendLoop()
 
         Packets.Remove(0);
         if(type <= PacketType_VideoHigh)
-		{
-			AddBits(&bitsOut, packetData.Num()*8, OSGetTime());
-			bitsQueued -= packetData.Num()*8;
+        {
+            AddBits(&bitsOut, packetData.Num()*8, OSGetTime());
             numVideoPackets--;
-		}
+        }
+        bitsQueued -= packetData.Num()*8;
+        Log(TEXT("bitsQueued: %u"), bitsQueued);
         OSLeaveMutex(hDataMutex);
 
         //--------------------------------------------
@@ -488,11 +499,16 @@ void RTMPPublisher::DoIFrameDelay()
             {
                 NetworkPacket &bestPacket = Packets[bestItem];
 
-				AddBits(&bitsOut, bestPacket.data.Num()*8, OSGetTime());
-				bitsQueued -= bestPacket.data.Num()*8;
+                AddBits(&bitsOut, bestPacket.data.Num()*8, OSGetTime());
+                bitsQueued -= bestPacket.data.Num()*8;
+                Log(TEXT("bitsQueued: %u"), bitsQueued);
                 bestPacket.data.Clear();
                 Packets.Remove(bestItem);
                 numVideoPackets--;
+                if(bestPacket.type >= PacketType_VideoHigh)
+                    numPFramesDumped++;
+                else
+                    numBFramesDumped++;
 
                 //disposing P-frames will corrupt the rest of the frame group, so you have to wait until another I-frame
                 if(!bFoundIFrame || !bFoundFrameBeforeIFrame)
@@ -522,22 +538,30 @@ void RTMPPublisher::DoIFrameDelay()
                     }
                     else //clear out following dependent packets of lower priority
                     {
-						AddBits(&bitsOut, packet.data.Num()*8, OSGetTime());
-						bitsQueued -= packet.data.Num()*8;
+                        AddBits(&bitsOut, packet.data.Num()*8, OSGetTime());
+                        bitsQueued -= packet.data.Num()*8;
+                        Log(TEXT("bitsQueued: %u"), bitsQueued);
                         packet.data.Clear();
                         Packets.Remove(i--);
                         numVideoPackets--;
-                        numPFramesDumped++;
+                        if(packet.type >= PacketType_VideoHigh)
+                            numPFramesDumped++;
+                        else
+                            numBFramesDumped++;
                     }
                 }
                 else if(packet.type == packetWaitType)
                 {
-					AddBits(&bitsOut, packet.data.Num()*8, OSGetTime());
-					bitsQueued -= packet.data.Num()*8;
+                    AddBits(&bitsOut, packet.data.Num()*8, OSGetTime());
+                    bitsQueued -= packet.data.Num()*8;
+                    Log(TEXT("bitsQueued: %u"), bitsQueued);
                     packet.data.Clear();
                     Packets.Remove(i--);
                     numVideoPackets--;
-                    numPFramesDumped++;
+                    if(packet.type >= PacketType_VideoHigh)
+                        numPFramesDumped++;
+                    else
+                        numBFramesDumped++;
 
                     bRemovedPacket = true;
                 }
@@ -574,8 +598,9 @@ void RTMPPublisher::DumpBFrame()
                 }
                 else //clear out following dependent packets of lower priority
                 {
-					AddBits(&bitsOut, packet.data.Num()*8, OSGetTime());
-					bitsQueued -= packet.data.Num()*8;
+                    AddBits(&bitsOut, packet.data.Num()*8, OSGetTime());
+                    bitsQueued -= packet.data.Num()*8;
+                    Log(TEXT("bitsQueued: %u"), bitsQueued);
                     packet.data.Clear();
                     Packets.Remove(i--);
                     numBFramesDumped++;
@@ -584,8 +609,9 @@ void RTMPPublisher::DumpBFrame()
             }
             else if(packet.type == packetWaitType)
             {
-				AddBits(&bitsOut, packet.data.Num()*8, OSGetTime());
-				bitsQueued -= packet.data.Num()*8;
+                AddBits(&bitsOut, packet.data.Num()*8, OSGetTime());
+                bitsQueued -= packet.data.Num()*8;
+                Log(TEXT("bitsQueued: %u"), bitsQueued);
                 packet.data.Clear();
                 Packets.Remove(i--);
                 numBFramesDumped++;

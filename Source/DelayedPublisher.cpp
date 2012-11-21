@@ -62,15 +62,26 @@ class DelayedPublisher : public NetworkStream
 
     static INT_PTR CALLBACK EndDelayProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
-        if(message == WM_INITDIALOG)
+        switch(message)
         {
-            LocalizeWindow(hwnd);
-            SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
-            return TRUE;
-        }
-        else if(message == WM_COMMAND && LOWORD(wParam) == IDCANCEL)
-        {
-            DelayedPublisher *publisher = (DelayedPublisher*)GetWindowLongPtr(hwnd, DWLP_USER);
+            case WM_INITDIALOG:
+                LocalizeWindow(hwnd);
+                SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
+                return TRUE;
+
+            case WM_COMMAND:
+                if(LOWORD(wParam) == IDCANCEL)
+                {
+                    DelayedPublisher *publisher = (DelayedPublisher*)GetWindowLongPtr(hwnd, DWLP_USER);
+                    publisher->bCancelEnd = true;
+                }
+                break;
+
+            case WM_CLOSE:
+                {
+                    DelayedPublisher *publisher = (DelayedPublisher*)GetWindowLongPtr(hwnd, DWLP_USER);
+                    publisher->bCancelEnd = true;
+                }
         }
         return 0;
     }
@@ -127,24 +138,34 @@ public:
         {
             bStreamEnding = true;
             HWND hwndProgressDialog = CreateDialogParam(hinstMain, MAKEINTRESOURCE(IDD_ENDINGDELAY), hwndMain, (DLGPROC)EndDelayProc, (LPARAM)this);
+            ProcessEvents();
+
             ShowWindow(hwndProgressDialog, TRUE);
 
             DWORD totalTimeLeft = delayTime;
 
             String strTimeLeftVal = Str("EndingDelay.TimeLeft");
 
+            DWORD lastTimeLeft = -1;
+
             DWORD firstTime = OSGetTime();
             while(queuedPackets.Num() && !bCancelEnd)
             {
+                ProcessEvents();
+
                 DWORD timeElapsed = (OSGetTime()-firstTime);
 
                 DWORD timeLeft = (totalTimeLeft-timeElapsed)/1000;
                 DWORD timeLeftMinutes = timeLeft/60;
                 DWORD timeLeftSeconds = timeLeft%60;
 
-                String strTimeLeft = strTimeLeftVal;
-                strTimeLeft.FindReplace(TEXT("$1"), FormattedString(TEXT("%u:%02u"), timeLeftMinutes, timeLeftSeconds));
-                SetWindowText(GetDlgItem(hwndProgressDialog, IDC_TIMELEFT), strTimeLeft);
+                if(timeLeft != lastTimeLeft)
+                {
+                    String strTimeLeft = strTimeLeftVal;
+                    strTimeLeft.FindReplace(TEXT("$1"), FormattedString(TEXT("%u:%02u"), timeLeftMinutes, timeLeftSeconds));
+                    SetWindowText(GetDlgItem(hwndProgressDialog, IDC_TIMELEFT), strTimeLeft);
+                    lastTimeLeft = timeLeft;
+                }
 
                 ProcessPackets(lastTimestamp+timeElapsed);
                 if(outputStream && outputStream->bStopping)

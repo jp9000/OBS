@@ -68,6 +68,7 @@
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../OBSApi/Debug"
 				GenerateDebugInformation="true"
+				ProgramDatabaseFile="..\rundir\$(TargetName).pdb"
 				SubSystem="2"
 				TargetMachine="1"
 			/>
@@ -144,6 +145,7 @@
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../OBSApi/x64/Debug"
 				GenerateDebugInformation="true"
+				ProgramDatabaseFile="..\rundir\$(TargetName).pdb"
 				SubSystem="2"
 				TargetMachine="17"
 			/>
@@ -220,6 +222,7 @@
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../OBSApi/Release"
 				GenerateDebugInformation="true"
+				ProgramDatabaseFile="..\rundir\$(TargetName).pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -299,6 +302,7 @@
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../OBSApi/x64/Release"
 				GenerateDebugInformation="true"
+				ProgramDatabaseFile="..\rundir\$(TargetName).pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"

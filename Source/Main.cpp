@@ -276,6 +276,15 @@ void LoadGlobalIni()
     }
 }
 
+void WINAPI ProcessEvents()
+{
+    MSG msg;
+    while(PeekMessage(&msg, NULL, 0, 0, 1))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+}
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {

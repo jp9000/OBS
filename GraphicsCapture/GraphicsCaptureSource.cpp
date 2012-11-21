@@ -176,9 +176,13 @@ void GraphicsCaptureSource::NewCapture(LPVOID address)
 
 void GraphicsCaptureSource::EndCapture()
 {
-    capture->Destroy();
-    delete capture;
-    capture = NULL;
+    if(capture)
+    {
+        capture->Destroy();
+        delete capture;
+        capture = NULL;
+    }
+
     bErrorAcquiring = false;
     bCapturing = false;
     captureCheckInterval = -1.0f;

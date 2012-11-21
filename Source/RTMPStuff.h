@@ -33,7 +33,7 @@
 //just so you know, I'm fairly disgusted with all this stuff.
 //librtmp is a nice library, but they really need to work on making things function more..  cleanly.
 
-#define SAVC(x)	static const AVal av_##x = AVC(#x)
+#define SAVC(x)    static const AVal av_##x = AVC(#x)
 #define STR2AVAL(av,str) av.av_val = str; av.av_len = (int)strlen(av.av_val)
 
 SAVC(app);
