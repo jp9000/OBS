@@ -91,6 +91,7 @@ void SetupD3D101(IDXGISwapChain *swapChain)
         }
     }
 
+    lastTime = 0;
     OSInitializeTimer();
 }
 
@@ -293,18 +294,23 @@ struct D3D101Override
     {
         IDXGISwapChain *swap = (IDXGISwapChain*)this;
 
+        ClearD3D101Data();
+        lpCurrentSwap = NULL;
+        lpCurrentDevice = NULL;
+        bTargetAcquired = false;
+
         gi1swapResizeBuffers.Unhook();
         HRESULT hRes = swap->ResizeBuffers(bufferCount, width, height, giFormat, flags);
         gi1swapResizeBuffers.Rehook();
 
-        if(lpCurrentSwap == NULL && !bTargetAcquired)
+        /*if(lpCurrentSwap == NULL && !bTargetAcquired)
         {
             lpCurrentSwap = swap;
             bTargetAcquired = true;
         }
 
         if(lpCurrentSwap == swap)
-            SetupD3D101(swap);
+            SetupD3D101(swap);*/
 
         return hRes;
     }
@@ -329,13 +335,13 @@ struct D3D101Override
                 {
                     lpCurrentDevice = device;
 
-                    FARPROC oldRelease = GetVTable(device, (8/4));
+                    /*FARPROC oldRelease = GetVTable(device, (8/4));
                     if(oldRelease != newD3D10Release)
                     {
                         oldD3D10Release = oldRelease;
                         newD3D10Release = ConvertClassProcToFarproc((CLASSPROC)&D3D101Override::DeviceReleaseHook);
                         SetVTable(device, (8/4), newD3D10Release);
-                    }
+                    }*/
                 }
 
                 if(bCapturing && bStopRequested)
@@ -353,7 +359,7 @@ struct D3D101Override
 
                         if(hwndReceiver)
                         {
-                            bool bSuccess = DoD3D101Hook(device);
+                            BOOL bSuccess = DoD3D101Hook(device);
 
                             if(bSuccess)
                             {
@@ -361,6 +367,9 @@ struct D3D101Override
                                 if(!d3d101CaptureInfo.mapID)
                                     bSuccess = false;
                             }
+
+                            if(bSuccess)
+                                bSuccess = IsWindow(hwndReceiver);
 
                             if(bSuccess)
                             {

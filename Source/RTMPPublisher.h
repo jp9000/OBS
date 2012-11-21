@@ -51,6 +51,7 @@ protected:
 	List<BitRecord> bitsIn, bitsOut;
 	UINT bitsInPerTime, bitsOutPerTime, bitsQueued;
 
+    UINT numVideoPackets;
 	UINT maxBitRate, bufferSize, bufferTime;
 
     QWORD bytesSent;

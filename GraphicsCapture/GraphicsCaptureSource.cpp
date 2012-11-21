@@ -19,6 +19,7 @@
 
 #include "GraphicsCapture.h"
 
+
 BOOL WINAPI InjectLibrary(HANDLE hProcess, CTSTR lpDLL)
 {
     UPARAM procAddress;
@@ -113,7 +114,11 @@ LRESULT WINAPI GraphicsCaptureSource::ReceiverWindowProc(HWND hwnd, UINT message
             {
                 GraphicsCaptureSource *source = (GraphicsCaptureSource*)GetWindowLongPtr(hwnd, 0);
                 if(source)
+                {
+                    API->EnterSceneMutex();
                     source->EndCapture();
+                    API->LeaveSceneMutex();
+                }
             }
             break;
 
@@ -171,8 +176,6 @@ void GraphicsCaptureSource::NewCapture(LPVOID address)
 
 void GraphicsCaptureSource::EndCapture()
 {
-    API->EnterSceneMutex();
-
     capture->Destroy();
     delete capture;
     capture = NULL;
@@ -185,14 +188,17 @@ void GraphicsCaptureSource::EndCapture()
         API->RemoveStreamInfo(warningID);
         warningID = 0;
     }
-
-    API->LeaveSceneMutex();
 }
 
 bool GraphicsCaptureSource::FindSenderWindow()
 {
     if(hwndSender)
-        return true;
+    {
+        if(!IsWindow(hwndSender))
+            hwndSender = NULL;
+        else
+            return true;
+    }
 
     while(hwndSender = FindWindowEx(NULL, hwndSender, SENDER_WINDOWCLASS, NULL))
     {
@@ -343,6 +349,11 @@ void GraphicsCaptureSource::Tick(float fSeconds)
             AttemptCapture();
             captureCheckInterval = 0.0f;
         }
+    }
+    else
+    {
+        if(!FindSenderWindow())
+            EndCapture();
     }
 }
 

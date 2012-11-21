@@ -256,7 +256,7 @@ typedef HRESULT (WINAPI *CREATEDXGIFACTORY1PROC)(REFIID riid, void **ppFactory);
 
 void DoD3D9GPUHook(IDirect3DDevice9 *device)
 {
-    bool bSuccess = false;
+    BOOL bSuccess = false;
 
     HRESULT hErr;
 
@@ -471,7 +471,7 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
         goto finishGPUHook;
     }
 
-    bSuccess = true;
+    bSuccess = IsWindow(hwndReceiver);
 
 finishGPUHook:
 
@@ -496,7 +496,7 @@ DWORD CopyD3D9CPUTextureThread(LPVOID lpUseless);
 
 void DoD3D9CPUHook(IDirect3DDevice9 *device)
 {
-    bool bSuccess = true;
+    BOOL bSuccess = true;
     HRESULT hErr;
     UINT pitch;
 
@@ -579,6 +579,9 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
             bSuccess = false;
         }
     }
+
+    if(bSuccess)
+        bSuccess = IsWindow(hwndReceiver);
 
     if(bSuccess)
     {
@@ -1040,6 +1043,7 @@ void SetupD3D9(IDirect3DDevice9 *device)
         swapChain->Release();
     }
 
+    lastTime = 0;
     OSInitializeTimer();
 }
 

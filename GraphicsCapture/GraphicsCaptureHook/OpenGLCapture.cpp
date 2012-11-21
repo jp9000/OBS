@@ -234,7 +234,7 @@ void DoGLCPUHook(RECT &rc)
 
     DWORD dwSize = glcaptureInfo.cx*glcaptureInfo.cy*4;
 
-    bool bSuccess = true;
+    BOOL bSuccess = true;
     for(UINT i=0; i<NUM_BUFFERS; i++)
     {
         UINT test = 0;
@@ -279,6 +279,9 @@ void DoGLCPUHook(RECT &rc)
     }
 
     if(bSuccess)
+        bSuccess = IsWindow(hwndReceiver);
+
+    if(bSuccess)
     {
         bHasTextures = true;
         glcaptureInfo.captureType = CAPTURETYPE_MEMORY;
@@ -286,7 +289,7 @@ void DoGLCPUHook(RECT &rc)
         glcaptureInfo.pitch = glcaptureInfo.cx*4;
         glcaptureInfo.bFlip = TRUE;
         fps = (DWORD)SendMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&glcaptureInfo);
-        frameTime = 1000000/LONGLONG(fps);
+        frameTime = (fps) ? 1000000/LONGLONG(fps) : 0;
 
         logOutput << "DoGLCPUHook: success, fps = " << fps << ", frameTime = " << frameTime << endl;
 

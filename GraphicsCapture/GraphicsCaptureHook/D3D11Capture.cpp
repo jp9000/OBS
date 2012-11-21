@@ -26,7 +26,6 @@
 
 HookData                gi11swapResizeBuffers;
 HookData                gi11swapPresent;
-//HookData                gi11swapSetFullscreenState;
 FARPROC                 oldD3D11Release = NULL;
 FARPROC                 newD3D11Release = NULL;
 
@@ -50,6 +49,7 @@ HANDLE                  sharedHandles[2] = {NULL, NULL};
 IDXGIKeyedMutex         *keyedMutexes[2] = {NULL, NULL};
 ID3D10Resource          *sharedTextures[2] = {NULL, NULL};
 
+
 extern bool bD3D101Hooked;
 
 void ClearD3D11Data()
@@ -62,6 +62,7 @@ void ClearD3D11Data()
     {
         SafeRelease(keyedMutexes[i]);
         SafeRelease(sharedTextures[i]);
+        sharedHandles[i] = NULL;
     }
 
     SafeRelease(copyTextureGame);
@@ -94,6 +95,7 @@ void SetupD3D11(IDXGISwapChain *swapChain)
         }
     }
 
+    lastTime = 0;
     OSInitializeTimer();
 }
 
@@ -278,73 +280,54 @@ bool DoD3D11Hook(ID3D11Device *device)
     return true;
 }
 
-struct D3D11Override
+UINT STDMETHODCALLTYPE DeviceReleaseHook(ID3D10Device *device)
 {
-    UINT STDMETHODCALLTYPE DeviceReleaseHook()
+    /*device->AddRef();
+    ULONG refVal = (*(RELEASEPROC)oldD3D11Release)(device);*/
+
+    ULONG refVal = (*(RELEASEPROC)oldD3D11Release)(device);
+
+    /*if(bHasTextures)
     {
-        ID3D10Device *device = (ID3D10Device*)this;
-
-        device->AddRef();
-        ULONG refVal = (*(RELEASEPROC)oldD3D11Release)(device);
-
-        if(bHasTextures)
+        if(refVal == 8) //our two textures are holding the reference up, so always clear at 3
         {
-            if(refVal == 8) //our two textures are holding the reference up, so always clear at 3
-            {
-                ClearD3D11Data();
-                lpCurrentDevice = NULL;
-                bTargetAcquired = false;
-            }
-        }
-        else if(refVal == 1)
-        {
+            ClearD3D11Data();
             lpCurrentDevice = NULL;
             bTargetAcquired = false;
         }
-
-        return (*(RELEASEPROC)oldD3D11Release)(device);
     }
-
-    /*HRESULT STDMETHODCALLTYPE SwapSetFullscreenState(BOOL bFullscreen, IDXGIOutput *output)
+    else if(refVal == 1)
     {
-        IDXGISwapChain *swap = (IDXGISwapChain*)this;
-
-        ClearD3D11Data();
-
-        gi11swapSetFullscreenState.Unhook();
-        HRESULT hRes = swap->SetFullscreenState(bFullscreen, output);
-        gi11swapSetFullscreenState.Rehook();
-
-        if(lpCurrentSwap == NULL && !bTargetAcquired)
-        {
-            lpCurrentSwap = swap;
-            bTargetAcquired = true;
-        }
-
-        if(lpCurrentSwap == swap)
-            SetupD3D11(swap);
-
-        return hRes;
+        lpCurrentDevice = NULL;
+        bTargetAcquired = false;
     }*/
 
+    return refVal;
+}
+
+struct D3D11Override
+{
     HRESULT STDMETHODCALLTYPE SwapResizeBuffersHook(UINT bufferCount, UINT width, UINT height, DXGI_FORMAT giFormat, UINT flags)
     {
         IDXGISwapChain *swap = (IDXGISwapChain*)this;
 
         ClearD3D11Data();
+        lpCurrentSwap = NULL;
+        lpCurrentDevice = NULL;
+        bTargetAcquired = false;
 
         gi11swapResizeBuffers.Unhook();
         HRESULT hRes = swap->ResizeBuffers(bufferCount, width, height, giFormat, flags);
         gi11swapResizeBuffers.Rehook();
 
-        if(lpCurrentSwap == NULL && !bTargetAcquired)
+        /*if(lpCurrentSwap == NULL && !bTargetAcquired)
         {
             lpCurrentSwap = swap;
             bTargetAcquired = true;
         }
 
         if(lpCurrentSwap == swap)
-            SetupD3D11(swap);
+            SetupD3D11(swap);*/
 
         return hRes;
     }
@@ -370,13 +353,13 @@ struct D3D11Override
                 {
                     lpCurrentDevice = device;
 
-                    FARPROC curRelease = GetVTable(device, (8/4));
+                    /*FARPROC curRelease = GetVTable(device, (8/4));
                     if(curRelease != newD3D11Release)
                     {
                         oldD3D11Release = curRelease;
-                        newD3D11Release = ConvertClassProcToFarproc((CLASSPROC)&D3D11Override::DeviceReleaseHook);
+                        newD3D11Release = (FARPROC)DeviceReleaseHook;
                         SetVTable(device, (8/4), newD3D11Release);
-                    }
+                    }*/
                 }
 
                 ID3D11DeviceContext *context;
@@ -397,7 +380,7 @@ struct D3D11Override
 
                         if(hwndReceiver)
                         {
-                            bool bSuccess = DoD3D11Hook(device);
+                            BOOL bSuccess = DoD3D11Hook(device);
 
                             if(bSuccess)
                             {
@@ -408,6 +391,9 @@ struct D3D11Override
                                     bSuccess = false;
                                 }
                             }
+
+                            if(bSuccess)
+                                bSuccess = IsWindow(hwndReceiver);
 
                             if(bSuccess)
                             {
@@ -530,7 +516,6 @@ bool InitD3D11Capture()
                 UPARAM *vtable = *(UPARAM**)swap;
                 gi11swapPresent.Hook((FARPROC)*(vtable+(32/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D11Override::SwapPresentHook));
                 gi11swapResizeBuffers.Hook((FARPROC)*(vtable+(52/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D11Override::SwapResizeBuffersHook));
-                //gi11swapSetFullscreenState.Hook((FARPROC)*(vtable+(40/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D11Override::SwapSetFullscreenState));
 
                 SafeRelease(swap);
                 SafeRelease(device);
@@ -538,7 +523,6 @@ bool InitD3D11Capture()
 
                 gi11swapPresent.Rehook();
                 gi11swapResizeBuffers.Rehook();
-                //gi11swapSetFullscreenState.Rehook();
             }
             else
                 logOutput << "InitD3D11Capture: D3D11CreateDeviceAndSwapChain failed, result = " << UINT(hErr) << endl;

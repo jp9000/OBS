@@ -118,6 +118,17 @@ void   WINAPI OSCloseMutex(HANDLE hMutex)
 }
 
 
+void QuickLog(LPCSTR lpText)
+{
+    HANDLE hFile = CreateFile(TEXT("d:\\log.txt"), GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, 0, NULL);
+    DWORD bla;
+    SetFilePointer(hFile, 0, 0, FILE_END);
+    WriteFile(hFile, lpText, strlen(lpText), &bla, NULL);
+    FlushFileBuffers(hFile);
+    CloseHandle(hFile);
+}
+
+
 UINT InitializeSharedMemoryCPUCapture(UINT textureSize, DWORD *totalSize, MemoryCopyData **copyData, LPBYTE *textureBuffers)
 {
     UINT alignedHeaderSize = (sizeof(MemoryCopyData)+15) & 0xFFFFFFF0;

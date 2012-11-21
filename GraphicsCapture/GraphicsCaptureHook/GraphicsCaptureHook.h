@@ -250,3 +250,4 @@ void FreeD3D9ExCapture();
 void FreeD3D101Capture();
 void FreeD3D11Capture();
 
+void QuickLog(LPCSTR lpText);
