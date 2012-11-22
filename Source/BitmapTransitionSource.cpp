@@ -56,12 +56,8 @@ class BitmapTransitionSource : public ImageSource
 public:
     BitmapTransitionSource(XElement *data)
     {
-        traceIn(BitmapTransitionSource::BitmapImageSource);
-
         this->data = data;
         UpdateSettings();
-
-        traceOut;
     }
 
     ~BitmapTransitionSource()
@@ -133,8 +129,6 @@ public:
 
     void Render(const Vect2 &pos, const Vect2 &size)
     {
-        traceIn(BitmapTransitionSource::Render);
-
         if(textures.Num())
         {
             if(bTransitioning && textures.Num() > 1)
@@ -151,14 +145,10 @@ public:
             else
                 DrawBitmap(curTexture, 1.0f, pos, size);
         }
-
-        traceOut;
     }
 
     void UpdateSettings()
     {
-        traceIn(BitmapTransitionSource::UpdateSettings);
-
         for(UINT i=0; i<textures.Num(); i++)
             delete textures[i];
         textures.Clear();
@@ -217,8 +207,6 @@ public:
         curTexture = 0;
         bTransitioning = false;
         curFadeValue = 0.0f;
-
-        traceOut;
     }
 
     Vect2 GetSize() const {return fullSize;}

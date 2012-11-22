@@ -44,8 +44,6 @@ class AACEncoder : public AudioEncoder
 public:
     AACEncoder(UINT bitRate)
     {
-        traceIn(AACEncoder::AACEncoder);
-
         curBitRate = bitRate;
 
         faac = faacEncOpen(44100, 2, &numReadSamples, &outputSize);
@@ -84,23 +82,15 @@ public:
 
         Log(TEXT("------------------------------------------"));
         Log(TEXT("%s"), GetInfoString().Array());
-
-        traceOut;
     }
 
     ~AACEncoder()
     {
-        traceIn(AACEncoder::~AACEncoder);
-
         faacEncClose(faac);
-
-        traceOut;
     }
 
     bool Encode(float *input, UINT numInputFrames, DataPacket &packet, DWORD &timestamp)
     {
-        traceIn(AACEncoder::Encode);
-
         if(bFirstFrame)
         {
             curEncodeTimestamp = timestamp;
@@ -169,8 +159,6 @@ public:
         }
 
         return ret > 0;
-
-        traceOut;
     }
 
     UINT GetFrameSize() const

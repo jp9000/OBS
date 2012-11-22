@@ -67,8 +67,6 @@ public:
 
     ~MMDeviceAudioSource()
     {
-        traceIn(MMDeviceAudioSource::~MMDeviceAudioSource);
-
         StopCapture();
 
         SafeRelease(mmCapture);
@@ -78,8 +76,6 @@ public:
 
         if(bResample)
             src_delete(resampler);
-
-        traceOut;
     }
 
     virtual void StartCapture();
@@ -109,8 +105,6 @@ AudioSource* CreateAudioSource(bool bMic, CTSTR lpID)
 
 bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
 {
-    traceIn(MMDeviceAudioSource::Initialize);
-
     const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
     const IID IID_IMMDeviceEnumerator    = __uuidof(IMMDeviceEnumerator);
     const IID IID_IAudioClient           = __uuidof(IAudioClient);
@@ -265,28 +259,18 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
     }
 
     return true;
-
-    traceOut;
 }
 
 void MMDeviceAudioSource::StartCapture()
 {
-    traceIn(MMDeviceAudioSource::StartCapture);
-
     if(mmClient)
         mmClient->Start();
-
-    traceOut;
 }
 
 void MMDeviceAudioSource::StopCapture()
 {
-    traceIn(MMDeviceAudioSource::StopCapture);
-
     if(mmClient)
         mmClient->Stop();
-
-    traceOut;
 }
 
 String MMDeviceAudioSource::GetDeviceName()
@@ -323,8 +307,6 @@ const float lowFreqMix  = 3.16227766f*dbMinus3;
 
 UINT MMDeviceAudioSource::GetNextBuffer()
 {
-    traceIn(MMDeviceAudioSource::GetBuffer);
-
     if(bClearSegment)
     {
         receiveBuffer.RemoveRange(0, (441*2));
@@ -633,8 +615,6 @@ UINT MMDeviceAudioSource::GetNextBuffer()
     }
 
     return NoAudioAvailable;
-
-    traceOut;
 }
 
 bool MMDeviceAudioSource::GetBuffer(float **buffer, UINT *numFrames, DWORD &timestamp)

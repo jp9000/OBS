@@ -1406,8 +1406,6 @@ ImageSource* STDCALL CreateDShowSource(XElement *data)
 
 bool LoadPlugin()
 {
-    traceIn(DShowPluginLoadPlugin);
-
     InitColorControl(hinstMain);
 
     pluginLocale = new LocaleStringLookup;
@@ -1426,8 +1424,6 @@ bool LoadPlugin()
     API->RegisterImageSourceClass(DSHOW_CLASSNAME, PluginStr("ClassName"), (OBSCREATEPROC)CreateDShowSource, (OBSCONFIGPROC)ConfigureDShowSource);
 
     return true;
-
-    traceOut;
 }
 
 void UnloadPlugin()

@@ -54,8 +54,6 @@ void LogVideoCardStats()
 
 D3D10System::D3D10System()
 {
-    traceIn(D3D10System::D3D10System);
-
     HRESULT err;
 
     IDXGIFactory1 *factory;
@@ -176,8 +174,6 @@ D3D10System::D3D10System()
 
     this->BlendFunction(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA, 1.0f);
     bBlendingEnabled = true;
-
-    traceOut;
 }
 
 D3D10System::~D3D10System()
@@ -237,8 +233,6 @@ LPVOID D3D10System::GetDevice()
 
 void D3D10System::Init()
 {
-    traceIn(D3D10System::Init);
-
     VBData *data = new VBData;
     data->UVList.SetSize(1);
 
@@ -256,8 +250,6 @@ void D3D10System::Init()
     //------------------------------------------------------------------
 
     GraphicsSystem::Init();
-
-    traceOut;
 }
 
 
@@ -747,8 +739,6 @@ void D3D10System::ResetViewMatrix()
 
 void D3D10System::ResizeView()
 {
-    traceIn(D3D10System::ResizeView);
-
     LPVOID nullVal = NULL;
     d3d->OMSetRenderTargets(1, (ID3D10RenderTargetView**)&nullVal, NULL);
 
@@ -766,7 +756,5 @@ void D3D10System::ResizeView()
         CrashError(TEXT("Unable to get render view from back buffer"));
 
     backBuffer->Release();
-
-    traceOut;
 }
 

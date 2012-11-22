@@ -53,8 +53,6 @@ class MP3Encoder : public AudioEncoder
 public:
     MP3Encoder(UINT bitRate)
     {
-        traceIn(MP3Encoder::MP3Encoder);
-
         curBitRate = bitRate;
 
         lgf = lame_init();
@@ -79,23 +77,15 @@ public:
 
         Log(TEXT("------------------------------------------"));
         Log(TEXT("%s"), GetInfoString().Array());
-
-        traceOut;
     }
 
     ~MP3Encoder()
     {
-        traceIn(MP3Encoder::~MP3Encoder);
-
         lame_close(lgf);
-
-        traceOut;
     }
 
     bool Encode(float *input, UINT numInputFrames, DataPacket &packet, DWORD &timestamp)
     {
-        traceIn(MP3Encoder::Encode);
-
         if(bFirstFrame)
         {
             curEncodeTimestamp = timestamp;
@@ -145,8 +135,6 @@ public:
         }
 
         return ret > 0;
-
-        traceOut;
     }
 
     UINT GetFrameSize() const

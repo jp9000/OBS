@@ -22,8 +22,6 @@
 
 VertexBuffer* D3D10VertexBuffer::CreateVertexBuffer(VBData *vbData, BOOL bStatic)
 {
-    traceIn(D3D10VertexBuffer::CreateVertexBuffer);
-
     if(!vbData)
     {
         AppWarning(TEXT("D3D10VertexBuffer::CreateVertexBuffer: vbData NULL"));
@@ -147,8 +145,6 @@ VertexBuffer* D3D10VertexBuffer::CreateVertexBuffer(VBData *vbData, BOOL bStatic
         buf->data = vbData;
 
     return buf;
-
-    traceOut;
 }
 
 

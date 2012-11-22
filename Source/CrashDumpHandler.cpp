@@ -32,40 +32,52 @@ BOOL CALLBACK EnumerateLoadedModulesProcInfo (PCTSTR ModuleName, DWORD64 ModuleB
     return TRUE;
 }
 
+BOOL CALLBACK RecordAllLoadedModules (PCTSTR ModuleName, DWORD64 ModuleBase, ULONG ModuleSize, PVOID UserContext)
+{
+    String &str = *(String*)UserContext;
+
+#ifdef _WIN64
+    str << FormattedString(TEXT("%016I64X-%016I64X %s\r\n"), ModuleBase, ModuleBase+ModuleSize, ModuleName);
+#else
+    str << FormattedString(TEXT("%08.8I64X-%08.8I64X %s\r\n"), ModuleBase, ModuleBase+ModuleSize, ModuleName);
+#endif
+    return TRUE;
+}
+
 LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
 {
-    HANDLE    hProcess;
+    HANDLE  hProcess;
 
-    HMODULE    hDbgHelp;
+    HMODULE hDbgHelp;
 
     MINIDUMP_EXCEPTION_INFORMATION miniInfo;
 
-    STACKFRAME64    frame = {0};
-    CONTEXT            context = *exceptionInfo->ContextRecord;
-    SYMBOL_INFO        *symInfo;
-    DWORD64            fnOffset;
-    TCHAR            logPath[MAX_PATH];
-    TCHAR            dumpPath[MAX_PATH];
-    OSVERSIONINFOEX    osInfo;
-    SYSTEMTIME        timeInfo;
+    STACKFRAME64        frame = {0};
+    CONTEXT             context = *exceptionInfo->ContextRecord;
+    SYMBOL_INFO         *symInfo;
+    DWORD64             fnOffset;
+    TCHAR               logPath[MAX_PATH];
+    TCHAR               dumpPath[MAX_PATH];
+    OSVERSIONINFOEX     osInfo;
+    SYSTEMTIME          timeInfo;
 
     ENUMERATELOADEDMODULES64    fnEnumerateLoadedModules64;
-    SYMSETOPTIONS                fnSymSetOptions;
-    SYMINITIALIZE                fnSymInitialize;
-    STACKWALK64                    fnStackWalk64;
+    SYMSETOPTIONS               fnSymSetOptions;
+    SYMINITIALIZE               fnSymInitialize;
+    STACKWALK64                 fnStackWalk64;
     SYMFUNCTIONTABLEACCESS64    fnSymFunctionTableAccess64;
-    SYMGETMODULEBASE64            fnSymGetModuleBase64;
-    SYMFROMADDR                    fnSymFromAddr;
-    SYMCLEANUP                    fnSymCleanup;
-    MINIDUMPWRITEDUMP            fnMiniDumpWriteDump;
-    SYMGETMODULEINFO64            fnSymGetModuleInfo64;
+    SYMGETMODULEBASE64          fnSymGetModuleBase64;
+    SYMFROMADDR                 fnSymFromAddr;
+    SYMCLEANUP                  fnSymCleanup;
+    MINIDUMPWRITEDUMP           fnMiniDumpWriteDump;
+    SYMGETMODULEINFO64          fnSymGetModuleInfo64;
 
-    DWORD                        i;
-    DWORD64                        InstructionPtr;
+    DWORD                       i;
+    DWORD64                     InstructionPtr;
 
     BOOL                        wantUpload = TRUE;
 
-    TCHAR                        searchPath[MAX_PATH], *p;
+    TCHAR                       searchPath[MAX_PATH], *p;
 
     static BOOL                 inExceptionHandler = FALSE;
 
@@ -196,7 +208,11 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
     crashDumpLog.WriteStr(FormattedString(TEXT("Windows version: %d.%d (Build %d) %s\r\n\r\n"), osInfo.dwMajorVersion, osInfo.dwMinorVersion, osInfo.dwBuildNumber, osInfo.szCSDVersion));
 
     crashDumpLog.WriteStr(TEXT("Crashing thread stack trace:\r\n"));
+#ifdef _WIN64
+    crashDumpLog.WriteStr(TEXT("Stack            EIP              Arg0             Arg1             Arg2             Arg3             Address\r\n"));
+#else
     crashDumpLog.WriteStr(TEXT("Stack    EIP      Arg0     Arg1     Arg2     Arg3     Address\r\n"));
+#endif
     crashDumpLog.FlushFileBuffers();
 
     while (fnStackWalk64 (IMAGE_FILE_MACHINE_I386, hProcess, GetCurrentThread(), &frame, &context, NULL, (PFUNCTION_TABLE_ACCESS_ROUTINE64)fnSymFunctionTableAccess64, (PGET_MODULE_BASE_ROUTINE64)fnSymGetModuleBase64, NULL))
@@ -215,7 +231,7 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
 #ifdef _WIN64
         if (fnSymFromAddr (hProcess, frame.AddrPC.Offset, &fnOffset, symInfo) && !(symInfo->Flags & SYMFLAG_EXPORT))
         {
-            crashDumpLog.WriteStr(FormattedString(TEXT("%16I64X %16I64X %16I64X %16I64X %16I64X %16I64X %s!%s+0x%I64x\r\n"),
+            crashDumpLog.WriteStr(FormattedString(TEXT("%016I64X %016I64X %016I64X %016I64X %016I64X %016I64X %s!%s+0x%I64x\r\n"),
                 frame.AddrStack.Offset,
                 frame.AddrPC.Offset,
                 frame.Params[0],
@@ -228,7 +244,7 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
         }
         else
         {
-            crashDumpLog.WriteStr(FormattedString(TEXT("%16I64X %16I64X %16I64X %16I64X %16I64X %16I64X %s!0x%I64x\r\n"),
+            crashDumpLog.WriteStr(FormattedString(TEXT("%016I64X %016I64X %016I64X %016I64X %016I64X %016I64X %s!0x%I64x\r\n"),
                 frame.AddrStack.Offset,
                 frame.AddrPC.Offset,
                 frame.Params[0],
@@ -299,6 +315,16 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
     {
         crashDumpLog.WriteStr(TEXT("\r\nA minidump could not be created. Please check dbghelp.dll is present.\r\n"));
     }
+
+    String strModuleInfo;
+    crashDumpLog.WriteStr("\r\nList of loaded modules:\r\n");
+#ifdef _WIN64
+    crashDumpLog.WriteStr("Base Address                      Module\r\n");
+#else
+    crashDumpLog.WriteStr("Base Address      Module\r\n");
+#endif
+    fnEnumerateLoadedModules64(hProcess, (PENUMLOADED_MODULES_CALLBACK64)RecordAllLoadedModules, (VOID *)&strModuleInfo);
+    crashDumpLog.WriteStr(strModuleInfo);
 
     crashDumpLog.Close();
 

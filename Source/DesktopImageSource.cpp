@@ -51,8 +51,6 @@ class DesktopImageSource : public ImageSource
 public:
     DesktopImageSource(UINT frameTime, XElement *data)
     {
-        traceIn(DesktopImageSource::DesktopImageSource);
-
         this->data = data;
         UpdateSettings();
 
@@ -61,16 +59,10 @@ public:
 
         colorKeyShader      = CreatePixelShaderFromFile(TEXT("shaders\\ColorKey_RGB.pShader"));
         alphaIgnoreShader   = CreatePixelShaderFromFile(TEXT("shaders\\AlphaIgnore.pShader"));
-
-        //-------------------------------------------------------
-
-        traceOut;
     }
 
     ~DesktopImageSource()
     {
-        traceIn(DesktopImageSource::~DesktopImageSource);
-
         for(int i=0; i<NUM_CAPTURE_TEXTURES; i++)
             delete renderTextures[i];
 
@@ -79,14 +71,10 @@ public:
 
         delete alphaIgnoreShader;
         delete colorKeyShader;
-
-        traceOut;
     }
 
     void Preprocess()
     {
-        traceIn(DesktopImageSource::Preprocess);
-
         Texture *captureTexture = renderTextures[curCaptureTexture];
 
         HDC hDC;
@@ -234,14 +222,10 @@ public:
 
         if(++curCaptureTexture == NUM_CAPTURE_TEXTURES)
             curCaptureTexture = 0;
-
-        traceOut;
     }
 
     void Render(const Vect2 &pos, const Vect2 &size)
     {
-        traceIn(DesktopImageSource::Render);
-
         if(lastRendered)
         {
             Shader *lastPixelShader = GetCurrentPixelShader();
@@ -270,8 +254,6 @@ public:
 
             LoadPixelShader(lastPixelShader);
         }
-
-        traceOut;
     }
 
     Vect2 GetSize() const

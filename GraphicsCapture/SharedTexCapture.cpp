@@ -23,12 +23,12 @@
 void SharedTexCapture::Destroy()
 {
     for(UINT i=0; i<2; i++)
+    {
         delete sharedTextures[i];
+        sharedTextures[i] = NULL;
+    }
 
     bInitialized = false;
-
-    if(hMemoryMutex)
-        OSEnterMutex(hMemoryMutex);
 
     texData = NULL;
 
@@ -37,12 +37,6 @@ void SharedTexCapture::Destroy()
 
     if(hFileMap)
         CloseHandle(hFileMap);
-
-    if(hMemoryMutex)
-    {
-        OSLeaveMutex(hMemoryMutex);
-        OSCloseMutex(hMemoryMutex);
-    }
 }
 
 bool SharedTexCapture::Init(HANDLE hProcess, HWND hwndTarget, CaptureInfo &info)
@@ -64,13 +58,6 @@ bool SharedTexCapture::Init(HANDLE hProcess, HWND hwndTarget, CaptureInfo &info)
     if(!sharedMemory)
     {
         AppWarning(TEXT("SharedTexCapture::Init: Could not map view of file"));
-        return false;
-    }
-
-    hMemoryMutex = OSCreateMutex();
-    if(!hMemoryMutex)
-    {
-        AppWarning(TEXT("SharedTexCapture::Init: Could not create memory mutex"));
         return false;
     }
 

@@ -313,8 +313,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     if(InitXT(NULL, TEXT("FastAlloc")))
     {
-        traceIn(Main);
-
         InitSockets();
         //CoInitializeEx(NULL, COINIT_MULTITHREADED);
         CoInitialize(0);
@@ -454,8 +452,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             DwmEnableComposition(DWM_EC_ENABLECOMPOSITION);
 
         TerminateSockets();
-
-        traceOutStop;
     }
 
     Gdiplus::GdiplusShutdown(gdipToken);

@@ -21,8 +21,6 @@
 
 void Convert444to420(LPBYTE input, int width, int pitch, int height, int startY, int endY, LPBYTE *output, bool bSSE2Available)
 {
-    traceIn(Convert444to420);
-
     LPBYTE lumPlane     = output[0];
     LPBYTE uPlane       = output[1];
     LPBYTE vPlane       = output[2];
@@ -138,7 +136,5 @@ void Convert444to420(LPBYTE input, int width, int pitch, int height, int startY,
         }
 #endif
     }
-
-    traceOut;
 }
 

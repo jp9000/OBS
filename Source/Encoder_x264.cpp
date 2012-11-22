@@ -82,8 +82,6 @@ class X264Encoder : public VideoEncoder
 public:
     X264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize)
     {
-        traceIn(X264Encoder::X264Encoder);
-
         fps_ms = 1000/fps;
 
         zero(&paramData, sizeof(paramData));
@@ -177,24 +175,16 @@ public:
 
         DataPacket packet;
         GetHeaders(packet);
-
-        traceOut;
     }
 
     ~X264Encoder()
     {
-        traceIn(X264Encoder::~X264Encoder);
-
         ClearPackets();
         x264_encoder_close(x264);
-
-        traceOut;
     }
 
     bool Encode(LPVOID picInPtr, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp)
     {
-        traceIn(X264Encoder::Encode);
-
         x264_picture_t *picIn = (x264_picture_t*)picInPtr;
 
         x264_nal_t *nalOut;
@@ -301,14 +291,10 @@ public:
         }
 
         return true;
-
-        traceOut;
     }
 
     void GetHeaders(DataPacket &packet)
     {
-        traceIn(X264Encoder::GetHeaders);
-
         if(!HeaderPacket.Num())
         {
             x264_nal_t *nalOut;
@@ -347,18 +333,12 @@ public:
 
         packet.lpPacket = HeaderPacket.Array();
         packet.size     = HeaderPacket.Num();
-
-        traceOut;
     }
 
     void GetSEI(DataPacket &packet)
     {
-        traceIn(X264Encoder::GetHeaders);
-
         packet.lpPacket = SEIPacket.Array();
         packet.size     = SEIPacket.Num();
-
-        traceOut;
     }
 
     int GetBitRate() const {return paramData.rc.i_vbv_max_bitrate;}

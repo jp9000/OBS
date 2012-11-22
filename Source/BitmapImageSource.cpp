@@ -70,12 +70,8 @@ class BitmapImageSource : public ImageSource
 public:
     BitmapImageSource(XElement *data)
     {
-        //traceIn(BitmapImageSource::BitmapImageSource);
-
         this->data = data;
         UpdateSettings();
-
-        //traceOut;
     }
 
     ~BitmapImageSource()
@@ -126,22 +122,16 @@ public:
 
     void Render(const Vect2 &pos, const Vect2 &size)
     {
-        //traceIn(BitmapImageSource::Render);
-
         if(texture)
         {
             DWORD alpha = DWORD(double(opacity)*2.55);
             DWORD outputColor = (alpha << 24) | color&0xFFFFFF;
             DrawSprite(texture, outputColor, pos.x, pos.y, pos.x+size.x, pos.y+size.y);
         }
-
-        //traceOut;
     }
 
     void UpdateSettings()
     {
-        //traceIn(BitmapImageSource::UpdateSettings);
-
         if(bIsAnimatedGif)
         {
             bIsAnimatedGif = false;
@@ -244,10 +234,6 @@ public:
             opacity = 100;
         else if(opacity < 0)
             opacity = 0;
-
-        //------------------------------------
-
-        //traceOut;
     }
 
     Vect2 GetSize() const {return fullSize;}

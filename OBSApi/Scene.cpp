@@ -117,18 +117,12 @@ void SceneItem::MoveToBottom()
 
 Scene::~Scene()
 {
-    traceIn(Scene::~Scene);
-
     for(UINT i=0; i<sceneItems.Num(); i++)
         delete sceneItems[i];
-
-    traceOut;
 }
 
 SceneItem* Scene::AddImageSource(XElement *sourceElement)
 {
-    traceIn(Scene::AddImageSource);
-
     if(GetSceneItem(sourceElement->GetName()) != NULL)
     {
         AppWarning(TEXT("Scene source '%s' already in scene.  actually, no one should get this error.  if you do send it to jim immidiately."), sourceElement->GetName());
@@ -168,20 +162,14 @@ SceneItem* Scene::AddImageSource(XElement *sourceElement)
         bMissingSources = true;
 
     return item;
-
-    traceOut;
 }
 
 void Scene::RemoveImageSource(SceneItem *item)
 {
-    traceIn(Scene::RemoveImageSource);
-
     if(bSceneStarted) item->source->EndScene();
     item->GetElement()->GetParent()->RemoveElement(item->GetElement());
     sceneItems.RemoveItem(item);
     delete item;
-
-    traceOut;
 }
 
 void Scene::RemoveImageSource(CTSTR lpName)
@@ -198,36 +186,26 @@ void Scene::RemoveImageSource(CTSTR lpName)
 
 void Scene::Preprocess()
 {
-    traceIn(Scene::Preprocess);
-
     for(UINT i=0; i<sceneItems.Num(); i++)
     {
         SceneItem *item = sceneItems[i];
         if(item->source)
             item->source->Preprocess();
     }
-
-    traceOut;
 }
 
 void Scene::Tick(float fSeconds)
 {
-    traceIn(Scene::Tick);
-
     for(UINT i=0; i<sceneItems.Num(); i++)
     {
         SceneItem *item = sceneItems[i];
         if(item->source)
             item->source->Tick(fSeconds);
     }
-
-    traceOut;
 }
 
 void Scene::Render()
 {
-    traceIn(Scene::Render);
-
     GS->ClearColorBuffer();
 
     for(UINT i=0; i<sceneItems.Num(); i++)
@@ -236,14 +214,10 @@ void Scene::Render()
         if(item->source)
             item->source->Render(item->pos, item->size);
     }
-
-    traceOut;
 }
 
 void Scene::RenderSelections()
 {
-    traceIn(Scene::RenderSelections);
-
     for(UINT i=0; i<sceneItems.Num(); i++)
     {
         SceneItem *item = sceneItems[i];
@@ -265,14 +239,10 @@ void Scene::RenderSelections()
             DrawBox(pos, size);
         }
     }
-
-    traceOut;
 }
 
 void Scene::BeginScene()
 {
-    traceIn(Scene::BeginScene);
-
     if(bSceneStarted)
         return;
 
@@ -284,14 +254,10 @@ void Scene::BeginScene()
     }
 
     bSceneStarted = true;
-
-    traceOut;
 }
 
 void Scene::EndScene()
 {
-    traceIn(Scene::EndScene);
-
     if(!bSceneStarted)
         return;
 
@@ -303,6 +269,4 @@ void Scene::EndScene()
     }
 
     bSceneStarted = false;
-
-    traceOut;
 }

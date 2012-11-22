@@ -435,8 +435,6 @@ public:
 
 OBS::OBS()
 {
-    traceIn(OBS::OBS);
-
     App = this;
 
     __cpuid(cpuInfo, 1);
@@ -851,15 +849,11 @@ OBS::OBS()
     hHotkeyThread = OSCreateThread((XTHREAD)HotkeyThread, NULL);
     
     bRenderViewEnabled = true;
-
-    traceOut;
 }
 
 
 OBS::~OBS()
 {
-    traceIn(OBS::~OBS);
-
     Stop();
 
     bShuttingDown = true;
@@ -910,20 +904,14 @@ OBS::~OBS()
         OSCloseMutex(hInfoMutex);
     if(hHotkeyMutex)
         OSCloseMutex(hHotkeyMutex);
-
-    traceOut;
 }
 
 void OBS::ToggleCapturing()
 {
-    traceIn(OBS::ToggleCapturing);
-
     if(!bRunning)
         Start();
     else
         Stop();
-
-    traceOut;
 }
 
 void STDCALL SceneHotkey(DWORD hotkey, UPARAM param, bool bDown)
@@ -1050,8 +1038,6 @@ HFONT OBS::GetFont(CTSTR lpFontFace, int fontSize, int fontWeight)
 
 ID3D10Blob* CompileShader(CTSTR lpShader, LPCSTR lpTarget)
 {
-    traceIn(CompileShader);
-
     ID3D10Blob *errorMessages = NULL, *shaderBlob = NULL;
 
     HRESULT err = D3DX10CompileFromFile(lpShader, NULL, NULL, "main", lpTarget, D3D10_SHADER_OPTIMIZATION_LEVEL3, 0, NULL, &shaderBlob, &errorMessages, NULL);
@@ -1072,14 +1058,10 @@ ID3D10Blob* CompileShader(CTSTR lpShader, LPCSTR lpTarget)
     }
 
     return shaderBlob;
-
-    traceOut;
 }
 
 void OBS::Start()
 {
-    traceIn(OBS::Start);
-
     if(bRunning) return;
 
     //-------------------------------------------------------------
@@ -1403,8 +1385,6 @@ void OBS::Start()
     //-------------------------------------------------------------
 
     SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, 0, 0, 0);
-
-    traceOut;
 }
 
 StatusBarDrawData statusBarData;
@@ -1542,8 +1522,6 @@ void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
 
 void OBS::Stop()
 {
-    traceIn(OBS::Stop);
-
     if(!bRunning) return;
 
     bRunning = false;
@@ -1712,8 +1690,6 @@ void OBS::Stop()
     SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, 1, 0, 0);
 
     bTestStream = false;
-
-    traceOut;
 }
 
 inline void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
@@ -1776,8 +1752,6 @@ DWORD STDCALL Convert444Thread(Convert444Data *data)
 
 void OBS::MainCaptureLoop()
 {
-    traceIn(OBS::MainCaptureLoop);
-
     int curRenderTarget = 0, curYUVTexture = 0, curCopyTexture = 0;
     int copyWait = NUM_RENDER_BUFFERS-1;
     UINT curStreamTime = 0, firstFrameTime = OSGetTime(), lastStreamTime = 0;
@@ -2410,8 +2384,6 @@ void OBS::MainCaptureLoop()
     Free(convertInfo);
 
     Log(TEXT("Total frames rendered: %d, number of frames that lagged: %d (%0.2f%%) (it's okay for some frames to lag)"), numTotalFrames, numLongFrames, (double(numLongFrames)/double(numTotalFrames))*100.0);
-
-    traceOutStop;
 }
 
 //only get audio if all audio sources have 441 frames pending
@@ -2435,8 +2407,6 @@ bool OBS::QueryNewAudio()
 
 void OBS::MainAudioLoop()
 {
-    traceIn(OBS::MainAudioLoop);
-
     bPushToTalkOn = false;
 
     UINT curAudioFrame = 0;
@@ -2590,8 +2560,6 @@ void OBS::MainAudioLoop()
 
     for(UINT i=0; i<pendingAudioFrames.Num(); i++)
         pendingAudioFrames[i].audioData.Clear();
-
-    traceOutStop;
 }
 
 void OBS::SelectSources()

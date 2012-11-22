@@ -36,18 +36,12 @@ XFile::XFile()
 
 XFile::XFile(CTSTR lpFile, DWORD dwAccess, DWORD dwCreationDisposition)
 {
-    traceInFast(XFile::XFile);
-
     assert(lpFile);
     Open(lpFile, dwAccess, dwCreationDisposition);
-
-    traceOutFast;
 }
 
 BOOL XFile::Open(CTSTR lpFile, DWORD dwAccess, DWORD dwCreationDisposition)
 {
-    traceInFast(XFile::Open);
-
     qwPos = 0;
 
     DWORD dwFileAccess = 0;
@@ -70,8 +64,6 @@ BOOL XFile::Open(CTSTR lpFile, DWORD dwAccess, DWORD dwCreationDisposition)
     if((hFile = CreateFile(lpFile, dwFileAccess, dwShareAccess, NULL, dwCreationDisposition, 0, NULL)) == INVALID_HANDLE_VALUE)
         return 0;
     return 1;
-
-    traceOutFast;
 }
 
 BOOL XFile::IsOpen()
@@ -81,8 +73,6 @@ BOOL XFile::IsOpen()
 
 DWORD XFile::Read(LPVOID lpBuffer, DWORD dwBytes)
 {
-    traceInFast(XFile::Read);
-
     DWORD dwRet;
 
     assert(lpBuffer);
@@ -95,14 +85,10 @@ DWORD XFile::Read(LPVOID lpBuffer, DWORD dwBytes)
 
     ReadFile(hFile, lpBuffer, dwBytes, &dwRet, NULL);
     return dwRet;
-
-    traceOutFast;
 }
 
 DWORD XFile::Write(const void *lpBuffer, DWORD dwBytes)
 {
-    traceInFast(XFile::Write);
-
     DWORD dwRet;
 
     assert(lpBuffer);
@@ -117,14 +103,10 @@ DWORD XFile::Write(const void *lpBuffer, DWORD dwBytes)
         bHasWritten = TRUE;
 
     return dwRet;
-
-    traceOutFast;
 }
 
 DWORD XFile::WriteStr(CWSTR lpBuffer)
 {
-    traceInFast(XFile::WriteStr);
-
     assert(lpBuffer);
 
     if(!hFile) return XFILE_ERROR;
@@ -136,8 +118,6 @@ DWORD XFile::WriteStr(CWSTR lpBuffer)
     DWORD retVal = Write(lpDest, dwBytes);
 
     return retVal;
-
-    traceOutFast;
 }
 
 void XFile::FlushFileBuffers()
@@ -147,8 +127,6 @@ void XFile::FlushFileBuffers()
 
 DWORD XFile::WriteStr(LPCSTR lpBuffer)
 {
-    traceInFast(XFile::WriteStr);
-
     assert(lpBuffer);
 
     if(!hFile) return XFILE_ERROR;
@@ -156,14 +134,10 @@ DWORD XFile::WriteStr(LPCSTR lpBuffer)
     DWORD dwElements = (DWORD)strlen(lpBuffer);
 
     return Write(lpBuffer, dwElements);
-
-    traceOutFast;
 }
 
 DWORD XFile::WriteAsUTF8(CTSTR lpBuffer, DWORD dwElements)
 {
-    traceInFast(XFile::WriteAsUTF8);
-
     if(!lpBuffer)
         return 0;
 
@@ -183,14 +157,10 @@ DWORD XFile::WriteAsUTF8(CTSTR lpBuffer, DWORD dwElements)
 #endif
 
     return retVal;
-
-    traceOutFast;
 }
 
 BOOL XFile::SetFileSize(DWORD dwSize)
 {
-    traceInFast(XFile::SetFileSize);
-
     assert(hFile != INVALID_HANDLE_VALUE);
 
     if(!hFile) return 0;
@@ -200,26 +170,18 @@ BOOL XFile::SetFileSize(DWORD dwSize)
 
     SetPos(dwSize, XFILE_BEGIN);
     return SetEndOfFile(hFile);
-
-    traceOutFast;
 }
 
 QWORD XFile::GetFileSize() const
 {
-    traceInFast(XFile::GetFileSize);
-
     UINT64 size = 0;
     size |= ::GetFileSize(hFile, (DWORD*)(((BYTE*)&size)+4));
 
     return size;
-
-    traceOutFast;
 }
 
 UINT64 XFile::SetPos(INT64 iPos, DWORD dwMoveMethod)  //uses the SetFilePointer 4th parameter flags
 {
-    traceInFast(XFile::SetPos);
-
     assert(hFile != INVALID_HANDLE_VALUE);
 
     if(!hFile) return 0;
@@ -248,14 +210,10 @@ UINT64 XFile::SetPos(INT64 iPos, DWORD dwMoveMethod)  //uses the SetFilePointer 
     largeInt.lowVal = newPosLow;
 
     return largeInt.largeVal;
-
-    traceOutFast;
 }
 
 void XFile::Close()
 {
-    traceInFast(XFile::Close);
-
     if(hFile != INVALID_HANDLE_VALUE)
     {
         if(bHasWritten)
@@ -263,8 +221,6 @@ void XFile::Close()
         CloseHandle(hFile);
         hFile = INVALID_HANDLE_VALUE;
     }
-
-    traceOutFast;
 }
 
 String GetPathFileName(CTSTR lpPath, BOOL bExtension)

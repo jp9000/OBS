@@ -37,8 +37,6 @@ void rtmp_log_output(int level, const char *format, va_list vl)
 
 RTMPPublisher::RTMPPublisher(RTMP *rtmpIn, BOOL bUseSendBuffer, UINT sendBufferSize)
 {
-    //traceIn(RTMPPublisher::RTMPPublisher);
-
     rtmp = rtmpIn;
 
     sendBuffer.SetSize(sendBufferSize);
@@ -75,13 +73,11 @@ RTMPPublisher::RTMPPublisher(RTMP *rtmpIn, BOOL bUseSendBuffer, UINT sendBufferS
     bufferSize = (UINT)AppConfig->GetInt(TEXT("Video Encoding"), TEXT("BufferSize"), 1000);
     bufferTime = (UINT)(min(1.0, float(bufferSize)/float(maxBitRate))*1000);
 
-    //traceOut;
+    maxBitRate += (UINT)AppConfig->GetInt(TEXT("Audio Encoding"), TEXT("Bitrate"), 96);
 }
 
 RTMPPublisher::~RTMPPublisher()
 {
-    //traceIn(RTMPPublisher::~RTMPPublisher);
-
     bStopping = true;
     ReleaseSemaphore(hSendSempahore, 1, NULL);
     OSTerminateThread(hSendThread, 20000);
@@ -108,8 +104,6 @@ RTMPPublisher::~RTMPPublisher()
         RTMP_Close(rtmp);
         RTMP_Free(rtmp);
     }
-
-    //traceOut;
 }
 
 UINT RTMPPublisher::BitsPerTime(List<BitRecord> *list)
@@ -143,8 +137,6 @@ void RTMPPublisher::AddBits(List<BitRecord> *list, UINT bits, DWORD timestamp)
 
 void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)
 {
-    //traceIn(RTMPPublisher::SendPacket);
-
     if(!bStopping)
     {
         List<BYTE> paddedData;
@@ -187,16 +179,16 @@ void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketTyp
             netPacket.timestamp = timestamp;
             netPacket.data.TransferFrom(paddedData);
 
-            bitsQueued += netPacket.data.Num()*8;
+            UINT maxVidyaPackets = App->GetFPS()/12;
+            UINT bitrateThreshold = maxBitRate/3;
 
-            UINT maxVidyaPackets = App->GetFPS()/10;
-
-            //begin dumping b frames if there's signs of lag
-            if (bitsQueued > sendBuffer.Num()*8 &&
-                bitsQueued > bitsInPerTime &&
-                numVideoPackets > maxVidyaPackets)
+            //begin dumping b frames if there's signs of lag.  also, holy clusterf***
+            if (bitsQueued > bitsInPerTime          &&  //<- indications of possible lag
+                bitsQueued > sendBuffer.Num()*8     &&  //<- make sure to account for the send buffer size
+                numVideoPackets > maxVidyaPackets   &&  //<- a check to make sure we actually have video frames in queue
+                bitsOutPerTime > bitrateThreshold)      //<- make sure that drops only happen in the upper levels of their bitrate
             {
-                if(bitsInPerTime > bitsOutPerTime)
+                if (bitsInPerTime > bitsOutPerTime)
                 {
                     if(!bPacketDumpMode)
                     {
@@ -211,9 +203,11 @@ void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketTyp
                 }
 
                 //begin dumping p frames if b frames aren't enough
-                if (bitsInPerTime > bitsOutPerTime*13/10 && numVideoPacketsBuffered) // TODO: Tweak this
+                if (bitsInPerTime > bitsOutPerTime*14/10 && numVideoPacketsBuffered) // TODO: Tweak this
                     DoIFrameDelay();
             }
+
+            bitsQueued += netPacket.data.Num()*8;
 
             //-----------------
 
@@ -249,14 +243,10 @@ void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketTyp
                 App->PostStopMessage();
         }*/
     }
-
-    //traceOut;
 }
 
 void RTMPPublisher::BeginPublishing()
 {
-    //traceIn(RTMPPublisher::BeginPublishing);
-
     RTMPPacket packet;
 
     char pbuf[2048], *pend = pbuf+sizeof(pbuf);
@@ -322,8 +312,6 @@ void RTMPPublisher::BeginPublishing()
         App->PostStopMessage();
         return;
     }
-
-    //traceOut;
 }
 
 double RTMPPublisher::GetPacketStrain() const
@@ -349,8 +337,6 @@ DWORD RTMPPublisher::NumDroppedFrames() const
 
 void RTMPPublisher::SendLoop()
 {
-    //traceIn(RTMPPublisher::SendLoop);
-
     while(WaitForSingleObject(hSendSempahore, INFINITE) == WAIT_OBJECT_0 && !bStopping && RTMP_IsConnected(rtmp))
     {
         /*//--------------------------------------------
@@ -447,8 +433,6 @@ void RTMPPublisher::SendLoop()
 
         bytesSent += packetData.Num();
     }
-
-    //traceOut;
 }
 
 DWORD RTMPPublisher::SendThread(RTMPPublisher *publisher)
@@ -706,8 +690,6 @@ int RTMPPublisher::BufferedSend(RTMPSockBuf *sb, const char *buf, int len, RTMPP
 
 NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry)
 {
-    //traceIn(CreateRTMPPublisher);
-
     //------------------------------------------------------
     // set up URL
 
@@ -826,6 +808,4 @@ NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry)
     Free(lpAnsiPlaypath);
 
     return new RTMPPublisher(rtmp, bUseSendBuffer, sendBufferSize);
-
-    //traceOut;
 }

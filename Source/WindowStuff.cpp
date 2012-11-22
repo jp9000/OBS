@@ -1585,8 +1585,6 @@ INT_PTR CALLBACK OBS::ReconnectDialogProc(HWND hwnd, UINT message, WPARAM wParam
 
 LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    traceIn(OBS::OBSProc);
-
     switch(message)
     {
         case WM_COMMAND:
@@ -1862,8 +1860,6 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
     }
 
     return 0;
-
-    traceOut;
 }
 
 ItemModifyType GetItemModifyType(const Vect2 &mousePos, const Vect2 &itemPos, const Vect2 &itemSize)
@@ -1905,8 +1901,6 @@ enum
 
 LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    traceIn(OBS::RenderFrameProc);
-
     if(message == WM_LBUTTONDOWN)
     {
         POINTS pos;
@@ -2449,8 +2443,6 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
     }
 
     return DefWindowProc(hwnd, message, wParam, lParam);
-
-    traceOut;
 }
 
 typedef CTSTR (*GETPLUGINNAMEPROC)();

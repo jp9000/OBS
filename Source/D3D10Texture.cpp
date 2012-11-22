@@ -557,8 +557,6 @@ void CopyPackedRGB(BYTE *lpDest, BYTE *lpSource, UINT nPixels)
 
 void D3D10Texture::SetImage(void *lpData, GSImageFormat imageFormat, UINT pitch)
 {
-    traceIn(D3D10Texture::SetImage);
-
     if(!bDynamic)
     {
         AppWarning(TEXT("3D11Texture::SetImage: cannot call on a non-dynamic texture"));
@@ -651,8 +649,6 @@ void D3D10Texture::SetImage(void *lpData, GSImageFormat imageFormat, UINT pitch)
     }
 
     texture->Unmap(0);
-
-    traceOut;
 }
 
 bool D3D10Texture::Map(BYTE *&lpData, UINT &pitch)

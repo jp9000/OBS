@@ -230,8 +230,6 @@ void LocaleStringLookup::RemoveLookup(CTSTR lookupVal, StringLookupNode *node)
 //ugh yet more string parsing, you think you escape it for one minute and then bam!  you discover yet more string parsing code needs to be written
 BOOL LocaleStringLookup::LoadStringFile(CTSTR lpFile, bool bClear)
 {
-    traceIn(LocaleStringLookup::LoadStringFile);
-
     if(bClear)
     {
         cache.Clear();
@@ -308,8 +306,6 @@ BOOL LocaleStringLookup::LoadStringFile(CTSTR lpFile, bool bClear)
     //------------------------
 
     return TRUE;
-
-    traceOut;
 }
 
 
@@ -355,8 +351,6 @@ void LocaleStringLookup::AddLookupString(CTSTR lookupVal, CTSTR lpVal)
 
 CTSTR LocaleStringLookup::LookupString(CTSTR lookupVal)
 {
-    traceIn(LocaleStringLookup::LookupString);
-
     StringLookupNode *child = FindNode(lookupVal);
     if(!child)
         return TEXT("(string not found)");
@@ -365,8 +359,6 @@ CTSTR LocaleStringLookup::LookupString(CTSTR lookupVal)
         return TEXT("(lookup error)");
 
     return child->leaf->strValue;
-
-    traceOut;
 }
 
 

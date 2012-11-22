@@ -37,8 +37,6 @@ void GraphicsSystem::Init()
 
 Shader* GraphicsSystem::CreateVertexShaderFromFile(CTSTR lpFileName)
 {
-    traceIn(GraphicsSystem::CreateVertexShaderFromFile);
-
     XFile ShaderFile;
 
     if(!ShaderFile.Open(lpFileName, XFILE_READ, XFILE_OPENEXISTING))
@@ -48,14 +46,10 @@ Shader* GraphicsSystem::CreateVertexShaderFromFile(CTSTR lpFileName)
     ShaderFile.ReadFileToString(strShader);
 
     return CreateVertexShader(strShader, lpFileName);
-
-    traceOut;
 }
 
 Shader* GraphicsSystem::CreatePixelShaderFromFile(CTSTR lpFileName)
 {
-    traceIn(GraphicsSystem::CreatePixelShaderFromFile);
-
     XFile ShaderFile;
 
     if(!ShaderFile.Open(lpFileName, XFILE_READ, XFILE_OPENEXISTING))
@@ -65,20 +59,14 @@ Shader* GraphicsSystem::CreatePixelShaderFromFile(CTSTR lpFileName)
     ShaderFile.ReadFileToString(strShader);
 
     return CreatePixelShader(strShader, lpFileName);
-
-    traceOut;
 }
 
 
 void GraphicsSystem::DrawSprite(Texture *texture, DWORD color, float x, float y, float x2, float y2)
 {
-    traceIn(GraphicsSystem::DrawSprite);
-
     assert(texture);
 
     DrawSpriteEx(texture, color, x, y, x2, y2);
-
-    traceOut;
 }
 
 
@@ -87,8 +75,6 @@ void GraphicsSystem::DrawSprite(Texture *texture, DWORD color, float x, float y,
 
 void GraphicsSystem::StartVertexBuffer()
 {
-    traceInFast(GraphicsSystem::StartVertexBuffer);
-
     bNormalSet = FALSE;
     bColorSet = FALSE;
     TexCoordSetList.Clear();
@@ -98,14 +84,10 @@ void GraphicsSystem::StartVertexBuffer()
     dwCurTexVert   = 0;
     dwCurColorVert = 0;
     dwCurNormVert  = 0;
-
-    traceOutFast;
 }
 
 VertexBuffer *GraphicsSystem::SaveVertexBuffer()
 {
-    traceInFast(GraphicsSystem::SaveVertexBuffer);
-
     if(vbd->VertList.Num())
     {
         VertexBuffer *buffer;
@@ -123,24 +105,16 @@ VertexBuffer *GraphicsSystem::SaveVertexBuffer()
 
         return NULL;
     }
-
-    traceOutFast;
 }
 
 void GraphicsSystem::Vertex(float x, float y, float z)
 {
-    traceInFast(GraphicsSystem::Vertex);
-
     Vect v(x, y, z);
     Vertex(v);
-
-    traceOutFast;
 }
 
 void GraphicsSystem::Vertex(const Vect &v)
 {
-    traceInFast(GraphicsSystem::Vertex);
-
     if(!bNormalSet && vbd->NormalList.Num())
         Normal(vbd->NormalList[vbd->NormalList.Num()-1]);
     bNormalSet = 0;
@@ -164,69 +138,45 @@ void GraphicsSystem::Vertex(const Vect &v)
     vbd->VertList << v;
 
     ++dwCurPointVert;
-
-    traceOutFast;
 }
 
 void GraphicsSystem::Normal(float x, float y, float z)
 {
-    traceInFast(GraphicsSystem::Normal);
-
     Vect v(x, y, z);
     Normal(v);
-
-    traceOutFast;
 }
 
 void GraphicsSystem::Normal(const Vect &v)
 {
-    traceInFast(GraphicsSystem::Normal);
-
     vbd->NormalList << v;
 
     ++dwCurNormVert;
 
     bNormalSet = TRUE;
-
-    traceOutFast;
 }
 
 void GraphicsSystem::Color(DWORD dwRGBA)
 {
-    traceInFast(GraphicsSystem::Color);
-
     vbd->ColorList << dwRGBA;
 
     ++dwCurColorVert;
 
     bColorSet = TRUE;
-
-    traceOutFast;
 }
 
 void GraphicsSystem::Color(const Color4 &v)
 {
-    traceInFast(GraphicsSystem::Color);
-
     Color(Vect4_to_RGBA(v));
-
-    traceOutFast;
 }
 
 void GraphicsSystem::TexCoord(float u, float v, int idTexture)
 {
-    traceInFast(GraphicsSystem::TexCoord);
-
     UVCoord uv(u, v);
     TexCoord(uv, idTexture);
-
-    traceOutFast;
 }
 
 void GraphicsSystem::TexCoord(const UVCoord &uv, int idTexture)
 {
-    traceInFast(GraphicsSystem::TexCoord);
-
     if(vbd->UVList.Num() < (DWORD)(idTexture+1))
     {
         vbd->UVList.SetSize(idTexture+1);
@@ -238,8 +188,6 @@ void GraphicsSystem::TexCoord(const UVCoord &uv, int idTexture)
     ++dwCurTexVert;
 
     TexCoordSetList.Set(idTexture);
-
-    traceOutFast;
 }
 
 

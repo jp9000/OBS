@@ -24,8 +24,6 @@ DWORD STDCALL PackPlanarThread(ConvertData *data);
 
 bool DeviceSource::Init(XElement *data)
 {
-    traceIn(DeviceSource::Init);
-
     HRESULT err;
     err = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC, (REFIID)IID_IFilterGraph, (void**)&graph);
     if(FAILED(err))
@@ -64,14 +62,10 @@ bool DeviceSource::Init(XElement *data)
     //    return false;
 
     return true;
-
-    traceOut;
 }
 
 DeviceSource::~DeviceSource()
 {
-    traceIn(DeviceSource::~DeviceSource);
-
     Stop();
     UnloadFilters();
 
@@ -86,8 +80,6 @@ DeviceSource::~DeviceSource()
 
     if(hSampleMutex)
         OSCloseMutex(hSampleMutex);
-
-    traceOut;
 }
 
 String DeviceSource::ChooseShader()
@@ -131,8 +123,6 @@ const float yuvMat[16] = { 0.257f,  0.504f,  0.098f, 0.0625f,
 
 bool DeviceSource::LoadFilters()
 {
-    traceIn(DeviceSource::LoadFilters);
-
     if(bCapturing || bFiltersLoaded)
         return false;
 
@@ -462,14 +452,10 @@ cleanFinish:
 
     bFiltersLoaded = bSucceeded;
     return bSucceeded;
-
-    traceOut;
 }
 
 void DeviceSource::UnloadFilters()
 {
-    traceIn(DeviceSource::UnloadFilters);
-
     if(texture)
     {
         delete texture;
@@ -527,14 +513,10 @@ void DeviceSource::UnloadFilters()
     }
 
     SafeRelease(control);
-
-    traceOut;
 }
 
 void DeviceSource::Start()
 {
-    traceIn(DeviceSource::Start);
-
     if(bCapturing || !control)
         return;
 
@@ -546,40 +528,26 @@ void DeviceSource::Start()
     }
 
     bCapturing = true;
-
-    traceOut;
 }
 
 void DeviceSource::Stop()
 {
-    traceIn(DeviceSource::Stop);
-
     if(!bCapturing)
         return;
 
     bCapturing = false;
     control->Stop();
     FlushSamples();
-
-    traceOut;
 }
 
 void DeviceSource::BeginScene()
 {
-    traceIn(DeviceSource::BeginScene);
-
     Start();
-
-    traceOut;
 }
 
 void DeviceSource::EndScene()
 {
-    traceIn(DeviceSource::EndScene);
-
     Stop();
-
-    traceOut;
 }
 
 void DeviceSource::Receive(IMediaSample *sample)
@@ -615,8 +583,6 @@ DWORD STDCALL PackPlanarThread(ConvertData *data)
 
 void DeviceSource::Preprocess()
 {
-    traceIn(DeviceSource::Preprocess);
-
     if(!bCapturing)
         return;
 
@@ -730,14 +696,10 @@ void DeviceSource::Preprocess()
 
         lastSample->Release();
     }
-
-    traceOut;
 }
 
 void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
 {
-    traceIn(DeviceSource::Render);
-
     if(texture && bReadyToDraw)
     {
         Shader *oldShader = GetCurrentPixelShader();
@@ -790,14 +752,10 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
         if(colorConvertShader)
             LoadPixelShader(oldShader);
     }
-
-    traceOut;
 }
 
 void DeviceSource::UpdateSettings()
 {
-    traceIn(DeviceSource::UpdateSettings);
-
     String strNewDevice     = data->GetString(TEXT("device"));
     UINT64 newFrameInterval = data->GetInt(TEXT("frameInterval"));
     UINT newCX              = data->GetInt(TEXT("resolutionWidth"));
@@ -819,8 +777,6 @@ void DeviceSource::UpdateSettings()
 
         API->LeaveSceneMutex();
     }
-
-    traceOut;
 }
 
 void DeviceSource::SetInt(CTSTR lpName, int iVal)

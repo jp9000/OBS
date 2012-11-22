@@ -22,8 +22,6 @@
 
 class SharedTexCapture : public GraphicsCaptureMethod
 {
-    HANDLE hMemoryMutex;
-
     Texture *sharedTextures[2];
     Texture *curTexture;
 

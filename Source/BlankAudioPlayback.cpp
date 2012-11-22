@@ -37,8 +37,6 @@ struct BlankAudioPlayback
 
     inline BlankAudioPlayback()
     {
-        traceIn(BlankAudioPlayback::BlankAudioPlayback);
-
         const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
         const IID IID_IMMDeviceEnumerator    = __uuidof(IMMDeviceEnumerator);
         const IID IID_IAudioClient           = __uuidof(IAudioClient);
@@ -90,22 +88,16 @@ struct BlankAudioPlayback
 
         if(FAILED(mmClient->Start()))
             CrashError(TEXT("Could not start audio source"));
-
-        traceOut;
     }
 
     inline ~BlankAudioPlayback()
     {
-        traceIn(BlankAudioPlayback::~BlankAudioPlayback);
-
         mmClient->Stop();
 
         SafeRelease(mmRender);
         SafeRelease(mmClient);
         SafeRelease(mmDevice);
         SafeRelease(mmEnumerator);
-
-        traceOut;
     }
 };
 
