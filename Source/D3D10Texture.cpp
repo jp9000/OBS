@@ -403,6 +403,10 @@ Texture* D3D10Texture::CreateGDITexture(unsigned int width, unsigned int height)
     td.Usage            = D3D10_USAGE_DEFAULT;
     td.MiscFlags        = D3D10_RESOURCE_MISC_GDI_COMPATIBLE;
 
+    LPBYTE lpData = NULL;
+    D3D10_SUBRESOURCE_DATA srd;
+    zero(&srd, sizeof(srd));
+
     ID3D10Texture2D *texVal;
     if(FAILED(err = GetD3D()->CreateTexture2D(&td, NULL, &texVal)))
     {
