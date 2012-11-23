@@ -304,7 +304,7 @@ parsehost:
     app->av_val = p;
     app->av_len = (int)strlen(p);
 
-    if(p[app->av_len-1] == '/')
+    if(app->av_len && p[app->av_len-1] == '/')
         app->av_len--;
 
     RTMP_Log(RTMP_LOGDEBUG, "Parsed app     : %.*s", app->av_len, p);
