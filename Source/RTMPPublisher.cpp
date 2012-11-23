@@ -54,7 +54,7 @@ RTMPPublisher::RTMPPublisher(RTMP *rtmpIn, BOOL bUseSendBuffer, UINT sendBufferS
 
         int sndBufSize = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("MaxBitrate"), 1000);
         sndBufSize += AppConfig->GetInt(TEXT("Audio Encoding"), TEXT("Bitrate"), 96);
-        sndBufSize *= 2;
+        sndBufSize *= 1024*2;
         sndBufSize /= 8;
 
         setsockopt(rtmp->m_sb.sb_socket, SOL_SOCKET, SO_SNDBUF, (char*)&sndBufSize, sizeof(sndBufSize));
