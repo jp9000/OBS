@@ -320,7 +320,7 @@ UINT MMDeviceAudioSource::GetNextBuffer()
     HRESULT err = mmCapture->GetNextPacketSize(&captureSize);
     if(FAILED(err))
     {
-        AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: GetNextPacketSize failed"));
+        RUNONCE AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: GetNextPacketSize failed"));
         return NoAudioAvailable;
     }
 
@@ -336,7 +336,7 @@ UINT MMDeviceAudioSource::GetNextBuffer()
         err = mmCapture->GetBuffer(&captureBuffer, &numAudioFrames, &dwFlags, NULL, &qpcTimestamp);
         if(FAILED(err))
         {
-            AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: GetBuffer failed"));
+            RUNONCE AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: GetBuffer failed"));
             MakeErrorBuffer();
             return AudioAvailable;
         }
@@ -594,14 +594,14 @@ UINT MMDeviceAudioSource::GetNextBuffer()
             int err = src_process(resampler, &data);
             if(err)
             {
-                AppWarning(TEXT("Was unable to resample audio"));
+                RUNONCE AppWarning(TEXT("Was unable to resample audio"));
                 MakeErrorBuffer();
                 return AudioAvailable;
             }
 
             if(data.input_frames_used != numAudioFrames)
             {
-                AppWarning(TEXT("Failed to downsample buffer completely, which shouldn't actually happen because it should be using 10ms of samples"));
+                RUNONCE AppWarning(TEXT("Failed to downsample buffer completely, which shouldn't actually happen because it should be using 10ms of samples"));
                 MakeErrorBuffer();
                 return AudioAvailable;
             }

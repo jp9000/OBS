@@ -1,5 +1,22 @@
 (yyyy-mm-dd)
 
+-------------------------------
+2012-11-22 - 0.446 (alpha)
+    * Finally just about completed game capture (wow was that a
+      crazy adventure)
+    * Added GIF supprot to bitmap image source
+    * Added stream delay feature
+    * Adde option to allow users to use up to 120 FPS (if they're
+      crazy)
+    * Made send buffer use multiples of the maximum segment size
+      instead of powers of two
+    * Added new awesome crash code by R1CH
+    * Fixed various issues with the text source
+    * Changed the way RTMP server data is entered, it now uses the
+      proper FMS server entry format
+    * Added opacity to video capture
+    * Added stream timer
+    * Fixed some code in librtmp to process FMS URLs properly
 
 -------------------------------
 2012-11-02 - 0.432 (alpha)

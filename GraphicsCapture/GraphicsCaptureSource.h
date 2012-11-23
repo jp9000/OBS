@@ -27,12 +27,19 @@ class GraphicsCaptureSource : public ImageSource
     XElement *data;
 
     String strWindowClass;
-    HWND hwndTarget, hwndSender, hwndReceiver;
-    bool bCapturing, bErrorAcquiring, bFlip, bStretch;
+    HWND hwndTarget, hwndSender, hwndReceiver, hwndCapture;
+    bool bCapturing, bErrorAcquiring, bFlip, bStretch, bCaptureMouse;
     UINT captureWaitCount;
     DWORD targetProcessID;
     HANDLE hProcess;
     UINT warningID;
+
+    POINT cursorPos;
+    int xHotspot, yHotspot;
+    bool bMouseCaptured, bMouseDown;
+    HCURSOR hCurrentCursor;
+    Shader *invertShader;
+    Texture *cursorTexture;
 
     float captureCheckInterval;
 

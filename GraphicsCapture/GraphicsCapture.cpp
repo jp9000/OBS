@@ -41,10 +41,45 @@ inline  BOOL Is64BitWindows()
 #endif
 }
 
-void RefreshWindowList(HWND hwndCombobox, StringList &classList)
+
+struct WindowInfo
+{
+    String strClass;
+    BOOL b64bit;
+    BOOL bRequiresAdmin;
+};
+
+struct ConfigDialogData
+{
+    XElement *data;
+    List<WindowInfo> windowData;
+    StringList adminWindows;
+    StringList opposingBitWindows;
+
+    UINT cx, cy;
+
+    inline void ClearData()
+    {
+        for(UINT i=0; i<windowData.Num(); i++)
+            windowData[i].strClass.Clear();
+        windowData.Clear();
+        adminWindows.Clear();
+        opposingBitWindows.Clear();
+    }
+
+    inline ~ConfigDialogData()
+    {
+        for(UINT i=0; i<windowData.Num(); i++)
+            windowData[i].strClass.Clear();
+    }
+};
+
+void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
 {
     SendMessage(hwndCombobox, CB_RESETCONTENT, 0, 0);
-    classList.Clear();
+    configData.ClearData();
+
+    BOOL bWindows64bit = Is64BitWindows();
 
     BOOL bCurrentProcessIsWow64 = FALSE;
     IsWow64Process(GetCurrentProcess(), &bCurrentProcessIsWow64);
@@ -62,12 +97,13 @@ void RefreshWindowList(HWND hwndCombobox, StringList &classList)
             DWORD exStyles = (DWORD)GetWindowLongPtr(hwndCurrent, GWL_EXSTYLE);
             DWORD styles = (DWORD)GetWindowLongPtr(hwndCurrent, GWL_STYLE);
 
-
             if( (exStyles & WS_EX_TOOLWINDOW) == 0 && (styles & WS_CHILD) == 0 && hwndParent == NULL)
             {
                 String strWindowName;
                 strWindowName.SetLength(GetWindowTextLength(hwndCurrent));
                 GetWindowText(hwndCurrent, strWindowName, strWindowName.Length()+1);
+
+                bool b64bit = false;
 
                 //-------
 
@@ -79,24 +115,28 @@ void RefreshWindowList(HWND hwndCombobox, StringList &classList)
                 TCHAR fileName[MAX_PATH+1];
                 scpy(fileName, TEXT("unknown"));
 
-                HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, FALSE, processID);
+                HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ | PROCESS_VM_WRITE, FALSE, processID);
                 if(hProcess)
                 {
-                    BOOL bFoundModule = FALSE;
-                    StringList moduleList;
                     BOOL bTargetProcessIsWow64 = FALSE;
                     IsWow64Process(hProcess, &bTargetProcessIsWow64);
 
                     DWORD dwSize = MAX_PATH;
                     QueryFullProcessImageName(hProcess, 0, fileName, &dwSize);
 
+                    StringList moduleList;
                     OSGetLoadedModuleList(hProcess, moduleList);
 
                     CloseHandle(hProcess);
 
+                    //todo: remove later
                     if(bCurrentProcessIsWow64 != bTargetProcessIsWow64)
+                    {
+                        configData.opposingBitWindows << strWindowName;
                         continue;
+                    }
 
+                    BOOL bFoundModule = FALSE;
                     for(UINT i=0; i<moduleList.Num(); i++)
                     {
                         CTSTR moduleName = moduleList[i];
@@ -114,9 +154,27 @@ void RefreshWindowList(HWND hwndCombobox, StringList &classList)
 
                     if (!bFoundModule)
                         continue;
+
+                    b64bit = (bWindows64bit && !bTargetProcessIsWow64);
                 }
                 else
+                {
+                    hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, processID);
+                    if(hProcess)
+                    {
+                        BOOL bTargetProcessIsWow64 = FALSE;
+                        IsWow64Process(hProcess, &bTargetProcessIsWow64);
+
+                        if(bCurrentProcessIsWow64 != bTargetProcessIsWow64)
+                            configData.opposingBitWindows << strWindowName;
+
+                        configData.adminWindows << strWindowName;
+
+                        CloseHandle(hProcess);
+                    }
+
                     continue;
+                }
 
                 //-------
 
@@ -124,7 +182,9 @@ void RefreshWindowList(HWND hwndCombobox, StringList &classList)
                 strFileName.FindReplace(TEXT("\\"), TEXT("/"));
 
                 String strText;
-                strText << TEXT("[") << GetPathFileName(strFileName) << TEXT("]: ") << strWindowName;
+                strText << TEXT("[") << GetPathFileName(strFileName);
+                strText << (b64bit ? TEXT("*64") : TEXT("*32"));
+                strText << TEXT("]: ") << strWindowName;
 
                 int id = (int)SendMessage(hwndCombobox, CB_ADDSTRING, 0, (LPARAM)strText.Array());
                 SendMessage(hwndCombobox, CB_SETITEMDATA, id, (LPARAM)hwndCurrent);
@@ -134,19 +194,14 @@ void RefreshWindowList(HWND hwndCombobox, StringList &classList)
                 GetClassName(hwndCurrent, strClassName.Array(), 255);
                 strClassName.SetLength(slen(strClassName));
 
-                classList << strClassName;
+                WindowInfo &info    = *configData.windowData.CreateNew();
+                info.strClass       = strClassName;
+                info.b64bit         = b64bit;
+                info.bRequiresAdmin = false; //todo: add later
             }
         }
     } while (hwndCurrent = GetNextWindow(hwndCurrent, GW_HWNDNEXT));
 }
-
-struct ConfigDialogData
-{
-    XElement *data;
-    StringList strWindowClasses;
-
-    UINT cx, cy;
-};
 
 INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -166,7 +221,11 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 //--------------------------------------------
 
-                SendMessage(GetDlgItem(hwnd, IDC_STRETCHTOSCREEN), BM_SETCHECK, data->GetInt(TEXT("stretchImage")) ? BST_CHECKED : BST_UNCHECKED, 0);
+                BOOL bCaptureMouse = data->GetInt(TEXT("captureMouse"), 1);
+                SendMessage(GetDlgItem(hwnd, IDC_STRETCHTOSCREEN),    BM_SETCHECK, data->GetInt(TEXT("stretchImage")) ? BST_CHECKED : BST_UNCHECKED, 0);
+                SendMessage(GetDlgItem(hwnd, IDC_CAPTUREMOUSE),       BM_SETCHECK, bCaptureMouse                      ? BST_CHECKED : BST_UNCHECKED, 0);
+                SendMessage(GetDlgItem(hwnd, IDC_INVERTMOUSEONCLICK), BM_SETCHECK, data->GetInt(TEXT("invertMouse"))  ? BST_CHECKED : BST_UNCHECKED, 0);
+                EnableWindow(GetDlgItem(hwnd, IDC_INVERTMOUSEONCLICK), bCaptureMouse);
 
                 return TRUE;
             }
@@ -174,6 +233,13 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
         case WM_COMMAND:
             switch(LOWORD(wParam))
             {
+                case IDC_CAPTUREMOUSE:
+                    {
+                        BOOL bCaptureMouse = SendMessage(GetDlgItem(hwnd, IDC_CAPTUREMOUSE), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        EnableWindow(GetDlgItem(hwnd, IDC_INVERTMOUSEONCLICK), bCaptureMouse);
+                    }
+                    break;
+
                 case IDC_REFRESH:
                     {
                         ConfigDialogData *info = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
@@ -182,7 +248,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         CTSTR lpWindowName = data->GetString(TEXT("window"));
 
                         HWND hwndWindowList = GetDlgItem(hwnd, IDC_APPLIST);
-                        RefreshWindowList(hwndWindowList, info->strWindowClasses);
+                        RefreshWindowList(hwndWindowList, *info);
 
                         UINT windowID = 0;
                         if(lpWindowName)
@@ -192,6 +258,33 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                             SendMessage(hwndWindowList, CB_SETCURSEL, windowID, 0);
                         else
                             SendMessage(hwndWindowList, CB_SETCURSEL, 0, 0);
+
+                        String strInfoText;
+
+                        //todo: remove later whem more stable
+                        strInfoText << TEXT("Note: This plugin is currently experimental and may not be fully stable yet.\r\nIf using multiple scenes, I highly recommend using this as a global source to prevent stability issues.\r\n\r\n");
+
+                        if(info->adminWindows.Num())
+                        {
+                            strInfoText << Str("Sources.GameCaptureSource.RequiresAdmin") << TEXT("\r\n");
+
+                            for(UINT i=0; i<info->adminWindows.Num(); i++)
+                                strInfoText << info->adminWindows[i] << TEXT("\r\n");
+                        }
+
+                        if(info->opposingBitWindows.Num())
+                        {
+#ifdef _WIN64
+                            strInfoText << Str("Sources.GameCaptureSource.Requires32bit") << TEXT("\r\n");
+#else
+                            strInfoText << Str("Sources.GameCaptureSource.Requires64bit") << TEXT("\r\n");
+#endif
+
+                            for(UINT i=0; i<info->opposingBitWindows.Num(); i++)
+                                strInfoText << TEXT("    * ") << info->opposingBitWindows[i] << TEXT("\r\n");
+                        }
+
+                        SetWindowText(GetDlgItem(hwnd, IDC_INFO), strInfoText);
                     }
                     break;
 
@@ -203,14 +296,16 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         ConfigDialogData *info = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
                         XElement *data = info->data;
 
-                        if(!info->strWindowClasses.Num())
+                        if(!info->windowData.Num())
                             return 0;
 
                         String strWindow = GetCBText(GetDlgItem(hwnd, IDC_APPLIST), windowID);
                         data->SetString(TEXT("window"),      strWindow);
-                        data->SetString(TEXT("windowClass"), info->strWindowClasses[windowID]);
+                        data->SetString(TEXT("windowClass"), info->windowData[windowID].strClass);
 
                         data->SetInt(TEXT("stretchImage"), SendMessage(GetDlgItem(hwnd, IDC_STRETCHTOSCREEN), BM_GETCHECK, 0, 0) == BST_CHECKED);
+                        data->SetInt(TEXT("captureMouse"), SendMessage(GetDlgItem(hwnd, IDC_CAPTUREMOUSE), BM_GETCHECK, 0, 0) == BST_CHECKED);
+                        data->SetInt(TEXT("invertMouse"),  SendMessage(GetDlgItem(hwnd, IDC_INVERTMOUSEONCLICK), BM_GETCHECK, 0, 0) == BST_CHECKED);
                     }
 
                 case IDCANCEL:

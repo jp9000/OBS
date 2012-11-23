@@ -179,6 +179,7 @@ Texture* D3D10Texture::CreateTexture(unsigned int width, unsigned int height, GS
     {
         srd.pSysMem = lpData;
         srd.SysMemPitch = width*formatPitch[(UINT)colorFormat];
+        srd.SysMemSlicePitch = 0;
         lpSRD = &srd;
     }
     else

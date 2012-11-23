@@ -286,6 +286,7 @@ void DoGLCPUHook(RECT &rc)
         bHasTextures = true;
         glcaptureInfo.captureType = CAPTURETYPE_MEMORY;
         glcaptureInfo.hwndSender = hwndSender;
+        glcaptureInfo.hwndCapture = hwndTarget;
         glcaptureInfo.pitch = glcaptureInfo.cx*4;
         glcaptureInfo.bFlip = TRUE;
         fps = (DWORD)SendMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&glcaptureInfo);
@@ -348,6 +349,12 @@ DWORD CopyGLCPUTextureThread(LPVOID lpUseless)
     return 0;
 }
 
+bool bReacquiring = false;
+LONGLONG reacquireStart = 0;
+LONGLONG reacquireTime = 0;
+
+LONG lastCX=0, lastCY=0;
+
 void HandleGLSceneUpdate(HDC hDC)
 {
     if(!bTargetAcquired && hdcAcquiredDC == NULL)
@@ -375,10 +382,26 @@ void HandleGLSceneUpdate(HDC hDC)
         {
             ClearGLData();
             bStopRequested = false;
+            bReacquiring = false;
         }
 
         RECT rc;
         GetClientRect(hwndTarget, &rc);
+
+        if(bCapturing && bReacquiring)
+        {
+            if(lastCX != rc.right || lastCY != rc.bottom) //reset if continuing to size within the 3 seconds
+            {
+                reacquireStart = OSGetTimeMicroseconds();
+                lastCX = rc.right;
+                lastCY = rc.bottom;
+            }
+
+            if(OSGetTimeMicroseconds()-reacquireTime >= 3000000) //3 second to reacquire
+                bReacquiring = false;
+            else
+                return;
+        }
 
         if(bCapturing && (!bHasTextures || rc.right != glcaptureInfo.cx || rc.bottom != glcaptureInfo.cy))
         {
@@ -388,10 +411,22 @@ void HandleGLSceneUpdate(HDC hDC)
             if(!hwndReceiver)
                 hwndReceiver = FindWindow(RECEIVER_WINDOWCLASS, NULL);
 
-            if(hwndReceiver)
-                DoGLCPUHook(rc);
-            else
+            if(bHasTextures) //resizing
+            {
                 ClearGLData();
+                bReacquiring = true;
+                reacquireStart = OSGetTimeMicroseconds();
+                lastCX = rc.right;
+                lastCY = rc.bottom;
+                return;
+            }
+            else
+            {
+                if(hwndReceiver)
+                    DoGLCPUHook(rc);
+                else
+                    ClearGLData();
+            }
         }
 
         if(bHasTextures)

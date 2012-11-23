@@ -17,55 +17,26 @@
 ********************************************************************************/
 
 
-#pragma once
+uniform Texture2D diffuseTexture;
+uniform float4 outputColor;
 
-
-#define RECEIVER_WINDOWCLASS    TEXT("OBSGraphicsCaptureReceiver")
-#define SENDER_WINDOWCLASS      TEXT("OBSGraphicsCaptureSender")
-
-#define TEXTURE_MUTEX1          TEXT("OBSTextureMutex1")
-#define TEXTURE_MUTEX2          TEXT("OBSTextureMutex2")
-
-#define TEXTURE_MEMORY          TEXT("Local\\OBSTextureMemory")
-
-#define CAPTURETYPE_MEMORY      1
-#define CAPTURETYPE_SHAREDTEX   2
-
-struct MemoryCopyData
+SamplerState textureSampler
 {
-    UINT    lastRendered;
-    DWORD   texture1Offset, texture2Offset;
+    AddressU  = Clamp;
+    AddressV  = Clamp;
+    Filter    = Linear;
 };
 
-struct SharedTexData
+struct VertData
 {
-    UINT    lastRendered;
-    HANDLE  texHandles[2];
+    float4 pos      : SV_Position;
+    float2 texCoord : TexCoord0;
 };
 
-struct CaptureInfo
+float4 main(VertData input) : SV_Target
 {
-    UINT    captureType;
-    DWORD   format;
-    UINT    cx, cy;
-    HWND    hwndSender;
-    HWND    hwndCapture;
-    BOOL    bFlip;
+    float4 rgba = diffuseTexture.Sample(textureSampler, input.texCoord);
+    rgba.rgb = float3(1.0, 1.0, 1.0)-rgba.rgb;
 
-    UINT    pitch;
-    UINT    mapID;
-    DWORD   mapSize;
-};
-
-enum
-{
-    RECEIVER_NEWCAPTURE=WM_USER+1,
-    RECEIVER_ENDCAPTURE,
-};
-
-enum
-{
-    SENDER_RESTARTCAPTURE=WM_USER+1,
-    SENDER_ENDCAPTURE,
-};
-
+    return rgba * outputColor;
+}

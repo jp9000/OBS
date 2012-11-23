@@ -164,7 +164,8 @@ public:
                 if(!BitBlt(hDC, 0, 0, width, height, hCaptureDC, captureRect.left, captureRect.top, bCaptureLayered ? SRCCOPY|CAPTUREBLT : SRCCOPY))
                 {
                     int chi = GetLastError();
-                    AppWarning(TEXT("Capture BitBlt failed..  just so you know"));
+
+                    RUNONCE AppWarning(TEXT("Capture BitBlt failed..  just so you know"));
                 }
             }
 
@@ -216,7 +217,9 @@ public:
             captureTexture->ReleaseDC();
         }
         else
-            AppWarning(TEXT("Failed to get DC from capture surface"));
+        {
+            RUNONCE AppWarning(TEXT("Failed to get DC from capture surface"));
+        }
 
         lastRendered = captureTexture;
 

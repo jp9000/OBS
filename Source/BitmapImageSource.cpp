@@ -169,7 +169,7 @@ public:
                 return;
             }
 
-            size_t fileSize = (size_t)gifFile.GetFileSize();
+            DWORD fileSize = (DWORD)gifFile.GetFileSize();
             LPBYTE lpGifData = (LPBYTE)Allocate(fileSize);
             gifFile.Read(lpGifData, fileSize);
 

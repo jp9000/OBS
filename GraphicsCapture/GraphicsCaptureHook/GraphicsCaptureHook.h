@@ -37,17 +37,11 @@
 #include <fstream>
 using namespace std;
 
+//arghh I hate defines like this
+#define RUNONCE static bool bRunOnce = false; if(!bRunOnce && (bRunOnce = true))
+
 
 #define SafeRelease(var) if(var) {var->Release(); var = NULL;}
-
-
-struct DummyClass {};
-typedef HRESULT (DummyClass::*CLASSPROC)();
-
-inline FARPROC ConvertClassProcToFarproc(CLASSPROC val)
-{
-    return *reinterpret_cast<FARPROC*>(&val);
-}
 
 
 #ifdef _WIN64

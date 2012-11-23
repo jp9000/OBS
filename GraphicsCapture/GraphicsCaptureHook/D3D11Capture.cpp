@@ -90,6 +90,7 @@ void SetupD3D11(IDXGISwapChain *swapChain)
                 dxgiFormat = scd.BufferDesc.Format;
                 d3d11CaptureInfo.cx = scd.BufferDesc.Width;
                 d3d11CaptureInfo.cy = scd.BufferDesc.Height;
+                d3d11CaptureInfo.hwndCapture = scd.OutputWindow;
                 bIsMultisampled = scd.SampleDesc.Count > 1;
             }
         }
@@ -110,42 +111,42 @@ bool DoD3D11Hook(ID3D11Device *device)
     HMODULE hD3D10_1 = LoadLibrary(TEXT("d3d10_1.dll"));
     if(!hD3D10_1)
     {
-        logOutput << "DoD3D11Hook: could not load d3d10.1" << endl;
+        RUNONCE logOutput << "DoD3D11Hook: could not load d3d10.1" << endl;
         return false;
     }
 
     HMODULE hDXGI = GetModuleHandle(TEXT("dxgi.dll"));
     if(!hDXGI)
     {
-        logOutput << "DoD3D11Hook: could not load dxgi" << endl;
+        RUNONCE logOutput << "DoD3D11Hook: could not load dxgi" << endl;
         return false;
     }
 
     CREATEDXGIFACTORY1PROC createDXGIFactory1 = (CREATEDXGIFACTORY1PROC)GetProcAddress(hDXGI, "CreateDXGIFactory1");
     if(!createDXGIFactory1)
     {
-        logOutput << "DoD3D11Hook: could not get address of CreateDXGIFactory1" << endl;
+        RUNONCE logOutput << "DoD3D11Hook: could not get address of CreateDXGIFactory1" << endl;
         return false;
     }
 
     PFN_D3D10_CREATE_DEVICE1 d3d10CreateDevice1 = (PFN_D3D10_CREATE_DEVICE1)GetProcAddress(hD3D10_1, "D3D10CreateDevice1");
     if(!d3d10CreateDevice1)
     {
-        logOutput << "DoD3D11Hook: could not get address of D3D10CreateDevice1" << endl;
+        RUNONCE logOutput << "DoD3D11Hook: could not get address of D3D10CreateDevice1" << endl;
         return false;
     }
 
     IDXGIFactory1 *factory;
     if(FAILED(hErr = (*createDXGIFactory1)(__uuidof(IDXGIFactory1), (void**)&factory)))
     {
-        logOutput << "DoD3D11Hook: CreateDXGIFactory1 failed, result = " << UINT(hErr) << endl;
+        RUNONCE logOutput << "DoD3D11Hook: CreateDXGIFactory1 failed, result = " << UINT(hErr) << endl;
         return false;
     }
 
     IDXGIAdapter1 *adapter;
     if(FAILED(hErr = factory->EnumAdapters1(0, &adapter)))
     {
-        logOutput << "DoD3D11Hook: factory->EnumAdapters1 failed, result = " << UINT(hErr) << endl;
+        RUNONCE logOutput << "DoD3D11Hook: factory->EnumAdapters1 failed, result = " << UINT(hErr) << endl;
         factory->Release();
         return false;
     }
@@ -154,7 +155,7 @@ bool DoD3D11Hook(ID3D11Device *device)
     {
         if(FAILED(hErr = (*d3d10CreateDevice1)(adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_FEATURE_LEVEL_9_3, D3D10_1_SDK_VERSION, &shareDevice)))
         {
-            logOutput << "DoD3D11Hook: device creation failed, result = " << UINT(hErr) << endl;
+            RUNONCE logOutput << "DoD3D11Hook: device creation failed, result = " << UINT(hErr) << endl;
             adapter->Release();
             factory->Release();
             return false;
@@ -181,13 +182,13 @@ bool DoD3D11Hook(ID3D11Device *device)
     ID3D11Texture2D *d3d11Tex;
     if(FAILED(hErr = device->CreateTexture2D(&texGameDesc, NULL, &d3d11Tex)))
     {
-        logOutput << "DoD3D11Hook: creation of intermediary texture failed, result = " << UINT(hErr) << endl;
+        RUNONCE logOutput << "DoD3D11Hook: creation of intermediary texture failed, result = " << UINT(hErr) << endl;
         return false;
     }
 
     if(FAILED(hErr = d3d11Tex->QueryInterface(__uuidof(ID3D11Resource), (void**)&copyTextureGame)))
     {
-        logOutput << "DoD3D11Hook: d3d11Tex->QueryInterface(ID3D11Resource) failed, result = " << UINT(hErr) << endl;
+        RUNONCE logOutput << "DoD3D11Hook: d3d11Tex->QueryInterface(ID3D11Resource) failed, result = " << UINT(hErr) << endl;
         d3d11Tex->Release();
         return false;
     }
@@ -195,7 +196,7 @@ bool DoD3D11Hook(ID3D11Device *device)
     IDXGIResource *res;
     if(FAILED(hErr = d3d11Tex->QueryInterface(IID_IDXGIResource, (void**)&res)))
     {
-        logOutput << "DoD3D11Hook: d3d11Tex->QueryInterface(IID_IDXGIResource) failed, result = " << UINT(hErr) << endl;
+        RUNONCE logOutput << "DoD3D11Hook: d3d11Tex->QueryInterface(IID_IDXGIResource) failed, result = " << UINT(hErr) << endl;
         d3d11Tex->Release();
         return false;
     }
@@ -203,7 +204,7 @@ bool DoD3D11Hook(ID3D11Device *device)
     HANDLE handle;
     if(FAILED(hErr = res->GetSharedHandle(&handle)))
     {
-        logOutput << "DoD3D11Hook: res->GetSharedHandle failed, result = " << UINT(hErr) << endl;
+        RUNONCE logOutput << "DoD3D11Hook: res->GetSharedHandle failed, result = " << UINT(hErr) << endl;
         d3d11Tex->Release();
         res->Release();
         return false;
@@ -216,7 +217,7 @@ bool DoD3D11Hook(ID3D11Device *device)
 
     if(FAILED(hErr = shareDevice->OpenSharedResource(handle, __uuidof(ID3D10Resource), (void**)&copyTextureIntermediary)))
     {
-        logOutput << "DoD3D11Hook: shareDevice->OpenSharedResource failed, result = " << UINT(hErr) << endl;
+        RUNONCE logOutput << "DoD3D11Hook: shareDevice->OpenSharedResource failed, result = " << UINT(hErr) << endl;
         return false;
     }
 
@@ -239,20 +240,20 @@ bool DoD3D11Hook(ID3D11Device *device)
         ID3D10Texture2D *d3d10tex;
         if(FAILED(hErr = shareDevice->CreateTexture2D(&texDesc, NULL, &d3d10tex)))
         {
-            logOutput << "DoD3D11Hook: shareDevice->CreateTexture2D " << i << " failed, result = " << UINT(hErr) << endl;
+            RUNONCE logOutput << "DoD3D11Hook: shareDevice->CreateTexture2D " << i << " failed, result = " << UINT(hErr) << endl;
             return false;
         }
 
         if(FAILED(hErr = d3d10tex->QueryInterface(__uuidof(ID3D10Resource), (void**)&sharedTextures[i])))
         {
-            logOutput << "DoD3D11Hook: d3d10tex->QueryInterface(ID3D10Resource) " << i << " failed, result = " << UINT(hErr) << endl;
+            RUNONCE logOutput << "DoD3D11Hook: d3d10tex->QueryInterface(ID3D10Resource) " << i << " failed, result = " << UINT(hErr) << endl;
             d3d10tex->Release();
             return false;
         }
 
         if(FAILED(hErr = d3d10tex->QueryInterface(__uuidof(IDXGIKeyedMutex), (void**)&keyedMutexes[i])))
         {
-            logOutput << "DoD3D11Hook: d3d10tex->QueryInterface(IDXGIKeyedMutex) " << i << " failed, result = " << UINT(hErr) << endl;
+            RUNONCE logOutput << "DoD3D11Hook: d3d10tex->QueryInterface(IDXGIKeyedMutex) " << i << " failed, result = " << UINT(hErr) << endl;
             d3d10tex->Release();
             return false;
         }
@@ -260,14 +261,14 @@ bool DoD3D11Hook(ID3D11Device *device)
         IDXGIResource *res;
         if(FAILED(hErr = d3d10tex->QueryInterface(__uuidof(IDXGIResource), (void**)&res)))
         {
-            logOutput << "DoD3D11Hook: d3d10tex->QueryInterface(IDXGIResource) " << i << " failed, result = " << UINT(hErr) << endl;
+            RUNONCE logOutput << "DoD3D11Hook: d3d10tex->QueryInterface(IDXGIResource) " << i << " failed, result = " << UINT(hErr) << endl;
             d3d10tex->Release();
             return false;
         }
 
         if(FAILED(hErr = res->GetSharedHandle(&sharedHandles[i])))
         {
-            logOutput << "DoD3D11Hook: res->GetSharedHandle " << i << " failed, result = " << UINT(hErr) << endl;
+            RUNONCE logOutput << "DoD3D11Hook: res->GetSharedHandle " << i << " failed, result = " << UINT(hErr) << endl;
             res->Release();
             d3d10tex->Release();
             return false;
@@ -280,7 +281,7 @@ bool DoD3D11Hook(ID3D11Device *device)
     return true;
 }
 
-UINT STDMETHODCALLTYPE DeviceReleaseHook(ID3D10Device *device)
+UINT STDMETHODCALLTYPE D3D11DeviceReleaseHook(ID3D10Device *device)
 {
     /*device->AddRef();
     ULONG refVal = (*(RELEASEPROC)oldD3D11Release)(device);*/
@@ -305,178 +306,171 @@ UINT STDMETHODCALLTYPE DeviceReleaseHook(ID3D10Device *device)
     return refVal;
 }
 
-struct D3D11Override
+HRESULT STDMETHODCALLTYPE D3D11SwapResizeBuffersHook(IDXGISwapChain *swap, UINT bufferCount, UINT width, UINT height, DXGI_FORMAT giFormat, UINT flags)
 {
-    HRESULT STDMETHODCALLTYPE SwapResizeBuffersHook(UINT bufferCount, UINT width, UINT height, DXGI_FORMAT giFormat, UINT flags)
+    ClearD3D11Data();
+    lpCurrentSwap = NULL;
+    lpCurrentDevice = NULL;
+    bTargetAcquired = false;
+
+    gi11swapResizeBuffers.Unhook();
+    HRESULT hRes = swap->ResizeBuffers(bufferCount, width, height, giFormat, flags);
+    gi11swapResizeBuffers.Rehook();
+
+    /*if(lpCurrentSwap == NULL && !bTargetAcquired)
     {
-        IDXGISwapChain *swap = (IDXGISwapChain*)this;
-
-        ClearD3D11Data();
-        lpCurrentSwap = NULL;
-        lpCurrentDevice = NULL;
-        bTargetAcquired = false;
-
-        gi11swapResizeBuffers.Unhook();
-        HRESULT hRes = swap->ResizeBuffers(bufferCount, width, height, giFormat, flags);
-        gi11swapResizeBuffers.Rehook();
-
-        /*if(lpCurrentSwap == NULL && !bTargetAcquired)
-        {
-            lpCurrentSwap = swap;
-            bTargetAcquired = true;
-        }
-
-        if(lpCurrentSwap == swap)
-            SetupD3D11(swap);*/
-
-        return hRes;
+        lpCurrentSwap = swap;
+        bTargetAcquired = true;
     }
 
-    HRESULT STDMETHODCALLTYPE SwapPresentHook(UINT syncInterval, UINT flags)
+    if(lpCurrentSwap == swap)
+        SetupD3D11(swap);*/
+
+    return hRes;
+}
+
+HRESULT STDMETHODCALLTYPE D3D11SwapPresentHook(IDXGISwapChain *swap, UINT syncInterval, UINT flags)
+{
+    if(lpCurrentSwap == NULL && !bTargetAcquired)
     {
-        IDXGISwapChain *swap = (IDXGISwapChain*)this;
+        lpCurrentSwap = swap;
+        SetupD3D11(swap);
+        bTargetAcquired = true;
+    }
 
-        if(lpCurrentSwap == NULL && !bTargetAcquired)
+    if(lpCurrentSwap == swap)
+    {
+        ID3D11Device *device = NULL;
+        HRESULT chi;
+        if(SUCCEEDED(chi = swap->GetDevice(__uuidof(ID3D11Device), (void**)&device)))
         {
-            lpCurrentSwap = swap;
-            SetupD3D11(swap);
-            bTargetAcquired = true;
-        }
-
-        if(lpCurrentSwap == swap)
-        {
-            ID3D11Device *device = NULL;
-            HRESULT chi;
-            if(SUCCEEDED(chi = swap->GetDevice(__uuidof(ID3D11Device), (void**)&device)))
+            if(!lpCurrentDevice)
             {
-                if(!lpCurrentDevice)
+                lpCurrentDevice = device;
+
+                /*FARPROC curRelease = GetVTable(device, (8/4));
+                if(curRelease != newD3D11Release)
                 {
-                    lpCurrentDevice = device;
-
-                    /*FARPROC curRelease = GetVTable(device, (8/4));
-                    if(curRelease != newD3D11Release)
-                    {
-                        oldD3D11Release = curRelease;
-                        newD3D11Release = (FARPROC)DeviceReleaseHook;
-                        SetVTable(device, (8/4), newD3D11Release);
-                    }*/
-                }
-
-                ID3D11DeviceContext *context;
-                device->GetImmediateContext(&context);
-
-                if(bCapturing && bStopRequested)
-                {
-                    ClearD3D11Data();
-                    bStopRequested = false;
-                }
-
-                if(!bHasTextures && bCapturing)
-                {
-                    if(dxgiFormat)
-                    {
-                        if(!hwndReceiver)
-                            hwndReceiver = FindWindow(RECEIVER_WINDOWCLASS, NULL);
-
-                        if(hwndReceiver)
-                        {
-                            BOOL bSuccess = DoD3D11Hook(device);
-
-                            if(bSuccess)
-                            {
-                                d3d11CaptureInfo.mapID = InitializeSharedMemoryGPUCapture(&texData);
-                                if(!d3d11CaptureInfo.mapID)
-                                {
-                                    logOutput << "SwapPresentHook: creation of shared memory failed" << endl;
-                                    bSuccess = false;
-                                }
-                            }
-
-                            if(bSuccess)
-                                bSuccess = IsWindow(hwndReceiver);
-
-                            if(bSuccess)
-                            {
-                                bHasTextures = true;
-                                d3d11CaptureInfo.captureType = CAPTURETYPE_SHAREDTEX;
-                                d3d11CaptureInfo.hwndSender = hwndSender;
-                                d3d11CaptureInfo.bFlip = FALSE;
-                                texData->texHandles[0] = sharedHandles[0];
-                                texData->texHandles[1] = sharedHandles[1];
-                                fps = (DWORD)SendMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d11CaptureInfo);
-                                frameTime = 1000000/LONGLONG(fps)/2;
-
-                                logOutput << "DoD3D11Hook: success";
-                            }
-                            else
-                            {
-                                ClearD3D11Data();
-                            }
-                        }
-                    }
-                }
-
-                if(bHasTextures)
-                {
-                    if(bCapturing)
-                    {
-                        LONGLONG timeVal = OSGetTimeMicroseconds();
-                        LONGLONG timeElapsed = timeVal-lastTime;
-
-                        if(timeElapsed >= frameTime)
-                        {
-                            lastTime += frameTime;
-                            if(timeElapsed > frameTime*2)
-                                lastTime = timeVal;
-
-                            DWORD nextCapture = curCapture == 0 ? 1 : 0;
-
-                            ID3D11Resource *backBuffer = NULL;
-
-                            if(SUCCEEDED(swap->GetBuffer(0, IID_ID3D11Resource, (void**)&backBuffer)))
-                            {
-                                if(bIsMultisampled)
-                                    context->ResolveSubresource(copyTextureGame, 0, backBuffer, 0, dxgiFormat);
-                                else
-                                    context->CopyResource(copyTextureGame, backBuffer);
-
-                                ID3D10Texture2D *outputTexture = NULL;
-                                int lastRendered = -1;
-
-                                if(keyedMutexes[curCapture]->AcquireSync(0, 0) == WAIT_OBJECT_0)
-                                    lastRendered = (int)curCapture;
-                                else if(keyedMutexes[nextCapture]->AcquireSync(0, 0) == WAIT_OBJECT_0)
-                                    lastRendered = (int)nextCapture;
-
-                                if(lastRendered != -1)
-                                {
-                                    shareDevice->CopyResource(sharedTextures[lastRendered], copyTextureIntermediary);
-                                    keyedMutexes[lastRendered]->ReleaseSync(0);
-                                }
-
-                                texData->lastRendered = lastRendered;
-                                backBuffer->Release();
-                            }
-
-                            curCapture = nextCapture;
-                        }
-                    }
-                    else
-                        ClearD3D11Data();
-                }
-
-                device->Release();
-                context->Release();
+                    oldD3D11Release = curRelease;
+                    newD3D11Release = (FARPROC)DeviceReleaseHook;
+                    SetVTable(device, (8/4), newD3D11Release);
+                }*/
             }
+
+            ID3D11DeviceContext *context;
+            device->GetImmediateContext(&context);
+
+            if(bCapturing && bStopRequested)
+            {
+                ClearD3D11Data();
+                bStopRequested = false;
+            }
+
+            if(!bHasTextures && bCapturing)
+            {
+                if(dxgiFormat)
+                {
+                    if(!hwndReceiver)
+                        hwndReceiver = FindWindow(RECEIVER_WINDOWCLASS, NULL);
+
+                    if(hwndReceiver)
+                    {
+                        BOOL bSuccess = DoD3D11Hook(device);
+
+                        if(bSuccess)
+                        {
+                            d3d11CaptureInfo.mapID = InitializeSharedMemoryGPUCapture(&texData);
+                            if(!d3d11CaptureInfo.mapID)
+                            {
+                                RUNONCE logOutput << "SwapPresentHook: creation of shared memory failed" << endl;
+                                bSuccess = false;
+                            }
+                        }
+
+                        if(bSuccess)
+                            bSuccess = IsWindow(hwndReceiver);
+
+                        if(bSuccess)
+                        {
+                            bHasTextures = true;
+                            d3d11CaptureInfo.captureType = CAPTURETYPE_SHAREDTEX;
+                            d3d11CaptureInfo.hwndSender = hwndSender;
+                            d3d11CaptureInfo.bFlip = FALSE;
+                            texData->texHandles[0] = sharedHandles[0];
+                            texData->texHandles[1] = sharedHandles[1];
+                            fps = (DWORD)SendMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d11CaptureInfo);
+                            frameTime = 1000000/LONGLONG(fps)/2;
+
+                            logOutput << "DoD3D11Hook: success";
+                        }
+                        else
+                        {
+                            ClearD3D11Data();
+                        }
+                    }
+                }
+            }
+
+            if(bHasTextures)
+            {
+                if(bCapturing)
+                {
+                    LONGLONG timeVal = OSGetTimeMicroseconds();
+                    LONGLONG timeElapsed = timeVal-lastTime;
+
+                    if(timeElapsed >= frameTime)
+                    {
+                        lastTime += frameTime;
+                        if(timeElapsed > frameTime*2)
+                            lastTime = timeVal;
+
+                        DWORD nextCapture = curCapture == 0 ? 1 : 0;
+
+                        ID3D11Resource *backBuffer = NULL;
+
+                        if(SUCCEEDED(swap->GetBuffer(0, IID_ID3D11Resource, (void**)&backBuffer)))
+                        {
+                            if(bIsMultisampled)
+                                context->ResolveSubresource(copyTextureGame, 0, backBuffer, 0, dxgiFormat);
+                            else
+                                context->CopyResource(copyTextureGame, backBuffer);
+
+                            ID3D10Texture2D *outputTexture = NULL;
+                            int lastRendered = -1;
+
+                            if(keyedMutexes[curCapture]->AcquireSync(0, 0) == WAIT_OBJECT_0)
+                                lastRendered = (int)curCapture;
+                            else if(keyedMutexes[nextCapture]->AcquireSync(0, 0) == WAIT_OBJECT_0)
+                                lastRendered = (int)nextCapture;
+
+                            if(lastRendered != -1)
+                            {
+                                shareDevice->CopyResource(sharedTextures[lastRendered], copyTextureIntermediary);
+                                keyedMutexes[lastRendered]->ReleaseSync(0);
+                            }
+
+                            texData->lastRendered = lastRendered;
+                            backBuffer->Release();
+                        }
+
+                        curCapture = nextCapture;
+                    }
+                }
+                else
+                    ClearD3D11Data();
+            }
+
+            device->Release();
+            context->Release();
         }
-
-        gi11swapPresent.Unhook();
-        HRESULT hRes = swap->Present(syncInterval, flags);
-        gi11swapPresent.Rehook();
-
-        return hRes;
     }
-};
+
+    gi11swapPresent.Unhook();
+    HRESULT hRes = swap->Present(syncInterval, flags);
+    gi11swapPresent.Rehook();
+
+    return hRes;
+}
 
 typedef HRESULT (WINAPI*D3D11CREATEPROC)(IDXGIAdapter*, D3D_DRIVER_TYPE, HMODULE, UINT, D3D_FEATURE_LEVEL*, UINT, UINT, DXGI_SWAP_CHAIN_DESC*, IDXGISwapChain**, ID3D11Device**, D3D_FEATURE_LEVEL*, ID3D11DeviceContext**);
 
@@ -514,8 +508,8 @@ bool InitD3D11Capture()
                 bSuccess = true;
 
                 UPARAM *vtable = *(UPARAM**)swap;
-                gi11swapPresent.Hook((FARPROC)*(vtable+(32/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D11Override::SwapPresentHook));
-                gi11swapResizeBuffers.Hook((FARPROC)*(vtable+(52/4)), ConvertClassProcToFarproc((CLASSPROC)&D3D11Override::SwapResizeBuffersHook));
+                gi11swapPresent.Hook((FARPROC)*(vtable+(32/4)), (FARPROC)D3D11SwapPresentHook);
+                gi11swapResizeBuffers.Hook((FARPROC)*(vtable+(52/4)), (FARPROC)D3D11SwapResizeBuffersHook);
 
                 SafeRelease(swap);
                 SafeRelease(device);
@@ -525,10 +519,14 @@ bool InitD3D11Capture()
                 gi11swapResizeBuffers.Rehook();
             }
             else
-                logOutput << "InitD3D11Capture: D3D11CreateDeviceAndSwapChain failed, result = " << UINT(hErr) << endl;
+            {
+                RUNONCE logOutput << "InitD3D11Capture: D3D11CreateDeviceAndSwapChain failed, result = " << UINT(hErr) << endl;
+            }
         }
         else
-            logOutput << "InitD3D11Capture: could not get address of D3D11CreateDeviceAndSwapChain" << endl;
+        {
+            RUNONCE logOutput << "InitD3D11Capture: could not get address of D3D11CreateDeviceAndSwapChain" << endl;
+        }
     }
 
     return bSuccess;
