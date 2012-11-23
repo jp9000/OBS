@@ -1295,7 +1295,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         //------------------------------------------
 
                         BOOL bUDMError;
-                        UINT opacity = (UINT)SendMessage(GetDlgItem(hwnd, IDC_BLEND), UDM_GETPOS32, 0, (LPARAM)&bUDMError);
+                        UINT opacity = (UINT)SendMessage(GetDlgItem(hwnd, IDC_OPACITY), UDM_GETPOS32, 0, (LPARAM)&bUDMError);
                         if(bUDMError) opacity = 100;
 
                         configData->data->SetInt(TEXT("opacity"), opacity);

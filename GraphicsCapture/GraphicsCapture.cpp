@@ -97,7 +97,7 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
             DWORD exStyles = (DWORD)GetWindowLongPtr(hwndCurrent, GWL_EXSTYLE);
             DWORD styles = (DWORD)GetWindowLongPtr(hwndCurrent, GWL_STYLE);
 
-            if( (exStyles & WS_EX_TOOLWINDOW) == 0 && (styles & WS_CHILD) == 0 && hwndParent == NULL)
+            if( (exStyles & WS_EX_TOOLWINDOW) == 0 && (styles & WS_CHILD) == 0 /*&& hwndParent == NULL*/)
             {
                 String strWindowName;
                 strWindowName.SetLength(GetWindowTextLength(hwndCurrent));

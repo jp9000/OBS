@@ -51,6 +51,12 @@ RTMPPublisher::RTMPPublisher(RTMP *rtmpIn, BOOL bUseSendBuffer, UINT sendBufferS
         rtmp->m_customSendFunc = (CUSTOMSEND)RTMPPublisher::BufferedSend;
         rtmp->m_customSendParam = this;
         rtmp->m_bCustomSend = TRUE;
+
+        int sndBufSize = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("MaxBitrate"), 1000);
+        sndBufSize += AppConfig->GetInt(TEXT("Audio Encoding"), TEXT("Bitrate"), 96);
+        sndBufSize *= 2;
+
+        setsockopt(rtmp->m_sb.sb_socket, SOL_SOCKET, SO_SNDBUF, (char*)&sndBufSize, sizeof(sndBufSize));
     }
     else
         Log(TEXT("Not using send buffering"));
@@ -69,8 +75,8 @@ RTMPPublisher::RTMPPublisher(RTMP *rtmpIn, BOOL bUseSendBuffer, UINT sendBufferS
 
     packetWaitType = 0;
 
-    BFrameThreshold = App->GetFPS(); //when it starts cutting out b frames
-    maxVideoPackets = App->GetFPS()*2; //when it starts cutting out p frames
+    BFrameThreshold = 30; //when it starts cutting out b frames
+    maxVideoPackets = 70; //when it starts cutting out p frames
     revertThreshold = 2;  //when it reverts to normal
 }
 
