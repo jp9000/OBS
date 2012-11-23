@@ -151,7 +151,7 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
     }
 
     //initialize debug symbols
-    fnSymInitialize (hProcess, searchPath, TRUE);
+    fnSymInitialize (hProcess, NULL, TRUE);
 
 #ifdef _WIN64
     InstructionPtr = context.Rip;
