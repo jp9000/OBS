@@ -2255,15 +2255,15 @@ void OBS::MainCaptureLoop()
                         if(pendingAudioFrames.Num())
                         {
                             //Log(TEXT("pending frames %u, (in milliseconds): %u"), pendingAudioFrames.Num(), pendingAudioFrames.Last().timestamp-pendingAudioFrames[0].timestamp);
-                            while(pendingAudioFrames.Num() && pendingAudioFrames[0].timestamp < curTimeStamp)
+                            while(pendingAudioFrames.Num() && pendingAudioFrames[0].timestamp+75 < curTimeStamp)
                             {
                                 List<BYTE> &audioData = pendingAudioFrames[0].audioData;
 
                                 if(audioData.Num())
                                 {
-                                    network->SendPacket(audioData.Array(), audioData.Num(), pendingAudioFrames[0].timestamp, PacketType_Audio);
+                                    network->SendPacket(audioData.Array(), audioData.Num(), pendingAudioFrames[0].timestamp+75, PacketType_Audio);
                                     if(fileStream)
-                                        fileStream->AddPacket(audioData.Array(), audioData.Num(), pendingAudioFrames[0].timestamp, PacketType_Audio);
+                                        fileStream->AddPacket(audioData.Array(), audioData.Num(), pendingAudioFrames[0].timestamp+75, PacketType_Audio);
 
                                     audioData.Clear();
                                 }

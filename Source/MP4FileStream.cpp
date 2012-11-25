@@ -481,7 +481,7 @@ public:
                     output.Serialize(IFrameIDs.Array(), IFrameIDs.Num()*sizeof(UINT));
                   PopBox(); //stss
                   PushBox(output, DWORD_BE('ctts')); //list of composition time offsets
-                    output.OutputDword(DWORD_BE(0x01000000)); //version (1) and flags (none)
+                    output.OutputDword(0); //version (0) and flags (none)
                     output.OutputDword(fastHtonl(compositionOffsets.Num()));
                     for(UINT i=0; i<compositionOffsets.Num(); i++)
                     {

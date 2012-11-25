@@ -208,6 +208,10 @@ public:
         int timeOffset = int(INT64(picOut.i_pts+delayTime)-INT64(outputTimestamp));
         //Log(TEXT("dts: %d, pts: %d, timestamp: %d, offset: %d"), picOut.i_dts, picOut.i_pts, outputTimestamp, timeOffset);
 
+        timeOffset += 75; //100 is negative CTS padding for VFR
+        if(timeOffset < 0) //this is very unlikely with the padding
+            timeOffset = 0;
+
         timeOffset = htonl(timeOffset);
 
         BYTE *timeOffsetAddr = ((BYTE*)&timeOffset)+1;
@@ -233,7 +237,7 @@ public:
                 *(DWORD*)(SEIPacket+5) = htonl(newPayloadSize);
                 mcpy(SEIPacket+9, nal.p_payload+skipBytes, newPayloadSize);
             }
-            else if(nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE)
+            else if(nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE /*|| nal.i_type == NAL_SEI*/)
             {
                 VideoPacket *newPacket = CurrentPackets.CreateNew();
 
@@ -244,7 +248,7 @@ public:
                 int newPayloadSize = (nal.i_payload-skipBytes);
                 newPacket->Packet.SetSize(9+newPayloadSize);
 
-                newPacket->Packet[0] = ((nal.i_type == NAL_SLICE_IDR) ? 0x17 : 0x27);
+                newPacket->Packet[0] = ((nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SEI) ? 0x17 : 0x27);
                 newPacket->Packet[1] = 1;
                 mcpy(newPacket->Packet+2, timeOffsetAddr, 3);
                 *(DWORD*)(newPacket->Packet+5) = htonl(newPayloadSize);
@@ -302,6 +306,9 @@ public:
 
             x264_encoder_headers(x264, &nalOut, &nalNum);
 
+            int timeOffset = 0;//htonl(200);
+            BYTE *timeOffsetAddr = ((BYTE*)&timeOffset)+1;
+
             for(int i=0; i<nalNum; i++)
             {
                 x264_nal_t &nal = nalOut[i];
@@ -312,6 +319,7 @@ public:
 
                     headerOut.OutputByte(0x17);
                     headerOut.OutputByte(0);
+                    //headerOut.Serialize(timeOffsetAddr, 3);
                     headerOut.OutputByte(0);
                     headerOut.OutputByte(0);
                     headerOut.OutputByte(0);
