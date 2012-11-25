@@ -335,7 +335,10 @@ void GraphicsCaptureSource::EndScene()
     }
 
     if(windowData)
+    {
         windowData->source = NULL;
+        windowData = NULL;
+    }
 
     if(hwndReceiver)
     {
