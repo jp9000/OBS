@@ -99,7 +99,7 @@ Settings.Video              "Video"
 
 Settings.Advanced.Network                           "Network"
 Settings.Advanced.SendBufferSize                    "Send Buffer Size:"
-Settings.Advanced.UnlockHigherFPS                   "Unlock Higher FPS Rates"
+Settings.Advanced.UnlockHigherFPS                   "Allow 60-120 FPS entry in video settings"
 Settings.Advanced.UseHighQualityResampling          "Use Higher Quality Resampling"
 Settings.Advanced.UseHighQualityResamplingTooltip   "When the audio subsystem is forced to resample, uses sinc interpolation instead of linear interpolation to resample sound.  Requires a little bit more CPU."
 Settings.Advanced.UseMultithreadedOptimizations     "Use Multithreaded Optimizations"

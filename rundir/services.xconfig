@@ -29,4 +29,14 @@ services : {
       EU (Partner)      : rtmp://live.eu.pro.own3d.tv/live
     }
   }
+  "Vaughn Live" : {
+    servers : {
+      "US Chicago (Primary)"  : rtmp://live.vaughnlive.tv:443/live
+    }
+  }
+  iNSTAGIB.tv : {
+    servers : {
+      "US Chicago (Primary)"  : rtmp://live.instagib.tv:443/live
+    }
+  }
 }
