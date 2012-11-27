@@ -22,14 +22,33 @@ struct NetworkPacket
     List<BYTE> data;
     DWORD timestamp;
     PacketType type;
+    UINT distanceFromDroppedFrame;
 };
 
 //max latency in milliseconds allowed when using the send buffer
 const DWORD maxBufferTime = 600;
 
+struct PacketTimeSize
+{
+    inline PacketTimeSize(DWORD timestamp, DWORD size) : timestamp(timestamp), size(size) {}
+
+    DWORD timestamp;
+    DWORD size;
+};
+
 class RTMPPublisher : public NetworkStream
 {
     friend class DelayedPublisher;
+
+    List<PacketTimeSize> packetSizeRecord;
+    DWORD outputRateSize;
+
+    bool numStartFrames;
+    int ignoreCount;
+    DWORD currentBufferSize, sendTime;
+    DWORD bufferTime, dropThreshold;
+    List<NetworkPacket> queuedPackets;
+    bool bCancelEnd;
 
 protected:
     RTMP *rtmp;
@@ -41,34 +60,29 @@ protected:
     bool bStopping;
 
     int packetWaitType;
-    List<NetworkPacket> Packets;
-    UINT numVideoPackets;
-    UINT maxVideoPackets, BFrameThreshold, revertThreshold;
 
     QWORD bytesSent;
 
     UINT numPFramesDumped;
     UINT numBFramesDumped;
 
-    UINT numVideoPacketsBuffered;
-    DWORD firstBufferedVideoFrameTimestamp;
-
-    bool bPacketDumpMode;
-
     BOOL bUseSendBuffer;
-
-    //all data sending is done in yet another separate thread to prevent blocking in the main capture thread
-
     List<BYTE> sendBuffer;
     int curSendBufferLen;
 
+    DWORD firstBufferedVideoFrameTimestamp;
+    bool bFirstSend;
+
     void SendLoop();
     static DWORD SendThread(RTMPPublisher *publisher);
-    void DoIFrameDelay();
-    void DumpBFrame();
+
+    void DropFrame(UINT id);
+    bool DoIFrameDelay(bool bBFramesOnly);
 
     int FlushSendBuffer();
     static int BufferedSend(RTMPSockBuf *sb, const char *buf, int len, RTMPPublisher *network);
+
+    void ProcessPackets(DWORD timestamp);
 
 public:
     RTMPPublisher(RTMP *rtmpIn, BOOL bUseSendBuffer, UINT sendBufferSize);
