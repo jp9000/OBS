@@ -321,7 +321,7 @@ BEGIN
     CONTROL         "Settings.Advanced.UseSyncFix",IDC_USESYNCFIX,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,109,243,10
     GROUPBOX        "Settings.General",IDC_STATIC,5,5,418,41
     CONTROL         "Settings.Advanced.UseMultithreadedOptimizations",IDC_USEMULTITHREADEDOPTIMIZATIONS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,17,347,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,17,173,10
     GROUPBOX        "Settings.Audio",IDC_STATIC,4,144,418,29
     CONTROL         "Settings.Advanced.UseHighQualityResampling",IDC_USEHIGHQUALITYRESAMPLING,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,157,332,10
@@ -529,7 +529,6 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 420
         TOPMARGIN, 7
-        BOTTOMMARGIN, 299
     END
 
     IDD_CONFIGURETRANSITIONSOURCE, DIALOG
