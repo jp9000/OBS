@@ -1517,9 +1517,17 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                 bool bUseMTOptimizations = AppConfig->GetInt(TEXT("General"), TEXT("UseMultithreadedOptimizations"), TRUE) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_USEMULTITHREADEDOPTIMIZATIONS), BM_SETCHECK, bUseMTOptimizations ? BST_CHECKED : BST_UNCHECKED, 0);
 
+                HWND hwndTemp = GetDlgItem(hwnd, IDC_PRIORITY);
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("High"));
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("Above Normal"));
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("Normal"));
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("Idle"));
+                
+                LoadSettingComboString(hwndTemp, TEXT("General"), TEXT("Priority"), TEXT("Normal"));
+
                 //--------------------------------------------
 
-                HWND hwndTemp = GetDlgItem(hwnd, IDC_PRESET);
+                hwndTemp = GetDlgItem(hwnd, IDC_PRESET);
                 for(int i=0; i<10; i++)
                     SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)preset_names[i]);
 
@@ -1598,6 +1606,8 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 //------------------------------------
 
+                //need this as some of the dialog item sets above trigger the notifications
+                ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_HIDE);
                 App->SetChangedSettings(false);
                 return TRUE;
             }
@@ -1648,6 +1658,7 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 case IDC_SENDBUFFERSIZE:
                 case IDC_PRESET:
+                case IDC_PRIORITY:
                     if(HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == CBN_EDITCHANGE)
                     {
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
@@ -1919,6 +1930,9 @@ void OBS::ApplySettings()
 
                 bool bUseMTOptimizations = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USEMULTITHREADEDOPTIMIZATIONS), BM_GETCHECK, 0, 0) == BST_CHECKED;
                 AppConfig->SetInt(TEXT("General"), TEXT("UseMultithreadedOptimizations"), bUseMTOptimizations);
+
+                strTemp = GetCBText(GetDlgItem(hwndCurrentSettings, IDC_PRIORITY));
+                AppConfig->SetString(TEXT("General"), TEXT("Priority"), strTemp);
 
                 //--------------------------------------------------
 

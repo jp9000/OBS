@@ -756,9 +756,6 @@ OBS::OBS()
     strDashboard = AppConfig->GetString(TEXT("Publish"), TEXT("Dashboard"));
     strDashboard.KillSpaces();
 
-    ResizeWindow(false);
-    ShowWindow(hwndMain, SW_SHOW);
-
     //-----------------------------------------------------
 
     for(UINT i=0; i<numScenes; i++)
@@ -848,6 +845,9 @@ OBS::OBS()
 
     hHotkeyThread = OSCreateThread((XTHREAD)HotkeyThread, NULL);
     
+    ResizeWindow(false);
+    ShowWindow(hwndMain, SW_SHOW);
+
     bRenderViewEnabled = true;
 }
 
@@ -1085,6 +1085,14 @@ void OBS::Start()
         Log(TEXT("Incompatible modules detected."));
         return;
     }
+
+    String processPriority = AppConfig->GetString(TEXT("General"), TEXT("Priority"), TEXT("Normal"));
+    if (!scmp(processPriority, TEXT("Idle")))
+        SetPriorityClass(GetCurrentProcess(), IDLE_PRIORITY_CLASS);
+    else if (!scmp(processPriority, TEXT("Above Normal")))
+        SetPriorityClass(GetCurrentProcess(), ABOVE_NORMAL_PRIORITY_CLASS);
+    else if (!scmp(processPriority, TEXT("High")))
+        SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
 
     //-------------------------------------------------------------
 
@@ -1688,6 +1696,10 @@ void OBS::Stop()
     InvalidateRect(hwndRenderFrame, NULL, TRUE);
 
     SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, 1, 0, 0);
+
+    String processPriority = AppConfig->GetString(TEXT("General"), TEXT("Priority"), TEXT("Normal"));
+    if (scmp(processPriority, TEXT("Normal")))
+        SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
 
     bTestStream = false;
 }
