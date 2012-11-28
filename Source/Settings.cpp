@@ -1656,8 +1656,30 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                     }
                     break;
 
-                case IDC_SENDBUFFERSIZE:
                 case IDC_PRESET:
+                    if(HIWORD(wParam) == CBN_SELCHANGE)
+                    {
+                        HWND hwndTemp = (HWND)lParam;
+
+                        String strNewPreset = GetCBText(hwndTemp);
+                        if (scmp(strNewPreset.Array(), AppConfig->GetString(TEXT("Video Encoding"), TEXT("Preset"), TEXT("veryfast"))))
+                        {
+                            static BOOL bHasWarned = FALSE;
+                            if (!bHasWarned && MessageBox(hwnd, Str("Settings.Advanced.PresetWarning"), NULL, MB_ICONEXCLAMATION | MB_YESNO) == IDNO)
+                            {
+                                LoadSettingComboString(hwndTemp, TEXT("Video Encoding"), TEXT("Preset"), TEXT("veryfast"));
+                            }
+                            else
+                            {
+                                bHasWarned = TRUE;
+                                ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
+                                App->SetChangedSettings(true);
+                            }
+                        }
+                    }
+                    break;
+
+                case IDC_SENDBUFFERSIZE:
                 case IDC_PRIORITY:
                     if(HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == CBN_EDITCHANGE)
                     {
