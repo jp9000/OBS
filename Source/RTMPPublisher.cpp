@@ -34,12 +34,34 @@ void rtmp_log_output(int level, const char *format, va_list vl)
     Free(lpTemp);
 }
 
-
-RTMPPublisher::RTMPPublisher(RTMP *rtmpIn, BOOL bUseSendBuffer, UINT sendBufferSize)
+RTMPPublisher::RTMPPublisher()
 {
-    rtmp = rtmpIn;
+    hSendSempahore = CreateSemaphore(NULL, 0, 0x7FFFFFFFL, NULL);
+    if(!hSendSempahore)
+        CrashError(TEXT("RTMPPublisher: Could not create semaphore"));
+
+    hDataMutex = OSCreateMutex();
+    if(!hDataMutex)
+        CrashError(TEXT("RTMPPublisher: Could not create mutex"));
 
     //------------------------------------------
+
+    bufferTime = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("FrameDropBufferTime"), 3);
+    if(bufferTime < 1) bufferTime = 1;
+    else if(bufferTime > 10) bufferTime = 10;
+    bufferTime *= 1000;
+
+    connectTime = bufferTime-600; //connect about 600 milliseconds before we start sending
+
+    dropThreshold = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("FrameDropThreshold"), 400);
+    if(dropThreshold < 50)        dropThreshold = 50;
+    else if(dropThreshold > 1000) dropThreshold = 1000;
+    dropThreshold += bufferTime;
+}
+
+bool RTMPPublisher::Init(RTMP *rtmpIn, BOOL bUseSendBuffer, UINT sendBufferSize)
+{
+    rtmp = rtmpIn;
 
     sendBuffer.SetSize(sendBufferSize);
     curSendBufferLen = 0;
@@ -62,28 +84,6 @@ RTMPPublisher::RTMPPublisher(RTMP *rtmpIn, BOOL bUseSendBuffer, UINT sendBufferS
 
     //------------------------------------------
 
-    bufferTime = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("FrameDropBufferTime"), 2);
-    if(bufferTime < 1) bufferTime = 1;
-    else if(bufferTime > 10) bufferTime = 10;
-    bufferTime *= 1000;
-
-    dropThreshold = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("FrameDropThreshold"), 400);
-    if(dropThreshold < 50)        dropThreshold = 50;
-    else if(dropThreshold > 1000) dropThreshold = 1000;
-    dropThreshold += bufferTime;
-
-    Log(TEXT("bufferTime: %u, dropThreshold: %u"), bufferTime, dropThreshold);
-
-    //------------------------------------------
-
-    hSendSempahore = CreateSemaphore(NULL, 0, 0x7FFFFFFFL, NULL);
-    if(!hSendSempahore)
-        CrashError(TEXT("RTMPPublisher: Could not create semaphore"));
-
-    hDataMutex = OSCreateMutex();
-    if(!hDataMutex)
-        CrashError(TEXT("RTMPPublisher: Could not create mutex"));
-
     hSendThread = OSCreateThread((XTHREAD)RTMPPublisher::SendThread, this);
     if(!hSendThread)
         CrashError(TEXT("RTMPPublisher: Could not create thread"));
@@ -91,16 +91,24 @@ RTMPPublisher::RTMPPublisher(RTMP *rtmpIn, BOOL bUseSendBuffer, UINT sendBufferS
     //------------------------------------------
 
     packetWaitType = 0;
+
+    return true;
 }
 
 RTMPPublisher::~RTMPPublisher()
 {
     bStopping = true;
-    ReleaseSemaphore(hSendSempahore, 1, NULL);
-    OSTerminateThread(hSendThread, 20000);
+    if(hSendThread)
+    {
+        ReleaseSemaphore(hSendSempahore, 1, NULL);
+        OSTerminateThread(hSendThread, 20000);
+    }
 
-    CloseHandle(hSendSempahore);
-    OSCloseMutex(hDataMutex);
+    if(hSendSempahore)
+        CloseHandle(hSendSempahore);
+
+    if(hDataMutex)
+        OSCloseMutex(hDataMutex);
 
     //flush the last of the data
     if(bUseSendBuffer && RTMP_IsConnected(rtmp))
@@ -112,7 +120,11 @@ RTMPPublisher::~RTMPPublisher()
         queuedPackets[i].data.Clear();
     queuedPackets.Clear();
 
-    Log(TEXT("Number of b-frames dropped: %u, Number of p-frames dropped: %u"), numBFramesDumped, numPFramesDumped);
+    double dTotalFrames = double(totalFrames);
+    double dBFrameDropPercentage = double(numBFramesDumped)/dTotalFrames*100.0;
+    double dPFrameDropPercentage = double(numPFramesDumped)/dTotalFrames*100.0;
+
+    Log(TEXT("Number of b-frames dropped: %u (%%%g), Number of p-frames dropped: %u (%%%g)"), numBFramesDumped, dBFrameDropPercentage, numPFramesDumped, dPFrameDropPercentage);
 
     //--------------------------
 
@@ -127,15 +139,15 @@ RTMPPublisher::~RTMPPublisher()
 
 void RTMPPublisher::ProcessPackets(DWORD timestamp)
 {
-    if(bCancelEnd)
-        return;
-
     if(queuedPackets.Num())
     {
         DWORD queueTime = queuedPackets.Last().timestamp-queuedPackets[0].timestamp;
         Log(TEXT("queueTime: %u, outputRateSize: %u, currentBufferSize: %u, queuedPackets.Num: %u, timestamp: %u, bufferTime: %u"), queueTime, outputRateSize, currentBufferSize, queuedPackets.Num(), timestamp, bufferTime);
 
-        if(!ignoreCount && queueTime > dropThreshold && currentBufferSize > outputRateSize)
+        if( bStreamStarted &&
+            !ignoreCount &&
+            queueTime > dropThreshold &&
+            currentBufferSize > outputRateSize)
         {
             Log(TEXT("killing frames"));
             while(currentBufferSize > outputRateSize)
@@ -148,10 +160,33 @@ void RTMPPublisher::ProcessPackets(DWORD timestamp)
         }
     }
 
+    if(!bConnected && !bConnecting && timestamp > connectTime)
+    {
+        HANDLE hConnectionThread = OSCreateThread((XTHREAD)CreateConnectionThread, this);
+        OSCloseThread(hConnectionThread);
+
+        bConnecting = true;
+    }
+
     if(timestamp >= bufferTime)
     {
-        sendTime = timestamp-bufferTime;
-        ReleaseSemaphore(hSendSempahore, 1, NULL);
+        if(bConnected)
+        {
+            if(!bStreamStarted)
+            {
+                BeginPublishingInternal();
+                bStreamStarted = true;
+
+                DWORD timeAdjust = timestamp-bufferTime;
+                bufferTime += timeAdjust;
+                dropThreshold += timeAdjust;
+
+                Log(TEXT("bufferTime: %u, dropThreshold: %u"), bufferTime, dropThreshold);
+            }
+
+            sendTime = timestamp-bufferTime;
+            ReleaseSemaphore(hSendSempahore, 1, NULL);
+        }
     }
 }
 
@@ -159,6 +194,8 @@ void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketTyp
 {
     if(!bStopping)
     {
+        totalFrames++;
+
         bool bAddPacket = false;
         if(type >= packetWaitType)
         {
@@ -200,7 +237,7 @@ void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketTyp
     }
 }
 
-void RTMPPublisher::BeginPublishing()
+void RTMPPublisher::BeginPublishingInternal()
 {
     RTMPPacket packet;
 
@@ -246,6 +283,7 @@ void RTMPPublisher::BeginPublishing()
     if(!RTMP_SendPacket(rtmp, &packet, FALSE))
     {
         App->PostStopMessage();
+        bStopping = true;
         return;
     }
 
@@ -265,8 +303,155 @@ void RTMPPublisher::BeginPublishing()
     if(!RTMP_SendPacket(rtmp, &packet, FALSE))
     {
         App->PostStopMessage();
+        bStopping = true;
         return;
     }
+}
+
+void RTMPPublisher::BeginPublishing()
+{
+}
+
+DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
+{
+    //------------------------------------------------------
+    // set up URL
+
+    bool bRetry = false;
+    bool bSuccess = false;
+    bool bCanRetry = false;
+
+    String failReason;
+
+    int    serviceID    = AppConfig->GetInt   (TEXT("Publish"), TEXT("Service"));
+    String strURL       = AppConfig->GetString(TEXT("Publish"), TEXT("URL"));
+    String strPlayPath  = AppConfig->GetString(TEXT("Publish"), TEXT("PlayPath"));
+
+    if(!strURL.IsValid())
+    {
+        failReason = TEXT("No server specified to connect to");
+        goto end;
+    }
+
+    if(serviceID != 0)
+    {
+        XConfig serverData;
+        if(!serverData.Open(TEXT("services.xconfig")))
+        {
+            failReason = TEXT("Could not open services.xconfig");
+            goto end;
+        }
+
+        XElement *services = serverData.GetElement(TEXT("services"));
+        if(!services)
+        {
+            failReason = TEXT("Could not any services in services.xconfig");
+            goto end;
+        }
+
+        XElement *service = services->GetElementByID(serviceID-1);
+        if(!service)
+        {
+            failReason = TEXT("Could not find the service specified in services.xconfig");
+            goto end;
+        }
+
+        XElement *servers = service->GetElement(TEXT("servers"));
+        if(!servers)
+        {
+            failReason = TEXT("Could not find any servers for the service specified in services.xconfig");
+            goto end;
+        }
+
+        XDataItem *item = servers->GetDataItem(strURL);
+        if(!item)
+            item = servers->GetDataItemByID(0);
+
+        strURL = item->GetData();
+    }
+
+    //------------------------------------------------------
+
+    RTMP *rtmp = RTMP_Alloc();
+    RTMP_Init(rtmp);
+    /*RTMP_LogSetCallback(rtmp_log_output);
+    RTMP_LogSetLevel(RTMP_LOGDEBUG2);*/
+
+    LPSTR lpAnsiURL = strURL.CreateUTF8String();
+    LPSTR lpAnsiPlaypath = strPlayPath.CreateUTF8String();
+
+    if(!RTMP_SetupURL2(rtmp, lpAnsiURL, lpAnsiPlaypath))
+    {
+        failReason = Str("Connection.CouldNotParseURL");
+        goto end;
+    }
+
+    RTMP_EnableWrite(rtmp); //set it to publish
+
+    /*rtmp->Link.swfUrl.av_len = rtmp->Link.tcUrl.av_len;
+    rtmp->Link.swfUrl.av_val = rtmp->Link.tcUrl.av_val;
+    rtmp->Link.pageUrl.av_len = rtmp->Link.tcUrl.av_len;
+    rtmp->Link.pageUrl.av_val = rtmp->Link.tcUrl.av_val;*/
+    rtmp->Link.flashVer.av_val = "FMLE/3.0 (compatible; FMSc/1.0)";
+    rtmp->Link.flashVer.av_len = (int)strlen(rtmp->Link.flashVer.av_val);
+
+    BOOL bUseSendBuffer = AppConfig->GetInt(TEXT("Publish"), TEXT("UseSendBuffer"), 1);
+    UINT sendBufferSize = AppConfig->GetInt(TEXT("Publish"), TEXT("SendBufferSize"), 1460);
+
+    if(sendBufferSize > 32120)
+        sendBufferSize = 32120;
+    else if(sendBufferSize < 536)
+        sendBufferSize = 536;
+
+    rtmp->m_outChunkSize = 4096;//RTMP_DEFAULT_CHUNKSIZE;//
+    rtmp->m_bSendChunkSizeInfo = TRUE;
+
+    if (!bUseSendBuffer)
+        rtmp->m_bUseNagle = TRUE;
+
+    if(!RTMP_Connect(rtmp, NULL))
+    {
+        failReason = Str("Connection.CouldNotConnect");
+        bCanRetry = true;
+        goto end;
+    }
+
+    if(!RTMP_ConnectStream(rtmp, 0))
+    {
+        failReason = Str("Connection.InvalidStream");
+        goto end;
+    }
+
+    bSuccess = true;
+
+end:
+
+    Free(lpAnsiURL);
+    Free(lpAnsiPlaypath);
+
+    if(!bSuccess)
+    {
+        if(rtmp)
+        {
+            RTMP_Close(rtmp);
+            RTMP_Free(rtmp);
+        }
+
+        App->SetStreamReport(failReason);
+
+        if(!publisher->bStopping)
+            PostMessage(hwndMain, OBS_REQUESTSTOP, 1, 0);
+
+        publisher->bStopping = true;
+    }
+    else
+    {
+        publisher->Init(rtmp, bUseSendBuffer, sendBufferSize);
+        publisher->bConnected = true;
+        publisher->bConnecting = false;
+    }
+
+    return 0;
 }
 
 double RTMPPublisher::GetPacketStrain() const
@@ -292,7 +477,6 @@ DWORD RTMPPublisher::NumDroppedFrames() const
 
 void RTMPPublisher::SendLoop()
 {
-    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
     while(WaitForSingleObject(hSendSempahore, INFINITE) == WAIT_OBJECT_0)
     {
         /*//--------------------------------------------
@@ -411,11 +595,8 @@ void RTMPPublisher::SendLoop()
 
             if(bUseSendBuffer && type != PacketType_Audio)
             {
-                if(!bFirstSend)
-                {
+                if(!numVideoPacketsBuffered)
                     firstBufferedVideoFrameTimestamp = timestamp;
-                    bFirstSend = true;
-                }
 
                 DWORD bufferedTime = timestamp-firstBufferedVideoFrameTimestamp;
                 if(bufferedTime > maxBufferTime)
@@ -427,8 +608,10 @@ void RTMPPublisher::SendLoop()
                         break;
                     }
 
-                    firstBufferedVideoFrameTimestamp = timestamp;
+                    numVideoPacketsBuffered = 0;
                 }
+
+                numVideoPacketsBuffered++;
             }
 
             bytesSent += packetData.Num();
@@ -664,128 +847,11 @@ int RTMPPublisher::BufferedSend(RTMPSockBuf *sb, const char *buf, int len, RTMPP
         }
     } while(!bComplete);
 
+    network->numVideoPacketsBuffered = 0;
     return fullLen;
 }
 
-
-NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry)
+NetworkStream* CreateRTMPPublisher()
 {
-    //------------------------------------------------------
-    // set up URL
-
-    bCanRetry = false;
-
-    int    serviceID    = AppConfig->GetInt   (TEXT("Publish"), TEXT("Service"));
-    String strURL       = AppConfig->GetString(TEXT("Publish"), TEXT("URL"));
-    String strPlayPath  = AppConfig->GetString(TEXT("Publish"), TEXT("PlayPath"));
-
-    if(!strURL.IsValid())
-    {
-        failReason = TEXT("No server specified to connect to");
-        return NULL;
-    }
-
-    if(serviceID != 0)
-    {
-        XConfig serverData;
-        if(!serverData.Open(TEXT("services.xconfig")))
-        {
-            failReason = TEXT("Could not open services.xconfig");
-            return NULL;
-        }
-
-        XElement *services = serverData.GetElement(TEXT("services"));
-        if(!services)
-        {
-            failReason = TEXT("Could not any services in services.xconfig");
-            return NULL;
-        }
-
-        XElement *service = services->GetElementByID(serviceID-1);
-        if(!service)
-        {
-            failReason = TEXT("Could not find the service specified in services.xconfig");
-            return NULL;
-        }
-
-        XElement *servers = service->GetElement(TEXT("servers"));
-        if(!servers)
-        {
-            failReason = TEXT("Could not find any servers for the service specified in services.xconfig");
-            return NULL;
-        }
-
-        XDataItem *item = servers->GetDataItem(strURL);
-        if(!item)
-            item = servers->GetDataItemByID(0);
-
-        strURL = item->GetData();
-    }
-
-    //------------------------------------------------------
-
-    RTMP *rtmp = RTMP_Alloc();
-    RTMP_Init(rtmp);
-    /*RTMP_LogSetCallback(rtmp_log_output);
-    RTMP_LogSetLevel(RTMP_LOGDEBUG2);*/
-
-    LPSTR lpAnsiURL = strURL.CreateUTF8String();
-    LPSTR lpAnsiPlaypath = strPlayPath.CreateUTF8String();
-
-    if(!RTMP_SetupURL2(rtmp, lpAnsiURL, lpAnsiPlaypath))
-    {
-        failReason = Str("Connection.CouldNotParseURL");
-        RTMP_Free(rtmp);
-        Free(lpAnsiURL);
-        Free(lpAnsiPlaypath);
-        return NULL;
-    }
-
-    RTMP_EnableWrite(rtmp); //set it to publish
-
-    /*rtmp->Link.swfUrl.av_len = rtmp->Link.tcUrl.av_len;
-    rtmp->Link.swfUrl.av_val = rtmp->Link.tcUrl.av_val;
-    rtmp->Link.pageUrl.av_len = rtmp->Link.tcUrl.av_len;
-    rtmp->Link.pageUrl.av_val = rtmp->Link.tcUrl.av_val;*/
-    rtmp->Link.flashVer.av_val = "FMLE/3.0 (compatible; FMSc/1.0)";
-    rtmp->Link.flashVer.av_len = (int)strlen(rtmp->Link.flashVer.av_val);
-
-    BOOL bUseSendBuffer = AppConfig->GetInt(TEXT("Publish"), TEXT("UseSendBuffer"), 1);
-    UINT sendBufferSize = AppConfig->GetInt(TEXT("Publish"), TEXT("SendBufferSize"), 1460);
-
-    if(sendBufferSize > 32120)
-        sendBufferSize = 32120;
-    else if(sendBufferSize < 536)
-        sendBufferSize = 536;
-
-    rtmp->m_outChunkSize = 4096;//RTMP_DEFAULT_CHUNKSIZE;//
-    rtmp->m_bSendChunkSizeInfo = TRUE;
-
-    if (!bUseSendBuffer)
-        rtmp->m_bUseNagle = TRUE;
-
-    if(!RTMP_Connect(rtmp, NULL))
-    {
-        failReason = Str("Connection.CouldNotConnect");
-        RTMP_Free(rtmp);
-        bCanRetry = true;
-        Free(lpAnsiURL);
-        Free(lpAnsiPlaypath);
-        return NULL;
-    }
-
-    if(!RTMP_ConnectStream(rtmp, 0))
-    {
-        failReason = Str("Connection.InvalidStream");
-        RTMP_Close(rtmp);
-        RTMP_Free(rtmp);
-        Free(lpAnsiURL);
-        Free(lpAnsiPlaypath);
-        return NULL;
-    }
-
-    Free(lpAnsiURL);
-    Free(lpAnsiPlaypath);
-
-    return new RTMPPublisher(rtmp, bUseSendBuffer, sendBufferSize);
+    return new RTMPPublisher;
 }

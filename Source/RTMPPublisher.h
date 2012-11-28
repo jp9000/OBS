@@ -46,9 +46,15 @@ class RTMPPublisher : public NetworkStream
     bool numStartFrames;
     int ignoreCount;
     DWORD currentBufferSize, sendTime;
-    DWORD bufferTime, dropThreshold;
+    DWORD bufferTime, dropThreshold, connectTime;
     List<NetworkPacket> queuedPackets;
-    bool bCancelEnd;
+
+    bool bStreamStarted;
+    bool bConnecting, bConnected;
+
+    static DWORD WINAPI CreateConnectionThread(RTMPPublisher *publisher);
+
+    void BeginPublishingInternal();
 
 protected:
     RTMP *rtmp;
@@ -63,6 +69,7 @@ protected:
 
     QWORD bytesSent;
 
+    UINT totalFrames;
     UINT numPFramesDumped;
     UINT numBFramesDumped;
 
@@ -70,8 +77,8 @@ protected:
     List<BYTE> sendBuffer;
     int curSendBufferLen;
 
+    DWORD numVideoPacketsBuffered;
     DWORD firstBufferedVideoFrameTimestamp;
-    bool bFirstSend;
 
     void SendLoop();
     static DWORD SendThread(RTMPPublisher *publisher);
@@ -85,7 +92,8 @@ protected:
     void ProcessPackets(DWORD timestamp);
 
 public:
-    RTMPPublisher(RTMP *rtmpIn, BOOL bUseSendBuffer, UINT sendBufferSize);
+    RTMPPublisher();
+    bool Init(RTMP *rtmpIn, BOOL bUseSendBuffer, UINT sendBufferSize);
     ~RTMPPublisher();
 
     void SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type);

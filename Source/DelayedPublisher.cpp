@@ -21,7 +21,7 @@
 #include "RTMPStuff.h"
 #include "RTMPPublisher.h"
 
-NetworkStream* CreateRTMPPublisher(String &failReason, bool &bCanRetry);
+NetworkStream* CreateRTMPPublisher();
 
 
 class DelayedPublisher : public NetworkStream
@@ -32,33 +32,8 @@ class DelayedPublisher : public NetworkStream
 
     RTMPPublisher *outputStream;
 
-    bool bPublishingStarted;
-    bool bConnecting, bConnected;
+    bool bConnected;
     bool bStreamEnding, bCancelEnd;
-
-    static DWORD WINAPI CreateConnectionThread(DelayedPublisher *publisher)
-    {
-        String strFailReason;
-        bool bRetry = false;
-
-        publisher->outputStream = (RTMPPublisher*)CreateRTMPPublisher(strFailReason, bRetry);
-        if(!publisher->outputStream)
-        {
-            App->SetStreamReport(strFailReason);
-
-            if(!publisher->bStreamEnding)
-                PostMessage(hwndMain, OBS_REQUESTSTOP, 1, 0);
-
-            publisher->bCancelEnd = true;
-        }
-        else
-        {
-            publisher->bConnected = true;
-            publisher->bConnecting = false;
-        }
-
-        return 0;
-    }
 
     static INT_PTR CALLBACK EndDelayProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
@@ -91,36 +66,23 @@ class DelayedPublisher : public NetworkStream
         if(bCancelEnd)
             return;
 
-        if(timestamp > delayTime)
+        if(timestamp >= delayTime)
         {
             if(!bConnected)
             {
-                if(!bConnecting)
-                {
-                    HANDLE hThread = OSCreateThread((XTHREAD)CreateConnectionThread, this);
-                    OSCloseThread(hThread);
-
-                    bConnecting = true;
-                }
+                outputStream = (RTMPPublisher*)CreateRTMPPublisher();
+                bConnected = true;
             }
-            else
-            {
-                if(!bPublishingStarted)
-                {
-                    outputStream->BeginPublishing();
-                    bPublishingStarted = true;
-                }
 
-                DWORD sendTime = timestamp-delayTime;
-                for(UINT i=0; i<queuedPackets.Num(); i++)
+            DWORD sendTime = timestamp-delayTime;
+            for(UINT i=0; i<queuedPackets.Num(); i++)
+            {
+                NetworkPacket &packet = queuedPackets[i];
+                if(packet.timestamp <= sendTime)
                 {
-                    NetworkPacket &packet = queuedPackets[i];
-                    if(packet.timestamp <= sendTime)
-                    {
-                        outputStream->SendPacket(packet.data.Array(), packet.data.Num(), packet.timestamp, packet.type);
-                        packet.data.Clear();
-                        queuedPackets.Remove(i--);
-                    }
+                    outputStream->SendPacket(packet.data.Array(), packet.data.Num(), packet.timestamp, packet.type);
+                    packet.data.Clear();
+                    queuedPackets.Remove(i--);
                 }
             }
         }
