@@ -43,10 +43,10 @@ class RTMPPublisher : public NetworkStream
     List<PacketTimeSize> packetSizeRecord;
     DWORD outputRateSize;
 
-    bool numStartFrames;
+    bool numStartFrames, bNetworkStrain;
     int ignoreCount;
     DWORD currentBufferSize, sendTime;
-    DWORD bufferTime, dropThreshold, connectTime;
+    DWORD bufferTime, outputRateWindowTime, dropThreshold, connectTime;
     List<NetworkPacket> queuedPackets;
 
     bool bStreamStarted;
