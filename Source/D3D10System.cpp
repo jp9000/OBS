@@ -38,8 +38,8 @@ void LogVideoCardStats()
             {
                 Log(TEXT("Adapter %u"), i);
                 Log(TEXT("  Video Adapter: %s"), adapterDesc.Description);
-                Log(TEXT("  Video Adapeter Dedicated Video Memory: %u"), adapterDesc.DedicatedVideoMemory);
-                Log(TEXT("  Video Adapeter Shared System Memory: %u"), adapterDesc.SharedSystemMemory);
+                Log(TEXT("  Video Adapter Dedicated Video Memory: %u"), adapterDesc.DedicatedVideoMemory);
+                Log(TEXT("  Video Adapter Shared System Memory: %u"), adapterDesc.SharedSystemMemory);
             }
             else
                 AppWarning(TEXT("Could not query adapter %u"), i);
