@@ -422,6 +422,29 @@ void   STDCALL OSCloseMutex(HANDLE hMutex)
 }
 
 
+VOID   STDCALL OSSubMillisecondSleep(float fMSeconds)
+{
+    int intPart;
+
+    intPart = (int)fMSeconds;
+    if (intPart)
+        Sleep(intPart);
+
+    fMSeconds -= intPart;
+
+    LARGE_INTEGER t1, t2;
+    float fElapsedTime;
+
+    QueryPerformanceCounter(&t1);
+    for (;;)
+    {
+        QueryPerformanceCounter(&t2);
+        fElapsedTime = (t2.QuadPart - t1.QuadPart) * 1000.0f / clockFreq.QuadPart;
+        if (fElapsedTime >= fMSeconds)
+            return;
+        Sleep(0);
+    }
+}
 
 void   STDCALL OSSleep(DWORD dwMSeconds)
 {

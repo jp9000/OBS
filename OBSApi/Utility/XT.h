@@ -120,6 +120,7 @@ BASE_EXPORT DEFPROC STDCALL OSGetProcAddress(HANDLE hLibrary, LPCSTR lpProcedure
 BASE_EXPORT void   STDCALL OSFreeLibrary(HANDLE hLibrary);
 
 BASE_EXPORT void   STDCALL OSSleep(DWORD dwMSeconds);
+BASE_EXPORT void   STDCALL OSSubMillisecondSleep(float fMSeconds);
 
 BASE_EXPORT int    STDCALL OSGetTotalCores();
 BASE_EXPORT int    STDCALL OSGetLogicalCores();
