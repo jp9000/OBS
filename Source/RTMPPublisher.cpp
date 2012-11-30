@@ -46,14 +46,14 @@ RTMPPublisher::RTMPPublisher()
 
     //------------------------------------------
 
-    bufferTime = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("FrameDropBufferTime"), 3000);
+    bufferTime = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("FrameDropBufferTime"), 2000);
     if(bufferTime < 1000) bufferTime = 1000;
     else if(bufferTime > 10000) bufferTime = 10000;
 
     connectTime = bufferTime-600; //connect about 600 milliseconds before we start sending
-    outputRateWindowTime = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("OutputRateWindowTime"), 500);
-    if(outputRateWindowTime < 200)       dropThreshold = 200;
-    else if(outputRateWindowTime > 4000) dropThreshold = 4000;
+    outputRateWindowTime = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("OutputRateWindowTime"), 1000);
+    if(outputRateWindowTime < 200)       outputRateWindowTime = 200;
+    else if(outputRateWindowTime > 4000) outputRateWindowTime = 4000;
 
     dropThreshold = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("FrameDropThreshold"), 500);
     if(dropThreshold < 50)        dropThreshold = 50;
@@ -77,9 +77,6 @@ bool RTMPPublisher::Init(RTMP *rtmpIn, BOOL bUseSendBuffer, UINT sendBufferSize)
         rtmp->m_customSendFunc = (CUSTOMSEND)RTMPPublisher::BufferedSend;
         rtmp->m_customSendParam = this;
         rtmp->m_bCustomSend = TRUE;
-
-        //todo: this is a test
-        //setsockopt(rtmp->m_sb.sb_socket, SOL_SOCKET, SO_SNDBUF, (char*)&sendBufferSize, sizeof(sendBufferSize));
     }
     else
         Log(TEXT("Not using send buffering"));
@@ -126,7 +123,10 @@ RTMPPublisher::~RTMPPublisher()
     double dBFrameDropPercentage = double(numBFramesDumped)/dTotalFrames*100.0;
     double dPFrameDropPercentage = double(numPFramesDumped)/dTotalFrames*100.0;
 
-    Log(TEXT("Number of b-frames dropped: %u (%%%0.2g), Number of p-frames dropped: %u (%%%0.2g)"), numBFramesDumped, dBFrameDropPercentage, numPFramesDumped, dPFrameDropPercentage);
+    /*Log(TEXT("Number of b-frames dropped: %u (%%%0.2g), Number of p-frames dropped: %u (%%%0.2g), Total %u (%%%0.2g)"),
+        numBFramesDumped, dBFrameDropPercentage,
+        numPFramesDumped, dPFrameDropPercentage,
+        numBFramesDumped+numPFramesDumped, dBFrameDropPercentage+dPFrameDropPercentage);*/
 
     //--------------------------
 
@@ -143,10 +143,10 @@ void RTMPPublisher::ProcessPackets(DWORD timestamp)
 {
     if(queuedPackets.Num())
     {
+        DWORD queueTime = queuedPackets.Last().timestamp-queuedPackets[0].timestamp;
         DWORD adjustedOutputRateSize = outputRateSize*bufferTime/outputRateWindowTime;
 
-        DWORD queueTime = queuedPackets.Last().timestamp-queuedPackets[0].timestamp;
-        Log(TEXT("queueTime: %u, outputRateSize: %u, adjustedOutputRateSize: %u, currentBufferSize: %u, queuedPackets.Num: %u, timestamp: %u, bufferTime: %u"), queueTime, outputRateSize, adjustedOutputRateSize, currentBufferSize, queuedPackets.Num(), timestamp, bufferTime);
+        //Log(TEXT("queueTime: %u, adjustedOutputRateSize: %u, currentBufferSize: %u, queuedPackets.Num: %u, timestamp: %u"), queueTime, adjustedOutputRateSize, currentBufferSize, queuedPackets.Num(), timestamp);
 
         if( bStreamStarted &&
             !ignoreCount &&
@@ -154,7 +154,7 @@ void RTMPPublisher::ProcessPackets(DWORD timestamp)
         {
             if(currentBufferSize > adjustedOutputRateSize)
             {
-                Log(TEXT("killing frames"));
+                //Log(TEXT("killing frames"));
                 while(currentBufferSize > adjustedOutputRateSize)
                 {
                     if(!DoIFrameDelay(false))
@@ -162,9 +162,10 @@ void RTMPPublisher::ProcessPackets(DWORD timestamp)
                 }
 
                 bNetworkStrain = true;
+                //ignoreCount = int(queuedPackets.Num());
             }
-            else
-                Log(TEXT("ignoring frames"));
+            /*else
+                Log(TEXT("ignoring frames"));*/
 
             ignoreCount = int(queuedPackets.Num());
         }
@@ -556,7 +557,7 @@ void RTMPPublisher::SendLoop()
             {
                 if(--ignoreCount == 0)
                 {
-                    Log(TEXT("ignore complete"));
+                    //Log(TEXT("ignore complete"));
                     bNetworkStrain = false;
                 }
             }
@@ -585,8 +586,8 @@ void RTMPPublisher::SendLoop()
                 }
             }
             DWORD totalTime = OSGetTime()-startTime;
-            if(totalTime > 200)
-                Log(TEXT("send total time: %u"), totalTime);
+            /*if(totalTime > 200)
+                Log(TEXT("send total time: %u"), totalTime);*/
 
             //----------------------------------------------------------
 

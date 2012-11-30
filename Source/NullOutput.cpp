@@ -23,11 +23,14 @@
 class NullVideoEncoder : public VideoEncoder
 {
 public:
-    virtual bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp) {return true;}
+    virtual bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, int &ctsOffset) {return true;}
     virtual void GetHeaders(DataPacket &packet) {}
-    virtual void GetSEI(DataPacket &packet) {}
+   // virtual void GetSEI(DataPacket &packet) {}
     virtual int  GetBitRate() const {return 0;}
     virtual String GetInfoString() const {return String();}
+
+    virtual bool DynamicBitrateSupported() const {return false;}
+    virtual bool SetBitRate(DWORD maxBitrate, DWORD bufferSize) {return false;}
 };
 
 class NullAudioEncoder : public AudioEncoder

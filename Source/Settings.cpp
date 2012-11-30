@@ -1539,6 +1539,11 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 //------------------------------------
 
+                bool bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR")) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_USECBR), BM_SETCHECK, bUseCBR ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                //------------------------------------
+
                 bool bUseCustomX264Settings = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCustomSettings")) != 0;
                 String strX264Settings = AppConfig->GetString(TEXT("Video Encoding"), TEXT("CustomSettings"));
 
@@ -1683,6 +1688,20 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                 case IDC_PRIORITY:
                     if(HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == CBN_EDITCHANGE)
                     {
+                        ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
+                        App->SetChangedSettings(true);
+                    }
+                    break;
+
+                case IDC_USECBR:
+                    if(HIWORD(wParam) == BN_CLICKED)
+                    {
+                        String strText;
+                        strText << Str("Settings.Advanced.UseCBR");
+                        if(SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED)
+                            strText << TEXT(" (..why are you using CBR?)");
+
+                        SetWindowText((HWND)lParam, strText.Array());
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
                         App->SetChangedSettings(true);
                     }
@@ -1955,6 +1974,11 @@ void OBS::ApplySettings()
 
                 strTemp = GetCBText(GetDlgItem(hwndCurrentSettings, IDC_PRIORITY));
                 AppConfig->SetString(TEXT("General"), TEXT("Priority"), strTemp);
+
+                //--------------------------------------------------
+
+                bool bUseCBR = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USECBR), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("UseCBR"),            bUseCBR);
 
                 //--------------------------------------------------
 

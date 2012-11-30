@@ -1351,6 +1351,7 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
+    ctsOffset = 0;
     videoEncoder = CreateX264Encoder(fps, outputCX, outputCY, quality, preset, bUsing444, maxBitRate, bufferSize);
 
     //-------------------------------------------------------------
@@ -2225,7 +2226,7 @@ void OBS::MainCaptureLoop()
 
                     profileIn("call to encoder");
 
-                    videoEncoder->Encode(&picOut, videoPackets, videoPacketTypes, curTimeStamp);
+                    videoEncoder->Encode(&picOut, videoPackets, videoPacketTypes, curTimeStamp, ctsOffset);
                     if(bUsing444) prevTexture->Unmap(0);
 
                     profileOut;
@@ -2254,15 +2255,15 @@ void OBS::MainCaptureLoop()
                         if(pendingAudioFrames.Num())
                         {
                             //Log(TEXT("pending frames %u, (in milliseconds): %u"), pendingAudioFrames.Num(), pendingAudioFrames.Last().timestamp-pendingAudioFrames[0].timestamp);
-                            while(pendingAudioFrames.Num() && pendingAudioFrames[0].timestamp < curTimeStamp+123)
+                            while(pendingAudioFrames.Num() && (pendingAudioFrames[0].timestamp+ctsOffset) < curTimeStamp)
                             {
                                 List<BYTE> &audioData = pendingAudioFrames[0].audioData;
 
                                 if(audioData.Num())
                                 {
-                                    network->SendPacket(audioData.Array(), audioData.Num(), pendingAudioFrames[0].timestamp, PacketType_Audio);
+                                    network->SendPacket(audioData.Array(), audioData.Num(), pendingAudioFrames[0].timestamp+ctsOffset, PacketType_Audio);
                                     if(fileStream)
-                                        fileStream->AddPacket(audioData.Array(), audioData.Num(), pendingAudioFrames[0].timestamp, PacketType_Audio);
+                                        fileStream->AddPacket(audioData.Array(), audioData.Num(), pendingAudioFrames[0].timestamp+ctsOffset, PacketType_Audio);
 
                                     audioData.Clear();
                                 }
@@ -2281,9 +2282,9 @@ void OBS::MainCaptureLoop()
                             DataPacket &packet  = videoPackets[i];
                             PacketType type     = videoPacketTypes[i];
 
-                            network->SendPacket(packet.lpPacket, packet.size, curTimeStamp+123, type);
+                            network->SendPacket(packet.lpPacket, packet.size, curTimeStamp, type);
                             if(fileStream)
-                                fileStream->AddPacket(packet.lpPacket, packet.size, curTimeStamp+123, type);
+                                fileStream->AddPacket(packet.lpPacket, packet.size, curTimeStamp, type);
                         }
 
                         curPTS--;

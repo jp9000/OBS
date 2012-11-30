@@ -351,7 +351,15 @@ UINT MMDeviceAudioSource::GetNextBuffer()
             startTimestamp = lastTimestamp;
         }
         else if(dwFlags & AUDCLNT_BUFFERFLAGS_TIMESTAMP_ERROR)
+        {
+            AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: woa woa woa, getting timestamp errors from the audio subsystem.  device = %s"), GetDeviceName().Array());
             lastTimestamp += 10;
+        }
+
+        if(dwFlags & AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY)
+        {
+            AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: got a discontinuity flag.  device = %s"), GetDeviceName().Array());
+        }
 
         lastTimestamp -= startTimestamp;
 
@@ -364,7 +372,7 @@ UINT MMDeviceAudioSource::GetNextBuffer()
         //------------------------------------------------------------
         // channel upmix/downmix
 
-        if(inputChannels == 1) //actually I'm pretty sure mono is never used internally, but best to be safe I suppose
+        if(inputChannels == 1)
         {
             UINT  numFloats   = numAudioFrames;
             float *inputTemp  = (float*)captureBuffer;

@@ -195,6 +195,8 @@
 #define IDC_UNLOCKHIGHFPS               1128
 #define IDC_CANCEL                      1130
 #define IDC_PRIORITY                    1132
+#define IDC_USECBR                      1133
+#define IDC_BUTTON1                     1134
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -225,7 +227,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        141
 #define _APS_NEXT_COMMAND_VALUE         40044
-#define _APS_NEXT_CONTROL_VALUE         1133
+#define _APS_NEXT_CONTROL_VALUE         1135
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

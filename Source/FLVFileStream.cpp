@@ -109,14 +109,14 @@ public:
         {
             bSentFirstPacket = true;
 
-            DataPacket audioHeaders, videoHeaders, videoSEI;
+            DataPacket audioHeaders, videoHeaders;//, videoSEI;
             App->GetAudioHeaders(audioHeaders);
             App->GetVideoHeaders(videoHeaders);
-            App->GetVideoEncoder()->GetSEI(videoSEI);
+            //App->GetVideoEncoder()->GetSEI(videoSEI);
 
             AppendFLVPacket(audioHeaders.lpPacket, audioHeaders.size, 8, 0);
             AppendFLVPacket(videoHeaders.lpPacket, videoHeaders.size, 9, 0);
-            AppendFLVPacket(videoSEI.lpPacket,     videoSEI.size, 9, 0);
+            //AppendFLVPacket(videoSEI.lpPacket,     videoSEI.size, 9, 0);
         }
 
         AppendFLVPacket(data, size, (type == PacketType_Audio) ? 8 : 9, timestamp);

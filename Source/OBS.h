@@ -155,15 +155,17 @@ class VideoEncoder
     friend class OBS;
 
 protected:
-    virtual bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp)=0;
+    virtual bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, int &ctsOffset)=0;
 
 public:
     virtual ~VideoEncoder() {}
 
     virtual int  GetBitRate() const=0;
+    virtual bool DynamicBitrateSupported() const=0;
+    virtual bool SetBitRate(DWORD maxBitrate, DWORD bufferSize)=0;
 
     virtual void GetHeaders(DataPacket &packet)=0;
-    virtual void GetSEI(DataPacket &packet)=0;
+    //virtual void GetSEI(DataPacket &packet)=0;
 
     virtual String GetInfoString() const=0;
 };
@@ -441,6 +443,7 @@ class OBS
     HANDLE  hSceneMutex;
     bool    bUsing444;
 
+    int ctsOffset;
     DWORD bytesPerSec;
     DWORD captureFPS;
     DWORD curFramesDropped;

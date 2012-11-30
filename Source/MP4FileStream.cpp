@@ -742,10 +742,10 @@ public:
         {
             bSentFirstVideoPacket = true;
 
-            DataPacket seiData;
+            /*DataPacket seiData;
             App->GetVideoEncoder()->GetSEI(seiData);
 
-            AddPacket(seiData.lpPacket, seiData.size, timestamp, PacketType_VideoHighest);
+            AddPacket(seiData.lpPacket, seiData.size, timestamp, PacketType_VideoHighest);*/
         }
 
         UINT64 offset = fileOut.GetPos();
