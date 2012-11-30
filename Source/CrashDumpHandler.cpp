@@ -74,6 +74,7 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
 
     DWORD                       i;
     DWORD64                     InstructionPtr;
+    DWORD                       imageType;
 
     BOOL                        wantUpload = TRUE;
 
@@ -158,11 +159,13 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
     frame.AddrPC.Offset = InstructionPtr;
     frame.AddrFrame.Offset = context.Rbp;
     frame.AddrStack.Offset = context.Rsp;
+    imageType = IMAGE_FILE_MACHINE_AMD64;
 #else
     InstructionPtr = context.Eip;
     frame.AddrPC.Offset = InstructionPtr;
     frame.AddrFrame.Offset = context.Ebp;
     frame.AddrStack.Offset = context.Esp;
+    imageType = IMAGE_FILE_MACHINE_I386;
 #endif
 
     frame.AddrFrame.Mode = AddrModeFlat;
@@ -216,7 +219,7 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
 #endif
     crashDumpLog.FlushFileBuffers();
 
-    while (fnStackWalk64 (IMAGE_FILE_MACHINE_I386, hProcess, GetCurrentThread(), &frame, &context, NULL, (PFUNCTION_TABLE_ACCESS_ROUTINE64)fnSymFunctionTableAccess64, (PGET_MODULE_BASE_ROUTINE64)fnSymGetModuleBase64, NULL))
+    while (fnStackWalk64 (imageType, hProcess, GetCurrentThread(), &frame, &context, NULL, (PFUNCTION_TABLE_ACCESS_ROUTINE64)fnSymFunctionTableAccess64, (PGET_MODULE_BASE_ROUTINE64)fnSymGetModuleBase64, NULL))
     {
         scpy (moduleInfo.moduleName, TEXT("<unknown>"));
         moduleInfo.faultAddress = frame.AddrPC.Offset;
@@ -340,5 +343,6 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
 
     //we really shouldn't be returning here, if we're at the bottom of the VEH chain this is a pretty legitimate crash
     //and if we return we could end up invoking a second crash handler or other weird / annoying things
-    ExitProcess(exceptionInfo->ExceptionRecord->ExceptionCode);
+    //ExitProcess(exceptionInfo->ExceptionRecord->ExceptionCode);
+    return EXCEPTION_CONTINUE_SEARCH;
 }

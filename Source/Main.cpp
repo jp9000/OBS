@@ -286,6 +286,35 @@ void WINAPI ProcessEvents()
     }
 }
 
+typedef BOOL (WINAPI *getUserModeExceptionProc)(LPDWORD);
+typedef BOOL (WINAPI *setUserModeExceptionProc)(DWORD);
+
+void InitializeExceptionHandler()
+{
+    HMODULE k32;
+
+    //standard app-wide unhandled exception filter
+    SetUnhandledExceptionFilter(OBSExceptionHandler);
+
+    //fix for exceptions being swallowed inside callbacks (see KB976038)
+    k32 = GetModuleHandle(TEXT("KERNEL32"));
+    if (k32)
+    {
+        DWORD dwFlags;
+        getUserModeExceptionProc procGetProcessUserModeExceptionPolicy;
+        setUserModeExceptionProc procSetProcessUserModeExceptionPolicy;
+
+        procGetProcessUserModeExceptionPolicy = (getUserModeExceptionProc)GetProcAddress(k32, "GetProcessUserModeExceptionPolicy");
+        procSetProcessUserModeExceptionPolicy = (setUserModeExceptionProc)GetProcAddress(k32, "SetProcessUserModeExceptionPolicy");
+
+        if (procGetProcessUserModeExceptionPolicy && procSetProcessUserModeExceptionPolicy)
+        {
+            if (procGetProcessUserModeExceptionPolicy(&dwFlags))
+                procSetProcessUserModeExceptionPolicy(dwFlags & ~1);
+        }
+    }
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
     //make sure only one instance of the application can be open at a time
@@ -303,9 +332,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     //------------------------------------------------------------
 
     hinstMain = hInstance;
-
-    PVOID vectoredHandler;
-    vectoredHandler = AddVectoredExceptionHandler(0, OBSExceptionHandler);
+    
+    InitializeExceptionHandler();
 
     ULONG_PTR gdipToken;
     const Gdiplus::GdiplusStartupInput gdipInput;
@@ -457,8 +485,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     Gdiplus::GdiplusShutdown(gdipToken);
 
     TerminateXT();
-
-    RemoveVectoredExceptionHandler(vectoredHandler);
 
     //------------------------------------------------------------
 
