@@ -488,6 +488,7 @@ DWORD RTMPPublisher::NumDroppedFrames() const
 
 void RTMPPublisher::SendLoop()
 {
+    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
     while(WaitForSingleObject(hSendSempahore, INFINITE) == WAIT_OBJECT_0)
     {
         /*//--------------------------------------------
