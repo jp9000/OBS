@@ -45,6 +45,7 @@ void STDCALL ResetCursorClip();
 SYSTEM_INFO si;
 
 BOOL        bHidingCursor = 0;
+BOOL        bWindows8 = 0;
 
 HWND        hwndMainAppWindow = NULL;
 
@@ -69,7 +70,15 @@ void   STDCALL OSInit()
 {
     timeBeginPeriod(1);
 
+    TIMECAPS chi;
+    timeGetDevCaps(&chi, sizeof(chi));
+
     GetSystemInfo(&si);
+
+	OSVERSIONINFO osvi;
+	GetVersionEx(&osvi);
+	if(osvi.dwMajorVersion > 6 || (osvi.dwMajorVersion == 6 && osvi.dwMinorVersion >= 2))
+		bWindows8 = TRUE;
 
     QueryPerformanceFrequency(&clockFreq);
     QueryPerformanceCounter(&startTime);
@@ -422,12 +431,14 @@ void   STDCALL OSCloseMutex(HANDLE hMutex)
 }
 
 
-VOID   STDCALL OSSubMillisecondSleep(float fMSeconds)
+void   STDCALL OSSubMillisecondSleep(float fMSeconds)
 {
     int intPart;
 
     intPart = (int)fMSeconds;
-    if (intPart)
+    if(bWindows8 && intPart > 0)
+        intPart--;
+    if (intPart > 0)
         Sleep(intPart);
 
     fMSeconds -= intPart;
@@ -446,9 +457,41 @@ VOID   STDCALL OSSubMillisecondSleep(float fMSeconds)
     }
 }
 
+void   STDCALL OSMicrosecondSleep(QWORD qwMicroseconds)
+{
+    unsigned int milliseconds = (unsigned int)(qwMicroseconds/1000);
+    if(bWindows8 && milliseconds >= 2)
+        milliseconds--;
+    if (milliseconds > 0)
+        Sleep(milliseconds);
+
+    qwMicroseconds -= milliseconds*1000;
+
+    LARGE_INTEGER t1, t2;
+	QWORD qwElapsedTime;
+
+    QueryPerformanceCounter(&t1);
+    for (;;)
+    {
+        QueryPerformanceCounter(&t2);
+        qwElapsedTime = (t2.QuadPart - t1.QuadPart) * 1000000 / clockFreq.QuadPart;
+        if (qwElapsedTime >= qwMicroseconds)
+            return;
+        Sleep(0);
+    }
+}
+
 void   STDCALL OSSleep(DWORD dwMSeconds)
 {
-    Sleep(dwMSeconds);
+    if(bWindows8)
+    {
+        if(dwMSeconds > 0)
+            Sleep(dwMSeconds-1);
+        else
+            Sleep(0);
+    }
+    else
+        Sleep(dwMSeconds);
 }
 
 
@@ -523,10 +566,23 @@ QWORD STDCALL OSGetTimeMicroseconds()
     prevElapsedTime = elapsedTime;
 
     // Convert to microseconds.
-    unsigned long usecTicks = (unsigned long)(1000000 * elapsedTime / 
+    QWORD usecTicks = (QWORD)(1000000 * elapsedTime / 
         clockFreq.QuadPart);
 
     return usecTicks;
+}
+
+double STDCALL OSGetTimeDoubleMS()
+{
+    LARGE_INTEGER currentTime;
+    QueryPerformanceCounter(&currentTime);
+    LONGLONG elapsedTime = currentTime.QuadPart - 
+        startTime.QuadPart;
+
+    // Store the current elapsed time for adjustments next time.
+    prevElapsedTime = elapsedTime;
+
+    return double(elapsedTime) * 1000.0 / double(clockFreq.QuadPart);
 }
 
 

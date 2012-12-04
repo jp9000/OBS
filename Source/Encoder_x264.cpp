@@ -71,7 +71,8 @@ class X264Encoder : public VideoEncoder
 
     List<VideoPacket> CurrentPackets;
     List<BYTE> HeaderPacket;
-    List<BYTE> SEIPacket;
+
+    int delayOffset;
 
     inline void ClearPackets()
     {
@@ -108,11 +109,9 @@ public:
 
         if(bUseCBR)
         {
-            Log(TEXT("Using CBR"));
-
             paramData.rc.i_bitrate          = maxBitRate;
             paramData.rc.i_vbv_max_bitrate  = maxBitRate; //vbv-maxrate
-            paramData.rc.i_vbv_buffer_size  = maxBitRate; //vbv-bufsize
+            paramData.rc.i_vbv_buffer_size  = bufferSize; //vbv-bufsize
             paramData.i_nal_hrd             = X264_NAL_HRD_CBR;
             paramData.rc.i_rc_method        = X264_RC_ABR;
             paramData.rc.f_rf_constant      = 0.0f;
@@ -216,24 +215,27 @@ public:
             return false;
         }
 
-        INT64 ts = INT64(outputTimestamp);
-        int timeOffset = int(INT64(picOut.i_pts)-ts);
-
         if(!bFirstFrameProcessed && nalNum)
         {
-            ctsOffset = DWORD(-picOut.i_dts);
+            if(picOut.i_dts < 0)
+                delayOffset = int(-picOut.i_dts);
             //Log(TEXT("cts: %u, timestamp: %u"), ctsOffset, outputTimestamp);
             bFirstFrameProcessed = true;
         }
 
-        //dynamically adjust the CTS for the stream if it gets lower than the current value
-        if(nalNum && -timeOffset > ctsOffset)
-        {
-            ctsOffset = -timeOffset;
-            //Log(TEXT("cts: %u, timestamp: %u"), ctsOffset, outputTimestamp);
-        }
+        INT64 ts = INT64(outputTimestamp);
+        int timeOffset = int(picOut.i_pts+INT64(delayOffset)-ts);
 
         timeOffset += ctsOffset;
+
+        //dynamically adjust the CTS for the stream if it gets lower than the current value
+        //(thanks to cyrus for suggesting to do this instead of a single shift)
+        if(nalNum && timeOffset < 0)
+        {
+            ctsOffset -= timeOffset;
+            timeOffset = 0;
+        }
+
         //Log(TEXT("dts: %d, pts: %d, timestamp: %d, offset: %d"), picOut.i_dts, picOut.i_pts, outputTimestamp, timeOffset);
 
         timeOffset = htonl(timeOffset);
@@ -244,24 +246,7 @@ public:
         {
             x264_nal_t &nal = nalOut[i];
 
-            /*if(nal.i_type == NAL_SEI)
-            {
-                BYTE *skip = nal.p_payload;
-                while(*(skip++) != 0x1);
-                int skipBytes = (int)(skip-nal.p_payload);
-
-                int newPayloadSize = (nal.i_payload-skipBytes);
-                SEIPacket.SetSize(9+newPayloadSize);
-
-                SEIPacket[0] = 0x17;
-                SEIPacket[1] = 1;
-                SEIPacket[2] = 0;
-                SEIPacket[3] = 0;
-                SEIPacket[4] = 0;
-                *(DWORD*)(SEIPacket+5) = htonl(newPayloadSize);
-                mcpy(SEIPacket+9, nal.p_payload+skipBytes, newPayloadSize);
-            }
-            else*/ if(nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE || nal.i_type == NAL_SEI)
+            if(nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE || nal.i_type == NAL_SEI)
             {
                 VideoPacket *newPacket = CurrentPackets.CreateNew();
 
@@ -363,25 +348,24 @@ public:
         packet.size     = HeaderPacket.Num();
     }
 
-    void GetSEI(DataPacket &packet)
-    {
-        packet.lpPacket = SEIPacket.Array();
-        packet.size     = SEIPacket.Num();
-    }
-
     int GetBitRate() const {return paramData.rc.i_vbv_max_bitrate;}
 
     String GetInfoString() const
     {
         String strInfo;
+
         strInfo << TEXT("Video Encoding: x264")  <<
                    TEXT("\r\n    fps: ")         << IntString(paramData.i_fps_num) <<
                    TEXT("\r\n    width: ")       << IntString(width) << TEXT(", height: ") << IntString(height) <<
-                   TEXT("\r\n    quality: ")     << IntString(10-int(paramData.rc.f_rf_constant-baseCRF)) <<
                    TEXT("\r\n    preset: ")      << curPreset <<
-                   TEXT("\r\n    i444: ")        << CTSTR((paramData.i_csp == X264_CSP_I444) ? TEXT("yes") : TEXT("no")) <<
-                   TEXT("\r\n    max bitrate: ") << IntString(paramData.rc.i_vbv_max_bitrate) <<
-                   TEXT("\r\n    buffer size: ") << IntString(paramData.rc.i_vbv_buffer_size);
+                   TEXT("\r\n    CBR: ")         << CTSTR((bUseCBR) ? TEXT("yes") : TEXT("no")) <<
+                   TEXT("\r\n    max bitrate: ") << IntString(paramData.rc.i_vbv_max_bitrate);
+
+        if(!bUseCBR)
+        {
+            strInfo << TEXT("\r\n    buffer size: ") << IntString(paramData.rc.i_vbv_buffer_size) << 
+                       TEXT("\r\n    quality: ")     << IntString(10-int(paramData.rc.f_rf_constant-baseCRF));
+        }
 
         return strInfo;
     }
@@ -395,9 +379,9 @@ public:
     {
         if(bUseCBR)
         {
-            paramData.rc.i_bitrate = maxBitrate;
+            paramData.rc.i_bitrate          = maxBitrate;
             paramData.rc.i_vbv_max_bitrate  = maxBitrate; //vbv-maxrate
-            paramData.rc.i_vbv_buffer_size  = maxBitrate; //vbv-bufsize
+            paramData.rc.i_vbv_buffer_size  = bufferSize; //vbv-bufsize
         }
         else
         {

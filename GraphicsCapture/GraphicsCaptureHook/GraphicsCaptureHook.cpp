@@ -153,6 +153,7 @@ UINT InitializeSharedMemoryCPUCapture(UINT textureSize, DWORD *totalSize, Memory
     *copyData = (MemoryCopyData*)lpSharedMemory;
     (*copyData)->texture1Offset = alignedHeaderSize;
     (*copyData)->texture2Offset = alignedHeaderSize+alignedTexureSize;
+    (*copyData)->frameTime = 0;
 
     textureBuffers[0] = lpSharedMemory+alignedHeaderSize;
     textureBuffers[1] = lpSharedMemory+alignedHeaderSize+alignedTexureSize;
@@ -179,6 +180,7 @@ UINT InitializeSharedMemoryGPUCapture(SharedTexData **texData)
     }
 
     *texData = (SharedTexData*)lpSharedMemory;
+    (*texData)->frameTime = 0;
 
     return sharedMemoryIDCounter;
 }

@@ -390,7 +390,7 @@ String LoadSettingTextComboString(HWND hwnd, CTSTR lpConfigSection, CTSTR lpConf
 }
 
 
-CTSTR preset_names[10] = {TEXT("ultrafast"), TEXT("superfast"), TEXT("veryfast"), TEXT("faster"), TEXT("fast"), TEXT("medium"), TEXT("slow"), TEXT("slower"), TEXT("veryslow"), TEXT("placebo")};
+CTSTR preset_names[7] = {TEXT("ultrafast"), TEXT("superfast"), TEXT("veryfast"), TEXT("faster"), TEXT("fast"), TEXT("medium"), TEXT("slow")};
 
 INT_PTR CALLBACK OBS::EncoderSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -1528,7 +1528,7 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                 //--------------------------------------------
 
                 hwndTemp = GetDlgItem(hwnd, IDC_PRESET);
-                for(int i=0; i<10; i++)
+                for(int i=0; i<7; i++)
                     SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)preset_names[i]);
 
                 LoadSettingComboString(hwndTemp, TEXT("Video Encoding"), TEXT("Preset"), TEXT("veryfast"));
@@ -1593,24 +1593,6 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 //------------------------------------
 
-                BOOL bUseSendBuffer = AppConfig->GetInt(TEXT("Publish"), TEXT("UseSendBuffer"), 1) != 0;
-                SendMessage(GetDlgItem(hwnd, IDC_USESENDBUFFER), BM_SETCHECK, bUseSendBuffer ? BST_CHECKED : BST_UNCHECKED, 0);
-
-                hwndTemp = GetDlgItem(hwnd, IDC_SENDBUFFERSIZE);
-                EnableWindow(hwndTemp, bUseSendBuffer);
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("11680"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("5840"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("2920"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("1460"));
-
-                LoadSettingEditString(hwndTemp, TEXT("Publish"), TEXT("SendBufferSize"), TEXT("1460"));
-
-                ti.lpszText = (LPWSTR)Str("Settings.Advanced.UseSendBufferTooltip");
-                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_USESENDBUFFER);
-                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
-
-                //------------------------------------
-
                 //need this as some of the dialog item sets above trigger the notifications
                 ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_HIDE);
                 App->SetChangedSettings(false);
@@ -1650,17 +1632,6 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                     }
                     break;*/
 
-                case IDC_USESENDBUFFER:
-                    if(HIWORD(wParam) == BN_CLICKED)
-                    {
-                        BOOL bUseSendBuffer = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
-                        EnableWindow(GetDlgItem(hwnd, IDC_SENDBUFFERSIZE), bUseSendBuffer);
-
-                        ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-                        App->SetChangedSettings(true);
-                    }
-                    break;
-
                 case IDC_PRESET:
                     if(HIWORD(wParam) == CBN_SELCHANGE)
                     {
@@ -1684,7 +1655,6 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                     }
                     break;
 
-                case IDC_SENDBUFFERSIZE:
                 case IDC_PRIORITY:
                     if(HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == CBN_EDITCHANGE)
                     {
@@ -1699,7 +1669,7 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                         String strText;
                         strText << Str("Settings.Advanced.UseCBR");
                         if(SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED)
-                            strText << TEXT(" (..why are you using CBR?)");
+                            strText << TEXT(" (..I hope you know what you're doing)");
 
                         SetWindowText((HWND)lParam, strText.Array());
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
@@ -2008,13 +1978,6 @@ void OBS::ApplySettings()
                 /*BOOL bDisableD3DCompat = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_DISABLED3DCOMPATIBILITY), BM_GETCHECK, 0, 0) == BST_CHECKED;
                 AppConfig->SetInt   (TEXT("Video"), TEXT("DisableD3DCompatibilityMode"), bDisableD3DCompat);*/
 
-                //--------------------------------------------------
-
-                BOOL bUseSendBuffer = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USESENDBUFFER), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                String strSendBufferSize = GetEditText(GetDlgItem(hwndCurrentSettings, IDC_SENDBUFFERSIZE));
-
-                AppConfig->SetInt   (TEXT("Publish"),        TEXT("UseSendBuffer"),     bUseSendBuffer);
-                AppConfig->SetString(TEXT("Publish"),        TEXT("SendBufferSize"),    strSendBufferSize);
                 break;
             }
     }

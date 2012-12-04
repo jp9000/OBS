@@ -37,8 +37,6 @@ SharedTexData           *texData;
 extern DWORD            curCapture;
 extern BOOL             bHasTextures;
 extern BOOL             bIsMultisampled;
-extern LONGLONG         frameTime;
-extern DWORD            fps;
 extern LONGLONG         lastTime;
 
 extern DXGI_FORMAT      dxgiFormat;
@@ -398,8 +396,7 @@ HRESULT STDMETHODCALLTYPE D3D11SwapPresentHook(IDXGISwapChain *swap, UINT syncIn
                             d3d11CaptureInfo.bFlip = FALSE;
                             texData->texHandles[0] = sharedHandles[0];
                             texData->texHandles[1] = sharedHandles[1];
-                            fps = (DWORD)SendMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d11CaptureInfo);
-                            frameTime = 1000000/LONGLONG(fps)/2;
+                            PostMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d11CaptureInfo);
 
                             logOutput << "DoD3D11Hook: success";
                         }
@@ -413,7 +410,8 @@ HRESULT STDMETHODCALLTYPE D3D11SwapPresentHook(IDXGISwapChain *swap, UINT syncIn
 
             if(bHasTextures)
             {
-                if(bCapturing)
+                LONGLONG frameTime;
+                if(bCapturing && texData && (frameTime = texData->frameTime))
                 {
                     LONGLONG timeVal = OSGetTimeMicroseconds();
                     LONGLONG timeElapsed = timeVal-lastTime;
@@ -499,11 +497,19 @@ bool InitD3D11Capture()
             ID3D11Device *device;
             ID3D11DeviceContext *context;
 
-            D3D_FEATURE_LEVEL desiredLevel = D3D_FEATURE_LEVEL_11_0;
+            D3D_FEATURE_LEVEL desiredLevels[6] =
+            {
+                D3D_FEATURE_LEVEL_11_0,
+                D3D_FEATURE_LEVEL_10_1,
+                D3D_FEATURE_LEVEL_10_0,
+                D3D_FEATURE_LEVEL_9_3,
+                D3D_FEATURE_LEVEL_9_2,
+                D3D_FEATURE_LEVEL_9_1,
+            };
             D3D_FEATURE_LEVEL receivedLevel;
 
             HRESULT hErr;
-            if(SUCCEEDED(hErr = (*d3d11Create)(NULL, D3D_DRIVER_TYPE_NULL, NULL, 0, &desiredLevel, 1, D3D11_SDK_VERSION, &swapDesc, &swap, &device, &receivedLevel, &context)))
+            if(SUCCEEDED(hErr = (*d3d11Create)(NULL, D3D_DRIVER_TYPE_NULL, NULL, 0, desiredLevels, 6, D3D11_SDK_VERSION, &swapDesc, &swap, &device, &receivedLevel, &context)))
             {
                 bSuccess = true;
 
@@ -520,7 +526,7 @@ bool InitD3D11Capture()
             }
             else
             {
-                RUNONCE logOutput << "InitD3D11Capture: D3D11CreateDeviceAndSwapChain failed, result = " << UINT(hErr) << endl;
+                RUNONCE logOutput << "InitD3D11Capture: D3D11CreateDeviceAndSwapChain definitely failed, result = " << UINT(hErr) << endl;
             }
         }
         else

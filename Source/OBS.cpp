@@ -443,6 +443,12 @@ OBS::OBS()
 
     hSceneMutex = OSCreateMutex();
 
+	QWORD curTime = OSGetTimeMicroseconds();
+	OSMicrosecondSleep(111111);
+	QWORD totalTime = OSGetTimeMicroseconds()-curTime;
+
+	OSDebugOut(TEXT("%llu"), totalTime);
+
     monitors.Clear();
     EnumDisplayMonitors(NULL, NULL, (MONITORENUMPROC)MonitorInfoEnumProc, (LPARAM)&monitors);
 
@@ -1877,9 +1883,6 @@ void OBS::MainCaptureLoop()
         curStreamTime = renderStartTime-firstFrameTime;
         DWORD frameDelta = curStreamTime-lastStreamTime;
 
-        if(frameDelta < 0 || frameDelta > 4000)
-            nop();
-
         if(bUseSyncFix)
         {
             OSEnterMutex(hSoundDataMutex);
@@ -2331,13 +2334,14 @@ void OBS::MainCaptureLoop()
         DWORD renderStopTime = OSGetTime();
         DWORD totalTime = renderStopTime-renderStartTime;
 
-        //OSDebugOut(TEXT("Total frame time: %d\r\n"), totalTime);
+        //OSDebugOut(TEXT("Frame adjust time: %d, "), frameTimeAdjust-totalTime);
+
         if(totalTime > frameTimeAdjust)
             numLongFrames++;
 
         numTotalFrames++;
 
-        if(totalTime < frameTimeAdjust)
+		if(totalTime < frameTimeAdjust)
             OSSleep(frameTimeAdjust-totalTime);
     }
 

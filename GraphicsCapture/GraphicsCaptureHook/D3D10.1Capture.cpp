@@ -36,8 +36,6 @@ extern SharedTexData    *texData;
 extern DWORD            curCapture;
 extern BOOL             bHasTextures;
 extern BOOL             bIsMultisampled;
-extern LONGLONG         frameTime;
-extern DWORD            fps;
 extern LONGLONG         lastTime;
 
 extern DXGI_FORMAT      dxgiFormat;
@@ -372,8 +370,7 @@ HRESULT STDMETHODCALLTYPE D3D101SwapPresentHook(IDXGISwapChain *swap, UINT syncI
                             d3d101CaptureInfo.bFlip = FALSE;
                             texData->texHandles[0] = sharedHandles[0];
                             texData->texHandles[1] = sharedHandles[1];
-                            fps = (DWORD)SendMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d101CaptureInfo);
-                            frameTime = 1000000/LONGLONG(fps)/2;
+                            PostMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d101CaptureInfo);
 
                             logOutput << "DoD3D101Hook: success";
                         }
@@ -387,7 +384,8 @@ HRESULT STDMETHODCALLTYPE D3D101SwapPresentHook(IDXGISwapChain *swap, UINT syncI
 
             if(bHasTextures)
             {
-                if(bCapturing)
+                LONGLONG frameTime;
+                if(bCapturing && texData && (frameTime = texData->frameTime))
                 {
                     LONGLONG timeVal = OSGetTimeMicroseconds();
                     LONGLONG timeElapsed = timeVal-lastTime;

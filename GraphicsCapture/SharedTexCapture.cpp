@@ -66,6 +66,7 @@ bool SharedTexCapture::Init(HANDLE hProcess, HWND hwndTarget, CaptureInfo &info)
     //---------------------------------------
 
     texData = (SharedTexData*)sharedMemory;
+    texData->frameTime = 1000000/API->GetMaxFPS()/2;
 
     for(UINT i=0; i<2; i++)
     {

@@ -84,6 +84,7 @@ bool MemoryCapture::Init(HANDLE hProcess, HWND hwndTarget, CaptureInfo &info)
     copyData = (MemoryCopyData*)sharedMemory;
     textureBuffers[0] = sharedMemory+copyData->texture1Offset;
     textureBuffers[1] = sharedMemory+copyData->texture2Offset;
+    copyData->frameTime = 1000000/API->GetMaxFPS();
 
     texture = CreateTexture(info.cx, info.cy, (GSColorFormat)info.format, NULL, NULL, FALSE);
     if(!texture)

@@ -240,6 +240,18 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
 
     if(inputChannels > 2)
     {
+        if(inputChannelMask == 0)
+        {
+            switch(inputChannels)
+            {
+                case 3: inputChannelMask = KSAUDIO_SPEAKER_2POINT1; break;
+                case 4: inputChannelMask = KSAUDIO_SPEAKER_QUAD;    break;
+                case 5: inputChannelMask = KSAUDIO_SPEAKER_4POINT1; break;
+                case 6: inputChannelMask = KSAUDIO_SPEAKER_5POINT1; break;
+                case 8: inputChannelMask = KSAUDIO_SPEAKER_7POINT1; break;
+            }
+        }
+
         switch(inputChannelMask)
         {
             case KSAUDIO_SPEAKER_QUAD:              Log(TEXT("Using quad speaker setup"));                          break; //ocd anyone?
@@ -352,14 +364,14 @@ UINT MMDeviceAudioSource::GetNextBuffer()
         }
         else if(dwFlags & AUDCLNT_BUFFERFLAGS_TIMESTAMP_ERROR)
         {
-            AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: woa woa woa, getting timestamp errors from the audio subsystem.  device = %s"), GetDeviceName().Array());
+            RUNONCE AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: woa woa woa, getting timestamp errors from the audio subsystem.  device = %s"), GetDeviceName().Array());
             lastTimestamp += 10;
         }
 
-        if(dwFlags & AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY)
+        /*if(dwFlags & AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY)
         {
             AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: got a discontinuity flag.  device = %s"), GetDeviceName().Array());
-        }
+        }*/
 
         lastTimestamp -= startTimestamp;
 

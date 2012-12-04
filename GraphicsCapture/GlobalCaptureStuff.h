@@ -33,14 +33,16 @@
 
 struct MemoryCopyData
 {
-    UINT    lastRendered;
-    DWORD   texture1Offset, texture2Offset;
+    UINT        lastRendered;
+    LONGLONG    frameTime;
+    DWORD       texture1Offset, texture2Offset;
 };
 
 struct SharedTexData
 {
-    UINT    lastRendered;
-    HANDLE  texHandles[2];
+    UINT        lastRendered;
+    LONGLONG    frameTime;
+    HANDLE      texHandles[2];
 };
 
 struct CaptureInfo

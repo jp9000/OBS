@@ -152,8 +152,6 @@ extern MemoryCopyData   *copyData;
 extern LPBYTE           textureBuffers[2];
 extern DWORD            curCapture;
 extern BOOL             bHasTextures;
-extern LONGLONG         frameTime;
-extern DWORD            fps;
 extern DWORD            copyWait;
 extern LONGLONG         lastTime;
 
@@ -216,8 +214,6 @@ void ClearGLData()
     copyData = NULL;
     copyWait = 0;
     lastTime = 0;
-    fps = 0;
-    frameTime = 0;
     curCapture = 0;
     curCPUTexture = 0;
     pCopyData = NULL;
@@ -289,10 +285,9 @@ void DoGLCPUHook(RECT &rc)
         glcaptureInfo.hwndCapture = hwndTarget;
         glcaptureInfo.pitch = glcaptureInfo.cx*4;
         glcaptureInfo.bFlip = TRUE;
-        fps = (DWORD)SendMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&glcaptureInfo);
-        frameTime = (fps) ? 1000000/LONGLONG(fps) : 0;
+        PostMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&glcaptureInfo);
 
-        logOutput << "DoGLCPUHook: success, fps = " << fps << ", frameTime = " << frameTime << endl;
+        logOutput << "DoGLCPUHook: success" << endl;
 
         OSInitializeTimer();
     }
@@ -431,7 +426,8 @@ void HandleGLSceneUpdate(HDC hDC)
 
         if(bHasTextures)
         {
-            if(bCapturing)
+            LONGLONG frameTime;
+            if(bCapturing && copyData && (frameTime = copyData->frameTime))
             {
                 LONGLONG timeVal = OSGetTimeMicroseconds();
                 LONGLONG timeElapsed = timeVal-lastTime;

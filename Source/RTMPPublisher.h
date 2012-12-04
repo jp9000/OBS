@@ -73,10 +73,6 @@ protected:
     UINT numPFramesDumped;
     UINT numBFramesDumped;
 
-    BOOL bUseSendBuffer;
-    List<BYTE> sendBuffer;
-    int curSendBufferLen;
-
     DWORD numVideoPacketsBuffered;
     DWORD firstBufferedVideoFrameTimestamp;
 
@@ -86,14 +82,11 @@ protected:
     void DropFrame(UINT id);
     bool DoIFrameDelay(bool bBFramesOnly);
 
-    int FlushSendBuffer();
-    static int BufferedSend(RTMPSockBuf *sb, const char *buf, int len, RTMPPublisher *network);
-
     void ProcessPackets(DWORD timestamp);
 
 public:
     RTMPPublisher();
-    bool Init(RTMP *rtmpIn, BOOL bUseSendBuffer, UINT sendBufferSize);
+    bool Init(RTMP *rtmpIn, UINT tcpBufferSize);
     ~RTMPPublisher();
 
     void SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type);

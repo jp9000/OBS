@@ -108,7 +108,7 @@ LRESULT WINAPI GraphicsCaptureSource::ReceiverWindowProc(HWND hwnd, UINT message
                 if(data->source)
                     data->source->NewCapture((LPVOID)lParam);
             }
-            return API->GetMaxFPS();
+            break;
 
         case RECEIVER_ENDCAPTURE:
             {

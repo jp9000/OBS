@@ -59,8 +59,6 @@ MemoryCopyData          *copyData = NULL;
 LPBYTE                  textureBuffers[2] = {NULL, NULL};
 DWORD                   curCapture = 0;
 BOOL                    bHasTextures = FALSE;
-LONGLONG                frameTime = 0;
-DWORD                   fps = 0;
 LONGLONG                lastTime = 0;
 DWORD                   copyWait = 0;
 
@@ -214,8 +212,6 @@ void ClearD3D9Data()
     copyData = NULL;
     copyWait = 0;
     lastTime = 0;
-    fps = 0;
-    frameTime = 0;
     curCapture = 0;
     curCPUTexture = 0;
     pCopyData = NULL;
@@ -483,8 +479,7 @@ finishGPUHook:
         d3d9CaptureInfo.bFlip = FALSE;
         texData->texHandles[0] = sharedHandles[0];
         texData->texHandles[1] = sharedHandles[1];
-        fps = (DWORD)SendMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d9CaptureInfo);
-        frameTime = 1000000/LONGLONG(fps)/2;
+        PostMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d9CaptureInfo);
 
         logOutput << "DoD3D9GPUHook: success" << endl;
     }
@@ -590,10 +585,9 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
         d3d9CaptureInfo.pitch = pitch;
         d3d9CaptureInfo.hwndSender = hwndSender;
         d3d9CaptureInfo.bFlip = FALSE;
-        fps = (DWORD)SendMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d9CaptureInfo);
-        frameTime = 1000000/LONGLONG(fps);
+        PostMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d9CaptureInfo);
 
-        logOutput << "DoD3D9CPUHook: success, fps = " << fps << ", frameTime = " << frameTime << endl;
+        logOutput << "DoD3D9CPUHook: success" << endl;
     }
     else
         ClearD3D9Data();
@@ -684,52 +678,56 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
 
     if(bHasTextures)
     {
+        LONGLONG frameTime;
         if(bCapturing)
         {
             if(bUseSharedTextures) //shared texture support
             {
-                LONGLONG timeVal = OSGetTimeMicroseconds();
-                LONGLONG timeElapsed = timeVal-lastTime;
-
-                if(timeElapsed >= frameTime)
+                if(texData && (frameTime = texData->frameTime))
                 {
-                    lastTime += frameTime;
-                    if(timeElapsed > frameTime*2)
-                        lastTime = timeVal;
+                    LONGLONG timeVal = OSGetTimeMicroseconds();
+                    LONGLONG timeElapsed = timeVal-lastTime;
 
-                    DWORD nextCapture = curCapture == 0 ? 1 : 0;
-
-                    IDirect3DSurface9 *texture = textures[curCapture];
-                    IDirect3DSurface9 *backBuffer = NULL;
-
-                    if(SUCCEEDED(device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &backBuffer)))
+                    if(timeElapsed >= frameTime)
                     {
-                        if(SUCCEEDED(device->StretchRect(backBuffer, NULL, copyD3D9TextureGame, NULL, D3DTEXF_NONE)))
+                        lastTime += frameTime;
+                        if(timeElapsed > frameTime*2)
+                            lastTime = timeVal;
+
+                        DWORD nextCapture = curCapture == 0 ? 1 : 0;
+
+                        IDirect3DSurface9 *texture = textures[curCapture];
+                        IDirect3DSurface9 *backBuffer = NULL;
+
+                        if(SUCCEEDED(device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &backBuffer)))
                         {
-                            ID3D10Texture2D *outputTexture = NULL;
-                            int lastRendered = -1;
-
-                            if(keyedMutexes[curCapture]->AcquireSync(0, 0) == WAIT_OBJECT_0)
-                                lastRendered = (int)curCapture;
-                            else if(keyedMutexes[nextCapture]->AcquireSync(0, 0) == WAIT_OBJECT_0)
-                                lastRendered = (int)nextCapture;
-
-                            if(lastRendered != -1)
+                            if(SUCCEEDED(device->StretchRect(backBuffer, NULL, copyD3D9TextureGame, NULL, D3DTEXF_NONE)))
                             {
-                                shareDevice->CopyResource(sharedTextures[lastRendered], copyTextureIntermediary);
-                                keyedMutexes[lastRendered]->ReleaseSync(0);
+                                ID3D10Texture2D *outputTexture = NULL;
+                                int lastRendered = -1;
+
+                                if(keyedMutexes[curCapture]->AcquireSync(0, 0) == WAIT_OBJECT_0)
+                                    lastRendered = (int)curCapture;
+                                else if(keyedMutexes[nextCapture]->AcquireSync(0, 0) == WAIT_OBJECT_0)
+                                    lastRendered = (int)nextCapture;
+
+                                if(lastRendered != -1)
+                                {
+                                    shareDevice->CopyResource(sharedTextures[lastRendered], copyTextureIntermediary);
+                                    keyedMutexes[lastRendered]->ReleaseSync(0);
+                                }
+
+                                texData->lastRendered = lastRendered;
                             }
 
-                            texData->lastRendered = lastRendered;
+                            backBuffer->Release();
                         }
 
-                        backBuffer->Release();
+                        curCapture = nextCapture;
                     }
-
-                    curCapture = nextCapture;
                 }
             }
-            else //slow regular d3d9, no shared textures
+            else if(copyData && (frameTime = copyData->frameTime))//slow regular d3d9, no shared textures
             {
                 //copy texture data only when GetRenderTargetData completes
                 for(UINT i=0; i<NUM_BUFFERS; i++)
