@@ -44,6 +44,7 @@ class RTMPPublisher : public NetworkStream
     DWORD outputRateSize;
 
     bool numStartFrames, bNetworkStrain;
+	double dNetworkStrain;
     int ignoreCount;
     DWORD currentBufferSize, sendTime;
     DWORD bufferTime, outputRateWindowTime, dropThreshold, connectTime;

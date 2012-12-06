@@ -114,7 +114,7 @@ RTMPPublisher::~RTMPPublisher()
     double dBFrameDropPercentage = double(numBFramesDumped)/dTotalFrames*100.0;
     double dPFrameDropPercentage = double(numPFramesDumped)/dTotalFrames*100.0;
 
-    Log(TEXT("Number of b-frames dropped: %u (%%%0.2g), Number of p-frames dropped: %u (%%%0.2g), Total %u (%%%0.2g)"),
+    Log(TEXT("Number of b-frames dropped: %u (%0.2g%%), Number of p-frames dropped: %u (%0.2g%%), Total %u (%0.2g%%)"),
         numBFramesDumped, dBFrameDropPercentage,
         numPFramesDumped, dPFrameDropPercentage,
         numBFramesDumped+numPFramesDumped, dBFrameDropPercentage+dPFrameDropPercentage);
@@ -136,7 +136,8 @@ void RTMPPublisher::ProcessPackets(DWORD timestamp)
         DWORD adjustedOutputRateSize = outputRateSize*bufferTime/outputRateWindowTime;
 
         //Log(TEXT("queueTime: %u, adjustedOutputRateSize: %u, currentBufferSize: %u, queuedPackets.Num: %u, timestamp: %u"), queueTime, adjustedOutputRateSize, currentBufferSize, queuedPackets.Num(), timestamp);
-
+		if (queueTime)
+			dNetworkStrain = (double(queueTime)/double(dropThreshold));
         if( bStreamStarted &&
             !ignoreCount &&
             queueTime > dropThreshold)
@@ -454,11 +455,10 @@ end:
 double RTMPPublisher::GetPacketStrain() const
 {
     if(packetWaitType >= PacketType_VideoHigh)
-        return 100.0;
+        return min(100, dNetworkStrain*100);
     else if(bNetworkStrain)
-        return 50.0;
-
-    return 0.0;
+        return dNetworkStrain*66;
+	return dNetworkStrain*33;
 }
 
 QWORD RTMPPublisher::GetCurrentSentBytes()
