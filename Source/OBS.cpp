@@ -749,13 +749,15 @@ OBS::OBS()
     UINT numScenes = scenes->NumElements();
     if(!numScenes)
     {
-        scenes->CreateElement(Str("Scene"));
+        XElement *scene = scenes->CreateElement(Str("Scene"));
+        scene->SetString(TEXT("class"), TEXT("Scene"));
         numScenes++;
     }
 
     for(UINT i=0; i<numScenes; i++)
     {
         XElement *scene = scenes->GetElementByID(i);
+        scene->SetString(TEXT("class"), TEXT("Scene"));
         SendMessage(hwndTemp, LB_ADDSTRING, 0, (LPARAM)scene->GetName());
     }
 

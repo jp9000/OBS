@@ -76,6 +76,7 @@ void   STDCALL OSInit()
     GetSystemInfo(&si);
 
     OSVERSIONINFO osvi;
+    osvi.dwOSVersionInfoSize = sizeof(osvi);
     GetVersionEx(&osvi);
     if(osvi.dwMajorVersion > 6 || (osvi.dwMajorVersion == 6 && osvi.dwMinorVersion >= 2))
         bWindows8 = TRUE;

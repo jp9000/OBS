@@ -384,7 +384,13 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
             if(numItems)
             {
                 curClassInfo = App->GetSceneClass(item->GetString(TEXT("class")));
-                if(curClassInfo->configProc)
+                if(!curClassInfo)
+                {
+                    curSceneElement->AddString(TEXT("class"), TEXT("Scene"));
+                    curClassInfo = App->GetSceneClass(item->GetString(TEXT("class")));
+                }
+
+                if(curClassInfo && curClassInfo->configProc)
                 {
                     AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
                     AppendMenu(hMenu, MF_STRING, ID_LISTBOX_CONFIG, Str("Listbox.Config"));
