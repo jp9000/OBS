@@ -70,6 +70,7 @@
 				AdditionalLibraryDirectories="../OBSApi/Debug"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="..\rundir\pdb32\$(TargetName).pdb"
+				StripPrivateSymbols="..\rundir\pdb32\stripped\$(TargetName).pdb"
 				SubSystem="2"
 				TargetMachine="1"
 			/>
@@ -148,6 +149,7 @@
 				AdditionalLibraryDirectories="../OBSApi/x64/Debug"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="..\rundir\pdb64\$(TargetName).pdb"
+				StripPrivateSymbols="..\rundir\pdb64\stripped\$(TargetName).pdb"
 				SubSystem="2"
 				TargetMachine="17"
 			/>
@@ -228,6 +230,7 @@
 				AdditionalLibraryDirectories="../OBSApi/Release"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="..\rundir\pdb32\$(TargetName).pdb"
+				StripPrivateSymbols="..\rundir\pdb32\stripped\$(TargetName).pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -311,6 +314,7 @@
 				AdditionalLibraryDirectories="../OBSApi/x64/Release"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="..\rundir\pdb64\$(TargetName).pdb"
+				StripPrivateSymbols="..\rundir\pdb64\stripped\$(TargetName).pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"

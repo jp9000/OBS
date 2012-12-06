@@ -23,7 +23,11 @@ void LogVideoCardStats()
 {
     HRESULT err;
 
+#ifdef USE_DXGI1_2
     REFIID iidVal = IsWindows8Up() ? __uuidof(IDXGIFactory2) : __uuidof(IDXGIFactory1);
+#else
+    REFIIF iidVal = __uuidof(IDXGIFactory1);
+#endif
 
     IDXGIFactory1 *factory;
     if(SUCCEEDED(err = CreateDXGIFactory1(iidVal, (void**)&factory)))
@@ -58,7 +62,11 @@ D3D10System::D3D10System()
 {
     HRESULT err;
 
+#ifdef USE_DXGI1_2
     REFIID iidVal = IsWindows8Up() ? __uuidof(IDXGIFactory2) : __uuidof(IDXGIFactory1);
+#else
+    REFIID iidVal = __uuidof(IDXGIFactory1);
+#endif
 
     IDXGIFactory1 *factory;
     if(FAILED(err = CreateDXGIFactory1(iidVal, (void**)&factory)))

@@ -68,6 +68,7 @@
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="..\rundir\pdb32\$(TargetName).pdb"
+				StripPrivateSymbols="..\rundir\pdb32\stripped\$(TargetName).pdb"
 				SubSystem="2"
 				TargetMachine="1"
 			/>
@@ -143,6 +144,7 @@
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="..\rundir\pdb64\$(TargetName).pdb"
+				StripPrivateSymbols="..\rundir\pdb64\stripped\$(TargetName).pdb"
 				SubSystem="2"
 				TargetMachine="17"
 			/>
@@ -219,6 +221,7 @@
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="..\rundir\pdb32\$(TargetName).pdb"
+				StripPrivateSymbols="..\rundir\pdb32\stripped\$(TargetName).pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -299,6 +302,7 @@
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="..\rundir\pdb64\$(TargetName).pdb"
+				StripPrivateSymbols="..\rundir\pdb64\stripped\$(TargetName).pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
