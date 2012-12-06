@@ -1349,7 +1349,7 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                         ConfigDesktopSourceInfo *info = (ConfigDesktopSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
 
-                        if(windowID >= info->strClasses.Num())
+                        if(captureType == 1 && windowID >= info->strClasses.Num())
                             break;
 
                         String strWindow = GetCBText(GetDlgItem(hwnd, IDC_WINDOW), windowID);
@@ -1378,8 +1378,12 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                         data->SetInt(TEXT("monitor"),       monitorID);
 
-                        data->SetString(TEXT("window"),     strWindow);
-                        data->SetString(TEXT("windowClass"),info->strClasses[windowID]);
+                        if(captureType == 1)
+                        {
+                            data->SetString(TEXT("window"),     strWindow);
+                            data->SetString(TEXT("windowClass"),info->strClasses[windowID]);
+                        }
+
                         data->SetInt(TEXT("innerWindow"),   bInnerWindow);
 
                         data->SetInt(TEXT("regionCapture"), bRegion);

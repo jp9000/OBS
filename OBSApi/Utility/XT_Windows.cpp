@@ -75,10 +75,10 @@ void   STDCALL OSInit()
 
     GetSystemInfo(&si);
 
-	OSVERSIONINFO osvi;
-	GetVersionEx(&osvi);
-	if(osvi.dwMajorVersion > 6 || (osvi.dwMajorVersion == 6 && osvi.dwMinorVersion >= 2))
-		bWindows8 = TRUE;
+    OSVERSIONINFO osvi;
+    GetVersionEx(&osvi);
+    if(osvi.dwMajorVersion > 6 || (osvi.dwMajorVersion == 6 && osvi.dwMinorVersion >= 2))
+        bWindows8 = TRUE;
 
     QueryPerformanceFrequency(&clockFreq);
     QueryPerformanceCounter(&startTime);
@@ -468,7 +468,7 @@ void   STDCALL OSMicrosecondSleep(QWORD qwMicroseconds)
     qwMicroseconds -= milliseconds*1000;
 
     LARGE_INTEGER t1, t2;
-	QWORD qwElapsedTime;
+    QWORD qwElapsedTime;
 
     QueryPerformanceCounter(&t1);
     for (;;)

@@ -1,6 +1,23 @@
 (yyyy-mm-dd)
 
 -------------------------------
+2012-12-05 - 0.45 (alpha)
+    * Fixed bug where game capture and the app can crash due to
+      bad IPC
+    * Fixed bugs with text output, added outline (thanks to
+      HomeWorld)
+    * Fixed major throughput bug with networking (changed SO_SNDBUF
+      to 64k by default)
+    * Fixed CTS issue entirely (thanks to Cyrus)
+    * Fixed windows 8 bug where sleep goes for 1ms more than
+      intended
+    * Fixed graphics capture bugs
+    * Fixed other random bugs and stuff
+    * Got rid of a memory leak in graphics capture
+    * Added CBR feature
+    * Other random bug fixes that I unfortunately can't remember
+
+-------------------------------
 2012-11-25 - 0.448 (alpha)
     * Fixed memory leak caused by the mouse cursor data not being
       freed

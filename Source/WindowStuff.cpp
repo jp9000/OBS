@@ -372,6 +372,8 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
         int curSel = (int)SendMessage(hwnd, LB_GETCURSEL, 0, 0);
 
+        XElement *curSceneElement = App->sceneElement;
+
         if(id == ID_SCENES)
         {
             XElement *item = App->sceneElement;
@@ -626,9 +628,9 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
                         if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSourceNameDialogProc, (LPARAM)&strName) == IDOK)
                         {
-                            XElement *sources = App->sceneElement->GetElement(TEXT("sources"));
+                            XElement *sources = curSceneElement->GetElement(TEXT("sources"));
                             if(!sources)
-                                sources = App->sceneElement->CreateElement(TEXT("sources"));
+                                sources = curSceneElement->CreateElement(TEXT("sources"));
                             XElement *newSourceElement = sources->CreateElement(strName);
 
                             if(ret >= ID_LISTBOX_GLOBALSOURCE)
@@ -663,16 +665,19 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                                 }
                             }
 
-                            if(App->bRunning)
+                            if(App->sceneElement == curSceneElement)
                             {
-                                App->EnterSceneMutex();
-                                App->scene->AddImageSource(newSourceElement);
-                                App->LeaveSceneMutex();
-                            }
+                                if(App->bRunning)
+                                {
+                                    App->EnterSceneMutex();
+                                    App->scene->AddImageSource(newSourceElement);
+                                    App->LeaveSceneMutex();
+                                }
 
-                            UINT newID = (UINT)SendMessage(hwnd, LB_ADDSTRING, 0, (LPARAM)strName.Array());
-                            PostMessage(hwnd, LB_SETCURSEL, newID, 0);
-                            PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_SOURCES, LBN_SELCHANGE), (LPARAM)hwnd);
+                                UINT newID = (UINT)SendMessage(hwnd, LB_ADDSTRING, 0, (LPARAM)strName.Array());
+                                PostMessage(hwnd, LB_SETCURSEL, newID, 0);
+                                PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_SOURCES, LBN_SELCHANGE), (LPARAM)hwnd);
+                            }
                         }
                     }
                     break;
@@ -1809,7 +1814,8 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 {
                     App->clientWidth  = client.right;
                     App->clientHeight = client.bottom;
-                    App->bSizeChanging = true;
+                    if(wParam != SIZE_MINIMIZED && wParam != SIZE_RESTORED && wParam != SIZE_MAXIMIZED)
+                        App->bSizeChanging = true;
                     App->ResizeWindow(false);
                 }
                 break;

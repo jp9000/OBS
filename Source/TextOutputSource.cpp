@@ -25,6 +25,7 @@
     if(iVal < minVal) iVal = minVal; \
     else if(iVal > maxVal) iVal = maxVal;
 
+
 class TextOutputSource : public ImageSource
 {
     bool        bUpdateTexture;
@@ -45,6 +46,10 @@ class TextOutputSource : public ImageSource
     int         scrollSpeed;
     bool        bBold, bItalic, bUnderline, bVertical;
 
+    bool        bUseOutline;
+    float       outlineSize;
+    DWORD       outlineColor;
+
     bool        bUseExtents;
     UINT        extentWidth, extentHeight;
     bool        bWrap;
@@ -62,6 +67,34 @@ class TextOutputSource : public ImageSource
     SamplerState *ss;
 
     XElement    *data;
+
+    inline DWORD GetAlphaVal()  {return ((opacity*255/100)&0xFF) << 24;}
+
+    void DrawOutlineText(Gdiplus::Graphics &graphics,
+                         Gdiplus::Font &font,
+                         const Gdiplus::GraphicsPath &path,
+                         const Gdiplus::StringFormat &format,
+                         const Gdiplus::Brush *brush)
+    {
+        // HomeWorld -- text outline stuff
+        // Stuff to make things look pretty
+        graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
+        graphics.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+
+        // Outline color and size
+        Gdiplus::Pen pen(Gdiplus::Color(GetAlphaVal() | (outlineColor&0xFFFFFF)), outlineSize);
+        pen.SetLineJoin(Gdiplus::LineJoinRound);
+
+        // Use source copy mode (so text color will not blend with background color in case alpha < 255)
+        graphics.SetCompositingMode(Gdiplus::CompositingModeSourceCopy);
+        // Draw the text        
+        graphics.FillPath(brush, &path);
+
+        // Use source over mode for drawing outline (using source copy doesn't look good because of antialiasing)
+        graphics.SetCompositingMode(Gdiplus::CompositingModeSourceOver);
+        // Draw the outline
+        graphics.DrawPath(&pen, &path);
+    }
 
     void UpdateTexture()
     {
@@ -138,12 +171,6 @@ class TextOutputSource : public ImageSource
             return;
 
         SIZE textSize;
-        if(bUseExtents && bWrap)
-        {
-            textSize.cx = extentWidth;
-            textSize.cy = extentHeight;
-        }
-        else
         {
             HDC hDC = CreateCompatibleDC(NULL);
             {
@@ -170,6 +197,22 @@ class TextOutputSource : public ImageSource
                 }
             }
             DeleteDC(hDC);
+        }
+
+        if(bUseExtents)
+        {
+            if(bWrap)
+            {
+                textSize.cx = extentWidth;
+                textSize.cy = extentHeight;
+            }
+            else
+            {
+                if(LONG(extentWidth) > textSize.cx)
+                    textSize.cx = extentWidth;
+                if(LONG(extentHeight) > textSize.cy)
+                    textSize.cy = extentHeight;
+            }
         }
 
         textSize.cx++;
@@ -220,15 +263,18 @@ class TextOutputSource : public ImageSource
 
             {
                 Gdiplus::Bitmap      bmp(textureSize.cx, textureSize.cy, 4*textureSize.cx, PixelFormat32bppARGB, (BYTE*)lpBits);
-                Gdiplus::Graphics    graphics(&bmp);
-                Gdiplus::SolidBrush  *brush = new Gdiplus::SolidBrush(Gdiplus::Color(0xFF000000|color));
-                Gdiplus::Font        font(hTempDC, hFont);
+                Gdiplus::Graphics    graphics(&bmp); 
 
-                //graphics.FillRectangle(brush, 0, 0, 50, 50);
+                //HomeWorld  -- we can use alpha for text color too :)
+                Gdiplus::SolidBrush  *brush = new Gdiplus::SolidBrush(Gdiplus::Color(0xFF000000|(color&0x00FFFFFF)));
+                Gdiplus::Font        font(hTempDC, hFont);
 
                 stat = graphics.SetTextRenderingHint(Gdiplus::TextRenderingHintAntiAlias);
                 if(stat != Gdiplus::Ok) AppWarning(TEXT("graphics.SetTextRenderingHint failed: %u"), (int)stat);
-                stat = graphics.Clear(Gdiplus::Color(0));
+
+                // HomeWorld --- clear context using a specified background color (we can drop source opacity since we can specify the alpha of background/text/outline)
+                stat = graphics.Clear(Gdiplus::Color(0x00000000));
+
                 if(stat != Gdiplus::Ok) AppWarning(TEXT("graphics.Clear failed: %u"), (int)stat);
 
                 if(bUseExtents && bWrap)
@@ -263,13 +309,21 @@ class TextOutputSource : public ImageSource
                     if(bVertical)
                         format.SetFormatFlags(Gdiplus::StringFormatFlagsDirectionVertical|Gdiplus::StringFormatFlagsDirectionRightToLeft);
 
-                    /*if(bWrap)
-                    {*/
-                        Gdiplus::RectF rcf(0.0f, 0.0f, float(textSize.cx), float(textSize.cy));
-                        graphics.DrawString(strCurrentText, -1, &font, rcf, &format, brush);
-                    /*}
+
+                    Gdiplus::RectF rcf(0.0f, 0.0f, float(textureSize.cx), float(textureSize.cy));
+
+                    if(bUseOutline)
+                    {
+                        Gdiplus::FontFamily fontFamily;
+                        font.GetFamily(&fontFamily);
+
+                        Gdiplus::GraphicsPath path;
+                        path.AddString(strCurrentText, -1, &fontFamily, font.GetStyle(), font.GetSize(), rcf, &format);
+
+                        DrawOutlineText(graphics, font, path, format, brush);
+                    }
                     else
-                        graphics.DrawString(strCurrentText, -1, &font, pos, &format, brush);*/
+                        graphics.DrawString(strCurrentText, -1, &font, rcf, &format, brush);
                 }
                 else
                 {
@@ -278,8 +332,21 @@ class TextOutputSource : public ImageSource
                     if(bVertical)
                         format.SetFormatFlags(Gdiplus::StringFormatFlagsDirectionVertical|Gdiplus::StringFormatFlagsDirectionRightToLeft);
 
-                    stat = graphics.DrawString(strCurrentText, -1, &font, Gdiplus::PointF(bVertical ? float(textSize.cx) : 0.0f, -4.0f), &format, brush);
-                    if(stat != Gdiplus::Ok) AppWarning(TEXT("Hmm, DrawString failed: %u"), (int)stat);
+                    if(bUseOutline)
+                    {
+                        Gdiplus::FontFamily fontFamily;
+                        font.GetFamily(&fontFamily); 
+
+                        Gdiplus::GraphicsPath path;
+                        path.AddString(strCurrentText, -1, &fontFamily, font.GetStyle(), font.GetSize(), Gdiplus::PointF(bVertical ? float(textSize.cx) : 0.0f, float(textSize.cy - size) * 0.5f), &format);
+
+                        DrawOutlineText(graphics, font, path, format, brush);
+                    }
+                    else
+                    {
+                        stat = graphics.DrawString(strCurrentText, -1, &font, Gdiplus::PointF(bVertical ? float(textSize.cx) : 0.0f, float(textSize.cy - size) * 0.5f), &format, brush);
+                        if(stat != Gdiplus::Ok) AppWarning(TEXT("Hmm, DrawString failed: %u"), (int)stat);
+                    }
                 }
 
                 delete brush;
@@ -490,6 +557,10 @@ public:
         baseSize.x  = data->GetFloat(TEXT("baseSizeCX"), 100);
         baseSize.y  = data->GetFloat(TEXT("baseSizeCY"), 100);
 
+        bUseOutline = data->GetInt(TEXT("useOutline")) != 0;
+        outlineColor= data->GetInt(TEXT("outlineColor"), 0xFFFFFF);
+        outlineSize = data->GetFloat(TEXT("outlineSize"), 2);
+
         bUpdateTexture = true;
     }
 
@@ -545,6 +616,18 @@ public:
             align = iValue;
         else if(scmpi(lpName, TEXT("mode")) == 0)
             mode = iValue;
+        else if(scmpi(lpName, TEXT("useOutline")) == 0)
+            bUseOutline = iValue != 0;
+        else if(scmpi(lpName, TEXT("outlineColor")) == 0)
+            outlineColor = iValue;
+
+        bUpdateTexture = true;
+    }
+
+    void SetFloat(CTSTR lpName, float fValue)
+    {
+        if(scmpi(lpName, TEXT("outlineSize")) == 0)
+            outlineSize = fValue;
 
         bUpdateTexture = true;
     }
@@ -680,7 +763,21 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
                 //-----------------------------------------
 
-                bool bChecked = data->GetInt(TEXT("useTextExtents"), 0) != 0;
+                bool bChecked = data->GetInt(TEXT("useOutline"), 0) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_USEOUTLINE), BM_SETCHECK, bChecked ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                EnableWindow(GetDlgItem(hwnd, IDC_OUTLINETHICKNESS_EDIT), bChecked);
+                EnableWindow(GetDlgItem(hwnd, IDC_OUTLINETHICKNESS), bChecked);
+                EnableWindow(GetDlgItem(hwnd, IDC_OUTLINECOLOR), bChecked);
+
+                SendMessage(GetDlgItem(hwnd, IDC_OUTLINETHICKNESS), UDM_SETRANGE32, 1, 20);
+                SendMessage(GetDlgItem(hwnd, IDC_OUTLINETHICKNESS), UDM_SETPOS32, 0, data->GetInt(TEXT("outlineSize"), 2));
+
+                CCSetColor(GetDlgItem(hwnd, IDC_OUTLINECOLOR), data->GetInt(TEXT("outlineColor"), 0xFFFFFFFF));
+
+                //-----------------------------------------
+
+                bChecked = data->GetInt(TEXT("useTextExtents"), 0) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_USETEXTEXTENTS), BM_SETCHECK, bChecked ? BST_CHECKED : BST_UNCHECKED, 0);
                 ConfigureTextProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_USETEXTEXTENTS, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDC_USETEXTEXTENTS));
 
@@ -761,6 +858,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                     }
                     break;
 
+                case IDC_OUTLINECOLOR:
                 case IDC_COLOR:
                     if(bInitializedDialog)
                     {
@@ -770,7 +868,13 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                         if(!configInfo) break;
                         ImageSource *source = API->GetSceneImageSource(configInfo->lpName);
                         if(source)
-                            source->SetInt(TEXT("color"), color);
+                        {
+                            switch(LOWORD(wParam))
+                            {
+                                case IDC_OUTLINECOLOR:  source->SetInt(TEXT("outlineColor"), color); break;
+                                case IDC_COLOR:         source->SetInt(TEXT("color"), color); break;
+                            }
+                        }
                     }
                     break;
 
@@ -778,6 +882,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                 case IDC_EXTENTWIDTH_EDIT:
                 case IDC_EXTENTHEIGHT_EDIT:
                 case IDC_TEXTOPACITY_EDIT:
+                case IDC_OUTLINETHICKNESS_EDIT:
                 case IDC_SCROLLSPEED_EDIT:
                     if(HIWORD(wParam) == EN_CHANGE && bInitializedDialog)
                     {
@@ -791,11 +896,12 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                         {
                             switch(LOWORD(wParam))
                             {
-                                case IDC_TEXTSIZE_EDIT:     source->SetInt(TEXT("fontSize"), val); break;
-                                case IDC_EXTENTWIDTH_EDIT:  source->SetInt(TEXT("extentWidth"), val); break;
-                                case IDC_EXTENTHEIGHT_EDIT: source->SetInt(TEXT("extentHeight"), val); break;
-                                case IDC_TEXTOPACITY_EDIT:  source->SetInt(TEXT("textOpacity"), val); break;
-                                case IDC_SCROLLSPEED_EDIT:  source->SetInt(TEXT("scrollSpeed"), val); break;
+                                case IDC_TEXTSIZE_EDIT:         source->SetInt(TEXT("fontSize"), val); break;
+                                case IDC_EXTENTWIDTH_EDIT:      source->SetInt(TEXT("extentWidth"), val); break;
+                                case IDC_EXTENTHEIGHT_EDIT:     source->SetInt(TEXT("extentHeight"), val); break;
+                                case IDC_TEXTOPACITY_EDIT:      source->SetInt(TEXT("textOpacity"), val); break;
+                                case IDC_OUTLINETHICKNESS_EDIT: source->SetFloat(TEXT("outlineSize"), (float)val); break;
+                                case IDC_SCROLLSPEED_EDIT:      source->SetInt(TEXT("scrollSpeed"), val); break;
                             }
                         }
                     }
@@ -806,6 +912,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                 case IDC_UNDERLINE:
                 case IDC_VERTICALSCRIPT:
                 case IDC_WRAP:
+                case IDC_USEOUTLINE:
                 case IDC_USETEXTEXTENTS:
                     if(HIWORD(wParam) == BN_CLICKED && bInitializedDialog)
                     {
@@ -823,14 +930,14 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                                 case IDC_UNDERLINE:         source->SetInt(TEXT("underline"), bChecked); break;
                                 case IDC_VERTICALSCRIPT:    source->SetInt(TEXT("vertical"), bChecked); break;
                                 case IDC_WRAP:              source->SetInt(TEXT("wrap"), bChecked); break;
+                                case IDC_USEOUTLINE:        source->SetInt(TEXT("useOutline"), bChecked); break;
                                 case IDC_USETEXTEXTENTS:    source->SetInt(TEXT("useTextExtents"), bChecked); break;
                             }
                         }
 
                         if(LOWORD(wParam) == IDC_WRAP)
                             EnableWindow(GetDlgItem(hwnd, IDC_ALIGN), bChecked);
-
-                        if(LOWORD(wParam) == IDC_USETEXTEXTENTS)
+                        else if(LOWORD(wParam) == IDC_USETEXTEXTENTS)
                         {
                             EnableWindow(GetDlgItem(hwnd, IDC_EXTENTWIDTH_EDIT), bChecked);
                             EnableWindow(GetDlgItem(hwnd, IDC_EXTENTHEIGHT_EDIT), bChecked);
@@ -844,6 +951,12 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
                             if(bChecked)
                                 EnableWindow(GetDlgItem(hwnd, IDC_ALIGN), bWrap);
+                        }
+                        else if(LOWORD(wParam) == IDC_USEOUTLINE)
+                        {
+                            EnableWindow(GetDlgItem(hwnd, IDC_OUTLINETHICKNESS_EDIT), bChecked);
+                            EnableWindow(GetDlgItem(hwnd, IDC_OUTLINETHICKNESS), bChecked);
+                            EnableWindow(GetDlgItem(hwnd, IDC_OUTLINECOLOR), bChecked);
                         }
                     }
                     break;
@@ -1062,6 +1175,11 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                         data->SetInt(TEXT("vertical"), bVertical);
                         data->SetInt(TEXT("wrap"), SendMessage(GetDlgItem(hwnd, IDC_WRAP), BM_GETCHECK, 0, 0) == BST_CHECKED);
                         data->SetInt(TEXT("underline"), SendMessage(GetDlgItem(hwnd, IDC_UNDERLINE), BM_GETCHECK, 0, 0) == BST_CHECKED);
+
+                        data->SetInt(TEXT("useOutline"), SendMessage(GetDlgItem(hwnd, IDC_USEOUTLINE), BM_GETCHECK, 0, 0) == BST_CHECKED);
+                        data->SetInt(TEXT("outlineColor"), CCGetColor(GetDlgItem(hwnd, IDC_OUTLINECOLOR)));
+                        data->SetFloat(TEXT("outlineSize"), (float)SendMessage(GetDlgItem(hwnd, IDC_OUTLINETHICKNESS), UDM_GETPOS32, 0, 0));
+
                         data->SetInt(TEXT("useTextExtents"), bUseTextExtents);
                         data->SetInt(TEXT("extentWidth"), extentWidth);
                         data->SetInt(TEXT("extentHeight"), extentHeight);

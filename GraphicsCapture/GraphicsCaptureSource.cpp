@@ -77,6 +77,7 @@ end:
 bool GraphicsCaptureSource::Init(XElement *data)
 {
     this->data = data;
+    capture = NULL;
     return true;
 }
 
@@ -106,7 +107,10 @@ LRESULT WINAPI GraphicsCaptureSource::ReceiverWindowProc(HWND hwnd, UINT message
             {
                 CaptureWindowData *data = (CaptureWindowData*)GetWindowLongPtr(hwnd, 0);
                 if(data->source)
-                    data->source->NewCapture((LPVOID)lParam);
+                {
+                    data->source->captureData = (LPVOID)lParam;
+                    data->source->bNewCapture = true;
+                }
             }
             break;
 
@@ -114,11 +118,7 @@ LRESULT WINAPI GraphicsCaptureSource::ReceiverWindowProc(HWND hwnd, UINT message
             {
                 CaptureWindowData *data = (CaptureWindowData*)GetWindowLongPtr(hwnd, 0);
                 if(data->source)
-                {
-                    API->EnterSceneMutex();
-                    data->source->EndCapture();
-                    API->LeaveSceneMutex();
-                }
+                    data->source->bEndCapture = true;
             }
             break;
 
@@ -140,8 +140,6 @@ void GraphicsCaptureSource::NewCapture(LPVOID address)
 {
     if(!hProcess)
         return;
-
-    API->EnterSceneMutex();
 
     if(capture)
     {
@@ -181,8 +179,6 @@ void GraphicsCaptureSource::NewCapture(LPVOID address)
         delete capture;
         capture = NULL;
     }
-
-    API->LeaveSceneMutex();
 }
 
 void GraphicsCaptureSource::EndCapture()
@@ -203,6 +199,21 @@ void GraphicsCaptureSource::EndCapture()
     {
         API->RemoveStreamInfo(warningID);
         warningID = 0;
+    }
+}
+
+void GraphicsCaptureSource::Preprocess()
+{
+    if(bEndCapture)
+    {
+        EndCapture();
+        bEndCapture = false;
+    }
+
+    if(bNewCapture)
+    {
+        NewCapture(captureData);
+        bNewCapture = false;
     }
 }
 
@@ -323,17 +334,6 @@ void GraphicsCaptureSource::AttemptCapture()
 
 void GraphicsCaptureSource::EndScene()
 {
-    if(!bCapturing)
-        return;
-
-    bCapturing = false;
-
-    if(FindSenderWindow())
-    {
-        PostMessage(hwndSender, SENDER_ENDCAPTURE, 0, 0);
-        hwndSender = NULL;
-    }
-
     if(windowData)
     {
         windowData->source = NULL;
@@ -353,12 +353,6 @@ void GraphicsCaptureSource::EndScene()
         capture = NULL;
     }
 
-    if(hProcess)
-    {
-        CloseHandle(hProcess);
-        hProcess = NULL;
-    }
-
     if(invertShader)
     {
         delete invertShader;
@@ -369,6 +363,23 @@ void GraphicsCaptureSource::EndScene()
     {
         delete cursorTexture;
         cursorTexture = NULL;
+    }
+
+    if(!bCapturing)
+        return;
+
+    bCapturing = false;
+
+    if(FindSenderWindow())
+    {
+        PostMessage(hwndSender, SENDER_ENDCAPTURE, 0, 0);
+        hwndSender = NULL;
+    }
+
+    if(hProcess)
+    {
+        CloseHandle(hProcess);
+        hProcess = NULL;
     }
 }
 

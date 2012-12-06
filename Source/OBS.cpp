@@ -443,12 +443,6 @@ OBS::OBS()
 
     hSceneMutex = OSCreateMutex();
 
-	QWORD curTime = OSGetTimeMicroseconds();
-	OSMicrosecondSleep(111111);
-	QWORD totalTime = OSGetTimeMicroseconds()-curTime;
-
-	OSDebugOut(TEXT("%llu"), totalTime);
-
     monitors.Clear();
     EnumDisplayMonitors(NULL, NULL, (MONITORENUMPROC)MonitorInfoEnumProc, (LPARAM)&monitors);
 
@@ -527,8 +521,8 @@ OBS::OBS()
     borderYSize += GetSystemMetrics(SM_CYMENU);
     borderYSize += GetSystemMetrics(SM_CYCAPTION);
 
-    clientWidth  = AppConfig->GetInt(TEXT("General"), TEXT("Width"),  700);
-    clientHeight = AppConfig->GetInt(TEXT("General"), TEXT("Height"), 553);
+    clientWidth  = GlobalConfig->GetInt(TEXT("General"), TEXT("Width"),  700);
+    clientHeight = GlobalConfig->GetInt(TEXT("General"), TEXT("Height"), 553);
 
     if(clientWidth < minClientWidth)
         clientWidth = minClientWidth;
@@ -548,6 +542,29 @@ OBS::OBS()
 
     int x = (fullscreenX/2)-(cx/2);
     int y = (fullscreenY/2)-(cy/2);
+
+    int posX = GlobalConfig->GetInt(TEXT("General"), TEXT("PosX"));
+    int posY = GlobalConfig->GetInt(TEXT("General"), TEXT("PosY"));
+
+    bool bInsideMonitors = false;
+    if(posX || posY)
+    {
+        for(UINT i=0; i<monitors.Num(); i++)
+        {
+            if( posX >= monitors[i].rect.left && posX < monitors[i].rect.right  &&
+                posY >= monitors[i].rect.top  && posY < monitors[i].rect.bottom )
+            {
+                bInsideMonitors = true;
+                break;
+            }
+        }
+    }
+
+    if(bInsideMonitors)
+    {
+        x = posX;
+        y = posY;
+    }
 
     hwndMain = CreateWindowEx(WS_EX_CONTROLPARENT|WS_EX_WINDOWEDGE, OBS_WINDOW_CLASS, OBS_VERSION_STRING,
         WS_OVERLAPPED | WS_THICKFRAME | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN,
@@ -730,6 +747,12 @@ OBS::OBS()
         scenes = scenesConfig.CreateElement(TEXT("scenes"));
 
     UINT numScenes = scenes->NumElements();
+    if(!numScenes)
+    {
+        scenes->CreateElement(Str("Scene"));
+        numScenes++;
+    }
+
     for(UINT i=0; i<numScenes; i++)
     {
         XElement *scene = scenes->GetElementByID(i);
@@ -879,8 +902,13 @@ OBS::~OBS()
 
     //DestroyWindow(hwndMain);
 
-    AppConfig->SetInt(TEXT("General"), TEXT("Width"),  clientWidth);
-    AppConfig->SetInt(TEXT("General"), TEXT("Height"), clientHeight);
+    RECT rcWindow;
+    GetWindowRect(hwndMain, &rcWindow);
+
+    GlobalConfig->SetInt(TEXT("General"), TEXT("PosX"),   rcWindow.left);
+    GlobalConfig->SetInt(TEXT("General"), TEXT("PosY"),   rcWindow.top);
+    GlobalConfig->SetInt(TEXT("General"), TEXT("Width"),  clientWidth);
+    GlobalConfig->SetInt(TEXT("General"), TEXT("Height"), clientHeight);
 
     scenesConfig.Close(true);
 
@@ -2239,6 +2267,8 @@ void OBS::MainCaptureLoop()
 
                     bool bSendingVideo = videoPackets.Num() > 0;
 
+                    profileIn("sending stuff out");
+
                     //send headers before the first frame if not yet sent
                     if(bSendingVideo)
                     {
@@ -2294,6 +2324,8 @@ void OBS::MainCaptureLoop()
 
                         bufferedTimes.Remove(0);
                     }
+
+                    profileOut;
                 }
             }
 
@@ -2341,7 +2373,7 @@ void OBS::MainCaptureLoop()
 
         numTotalFrames++;
 
-		if(totalTime < frameTimeAdjust)
+        if(totalTime < frameTimeAdjust)
             OSSleep(frameTimeAdjust-totalTime);
     }
 

@@ -41,6 +41,10 @@
 #include <D3DX10.h>
 #include <DXGI.h>
 
+#include "../extras/sal.h"
+#include "../extras/no_sal2.h"
+#include "../extras/dxgi1_2.h"
+
 
 //-------------------------------------------
 // API DLL
@@ -61,8 +65,8 @@ extern ConfigFile   *AppConfig;
 extern OBS          *App;
 extern TCHAR        lpAppDataPath[MAX_PATH];
 
-#define OBS_VERSION             0x000449
-#define OBS_VERSION_STRING_ANSI "Open Broadcaster Software v0.449a [test 5]"
+#define OBS_VERSION             0x000450
+#define OBS_VERSION_STRING_ANSI "Open Broadcaster Software v0.45a"
 #define OBS_VERSION_STRING      TEXT(OBS_VERSION_STRING_ANSI)
 
 #define OBS_WINDOW_CLASS      TEXT("OBSWindowClass")
@@ -74,6 +78,14 @@ inline UINT ConvertMSTo100NanoSec(UINT ms)
 }
 
 void WINAPI ProcessEvents();
+
+inline bool IsWindows8Up()
+{
+    OSVERSIONINFO osi;
+    GetVersionEx(&osi);
+
+    return (osi.dwMajorVersion > 6 || (osi.dwMajorVersion == 6 && osi.dwMinorVersion >= 2));
+}
 
 //-------------------------------------------
 // application headers

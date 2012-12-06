@@ -151,6 +151,7 @@
 #define IDC_EXTENTHEIGHT                1083
 #define IDC_DELAY_EDIT                  1083
 #define IDC_DELAY                       1084
+#define IDC_OUTLINETHICKNESS_EDIT       1084
 #define IDC_USESYNCFIX                  1086
 #define IDC_CLEARPUSHTOTALK             1088
 #define IDC_CLEARMUTEMIC                1089
@@ -169,12 +170,14 @@
 #define IDC_DISABLED3DCOMPATIBILITY     1099
 #define IDC_USEMULTITHREADEDOPTIMIZATIONS 1099
 #define IDC_CAPTURELAYERED              1099
+#define IDC_USEOUTLINE                  1099
 #define IDC_TIMER1                      1100
 #define IDC_PROGRESS1                   1101
 #define IDC_DASHBOARDLINK_STATIC        1102
 #define IDC_DASHBOARDLINK               1103
 #define IDC_COLOR                       1104
 #define IDC_USEHIGHQUALITYRESAMPLING    1105
+#define IDC_OUTLINECOLOR                1105
 #define IDC_USETEXT                     1106
 #define IDC_USEFILE                     1107
 #define IDC_FILE                        1108
@@ -183,6 +186,8 @@
 #define IDC_SELECTFONT                  1116
 #define IDC_TEXTOPACITY                 1118
 #define IDC_WRAP                        1119
+#define IDC_TEXTOPACITY2                1120
+#define IDC_OUTLINETHICKNESS            1120
 #define IDC_EXAMPLE                     1121
 #define IDC_VERTICALSCRIPT              1122
 #define IDC_UNDERLINE                   1123
@@ -196,7 +201,7 @@
 #define IDC_CANCEL                      1130
 #define IDC_PRIORITY                    1132
 #define IDC_USECBR                      1133
-#define IDC_DROPBUFFERTIME_EDIT         1136
+#define IDC_COMBO1                      1139
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -227,7 +232,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        141
 #define _APS_NEXT_COMMAND_VALUE         40044
-#define _APS_NEXT_CONTROL_VALUE         1138
+#define _APS_NEXT_CONTROL_VALUE         1140
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

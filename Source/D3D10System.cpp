@@ -23,8 +23,10 @@ void LogVideoCardStats()
 {
     HRESULT err;
 
+    REFIID iidVal = IsWindows8Up() ? __uuidof(IDXGIFactory2) : __uuidof(IDXGIFactory1);
+
     IDXGIFactory1 *factory;
-    if(SUCCEEDED(err = CreateDXGIFactory1(__uuidof(IDXGIFactory1), (void**)&factory)))
+    if(SUCCEEDED(err = CreateDXGIFactory1(iidVal, (void**)&factory)))
     {
         UINT i=0;
         IDXGIAdapter1 *giAdapter;
@@ -56,8 +58,10 @@ D3D10System::D3D10System()
 {
     HRESULT err;
 
+    REFIID iidVal = IsWindows8Up() ? __uuidof(IDXGIFactory2) : __uuidof(IDXGIFactory1);
+
     IDXGIFactory1 *factory;
-    if(FAILED(err = CreateDXGIFactory1(__uuidof(IDXGIFactory1), (void**)&factory)))
+    if(FAILED(err = CreateDXGIFactory1(iidVal, (void**)&factory)))
         CrashError(TEXT("Could not create dxgi factory"));
 
     IDXGIAdapter1 *adapter;

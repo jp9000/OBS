@@ -52,6 +52,9 @@ class GraphicsCaptureSource : public ImageSource
     Shader *invertShader;
     Texture *cursorTexture;
 
+    bool bNewCapture, bEndCapture;
+    LPVOID captureData;
+
     float captureCheckInterval;
 
     void NewCapture(LPVOID address);
@@ -68,6 +71,7 @@ public:
     void BeginScene();
     void EndScene();
 
+    void Preprocess();
     void Tick(float fSeconds);
     void Render(const Vect2 &pos, const Vect2 &size);
     Vect2 GetSize() const;

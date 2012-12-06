@@ -22,6 +22,9 @@
 #include "RTMPPublisher.h"
 
 
+//QWORD totalCalls = 0, totalTime = 0;
+
+
 void rtmp_log_output(int level, const char *format, va_list vl)
 {
     int size = _vscprintf(format, vl);
@@ -61,9 +64,27 @@ RTMPPublisher::RTMPPublisher()
     dropThreshold += bufferTime;
 }
 
-bool RTMPPublisher::Init(RTMP *rtmpIn, UINT tcpBufferSize)
+bool RTMPPublisher::Init(RTMP *rtmpIn, UINT tcpBufferSize, BOOL bUseSendBuffer, UINT sendBufferSize)
 {
     rtmp = rtmpIn;
+
+    //------------------------------------------
+
+    sendBuffer.SetSize(sendBufferSize);
+    curSendBufferLen = 0;
+
+    this->bUseSendBuffer = bUseSendBuffer;
+
+    if(bUseSendBuffer)
+    {
+        Log(TEXT("Using Send Buffer Size: %u"), sendBufferSize);
+
+        rtmp->m_customSendFunc = (CUSTOMSEND)RTMPPublisher::BufferedSend;
+        rtmp->m_customSendParam = this;
+        rtmp->m_bCustomSend = TRUE;
+    }
+
+    //------------------------------------------
 
     int curTCPBufSize, curTCPBufSizeSize = 4;
     getsockopt (rtmp->m_sb.sb_socket, SOL_SOCKET, SO_SNDBUF, (char *)&curTCPBufSize, &curTCPBufSizeSize);
@@ -75,6 +96,8 @@ bool RTMPPublisher::Init(RTMP *rtmpIn, UINT tcpBufferSize)
         if(curTCPBufSize != tcpBufferSize)
             Log(TEXT("Could not set SO_SNDBUF to %u, value is now %u"), tcpBufferSize, curTCPBufSize);
     }
+    else
+        Log(TEXT("SO_SNDBUF already at %u"), curTCPBufSize);
 
     //------------------------------------------
 
@@ -104,6 +127,10 @@ RTMPPublisher::~RTMPPublisher()
     if(hDataMutex)
         OSCloseMutex(hDataMutex);
 
+    //flush the last of the data
+    if(bUseSendBuffer && RTMP_IsConnected(rtmp))
+        FlushSendBuffer();
+
     //--------------------------
 
     for(UINT i=0; i<queuedPackets.Num(); i++)
@@ -118,6 +145,9 @@ RTMPPublisher::~RTMPPublisher()
         numBFramesDumped, dBFrameDropPercentage,
         numPFramesDumped, dPFrameDropPercentage,
         numBFramesDumped+numPFramesDumped, dBFrameDropPercentage+dPFrameDropPercentage);
+
+    /*if(totalCalls)
+        Log(TEXT("average send time: %u"), totalTime/totalCalls);*/
 
     //--------------------------
 
@@ -136,8 +166,10 @@ void RTMPPublisher::ProcessPackets(DWORD timestamp)
         DWORD adjustedOutputRateSize = outputRateSize*bufferTime/outputRateWindowTime;
 
         //Log(TEXT("queueTime: %u, adjustedOutputRateSize: %u, currentBufferSize: %u, queuedPackets.Num: %u, timestamp: %u"), queueTime, adjustedOutputRateSize, currentBufferSize, queuedPackets.Num(), timestamp);
-		if (queueTime)
-			dNetworkStrain = (double(queueTime)/double(dropThreshold));
+
+        if (queueTime)
+            dNetworkStrain = (double(queueTime)/double(dropThreshold));
+
         if( bStreamStarted &&
             !ignoreCount &&
             queueTime > dropThreshold)
@@ -395,6 +427,18 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     rtmp->Link.flashVer.av_val = "FMLE/3.0 (compatible; FMSc/1.0)";
     rtmp->Link.flashVer.av_len = (int)strlen(rtmp->Link.flashVer.av_val);
 
+    //-----------------------------------------
+
+    BOOL bUseSendBuffer = AppConfig->GetInt(TEXT("Publish"), TEXT("UseSendBuffer"));
+    UINT sendBufferSize = AppConfig->GetInt(TEXT("Publish"), TEXT("SendBufferSize"), 5840);
+
+    if(sendBufferSize > 32120)
+        sendBufferSize = 32120;
+    else if(sendBufferSize < 536)
+        sendBufferSize = 536;
+
+    //-----------------------------------------
+
     UINT tcpBufferSize = AppConfig->GetInt(TEXT("Publish"), TEXT("TCPBufferSize"), 64*1024);
 
     if(tcpBufferSize < 8196)
@@ -406,6 +450,8 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     rtmp->m_bSendChunkSizeInfo = TRUE;
 
     rtmp->m_bUseNagle = TRUE;
+
+    //-----------------------------------------
 
     if(!RTMP_Connect(rtmp, NULL))
     {
@@ -435,7 +481,8 @@ end:
             RTMP_Free(rtmp);
         }
 
-        App->SetStreamReport(failReason);
+        if(failReason.IsValid())
+            App->SetStreamReport(failReason);
 
         if(!publisher->bStopping)
             PostMessage(hwndMain, OBS_REQUESTSTOP, 1, 0);
@@ -444,7 +491,7 @@ end:
     }
     else
     {
-        publisher->Init(rtmp, tcpBufferSize);
+        publisher->Init(rtmp, tcpBufferSize, bUseSendBuffer, sendBufferSize);
         publisher->bConnected = true;
         publisher->bConnecting = false;
     }
@@ -455,10 +502,11 @@ end:
 double RTMPPublisher::GetPacketStrain() const
 {
     if(packetWaitType >= PacketType_VideoHigh)
-        return min(100, dNetworkStrain*100);
+        return min(100.0, dNetworkStrain*100.0);
     else if(bNetworkStrain)
-        return dNetworkStrain*66;
-	return dNetworkStrain*33;
+        return dNetworkStrain*66.0;
+
+    return dNetworkStrain*33.0;
 }
 
 QWORD RTMPPublisher::GetCurrentSentBytes()
@@ -572,7 +620,7 @@ void RTMPPublisher::SendLoop()
                     break;
                 }
 
-				RUNONCE Log(TEXT("okay, this is strange"));
+                RUNONCE Log(TEXT("okay, this is strange"));
             }
 
             /*QWORD sendTimeTotal = OSGetTimeMicroseconds()-sendTimeStart;
@@ -598,6 +646,32 @@ void RTMPPublisher::SendLoop()
                 if(packetID != 0)
                     packetSizeRecord.RemoveRange(0, packetID);
             }
+
+            //----------------------------------------------------------
+            //make sure to flush the send buffer if surpassing max latency to keep frame data synced up on the server
+
+            if(bUseSendBuffer)
+            {
+                if(!numVideoPacketsBuffered)
+                    firstBufferedVideoFrameTimestamp = timestamp;
+
+                DWORD bufferedTime = timestamp-firstBufferedVideoFrameTimestamp;
+                if(bufferedTime > maxBufferTime)
+                {
+                    if(!FlushSendBuffer())
+                    {
+                        App->PostStopMessage();
+                        bStopping = true;
+                        break;
+                    }
+
+                    numVideoPacketsBuffered = 0;
+                }
+
+                numVideoPacketsBuffered++;
+            }
+
+            //----------------------------------------------------------
 
             bytesSent += packetData.Num();
         }
@@ -750,6 +824,91 @@ bool RTMPPublisher::DoIFrameDelay(bool bBFramesOnly)
     }
 
     return false;
+}
+
+int RTMPPublisher::FlushSendBuffer()
+{
+    if(!curSendBufferLen)
+        return 1;
+
+    SOCKET sb_socket = rtmp->m_sb.sb_socket;
+
+    BYTE *lpTemp = sendBuffer.Array();
+    int totalBytesSent = curSendBufferLen;
+    while(totalBytesSent > 0)
+    {
+        int nBytes = send(sb_socket, (const char*)lpTemp, totalBytesSent, 0);
+        if(nBytes < 0)
+            return nBytes;
+        if(nBytes == 0)
+            return 0;
+
+        totalBytesSent -= nBytes;
+        lpTemp += nBytes;
+    }
+
+    int prevSendBufferSize = curSendBufferLen;
+    curSendBufferLen = 0;
+
+    return prevSendBufferSize;
+}
+
+int RTMPPublisher::BufferedSend(RTMPSockBuf *sb, const char *buf, int len, RTMPPublisher *network)
+{
+    bool bComplete = false;
+    int fullLen = len;
+
+    do
+    {
+        int newTotal = network->curSendBufferLen+len;
+
+        //buffer full, send
+        if(newTotal >= int(network->sendBuffer.Num()))
+        {
+            int pendingBytes = newTotal-network->sendBuffer.Num();
+            int copyCount    = network->sendBuffer.Num()-network->curSendBufferLen;
+
+            mcpy(network->sendBuffer.Array()+network->curSendBufferLen, buf, copyCount);
+
+            BYTE *lpTemp = network->sendBuffer.Array();
+            int totalBytesSent = network->sendBuffer.Num();
+            while(totalBytesSent > 0)
+            {
+                int nBytes = send(sb->sb_socket, (const char*)lpTemp, totalBytesSent, 0);
+                if(nBytes < 0)
+                    return nBytes;
+                if(nBytes == 0)
+                    return 0;
+
+                totalBytesSent -= nBytes;
+                lpTemp += nBytes;
+            }
+
+            network->curSendBufferLen = 0;
+
+            if(pendingBytes)
+            {
+                buf += copyCount;
+                len -= copyCount;
+            }
+            else
+                bComplete = true;
+
+            network->numVideoPacketsBuffered = 0;
+        }
+        else
+        {
+            if(len)
+            {
+                mcpy(network->sendBuffer.Array()+network->curSendBufferLen, buf, len);
+                network->curSendBufferLen = newTotal;
+            }
+
+            bComplete = true;
+        }
+    } while(!bComplete);
+
+    return fullLen;
 }
 
 NetworkStream* CreateRTMPPublisher()

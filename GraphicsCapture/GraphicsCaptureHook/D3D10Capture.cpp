@@ -387,46 +387,49 @@ HRESULT STDMETHODCALLTYPE D3D10SwapPresentHook(IDXGISwapChain *swap, UINT syncIn
                 LONGLONG frameTime;
                 if(bCapturing)
                 {
-                    if(texData && (frameTime = texData->frameTime))
+                    if(texData)
                     {
-                        LONGLONG timeVal = OSGetTimeMicroseconds();
-                        LONGLONG timeElapsed = timeVal-lastTime;
-
-                        if(timeElapsed >= frameTime)
+                        if(frameTime = texData->frameTime)
                         {
-                            lastTime += frameTime;
-                            if(timeElapsed > frameTime*2)
-                                lastTime = timeVal;
+                            LONGLONG timeVal = OSGetTimeMicroseconds();
+                            LONGLONG timeElapsed = timeVal-lastTime;
 
-                            DWORD nextCapture = curCapture == 0 ? 1 : 0;
-
-                            ID3D10Resource *backBuffer = NULL;
-                            if(SUCCEEDED(swap->GetBuffer(0, IID_ID3D10Resource, (void**)&backBuffer)))
+                            if(timeElapsed >= frameTime)
                             {
-                                if(bIsMultisampled)
-                                    device->ResolveSubresource(copyD3D10TextureGame, 0, backBuffer, 0, dxgiFormat);
-                                else
-                                    device->CopyResource(copyD3D10TextureGame, backBuffer);
+                                lastTime += frameTime;
+                                if(timeElapsed > frameTime*2)
+                                    lastTime = timeVal;
 
-                                ID3D10Texture2D *outputTexture = NULL;
-                                int lastRendered = -1;
+                                DWORD nextCapture = curCapture == 0 ? 1 : 0;
 
-                                if(keyedMutexes[curCapture]->AcquireSync(0, 0) == WAIT_OBJECT_0)
-                                    lastRendered = (int)curCapture;
-                                else if(keyedMutexes[nextCapture]->AcquireSync(0, 0) == WAIT_OBJECT_0)
-                                    lastRendered = (int)nextCapture;
-
-                                if(lastRendered != -1)
+                                ID3D10Resource *backBuffer = NULL;
+                                if(SUCCEEDED(swap->GetBuffer(0, IID_ID3D10Resource, (void**)&backBuffer)))
                                 {
-                                    shareDevice->CopyResource(sharedTextures[lastRendered], copyTextureIntermediary);
-                                    keyedMutexes[lastRendered]->ReleaseSync(0);
+                                    if(bIsMultisampled)
+                                        device->ResolveSubresource(copyD3D10TextureGame, 0, backBuffer, 0, dxgiFormat);
+                                    else
+                                        device->CopyResource(copyD3D10TextureGame, backBuffer);
+
+                                    ID3D10Texture2D *outputTexture = NULL;
+                                    int lastRendered = -1;
+
+                                    if(keyedMutexes[curCapture]->AcquireSync(0, 0) == WAIT_OBJECT_0)
+                                        lastRendered = (int)curCapture;
+                                    else if(keyedMutexes[nextCapture]->AcquireSync(0, 0) == WAIT_OBJECT_0)
+                                        lastRendered = (int)nextCapture;
+
+                                    if(lastRendered != -1)
+                                    {
+                                        shareDevice->CopyResource(sharedTextures[lastRendered], copyTextureIntermediary);
+                                        keyedMutexes[lastRendered]->ReleaseSync(0);
+                                    }
+
+                                    texData->lastRendered = lastRendered;
+                                    backBuffer->Release();
                                 }
 
-                                texData->lastRendered = lastRendered;
-                                backBuffer->Release();
+                                curCapture = nextCapture;
                             }
-
-                            curCapture = nextCapture;
                         }
                     }
                 }
