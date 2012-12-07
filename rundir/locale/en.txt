@@ -114,6 +114,7 @@ Settings.Advanced.VideoEncoderSettings              "Custom x264 Encoder Setting
 Settings.Advanced.VideoEncoderSettingsTooltip       "This allows you to set custom x264 encoder settings.  In the form of [parameter]=[value] (e.g. \"vbv-maxrate=1000 vbv-bufsize=1000\")."
 Settings.Advanced.ProcessPriority                   "Process Priority Class"
 Settings.Advanced.PresetWarning                     "WARNING! Changing the x264 preset can have severe negative effects on your stream quality and CPU usage.\r\n\r\nDo not change this setting unless you fully understand the consequences of how the preset affects your stream.\r\n\r\nTreat any guides that suggest changing this with caution. You should almost never need to change this option from the default (veryfast).\r\n\r\nAre you sure you wish to change the preset?"
+Settings.Advanced.BindToIP                          "Bind To Interface:"
 
 Settings.Audio.Device               "Microphone/Auxiliary Audio Device:"
 Settings.Audio.ForceMicMono         "Force Microphone/Auxiliary to Mono:"
