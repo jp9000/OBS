@@ -19,6 +19,9 @@
 
 #include "Main.h"
 
+#include <Winsock2.h>
+#include <iphlpapi.h>
+
 enum SettingsSelection
 {
     Settings_General,
@@ -1611,6 +1614,49 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 //------------------------------------
 
+                MIB_IPADDRTABLE tempTable;
+                DWORD dwSize = 0;
+                if (GetIpAddrTable (&tempTable, &dwSize, TRUE) == ERROR_INSUFFICIENT_BUFFER)
+                {
+                    PMIB_IPADDRTABLE ipTable;
+
+                    ipTable = (PMIB_IPADDRTABLE)Allocate(dwSize);
+
+                    if (GetIpAddrTable (ipTable, &dwSize, TRUE) == NO_ERROR)
+                    {
+                        DWORD i;
+
+                        hwndTemp = GetDlgItem(hwnd, IDC_BINDIP);
+                        SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("Default"));
+
+                        for (i=0; i < ipTable->dwNumEntries; i++)
+                        {
+                            String strAddress;
+                            DWORD strLength = 32;
+
+                            // don't allow binding to localhost
+                            if ((ipTable->table[i].dwAddr & 0xFF) == 127)
+                                continue;
+
+                            strAddress.SetLength(strLength);
+
+                            SOCKADDR_IN IP;
+
+                            IP.sin_addr.S_un.S_addr = ipTable->table[i].dwAddr;
+                            IP.sin_family = AF_INET;
+                            IP.sin_port = 0;
+                            zero(&IP.sin_zero, sizeof(IP.sin_zero));
+
+                            WSAAddressToString ((LPSOCKADDR)&IP, sizeof(IP), NULL, strAddress.Array(), &strLength);
+                            SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)strAddress.Array());
+                        }
+
+                        LoadSettingComboString(hwndTemp, TEXT("Publish"), TEXT("BindToIP"), TEXT("Default"));
+                    }
+
+                    Free(ipTable);
+                }
+
                 //need this as some of the dialog item sets above trigger the notifications
                 ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_HIDE);
                 App->SetChangedSettings(false);
@@ -1686,6 +1732,7 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 case IDC_SENDBUFFERSIZE:
                 case IDC_PRIORITY:
+                case IDC_BINDIP:
                     if(HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == CBN_EDITCHANGE)
                     {
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
@@ -2015,6 +2062,11 @@ void OBS::ApplySettings()
 
                 AppConfig->SetInt   (TEXT("Publish"),        TEXT("UseSendBuffer"),     bUseSendBuffer);
                 AppConfig->SetString(TEXT("Publish"),        TEXT("SendBufferSize"),    strSendBufferSize);
+
+                //--------------------------------------------------
+
+                strTemp = GetCBText(GetDlgItem(hwndCurrentSettings, IDC_BINDIP));
+                AppConfig->SetString(TEXT("Publish"), TEXT("BindToIP"), strTemp);
 
                 break;
             }

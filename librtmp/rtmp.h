@@ -231,6 +231,12 @@ extern "C"
         int num;
     } RTMP_METHOD;
 
+    typedef struct RTMP_BINDINFO
+    {
+        struct sockaddr_in addr;
+        int addrLen;
+    } RTMP_BINDINFO;
+
     typedef int (*CUSTOMSEND)(RTMPSockBuf*, const char *, int, void*);
 
     typedef struct RTMP
@@ -257,6 +263,8 @@ extern "C"
         uint8_t m_bCustomSend;
         void*   m_customSendParam;
         CUSTOMSEND m_customSendFunc;
+
+        RTMP_BINDINFO m_bindIP;
 
         uint8_t m_bSendChunkSizeInfo;
 

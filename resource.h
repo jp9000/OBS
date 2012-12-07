@@ -45,6 +45,7 @@
 #define IDC_SERVERLIST                  1013
 #define IDC_SERVICE                     1014
 #define IDC_DOWNSCALE                   1014
+#define IDC_BINDIP                      1014
 #define IDC_MAXBITRATE                  1015
 #define IDC_COLORPICKER                 1015
 #define IDC_BUFFERSIZE                  1016

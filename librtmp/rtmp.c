@@ -1003,6 +1003,18 @@ RTMP_Connect0(RTMP *r, struct sockaddr * service)
     r->m_sb.sb_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (r->m_sb.sb_socket != -1)
     {
+        if(r->m_bindIP.addrLen)
+        {
+            if (bind(r->m_sb.sb_socket, (const struct sockaddr *)&r->m_bindIP.addr, r->m_bindIP.addrLen) < 0)
+            {
+                int err = GetSockError();
+                RTMP_Log(RTMP_LOGERROR, "%s, failed to bind socket. %d (%s)",
+                         __FUNCTION__, err, strerror(err));
+                RTMP_Close(r);
+                return FALSE;
+            }
+        }
+
         if (connect(r->m_sb.sb_socket, service, sizeof(struct sockaddr)) < 0)
         {
             int err = GetSockError();

@@ -354,6 +354,7 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     bool bCanRetry = false;
 
     String failReason;
+    String strBindIP;
 
     int    serviceID    = AppConfig->GetInt   (TEXT("Publish"), TEXT("Service"));
     String strURL       = AppConfig->GetString(TEXT("Publish"), TEXT("URL"));
@@ -450,6 +451,19 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     rtmp->m_bSendChunkSizeInfo = TRUE;
 
     rtmp->m_bUseNagle = TRUE;
+
+    strBindIP = AppConfig->GetString(TEXT("Publish"), TEXT("BindToIP"), TEXT("Default"));
+    if (scmp(strBindIP, TEXT("Default")))
+    {
+        rtmp->m_bindIP.addr.sin_family = AF_INET;
+        rtmp->m_bindIP.addrLen = sizeof(rtmp->m_bindIP.addr);
+        if (WSAStringToAddress(strBindIP.Array(), AF_INET, NULL, (LPSOCKADDR)&rtmp->m_bindIP.addr, &rtmp->m_bindIP.addrLen) == SOCKET_ERROR)
+        {
+            // no localization since this should rarely/never happen
+            failReason = TEXT("WSAStringToAddress: Could not parse address");
+            goto end;
+        }
+    }
 
     //-----------------------------------------
 
