@@ -315,6 +315,24 @@ void InitializeExceptionHandler()
     }
 }
 
+void SetWorkingFolder(void)
+{
+    String modulePath;
+
+    modulePath.SetLength(MAX_PATH);
+
+    if (GetModuleFileName(NULL, modulePath, modulePath.Length()-1))
+    {
+        TCHAR *p;
+
+        p = srchr(modulePath, '\\');
+        if (p)
+            *p = 0;
+        
+        SetCurrentDirectory(modulePath);
+    }
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
     //make sure only one instance of the application can be open at a time
@@ -345,6 +363,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         //CoInitializeEx(NULL, COINIT_MULTITHREADED);
         CoInitialize(0);
         EnableProfiling(TRUE);
+
+        //always make sure we're running inside our app folder so that locale files and plugins work
+        SetWorkingFolder();
 
         TSTR lpAllocator = NULL;
 
