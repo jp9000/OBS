@@ -105,6 +105,17 @@ bool RTMPPublisher::Init(RTMP *rtmpIn, UINT tcpBufferSize, BOOL bUseSendBuffer, 
     if(!hSendThread)
         CrashError(TEXT("RTMPPublisher: Could not create send thread"));
 
+    hBufferEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+    hBufferSpaceAvailableEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+    hDataBufferMutex = OSCreateMutex();
+
+    dataBuffer = (BYTE *)Allocate(262144);
+
+    hSocketThread = OSCreateThread((XTHREAD)RTMPPublisher::SocketThread, this);
+    if(!hSocketThread)
+        CrashError(TEXT("RTMPPublisher: Could not create send thread"));
+
     //------------------------------------------
 
     packetWaitType = 0;
@@ -130,6 +141,23 @@ RTMPPublisher::~RTMPPublisher()
     //flush the last of the data
     if(bUseSendBuffer && RTMP_IsConnected(rtmp))
         FlushSendBuffer();
+
+    //FIXME: flush the data buffer before destroying it.
+
+    if (dataBuffer)
+        Free(dataBuffer);
+
+    if (hDataBufferMutex)
+        OSCloseMutex(hDataBufferMutex);
+
+    if (hBufferEvent)
+        CloseHandle(hBufferEvent);
+
+    if (hBufferSpaceAvailableEvent)
+        CloseHandle(hBufferSpaceAvailableEvent);
+
+    if(hSendThread)
+        OSTerminateThread(hSocketThread, 20000);
 
     //--------------------------
 
@@ -515,6 +543,7 @@ end:
 
 double RTMPPublisher::GetPacketStrain() const
 {
+    return (curDataBufferLen / 262144.0) * 100.0;
     if(packetWaitType >= PacketType_VideoHigh)
         return min(100.0, dNetworkStrain*100.0);
     else if(bNetworkStrain)
@@ -533,6 +562,97 @@ DWORD RTMPPublisher::NumDroppedFrames() const
     return numBFramesDumped+numPFramesDumped;
 }
 
+void RTMPPublisher::SocketLoop()
+{
+    HANDLE hWriteEvent;
+
+    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
+
+    hWriteEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+    WSAEventSelect(rtmp->m_sb.sb_socket, hWriteEvent, FD_WRITE|FD_CLOSE);
+    do
+    {
+        Log(TEXT("RTMPPublisher::SocketLoop: Waiting for socket FD_WRITE"));
+
+        int status = WaitForSingleObject(hWriteEvent, INFINITE);
+        if (status == WAIT_ABANDONED || status == WAIT_FAILED)
+            return;
+
+        Log(TEXT("RTMPPublisher::SocketLoop: Got socket FD_WRITE"));
+
+        while (!bStopping)
+        {
+            Log(TEXT("RTMPPublisher::SocketLoop: Waiting for data"));
+
+            status = WaitForSingleObject(hBufferEvent, INFINITE);
+            if (status == WAIT_ABANDONED || status == WAIT_FAILED)
+                return;
+
+            OSEnterMutex(hDataBufferMutex);
+
+            Log(TEXT("RTMPPublisher::SocketLoop: %d bytes available"), curDataBufferLen);
+            if (!curDataBufferLen)
+            {
+                OSLeaveMutex(hDataBufferMutex);
+                Log(TEXT("RTMPPublisher::SocketLoop: NO DATA, what the fuck?"));
+                continue;
+            }
+
+            int ret = send(rtmp->m_sb.sb_socket, (const char *)dataBuffer, curDataBufferLen, 0);
+            if (ret > 0)
+            {
+                Log(TEXT("RTMPPublisher::SocketLoop: Wrote %d bytes, %d remaining"), ret, curDataBufferLen - ret);
+                if (curDataBufferLen - ret)
+                    memmove(dataBuffer, dataBuffer + ret, curDataBufferLen - ret);
+                curDataBufferLen -= ret;
+
+                SetEvent(hBufferSpaceAvailableEvent);
+            }
+            else
+            {
+                if (ret == 0 || (ret == -1 && WSAGetLastError() == WSAECONNABORTED))
+                {
+                    Log(TEXT("RTMPPublisher::SocketLoop: Socket error, send() returned 0"), curDataBufferLen);
+                    OSLeaveMutex(hDataBufferMutex);
+                    App->PostStopMessage();
+                    bStopping = true;
+                    return;
+                }
+
+                if (WSAGetLastError() == WSAEWOULDBLOCK)
+                {
+                    Log(TEXT("RTMPPublisher::SocketLoop: WSAEWOULDBLOCK with %d bytes remaining"), curDataBufferLen);
+                    OSLeaveMutex(hDataBufferMutex);
+                    break;
+                }
+                //!!!
+            }
+
+            if (bStopping)
+            {
+                OSLeaveMutex(hDataBufferMutex);
+                return;
+            }
+
+            if(!RTMP_IsConnected(rtmp))
+            {
+                OSLeaveMutex(hDataBufferMutex);
+                return;
+            }
+
+            if (curDataBufferLen == 0)
+            {
+                Log(TEXT("RTMPPublisher::SocketLoop: Buffer is empty, resetting event"));
+                ResetEvent(hBufferEvent);
+                OSLeaveMutex(hDataBufferMutex);
+                continue;
+            }
+
+            OSLeaveMutex(hDataBufferMutex);
+        }
+    } while (!bStopping);
+}
 
 void RTMPPublisher::SendLoop()
 {
@@ -695,6 +815,12 @@ void RTMPPublisher::SendLoop()
 DWORD RTMPPublisher::SendThread(RTMPPublisher *publisher)
 {
     publisher->SendLoop();
+    return 0;
+}
+
+DWORD RTMPPublisher::SocketThread(RTMPPublisher *publisher)
+{
+    publisher->SocketLoop();
     return 0;
 }
 
@@ -869,8 +995,41 @@ int RTMPPublisher::FlushSendBuffer()
 
 int RTMPPublisher::BufferedSend(RTMPSockBuf *sb, const char *buf, int len, RTMPPublisher *network)
 {
+    bool bWasEmpty = false;
     bool bComplete = false;
     int fullLen = len;
+
+retrySend:
+
+    OSEnterMutex(network->hDataBufferMutex);
+
+    if (network->curDataBufferLen + len >= 262144)
+    {
+        Log(TEXT("RTMPPublisher::BufferedSend: Buffer is full, waiting on a send"));
+        OSLeaveMutex(network->hDataBufferMutex);
+        int status = WaitForSingleObject(network->hBufferSpaceAvailableEvent, INFINITE);
+        if (status == WAIT_ABANDONED || status == WAIT_FAILED)
+            return 0;
+        goto retrySend;
+    }
+
+    if (!network->curDataBufferLen)
+        bWasEmpty = true;
+
+    Log(TEXT("RTMPPublisher::BufferedSend: Queuing %d bytes"), len);
+
+    mcpy(network->dataBuffer + network->curDataBufferLen, buf, len);
+    network->curDataBufferLen += len;
+
+    if (bWasEmpty)
+    {
+        Log(TEXT("RTMPPublisher::BufferedSend: Buffer is empty, signalling event"));
+        SetEvent (network->hBufferEvent);
+    }
+
+    OSLeaveMutex(network->hDataBufferMutex);
+
+    return len;
 
     do
     {

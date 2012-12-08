@@ -66,6 +66,10 @@ protected:
     HANDLE hSendSempahore;
     HANDLE hDataMutex;
     HANDLE hSendThread;
+    HANDLE hSocketThread;
+    HANDLE hBufferEvent;
+    HANDLE hBufferSpaceAvailableEvent;
+    HANDLE hDataBufferMutex;
 
     bool bStopping;
 
@@ -84,8 +88,13 @@ protected:
     DWORD numVideoPacketsBuffered;
     DWORD firstBufferedVideoFrameTimestamp;
 
+    BYTE *dataBuffer;
+    int curDataBufferLen;
+
     void SendLoop();
+    void SocketLoop();
     static DWORD SendThread(RTMPPublisher *publisher);
+    static DWORD SocketThread(RTMPPublisher *publisher);
 
     void DropFrame(UINT id);
     bool DoIFrameDelay(bool bBFramesOnly);
