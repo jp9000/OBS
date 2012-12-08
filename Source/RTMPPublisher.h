@@ -89,6 +89,8 @@ protected:
     DWORD firstBufferedVideoFrameTimestamp;
 
     BYTE *dataBuffer;
+    int dataBufferSize;
+
     int curDataBufferLen;
 
     void SendLoop();

@@ -110,7 +110,9 @@ bool RTMPPublisher::Init(RTMP *rtmpIn, UINT tcpBufferSize, BOOL bUseSendBuffer, 
 
     hDataBufferMutex = OSCreateMutex();
 
-    dataBuffer = (BYTE *)Allocate(262144);
+    dataBufferSize = (App->GetVideoEncoder()->GetBitRate() + App->GetAudioEncoder()->GetBitRate()) / 8 * 1024;
+
+    dataBuffer = (BYTE *)Allocate(dataBufferSize);
 
     hSocketThread = OSCreateThread((XTHREAD)RTMPPublisher::SocketThread, this);
     if(!hSocketThread)
@@ -138,6 +140,9 @@ RTMPPublisher::~RTMPPublisher()
     if(hDataMutex)
         OSCloseMutex(hDataMutex);
 
+    if(rtmp)
+        RTMP_Close(rtmp);
+
     //flush the last of the data
     if(bUseSendBuffer && RTMP_IsConnected(rtmp))
         FlushSendBuffer();
@@ -159,6 +164,9 @@ RTMPPublisher::~RTMPPublisher()
     if(hSendThread)
         OSTerminateThread(hSocketThread, 20000);
 
+    if(rtmp)
+        RTMP_Free(rtmp);
+
     //--------------------------
 
     for(UINT i=0; i<queuedPackets.Num(); i++)
@@ -178,12 +186,6 @@ RTMPPublisher::~RTMPPublisher()
         Log(TEXT("average send time: %u"), totalTime/totalCalls);*/
 
     //--------------------------
-
-    if(rtmp)
-    {
-        RTMP_Close(rtmp);
-        RTMP_Free(rtmp);
-    }
 }
 
 void RTMPPublisher::ProcessPackets(DWORD timestamp)
@@ -543,7 +545,7 @@ end:
 
 double RTMPPublisher::GetPacketStrain() const
 {
-    return (curDataBufferLen / 262144.0) * 100.0;
+    return (curDataBufferLen / (double)dataBufferSize) * 100.0;
     if(packetWaitType >= PacketType_VideoHigh)
         return min(100.0, dNetworkStrain*100.0);
     else if(bNetworkStrain)
@@ -611,9 +613,10 @@ void RTMPPublisher::SocketLoop()
             }
             else
             {
-                if (ret == 0 || (ret == -1 && WSAGetLastError() == WSAECONNABORTED))
+                if (ret == 0 || (ret == -1 && (WSAGetLastError() == WSAECONNABORTED || WSAGetLastError() == WSAENOTSOCK)))
                 {
-                    Log(TEXT("RTMPPublisher::SocketLoop: Socket error, send() returned 0"), curDataBufferLen);
+                    //connection closed, or connection was aborted / socket closed, that's a fatal error for us.
+                    Log(TEXT("RTMPPublisher::SocketLoop: Socket error, send() returned %d, GetLastError() %d"), ret, WSAGetLastError());
                     OSLeaveMutex(hDataBufferMutex);
                     App->PostStopMessage();
                     bStopping = true;
@@ -626,6 +629,7 @@ void RTMPPublisher::SocketLoop()
                     OSLeaveMutex(hDataBufferMutex);
                     break;
                 }
+
                 //!!!
             }
 
@@ -1003,7 +1007,7 @@ retrySend:
 
     OSEnterMutex(network->hDataBufferMutex);
 
-    if (network->curDataBufferLen + len >= 262144)
+    if (network->curDataBufferLen + len >= network->dataBufferSize)
     {
         Log(TEXT("RTMPPublisher::BufferedSend: Buffer is full, waiting on a send"));
         OSLeaveMutex(network->hDataBufferMutex);
