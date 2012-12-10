@@ -319,6 +319,9 @@ void SetWorkingFolder(void)
 {
     String modulePath;
 
+    if (GetFileAttributes(TEXT("locale\\en.txt")) != INVALID_FILE_ATTRIBUTES)
+        return;
+
     modulePath.SetLength(MAX_PATH);
 
     if (GetModuleFileName(NULL, modulePath, modulePath.Length()-1))
