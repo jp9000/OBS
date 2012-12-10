@@ -19,18 +19,12 @@
 
 #pragma once
 
-#define VOLUME_CONTROL_CLASS TEXT("OBSVolumeControl")
+#define VOLUME_METER_CLASS TEXT("OBSVolumeMeter")
 
-void InitVolumeControl();
-void SetVolumeControlIcons(HWND hwnd, HICON hiconPlay, HICON hiconMute);
-float ToggleVolumeControlMute(HWND hwnd);
-float SetVolumeControlValue(HWND hwnd, float fValue);
-float GetVolumeControlValue(HWND hwnd);
+void InitVolumeMeter();
+float SetVolumeMeterValue(HWND hwnd, float fValue);
 
+#define VOL_MIN -72
+#define VOL_MAX 6
 
-#define VOLN_ADJUSTING  0x300
-#define VOLN_FINALVALUE 0x301
-
-/* 60 db dynamic range values for volume control scale*/
-#define VOL_ALPHA .001f
-#define VOL_BETA 6.908f
+#define VOLN_METERED  0x302
