@@ -1049,18 +1049,8 @@ void STDCALL OBS::MuteDesktopHotkey(DWORD hotkey, UPARAM param, bool bDown)
 
 void OBS::UpdateAudioMeters()
 {
-    float desktopMagTemp = 0;
-    float micMagTemp = 0;
-    
-    if(hSoundDataMutex)
-        OSEnterMutex(hSoundDataMutex);
-    desktopMagTemp = desktopMag;
-    micMagTemp = micMag;
-    if(hSoundDataMutex)
-        OSLeaveMutex(hSoundDataMutex);
-
-    SetVolumeMeterValue(GetDlgItem(hwndMain, ID_DESKTOPVOLUMEMETER), desktopMagTemp);
-    SetVolumeMeterValue(GetDlgItem(hwndMain, ID_MICVOLUMEMETER), micMagTemp);
+    SetVolumeMeterValue(GetDlgItem(hwndMain, ID_DESKTOPVOLUMEMETER), desktopMag);
+    SetVolumeMeterValue(GetDlgItem(hwndMain, ID_MICVOLUMEMETER), micMag);
 }
 
 HICON OBS::GetIcon(HINSTANCE hInst, int resource)
@@ -1789,6 +1779,9 @@ inline float MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
         buffer[i] *= mulVal;
         sum += buffer[i] * buffer[i];
     }
+
+    if (!totalFloats)
+        return 0.0f;
 
     return sqrt(sum / totalFloats);
 }
@@ -2553,10 +2546,13 @@ void OBS::MainAudioLoop()
 
             /*low pass the level sampling*/
             float alpha = 0.05f;
-            OSEnterMutex(hSoundDataMutex);
+
             desktopMag = alpha * desktopMagCurrentSample + desktopMag * (1.0f - alpha);
             micMag = alpha * micMagCurrentSample + micMag * (1.0f - alpha);
-            OSLeaveMutex(hSoundDataMutex);
+
+            // instant feedback
+            //desktopMag = desktopMagCurrentSample;
+            //micMag = micMagCurrentSample;
 
             /*update the meter about every 100ms*/
             audioFramesSinceMeterUpdate += desktopAudioFrames;
@@ -2676,10 +2672,8 @@ void OBS::MainAudioLoop()
     }
 
     /*set meters back to zero*/
-    OSEnterMutex(hSoundDataMutex);
     desktopMag = VOL_MIN;
     micMag = VOL_MIN;
-    OSLeaveMutex(hSoundDataMutex);
 
     PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_MICVOLUMEMETER, VOLN_METERED), 0);
 

@@ -165,10 +165,10 @@ void VolumeMeterData::DrawVolumeMeter(HDC hDC)
     if(scale < yellowThresh)
     {
         /*only green meter*/
-        RECT meterGreen = {0, 0, cx * scale, cy};
-        RECT meterGreenDark = {cx * scale, 0, cx * yellowThresh, cy};
-        RECT meterYellowDark = {cx * yellowThresh, 0, cx * redThresh, cy};
-        RECT meterRedDark = {cx * redThresh, 0, cx, cy};
+        RECT meterGreen = {0, 0, (LONG)(cx * scale), cy};
+        RECT meterGreenDark = {(LONG)(cx * scale), 0, (LONG)(cx * yellowThresh), cy};
+        RECT meterYellowDark = {(LONG)(cx * yellowThresh), 0, (LONG)(cx * redThresh), cy};
+        RECT meterRedDark = {(LONG)(cx * redThresh), 0, cx, cy};
         
         FillRect(hdcTemp, &meterGreen, hGreen);
         FillRect(hdcTemp, &meterGreenDark, hGreenDark);
@@ -178,10 +178,10 @@ void VolumeMeterData::DrawVolumeMeter(HDC hDC)
     else if(scale < redThresh)
     {
         /*yellow meter*/
-        RECT meterGreen = {0, 0, cx * yellowThresh, cy};
-        RECT meterYellow = {cx * yellowThresh, 0, cx * scale, cy};
-        RECT meterYellowDark = {cx * scale, 0, cx * redThresh, cy};
-        RECT meterRedDark = {cx * redThresh, 0, cx, cy};
+        RECT meterGreen = {0, 0, (LONG)(cx * yellowThresh), cy};
+        RECT meterYellow = {(LONG)(cx * yellowThresh), 0, (LONG)(cx * scale), cy};
+        RECT meterYellowDark = {(LONG)(cx * scale), 0, (LONG)(cx * redThresh), cy};
+        RECT meterRedDark = {(LONG)(cx * redThresh), 0, cx, cy};
         
         FillRect(hdcTemp, &meterGreen, hGreen);
         FillRect(hdcTemp, &meterYellow, hYellow);
@@ -191,10 +191,10 @@ void VolumeMeterData::DrawVolumeMeter(HDC hDC)
     else
     {
         /*red meter (signal will be clippled)*/
-        RECT meterGreen = {0, 0, cx * yellowThresh, cy};
-        RECT meterYellow = {cx * yellowThresh, 0, cx * redThresh, cy};
-        RECT meterRed = {cx * redThresh, 0, cx * scale, cy};
-        RECT meterRedDark = {cx * scale, 0, cx, cy};
+        RECT meterGreen = {0, 0, (LONG)(cx * yellowThresh), cy};
+        RECT meterYellow = {(LONG)(cx * yellowThresh), 0, (LONG)(cx * redThresh), cy};
+        RECT meterRed = {(LONG)(cx * redThresh), 0, (LONG)(cx * scale), cy};
+        RECT meterRedDark = {(LONG)(cx * scale), 0, cx, cy};
 
         FillRect(hdcTemp, &meterGreen, hGreen);
         FillRect(hdcTemp, &meterYellow, hYellow);

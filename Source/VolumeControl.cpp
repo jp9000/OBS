@@ -78,6 +78,8 @@ float SetVolumeControlValue(HWND hwnd, float fVal)
     */
     if(fVal == 0)
         control->curVolume = 0;
+    else if (fVal == 1)
+        control->curVolume = 1;
     else
         control->curVolume = log(fVal / VOL_ALPHA) / VOL_BETA;
     
@@ -99,8 +101,13 @@ float GetVolumeControlValue(HWND hwnd)
         conversion to logarithmic scale 
         based on article at http://www.dr-lex.be/info-stuff/volumecontrols.html
     */
-    if(control->curVolume > 0.05)
-        return VOL_ALPHA * exp(VOL_BETA * control->curVolume);
+    if(control->curVolume > 0.05f)
+    {
+        float adjVolume = VOL_ALPHA * exp(VOL_BETA * control->curVolume);
+        if (adjVolume > 1.0f)
+            adjVolume = 1.0f;
+        return adjVolume;
+    }
     else 
         return 0;
 
