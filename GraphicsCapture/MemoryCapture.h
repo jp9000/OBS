@@ -31,8 +31,6 @@ class MemoryCapture : public GraphicsCaptureMethod
     LPBYTE textureBuffers[2];
     UINT pitch;
 
-    HWND hwndTarget;
-    HANDLE hProcess;
     Texture *texture;
     HANDLE hMutex;
 
@@ -44,7 +42,7 @@ class MemoryCapture : public GraphicsCaptureMethod
 public:
     void Destroy();
 
-    virtual bool Init(HANDLE hProcess, HWND hwndTarget, CaptureInfo &info);
+    virtual bool Init(CaptureInfo &info);
 
     virtual Texture* LockTexture();
     virtual void UnlockTexture();

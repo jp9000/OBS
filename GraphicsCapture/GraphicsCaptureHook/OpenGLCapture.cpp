@@ -275,17 +275,15 @@ void DoGLCPUHook(RECT &rc)
     }
 
     if(bSuccess)
-        bSuccess = IsWindow(hwndReceiver);
-
-    if(bSuccess)
     {
         bHasTextures = true;
         glcaptureInfo.captureType = CAPTURETYPE_MEMORY;
-        glcaptureInfo.hwndSender = hwndSender;
         glcaptureInfo.hwndCapture = hwndTarget;
         glcaptureInfo.pitch = glcaptureInfo.cx*4;
         glcaptureInfo.bFlip = TRUE;
-        PostMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&glcaptureInfo);
+
+        memcpy(infoMem, &glcaptureInfo, sizeof(CaptureInfo));
+        SetEvent(hSignalReady);
 
         logOutput << "DoGLCPUHook: success" << endl;
 
@@ -376,8 +374,16 @@ void HandleGLSceneUpdate(HDC hDC)
         if(bCapturing && bStopRequested)
         {
             ClearGLData();
+            bCapturing = false;
             bStopRequested = false;
             bReacquiring = false;
+        }
+
+        if(!bCapturing && WaitForSingleObject(hSignalRestart, 0) == WAIT_OBJECT_0)
+        {
+            hwndOBS = FindWindow(OBS_WINDOW_CLASS, NULL);
+            if(hwndOBS)
+                bCapturing = true;
         }
 
         RECT rc;
@@ -403,9 +409,6 @@ void HandleGLSceneUpdate(HDC hDC)
             if (!rc.right || !rc.bottom)
                 return;
 
-            if(!hwndReceiver)
-                hwndReceiver = FindWindow(RECEIVER_WINDOWCLASS, NULL);
-
             if(bHasTextures) //resizing
             {
                 ClearGLData();
@@ -417,7 +420,7 @@ void HandleGLSceneUpdate(HDC hDC)
             }
             else
             {
-                if(hwndReceiver)
+                if(hwndOBS)
                     DoGLCPUHook(rc);
                 else
                     ClearGLData();
@@ -438,6 +441,15 @@ void HandleGLSceneUpdate(HDC hDC)
 
                         if(timeElapsed >= frameTime)
                         {
+                            if(!IsWindow(hwndOBS))
+                            {
+                                hwndOBS = NULL;
+                                bStopRequested = true;
+                            }
+
+                            if(WaitForSingleObject(hSignalEnd, 0) == WAIT_OBJECT_0)
+                                bStopRequested = true;
+
                             lastTime += frameTime;
                             if(timeElapsed > frameTime*2)
                                 lastTime = timeVal;

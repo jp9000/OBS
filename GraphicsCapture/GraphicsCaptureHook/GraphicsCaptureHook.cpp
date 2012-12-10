@@ -21,8 +21,11 @@
 #include <shlobj.h>
 
 
+HANDLE hSignalRestart=NULL, hSignalEnd=NULL;
+HANDLE hSignalReady=NULL, hSignalExit=NULL;
+
 HINSTANCE hinstMain = NULL;
-HWND hwndSender = NULL, hwndReceiver = NULL;
+HWND hwndSender = NULL, hwndOBS = NULL;
 HANDLE textureMutexes[2] = {NULL, NULL};
 bool bStopRequested = false;
 bool bCapturing = true;
@@ -31,6 +34,9 @@ bool bTargetAcquired = false;
 HANDLE hFileMap = NULL;
 LPBYTE lpSharedMemory = NULL;
 UINT sharedMemoryIDCounter = 0;
+
+HANDLE hInfoFileMap = NULL;
+CaptureInfo *infoMem = NULL;
 
 
 LARGE_INTEGER clockFreq, startTime;
@@ -198,27 +204,6 @@ void DestroySharedMemory()
 }
 
 
-LRESULT WINAPI SenderWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    switch(message)
-    {
-        case SENDER_RESTARTCAPTURE:
-            bCapturing = true;
-            break;
-
-        case SENDER_ENDCAPTURE:
-            bStopRequested = true;
-            bCapturing = false;
-            hwndReceiver = NULL;
-            break;
-
-        default:
-            return DefWindowProc(hwnd, message, wParam, lParam);
-    }
-
-    return 0;
-}
-
 bool bD3D9Hooked = false;
 bool bD3D10Hooked = false;
 bool bD3D101Hooked = false;
@@ -278,6 +263,7 @@ inline bool AttemptToHookSomething()
 
 fstream logOutput;
 
+#define SENDER_WINDOWCLASS TEXT("OBSGraphicsCaptureSender")
 
 DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
 {
@@ -301,7 +287,44 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
     ZeroMemory(&wc, sizeof(wc));
     wc.hInstance = hinstMain;
     wc.lpszClassName = SENDER_WINDOWCLASS;
-    wc.lpfnWndProc = (WNDPROC)SenderWindowProc;
+    wc.lpfnWndProc = (WNDPROC)DefWindowProc;
+
+    DWORD procID = GetCurrentProcessId();
+
+    wstringstream strRestartEvent, strEndEvent, strReadyEvent, strExitEvent, strInfoMemory;
+    strRestartEvent << RESTART_CAPTURE_EVENT << procID;
+    strEndEvent     << END_CAPTURE_EVENT     << procID;
+    strReadyEvent   << CAPTURE_READY_EVENT   << procID;
+    strExitEvent    << APP_EXIT_EVENT        << procID;
+    strInfoMemory   << INFO_MEMORY           << procID;
+
+    hSignalRestart  = GetEvent(strRestartEvent.str().c_str());
+    hSignalEnd      = GetEvent(strEndEvent.str().c_str());
+    hSignalReady    = GetEvent(strReadyEvent.str().c_str());
+    hSignalExit     = GetEvent(strExitEvent.str().c_str());
+
+    hInfoFileMap = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(CaptureInfo), strInfoMemory.str().c_str());
+    if(!hInfoFileMap)
+    {
+        logOutput << "CaptureThread: could not info file mapping" << endl;
+        return 0;
+    }
+
+    infoMem = (CaptureInfo*)MapViewOfFile(hInfoFileMap, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(CaptureInfo));
+    if(!infoMem)
+    {
+        logOutput << "CaptureThread: could not map view of info shared memory" << endl;
+        CloseHandle(hInfoFileMap);
+        hInfoFileMap = NULL;
+        return 0;
+    }
+
+    hwndOBS = FindWindow(OBS_WINDOW_CLASS, NULL);
+    if(!hwndOBS)
+    {
+        logOutput << "CaptureThread: could not find main application window?  wtf?  seriously?" << endl;
+        return 0;
+    }
 
     if(RegisterClass(&wc))
     {
@@ -367,8 +390,26 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpBlah)
         FreeD3D101Capture();
         FreeD3D11Capture();*/
 
-        if(hwndReceiver)
-            PostMessage(hwndReceiver, RECEIVER_ENDCAPTURE, 0, 0);
+        if(hSignalRestart)
+            CloseHandle(hSignalRestart);
+        if(hSignalEnd)
+            CloseHandle(hSignalEnd);
+        if(hSignalReady)
+            CloseHandle(hSignalReady);
+        if(hSignalExit)
+        {
+            SetEvent(hSignalExit);
+            CloseHandle(hSignalExit);
+        }
+
+        if(infoMem)
+        {
+            UnmapViewOfFile(lpSharedMemory);
+            CloseHandle(hInfoFileMap);
+        }
+
+        hFileMap = NULL;
+        lpSharedMemory = NULL;
 
         if(hwndSender)
             DestroyWindow(hwndSender);

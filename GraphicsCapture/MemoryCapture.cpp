@@ -46,10 +46,8 @@ void MemoryCapture::Destroy()
     }
 }
 
-bool MemoryCapture::Init(HANDLE hProcess, HWND hwndTarget, CaptureInfo &info)
+bool MemoryCapture::Init(CaptureInfo &info)
 {
-    this->hwndTarget = hwndTarget;
-    this->hProcess = hProcess;
     this->height = info.cy;
     this->pitch = info.pitch;
 

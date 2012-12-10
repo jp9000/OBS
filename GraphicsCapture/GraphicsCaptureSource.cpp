@@ -92,55 +92,36 @@ GraphicsCaptureSource::~GraphicsCaptureSource()
     EndScene(); //should never actually need to be called, but doing it anyway just to be safe
 }
 
-LRESULT WINAPI GraphicsCaptureSource::ReceiverWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+bool GetCaptureInfo(CaptureInfo &ci, DWORD processID)
 {
-    switch(message)
+    HANDLE hFileMap = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, String() << INFO_MEMORY << int(processID));
+    if(hFileMap == NULL)
     {
-        case WM_CREATE:
-            {
-                CREATESTRUCT *cs = (CREATESTRUCT*)lParam;
-                SetWindowLongPtr(hwnd, 0, (LONG_PTR)cs->lpCreateParams);
-            }
-            break;
-
-        case RECEIVER_NEWCAPTURE:
-            {
-                CaptureWindowData *data = (CaptureWindowData*)GetWindowLongPtr(hwnd, 0);
-                if(data->source)
-                {
-                    data->source->captureData = (LPVOID)lParam;
-                    data->source->bNewCapture = true;
-                }
-            }
-            break;
-
-        case RECEIVER_ENDCAPTURE:
-            {
-                CaptureWindowData *data = (CaptureWindowData*)GetWindowLongPtr(hwnd, 0);
-                if(data->source)
-                    data->source->bEndCapture = true;
-            }
-            break;
-
-        case WM_DESTROY:
-            {
-                CaptureWindowData *data = (CaptureWindowData*)GetWindowLongPtr(hwnd, 0);
-                delete data;
-            }
-            break;
-
-        default:
-            return DefWindowProc(hwnd, message, wParam, lParam);
+        AppWarning(TEXT("GetCaptureInfo: Could not open file mapping"));
+        return false;
     }
 
-    return 0;
+    CaptureInfo *infoIn;
+    infoIn = (CaptureInfo*)MapViewOfFile(hFileMap, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(CaptureInfo));
+    if(!infoIn)
+    {
+        AppWarning(TEXT("GetCaptureInfo: Could not map view of file"));
+        return false;
+    }
+
+    mcpy(&ci, infoIn, sizeof(CaptureInfo));
+
+    if(infoIn)
+        UnmapViewOfFile(infoIn);
+
+    if(hFileMap)
+        CloseHandle(hFileMap);
+
+    return true;
 }
 
-void GraphicsCaptureSource::NewCapture(LPVOID address)
+void GraphicsCaptureSource::NewCapture()
 {
-    if(!hProcess)
-        return;
-
     if(capture)
     {
         capture->Destroy();
@@ -148,14 +129,40 @@ void GraphicsCaptureSource::NewCapture(LPVOID address)
         capture = NULL;
     }
 
-    CaptureInfo info;
-    if(!ReadProcessMemory(hProcess, address, &info, sizeof(info), NULL))
+    if(!hSignalRestart)
     {
-        API->LeaveSceneMutex();
+        hSignalRestart = GetEvent(String() << RESTART_CAPTURE_EVENT << int(targetProcessID));
+        if(!hSignalRestart)
+        {
+            RUNONCE AppWarning(TEXT("GraphicsCaptureSource::NewCapture:  Could not create restart event"));
+            return;
+        }
+    }
 
-        RUNONCE AppWarning(TEXT("GraphicsCaptureSource::NewCapture: Could not read capture info from target process"));
+    hSignalEnd = GetEvent(String() << END_CAPTURE_EVENT << int(targetProcessID));
+    if(!hSignalEnd)
+    {
+        RUNONCE AppWarning(TEXT("GraphicsCaptureSource::NewCapture:  Could not create end event"));
         return;
     }
+
+    hSignalReady = GetEvent(String() << CAPTURE_READY_EVENT << int(targetProcessID));
+    if(!hSignalReady)
+    {
+        RUNONCE AppWarning(TEXT("GraphicsCaptureSource::NewCapture:  Could not create ready event"));
+        return;
+    }
+
+    hSignalExit = GetEvent(String() << APP_EXIT_EVENT << int(targetProcessID));
+    if(!hSignalExit)
+    {
+        RUNONCE AppWarning(TEXT("GraphicsCaptureSource::NewCapture:  Could not create exit event"));
+        return;
+    }
+
+    CaptureInfo info;
+    if(!GetCaptureInfo(info, targetProcessID))
+        return;
 
     bFlip = info.bFlip != 0;
 
@@ -173,7 +180,7 @@ void GraphicsCaptureSource::NewCapture(LPVOID address)
         return;
     }
 
-    if(!capture->Init(hProcess, hwndTarget, info))
+    if(!capture->Init(info))
     {
         capture->Destroy();
         delete capture;
@@ -190,10 +197,23 @@ void GraphicsCaptureSource::EndCapture()
         capture = NULL;
     }
 
+    if(hSignalRestart)
+        CloseHandle(hSignalRestart);
+    if(hSignalEnd)
+        CloseHandle(hSignalEnd);
+    if(hSignalReady)
+        CloseHandle(hSignalReady);
+    if(hSignalExit)
+        CloseHandle(hSignalExit);
+
+    hSignalRestart = hSignalEnd = hSignalReady = hSignalExit = NULL;
+
     bErrorAcquiring = false;
+
     bCapturing = false;
     captureCheckInterval = -1.0f;
     hwndCapture = NULL;
+    targetProcessID = 0;
 
     if(warningID)
     {
@@ -204,39 +224,16 @@ void GraphicsCaptureSource::EndCapture()
 
 void GraphicsCaptureSource::Preprocess()
 {
-    if(bEndCapture)
+    if(hSignalExit && WaitForSingleObject(hSignalExit, 0) == WAIT_OBJECT_0)
     {
         EndCapture();
-        bEndCapture = false;
     }
 
-    if(bNewCapture)
-    {
-        NewCapture(captureData);
-        bNewCapture = false;
-    }
-}
+    if(bCapturing && !hSignalReady && targetProcessID)
+        hSignalReady = GetEvent(String() << CAPTURE_READY_EVENT << int(targetProcessID));
 
-bool GraphicsCaptureSource::FindSenderWindow()
-{
-    if(hwndSender)
-    {
-        if(!IsWindow(hwndSender))
-            hwndSender = NULL;
-        else
-            return true;
-    }
-
-    while(hwndSender = FindWindowEx(NULL, hwndSender, SENDER_WINDOWCLASS, NULL))
-    {
-        DWORD procID = 0;
-
-        GetWindowThreadProcessId(hwndSender, &procID);
-        if(procID == targetProcessID)
-            return true;
-    }
-
-    return false;
+    if(hSignalReady && (WaitForSingleObject(hSignalReady, 0) == WAIT_OBJECT_0))
+        NewCapture();
 }
 
 void GraphicsCaptureSource::BeginScene()
@@ -255,7 +252,6 @@ void GraphicsCaptureSource::BeginScene()
         invertShader = CreatePixelShaderFromFile(TEXT("shaders\\InvertTexture.pShader"));
 
     windowData = new CaptureWindowData(this);
-    hwndReceiver = CreateWindow(RECEIVER_WINDOWCLASS, NULL, 0, 0, 0, 0, 0, 0, 0, hinstMain, windowData);
 
     AttemptCapture();
 }
@@ -292,12 +288,15 @@ void GraphicsCaptureSource::AttemptCapture()
     //-------------------------------------------
     // see if we already hooked the process.  if not, inject DLL
 
-    hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, targetProcessID);
+    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, targetProcessID);
     if(hProcess)
     {
-        if(FindSenderWindow())
+        hwndCapture = hwndTarget;
+
+        hSignalRestart = OpenEvent(EVENT_ALL_ACCESS, FALSE, String() << RESTART_CAPTURE_EVENT << int(targetProcessID));
+        if(hSignalRestart)
         {
-            PostMessage(hwndSender, SENDER_RESTARTCAPTURE, 0, 0);
+            SetEvent(hSignalRestart);
             bCapturing = true;
             captureWaitCount = 0;
         }
@@ -330,6 +329,8 @@ void GraphicsCaptureSource::AttemptCapture()
         AppWarning(TEXT("GraphicsCaptureSource::BeginScene: OpenProcess failed, GetLastError = %u"), GetLastError());
         bErrorAcquiring = true;
     }
+
+    CloseHandle(hProcess);
 }
 
 void GraphicsCaptureSource::EndScene()
@@ -338,12 +339,6 @@ void GraphicsCaptureSource::EndScene()
     {
         windowData->source = NULL;
         windowData = NULL;
-    }
-
-    if(hwndReceiver)
-    {
-        DestroyWindow(hwndReceiver);
-        hwndReceiver = NULL;
     }
 
     if(capture)
@@ -366,21 +361,14 @@ void GraphicsCaptureSource::EndScene()
     }
 
     if(!bCapturing)
+    {
         return;
+    }
 
     bCapturing = false;
 
-    if(FindSenderWindow())
-    {
-        PostMessage(hwndSender, SENDER_ENDCAPTURE, 0, 0);
-        hwndSender = NULL;
-    }
-
-    if(hProcess)
-    {
-        CloseHandle(hProcess);
-        hProcess = NULL;
-    }
+    SetEvent(hSignalEnd);
+    EndCapture();
 }
 
 void GraphicsCaptureSource::Tick(float fSeconds)
@@ -388,7 +376,9 @@ void GraphicsCaptureSource::Tick(float fSeconds)
     if(bCapturing && !capture)
     {
         if(++captureWaitCount >= API->GetMaxFPS())
+        {
             bCapturing = false;
+        }
     }
 
     if(!bCapturing && !bErrorAcquiring)
@@ -402,7 +392,7 @@ void GraphicsCaptureSource::Tick(float fSeconds)
     }
     else
     {
-        if(!FindSenderWindow())
+        if(!IsWindow(hwndCapture))
             EndCapture();
     }
 }

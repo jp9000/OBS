@@ -361,49 +361,49 @@ HRESULT STDMETHODCALLTYPE D3D11SwapPresentHook(IDXGISwapChain *swap, UINT syncIn
             if(bCapturing && bStopRequested)
             {
                 ClearD3D11Data();
+                bCapturing = false;
                 bStopRequested = false;
+            }
+
+            if(!bCapturing && WaitForSingleObject(hSignalRestart, 0) == WAIT_OBJECT_0)
+            {
+                hwndOBS = FindWindow(OBS_WINDOW_CLASS, NULL);
+                if(hwndOBS)
+                    bCapturing = true;
             }
 
             if(!bHasTextures && bCapturing)
             {
-                if(dxgiFormat)
+                if(dxgiFormat && hwndOBS)
                 {
-                    if(!hwndReceiver)
-                        hwndReceiver = FindWindow(RECEIVER_WINDOWCLASS, NULL);
+                    BOOL bSuccess = DoD3D11Hook(device);
 
-                    if(hwndReceiver)
+                    if(bSuccess)
                     {
-                        BOOL bSuccess = DoD3D11Hook(device);
-
-                        if(bSuccess)
+                        d3d11CaptureInfo.mapID = InitializeSharedMemoryGPUCapture(&texData);
+                        if(!d3d11CaptureInfo.mapID)
                         {
-                            d3d11CaptureInfo.mapID = InitializeSharedMemoryGPUCapture(&texData);
-                            if(!d3d11CaptureInfo.mapID)
-                            {
-                                RUNONCE logOutput << "SwapPresentHook: creation of shared memory failed" << endl;
-                                bSuccess = false;
-                            }
+                            RUNONCE logOutput << "SwapPresentHook: creation of shared memory failed" << endl;
+                            bSuccess = false;
                         }
+                    }
 
-                        if(bSuccess)
-                            bSuccess = IsWindow(hwndReceiver);
+                    if(bSuccess)
+                    {
+                        bHasTextures = true;
+                        d3d11CaptureInfo.captureType = CAPTURETYPE_SHAREDTEX;
+                        d3d11CaptureInfo.bFlip = FALSE;
+                        texData->texHandles[0] = sharedHandles[0];
+                        texData->texHandles[1] = sharedHandles[1];
 
-                        if(bSuccess)
-                        {
-                            bHasTextures = true;
-                            d3d11CaptureInfo.captureType = CAPTURETYPE_SHAREDTEX;
-                            d3d11CaptureInfo.hwndSender = hwndSender;
-                            d3d11CaptureInfo.bFlip = FALSE;
-                            texData->texHandles[0] = sharedHandles[0];
-                            texData->texHandles[1] = sharedHandles[1];
-                            PostMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d11CaptureInfo);
+                        memcpy(infoMem, &d3d11CaptureInfo, sizeof(CaptureInfo));
+                        SetEvent(hSignalReady);
 
-                            logOutput << "DoD3D11Hook: success";
-                        }
-                        else
-                        {
-                            ClearD3D11Data();
-                        }
+                        logOutput << "DoD3D11Hook: success" << endl;
+                    }
+                    else
+                    {
+                        ClearD3D11Data();
                     }
                 }
             }
@@ -422,6 +422,15 @@ HRESULT STDMETHODCALLTYPE D3D11SwapPresentHook(IDXGISwapChain *swap, UINT syncIn
 
                             if(timeElapsed >= frameTime)
                             {
+                                if(!IsWindow(hwndOBS))
+                                {
+                                    hwndOBS = NULL;
+                                    bStopRequested = true;
+                                }
+
+                                if(WaitForSingleObject(hSignalEnd, 0) == WAIT_OBJECT_0)
+                                    bStopRequested = true;
+
                                 lastTime += frameTime;
                                 if(timeElapsed > frameTime*2)
                                     lastTime = timeVal;

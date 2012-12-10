@@ -38,11 +38,10 @@ class GraphicsCaptureSource : public ImageSource
     XElement *data;
 
     String strWindowClass;
-    HWND hwndTarget, hwndSender, hwndReceiver, hwndCapture;
+    HWND hwndTarget, hwndCapture;
     bool bCapturing, bErrorAcquiring, bFlip, bStretch, bCaptureMouse;
     UINT captureWaitCount;
     DWORD targetProcessID;
-    HANDLE hProcess;
     UINT warningID;
 
     POINT cursorPos;
@@ -52,15 +51,15 @@ class GraphicsCaptureSource : public ImageSource
     Shader *invertShader;
     Texture *cursorTexture;
 
-    bool bNewCapture, bEndCapture;
-    LPVOID captureData;
+    HANDLE hSignalRestart, hSignalEnd;
+    HANDLE hSignalReady, hSignalExit;
+
+    HANDLE hOBSIsAlive;
 
     float captureCheckInterval;
 
-    void NewCapture(LPVOID address);
+    void NewCapture();
     void EndCapture();
-
-    bool FindSenderWindow();
 
     void AttemptCapture();
 
@@ -77,6 +76,4 @@ public:
     Vect2 GetSize() const;
 
     void UpdateSettings();
-
-    static LRESULT WINAPI ReceiverWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 };

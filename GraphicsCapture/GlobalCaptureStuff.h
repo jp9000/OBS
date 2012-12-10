@@ -20,16 +20,33 @@
 #pragma once
 
 
-#define RECEIVER_WINDOWCLASS    TEXT("OBSGraphicsCaptureReceiver")
-#define SENDER_WINDOWCLASS      TEXT("OBSGraphicsCaptureSender")
+#define OBS_WINDOW_CLASS        TEXT("OBSWindowClass")
+
+//events sent by receiver (OBS)
+#define RESTART_CAPTURE_EVENT   TEXT("OBS_RestartCapture")
+#define END_CAPTURE_EVENT       TEXT("OBS_EndCapture")
+
+//events sent by sender (graphics app)
+#define CAPTURE_READY_EVENT     TEXT("OBS_CaptureReady")
+#define APP_EXIT_EVENT          TEXT("OBS_AppExit")
 
 #define TEXTURE_MUTEX1          TEXT("OBSTextureMutex1")
 #define TEXTURE_MUTEX2          TEXT("OBSTextureMutex2")
 
+#define INFO_MEMORY             TEXT("Local\\OBSInfoMemory")
 #define TEXTURE_MEMORY          TEXT("Local\\OBSTextureMemory")
 
 #define CAPTURETYPE_MEMORY      1
 #define CAPTURETYPE_SHAREDTEX   2
+
+inline HANDLE GetEvent(LPCTSTR lpEvent)
+{
+    HANDLE hEvent = CreateEvent(NULL, FALSE, FALSE, lpEvent);
+    if(!hEvent)
+        hEvent = OpenEvent(EVENT_ALL_ACCESS, FALSE, lpEvent);
+
+    return hEvent;
+}
 
 struct MemoryCopyData
 {
@@ -50,7 +67,6 @@ struct CaptureInfo
     UINT    captureType;
     DWORD   format;
     UINT    cx, cy;
-    HWND    hwndSender;
     HWND    hwndCapture;
     BOOL    bFlip;
 
@@ -58,16 +74,3 @@ struct CaptureInfo
     UINT    mapID;
     DWORD   mapSize;
 };
-
-enum
-{
-    RECEIVER_NEWCAPTURE=WM_USER+1,
-    RECEIVER_ENDCAPTURE,
-};
-
-enum
-{
-    SENDER_RESTARTCAPTURE=WM_USER+1,
-    SENDER_ENDCAPTURE,
-};
-

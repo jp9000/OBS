@@ -26,7 +26,6 @@ class SharedTexCapture : public GraphicsCaptureMethod
     Texture *curTexture;
 
     HWND hwndTarget;
-    HANDLE hProcess;
 
     HANDLE hFileMap;
     LPBYTE sharedMemory;
@@ -38,7 +37,7 @@ class SharedTexCapture : public GraphicsCaptureMethod
 
 public:
     void Destroy();
-    virtual bool Init(HANDLE hProcess, HWND hwndTarget, CaptureInfo &info);
+    virtual bool Init(CaptureInfo &info);
 
     virtual Texture* LockTexture();
     virtual void UnlockTexture();

@@ -363,19 +363,6 @@ ImageSource* STDCALL CreateGraphicsCaptureSource(XElement *data)
 
 bool LoadPlugin()
 {
-    WNDCLASS wc;
-    zero(&wc, sizeof(wc));
-    wc.hInstance = hinstMain;
-    wc.cbWndExtra = sizeof(LPVOID);
-    wc.lpszClassName = RECEIVER_WINDOWCLASS;
-    wc.lpfnWndProc = (WNDPROC)GraphicsCaptureSource::ReceiverWindowProc;
-
-    if(!RegisterClass(&wc))
-    {
-        AppWarning(TEXT("Could not register window class for graphics plugin"));
-        return false;
-    }
-
     textureMutexes[0] = CreateMutex(NULL, NULL, TEXTURE_MUTEX1);
     if(!textureMutexes[0])
     {

@@ -467,7 +467,7 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
         goto finishGPUHook;
     }
 
-    bSuccess = IsWindow(hwndReceiver);
+    bSuccess = IsWindow(hwndOBS);
 
 finishGPUHook:
 
@@ -475,11 +475,12 @@ finishGPUHook:
     {
         bHasTextures = true;
         d3d9CaptureInfo.captureType = CAPTURETYPE_SHAREDTEX;
-        d3d9CaptureInfo.hwndSender = hwndSender;
         d3d9CaptureInfo.bFlip = FALSE;
         texData->texHandles[0] = sharedHandles[0];
         texData->texHandles[1] = sharedHandles[1];
-        PostMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d9CaptureInfo);
+
+        memcpy(infoMem, &d3d9CaptureInfo, sizeof(CaptureInfo));
+        SetEvent(hSignalReady);
 
         logOutput << "DoD3D9GPUHook: success" << endl;
     }
@@ -576,16 +577,17 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
     }
 
     if(bSuccess)
-        bSuccess = IsWindow(hwndReceiver);
+        bSuccess = IsWindow(hwndOBS);
 
     if(bSuccess)
     {
         bHasTextures = true;
         d3d9CaptureInfo.captureType = CAPTURETYPE_MEMORY;
         d3d9CaptureInfo.pitch = pitch;
-        d3d9CaptureInfo.hwndSender = hwndSender;
         d3d9CaptureInfo.bFlip = FALSE;
-        PostMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d9CaptureInfo);
+
+        memcpy(infoMem, &d3d9CaptureInfo, sizeof(CaptureInfo));
+        SetEvent(hSignalReady);
 
         logOutput << "DoD3D9CPUHook: success" << endl;
     }
@@ -649,28 +651,30 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
     if(bStopRequested)
     {
         ClearD3D9Data();
+        bCapturing = false;
         bStopRequested = false;
+    }
+
+    if(!bCapturing && WaitForSingleObject(hSignalRestart, 0) == WAIT_OBJECT_0)
+    {
+        hwndOBS = FindWindow(OBS_WINDOW_CLASS, NULL);
+        if(hwndOBS)
+            bCapturing = true;
     }
 
     if(!bHasTextures && bCapturing)
     {
-        if(d3d9Format)
+        if(d3d9Format && hwndOBS)
         {
-            if(!hwndReceiver)
-                hwndReceiver = FindWindow(RECEIVER_WINDOWCLASS, NULL);
+            if(bD3D9Ex)
+                bUseSharedTextures = true;
+            else
+                bUseSharedTextures = (patchType = GetD3D9PatchType()) != 0;
 
-            if(hwndReceiver)
-            {
-                if(bD3D9Ex)
-                    bUseSharedTextures = true;
-                else
-                    bUseSharedTextures = (patchType = GetD3D9PatchType()) != 0;
-
-                if(bUseSharedTextures)
-                    DoD3D9GPUHook(device);
-                else
-                    DoD3D9CPUHook(device);
-            }
+            if(bUseSharedTextures)
+                DoD3D9GPUHook(device);
+            else
+                DoD3D9CPUHook(device);
         }
     }
 
@@ -692,6 +696,17 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
 
                         if(timeElapsed >= frameTime)
                         {
+                            if(!IsWindow(hwndOBS))
+                            {
+                                hwndOBS = NULL;
+                                bStopRequested = true;
+                            }
+
+                            if(WaitForSingleObject(hSignalEnd, 0) == WAIT_OBJECT_0)
+                            {
+                                bStopRequested = true;
+                            }
+
                             lastTime += frameTime;
                             if(timeElapsed > frameTime*2)
                                 lastTime = timeVal;
@@ -765,6 +780,15 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
 
                     if(timeElapsed >= frameTime)
                     {
+                        if(!IsWindow(hwndOBS))
+                        {
+                            hwndOBS = NULL;
+                            bStopRequested = true;
+                        }
+
+                        if(WaitForSingleObject(hSignalEnd, 0) == WAIT_OBJECT_0)
+                            bStopRequested = true;
+
                         lastTime += frameTime;
                         if(timeElapsed > frameTime*2)
                             lastTime = timeVal;
