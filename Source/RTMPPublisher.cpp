@@ -107,6 +107,7 @@ bool RTMPPublisher::Init(RTMP *rtmpIn, UINT tcpBufferSize, BOOL bUseSendBuffer, 
 
     hBufferEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
     hBufferSpaceAvailableEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    hWriteEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
     hDataBufferMutex = OSCreateMutex();
 
@@ -140,14 +141,18 @@ RTMPPublisher::~RTMPPublisher()
     if(hDataMutex)
         OSCloseMutex(hDataMutex);
 
+    //wake up and shut down the buffered sender
+    SetEvent(hWriteEvent);
+    OSTerminateThread(hSocketThread, 20000);
+
+    //at this point nothing new should be coming in to the buffer, flush out what remains
+    FlushDataBuffer();
+
+    //disable the buffered send, so RTMP_Close writes directly to the net
+    rtmp->m_bCustomSend = FALSE;
+
     if(rtmp)
         RTMP_Close(rtmp);
-
-    //flush the last of the data
-    if(bUseSendBuffer && RTMP_IsConnected(rtmp))
-        FlushSendBuffer();
-
-    //FIXME: flush the data buffer before destroying it.
 
     if (dataBuffer)
         Free(dataBuffer);
@@ -161,8 +166,8 @@ RTMPPublisher::~RTMPPublisher()
     if (hBufferSpaceAvailableEvent)
         CloseHandle(hBufferSpaceAvailableEvent);
 
-    if(hSendThread)
-        OSTerminateThread(hSocketThread, 20000);
+    if (hWriteEvent)
+        CloseHandle(hWriteEvent);
 
     if(rtmp)
         RTMP_Free(rtmp);
@@ -564,24 +569,34 @@ DWORD RTMPPublisher::NumDroppedFrames() const
     return numBFramesDumped+numPFramesDumped;
 }
 
+int RTMPPublisher::FlushDataBuffer()
+{
+    unsigned long zero = 0;
+    
+    //make it blocking again
+    ioctlsocket(rtmp->m_sb.sb_socket, FIONBIO, &zero);
+
+    OSEnterMutex(hDataBufferMutex);
+    int ret = send(rtmp->m_sb.sb_socket, (const char *)dataBuffer, curDataBufferLen, 0);
+    curDataBufferLen = 0;
+    OSLeaveMutex(hDataBufferMutex);
+
+    return ret;
+}
+
 void RTMPPublisher::SocketLoop()
 {
-    HANDLE hWriteEvent;
-
     SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
-
-    hWriteEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
     WSAEventSelect(rtmp->m_sb.sb_socket, hWriteEvent, FD_WRITE|FD_CLOSE);
     do
     {
-        Log(TEXT("RTMPPublisher::SocketLoop: Waiting for socket FD_WRITE"));
-
         int status = WaitForSingleObject(hWriteEvent, INFINITE);
         if (status == WAIT_ABANDONED || status == WAIT_FAILED)
+        {
+            Log(TEXT("RTMPPublisher::SocketLoop: Aborting due to hWriteEvent mutex"));
             return;
-
-        Log(TEXT("RTMPPublisher::SocketLoop: Got socket FD_WRITE"));
+        }
 
         while (!bStopping)
         {
@@ -589,22 +604,23 @@ void RTMPPublisher::SocketLoop()
 
             status = WaitForSingleObject(hBufferEvent, INFINITE);
             if (status == WAIT_ABANDONED || status == WAIT_FAILED)
+            {
+                Log(TEXT("RTMPPublisher::SocketLoop: Aborting due to hBufferEvent mutex"));
                 return;
+            }
 
             OSEnterMutex(hDataBufferMutex);
 
-            Log(TEXT("RTMPPublisher::SocketLoop: %d bytes available"), curDataBufferLen);
             if (!curDataBufferLen)
             {
                 OSLeaveMutex(hDataBufferMutex);
-                Log(TEXT("RTMPPublisher::SocketLoop: NO DATA, what the fuck?"));
+                Log(TEXT("RTMPPublisher::SocketLoop: Trying to send, but no data available?!"));
                 continue;
             }
 
             int ret = send(rtmp->m_sb.sb_socket, (const char *)dataBuffer, curDataBufferLen, 0);
             if (ret > 0)
             {
-                Log(TEXT("RTMPPublisher::SocketLoop: Wrote %d bytes, %d remaining"), ret, curDataBufferLen - ret);
                 if (curDataBufferLen - ret)
                     memmove(dataBuffer, dataBuffer + ret, curDataBufferLen - ret);
                 curDataBufferLen -= ret;
@@ -625,7 +641,6 @@ void RTMPPublisher::SocketLoop()
 
                 if (WSAGetLastError() == WSAEWOULDBLOCK)
                 {
-                    Log(TEXT("RTMPPublisher::SocketLoop: WSAEWOULDBLOCK with %d bytes remaining"), curDataBufferLen);
                     OSLeaveMutex(hDataBufferMutex);
                     break;
                 }
@@ -635,19 +650,20 @@ void RTMPPublisher::SocketLoop()
 
             if (bStopping)
             {
+                Log(TEXT("RTMPPublisher::SocketLoop: Aborting due to bStopping request"));
                 OSLeaveMutex(hDataBufferMutex);
                 return;
             }
 
             if(!RTMP_IsConnected(rtmp))
             {
+                Log(TEXT("RTMPPublisher::SocketLoop: Aborting due to RTMP not connected"));
                 OSLeaveMutex(hDataBufferMutex);
                 return;
             }
 
             if (curDataBufferLen == 0)
             {
-                Log(TEXT("RTMPPublisher::SocketLoop: Buffer is empty, resetting event"));
                 ResetEvent(hBufferEvent);
                 OSLeaveMutex(hDataBufferMutex);
                 continue;
@@ -656,6 +672,8 @@ void RTMPPublisher::SocketLoop()
             OSLeaveMutex(hDataBufferMutex);
         }
     } while (!bStopping);
+
+    Log(TEXT("RTMPPublisher::SocketLoop: Aborting due to loop exit"));
 }
 
 void RTMPPublisher::SendLoop()

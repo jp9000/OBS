@@ -67,6 +67,7 @@ protected:
     HANDLE hDataMutex;
     HANDLE hSendThread;
     HANDLE hSocketThread;
+    HANDLE hWriteEvent;
     HANDLE hBufferEvent;
     HANDLE hBufferSpaceAvailableEvent;
     HANDLE hDataBufferMutex;
@@ -95,6 +96,7 @@ protected:
 
     void SendLoop();
     void SocketLoop();
+    int RTMPPublisher::FlushDataBuffer();
     static DWORD SendThread(RTMPPublisher *publisher);
     static DWORD SocketThread(RTMPPublisher *publisher);
 
