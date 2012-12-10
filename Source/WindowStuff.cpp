@@ -1676,6 +1676,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                         if(IsWindowEnabled((HWND)lParam))
                         {
                             App->desktopVol = GetVolumeControlValue((HWND)lParam);
+                            
                             if(App->desktopVol < EPSILON)
                                 App->desktopVol = 0.0f;
 
@@ -1684,7 +1685,13 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                         }
                     }
                     break;
-
+                case ID_DESKTOPVOLUMEMETER:
+                case ID_MICVOLUMEMETER:
+                    if(HIWORD(wParam) == VOLN_METERED)
+                    {
+                        App->UpdateAudioMeters();
+                    }
+                    break;
                 case ID_SCENEEDITOR:
                     if(HIWORD(wParam) == BN_CLICKED)
                         App->bEditMode = !App->bEditMode;
