@@ -75,9 +75,9 @@ bool RTMPPublisher::Init(RTMP *rtmpIn, UINT tcpBufferSize, BOOL bUseSendBuffer, 
 
     this->bUseSendBuffer = bUseSendBuffer;
 
-    if(bUseSendBuffer)
+    if(1)
     {
-        Log(TEXT("Using Send Buffer Size: %u"), sendBufferSize);
+        //Log(TEXT("Using Send Buffer Size: %u"), sendBufferSize);
 
         rtmp->m_customSendFunc = (CUSTOMSEND)RTMPPublisher::BufferedSend;
         rtmp->m_customSendParam = this;
@@ -143,13 +143,14 @@ RTMPPublisher::~RTMPPublisher()
 
     //wake up and shut down the buffered sender
     SetEvent(hWriteEvent);
+    SetEvent(hBufferEvent);
     OSTerminateThread(hSocketThread, 20000);
 
     //at this point nothing new should be coming in to the buffer, flush out what remains
     FlushDataBuffer();
 
     //disable the buffered send, so RTMP_Close writes directly to the net
-    rtmp->m_bCustomSend = FALSE;
+    rtmp->m_bCustomSend = 0;
 
     if(rtmp)
         RTMP_Close(rtmp);
@@ -600,12 +601,16 @@ void RTMPPublisher::SocketLoop()
 
         while (!bStopping)
         {
-            Log(TEXT("RTMPPublisher::SocketLoop: Waiting for data"));
-
             status = WaitForSingleObject(hBufferEvent, INFINITE);
             if (status == WAIT_ABANDONED || status == WAIT_FAILED)
             {
                 Log(TEXT("RTMPPublisher::SocketLoop: Aborting due to hBufferEvent mutex"));
+                return;
+            }
+
+            if (bStopping)
+            {
+                Log(TEXT("RTMPPublisher::SocketLoop: Aborting due to bStopping"));
                 return;
             }
 
@@ -629,45 +634,39 @@ void RTMPPublisher::SocketLoop()
             }
             else
             {
-                if (ret == 0 || (ret == -1 && (WSAGetLastError() == WSAECONNABORTED || WSAGetLastError() == WSAENOTSOCK)))
+                int errorCode;
+                BOOL fatalError = FALSE;
+
+                if (ret == -1)
                 {
-                    //connection closed, or connection was aborted / socket closed, that's a fatal error for us.
-                    Log(TEXT("RTMPPublisher::SocketLoop: Socket error, send() returned %d, GetLastError() %d"), ret, WSAGetLastError());
+                    errorCode = WSAGetLastError();
+
+                    if (errorCode == WSAEWOULDBLOCK)
+                    {
+                        OSLeaveMutex(hDataBufferMutex);
+                        break;
+                    }
+
+                    fatalError = TRUE;
+                }
+                else if (ret == 0)
+                {
+                    fatalError = TRUE;
+                }
+
+                if (fatalError)
+                {
+                    //connection closed, or connection was aborted / socket closed / etc, that's a fatal error for us.
+                    Log(TEXT("RTMPPublisher::SocketLoop: Socket error, send() returned %d, GetLastError() %d"), ret, errorCode);
                     OSLeaveMutex(hDataBufferMutex);
                     App->PostStopMessage();
                     bStopping = true;
                     return;
                 }
-
-                if (WSAGetLastError() == WSAEWOULDBLOCK)
-                {
-                    OSLeaveMutex(hDataBufferMutex);
-                    break;
-                }
-
-                //!!!
-            }
-
-            if (bStopping)
-            {
-                Log(TEXT("RTMPPublisher::SocketLoop: Aborting due to bStopping request"));
-                OSLeaveMutex(hDataBufferMutex);
-                return;
-            }
-
-            if(!RTMP_IsConnected(rtmp))
-            {
-                Log(TEXT("RTMPPublisher::SocketLoop: Aborting due to RTMP not connected"));
-                OSLeaveMutex(hDataBufferMutex);
-                return;
             }
 
             if (curDataBufferLen == 0)
-            {
                 ResetEvent(hBufferEvent);
-                OSLeaveMutex(hDataBufferMutex);
-                continue;
-            }
 
             OSLeaveMutex(hDataBufferMutex);
         }
@@ -1027,7 +1026,7 @@ retrySend:
 
     if (network->curDataBufferLen + len >= network->dataBufferSize)
     {
-        Log(TEXT("RTMPPublisher::BufferedSend: Buffer is full, waiting on a send"));
+        Log(TEXT("RTMPPublisher::BufferedSend: Buffer is full (%d / %d bytes), waiting to send %d bytes"), network->curDataBufferLen, network->dataBufferSize, len);
         OSLeaveMutex(network->hDataBufferMutex);
         int status = WaitForSingleObject(network->hBufferSpaceAvailableEvent, INFINITE);
         if (status == WAIT_ABANDONED || status == WAIT_FAILED)
@@ -1038,16 +1037,11 @@ retrySend:
     if (!network->curDataBufferLen)
         bWasEmpty = true;
 
-    Log(TEXT("RTMPPublisher::BufferedSend: Queuing %d bytes"), len);
-
     mcpy(network->dataBuffer + network->curDataBufferLen, buf, len);
     network->curDataBufferLen += len;
 
     if (bWasEmpty)
-    {
-        Log(TEXT("RTMPPublisher::BufferedSend: Buffer is empty, signalling event"));
         SetEvent (network->hBufferEvent);
-    }
 
     OSLeaveMutex(network->hDataBufferMutex);
 
