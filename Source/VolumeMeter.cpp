@@ -54,7 +54,7 @@ float SetVolumeMeterValue(HWND hwnd, float fVal)
     float lastVal = meter->curVolume;
 
     meter->curVolume = fVal;
-	
+    
     HDC hDC = GetDC(hwnd);
     meter->DrawVolumeMeter(hDC);
     ReleaseDC(hwnd, hDC);
@@ -120,7 +120,7 @@ LRESULT CALLBACK VolumeMeterProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                 EndPaint(hwnd, &ps);
 
                 break;
-			}
+            }
 
         case WM_SIZE:
             {
@@ -155,25 +155,25 @@ void VolumeMeterData::DrawVolumeMeter(HDC hDC)
     const int padding = 1;
 
     /* bound volume values */
-	float workingVol = max(VOL_MIN, curVolume);
-	workingVol = min(VOL_MAX, workingVol);
+    float workingVol = max(VOL_MIN, curVolume);
+    workingVol = min(VOL_MAX, workingVol);
 
     /* convert to linear value [0, 1] */
     float scale = (workingVol - VOL_MIN) / (VOL_MAX - VOL_MIN);
-	
+    
     /* draw active and inactive part of volume meter */
     if(scale < yellowThresh)
     {
         /*only green meter*/
         RECT meterGreen = {0, 0, cx * scale, cy};
-	    RECT meterGreenDark = {cx * scale, 0, cx * yellowThresh, cy};
+        RECT meterGreenDark = {cx * scale, 0, cx * yellowThresh, cy};
         RECT meterYellowDark = {cx * yellowThresh, 0, cx * redThresh, cy};
         RECT meterRedDark = {cx * redThresh, 0, cx, cy};
         
         FillRect(hdcTemp, &meterGreen, hGreen);
-	    FillRect(hdcTemp, &meterGreenDark, hGreenDark);
+        FillRect(hdcTemp, &meterGreenDark, hGreenDark);
         FillRect(hdcTemp, &meterYellowDark, hYellowDark);
-	    FillRect(hdcTemp, &meterRedDark, hRedDark);
+        FillRect(hdcTemp, &meterRedDark, hRedDark);
     }
     else if(scale < redThresh)
     {
@@ -184,9 +184,9 @@ void VolumeMeterData::DrawVolumeMeter(HDC hDC)
         RECT meterRedDark = {cx * redThresh, 0, cx, cy};
         
         FillRect(hdcTemp, &meterGreen, hGreen);
-	    FillRect(hdcTemp, &meterYellow, hYellow);
+        FillRect(hdcTemp, &meterYellow, hYellow);
         FillRect(hdcTemp, &meterYellowDark, hYellowDark);
-	    FillRect(hdcTemp, &meterRedDark, hRedDark);
+        FillRect(hdcTemp, &meterRedDark, hRedDark);
     }
     else
     {
@@ -197,12 +197,12 @@ void VolumeMeterData::DrawVolumeMeter(HDC hDC)
         RECT meterRedDark = {cx * scale, 0, cx, cy};
 
         FillRect(hdcTemp, &meterGreen, hGreen);
-	    FillRect(hdcTemp, &meterYellow, hYellow);
+        FillRect(hdcTemp, &meterYellow, hYellow);
         FillRect(hdcTemp, &meterRed, hRed);
-	    FillRect(hdcTemp, &meterRedDark, hRedDark);
+        FillRect(hdcTemp, &meterRedDark, hRedDark);
 
     }
-	
+    
     BitBlt(hDC, 0, 0, cx, cy, hdcTemp, 0, 0, SRCCOPY);
 
     DeleteObject(hdcTemp);

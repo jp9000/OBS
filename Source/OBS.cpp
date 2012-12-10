@@ -192,7 +192,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
     const int controlHeight = 22;
 
     const int volControlHeight = 32;
-	const int volMeterHeight = 6;
+    const int volMeterHeight = 6;
 
     const int textControlHeight = 16;
 
@@ -261,8 +261,8 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
     yPos += volControlHeight+controlPadding;
 
     //-----------------------------------------------------
-	
-	xPos = resetXPos;
+    
+    xPos = resetXPos;
 
     SetWindowPos(GetDlgItem(hwndMain, ID_MICVOLUMEMETER), NULL, xPos, yPos, controlWidth-controlPadding, volMeterHeight, flags);
     xPos += controlWidth;
@@ -272,7 +272,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
 
     yPos += volMeterHeight+controlPadding;
 
-	//-----------------------------------------------------
+    //-----------------------------------------------------
 
     xPos = resetXPos;
 
@@ -468,7 +468,7 @@ OBS::OBS()
     InitHotkeyExControl(hinstMain);
     InitColorControl(hinstMain);
     InitVolumeControl();
-	InitVolumeMeter();
+    InitVolumeMeter();
 
     //-----------------------------------------------------
     // load locale
@@ -652,13 +652,13 @@ OBS::OBS()
     audioDevices.FreeData();
 
     EnableWindow(hwndTemp, !strDevice.CompareI(TEXT("Disable")));
-	
-	//-----------------------------------------------------
+    
+    //-----------------------------------------------------
     // mic volume meter
 
     hwndTemp = CreateWindow(VOLUME_METER_CLASS, NULL,
         WS_CHILDWINDOW|WS_VISIBLE|WS_CLIPSIBLINGS,
-		0, 0, 0, 0, hwndMain, (HMENU)ID_MICVOLUMEMETER, 0, 0);
+        0, 0, 0, 0, hwndMain, (HMENU)ID_MICVOLUMEMETER, 0, 0);
 
     //-----------------------------------------------------
     // desktop volume control
@@ -677,9 +677,9 @@ OBS::OBS()
 
     hwndTemp = CreateWindow(VOLUME_METER_CLASS, NULL,
         WS_CHILDWINDOW|WS_VISIBLE|WS_CLIPSIBLINGS,
-		0, 0, 0, 0, hwndMain, (HMENU)ID_DESKTOPVOLUMEMETER, 0, 0);
+        0, 0, 0, 0, hwndMain, (HMENU)ID_DESKTOPVOLUMEMETER, 0, 0);
 
-	//-----------------------------------------------------
+    //-----------------------------------------------------
     // settings button
 
     hwndTemp = CreateWindow(TEXT("BUTTON"), Str("Settings"),
@@ -1049,18 +1049,18 @@ void STDCALL OBS::MuteDesktopHotkey(DWORD hotkey, UPARAM param, bool bDown)
 
 void OBS::UpdateAudioMeters()
 {
-	float desktopMagTemp = 0;
-	float micMagTemp = 0;
-	
-	if(hSoundDataMutex)
-		OSEnterMutex(hSoundDataMutex);
-	desktopMagTemp = desktopMag;
-	micMagTemp = micMag;
-	if(hSoundDataMutex)
-		OSLeaveMutex(hSoundDataMutex);
+    float desktopMagTemp = 0;
+    float micMagTemp = 0;
+    
+    if(hSoundDataMutex)
+        OSEnterMutex(hSoundDataMutex);
+    desktopMagTemp = desktopMag;
+    micMagTemp = micMag;
+    if(hSoundDataMutex)
+        OSLeaveMutex(hSoundDataMutex);
 
-	SetVolumeMeterValue(GetDlgItem(hwndMain, ID_DESKTOPVOLUMEMETER), desktopMagTemp);
-	SetVolumeMeterValue(GetDlgItem(hwndMain, ID_MICVOLUMEMETER), micMagTemp);
+    SetVolumeMeterValue(GetDlgItem(hwndMain, ID_DESKTOPVOLUMEMETER), desktopMagTemp);
+    SetVolumeMeterValue(GetDlgItem(hwndMain, ID_MICVOLUMEMETER), micMagTemp);
 }
 
 HICON OBS::GetIcon(HINSTANCE hInst, int resource)
@@ -1770,9 +1770,9 @@ void OBS::Stop()
 
 inline float MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
 {
-	float sum = 0.0f;
+    float sum = 0.0f;
     
-	if(App->SSE2Available() && (UPARAM(buffer) & 0xF) == 0)
+    if(App->SSE2Available() && (UPARAM(buffer) & 0xF) == 0)
     {
         UINT alignedFloats = totalFloats & 0xFFFFFFFC;
         __m128 sseMulVal = _mm_set_ps1(mulVal);
@@ -1785,25 +1785,25 @@ inline float MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
     }
 
     for(int i=0; i<totalFloats; i++)
-	{
+    {
         buffer[i] *= mulVal;
-		sum += buffer[i] * buffer[i];
-	}
+        sum += buffer[i] * buffer[i];
+    }
 
-	return sqrt(sum / totalFloats);
+    return sqrt(sum / totalFloats);
 }
 
 inline bool IsFiniteNumber(float x) 
 {
-	return (x <= FLT_MAX && x >= -FLT_MAX); 
+    return (x <= FLT_MAX && x >= -FLT_MAX); 
 } 
 
 inline float toDB(float RMS)
 {
-	float db = 20.0f * log10(RMS);
-	if(!IsFiniteNumber(db))
-		return VOL_MIN;
-	return db;
+    float db = 20.0f * log10(RMS);
+    if(!IsFiniteNumber(db))
+        return VOL_MIN;
+    return db;
 }
 
 DWORD STDCALL OBS::MainCaptureThread(LPVOID lpUnused)
@@ -2505,7 +2505,7 @@ void OBS::MainAudioLoop()
 
     UINT curAudioFrame = 0;
 
-	UINT audioFramesSinceMeterUpdate = 0;
+    UINT audioFramesSinceMeterUpdate = 0;
 
     while(TRUE)
     {
@@ -2540,31 +2540,31 @@ void OBS::MainAudioLoop()
                 micAudio->GetBuffer(&micBuffer, &micAudioFrames, nullTimestamp);
 
             UINT totalFloats = desktopAudioFrames*2;
-			
-			/*multiply samples by volume and compute RMS of samples*/
-			float desktopRMS, micRMS = 0;
+            
+            /*multiply samples by volume and compute RMS of samples*/
+            float desktopRMS, micRMS = 0;
             desktopRMS = MultiplyAudioBuffer(desktopBuffer, totalFloats, desktopVol);
             if(bMicEnabled)
                 micRMS = MultiplyAudioBuffer(micBuffer, totalFloats, curMicVol);
-			
-			/*convert RMS of samples to dB*/			
-			float desktopMagCurrentSample = toDB(desktopRMS);
-			float micMagCurrentSample = toDB(micRMS);
+            
+            /*convert RMS of samples to dB*/            
+            float desktopMagCurrentSample = toDB(desktopRMS);
+            float micMagCurrentSample = toDB(micRMS);
 
-			/*low pass the level sampling*/
-			float alpha = 0.05f;
-			OSEnterMutex(hSoundDataMutex);
-			desktopMag = alpha * desktopMagCurrentSample + desktopMag * (1.0f - alpha);
-			micMag = alpha * micMagCurrentSample + micMag * (1.0f - alpha);
-			OSLeaveMutex(hSoundDataMutex);
+            /*low pass the level sampling*/
+            float alpha = 0.05f;
+            OSEnterMutex(hSoundDataMutex);
+            desktopMag = alpha * desktopMagCurrentSample + desktopMag * (1.0f - alpha);
+            micMag = alpha * micMagCurrentSample + micMag * (1.0f - alpha);
+            OSLeaveMutex(hSoundDataMutex);
 
-			/*update the meter about every 100ms*/
-			audioFramesSinceMeterUpdate += desktopAudioFrames;
-			if(audioFramesSinceMeterUpdate >= 4410)
-			{
-				PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_MICVOLUMEMETER, VOLN_METERED), 0);
-				audioFramesSinceMeterUpdate = 0;
-			}
+            /*update the meter about every 100ms*/
+            audioFramesSinceMeterUpdate += desktopAudioFrames;
+            if(audioFramesSinceMeterUpdate >= 4410)
+            {
+                PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_MICVOLUMEMETER, VOLN_METERED), 0);
+                audioFramesSinceMeterUpdate = 0;
+            }
 
             //-----------------
             // mix mic and desktop sound, using SSE2 if available
@@ -2675,18 +2675,18 @@ void OBS::MainAudioLoop()
             bRecievedFirstAudioFrame = true;
     }
 
-	/*set meters back to zero*/
-	OSEnterMutex(hSoundDataMutex);
-	desktopMag = VOL_MIN;
-	micMag = VOL_MIN;
-	OSLeaveMutex(hSoundDataMutex);
+    /*set meters back to zero*/
+    OSEnterMutex(hSoundDataMutex);
+    desktopMag = VOL_MIN;
+    micMag = VOL_MIN;
+    OSLeaveMutex(hSoundDataMutex);
 
-	PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_MICVOLUMEMETER, VOLN_METERED), 0);
+    PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_MICVOLUMEMETER, VOLN_METERED), 0);
 
-	/*close out hSoundDataMutex*/
-	if(hSoundDataMutex)
+    /*close out hSoundDataMutex*/
+    if(hSoundDataMutex)
         OSCloseMutex(hSoundDataMutex);
-	hSoundDataMutex = NULL;
+    hSoundDataMutex = NULL;
 
     for(UINT i=0; i<pendingAudioFrames.Num(); i++)
         pendingAudioFrames[i].audioData.Clear();

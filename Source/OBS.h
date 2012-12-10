@@ -251,8 +251,8 @@ enum
     ID_SCENEEDITOR,
     ID_DESKTOPVOLUME,
     ID_MICVOLUME,
-	ID_DESKTOPVOLUMEMETER,
-	ID_MICVOLUMEMETER,
+    ID_DESKTOPVOLUMEMETER,
+    ID_MICVOLUMEMETER,
     ID_STATUS,
     ID_SCENES,
     ID_SCENES_TEXT,
@@ -462,7 +462,7 @@ class OBS
 
     HANDLE  hSoundThread, hSoundDataMutex, hRequestAudioEvent;
     float   desktopVol, micVol;
-	float	desktopMag, micMag;
+    float    desktopMag, micMag;
     List<FrameAudio> pendingAudioFrames;
     bool    bForceMicMono;
     float   micBoost;
@@ -570,7 +570,7 @@ class OBS
     static void STDCALL MuteMicHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL MuteDesktopHotkey(DWORD hotkey, UPARAM param, bool bDown);
 
-	void UpdateAudioMeters();
+    void UpdateAudioMeters();
 
     static void GetNewSceneName(String &strScene);
     static void GetNewSourceName(String &strSource);
