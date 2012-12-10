@@ -97,6 +97,7 @@ inline bool IsWindows8Up()
 
 #include "../resource.h"
 #include "VolumeControl.h"
+#include "VolumeMeter.h"
 #include "OBS.h"
 #include "WindowStuff.h"
 #include "CodeTokenizer.h"
