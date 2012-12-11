@@ -26,18 +26,20 @@ float minLinear;
 
 struct VolumeMeterData
 {
-    float curVolume;
+    float curVolume, curMax;
+    float graduations[16];
 
     DWORD drawColor;
     long  cx,cy;
-    HBRUSH  hRed,hRedDark,hYellow,hYellowDark,hGreen,hGreenDark;
+    HBRUSH  hRed,hRedDark,hYellow,hYellowDark,hGreen,hGreenDark, hBlack, hGray;
 
     void DrawVolumeMeter(HDC hDC);
 };
 
-inline float DBtoLinear(float db)
+inline float DBtoLog(float db)
 {
-    return pow(10,db / 20.0f);
+    /* logarithmic scale for audio meter */
+    return -log10(0.0f-(db - 6.0f));
 }
 
 inline VolumeMeterData* GetVolumeMeterData(HWND hwnd)
@@ -45,7 +47,7 @@ inline VolumeMeterData* GetVolumeMeterData(HWND hwnd)
     return (VolumeMeterData*)GetWindowLongPtr(hwnd, 0);
 }
 
-float SetVolumeMeterValue(HWND hwnd, float fVal)
+float SetVolumeMeterValue(HWND hwnd, float fVal, float fMax)
 {
     VolumeMeterData *meter = GetVolumeMeterData(hwnd);
     if(!meter)
@@ -54,6 +56,7 @@ float SetVolumeMeterValue(HWND hwnd, float fVal)
     float lastVal = meter->curVolume;
 
     meter->curVolume = fVal;
+    meter->curMax = max(VOL_MIN, min(VOL_MAX, fMax));
     
     HDC hDC = GetDC(hwnd);
     meter->DrawVolumeMeter(hDC);
@@ -77,9 +80,15 @@ LRESULT CALLBACK VolumeMeterProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                 SetWindowLongPtr(hwnd, 0, (LONG_PTR)meter);
 
                 meter->curVolume = VOL_MIN;
+                meter->curMax = VOL_MIN;
                 
                 meter->cx = pCreateData->cx;
                 meter->cy = pCreateData->cy;
+
+                for(int i = 0; i < 16; i++)
+                {
+                    meter->graduations[i] = (DBtoLog(-96.0f + 6.0f * (i+1)) - minLinear) / (maxLinear - minLinear);
+                }
 
                 /*create color brushes*/
                 meter->hRed  = CreateSolidBrush(0x2929f4);
@@ -88,6 +97,8 @@ LRESULT CALLBACK VolumeMeterProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                 meter->hYellowDark  = CreateSolidBrush(0x167c78);
                 meter->hGreen  = CreateSolidBrush(0x2bf13e);
                 meter->hGreenDark  = CreateSolidBrush(0x177d20);
+                meter->hBlack = CreateSolidBrush(0x000000);
+                meter->hGray = CreateSolidBrush(0x777777);
                 
                 return TRUE;
             }
@@ -102,6 +113,8 @@ LRESULT CALLBACK VolumeMeterProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                 DeleteObject(meter->hYellowDark);
                 DeleteObject(meter->hGreen);
                 DeleteObject(meter->hGreenDark);
+                DeleteObject(meter->hBlack);
+                DeleteObject(meter->hGray);
                 
                 if(meter)
                     free(meter);
@@ -158,17 +171,19 @@ void VolumeMeterData::DrawVolumeMeter(HDC hDC)
     float workingVol = max(VOL_MIN, curVolume);
     workingVol = min(VOL_MAX, workingVol);
 
-    /* convert to linear value [0, 1] */
-    float scale = (workingVol - VOL_MIN) / (VOL_MAX - VOL_MIN);
+    /* convert dB to logarithmic then to linear scale [0, 1] */
+    float scale = (DBtoLog(workingVol) - minLinear) / (maxLinear - minLinear);
     
+    LONG yStart = 0, yEnd = cy - 5;
+
     /* draw active and inactive part of volume meter */
     if(scale < yellowThresh)
     {
         /*only green meter*/
-        RECT meterGreen = {0, 0, (LONG)(cx * scale), cy};
-        RECT meterGreenDark = {(LONG)(cx * scale), 0, (LONG)(cx * yellowThresh), cy};
-        RECT meterYellowDark = {(LONG)(cx * yellowThresh), 0, (LONG)(cx * redThresh), cy};
-        RECT meterRedDark = {(LONG)(cx * redThresh), 0, cx, cy};
+        RECT meterGreen = {0, yStart, (LONG)(cx * scale), yEnd};
+        RECT meterGreenDark = {(LONG)(cx * scale), yStart, (LONG)(cx * yellowThresh), yEnd};
+        RECT meterYellowDark = {(LONG)(cx * yellowThresh), yStart, (LONG)(cx * redThresh), yEnd};
+        RECT meterRedDark = {(LONG)(cx * redThresh), yStart, cx, yEnd};
         
         FillRect(hdcTemp, &meterGreen, hGreen);
         FillRect(hdcTemp, &meterGreenDark, hGreenDark);
@@ -178,10 +193,10 @@ void VolumeMeterData::DrawVolumeMeter(HDC hDC)
     else if(scale < redThresh)
     {
         /*yellow meter*/
-        RECT meterGreen = {0, 0, (LONG)(cx * yellowThresh), cy};
-        RECT meterYellow = {(LONG)(cx * yellowThresh), 0, (LONG)(cx * scale), cy};
-        RECT meterYellowDark = {(LONG)(cx * scale), 0, (LONG)(cx * redThresh), cy};
-        RECT meterRedDark = {(LONG)(cx * redThresh), 0, cx, cy};
+        RECT meterGreen = {0, yStart, (LONG)(cx * yellowThresh), yEnd};
+        RECT meterYellow = {(LONG)(cx * yellowThresh), yStart, (LONG)(cx * scale), yEnd};
+        RECT meterYellowDark = {(LONG)(cx * scale), yStart, (LONG)(cx * redThresh), yEnd};
+        RECT meterRedDark = {(LONG)(cx * redThresh), yStart, cx, yEnd};
         
         FillRect(hdcTemp, &meterGreen, hGreen);
         FillRect(hdcTemp, &meterYellow, hYellow);
@@ -191,10 +206,10 @@ void VolumeMeterData::DrawVolumeMeter(HDC hDC)
     else
     {
         /*red meter (signal will be clippled)*/
-        RECT meterGreen = {0, 0, (LONG)(cx * yellowThresh), cy};
-        RECT meterYellow = {(LONG)(cx * yellowThresh), 0, (LONG)(cx * redThresh), cy};
-        RECT meterRed = {(LONG)(cx * redThresh), 0, (LONG)(cx * scale), cy};
-        RECT meterRedDark = {(LONG)(cx * scale), 0, cx, cy};
+        RECT meterGreen = {0, yStart, (LONG)(cx * yellowThresh), yEnd};
+        RECT meterYellow = {(LONG)(cx * yellowThresh), yStart, (LONG)(cx * redThresh), yEnd};
+        RECT meterRed = {(LONG)(cx * redThresh), yStart, (LONG)(cx * scale), yEnd};
+        RECT meterRedDark = {(LONG)(cx * scale), yStart, cx, yEnd};
 
         FillRect(hdcTemp, &meterGreen, hGreen);
         FillRect(hdcTemp, &meterYellow, hYellow);
@@ -203,6 +218,20 @@ void VolumeMeterData::DrawVolumeMeter(HDC hDC)
 
     }
     
+    /* draw 6dB graduations */
+    for(int i = 0; i < 16; i++)
+    {
+        float scale = graduations[i];
+        RECT graduation = {(LONG)(cx * scale), cy - 4, ((LONG)(cx * scale)) + 1, cy};
+        FillRect(hdcTemp, &graduation, hGray);
+    }
+    
+    /* draw max sample indicator */
+    scale = (DBtoLog(curMax) - minLinear) / (maxLinear - minLinear);
+    bool maxxed = VOL_MAX - curMax < 0.1f;
+    RECT graduation = {(LONG)(cx * scale) - ((maxxed)?1:0), 0, ((LONG)(cx * scale)) + 1, cy};
+    FillRect(hdcTemp, &graduation, (maxxed)?hRed:hBlack);
+
     BitBlt(hDC, 0, 0, cx, cy, hdcTemp, 0, 0, SRCCOPY);
 
     DeleteObject(hdcTemp);
@@ -212,10 +241,12 @@ void VolumeMeterData::DrawVolumeMeter(HDC hDC)
 void InitVolumeMeter()
 {
     /*initiate threshold values */
-    maxLinear = DBtoLinear(VOL_MAX);
-    minLinear = DBtoLinear(VOL_MIN);
-    redThresh = (0.0f - VOL_MIN) / (VOL_MAX - VOL_MIN);
-    yellowThresh = (-24.0f - VOL_MIN) / (VOL_MAX - VOL_MIN);
+    maxLinear = DBtoLog(VOL_MAX);
+    minLinear = DBtoLog(VOL_MIN);
+    
+    /* -2dB red zone, -10.0dB yellow zone */
+    redThresh = (DBtoLog(-2.0f) - minLinear) / (maxLinear - minLinear);
+    yellowThresh = (DBtoLog(-10.0f) - minLinear) / (maxLinear - minLinear);
 
     WNDCLASS wnd;
 

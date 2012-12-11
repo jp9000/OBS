@@ -463,6 +463,7 @@ class OBS
     HANDLE  hSoundThread, hSoundDataMutex, hRequestAudioEvent;
     float   desktopVol, micVol;
     float    desktopMag, micMag;
+    float   desktopMax, micMax;
     List<FrameAudio> pendingAudioFrames;
     bool    bForceMicMono;
     float   micBoost;
