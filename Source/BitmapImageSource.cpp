@@ -106,6 +106,8 @@ public:
                     {
                         if(!totalLoops || ++curLoop < totalLoops)
                             newFrame = 0;
+                        else if (curLoop == totalLoops)
+                            break;
                     }
                 }
 
@@ -196,7 +198,12 @@ public:
                 texture = CreateTexture(gif.width, gif.height, GS_RGBA, gif.frame_image, FALSE, FALSE);
 
                 for(UINT i=0; i<gif.frame_count; i++)
-                    animationTimes << float(gif.frames[i].frame_delay)*0.01f;
+                {
+                    float frameTime = float(gif.frames[i].frame_delay)*0.01f;
+                    if (frameTime == 0.0f)
+                        frameTime = 0.1f;
+                    animationTimes << frameTime;
+                }
 
                 fullSize.x = float(gif.width);
                 fullSize.y = float(gif.height);
