@@ -70,11 +70,11 @@ D3D10System::D3D10System()
 
     IDXGIFactory1 *factory;
     if(FAILED(err = CreateDXGIFactory1(iidVal, (void**)&factory)))
-        CrashError(TEXT("Could not create dxgi factory"));
+        CrashError(TEXT("Could not create DXGI factory"));
 
     IDXGIAdapter1 *adapter;
     if(FAILED(err = factory->EnumAdapters1(0, &adapter)))
-        CrashError(TEXT("Could not get dxgi adapter"));
+        CrashError(TEXT("Could not get DXGI adapter"));
 
     //------------------------------------------------------------------
 

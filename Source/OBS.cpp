@@ -1156,6 +1156,14 @@ void OBS::Start()
         return;
     }
 
+    String strPatchesError;
+    if (OSIncompatiblePatchesLoaded(strPatchesError))
+    {
+        MessageBox(hwndMain, strPatchesError.Array(), NULL, MB_ICONERROR);
+        Log(TEXT("Incompatible patches detected."));
+        return;
+    }
+
     //-------------------------------------------------------------
 
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);

@@ -659,6 +659,44 @@ BOOL   STDCALL OSGetLoadedModuleList(HANDLE hProcess, StringList &ModuleList)
     return 1;
 }
 
+BOOL   STDCALL OSIncompatiblePatchesLoaded(String &errors)
+{
+    BOOL ret = FALSE;
+    HMODULE dxGI;
+    StringList moduleList;
+
+    OSGetLoadedModuleList (GetCurrentProcess(), moduleList);
+
+    //known problematic code modification hooks can be checked for here
+
+    //current checks:
+    //TeamSpeak 3 Overlay (hooks CreateDXGIFactory1 in such a way that it fails when called by OBS)
+
+    dxGI = GetModuleHandle(TEXT("DXGI.DLL"));
+    if (dxGI)
+    {
+        FARPROC createFactory = GetProcAddress(dxGI, "CreateDXGIFactory1");
+        if (createFactory)
+        {
+            if (!IsBadReadPtr(createFactory, 5))
+            {
+                BYTE opCode = *(BYTE *)createFactory;
+
+                if (opCode == 0xE9)
+                {
+                    if (moduleList.HasValue(TEXT("ts3overlay_hook_win32.dll")))
+                    {
+                        errors << TEXT("TeamSpeak 3 overlay has loaded into OBS and will cause problems. Please set \"Disable Loading\" for OBS.EXE in your TeamSpeak 3 overlay settings or visit http://bit.ly/OBSTS3 for help."); 
+                        ret = TRUE;
+                    }
+                }
+            }
+        }
+    }
+
+    return ret;
+}
+
 BOOL   STDCALL OSIncompatibleModulesLoaded()
 {
     StringList  moduleList;
