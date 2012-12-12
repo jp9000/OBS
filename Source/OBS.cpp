@@ -95,7 +95,7 @@ BOOL CALLBACK MonitorInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprc
 const int controlPadding = 3;
 
 const int totalControlAreaWidth  = minClientWidth;
-const int totalControlAreaHeight = 167;//170;//
+const int totalControlAreaHeight = 171;//170;//
 
 void OBS::ResizeRenderFrame(bool bRedrawRenderFrame)
 {
@@ -192,7 +192,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
     const int controlHeight = 22;
 
     const int volControlHeight = 32;
-    const int volMeterHeight = 6;
+    const int volMeterHeight = 10;
 
     const int textControlHeight = 16;
 
@@ -1050,8 +1050,8 @@ void STDCALL OBS::MuteDesktopHotkey(DWORD hotkey, UPARAM param, bool bDown)
 
 void OBS::UpdateAudioMeters()
 {
-    SetVolumeMeterValue(GetDlgItem(hwndMain, ID_DESKTOPVOLUMEMETER), desktopMag);
-    SetVolumeMeterValue(GetDlgItem(hwndMain, ID_MICVOLUMEMETER), micMag);
+    SetVolumeMeterValue(GetDlgItem(hwndMain, ID_DESKTOPVOLUMEMETER), desktopMag, desktopMax);
+    SetVolumeMeterValue(GetDlgItem(hwndMain, ID_MICVOLUMEMETER), micMag, micMax);
 }
 
 HICON OBS::GetIcon(HINSTANCE hInst, int resource)
@@ -1762,46 +1762,52 @@ void OBS::Stop()
     bTestStream = false;
 }
 
-inline float MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
+inline void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal, float &RMS, float &MAX)
 {
     float sum = 0.0f;
-    int curFloats = totalFloats;
-    
+    int totalFloatsStore = totalFloats;
+
+    float Max = 0.0f;
+
     if(App->SSE2Available() && (UPARAM(buffer) & 0xF) == 0)
     {
         UINT alignedFloats = totalFloats & 0xFFFFFFFC;
         __m128 sseMulVal = _mm_set_ps1(mulVal);
-        __m128 sseSumVal = _mm_set_ps1(0.0f);
 
         for(UINT i=0; i<alignedFloats; i += 4)
         {
-            __m128 newVal = _mm_mul_ps(_mm_load_ps(buffer+i), sseMulVal);
-            _mm_store_ps(buffer+i, newVal);
+            __m128 sseScaledVals = _mm_mul_ps(_mm_load_ps(buffer+i), sseMulVal);
+            _mm_store_ps(buffer+i, sseScaledVals);
 
-            sseSumVal = _mm_add_ps(sseSumVal, _mm_mul_ps(newVal, newVal));
+            /*compute squares and add them to the sum*/
+            __m128 sseSquares = _mm_mul_ps(sseScaledVals, sseScaledVals);
+            sum += sseSquares.m128_f32[0] + sseSquares.m128_f32[1] + sseSquares.m128_f32[2] + sseSquares.m128_f32[3];
+
+            /* 
+                sse maximum of squared floats 
+                concept from: http://stackoverflow.com/questions/9795529/how-to-find-the-horizontal-maximum-in-a-256-bit-avx-vector
+            */
+            __m128 sseSquaresP = _mm_shuffle_ps(sseSquares, sseSquares, _MM_SHUFFLE(1, 0, 3, 2));
+            __m128 halfmax = _mm_max_ps(sseSquares, sseSquaresP);
+            __m128 halfmaxP = _mm_shuffle_ps(halfmax, halfmax, _MM_SHUFFLE(0,1,2,3));
+            __m128 maxs = _mm_max_ps(halfmax, halfmaxP);
+
+            Max = max(Max, maxs.m128_f32[0]);
         }
 
         buffer      += alignedFloats;
-        curFloats   -= alignedFloats;
-
-        sum = sseSumVal.m128_f32[0] +
-              sseSumVal.m128_f32[1] +
-              sseSumVal.m128_f32[2] +
-              sseSumVal.m128_f32[3];
+        totalFloats -= alignedFloats;
     }
 
-    for(int i=0; i<curFloats; i++)
+    for(int i=0; i<totalFloats; i++)
     {
         buffer[i] *= mulVal;
         sum += buffer[i] * buffer[i];
+        Max = max(Max, buffer[i] * buffer[i]);
     }
 
-    if (!totalFloats)
-        return 0.0f;
-    if(!CloseFloat(sum, 0.0f))
-        return sqrt(sum / totalFloats);
-
-    return 0.0f;
+    RMS = sqrt(sum / totalFloatsStore);
+    MAX = sqrt(Max);
 }
 
 inline float toDB(float RMS)
@@ -2563,8 +2569,11 @@ void OBS::MainAudioLoop()
 
     UINT curAudioFrame = 0;
 
-    int sumCount = 0;
-    float desktopMagSum = 0.0f, micMagSum = 0.0f;
+    micMax = desktopMax = VOL_MIN;
+
+    UINT audioFramesSinceMeterUpdate = 0;
+    UINT audioFramesSinceMicMaxUpdate = 0;
+    UINT audioFramesSinceDesktopMaxUpdate = 0;
 
     while(TRUE)
     {
@@ -2596,39 +2605,58 @@ void OBS::MainAudioLoop()
             if(micAudio != NULL)
                 micAudio->GetBuffer(&micBuffer, &micAudioFrames, timestamp);
 
-            //Log(TEXT("micAudioFrames: %u"), micAudioFrames);
-
             //----------------------------------------------------------------------------
 
-            //LONGLONG chi = LONGLONG(timestamp)-LONGLONG(nullTimestamp);
-
             UINT totalFloats = desktopAudioFrames*2;
-
-            //multiply samples by volume and compute RMS of samples
-            float desktopRMS, micRMS = 0;
-            desktopRMS = MultiplyAudioBuffer(desktopBuffer, totalFloats, desktopVol);
+            
+            /*multiply samples by volume and compute RMS and max of samples*/
+            float desktopRMS = 0, micRMS = 0, desktopMx = 0, micMx = 0;
+            MultiplyAudioBuffer(desktopBuffer, totalFloats, desktopVol, desktopRMS, desktopMx);
             if(bMicEnabled)
-                micRMS = MultiplyAudioBuffer(micBuffer, totalFloats, curMicVol);
+                MultiplyAudioBuffer(micBuffer, totalFloats, curMicVol, micRMS, micMx);
+            
+            /*convert RMS and Max of samples to dB*/            
+            desktopRMS = toDB(desktopRMS);
+            micRMS = toDB(micRMS);
+            desktopMx = toDB(desktopMx);
+            micMx = toDB(micMx);
 
-            //convert RMS of samples to dB
-            float desktopMagCurrentSample = toDB(desktopRMS);
-            float micMagCurrentSample = toDB(micRMS);
-
-            desktopMagSum += desktopMagCurrentSample;
-            micMagSum += micMagCurrentSample;
-            sumCount++;
-
-            //update the meter about every 100ms
-            if(sumCount >= 10)
+            /* update max if sample max is greater or after 1 second */
+            if(micMx > micMax || audioFramesSinceMicMaxUpdate >= 44100)
             {
-                float fSumVal = float(sumCount);
-                desktopMag = desktopMagSum/fSumVal;
-                micMag = micMagSum/fSumVal;
+                micMax = micMx;
+                audioFramesSinceMicMaxUpdate = 0;
+            }
+            else 
+            {
+                audioFramesSinceMicMaxUpdate += desktopAudioFrames;
+            }
 
-                sumCount = 0;
-                micMagSum = desktopMagSum = 0.0f;
+            if(desktopMx > desktopMax || audioFramesSinceDesktopMaxUpdate >= 44100)
+            {
+                desktopMax = desktopMx;
+                audioFramesSinceDesktopMaxUpdate = 0;
+            }
+            else 
+            {
+                audioFramesSinceDesktopMaxUpdate += desktopAudioFrames;
+            }
 
+            /*low pass the level sampling*/
+            float alpha = 0.3f;
+            desktopMag = alpha * desktopRMS + desktopMag * (1.0f - alpha);
+            micMag = alpha * micRMS + micMag * (1.0f - alpha);
+
+            // instant feedback
+            //desktopMag = desktopMagCurrentSample;
+            //micMag = micMagCurrentSample;
+
+            /*update the meter about every 50ms*/
+            audioFramesSinceMeterUpdate += desktopAudioFrames;
+            if(audioFramesSinceMeterUpdate >= 2205)
+            {
                 PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_MICVOLUMEMETER, VOLN_METERED), 0);
+                audioFramesSinceMeterUpdate = 0;
             }
 
             //----------------------------------------------------------------------------
