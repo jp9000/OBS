@@ -71,6 +71,7 @@ protected:
     HANDLE hBufferEvent;
     HANDLE hBufferSpaceAvailableEvent;
     HANDLE hDataBufferMutex;
+    HANDLE hConnectionThread;
 
     bool bStopping;
 

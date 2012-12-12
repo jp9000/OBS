@@ -129,6 +129,14 @@ bool RTMPPublisher::Init(RTMP *rtmpIn, UINT tcpBufferSize, BOOL bUseSendBuffer, 
 RTMPPublisher::~RTMPPublisher()
 {
     bStopping = true;
+
+    //we're in the middle of connecting! wait for that to happen to avoid all manner of race conditions
+    if (hConnectionThread)
+    {
+        WaitForSingleObject(hConnectionThread, INFINITE);
+        OSCloseThread(hConnectionThread);
+    }
+
     if(hSendThread)
     {
         ReleaseSemaphore(hSendSempahore, 1, NULL);
@@ -144,16 +152,21 @@ RTMPPublisher::~RTMPPublisher()
     //wake up and shut down the buffered sender
     SetEvent(hWriteEvent);
     SetEvent(hBufferEvent);
-    OSTerminateThread(hSocketThread, 20000);
 
-    //at this point nothing new should be coming in to the buffer, flush out what remains
-    FlushDataBuffer();
+    if (hSocketThread)
+    {
+        OSTerminateThread(hSocketThread, 20000);
 
-    //disable the buffered send, so RTMP_Close writes directly to the net
-    rtmp->m_bCustomSend = 0;
+        //at this point nothing new should be coming in to the buffer, flush out what remains
+        FlushDataBuffer();
+    }
 
     if(rtmp)
+    {
+        //disable the buffered send, so RTMP_Close writes directly to the net
+        rtmp->m_bCustomSend = 0;
         RTMP_Close(rtmp);
+    }
 
     if (dataBuffer)
         Free(dataBuffer);
@@ -228,11 +241,9 @@ void RTMPPublisher::ProcessPackets(DWORD timestamp)
         }
     }
 
-    if(!bConnected && !bConnecting && timestamp > connectTime)
+    if(!bConnected && !bConnecting && timestamp > connectTime && !bStopping)
     {
-        HANDLE hConnectionThread = OSCreateThread((XTHREAD)CreateConnectionThread, this);
-        OSCloseThread(hConnectionThread);
-
+        hConnectionThread = OSCreateThread((XTHREAD)CreateConnectionThread, this);
         bConnecting = true;
     }
 

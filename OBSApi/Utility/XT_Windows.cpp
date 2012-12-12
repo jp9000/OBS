@@ -610,12 +610,16 @@ BOOL   STDCALL OSWaitForThread(HANDLE hThread, LPDWORD ret)
 
 BOOL   STDCALL OSCloseThread(HANDLE hThread)
 {
+    assert (hThread);
+
     CloseHandle(hThread);
     return 1;
 }
 
 BOOL   STDCALL OSTerminateThread(HANDLE hThread, DWORD waitMS)
 {
+    assert (hThread);
+
     if(WaitForSingleObjectEx(hThread, waitMS, 0) == WAIT_TIMEOUT)
         TerminateThread(hThread, 0);
 
