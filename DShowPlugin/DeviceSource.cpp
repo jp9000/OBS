@@ -142,6 +142,8 @@ bool DeviceSource::LoadFilters()
 
     bUseCustomResolution = data->GetInt(TEXT("customResolution"));
     strDevice = data->GetString(TEXT("device"));
+    strDeviceName = data->GetString(TEXT("deviceName"));
+    strDeviceID = data->GetString(TEXT("deviceID"));
 
     bFlipVertical = data->GetInt(TEXT("flipImage")) != 0;
     bFlipHorizontal = data->GetInt(TEXT("flipImageHorizontal")) != 0;
@@ -165,17 +167,29 @@ bool DeviceSource::LoadFilters()
 
     //------------------------------------------------
 
-    if(!strDevice.IsValid())
+    if(strDeviceName.IsValid())
     {
-        AppWarning(TEXT("DShowPlugin: Invalid device specified"));
-        goto cleanFinish;
+        deviceFilter = GetDeviceByValue(L"FriendlyName", strDeviceName, L"DevicePath", strDeviceID);
+        if(!deviceFilter)
+        {
+            AppWarning(TEXT("DShowPlugin: Invalid device: name '%s', path '%s'"), strDeviceName.Array(), strDeviceID.Array());
+            goto cleanFinish;
+        }
     }
-
-    deviceFilter = GetDeviceByName(strDevice);
-    if(!deviceFilter)
+    else
     {
-        AppWarning(TEXT("DShowPlugin: Could not create device filter"));
-        goto cleanFinish;
+        if(!strDevice.IsValid())
+        {
+            AppWarning(TEXT("DShowPlugin: Invalid device specified"));
+            goto cleanFinish;
+        }
+
+        deviceFilter = GetDeviceByValue(L"FriendlyName", strDevice);
+        if(!deviceFilter)
+        {
+            AppWarning(TEXT("DShowPlugin: Could not create device filter"));
+            goto cleanFinish;
+        }
     }
 
     devicePin = GetOutputPin(deviceFilter);
@@ -251,11 +265,13 @@ bool DeviceSource::LoadFilters()
         goto cleanFinish;
     }
 
+    //------------------------------------------------
+
     {
         VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(bestOutput->mediaType->pbFormat);
 
-        String strTest = FormattedString(TEXT("   device: %s, chosen type: %s, usingFourCC: %s, res: %ux%u - %ux%u, fps: %g-%g"),
-            strDevice.Array(),
+        String strTest = FormattedString(TEXT("    device: %s,\r\n    device id %s,\r\n    chosen type: %s, usingFourCC: %s, res: %ux%u - %ux%u, fps: %g-%g"),
+            strDevice.Array(), strDeviceID.Array(),
             EnumToName[(int)bestOutput->videoType],
             bestOutput->bUsingFourCC ? TEXT("true") : TEXT("false"),
             bestOutput->minCX, bestOutput->minCY, bestOutput->maxCX, bestOutput->maxCY,
@@ -270,8 +286,11 @@ bool DeviceSource::LoadFilters()
         else
             strTest << FormattedString(TEXT(", fourCC: %08lX\r\n"), pVih->bmiHeader.biCompression);
 
+        Log(TEXT("------------------------------------------"));
         Log(strTest.Array());
     }
+
+    //------------------------------------------------
 
     expectedMediaType = bestOutput->mediaType->subtype;
 

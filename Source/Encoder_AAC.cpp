@@ -37,8 +37,8 @@ class AACEncoder : public AudioEncoder
     List<BYTE>  aacBuffer;
     List<BYTE>  header;
 
-    List<DWORD> bufferedTimestamps;
-    DWORD curEncodeTimestamp;
+    List<QWORD> bufferedTimestamps;
+    QWORD curEncodeTimestamp;
     bool bFirstFrame;
 
 public:
@@ -89,7 +89,7 @@ public:
         faacEncClose(faac);
     }
 
-    bool Encode(float *input, UINT numInputFrames, DataPacket &packet, DWORD &timestamp)
+    bool Encode(float *input, UINT numInputFrames, DataPacket &packet, QWORD &timestamp)
     {
         if(bFirstFrame)
         {
@@ -99,7 +99,7 @@ public:
 
         //------------------------------------------------
 
-        DWORD curTimestamp = timestamp;
+        QWORD curTimestamp = timestamp;
 
         UINT lastSampleSize = inputBuffer.Num();
         UINT numInputSamples = numInputFrames*2;

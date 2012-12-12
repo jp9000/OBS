@@ -22,16 +22,9 @@
 
 class GraphicsCaptureSource;
 
-struct CaptureWindowData
-{
-    inline CaptureWindowData(GraphicsCaptureSource *source) : source(source) {}
-    GraphicsCaptureSource *source;
-};
-
 
 class GraphicsCaptureSource : public ImageSource
 {
-    CaptureWindowData *windowData;
     GraphicsCaptureMethod *capture;
     UINT cx, cy;
 

@@ -124,7 +124,10 @@ public:
     virtual void StopCapture()=0;
 
     virtual UINT GetNextBuffer()=0;
-    virtual bool GetBuffer(float **buffer, UINT *numFrames, DWORD &timestamp)=0;
+    virtual bool GetMostRecentTimestamp(QWORD &timestamp)=0;
+    virtual bool GetBuffer(float **buffer, UINT *numFrames, QWORD targetTimestamp)=0;
+
+    virtual QWORD GetBufferedTime()=0;
 };
 
 //-------------------------------------------------------------------
@@ -134,7 +137,7 @@ class AudioEncoder
     friend class OBS;
 
 protected:
-    virtual bool    Encode(float *input, UINT numInputFrames, DataPacket &packet, DWORD &timestamp)=0;
+    virtual bool    Encode(float *input, UINT numInputFrames, DataPacket &packet, QWORD &timestamp)=0;
     virtual void    GetHeaders(DataPacket &packet)=0;
 
 public:
@@ -165,7 +168,6 @@ public:
     virtual bool SetBitRate(DWORD maxBitrate, DWORD bufferSize)=0;
 
     virtual void GetHeaders(DataPacket &packet)=0;
-    //virtual void GetSEI(DataPacket &packet)=0;
 
     virtual String GetInfoString() const=0;
 };
@@ -203,10 +205,21 @@ struct FontInfo
 
 //-------------------------------------------------------------------
 
+struct AudioSegment
+{
+    List<float> audioData;
+    QWORD timestamp;
+
+    inline void ClearData()
+    {
+        audioData.Clear();
+    }
+};
+
 struct FrameAudio
 {
     List<BYTE> audioData;
-    DWORD timestamp;
+    QWORD timestamp;
 };
 
 
@@ -462,8 +475,7 @@ class OBS
 
     HANDLE  hSoundThread, hSoundDataMutex, hRequestAudioEvent;
     float   desktopVol, micVol;
-    float    desktopMag, micMag;
-    float   desktopMax, micMax;
+    float   desktopMag, micMag;
     List<FrameAudio> pendingAudioFrames;
     bool    bForceMicMono;
     float   micBoost;
@@ -560,7 +572,7 @@ class OBS
     void MainCaptureLoop();
     static DWORD STDCALL MainCaptureThread(LPVOID lpUnused);
 
-    bool QueryNewAudio();
+    bool QueryNewAudio(QWORD &timestamp);
     void MainAudioLoop();
     static DWORD STDCALL MainAudioThread(LPVOID lpUnused);
 

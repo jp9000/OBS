@@ -46,7 +46,7 @@ struct VideoPacket
     inline void FreeData() {Packet.Clear();}
 };
 
-const float baseCRF = 20.0f;
+const float baseCRF = 22.0f;
 
 class X264Encoder : public VideoEncoder
 {
@@ -125,7 +125,7 @@ public:
         }
 
         paramData.b_vfr_input           = 1;
-        paramData.i_keyint_max          = fps*5;      //keyframe every 5 sec, should make this an option
+        //paramData.i_keyint_max          = fps*5;      //keyframe every 5 sec, should make this an option
         paramData.i_width               = width;
         paramData.i_height              = height;
         paramData.vui.b_fullrange       = 0;          //specify full range input levels

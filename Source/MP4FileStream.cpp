@@ -741,11 +741,6 @@ public:
         if(!bSentFirstVideoPacket && type != PacketType_Audio)
         {
             bSentFirstVideoPacket = true;
-
-            /*DataPacket seiData;
-            App->GetVideoEncoder()->GetSEI(seiData);
-
-            AddPacket(seiData.lpPacket, seiData.size, timestamp, PacketType_VideoHighest);*/
         }
 
         UINT64 offset = fileOut.GetPos();

@@ -22,9 +22,9 @@
 #define VOLUME_METER_CLASS TEXT("OBSVolumeMeter")
 
 void InitVolumeMeter();
-float SetVolumeMeterValue(HWND hwnd, float fValue, float fMax);
+float SetVolumeMeterValue(HWND hwnd, float fValue);
 
-#define VOL_MIN -96
-#define VOL_MAX 0
+#define VOL_MIN -72
+#define VOL_MAX 6
 
 #define VOLN_METERED  0x302

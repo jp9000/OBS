@@ -251,8 +251,6 @@ void GraphicsCaptureSource::BeginScene()
     if(bCaptureMouse && data->GetInt(TEXT("invertMouse")))
         invertShader = CreatePixelShaderFromFile(TEXT("shaders\\InvertTexture.pShader"));
 
-    windowData = new CaptureWindowData(this);
-
     AttemptCapture();
 }
 
@@ -335,12 +333,6 @@ void GraphicsCaptureSource::AttemptCapture()
 
 void GraphicsCaptureSource::EndScene()
 {
-    if(windowData)
-    {
-        windowData->source = NULL;
-        windowData = NULL;
-    }
-
     if(capture)
     {
         capture->Destroy();
