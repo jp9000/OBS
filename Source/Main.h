@@ -32,6 +32,7 @@
 #include <xmmintrin.h>
 #include <emmintrin.h>
 
+#define USE_AAC 1
 
 
 //-------------------------------------------
@@ -69,8 +70,8 @@ extern ConfigFile   *AppConfig;
 extern OBS          *App;
 extern TCHAR        lpAppDataPath[MAX_PATH];
 
-#define OBS_VERSION             0x000453
-#define OBS_VERSION_STRING_ANSI "Open Broadcaster Software v0.454a (test 15)"
+#define OBS_VERSION             0x000455
+#define OBS_VERSION_STRING_ANSI "Open Broadcaster Software v0.455a"
 #define OBS_VERSION_STRING      TEXT(OBS_VERSION_STRING_ANSI)
 
 #define OBS_WINDOW_CLASS      TEXT("OBSWindowClass")
@@ -90,6 +91,15 @@ inline bool IsWindows8Up()
     GetVersionEx(&osi);
 
     return (osi.dwMajorVersion > 6 || (osi.dwMajorVersion == 6 && osi.dwMinorVersion >= 2));
+}
+
+inline bool IsWindows7Up()
+{
+    OSVERSIONINFO osi;
+    osi.dwOSVersionInfoSize = sizeof(osi);
+    GetVersionEx(&osi);
+
+    return (osi.dwMajorVersion > 6 || (osi.dwMajorVersion == 6 && osi.dwMinorVersion >= 1));
 }
 
 //-------------------------------------------

@@ -162,7 +162,7 @@ public:
     double GetPacketStrain() const {return (outputStream) ? outputStream->GetPacketStrain() : 0;}
     QWORD GetCurrentSentBytes() {return (outputStream) ? outputStream->GetCurrentSentBytes() : 0;}
     DWORD NumDroppedFrames() const {return (outputStream) ? outputStream->NumDroppedFrames() : 0;}
-    DWORD NumTotalFrames() const {return (outputStream) ? outputStream->NumTotalFrames() : 1;}
+    DWORD NumTotalVideoFrames() const {return (outputStream) ? outputStream->NumTotalVideoFrames() : 1;}
 
 };
 

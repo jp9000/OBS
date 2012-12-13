@@ -372,7 +372,7 @@ UINT MMDeviceAudioSource::GetNextBuffer()
             {
                 newTimestamp = qpcTimestamp/10000;
 
-                if(bFirstFrameReceived)
+                /*if(bFirstFrameReceived)
                 {
                     LONGLONG offset = LONGLONG(newTimestamp)-LONGLONG(lastKnownTimestamp);
                     if(offset < 1 || offset > 20)
@@ -380,7 +380,7 @@ UINT MMDeviceAudioSource::GetNextBuffer()
                     else
                         lastKnownTimestamp = newTimestamp;
                 }
-                else
+                else*/
                     lastKnownTimestamp = newTimestamp;
             }
         }

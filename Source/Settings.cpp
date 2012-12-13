@@ -450,10 +450,16 @@ INT_PTR CALLBACK OBS::EncoderSettingsProc(HWND hwnd, UINT message, WPARAM wParam
 
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("MP3"));
 #ifdef USE_AAC
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("AAC"));
-#endif
-
+                if(IsWindows7Up())
+                {
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("AAC"));
+                    LoadSettingComboString(hwndTemp, TEXT("Audio Encoding"), TEXT("Codec"), TEXT("AAC"));
+                }
+                else
+                    LoadSettingComboString(hwndTemp, TEXT("Audio Encoding"), TEXT("Codec"), TEXT("MP3"));
+#else
                 LoadSettingComboString(hwndTemp, TEXT("Audio Encoding"), TEXT("Codec"), TEXT("MP3"));
+#endif
 
                 //--------------------------------------------
 
@@ -462,6 +468,7 @@ INT_PTR CALLBACK OBS::EncoderSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("64"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("96"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("128"));
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("160"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("192"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("256"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("320"));

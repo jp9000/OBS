@@ -61,6 +61,8 @@ bool DeviceSource::Init(XElement *data)
     //if(!bFiltersLoaded)
     //    return false;
 
+    Log(TEXT("Using directshow input"));
+
     return true;
 }
 

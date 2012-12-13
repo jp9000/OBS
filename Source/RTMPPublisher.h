@@ -80,6 +80,7 @@ protected:
     QWORD bytesSent;
 
     UINT totalFrames;
+    UINT totalVideoFrames;
     UINT numPFramesDumped;
     UINT numBFramesDumped;
 
@@ -118,5 +119,5 @@ public:
     double GetPacketStrain() const;
     QWORD GetCurrentSentBytes();
     DWORD NumDroppedFrames() const;
-    DWORD NumTotalFrames() const {return totalFrames;}
+    DWORD NumTotalVideoFrames() const {return totalVideoFrames;}
 };

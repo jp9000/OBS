@@ -77,7 +77,7 @@ public:
     double GetPacketStrain() const {return 0;}
     QWORD GetCurrentSentBytes() {return 0;}
     DWORD NumDroppedFrames() const {return 0;}
-    DWORD NumTotalFrames() const {return 1;}
+    DWORD NumTotalVideoFrames() const {return 1;}
 };
 
 
