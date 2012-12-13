@@ -13,11 +13,13 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Japanese (Japan) resources
+// “ú–{Œê resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_JPN)
+#ifdef _WIN32
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 #pragma code_page(932)
+#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -427,7 +429,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO
+GUIDELINES DESIGNINFO 
 BEGIN
     IDD_SETTINGS, DIALOG
     BEGIN
@@ -609,7 +611,7 @@ END
 // Accelerator
 //
 
-IDR_ACCELERATOR1 ACCELERATORS
+IDR_ACCELERATOR1 ACCELERATORS 
 BEGIN
     "C",            IDA_SOURCE_CENTER,      VIRTKEY, CONTROL, NOINVERT
     VK_DELETE,      IDA_SOURCE_DELETE,      VIRTKEY, NOINVERT
@@ -665,7 +667,7 @@ END
 // Menu
 //
 
-IDR_MAINMENU MENU
+IDR_MAINMENU MENU 
 BEGIN
     POPUP "MainMenu.File"
     BEGIN
@@ -692,7 +694,7 @@ END
 //
 
 IDC_COLORPICKER         CURSOR                  "cursor1.cur"
-#endif    // Japanese (Japan) resources
+#endif    // “ú–{Œê resources
 /////////////////////////////////////////////////////////////////////////////
 
 

@@ -72,6 +72,8 @@ public:
     {
         this->data = data;
         UpdateSettings();
+
+        Log(TEXT("Using bitmap image"));
     }
 
     ~BitmapImageSource()

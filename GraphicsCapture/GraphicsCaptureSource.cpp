@@ -78,6 +78,8 @@ bool GraphicsCaptureSource::Init(XElement *data)
 {
     this->data = data;
     capture = NULL;
+
+    Log(TEXT("Using graphics capture"));
     return true;
 }
 
@@ -596,7 +598,7 @@ void GraphicsCaptureSource::Render(const Vect2 &pos, const Vect2 &size)
             if(invertShader)
             {
                 lastShader = GetCurrentPixelShader();
-                if(bInvertCursor = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0)
+                if(bInvertCursor = ((GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0 || (GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0))
                     LoadPixelShader(invertShader);
             }
 

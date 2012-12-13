@@ -204,6 +204,8 @@ public:
         if(!bStreamOpened)
             return;
 
+        App->EnableSceneSwitching(false);
+
         HWND hwndProgressDialog = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_BUILDINGMP4), hwndMain, (DLGPROC)MP4ProgressDialogProc);
         SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETRANGE32, 0, 100);
 
@@ -732,6 +734,8 @@ public:
 #endif
             file.Close();
         }
+
+        App->EnableSceneSwitching(true);
 
         DestroyWindow(hwndProgressDialog);
     }

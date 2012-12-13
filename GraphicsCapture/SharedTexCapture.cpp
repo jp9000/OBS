@@ -58,7 +58,7 @@ bool SharedTexCapture::Init(CaptureInfo &info)
         return false;
     }
 
-    Log(TEXT("using shared texture capture"));
+    //Log(TEXT("using shared texture capture"));
 
     //---------------------------------------
 

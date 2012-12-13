@@ -118,4 +118,5 @@ public:
     double GetPacketStrain() const;
     QWORD GetCurrentSentBytes();
     DWORD NumDroppedFrames() const;
+    DWORD NumTotalFrames() const {return totalFrames;}
 };

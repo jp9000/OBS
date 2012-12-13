@@ -25,6 +25,7 @@
     if(iVal < minVal) iVal = minVal; \
     else if(iVal > maxVal) iVal = maxVal;
 
+#define UPDATE_DELAY 1.0f
 
 class TextOutputSource : public ImageSource
 {
@@ -63,6 +64,9 @@ class TextOutputSource : public ImageSource
     bool        bMonitoringFileChanges;
     HANDLE      hDirectory;
     OVERLAPPED  directoryChange;
+
+    bool        bDoUpdate;
+    float       updateDelay;
 
     SamplerState *ss;
 
@@ -389,6 +393,8 @@ public:
 
         changeBuffer = (LPBYTE)Allocate(2048);
         zero(changeBuffer, 2048);
+
+        Log(TEXT("Using text output"));
     }
 
     ~TextOutputSource()
@@ -429,7 +435,10 @@ public:
                 strFileChanged << strDirectory << strFileName;
 
                 if(strFileChanged.CompareI(strFile))
-                    bUpdateTexture = true;
+                {
+                    bDoUpdate = true;
+                    updateDelay = 0.0f;
+                }
 
                 DWORD test;
                 zero(&directoryChange, sizeof(directoryChange));
@@ -462,6 +471,17 @@ public:
 
         if(showExtentTime > 0.0f)
             showExtentTime -= fSeconds;
+
+        if(bDoUpdate)
+        {
+            updateDelay += fSeconds;
+            if(updateDelay >= UPDATE_DELAY)
+            {
+                updateDelay = 0.0f;
+                bDoUpdate = false;
+                bUpdateTexture = true;
+            }
+        }
     }
 
     void Render(const Vect2 &pos, const Vect2 &size)

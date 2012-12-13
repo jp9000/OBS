@@ -95,6 +95,7 @@ public:
     virtual double GetPacketStrain() const=0;
     virtual QWORD GetCurrentSentBytes()=0;
     virtual DWORD NumDroppedFrames() const=0;
+    virtual DWORD NumTotalFrames() const=0;
 };
 
 //-------------------------------------------------------------------
@@ -332,6 +333,32 @@ struct StatusBarDrawData
 
 //----------------------------
 
+struct VideoPacketData
+{
+    List<BYTE> data;
+    PacketType type;
+
+    inline void Clear() {data.Clear();}
+};
+
+struct VideoSegment
+{
+    List<VideoPacketData> packets;
+    DWORD timestamp;
+    int ctsOffset;
+
+    inline VideoSegment() : timestamp(0), ctsOffset(0) {}
+    inline ~VideoSegment() {Clear();}
+    inline void Clear()
+    {
+        for(UINT i=0; i<packets.Num(); i++)
+            packets[i].Clear();
+        packets.Clear();
+    }
+};
+
+//----------------------------
+
 class OBS
 {
     friend class Scene;
@@ -435,6 +462,7 @@ class OBS
     bool    bReconnecting;
     UINT    reconnectTimeout;
 
+    bool    bDisableSceneSwitching;
     bool    bEditMode;
     bool    bRenderViewEnabled;
     bool    bShowFPS;
@@ -448,6 +476,8 @@ class OBS
     int     cpuInfo[4];
     bool    bSSE2Available;
 
+    //---------------------------------------------------
+
     int     lastRenderTarget;
     UINT    baseCX,   baseCY;
     UINT    scaleCX,  scaleCY;
@@ -458,20 +488,27 @@ class OBS
     HANDLE  hSceneMutex;
     bool    bUsing444;
 
+    //---------------------------------------------------
+
     int ctsOffset;
     DWORD bytesPerSec;
     DWORD captureFPS;
     DWORD curFramesDropped;
     double curStrain;
 
+    List<VideoSegment> bufferedVideo;
+    bool BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, VideoSegment &segmentOut);
+
     DWORD totalStreamTime;
 
     bool        bUseSyncFix;
     List<UINT>  bufferedTimes;
 
-    bool    bRecievedFirstAudioFrame;
+    bool bRecievedFirstAudioFrame;
 
-    HANDLE  hHotkeyMutex;
+    QWORD firstSceneTimestamp;
+
+    //---------------------------------------------------
 
     HANDLE  hSoundThread, hSoundDataMutex, hRequestAudioEvent;
     float   desktopVol, micVol;
@@ -481,6 +518,9 @@ class OBS
     bool    bForceMicMono;
     float   micBoost;
 
+    //---------------------------------------------------
+
+    HANDLE hHotkeyMutex;
     HANDLE hHotkeyThread;
     bool bUsingPushToTalk, bPushToTalkOn;
     UINT pushToTalkHotkeyID;
@@ -488,11 +528,14 @@ class OBS
     UINT muteDesktopHotkeyID;
     UINT startStreamHotkeyID;
     UINT stopStreamHotkeyID;
-
     bool bStartStreamHotkeyDown, bStopStreamHotkeyDown;
+
+    //---------------------------------------------------
 
     bool bWriteToFile;
     VideoFileStream *fileStream;
+
+    //---------------------------------------------------
 
     String  streamReport;
 
@@ -506,11 +549,13 @@ class OBS
 
     List<GlobalSourceInfo> globalSources;
 
-    List<PluginInfo> plugins;
-
     HANDLE hInfoMutex;
     List<StreamInfo> streamInfoList;
     UINT streamInfoIDCounter;
+
+    //---------------------------------------------------
+
+    List<PluginInfo> plugins;
 
     bool bShuttingDown;
 
@@ -658,6 +703,8 @@ public:
     inline void EnterSceneMutex() {OSEnterMutex(hSceneMutex);}
     inline void LeaveSceneMutex() {OSLeaveMutex(hSceneMutex);}
 
+    inline void EnableSceneSwitching(bool bEnable) {bDisableSceneSwitching = !bEnable;}
+
     inline bool IsRunning()    const {return bRunning;}
     inline UINT GetFPS()       const {return fps;}
     inline UINT GetFrameTime() const {return frameTime;}
@@ -681,6 +728,8 @@ public:
     void RemoveStreamInfo(UINT infoID);
     String GetMostImportantInfo();
 
+    inline QWORD GetSceneTimestamp() {return firstSceneTimestamp;}
+
     //---------------------------------------------------------------------------
 
     virtual void RegisterSceneClass(CTSTR lpClassName, CTSTR lpDisplayName, OBSCREATEPROC createProc, OBSCONFIGPROC configProc);
@@ -690,6 +739,16 @@ public:
 
     virtual bool SetScene(CTSTR lpScene);
 };
+
+inline QWORD GetQPCTimeMS(LONGLONG clockFreq)
+{
+    LARGE_INTEGER currentTime;
+    QueryPerformanceCounter(&currentTime);
+
+    QWORD timeVal = 1000 * currentTime.QuadPart / clockFreq;
+
+    return timeVal;
+}
 
 ID3D10Blob* CompileShader(CTSTR lpShader, LPCSTR lpTarget);
 

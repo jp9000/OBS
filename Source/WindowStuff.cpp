@@ -468,11 +468,15 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                     }
 
                 case ID_LISTBOX_CONFIG:
+                    App->EnableSceneSwitching(false);
+
                     if(curClassInfo->configProc(item, false))
                     {
                         if(App->bRunning)
                             App->scene->UpdateSettings();
                     }
+
+                    App->EnableSceneSwitching(true);
                     break;
 
                 case ID_LISTBOX_HOTKEY:
@@ -707,6 +711,8 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                     }
 
                 case ID_LISTBOX_CONFIG:
+                    App->EnableSceneSwitching(false);
+
                     if(curClassInfo->configProc(selectedElement, false))
                     {
                         if(App->bRunning)
@@ -720,6 +726,8 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                             App->LeaveSceneMutex();
                         }
                     }
+
+                    App->EnableSceneSwitching(true);
                     break;
 
                 case ID_LISTBOX_MOVEUP:
@@ -1715,6 +1723,49 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 case ID_SOURCES:
                     if(HIWORD(wParam) == LBN_SELCHANGE)
                         App->SelectSources();
+                    else if(HIWORD(wParam) == LBN_DBLCLK)
+                    {
+                        int numItems = (int)SendMessage((HWND)lParam, LB_GETCOUNT, 0, 0);
+                        if(numItems == 1)
+                        {
+                            UINT selectedID;
+                            SendMessage((HWND)lParam, LB_GETSELITEMS, 1, (LPARAM)&selectedID);
+
+                            XElement *sourcesElement = App->sceneElement->GetElement(TEXT("sources"));
+                            if(!sourcesElement)
+                                break;
+
+                            XElement *selectedElement = sourcesElement->GetElementByID(selectedID);
+                            if(!selectedElement)
+                                break;
+
+                            ClassInfo *curClassInfo = App->GetImageSourceClass(selectedElement->GetString(TEXT("class")));
+                            if(curClassInfo && curClassInfo->configProc)
+                            {
+                                App->EnableSceneSwitching(false);
+
+                                if(curClassInfo->configProc(selectedElement, false))
+                                {
+                                    if(App->bRunning)
+                                    {
+                                        App->EnterSceneMutex();
+
+                                        List<SceneItem*> selectedSceneItems;
+                                        if(App->scene)
+                                            App->scene->GetSelectedItems(selectedSceneItems);
+
+                                        if(selectedSceneItems[0]->GetSource())
+                                            selectedSceneItems[0]->GetSource()->UpdateSettings();
+                                        selectedSceneItems[0]->Update();
+
+                                        App->LeaveSceneMutex();
+                                    }
+                                }
+
+                                App->EnableSceneSwitching(true);
+                            }
+                        }
+                    }
                     break;
 
                 case ID_TESTSTREAM:

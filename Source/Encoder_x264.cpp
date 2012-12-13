@@ -242,28 +242,37 @@ public:
 
         BYTE *timeOffsetAddr = ((BYTE*)&timeOffset)+1;
 
+        VideoPacket *newPacket = NULL;
+
         for(int i=0; i<nalNum; i++)
         {
             x264_nal_t &nal = nalOut[i];
 
             if(nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE || nal.i_type == NAL_SEI)
             {
-                VideoPacket *newPacket = CurrentPackets.CreateNew();
-
                 BYTE *skip = nal.p_payload;
                 while(*(skip++) != 0x1);
                 int skipBytes = (int)(skip-nal.p_payload);
 
-                int newPayloadSize = (nal.i_payload-skipBytes);
-                newPacket->Packet.SetSize(9+newPayloadSize);
+                bool bNewPacket = (!newPacket);
 
-                newPacket->Packet[0] = ((nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SEI) ? 0x17 : 0x27);
-                newPacket->Packet[1] = 1;
-                mcpy(newPacket->Packet+2, timeOffsetAddr, 3);
-                *(DWORD*)(newPacket->Packet+5) = htonl(newPayloadSize);
-                mcpy(newPacket->Packet+9, nal.p_payload+skipBytes, newPayloadSize);
+                if(bNewPacket)
+                    newPacket = CurrentPackets.CreateNew();
+
+                int newPayloadSize = (nal.i_payload-skipBytes);
+                BufferOutputSerializer packetOut(newPacket->Packet);
+
+                if(bNewPacket)
+                {
+                    packetOut.OutputByte((nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SEI) ? 0x17 : 0x27);
+                    packetOut.OutputByte(1);
+                    packetOut.Serialize(timeOffsetAddr, 3);
+                }
+
+                packetOut.OutputDword(htonl(newPayloadSize));
+                packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
             }
-            else if(nal.i_type == NAL_SPS)
+            /*else if(nal.i_type == NAL_SPS)
             {
                 VideoPacket *newPacket = CurrentPackets.CreateNew();
                 BufferOutputSerializer headerOut(newPacket->Packet);
@@ -283,7 +292,7 @@ public:
                 headerOut.OutputByte(1);
                 headerOut.OutputWord(htons(pps.i_payload-4));
                 headerOut.Serialize(pps.p_payload+4, pps.i_payload-4);
-            }
+            }*/
             else
                 continue;
 

@@ -33,6 +33,8 @@ typedef void (*UNLOADPLUGINPROC)();
 BOOL bLoggedSystemStats = FALSE;
 void LogSystemStats();
 
+#define OUTPUT_BUFFER_TIME 500
+
 
 VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize);
 AudioEncoder* CreateMP3Encoder(UINT bitRate);
@@ -241,7 +243,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
     parts[4] = -1;
     parts[3] = clientWidth-100;
     parts[2] = parts[3]-60;
-    parts[1] = parts[2]-150;
+    parts[1] = parts[2]-170;
     parts[0] = parts[1]-80;
     SendMessage(hwndTemp, SB_SETPARTS, 5, (LPARAM)parts);
 
@@ -1338,9 +1340,11 @@ void OBS::Start()
     UINT bitRate = (UINT)AppConfig->GetInt(TEXT("Audio Encoding"), TEXT("Bitrate"), 96);
     String strEncoder = AppConfig->GetString(TEXT("Audio Encoding"), TEXT("Codec"), TEXT("MP3"));
 
+#ifdef USE_AAC
     if(strEncoder.CompareI(TEXT("AAC")))
         audioEncoder = CreateAACEncoder(bitRate);
     else
+#endif
         audioEncoder = CreateMP3Encoder(bitRate);
 
     //-------------------------------------------------------------
@@ -1384,7 +1388,7 @@ void OBS::Start()
     String preset  = AppConfig->GetString(TEXT("Video Encoding"), TEXT("Preset"),     TEXT("veryfast"));
     bUsing444      = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Use444"),     0) != 0;
 
-    bUseSyncFix    = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("UseSyncFix"), 0) != 0;
+    bUseSyncFix    = 0;//AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("UseSyncFix"), 0) != 0;
 
     if(bUseSyncFix)
     {
@@ -1579,7 +1583,18 @@ void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
                     strOutString = FormattedString(TEXT("%u:%02u:%02u"), streamTimeHours, streamTimeMinutes, streamTimeSeconds);
                 }
                 break;
-            case 2: strOutString << Str("MainWindow.DroppedFrames") << TEXT(" ") << IntString(App->curFramesDropped); break;
+            case 2:
+                {
+                    double percentageDropped = 0.0;
+                    if(App->network)
+                    {
+                        UINT numTotalFrames = App->network->NumTotalFrames();
+                        if(numTotalFrames)
+                            percentageDropped = double(App->network->NumDroppedFrames())/double(numTotalFrames);
+                    }
+                    strOutString << Str("MainWindow.DroppedFrames") << FormattedString(TEXT(" %u (%0.3f%%)"), App->curFramesDropped, percentageDropped);
+                }
+                break;
             case 3: strOutString << TEXT("FPS: ") << IntString(App->captureFPS); break;
         }
 
@@ -1767,6 +1782,10 @@ void OBS::Stop()
 
     SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, 1, 0, 0);
 
+    for(UINT i=0; i<bufferedVideo.Num(); i++)
+        bufferedVideo[i].Clear();
+    bufferedVideo.Clear();
+
     bTestStream = false;
 }
 
@@ -1862,14 +1881,30 @@ DWORD STDCALL Convert444Thread(Convert444Data *data)
     return 0;
 }
 
-QWORD GetQPCTimeMS(LONGLONG clockFreq)
+bool OBS::BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, VideoSegment &segmentOut)
 {
-    LARGE_INTEGER currentTime;
-    QueryPerformanceCounter(&currentTime);
+    VideoSegment &segmentIn = *bufferedVideo.CreateNew();
+    segmentIn.ctsOffset = ctsOffset;
+    segmentIn.timestamp = timestamp;
 
-    QWORD timeVal = 1000 * currentTime.QuadPart / clockFreq;
+    segmentIn.packets.SetSize(inputPackets.Num());
+    for(UINT i=0; i<inputPackets.Num(); i++)
+    {
+        segmentIn.packets[i].data.CopyArray(inputPackets[i].lpPacket, inputPackets[i].size);
+        segmentIn.packets[i].type =  inputTypes[i];
+    }
 
-    return timeVal;
+    if((bufferedVideo.Last().timestamp-bufferedVideo[0].timestamp) >= OUTPUT_BUFFER_TIME)
+    {
+        segmentOut.packets.TransferFrom(bufferedVideo[0].packets);
+        segmentOut.ctsOffset = bufferedVideo[0].ctsOffset;
+        segmentOut.timestamp = bufferedVideo[0].timestamp;
+        bufferedVideo.Remove(0);
+
+        return true;
+    }
+
+    return false;
 }
 
 void OBS::MainCaptureLoop()
@@ -1918,6 +1953,11 @@ void OBS::MainCaptureLoop()
 
     desktopAudio->StartCapture();
     if(micAudio) micAudio->StartCapture();
+
+    LARGE_INTEGER clockFreq;
+    QueryPerformanceFrequency(&clockFreq);
+
+    firstSceneTimestamp = GetQPCTimeMS(clockFreq.QuadPart);
 
     bytesPerSec = 0;
     captureFPS = 0;
@@ -1981,11 +2021,10 @@ void OBS::MainCaptureLoop()
         }
     }
 
-    LARGE_INTEGER clockFreq;
-    QueryPerformanceFrequency(&clockFreq);
-
     QWORD curStreamTime = 0, lastStreamTime, firstFrameTime = GetQPCTimeMS(clockFreq.QuadPart);
     lastStreamTime = 0;
+
+    bool bFirstAudioPacket = true;
 
     while(bRunning)
     {
@@ -2334,11 +2373,8 @@ void OBS::MainCaptureLoop()
                     //------------------------------------
                     // get timestamps
 
-                    DWORD curTimeStamp = 0;
-                    DWORD curPTSVal = 0;
-
-                    curTimeStamp = bufferedTimes[0];
-                    curPTSVal = bufferedTimes[curPTS++];
+                    DWORD curTimeStamp = bufferedTimes[0];
+                    DWORD curPTSVal = bufferedTimes[curPTS++];
 
                     if(bUseSyncFix)
                     {
@@ -2364,17 +2400,27 @@ void OBS::MainCaptureLoop()
                     //------------------------------------
                     // encode
 
+                    VideoSegment curSegment;
+                    bool bSendingVideo;
+
                     profileIn("call to encoder");
 
                     videoEncoder->Encode(&picOut, videoPackets, videoPacketTypes, curTimeStamp, ctsOffset);
                     if(bUsing444) prevTexture->Unmap(0);
 
+                    if(videoPackets.Num())
+                    {
+                        curPTS--;
+                        bufferedTimes.Remove(0);
+                    }
+
+                    //buffer video data before sending out
+                    bSendingVideo = BufferVideoData(videoPackets, videoPacketTypes, curTimeStamp, curSegment);
+
                     profileOut;
 
                     //------------------------------------
                     // upload
-
-                    bool bSendingVideo = videoPackets.Num() > 0;
 
                     profileIn("sending stuff out");
 
@@ -2394,11 +2440,22 @@ void OBS::MainCaptureLoop()
                             //Log(TEXT("pending frames %u, (in milliseconds): %u"), pendingAudioFrames.Num(), pendingAudioFrames.Last().timestamp-pendingAudioFrames[0].timestamp);
                             while(pendingAudioFrames.Num())
                             {
-                                if(firstFrameTime <= pendingAudioFrames[0].timestamp)
+                                if(firstFrameTime < pendingAudioFrames[0].timestamp)
                                 {
-                                    UINT audioTimestamp = UINT(pendingAudioFrames[0].timestamp-firstFrameTime)+ctsOffset;
-                                    if(audioTimestamp >= curTimeStamp)
+                                    UINT audioTimestamp = UINT(pendingAudioFrames[0].timestamp-firstFrameTime);
+
+                                    if(bFirstAudioPacket)
+                                    {
+                                        audioTimestamp = 0;
+                                        bFirstAudioPacket = false;
+                                    }
+                                    else
+                                        audioTimestamp += curSegment.ctsOffset;
+
+                                    if(audioTimestamp > curSegment.timestamp)
                                         break;
+
+                                    //Log(TEXT("audioTimestamp: %u, curTimestamp: %u"), audioTimestamp, curSegment.timestamp);
 
                                     List<BYTE> &audioData = pendingAudioFrames[0].audioData;
 
@@ -2412,28 +2469,25 @@ void OBS::MainCaptureLoop()
                                     }
                                 }
 
-                                //Log(TEXT("audio packet timestamp: %u"), pendingAudioFrames[0].timestamp);
+                                //Log(TEXT("audio packet timestamp: %llu, firstFrameTime: %llu"), pendingAudioFrames[0].timestamp, firstFrameTime);
 
                                 pendingAudioFrames[0].audioData.Clear();
                                 pendingAudioFrames.Remove(0);
                             }
                         }
 
+                        //Log(TEXT("no more audio to get"));
+
                         OSLeaveMutex(hSoundDataMutex);
 
-                        for(UINT i=0; i<videoPackets.Num(); i++)
+                        for(UINT i=0; i<curSegment.packets.Num(); i++)
                         {
-                            DataPacket &packet  = videoPackets[i];
-                            PacketType type     = videoPacketTypes[i];
+                            VideoPacketData &packet = curSegment.packets[i];
 
-                            network->SendPacket(packet.lpPacket, packet.size, curTimeStamp, type);
+                            network->SendPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, packet.type);
                             if(fileStream)
-                                fileStream->AddPacket(packet.lpPacket, packet.size, curTimeStamp, type);
+                                fileStream->AddPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, packet.type);
                         }
-
-                        curPTS--;
-
-                        bufferedTimes.Remove(0);
                     }
 
                     profileOut;
@@ -2549,22 +2603,21 @@ bool OBS::QueryNewAudio(QWORD &timestamp)
     {
         while((audioRet = micAudio->GetNextBuffer()) != NoAudioAvailable);
 
-        QWORD micTimestamp;
-        if(micAudio->GetMostRecentTimestamp(micTimestamp))
-        {
-            if(micTimestamp < timestamp)
-                timestamp = micTimestamp;
-        }
+        QWORD micTimestamp = INVALID_LL;
+        micAudio->GetMostRecentTimestamp(micTimestamp);
 
-        //Log(TEXT("desktopTimestamp: %u, micTimestamp: %u"), desktopTimestamp, micTimestamp);
+        //if(micTimestamp < desktopTimestamp)
+        //    timestamp = micTimestamp;
+
+        //Log(TEXT("desktopTimestamp: %llu, micTimestamp: %llu"), desktopTimestamp, micTimestamp);
     }
 
-    if(desktopAudio->GetBufferedTime() > 300)
+    if(desktopAudio->GetBufferedTime() >= OUTPUT_BUFFER_TIME)
         return true;
 
     if(micAudio)
     {
-        if(micAudio->GetBufferedTime() > 300)
+        if(micAudio->GetBufferedTime() >= OUTPUT_BUFFER_TIME)
             return true;
     }
 
@@ -2622,7 +2675,7 @@ void OBS::MainAudioLoop()
             MultiplyAudioBuffer(desktopBuffer, totalFloats, desktopVol, desktopRMS, desktopMx);
             if(bMicEnabled)
                 MultiplyAudioBuffer(micBuffer, totalFloats, curMicVol, micRMS, micMx);
-            
+
             /*convert RMS and Max of samples to dB*/            
             desktopRMS = toDB(desktopRMS);
             micRMS = toDB(micRMS);
@@ -2688,7 +2741,7 @@ void OBS::MainAudioLoop()
                 float *desktopTemp = desktopBuffer;
                 float *micTemp     = micBuffer;
 
-                if(SSE2Available())
+                if(SSE2Available() && (UPARAM(desktopTemp) & 0xF) == 0 && (UPARAM(micTemp) & 0xF) == 0)
                 {
                     UINT alignedFloats = floatsLeft & 0xFFFFFFFC;
 

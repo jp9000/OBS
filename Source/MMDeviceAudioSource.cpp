@@ -49,7 +49,9 @@ class MMDeviceAudioSource : public AudioSource
 
     List<AudioSegment> audioSegments;
 
+    bool bFirstFrameReceived;
     QWORD lastKnownTimestamp;
+    bool bBrokenTimestamp;
 
     //-----------------------------------------
 
@@ -361,10 +363,46 @@ UINT MMDeviceAudioSource::GetNextBuffer()
         if(dwFlags & AUDCLNT_BUFFERFLAGS_TIMESTAMP_ERROR)
         {
             RUNONCE AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: woa woa woa, getting timestamp errors from the audio subsystem.  device = %s"), GetDeviceName().Array());
-            lastKnownTimestamp = newTimestamp = lastKnownTimestamp+10;
+            if(!bBrokenTimestamp)
+                lastKnownTimestamp = newTimestamp = lastKnownTimestamp + numAudioFrames*1000/inputSamplesPerSec;
         }
         else
-            lastKnownTimestamp = newTimestamp = qpcTimestamp/10000;
+        {
+            if(!bBrokenTimestamp)
+            {
+                newTimestamp = qpcTimestamp/10000;
+
+                if(bFirstFrameReceived)
+                {
+                    LONGLONG offset = LONGLONG(newTimestamp)-LONGLONG(lastKnownTimestamp);
+                    if(offset < 1 || offset > 20)
+                        bBrokenTimestamp = true;
+                    else
+                        lastKnownTimestamp = newTimestamp;
+                }
+                else
+                    lastKnownTimestamp = newTimestamp;
+            }
+        }
+
+        //have to do this crap to account for broken devices or device drivers.  absolutely unbelievable.
+        if(!bFirstFrameReceived)
+        {
+            LARGE_INTEGER clockFreq;
+            QueryPerformanceFrequency(&clockFreq);
+
+            QWORD curTime = GetQPCTimeMS(clockFreq.QuadPart);
+
+            if(newTimestamp < (curTime-10000) || newTimestamp > (curTime+10000))
+            {
+                bBrokenTimestamp = true;
+                lastKnownTimestamp = newTimestamp = GetQPCTimeMS(clockFreq.QuadPart);
+
+                Log(TEXT("MMDeviceAudioSource::GetNextBuffer: Got bad audio timestamp from device: '%s', timestamps for this device will be calculated"), GetDeviceName().Array());
+            }
+
+            bFirstFrameReceived = true;
+        }
 
         if(tempBuffer.Num() < numAudioFrames*2)
             tempBuffer.SetSize(numAudioFrames*2);
@@ -623,28 +661,43 @@ UINT MMDeviceAudioSource::GetNextBuffer()
 
         float *newBuffer = (bResample) ? tempResampleBuffer.Array() : tempBuffer.Array();
 
-        UINT storedFrames = storageBuffer.Num();
-
-        storageBuffer.AppendArray(newBuffer, numAudioFrames*2);
-        if(storageBuffer.Num() >= (441*2))
+        if(storageBuffer.Num() == 0 && numAudioFrames == 441)
         {
-            QWORD baseTimestmap;
-
             AudioSegment &newSegment = *audioSegments.CreateNew();
-            newSegment.audioData.CopyArray(storageBuffer.Array(), (441*2));
-            storageBuffer.RemoveRange(0, (441*2));
-            baseTimestmap = newSegment.timestamp = newTimestamp - QWORD(storedFrames)/2*1000/44100;
+            newSegment.audioData.CopyArray(newBuffer, numAudioFrames*2);
+            if(bBrokenTimestamp)
+                newSegment.timestamp = (lastKnownTimestamp += 10);
+            else
+                newSegment.timestamp = newTimestamp;
+        }
+        else
+        {
+            UINT storedFrames = storageBuffer.Num();
 
-            //if still data pending (can happen)
-            QWORD copiedFrames = 0;
-            while(storageBuffer.Num() >= (441*2))
+            storageBuffer.AppendArray(newBuffer, numAudioFrames*2);
+            if(storageBuffer.Num() >= (441*2))
             {
-                copiedFrames += 441;
+                QWORD baseTimestmap;
 
                 AudioSegment &newSegment = *audioSegments.CreateNew();
                 newSegment.audioData.CopyArray(storageBuffer.Array(), (441*2));
                 storageBuffer.RemoveRange(0, (441*2));
-                newSegment.timestamp = baseTimestmap + copiedFrames*1000/44100;
+                if(bBrokenTimestamp)
+                    newSegment.timestamp = (lastKnownTimestamp += 10);
+                else
+                    baseTimestmap = newSegment.timestamp = newTimestamp - QWORD(storedFrames)/2*1000/44100;
+
+                //if still data pending (can happen)
+                while(storageBuffer.Num() >= (441*2))
+                {
+                    AudioSegment &newSegment = *audioSegments.CreateNew();
+                    newSegment.audioData.CopyArray(storageBuffer.Array(), (441*2));
+                    storageBuffer.RemoveRange(0, (441*2));
+                    if(bBrokenTimestamp)
+                        newSegment.timestamp = (lastKnownTimestamp += 10);
+                    else
+                        newSegment.timestamp = (baseTimestmap += 10);
+                }
             }
         }
 
@@ -671,6 +724,14 @@ bool MMDeviceAudioSource::GetBuffer(float **buffer, UINT *numFrames, QWORD targe
 {
     bool bSuccess = false;
     outputBuffer.Clear();
+
+    while(audioSegments.Num())
+    {
+        if(audioSegments[0].timestamp < targetTimestamp)
+            audioSegments.Remove(0);
+        else
+            break;
+    }
 
     if(audioSegments.Num())
     {

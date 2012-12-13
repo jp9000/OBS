@@ -447,10 +447,13 @@ INT_PTR CALLBACK OBS::EncoderSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                 //--------------------------------------------
 
                 hwndTemp = GetDlgItem(hwnd, IDC_AUDIOCODEC);
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("AAC"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("MP3"));
 
-                LoadSettingComboString(hwndTemp, TEXT("Audio Encoding"), TEXT("Codec"), TEXT("AAC"));
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("MP3"));
+#ifdef USE_AAC
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("AAC"));
+#endif
+
+                LoadSettingComboString(hwndTemp, TEXT("Audio Encoding"), TEXT("Codec"), TEXT("MP3"));
 
                 //--------------------------------------------
 

@@ -70,7 +70,7 @@ extern OBS          *App;
 extern TCHAR        lpAppDataPath[MAX_PATH];
 
 #define OBS_VERSION             0x000453
-#define OBS_VERSION_STRING_ANSI "Open Broadcaster Software v0.454a (test 13)"
+#define OBS_VERSION_STRING_ANSI "Open Broadcaster Software v0.454a (test 15)"
 #define OBS_VERSION_STRING      TEXT(OBS_VERSION_STRING_ANSI)
 
 #define OBS_WINDOW_CLASS      TEXT("OBSWindowClass")

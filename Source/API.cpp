@@ -156,6 +156,9 @@ void OBS::ConfigureImageSource(XElement *element)
 
 bool OBS::SetScene(CTSTR lpScene)
 {
+    if(bDisableSceneSwitching)
+        return false;
+
     HWND hwndScenes = GetDlgItem(hwndMain, ID_SCENES);
     UINT curSel = (UINT)SendMessage(hwndScenes, LB_GETCURSEL, 0, 0);
 
@@ -204,6 +207,12 @@ bool OBS::SetScene(CTSTR lpScene)
     {
         AppWarning(TEXT("OBS::SetScene: no class found for scene '%s'"), newSceneElement->GetName());
         return false;
+    }
+
+    if(bRunning)
+    {
+        Log(TEXT("++++++++++++++++++++++++++++++++++++++++++++++++++++++"));
+        Log(TEXT("  New Scene"));
     }
 
     XElement *sceneData = newSceneElement->GetElement(TEXT("data"));

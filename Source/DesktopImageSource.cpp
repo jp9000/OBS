@@ -59,6 +59,11 @@ public:
 
         colorKeyShader      = CreatePixelShaderFromFile(TEXT("shaders\\ColorKey_RGB.pShader"));
         alphaIgnoreShader   = CreatePixelShaderFromFile(TEXT("shaders\\AlphaIgnore.pShader"));
+
+        if(captureType == 0)
+            Log(TEXT("Using Monitor Capture"));
+        else if(captureType == 1)
+            Log(TEXT("Using Window Capture"));
     }
 
     ~DesktopImageSource()

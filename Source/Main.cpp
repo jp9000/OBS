@@ -85,7 +85,6 @@ void LogSystemStats()
     RegCloseKey(key);
 
     MEMORYSTATUS ms;
-
     GlobalMemoryStatus(&ms);
 
     Log(TEXT("Physical Memory:  %ldMB Total, %ldMB Free"), (ms.dwTotalPhys/1048576), (ms.dwAvailPhys/1048576));
@@ -102,6 +101,15 @@ void LogSystemStats()
     BYTE cpuHTT         = (cpuInfo[3]>>28) & 1;
 
     Log(TEXT("stepping id: %u, model %u, family %u, type %u, extmodel %u, extfamily %u, HTT %u, logical cores %u, total cores %u"), cpuSteppingID, cpuModel, cpuFamily, cpuType, cpuExtModel, cpuExtFamily, cpuHTT, OSGetLogicalCores(), OSGetTotalCores());
+
+    OSVERSIONINFO osvi;
+    osvi.dwOSVersionInfoSize = sizeof(osvi);
+    GetVersionEx(&osvi);
+    Log(TEXT("Windows Version: %u.%u Build %u %S"), osvi.dwMajorVersion, osvi.dwMinorVersion, osvi.dwBuildNumber, osvi.szCSDVersion);
+
+    BOOL bComposition;
+    DwmIsCompositionEnabled(&bComposition);
+    Log(TEXT("Aero is %s"), bComposition ? TEXT("Enabled") : TEXT("Disabled"));
 
     LogVideoCardStats();
 }
@@ -235,7 +243,7 @@ void SetupIni()
 
     AppConfig->SetInt   (TEXT("Audio Encoding"), TEXT("Format"),        1);
     AppConfig->SetString(TEXT("Audio Encoding"), TEXT("Bitrate"),       TEXT("128"));
-    AppConfig->SetString(TEXT("Audio Encoding"), TEXT("Codec"),         TEXT("AAC"));
+    AppConfig->SetString(TEXT("Audio Encoding"), TEXT("Codec"),         TEXT("MP3"));
 
     AppConfig->SetInt   (TEXT("Publish"),        TEXT("Service"),       0);
     AppConfig->SetInt   (TEXT("Publish"),        TEXT("Mode"),          0);
@@ -468,9 +476,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         bDisableComposition = AppConfig->GetInt(TEXT("Video"), TEXT("DisableAero"), 0);
 
+        DwmIsCompositionEnabled(&bCompositionEnabled);
         if(bDisableComposition)
         {
-            DwmIsCompositionEnabled(&bCompositionEnabled);
             if(bCompositionEnabled)
                 DwmEnableComposition(DWM_EC_DISABLECOMPOSITION);
         }
