@@ -725,12 +725,15 @@ bool MMDeviceAudioSource::GetBuffer(float **buffer, UINT *numFrames, QWORD targe
     bool bSuccess = false;
     outputBuffer.Clear();
 
-    while(audioSegments.Num())
+    if(!bBrokenTimestamp)
     {
-        if(audioSegments[0].timestamp < targetTimestamp)
-            audioSegments.Remove(0);
-        else
-            break;
+        while(audioSegments.Num())
+        {
+            if(audioSegments[0].timestamp < targetTimestamp)
+                audioSegments.Remove(0);
+            else
+                break;
+        }
     }
 
     if(audioSegments.Num())
@@ -740,7 +743,7 @@ bool MMDeviceAudioSource::GetBuffer(float **buffer, UINT *numFrames, QWORD targe
         AudioSegment &segment = audioSegments[0];
 
         QWORD difference = (segment.timestamp-targetTimestamp);
-        if(difference <= 10)
+        if(bBrokenTimestamp || difference <= 10)
         {
             //Log(TEXT("segment.timestamp: %llu, targetTimestamp: %llu"), segment.timestamp, targetTimestamp);
             outputBuffer.TransferFrom(segment.audioData);
