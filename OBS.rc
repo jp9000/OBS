@@ -320,7 +320,7 @@ BEGIN
     CONTROL         "Settings.Advanced.VideoEncoderSettings",IDC_USEVIDEOENCODERSETTINGS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,92,260,10
     EDITTEXT        IDC_VIDEOENCODERSETTINGS,33,105,373,14,ES_AUTOHSCROLL
-    CONTROL         "Settings.Advanced.UseSyncFix",IDC_USESYNCFIX,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,125,243,10
+    CONTROL         "Settings.Advanced.UseSyncFix",IDC_USESYNCFIX,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,20,125,243,10
     CONTROL         "Settings.Advanced.UnlockHigherFPS",IDC_UNLOCKHIGHFPS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,139,217,10
     GROUPBOX        "Settings.Audio",IDC_STATIC,4,160,418,29
@@ -630,8 +630,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,4,4,8
- PRODUCTVERSION 0,4,4,8
+ FILEVERSION 0,4,5,5
+ PRODUCTVERSION 0,4,5,5
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -647,12 +647,12 @@ BEGIN
         BLOCK "041104b0"
         BEGIN
             VALUE "FileDescription", "Open Broadcaster Software"
-            VALUE "FileVersion", "0, 4, 4, 8"
+            VALUE "FileVersion", "0, 4, 5, 5"
             VALUE "InternalName", "OBS"
             VALUE "LegalCopyright", "Copyright (C) 2012"
             VALUE "OriginalFilename", "OBS.exe"
             VALUE "ProductName", "Open Broadcaster Software"
-            VALUE "ProductVersion", "0, 4, 4, 8"
+            VALUE "ProductVersion", "0, 4, 5, 5"
         END
     END
     BLOCK "VarFileInfo"

@@ -1,6 +1,26 @@
 (yyyy-mm-dd)
 
 -------------------------------
+2012-12-13 - 0.455 (alpha)
+    * Fixed issues with the way the data being sent, data output
+      should now be "correct" so to speak, the SEI/PPS/SPS/keyframe
+      are now all put into the same packet, where as they were
+      separated before.  This fixes problems with transcoders and
+      things like the twitch preview/thumbnail thing.  Hopefully.
+    * Fixed pretty much all issues related to sync by using a
+      universal method of timestamp calculation.  Desktop audio
+      and video now calculate timestamps the same way, and therefore
+      time should now be exact at all times (outside of weird issues)
+    * Added audio level bars courtesy of the awesome Bill Hamilton of
+      Texas A&M University.
+    * Fixed problems where game capture would have trouble aquiring
+      due to using window message communication instead of something
+      that's actually sensable
+    * Added "Bind to interface" option to bind to a specific network
+      interface (for example, using multiple network connections)
+    * Fixed other random bugs that I can't remember
+
+-------------------------------
 2012-12-05 - 0.45 (alpha)
     * Fixed bug where game capture and the app can crash due to
       bad IPC
