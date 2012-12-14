@@ -1186,6 +1186,9 @@ INT_PTR CALLBACK OBS::VideoSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
 
                 hwndTemp = GetDlgItem(hwnd, IDC_DISABLEAERO);
 
+                if(IsWindows8Up())
+                    EnableWindow(hwndTemp, FALSE);
+
                 BOOL bDisableAero = AppConfig->GetInt(TEXT("Video"), TEXT("DisableAero"), 0);
                 SendMessage(hwndTemp, BM_SETCHECK, bDisableAero ? BST_CHECKED : 0, 0);
 
@@ -1906,6 +1909,7 @@ void OBS::ApplySettings()
 
                 break;
             }
+
 
         case Settings_Video:
             {

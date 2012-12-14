@@ -33,7 +33,7 @@ typedef void (*UNLOADPLUGINPROC)();
 BOOL bLoggedSystemStats = FALSE;
 void LogSystemStats();
 
-#define OUTPUT_BUFFER_TIME 200
+#define OUTPUT_BUFFER_TIME 600
 
 
 VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize);
@@ -1789,7 +1789,7 @@ void OBS::Stop()
     bTestStream = false;
 }
 
-inline void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal, float &RMS, float &MAX)
+inline void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
 {
     float sum = 0.0f;
     int totalFloatsStore = totalFloats;
@@ -1805,6 +1805,33 @@ inline void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal, fl
         {
             __m128 sseScaledVals = _mm_mul_ps(_mm_load_ps(buffer+i), sseMulVal);
             _mm_store_ps(buffer+i, sseScaledVals);
+        }
+
+        buffer      += alignedFloats;
+        totalFloats -= alignedFloats;
+    }
+
+    for(int i=0; i<totalFloats; i++)
+    {
+        buffer[i] *= mulVal;
+    }
+}
+
+inline void CalculateVolumeLevels(float *buffer, int totalFloats, float mulVal, float &RMS, float &MAX)
+{
+    float sum = 0.0f;
+    int totalFloatsStore = totalFloats;
+
+    float Max = 0.0f;
+
+    if(App->SSE2Available() && (UPARAM(buffer) & 0xF) == 0)
+    {
+        UINT alignedFloats = totalFloats & 0xFFFFFFFC;
+        __m128 sseMulVal = _mm_set_ps1(mulVal);
+
+        for(UINT i=0; i<alignedFloats; i += 4)
+        {
+            __m128 sseScaledVals = _mm_mul_ps(_mm_load_ps(buffer+i), sseMulVal);
 
             /*compute squares and add them to the sum*/
             __m128 sseSquares = _mm_mul_ps(sseScaledVals, sseScaledVals);
@@ -1828,9 +1855,10 @@ inline void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal, fl
 
     for(int i=0; i<totalFloats; i++)
     {
-        buffer[i] *= mulVal;
-        sum += buffer[i] * buffer[i];
-        Max = max(Max, buffer[i] * buffer[i]);
+        float val = buffer[i] * mulVal;
+        float pow2Val = val * val;
+        sum += pow2Val;
+        Max = max(Max, pow2Val);
     }
 
     RMS = sqrt(sum / totalFloatsStore);
@@ -2030,6 +2058,9 @@ void OBS::MainCaptureLoop()
 
     while(bRunning)
     {
+        //todo: test
+        QueryPerformanceFrequency(&clockFreq);
+
         DWORD renderStartTime = OSGetTime();
 
         totalStreamTime = renderStartTime-streamTimeStart;
@@ -2598,7 +2629,7 @@ bool OBS::QueryNewAudio(QWORD &timestamp)
 
     QWORD desktopTimestamp;
     while((audioRet = desktopAudio->GetNextBuffer()) != NoAudioAvailable);
-    if(desktopAudio->GetMostRecentTimestamp(desktopTimestamp))
+    if(desktopAudio->GetEarliestTimestamp(desktopTimestamp))
         timestamp = desktopTimestamp;
 
     if(micAudio != NULL)
@@ -2606,7 +2637,7 @@ bool OBS::QueryNewAudio(QWORD &timestamp)
         while((audioRet = micAudio->GetNextBuffer()) != NoAudioAvailable);
 
         QWORD micTimestamp = INVALID_LL;
-        micAudio->GetMostRecentTimestamp(micTimestamp);
+        micAudio->GetEarliestTimestamp(micTimestamp);
 
         //if(micTimestamp < desktopTimestamp)
         //    timestamp = micTimestamp;
@@ -2616,12 +2647,6 @@ bool OBS::QueryNewAudio(QWORD &timestamp)
 
     if(desktopAudio->GetBufferedTime() >= OUTPUT_BUFFER_TIME)
         return true;
-
-    if(micAudio)
-    {
-        if(micAudio->GetBufferedTime() >= OUTPUT_BUFFER_TIME)
-            return true;
-    }
 
     return false;
 }
@@ -2647,7 +2672,9 @@ void OBS::MainAudioLoop()
         //-----------------------------------------------
 
         float *desktopBuffer, *micBuffer;
+        float *latestDesktopBuffer, *latestMicBuffer;
         UINT desktopAudioFrames = 0, micAudioFrames = 0;
+        UINT latestDesktopAudioFrames = 0, latestMicAudioFrames = 0;
 
         float curMicVol;
 
@@ -2665,18 +2692,28 @@ void OBS::MainAudioLoop()
         while(QueryNewAudio(timestamp))
         {
             desktopAudio->GetBuffer(&desktopBuffer, &desktopAudioFrames, timestamp);
+            desktopAudio->GetNewestFrame(&latestDesktopBuffer, &latestDesktopAudioFrames);
             if(micAudio != NULL)
+            {
                 micAudio->GetBuffer(&micBuffer, &micAudioFrames, timestamp);
+                micAudio->GetNewestFrame(&latestMicBuffer, &latestMicAudioFrames);
+            }
 
             //----------------------------------------------------------------------------
 
             UINT totalFloats = desktopAudioFrames*2;
-            
+
+            MultiplyAudioBuffer(desktopBuffer, totalFloats, desktopVol);
+            if(bMicEnabled)
+                MultiplyAudioBuffer(micBuffer, totalFloats, curMicVol);
+
+            //----------------------------------------------------------------------------
+
             /*multiply samples by volume and compute RMS and max of samples*/
             float desktopRMS = 0, micRMS = 0, desktopMx = 0, micMx = 0;
-            MultiplyAudioBuffer(desktopBuffer, totalFloats, desktopVol, desktopRMS, desktopMx);
+            CalculateVolumeLevels(latestDesktopBuffer, latestDesktopAudioFrames*2, desktopVol, desktopRMS, desktopMx);
             if(bMicEnabled)
-                MultiplyAudioBuffer(micBuffer, totalFloats, curMicVol, micRMS, micMx);
+                CalculateVolumeLevels(latestMicBuffer, latestMicAudioFrames*2, curMicVol, micRMS, micMx);
 
             /*convert RMS and Max of samples to dB*/            
             desktopRMS = toDB(desktopRMS);

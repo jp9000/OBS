@@ -48,6 +48,10 @@ class DesktopImageSource : public ImageSource
 
     UINT     opacity;
 
+    bool     bWindows8MonitorCapture;
+
+    OutputDuplicator *duplicator;
+
 public:
     DesktopImageSource(UINT frameTime, XElement *data)
     {
@@ -74,12 +78,46 @@ public:
         if(warningID)
             App->RemoveStreamInfo(warningID);
 
+        if(duplicator)
+            delete duplicator;
+
         delete alphaIgnoreShader;
         delete colorKeyShader;
     }
 
+    void PreprocessWindows8MonitorCapture()
+    {
+        if(duplicator)
+        {
+            Texture *newTex = NULL;
+
+            POINT mousePos = {0, 0};
+            BOOL bMouseVis = FALSE;
+            switch(duplicator->AquireNextFrame(0, mousePos, bMouseVis))
+            {
+                case DuplicatorInfo_Lost:
+                    {
+                        delete duplicator;
+                        duplicator = GS->CreateOutputDulicator(0);
+                        return;
+                    }
+
+                case DuplicatorInfo_Error:
+                case DuplicatorInfo_Timeout:
+                    return;
+            }
+
+            lastRendered = duplicator->GetCopyTexture();
+        }
+    }
+
     void Preprocess()
     {
+        if(bWindows8MonitorCapture)
+        {
+            PreprocessWindows8MonitorCapture();
+            return;
+        }
         Texture *captureTexture = renderTextures[curCaptureTexture];
 
         HDC hDC;
@@ -232,8 +270,26 @@ public:
             curCaptureTexture = 0;
     }
 
+    void RenderWindows8MonitorCapture(const Vect2 &pos, const Vect2 &size)
+    {
+    }
+
     void Render(const Vect2 &pos, const Vect2 &size)
     {
+        /*if(bWindows8MonitorCapture)
+        {
+            RenderWindows8MonitorCapture(pos, size);
+            return;
+        }*/
+
+        Vect2 outPos = pos;
+        Vect2 outSize = size;
+
+        if(bWindows8MonitorCapture)
+        {
+            
+        }
+
         if(lastRendered)
         {
             Shader *lastPixelShader = GetCurrentPixelShader();
@@ -291,7 +347,10 @@ public:
             bNewClientCapture != bClientCapture)
         {
             for(int i=0; i<NUM_CAPTURE_TEXTURES; i++)
+            {
                 delete renderTextures[i];
+                renderTextures[i] = NULL;
+            }
 
             captureType        = newCaptureType;
             strWindow          = strNewWindow;
@@ -303,11 +362,18 @@ public:
             captureRect.right  = x+cx;
             captureRect.bottom = y+cy;
 
+            //bWindows8MonitorCapture = captureType == 0 && IsWindows8Up();
+
             width  = cx;
             height = cy;
 
-            for(UINT i=0; i<NUM_CAPTURE_TEXTURES; i++)
-                renderTextures[i] = CreateGDITexture(width, height);
+            if(bWindows8MonitorCapture)
+                duplicator = GS->CreateOutputDulicator(0);
+            else
+            {
+                for(UINT i=0; i<NUM_CAPTURE_TEXTURES; i++)
+                    renderTextures[i] = CreateGDITexture(width, height);
+            }
 
             lastRendered = NULL;
         }
