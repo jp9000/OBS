@@ -419,7 +419,7 @@ UINT MMDeviceAudioSource::GetNextBuffer()
                 bBrokenTimestamp = true;
                 lastUsedTimestamp = newTimestamp = GetQPCTimeMS(clockFreq.QuadPart);
 
-                Log(TEXT("MMDeviceAudioSource::GetNextBuffer: Got bad audio timestamp from device: '%s', timestamps for this device will be calculated"), GetDeviceName().Array());
+                Log(TEXT("MMDeviceAudioSource::GetNextBuffer: Got bad audio timestamp offset %d from device: '%s', timestamps for this device will be calculated"), (int)(newTimestamp - curTime), GetDeviceName().Array());
             }
             else
                 lastUsedTimestamp = newTimestamp;
