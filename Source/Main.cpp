@@ -243,7 +243,6 @@ void SetupIni()
 
     AppConfig->SetInt   (TEXT("Audio Encoding"), TEXT("Format"),        1);
     AppConfig->SetString(TEXT("Audio Encoding"), TEXT("Bitrate"),       TEXT("128"));
-    AppConfig->SetString(TEXT("Audio Encoding"), TEXT("Codec"),         TEXT("MP3"));
 
     AppConfig->SetInt   (TEXT("Publish"),        TEXT("Service"),       0);
     AppConfig->SetInt   (TEXT("Publish"),        TEXT("Mode"),          0);

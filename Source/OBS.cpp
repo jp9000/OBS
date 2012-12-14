@@ -33,7 +33,7 @@ typedef void (*UNLOADPLUGINPROC)();
 BOOL bLoggedSystemStats = FALSE;
 void LogSystemStats();
 
-#define OUTPUT_BUFFER_TIME 500
+#define OUTPUT_BUFFER_TIME 200
 
 
 VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize);
@@ -1338,10 +1338,10 @@ void OBS::Start()
     //-------------------------------------------------------------
 
     UINT bitRate = (UINT)AppConfig->GetInt(TEXT("Audio Encoding"), TEXT("Bitrate"), 96);
-    String strEncoder = AppConfig->GetString(TEXT("Audio Encoding"), TEXT("Codec"), TEXT("MP3"));
+    String strEncoder = AppConfig->GetString(TEXT("Audio Encoding"), TEXT("Codec"), TEXT("AAC"));
 
 #ifdef USE_AAC
-    if(strEncoder.CompareI(TEXT("AAC")))
+    if(strEncoder.CompareI(TEXT("AAC")) && IsWindows7Up())
         audioEncoder = CreateAACEncoder(bitRate);
     else
 #endif
@@ -1588,11 +1588,11 @@ void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
                     double percentageDropped = 0.0;
                     if(App->network)
                     {
-                        UINT numTotalFrames = App->network->NumTotalFrames();
+                        UINT numTotalFrames = App->network->NumTotalVideoFrames();
                         if(numTotalFrames)
                             percentageDropped = double(App->network->NumDroppedFrames())/double(numTotalFrames);
                     }
-                    strOutString << Str("MainWindow.DroppedFrames") << FormattedString(TEXT(" %u (%0.3f%%)"), App->curFramesDropped, percentageDropped);
+                    strOutString << Str("MainWindow.DroppedFrames") << FormattedString(TEXT(" %u (%0.3g%%)"), App->curFramesDropped, percentageDropped);
                 }
                 break;
             case 3: strOutString << TEXT("FPS: ") << IntString(App->captureFPS); break;
@@ -1853,7 +1853,9 @@ DWORD STDCALL OBS::MainCaptureThread(LPVOID lpUnused)
 
 DWORD STDCALL OBS::MainAudioThread(LPVOID lpUnused)
 {
+    CoInitialize(0);
     App->MainAudioLoop();
+    CoUninitialize();
     return 0;
 }
 

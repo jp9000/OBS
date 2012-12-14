@@ -95,7 +95,7 @@ public:
     virtual double GetPacketStrain() const=0;
     virtual QWORD GetCurrentSentBytes()=0;
     virtual DWORD NumDroppedFrames() const=0;
-    virtual DWORD NumTotalFrames() const=0;
+    virtual DWORD NumTotalVideoFrames() const=0;
 };
 
 //-------------------------------------------------------------------

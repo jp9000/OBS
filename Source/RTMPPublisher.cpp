@@ -274,6 +274,8 @@ void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketTyp
     if(!bStopping)
     {
         totalFrames++;
+        if(type != PacketType_Audio)
+            totalVideoFrames++;
 
         bool bAddPacket = false;
         if(type >= packetWaitType)
