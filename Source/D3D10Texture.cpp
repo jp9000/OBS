@@ -106,9 +106,9 @@ Texture* D3D10Texture::CreateFromSharedHandle(unsigned int width, unsigned int h
     IDXGIKeyedMutex *km;
     if(FAILED(err = texVal->QueryInterface(__uuidof(IDXGIKeyedMutex), (void**)&km)))
     {
-        SafeRelease(texVal);
+        //SafeRelease(texVal);
         AppWarning(TEXT("D3D10Texture::CreateFromSharedHandle: could not query keyed mutex interface, result = 0x%08lX"), err);
-        return NULL;
+        //return NULL;
     }
 
     //------------------------------------------
