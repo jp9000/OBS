@@ -125,8 +125,10 @@ public:
     virtual void StopCapture()=0;
 
     virtual UINT GetNextBuffer()=0;
-    virtual bool GetMostRecentTimestamp(QWORD &timestamp)=0;
+    virtual bool GetEarliestTimestamp(QWORD &timestamp)=0;
     virtual bool GetBuffer(float **buffer, UINT *numFrames, QWORD targetTimestamp)=0;
+
+    virtual bool GetNewestFrame(float **buffer, UINT *numFrames)=0;
 
     virtual QWORD GetBufferedTime()=0;
 };

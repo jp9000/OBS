@@ -327,6 +327,44 @@ SamplerState* D3D10System::CreateSamplerState(SamplerInfo &info)
 }
 
 
+UINT D3D10System::GetNumOutputs()
+{
+    UINT count = 0;
+
+    IDXGIDevice *device;
+    if(SUCCEEDED(d3d->QueryInterface(__uuidof(IDXGIDevice), (void**)&device)))
+    {
+        IDXGIAdapter *adapter;
+        if(SUCCEEDED(device->GetAdapter(&adapter)))
+        {
+            IDXGIOutput *outputInterface;
+
+            while(SUCCEEDED(adapter->EnumOutputs(count, &outputInterface)))
+            {
+                count++;
+                outputInterface->Release();
+            }
+
+            adapter->Release();
+        }
+
+        device->Release();
+    }
+
+    return count;
+}
+
+OutputDuplicator *D3D10System::CreateOutputDulicator(UINT outputID)
+{
+    D3D10OutputDuplicator *duplicator = new D3D10OutputDuplicator;
+    if(duplicator->Init(outputID))
+        return duplicator;
+
+    delete duplicator;
+    return NULL;
+}
+
+
 ////////////////////////////
 //Shader Functions
 Shader* D3D10System::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)

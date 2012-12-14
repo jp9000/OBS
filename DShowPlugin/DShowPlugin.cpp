@@ -141,56 +141,60 @@ IBaseFilter* GetDeviceByValue(WSTR lpType, CTSTR lpName, WSTR lpType2, CTSTR lpN
             VARIANT valueThingy;
             VARIANT valueThingy2;
             valueThingy.vt  = VT_BSTR;
+            valueThingy.pbstrVal = NULL;
+
             valueThingy2.vt = VT_BSTR;
             valueThingy2.bstrVal = NULL;
 
-            propertyData->Read(lpType, &valueThingy, NULL);
-            if(lpType2 && lpName2)
-                propertyData->Read(lpType2, &valueThingy2, NULL);
-
-            SafeRelease(propertyData);
-
-            String strVal1 = (CWSTR)valueThingy.bstrVal;
-
-            if(strVal1 == lpName)
+            if(SUCCEEDED(propertyData->Read(lpType, &valueThingy, NULL)))
             {
-                IBaseFilter *filter;
-                err = deviceInfo->BindToObject(NULL, 0, IID_IBaseFilter, (void**)&filter);
-                if(FAILED(err))
-                {
-                    AppWarning(TEXT("GetDeviceByName: deviceInfo->BindToObject failed, result = %08lX"), err);
-                    continue;
-                }
+                if(lpType2 && lpName2)
+                    propertyData->Read(lpType2, &valueThingy2, NULL);
 
-                if(!bestFilter)
-                {
-                    bestFilter = filter;
+                SafeRelease(propertyData);
 
-                    if(!lpType2 || !lpName2)
+                String strVal1 = (CWSTR)valueThingy.bstrVal;
+
+                if(strVal1 == lpName)
+                {
+                    IBaseFilter *filter;
+                    err = deviceInfo->BindToObject(NULL, 0, IID_IBaseFilter, (void**)&filter);
+                    if(FAILED(err))
                     {
-                        SafeRelease(deviceInfo);
-                        SafeRelease(videoDeviceEnum);
-
-                        return bestFilter;
+                        AppWarning(TEXT("GetDeviceByName: deviceInfo->BindToObject failed, result = %08lX"), err);
+                        continue;
                     }
-                }
-                else if(lpType2 && lpName2)
-                {
-                    String strVal2 = (CWSTR)valueThingy2.bstrVal;
-                    if(strVal2 == lpName2)
-                    {
-                        bestFilter->Release();
 
+                    if(!bestFilter)
+                    {
                         bestFilter = filter;
 
-                        SafeRelease(deviceInfo);
-                        SafeRelease(videoDeviceEnum);
+                        if(!lpType2 || !lpName2)
+                        {
+                            SafeRelease(deviceInfo);
+                            SafeRelease(videoDeviceEnum);
 
-                        return bestFilter;
+                            return bestFilter;
+                        }
                     }
+                    else if(lpType2 && lpName2)
+                    {
+                        String strVal2 = (CWSTR)valueThingy2.bstrVal;
+                        if(strVal2 == lpName2)
+                        {
+                            bestFilter->Release();
+
+                            bestFilter = filter;
+
+                            SafeRelease(deviceInfo);
+                            SafeRelease(videoDeviceEnum);
+
+                            return bestFilter;
+                        }
+                    }
+                    else
+                        filter->Release();
                 }
-                else
-                    filter->Release();
             }
         }
 
@@ -551,10 +555,11 @@ void FillOutListOfVideoDevices(HWND hwndCombo, ConfigDialogData &info)
         {
             VARIANT friendlyNameValue, devicePathValue;
             friendlyNameValue.vt = VT_BSTR;
+            friendlyNameValue.bstrVal = NULL;
             devicePathValue.vt = VT_BSTR;
             devicePathValue.bstrVal = NULL;
 
-            propertyData->Read(L"FriendlyName", &friendlyNameValue, NULL);
+            err = propertyData->Read(L"FriendlyName", &friendlyNameValue, NULL);
             propertyData->Read(L"DevicePath", &devicePathValue, NULL);
 
             if(SUCCEEDED(err))
