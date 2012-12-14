@@ -387,6 +387,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Source\D3D10OutputDuplicator.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Source\D3D10Shader.cpp"
 				>
 			</File>
