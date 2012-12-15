@@ -72,17 +72,7 @@ float SetVolumeControlValue(HWND hwnd, float fVal)
 
     float lastVal = control->curVolume;
 
-    /* 
-        convert back to linear, assuming logarithmic scale input
-        based on article at http://www.dr-lex.be/info-stuff/volumecontrols.html
-    */
-    if(fVal == 0)
-        control->curVolume = 0;
-    else if (fVal == 1)
-        control->curVolume = 1;
-    else
-        control->curVolume = log(fVal / VOL_ALPHA) / VOL_BETA;
-    
+    control->curVolume = fVal;
 
     HDC hDC = GetDC(hwnd);
     control->DrawVolumeControl(hDC);
@@ -96,21 +86,8 @@ float GetVolumeControlValue(HWND hwnd)
     VolumeControlData *control = GetVolumeControlData(hwnd);
     if(!control)
         CrashError(TEXT("GetVolumeControlValue called on a control that's not a volume control"));
-    
-    /* 
-        conversion to logarithmic scale 
-        based on article at http://www.dr-lex.be/info-stuff/volumecontrols.html
-    */
-    if(control->curVolume > 0.05f)
-    {
-        float adjVolume = VOL_ALPHA * exp(VOL_BETA * control->curVolume);
-        if (adjVolume > 1.0f)
-            adjVolume = 1.0f;
-        return adjVolume;
-    }
-    else 
-        return 0;
 
+    return control->curVolume;
 }
 
 void SetVolumeControlIcons(HWND hwnd, HICON hiconPlay, HICON hiconMute)
@@ -401,4 +378,3 @@ void InitVolumeControl()
     if(!RegisterClass(&wnd))
         CrashError(TEXT("Could not register volume control class"));
 }
-

@@ -691,7 +691,7 @@ UINT MMDeviceAudioSource::GetNextBuffer()
             if(!bBrokenTimestamp) 
             {
                 QWORD difVal = GetQWDif(newTimestamp, lastUsedTimestamp);
-                if(difVal > 100)
+                if(difVal > 70)
                     lastUsedTimestamp = newTimestamp;
             }
 
@@ -719,7 +719,7 @@ UINT MMDeviceAudioSource::GetNextBuffer()
                 if(!bBrokenTimestamp)
                 {
                     QWORD difVal = GetQWDif(newTimestamp, lastUsedTimestamp);
-                    if(difVal > 100)
+                    if(difVal > 70)
                         lastUsedTimestamp = newTimestamp - (QWORD(storedFrames)/2*1000/44100);
                 }
 

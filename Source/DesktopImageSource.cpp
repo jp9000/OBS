@@ -48,7 +48,11 @@ class DesktopImageSource : public ImageSource
 
     UINT     opacity;
 
+    UINT     monitor;
+    UINT     deviceOutputID;
+    float    retryAcquire;
     bool     bWindows8MonitorCapture;
+    MonitorInfo monitorData;
 
     OutputDuplicator *duplicator;
 
@@ -84,11 +88,23 @@ public:
         delete colorKeyShader;
     }
 
+    void Tick(float fSeconds)
+    {
+        if(bWindows8MonitorCapture && !duplicator)
+        {
+            retryAcquire += fSeconds;
+            if(retryAcquire > 3.0f)
+            {
+                retryAcquire = 0.0f;
+
+                lastRendered = NULL;
+                duplicator = GS->CreateOutputDulicator(deviceOutputID);
+            }
+        }
+    }
+
     void PreprocessWindows8MonitorCapture()
     {
-        if(!duplicator)
-            duplicator = GS->CreateOutputDulicator(0);
-
         if(duplicator)
         {
             Texture *newTex = NULL;
@@ -100,13 +116,15 @@ public:
                 case DuplicatorInfo_Lost:
                     {
                         delete duplicator;
-                        duplicator = GS->CreateOutputDulicator(0);
+                        lastRendered = NULL;
+                        duplicator = GS->CreateOutputDulicator(deviceOutputID);
                         return;
                     }
 
                 case DuplicatorInfo_Error:
                     delete duplicator;
                     duplicator = NULL;
+                    lastRendered = NULL;
                     return;
 
                 case DuplicatorInfo_Timeout:
@@ -348,14 +366,24 @@ public:
         int cx = data->GetInt(TEXT("captureCX"), 32);
         int cy = data->GetInt(TEXT("captureCY"), 32);
 
+        UINT newMonitor = data->GetInt(TEXT("monitor"));
+        if(newMonitor > App->NumMonitors())
+            newMonitor = 0;
+
         if( captureRect.left != x || captureRect.right != (x+cx) || captureRect.top != cy || captureRect.bottom != (y+cy) ||
             newCaptureType != captureType || !strNewWindowClass.CompareI(strWindowClass) || !strNewWindow.CompareI(strWindow) ||
-            bNewClientCapture != bClientCapture)
+            bNewClientCapture != bClientCapture || (IsWindows8Up() && newMonitor != monitor))
         {
             for(int i=0; i<NUM_CAPTURE_TEXTURES; i++)
             {
                 delete renderTextures[i];
                 renderTextures[i] = NULL;
+            }
+
+            if(duplicator)
+            {
+                delete duplicator;
+                duplicator = NULL;
             }
 
             captureType        = newCaptureType;
@@ -368,13 +396,32 @@ public:
             captureRect.right  = x+cx;
             captureRect.bottom = y+cy;
 
-            bWindows8MonitorCapture = captureType == 0 && IsWindows8Up();
+            monitor = newMonitor;
+
+            if(captureType == 0 && IsWindows8Up())
+            {
+                DeviceOutputs outputs;
+                GetDisplayDevices(outputs);
+
+                if(outputs.devices.Num())
+                {
+                    const MonitorInfo &info = App->GetMonitor(monitor);
+                    for(UINT j=0; j<outputs.devices[0].monitors.Num(); j++)
+                    {
+                        if(outputs.devices[0].monitors[j].hMonitor == info.hMonitor)
+                        {
+                            deviceOutputID = j;
+                            bWindows8MonitorCapture = true;
+                        }
+                    }
+                }
+            }
 
             width  = cx;
             height = cy;
 
             if(bWindows8MonitorCapture)
-                duplicator = GS->CreateOutputDulicator(0);
+                duplicator = GS->CreateOutputDulicator(deviceOutputID);
             else
             {
                 for(UINT i=0; i<NUM_CAPTURE_TEXTURES; i++)
@@ -1030,6 +1077,12 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 if(!bFoundWindow)
                     bRegion = false;
 
+                if(IsWindows8Up() && captureType == 0)
+                {
+                    EnableWindow(GetDlgItem(hwnd, IDC_REGIONCAPTURE), FALSE);
+                    bRegion = FALSE;
+                }
+
                 SendMessage(GetDlgItem(hwnd, IDC_REGIONCAPTURE), BM_SETCHECK, (bRegion) ? BST_CHECKED : BST_UNCHECKED, 0);
                 EnableWindow(GetDlgItem(hwnd, IDC_POSX),            bRegion);
                 EnableWindow(GetDlgItem(hwnd, IDC_POSY),            bRegion);
@@ -1167,11 +1220,19 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 case IDC_MONITORCAPTURE:
                     SetDesktopCaptureType(hwnd, 0);
                     PostMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_MONITOR, 0), 0);
+                    if(IsWindows8Up())
+                    {
+                        EnableWindow(GetDlgItem(hwnd, IDC_REGIONCAPTURE), FALSE);
+                        SendMessage(GetDlgItem(hwnd, IDC_REGIONCAPTURE), BM_SETCHECK, BST_UNCHECKED, 0);
+                        ConfigDesktopSourceProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_REGIONCAPTURE, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDC_REGIONCAPTURE));
+                    }
                     break;
 
                 case IDC_WINDOWCAPTURE:
                     SetDesktopCaptureType(hwnd, 1);
                     PostMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_WINDOW, 0), 0);
+                    if(IsWindows8Up())
+                        EnableWindow(GetDlgItem(hwnd, IDC_REGIONCAPTURE), TRUE);
                     break;
 
                 case IDC_REGIONCAPTURE:

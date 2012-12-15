@@ -19,6 +19,67 @@
 
 #include "Main.h"
 
+
+void GetDisplayDevices(DeviceOutputs &deviceList)
+{
+    HRESULT err;
+    UINT count = 0;
+
+    deviceList.ClearData();
+
+#ifdef USE_DXGI1_2
+    REFIID iidVal = IsWindows8Up() ? __uuidof(IDXGIFactory2) : __uuidof(IDXGIFactory1);
+#else
+    REFIIF iidVal = __uuidof(IDXGIFactory1);
+#endif
+
+    IDXGIFactory1 *factory;
+    if(SUCCEEDED(err = CreateDXGIFactory1(iidVal, (void**)&factory)))
+    {
+        UINT i=0;
+        IDXGIAdapter1 *giAdapter;
+
+        while(factory->EnumAdapters1(i++, &giAdapter) == S_OK)
+        {
+            Log(TEXT("------------------------------------------"));
+
+            DXGI_ADAPTER_DESC adapterDesc;
+            if(err = SUCCEEDED(giAdapter->GetDesc(&adapterDesc)))
+            {
+                DeviceOutputData &deviceData = *deviceList.devices.CreateNew();
+                deviceData.strDevice = adapterDesc.Description;
+
+                UINT j=0;
+                IDXGIOutput *giOutput;
+                while(giAdapter->EnumOutputs(j++, &giOutput) == S_OK)
+                {
+                    DXGI_OUTPUT_DESC outputDesc;
+                    if(SUCCEEDED(giOutput->GetDesc(&outputDesc)))
+                    {
+                        if(outputDesc.AttachedToDesktop)
+                        {
+                            deviceData.monitorNameList << outputDesc.DeviceName;
+
+                            MonitorInfo &monitorInfo = *deviceData.monitors.CreateNew();
+                            monitorInfo.hMonitor = outputDesc.Monitor;
+                            mcpy(&monitorInfo.rect, &outputDesc.DesktopCoordinates, sizeof(RECT));
+                        }
+                    }
+
+                    giOutput->Release();
+                }
+            }
+            else
+                AppWarning(TEXT("Could not query adapter %u"), i);
+
+            giAdapter->Release();
+        }
+
+        factory->Release();
+    }
+}
+
+
 void LogVideoCardStats()
 {
     HRESULT err;

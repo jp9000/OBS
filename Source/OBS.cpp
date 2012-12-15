@@ -1794,8 +1794,6 @@ inline void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
     float sum = 0.0f;
     int totalFloatsStore = totalFloats;
 
-    float Max = 0.0f;
-
     if(App->SSE2Available() && (UPARAM(buffer) & 0xF) == 0)
     {
         UINT alignedFloats = totalFloats & 0xFFFFFFFC;
