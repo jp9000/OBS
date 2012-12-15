@@ -2488,7 +2488,7 @@ void OBS::MainCaptureLoop()
                                     if(audioTimestamp > curSegment.timestamp)
                                         break;
 
-                                    //Log(TEXT("audioTimestamp: %u, curTimestamp: %u"), audioTimestamp, curSegment.timestamp);
+                                    //Log(TEXT("audioTimestamp: %llu"), audioTimestamp);
 
                                     List<BYTE> &audioData = pendingAudioFrames[0].audioData;
 
@@ -2508,6 +2508,8 @@ void OBS::MainCaptureLoop()
                                 pendingAudioFrames.Remove(0);
                             }
                         }
+
+                        //Log(TEXT("videoTimestamp: %llu"), curSegment.timestamp);
 
                         //Log(TEXT("no more audio to get"));
 

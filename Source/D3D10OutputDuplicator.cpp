@@ -75,6 +75,7 @@ bool D3D10OutputDuplicator::Init(UINT output)
 D3D10OutputDuplicator::~D3D10OutputDuplicator()
 {
     SafeRelease(duplicator);
+    delete copyTex;
 }
 
 DuplicatorInfo D3D10OutputDuplicator::AquireNextFrame(UINT timeout, POINT &mousePos, BOOL &mouseVisible)

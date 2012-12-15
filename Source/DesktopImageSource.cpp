@@ -78,8 +78,7 @@ public:
         if(warningID)
             App->RemoveStreamInfo(warningID);
 
-        if(duplicator)
-            delete duplicator;
+        delete duplicator;
 
         delete alphaIgnoreShader;
         delete colorKeyShader;
@@ -87,6 +86,9 @@ public:
 
     void PreprocessWindows8MonitorCapture()
     {
+        if(!duplicator)
+            duplicator = GS->CreateOutputDulicator(0);
+
         if(duplicator)
         {
             Texture *newTex = NULL;
@@ -103,6 +105,10 @@ public:
                     }
 
                 case DuplicatorInfo_Error:
+                    delete duplicator;
+                    duplicator = NULL;
+                    return;
+
                 case DuplicatorInfo_Timeout:
                     return;
             }
@@ -362,7 +368,7 @@ public:
             captureRect.right  = x+cx;
             captureRect.bottom = y+cy;
 
-            //bWindows8MonitorCapture = captureType == 0 && IsWindows8Up();
+            bWindows8MonitorCapture = captureType == 0 && IsWindows8Up();
 
             width  = cx;
             height = cy;

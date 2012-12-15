@@ -56,7 +56,7 @@ class MMDeviceAudioSource : public AudioSource
     List<AudioSegment> audioSegments;
 
     bool bFirstFrameReceived;
-    QWORD lastUsedTimestamp;
+    QWORD lastUsedTimestamp, lastSentTimestamp;
     bool bBrokenTimestamp;
 
     //-----------------------------------------
@@ -417,9 +417,9 @@ UINT MMDeviceAudioSource::GetNextBuffer()
             if(newTimestamp < (curTime-1000) || newTimestamp > (curTime+1000))
             {
                 bBrokenTimestamp = true;
-                lastUsedTimestamp = newTimestamp = GetQPCTimeMS(clockFreq.QuadPart);
 
-                Log(TEXT("MMDeviceAudioSource::GetNextBuffer: Got bad audio timestamp offset %d from device: '%s', timestamps for this device will be calculated"), (int)(newTimestamp - curTime), GetDeviceName().Array());
+                Log(TEXT("MMDeviceAudioSource::GetNextBuffer: Got bad audio timestamp offset %lld from device: '%s', timestamps for this device will be calculated.  curTime: %llu, newTimestamp: %llu"), (LONGLONG)(newTimestamp - curTime), GetDeviceName().Array(), curTime, newTimestamp);
+                lastUsedTimestamp = newTimestamp = curTime;
             }
             else
                 lastUsedTimestamp = newTimestamp;
@@ -687,15 +687,25 @@ UINT MMDeviceAudioSource::GetNextBuffer()
 
         if(storageBuffer.Num() == 0 && numAudioFrames == 441)
         {
-            AudioSegment &newSegment = *audioSegments.CreateNew();
-            newSegment.audioData.CopyArray(newBuffer, numAudioFrames*2);
-
-            newSegment.timestamp = (lastUsedTimestamp += 10);
+            lastUsedTimestamp += 10;
             if(!bBrokenTimestamp) 
             {
-                QWORD difVal = GetQWDif(newTimestamp, newSegment.timestamp);
+                QWORD difVal = GetQWDif(newTimestamp, lastUsedTimestamp);
                 if(difVal > 100)
-                    lastUsedTimestamp = newSegment.timestamp = newTimestamp;
+                    lastUsedTimestamp = newTimestamp;
+            }
+
+            if(lastUsedTimestamp > lastSentTimestamp)
+            {
+                QWORD adjustVal = (lastUsedTimestamp-lastSentTimestamp);
+                if(adjustVal < 10)
+                    lastUsedTimestamp += 10-adjustVal;
+
+                AudioSegment &newSegment = *audioSegments.CreateNew();
+                newSegment.audioData.CopyArray(newBuffer, numAudioFrames*2);
+                newSegment.timestamp = lastUsedTimestamp;
+
+                lastSentTimestamp = lastUsedTimestamp;
             }
         }
         else
@@ -705,19 +715,28 @@ UINT MMDeviceAudioSource::GetNextBuffer()
             storageBuffer.AppendArray(newBuffer, numAudioFrames*2);
             if(storageBuffer.Num() >= (441*2))
             {
-                AudioSegment &newSegment = *audioSegments.CreateNew();
-                newSegment.audioData.CopyArray(storageBuffer.Array(), (441*2));
-                storageBuffer.RemoveRange(0, (441*2));
+                lastUsedTimestamp += 10;
+                if(!bBrokenTimestamp)
+                {
+                    QWORD difVal = GetQWDif(newTimestamp, lastUsedTimestamp);
+                    if(difVal > 100)
+                        lastUsedTimestamp = newTimestamp - (QWORD(storedFrames)/2*1000/44100);
+                }
 
                 //------------------------
                 // add new data
 
-                newSegment.timestamp = (lastUsedTimestamp += 10);
-                if(!bBrokenTimestamp)
+                if(lastUsedTimestamp > lastSentTimestamp)
                 {
-                    QWORD difVal = GetQWDif(newTimestamp, newSegment.timestamp);
-                    if(difVal > 100)
-                        lastUsedTimestamp = newSegment.timestamp = newTimestamp - (QWORD(storedFrames)/2*1000/44100);
+                    QWORD adjustVal = (lastUsedTimestamp-lastSentTimestamp);
+                    if(adjustVal < 10)
+                        lastUsedTimestamp += 10-adjustVal;
+
+                    AudioSegment &newSegment = *audioSegments.CreateNew();
+                    newSegment.audioData.CopyArray(storageBuffer.Array(), (441*2));
+                    newSegment.timestamp = lastUsedTimestamp;
+
+                    storageBuffer.RemoveRange(0, (441*2));
                 }
 
                 //------------------------
@@ -725,11 +744,22 @@ UINT MMDeviceAudioSource::GetNextBuffer()
 
                 while(storageBuffer.Num() >= (441*2))
                 {
-                    AudioSegment &newSegment = *audioSegments.CreateNew();
-                    newSegment.audioData.CopyArray(storageBuffer.Array(), (441*2));
-                    storageBuffer.RemoveRange(0, (441*2));
+                    lastUsedTimestamp += 10;
 
-                    newSegment.timestamp = (lastUsedTimestamp += 10);
+                    if(lastUsedTimestamp > lastSentTimestamp)
+                    {
+                        QWORD adjustVal = (lastUsedTimestamp-lastSentTimestamp);
+                        if(adjustVal < 10)
+                            lastUsedTimestamp += 10-adjustVal;
+
+                        AudioSegment &newSegment = *audioSegments.CreateNew();
+                        newSegment.audioData.CopyArray(storageBuffer.Array(), (441*2));
+                        storageBuffer.RemoveRange(0, (441*2));
+
+                        newSegment.timestamp = lastUsedTimestamp;
+
+                        lastSentTimestamp = lastUsedTimestamp;
+                    }
                 }
             }
         }
