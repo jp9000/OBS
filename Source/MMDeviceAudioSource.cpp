@@ -793,7 +793,10 @@ bool MMDeviceAudioSource::GetBuffer(float **buffer, UINT *numFrames, QWORD targe
         while(audioSegments.Num())
         {
             if(audioSegments[0].timestamp < targetTimestamp)
+            {
+                audioSegments[0].audioData.Clear();
                 audioSegments.Remove(0);
+            }
             else
                 break;
         }

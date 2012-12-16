@@ -296,6 +296,7 @@ public:
 
     void RenderWindows8MonitorCapture(const Vect2 &pos, const Vect2 &size)
     {
+        
     }
 
     void Render(const Vect2 &pos, const Vect2 &size)
@@ -306,12 +307,22 @@ public:
             return;
         }*/
 
-        Vect2 outPos = pos;
-        Vect2 outSize = size;
-
+        Vect2 ulCoord = Vect2(0.0f, 0.0f),
+              lrCoord = Vect2(1.0f, 1.0f);
         if(bWindows8MonitorCapture)
         {
-            
+            LONG monitorWidth  = monitorData.rect.right-monitorData.rect.left;
+            LONG monitorHeight = monitorData.rect.bottom-monitorData.rect.top;
+            RECT captureArea = {captureRect.left+monitorData.rect.left,
+                                captureRect.top+monitorData.rect.top,
+                                captureRect.right+monitorData.rect.left,
+                                captureRect.bottom+monitorData.rect.top};
+
+            ulCoord.x = float(double(captureArea.left)/double(monitorWidth));
+            ulCoord.y = float(double(captureArea.top)/double(monitorHeight));
+
+            lrCoord.x = float(double(captureArea.right)/double(monitorWidth));
+            lrCoord.y = float(double(captureArea.bottom)/double(monitorHeight));
         }
 
         if(lastRendered)
@@ -332,12 +343,18 @@ public:
                 colorKeyShader->SetFloat(colorKeyShader->GetParameter(3), fSimilarity);
                 colorKeyShader->SetFloat(colorKeyShader->GetParameter(4), fBlend);
 
-                DrawSprite(lastRendered, (opacity255<<24) | 0xFFFFFF, pos.x, pos.y, pos.x+size.x, pos.y+size.y);
+                DrawSpriteEx(lastRendered, (opacity255<<24) | 0xFFFFFF,
+                        pos.x, pos.y, pos.x+size.x, pos.y+size.y,
+                        ulCoord.x, ulCoord.y,
+                        lrCoord.x, lrCoord.y);
             }
             else
             {
                 LoadPixelShader(alphaIgnoreShader);
-                DrawSprite(lastRendered, (opacity255<<24) | 0xFFFFFF, pos.x, pos.y, pos.x+size.x, pos.y+size.y);
+                DrawSpriteEx(lastRendered, (opacity255<<24) | 0xFFFFFF,
+                        pos.x, pos.y, pos.x+size.x, pos.y+size.y,
+                        ulCoord.x, ulCoord.y,
+                        lrCoord.x, lrCoord.y);
             }
 
             LoadPixelShader(lastPixelShader);
@@ -397,6 +414,8 @@ public:
             captureRect.bottom = y+cy;
 
             monitor = newMonitor;
+            const MonitorInfo &monitorInfo = App->GetMonitor(monitor);
+            mcpy(&monitorData, &monitorInfo, sizeof(monitorInfo));
 
             if(captureType == 0 && IsWindows8Up())
             {
@@ -628,6 +647,12 @@ struct RegionWindowData
     RECT captureRect;
     bool bMovingWindow;
     bool bInnerWindowRegion;
+
+    inline RegionWindowData()
+    {
+        bMovingWindow = false;
+        bInnerWindowRegion = false;
+    }
 };
 
 RegionWindowData regionWindowData;
@@ -654,20 +679,17 @@ LRESULT WINAPI RegionWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             POINT newPos = {rc.left+posOffset.x, rc.top+posOffset.y};
             SIZE windowSize = {rc.right-rc.left, rc.bottom-rc.top};
 
-            if(regionWindowData.hwndCaptureWindow)
-            {
-                if(newPos.x < regionWindowData.captureRect.left)
-                    newPos.x = regionWindowData.captureRect.left;
-                if(newPos.y < regionWindowData.captureRect.top)
-                    newPos.y = regionWindowData.captureRect.top;
+            if(newPos.x < regionWindowData.captureRect.left)
+                newPos.x = regionWindowData.captureRect.left;
+            if(newPos.y < regionWindowData.captureRect.top)
+                newPos.y = regionWindowData.captureRect.top;
 
-                POINT newBottomRight = {rc.right+posOffset.x, rc.bottom+posOffset.y};
+            POINT newBottomRight = {rc.right+posOffset.x, rc.bottom+posOffset.y};
 
-                if(newBottomRight.x > regionWindowData.captureRect.right)
-                    newPos.x -= (newBottomRight.x-regionWindowData.captureRect.right);
-                if(newBottomRight.y > regionWindowData.captureRect.bottom)
-                    newPos.y -= (newBottomRight.y-regionWindowData.captureRect.bottom);
-            }
+            if(newBottomRight.x > regionWindowData.captureRect.right)
+                newPos.x -= (newBottomRight.x-regionWindowData.captureRect.right);
+            if(newBottomRight.y > regionWindowData.captureRect.bottom)
+                newPos.y -= (newBottomRight.y-regionWindowData.captureRect.bottom);
 
             SetWindowPos(hwnd, NULL, newPos.x, newPos.y, 0, 0, SWP_NOSIZE|SWP_NOZORDER);
         }
@@ -1077,12 +1099,6 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 if(!bFoundWindow)
                     bRegion = false;
 
-                if(IsWindows8Up() && captureType == 0)
-                {
-                    EnableWindow(GetDlgItem(hwnd, IDC_REGIONCAPTURE), FALSE);
-                    bRegion = FALSE;
-                }
-
                 SendMessage(GetDlgItem(hwnd, IDC_REGIONCAPTURE), BM_SETCHECK, (bRegion) ? BST_CHECKED : BST_UNCHECKED, 0);
                 EnableWindow(GetDlgItem(hwnd, IDC_POSX),            bRegion);
                 EnableWindow(GetDlgItem(hwnd, IDC_POSY),            bRegion);
@@ -1220,19 +1236,11 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 case IDC_MONITORCAPTURE:
                     SetDesktopCaptureType(hwnd, 0);
                     PostMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_MONITOR, 0), 0);
-                    if(IsWindows8Up())
-                    {
-                        EnableWindow(GetDlgItem(hwnd, IDC_REGIONCAPTURE), FALSE);
-                        SendMessage(GetDlgItem(hwnd, IDC_REGIONCAPTURE), BM_SETCHECK, BST_UNCHECKED, 0);
-                        ConfigDesktopSourceProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_REGIONCAPTURE, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDC_REGIONCAPTURE));
-                    }
                     break;
 
                 case IDC_WINDOWCAPTURE:
                     SetDesktopCaptureType(hwnd, 1);
                     PostMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_WINDOW, 0), 0);
-                    if(IsWindows8Up())
-                        EnableWindow(GetDlgItem(hwnd, IDC_REGIONCAPTURE), TRUE);
                     break;
 
                 case IDC_REGIONCAPTURE:
@@ -1284,6 +1292,8 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                             String strWindow = GetCBText(GetDlgItem(hwnd, IDC_WINDOW), windowID);
 
+                            zero(&regionWindowData, sizeof(regionWindowData));
+
                             regionWindowData.hwndCaptureWindow = FindWindow(info->strClasses[windowID], strWindow);
                             if(!regionWindowData.hwndCaptureWindow)
                             {
@@ -1320,12 +1330,20 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                             posY += regionWindowData.captureRect.top;
                         }
                         else
+                        {
+                            UINT monitorID = (UINT)SendMessage(GetDlgItem(hwnd, IDC_MONITOR), CB_GETCURSEL, 0, 0);
+                            if(monitorID == CB_ERR) monitorID = 0;
+
+                            const MonitorInfo &monitor = App->GetMonitor(monitorID);
                             regionWindowData.hwndCaptureWindow = NULL;
+                            mcpy(&regionWindowData.captureRect, &monitor.rect, sizeof(RECT));
+                        }
 
                         //--------------------------------------------
 
                         regionWindowData.hwndConfigDialog = hwnd;
-                        CreateWindow(CAPTUREREGIONCLASS, NULL, WS_POPUP|WS_VISIBLE, posX, posY, sizeX, sizeY, hwnd, NULL, hinstMain, NULL);
+                        HWND hwndRegion = CreateWindowEx(0, CAPTUREREGIONCLASS, NULL, WS_POPUP|WS_VISIBLE, posX, posY, sizeX, sizeY, hwnd, NULL, hinstMain, NULL);
+                        //SetLayeredWindowAttributes(hwndRegion, 0xFFFFFF, 0x7F, LWA_ALPHA);
                         break;
                     }
 
@@ -1611,11 +1629,8 @@ bool STDCALL ConfigureDesktopSource(XElement *element, bool bInitialize)
 
     if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_CONFIGUREDESKTOPSOURCE), hwndMain, ConfigDesktopSourceProc, (LPARAM)&info) == IDOK)
     {
-        if(bInitialize)
-        {
-            element->SetInt(TEXT("cx"), data->GetInt(TEXT("captureCX")));
-            element->SetInt(TEXT("cy"), data->GetInt(TEXT("captureCY")));
-        }
+        element->SetInt(TEXT("cx"), data->GetInt(TEXT("captureCX")));
+        element->SetInt(TEXT("cy"), data->GetInt(TEXT("captureCY")));
         return true;
     }
 
