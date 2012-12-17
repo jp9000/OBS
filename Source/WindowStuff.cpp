@@ -1310,6 +1310,8 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                                                         SendMessage(hwndSceneSources, LB_DELETESTRING, listID, 0);
 
                                                     sources->RemoveElement(source);
+                                                    j--;
+                                                    numSources--;
                                                 }
                                             }
                                         }
