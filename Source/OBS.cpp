@@ -33,7 +33,7 @@ typedef void (*UNLOADPLUGINPROC)();
 BOOL bLoggedSystemStats = FALSE;
 void LogSystemStats();
 
-#define OUTPUT_BUFFER_TIME 600
+#define OUTPUT_BUFFER_TIME 700
 
 
 VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize);
@@ -1794,8 +1794,6 @@ inline void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
     float sum = 0.0f;
     int totalFloatsStore = totalFloats;
 
-    float Max = 0.0f;
-
     if(App->SSE2Available() && (UPARAM(buffer) & 0xF) == 0)
     {
         UINT alignedFloats = totalFloats & 0xFFFFFFFC;
@@ -2488,7 +2486,7 @@ void OBS::MainCaptureLoop()
                                     if(audioTimestamp > curSegment.timestamp)
                                         break;
 
-                                    //Log(TEXT("audioTimestamp: %u, curTimestamp: %u"), audioTimestamp, curSegment.timestamp);
+                                    //Log(TEXT("audioTimestamp: %llu"), audioTimestamp);
 
                                     List<BYTE> &audioData = pendingAudioFrames[0].audioData;
 
@@ -2508,6 +2506,8 @@ void OBS::MainCaptureLoop()
                                 pendingAudioFrames.Remove(0);
                             }
                         }
+
+                        //Log(TEXT("videoTimestamp: %llu"), curSegment.timestamp);
 
                         //Log(TEXT("no more audio to get"));
 
@@ -2672,7 +2672,6 @@ void OBS::MainAudioLoop()
         //-----------------------------------------------
 
         float *desktopBuffer, *micBuffer;
-        float *latestDesktopBuffer, *latestMicBuffer;
         UINT desktopAudioFrames = 0, micAudioFrames = 0;
         UINT latestDesktopAudioFrames = 0, latestMicAudioFrames = 0;
 
@@ -2691,6 +2690,8 @@ void OBS::MainAudioLoop()
         QWORD timestamp;
         while(QueryNewAudio(timestamp))
         {
+            float *latestDesktopBuffer = NULL, *latestMicBuffer = NULL;
+
             desktopAudio->GetBuffer(&desktopBuffer, &desktopAudioFrames, timestamp);
             desktopAudio->GetNewestFrame(&latestDesktopBuffer, &latestDesktopAudioFrames);
             if(micAudio != NULL)
@@ -2711,8 +2712,9 @@ void OBS::MainAudioLoop()
 
             /*multiply samples by volume and compute RMS and max of samples*/
             float desktopRMS = 0, micRMS = 0, desktopMx = 0, micMx = 0;
-            CalculateVolumeLevels(latestDesktopBuffer, latestDesktopAudioFrames*2, desktopVol, desktopRMS, desktopMx);
-            if(bMicEnabled)
+            if(latestDesktopBuffer)
+                CalculateVolumeLevels(latestDesktopBuffer, latestDesktopAudioFrames*2, desktopVol, desktopRMS, desktopMx);
+            if(bMicEnabled && latestMicBuffer)
                 CalculateVolumeLevels(latestMicBuffer, latestMicAudioFrames*2, curMicVol, micRMS, micMx);
 
             /*convert RMS and Max of samples to dB*/            
@@ -2913,7 +2915,7 @@ DWORD STDCALL OBS::HotkeyThread(LPVOID lpUseless)
     while(!App->bShuttingDown)
     {
         static_cast<OBSAPIInterface*>(API)->HandleHotkeys();
-        OSSleep(50);
+        OSSleep(30);
     }
 
     return 0;

@@ -1591,6 +1591,11 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 //------------------------------------
 
+                bool bDisableCTSAdjust = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("DisableCTSAdjust")) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_DISABLECTSADJUST), BM_SETCHECK, bDisableCTSAdjust ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                //------------------------------------
+
                 /*bool bDisableD3DCompat = AppConfig->GetInt(TEXT("Video"), TEXT("DisableD3DCompatibilityMode")) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_DISABLED3DCOMPATIBILITY), BM_SETCHECK, bDisableD3DCompat ? BST_CHECKED : BST_UNCHECKED, 0);
 
@@ -1767,6 +1772,7 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                     }
                     break;
 
+                case IDC_DISABLECTSADJUST:
                 case IDC_USEHIGHQUALITYRESAMPLING:
                 case IDC_USEMULTITHREADEDOPTIMIZATIONS:
                 case IDC_USESYNCFIX:
@@ -2058,6 +2064,11 @@ void OBS::ApplySettings()
 
                 BOOL bUnlockFPS = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_UNLOCKHIGHFPS), BM_GETCHECK, 0, 0) == BST_CHECKED;
                 AppConfig->SetInt   (TEXT("Video"), TEXT("UnlockFPS"), bUnlockFPS);
+
+                //------------------------------------
+
+                BOOL bDisableCTSAdjust = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_DISABLECTSADJUST), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("DisableCTSAdjust"), bDisableCTSAdjust);
 
                 //------------------------------------
 

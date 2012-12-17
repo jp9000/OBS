@@ -49,7 +49,7 @@ RTMPPublisher::RTMPPublisher()
 
     //------------------------------------------
 
-    bufferTime = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("FrameDropBufferTime"), 2000);
+    bufferTime = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("FrameDropBufferTime"), 1400);
     if(bufferTime < 1000) bufferTime = 1000;
     else if(bufferTime > 10000) bufferTime = 10000;
 

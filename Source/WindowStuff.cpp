@@ -833,8 +833,19 @@ void OBS::DeleteItems()
                     sourcesElement->RemoveElement(selectedElements[i]);
             }
 
-            for(UINT i=0; i<selectedIDs.Num(); i++)
-                SendMessage(hwndSources, LB_DELETESTRING, selectedIDs[i], 0);
+            while(selectedIDs.Num())
+            {
+                UINT id = selectedIDs[0];
+                selectedIDs.Remove(0);
+
+                for(UINT i=0; i<selectedIDs.Num(); i++)
+                {
+                    if(selectedIDs[i] > id)
+                        selectedIDs[i]--;
+                }
+
+                SendMessage(hwndSources, LB_DELETESTRING, id, 0);
+            }
 
             if(selectedSceneItems.Num())
                 App->LeaveSceneMutex();
@@ -1250,6 +1261,7 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                 case IDC_REMOVE:
                     {
                         HWND hwndSources = GetDlgItem(hwnd, IDC_SOURCES);
+                        HWND hwndSceneSources = GetDlgItem(hwndMain, ID_SOURCES);
 
                         UINT id = (UINT)SendMessage(GetDlgItem(hwnd, IDC_SOURCES), LB_GETCURSEL, 0, 0);
                         if(id == LB_ERR)
@@ -1315,7 +1327,13 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                                             {
                                                 CTSTR lpName = data->GetString(TEXT("name"));
                                                 if(scmpi(lpName, element->GetName()) == 0)
+                                                {
+                                                    UINT listID = (UINT)SendMessage(hwndSceneSources, LB_FINDSTRINGEXACT, -1, (LPARAM)source->GetName());
+                                                    if(listID != LB_ERR)
+                                                        SendMessage(hwndSceneSources, LB_DELETESTRING, listID, 0);
+
                                                     sources->RemoveElement(source);
+                                                }
                                             }
                                         }
                                     }

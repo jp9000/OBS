@@ -67,12 +67,12 @@ class X264Encoder : public VideoEncoder
 
     bool bFirstFrameProcessed;
 
-    bool bUseCBR;
+    bool bUseCBR, bUseCTSAdjust;
 
     List<VideoPacket> CurrentPackets;
     List<BYTE> HeaderPacket;
 
-    int delayOffset;
+    INT64 delayOffset;
 
     inline void ClearPackets()
     {
@@ -125,7 +125,7 @@ public:
         }
 
         paramData.b_vfr_input           = 1;
-        //paramData.i_keyint_max          = fps*5;      //keyframe every 5 sec, should make this an option
+        paramData.i_keyint_max          = fps*4;      //keyframe every 4 sec, should make this an option
         paramData.i_width               = width;
         paramData.i_height              = height;
         paramData.vui.b_fullrange       = 0;          //specify full range input levels
@@ -141,6 +141,7 @@ public:
         //paramData.pf_log                = get_x264_log;
         //paramData.i_log_level           = X264_LOG_INFO;
 
+        bUseCTSAdjust = !AppConfig->GetInt(TEXT("Video Encoding"), TEXT("DisableCTSAdjust"));
         BOOL bUseCustomParams = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCustomSettings"));
         if(bUseCustomParams)
         {
@@ -217,23 +218,24 @@ public:
 
         if(!bFirstFrameProcessed && nalNum)
         {
-            if(picOut.i_dts < 0)
-                delayOffset = int(-picOut.i_dts);
-            //Log(TEXT("cts: %u, timestamp: %u"), ctsOffset, outputTimestamp);
+            delayOffset = -picOut.i_dts;
             bFirstFrameProcessed = true;
         }
 
         INT64 ts = INT64(outputTimestamp);
-        int timeOffset = int(picOut.i_pts+INT64(delayOffset)-ts);
+        int timeOffset = int((picOut.i_pts+delayOffset)-ts);
 
-        timeOffset += ctsOffset;
-
-        //dynamically adjust the CTS for the stream if it gets lower than the current value
-        //(thanks to cyrus for suggesting to do this instead of a single shift)
-        if(nalNum && timeOffset < 0)
+        if(bUseCTSAdjust)
         {
-            ctsOffset -= timeOffset;
-            timeOffset = 0;
+            timeOffset += ctsOffset;
+
+            //dynamically adjust the CTS for the stream if it gets lower than the current value
+            //(thanks to cyrus for suggesting to do this instead of a single shift)
+            if(nalNum && timeOffset < 0)
+            {
+                ctsOffset -= timeOffset;
+                timeOffset = 0;
+            }
         }
 
         //Log(TEXT("dts: %d, pts: %d, timestamp: %d, offset: %d"), picOut.i_dts, picOut.i_pts, outputTimestamp, timeOffset);

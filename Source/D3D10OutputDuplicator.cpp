@@ -46,28 +46,28 @@ bool D3D10OutputDuplicator::Init(UINT output)
                 {
                     if(SUCCEEDED(hRes = output1->DuplicateOutput(GetD3D(), &duplicator)))
                         bSuccess = true;
-                    else
-                        AppWarning(TEXT("D3D10OutputDuplicator::Init: output1->DuplicateOutput failed, result = %u"), (UINT)hRes);
+                    /*else
+                        AppWarning(TEXT("D3D10OutputDuplicator::Init: output1->DuplicateOutput failed, result = %u"), (UINT)hRes);*/
 
                     output1->Release();
                 }
-                else
-                    AppWarning(TEXT("D3D10OutputDuplicator::Init: outputInterface->QueryInterface failed, result = %u"), (UINT)hRes);
+                /*else
+                    AppWarning(TEXT("D3D10OutputDuplicator::Init: outputInterface->QueryInterface failed, result = %u"), (UINT)hRes);*/
 
                 outputInterface->Release();
             }
-            else
-                AppWarning(TEXT("D3D10OutputDuplicator::Init: adapter->EnumOutputs failed, result = %u"), (UINT)hRes);
+            /*else
+                AppWarning(TEXT("D3D10OutputDuplicator::Init: adapter->EnumOutputs failed, result = %u"), (UINT)hRes);*/
 
             adapter->Release();
         }
-        else
-            AppWarning(TEXT("D3D10OutputDuplicator::Init: device->GetAdapter failed, result = %u"), (UINT)hRes);
+        /*else
+            AppWarning(TEXT("D3D10OutputDuplicator::Init: device->GetAdapter failed, result = %u"), (UINT)hRes);*/
 
         device->Release();
     }
-    else
-        AppWarning(TEXT("D3D10OutputDuplicator::Init: GetD3D()->QueryInterface failed, result = %u"), (UINT)hRes);
+    /*else
+        AppWarning(TEXT("D3D10OutputDuplicator::Init: GetD3D()->QueryInterface failed, result = %u"), (UINT)hRes);*/
 
     return bSuccess;
 }
@@ -75,6 +75,7 @@ bool D3D10OutputDuplicator::Init(UINT output)
 D3D10OutputDuplicator::~D3D10OutputDuplicator()
 {
     SafeRelease(duplicator);
+    delete copyTex;
 }
 
 DuplicatorInfo D3D10OutputDuplicator::AquireNextFrame(UINT timeout, POINT &mousePos, BOOL &mouseVisible)

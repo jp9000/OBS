@@ -179,6 +179,8 @@ public:
 
 struct MonitorInfo
 {
+    inline MonitorInfo() {zero(this, sizeof(MonitorInfo));}
+
     inline MonitorInfo(HMONITOR hMonitor, RECT *lpRect)
     {
         this->hMonitor = hMonitor;
@@ -188,6 +190,40 @@ struct MonitorInfo
     HMONITOR hMonitor;
     RECT rect;
 };
+
+struct DeviceOutputData
+{
+    String strDevice;
+    List<MonitorInfo> monitors;
+    StringList monitorNameList;
+
+    inline void ClearData()
+    {
+        strDevice.Clear();
+        monitors.Clear();
+        monitorNameList.Clear();
+    }
+};
+
+struct DeviceOutputs
+{
+    List<DeviceOutputData> devices;
+
+    inline ~DeviceOutputs()
+    {
+        ClearData();
+    }
+
+    inline void ClearData()
+    {
+        for(UINT i=0; i<devices.Num(); i++)
+            devices[i].ClearData();
+        devices.Clear();
+    }
+};
+
+void GetDisplayDevices(DeviceOutputs &deviceList);
+
 
 //-------------------------------------------------------------------
 
