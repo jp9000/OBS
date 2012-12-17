@@ -78,7 +78,7 @@ D3D10OutputDuplicator::~D3D10OutputDuplicator()
     delete copyTex;
 }
 
-DuplicatorInfo D3D10OutputDuplicator::AquireNextFrame(UINT timeout, POINT &mousePos, BOOL &mouseVisible)
+DuplicatorInfo D3D10OutputDuplicator::AquireNextFrame(UINT timeout)
 {
     if(!duplicator)
     {
@@ -139,4 +139,15 @@ DuplicatorInfo D3D10OutputDuplicator::AquireNextFrame(UINT timeout, POINT &mouse
 Texture* D3D10OutputDuplicator::GetCopyTexture()
 {
     return copyTex;
+}
+
+Texture* D3D10OutputDuplicator::GetCursorTex(POINT* pos)
+{
+    if(pos)
+        mcpy(pos, &cursorPos, sizeof(POINT));
+
+    if(bCursorVis)
+        return cursorTex;
+
+    return NULL;
 }

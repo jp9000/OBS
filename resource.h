@@ -144,9 +144,12 @@
 #define IDC_TEXTSIZE                    1079
 #define IDC_AUTORECONNECT_TIMEOUT_STATIC 1080
 #define IDC_TEXTOPACITY_EDIT            1080
+#define IDC_PTTDELAY_EDIT               1080
 #define IDC_RECONNECTING                1081
 #define IDC_SAVEPATH                    1081
 #define IDC_SCROLLSPEED_EDIT            1081
+#define IDC_MICBOOST2                   1081
+#define IDC_PTTDELAY                    1081
 #define IDC_SAVEPATH_STATIC             1082
 #define IDC_EXTENTWIDTH                 1082
 #define IDC_EXTENTHEIGHT                1083
@@ -203,7 +206,6 @@
 #define IDC_PRIORITY                    1132
 #define IDC_USECBR                      1133
 #define IDC_COMBO1                      1139
-#define IDC_CHECK3                      1140
 #define IDC_DISABLECTSADJUST            1140
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019

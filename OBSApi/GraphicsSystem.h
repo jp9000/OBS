@@ -342,8 +342,9 @@ class BASE_EXPORT OutputDuplicator
 public:
     virtual ~OutputDuplicator() {}
 
-    virtual DuplicatorInfo AquireNextFrame(UINT timeout, POINT &mousePos, BOOL &mouseVisible)=0;
+    virtual DuplicatorInfo AquireNextFrame(UINT timeout)=0;
     virtual Texture* GetCopyTexture()=0;
+    virtual Texture* GetCursorTex(POINT* pos)=0;
 };
 
 /*=========================================================

@@ -32,8 +32,6 @@ struct HotkeyControlExData
     HFONT hFont;
     int fontHeight;
 
-    bool bExtendedKey;
-
     void DrawHotkeyControlEx(HWND hwnd, HDC hDC);
 };
 
@@ -141,7 +139,6 @@ LRESULT CALLBACK HotkeyExProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     {
                         control->hotkeyVK = 0;
                         control->modifiers = 0;
-                        control->bExtendedKey = 0;
 
                         InvalidateRect(hwnd, NULL, TRUE);
                         PostMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(GetDlgCtrlID(hwnd), EN_CHANGE), (LPARAM)hwnd);
@@ -163,13 +160,13 @@ LRESULT CALLBACK HotkeyExProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     modifiers |= HOTKEYF_ALT;
 
                 bool bExtendedKey = (lParam & 0x01000000) != 0;
+                if(bExtendedKey)
+                    modifiers |= HOTKEYF_EXT;
 
-                if((hotkeyVK && control->hotkeyVK != hotkeyVK) || control->bExtendedKey != bExtendedKey || control->modifiers != modifiers)
+                if((hotkeyVK && control->hotkeyVK != hotkeyVK) || control->modifiers != modifiers)
                 {
-                    control->hotkeyVK = hotkeyVK;
-
-                    control->modifiers    = modifiers;
-                    control->bExtendedKey = bExtendedKey;
+                    control->hotkeyVK  = hotkeyVK;
+                    control->modifiers = modifiers;
 
                     InvalidateRect(hwnd, NULL, TRUE);
                     PostMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(GetDlgCtrlID(hwnd), EN_CHANGE), (LPARAM)hwnd);
@@ -217,7 +214,6 @@ LRESULT CALLBACK HotkeyExProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 {
                     control->hotkeyVK = hotkeyVK;
                     control->modifiers = modifiers;
-                    control->bExtendedKey = false;
 
                     InvalidateRect(hwnd, NULL, TRUE);
                     PostMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(GetDlgCtrlID(hwnd), EN_CHANGE), (LPARAM)hwnd);
@@ -336,7 +332,7 @@ void HotkeyControlExData::DrawHotkeyControlEx(HWND hwnd, HDC hDC)
             else
             {
                 UINT scanCode = MapVirtualKey(hotkeyVK, 0) << 16;
-                if(bExtendedKey)
+                if(modifiers & HOTKEYF_EXT)
                     scanCode |= 0x01000000;
 
                 GetKeyNameText(scanCode, lpName, 128);

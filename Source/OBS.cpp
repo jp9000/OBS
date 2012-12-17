@@ -33,8 +33,6 @@ typedef void (*UNLOADPLUGINPROC)();
 BOOL bLoggedSystemStats = FALSE;
 void LogSystemStats();
 
-#define OUTPUT_BUFFER_TIME 700
-
 
 VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize);
 AudioEncoder* CreateMP3Encoder(UINT bitRate);
@@ -448,6 +446,95 @@ public:
 };
 
 
+#define QuickClearHotkey(hotkeyID) \
+    if(hotkeyID) \
+    { \
+        API->DeleteHotkey(hotkeyID); \
+        hotkeyID = NULL; \
+    }
+
+
+void OBS::ReloadIniSettings()
+{
+    HWND hwndTemp;
+
+    //-------------------------------------------
+    // mic volume data
+    hwndTemp = GetDlgItem(hwndMain, ID_MICVOLUME);
+
+    if(!AppConfig->HasKey(TEXT("Audio"), TEXT("MicVolume")))
+        AppConfig->SetFloat(TEXT("Audio"), TEXT("MicVolume"), 0.0f);
+    SetVolumeControlValue(hwndTemp, AppConfig->GetFloat(TEXT("Audio"), TEXT("MicVolume"), 0.0f));
+
+    AudioDeviceList audioDevices;
+    GetAudioDevices(audioDevices);
+
+    String strDevice = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), NULL);
+    if(strDevice.IsEmpty() || !audioDevices.HasID(strDevice))
+    {
+        AppConfig->SetString(TEXT("Audio"), TEXT("Device"), TEXT("Disable"));
+        strDevice = TEXT("Disable");
+    }
+
+    audioDevices.FreeData();
+
+    EnableWindow(hwndTemp, !strDevice.CompareI(TEXT("Disable")));
+
+    //-------------------------------------------
+    // desktop volume
+    hwndTemp = GetDlgItem(hwndMain, ID_DESKTOPVOLUME);
+
+    if(!AppConfig->HasKey(TEXT("Audio"), TEXT("DesktopVolume")))
+        AppConfig->SetFloat(TEXT("Audio"), TEXT("DesktopVolume"), 1.0f);
+    SetVolumeControlValue(hwndTemp, AppConfig->GetFloat(TEXT("Audio"), TEXT("DesktopVolume"), 0.0f));
+
+    //-------------------------------------------
+    // mic boost
+    DWORD micBoostPercentage = AppConfig->GetInt(TEXT("Audio"), TEXT("MicBoostMultiple"), 1);
+    if(micBoostPercentage < 1)
+        micBoostPercentage = 1;
+    else if(micBoostPercentage > 20)
+        micBoostPercentage = 20;
+    micBoost = float(micBoostPercentage);
+
+    //-------------------------------------------
+    // dashboard
+    strDashboard = AppConfig->GetString(TEXT("Publish"), TEXT("Dashboard"));
+    strDashboard.KillSpaces();
+
+    //-------------------------------------------
+    // hotkeys
+    QuickClearHotkey(pushToTalkHotkeyID);
+    QuickClearHotkey(muteMicHotkeyID);
+    QuickClearHotkey(muteDesktopHotkeyID);
+    QuickClearHotkey(stopStreamHotkeyID);
+    QuickClearHotkey(startStreamHotkeyID);
+
+    bUsingPushToTalk = AppConfig->GetInt(TEXT("Audio"), TEXT("UsePushToTalk")) != 0;
+    DWORD hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey"));
+    pushToTalkDelay = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkDelay"), 200);
+
+    if(bUsingPushToTalk && hotkey)
+        pushToTalkHotkeyID = API->CreateHotkey(hotkey, OBS::PushToTalkHotkey, NULL);
+
+    hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("MuteMicHotkey"));
+    if(hotkey)
+        muteMicHotkeyID = API->CreateHotkey(hotkey, OBS::MuteMicHotkey, NULL);
+
+    hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("MuteDesktopHotkey"));
+    if(hotkey)
+        muteDesktopHotkeyID = API->CreateHotkey(hotkey, OBS::MuteDesktopHotkey, NULL);
+
+    hotkey = AppConfig->GetInt(TEXT("Publish"), TEXT("StopStreamHotkey"));
+    if(hotkey)
+        stopStreamHotkeyID = API->CreateHotkey(hotkey, OBS::StopStreamHotkey, NULL);
+
+    hotkey = AppConfig->GetInt(TEXT("Publish"), TEXT("StartStreamHotkey"));
+    if(hotkey)
+        startStreamHotkeyID = API->CreateHotkey(hotkey, OBS::StartStreamHotkey, NULL);
+}
+
+
 OBS::OBS()
 {
     App = this;
@@ -637,23 +724,6 @@ OBS::OBS()
         0, 0, 0, 0, hwndMain, (HMENU)ID_MICVOLUME, 0, 0);
     SetVolumeControlIcons(hwndTemp, GetIcon(hinstMain, IDI_SOUND_MIC), GetIcon(hinstMain, IDI_SOUND_MIC_MUTED));
 
-    if(!AppConfig->HasKey(TEXT("Audio"), TEXT("MicVolume")))
-        AppConfig->SetFloat(TEXT("Audio"), TEXT("MicVolume"), 0.0f);
-    SetVolumeControlValue(hwndTemp, AppConfig->GetFloat(TEXT("Audio"), TEXT("MicVolume"), 0.0f));
-
-    AudioDeviceList audioDevices;
-    GetAudioDevices(audioDevices);
-
-    String strDevice = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), NULL);
-    if(strDevice.IsEmpty() || !audioDevices.HasID(strDevice))
-    {
-        AppConfig->SetString(TEXT("Audio"), TEXT("Device"), TEXT("Disable"));
-        strDevice = TEXT("Disable");
-    }
-
-    audioDevices.FreeData();
-
-    EnableWindow(hwndTemp, !strDevice.CompareI(TEXT("Disable")));
 
     //-----------------------------------------------------
     // mic volume meter
@@ -676,10 +746,6 @@ OBS::OBS()
         WS_CHILDWINDOW|WS_VISIBLE|WS_CLIPSIBLINGS,
         0, 0, 0, 0, hwndMain, (HMENU)ID_DESKTOPVOLUME, 0, 0);
     SetVolumeControlIcons(hwndTemp, GetIcon(hinstMain, IDI_SOUND_DESKTOP), GetIcon(hinstMain, IDI_SOUND_DESKTOP_MUTED));
-
-    if(!AppConfig->HasKey(TEXT("Audio"), TEXT("DesktopVolume")))
-        AppConfig->SetFloat(TEXT("Audio"), TEXT("DesktopVolume"), 1.0f);
-    SetVolumeControlValue(hwndTemp, AppConfig->GetFloat(TEXT("Audio"), TEXT("DesktopVolume"), 0.0f));
 
     //-----------------------------------------------------
     // settings button
@@ -814,9 +880,6 @@ OBS::OBS()
 
     API = new OBSAPIInterface;
 
-    strDashboard = AppConfig->GetString(TEXT("Publish"), TEXT("Dashboard"));
-    strDashboard.KillSpaces();
-
     ResizeWindow(false);
     ShowWindow(hwndMain, SW_SHOW);
 
@@ -837,35 +900,6 @@ OBS::OBS()
                 sceneHotkeys << hotkeyInfo;
         }
     }
-
-    bUsingPushToTalk = AppConfig->GetInt(TEXT("Audio"), TEXT("UsePushToTalk")) != 0;
-    DWORD hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey"));
-
-    if(bUsingPushToTalk && hotkey)
-        pushToTalkHotkeyID = API->CreateHotkey(hotkey, OBS::PushToTalkHotkey, NULL);
-
-    hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("MuteMicHotkey"));
-    if(hotkey)
-        muteMicHotkeyID = API->CreateHotkey(hotkey, OBS::MuteMicHotkey, NULL);
-
-    hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("MuteDesktopHotkey"));
-    if(hotkey)
-        muteDesktopHotkeyID = API->CreateHotkey(hotkey, OBS::MuteDesktopHotkey, NULL);
-
-    hotkey = AppConfig->GetInt(TEXT("Publish"), TEXT("StopStreamHotkey"));
-    if(hotkey)
-        stopStreamHotkeyID = API->CreateHotkey(hotkey, OBS::StopStreamHotkey, NULL);
-
-    hotkey = AppConfig->GetInt(TEXT("Publish"), TEXT("StartStreamHotkey"));
-    if(hotkey)
-        startStreamHotkeyID = API->CreateHotkey(hotkey, OBS::StartStreamHotkey, NULL);
-
-    DWORD micBoostPercentage = AppConfig->GetInt(TEXT("Audio"), TEXT("MicBoostMultiple"), 1);
-    if(micBoostPercentage < 1)
-        micBoostPercentage = 1;
-    else if(micBoostPercentage > 20)
-        micBoostPercentage = 20;
-    micBoost = float(micBoostPercentage);
 
     //-----------------------------------------------------
     // load plugins
@@ -902,13 +936,17 @@ OBS::OBS()
 
     //-----------------------------------------------------
 
+    ReloadIniSettings();
+
+    //-----------------------------------------------------
+
     bAutoReconnect = AppConfig->GetInt(TEXT("Publish"), TEXT("AutoReconnect"), 1) != 0;
     reconnectTimeout = AppConfig->GetInt(TEXT("Publish"), TEXT("AutoReconnectTimeout"), 10);
     if(reconnectTimeout < 5)
         reconnectTimeout = 5;
 
     hHotkeyThread = OSCreateThread((XTHREAD)HotkeyThread, NULL);
-    
+
     bRenderViewEnabled = true;
 }
 
@@ -1031,7 +1069,14 @@ void STDCALL OBS::StopStreamHotkey(DWORD hotkey, UPARAM param, bool bDown)
 
 void STDCALL OBS::PushToTalkHotkey(DWORD hotkey, UPARAM param, bool bDown)
 {
-    App->bPushToTalkOn = bDown;
+    App->bPushToTalkDown = bDown;
+    if(bDown)
+        App->bPushToTalkOn = true;
+    else if(App->pushToTalkDelay <= 0)
+        App->bPushToTalkOn = false;
+    
+    App->pushToTalkTimeLeft = App->pushToTalkDelay;
+    OSDebugOut(TEXT("Actual delay: %d"), App->pushToTalkDelay);
 }
 
 
@@ -1592,7 +1637,7 @@ void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
                         if(numTotalFrames)
                             percentageDropped = double(App->network->NumDroppedFrames())/double(numTotalFrames);
                     }
-                    strOutString << Str("MainWindow.DroppedFrames") << FormattedString(TEXT(" %u (%0.3g%%)"), App->curFramesDropped, percentageDropped);
+                    strOutString << Str("MainWindow.DroppedFrames") << FormattedString(TEXT(" %u (%0.2f%%)"), App->curFramesDropped, percentageDropped);
                 }
                 break;
             case 3: strOutString << TEXT("FPS: ") << IntString(App->captureFPS); break;
@@ -1787,32 +1832,6 @@ void OBS::Stop()
     bufferedVideo.Clear();
 
     bTestStream = false;
-}
-
-inline void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
-{
-    float sum = 0.0f;
-    int totalFloatsStore = totalFloats;
-
-    if(App->SSE2Available() && (UPARAM(buffer) & 0xF) == 0)
-    {
-        UINT alignedFloats = totalFloats & 0xFFFFFFFC;
-        __m128 sseMulVal = _mm_set_ps1(mulVal);
-
-        for(UINT i=0; i<alignedFloats; i += 4)
-        {
-            __m128 sseScaledVals = _mm_mul_ps(_mm_load_ps(buffer+i), sseMulVal);
-            _mm_store_ps(buffer+i, sseScaledVals);
-        }
-
-        buffer      += alignedFloats;
-        totalFloats -= alignedFloats;
-    }
-
-    for(int i=0; i<totalFloats; i++)
-    {
-        buffer[i] *= mulVal;
-    }
 }
 
 inline void CalculateVolumeLevels(float *buffer, int totalFloats, float mulVal, float &RMS, float &MAX)
@@ -2092,6 +2111,17 @@ void OBS::MainCaptureLoop()
         }
         else
             bufferedTimes << UINT(curStreamTime);
+
+        if(!bPushToTalkDown && pushToTalkTimeLeft > 0)
+        {
+            pushToTalkTimeLeft -= int(frameDelta);
+            OSDebugOut(TEXT("time left: %d\r\n"), pushToTalkTimeLeft);
+            if(pushToTalkTimeLeft <= 0)
+            {
+                pushToTalkTimeLeft = 0;
+                bPushToTalkOn = false;
+            }
+        }
 
         float fSeconds = float(frameDelta)*0.001f;
         lastStreamTime = curStreamTime;
@@ -2628,13 +2658,13 @@ bool OBS::QueryNewAudio(QWORD &timestamp)
     timestamp = INVALID_LL;
 
     QWORD desktopTimestamp;
-    while((audioRet = desktopAudio->GetNextBuffer()) != NoAudioAvailable);
+    while((audioRet = desktopAudio->GetNextBuffer(desktopVol)) != NoAudioAvailable);
     if(desktopAudio->GetEarliestTimestamp(desktopTimestamp))
         timestamp = desktopTimestamp;
 
     if(micAudio != NULL)
     {
-        while((audioRet = micAudio->GetNextBuffer()) != NoAudioAvailable);
+        while((audioRet = micAudio->GetNextBuffer(curMicVol)) != NoAudioAvailable);
 
         QWORD micTimestamp = INVALID_LL;
         micAudio->GetEarliestTimestamp(micTimestamp);
@@ -2675,8 +2705,6 @@ void OBS::MainAudioLoop()
         UINT desktopAudioFrames = 0, micAudioFrames = 0;
         UINT latestDesktopAudioFrames = 0, latestMicAudioFrames = 0;
 
-        float curMicVol;
-
         if(bUsingPushToTalk)
             curMicVol = bPushToTalkOn ? micVol : 0.0f;
         else
@@ -2703,10 +2731,6 @@ void OBS::MainAudioLoop()
             //----------------------------------------------------------------------------
 
             UINT totalFloats = desktopAudioFrames*2;
-
-            MultiplyAudioBuffer(desktopBuffer, totalFloats, desktopVol);
-            if(bMicEnabled)
-                MultiplyAudioBuffer(micBuffer, totalFloats, curMicVol);
 
             //----------------------------------------------------------------------------
 
@@ -3013,6 +3037,8 @@ void OBSAPIInterface::HandleHotkeys()
 
         DWORD hotkeyVK          = LOBYTE(info.hotkey);
         DWORD hotkeyModifiers   = HIBYTE(info.hotkey);
+
+        hotkeyModifiers &= ~(HOTKEYF_EXT);
 
         bool bModifiersMatch = (hotkeyModifiers == modifiers);
 

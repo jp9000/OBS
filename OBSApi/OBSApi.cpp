@@ -142,3 +142,44 @@ String GetEditText(HWND hwndEdit)
 
     return strText;
 }
+
+LPBYTE GetCursorData(HICON hIcon, ICONINFO &ii, UINT &size)
+{
+    BITMAP bmp;
+    HBITMAP hBmp = ii.hbmColor ? ii.hbmColor : ii.hbmMask;
+
+    if(GetObject(hBmp, sizeof(bmp), &bmp) != 0)
+    {
+        BITMAPINFO bi;
+        zero(&bi, sizeof(bi));
+
+        size = bmp.bmWidth;
+
+        void* lpBits;
+
+        BITMAPINFOHEADER &bih = bi.bmiHeader;
+        bih.biSize = sizeof(bih);
+        bih.biBitCount = 32;
+        bih.biWidth  = bmp.bmWidth;
+        bih.biHeight = bmp.bmHeight;
+        bih.biPlanes = 1;
+
+        HDC hTempDC = CreateCompatibleDC(NULL);
+        HBITMAP hBitmap = CreateDIBSection(hTempDC, &bi, DIB_RGB_COLORS, &lpBits, NULL, 0);
+        HBITMAP hbmpOld = (HBITMAP)SelectObject(hTempDC, hBitmap);
+
+        zero(lpBits, bmp.bmHeight*bmp.bmWidth*4);
+        DrawIcon(hTempDC, 0, 0, hIcon);
+
+        LPBYTE lpData = (LPBYTE)Allocate(bmp.bmHeight*bmp.bmWidth*4);
+        mcpy(lpData, lpBits, bmp.bmHeight*bmp.bmWidth*4);
+
+        SelectObject(hTempDC, hbmpOld);
+        DeleteObject(hBitmap);
+        DeleteDC(hTempDC);
+
+        return lpData;
+    }
+
+    return NULL;
+}

@@ -121,6 +121,7 @@ Settings.Audio.ForceMicMono         "Force Microphone/Auxiliary to Mono:"
 Settings.Audio.MicBoost             "Mic/Aux Boost (multiple):"
 Settings.Audio.MuteDesktopHotkey    "Mute/Unmute Desktop Hotkey:"
 Settings.Audio.MuteMicHotkey        "Mute/Unmute Mic Hotkey:"
+Settings.Audio.PushToTalkDelay      "Push-to-talk Delay (milliseconds):"
 Settings.Audio.PushToTalkHotkey     "Use Push-to-talk:"
 
 Settings.Encoding.Audio "Audio Encoding"
@@ -184,6 +185,7 @@ Sources.BitmapSource.Empty      "No bitmap entered.  Please browse and select a 
 Sources.BitmapSource.Opacity    "Opacity:"
 
 Sources.GameCaptureSource.Application       "Application:"
+Sources.GameCaptureSource.IgnoreAspect      "Ignore aspect ratio"
 Sources.GameCaptureSource.PluginDescription "Captures frames directly from games and graphics applications by hooking into the application and reading the frames as they come in."
 Sources.GameCaptureSource.PluginName        "Game Capture Plugin"
 Sources.GameCaptureSource.Requires32bit     "These applications require the 32bit version of OBS to capture:"

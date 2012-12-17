@@ -27,6 +27,9 @@ static const int minClientWidth  = 700;
 static const int minClientHeight = 200;
 
 
+#define OUTPUT_BUFFER_TIME 700
+
+
 struct AudioDeviceInfo
 {
     String strID;
@@ -124,7 +127,7 @@ public:
     virtual void StartCapture()=0;
     virtual void StopCapture()=0;
 
-    virtual UINT GetNextBuffer()=0;
+    virtual UINT GetNextBuffer(float curVolume)=0;
     virtual bool GetEarliestTimestamp(QWORD &timestamp)=0;
     virtual bool GetBuffer(float **buffer, UINT *numFrames, QWORD targetTimestamp)=0;
 
@@ -549,7 +552,7 @@ class OBS
     //---------------------------------------------------
 
     HANDLE  hSoundThread, hSoundDataMutex, hRequestAudioEvent;
-    float   desktopVol, micVol;
+    float   desktopVol, micVol, curMicVol;
     float   desktopMax, micMax;
     float   desktopMag, micMag;
     List<FrameAudio> pendingAudioFrames;
@@ -560,12 +563,16 @@ class OBS
 
     HANDLE hHotkeyMutex;
     HANDLE hHotkeyThread;
-    bool bUsingPushToTalk, bPushToTalkOn;
+
+    bool bUsingPushToTalk, bPushToTalkDown, bPushToTalkOn;
+    int pushToTalkDelay, pushToTalkTimeLeft;
+
     UINT pushToTalkHotkeyID;
     UINT muteMicHotkeyID;
     UINT muteDesktopHotkeyID;
     UINT startStreamHotkeyID;
     UINT stopStreamHotkeyID;
+
     bool bStartStreamHotkeyDown, bStopStreamHotkeyDown;
 
     //---------------------------------------------------
@@ -709,6 +716,8 @@ class OBS
 
     static void ClearStatusBar();
     static void DrawStatusBar(DRAWITEMSTRUCT &dis);
+
+    void ReloadIniSettings();
 
 public:
     OBS();

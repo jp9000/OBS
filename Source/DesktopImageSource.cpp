@@ -48,11 +48,18 @@ class DesktopImageSource : public ImageSource
 
     UINT     opacity;
 
+    //-------------------------
+    // win 8 capture stuff
+    Texture  *cursorTexture;
+    int      xHotspot, yHotspot;
     UINT     monitor;
     UINT     deviceOutputID;
     float    retryAcquire;
     bool     bWindows8MonitorCapture;
     MonitorInfo monitorData;
+    bool     bMouseCaptured;
+    POINT    cursorPos;
+    HCURSOR  hCurrentCursor;
 
     OutputDuplicator *duplicator;
 
@@ -83,7 +90,7 @@ public:
             App->RemoveStreamInfo(warningID);
 
         delete duplicator;
-
+        delete cursorTexture;
         delete alphaIgnoreShader;
         delete colorKeyShader;
     }
@@ -105,13 +112,14 @@ public:
 
     void PreprocessWindows8MonitorCapture()
     {
+        //----------------------------------------------------------
+        // capture monitor
+
         if(duplicator)
         {
             Texture *newTex = NULL;
 
-            POINT mousePos = {0, 0};
-            BOOL bMouseVis = FALSE;
-            switch(duplicator->AquireNextFrame(0, mousePos, bMouseVis))
+            switch(duplicator->AquireNextFrame(0))
             {
                 case DuplicatorInfo_Lost:
                     {
@@ -133,6 +141,62 @@ public:
 
             lastRendered = duplicator->GetCopyTexture();
         }
+
+        //----------------------------------------------------------
+        // capture mouse
+
+        bMouseCaptured = false;
+        if(bCaptureMouse)
+        {
+            CURSORINFO ci;
+            zero(&ci, sizeof(ci));
+            ci.cbSize = sizeof(ci);
+
+            if(GetCursorInfo(&ci))
+            {
+                mcpy(&cursorPos, &ci.ptScreenPos, sizeof(cursorPos));
+
+                if(ci.flags & CURSOR_SHOWING)
+                {
+                    if(ci.hCursor == hCurrentCursor)
+                        bMouseCaptured = true;
+                    else
+                    {
+                        HICON hIcon = CopyIcon(ci.hCursor);
+                        hCurrentCursor = ci.hCursor;
+
+                        delete cursorTexture;
+                        cursorTexture = NULL;
+
+                        if(hIcon)
+                        {
+                            ICONINFO ii;
+                            if(GetIconInfo(hIcon, &ii))
+                            {
+                                xHotspot = int(ii.xHotspot);
+                                yHotspot = int(ii.yHotspot);
+
+                                UINT size;
+                                LPBYTE lpData = GetCursorData(hIcon, ii, size);
+                                if(lpData)
+                                {
+                                    cursorTexture = CreateTexture(size, size, GS_BGRA, lpData, FALSE);
+                                    if(cursorTexture)
+                                        bMouseCaptured = true;
+
+                                    Free(lpData);
+                                }
+
+                                DeleteObject(ii.hbmColor);
+                                DeleteObject(ii.hbmMask);
+                            }
+
+                            DestroyIcon(hIcon);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     void Preprocess()
@@ -142,6 +206,7 @@ public:
             PreprocessWindows8MonitorCapture();
             return;
         }
+
         Texture *captureTexture = renderTextures[curCaptureTexture];
 
         HDC hDC;
@@ -313,10 +378,10 @@ public:
         {
             LONG monitorWidth  = monitorData.rect.right-monitorData.rect.left;
             LONG monitorHeight = monitorData.rect.bottom-monitorData.rect.top;
-            RECT captureArea = {captureRect.left+monitorData.rect.left,
-                                captureRect.top+monitorData.rect.top,
-                                captureRect.right+monitorData.rect.left,
-                                captureRect.bottom+monitorData.rect.top};
+            RECT captureArea = {captureRect.left-monitorData.rect.left,
+                                captureRect.top-monitorData.rect.top,
+                                captureRect.right-monitorData.rect.left,
+                                captureRect.bottom-monitorData.rect.top};
 
             ulCoord.x = float(double(captureArea.left)/double(monitorWidth));
             ulCoord.y = float(double(captureArea.top)/double(monitorHeight));
@@ -358,6 +423,25 @@ public:
             }
 
             LoadPixelShader(lastPixelShader);
+
+            //draw mouse
+            if(bWindows8MonitorCapture && cursorTexture && bMouseCaptured && bCaptureMouse)
+            {
+                POINT newPos = {cursorPos.x-xHotspot, cursorPos.y-yHotspot};
+
+                if( newPos.x >= captureRect.left && newPos.y >= captureRect.top &&
+                    newPos.x < captureRect.right && newPos.y < captureRect.bottom)
+                {
+                    Vect2 newCursorPos  = Vect2(float(newPos.x-captureRect.left), float(newPos.y-captureRect.top));
+                    Vect2 newCursorSize = Vect2(float(cursorTexture->Width()), float(cursorTexture->Height()));
+
+                    Vect2 sizeMultiplier = size/GetSize();
+                    newCursorPos *= sizeMultiplier;
+                    newCursorSize *= sizeMultiplier;
+
+                    DrawSprite(cursorTexture, 0xFFFFFFFF, newCursorPos.x, newCursorPos.y+newCursorSize.y, newCursorPos.x+newCursorSize.x, newCursorPos.y);
+                }
+            }
         }
     }
 
@@ -402,6 +486,14 @@ public:
                 delete duplicator;
                 duplicator = NULL;
             }
+
+            if(cursorTexture)
+            {
+                delete cursorTexture;
+                cursorTexture = NULL;
+            }
+
+            hCurrentCursor = NULL;
 
             captureType        = newCaptureType;
             strWindow          = strNewWindow;
@@ -1096,7 +1188,7 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 //-----------------------------------------------------
 
                 bool bRegion = data->GetInt(TEXT("regionCapture")) != FALSE;
-                if(!bFoundWindow)
+                if(captureType == 1 && !bFoundWindow)
                     bRegion = false;
 
                 SendMessage(GetDlgItem(hwnd, IDC_REGIONCAPTURE), BM_SETCHECK, (bRegion) ? BST_CHECKED : BST_UNCHECKED, 0);
@@ -1107,7 +1199,7 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 EnableWindow(GetDlgItem(hwnd, IDC_SELECTREGION),    bRegion);
 
                 int posX = 0, posY = 0, sizeX = 32, sizeY = 32;
-                if(!data->GetBaseItem(TEXT("captureX")) || !bFoundWindow)
+                if(!data->GetBaseItem(TEXT("captureX")) || !bRegion)
                 {
                     if(captureType == 0)
                         PostMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_MONITOR, 0), 0);
