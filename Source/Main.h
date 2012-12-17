@@ -84,24 +84,6 @@ inline UINT ConvertMSTo100NanoSec(UINT ms)
 
 void WINAPI ProcessEvents();
 
-inline bool IsWindows8Up()
-{
-    OSVERSIONINFO osi;
-    osi.dwOSVersionInfoSize = sizeof(osi);
-    GetVersionEx(&osi);
-
-    return (osi.dwMajorVersion > 6 || (osi.dwMajorVersion == 6 && osi.dwMinorVersion >= 2));
-}
-
-inline bool IsWindows7Up()
-{
-    OSVERSIONINFO osi;
-    osi.dwOSVersionInfoSize = sizeof(osi);
-    GetVersionEx(&osi);
-
-    return (osi.dwMajorVersion > 6 || (osi.dwMajorVersion == 6 && osi.dwMinorVersion >= 1));
-}
-
 //-------------------------------------------
 // application headers
 

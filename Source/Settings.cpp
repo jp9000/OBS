@@ -450,7 +450,7 @@ INT_PTR CALLBACK OBS::EncoderSettingsProc(HWND hwnd, UINT message, WPARAM wParam
 
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("MP3"));
 #ifdef USE_AAC
-                if(IsWindows7Up())
+                if(OSGetVersion() >= 7)
                 {
                     SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("AAC"));
                     LoadSettingComboString(hwndTemp, TEXT("Audio Encoding"), TEXT("Codec"), TEXT("AAC"));
@@ -1186,7 +1186,7 @@ INT_PTR CALLBACK OBS::VideoSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
 
                 hwndTemp = GetDlgItem(hwnd, IDC_DISABLEAERO);
 
-                if(IsWindows8Up())
+                if(OSGetVersion() == 8)
                     EnableWindow(hwndTemp, FALSE);
 
                 BOOL bDisableAero = AppConfig->GetInt(TEXT("Video"), TEXT("DisableAero"), 0);
