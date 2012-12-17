@@ -473,7 +473,7 @@ public:
 
         if( captureRect.left != x || captureRect.right != (x+cx) || captureRect.top != cy || captureRect.bottom != (y+cy) ||
             newCaptureType != captureType || !strNewWindowClass.CompareI(strWindowClass) || !strNewWindow.CompareI(strWindow) ||
-            bNewClientCapture != bClientCapture || (IsWindows8Up() && newMonitor != monitor))
+            bNewClientCapture != bClientCapture || (OSGetVersion() >= 8 && newMonitor != monitor))
         {
             for(int i=0; i<NUM_CAPTURE_TEXTURES; i++)
             {
@@ -509,7 +509,7 @@ public:
             const MonitorInfo &monitorInfo = App->GetMonitor(monitor);
             mcpy(&monitorData, &monitorInfo, sizeof(monitorInfo));
 
-            if(captureType == 0 && IsWindows8Up())
+            if(captureType == 0 && OSGetVersion() >= 8)
             {
                 DeviceOutputs outputs;
                 GetDisplayDevices(outputs);

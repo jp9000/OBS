@@ -1386,7 +1386,7 @@ void OBS::Start()
     String strEncoder = AppConfig->GetString(TEXT("Audio Encoding"), TEXT("Codec"), TEXT("AAC"));
 
 #ifdef USE_AAC
-    if(strEncoder.CompareI(TEXT("AAC")) && IsWindows7Up())
+    if(strEncoder.CompareI(TEXT("AAC")) && OSGetVersion() >= 7)
         audioEncoder = CreateAACEncoder(bitRate);
     else
 #endif

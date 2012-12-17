@@ -28,7 +28,7 @@ void GetDisplayDevices(DeviceOutputs &deviceList)
     deviceList.ClearData();
 
 #ifdef USE_DXGI1_2
-    REFIID iidVal = IsWindows8Up() ? __uuidof(IDXGIFactory2) : __uuidof(IDXGIFactory1);
+    REFIID iidVal = OSGetVersion() >= 8 ? __uuidof(IDXGIFactory2) : __uuidof(IDXGIFactory1);
 #else
     REFIIF iidVal = __uuidof(IDXGIFactory1);
 #endif
@@ -85,7 +85,7 @@ void LogVideoCardStats()
     HRESULT err;
 
 #ifdef USE_DXGI1_2
-    REFIID iidVal = IsWindows8Up() ? __uuidof(IDXGIFactory2) : __uuidof(IDXGIFactory1);
+    REFIID iidVal = OSGetVersion() >= 8 ? __uuidof(IDXGIFactory2) : __uuidof(IDXGIFactory1);
 #else
     REFIIF iidVal = __uuidof(IDXGIFactory1);
 #endif
@@ -124,7 +124,7 @@ D3D10System::D3D10System()
     HRESULT err;
 
 #ifdef USE_DXGI1_2
-    REFIID iidVal = IsWindows8Up() ? __uuidof(IDXGIFactory2) : __uuidof(IDXGIFactory1);
+    REFIID iidVal = OSGetVersion() >= 8 ? __uuidof(IDXGIFactory2) : __uuidof(IDXGIFactory1);
 #else
     REFIID iidVal = __uuidof(IDXGIFactory1);
 #endif

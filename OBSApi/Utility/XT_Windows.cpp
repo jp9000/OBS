@@ -43,6 +43,7 @@ void STDCALL InputProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 void STDCALL ResetCursorClip();
 
 SYSTEM_INFO si;
+OSVERSIONINFO osVersionInfo;
 
 BOOL        bHidingCursor = 0;
 BOOL        bWindows8 = 0;
@@ -66,6 +67,29 @@ DWORD CountSetBits(ULONG_PTR bitMask)
     return bitSetCount;
 }
 
+int    STDCALL OSGetVersion()
+{
+    if(osVersionInfo.dwMajorVersion > 6)
+        return 8;
+
+    if (osVersionInfo.dwMajorVersion == 6)
+    {
+        //Windows 8
+        if (osVersionInfo.dwMinorVersion >= 2)
+            return 8;
+
+        //Windows 7
+        if (osVersionInfo.dwMinorVersion == 1)
+            return 7;
+
+        //Vista
+        if (osVersionInfo.dwMinorVersion == 0)
+            return 6;
+    }
+
+    return 0;
+}
+
 void   STDCALL OSInit()
 {
     timeBeginPeriod(1);
@@ -75,10 +99,10 @@ void   STDCALL OSInit()
 
     GetSystemInfo(&si);
 
-    OSVERSIONINFO osvi;
-    osvi.dwOSVersionInfoSize = sizeof(osvi);
-    GetVersionEx(&osvi);
-    if(osvi.dwMajorVersion > 6 || (osvi.dwMajorVersion == 6 && osvi.dwMinorVersion >= 2))
+    osVersionInfo.dwOSVersionInfoSize = sizeof(osVersionInfo);
+    GetVersionEx(&osVersionInfo);
+
+    if (OSGetVersion() == 8)
         bWindows8 = TRUE;
 
     QueryPerformanceFrequency(&clockFreq);
