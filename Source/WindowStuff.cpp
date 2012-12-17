@@ -405,8 +405,6 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 default:
                     if(ret >= ID_LISTBOX_ADD)
                     {
-                        App->EnableSceneSwitching(false);
-
                         String strName = Str("Scene");
                         GetNewSceneName(strName);
 
@@ -432,14 +430,10 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                             PostMessage(hwnd, LB_SETCURSEL, newID, 0);
                             PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_SCENES, LBN_SELCHANGE), (LPARAM)hwnd);
                         }
-
-                        App->EnableSceneSwitching(true);
                     }
                     break;
 
                 case ID_LISTBOX_REMOVE:
-                    App->EnableSceneSwitching(false);
-
                     if(MessageBox(hwndMain, Str("DeleteConfirm"), Str("DeleteConfirm.Title"), MB_YESNO) == IDYES)
                     {
                         DWORD hotkey = item->GetInt(TEXT("hotkey"));
@@ -457,14 +451,11 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
                         bDelete = true;
                     }
-
-                    App->EnableSceneSwitching(true);
                     break;
 
                 case ID_LISTBOX_RENAME:
                     {
                         String strName;
-                        App->EnableSceneSwitching(false);
                         if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSceneNameDialogProc, (LPARAM)&strName) == IDOK)
                         {
                             SendMessage(hwnd, LB_DELETESTRING, curSel, 0);
@@ -473,7 +464,6 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
                             item->SetName(strName);
                         }
-                        App->EnableSceneSwitching(true);
                         break;
                     }
 
@@ -625,8 +615,6 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 default:
                     if(ret >= ID_LISTBOX_ADD)
                     {
-                        App->EnableSceneSwitching(false);
-
                         ClassInfo *ci;
                         if(ret >= ID_LISTBOX_GLOBALSOURCE)
                             ci = App->GetImageSourceClass(TEXT("GlobalSource"));
@@ -682,7 +670,6 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                                     if(!ci->configProc(newSourceElement, true))
                                     {
                                         sources->RemoveElement(newSourceElement);
-                                        App->EnableSceneSwitching(true);
                                         break;
                                     }
                                 }
@@ -702,21 +689,16 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                                 PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_SOURCES, LBN_SELCHANGE), (LPARAM)hwnd);
                             }
                         }
-
-                        App->EnableSceneSwitching(true);
                     }
                     break;
 
                 case ID_LISTBOX_REMOVE:
-                    App->EnableSceneSwitching(false);
                     App->DeleteItems();
-                    App->EnableSceneSwitching(true);
                     break;
 
                 case ID_LISTBOX_RENAME:
                     {
                         String strName;
-                        App->EnableSceneSwitching(false);
                         if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSourceNameDialogProc, (LPARAM)&strName) == IDOK)
                         {
                             SendMessage(hwnd, LB_DELETESTRING, curSel, 0);
@@ -725,8 +707,6 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
                             selectedElement->SetName(strName);
                         }
-
-                        App->EnableSceneSwitching(true);
                         break;
                     }
 
@@ -1292,11 +1272,8 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                                     {
                                         if(scmpi(data->GetString(TEXT("name")), element->GetName()) == 0)
                                         {
-                                            UINT listID = (UINT)SendMessage(hwndSources, LB_FINDSTRINGEXACT, -1, (LPARAM)item->GetName());
-                                            if(listID != LB_ERR)
-                                                SendMessage(hwndSources, LB_DELETESTRING, listID, 0);
-
                                             App->scene->RemoveImageSource(item);
+                                            i--;
                                         }
                                     }
                                 }
