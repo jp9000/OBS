@@ -225,12 +225,14 @@ char* OBS::EncMetaData(char *enc, char *pend, bool bFLVFile)
     double audioCodecID;
     const AVal *av_codecFourCC;
 
+#ifdef USE_AAC
     if(scmpi(lpAudioCodec, TEXT("AAC")) == 0)
     {
         av_codecFourCC = &av_mp4a;
         audioCodecID = 10.0;
     }
     else
+#endif
     {
         av_codecFourCC = &av_mp3;
         audioCodecID = 2.0;
@@ -243,6 +245,7 @@ char* OBS::EncMetaData(char *enc, char *pend, bool bFLVFile)
     }
     else
         *enc++ = AMF_OBJECT;
+
     enc = AMF_EncodeNamedNumber(enc, pend, &av_duration,        0.0);
     enc = AMF_EncodeNamedNumber(enc, pend, &av_fileSize,        0.0);
     enc = AMF_EncodeNamedNumber(enc, pend, &av_width,           double(outputCX));

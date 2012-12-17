@@ -378,4 +378,3 @@ void InitVolumeControl()
     if(!RegisterClass(&wnd))
         CrashError(TEXT("Could not register volume control class"));
 }
-

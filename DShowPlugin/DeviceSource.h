@@ -62,7 +62,7 @@ class DeviceSource : public ImageSource
 
     DeviceColorType colorType;
 
-    String          strDevice;
+    String          strDevice, strDeviceName, strDeviceID;
     bool            bFlipVertical, bFlipHorizontal;
     UINT64          frameInterval;
     UINT            renderCX, renderCY;

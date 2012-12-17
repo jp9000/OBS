@@ -46,7 +46,7 @@ struct VideoPacket
     inline void FreeData() {Packet.Clear();}
 };
 
-const float baseCRF = 20.0f;
+const float baseCRF = 22.0f;
 
 class X264Encoder : public VideoEncoder
 {
@@ -67,12 +67,12 @@ class X264Encoder : public VideoEncoder
 
     bool bFirstFrameProcessed;
 
-    bool bUseCBR;
+    bool bUseCBR, bUseCTSAdjust;
 
     List<VideoPacket> CurrentPackets;
     List<BYTE> HeaderPacket;
 
-    int delayOffset;
+    INT64 delayOffset;
 
     inline void ClearPackets()
     {
@@ -125,7 +125,7 @@ public:
         }
 
         paramData.b_vfr_input           = 1;
-        paramData.i_keyint_max          = fps*5;      //keyframe every 5 sec, should make this an option
+        paramData.i_keyint_max          = fps*4;      //keyframe every 4 sec, should make this an option
         paramData.i_width               = width;
         paramData.i_height              = height;
         paramData.vui.b_fullrange       = 0;          //specify full range input levels
@@ -141,6 +141,7 @@ public:
         //paramData.pf_log                = get_x264_log;
         //paramData.i_log_level           = X264_LOG_INFO;
 
+        bUseCTSAdjust = !AppConfig->GetInt(TEXT("Video Encoding"), TEXT("DisableCTSAdjust"));
         BOOL bUseCustomParams = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCustomSettings"));
         if(bUseCustomParams)
         {
@@ -217,23 +218,24 @@ public:
 
         if(!bFirstFrameProcessed && nalNum)
         {
-            if(picOut.i_dts < 0)
-                delayOffset = int(-picOut.i_dts);
-            //Log(TEXT("cts: %u, timestamp: %u"), ctsOffset, outputTimestamp);
+            delayOffset = -picOut.i_dts;
             bFirstFrameProcessed = true;
         }
 
         INT64 ts = INT64(outputTimestamp);
-        int timeOffset = int(picOut.i_pts+INT64(delayOffset)-ts);
+        int timeOffset = int((picOut.i_pts+delayOffset)-ts);
 
-        timeOffset += ctsOffset;
-
-        //dynamically adjust the CTS for the stream if it gets lower than the current value
-        //(thanks to cyrus for suggesting to do this instead of a single shift)
-        if(nalNum && timeOffset < 0)
+        if(bUseCTSAdjust)
         {
-            ctsOffset -= timeOffset;
-            timeOffset = 0;
+            timeOffset += ctsOffset;
+
+            //dynamically adjust the CTS for the stream if it gets lower than the current value
+            //(thanks to cyrus for suggesting to do this instead of a single shift)
+            if(nalNum && timeOffset < 0)
+            {
+                ctsOffset -= timeOffset;
+                timeOffset = 0;
+            }
         }
 
         //Log(TEXT("dts: %d, pts: %d, timestamp: %d, offset: %d"), picOut.i_dts, picOut.i_pts, outputTimestamp, timeOffset);
@@ -242,28 +244,37 @@ public:
 
         BYTE *timeOffsetAddr = ((BYTE*)&timeOffset)+1;
 
+        VideoPacket *newPacket = NULL;
+
         for(int i=0; i<nalNum; i++)
         {
             x264_nal_t &nal = nalOut[i];
 
             if(nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE || nal.i_type == NAL_SEI)
             {
-                VideoPacket *newPacket = CurrentPackets.CreateNew();
-
                 BYTE *skip = nal.p_payload;
                 while(*(skip++) != 0x1);
                 int skipBytes = (int)(skip-nal.p_payload);
 
-                int newPayloadSize = (nal.i_payload-skipBytes);
-                newPacket->Packet.SetSize(9+newPayloadSize);
+                bool bNewPacket = (!newPacket);
 
-                newPacket->Packet[0] = ((nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SEI) ? 0x17 : 0x27);
-                newPacket->Packet[1] = 1;
-                mcpy(newPacket->Packet+2, timeOffsetAddr, 3);
-                *(DWORD*)(newPacket->Packet+5) = htonl(newPayloadSize);
-                mcpy(newPacket->Packet+9, nal.p_payload+skipBytes, newPayloadSize);
+                if(bNewPacket)
+                    newPacket = CurrentPackets.CreateNew();
+
+                int newPayloadSize = (nal.i_payload-skipBytes);
+                BufferOutputSerializer packetOut(newPacket->Packet);
+
+                if(bNewPacket)
+                {
+                    packetOut.OutputByte((nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SEI) ? 0x17 : 0x27);
+                    packetOut.OutputByte(1);
+                    packetOut.Serialize(timeOffsetAddr, 3);
+                }
+
+                packetOut.OutputDword(htonl(newPayloadSize));
+                packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
             }
-            else if(nal.i_type == NAL_SPS)
+            /*else if(nal.i_type == NAL_SPS)
             {
                 VideoPacket *newPacket = CurrentPackets.CreateNew();
                 BufferOutputSerializer headerOut(newPacket->Packet);
@@ -283,7 +294,7 @@ public:
                 headerOut.OutputByte(1);
                 headerOut.OutputWord(htons(pps.i_payload-4));
                 headerOut.Serialize(pps.p_payload+4, pps.i_payload-4);
-            }
+            }*/
             else
                 continue;
 

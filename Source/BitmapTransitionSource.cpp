@@ -58,6 +58,7 @@ public:
     {
         this->data = data;
         UpdateSettings();
+        Log(TEXT("Using Slide Show"));
     }
 
     ~BitmapTransitionSource()

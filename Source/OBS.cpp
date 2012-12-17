@@ -95,7 +95,7 @@ BOOL CALLBACK MonitorInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprc
 const int controlPadding = 3;
 
 const int totalControlAreaWidth  = minClientWidth;
-const int totalControlAreaHeight = 158;//170;//
+const int totalControlAreaHeight = 171;//170;//
 
 void OBS::ResizeRenderFrame(bool bRedrawRenderFrame)
 {
@@ -192,6 +192,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
     const int controlHeight = 22;
 
     const int volControlHeight = 32;
+    const int volMeterHeight = 10;
 
     const int textControlHeight = 16;
 
@@ -240,7 +241,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
     parts[4] = -1;
     parts[3] = clientWidth-100;
     parts[2] = parts[3]-60;
-    parts[1] = parts[2]-150;
+    parts[1] = parts[2]-170;
     parts[0] = parts[1]-80;
     SendMessage(hwndTemp, SB_SETPARTS, 5, (LPARAM)parts);
 
@@ -258,6 +259,18 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
     xPos += controlWidth;
 
     yPos += volControlHeight+controlPadding;
+
+    //-----------------------------------------------------
+
+    xPos = resetXPos;
+
+    SetWindowPos(GetDlgItem(hwndMain, ID_MICVOLUMEMETER), NULL, xPos, yPos, controlWidth-controlPadding, volMeterHeight, flags);
+    xPos += controlWidth;
+
+    SetWindowPos(GetDlgItem(hwndMain, ID_DESKTOPVOLUMEMETER), NULL, xPos, yPos, controlWidth-controlPadding, volMeterHeight, flags);
+    xPos += controlWidth;
+
+    yPos += volMeterHeight+controlPadding;
 
     //-----------------------------------------------------
 
@@ -433,6 +446,95 @@ public:
 };
 
 
+#define QuickClearHotkey(hotkeyID) \
+    if(hotkeyID) \
+    { \
+        API->DeleteHotkey(hotkeyID); \
+        hotkeyID = NULL; \
+    }
+
+
+void OBS::ReloadIniSettings()
+{
+    HWND hwndTemp;
+
+    //-------------------------------------------
+    // mic volume data
+    hwndTemp = GetDlgItem(hwndMain, ID_MICVOLUME);
+
+    if(!AppConfig->HasKey(TEXT("Audio"), TEXT("MicVolume")))
+        AppConfig->SetFloat(TEXT("Audio"), TEXT("MicVolume"), 0.0f);
+    SetVolumeControlValue(hwndTemp, AppConfig->GetFloat(TEXT("Audio"), TEXT("MicVolume"), 0.0f));
+
+    AudioDeviceList audioDevices;
+    GetAudioDevices(audioDevices);
+
+    String strDevice = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), NULL);
+    if(strDevice.IsEmpty() || !audioDevices.HasID(strDevice))
+    {
+        AppConfig->SetString(TEXT("Audio"), TEXT("Device"), TEXT("Disable"));
+        strDevice = TEXT("Disable");
+    }
+
+    audioDevices.FreeData();
+
+    EnableWindow(hwndTemp, !strDevice.CompareI(TEXT("Disable")));
+
+    //-------------------------------------------
+    // desktop volume
+    hwndTemp = GetDlgItem(hwndMain, ID_DESKTOPVOLUME);
+
+    if(!AppConfig->HasKey(TEXT("Audio"), TEXT("DesktopVolume")))
+        AppConfig->SetFloat(TEXT("Audio"), TEXT("DesktopVolume"), 1.0f);
+    SetVolumeControlValue(hwndTemp, AppConfig->GetFloat(TEXT("Audio"), TEXT("DesktopVolume"), 0.0f));
+
+    //-------------------------------------------
+    // mic boost
+    DWORD micBoostPercentage = AppConfig->GetInt(TEXT("Audio"), TEXT("MicBoostMultiple"), 1);
+    if(micBoostPercentage < 1)
+        micBoostPercentage = 1;
+    else if(micBoostPercentage > 20)
+        micBoostPercentage = 20;
+    micBoost = float(micBoostPercentage);
+
+    //-------------------------------------------
+    // dashboard
+    strDashboard = AppConfig->GetString(TEXT("Publish"), TEXT("Dashboard"));
+    strDashboard.KillSpaces();
+
+    //-------------------------------------------
+    // hotkeys
+    QuickClearHotkey(pushToTalkHotkeyID);
+    QuickClearHotkey(muteMicHotkeyID);
+    QuickClearHotkey(muteDesktopHotkeyID);
+    QuickClearHotkey(stopStreamHotkeyID);
+    QuickClearHotkey(startStreamHotkeyID);
+
+    bUsingPushToTalk = AppConfig->GetInt(TEXT("Audio"), TEXT("UsePushToTalk")) != 0;
+    DWORD hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey"));
+    pushToTalkDelay = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkDelay"), 200);
+
+    if(bUsingPushToTalk && hotkey)
+        pushToTalkHotkeyID = API->CreateHotkey(hotkey, OBS::PushToTalkHotkey, NULL);
+
+    hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("MuteMicHotkey"));
+    if(hotkey)
+        muteMicHotkeyID = API->CreateHotkey(hotkey, OBS::MuteMicHotkey, NULL);
+
+    hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("MuteDesktopHotkey"));
+    if(hotkey)
+        muteDesktopHotkeyID = API->CreateHotkey(hotkey, OBS::MuteDesktopHotkey, NULL);
+
+    hotkey = AppConfig->GetInt(TEXT("Publish"), TEXT("StopStreamHotkey"));
+    if(hotkey)
+        stopStreamHotkeyID = API->CreateHotkey(hotkey, OBS::StopStreamHotkey, NULL);
+
+    hotkey = AppConfig->GetInt(TEXT("Publish"), TEXT("StartStreamHotkey"));
+    if(hotkey)
+        startStreamHotkeyID = API->CreateHotkey(hotkey, OBS::StartStreamHotkey, NULL);
+}
+
+
 OBS::OBS()
 {
     App = this;
@@ -455,6 +557,7 @@ OBS::OBS()
     InitHotkeyExControl(hinstMain);
     InitColorControl(hinstMain);
     InitVolumeControl();
+    InitVolumeMeter();
 
     //-----------------------------------------------------
     // load locale
@@ -621,23 +724,20 @@ OBS::OBS()
         0, 0, 0, 0, hwndMain, (HMENU)ID_MICVOLUME, 0, 0);
     SetVolumeControlIcons(hwndTemp, GetIcon(hinstMain, IDI_SOUND_MIC), GetIcon(hinstMain, IDI_SOUND_MIC_MUTED));
 
-    if(!AppConfig->HasKey(TEXT("Audio"), TEXT("MicVolume")))
-        AppConfig->SetFloat(TEXT("Audio"), TEXT("MicVolume"), 0.0f);
-    SetVolumeControlValue(hwndTemp, AppConfig->GetFloat(TEXT("Audio"), TEXT("MicVolume"), 0.0f));
 
-    AudioDeviceList audioDevices;
-    GetAudioDevices(audioDevices);
+    //-----------------------------------------------------
+    // mic volume meter
 
-    String strDevice = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), NULL);
-    if(strDevice.IsEmpty() || !audioDevices.HasID(strDevice))
-    {
-        AppConfig->SetString(TEXT("Audio"), TEXT("Device"), TEXT("Disable"));
-        strDevice = TEXT("Disable");
-    }
+    hwndTemp = CreateWindow(VOLUME_METER_CLASS, NULL,
+                            WS_CHILDWINDOW|WS_VISIBLE|WS_CLIPSIBLINGS,
+                            0, 0, 0, 0, hwndMain, (HMENU)ID_MICVOLUMEMETER, 0, 0);
 
-    audioDevices.FreeData();
+    //-----------------------------------------------------
+    // desktop volume meter
 
-    EnableWindow(hwndTemp, !strDevice.CompareI(TEXT("Disable")));
+    hwndTemp = CreateWindow(VOLUME_METER_CLASS, NULL,
+                            WS_CHILDWINDOW|WS_VISIBLE|WS_CLIPSIBLINGS,
+                            0, 0, 0, 0, hwndMain, (HMENU)ID_DESKTOPVOLUMEMETER, 0, 0);
 
     //-----------------------------------------------------
     // desktop volume control
@@ -646,10 +746,6 @@ OBS::OBS()
         WS_CHILDWINDOW|WS_VISIBLE|WS_CLIPSIBLINGS,
         0, 0, 0, 0, hwndMain, (HMENU)ID_DESKTOPVOLUME, 0, 0);
     SetVolumeControlIcons(hwndTemp, GetIcon(hinstMain, IDI_SOUND_DESKTOP), GetIcon(hinstMain, IDI_SOUND_DESKTOP_MUTED));
-
-    if(!AppConfig->HasKey(TEXT("Audio"), TEXT("DesktopVolume")))
-        AppConfig->SetFloat(TEXT("Audio"), TEXT("DesktopVolume"), 1.0f);
-    SetVolumeControlValue(hwndTemp, AppConfig->GetFloat(TEXT("Audio"), TEXT("DesktopVolume"), 0.0f));
 
     //-----------------------------------------------------
     // settings button
@@ -784,9 +880,6 @@ OBS::OBS()
 
     API = new OBSAPIInterface;
 
-    strDashboard = AppConfig->GetString(TEXT("Publish"), TEXT("Dashboard"));
-    strDashboard.KillSpaces();
-
     ResizeWindow(false);
     ShowWindow(hwndMain, SW_SHOW);
 
@@ -807,35 +900,6 @@ OBS::OBS()
                 sceneHotkeys << hotkeyInfo;
         }
     }
-
-    bUsingPushToTalk = AppConfig->GetInt(TEXT("Audio"), TEXT("UsePushToTalk")) != 0;
-    DWORD hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey"));
-
-    if(bUsingPushToTalk && hotkey)
-        pushToTalkHotkeyID = API->CreateHotkey(hotkey, OBS::PushToTalkHotkey, NULL);
-
-    hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("MuteMicHotkey"));
-    if(hotkey)
-        muteMicHotkeyID = API->CreateHotkey(hotkey, OBS::MuteMicHotkey, NULL);
-
-    hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("MuteDesktopHotkey"));
-    if(hotkey)
-        muteDesktopHotkeyID = API->CreateHotkey(hotkey, OBS::MuteDesktopHotkey, NULL);
-
-    hotkey = AppConfig->GetInt(TEXT("Publish"), TEXT("StopStreamHotkey"));
-    if(hotkey)
-        stopStreamHotkeyID = API->CreateHotkey(hotkey, OBS::StopStreamHotkey, NULL);
-
-    hotkey = AppConfig->GetInt(TEXT("Publish"), TEXT("StartStreamHotkey"));
-    if(hotkey)
-        startStreamHotkeyID = API->CreateHotkey(hotkey, OBS::StartStreamHotkey, NULL);
-
-    DWORD micBoostPercentage = AppConfig->GetInt(TEXT("Audio"), TEXT("MicBoostMultiple"), 1);
-    if(micBoostPercentage < 1)
-        micBoostPercentage = 1;
-    else if(micBoostPercentage > 20)
-        micBoostPercentage = 20;
-    micBoost = float(micBoostPercentage);
 
     //-----------------------------------------------------
     // load plugins
@@ -872,13 +936,17 @@ OBS::OBS()
 
     //-----------------------------------------------------
 
+    ReloadIniSettings();
+
+    //-----------------------------------------------------
+
     bAutoReconnect = AppConfig->GetInt(TEXT("Publish"), TEXT("AutoReconnect"), 1) != 0;
     reconnectTimeout = AppConfig->GetInt(TEXT("Publish"), TEXT("AutoReconnectTimeout"), 10);
     if(reconnectTimeout < 5)
         reconnectTimeout = 5;
 
     hHotkeyThread = OSCreateThread((XTHREAD)HotkeyThread, NULL);
-    
+
     bRenderViewEnabled = true;
 }
 
@@ -1001,7 +1069,14 @@ void STDCALL OBS::StopStreamHotkey(DWORD hotkey, UPARAM param, bool bDown)
 
 void STDCALL OBS::PushToTalkHotkey(DWORD hotkey, UPARAM param, bool bDown)
 {
-    App->bPushToTalkOn = bDown;
+    App->bPushToTalkDown = bDown;
+    if(bDown)
+        App->bPushToTalkOn = true;
+    else if(App->pushToTalkDelay <= 0)
+        App->bPushToTalkOn = false;
+    
+    App->pushToTalkTimeLeft = App->pushToTalkDelay;
+    OSDebugOut(TEXT("Actual delay: %d"), App->pushToTalkDelay);
 }
 
 
@@ -1018,6 +1093,12 @@ void STDCALL OBS::MuteDesktopHotkey(DWORD hotkey, UPARAM param, bool bDown)
     if(!bDown) return;
 
     App->desktopVol = ToggleVolumeControlMute(GetDlgItem(hwndMain, ID_DESKTOPVOLUME));
+}
+
+void OBS::UpdateAudioMeters()
+{
+    SetVolumeMeterValue(GetDlgItem(hwndMain, ID_DESKTOPVOLUMEMETER), desktopMag, desktopMax);
+    SetVolumeMeterValue(GetDlgItem(hwndMain, ID_MICVOLUMEMETER), micMag, micMax);
 }
 
 HICON OBS::GetIcon(HINSTANCE hInst, int resource)
@@ -1119,6 +1200,14 @@ void OBS::Start()
     {
         MessageBox(hwndMain, Str("IncompatibleModules"), NULL, MB_ICONERROR);
         Log(TEXT("Incompatible modules detected."));
+        return;
+    }
+
+    String strPatchesError;
+    if (OSIncompatiblePatchesLoaded(strPatchesError))
+    {
+        MessageBox(hwndMain, strPatchesError.Array(), NULL, MB_ICONERROR);
+        Log(TEXT("Incompatible patches detected."));
         return;
     }
 
@@ -1294,11 +1383,13 @@ void OBS::Start()
     //-------------------------------------------------------------
 
     UINT bitRate = (UINT)AppConfig->GetInt(TEXT("Audio Encoding"), TEXT("Bitrate"), 96);
-    String strEncoder = AppConfig->GetString(TEXT("Audio Encoding"), TEXT("Codec"), TEXT("MP3"));
+    String strEncoder = AppConfig->GetString(TEXT("Audio Encoding"), TEXT("Codec"), TEXT("AAC"));
 
-    if(strEncoder.CompareI(TEXT("AAC")))
+#ifdef USE_AAC
+    if(strEncoder.CompareI(TEXT("AAC")) && OSGetVersion() >= 7)
         audioEncoder = CreateAACEncoder(bitRate);
     else
+#endif
         audioEncoder = CreateMP3Encoder(bitRate);
 
     //-------------------------------------------------------------
@@ -1342,7 +1433,7 @@ void OBS::Start()
     String preset  = AppConfig->GetString(TEXT("Video Encoding"), TEXT("Preset"),     TEXT("veryfast"));
     bUsing444      = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Use444"),     0) != 0;
 
-    bUseSyncFix    = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("UseSyncFix"), 0) != 0;
+    bUseSyncFix    = 0;//AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("UseSyncFix"), 0) != 0;
 
     if(bUseSyncFix)
     {
@@ -1537,7 +1628,18 @@ void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
                     strOutString = FormattedString(TEXT("%u:%02u:%02u"), streamTimeHours, streamTimeMinutes, streamTimeSeconds);
                 }
                 break;
-            case 2: strOutString << Str("MainWindow.DroppedFrames") << TEXT(" ") << IntString(App->curFramesDropped); break;
+            case 2:
+                {
+                    double percentageDropped = 0.0;
+                    if(App->network)
+                    {
+                        UINT numTotalFrames = App->network->NumTotalVideoFrames();
+                        if(numTotalFrames)
+                            percentageDropped = double(App->network->NumDroppedFrames())/double(numTotalFrames);
+                    }
+                    strOutString << Str("MainWindow.DroppedFrames") << FormattedString(TEXT(" %u (%0.2f%%)"), App->curFramesDropped, percentageDropped);
+                }
+                break;
             case 3: strOutString << TEXT("FPS: ") << IntString(App->captureFPS); break;
         }
 
@@ -1725,30 +1827,68 @@ void OBS::Stop()
 
     SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, 1, 0, 0);
 
+    for(UINT i=0; i<bufferedVideo.Num(); i++)
+        bufferedVideo[i].Clear();
+    bufferedVideo.Clear();
+
     bTestStream = false;
 }
 
-inline void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
+inline void CalculateVolumeLevels(float *buffer, int totalFloats, float mulVal, float &RMS, float &MAX)
 {
-    if(!CloseFloat(mulVal, 1.0))
+    float sum = 0.0f;
+    int totalFloatsStore = totalFloats;
+
+    float Max = 0.0f;
+
+    if(App->SSE2Available() && (UPARAM(buffer) & 0xF) == 0)
     {
-        if(App->SSE2Available() && (UPARAM(buffer) & 0xF) == 0)
+        UINT alignedFloats = totalFloats & 0xFFFFFFFC;
+        __m128 sseMulVal = _mm_set_ps1(mulVal);
+
+        for(UINT i=0; i<alignedFloats; i += 4)
         {
-            UINT alignedFloats = totalFloats & 0xFFFFFFFC;
-            __m128 sseMulVal = _mm_set_ps1(mulVal);
+            __m128 sseScaledVals = _mm_mul_ps(_mm_load_ps(buffer+i), sseMulVal);
 
-            for(UINT i=0; i<alignedFloats; i += 4)
-                _mm_store_ps(buffer+i, _mm_mul_ps(_mm_load_ps(buffer+i), sseMulVal));
+            /*compute squares and add them to the sum*/
+            __m128 sseSquares = _mm_mul_ps(sseScaledVals, sseScaledVals);
+            sum += sseSquares.m128_f32[0] + sseSquares.m128_f32[1] + sseSquares.m128_f32[2] + sseSquares.m128_f32[3];
 
-            buffer      += alignedFloats;
-            totalFloats -= alignedFloats;
+            /* 
+                sse maximum of squared floats 
+                concept from: http://stackoverflow.com/questions/9795529/how-to-find-the-horizontal-maximum-in-a-256-bit-avx-vector
+            */
+            __m128 sseSquaresP = _mm_shuffle_ps(sseSquares, sseSquares, _MM_SHUFFLE(1, 0, 3, 2));
+            __m128 halfmax = _mm_max_ps(sseSquares, sseSquaresP);
+            __m128 halfmaxP = _mm_shuffle_ps(halfmax, halfmax, _MM_SHUFFLE(0,1,2,3));
+            __m128 maxs = _mm_max_ps(halfmax, halfmaxP);
+
+            Max = max(Max, maxs.m128_f32[0]);
         }
 
-        for(int i=0; i<totalFloats; i++)
-            buffer[i] *= mulVal;
+        buffer      += alignedFloats;
+        totalFloats -= alignedFloats;
     }
+
+    for(int i=0; i<totalFloats; i++)
+    {
+        float val = buffer[i] * mulVal;
+        float pow2Val = val * val;
+        sum += pow2Val;
+        Max = max(Max, pow2Val);
+    }
+
+    RMS = sqrt(sum / totalFloatsStore);
+    MAX = sqrt(Max);
 }
 
+inline float toDB(float RMS)
+{
+    float db = 20.0f * log10(RMS);
+    if(!_finite(db))
+        return VOL_MIN;
+    return db;
+}
 
 DWORD STDCALL OBS::MainCaptureThread(LPVOID lpUnused)
 {
@@ -1758,7 +1898,9 @@ DWORD STDCALL OBS::MainCaptureThread(LPVOID lpUnused)
 
 DWORD STDCALL OBS::MainAudioThread(LPVOID lpUnused)
 {
+    CoInitialize(0);
     App->MainAudioLoop();
+    CoUninitialize();
     return 0;
 }
 
@@ -1786,20 +1928,45 @@ DWORD STDCALL Convert444Thread(Convert444Data *data)
     return 0;
 }
 
+bool OBS::BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, VideoSegment &segmentOut)
+{
+    VideoSegment &segmentIn = *bufferedVideo.CreateNew();
+    segmentIn.ctsOffset = ctsOffset;
+    segmentIn.timestamp = timestamp;
+
+    segmentIn.packets.SetSize(inputPackets.Num());
+    for(UINT i=0; i<inputPackets.Num(); i++)
+    {
+        segmentIn.packets[i].data.CopyArray(inputPackets[i].lpPacket, inputPackets[i].size);
+        segmentIn.packets[i].type =  inputTypes[i];
+    }
+
+    if((bufferedVideo.Last().timestamp-bufferedVideo[0].timestamp) >= OUTPUT_BUFFER_TIME)
+    {
+        segmentOut.packets.TransferFrom(bufferedVideo[0].packets);
+        segmentOut.ctsOffset = bufferedVideo[0].ctsOffset;
+        segmentOut.timestamp = bufferedVideo[0].timestamp;
+        bufferedVideo.Remove(0);
+
+        return true;
+    }
+
+    return false;
+}
+
 void OBS::MainCaptureLoop()
 {
     int curRenderTarget = 0, curYUVTexture = 0, curCopyTexture = 0;
     int copyWait = NUM_RENDER_BUFFERS-1;
-    UINT curStreamTime = 0, firstFrameTime = OSGetTime(), lastStreamTime = 0;
     UINT lastPTSVal = 0, lastUnmodifiedPTSVal = 0;
 
     bool bSentHeaders = false;
 
     bufferedTimes.Clear();
 
-    Vect2 baseSize        = Vect2(float(baseCX), float(baseCY));
-    Vect2 outputSize      = Vect2(float(outputCX), float(outputCY));
-    Vect2 scaleSize       = Vect2(float(scaleCX), float(scaleCY));
+    Vect2 baseSize    = Vect2(float(baseCX), float(baseCY));
+    Vect2 outputSize  = Vect2(float(outputCX), float(outputCY));
+    Vect2 scaleSize   = Vect2(float(scaleCX), float(scaleCY));
 
     int numLongFrames = 0;
     int numTotalFrames = 0;
@@ -1834,16 +2001,23 @@ void OBS::MainCaptureLoop()
     desktopAudio->StartCapture();
     if(micAudio) micAudio->StartCapture();
 
+    LARGE_INTEGER clockFreq;
+    QueryPerformanceFrequency(&clockFreq);
+
+    firstSceneTimestamp = GetQPCTimeMS(clockFreq.QuadPart);
+
     bytesPerSec = 0;
     captureFPS = 0;
     curFramesDropped = 0;
     curStrain = 0.0;
     PostMessage(hwndMain, OBS_UPDATESTATUSBAR, 0, 0);
 
-    QWORD lastBytesSent = 0;
+    QWORD lastBytesSent[3] = {0, 0, 0};
     DWORD lastFramesDropped = 0;
     float bpsTime = 0.0f;
     double lastStrain = 0.0f;
+
+    DWORD numSecondsWaited = 0;
 
     int numThreads = MAX(OSGetTotalCores()-2, 1);
     HANDLE *h420Threads = (HANDLE*)Allocate(sizeof(HANDLE)*numThreads);
@@ -1883,6 +2057,8 @@ void OBS::MainCaptureLoop()
 
     List<HANDLE> completeEvents;
 
+    bUseSyncFix = false;
+
     if(bUseThreaded420)
     {
         for(int i=0; i<numThreads; i++)
@@ -1892,8 +2068,16 @@ void OBS::MainCaptureLoop()
         }
     }
 
+    QWORD curStreamTime = 0, lastStreamTime, firstFrameTime = GetQPCTimeMS(clockFreq.QuadPart);
+    lastStreamTime = 0;
+
+    bool bFirstAudioPacket = true;
+
     while(bRunning)
     {
+        //todo: test
+        QueryPerformanceFrequency(&clockFreq);
+
         DWORD renderStartTime = OSGetTime();
 
         totalStreamTime = renderStartTime-streamTimeStart;
@@ -1910,8 +2094,9 @@ void OBS::MainCaptureLoop()
 
         profileIn("frame");
 
-        curStreamTime = renderStartTime-firstFrameTime;
-        DWORD frameDelta = curStreamTime-lastStreamTime;
+        QWORD qwTime = GetQPCTimeMS(clockFreq.QuadPart);
+        curStreamTime = qwTime-firstFrameTime;
+        QWORD frameDelta = curStreamTime-lastStreamTime;
 
         if(bUseSyncFix)
         {
@@ -1919,13 +2104,24 @@ void OBS::MainCaptureLoop()
             if(!pendingAudioFrames.Num())
                 bufferedTimes << 0;
             else
-                bufferedTimes << pendingAudioFrames.Last().timestamp;
+                bufferedTimes << UINT(pendingAudioFrames.Last().timestamp);
             OSLeaveMutex(hSoundDataMutex);
 
             ReleaseSemaphore(hRequestAudioEvent, 1, NULL);
         }
         else
-            bufferedTimes << curStreamTime;
+            bufferedTimes << UINT(curStreamTime);
+
+        if(!bPushToTalkDown && pushToTalkTimeLeft > 0)
+        {
+            pushToTalkTimeLeft -= int(frameDelta);
+            OSDebugOut(TEXT("time left: %d\r\n"), pushToTalkTimeLeft);
+            if(pushToTalkTimeLeft <= 0)
+            {
+                pushToTalkTimeLeft = 0;
+                bPushToTalkOn = false;
+            }
+        }
 
         float fSeconds = float(frameDelta)*0.001f;
         lastStreamTime = curStreamTime;
@@ -1967,10 +2163,21 @@ void OBS::MainCaptureLoop()
         bpsTime += fSeconds;
         if(bpsTime > 1.0f)
         {
-            bytesPerSec = DWORD(curBytesSent - lastBytesSent);
+            if(numSecondsWaited < 3)
+                ++numSecondsWaited;
+
+            //bytesPerSec = DWORD(curBytesSent - lastBytesSent);
+            bytesPerSec = DWORD(curBytesSent - lastBytesSent[0]) / numSecondsWaited;
             bpsTime = 0.0f;
 
-            lastBytesSent = curBytesSent;
+            if(numSecondsWaited == 3)
+            {
+                lastBytesSent[0] = lastBytesSent[1];
+                lastBytesSent[1] = lastBytesSent[2];
+                lastBytesSent[2] = curBytesSent;
+            }
+            else
+                lastBytesSent[numSecondsWaited] = curBytesSent;
 
             captureFPS = fpsCounter;
             fpsCounter = 0;
@@ -2227,11 +2434,8 @@ void OBS::MainCaptureLoop()
                     //------------------------------------
                     // get timestamps
 
-                    DWORD curTimeStamp = 0;
-                    DWORD curPTSVal = 0;
-
-                    curTimeStamp = bufferedTimes[0];
-                    curPTSVal = bufferedTimes[curPTS++];
+                    DWORD curTimeStamp = bufferedTimes[0];
+                    DWORD curPTSVal = bufferedTimes[curPTS++];
 
                     if(bUseSyncFix)
                     {
@@ -2257,17 +2461,27 @@ void OBS::MainCaptureLoop()
                     //------------------------------------
                     // encode
 
+                    VideoSegment curSegment;
+                    bool bSendingVideo;
+
                     profileIn("call to encoder");
 
                     videoEncoder->Encode(&picOut, videoPackets, videoPacketTypes, curTimeStamp, ctsOffset);
                     if(bUsing444) prevTexture->Unmap(0);
 
+                    if(videoPackets.Num())
+                    {
+                        curPTS--;
+                        bufferedTimes.Remove(0);
+                    }
+
+                    //buffer video data before sending out
+                    bSendingVideo = BufferVideoData(videoPackets, videoPacketTypes, curTimeStamp, curSegment);
+
                     profileOut;
 
                     //------------------------------------
                     // upload
-
-                    bool bSendingVideo = videoPackets.Num() > 0;
 
                     profileIn("sending stuff out");
 
@@ -2278,53 +2492,65 @@ void OBS::MainCaptureLoop()
                         {
                             network->BeginPublishing();
                             bSentHeaders = true;
-
-                            /*DataPacket seiPacket;
-                            videoEncoder->GetSEI(seiPacket);
-
-                            network->SendPacket(seiPacket.lpPacket, seiPacket.size, 0, PacketType_VideoHighest);*/
                         }
 
                         OSEnterMutex(hSoundDataMutex);
-
+    
                         if(pendingAudioFrames.Num())
                         {
                             //Log(TEXT("pending frames %u, (in milliseconds): %u"), pendingAudioFrames.Num(), pendingAudioFrames.Last().timestamp-pendingAudioFrames[0].timestamp);
-                            while(pendingAudioFrames.Num() && (pendingAudioFrames[0].timestamp+ctsOffset) < curTimeStamp)
+                            while(pendingAudioFrames.Num())
                             {
-                                List<BYTE> &audioData = pendingAudioFrames[0].audioData;
-
-                                if(audioData.Num())
+                                if(firstFrameTime < pendingAudioFrames[0].timestamp)
                                 {
-                                    network->SendPacket(audioData.Array(), audioData.Num(), pendingAudioFrames[0].timestamp+ctsOffset, PacketType_Audio);
-                                    if(fileStream)
-                                        fileStream->AddPacket(audioData.Array(), audioData.Num(), pendingAudioFrames[0].timestamp+ctsOffset, PacketType_Audio);
+                                    UINT audioTimestamp = UINT(pendingAudioFrames[0].timestamp-firstFrameTime);
 
-                                    audioData.Clear();
+                                    if(bFirstAudioPacket)
+                                    {
+                                        audioTimestamp = 0;
+                                        bFirstAudioPacket = false;
+                                    }
+                                    else
+                                        audioTimestamp += curSegment.ctsOffset;
+
+                                    if(audioTimestamp > curSegment.timestamp)
+                                        break;
+
+                                    //Log(TEXT("audioTimestamp: %llu"), audioTimestamp);
+
+                                    List<BYTE> &audioData = pendingAudioFrames[0].audioData;
+
+                                    if(audioData.Num())
+                                    {
+                                        network->SendPacket(audioData.Array(), audioData.Num(), audioTimestamp, PacketType_Audio);
+                                        if(fileStream)
+                                            fileStream->AddPacket(audioData.Array(), audioData.Num(), audioTimestamp, PacketType_Audio);
+
+                                        audioData.Clear();
+                                    }
                                 }
 
-                                //Log(TEXT("audio packet timestamp: %u"), pendingAudioFrames[0].timestamp);
+                                //Log(TEXT("audio packet timestamp: %llu, firstFrameTime: %llu"), pendingAudioFrames[0].timestamp, firstFrameTime);
 
                                 pendingAudioFrames[0].audioData.Clear();
                                 pendingAudioFrames.Remove(0);
                             }
                         }
 
+                        //Log(TEXT("videoTimestamp: %llu"), curSegment.timestamp);
+
+                        //Log(TEXT("no more audio to get"));
+
                         OSLeaveMutex(hSoundDataMutex);
 
-                        for(UINT i=0; i<videoPackets.Num(); i++)
+                        for(UINT i=0; i<curSegment.packets.Num(); i++)
                         {
-                            DataPacket &packet  = videoPackets[i];
-                            PacketType type     = videoPacketTypes[i];
+                            VideoPacketData &packet = curSegment.packets[i];
 
-                            network->SendPacket(packet.lpPacket, packet.size, curTimeStamp, type);
+                            network->SendPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, packet.type);
                             if(fileStream)
-                                fileStream->AddPacket(packet.lpPacket, packet.size, curTimeStamp, type);
+                                fileStream->AddPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, packet.type);
                         }
-
-                        curPTS--;
-
-                        bufferedTimes.Remove(0);
                     }
 
                     profileOut;
@@ -2424,23 +2650,35 @@ void OBS::MainCaptureLoop()
     Log(TEXT("Total frames rendered: %d, number of frames that lagged: %d (%0.2f%%) (it's okay for some frames to lag)"), numTotalFrames, numLongFrames, (double(numLongFrames)/double(numTotalFrames))*100.0);
 }
 
-//only get audio if all audio sources have 441 frames pending
-bool OBS::QueryNewAudio()
+#define INVALID_LL 0xFFFFFFFFFFFFFFFFLL
+
+bool OBS::QueryNewAudio(QWORD &timestamp)
 {
     UINT audioRet;
+    timestamp = INVALID_LL;
 
-    while((audioRet = desktopAudio->GetNextBuffer()) == ContinueAudioRequest);
-    if(audioRet == NoAudioAvailable)
-        return false;
+    QWORD desktopTimestamp;
+    while((audioRet = desktopAudio->GetNextBuffer(desktopVol)) != NoAudioAvailable);
+    if(desktopAudio->GetEarliestTimestamp(desktopTimestamp))
+        timestamp = desktopTimestamp;
 
     if(micAudio != NULL)
     {
-        while((audioRet = micAudio->GetNextBuffer()) == ContinueAudioRequest);
-        if(audioRet == NoAudioAvailable)
-            return false;
+        while((audioRet = micAudio->GetNextBuffer(curMicVol)) != NoAudioAvailable);
+
+        QWORD micTimestamp = INVALID_LL;
+        micAudio->GetEarliestTimestamp(micTimestamp);
+
+        //if(micTimestamp < desktopTimestamp)
+        //    timestamp = micTimestamp;
+
+        //Log(TEXT("desktopTimestamp: %llu, micTimestamp: %llu"), desktopTimestamp, micTimestamp);
     }
 
-    return true;
+    if(desktopAudio->GetBufferedTime() >= OUTPUT_BUFFER_TIME)
+        return true;
+
+    return false;
 }
 
 void OBS::MainAudioLoop()
@@ -2448,6 +2686,12 @@ void OBS::MainAudioLoop()
     bPushToTalkOn = false;
 
     UINT curAudioFrame = 0;
+
+    micMax = desktopMax = VOL_MIN;
+
+    UINT audioFramesSinceMeterUpdate = 0;
+    UINT audioFramesSinceMicMaxUpdate = 0;
+    UINT audioFramesSinceDesktopMaxUpdate = 0;
 
     while(TRUE)
     {
@@ -2458,9 +2702,8 @@ void OBS::MainAudioLoop()
         //-----------------------------------------------
 
         float *desktopBuffer, *micBuffer;
-        UINT desktopAudioFrames, micAudioFrames;
-
-        float curMicVol;
+        UINT desktopAudioFrames = 0, micAudioFrames = 0;
+        UINT latestDesktopAudioFrames = 0, latestMicAudioFrames = 0;
 
         if(bUsingPushToTalk)
             curMicVol = bPushToTalkOn ? micVol : 0.0f;
@@ -2472,22 +2715,77 @@ void OBS::MainAudioLoop()
         bool bDesktopMuted = (desktopVol < EPSILON);
         bool bMicEnabled   = (micAudio != NULL);
 
-        while(QueryNewAudio())
+        QWORD timestamp;
+        while(QueryNewAudio(timestamp))
         {
-            DWORD timestamp, nullTimestamp;
+            float *latestDesktopBuffer = NULL, *latestMicBuffer = NULL;
 
             desktopAudio->GetBuffer(&desktopBuffer, &desktopAudioFrames, timestamp);
-
+            desktopAudio->GetNewestFrame(&latestDesktopBuffer, &latestDesktopAudioFrames);
             if(micAudio != NULL)
-                micAudio->GetBuffer(&micBuffer, &micAudioFrames, nullTimestamp);
+            {
+                micAudio->GetBuffer(&micBuffer, &micAudioFrames, timestamp);
+                micAudio->GetNewestFrame(&latestMicBuffer, &latestMicAudioFrames);
+            }
+
+            //----------------------------------------------------------------------------
 
             UINT totalFloats = desktopAudioFrames*2;
 
-            MultiplyAudioBuffer(desktopBuffer, totalFloats, desktopVol);
-            if(bMicEnabled)
-                MultiplyAudioBuffer(micBuffer, totalFloats, curMicVol);
+            //----------------------------------------------------------------------------
 
-            //-----------------
+            /*multiply samples by volume and compute RMS and max of samples*/
+            float desktopRMS = 0, micRMS = 0, desktopMx = 0, micMx = 0;
+            if(latestDesktopBuffer)
+                CalculateVolumeLevels(latestDesktopBuffer, latestDesktopAudioFrames*2, desktopVol, desktopRMS, desktopMx);
+            if(bMicEnabled && latestMicBuffer)
+                CalculateVolumeLevels(latestMicBuffer, latestMicAudioFrames*2, curMicVol, micRMS, micMx);
+
+            /*convert RMS and Max of samples to dB*/            
+            desktopRMS = toDB(desktopRMS);
+            micRMS = toDB(micRMS);
+            desktopMx = toDB(desktopMx);
+            micMx = toDB(micMx);
+
+            /* update max if sample max is greater or after 1 second */
+            if(micMx > micMax || audioFramesSinceMicMaxUpdate >= 44100)
+            {
+                micMax = micMx;
+                audioFramesSinceMicMaxUpdate = 0;
+            }
+            else 
+            {
+                audioFramesSinceMicMaxUpdate += desktopAudioFrames;
+            }
+
+            if(desktopMx > desktopMax || audioFramesSinceDesktopMaxUpdate >= 44100)
+            {
+                desktopMax = desktopMx;
+                audioFramesSinceDesktopMaxUpdate = 0;
+            }
+            else 
+            {
+                audioFramesSinceDesktopMaxUpdate += desktopAudioFrames;
+            }
+
+            /*low pass the level sampling*/
+            float alpha = 0.3f;
+            desktopMag = alpha * desktopRMS + desktopMag * (1.0f - alpha);
+            micMag = alpha * micRMS + micMag * (1.0f - alpha);
+
+            // instant feedback
+            //desktopMag = desktopMagCurrentSample;
+            //micMag = micMagCurrentSample;
+
+            /*update the meter about every 50ms*/
+            audioFramesSinceMeterUpdate += desktopAudioFrames;
+            if(audioFramesSinceMeterUpdate >= 2205)
+            {
+                PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_MICVOLUMEMETER, VOLN_METERED), 0);
+                audioFramesSinceMeterUpdate = 0;
+            }
+
+            //----------------------------------------------------------------------------
             // mix mic and desktop sound, using SSE2 if available
             // also, it's perfectly fine to just mix into the returned buffer
             if(bDesktopMuted)
@@ -2508,7 +2806,7 @@ void OBS::MainAudioLoop()
                 float *desktopTemp = desktopBuffer;
                 float *micTemp     = micBuffer;
 
-                if(SSE2Available())
+                if(SSE2Available() && (UPARAM(desktopTemp) & 0xF) == 0 && (UPARAM(micTemp) & 0xF) == 0)
                 {
                     UINT alignedFloats = floatsLeft & 0xFFFFFFFC;
 
@@ -2596,6 +2894,11 @@ void OBS::MainAudioLoop()
             bRecievedFirstAudioFrame = true;
     }
 
+    desktopMag = VOL_MIN;
+    micMag = VOL_MIN;
+
+    PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_MICVOLUMEMETER, VOLN_METERED), 0);
+
     for(UINT i=0; i<pendingAudioFrames.Num(); i++)
         pendingAudioFrames[i].audioData.Clear();
 }
@@ -2636,7 +2939,7 @@ DWORD STDCALL OBS::HotkeyThread(LPVOID lpUseless)
     while(!App->bShuttingDown)
     {
         static_cast<OBSAPIInterface*>(API)->HandleHotkeys();
-        OSSleep(50);
+        OSSleep(30);
     }
 
     return 0;
@@ -2734,6 +3037,8 @@ void OBSAPIInterface::HandleHotkeys()
 
         DWORD hotkeyVK          = LOBYTE(info.hotkey);
         DWORD hotkeyModifiers   = HIBYTE(info.hotkey);
+
+        hotkeyModifiers &= ~(HOTKEYF_EXT);
 
         bool bModifiersMatch = (hotkeyModifiers == modifiers);
 

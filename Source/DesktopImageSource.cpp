@@ -48,6 +48,21 @@ class DesktopImageSource : public ImageSource
 
     UINT     opacity;
 
+    //-------------------------
+    // win 8 capture stuff
+    Texture  *cursorTexture;
+    int      xHotspot, yHotspot;
+    UINT     monitor;
+    UINT     deviceOutputID;
+    float    retryAcquire;
+    bool     bWindows8MonitorCapture;
+    MonitorInfo monitorData;
+    bool     bMouseCaptured;
+    POINT    cursorPos;
+    HCURSOR  hCurrentCursor;
+
+    OutputDuplicator *duplicator;
+
 public:
     DesktopImageSource(UINT frameTime, XElement *data)
     {
@@ -59,6 +74,11 @@ public:
 
         colorKeyShader      = CreatePixelShaderFromFile(TEXT("shaders\\ColorKey_RGB.pShader"));
         alphaIgnoreShader   = CreatePixelShaderFromFile(TEXT("shaders\\AlphaIgnore.pShader"));
+
+        if(captureType == 0)
+            Log(TEXT("Using Monitor Capture"));
+        else if(captureType == 1)
+            Log(TEXT("Using Window Capture"));
     }
 
     ~DesktopImageSource()
@@ -69,12 +89,124 @@ public:
         if(warningID)
             App->RemoveStreamInfo(warningID);
 
+        delete duplicator;
+        delete cursorTexture;
         delete alphaIgnoreShader;
         delete colorKeyShader;
     }
 
+    void Tick(float fSeconds)
+    {
+        if(bWindows8MonitorCapture && !duplicator)
+        {
+            retryAcquire += fSeconds;
+            if(retryAcquire > 3.0f)
+            {
+                retryAcquire = 0.0f;
+
+                lastRendered = NULL;
+                duplicator = GS->CreateOutputDulicator(deviceOutputID);
+            }
+        }
+    }
+
+    void PreprocessWindows8MonitorCapture()
+    {
+        //----------------------------------------------------------
+        // capture monitor
+
+        if(duplicator)
+        {
+            Texture *newTex = NULL;
+
+            switch(duplicator->AquireNextFrame(0))
+            {
+                case DuplicatorInfo_Lost:
+                    {
+                        delete duplicator;
+                        lastRendered = NULL;
+                        duplicator = GS->CreateOutputDulicator(deviceOutputID);
+                        return;
+                    }
+
+                case DuplicatorInfo_Error:
+                    delete duplicator;
+                    duplicator = NULL;
+                    lastRendered = NULL;
+                    return;
+
+                case DuplicatorInfo_Timeout:
+                    return;
+            }
+
+            lastRendered = duplicator->GetCopyTexture();
+        }
+
+        //----------------------------------------------------------
+        // capture mouse
+
+        bMouseCaptured = false;
+        if(bCaptureMouse)
+        {
+            CURSORINFO ci;
+            zero(&ci, sizeof(ci));
+            ci.cbSize = sizeof(ci);
+
+            if(GetCursorInfo(&ci))
+            {
+                mcpy(&cursorPos, &ci.ptScreenPos, sizeof(cursorPos));
+
+                if(ci.flags & CURSOR_SHOWING)
+                {
+                    if(ci.hCursor == hCurrentCursor)
+                        bMouseCaptured = true;
+                    else
+                    {
+                        HICON hIcon = CopyIcon(ci.hCursor);
+                        hCurrentCursor = ci.hCursor;
+
+                        delete cursorTexture;
+                        cursorTexture = NULL;
+
+                        if(hIcon)
+                        {
+                            ICONINFO ii;
+                            if(GetIconInfo(hIcon, &ii))
+                            {
+                                xHotspot = int(ii.xHotspot);
+                                yHotspot = int(ii.yHotspot);
+
+                                UINT size;
+                                LPBYTE lpData = GetCursorData(hIcon, ii, size);
+                                if(lpData)
+                                {
+                                    cursorTexture = CreateTexture(size, size, GS_BGRA, lpData, FALSE);
+                                    if(cursorTexture)
+                                        bMouseCaptured = true;
+
+                                    Free(lpData);
+                                }
+
+                                DeleteObject(ii.hbmColor);
+                                DeleteObject(ii.hbmMask);
+                            }
+
+                            DestroyIcon(hIcon);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     void Preprocess()
     {
+        if(bWindows8MonitorCapture)
+        {
+            PreprocessWindows8MonitorCapture();
+            return;
+        }
+
         Texture *captureTexture = renderTextures[curCaptureTexture];
 
         HDC hDC;
@@ -227,8 +359,37 @@ public:
             curCaptureTexture = 0;
     }
 
+    void RenderWindows8MonitorCapture(const Vect2 &pos, const Vect2 &size)
+    {
+        
+    }
+
     void Render(const Vect2 &pos, const Vect2 &size)
     {
+        /*if(bWindows8MonitorCapture)
+        {
+            RenderWindows8MonitorCapture(pos, size);
+            return;
+        }*/
+
+        Vect2 ulCoord = Vect2(0.0f, 0.0f),
+              lrCoord = Vect2(1.0f, 1.0f);
+        if(bWindows8MonitorCapture)
+        {
+            LONG monitorWidth  = monitorData.rect.right-monitorData.rect.left;
+            LONG monitorHeight = monitorData.rect.bottom-monitorData.rect.top;
+            RECT captureArea = {captureRect.left-monitorData.rect.left,
+                                captureRect.top-monitorData.rect.top,
+                                captureRect.right-monitorData.rect.left,
+                                captureRect.bottom-monitorData.rect.top};
+
+            ulCoord.x = float(double(captureArea.left)/double(monitorWidth));
+            ulCoord.y = float(double(captureArea.top)/double(monitorHeight));
+
+            lrCoord.x = float(double(captureArea.right)/double(monitorWidth));
+            lrCoord.y = float(double(captureArea.bottom)/double(monitorHeight));
+        }
+
         if(lastRendered)
         {
             Shader *lastPixelShader = GetCurrentPixelShader();
@@ -247,15 +408,40 @@ public:
                 colorKeyShader->SetFloat(colorKeyShader->GetParameter(3), fSimilarity);
                 colorKeyShader->SetFloat(colorKeyShader->GetParameter(4), fBlend);
 
-                DrawSprite(lastRendered, (opacity255<<24) | 0xFFFFFF, pos.x, pos.y, pos.x+size.x, pos.y+size.y);
+                DrawSpriteEx(lastRendered, (opacity255<<24) | 0xFFFFFF,
+                        pos.x, pos.y, pos.x+size.x, pos.y+size.y,
+                        ulCoord.x, ulCoord.y,
+                        lrCoord.x, lrCoord.y);
             }
             else
             {
                 LoadPixelShader(alphaIgnoreShader);
-                DrawSprite(lastRendered, (opacity255<<24) | 0xFFFFFF, pos.x, pos.y, pos.x+size.x, pos.y+size.y);
+                DrawSpriteEx(lastRendered, (opacity255<<24) | 0xFFFFFF,
+                        pos.x, pos.y, pos.x+size.x, pos.y+size.y,
+                        ulCoord.x, ulCoord.y,
+                        lrCoord.x, lrCoord.y);
             }
 
             LoadPixelShader(lastPixelShader);
+
+            //draw mouse
+            if(bWindows8MonitorCapture && cursorTexture && bMouseCaptured && bCaptureMouse)
+            {
+                POINT newPos = {cursorPos.x-xHotspot, cursorPos.y-yHotspot};
+
+                if( newPos.x >= captureRect.left && newPos.y >= captureRect.top &&
+                    newPos.x < captureRect.right && newPos.y < captureRect.bottom)
+                {
+                    Vect2 newCursorPos  = Vect2(float(newPos.x-captureRect.left), float(newPos.y-captureRect.top));
+                    Vect2 newCursorSize = Vect2(float(cursorTexture->Width()), float(cursorTexture->Height()));
+
+                    Vect2 sizeMultiplier = size/GetSize();
+                    newCursorPos *= sizeMultiplier;
+                    newCursorSize *= sizeMultiplier;
+
+                    DrawSprite(cursorTexture, 0xFFFFFFFF, newCursorPos.x, newCursorPos.y+newCursorSize.y, newCursorPos.x+newCursorSize.x, newCursorPos.y);
+                }
+            }
         }
     }
 
@@ -281,12 +467,33 @@ public:
         int cx = data->GetInt(TEXT("captureCX"), 32);
         int cy = data->GetInt(TEXT("captureCY"), 32);
 
+        UINT newMonitor = data->GetInt(TEXT("monitor"));
+        if(newMonitor > App->NumMonitors())
+            newMonitor = 0;
+
         if( captureRect.left != x || captureRect.right != (x+cx) || captureRect.top != cy || captureRect.bottom != (y+cy) ||
             newCaptureType != captureType || !strNewWindowClass.CompareI(strWindowClass) || !strNewWindow.CompareI(strWindow) ||
-            bNewClientCapture != bClientCapture)
+            bNewClientCapture != bClientCapture || (OSGetVersion() >= 8 && newMonitor != monitor))
         {
             for(int i=0; i<NUM_CAPTURE_TEXTURES; i++)
+            {
                 delete renderTextures[i];
+                renderTextures[i] = NULL;
+            }
+
+            if(duplicator)
+            {
+                delete duplicator;
+                duplicator = NULL;
+            }
+
+            if(cursorTexture)
+            {
+                delete cursorTexture;
+                cursorTexture = NULL;
+            }
+
+            hCurrentCursor = NULL;
 
             captureType        = newCaptureType;
             strWindow          = strNewWindow;
@@ -298,11 +505,39 @@ public:
             captureRect.right  = x+cx;
             captureRect.bottom = y+cy;
 
+            monitor = newMonitor;
+            const MonitorInfo &monitorInfo = App->GetMonitor(monitor);
+            mcpy(&monitorData, &monitorInfo, sizeof(monitorInfo));
+
+            if(captureType == 0 && OSGetVersion() >= 8)
+            {
+                DeviceOutputs outputs;
+                GetDisplayDevices(outputs);
+
+                if(outputs.devices.Num())
+                {
+                    const MonitorInfo &info = App->GetMonitor(monitor);
+                    for(UINT j=0; j<outputs.devices[0].monitors.Num(); j++)
+                    {
+                        if(outputs.devices[0].monitors[j].hMonitor == info.hMonitor)
+                        {
+                            deviceOutputID = j;
+                            bWindows8MonitorCapture = true;
+                        }
+                    }
+                }
+            }
+
             width  = cx;
             height = cy;
 
-            for(UINT i=0; i<NUM_CAPTURE_TEXTURES; i++)
-                renderTextures[i] = CreateGDITexture(width, height);
+            if(bWindows8MonitorCapture)
+                duplicator = GS->CreateOutputDulicator(deviceOutputID);
+            else
+            {
+                for(UINT i=0; i<NUM_CAPTURE_TEXTURES; i++)
+                    renderTextures[i] = CreateGDITexture(width, height);
+            }
 
             lastRendered = NULL;
         }
@@ -504,6 +739,12 @@ struct RegionWindowData
     RECT captureRect;
     bool bMovingWindow;
     bool bInnerWindowRegion;
+
+    inline RegionWindowData()
+    {
+        bMovingWindow = false;
+        bInnerWindowRegion = false;
+    }
 };
 
 RegionWindowData regionWindowData;
@@ -530,20 +771,17 @@ LRESULT WINAPI RegionWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             POINT newPos = {rc.left+posOffset.x, rc.top+posOffset.y};
             SIZE windowSize = {rc.right-rc.left, rc.bottom-rc.top};
 
-            if(regionWindowData.hwndCaptureWindow)
-            {
-                if(newPos.x < regionWindowData.captureRect.left)
-                    newPos.x = regionWindowData.captureRect.left;
-                if(newPos.y < regionWindowData.captureRect.top)
-                    newPos.y = regionWindowData.captureRect.top;
+            if(newPos.x < regionWindowData.captureRect.left)
+                newPos.x = regionWindowData.captureRect.left;
+            if(newPos.y < regionWindowData.captureRect.top)
+                newPos.y = regionWindowData.captureRect.top;
 
-                POINT newBottomRight = {rc.right+posOffset.x, rc.bottom+posOffset.y};
+            POINT newBottomRight = {rc.right+posOffset.x, rc.bottom+posOffset.y};
 
-                if(newBottomRight.x > regionWindowData.captureRect.right)
-                    newPos.x -= (newBottomRight.x-regionWindowData.captureRect.right);
-                if(newBottomRight.y > regionWindowData.captureRect.bottom)
-                    newPos.y -= (newBottomRight.y-regionWindowData.captureRect.bottom);
-            }
+            if(newBottomRight.x > regionWindowData.captureRect.right)
+                newPos.x -= (newBottomRight.x-regionWindowData.captureRect.right);
+            if(newBottomRight.y > regionWindowData.captureRect.bottom)
+                newPos.y -= (newBottomRight.y-regionWindowData.captureRect.bottom);
 
             SetWindowPos(hwnd, NULL, newPos.x, newPos.y, 0, 0, SWP_NOSIZE|SWP_NOZORDER);
         }
@@ -950,7 +1188,7 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 //-----------------------------------------------------
 
                 bool bRegion = data->GetInt(TEXT("regionCapture")) != FALSE;
-                if(!bFoundWindow)
+                if(captureType == 1 && !bFoundWindow)
                     bRegion = false;
 
                 SendMessage(GetDlgItem(hwnd, IDC_REGIONCAPTURE), BM_SETCHECK, (bRegion) ? BST_CHECKED : BST_UNCHECKED, 0);
@@ -961,7 +1199,7 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 EnableWindow(GetDlgItem(hwnd, IDC_SELECTREGION),    bRegion);
 
                 int posX = 0, posY = 0, sizeX = 32, sizeY = 32;
-                if(!data->GetBaseItem(TEXT("captureX")) || !bFoundWindow)
+                if(!data->GetBaseItem(TEXT("captureX")) || !bRegion)
                 {
                     if(captureType == 0)
                         PostMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_MONITOR, 0), 0);
@@ -1146,6 +1384,8 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                             String strWindow = GetCBText(GetDlgItem(hwnd, IDC_WINDOW), windowID);
 
+                            zero(&regionWindowData, sizeof(regionWindowData));
+
                             regionWindowData.hwndCaptureWindow = FindWindow(info->strClasses[windowID], strWindow);
                             if(!regionWindowData.hwndCaptureWindow)
                             {
@@ -1182,12 +1422,20 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                             posY += regionWindowData.captureRect.top;
                         }
                         else
+                        {
+                            UINT monitorID = (UINT)SendMessage(GetDlgItem(hwnd, IDC_MONITOR), CB_GETCURSEL, 0, 0);
+                            if(monitorID == CB_ERR) monitorID = 0;
+
+                            const MonitorInfo &monitor = App->GetMonitor(monitorID);
                             regionWindowData.hwndCaptureWindow = NULL;
+                            mcpy(&regionWindowData.captureRect, &monitor.rect, sizeof(RECT));
+                        }
 
                         //--------------------------------------------
 
                         regionWindowData.hwndConfigDialog = hwnd;
-                        CreateWindow(CAPTUREREGIONCLASS, NULL, WS_POPUP|WS_VISIBLE, posX, posY, sizeX, sizeY, hwnd, NULL, hinstMain, NULL);
+                        HWND hwndRegion = CreateWindowEx(0, CAPTUREREGIONCLASS, NULL, WS_POPUP|WS_VISIBLE, posX, posY, sizeX, sizeY, hwnd, NULL, hinstMain, NULL);
+                        //SetLayeredWindowAttributes(hwndRegion, 0xFFFFFF, 0x7F, LWA_ALPHA);
                         break;
                     }
 
@@ -1473,11 +1721,8 @@ bool STDCALL ConfigureDesktopSource(XElement *element, bool bInitialize)
 
     if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_CONFIGUREDESKTOPSOURCE), hwndMain, ConfigDesktopSourceProc, (LPARAM)&info) == IDOK)
     {
-        if(bInitialize)
-        {
-            element->SetInt(TEXT("cx"), data->GetInt(TEXT("captureCX")));
-            element->SetInt(TEXT("cy"), data->GetInt(TEXT("captureCY")));
-        }
+        element->SetInt(TEXT("cx"), data->GetInt(TEXT("captureCX")));
+        element->SetInt(TEXT("cy"), data->GetInt(TEXT("captureCY")));
         return true;
     }
 

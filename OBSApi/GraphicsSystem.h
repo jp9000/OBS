@@ -326,6 +326,28 @@ public:
 
 
 /*=========================================================
+    Output Duplication class
+==========================================================*/
+
+enum DuplicatorInfo
+{
+    DuplicatorInfo_Error,
+    DuplicatorInfo_Timeout,
+    DuplicatorInfo_Lost,
+    DuplicatorInfo_Acquired
+};
+
+class BASE_EXPORT OutputDuplicator
+{
+public:
+    virtual ~OutputDuplicator() {}
+
+    virtual DuplicatorInfo AquireNextFrame(UINT timeout)=0;
+    virtual Texture* GetCopyTexture()=0;
+    virtual Texture* GetCursorTex(POINT* pos)=0;
+};
+
+/*=========================================================
     Vertex Buffer class
 ==========================================================*/
 
@@ -400,6 +422,9 @@ public:
     virtual bool            GetTextureFileInfo(CTSTR lpFile, TextureInfo &info)=0;
 
     virtual SamplerState*   CreateSamplerState(SamplerInfo &info)=0;
+
+    virtual UINT            GetNumOutputs()=0;
+    virtual OutputDuplicator *CreateOutputDulicator(UINT outputID)=0;
 
 
     //----------------------------------------------------

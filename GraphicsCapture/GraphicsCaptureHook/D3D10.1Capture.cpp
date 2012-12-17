@@ -338,46 +338,46 @@ HRESULT STDMETHODCALLTYPE D3D101SwapPresentHook(IDXGISwapChain *swap, UINT syncI
             if(bCapturing && bStopRequested)
             {
                 ClearD3D101Data();
+                bCapturing = false;
                 bStopRequested = false;
+            }
+
+            if(!bCapturing && WaitForSingleObject(hSignalRestart, 0) == WAIT_OBJECT_0)
+            {
+                hwndOBS = FindWindow(OBS_WINDOW_CLASS, NULL);
+                if(hwndOBS)
+                    bCapturing = true;
             }
 
             if(!bHasTextures && bCapturing)
             {
-                if(dxgiFormat)
+                if(dxgiFormat && hwndOBS)
                 {
-                    if(!hwndReceiver)
-                        hwndReceiver = FindWindow(RECEIVER_WINDOWCLASS, NULL);
+                    BOOL bSuccess = DoD3D101Hook(device);
 
-                    if(hwndReceiver)
+                    if(bSuccess)
                     {
-                        BOOL bSuccess = DoD3D101Hook(device);
+                        d3d101CaptureInfo.mapID = InitializeSharedMemoryGPUCapture(&texData);
+                        if(!d3d101CaptureInfo.mapID)
+                            bSuccess = false;
+                    }
 
-                        if(bSuccess)
-                        {
-                            d3d101CaptureInfo.mapID = InitializeSharedMemoryGPUCapture(&texData);
-                            if(!d3d101CaptureInfo.mapID)
-                                bSuccess = false;
-                        }
+                    if(bSuccess)
+                    {
+                        bHasTextures = true;
+                        d3d101CaptureInfo.captureType = CAPTURETYPE_SHAREDTEX;
+                        d3d101CaptureInfo.bFlip = FALSE;
+                        texData->texHandles[0] = sharedHandles[0];
+                        texData->texHandles[1] = sharedHandles[1];
 
-                        if(bSuccess)
-                            bSuccess = IsWindow(hwndReceiver);
+                        memcpy(infoMem, &d3d101CaptureInfo, sizeof(CaptureInfo));
+                        SetEvent(hSignalReady);
 
-                        if(bSuccess)
-                        {
-                            bHasTextures = true;
-                            d3d101CaptureInfo.captureType = CAPTURETYPE_SHAREDTEX;
-                            d3d101CaptureInfo.hwndSender = hwndSender;
-                            d3d101CaptureInfo.bFlip = FALSE;
-                            texData->texHandles[0] = sharedHandles[0];
-                            texData->texHandles[1] = sharedHandles[1];
-                            PostMessage(hwndReceiver, RECEIVER_NEWCAPTURE, 0, (LPARAM)&d3d101CaptureInfo);
-
-                            logOutput << "DoD3D101Hook: success";
-                        }
-                        else
-                        {
-                            ClearD3D101Data();
-                        }
+                        logOutput << "DoD3D101Hook: success";
+                    }
+                    else
+                    {
+                        ClearD3D101Data();
                     }
                 }
             }
@@ -396,6 +396,15 @@ HRESULT STDMETHODCALLTYPE D3D101SwapPresentHook(IDXGISwapChain *swap, UINT syncI
 
                             if(timeElapsed >= frameTime)
                             {
+                                if(!IsWindow(hwndOBS))
+                                {
+                                    hwndOBS = NULL;
+                                    bStopRequested = true;
+                                }
+
+                                if(WaitForSingleObject(hSignalEnd, 0) == WAIT_OBJECT_0)
+                                    bStopRequested = true;
+
                                 lastTime += frameTime;
                                 if(timeElapsed > frameTime*2)
                                     lastTime = timeVal;

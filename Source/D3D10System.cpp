@@ -19,12 +19,73 @@
 
 #include "Main.h"
 
+
+void GetDisplayDevices(DeviceOutputs &deviceList)
+{
+    HRESULT err;
+    UINT count = 0;
+
+    deviceList.ClearData();
+
+#ifdef USE_DXGI1_2
+    REFIID iidVal = OSGetVersion() >= 8 ? __uuidof(IDXGIFactory2) : __uuidof(IDXGIFactory1);
+#else
+    REFIIF iidVal = __uuidof(IDXGIFactory1);
+#endif
+
+    IDXGIFactory1 *factory;
+    if(SUCCEEDED(err = CreateDXGIFactory1(iidVal, (void**)&factory)))
+    {
+        UINT i=0;
+        IDXGIAdapter1 *giAdapter;
+
+        while(factory->EnumAdapters1(i++, &giAdapter) == S_OK)
+        {
+            Log(TEXT("------------------------------------------"));
+
+            DXGI_ADAPTER_DESC adapterDesc;
+            if(err = SUCCEEDED(giAdapter->GetDesc(&adapterDesc)))
+            {
+                DeviceOutputData &deviceData = *deviceList.devices.CreateNew();
+                deviceData.strDevice = adapterDesc.Description;
+
+                UINT j=0;
+                IDXGIOutput *giOutput;
+                while(giAdapter->EnumOutputs(j++, &giOutput) == S_OK)
+                {
+                    DXGI_OUTPUT_DESC outputDesc;
+                    if(SUCCEEDED(giOutput->GetDesc(&outputDesc)))
+                    {
+                        if(outputDesc.AttachedToDesktop)
+                        {
+                            deviceData.monitorNameList << outputDesc.DeviceName;
+
+                            MonitorInfo &monitorInfo = *deviceData.monitors.CreateNew();
+                            monitorInfo.hMonitor = outputDesc.Monitor;
+                            mcpy(&monitorInfo.rect, &outputDesc.DesktopCoordinates, sizeof(RECT));
+                        }
+                    }
+
+                    giOutput->Release();
+                }
+            }
+            else
+                AppWarning(TEXT("Could not query adapter %u"), i);
+
+            giAdapter->Release();
+        }
+
+        factory->Release();
+    }
+}
+
+
 void LogVideoCardStats()
 {
     HRESULT err;
 
 #ifdef USE_DXGI1_2
-    REFIID iidVal = IsWindows8Up() ? __uuidof(IDXGIFactory2) : __uuidof(IDXGIFactory1);
+    REFIID iidVal = OSGetVersion() >= 8 ? __uuidof(IDXGIFactory2) : __uuidof(IDXGIFactory1);
 #else
     REFIIF iidVal = __uuidof(IDXGIFactory1);
 #endif
@@ -63,18 +124,18 @@ D3D10System::D3D10System()
     HRESULT err;
 
 #ifdef USE_DXGI1_2
-    REFIID iidVal = IsWindows8Up() ? __uuidof(IDXGIFactory2) : __uuidof(IDXGIFactory1);
+    REFIID iidVal = OSGetVersion() >= 8 ? __uuidof(IDXGIFactory2) : __uuidof(IDXGIFactory1);
 #else
     REFIID iidVal = __uuidof(IDXGIFactory1);
 #endif
 
     IDXGIFactory1 *factory;
     if(FAILED(err = CreateDXGIFactory1(iidVal, (void**)&factory)))
-        CrashError(TEXT("Could not create dxgi factory"));
+        CrashError(TEXT("Could not create DXGI factory"));
 
     IDXGIAdapter1 *adapter;
     if(FAILED(err = factory->EnumAdapters1(0, &adapter)))
-        CrashError(TEXT("Could not get dxgi adapter"));
+        CrashError(TEXT("Could not get DXGI adapter"));
 
     //------------------------------------------------------------------
 
@@ -324,6 +385,44 @@ bool D3D10System::GetTextureFileInfo(CTSTR lpFile, TextureInfo &info)
 SamplerState* D3D10System::CreateSamplerState(SamplerInfo &info)
 {
     return D3D10SamplerState::CreateSamplerState(info);
+}
+
+
+UINT D3D10System::GetNumOutputs()
+{
+    UINT count = 0;
+
+    IDXGIDevice *device;
+    if(SUCCEEDED(d3d->QueryInterface(__uuidof(IDXGIDevice), (void**)&device)))
+    {
+        IDXGIAdapter *adapter;
+        if(SUCCEEDED(device->GetAdapter(&adapter)))
+        {
+            IDXGIOutput *outputInterface;
+
+            while(SUCCEEDED(adapter->EnumOutputs(count, &outputInterface)))
+            {
+                count++;
+                outputInterface->Release();
+            }
+
+            adapter->Release();
+        }
+
+        device->Release();
+    }
+
+    return count;
+}
+
+OutputDuplicator *D3D10System::CreateOutputDulicator(UINT outputID)
+{
+    D3D10OutputDuplicator *duplicator = new D3D10OutputDuplicator;
+    if(duplicator->Init(outputID))
+        return duplicator;
+
+    delete duplicator;
+    return NULL;
 }
 
 

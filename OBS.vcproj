@@ -65,7 +65,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/ignore:4049 /ignore:4217"
-				AdditionalDependencies="dwmapi.lib comctl32.lib dxgi.lib dxguid.lib d3d10_1.lib d3dx10.lib libx264.a libgcc.a ws2_32.lib Winmm.lib librtmp.lib libmp3lame-static.lib libfaac.lib libsamplerate.lib dsound.lib obsapi.lib shell32.lib gdiplus.lib"
+				AdditionalDependencies="dwmapi.lib comctl32.lib dxgi.lib dxguid.lib d3d10_1.lib d3dx10.lib libx264.a libgcc.a ws2_32.lib Iphlpapi.lib Winmm.lib librtmp.lib libmp3lame-static.lib libfaac.lib libsamplerate.lib dsound.lib obsapi.lib shell32.lib gdiplus.lib mfplat.lib Mfuuid.lib"
 				Version=""
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="OBSApi/Debug;x264/libs/32bit;librtmp/debug;lame/output/32bit;libfaac/debug;libsamplerate/debug"
@@ -145,7 +145,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dwmapi.lib comctl32.lib dxgi.lib dxguid.lib d3d10_1.lib d3dx10.lib libx264.a libgcc.a ws2_32.lib Winmm.lib librtmp.lib libmp3lame-static.lib libfaac.lib libsamplerate.lib dsound.lib obsapi.lib shell32.lib gdiplus.lib"
+				AdditionalDependencies="dwmapi.lib comctl32.lib dxgi.lib dxguid.lib d3d10_1.lib d3dx10.lib libx264.a libgcc.a ws2_32.lib Iphlpapi.lib Winmm.lib librtmp.lib libmp3lame-static.lib libfaac.lib libsamplerate.lib dsound.lib obsapi.lib shell32.lib gdiplus.lib mfplat.lib Mfuuid.lib"
 				Version=""
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="OBSApi/x64/Debug;x264/libs/64bit;librtmp/x64/debug;lame/output/64bit;libfaac/x64/debug;libsamplerate/x64/debug"
@@ -228,7 +228,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/ignore:4049 /ignore:4217"
-				AdditionalDependencies="dwmapi.lib comctl32.lib dxgi.lib dxguid.lib d3d10_1.lib d3dx10.lib libx264.a libgcc.a ws2_32.lib Winmm.lib librtmp.lib libmp3lame-static.lib libfaac.lib libsamplerate.lib dsound.lib obsapi.lib shell32.lib gdiplus.lib"
+				AdditionalDependencies="dwmapi.lib comctl32.lib dxgi.lib dxguid.lib d3d10_1.lib d3dx10.lib libx264.a libgcc.a ws2_32.lib Iphlpapi.lib Winmm.lib librtmp.lib libmp3lame-static.lib libfaac.lib libsamplerate.lib dsound.lib obsapi.lib shell32.lib gdiplus.lib mfplat.lib Mfuuid.lib"
 				Version=""
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="OBSApi/Release;x264/libs/32bit;librtmp/release;lame/output/32bit;libfaac/release;libsamplerate/release"
@@ -313,7 +313,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dwmapi.lib comctl32.lib dxgi.lib dxguid.lib d3d10_1.lib d3dx10.lib libx264.a libgcc.a ws2_32.lib Winmm.lib librtmp.lib libmp3lame-static.lib libfaac.lib libsamplerate.lib dsound.lib obsapi.lib shell32.lib gdiplus.lib"
+				AdditionalDependencies="dwmapi.lib comctl32.lib dxgi.lib dxguid.lib d3d10_1.lib d3dx10.lib libx264.a libgcc.a ws2_32.lib Iphlpapi.lib Winmm.lib librtmp.lib libmp3lame-static.lib libfaac.lib libsamplerate.lib dsound.lib obsapi.lib shell32.lib gdiplus.lib mfplat.lib Mfuuid.lib"
 				Version=""
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="OBSApi/x64/Release;x264/libs/64bit;librtmp/x64/release;lame/output/64bit;libfaac/x64/release;libsamplerate/x64/release"
@@ -384,6 +384,10 @@
 			</File>
 			<File
 				RelativePath=".\Source\CrashDumpHandler.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Source\D3D10OutputDuplicator.cpp"
 				>
 			</File>
 			<File
@@ -491,6 +495,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Source\VolumeMeter.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Source\WindowStuff.cpp"
 				>
 			</File>
@@ -538,6 +546,10 @@
 			</File>
 			<File
 				RelativePath=".\Source\VolumeControl.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Source\VolumeMeter.h"
 				>
 			</File>
 			<File

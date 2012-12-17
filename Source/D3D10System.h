@@ -23,6 +23,23 @@
 class D3D10VertexShader;
 
 
+
+inline GSColorFormat ConvertGIBackBufferFormat(DXGI_FORMAT format)
+{
+    switch(format)
+    {
+    case DXGI_FORMAT_R10G10B10A2_UNORM: return GS_R10G10B10A2;
+    case DXGI_FORMAT_R8G8B8A8_UNORM:    return GS_RGBA;
+    case DXGI_FORMAT_B8G8R8A8_UNORM:    return GS_BGRA;
+    case DXGI_FORMAT_B8G8R8X8_UNORM:    return GS_BGR;
+    case DXGI_FORMAT_B5G5R5A1_UNORM:    return GS_B5G5R5A1;
+    case DXGI_FORMAT_B5G6R5_UNORM:      return GS_B5G6R5;
+    }
+
+    return GS_UNKNOWNFORMAT;
+}
+
+
 //=============================================================================
 
 class D3D10VertexBuffer : public VertexBuffer
@@ -76,6 +93,7 @@ public:
 
 class D3D10Texture : public Texture
 {
+    friend class D3D10OutputDuplicator;
     friend class D3D10System;
     friend class OBS;
 
@@ -288,6 +306,27 @@ public:
     virtual ShaderType GetType() const {return ShaderType_Pixel;}
 };
 
+//--------------------------------------------------
+
+class D3D10OutputDuplicator : public OutputDuplicator
+{
+    IDXGIOutputDuplication *duplicator;
+    Texture *copyTex;
+
+    POINT cursorPos;
+    Texture *cursorTex;
+    BOOL bCursorVis;
+
+public:
+    bool Init(UINT output);
+    virtual ~D3D10OutputDuplicator();
+
+    virtual DuplicatorInfo AquireNextFrame(UINT timeout);
+    virtual Texture* GetCopyTexture();
+    virtual Texture* GetCursorTex(POINT* pos);
+};
+
+
 //=============================================================================
 
 struct SavedBlendState
@@ -365,6 +404,9 @@ public:
     virtual bool            GetTextureFileInfo(CTSTR lpFile, TextureInfo &info);
 
     virtual SamplerState*   CreateSamplerState(SamplerInfo &info);
+
+    virtual UINT            GetNumOutputs();
+    virtual OutputDuplicator *CreateOutputDulicator(UINT outputID);
 
 
     ////////////////////////////

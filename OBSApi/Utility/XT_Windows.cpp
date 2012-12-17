@@ -43,6 +43,7 @@ void STDCALL InputProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 void STDCALL ResetCursorClip();
 
 SYSTEM_INFO si;
+OSVERSIONINFO osVersionInfo;
 
 BOOL        bHidingCursor = 0;
 BOOL        bWindows8 = 0;
@@ -66,6 +67,29 @@ DWORD CountSetBits(ULONG_PTR bitMask)
     return bitSetCount;
 }
 
+int    STDCALL OSGetVersion()
+{
+    if(osVersionInfo.dwMajorVersion > 6)
+        return 8;
+
+    if (osVersionInfo.dwMajorVersion == 6)
+    {
+        //Windows 8
+        if (osVersionInfo.dwMinorVersion >= 2)
+            return 8;
+
+        //Windows 7
+        if (osVersionInfo.dwMinorVersion == 1)
+            return 7;
+
+        //Vista
+        if (osVersionInfo.dwMinorVersion == 0)
+            return 6;
+    }
+
+    return 0;
+}
+
 void   STDCALL OSInit()
 {
     timeBeginPeriod(1);
@@ -75,10 +99,10 @@ void   STDCALL OSInit()
 
     GetSystemInfo(&si);
 
-    OSVERSIONINFO osvi;
-    osvi.dwOSVersionInfoSize = sizeof(osvi);
-    GetVersionEx(&osvi);
-    if(osvi.dwMajorVersion > 6 || (osvi.dwMajorVersion == 6 && osvi.dwMinorVersion >= 2))
+    osVersionInfo.dwOSVersionInfoSize = sizeof(osVersionInfo);
+    GetVersionEx(&osVersionInfo);
+
+    if (OSGetVersion() == 8)
         bWindows8 = TRUE;
 
     QueryPerformanceFrequency(&clockFreq);
@@ -610,12 +634,16 @@ BOOL   STDCALL OSWaitForThread(HANDLE hThread, LPDWORD ret)
 
 BOOL   STDCALL OSCloseThread(HANDLE hThread)
 {
+    assert (hThread);
+
     CloseHandle(hThread);
     return 1;
 }
 
 BOOL   STDCALL OSTerminateThread(HANDLE hThread, DWORD waitMS)
 {
+    assert (hThread);
+
     if(WaitForSingleObjectEx(hThread, waitMS, 0) == WAIT_TIMEOUT)
         TerminateThread(hThread, 0);
 
@@ -653,6 +681,44 @@ BOOL   STDCALL OSGetLoadedModuleList(HANDLE hProcess, StringList &ModuleList)
         return 0;
 
     return 1;
+}
+
+BOOL   STDCALL OSIncompatiblePatchesLoaded(String &errors)
+{
+    BOOL ret = FALSE;
+    HMODULE dxGI;
+    StringList moduleList;
+
+    OSGetLoadedModuleList (GetCurrentProcess(), moduleList);
+
+    //known problematic code modification hooks can be checked for here
+
+    //current checks:
+    //TeamSpeak 3 Overlay (hooks CreateDXGIFactory1 in such a way that it fails when called by OBS)
+
+    dxGI = GetModuleHandle(TEXT("DXGI.DLL"));
+    if (dxGI)
+    {
+        FARPROC createFactory = GetProcAddress(dxGI, "CreateDXGIFactory1");
+        if (createFactory)
+        {
+            if (!IsBadReadPtr(createFactory, 5))
+            {
+                BYTE opCode = *(BYTE *)createFactory;
+
+                if (opCode == 0xE9)
+                {
+                    if (moduleList.HasValue(TEXT("ts3overlay_hook_win32.dll")))
+                    {
+                        errors << TEXT("TeamSpeak 3 overlay has loaded into OBS and will cause problems. Please set \"Disable Loading\" for OBS.EXE in your TeamSpeak 3 overlay settings or visit http://bit.ly/OBSTS3 for help."); 
+                        ret = TRUE;
+                    }
+                }
+            }
+        }
+    }
+
+    return ret;
 }
 
 BOOL   STDCALL OSIncompatibleModulesLoaded()

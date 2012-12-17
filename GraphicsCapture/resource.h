@@ -10,7 +10,8 @@
 #define IDC_CAPTUREMOUSE                1004
 #define IDC_INVERTMOUSEONCLICK          1005
 #define IDC_INFO                        1006
-#define IDC_EDIT1                       1007
+#define IDC_STRETCHTOSCREEN2            1007
+#define IDC_IGNOREASPECT                1007
 
 // Next default values for new objects
 // 

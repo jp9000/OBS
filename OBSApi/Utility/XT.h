@@ -80,6 +80,7 @@ struct XRect
 };
 
 class StringList;
+class String;
 
 #define WAIT_INFINITE 0xFFFFFFFF
 
@@ -123,6 +124,7 @@ BASE_EXPORT void   STDCALL OSSleep(DWORD dwMSeconds);
 BASE_EXPORT void   STDCALL OSSubMillisecondSleep(float fMSeconds);
 BASE_EXPORT void   STDCALL OSMicrosecondSleep(QWORD qwMicroseconds);
 
+BASE_EXPORT int    STDCALL OSGetVersion();
 BASE_EXPORT int    STDCALL OSGetTotalCores();
 BASE_EXPORT int    STDCALL OSGetLogicalCores();
 BASE_EXPORT HANDLE STDCALL OSCreateThread(XTHREAD lpThreadFunc, LPVOID param);
@@ -150,6 +152,7 @@ BASE_EXPORT void __cdecl   OSDebugOut(const TCHAR *format, ...);
 
 BASE_EXPORT BOOL   STDCALL OSGetLoadedModuleList(HANDLE hProcess, StringList &ModuleList);
 BASE_EXPORT BOOL   STDCALL OSIncompatibleModulesLoaded();
+BASE_EXPORT BOOL   STDCALL OSIncompatiblePatchesLoaded(String &errors);
 
 BASE_EXPORT void __cdecl   Logva(const TCHAR *format, va_list argptr);
 BASE_EXPORT void __cdecl   Log(const TCHAR *format, ...);

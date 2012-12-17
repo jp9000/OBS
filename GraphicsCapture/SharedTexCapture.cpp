@@ -39,18 +39,15 @@ void SharedTexCapture::Destroy()
         CloseHandle(hFileMap);
 }
 
-bool SharedTexCapture::Init(HANDLE hProcess, HWND hwndTarget, CaptureInfo &info)
+bool SharedTexCapture::Init(CaptureInfo &info)
 {
-    this->hwndTarget = hwndTarget;
-    this->hProcess = hProcess;
-
     String strFileMapName;
     strFileMapName << TEXTURE_MEMORY << UIntString(info.mapID);
 
     hFileMap = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, strFileMapName);
     if(hFileMap == NULL)
     {
-        AppWarning(TEXT("SharedTexCapture::Init: Could not open file mapping"));
+        AppWarning(TEXT("SharedTexCapture::Init: Could not open file mapping: %d"), GetLastError());
         return false;
     }
 
@@ -61,7 +58,7 @@ bool SharedTexCapture::Init(HANDLE hProcess, HWND hwndTarget, CaptureInfo &info)
         return false;
     }
 
-    Log(TEXT("using shared texture capture"));
+    //Log(TEXT("using shared texture capture"));
 
     //---------------------------------------
 

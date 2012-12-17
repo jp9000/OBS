@@ -78,6 +78,8 @@ bool GraphicsCaptureSource::Init(XElement *data)
 {
     this->data = data;
     capture = NULL;
+
+    Log(TEXT("Using graphics capture"));
     return true;
 }
 
@@ -92,55 +94,36 @@ GraphicsCaptureSource::~GraphicsCaptureSource()
     EndScene(); //should never actually need to be called, but doing it anyway just to be safe
 }
 
-LRESULT WINAPI GraphicsCaptureSource::ReceiverWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+bool GetCaptureInfo(CaptureInfo &ci, DWORD processID)
 {
-    switch(message)
+    HANDLE hFileMap = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, String() << INFO_MEMORY << int(processID));
+    if(hFileMap == NULL)
     {
-        case WM_CREATE:
-            {
-                CREATESTRUCT *cs = (CREATESTRUCT*)lParam;
-                SetWindowLongPtr(hwnd, 0, (LONG_PTR)cs->lpCreateParams);
-            }
-            break;
-
-        case RECEIVER_NEWCAPTURE:
-            {
-                CaptureWindowData *data = (CaptureWindowData*)GetWindowLongPtr(hwnd, 0);
-                if(data->source)
-                {
-                    data->source->captureData = (LPVOID)lParam;
-                    data->source->bNewCapture = true;
-                }
-            }
-            break;
-
-        case RECEIVER_ENDCAPTURE:
-            {
-                CaptureWindowData *data = (CaptureWindowData*)GetWindowLongPtr(hwnd, 0);
-                if(data->source)
-                    data->source->bEndCapture = true;
-            }
-            break;
-
-        case WM_DESTROY:
-            {
-                CaptureWindowData *data = (CaptureWindowData*)GetWindowLongPtr(hwnd, 0);
-                delete data;
-            }
-            break;
-
-        default:
-            return DefWindowProc(hwnd, message, wParam, lParam);
+        AppWarning(TEXT("GetCaptureInfo: Could not open file mapping"));
+        return false;
     }
 
-    return 0;
+    CaptureInfo *infoIn;
+    infoIn = (CaptureInfo*)MapViewOfFile(hFileMap, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(CaptureInfo));
+    if(!infoIn)
+    {
+        AppWarning(TEXT("GetCaptureInfo: Could not map view of file"));
+        return false;
+    }
+
+    mcpy(&ci, infoIn, sizeof(CaptureInfo));
+
+    if(infoIn)
+        UnmapViewOfFile(infoIn);
+
+    if(hFileMap)
+        CloseHandle(hFileMap);
+
+    return true;
 }
 
-void GraphicsCaptureSource::NewCapture(LPVOID address)
+void GraphicsCaptureSource::NewCapture()
 {
-    if(!hProcess)
-        return;
-
     if(capture)
     {
         capture->Destroy();
@@ -148,14 +131,40 @@ void GraphicsCaptureSource::NewCapture(LPVOID address)
         capture = NULL;
     }
 
-    CaptureInfo info;
-    if(!ReadProcessMemory(hProcess, address, &info, sizeof(info), NULL))
+    if(!hSignalRestart)
     {
-        API->LeaveSceneMutex();
+        hSignalRestart = GetEvent(String() << RESTART_CAPTURE_EVENT << int(targetProcessID));
+        if(!hSignalRestart)
+        {
+            RUNONCE AppWarning(TEXT("GraphicsCaptureSource::NewCapture:  Could not create restart event"));
+            return;
+        }
+    }
 
-        RUNONCE AppWarning(TEXT("GraphicsCaptureSource::NewCapture: Could not read capture info from target process"));
+    hSignalEnd = GetEvent(String() << END_CAPTURE_EVENT << int(targetProcessID));
+    if(!hSignalEnd)
+    {
+        RUNONCE AppWarning(TEXT("GraphicsCaptureSource::NewCapture:  Could not create end event"));
         return;
     }
+
+    hSignalReady = GetEvent(String() << CAPTURE_READY_EVENT << int(targetProcessID));
+    if(!hSignalReady)
+    {
+        RUNONCE AppWarning(TEXT("GraphicsCaptureSource::NewCapture:  Could not create ready event"));
+        return;
+    }
+
+    hSignalExit = GetEvent(String() << APP_EXIT_EVENT << int(targetProcessID));
+    if(!hSignalExit)
+    {
+        RUNONCE AppWarning(TEXT("GraphicsCaptureSource::NewCapture:  Could not create exit event"));
+        return;
+    }
+
+    CaptureInfo info;
+    if(!GetCaptureInfo(info, targetProcessID))
+        return;
 
     bFlip = info.bFlip != 0;
 
@@ -173,7 +182,7 @@ void GraphicsCaptureSource::NewCapture(LPVOID address)
         return;
     }
 
-    if(!capture->Init(hProcess, hwndTarget, info))
+    if(!capture->Init(info))
     {
         capture->Destroy();
         delete capture;
@@ -190,10 +199,23 @@ void GraphicsCaptureSource::EndCapture()
         capture = NULL;
     }
 
+    if(hSignalRestart)
+        CloseHandle(hSignalRestart);
+    if(hSignalEnd)
+        CloseHandle(hSignalEnd);
+    if(hSignalReady)
+        CloseHandle(hSignalReady);
+    if(hSignalExit)
+        CloseHandle(hSignalExit);
+
+    hSignalRestart = hSignalEnd = hSignalReady = hSignalExit = NULL;
+
     bErrorAcquiring = false;
+
     bCapturing = false;
     captureCheckInterval = -1.0f;
     hwndCapture = NULL;
+    targetProcessID = 0;
 
     if(warningID)
     {
@@ -204,39 +226,16 @@ void GraphicsCaptureSource::EndCapture()
 
 void GraphicsCaptureSource::Preprocess()
 {
-    if(bEndCapture)
+    if(hSignalExit && WaitForSingleObject(hSignalExit, 0) == WAIT_OBJECT_0)
     {
         EndCapture();
-        bEndCapture = false;
     }
 
-    if(bNewCapture)
-    {
-        NewCapture(captureData);
-        bNewCapture = false;
-    }
-}
+    if(bCapturing && !hSignalReady && targetProcessID)
+        hSignalReady = GetEvent(String() << CAPTURE_READY_EVENT << int(targetProcessID));
 
-bool GraphicsCaptureSource::FindSenderWindow()
-{
-    if(hwndSender)
-    {
-        if(!IsWindow(hwndSender))
-            hwndSender = NULL;
-        else
-            return true;
-    }
-
-    while(hwndSender = FindWindowEx(NULL, hwndSender, SENDER_WINDOWCLASS, NULL))
-    {
-        DWORD procID = 0;
-
-        GetWindowThreadProcessId(hwndSender, &procID);
-        if(procID == targetProcessID)
-            return true;
-    }
-
-    return false;
+    if(hSignalReady && (WaitForSingleObject(hSignalReady, 0) == WAIT_OBJECT_0))
+        NewCapture();
 }
 
 void GraphicsCaptureSource::BeginScene()
@@ -249,13 +248,11 @@ void GraphicsCaptureSource::BeginScene()
         return;
 
     bStretch = data->GetInt(TEXT("stretchImage")) != 0;
+    bIgnoreAspect = data->GetInt(TEXT("ignoreAspect")) != 0;
     bCaptureMouse = data->GetInt(TEXT("captureMouse"), 1) != 0;
 
     if(bCaptureMouse && data->GetInt(TEXT("invertMouse")))
         invertShader = CreatePixelShaderFromFile(TEXT("shaders\\InvertTexture.pShader"));
-
-    windowData = new CaptureWindowData(this);
-    hwndReceiver = CreateWindow(RECEIVER_WINDOWCLASS, NULL, 0, 0, 0, 0, 0, 0, 0, hinstMain, windowData);
 
     AttemptCapture();
 }
@@ -292,12 +289,15 @@ void GraphicsCaptureSource::AttemptCapture()
     //-------------------------------------------
     // see if we already hooked the process.  if not, inject DLL
 
-    hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, targetProcessID);
+    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, targetProcessID);
     if(hProcess)
     {
-        if(FindSenderWindow())
+        hwndCapture = hwndTarget;
+
+        hSignalRestart = OpenEvent(EVENT_ALL_ACCESS, FALSE, String() << RESTART_CAPTURE_EVENT << int(targetProcessID));
+        if(hSignalRestart)
         {
-            PostMessage(hwndSender, SENDER_RESTARTCAPTURE, 0, 0);
+            SetEvent(hSignalRestart);
             bCapturing = true;
             captureWaitCount = 0;
         }
@@ -330,22 +330,12 @@ void GraphicsCaptureSource::AttemptCapture()
         AppWarning(TEXT("GraphicsCaptureSource::BeginScene: OpenProcess failed, GetLastError = %u"), GetLastError());
         bErrorAcquiring = true;
     }
+
+    CloseHandle(hProcess);
 }
 
 void GraphicsCaptureSource::EndScene()
 {
-    if(windowData)
-    {
-        windowData->source = NULL;
-        windowData = NULL;
-    }
-
-    if(hwndReceiver)
-    {
-        DestroyWindow(hwndReceiver);
-        hwndReceiver = NULL;
-    }
-
     if(capture)
     {
         capture->Destroy();
@@ -366,21 +356,14 @@ void GraphicsCaptureSource::EndScene()
     }
 
     if(!bCapturing)
+    {
         return;
+    }
 
     bCapturing = false;
 
-    if(FindSenderWindow())
-    {
-        PostMessage(hwndSender, SENDER_ENDCAPTURE, 0, 0);
-        hwndSender = NULL;
-    }
-
-    if(hProcess)
-    {
-        CloseHandle(hProcess);
-        hProcess = NULL;
-    }
+    SetEvent(hSignalEnd);
+    EndCapture();
 }
 
 void GraphicsCaptureSource::Tick(float fSeconds)
@@ -388,7 +371,9 @@ void GraphicsCaptureSource::Tick(float fSeconds)
     if(bCapturing && !capture)
     {
         if(++captureWaitCount >= API->GetMaxFPS())
+        {
             bCapturing = false;
+        }
     }
 
     if(!bCapturing && !bErrorAcquiring)
@@ -402,7 +387,7 @@ void GraphicsCaptureSource::Tick(float fSeconds)
     }
     else
     {
-        if(!FindSenderWindow())
+        if(!IsWindow(hwndCapture))
             EndCapture();
     }
 }
@@ -418,45 +403,10 @@ inline double round(double val)
         return floor(val-0.5);
 }
 
-LPBYTE GetCursorData(HICON hIcon, ICONINFO &ii, UINT &size)
+void RoundVect2(Vect2 &v)
 {
-    BITMAP bmp;
-    HBITMAP hBmp = ii.hbmColor ? ii.hbmColor : ii.hbmMask;
-
-    if(GetObject(hBmp, sizeof(bmp), &bmp) != 0)
-    {
-        BITMAPINFO bi;
-        zero(&bi, sizeof(bi));
-
-        size = bmp.bmWidth;
-
-        void* lpBits;
-
-        BITMAPINFOHEADER &bih = bi.bmiHeader;
-        bih.biSize = sizeof(bih);
-        bih.biBitCount = 32;
-        bih.biWidth  = bmp.bmWidth;
-        bih.biHeight = bmp.bmHeight;
-        bih.biPlanes = 1;
-
-        HDC hTempDC = CreateCompatibleDC(NULL);
-        HBITMAP hBitmap = CreateDIBSection(hTempDC, &bi, DIB_RGB_COLORS, &lpBits, NULL, 0);
-        HBITMAP hbmpOld = (HBITMAP)SelectObject(hTempDC, hBitmap);
-
-        zero(lpBits, bmp.bmHeight*bmp.bmWidth*4);
-        DrawIcon(hTempDC, 0, 0, hIcon);
-
-        LPBYTE lpData = (LPBYTE)Allocate(bmp.bmHeight*bmp.bmWidth*4);
-        mcpy(lpData, lpBits, bmp.bmHeight*bmp.bmWidth*4);
-
-        SelectObject(hTempDC, hbmpOld);
-        DeleteObject(hBitmap);
-        DeleteDC(hTempDC);
-
-        return lpData;
-    }
-
-    return NULL;
+    v.x = float(round(v.x));
+    v.y = float(round(v.y));
 }
 
 void GraphicsCaptureSource::Render(const Vect2 &pos, const Vect2 &size)
@@ -524,104 +474,87 @@ void GraphicsCaptureSource::Render(const Vect2 &pos, const Vect2 &size)
         //----------------------------------------------------------
         // game texture
 
+        Texture *tex = capture->LockTexture();
+
         Vect2 texPos = Vect2(0.0f, 0.0f);
         Vect2 texStretch = Vect2(1.0f, 1.0f);
 
-        Texture *tex = capture->LockTexture();
         if(tex)
         {
+            Vect2 texSize = Vect2(float(tex->Width()), float(tex->Height()));
+            Vect2 totalSize = API->GetBaseSize();
+
+            Vect2 center = totalSize*0.5f;
+
             BlendFunction(GS_BLEND_ONE, GS_BLEND_ZERO);
 
             if(bStretch)
             {
-                //Vect2 halfSize = size*0.5f;
-                //Vect2 center = pos+halfSize;
-                Vect2 halfSize = API->GetBaseSize()*0.5f;
-                Vect2 center = halfSize;
-                center.x = float(round(center.x));
-                center.y = float(round(center.y));
-
-                Vect2 texSize = Vect2(float(tex->Width()), float(tex->Height()));
-                Vect2 outSize = API->GetBaseSize(), outPos = Vect2(0.0f, 0.0f);  //outSize = size,
-                Vect2 lr = Vect2(0.0f, 0.0f);
-
-                double sourceAspect = double(tex->Width())/double(tex->Height());
-                double baseAspect = double(outSize.x)/double(outSize.y);
-
-                if(!CloseDouble(baseAspect, sourceAspect))
-                {
-                    if(baseAspect < sourceAspect)
-                        outSize.y = float(double(outSize.x) / sourceAspect);
-                    else
-                        outSize.x = float(double(outSize.y) * sourceAspect);
-
-                    outPos = (API->GetBaseSize()-outSize)*0.5f; //(size-outSize)*0.5f;
-
-                    outPos.x = (float)round(outPos.x);
-                    outPos.y = (float)round(outPos.y);
-
-                    outSize.x = (float)round(outSize.x);
-                    outSize.y = (float)round(outSize.y);
-                }
-
-                lr += outSize;
-                lr += outPos;
-                //outPos += pos;
-
-                texPos = outPos;
-                texStretch = outSize/texSize;
-
-                if(bFlip)
-                    DrawSprite(tex, 0xFFFFFFFF, outPos.x, lr.y, lr.x, outPos.y);
+                if(bIgnoreAspect)
+                    texStretch *= totalSize;
                 else
-                    DrawSprite(tex, 0xFFFFFFFF, outPos.x, outPos.y, lr.x, lr.y);
+                {
+                    float xDif = fabsf(totalSize.x-texSize.x);
+                    float yDif = fabsf(totalSize.y-texSize.y);
+                    float multiplyVal = (xDif < yDif) ? (totalSize.x/texSize.x) : (totalSize.y/texSize.y);
+                        
+                    texStretch *= texSize*multiplyVal;
+                    texPos = center-(texStretch*0.5f);
+                }
             }
             else
             {
-                //Vect2 halfSize = size*0.5f;
-                //Vect2 center = pos+halfSize;
-                Vect2 halfSize = API->GetBaseSize()*0.5f;
-                Vect2 center = halfSize;
-                center.x = float(round(center.x));
-                center.y = float(round(center.y));
-
-                Vect2 texHalfSize = Vect2(float(tex->Width()/2), float(tex->Height()/2));
-                texPos = center-texHalfSize;
-
-                if(bFlip)
-                    DrawSprite(tex, 0xFFFFFFFF, center.x-texHalfSize.x, center.y+texHalfSize.y, center.x+texHalfSize.x, center.y-texHalfSize.y);
-                else
-                    DrawSprite(tex, 0xFFFFFFFF, center.x-texHalfSize.x, center.y-texHalfSize.y, center.x+texHalfSize.x, center.y+texHalfSize.y);
+                texStretch *= texSize;
+                texPos = center-(texStretch*0.5f);
             }
+
+            Vect2 sizeAdjust = size/totalSize;
+            texPos += pos;
+            texPos *= sizeAdjust;
+            texStretch *= sizeAdjust;
+
+            RoundVect2(texPos);
+            RoundVect2(texSize);
+
+            if(bFlip)
+                DrawSprite(tex, 0xFFFFFFFF, texPos.x, texPos.y+texStretch.y, texPos.x+texStretch.x, texPos.y);
+            else
+                DrawSprite(tex, 0xFFFFFFFF, texPos.x, texPos.y, texPos.x+texStretch.x, texPos.y+texStretch.y);
 
             capture->UnlockTexture();
 
             BlendFunction(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA);
-        }
 
-        //----------------------------------------------------------
-        // draw mouse
+            //----------------------------------------------------------
+            // draw mouse
 
-        if(bMouseCaptured && cursorTexture)
-        {
-            float fCursorX = (texPos.x + texStretch.x * float(cursorPos.x-xHotspot));
-            float fCursorY = (texPos.y + texStretch.y * float(cursorPos.y-xHotspot));
-            float fCursorCX = texStretch.x * float(cursorTexture->Width());
-            float fCursorCY = texStretch.y * float(cursorTexture->Height());
-
-            Shader *lastShader;
-            bool bInvertCursor = false;
-            if(invertShader)
+            if(bMouseCaptured && cursorTexture)
             {
-                lastShader = GetCurrentPixelShader();
-                if(bInvertCursor = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0)
-                    LoadPixelShader(invertShader);
+                Vect2 newCursorPos  = Vect2(float(cursorPos.x-xHotspot), float(cursorPos.y-xHotspot));
+                Vect2 newCursorSize = Vect2(float(cursorTexture->Width()), float(cursorTexture->Height()));
+
+                newCursorPos  /= texSize;
+                newCursorSize /= texSize;
+
+                newCursorPos *= texStretch;
+                newCursorPos += texPos;
+
+                newCursorSize *= texStretch;
+
+                Shader *lastShader;
+                bool bInvertCursor = false;
+                if(invertShader)
+                {
+                    lastShader = GetCurrentPixelShader();
+                    if(bInvertCursor = ((GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0 || (GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0))
+                        LoadPixelShader(invertShader);
+                }
+
+                DrawSprite(cursorTexture, 0xFFFFFFFF, newCursorPos.x, newCursorPos.y+newCursorSize.y, newCursorPos.x+newCursorSize.x, newCursorPos.y);
+
+                if(bInvertCursor)
+                    LoadPixelShader(lastShader);
             }
-
-            DrawSprite(cursorTexture, 0xFFFFFFFF, fCursorX, fCursorY+fCursorCY, fCursorX+fCursorCX, fCursorY);
-
-            if(bInvertCursor)
-                LoadPixelShader(lastShader);
         }
     }
 }

@@ -100,8 +100,7 @@ bool CurrentDeviceExists(CTSTR lpDevice, bool bGlobal, bool &isGlobal)
     return false;
 }
 
-
-IBaseFilter* GetDeviceByName(CTSTR lpName)
+IBaseFilter* GetDeviceByValue(WSTR lpType, CTSTR lpName, WSTR lpType2, CTSTR lpName2)
 {
     ICreateDevEnum *deviceEnum;
     IEnumMoniker *videoDeviceEnum;
@@ -127,6 +126,10 @@ IBaseFilter* GetDeviceByName(CTSTR lpName)
     if(err == S_FALSE) //no devices, so NO ENUM FO U
         return NULL;
 
+    //---------------------------------
+
+    IBaseFilter *bestFilter = NULL;
+
     IMoniker *deviceInfo;
     DWORD count;
     while(videoDeviceEnum->Next(1, &deviceInfo, &count) == S_OK)
@@ -136,28 +139,61 @@ IBaseFilter* GetDeviceByName(CTSTR lpName)
         if(SUCCEEDED(err))
         {
             VARIANT valueThingy;
-            valueThingy.vt = VT_BSTR;
+            VARIANT valueThingy2;
+            valueThingy.vt  = VT_BSTR;
+            valueThingy.pbstrVal = NULL;
 
-            err = propertyData->Read(L"FriendlyName", &valueThingy, NULL);
-            SafeRelease(propertyData);
+            valueThingy2.vt = VT_BSTR;
+            valueThingy2.bstrVal = NULL;
 
-            if(SUCCEEDED(err))
+            if(SUCCEEDED(propertyData->Read(lpType, &valueThingy, NULL)))
             {
-                String strDeviceName = (CWSTR)valueThingy.bstrVal;
-                if(strDeviceName == lpName)
+                if(lpType2 && lpName2)
+                    propertyData->Read(lpType2, &valueThingy2, NULL);
+
+                SafeRelease(propertyData);
+
+                String strVal1 = (CWSTR)valueThingy.bstrVal;
+
+                if(strVal1 == lpName)
                 {
                     IBaseFilter *filter;
                     err = deviceInfo->BindToObject(NULL, 0, IID_IBaseFilter, (void**)&filter);
                     if(FAILED(err))
                     {
                         AppWarning(TEXT("GetDeviceByName: deviceInfo->BindToObject failed, result = %08lX"), err);
-                        return NULL;
+                        continue;
                     }
 
-                    SafeRelease(deviceInfo);
-                    SafeRelease(videoDeviceEnum);
+                    if(!bestFilter)
+                    {
+                        bestFilter = filter;
 
-                    return filter;
+                        if(!lpType2 || !lpName2)
+                        {
+                            SafeRelease(deviceInfo);
+                            SafeRelease(videoDeviceEnum);
+
+                            return bestFilter;
+                        }
+                    }
+                    else if(lpType2 && lpName2)
+                    {
+                        String strVal2 = (CWSTR)valueThingy2.bstrVal;
+                        if(strVal2 == lpName2)
+                        {
+                            bestFilter->Release();
+
+                            bestFilter = filter;
+
+                            SafeRelease(deviceInfo);
+                            SafeRelease(videoDeviceEnum);
+
+                            return bestFilter;
+                        }
+                    }
+                    else
+                        filter->Release();
                 }
             }
         }
@@ -167,72 +203,9 @@ IBaseFilter* GetDeviceByName(CTSTR lpName)
 
     SafeRelease(videoDeviceEnum);
 
-    return NULL;
+    return bestFilter;
 }
 
-
-void FillOutListOfVideoDevices(HWND hwndCombo)
-{
-    SendMessage(hwndCombo, CB_RESETCONTENT, 0, 0);
-
-    ICreateDevEnum *deviceEnum;
-    IEnumMoniker *videoDeviceEnum;
-
-    HRESULT err;
-    err = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC, IID_ICreateDevEnum, (void**)&deviceEnum);
-    if(FAILED(err))
-    {
-        AppWarning(TEXT("FillOutListOfVideoDevices: CoCreateInstance for the device enum failed, result = %08lX"), err);
-        return;
-    }
-
-    err = deviceEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory, &videoDeviceEnum, 0);
-    if(FAILED(err))
-    {
-        AppWarning(TEXT("FillOutListOfVideoDevices: deviceEnum->CreateClassEnumerator failed, result = %08lX"), err);
-        deviceEnum->Release();
-        return;
-    }
-
-    SafeRelease(deviceEnum);
-
-    if(err == S_FALSE) //no devices
-        return;
-
-    IMoniker *deviceInfo;
-    DWORD count;
-    while(videoDeviceEnum->Next(1, &deviceInfo, &count) == S_OK)
-    {
-        IPropertyBag *propertyData;
-        err = deviceInfo->BindToStorage(0, 0, IID_IPropertyBag, (void**)&propertyData);
-        if(SUCCEEDED(err))
-        {
-            VARIANT valueThingy;
-            valueThingy.vt = VT_BSTR;
-
-            err = propertyData->Read(L"FriendlyName", &valueThingy, NULL);
-            SafeRelease(propertyData);
-
-            if(SUCCEEDED(err))
-            {
-                IBaseFilter *filter;
-                err = deviceInfo->BindToObject(NULL, 0, IID_IBaseFilter, (void**)&filter);
-                if(SUCCEEDED(err))
-                {
-                    String strDeviceName = (CWSTR)valueThingy.bstrVal;
-                    if(SendMessage(hwndCombo, CB_FINDSTRINGEXACT, -1, (LPARAM)strDeviceName.Array()) == CB_ERR)
-                        SendMessage(hwndCombo, CB_ADDSTRING, 0, (LPARAM)strDeviceName.Array());
-
-                    SafeRelease(filter);
-                }
-            }
-        }
-
-        SafeRelease(deviceInfo);
-    }
-
-    SafeRelease(videoDeviceEnum);
-}
 
 IPin* GetOutputPin(IBaseFilter *filter)
 {
@@ -463,6 +436,8 @@ struct ConfigDialogData
     XElement *data;
     List<MediaOutputInfo> outputList;
     List<SIZE> resolutions;
+    StringList deviceNameList;
+    StringList deviceIDList;
     bool bGlobalSource;
     bool bCreating;
 
@@ -537,6 +512,90 @@ struct ConfigDialogData
         return fpsInfo.supportedIntervals.Num() != 0;
     }
 };
+
+void FillOutListOfVideoDevices(HWND hwndCombo, ConfigDialogData &info)
+{
+    info.deviceIDList.Clear();
+    SendMessage(hwndCombo, CB_RESETCONTENT, 0, 0);
+
+    ICreateDevEnum *deviceEnum;
+    IEnumMoniker *videoDeviceEnum;
+
+    HRESULT err;
+    err = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC, IID_ICreateDevEnum, (void**)&deviceEnum);
+    if(FAILED(err))
+    {
+        AppWarning(TEXT("FillOutListOfVideoDevices: CoCreateInstance for the device enum failed, result = %08lX"), err);
+        return;
+    }
+
+    err = deviceEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory, &videoDeviceEnum, 0);
+    if(FAILED(err))
+    {
+        AppWarning(TEXT("FillOutListOfVideoDevices: deviceEnum->CreateClassEnumerator failed, result = %08lX"), err);
+        deviceEnum->Release();
+        return;
+    }
+
+    SafeRelease(deviceEnum);
+
+    if(err == S_FALSE) //no devices
+        return;
+
+    IMoniker *deviceInfo;
+    DWORD count;
+
+    StringList deviceNameList;
+
+    while(videoDeviceEnum->Next(1, &deviceInfo, &count) == S_OK)
+    {
+        IPropertyBag *propertyData;
+        err = deviceInfo->BindToStorage(0, 0, IID_IPropertyBag, (void**)&propertyData);
+        if(SUCCEEDED(err))
+        {
+            VARIANT friendlyNameValue, devicePathValue;
+            friendlyNameValue.vt = VT_BSTR;
+            friendlyNameValue.bstrVal = NULL;
+            devicePathValue.vt = VT_BSTR;
+            devicePathValue.bstrVal = NULL;
+
+            err = propertyData->Read(L"FriendlyName", &friendlyNameValue, NULL);
+            propertyData->Read(L"DevicePath", &devicePathValue, NULL);
+
+            if(SUCCEEDED(err))
+            {
+                IBaseFilter *filter;
+                err = deviceInfo->BindToObject(NULL, 0, IID_IBaseFilter, (void**)&filter);
+                if(SUCCEEDED(err))
+                {
+                    String strDeviceName = (CWSTR)friendlyNameValue.bstrVal;
+                    deviceNameList << strDeviceName;
+
+                    UINT count = 0;
+                    UINT id = INVALID;
+                    while((id = deviceNameList.FindNextValueIndexI(strDeviceName, id)) != INVALID) count++;
+
+                    info.deviceNameList << strDeviceName;
+
+                    if(count > 1)
+                        strDeviceName << TEXT(" (") << UIntString(count) << TEXT(")");
+
+                    String strDeviceID = (CWSTR)devicePathValue.bstrVal;
+                    SendMessage(hwndCombo, CB_ADDSTRING, 0, (LPARAM)strDeviceName.Array());
+                    info.deviceIDList << strDeviceID;
+
+                    SafeRelease(filter);
+                }
+            }
+
+            SafeRelease(propertyData);
+        }
+
+        SafeRelease(deviceInfo);
+    }
+
+    SafeRelease(videoDeviceEnum);
+}
 
 
 bool GetResolution(HWND hwndResolution, SIZE &resolution, BOOL bSelChange)
@@ -701,7 +760,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 SendMessage(GetDlgItem(hwnd, IDC_CUSTOMRESOLUTION), BM_SETCHECK, bCustomResolution ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 LocalizeWindow(hwnd, pluginLocale);
-                FillOutListOfVideoDevices(GetDlgItem(hwnd, IDC_DEVICELIST));
+                FillOutListOfVideoDevices(GetDlgItem(hwnd, IDC_DEVICELIST), *configData);
 
                 UINT deviceID = CB_ERR;
                 if(strDevice.IsValid() && cx > 0 && cy > 0 && frameInterval > 0)
@@ -967,7 +1026,9 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                     {
                         HWND hwndDeviceList = GetDlgItem(hwnd, IDC_DEVICELIST);
 
-                        FillOutListOfVideoDevices(hwndDeviceList);
+                        ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
+
+                        FillOutListOfVideoDevices(hwndDeviceList, *configData);
                         SendMessage(hwndDeviceList, CB_SETCURSEL, 0, 0);
                         ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_DEVICELIST, CBN_SELCHANGE), (LPARAM)hwndDeviceList);
                         break;
@@ -998,9 +1059,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                             EnableWindow(GetDlgItem(hwnd, IDOK), TRUE);
 
                             ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
-
-                            String strSel = GetCBText(hwndDevices, id);
-                            IBaseFilter *filter = GetDeviceByName(strSel);
+                            IBaseFilter *filter = GetDeviceByValue(L"FriendlyName", configData->deviceNameList[id], L"DevicePath", configData->deviceIDList[id]);
                             if(filter)
                             {
                                 IPin *outputPin = GetOutputPin(filter);
@@ -1194,8 +1253,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         UINT id = (UINT)SendMessage(GetDlgItem(hwnd, IDC_DEVICELIST), CB_GETCURSEL, 0, 0);
                         if(id != CB_ERR)
                         {
-                            String strSel = GetCBText(GetDlgItem(hwnd, IDC_DEVICELIST), id);
-                            IBaseFilter *filter = GetDeviceByName(strSel);
+                            ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
+                            IBaseFilter *filter = GetDeviceByValue(L"FriendlyName", configData->deviceNameList[id], L"DevicePath", configData->deviceIDList[id]);
                             if(filter)
                             {
                                 ISpecifyPropertyPages *propPages;
@@ -1285,6 +1344,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         BOOL bCustomResolution = SendMessage(GetDlgItem(hwnd, IDC_CUSTOMRESOLUTION), BM_GETCHECK, 0, 0) == BST_CHECKED;
 
                         configData->data->SetString(TEXT("device"), strDevice);
+                        configData->data->SetString(TEXT("deviceName"), configData->deviceNameList[deviceID]);
+                        configData->data->SetString(TEXT("deviceID"), configData->deviceIDList[deviceID]);
                         configData->data->SetInt(TEXT("customResolution"), bCustomResolution);
                         configData->data->SetInt(TEXT("resolutionWidth"), resolution.cx);
                         configData->data->SetInt(TEXT("resolutionHeight"), resolution.cy);

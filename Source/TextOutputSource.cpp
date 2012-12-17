@@ -25,6 +25,7 @@
     if(iVal < minVal) iVal = minVal; \
     else if(iVal > maxVal) iVal = maxVal;
 
+#define UPDATE_DELAY 1.0f
 
 class TextOutputSource : public ImageSource
 {
@@ -64,6 +65,9 @@ class TextOutputSource : public ImageSource
     HANDLE      hDirectory;
     OVERLAPPED  directoryChange;
 
+    bool        bDoUpdate;
+    float       updateDelay;
+
     SamplerState *ss;
 
     XElement    *data;
@@ -76,24 +80,30 @@ class TextOutputSource : public ImageSource
                          const Gdiplus::StringFormat &format,
                          const Gdiplus::Brush *brush)
     {
-        // HomeWorld -- text outline stuff
+                
+        Gdiplus::GraphicsPath *outlinePath;
+
+        outlinePath = path.Clone();
+
         // Stuff to make things look pretty
         graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
         graphics.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+        graphics.SetCompositingMode(Gdiplus::CompositingModeSourceOver);
 
         // Outline color and size
         Gdiplus::Pen pen(Gdiplus::Color(GetAlphaVal() | (outlineColor&0xFFFFFF)), outlineSize);
         pen.SetLineJoin(Gdiplus::LineJoinRound);
 
-        // Use source copy mode (so text color will not blend with background color in case alpha < 255)
-        graphics.SetCompositingMode(Gdiplus::CompositingModeSourceCopy);
+        // Widen the outline
+        outlinePath->Widen(&pen);
+
+        // Draw the outline
+        graphics.DrawPath(&pen, outlinePath);
+
         // Draw the text        
         graphics.FillPath(brush, &path);
 
-        // Use source over mode for drawing outline (using source copy doesn't look good because of antialiasing)
-        graphics.SetCompositingMode(Gdiplus::CompositingModeSourceOver);
-        // Draw the outline
-        graphics.DrawPath(&pen, &path);
+        delete outlinePath;
     }
 
     void UpdateTexture()
@@ -179,7 +189,9 @@ class TextOutputSource : public ImageSource
                 Gdiplus::StringFormat format;
 
                 if(bVertical)
-                    format.SetFormatFlags(Gdiplus::StringFormatFlagsDirectionVertical|Gdiplus::StringFormatFlagsDirectionRightToLeft);
+                    format.SetFormatFlags(Gdiplus::StringFormatFlagsDirectionVertical|Gdiplus::StringFormatFlagsDirectionRightToLeft|Gdiplus::StringFormatFlagsMeasureTrailingSpaces);
+                else
+                    format.SetFormatFlags(Gdiplus::StringFormatFlagsMeasureTrailingSpaces);
 
                 Gdiplus::RectF rcf;
                 stat = graphics.MeasureString(strCurrentText, -1, &font, Gdiplus::PointF(0.0f, 0.0f), &format, &rcf);
@@ -381,6 +393,8 @@ public:
 
         changeBuffer = (LPBYTE)Allocate(2048);
         zero(changeBuffer, 2048);
+
+        Log(TEXT("Using text output"));
     }
 
     ~TextOutputSource()
@@ -421,7 +435,10 @@ public:
                 strFileChanged << strDirectory << strFileName;
 
                 if(strFileChanged.CompareI(strFile))
-                    bUpdateTexture = true;
+                {
+                    bDoUpdate = true;
+                    updateDelay = 0.0f;
+                }
 
                 DWORD test;
                 zero(&directoryChange, sizeof(directoryChange));
@@ -454,6 +471,17 @@ public:
 
         if(showExtentTime > 0.0f)
             showExtentTime -= fSeconds;
+
+        if(bDoUpdate)
+        {
+            updateDelay += fSeconds;
+            if(updateDelay >= UPDATE_DELAY)
+            {
+                updateDelay = 0.0f;
+                bDoUpdate = false;
+                bUpdateTexture = true;
+            }
+        }
     }
 
     void Render(const Vect2 &pos, const Vect2 &size)
@@ -1150,7 +1178,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                                 Gdiplus::StringFormat format;
 
                                 if(bVertical)
-                                    format.SetFormatFlags(Gdiplus::StringFormatFlagsDirectionVertical|Gdiplus::StringFormatFlagsDirectionRightToLeft);
+                                    format.SetFormatFlags(Gdiplus::StringFormatFlagsDirectionVertical|Gdiplus::StringFormatFlagsDirectionRightToLeft|Gdiplus::StringFormatFlagsMeasureTrailingSpaces);
 
                                 Gdiplus::RectF rcf;
                                 graphics.MeasureString(strOutputText, -1, &font, Gdiplus::PointF(0.0f, 0.0f), &format, &rcf);

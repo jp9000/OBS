@@ -45,8 +45,8 @@ class MP3Encoder : public AudioEncoder
     UINT outputFrameSize;
     UINT curBitRate;
 
-    List<DWORD> bufferedTimestamps;
-    DWORD curEncodeTimestamp;
+    List<QWORD> bufferedTimestamps;
+    QWORD curEncodeTimestamp;
     DWORD frameCounter;
     bool bFirstFrame;
 
@@ -84,7 +84,7 @@ public:
         lame_close(lgf);
     }
 
-    bool Encode(float *input, UINT numInputFrames, DataPacket &packet, DWORD &timestamp)
+    bool Encode(float *input, UINT numInputFrames, DataPacket &packet, QWORD &timestamp)
     {
         if(bFirstFrame)
         {
@@ -146,8 +146,6 @@ public:
     {
         packet.lpPacket = header.Array();
         packet.size = header.Num();
-
-        OSDebugOut(TEXT("testing, 123\r\n"));
     }
 
     int GetBitRate() const {return curBitRate;}

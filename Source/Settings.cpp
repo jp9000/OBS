@@ -197,6 +197,8 @@ INT_PTR CALLBACK OBS::GeneralSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                             break;
                         }
 
+                        App->ReloadIniSettings();
+
                         SetWindowText(GetDlgItem(hwnd, IDC_INFO), Str("Settings.Info"));
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
 
@@ -447,10 +449,19 @@ INT_PTR CALLBACK OBS::EncoderSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                 //--------------------------------------------
 
                 hwndTemp = GetDlgItem(hwnd, IDC_AUDIOCODEC);
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("AAC"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("MP3"));
 
-                LoadSettingComboString(hwndTemp, TEXT("Audio Encoding"), TEXT("Codec"), TEXT("AAC"));
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("MP3"));
+#ifdef USE_AAC
+                if(OSGetVersion() >= 7)
+                {
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("AAC"));
+                    LoadSettingComboString(hwndTemp, TEXT("Audio Encoding"), TEXT("Codec"), TEXT("AAC"));
+                }
+                else
+                    LoadSettingComboString(hwndTemp, TEXT("Audio Encoding"), TEXT("Codec"), TEXT("MP3"));
+#else
+                LoadSettingComboString(hwndTemp, TEXT("Audio Encoding"), TEXT("Codec"), TEXT("MP3"));
+#endif
 
                 //--------------------------------------------
 
@@ -459,6 +470,7 @@ INT_PTR CALLBACK OBS::EncoderSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("64"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("96"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("128"));
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("160"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("192"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("256"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("320"));
@@ -1176,6 +1188,9 @@ INT_PTR CALLBACK OBS::VideoSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
 
                 hwndTemp = GetDlgItem(hwnd, IDC_DISABLEAERO);
 
+                if(OSGetVersion() == 8)
+                    EnableWindow(hwndTemp, FALSE);
+
                 BOOL bDisableAero = AppConfig->GetInt(TEXT("Video"), TEXT("DisableAero"), 0);
                 SendMessage(hwndTemp, BM_SETCHECK, bDisableAero ? BST_CHECKED : 0, 0);
 
@@ -1381,9 +1396,15 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                 SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALK), BM_SETCHECK, bPushToTalk ? BST_CHECKED : BST_UNCHECKED, 0);
                 EnableWindow(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY), bPushToTalk);
                 EnableWindow(GetDlgItem(hwnd, IDC_CLEARPUSHTOTALK), bPushToTalk);
+                EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY_EDIT), bPushToTalk);
+                EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY), bPushToTalk);
 
                 DWORD hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey"));
                 SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY), HKM_SETHOTKEY, hotkey, 0);
+
+                int pttDelay = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkDelay"), 200);
+                SendMessage(GetDlgItem(hwnd, IDC_PTTDELAY), UDM_SETRANGE32, 0, 2000);
+                SendMessage(GetDlgItem(hwnd, IDC_PTTDELAY), UDM_SETPOS32, 0, pttDelay);
 
                 //--------------------------------------------
 
@@ -1434,6 +1455,8 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                             BOOL bUsePushToTalk = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
                             EnableWindow(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY), bUsePushToTalk);
                             EnableWindow(GetDlgItem(hwnd, IDC_CLEARPUSHTOTALK), bUsePushToTalk);
+                            EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY_EDIT), bUsePushToTalk);
+                            EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY), bUsePushToTalk);
                             App->SetChangedSettings(true);
                         }
                         break;
@@ -1442,6 +1465,7 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                     case IDC_PUSHTOTALKHOTKEY:
                     case IDC_MUTEMICHOTKEY:
                     case IDC_MUTEDESKTOPHOTKEY:
+                    case IDC_PTTDELAY_EDIT:
                         if(HIWORD(wParam) == EN_CHANGE)
                             App->SetChangedSettings(true);
                         break;
@@ -1575,6 +1599,11 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 bool bUnlockFPS = AppConfig->GetInt(TEXT("Video"), TEXT("UnlockFPS")) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_UNLOCKHIGHFPS), BM_SETCHECK, bUnlockFPS ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                //------------------------------------
+
+                bool bDisableCTSAdjust = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("DisableCTSAdjust")) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_DISABLECTSADJUST), BM_SETCHECK, bDisableCTSAdjust ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 //------------------------------------
 
@@ -1754,6 +1783,7 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                     }
                     break;
 
+                case IDC_DISABLECTSADJUST:
                 case IDC_USEHIGHQUALITYRESAMPLING:
                 case IDC_USEMULTITHREADEDOPTIMIZATIONS:
                 case IDC_USESYNCFIX:
@@ -1897,6 +1927,7 @@ void OBS::ApplySettings()
                 break;
             }
 
+
         case Settings_Video:
             {
                 int curSel = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_MONITOR), CB_GETCURSEL, 0, 0);
@@ -1951,8 +1982,15 @@ void OBS::ApplySettings()
                 bUsingPushToTalk = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_PUSHTOTALK), BM_GETCHECK, 0, 0) == BST_CHECKED;
                 DWORD hotkey = (DWORD)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_PUSHTOTALKHOTKEY), HKM_GETHOTKEY, 0, 0);
 
+                pushToTalkDelay = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_PTTDELAY), UDM_GETPOS32, 0, 0);
+                if(pushToTalkDelay < 0)
+                    pushToTalkDelay = 0;
+                else if(pushToTalkDelay > 2000)
+                    pushToTalkDelay = 2000;
+
                 AppConfig->SetInt(TEXT("Audio"), TEXT("UsePushToTalk"), bUsingPushToTalk);
                 AppConfig->SetInt(TEXT("Audio"), TEXT("PushToTalkHotkey"), hotkey);
+                AppConfig->SetInt(TEXT("Audio"), TEXT("PushToTalkDelay"), pushToTalkDelay);
 
                 if(App->pushToTalkHotkeyID)
                 {
@@ -2044,6 +2082,11 @@ void OBS::ApplySettings()
 
                 BOOL bUnlockFPS = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_UNLOCKHIGHFPS), BM_GETCHECK, 0, 0) == BST_CHECKED;
                 AppConfig->SetInt   (TEXT("Video"), TEXT("UnlockFPS"), bUnlockFPS);
+
+                //------------------------------------
+
+                BOOL bDisableCTSAdjust = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_DISABLECTSADJUST), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("DisableCTSAdjust"), bDisableCTSAdjust);
 
                 //------------------------------------
 

@@ -405,6 +405,8 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 default:
                     if(ret >= ID_LISTBOX_ADD)
                     {
+                        App->EnableSceneSwitching(false);
+
                         String strName = Str("Scene");
                         GetNewSceneName(strName);
 
@@ -430,10 +432,14 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                             PostMessage(hwnd, LB_SETCURSEL, newID, 0);
                             PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_SCENES, LBN_SELCHANGE), (LPARAM)hwnd);
                         }
+
+                        App->EnableSceneSwitching(true);
                     }
                     break;
 
                 case ID_LISTBOX_REMOVE:
+                    App->EnableSceneSwitching(false);
+
                     if(MessageBox(hwndMain, Str("DeleteConfirm"), Str("DeleteConfirm.Title"), MB_YESNO) == IDYES)
                     {
                         DWORD hotkey = item->GetInt(TEXT("hotkey"));
@@ -451,11 +457,14 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
                         bDelete = true;
                     }
+
+                    App->EnableSceneSwitching(true);
                     break;
 
                 case ID_LISTBOX_RENAME:
                     {
                         String strName;
+                        App->EnableSceneSwitching(false);
                         if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSceneNameDialogProc, (LPARAM)&strName) == IDOK)
                         {
                             SendMessage(hwnd, LB_DELETESTRING, curSel, 0);
@@ -464,15 +473,20 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
                             item->SetName(strName);
                         }
+                        App->EnableSceneSwitching(true);
                         break;
                     }
 
                 case ID_LISTBOX_CONFIG:
+                    App->EnableSceneSwitching(false);
+
                     if(curClassInfo->configProc(item, false))
                     {
                         if(App->bRunning)
                             App->scene->UpdateSettings();
                     }
+
+                    App->EnableSceneSwitching(true);
                     break;
 
                 case ID_LISTBOX_HOTKEY:
@@ -611,6 +625,8 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 default:
                     if(ret >= ID_LISTBOX_ADD)
                     {
+                        App->EnableSceneSwitching(false);
+
                         ClassInfo *ci;
                         if(ret >= ID_LISTBOX_GLOBALSOURCE)
                             ci = App->GetImageSourceClass(TEXT("GlobalSource"));
@@ -666,6 +682,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                                     if(!ci->configProc(newSourceElement, true))
                                     {
                                         sources->RemoveElement(newSourceElement);
+                                        App->EnableSceneSwitching(true);
                                         break;
                                     }
                                 }
@@ -685,16 +702,21 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                                 PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_SOURCES, LBN_SELCHANGE), (LPARAM)hwnd);
                             }
                         }
+
+                        App->EnableSceneSwitching(true);
                     }
                     break;
 
                 case ID_LISTBOX_REMOVE:
+                    App->EnableSceneSwitching(false);
                     App->DeleteItems();
+                    App->EnableSceneSwitching(true);
                     break;
 
                 case ID_LISTBOX_RENAME:
                     {
                         String strName;
+                        App->EnableSceneSwitching(false);
                         if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSourceNameDialogProc, (LPARAM)&strName) == IDOK)
                         {
                             SendMessage(hwnd, LB_DELETESTRING, curSel, 0);
@@ -703,10 +725,14 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
                             selectedElement->SetName(strName);
                         }
+
+                        App->EnableSceneSwitching(true);
                         break;
                     }
 
                 case ID_LISTBOX_CONFIG:
+                    App->EnableSceneSwitching(false);
+
                     if(curClassInfo->configProc(selectedElement, false))
                     {
                         if(App->bRunning)
@@ -720,6 +746,8 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                             App->LeaveSceneMutex();
                         }
                     }
+
+                    App->EnableSceneSwitching(true);
                     break;
 
                 case ID_LISTBOX_MOVEUP:
@@ -805,8 +833,19 @@ void OBS::DeleteItems()
                     sourcesElement->RemoveElement(selectedElements[i]);
             }
 
-            for(UINT i=0; i<selectedIDs.Num(); i++)
-                SendMessage(hwndSources, LB_DELETESTRING, selectedIDs[i], 0);
+            while(selectedIDs.Num())
+            {
+                UINT id = selectedIDs[0];
+                selectedIDs.Remove(0);
+
+                for(UINT i=0; i<selectedIDs.Num(); i++)
+                {
+                    if(selectedIDs[i] > id)
+                        selectedIDs[i]--;
+                }
+
+                SendMessage(hwndSources, LB_DELETESTRING, id, 0);
+            }
 
             if(selectedSceneItems.Num())
                 App->LeaveSceneMutex();
@@ -1222,6 +1261,7 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                 case IDC_REMOVE:
                     {
                         HWND hwndSources = GetDlgItem(hwnd, IDC_SOURCES);
+                        HWND hwndSceneSources = GetDlgItem(hwndMain, ID_SOURCES);
 
                         UINT id = (UINT)SendMessage(GetDlgItem(hwnd, IDC_SOURCES), LB_GETCURSEL, 0, 0);
                         if(id == LB_ERR)
@@ -1287,7 +1327,13 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                                             {
                                                 CTSTR lpName = data->GetString(TEXT("name"));
                                                 if(scmpi(lpName, element->GetName()) == 0)
+                                                {
+                                                    UINT listID = (UINT)SendMessage(hwndSceneSources, LB_FINDSTRINGEXACT, -1, (LPARAM)source->GetName());
+                                                    if(listID != LB_ERR)
+                                                        SendMessage(hwndSceneSources, LB_DELETESTRING, listID, 0);
+
                                                     sources->RemoveElement(source);
+                                                }
                                             }
                                         }
                                     }
@@ -1676,6 +1722,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                         if(IsWindowEnabled((HWND)lParam))
                         {
                             App->desktopVol = GetVolumeControlValue((HWND)lParam);
+                            
                             if(App->desktopVol < EPSILON)
                                 App->desktopVol = 0.0f;
 
@@ -1684,7 +1731,13 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                         }
                     }
                     break;
-
+                case ID_DESKTOPVOLUMEMETER:
+                case ID_MICVOLUMEMETER:
+                    if(HIWORD(wParam) == VOLN_METERED)
+                    {
+                        App->UpdateAudioMeters();
+                    }
+                    break;
                 case ID_SCENEEDITOR:
                     if(HIWORD(wParam) == BN_CLICKED)
                         App->bEditMode = !App->bEditMode;
@@ -1708,6 +1761,49 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 case ID_SOURCES:
                     if(HIWORD(wParam) == LBN_SELCHANGE)
                         App->SelectSources();
+                    else if(HIWORD(wParam) == LBN_DBLCLK)
+                    {
+                        int numItems = (int)SendMessage((HWND)lParam, LB_GETCOUNT, 0, 0);
+                        if(numItems == 1)
+                        {
+                            UINT selectedID;
+                            SendMessage((HWND)lParam, LB_GETSELITEMS, 1, (LPARAM)&selectedID);
+
+                            XElement *sourcesElement = App->sceneElement->GetElement(TEXT("sources"));
+                            if(!sourcesElement)
+                                break;
+
+                            XElement *selectedElement = sourcesElement->GetElementByID(selectedID);
+                            if(!selectedElement)
+                                break;
+
+                            ClassInfo *curClassInfo = App->GetImageSourceClass(selectedElement->GetString(TEXT("class")));
+                            if(curClassInfo && curClassInfo->configProc)
+                            {
+                                App->EnableSceneSwitching(false);
+
+                                if(curClassInfo->configProc(selectedElement, false))
+                                {
+                                    if(App->bRunning)
+                                    {
+                                        App->EnterSceneMutex();
+
+                                        List<SceneItem*> selectedSceneItems;
+                                        if(App->scene)
+                                            App->scene->GetSelectedItems(selectedSceneItems);
+
+                                        if(selectedSceneItems[0]->GetSource())
+                                            selectedSceneItems[0]->GetSource()->UpdateSettings();
+                                        selectedSceneItems[0]->Update();
+
+                                        App->LeaveSceneMutex();
+                                    }
+                                }
+
+                                App->EnableSceneSwitching(true);
+                            }
+                        }
+                    }
                     break;
 
                 case ID_TESTSTREAM:

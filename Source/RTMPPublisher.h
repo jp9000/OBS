@@ -66,6 +66,12 @@ protected:
     HANDLE hSendSempahore;
     HANDLE hDataMutex;
     HANDLE hSendThread;
+    HANDLE hSocketThread;
+    HANDLE hWriteEvent;
+    HANDLE hBufferEvent;
+    HANDLE hBufferSpaceAvailableEvent;
+    HANDLE hDataBufferMutex;
+    HANDLE hConnectionThread;
 
     bool bStopping;
 
@@ -74,6 +80,7 @@ protected:
     QWORD bytesSent;
 
     UINT totalFrames;
+    UINT totalVideoFrames;
     UINT numPFramesDumped;
     UINT numBFramesDumped;
 
@@ -84,8 +91,16 @@ protected:
     DWORD numVideoPacketsBuffered;
     DWORD firstBufferedVideoFrameTimestamp;
 
+    BYTE *dataBuffer;
+    int dataBufferSize;
+
+    int curDataBufferLen;
+
     void SendLoop();
+    void SocketLoop();
+    int RTMPPublisher::FlushDataBuffer();
     static DWORD SendThread(RTMPPublisher *publisher);
+    static DWORD SocketThread(RTMPPublisher *publisher);
 
     void DropFrame(UINT id);
     bool DoIFrameDelay(bool bBFramesOnly);
@@ -104,4 +119,5 @@ public:
     double GetPacketStrain() const;
     QWORD GetCurrentSentBytes();
     DWORD NumDroppedFrames() const;
+    DWORD NumTotalVideoFrames() const {return totalVideoFrames;}
 };
