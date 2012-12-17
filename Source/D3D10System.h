@@ -313,12 +313,17 @@ class D3D10OutputDuplicator : public OutputDuplicator
     IDXGIOutputDuplication *duplicator;
     Texture *copyTex;
 
+    POINT cursorPos;
+    Texture *cursorTex;
+    BOOL bCursorVis;
+
 public:
     bool Init(UINT output);
     virtual ~D3D10OutputDuplicator();
 
-    virtual DuplicatorInfo AquireNextFrame(UINT timeout, POINT &mousePos, BOOL &mouseVisible);
+    virtual DuplicatorInfo AquireNextFrame(UINT timeout);
     virtual Texture* GetCopyTexture();
+    virtual Texture* GetCursorTex(POINT* pos);
 };
 
 

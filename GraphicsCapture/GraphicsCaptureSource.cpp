@@ -248,6 +248,7 @@ void GraphicsCaptureSource::BeginScene()
         return;
 
     bStretch = data->GetInt(TEXT("stretchImage")) != 0;
+    bIgnoreAspect = data->GetInt(TEXT("ignoreAspect")) != 0;
     bCaptureMouse = data->GetInt(TEXT("captureMouse"), 1) != 0;
 
     if(bCaptureMouse && data->GetInt(TEXT("invertMouse")))
@@ -402,45 +403,10 @@ inline double round(double val)
         return floor(val-0.5);
 }
 
-LPBYTE GetCursorData(HICON hIcon, ICONINFO &ii, UINT &size)
+void RoundVect2(Vect2 &v)
 {
-    BITMAP bmp;
-    HBITMAP hBmp = ii.hbmColor ? ii.hbmColor : ii.hbmMask;
-
-    if(GetObject(hBmp, sizeof(bmp), &bmp) != 0)
-    {
-        BITMAPINFO bi;
-        zero(&bi, sizeof(bi));
-
-        size = bmp.bmWidth;
-
-        void* lpBits;
-
-        BITMAPINFOHEADER &bih = bi.bmiHeader;
-        bih.biSize = sizeof(bih);
-        bih.biBitCount = 32;
-        bih.biWidth  = bmp.bmWidth;
-        bih.biHeight = bmp.bmHeight;
-        bih.biPlanes = 1;
-
-        HDC hTempDC = CreateCompatibleDC(NULL);
-        HBITMAP hBitmap = CreateDIBSection(hTempDC, &bi, DIB_RGB_COLORS, &lpBits, NULL, 0);
-        HBITMAP hbmpOld = (HBITMAP)SelectObject(hTempDC, hBitmap);
-
-        zero(lpBits, bmp.bmHeight*bmp.bmWidth*4);
-        DrawIcon(hTempDC, 0, 0, hIcon);
-
-        LPBYTE lpData = (LPBYTE)Allocate(bmp.bmHeight*bmp.bmWidth*4);
-        mcpy(lpData, lpBits, bmp.bmHeight*bmp.bmWidth*4);
-
-        SelectObject(hTempDC, hbmpOld);
-        DeleteObject(hBitmap);
-        DeleteDC(hTempDC);
-
-        return lpData;
-    }
-
-    return NULL;
+    v.x = float(round(v.x));
+    v.y = float(round(v.y));
 }
 
 void GraphicsCaptureSource::Render(const Vect2 &pos, const Vect2 &size)
@@ -508,104 +474,87 @@ void GraphicsCaptureSource::Render(const Vect2 &pos, const Vect2 &size)
         //----------------------------------------------------------
         // game texture
 
+        Texture *tex = capture->LockTexture();
+
         Vect2 texPos = Vect2(0.0f, 0.0f);
         Vect2 texStretch = Vect2(1.0f, 1.0f);
 
-        Texture *tex = capture->LockTexture();
         if(tex)
         {
+            Vect2 texSize = Vect2(float(tex->Width()), float(tex->Height()));
+            Vect2 totalSize = API->GetBaseSize();
+
+            Vect2 center = totalSize*0.5f;
+
             BlendFunction(GS_BLEND_ONE, GS_BLEND_ZERO);
 
             if(bStretch)
             {
-                //Vect2 halfSize = size*0.5f;
-                //Vect2 center = pos+halfSize;
-                Vect2 halfSize = API->GetBaseSize()*0.5f;
-                Vect2 center = halfSize;
-                center.x = float(round(center.x));
-                center.y = float(round(center.y));
-
-                Vect2 texSize = Vect2(float(tex->Width()), float(tex->Height()));
-                Vect2 outSize = API->GetBaseSize(), outPos = Vect2(0.0f, 0.0f);  //outSize = size,
-                Vect2 lr = Vect2(0.0f, 0.0f);
-
-                double sourceAspect = double(tex->Width())/double(tex->Height());
-                double baseAspect = double(outSize.x)/double(outSize.y);
-
-                if(!CloseDouble(baseAspect, sourceAspect))
-                {
-                    if(baseAspect < sourceAspect)
-                        outSize.y = float(double(outSize.x) / sourceAspect);
-                    else
-                        outSize.x = float(double(outSize.y) * sourceAspect);
-
-                    outPos = (API->GetBaseSize()-outSize)*0.5f; //(size-outSize)*0.5f;
-
-                    outPos.x = (float)round(outPos.x);
-                    outPos.y = (float)round(outPos.y);
-
-                    outSize.x = (float)round(outSize.x);
-                    outSize.y = (float)round(outSize.y);
-                }
-
-                lr += outSize;
-                lr += outPos;
-                //outPos += pos;
-
-                texPos = outPos;
-                texStretch = outSize/texSize;
-
-                if(bFlip)
-                    DrawSprite(tex, 0xFFFFFFFF, outPos.x, lr.y, lr.x, outPos.y);
+                if(bIgnoreAspect)
+                    texStretch *= totalSize;
                 else
-                    DrawSprite(tex, 0xFFFFFFFF, outPos.x, outPos.y, lr.x, lr.y);
+                {
+                    float xDif = fabsf(totalSize.x-texSize.x);
+                    float yDif = fabsf(totalSize.y-texSize.y);
+                    float multiplyVal = (xDif < yDif) ? (totalSize.x/texSize.x) : (totalSize.y/texSize.y);
+                        
+                    texStretch *= texSize*multiplyVal;
+                    texPos = center-(texStretch*0.5f);
+                }
             }
             else
             {
-                //Vect2 halfSize = size*0.5f;
-                //Vect2 center = pos+halfSize;
-                Vect2 halfSize = API->GetBaseSize()*0.5f;
-                Vect2 center = halfSize;
-                center.x = float(round(center.x));
-                center.y = float(round(center.y));
-
-                Vect2 texHalfSize = Vect2(float(tex->Width()/2), float(tex->Height()/2));
-                texPos = center-texHalfSize;
-
-                if(bFlip)
-                    DrawSprite(tex, 0xFFFFFFFF, center.x-texHalfSize.x, center.y+texHalfSize.y, center.x+texHalfSize.x, center.y-texHalfSize.y);
-                else
-                    DrawSprite(tex, 0xFFFFFFFF, center.x-texHalfSize.x, center.y-texHalfSize.y, center.x+texHalfSize.x, center.y+texHalfSize.y);
+                texStretch *= texSize;
+                texPos = center-(texStretch*0.5f);
             }
+
+            Vect2 sizeAdjust = size/totalSize;
+            texPos += pos;
+            texPos *= sizeAdjust;
+            texStretch *= sizeAdjust;
+
+            RoundVect2(texPos);
+            RoundVect2(texSize);
+
+            if(bFlip)
+                DrawSprite(tex, 0xFFFFFFFF, texPos.x, texPos.y+texStretch.y, texPos.x+texStretch.x, texPos.y);
+            else
+                DrawSprite(tex, 0xFFFFFFFF, texPos.x, texPos.y, texPos.x+texStretch.x, texPos.y+texStretch.y);
 
             capture->UnlockTexture();
 
             BlendFunction(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA);
-        }
 
-        //----------------------------------------------------------
-        // draw mouse
+            //----------------------------------------------------------
+            // draw mouse
 
-        if(bMouseCaptured && cursorTexture)
-        {
-            float fCursorX = (texPos.x + texStretch.x * float(cursorPos.x-xHotspot));
-            float fCursorY = (texPos.y + texStretch.y * float(cursorPos.y-xHotspot));
-            float fCursorCX = texStretch.x * float(cursorTexture->Width());
-            float fCursorCY = texStretch.y * float(cursorTexture->Height());
-
-            Shader *lastShader;
-            bool bInvertCursor = false;
-            if(invertShader)
+            if(bMouseCaptured && cursorTexture)
             {
-                lastShader = GetCurrentPixelShader();
-                if(bInvertCursor = ((GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0 || (GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0))
-                    LoadPixelShader(invertShader);
+                Vect2 newCursorPos  = Vect2(float(cursorPos.x-xHotspot), float(cursorPos.y-xHotspot));
+                Vect2 newCursorSize = Vect2(float(cursorTexture->Width()), float(cursorTexture->Height()));
+
+                newCursorPos  /= texSize;
+                newCursorSize /= texSize;
+
+                newCursorPos *= texStretch;
+                newCursorPos += texPos;
+
+                newCursorSize *= texStretch;
+
+                Shader *lastShader;
+                bool bInvertCursor = false;
+                if(invertShader)
+                {
+                    lastShader = GetCurrentPixelShader();
+                    if(bInvertCursor = ((GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0 || (GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0))
+                        LoadPixelShader(invertShader);
+                }
+
+                DrawSprite(cursorTexture, 0xFFFFFFFF, newCursorPos.x, newCursorPos.y+newCursorSize.y, newCursorPos.x+newCursorSize.x, newCursorPos.y);
+
+                if(bInvertCursor)
+                    LoadPixelShader(lastShader);
             }
-
-            DrawSprite(cursorTexture, 0xFFFFFFFF, fCursorX, fCursorY+fCursorCY, fCursorX+fCursorCX, fCursorY);
-
-            if(bInvertCursor)
-                LoadPixelShader(lastShader);
         }
     }
 }

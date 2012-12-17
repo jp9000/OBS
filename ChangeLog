@@ -1,6 +1,51 @@
 (yyyy-mm-dd)
 
 -------------------------------
+2012-12-16 - 0.461 (alpha)
+    * Made game capture sizable/positionable, and added the option
+      to ignore aspect
+    * Added mouse cursor to win 8 capture
+    * Made it so that changing profiles updates all profile hotkeys
+      and the dashboard link and all that
+    * Fixed a bug where push to talk and muting was delayed by 700
+      milliseconds due to scene buffering
+
+-------------------------------
+2012-12-16 - 0.460 (alpha)
+    * Fixed a crash that could happen when calculating volume levels
+    * Removed an annoying memory leak from audio stuff
+    * Fixed a bug when removing multiple sources at once that could
+      cause the app to crash
+    * Fixed a similar bug with removing global sources where the app
+      could crash
+
+-------------------------------
+2012-12-16 - 0.459 (alpha)
+    * Reverted volume adjusters to linear rather than DB as it
+      unfortunately confused almost every user (sorrry about that
+      bill)
+
+-------------------------------
+2012-12-15 - 0.458 (alpha)
+    * Fixed issue with audio timestamps "springing" back in time when
+      they reach a certain threshold, and thus destroying the stream
+    * Added a test version of the new windows 8 capture
+
+-------------------------------
+2012-12-14 - 0.457 (alpha)
+    * More issues regarding mic problems
+    * Align all audio data and only adjust time when a certain
+      threshold is reached
+    * Fixed a crash in game capture
+    * Changed audio levels to be instant response by sampling the
+      latest audio data
+
+-------------------------------
+2012-12-13 - 0.456 (alpha)
+    * Fixed an issue where the scene buffering was too small and mics
+      couldn't be heard
+
+-------------------------------
 2012-12-13 - 0.455 (alpha)
     * Fixed issues with the way the data being sent, data output
       should now be "correct" so to speak, the SEI/PPS/SPS/keyframe

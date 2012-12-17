@@ -94,7 +94,7 @@ public:
     virtual void StartCapture();
     virtual void StopCapture();
 
-    virtual UINT GetNextBuffer();
+    virtual UINT GetNextBuffer(float curVolume);
 
     virtual bool GetEarliestTimestamp(QWORD &timestamp);
     virtual bool GetBuffer(float **buffer, UINT *numFrames, QWORD targetTimestamp);
@@ -362,7 +362,31 @@ const float surroundMix = dbMinus3;
 const float centerMix   = dbMinus3;
 const float lowFreqMix  = 3.16227766f*dbMinus3;
 
-UINT MMDeviceAudioSource::GetNextBuffer()
+inline void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
+{
+    float sum = 0.0f;
+    int totalFloatsStore = totalFloats;
+
+    if(App->SSE2Available() && (UPARAM(buffer) & 0xF) == 0)
+    {
+        UINT alignedFloats = totalFloats & 0xFFFFFFFC;
+        __m128 sseMulVal = _mm_set_ps1(mulVal);
+
+        for(UINT i=0; i<alignedFloats; i += 4)
+        {
+            __m128 sseScaledVals = _mm_mul_ps(_mm_load_ps(buffer+i), sseMulVal);
+            _mm_store_ps(buffer+i, sseScaledVals);
+        }
+
+        buffer      += alignedFloats;
+        totalFloats -= alignedFloats;
+    }
+
+    for(int i=0; i<totalFloats; i++)
+        buffer[i] *= mulVal;
+}
+
+UINT MMDeviceAudioSource::GetNextBuffer(float curVolume)
 {
     UINT captureSize = 0;
     HRESULT err = mmCapture->GetNextPacketSize(&captureSize);
@@ -704,6 +728,7 @@ UINT MMDeviceAudioSource::GetNextBuffer()
                 AudioSegment &newSegment = *audioSegments.CreateNew();
                 newSegment.audioData.CopyArray(newBuffer, numAudioFrames*2);
                 newSegment.timestamp = lastUsedTimestamp;
+                MultiplyAudioBuffer(newSegment.audioData.Array(), numAudioFrames*2, curVolume);
 
                 lastSentTimestamp = lastUsedTimestamp;
             }
@@ -735,6 +760,7 @@ UINT MMDeviceAudioSource::GetNextBuffer()
                     AudioSegment &newSegment = *audioSegments.CreateNew();
                     newSegment.audioData.CopyArray(storageBuffer.Array(), (441*2));
                     newSegment.timestamp = lastUsedTimestamp;
+                    MultiplyAudioBuffer(newSegment.audioData.Array(), 441*2, curVolume);
 
                     storageBuffer.RemoveRange(0, (441*2));
                 }
@@ -755,6 +781,7 @@ UINT MMDeviceAudioSource::GetNextBuffer()
                         AudioSegment &newSegment = *audioSegments.CreateNew();
                         newSegment.audioData.CopyArray(storageBuffer.Array(), (441*2));
                         storageBuffer.RemoveRange(0, (441*2));
+                        MultiplyAudioBuffer(newSegment.audioData.Array(), 441*2, curVolume);
 
                         newSegment.timestamp = lastUsedTimestamp;
 
