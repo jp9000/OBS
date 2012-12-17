@@ -450,6 +450,9 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
             item = servers->GetDataItemByID(0);
 
         strURL = item->GetData();
+
+        Log(TEXT("Using RTMP service: %s"), service->GetName());
+        Log(TEXT("  Server selection: %s"), strURL);
     }
 
     //------------------------------------------------------
