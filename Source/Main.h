@@ -94,4 +94,4 @@ void WINAPI ProcessEvents();
 #include "WindowStuff.h"
 #include "CodeTokenizer.h"
 #include "D3D10System.h"
-
+#include "HTTPClient.h"

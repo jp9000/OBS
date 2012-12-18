@@ -1,6 +1,5 @@
 /********************************************************************************
  Copyright (C) 2012 Hugh Bailey <obs.jim@gmail.com>
-                    Richard Stanway
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -17,24 +16,8 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 ********************************************************************************/
 
-#include "Main.h"
-#include <winhttp.h>
 
-DWORD WINAPI CheckUpdateThread(VOID *arg)
-{
+#pragma once
 
-    return 0;
-}
+BOOL HTTPGetFile (CTSTR url, CTSTR outputPath, CTSTR extraHeaders);
 
-BOOL FetchUpdaterModule()
-{
-    TCHAR updateFilePath[MAX_PATH];
-    tsprintf_s (updateFilePath, _countof(updateFilePath)-1, TEXT("%s\\updates\updater.exe"), lpAppDataPath);
-
-    if (HTTPGetFile(TEXT("https://obsproject.com/update/updater.exe"), updateFilePath, NULL))
-    {
-
-    }
-
-    return TRUE;
-}
