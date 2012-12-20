@@ -1097,8 +1097,8 @@ void STDCALL OBS::MuteDesktopHotkey(DWORD hotkey, UPARAM param, bool bDown)
 
 void OBS::UpdateAudioMeters()
 {
-    SetVolumeMeterValue(GetDlgItem(hwndMain, ID_DESKTOPVOLUMEMETER), desktopMag, desktopMax);
-    SetVolumeMeterValue(GetDlgItem(hwndMain, ID_MICVOLUMEMETER), micMag, micMax);
+    SetVolumeMeterValue(GetDlgItem(hwndMain, ID_DESKTOPVOLUMEMETER), desktopMag, desktopMax, desktopPeak);
+    SetVolumeMeterValue(GetDlgItem(hwndMain, ID_MICVOLUMEMETER), micMag, micMax, micPeak);
 }
 
 HICON OBS::GetIcon(HINSTANCE hInst, int resource)
@@ -2688,6 +2688,8 @@ void OBS::MainAudioLoop()
     UINT curAudioFrame = 0;
 
     micMax = desktopMax = VOL_MIN;
+    
+    micPeak = desktopPeak = VOL_MIN;
 
     UINT audioFramesSinceMeterUpdate = 0;
     UINT audioFramesSinceMicMaxUpdate = 0;
@@ -2748,34 +2750,51 @@ void OBS::MainAudioLoop()
             micMx = toDB(micMx);
 
             /* update max if sample max is greater or after 1 second */
-            if(micMx > micMax || audioFramesSinceMicMaxUpdate >= 44100)
+            float maxAlpha = 0.15f;
+            UINT peakMeterDelayFrames = 44100 * 3;
+            if(micMx > micMax)
             {
                 micMax = micMx;
-                audioFramesSinceMicMaxUpdate = 0;
             }
             else 
+            {
+                micMax = maxAlpha * micMx + (1.0f - maxAlpha) * micMax;
+            }
+
+            if(desktopMx > desktopMax)
+            {
+                desktopMax = desktopMx;
+            }
+            else 
+            {
+                desktopMax = maxAlpha * desktopMx + (1.0f - maxAlpha) * desktopMax;
+            }
+
+            /*update delayed peak meter*/
+            if(micMax > micPeak || audioFramesSinceMicMaxUpdate > peakMeterDelayFrames)
+            {
+                micPeak = micMax;
+                audioFramesSinceMicMaxUpdate = 0;
+            }
+            else
             {
                 audioFramesSinceMicMaxUpdate += desktopAudioFrames;
             }
-
-            if(desktopMx > desktopMax || audioFramesSinceDesktopMaxUpdate >= 44100)
+            
+            if(desktopMax > desktopPeak || audioFramesSinceDesktopMaxUpdate > peakMeterDelayFrames)
             {
-                desktopMax = desktopMx;
+                desktopPeak = desktopMax;
                 audioFramesSinceDesktopMaxUpdate = 0;
             }
-            else 
+            else
             {
                 audioFramesSinceDesktopMaxUpdate += desktopAudioFrames;
             }
 
             /*low pass the level sampling*/
-            float alpha = 0.3f;
-            desktopMag = alpha * desktopRMS + desktopMag * (1.0f - alpha);
-            micMag = alpha * micRMS + micMag * (1.0f - alpha);
-
-            // instant feedback
-            //desktopMag = desktopMagCurrentSample;
-            //micMag = micMagCurrentSample;
+            float rmsAlpha = 0.15f;
+            desktopMag = rmsAlpha * desktopRMS + desktopMag * (1.0f - rmsAlpha);
+            micMag = rmsAlpha * micRMS + micMag * (1.0f - rmsAlpha);
 
             /*update the meter about every 50ms*/
             audioFramesSinceMeterUpdate += desktopAudioFrames;
@@ -2894,8 +2913,9 @@ void OBS::MainAudioLoop()
             bRecievedFirstAudioFrame = true;
     }
 
-    desktopMag = VOL_MIN;
-    micMag = VOL_MIN;
+    desktopMag = desktopMax = desktopPeak = VOL_MIN;
+    micMag = micMax = micPeak = VOL_MIN;
+
 
     PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_MICVOLUMEMETER, VOLN_METERED), 0);
 
