@@ -409,6 +409,9 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     String strURL       = AppConfig->GetString(TEXT("Publish"), TEXT("URL"));
     String strPlayPath  = AppConfig->GetString(TEXT("Publish"), TEXT("PlayPath"));
 
+	LPSTR lpAnsiURL = NULL, lpAnsiPlaypath = NULL;
+	RTMP *rtmp = NULL;
+
     if(!strURL.IsValid())
     {
         failReason = TEXT("No server specified to connect to");
@@ -457,13 +460,13 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
 
     //------------------------------------------------------
 
-    RTMP *rtmp = RTMP_Alloc();
+    rtmp = RTMP_Alloc();
     RTMP_Init(rtmp);
     /*RTMP_LogSetCallback(rtmp_log_output);
     RTMP_LogSetLevel(RTMP_LOGDEBUG2);*/
 
-    LPSTR lpAnsiURL = strURL.CreateUTF8String();
-    LPSTR lpAnsiPlaypath = strPlayPath.CreateUTF8String();
+    lpAnsiURL = strURL.CreateUTF8String();
+    lpAnsiPlaypath = strPlayPath.CreateUTF8String();
 
     if(!RTMP_SetupURL2(rtmp, lpAnsiURL, lpAnsiPlaypath))
     {
@@ -536,8 +539,11 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
 
 end:
 
-    Free(lpAnsiURL);
-    Free(lpAnsiPlaypath);
+	if (lpAnsiURL)
+		Free(lpAnsiURL);
+	
+	if (lpAnsiPlaypath)
+		Free(lpAnsiPlaypath);
 
     if(!bSuccess)
     {
