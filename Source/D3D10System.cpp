@@ -170,7 +170,7 @@ D3D10System::D3D10System()
     }
 
     if(FAILED(err))
-        CrashError(TEXT("Could not create D3D10 device and swap chain.  This error can happen for one of the following reasons:\r\n\r\n1.) You're using an old or unsupported GPU (some laptop GPUs can also have this issue)\r\n2.) You're running windows vista without the \"Platform Update\"\r\n3.) I screwed something up somewhere"));
+        CrashError(TEXT("Could not create D3D10 device and swap chain.  This error can happen for one of the following reasons:\r\n\r\n1.) Your GPU is not supported (DirectX 10 support is required - many integrated laptop GPUs do not support DX10)\r\n2.) You're running Windows Vista without the \"Platform Update\"\r\n3.) Your video card drivers are out of date"));
 
     adapter->Release();
     factory->Release();

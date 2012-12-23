@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <intrin.h>
+
 //-----------------------------------------
 //warnings we don't want to hear over and over that have no relevance
 //-----------------------------------------
@@ -40,6 +42,7 @@
 #define strcmpi                 lstrcmpi
 
 #define ProgramBreak() __debugbreak()
+#define ReturnAddress() _ReturnAddress()
 
 #ifndef FORCE_TRACE
     #ifdef _DEBUG

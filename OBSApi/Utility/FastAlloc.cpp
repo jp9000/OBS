@@ -154,13 +154,13 @@ void * FastAlloc::_Allocate(size_t dwSize)
         if(!meminfo->nextFree) //no pools have been created for this section
         {
             lpMemory = OSVirtualAlloc(0x10000);
-            if(!lpMemory) CrashError(TEXT("Out of memory"));
+            if(!lpMemory) CrashError(TEXT("Out of memory while trying to allocate %d bytes at %p"), dwSize, ReturnAddress());
 
             Pool *&poollist = PoolList[PtrTo32(lpMemory)>>24];
             if(!poollist)
             {
                 poollist = (Pool*)OSVirtualAlloc(sizeof(Pool)*256);
-                if(!poollist) CrashError(TEXT("Out of memory"));
+                if(!poollist) CrashError(TEXT("Out of memory while trying to allocate %d bytes at %p"), dwSize, ReturnAddress());
                 zero(poollist, sizeof(Pool)*256);
             }
             pool = &poollist[(PtrTo32(lpMemory)>>16)&0xFF];
@@ -232,7 +232,7 @@ void * FastAlloc::_Allocate(size_t dwSize)
     {
         dwSize = align(dwSize);
         lpMemory = OSVirtualAlloc(dwSize);
-        if(!lpMemory) CrashError(TEXT("Out of memory"));
+        if(!lpMemory) CrashError(TEXT("Out of memory while trying to allocate %d bytes at %p"), dwSize, ReturnAddress());
 
         //zero(lpMemory, dwSize);
 
@@ -240,7 +240,7 @@ void * FastAlloc::_Allocate(size_t dwSize)
         if(!poollist)
         {
             poollist = (Pool*)OSVirtualAlloc(sizeof(Pool)*256);
-            if(!poollist) CrashError(TEXT("Out of memory"));
+            if(!poollist) CrashError(TEXT("Out of memory while trying to allocate %d bytes at %p"), dwSize, ReturnAddress());
             zero(poollist, sizeof(Pool)*256);
         }
         pool = &poollist[(PtrTo32(lpMemory)>>16)&0xFF];
@@ -282,7 +282,7 @@ void * FastAlloc::_ReAllocate(LPVOID lpMemory, size_t dwSize)
         return lpMemory;
 
     LPVOID lpNew = _Allocate(dwSize);
-    if(!lpNew) CrashError(TEXT("Out of memory"));
+    if(!lpNew) CrashError(TEXT("Out of memory while trying to reallocate %d bytes at %p"), dwSize, ReturnAddress());
 
     if(pool->meminfo)
         mcpy(lpNew, lpMemory, MIN(dwSize, pool->meminfo->maxBlockSize));
