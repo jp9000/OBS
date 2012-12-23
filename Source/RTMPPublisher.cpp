@@ -409,8 +409,8 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     String strURL       = AppConfig->GetString(TEXT("Publish"), TEXT("URL"));
     String strPlayPath  = AppConfig->GetString(TEXT("Publish"), TEXT("PlayPath"));
 
-	LPSTR lpAnsiURL = NULL, lpAnsiPlaypath = NULL;
-	RTMP *rtmp = NULL;
+    LPSTR lpAnsiURL = NULL, lpAnsiPlaypath = NULL;
+    RTMP *rtmp = NULL;
 
     if(!strURL.IsValid())
     {
@@ -539,11 +539,11 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
 
 end:
 
-	if (lpAnsiURL)
-		Free(lpAnsiURL);
-	
-	if (lpAnsiPlaypath)
-		Free(lpAnsiPlaypath);
+    if (lpAnsiURL)
+        Free(lpAnsiURL);
+
+    if (lpAnsiPlaypath)
+        Free(lpAnsiPlaypath);
 
     if(!bSuccess)
     {
