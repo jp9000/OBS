@@ -947,6 +947,8 @@ OBS::OBS()
 
     hHotkeyThread = OSCreateThread((XTHREAD)HotkeyThread, NULL);
 
+    OSCloseThread(OSCreateThread((XTHREAD)CheckUpdateThread, NULL));
+
     bRenderViewEnabled = true;
 }
 

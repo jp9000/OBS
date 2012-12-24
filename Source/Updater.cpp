@@ -18,23 +18,318 @@
 ********************************************************************************/
 
 #include "Main.h"
+
 #include <winhttp.h>
+#include <Wincrypt.h>
+#include <shellapi.h>
 
-DWORD WINAPI CheckUpdateThread(VOID *arg)
+HCRYPTPROV hProvider;
+
+VOID HashToString (BYTE *in, TCHAR *out)
 {
+    const char alphabet[] = "0123456789abcdef";
 
-    return 0;
+    for (int i = 0; i != 20; ++i)
+    {
+        out[2*i]     = alphabet[in[i] / 16];
+        out[2*i + 1] = alphabet[in[i] % 16];
+    }
+
+    out[40] = 0;
+}
+
+BOOL CalculateFileHash (TCHAR *path, BYTE *hash)
+{
+    BYTE buff[65536];
+    HCRYPTHASH hHash;
+
+    if (!CryptCreateHash(hProvider, CALG_SHA1, 0, 0, &hHash))
+        return FALSE;
+
+    XFile file;
+
+    if (file.Open(path, XFILE_READ, OPEN_EXISTING))
+    {
+        for (;;)
+        {
+            DWORD read = file.Read(buff, sizeof(buff));
+
+            if (!read)
+                break;
+
+            if (!CryptHashData(hHash, buff, read, 0))
+            {
+                CryptDestroyHash(hHash);
+                file.Close();
+                return FALSE;
+            }
+        }
+    }
+    else
+    {
+        CryptDestroyHash(hHash);
+        return FALSE;
+    }
+
+    file.Close();
+
+    DWORD hashLength = 20;
+    if (!CryptGetHashParam(hHash, HP_HASHVAL, hash, &hashLength, 0))
+        return FALSE;
+
+    CryptDestroyHash(hHash);
+    return TRUE;
 }
 
 BOOL FetchUpdaterModule()
 {
+    int responseCode;
     TCHAR updateFilePath[MAX_PATH];
-    tsprintf_s (updateFilePath, _countof(updateFilePath)-1, TEXT("%s\\updates\updater.exe"), lpAppDataPath);
+    BYTE updateFileHash[20];
+    TCHAR extraHeaders[256];
 
-    if (HTTPGetFile(TEXT("https://obsproject.com/update/updater.exe"), updateFilePath, NULL))
+    tsprintf_s (updateFilePath, _countof(updateFilePath)-1, TEXT("%s\\updates\\updater.exe"), lpAppDataPath);
+
+    if (CalculateFileHash(updateFilePath, updateFileHash))
     {
+        TCHAR hashString[41];
 
+        HashToString(updateFileHash, hashString);
+
+        tsprintf_s (extraHeaders, _countof(extraHeaders)-1, TEXT("If-None-Match: %s"), hashString);
+    }
+    else
+        extraHeaders[0] = 0;
+
+    if (HTTPGetFile(TEXT("https://obsproject.com/update/updater.exe"), updateFilePath, extraHeaders, &responseCode))
+    {
+        if (responseCode != 200 && responseCode != 304)
+            return FALSE;
     }
 
     return TRUE;
+}
+
+BOOL IsSafeFilename (CTSTR path)
+{
+    const TCHAR *p;
+
+    p = path;
+
+    if (!*p)
+       return FALSE;
+
+    while (*p)
+    {
+        if (!isalnum(*p) && *p != '.')
+            return FALSE;
+        p++;
+    }
+
+    return TRUE;
+}
+
+BOOL IsSafePath (CTSTR path)
+{
+    const TCHAR *p;
+
+    p = path;
+
+    if (!*p)
+        return TRUE;
+
+    if (!isalnum(*p))
+        return FALSE;
+
+    while (*p)
+    {
+        if (*p == '.' || *p == '\\')
+            return FALSE;
+        p++;
+    }
+    
+    return TRUE;
+}
+
+BOOL ParseUpdateManifest (TCHAR *path, BOOL *updatesAvailable, String &description)
+{
+    XConfig manifest;
+    XElement *root;
+
+    if (!manifest.Open(path))
+        return FALSE;
+
+    root = manifest.GetRootElement();
+
+    DWORD numPackages = root->NumElements();
+    DWORD totalUpdatableFiles = 0;
+
+    for (DWORD i = 0; i < numPackages; i++)
+    {
+        XElement *package;
+        package = root->GetElementByID(i);
+        CTSTR packageName = package->GetName();
+
+        //find out if this package is relevant to us
+        String platform = package->GetString(TEXT("platform"));
+        if (!platform)
+            continue;
+
+        if (scmp(platform, TEXT("all")))
+        {
+#ifdef WIN32
+            if (scmp(platform, TEXT("Win32")))
+                continue;
+#else
+            if (scmp(platform, TEXT("Win64")))
+                continue;
+#endif
+        }
+
+        //what is it?
+        String name = package->GetString(TEXT("name"));
+        String version = package->GetString(TEXT("version"));
+
+        //figure out where the files belong
+        XDataItem *pathElement = package->GetDataItem(TEXT("path"));
+        if (!pathElement)
+            continue;
+
+        CTSTR path = pathElement->GetData();
+
+        if (path == NULL)
+            path = TEXT("");
+
+        if (!IsSafePath(path))
+            continue;
+
+        //get the file list for this package
+        XElement *files = package->GetElement(TEXT("files"));
+        if (!files)
+            continue;
+
+        DWORD numFiles = files->NumElements();
+        DWORD numUpdatableFiles = 0;
+        for (DWORD j = 0; j < numFiles; j++)
+        {
+            XElement *file = files->GetElementByID(j);
+
+            String hash = file->GetString(TEXT("hash"));
+            if (!hash || hash.Length() != 40)
+                continue;
+
+            String fileName = file->GetName();
+            if (!fileName)
+                continue;
+
+            if (!IsSafeFilename(fileName))
+                continue;
+
+            String filePath;
+
+            filePath << path;
+            filePath << fileName;
+
+            BYTE fileHash[20];
+            TCHAR fileHashString[41];
+
+            if (CalculateFileHash(filePath, fileHash))
+            {
+                HashToString(fileHash, fileHashString);
+                if (!scmp(fileHashString, hash))
+                    continue;
+            }
+
+            numUpdatableFiles++;
+        }
+
+        if (numUpdatableFiles)
+        {
+            *updatesAvailable = TRUE;
+            description << name << TEXT(" (") << version << TEXT(")\r\n");
+        }
+
+        totalUpdatableFiles += numUpdatableFiles;
+        numUpdatableFiles = 0;
+    }
+
+    manifest.Close();
+
+    if (totalUpdatableFiles)
+    {
+        if (!FetchUpdaterModule())
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+DWORD WINAPI CheckUpdateThread (VOID *arg)
+{
+    int responseCode;
+    TCHAR extraHeaders[256];
+    BYTE manifestHash[20];
+    TCHAR manifestPath[MAX_PATH];
+
+    tsprintf_s (manifestPath, _countof(manifestPath)-1, TEXT("%s\\updates\\packages.xconfig"), lpAppDataPath);
+
+    if (!CryptAcquireContext(&hProvider, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT))
+    {
+        Log (TEXT("Updater: CryptAcquireContext failed: %08x"), GetLastError());
+        return 1;
+    }
+
+    if (CalculateFileHash(manifestPath, manifestHash))
+    {
+        TCHAR hashString[41];
+
+        HashToString(manifestHash, hashString);
+
+        tsprintf_s (extraHeaders, _countof(extraHeaders)-1, TEXT("If-None-Match: %s"), hashString);
+    }
+    else
+        extraHeaders[0] = 0;
+
+    if (HTTPGetFile(TEXT("https://obsproject.com/update/packages.xconfig"), manifestPath, extraHeaders, &responseCode))
+    {
+        //if (responseCode == 200)
+        {
+            String updateInfo;
+            BOOL updatesAvailable;
+
+            updateInfo = Str("Updater.NewUpdates");
+
+            if (ParseUpdateManifest(manifestPath, &updatesAvailable, updateInfo))
+            {
+                if (updatesAvailable)
+                {
+                    updateInfo << TEXT("\r\n") << Str("Updater.DownloadNow");
+
+                    if (MessageBox (NULL, updateInfo.Array(), Str("Updater.UpdatesAvailable"), MB_ICONQUESTION|MB_YESNO) == IDYES)
+                    {
+                        if (App->IsRunning())
+                        {
+                            if (MessageBox (NULL, Str("Updater.RunningWarning"), NULL, MB_ICONEXCLAMATION|MB_YESNO) == IDNO)
+                                goto abortUpdate;
+                        }
+
+                        TCHAR updateFilePath[MAX_PATH];
+                        tsprintf_s (updateFilePath, _countof(updateFilePath)-1, TEXT("%s\\updates\\updater.exe"), lpAppDataPath);
+
+                        //note, can't use CreateProcess to launch as admin.
+                        ShellExecute(NULL, TEXT("open"), updateFilePath, 0, 0, SW_SHOWNORMAL);
+
+                        //since we're in a separate thread we can't just PostQuitMessage ourselves
+                        SendMessage(hwndMain, WM_CLOSE, 0, 0);
+                    }
+                }
+            }
+        }
+    }
+
+abortUpdate:
+
+    CryptReleaseContext(hProvider, 0);
+
+    return 0;
 }
