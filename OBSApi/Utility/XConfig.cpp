@@ -686,6 +686,8 @@ String XConfig::ProcessString(TSTR &lpTemp)
     *lpTemp = backupChar;
 
     String stringOut = string.Mid(1, string.Length()-1);
+    if (!stringOut)
+        return String();
 
     TSTR lpStringOut = stringOut;
     while(*lpStringOut != 0 && (lpStringOut = schr(lpStringOut, '\\')) != 0)
