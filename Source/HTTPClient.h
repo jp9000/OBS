@@ -19,5 +19,5 @@
 
 #pragma once
 
-BOOL HTTPGetFile (CTSTR url, CTSTR outputPath, CTSTR extraHeaders);
+BOOL HTTPGetFile (CTSTR url, CTSTR outputPath, CTSTR extraHeaders, int *responseCode);
 

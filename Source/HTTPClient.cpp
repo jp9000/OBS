@@ -20,7 +20,7 @@
 #include "Main.h"
 #include <winhttp.h>
 
-BOOL HTTPGetFile (CTSTR url, CTSTR outputPath, CTSTR extraHeaders)
+BOOL HTTPGetFile (CTSTR url, CTSTR outputPath, CTSTR extraHeaders, int *responseCode)
 {
     HINTERNET hSession = NULL;
     HINTERNET hConnect = NULL;
@@ -81,10 +81,9 @@ BOOL HTTPGetFile (CTSTR url, CTSTR outputPath, CTSTR extraHeaders)
     if (!WinHttpQueryHeaders (hRequest, WINHTTP_QUERY_STATUS_CODE, WINHTTP_HEADER_NAME_BY_INDEX, &statusCode, &statusCodeLen, WINHTTP_NO_HEADER_INDEX))
         goto failure;
 
-    if (!scmp(statusCode, TEXT("200")))
-        goto failure;
+    *responseCode = wcstoul(statusCode, NULL, 10);
 
-    if (bResults)
+    if (bResults && *responseCode == 200)
     {
         BYTE buffer[16384];
         DWORD dwSize, dwOutSize;
@@ -107,6 +106,9 @@ BOOL HTTPGetFile (CTSTR url, CTSTR outputPath, CTSTR extraHeaders)
             }
             else
             {
+                if (!dwOutSize)
+                    break;
+
                 if (!updateFile.Write(buffer, dwOutSize))
                     goto failure;
             }
@@ -119,11 +121,11 @@ BOOL HTTPGetFile (CTSTR url, CTSTR outputPath, CTSTR extraHeaders)
 
 failure:
     if (hSession)
-        CloseHandle(hSession);
+        WinHttpCloseHandle(hSession);
     if (hConnect)
-        CloseHandle(hConnect);
+        WinHttpCloseHandle(hConnect);
     if (hRequest)
-        CloseHandle(hRequest);
+        WinHttpCloseHandle(hRequest);
 
     return ret;
 }
