@@ -37,9 +37,14 @@ enum StreamInfoPriority
     StreamInfoPriority_Critical,
 };
 
+//-------------------------------------------------------------------
+
 class APIInterface
 {
     friend class OBS;
+    friend class AudioSource;
+
+    virtual bool UseHighQualityResampling() const=0;
 
 protected:
     bool bSSE2Availabe;
@@ -108,6 +113,8 @@ public:
 
         return NULL;
     }
+
+    virtual QWORD GetAudioTime() const=0;
 };
 
 

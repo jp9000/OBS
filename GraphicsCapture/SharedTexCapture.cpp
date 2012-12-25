@@ -75,6 +75,8 @@ bool SharedTexCapture::Init(CaptureInfo &info)
         }
     }
 
+    Log(TEXT("SharedTexCapture hooked"));
+
     bInitialized = true;
     return true;
 }

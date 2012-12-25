@@ -437,6 +437,7 @@ public:
 
                     Vect2 sizeMultiplier = size/GetSize();
                     newCursorPos *= sizeMultiplier;
+                    newCursorPos += pos;
                     newCursorSize *= sizeMultiplier;
 
                     DrawSprite(cursorTexture, 0xFFFFFFFF, newCursorPos.x, newCursorPos.y+newCursorSize.y, newCursorPos.x+newCursorSize.x, newCursorPos.y);

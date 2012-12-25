@@ -1887,10 +1887,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 int maxCX = GetSystemMetrics(SM_CXFULLSCREEN);
                 int maxCY = GetSystemMetrics(SM_CYFULLSCREEN);
 
-                if(newWidth > maxCX)
+                /*if(newWidth > maxCX)
                     newWidth = maxCX;
                 if(newHeight > maxCY)
-                    newHeight = maxCY;
+                    newHeight = maxCY;*/
 
                 if(wParam == WMSZ_LEFT || wParam == WMSZ_BOTTOMLEFT || wParam == WMSZ_TOPLEFT)
                     screenSize.left = screenSize.right - newWidth;

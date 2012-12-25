@@ -25,14 +25,14 @@ DWORD STDCALL PackPlanarThread(ConvertData *data);
 bool DeviceSource::Init(XElement *data)
 {
     HRESULT err;
-    err = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC, (REFIID)IID_IFilterGraph, (void**)&graph);
+    err = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, (REFIID)IID_IFilterGraph, (void**)&graph);
     if(FAILED(err))
     {
         AppWarning(TEXT("DShowPlugin: Failed to build IGraphBuilder, result = %08lX"), err);
         return false;
     }
 
-    err = CoCreateInstance(CLSID_CaptureGraphBuilder2, NULL, CLSCTX_INPROC, (REFIID)IID_ICaptureGraphBuilder2, (void**)&capture);
+    err = CoCreateInstance(CLSID_CaptureGraphBuilder2, NULL, CLSCTX_INPROC_SERVER, (REFIID)IID_ICaptureGraphBuilder2, (void**)&capture);
     if(FAILED(err))
     {
         AppWarning(TEXT("DShowPlugin: Failed to build ICaptureGraphBuilder2, result = %08lX"), err);
@@ -132,9 +132,9 @@ bool DeviceSource::LoadFilters()
 
     List<MediaOutputInfo> outputList;
     IAMStreamConfig *config = NULL;
-    bool bAddedCapture = false, bAddedDevice = false;
+    bool bAddedVideoCapture = false, bAddedAudioCapture = false, bAddedDevice = false;
     GUID expectedMediaType;
-    IPin *devicePin = NULL;
+    IPin *devicePin = NULL, *audioPin = NULL;
     HRESULT err;
     String strShader;
 
@@ -194,11 +194,23 @@ bool DeviceSource::LoadFilters()
         }
     }
 
-    devicePin = GetOutputPin(deviceFilter);
-    if(!devicePin)
+    err = capture->FindPin(deviceFilter, PINDIR_OUTPUT, &PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video, TRUE, 0, &devicePin);
+    if(FAILED(err))
     {
-        AppWarning(TEXT("DShowPlugin: Could not create device ping"));
+        AppWarning(TEXT("DShowPlugin: Could not get device video pin, result = %lX"), err);
         goto cleanFinish;
+    }
+
+    soundOutputType = data->GetInt(TEXT("soundOutputType"));
+
+    if(soundOutputType != 0)
+    {
+        err = capture->FindPin(deviceFilter, PINDIR_OUTPUT, &PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, TRUE, 0, &audioPin);
+        if(FAILED(err))
+        {
+            Log(TEXT("DShowPlugin: No audio pin, result = %lX"), err);
+            soundOutputType = 0;
+        }
     }
 
     GetOutputList(devicePin, outputList);
@@ -364,15 +376,39 @@ bool DeviceSource::LoadFilters()
 
     //------------------------------------------------
 
-    captureFilter = new CaptureFilter(this, expectedMediaType);
+    captureFilter = new CaptureFilter(this, MEDIATYPE_Video, expectedMediaType);
 
     if(FAILED(err = graph->AddFilter(captureFilter, NULL)))
     {
-        AppWarning(TEXT("DShowPlugin: Failed to add capture filter to graph, result = %08lX"), err);
+        AppWarning(TEXT("DShowPlugin: Failed to add video capture filter to graph, result = %08lX"), err);
         goto cleanFinish;
     }
 
-    bAddedCapture = true;
+    bAddedVideoCapture = true;
+
+    //------------------------------------------------
+
+    if(soundOutputType == 2)
+    {
+        if(FAILED(err = CoCreateInstance(CLSID_AudioRender, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter, (void**)&audioFilter)))
+        {
+            Log(TEXT("DShowPlugin: no audio available for this device, result = %08lX"), err);
+            soundOutputType = 0;
+        }
+    }
+
+    if(soundOutputType != 0)
+    {
+        if(FAILED(err = graph->AddFilter(audioFilter, NULL)))
+        {
+            AppWarning(TEXT("DShowPlugin: Failed to add audio capture filter to graph, result = %08lX"), err);
+            goto cleanFinish;
+        }
+
+        bAddedAudioCapture = true;
+    }
+
+    //------------------------------------------------
 
     if(FAILED(err = graph->AddFilter(deviceFilter, NULL)))
     {
@@ -390,8 +426,18 @@ bool DeviceSource::LoadFilters()
     {
         if(FAILED(err = graph->Connect(devicePin, captureFilter->GetCapturePin())))
         {
-            AppWarning(TEXT("DShowPlugin: Failed to connect the device pin to the capture pin, result = %08lX"), err);
+            AppWarning(TEXT("DShowPlugin: Failed to connect the video device pin to the video capture pin, result = %08lX"), err);
             goto cleanFinish;
+        }
+    }
+
+    if(soundOutputType != 0)
+    {
+        bConnected = SUCCEEDED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, deviceFilter, NULL, audioFilter));
+        if(!bConnected)
+        {
+            AppWarning(TEXT("DShowPlugin: Failed to connect the audio device pin to the audio capture pin, result = %08lX"), err);
+            soundOutputType = 0;
         }
     }
 
@@ -406,6 +452,7 @@ bool DeviceSource::LoadFilters()
 cleanFinish:
     SafeRelease(config);
     SafeRelease(devicePin);
+    SafeRelease(audioPin);
 
     for(UINT i=0; i<outputList.Num(); i++)
         outputList[i].FreeData();
@@ -414,13 +461,16 @@ cleanFinish:
     {
         bCapturing = false;
 
-        if(bAddedCapture)
+        if(bAddedVideoCapture)
             graph->RemoveFilter(captureFilter);
+        if(bAddedAudioCapture)
+            graph->RemoveFilter(audioFilter);
         if(bAddedDevice)
             graph->RemoveFilter(deviceFilter);
 
         SafeRelease(deviceFilter);
         SafeRelease(captureFilter);
+        SafeRelease(audioFilter);
         SafeRelease(control);
 
         if(colorConvertShader)
@@ -515,8 +565,12 @@ void DeviceSource::UnloadFilters()
         graph->RemoveFilter(captureFilter);
         graph->RemoveFilter(deviceFilter);
 
+        if(audioFilter)
+            graph->RemoveFilter(audioFilter);
+
         SafeReleaseLogRef(captureFilter);
         SafeReleaseLogRef(deviceFilter);
+        SafeReleaseLogRef(audioFilter);
 
         bFiltersLoaded = false;
     }
@@ -571,7 +625,7 @@ void DeviceSource::EndScene()
     Stop();
 }
 
-void DeviceSource::Receive(IMediaSample *sample)
+void DeviceSource::ReceiveVideo(IMediaSample *sample)
 {
     if(bCapturing)
     {
@@ -582,6 +636,13 @@ void DeviceSource::Receive(IMediaSample *sample)
         curSample->AddRef();
 
         OSLeaveMutex(hSampleMutex);
+    }
+}
+
+void DeviceSource::ReceiveAudio(IMediaSample *sample)
+{
+    if(bCapturing)
+    {
     }
 }
 

@@ -125,6 +125,7 @@ Settings.Audio.ForceMicMono         "Принудительный режим м�
 Settings.Audio.MicBoost             "Усиление (множитель):"
 Settings.Audio.MuteDesktopHotkey    "Горячая клавиша Вкл/Откл звука:"
 Settings.Audio.MuteMicHotkey        "Горячая клавиша Вкл/Откл микрофона:"
+Settings.Audio.PushToTalkDelay      "Задержка РТТ (миллисекунды):"
 Settings.Audio.PushToTalkHotkey     "Использовать "Нажми и говори""
 
 Settings.Encoding.Audio "Кодирование Аудио"
@@ -188,6 +189,7 @@ Sources.BitmapSource.Empty  "Изображение не найдено. Пож�
 Sources.BitmapSource.Opacity    "Прозрачность:"
 
 Sources.GameCaptureSource.Application       "Приложение:"
+Sources.GameCaptureSource.IgnoreAspect      "Игнорировать соотношение сторон"
 Sources.GameCaptureSource.PluginDescription "Захватывает картинку напрямую из игры и других графических приложений, путем внедрения в приложение и считывания кадров."
 Sources.GameCaptureSource.PluginName        "Плагин Игрового захвата"
 Sources.GameCaptureSource.Requires32bit     "Эти приложения требуют 32-битную версию OBS для захвата:"

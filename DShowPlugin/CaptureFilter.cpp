@@ -20,21 +20,23 @@
 #include "DShowPlugin.h"
 
 
-#define FILTER_NAME  L"Capture Filter"
-#define PIN_NAME     L"Capture"
+#define FILTER_NAME     L"Capture Filter"
+#define VIDEO_PIN_NAME  L"Video Capture"
+#define AUDIO_PIN_NAME  L"Audio Capture"
 
 
 //========================================================================================================
 
-CapturePin::CapturePin(CaptureFilter* filterIn, DeviceSource *sourceIn, GUID &expectedMediaType)
+CapturePin::CapturePin(CaptureFilter* filterIn, DeviceSource *sourceIn, const GUID &expectedMajorType, const GUID &expectedMediaType)
 : filter(filterIn), source(sourceIn), refCount(1)
 {
-    connectedMediaType.majortype = MEDIATYPE_Video;
+    connectedMediaType.majortype = expectedMajorType;
     connectedMediaType.subtype   = GUID_NULL;
     connectedMediaType.pbFormat  = NULL;
     connectedMediaType.cbFormat  = 0;
     connectedMediaType.pUnk      = NULL;
     this->expectedMediaType = expectedMediaType;
+    this->expectedMajorType = expectedMajorType;
 }
 
 CapturePin::~CapturePin()
@@ -75,9 +77,9 @@ STDMETHODIMP CapturePin::Connect(IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
         return VFW_E_ALREADY_CONNECTED;
     if(!pmt)
         return S_OK;
-    if(pmt->majortype != GUID_NULL && pmt->majortype != MEDIATYPE_Video)
+    if(pmt->majortype != GUID_NULL && pmt->majortype != expectedMajorType)
         return S_FALSE;
-    if(pmt->majortype == MEDIATYPE_Video && !IsValidMediaType(pmt))
+    if(pmt->majortype == expectedMajorType && !IsValidMediaType(pmt))
         return S_FALSE;
 
     return S_OK;
@@ -136,7 +138,11 @@ STDMETHODIMP CapturePin::QueryPinInfo(PIN_INFO *pInfo)
     pInfo->pFilter = filter;
     if(filter) filter->AddRef();
 
-    mcpy(pInfo->achName, PIN_NAME, sizeof(PIN_NAME));
+    if(expectedMajorType == MEDIATYPE_Video)
+        mcpy(pInfo->achName, VIDEO_PIN_NAME, sizeof(VIDEO_PIN_NAME));
+    else
+        mcpy(pInfo->achName, AUDIO_PIN_NAME, sizeof(AUDIO_PIN_NAME));
+
     pInfo->dir = PINDIR_INPUT;
 
     return NOERROR;
@@ -146,9 +152,9 @@ STDMETHODIMP CapturePin::QueryDirection(PIN_DIRECTION *pPinDir)    {*pPinDir = P
 STDMETHODIMP CapturePin::QueryId(LPWSTR *lpId)                     {*lpId = L"Capture Pin"; return S_OK;}
 STDMETHODIMP CapturePin::QueryAccept(const AM_MEDIA_TYPE *pmt)
 {
-    if( filter->state != State_Stopped)
+    if(filter->state != State_Stopped)
         return S_FALSE;
-    if(pmt->majortype != MEDIATYPE_Video)
+    if(pmt->majortype != expectedMajorType)
         return S_FALSE;
     if(!IsValidMediaType(pmt))
         return S_FALSE;
@@ -190,7 +196,7 @@ STDMETHODIMP CapturePin::GetAllocatorRequirements(ALLOCATOR_PROPERTIES *pProps) 
 STDMETHODIMP CapturePin::Receive(IMediaSample *pSample)
 {
     if(pSample)
-        source->Receive(pSample);
+        source->ReceiveVideo(pSample);
     return S_OK;
 }
 
@@ -208,12 +214,17 @@ bool CapturePin::IsValidMediaType(const AM_MEDIA_TYPE *pmt) const
 {
     if(pmt->pbFormat)
     {
-        VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pmt->pbFormat);
-        if( pVih->bmiHeader.biHeight == 0 ||
-            pVih->bmiHeader.biWidth  == 0 ||
-            pmt->subtype != expectedMediaType)
-        {
+        if(pmt->subtype != expectedMediaType || pmt->majortype != expectedMajorType)
             return false;
+
+        if(expectedMajorType == MEDIATYPE_Video)
+        {
+            VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pmt->pbFormat);
+            if( pVih->bmiHeader.biHeight == 0 ||
+                pVih->bmiHeader.biWidth  == 0)
+            {
+                return false;
+            }
         }
     }
 
@@ -223,10 +234,10 @@ bool CapturePin::IsValidMediaType(const AM_MEDIA_TYPE *pmt) const
 
 //========================================================================================================
 
-CaptureFilter::CaptureFilter(DeviceSource *source, GUID &expectedMediaType)
+CaptureFilter::CaptureFilter(DeviceSource *source, const GUID &expectedMajorType, const GUID &expectedMediaType)
 : state(State_Stopped), refCount(1)
 {
-    pin = new CapturePin(this, source, expectedMediaType);
+    pin = new CapturePin(this, source, expectedMajorType, expectedMediaType);
 }
 
 CaptureFilter::~CaptureFilter()

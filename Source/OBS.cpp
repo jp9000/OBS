@@ -19,6 +19,8 @@
 
 #include "Main.h"
 
+#include <Avrt.h>
+
 #include <intrin.h>
 #include <inttypes.h>
 extern "C"
@@ -373,6 +375,8 @@ class OBSAPIInterface : public APIInterface
 
     void HandleHotkeys();
 
+    virtual bool UseHighQualityResampling() const {return AppConfig->GetInt(TEXT("Audio"), TEXT("UseHighQualityResampling"), FALSE) != 0;}
+
 public:
     OBSAPIInterface() {bSSE2Availabe = App->bSSE2Available;}
 
@@ -443,6 +447,8 @@ public:
     virtual void RemoveStreamInfo(UINT infoID)                                      {App->RemoveStreamInfo(infoID);}
 
     virtual bool UseMultithreadedOptimizations() const {return App->bUseMultithreadedOptimizations;}
+
+    virtual QWORD GetAudioTime() const          {return App->GetAudioTime();}
 };
 
 
@@ -2654,26 +2660,27 @@ void OBS::MainCaptureLoop()
 
 bool OBS::QueryNewAudio(QWORD &timestamp)
 {
+    bool bNewAudio = false;
+
     UINT audioRet;
     timestamp = INVALID_LL;
 
     QWORD desktopTimestamp;
-    while((audioRet = desktopAudio->GetNextBuffer(desktopVol)) != NoAudioAvailable);
+    while((audioRet = desktopAudio->QueryAudio(desktopVol)) != NoAudioAvailable)
+    {
+        bNewAudio = true;
+
+        if(micAudio != NULL)
+            micAudio->QueryAudio(curMicVol);
+    }
+
+    if(micAudio && bNewAudio)
+    {
+        while((audioRet = micAudio->QueryAudio(curMicVol)) != NoAudioAvailable);
+    }
+
     if(desktopAudio->GetEarliestTimestamp(desktopTimestamp))
         timestamp = desktopTimestamp;
-
-    if(micAudio != NULL)
-    {
-        while((audioRet = micAudio->GetNextBuffer(curMicVol)) != NoAudioAvailable);
-
-        QWORD micTimestamp = INVALID_LL;
-        micAudio->GetEarliestTimestamp(micTimestamp);
-
-        //if(micTimestamp < desktopTimestamp)
-        //    timestamp = micTimestamp;
-
-        //Log(TEXT("desktopTimestamp: %llu, micTimestamp: %llu"), desktopTimestamp, micTimestamp);
-    }
 
     if(desktopAudio->GetBufferedTime() >= OUTPUT_BUFFER_TIME)
         return true;
@@ -2683,12 +2690,14 @@ bool OBS::QueryNewAudio(QWORD &timestamp)
 
 void OBS::MainAudioLoop()
 {
+    DWORD taskID;
+    AvSetMmThreadCharacteristics(TEXT("Audio"), &taskID);
+
     bPushToTalkOn = false;
 
     UINT curAudioFrame = 0;
 
     micMax = desktopMax = VOL_MIN;
-    
     micPeak = desktopPeak = VOL_MIN;
 
     UINT audioFramesSinceMeterUpdate = 0;
@@ -2697,7 +2706,8 @@ void OBS::MainAudioLoop()
 
     while(TRUE)
     {
-        WaitForSingleObject(hRequestAudioEvent, INFINITE);
+        Sleep(5); //screw it, just run it every 5ms
+
         if(!bRunning)
             break;
 
@@ -2780,7 +2790,7 @@ void OBS::MainAudioLoop()
             {
                 audioFramesSinceMicMaxUpdate += desktopAudioFrames;
             }
-            
+
             if(desktopMax > desktopPeak || audioFramesSinceDesktopMaxUpdate > peakMeterDelayFrames)
             {
                 desktopPeak = desktopMax;
@@ -2915,7 +2925,6 @@ void OBS::MainAudioLoop()
 
     desktopMag = desktopMax = desktopPeak = VOL_MIN;
     micMag = micMax = micPeak = VOL_MIN;
-
 
     PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_MICVOLUMEMETER, VOLN_METERED), 0);
 
@@ -3060,7 +3069,8 @@ void OBSAPIInterface::HandleHotkeys()
 
         hotkeyModifiers &= ~(HOTKEYF_EXT);
 
-        bool bModifiersMatch = (hotkeyModifiers == modifiers);
+        //changed so that it allows hotkeys to be pressed even if extra modiifers are pushed
+        bool bModifiersMatch = ((hotkeyModifiers & modifiers) == hotkeyModifiers);//(hotkeyModifiers == modifiers);
 
         if(hotkeyModifiers && !hotkeyVK) //modifier-only hotkey
         {

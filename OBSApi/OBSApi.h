@@ -102,5 +102,6 @@ inline BOOL CloseDouble(double f1, double f2, double precision=0.001)
 #include "GraphicsSystem.h"
 #include "Scene.h"
 #include "APIInterface.h"
+#include "AudioSource.h"
 #include "HotkeyControlEx.h"
 #include "ColorControl.h"

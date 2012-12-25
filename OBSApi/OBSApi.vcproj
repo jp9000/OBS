@@ -64,8 +64,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="winmm.lib psapi.lib"
+				AdditionalDependencies="winmm.lib psapi.lib libsamplerate.lib"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="../libsamplerate/debug"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="..\rundir\pdb32\$(TargetName).pdb"
 				StripPrivateSymbols="..\rundir\pdb32\stripped\$(TargetName).pdb"
@@ -140,8 +141,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="winmm.lib psapi.lib"
+				AdditionalDependencies="winmm.lib psapi.lib libsamplerate.lib"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="../libsamplerate/x64/debug"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="..\rundir\pdb64\$(TargetName).pdb"
 				StripPrivateSymbols="..\rundir\pdb64\stripped\$(TargetName).pdb"
@@ -217,8 +219,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="winmm.lib psapi.lib"
+				AdditionalDependencies="winmm.lib psapi.lib libsamplerate.lib"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="../libsamplerate/release"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="..\rundir\pdb32\$(TargetName).pdb"
 				StripPrivateSymbols="..\rundir\pdb32\stripped\$(TargetName).pdb"
@@ -298,8 +301,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="winmm.lib psapi.lib"
+				AdditionalDependencies="winmm.lib psapi.lib libsamplerate.lib"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="../libsamplerate/x64/release"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="..\rundir\pdb64\$(TargetName).pdb"
 				StripPrivateSymbols="..\rundir\pdb64\stripped\$(TargetName).pdb"
@@ -341,6 +345,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\AudioSource.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ColorControl.cpp"
 				>
 			</File>
@@ -368,6 +376,10 @@
 			>
 			<File
 				RelativePath=".\APIInterface.h"
+				>
+			</File>
+			<File
+				RelativePath=".\AudioSource.h"
 				>
 			</File>
 			<File
