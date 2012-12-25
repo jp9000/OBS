@@ -181,7 +181,7 @@ Sources.TransitionSource        "Diashow"
 
 Sources.BitmapSource.Color      "Farbe:"
 Sources.BitmapSource.Empty      "Kein Bild ausgewählt.  Bitte wähle ein Bild aus."
-Sources.BitmapSource.Opacity    "Transparenz:"
+Sources.BitmapSource.Opacity    "Deckkraft:"
 
 Sources.GameCaptureSource.Application       "Anwendung:"
 Sources.GameCaptureSource.PluginDescription "Nimmt Einzelbilder direkt von Spielen und Grafischen Anwendungen auf indem es sich in den Prozess einklinkt."
