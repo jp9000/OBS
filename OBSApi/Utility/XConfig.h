@@ -191,7 +191,7 @@ class BASE_EXPORT XConfig
     XElement *RootElement;
     String strFileName;
 
-    bool ReadFileData(XElement *curElement, TSTR &lpFileData);
+    bool ReadFileData(XElement *curElement, int level, TSTR &lpFileData);
     void WriteFileData(XFile &file, int indent, XElement *curElement);
     void WriteFileItem(XFile &file, int indent, XBaseItem *curItem);
 
