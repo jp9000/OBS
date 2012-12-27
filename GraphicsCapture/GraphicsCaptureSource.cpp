@@ -509,8 +509,8 @@ void GraphicsCaptureSource::Render(const Vect2 &pos, const Vect2 &size)
             }
 
             Vect2 sizeAdjust = size/totalSize;
-            texPos += pos;
             texPos *= sizeAdjust;
+            texPos += pos;
             texStretch *= sizeAdjust;
 
             RoundVect2(texPos);
