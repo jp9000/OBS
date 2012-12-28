@@ -164,6 +164,8 @@ BOOL ParseUpdateManifest (TCHAR *path, BOOL *updatesAvailable, String &descripti
     DWORD numPackages = root->NumElements();
     DWORD totalUpdatableFiles = 0;
 
+    int priority, bestPriority = 999;
+
     for (DWORD i = 0; i < numPackages; i++)
     {
         XElement *package;
@@ -202,6 +204,8 @@ BOOL ParseUpdateManifest (TCHAR *path, BOOL *updatesAvailable, String &descripti
 
         if (!IsSafePath(path))
             continue;
+
+        priority = package->GetInt(TEXT("priority"), 999);
 
         //get the file list for this package
         XElement *files = package->GetElement(TEXT("files"));
@@ -245,8 +249,13 @@ BOOL ParseUpdateManifest (TCHAR *path, BOOL *updatesAvailable, String &descripti
 
         if (numUpdatableFiles)
         {
-            *updatesAvailable = TRUE;
-            description << name << TEXT(" (") << version << TEXT(")\r\n");
+            if (version.Length())
+                description << name << TEXT(" (") << version << TEXT(")\r\n");
+            else
+                description << name << TEXT("\r\n");
+
+            if (priority < bestPriority)
+                bestPriority = priority;
         }
 
         totalUpdatableFiles += numUpdatableFiles;
@@ -260,6 +269,9 @@ BOOL ParseUpdateManifest (TCHAR *path, BOOL *updatesAvailable, String &descripti
         if (!FetchUpdaterModule())
             return FALSE;
     }
+
+    if (bestPriority < 5)
+        *updatesAvailable = TRUE;
 
     return TRUE;
 }
@@ -314,10 +326,28 @@ DWORD WINAPI CheckUpdateThread (VOID *arg)
                         }
 
                         TCHAR updateFilePath[MAX_PATH];
+                        TCHAR cwd[MAX_PATH];
+
+                        GetCurrentDirectory(_countof(cwd)-1, cwd);
+
                         tsprintf_s (updateFilePath, _countof(updateFilePath)-1, TEXT("%s\\updates\\updater.exe"), lpAppDataPath);
 
                         //note, can't use CreateProcess to launch as admin.
-                        ShellExecute(NULL, TEXT("open"), updateFilePath, 0, 0, SW_SHOWNORMAL);
+                        SHELLEXECUTEINFO execInfo;
+
+                        zero(&execInfo, sizeof(execInfo));
+
+                        execInfo.cbSize = sizeof(execInfo);
+                        execInfo.lpFile = updateFilePath;
+                        execInfo.lpParameters = cwd;
+                        execInfo.lpDirectory = cwd;
+                        execInfo.nShow = SW_SHOWNORMAL;
+
+                        if (!ShellExecuteEx (&execInfo))
+                        {
+                            AppWarning(TEXT("Can't launch updater '%s': %d"), updateFilePath, GetLastError());
+                            goto abortUpdate;
+                        }
 
                         //since we're in a separate thread we can't just PostQuitMessage ourselves
                         SendMessage(hwndMain, WM_CLOSE, 0, 0);
