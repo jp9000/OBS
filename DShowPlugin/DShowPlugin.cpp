@@ -316,6 +316,14 @@ void GetOutputList(IPin *curPin, List<MediaOutputInfo> &outputInfoList)
                             CoTaskMemFree(pMT);
                         }
                     }
+                    else if(pMT->formattype == FORMAT_WaveFormatEx)
+                    {
+                        AUDIO_STREAM_CONFIG_CAPS *pASCC = reinterpret_cast<AUDIO_STREAM_CONFIG_CAPS*>(capsData);
+                        WAVEFORMATEX *pWfx = reinterpret_cast<WAVEFORMATEX*>(pMT->pbFormat);
+
+                        FreeMediaType(*pMT);
+                        CoTaskMemFree(pMT);
+                    }
                     else
                     {
                         FreeMediaType(*pMT);
@@ -799,6 +807,20 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 //------------------------------------------
 
+                HWND hwndTemp;
+
+                int soundOutputType = configData->data->GetInt(TEXT("soundOutputType"));
+                switch(soundOutputType)
+                {
+                    case 0: hwndTemp = GetDlgItem(hwnd, IDC_NOSOUND); break;
+                    case 1: hwndTemp = GetDlgItem(hwnd, IDC_OUTPUTSOUND); break;
+                    case 2: hwndTemp = GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND); break;
+                }
+
+                SendMessage(hwndTemp, BM_SETCHECK, BST_CHECKED, 0);
+
+                //------------------------------------------
+
                 BOOL  bUseChromaKey = configData->data->GetInt(TEXT("useChromaKey"), 0);
                 DWORD keyColor      = configData->data->GetInt(TEXT("keyColor"), 0xFFFFFFFF);
                 UINT  similarity    = configData->data->GetInt(TEXT("keySimilarity"), 0);
@@ -825,6 +847,10 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 EnableWindow(GetDlgItem(hwnd, IDC_BLEND), bUseChromaKey);
                 EnableWindow(GetDlgItem(hwnd, IDC_SPILLREDUCTION_EDIT), bUseChromaKey);
                 EnableWindow(GetDlgItem(hwnd, IDC_SPILLREDUCTION), bUseChromaKey);
+
+                //------------------------------------------
+
+                
 
                 return TRUE;
             }
@@ -1371,6 +1397,16 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         BOOL bUsePreferredType = preferredType != -1 && SendMessage(GetDlgItem(hwnd, IDC_USEPREFERREDOUTPUT), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         configData->data->SetInt(TEXT("usePreferredType"), bUsePreferredType);
                         configData->data->SetInt(TEXT("preferredType"), preferredType);
+
+                        //------------------------------------------
+
+                        int soundOutputType = 0;
+                        if(SendMessage(GetDlgItem(hwnd, IDC_OUTPUTSOUND), BM_GETCHECK, 0, 0) == BST_CHECKED)
+                            soundOutputType = 1;
+                        else if(SendMessage(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), BM_GETCHECK, 0, 0) == BST_CHECKED)
+                            soundOutputType = 2;
+
+                        configData->data->SetInt(TEXT("soundOutputType"), soundOutputType);
 
                         //------------------------------------------
 

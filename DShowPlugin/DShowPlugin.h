@@ -22,6 +22,7 @@
 #include "OBSApi.h"
 
 #include <dshow.h>
+#include <Amaudio.h>
 
 #include "MediaInfoStuff.h"
 #include "CaptureFilter.h"

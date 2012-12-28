@@ -57,6 +57,7 @@ class DeviceSource : public ImageSource
 
     IBaseFilter             *deviceFilter;
     CaptureFilter           *captureFilter;
+    IBaseFilter             *audioFilter;
 
     //---------------------------------
 
@@ -72,6 +73,9 @@ class DeviceSource : public ImageSource
     bool            bFirstFrame;
     bool            bUseThreadedConversion;
     bool            bReadyToDraw;
+
+    int             soundOutputType;
+    bool            bOutputAudioToDesktop;
 
     Texture         *texture;
     HANDLE          hSampleMutex;
@@ -112,7 +116,8 @@ class DeviceSource : public ImageSource
         OSLeaveMutex(hSampleMutex);
     }
 
-    void Receive(IMediaSample *sample);
+    void ReceiveVideo(IMediaSample *sample);
+    void ReceiveAudio(IMediaSample *sample);
 
     bool LoadFilters();
     void UnloadFilters();

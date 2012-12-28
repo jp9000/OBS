@@ -628,7 +628,7 @@ bool XElement::Import(CTSTR lpFile)
     importFile.ReadFileToString(strFileData);
 
     TSTR lpFileData = strFileData;
-    file->ReadFileData(this, lpFileData);
+    file->ReadFileData(this, 0, lpFileData);
 
     return true;
 }
@@ -711,18 +711,24 @@ String XConfig::ProcessString(TSTR &lpTemp)
 }
 
 
-bool  XConfig::ReadFileData(XElement *curElement, TSTR &lpTemp)
+bool  XConfig::ReadFileData(XElement *curElement, int level, TSTR &lpTemp)
 {
     while(*lpTemp)
     {
         if(*lpTemp == '}')
-            return (curElement != RootElement);
+            return level != 0;
 
-        if( *lpTemp != ' '   &&
-            *lpTemp != L'　' &&
-            *lpTemp != '\t'  &&
-            *lpTemp != '\r'  &&
-            *lpTemp != '\n'  )
+        if(*lpTemp == '{') //unnamed object, usually only happens at the start of the file, ignore
+        {
+            ++lpTemp;
+            if(!ReadFileData(curElement, level+1, lpTemp))
+                return false;
+        }
+        else if(*lpTemp != ' '   &&
+                *lpTemp != L'　' &&
+                *lpTemp != '\t'  &&
+                *lpTemp != '\r'  &&
+                *lpTemp != '\n'  )
         {
             String strName;
 
@@ -765,7 +771,7 @@ bool  XConfig::ReadFileData(XElement *curElement, TSTR &lpTemp)
                 ++lpTemp;
 
                 XElement *newElement = curElement->CreateElement(strName);
-                if(!ReadFileData(newElement, lpTemp))
+                if(!ReadFileData(newElement, level+1, lpTemp))
                     return false;
             }
             else //item
@@ -822,7 +828,7 @@ void  XConfig::WriteFileItem(XFile &file, int indent, XBaseItem *baseItem)
         for(j=0; j<indent; j++)
             strItem << TEXT("  ");
 
-        if( item->strName.IsValid()                         && (
+        /*if( item->strName.IsValid()                         && (
             item->strName[0] == ' '                         ||
             item->strName[0] == '\t'                        ||
             item->strName[0] == '{'                         ||
@@ -831,15 +837,15 @@ void  XConfig::WriteFileItem(XFile &file, int indent, XBaseItem *baseItem)
             schr(item->strName, '\n')                       ||
             schr(item->strName, '"')                        ||
             schr(item->strName, ':')                        ))
-        {
+        {*/
             strItem << ConvertToTextString(item->strName);
-        }
+        /*}
         else
-            strItem << item->strName;
+            strItem << item->strName;*/
 
         strItem << TEXT(" : ");
 
-        if( item->strData.IsValid()                         && (
+        /*if( item->strData.IsValid()                         && (
             item->strData[0] == ' '                         ||
             item->strData[0] == '\t'                        ||
             item->strData[0] == '{'                         ||
@@ -848,11 +854,11 @@ void  XConfig::WriteFileItem(XFile &file, int indent, XBaseItem *baseItem)
             schr(item->strData, '\n')                       ||
             schr(item->strData, '"')                        ||
             schr(item->strData, ':')                        ))
-        {
+        {*/
             strItem << ConvertToTextString(item->strData);
-        }
+        /*}
         else
-            strItem << item->strData;
+            strItem << item->strData;*/
 
         strItem << TEXT("\r\n");
 
@@ -867,7 +873,7 @@ void  XConfig::WriteFileItem(XFile &file, int indent, XBaseItem *baseItem)
         for(j=0; j<indent; j++)
             strElement << TEXT("  ");
 
-        if( element->strName.IsValid()                            && (
+        /*if( element->strName.IsValid()                            && (
             element->strName[0] == ' '                            ||
             element->strName[0] == '\t'                           ||
             element->strName[0] == '{'                            ||
@@ -876,11 +882,11 @@ void  XConfig::WriteFileItem(XFile &file, int indent, XBaseItem *baseItem)
             schr(element->strName, '\n')                          ||
             schr(element->strName, '"')                           ||
             schr(element->strName, ':')                           ))
-        {
+        {*/
             strElement << ConvertToTextString(element->strName);
-        }
+        /*}
         else
-            strElement << element->strName;
+            strElement << element->strName;*/
 
         strElement << TEXT(" : {\r\n");
 
@@ -966,7 +972,8 @@ bool  XConfig::Open(CTSTR lpFile)
     //-------------------------------------
 
     TSTR lpTemp = lpFileData;
-    if(!ReadFileData(RootElement, lpTemp))
+
+    if(!ReadFileData(RootElement, 0, lpTemp))
     {
         for(DWORD i=0; i<RootElement->SubItems.Num(); i++)
             delete RootElement->SubItems[i];

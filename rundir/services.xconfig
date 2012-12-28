@@ -1,5 +1,5 @@
 services : {
-  TwitchTV/JustinTV : {
+  Twitch / Justin.tv : {
     servers : {
       "Global Load Balancing Service"        : rtmp://live-3c.justin.tv/app
       "Asia: Singapore"                      : rtmp://live-sin-backup.justin.tv/app
@@ -19,7 +19,7 @@ services : {
       "US West: San Francisco, CA"           : rtmp://live.justin.tv/app
     }
   }
-  Own3D : {
+  Own3D.tv : {
     servers : {
       US West           : rtmp://live.usw.own3d.tv/live
       US East           : rtmp://live.use.own3d.tv/live

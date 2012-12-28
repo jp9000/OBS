@@ -112,32 +112,6 @@ public:
 
 //-------------------------------------------------------------------
 
-enum
-{
-    NoAudioAvailable,
-    AudioAvailable,
-    ContinueAudioRequest
-};
-
-class AudioSource
-{
-public:
-    virtual ~AudioSource() {}
-
-    virtual void StartCapture()=0;
-    virtual void StopCapture()=0;
-
-    virtual UINT GetNextBuffer(float curVolume)=0;
-    virtual bool GetEarliestTimestamp(QWORD &timestamp)=0;
-    virtual bool GetBuffer(float **buffer, UINT *numFrames, QWORD targetTimestamp)=0;
-
-    virtual bool GetNewestFrame(float **buffer, UINT *numFrames)=0;
-
-    virtual QWORD GetBufferedTime()=0;
-};
-
-//-------------------------------------------------------------------
-
 class AudioEncoder
 {
     friend class OBS;
@@ -246,17 +220,6 @@ struct FontInfo
 };
 
 //-------------------------------------------------------------------
-
-struct AudioSegment
-{
-    List<float> audioData;
-    QWORD timestamp;
-
-    inline void ClearData()
-    {
-        audioData.Clear();
-    }
-};
 
 struct FrameAudio
 {
@@ -411,6 +374,7 @@ class OBS
     friend class OBSAPIInterface;
     friend class GlobalSource;
     friend class TextOutputSource;
+    friend class MMDeviceAudioSource;
 
     //---------------------------------------------------
     // graphics stuff
@@ -552,7 +516,9 @@ class OBS
     //---------------------------------------------------
 
     HANDLE  hSoundThread, hSoundDataMutex, hRequestAudioEvent;
+    QWORD   latestAudioTime;
     float   desktopVol, micVol, curMicVol;
+    float   desktopPeak, micPeak;
     float   desktopMax, micMax;
     float   desktopMag, micMag;
     List<FrameAudio> pendingAudioFrames;
@@ -722,6 +688,8 @@ class OBS
 public:
     OBS();
     ~OBS();
+
+    inline QWORD GetAudioTime() const {return latestAudioTime;}
 
     char* EncMetaData(char *enc, char *pend, bool bFLVFile=false);
 

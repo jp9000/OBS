@@ -164,8 +164,8 @@ const int inputPriority[] =
     13,
     13,
 
-    9,
-    9,
+    10,
+    10,
 
     -1,
     -1,
@@ -182,7 +182,7 @@ const int inputPriority[] =
     5,
     5,
 
-    10
+    9
 };
 
 bool GetVideoOutputTypes(const List<MediaOutputInfo> &outputList, UINT width, UINT height, UINT64 frameInterval, List<VideoOutputType> &types)
