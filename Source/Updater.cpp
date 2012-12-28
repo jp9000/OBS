@@ -233,12 +233,12 @@ BOOL ParseUpdateManifest (TCHAR *path, BOOL *updatesAvailable, String &descripti
             BYTE fileHash[20];
             TCHAR fileHashString[41];
 
-            if (CalculateFileHash(filePath, fileHash))
-            {
-                HashToString(fileHash, fileHashString);
-                if (!scmp(fileHashString, hash))
-                    continue;
-            }
+            if (!CalculateFileHash(filePath, fileHash))
+                continue;
+            
+            HashToString(fileHash, fileHashString);
+            if (!scmp(fileHashString, hash))
+                continue;
 
             numUpdatableFiles++;
         }
