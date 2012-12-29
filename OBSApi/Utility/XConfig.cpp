@@ -687,6 +687,9 @@ String XConfig::ProcessString(TSTR &lpTemp)
 
     String stringOut = string.Mid(1, string.Length()-1);
 
+    if(stringOut.IsEmpty())
+        return String();
+
     TSTR lpStringOut = stringOut;
     while(*lpStringOut != 0 && (lpStringOut = schr(lpStringOut, '\\')) != 0)
     {
@@ -726,7 +729,8 @@ bool  XConfig::ReadFileData(XElement *curElement, int level, TSTR &lpTemp)
                 *lpTemp != L'　' &&
                 *lpTemp != '\t'  &&
                 *lpTemp != '\r'  &&
-                *lpTemp != '\n'  )
+                *lpTemp != '\n'  &&
+                *lpTemp != ',')
         {
             String strName;
 
