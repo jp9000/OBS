@@ -119,9 +119,15 @@ BOOL IsSafeFilename (CTSTR path)
     if (!*p)
        return FALSE;
 
+    if (sstr(path, TEXT("..")))
+        return FALSE;
+
+    if (*p == '/')
+        return FALSE;
+
     while (*p)
     {
-        if (!isalnum(*p) && *p != '.')
+        if (!isalnum(*p) && *p != '.' && *p != '/' && *p != '_')
             return FALSE;
         p++;
     }
@@ -237,12 +243,15 @@ BOOL ParseUpdateManifest (TCHAR *path, BOOL *updatesAvailable, String &descripti
             BYTE fileHash[20];
             TCHAR fileHashString[41];
 
-            if (!CalculateFileHash(filePath, fileHash))
-                continue;
-            
-            HashToString(fileHash, fileHashString);
-            if (!scmp(fileHashString, hash))
-                continue;
+            if (OSFileExists(filePath))
+            {
+                if (!CalculateFileHash(filePath, fileHash))
+                    continue;
+                
+                HashToString(fileHash, fileHashString);
+                if (!scmp(fileHashString, hash))
+                    continue;
+            }
 
             numUpdatableFiles++;
         }
@@ -270,7 +279,7 @@ BOOL ParseUpdateManifest (TCHAR *path, BOOL *updatesAvailable, String &descripti
             return FALSE;
     }
 
-    if (bestPriority < 5)
+    if (bestPriority <= 5)
         *updatesAvailable = TRUE;
 
     return TRUE;
