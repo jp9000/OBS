@@ -337,7 +337,10 @@ DWORD WINAPI CheckUpdateThread (VOID *arg)
                         TCHAR updateFilePath[MAX_PATH];
                         TCHAR cwd[MAX_PATH];
 
-                        GetCurrentDirectory(_countof(cwd)-1, cwd);
+                        GetModuleFileName(NULL, cwd, _countof(cwd)-1);
+                        TCHAR *p = srchr(cwd, '\\');
+                        if (p)
+                            *p = 0;
 
                         tsprintf_s (updateFilePath, _countof(updateFilePath)-1, TEXT("%s\\updates\\updater.exe"), lpAppDataPath);
 
@@ -348,7 +351,11 @@ DWORD WINAPI CheckUpdateThread (VOID *arg)
 
                         execInfo.cbSize = sizeof(execInfo);
                         execInfo.lpFile = updateFilePath;
-                        execInfo.lpParameters = cwd;
+#ifdef WIN32
+                        execInfo.lpParameters = TEXT("Win32");
+#else
+                        execInfo.lpParameters = TEXT("Win64");
+#endif
                         execInfo.lpDirectory = cwd;
                         execInfo.nShow = SW_SHOWNORMAL;
 
