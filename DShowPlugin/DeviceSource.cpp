@@ -195,7 +195,7 @@ bool DeviceSource::LoadFilters()
     }
 
     devicePin = GetOutputPin(deviceFilter);
-    if(FAILED(err))
+    if(!devicePin)
     {
         AppWarning(TEXT("DShowPlugin: Could not get device video pin"));
         goto cleanFinish;
