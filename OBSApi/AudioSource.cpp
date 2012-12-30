@@ -490,6 +490,12 @@ UINT AudioSource::QueryAudio(float curVolume)
         // sort all audio frames into 10 millisecond increments (done because not all devices output in 10ms increments)
         // NOTE: 0.457+ - instead of using the timestamps from windows, just compare and make sure it stays within a 100ms of their timestamps
 
+        if(!bFirstBaseFrameReceived)
+        {
+            lastUsedTimestamp = newTimestamp;
+            bFirstBaseFrameReceived = true;
+        }
+
         float *newBuffer = (bResample) ? tempResampleBuffer.Array() : tempBuffer.Array();
 
         if(storageBuffer.Num() == 0 && numAudioFrames == 441)
@@ -500,9 +506,9 @@ UINT AudioSource::QueryAudio(float curVolume)
                 QWORD difVal = GetQWDif(newTimestamp, lastUsedTimestamp);
                 if(difVal > 70)
                 {
-                    if(difVal > 120)
+                    if(difVal > 700)
                     {
-                        Log(TEXT("AudioSource::QueryAudio: A timestampfor device '%s' just went %llu off, calculating timestamps from here out"), GetDeviceName(), difVal);
+                        Log(TEXT("AudioSource::QueryAudio: A timestamp for device '%s' just went %llu off, calculating timestamps from here out"), GetDeviceName(), difVal);
                         bCalculateTimestamp = true;
                     }
                     else
@@ -537,9 +543,9 @@ UINT AudioSource::QueryAudio(float curVolume)
                     QWORD difVal = GetQWDif(newTimestamp, lastUsedTimestamp);
                     if(difVal > 70)
                     {
-                        if(difVal > 120)
+                        if(difVal > 700)
                         {
-                            Log(TEXT("AudioSource::QueryAudio: A timestampfor device '%s' just went %llu off, calculating timestamps from here out"), GetDeviceName(), difVal);
+                            Log(TEXT("AudioSource::QueryAudio: A timestamp for device '%s' just went %llu off, calculating timestamps from here out"), GetDeviceName(), difVal);
                             bCalculateTimestamp = true;
                         }
                         else

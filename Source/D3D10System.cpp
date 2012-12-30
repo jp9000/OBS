@@ -415,7 +415,7 @@ UINT D3D10System::GetNumOutputs()
     return count;
 }
 
-OutputDuplicator *D3D10System::CreateOutputDulicator(UINT outputID)
+OutputDuplicator *D3D10System::CreateOutputDuplicator(UINT outputID)
 {
     D3D10OutputDuplicator *duplicator = new D3D10OutputDuplicator;
     if(duplicator->Init(outputID))

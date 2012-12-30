@@ -114,6 +114,9 @@ public:
         return NULL;
     }
 
+    virtual void AddAudioSource(AudioSource *source)=0;
+    virtual void RemoveAudioSource(AudioSource *source)=0;
+
     virtual QWORD GetAudioTime() const=0;
 };
 

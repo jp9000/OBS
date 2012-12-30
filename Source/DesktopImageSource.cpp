@@ -105,7 +105,7 @@ public:
                 retryAcquire = 0.0f;
 
                 lastRendered = NULL;
-                duplicator = GS->CreateOutputDulicator(deviceOutputID);
+                duplicator = GS->CreateOutputDuplicator(deviceOutputID);
             }
         }
     }
@@ -125,7 +125,7 @@ public:
                     {
                         delete duplicator;
                         lastRendered = NULL;
-                        duplicator = GS->CreateOutputDulicator(deviceOutputID);
+                        duplicator = GS->CreateOutputDuplicator(deviceOutputID);
                         return;
                     }
 
@@ -533,7 +533,7 @@ public:
             height = cy;
 
             if(bWindows8MonitorCapture)
-                duplicator = GS->CreateOutputDulicator(deviceOutputID);
+                duplicator = GS->CreateOutputDuplicator(deviceOutputID);
             else
             {
                 for(UINT i=0; i<NUM_CAPTURE_TEXTURES; i++)

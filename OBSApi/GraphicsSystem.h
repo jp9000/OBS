@@ -424,7 +424,7 @@ public:
     virtual SamplerState*   CreateSamplerState(SamplerInfo &info)=0;
 
     virtual UINT            GetNumOutputs()=0;
-    virtual OutputDuplicator *CreateOutputDulicator(UINT outputID)=0;
+    virtual OutputDuplicator *CreateOutputDuplicator(UINT outputID)=0;
 
 
     //----------------------------------------------------
