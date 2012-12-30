@@ -73,6 +73,15 @@ extern TCHAR        lpAppDataPath[MAX_PATH];
 #define OBS_VERSION             0x000462
 #define OBS_VERSION_STRING_ANSI "Open Broadcaster Software v0.463a (test build 6)"
 #define OBS_VERSION_STRING      TEXT(OBS_VERSION_STRING_ANSI)
+//#define OBS_TEST_BUILD          1 //define this if releasing a test build to disable the auto updater
+
+#ifdef _DEBUG
+#define OBS_DISABLE_AUTOUPDATE 1
+#endif
+
+#if OBS_TEST_BUILD
+#define OBS_DISABLE_AUTOUPDATE 1
+#endif
 
 #define OBS_WINDOW_CLASS      TEXT("OBSWindowClass")
 #define OBS_RENDERFRAME_CLASS TEXT("RenderFrame")
@@ -94,4 +103,5 @@ void WINAPI ProcessEvents();
 #include "WindowStuff.h"
 #include "CodeTokenizer.h"
 #include "D3D10System.h"
-
+#include "HTTPClient.h"
+#include "Updater.h"

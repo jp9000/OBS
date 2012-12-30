@@ -686,6 +686,8 @@ String XConfig::ProcessString(TSTR &lpTemp)
     *lpTemp = backupChar;
 
     String stringOut = string.Mid(1, string.Length()-1);
+    if (!stringOut)
+        return String();
 
     if(stringOut.IsEmpty())
         return String();

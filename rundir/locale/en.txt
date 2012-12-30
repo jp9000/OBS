@@ -247,3 +247,8 @@ Sources.TransitionSource.Bitmaps            "Bitmaps:"
 Sources.TransitionSource.Empty              "There are no bitmaps entered to display."
 Sources.TransitionSource.FadeInOnly         "Fade In Only:"
 Sources.TransitionSource.TimeBetweenBitmaps "Time between images (seconds):"
+
+Updater.UpdatesAvailable						"Updates are available"
+Updater.NewUpdates        				  "The following updates are available:\r\n\r\n"
+Updater.DownloadNow                 "Would you like to download them now?"
+Updater.RunningWarning							"OBS will be restarted to install the updates.\r\n\r\nAre you sure you want to continue?"

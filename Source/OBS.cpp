@@ -956,6 +956,10 @@ OBS::OBS()
 
     hHotkeyThread = OSCreateThread((XTHREAD)HotkeyThread, NULL);
 
+#ifndef OBS_DISABLE_AUTOUPDATE
+    OSCloseThread(OSCreateThread((XTHREAD)CheckUpdateThread, NULL));
+#endif
+
     bRenderViewEnabled = true;
 }
 
