@@ -702,6 +702,7 @@ String XConfig::ProcessString(TSTR &lpTemp)
             case 't':   *lpStringOut = '\t'; scpy(lpStringOut+1, lpStringOut+2); break;
             case 'r':   *lpStringOut = '\r'; scpy(lpStringOut+1, lpStringOut+2); break;
             case 'n':   *lpStringOut = '\n'; scpy(lpStringOut+1, lpStringOut+2); break;
+            case '/':   *lpStringOut = '/';  scpy(lpStringOut+1, lpStringOut+2); break;
             case '\\':  scpy(lpStringOut+1, lpStringOut+2); break;
         }
 
