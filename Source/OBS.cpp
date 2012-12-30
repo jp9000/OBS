@@ -448,6 +448,9 @@ public:
 
     virtual bool UseMultithreadedOptimizations() const {return App->bUseMultithreadedOptimizations;}
 
+    virtual void AddAudioSource(AudioSource *source) {App->AddAudioSource(source);}
+    virtual void RemoveAudioSource(AudioSource *source) {App->RemoveAudioSource(source);}
+
     virtual QWORD GetAudioTime() const          {return App->GetAudioTime();}
 };
 
@@ -2692,6 +2695,73 @@ bool OBS::QueryNewAudio(QWORD &timestamp)
     return false;
 }
 
+void MixAudio(float *bufferDest, float *bufferSrc, UINT totalFloats, bool bForceMono)
+{
+    UINT floatsLeft = totalFloats;
+    float *destTemp = bufferDest;
+    float *srcTemp  = bufferSrc;
+
+    if((UPARAM(destTemp) & 0xF) == 0 && (UPARAM(srcTemp) & 0xF) == 0)
+    {
+        UINT alignedFloats = floatsLeft & 0xFFFFFFFC;
+
+        if(bForceMono)
+        {
+            __m128 halfVal = _mm_set_ps1(0.5f);
+            for(UINT i=0; i<alignedFloats; i += 4)
+            {
+                float *micInput = srcTemp+i;
+                __m128 val = _mm_load_ps(micInput);
+                __m128 shufVal = _mm_shuffle_ps(val, val, _MM_SHUFFLE(2, 3, 0, 1));
+
+                _mm_store_ps(micInput, _mm_mul_ps(_mm_add_ps(val, shufVal), halfVal));
+            }
+        }
+
+        __m128 maxVal = _mm_set_ps1(1.0f);
+        __m128 minVal = _mm_set_ps1(-1.0f);
+
+        for(UINT i=0; i<alignedFloats; i += 4)
+        {
+            float *pos = destTemp+i;
+
+            __m128 mix;
+            mix = _mm_add_ps(_mm_load_ps(pos), _mm_load_ps(srcTemp+i));
+            mix = _mm_min_ps(mix, maxVal);
+            mix = _mm_max_ps(mix, minVal);
+
+            _mm_store_ps(pos, mix);
+        }
+
+        floatsLeft  &= 0x3;
+        destTemp    += alignedFloats;
+        srcTemp     += alignedFloats;
+    }
+
+    if(floatsLeft)
+    {
+        if(bForceMono)
+        {
+            for(UINT i=0; i<floatsLeft; i += 2)
+            {
+                srcTemp[i] += srcTemp[i+1];
+                srcTemp[i] *= 0.5f;
+                srcTemp[i+1] = srcTemp[i];
+            }
+        }
+
+        for(UINT i=0; i<floatsLeft; i++)
+        {
+            float val = destTemp[i]+srcTemp[i];
+
+            if(val < -1.0f)     val = -1.0f;
+            else if(val > 1.0f) val = 1.0f;
+
+            destTemp[i] = val;
+        }
+    }
+}
+
 void OBS::MainAudioLoop()
 {
     DWORD taskID;
@@ -2707,6 +2777,8 @@ void OBS::MainAudioLoop()
     UINT audioFramesSinceMeterUpdate = 0;
     UINT audioFramesSinceMicMaxUpdate = 0;
     UINT audioFramesSinceDesktopMaxUpdate = 0;
+
+    List<float> mixedLatestDesktopSamples;
 
     while(TRUE)
     {
@@ -2734,6 +2806,9 @@ void OBS::MainAudioLoop()
         QWORD timestamp;
         while(QueryNewAudio(timestamp))
         {
+            //----------------------------------------------------------------------------
+            // get latest sample for calculating the volume levels
+
             float *latestDesktopBuffer = NULL, *latestMicBuffer = NULL;
 
             desktopAudio->GetBuffer(&desktopBuffer, &desktopAudioFrames, timestamp);
@@ -2745,6 +2820,29 @@ void OBS::MainAudioLoop()
             }
 
             //----------------------------------------------------------------------------
+            // get latest aux volume level samples and mix
+
+            mixedLatestDesktopSamples.CopyArray(latestDesktopBuffer, latestDesktopAudioFrames*2);
+            for(UINT i=0; auxAudioSources.Num(); i++)
+            {
+                float *latestAuxBuffer;
+
+                auxAudioSources[i]->GetNewestFrame(&latestAuxBuffer, &latestDesktopAudioFrames);
+                MixAudio(mixedLatestDesktopSamples.Array(), latestAuxBuffer, latestDesktopAudioFrames*2, false);
+            }
+
+            //----------------------------------------------------------------------------
+            // mix output aux sound samples with the desktop
+
+            for(UINT i=0; auxAudioSources.Num(); i++)
+            {
+                float *auxBuffer;
+
+                auxAudioSources[i]->GetBuffer(&auxBuffer, &desktopAudioFrames, timestamp);
+                MixAudio(desktopBuffer, auxBuffer, desktopAudioFrames*2, false);
+            }
+
+            //----------------------------------------------------------------------------
 
             UINT totalFloats = desktopAudioFrames*2;
 
@@ -2753,7 +2851,7 @@ void OBS::MainAudioLoop()
             /*multiply samples by volume and compute RMS and max of samples*/
             float desktopRMS = 0, micRMS = 0, desktopMx = 0, micMx = 0;
             if(latestDesktopBuffer)
-                CalculateVolumeLevels(latestDesktopBuffer, latestDesktopAudioFrames*2, desktopVol, desktopRMS, desktopMx);
+                CalculateVolumeLevels(mixedLatestDesktopSamples.Array(), latestDesktopAudioFrames*2, desktopVol, desktopRMS, desktopMx);
             if(bMicEnabled && latestMicBuffer)
                 CalculateVolumeLevels(latestMicBuffer, latestMicAudioFrames*2, curMicVol, micRMS, micMx);
 
@@ -2835,69 +2933,7 @@ void OBS::MainAudioLoop()
             }
             else if(bMicEnabled)
             {
-                UINT floatsLeft    = totalFloats;
-                float *desktopTemp = desktopBuffer;
-                float *micTemp     = micBuffer;
-
-                if(SSE2Available() && (UPARAM(desktopTemp) & 0xF) == 0 && (UPARAM(micTemp) & 0xF) == 0)
-                {
-                    UINT alignedFloats = floatsLeft & 0xFFFFFFFC;
-
-                    if(bForceMicMono)
-                    {
-                        __m128 halfVal = _mm_set_ps1(0.5f);
-                        for(UINT i=0; i<alignedFloats; i += 4)
-                        {
-                            float *micInput = micTemp+i;
-                            __m128 val = _mm_load_ps(micInput);
-                            __m128 shufVal = _mm_shuffle_ps(val, val, _MM_SHUFFLE(2, 3, 0, 1));
-
-                            _mm_store_ps(micInput, _mm_mul_ps(_mm_add_ps(val, shufVal), halfVal));
-                        }
-                    }
-
-                    __m128 maxVal = _mm_set_ps1(1.0f);
-                    __m128 minVal = _mm_set_ps1(-1.0f);
-
-                    for(UINT i=0; i<alignedFloats; i += 4)
-                    {
-                        float *pos = desktopBuffer+i;
-
-                        __m128 mix;
-                        mix = _mm_add_ps(_mm_load_ps(pos), _mm_load_ps(micBuffer+i));
-                        mix = _mm_min_ps(mix, maxVal);
-                        mix = _mm_max_ps(mix, minVal);
-
-                        _mm_store_ps(pos, mix);
-                    }
-
-                    floatsLeft  &= 0x3;
-                    desktopTemp += alignedFloats;
-                    micTemp     += alignedFloats;
-                }
-
-                if(floatsLeft)
-                {
-                    if(bForceMicMono)
-                    {
-                        for(UINT i=0; i<floatsLeft; i += 2)
-                        {
-                            micTemp[i] += micTemp[i+1];
-                            micTemp[i] *= 0.5f;
-                            micTemp[i+1] = micTemp[i];
-                        }
-                    }
-
-                    for(UINT i=0; i<floatsLeft; i++)
-                    {
-                        float val = desktopTemp[i]+micTemp[i];
-
-                        if(val < -1.0f)     val = -1.0f;
-                        else if(val > 1.0f) val = 1.0f;
-
-                        desktopTemp[i] = val;
-                    }
-                }
+                MixAudio(desktopBuffer, micBuffer, totalFloats, bForceMicMono);
             }
 
             DataPacket packet;

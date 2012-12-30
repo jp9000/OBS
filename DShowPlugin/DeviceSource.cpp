@@ -42,7 +42,7 @@ bool DeviceSource::Init(XElement *data)
     hSampleMutex = OSCreateMutex();
     if(!hSampleMutex)
     {
-        AppWarning(TEXT("DShowPlugin: could not create sasmple mutex"));
+        AppWarning(TEXT("DShowPlugin: could not create sample mutex"));
         return false;
     }
 
@@ -194,10 +194,10 @@ bool DeviceSource::LoadFilters()
         }
     }
 
-    err = capture->FindPin(deviceFilter, PINDIR_OUTPUT, &PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video, TRUE, 0, &devicePin);
-    if(FAILED(err))
+    devicePin = GetOutputPin(deviceFilter);
+    if(!devicePin)
     {
-        AppWarning(TEXT("DShowPlugin: Could not get device video pin, result = %lX"), err);
+        AppWarning(TEXT("DShowPlugin: Could not get device video pin"));
         goto cleanFinish;
     }
 

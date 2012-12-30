@@ -406,7 +406,7 @@ public:
     virtual SamplerState*   CreateSamplerState(SamplerInfo &info);
 
     virtual UINT            GetNumOutputs();
-    virtual OutputDuplicator *CreateOutputDulicator(UINT outputID);
+    virtual OutputDuplicator *CreateOutputDuplicator(UINT outputID);
 
 
     ////////////////////////////

@@ -1,0 +1,22 @@
+*.exe
+*.dll
+
+tests and backups/
+publish/
+Release/
+Debug/
+x64/
+
+*.aps
+*.suo
+*.ncb
+*.user
+*.o
+*.obj
+*.pdb
+*.res
+*.manifest
+*.dep
+*.zip
+*.lnk
+*.chm

@@ -51,9 +51,16 @@ struct MP4AudioFrameInfo
 {
     UINT64  fileOffset;
     UINT    size;
+    UINT    timestamp;
 };
 
 #define USE_64BIT_MP4 1
+
+inline UINT64 ConvertToAudioTime(DWORD timestamp, UINT64 minVal)
+{
+    UINT val = UINT64(timestamp)*44100/1000;
+    return MAX(val, minVal);
+}
 
 
 //code annoyance rating: fairly nightmarish
@@ -216,9 +223,11 @@ public:
 
         BufferOutputSerializer output(endBuffer);
 
+        UINT64 audioFrameSize = App->GetAudioEncoder()->GetFrameSize();
+
         DWORD macTime = fastHtonl(DWORD(GetMacTime()));
         UINT videoDuration = fastHtonl(lastVideoTimestamp + App->GetFrameTime());
-        UINT audioDuration = fastHtonl(lastVideoTimestamp + DWORD(double(App->GetAudioEncoder()->GetFrameSize())/44.1));
+        UINT audioDuration = fastHtonl(lastVideoTimestamp + DWORD(double(audioFrameSize)/44.1));
         UINT width, height;
         App->GetOutputSize(width, height);
 
@@ -294,6 +303,48 @@ public:
         }
 
         SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 20, 0);
+
+        //-------------------------------------------
+        // build audio decode time list
+        List<OffsetVal> audioDecodeTimes;
+
+        UINT64 lastAudioTimeVal = 0;
+
+        for(UINT i=0; i<audioFrames.Num(); i++)
+        {
+            UINT frameTime;
+            if(i == audioFrames.Num()-1)
+                frameTime = audioDecodeTimes.Last().val;
+            else
+            {
+                UINT64 newTimeVal = lastAudioTimeVal+audioFrameSize;
+                if(i)
+                {
+                    UINT64 convertedTime = ConvertToAudioTime(audioFrames[i+1].timestamp, audioFrameSize*(i+1));
+                    if(convertedTime > newTimeVal)
+                        newTimeVal = convertedTime;
+                }
+
+                frameTime = UINT(newTimeVal - lastAudioTimeVal);
+                lastAudioTimeVal = newTimeVal;
+            }
+
+            if(!audioDecodeTimes.Num() || audioDecodeTimes.Last().val != (UINT)frameTime)
+            {
+                OffsetVal newVal;
+                newVal.count = 1;
+                newVal.val = (UINT)frameTime;
+                audioDecodeTimes << newVal;
+            }
+            else
+                audioDecodeTimes.Last().count++;
+
+            ProcessEvents();
+        }
+
+        UINT audioUnitDuration = fastHtonl(UINT(lastAudioTimeVal));
+
+        SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 25, 0);
 
         //-------------------------------------------
         // sound descriptor thingy.  this part made me die a little inside admittedly.
@@ -583,7 +634,7 @@ public:
                 output.OutputDword(macTime); //creation time
                 output.OutputDword(macTime); //modified time
                 output.OutputDword(DWORD_BE(44100)); //time scale
-                output.OutputDword(fastHtonl(audioFrames.Num()*App->GetAudioEncoder()->GetFrameSize()));
+                output.OutputDword(audioUnitDuration);
                 output.OutputDword(DWORD_BE(0x55c40000));
               PopBox(); //mdhd
               PushBox(output, DWORD_BE('hdlr'));
@@ -638,9 +689,12 @@ public:
                   PopBox(); //stsd
                   PushBox(output, DWORD_BE('stts')); //list of keyframe (i-frame) IDs
                     output.OutputDword(0); //version and flags (none)
-                    output.OutputDword(DWORD_BE(1));
-                    output.OutputDword(fastHtonl(audioFrames.Num()));
-                    output.OutputDword(fastHtonl(App->GetAudioEncoder()->GetFrameSize()));
+                    output.OutputDword(fastHtonl(audioDecodeTimes.Num()));
+                    for(UINT i=0; i<audioDecodeTimes.Num(); i++)
+                    {
+                        output.OutputDword(fastHtonl(audioDecodeTimes[i].count));
+                        output.OutputDword(fastHtonl(audioDecodeTimes[i].val));
+                    }
                   PopBox(); //stss
                   PushBox(output, DWORD_BE('stsc')); //sample to chunk list
                     output.OutputDword(0); //version and flags (none)
@@ -774,6 +828,7 @@ public:
             MP4AudioFrameInfo audioFrame;
             audioFrame.fileOffset   = offset;
             audioFrame.size         = copySize;
+            audioFrame.timestamp    = timestamp;
             audioFrames << audioFrame;
         }
         else

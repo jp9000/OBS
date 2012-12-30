@@ -525,6 +525,8 @@ class OBS
     bool    bForceMicMono;
     float   micBoost;
 
+    List<AudioSource*> auxAudioSources;
+
     //---------------------------------------------------
 
     HANDLE hHotkeyMutex;
@@ -688,6 +690,9 @@ class OBS
 public:
     OBS();
     ~OBS();
+
+    inline void AddAudioSource(AudioSource *source) {auxAudioSources << source;}
+    inline void RemoveAudioSource(AudioSource *source) {auxAudioSources.RemoveItem(source);}
 
     inline QWORD GetAudioTime() const {return latestAudioTime;}
 

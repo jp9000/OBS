@@ -245,11 +245,12 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
         //-----------------------------------------------------------------
         // timestamp bs
 
-        QWORD newTimestamp;
+        QWORD newTimestamp = 0;
 
         if(bIsMic)
         {
             newTimestamp = App->GetAudioTime();
+            //Log(TEXT("newTimestamp: %llu"), newTimestamp);
         }
         else
         {
