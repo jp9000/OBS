@@ -23,6 +23,15 @@
 void WINAPI FreeMediaType(AM_MEDIA_TYPE& mt);
 HRESULT WINAPI CopyMediaType(AM_MEDIA_TYPE *pmtTarget, const AM_MEDIA_TYPE *pmtSource);
 
+inline void DeleteMediaType(AM_MEDIA_TYPE *pmt)
+{
+    if(pmt != NULL)
+    {
+        FreeMediaType(*pmt);
+        CoTaskMemFree(pmt);
+    }
+}
+
 
 const GUID MEDIASUBTYPE_I420 = {0x30323449, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
 

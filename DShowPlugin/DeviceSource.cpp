@@ -141,6 +141,7 @@ bool DeviceSource::LoadFilters()
     bUseThreadedConversion = API->UseMultithreadedOptimizations() && (OSGetTotalCores() > 1);
 
     //------------------------------------------------
+    // basic initialization vars
 
     bUseCustomResolution = data->GetInt(TEXT("customResolution"));
     strDevice = data->GetString(TEXT("device"));
@@ -153,6 +154,7 @@ bool DeviceSource::LoadFilters()
     opacity = data->GetInt(TEXT("opacity"), 100);
 
     //------------------------------------------------
+    // chrom key stuff
 
     bUseChromaKey = data->GetInt(TEXT("useChromaKey")) != 0;
     keyColor = data->GetInt(TEXT("keyColor"), 0xFFFFFFFF);
@@ -168,6 +170,7 @@ bool DeviceSource::LoadFilters()
         keyBaseColor -= keyBaseColor.z;
 
     //------------------------------------------------
+    // get the device filter and pins
 
     if(strDeviceName.IsValid())
     {
@@ -205,7 +208,7 @@ bool DeviceSource::LoadFilters()
 
     if(soundOutputType != 0)
     {
-        err = capture->FindPin(deviceFilter, PINDIR_OUTPUT, &PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, TRUE, 0, &audioPin);
+        err = capture->FindPin(deviceFilter, PINDIR_OUTPUT, &PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, FALSE, 0, &audioPin);
         if(FAILED(err))
         {
             Log(TEXT("DShowPlugin: No audio pin, result = %lX"), err);
@@ -213,9 +216,12 @@ bool DeviceSource::LoadFilters()
         }
     }
 
+    int soundTimeOffset = data->GetInt(TEXT("soundTimeOffset"));
+
     GetOutputList(devicePin, outputList);
 
     //------------------------------------------------
+    // initialize the basic video variables and data
 
     renderCX = renderCY = 0;
     frameInterval = 0;
@@ -271,6 +277,7 @@ bool DeviceSource::LoadFilters()
     bFirstFrame = true;
 
     //------------------------------------------------
+    // get the closest media output for the settings used
 
     MediaOutputInfo *bestOutput = GetBestMediaOutput(outputList, renderCX, renderCY, preferredOutputType, frameInterval);
     if(!bestOutput)
@@ -280,6 +287,7 @@ bool DeviceSource::LoadFilters()
     }
 
     //------------------------------------------------
+    // log video info
 
     {
         VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(bestOutput->mediaType->pbFormat);
@@ -305,6 +313,7 @@ bool DeviceSource::LoadFilters()
     }
 
     //------------------------------------------------
+    // set up shaders and video output data
 
     expectedMediaType = bestOutput->mediaType->subtype;
 
@@ -344,12 +353,14 @@ bool DeviceSource::LoadFilters()
     }
 
     //------------------------------------------------
+    // set chroma details
 
     keyBaseColor = Color4().MakeFromRGBA(keyColor);
     Matrix4x4TransformVect(keyChroma, (colorType == DeviceOutputType_HDYC) ? (float*)yuv709Mat : (float*)yuvMat, keyBaseColor);
     keyChroma *= 2.0f;
 
     //------------------------------------------------
+    // configure video pin
 
     if(FAILED(err = devicePin->QueryInterface(IID_IAMStreamConfig, (void**)&config)))
     {
@@ -360,11 +371,11 @@ bool DeviceSource::LoadFilters()
     AM_MEDIA_TYPE outputMediaType;
     CopyMediaType(&outputMediaType, bestOutput->mediaType);
 
-    VIDEOINFOHEADER *vih = reinterpret_cast<VIDEOINFOHEADER*>(outputMediaType.pbFormat);
-    vih->AvgTimePerFrame = frameInterval;
-    vih->bmiHeader.biWidth  = renderCX;
-    vih->bmiHeader.biHeight = renderCY;
-    vih->bmiHeader.biSizeImage = renderCX*renderCY*(vih->bmiHeader.biBitCount>>3);
+    VIDEOINFOHEADER *vih        = reinterpret_cast<VIDEOINFOHEADER*>(outputMediaType.pbFormat);
+    vih->AvgTimePerFrame        = frameInterval;
+    vih->bmiHeader.biWidth      = renderCX;
+    vih->bmiHeader.biHeight     = renderCY;
+    vih->bmiHeader.biSizeImage  = renderCX*renderCY*(vih->bmiHeader.biBitCount>>3);
 
     if(FAILED(err = config->SetFormat(&outputMediaType)))
     {
@@ -375,6 +386,61 @@ bool DeviceSource::LoadFilters()
     FreeMediaType(outputMediaType);
 
     //------------------------------------------------
+    // get audio pin configuration, optionally configure audio pin to 44100
+
+    GUID expectedAudioType;
+
+    if(soundOutputType == 1)
+    {
+        IAMStreamConfig *audioConfig;
+        if(SUCCEEDED(audioPin->QueryInterface(IID_IAMStreamConfig, (void**)&audioConfig)))
+        {
+            AM_MEDIA_TYPE *audioMediaType;
+            if(SUCCEEDED(audioConfig->GetFormat(&audioMediaType)))
+            {
+                expectedAudioType = audioMediaType->subtype;
+
+                if(audioMediaType->formattype == FORMAT_WaveFormatEx)
+                {
+                    WAVEFORMATEX *pFormat = reinterpret_cast<WAVEFORMATEX*>(audioMediaType->pbFormat);
+                    mcpy(&audioFormat, pFormat, sizeof(audioFormat));
+
+                    Log(TEXT("    device audio info - bits per sample: %u, channels: %u, samples per sec: %u"),
+                        audioFormat.wBitsPerSample, audioFormat.nChannels, audioFormat.nSamplesPerSec);
+
+                    //avoid local resampling if possible
+                    /*if(pFormat->nSamplesPerSec != 44100)
+                    {
+                        pFormat->nSamplesPerSec = 44100;
+                        if(SUCCEEDED(audioConfig->SetFormat(audioMediaType)))
+                        {
+                            Log(TEXT("    also successfully set samples per sec to 44.1k"));
+                            audioFormat.nSamplesPerSec = 44100;
+                        }
+                    }*/
+                }
+                else
+                {
+                    AppWarning(TEXT("DShowPlugin: Audio format was not a normal wave format"));
+                    soundOutputType = 0;
+                }
+
+                DeleteMediaType(audioMediaType);
+            }
+            else
+            {
+                AppWarning(TEXT("DShowPlugin: Could not get audio format"));
+                soundOutputType = 0;
+            }
+
+            audioConfig->Release();
+        }
+        else
+            soundOutputType = 0;
+    }
+
+    //------------------------------------------------
+    // add video capture filter if any
 
     captureFilter = new CaptureFilter(this, MEDIATYPE_Video, expectedMediaType);
 
@@ -387,12 +453,22 @@ bool DeviceSource::LoadFilters()
     bAddedVideoCapture = true;
 
     //------------------------------------------------
+    // add audio capture filter if any
 
-    if(soundOutputType == 2)
+    if(soundOutputType == 1)
+    {
+        audioFilter = new CaptureFilter(this, MEDIATYPE_Audio, expectedAudioType);
+        if(!audioFilter)
+        {
+            AppWarning(TEXT("Failed to create audio ccapture filter"));
+            soundOutputType = 0;
+        }
+    }
+    else if(soundOutputType == 2)
     {
         if(FAILED(err = CoCreateInstance(CLSID_AudioRender, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter, (void**)&audioFilter)))
         {
-            Log(TEXT("DShowPlugin: no audio available for this device, result = %08lX"), err);
+            AppWarning(TEXT("DShowPlugin: failed to create audio renderer, result = %08lX"), err);
             soundOutputType = 0;
         }
     }
@@ -409,6 +485,7 @@ bool DeviceSource::LoadFilters()
     }
 
     //------------------------------------------------
+    // add primary device filter
 
     if(FAILED(err = graph->AddFilter(deviceFilter, NULL)))
     {
@@ -419,6 +496,16 @@ bool DeviceSource::LoadFilters()
     bAddedDevice = true;
 
     //------------------------------------------------
+    // connect all pins and set up the whole capture thing
+
+    /*IMediaFilter *mediaFilter;
+    if(SUCCEEDED(graph->QueryInterface(IID_IMediaFilter, (void**)&mediaFilter)))
+    {
+        if(FAILED(mediaFilter->SetSyncSource(NULL)))
+            AppWarning(TEXT("DShowPlugin: Failed to set sync source, result = %08lX"), err);
+
+        mediaFilter->Release();
+    }*/
 
     //THANK THE NINE DIVINES I FINALLY GOT IT WORKING
     bool bConnected = SUCCEEDED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video, deviceFilter, NULL, captureFilter));
@@ -445,6 +532,13 @@ bool DeviceSource::LoadFilters()
     {
         AppWarning(TEXT("DShowPlugin: Failed to get IMediaControl, result = %08lX"), err);
         goto cleanFinish;
+    }
+
+    if(soundOutputType == 1)
+    {
+        audioOut = new DeviceAudioSource;
+        audioOut->Initialize(this, soundTimeOffset);
+        API->AddAudioSource(audioOut);
     }
 
     bSucceeded = true;
@@ -477,6 +571,12 @@ cleanFinish:
         {
             delete colorConvertShader;
             colorConvertShader = NULL;
+        }
+
+        if(audioOut)
+        {
+            delete audioOut;
+            audioOut = NULL;
         }
 
         if(lpImageBuffer)
@@ -575,6 +675,13 @@ void DeviceSource::UnloadFilters()
         bFiltersLoaded = false;
     }
 
+    if(audioOut)
+    {
+        API->RemoveAudioSource(audioOut);
+        delete audioOut;
+        audioOut = NULL;
+    }
+
     if(colorConvertShader)
     {
         delete colorConvertShader;
@@ -641,8 +748,9 @@ void DeviceSource::ReceiveVideo(IMediaSample *sample)
 
 void DeviceSource::ReceiveAudio(IMediaSample *sample)
 {
-    if(bCapturing)
+    if(bCapturing && audioOut)
     {
+        audioOut->ReceiveAudio(sample);
     }
 }
 

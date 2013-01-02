@@ -41,6 +41,8 @@ class MMDeviceAudioSource : public AudioSource
 
     String strDeviceName;
 
+    int timeOffset;
+
 protected:
     virtual bool GetNextBuffer(void **buffer, UINT *numFrames, QWORD *timestamp);
     virtual void ReleaseBuffer();
@@ -48,7 +50,7 @@ protected:
     virtual CTSTR GetDeviceName() const {return strDeviceName.Array();}
 
 public:
-    bool Initialize(bool bMic, CTSTR lpID);
+    bool Initialize(bool bMic, CTSTR lpID, int timeOffset);
 
     ~MMDeviceAudioSource()
     {
@@ -65,10 +67,10 @@ public:
     virtual void StopCapture();
 };
 
-AudioSource* CreateAudioSource(bool bMic, CTSTR lpID)
+AudioSource* CreateAudioSource(bool bMic, CTSTR lpID, int timeOffset)
 {
     MMDeviceAudioSource *source = new MMDeviceAudioSource;
-    if(source->Initialize(bMic, lpID))
+    if(source->Initialize(bMic, lpID, timeOffset))
         return source;
     else
     {
@@ -79,7 +81,7 @@ AudioSource* CreateAudioSource(bool bMic, CTSTR lpID)
 
 //==============================================================================================================================
 
-bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
+bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID, int timeOffset)
 {
     const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
     const IID IID_IMMDeviceEnumerator    = __uuidof(IMMDeviceEnumerator);
@@ -94,6 +96,7 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
         return false;
     }
 
+    this->timeOffset = timeOffset;
     bIsMic = bMic;
 
     if(bMic)
@@ -249,7 +252,7 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
 
         if(bIsMic)
         {
-            newTimestamp = App->GetAudioTime();
+            newTimestamp = App->GetAudioTime()+timeOffset;
             //Log(TEXT("newTimestamp: %llu"), newTimestamp);
         }
         else

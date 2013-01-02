@@ -40,7 +40,7 @@ VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTS
 AudioEncoder* CreateMP3Encoder(UINT bitRate);
 AudioEncoder* CreateAACEncoder(UINT bitRate);
 
-AudioSource* CreateAudioSource(bool bMic, CTSTR lpID);
+AudioSource* CreateAudioSource(bool bMic, CTSTR lpID, int timeOffset);
 
 ImageSource* STDCALL CreateDesktopSource(XElement *data);
 bool STDCALL ConfigureDesktopSource(XElement *data, bool bCreating);
@@ -553,6 +553,7 @@ OBS::OBS()
     bSSE2Available = (cpuInfo[3] & (1<<26)) != 0;
 
     hSceneMutex = OSCreateMutex();
+    hAuxAudioMutex = OSCreateMutex();
 
     monitors.Clear();
     EnumDisplayMonitors(NULL, NULL, (MONITORENUMPROC)MonitorInfoEnumProc, (LPARAM)&monitors);
@@ -1014,6 +1015,9 @@ OBS::~OBS()
     if(hSceneMutex)
         OSCloseMutex(hSceneMutex);
 
+    if(hAuxAudioMutex)
+        OSCloseMutex(hAuxAudioMutex);
+
     delete API;
     API = NULL;
 
@@ -1355,7 +1359,7 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
-    desktopAudio = CreateAudioSource(false, NULL);
+    desktopAudio = CreateAudioSource(false, NULL, 0);
     if(!desktopAudio)
         CrashError(TEXT("Cannot initialize desktop audio sound, more info in the log file."));
 
@@ -1383,7 +1387,10 @@ void OBS::Start()
         {
             if(bUseDefault)
                 strDevice = strDefaultMic;
-            micAudio = CreateAudioSource(true, strDevice);
+
+            int micTimeOffset = AppConfig->GetInt(TEXT("Audio"), TEXT("MicTimeOffset"), 0);
+            micAudio = CreateAudioSource(true, strDevice, micTimeOffset);
+
             if(!micAudio)
                 MessageBox(hwndMain, Str("MicrophoneFailure"), NULL, 0);
 
@@ -1525,6 +1532,7 @@ void OBS::Start()
     //-------------------------------------------------------------
 
     SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, 0, 0, 0);
+    SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
 }
 
 StatusBarDrawData statusBarData;
@@ -1839,6 +1847,7 @@ void OBS::Stop()
     InvalidateRect(hwndRenderFrame, NULL, TRUE);
 
     SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, 1, 0, 0);
+    SetThreadExecutionState(ES_CONTINUOUS);
 
     for(UINT i=0; i<bufferedVideo.Num(); i++)
         bufferedVideo[i].Clear();
@@ -2677,13 +2686,26 @@ bool OBS::QueryNewAudio(QWORD &timestamp)
     {
         bNewAudio = true;
 
+        OSEnterMutex(hAuxAudioMutex);
+        for(UINT i=0; i<auxAudioSources.Num(); i++)
+            auxAudioSources[i]->QueryAudio(desktopVol);
+        OSLeaveMutex(hAuxAudioMutex);
+
         if(micAudio != NULL)
             micAudio->QueryAudio(curMicVol);
     }
 
-    if(micAudio && bNewAudio)
+    if(bNewAudio)
     {
-        while((audioRet = micAudio->QueryAudio(curMicVol)) != NoAudioAvailable);
+        OSEnterMutex(hAuxAudioMutex);
+        for(UINT i=0; i<auxAudioSources.Num(); i++)
+            auxAudioSources[i]->QueryAudio(desktopVol);
+        OSLeaveMutex(hAuxAudioMutex);
+
+        if(micAudio)
+        {
+            while((audioRet = micAudio->QueryAudio(curMicVol)) != NoAudioAvailable);
+        }
     }
 
     if(desktopAudio->GetEarliestTimestamp(desktopTimestamp))
@@ -2822,25 +2844,29 @@ void OBS::MainAudioLoop()
             //----------------------------------------------------------------------------
             // get latest aux volume level samples and mix
 
+            OSEnterMutex(hAuxAudioMutex);
+
             mixedLatestDesktopSamples.CopyArray(latestDesktopBuffer, latestDesktopAudioFrames*2);
-            for(UINT i=0; auxAudioSources.Num(); i++)
+            for(UINT i=0; i<auxAudioSources.Num(); i++)
             {
                 float *latestAuxBuffer;
 
-                auxAudioSources[i]->GetNewestFrame(&latestAuxBuffer, &latestDesktopAudioFrames);
-                MixAudio(mixedLatestDesktopSamples.Array(), latestAuxBuffer, latestDesktopAudioFrames*2, false);
+                if(auxAudioSources[i]->GetNewestFrame(&latestAuxBuffer, &latestDesktopAudioFrames))
+                    MixAudio(mixedLatestDesktopSamples.Array(), latestAuxBuffer, latestDesktopAudioFrames*2, false);
             }
 
             //----------------------------------------------------------------------------
             // mix output aux sound samples with the desktop
 
-            for(UINT i=0; auxAudioSources.Num(); i++)
+            for(UINT i=0; i<auxAudioSources.Num(); i++)
             {
                 float *auxBuffer;
 
-                auxAudioSources[i]->GetBuffer(&auxBuffer, &desktopAudioFrames, timestamp);
-                MixAudio(desktopBuffer, auxBuffer, desktopAudioFrames*2, false);
+                if(auxAudioSources[i]->GetBuffer(&auxBuffer, &desktopAudioFrames, timestamp))
+                    MixAudio(desktopBuffer, auxBuffer, desktopAudioFrames*2, false);
             }
+
+            OSLeaveMutex(hAuxAudioMutex);
 
             //----------------------------------------------------------------------------
 

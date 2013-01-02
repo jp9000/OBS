@@ -196,7 +196,12 @@ STDMETHODIMP CapturePin::GetAllocatorRequirements(ALLOCATOR_PROPERTIES *pProps) 
 STDMETHODIMP CapturePin::Receive(IMediaSample *pSample)
 {
     if(pSample)
-        source->ReceiveVideo(pSample);
+    {
+        if(expectedMajorType == MEDIATYPE_Video)
+            source->ReceiveVideo(pSample);
+        else if(expectedMajorType == MEDIATYPE_Audio)
+            source->ReceiveAudio(pSample);
+    }
     return S_OK;
 }
 

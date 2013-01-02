@@ -819,6 +819,16 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 SendMessage(hwndTemp, BM_SETCHECK, BST_CHECKED, 0);
 
+                EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET), soundOutputType == 1);
+                EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET_EDIT), soundOutputType == 1);
+
+                //------------------------------------------
+
+                int pos = configData->data->GetInt(TEXT("soundTimeOffset"));
+
+                SendMessage(GetDlgItem(hwnd, IDC_TIMEOFFSET), UDM_SETRANGE32, -700, 3000);
+                SendMessage(GetDlgItem(hwnd, IDC_TIMEOFFSET), UDM_SETPOS32, 0, pos);
+
                 //------------------------------------------
 
                 BOOL  bUseChromaKey = configData->data->GetInt(TEXT("useChromaKey"), 0);
@@ -849,8 +859,6 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 EnableWindow(GetDlgItem(hwnd, IDC_SPILLREDUCTION), bUseChromaKey);
 
                 //------------------------------------------
-
-                
 
                 return TRUE;
             }
@@ -928,6 +936,23 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         EnableWindow(GetDlgItem(hwnd, IDC_FPS), bCustomResolution);
                         break;
                     }
+
+                case IDC_NOSOUND:
+                case IDC_PLAYDESKTOPSOUND:
+                    if(HIWORD(wParam) == BN_CLICKED)
+                    {
+                        EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET), FALSE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET_EDIT), FALSE);
+                    }
+                    break;
+
+                case IDC_OUTPUTSOUND:
+                    if(HIWORD(wParam) == BN_CLICKED)
+                    {
+                        EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET), TRUE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET_EDIT), TRUE);
+                    }
+                    break;
 
                 case IDC_USECHROMAKEY:
                     {
@@ -1407,6 +1432,9 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                             soundOutputType = 2;
 
                         configData->data->SetInt(TEXT("soundOutputType"), soundOutputType);
+
+                        int soundTimeOffset = SendMessage(GetDlgItem(hwnd, IDC_TIMEOFFSET), UDM_GETPOS32, 0, 0);
+                        configData->data->SetInt(TEXT("soundTimeOffset"), soundTimeOffset);
 
                         //------------------------------------------
 

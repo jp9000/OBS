@@ -129,7 +129,7 @@ public:
         paramData.i_width               = width;
         paramData.i_height              = height;
         paramData.vui.b_fullrange       = 0;          //specify full range input levels
-        paramData.i_frame_reference     = 1;
+        //paramData.i_frame_reference     = 1;
         //paramData.b_in
 
         paramData.i_fps_num = fps;

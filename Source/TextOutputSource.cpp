@@ -683,8 +683,11 @@ ImageSource* STDCALL CreateTextSource(XElement *data)
 
 int CALLBACK FontEnumProcThingy(ENUMLOGFONTEX *logicalData, NEWTEXTMETRICEX *physicalData, DWORD fontType, ConfigTextSourceInfo *configInfo)
 {
-    configInfo->fontNames << logicalData->elfFullName;
-    configInfo->fontFaces << logicalData->elfLogFont.lfFaceName;
+    if(fontType == TRUETYPE_FONTTYPE) //HomeWorld - GDI+ doesn't like anything other than truetype
+    {
+        configInfo->fontNames << logicalData->elfFullName;
+        configInfo->fontFaces << logicalData->elfLogFont.lfFaceName;
+    }
 
     return 1;
 }

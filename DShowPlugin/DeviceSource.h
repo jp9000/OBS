@@ -47,8 +47,36 @@ struct ConvertData
     UINT startY, endY;
 };
 
+class DeviceSource;
+
+class DeviceAudioSource : public AudioSource
+{
+    DeviceSource *device;
+
+    UINT sampleSegmentSize, sampleFrameCount;
+
+    HANDLE hAudioMutex;
+    List<BYTE> sampleBuffer;
+    List<BYTE> outputBuffer;
+
+    int soundTimeOffset;
+
+protected:
+    virtual bool GetNextBuffer(void **buffer, UINT *numFrames, QWORD *timestamp);
+    virtual void ReleaseBuffer();
+
+    virtual CTSTR GetDeviceName() const;
+
+public:
+    bool Initialize(DeviceSource *parent, int soundTimeOffset);
+    ~DeviceAudioSource();
+
+    void ReceiveAudio(IMediaSample *sample);
+};
+
 class DeviceSource : public ImageSource
 {
+    friend class DeviceAudioSource;
     friend class CapturePin;
 
     IGraphBuilder           *graph;
@@ -58,6 +86,11 @@ class DeviceSource : public ImageSource
     IBaseFilter             *deviceFilter;
     CaptureFilter           *captureFilter;
     IBaseFilter             *audioFilter;
+
+    //---------------------------------
+
+    WAVEFORMATEX            audioFormat;
+    DeviceAudioSource       *audioOut;
 
     //---------------------------------
 

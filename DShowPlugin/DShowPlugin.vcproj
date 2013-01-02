@@ -357,6 +357,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DeviceAudio.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\DeviceSource.cpp"
 				>
 			</File>

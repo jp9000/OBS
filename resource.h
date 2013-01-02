@@ -148,12 +148,14 @@
 #define IDC_RECONNECTING                1081
 #define IDC_SAVEPATH                    1081
 #define IDC_SCROLLSPEED_EDIT            1081
-#define IDC_MICBOOST2                   1081
 #define IDC_PTTDELAY                    1081
 #define IDC_SAVEPATH_STATIC             1082
 #define IDC_EXTENTWIDTH                 1082
+#define IDC_MICBOOST_EDIT2              1082
+#define IDC_MICTIMEOFFSET_EDIT          1082
 #define IDC_EXTENTHEIGHT                1083
 #define IDC_DELAY_EDIT                  1083
+#define IDC_MICTIMEOFFSET               1083
 #define IDC_DELAY                       1084
 #define IDC_OUTLINETHICKNESS_EDIT       1084
 #define IDC_USESYNCFIX                  1086

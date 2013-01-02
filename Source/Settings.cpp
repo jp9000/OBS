@@ -1433,6 +1433,17 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
 
                 //--------------------------------------------
 
+                int micTimeOffset = AppConfig->GetInt(TEXT("Audio"), TEXT("MicTimeOffset"), 0);
+                if(micTimeOffset < -500)
+                    micTimeOffset = -500;
+                else if(micTimeOffset > 3000)
+                    micTimeOffset = 3000;
+
+                SendMessage(GetDlgItem(hwnd, IDC_MICTIMEOFFSET), UDM_SETRANGE32, -500, 3000);
+                SendMessage(GetDlgItem(hwnd, IDC_MICTIMEOFFSET), UDM_SETPOS32, 0, micTimeOffset);
+
+                //--------------------------------------------
+
                 App->SetChangedSettings(false);
                 return TRUE;
             }
@@ -1461,6 +1472,7 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                         }
                         break;
 
+                    case IDC_MICTIMEOFFSET_EDIT:
                     case IDC_MICBOOST_EDIT:
                     case IDC_PUSHTOTALKHOTKEY:
                     case IDC_MUTEMICHOTKEY:
@@ -2043,6 +2055,15 @@ void OBS::ApplySettings()
                     micBoostMultiple = 20;
                 AppConfig->SetInt(TEXT("Audio"), TEXT("MicBoostMultiple"), micBoostMultiple);
                 App->micBoost = float(micBoostMultiple);
+
+                //------------------------------------
+
+                int micTimeOffset = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_MICTIMEOFFSET), UDM_GETPOS32, 0, 0);
+                if(micTimeOffset < -500)
+                    micTimeOffset = -500;
+                else if(micTimeOffset > 3000)
+                    micTimeOffset = 3000;
+                AppConfig->SetInt(TEXT("Audio"), TEXT("MicTimeOffset"), micTimeOffset);
 
                 break;
             }

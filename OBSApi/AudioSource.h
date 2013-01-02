@@ -100,7 +100,7 @@ public:
 
     virtual QWORD GetBufferedTime();
 
-    virtual void StartCapture()=0;
-    virtual void StopCapture()=0;
+    virtual void StartCapture() {}
+    virtual void StopCapture() {}
 };
 

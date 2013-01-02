@@ -79,12 +79,11 @@ public:
     ~BitmapImageSource()
     {
         if(bIsAnimatedGif)
-        {
             gif_finalise(&gif);
+
+        if(lpGifData)
             Free(lpGifData);
-            lpGifData = NULL;
-        }
-            
+
         delete texture;
     }
 
@@ -115,7 +114,7 @@ public:
 
                 if(newFrame != curFrame)
                 {
-                    gif_decode_frame(&gif, curFrame);
+                    gif_decode_frame(&gif, newFrame);
                     texture->SetImage(gif.frame_image, GS_IMAGEFORMAT_RGBA, gif.width*4);
 
                     curFrame = newFrame;
@@ -140,6 +139,10 @@ public:
         {
             bIsAnimatedGif = false;
             gif_finalise(&gif);
+        }
+
+        if(lpGifData)
+        {
             Free(lpGifData);
             lpGifData = NULL;
         }
@@ -173,8 +176,9 @@ public:
                 return;
             }
 
+
             DWORD fileSize = (DWORD)gifFile.GetFileSize();
-            LPBYTE lpGifData = (LPBYTE)Allocate(fileSize);
+            lpGifData = (LPBYTE)Allocate(fileSize);
             gifFile.Read(lpGifData, fileSize);
 
             gif_result result;
