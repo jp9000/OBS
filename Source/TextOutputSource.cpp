@@ -25,6 +25,7 @@
     if(iVal < minVal) iVal = minVal; \
     else if(iVal > maxVal) iVal = maxVal;
 
+#define UPDATE_DELAY 1.0f
 
 class TextOutputSource : public ImageSource
 {
@@ -65,6 +66,7 @@ class TextOutputSource : public ImageSource
     OVERLAPPED  directoryChange;
 
     bool        bDoUpdate;
+    float       updateDelay;
 
     SamplerState *ss;
 
@@ -130,17 +132,6 @@ class TextOutputSource : public ImageSource
                 strDirectory = GetPathDirectory(strDirectory);
                 strDirectory.FindReplace(TEXT("/"), TEXT("\\"));
                 strDirectory << TEXT("\\");
-            }
-            else
-            {
-                strCurrentText = TEXT("");
-                AppWarning(TEXT("TextSource::UpdateTexture: could not open specified file (invalid file name or access violation)"));
-            }
-
-            if(!strCurrentText.IsValid())
-            {
-                strCurrentText = TEXT("");
-                AppWarning(TEXT("TextSource::UpdateTexture: invalid string returned by ReadFileToString (is the file UTF-8 or compatible ?!)"));
             }
 
             hDirectory = CreateFile(strDirectory, FILE_LIST_DIRECTORY, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OVERLAPPED, NULL);
@@ -444,7 +435,10 @@ public:
                 strFileChanged << strDirectory << strFileName;
 
                 if(strFileChanged.CompareI(strFile))
+                {
                     bDoUpdate = true;
+                    updateDelay = 0.0f;
+                }
 
                 DWORD test;
                 zero(&directoryChange, sizeof(directoryChange));
@@ -480,8 +474,13 @@ public:
 
         if(bDoUpdate)
         {
-            bDoUpdate = false;
-            bUpdateTexture = true;
+            updateDelay += fSeconds;
+            if(updateDelay >= UPDATE_DELAY)
+            {
+                updateDelay = 0.0f;
+                bDoUpdate = false;
+                bUpdateTexture = true;
+            }
         }
     }
 
