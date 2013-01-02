@@ -123,7 +123,7 @@ class TextOutputSource : public ImageSource
         else if(mode == 1)
         {
             XFile textFile;
-            if(strFile.IsValid() && textFile.Open(strFile, XFILE_READ, XFILE_OPENEXISTING))
+            if(strFile.IsValid() && textFile.Open(strFile, XFILE_READ | XFILE_SHARED, XFILE_OPENEXISTING))
             {
                 textFile.ReadFileToString(strCurrentText);
 
@@ -1140,7 +1140,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                             else if(mode == 1)
                             {
                                 XFile textFile;
-                                if(strFile.IsEmpty() || !textFile.Open(strFile, XFILE_READ, XFILE_OPENEXISTING))
+                                if(strFile.IsEmpty() || !textFile.Open(strFile, XFILE_READ | XFILE_SHARED, XFILE_OPENEXISTING))
                                 {
                                     String strError = Str("Sources.TextSource.FileNotFound");
                                     strError.FindReplace(TEXT("$1"), strFile);
