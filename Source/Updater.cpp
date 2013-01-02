@@ -313,7 +313,7 @@ DWORD WINAPI CheckUpdateThread (VOID *arg)
 
     if (HTTPGetFile(TEXT("https://obsproject.com/update/packages.xconfig"), manifestPath, extraHeaders, &responseCode))
     {
-        //if (responseCode == 200)
+        if (responseCode == 200 || responseCode == 304)
         {
             String updateInfo;
             BOOL updatesAvailable;
