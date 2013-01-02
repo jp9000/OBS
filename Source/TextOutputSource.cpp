@@ -140,7 +140,7 @@ class TextOutputSource : public ImageSource
                 DWORD test;
                 zero(&directoryChange, sizeof(directoryChange));
 
-                if(ReadDirectoryChangesW(hDirectory, changeBuffer, 2048, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE, &test, &directoryChange, NULL))
+                if(ReadDirectoryChangesW(hDirectory, changeBuffer, 2048, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE, &test, &directoryChange, NULL))
                     bMonitoringFileChanges = true;
                 else
                 {
@@ -444,7 +444,7 @@ public:
                 zero(&directoryChange, sizeof(directoryChange));
                 zero(changeBuffer, 2048);
 
-                if(ReadDirectoryChangesW(hDirectory, changeBuffer, 2048, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE, &test, &directoryChange, NULL))
+                if(ReadDirectoryChangesW(hDirectory, changeBuffer, 2048, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE, &test, &directoryChange, NULL))
                     bMonitoringFileChanges = true;
                 else
                     CloseHandle(hDirectory);
