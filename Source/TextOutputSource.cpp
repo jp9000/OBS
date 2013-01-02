@@ -1128,6 +1128,20 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                             break;
                         }
 
+                        XFile textFile;
+
+                        if(mode == 1)
+                        {
+                            if(strFile.IsEmpty() || !textFile.Open(strFile, XFILE_READ | XFILE_SHARED, XFILE_OPENEXISTING))
+                            {
+                                String strError = Str("Sources.TextSource.FileNotFound");
+                                strError.FindReplace(TEXT("$1"), strFile);
+
+                                MessageBox(hwnd, strError, NULL, 0);
+                                break;
+                            }
+                        }
+
                         if(bUseTextExtents)
                         {
                             configInfo->cx = float(extentWidth);
@@ -1140,17 +1154,12 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                                 strOutputText = strText;
                             else if(mode == 1)
                             {
-                                XFile textFile;
-                                if(strFile.IsEmpty() || !textFile.Open(strFile, XFILE_READ | XFILE_SHARED, XFILE_OPENEXISTING))
-                                {
-                                    String strError = Str("Sources.TextSource.FileNotFound");
-                                    strError.FindReplace(TEXT("$1"), strFile);
-
-                                    MessageBox(hwnd, strError, NULL, 0);
-                                    break;
-                                }
-
                                 textFile.ReadFileToString(strOutputText);
+                                if(!strOutputText.IsValid())
+                                {
+                                    strOutputText = TEXT("");
+                                    AppWarning(TEXT("TextSource::ConfigureTextProc:IDOK: invalid string returned by ReadFileToString (is the file UTF-8 or compatible ?!)"));
+                                }
                             }
 
                             LOGFONT lf;
