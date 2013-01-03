@@ -51,13 +51,13 @@ BOOL XFile::Open(CTSTR lpFile, DWORD dwAccess, DWORD dwCreationDisposition)
     {
         dwFileAccess |= GENERIC_READ;
         if(dwAccess & XFILE_SHARED)
-            dwShareAccess |= FILE_SHARE_READ;
+            dwShareAccess |= FILE_SHARE_READ | FILE_SHARE_WRITE;
     }
     if(dwAccess & XFILE_WRITE)
     {
         dwFileAccess |= GENERIC_WRITE;
         if(dwAccess & XFILE_SHARED)
-            dwShareAccess |= FILE_SHARE_WRITE;
+            dwShareAccess |= FILE_SHARE_READ;
     }
 
     assert(lpFile);
