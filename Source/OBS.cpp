@@ -1389,10 +1389,11 @@ void OBS::Start()
                 strDevice = strDefaultMic;
 
             micAudio = CreateAudioSource(true, strDevice);
-            micAudio->SetTimeOffset(AppConfig->GetInt(TEXT("Audio"), TEXT("MicTimeOffset"), 0));
-
+            
             if(!micAudio)
                 MessageBox(hwndMain, Str("MicrophoneFailure"), NULL, 0);
+            else
+                micAudio->SetTimeOffset(AppConfig->GetInt(TEXT("Audio"), TEXT("MicTimeOffset"), 0));
 
             EnableWindow(GetDlgItem(hwndMain, ID_MICVOLUME), micAudio != NULL);
         }
