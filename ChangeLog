@@ -1,6 +1,31 @@
 (yyyy-mm-dd)
 
 -------------------------------
+2013-01-02 - 0.465 (alpha)
+    * Finally implemented capture card audio output options
+    * Added options to adjust microphone and capture card audio
+      time
+    * Added an auto-updater courtesy of R1CH
+    * Added improved volume meters courtesy of Bill Hamilton once
+      again
+    * Made it so that windows won't go into an idle state while
+      streaming
+    * Fixed a bug where the recieve buffer could fill up and cause
+      spontaneous disconnecting for the user
+    * Fixed more issues related to mic syncing by forcing all
+      non-desktop audio sources to use the desktop audio time
+      (which seems to always be valid) as a base.
+    * Fixed a bug with stream keys/play paths failing
+    * Fixed a bug with game capture not being properly movable
+    * Removed the ability for the sound system to ever calculate
+      timestamps.  Made it always use proper timestamping.
+    * Fixed a bug where MP4 audio wasn't recording proper audio
+      time offsets
+    * Fixed some bugs in text and utility stuff courtesy of
+      HomeWorld
+    * Fixed some memory leaks
+
+-------------------------------
 2012-12-16 - 0.461 (alpha)
     * Made game capture sizable/positionable, and added the option
       to ignore aspect
