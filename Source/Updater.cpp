@@ -160,7 +160,7 @@ BOOL ParseUpdateManifest (TCHAR *path, BOOL *updatesAvailable, String &descripti
 
         if (scmp(platform, TEXT("all")))
         {
-#ifdef WIN32
+#ifndef _WIN64
             if (scmp(platform, TEXT("Win32")))
                 continue;
 #else
@@ -277,6 +277,8 @@ DWORD WINAPI CheckUpdateThread (VOID *arg)
         return 1;
     }
 
+    extraHeaders[0] = 0;
+
     if (CalculateFileHash(manifestPath, manifestHash))
     {
         TCHAR hashString[41];
@@ -285,8 +287,18 @@ DWORD WINAPI CheckUpdateThread (VOID *arg)
 
         tsprintf_s (extraHeaders, _countof(extraHeaders)-1, TEXT("If-None-Match: %s"), hashString);
     }
-    else
-        extraHeaders[0] = 0;
+    
+    //this is an arbitrary random number that we use to count the number of unique OBS installations
+    //and is not associated with any kind of identifiable information
+    String guid = GlobalConfig->GetString(TEXT("General"), TEXT("InstallGUID"));
+    if (guid.IsValid())
+    {
+        if (extraHeaders[0])
+            scat(extraHeaders, TEXT("\n"));
+
+        scat(extraHeaders, TEXT("X-OBS-GUID: "));
+        scat(extraHeaders, guid);
+    }
 
     if (HTTPGetFile(TEXT("https://obsproject.com/update/packages.xconfig"), manifestPath, extraHeaders, &responseCode))
     {
@@ -328,7 +340,7 @@ DWORD WINAPI CheckUpdateThread (VOID *arg)
 
                         execInfo.cbSize = sizeof(execInfo);
                         execInfo.lpFile = updateFilePath;
-#ifdef WIN32
+#ifndef _WIN64
                         execInfo.lpParameters = TEXT("Win32");
 #else
                         execInfo.lpParameters = TEXT("Win64");
