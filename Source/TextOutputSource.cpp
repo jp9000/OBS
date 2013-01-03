@@ -25,7 +25,6 @@
     if(iVal < minVal) iVal = minVal; \
     else if(iVal > maxVal) iVal = maxVal;
 
-#define UPDATE_DELAY 1.0f
 
 class TextOutputSource : public ImageSource
 {
@@ -66,7 +65,6 @@ class TextOutputSource : public ImageSource
     OVERLAPPED  directoryChange;
 
     bool        bDoUpdate;
-    float       updateDelay;
 
     SamplerState *ss;
 
@@ -123,7 +121,7 @@ class TextOutputSource : public ImageSource
         else if(mode == 1)
         {
             XFile textFile;
-            if(strFile.IsValid() && textFile.Open(strFile, XFILE_READ, XFILE_OPENEXISTING))
+            if(strFile.IsValid() && textFile.Open(strFile, XFILE_READ | XFILE_SHARED, XFILE_OPENEXISTING))
             {
                 textFile.ReadFileToString(strCurrentText);
 
@@ -133,6 +131,17 @@ class TextOutputSource : public ImageSource
                 strDirectory.FindReplace(TEXT("/"), TEXT("\\"));
                 strDirectory << TEXT("\\");
             }
+            else
+            {
+                strCurrentText = TEXT("");
+                AppWarning(TEXT("TextSource::UpdateTexture: could not open specified file (invalid file name or access violation)"));
+            }
+
+            if(!strCurrentText.IsValid())
+            {
+                strCurrentText = TEXT("");
+                AppWarning(TEXT("TextSource::UpdateTexture: invalid string returned by ReadFileToString (is the file UTF-8 or compatible ?!)"));
+            }
 
             hDirectory = CreateFile(strDirectory, FILE_LIST_DIRECTORY, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OVERLAPPED, NULL);
             if(hDirectory != INVALID_HANDLE_VALUE)
@@ -140,7 +149,7 @@ class TextOutputSource : public ImageSource
                 DWORD test;
                 zero(&directoryChange, sizeof(directoryChange));
 
-                if(ReadDirectoryChangesW(hDirectory, changeBuffer, 2048, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE, &test, &directoryChange, NULL))
+                if(ReadDirectoryChangesW(hDirectory, changeBuffer, 2048, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE, &test, &directoryChange, NULL))
                     bMonitoringFileChanges = true;
                 else
                 {
@@ -435,16 +444,13 @@ public:
                 strFileChanged << strDirectory << strFileName;
 
                 if(strFileChanged.CompareI(strFile))
-                {
                     bDoUpdate = true;
-                    updateDelay = 0.0f;
-                }
 
                 DWORD test;
                 zero(&directoryChange, sizeof(directoryChange));
                 zero(changeBuffer, 2048);
 
-                if(ReadDirectoryChangesW(hDirectory, changeBuffer, 2048, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE, &test, &directoryChange, NULL))
+                if(ReadDirectoryChangesW(hDirectory, changeBuffer, 2048, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE, &test, &directoryChange, NULL))
                     bMonitoringFileChanges = true;
                 else
                     CloseHandle(hDirectory);
@@ -474,13 +480,8 @@ public:
 
         if(bDoUpdate)
         {
-            updateDelay += fSeconds;
-            if(updateDelay >= UPDATE_DELAY)
-            {
-                updateDelay = 0.0f;
-                bDoUpdate = false;
-                bUpdateTexture = true;
-            }
+            bDoUpdate = false;
+            bUpdateTexture = true;
         }
     }
 
@@ -1140,7 +1141,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                             else if(mode == 1)
                             {
                                 XFile textFile;
-                                if(strFile.IsEmpty() || !textFile.Open(strFile, XFILE_READ, XFILE_OPENEXISTING))
+                                if(strFile.IsEmpty() || !textFile.Open(strFile, XFILE_READ | XFILE_SHARED, XFILE_OPENEXISTING))
                                 {
                                     String strError = Str("Sources.TextSource.FileNotFound");
                                     strError.FindReplace(TEXT("$1"), strFile);
