@@ -41,8 +41,6 @@ class MMDeviceAudioSource : public AudioSource
 
     String strDeviceName;
 
-    int timeOffset;
-
 protected:
     virtual bool GetNextBuffer(void **buffer, UINT *numFrames, QWORD *timestamp);
     virtual void ReleaseBuffer();
@@ -50,7 +48,7 @@ protected:
     virtual CTSTR GetDeviceName() const {return strDeviceName.Array();}
 
 public:
-    bool Initialize(bool bMic, CTSTR lpID, int timeOffset);
+    bool Initialize(bool bMic, CTSTR lpID);
 
     ~MMDeviceAudioSource()
     {
@@ -67,10 +65,10 @@ public:
     virtual void StopCapture();
 };
 
-AudioSource* CreateAudioSource(bool bMic, CTSTR lpID, int timeOffset)
+AudioSource* CreateAudioSource(bool bMic, CTSTR lpID)
 {
     MMDeviceAudioSource *source = new MMDeviceAudioSource;
-    if(source->Initialize(bMic, lpID, timeOffset))
+    if(source->Initialize(bMic, lpID))
         return source;
     else
     {
@@ -81,7 +79,7 @@ AudioSource* CreateAudioSource(bool bMic, CTSTR lpID, int timeOffset)
 
 //==============================================================================================================================
 
-bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID, int timeOffset)
+bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
 {
     const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
     const IID IID_IMMDeviceEnumerator    = __uuidof(IMMDeviceEnumerator);
@@ -260,31 +258,10 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
             if(dwFlags & AUDCLNT_BUFFERFLAGS_TIMESTAMP_ERROR)
             {
                 RUNONCE AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: woa woa woa, getting timestamp errors from the audio subsystem.  device = %s"), GetDeviceName());
-                if(!bCalculateTimestamp)
-                    newTimestamp = lastUsedTimestamp + numFramesRead*1000/inputSamplesPerSec;
+                newTimestamp = lastUsedTimestamp + numFramesRead*1000/inputSamplesPerSec;
             }
             else
-            {
-                if(!bCalculateTimestamp)
-                    newTimestamp = qpcTimestamp/10000;
-
-                /*if(bIsMic)
-                {
-                    UINT64 freq;
-                    mmClock->GetFrequency(&freq);
-
-                    QWORD micTime = devPosition*8000/freq;
-
-                    static QWORD startTimestamp = newTimestamp;
-                    static QWORD startTime = micTime;
-
-                    LONGLONG timestampOffset = LONGLONG(newTimestamp-startTimestamp);
-                    LONGLONG micTimeOffset = LONGLONG(micTime-startTime);
-
-                    Log(TEXT("position: %llu, numAudioFrames: %u, freq: %llu, newTimestamp: %llu, micTime: %llu, timestampOffset: %llu, micTimeOffset: %llu, diff: %lld"),
-                        devPosition, numAudioFrames, freq, newTimestamp, micTime, timestampOffset, micTimeOffset, micTimeOffset-timestampOffset);
-                }*/
-            }
+                newTimestamp = qpcTimestamp/10000;
 
             //have to do this crap to account for broken devices or device drivers.  absolutely unbelievable.
             if(!bFirstFrameReceived)
@@ -293,11 +270,9 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
                 QueryPerformanceFrequency(&clockFreq);
                 QWORD curTime = GetQPCTimeMS(clockFreq.QuadPart);
 
-                if(newTimestamp < (curTime-OUTPUT_BUFFER_TIME) || newTimestamp > (curTime+OUTPUT_BUFFER_TIME))
+                if(newTimestamp < (curTime-OUTPUT_BUFFER_TIME) || newTimestamp > (curTime+2000))
                 {
-                    bCalculateTimestamp = true;
-
-                    Log(TEXT("MMDeviceAudioSource::GetNextBuffer: Got bad audio timestamp offset %lld from device: '%s', timestamps for this device will be calculated.  curTime: %llu, newTimestamp: %llu"), (LONGLONG)(newTimestamp - curTime), GetDeviceName(), curTime, newTimestamp);
+                    CrashError(TEXT("MMDeviceAudioSource::GetNextBuffer: Got bad audio timestamp offset %lld from device: '%s'.  curTime: %llu, newTimestamp: %llu"), (LONGLONG)(newTimestamp - curTime), GetDeviceName(), curTime, newTimestamp);
                     lastUsedTimestamp = newTimestamp = curTime;
                 }
                 else

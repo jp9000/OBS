@@ -35,7 +35,7 @@ bool DeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *tim
 
         *buffer = outputBuffer.Array();
         *numFrames = sampleFrameCount;
-        *timestamp = API->GetAudioTime()+soundTimeOffset;
+        *timestamp = API->GetAudioTime()+timeOffset;
 
         return true;
     }
@@ -57,9 +57,8 @@ CTSTR DeviceAudioSource::GetDeviceName() const
 }
 
 
-bool DeviceAudioSource::Initialize(DeviceSource *parent, int soundTimeOffset)
+bool DeviceAudioSource::Initialize(DeviceSource *parent)
 {
-    this->soundTimeOffset = soundTimeOffset;
     device = parent;
     hAudioMutex = OSCreateMutex();
 

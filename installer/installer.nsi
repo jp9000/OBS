@@ -2,11 +2,15 @@
 
 ; Define your application name
 !define APPNAME "Open Broadcaster Software"
-!define APPNAMEANDVERSION "Open Broadcaster Software 0.452a"
+!define APPNAMEANDVERSION "Open Broadcaster Software 0.465a"
+
+; Additional script dependencies
+!include WinVer.nsh
+!include x64.nsh
 
 ; Main Install settings
 Name "${APPNAMEANDVERSION}"
-InstallDir "$PROGRAMFILES\OBS"
+InstallDir "$PROGRAMFILES32\OBS"
 InstallDirRegKey HKLM "Software\${APPNAME}" ""
 OutFile "OBS_Installer.exe"
 
@@ -18,9 +22,6 @@ RequestExecutionLevel admin
 
 ; Modern interface settings
 !include "MUI.nsh"
-
-; Additional script dependencies
-!include WinVer.nsh
 
 !define MUI_ABORTWARNING
 !define MUI_FINISHPAGE_RUN "$INSTDIR\OBS.exe"
@@ -48,7 +49,7 @@ Function PreReqCheck
 	${EndIf}
 	
 	; Vista specific checks
-  ${If} ${IsWinVista}
+	${If} ${IsWinVista}
 		; Check Vista SP2
 		${If} ${AtMostServicePack} 1
 			MessageBox MB_YESNO|MB_ICONEXCLAMATION "${APPNAME} requires Service Pack 2 when running on Vista. Would you like to download it?" IDYES sptrue IDNO spfalse
@@ -79,7 +80,7 @@ Function PreReqCheck
 	GetDLLVersion "DXGI.DLL" $R0 $R1
 	IfErrors dxMissing dxOK
 	dxMissing:
-		MessageBox MB_YESNO|MB_ICONEXCLAMATION "Your system is missing a DirectX update that {$APPNAME} requires. Would you like to download it?" IDYES dxtrue IDNO dxfalse
+		MessageBox MB_YESNO|MB_ICONEXCLAMATION "Your system is missing a DirectX update that ${APPNAME} requires. Would you like to download it?" IDYES dxtrue IDNO dxfalse
 		dxtrue:
 			ExecShell "open" "http://www.microsoft.com/en-us/download/details.aspx?id=35"
 		dxfalse:
@@ -104,74 +105,56 @@ Section "Open Broadcaster Software" Section1
 
 	; Set Section Files and Shortcuts
 	SetOutPath "$INSTDIR\"
-	File "..\rundir\OBS.exe"
-	File "..\rundir\OBS.exe"
-	File "..\rundir\OBSApi.dll"
+	File "..\Release\OBS.exe"
+	File "..\OBSAPI\Release\OBSApi.dll"
 	File "..\rundir\services.xconfig"
+	File "..\rundir\OBSHelp.chm"
+	File "..\rundir\pdb32\stripped\*.pdb"
 	SetOutPath "$INSTDIR\locale"
-	File "..\rundir\locale\bg.txt"
-	File "..\rundir\locale\br.txt"
-	File "..\rundir\locale\de.txt"
-	File "..\rundir\locale\el.txt"
-	File "..\rundir\locale\en.txt"
-	File "..\rundir\locale\es.txt"
-	File "..\rundir\locale\et.txt"
-	File "..\rundir\locale\fi.txt"
-	File "..\rundir\locale\fr.txt"
-	File "..\rundir\locale\ja.txt"
-	File "..\rundir\locale\nb.txt"
-	File "..\rundir\locale\pl.txt"
-	File "..\rundir\locale\ru.txt"
-	File "..\rundir\locale\tw.txt"
-	SetOutPath "$INSTDIR\plugins\"
-	File "..\rundir\plugins\DShowPlugin.dll"
-	File "..\rundir\plugins\GraphicsCapture.dll"
-	SetOutPath "$INSTDIR\plugins\DShowPlugin\locale\"
-	File "..\rundir\plugins\DShowPlugin\locale\bg.txt"
-	File "..\rundir\plugins\DShowPlugin\locale\br.txt"
-	File "..\rundir\plugins\DShowPlugin\locale\de.txt"
-	File "..\rundir\plugins\DShowPlugin\locale\el.txt"
-	File "..\rundir\plugins\DShowPlugin\locale\en.txt"
-	File "..\rundir\plugins\DShowPlugin\locale\es.txt"
-	File "..\rundir\plugins\DShowPlugin\locale\et.txt"
-	File "..\rundir\plugins\DShowPlugin\locale\fi.txt"
-	File "..\rundir\plugins\DShowPlugin\locale\ja.txt"
-	File "..\rundir\plugins\DShowPlugin\locale\nb.txt"
-	File "..\rundir\plugins\DShowPlugin\locale\ru.txt"
-	File "..\rundir\plugins\DShowPlugin\locale\tw.txt"
-	SetOutPath "$INSTDIR\plugins\DShowPlugin\shaders\"
-	File "..\rundir\plugins\DShowPlugin\shaders\ChromaKey_HDYCToRGB.pShader"
-	File "..\rundir\plugins\DShowPlugin\shaders\ChromaKey_RGB.pShader"
-	File "..\rundir\plugins\DShowPlugin\shaders\ChromaKey_UYVToRGB.pShader"
-	File "..\rundir\plugins\DShowPlugin\shaders\ChromaKey_YUVToRGB.pShader"
-	File "..\rundir\plugins\DShowPlugin\shaders\ChromaKey_YUXVToRGB.pShader"
-	File "..\rundir\plugins\DShowPlugin\shaders\ChromaKey_YVUToRGB.pShader"
-	File "..\rundir\plugins\DShowPlugin\shaders\ChromaKey_YVXUToRGB.pShader"
-	File "..\rundir\plugins\DShowPlugin\shaders\HDYCToRGB.pShader"
-	File "..\rundir\plugins\DShowPlugin\shaders\UYVToRGB.pShader"
-	File "..\rundir\plugins\DShowPlugin\shaders\YUVToRGB.pShader"
-	File "..\rundir\plugins\DShowPlugin\shaders\YUXVToRGB.pShader"
-	File "..\rundir\plugins\DShowPlugin\shaders\YVUToRGB.pShader"
-	File "..\rundir\plugins\DShowPlugin\shaders\YVXUToRGB.pShader"
-	SetOutPath "$INSTDIR\plugins\GraphicsCapture\"
-	File "..\rundir\plugins\GraphicsCapture\GraphicsCaptureHook.dll"
+	File "..\rundir\locale\*.txt"
 	SetOutPath "$INSTDIR\shaders\"
-	File "..\rundir\shaders\AlphaIgnore.pShader"
-	File "..\rundir\shaders\ColorKey_RGB.pShader"
-	File "..\rundir\shaders\DownscaleYUV1.5.pShader"
-	File "..\rundir\shaders\DownscaleYUV2.25.pShader"
-	File "..\rundir\shaders\DownscaleYUV2.pShader"
-	File "..\rundir\shaders\DownscaleYUV3.pShader"
-	File "..\rundir\shaders\DrawSolid.pShader"
-	File "..\rundir\shaders\DrawSolid.vShader"
-	File "..\rundir\shaders\DrawTexture.pShader"
-	File "..\rundir\shaders\DrawTexture.vShader"
-	File "..\rundir\shaders\DrawYUVTexture.pShader"
-	File "..\rundir\shaders\InvertTexture.pShader"
+	File "..\rundir\shaders\*.?Shader"
+	SetOutPath "$INSTDIR\plugins\"
+	File "..\DShowPlugin\Release\DShowPlugin.dll"
+	File "..\GraphicsCapture\Release\GraphicsCapture.dll"
+	SetOutPath "$INSTDIR\plugins\DShowPlugin\locale\"
+	File "..\rundir\plugins\DShowPlugin\locale\*.txt"
+	SetOutPath "$INSTDIR\plugins\DShowPlugin\shaders\"
+	File "..\rundir\plugins\DShowPlugin\shaders\*.?Shader"
+	SetOutPath "$INSTDIR\plugins\GraphicsCapture\"
+	File "..\GraphicsCapture\GraphicsCaptureHook\Release\GraphicsCaptureHook.dll"
+	${if} ${RunningX64}
+		SetOutPath "$INSTDIR\64bit\"
+		File "..\x64\Release\OBS.exe"
+		File "..\OBSAPI\x64\Release\OBSApi.dll"
+		File "..\rundir\services.xconfig"
+		File "..\rundir\OBSHelp.chm"
+		File "..\rundir\pdb64\stripped\*.pdb"
+		SetOutPath "$INSTDIR\64bit\locale"
+		File "..\rundir\locale\*.txt"
+		SetOutPath "$INSTDIR\64bit\shaders\"
+		File "..\rundir\shaders\*.?Shader"
+		SetOutPath "$INSTDIR\64bit\plugins\"
+		File "..\DShowPlugin\x64\Release\DShowPlugin.dll"
+		File "..\GraphicsCapture\x64\Release\GraphicsCapture.dll"
+		SetOutPath "$INSTDIR\64bit\plugins\DShowPlugin\locale\"
+		File "..\rundir\plugins\DShowPlugin\locale\*.txt"
+		SetOutPath "$INSTDIR\64bit\plugins\DShowPlugin\shaders\"
+		File "..\rundir\plugins\DShowPlugin\shaders\*.?Shader"
+		SetOutPath "$INSTDIR\64bit\plugins\GraphicsCapture\"
+		File "..\GraphicsCapture\GraphicsCaptureHook\x64\Release\GraphicsCaptureHook.dll"
+	${endif}
+
+	WriteUninstaller "$INSTDIR\uninstall.exe"
+
 	CreateShortCut "$DESKTOP\Open Broadcaster Software.lnk" "$INSTDIR\OBS.exe"
 	CreateDirectory "$SMPROGRAMS\Open Broadcaster Software"
-	CreateShortCut "$SMPROGRAMS\Open Broadcaster Software\Open Broadcaster Software.lnk" "$INSTDIR\OBS.exe"
+	CreateShortCut "$SMPROGRAMS\Open Broadcaster Software\Open Broadcaster Software (32bit).lnk" "$INSTDIR\OBS.exe"
 	CreateShortCut "$SMPROGRAMS\Open Broadcaster Software\Uninstall.lnk" "$INSTDIR\uninstall.exe"
+
+	${if} ${RunningX64}
+		CreateShortCut "$SMPROGRAMS\Open Broadcaster Software\Open Broadcaster Software (64bit).lnk" "$INSTDIR\64bit\OBS.exe"
+	${endif}
 
 SectionEnd
 
@@ -180,7 +163,6 @@ Section -FinishSection
 	WriteRegStr HKLM "Software\${APPNAME}" "" "$INSTDIR"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayName" "${APPNAME}"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString" "$INSTDIR\uninstall.exe"
-	WriteUninstaller "$INSTDIR\uninstall.exe"
 
 SectionEnd
 
@@ -201,67 +183,39 @@ Section Uninstall
 
 	; Delete Shortcuts
 	Delete "$DESKTOP\Open Broadcaster Software.lnk"
-	Delete "$SMPROGRAMS\Open Broadcaster Software\Open Broadcaster Software.lnk"
+	Delete "$SMPROGRAMS\Open Broadcaster Software\Open Broadcaster Software (32bit).lnk"
 	Delete "$SMPROGRAMS\Open Broadcaster Software\Uninstall.lnk"
+	${if} ${RunningX64}
+		Delete "$SMPROGRAMS\Open Broadcaster Software\Open Broadcaster Software (64bit).lnk"
+	${endif}
 
 	; Clean up Open Broadcaster Software
 	Delete "$INSTDIR\OBS.exe"
 	Delete "$INSTDIR\OBSApi.dll"
 	Delete "$INSTDIR\services.xconfig"
-	Delete "$INSTDIR\locale\bg.txt"
-	Delete "$INSTDIR\locale\br.txt"
-	Delete "$INSTDIR\locale\de.txt"
-	Delete "$INSTDIR\locale\el.txt"
-	Delete "$INSTDIR\locale\en.txt"
-	Delete "$INSTDIR\locale\es.txt"
-	Delete "$INSTDIR\locale\et.txt"
-	Delete "$INSTDIR\locale\fi.txt"
-	Delete "$INSTDIR\locale\fr.txt"
-	Delete "$INSTDIR\locale\ja.txt"
-	Delete "$INSTDIR\locale\nb.txt"
-	Delete "$INSTDIR\locale\pl.txt"
-	Delete "$INSTDIR\locale\ru.txt"
-	Delete "$INSTDIR\locale\tw.txt"
+	Delete "$INSTDIR\*.chm"
+	Delete "$INSTDIR\*.pdb"
+	Delete "$INSTDIR\locale\*.txt"
+	Delete "$INSTDIR\shaders\*.?Shader"
 	Delete "$INSTDIR\plugins\DShowPlugin.dll"
 	Delete "$INSTDIR\plugins\GraphicsCapture.dll"
-	Delete "$INSTDIR\plugins\DShowPlugin\locale\bg.txt"
-	Delete "$INSTDIR\plugins\DShowPlugin\locale\br.txt"
-	Delete "$INSTDIR\plugins\DShowPlugin\locale\de.txt"
-	Delete "$INSTDIR\plugins\DShowPlugin\locale\el.txt"
-	Delete "$INSTDIR\plugins\DShowPlugin\locale\en.txt"
-	Delete "$INSTDIR\plugins\DShowPlugin\locale\es.txt"
-	Delete "$INSTDIR\plugins\DShowPlugin\locale\et.txt"
-	Delete "$INSTDIR\plugins\DShowPlugin\locale\fi.txt"
-	Delete "$INSTDIR\plugins\DShowPlugin\locale\ja.txt"
-	Delete "$INSTDIR\plugins\DShowPlugin\locale\nb.txt"
-	Delete "$INSTDIR\plugins\DShowPlugin\locale\ru.txt"
-	Delete "$INSTDIR\plugins\DShowPlugin\locale\tw.txt"
-	Delete "$INSTDIR\plugins\DShowPlugin\shaders\ChromaKey_HDYCToRGB.pShader"
-	Delete "$INSTDIR\plugins\DShowPlugin\shaders\ChromaKey_RGB.pShader"
-	Delete "$INSTDIR\plugins\DShowPlugin\shaders\ChromaKey_UYVToRGB.pShader"
-	Delete "$INSTDIR\plugins\DShowPlugin\shaders\ChromaKey_YUVToRGB.pShader"
-	Delete "$INSTDIR\plugins\DShowPlugin\shaders\ChromaKey_YUXVToRGB.pShader"
-	Delete "$INSTDIR\plugins\DShowPlugin\shaders\ChromaKey_YVUToRGB.pShader"
-	Delete "$INSTDIR\plugins\DShowPlugin\shaders\ChromaKey_YVXUToRGB.pShader"
-	Delete "$INSTDIR\plugins\DShowPlugin\shaders\HDYCToRGB.pShader"
-	Delete "$INSTDIR\plugins\DShowPlugin\shaders\UYVToRGB.pShader"
-	Delete "$INSTDIR\plugins\DShowPlugin\shaders\YUVToRGB.pShader"
-	Delete "$INSTDIR\plugins\DShowPlugin\shaders\YUXVToRGB.pShader"
-	Delete "$INSTDIR\plugins\DShowPlugin\shaders\YVUToRGB.pShader"
-	Delete "$INSTDIR\plugins\DShowPlugin\shaders\YVXUToRGB.pShader"
+	Delete "$INSTDIR\plugins\DShowPlugin\locale\*.txt"
+	Delete "$INSTDIR\plugins\DShowPlugin\shaders\*.?Shader"
 	Delete "$INSTDIR\plugins\GraphicsCapture\GraphicsCaptureHook.dll"
-	Delete "$INSTDIR\plugins\GraphicsCapture\AlphaIgnore.pShader"
-	Delete "$INSTDIR\plugins\GraphicsCapture\ColorKey_RGB.pShader"
-	Delete "$INSTDIR\plugins\GraphicsCapture\DownscaleYUV1.5.pShader"
-	Delete "$INSTDIR\plugins\GraphicsCapture\DownscaleYUV2.25.pShader"
-	Delete "$INSTDIR\plugins\GraphicsCapture\DownscaleYUV2.pShader"
-	Delete "$INSTDIR\plugins\GraphicsCapture\DownscaleYUV3.pShader"
-	Delete "$INSTDIR\plugins\GraphicsCapture\DrawSolid.pShader"
-	Delete "$INSTDIR\plugins\GraphicsCapture\DrawSolid.vShader"
-	Delete "$INSTDIR\plugins\GraphicsCapture\DrawTexture.pShader"
-	Delete "$INSTDIR\plugins\GraphicsCapture\DrawTexture.vShader"
-	Delete "$INSTDIR\plugins\GraphicsCapture\DrawYUVTexture.pShader"
-	Delete "$INSTDIR\plugins\GraphicsCapture\InvertTexture.pShader"
+	${if} ${RunningX64}
+		Delete "$INSTDIR\64bit\OBS.exe"
+		Delete "$INSTDIR\64bit\OBSApi.dll"
+		Delete "$INSTDIR\64bit\services.xconfig"
+		Delete "$INSTDIR\64bit\*.chm"
+		Delete "$INSTDIR\64bit\*.pdb"
+		Delete "$INSTDIR\64bit\locale\*.txt"
+		Delete "$INSTDIR\64bit\shaders\*.?Shader"
+		Delete "$INSTDIR\64bit\plugins\DShowPlugin.dll"
+		Delete "$INSTDIR\64bit\plugins\GraphicsCapture.dll"
+		Delete "$INSTDIR\64bit\plugins\DShowPlugin\locale\*.txt"
+		Delete "$INSTDIR\64bit\plugins\DShowPlugin\shaders\*.?Shader"
+		Delete "$INSTDIR\64bit\plugins\GraphicsCapture\GraphicsCaptureHook.dll"
+	${endif}
 
 	; Remove remaining directories
 	RMDir "$SMPROGRAMS\Open Broadcaster Software"
@@ -269,6 +223,19 @@ Section Uninstall
 	RMDir "$INSTDIR\plugins\DShowPlugin\shaders\"
 	RMDir "$INSTDIR\plugins\DShowPlugin\locale\"
 	RMDir "$INSTDIR\plugins\DShowPlugin\"
+	RMDir "$INSTDIR\plugins"
+	RMDir "$INSTDIR\locale"
+	RMDir "$INSTDIR\shaders"
+	${if} ${RunningX64}
+		RMDir "$INSTDIR\64bit\plugins\GraphicsCapture\"
+		RMDir "$INSTDIR\64bit\plugins\DShowPlugin\shaders\"
+		RMDir "$INSTDIR\64bit\plugins\DShowPlugin\locale\"
+		RMDir "$INSTDIR\64bit\plugins\DShowPlugin\"
+		RMDir "$INSTDIR\64bit\plugins"
+		RMDir "$INSTDIR\64bit\locale"
+		RMDir "$INSTDIR\64bit\shaders"
+		RMDir "$INSTDIR\64bit\"
+	${endif}
 	RMDir "$INSTDIR\"
 
 SectionEnd

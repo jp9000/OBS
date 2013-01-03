@@ -110,31 +110,6 @@ BOOL FetchUpdaterModule()
     return TRUE;
 }
 
-BOOL IsSafeFilename (CTSTR path)
-{
-    const TCHAR *p;
-
-    p = path;
-
-    if (!*p)
-       return FALSE;
-
-    if (sstr(path, TEXT("..")))
-        return FALSE;
-
-    if (*p == '/')
-        return FALSE;
-
-    while (*p)
-    {
-        if (!isalnum(*p) && *p != '.' && *p != '/' && *p != '_')
-            return FALSE;
-        p++;
-    }
-
-    return TRUE;
-}
-
 BOOL IsSafePath (CTSTR path)
 {
     const TCHAR *p;

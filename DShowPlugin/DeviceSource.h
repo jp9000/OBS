@@ -59,8 +59,6 @@ class DeviceAudioSource : public AudioSource
     List<BYTE> sampleBuffer;
     List<BYTE> outputBuffer;
 
-    int soundTimeOffset;
-
 protected:
     virtual bool GetNextBuffer(void **buffer, UINT *numFrames, QWORD *timestamp);
     virtual void ReleaseBuffer();
@@ -68,7 +66,7 @@ protected:
     virtual CTSTR GetDeviceName() const;
 
 public:
-    bool Initialize(DeviceSource *parent, int soundTimeOffset);
+    bool Initialize(DeviceSource *parent);
     ~DeviceAudioSource();
 
     void ReceiveAudio(IMediaSample *sample);

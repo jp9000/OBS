@@ -63,6 +63,8 @@ class BASE_EXPORT AudioSource
 
 protected:
 
+    int timeOffset;
+
     //-----------------------------------------
 
     bool bFloat;
@@ -72,7 +74,6 @@ protected:
     UINT inputBlockSize;
     DWORD inputChannelMask;
 
-    bool bCalculateTimestamp;
     QWORD lastUsedTimestamp;
 
     void InitAudioData();
@@ -102,5 +103,7 @@ public:
 
     virtual void StartCapture() {}
     virtual void StopCapture() {}
+
+    inline void SetTimeOffset(int newOffset) {timeOffset = newOffset;}
 };
 

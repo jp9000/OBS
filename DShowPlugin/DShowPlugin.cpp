@@ -826,7 +826,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 int pos = configData->data->GetInt(TEXT("soundTimeOffset"));
 
-                SendMessage(GetDlgItem(hwnd, IDC_TIMEOFFSET), UDM_SETRANGE32, -700, 3000);
+                SendMessage(GetDlgItem(hwnd, IDC_TIMEOFFSET), UDM_SETRANGE32, -500, 3000);
                 SendMessage(GetDlgItem(hwnd, IDC_TIMEOFFSET), UDM_SETPOS32, 0, pos);
 
                 //------------------------------------------
@@ -1031,6 +1031,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                     }
                     break;
 
+                case IDC_TIMEOFFSET_EDIT:
                 case IDC_OPACITY_EDIT:
                 case IDC_BASETHRESHOLD_EDIT:
                 case IDC_BLEND_EDIT:
@@ -1047,6 +1048,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                                 HWND hwndVal = NULL;
                                 switch(LOWORD(wParam))
                                 {
+                                    case IDC_TIMEOFFSET_EDIT:       hwndVal = GetDlgItem(hwnd, IDC_TIMEOFFSET); break;
                                     case IDC_OPACITY_EDIT:          hwndVal = GetDlgItem(hwnd, IDC_OPACITY); break;
                                     case IDC_BASETHRESHOLD_EDIT:    hwndVal = GetDlgItem(hwnd, IDC_BASETHRESHOLD); break;
                                     case IDC_BLEND_EDIT:            hwndVal = GetDlgItem(hwnd, IDC_BLEND); break;
@@ -1056,6 +1058,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                                 int val = (int)SendMessage(hwndVal, UDM_GETPOS32, 0, 0);
                                 switch(LOWORD(wParam))
                                 {
+                                    case IDC_TIMEOFFSET_EDIT:       source->SetInt(TEXT("timeOffset"), val); break;
                                     case IDC_OPACITY_EDIT:          source->SetInt(TEXT("opacity"), val); break;
                                     case IDC_BASETHRESHOLD_EDIT:    source->SetInt(TEXT("keySimilarity"), val); break;
                                     case IDC_BLEND_EDIT:            source->SetInt(TEXT("keyBlend"), val); break;
@@ -1433,7 +1436,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         configData->data->SetInt(TEXT("soundOutputType"), soundOutputType);
 
-                        int soundTimeOffset = SendMessage(GetDlgItem(hwnd, IDC_TIMEOFFSET), UDM_GETPOS32, 0, 0);
+                        int soundTimeOffset = (int)SendMessage(GetDlgItem(hwnd, IDC_TIMEOFFSET), UDM_GETPOS32, 0, 0);
                         configData->data->SetInt(TEXT("soundTimeOffset"), soundTimeOffset);
 
                         //------------------------------------------
@@ -1465,6 +1468,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         if(source)
                         {
+                            source->SetInt(TEXT("timeOffset"),          configData->data->GetInt(TEXT("soundTimeOffset"), 0));
+
                             source->SetInt(TEXT("flipImage"),           configData->data->GetInt(TEXT("flipImage"), 0));
                             source->SetInt(TEXT("flipImageHorizontal"), configData->data->GetInt(TEXT("flipImageHorizontal"), 0));
                             source->SetInt(TEXT("opacity"),             configData->data->GetInt(TEXT("opacity"), 100));

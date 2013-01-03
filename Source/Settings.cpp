@@ -947,7 +947,7 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                             BOOL bChoseFile = GetSaveFileName(&ofn);
                             SetCurrentDirectory(curDirectory);
 
-                            if(bChoseFile)
+                            if(*lpFile && bChoseFile)
                             {
                                 String strFile = lpFile;
                                 strFile.FindReplace(TEXT("\\"), TEXT("/"));
@@ -2064,6 +2064,9 @@ void OBS::ApplySettings()
                 else if(micTimeOffset > 3000)
                     micTimeOffset = 3000;
                 AppConfig->SetInt(TEXT("Audio"), TEXT("MicTimeOffset"), micTimeOffset);
+
+                if(App->bRunning && App->micAudio)
+                    App->micAudio->SetTimeOffset(micTimeOffset);
 
                 break;
             }

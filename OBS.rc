@@ -181,7 +181,7 @@ BEGIN
     CONTROL         "Settings.Audio.ForceMicMono",IDC_FORCEMONO,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,103,143,10,WS_EX_RIGHT
     RTEXT           "Settings.Audio.MicBoost",IDC_STATIC,4,122,138,8
     EDITTEXT        IDC_MICBOOST_EDIT,143,120,40,14,ES_AUTOHSCROLL
-    CONTROL         "",IDC_MICBOOST,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNLEFT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,183,120,10,14
+    CONTROL         "",IDC_MICBOOST,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,183,120,10,14
     RTEXT           "Settings.Audio.MicTimeOffset",IDC_STATIC,3,140,138,8
     EDITTEXT        IDC_MICTIMEOFFSET_EDIT,143,138,40,14,ES_AUTOHSCROLL
     CONTROL         "",IDC_MICTIMEOFFSET,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,183,138,11,14
@@ -638,8 +638,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,4,5,7
- PRODUCTVERSION 0,4,5,7
+ FILEVERSION 0,4,6,5
+ PRODUCTVERSION 0,4,6,5
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -655,12 +655,12 @@ BEGIN
         BLOCK "041104b0"
         BEGIN
             VALUE "FileDescription", "Open Broadcaster Software"
-            VALUE "FileVersion", "0, 4, 5, 7"
+            VALUE "FileVersion", "0, 4, 6, 5"
             VALUE "InternalName", "OBS"
             VALUE "LegalCopyright", "Copyright (C) 2012"
             VALUE "OriginalFilename", "OBS.exe"
             VALUE "ProductName", "Open Broadcaster Software"
-            VALUE "ProductVersion", "0, 4, 5, 7"
+            VALUE "ProductVersion", "0, 4, 6, 5"
         END
     END
     BLOCK "VarFileInfo"

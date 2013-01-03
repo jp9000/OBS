@@ -40,7 +40,7 @@ VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTS
 AudioEncoder* CreateMP3Encoder(UINT bitRate);
 AudioEncoder* CreateAACEncoder(UINT bitRate);
 
-AudioSource* CreateAudioSource(bool bMic, CTSTR lpID, int timeOffset);
+AudioSource* CreateAudioSource(bool bMic, CTSTR lpID);
 
 ImageSource* STDCALL CreateDesktopSource(XElement *data);
 bool STDCALL ConfigureDesktopSource(XElement *data, bool bCreating);
@@ -1359,7 +1359,7 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
-    desktopAudio = CreateAudioSource(false, NULL, 0);
+    desktopAudio = CreateAudioSource(false, NULL);
     if(!desktopAudio)
         CrashError(TEXT("Cannot initialize desktop audio sound, more info in the log file."));
 
@@ -1388,8 +1388,8 @@ void OBS::Start()
             if(bUseDefault)
                 strDevice = strDefaultMic;
 
-            int micTimeOffset = AppConfig->GetInt(TEXT("Audio"), TEXT("MicTimeOffset"), 0);
-            micAudio = CreateAudioSource(true, strDevice, micTimeOffset);
+            micAudio = CreateAudioSource(true, strDevice);
+            micAudio->SetTimeOffset(AppConfig->GetInt(TEXT("Audio"), TEXT("MicTimeOffset"), 0));
 
             if(!micAudio)
                 MessageBox(hwndMain, Str("MicrophoneFailure"), NULL, 0);
@@ -1466,9 +1466,10 @@ void OBS::Start()
     bWriteToFile = networkMode == 1 || AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile")) != 0;
     String strOutputFile = AppConfig->GetString(TEXT("Publish"), TEXT("SavePath"));
 
+    strOutputFile.FindReplace(TEXT("\\"), TEXT("/"));
+
     if(OSFileExists(strOutputFile))
     {
-        strOutputFile.FindReplace(TEXT("\\"), TEXT("/"));
         String strFileWithoutExtension = GetPathWithoutExtension(strOutputFile);
         String strFileExtension = GetPathExtension(strOutputFile);
         UINT curFile = 0;
@@ -1480,6 +1481,19 @@ void OBS::Start()
         } while(OSFileExists(strNewFilePath));
 
         strOutputFile = strNewFilePath;
+    }
+    else
+    {
+        String strFileName = GetPathFileName(strOutputFile);
+
+        if(!strFileName.IsValid() || !IsSafeFilename(strFileName))
+        {
+            SYSTEMTIME st;
+            GetLocalTime(&st);
+
+            String strDirectory = GetPathDirectory(strOutputFile);
+            strOutputFile = FormattedString(TEXT("%s/%u-%02u-%02u-%02u%02u-%02u.mp4"), strDirectory.Array(), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+        }
     }
 
     //-------------------------------------------------------------
@@ -1755,6 +1769,12 @@ void OBS::Stop()
     for(UINT i=0; i<globalSources.Num(); i++)
         globalSources[i].FreeData();
     globalSources.Clear();
+
+    //-------------------------------------------------------------
+
+    for(UINT i=0; i<auxAudioSources.Num(); i++)
+        delete auxAudioSources[i];
+    auxAudioSources.Clear();
 
     //-------------------------------------------------------------
 

@@ -537,7 +537,7 @@ bool DeviceSource::LoadFilters()
     if(soundOutputType == 1)
     {
         audioOut = new DeviceAudioSource;
-        audioOut->Initialize(this, soundTimeOffset);
+        audioOut->Initialize(this);
         API->AddAudioSource(audioOut);
     }
 
@@ -1034,6 +1034,11 @@ void DeviceSource::SetInt(CTSTR lpName, int iVal)
         else if(scmpi(lpName, TEXT("opacity")) == 0)
         {
             opacity = iVal;
+        }
+        else if(scmpi(lpName, TEXT("timeOffset")) == 0)
+        {
+            if(audioOut)
+                audioOut->SetTimeOffset(iVal);
         }
     }
 }

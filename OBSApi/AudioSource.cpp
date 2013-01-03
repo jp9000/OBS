@@ -501,20 +501,10 @@ UINT AudioSource::QueryAudio(float curVolume)
         if(storageBuffer.Num() == 0 && numAudioFrames == 441)
         {
             lastUsedTimestamp += 10;
-            if(!bCalculateTimestamp) 
-            {
-                QWORD difVal = GetQWDif(newTimestamp, lastUsedTimestamp);
-                if(difVal > 70)
-                {
-                    if(difVal > 700)
-                    {
-                        Log(TEXT("AudioSource::QueryAudio: A timestamp for device '%s' just went %llu off, calculating timestamps from here out"), GetDeviceName(), difVal);
-                        bCalculateTimestamp = true;
-                    }
-                    else
-                        lastUsedTimestamp = newTimestamp;
-                }
-            }
+
+            QWORD difVal = GetQWDif(newTimestamp, lastUsedTimestamp);
+            if(difVal > 70)
+                lastUsedTimestamp = newTimestamp;
 
             if(lastUsedTimestamp > lastSentTimestamp)
             {
@@ -538,20 +528,10 @@ UINT AudioSource::QueryAudio(float curVolume)
             if(storageBuffer.Num() >= (441*2))
             {
                 lastUsedTimestamp += 10;
-                if(!bCalculateTimestamp)
-                {
-                    QWORD difVal = GetQWDif(newTimestamp, lastUsedTimestamp);
-                    if(difVal > 70)
-                    {
-                        if(difVal > 700)
-                        {
-                            Log(TEXT("AudioSource::QueryAudio: A timestamp for device '%s' just went %llu off, calculating timestamps from here out"), GetDeviceName(), difVal);
-                            bCalculateTimestamp = true;
-                        }
-                        else
-                            lastUsedTimestamp = newTimestamp - (QWORD(storedFrames)/2*1000/44100);
-                    }
-                }
+
+                QWORD difVal = GetQWDif(newTimestamp, lastUsedTimestamp);
+                if(difVal > 70)
+                    lastUsedTimestamp = newTimestamp - (QWORD(storedFrames)/2*1000/44100);
 
                 //------------------------
                 // add new data
@@ -620,18 +600,15 @@ bool AudioSource::GetBuffer(float **buffer, UINT *numFrames, QWORD targetTimesta
     bool bSuccess = false;
     outputBuffer.Clear();
 
-    if(!bCalculateTimestamp)
+    while(audioSegments.Num())
     {
-        while(audioSegments.Num())
+        if(audioSegments[0].timestamp < targetTimestamp)
         {
-            if(audioSegments[0].timestamp < targetTimestamp)
-            {
-                audioSegments[0].audioData.Clear();
-                audioSegments.Remove(0);
-            }
-            else
-                break;
+            audioSegments[0].audioData.Clear();
+            audioSegments.Remove(0);
         }
+        else
+            break;
     }
 
     if(audioSegments.Num())
@@ -641,7 +618,7 @@ bool AudioSource::GetBuffer(float **buffer, UINT *numFrames, QWORD targetTimesta
         AudioSegment &segment = audioSegments[0];
 
         QWORD difference = (segment.timestamp-targetTimestamp);
-        if(bCalculateTimestamp || difference <= 10)
+        if(difference <= 10)
         {
             //Log(TEXT("segment.timestamp: %llu, targetTimestamp: %llu"), segment.timestamp, targetTimestamp);
             outputBuffer.TransferFrom(segment.audioData);
