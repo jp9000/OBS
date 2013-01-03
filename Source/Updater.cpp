@@ -38,6 +38,17 @@ VOID HashToString (BYTE *in, TCHAR *out)
     out[40] = 0;
 }
 
+VOID GenerateGUID(String &strGUID)
+{
+    BYTE junk[20];
+
+    if (!CryptGenRandom(hProvider, sizeof(junk), junk))
+        return;
+    
+    strGUID.SetLength(41);
+    HashToString(junk, strGUID.Array());
+}
+
 BOOL CalculateFileHash (TCHAR *path, BYTE *hash)
 {
     BYTE buff[65536];
@@ -290,14 +301,22 @@ DWORD WINAPI CheckUpdateThread (VOID *arg)
     
     //this is an arbitrary random number that we use to count the number of unique OBS installations
     //and is not associated with any kind of identifiable information
-    String guid = GlobalConfig->GetString(TEXT("General"), TEXT("InstallGUID"));
-    if (guid.IsValid())
+    String strGUID = GlobalConfig->GetString(TEXT("General"), TEXT("InstallGUID"));
+    if (strGUID.IsEmpty())
+    {
+        GenerateGUID(strGUID);
+
+        if (strGUID.IsValid())
+            GlobalConfig->SetString(TEXT("General"), TEXT("InstallGUID"), strGUID);
+    }
+
+    if (strGUID.IsValid())
     {
         if (extraHeaders[0])
             scat(extraHeaders, TEXT("\n"));
 
         scat(extraHeaders, TEXT("X-OBS-GUID: "));
-        scat(extraHeaders, guid);
+        scat(extraHeaders, strGUID);
     }
 
     if (HTTPGetFile(TEXT("https://obsproject.com/update/packages.xconfig"), manifestPath, extraHeaders, &responseCode))
