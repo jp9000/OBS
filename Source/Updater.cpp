@@ -256,6 +256,8 @@ BOOL ParseUpdateManifest (TCHAR *path, BOOL *updatesAvailable, String &descripti
 
     if (bestPriority <= 5)
         *updatesAvailable = TRUE;
+    else
+        *updatesAvailable = FALSE;
 
     return TRUE;
 }
