@@ -271,9 +271,6 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         String strInfoText;
 
-                        //todo: remove later whem more stable
-                        strInfoText << TEXT("Note: This plugin is currently experimental and may not be fully stable yet.\r\nIf using multiple scenes, I highly recommend using this as a global source to prevent stability issues.\r\n\r\n");
-
                         if(info->adminWindows.Num())
                         {
                             strInfoText << Str("Sources.GameCaptureSource.RequiresAdmin") << TEXT("\r\n");

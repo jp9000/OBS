@@ -1,11 +1,18 @@
 (yyyy-mm-dd)
 
 -------------------------------
+2013-01-04 - 0.466 (alpha)
+    * Fixed mic crash
+    * Readded goodgame.ru to services.xconfig after mistakenly
+      taking it out at some point
+
+-------------------------------
 2013-01-02 - 0.465 (alpha)
     * Finally implemented capture card audio output options
     * Added options to adjust microphone and capture card audio
       time
     * Added an auto-updater courtesy of R1CH
+    * Added a new and improved installer in NSIS courtesy of R1CH
     * Added improved volume meters courtesy of Bill Hamilton once
       again
     * Made it so that windows won't go into an idle state while

@@ -167,7 +167,7 @@ Settings.Video.Monitor              "画面:"
 Settings.Video.Resolution           "解像度:"
 
 Sources.BitmapSource            "画像"
-Sources.GameCaptureSource       "ゲームキャプチャ (実験用途)"
+Sources.GameCaptureSource       "ゲームキャプチャ"
 Sources.GlobalSource            "グローバルソース"
 Sources.SoftwareCaptureSource   "ソフトウェアキャプチャソース"
 Sources.TextSource              "テキストソース"
