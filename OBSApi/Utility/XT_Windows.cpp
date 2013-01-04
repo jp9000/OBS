@@ -686,7 +686,6 @@ BOOL   STDCALL OSGetLoadedModuleList(HANDLE hProcess, StringList &ModuleList)
 BOOL   STDCALL OSIncompatiblePatchesLoaded(String &errors)
 {
     BOOL ret = FALSE;
-    HMODULE dxGI;
     StringList moduleList;
 
     OSGetLoadedModuleList (GetCurrentProcess(), moduleList);
@@ -695,8 +694,9 @@ BOOL   STDCALL OSIncompatiblePatchesLoaded(String &errors)
 
     //current checks:
     //TeamSpeak 3 Overlay (hooks CreateDXGIFactory1 in such a way that it fails when called by OBS)
+    //Webroot Secureanywhere (hooks GDI calls and prevents OBS from screen capturing among other issues)
 
-    dxGI = GetModuleHandle(TEXT("DXGI.DLL"));
+    HMODULE dxGI = GetModuleHandle(TEXT("DXGI.DLL"));
     if (dxGI)
     {
         FARPROC createFactory = GetProcAddress(dxGI, "CreateDXGIFactory1");
@@ -711,6 +711,31 @@ BOOL   STDCALL OSIncompatiblePatchesLoaded(String &errors)
                     if (moduleList.HasValue(TEXT("ts3overlay_hook_win32.dll")))
                     {
                         errors << TEXT("TeamSpeak 3 overlay has loaded into OBS and will cause problems. Please set \"Disable Loading\" for OBS.EXE in your TeamSpeak 3 overlay settings or visit http://bit.ly/OBSTS3 for help."); 
+                        ret = TRUE;
+                    }
+                }
+            }
+        }
+    }
+
+    HMODULE msIMG = GetModuleHandle(TEXT("MSIMG32"));
+    if (msIMG)
+    {
+        FARPROC alphaBlend = GetProcAddress(msIMG, "AlphaBlend");
+        if (alphaBlend)
+        {
+            if (!IsBadReadPtr(alphaBlend, 5))
+            {
+                BYTE opCode = *(BYTE *)alphaBlend;
+
+                if (opCode == 0xE9)
+                {
+                    if (moduleList.HasValue(TEXT("wrusr.dll")))
+                    {
+                        if (!errors.IsEmpty())
+                            errors << TEXT("\r\n\r\n");
+
+                        errors << TEXT("Webroot Secureanywhere appears to be active. This product is incompatible with OBS as the security features block OBS from accessing Windows GDI functions. Please disable it and restart OBS."); 
                         ret = TRUE;
                     }
                 }
