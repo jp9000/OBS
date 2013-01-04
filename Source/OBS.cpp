@@ -2807,8 +2807,19 @@ void MixAudio(float *bufferDest, float *bufferSrc, UINT totalFloats, bool bForce
 
 void OBS::MainAudioLoop()
 {
-    DWORD taskID;
-    AvSetMmThreadCharacteristics(TEXT("Audio"), &taskID);
+    DWORD taskID = 0;
+    
+    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
+
+    HANDLE mmcssTask = AvSetMmThreadCharacteristics(TEXT("Pro Audio"), &taskID);
+
+    bool mmcssOk = (mmcssTask && AvSetMmThreadPriority(mmcssTask, AVRT_PRIORITY_CRITICAL));
+
+    if(!mmcssOk)
+    {
+        int err = GetLastError();
+        AppWarning(TEXT("OBS::MainAudioLoop: could not enable MMCS error code = %d"), err);
+    }
 
     bPushToTalkOn = false;
 
@@ -3017,6 +3028,11 @@ void OBS::MainAudioLoop()
 
     for(UINT i=0; i<pendingAudioFrames.Num(); i++)
         pendingAudioFrames[i].audioData.Clear();
+
+    if(mmcssTask && !AvRevertMmThreadCharacteristics(mmcssTask))
+    {
+        AppWarning(TEXT("OBS::MainAudioLoop: failed to disable MMCSS"));
+    }
 }
 
 void OBS::SelectSources()
