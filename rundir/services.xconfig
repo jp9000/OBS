@@ -39,4 +39,9 @@ services : {
       "US Chicago (Primary)"  : rtmp://live.instagib.tv:443/live
     }
   }
+  GoodGame.ru : {
+    servers : {
+      "Primary"  :   rtmp://stream.goodgame.ru:1940/live
+    }
+  }
 }

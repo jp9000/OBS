@@ -1389,7 +1389,7 @@ void OBS::Start()
                 strDevice = strDefaultMic;
 
             micAudio = CreateAudioSource(true, strDevice);
-            
+
             if(!micAudio)
                 MessageBox(hwndMain, Str("MicrophoneFailure"), NULL, 0);
             else
