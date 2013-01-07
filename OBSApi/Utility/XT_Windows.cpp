@@ -735,7 +735,7 @@ BOOL   STDCALL OSIncompatiblePatchesLoaded(String &errors)
                         if (!errors.IsEmpty())
                             errors << TEXT("\r\n\r\n");
 
-                        errors << TEXT("Webroot Secureanywhere appears to be active. This product is incompatible with OBS as the security features block OBS from accessing Windows GDI functions. Please disable it and restart OBS."); 
+                        errors << TEXT("Webroot Secureanywhere appears to be active. This product is incompatible with OBS as the security features block OBS from accessing Windows GDI functions. Please add OBS.exe to the Secureanywhere exceptions list and restart OBS - see http://bit.ly/OBSWR if you need help."); 
                         ret = TRUE;
                     }
                 }
