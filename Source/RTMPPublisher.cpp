@@ -455,7 +455,7 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
         strURL = item->GetData();
 
         Log(TEXT("Using RTMP service: %s"), service->GetName());
-        Log(TEXT("  Server selection: %s"), strURL);
+        Log(TEXT("  Server selection: %s"), strURL.Array());
     }
 
     //------------------------------------------------------
@@ -899,7 +899,7 @@ void RTMPPublisher::SendLoop()
             //----------------------------------------------------------
             //make sure to flush the send buffer if surpassing max latency to keep frame data synced up on the server
 
-            if(bUseSendBuffer)
+            /*if(bUseSendBuffer)
             {
                 if(!numVideoPacketsBuffered)
                     firstBufferedVideoFrameTimestamp = timestamp;
@@ -918,7 +918,7 @@ void RTMPPublisher::SendLoop()
                 }
 
                 numVideoPacketsBuffered++;
-            }
+            }*/
 
             //----------------------------------------------------------
 
