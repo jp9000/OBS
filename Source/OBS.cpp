@@ -81,6 +81,7 @@ void STDCALL SceneHotkey(DWORD hotkey, UPARAM param, bool bDown);
 //----------------------------
 
 WNDPROC listboxProc = NULL;
+WNDPROC listviewProc = NULL;
 
 //----------------------------
 
@@ -712,10 +713,13 @@ OBS::OBS()
     //-----------------------------------------------------
     // elements listbox
 
-    hwndTemp = CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("LISTBOX"), NULL,
-        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|LBS_HASSTRINGS|WS_VSCROLL|LBS_NOTIFY|LBS_NOINTEGRALHEIGHT|LBS_EXTENDEDSEL|WS_CLIPSIBLINGS,
+    hwndTemp = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL,
+        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|WS_VSCROLL|WS_CLIPSIBLINGS|LVS_LIST|LVS_SHOWSELALWAYS,
         0, 0, 0, 0, hwndMain, (HMENU)ID_SOURCES, 0, 0);
     SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
+
+    ListView_SetExtendedListViewStyle(hwndTemp, LVS_EX_CHECKBOXES);
+    listviewProc = (WNDPROC)GetWindowLongPtr(hwndTemp, GWLP_WNDPROC);
     SetWindowLongPtr(hwndTemp, GWLP_WNDPROC, (LONG_PTR)OBS::ListboxHook);
 
     //-----------------------------------------------------
@@ -1434,7 +1438,7 @@ void OBS::Start()
                 SceneItem *item = scene->AddImageSource(sources->GetElementByID(i));
                 if(item)
                 {
-                    if(SendMessage(GetDlgItem(hwndMain, ID_SOURCES), LB_GETSEL, i, 0) > 0)
+                    if(ListView_GetItemState(GetDlgItem(hwndMain, ID_SOURCES), i, LVIS_SELECTED) > 0)
                         item->Select(true);
                 }
             }
@@ -3025,23 +3029,53 @@ void OBS::SelectSources()
         scene->DeselectAll();
 
     HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
-    UINT numSelected = (UINT)SendMessage(hwndSources, LB_GETSELCOUNT, 0, 0);
+    UINT numSelected = ListView_GetSelectedCount(hwndSources);
 
     if(numSelected)
     {
         List<UINT> selectedItems;
         selectedItems.SetSize(numSelected);
-        SendMessage(hwndSources, LB_GETSELITEMS, numSelected, (LPARAM)selectedItems.Array());
+        //SendMessage(hwndSources, LB_GETSELITEMS, numSelected, (LPARAM)selectedItems.Array());
 
         if(scene)
         {
-            for(UINT i=0; i<numSelected; i++)
+            int iPos = ListView_GetNextItem(hwndSources, -1, LVNI_SELECTED);
+            while (iPos != -1)
             {
-                SceneItem *sceneItem = scene->GetSceneItem(selectedItems[i]);
+                SceneItem *sceneItem = scene->GetSceneItem(iPos);
                 sceneItem->bSelected = true;
+                
+                iPos = ListView_GetNextItem(hwndSources, iPos, LVNI_SELECTED);
             }
         }
     }
+}
+
+void OBS::CheckSources()
+{
+    XElement *curSceneElement = App->sceneElement;
+    XElement *sources = curSceneElement->GetElement(TEXT("sources"));
+
+    if(!sources)
+        return;
+
+    HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
+
+    int numSources = ListView_GetItemCount(hwndSources);
+    for(int i = 0; i < numSources; i++)
+    {
+        bool checked = ListView_GetCheckState(hwndSources, i) > 0;
+        XElement *source =sources->GetElementByID(i);
+        source->SetInt(TEXT("render"), (checked)?1:0);
+        if(scene && i < scene->NumSceneItems())
+        {
+            SceneItem *sceneItem = scene->GetSceneItem(i);
+            sceneItem->bRender = checked;
+            sceneItem->SetRender(checked);
+        }
+    }
+
+
 }
 
 DWORD STDCALL OBS::HotkeyThread(LPVOID lpUseless)

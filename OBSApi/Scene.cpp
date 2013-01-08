@@ -30,6 +30,12 @@ void SceneItem::SetName(CTSTR lpNewName)
     element->SetName(lpNewName);
 }
 
+void SceneItem::SetRender(bool render)
+{
+    element->SetInt(TEXT("render"), (int)((render)?1:0));
+    bRender = render;
+}
+
 void SceneItem::Update()
 {
     pos = Vect2(element->GetFloat(TEXT("x")), element->GetFloat(TEXT("y")));
@@ -145,6 +151,7 @@ SceneItem* Scene::AddImageSource(XElement *sourceElement)
     float y  = sourceElement->GetFloat(TEXT("y"));
     float cx = sourceElement->GetFloat(TEXT("cx"), 100);
     float cy = sourceElement->GetFloat(TEXT("cy"), 100);
+    bool render = sourceElement->GetInt(TEXT("render"), 1) > 0;
 
     SceneItem *item = new SceneItem;
     item->element = sourceElement;
@@ -152,6 +159,7 @@ SceneItem* Scene::AddImageSource(XElement *sourceElement)
     item->source = source;
     item->pos = Vect2(x, y);
     item->size = Vect2(cx, cy);
+    item->SetRender(render);
 
     API->EnterSceneMutex();
     if(bSceneStarted) source->BeginScene();
@@ -211,7 +219,7 @@ void Scene::Render()
     for(UINT i=0; i<sceneItems.Num(); i++)
     {
         SceneItem *item = sceneItems[i];
-        if(item->source)
+        if(item->source && item->bRender)
             item->source->Render(item->pos, item->size);
     }
 }

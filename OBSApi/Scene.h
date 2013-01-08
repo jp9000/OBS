@@ -83,6 +83,7 @@ class BASE_EXPORT SceneItem
     Vect2 pos, size;
 
     bool bSelected;
+    bool bRender;
 
 public:
     ~SceneItem();
@@ -103,6 +104,7 @@ public:
     inline UINT GetID();
 
     void SetName(CTSTR lpNewName);
+    void SetRender(bool render);
 
     void Update();
 
@@ -165,7 +167,7 @@ public:
             SceneItem *item = sceneItems[i];
             Vect2 upperLeft  = item->GetPos();
             Vect2 lowerRight = upperLeft+item->GetSize();
-            if(pos.x >= upperLeft.x && pos.y >= upperLeft.y && pos.x <= lowerRight.x && pos.y <= lowerRight.y)
+            if(item->bRender && pos.x >= upperLeft.x && pos.y >= upperLeft.y && pos.x <= lowerRight.x && pos.y <= lowerRight.y)
                 items << item;
         }
     }

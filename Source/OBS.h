@@ -426,6 +426,7 @@ class OBS
     }
 
     void SelectSources();
+    void CheckSources();
 
     //---------------------------------------------------
     // settings window
@@ -468,6 +469,7 @@ class OBS
     UINT    reconnectTimeout;
 
     bool    bDisableSceneSwitching;
+    bool    bChangingSources;
     bool    bEditMode;
     bool    bRenderViewEnabled;
     bool    bShowFPS;
@@ -769,6 +771,7 @@ public:
     virtual ImageSource* CreateImageSource(CTSTR lpClassName, XElement *data);
 
     virtual bool SetScene(CTSTR lpScene);
+    virtual void AddSourceItem(LPWSTR name, bool checked, UINT index);
 };
 
 inline QWORD GetQPCTimeMS(LONGLONG clockFreq)

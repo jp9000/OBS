@@ -119,6 +119,15 @@ String GetLBText(HWND hwndList, UINT id)
     return strText;
 }
 
+String GetLVText(HWND hwndList, UINT id)
+{
+    String strText;
+    strText.SetLength(256);
+    ListView_GetItemText(hwndList, id, 0, (LPWSTR)strText.Array(), 256);
+
+    return strText;
+}
+
 String GetCBText(HWND hwndCombo, UINT id)
 {
     UINT curSel = (id != CB_ERR) ? id : (UINT)SendMessage(hwndCombo, CB_GETCURSEL, 0, 0);

@@ -154,6 +154,24 @@ void OBS::ConfigureImageSource(XElement *element)
     AppWarning(TEXT("OBS::ConfigureImageSource: Could not find scene class '%s'"), lpClassName);
 }
 
+void OBS::AddSourceItem(LPWSTR name, bool checked, UINT index)
+{
+    LVITEM lvI;
+    // Initialize LVITEM members that are common to all items.
+    lvI.mask      = LVIF_TEXT | LVIF_IMAGE | LVIF_STATE;
+    lvI.stateMask = 0;
+    lvI.iSubItem  = 0;
+    lvI.state     = 0;
+    lvI.pszText = name;
+    lvI.iItem = index;
+
+
+    HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
+    
+    ListView_InsertItem(hwndSources, &lvI);
+    ListView_SetCheckState(hwndSources, index, checked);       
+}
+
 bool OBS::SetScene(CTSTR lpScene)
 {
     if(bDisableSceneSwitching)
@@ -226,21 +244,29 @@ bool OBS::SetScene(CTSTR lpScene)
     //-------------------------
 
     HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
-    SendMessage(hwndSources, LB_RESETCONTENT, 0, 0);
-
+    bChangingSources = true;
+    ListView_DeleteAllItems(hwndSources);
+    
     XElement *sources = sceneElement->GetElement(TEXT("sources"));
     if(sources)
     {
         UINT numSources = sources->NumElements();
+        ListView_SetItemCount(hwndSources, numSources);
+
         for(UINT i=0; i<numSources; i++)
         {
             XElement *sourceElement = sources->GetElementByID(i);
-            UINT id = (UINT)SendMessage(hwndSources, LB_ADDSTRING, 0, (LPARAM)sourceElement->GetName());
-
+            bool render = sourceElement->GetInt(TEXT("render"), 1) > 0;
+            
+            
+            AddSourceItem((LPWSTR)sourceElement->GetName(), render, i);
+            
+           
             if(bRunning && newScene)
                 newScene->AddImageSource(sourceElement);
         }
     }
+    bChangingSources = false;
 
     if(scene && newScene->HasMissingSources())
         MessageBox(hwndMain, Str("Scene.MissingSources"), NULL, 0);

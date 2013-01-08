@@ -26,6 +26,7 @@
 
 
 extern WNDPROC listboxProc;
+extern WNDPROC listviewProc;
 
 void STDCALL SceneHotkey(DWORD hotkey, UPARAM param, bool bDown);
 
@@ -256,15 +257,24 @@ void OBS::GetNewSourceName(String &strSource)
 
 LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    UINT id = (UINT)GetWindowLongPtr(hwnd, GWL_ID);
+
     if(message == WM_RBUTTONDOWN)
     {
-        CallWindowProc(listboxProc, hwnd, WM_LBUTTONDOWN, wParam, lParam);
-
-        UINT id = (UINT)GetWindowLongPtr(hwnd, GWL_ID);
+        int numItems = 0;
+        if(id == ID_SCENES)
+        {
+            CallWindowProc(listboxProc, hwnd, WM_LBUTTONDOWN, wParam, lParam);
+            numItems = (int)SendMessage(hwnd, LB_GETCOUNT, 0, 0);
+        }
+        else
+        {
+            CallWindowProc(listviewProc, hwnd, WM_LBUTTONDOWN, wParam, lParam);
+            numItems = ListView_GetItemCount(hwnd);
+        }
 
         HMENU hMenu = CreatePopupMenu();
 
-        int numItems = (int)SendMessage(hwnd, LB_GETCOUNT, 0, 0);
         bool bSelected = true;
 
         if(id == ID_SCENES)
@@ -282,8 +292,6 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
         {
             if(!App->sceneElement)
                 return 0;
-
-            SendMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_SOURCES, LBN_SELCHANGE), (LPARAM)GetDlgItem(hwndMain, ID_SCENES));
 
             for(UINT i=0; i<App->imageSourceClasses.Num(); i++)
             {
@@ -309,7 +317,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                     AppendMenu(hMenu, MF_STRING, ID_LISTBOX_ADD+i, strAdd.Array());
             }
 
-            bSelected = SendMessage(hwnd, LB_GETSELCOUNT, 0, 0) != 0;
+            bSelected = ListView_GetSelectedCount(hwnd) != 0;
         }
 
         if(numItems && bSelected)
@@ -345,7 +353,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
             AppendMenu(hMenu, MF_STRING, ID_LISTBOX_MOVETOTOP,      strMoveTop);
             AppendMenu(hMenu, MF_STRING, ID_LISTBOX_MOVETOBOTTOM,   strMoveToBottom);
 
-            UINT numSelected = (UINT)SendMessage(hwnd, LB_GETSELCOUNT, 0, 0);
+            UINT numSelected = (id==ID_SOURCES)?(ListView_GetSelectedCount(hwnd)):((UINT)SendMessage(hwnd, LB_GETSELCOUNT, 0, 0));
             if(id == ID_SCENES || numSelected == 1)
             {
                 AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
@@ -370,7 +378,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
         POINT p;
         GetCursorPos(&p);
 
-        int curSel = (int)SendMessage(hwnd, LB_GETCURSEL, 0, 0);
+        int curSel = (id== ID_SOURCES)?(ListView_GetNextItem(hwnd, -1, LVNI_SELECTED)):((int)SendMessage(hwnd, LB_GETCURSEL, 0, 0));
 
         XElement *curSceneElement = App->sceneElement;
 
@@ -586,8 +594,10 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                     OSLeaveMutex(App->hSceneMutex);
                 }
 
-                SendMessage(GetDlgItem(hwndMain, ID_SOURCES), LB_RESETCONTENT, 0, 0);
-
+                App->bChangingSources = true;
+                ListView_DeleteAllItems(GetDlgItem(hwndMain, ID_SOURCES));
+                App->bChangingSources = false;
+                
                 item->GetParent()->RemoveElement(item);
                 App->sceneElement = NULL;
             }
@@ -604,16 +614,15 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
             if(selectedSceneItems.Num() < 1)
                 nop();
 
-            UINT numSelected = (UINT)SendMessage(hwnd, LB_GETSELCOUNT, 0, 0);
+            UINT numSelected = (ListView_GetSelectedCount(hwnd));
 
             XElement *selectedElement = NULL;
 
             ClassInfo *curClassInfo = NULL;
             if(numSelected == 1)
             {
-                UINT selectedID;
-                SendMessage(hwnd, LB_GETSELITEMS, 1, (LPARAM)&selectedID);
-
+                UINT selectedID = ListView_GetNextItem(hwnd, -1, LVNI_SELECTED);
+                
                 XElement *sourcesElement = App->sceneElement->GetElement(TEXT("sources"));
                 selectedElement = sourcesElement->GetElementByID(selectedID);
 
@@ -664,6 +673,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                             if(ret >= ID_LISTBOX_GLOBALSOURCE)
                             {
                                 newSourceElement->SetString(TEXT("class"), TEXT("GlobalSource"));
+                                newSourceElement->SetInt(TEXT("render"), 1);
 
                                 List<CTSTR> sourceNames;
                                 App->GetGlobalSourceNames(sourceNames);
@@ -701,10 +711,16 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                                     App->scene->AddImageSource(newSourceElement);
                                     App->LeaveSceneMutex();
                                 }
+                                
+                                UINT numSources = sources->NumElements();
+                                ListView_SetItemCount(hwnd, numSources);
+                                
+                                App->bChangingSources = true;
+                                App->AddSourceItem((LPWSTR) strName.Array(), true, numSources - 1);
+                                App->bChangingSources = false;
 
-                                UINT newID = (UINT)SendMessage(hwnd, LB_ADDSTRING, 0, (LPARAM)strName.Array());
-                                PostMessage(hwnd, LB_SETCURSEL, newID, 0);
-                                PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_SOURCES, LBN_SELCHANGE), (LPARAM)hwnd);
+                                SetFocus(hwnd);
+                                ListView_SetItemState(hwnd, numSources - 1, LVIS_SELECTED, LVIS_SELECTED);
                             }
                         }
 
@@ -720,13 +736,10 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                     {
                         App->EnableSceneSwitching(false);
 
-                        String strName;
+                        String strName = selectedElement->GetName();
                         if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSourceNameDialogProc, (LPARAM)&strName) == IDOK)
                         {
-                            SendMessage(hwnd, LB_DELETESTRING, curSel, 0);
-                            SendMessage(hwnd, LB_INSERTSTRING, curSel, (LPARAM)strName.Array());
-                            SendMessage(hwnd, LB_SETSEL, TRUE, curSel);
-
+                            ListView_SetItemText(hwnd, curSel, 0, strName.Array());
                             selectedElement->SetName(strName);
                         }
 
@@ -789,7 +802,15 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
         return 0;
     }
 
-    return CallWindowProc(listboxProc, hwnd, message, wParam, lParam);
+
+    if(id == ID_SOURCES)
+    {
+        return CallWindowProc(listviewProc, hwnd, message, wParam, lParam);
+    }
+    else
+    {
+        return CallWindowProc(listboxProc, hwnd, message, wParam, lParam);
+    }
 }
 
 //----------------------------
@@ -797,16 +818,22 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 void OBS::DeleteItems()
 {
     HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
-    UINT numSelected = (UINT)SendMessage(hwndSources, LB_GETSELCOUNT, 0, 0);
-    int numItems = (int)SendMessage(hwndSources, LB_GETCOUNT, 0, 0);
+    UINT numSelected = ListView_GetSelectedCount(hwndSources);
+    int numItems = ListView_GetItemCount(hwndSources);
 
     List<SceneItem*> selectedSceneItems;
     if(App->scene)
         App->scene->GetSelectedItems(selectedSceneItems);
 
     List<UINT> selectedIDs;
-    selectedIDs.SetSize(numSelected);
-    SendMessage(hwndSources, LB_GETSELITEMS, numSelected, (LPARAM)selectedIDs.Array());
+       
+    //get selected items
+    int iPos = ListView_GetNextItem(hwndSources, -1, LVNI_SELECTED);
+    while (iPos != -1)
+    {
+        selectedIDs.Add((UINT) iPos);
+        iPos = ListView_GetNextItem(hwndSources, iPos, LVNI_SELECTED);
+    }
 
     XElement *sourcesElement = NULL;
     List<XElement*> selectedElements;
@@ -847,8 +874,9 @@ void OBS::DeleteItems()
                     if(selectedIDs[i] > id)
                         selectedIDs[i]--;
                 }
-
-                SendMessage(hwndSources, LB_DELETESTRING, id, 0);
+                App->bChangingSources = true;
+                ListView_DeleteItem(hwndSources, id);
+                App->bChangingSources = false;
             }
 
             if(selectedSceneItems.Num())
@@ -860,16 +888,22 @@ void OBS::DeleteItems()
 void OBS::MoveSourcesUp()
 {
     HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
-    UINT numSelected = (UINT)SendMessage(hwndSources, LB_GETSELCOUNT, 0, 0);
-    int numItems = (int)SendMessage(hwndSources, LB_GETCOUNT, 0, 0);
+    UINT numSelected = ListView_GetSelectedCount(hwndSources);
+    int numItems = ListView_GetItemCount(hwndSources);
 
     List<SceneItem*> selectedSceneItems;
     if(App->scene)
         App->scene->GetSelectedItems(selectedSceneItems);
 
     List<UINT> selectedIDs;
-    selectedIDs.SetSize(numSelected);
-    SendMessage(hwndSources, LB_GETSELITEMS, numSelected, (LPARAM)selectedIDs.Array());
+       
+    //get selected items
+    int iPos = ListView_GetNextItem(hwndSources, -1, LVNI_SELECTED);
+    while (iPos != -1)
+    {
+        selectedIDs.Add((UINT) iPos);
+        iPos = ListView_GetNextItem(hwndSources, iPos, LVNI_SELECTED);
+    }
 
     XElement *sourcesElement = NULL;
     List<XElement*> selectedElements;
@@ -890,27 +924,38 @@ void OBS::MoveSourcesUp()
             else
                 selectedElements[i]->MoveUp();
 
-            String strName = GetLBText(hwndSources, selectedIDs[i]);
-            SendMessage(hwndSources, LB_DELETESTRING, selectedIDs[i], 0);
-            SendMessage(hwndSources, LB_INSERTSTRING, --selectedIDs[i], (LPARAM)strName.Array());
-            SendMessage(hwndSources, LB_SETSEL, TRUE, selectedIDs[i]);
+            String strName = GetLVText(hwndSources, selectedIDs[i]);
+            bool checkState = ListView_GetCheckState(hwndSources, selectedIDs[i]) > 0;
+            
+            bChangingSources = true;
+            ListView_DeleteItem(hwndSources, selectedIDs[i]);
+            AddSourceItem((LPWSTR)strName.Array(), checkState, --selectedIDs[i]);
+            ListView_SetItemState(hwndSources, selectedIDs[i], LVIS_SELECTED, LVIS_SELECTED);
+            bChangingSources = false;
+            
         }
     }
 }
 
 void OBS::MoveSourcesDown()
 {
-    HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
-    UINT numSelected = (UINT)SendMessage(hwndSources, LB_GETSELCOUNT, 0, 0);
-    int numItems = (int)SendMessage(hwndSources, LB_GETCOUNT, 0, 0);
+   HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
+    UINT numSelected = ListView_GetSelectedCount(hwndSources);
+    int numItems = ListView_GetItemCount(hwndSources);
 
     List<SceneItem*> selectedSceneItems;
     if(App->scene)
         App->scene->GetSelectedItems(selectedSceneItems);
 
     List<UINT> selectedIDs;
-    selectedIDs.SetSize(numSelected);
-    SendMessage(hwndSources, LB_GETSELITEMS, numSelected, (LPARAM)selectedIDs.Array());
+       
+    //get selected items
+    int iPos = ListView_GetNextItem(hwndSources, -1, LVNI_SELECTED);
+    while (iPos != -1)
+    {
+        selectedIDs.Add((UINT) iPos);
+        iPos = ListView_GetNextItem(hwndSources, iPos, LVNI_SELECTED);
+    }
 
     XElement *sourcesElement = NULL;
     List<XElement*> selectedElements;
@@ -921,7 +966,7 @@ void OBS::MoveSourcesDown()
             selectedElements << sourcesElement->GetElementByID(selectedIDs[i]);
     }
 
-    UINT lastItem = (UINT)SendMessage(hwndSources, LB_GETCOUNT, 0, 0)-1;
+    UINT lastItem = (UINT)ListView_GetItemCount(hwndSources)-1;
     UINT lastSelectedID = numSelected-1;
 
     for(int i=(int)lastSelectedID; i>=0; i--)
@@ -934,10 +979,14 @@ void OBS::MoveSourcesDown()
             else
                 selectedElements[i]->MoveDown();
 
-            String strName = GetLBText(hwndSources, selectedIDs[i]);
-            SendMessage(hwndSources, LB_DELETESTRING, selectedIDs[i], 0);
-            SendMessage(hwndSources, LB_INSERTSTRING, ++selectedIDs[i], (LPARAM)strName.Array());
-            SendMessage(hwndSources, LB_SETSEL, TRUE, selectedIDs[i]);
+            String strName = GetLVText(hwndSources, selectedIDs[i]);
+            bool checkState = ListView_GetCheckState(hwndSources, selectedIDs[i]) > 0;
+            
+            bChangingSources = true;
+            ListView_DeleteItem(hwndSources, selectedIDs[i]);
+            AddSourceItem((LPWSTR)strName.Array(), checkState, ++selectedIDs[i]);
+            ListView_SetItemState(hwndSources, selectedIDs[i], LVIS_SELECTED, LVIS_SELECTED);
+            bChangingSources = false;
         }
     }
 }
@@ -945,16 +994,22 @@ void OBS::MoveSourcesDown()
 void OBS::MoveSourcesToTop()
 {
     HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
-    UINT numSelected = (UINT)SendMessage(hwndSources, LB_GETSELCOUNT, 0, 0);
-    int numItems = (int)SendMessage(hwndSources, LB_GETCOUNT, 0, 0);
+    UINT numSelected = ListView_GetSelectedCount(hwndSources);
+    int numItems = ListView_GetItemCount(hwndSources);
 
     List<SceneItem*> selectedSceneItems;
     if(App->scene)
         App->scene->GetSelectedItems(selectedSceneItems);
 
     List<UINT> selectedIDs;
-    selectedIDs.SetSize(numSelected);
-    SendMessage(hwndSources, LB_GETSELITEMS, numSelected, (LPARAM)selectedIDs.Array());
+       
+    //get selected items
+    int iPos = ListView_GetNextItem(hwndSources, -1, LVNI_SELECTED);
+    while (iPos != -1)
+    {
+        selectedIDs.Add((UINT) iPos);
+        iPos = ListView_GetNextItem(hwndSources, iPos, LVNI_SELECTED);
+    }
 
     XElement *sourcesElement = NULL;
     List<XElement*> selectedElements;
@@ -980,10 +1035,14 @@ void OBS::MoveSourcesToTop()
     {
         if(selectedIDs[i] != i)
         {
-            String strName = GetLBText(hwndSources, selectedIDs[i]);
-            SendMessage(hwndSources, LB_DELETESTRING, selectedIDs[i], 0);
-            SendMessage(hwndSources, LB_INSERTSTRING, i, (LPARAM)strName.Array());
-            SendMessage(hwndSources, LB_SETSEL, TRUE, i);
+            String strName = GetLVText(hwndSources, selectedIDs[i]);
+            bool checkState = ListView_GetCheckState(hwndSources, selectedIDs[i]) > 0;
+            
+            bChangingSources = true;
+            ListView_DeleteItem(hwndSources, selectedIDs[i]);
+            AddSourceItem((LPWSTR)strName.Array(), checkState, i);
+            ListView_SetItemState(hwndSources, i, LVIS_SELECTED, LVIS_SELECTED);
+            bChangingSources = false;
         }
     }
 }
@@ -991,16 +1050,22 @@ void OBS::MoveSourcesToTop()
 void OBS::MoveSourcesToBottom()
 {
     HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
-    UINT numSelected = (UINT)SendMessage(hwndSources, LB_GETSELCOUNT, 0, 0);
-    int numItems = (int)SendMessage(hwndSources, LB_GETCOUNT, 0, 0);
+    UINT numSelected = ListView_GetSelectedCount(hwndSources);
+    int numItems = ListView_GetItemCount(hwndSources);
 
     List<SceneItem*> selectedSceneItems;
     if(App->scene)
         App->scene->GetSelectedItems(selectedSceneItems);
 
     List<UINT> selectedIDs;
-    selectedIDs.SetSize(numSelected);
-    SendMessage(hwndSources, LB_GETSELITEMS, numSelected, (LPARAM)selectedIDs.Array());
+       
+    //get selected items
+    int iPos = ListView_GetNextItem(hwndSources, -1, LVNI_SELECTED);
+    while (iPos != -1)
+    {
+        selectedIDs.Add((UINT) iPos);
+        iPos = ListView_GetNextItem(hwndSources, iPos, LVNI_SELECTED);
+    }
 
     XElement *sourcesElement = NULL;
     List<XElement*> selectedElements;
@@ -1022,16 +1087,20 @@ void OBS::MoveSourcesToBottom()
             selectedElements[i]->MoveToBottom();
     }
 
-    UINT curID = (UINT)SendMessage(hwndSources, LB_GETCOUNT, 0, 0)-1;
+    UINT curID = ListView_GetItemCount(hwndSources)-1;
 
     for(int i=int(selectedIDs.Num()-1); i>=0; i--)
     {
         if(selectedIDs[i] != curID)
         {
-            String strName = GetLBText(hwndSources, selectedIDs[i]);
-            SendMessage(hwndSources, LB_DELETESTRING, selectedIDs[i], 0);
-            SendMessage(hwndSources, LB_INSERTSTRING, curID, (LPARAM)strName.Array());
-            SendMessage(hwndSources, LB_SETSEL, TRUE, curID);
+            String strName = GetLVText(hwndSources, selectedIDs[i]);
+            bool checkState = ListView_GetCheckState(hwndSources, selectedIDs[i]) > 0;
+            
+            bChangingSources = true;
+            ListView_DeleteItem(hwndSources, selectedIDs[i]);
+            AddSourceItem((LPWSTR)strName.Array(), checkState, curID);
+            ListView_SetItemState(hwndSources, curID, LVIS_SELECTED, LVIS_SELECTED);
+            bChangingSources = false;
         }
 
         curID--;
@@ -1284,8 +1353,6 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
 
                         if(App->bRunning)
                         {
-                            HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
-
                             for(int i=int(App->scene->sceneItems.Num()-1); i>=0; i--)
                             {
                                 SceneItem *item = App->scene->sceneItems[i];
@@ -1295,7 +1362,20 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                                     if(data)
                                     {
                                         if(scmpi(data->GetString(TEXT("name")), element->GetName()) == 0)
+                                        {
+                                            LVFINDINFO findInfo;
+                                            findInfo.flags = LVFI_STRING;
+                                            findInfo.psz = (LPCWSTR) element->GetName();
+
+                                            int listID = ListView_FindItem(hwndSceneSources, -1, &findInfo);
+                                            if(listID != -1)
+                                            {
+                                                App->bChangingSources = true;
+                                                ListView_DeleteItem(hwndSceneSources, listID);
+                                                App->bChangingSources = false;
+                                            }
                                             App->scene->RemoveImageSource(item);
+                                        }
                                     }
                                 }
                             }
@@ -1326,10 +1406,17 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                                                 CTSTR lpName = data->GetString(TEXT("name"));
                                                 if(scmpi(lpName, element->GetName()) == 0)
                                                 {
-                                                    UINT listID = (UINT)SendMessage(hwndSceneSources, LB_FINDSTRINGEXACT, -1, (LPARAM)source->GetName());
-                                                    if(listID != LB_ERR)
-                                                        SendMessage(hwndSceneSources, LB_DELETESTRING, listID, 0);
+                                                    LVFINDINFO findInfo;
+                                                    findInfo.flags = LVFI_STRING;
+                                                    findInfo.psz = (LPCWSTR) source->GetName();
 
+                                                    int listID = ListView_FindItem(hwndSceneSources, -1, &findInfo);
+                                                    if(listID != -1)
+                                                    {
+                                                        App->bChangingSources = true;
+                                                        ListView_DeleteItem(hwndSceneSources, listID);
+                                                        App->bChangingSources = false;
+                                                    }
                                                     sources->RemoveElement(source);
                                                 }
                                             }
@@ -1756,54 +1843,6 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     }
                     break;
 
-                case ID_SOURCES:
-                    if(HIWORD(wParam) == LBN_SELCHANGE)
-                        App->SelectSources();
-                    else if(HIWORD(wParam) == LBN_DBLCLK)
-                    {
-                        int numItems = (int)SendMessage((HWND)lParam, LB_GETCOUNT, 0, 0);
-                        if(numItems == 1)
-                        {
-                            UINT selectedID;
-                            SendMessage((HWND)lParam, LB_GETSELITEMS, 1, (LPARAM)&selectedID);
-
-                            XElement *sourcesElement = App->sceneElement->GetElement(TEXT("sources"));
-                            if(!sourcesElement)
-                                break;
-
-                            XElement *selectedElement = sourcesElement->GetElementByID(selectedID);
-                            if(!selectedElement)
-                                break;
-
-                            ClassInfo *curClassInfo = App->GetImageSourceClass(selectedElement->GetString(TEXT("class")));
-                            if(curClassInfo && curClassInfo->configProc)
-                            {
-                                App->EnableSceneSwitching(false);
-
-                                if(curClassInfo->configProc(selectedElement, false))
-                                {
-                                    if(App->bRunning)
-                                    {
-                                        App->EnterSceneMutex();
-
-                                        List<SceneItem*> selectedSceneItems;
-                                        if(App->scene)
-                                            App->scene->GetSelectedItems(selectedSceneItems);
-
-                                        if(selectedSceneItems[0]->GetSource())
-                                            selectedSceneItems[0]->GetSource()->UpdateSettings();
-                                        selectedSceneItems[0]->Update();
-
-                                        App->LeaveSceneMutex();
-                                    }
-                                }
-
-                                App->EnableSceneSwitching(true);
-                            }
-                        }
-                    }
-                    break;
-
                 case ID_TESTSTREAM:
                     App->bTestStream = true;
                     App->ToggleCapturing();
@@ -1844,6 +1883,71 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 case IDA_SOURCE_MOVETOBOTTOM:
                     App->MoveSourcesToBottom();
                     break;
+            }
+            break;
+
+        case WM_NOTIFY:
+            {
+                NMHDR nmh = *(LPNMHDR)lParam;
+                switch(wParam)
+                {
+                    case ID_SOURCES:
+                        if(nmh.code == LVN_ITEMCHANGED && !App->bChangingSources)
+                        {
+                            NMLISTVIEW pnmv = *(LPNMLISTVIEW)lParam;
+                            if((pnmv.uOldState & LVIS_SELECTED) != (pnmv.uNewState & LVIS_SELECTED))
+                            {
+                                /*item selected*/
+                                App->SelectSources();
+                            }
+                            if((pnmv.uOldState & LVIS_STATEIMAGEMASK) != (pnmv.uNewState & LVIS_STATEIMAGEMASK))
+                            {
+                                //checks changed
+                                App->CheckSources();
+                            }
+                        }
+                        else if(nmh.code == NM_DBLCLK)
+                        {
+                            NMITEMACTIVATE itemActivate = *(LPNMITEMACTIVATE)lParam;
+                            UINT selectedID = itemActivate.iItem;
+                            
+                            XElement *sourcesElement = App->sceneElement->GetElement(TEXT("sources"));
+                            if(!sourcesElement)
+                                break;
+
+                            XElement *selectedElement = sourcesElement->GetElementByID(selectedID);
+                            if(!selectedElement)
+                                break;
+
+                            ClassInfo *curClassInfo = App->GetImageSourceClass(selectedElement->GetString(TEXT("class")));
+                            if(curClassInfo && curClassInfo->configProc)
+                            {
+                                App->EnableSceneSwitching(false);
+
+                                if(curClassInfo->configProc(selectedElement, false))
+                                {
+                                    if(App->bRunning)
+                                    {
+                                        App->EnterSceneMutex();
+
+                                        if(App->scene)
+                                        {
+                                            SceneItem* selectedItem = App->scene->GetSceneItem(selectedID);
+                                            if(selectedItem->GetSource())
+                                                selectedItem->GetSource()->UpdateSettings();
+                                            selectedItem->Update();
+
+                                        }
+
+                                        App->LeaveSceneMutex();
+                                    }
+                                }
+
+                                App->EnableSceneSwitching(true);
+                            }
+                        }
+                        break;
+                }
             }
             break;
 
@@ -2007,6 +2111,7 @@ enum
 
 LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
     if(message == WM_LBUTTONDOWN)
     {
         POINTS pos;
@@ -2033,26 +2138,42 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
 
                     if(!bControlDown)
                     {
-                        SendMessage(GetDlgItem(hwndMain, ID_SOURCES), LB_SELITEMRANGEEX, App->scene->NumSceneItems(), 0); 
+                        /* clears all selections */
+                        App->bChangingSources = true;
+                        ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED|LVIS_FOCUSED);
+                        App->bChangingSources = false;
+
                         App->scene->DeselectAll();
                     }
 
                     topItem->Select(true);
-                    SendMessage(GetDlgItem(hwndMain, ID_SOURCES), LB_SETSEL, TRUE, topItem->GetID());
+                    App->bChangingSources = true;
+                    SetFocus(hwndSources);
+                    ListView_SetItemState(hwndSources, topItem->GetID(), LVIS_SELECTED|LVIS_FOCUSED, LVIS_SELECTED|LVIS_FOCUSED);
+                    App->bChangingSources = false;
 
                     if(App->modifyType == ItemModifyType_None)
                         App->modifyType = ItemModifyType_Move;
                 }
                 else if(!bControlDown) //clicked on empty space without control
                 {
-                    SendMessage(GetDlgItem(hwndMain, ID_SOURCES), LB_SELITEMRANGEEX, App->scene->NumSceneItems(), 0); 
+                    /* clears all selections */
+                    App->bChangingSources = true;
+                    ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED);
+                    App->bChangingSources = false;
+
                     App->scene->DeselectAll();
                 }
             }
             else
             {
-                SceneItem *topItem = items.Last();
-                App->bItemWasSelected = topItem->bSelected;
+                App->scene->GetItemsOnPoint(framePos, items);
+                if(items.Num())
+                {
+                    SceneItem *topItem = items.Last();
+                    App->bItemWasSelected = topItem->bSelected;
+                    ListView_SetItemState(hwndSources, topItem->GetID(), LVIS_FOCUSED | LVIS_SELECTED,  LVIS_FOCUSED | LVIS_SELECTED);
+                }
             }
 
             App->bMouseDown = true;
@@ -2471,11 +2592,9 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
 
                     if(bControlDown && App->bItemWasSelected)
                     {
-                        HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
-
                         SceneItem *lastItem = items.Last();
                         lastItem->Select(false);
-                        SendMessage(hwndSources, LB_SETSEL, FALSE, lastItem->GetID());
+                        ListView_SetItemState(hwndSources, lastItem->GetID(), 0, LVIS_SELECTED);
                     }
                     else
                     {
@@ -2485,19 +2604,28 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
 
                             if(!bControlDown)
                             {
-                                SendMessage(GetDlgItem(hwndMain, ID_SOURCES), LB_SELITEMRANGEEX, App->scene->NumSceneItems(), 0); 
+                                App->bChangingSources = true;
+                                ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED|LVIS_FOCUSED);
+                                App->bChangingSources = false;
+
                                 App->scene->DeselectAll();
                             }
 
                             topItem->Select(true);
-                            SendMessage(GetDlgItem(hwndMain, ID_SOURCES), LB_SETSEL, TRUE, topItem->GetID());
+
+                            App->bChangingSources = true;
+                            SetFocus(hwndSources);
+                            ListView_SetItemState(hwndSources, topItem->GetID(), LVIS_SELECTED|LVIS_FOCUSED, LVIS_SELECTED|LVIS_FOCUSED);
+                            App->bChangingSources = false;
 
                             if(App->modifyType == ItemModifyType_None)
                                 App->modifyType = ItemModifyType_Move;
                         }
                         else if(!bControlDown) //clicked on empty space without control
                         {
-                            SendMessage(GetDlgItem(hwndMain, ID_SOURCES), LB_SELITEMRANGEEX, App->scene->NumSceneItems(), 0); 
+                            App->bChangingSources = true;
+                            ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED|LVIS_FOCUSED);
+                            App->bChangingSources = false;
                             App->scene->DeselectAll();
                         }
                     }
