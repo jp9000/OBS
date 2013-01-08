@@ -1473,31 +1473,39 @@ void OBS::Start()
 
     strOutputFile.FindReplace(TEXT("\\"), TEXT("/"));
 
-    if(OSFileExists(strOutputFile))
+    if (bWriteToFile)
     {
-        String strFileWithoutExtension = GetPathWithoutExtension(strOutputFile);
-        String strFileExtension = GetPathExtension(strOutputFile);
-        UINT curFile = 0;
-
-        String strNewFilePath;
-        do 
+        if (strOutputFile.IsEmpty())
         {
-            strNewFilePath.Clear() << strFileWithoutExtension << TEXT(" (") << FormattedString(TEXT("%02u"), ++curFile) << TEXT(").") << strFileExtension;
-        } while(OSFileExists(strNewFilePath));
 
-        strOutputFile = strNewFilePath;
-    }
-    else
-    {
-        String strFileName = GetPathFileName(strOutputFile);
+        }
 
-        if(!strFileName.IsValid() || !IsSafeFilename(strFileName))
+        if(OSFileExists(strOutputFile))
         {
-            SYSTEMTIME st;
-            GetLocalTime(&st);
+            String strFileWithoutExtension = GetPathWithoutExtension(strOutputFile);
+            String strFileExtension = GetPathExtension(strOutputFile);
+            UINT curFile = 0;
 
-            String strDirectory = GetPathDirectory(strOutputFile);
-            strOutputFile = FormattedString(TEXT("%s/%u-%02u-%02u-%02u%02u-%02u.mp4"), strDirectory.Array(), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+            String strNewFilePath;
+            do 
+            {
+                strNewFilePath.Clear() << strFileWithoutExtension << TEXT(" (") << FormattedString(TEXT("%02u"), ++curFile) << TEXT(").") << strFileExtension;
+            } while(OSFileExists(strNewFilePath));
+
+            strOutputFile = strNewFilePath;
+        }
+        else
+        {
+            String strFileName = GetPathFileName(strOutputFile);
+
+            if(!strFileName.IsValid() || !IsSafeFilename(strFileName))
+            {
+                SYSTEMTIME st;
+                GetLocalTime(&st);
+
+                String strDirectory = GetPathDirectory(strOutputFile);
+                strOutputFile = FormattedString(TEXT("%s/%u-%02u-%02u-%02u%02u-%02u.mp4"), strDirectory.Array(), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+            }
         }
     }
 
