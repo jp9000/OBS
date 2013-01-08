@@ -1910,6 +1910,14 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                         {
                             NMITEMACTIVATE itemActivate = *(LPNMITEMACTIVATE)lParam;
                             UINT selectedID = itemActivate.iItem;
+
+                            /* check to see if the double click is on top of the checkbox
+                               if so, forget about it */
+                            LVHITTESTINFO hitInfo;
+                            hitInfo.pt = itemActivate.ptAction;
+                            ListView_HitTestEx(nmh.hwndFrom, &hitInfo);
+                            if(hitInfo.flags & LVHT_ONITEMSTATEICON)
+                                break;
                             
                             XElement *sourcesElement = App->sceneElement->GetElement(TEXT("sources"));
                             if(!sourcesElement)
