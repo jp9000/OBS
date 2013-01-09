@@ -470,6 +470,7 @@ class OBS
 
     bool    bDisableSceneSwitching;
     bool    bChangingSources;
+    bool    bAlwaysOnTop;
     bool    bEditMode;
     bool    bRenderViewEnabled;
     bool    bShowFPS;

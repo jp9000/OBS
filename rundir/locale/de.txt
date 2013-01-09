@@ -52,6 +52,7 @@ Listbox.SetHotkey   "Hotkey setzen"
 MainMenu.File       "&Datei"
 MainMenu.Help       "&Hilfe"
 MainMenu.Settings   "&Einstellungen"
+MainMenu.Settings.AlwaysOnTop "&Auf Immer im Vordergrund"
 
 MainMenu.File.Exit  "B&eenden"
 

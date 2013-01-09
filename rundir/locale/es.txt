@@ -47,6 +47,7 @@ Listbox.SetHotkey   "Tecla rápida"
 MainMenu.File       "&Archivo"
 MainMenu.Help       "A&yuda"
 MainMenu.Settings   "&Configuración"
+MainMenu.Settings.AlwaysOnTop "&Siempre en primer plano"
 
 MainMenu.File.Exit  "&Salir"
 

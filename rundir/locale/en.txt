@@ -52,6 +52,7 @@ Listbox.SetHotkey   "Set Hotkey"
 MainMenu.File       "&File"
 MainMenu.Help       "&Help"
 MainMenu.Settings   "&Settings"
+MainMenu.Settings.AlwaysOnTop "&Always On Top"
 
 MainMenu.File.Exit  "E&xit"
 

@@ -48,6 +48,8 @@ Listbox.SetHotkey   "Definir Hotkey"
 MainMenu.File       "&Arquivo"
 MainMenu.Help       "&Ajuda"
 MainMenu.Settings   "&Configurações"
+MainMenu.Settings.AlwaysOnTop "&Sempre em cima"
+
 
 MainMenu.File.Exit  "Sair"
 

@@ -53,6 +53,7 @@ Listbox.SetHotkey   "Pikanäppäin"
 MainMenu.File       "&Tiedosto"
 MainMenu.Help       "&Apua"
 MainMenu.Settings   "&Asetukset"
+MainMenu.Settings.AlwaysOnTop "&Aina päällimmäisenä"
 
 MainMenu.File.Exit  "&Sulje"
 

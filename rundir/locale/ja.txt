@@ -52,6 +52,7 @@ Listbox.SetHotkey   "ホットキーの設定"
 MainMenu.File       "ファイル(&F)"
 MainMenu.Help       "ヘルプ(&H)"
 MainMenu.Settings   "設定(&S)"
+MainMenu.Settings.AlwaysOnTop "常に手前に表示"
 
 MainMenu.File.Exit  "終了(&X)"
 

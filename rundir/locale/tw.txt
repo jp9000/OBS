@@ -52,6 +52,7 @@ Listbox.SetHotkey   "設定快捷鍵"
 MainMenu.File       "檔案(&F)"
 MainMenu.Help       "幫助(&H)"
 MainMenu.Settings   "設定(&S)"
+MainMenu.Settings.AlwaysOnTop "總在最前"
 
 MainMenu.File.Exit  "退出(&X)"
 

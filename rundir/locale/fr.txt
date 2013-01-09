@@ -48,6 +48,7 @@ Listbox.SetHotkey   "Utiliser un raccourci clavier"
 MainMenu.File       "&Fichier"
 MainMenu.Help       "&Aide"
 MainMenu.Settings   "&Paramètres"
+MainMenu.Settings.AlwaysOnTop "Toujours au premier"
 
 MainMenu.File.Exit  "&Sortir"
 

@@ -1746,6 +1746,17 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     PostQuitMessage(0);
                     break;
 
+                case ID_ALWAYSONTOP:
+                    {
+                        HMENU hmenuBar = GetMenu(hwnd); 
+                        App->bAlwaysOnTop = !App->bAlwaysOnTop;
+                        CheckMenuItem(hmenuBar, ID_ALWAYSONTOP, (App->bAlwaysOnTop)?MF_CHECKED:MF_UNCHECKED);
+                        
+                        SetWindowPos(hwndMain, (App->bAlwaysOnTop)?HWND_TOPMOST:HWND_NOTOPMOST, 0, 0, 0, 0,
+                            SWP_NOSIZE | SWP_NOMOVE);
+                    }
+                    break;
+
                 case ID_HELP_VISITWEBSITE:
                     ShellExecute(NULL, TEXT("open"), TEXT("http://www.obsproject.com"), 0, 0, SW_SHOWNORMAL);
                     break;

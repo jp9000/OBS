@@ -232,13 +232,15 @@
 #define ID_SETTINGS_SETTINGS            40041
 #define ID_MAINMENU_MAINMENU40042       40042
 #define ID_HELP_VISITWEBSITE            40043
+#define ID_MAINMENU_MAINMENU40044       40044
+#define ID_ALWAYSONTOP                  40045
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        141
-#define _APS_NEXT_COMMAND_VALUE         40044
+#define _APS_NEXT_COMMAND_VALUE         40046
 #define _APS_NEXT_CONTROL_VALUE         1141
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

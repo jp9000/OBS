@@ -32,6 +32,8 @@ Listbox.Center          "Sentrer"
 Listbox.Config          "Egenskaper"
 Listbox.ResetSize       "Tilbakestill størrelse"
 
+MainMenu.Settings.AlwaysOnTop "&Alltid Synlig"
+
 MainWindow.Exit         "Lukk"
 MainWindow.Plugins      "Programvareutvidelse"
 MainWindow.SceneEditor  "Rediger scene"

@@ -31,6 +31,8 @@ Listbox.Center          "Keskel"
 Listbox.Config          "Atribuudid"
 Listbox.ResetSize       "Algseadista suurus"
 
+MainMenu.Settings.AlwaysOnTop "&Alati pealmine"
+
 MainWindow.Exit         "Välju"
 MainWindow.Plugins      "Pluginad"
 MainWindow.SceneEditor  "Muuda stseeni"

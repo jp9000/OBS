@@ -31,6 +31,8 @@ Listbox.Center          "Центрирай"
 Listbox.Config          "Свойства"
 Listbox.ResetSize       "Смени размера по подразбиране"
 
+MainMenu.Settings.AlwaysOnTop "Винаги видим"
+
 MainWindow.Exit         "Излизане"
 MainWindow.Plugins      "Плъгини"
 MainWindow.SceneEditor  "Редактирай сцена"

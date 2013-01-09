@@ -52,6 +52,7 @@ Listbox.SetHotkey       "Добавить горячую клавишу"
 MainMenu.File       "&Файл"
 MainMenu.Help       "&Помощь"
 MainMenu.Settings   "&Настройки"
+MainMenu.Settings.AlwaysOnTop "&Всегда сверху"
 
 MainMenu.File.Exit  "&Выход"
 

@@ -52,6 +52,7 @@ Listbox.SetHotkey   "Sneltoets Instellen"
 MainMenu.File       "&Bestand"
 MainMenu.Help       "&Help"
 MainMenu.Settings   "&Instellingen"
+MainMenu.Settings.AlwaysOnTop "&Altijd op voorgrond"
 
 MainMenu.File.Exit  "&Afsluiten"
 

@@ -31,6 +31,8 @@ Listbox.Center          "Κέντρο"
 Listbox.Config          "Ιδιότητες"
 Listbox.ResetSize       "Επαναφορά μεγέθους"
 
+MainMenu.Settings.AlwaysOnTop "Πάντα στην Κορυφή"
+
 MainWindow.Exit         "Έξοδος"
 MainWindow.Plugins      "Πρόσθετα"
 MainWindow.SceneEditor  "Επεξεργασία σκηνής"
