@@ -2186,12 +2186,12 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
             }
             else
             {
+                
                 App->scene->GetItemsOnPoint(framePos, items);
                 if(items.Num())
                 {
                     SceneItem *topItem = items.Last();
                     App->bItemWasSelected = topItem->bSelected;
-                    ListView_SetItemState(hwndSources, topItem->GetID(), LVIS_FOCUSED | LVIS_SELECTED,  LVIS_FOCUSED | LVIS_SELECTED);
                 }
             }
 
