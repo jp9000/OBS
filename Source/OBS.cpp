@@ -98,7 +98,15 @@ BOOL CALLBACK MonitorInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprc
 const int controlPadding = 3;
 
 const int totalControlAreaWidth  = minClientWidth;
+const int miscAreaWidth = 290;
 const int totalControlAreaHeight = 171;//170;//
+const int listAreaWidth = totalControlAreaWidth-miscAreaWidth;
+const int controlWidth = miscAreaWidth/2;
+const int controlHeight = 22;
+const int volControlHeight = 32;
+const int volMeterHeight = 10;
+const int textControlHeight = 16;
+const int listControlWidth = listAreaWidth/2;
 
 void OBS::ResizeRenderFrame(bool bRedrawRenderFrame)
 {
@@ -189,18 +197,7 @@ void OBS::GetBaseSize(UINT &width, UINT &height) const
 
 void OBS::ResizeWindow(bool bRedrawRenderFrame)
 {
-    const int miscAreaWidth = 290;
-    const int listAreaWidth = totalControlAreaWidth-miscAreaWidth;
-    const int controlWidth = miscAreaWidth/2;
-    const int controlHeight = 22;
-
-    const int volControlHeight = 32;
-    const int volMeterHeight = 10;
-
-    const int textControlHeight = 16;
-
-    //const int statusHeight = 50;
-    const int listControlWidth = listAreaWidth/2;
+    
     //const int listControlHeight = totalControlAreaHeight - textControlHeight - controlHeight - controlPadding;
 
     //-----------------------------------------------------
@@ -714,11 +711,21 @@ OBS::OBS()
     // elements listbox
 
     hwndTemp = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL,
-        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|WS_VSCROLL|WS_CLIPSIBLINGS|LVS_LIST|LVS_SHOWSELALWAYS,
+        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|WS_VSCROLL|WS_CLIPSIBLINGS|LVS_REPORT|LVS_NOCOLUMNHEADER|
+        LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_NOLABELWRAP,
         0, 0, 0, 0, hwndMain, (HMENU)ID_SOURCES, 0, 0);
     SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 
     ListView_SetExtendedListViewStyle(hwndTemp, LVS_EX_CHECKBOXES);
+    
+    //add single column needed for report style
+    LVCOLUMN column;    
+    column.mask = LVCF_TEXT | LVCF_WIDTH;
+    column.fmt = LVCFMT_FIXED_WIDTH;
+    column.cx = listControlWidth - controlPadding * 3 ;
+    column.pszText = TEXT("");
+    ListView_InsertColumn(hwndTemp, 0, &column);
+
     listviewProc = (WNDPROC)GetWindowLongPtr(hwndTemp, GWLP_WNDPROC);
     SetWindowLongPtr(hwndTemp, GWLP_WNDPROC, (LONG_PTR)OBS::ListboxHook);
 
