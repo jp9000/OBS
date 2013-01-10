@@ -435,16 +435,27 @@ public:
 
                 FILE_NOTIFY_INFORMATION *notify = (FILE_NOTIFY_INFORMATION*)changeBuffer;
 
-                String strFileName;
-                strFileName.SetLength(notify->FileNameLength);
-                scpy_n(strFileName, notify->FileName, notify->FileNameLength/2);
-                strFileName.KillSpaces();
+                for (;;)
+                {
+                    String strFileName;
+                    strFileName.SetLength(notify->FileNameLength);
+                    scpy_n(strFileName, notify->FileName, notify->FileNameLength/2);
+                    strFileName.KillSpaces();
 
-                String strFileChanged;
-                strFileChanged << strDirectory << strFileName;
+                    String strFileChanged;
+                    strFileChanged << strDirectory << strFileName;
 
-                if(strFileChanged.CompareI(strFile))
-                    bDoUpdate = true;
+                    if(strFileChanged.CompareI(strFile))
+                    {
+                        bDoUpdate = true;
+                        break;
+                    }
+
+                    if (!notify->NextEntryOffset)
+                        break;
+
+                    notify = (FILE_NOTIFY_INFORMATION*)((BYTE *)notify + notify->NextEntryOffset);
+                }
 
                 DWORD test;
                 zero(&directoryChange, sizeof(directoryChange));
