@@ -272,7 +272,10 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
 
                 if(newTimestamp < (curTime-OUTPUT_BUFFER_TIME) || newTimestamp > (curTime+2000))
                 {
+                    //disabled for debug mode since this crashes when stepping through in the debugger
+#ifndef _DEBUG
                     CrashError(TEXT("MMDeviceAudioSource::GetNextBuffer: Got bad audio timestamp offset %lld from device: '%s'.  curTime: %llu, newTimestamp: %llu"), (LONGLONG)(newTimestamp - curTime), GetDeviceName(), curTime, newTimestamp);
+#endif
                     lastUsedTimestamp = newTimestamp = curTime;
                 }
                 else
