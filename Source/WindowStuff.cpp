@@ -1128,6 +1128,28 @@ void OBS::CenterItems()
     }
 }
 
+void OBS::MoveItemsByPixels(int dx, int dy)
+{
+    if(App->bRunning)
+    {
+        List<SceneItem*> selectedItems;
+        App->scene->GetSelectedItems(selectedItems);
+
+        Vect2 baseSize = App->GetBaseSize();
+
+        for(UINT i=0; i<selectedItems.Num(); i++)
+        {
+            SceneItem *item = selectedItems[i];
+            item->pos.x += dx;
+            item->pos.y += dy;
+
+            XElement *itemElement = item->GetElement();
+            itemElement->SetInt(TEXT("x"), int(item->pos.x));
+            itemElement->SetInt(TEXT("y"), int(item->pos.y));
+        }
+    }
+}
+
 extern "C" double round(double val);
 
 void OBS::FitItemsToScreen()
@@ -2159,7 +2181,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                     {
                         /* clears all selections */
                         App->bChangingSources = true;
-                        ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED|LVIS_FOCUSED);
+                        ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED);
                         App->bChangingSources = false;
 
                         App->scene->DeselectAll();
@@ -2167,8 +2189,8 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
 
                     topItem->Select(true);
                     App->bChangingSources = true;
-                    SetFocus(hwndSources);
-                    ListView_SetItemState(hwndSources, topItem->GetID(), LVIS_SELECTED|LVIS_FOCUSED, LVIS_SELECTED|LVIS_FOCUSED);
+                    SetFocus(hwnd);
+                    ListView_SetItemState(hwndSources, topItem->GetID(), LVIS_SELECTED, LVIS_SELECTED);
                     App->bChangingSources = false;
 
                     if(App->modifyType == ItemModifyType_None)
@@ -2624,7 +2646,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                             if(!bControlDown)
                             {
                                 App->bChangingSources = true;
-                                ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED|LVIS_FOCUSED);
+                                ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED);
                                 App->bChangingSources = false;
 
                                 App->scene->DeselectAll();
@@ -2633,8 +2655,8 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                             topItem->Select(true);
 
                             App->bChangingSources = true;
-                            SetFocus(hwndSources);
-                            ListView_SetItemState(hwndSources, topItem->GetID(), LVIS_SELECTED|LVIS_FOCUSED, LVIS_SELECTED|LVIS_FOCUSED);
+                            SetFocus(hwnd);
+                            ListView_SetItemState(hwndSources, topItem->GetID(), LVIS_SELECTED, LVIS_SELECTED);
                             App->bChangingSources = false;
 
                             if(App->modifyType == ItemModifyType_None)
@@ -2694,6 +2716,39 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
 
         DestroyMenu(hPopup);
     }
+    else if(message == WM_GETDLGCODE && App->bEditMode)
+    {
+        return DLGC_WANTARROWS; 
+    }
+    else if(message == WM_KEYDOWN && App->bRunning && App->bEditMode)
+    {
+        int dx, dy ;
+        dx = dy = 0;
+        switch(wParam)
+        {
+            case VK_UP:
+                dy = -1;
+                break;
+            case VK_DOWN:
+                dy = 1;
+                break;
+            case VK_RIGHT:
+                dx = 1;
+                break;
+            case VK_LEFT:
+                dx = -1;
+                break;
+            default:
+                return DefWindowProc(hwnd, message, wParam, lParam);
+        }
+        App->MoveItemsByPixels(dx, dy);
+        return 0;
+    }
+    else if(message == WM_KEYUP && App->bEditMode)
+    {
+        return 0;
+    }
+            
 
     return DefWindowProc(hwnd, message, wParam, lParam);
 }

@@ -626,6 +626,7 @@ class OBS
     void MoveSourcesToTop();
     void MoveSourcesToBottom();
     void CenterItems();
+    void MoveItemsByPixels(int dx, int dy);
     void FitItemsToScreen();
     void ResetItemSizes();
 
