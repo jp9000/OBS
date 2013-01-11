@@ -13,13 +13,11 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Japanese resources
+// Japanese (Japan) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_JPN)
-#ifdef _WIN32
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 #pragma code_page(932)
-#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -249,7 +247,7 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,322,319,50,14
 END
 
-IDD_CONFIGUREBITMAPSOURCE DIALOGEX 0, 0, 244, 85
+IDD_CONFIGUREBITMAPSOURCE DIALOGEX 0, 0, 244, 95
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Sources.BitmapSource"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -259,10 +257,11 @@ BEGIN
     RTEXT           "Sources.BitmapSource.Opacity",IDC_STATIC,5,45,118,8
     EDITTEXT        IDC_OPACITY_EDIT,125,43,40,14,ES_AUTOHSCROLL | ES_NUMBER
     CONTROL         "",IDC_OPACITY,"msctls_updown32",UDS_SETBUDDYINT | UDS_AUTOBUDDY | UDS_ARROWKEYS,164,43,10,14
-    DEFPUSHBUTTON   "OK",IDOK,132,64,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,186,64,50,14
+    DEFPUSHBUTTON   "OK",IDOK,132,74,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,186,74,50,14
     RTEXT           "Color",IDC_STATIC,5,28,118,8
     CONTROL         "",IDC_COLOR,"OBSColorControl",WS_TABSTOP,125,26,34,14
+    CONTROL         "Sources.BitmapSource.Monitor",IDC_MONITOR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,59,114,10,WS_EX_RIGHT
 END
 
 IDD_GLOBAL_SOURCES DIALOGEX 0, 0, 227, 195
@@ -437,7 +436,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO 
+GUIDELINES DESIGNINFO
 BEGIN
     IDD_SETTINGS, DIALOG
     BEGIN
@@ -508,7 +507,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 237
         TOPMARGIN, 7
-        BOTTOMMARGIN, 78
+        BOTTOMMARGIN, 88
     END
 
     IDD_GLOBAL_SOURCES, DIALOG
@@ -619,7 +618,7 @@ END
 // Accelerator
 //
 
-IDR_ACCELERATOR1 ACCELERATORS 
+IDR_ACCELERATOR1 ACCELERATORS
 BEGIN
     "C",            IDA_SOURCE_CENTER,      VIRTKEY, CONTROL, NOINVERT
     VK_DELETE,      IDA_SOURCE_DELETE,      VIRTKEY, NOINVERT
@@ -675,7 +674,7 @@ END
 // Menu
 //
 
-IDR_MAINMENU MENU 
+IDR_MAINMENU MENU
 BEGIN
     POPUP "MainMenu.File"
     BEGIN
@@ -704,7 +703,7 @@ END
 //
 
 IDC_COLORPICKER         CURSOR                  "cursor1.cur"
-#endif    // Japanese resources
+#endif    // Japanese (Japan) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

@@ -56,6 +56,8 @@ class BitmapImageSource : public ImageSource
     UINT curFrame, curLoop;
     float curTime;
 
+    OSFileChangeData *changeMonitor;
+
     void CreateErrorTexture()
     {
         LPBYTE textureData = (LPBYTE)Allocate(32*32*4);
@@ -83,6 +85,9 @@ public:
 
         if(lpGifData)
             Free(lpGifData);
+
+        if (changeMonitor)
+            OSMonitorFileDestroy(changeMonitor);
 
         delete texture;
     }
@@ -121,6 +126,9 @@ public:
                 }
             }
         }
+
+        if (changeMonitor && OSFileHasChanged(changeMonitor))
+            UpdateSettings();
     }
 
     void Render(const Vect2 &pos, const Vect2 &size)
@@ -247,6 +255,16 @@ public:
             opacity = 100;
         else if(opacity < 0)
             opacity = 0;
+
+        if (changeMonitor)
+        {
+            OSMonitorFileDestroy(changeMonitor);
+            changeMonitor = NULL;
+        }
+
+        int monitor = data->GetInt(TEXT("monitor"), 0);
+        if (monitor)
+            changeMonitor = OSMonitorFileStart(lpBitmap);
     }
 
     Vect2 GetSize() const {return fullSize;}
@@ -296,6 +314,11 @@ INT_PTR CALLBACK ConfigureBitmapProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 DWORD color = configInfo->data->GetInt(TEXT("color"), 0xFFFFFFFF);
                 CCSetColor(GetDlgItem(hwnd, IDC_COLOR), color);
+
+                //--------------------------
+
+                int monitor = configInfo->data->GetInt(TEXT("monitor"), 0);
+                SendMessage(GetDlgItem(hwnd, IDC_MONITOR), BM_SETCHECK, monitor ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 return TRUE;
             }
@@ -352,6 +375,12 @@ INT_PTR CALLBACK ConfigureBitmapProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         DWORD color = CCGetColor(GetDlgItem(hwnd, IDC_COLOR));
                         configInfo->data->SetInt(TEXT("color"), color);
+
+                        int monitor = (int)SendMessage(GetDlgItem(hwnd, IDC_MONITOR), BM_GETCHECK, 0, 0);
+                        if (monitor == BST_CHECKED)
+                            configInfo->data->SetInt(TEXT("monitor"), 1);
+                        else
+                            configInfo->data->SetInt(TEXT("monitor"), 0);
                     }
 
                 case IDCANCEL:
