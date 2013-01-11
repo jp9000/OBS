@@ -716,7 +716,7 @@ OBS::OBS()
         0, 0, 0, 0, hwndMain, (HMENU)ID_SOURCES, 0, 0);
     SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 
-    ListView_SetExtendedListViewStyle(hwndTemp, LVS_EX_CHECKBOXES);
+    ListView_SetExtendedListViewStyle(hwndTemp, LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT );
     
     //add single column needed for report style
     LVCOLUMN column;    
