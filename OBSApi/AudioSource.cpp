@@ -160,8 +160,11 @@ const float dbMinus9    = 0.3535533905932738f;
 //not entirely sure if these are the correct coefficients for downmixing,
 //I'm fairly new to the whole multi speaker thing
 const float surroundMix = dbMinus3;
-const float centerMix   = dbMinus3;
-const float lowFreqMix  = 3.16227766f*dbMinus3;
+const float centerMix   = dbMinus6;
+const float lowFreqMix  = dbMinus3;
+
+//const float attn5dot1 = 0.414213562373095f;
+const float attn5dot1 = 1 / (1 + centerMix + surroundMix);
 
 UINT AudioSource::QueryAudio(float curVolume)
 {
@@ -360,8 +363,10 @@ UINT AudioSource::QueryAudio(float curVolume)
                     inputTemp  += 4;
                 }
             }
-            //don't think this will work for both
-            else if(inputChannelMask == KSAUDIO_SPEAKER_5POINT1)
+            // Both speakers configs share the same format, the difference is in rear speakers position 
+            // See: http://msdn.microsoft.com/en-us/library/windows/hardware/ff537083(v=vs.85).aspx
+            // Probably for KSAUDIO_SPEAKER_5POINT1_SURROUND we will need a different coefficient for rear left/right
+            else if(inputChannelMask == KSAUDIO_SPEAKER_5POINT1 || inputChannelMask == KSAUDIO_SPEAKER_5POINT1_SURROUND)
             {
                 UINT numFloats = numAudioFrames*6;
                 float *endTemp = inputTemp+numFloats;
@@ -371,37 +376,41 @@ UINT AudioSource::QueryAudio(float curVolume)
                     float left      = inputTemp[0];
                     float right     = inputTemp[1];
                     float center    = inputTemp[2]*centerMix;
-                    float lowFreq   = inputTemp[3]*lowFreqMix;
-                    float rear      = (inputTemp[4]+inputTemp[5])*surroundMix;
+                    
+                    //We don't need LFE channel so skip it (see below)
+                    //float lowFreq   = inputTemp[3]*lowFreqMix;
+                    
+                    float rearLeft  = inputTemp[4]*surroundMix;
+                    float rearRight = inputTemp[5]*surroundMix;
+                    
+                    // According to ITU-R  BS.775-1 recommendation, the downmix from a 3/2 source to stereo
+                    // is the following:
+                    // L = FL + k0*C + k1*RL
+                    // R = FR + k0*C + k1*RR
+                    // FL = front left
+                    // FR = front right
+                    // C  = center
+                    // RL = rear left
+                    // RR = rear right
+                    // k0 = centerMix   = dbMinus3 = 0.7071067811865476 [for k0 we can use dbMinus6 = 0.5 too, probably it's better]
+                    // k1 = surroundMix = dbMinus3 = 0.7071067811865476
 
-                    *(outputTemp++) = left  + center + lowFreq - rear;
-                    *(outputTemp++) = right + center + lowFreq + rear;
+                    // The output (L,R) can be out of (-1,1) domain so we attenuate it [ attn5dot1 = 1/(1 + centerMix + surroundMix) ]
+                    // Note: this method of downmixing is far from "perfect" (pretty sure it's not the correct way) but the resulting downmix is "okayish", at least no more bleeding ears.
+                    // (maybe have a look at http://forum.doom9.org/archive/index.php/t-148228.html too [ 5.1 -> stereo ] the approach seems almost the same [but different coefficients])
+
+                    
+                    // http://acousticsfreq.com/blog/wp-content/uploads/2012/01/ITU-R-BS775-1.pdf
+                    // http://ir.lib.nctu.edu.tw/bitstream/987654321/22934/1/030104001.pdf
+
+                    *(outputTemp++) = (left  + center  + rearLeft) * attn5dot1;
+                    *(outputTemp++) = (right + center  + rearRight) * attn5dot1;
 
                     inputTemp  += 6;
                 }
             }
             //todo ------------------
             //not sure if my 5.1/7.1 downmixes are correct
-            else if(inputChannelMask == KSAUDIO_SPEAKER_5POINT1_SURROUND)
-            {
-                UINT numFloats = numAudioFrames*6;
-                float *endTemp = inputTemp+numFloats;
-
-                while(inputTemp < endTemp)
-                {
-                    float left      = inputTemp[0];
-                    float right     = inputTemp[1];
-                    float center    = inputTemp[2]*centerMix;
-                    float lowFreq   = inputTemp[3]*lowFreqMix;
-                    float sideLeft  = inputTemp[4]*dbMinus3;
-                    float sideRight = inputTemp[5]*dbMinus3;
-
-                    *(outputTemp++) = left  + center + sideLeft  + lowFreq;
-                    *(outputTemp++) = right + center + sideRight + lowFreq;
-
-                    inputTemp  += 6;
-                }
-            }
             else if(inputChannelMask == KSAUDIO_SPEAKER_7POINT1)
             {
                 UINT numFloats = numAudioFrames*8;
