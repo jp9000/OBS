@@ -58,11 +58,8 @@ class TextOutputSource : public ImageSource
     Vect2       baseSize;
     SIZE        textureSize;
 
-    String      strDirectory;
-    LPBYTE      changeBuffer;
     bool        bMonitoringFileChanges;
-    HANDLE      hDirectory;
-    OVERLAPPED  directoryChange;
+    OSFileChangeData *fileChangeMonitor;
 
     bool        bDoUpdate;
 
@@ -110,9 +107,7 @@ class TextOutputSource : public ImageSource
 
         if(bMonitoringFileChanges)
         {
-            CancelIoEx(hDirectory, &directoryChange);
-            CloseHandle(hDirectory);
-
+            OSMonitorFileDestroy(fileChangeMonitor);
             bMonitoringFileChanges = false;
         }
 
@@ -124,12 +119,6 @@ class TextOutputSource : public ImageSource
             if(strFile.IsValid() && textFile.Open(strFile, XFILE_READ | XFILE_SHARED, XFILE_OPENEXISTING))
             {
                 textFile.ReadFileToString(strCurrentText);
-
-                strDirectory = strFile;
-                strDirectory.FindReplace(TEXT("\\"), TEXT("/"));
-                strDirectory = GetPathDirectory(strDirectory);
-                strDirectory.FindReplace(TEXT("/"), TEXT("\\"));
-                strDirectory << TEXT("\\");
             }
             else
             {
@@ -143,25 +132,8 @@ class TextOutputSource : public ImageSource
                 AppWarning(TEXT("TextSource::UpdateTexture: invalid string returned by ReadFileToString (is the file UTF-8 or compatible ?!)"));
             }
 
-            hDirectory = CreateFile(strDirectory, FILE_LIST_DIRECTORY, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OVERLAPPED, NULL);
-            if(hDirectory != INVALID_HANDLE_VALUE)
-            {
-                DWORD test;
-                zero(&directoryChange, sizeof(directoryChange));
-
-                if(ReadDirectoryChangesW(hDirectory, changeBuffer, 2048, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE, &test, &directoryChange, NULL))
-                    bMonitoringFileChanges = true;
-                else
-                {
-                    int err = GetLastError();
-                    CloseHandle(hDirectory);
-                }
-            }
-            else
-            {
-                int err = GetLastError();
-                nop();
-            }
+            if (fileChangeMonitor = OSMonitorFileStart (strFile))
+                bMonitoringFileChanges = true;
         }
 
         HFONT hFont = NULL;
@@ -400,9 +372,6 @@ public:
         si.filter = GS_FILTER_LINEAR;
         ss = CreateSamplerState(si);
 
-        changeBuffer = (LPBYTE)Allocate(2048);
-        zero(changeBuffer, 2048);
-
         Log(TEXT("Using text output"));
     }
 
@@ -416,12 +385,9 @@ public:
 
         delete ss;
 
-        Free(changeBuffer);
-
         if(bMonitoringFileChanges)
         {
-            CancelIoEx(hDirectory, &directoryChange);
-            CloseHandle(hDirectory);
+            OSMonitorFileDestroy(fileChangeMonitor);
         }
     }
 
@@ -429,43 +395,8 @@ public:
     {
         if(bMonitoringFileChanges)
         {
-            if(HasOverlappedIoCompleted(&directoryChange))
-            {
-                bMonitoringFileChanges = false;
-
-                FILE_NOTIFY_INFORMATION *notify = (FILE_NOTIFY_INFORMATION*)changeBuffer;
-
-                for (;;)
-                {
-                    String strFileName;
-                    strFileName.SetLength(notify->FileNameLength);
-                    scpy_n(strFileName, notify->FileName, notify->FileNameLength/2);
-                    strFileName.KillSpaces();
-
-                    String strFileChanged;
-                    strFileChanged << strDirectory << strFileName;
-
-                    if(strFileChanged.CompareI(strFile))
-                    {
-                        bDoUpdate = true;
-                        break;
-                    }
-
-                    if (!notify->NextEntryOffset)
-                        break;
-
-                    notify = (FILE_NOTIFY_INFORMATION*)((BYTE *)notify + notify->NextEntryOffset);
-                }
-
-                DWORD test;
-                zero(&directoryChange, sizeof(directoryChange));
-                zero(changeBuffer, 2048);
-
-                if(ReadDirectoryChangesW(hDirectory, changeBuffer, 2048, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE, &test, &directoryChange, NULL))
-                    bMonitoringFileChanges = true;
-                else
-                    CloseHandle(hDirectory);
-            }
+            if (OSFileHasChanged(fileChangeMonitor))
+                bUpdateTexture = true;
         }
 
         if(bUpdateTexture)

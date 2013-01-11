@@ -50,6 +50,15 @@ BOOL        bWindows8 = 0;
 
 HWND        hwndMainAppWindow = NULL;
 
+struct OSFileChangeData
+{
+    HANDLE hDirectory;
+    OVERLAPPED directoryChange;
+    TCHAR strDirectory[MAX_PATH];
+    TCHAR targetFileName[MAX_PATH];
+    BYTE changeBuffer[2048];
+};
+
 // Helper function to count set bits in the processor mask.
 DWORD CountSetBits(ULONG_PTR bitMask)
 {
@@ -769,5 +778,99 @@ BOOL   STDCALL OSIncompatibleModulesLoaded()
     return 0;
 }
 
+OSFileChangeData * STDCALL OSMonitorFileStart(String path)
+{
+    HANDLE hDirectory;
+    OSFileChangeData *data = (OSFileChangeData *)Allocate(sizeof(*data));
+
+    String strDirectory = path;
+    strDirectory.FindReplace(TEXT("\\"), TEXT("/"));
+    strDirectory = GetPathDirectory(strDirectory);
+    strDirectory.FindReplace(TEXT("/"), TEXT("\\"));
+    strDirectory << TEXT("\\");
+
+    scpy_n (data->strDirectory, strDirectory.Array(), _countof(data->strDirectory)-1);
+
+    hDirectory = CreateFile(data->strDirectory, FILE_LIST_DIRECTORY, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OVERLAPPED, NULL);
+    if(hDirectory != INVALID_HANDLE_VALUE)
+    {
+        DWORD test;
+        zero(&data->directoryChange, sizeof(data->directoryChange));
+
+        if(ReadDirectoryChangesW(hDirectory, data->changeBuffer, 2048, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE, &test, &data->directoryChange, NULL))
+        {
+            scpy_n (data->targetFileName, path.Array(), _countof(data->targetFileName)-1);
+            data->hDirectory = hDirectory;
+            return data;
+        }
+        else
+        {
+            int err = GetLastError();
+            CloseHandle(hDirectory);
+            Log(TEXT("OSMonitorFileStart: Unable to monitor file '%s', error %d"), path.Array(), err);
+            return NULL;
+        }
+    }
+    else
+    {
+        int err = GetLastError();
+        Log(TEXT("OSMonitorFileStart: Unable to open directory '%s', error %d"), data->strDirectory, err);
+        return NULL;
+    }
+}
+
+BOOL STDCALL OSFileHasChanged (OSFileChangeData *data)
+{
+    BOOL hasModified = FALSE;
+
+    if(HasOverlappedIoCompleted(&data->directoryChange))
+    {
+        FILE_NOTIFY_INFORMATION *notify = (FILE_NOTIFY_INFORMATION*)data->changeBuffer;
+
+        for (;;)
+        {
+            String strFileName;
+            strFileName.SetLength(notify->FileNameLength);
+            scpy_n(strFileName, notify->FileName, notify->FileNameLength/2);
+            strFileName.KillSpaces();
+
+            String strFileChanged;
+            strFileChanged << data->strDirectory << strFileName;
+
+            if(strFileChanged.CompareI(data->targetFileName))
+            {
+                hasModified = TRUE;
+                break;
+            }
+
+            if (!notify->NextEntryOffset)
+                break;
+
+            notify = (FILE_NOTIFY_INFORMATION*)((BYTE *)notify + notify->NextEntryOffset);
+        }
+
+        DWORD test;
+        zero(&data->directoryChange, sizeof(data->directoryChange));
+        zero(data->changeBuffer, sizeof(data->changeBuffer));
+
+        if(ReadDirectoryChangesW(data->hDirectory, data->changeBuffer, 2048, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE, &test, &data->directoryChange, NULL))
+        {
+        }
+        else
+        {
+            CloseHandle(data->hDirectory);
+            return hasModified;
+        }
+    }
+
+    return hasModified;
+}
+
+VOID STDCALL OSMonitorFileDestroy (OSFileChangeData *data)
+{
+    CancelIoEx(data->hDirectory, &data->directoryChange);
+    CloseHandle(data->hDirectory);
+    Free(data);
+}
 
 #endif

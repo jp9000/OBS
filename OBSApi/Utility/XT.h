@@ -64,9 +64,12 @@
 //-----------------------------------------
 //OS-independant functions
 //-----------------------------------------
+class StringList;
+class String;
+
 struct OSFindData
 {
-    TCHAR fileName[512];
+    TCHAR fileName[260];
     BOOL bDirectory;
     BOOL bHidden;
 };
@@ -79,8 +82,7 @@ struct XRect
     int cy;
 };
 
-class StringList;
-class String;
+struct OSFileChangeData;
 
 #define WAIT_INFINITE 0xFFFFFFFF
 
@@ -97,6 +99,11 @@ BASE_EXPORT BOOL   STDCALL OSCopyFile(CTSTR lpFileDest, CTSTR lpFileSrc);
 BASE_EXPORT BOOL   STDCALL OSCreateDirectory(CTSTR lpDirectory);
 BASE_EXPORT BOOL   STDCALL OSSetCurrentDirectory(CTSTR lpDirectory);
 BASE_EXPORT BOOL   STDCALL OSFileExists(CTSTR lpFile);
+
+BASE_EXPORT OSFileChangeData * STDCALL OSMonitorFileStart(String path);
+BASE_EXPORT BOOL   STDCALL OSFileHasChanged (OSFileChangeData *data);
+BASE_EXPORT VOID   STDCALL OSMonitorFileDestroy (OSFileChangeData *data);
+
 
 BASE_EXPORT BOOL   STDCALL OSCreateMainWindow(int x, int y, int cx, int cy);
 BASE_EXPORT void   STDCALL OSDestroyMainWindow();
