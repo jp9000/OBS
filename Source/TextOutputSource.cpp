@@ -108,6 +108,8 @@ class TextOutputSource : public ImageSource
         if(bMonitoringFileChanges)
         {
             OSMonitorFileDestroy(fileChangeMonitor);
+            fileChangeMonitor = NULL;
+
             bMonitoringFileChanges = false;
         }
 
