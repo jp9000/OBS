@@ -797,7 +797,7 @@ OSFileChangeData * STDCALL OSMonitorFileStart(String path)
         DWORD test;
         zero(&data->directoryChange, sizeof(data->directoryChange));
 
-        if(ReadDirectoryChangesW(hDirectory, data->changeBuffer, 2048, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE, &test, &data->directoryChange, NULL))
+        if(ReadDirectoryChangesW(hDirectory, data->changeBuffer, 2048, FALSE, FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE, &test, &data->directoryChange, NULL))
         {
             scpy_n (data->targetFileName, path.Array(), _countof(data->targetFileName)-1);
             data->hDirectory = hDirectory;
@@ -829,18 +829,21 @@ BOOL STDCALL OSFileHasChanged (OSFileChangeData *data)
 
         for (;;)
         {
-            String strFileName;
-            strFileName.SetLength(notify->FileNameLength);
-            scpy_n(strFileName, notify->FileName, notify->FileNameLength/2);
-            strFileName.KillSpaces();
-
-            String strFileChanged;
-            strFileChanged << data->strDirectory << strFileName;
-
-            if(strFileChanged.CompareI(data->targetFileName))
+            if (notify->Action != FILE_ACTION_RENAMED_OLD_NAME && notify->Action != FILE_ACTION_REMOVED)
             {
-                hasModified = TRUE;
-                break;
+                String strFileName;
+                strFileName.SetLength(notify->FileNameLength);
+                scpy_n(strFileName, notify->FileName, notify->FileNameLength/2);
+                strFileName.KillSpaces();
+
+                String strFileChanged;
+                strFileChanged << data->strDirectory << strFileName;             
+
+                if(strFileChanged.CompareI(data->targetFileName))
+                {
+                    hasModified = TRUE;
+                    break;
+                }
             }
 
             if (!notify->NextEntryOffset)
@@ -853,7 +856,7 @@ BOOL STDCALL OSFileHasChanged (OSFileChangeData *data)
         zero(&data->directoryChange, sizeof(data->directoryChange));
         zero(data->changeBuffer, sizeof(data->changeBuffer));
 
-        if(ReadDirectoryChangesW(data->hDirectory, data->changeBuffer, 2048, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE, &test, &data->directoryChange, NULL))
+        if(ReadDirectoryChangesW(data->hDirectory, data->changeBuffer, 2048, FALSE, FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE, &test, &data->directoryChange, NULL))
         {
         }
         else
