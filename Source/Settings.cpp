@@ -1600,22 +1600,8 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 //------------------------------------
 
-                bool bUseVideoSyncFix = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseSyncFix")) != 0;
-                SendMessage(GetDlgItem(hwnd, IDC_USESYNCFIX), BM_SETCHECK, bUseVideoSyncFix ? BST_CHECKED : BST_UNCHECKED, 0);
-
-                ti.lpszText = (LPWSTR)Str("Settings.Advanced.UseSyncFixTooltip");
-                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_USESYNCFIX);
-                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
-
-                //------------------------------------
-
                 bool bUnlockFPS = AppConfig->GetInt(TEXT("Video"), TEXT("UnlockFPS")) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_UNLOCKHIGHFPS), BM_SETCHECK, bUnlockFPS ? BST_CHECKED : BST_UNCHECKED, 0);
-
-                //------------------------------------
-
-                bool bDisableCTSAdjust = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("DisableCTSAdjust")) != 0;
-                SendMessage(GetDlgItem(hwnd, IDC_DISABLECTSADJUST), BM_SETCHECK, bDisableCTSAdjust ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 //------------------------------------
 
@@ -1795,10 +1781,8 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                     }
                     break;
 
-                case IDC_DISABLECTSADJUST:
                 case IDC_USEHIGHQUALITYRESAMPLING:
                 case IDC_USEMULTITHREADEDOPTIMIZATIONS:
-                case IDC_USESYNCFIX:
                 case IDC_UNLOCKHIGHFPS:
                     if(HIWORD(wParam) == BN_CLICKED)
                     {
@@ -2099,18 +2083,8 @@ void OBS::ApplySettings()
 
                 //--------------------------------------------------
 
-                BOOL bUseVideoSyncFix = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USESYNCFIX), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("UseSyncFix"),        bUseVideoSyncFix);
-
-                //------------------------------------
-
                 BOOL bUnlockFPS = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_UNLOCKHIGHFPS), BM_GETCHECK, 0, 0) == BST_CHECKED;
                 AppConfig->SetInt   (TEXT("Video"), TEXT("UnlockFPS"), bUnlockFPS);
-
-                //------------------------------------
-
-                BOOL bDisableCTSAdjust = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_DISABLECTSADJUST), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("DisableCTSAdjust"), bDisableCTSAdjust);
 
                 //------------------------------------
 

@@ -13,11 +13,13 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Japanese (Japan) resources
+// “ú–{Œê resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_JPN)
+#ifdef _WIN32
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 #pragma code_page(932)
+#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -318,7 +320,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,17,173,10
     RTEXT           "Settings.Advanced.ProcessPriority",IDC_STATIC,7,31,136,8
     COMBOBOX        IDC_PRIORITY,145,29,82,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Settings.Video",IDC_STATIC,4,48,418,123
+    GROUPBOX        "Settings.Video",IDC_STATIC,4,48,418,109
     RTEXT           "Settings.Advanced.VideoEncoderCPUTradeoff",IDC_STATIC,5,60,138,8
     COMBOBOX        IDC_PRESET,145,58,82,62,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Settings.Advanced.UseCBR",IDC_USECBR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,79,292,10
@@ -328,19 +330,13 @@ BEGIN
     CONTROL         "Settings.Advanced.UseSyncFix",IDC_USESYNCFIX,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,20,125,243,10
     CONTROL         "Settings.Advanced.UnlockHigherFPS",IDC_UNLOCKHIGHFPS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,139,217,10
-    GROUPBOX        "Settings.Audio",IDC_STATIC,4,174,418,29
+    GROUPBOX        "Settings.Audio",IDC_STATIC,4,163,418,29
     CONTROL         "Settings.Advanced.UseHighQualityResampling",IDC_USEHIGHQUALITYRESAMPLING,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,187,332,10
-    GROUPBOX        "Settings.Advanced.Network",IDC_STATIC,4,211,418,67
-    CONTROL         "Settings.Advanced.UseSendBuffer",IDC_USESENDBUFFER,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,226,277,10
-    RTEXT           "Settings.Advanced.SendBufferSize",IDC_STATIC,5,241,138,8
-    COMBOBOX        IDC_SENDBUFFERSIZE,145,239,158,30,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Settings.Info",IDC_INFO,7,281,418,37,NOT WS_VISIBLE
-    RTEXT           "Settings.Advanced.BindToIP",IDC_STATIC,5,258,138,8
-    COMBOBOX        IDC_BINDIP,145,256,87,62,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         ".Allow negative CTS (for testing purposes)",IDC_DISABLECTSADJUST,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,154,286,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,176,332,10
+    GROUPBOX        "Settings.Advanced.Network",IDC_STATIC,4,200,418,32
+    RTEXT           "Settings.Advanced.BindToIP",IDC_STATIC,5,213,138,8
+    COMBOBOX        IDC_BINDIP,145,211,87,62,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Settings.Info",IDC_INFO,7,238,418,37,NOT WS_VISIBLE
 END
 
 IDD_CONFIGURETRANSITIONSOURCE DIALOGEX 0, 0, 338, 198
@@ -436,7 +432,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO
+GUIDELINES DESIGNINFO 
 BEGIN
     IDD_SETTINGS, DIALOG
     BEGIN
@@ -618,7 +614,7 @@ END
 // Accelerator
 //
 
-IDR_ACCELERATOR1 ACCELERATORS
+IDR_ACCELERATOR1 ACCELERATORS 
 BEGIN
     "C",            IDA_SOURCE_CENTER,      VIRTKEY, CONTROL, NOINVERT
     VK_DELETE,      IDA_SOURCE_DELETE,      VIRTKEY, NOINVERT
@@ -674,7 +670,7 @@ END
 // Menu
 //
 
-IDR_MAINMENU MENU
+IDR_MAINMENU MENU 
 BEGIN
     POPUP "MainMenu.File"
     BEGIN
@@ -703,7 +699,7 @@ END
 //
 
 IDC_COLORPICKER         CURSOR                  "cursor1.cur"
-#endif    // Japanese (Japan) resources
+#endif    // “ú–{Œê resources
 /////////////////////////////////////////////////////////////////////////////
 
 

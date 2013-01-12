@@ -79,7 +79,6 @@ class MP4FileStream : public VideoFileStream
 
     bool            bStreamOpened;
     bool            bMP3;
-    bool            bUseCTSAdjust;
 
     List<BYTE>      endBuffer;
     List<UINT>      boxOffsets;
@@ -137,8 +136,6 @@ public:
 
         if(!fileOut.Open(lpFile, XFILE_CREATEALWAYS, 1024*1024))
             return false;
-
-        bUseCTSAdjust = !AppConfig->GetInt(TEXT("Video Encoding"), TEXT("DisableCTSAdjust"));
 
         fileOut.OutputDword(DWORD_BE(0x20));
         fileOut.OutputDword(DWORD_BE('ftyp'));
@@ -537,10 +534,7 @@ public:
                     output.Serialize(IFrameIDs.Array(), IFrameIDs.Num()*sizeof(UINT));
                   PopBox(); //stss
                   PushBox(output, DWORD_BE('ctts')); //list of composition time offsets
-                    if(bUseCTSAdjust)
-                        output.OutputDword(0); //version (0) and flags (none)
-                    else
-                        output.OutputDword(DWORD_BE(0x01000000)); //version (1) and flags (none)
+                    output.OutputDword(0); //version (0) and flags (none)
 
                     output.OutputDword(fastHtonl(compositionOffsets.Num()));
                     for(UINT i=0; i<compositionOffsets.Num(); i++)

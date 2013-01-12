@@ -509,8 +509,7 @@ class OBS
 
     DWORD totalStreamTime;
 
-    bool        bUseSyncFix;
-    List<UINT>  bufferedTimes;
+    List<UINT> bufferedTimes;
 
     bool bRecievedFirstAudioFrame;
 

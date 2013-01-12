@@ -1474,14 +1474,6 @@ void OBS::Start()
     String preset  = AppConfig->GetString(TEXT("Video Encoding"), TEXT("Preset"),     TEXT("veryfast"));
     bUsing444      = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Use444"),     0) != 0;
 
-    bUseSyncFix    = 0;//AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("UseSyncFix"), 0) != 0;
-
-    if(bUseSyncFix)
-    {
-        Log(TEXT("------------------------------------------"));
-        Log(TEXT("  Using audio/video sync fix"));
-    }
-
     //-------------------------------------------------------------
 
     bWriteToFile = networkMode == 1 || AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile")) != 0;
@@ -2076,6 +2068,7 @@ void OBS::MainCaptureLoop()
     QueryPerformanceFrequency(&clockFreq);
 
     firstSceneTimestamp = GetQPCTimeMS(clockFreq.QuadPart);
+    Log(TEXT("Starting desktop Time: %llu"), firstSceneTimestamp);
 
     bytesPerSec = 0;
     captureFPS = 0;
@@ -2128,8 +2121,6 @@ void OBS::MainCaptureLoop()
 
     List<HANDLE> completeEvents;
 
-    bUseSyncFix = false;
-
     if(bUseThreaded420)
     {
         for(int i=0; i<numThreads; i++)
@@ -2166,22 +2157,13 @@ void OBS::MainCaptureLoop()
         profileIn("frame");
 
         QWORD qwTime = GetQPCTimeMS(clockFreq.QuadPart);
+
+        Log(TEXT("Desktop Time: %llu"), qwTime);
+
         curStreamTime = qwTime-firstFrameTime;
         QWORD frameDelta = curStreamTime-lastStreamTime;
 
-        if(bUseSyncFix)
-        {
-            OSEnterMutex(hSoundDataMutex);
-            if(!pendingAudioFrames.Num())
-                bufferedTimes << 0;
-            else
-                bufferedTimes << UINT(pendingAudioFrames.Last().timestamp);
-            OSLeaveMutex(hSoundDataMutex);
-
-            ReleaseSemaphore(hRequestAudioEvent, 1, NULL);
-        }
-        else
-            bufferedTimes << UINT(curStreamTime);
+        bufferedTimes << UINT(curStreamTime);
 
         if(!bPushToTalkDown && pushToTalkTimeLeft > 0)
         {
@@ -2399,39 +2381,26 @@ void OBS::MainCaptureLoop()
         }
         else
         {
-            if(bUseSyncFix)
+            //audio sometimes takes a bit to start -- do not start processing frames until audio has started capturing
+            if(!bRecievedFirstAudioFrame)
+                bEncode = false;
+            else if(bFirstFrame)
             {
-                if(bufferedTimes.Num() < 2 || bufferedTimes[1] == 0)
-                {
-                    if(bufferedTimes.Num() > 1)
-                        bufferedTimes.Remove(0);
+                if(bufferedTimes.Num() > 1)
+                    bufferedTimes.RemoveRange(0, bufferedTimes.Num()-1);
+                lastStreamTime -= bufferedTimes[0];
+                firstFrameTime += bufferedTimes[0];
+                bufferedTimes[0] = 0;
 
-                    bEncode = false;
-                }
+                bFirstFrame = false;
             }
-            else
+
+            if(!bEncode)
             {
-                //audio sometimes takes a bit to start -- do not start processing frames until audio has started capturing
-                if(!bRecievedFirstAudioFrame)
-                    bEncode = false;
-                else if(bFirstFrame)
-                {
-                    if(bufferedTimes.Num() > 1)
-                        bufferedTimes.RemoveRange(0, bufferedTimes.Num()-1);
-                    lastStreamTime -= bufferedTimes[0];
-                    firstFrameTime += bufferedTimes[0];
-                    bufferedTimes[0] = 0;
-
-                    bFirstFrame = false;
-                }
-
-                if(!bEncode)
-                {
-                    if(curYUVTexture == (NUM_RENDER_BUFFERS-1))
-                        curYUVTexture = 0;
-                    else
-                        curYUVTexture++;
-                }
+                if(curYUVTexture == (NUM_RENDER_BUFFERS-1))
+                    curYUVTexture = 0;
+                else
+                    curYUVTexture++;
             }
         }
 
@@ -2507,25 +2476,6 @@ void OBS::MainCaptureLoop()
 
                     DWORD curTimeStamp = bufferedTimes[0];
                     DWORD curPTSVal = bufferedTimes[curPTS++];
-
-                    if(bUseSyncFix)
-                    {
-                        DWORD savedPTSVal = curPTSVal;
-
-                        if(curPTSVal != 0)
-                        {
-                            curPTSVal = lastPTSVal+frameTimeAdjust;
-                            if(curPTSVal < lastUnmodifiedPTSVal)
-                                curPTSVal = lastUnmodifiedPTSVal;
-
-                            bufferedTimes[curPTS-1] = curPTSVal;
-                        }
-
-                        lastUnmodifiedPTSVal = savedPTSVal;
-                        lastPTSVal = curPTSVal;
-
-                        //Log(TEXT("val: %u - adjusted: %u"), savedPTSVal, curPTSVal);
-                    }
 
                     picOut.i_pts = curPTSVal;
 
@@ -2656,8 +2606,7 @@ void OBS::MainCaptureLoop()
 
         //------------------------------------
         // get audio while sleeping or capturing
-        if(!bUseSyncFix)
-            ReleaseSemaphore(hRequestAudioEvent, 1, NULL);
+        ReleaseSemaphore(hRequestAudioEvent, 1, NULL);
 
         //------------------------------------
         // frame sync
@@ -3018,10 +2967,7 @@ void OBS::MainAudioLoop()
 
                 FrameAudio *frameAudio = pendingAudioFrames.CreateNew();
                 frameAudio->audioData.CopyArray(packet.lpPacket, packet.size);
-                if(bUseSyncFix)
-                    frameAudio->timestamp = DWORD(QWORD(curAudioFrame)*QWORD(GetAudioEncoder()->GetFrameSize())*10/441);
-                else
-                    frameAudio->timestamp = timestamp;
+                frameAudio->timestamp = timestamp;
 
                 /*DWORD calcTimestamp = DWORD(double(curAudioFrame)*double(GetAudioEncoder()->GetFrameSize())/44.1);
                 Log(TEXT("returned timestamp: %u, calculated timestamp: %u"), timestamp, calcTimestamp);*/

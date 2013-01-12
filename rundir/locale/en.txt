@@ -46,6 +46,7 @@ Listbox.Add         "Add $1"
 Listbox.Center      "Center"
 Listbox.Config      "Properties"
 Listbox.FitToScreen "Fit to screen"
+Listbox.Positioning "Position/Size"
 Listbox.ResetSize   "Reset Size"
 Listbox.SetHotkey   "Set Hotkey"
 

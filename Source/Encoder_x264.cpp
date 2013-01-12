@@ -67,7 +67,7 @@ class X264Encoder : public VideoEncoder
 
     bool bFirstFrameProcessed;
 
-    bool bUseCBR, bUseCTSAdjust;
+    bool bUseCBR;
 
     List<VideoPacket> CurrentPackets;
     List<BYTE> HeaderPacket;
@@ -141,7 +141,6 @@ public:
         //paramData.pf_log                = get_x264_log;
         //paramData.i_log_level           = X264_LOG_INFO;
 
-        bUseCTSAdjust = !AppConfig->GetInt(TEXT("Video Encoding"), TEXT("DisableCTSAdjust"));
         BOOL bUseCustomParams = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCustomSettings"));
         if(bUseCustomParams)
         {
@@ -225,7 +224,7 @@ public:
         INT64 ts = INT64(outputTimestamp);
         int timeOffset = int((picOut.i_pts+delayOffset)-ts);
 
-        if(bUseCTSAdjust)
+        //if(bUseVFR)
         {
             timeOffset += ctsOffset;
 
