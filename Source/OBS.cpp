@@ -708,7 +708,7 @@ OBS::OBS()
     SetWindowLongPtr(hwndTemp, GWLP_WNDPROC, (LONG_PTR)OBS::ListboxHook);
 
     //-----------------------------------------------------
-    // elements listbox
+    // elements listview
 
     hwndTemp = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL,
         WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|WS_VSCROLL|WS_CLIPSIBLINGS|LVS_REPORT|LVS_NOCOLUMNHEADER|
@@ -720,11 +720,13 @@ OBS::OBS()
     
     //add single column needed for report style
     LVCOLUMN column;    
-    column.mask = LVCF_TEXT | LVCF_WIDTH;
+    column.mask = LVCF_TEXT;
     column.fmt = LVCFMT_FIXED_WIDTH;
-    column.cx = listControlWidth - controlPadding * 3 ;
+    column.cx = 0;
     column.pszText = TEXT("");
+
     ListView_InsertColumn(hwndTemp, 0, &column);
+    ListView_InsertColumn(hwndTemp, 1, &column);
 
     listviewProc = (WNDPROC)GetWindowLongPtr(hwndTemp, GWLP_WNDPROC);
     SetWindowLongPtr(hwndTemp, GWLP_WNDPROC, (LONG_PTR)OBS::ListboxHook);

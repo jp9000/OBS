@@ -803,6 +803,11 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
     }
 
 
+    if(message == WM_SIZE && id == ID_SOURCES)
+    {
+        ListView_SetColumnWidth(hwnd, 0, LVSCW_AUTOSIZE_USEHEADER);
+        ListView_SetColumnWidth(hwnd, 1, LVSCW_AUTOSIZE_USEHEADER);
+    }
     if(id == ID_SOURCES)
     {
         return CallWindowProc(listviewProc, hwnd, message, wParam, lParam);
