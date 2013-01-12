@@ -127,13 +127,7 @@ class TextOutputSource : public ImageSource
                 strCurrentText = TEXT("");
                 AppWarning(TEXT("TextSource::UpdateTexture: could not open specified file (invalid file name or access violation)"));
             }
-
-            if(!strCurrentText.IsValid())
-            {
-                strCurrentText = TEXT("");
-                AppWarning(TEXT("TextSource::UpdateTexture: invalid string returned by ReadFileToString (is the file UTF-8 or compatible ?!)"));
-            }
-
+                        
             if (fileChangeMonitor = OSMonitorFileStart (strFile))
                 bMonitoringFileChanges = true;
         }
@@ -177,12 +171,21 @@ class TextOutputSource : public ImageSource
                     format.SetFormatFlags(Gdiplus::StringFormatFlagsMeasureTrailingSpaces);
 
                 Gdiplus::RectF rcf;
-                stat = graphics.MeasureString(strCurrentText, -1, &font, Gdiplus::PointF(0.0f, 0.0f), &format, &rcf);
-                if(stat != Gdiplus::Ok)
-                    AppWarning(TEXT("graphics.MeasureString failed: %u"), (int)stat);
 
-                textSize.cx = long(rcf.Width+EPSILON);
-                textSize.cy = long(rcf.Height+EPSILON);
+                if(!strCurrentText.IsEmpty())
+                {
+                    stat = graphics.MeasureString(strCurrentText, -1, &font, Gdiplus::PointF(0.0f, 0.0f), &format, &rcf);
+                    if(stat != Gdiplus::Ok)
+                        AppWarning(TEXT("graphics.MeasureString failed: %u"), (int)stat);
+
+                    textSize.cx = long(rcf.Width+EPSILON);
+                    textSize.cy = long(rcf.Height+EPSILON);
+                }
+                else
+                {
+                    textSize.cx = 32;
+                    textSize.cy = 32;
+                }
 
                 if(!textSize.cx || !textSize.cy)
                 {

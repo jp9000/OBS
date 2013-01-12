@@ -163,8 +163,10 @@ const float surroundMix = dbMinus3;
 const float centerMix   = dbMinus6;
 const float lowFreqMix  = dbMinus3;
 
-//const float attn5dot1 = 0.414213562373095f;
-const float attn5dot1 = 1 / (1 + centerMix + surroundMix);
+const float surroundMix4 = dbMinus6;
+
+const float attn5dot1 = 1.0f / (1.0f + centerMix + surroundMix);
+const float attn4dotX = 1.0f / (1.0f + surroundMix4);
 
 UINT AudioSource::QueryAudio(float curVolume)
 {
@@ -302,10 +304,14 @@ UINT AudioSource::QueryAudio(float curVolume)
                 {
                     float left      = inputTemp[0];
                     float right     = inputTemp[1];
-                    float rear      = (inputTemp[2]+inputTemp[3])*surroundMix;
+                    float rearLeft  = inputTemp[2]*surroundMix4;
+                    float rearRight = inputTemp[3]*surroundMix4;
 
-                    *(outputTemp++) = left  - rear;
-                    *(outputTemp++) = right + rear;
+                    // When in doubt, use only left and right .... and rear left and rear right :) 
+                    // Same idea as with 5.1 downmix
+
+                    *(outputTemp++) = (left  + rearLeft)  * attn4dotX;
+                    *(outputTemp++) = (right + rearRight) * attn4dotX;
 
                     inputTemp  += 4;
                 }
@@ -319,10 +325,12 @@ UINT AudioSource::QueryAudio(float curVolume)
                 {
                     float left      = inputTemp[0];
                     float right     = inputTemp[1];
-                    float lfe       = inputTemp[2]*lowFreqMix;
+                   
+                    // Drop LFE since we don't need it
+                    //float lfe       = inputTemp[2]*lowFreqMix;
 
-                    *(outputTemp++) = left  + lfe;
-                    *(outputTemp++) = right + lfe;
+                    *(outputTemp++) = left;
+                    *(outputTemp++) = right;
 
                     inputTemp  += 3;
                 }
@@ -336,11 +344,17 @@ UINT AudioSource::QueryAudio(float curVolume)
                 {
                     float left      = inputTemp[0];
                     float right     = inputTemp[1];
-                    float lfe       = inputTemp[2]*lowFreqMix;
-                    float rear      = (inputTemp[3]+inputTemp[4])*surroundMix;
 
-                    *(outputTemp++) = left  + lfe - rear;
-                    *(outputTemp++) = right + lfe + rear;
+                    // Skip LFE , we don't really need it.
+                    //float lfe       = inputTemp[2];
+
+                    float rearLeft  = inputTemp[3]*surroundMix4;
+                    float rearRight = inputTemp[4]*surroundMix4;
+
+                    // Same idea as with 5.1 downmix
+
+                    *(outputTemp++) = (left  + rearLeft)  * attn4dotX;
+                    *(outputTemp++) = (right + rearRight) * attn4dotX;
 
                     inputTemp  += 5;
                 }
@@ -354,11 +368,14 @@ UINT AudioSource::QueryAudio(float curVolume)
                 {
                     float left      = inputTemp[0];
                     float right     = inputTemp[1];
-                    float center    = inputTemp[2]*centerMix;
-                    float rear      = inputTemp[3]*(surroundMix*dbMinus3);
+                    float frontCenter    = inputTemp[2];
+                    float rearCenter     = inputTemp[3];
+                    
+                    // When in doubt, use only left and right :) Seriously.
+                    // THIS NEEDS TO BE PROPERLY IMPLEMENTED!
 
-                    *(outputTemp++) = left  + center - rear;
-                    *(outputTemp++) = right + center + rear;
+                    *(outputTemp++) = left;
+                    *(outputTemp++) = right;
 
                     inputTemp  += 4;
                 }
@@ -409,8 +426,11 @@ UINT AudioSource::QueryAudio(float curVolume)
                     inputTemp  += 6;
                 }
             }
-            //todo ------------------
-            //not sure if my 5.1/7.1 downmixes are correct
+
+            // According to http://msdn.microsoft.com/en-us/library/windows/hardware/ff537083(v=vs.85).aspx
+            // KSAUDIO_SPEAKER_7POINT1 is obsolete and no longer supported in Windows Vista and later versions of Windows
+            // Not sure what to do about it, meh , drop front left of center/front right of center -> 5.1 -> stereo; 
+
             else if(inputChannelMask == KSAUDIO_SPEAKER_7POINT1)
             {
                 UINT numFloats = numAudioFrames*8;
@@ -420,18 +440,28 @@ UINT AudioSource::QueryAudio(float curVolume)
                 {
                     float left          = inputTemp[0];
                     float right         = inputTemp[1];
-                    float center        = inputTemp[2]*(centerMix*dbMinus3);
-                    float lowFreq       = inputTemp[3]*lowFreqMix;
-                    float rear          = (inputTemp[4]+inputTemp[5])*surroundMix;
-                    float centerLeft    = inputTemp[6]*dbMinus6;
-                    float centerRight   = inputTemp[7]*dbMinus6;
+                    
+                    float center        = inputTemp[2] * centerMix;
+                    
+                    // Drop LFE since we don't need it
+                    //float lowFreq       = inputTemp[3]*lowFreqMix;
+                    
+                    float rearLeft      = inputTemp[4] * surroundMix;
+                    float rearRight     = inputTemp[5] * surroundMix;
 
-                    *(outputTemp++) = left  + centerLeft  + center + lowFreq - rear;
-                    *(outputTemp++) = right + centerRight + center + lowFreq + rear;
+                    // Drop SPEAKER_FRONT_LEFT_OF_CENTER , SPEAKER_FRONT_RIGHT_OF_CENTER
+                    //float centerLeft    = inputTemp[6];
+                    //float centerRight   = inputTemp[7];
+                    
+                    // Downmix from 5.1 to stereo
+                    *(outputTemp++) = (left  + center  + rearLeft)  * attn5dot1;
+                    *(outputTemp++) = (right + center  + rearRight) * attn5dot1;
 
                     inputTemp  += 8;
                 }
             }
+
+            // Downmix to 5.1 (easy stuff) then downmix to stereo as done in KSAUDIO_SPEAKER_5POINT1
             else if(inputChannelMask == KSAUDIO_SPEAKER_7POINT1_SURROUND)
             {
                 UINT numFloats = numAudioFrames*8;
@@ -441,14 +471,23 @@ UINT AudioSource::QueryAudio(float curVolume)
                 {
                     float left      = inputTemp[0];
                     float right     = inputTemp[1];
-                    float center    = inputTemp[2]*centerMix;
-                    float lowFreq   = inputTemp[3]*lowFreqMix;
-                    float rear      = (inputTemp[4]+inputTemp[5])*(surroundMix*dbMinus3);
-                    float sideLeft  = inputTemp[6]*dbMinus6;
-                    float sideRight = inputTemp[7]*dbMinus6;
+                    float center    = inputTemp[2] * centerMix;
 
-                    *(outputTemp++) = left  + sideLeft + center + lowFreq - rear;
-                    *(outputTemp++) = right + sideLeft + center + lowFreq + rear;
+                    // Skip LFE we don't need it
+                    //float lowFreq   = inputTemp[3]*lowFreqMix;
+
+                    float rearLeft  = inputTemp[4];
+                    float rearRight = inputTemp[5];
+                    float sideLeft  = inputTemp[6];
+                    float sideRight = inputTemp[7];
+
+                    // combine the rear/side channels first , baaam! 5.1
+                    rearLeft  = (rearLeft  + sideLeft)  * 0.5f;
+                    rearRight = (rearRight + sideRight) * 0.5f;
+                    
+                    // downmix to stereo as in 5.1 case
+                    *(outputTemp++) = (left  + center + rearLeft  * surroundMix) * attn5dot1;
+                    *(outputTemp++) = (right + center + rearRight * surroundMix) * attn5dot1;
 
                     inputTemp  += 8;
                 }
