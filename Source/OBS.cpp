@@ -2061,14 +2061,13 @@ void OBS::MainCaptureLoop()
 
     HANDLE hScaleVal = yuvScalePixelShader->GetParameterByName(TEXT("baseDimensionI"));
 
-    desktopAudio->StartCapture();
-    if(micAudio) micAudio->StartCapture();
-
     LARGE_INTEGER clockFreq;
     QueryPerformanceFrequency(&clockFreq);
 
-    firstSceneTimestamp = GetQPCTimeMS(clockFreq.QuadPart);
-    Log(TEXT("Starting desktop Time: %llu"), firstSceneTimestamp);
+    latestVideoTime = firstSceneTimestamp = GetQPCTimeMS(clockFreq.QuadPart);
+
+    desktopAudio->StartCapture();
+    if(micAudio) micAudio->StartCapture();
 
     bytesPerSec = 0;
     captureFPS = 0;
@@ -2157,8 +2156,7 @@ void OBS::MainCaptureLoop()
         profileIn("frame");
 
         QWORD qwTime = GetQPCTimeMS(clockFreq.QuadPart);
-
-        Log(TEXT("Desktop Time: %llu"), qwTime);
+        latestVideoTime = qwTime;
 
         curStreamTime = qwTime-firstFrameTime;
         QWORD frameDelta = curStreamTime-lastStreamTime;
@@ -3031,8 +3029,8 @@ void OBS::CheckSources()
 
     HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
 
-    int numSources = ListView_GetItemCount(hwndSources);
-    for(int i = 0; i < numSources; i++)
+    UINT numSources = ListView_GetItemCount(hwndSources);
+    for(UINT i = 0; i < numSources; i++)
     {
         bool checked = ListView_GetCheckState(hwndSources, i) > 0;
         XElement *source =sources->GetElementByID(i);

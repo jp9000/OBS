@@ -6,6 +6,8 @@ publish/
 Release/
 Debug/
 x64/
+installer/32bit
+installer/64bit
 
 *.aps
 *.suo

@@ -514,6 +514,7 @@ class OBS
     bool bRecievedFirstAudioFrame;
 
     QWORD firstSceneTimestamp;
+    QWORD latestVideoTime;
 
     //---------------------------------------------------
 
@@ -709,6 +710,7 @@ public:
     }
 
     inline QWORD GetAudioTime() const {return latestAudioTime;}
+    inline QWORD GetVideoTime() const {return latestVideoTime;}
 
     char* EncMetaData(char *enc, char *pend, bool bFLVFile=false);
 
