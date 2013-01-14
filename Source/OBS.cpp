@@ -17,6 +17,8 @@
 ********************************************************************************/
 
 
+//this file is seriously a mess.
+
 #include "Main.h"
 
 #include <Avrt.h>
@@ -2017,6 +2019,7 @@ bool OBS::BufferVideoData(const List<DataPacket> &inputPackets, const List<Packe
     return false;
 }
 
+//todo: this function is way too big
 void OBS::MainCaptureLoop()
 {
     int curRenderTarget = 0, curYUVTexture = 0, curCopyTexture = 0;
@@ -2058,6 +2061,8 @@ void OBS::MainCaptureLoop()
     }
 
     int curPTS = 0;
+
+    DWORD lastAudioTimestamp = 0;
 
     HANDLE hScaleVal = yuvScalePixelShader->GetParameterByName(TEXT("baseDimensionI"));
 
@@ -2514,10 +2519,9 @@ void OBS::MainCaptureLoop()
                         }
 
                         OSEnterMutex(hSoundDataMutex);
-    
+
                         if(pendingAudioFrames.Num())
                         {
-                            //Log(TEXT("pending frames %u, (in milliseconds): %u"), pendingAudioFrames.Num(), pendingAudioFrames.Last().timestamp-pendingAudioFrames[0].timestamp);
                             while(pendingAudioFrames.Num())
                             {
                                 if(firstFrameTime < pendingAudioFrames[0].timestamp)
@@ -2532,39 +2536,40 @@ void OBS::MainCaptureLoop()
                                     else
                                         audioTimestamp += curSegment.ctsOffset;
 
+                                    //stop sending audio packets when we reach an audio timestamp greater than the video timestamp
                                     if(audioTimestamp > curSegment.timestamp)
                                         break;
 
-                                    //Log(TEXT("audioTimestamp: %llu"), audioTimestamp);
-
-                                    List<BYTE> &audioData = pendingAudioFrames[0].audioData;
-
-                                    if(audioData.Num())
+                                    if(audioTimestamp == 0 || audioTimestamp > lastAudioTimestamp)
                                     {
-                                        network->SendPacket(audioData.Array(), audioData.Num(), audioTimestamp, PacketType_Audio);
-                                        if(fileStream)
-                                            fileStream->AddPacket(audioData.Array(), audioData.Num(), audioTimestamp, PacketType_Audio);
+                                        List<BYTE> &audioData = pendingAudioFrames[0].audioData;
+                                        if(audioData.Num())
+                                        {
+                                            //Log(TEXT("a:%u, %u"), audioTimestamp, firstFrameTime+audioTimestamp-curSegment.ctsOffset);
 
-                                        audioData.Clear();
+                                            network->SendPacket(audioData.Array(), audioData.Num(), audioTimestamp, PacketType_Audio);
+                                            if(fileStream)
+                                                fileStream->AddPacket(audioData.Array(), audioData.Num(), audioTimestamp, PacketType_Audio);
+
+                                            audioData.Clear();
+
+                                            lastAudioTimestamp = audioTimestamp;
+                                        }
                                     }
                                 }
-
-                                //Log(TEXT("audio packet timestamp: %llu, firstFrameTime: %llu"), pendingAudioFrames[0].timestamp, firstFrameTime);
 
                                 pendingAudioFrames[0].audioData.Clear();
                                 pendingAudioFrames.Remove(0);
                             }
                         }
 
-                        //Log(TEXT("videoTimestamp: %llu"), curSegment.timestamp);
-
-                        //Log(TEXT("no more audio to get"));
-
                         OSLeaveMutex(hSoundDataMutex);
 
                         for(UINT i=0; i<curSegment.packets.Num(); i++)
                         {
                             VideoPacketData &packet = curSegment.packets[i];
+
+                            //Log(TEXT("v:%u, %u"), curSegment.timestamp, firstFrameTime+curSegment.timestamp);
 
                             network->SendPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, packet.type);
                             if(fileStream)
@@ -2782,8 +2787,8 @@ void MixAudio(float *bufferDest, float *bufferSrc, UINT totalFloats, bool bForce
 
 void OBS::MainAudioLoop()
 {
-    DWORD taskID;
-    AvSetMmThreadCharacteristics(TEXT("Audio"), &taskID);
+    //DWORD taskID = 0;
+    //HANDLE hTask = AvSetMmThreadCharacteristics(TEXT("Pro Audio"), &taskID);
 
     bPushToTalkOn = false;
 
@@ -2890,7 +2895,7 @@ void OBS::MainAudioLoop()
             {
                 micMax = micMx;
             }
-            else 
+            else
             {
                 micMax = maxAlpha * micMx + (1.0f - maxAlpha) * micMax;
             }
@@ -2899,7 +2904,7 @@ void OBS::MainAudioLoop()
             {
                 desktopMax = desktopMx;
             }
-            else 
+            else
             {
                 desktopMax = maxAlpha * desktopMx + (1.0f - maxAlpha) * desktopMax;
             }

@@ -71,7 +71,7 @@ extern OBS          *App;
 extern TCHAR        lpAppDataPath[MAX_PATH];
 
 #define OBS_VERSION             0x000466
-#define OBS_VERSION_STRING_ANSI "Open Broadcaster Software v0.466a"
+#define OBS_VERSION_STRING_ANSI "Open Broadcaster Software v0.467a (zorgtest2)"
 #define OBS_VERSION_STRING      TEXT(OBS_VERSION_STRING_ANSI)
 #define OBS_TEST_BUILD          1 //define this if releasing a test build to disable the auto updater
 

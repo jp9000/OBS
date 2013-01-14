@@ -27,7 +27,7 @@ static const int minClientWidth  = 700;
 static const int minClientHeight = 200;
 
 
-#define OUTPUT_BUFFER_TIME 700
+#define OUTPUT_BUFFER_TIME 200
 
 
 struct AudioDeviceInfo
@@ -363,6 +363,7 @@ struct VideoSegment
 
 //----------------------------
 
+//todo: this class has become way too big
 class OBS
 {
     friend class Scene;
@@ -520,6 +521,7 @@ class OBS
 
     HANDLE  hSoundThread, hSoundDataMutex, hRequestAudioEvent;
     QWORD   latestAudioTime;
+
     float   desktopVol, micVol, curMicVol;
     float   desktopPeak, micPeak;
     float   desktopMax, micMax;
