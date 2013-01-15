@@ -75,8 +75,17 @@ union TripleToLong
     };
 };
 
-void AudioSource::InitAudioData()
+void AudioSource::InitAudioData(bool bFloat, UINT channels, UINT samplesPerSec, UINT bitsPerSample, UINT blockSize, DWORD channelMask)
 {
+    this->bFloat = bFloat;
+    inputChannels = channels;
+    inputSamplesPerSec = samplesPerSec;
+    inputBitsPerSample = bitsPerSample;
+    inputBlockSize = blockSize;
+    inputChannelMask = channelMask;
+
+    //-----------------------------
+
     if(inputSamplesPerSec != 44100)
     {
         int errVal;

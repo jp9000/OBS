@@ -479,6 +479,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Source\OBSCapture.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Source\OBSHotkeyHandlers.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Source\RTMPPublisher.cpp"
 				>
 			</File>

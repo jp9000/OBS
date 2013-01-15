@@ -521,6 +521,10 @@ struct ConfigDialogData
     }
 };
 
+void FillOutExceptionDevice(const GUID &guid, HWND hwndCombo, ConfigDialogData &info)
+{
+}
+
 void FillOutListOfVideoDevices(HWND hwndCombo, ConfigDialogData &info)
 {
     info.deviceIDList.Clear();

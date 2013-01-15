@@ -101,7 +101,6 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
         return false;
     }
 
-    this->timeOffset = timeOffset;
     bIsMic = bMic;
 
     if(bMic)
@@ -156,6 +155,13 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
         AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not get mix format from audio client = %08lX"), (BOOL)bMic, err);
         return false;
     }
+
+    bool  bFloat;
+    UINT  inputChannels;
+    UINT  inputSamplesPerSec;
+    UINT  inputBitsPerSample;
+    UINT  inputBlockSize;
+    DWORD inputChannelMask;
 
     //the internal audio engine should always use floats (or so I read), but I suppose just to be safe better check
     if(pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
@@ -212,7 +218,7 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
 
     //-----------------------------------------------------------------
 
-    InitAudioData();
+    InitAudioData(bFloat, inputChannels, inputSamplesPerSec, inputBitsPerSample, inputBlockSize, inputChannelMask);
 
     return true;
 }
@@ -260,13 +266,13 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
             if(inputBuffer.Num() == 0 && lastNumFramesRead == sampleWindowSize)
                 break;
 
-            qpcTimestamp -= inputBuffer.Num()/inputChannels*1000/inputSamplesPerSec;
-            inputBuffer.AppendArray(captureBuffer, lastNumFramesRead*inputChannels);
+            qpcTimestamp -= inputBuffer.Num()/GetChannelCount()*1000/GetSamplesPerSec();
+            inputBuffer.AppendArray(captureBuffer, lastNumFramesRead*GetChannelCount());
         }
         else
             return false;
 
-        if(inputBuffer.Num() >= sampleWindowSize*inputChannels)
+        if(inputBuffer.Num() >= sampleWindowSize*GetChannelCount())
         {
             captureBuffer = inputBuffer.Array();
             bNeedMoreFrames = false;
@@ -283,7 +289,7 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
     //half the time, they aren't valid.  just use desktop timing and let the user deal with
     //offsetting the time.
     if(bIsMic)
-        newTimestamp = App->GetAudioTime()+timeOffset;
+        newTimestamp = App->GetAudioTime()+GetTimeOffset();
     else
     {
         //we're doing all these checks because device timestamps are only reliable "sometimes"
@@ -299,13 +305,11 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
             {
                 lastVideoTime = App->GetVideoTime();
 
-                timeOffset += 10-int(lastVideoTime-App->GetSceneTimestamp());
+                SetTimeOffset(GetTimeOffset()-int(lastVideoTime-App->GetSceneTimestamp()));
                 bUseVideoTime = true;
 
-                lastUsedTimestamp = newTimestamp = lastVideoTime+timeOffset;
+                newTimestamp = lastVideoTime+GetTimeOffset();
             }
-            else
-                lastUsedTimestamp = newTimestamp;
 
             bFirstFrameReceived = true;
         }
@@ -318,13 +322,13 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
                 if(newVideoTime != lastVideoTime)
                 {
                     lastVideoTime = newVideoTime;
-                    newTimestamp = newVideoTime+timeOffset;
+                    newTimestamp = newVideoTime+GetTimeOffset();
                 }
                 else
                     newTimestamp += 10;
             }
             else
-                newTimestamp = qpcTimestamp+timeOffset;
+                newTimestamp = qpcTimestamp+GetTimeOffset();
         }
 
         App->latestAudioTime = newTimestamp;
@@ -343,7 +347,7 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
 void MMDeviceAudioSource::ReleaseBuffer()
 {
     if(inputBuffer.Num() != 0)
-        inputBuffer.RemoveRange(0, sampleWindowSize*inputChannels);
+        inputBuffer.RemoveRange(0, sampleWindowSize*GetChannelCount());
 
     mmCapture->ReleaseBuffer(lastNumFramesRead);
 }

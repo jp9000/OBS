@@ -789,7 +789,5 @@ inline QWORD GetQPCTimeMS(LONGLONG clockFreq)
     return timeVal;
 }
 
-ID3D10Blob* CompileShader(CTSTR lpShader, LPCSTR lpTarget);
-
 LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo);
 
