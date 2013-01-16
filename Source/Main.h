@@ -52,6 +52,16 @@
 
 
 //-------------------------------------------
+// x264..  guess I'll just hard-code it then.  sigh
+
+#include <inttypes.h>
+extern "C"
+{
+#include "../x264/x264.h"
+}
+
+
+//-------------------------------------------
 // API DLL
 
 #include "OBSApi.h"

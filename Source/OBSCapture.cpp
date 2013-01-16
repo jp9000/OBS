@@ -18,11 +18,6 @@
 
 
 #include "Main.h"
-#include <inttypes.h>
-extern "C"
-{
-#include "../x264/x264.h"
-}
 
 VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize);
 AudioEncoder* CreateMP3Encoder(UINT bitRate);
@@ -379,6 +374,8 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
+    bUseCFR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCFR"), 1) != 0;
+
     ctsOffset = 0;
     videoEncoder = CreateX264Encoder(fps, outputCX, outputCY, quality, preset, bUsing444, maxBitRate, bufferSize);
 
@@ -599,62 +596,6 @@ void OBS::Stop()
     bTestStream = false;
 }
 
-inline void CalculateVolumeLevels(float *buffer, int totalFloats, float mulVal, float &RMS, float &MAX)
-{
-    float sum = 0.0f;
-    int totalFloatsStore = totalFloats;
-
-    float Max = 0.0f;
-
-    if(App->SSE2Available() && (UPARAM(buffer) & 0xF) == 0)
-    {
-        UINT alignedFloats = totalFloats & 0xFFFFFFFC;
-        __m128 sseMulVal = _mm_set_ps1(mulVal);
-
-        for(UINT i=0; i<alignedFloats; i += 4)
-        {
-            __m128 sseScaledVals = _mm_mul_ps(_mm_load_ps(buffer+i), sseMulVal);
-
-            /*compute squares and add them to the sum*/
-            __m128 sseSquares = _mm_mul_ps(sseScaledVals, sseScaledVals);
-            sum += sseSquares.m128_f32[0] + sseSquares.m128_f32[1] + sseSquares.m128_f32[2] + sseSquares.m128_f32[3];
-
-            /* 
-                sse maximum of squared floats 
-                concept from: http://stackoverflow.com/questions/9795529/how-to-find-the-horizontal-maximum-in-a-256-bit-avx-vector
-            */
-            __m128 sseSquaresP = _mm_shuffle_ps(sseSquares, sseSquares, _MM_SHUFFLE(1, 0, 3, 2));
-            __m128 halfmax = _mm_max_ps(sseSquares, sseSquaresP);
-            __m128 halfmaxP = _mm_shuffle_ps(halfmax, halfmax, _MM_SHUFFLE(0,1,2,3));
-            __m128 maxs = _mm_max_ps(halfmax, halfmaxP);
-
-            Max = max(Max, maxs.m128_f32[0]);
-        }
-
-        buffer      += alignedFloats;
-        totalFloats -= alignedFloats;
-    }
-
-    for(int i=0; i<totalFloats; i++)
-    {
-        float val = buffer[i] * mulVal;
-        float pow2Val = val * val;
-        sum += pow2Val;
-        Max = max(Max, pow2Val);
-    }
-
-    RMS = sqrt(sum / totalFloatsStore);
-    MAX = sqrt(Max);
-}
-
-inline float toDB(float RMS)
-{
-    float db = 20.0f * log10(RMS);
-    if(!_finite(db))
-        return VOL_MIN;
-    return db;
-}
-
 DWORD STDCALL OBS::MainCaptureThread(LPVOID lpUnused)
 {
     App->MainCaptureLoop();
@@ -719,7 +660,9 @@ bool OBS::BufferVideoData(const List<DataPacket> &inputPackets, const List<Packe
     return false;
 }
 
-//todo: this function is way too big
+#define NUM_OUT_BUFFERS 3
+
+//todo: this function is way too big, this is just disgusting.  fix it
 void OBS::MainCaptureLoop()
 {
     int curRenderTarget = 0, curYUVTexture = 0, curCopyTexture = 0;
@@ -728,51 +671,70 @@ void OBS::MainCaptureLoop()
 
     bool bSentHeaders = false;
 
-    bufferedTimes.Clear();
-
     Vect2 baseSize    = Vect2(float(baseCX), float(baseCY));
     Vect2 outputSize  = Vect2(float(outputCX), float(outputCY));
     Vect2 scaleSize   = Vect2(float(scaleCX), float(scaleCY));
 
-    int numLongFrames = 0;
-    int numTotalFrames = 0;
+    HANDLE hScaleVal = yuvScalePixelShader->GetParameterByName(TEXT("baseDimensionI"));
 
     LPVOID nullBuff = NULL;
+
+    //----------------------------------------
+    // x264 input buffers
+
+    int curOutBuffer = 0;
+    x264_picture_t outPics[NUM_OUT_BUFFERS];
+
+    for(int i=0; i<NUM_OUT_BUFFERS; i++)
+        x264_picture_init(&outPics[i]);
+
+    if(bUsing444)
+    {
+        for(int i=0; i<NUM_OUT_BUFFERS; i++)
+        {
+            outPics[i].img.i_csp   = X264_CSP_BGRA; //although the x264 input says BGR, x264 actually will expect packed UYV
+            outPics[i].img.i_plane = 1;
+        }
+    }
+    else
+    {
+        for(int i=0; i<NUM_OUT_BUFFERS; i++)
+            x264_picture_alloc(&outPics[i], X264_CSP_I420, outputCX, outputCY);
+    }
+
+    //----------------------------------------
+    // time/timestamp stuff
+
+    bufferedTimes.Clear();
 
     DWORD streamTimeStart = OSGetTime();
     totalStreamTime = 0;
 
-    x264_picture_t outPics[2];
-    x264_picture_init(&outPics[0]);
-    x264_picture_init(&outPics[1]);
-
-    if(bUsing444)
-    {
-        outPics[0].img.i_csp   = X264_CSP_BGRA; //although the x264 input says BGR, x264 actually will expect packed UYV
-        outPics[0].img.i_plane = 1;
-
-        outPics[1].img.i_csp   = X264_CSP_BGRA;
-        outPics[1].img.i_plane = 1;
-    }
-    else
-    {
-        x264_picture_alloc(&outPics[0], X264_CSP_I420, outputCX, outputCY);
-        x264_picture_alloc(&outPics[1], X264_CSP_I420, outputCX, outputCY);
-    }
-
     int curPTS = 0;
-
     DWORD lastAudioTimestamp = 0;
-
-    HANDLE hScaleVal = yuvScalePixelShader->GetParameterByName(TEXT("baseDimensionI"));
 
     LARGE_INTEGER clockFreq;
     QueryPerformanceFrequency(&clockFreq);
 
     latestVideoTime = firstSceneTimestamp = GetQPCTimeMS(clockFreq.QuadPart);
 
+    DWORD fpsTimeNumerator = 1000-(frameTime*fps);
+    DWORD fpsTimeDenominator = fps;
+    DWORD fpsTimeAdjust = 0;
+
+    //----------------------------------------
+    // start audio capture streams
+
     desktopAudio->StartCapture();
     if(micAudio) micAudio->StartCapture();
+
+    //----------------------------------------
+    // status bar/statistics stuff
+
+    DWORD fpsCounter = 0;
+
+    int numLongFrames = 0;
+    int numTotalFrames = 0;
 
     bytesPerSec = 0;
     captureFPS = 0;
@@ -784,8 +746,10 @@ void OBS::MainCaptureLoop()
     DWORD lastFramesDropped = 0;
     float bpsTime = 0.0f;
     double lastStrain = 0.0f;
-
     DWORD numSecondsWaited = 0;
+
+    //----------------------------------------
+    // 444->420 thread data
 
     int numThreads = MAX(OSGetTotalCores()-2, 1);
     HANDLE *h420Threads = (HANDLE*)Allocate(sizeof(HANDLE)*numThreads);
@@ -812,12 +776,6 @@ void OBS::MainCaptureLoop()
             convertInfo[i].endY = ((outputCY/numThreads)*(i+1)) & 0xFFFFFFFE;
     }
 
-    DWORD fpsTimeNumerator = 1000-(frameTime*fps);
-    DWORD fpsTimeDenominator = fps;
-    DWORD fpsTimeAdjust = 0;
-
-    DWORD fpsCounter = 0;
-
     bool bFirstFrame = true;
     bool bFirstImage = true;
     bool bFirst420Encode = true;
@@ -833,6 +791,8 @@ void OBS::MainCaptureLoop()
             completeEvents << convertInfo[i].hSignalComplete;
         }
     }
+
+    //----------------------------------------
 
     QWORD curStreamTime = 0, lastStreamTime, firstFrameTime = GetQPCTimeMS(clockFreq.QuadPart);
     lastStreamTime = 0;
@@ -1132,7 +1092,14 @@ void OBS::MainCaptureLoop()
                 List<DataPacket> videoPackets;
                 List<PacketType> videoPacketTypes;
 
-                x264_picture_t &picOut = outPics[prevCopyTexture];
+                int prevOutBuffer = (curOutBuffer == 0) ? NUM_OUT_BUFFERS-1 : curOutBuffer-1;
+                int nextOutBuffer = (curOutBuffer == NUM_OUT_BUFFERS-1) ? 0 : curOutBuffer+1;
+
+                x264_picture_t &prevPicOut = outPics[prevOutBuffer];
+                x264_picture_t &picOut = outPics[curOutBuffer];
+                x264_picture_t &nextPicOut = outPics[nextOutBuffer];
+
+                curOutBuffer = nextOutBuffer;
 
                 if(!bUsing444)
                 {
@@ -1140,15 +1107,13 @@ void OBS::MainCaptureLoop()
 
                     if(bUseThreaded420)
                     {
-                        x264_picture_t &newPicOut = outPics[curCopyTexture];
-
                         for(int i=0; i<numThreads; i++)
                         {
                             convertInfo[i].input     = (LPBYTE)map.pData;
                             convertInfo[i].pitch     = map.RowPitch;
-                            convertInfo[i].output[0] = newPicOut.img.plane[0];
-                            convertInfo[i].output[1] = newPicOut.img.plane[1];
-                            convertInfo[i].output[2] = newPicOut.img.plane[2];
+                            convertInfo[i].output[0] = nextPicOut.img.plane[0];
+                            convertInfo[i].output[1] = nextPicOut.img.plane[1];
+                            convertInfo[i].output[2] = nextPicOut.img.plane[2];
                             SetEvent(convertInfo[i].hSignalConvert);
                         }
 
@@ -1374,6 +1339,62 @@ void OBS::MainCaptureLoop()
 }
 
 #define INVALID_LL 0xFFFFFFFFFFFFFFFFLL
+
+inline void CalculateVolumeLevels(float *buffer, int totalFloats, float mulVal, float &RMS, float &MAX)
+{
+    float sum = 0.0f;
+    int totalFloatsStore = totalFloats;
+
+    float Max = 0.0f;
+
+    if(App->SSE2Available() && (UPARAM(buffer) & 0xF) == 0)
+    {
+        UINT alignedFloats = totalFloats & 0xFFFFFFFC;
+        __m128 sseMulVal = _mm_set_ps1(mulVal);
+
+        for(UINT i=0; i<alignedFloats; i += 4)
+        {
+            __m128 sseScaledVals = _mm_mul_ps(_mm_load_ps(buffer+i), sseMulVal);
+
+            /*compute squares and add them to the sum*/
+            __m128 sseSquares = _mm_mul_ps(sseScaledVals, sseScaledVals);
+            sum += sseSquares.m128_f32[0] + sseSquares.m128_f32[1] + sseSquares.m128_f32[2] + sseSquares.m128_f32[3];
+
+            /* 
+                sse maximum of squared floats 
+                concept from: http://stackoverflow.com/questions/9795529/how-to-find-the-horizontal-maximum-in-a-256-bit-avx-vector
+            */
+            __m128 sseSquaresP = _mm_shuffle_ps(sseSquares, sseSquares, _MM_SHUFFLE(1, 0, 3, 2));
+            __m128 halfmax = _mm_max_ps(sseSquares, sseSquaresP);
+            __m128 halfmaxP = _mm_shuffle_ps(halfmax, halfmax, _MM_SHUFFLE(0,1,2,3));
+            __m128 maxs = _mm_max_ps(halfmax, halfmaxP);
+
+            Max = max(Max, maxs.m128_f32[0]);
+        }
+
+        buffer      += alignedFloats;
+        totalFloats -= alignedFloats;
+    }
+
+    for(int i=0; i<totalFloats; i++)
+    {
+        float val = buffer[i] * mulVal;
+        float pow2Val = val * val;
+        sum += pow2Val;
+        Max = max(Max, pow2Val);
+    }
+
+    RMS = sqrt(sum / totalFloatsStore);
+    MAX = sqrt(Max);
+}
+
+inline float toDB(float RMS)
+{
+    float db = 20.0f * log10(RMS);
+    if(!_finite(db))
+        return VOL_MIN;
+    return db;
+}
 
 bool OBS::QueryNewAudio(QWORD &timestamp)
 {

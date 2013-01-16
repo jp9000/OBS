@@ -434,6 +434,9 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     String strURL       = AppConfig->GetString(TEXT("Publish"), TEXT("URL"));
     String strPlayPath  = AppConfig->GetString(TEXT("Publish"), TEXT("PlayPath"));
 
+    strURL.KillSpaces();
+    strPlayPath.KillSpaces();
+
     LPSTR lpAnsiURL = NULL, lpAnsiPlaypath = NULL;
     RTMP *rtmp = NULL;
 

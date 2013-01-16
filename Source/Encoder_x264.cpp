@@ -67,7 +67,7 @@ class X264Encoder : public VideoEncoder
 
     bool bFirstFrameProcessed;
 
-    bool bUseCBR;
+    bool bUseCBR, bUseCFR;
 
     List<VideoPacket> CurrentPackets;
     List<BYTE> HeaderPacket;
@@ -106,6 +106,7 @@ public:
         //paramData.i_threads             = 4;
 
         bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR")) != 0;
+        bUseCFR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCFR"), 1) != 0;
 
         if(bUseCBR)
         {
@@ -124,13 +125,11 @@ public:
             paramData.rc.f_rf_constant      = baseCRF+float(10-quality);
         }
 
-        paramData.b_vfr_input           = 1;
-        paramData.i_keyint_max          = fps*4;      //keyframe every 4 sec, should make this an option
+        paramData.b_vfr_input           = !bUseCFR;
         paramData.i_width               = width;
         paramData.i_height              = height;
-        paramData.vui.b_fullrange       = 0;          //specify full range input levels
-        //paramData.i_frame_reference     = 1;
-        //paramData.b_in
+        //paramData.vui.b_fullrange       = 0;          //specify full range input levels
+        //paramData.i_keyint_max          = fps*4;      //keyframe every 4 sec, should make this an option
 
         paramData.i_fps_num = fps;
         paramData.i_fps_den = 1;
@@ -167,14 +166,28 @@ public:
                     {
                         continue;
                     }
+                    else if(strParamName.CompareI(TEXT("preset")))
+                    {
+                        LPSTR lpVal = strParamVal.CreateUTF8String();
+                        x264_param_default_preset(&paramData, lpVal, NULL);
+                        Free(lpVal);
+                    }
+                    else if(strParamName.CompareI(TEXT("tune")))
+                    {
+                        LPSTR lpVal = strParamVal.CreateUTF8String();
+                        x264_param_default_preset(&paramData, NULL, lpVal);
+                        Free(lpVal);
+                    }
+                    else
+                    {
+                        LPSTR lpParam = strParamName.CreateUTF8String();
+                        LPSTR lpVal   = strParamVal.CreateUTF8String();
 
-                    LPSTR lpParam = strParamName.CreateUTF8String();
-                    LPSTR lpVal   = strParamVal.CreateUTF8String();
+                        x264_param_parse(&paramData, lpParam, lpVal);
 
-                    x264_param_parse(&paramData, lpParam, lpVal);
-
-                    Free(lpParam);
-                    Free(lpVal);
+                        Free(lpParam);
+                        Free(lpVal);
+                    }
                 }
             }
         }

@@ -2022,6 +2022,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 RECT client;
                 GetClientRect(hwnd, &client);
 
+                //todo: bSizeChanging = false never gets set because this never gets called when maximizing
                 App->ResizeWindow(true);
                 App->bSizeChanging = false;
 

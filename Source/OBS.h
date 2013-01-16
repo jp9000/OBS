@@ -517,6 +517,8 @@ class OBS
     QWORD firstSceneTimestamp;
     QWORD latestVideoTime;
 
+    bool bUseCFR;
+
     //---------------------------------------------------
 
     HANDLE  hSoundThread, hSoundDataMutex, hRequestAudioEvent;
@@ -635,12 +637,13 @@ class OBS
     void Start();
     void Stop();
 
-    void MainCaptureLoop();
     static DWORD STDCALL MainCaptureThread(LPVOID lpUnused);
+    static DWORD STDCALL MainAudioThread(LPVOID lpUnused);
+
+    void MainCaptureLoop();
 
     bool QueryNewAudio(QWORD &timestamp);
     void MainAudioLoop();
-    static DWORD STDCALL MainAudioThread(LPVOID lpUnused);
 
     static void STDCALL StartStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL StopStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
