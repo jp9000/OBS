@@ -246,6 +246,9 @@ bool OBS::SetScene(CTSTR lpScene)
     //-------------------------
 
     HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
+
+    SendMessage(hwndSources, WM_SETREDRAW, (WPARAM)FALSE, (LPARAM) 0);
+
     bChangingSources = true;
     ListView_DeleteAllItems(hwndSources);
     
@@ -269,7 +272,9 @@ bool OBS::SetScene(CTSTR lpScene)
         }
     }
     bChangingSources = false;
-
+    SendMessage(hwndSources, WM_SETREDRAW, (WPARAM)TRUE, (LPARAM) 0);
+    RedrawWindow(hwndSources, NULL, NULL, RDW_ERASE | RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN);
+    
     if(scene && newScene->HasMissingSources())
         MessageBox(hwndMain, Str("Scene.MissingSources"), NULL, 0);
 
