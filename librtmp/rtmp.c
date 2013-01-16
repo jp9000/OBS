@@ -978,7 +978,7 @@ add_addr_info(struct sockaddr_in *service, AVal *host, int port)
         struct hostent *host = gethostbyname(hostname);
         if (host == NULL || host->h_addr == NULL)
         {
-            RTMP_Log(RTMP_LOGERROR, "Problem accessing the DNS. (addr: %s)", hostname);
+            RTMP_Log(RTMP_LOGERROR, "Problem accessing the DNS. (addr: %s, error: %d)", hostname, GetSockError());
             ret = FALSE;
             goto finish;
         }

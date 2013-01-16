@@ -21,9 +21,9 @@
 #include "RTMPStuff.h"
 #include "RTMPPublisher.h"
 
+String RTMPPublisher::strRTMPErrors;
 
 //QWORD totalCalls = 0, totalTime = 0;
-
 
 void rtmp_log_output(int level, const char *format, va_list vl)
 {
@@ -35,6 +35,29 @@ void rtmp_log_output(int level, const char *format, va_list vl)
     Log(TEXT("%S\r\n"), lpTemp);
 
     Free(lpTemp);
+}
+
+void RTMPPublisher::librtmpErrorCallback(int level, const char *format, va_list vl)
+{
+    char ansiStr[1024];
+    TCHAR logStr[1024];
+
+    if (level > RTMP_LOGERROR)
+        return;
+
+    vsnprintf(ansiStr, sizeof(ansiStr)-1, format, vl);
+    ansiStr[sizeof(ansiStr)-1] = 0;
+
+    MultiByteToWideChar(CP_UTF8, 0, ansiStr, -1, logStr, _countof(logStr)-1);
+
+    Log (TEXT("librtmp error: %s"), logStr);
+
+    strRTMPErrors << logStr << TEXT("\n");
+}
+
+String RTMPPublisher::GetRTMPErrors()
+{
+    return strRTMPErrors;
 }
 
 RTMPPublisher::RTMPPublisher()
@@ -62,6 +85,8 @@ RTMPPublisher::RTMPPublisher()
     if(dropThreshold < 50)        dropThreshold = 50;
     else if(dropThreshold > 1000) dropThreshold = 1000;
     dropThreshold += bufferTime;
+
+    strRTMPErrors.Clear();
 }
 
 bool RTMPPublisher::Init(RTMP *rtmpIn, UINT tcpBufferSize, BOOL bUseSendBuffer, UINT sendBufferSize)
@@ -204,6 +229,7 @@ RTMPPublisher::~RTMPPublisher()
     /*if(totalCalls)
         Log(TEXT("average send time: %u"), totalTime/totalCalls);*/
 
+    strRTMPErrors.Clear();
     //--------------------------
 }
 
@@ -462,8 +488,10 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
 
     rtmp = RTMP_Alloc();
     RTMP_Init(rtmp);
-    /*RTMP_LogSetCallback(rtmp_log_output);
-    RTMP_LogSetLevel(RTMP_LOGDEBUG2);*/
+
+    RTMP_LogSetCallback(librtmpErrorCallback);
+
+    //RTMP_LogSetLevel(RTMP_LOGERROR);
 
     lpAnsiURL = strURL.CreateUTF8String();
     lpAnsiPlaypath = strPlayPath.CreateUTF8String();
@@ -525,6 +553,7 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     if(!RTMP_Connect(rtmp, NULL))
     {
         failReason = Str("Connection.CouldNotConnect");
+        failReason << TEXT("\r\n\r\n") << RTMPPublisher::GetRTMPErrors();
         bCanRetry = true;
         goto end;
     }

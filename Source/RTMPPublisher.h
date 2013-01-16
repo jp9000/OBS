@@ -60,6 +60,11 @@ class RTMPPublisher : public NetworkStream
     int FlushSendBuffer();
     static int BufferedSend(RTMPSockBuf *sb, const char *buf, int len, RTMPPublisher *network);
 
+    static String strRTMPErrors;
+
+    static void librtmpErrorCallback(int level, const char *format, va_list vl);
+    static String GetRTMPErrors();
+
 protected:
     RTMP *rtmp;
 
