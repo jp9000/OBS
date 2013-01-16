@@ -741,6 +741,8 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                         {
                             ListView_SetItemText(hwnd, curSel, 0, strName.Array());
                             selectedElement->SetName(strName);
+                            ListView_SetColumnWidth(hwnd, 0, LVSCW_AUTOSIZE_USEHEADER);
+                            ListView_SetColumnWidth(hwnd, 1, LVSCW_AUTOSIZE_USEHEADER);
                         }
 
                         App->EnableSceneSwitching(true);
@@ -802,12 +804,6 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
         return 0;
     }
 
-
-    if(message == WM_SIZE && id == ID_SOURCES)
-    {
-        ListView_SetColumnWidth(hwnd, 0, LVSCW_AUTOSIZE_USEHEADER);
-        ListView_SetColumnWidth(hwnd, 1, LVSCW_AUTOSIZE_USEHEADER);
-    }
     if(id == ID_SOURCES)
     {
         return CallWindowProc(listviewProc, hwnd, message, wParam, lParam);
@@ -881,6 +877,8 @@ void OBS::DeleteItems()
                 }
                 App->bChangingSources = true;
                 ListView_DeleteItem(hwndSources, id);
+                ListView_SetColumnWidth(hwndSources, 0, LVSCW_AUTOSIZE_USEHEADER);
+                ListView_SetColumnWidth(hwndSources, 1, LVSCW_AUTOSIZE_USEHEADER);
                 App->bChangingSources = false;
             }
 
