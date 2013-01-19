@@ -1204,7 +1204,7 @@ INT_PTR CALLBACK OBS::VideoSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                 int topFPS = bUnlockFPS ? 120 : 60;
 
                 hwndTemp = GetDlgItem(hwnd, IDC_FPS);
-                SendMessage(hwndTemp, UDM_SETRANGE32, 10, topFPS);
+                SendMessage(hwndTemp, UDM_SETRANGE32, 1, topFPS);
 
                 int fps = AppConfig->GetInt(TEXT("Video"), TEXT("FPS"), 30);
                 if(!AppConfig->HasKey(TEXT("Video"), TEXT("FPS")))
@@ -1212,10 +1212,10 @@ INT_PTR CALLBACK OBS::VideoSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                     AppConfig->SetInt(TEXT("Video"), TEXT("FPS"), 30);
                     fps = 30;
                 }
-                else if(fps < 10)
+                else if(fps < 1)
                 {
                     AppConfig->SetInt(TEXT("Video"), TEXT("FPS"), 10);
-                    fps = 10;
+                    fps = 1;
                 }
                 else if(fps > topFPS)
                 {
@@ -1434,12 +1434,12 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                 //--------------------------------------------
 
                 int micTimeOffset = AppConfig->GetInt(TEXT("Audio"), TEXT("MicTimeOffset"), 0);
-                if(micTimeOffset < -150)
-                    micTimeOffset = -150;
+                if(micTimeOffset < -50)
+                    micTimeOffset = -50;
                 else if(micTimeOffset > 3000)
                     micTimeOffset = 3000;
 
-                SendMessage(GetDlgItem(hwnd, IDC_MICTIMEOFFSET), UDM_SETRANGE32, -150, 3000);
+                SendMessage(GetDlgItem(hwnd, IDC_MICTIMEOFFSET), UDM_SETRANGE32, -50, 3000);
                 SendMessage(GetDlgItem(hwnd, IDC_MICTIMEOFFSET), UDM_SETPOS32, 0, micTimeOffset);
 
                 //--------------------------------------------
@@ -2043,8 +2043,8 @@ void OBS::ApplySettings()
                 //------------------------------------
 
                 int micTimeOffset = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_MICTIMEOFFSET), UDM_GETPOS32, 0, 0);
-                if(micTimeOffset < -150)
-                    micTimeOffset = -150;
+                if(micTimeOffset < -50)
+                    micTimeOffset = -50;
                 else if(micTimeOffset > 3000)
                     micTimeOffset = 3000;
                 AppConfig->SetInt(TEXT("Audio"), TEXT("MicTimeOffset"), micTimeOffset);

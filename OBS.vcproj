@@ -487,6 +487,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Source\OBSVideoCapture.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Source\RTMPPublisher.cpp"
 				>
 			</File>

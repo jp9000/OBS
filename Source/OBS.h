@@ -27,7 +27,7 @@ static const int minClientWidth  = 700;
 static const int minClientHeight = 200;
 
 
-#define OUTPUT_BUFFER_TIME 200
+#define OUTPUT_BUFFER_TIME 100
 
 
 struct AudioDeviceInfo
@@ -363,7 +363,9 @@ struct VideoSegment
 
 //----------------------------
 
-//todo: this class has become way too big
+struct FrameProcessInfo;
+
+//todo: this class has become way too big, it's horrible, and I should be ashamed of myself
 class OBS
 {
     friend class Scene;
@@ -393,17 +395,21 @@ class OBS
     Shader  *solidVertexShader, *solidPixelShader;
 
     //---------------------------------------------------
-    // network
+
     NetworkStream *network;
 
     //---------------------------------------------------
-    // audio
+    // audio sources/encoder
+
     AudioSource  *desktopAudio;
     AudioSource  *micAudio;
+    List<AudioSource*> auxAudioSources;
+
     AudioEncoder *audioEncoder;
 
     //---------------------------------------------------
-    // video
+    // scene/encoder
+
     Scene                   *scene;
     VideoEncoder            *videoEncoder;
     HDC                     hCaptureDC;
@@ -431,6 +437,7 @@ class OBS
 
     //---------------------------------------------------
     // settings window
+
     int     curSettingsSelection;
     HWND    hwndSettings;
     HWND    hwndCurrentSettings;
@@ -453,6 +460,7 @@ class OBS
     static INT_PTR CALLBACK AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
     //---------------------------------------------------
+    // mainly manly main window stuff
 
     String  strLanguage;
     bool    bTestStream;
@@ -486,6 +494,7 @@ class OBS
     bool    bSSE2Available;
 
     //---------------------------------------------------
+    // resolution/fps/downscale/etc settings
 
     int     lastRenderTarget;
     UINT    baseCX,   baseCY;
@@ -493,33 +502,48 @@ class OBS
     UINT    outputCX, outputCY;
     float   downscale;
     UINT    frameTime, fps;
-    HANDLE  hMainThread;
-    HANDLE  hSceneMutex;
     bool    bUsing444;
 
     //---------------------------------------------------
+    // stats
 
     int ctsOffset;
     DWORD bytesPerSec;
     DWORD captureFPS;
     DWORD curFramesDropped;
+    DWORD totalStreamTime;
     double curStrain;
 
+    //---------------------------------------------------
+    // main capture loop stuff
+
+    HANDLE  hMainThread;
+    HANDLE  hSceneMutex;
+
     List<VideoSegment> bufferedVideo;
-    bool BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, VideoSegment &segmentOut);
 
-    DWORD totalStreamTime;
-
+    int curPTS;
     List<UINT> bufferedTimes;
 
-    bool bRecievedFirstAudioFrame;
+    bool bRecievedFirstAudioFrame, bSentHeaders, bFirstAudioPacket;
+
+    DWORD lastAudioTimestamp;
 
     QWORD firstSceneTimestamp;
     QWORD latestVideoTime;
-
+    
     bool bUseCFR;
 
+    bool bWriteToFile;
+    VideoFileStream *fileStream;
+
+    static DWORD STDCALL MainCaptureThread(LPVOID lpUnused);
+    bool BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, VideoSegment &segmentOut);
+    bool ProcessFrame(FrameProcessInfo &frameInfo);
+    void MainCaptureLoop();
+
     //---------------------------------------------------
+    // main audio capture loop stuff
 
     HANDLE  hSoundThread, hSoundDataMutex, hRequestAudioEvent;
     QWORD   latestAudioTime;
@@ -533,9 +557,9 @@ class OBS
     float   micBoost;
 
     HANDLE hAuxAudioMutex;
-    List<AudioSource*> auxAudioSources;
 
     //---------------------------------------------------
+    // hotkey stuff
 
     HANDLE hHotkeyMutex;
     HANDLE hHotkeyThread;
@@ -551,12 +575,12 @@ class OBS
 
     bool bStartStreamHotkeyDown, bStopStreamHotkeyDown;
 
-    //---------------------------------------------------
+    static DWORD STDCALL MainAudioThread(LPVOID lpUnused);
+    bool QueryNewAudio(QWORD &timestamp);
+    void MainAudioLoop();
 
-    bool bWriteToFile;
-    VideoFileStream *fileStream;
-
     //---------------------------------------------------
+    // random bla-haa
 
     String  streamReport;
 
@@ -636,14 +660,6 @@ class OBS
 
     void Start();
     void Stop();
-
-    static DWORD STDCALL MainCaptureThread(LPVOID lpUnused);
-    static DWORD STDCALL MainAudioThread(LPVOID lpUnused);
-
-    void MainCaptureLoop();
-
-    bool QueryNewAudio(QWORD &timestamp);
-    void MainAudioLoop();
 
     static void STDCALL StartStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL StopStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
