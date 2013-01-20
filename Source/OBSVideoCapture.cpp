@@ -199,6 +199,27 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
     return bProcessedFrame;
 }
 
+
+void STDCALL SleepTo(LONGLONG clockFreq, QWORD qw100NSTime)
+{
+    QWORD t = GetQPCTime100NS(clockFreq);
+
+    unsigned int milliseconds = (unsigned int)((qw100NSTime - t)/10000);
+    if (milliseconds > 1) //also accounts for windows 8 sleep problem
+        Sleep(--milliseconds);
+
+    for (;;)
+    {
+        t = GetQPCTime100NS(clockFreq);
+        if (t >= qw100NSTime)
+            return;
+        Sleep(0);
+    }
+}
+
+
+#define USE_100NS_TIME 1
+
 //todo: this function is way too big, this is just disgusting.  fix it
 void OBS::MainCaptureLoop()
 {
@@ -244,16 +265,24 @@ void OBS::MainCaptureLoop()
     //----------------------------------------
     // time/timestamp stuff
 
+    LARGE_INTEGER clockFreq;
+    QueryPerformanceFrequency(&clockFreq);
+
     bufferedTimes.Clear();
 
+#ifdef USE_100NS_TIME
+    QWORD streamTimeStart = GetQPCTime100NS(clockFreq.QuadPart);
+    QWORD frameTime100ns = 10000000/fps;
+
+    QWORD sleepTargetTime = 0;
+    bool bWasLaggedFrame = false;
+#else
     DWORD streamTimeStart = OSGetTime();
+#endif
     totalStreamTime = 0;
 
     curPTS = 0;
     lastAudioTimestamp = 0;
-
-    LARGE_INTEGER clockFreq;
-    QueryPerformanceFrequency(&clockFreq);
 
     latestVideoTime = firstSceneTimestamp = GetQPCTimeMS(clockFreq.QuadPart);
 
@@ -288,7 +317,11 @@ void OBS::MainCaptureLoop()
 
     QWORD lastBytesSent[3] = {0, 0, 0};
     DWORD lastFramesDropped = 0;
+#ifdef USE_100NS_TIME
+    double bpsTime = 0.0;
+#else
     float bpsTime = 0.0f;
+#endif
     double lastStrain = 0.0f;
     DWORD numSecondsWaited = 0;
 
@@ -345,11 +378,14 @@ void OBS::MainCaptureLoop()
 
     while(bRunning)
     {
-        //todo: test
         QueryPerformanceFrequency(&clockFreq);
 
+#ifdef USE_100NS_TIME
+        QWORD renderStartTime = GetQPCTime100NS(clockFreq.QuadPart);
+        if(sleepTargetTime == 0 || bWasLaggedFrame)
+            sleepTargetTime = renderStartTime;
+#else
         DWORD renderStartTime = OSGetTime();
-
         totalStreamTime = renderStartTime-streamTimeStart;
 
         DWORD frameTimeAdjust = frameTime;
@@ -359,16 +395,33 @@ void OBS::MainCaptureLoop()
             fpsTimeAdjust -= fpsTimeDenominator;
             ++frameTimeAdjust;
         }
+#endif
 
         bool bRenderView = !IsIconic(hwndMain) && bRenderViewEnabled;
 
         profileIn("frame");
 
-        QWORD qwTime = GetQPCTimeMS(clockFreq.QuadPart);
+#ifdef USE_100NS_TIME
+        QWORD qwTime = renderStartTime/10000;
         latestVideoTime = qwTime;
 
+        QWORD frameDelta = renderStartTime-lastStreamTime;
+        double fSeconds = double(frameDelta)*0.0000001;
+
+        //Log(TEXT("frameDelta: %f"), fSeconds);
+
+        lastStreamTime = renderStartTime;
+#else
+        QWORD qwTime = GetQPCTime100NS(clockFreq.QuadPart)/10000;
+        latestVideoTime = qwTime;
+
+        QWORD frameDelta = qwTime-lastStreamTime;
+        float fSeconds = float(frameDelta)*0.001f;
+
+        lastStreamTime = qwTime;
+#endif
+
         curStreamTime = qwTime-firstFrameTime;
-        QWORD frameDelta = curStreamTime-lastStreamTime;
 
         bufferedTimes << UINT(curStreamTime);
 
@@ -382,9 +435,6 @@ void OBS::MainCaptureLoop()
                 bPushToTalkOn = false;
             }
         }
-
-        float fSeconds = float(frameDelta)*0.001f;
-        lastStreamTime = curStreamTime;
 
         //------------------------------------
 
@@ -408,10 +458,10 @@ void OBS::MainCaptureLoop()
 
             profileOut;
 
-            scene->Tick(fSeconds);
+            scene->Tick(float(fSeconds));
 
             for(UINT i=0; i<globalSources.Num(); i++)
-                globalSources[i].source->Tick(fSeconds);
+                globalSources[i].source->Tick(float(fSeconds));
         }
 
         //------------------------------------
@@ -428,7 +478,11 @@ void OBS::MainCaptureLoop()
 
             //bytesPerSec = DWORD(curBytesSent - lastBytesSent);
             bytesPerSec = DWORD(curBytesSent - lastBytesSent[0]) / numSecondsWaited;
-            bpsTime = 0.0f;
+
+            if(bpsTime > 2.0)
+                bpsTime = 0.0f;
+            else
+                bpsTime -= 1.0;
 
             if(numSecondsWaited == 3)
             {
@@ -494,7 +548,7 @@ void OBS::MainCaptureLoop()
         if(bTransitioning)
         {
             EnableBlending(TRUE);
-            transitionAlpha += fSeconds*5.0f;
+            transitionAlpha += float(fSeconds)*5.0f;
             if(transitionAlpha > 1.0f)
                 transitionAlpha = 1.0f;
         }
@@ -777,18 +831,27 @@ void OBS::MainCaptureLoop()
         //------------------------------------
         // frame sync
 
+#ifdef USE_100NS_TIME
+        QWORD renderStopTime = GetQPCTime100NS(clockFreq.QuadPart);
+        sleepTargetTime += frameTime100ns;
+
+        if(bWasLaggedFrame = (sleepTargetTime <= renderStopTime))
+            numLongFrames++;
+        else
+            SleepTo(clockFreq.QuadPart, sleepTargetTime);
+#else
         DWORD renderStopTime = OSGetTime();
         DWORD totalTime = renderStopTime-renderStartTime;
 
-        //OSDebugOut(TEXT("Frame adjust time: %d, "), frameTimeAdjust-totalTime);
-
         if(totalTime > frameTimeAdjust)
             numLongFrames++;
+        else if(totalTime < frameTimeAdjust)
+            OSSleep(frameTimeAdjust-totalTime);
+#endif
+
+        //OSDebugOut(TEXT("Frame adjust time: %d, "), frameTimeAdjust-totalTime);
 
         numTotalFrames++;
-
-        if(totalTime < frameTimeAdjust)
-            OSSleep(frameTimeAdjust-totalTime);
     }
 
     if(!bUsing444)

@@ -798,15 +798,5 @@ public:
     virtual void AddSourceItem(LPWSTR name, bool checked, UINT index);
 };
 
-inline QWORD GetQPCTimeMS(LONGLONG clockFreq)
-{
-    LARGE_INTEGER currentTime;
-    QueryPerformanceCounter(&currentTime);
-
-    QWORD timeVal = 1000 * currentTime.QuadPart / clockFreq;
-
-    return timeVal;
-}
-
 LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo);
 

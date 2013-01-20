@@ -465,7 +465,7 @@ void   STDCALL OSCloseMutex(HANDLE hMutex)
 }
 
 
-void   STDCALL OSSubMillisecondSleep(float fMSeconds)
+void   STDCALL OSSleepSubMillisecond(double fMSeconds)
 {
     int intPart;
 
@@ -478,20 +478,20 @@ void   STDCALL OSSubMillisecondSleep(float fMSeconds)
     fMSeconds -= intPart;
 
     LARGE_INTEGER t1, t2;
-    float fElapsedTime;
+    double fElapsedTime;
 
     QueryPerformanceCounter(&t1);
     for (;;)
     {
         QueryPerformanceCounter(&t2);
-        fElapsedTime = (t2.QuadPart - t1.QuadPart) * 1000.0f / clockFreq.QuadPart;
+        fElapsedTime = (t2.QuadPart - t1.QuadPart) * 1000.0 / clockFreq.QuadPart;
         if (fElapsedTime >= fMSeconds)
             return;
         Sleep(0);
     }
 }
 
-void   STDCALL OSMicrosecondSleep(QWORD qwMicroseconds)
+void   STDCALL OSSleepMicrosecond(QWORD qwMicroseconds)
 {
     unsigned int milliseconds = (unsigned int)(qwMicroseconds/1000);
     if(bWindows8 && milliseconds >= 2)
@@ -510,6 +510,30 @@ void   STDCALL OSMicrosecondSleep(QWORD qwMicroseconds)
         QueryPerformanceCounter(&t2);
         qwElapsedTime = (t2.QuadPart - t1.QuadPart) * 1000000 / clockFreq.QuadPart;
         if (qwElapsedTime >= qwMicroseconds)
+            return;
+        Sleep(0);
+    }
+}
+
+void   STDCALL OSSleep100NS(QWORD qw100NSTime)
+{
+    unsigned int milliseconds = (unsigned int)(qw100NSTime/10000);
+    if(bWindows8 && milliseconds >= 2)
+        milliseconds--;
+    if (milliseconds > 0)
+        Sleep(milliseconds);
+
+    qw100NSTime -= milliseconds*10000;
+
+    LARGE_INTEGER t1, t2;
+    QWORD qwElapsedTime;
+
+    QueryPerformanceCounter(&t1);
+    for (;;)
+    {
+        QueryPerformanceCounter(&t2);
+        qwElapsedTime = (t2.QuadPart - t1.QuadPart) * 10000000 / clockFreq.QuadPart;
+        if (qwElapsedTime >= qw100NSTime)
             return;
         Sleep(0);
     }
