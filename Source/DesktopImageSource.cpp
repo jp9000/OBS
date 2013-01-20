@@ -670,6 +670,7 @@ void SetDesktopCaptureType(HWND hwnd, UINT type)
 
     EnableWindow(GetDlgItem(hwnd, IDC_WINDOW),      type == 1);
     EnableWindow(GetDlgItem(hwnd, IDC_REFRESH),     type == 1);
+    EnableWindow(GetDlgItem(hwnd, IDC_SETRES),      type == 1);
     EnableWindow(GetDlgItem(hwnd, IDC_OUTERWINDOW), type == 1);
     EnableWindow(GetDlgItem(hwnd, IDC_INNERWINDOW), type == 1);
 }
@@ -1468,7 +1469,18 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 case IDC_INNERWINDOW:
                     SelectTargetWindow(hwnd);
                     break;
+                case IDC_SETRES:
+                    {
+                        String strVal;
+                        strVal.SetLength(GetWindowTextLength(GetDlgItem(hwnd, IDC_SIZEX)));
+                        GetWindowText(GetDlgItem(hwnd, IDC_SIZEX), strVal, strVal.Length()+1);
+                        AppConfig->SetInt(TEXT("Video"), TEXT("BaseWidth"), strVal.ToInt());
 
+                        strVal.SetLength(GetWindowTextLength(GetDlgItem(hwnd, IDC_SIZEY)));
+                        GetWindowText(GetDlgItem(hwnd, IDC_SIZEY), strVal, strVal.Length()+1);
+                        AppConfig->SetInt(TEXT("Video"), TEXT("BaseHeight"), strVal.ToInt());
+                        break;
+                    }
                 case IDC_REFRESH:
                     {
                         ConfigDesktopSourceInfo *info = (ConfigDesktopSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);

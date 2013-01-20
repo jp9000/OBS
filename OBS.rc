@@ -211,9 +211,10 @@ BEGIN
     COMBOBOX        IDC_WINDOW,107,66,197,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Sources.SoftwareCaptureSource.Refresh",IDC_REFRESH,310,65,62,14
     CONTROL         "Sources.SoftwareCaptureSource.InnerWindow",IDC_INNERWINDOW,
-                    "Button",BS_AUTORADIOBUTTON,106,83,266,10
+                    "Button",BS_AUTORADIOBUTTON,106,83,204,10
     CONTROL         "Sources.SoftwareCaptureSource.EntireWindow",IDC_OUTERWINDOW,
-                    "Button",BS_AUTORADIOBUTTON,106,95,266,10
+                    "Button",BS_AUTORADIOBUTTON,106,95,204,10
+    PUSHBUTTON      "Sources.SoftwareCaptureSource.SetResolution", IDC_SETRES, 310, 82, 62, 14
     CONTROL         "Sources.SoftwareCaptureSource.MouseCapture",IDC_CAPTUREMOUSE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,113,283,10
     CONTROL         "Sources.SoftwareCaptureSource.CaptureLayered",IDC_CAPTURELAYERED,
