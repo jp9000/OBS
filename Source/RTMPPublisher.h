@@ -57,7 +57,6 @@ class RTMPPublisher : public NetworkStream
 
     void BeginPublishingInternal();
 
-    int FlushSendBuffer();
     static int BufferedSend(RTMPSockBuf *sb, const char *buf, int len, RTMPPublisher *network);
 
     static String strRTMPErrors;
@@ -89,10 +88,6 @@ protected:
     UINT numPFramesDumped;
     UINT numBFramesDumped;
 
-    BOOL bUseSendBuffer;
-    List<BYTE> sendBuffer;
-    int curSendBufferLen;
-
     DWORD numVideoPacketsBuffered;
     DWORD firstBufferedVideoFrameTimestamp;
 
@@ -100,6 +95,9 @@ protected:
     int dataBufferSize;
 
     int curDataBufferLen;
+
+    BOOL bLowLatencyMode;
+    int latencyFactor;
 
     void SendLoop();
     void SocketLoop();
@@ -114,7 +112,7 @@ protected:
 
 public:
     RTMPPublisher();
-    bool Init(RTMP *rtmpIn, UINT tcpBufferSize, BOOL bUseSendBuffer, UINT sendBufferSize);
+    bool Init(RTMP *rtmpIn, UINT tcpBufferSize);
     ~RTMPPublisher();
 
     void SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type);
