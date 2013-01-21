@@ -731,6 +731,8 @@ OBS::OBS()
     listviewProc = (WNDPROC)GetWindowLongPtr(hwndTemp, GWLP_WNDPROC);
     SetWindowLongPtr(hwndTemp, GWLP_WNDPROC, (LONG_PTR)OBS::ListboxHook);
 
+    HWND hwndSources = hwndTemp;
+
     //-----------------------------------------------------
     // status control
 
@@ -905,6 +907,11 @@ OBS::OBS()
 
     ResizeWindow(false);
     ShowWindow(hwndMain, SW_SHOW);
+
+    // make sure sources listview column widths are as expected after obs window is shown
+
+    ListView_SetColumnWidth(hwndSources,0,LVSCW_AUTOSIZE_USEHEADER);
+    ListView_SetColumnWidth(hwndSources,1,LVSCW_AUTOSIZE_USEHEADER);
 
     //-----------------------------------------------------
 
