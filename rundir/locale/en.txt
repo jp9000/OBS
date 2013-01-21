@@ -214,6 +214,7 @@ Sources.SoftwareCaptureSource.RegionWindowText      "Press Enter, Esc, or click 
 Sources.SoftwareCaptureSource.Select                "Select"
 Sources.SoftwareCaptureSource.SelectRegion          "Select Region"
 Sources.SoftwareCaptureSource.SelectRegionTooltip   "When selecting a region, move by clicking and dragging, or resize the rectangle by clicking the edges."
+Sources.SoftwareCaptureSource.SetResolution         "Set Resolution"
 Sources.SoftwareCaptureSource.Similarity            "Similarity (1-100):"
 Sources.SoftwareCaptureSource.Size                  "Size:"
 Sources.SoftwareCaptureSource.SpillReduction        "Spill Reduction:"
