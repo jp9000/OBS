@@ -19,6 +19,10 @@
 
 #include "DShowPlugin.h"
 
+//todo: 1500 line file.  this is another one of those abominations.
+//fix it jim
+
+
 extern "C" __declspec(dllexport) bool LoadPlugin();
 extern "C" __declspec(dllexport) void UnloadPlugin();
 extern "C" __declspec(dllexport) CTSTR GetPluginName();
@@ -100,8 +104,58 @@ bool CurrentDeviceExists(CTSTR lpDevice, bool bGlobal, bool &isGlobal)
     return false;
 }
 
+IBaseFilter* GetExceptionDevice(CTSTR lpGUID)
+{
+    String strGUID = lpGUID;
+    if(strGUID.Length() != 38)
+        return NULL;
+
+    strGUID = strGUID.Mid(1, strGUID.Length()-1);
+
+    StringList GUIDData;
+    strGUID.GetTokenList(GUIDData, '-', FALSE);
+
+    if (GUIDData.Num() != 5)
+        return NULL;
+
+    if (GUIDData[0].Length() != 8  ||
+        GUIDData[1].Length() != 4  ||
+        GUIDData[2].Length() != 4  ||
+        GUIDData[3].Length() != 4  ||
+        GUIDData[4].Length() != 12 )
+    {
+        return NULL;
+    }
+
+    GUID targetGUID;
+    targetGUID.Data1 = (UINT)tstring_base_to_uint(GUIDData[0], NULL, 16);
+    targetGUID.Data2 = (WORD)tstring_base_to_uint(GUIDData[1], NULL, 16);
+    targetGUID.Data3 = (WORD)tstring_base_to_uint(GUIDData[2], NULL, 16);
+    targetGUID.Data4[0] = (BYTE)tstring_base_to_uint(GUIDData[3].Left(2), NULL, 16);
+    targetGUID.Data4[1] = (BYTE)tstring_base_to_uint(GUIDData[3].Right(2), NULL, 16);
+    targetGUID.Data4[2] = (BYTE)tstring_base_to_uint(GUIDData[4].Left(2), NULL, 16);
+    targetGUID.Data4[3] = (BYTE)tstring_base_to_uint(GUIDData[4].Mid(2, 4), NULL, 16);
+    targetGUID.Data4[4] = (BYTE)tstring_base_to_uint(GUIDData[4].Mid(4, 6), NULL, 16);
+    targetGUID.Data4[5] = (BYTE)tstring_base_to_uint(GUIDData[4].Mid(6, 8), NULL, 16);
+    targetGUID.Data4[6] = (BYTE)tstring_base_to_uint(GUIDData[4].Mid(8, 10), NULL, 16);
+    targetGUID.Data4[7] = (BYTE)tstring_base_to_uint(GUIDData[4].Right(2), NULL, 16);
+
+    IBaseFilter *filter;
+    if(SUCCEEDED(CoCreateInstance(targetGUID, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter, (void**)&filter)))
+        return filter;
+
+    return NULL;
+}
+
 IBaseFilter* GetDeviceByValue(WSTR lpType, CTSTR lpName, WSTR lpType2, CTSTR lpName2)
 {
+    //---------------------------------
+    // exception devices
+    if(scmpi(lpType2, TEXT("DevicePath")) == 0 && lpName && *lpName == '{')
+        return GetExceptionDevice(lpName2);
+
+    //---------------------------------
+
     ICreateDevEnum *deviceEnum;
     IEnumMoniker *videoDeviceEnum;
 
@@ -525,10 +579,33 @@ void FillOutExceptionDevice(const GUID &guid, HWND hwndCombo, ConfigDialogData &
 {
 }
 
+
+#define DEV_EXCEPTION_COUNT 1
+CTSTR lpExceptionNames[DEV_EXCEPTION_COUNT] = {TEXT("Elgato Game Capture HD")};
+CTSTR lpExceptionGUIDs[DEV_EXCEPTION_COUNT] = {TEXT("{39F50F4C-99E1-464a-B6F9-D605B4FB5918}")};
+
 void FillOutListOfVideoDevices(HWND hwndCombo, ConfigDialogData &info)
 {
     info.deviceIDList.Clear();
     SendMessage(hwndCombo, CB_RESETCONTENT, 0, 0);
+
+    //------------------------------------------
+
+    for(int i=0; i<DEV_EXCEPTION_COUNT; i++)
+    {
+        IBaseFilter *exceptionFilter = GetExceptionDevice(lpExceptionGUIDs[i]);
+        if(exceptionFilter)
+        {
+            info.deviceNameList << lpExceptionNames[i];
+            info.deviceIDList   << lpExceptionGUIDs[i];
+
+            SendMessage(hwndCombo, CB_ADDSTRING, 0, (LPARAM)lpExceptionNames[i]);
+
+            exceptionFilter->Release();
+        }
+    }
+
+    //------------------------------------------
 
     ICreateDevEnum *deviceEnum;
     IEnumMoniker *videoDeviceEnum;
@@ -553,6 +630,8 @@ void FillOutListOfVideoDevices(HWND hwndCombo, ConfigDialogData &info)
 
     if(err == S_FALSE) //no devices
         return;
+
+    //------------------------------------------
 
     IMoniker *deviceInfo;
     DWORD count;

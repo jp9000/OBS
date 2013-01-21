@@ -220,7 +220,8 @@ void STDCALL SleepTo(LONGLONG clockFreq, QWORD qw100NSTime)
 
 #define USE_100NS_TIME 1
 
-//todo: this function is way too big, this is just disgusting.  fix it
+//todo: this function is an abomination, this is just disgusting.  fix it.
+//...seriously, this is really, really horrible.  I mean this is amazingly bad.
 void OBS::MainCaptureLoop()
 {
     int curRenderTarget = 0, curYUVTexture = 0, curCopyTexture = 0;
