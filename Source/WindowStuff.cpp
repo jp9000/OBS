@@ -711,8 +711,18 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                                     App->scene->AddImageSource(newSourceElement);
                                     App->LeaveSceneMutex();
                                 }
-                                
+
                                 UINT numSources = sources->NumElements();
+
+                                // clear selection/focus for all items before adding the new item
+                                UINT itemState;
+                                for(int i = 0; i<numSources; i++)
+                                {
+                                    itemState = ListView_GetItemState(hwnd, i, LVIS_SELECTED);
+                                    if(itemState & LVIS_SELECTED || itemState & LVIS_FOCUSED)
+                                        ListView_SetItemState(hwnd , i , 0, LVIS_SELECTED|LVIS_FOCUSED);
+                                }
+
                                 ListView_SetItemCount(hwnd, numSources);
                                 
                                 App->bChangingSources = true;
@@ -720,7 +730,10 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                                 App->bChangingSources = false;
 
                                 SetFocus(hwnd);
-                                ListView_SetItemState(hwnd, numSources - 1, LVIS_SELECTED, LVIS_SELECTED);
+                                
+                                // make sure the added item is visible and selected/focused
+                                ListView_EnsureVisible(hwnd, numSources - 1, false);
+                                ListView_SetItemState(hwnd, numSources - 1, LVIS_SELECTED|LVIS_FOCUSED, LVIS_SELECTED|LVIS_FOCUSED);
                             }
                         }
 
