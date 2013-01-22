@@ -19,7 +19,7 @@
 
 #include "DShowPlugin.h"
 
-//todo: 1500 line file.  this is another one of those abominations.
+//todo: 1700 line file.  this is another one of those abominations.
 //fix it jim
 
 
@@ -151,7 +151,7 @@ IBaseFilter* GetDeviceByValue(WSTR lpType, CTSTR lpName, WSTR lpType2, CTSTR lpN
 {
     //---------------------------------
     // exception devices
-    if(scmpi(lpType2, TEXT("DevicePath")) == 0 && lpName && *lpName == '{')
+    if(scmpi(lpType2, L"DevicePath") == 0 && lpName2 && *lpName2 == '{')
         return GetExceptionDevice(lpName2);
 
     //---------------------------------
@@ -316,13 +316,73 @@ IPin* GetOutputPin(IBaseFilter *filter)
     return foundPin;
 }
 
+void AddOutput(AM_MEDIA_TYPE *pMT, BYTE *capsData, List<MediaOutputInfo> &outputInfoList)
+{
+    VideoOutputType type = GetVideoOutputType(*pMT);
+
+    if(pMT->formattype == FORMAT_VideoInfo || pMT->formattype == FORMAT_VideoInfo2)
+    {
+        VIDEO_STREAM_CONFIG_CAPS *pVSCC = reinterpret_cast<VIDEO_STREAM_CONFIG_CAPS*>(capsData);
+        VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pMT->pbFormat);
+        BITMAPINFOHEADER *bmiHeader = GetVideoBMIHeader(pMT);
+
+        bool bUsingFourCC = false;
+        if(type == VideoOutputType_None)
+        {
+            type = GetVideoOutputTypeFromFourCC(bmiHeader->biCompression);
+            bUsingFourCC = true;
+        }
+
+        if(type != VideoOutputType_None)
+        {
+            MediaOutputInfo *outputInfo = outputInfoList.CreateNew();
+
+            if(pVSCC)
+            {
+                outputInfo->minFrameInterval = pVSCC->MinFrameInterval;
+                outputInfo->maxFrameInterval = pVSCC->MaxFrameInterval;
+                outputInfo->minCX = pVSCC->MinOutputSize.cx;
+                outputInfo->maxCX = pVSCC->MaxOutputSize.cx;
+                outputInfo->minCY = pVSCC->MinOutputSize.cy;
+                outputInfo->maxCY = pVSCC->MaxOutputSize.cy;
+
+                //actually due to the other code in GetResolutionFPSInfo, we can have this granularity
+                // back to the way it was.  now, even if it's corrupted, it will always work
+                outputInfo->xGranularity = max(pVSCC->OutputGranularityX, 1);
+                outputInfo->yGranularity = max(pVSCC->OutputGranularityY, 1);
+            }
+            else
+            {
+                outputInfo->minCX = outputInfo->maxCX = bmiHeader->biWidth;
+                outputInfo->minCY = outputInfo->maxCY = bmiHeader->biHeight;
+                if(pVih->AvgTimePerFrame != 0)
+                    outputInfo->minFrameInterval = outputInfo->maxFrameInterval = pVih->AvgTimePerFrame;
+                else
+                    outputInfo->minFrameInterval = outputInfo->maxFrameInterval = 10000000/30; //elgato hack
+
+                outputInfo->xGranularity = outputInfo->yGranularity = 1;
+            }
+
+            outputInfo->mediaType = pMT;
+            outputInfo->videoType = type;
+            outputInfo->bUsingFourCC = bUsingFourCC;
+
+            return;
+        }
+    }
+
+    DeleteMediaType(pMT);
+}
+
 void GetOutputList(IPin *curPin, List<MediaOutputInfo> &outputInfoList)
 {
+    HRESULT hRes;
+
     IAMStreamConfig *config;
     if(SUCCEEDED(curPin->QueryInterface(IID_IAMStreamConfig, (void**)&config)))
     {
         int count, size;
-        if(SUCCEEDED(config->GetNumberOfCapabilities(&count, &size)))
+        if(SUCCEEDED(hRes = config->GetNumberOfCapabilities(&count, &size)))
         {
             BYTE *capsData = (BYTE*)Allocate(size);
 
@@ -331,62 +391,24 @@ void GetOutputList(IPin *curPin, List<MediaOutputInfo> &outputInfoList)
             {
                 AM_MEDIA_TYPE *pMT;
                 if(SUCCEEDED(config->GetStreamCaps(i, &pMT, capsData)))
-                {
-                     VideoOutputType type = GetVideoOutputType(*pMT);
-
-                    if(pMT->formattype == FORMAT_VideoInfo)
-                    {
-                        VIDEO_STREAM_CONFIG_CAPS *pVSCC = reinterpret_cast<VIDEO_STREAM_CONFIG_CAPS*>(capsData);
-                        VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pMT->pbFormat);
-
-                        bool bUsingFourCC = false;
-                        if(type == VideoOutputType_None)
-                        {
-                            type = GetVideoOutputTypeFromFourCC(pVih->bmiHeader.biCompression);
-                            bUsingFourCC = true;
-                        }
-
-                        if(type != VideoOutputType_None)
-                        {
-                            MediaOutputInfo *outputInfo = outputInfoList.CreateNew();
-                            outputInfo->mediaType = pMT;
-                            outputInfo->videoType = type;
-                            outputInfo->minFrameInterval = pVSCC->MinFrameInterval;
-                            outputInfo->maxFrameInterval = pVSCC->MaxFrameInterval;
-                            outputInfo->minCX = pVSCC->MinOutputSize.cx;
-                            outputInfo->maxCX = pVSCC->MaxOutputSize.cx;
-                            outputInfo->minCY = pVSCC->MinOutputSize.cy;
-                            outputInfo->maxCY = pVSCC->MaxOutputSize.cy;
-                            outputInfo->bUsingFourCC = bUsingFourCC;
-
-                            //actually due to the other code in GetResolutionFPSInfo, we can have this granularity
-                            // back to the way it was.  now, even if it's corrupted, it will always work
-                            outputInfo->xGranularity = max(pVSCC->OutputGranularityX, 1);
-                            outputInfo->yGranularity = max(pVSCC->OutputGranularityY, 1);
-                        }
-                        else
-                        {
-                            FreeMediaType(*pMT);
-                            CoTaskMemFree(pMT);
-                        }
-                    }
-                    else if(pMT->formattype == FORMAT_WaveFormatEx)
-                    {
-                        AUDIO_STREAM_CONFIG_CAPS *pASCC = reinterpret_cast<AUDIO_STREAM_CONFIG_CAPS*>(capsData);
-                        WAVEFORMATEX *pWfx = reinterpret_cast<WAVEFORMATEX*>(pMT->pbFormat);
-
-                        FreeMediaType(*pMT);
-                        CoTaskMemFree(pMT);
-                    }
-                    else
-                    {
-                        FreeMediaType(*pMT);
-                        CoTaskMemFree(pMT);
-                    }
-                }
+                    AddOutput(pMT, capsData, outputInfoList);
             }
 
             Free(capsData);
+        }
+        else if(hRes == E_NOTIMPL) //...usually elgato.
+        {
+            IEnumMediaTypes *mediaTypes;
+            if(SUCCEEDED(curPin->EnumMediaTypes(&mediaTypes)))
+            {
+                ULONG i;
+
+                AM_MEDIA_TYPE *pMT;
+                if(mediaTypes->Next(1, &pMT, &i) == S_OK)
+                    AddOutput(pMT, NULL, outputInfoList);
+
+                mediaTypes->Release();
+            }
         }
 
         SafeRelease(config);
@@ -574,10 +596,6 @@ struct ConfigDialogData
         return fpsInfo.supportedIntervals.Num() != 0;
     }
 };
-
-void FillOutExceptionDevice(const GUID &guid, HWND hwndCombo, ConfigDialogData &info)
-{
-}
 
 
 #define DEV_EXCEPTION_COUNT 1
@@ -832,6 +850,13 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 SendMessage(hwndFlip, BM_SETCHECK, bFlipVertical ? BST_CHECKED : BST_UNCHECKED, 0);
                 SendMessage(hwndFlipHorizontal, BM_SETCHECK, bFlipHorizontal ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                //------------------------------------------
+
+                HWND hwndNoBuffering = GetDlgItem(hwnd, IDC_NOBUFFERING);
+
+                bool bNoBuffering = configData->data->GetInt(TEXT("noBuffering")) != 0;
+                SendMessage(hwndNoBuffering, BM_SETCHECK, bNoBuffering ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 //------------------------------------------
 
@@ -1521,6 +1546,11 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         int soundTimeOffset = (int)SendMessage(GetDlgItem(hwnd, IDC_TIMEOFFSET), UDM_GETPOS32, 0, 0);
                         configData->data->SetInt(TEXT("soundTimeOffset"), soundTimeOffset);
+
+                        //------------------------------------------
+
+                        BOOL bNoBuffering = SendMessage(GetDlgItem(hwnd, IDC_NOBUFFERING), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        configData->data->SetInt(TEXT("noBuffering"), bNoBuffering);
 
                         //------------------------------------------
 

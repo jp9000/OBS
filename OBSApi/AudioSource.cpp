@@ -562,9 +562,9 @@ UINT AudioSource::QueryAudio(float curVolume)
             QWORD difVal = GetQWDif(newTimestamp, lastUsedTimestamp);
             if(difVal > 70)
             {
-                Log(TEXT("----------------------------1\r\nlastUsedTimestamp before: %llu"), lastUsedTimestamp);
+                //Log(TEXT("----------------------------1\r\nlastUsedTimestamp before: %llu"), lastUsedTimestamp);
                 lastUsedTimestamp = newTimestamp;
-                Log(TEXT("lastUsedTimestamp after: %llu"), lastUsedTimestamp);
+                //Log(TEXT("lastUsedTimestamp after: %llu"), lastUsedTimestamp);
             }
 
             if(lastUsedTimestamp > lastSentTimestamp)
@@ -593,9 +593,9 @@ UINT AudioSource::QueryAudio(float curVolume)
                 QWORD difVal = GetQWDif(newTimestamp, lastUsedTimestamp);
                 if(difVal > 70)
                 {
-                    Log(TEXT("----------------------------2\r\nlastUsedTimestamp before: %llu"), lastUsedTimestamp);
+                    //Log(TEXT("----------------------------2\r\nlastUsedTimestamp before: %llu"), lastUsedTimestamp);
                     lastUsedTimestamp = newTimestamp - (QWORD(storedFrames)/2*1000/44100);
-                    Log(TEXT("lastUsedTimestamp after: %llu"), lastUsedTimestamp);
+                    //Log(TEXT("lastUsedTimestamp after: %llu"), lastUsedTimestamp);
                 }
 
                 //------------------------

@@ -123,6 +123,38 @@ const float yuvMat[16] = { 0.257f,  0.504f,  0.098f, 0.0625f,
                            0.439f, -0.368f, -0.071f, 0.50f,
                            0.0f,    0.0f,    0.0f,   1.0f};
 
+void DeviceSource::SetAudioInfo(AM_MEDIA_TYPE *audioMediaType, GUID &expectedAudioType)
+{
+    expectedAudioType = audioMediaType->subtype;
+
+    if(audioMediaType->formattype == FORMAT_WaveFormatEx)
+    {
+        WAVEFORMATEX *pFormat = reinterpret_cast<WAVEFORMATEX*>(audioMediaType->pbFormat);
+        mcpy(&audioFormat, pFormat, sizeof(audioFormat));
+
+        Log(TEXT("    device audio info - bits per sample: %u, channels: %u, samples per sec: %u, block size: %u"),
+            audioFormat.wBitsPerSample, audioFormat.nChannels, audioFormat.nSamplesPerSec, audioFormat.nBlockAlign);
+
+        //avoid local resampling if possible
+        /*if(pFormat->nSamplesPerSec != 44100)
+        {
+            pFormat->nSamplesPerSec = 44100;
+            if(SUCCEEDED(audioConfig->SetFormat(audioMediaType)))
+            {
+                Log(TEXT("    also successfully set samples per sec to 44.1k"));
+                audioFormat.nSamplesPerSec = 44100;
+            }
+        }*/
+    }
+    else
+    {
+        AppWarning(TEXT("DShowPlugin: Audio format was not a normal wave format"));
+        soundOutputType = 0;
+    }
+
+    DeleteMediaType(audioMediaType);
+}
+
 bool DeviceSource::LoadFilters()
 {
     if(bCapturing || bFiltersLoaded)
@@ -139,6 +171,8 @@ bool DeviceSource::LoadFilters()
     String strShader;
 
     bUseThreadedConversion = API->UseMultithreadedOptimizations() && (OSGetTotalCores() > 1);
+
+    bool bNoBuffering = data->GetInt(TEXT("noBuffering")) != 0;
 
     //------------------------------------------------
     // basic initialization vars
@@ -290,8 +324,6 @@ bool DeviceSource::LoadFilters()
     // log video info
 
     {
-        VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(bestOutput->mediaType->pbFormat);
-
         String strTest = FormattedString(TEXT("    device: %s,\r\n    device id %s,\r\n    chosen type: %s, usingFourCC: %s, res: %ux%u - %ux%u, fps: %g-%g"),
             strDevice.Array(), strDeviceID.Array(),
             EnumToName[(int)bestOutput->videoType],
@@ -299,14 +331,16 @@ bool DeviceSource::LoadFilters()
             bestOutput->minCX, bestOutput->minCY, bestOutput->maxCX, bestOutput->maxCY,
             10000000.0/double(bestOutput->maxFrameInterval), 10000000.0/double(bestOutput->minFrameInterval));
 
+        BITMAPINFOHEADER *bmiHeader = GetVideoBMIHeader(bestOutput->mediaType);
+
         char fourcc[5];
-        mcpy(fourcc, &pVih->bmiHeader.biCompression, 4);
+        mcpy(fourcc, &bmiHeader->biCompression, 4);
         fourcc[4] = 0;
 
-        if(pVih->bmiHeader.biCompression > 1000)
+        if(bmiHeader->biCompression > 1000)
             strTest << FormattedString(TEXT(", fourCC: '%S'\r\n"), fourcc);
         else
-            strTest << FormattedString(TEXT(", fourCC: %08lX\r\n"), pVih->bmiHeader.biCompression);
+            strTest << FormattedString(TEXT(", fourCC: %08lX\r\n"), bmiHeader->biCompression);
 
         Log(TEXT("------------------------------------------"));
         Log(strTest.Array());
@@ -371,16 +405,20 @@ bool DeviceSource::LoadFilters()
     AM_MEDIA_TYPE outputMediaType;
     CopyMediaType(&outputMediaType, bestOutput->mediaType);
 
-    VIDEOINFOHEADER *vih        = reinterpret_cast<VIDEOINFOHEADER*>(outputMediaType.pbFormat);
-    vih->AvgTimePerFrame        = frameInterval;
-    vih->bmiHeader.biWidth      = renderCX;
-    vih->bmiHeader.biHeight     = renderCY;
-    vih->bmiHeader.biSizeImage  = renderCX*renderCY*(vih->bmiHeader.biBitCount>>3);
+    VIDEOINFOHEADER *vih  = reinterpret_cast<VIDEOINFOHEADER*>(outputMediaType.pbFormat);
+    BITMAPINFOHEADER *bmi = GetVideoBMIHeader(&outputMediaType);
+    vih->AvgTimePerFrame  = frameInterval;
+    bmi->biWidth          = renderCX;
+    bmi->biHeight         = renderCY;
+    bmi->biSizeImage      = renderCX*renderCY*(bmi->biBitCount>>3);
 
     if(FAILED(err = config->SetFormat(&outputMediaType)))
     {
-        AppWarning(TEXT("DShowPlugin: SetFormat on device pin failed, result = %08lX"), err);
-        goto cleanFinish;
+        if(err != E_NOTIMPL)
+        {
+            AppWarning(TEXT("DShowPlugin: SetFormat on device pin failed, result = %08lX"), err);
+            goto cleanFinish;
+        }
     }
 
     FreeMediaType(outputMediaType);
@@ -396,40 +434,35 @@ bool DeviceSource::LoadFilters()
         if(SUCCEEDED(audioPin->QueryInterface(IID_IAMStreamConfig, (void**)&audioConfig)))
         {
             AM_MEDIA_TYPE *audioMediaType;
-            if(SUCCEEDED(audioConfig->GetFormat(&audioMediaType)))
+            if(SUCCEEDED(err = audioConfig->GetFormat(&audioMediaType)))
             {
-                expectedAudioType = audioMediaType->subtype;
-
-                if(audioMediaType->formattype == FORMAT_WaveFormatEx)
+                SetAudioInfo(audioMediaType, expectedAudioType);
+            }
+            else if(err == E_NOTIMPL) //elgato probably
+            {
+                IEnumMediaTypes *audioMediaTypes;
+                if(SUCCEEDED(err = audioPin->EnumMediaTypes(&audioMediaTypes)))
                 {
-                    WAVEFORMATEX *pFormat = reinterpret_cast<WAVEFORMATEX*>(audioMediaType->pbFormat);
-                    mcpy(&audioFormat, pFormat, sizeof(audioFormat));
-
-                    Log(TEXT("    device audio info - bits per sample: %u, channels: %u, samples per sec: %u"),
-                        audioFormat.wBitsPerSample, audioFormat.nChannels, audioFormat.nSamplesPerSec);
-
-                    //avoid local resampling if possible
-                    /*if(pFormat->nSamplesPerSec != 44100)
+                    ULONG i = 0;
+                    if((err = audioMediaTypes->Next(1, &audioMediaType, &i)) == S_OK)
+                        SetAudioInfo(audioMediaType, expectedAudioType);
+                    else
                     {
-                        pFormat->nSamplesPerSec = 44100;
-                        if(SUCCEEDED(audioConfig->SetFormat(audioMediaType)))
-                        {
-                            Log(TEXT("    also successfully set samples per sec to 44.1k"));
-                            audioFormat.nSamplesPerSec = 44100;
-                        }
-                    }*/
+                        AppWarning(TEXT("DShowPlugin: audioMediaTypes->Next failed, result = %08lX"), err);
+                        soundOutputType = 0;
+                    }
+
+                    audioMediaTypes->Release();
                 }
                 else
                 {
-                    AppWarning(TEXT("DShowPlugin: Audio format was not a normal wave format"));
+                    AppWarning(TEXT("DShowPlugin: audioMediaTypes->Next failed, result = %08lX"), err);
                     soundOutputType = 0;
                 }
-
-                DeleteMediaType(audioMediaType);
             }
             else
             {
-                AppWarning(TEXT("DShowPlugin: Could not get audio format"));
+                AppWarning(TEXT("DShowPlugin: Could not get audio format, result = %08lX"), err);
                 soundOutputType = 0;
             }
 
@@ -498,14 +531,18 @@ bool DeviceSource::LoadFilters()
     //------------------------------------------------
     // connect all pins and set up the whole capture thing
 
-    /*IMediaFilter *mediaFilter;
-    if(SUCCEEDED(graph->QueryInterface(IID_IMediaFilter, (void**)&mediaFilter)))
+    if(bNoBuffering)
     {
-        if(FAILED(mediaFilter->SetSyncSource(NULL)))
-            AppWarning(TEXT("DShowPlugin: Failed to set sync source, result = %08lX"), err);
+        IMediaFilter *mediaFilter;
+        if(SUCCEEDED(graph->QueryInterface(IID_IMediaFilter, (void**)&mediaFilter)))
+        {
+            if(FAILED(mediaFilter->SetSyncSource(NULL)))
+                AppWarning(TEXT("DShowPlugin: Failed to set sync source, result = %08lX"), err);
 
-        mediaFilter->Release();
-    }*/
+            Log(TEXT("Disabling buffering (hopefully)"));
+            mediaFilter->Release();
+        }
+    }
 
     //THANK THE NINE DIVINES I FINALLY GOT IT WORKING
     bool bConnected = SUCCEEDED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video, deviceFilter, NULL, captureFilter));

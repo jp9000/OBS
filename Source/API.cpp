@@ -400,6 +400,8 @@ public:
     virtual void RemoveAudioSource(AudioSource *source) {App->RemoveAudioSource(source);}
 
     virtual QWORD GetAudioTime() const          {return App->GetAudioTime();}
+
+    virtual CTSTR GetAppPath() const            {return lpAppPath;}
 };
 
 APIInterface* CreateOBSApiInterface()

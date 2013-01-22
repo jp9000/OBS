@@ -440,6 +440,18 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     LPSTR lpAnsiURL = NULL, lpAnsiPlaypath = NULL;
     RTMP *rtmp = NULL;
 
+    //--------------------------------
+    // unbelievably disgusting hack because elgato's filter requires full god damn control of the working directory or it won't function.  I am NOT happy.
+
+    String strWorthlessStupidIdioticDirectoryOfCrapYouHaveNoIdeHowPissedOffIAm;
+    UINT dirSize = GetCurrentDirectory(0, 0);
+    strWorthlessStupidIdioticDirectoryOfCrapYouHaveNoIdeHowPissedOffIAm.SetLength(dirSize);
+    GetCurrentDirectory(dirSize, strWorthlessStupidIdioticDirectoryOfCrapYouHaveNoIdeHowPissedOffIAm.Array());
+
+    OSSetCurrentDirectory(API->GetAppPath());
+
+    //--------------------------------
+
     if(!strURL.IsValid())
     {
         failReason = TEXT("No server specified to connect to");
@@ -485,6 +497,8 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
         Log(TEXT("Using RTMP service: %s"), service->GetName());
         Log(TEXT("  Server selection: %s"), strURL.Array());
     }
+
+    OSSetCurrentDirectory(strWorthlessStupidIdioticDirectoryOfCrapYouHaveNoIdeHowPissedOffIAm);
 
     //------------------------------------------------------
 

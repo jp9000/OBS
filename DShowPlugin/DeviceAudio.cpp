@@ -64,7 +64,7 @@ bool DeviceAudioSource::Initialize(DeviceSource *parent)
 
     //---------------------------------
 
-    bool  bFloat;
+    bool  bFloat = false;
     UINT  inputChannels;
     UINT  inputSamplesPerSec;
     UINT  inputBitsPerSample;

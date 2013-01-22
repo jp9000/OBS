@@ -23,6 +23,7 @@
 
 #include <dshow.h>
 #include <Amaudio.h>
+#include <Dvdmedia.h>
 
 #include "MediaInfoStuff.h"
 #include "CaptureFilter.h"
