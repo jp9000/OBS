@@ -451,7 +451,7 @@ OBS::OBS()
 
     //-----------------------------------------------------
 
-    API = new OBSAPIInterface;
+    API = CreateOBSApiInterface();
 
     ResizeWindow(false);
     ShowWindow(hwndMain, SW_SHOW);

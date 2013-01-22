@@ -177,6 +177,7 @@
 #define IDC_USEMULTITHREADEDOPTIMIZATIONS 1099
 #define IDC_CAPTURELAYERED              1099
 #define IDC_USEOUTLINE                  1099
+#define IDC_LOWLATENCYMODE              1099
 #define IDC_TIMER1                      1100
 #define IDC_PROGRESS1                   1101
 #define IDC_DASHBOARDLINK_STATIC        1102
@@ -185,6 +186,8 @@
 #define IDC_USEHIGHQUALITYRESAMPLING    1105
 #define IDC_OUTLINECOLOR                1105
 #define IDC_USETEXT                     1106
+#define IDC_USEVIDEOSYNC                1106
+#define IDC_SYNCTOVIDEOTIME             1106
 #define IDC_USEFILE                     1107
 #define IDC_FILE                        1108
 #define IDC_FONT                        1112
@@ -209,6 +212,7 @@
 #define IDC_USECBR                      1133
 #define IDC_COMBO1                      1139
 #define IDC_DISABLECTSADJUST            1140
+#define IDC_USECFR                      1141
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -241,7 +245,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        141
 #define _APS_NEXT_COMMAND_VALUE         40046
-#define _APS_NEXT_CONTROL_VALUE         1141
+#define _APS_NEXT_CONTROL_VALUE         1143
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

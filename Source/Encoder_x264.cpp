@@ -395,6 +395,7 @@ public:
                    TEXT("\r\n    width: ")       << IntString(width) << TEXT(", height: ") << IntString(height) <<
                    TEXT("\r\n    preset: ")      << curPreset <<
                    TEXT("\r\n    CBR: ")         << CTSTR((bUseCBR) ? TEXT("yes") : TEXT("no")) <<
+                   TEXT("\r\n    CFR: ")         << CTSTR((bUseCFR) ? TEXT("yes") : TEXT("no")) <<
                    TEXT("\r\n    max bitrate: ") << IntString(paramData.rc.i_vbv_max_bitrate);
 
         if(!bUseCBR)

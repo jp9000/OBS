@@ -645,6 +645,13 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
 
                 //--------------------------------------------
 
+                hwndTemp = GetDlgItem(hwnd, IDC_LOWLATENCYMODE);
+
+                BOOL bLowLatencyMode = AppConfig->GetInt(TEXT("Publish"), TEXT("LowLatencyMode"), 0);
+                SendMessage(hwndTemp, BM_SETCHECK, bLowLatencyMode ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                //--------------------------------------------
+
                 hwndTemp = GetDlgItem(hwnd, IDC_AUTORECONNECT);
 
                 BOOL bAutoReconnect = AppConfig->GetInt(TEXT("Publish"), TEXT("AutoReconnect"), 1);
@@ -682,6 +689,7 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                     ShowWindow(GetDlgItem(hwnd, IDC_PLAYPATH_STATIC), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_URL_STATIC), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_SERVER_STATIC), SW_HIDE);
+                    ShowWindow(GetDlgItem(hwnd, IDC_LOWLATENCYMODE), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT_TIMEOUT_STATIC), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT_TIMEOUT_EDIT), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_DELAY_STATIC), SW_HIDE);
@@ -823,6 +831,7 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                             ShowWindow(GetDlgItem(hwnd, IDC_SERVER_STATIC), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK_STATIC), swShowControls);
+                            ShowWindow(GetDlgItem(hwnd, IDC_LOWLATENCYMODE), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT_TIMEOUT), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT_TIMEOUT_STATIC), swShowControls);
@@ -976,6 +985,11 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
 
                             break;
                         }
+
+                    case IDC_LOWLATENCYMODE:
+                        if(HIWORD(wParam) == BN_CLICKED)
+                            bDataChanged = true;
+                        break;
 
                     case IDC_STARTSTREAMHOTKEY:
                     case IDC_STOPSTREAMHOTKEY:
@@ -1578,6 +1592,9 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 //------------------------------------
 
+                bool bUseCFR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCFR"), 1) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_USECFR), BM_SETCHECK, bUseCFR ? BST_CHECKED : BST_UNCHECKED, 0);
+
                 bool bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR")) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_USECBR), BM_SETCHECK, bUseCBR ? BST_CHECKED : BST_UNCHECKED, 0);
 
@@ -1768,19 +1785,7 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                     break;
 
                 case IDC_USECBR:
-                    if(HIWORD(wParam) == BN_CLICKED)
-                    {
-                        String strText;
-                        strText << Str("Settings.Advanced.UseCBR");
-                        if(SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED)
-                            strText << TEXT(" (..I hope you know what you're doing)");
-
-                        SetWindowText((HWND)lParam, strText.Array());
-                        ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-                        App->SetChangedSettings(true);
-                    }
-                    break;
-
+                case IDC_USECFR:
                 case IDC_USEHIGHQUALITYRESAMPLING:
                 case IDC_USEMULTITHREADEDOPTIMIZATIONS:
                 case IDC_UNLOCKHIGHFPS:
@@ -1853,6 +1858,11 @@ void OBS::ApplySettings()
                     strTemp = GetCBText(GetDlgItem(hwndCurrentSettings, IDC_SERVERLIST));
                     AppConfig->SetString(TEXT("Publish"), TEXT("URL"), strTemp);
                 }
+
+                //------------------------------------------
+
+                bool bLowLatencyMode = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_LOWLATENCYMODE), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                AppConfig->SetInt(TEXT("Publish"), TEXT("LowLatencyMode"), bLowLatencyMode);
 
                 //------------------------------------------
 
@@ -2067,6 +2077,11 @@ void OBS::ApplySettings()
 
                 strTemp = GetCBText(GetDlgItem(hwndCurrentSettings, IDC_PRIORITY));
                 AppConfig->SetString(TEXT("General"), TEXT("Priority"), strTemp);
+
+                //--------------------------------------------------
+
+                bool bUseCFR = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USECFR), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("UseCFR"),            bUseCFR);
 
                 //--------------------------------------------------
 

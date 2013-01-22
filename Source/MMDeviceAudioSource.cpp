@@ -144,6 +144,11 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
         Log(TEXT("------------------------------------------"));
         Log(TEXT("Using auxilary audio input: %s"), GetDeviceName());
     }
+    else
+    {
+        Log(TEXT("------------------------------------------"));
+        Log(TEXT("Using desktop audio input: %s"), GetDeviceName());
+    }
 
     //-----------------------------------------------------------------
     // get format

@@ -87,7 +87,7 @@ RTMPPublisher::RTMPPublisher()
     dropThreshold += bufferTime;
 
     latencyFactor = AppConfig->GetInt(TEXT("Publish"), TEXT("LatencyFactor"), 20);
-    
+
     if (latencyFactor < 3)
         latencyFactor = 3;
 
