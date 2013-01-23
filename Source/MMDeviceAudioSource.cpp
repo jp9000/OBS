@@ -43,6 +43,7 @@ class MMDeviceAudioSource : public AudioSource
 
     bool bUseVideoTime;
     QWORD lastVideoTime;
+    QWORD curVideoTime;
 
     UINT32 lastNumFramesRead;
     UINT sampleWindowSize;
@@ -149,7 +150,7 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
         Log(TEXT("------------------------------------------"));
         Log(TEXT("Using desktop audio input: %s"), GetDeviceName());
 
-        bUseVideoTime = AppConfig->GetInt(TEXT("Audio"), TEXT("SyncToVideoTime"));
+        bUseVideoTime = AppConfig->GetInt(TEXT("Audio"), TEXT("SyncToVideoTime")) != 0;
     }
 
     //-----------------------------------------------------------------
@@ -310,7 +311,7 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
 
             if(bUseVideoTime || newTimestamp < (curTime-OUTPUT_BUFFER_TIME) || newTimestamp > (curTime+2000))
             {
-                lastVideoTime = App->GetVideoTime();
+                curVideoTime = lastVideoTime = App->GetVideoTime();
 
                 SetTimeOffset(GetTimeOffset()-int(lastVideoTime-App->GetSceneTimestamp()));
                 bUseVideoTime = true;
@@ -329,10 +330,10 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
                 if(newVideoTime != lastVideoTime)
                 {
                     lastVideoTime = newVideoTime;
-                    newTimestamp = newVideoTime+GetTimeOffset();
+                    newTimestamp = curVideoTime = newVideoTime+GetTimeOffset();
                 }
                 else
-                    newTimestamp += 10;
+                    newTimestamp = curVideoTime += 10;
             }
             else
                 newTimestamp = qpcTimestamp+GetTimeOffset();

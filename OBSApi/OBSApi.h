@@ -103,7 +103,9 @@ inline QWORD GetQPCTime100NS(LONGLONG clockFreq)
     LARGE_INTEGER currentTime;
     QueryPerformanceCounter(&currentTime);
 
-    QWORD timeVal = 10000000 * currentTime.QuadPart / clockFreq;
+    QWORD timeVal = currentTime.QuadPart;
+    timeVal *= 10000000;
+    timeVal /= clockFreq;
 
     return timeVal;
 }
@@ -113,7 +115,9 @@ inline QWORD GetQPCTimeMS(LONGLONG clockFreq)
     LARGE_INTEGER currentTime;
     QueryPerformanceCounter(&currentTime);
 
-    QWORD timeVal = 1000 * currentTime.QuadPart / clockFreq;
+    QWORD timeVal = currentTime.QuadPart;
+    timeVal *= 1000;
+    timeVal /= clockFreq;
 
     return timeVal;
 }

@@ -269,6 +269,14 @@ void OBS::MainCaptureLoop()
     LARGE_INTEGER clockFreq;
     QueryPerformanceFrequency(&clockFreq);
 
+    /*LARGE_INTEGER currentTime;
+    QueryPerformanceCounter(&currentTime);
+
+    QWORD timeVal = currentTime.QuadPart;
+    QWORD chi1 = timeVal * 1000 / clockFreq.QuadPart;
+    QWORD chi2 = timeVal * 10000000 / clockFreq.QuadPart;
+    Log(TEXT("qpc %llu, clockFreq: %llu, ms: %llu, 100ns: %llu"), timeVal, clockFreq.QuadPart, chi1, chi2);*/
+
     bufferedTimes.Clear();
 
 #ifdef USE_100NS_TIME
@@ -285,7 +293,7 @@ void OBS::MainCaptureLoop()
     curPTS = 0;
     lastAudioTimestamp = 0;
 
-    latestVideoTime = firstSceneTimestamp = GetQPCTimeMS(clockFreq.QuadPart);
+    latestVideoTime = firstSceneTimestamp = GetQPCTime100NS(clockFreq.QuadPart)/10000;
 
     DWORD fpsTimeNumerator = 1000-(frameTime*fps);
     DWORD fpsTimeDenominator = fps;
@@ -383,6 +391,7 @@ void OBS::MainCaptureLoop()
 
 #ifdef USE_100NS_TIME
         QWORD renderStartTime = GetQPCTime100NS(clockFreq.QuadPart);
+
         if(sleepTargetTime == 0 || bWasLaggedFrame)
             sleepTargetTime = renderStartTime;
 #else

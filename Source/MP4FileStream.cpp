@@ -647,7 +647,7 @@ public:
                       output.OutputDword(DWORD_BE(0x00480000)); //fixed point height pixel resolution (72.0)
                       output.OutputDword(0); //quicktime video data size 
                       output.OutputWord(WORD_BE(1)); //frame count(?)
-                      output.OutputByte(strlen(videoCompressionName)); //compression name length
+                      output.OutputByte((BYTE)strlen(videoCompressionName)); //compression name length
                       output.Serialize(videoCompressionName, 31); //31 bytes for the name
                       output.OutputWord(WORD_BE(24)); //bit depth
                       output.OutputWord(0xFFFF); //quicktime video color table id (none = -1)
