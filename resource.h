@@ -213,6 +213,8 @@
 #define IDC_COMBO1                      1139
 #define IDC_DISABLECTSADJUST            1140
 #define IDC_USECFR                      1141
+#define IDC_PLAYBACKDEVICES             1142
+
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020

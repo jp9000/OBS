@@ -107,7 +107,7 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
     if(bMic)
         err = mmEnumerator->GetDevice(lpID, &mmDevice);
     else
-        err = mmEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &mmDevice);
+        err = mmEnumerator->GetDevice(lpID, &mmDevice);
 
     if(FAILED(err))
     {

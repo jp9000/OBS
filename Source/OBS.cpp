@@ -849,7 +849,7 @@ void OBS::ReloadIniSettings()
     SetVolumeControlValue(hwndTemp, AppConfig->GetFloat(TEXT("Audio"), TEXT("MicVolume"), 0.0f));
 
     AudioDeviceList audioDevices;
-    GetAudioDevices(audioDevices);
+    GetAudioDevices(audioDevices, ADT_RECORDING);
 
     String strDevice = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), NULL);
     if(strDevice.IsEmpty() || !audioDevices.HasID(strDevice))

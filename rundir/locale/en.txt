@@ -118,7 +118,9 @@ Settings.Advanced.VideoEncoderCPUTradeoffToolTip    "Setting this value higher r
 Settings.Advanced.VideoEncoderSettings              "Custom x264 Encoder Settings"
 Settings.Advanced.VideoEncoderSettingsTooltip       "This allows you to set custom x264 encoder settings.  In the form of [parameter]=[value] (e.g. \"vbv-maxrate=1000 vbv-bufsize=1000\")."
 
+Settings.Audio.PlaybackDevice       "Playback Audio Device:"
 Settings.Audio.Device               "Microphone/Auxiliary Audio Device:"
+
 Settings.Audio.ForceMicMono         "Force Microphone/Auxiliary to Mono:"
 Settings.Audio.MicBoost             "Mic/Aux Boost (multiple):"
 Settings.Audio.MicTimeOffset        "Mic Time Offset (milliseconds):"
