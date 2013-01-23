@@ -22,6 +22,11 @@
 #include <Winsock2.h>
 #include <iphlpapi.h>
 
+struct AudioDeviceStorage {
+    AudioDeviceList *playbackDevices;
+    AudioDeviceList *recordingDevices;
+};
+
 enum SettingsSelection
 {
     Settings_General,
@@ -1376,35 +1381,61 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
 
                 //--------------------------------------------
 
-                AudioDeviceList *audioDevices = new AudioDeviceList;
-                GetAudioDevices(*audioDevices);
+                AudioDeviceStorage *storage = new AudioDeviceStorage;
+
+                storage->playbackDevices = new AudioDeviceList;
+                GetAudioDevices((*storage->playbackDevices), ADT_PLAYBACK);
+
+                storage->recordingDevices = new AudioDeviceList;
+                GetAudioDevices((*storage->recordingDevices), ADT_RECORDING);
 
                 HWND hwndTemp = GetDlgItem(hwnd, IDC_MICDEVICES);
+                HWND hwndPlayback = GetDlgItem(hwnd, IDC_PLAYBACKDEVICES);
 
-                for(UINT i=0; i<audioDevices->devices.Num(); i++)
-                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)audioDevices->devices[i].strName.Array());
+                for(UINT i=0; i<storage->playbackDevices->devices.Num(); i++)
+                    SendMessage(hwndPlayback, CB_ADDSTRING, 0, (LPARAM)storage->playbackDevices->devices[i].strName.Array());
 
-                String strDeviceID = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), audioDevices->devices[0].strID);
+                for(UINT i=0; i<storage->recordingDevices->devices.Num(); i++)
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)storage->recordingDevices->devices[i].strName.Array());
+
+                String strPlaybackID = AppConfig->GetString(TEXT("Audio"), TEXT("PlaybackDevice"), storage->playbackDevices->devices[0].strID);
+                String strDeviceID = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), storage->recordingDevices->devices[0].strID);
+
+                UINT iPlaybackDevice;
+                for(iPlaybackDevice=0; iPlaybackDevice<storage->playbackDevices->devices.Num(); iPlaybackDevice++)
+                {
+                    if(storage->playbackDevices->devices[iPlaybackDevice].strID == strPlaybackID)
+                    {
+                        SendMessage(hwndPlayback, CB_SETCURSEL, iPlaybackDevice, 0);
+                        break;
+                    }
+                }
 
                 UINT iDevice;
-                for(iDevice=0; iDevice<audioDevices->devices.Num(); iDevice++)
+                for(iDevice=0; iDevice<storage->recordingDevices->devices.Num(); iDevice++)
                 {
-                    if(audioDevices->devices[iDevice].strID == strDeviceID)
+                    if(storage->recordingDevices->devices[iDevice].strID == strDeviceID)
                     {
                         SendMessage(hwndTemp, CB_SETCURSEL, iDevice, 0);
                         break;
                     }
                 }
 
-                if(iDevice == audioDevices->devices.Num())
+                if(iPlaybackDevice == storage->playbackDevices->devices.Num())
                 {
-                    AppConfig->SetString(TEXT("Audio"), TEXT("Device"), audioDevices->devices[0].strID);
+                    AppConfig->SetString(TEXT("Audio"), TEXT("PlaybackDevice"), storage->playbackDevices->devices[0].strID);
+                    SendMessage(hwndPlayback, CB_SETCURSEL, 0, 0);
+                }
+
+                if(iDevice == storage->recordingDevices->devices.Num())
+                {
+                    AppConfig->SetString(TEXT("Audio"), TEXT("Device"), storage->recordingDevices->devices[0].strID);
                     SendMessage(hwndTemp, CB_SETCURSEL, 0, 0);
                 }
 
-                SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)audioDevices);
-
                 //--------------------------------------------
+
+                SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)storage);
 
                 BOOL bPushToTalk = AppConfig->GetInt(TEXT("Audio"), TEXT("UsePushToTalk"));
                 SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALK), BM_SETCHECK, bPushToTalk ? BST_CHECKED : BST_UNCHECKED, 0);
@@ -1464,8 +1495,10 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
 
         case WM_DESTROY:
             {
-                AudioDeviceList *audioDevices = (AudioDeviceList*)GetWindowLongPtr(hwnd, DWLP_USER);
-                delete audioDevices;
+                AudioDeviceStorage* storage = (AudioDeviceStorage*)GetWindowLongPtr(hwnd, DWLP_USER);
+                delete storage->recordingDevices;
+                delete storage->playbackDevices;
+                delete storage;
             }
 
         case WM_COMMAND:
@@ -1526,6 +1559,11 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                         break;
 
                     case IDC_MICDEVICES:
+                        if(HIWORD(wParam) == CBN_SELCHANGE)
+                            bDataChanged = true;
+                        break;
+
+                    case IDC_PLAYBACKDEVICES:
                         if(HIWORD(wParam) == CBN_SELCHANGE)
                             bDataChanged = true;
                         break;
@@ -1972,17 +2010,31 @@ void OBS::ApplySettings()
 
         case Settings_Audio:
             {
-                AudioDeviceList *audioDevices = (AudioDeviceList*)GetWindowLongPtr(hwndCurrentSettings, DWLP_USER);
+                AudioDeviceStorage *storage = (AudioDeviceStorage*)GetWindowLongPtr(hwndCurrentSettings, DWLP_USER);
+                UINT iPlaybackDevice = (UINT)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_PLAYBACKDEVICES), CB_GETCURSEL, 0, 0);
+                String strPlaybackDevice;
+
+                if(iPlaybackDevice == CB_ERR) {
+                    strPlaybackDevice = TEXT("Default");
+                }
+                else {
+                    strPlaybackDevice = storage->playbackDevices->devices[iPlaybackDevice].strID;
+                }
+
+                AppConfig->SetString(TEXT("Audio"), TEXT("PlaybackDevice"), strPlaybackDevice);
 
                 UINT iDevice = (UINT)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_MICDEVICES), CB_GETCURSEL, 0, 0);
 
                 String strDevice;
+
                 if(iDevice == CB_ERR)
                     strDevice = TEXT("Disable");
                 else
-                    strDevice = audioDevices->devices[iDevice].strID;
+                    strDevice = storage->recordingDevices->devices[iDevice].strID;
+
 
                 AppConfig->SetString(TEXT("Audio"), TEXT("Device"), strDevice);
+
 
                 if(strDevice.CompareI(TEXT("Disable")))
                     EnableWindow(GetDlgItem(hwndMain, ID_MICVOLUME), FALSE);

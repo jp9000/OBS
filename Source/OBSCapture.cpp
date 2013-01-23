@@ -218,12 +218,33 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
-    desktopAudio = CreateAudioSource(false, NULL);
-    if(!desktopAudio)
+    AudioDeviceList playbackDevices;
+    GetAudioDevices(playbackDevices, ADT_PLAYBACK);
+
+    String strPlaybackDevice = AppConfig->GetString(TEXT("Audio"), TEXT("PlaybackDevice"), TEXT("Default"));
+    if(strPlaybackDevice.IsEmpty() || !playbackDevices.HasID(strPlaybackDevice))
+    {
+        AppConfig->SetString(TEXT("Audio"), TEXT("PlaybackDevice"), TEXT("Default"));
+        strPlaybackDevice = TEXT("Default");
+    }
+
+    Log(TEXT("Playback device %s"), strPlaybackDevice);
+    playbackDevices.FreeData();
+
+    if(!strPlaybackDevice.CompareI(TEXT("Default"))) {
+        desktopAudio = CreateAudioSource(false, strPlaybackDevice);
+    } else {
+        String strDefaultSpeakers;
+        GetDefaultSpeakerID(strDefaultSpeakers);
+        desktopAudio = CreateAudioSource(false, strDefaultSpeakers);
+    }
+
+    if(!desktopAudio) {
         CrashError(TEXT("Cannot initialize desktop audio sound, more info in the log file."));
+    }
 
     AudioDeviceList audioDevices;
-    GetAudioDevices(audioDevices);
+    GetAudioDevices(audioDevices, ADT_RECORDING);
 
     String strDevice = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), NULL);
     if(strDevice.IsEmpty() || !audioDevices.HasID(strDevice))
@@ -538,7 +559,7 @@ void OBS::Stop()
     //-------------------------------------------------------------
 
     AudioDeviceList audioDevices;
-    GetAudioDevices(audioDevices);
+    GetAudioDevices(audioDevices, ADT_RECORDING);
 
     String strDevice = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), NULL);
     if(strDevice.IsEmpty() || !audioDevices.HasID(strDevice))

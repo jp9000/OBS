@@ -66,8 +66,14 @@ struct AudioDeviceList
     }
 };
 
-void GetAudioDevices(AudioDeviceList &deviceList);
+enum AudioDeviceType {
+	ADT_PLAYBACK,
+	ADT_RECORDING
+};
+
+void GetAudioDevices(AudioDeviceList &deviceList, AudioDeviceType deviceType);
 bool GetDefaultMicID(String &strVal);
+bool GetDefaultSpeakerID(String &strVal);
 
 //-------------------------------------------------------------------
 
