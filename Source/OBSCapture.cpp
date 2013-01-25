@@ -785,8 +785,8 @@ void MixAudio(float *bufferDest, float *bufferSrc, UINT totalFloats, bool bForce
 
 void OBS::MainAudioLoop()
 {
-    //DWORD taskID = 0;
-    //HANDLE hTask = AvSetMmThreadCharacteristics(TEXT("Pro Audio"), &taskID);
+    DWORD taskID = 0;
+    HANDLE hTask = AvSetMmThreadCharacteristics(TEXT("Pro Audio"), &taskID);
 
     bPushToTalkOn = false;
 
@@ -944,22 +944,12 @@ void OBS::MainAudioLoop()
             //----------------------------------------------------------------------------
             // mix mic and desktop sound, using SSE2 if available
             // also, it's perfectly fine to just mix into the returned buffer
+
             if(bDesktopMuted)
-            {
-                if (bMicEnabled)
-                {
-                    desktopBuffer = micBuffer;
-                    desktopAudioFrames = micAudioFrames;
-                }
-                else
-                {
-                    zero(desktopBuffer, sizeof(*desktopBuffer)*totalFloats);
-                }
-            }
-            else if(bMicEnabled)
-            {
+                zero(desktopBuffer, sizeof(*desktopBuffer)*totalFloats);
+
+            if(bMicEnabled)
                 MixAudio(desktopBuffer, micBuffer, totalFloats, bForceMicMono);
-            }
 
             DataPacket packet;
             if(audioEncoder->Encode(desktopBuffer, totalFloats>>1, packet, timestamp))
@@ -992,5 +982,7 @@ void OBS::MainAudioLoop()
 
     for(UINT i=0; i<pendingAudioFrames.Num(); i++)
         pendingAudioFrames[i].audioData.Clear();
+
+    AvRevertMmThreadCharacteristics(hTask);
 }
 
