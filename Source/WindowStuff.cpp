@@ -293,10 +293,11 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
             if(!App->sceneElement)
                 return 0;
 
+            HMENU hmenuAdd = CreatePopupMenu();
+
             for(UINT i=0; i<App->imageSourceClasses.Num(); i++)
             {
-                String strAdd = Str("Listbox.Add");
-                strAdd.FindReplace(TEXT("$1"), App->imageSourceClasses[i].strName);
+                String strAdd = App->imageSourceClasses[i].strName;
 
                 if(App->imageSourceClasses[i].strClass == TEXT("GlobalSource"))
                 {
@@ -311,11 +312,13 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                     for(UINT j=0; j<sourceNames.Num(); j++)
                         AppendMenu(hmenuGlobals, MF_STRING, ID_LISTBOX_GLOBALSOURCE+j, sourceNames[j]);
 
-                    AppendMenu(hMenu, MF_STRING|MF_POPUP, (UINT_PTR)hmenuGlobals, strAdd.Array());
+                    AppendMenu(hmenuAdd, MF_STRING|MF_POPUP, (UINT_PTR)hmenuGlobals, strAdd.Array());
                 }
                 else
-                    AppendMenu(hMenu, MF_STRING, ID_LISTBOX_ADD+i, strAdd.Array());
+                    AppendMenu(hmenuAdd, MF_STRING, ID_LISTBOX_ADD+i, strAdd.Array());
             }
+
+            AppendMenu(hMenu, MF_STRING|MF_POPUP, (UINT_PTR)hmenuAdd, Str("Add"));
 
             bSelected = ListView_GetSelectedCount(hwnd) != 0;
         }
@@ -328,6 +331,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
             String strMoveDown     = Str("MoveDown");
             String strMoveTop      = Str("MoveToTop");
             String strMoveToBottom = Str("MoveToBottom");
+            String strPositionSize = Str("Listbox.Positioning");
             String strCenter       = Str("Listbox.Center");
             String strFitToScreen  = Str("Listbox.FitToScreen");
             String strResize       = Str("Listbox.ResetSize");
@@ -369,9 +373,13 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
             if(id == ID_SOURCES)
             {
                 AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
-                AppendMenu(hMenu, MF_STRING, ID_LISTBOX_CENTER,         strCenter);
-                AppendMenu(hMenu, MF_STRING, ID_LISTBOX_FITTOSCREEN,    strFitToScreen);
-                AppendMenu(hMenu, MF_STRING, ID_LISTBOX_RESETSIZE,      strResize);
+
+                HMENU hmenuPositioning = CreatePopupMenu();
+                AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_CENTER,         strCenter);
+                AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_FITTOSCREEN,    strFitToScreen);
+                AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_RESETSIZE,      strResize);
+
+                AppendMenu(hMenu, MF_STRING|MF_POPUP, (UINT_PTR)hmenuPositioning, strPositionSize.Array());
             }
         }
 
@@ -2014,6 +2022,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 RECT client;
                 GetClientRect(hwnd, &client);
 
+                //todo: bSizeChanging = false never gets set because this never gets called when maximizing
                 App->ResizeWindow(true);
                 App->bSizeChanging = false;
 

@@ -35,7 +35,7 @@ bool DeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *tim
 
         *buffer = outputBuffer.Array();
         *numFrames = sampleFrameCount;
-        *timestamp = API->GetAudioTime()+timeOffset;
+        *timestamp = API->GetAudioTime()+GetTimeOffset();
 
         return true;
     }
@@ -64,6 +64,15 @@ bool DeviceAudioSource::Initialize(DeviceSource *parent)
 
     //---------------------------------
 
+    bool  bFloat = false;
+    UINT  inputChannels;
+    UINT  inputSamplesPerSec;
+    UINT  inputBitsPerSample;
+    UINT  inputBlockSize;
+    DWORD inputChannelMask;
+
+    //---------------------------------
+
     if(device->audioFormat.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
     {
         WAVEFORMATEXTENSIBLE *wfext = (WAVEFORMATEXTENSIBLE*)&device->audioFormat;
@@ -84,7 +93,7 @@ bool DeviceAudioSource::Initialize(DeviceSource *parent)
 
     outputBuffer.SetSize(sampleSegmentSize);
 
-    InitAudioData();
+    InitAudioData(bFloat, inputChannels, inputSamplesPerSec, inputBitsPerSample, inputBlockSize, inputChannelMask);
 
     return true;
 }

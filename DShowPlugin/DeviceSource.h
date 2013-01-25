@@ -147,6 +147,8 @@ class DeviceSource : public ImageSource
         OSLeaveMutex(hSampleMutex);
     }
 
+    void SetAudioInfo(AM_MEDIA_TYPE *audioMediaType, GUID &expectedAudioType);
+
     void ReceiveVideo(IMediaSample *sample);
     void ReceiveAudio(IMediaSample *sample);
 

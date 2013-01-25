@@ -118,6 +118,8 @@ public:
     virtual void RemoveAudioSource(AudioSource *source)=0;
 
     virtual QWORD GetAudioTime() const=0;
+
+    virtual CTSTR GetAppPath() const=0;
 };
 
 

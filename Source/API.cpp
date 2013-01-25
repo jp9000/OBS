@@ -304,4 +304,3 @@ bool OBS::SetScene(CTSTR lpScene)
 
     return true;
 }
-

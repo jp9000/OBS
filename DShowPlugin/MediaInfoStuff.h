@@ -108,6 +108,13 @@ struct MediaOutputInfo
     }
 };
 
+inline BITMAPINFOHEADER* GetVideoBMIHeader(const AM_MEDIA_TYPE *pMT)
+{
+    return (pMT->formattype == FORMAT_VideoInfo) ?
+        &reinterpret_cast<VIDEOINFOHEADER*>(pMT->pbFormat)->bmiHeader : 
+        &reinterpret_cast<VIDEOINFOHEADER2*>(pMT->pbFormat)->bmiHeader;
+}
+
 VideoOutputType GetVideoOutputTypeFromFourCC(DWORD fourCC);
 VideoOutputType GetVideoOutputType(const AM_MEDIA_TYPE &media_type);
 bool GetVideoOutputTypes(const List<MediaOutputInfo> &outputList, UINT width, UINT height, UINT64 frameInterval, List<VideoOutputType> &types);

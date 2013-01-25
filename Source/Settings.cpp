@@ -22,6 +22,11 @@
 #include <Winsock2.h>
 #include <iphlpapi.h>
 
+struct AudioDeviceStorage {
+    AudioDeviceList *playbackDevices;
+    AudioDeviceList *recordingDevices;
+};
+
 enum SettingsSelection
 {
     Settings_General,
@@ -645,6 +650,13 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
 
                 //--------------------------------------------
 
+                hwndTemp = GetDlgItem(hwnd, IDC_LOWLATENCYMODE);
+
+                BOOL bLowLatencyMode = AppConfig->GetInt(TEXT("Publish"), TEXT("LowLatencyMode"), 0);
+                SendMessage(hwndTemp, BM_SETCHECK, bLowLatencyMode ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                //--------------------------------------------
+
                 hwndTemp = GetDlgItem(hwnd, IDC_AUTORECONNECT);
 
                 BOOL bAutoReconnect = AppConfig->GetInt(TEXT("Publish"), TEXT("AutoReconnect"), 1);
@@ -682,6 +694,7 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                     ShowWindow(GetDlgItem(hwnd, IDC_PLAYPATH_STATIC), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_URL_STATIC), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_SERVER_STATIC), SW_HIDE);
+                    ShowWindow(GetDlgItem(hwnd, IDC_LOWLATENCYMODE), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT_TIMEOUT_STATIC), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT_TIMEOUT_EDIT), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_DELAY_STATIC), SW_HIDE);
@@ -823,6 +836,7 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                             ShowWindow(GetDlgItem(hwnd, IDC_SERVER_STATIC), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK_STATIC), swShowControls);
+                            ShowWindow(GetDlgItem(hwnd, IDC_LOWLATENCYMODE), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT_TIMEOUT), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT_TIMEOUT_STATIC), swShowControls);
@@ -976,6 +990,11 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
 
                             break;
                         }
+
+                    case IDC_LOWLATENCYMODE:
+                        if(HIWORD(wParam) == BN_CLICKED)
+                            bDataChanged = true;
+                        break;
 
                     case IDC_STARTSTREAMHOTKEY:
                     case IDC_STOPSTREAMHOTKEY:
@@ -1362,35 +1381,61 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
 
                 //--------------------------------------------
 
-                AudioDeviceList *audioDevices = new AudioDeviceList;
-                GetAudioDevices(*audioDevices);
+                AudioDeviceStorage *storage = new AudioDeviceStorage;
+
+                storage->playbackDevices = new AudioDeviceList;
+                GetAudioDevices((*storage->playbackDevices), ADT_PLAYBACK);
+
+                storage->recordingDevices = new AudioDeviceList;
+                GetAudioDevices((*storage->recordingDevices), ADT_RECORDING);
 
                 HWND hwndTemp = GetDlgItem(hwnd, IDC_MICDEVICES);
+                HWND hwndPlayback = GetDlgItem(hwnd, IDC_PLAYBACKDEVICES);
 
-                for(UINT i=0; i<audioDevices->devices.Num(); i++)
-                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)audioDevices->devices[i].strName.Array());
+                for(UINT i=0; i<storage->playbackDevices->devices.Num(); i++)
+                    SendMessage(hwndPlayback, CB_ADDSTRING, 0, (LPARAM)storage->playbackDevices->devices[i].strName.Array());
 
-                String strDeviceID = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), audioDevices->devices[0].strID);
+                for(UINT i=0; i<storage->recordingDevices->devices.Num(); i++)
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)storage->recordingDevices->devices[i].strName.Array());
+
+                String strPlaybackID = AppConfig->GetString(TEXT("Audio"), TEXT("PlaybackDevice"), storage->playbackDevices->devices[0].strID);
+                String strDeviceID = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), storage->recordingDevices->devices[0].strID);
+
+                UINT iPlaybackDevice;
+                for(iPlaybackDevice=0; iPlaybackDevice<storage->playbackDevices->devices.Num(); iPlaybackDevice++)
+                {
+                    if(storage->playbackDevices->devices[iPlaybackDevice].strID == strPlaybackID)
+                    {
+                        SendMessage(hwndPlayback, CB_SETCURSEL, iPlaybackDevice, 0);
+                        break;
+                    }
+                }
 
                 UINT iDevice;
-                for(iDevice=0; iDevice<audioDevices->devices.Num(); iDevice++)
+                for(iDevice=0; iDevice<storage->recordingDevices->devices.Num(); iDevice++)
                 {
-                    if(audioDevices->devices[iDevice].strID == strDeviceID)
+                    if(storage->recordingDevices->devices[iDevice].strID == strDeviceID)
                     {
                         SendMessage(hwndTemp, CB_SETCURSEL, iDevice, 0);
                         break;
                     }
                 }
 
-                if(iDevice == audioDevices->devices.Num())
+                if(iPlaybackDevice == storage->playbackDevices->devices.Num())
                 {
-                    AppConfig->SetString(TEXT("Audio"), TEXT("Device"), audioDevices->devices[0].strID);
+                    AppConfig->SetString(TEXT("Audio"), TEXT("PlaybackDevice"), storage->playbackDevices->devices[0].strID);
+                    SendMessage(hwndPlayback, CB_SETCURSEL, 0, 0);
+                }
+
+                if(iDevice == storage->recordingDevices->devices.Num())
+                {
+                    AppConfig->SetString(TEXT("Audio"), TEXT("Device"), storage->recordingDevices->devices[0].strID);
                     SendMessage(hwndTemp, CB_SETCURSEL, 0, 0);
                 }
 
-                SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)audioDevices);
-
                 //--------------------------------------------
+
+                SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)storage);
 
                 BOOL bPushToTalk = AppConfig->GetInt(TEXT("Audio"), TEXT("UsePushToTalk"));
                 SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALK), BM_SETCHECK, bPushToTalk ? BST_CHECKED : BST_UNCHECKED, 0);
@@ -1434,12 +1479,12 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                 //--------------------------------------------
 
                 int micTimeOffset = AppConfig->GetInt(TEXT("Audio"), TEXT("MicTimeOffset"), 0);
-                if(micTimeOffset < -500)
-                    micTimeOffset = -500;
+                if(micTimeOffset < -50)
+                    micTimeOffset = -50;
                 else if(micTimeOffset > 3000)
                     micTimeOffset = 3000;
 
-                SendMessage(GetDlgItem(hwnd, IDC_MICTIMEOFFSET), UDM_SETRANGE32, -500, 3000);
+                SendMessage(GetDlgItem(hwnd, IDC_MICTIMEOFFSET), UDM_SETRANGE32, -50, 3000);
                 SendMessage(GetDlgItem(hwnd, IDC_MICTIMEOFFSET), UDM_SETPOS32, 0, micTimeOffset);
 
                 //--------------------------------------------
@@ -1450,8 +1495,10 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
 
         case WM_DESTROY:
             {
-                AudioDeviceList *audioDevices = (AudioDeviceList*)GetWindowLongPtr(hwnd, DWLP_USER);
-                delete audioDevices;
+                AudioDeviceStorage* storage = (AudioDeviceStorage*)GetWindowLongPtr(hwnd, DWLP_USER);
+                delete storage->recordingDevices;
+                delete storage->playbackDevices;
+                delete storage;
             }
 
         case WM_COMMAND:
@@ -1512,6 +1559,11 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                         break;
 
                     case IDC_MICDEVICES:
+                        if(HIWORD(wParam) == CBN_SELCHANGE)
+                            bDataChanged = true;
+                        break;
+
+                    case IDC_PLAYBACKDEVICES:
                         if(HIWORD(wParam) == CBN_SELCHANGE)
                             bDataChanged = true;
                         break;
@@ -1578,6 +1630,9 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 //------------------------------------
 
+                bool bUseCFR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCFR"), 0) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_USECFR), BM_SETCHECK, bUseCFR ? BST_CHECKED : BST_UNCHECKED, 0);
+
                 bool bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR")) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_USECBR), BM_SETCHECK, bUseCBR ? BST_CHECKED : BST_UNCHECKED, 0);
 
@@ -1600,22 +1655,8 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 //------------------------------------
 
-                bool bUseVideoSyncFix = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseSyncFix")) != 0;
-                SendMessage(GetDlgItem(hwnd, IDC_USESYNCFIX), BM_SETCHECK, bUseVideoSyncFix ? BST_CHECKED : BST_UNCHECKED, 0);
-
-                ti.lpszText = (LPWSTR)Str("Settings.Advanced.UseSyncFixTooltip");
-                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_USESYNCFIX);
-                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
-
-                //------------------------------------
-
                 bool bUnlockFPS = AppConfig->GetInt(TEXT("Video"), TEXT("UnlockFPS")) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_UNLOCKHIGHFPS), BM_SETCHECK, bUnlockFPS ? BST_CHECKED : BST_UNCHECKED, 0);
-
-                //------------------------------------
-
-                bool bDisableCTSAdjust = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("DisableCTSAdjust")) != 0;
-                SendMessage(GetDlgItem(hwnd, IDC_DISABLECTSADJUST), BM_SETCHECK, bDisableCTSAdjust ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 //------------------------------------
 
@@ -1634,6 +1675,11 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                 ti.lpszText = (LPWSTR)Str("Settings.Advanced.UseHighQualityResamplingTooltip");
                 ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_USEHIGHQUALITYRESAMPLING);
                 SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+
+                //------------------------------------
+
+                bool bSyncToVideoTime = AppConfig->GetInt(TEXT("Audio"), TEXT("SyncToVideoTime")) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_SYNCTOVIDEOTIME), BM_SETCHECK, bSyncToVideoTime ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 //------------------------------------
 
@@ -1781,24 +1827,11 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                     }
                     break;
 
+                case IDC_SYNCTOVIDEOTIME:
                 case IDC_USECBR:
-                    if(HIWORD(wParam) == BN_CLICKED)
-                    {
-                        String strText;
-                        strText << Str("Settings.Advanced.UseCBR");
-                        if(SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED)
-                            strText << TEXT(" (..I hope you know what you're doing)");
-
-                        SetWindowText((HWND)lParam, strText.Array());
-                        ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-                        App->SetChangedSettings(true);
-                    }
-                    break;
-
-                case IDC_DISABLECTSADJUST:
+                case IDC_USECFR:
                 case IDC_USEHIGHQUALITYRESAMPLING:
                 case IDC_USEMULTITHREADEDOPTIMIZATIONS:
-                case IDC_USESYNCFIX:
                 case IDC_UNLOCKHIGHFPS:
                     if(HIWORD(wParam) == BN_CLICKED)
                     {
@@ -1869,6 +1902,11 @@ void OBS::ApplySettings()
                     strTemp = GetCBText(GetDlgItem(hwndCurrentSettings, IDC_SERVERLIST));
                     AppConfig->SetString(TEXT("Publish"), TEXT("URL"), strTemp);
                 }
+
+                //------------------------------------------
+
+                bool bLowLatencyMode = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_LOWLATENCYMODE), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                AppConfig->SetInt(TEXT("Publish"), TEXT("LowLatencyMode"), bLowLatencyMode);
 
                 //------------------------------------------
 
@@ -1972,17 +2010,31 @@ void OBS::ApplySettings()
 
         case Settings_Audio:
             {
-                AudioDeviceList *audioDevices = (AudioDeviceList*)GetWindowLongPtr(hwndCurrentSettings, DWLP_USER);
+                AudioDeviceStorage *storage = (AudioDeviceStorage*)GetWindowLongPtr(hwndCurrentSettings, DWLP_USER);
+                UINT iPlaybackDevice = (UINT)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_PLAYBACKDEVICES), CB_GETCURSEL, 0, 0);
+                String strPlaybackDevice;
+
+                if(iPlaybackDevice == CB_ERR) {
+                    strPlaybackDevice = TEXT("Default");
+                }
+                else {
+                    strPlaybackDevice = storage->playbackDevices->devices[iPlaybackDevice].strID;
+                }
+
+                AppConfig->SetString(TEXT("Audio"), TEXT("PlaybackDevice"), strPlaybackDevice);
 
                 UINT iDevice = (UINT)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_MICDEVICES), CB_GETCURSEL, 0, 0);
 
                 String strDevice;
+
                 if(iDevice == CB_ERR)
                     strDevice = TEXT("Disable");
                 else
-                    strDevice = audioDevices->devices[iDevice].strID;
+                    strDevice = storage->recordingDevices->devices[iDevice].strID;
+
 
                 AppConfig->SetString(TEXT("Audio"), TEXT("Device"), strDevice);
+
 
                 if(strDevice.CompareI(TEXT("Disable")))
                     EnableWindow(GetDlgItem(hwndMain, ID_MICVOLUME), FALSE);
@@ -2059,8 +2111,8 @@ void OBS::ApplySettings()
                 //------------------------------------
 
                 int micTimeOffset = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_MICTIMEOFFSET), UDM_GETPOS32, 0, 0);
-                if(micTimeOffset < -500)
-                    micTimeOffset = -500;
+                if(micTimeOffset < -50)
+                    micTimeOffset = -50;
                 else if(micTimeOffset > 3000)
                     micTimeOffset = 3000;
                 AppConfig->SetInt(TEXT("Audio"), TEXT("MicTimeOffset"), micTimeOffset);
@@ -2086,6 +2138,11 @@ void OBS::ApplySettings()
 
                 //--------------------------------------------------
 
+                bool bUseCFR = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USECFR), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("UseCFR"),            bUseCFR);
+
+                //--------------------------------------------------
+
                 bool bUseCBR = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USECBR), BM_GETCHECK, 0, 0) == BST_CHECKED;
                 AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("UseCBR"),            bUseCBR);
 
@@ -2099,23 +2156,18 @@ void OBS::ApplySettings()
 
                 //--------------------------------------------------
 
-                BOOL bUseVideoSyncFix = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USESYNCFIX), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("UseSyncFix"),        bUseVideoSyncFix);
-
-                //------------------------------------
-
                 BOOL bUnlockFPS = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_UNLOCKHIGHFPS), BM_GETCHECK, 0, 0) == BST_CHECKED;
                 AppConfig->SetInt   (TEXT("Video"), TEXT("UnlockFPS"), bUnlockFPS);
 
                 //------------------------------------
 
-                BOOL bDisableCTSAdjust = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_DISABLECTSADJUST), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("DisableCTSAdjust"), bDisableCTSAdjust);
-
-                //------------------------------------
-
                 BOOL bUseHQResampling = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USEHIGHQUALITYRESAMPLING), BM_GETCHECK, 0, 0) == BST_CHECKED;
                 AppConfig->SetInt   (TEXT("Audio"), TEXT("UseHighQualityResampling"), bUseHQResampling);
+
+                //--------------------------------------------------
+
+                BOOL bSyncToVideoTime = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_SYNCTOVIDEOTIME), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                AppConfig->SetInt   (TEXT("Audio"), TEXT("SyncToVideoTime"), bSyncToVideoTime);
 
                 //--------------------------------------------------
 

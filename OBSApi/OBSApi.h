@@ -98,6 +98,30 @@ inline BOOL CloseDouble(double f1, double f2, double precision=0.001)
     return fabs(f1-f2) <= precision;
 }
 
+inline QWORD GetQPCTime100NS(LONGLONG clockFreq)
+{
+    LARGE_INTEGER currentTime;
+    QueryPerformanceCounter(&currentTime);
+
+    QWORD timeVal = currentTime.QuadPart;
+    timeVal *= 10000000;
+    timeVal /= clockFreq;
+
+    return timeVal;
+}
+
+inline QWORD GetQPCTimeMS(LONGLONG clockFreq)
+{
+    LARGE_INTEGER currentTime;
+    QueryPerformanceCounter(&currentTime);
+
+    QWORD timeVal = currentTime.QuadPart;
+    timeVal *= 1000;
+    timeVal /= clockFreq;
+
+    return timeVal;
+}
+
 //-------------------------------------------
 
 #include "GraphicsSystem.h"

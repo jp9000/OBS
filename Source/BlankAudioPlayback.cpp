@@ -35,7 +35,7 @@ struct BlankAudioPlayback
     IAudioClient        *mmClient;
     IAudioRenderClient  *mmRender;
 
-    inline BlankAudioPlayback()
+    BlankAudioPlayback(CTSTR lpDevice)
     {
         const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
         const IID IID_IMMDeviceEnumerator    = __uuidof(IMMDeviceEnumerator);
@@ -47,7 +47,7 @@ struct BlankAudioPlayback
         if(FAILED(err))
             CrashError(TEXT("Could not create IMMDeviceEnumerator"));
 
-        err = mmEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &mmDevice);
+        err = mmEnumerator->GetDevice(lpDevice, &mmDevice);
         if(FAILED(err))
             CrashError(TEXT("Could not create IMMDevice"));
 
@@ -90,7 +90,7 @@ struct BlankAudioPlayback
             CrashError(TEXT("Could not start audio source"));
     }
 
-    inline ~BlankAudioPlayback()
+    ~BlankAudioPlayback()
     {
         mmClient->Stop();
 
@@ -104,10 +104,10 @@ struct BlankAudioPlayback
 
 static BlankAudioPlayback *curBlankPlaybackThingy = NULL;
 
-void StartBlankSoundPlayback()
+void StartBlankSoundPlayback(CTSTR lpDevice)
 {
     if(!curBlankPlaybackThingy)
-        curBlankPlaybackThingy = new BlankAudioPlayback;
+        curBlankPlaybackThingy = new BlankAudioPlayback(lpDevice);
 }
 
 void StopBlankSoundPlayback()

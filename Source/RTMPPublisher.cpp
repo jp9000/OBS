@@ -87,7 +87,7 @@ RTMPPublisher::RTMPPublisher()
     dropThreshold += bufferTime;
 
     latencyFactor = AppConfig->GetInt(TEXT("Publish"), TEXT("LatencyFactor"), 20);
-    
+
     if (latencyFactor < 3)
         latencyFactor = 3;
 
@@ -434,8 +434,23 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     String strURL       = AppConfig->GetString(TEXT("Publish"), TEXT("URL"));
     String strPlayPath  = AppConfig->GetString(TEXT("Publish"), TEXT("PlayPath"));
 
+    strURL.KillSpaces();
+    strPlayPath.KillSpaces();
+
     LPSTR lpAnsiURL = NULL, lpAnsiPlaypath = NULL;
     RTMP *rtmp = NULL;
+
+    //--------------------------------
+    // unbelievably disgusting hack for elgato devices
+
+    String strOldDirectory;
+    UINT dirSize = GetCurrentDirectory(0, 0);
+    strOldDirectory.SetLength(dirSize);
+    GetCurrentDirectory(dirSize, strOldDirectory.Array());
+
+    OSSetCurrentDirectory(API->GetAppPath());
+
+    //--------------------------------
 
     if(!strURL.IsValid())
     {
@@ -482,6 +497,11 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
         Log(TEXT("Using RTMP service: %s"), service->GetName());
         Log(TEXT("  Server selection: %s"), strURL.Array());
     }
+
+    //------------------------------------------------------
+    // now back to the elgato directory if it needs the directory changed still to function *sigh*
+
+    OSSetCurrentDirectory(strOldDirectory);
 
     //------------------------------------------------------
 

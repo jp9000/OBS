@@ -128,8 +128,9 @@ BASE_EXPORT DEFPROC STDCALL OSGetProcAddress(HANDLE hLibrary, LPCSTR lpProcedure
 BASE_EXPORT void   STDCALL OSFreeLibrary(HANDLE hLibrary);
 
 BASE_EXPORT void   STDCALL OSSleep(DWORD dwMSeconds);
-BASE_EXPORT void   STDCALL OSSubMillisecondSleep(float fMSeconds);
-BASE_EXPORT void   STDCALL OSMicrosecondSleep(QWORD qwMicroseconds);
+BASE_EXPORT void   STDCALL OSSleepSubMillisecond(double fMSeconds);
+BASE_EXPORT void   STDCALL OSSleepMicrosecond(QWORD qwMicroseconds);
+BASE_EXPORT void   STDCALL OSSleep100NS(QWORD qw100NSTime); //why
 
 BASE_EXPORT int    STDCALL OSGetVersion();
 BASE_EXPORT int    STDCALL OSGetTotalCores();

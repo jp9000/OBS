@@ -67,12 +67,14 @@ class X264Encoder : public VideoEncoder
 
     bool bFirstFrameProcessed;
 
-    bool bUseCBR, bUseCTSAdjust;
+    bool bUseCBR, bUseCFR;
 
     List<VideoPacket> CurrentPackets;
     List<BYTE> HeaderPacket;
 
     INT64 delayOffset;
+
+    int frameShift;
 
     inline void ClearPackets()
     {
@@ -82,7 +84,7 @@ class X264Encoder : public VideoEncoder
     }
 
 public:
-    X264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize)
+    X264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR)
     {
         fps_ms = 1000/fps;
 
@@ -106,6 +108,7 @@ public:
         //paramData.i_threads             = 4;
 
         bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR")) != 0;
+        this->bUseCFR = bUseCFR;
 
         if(bUseCBR)
         {
@@ -124,13 +127,11 @@ public:
             paramData.rc.f_rf_constant      = baseCRF+float(10-quality);
         }
 
-        paramData.b_vfr_input           = 1;
-        paramData.i_keyint_max          = fps*4;      //keyframe every 4 sec, should make this an option
+        paramData.b_vfr_input           = !bUseCFR;
         paramData.i_width               = width;
         paramData.i_height              = height;
-        paramData.vui.b_fullrange       = 0;          //specify full range input levels
-        //paramData.i_frame_reference     = 1;
-        //paramData.b_in
+        //paramData.vui.b_fullrange       = 0;          //specify full range input levels
+        //paramData.i_keyint_max          = fps*4;      //keyframe every 4 sec, should make this an option
 
         paramData.i_fps_num = fps;
         paramData.i_fps_den = 1;
@@ -141,7 +142,6 @@ public:
         //paramData.pf_log                = get_x264_log;
         //paramData.i_log_level           = X264_LOG_INFO;
 
-        bUseCTSAdjust = !AppConfig->GetInt(TEXT("Video Encoding"), TEXT("DisableCTSAdjust"));
         BOOL bUseCustomParams = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCustomSettings"));
         if(bUseCustomParams)
         {
@@ -168,14 +168,28 @@ public:
                     {
                         continue;
                     }
+                    else if(strParamName.CompareI(TEXT("preset")))
+                    {
+                        LPSTR lpVal = strParamVal.CreateUTF8String();
+                        x264_param_default_preset(&paramData, lpVal, NULL);
+                        Free(lpVal);
+                    }
+                    else if(strParamName.CompareI(TEXT("tune")))
+                    {
+                        LPSTR lpVal = strParamVal.CreateUTF8String();
+                        x264_param_default_preset(&paramData, NULL, lpVal);
+                        Free(lpVal);
+                    }
+                    else
+                    {
+                        LPSTR lpParam = strParamName.CreateUTF8String();
+                        LPSTR lpVal   = strParamVal.CreateUTF8String();
 
-                    LPSTR lpParam = strParamName.CreateUTF8String();
-                    LPSTR lpVal   = strParamVal.CreateUTF8String();
+                        x264_param_parse(&paramData, lpParam, lpVal);
 
-                    x264_param_parse(&paramData, lpParam, lpVal);
-
-                    Free(lpParam);
-                    Free(lpVal);
+                        Free(lpParam);
+                        Free(lpVal);
+                    }
                 }
             }
         }
@@ -225,7 +239,18 @@ public:
         INT64 ts = INT64(outputTimestamp);
         int timeOffset = int((picOut.i_pts+delayOffset)-ts);
 
-        if(bUseCTSAdjust)
+        if(bUseCFR)
+        {
+            //if CFR's being used, the shift will be insignificant, so just don't bother adjusting audio
+            timeOffset += frameShift;
+
+            if(nalNum && timeOffset < 0)
+            {
+                frameShift -= timeOffset;
+                timeOffset = 0;
+            }
+        }
+        else
         {
             timeOffset += ctsOffset;
 
@@ -370,6 +395,7 @@ public:
                    TEXT("\r\n    width: ")       << IntString(width) << TEXT(", height: ") << IntString(height) <<
                    TEXT("\r\n    preset: ")      << curPreset <<
                    TEXT("\r\n    CBR: ")         << CTSTR((bUseCBR) ? TEXT("yes") : TEXT("no")) <<
+                   TEXT("\r\n    CFR: ")         << CTSTR((bUseCFR) ? TEXT("yes") : TEXT("no")) <<
                    TEXT("\r\n    max bitrate: ") << IntString(paramData.rc.i_vbv_max_bitrate);
 
         if(!bUseCBR)
@@ -409,8 +435,8 @@ public:
 };
 
 
-VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize)
+VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR)
 {
-    return new X264Encoder(fps, width, height, quality, preset, bUse444, maxBitRate, bufferSize);
+    return new X264Encoder(fps, width, height, quality, preset, bUse444, maxBitRate, bufferSize, bUseCFR);
 }
 

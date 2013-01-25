@@ -25,7 +25,7 @@
 #include <Functiondiscoverykeys_devpkey.h>
 
 
-void GetAudioDevices(AudioDeviceList &deviceList)
+void GetAudioDevices(AudioDeviceList &deviceList, AudioDeviceType deviceType)
 {
     const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
     const IID IID_IMMDeviceEnumerator    = __uuidof(IMMDeviceEnumerator);
@@ -41,9 +41,13 @@ void GetAudioDevices(AudioDeviceList &deviceList)
 
     //-------------------------------------------------------
 
-    AudioDeviceInfo *info = deviceList.devices.CreateNew();
-    info->strID = TEXT("Disable");
-    info->strName = Str("Disable");
+    AudioDeviceInfo *info;
+
+    if(deviceType == ADT_RECORDING) {
+      info = deviceList.devices.CreateNew();
+      info->strID = TEXT("Disable");
+      info->strName = Str("Disable");
+    }
 
     info = deviceList.devices.CreateNew();
     info->strID = TEXT("Default");
@@ -52,7 +56,22 @@ void GetAudioDevices(AudioDeviceList &deviceList)
     //-------------------------------------------------------
 
     IMMDeviceCollection *collection;
-    err = mmEnumerator->EnumAudioEndpoints(eCapture, DEVICE_STATE_ACTIVE | DEVICE_STATE_UNPLUGGED, &collection);
+
+    EDataFlow audioDeviceType;
+    switch(deviceType)
+    {
+    case ADT_RECORDING:
+        audioDeviceType = eCapture;
+        break;
+    case ADT_PLAYBACK:
+        audioDeviceType = eRender;
+        break;
+    default:
+        audioDeviceType = eAll;
+        break;
+    }
+
+    err = mmEnumerator->EnumAudioEndpoints(audioDeviceType, DEVICE_STATE_ACTIVE | DEVICE_STATE_UNPLUGGED, &collection);
     if(FAILED(err))
     {
         AppWarning(TEXT("GetAudioDevices: Could not enumerate audio endpoints"));
@@ -101,7 +120,7 @@ void GetAudioDevices(AudioDeviceList &deviceList)
     SafeRelease(mmEnumerator);
 }
 
-bool GetDefaultMicID(String &strVal)
+bool GetDefaultDevice(String &strVal, EDataFlow df )
 {
     const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
     const IID IID_IMMDeviceEnumerator    = __uuidof(IMMDeviceEnumerator);
@@ -115,7 +134,7 @@ bool GetDefaultMicID(String &strVal)
     //-------------------------------------------------------
 
     IMMDevice *defDevice;
-    if(FAILED(mmEnumerator->GetDefaultAudioEndpoint(eCapture, eCommunications, &defDevice)))
+    if(FAILED(mmEnumerator->GetDefaultAudioEndpoint(df, eCommunications, &defDevice)))
     {
         SafeRelease(mmEnumerator);
         return false;
@@ -136,4 +155,12 @@ bool GetDefaultMicID(String &strVal)
     SafeRelease(mmEnumerator);
 
     return true;
+}
+
+bool GetDefaultMicID(String &strVal) {
+    return GetDefaultDevice(strVal, eCapture);
+}
+
+bool GetDefaultSpeakerID(String &strVal) {
+    return GetDefaultDevice(strVal, eRender);
 }

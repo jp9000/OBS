@@ -49,6 +49,7 @@ class BASE_EXPORT AudioSource
 
     bool bFirstBaseFrameReceived;
     QWORD lastSentTimestamp;
+    int timeOffset;
 
     //-----------------------------------------
 
@@ -61,22 +62,22 @@ class BASE_EXPORT AudioSource
     List<float> tempBuffer;
     List<float> tempResampleBuffer;
 
-protected:
-
-    int timeOffset;
-
     //-----------------------------------------
 
-    bool bFloat;
-    UINT inputChannels;
-    UINT inputSamplesPerSec;
-    UINT inputBitsPerSample;
-    UINT inputBlockSize;
+    bool  bFloat;
+    UINT  inputChannels;
+    UINT  inputSamplesPerSec;
+    UINT  inputBitsPerSample;
+    UINT  inputBlockSize;
     DWORD inputChannelMask;
 
     QWORD lastUsedTimestamp;
 
-    void InitAudioData();
+    //-----------------------------------------
+
+protected:
+
+    void InitAudioData(bool bFloat, UINT channels, UINT samplesPerSec, UINT bitsPerSample, UINT blockSize, DWORD channelMask);
 
     //-----------------------------------------
 
@@ -104,6 +105,10 @@ public:
     virtual void StartCapture() {}
     virtual void StopCapture() {}
 
+    inline UINT GetChannelCount() const {return inputChannels;}
+    inline UINT GetSamplesPerSec() const {return inputSamplesPerSec;}
+
+    inline int  GetTimeOffset() const {return timeOffset;}
     inline void SetTimeOffset(int newOffset) {timeOffset = newOffset;}
 };
 

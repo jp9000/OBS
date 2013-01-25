@@ -36,6 +36,7 @@ HINSTANCE   hinstMain       = NULL;
 ConfigFile  *GlobalConfig   = NULL;
 ConfigFile  *AppConfig      = NULL;
 OBS         *App            = NULL;
+TCHAR       lpAppPath[MAX_PATH];
 TCHAR       lpAppDataPath[MAX_PATH];
 
 //----------------------------
@@ -434,6 +435,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         UINT dirSize = GetCurrentDirectory(0, 0);
         strDirectory.SetLength(dirSize);
         GetCurrentDirectory(dirSize, strDirectory.Array());
+
+        scpy(lpAppPath, strDirectory);
 
         GlobalConfig->SetString(TEXT("General"), TEXT("LastAppDirectory"), strDirectory.Array());
 

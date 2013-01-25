@@ -17,27 +17,6 @@
 ********************************************************************************/
 
 
-#pragma once
+#include "Main.h"
 
-#include "OBSApi.h"
 
-#include <dshow.h>
-#include <Amaudio.h>
-#include <Dvdmedia.h>
-
-#include "MediaInfoStuff.h"
-#include "CaptureFilter.h"
-#include "DeviceSource.h"
-#include "resource.h"
-
-//-----------------------------------------------------------
-
-extern HINSTANCE hinstMain;
-
-IBaseFilter* GetDeviceByValue(WSTR lpType, CTSTR lpName, WSTR lpType2=NULL, CTSTR lpName2=NULL);
-IPin* GetOutputPin(IBaseFilter *filter);
-void GetOutputList(IPin *curPin, List<MediaOutputInfo> &outputInfoList);
-bool GetClosestResolution(List<MediaOutputInfo> &outputList, SIZE &resolution, UINT64 &frameInterval);
-
-extern LocaleStringLookup *pluginLocale;
-#define PluginStr(text) pluginLocale->LookupString(TEXT2(text))
