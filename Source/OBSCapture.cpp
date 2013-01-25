@@ -804,7 +804,7 @@ void OBS::MainAudioLoop()
 
     while(TRUE)
     {
-        Sleep(5); //screw it, just run it every 5ms
+        OSSleep(5); //screw it, just run it every 5ms
 
         if(!bRunning)
             break;

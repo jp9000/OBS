@@ -98,6 +98,7 @@ inline BOOL CloseDouble(double f1, double f2, double precision=0.001)
     return fabs(f1-f2) <= precision;
 }
 
+/* this actually can't work without a 128bit integer, so commenting out for now
 inline QWORD GetQPCTime100NS(LONGLONG clockFreq)
 {
     LARGE_INTEGER currentTime;
@@ -108,7 +109,7 @@ inline QWORD GetQPCTime100NS(LONGLONG clockFreq)
     timeVal /= clockFreq;
 
     return timeVal;
-}
+}*/
 
 inline QWORD GetQPCTimeMS(LONGLONG clockFreq)
 {

@@ -1439,7 +1439,7 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                         //--------------------------------------------
 
                         regionWindowData.hwndConfigDialog = hwnd;
-                        HWND hwndRegion = CreateWindowEx(0, CAPTUREREGIONCLASS, NULL, WS_POPUP|WS_VISIBLE, posX, posY, sizeX, sizeY, hwnd, NULL, hinstMain, NULL);
+                        HWND hwndRegion = CreateWindowEx(WS_EX_TOPMOST, CAPTUREREGIONCLASS, NULL, WS_POPUP|WS_VISIBLE, posX, posY, sizeX, sizeY, hwnd, NULL, hinstMain, NULL);
 
                         //everyone better thank homeworld for this
                         SetWindowLongW(hwndRegion, GWL_EXSTYLE, GetWindowLong(hwndRegion, GWL_EXSTYLE) | WS_EX_LAYERED);

@@ -200,6 +200,9 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
 }
 
 
+//#define USE_100NS_TIME 1
+
+#ifdef USE_100NS_TIME
 void STDCALL SleepTo(LONGLONG clockFreq, QWORD qw100NSTime)
 {
     QWORD t = GetQPCTime100NS(clockFreq);
@@ -216,9 +219,8 @@ void STDCALL SleepTo(LONGLONG clockFreq, QWORD qw100NSTime)
         Sleep(0);
     }
 }
+#endif
 
-
-//#define USE_100NS_TIME 1
 
 //todo: this function is an abomination, this is just disgusting.  fix it.
 //...seriously, this is really, really horrible.  I mean this is amazingly bad.
@@ -269,14 +271,6 @@ void OBS::MainCaptureLoop()
     LARGE_INTEGER clockFreq;
     QueryPerformanceFrequency(&clockFreq);
 
-    /*LARGE_INTEGER currentTime;
-    QueryPerformanceCounter(&currentTime);
-
-    QWORD timeVal = currentTime.QuadPart;
-    QWORD chi1 = timeVal * 1000 / clockFreq.QuadPart;
-    QWORD chi2 = timeVal * 10000000 / clockFreq.QuadPart;
-    Log(TEXT("qpc %llu, clockFreq: %llu, ms: %llu, 100ns: %llu"), timeVal, clockFreq.QuadPart, chi1, chi2);*/
-
     bufferedTimes.Clear();
 
 #ifdef USE_100NS_TIME
@@ -293,7 +287,7 @@ void OBS::MainCaptureLoop()
     curPTS = 0;
     lastAudioTimestamp = 0;
 
-    latestVideoTime = firstSceneTimestamp = GetQPCTime100NS(clockFreq.QuadPart)/10000;
+    latestVideoTime = firstSceneTimestamp = GetQPCTimeMS(clockFreq.QuadPart);
 
     DWORD fpsTimeNumerator = 1000-(frameTime*fps);
     DWORD fpsTimeDenominator = fps;
@@ -422,7 +416,7 @@ void OBS::MainCaptureLoop()
 
         lastStreamTime = renderStartTime;
 #else
-        QWORD qwTime = GetQPCTime100NS(clockFreq.QuadPart)/10000;
+        QWORD qwTime = GetQPCTimeMS(clockFreq.QuadPart);
         latestVideoTime = qwTime;
 
         QWORD frameDelta = qwTime-lastStreamTime;
