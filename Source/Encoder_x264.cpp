@@ -130,7 +130,7 @@ public:
         paramData.b_vfr_input           = !bUseCFR;
         paramData.i_width               = width;
         paramData.i_height              = height;
-        //paramData.vui.b_fullrange       = 0;          //specify full range input levels
+        paramData.vui.b_fullrange       = 0;          //specify full range input levels
         //paramData.i_keyint_max          = fps*4;      //keyframe every 4 sec, should make this an option
 
         paramData.i_fps_num = fps;

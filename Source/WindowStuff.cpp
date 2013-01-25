@@ -724,7 +724,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
                                 // clear selection/focus for all items before adding the new item
                                 UINT itemState;
-                                for(int i = 0; i<numSources; i++)
+                                for(UINT i = 0; i<numSources; i++)
                                 {
                                     itemState = ListView_GetItemState(hwnd, i, LVIS_SELECTED);
                                     if(itemState & LVIS_SELECTED || itemState & LVIS_FOCUSED)
