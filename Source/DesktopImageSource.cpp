@@ -914,9 +914,13 @@ LRESULT WINAPI RegionWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 
             HFONT hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
             HFONT hfontOld = (HFONT)SelectObject(hDC, hFont);
-
+            
+            SIZE textExtent;
+            GetTextExtentPoint32(hDC, lpStr, wcslen(lpStr), &textExtent);
+            
+            SetBkMode(hDC, TRANSPARENT);
             SetTextAlign(hDC, TA_CENTER);
-            TextOut(hDC, clientRect.right/2, clientRect.bottom/2, lpStr, slen(lpStr));
+            TextOut(hDC, clientRect.right/2, (clientRect.bottom - textExtent.cy)/2, lpStr, slen(lpStr));
 
             //-----------------------------------------
 
