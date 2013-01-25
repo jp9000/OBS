@@ -1479,12 +1479,12 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                 //--------------------------------------------
 
                 int micTimeOffset = AppConfig->GetInt(TEXT("Audio"), TEXT("MicTimeOffset"), 0);
-                if(micTimeOffset < -50)
-                    micTimeOffset = -50;
+                if(micTimeOffset < -150)
+                    micTimeOffset = -150;
                 else if(micTimeOffset > 3000)
                     micTimeOffset = 3000;
 
-                SendMessage(GetDlgItem(hwnd, IDC_MICTIMEOFFSET), UDM_SETRANGE32, -50, 3000);
+                SendMessage(GetDlgItem(hwnd, IDC_MICTIMEOFFSET), UDM_SETRANGE32, -150, 3000);
                 SendMessage(GetDlgItem(hwnd, IDC_MICTIMEOFFSET), UDM_SETPOS32, 0, micTimeOffset);
 
                 //--------------------------------------------
@@ -2111,8 +2111,8 @@ void OBS::ApplySettings()
                 //------------------------------------
 
                 int micTimeOffset = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_MICTIMEOFFSET), UDM_GETPOS32, 0, 0);
-                if(micTimeOffset < -50)
-                    micTimeOffset = -50;
+                if(micTimeOffset < -150)
+                    micTimeOffset = -150;
                 else if(micTimeOffset > 3000)
                     micTimeOffset = 3000;
                 AppConfig->SetInt(TEXT("Audio"), TEXT("MicTimeOffset"), micTimeOffset);

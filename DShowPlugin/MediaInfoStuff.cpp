@@ -245,7 +245,7 @@ MediaOutputInfo* GetBestMediaOutput(const List<MediaOutputInfo> &outputList, UIN
 
                 UINT64 intervalDifference = (UINT64)_abs64(INT64(curInterval)-INT64(frameInterval));
 
-                if(intervalDifference < closestIntervalDifference)
+                if(intervalDifference <= closestIntervalDifference)
                 {
                     closestIntervalDifference = intervalDifference;
                     bestFrameInterval = curInterval;

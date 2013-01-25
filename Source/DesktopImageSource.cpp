@@ -916,7 +916,7 @@ LRESULT WINAPI RegionWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             HFONT hfontOld = (HFONT)SelectObject(hDC, hFont);
             
             SIZE textExtent;
-            GetTextExtentPoint32(hDC, lpStr, wcslen(lpStr), &textExtent);
+            GetTextExtentPoint32(hDC, lpStr, slen(lpStr), &textExtent);
             
             SetBkMode(hDC, TRANSPARENT);
             SetTextAlign(hDC, TA_CENTER);
