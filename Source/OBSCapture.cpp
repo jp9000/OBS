@@ -18,6 +18,7 @@
 
 
 #include "Main.h"
+#include <Avrt.h>
 
 VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR);
 AudioEncoder* CreateMP3Encoder(UINT bitRate);
