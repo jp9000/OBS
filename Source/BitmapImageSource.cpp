@@ -113,14 +113,17 @@ public:
                         if(!totalLoops || ++curLoop < totalLoops)
                             newFrame = 0;
                         else if (curLoop == totalLoops)
+                        {
+                            newFrame--;
                             break;
+                        }
                     }
                 }
 
                 if(newFrame != curFrame)
                 {
-                    gif_decode_frame(&gif, newFrame);
-                    texture->SetImage(gif.frame_image, GS_IMAGEFORMAT_RGBA, gif.width*4);
+                    if (gif_decode_frame(&gif, newFrame) == GIF_OK)
+                        texture->SetImage(gif.frame_image, GS_IMAGEFORMAT_RGBA, gif.width*4);
 
                     curFrame = newFrame;
                 }
