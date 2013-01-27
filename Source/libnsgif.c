@@ -774,6 +774,11 @@ gif_result gif_decode_frame(gif_animation *gif, unsigned int frame) {
     int last_undisposed_frame = (frame - 1);
     register unsigned char colour;
 
+    /*    Ensure we have a frame to decode
+    */
+    if (frame >= gif->frame_count_partial)
+        return GIF_INSUFFICIENT_DATA;
+
     /*    Ensure this frame is supposed to be decoded
     */
     if (gif->frames[frame].display == FALSE) {
@@ -781,10 +786,6 @@ gif_result gif_decode_frame(gif_animation *gif, unsigned int frame) {
         return GIF_OK;
     }
 
-    /*    Ensure we have a frame to decode
-    */
-    if (frame > gif->frame_count_partial)
-        return GIF_INSUFFICIENT_DATA;
     if ((!clear_image) && ((int)frame == gif->decoded_frame))
         return GIF_OK;
 
