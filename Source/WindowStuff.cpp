@@ -2025,17 +2025,6 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 //todo: bSizeChanging = false never gets set because this never gets called when maximizing
                 App->ResizeWindow(true);
                 App->bSizeChanging = false;
-
-                ShowWindow(GetDlgItem(hwndMain, ID_SCENES), SW_SHOW);
-                ShowWindow(GetDlgItem(hwndMain, ID_SOURCES), SW_SHOW);
-                ShowWindow(GetDlgItem(hwndMain, ID_MICVOLUME), SW_SHOW);
-                ShowWindow(GetDlgItem(hwndMain, ID_DESKTOPVOLUME), SW_SHOW);
-                ShowWindow(GetDlgItem(hwndMain, ID_SETTINGS), SW_SHOW);
-                ShowWindow(GetDlgItem(hwndMain, ID_STARTSTOP), SW_SHOW);
-                ShowWindow(GetDlgItem(hwndMain, ID_SCENEEDITOR), SW_SHOW);
-                ShowWindow(GetDlgItem(hwndMain, ID_EXIT), SW_SHOW);
-                ShowWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), SW_SHOW);
-                ShowWindow(GetDlgItem(hwndMain, ID_GLOBALSOURCES), SW_SHOW);
             }
             break;
 
@@ -2178,7 +2167,10 @@ enum
 LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
-    if(message == WM_LBUTTONDOWN)
+
+    if(message == WM_ERASEBKGND && App->bRunning)
+        return 1;
+    else if(message == WM_LBUTTONDOWN)
     {
         POINTS pos;
         pos.x = (short)LOWORD(lParam);

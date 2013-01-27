@@ -685,24 +685,6 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
 {
     //const int listControlHeight = totalControlAreaHeight - textControlHeight - controlHeight - controlPadding;
 
-    //-----------------------------------------------------
-
-    /*ShowWindow(GetDlgItem(hwndMain, ID_SCENES), SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_SOURCES), SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_SCENES_TEXT), SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_SOURCES_TEXT), SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_MICVOLUME), SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_DESKTOPVOLUME), SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_SETTINGS), SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_STARTSTOP), SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_SCENEEDITOR), SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_EXIT), SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_DASHBOARD), SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_GLOBALSOURCES), SW_HIDE);*/
-
-    //-----------------------------------------------------
-
     ResizeRenderFrame(bRedrawRenderFrame);
 
     //-----------------------------------------------------
