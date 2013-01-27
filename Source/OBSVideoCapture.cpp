@@ -162,7 +162,7 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
                         List<BYTE> &audioData = pendingAudioFrames[0].audioData;
                         if(audioData.Num())
                         {
-                            //Log(TEXT("a:%u, %u"), audioTimestamp, firstFrameTime+audioTimestamp-curSegment.ctsOffset);
+                            //Log(TEXT("a:%u, %llu, cts: %d"), audioTimestamp, frameInfo.firstFrameTime+audioTimestamp-curSegment.ctsOffset, curSegment.ctsOffset);
 
                             network->SendPacket(audioData.Array(), audioData.Num(), audioTimestamp, PacketType_Audio);
                             if(fileStream)
@@ -186,7 +186,7 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
         {
             VideoPacketData &packet = curSegment.packets[i];
 
-            //Log(TEXT("v:%u, %u"), curSegment.timestamp, firstFrameTime+curSegment.timestamp);
+            //Log(TEXT("v:%u, %llu"), curSegment.timestamp, frameInfo.firstFrameTime+curSegment.timestamp);
 
             network->SendPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, packet.type);
             if(fileStream)
@@ -375,7 +375,7 @@ void OBS::MainCaptureLoop()
     //----------------------------------------
 
     QWORD curStreamTime = 0, lastStreamTime, firstFrameTime = GetQPCTimeMS(clockFreq.QuadPart);
-    lastStreamTime = 0;
+    lastStreamTime = firstFrameTime;
 
     bool bFirstAudioPacket = true;
 
@@ -422,11 +422,12 @@ void OBS::MainCaptureLoop()
         QWORD frameDelta = qwTime-lastStreamTime;
         float fSeconds = float(frameDelta)*0.001f;
 
+        Log(TEXT("%llu"), frameDelta);
+
         lastStreamTime = qwTime;
 #endif
 
         curStreamTime = qwTime-firstFrameTime;
-
         bufferedTimes << UINT(curStreamTime);
 
         if(!bPushToTalkDown && pushToTalkTimeLeft > 0)

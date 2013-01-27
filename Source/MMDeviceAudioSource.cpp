@@ -307,6 +307,11 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
 
             if(bUseVideoTime || newTimestamp < (curTime-OUTPUT_BUFFER_TIME) || newTimestamp > (curTime+2000))
             {
+                if(!bUseVideoTime)
+                    Log(TEXT("Bad timestamp detected, syncing audio to video time"));
+                else
+                    Log(TEXT("Syncing audio to video time"));
+
                 curVideoTime = lastVideoTime = App->GetVideoTime();
 
                 SetTimeOffset(GetTimeOffset()-int(lastVideoTime-App->GetSceneTimestamp()));

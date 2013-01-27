@@ -316,11 +316,11 @@ IPin* GetOutputPin(IBaseFilter *filter)
     return foundPin;
 }
 
-void AddOutput(AM_MEDIA_TYPE *pMT, BYTE *capsData, List<MediaOutputInfo> &outputInfoList)
+void AddOutput(AM_MEDIA_TYPE *pMT, BYTE *capsData, bool bAllowV2, List<MediaOutputInfo> &outputInfoList)
 {
     VideoOutputType type = GetVideoOutputType(*pMT);
 
-    if(pMT->formattype == FORMAT_VideoInfo || pMT->formattype == FORMAT_VideoInfo2)
+    if(pMT->formattype == FORMAT_VideoInfo || (bAllowV2 && pMT->formattype == FORMAT_VideoInfo2))
     {
         VIDEO_STREAM_CONFIG_CAPS *pVSCC = reinterpret_cast<VIDEO_STREAM_CONFIG_CAPS*>(capsData);
         VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pMT->pbFormat);
@@ -391,7 +391,7 @@ void GetOutputList(IPin *curPin, List<MediaOutputInfo> &outputInfoList)
             {
                 AM_MEDIA_TYPE *pMT;
                 if(SUCCEEDED(config->GetStreamCaps(i, &pMT, capsData)))
-                    AddOutput(pMT, capsData, outputInfoList);
+                    AddOutput(pMT, capsData, false, outputInfoList);
             }
 
             Free(capsData);
@@ -405,7 +405,7 @@ void GetOutputList(IPin *curPin, List<MediaOutputInfo> &outputInfoList)
 
                 AM_MEDIA_TYPE *pMT;
                 if(mediaTypes->Next(1, &pMT, &i) == S_OK)
-                    AddOutput(pMT, NULL, outputInfoList);
+                    AddOutput(pMT, NULL, true, outputInfoList);
 
                 mediaTypes->Release();
             }

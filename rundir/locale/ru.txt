@@ -124,6 +124,7 @@ Settings.Advanced.ProcessPriority                   "Приоритет проц
 Settings.Advanced.PresetWarning                     "Внимание! Изменение настроек х264 может оказывать негативное влияние на качество трансляции и повышение нагрузки на CPU.\r\n\r\nНе изменяйте эти настройки, если вы не до конца не понимаете, к каким последствиям это может привести.\r\n\r\nПрименяйте инструкции с осторожностью.\r\n\r\nВ большинстве случаев вам должны подойти настройки по умолчанию (veryfast).\r\n\r\nВы уверены, что хотите изменить настройки?"
 Settings.Advanced.BindToIP                          "Привязка к интерфейсу:"
 
+Settings.Audio.PlaybackDevice       "Устройство воспроизведения:"
 Settings.Audio.Device               "Микрофон:"
 Settings.Audio.ForceMicMono         "Принудительный режим моно:"
 Settings.Audio.MicBoost             "Усиление (множитель):"
@@ -193,7 +194,7 @@ Sources.TransitionSource        "Слайд-шоу"
 Sources.BitmapSource.Color      "Цвет:"
 Sources.BitmapSource.Empty  "Изображение не найдено. Пожалуйста, найдите и выберите картинку."
 Sources.BitmapSource.Opacity    "Прозрачность:"
-Sources.BitmapSource.Monitor    "Следить за изменениями:"
+Sources.BitmapSource.Monitor    "Отслеживать изменения:"
 
 Sources.GameCaptureSource.Application       "Приложение:"
 Sources.GameCaptureSource.IgnoreAspect      "Игнорировать соотношение сторон"
