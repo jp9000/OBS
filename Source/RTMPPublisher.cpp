@@ -164,6 +164,9 @@ RTMPPublisher::~RTMPPublisher()
     if(hSendThread)
     {
         ReleaseSemaphore(hSendSempahore, 1, NULL);
+
+        //wake it up in case it's waiting for buffer space
+        SetEvent(hBufferSpaceAvailableEvent);
         OSTerminateThread(hSendThread, 20000);
     }
 
@@ -1139,7 +1142,7 @@ retrySend:
         Log(TEXT("RTMPPublisher::BufferedSend: Buffer is full (%d / %d bytes), waiting to send %d bytes"), network->curDataBufferLen, network->dataBufferSize, len);
         OSLeaveMutex(network->hDataBufferMutex);
         int status = WaitForSingleObject(network->hBufferSpaceAvailableEvent, INFINITE);
-        if (status == WAIT_ABANDONED || status == WAIT_FAILED)
+        if (status == WAIT_ABANDONED || status == WAIT_FAILED || network->bStopping)
             return 0;
         goto retrySend;
     }
