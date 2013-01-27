@@ -336,13 +336,13 @@ class TextOutputSource : public ImageSource
                         font.GetFamily(&fontFamily); 
 
                         Gdiplus::GraphicsPath path;
-                        path.AddString(strCurrentText, -1, &fontFamily, font.GetStyle(), font.GetSize(), Gdiplus::PointF(bVertical ? float(textSize.cx) : 0.0f, float(textSize.cy - size) * 0.5f), &format);
+                        path.AddString(strCurrentText, -1, &fontFamily, font.GetStyle(), font.GetSize(), Gdiplus::PointF(bVertical ? float(textSize.cx) : 0.0f, bVertical ? 0: float(textSize.cy - size) * 0.5f), &format);
 
                         DrawOutlineText(graphics, font, path, format, brush);
                     }
                     else
                     {
-                        stat = graphics.DrawString(strCurrentText, -1, &font, Gdiplus::PointF(bVertical ? float(textSize.cx) : 0.0f, float(textSize.cy - size) * 0.5f), &format, brush);
+                        stat = graphics.DrawString(strCurrentText, -1, &font, Gdiplus::PointF(bVertical ? float(textSize.cx) : 0.0f, bVertical ? 0: float(textSize.cy - size) * 0.5f), &format, brush);
                         if(stat != Gdiplus::Ok) AppWarning(TEXT("Hmm, DrawString failed: %u"), (int)stat);
                     }
                 }
@@ -413,9 +413,9 @@ public:
 
     void Tick(float fSeconds)
     {
-        if(scrollSpeed != 0)
+        if(scrollSpeed != 0 && texture)
         {
-            scrollValue += fSeconds*float(scrollSpeed)*0.01f;
+            scrollValue += fSeconds*float(scrollSpeed)/(bVertical?(-1.0f)*float(textureSize.cy):float(textureSize.cx));
             while(scrollValue > 1.0f)
                 scrollValue -= 1.0f;
             while(scrollValue < -1.0f)
