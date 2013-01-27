@@ -2167,7 +2167,10 @@ enum
 LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
-    if(message == WM_LBUTTONDOWN)
+
+    if(message == WM_ERASEBKGND && App->bRunning)
+        return 1;
+    else if(message == WM_LBUTTONDOWN)
     {
         POINTS pos;
         pos.x = (short)LOWORD(lParam);
