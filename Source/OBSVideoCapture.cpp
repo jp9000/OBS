@@ -422,7 +422,7 @@ void OBS::MainCaptureLoop()
         QWORD frameDelta = qwTime-lastStreamTime;
         float fSeconds = float(frameDelta)*0.001f;
 
-        Log(TEXT("%llu"), frameDelta);
+        //Log(TEXT("%llu"), frameDelta);
 
         lastStreamTime = qwTime;
 #endif
