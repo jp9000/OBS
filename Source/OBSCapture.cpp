@@ -184,6 +184,8 @@ void OBS::Start()
         CrashError(TEXT("Invalid downscale value (must be either 1.0, 1.5, 2.0, 2.25, or 3.0)"));
 
     yuvScalePixelShader = CreatePixelShaderFromFile(lpShader);
+    if (!yuvScalePixelShader)
+        CrashError(TEXT("Unable to create shader from file %s"), lpShader);
 
     //-------------------------------------------------------------
 
