@@ -142,6 +142,7 @@
 #define IDC_TRANSITIONTIME_EDIT         1079
 #define IDC_MICBOOST                    1079
 #define IDC_TEXTSIZE                    1079
+#define IDC_AUDIOTIMEADJUST             1079
 #define IDC_AUTORECONNECT_TIMEOUT_STATIC 1080
 #define IDC_TEXTOPACITY_EDIT            1080
 #define IDC_PTTDELAY_EDIT               1080
@@ -214,7 +215,8 @@
 #define IDC_DISABLECTSADJUST            1140
 #define IDC_USECFR                      1141
 #define IDC_PLAYBACKDEVICES             1142
-
+#define IDC_EDIT2                       1144
+#define IDC_AUDIOTIMEADJUST_EDIT        1144
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -247,7 +249,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        141
 #define _APS_NEXT_COMMAND_VALUE         40046
-#define _APS_NEXT_CONTROL_VALUE         1143
+#define _APS_NEXT_CONTROL_VALUE         1145
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

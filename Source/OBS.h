@@ -27,7 +27,7 @@ static const int minClientWidth  = 700;
 static const int minClientHeight = 200;
 
 
-#define OUTPUT_BUFFER_TIME 200
+#define OUTPUT_BUFFER_TIME 400
 
 
 struct AudioDeviceInfo

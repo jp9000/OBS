@@ -335,15 +335,18 @@ BEGIN
     CONTROL         "Settings.Advanced.UseSyncFix",IDC_USESYNCFIX,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,20,141,243,10
     CONTROL         "Settings.Advanced.UnlockHigherFPS",IDC_UNLOCKHIGHFPS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,155,217,10
-    GROUPBOX        "Settings.Audio",IDC_STATIC,4,176,418,44
+    GROUPBOX        "Settings.Audio",IDC_STATIC,4,176,418,62
     CONTROL         "Settings.Advanced.UseHighQualityResampling",IDC_USEHIGHQUALITYRESAMPLING,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,189,332,10
     CONTROL         "Settings.Advanced.SyncToVideoTime",IDC_SYNCTOVIDEOTIME,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,203,332,10
-    GROUPBOX        "Settings.Advanced.Network",IDC_STATIC,4,224,418,32
-    RTEXT           "Settings.Advanced.BindToIP",IDC_STATIC,5,237,138,8
-    COMBOBOX        IDC_BINDIP,145,235,87,62,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Settings.Info",IDC_INFO,7,262,418,37,NOT WS_VISIBLE
+    LTEXT           "Settings.Advanced.GlobalAudioTimeAdjust",IDC_STATIC,5,221,138,8,0,WS_EX_RIGHT
+    EDITTEXT        IDC_AUDIOTIMEADJUST_EDIT,144,218,40,14,ES_AUTOHSCROLL
+    CONTROL         "",IDC_AUDIOTIMEADJUST,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,184,218,10,14
+    GROUPBOX        "Settings.Advanced.Network",IDC_STATIC,4,246,418,32
+    RTEXT           "Settings.Advanced.BindToIP",IDC_STATIC,5,259,138,8
+    COMBOBOX        IDC_BINDIP,145,257,87,62,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Settings.Info",IDC_INFO,7,284,418,37,NOT WS_VISIBLE
 END
 
 IDD_CONFIGURETRANSITIONSOURCE DIALOGEX 0, 0, 338, 198

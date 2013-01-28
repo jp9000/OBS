@@ -1683,6 +1683,12 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 //------------------------------------
 
+                int globalAudioTimeAdjust = GlobalConfig->GetInt(TEXT("Audio"), TEXT("GlobalAudioTimeAdjust"));
+                SendMessage(GetDlgItem(hwnd, IDC_AUDIOTIMEADJUST), UDM_SETRANGE32, -(OUTPUT_BUFFER_TIME-50), 1000);
+                SendMessage(GetDlgItem(hwnd, IDC_AUDIOTIMEADJUST), UDM_SETPOS32, 0, globalAudioTimeAdjust);
+
+                //------------------------------------
+
                 BOOL bUseSendBuffer = AppConfig->GetInt(TEXT("Publish"), TEXT("UseSendBuffer"), 0) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_USESENDBUFFER), BM_SETCHECK, bUseSendBuffer ? BST_CHECKED : BST_UNCHECKED, 0);
 
@@ -1764,6 +1770,7 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                     }
                     break;
 
+                case IDC_AUDIOTIMEADJUST_EDIT:
                 case IDC_VIDEOENCODERSETTINGS:
                     if(HIWORD(wParam) == EN_CHANGE)
                     {
@@ -2171,8 +2178,8 @@ void OBS::ApplySettings()
 
                 //--------------------------------------------------
 
-                /*BOOL bDisableD3DCompat = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_DISABLED3DCOMPATIBILITY), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                AppConfig->SetInt   (TEXT("Video"), TEXT("DisableD3DCompatibilityMode"), bDisableD3DCompat);*/
+                int globalAudioTimeAdjust = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_AUDIOTIMEADJUST), UDM_GETPOS32, 0, 0);
+                GlobalConfig->SetInt(TEXT("Audio"), TEXT("GlobalAudioTimeAdjust"), globalAudioTimeAdjust);
 
                 //--------------------------------------------------
 

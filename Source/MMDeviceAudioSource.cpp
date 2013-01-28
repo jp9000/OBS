@@ -147,6 +147,7 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
         Log(TEXT("Using desktop audio input: %s"), GetDeviceName());
 
         bUseVideoTime = AppConfig->GetInt(TEXT("Audio"), TEXT("SyncToVideoTime")) != 0;
+        SetTimeOffset(GlobalConfig->GetInt(TEXT("Audio"), TEXT("GlobalAudioTimeAdjust")));
     }
 
     //-----------------------------------------------------------------

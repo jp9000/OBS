@@ -88,6 +88,39 @@ Scene* STDCALL CreateNormalScene(XElement *data)
     return new Scene;
 }
 
+BOOL IsWebrootLoaded()
+{
+    BOOL ret = FALSE;
+    StringList moduleList;
+
+    OSGetLoadedModuleList (GetCurrentProcess(), moduleList);
+
+    HMODULE msIMG = GetModuleHandle(TEXT("MSIMG32"));
+    if (msIMG)
+    {
+        FARPROC alphaBlend = GetProcAddress(msIMG, "AlphaBlend");
+        if (alphaBlend)
+        {
+            if (!IsBadReadPtr(alphaBlend, 5))
+            {
+                BYTE opCode = *(BYTE *)alphaBlend;
+
+                if (opCode == 0xE9)
+                {
+                    if (moduleList.HasValue(TEXT("wrusr.dll")))
+                        ret = TRUE;
+                }
+            }
+        }
+    }
+
+    return ret;
+}
+
+
+
+//---------------------------------------------------------------------------
+
 
 OBS::OBS()
 {
@@ -529,6 +562,9 @@ OBS::OBS()
 #endif
 
     bRenderViewEnabled = true;
+
+    if(GlobalConfig->GetInt(TEXT("General"), TEXT("ShowWebrootWarning"), TRUE) && IsWebrootLoaded())
+        MessageBox(hwndMain, TEXT("Webroot Secureanywhere appears to be active.  This product will cause problems with OBS as the security features block OBS from accessing Windows GDI functions.  It is highly recommended that you add OBS.exe to the Secureanywhere exceptions list and restart OBS - see http://bit.ly/OBSWR if you need help.\r\n\r\nOf course you can always just ignore this message if you want, but it may prevent you from being able to stream certain things."), TEXT("Just a slight issue you might want to be aware of"), MB_OK);
 }
 
 

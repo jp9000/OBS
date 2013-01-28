@@ -751,7 +751,9 @@ BOOL   STDCALL OSIncompatiblePatchesLoaded(String &errors)
         }
     }
 
-    HMODULE msIMG = GetModuleHandle(TEXT("MSIMG32"));
+    //I'm just going to make this a warning that pops up when the app starts instead of actually preventing people from using the app
+    //People are complaining about this a bit too much and it's just like "whatever, do whatever you want"
+    /*HMODULE msIMG = GetModuleHandle(TEXT("MSIMG32"));
     if (msIMG)
     {
         FARPROC alphaBlend = GetProcAddress(msIMG, "AlphaBlend");
@@ -774,7 +776,7 @@ BOOL   STDCALL OSIncompatiblePatchesLoaded(String &errors)
                 }
             }
         }
-    }
+    }*/
 
     return ret;
 }
