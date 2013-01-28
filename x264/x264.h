@@ -1,7 +1,7 @@
 /*****************************************************************************
  * x264.h: x264 public header
  *****************************************************************************
- * Copyright (C) 2003-2012 x264 project
+ * Copyright (C) 2003-2013 x264 project
  *
  * Authors: Laurent Aimar <fenrir@via.ecp.fr>
  *          Loren Merritt <lorenm@u.washington.edu>
@@ -41,7 +41,7 @@
 
 #include "x264_config.h"
 
-#define X264_BUILD 125
+#define X264_BUILD 129
 
 /* Application developers planning to link against a shared library version of
  * libx264 from a Microsoft Visual Studio or similar development environment
@@ -365,7 +365,8 @@ typedef struct x264_param_t
         float        f_psy_trellis; /* Psy trellis strength */
         int          b_psy; /* Toggle all psy optimizations */
 
-        int          b_mb_info; /* Use input mb_info data in x264_picture_t */
+        int          b_mb_info;            /* Use input mb_info data in x264_picture_t */
+        int          b_mb_info_update; /* Update the values in mb_info according to the results of encoding. */
 
         /* the deadzone size that will be used in luma quantization */
         int          i_luma_deadzone[2]; /* {inter, intra} */
@@ -502,8 +503,13 @@ typedef struct x264_param_t
      * the calling application is expected to acquire all output NALs through the callback.
      *
      * It is generally sensible to combine this callback with a use of slice-max-mbs or
-     * slice-max-size. */
-    void (*nalu_process) ( x264_t *h, x264_nal_t *nal );
+     * slice-max-size.
+     *
+     * The opaque pointer is the opaque pointer from the input frame associated with this
+     * NAL unit. This helps distinguish between nalu_process calls from different sources,
+     * e.g. if doing multiple encodes in one process.
+     */
+    void (*nalu_process) ( x264_t *h, x264_nal_t *nal, void *opaque );
 } x264_param_t;
 
 void x264_nal_encode( x264_t *h, uint8_t *dst, x264_nal_t *nal );
@@ -517,7 +523,7 @@ typedef struct
     int level_idc;
     int mbps;        /* max macroblock processing rate (macroblocks/sec) */
     int frame_size;  /* max frame size (macroblocks) */
-    int dpb;         /* max decoded picture buffer (bytes) */
+    int dpb;         /* max decoded picture buffer (mbs) */
     int bitrate;     /* max bitrate (kbit/sec) */
     int cpb;         /* max vbv buffer (kbit) */
     int mv_range;    /* max vertical mv component range (pixels) */
@@ -713,7 +719,20 @@ typedef struct
      *     Allows specifying additional information for the encoder such as which macroblocks
      *     remain unchanged.  Usable flags are listed below.
      *     x264_param_t.analyse.b_mb_info must be set to use this, since x264 needs to track
-     *     extra data internally to make full use of this information. */
+     *     extra data internally to make full use of this information.
+     *
+     * Out: if b_mb_info_update is set, x264 will update this array as a result of encoding.
+     *
+     *      For "MBINFO_CONSTANT", it will remove this flag on any macroblock whose decoded
+     *      pixels have changed.  This can be useful for e.g. noting which areas of the
+     *      frame need to actually be blitted. Note: this intentionally ignores the effects
+     *      of deblocking for the current frame, which should be fine unless one needs exact
+     *      pixel-perfect accuracy.
+     *
+     *      Results for MBINFO_CONSTANT are currently only set for P-frames, and are not
+     *      guaranteed to enumerate all blocks which haven't changed.  (There may be false
+     *      negatives, but no false positives.)
+     */
     uint8_t *mb_info;
     /* In: optional callback to free mb_info when used. */
     void (*mb_info_free)( void* );
@@ -728,6 +747,9 @@ typedef struct
     double f_psnr_avg;
     /* Out: PSNR of Y, U, and V (if x264_param_t.b_psnr is set) */
     double f_psnr[3];
+
+    /* Out: Average effective CRF of the encoded frame */
+    double f_crf_avg;
 } x264_image_properties_t;
 
 typedef struct
