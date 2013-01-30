@@ -337,7 +337,7 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
                 else
                     curVideoTime += 10;
 
-                newTimestamp = (bUseVideoTime) ? curVideoTime : newTimestamp = qpcTimestamp;
+                newTimestamp = (bUseVideoTime) ? curVideoTime : qpcTimestamp;
                 newTimestamp += GetTimeOffset();
             }
 
