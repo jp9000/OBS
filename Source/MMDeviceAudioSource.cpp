@@ -49,6 +49,8 @@ class MMDeviceAudioSource : public AudioSource
     UINT sampleWindowSize;
     List<float> inputBuffer;
 
+    bool bUseQPC;
+
 protected:
     virtual bool GetNextBuffer(void **buffer, UINT *numFrames, QWORD *timestamp);
     virtual void ReleaseBuffer();
@@ -102,7 +104,7 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
         return false;
     }
 
-    bIsMic = bMic;
+    bUseQPC = bIsMic = bMic;
     err = mmEnumerator->GetDevice(lpID, &mmDevice);
 
     if(FAILED(err))
@@ -263,13 +265,41 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
             return false;
         }
 
+        qpcTimestamp /= 10000;
+
         //-----------------------------------------------------------------
         // timestamp bs
 
         QWORD newTimestamp = 0;
 
         if(bIsMic)
-            newTimestamp = App->GetAudioTime()+GetTimeOffset();
+        {
+            newTimestamp = App->GetAudioTime();//+GetTimeOffset();
+
+            if(bUseQPC)
+            {
+                QWORD qpcVal = qpcTimestamp;
+                if(qpcVal > newTimestamp)
+                {
+                    if(qpcVal-newTimestamp < 200)
+                        newTimestamp = qpcVal;
+                    else
+                        bUseQPC = false;
+                }
+                else
+                {
+                    if(newTimestamp-qpcVal < 200)
+                        newTimestamp = qpcVal;
+                    else
+                        bUseQPC = false;
+                }
+
+                if(!bUseQPC)
+                    Log(TEXT("timestamps for '%s' just decided to go wacky.  reverting to desktop time.  PRAISE WONDERFUL DEVICE DRIVERS"), GetDeviceName());
+            }
+
+            newTimestamp += GetTimeOffset();
+        }
         else
         {
             //we're doing all these checks because device timestamps are only reliable "sometimes"
@@ -281,14 +311,14 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
 
                 newTimestamp = qpcTimestamp;
 
+                curVideoTime = lastVideoTime = App->GetVideoTime();
+
                 if(bUseVideoTime || newTimestamp < (curTime-OUTPUT_BUFFER_TIME) || newTimestamp > (curTime+2000))
                 {
                     if(!bUseVideoTime)
                         Log(TEXT("Bad timestamp detected, syncing audio to video time"));
                     else
                         Log(TEXT("Syncing audio to video time"));
-
-                    curVideoTime = lastVideoTime = App->GetVideoTime();
 
                     SetTimeOffset(GetTimeOffset()-int(lastVideoTime-App->GetSceneTimestamp()));
                     bUseVideoTime = true;
@@ -300,20 +330,15 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
             }
             else
             {
-                if(bUseVideoTime)
-                {
-                    QWORD newVideoTime = App->GetVideoTime();
+                QWORD newVideoTime = App->GetVideoTime();
 
-                    if(newVideoTime != lastVideoTime)
-                    {
-                        lastVideoTime = newVideoTime;
-                        newTimestamp = curVideoTime = newVideoTime+GetTimeOffset();
-                    }
-                    else
-                        newTimestamp = curVideoTime += 10;
-                }
+                if(newVideoTime != lastVideoTime)
+                    curVideoTime = lastVideoTime = newVideoTime;
                 else
-                    newTimestamp = qpcTimestamp+GetTimeOffset();
+                    curVideoTime += 10;
+
+                newTimestamp = (bUseVideoTime) ? curVideoTime : newTimestamp = qpcTimestamp;
+                newTimestamp += GetTimeOffset();
             }
 
             App->latestAudioTime = newTimestamp;

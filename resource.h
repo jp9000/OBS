@@ -88,6 +88,8 @@
 #define IDC_CHANNELNAME_STATIC          1043
 #define IDC_EXTENTWIDTH_EDIT            1043
 #define IDC_URL_STATIC                  1043
+#define IDC_FORCEMONO2                  1043
+#define IDC_USEMICTIMESTAMP             1043
 #define IDC_PLAYPATH_STATIC             1044
 #define IDC_SCROLLSPEED3                1044
 #define IDC_EXTENTHEIGHT_EDIT           1044
@@ -215,7 +217,6 @@
 #define IDC_DISABLECTSADJUST            1140
 #define IDC_USECFR                      1141
 #define IDC_PLAYBACKDEVICES             1142
-#define IDC_EDIT2                       1144
 #define IDC_AUDIOTIMEADJUST_EDIT        1144
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019

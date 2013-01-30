@@ -105,9 +105,10 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
     //------------------------------------
     // encode
 
+    bufferedTimes << frameInfo.frameTimestamp;
+
     VideoSegment curSegment;
-    bool bSendFrame;
-    bool bProcessedFrame;
+    bool bProcessedFrame, bSendFrame = false;
 
     profileIn("call to encoder");
 
@@ -117,7 +118,11 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
     bProcessedFrame = (videoPackets.Num() != 0);
 
     //buffer video data before sending out
-    bSendFrame = BufferVideoData(videoPackets, videoPacketTypes, frameInfo.frameTimestamp, curSegment);
+    if(bProcessedFrame)
+    {
+        bSendFrame = BufferVideoData(videoPackets, videoPacketTypes, bufferedTimes[0], curSegment);
+        bufferedTimes.Remove(0);
+    }
 
     profileOut;
 
@@ -230,7 +235,7 @@ void OBS::MainCaptureLoop()
     int copyWait = NUM_RENDER_BUFFERS-1;
 
     bSentHeaders = false;
-    bFirstAudioPacket = false;
+    bFirstAudioPacket = true;
 
     Vect2 baseSize    = Vect2(float(baseCX), float(baseCY));
     Vect2 outputSize  = Vect2(float(outputCX), float(outputCY));
@@ -247,6 +252,7 @@ void OBS::MainCaptureLoop()
 
     x264_picture_t *lastPic = NULL;
     x264_picture_t outPics[NUM_OUT_BUFFERS];
+    DWORD outTimes[NUM_OUT_BUFFERS] = {0, 0, 0};
 
     for(int i=0; i<NUM_OUT_BUFFERS; i++)
         x264_picture_init(&outPics[i]);
@@ -284,7 +290,6 @@ void OBS::MainCaptureLoop()
 #endif
     totalStreamTime = 0;
 
-    curPTS = 0;
     lastAudioTimestamp = 0;
 
     latestVideoTime = firstSceneTimestamp = GetQPCTimeMS(clockFreq.QuadPart);
@@ -375,7 +380,7 @@ void OBS::MainCaptureLoop()
     //----------------------------------------
 
     QWORD curStreamTime = 0, lastStreamTime, firstFrameTime = GetQPCTimeMS(clockFreq.QuadPart);
-    lastStreamTime = firstFrameTime;
+    lastStreamTime = firstFrameTime-frameTime;
 
     bool bFirstAudioPacket = true;
 
@@ -422,13 +427,10 @@ void OBS::MainCaptureLoop()
         QWORD frameDelta = qwTime-lastStreamTime;
         float fSeconds = float(frameDelta)*0.001f;
 
-        //Log(TEXT("%llu"), frameDelta);
+        //Log(TEXT("frameDelta: %llu"), frameDelta);
 
         lastStreamTime = qwTime;
 #endif
-
-        curStreamTime = qwTime-firstFrameTime;
-        bufferedTimes << UINT(curStreamTime);
 
         if(!bPushToTalkDown && pushToTalkTimeLeft > 0)
         {
@@ -652,12 +654,7 @@ void OBS::MainCaptureLoop()
                 bEncode = false;
             else if(bFirstFrame)
             {
-                if(bufferedTimes.Num() > 1)
-                    bufferedTimes.RemoveRange(0, bufferedTimes.Num()-1);
-                lastStreamTime -= bufferedTimes[0];
-                firstFrameTime += bufferedTimes[0];
-                bufferedTimes[0] = 0;
-
+                firstFrameTime = qwTime;
                 bFirstFrame = false;
             }
 
@@ -672,6 +669,8 @@ void OBS::MainCaptureLoop()
 
         if(bEncode)
         {
+            curStreamTime = qwTime-firstFrameTime;
+
             UINT prevCopyTexture = (curCopyTexture+1) & 1;
 
             ID3D10Texture2D *copyTexture = copyTextures[curCopyTexture];
@@ -689,117 +688,112 @@ void OBS::MainCaptureLoop()
 
             ID3D10Texture2D *prevTexture = copyTextures[prevCopyTexture];
 
-            D3D10_MAPPED_TEXTURE2D map;
-            if(SUCCEEDED(prevTexture->Map(0, D3D10_MAP_READ, 0, &map)))
+            if(bFirstImage) //ignore the first frame
+                bFirstImage = false;
+            else
             {
-                int prevOutBuffer = (curOutBuffer == 0) ? NUM_OUT_BUFFERS-1 : curOutBuffer-1;
-                int nextOutBuffer = (curOutBuffer == NUM_OUT_BUFFERS-1) ? 0 : curOutBuffer+1;
-
-                x264_picture_t &prevPicOut = outPics[prevOutBuffer];
-                x264_picture_t &picOut = outPics[curOutBuffer];
-                x264_picture_t &nextPicOut = outPics[nextOutBuffer];
-
-                curOutBuffer = nextOutBuffer;
-
-                if(!bUsing444)
+                D3D10_MAPPED_TEXTURE2D map;
+                if(SUCCEEDED(prevTexture->Map(0, D3D10_MAP_READ, 0, &map)))
                 {
-                    profileIn("conversion to 4:2:0");
+                    int prevOutBuffer = (curOutBuffer == 0) ? NUM_OUT_BUFFERS-1 : curOutBuffer-1;
+                    int nextOutBuffer = (curOutBuffer == NUM_OUT_BUFFERS-1) ? 0 : curOutBuffer+1;
 
-                    if(bUseThreaded420)
+                    x264_picture_t &prevPicOut = outPics[prevOutBuffer];
+                    x264_picture_t &picOut = outPics[curOutBuffer];
+                    x264_picture_t &nextPicOut = outPics[nextOutBuffer];
+
+                    if(!bUsing444)
                     {
-                        for(int i=0; i<numThreads; i++)
+                        profileIn("conversion to 4:2:0");
+
+                        if(bUseThreaded420)
                         {
-                            convertInfo[i].input     = (LPBYTE)map.pData;
-                            convertInfo[i].pitch     = map.RowPitch;
-                            convertInfo[i].output[0] = nextPicOut.img.plane[0];
-                            convertInfo[i].output[1] = nextPicOut.img.plane[1];
-                            convertInfo[i].output[2] = nextPicOut.img.plane[2];
-                            SetEvent(convertInfo[i].hSignalConvert);
-                        }
+                            outTimes[nextOutBuffer] = (DWORD)curStreamTime;
 
-                        if(bFirst420Encode)
-                            bFirst420Encode = bEncode = false;
-                    }
-                    else
-                    {
-                        Convert444to420((LPBYTE)map.pData, outputCX, map.RowPitch, outputCY, 0, outputCY, picOut.img.plane, SSE2Available());
-                        prevTexture->Unmap(0);
-                    }
-
-                    profileOut;
-                }
-                else
-                {
-                    picOut.img.i_stride[0] = map.RowPitch;
-                    picOut.img.plane[0]    = (uint8_t*)map.pData;
-                }
-
-                if(bEncode && bFirstImage)
-                    bFirstImage = bEncode = false;
-
-                if(bEncode)
-                {
-                    DWORD curFrameTimestamp = bufferedTimes[curPTS++];
-
-                    //------------------------------------
-
-                    FrameProcessInfo frameInfo;
-                    frameInfo.firstFrameTime = firstFrameTime;
-                    frameInfo.prevTexture = prevTexture;
-
-                    if(bUseCFR)
-                    {
-                        bool bFrameProcessed = false;
-
-                        while(cfrTime < curFrameTimestamp)
-                        {
-                            DWORD frameTimeAdjust = frameTime;
-                            cfrTimeAdjust += fpsTimeNumerator;
-                            if(cfrTimeAdjust > fpsTimeDenominator)
+                            for(int i=0; i<numThreads; i++)
                             {
-                                cfrTimeAdjust -= fpsTimeDenominator;
-                                ++frameTimeAdjust;
+                                convertInfo[i].input     = (LPBYTE)map.pData;
+                                convertInfo[i].pitch     = map.RowPitch;
+                                convertInfo[i].output[0] = nextPicOut.img.plane[0];
+                                convertInfo[i].output[1] = nextPicOut.img.plane[1];
+                                convertInfo[i].output[2] = nextPicOut.img.plane[2];
+                                SetEvent(convertInfo[i].hSignalConvert);
                             }
 
-                            DWORD halfTime = (frameTimeAdjust+1)/2;
-
-                            x264_picture_t *nextPic = (curFrameTimestamp-cfrTime <= halfTime) ? &picOut : &prevPicOut;
-
-                            //these lines are just for counting duped frames
-                            if(nextPic == lastPic)
-                                ++numTotalDuplicatedFrames;
-                            else
-                                lastPic = nextPic;
-
-                            frameInfo.picOut = nextPic;
-                            frameInfo.picOut->i_pts = cfrTime;
-                            frameInfo.frameTimestamp = cfrTime;
-                            bFrameProcessed |= ProcessFrame(frameInfo);
-
-                            cfrTime += frameTimeAdjust;
-
-                            //Log(TEXT("cfrTime: %u, chi frame: %u"), cfrTime, (curFrameTimestamp-cfrTime <= halfTime));
+                            if(bFirst420Encode)
+                                bFirst420Encode = bEncode = false;
                         }
-
-                        if(bFrameProcessed)
+                        else
                         {
-                            curPTS--;
-                            bufferedTimes.Remove(0);
+                            outTimes[curOutBuffer] = (DWORD)curStreamTime;
+                            Convert444to420((LPBYTE)map.pData, outputCX, map.RowPitch, outputCY, 0, outputCY, picOut.img.plane, SSE2Available());
+                            prevTexture->Unmap(0);
                         }
+
+                        profileOut;
                     }
                     else
                     {
-                        picOut.i_pts = curFrameTimestamp;
+                        picOut.img.i_stride[0] = map.RowPitch;
+                        picOut.img.plane[0]    = (uint8_t*)map.pData;
+                    }
 
-                        frameInfo.picOut = &picOut;
-                        frameInfo.frameTimestamp = curFrameTimestamp;
+                    if(bEncode)
+                    {
+                        DWORD curFrameTimestamp = outTimes[prevOutBuffer];
+                        //Log(TEXT("curFrameTimestamp: %u"), curFrameTimestamp);
 
-                        if(ProcessFrame(frameInfo))
+                        //------------------------------------
+
+                        FrameProcessInfo frameInfo;
+                        frameInfo.firstFrameTime = firstFrameTime;
+                        frameInfo.prevTexture = prevTexture;
+
+                        if(bUseCFR)
                         {
-                            curPTS--;
-                            bufferedTimes.Remove(0);
+                            while(cfrTime < curFrameTimestamp)
+                            {
+                                DWORD frameTimeAdjust = frameTime;
+                                cfrTimeAdjust += fpsTimeNumerator;
+                                if(cfrTimeAdjust > fpsTimeDenominator)
+                                {
+                                    cfrTimeAdjust -= fpsTimeDenominator;
+                                    ++frameTimeAdjust;
+                                }
+
+                                DWORD halfTime = (frameTimeAdjust+1)/2;
+
+                                x264_picture_t *nextPic = (curFrameTimestamp-cfrTime <= halfTime) ? &picOut : &prevPicOut;
+                                //Log(TEXT("cfrTime: %u, time: %u"), cfrTime, curFrameTimestamp);
+
+                                //these lines are just for counting duped frames
+                                if(nextPic == lastPic)
+                                    ++numTotalDuplicatedFrames;
+                                else
+                                    lastPic = nextPic;
+
+                                frameInfo.picOut = nextPic;
+                                frameInfo.picOut->i_pts = cfrTime;
+                                frameInfo.frameTimestamp = cfrTime;
+                                ProcessFrame(frameInfo);
+
+                                cfrTime += frameTimeAdjust;
+
+                                //Log(TEXT("cfrTime: %u, chi frame: %u"), cfrTime, (curFrameTimestamp-cfrTime <= halfTime));
+                            }
+                        }
+                        else
+                        {
+                            picOut.i_pts = curFrameTimestamp;
+
+                            frameInfo.picOut = &picOut;
+                            frameInfo.frameTimestamp = curFrameTimestamp;
+
+                            ProcessFrame(frameInfo);
                         }
                     }
+
+                    curOutBuffer = nextOutBuffer;
                 }
             }
 
@@ -831,7 +825,7 @@ void OBS::MainCaptureLoop()
 
         //------------------------------------
         // get audio while sleeping or capturing
-        ReleaseSemaphore(hRequestAudioEvent, 1, NULL);
+        //ReleaseSemaphore(hRequestAudioEvent, 1, NULL);
 
         //------------------------------------
         // frame sync

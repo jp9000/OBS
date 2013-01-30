@@ -172,8 +172,6 @@ bool DeviceSource::LoadFilters()
 
     bUseThreadedConversion = API->UseMultithreadedOptimizations() && (OSGetTotalCores() > 1);
 
-    bool bNoBuffering = data->GetInt(TEXT("noBuffering")) != 0;
-
     //------------------------------------------------
     // basic initialization vars
 
@@ -531,7 +529,7 @@ bool DeviceSource::LoadFilters()
     //------------------------------------------------
     // connect all pins and set up the whole capture thing
 
-    if(bNoBuffering)
+    /*if(bNoBuffering)
     {
         IMediaFilter *mediaFilter;
         if(SUCCEEDED(graph->QueryInterface(IID_IMediaFilter, (void**)&mediaFilter)))
@@ -542,7 +540,7 @@ bool DeviceSource::LoadFilters()
             Log(TEXT("Disabling buffering (hopefully)"));
             mediaFilter->Release();
         }
-    }
+    }*/
 
     //THANK THE NINE DIVINES I FINALLY GOT IT WORKING
     bool bConnected = SUCCEEDED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video, deviceFilter, NULL, captureFilter));

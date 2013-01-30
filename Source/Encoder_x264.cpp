@@ -83,8 +83,17 @@ class X264Encoder : public VideoEncoder
         CurrentPackets.Clear();
     }
 
+    inline void SetBitRateParams(DWORD maxBitrate, DWORD bufferSize)
+    {
+        paramData.rc.i_vbv_max_bitrate  = maxBitrate; //vbv-maxrate
+        paramData.rc.i_vbv_buffer_size  = bufferSize; //vbv-bufsize
+
+        if(bUseCBR)
+            paramData.rc.i_bitrate = maxBitrate;
+    }
+
 public:
-    X264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR)
+    X264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitrate, int bufferSize, bool bUseCFR)
     {
         fps_ms = 1000/fps;
 
@@ -110,19 +119,16 @@ public:
         bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR")) != 0;
         this->bUseCFR = bUseCFR;
 
+        SetBitRateParams(maxBitrate, bufferSize);
+
         if(bUseCBR)
         {
-            paramData.rc.i_bitrate          = maxBitRate;
-            paramData.rc.i_vbv_max_bitrate  = maxBitRate; //vbv-maxrate
-            paramData.rc.i_vbv_buffer_size  = bufferSize; //vbv-bufsize
             paramData.i_nal_hrd             = X264_NAL_HRD_CBR;
             paramData.rc.i_rc_method        = X264_RC_ABR;
             paramData.rc.f_rf_constant      = 0.0f;
         }
         else
         {
-            paramData.rc.i_vbv_max_bitrate  = maxBitRate; //vbv-maxrate
-            paramData.rc.i_vbv_buffer_size  = bufferSize; //vbv-bufsize
             paramData.rc.i_rc_method        = X264_RC_CRF;
             paramData.rc.f_rf_constant      = baseCRF+float(10-quality);
         }
@@ -139,8 +145,8 @@ public:
         paramData.i_timebase_num = 1;
         paramData.i_timebase_den = 1000;
 
-        //paramData.pf_log                = get_x264_log;
-        //paramData.i_log_level           = X264_LOG_INFO;
+        paramData.pf_log                = get_x264_log;
+        paramData.i_log_level           = X264_LOG_INFO;
 
         BOOL bUseCustomParams = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCustomSettings"));
         if(bUseCustomParams)
@@ -414,17 +420,7 @@ public:
 
     virtual bool SetBitRate(DWORD maxBitrate, DWORD bufferSize)
     {
-        if(bUseCBR)
-        {
-            paramData.rc.i_bitrate          = maxBitrate;
-            paramData.rc.i_vbv_max_bitrate  = maxBitrate; //vbv-maxrate
-            paramData.rc.i_vbv_buffer_size  = bufferSize; //vbv-bufsize
-        }
-        else
-        {
-            paramData.rc.i_vbv_max_bitrate = maxBitrate;
-            paramData.rc.i_vbv_buffer_size = bufferSize;
-        }
+        SetBitRateParams(maxBitrate, bufferSize);
 
         int retVal = x264_encoder_reconfig(x264, &paramData);
         if(retVal < 0)

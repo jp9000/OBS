@@ -528,7 +528,6 @@ class OBS
 
     List<VideoSegment> bufferedVideo;
 
-    int curPTS;
     List<UINT> bufferedTimes;
 
     bool bRecievedFirstAudioFrame, bSentHeaders, bFirstAudioPacket;
@@ -551,7 +550,7 @@ class OBS
     //---------------------------------------------------
     // main audio capture loop stuff
 
-    HANDLE  hSoundThread, hSoundDataMutex, hRequestAudioEvent;
+    HANDLE  hSoundThread, hSoundDataMutex;//, hRequestAudioEvent;
     QWORD   latestAudioTime;
 
     float   desktopVol, micVol, curMicVol;

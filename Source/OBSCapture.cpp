@@ -382,7 +382,7 @@ void OBS::Start()
     bForceMicMono = AppConfig->GetInt(TEXT("Audio"), TEXT("ForceMicMono")) != 0;
     bRecievedFirstAudioFrame = false;
 
-    hRequestAudioEvent = CreateSemaphore(NULL, 0, 0x7FFFFFFFL, NULL);
+    //hRequestAudioEvent = CreateSemaphore(NULL, 0, 0x7FFFFFFFL, NULL);
     hSoundDataMutex = OSCreateMutex();
     hSoundThread = OSCreateThread((XTHREAD)OBS::MainAudioThread, NULL);
 
@@ -448,17 +448,17 @@ void OBS::Stop()
 
     if(hSoundThread)
     {
-        ReleaseSemaphore(hRequestAudioEvent, 1, NULL);
+        //ReleaseSemaphore(hRequestAudioEvent, 1, NULL);
         OSTerminateThread(hSoundThread, 20000);
     }
 
-    if(hRequestAudioEvent)
-        CloseHandle(hRequestAudioEvent);
+    //if(hRequestAudioEvent)
+    //    CloseHandle(hRequestAudioEvent);
     if(hSoundDataMutex)
         OSCloseMutex(hSoundDataMutex);
 
     hSoundThread = NULL;
-    hRequestAudioEvent = NULL;
+    //hRequestAudioEvent = NULL;
     hSoundDataMutex = NULL;
 
     //-------------------------------------------------------------

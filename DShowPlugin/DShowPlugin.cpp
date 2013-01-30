@@ -853,13 +853,6 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 //------------------------------------------
 
-                HWND hwndNoBuffering = GetDlgItem(hwnd, IDC_NOBUFFERING);
-
-                bool bNoBuffering = configData->data->GetInt(TEXT("noBuffering")) != 0;
-                SendMessage(hwndNoBuffering, BM_SETCHECK, bNoBuffering ? BST_CHECKED : BST_UNCHECKED, 0);
-
-                //------------------------------------------
-
                 UINT opacity = configData->data->GetInt(TEXT("opacity"), 100);
 
                 SendMessage(GetDlgItem(hwnd, IDC_OPACITY), UDM_SETRANGE32, 0, 100);
@@ -1546,11 +1539,6 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         int soundTimeOffset = (int)SendMessage(GetDlgItem(hwnd, IDC_TIMEOFFSET), UDM_GETPOS32, 0, 0);
                         configData->data->SetInt(TEXT("soundTimeOffset"), soundTimeOffset);
-
-                        //------------------------------------------
-
-                        BOOL bNoBuffering = SendMessage(GetDlgItem(hwnd, IDC_NOBUFFERING), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                        configData->data->SetInt(TEXT("noBuffering"), bNoBuffering);
 
                         //------------------------------------------
 

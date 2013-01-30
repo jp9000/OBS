@@ -2178,7 +2178,7 @@ void OBS::ApplySettings()
 
                 //--------------------------------------------------
 
-                int globalAudioTimeAdjust = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_AUDIOTIMEADJUST), UDM_GETPOS32, 0, 0);
+                int globalAudioTimeAdjust = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_AUDIOTIMEADJUST), UDM_GETPOS32, 0, 0);
                 GlobalConfig->SetInt(TEXT("Audio"), TEXT("GlobalAudioTimeAdjust"), globalAudioTimeAdjust);
 
                 //--------------------------------------------------

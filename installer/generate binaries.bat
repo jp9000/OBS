@@ -29,6 +29,7 @@ copy ..\rundir\plugins\dshowplugin\locale\*.txt .\32bit\plugins\dshowplugin\loca
 copy ..\rundir\plugins\dshowplugin\shaders\*.?Shader .\32bit\plugins\dshowplugin\shaders\
 copy ..\graphicscapture\release\graphicscapture.dll .\32bit\plugins
 copy ..\graphicscapture\graphicscapturehook\release\graphicscapturehook.dll .\32bit\plugins\graphicscapture
+copy ..\x264\libs\32bit\libx264-129.dll .\32bit
 
 copy ..\x64\release\obs.exe .\64bit\
 copy ..\obsapi\x64\release\obsapi.dll .\64bit\
@@ -42,3 +43,5 @@ copy ..\rundir\plugins\dshowplugin\locale\*.txt .\64bit\plugins\dshowplugin\loca
 copy ..\rundir\plugins\dshowplugin\shaders\*.?Shader .\64bit\plugins\dshowplugin\shaders\
 copy ..\graphicscapture\x64\release\graphicscapture.dll .\64bit\plugins
 copy ..\graphicscapture\graphicscapturehook\x64\release\graphicscapturehook.dll .\64bit\plugins\graphicscapture
+copy ..\x264\libs\64bit\libx264-129.dll .\64bit
+
