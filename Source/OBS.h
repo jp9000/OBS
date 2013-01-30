@@ -529,6 +529,7 @@ class OBS
     List<VideoSegment> bufferedVideo;
 
     List<UINT> bufferedTimes;
+    List<UINT> ctsOffsets;
 
     bool bRecievedFirstAudioFrame, bSentHeaders, bFirstAudioPacket;
 

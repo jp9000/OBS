@@ -109,11 +109,14 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
 
     VideoSegment curSegment;
     bool bProcessedFrame, bSendFrame = false;
+    int curCTSOffset = 0;
 
     profileIn("call to encoder");
 
-    videoEncoder->Encode(frameInfo.picOut, videoPackets, videoPacketTypes, frameInfo.frameTimestamp, ctsOffset);
+    videoEncoder->Encode(frameInfo.picOut, videoPackets, videoPacketTypes, bufferedTimes[0], ctsOffset);
     if(bUsing444) frameInfo.prevTexture->Unmap(0);
+
+    ctsOffsets << ctsOffset;
 
     bProcessedFrame = (videoPackets.Num() != 0);
 
@@ -122,6 +125,9 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
     {
         bSendFrame = BufferVideoData(videoPackets, videoPacketTypes, bufferedTimes[0], curSegment);
         bufferedTimes.Remove(0);
+
+        curCTSOffset = ctsOffsets[0];
+        ctsOffsets.Remove(0);
     }
 
     profileOut;
@@ -156,7 +162,7 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
                         bFirstAudioPacket = false;
                     }
                     else
-                        audioTimestamp += curSegment.ctsOffset;
+                        audioTimestamp += curCTSOffset;
 
                     //stop sending audio packets when we reach an audio timestamp greater than the video timestamp
                     if(audioTimestamp > curSegment.timestamp)
@@ -167,7 +173,7 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
                         List<BYTE> &audioData = pendingAudioFrames[0].audioData;
                         if(audioData.Num())
                         {
-                            //Log(TEXT("a:%u, %llu, cts: %d"), audioTimestamp, frameInfo.firstFrameTime+audioTimestamp-curSegment.ctsOffset, curSegment.ctsOffset);
+                            //Log(TEXT("a:%u, %llu, cts: %d"), audioTimestamp, frameInfo.firstFrameTime+audioTimestamp-curCTSOffset, curCTSOffset);
 
                             network->SendPacket(audioData.Array(), audioData.Num(), audioTimestamp, PacketType_Audio);
                             if(fileStream)
@@ -278,6 +284,7 @@ void OBS::MainCaptureLoop()
     QueryPerformanceFrequency(&clockFreq);
 
     bufferedTimes.Clear();
+    ctsOffsets.Clear();
 
 #ifdef USE_100NS_TIME
     QWORD streamTimeStart = GetQPCTime100NS(clockFreq.QuadPart);
