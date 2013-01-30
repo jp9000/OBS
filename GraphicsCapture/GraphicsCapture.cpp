@@ -129,13 +129,6 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
 
                     CloseHandle(hProcess);
 
-                    //todo: remove later
-                    if(bCurrentProcessIsWow64 != bTargetProcessIsWow64)
-                    {
-                        configData.opposingBitWindows << strWindowName;
-                        continue;
-                    }
-
                     BOOL bFoundModule = FALSE;
                     for(UINT i=0; i<moduleList.Num(); i++)
                     {
@@ -154,6 +147,13 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
 
                     if (!bFoundModule)
                         continue;
+
+                    //todo: remove later
+                    if(bCurrentProcessIsWow64 != bTargetProcessIsWow64)
+                    {
+                        configData.opposingBitWindows << strWindowName;
+                        continue;
+                    }
 
                     b64bit = (bWindows64bit && !bTargetProcessIsWow64);
                 }
