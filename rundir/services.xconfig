@@ -19,16 +19,6 @@ services : {
       "US West: San Francisco, CA"           : rtmp://live.justin.tv/app
     }
   }
-  Own3D.tv : {
-    servers : {
-      US West           : rtmp://live.usw.own3d.tv/live
-      US East           : rtmp://live.use.own3d.tv/live
-      EU                : rtmp://live.eu.own3d.tv/live
-      US West (Partner) : rtmp://live.usw.pro.own3d.tv/live
-      US East (Partner) : rtmp://live.use.pro.own3d.tv/live
-      EU (Partner)      : rtmp://live.eu.pro.own3d.tv/live
-    }
-  }
   "Vaughn Live" : {
     servers : {
       "US Chicago (Primary)"  : rtmp://live.vaughnlive.tv:443/live
