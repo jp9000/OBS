@@ -260,3 +260,6 @@ Updater.DownloadNow         "Would you like to download them now?"
 Updater.NewUpdates          "The following updates are available:\r\n\r\n"
 Updater.RunningWarning      "OBS will be restarted to install the updates.\r\n\r\nAre you sure you want to continue?"
 Updater.UpdatesAvailable    "Updates are available"
+
+Settings.Advanced.LatencyTuning          "Latency tuning factor:"
+Settings.Advanced.AutomaticLatency       "Automatic low latency mode:"

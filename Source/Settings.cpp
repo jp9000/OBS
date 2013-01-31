@@ -1689,21 +1689,11 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 //------------------------------------
 
-                BOOL bUseSendBuffer = AppConfig->GetInt(TEXT("Publish"), TEXT("UseSendBuffer"), 0) != 0;
-                SendMessage(GetDlgItem(hwnd, IDC_USESENDBUFFER), BM_SETCHECK, bUseSendBuffer ? BST_CHECKED : BST_UNCHECKED, 0);
+                int lowLatencyFactor = AppConfig->GetInt(TEXT("Publish"), TEXT("LatencyFactor"), 20);
+                SetDlgItemInt(hwnd, IDC_LATENCYTUNE, lowLatencyFactor, TRUE);
 
-                hwndTemp = GetDlgItem(hwnd, IDC_SENDBUFFERSIZE);
-                EnableWindow(hwndTemp, bUseSendBuffer);
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("11680"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("5840"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("2920"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("1460"));
-
-                LoadSettingEditString(hwndTemp, TEXT("Publish"), TEXT("SendBufferSize"), TEXT("5840"));
-
-                ti.lpszText = (LPWSTR)Str("Settings.Advanced.UseSendBufferTooltip");
-                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_USESENDBUFFER);
-                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+                int bLowLatencyAutoMethod = AppConfig->GetInt(TEXT("Publish"), TEXT("LowLatencyMethod"), 0);
+                SendMessage(GetDlgItem(hwnd, IDC_LATENCYMETHOD), BM_SETCHECK, bLowLatencyAutoMethod ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 //------------------------------------
 
@@ -1772,6 +1762,7 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 case IDC_AUDIOTIMEADJUST_EDIT:
                 case IDC_VIDEOENCODERSETTINGS:
+                case IDC_LATENCYTUNE:
                     if(HIWORD(wParam) == EN_CHANGE)
                     {
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
@@ -1840,6 +1831,7 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                 case IDC_USEHIGHQUALITYRESAMPLING:
                 case IDC_USEMULTITHREADEDOPTIMIZATIONS:
                 case IDC_UNLOCKHIGHFPS:
+                case IDC_LATENCYMETHOD:
                     if(HIWORD(wParam) == BN_CLICKED)
                     {
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
@@ -2183,11 +2175,11 @@ void OBS::ApplySettings()
 
                 //--------------------------------------------------
 
-                BOOL bUseSendBuffer = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USESENDBUFFER), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                String strSendBufferSize = GetEditText(GetDlgItem(hwndCurrentSettings, IDC_SENDBUFFERSIZE));
+                BOOL bLowLatencyAutoMode = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_LATENCYMETHOD), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                int latencyFactor = GetDlgItemInt(hwndCurrentSettings, IDC_LATENCYTUNE, NULL, TRUE);
 
-                AppConfig->SetInt   (TEXT("Publish"),        TEXT("UseSendBuffer"),     bUseSendBuffer);
-                AppConfig->SetString(TEXT("Publish"),        TEXT("SendBufferSize"),    strSendBufferSize);
+                AppConfig->SetInt   (TEXT("Publish"),        TEXT("LatencyFactor"),     latencyFactor);
+                AppConfig->SetInt   (TEXT("Publish"),        TEXT("LowLatencyMethod"),  bLowLatencyAutoMode);
 
                 //--------------------------------------------------
 

@@ -218,6 +218,9 @@
 #define IDC_USECFR                      1141
 #define IDC_PLAYBACKDEVICES             1142
 #define IDC_AUDIOTIMEADJUST_EDIT        1144
+#define IDC_LATENCYMETHOD               1145
+#define IDC_EDIT2                       1147
+#define IDC_LATENCYTUNE                 1147
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -250,7 +253,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        141
 #define _APS_NEXT_COMMAND_VALUE         40046
-#define _APS_NEXT_CONTROL_VALUE         1145
+#define _APS_NEXT_CONTROL_VALUE         1148
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

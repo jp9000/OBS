@@ -28,6 +28,13 @@ struct NetworkPacket
 //max latency in milliseconds allowed when using the send buffer
 const DWORD maxBufferTime = 600;
 
+typedef enum
+{
+    LL_MODE_NONE = 0,
+    LL_MODE_FIXED,
+    LL_MODE_AUTO,
+} latencymode_t;
+
 struct PacketTimeSize
 {
     inline PacketTimeSize(DWORD timestamp, DWORD size) : timestamp(timestamp), size(size) {}
@@ -96,7 +103,7 @@ protected:
 
     int curDataBufferLen;
 
-    BOOL bLowLatencyMode;
+    latencymode_t lowLatencyMode;
     int latencyFactor;
 
     void SendLoop();

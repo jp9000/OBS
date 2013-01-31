@@ -86,12 +86,26 @@ RTMPPublisher::RTMPPublisher()
     else if(dropThreshold > 1000) dropThreshold = 1000;
     dropThreshold += bufferTime;
 
-    latencyFactor = AppConfig->GetInt(TEXT("Publish"), TEXT("LatencyFactor"), 20);
+    if (AppConfig->GetInt(TEXT("Publish"), TEXT("LowLatencyMode"), 0))
+    {
+        if (AppConfig->GetInt(TEXT("Publish"), TEXT("LowLatencyMethod"), 0) == 0)
+        {
+            latencyFactor = AppConfig->GetInt(TEXT("Publish"), TEXT("LatencyFactor"), 20);
 
-    if (latencyFactor < 3)
-        latencyFactor = 3;
+            if (latencyFactor < 3)
+                latencyFactor = 3;
 
-    bLowLatencyMode = AppConfig->GetInt(TEXT("Publish"), TEXT("LowLatencyMode"), 0);
+            lowLatencyMode = LL_MODE_FIXED;
+            Log(TEXT("Using fixed low latency mode, factor %d"), latencyFactor);
+        }
+        else
+        {
+            lowLatencyMode = LL_MODE_AUTO;
+            Log(TEXT("Using automatic low latency mode"));
+        }
+    }
+    else
+        lowLatencyMode = LL_MODE_NONE;
 
     strRTMPErrors.Clear();
 }
@@ -662,7 +676,17 @@ void RTMPPublisher::SocketLoop()
     //Low latency mode works by delaying delayTime ms between calls to send() and only sending
     //a buffer as large as latencyPacketSize at once. This causes keyframes and other data bursts
     //to be sent over several sends instead of one large one.
-    if (bLowLatencyMode)
+    if (lowLatencyMode == LL_MODE_AUTO)
+    {
+        //Auto mode aims for a constant rate of whatever the stream bitrate is and segments into
+        //MTU sized packets (test packet captures indicated that despite nagling being enabled,
+        //the size of the send() buffer is still important for some reason). Note that delays
+        //become very short at this rate, and it can take a while for the buffer to empty after
+        //a keyframe.
+        delayTime = 1400.0f / (dataBufferSize / 1000.0f);
+        latencyPacketSize = 1460;
+    }
+    else if (lowLatencyMode == LL_MODE_FIXED)
     {
         //We use latencyFactor - 2 to guarantee we're always sending at a slightly higher
         //rate than the maximum expected data rate so we don't get backed up
@@ -776,7 +800,7 @@ void RTMPPublisher::SocketLoop()
                 }
                 
                 int ret;
-                if (bLowLatencyMode)
+                if (lowLatencyMode)
                 {
                     int sendLength = min (latencyPacketSize, curDataBufferLen);
                     ret = send(rtmp->m_sb.sb_socket, (const char *)dataBuffer, sendLength, 0);
@@ -827,7 +851,7 @@ void RTMPPublisher::SocketLoop()
                     }
                 }
 
-                if (curDataBufferLen == 0)
+                if (curDataBufferLen <= 1000)
                     ResetEvent(hBufferEvent);
 
                 OSLeaveMutex(hDataBufferMutex);
@@ -1147,7 +1171,7 @@ retrySend:
         goto retrySend;
     }
 
-    if (!network->curDataBufferLen)
+    if (network->curDataBufferLen <= 1000)
         bWasEmpty = true;
 
     mcpy(network->dataBuffer + network->curDataBufferLen, buf, len);
