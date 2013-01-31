@@ -36,6 +36,10 @@ void get_x264_log(void *param, int i_level, const char *psz, va_list argptr)
     chi.FindReplace(TEXT("%s"), TEXT("%S"));
 
     OSDebugOutva(chi, argptr);
+
+    chi.FindReplace(TEXT("\r"), TEXT(""));
+    chi.FindReplace(TEXT("\n"), TEXT(""));
+
     Logva(chi, argptr);
 }
 
