@@ -55,6 +55,7 @@ class BitmapImageSource : public ImageSource
     List<float> animationTimes;
     UINT curFrame, curLoop;
     float curTime;
+    float updateImageTime;
 
     OSFileChangeData *changeMonitor;
 
@@ -130,8 +131,18 @@ public:
             }
         }
 
+        if (updateImageTime)
+        {
+            updateImageTime -= fSeconds;
+            if (updateImageTime <= 0.0f)
+            {
+                updateImageTime = 0.0f;
+                UpdateSettings();
+            }
+        }
+
         if (changeMonitor && OSFileHasChanged(changeMonitor))
-            UpdateSettings();
+            updateImageTime = 1.0f;
     }
 
     void Render(const Vect2 &pos, const Vect2 &size)
