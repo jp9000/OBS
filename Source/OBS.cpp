@@ -1017,6 +1017,11 @@ void OBS::SetStatusBarData()
 
     SendMessage(hwndStatusBar, WM_SETREDRAW, 1, 0);
     InvalidateRect(hwndStatusBar, NULL, FALSE);
+    
+    API->ReportStreamStatus(bRunning, bTestStream, 
+        (UINT) statusBarData.bytesPerSec, statusBarData.strain, 
+        (UINT)this->totalStreamTime, (UINT)App->network->NumTotalVideoFrames(),
+        (UINT)App->curFramesDropped, (UINT) App->captureFPS);
 }
 
 void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
@@ -1179,13 +1184,54 @@ void OBS::CheckSources()
     {
         bool checked = ListView_GetCheckState(hwndSources, i) > 0;
         XElement *source =sources->GetElementByID(i);
-        source->SetInt(TEXT("render"), (checked)?1:0);
-        if(scene && i < scene->NumSceneItems())
+        bool curRender = source->GetInt(TEXT("render"), 0) > 0;
+        if(curRender != checked)
         {
-            SceneItem *sceneItem = scene->GetSceneItem(i);
-            sceneItem->bRender = checked;
-            sceneItem->SetRender(checked);
+            source->SetInt(TEXT("render"), (checked)?1:0);
+            if(scene && i < scene->NumSceneItems())
+            {
+                SceneItem *sceneItem = scene->GetSceneItem(i);
+                sceneItem->bRender = checked;
+                sceneItem->SetRender(checked);
+            }
+            API->ReportSourceChanged(source->GetName(), source);
         }
     }
 }
 
+void OBS::SetSourceRender(CTSTR sourceName, bool render)
+{
+    XElement *curSceneElement = App->sceneElement;
+    XElement *sources = curSceneElement->GetElement(TEXT("sources"));
+
+    if(!sources)
+        return;
+
+    HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
+
+    UINT numSources = ListView_GetItemCount(hwndSources);
+    for(UINT i = 0; i < numSources; i++)
+    {
+        bool checked = ListView_GetCheckState(hwndSources, i) > 0;
+        XElement *source =sources->GetElementByID(i);
+        if(scmp(source->GetName(), sourceName) == 0 && checked != render)
+        {
+            if(scene && i < scene->NumSceneItems())
+            {
+                SceneItem *sceneItem = scene->GetSceneItem(i);
+                sceneItem->SetRender(render);
+            }
+            else
+            {
+                source->SetInt(TEXT("render"), (render)?1:0);
+            }
+            App->bChangingSources = true;
+            ListView_SetCheckState(hwndSources, i, render);
+            App->bChangingSources = false;
+
+            API->ReportSourceChanged(sourceName, source);
+
+            break;
+        }
+    }
+}

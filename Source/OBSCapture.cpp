@@ -423,6 +423,8 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
+    API->ReportStartStreamTrigger(bTestStream);
+    
     SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, 0, 0, 0);
     SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
 }
@@ -575,6 +577,8 @@ void OBS::Stop()
     ClearStreamInfo();
 
     Log(TEXT("=====Stream End======================================================================="));
+    
+    API->ReportStopStreamTrigger(bTestStream);
 
     if(streamReport.IsValid())
     {
@@ -582,16 +586,12 @@ void OBS::Stop()
         streamReport.Clear();
     }
 
-    if(bTestStream)
-    {
-        SetWindowText(GetDlgItem(hwndMain, ID_TESTSTREAM), Str("MainWindow.TestStream"));
-        EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), TRUE);
-    }
-    else
-    {
-        SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), Str("MainWindow.StartStream"));
-        EnableWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), TRUE);
-    }
+    
+    SetWindowText(GetDlgItem(hwndMain, ID_TESTSTREAM), Str("MainWindow.TestStream"));
+    EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), TRUE);
+    SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), Str("MainWindow.StartStream"));
+    EnableWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), TRUE);
+
 
     bEditMode = false;
     SendMessage(GetDlgItem(hwndMain, ID_SCENEEDITOR), BM_SETCHECK, BST_UNCHECKED, 0);

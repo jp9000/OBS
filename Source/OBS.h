@@ -294,6 +294,8 @@ enum
     OBS_CALLHOTKEY,
     OBS_RECONNECT,
     OBS_SETSCENE,
+    OBS_SETSOURCEORDER,
+    OBS_SETSOURCERENDER,
     OBS_UPDATESTATUSBAR,
 };
 
@@ -440,6 +442,7 @@ class OBS
 
     void SelectSources();
     void CheckSources();
+    void SetSourceRender(CTSTR sourceName, bool render);
 
     //---------------------------------------------------
     // settings window
@@ -655,6 +658,7 @@ class OBS
     //---------------------------------------------------
 
     void DeleteItems();
+    void SetSourceOrder(StringList &sourceNames);
     void MoveSourcesUp();
     void MoveSourcesDown();
     void MoveSourcesToTop();
