@@ -13,11 +13,13 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Japanese (Japan) resources
+// “ú–{Œê resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_JPN)
+#ifdef _WIN32
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 #pragma code_page(932)
+#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -200,7 +202,7 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,209,28,50,14
 END
 
-IDD_CONFIGUREDESKTOPSOURCE DIALOGEX 0, 0, 379, 341
+IDD_CONFIGUREDESKTOPSOURCE DIALOGEX 0, 0, 379, 340
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Sources.SoftwareCaptureSource"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -241,10 +243,10 @@ BEGIN
     RTEXT           "Sources.SoftwareCaptureSource.Similarity",IDC_STATIC,18,266,117,8
     EDITTEXT        IDC_BASETHRESHOLD_EDIT,137,263,40,14,ES_AUTOHSCROLL | ES_NUMBER
     CONTROL         "",IDC_BASETHRESHOLD,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,178,263,11,14
-    RTEXT           "Sources.SoftwareCaptureSource.Blend",IDC_STATIC,17,282,117,8
+    RTEXT           "Sources.SoftwareCaptureSource.Blend",IDC_STATIC,17,284,117,8
     EDITTEXT        IDC_BLEND_EDIT,137,281,40,14,ES_AUTOHSCROLL | ES_NUMBER
     CONTROL         "",IDC_BLEND,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,177,281,11,14
-    RTEXT           "Sources.BitmapSource.Opacity",IDC_STATIC,7,311,96,8
+    RTEXT           "Sources.BitmapSource.Opacity",IDC_STATIC,7,313,96,8
     EDITTEXT        IDC_OPACITY_EDIT,107,310,40,14,ES_AUTOHSCROLL | ES_NUMBER
     CONTROL         "",IDC_OPACITY2,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,146,310,11,14
     DEFPUSHBUTTON   "OK",IDOK,268,319,50,14
@@ -444,7 +446,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO
+GUIDELINES DESIGNINFO 
 BEGIN
     IDD_SETTINGS, DIALOG
     BEGIN
@@ -507,7 +509,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 372
         TOPMARGIN, 7
-        BOTTOMMARGIN, 334
+        BOTTOMMARGIN, 333
     END
 
     IDD_CONFIGUREBITMAPSOURCE, DIALOG
@@ -626,7 +628,7 @@ END
 // Accelerator
 //
 
-IDR_ACCELERATOR1 ACCELERATORS
+IDR_ACCELERATOR1 ACCELERATORS 
 BEGIN
     "C",            IDA_SOURCE_CENTER,      VIRTKEY, CONTROL, NOINVERT
     VK_DELETE,      IDA_SOURCE_DELETE,      VIRTKEY, NOINVERT
@@ -682,7 +684,7 @@ END
 // Menu
 //
 
-IDR_MAINMENU MENU
+IDR_MAINMENU MENU 
 BEGIN
     POPUP "MainMenu.File"
     BEGIN
@@ -711,7 +713,7 @@ END
 //
 
 IDC_COLORPICKER         CURSOR                  "cursor1.cur"
-#endif    // Japanese (Japan) resources
+#endif    // “ú–{Œê resources
 /////////////////////////////////////////////////////////////////////////////
 
 

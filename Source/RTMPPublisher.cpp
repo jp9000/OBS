@@ -491,7 +491,18 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
             goto end;
         }
 
-        XElement *service = services->GetElementByID(serviceID-1);
+        XElement *service = NULL;
+        DWORD numServices = services->NumElements();
+        for(UINT i=0; i<numServices; i++)
+        {
+            XElement *curService = services->GetElementByID(i);
+            if(curService->GetInt(TEXT("id")) == serviceID)
+            {
+                service = curService;
+                break;
+            }
+        }
+
         if(!service)
         {
             failReason = TEXT("Could not find the service specified in services.xconfig");

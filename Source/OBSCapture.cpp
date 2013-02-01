@@ -209,7 +209,7 @@ void OBS::Start()
     td.Usage            = D3D10_USAGE_STAGING;
     td.CPUAccessFlags   = D3D10_CPU_ACCESS_READ;
 
-    for(UINT i=0; i<2; i++)
+    for(UINT i=0; i<NUM_RENDER_BUFFERS; i++)
     {
         HRESULT err = GetD3D()->CreateTexture2D(&td, NULL, &copyTextures[i]);
         if(FAILED(err))
@@ -521,7 +521,7 @@ void OBS::Stop()
         yuvRenderTextures[i] = NULL;
     }
 
-    for(UINT i=0; i<2; i++)
+    for(UINT i=0; i<NUM_RENDER_BUFFERS; i++)
     {
         SafeRelease(copyTextures[i]);
     }
