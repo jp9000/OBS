@@ -678,7 +678,7 @@ void OBS::MainCaptureLoop()
         {
             curStreamTime = qwTime-firstFrameTime;
 
-            UINT prevCopyTexture = (curCopyTexture == 0) ? NUM_RENDER_BUFFERS-1 : curCopyTexture+1;
+            UINT prevCopyTexture = (curCopyTexture == 0) ? NUM_RENDER_BUFFERS-1 : curCopyTexture-1;
 
             ID3D10Texture2D *copyTexture = copyTextures[curCopyTexture];
             profileIn("CopyResource");
