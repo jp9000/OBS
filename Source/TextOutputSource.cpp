@@ -21,9 +21,15 @@
 #include <gdiplus.h>
 
 
-#define ClampInt(iVal, minVal, maxVal) \
-    if(iVal < minVal) iVal = minVal; \
-    else if(iVal > maxVal) iVal = maxVal;
+#define ClampVal(val, minVal, maxVal) \
+    if(val < minVal) val = minVal; \
+    else if(val > maxVal) val = maxVal;
+
+
+inline DWORD GetAlphaVal(UINT opacityLevel)
+{
+    return ((opacityLevel*255/100)&0xFF) << 24;
+}
 
 
 class TextOutputSource : public ImageSource
@@ -70,8 +76,6 @@ class TextOutputSource : public ImageSource
     SamplerState *ss;
 
     XElement    *data;
-
-    inline DWORD GetAlphaVal(UINT opacityLevel)  {return ((opacityLevel*255/100)&0xFF) << 24;}
 
     void DrawOutlineText(Gdiplus::Graphics &graphics,
                          Gdiplus::Font &font,
@@ -222,8 +226,8 @@ class TextOutputSource : public ImageSource
         textSize.cx &= 0xFFFFFFFE;
         textSize.cy &= 0xFFFFFFFE;
 
-        ClampInt(textSize.cx, 32, 4096);
-        ClampInt(textSize.cy, 32, 4096);
+        ClampVal(textSize.cx, 32, 4096);
+        ClampVal(textSize.cy, 32, 4096);
 
         if(textureSize.cx != textSize.cx || textureSize.cy != textSize.cy)
         {
@@ -803,7 +807,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                 SendMessage(hwndAlign, CB_ADDSTRING, 0, (LPARAM)Str("Sources.TextSource.Right"));
 
                 int align = data->GetInt(TEXT("align"), 0);
-                ClampInt(align, 0, 2);
+                ClampVal(align, 0, 2);
                 SendMessage(hwndAlign, CB_SETCURSEL, align, 0);
 
                 //-----------------------------------------
