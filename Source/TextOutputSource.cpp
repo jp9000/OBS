@@ -43,6 +43,7 @@ class TextOutputSource : public ImageSource
     int         size;
     DWORD       color;
     UINT        opacity;
+    UINT        globalOpacity;
     int         scrollSpeed;
     bool        bBold, bItalic, bUnderline, bVertical;
 
@@ -70,7 +71,7 @@ class TextOutputSource : public ImageSource
 
     XElement    *data;
 
-    inline DWORD GetAlphaVal()  {return ((opacity*255/100)&0xFF) << 24;}
+    inline DWORD GetAlphaVal(UINT opacityLevel)  {return ((opacityLevel*255/100)&0xFF) << 24;}
 
     void DrawOutlineText(Gdiplus::Graphics &graphics,
                          Gdiplus::Font &font,
@@ -89,7 +90,7 @@ class TextOutputSource : public ImageSource
         graphics.SetCompositingMode(Gdiplus::CompositingModeSourceOver);
 
         // Outline color and size
-        Gdiplus::Pen pen(Gdiplus::Color(GetAlphaVal() | (outlineColor&0xFFFFFF)), outlineSize);
+        Gdiplus::Pen pen(Gdiplus::Color(GetAlphaVal(opacity) | (outlineColor&0xFFFFFF)), outlineSize);
         pen.SetLineJoin(Gdiplus::LineJoinRound);
 
         // Widen the outline
@@ -267,14 +268,14 @@ class TextOutputSource : public ImageSource
                 Gdiplus::Graphics    graphics(&bmp); 
 
                 //HomeWorld  -- we can use alpha for text color too :)
-                Gdiplus::SolidBrush  *brush = new Gdiplus::SolidBrush(Gdiplus::Color(0xFF000000|(color&0x00FFFFFF)));
+                Gdiplus::SolidBrush  *brush = new Gdiplus::SolidBrush(Gdiplus::Color(GetAlphaVal(opacity)|(color&0x00FFFFFF)));
                 Gdiplus::Font        font(hTempDC, hFont);
 
                 stat = graphics.SetTextRenderingHint(Gdiplus::TextRenderingHintAntiAlias);
                 if(stat != Gdiplus::Ok) AppWarning(TEXT("graphics.SetTextRenderingHint failed: %u"), (int)stat);
 
                 // HomeWorld --- clear context using a specified background color (we can drop source opacity since we can specify the alpha of background/text/outline)
-                stat = graphics.Clear(Gdiplus::Color(0x00000000));
+                stat = graphics.Clear(Gdiplus::Color(GetAlphaVal(backgroundOpacity)|(backgroundColor&0x00FFFFFF)));
 
                 if(stat != Gdiplus::Ok) AppWarning(TEXT("graphics.Clear failed: %u"), (int)stat);
 
@@ -379,6 +380,7 @@ public:
         si.borderColor = 0;
         si.filter = GS_FILTER_LINEAR;
         ss = CreateSamplerState(si);
+        globalOpacity = 100;
 
         Log(TEXT("Using text output"));
     }
@@ -473,7 +475,7 @@ public:
                 }
             }
 
-            DWORD alpha = DWORD(double(opacity)*2.55);
+            DWORD alpha = DWORD(double(globalOpacity)*2.55);
             DWORD outputColor = (alpha << 24) | 0xFFFFFF;
 
             if(scrollSpeed != 0)
