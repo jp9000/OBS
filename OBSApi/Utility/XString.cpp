@@ -1006,6 +1006,9 @@ Serializer& operator<<(Serializer &s, String &str)
 
 BOOL STDCALL ValidFloatString(CTSTR lpStr)
 {
+    if(!lpStr || !*lpStr)
+        return FALSE;
+
     BOOL bFoundDecimal = FALSE;
     BOOL bFoundExp = FALSE;
     BOOL bFoundEndThingy = FALSE;
@@ -1086,6 +1089,9 @@ BOOL STDCALL ValidIntString(CTSTR lpStr)
 
 BOOL DefinitelyFloatString(CTSTR lpStr)
 {
+    if(!lpStr || !*lpStr)
+        return FALSE;
+
     BOOL bFoundDecimal = FALSE;
     BOOL bFoundExp = FALSE;
     BOOL bFoundEndThingy = FALSE;
