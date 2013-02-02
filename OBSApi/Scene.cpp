@@ -216,7 +216,7 @@ void Scene::Render()
 {
     GS->ClearColorBuffer();
 
-    for(UINT i=0; i<sceneItems.Num(); i++)
+    for(int i=sceneItems.Num()-1; i>=0; i--)
     {
         SceneItem *item = sceneItems[i];
         if(item->source && item->bRender)
