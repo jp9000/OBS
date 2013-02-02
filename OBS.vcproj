@@ -483,6 +483,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Source\OBSEvents.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Source\OBSHotkeyHandlers.cpp"
 				>
 			</File>

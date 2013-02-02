@@ -218,7 +218,7 @@ bool OBS::SetScene(CTSTR lpScene)
         return false;
 
     if(API != NULL)
-       API->ReportSwitchScenes(lpScene);
+       ReportSwitchScenes(lpScene);
 
     if(sceneElement == newSceneElement)
         return true;
@@ -322,7 +322,6 @@ class OBSAPIInterface : public APIInterface
     friend class OBS;
 
     List<HotkeyInfo> hotkeys;
-    List<OBSTriggerHandler*> triggerHandlers;
     DWORD curHotkeyIDVal;
 
     void HandleHotkeys();
@@ -440,93 +439,16 @@ public:
     virtual QWORD GetAudioTime() const          {return App->GetAudioTime();}
 
     virtual CTSTR GetAppPath() const            {return lpAppPath;}
-    
+
     virtual void AddOBSEventListener(OBSTriggerHandler *handler)
     {
-        triggerHandlers.Add(handler);
+        App->AddOBSEventListener(handler);
     }
 
-    virtual void RemoveOBSEventListener(OBSTriggerHandler *handler)
+    void RemoveOBSEventListener(OBSTriggerHandler *handler)
     {
-        triggerHandlers.RemoveItem(handler);
+        App->RemoveOBSEventListener(handler);
     }
-
-protected:
-    virtual void ReportStartStreamTrigger(bool previewOnly)
-    {
-        for(UINT i = 0; i < triggerHandlers.Num(); i++)
-        {
-            OBSTriggerHandler* handler = triggerHandlers[i];
-            handler->StreamStarting(previewOnly);
-        }
-    }
-    virtual void ReportStopStreamTrigger(bool previewOnly)
-    {
-        for(UINT i = 0; i < triggerHandlers.Num(); i++)
-        {
-            OBSTriggerHandler* handler = triggerHandlers[i];
-            handler->StreamStopping(previewOnly);
-        }
-    }
-
-    virtual void ReportStreamStatus(bool streaming, bool previewOnly = false, 
-                                   UINT bytesPerSec = 0, double strain = 0, 
-                                   UINT totalStreamtime = 0, UINT numTotalFrames = 0,
-                                   UINT numDroppedFrames = 0, UINT fps = 0)
-    {
-        for(UINT i = 0; i < triggerHandlers.Num(); i++)
-        {
-            OBSTriggerHandler* handler = triggerHandlers[i];
-            handler->StreamStatus(streaming, previewOnly, bytesPerSec, strain, 
-                                        totalStreamtime, numTotalFrames, numDroppedFrames, fps);
-        }
-    }
-
-    virtual void ReportSwitchScenes(CTSTR scene)
-    {
-        for(UINT i = 0; i < triggerHandlers.Num(); i++)
-        {
-            OBSTriggerHandler* handler = triggerHandlers[i];
-            handler->ScenesSwitching(scene);
-        }
-    }
-    
-    virtual void ReportScenesChanged()
-    {
-        for(UINT i = 0; i < triggerHandlers.Num(); i++)
-        {
-            OBSTriggerHandler* handler = triggerHandlers[i];
-            handler->ScenesChanged();
-        }
-    }
-    
-    virtual void ReportSourceOrderChanged()
-    {
-        for(UINT i = 0; i < triggerHandlers.Num(); i++)
-        {
-            OBSTriggerHandler* handler = triggerHandlers[i];
-            handler->SourceOrderChanged();
-        }
-    }
-    
-    virtual void ReportSourceChanged(CTSTR sourceName, XElement* source)
-    {
-        for(UINT i = 0; i < triggerHandlers.Num(); i++)
-        {
-            OBSTriggerHandler* handler = triggerHandlers[i];
-            handler->SourceChanged(sourceName, source);
-        }
-    }
-
-    virtual void ReportSourcesAddedOrRemoved()
-    {
-        for(UINT i = 0; i < triggerHandlers.Num(); i++)
-        {
-            OBSTriggerHandler* handler = triggerHandlers[i];
-            handler->SourcesAddedOrRemoved();
-        }
-    }
-    
 };
 
 APIInterface* CreateOBSApiInterface()

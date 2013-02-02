@@ -1018,7 +1018,7 @@ void OBS::SetStatusBarData()
     SendMessage(hwndStatusBar, WM_SETREDRAW, 1, 0);
     InvalidateRect(hwndStatusBar, NULL, FALSE);
     
-    API->ReportStreamStatus(bRunning, bTestStream, 
+    ReportStreamStatus(bRunning, bTestStream, 
         (UINT) statusBarData.bytesPerSec, statusBarData.strain, 
         (UINT)this->totalStreamTime, (UINT)App->network->NumTotalVideoFrames(),
         (UINT)App->curFramesDropped, (UINT) App->captureFPS);
@@ -1194,7 +1194,7 @@ void OBS::CheckSources()
                 sceneItem->bRender = checked;
                 sceneItem->SetRender(checked);
             }
-            API->ReportSourceChanged(source->GetName(), source);
+            ReportSourceChanged(source->GetName(), source);
         }
     }
 }
@@ -1229,7 +1229,7 @@ void OBS::SetSourceRender(CTSTR sourceName, bool render)
             ListView_SetCheckState(hwndSources, i, render);
             App->bChangingSources = false;
 
-            API->ReportSourceChanged(sourceName, source);
+            ReportSourceChanged(sourceName, source);
 
             break;
         }

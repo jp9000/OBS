@@ -447,7 +447,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                             UINT newID = (UINT)SendMessage(hwnd, LB_ADDSTRING, 0, (LPARAM)strName.Array());
                             PostMessage(hwnd, LB_SETCURSEL, newID, 0);
                             PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_SCENES, LBN_SELCHANGE), (LPARAM)hwnd);
-                            API->ReportScenesChanged();
+                            App->ReportScenesChanged();
                         }
 
                         App->EnableSceneSwitching(true);
@@ -472,7 +472,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                         else
                             curSel = LB_ERR;
                         
-                        API->ReportScenesChanged();
+                        App->ReportScenesChanged();
                         bDelete = true;
                     }
 
@@ -491,7 +491,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                             SendMessage(hwnd, LB_SETCURSEL, curSel, 0);
 
                             item->SetName(strName);
-                            API->ReportScenesChanged();
+                            App->ReportScenesChanged();
                         }
 
                         App->EnableSceneSwitching(true);
@@ -547,7 +547,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
                         curSel--;
                         item->MoveUp();
-                        API->ReportScenesChanged();
+                        App->ReportScenesChanged();
                     }
                     break;
 
@@ -560,7 +560,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
                         curSel++;
                         item->MoveDown();
-                        API->ReportScenesChanged();
+                        App->ReportScenesChanged();
                     }
                     break;
 
@@ -573,7 +573,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
                         curSel = 0;
                         item->MoveToTop();
-                        API->ReportScenesChanged();
+                        App->ReportScenesChanged();
                     }
                     break;
 
@@ -586,7 +586,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
                         curSel = numItems-1;
                         item->MoveToBottom();
-                        API->ReportScenesChanged();
+                        App->ReportScenesChanged();
                     }
                     break;
             }
@@ -749,7 +749,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                                 // make sure the added item is visible and selected/focused
                                 ListView_EnsureVisible(hwnd, numSources - 1, false);
                                 ListView_SetItemState(hwnd, numSources - 1, LVIS_SELECTED|LVIS_FOCUSED, LVIS_SELECTED|LVIS_FOCUSED);
-                                API->ReportSourcesAddedOrRemoved();
+                                App->ReportSourcesAddedOrRemoved();
                             }
                         }
 
@@ -772,7 +772,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                             ListView_SetItemText(hwnd, curSel, 0, strName.Array());
                             selectedElement->SetName(strName);
                             
-                            API->ReportSourceChanged(oldStrName, selectedElement);
+                            App->ReportSourceChanged(oldStrName, selectedElement);
                             Free((void*)oldStrName);
                             
                             ListView_SetColumnWidth(hwnd, 0, LVSCW_AUTOSIZE_USEHEADER);
@@ -918,7 +918,7 @@ void OBS::DeleteItems()
 
             if(selectedSceneItems.Num())
                 App->LeaveSceneMutex();
-            API->ReportSourcesAddedOrRemoved();
+            ReportSourcesAddedOrRemoved();
         }
     }
 }
@@ -975,7 +975,7 @@ void OBS::SetSourceOrder(StringList &sourceNames)
     SendMessage(hwndSources, WM_SETREDRAW, (WPARAM)TRUE, (LPARAM) 0);
      RedrawWindow(hwndSources, NULL, NULL, RDW_ERASE | RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN);
 
-    API->ReportSourceOrderChanged();
+    ReportSourceOrderChanged();
 }
 
 void OBS::MoveSourcesUp()
@@ -1028,7 +1028,7 @@ void OBS::MoveSourcesUp()
             
         }
     }
-    API->ReportSourceOrderChanged();
+    ReportSourceOrderChanged();
 }
 
 void OBS::MoveSourcesDown()
@@ -1083,7 +1083,7 @@ void OBS::MoveSourcesDown()
             bChangingSources = false;
         }
     }
-    API->ReportSourceOrderChanged();
+    ReportSourceOrderChanged();
 }
 
 void OBS::MoveSourcesToTop()
@@ -1140,7 +1140,7 @@ void OBS::MoveSourcesToTop()
             bChangingSources = false;
         }
     }
-    API->ReportSourceOrderChanged();
+    ReportSourceOrderChanged();
 }
 
 void OBS::MoveSourcesToBottom()
@@ -1201,7 +1201,7 @@ void OBS::MoveSourcesToBottom()
 
         curID--;
     }
-    API->ReportSourceOrderChanged();
+    ReportSourceOrderChanged();
 }
 
 void OBS::CenterItems()

@@ -423,7 +423,7 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
-    API->ReportStartStreamTrigger(bTestStream);
+    ReportStartStreamTrigger(bTestStream);
     
     SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, 0, 0, 0);
     SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
@@ -578,7 +578,7 @@ void OBS::Stop()
 
     Log(TEXT("=====Stream End======================================================================="));
     
-    API->ReportStopStreamTrigger(bTestStream);
+    ReportStopStreamTrigger(bTestStream);
 
     if(streamReport.IsValid())
     {

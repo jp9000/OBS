@@ -806,6 +806,29 @@ public:
 
     virtual bool SetScene(CTSTR lpScene);
     virtual void AddSourceItem(LPWSTR name, bool checked, UINT index);
+    
+    //---------------------------------------------------------------------------
+    // event stuff 
+    List<OBSTriggerHandler*> triggerHandlers;
+
+    //---------------------------------------------------------------------------
+
+    // add remove event listeners
+    virtual void AddOBSEventListener(OBSTriggerHandler *handler);
+    virtual void RemoveOBSEventListener(OBSTriggerHandler *handler);
+
+    // event reporting functions
+    virtual void ReportStartStreamTrigger(bool previewOnly);
+    virtual void ReportStopStreamTrigger(bool previewOnly);
+    virtual void ReportStreamStatus(bool streaming, bool previewOnly = false, 
+                                   UINT bytesPerSec = 0, double strain = 0, 
+                                   UINT totalStreamtime = 0, UINT numTotalFrames = 0,
+                                   UINT numDroppedFrames = 0, UINT fps = 0);
+    virtual void ReportSwitchScenes(CTSTR scene);
+    virtual void ReportScenesChanged();
+    virtual void ReportSourceOrderChanged();
+    virtual void ReportSourceChanged(CTSTR sourceName, XElement* source);
+    virtual void ReportSourcesAddedOrRemoved();
 };
 
 LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo);

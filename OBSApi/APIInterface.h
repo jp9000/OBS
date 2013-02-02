@@ -76,18 +76,6 @@ class APIInterface
 protected:
     bool bSSE2Availabe;
 
-    virtual void ReportStartStreamTrigger(bool previewOnly) = 0;
-    virtual void ReportStopStreamTrigger(bool previewOnly) = 0;
-    virtual void ReportStreamStatus(bool streaming, bool previewOnly = false, 
-                                   UINT bytesPerSec = 0, double strain = 0, 
-                                   UINT totalStreamtime = 0, UINT numTotalFrames = 0,
-                                   UINT numDroppedFrames = 0, UINT fps = 0) = 0;
-    virtual void ReportSwitchScenes(CTSTR scene) = 0;
-    virtual void ReportScenesChanged() = 0;
-    virtual void ReportSourceOrderChanged() = 0;
-    virtual void ReportSourceChanged(CTSTR sourceName, XElement* source) = 0;
-    virtual void ReportSourcesAddedOrRemoved() = 0;
-
 public:
     virtual ~APIInterface() {}
 
@@ -101,19 +89,12 @@ public:
 
     virtual XElement* GetSceneListElement()=0;
     virtual XElement* GetGlobalSourceListElement()=0;
-    virtual void SetSourceOrder(StringList &sourceNames)=0;
-    virtual void SetSourceRender(CTSTR lpSource, bool render) = 0;
-
+    
     virtual bool SetScene(CTSTR lpScene, bool bPost)=0;
     virtual Scene* GetScene() const=0;
 
     virtual CTSTR GetSceneName() const=0;
     virtual XElement* GetSceneElement()=0;
-
-    virtual void StartStopStream() = 0;
-    virtual void StartStopPreview() = 0;
-    virtual bool GetStreaming() = 0;
-    virtual bool GetPreviewOnly() = 0;
 
     //low-order word is VK, high-order word is modifier.  equivalent to the value given by hotkey controls
     virtual UINT CreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARAM param)=0;
@@ -163,13 +144,21 @@ public:
     virtual void AddAudioSource(AudioSource *source)=0;
     virtual void RemoveAudioSource(AudioSource *source)=0;
 
-    /* add/remove trigger handler functions */
-    virtual void AddOBSEventListener(OBSTriggerHandler *handler) = 0;
-    virtual void RemoveOBSEventListener(OBSTriggerHandler *handler) = 0;
-
     virtual QWORD GetAudioTime() const=0;
 
     virtual CTSTR GetAppPath() const=0;
+
+    virtual void StartStopStream() = 0;
+    virtual void StartStopPreview() = 0;
+    virtual bool GetStreaming() = 0;
+    virtual bool GetPreviewOnly() = 0;
+
+    virtual void SetSourceOrder(StringList &sourceNames)=0;
+    virtual void SetSourceRender(CTSTR lpSource, bool render) = 0;
+
+    /* add/remove trigger handler functions */
+    virtual void AddOBSEventListener(OBSTriggerHandler *handler) = 0;
+    virtual void RemoveOBSEventListener(OBSTriggerHandler *handler) = 0;
 };
 
 
