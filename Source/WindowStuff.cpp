@@ -1844,6 +1844,35 @@ INT_PTR CALLBACK OBS::ReconnectDialogProc(HWND hwnd, UINT message, WPARAM wParam
 
 //----------------------------
 
+void OBS::ResetProfileMenu()
+{
+    StringList profileList;
+    GetProfiles(profileList);
+
+    HMENU hmenuMain = GetMenu(hwndMain);
+
+    MENUITEMINFO mii;
+    zero(&mii, sizeof(mii));
+    mii.cbSize = sizeof(mii);
+
+    HMENU hmenuProfiles = GetSubMenu(hmenuMain, 2);
+
+    while(DeleteMenu(hmenuProfiles, 0, MF_BYPOSITION));
+
+    for(UINT i=0; i<profileList.Num(); i++)
+    {
+        String &strProfile = profileList[i];
+
+        UINT flags = MF_STRING;
+        if(strProfile.CompareI(GetCurrentProfile()))
+            flags |= MF_CHECKED;
+
+        AppendMenu(hmenuProfiles, flags, ID_SWITCHPROFILE+i, strProfile.Array());
+    }
+}
+
+//----------------------------
+
 LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch(message)
@@ -2013,6 +2042,45 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 case IDA_SOURCE_MOVETOBOTTOM:
                     App->MoveSourcesToBottom();
                     break;
+
+                default:
+                    {
+                        UINT id = LOWORD(wParam);
+                        if (id >= ID_SWITCHPROFILE || 
+                            id <= ID_SWITCHPROFILE+500)
+                        {
+                            MENUITEMINFO mii;
+                            zero(&mii, sizeof(mii));
+                            mii.cbSize = sizeof(mii);
+                            mii.fMask = MIIM_STRING;
+
+                            HMENU hmenuMain = GetMenu(hwndMain);
+                            HMENU hmenuProfiles = GetSubMenu(hmenuMain, 2);
+                            GetMenuItemInfo(hmenuProfiles, id, FALSE, &mii);
+
+                            String strProfile;
+                            strProfile.SetLength(mii.cch++);
+                            mii.dwTypeData = strProfile.Array();
+
+                            GetMenuItemInfo(hmenuProfiles, id, FALSE, &mii);
+
+                            if(!strProfile.CompareI(GetCurrentProfile()))
+                            {
+                                String strProfilePath;
+                                strProfilePath << lpAppDataPath << TEXT("\\profiles\\") << strProfile << TEXT(".ini");
+
+                                if(!AppConfig->Open(strProfilePath))
+                                {
+                                    MessageBox(hwnd, TEXT("Error - unable to open ini file"), NULL, 0);
+                                    break;
+                                }
+
+                                GlobalConfig->SetString(TEXT("General"), TEXT("Profile"), strProfile);
+                                App->ReloadIniSettings();
+                                ResetProfileMenu();
+                            }
+                        }
+                    }
             }
             break;
 

@@ -40,7 +40,7 @@ void get_x264_log(void *param, int i_level, const char *psz, va_list argptr)
     chi.FindReplace(TEXT("\r"), TEXT(""));
     chi.FindReplace(TEXT("\n"), TEXT(""));
 
-    Logva(chi, argptr);
+    Logva(chi.Array(), argptr);
 }
 
 
@@ -127,14 +127,14 @@ public:
 
         if(bUseCBR)
         {
-            paramData.i_nal_hrd             = X264_NAL_HRD_CBR;
-            paramData.rc.i_rc_method        = X264_RC_ABR;
-            paramData.rc.f_rf_constant      = 0.0f;
+            paramData.i_nal_hrd         = X264_NAL_HRD_CBR;
+            paramData.rc.i_rc_method    = X264_RC_ABR;
+            paramData.rc.f_rf_constant  = 0.0f;
         }
         else
         {
-            paramData.rc.i_rc_method        = X264_RC_CRF;
-            paramData.rc.f_rf_constant      = baseCRF+float(10-quality);
+            paramData.rc.i_rc_method    = X264_RC_CRF;
+            paramData.rc.f_rf_constant  = baseCRF+float(10-quality);
         }
 
         paramData.b_vfr_input           = !bUseCFR;
@@ -143,11 +143,11 @@ public:
         paramData.vui.b_fullrange       = 0;          //specify full range input levels
         //paramData.i_keyint_max          = fps*4;      //keyframe every 4 sec, should make this an option
 
-        paramData.i_fps_num = fps;
-        paramData.i_fps_den = 1;
+        paramData.i_fps_num             = fps;
+        paramData.i_fps_den             = 1;
 
-        paramData.i_timebase_num = 1;
-        paramData.i_timebase_den = 1000;
+        paramData.i_timebase_num        = 1;
+        paramData.i_timebase_den        = 1000;
 
         paramData.pf_log                = get_x264_log;
         paramData.i_log_level           = X264_LOG_INFO;
@@ -195,7 +195,8 @@ public:
                         LPSTR lpParam = strParamName.CreateUTF8String();
                         LPSTR lpVal   = strParamVal.CreateUTF8String();
 
-                        x264_param_parse(&paramData, lpParam, lpVal);
+                        if(x264_param_parse(&paramData, lpParam, lpVal) != 0)
+                            Log(TEXT("The custom x264 command '%s' failed"), strParam.Array());
 
                         Free(lpParam);
                         Free(lpVal);

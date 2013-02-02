@@ -52,7 +52,9 @@ Listbox.SetHotkey   "Set Hotkey"
 
 MainMenu.File       "&File"
 MainMenu.Help       "&Help"
+MainMenu.Profiles   "&Profiles"
 MainMenu.Settings   "&Settings"
+
 MainMenu.Settings.AlwaysOnTop "&Always On Top"
 
 MainMenu.File.Exit  "E&xit"
@@ -219,6 +221,7 @@ Sources.SoftwareCaptureSource.RegionWindowText      "Press Enter, Esc, or click 
 Sources.SoftwareCaptureSource.Select                "Select"
 Sources.SoftwareCaptureSource.SelectRegion          "Select Region"
 Sources.SoftwareCaptureSource.SelectRegionTooltip   "When selecting a region, move by clicking and dragging, or resize the rectangle by clicking the edges."
+Sources.SoftwareCaptureSource.SetStreamSize         "Set base resolution"
 Sources.SoftwareCaptureSource.Similarity            "Similarity (1-100):"
 Sources.SoftwareCaptureSource.Size                  "Size:"
 Sources.SoftwareCaptureSource.SpillReduction        "Spill Reduction:"

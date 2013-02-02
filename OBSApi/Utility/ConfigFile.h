@@ -49,6 +49,7 @@ public:
     void  Close();
 
     BOOL  SaveAs(CTSTR lpPath);
+    inline CTSTR GetFilePath() const {return strFileName;}
     void  SetFilePath(CTSTR lpPath);
 
     String GetString(CTSTR lpSection, CTSTR lpKey, CTSTR def=NULL);

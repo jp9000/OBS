@@ -221,6 +221,7 @@
 #define IDC_LATENCYMETHOD               1145
 #define IDC_EDIT2                       1147
 #define IDC_LATENCYTUNE                 1147
+#define IDC_SETSTREAMSIZE               1148
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -246,14 +247,16 @@
 #define ID_HELP_VISITWEBSITE            40043
 #define ID_MAINMENU_MAINMENU40044       40044
 #define ID_ALWAYSONTOP                  40045
+#define ID_MAINMENU                     40046
+#define ID_MAINMENU_NOTHINGHERE         40047
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        141
-#define _APS_NEXT_COMMAND_VALUE         40046
-#define _APS_NEXT_CONTROL_VALUE         1148
+#define _APS_NEXT_COMMAND_VALUE         40048
+#define _APS_NEXT_CONTROL_VALUE         1149
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

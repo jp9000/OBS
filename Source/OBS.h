@@ -286,6 +286,8 @@ enum
     ID_GLOBALSOURCES,
     ID_PLUGINS,
     ID_DASHBOARD,
+
+    ID_SWITCHPROFILE,
 };
 
 enum
@@ -698,7 +700,6 @@ class OBS
     static INT_PTR CALLBACK SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
     void ResizeRenderFrame(bool bRedrawRenderFrame);
-    void ResizeWindow(bool bRedrawRenderFrame);
 
     void ToggleCapturing();
 
@@ -716,6 +717,8 @@ class OBS
 
     void CallHotkey(DWORD hotkeyID, bool bDown);
 
+    static void ResetProfileMenu();
+
     void SetStatusBarData();
 
     static void ClearStatusBar();
@@ -726,6 +729,8 @@ class OBS
 public:
     OBS();
     ~OBS();
+
+    void ResizeWindow(bool bRedrawRenderFrame);
 
     inline void AddAudioSource(AudioSource *source)
     {
@@ -799,6 +804,11 @@ public:
 
     //---------------------------------------------------------------------------
 
+    inline static CTSTR GetCurrentProfile() {return GlobalConfig->GetStringPtr(TEXT("General"), TEXT("Profile"));}
+    static void GetProfiles(StringList &profileList);
+
+    //---------------------------------------------------------------------------
+
     virtual void RegisterSceneClass(CTSTR lpClassName, CTSTR lpDisplayName, OBSCREATEPROC createProc, OBSCONFIGPROC configProc);
     virtual void RegisterImageSourceClass(CTSTR lpClassName, CTSTR lpDisplayName, OBSCREATEPROC createProc, OBSCONFIGPROC configProc);
 
@@ -806,7 +816,7 @@ public:
 
     virtual bool SetScene(CTSTR lpScene);
     virtual void AddSourceItem(LPWSTR name, bool checked, UINT index);
-    
+
     //---------------------------------------------------------------------------
     // event stuff 
     List<OBSTriggerHandler*> triggerHandlers;

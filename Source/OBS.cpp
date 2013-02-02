@@ -547,6 +547,7 @@ OBS::OBS()
     //-----------------------------------------------------
 
     ReloadIniSettings();
+    ResetProfileMenu();
 
     //-----------------------------------------------------
 
@@ -851,6 +852,28 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
 
     SetWindowPos(GetDlgItem(hwndMain, ID_SOURCES), NULL, xPos, yPos, listControlWidth-controlPadding, listControlHeight, flags);
     xPos += listControlWidth;
+}
+
+void OBS::GetProfiles(StringList &profileList)
+{
+    String strProfilesWildcard;
+    OSFindData ofd;
+    HANDLE hFind;
+
+    profileList.Clear();
+
+    strProfilesWildcard << lpAppDataPath << TEXT("\\profiles\\*.ini");
+
+    if(hFind = OSFindFirstFile(strProfilesWildcard, ofd))
+    {
+        do
+        {
+            if(ofd.bDirectory) continue;
+            profileList << GetPathWithoutExtension(ofd.fileName);
+        } while(OSFindNextFile(hFind, ofd));
+
+        OSFindClose(hFind);
+    }
 }
 
 void OBS::ReloadIniSettings()

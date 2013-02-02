@@ -106,22 +106,14 @@ INT_PTR CALLBACK OBS::GeneralSettingsProc(HWND hwnd, UINT message, WPARAM wParam
 
                 hwndTemp = GetDlgItem(hwnd, IDC_PROFILE);
 
-                String strProfilesWildcard = lpAppDataPath;
-                strProfilesWildcard << TEXT("\\profiles\\*.ini");
+                StringList profileList;
+                GetProfiles(profileList);
 
-                if(hFind = OSFindFirstFile(strProfilesWildcard, ofd))
+                for(UINT i=0; i<profileList.Num(); i++)
                 {
-                    do
-                    {
-                        if(ofd.bDirectory) continue;
-
-                        String strProfile = GetPathWithoutExtension(ofd.fileName);
-                        UINT id = (UINT)SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)strProfile.Array());
-                        if(strProfile.CompareI(strCurProfile))
-                            SendMessage(hwndTemp, CB_SETCURSEL, id, 0);
-                    } while(OSFindNextFile(hFind, ofd));
-
-                    OSFindClose(hFind);
+                    UINT id = (UINT)SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)profileList[i].Array());
+                    if(profileList[i].CompareI(strCurProfile))
+                        SendMessage(hwndTemp, CB_SETCURSEL, id, 0);
                 }
 
                 EnableWindow(GetDlgItem(hwnd, IDC_ADD),     FALSE);
@@ -129,6 +121,7 @@ INT_PTR CALLBACK OBS::GeneralSettingsProc(HWND hwnd, UINT message, WPARAM wParam
 
                 UINT numItems = (UINT)SendMessage(GetDlgItem(hwnd, IDC_PROFILE), CB_GETCOUNT, 0, 0);
                 EnableWindow(GetDlgItem(hwnd, IDC_REMOVE),  (numItems > 1));
+
                 //----------------------------------------------
 
                 App->SetChangedSettings(false);
@@ -208,6 +201,7 @@ INT_PTR CALLBACK OBS::GeneralSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
 
                         GlobalConfig->SetString(TEXT("General"), TEXT("Profile"), strProfile);
+                        ResetProfileMenu();
 
                         UINT numItems = (UINT)SendMessage(GetDlgItem(hwnd, IDC_PROFILE), CB_GETCOUNT, 0, 0);
                         EnableWindow(GetDlgItem(hwnd, IDC_REMOVE),  (numItems > 1));
@@ -269,6 +263,8 @@ INT_PTR CALLBACK OBS::GeneralSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                             EnableWindow(GetDlgItem(hwnd, IDC_REMOVE),  (numItems > 1));
                             EnableWindow(GetDlgItem(hwnd, IDC_RENAME),  FALSE);
                             EnableWindow(GetDlgItem(hwnd, IDC_ADD),     FALSE);
+
+                            ResetProfileMenu();
                         }
                     }
                     break;
@@ -298,6 +294,8 @@ INT_PTR CALLBACK OBS::GeneralSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                                 String strCurProfilePath;
                                 strCurProfilePath << lpAppDataPath << TEXT("\\profiles\\") << strCurProfile << TEXT(".ini");
                                 OSDeleteFile(strCurProfilePath);
+
+                                ResetProfileMenu();
                             }
                         }
 
