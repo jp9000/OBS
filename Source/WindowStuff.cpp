@@ -2142,12 +2142,12 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 RECT client;
                 GetClientRect(hwnd, &client);
 
-                if(App->clientWidth != client.right || App->clientHeight != client.bottom)
+                if(wParam != SIZE_MINIMIZED && (App->clientWidth != client.right || App->clientHeight != client.bottom))
                 {
                     App->clientWidth  = client.right;
                     App->clientHeight = client.bottom;
-                    //if(wParam != SIZE_MINIMIZED && wParam != SIZE_MAXIMIZED)
-                        App->bSizeChanging = true;
+                    App->bSizeChanging = true;
+
                     if(wParam != SIZE_MINIMIZED)
                         App->ResizeWindow(false);
                 }
