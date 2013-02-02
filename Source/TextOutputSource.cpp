@@ -46,6 +46,9 @@ class TextOutputSource : public ImageSource
     int         scrollSpeed;
     bool        bBold, bItalic, bUnderline, bVertical;
 
+    UINT        backgroundOpacity;
+    DWORD       backgroundColor;
+
     bool        bUseOutline;
     float       outlineSize;
     DWORD       outlineColor;
@@ -537,6 +540,9 @@ public:
         outlineColor= data->GetInt(TEXT("outlineColor"), 0xFFFFFF);
         outlineSize = data->GetFloat(TEXT("outlineSize"), 2);
 
+        backgroundColor   = data->GetInt(TEXT("backgroundColor"), 0xFF000000);
+        backgroundOpacity = data->GetInt(TEXT("backgroundOpacity"), 0);
+
         bUpdateTexture = true;
     }
 
@@ -596,6 +602,10 @@ public:
             bUseOutline = iValue != 0;
         else if(scmpi(lpName, TEXT("outlineColor")) == 0)
             outlineColor = iValue;
+        else if(scmpi(lpName, TEXT("backgroundColor")) == 0)
+            backgroundColor = iValue;
+        else if(scmpi(lpName, TEXT("backgroundOpacity")) == 0)
+            backgroundOpacity = iValue;
 
         bUpdateTexture = true;
     }
@@ -742,6 +752,13 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
                 //-----------------------------------------
 
+                CCSetColor(GetDlgItem(hwnd, IDC_BACKGROUNDCOLOR), data->GetInt(TEXT("backgroundColor"), 0xFF000000));
+
+                SendMessage(GetDlgItem(hwnd, IDC_BACKGROUNDOPACITY), UDM_SETRANGE32, 0, 100);
+                SendMessage(GetDlgItem(hwnd, IDC_BACKGROUNDOPACITY), UDM_SETPOS32, 0, data->GetInt(TEXT("backgroundOpacity"), 0));
+
+                //-----------------------------------------
+
                 bool bChecked = data->GetInt(TEXT("useOutline"), 0) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_USEOUTLINE), BM_SETCHECK, bChecked ? BST_CHECKED : BST_UNCHECKED, 0);
 
@@ -838,6 +855,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                     break;
 
                 case IDC_OUTLINECOLOR:
+                case IDC_BACKGROUNDCOLOR:
                 case IDC_COLOR:
                     if(bInitializedDialog)
                     {
@@ -850,8 +868,9 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                         {
                             switch(LOWORD(wParam))
                             {
-                                case IDC_OUTLINECOLOR:  source->SetInt(TEXT("outlineColor"), color); break;
-                                case IDC_COLOR:         source->SetInt(TEXT("color"), color); break;
+                                case IDC_OUTLINECOLOR:      source->SetInt(TEXT("outlineColor"), color); break;
+                                case IDC_BACKGROUNDCOLOR:   source->SetInt(TEXT("backgroundColor"), color); break;
+                                case IDC_COLOR:             source->SetInt(TEXT("color"), color); break;
                             }
                         }
                     }
@@ -860,6 +879,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                 case IDC_TEXTSIZE_EDIT:
                 case IDC_EXTENTWIDTH_EDIT:
                 case IDC_EXTENTHEIGHT_EDIT:
+                case IDC_BACKGROUNDOPACITY_EDIT:
                 case IDC_TEXTOPACITY_EDIT:
                 case IDC_OUTLINETHICKNESS_EDIT:
                 case IDC_SCROLLSPEED_EDIT:
@@ -875,12 +895,13 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                         {
                             switch(LOWORD(wParam))
                             {
-                                case IDC_TEXTSIZE_EDIT:         source->SetInt(TEXT("fontSize"), val); break;
-                                case IDC_EXTENTWIDTH_EDIT:      source->SetInt(TEXT("extentWidth"), val); break;
-                                case IDC_EXTENTHEIGHT_EDIT:     source->SetInt(TEXT("extentHeight"), val); break;
-                                case IDC_TEXTOPACITY_EDIT:      source->SetInt(TEXT("textOpacity"), val); break;
-                                case IDC_OUTLINETHICKNESS_EDIT: source->SetFloat(TEXT("outlineSize"), (float)val); break;
-                                case IDC_SCROLLSPEED_EDIT:      source->SetInt(TEXT("scrollSpeed"), val); break;
+                                case IDC_TEXTSIZE_EDIT:             source->SetInt(TEXT("fontSize"), val); break;
+                                case IDC_EXTENTWIDTH_EDIT:          source->SetInt(TEXT("extentWidth"), val); break;
+                                case IDC_EXTENTHEIGHT_EDIT:         source->SetInt(TEXT("extentHeight"), val); break;
+                                case IDC_TEXTOPACITY_EDIT:          source->SetInt(TEXT("textOpacity"), val); break;
+                                case IDC_BACKGROUNDOPACITY_EDIT:    source->SetInt(TEXT("backgroundOpacity"), val); break;
+                                case IDC_OUTLINETHICKNESS_EDIT:     source->SetFloat(TEXT("outlineSize"), (float)val); break;
+                                case IDC_SCROLLSPEED_EDIT:          source->SetInt(TEXT("scrollSpeed"), val); break;
                             }
                         }
                     }
@@ -1154,6 +1175,9 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                         data->SetInt(TEXT("vertical"), bVertical);
                         data->SetInt(TEXT("wrap"), SendMessage(GetDlgItem(hwnd, IDC_WRAP), BM_GETCHECK, 0, 0) == BST_CHECKED);
                         data->SetInt(TEXT("underline"), SendMessage(GetDlgItem(hwnd, IDC_UNDERLINE), BM_GETCHECK, 0, 0) == BST_CHECKED);
+
+                        data->SetInt(TEXT("backgroundColor"), CCGetColor(GetDlgItem(hwnd, IDC_BACKGROUNDCOLOR)));
+                        data->SetInt(TEXT("backgroundOpacity"), (UINT)SendMessage(GetDlgItem(hwnd, IDC_BACKGROUNDOPACITY), UDM_GETPOS32, 0, 0));
 
                         data->SetInt(TEXT("useOutline"), SendMessage(GetDlgItem(hwnd, IDC_USEOUTLINE), BM_GETCHECK, 0, 0) == BST_CHECKED);
                         data->SetInt(TEXT("outlineColor"), CCGetColor(GetDlgItem(hwnd, IDC_OUTLINECOLOR)));

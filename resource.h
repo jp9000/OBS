@@ -161,6 +161,7 @@
 #define IDC_MICTIMEOFFSET               1083
 #define IDC_DELAY                       1084
 #define IDC_OUTLINETHICKNESS_EDIT       1084
+#define IDC_BACKGROUNDOPACITY_EDIT      1085
 #define IDC_USESYNCFIX                  1086
 #define IDC_CLEARPUSHTOTALK             1088
 #define IDC_CLEARMUTEMIC                1089
@@ -193,6 +194,7 @@
 #define IDC_SYNCTOVIDEOTIME             1106
 #define IDC_USEFILE                     1107
 #define IDC_FILE                        1108
+#define IDC_BACKGROUNDCOLOR             1109
 #define IDC_FONT                        1112
 #define IDC_TEXTSIZE_EDIT               1115
 #define IDC_SELECTFONT                  1116
@@ -201,6 +203,8 @@
 #define IDC_TEXTOPACITY2                1120
 #define IDC_OUTLINETHICKNESS            1120
 #define IDC_EXAMPLE                     1121
+#define IDC_TEXTOPACITY3                1121
+#define IDC_BACKGROUNDOPACITY           1121
 #define IDC_VERTICALSCRIPT              1122
 #define IDC_UNDERLINE                   1123
 #define IDC_ALIGN                       1124

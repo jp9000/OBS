@@ -149,8 +149,8 @@ public:
         paramData.i_timebase_num        = 1;
         paramData.i_timebase_den        = 1000;
 
-        paramData.pf_log                = get_x264_log;
-        paramData.i_log_level           = X264_LOG_INFO;
+        //paramData.pf_log                = get_x264_log;
+        //paramData.i_log_level           = X264_LOG_INFO;
 
         BOOL bUseCustomParams = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCustomSettings"));
         if(bUseCustomParams)
