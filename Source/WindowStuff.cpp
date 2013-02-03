@@ -2052,7 +2052,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 default:
                     {
                         UINT id = LOWORD(wParam);
-                        if (id >= ID_SWITCHPROFILE || 
+                        if (id >= ID_SWITCHPROFILE && 
                             id <= ID_SWITCHPROFILE+500)
                         {
                             MENUITEMINFO mii;
