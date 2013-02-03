@@ -271,19 +271,16 @@ class TextOutputSource : public ImageSource
                 Gdiplus::Bitmap      bmp(textureSize.cx, textureSize.cy, 4*textureSize.cx, PixelFormat32bppARGB, (BYTE*)lpBits);
                 Gdiplus::Graphics    graphics(&bmp); 
 
-                //HomeWorld  -- we can use alpha for text color too :)
                 Gdiplus::SolidBrush  *brush = new Gdiplus::SolidBrush(Gdiplus::Color(GetAlphaVal(opacity)|(color&0x00FFFFFF)));
                 Gdiplus::Font        font(hTempDC, hFont);
 
                 stat = graphics.SetTextRenderingHint(Gdiplus::TextRenderingHintAntiAlias);
                 if(stat != Gdiplus::Ok) AppWarning(TEXT("graphics.SetTextRenderingHint failed: %u"), (int)stat);
 
-                // HomeWorld --- clear context using a specified background color (we can drop source opacity since we can specify the alpha of background/text/outline)
-                stat = graphics.Clear(Gdiplus::Color(GetAlphaVal(backgroundOpacity)|(backgroundColor&0x00FFFFFF)));
-
+                stat = graphics.Clear(Gdiplus::Color( (strCurrentText.IsValid() || bUseExtents) ? GetAlphaVal(backgroundOpacity) : GetAlphaVal(0) | (backgroundColor&0x00FFFFFF) ));
                 if(stat != Gdiplus::Ok) AppWarning(TEXT("graphics.Clear failed: %u"), (int)stat);
 
-                if(bUseExtents && bWrap)
+                if(bUseExtents && bWrap && strCurrentText.IsValid())
                 {
                     Gdiplus::StringFormat format;
                     Gdiplus::PointF pos(0.0f, 0.0f);
@@ -329,9 +326,12 @@ class TextOutputSource : public ImageSource
                         DrawOutlineText(graphics, font, path, format, brush);
                     }
                     else
-                        graphics.DrawString(strCurrentText, -1, &font, rcf, &format, brush);
+                    {
+                        stat = graphics.DrawString(strCurrentText, -1, &font, rcf, &format, brush);
+                        if(stat != Gdiplus::Ok) AppWarning(TEXT("Hmm, DrawString failed: %u"), (int)stat);
+                    }
                 }
-                else
+                else if(strCurrentText.IsValid())
                 {
                     Gdiplus::StringFormat format;
 
