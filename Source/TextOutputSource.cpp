@@ -281,18 +281,18 @@ class TextOutputSource : public ImageSource
                 stat = graphics.SetTextRenderingHint(Gdiplus::TextRenderingHintAntiAlias);
                 if(stat != Gdiplus::Ok) AppWarning(TEXT("graphics.SetTextRenderingHint failed: %u"), (int)stat);
 
-                if((textureSize.cx > size  || textureSize.cy > size) && !bUseExtents)
+                if((textureSize.cx > actualTextSize.cx  || textureSize.cy > actualTextSize.cy) && !bUseExtents)
                 {
                     stat = graphics.Clear(Gdiplus::Color( 0x00000000));
                     if(stat != Gdiplus::Ok) AppWarning(TEXT("graphics.Clear failed: %u"), (int)stat);
 
-                    Gdiplus::SolidBrush *bkBrush = new Gdiplus::SolidBrush(Gdiplus::Color((strCurrentText.IsValid() || bUseExtents) ? GetAlphaVal(backgroundOpacity) : GetAlphaVal(0) | (backgroundColor&0x00FFFFFF)));
+                    Gdiplus::SolidBrush *bkBrush = new Gdiplus::SolidBrush(Gdiplus::Color( ((strCurrentText.IsValid() || bUseExtents) ? GetAlphaVal(backgroundOpacity) : GetAlphaVal(0)) | (backgroundColor&0x00FFFFFF)));
                     Gdiplus::RectF bkClearRect(bVertical ? float(textureSize.cx - actualTextSize.cx) * 0.5f : 0.0f, bVertical ? 0.0f : float(textureSize.cy - actualTextSize.cy) * 0.5f, float(actualTextSize.cx) , bVertical ? float(textureSize.cy) : float(actualTextSize.cy));
                     graphics.FillRectangle(bkBrush, bkClearRect);
                 }
                 else
                 {
-                    stat = graphics.Clear(Gdiplus::Color( (strCurrentText.IsValid() || bUseExtents) ? GetAlphaVal(backgroundOpacity) : GetAlphaVal(0) | (backgroundColor&0x00FFFFFF) ));
+                    stat = graphics.Clear(Gdiplus::Color( ((strCurrentText.IsValid() || bUseExtents) ? GetAlphaVal(backgroundOpacity) : GetAlphaVal(0)) | (backgroundColor&0x00FFFFFF) ));
                     if(stat != Gdiplus::Ok) AppWarning(TEXT("graphics.Clear failed: %u"), (int)stat);
                 }
 
