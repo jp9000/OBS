@@ -281,6 +281,18 @@ class TextOutputSource : public ImageSource
                 stat = graphics.Clear(Gdiplus::Color( (strCurrentText.IsValid() || bUseExtents) ? GetAlphaVal(backgroundOpacity) : GetAlphaVal(0) | (backgroundColor&0x00FFFFFF) ));
                 if(stat != Gdiplus::Ok) AppWarning(TEXT("graphics.Clear failed: %u"), (int)stat);
 
+
+                float tx = 0.0f, ty = 0.0f;
+
+                if(bVertical)
+                    if(textureSize.cx > size)
+                        tx = float(textureSize.cx) - float(textureSize.cx - size) * 0.5f;
+                    else
+                        tx = float(textureSize.cx);
+                else
+                    if(textureSize.cy > size)
+                        ty = float(textureSize.cy - size) * 0.5f;
+
                 if(bUseExtents && bWrap && strCurrentText.IsValid())
                 {
                     Gdiplus::StringFormat format(Gdiplus::StringFormat::GenericTypographic());
@@ -314,7 +326,7 @@ class TextOutputSource : public ImageSource
                         format.SetFormatFlags(Gdiplus::StringFormatFlagsDirectionVertical|Gdiplus::StringFormatFlagsDirectionRightToLeft);
 
 
-                    Gdiplus::RectF rcf(0.0f, 0.0f, float(textureSize.cx), float(textureSize.cy));
+                    Gdiplus::RectF rcf(tx, ty, float(textureSize.cx), float(textureSize.cy));
 
                     if(bUseOutline)
                     {
@@ -338,20 +350,20 @@ class TextOutputSource : public ImageSource
 
                     if(bVertical)
                         format.SetFormatFlags(Gdiplus::StringFormatFlagsDirectionVertical|Gdiplus::StringFormatFlagsDirectionRightToLeft);
-
+                    
                     if(bUseOutline)
                     {
                         Gdiplus::FontFamily fontFamily;
                         font.GetFamily(&fontFamily); 
 
                         Gdiplus::GraphicsPath path;
-                        path.AddString(strCurrentText, -1, &fontFamily, font.GetStyle(), font.GetSize(), Gdiplus::PointF(bVertical ? float(textSize.cx) : 0.0f, 0.0f), &format);
+                        path.AddString(strCurrentText, -1, &fontFamily, font.GetStyle(), font.GetSize(), Gdiplus::PointF(tx, ty), &format);
 
                         DrawOutlineText(graphics, font, path, format, brush);
                     }
                     else
                     {
-                        stat = graphics.DrawString(strCurrentText, -1, &font, Gdiplus::PointF(bVertical ? float(textSize.cx) : 0.0f, 0.0f), &format, brush);
+                        stat = graphics.DrawString(strCurrentText, -1, &font, Gdiplus::PointF(tx, ty), &format, brush);
                         if(stat != Gdiplus::Ok) AppWarning(TEXT("Hmm, DrawString failed: %u"), (int)stat);
                     }
                 }
