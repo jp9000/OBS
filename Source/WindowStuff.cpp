@@ -1233,12 +1233,18 @@ void OBS::MoveItemsByPixels(int dx, int dy)
         App->scene->GetSelectedItems(selectedItems);
 
         Vect2 baseSize = App->GetBaseSize();
+        Vect2 renderSize = App->GetRenderFrameSize();
 
         for(UINT i=0; i<selectedItems.Num(); i++)
         {
             SceneItem *item = selectedItems[i];
             item->pos.x += dx;
             item->pos.y += dy;
+            if(App->bMouseMoved)
+            {
+                App->startMousePos.x -= dx * renderSize.x / baseSize.x;
+                App->startMousePos.y -= dy * renderSize.y / baseSize.y;
+            }
 
             XElement *itemElement = item->GetElement();
             itemElement->SetInt(TEXT("x"), int(item->pos.x));
@@ -2339,6 +2345,8 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
 
             bool bControlDown = HIBYTE(GetKeyState(VK_LCONTROL)) != 0 || HIBYTE(GetKeyState(VK_RCONTROL)) != 0;
 
+            SetFocus(hwnd);
+
             List<SceneItem*> items;
             App->scene->GetSelectedItems(items);
             if(!items.Num())
@@ -2362,7 +2370,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
 
                     topItem->Select(true);
                     App->bChangingSources = true;
-                    SetFocus(hwnd);
+                    
                     ListView_SetItemState(hwndSources, topItem->GetID(), LVIS_SELECTED, LVIS_SELECTED);
                     App->bChangingSources = false;
 
