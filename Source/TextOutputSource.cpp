@@ -209,7 +209,7 @@ class TextOutputSource : public ImageSource
             DeleteDC(hDC);
         }
 
-        mcpy(&actualTextSize, &textSize, sizeof(textureSize));
+        mcpy(&actualTextSize, &textSize, sizeof(actualTextSize));
 
         if(bUseExtents)
         {
