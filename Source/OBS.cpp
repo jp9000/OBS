@@ -817,6 +817,8 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
     xPos = resetXPos;
 
     BOOL bStreamOutput = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode")) == 0;
+
+    strDashboard = AppConfig->GetString(TEXT("Publish"), TEXT("Dashboard"));
     BOOL bShowDashboardButton = strDashboard.IsValid() && bStreamOutput;
 
     SetWindowPos(GetDlgItem(hwndMain, ID_DASHBOARD), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
