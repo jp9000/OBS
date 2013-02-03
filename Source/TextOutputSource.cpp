@@ -31,6 +31,7 @@ inline DWORD GetAlphaVal(UINT opacityLevel)
     return ((opacityLevel*255/100)&0xFF) << 24;
 }
 
+UINT padding;
 
 class TextOutputSource : public ImageSource
 {
@@ -62,6 +63,7 @@ class TextOutputSource : public ImageSource
 
     bool        bUseExtents;
     UINT        extentWidth, extentHeight;
+
     bool        bWrap;
     int         align;
 
@@ -192,6 +194,10 @@ class TextOutputSource : public ImageSource
 
                     textSize.cx = long(rcf.Width+EPSILON);
                     textSize.cy = long(rcf.Height+EPSILON);
+                    if(bVertical)
+                        textSize.cy += padding * 2;
+                    else
+                        textSize.cx += padding * 2;
                 }
                 else
                 {
@@ -281,32 +287,37 @@ class TextOutputSource : public ImageSource
                 stat = graphics.SetTextRenderingHint(Gdiplus::TextRenderingHintAntiAlias);
                 if(stat != Gdiplus::Ok) AppWarning(TEXT("graphics.SetTextRenderingHint failed: %u"), (int)stat);
 
-                if((textureSize.cx > size  || textureSize.cy > size) && !bUseExtents)
+                if((textureSize.cx > actualTextSize.cx  || textureSize.cy > actualTextSize.cy) && !bUseExtents)
                 {
                     stat = graphics.Clear(Gdiplus::Color( 0x00000000));
                     if(stat != Gdiplus::Ok) AppWarning(TEXT("graphics.Clear failed: %u"), (int)stat);
 
-                    Gdiplus::SolidBrush *bkBrush = new Gdiplus::SolidBrush(Gdiplus::Color((strCurrentText.IsValid() || bUseExtents) ? GetAlphaVal(backgroundOpacity) : GetAlphaVal(0) | (backgroundColor&0x00FFFFFF)));
+                    Gdiplus::SolidBrush *bkBrush = new Gdiplus::SolidBrush(Gdiplus::Color( ((strCurrentText.IsValid() || bUseExtents) ? GetAlphaVal(backgroundOpacity) : GetAlphaVal(0)) | (backgroundColor&0x00FFFFFF)));
                     Gdiplus::RectF bkClearRect(bVertical ? float(textureSize.cx - actualTextSize.cx) * 0.5f : 0.0f, bVertical ? 0.0f : float(textureSize.cy - actualTextSize.cy) * 0.5f, float(actualTextSize.cx) , bVertical ? float(textureSize.cy) : float(actualTextSize.cy));
                     graphics.FillRectangle(bkBrush, bkClearRect);
                 }
                 else
                 {
-                    stat = graphics.Clear(Gdiplus::Color( (strCurrentText.IsValid() || bUseExtents) ? GetAlphaVal(backgroundOpacity) : GetAlphaVal(0) | (backgroundColor&0x00FFFFFF) ));
+                    stat = graphics.Clear(Gdiplus::Color( ((strCurrentText.IsValid() || bUseExtents) ? GetAlphaVal(backgroundOpacity) : GetAlphaVal(0)) | (backgroundColor&0x00FFFFFF) ));
                     if(stat != Gdiplus::Ok) AppWarning(TEXT("graphics.Clear failed: %u"), (int)stat);
                 }
 
                 float tx = 0.0f, ty = 0.0f;
 
                 if(bVertical)
+                {
                     if(textureSize.cx > size)
                         tx = float(textureSize.cx) - float(textureSize.cx - size) * 0.5f;
                     else
                         tx = float(textureSize.cx);
+                    ty = float(padding);
+                }
                 else
+                {
                     if(textureSize.cy > size)
                         ty = float(textureSize.cy - size) * 0.5f;
-
+                    tx = float(padding);
+                }
                 if(bUseExtents && bWrap && strCurrentText.IsValid())
                 {
                     Gdiplus::StringFormat format(Gdiplus::StringFormat::GenericTypographic());
@@ -316,23 +327,45 @@ class TextOutputSource : public ImageSource
                     {
                         case 0:
                             if(bVertical)
+                            {
                                 format.SetLineAlignment(Gdiplus::StringAlignmentFar);
+                                ty = float(padding);
+                                tx = 0.0f;
+                            }
                             else
+                            {
                                 format.SetAlignment(Gdiplus::StringAlignmentNear);
+                                ty = 0.0f;
+                                tx = float(padding);
+                            }
                             break;
                         case 1:
                             if(bVertical)
+                            {
                                 format.SetLineAlignment(Gdiplus::StringAlignmentCenter);
+                                ty = float(padding);
+                                tx = 0.0f;
+                            }
                             else
+                            {
                                 format.SetAlignment(Gdiplus::StringAlignmentCenter);
-                            pos.X = float(textSize.cx/2);
+                                ty = 0.0f;
+                                tx = 0.0f;
+                            }
                             break;
                         case 2:
                             if(bVertical)
+                            {
                                 format.SetLineAlignment(Gdiplus::StringAlignmentNear);
+                                ty = float(padding);
+                                tx = 0.0f;
+                            }
                             else
+                            {
                                 format.SetAlignment(Gdiplus::StringAlignmentFar);
-                            pos.X = float(textSize.cx);
+                                ty = 0.0f;
+                                tx = -float(padding);
+                            }
                             break;
                     }
 
@@ -412,6 +445,7 @@ public:
         si.filter = GS_FILTER_LINEAR;
         ss = CreateSamplerState(si);
         globalOpacity = 100;
+        padding = 20;
 
         Log(TEXT("Using text output"));
     }
@@ -1189,6 +1223,10 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
                                 Gdiplus::RectF rcf;
                                 graphics.MeasureString(strOutputText, -1, &font, Gdiplus::PointF(0.0f, 0.0f), &format, &rcf);
+                                if(bVertical)
+                                    rcf.Height += padding * 2;
+                                else
+                                    rcf.Width += padding * 2;
 
                                 configInfo->cx = MAX(rcf.Width,  32.0f);
                                 configInfo->cy = MAX(rcf.Height, 32.0f);
