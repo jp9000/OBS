@@ -88,6 +88,13 @@ protected:
 
 public:
 
+    inline void ReverseOrder()
+    {
+        UINT count = SubItems.Num()/2;
+        for(UINT i=0; i<count; i++)
+            SubItems.SwapValues(i, SubItems.Num()-1-i);
+    }
+
     CTSTR GetString(CTSTR lpName, TSTR def=NULL) const;
     int   GetInt(CTSTR lpName, int def=0) const;
     float GetFloat(CTSTR lpName, float def=0.0f) const;

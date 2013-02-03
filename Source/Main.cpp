@@ -115,33 +115,32 @@ void LogSystemStats()
     LogVideoCardStats();
 }
 
-void ConvertPre445aConfig(CTSTR lpConfig)
+void InvertPre47Scenes()
 {
-    ConfigFile config;
-    if(config.Open(lpConfig))
+    String strScenesPath;
+    strScenesPath << lpAppDataPath << TEXT("\\scenes.xconfig");
+
+    XConfig scenesConfig;
+    if(scenesConfig.Open(strScenesPath))
     {
-        if(config.HasKey(TEXT("Publish"), TEXT("Server")))
+        XElement *scenes = scenesConfig.GetElement(TEXT("scenes"));
+        if(!scenes)
+            return;
+
+        UINT numScenes = scenes->NumElements();
+        for(UINT i=0; i<numScenes; i++)
         {
-            if(config.GetInt(TEXT("Publish"), TEXT("Service")) == 0)
-            {
-                String strServer    = config.GetString(TEXT("Publish"), TEXT("Server"));
-                String strChannel   = config.GetString(TEXT("Publish"), TEXT("Channel"));
+            XElement *scene = scenes->GetElementByID(i);
+            XElement *sources = scene->GetElement(TEXT("sources"));
+            if(!sources)
+                continue;
 
-                String strRTMPURL;
-                strRTMPURL << TEXT("rtmp://") << strServer << TEXT("/") << strChannel;
-
-                config.SetString(TEXT("Publish"), TEXT("URL"), strRTMPURL);
-            }
-            else
-            {
-                String strServer = config.GetString(TEXT("Publish"), TEXT("Server"));
-
-                config.SetString(TEXT("Publish"), TEXT("URL"), strServer);
-            }
+            sources->ReverseOrder();
         }
+
+        scenesConfig.Close(true);
     }
 }
-
 
 void SetupIni()
 {
@@ -152,27 +151,10 @@ void SetupIni()
     String strIni;
 
     //--------------------------------------------
-    // 0.445a fix (change server/channel to URL)
+    // 0.47a fix (invert sources in all scenes)
 
-    if(lastVersion < 0x445)
-    {
-        OSFindData ofd;
-
-        String strIniPath;
-        strIniPath << lpAppDataPath << TEXT("\\profiles\\");
-        HANDLE hFind = OSFindFirstFile(strIniPath + TEXT("*.ini"), ofd);
-        if(hFind)
-        {
-            do
-            {
-                if(ofd.bDirectory) continue;
-                ConvertPre445aConfig(strIniPath + ofd.fileName);
-
-            } while(OSFindNextFile(hFind, ofd));
-
-            OSFindClose(hFind);
-        }
-    }
+    if(lastVersion < 0x470)
+        InvertPre47Scenes();
 
     //--------------------------------------------
     // try to find and open the file, otherwise use the first one available
