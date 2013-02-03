@@ -162,7 +162,7 @@ public:
     {
         items.Clear();
 
-        for(UINT i=0; i<sceneItems.Num(); i++)
+        for(int i=sceneItems.Num() - 1; i >= 0; i--)
         {
             SceneItem *item = sceneItems[i];
             Vect2 upperLeft  = item->GetPos();
