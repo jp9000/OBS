@@ -19,6 +19,7 @@
 
 #include "Main.h"
 
+#include <shellapi.h>
 #include <shlobj.h>
 #include <dwmapi.h>
 
@@ -328,9 +329,23 @@ void SetWorkingFolder(void)
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+    int numArgs;
+    LPWSTR *args = CommandLineToArgvW(GetCommandLineW(), &numArgs);
+
+    bool bDisableMutex = false;
+    for(int i=1; i<numArgs; i++)
+    {
+        if(scmpi(args[i], TEXT("-multi")) == 0)
+            bDisableMutex = true;
+    }
+
+    LocalFree(args);
+
+    //------------------------------------------------------------
+
     //make sure only one instance of the application can be open at a time
     hOBSMutex = CreateMutex(NULL, TRUE, TEXT("OBSMutex"));
-    if(GetLastError() == ERROR_ALREADY_EXISTS)
+    if(!bDisableMutex && GetLastError() == ERROR_ALREADY_EXISTS)
     {
         hwndMain = FindWindow(OBS_WINDOW_CLASS, NULL);
         if(hwndMain)
