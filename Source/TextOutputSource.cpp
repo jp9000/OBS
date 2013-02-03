@@ -171,7 +171,10 @@ class TextOutputSource : public ImageSource
             {
                 Gdiplus::Font font(hDC, hFont);
                 Gdiplus::Graphics graphics(hDC);
-                Gdiplus::StringFormat format;
+                Gdiplus::StringFormat format(Gdiplus::StringFormat::GenericTypographic());
+
+                stat = graphics.SetTextRenderingHint(Gdiplus::TextRenderingHintAntiAlias);
+                if(stat != Gdiplus::Ok) AppWarning(TEXT("graphics.SetTextRenderingHint failed: %u"), (int)stat);
 
                 if(bVertical)
                     format.SetFormatFlags(Gdiplus::StringFormatFlagsDirectionVertical|Gdiplus::StringFormatFlagsDirectionRightToLeft|Gdiplus::StringFormatFlagsMeasureTrailingSpaces);
@@ -221,8 +224,6 @@ class TextOutputSource : public ImageSource
             }
         }
 
-        textSize.cx++;
-        textSize.cy++;
         textSize.cx &= 0xFFFFFFFE;
         textSize.cy &= 0xFFFFFFFE;
 
@@ -282,7 +283,7 @@ class TextOutputSource : public ImageSource
 
                 if(bUseExtents && bWrap && strCurrentText.IsValid())
                 {
-                    Gdiplus::StringFormat format;
+                    Gdiplus::StringFormat format(Gdiplus::StringFormat::GenericTypographic());
                     Gdiplus::PointF pos(0.0f, 0.0f);
 
                     switch(align)
@@ -333,7 +334,7 @@ class TextOutputSource : public ImageSource
                 }
                 else if(strCurrentText.IsValid())
                 {
-                    Gdiplus::StringFormat format;
+                    Gdiplus::StringFormat format(Gdiplus::StringFormat::GenericTypographic());
 
                     if(bVertical)
                         format.SetFormatFlags(Gdiplus::StringFormatFlagsDirectionVertical|Gdiplus::StringFormatFlagsDirectionRightToLeft);
@@ -344,13 +345,13 @@ class TextOutputSource : public ImageSource
                         font.GetFamily(&fontFamily); 
 
                         Gdiplus::GraphicsPath path;
-                        path.AddString(strCurrentText, -1, &fontFamily, font.GetStyle(), font.GetSize(), Gdiplus::PointF(bVertical ? float(textSize.cx) : 0.0f, bVertical ? 0: float(textSize.cy - size) * 0.5f), &format);
+                        path.AddString(strCurrentText, -1, &fontFamily, font.GetStyle(), font.GetSize(), Gdiplus::PointF(bVertical ? float(textSize.cx) : 0.0f, 0.0f), &format);
 
                         DrawOutlineText(graphics, font, path, format, brush);
                     }
                     else
                     {
-                        stat = graphics.DrawString(strCurrentText, -1, &font, Gdiplus::PointF(bVertical ? float(textSize.cx) : 0.0f, bVertical ? 0: float(textSize.cy - size) * 0.5f), &format, brush);
+                        stat = graphics.DrawString(strCurrentText, -1, &font, Gdiplus::PointF(bVertical ? float(textSize.cx) : 0.0f, 0.0f), &format, brush);
                         if(stat != Gdiplus::Ok) AppWarning(TEXT("Hmm, DrawString failed: %u"), (int)stat);
                     }
                 }
@@ -1153,10 +1154,12 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
                             {
                                 Gdiplus::Graphics graphics(hDC);
-                                Gdiplus::StringFormat format;
+                                Gdiplus::StringFormat format(Gdiplus::StringFormat::GenericTypographic());
 
                                 if(bVertical)
                                     format.SetFormatFlags(Gdiplus::StringFormatFlagsDirectionVertical|Gdiplus::StringFormatFlagsDirectionRightToLeft|Gdiplus::StringFormatFlagsMeasureTrailingSpaces);
+                                else
+                                    format.SetFormatFlags(Gdiplus::StringFormatFlagsMeasureTrailingSpaces);
 
                                 Gdiplus::RectF rcf;
                                 graphics.MeasureString(strOutputText, -1, &font, Gdiplus::PointF(0.0f, 0.0f), &format, &rcf);
