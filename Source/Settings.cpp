@@ -582,7 +582,8 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                 //--------------------------------------------
 
                 hwndTemp = GetDlgItem(hwnd, IDC_SERVICE);
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("Custom"));
+                int itemId = SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("Custom"));
+                SendMessage(hwndTemp, CB_SETITEMDATA, itemId, 0);
 
                 UINT numServices = 0;
 
@@ -597,12 +598,14 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                         for(UINT i=0; i<numServices; i++)
                         {
                             XElement *service = services->GetElementByID(i);
-                            SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)service->GetName());
+                            itemId = SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)service->GetName());
+                            SendMessage(hwndTemp, CB_SETITEMDATA, itemId, service->GetInt(TEXT("id")));
                         }
                     }
                 }
 
-                int serviceID = LoadSettingComboInt(hwndTemp, TEXT("Publish"), TEXT("Service"), 1, 0);
+                int serviceID = AppConfig->GetInt(TEXT("Publish"), TEXT("Service"), 0);
+
                 if(mode != 0) ShowWindow(hwndTemp, SW_HIDE);
 
                 //--------------------------------------------
@@ -616,6 +619,7 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                     ShowWindow(GetDlgItem(hwnd, IDC_SERVERLIST), SW_HIDE);
                     hwndTemp = GetDlgItem(hwnd, IDC_URL);
                     LoadSettingEditString(hwndTemp, TEXT("Publish"), TEXT("URL"), NULL);
+                    SendDlgItemMessage(hwnd, IDC_SERVICE, CB_SETCURSEL, 0, 0);
                 }
                 else
                 {
@@ -625,7 +629,19 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                     XElement *services = serverData.GetElement(TEXT("services"));
                     if(services)
                     {
-                        XElement *service = services->GetElementByID(serviceID-1);
+                        XElement *service = NULL;
+                        DWORD numServices = services->NumElements();
+                        for(UINT i=0; i<numServices; i++)
+                        {
+                            XElement *curService = services->GetElementByID(i);
+                            if(curService->GetInt(TEXT("id")) == serviceID)
+                            {
+                                SendDlgItemMessage(hwnd, IDC_SERVICE, CB_SETCURSEL, i+1, 0);
+                                service = curService;
+                                break;
+                            }
+                        }
+
                         if(service)
                         {
                             XElement *servers = service->GetElement(TEXT("servers"));
@@ -1884,7 +1900,10 @@ void OBS::ApplySettings()
 
                 int serviceID = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_SERVICE), CB_GETCURSEL, 0, 0);
                 if(serviceID != CB_ERR)
+                {
+                    serviceID = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_SERVICE), CB_GETITEMDATA, serviceID, 0);
                     AppConfig->SetInt(TEXT("Publish"), TEXT("Service"), serviceID);
+                }
 
                 String strTemp = GetEditText(GetDlgItem(hwndCurrentSettings, IDC_PLAYPATH));
                 AppConfig->SetString(TEXT("Publish"), TEXT("PlayPath"), strTemp);
