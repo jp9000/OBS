@@ -26,6 +26,7 @@
 
 typedef bool (*LOADPLUGINPROC)();
 typedef void (*UNLOADPLUGINPROC)();
+typedef CTSTR (*GETPLUGINNAMEPROC)();
 
 ImageSource* STDCALL CreateDesktopSource(XElement *data);
 bool STDCALL ConfigureDesktopSource(XElement *data, bool bCreating);
@@ -535,9 +536,27 @@ OBS::OBS()
                         PluginInfo *pluginInfo = plugins.CreateNew();
                         pluginInfo->hModule = hPlugin;
                         pluginInfo->strFile = ofd.fileName;
+
+                        GETPLUGINNAMEPROC getName = (GETPLUGINNAMEPROC)GetProcAddress(hPlugin, "GetPluginName");
+
+                        CTSTR lpName;
+                        if(getName)
+                            lpName = getName();
+                        else
+                            lpName = TEXT("<unknown>");
+
+                        //FIXME: log this somewhere else, it comes before the OBS version info and looks weird.
+                        //Log(TEXT("Loaded plugin '%s', %s"), lpName, strLocation);
                     }
                     else
+                    {
+                        Log(TEXT("Failed to initialize plugin %s"), strLocation);
                         FreeLibrary(hPlugin);
+                    }
+                }
+                else
+                {
+                    Log(TEXT("Failed to load plugin %s, %d"), strLocation, GetLastError());
                 }
             }
         } while (OSFindNextFile(hFind, ofd));
