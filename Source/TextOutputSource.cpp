@@ -125,10 +125,10 @@ class TextOutputSource : public ImageSource
 
         if(mode == 0)
             strCurrentText = strText;
-        else if(mode == 1)
+        else if(mode == 1 && strFile.IsValid())
         {
             XFile textFile;
-            if(strFile.IsValid() && textFile.Open(strFile, XFILE_READ | XFILE_SHARED, XFILE_OPENEXISTING))
+            if(textFile.Open(strFile, XFILE_READ | XFILE_SHARED, XFILE_OPENEXISTING))
             {
                 textFile.ReadFileToString(strCurrentText);
             }
@@ -141,6 +141,8 @@ class TextOutputSource : public ImageSource
             if (fileChangeMonitor = OSMonitorFileStart (strFile))
                 bMonitoringFileChanges = true;
         }
+        else
+            strCurrentText = TEXT("");
 
         HFONT hFont = NULL;
 
@@ -306,18 +308,19 @@ class TextOutputSource : public ImageSource
 
                 if(bVertical)
                 {
-                    if(textureSize.cx > size)
-                        tx = float(textureSize.cx) - float(textureSize.cx - size) * 0.5f;
+                    if(textureSize.cx > actualTextSize.cx)
+                        tx = float(textureSize.cx) - float(textureSize.cx - actualTextSize.cx) * 0.5f;
                     else
                         tx = float(textureSize.cx);
                     ty = float(padding);
                 }
                 else
                 {
-                    if(textureSize.cy > size)
-                        ty = float(textureSize.cy - size) * 0.5f;
+                    if(textureSize.cy > actualTextSize.cy)
+                        ty = float(textureSize.cy - actualTextSize.cy) * 0.5f;
                     tx = float(padding);
                 }
+
                 if(bUseExtents && bWrap && strCurrentText.IsValid())
                 {
                     Gdiplus::StringFormat format(Gdiplus::StringFormat::GenericTypographic());
@@ -329,13 +332,15 @@ class TextOutputSource : public ImageSource
                             if(bVertical)
                             {
                                 format.SetLineAlignment(Gdiplus::StringAlignmentFar);
-                                ty = float(padding);
+                                if((actualTextSize.cy + padding * 2) > textureSize.cy)
+                                    ty = 0.0f;
+                                else
+                                    ty = float(padding);
                                 tx = 0.0f;
                             }
                             else
                             {
                                 format.SetAlignment(Gdiplus::StringAlignmentNear);
-                                ty = 0.0f;
                                 tx = float(padding);
                             }
                             break;
@@ -343,13 +348,15 @@ class TextOutputSource : public ImageSource
                             if(bVertical)
                             {
                                 format.SetLineAlignment(Gdiplus::StringAlignmentCenter);
-                                ty = float(padding);
+                                if((actualTextSize.cy + padding * 2) > textureSize.cy)
+                                    ty = 0.0f;
+                                else
+                                    ty = float(padding);
                                 tx = 0.0f;
                             }
                             else
                             {
                                 format.SetAlignment(Gdiplus::StringAlignmentCenter);
-                                ty = 0.0f;
                                 tx = 0.0f;
                             }
                             break;
@@ -357,13 +364,15 @@ class TextOutputSource : public ImageSource
                             if(bVertical)
                             {
                                 format.SetLineAlignment(Gdiplus::StringAlignmentNear);
-                                ty = float(padding);
+                                if((actualTextSize.cy + padding * 2) > textureSize.cy)
+                                    ty = 0.0f;
+                                else
+                                    ty = float(padding);
                                 tx = 0.0f;
                             }
                             else
                             {
                                 format.SetAlignment(Gdiplus::StringAlignmentFar);
-                                ty = 0.0f;
                                 tx = -float(padding);
                             }
                             break;
@@ -372,6 +381,7 @@ class TextOutputSource : public ImageSource
                     if(bVertical)
                         format.SetFormatFlags(Gdiplus::StringFormatFlagsDirectionVertical|Gdiplus::StringFormatFlagsDirectionRightToLeft);
 
+                    format.SetFormatFlags(format.GetFormatFlags() ^ Gdiplus::StringFormatFlagsLineLimit);
 
                     Gdiplus::RectF rcf(tx, ty, float(textureSize.cx), float(textureSize.cy));
 
@@ -397,7 +407,9 @@ class TextOutputSource : public ImageSource
 
                     if(bVertical)
                         format.SetFormatFlags(Gdiplus::StringFormatFlagsDirectionVertical|Gdiplus::StringFormatFlagsDirectionRightToLeft);
-                    
+
+                    format.SetFormatFlags(format.GetFormatFlags() ^ Gdiplus::StringFormatFlagsLineLimit);
+
                     if(bUseOutline)
                     {
                         Gdiplus::FontFamily fontFamily;
