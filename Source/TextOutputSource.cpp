@@ -238,8 +238,8 @@ class TextOutputSource : public ImageSource
         textSize.cx &= 0xFFFFFFFE;
         textSize.cy &= 0xFFFFFFFE;
 
-        ClampVal(textSize.cx, 32, 4096);
-        ClampVal(textSize.cy, 32, 4096);
+        ClampVal(textSize.cx, 32, 8192);
+        ClampVal(textSize.cy, 32, 8192);
 
         if(textureSize.cx != textSize.cx || textureSize.cy != textSize.cy)
         {
