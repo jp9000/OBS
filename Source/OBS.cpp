@@ -480,6 +480,7 @@ OBS::OBS()
 
     hHotkeyMutex = OSCreateMutex();
     hInfoMutex = OSCreateMutex();
+    hStartupShutdownMutex = OSCreateMutex();
 
     //-----------------------------------------------------
 
@@ -1031,22 +1032,30 @@ void OBS::ClearStatusBar()
 
 void OBS::SetStatusBarData()
 {
-    HWND hwndStatusBar = GetDlgItem(hwndMain, ID_STATUS);
+    if (OSTryEnterMutex(hStartupShutdownMutex))
+    {
+        if (!App->network)
+            return;
 
-    SendMessage(hwndStatusBar, WM_SETREDRAW, 0, 0);
-    SendMessage(hwndStatusBar, SB_SETTEXT, 0 | SBT_OWNERDRAW, NULL);
-    SendMessage(hwndStatusBar, SB_SETTEXT, 1 | SBT_OWNERDRAW, NULL);
-    SendMessage(hwndStatusBar, SB_SETTEXT, 2 | SBT_OWNERDRAW, NULL);
-    SendMessage(hwndStatusBar, SB_SETTEXT, 3 | SBT_OWNERDRAW, NULL);
-    SendMessage(hwndStatusBar, SB_SETTEXT, 4 | SBT_OWNERDRAW, NULL);
+        HWND hwndStatusBar = GetDlgItem(hwndMain, ID_STATUS);
 
-    SendMessage(hwndStatusBar, WM_SETREDRAW, 1, 0);
-    InvalidateRect(hwndStatusBar, NULL, FALSE);
+        SendMessage(hwndStatusBar, WM_SETREDRAW, 0, 0);
+        SendMessage(hwndStatusBar, SB_SETTEXT, 0 | SBT_OWNERDRAW, NULL);
+        SendMessage(hwndStatusBar, SB_SETTEXT, 1 | SBT_OWNERDRAW, NULL);
+        SendMessage(hwndStatusBar, SB_SETTEXT, 2 | SBT_OWNERDRAW, NULL);
+        SendMessage(hwndStatusBar, SB_SETTEXT, 3 | SBT_OWNERDRAW, NULL);
+        SendMessage(hwndStatusBar, SB_SETTEXT, 4 | SBT_OWNERDRAW, NULL);
+
+        SendMessage(hwndStatusBar, WM_SETREDRAW, 1, 0);
+        InvalidateRect(hwndStatusBar, NULL, FALSE);
     
-    ReportStreamStatus(bRunning, bTestStream, 
-        (UINT) statusBarData.bytesPerSec, statusBarData.strain, 
-        (UINT)this->totalStreamTime, (UINT)App->network->NumTotalVideoFrames(),
-        (UINT)App->curFramesDropped, (UINT) App->captureFPS);
+        ReportStreamStatus(bRunning, bTestStream, 
+            (UINT) statusBarData.bytesPerSec, statusBarData.strain, 
+            (UINT)this->totalStreamTime, (UINT)App->network->NumTotalVideoFrames(),
+            (UINT)App->curFramesDropped, (UINT) App->captureFPS);
+
+        OSLeaveMutex(hStartupShutdownMutex);
+    }
 }
 
 void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
@@ -1139,11 +1148,15 @@ void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
             case 2:
                 {
                     double percentageDropped = 0.0;
-                    if(App->network)
+                    if (OSTryEnterMutex(App->hStartupShutdownMutex))
                     {
-                        UINT numTotalFrames = App->network->NumTotalVideoFrames();
-                        if(numTotalFrames)
-                            percentageDropped = (double(App->network->NumDroppedFrames())/double(numTotalFrames))*100.0;
+                        if(App->network)
+                        {
+                            UINT numTotalFrames = App->network->NumTotalVideoFrames();
+                            if(numTotalFrames)
+                                percentageDropped = (double(App->network->NumDroppedFrames())/double(numTotalFrames))*100.0;
+                        }
+                        OSLeaveMutex(App->hStartupShutdownMutex);
                     }
                     strOutString << Str("MainWindow.DroppedFrames") << FormattedString(TEXT(" %u (%0.2f%%)"), App->curFramesDropped, percentageDropped);
                 }

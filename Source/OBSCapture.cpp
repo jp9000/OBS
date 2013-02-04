@@ -58,6 +58,8 @@ void OBS::Start()
 {
     if(bRunning) return;
 
+    OSEnterMutex (hStartupShutdownMutex);
+
     //-------------------------------------------------------------
 
     fps = AppConfig->GetInt(TEXT("Video"), TEXT("FPS"), 30);
@@ -75,6 +77,7 @@ void OBS::Start()
 
     if (OSIncompatibleModulesLoaded())
     {
+        OSLeaveMutex (hStartupShutdownMutex);
         MessageBox(hwndMain, Str("IncompatibleModules"), NULL, MB_ICONERROR);
         Log(TEXT("Incompatible modules detected."));
         return;
@@ -83,6 +86,7 @@ void OBS::Start()
     String strPatchesError;
     if (OSIncompatiblePatchesLoaded(strPatchesError))
     {
+        OSLeaveMutex (hStartupShutdownMutex);
         MessageBox(hwndMain, strPatchesError.Array(), NULL, MB_ICONERROR);
         Log(TEXT("Incompatible patches detected."));
         return;
@@ -108,6 +112,8 @@ void OBS::Start()
 
     if(!network)
     {
+        OSLeaveMutex (hStartupShutdownMutex);
+
         if(!bReconnecting)
             MessageBox(hwndMain, strError, NULL, MB_ICONERROR);
         else
@@ -427,11 +433,15 @@ void OBS::Start()
     
     SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, 0, 0, 0);
     SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
+
+    OSLeaveMutex (hStartupShutdownMutex);
 }
 
 void OBS::Stop()
 {
     if(!bRunning) return;
+
+    OSEnterMutex(hStartupShutdownMutex);
 
     bRunning = false;
     if(hMainThread)
@@ -608,6 +618,8 @@ void OBS::Stop()
     SetThreadExecutionState(ES_CONTINUOUS);
 
     bTestStream = false;
+
+    OSLeaveMutex(hStartupShutdownMutex);
 }
 
 DWORD STDCALL OBS::MainAudioThread(LPVOID lpUnused)

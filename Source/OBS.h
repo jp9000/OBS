@@ -609,6 +609,8 @@ class OBS
     List<StreamInfo> streamInfoList;
     UINT streamInfoIDCounter;
 
+    HANDLE hStartupShutdownMutex;
+
     //---------------------------------------------------
 
     List<PluginInfo> plugins;
