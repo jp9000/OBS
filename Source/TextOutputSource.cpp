@@ -125,10 +125,10 @@ class TextOutputSource : public ImageSource
 
         if(mode == 0)
             strCurrentText = strText;
-        else if(mode == 1)
+        else if(mode == 1 && strFile.IsValid())
         {
             XFile textFile;
-            if(strFile.IsValid() && textFile.Open(strFile, XFILE_READ | XFILE_SHARED, XFILE_OPENEXISTING))
+            if(textFile.Open(strFile, XFILE_READ | XFILE_SHARED, XFILE_OPENEXISTING))
             {
                 textFile.ReadFileToString(strCurrentText);
             }
@@ -141,6 +141,8 @@ class TextOutputSource : public ImageSource
             if (fileChangeMonitor = OSMonitorFileStart (strFile))
                 bMonitoringFileChanges = true;
         }
+        else
+            strCurrentText = TEXT("");
 
         HFONT hFont = NULL;
 
