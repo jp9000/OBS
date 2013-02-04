@@ -1190,7 +1190,7 @@ retrySend:
             {
                 int bufferSize = (int)idealSendBacklog;
                 setsockopt(sb->sb_socket, SOL_SOCKET, SO_SNDBUF, (const char *)&bufferSize, sizeof(bufferSize));
-                Log(TEXT("RTMPPublisher::BufferedSend: Increasing socket send buffer to ISB %d\n"), idealSendBacklog, curTCPBufSize);
+                Log(TEXT("RTMPPublisher::BufferedSend: Increasing socket send buffer to ISB %d"), idealSendBacklog, curTCPBufSize);
             }
         }
 
