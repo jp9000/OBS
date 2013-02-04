@@ -342,7 +342,7 @@ class TextOutputSource : public ImageSource
                             if(bVertical)
                             {
                                 format.SetLineAlignment(Gdiplus::StringAlignmentFar);
-                                if((actualTextSize.cy + padding * 2) > textureSize.cy)
+                                if((actualTextSize.cy + LONG(padding) * 2) > textureSize.cy)
                                     ty = 0.0f;
                                 else
                                     ty = float(padding);
@@ -358,7 +358,7 @@ class TextOutputSource : public ImageSource
                             if(bVertical)
                             {
                                 format.SetLineAlignment(Gdiplus::StringAlignmentCenter);
-                                if((actualTextSize.cy + padding * 2) > textureSize.cy)
+                                if((actualTextSize.cy + LONG(padding) * 2) > textureSize.cy)
                                     ty = 0.0f;
                                 else
                                     ty = float(padding);
@@ -374,7 +374,7 @@ class TextOutputSource : public ImageSource
                             if(bVertical)
                             {
                                 format.SetLineAlignment(Gdiplus::StringAlignmentNear);
-                                if((actualTextSize.cy + padding * 2) > textureSize.cy)
+                                if((actualTextSize.cy + LONG(padding) * 2) > textureSize.cy)
                                     ty = 0.0f;
                                 else
                                     ty = float(padding);

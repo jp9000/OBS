@@ -46,9 +46,7 @@
 #define USE_DXGI1_2 1
 
 #ifdef USE_DXGI1_2
-#include "../extras/sal.h"
-#include "../extras/no_sal2.h"
-#include "../extras/dxgi1_2.h"
+#include <dxgi1_2.h>
 #endif
 
 
