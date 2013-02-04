@@ -38,4 +38,10 @@ services : {
       "Primary"  :   rtmp://stream.goodgame.ru:1940/live
     }
   }
+  DailyMotion : {
+    id : 6
+    servers : {
+      "Primary" :    rtmp://publish.dailymotion.com/publish-dm
+    }
+  }
 }
