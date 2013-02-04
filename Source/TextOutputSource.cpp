@@ -190,10 +190,20 @@ class TextOutputSource : public ImageSource
 
                 if(!strCurrentText.IsEmpty())
                 {
-                    stat = graphics.MeasureString(strCurrentText, -1, &font, Gdiplus::PointF(0.0f, 0.0f), &format, &rcf);
-                    if(stat != Gdiplus::Ok)
-                        AppWarning(TEXT("graphics.MeasureString failed: %u"), (int)stat);
+                    if(bUseExtents && bWrap)
+                    {
+                        Gdiplus::RectF layoutRect(0.0f, 0.0f, float(extentWidth), float(extentHeight));
 
+                        stat = graphics.MeasureString(strCurrentText, -1, &font, layoutRect, &format, &rcf);
+                        if(stat != Gdiplus::Ok)
+                            AppWarning(TEXT("graphics.MeasureString failed: %u"), (int)stat);
+                    }
+                    else
+                    {
+                        stat = graphics.MeasureString(strCurrentText, -1, &font, Gdiplus::PointF(0.0f, 0.0f), &format, &rcf);
+                        if(stat != Gdiplus::Ok)
+                            AppWarning(TEXT("graphics.MeasureString failed: %u"), (int)stat);
+                    }
                     textSize.cx = long(rcf.Width+EPSILON);
                     textSize.cy = long(rcf.Height+EPSILON);
                     if(bVertical)
