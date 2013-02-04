@@ -124,7 +124,7 @@ bool RTMPPublisher::Init(RTMP *rtmpIn, UINT tcpBufferSize)
 
     //------------------------------------------
 
-    int curTCPBufSize, curTCPBufSizeSize = 4;
+    int curTCPBufSize, curTCPBufSizeSize = sizeof(curTCPBufSize);
     getsockopt (rtmp->m_sb.sb_socket, SOL_SOCKET, SO_SNDBUF, (char *)&curTCPBufSize, &curTCPBufSizeSize);
 
     if(curTCPBufSize < int(tcpBufferSize))
@@ -562,10 +562,10 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
 
     UINT tcpBufferSize = AppConfig->GetInt(TEXT("Publish"), TEXT("TCPBufferSize"), 64*1024);
 
-    if(tcpBufferSize < 8196)
-        tcpBufferSize = 8196;
-    else if(tcpBufferSize > 128*1024)
-        tcpBufferSize = 128*1024;
+    if(tcpBufferSize < 8192)
+        tcpBufferSize = 8192;
+    else if(tcpBufferSize > 1024*1024)
+        tcpBufferSize = 1024*1024;
 
     rtmp->m_outChunkSize = 4096;//RTMP_DEFAULT_CHUNKSIZE;//
     rtmp->m_bSendChunkSizeInfo = TRUE;
@@ -706,6 +706,7 @@ void RTMPPublisher::SocketLoop()
     }
     else
     {
+        latencyPacketSize = dataBufferSize;
         delayTime = 0;
     }
 
@@ -811,7 +812,7 @@ void RTMPPublisher::SocketLoop()
                 }
                 
                 int ret;
-                if (lowLatencyMode)
+                if (lowLatencyMode != LL_MODE_NONE)
                 {
                     int sendLength = min (latencyPacketSize, curDataBufferLen);
                     ret = send(rtmp->m_sb.sb_socket, (const char *)dataBuffer, sendLength, 0);
@@ -848,6 +849,7 @@ void RTMPPublisher::SocketLoop()
                     }
                     else if (ret == 0)
                     {
+                        errorCode = 0;
                         fatalError = TRUE;
                     }
 
@@ -1174,8 +1176,24 @@ retrySend:
 
     if (network->curDataBufferLen + len >= network->dataBufferSize)
     {
-        Log(TEXT("RTMPPublisher::BufferedSend: Buffer is full (%d / %d bytes), waiting to send %d bytes"), network->curDataBufferLen, network->dataBufferSize, len);
+        ULONG idealSendBacklog;
+
+        Log(TEXT("RTMPPublisher::BufferedSend: Socket buffer is full (%d / %d bytes), waiting to send %d bytes"), network->curDataBufferLen, network->dataBufferSize, len);
         OSLeaveMutex(network->hDataBufferMutex);
+
+        if (!idealsendbacklogquery(sb->sb_socket, &idealSendBacklog))
+        {
+            int curTCPBufSize, curTCPBufSizeSize = sizeof(curTCPBufSize);
+            getsockopt (sb->sb_socket, SOL_SOCKET, SO_SNDBUF, (char *)&curTCPBufSize, &curTCPBufSizeSize);
+
+            if (curTCPBufSize != idealSendBacklog)
+            {
+                int bufferSize = (int)idealSendBacklog;
+                setsockopt(sb->sb_socket, SOL_SOCKET, SO_SNDBUF, (const char *)&bufferSize, sizeof(bufferSize));
+                Log(TEXT("RTMPPublisher::BufferedSend: Increasing socket send buffer to ISB %d\n"), idealSendBacklog, curTCPBufSize);
+            }
+        }
+
         int status = WaitForSingleObject(network->hBufferSpaceAvailableEvent, INFINITE);
         if (status == WAIT_ABANDONED || status == WAIT_FAILED || network->bStopping)
             return 0;
