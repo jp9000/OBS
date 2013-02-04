@@ -306,16 +306,16 @@ class TextOutputSource : public ImageSource
 
                 if(bVertical)
                 {
-                    if(textureSize.cx > size)
-                        tx = float(textureSize.cx) - float(textureSize.cx - size) * 0.5f;
+                    if(textureSize.cx > actualTextSize.cx)
+                        tx = float(textureSize.cx) - float(textureSize.cx - actualTextSize.cx) * 0.5f;
                     else
                         tx = float(textureSize.cx);
                     ty = float(padding);
                 }
                 else
                 {
-                    if(textureSize.cy > size)
-                        ty = float(textureSize.cy - size) * 0.5f;
+                    if(textureSize.cy > actualTextSize.cy)
+                        ty = float(textureSize.cy - actualTextSize.cy) * 0.5f;
                     tx = float(padding);
                 }
                 if(bUseExtents && bWrap && strCurrentText.IsValid())
@@ -372,6 +372,7 @@ class TextOutputSource : public ImageSource
                     if(bVertical)
                         format.SetFormatFlags(Gdiplus::StringFormatFlagsDirectionVertical|Gdiplus::StringFormatFlagsDirectionRightToLeft);
 
+                    format.SetFormatFlags(format.GetFormatFlags() ^ Gdiplus::StringFormatFlagsLineLimit);
 
                     Gdiplus::RectF rcf(tx, ty, float(textureSize.cx), float(textureSize.cy));
 
@@ -397,7 +398,9 @@ class TextOutputSource : public ImageSource
 
                     if(bVertical)
                         format.SetFormatFlags(Gdiplus::StringFormatFlagsDirectionVertical|Gdiplus::StringFormatFlagsDirectionRightToLeft);
-                    
+
+                    format.SetFormatFlags(format.GetFormatFlags() ^ Gdiplus::StringFormatFlagsLineLimit);
+
                     if(bUseOutline)
                     {
                         Gdiplus::FontFamily fontFamily;
