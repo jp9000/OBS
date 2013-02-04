@@ -324,14 +324,14 @@ void GraphicsCaptureSource::AttemptCapture()
                 bErrorAcquiring = true;
             }
         }
+
+        CloseHandle(hProcess);
     }
     else
     {
         AppWarning(TEXT("GraphicsCaptureSource::BeginScene: OpenProcess failed, GetLastError = %u"), GetLastError());
         bErrorAcquiring = true;
     }
-
-    CloseHandle(hProcess);
 }
 
 void GraphicsCaptureSource::EndScene()
