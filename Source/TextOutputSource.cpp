@@ -320,6 +320,7 @@ class TextOutputSource : public ImageSource
                         ty = float(textureSize.cy - actualTextSize.cy) * 0.5f;
                     tx = float(padding);
                 }
+
                 if(bUseExtents && bWrap && strCurrentText.IsValid())
                 {
                     Gdiplus::StringFormat format(Gdiplus::StringFormat::GenericTypographic());
@@ -331,13 +332,15 @@ class TextOutputSource : public ImageSource
                             if(bVertical)
                             {
                                 format.SetLineAlignment(Gdiplus::StringAlignmentFar);
-                                ty = float(padding);
+                                if((actualTextSize.cy + padding * 2) > textureSize.cy)
+                                    ty = 0.0f;
+                                else
+                                    ty = float(padding);
                                 tx = 0.0f;
                             }
                             else
                             {
                                 format.SetAlignment(Gdiplus::StringAlignmentNear);
-                                ty = 0.0f;
                                 tx = float(padding);
                             }
                             break;
@@ -345,13 +348,15 @@ class TextOutputSource : public ImageSource
                             if(bVertical)
                             {
                                 format.SetLineAlignment(Gdiplus::StringAlignmentCenter);
-                                ty = float(padding);
+                                if((actualTextSize.cy + padding * 2) > textureSize.cy)
+                                    ty = 0.0f;
+                                else
+                                    ty = float(padding);
                                 tx = 0.0f;
                             }
                             else
                             {
                                 format.SetAlignment(Gdiplus::StringAlignmentCenter);
-                                ty = 0.0f;
                                 tx = 0.0f;
                             }
                             break;
@@ -359,13 +364,15 @@ class TextOutputSource : public ImageSource
                             if(bVertical)
                             {
                                 format.SetLineAlignment(Gdiplus::StringAlignmentNear);
-                                ty = float(padding);
+                                if((actualTextSize.cy + padding * 2) > textureSize.cy)
+                                    ty = 0.0f;
+                                else
+                                    ty = float(padding);
                                 tx = 0.0f;
                             }
                             else
                             {
                                 format.SetAlignment(Gdiplus::StringAlignmentFar);
-                                ty = 0.0f;
                                 tx = -float(padding);
                             }
                             break;
