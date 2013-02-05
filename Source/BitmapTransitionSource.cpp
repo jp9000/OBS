@@ -257,7 +257,7 @@ INT_PTR CALLBACK ConfigureBitmapTransitionProc(HWND hwnd, UINT message, WPARAM w
                 hwndTemp = GetDlgItem(hwnd, IDC_TRANSITIONTIME);
 
                 UINT transitionTime = configInfo->data->GetInt(TEXT("transitionTime"));
-                SendMessage(hwndTemp, UDM_SETRANGE32, 5, 30);
+                SendMessage(hwndTemp, UDM_SETRANGE32, 3, 600);
 
                 if(!transitionTime)
                     transitionTime = 10;

@@ -237,7 +237,7 @@ void OBS::Start()
         strPlaybackDevice = TEXT("Default");
     }
 
-    Log(TEXT("Playback device %s"), strPlaybackDevice);
+    Log(TEXT("Playback device %s"), strPlaybackDevice.Array());
     playbackDevices.FreeData();
 
     if(strPlaybackDevice.CompareI(TEXT("Default")))
