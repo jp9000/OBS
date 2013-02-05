@@ -290,19 +290,18 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 // Clear all selected items state and select/focus the item we've right-clicked if it wasn't previously selected.
                 if(!(ListView_GetItemState(hwnd, index, LVIS_SELECTED) & LVIS_SELECTED))
                 {
-                    for(UINT i = 0; i < (UINT)numItems; i++)
-                    {
-                        int itemState = ListView_GetItemState(hwnd, i, LVIS_SELECTED);
-                        if(itemState & LVIS_SELECTED || itemState & LVIS_FOCUSED)
-                            ListView_SetItemState(hwnd , i , 0, LVIS_SELECTED|LVIS_FOCUSED);
-                    }
+                    ListView_SetItemState(hwnd , -1 , 0, LVIS_SELECTED | LVIS_FOCUSED);
                 
-                    ListView_SetItemState(hwnd, index, LVIS_SELECTED|LVIS_FOCUSED, LVIS_SELECTED|LVIS_FOCUSED);
+                    ListView_SetItemState(hwnd, index, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+
                     ListView_SetSelectionMark(hwnd, index);
                 }
             }
             else
+            {
+                ListView_SetItemState(hwnd , -1 , 0, LVIS_SELECTED | LVIS_FOCUSED)
                 CallWindowProc(listviewProc, hwnd, WM_RBUTTONDOWN, wParam, lParam);
+            }
         }
 
         HMENU hMenu = CreatePopupMenu();
@@ -762,13 +761,9 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                                 UINT numSources = sources->NumElements();
 
                                 // clear selection/focus for all items before adding the new item
-                                UINT itemState;
-                                for(UINT i = 0; i<numSources; i++)
-                                {
-                                    itemState = ListView_GetItemState(hwnd, i, LVIS_SELECTED);
-                                    if(itemState & LVIS_SELECTED || itemState & LVIS_FOCUSED)
-                                        ListView_SetItemState(hwnd , i , 0, LVIS_SELECTED|LVIS_FOCUSED);
-                                }
+
+                                ListView_SetItemState(hwnd , -1 , 0, LVIS_SELECTED | LVIS_FOCUSED);
+
 
                                 ListView_SetItemCount(hwnd, numSources);
                                 
@@ -780,7 +775,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                                 
                                 // make sure the added item is visible and selected/focused
                                 ListView_EnsureVisible(hwnd, 0, false);
-                                ListView_SetItemState(hwnd, 0, LVIS_SELECTED|LVIS_FOCUSED, LVIS_SELECTED|LVIS_FOCUSED);
+                                ListView_SetItemState(hwnd, 0, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
                                 App->ReportSourcesAddedOrRemoved();
                             }
                         }
@@ -1027,6 +1022,7 @@ void OBS::MoveSourcesUp()
     while (iPos != -1)
     {
         selectedIDs.Add((UINT) iPos);
+        ListView_SetItemState(hwndSources, iPos, 0, LVIS_FOCUSED);
         iPos = ListView_GetNextItem(hwndSources, iPos, LVNI_SELECTED);
     }
 
@@ -1080,6 +1076,7 @@ void OBS::MoveSourcesDown()
     while (iPos != -1)
     {
         selectedIDs.Add((UINT) iPos);
+        ListView_SetItemState(hwndSources, iPos, 0, LVIS_FOCUSED);
         iPos = ListView_GetNextItem(hwndSources, iPos, LVNI_SELECTED);
     }
 
@@ -1135,6 +1132,7 @@ void OBS::MoveSourcesToTop()
     while (iPos != -1)
     {
         selectedIDs.Add((UINT) iPos);
+        ListView_SetItemState(hwndSources, iPos, 0, LVIS_FOCUSED);
         iPos = ListView_GetNextItem(hwndSources, iPos, LVNI_SELECTED);
     }
 
@@ -1192,6 +1190,7 @@ void OBS::MoveSourcesToBottom()
     while (iPos != -1)
     {
         selectedIDs.Add((UINT) iPos);
+        ListView_SetItemState(hwndSources, iPos, 0, LVIS_FOCUSED);
         iPos = ListView_GetNextItem(hwndSources, iPos, LVNI_SELECTED);
     }
 
@@ -2394,7 +2393,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                     {
                         /* clears all selections */
                         App->bChangingSources = true;
-                        ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED);
+                        ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED | LVIS_FOCUSED);
                         App->bChangingSources = false;
 
                         App->scene->DeselectAll();
@@ -2413,7 +2412,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                 {
                     /* clears all selections */
                     App->bChangingSources = true;
-                    ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED);
+                    ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED | LVIS_FOCUSED);
                     App->bChangingSources = false;
 
                     App->scene->DeselectAll();
@@ -2859,7 +2858,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                             if(!bControlDown)
                             {
                                 App->bChangingSources = true;
-                                ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED);
+                                ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED | LVIS_FOCUSED);
                                 App->bChangingSources = false;
 
                                 App->scene->DeselectAll();
@@ -2878,7 +2877,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                         else if(!bControlDown) //clicked on empty space without control
                         {
                             App->bChangingSources = true;
-                            ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED|LVIS_FOCUSED);
+                            ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED | LVIS_FOCUSED);
                             App->bChangingSources = false;
                             App->scene->DeselectAll();
                         }
