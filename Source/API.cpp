@@ -167,7 +167,7 @@ void OBS::AddSourceItem(LPWSTR name, bool checked, UINT index)
 
 
     HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
-    
+
     ListView_InsertItem(hwndSources, &lvI);
     ListView_SetCheckState(hwndSources, index, checked);   
     ListView_SetColumnWidth(hwndSources, 0, LVSCW_AUTOSIZE_USEHEADER);

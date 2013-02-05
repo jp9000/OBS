@@ -17,6 +17,14 @@ convenience.
 
 
 ---------------------------------------------
+    Windows SDK
+---------------------------------------------
+  It requires the latest windows SDK, as it uses features from
+windows vista, windows 7 and 8.  The windows 8 SDK should also come
+with the latest DirectX includes and libraries
+
+
+---------------------------------------------
     Compiling LAME (if desired)
 ---------------------------------------------
 
@@ -44,7 +52,7 @@ though I suppose you could make it use posix threads with a bit of work,
 but it's fairly pointless and you'd probably have to add some more stuff
 to the Hacks.cpp file.
 
-If compiling static (which is what I usually do), please make sure to
+If compiling static (which I don't do anymore), please make sure to
 include the static libgcc.a that your mingw provides.  Depending on your
 mingw version you may need to add/remove stuff from Hacks.cpp to get it
 properly working.  It sucks, I know, but I'm not the one who decided to

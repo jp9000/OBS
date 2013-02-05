@@ -683,7 +683,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                             XElement *sources = curSceneElement->GetElement(TEXT("sources"));
                             if(!sources)
                                 sources = curSceneElement->CreateElement(TEXT("sources"));
-                            XElement *newSourceElement = sources->CreateElement(strName);
+                            XElement *newSourceElement = sources->InsertElement(0, strName);
                             newSourceElement->SetInt(TEXT("render"), 1);
 
                             if(ret >= ID_LISTBOX_GLOBALSOURCE)
@@ -741,14 +741,14 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                                 ListView_SetItemCount(hwnd, numSources);
                                 
                                 App->bChangingSources = true;
-                                App->AddSourceItem((LPWSTR) strName.Array(), true, numSources - 1);
+                                App->AddSourceItem((LPWSTR) strName.Array(), true, 0);
                                 App->bChangingSources = false;
 
                                 SetFocus(hwnd);
                                 
                                 // make sure the added item is visible and selected/focused
-                                ListView_EnsureVisible(hwnd, numSources - 1, false);
-                                ListView_SetItemState(hwnd, numSources - 1, LVIS_SELECTED|LVIS_FOCUSED, LVIS_SELECTED|LVIS_FOCUSED);
+                                ListView_EnsureVisible(hwnd, 0, false);
+                                ListView_SetItemState(hwnd, 0, LVIS_SELECTED|LVIS_FOCUSED, LVIS_SELECTED|LVIS_FOCUSED);
                                 App->ReportSourcesAddedOrRemoved();
                             }
                         }

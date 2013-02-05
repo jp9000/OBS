@@ -168,6 +168,7 @@ public:
     XElement* GetElementByID(DWORD elementID) const;
     XElement* GetElementByItem(CTSTR lpName, CTSTR lpItemName, CTSTR lpItemValue) const;
     XElement* CreateElement(CTSTR lpName);
+    XElement* InsertElement(UINT pos, CTSTR lpName);
     void  GetElementList(CTSTR lpName, List<XElement*> &Elements) const;
     void  RemoveElement(XElement *element);
     void  RemoveElement(CTSTR lpName);

@@ -2,7 +2,7 @@
 
 ; Define your application name
 !define APPNAME "Open Broadcaster Software"
-!define APPNAMEANDVERSION "Open Broadcaster Software 0.465a"
+!define APPNAMEANDVERSION "Open Broadcaster Software 0.47a"
 
 ; Additional script dependencies
 !include WinVer.nsh
@@ -106,6 +106,7 @@ Section "Open Broadcaster Software" Section1
 	; Set Section Files and Shortcuts
 	SetOutPath "$INSTDIR\"
 	File "..\Release\OBS.exe"
+	File "..\x264\libs\32bit\libx264-129.dll"
 	File "..\OBSAPI\Release\OBSApi.dll"
 	File "..\rundir\services.xconfig"
 	File "..\rundir\OBSHelp.chm"
@@ -126,6 +127,7 @@ Section "Open Broadcaster Software" Section1
 	${if} ${RunningX64}
 		SetOutPath "$INSTDIR\64bit\"
 		File "..\x64\Release\OBS.exe"
+		File "..\x264\libs\64bit\libx264-129.dll"
 		File "..\OBSAPI\x64\Release\OBSApi.dll"
 		File "..\rundir\services.xconfig"
 		File "..\rundir\OBSHelp.chm"
@@ -191,6 +193,7 @@ Section Uninstall
 
 	; Clean up Open Broadcaster Software
 	Delete "$INSTDIR\OBS.exe"
+	Delete "$INSTDIR\libx264-129.dll"
 	Delete "$INSTDIR\OBSApi.dll"
 	Delete "$INSTDIR\services.xconfig"
 	Delete "$INSTDIR\*.chm"
@@ -204,6 +207,7 @@ Section Uninstall
 	Delete "$INSTDIR\plugins\GraphicsCapture\GraphicsCaptureHook.dll"
 	${if} ${RunningX64}
 		Delete "$INSTDIR\64bit\OBS.exe"
+		Delete "$INSTDIR\64bit\libx264-129.dll"
 		Delete "$INSTDIR\64bit\OBSApi.dll"
 		Delete "$INSTDIR\64bit\services.xconfig"
 		Delete "$INSTDIR\64bit\*.chm"

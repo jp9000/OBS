@@ -417,6 +417,20 @@ XElement* XElement::CreateElement(CTSTR lpName)
     return newElement;
 }
 
+XElement* XElement::InsertElement(UINT pos, CTSTR lpName)
+{
+    assert(lpName);
+
+    XElement *newElement = new XElement(file, this, lpName);
+
+    if(pos > SubItems.Num())
+        pos = SubItems.Num();
+
+    SubItems.Insert(pos, newElement);
+
+    return newElement;
+}
+
 void  XElement::GetElementList(CTSTR lpName, List<XElement*> &Elements) const
 {
     Elements.Clear();

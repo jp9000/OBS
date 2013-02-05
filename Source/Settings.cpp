@@ -582,7 +582,7 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                 //--------------------------------------------
 
                 hwndTemp = GetDlgItem(hwnd, IDC_SERVICE);
-                int itemId = SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("Custom"));
+                int itemId = (int)SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("Custom"));
                 SendMessage(hwndTemp, CB_SETITEMDATA, itemId, 0);
 
                 UINT numServices = 0;
@@ -598,7 +598,7 @@ INT_PTR CALLBACK OBS::PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                         for(UINT i=0; i<numServices; i++)
                         {
                             XElement *service = services->GetElementByID(i);
-                            itemId = SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)service->GetName());
+                            itemId = (int)SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)service->GetName());
                             SendMessage(hwndTemp, CB_SETITEMDATA, itemId, service->GetInt(TEXT("id")));
                         }
                     }
