@@ -2137,17 +2137,20 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                             {
                                 case CDDS_ITEMPREPAINT:
 
-                                    int state;
+                                    int state, bkMode;
                                     BOOL checkState;
                                     RECT iconRect,textRect, itemRect;
                                     COLORREF oldTextColor;
+
+                                    // It seems there's a limitation to ListView's displayed max text length http://support.microsoft.com/default.aspx?scid=KB;EN-US;321104
+                                    // Read the comment below.
                                     String itemText;
+
                                     HDC hdc = lplvcd->nmcd.hdc;
                                     int itemId = lplvcd->nmcd.dwItemSpec;
 
-                                    // Not happy about this
-                                    itemText = App->sceneElement->GetElement(TEXT("sources"))->GetElementByID(itemId)->GetName();
-                                    
+                                    XElement *sources, *sourcesElement;
+
                                     ListView_GetItemRect(nmh.hwndFrom,itemId, &itemRect, LVIR_BOUNDS);
                                     ListView_GetItemRect(nmh.hwndFrom,itemId, &textRect, LVIR_LABEL);
 
@@ -2156,9 +2159,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                     iconRect.right = textRect.left - 1;
 
                                     state = ListView_GetItemState(nmh.hwndFrom, itemId, LVIS_SELECTED);
-                                    checkState = ListView_GetCheckState(nmh.hwndFrom, itemId); 
-                                    
+                                    checkState = ListView_GetCheckState(nmh.hwndFrom, itemId);
+
                                     oldTextColor = GetTextColor(hdc);
+
                                     if(state&LVIS_SELECTED)
                                     {
                                         FillRect(hdc, &itemRect, (HBRUSH)(COLOR_HIGHLIGHT + 1));
@@ -2177,8 +2181,31 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                         CloseThemeData(hTheme);
                                     }
 
-                                    if(itemText.IsValid())
-                                        DrawText(hdc, itemText, slen(itemText), &textRect, DT_LEFT | DT_END_ELLIPSIS | DT_VCENTER | DT_SINGLELINE );
+                                    // Not happy about this at all , wanted it to be generic (as a  simple ListView_GetItemText should suffice if we knew max text length), 
+                                    // but sending LVM_GETITEMTEXT msg to get the text length seems confusing (for me) by MSDN doc.
+                                    // We can use ListView_GetItemText with a MAX_PATH sized buffer instead of the following stuff (see the MSDN link above).
+
+                                    sources = App->sceneElement->GetElement(TEXT("sources"));
+
+                                    if(sources)
+                                    {
+                                        sourcesElement = sources->GetElementByID(itemId);
+                                        if(sourcesElement)
+                                        {
+                                            itemText = sourcesElement->GetName();
+                                            if(itemText.IsValid())
+                                            {
+                                                if(state&LVIS_SELECTED)                                                
+                                                    bkMode = SetBkMode(hdc, TRANSPARENT);
+
+                                                DrawText(hdc, itemText, slen(itemText), &textRect, DT_LEFT | DT_END_ELLIPSIS | DT_VCENTER | DT_SINGLELINE );
+
+                                                if(state&LVIS_SELECTED)
+                                                    SetBkMode(hdc, bkMode);
+                                            }
+                                        }
+                                    }
+
                                     SetTextColor(hdc, oldTextColor);
 
                                     return CDRF_SKIPDEFAULT;
