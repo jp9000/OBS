@@ -269,8 +269,40 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
         }
         else
         {
-            CallWindowProc(listviewProc, hwnd, WM_LBUTTONDOWN, wParam, lParam);
+            LVHITTESTINFO htInfo;
+            int index;
+
+            // Default behaviour of left/right click is to check/uncheck, we do not want to toggle items when right clicking above checkbox.
+
             numItems = ListView_GetItemCount(hwnd);
+
+            GetCursorPos(&htInfo.pt);
+            ScreenToClient(hwnd, &htInfo.pt);
+
+            index = ListView_HitTestEx(hwnd, &htInfo);
+
+            if(index != -1)
+            {
+                // Focus our control
+                if(GetFocus() != hwnd)
+                    SetFocus(hwnd);
+                
+                // Clear all selected items state and select/focus the item we've right-clicked if it wasn't previously selected.
+                if(!(ListView_GetItemState(hwnd, index, LVIS_SELECTED) & LVIS_SELECTED))
+                {
+                    for(UINT i = 0; i < (UINT)numItems; i++)
+                    {
+                        int itemState = ListView_GetItemState(hwnd, i, LVIS_SELECTED);
+                        if(itemState & LVIS_SELECTED || itemState & LVIS_FOCUSED)
+                            ListView_SetItemState(hwnd , i , 0, LVIS_SELECTED|LVIS_FOCUSED);
+                    }
+                
+                    ListView_SetItemState(hwnd, index, LVIS_SELECTED|LVIS_FOCUSED, LVIS_SELECTED|LVIS_FOCUSED);
+                    ListView_SetSelectionMark(hwnd, index);
+                }
+            }
+            else
+                CallWindowProc(listviewProc, hwnd, WM_RBUTTONDOWN, wParam, lParam);
         }
 
         HMENU hMenu = CreatePopupMenu();
