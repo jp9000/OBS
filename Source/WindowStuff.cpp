@@ -19,6 +19,8 @@
 
 #include "Main.h"
 #include <shellapi.h>
+#include <uxtheme.h>
+#include <vsstyle.h>
 
 
 //hello, you've come into the file I hate the most.
@@ -2124,9 +2126,67 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
         case WM_NOTIFY:
             {
                 NMHDR nmh = *(LPNMHDR)lParam;
+                static bool bHighlighted;
                 switch(wParam)
                 {
                     case ID_SOURCES:
+                        if(nmh.code == NM_CUSTOMDRAW)
+                        {
+                            LPNMLVCUSTOMDRAW  lplvcd = (LPNMLVCUSTOMDRAW)lParam;
+                            switch( lplvcd->nmcd.dwDrawStage)
+                            {
+                                case CDDS_ITEMPREPAINT:
+
+                                    int state;
+                                    BOOL checkState;
+                                    RECT iconRect,textRect, itemRect;
+                                    COLORREF oldTextColor;
+                                    String itemText;
+                                    HDC hdc = lplvcd->nmcd.hdc;
+                                    int itemId = lplvcd->nmcd.dwItemSpec;
+
+                                    // Not happy about this
+                                    itemText = App->sceneElement->GetElement(TEXT("sources"))->GetElementByID(itemId)->GetName();
+                                    
+                                    ListView_GetItemRect(nmh.hwndFrom,itemId, &itemRect, LVIR_BOUNDS);
+                                    ListView_GetItemRect(nmh.hwndFrom,itemId, &textRect, LVIR_LABEL);
+
+                                    mcpy(&iconRect,&itemRect,sizeof(RECT));
+
+                                    iconRect.right = textRect.left - 1;
+
+                                    state = ListView_GetItemState(nmh.hwndFrom, itemId, LVIS_SELECTED);
+                                    checkState = ListView_GetCheckState(nmh.hwndFrom, itemId); 
+                                    
+                                    oldTextColor = GetTextColor(hdc);
+                                    if(state&LVIS_SELECTED)
+                                    {
+                                        FillRect(hdc, &itemRect, (HBRUSH)(COLOR_HIGHLIGHT + 1));
+                                        SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
+                                    }
+                                   
+
+                                    HTHEME hTheme = OpenThemeData(hwnd, TEXT("BUTTON"));
+                                    
+                                    if(hTheme)
+                                    {
+                                        if(checkState)
+                                            DrawThemeBackground(hTheme, hdc, BP_CHECKBOX, (state&LVIS_SELECTED)?CBS_CHECKEDPRESSED:CBS_CHECKEDNORMAL, &iconRect, NULL);
+                                        else
+                                            DrawThemeBackground(hTheme, hdc, BP_CHECKBOX, CBS_UNCHECKEDNORMAL, &iconRect, NULL);
+                                        CloseThemeData(hTheme);
+                                    }
+
+                                    if(itemText.IsValid())
+                                        DrawText(hdc, itemText, slen(itemText), &textRect, DT_LEFT | DT_END_ELLIPSIS | DT_VCENTER | DT_SINGLELINE );
+                                    SetTextColor(hdc, oldTextColor);
+
+                                    return CDRF_SKIPDEFAULT;
+                            }
+
+                            return CDRF_NOTIFYPOSTPAINT | CDRF_NOTIFYITEMDRAW;
+                        }
+
                         if(nmh.code == LVN_ITEMCHANGED && !App->bChangingSources)
                         {
                             NMLISTVIEW pnmv = *(LPNMLISTVIEW)lParam;
