@@ -2168,6 +2168,8 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                         FillRect(hdc, &itemRect, (HBRUSH)(COLOR_HIGHLIGHT + 1));
                                         SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
                                     }
+                                    else
+                                        FillRect(hdc, &itemRect, (HBRUSH)(COLOR_WINDOW + 1));
                                    
 
                                     HTHEME hTheme = OpenThemeData(hwnd, TEXT("BUTTON"));
@@ -2195,13 +2197,9 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                             itemText = sourcesElement->GetName();
                                             if(itemText.IsValid())
                                             {
-                                                if(state&LVIS_SELECTED)                                                
-                                                    bkMode = SetBkMode(hdc, TRANSPARENT);
-
+                                                bkMode = SetBkMode(hdc, TRANSPARENT);
                                                 DrawText(hdc, itemText, slen(itemText), &textRect, DT_LEFT | DT_END_ELLIPSIS | DT_VCENTER | DT_SINGLELINE );
-
-                                                if(state&LVIS_SELECTED)
-                                                    SetBkMode(hdc, bkMode);
+                                                SetBkMode(hdc, bkMode);
                                             }
                                         }
                                     }
