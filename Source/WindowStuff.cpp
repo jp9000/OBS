@@ -19,6 +19,8 @@
 
 #include "Main.h"
 #include <shellapi.h>
+#include <uxtheme.h>
+#include <vsstyle.h>
 
 
 //hello, you've come into the file I hate the most.
@@ -290,19 +292,18 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 // Clear all selected items state and select/focus the item we've right-clicked if it wasn't previously selected.
                 if(!(ListView_GetItemState(hwnd, index, LVIS_SELECTED) & LVIS_SELECTED))
                 {
-                    for(UINT i = 0; i < (UINT)numItems; i++)
-                    {
-                        int itemState = ListView_GetItemState(hwnd, i, LVIS_SELECTED);
-                        if(itemState & LVIS_SELECTED || itemState & LVIS_FOCUSED)
-                            ListView_SetItemState(hwnd , i , 0, LVIS_SELECTED|LVIS_FOCUSED);
-                    }
+                    ListView_SetItemState(hwnd , -1 , 0, LVIS_SELECTED | LVIS_FOCUSED);
                 
-                    ListView_SetItemState(hwnd, index, LVIS_SELECTED|LVIS_FOCUSED, LVIS_SELECTED|LVIS_FOCUSED);
+                    ListView_SetItemState(hwnd, index, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+
                     ListView_SetSelectionMark(hwnd, index);
                 }
             }
             else
+            {
+                ListView_SetItemState(hwnd , -1 , 0, LVIS_SELECTED | LVIS_FOCUSED)
                 CallWindowProc(listviewProc, hwnd, WM_RBUTTONDOWN, wParam, lParam);
+            }
         }
 
         HMENU hMenu = CreatePopupMenu();
@@ -762,13 +763,9 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                                 UINT numSources = sources->NumElements();
 
                                 // clear selection/focus for all items before adding the new item
-                                UINT itemState;
-                                for(UINT i = 0; i<numSources; i++)
-                                {
-                                    itemState = ListView_GetItemState(hwnd, i, LVIS_SELECTED);
-                                    if(itemState & LVIS_SELECTED || itemState & LVIS_FOCUSED)
-                                        ListView_SetItemState(hwnd , i , 0, LVIS_SELECTED|LVIS_FOCUSED);
-                                }
+
+                                ListView_SetItemState(hwnd , -1 , 0, LVIS_SELECTED | LVIS_FOCUSED);
+
 
                                 ListView_SetItemCount(hwnd, numSources);
                                 
@@ -780,7 +777,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                                 
                                 // make sure the added item is visible and selected/focused
                                 ListView_EnsureVisible(hwnd, 0, false);
-                                ListView_SetItemState(hwnd, 0, LVIS_SELECTED|LVIS_FOCUSED, LVIS_SELECTED|LVIS_FOCUSED);
+                                ListView_SetItemState(hwnd, 0, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
                                 App->ReportSourcesAddedOrRemoved();
                             }
                         }
@@ -1027,6 +1024,7 @@ void OBS::MoveSourcesUp()
     while (iPos != -1)
     {
         selectedIDs.Add((UINT) iPos);
+        ListView_SetItemState(hwndSources, iPos, 0, LVIS_FOCUSED);
         iPos = ListView_GetNextItem(hwndSources, iPos, LVNI_SELECTED);
     }
 
@@ -1080,6 +1078,7 @@ void OBS::MoveSourcesDown()
     while (iPos != -1)
     {
         selectedIDs.Add((UINT) iPos);
+        ListView_SetItemState(hwndSources, iPos, 0, LVIS_FOCUSED);
         iPos = ListView_GetNextItem(hwndSources, iPos, LVNI_SELECTED);
     }
 
@@ -1135,6 +1134,7 @@ void OBS::MoveSourcesToTop()
     while (iPos != -1)
     {
         selectedIDs.Add((UINT) iPos);
+        ListView_SetItemState(hwndSources, iPos, 0, LVIS_FOCUSED);
         iPos = ListView_GetNextItem(hwndSources, iPos, LVNI_SELECTED);
     }
 
@@ -1192,6 +1192,7 @@ void OBS::MoveSourcesToBottom()
     while (iPos != -1)
     {
         selectedIDs.Add((UINT) iPos);
+        ListView_SetItemState(hwndSources, iPos, 0, LVIS_FOCUSED);
         iPos = ListView_GetNextItem(hwndSources, iPos, LVNI_SELECTED);
     }
 
@@ -2125,9 +2126,94 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
         case WM_NOTIFY:
             {
                 NMHDR nmh = *(LPNMHDR)lParam;
+                static bool bHighlighted;
                 switch(wParam)
                 {
                     case ID_SOURCES:
+                        if(nmh.code == NM_CUSTOMDRAW)
+                        {
+                            LPNMLVCUSTOMDRAW  lplvcd = (LPNMLVCUSTOMDRAW)lParam;
+                            switch( lplvcd->nmcd.dwDrawStage)
+                            {
+                                case CDDS_ITEMPREPAINT:
+
+                                    int state, bkMode;
+                                    BOOL checkState;
+                                    RECT iconRect,textRect, itemRect;
+                                    COLORREF oldTextColor;
+
+                                    // It seems there's a limitation to ListView's displayed max text length http://support.microsoft.com/default.aspx?scid=KB;EN-US;321104
+                                    // Read the comment below.
+                                    String itemText;
+
+                                    HDC hdc = lplvcd->nmcd.hdc;
+                                    int itemId = lplvcd->nmcd.dwItemSpec;
+
+                                    XElement *sources, *sourcesElement;
+
+                                    ListView_GetItemRect(nmh.hwndFrom,itemId, &itemRect, LVIR_BOUNDS);
+                                    ListView_GetItemRect(nmh.hwndFrom,itemId, &textRect, LVIR_LABEL);
+
+                                    mcpy(&iconRect,&itemRect,sizeof(RECT));
+
+                                    iconRect.right = textRect.left - 1;
+
+                                    state = ListView_GetItemState(nmh.hwndFrom, itemId, LVIS_SELECTED);
+                                    checkState = ListView_GetCheckState(nmh.hwndFrom, itemId);
+
+                                    oldTextColor = GetTextColor(hdc);
+
+                                    if(state&LVIS_SELECTED)
+                                    {
+                                        FillRect(hdc, &itemRect, (HBRUSH)(COLOR_HIGHLIGHT + 1));
+                                        SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
+                                    }
+                                   
+
+                                    HTHEME hTheme = OpenThemeData(hwnd, TEXT("BUTTON"));
+                                    
+                                    if(hTheme)
+                                    {
+                                        if(checkState)
+                                            DrawThemeBackground(hTheme, hdc, BP_CHECKBOX, (state&LVIS_SELECTED)?CBS_CHECKEDPRESSED:CBS_CHECKEDNORMAL, &iconRect, NULL);
+                                        else
+                                            DrawThemeBackground(hTheme, hdc, BP_CHECKBOX, CBS_UNCHECKEDNORMAL, &iconRect, NULL);
+                                        CloseThemeData(hTheme);
+                                    }
+
+                                    // Not happy about this at all , wanted it to be generic (as a  simple ListView_GetItemText should suffice if we knew max text length), 
+                                    // but sending LVM_GETITEMTEXT msg to get the text length seems confusing (for me) by MSDN doc.
+                                    // We can use ListView_GetItemText with a MAX_PATH sized buffer instead of the following stuff (see the MSDN link above).
+
+                                    sources = App->sceneElement->GetElement(TEXT("sources"));
+
+                                    if(sources)
+                                    {
+                                        sourcesElement = sources->GetElementByID(itemId);
+                                        if(sourcesElement)
+                                        {
+                                            itemText = sourcesElement->GetName();
+                                            if(itemText.IsValid())
+                                            {
+                                                if(state&LVIS_SELECTED)                                                
+                                                    bkMode = SetBkMode(hdc, TRANSPARENT);
+
+                                                DrawText(hdc, itemText, slen(itemText), &textRect, DT_LEFT | DT_END_ELLIPSIS | DT_VCENTER | DT_SINGLELINE );
+
+                                                if(state&LVIS_SELECTED)
+                                                    SetBkMode(hdc, bkMode);
+                                            }
+                                        }
+                                    }
+
+                                    SetTextColor(hdc, oldTextColor);
+
+                                    return CDRF_SKIPDEFAULT;
+                            }
+
+                            return CDRF_NOTIFYPOSTPAINT | CDRF_NOTIFYITEMDRAW;
+                        }
+
                         if(nmh.code == LVN_ITEMCHANGED && !App->bChangingSources)
                         {
                             NMLISTVIEW pnmv = *(LPNMLISTVIEW)lParam;
@@ -2394,7 +2480,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                     {
                         /* clears all selections */
                         App->bChangingSources = true;
-                        ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED);
+                        ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED | LVIS_FOCUSED);
                         App->bChangingSources = false;
 
                         App->scene->DeselectAll();
@@ -2413,7 +2499,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                 {
                     /* clears all selections */
                     App->bChangingSources = true;
-                    ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED);
+                    ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED | LVIS_FOCUSED);
                     App->bChangingSources = false;
 
                     App->scene->DeselectAll();
@@ -2859,7 +2945,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                             if(!bControlDown)
                             {
                                 App->bChangingSources = true;
-                                ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED);
+                                ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED | LVIS_FOCUSED);
                                 App->bChangingSources = false;
 
                                 App->scene->DeselectAll();
@@ -2878,7 +2964,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                         else if(!bControlDown) //clicked on empty space without control
                         {
                             App->bChangingSources = true;
-                            ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED|LVIS_FOCUSED);
+                            ListView_SetItemState(hwndSources, -1, 0, LVIS_SELECTED | LVIS_FOCUSED);
                             App->bChangingSources = false;
                             App->scene->DeselectAll();
                         }
