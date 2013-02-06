@@ -154,7 +154,7 @@ void OBS::ConfigureImageSource(XElement *element)
     AppWarning(TEXT("OBS::ConfigureImageSource: Could not find scene class '%s'"), lpClassName);
 }
 
-void OBS::AddSourceItem(LPWSTR name, bool checked, UINT index)
+void OBS::InsertSourceItem(UINT index, LPWSTR name, bool checked)
 {
     LVITEM lvI;
     // Initialize LVITEM members that are common to all items.
@@ -254,7 +254,7 @@ bool OBS::SetScene(CTSTR lpScene)
 
     bChangingSources = true;
     ListView_DeleteAllItems(hwndSources);
-    
+
     XElement *sources = sceneElement->GetElement(TEXT("sources"));
     if(sources)
     {
@@ -265,19 +265,18 @@ bool OBS::SetScene(CTSTR lpScene)
         {
             XElement *sourceElement = sources->GetElementByID(i);
             bool render = sourceElement->GetInt(TEXT("render"), 1) > 0;
-            
-            
-            AddSourceItem((LPWSTR)sourceElement->GetName(), render, i);
-            
-           
+
+            InsertSourceItem(i, (LPWSTR)sourceElement->GetName(), render);
+
             if(bRunning && newScene)
                 newScene->AddImageSource(sourceElement);
         }
     }
+
     bChangingSources = false;
     SendMessage(hwndSources, WM_SETREDRAW, (WPARAM)TRUE, (LPARAM) 0);
     RedrawWindow(hwndSources, NULL, NULL, RDW_ERASE | RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN);
-    
+
     if(scene && newScene->HasMissingSources())
         MessageBox(hwndMain, Str("Scene.MissingSources"), NULL, 0);
 
@@ -329,8 +328,6 @@ class OBSAPIInterface : public APIInterface
     virtual bool UseHighQualityResampling() const {return AppConfig->GetInt(TEXT("Audio"), TEXT("UseHighQualityResampling"), FALSE) != 0;}
 
 public:
-    OBSAPIInterface() {bSSE2Availabe = App->bSSE2Available;}
-
     virtual void EnterSceneMutex() {App->EnterSceneMutex();}
     virtual void LeaveSceneMutex() {App->LeaveSceneMutex();}
     
@@ -445,7 +442,7 @@ public:
         App->AddOBSEventListener(handler);
     }
 
-    void RemoveOBSEventListener(OBSTriggerHandler *handler)
+    virtual void RemoveOBSEventListener(OBSTriggerHandler *handler)
     {
         App->RemoveOBSEventListener(handler);
     }

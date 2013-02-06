@@ -1,0 +1,119 @@
+/********************************************************************************
+ Copyright (C) 2013 Hugh Bailey <obs.jim@gmail.com>
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+********************************************************************************/
+
+
+#include "OBSApi.h"
+
+
+//C-style exports because you don't ever want to use virtual functions for an API
+//...which I did until plugins started breaking left and right due to virtual function table changes
+//......I'm sorry!  I didn't think things through at the time!
+
+
+void OBSEnterSceneMutex() {API->EnterSceneMutex();}
+void OBSLeaveSceneMutex() {API->LeaveSceneMutex();}
+
+void OBSRegisterSceneClass(CTSTR lpClassName, CTSTR lpDisplayName,
+                           OBSCREATEPROC createProc, OBSCONFIGPROC configProc)
+{
+    API->RegisterSceneClass(lpClassName, lpDisplayName, createProc, configProc);
+}
+
+void OBSRegisterImageSourceClass(CTSTR lpClassName, CTSTR lpDisplayName, OBSCREATEPROC createProc, OBSCONFIGPROC configProc)
+{
+    API->RegisterImageSourceClass(lpClassName, lpDisplayName, createProc, configProc);
+}
+
+ImageSource* OBSCreateImageSource(CTSTR lpClassName, XElement *data)
+{
+    return API->CreateImageSource(lpClassName, data);
+}
+
+XElement* OBSGetSceneListElement()
+{
+    return API->GetSceneListElement();
+}
+
+XElement* OBSGetGlobalSourceListElement()
+{
+    return API->GetGlobalSourceListElement();
+}
+
+bool OBSSetScene(CTSTR lpScene, bool bPost)
+{
+    return API->SetScene(lpScene, bPost);
+}
+
+Scene* OBSGetScene()            {return API->GetScene();}
+
+CTSTR OBSGetSceneName()         {return API->GetSceneName();}
+XElement* OBSGetSceneElement()  {return API->GetSceneElement();}
+
+//low-order word is VK, high-order word is modifier.  equivalent to the value given by hotkey controls
+UINT OBSCreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARAM param)
+{
+    return API->CreateHotkey(hotkey, hotkeyProc, param);
+}
+
+void OBSDeleteHotkey(UINT hotkeyID)
+{
+    API->DeleteHotkey(hotkeyID);
+}
+
+Vect2 OBSGetBaseSize()          {return API->GetBaseSize();}
+Vect2 OBSGetRenderFrameSize()   {return API->GetRenderFrameSize();}
+Vect2 OBSGetOutputSize()        {return API->GetOutputSize();}
+
+void OBSGetBaseSize(UINT &width, UINT &height)          {API->GetBaseSize(width, height);}
+void OBSGetRenderFrameSize(UINT &width, UINT &height)   {API->GetRenderFrameSize(width, height);}
+void OBSGetOutputSize(UINT &width, UINT &height)        {API->GetOutputSize(width, height);}
+UINT OBSGetMaxFPS()                                     {return API->GetMaxFPS();}
+
+CTSTR OBSGetLanguage()          {return API->GetLanguage();}
+
+HWND OBSGetMainWindow()         {return API->GetMainWindow();}
+
+CTSTR OBSGetAppDataPath()       {return API->GetAppDataPath();}
+String OBSGetPluginDataPath()   {return API->GetPluginDataPath();}
+
+UINT OBSAddStreamInfo(CTSTR lpInfo, StreamInfoPriority priority)            {return API->AddStreamInfo(lpInfo, priority);}
+void OBSSetStreamInfo(UINT infoID, CTSTR lpInfo)                            {API->SetStreamInfo(infoID, lpInfo);}
+void OBSSetStreamInfoPriority(UINT infoID, StreamInfoPriority priority)     {API->SetStreamInfoPriority(infoID, priority);}
+void OBSRemoveStreamInfo(UINT infoID)                                       {API->RemoveStreamInfo(infoID);}
+
+bool OBSUseMultithreadedOptimizations()         {return API->UseMultithreadedOptimizations();}
+
+void OBSAddAudioSource(AudioSource *source)     {API->AddAudioSource(source);}
+void OBSRemoveAudioSource(AudioSource *source)  {API->RemoveAudioSource(source);}
+
+QWORD OBSGetAudioTime()         {return API->GetAudioTime();}
+
+CTSTR OBSGetAppPath()           {return API->GetAppPath();}
+
+void OBSStartStopStream()       {API->StartStopStream();}
+void OBSStartStopPreview()      {API->StartStopPreview();}
+bool OBSGetStreaming()          {return API->GetStreaming();}
+bool OBSGetPreviewOnly()        {return API->GetPreviewOnly();}
+
+void OBSSetSourceOrder(StringList &sourceNames)             {API->SetSourceOrder(sourceNames);}
+void OBSSetSourceRender(CTSTR lpSource, bool render)        {API->SetSourceRender(lpSource, render);}
+
+/* add/remove trigger handler functions */
+void OBSAddEventListener(OBSTriggerHandler *handler)        {API->AddOBSEventListener(handler);}
+void OBSRemoveEventListener(OBSTriggerHandler *handler)     {API->RemoveOBSEventListener(handler);}
+

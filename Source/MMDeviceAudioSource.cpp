@@ -247,7 +247,10 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
     UINT captureSize = 0;
     HRESULT err = mmCapture->GetNextPacketSize(&captureSize);
     if(FAILED(err))
+    {
+        RUNONCE AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: GetNextPacketSize failed, result = %08lX"), err);
         return false;
+    }
 
     numFramesRead = 0;
 
@@ -261,7 +264,7 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
         err = mmCapture->GetBuffer(&captureBuffer, &numFramesRead, &dwFlags, &devPosition, &qpcTimestamp);
         if(FAILED(err))
         {
-            RUNONCE AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: GetBuffer failed"));
+            RUNONCE AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: GetBuffer failed, result = %08lX"), err);
             return false;
         }
 
@@ -359,9 +362,5 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
 
 void MMDeviceAudioSource::ReleaseBuffer()
 {
-    /*if(inputBuffer.Num() != 0)
-        inputBuffer.RemoveRange(0, sampleWindowSize*GetChannelCount());
-
-    mmCapture->ReleaseBuffer(lastNumFramesRead);*/
     mmCapture->ReleaseBuffer(numFramesRead);
 }

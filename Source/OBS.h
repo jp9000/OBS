@@ -817,7 +817,7 @@ public:
     virtual ImageSource* CreateImageSource(CTSTR lpClassName, XElement *data);
 
     virtual bool SetScene(CTSTR lpScene);
-    virtual void AddSourceItem(LPWSTR name, bool checked, UINT index);
+    virtual void InsertSourceItem(UINT index, LPWSTR name, bool checked);
 
     //---------------------------------------------------------------------------
     // event stuff 

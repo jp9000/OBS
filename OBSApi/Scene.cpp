@@ -129,10 +129,21 @@ Scene::~Scene()
 
 SceneItem* Scene::AddImageSource(XElement *sourceElement)
 {
+    return InsertImageSource(sceneItems.Num(), sourceElement);
+}
+
+SceneItem* Scene::InsertImageSource(UINT pos, XElement *sourceElement)
+{
     if(GetSceneItem(sourceElement->GetName()) != NULL)
     {
         AppWarning(TEXT("Scene source '%s' already in scene.  actually, no one should get this error.  if you do send it to jim immidiately."), sourceElement->GetName());
         return NULL;
+    }
+
+    if(pos > sceneItems.Num())
+    {
+        AppWarning(TEXT("Scene::InsertImageSource: pos >= sceneItems.Num()"));
+        pos = sceneItems.Num();
     }
 
     CTSTR lpClass = sourceElement->GetString(TEXT("class"));
@@ -163,7 +174,7 @@ SceneItem* Scene::AddImageSource(XElement *sourceElement)
 
     API->EnterSceneMutex();
     if(bSceneStarted) source->BeginScene();
-    sceneItems << item;
+    sceneItems.Insert(pos, item);
     API->LeaveSceneMutex();
 
     if(!source)

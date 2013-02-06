@@ -138,6 +138,7 @@ class BASE_EXPORT Scene
 public:
     virtual ~Scene();
 
+    virtual SceneItem* InsertImageSource(UINT pos, XElement *sourceElement);
     virtual SceneItem* AddImageSource(XElement *sourceElement);
 
     virtual void RemoveImageSource(SceneItem *item);

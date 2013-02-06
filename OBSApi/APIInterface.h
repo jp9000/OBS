@@ -65,18 +65,16 @@ public:
 };
 
 //-------------------------------------------------------------------
+// API interface, plugins should not ever use, use C funcs below
 
 class APIInterface
 {
     friend class OBS;
     friend class AudioSource;
 
+public:
     virtual bool UseHighQualityResampling() const=0;
 
-protected:
-    bool bSSE2Availabe;
-
-public:
     virtual ~APIInterface() {}
 
     virtual void EnterSceneMutex()=0;
@@ -123,8 +121,6 @@ public:
 
     virtual bool UseMultithreadedOptimizations() const=0;
 
-    inline bool SSE2Available() {return bSSE2Availabe;}
-
     inline ImageSource* GetSceneImageSource(CTSTR lpImageSource)
     {
         Scene *scene = GetScene();
@@ -161,5 +157,85 @@ public:
     virtual void RemoveOBSEventListener(OBSTriggerHandler *handler) = 0;
 };
 
-
 BASE_EXPORT extern APIInterface *API;
+
+
+//C-style API exports, use these, do NOT use the API class
+BASE_EXPORT void OBSEnterSceneMutex();
+BASE_EXPORT void OBSLeaveSceneMutex();
+
+BASE_EXPORT void OBSRegisterSceneClass(CTSTR lpClassName, CTSTR lpDisplayName, OBSCREATEPROC createProc, OBSCONFIGPROC configProc);
+BASE_EXPORT void OBSRegisterImageSourceClass(CTSTR lpClassName, CTSTR lpDisplayName, OBSCREATEPROC createProc, OBSCONFIGPROC configProc);
+
+BASE_EXPORT ImageSource* OBSCreateImageSource(CTSTR lpClassName, XElement *data);
+
+BASE_EXPORT XElement* OBSGetSceneListElement();
+BASE_EXPORT XElement* OBSGetGlobalSourceListElement();
+
+BASE_EXPORT bool OBSSetScene(CTSTR lpScene, bool bPost);
+BASE_EXPORT Scene* OBSGetScene();
+
+BASE_EXPORT CTSTR OBSGetSceneName();
+BASE_EXPORT XElement* OBSGetSceneElement();
+
+//low-order word is VK, high-order word is modifier.  equivalent to the value given by hotkey controls
+BASE_EXPORT UINT OBSCreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARAM param);
+BASE_EXPORT void OBSDeleteHotkey(UINT hotkeyID);
+
+BASE_EXPORT Vect2 OBSGetBaseSize();          //get the base scene size
+BASE_EXPORT Vect2 OBSGetRenderFrameSize();   //get the render frame size
+BASE_EXPORT Vect2 OBSGetOutputSize();        //get the stream output size
+
+BASE_EXPORT void OBSGetBaseSize(UINT &width, UINT &height);
+BASE_EXPORT void OBSGetRenderFrameSize(UINT &width, UINT &height);
+BASE_EXPORT void OBSGetOutputSize(UINT &width, UINT &height);
+BASE_EXPORT UINT OBSGetMaxFPS();
+
+BASE_EXPORT CTSTR OBSGetLanguage();
+
+BASE_EXPORT HWND OBSGetMainWindow();
+
+BASE_EXPORT CTSTR OBSGetAppDataPath();
+BASE_EXPORT String OBSGetPluginDataPath();
+
+BASE_EXPORT UINT OBSAddStreamInfo(CTSTR lpInfo, StreamInfoPriority priority);
+BASE_EXPORT void OBSSetStreamInfo(UINT infoID, CTSTR lpInfo);
+BASE_EXPORT void OBSSetStreamInfoPriority(UINT infoID, StreamInfoPriority priority);
+BASE_EXPORT void OBSRemoveStreamInfo(UINT infoID);
+
+BASE_EXPORT bool OBSUseMultithreadedOptimizations();
+
+BASE_EXPORT void OBSAddAudioSource(AudioSource *source);
+BASE_EXPORT void OBSRemoveAudioSource(AudioSource *source);
+
+BASE_EXPORT QWORD OBSGetAudioTime();
+
+BASE_EXPORT CTSTR OBSGetAppPath();
+
+BASE_EXPORT void OBSStartStopStream();
+BASE_EXPORT void OBSStartStopPreview();
+BASE_EXPORT bool OBSGetStreaming();
+BASE_EXPORT bool OBSGetPreviewOnly();
+
+BASE_EXPORT void OBSSetSourceOrder(StringList &sourceNames);
+BASE_EXPORT void OBSSetSourceRender(CTSTR lpSource, bool render);
+
+/* add/remove trigger handler functions */
+BASE_EXPORT void OBSAddEventListener(OBSTriggerHandler *handler);
+BASE_EXPORT void OBSRemoveEventListener(OBSTriggerHandler *handler);
+
+inline ImageSource* OBSGetSceneImageSource(CTSTR lpImageSource)
+{
+    Scene *scene = OBSGetScene();
+    if(scene)
+    {
+        SceneItem *item = scene->GetSceneItem(lpImageSource);
+        if(item)
+        {
+            if(item->GetSource())
+                return item->GetSource();
+        }
+    }
+
+    return NULL;
+}

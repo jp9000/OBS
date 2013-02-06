@@ -756,7 +756,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                                 if(App->bRunning)
                                 {
                                     App->EnterSceneMutex();
-                                    App->scene->AddImageSource(newSourceElement);
+                                    App->scene->InsertImageSource(0, newSourceElement);
                                     App->LeaveSceneMutex();
                                 }
 
@@ -770,7 +770,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                                 ListView_SetItemCount(hwnd, numSources);
                                 
                                 App->bChangingSources = true;
-                                App->AddSourceItem((LPWSTR) strName.Array(), true, 0);
+                                App->InsertSourceItem(0, (LPWSTR)strName.Array(), true);
                                 App->bChangingSources = false;
 
                                 SetFocus(hwnd);
@@ -996,7 +996,7 @@ void OBS::SetSourceOrder(StringList &sourceNames)
             
             bChangingSources = true;
             ListView_DeleteItem(hwndSources, id);
-            AddSourceItem((LPWSTR)strName.Array(), checkState, numItems-1);
+            InsertSourceItem(numItems-1, (LPWSTR)strName.Array(), checkState);
             bChangingSources = false;    
         }
     }
@@ -1052,7 +1052,7 @@ void OBS::MoveSourcesUp()
             
             bChangingSources = true;
             ListView_DeleteItem(hwndSources, selectedIDs[i]);
-            AddSourceItem((LPWSTR)strName.Array(), checkState, --selectedIDs[i]);
+            InsertSourceItem(--selectedIDs[i], (LPWSTR)strName.Array(), checkState);
             ListView_SetItemState(hwndSources, selectedIDs[i], LVIS_SELECTED, LVIS_SELECTED);
             bChangingSources = false;
             
@@ -1109,7 +1109,7 @@ void OBS::MoveSourcesDown()
             
             bChangingSources = true;
             ListView_DeleteItem(hwndSources, selectedIDs[i]);
-            AddSourceItem((LPWSTR)strName.Array(), checkState, ++selectedIDs[i]);
+            InsertSourceItem(++selectedIDs[i], (LPWSTR)strName.Array(), checkState);
             ListView_SetItemState(hwndSources, selectedIDs[i], LVIS_SELECTED, LVIS_SELECTED);
             bChangingSources = false;
         }
@@ -1167,7 +1167,7 @@ void OBS::MoveSourcesToTop()
             
             bChangingSources = true;
             ListView_DeleteItem(hwndSources, selectedIDs[i]);
-            AddSourceItem((LPWSTR)strName.Array(), checkState, i);
+            InsertSourceItem(i, (LPWSTR)strName.Array(), checkState);
             ListView_SetItemState(hwndSources, i, LVIS_SELECTED, LVIS_SELECTED);
             bChangingSources = false;
         }
@@ -1227,7 +1227,7 @@ void OBS::MoveSourcesToBottom()
             
             bChangingSources = true;
             ListView_DeleteItem(hwndSources, selectedIDs[i]);
-            AddSourceItem((LPWSTR)strName.Array(), checkState, curID);
+            InsertSourceItem(curID, (LPWSTR)strName.Array(), checkState);
             ListView_SetItemState(hwndSources, curID, LVIS_SELECTED, LVIS_SELECTED);
             bChangingSources = false;
         }
