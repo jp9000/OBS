@@ -1069,7 +1069,7 @@ void OBS::SetStatusBarData()
         InvalidateRect(hwndStatusBar, NULL, FALSE);
     
         ReportStreamStatus(bRunning, bTestStream, 
-            (UINT) statusBarData.bytesPerSec, statusBarData.strain, 
+            (UINT) App->bytesPerSec, App->curStrain, 
             (UINT)this->totalStreamTime, (UINT)App->network->NumTotalVideoFrames(),
             (UINT)App->curFramesDropped, (UINT) App->captureFPS);
 
