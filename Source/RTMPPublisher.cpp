@@ -1186,7 +1186,7 @@ retrySend:
             int curTCPBufSize, curTCPBufSizeSize = sizeof(curTCPBufSize);
             getsockopt (sb->sb_socket, SOL_SOCKET, SO_SNDBUF, (char *)&curTCPBufSize, &curTCPBufSizeSize);
 
-            if (curTCPBufSize < idealSendBacklog)
+            if (curTCPBufSize < (int)idealSendBacklog)
             {
                 int bufferSize = (int)idealSendBacklog;
                 setsockopt(sb->sb_socket, SOL_SOCKET, SO_SNDBUF, (const char *)&bufferSize, sizeof(bufferSize));

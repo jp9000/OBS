@@ -480,20 +480,21 @@ void OBS::Stop()
     //-------------------------------------------------------------
 
     delete network;
+    network = NULL;
 
     delete micAudio;
+    micAudio = NULL;
+
     delete desktopAudio;
+    desktopAudio = NULL;
 
     delete fileStream;
+    fileStream = NULL;
 
     delete audioEncoder;
-    delete videoEncoder;
-
-    network = NULL;
-    micAudio = NULL;
-    desktopAudio = NULL;
-    fileStream = NULL;
     audioEncoder = NULL;
+
+    delete videoEncoder;
     videoEncoder = NULL;
 
     //-------------------------------------------------------------
