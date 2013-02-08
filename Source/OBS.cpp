@@ -579,7 +579,25 @@ OBS::OBS()
     hHotkeyThread = OSCreateThread((XTHREAD)HotkeyThread, NULL);
 
 #ifndef OBS_DISABLE_AUTOUPDATE
-    OSCloseThread(OSCreateThread((XTHREAD)CheckUpdateThread, NULL));
+    ULARGE_INTEGER lastUpdateTime;
+    ULARGE_INTEGER currentTime;
+    FILETIME systemTime;
+
+    lastUpdateTime.QuadPart = GlobalConfig->GetInt(TEXT("General"), TEXT("LastUpdateCheck"), 0);
+
+    GetSystemTimeAsFileTime(&systemTime);
+    currentTime.LowPart = systemTime.dwLowDateTime;
+    currentTime.HighPart = systemTime.dwHighDateTime;
+
+    //OBS doesn't support 64 bit ints in the config file, so we have to normalize it to a 32 bit int
+    currentTime.QuadPart /= 10000000;
+    currentTime.QuadPart -= 13000000000;
+
+    if (currentTime.QuadPart - lastUpdateTime.QuadPart >= 3600)
+    {
+        GlobalConfig->SetInt(TEXT("General"), TEXT("LastUpdateCheck"), (int)currentTime.QuadPart);
+        OSCloseThread(OSCreateThread((XTHREAD)CheckUpdateThread, NULL));
+    }
 #endif
 
     bRenderViewEnabled = true;
