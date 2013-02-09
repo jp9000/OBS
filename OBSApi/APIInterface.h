@@ -160,7 +160,9 @@ public:
 BASE_EXPORT extern APIInterface *API;
 
 
-//C-style API exports, use these, do NOT use the API class
+//-------------------------------------------------------------------
+//C-style API exports, use these
+
 BASE_EXPORT void OBSEnterSceneMutex();
 BASE_EXPORT void OBSLeaveSceneMutex();
 

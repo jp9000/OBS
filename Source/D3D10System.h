@@ -130,6 +130,8 @@ public:
 
     DWORD AcquireSync(UINT id, DWORD dwMS);
     void ReleaseSync(UINT id);
+
+    LPVOID GetD3DTexture() {return texture;}
 };
 
 //=============================================================================

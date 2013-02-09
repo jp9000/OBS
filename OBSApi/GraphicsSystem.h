@@ -210,6 +210,8 @@ public:
 
     virtual DWORD AcquireSync(UINT id, DWORD dwMS)=0;
     virtual void ReleaseSync(UINT id)=0;
+
+    virtual LPVOID GetD3DTexture()=0;
 };
 
 
