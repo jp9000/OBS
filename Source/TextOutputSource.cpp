@@ -171,16 +171,16 @@ class TextOutputSource : public ImageSource
     {
         UINT formatFlags;
 
-        formatFlags = Gdiplus::StringFormatFlagsNoClip
-                      | Gdiplus::StringFormatFlagsNoFitBlackBox
-                      | Gdiplus::StringFormatFlagsMeasureTrailingSpaces;
+        formatFlags = Gdiplus::StringFormatFlagsNoFitBlackBox
+                    | Gdiplus::StringFormatFlagsMeasureTrailingSpaces;
+
 
         if(bVertical)
             formatFlags |= Gdiplus::StringFormatFlagsDirectionVertical
-                           | Gdiplus::StringFormatFlagsDirectionRightToLeft;
+                         | Gdiplus::StringFormatFlagsDirectionRightToLeft;
 
         format.SetFormatFlags(formatFlags);
-        format.SetTrimming(Gdiplus::StringTrimmingCharacter);
+        format.SetTrimming(Gdiplus::StringTrimmingWord);
 
         if(bUseExtents && bWrap)
             switch(align)
@@ -223,16 +223,15 @@ class TextOutputSource : public ImageSource
         UpdateCurrentText();
 
         hFont = GetFont();
-
         if(!hFont)
             return;
 
         Gdiplus::StringFormat format(Gdiplus::StringFormat::GenericTypographic());
-        
+
         SetStringFormat(format);
 
         HDC hdc = CreateCompatibleDC(NULL);
-        
+
         Gdiplus::Font font(hdc, hFont);
         Gdiplus::Graphics *graphics = new Gdiplus::Graphics(hdc);
 
@@ -261,7 +260,12 @@ class TextOutputSource : public ImageSource
                 stat = graphics->MeasureString(strCurrentText, -1, &font, Gdiplus::PointF(0.0f, 0.0f), &format, &boundingBox);
                 if(stat != Gdiplus::Ok)
                     AppWarning(TEXT("TextSource::UpdateTexture: Gdiplus::Graphics::MeasureString failed: %u"), (int)stat);
-            }
+				if(bUseOutline)
+				{
+					boundingBox.Width  += outlineSize * 2.0f;
+					boundingBox.Height += outlineSize * 2.0f;
+				}
+			}
         }
 
         delete graphics;
@@ -270,17 +274,30 @@ class TextOutputSource : public ImageSource
         hdc = NULL;
         DeleteObject(hFont);
 
-        boundingBox.Width += 1.0f;
-        boundingBox.Height += 1.0f;
-
-        if(bUseOutline)
+        if(bVertical)
         {
-            boundingBox.Width  += outlineSize * 2.0f;
-            boundingBox.Height += outlineSize * 2.0f;
-        }
+            if(boundingBox.Width<size)
+            {
+                textSize.cx = size;
+                boundingBox.Width = float(size);
+            }
+            else
+                textSize.cx = LONG(boundingBox.Width + EPSILON);
 
-        textSize.cx = LONG(boundingBox.Width);
-        textSize.cy = LONG(boundingBox.Height);
+            textSize.cy = LONG(boundingBox.Height + EPSILON);
+        }
+        else
+        {
+            if(boundingBox.Height<size)
+            {
+                textSize.cy = size;
+                boundingBox.Height = float(size);
+            }
+            else
+                textSize.cy = LONG(boundingBox.Height + EPSILON);
+
+            textSize.cx = LONG(boundingBox.Width + EPSILON);
+        }
 
         if(bUseExtents)
         {
@@ -349,7 +366,7 @@ class TextOutputSource : public ImageSource
 
             DWORD bkColor;
 
-            if(backgroundOpacity == 0)
+			if(backgroundOpacity == 0 && scrollSpeed !=0)
                 bkColor = 1<<24 | (color&0x00FFFFFF);
             else
                 bkColor = ((strCurrentText.IsValid() || bUseExtents) ? GetAlphaVal(backgroundOpacity) : GetAlphaVal(0)) | (backgroundColor&0x00FFFFFF);
@@ -1203,16 +1220,15 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
                                 UINT formatFlags;
 
-                                formatFlags = Gdiplus::StringFormatFlagsNoClip
-                                              | Gdiplus::StringFormatFlagsNoFitBlackBox
-                                              | Gdiplus::StringFormatFlagsMeasureTrailingSpaces;
+                                formatFlags = Gdiplus::StringFormatFlagsNoFitBlackBox
+                                            | Gdiplus::StringFormatFlagsMeasureTrailingSpaces;
 
                                 if(bVertical)
                                     formatFlags |= Gdiplus::StringFormatFlagsDirectionVertical
-                                                   | Gdiplus::StringFormatFlagsDirectionRightToLeft;
+                                                 | Gdiplus::StringFormatFlagsDirectionRightToLeft;
 
                                 format.SetFormatFlags(formatFlags);
-                                format.SetTrimming(Gdiplus::StringTrimmingCharacter);
+                                format.SetTrimming(Gdiplus::StringTrimmingWord);
 
 
                                 Gdiplus::RectF rcf;
@@ -1224,6 +1240,16 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                                     rcf.Width  += outlineSize * 2;
                                 }
 
+                                if(bVertical)
+                                {
+                                    if(rcf.Width<fontSize)
+                                        rcf.Width = fontSize;
+                                }
+                                else
+                                {
+                                    if(rcf.Height<fontSize)
+                                        rcf.Height = fontSize;
+                                }
                                 configInfo->cx = MAX(rcf.Width,  32.0f);
                                 configInfo->cy = MAX(rcf.Height, 32.0f);
                             }
