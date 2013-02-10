@@ -208,7 +208,7 @@ void Scene::Preprocess()
     for(UINT i=0; i<sceneItems.Num(); i++)
     {
         SceneItem *item = sceneItems[i];
-        if(item->source)
+        if(item->source && item->bRender)
             item->source->Preprocess();
     }
 }

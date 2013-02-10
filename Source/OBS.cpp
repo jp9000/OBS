@@ -1069,7 +1069,7 @@ void OBS::ClearStatusBar()
 
 void OBS::SetStatusBarData()
 {
-    if (OSTryEnterMutex(hStartupShutdownMutex))
+    if (OSTryEnterMutex(hStartupShutdownMutex) && bRunning)
     {
         if (!App->network)
             return;
@@ -1086,10 +1086,13 @@ void OBS::SetStatusBarData()
         SendMessage(hwndStatusBar, WM_SETREDRAW, 1, 0);
         InvalidateRect(hwndStatusBar, NULL, FALSE);
     
-        ReportStreamStatus(bRunning, bTestStream, 
-            (UINT) App->bytesPerSec, App->curStrain, 
-            (UINT)this->totalStreamTime, (UINT)App->network->NumTotalVideoFrames(),
-            (UINT)App->curFramesDropped, (UINT) App->captureFPS);
+        if(bRunning)
+        {
+            ReportStreamStatus(bRunning, bTestStream, 
+                (UINT) App->bytesPerSec, App->curStrain, 
+                (UINT)this->totalStreamTime, (UINT)App->network->NumTotalVideoFrames(),
+                (UINT)App->curFramesDropped, (UINT) App->captureFPS);
+        }
 
         OSLeaveMutex(hStartupShutdownMutex);
     }

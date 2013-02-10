@@ -1627,7 +1627,7 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("Above Normal"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("Normal"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("Idle"));
-                
+
                 LoadSettingComboString(hwndTemp, TEXT("General"), TEXT("Priority"), TEXT("Normal"));
 
                 //--------------------------------------------

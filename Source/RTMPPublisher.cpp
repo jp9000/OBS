@@ -234,8 +234,8 @@ RTMPPublisher::~RTMPPublisher()
     queuedPackets.Clear();
 
     double dTotalFrames = double(totalFrames);
-    double dBFrameDropPercentage = double(numBFramesDumped)/dTotalFrames*100.0;
-    double dPFrameDropPercentage = double(numPFramesDumped)/dTotalFrames*100.0;
+    double dBFrameDropPercentage = double(numBFramesDumped)/NumTotalVideoFrames()*100.0;
+    double dPFrameDropPercentage = double(numPFramesDumped)/NumTotalVideoFrames()*100.0;
 
     Log(TEXT("Number of b-frames dropped: %u (%0.2g%%), Number of p-frames dropped: %u (%0.2g%%), Total %u (%0.2g%%)"),
         numBFramesDumped, dBFrameDropPercentage,
