@@ -1249,12 +1249,12 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                                 if(bVertical)
                                 {
                                     if(rcf.Width<fontSize)
-                                        rcf.Width = fontSize;
+                                        rcf.Width = (float)fontSize;
                                 }
                                 else
                                 {
                                     if(rcf.Height<fontSize)
-                                        rcf.Height = fontSize;
+                                        rcf.Height = (float)fontSize;
                                 }
                                 configInfo->cx = MAX(rcf.Width,  32.0f);
                                 configInfo->cy = MAX(rcf.Height, 32.0f);
