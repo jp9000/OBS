@@ -1069,7 +1069,7 @@ void OBS::ClearStatusBar()
 
 void OBS::SetStatusBarData()
 {
-    if (OSTryEnterMutex(hStartupShutdownMutex) && bRunning)
+    if (bRunning && OSTryEnterMutex(hStartupShutdownMutex))
     {
         if (!App->network)
             return;

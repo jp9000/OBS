@@ -2147,7 +2147,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                     String itemText;
 
                                     HDC hdc = lplvcd->nmcd.hdc;
-                                    int itemId = lplvcd->nmcd.dwItemSpec;
+                                    int itemId = (int)lplvcd->nmcd.dwItemSpec;
 
                                     XElement *sources, *sourcesElement;
 
