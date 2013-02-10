@@ -93,9 +93,10 @@ class TextOutputSource : public ImageSource
         // Outline color and size
         Gdiplus::Pen pen(Gdiplus::Color(GetAlphaVal(opacity) | (outlineColor&0xFFFFFF)), outlineSize);
         pen.SetLineJoin(Gdiplus::LineJoinRound);
-
+        
         // Widen the outline
-        outlinePath->Widen(&pen);
+        // It seems that Widen has a huge performance impact on DrawPath call, screw it! We're talking about freaking seconds in some extreme cases...
+        //outlinePath->Widen(&pen);
 
         // Draw the outline
         graphics->DrawPath(&pen, outlinePath);
@@ -247,8 +248,9 @@ class TextOutputSource : public ImageSource
 
                 if(bUseOutline)
                 {
-                    layoutBox.Width  -= outlineSize * 2;
-                    layoutBox.Height -= outlineSize * 2;
+                    //Note: since there's no path widening in DrawOutlineText the padding is half than what it was supposed to be.
+                    layoutBox.Width  -= outlineSize;
+                    layoutBox.Height -= outlineSize;
                 }
 
                 stat = graphics->MeasureString(strCurrentText, -1, &font, layoutBox, &format, &boundingBox);
@@ -260,10 +262,11 @@ class TextOutputSource : public ImageSource
                 stat = graphics->MeasureString(strCurrentText, -1, &font, Gdiplus::PointF(0.0f, 0.0f), &format, &boundingBox);
                 if(stat != Gdiplus::Ok)
                     AppWarning(TEXT("TextSource::UpdateTexture: Gdiplus::Graphics::MeasureString failed: %u"), (int)stat);
-				if(bUseOutline)
-				{
-					boundingBox.Width  += outlineSize * 2.0f;
-					boundingBox.Height += outlineSize * 2.0f;
+                if(bUseOutline)
+                {
+                    //Note: since there's no path widening in DrawOutlineText the padding is half than what it was supposed to be.
+                    boundingBox.Width  += outlineSize;
+                    boundingBox.Height += outlineSize;
 				}
 			}
         }
@@ -315,8 +318,11 @@ class TextOutputSource : public ImageSource
             }
         }
 
-        textSize.cx &= 0xFFFFFFFE;
-        textSize.cy &= 0xFFFFFFFE;
+        //textSize.cx &= 0xFFFFFFFE;
+        //textSize.cy &= 0xFFFFFFFE;
+
+        textSize.cx += textSize.cx%2;
+        textSize.cy += textSize.cy%2;
 
         ClampVal(textSize.cx, 32, 8192);
         ClampVal(textSize.cy, 32, 8192);
@@ -397,7 +403,7 @@ class TextOutputSource : public ImageSource
             if(strCurrentText.IsValid())
                 if(bUseOutline)
                 {
-                    boundingBox.Offset(outlineSize, outlineSize);
+                    boundingBox.Offset(outlineSize/2, outlineSize/2);
 
                     Gdiplus::FontFamily fontFamily;
                     Gdiplus::GraphicsPath path;
@@ -1236,8 +1242,8 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
                                 if(bUseOutline)
                                 {
-                                    rcf.Height += outlineSize * 2;
-                                    rcf.Width  += outlineSize * 2;
+                                    rcf.Height += outlineSize;
+                                    rcf.Width  += outlineSize;
                                 }
 
                                 if(bVertical)
