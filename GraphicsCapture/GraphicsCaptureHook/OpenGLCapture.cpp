@@ -278,7 +278,7 @@ void DoGLCPUHook(RECT &rc)
     {
         bHasTextures = true;
         glcaptureInfo.captureType = CAPTURETYPE_MEMORY;
-        glcaptureInfo.hwndCapture = hwndTarget;
+        glcaptureInfo.hwndCapture = (DWORD)hwndTarget;
         glcaptureInfo.pitch = glcaptureInfo.cx*4;
         glcaptureInfo.bFlip = TRUE;
 

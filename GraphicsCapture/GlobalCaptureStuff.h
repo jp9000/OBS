@@ -59,7 +59,7 @@ struct SharedTexData
 {
     UINT        lastRendered;
     LONGLONG    frameTime;
-    HANDLE      texHandles[2];
+    DWORD       texHandles[2];
 };
 
 struct CaptureInfo
@@ -67,10 +67,11 @@ struct CaptureInfo
     UINT    captureType;
     DWORD   format;
     UINT    cx, cy;
-    HWND    hwndCapture;
     BOOL    bFlip;
 
     UINT    pitch;
     UINT    mapID;
     DWORD   mapSize;
+
+    DWORD   hwndCapture;
 };

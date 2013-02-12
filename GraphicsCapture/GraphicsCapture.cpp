@@ -31,21 +31,10 @@ HANDLE textureMutexes[2] = {NULL, NULL};
 
 #define GRAPHICSCAPTURE_CLASSNAME TEXT("GraphicsCapture")
 
-inline  BOOL Is64BitWindows()
-{
-#if defined(_WIN64)
-    return TRUE;
-#elif defined(_WIN32)
-    BOOL f64 = FALSE;
-    return IsWow64Process(GetCurrentProcess(), &f64) && f64;
-#endif
-}
-
 
 struct WindowInfo
 {
     String strClass;
-    BOOL b64bit;
     BOOL bRequiresAdmin;
 };
 
@@ -54,7 +43,6 @@ struct ConfigDialogData
     XElement *data;
     List<WindowInfo> windowData;
     StringList adminWindows;
-    StringList opposingBitWindows;
 
     UINT cx, cy;
 
@@ -64,7 +52,6 @@ struct ConfigDialogData
             windowData[i].strClass.Clear();
         windowData.Clear();
         adminWindows.Clear();
-        opposingBitWindows.Clear();
     }
 
     inline ~ConfigDialogData()
@@ -78,11 +65,6 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
 {
     SendMessage(hwndCombobox, CB_RESETCONTENT, 0, 0);
     configData.ClearData();
-
-    BOOL bWindows64bit = Is64BitWindows();
-
-    BOOL bCurrentProcessIsWow64 = FALSE;
-    IsWow64Process(GetCurrentProcess(), &bCurrentProcessIsWow64);
 
     HWND hwndCurrent = GetWindow(GetDesktopWindow(), GW_CHILD);
     do
@@ -103,8 +85,6 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
                 strWindowName.SetLength(GetWindowTextLength(hwndCurrent));
                 GetWindowText(hwndCurrent, strWindowName, strWindowName.Length()+1);
 
-                bool b64bit = false;
-
                 //-------
 
                 DWORD processID;
@@ -118,9 +98,6 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
                 HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ | PROCESS_VM_WRITE, FALSE, processID);
                 if(hProcess)
                 {
-                    BOOL bTargetProcessIsWow64 = FALSE;
-                    IsWow64Process(hProcess, &bTargetProcessIsWow64);
-
                     DWORD dwSize = MAX_PATH;
                     QueryFullProcessImageName(hProcess, 0, fileName, &dwSize);
 
@@ -129,7 +106,8 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
 
                     CloseHandle(hProcess);
 
-                    BOOL bFoundModule = FALSE;
+                    //note: this doesn't actually work cross-bit
+                    /*BOOL bFoundModule = FALSE;
                     for(UINT i=0; i<moduleList.Num(); i++)
                     {
                         CTSTR moduleName = moduleList[i];
@@ -146,30 +124,14 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
                     }
 
                     if (!bFoundModule)
-                        continue;
-
-                    //todo: remove later
-                    if(bCurrentProcessIsWow64 != bTargetProcessIsWow64)
-                    {
-                        configData.opposingBitWindows << strWindowName;
-                        continue;
-                    }
-
-                    b64bit = (bWindows64bit && !bTargetProcessIsWow64);
+                        continue;*/
                 }
                 else
                 {
                     hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, processID);
                     if(hProcess)
                     {
-                        BOOL bTargetProcessIsWow64 = FALSE;
-                        IsWow64Process(hProcess, &bTargetProcessIsWow64);
-
-                        if(bCurrentProcessIsWow64 != bTargetProcessIsWow64)
-                            configData.opposingBitWindows << strWindowName;
-
                         configData.adminWindows << strWindowName;
-
                         CloseHandle(hProcess);
                     }
 
@@ -183,7 +145,6 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
 
                 String strText;
                 strText << TEXT("[") << GetPathFileName(strFileName);
-                strText << (b64bit ? TEXT("*64") : TEXT("*32"));
                 strText << TEXT("]: ") << strWindowName;
 
                 int id = (int)SendMessage(hwndCombobox, CB_ADDSTRING, 0, (LPARAM)strText.Array());
@@ -196,7 +157,6 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
 
                 WindowInfo &info    = *configData.windowData.CreateNew();
                 info.strClass       = strClassName;
-                info.b64bit         = b64bit;
                 info.bRequiresAdmin = false; //todo: add later
             }
         }
@@ -277,18 +237,6 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                             for(UINT i=0; i<info->adminWindows.Num(); i++)
                                 strInfoText << info->adminWindows[i] << TEXT("\r\n");
-                        }
-
-                        if(info->opposingBitWindows.Num())
-                        {
-#ifdef _WIN64
-                            strInfoText << Str("Sources.GameCaptureSource.Requires32bit") << TEXT("\r\n");
-#else
-                            strInfoText << Str("Sources.GameCaptureSource.Requires64bit") << TEXT("\r\n");
-#endif
-
-                            for(UINT i=0; i<info->opposingBitWindows.Num(); i++)
-                                strInfoText << TEXT("    * ") << info->opposingBitWindows[i] << TEXT("\r\n");
                         }
 
                         SetWindowText(GetDlgItem(hwnd, IDC_INFO), strInfoText);

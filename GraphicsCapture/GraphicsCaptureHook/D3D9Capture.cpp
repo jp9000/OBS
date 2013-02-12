@@ -476,8 +476,8 @@ finishGPUHook:
         bHasTextures = true;
         d3d9CaptureInfo.captureType = CAPTURETYPE_SHAREDTEX;
         d3d9CaptureInfo.bFlip = FALSE;
-        texData->texHandles[0] = sharedHandles[0];
-        texData->texHandles[1] = sharedHandles[1];
+        texData->texHandles[0] = (DWORD)sharedHandles[0];
+        texData->texHandles[1] = (DWORD)sharedHandles[1];
 
         memcpy(infoMem, &d3d9CaptureInfo, sizeof(CaptureInfo));
         SetEvent(hSignalReady);
@@ -1019,7 +1019,7 @@ void SetupD3D9(IDirect3DDevice9 *device)
                     d3d9Format = pp.BackBufferFormat;
                     d3d9CaptureInfo.cx = pp.BackBufferWidth;
                     d3d9CaptureInfo.cy = pp.BackBufferHeight;
-                    d3d9CaptureInfo.hwndCapture = pp.hDeviceWindow;
+                    d3d9CaptureInfo.hwndCapture = (DWORD)pp.hDeviceWindow;
                 }
             }
         }

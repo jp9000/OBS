@@ -67,7 +67,7 @@ bool SharedTexCapture::Init(CaptureInfo &info)
 
     for(UINT i=0; i<2; i++)
     {
-        sharedTextures[i] = GS->CreateTextureFromSharedHandle(info.cx, info.cy, (GSColorFormat)info.format, texData->texHandles[i]);
+        sharedTextures[i] = GS->CreateTextureFromSharedHandle(info.cx, info.cy, (GSColorFormat)info.format, (HANDLE)texData->texHandles[i]);
         if(!sharedTextures[i])
         {
             AppWarning(TEXT("SharedTexCapture::Init: Could not create shared texture"));

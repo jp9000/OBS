@@ -129,7 +129,7 @@ void QuickLog(LPCSTR lpText)
     HANDLE hFile = CreateFile(TEXT("d:\\log.txt"), GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, 0, NULL);
     DWORD bla;
     SetFilePointer(hFile, 0, 0, FILE_END);
-    WriteFile(hFile, lpText, strlen(lpText), &bla, NULL);
+    WriteFile(hFile, lpText, (DWORD)strlen(lpText), &bla, NULL);
     FlushFileBuffers(hFile);
     CloseHandle(hFile);
 }

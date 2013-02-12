@@ -20,60 +20,6 @@
 #include "GraphicsCapture.h"
 
 
-BOOL WINAPI InjectLibrary(HANDLE hProcess, CTSTR lpDLL)
-{
-    UPARAM procAddress;
-    DWORD dwTemp,dwSize;
-    LPVOID lpStr = NULL;
-    BOOL bWorks,bRet=0;
-    HANDLE hThread = NULL;
-    SIZE_T writtenSize;
-
-    if(!hProcess) return 0;
-
-    dwSize = ssize((TCHAR*)lpDLL);
-
-    lpStr = (LPVOID)VirtualAllocEx(hProcess, NULL, dwSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-    if(!lpStr) goto end;
-
-    bWorks = WriteProcessMemory(hProcess, lpStr, (LPVOID)lpDLL, dwSize, &writtenSize);
-    if(!bWorks) goto end;
-
-#ifdef UNICODE
-    procAddress = (UPARAM)GetProcAddress(GetModuleHandle(TEXT("KERNEL32")), "LoadLibraryW");
-#else
-    procAddress = (UPARAM)GetProcAddress(GetModuleHandle(TEXT("KERNEL32")), "LoadLibraryA");
-#endif
-    if(!procAddress) goto end;
-
-    hThread = CreateRemoteThread(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)procAddress, lpStr, 0, &dwTemp);
-    if(!hThread) goto end;
-
-    if(WaitForSingleObject(hThread, 200) == WAIT_OBJECT_0)
-    {
-        DWORD dw;
-        GetExitCodeThread(hThread, &dw);
-        bRet = dw != 0;
-
-        SetLastError(0);
-    }
-
-end:
-    DWORD lastError;
-    if(!bRet)
-        lastError = GetLastError();
-
-    if(hThread)
-        CloseHandle(hThread);
-    if(lpStr)
-        VirtualFreeEx(hProcess, lpStr, 0, MEM_RELEASE);
-
-    if(!bRet)
-        SetLastError(lastError);
-
-    return bRet;
-}
-
 bool GraphicsCaptureSource::Init(XElement *data)
 {
     this->data = data;
@@ -168,7 +114,7 @@ void GraphicsCaptureSource::NewCapture()
 
     bFlip = info.bFlip != 0;
 
-    hwndCapture = info.hwndCapture;
+    hwndCapture = (HWND)info.hwndCapture;
 
     if(info.captureType == CAPTURETYPE_MEMORY)
         capture = new MemoryCapture;
@@ -303,29 +249,61 @@ void GraphicsCaptureSource::AttemptCapture()
         }
         else
         {
-            String strDLL;
+            String strDLLPath;
             DWORD dwDirSize = GetCurrentDirectory(0, NULL);
-            strDLL.SetLength(dwDirSize);
-            GetCurrentDirectory(dwDirSize, strDLL);
+            strDLLPath.SetLength(dwDirSize);
+            GetCurrentDirectory(dwDirSize, strDLLPath);
 
-            strDLL << TEXT("\\plugins\\GraphicsCapture\\GraphicsCaptureHook.dll");
+            strDLLPath << TEXT("\\plugins\\GraphicsCapture");
 
-            if(InjectLibrary(hProcess, strDLL))
+            BOOL b32bit = TRUE;
+            if(Is64BitWindows())
+                IsWow64Process(hProcess, &b32bit);
+
+            String strHelper = strDLLPath;
+            strHelper << ((b32bit) ? TEXT("\\injectHelper.exe") : TEXT("\\injectHelper64.exe"));
+
+            String strCommandLine;
+            strCommandLine << strHelper << TEXT(" ") << UIntString(targetProcessID);
+
+            //---------------------------------------
+
+            PROCESS_INFORMATION pi;
+            STARTUPINFO si;
+
+            zero(&pi, sizeof(pi));
+            zero(&si, sizeof(si));
+            si.cb = sizeof(si);
+
+            if(CreateProcess(strHelper, strCommandLine, NULL, NULL, FALSE, 0, NULL, strDLLPath, &si, &pi))
             {
-                captureWaitCount = 0;
-                bCapturing = true;
+                DWORD exitCode = 0;
+
+                WaitForSingleObject(pi.hProcess, INFINITE);
+                GetExitCodeProcess(pi.hProcess, &exitCode);
+                CloseHandle(pi.hThread);
+                CloseHandle(pi.hProcess);
+
+                if(exitCode)
+                {
+                    captureWaitCount = 0;
+                    bCapturing = true;
+                }
+                else
+                {
+                    AppWarning(TEXT("GraphicsCaptureSource::BeginScene: Failed to inject library"));
+                    bErrorAcquiring = true;
+                }
             }
             else
             {
-                AppWarning(TEXT("GraphicsCaptureSource::BeginScene: Failed to inject library, GetLastError = %u"), GetLastError());
-
-                CloseHandle(hProcess);
-                hProcess = NULL;
+                AppWarning(TEXT("GraphicsCaptureSource::BeginScene: Could not create inject helper, GetLastError = %u"), GetLastError());
                 bErrorAcquiring = true;
             }
         }
 
         CloseHandle(hProcess);
+        hProcess = NULL;
     }
     else
     {

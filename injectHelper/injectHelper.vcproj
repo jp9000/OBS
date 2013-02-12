@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="GraphicsCaptureHook"
-	ProjectGUID="{12111D5C-819C-4BAF-9783-E6AF8CBC2700}"
-	RootNamespace="GraphicsCaptureHook"
+	Name="injectHelper"
+	ProjectGUID="{E03BF070-E830-46BB-8442-5771F7E5F301}"
+	RootNamespace="injectHelper"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -23,7 +23,7 @@
 			Name="Debug|Win32"
 			OutputDirectory="$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="2"
+			ConfigurationType="1"
 			CharacterSet="1"
 			>
 			<Tool
@@ -44,13 +44,11 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GRAPHICSCAPTUREHOOK_EXPORTS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
-				ExceptionHandling="2"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
-				AssemblerOutput="4"
 				WarningLevel="3"
 				DebugInformationFormat="4"
 			/>
@@ -65,11 +63,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dxguid.lib"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="..\..\rundir\pdb32\$(TargetName).pdb"
-				StripPrivateSymbols=""
 				SubSystem="2"
 				TargetMachine="1"
 			/>
@@ -93,14 +88,14 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(OutDir)\$(ProjectName).dll ..\..\rundir\plugins\GraphicsCapture"
+				CommandLine="copy $(OutDir)\$(ProjectName).exe ..\rundir\plugins\GraphicsCapture"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="2"
+			ConfigurationType="1"
 			CharacterSet="1"
 			>
 			<Tool
@@ -122,13 +117,11 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GRAPHICSCAPTUREHOOK_EXPORTS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
-				ExceptionHandling="2"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
-				AssemblerOutput="4"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -143,12 +136,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dxguid.lib"
-				OutputFile="$(OutDir)\$(ProjectName)64.dll"
+				OutputFile="$(OutDir)\$(ProjectName)64.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="..\..\rundir\pdb64\$(TargetName).pdb"
-				StripPrivateSymbols=""
 				SubSystem="2"
 				TargetMachine="17"
 			/>
@@ -172,14 +162,14 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(OutDir)\$(ProjectName)64.dll ..\..\rundir\plugins\GraphicsCapture"
+				CommandLine="copy $(OutDir)\$(ProjectName)64.exe ..\rundir\plugins\GraphicsCapture"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="2"
+			ConfigurationType="1"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
@@ -200,11 +190,10 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="3"
+				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GRAPHICSCAPTUREHOOK_EXPORTS"
-				ExceptionHandling="2"
-				RuntimeLibrary="0"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -221,11 +210,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dxguid.lib"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="..\..\rundir\pdb32\$(TargetName).pdb"
-				StripPrivateSymbols=""
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -251,14 +237,14 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(OutDir)\$(ProjectName).dll ..\..\rundir\plugins\GraphicsCapture"
+				CommandLine="copy $(OutDir)\$(ProjectName).exe ..\rundir\plugins\GraphicsCapture"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="2"
+			ConfigurationType="1"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
@@ -280,11 +266,10 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="3"
+				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GRAPHICSCAPTUREHOOK_EXPORTS"
-				ExceptionHandling="2"
-				RuntimeLibrary="0"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -301,12 +286,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dxguid.lib"
-				OutputFile="$(OutDir)\$(ProjectName)64.dll"
+				OutputFile="$(OutDir)\$(ProjectName)64.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="..\..\rundir\pdb64\$(TargetName).pdb"
-				StripPrivateSymbols=""
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -332,7 +314,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(OutDir)\$(ProjectName)64.dll ..\..\rundir\plugins\GraphicsCapture"
+				CommandLine="copy $(OutDir)\$(ProjectName)64.exe ..\rundir\plugins\GraphicsCapture"
 			/>
 		</Configuration>
 	</Configurations>
@@ -345,57 +327,9 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\D3D10.1Capture.cpp"
+				RelativePath=".\injectHelper.c"
 				>
 			</File>
-			<File
-				RelativePath=".\D3D10Capture.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\D3D11Capture.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\D3D9Capture.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\DDrawCapture.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\GraphicsCaptureHook.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\OpenGLCapture.cpp"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="Headers"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
-			>
-			<File
-				RelativePath=".\DXGIStuff.h"
-				>
-			</File>
-			<File
-				RelativePath="..\GlobalCaptureStuff.h"
-				>
-			</File>
-			<File
-				RelativePath=".\GraphicsCaptureHook.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="Resources"
-			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
-			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
-			>
 		</Filter>
 	</Files>
 	<Globals>

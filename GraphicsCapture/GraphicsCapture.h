@@ -44,6 +44,18 @@ public:
 
 //-----------------------------------------------------------
 
+inline BOOL Is64BitWindows()
+{
+#if defined(_WIN64)
+    return TRUE;
+#elif defined(_WIN32)
+    BOOL f64 = FALSE;
+    return IsWow64Process(GetCurrentProcess(), &f64) && f64;
+#endif
+}
+
+//-----------------------------------------------------------
+
 #include "MemoryCapture.h"
 #include "SharedTexCapture.h"
 #include "GraphicsCaptureSource.h"

@@ -85,7 +85,7 @@ void SetupD3D10(IDXGISwapChain *swapChain)
                 dxgiFormat = scd.BufferDesc.Format;
                 d3d10CaptureInfo.cx = scd.BufferDesc.Width;
                 d3d10CaptureInfo.cy = scd.BufferDesc.Height;
-                d3d10CaptureInfo.hwndCapture = scd.OutputWindow;
+                d3d10CaptureInfo.hwndCapture = (DWORD)scd.OutputWindow;
                 bIsMultisampled = scd.SampleDesc.Count > 1;
             }
         }
@@ -368,8 +368,8 @@ HRESULT STDMETHODCALLTYPE D3D10SwapPresentHook(IDXGISwapChain *swap, UINT syncIn
                         bHasTextures = true;
                         d3d10CaptureInfo.captureType = CAPTURETYPE_SHAREDTEX;
                         d3d10CaptureInfo.bFlip = FALSE;
-                        texData->texHandles[0] = sharedHandles[0];
-                        texData->texHandles[1] = sharedHandles[1];
+                        texData->texHandles[0] = (DWORD)sharedHandles[0];
+                        texData->texHandles[1] = (DWORD)sharedHandles[1];
 
                         memcpy(infoMem, &d3d10CaptureInfo, sizeof(CaptureInfo));
                         SetEvent(hSignalReady);

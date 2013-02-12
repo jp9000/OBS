@@ -88,7 +88,7 @@ void SetupD3D11(IDXGISwapChain *swapChain)
                 dxgiFormat = scd.BufferDesc.Format;
                 d3d11CaptureInfo.cx = scd.BufferDesc.Width;
                 d3d11CaptureInfo.cy = scd.BufferDesc.Height;
-                d3d11CaptureInfo.hwndCapture = scd.OutputWindow;
+                d3d11CaptureInfo.hwndCapture = (DWORD)scd.OutputWindow;
                 bIsMultisampled = scd.SampleDesc.Count > 1;
             }
         }
@@ -393,8 +393,8 @@ HRESULT STDMETHODCALLTYPE D3D11SwapPresentHook(IDXGISwapChain *swap, UINT syncIn
                         bHasTextures = true;
                         d3d11CaptureInfo.captureType = CAPTURETYPE_SHAREDTEX;
                         d3d11CaptureInfo.bFlip = FALSE;
-                        texData->texHandles[0] = sharedHandles[0];
-                        texData->texHandles[1] = sharedHandles[1];
+                        texData->texHandles[0] = (DWORD)sharedHandles[0];
+                        texData->texHandles[1] = (DWORD)sharedHandles[1];
 
                         memcpy(infoMem, &d3d11CaptureInfo, sizeof(CaptureInfo));
                         SetEvent(hSignalReady);
