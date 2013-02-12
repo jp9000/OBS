@@ -103,7 +103,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
             if (hProcess)
             {
                 UINT dirLen = GetCurrentDirectory(0, 0); /* includes null terminator */
-                const UINT fileNameLen = ((sizeof(pDLLName)-1) / sizeof(wchar_t));
+                const UINT fileNameLen = (sizeof(pDLLName) / sizeof(wchar_t))-1;
                 UINT len = dirLen + fileNameLen + 1; /* 1 for '/' */
                 wchar_t *pPath;
 
