@@ -446,6 +446,16 @@ public:
     {
         App->RemoveOBSEventListener(handler);
     }
+
+    virtual void SetDesktopVolume(float val, bool finalValue)        {App->SetDesktopVolume(val, finalValue);}
+    virtual float GetDesktopVolume()                                 {return App->GetDesktopVolume();}
+    virtual void ToggleDesktopMute()                                 {App->ToggleDesktopMute();}
+    virtual bool GetDesktopMuted()                                   {return App->GetDesktopMuted();}
+
+    virtual void SetMicVolume(float val, bool finalValue)            {App->SetMicVolume(val, finalValue);}
+    virtual float GetMicVolume()                                     {return App->GetMicVolume();}
+    virtual void ToggleMicMute()                                     {App->ToggleMicMute();}
+    virtual bool GetMicMuted()                                       {return App->GetMicMuted();}
 };
 
 APIInterface* CreateOBSApiInterface()
@@ -728,4 +738,72 @@ String OBS::GetMostImportantInfo()
     OSLeaveMutex(hInfoMutex);
 
     return strInfo;
+}
+
+void OBS::SetDesktopVolume(float val, bool finalValue)
+{
+    val = min(1.0f, max(0, val));
+    HWND desktop = GetDlgItem(hwndMain, ID_DESKTOPVOLUME);
+    
+    /* Allocate value on heap so we can send it's pointer in message */
+    float* valTemp = (float*)malloc(sizeof(float));
+    *valTemp = val;
+    
+    /*Send message to desktop volume control and have it handle it*/
+    PostMessage(desktop, WM_COMMAND, 
+        MAKEWPARAM(ID_DESKTOPVOLUME, finalValue?VOLN_FINALVALUE:VOLN_ADJUSTING),
+        (LPARAM)valTemp);
+}
+
+float OBS::GetDesktopVolume()
+{
+    HWND desktop = GetDlgItem(hwndMain, ID_DESKTOPVOLUME);
+    return GetVolumeControlValue(desktop);
+}
+
+void OBS::ToggleDesktopMute()
+{
+    HWND desktop = GetDlgItem(hwndMain, ID_DESKTOPVOLUME);
+    
+    /*Send message to desktop volume control and have it handle it*/
+    PostMessage(desktop, WM_COMMAND, MAKEWPARAM(ID_DESKTOPVOLUME, VOLN_TOGGLEMUTE), 0);
+}
+
+bool OBS::GetDesktopMuted()
+{
+    return GetDesktopVolume() < VOLN_MUTELEVEL;
+}
+
+void OBS::SetMicVolume(float val, bool finalValue)
+{
+    val = min(1.0f, max(0, val));
+    HWND mic = GetDlgItem(hwndMain, ID_MICVOLUME);
+    
+    /* Allocate value on heap so we can send it's pointer in message */
+    float* valTemp = (float*)malloc(sizeof(float));
+    *valTemp = val;
+
+    /*Send message to microphone volume control and have it handle it*/
+    PostMessage(mic, WM_COMMAND, 
+        MAKEWPARAM(ID_MICVOLUME, finalValue?VOLN_FINALVALUE:VOLN_ADJUSTING),
+        (LPARAM)valTemp);
+}
+
+float OBS::GetMicVolume()
+{
+    HWND mic = GetDlgItem(hwndMain, ID_MICVOLUME);
+    return GetVolumeControlValue(mic);
+}
+
+void OBS::ToggleMicMute()
+{
+    HWND mic = GetDlgItem(hwndMain, ID_MICVOLUME);
+    
+    /*Send message to microphone volume control and have it handle it*/
+    PostMessage(mic, WM_COMMAND, MAKEWPARAM(ID_MICVOLUME, VOLN_TOGGLEMUTE), 0);
+}
+
+bool OBS::GetMicMuted()
+{
+    return GetMicVolume() < VOLN_MUTELEVEL;
 }

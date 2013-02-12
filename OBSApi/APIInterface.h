@@ -62,6 +62,10 @@ public:
     virtual void SourceChanged(CTSTR /*sourceName*/, XElement* /*source*/ ){};
     /* called when a sources have been added or removed */
     virtual void SourcesAddedOrRemoved(){};
+    
+    /* called when audio source volumes have changed */
+    virtual void MicVolumeChanged(float /*level*/, bool /*muted*/, bool /*finalValue*/) {};
+    virtual void DesktopVolumeChanged(float /*level*/, bool /*muted*/, bool /*finalValue*/) {};
 };
 
 //-------------------------------------------------------------------
@@ -155,6 +159,16 @@ public:
     /* add/remove trigger handler functions */
     virtual void AddOBSEventListener(OBSTriggerHandler *handler) = 0;
     virtual void RemoveOBSEventListener(OBSTriggerHandler *handler) = 0;
+
+    virtual void SetDesktopVolume(float val, bool finalValue) = 0;
+    virtual float GetDesktopVolume() = 0;
+    virtual void ToggleDesktopMute() = 0;
+    virtual bool GetDesktopMuted() = 0;
+
+    virtual void SetMicVolume(float val, bool finalValue) = 0;
+    virtual float GetMicVolume() = 0;
+    virtual void ToggleMicMute() = 0;
+    virtual bool GetMicMuted() = 0;
 };
 
 BASE_EXPORT extern APIInterface *API;
@@ -241,3 +255,14 @@ inline ImageSource* OBSGetSceneImageSource(CTSTR lpImageSource)
 
     return NULL;
 }
+
+/* Volume Calls */
+BASE_EXPORT void OBSSetMicVolume(float val, bool finalValue);
+BASE_EXPORT float OBSGetMicVolume();
+BASE_EXPORT void OBSToggleMicMute();
+BASE_EXPORT bool OBSGetMicMuted();
+
+BASE_EXPORT void OBSSetDesktopVolume(float val, bool finalValue);
+BASE_EXPORT float OBSGetDesktopVolume();
+BASE_EXPORT void OBSToggleDesktopMute();
+BASE_EXPORT bool OBSGetDesktopMuted();

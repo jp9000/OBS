@@ -820,6 +820,19 @@ public:
     virtual void InsertSourceItem(UINT index, LPWSTR name, bool checked);
 
     //---------------------------------------------------------------------------
+    // volume stuff
+    virtual void SetDesktopVolume(float val, bool finalValue);
+    virtual float GetDesktopVolume();
+    virtual void ToggleDesktopMute();
+    virtual bool GetDesktopMuted();
+    
+    virtual void SetMicVolume(float val, bool finalValue);
+    virtual float GetMicVolume();
+    virtual void ToggleMicMute();
+    virtual bool GetMicMuted();
+    
+
+    //---------------------------------------------------------------------------
     // event stuff 
     List<OBSTriggerHandler*> triggerHandlers;
 
@@ -841,6 +854,9 @@ public:
     virtual void ReportSourceOrderChanged();
     virtual void ReportSourceChanged(CTSTR sourceName, XElement* source);
     virtual void ReportSourcesAddedOrRemoved();
+    virtual void ReportMicVolumeChange(float level, bool muted, bool finalValue);
+    virtual void ReportDesktopVolumeChange(float level, bool muted, bool finalValue);
+
 };
 
 LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo);

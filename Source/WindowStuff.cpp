@@ -1990,10 +1990,15 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                         if(IsWindowEnabled((HWND)lParam))
                         {
                             App->micVol = GetVolumeControlValue((HWND)lParam);
+
+                            bool finalValue = HIWORD(wParam) == VOLN_FINALVALUE;
+
+                            App->ReportMicVolumeChange(App->micVol, App->micVol < VOLN_MUTELEVEL, finalValue);
+
                             if(App->micVol < EPSILON)
                                 App->micVol = 0.0f;
 
-                            if(HIWORD(wParam) == VOLN_FINALVALUE)
+                            if(finalValue)
                                 AppConfig->SetFloat(TEXT("Audio"), TEXT("MicVolume"), App->micVol);
                         }
                     }
@@ -2006,11 +2011,17 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                         {
                             App->desktopVol = GetVolumeControlValue((HWND)lParam);
                             
+                            bool finalValue = HIWORD(wParam) == VOLN_FINALVALUE;
+
+                            App->ReportDesktopVolumeChange(App->desktopVol, App->desktopVol < VOLN_MUTELEVEL, finalValue);
+
                             if(App->desktopVol < EPSILON)
                                 App->desktopVol = 0.0f;
 
-                            if(HIWORD(wParam) == VOLN_FINALVALUE)
+                            if(finalValue)
                                 AppConfig->SetFloat(TEXT("Audio"), TEXT("DesktopVolume"), App->desktopVol);
+
+                            
                         }
                     }
                     break;

@@ -117,3 +117,12 @@ void OBSSetSourceRender(CTSTR lpSource, bool render)        {API->SetSourceRende
 void OBSAddEventListener(OBSTriggerHandler *handler)        {API->AddOBSEventListener(handler);}
 void OBSRemoveEventListener(OBSTriggerHandler *handler)     {API->RemoveOBSEventListener(handler);}
 
+void OBSSetDesktopVolume(float val, bool finalValue)        {API->SetDesktopVolume(val, finalValue);}
+float OBSGetDesktopVolume()                                 {return API->GetDesktopVolume();}
+void OBSToggleDesktopMute()                                 {API->ToggleDesktopMute();}
+bool OBSGetDesktopMuted()                                   {return API->GetDesktopMuted();}
+
+void OBSSetMicVolume(float val, bool finalValue)            {API->SetMicVolume(val, finalValue);}
+float OBSGetMicVolume()                                     {return API->GetMicVolume();}
+void OBSToggleMicMute()                                     {API->ToggleMicMute();}
+bool OBSGetMicMuted()                                       {return API->GetMicMuted();}

@@ -103,3 +103,21 @@ void OBS::ReportSourcesAddedOrRemoved()
         handler->SourcesAddedOrRemoved();
     }
 }
+
+void OBS::ReportMicVolumeChange(float level, bool muted, bool finalValue)
+{
+    for(UINT i = 0; i < triggerHandlers.Num(); i++)
+    {
+        OBSTriggerHandler* handler = triggerHandlers[i];
+        handler->MicVolumeChanged(level, muted, finalValue);
+    }
+}
+
+void OBS::ReportDesktopVolumeChange(float level, bool muted, bool finalValue)
+{
+    for(UINT i = 0; i < triggerHandlers.Num(); i++)
+    {
+        OBSTriggerHandler* handler = triggerHandlers[i];
+        handler->DesktopVolumeChanged(level, muted, finalValue);
+    }
+}

@@ -30,6 +30,9 @@ float GetVolumeControlValue(HWND hwnd);
 
 #define VOLN_ADJUSTING  0x300
 #define VOLN_FINALVALUE 0x301
+#define VOLN_TOGGLEMUTE 0x302
+
+#define VOLN_MUTELEVEL 0.05f
 
 /* 60 db dynamic range values for volume control scale*/
 #define VOL_ALPHA .001f

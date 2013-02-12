@@ -45,9 +45,9 @@ float ToggleVolumeControlMute(HWND hwnd)
     if(!control)
         CrashError(TEXT("ToggleVolumeControlMute called on a control that's not a volume control"));
 
-    if(control->curVolume < 0.05f)
+    if(control->curVolume < VOLN_MUTELEVEL)
     {
-        if(control->lastUnmutedVol < 0.05f)
+        if(control->lastUnmutedVol < VOLN_MUTELEVEL)
             control->lastUnmutedVol = 1.0f;
         control->curVolume = control->lastUnmutedVol;
     }
@@ -165,9 +165,9 @@ LRESULT CALLBACK VolumeControlProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                 {
                     if(control->cy == 32 && x >= (control->cx-32))
                     {
-                        if(control->curVolume < 0.05f)
+                        if(control->curVolume < VOLN_MUTELEVEL)
                         {
-                            if(control->lastUnmutedVol < 0.05f)
+                            if(control->lastUnmutedVol < VOLN_MUTELEVEL)
                                 control->lastUnmutedVol = 1.0f;
                             control->curVolume = control->lastUnmutedVol;
                         }
@@ -184,7 +184,7 @@ LRESULT CALLBACK VolumeControlProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                         SetCapture(hwnd);
                         control->bHasCapture = true;
 
-                        if(control->curVolume > 0.05f)
+                        if(control->curVolume > VOLN_MUTELEVEL)
                             control->lastUnmutedVol = control->curVolume;
 
                         int cxAdjust = control->cx;
@@ -246,7 +246,7 @@ LRESULT CALLBACK VolumeControlProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
                 if(control->bDisabled)
                 {
-                    if(control->curVolume > 0.05f)
+                    if(control->curVolume > VOLN_MUTELEVEL)
                     {
                         control->lastUnmutedVol = control->curVolume;
                         control->curVolume = 0.0f;
@@ -255,7 +255,7 @@ LRESULT CALLBACK VolumeControlProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                 }
                 else
                 {
-                    if(control->curVolume < 0.05f)
+                    if(control->curVolume < VOLN_MUTELEVEL)
                     {
                         control->curVolume = control->lastUnmutedVol;
                         SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(id, VOLN_ADJUSTING), (LPARAM)hwnd);
@@ -282,6 +282,39 @@ LRESULT CALLBACK VolumeControlProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                 break;
             }
 
+        case WM_COMMAND:
+            {
+                switch(HIWORD(wParam))
+                {
+                    /* 
+                       Handle API Volume Adjustments 
+                       Updates control values and sends message to obsproc to update
+                       application volume.
+                     */
+                    case VOLN_FINALVALUE:
+                    case VOLN_ADJUSTING:
+                        {
+                            float val = *(float*)lParam;
+                            SetVolumeControlValue(hwnd, val);
+                            
+                            /* free volume value on heap */
+                            free((void*) lParam);
+                            
+                            /* send message to obsproc to update volumes */
+                            UINT id = (UINT)GetWindowLongPtr(hwnd, GWLP_ID);
+                            SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(id, HIWORD(wParam)), (LPARAM)hwnd);
+                            break;
+                        }
+                    case VOLN_TOGGLEMUTE:
+                        {
+                            UINT id = (UINT)GetWindowLongPtr(hwnd, GWLP_ID);
+                            ToggleVolumeControlMute(GetDlgItem(hwndMain, id));
+
+                            SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(id, VOLN_FINALVALUE), (LPARAM)hwnd);
+                        }    
+                }
+                    
+            }
         default:
             return DefWindowProc(hwnd, message, wParam, lParam);
     }
@@ -348,7 +381,7 @@ void VolumeControlData::DrawVolumeControl(HDC hDC)
         }
 
         if(bDrawIcon)
-            DrawIcon(hdcTemp, cx-32, 0, (visualVolume > 0.05f) ? hiconPlay : hiconMute);
+            DrawIcon(hdcTemp, cx-32, 0, (visualVolume > VOLN_MUTELEVEL) ? hiconPlay : hiconMute);
     }
 
     BitBlt(hDC, 0, 0, cx, cy, hdcTemp, 0, 0, SRCCOPY);
