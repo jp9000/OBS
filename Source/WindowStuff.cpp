@@ -25,7 +25,8 @@
 
 //hello, you've come into the file I hate the most.
 
-
+#define FREEZE_WND(hwnd)   SendMessage(hwnd, WM_SETREDRAW, (WPARAM)FALSE, (LPARAM) 0);
+#define THAW_WND(hwnd)     {SendMessage(hwnd, WM_SETREDRAW, (WPARAM)TRUE, (LPARAM) 0); RedrawWindow(hwnd, NULL, NULL, RDW_ERASE | RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN);}
 
 extern WNDPROC listboxProc;
 extern WNDPROC listviewProc;
@@ -964,7 +965,7 @@ void OBS::SetSourceOrder(StringList &sourceNames)
 
     XElement* sourcesElement = App->sceneElement->GetElement(TEXT("sources"));
     
-    SendMessage(hwndSources, WM_SETREDRAW, (WPARAM)FALSE, (LPARAM) 0);
+    FREEZE_WND(hwndSources);
 
     for(UINT i=0; i<sourceNames.Num(); i++)
     {
@@ -1002,11 +1003,11 @@ void OBS::SetSourceOrder(StringList &sourceNames)
         }
     }
 
-    SendMessage(hwndSources, WM_SETREDRAW, (WPARAM)TRUE, (LPARAM) 0);
-     RedrawWindow(hwndSources, NULL, NULL, RDW_ERASE | RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN);
+    THAW_WND(hwndSources);
 
     ReportSourceOrderChanged();
 }
+
 
 void OBS::MoveSourcesUp()
 {
@@ -1043,7 +1044,7 @@ void OBS::MoveSourcesUp()
     }
 
     UINT stateFlags;
-
+    FREEZE_WND(hwndSources);
     for(UINT i=0; i<selectedIDs.Num(); i++)
     {
         if( (i == 0 && selectedIDs[i] > 0) ||
@@ -1073,6 +1074,8 @@ void OBS::MoveSourcesUp()
             
         }
     }
+    THAW_WND(hwndSources);
+
     ReportSourceOrderChanged();
 }
 
@@ -1114,6 +1117,7 @@ void OBS::MoveSourcesDown()
     UINT lastSelectedID = numSelected-1;
     UINT stateFlags;
 
+    FREEZE_WND(hwndSources);
     for(int i=(int)lastSelectedID; i>=0; i--)
     {
         if( (i == lastSelectedID && selectedIDs[i] < lastItem) ||
@@ -1131,7 +1135,7 @@ void OBS::MoveSourcesDown()
             ListView_DeleteItem(hwndSources, selectedIDs[i]);
             InsertSourceItem(++selectedIDs[i], (LPWSTR)strName.Array(), checkState);
 
-            if((focusedItem!=-1) && (focusedItem == selectedIDs[i]-1))
+            if(focusedItem == selectedIDs[i]-1)
                 stateFlags = LVIS_SELECTED | LVIS_FOCUSED;
             else
                 stateFlags = LVIS_SELECTED;
@@ -1142,6 +1146,8 @@ void OBS::MoveSourcesDown()
             bChangingSources = false;
         }
     }
+    THAW_WND(hwndSources);
+
     ReportSourceOrderChanged();
 }
 
@@ -1192,6 +1198,7 @@ void OBS::MoveSourcesToTop()
 
     UINT stateFlags;
 
+    FREEZE_WND(hwndSources);
     for(UINT i=0; i<selectedIDs.Num(); i++)
     {
         if(selectedIDs[i] != i)
@@ -1214,6 +1221,8 @@ void OBS::MoveSourcesToTop()
             bChangingSources = false;
         }
     }
+    THAW_WND(hwndSources);
+
     ReportSourceOrderChanged();
 }
 
@@ -1265,6 +1274,7 @@ void OBS::MoveSourcesToBottom()
     UINT curID = ListView_GetItemCount(hwndSources)-1;
     UINT stateFlags;
 
+    FREEZE_WND(hwndSources);
     for(int i=int(selectedIDs.Num()-1); i>=0; i--)
     {
         if(selectedIDs[i] != curID)
@@ -1289,6 +1299,8 @@ void OBS::MoveSourcesToBottom()
 
         curID--;
     }
+    THAW_WND(hwndSources);
+
     ReportSourceOrderChanged();
 }
 
