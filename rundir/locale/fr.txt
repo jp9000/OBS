@@ -48,7 +48,7 @@ Listbox.SetHotkey   "Utiliser un raccourci clavier"
 MainMenu.File       "&Fichier"
 MainMenu.Help       "&Aide"
 MainMenu.Settings   "&Paramètres"
-MainMenu.Settings.AlwaysOnTop "Toujours au premier"
+MainMenu.Settings.AlwaysOnTop "Toujours au premier plan"
 
 MainMenu.File.Exit  "&Sortir"
 
@@ -179,7 +179,7 @@ Sources.SoftwareCaptureSource.MouseCapture          "Capturer le curseur de la s
 Sources.SoftwareCaptureSource.Position              "Position:"
 Sources.SoftwareCaptureSource.Refresh               "Rafraîchir"
 Sources.SoftwareCaptureSource.RegionCapture         "Capturer une Région"
-Sources.SoftwareCaptureSource.RegionWindowText      "Appuyer sur Enter, Esc, ou cliquer a l'extérieur de ce rectangle quand vous avez terminer."
+Sources.SoftwareCaptureSource.RegionWindowText      "Appuyer sur Enter, Esc, ou cliquer à l'extérieur de ce rectangle quand vous avez terminé."
 Sources.SoftwareCaptureSource.Select                "Sélection"
 Sources.SoftwareCaptureSource.SelectRegion          "Sélectionner une Région"
 Sources.SoftwareCaptureSource.Similarity            "Similarité (1-100):"
