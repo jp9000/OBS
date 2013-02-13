@@ -25,7 +25,8 @@
 
 //hello, you've come into the file I hate the most.
 
-
+#define FREEZE_WND(hwnd)   SendMessage(hwnd, WM_SETREDRAW, (WPARAM)FALSE, (LPARAM) 0);
+#define THAW_WND(hwnd)     {SendMessage(hwnd, WM_SETREDRAW, (WPARAM)TRUE, (LPARAM) 0); RedrawWindow(hwnd, NULL, NULL, RDW_ERASE | RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN);}
 
 extern WNDPROC listboxProc;
 extern WNDPROC listviewProc;
@@ -775,9 +776,10 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
                                 SetFocus(hwnd);
                                 
-                                // make sure the added item is visible and selected/focused
+                                // make sure the added item is visible/selected/focused and selection mark moved to it.
                                 ListView_EnsureVisible(hwnd, 0, false);
                                 ListView_SetItemState(hwnd, 0, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+                                ListView_SetSelectionMark(hwnd, 0);
                                 App->ReportSourcesAddedOrRemoved();
                             }
                         }
@@ -963,7 +965,7 @@ void OBS::SetSourceOrder(StringList &sourceNames)
 
     XElement* sourcesElement = App->sceneElement->GetElement(TEXT("sources"));
     
-    SendMessage(hwndSources, WM_SETREDRAW, (WPARAM)FALSE, (LPARAM) 0);
+    FREEZE_WND(hwndSources);
 
     for(UINT i=0; i<sourceNames.Num(); i++)
     {
@@ -1001,30 +1003,34 @@ void OBS::SetSourceOrder(StringList &sourceNames)
         }
     }
 
-    SendMessage(hwndSources, WM_SETREDRAW, (WPARAM)TRUE, (LPARAM) 0);
-     RedrawWindow(hwndSources, NULL, NULL, RDW_ERASE | RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN);
+    THAW_WND(hwndSources);
 
     ReportSourceOrderChanged();
 }
+
 
 void OBS::MoveSourcesUp()
 {
     HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
     UINT numSelected = ListView_GetSelectedCount(hwndSources);
     int numItems = ListView_GetItemCount(hwndSources);
+    UINT focusedItem = -1, selectionMark;
 
     List<SceneItem*> selectedSceneItems;
     if(App->scene)
         App->scene->GetSelectedItems(selectedSceneItems);
 
     List<UINT> selectedIDs;
-       
+
+    selectionMark = ListView_GetSelectionMark(hwndSources);
+
     //get selected items
     int iPos = ListView_GetNextItem(hwndSources, -1, LVNI_SELECTED);
     while (iPos != -1)
     {
         selectedIDs.Add((UINT) iPos);
-        ListView_SetItemState(hwndSources, iPos, 0, LVIS_FOCUSED);
+        if(ListView_GetItemState(hwndSources, iPos, LVIS_FOCUSED) & LVIS_FOCUSED)
+            focusedItem = iPos;
         iPos = ListView_GetNextItem(hwndSources, iPos, LVNI_SELECTED);
     }
 
@@ -1037,6 +1043,8 @@ void OBS::MoveSourcesUp()
             selectedElements << sourcesElement->GetElementByID(selectedIDs[i]);
     }
 
+    UINT stateFlags;
+    FREEZE_WND(hwndSources);
     for(UINT i=0; i<selectedIDs.Num(); i++)
     {
         if( (i == 0 && selectedIDs[i] > 0) ||
@@ -1053,11 +1061,21 @@ void OBS::MoveSourcesUp()
             bChangingSources = true;
             ListView_DeleteItem(hwndSources, selectedIDs[i]);
             InsertSourceItem(--selectedIDs[i], (LPWSTR)strName.Array(), checkState);
-            ListView_SetItemState(hwndSources, selectedIDs[i], LVIS_SELECTED, LVIS_SELECTED);
+
+            if(focusedItem == selectedIDs[i]+1)
+                stateFlags = LVIS_SELECTED | LVIS_FOCUSED;
+            else
+                stateFlags = LVIS_SELECTED;
+            if(selectionMark == selectedIDs[i]+1)
+                ListView_SetSelectionMark(hwndSources, selectedIDs[i]);
+
+            ListView_SetItemState(hwndSources, selectedIDs[i], stateFlags, stateFlags);
             bChangingSources = false;
             
         }
     }
+    THAW_WND(hwndSources);
+
     ReportSourceOrderChanged();
 }
 
@@ -1066,19 +1084,23 @@ void OBS::MoveSourcesDown()
    HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
     UINT numSelected = ListView_GetSelectedCount(hwndSources);
     int numItems = ListView_GetItemCount(hwndSources);
+    int focusedItem = -1, selectionMark;
 
     List<SceneItem*> selectedSceneItems;
     if(App->scene)
         App->scene->GetSelectedItems(selectedSceneItems);
 
     List<UINT> selectedIDs;
-       
+
+    selectionMark = ListView_GetSelectionMark(hwndSources);
+
     //get selected items
     int iPos = ListView_GetNextItem(hwndSources, -1, LVNI_SELECTED);
     while (iPos != -1)
     {
         selectedIDs.Add((UINT) iPos);
-        ListView_SetItemState(hwndSources, iPos, 0, LVIS_FOCUSED);
+        if(ListView_GetItemState(hwndSources, iPos, LVIS_FOCUSED) &  LVIS_FOCUSED)
+            focusedItem = iPos;
         iPos = ListView_GetNextItem(hwndSources, iPos, LVNI_SELECTED);
     }
 
@@ -1093,7 +1115,9 @@ void OBS::MoveSourcesDown()
 
     UINT lastItem = (UINT)ListView_GetItemCount(hwndSources)-1;
     UINT lastSelectedID = numSelected-1;
+    UINT stateFlags;
 
+    FREEZE_WND(hwndSources);
     for(int i=(int)lastSelectedID; i>=0; i--)
     {
         if( (i == lastSelectedID && selectedIDs[i] < lastItem) ||
@@ -1110,10 +1134,20 @@ void OBS::MoveSourcesDown()
             bChangingSources = true;
             ListView_DeleteItem(hwndSources, selectedIDs[i]);
             InsertSourceItem(++selectedIDs[i], (LPWSTR)strName.Array(), checkState);
-            ListView_SetItemState(hwndSources, selectedIDs[i], LVIS_SELECTED, LVIS_SELECTED);
+
+            if(focusedItem == selectedIDs[i]-1)
+                stateFlags = LVIS_SELECTED | LVIS_FOCUSED;
+            else
+                stateFlags = LVIS_SELECTED;
+            if(selectionMark == selectedIDs[i]-1)
+                ListView_SetSelectionMark(hwndSources, selectedIDs[i]);
+
+            ListView_SetItemState(hwndSources, selectedIDs[i], stateFlags, stateFlags);
             bChangingSources = false;
         }
     }
+    THAW_WND(hwndSources);
+
     ReportSourceOrderChanged();
 }
 
@@ -1122,19 +1156,23 @@ void OBS::MoveSourcesToTop()
     HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
     UINT numSelected = ListView_GetSelectedCount(hwndSources);
     int numItems = ListView_GetItemCount(hwndSources);
+    UINT focusedItem = -1, selectionMark;
 
     List<SceneItem*> selectedSceneItems;
     if(App->scene)
         App->scene->GetSelectedItems(selectedSceneItems);
 
     List<UINT> selectedIDs;
-       
+
+    selectionMark = ListView_GetSelectionMark(hwndSources);
+
     //get selected items
     int iPos = ListView_GetNextItem(hwndSources, -1, LVNI_SELECTED);
     while (iPos != -1)
     {
         selectedIDs.Add((UINT) iPos);
-        ListView_SetItemState(hwndSources, iPos, 0, LVIS_FOCUSED);
+        if(ListView_GetItemState(hwndSources, iPos, LVIS_FOCUSED) &  LVIS_FOCUSED)
+            focusedItem = iPos;
         iPos = ListView_GetNextItem(hwndSources, iPos, LVNI_SELECTED);
     }
 
@@ -1158,6 +1196,9 @@ void OBS::MoveSourcesToTop()
             selectedElements[i]->MoveToTop();
     }
 
+    UINT stateFlags;
+
+    FREEZE_WND(hwndSources);
     for(UINT i=0; i<selectedIDs.Num(); i++)
     {
         if(selectedIDs[i] != i)
@@ -1168,10 +1209,20 @@ void OBS::MoveSourcesToTop()
             bChangingSources = true;
             ListView_DeleteItem(hwndSources, selectedIDs[i]);
             InsertSourceItem(i, (LPWSTR)strName.Array(), checkState);
-            ListView_SetItemState(hwndSources, i, LVIS_SELECTED, LVIS_SELECTED);
+            
+            if(focusedItem == selectedIDs[i])
+                stateFlags = LVIS_SELECTED | LVIS_FOCUSED;
+            else
+                stateFlags = LVIS_SELECTED;
+            if(selectionMark == selectedIDs[i])
+                ListView_SetSelectionMark(hwndSources, i);
+
+            ListView_SetItemState(hwndSources, i, stateFlags, stateFlags);
             bChangingSources = false;
         }
     }
+    THAW_WND(hwndSources);
+
     ReportSourceOrderChanged();
 }
 
@@ -1180,19 +1231,23 @@ void OBS::MoveSourcesToBottom()
     HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
     UINT numSelected = ListView_GetSelectedCount(hwndSources);
     int numItems = ListView_GetItemCount(hwndSources);
+    UINT focusedItem = -1, selectionMark;
 
     List<SceneItem*> selectedSceneItems;
     if(App->scene)
         App->scene->GetSelectedItems(selectedSceneItems);
 
     List<UINT> selectedIDs;
-       
+
+    selectionMark = ListView_GetSelectionMark(hwndSources);
+
     //get selected items
     int iPos = ListView_GetNextItem(hwndSources, -1, LVNI_SELECTED);
     while (iPos != -1)
     {
         selectedIDs.Add((UINT) iPos);
-        ListView_SetItemState(hwndSources, iPos, 0, LVIS_FOCUSED);
+        if(ListView_GetItemState(hwndSources, iPos, LVIS_FOCUSED) &  LVIS_FOCUSED)
+            focusedItem = iPos;
         iPos = ListView_GetNextItem(hwndSources, iPos, LVNI_SELECTED);
     }
 
@@ -1217,7 +1272,9 @@ void OBS::MoveSourcesToBottom()
     }
 
     UINT curID = ListView_GetItemCount(hwndSources)-1;
+    UINT stateFlags;
 
+    FREEZE_WND(hwndSources);
     for(int i=int(selectedIDs.Num()-1); i>=0; i--)
     {
         if(selectedIDs[i] != curID)
@@ -1228,12 +1285,22 @@ void OBS::MoveSourcesToBottom()
             bChangingSources = true;
             ListView_DeleteItem(hwndSources, selectedIDs[i]);
             InsertSourceItem(curID, (LPWSTR)strName.Array(), checkState);
-            ListView_SetItemState(hwndSources, curID, LVIS_SELECTED, LVIS_SELECTED);
+
+            if(focusedItem == selectedIDs[i])
+                stateFlags = LVIS_SELECTED | LVIS_FOCUSED;
+            else
+                stateFlags = LVIS_SELECTED;
+            if(selectionMark == selectedIDs[i])
+                ListView_SetSelectionMark(hwndSources, curID);
+
+            ListView_SetItemState(hwndSources, curID, stateFlags, stateFlags);
             bChangingSources = false;
         }
 
         curID--;
     }
+    THAW_WND(hwndSources);
+
     ReportSourceOrderChanged();
 }
 
