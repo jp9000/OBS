@@ -81,7 +81,7 @@ end:
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nShowCmd)
 {
     LPWSTR pCommandLineW = GetCommandLineW();
-    int bRetVal = 0;
+    int retVal = 0;
     DWORD procID = 0;
     int numArgs = 0;
 
@@ -118,16 +118,30 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
                     pPath[dirLen-1] = '\\';
                     wcsncpy(pPath+dirLen, pDLLName, fileNameLen);
 
-                    bRetVal = (int)InjectLibrary(hProcess, pPath, len-1);
+                    if(!InjectLibrary(hProcess, pPath, len-1))
+                    {
+                        retVal = GetLastError();
+                        if(!retVal)
+                            retVal = -5;
+                    }
+
                     free(pPath);
                 }
+                else
+                    retVal = -4;
 
                 CloseHandle(hProcess);
             }
+            else
+                retVal = -3;
         }
+        else
+            retVal = -2;
     }
+    else
+        retVal = -1;
 
     LocalFree(pCommandLineArgs);
 
-    return bRetVal;
+    return retVal;
 }

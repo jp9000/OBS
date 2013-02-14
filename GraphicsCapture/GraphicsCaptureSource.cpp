@@ -264,7 +264,7 @@ void GraphicsCaptureSource::AttemptCapture()
             strHelper << ((b32bit) ? TEXT("\\injectHelper.exe") : TEXT("\\injectHelper64.exe"));
 
             String strCommandLine;
-            strCommandLine << strHelper << TEXT(" ") << UIntString(targetProcessID);
+            strCommandLine << TEXT("\"") << strHelper << TEXT("\" ") << UIntString(targetProcessID);
 
             //---------------------------------------
 
@@ -277,21 +277,21 @@ void GraphicsCaptureSource::AttemptCapture()
 
             if(CreateProcess(strHelper, strCommandLine, NULL, NULL, FALSE, 0, NULL, strDLLPath, &si, &pi))
             {
-                DWORD exitCode = 0;
+                int exitCode = 0;
 
                 WaitForSingleObject(pi.hProcess, INFINITE);
-                GetExitCodeProcess(pi.hProcess, &exitCode);
+                GetExitCodeProcess(pi.hProcess, (DWORD*)&exitCode);
                 CloseHandle(pi.hThread);
                 CloseHandle(pi.hProcess);
 
-                if(exitCode)
+                if(exitCode == 0)
                 {
                     captureWaitCount = 0;
                     bCapturing = true;
                 }
                 else
                 {
-                    AppWarning(TEXT("GraphicsCaptureSource::BeginScene: Failed to inject library"));
+                    AppWarning(TEXT("GraphicsCaptureSource::BeginScene: Failed to inject library, error code = %d"), exitCode);
                     bErrorAcquiring = true;
                 }
             }
