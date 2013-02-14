@@ -48,6 +48,8 @@ inline HANDLE GetEvent(LPCTSTR lpEvent)
     return hEvent;
 }
 
+#pragma pack(push, 8)
+
 struct MemoryCopyData
 {
     UINT        lastRendered;
@@ -75,3 +77,5 @@ struct CaptureInfo
 
     DWORD   hwndCapture;
 };
+
+#pragma pack(pop)
