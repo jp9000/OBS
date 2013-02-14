@@ -29,6 +29,9 @@ copy ..\rundir\plugins\dshowplugin\locale\*.txt .\32bit\plugins\dshowplugin\loca
 copy ..\rundir\plugins\dshowplugin\shaders\*.?Shader .\32bit\plugins\dshowplugin\shaders\
 copy ..\graphicscapture\release\graphicscapture.dll .\32bit\plugins
 copy ..\graphicscapture\graphicscapturehook\release\graphicscapturehook.dll .\32bit\plugins\graphicscapture
+copy ..\graphicscapture\graphicscapturehook\x64\release\graphicscapturehook64.dll .\32bit\plugins\graphicscapture
+copy ..\injectHelper\release\injectHelper.exe .\32bit\plugins\graphicscapture
+copy ..\injectHelper\x64\release\injectHelper64.exe .\32bit\plugins\graphicscapture
 copy ..\x264\libs\32bit\libx264-129.dll .\32bit
 
 copy ..\x64\release\obs.exe .\64bit\
@@ -42,6 +45,9 @@ copy ..\dshowplugin\x64\release\dshowplugin.dll .\64bit\plugins
 copy ..\rundir\plugins\dshowplugin\locale\*.txt .\64bit\plugins\dshowplugin\locale\
 copy ..\rundir\plugins\dshowplugin\shaders\*.?Shader .\64bit\plugins\dshowplugin\shaders\
 copy ..\graphicscapture\x64\release\graphicscapture.dll .\64bit\plugins
-copy ..\graphicscapture\graphicscapturehook\x64\release\graphicscapturehook.dll .\64bit\plugins\graphicscapture
+copy ..\graphicscapture\graphicscapturehook\release\graphicscapturehook.dll .\64bit\plugins\graphicscapture
+copy ..\graphicscapture\graphicscapturehook\x64\release\graphicscapturehook64.dll .\64bit\plugins\graphicscapture
+copy ..\injectHelper\release\injectHelper.exe .\64bit\plugins\graphicscapture
+copy ..\injectHelper\x64\release\injectHelper64.exe .\64bit\plugins\graphicscapture
 copy ..\x264\libs\64bit\libx264-129.dll .\64bit
 
