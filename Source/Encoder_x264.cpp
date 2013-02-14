@@ -32,7 +32,9 @@ extern "C"
 
 void get_x264_log(void *param, int i_level, const char *psz, va_list argptr)
 {
-    String chi(psz);
+    String chi;
+    
+    chi << TEXT("x264: ") << String(psz);
     chi.FindReplace(TEXT("%s"), TEXT("%S"));
 
     OSDebugOutva(chi, argptr);
