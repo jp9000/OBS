@@ -2217,7 +2217,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
                                     int state, bkMode;
                                     BOOL checkState;
-                                    RECT iconRect,textRect, itemRect;
+                                    RECT iconRect, textRect, itemRect;
                                     COLORREF oldTextColor;
 
                                     // It seems there's a limitation to ListView's displayed max text length http://support.microsoft.com/default.aspx?scid=KB;EN-US;321104
@@ -2232,9 +2232,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                     ListView_GetItemRect(nmh.hwndFrom,itemId, &itemRect, LVIR_BOUNDS);
                                     ListView_GetItemRect(nmh.hwndFrom,itemId, &textRect, LVIR_LABEL);
 
-                                    mcpy(&iconRect,&itemRect,sizeof(RECT));
-
                                     iconRect.right = textRect.left - 1;
+                                    iconRect.left = iconRect.right - (textRect.bottom - textRect.top);
+                                    iconRect.top  = textRect.top + 2;
+                                    iconRect.bottom = textRect.bottom - 2;
 
                                     state = ListView_GetItemState(nmh.hwndFrom, itemId, LVIS_SELECTED);
                                     checkState = ListView_GetCheckState(nmh.hwndFrom, itemId);
@@ -2260,6 +2261,16 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                             DrawThemeBackground(hTheme, hdc, BP_CHECKBOX, CBS_UNCHECKEDNORMAL, &iconRect, NULL);
                                         CloseThemeData(hTheme);
                                     }
+                                    else
+                                    {
+                                        iconRect.right = iconRect.left + iconRect.bottom - iconRect.top;
+                                        if(checkState)
+                                            DrawFrameControl(hdc,&iconRect, DFC_BUTTON, DFCS_BUTTONCHECK | DFCS_CHECKED | DFCS_FLAT);
+                                        else
+                                            DrawFrameControl(hdc,&iconRect, DFC_BUTTON, DFCS_BUTTONCHECK | DFCS_FLAT);
+                                    }
+
+                                    textRect.left += 2;
 
                                     // Not happy about this at all , wanted it to be generic (as a  simple ListView_GetItemText should suffice if we knew max text length), 
                                     // but sending LVM_GETITEMTEXT msg to get the text length seems confusing (for me) by MSDN doc.
