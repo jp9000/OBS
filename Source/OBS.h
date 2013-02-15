@@ -152,6 +152,9 @@ public:
     virtual bool SetBitRate(DWORD maxBitrate, DWORD bufferSize)=0;
 
     virtual void GetHeaders(DataPacket &packet)=0;
+    virtual void GetSEI(DataPacket &packet) {}
+
+    virtual void RequestKeyframe() {}
 
     virtual String GetInfoString() const=0;
 };
@@ -550,11 +553,14 @@ class OBS
 
     QWORD firstSceneTimestamp;
     QWORD latestVideoTime;
-    
+
     bool bUseCFR;
 
     bool bWriteToFile;
     VideoFileStream *fileStream;
+
+    bool bRequestKeyframe;
+    int  keyframeWait;
 
     static DWORD STDCALL MainCaptureThread(LPVOID lpUnused);
     bool BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, VideoSegment &segmentOut);
@@ -741,6 +747,8 @@ public:
     ~OBS();
 
     void ResizeWindow(bool bRedrawRenderFrame);
+
+    void RequestKeyframe(int waitTime);
 
     inline void AddAudioSource(AudioSource *source)
     {

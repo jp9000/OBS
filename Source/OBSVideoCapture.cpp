@@ -197,6 +197,9 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
         {
             VideoPacketData &packet = curSegment.packets[i];
 
+            if(packet.type == PacketType_VideoHighest)
+                bRequestKeyframe = false;
+
             //Log(TEXT("v:%u, %llu"), curSegment.timestamp, frameInfo.firstFrameTime+curSegment.timestamp);
 
             network->SendPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, packet.type);
@@ -436,6 +439,19 @@ void OBS::MainCaptureLoop()
 
         lastStreamTime = qwTime;
 #endif
+
+        //------------------------------------
+
+        if(bRequestKeyframe && keyframeWait > 0)
+        {
+            keyframeWait -= int(frameDelta);
+
+            if(keyframeWait <= 0)
+            {
+                GetVideoEncoder()->RequestKeyframe();
+                bRequestKeyframe = false;
+            }
+        }
 
         if(!bPushToTalkDown && pushToTalkTimeLeft > 0)
         {

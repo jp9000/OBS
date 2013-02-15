@@ -35,30 +35,38 @@ typedef enum
     LL_MODE_AUTO,
 } latencymode_t;
 
-struct PacketTimeSize
+/*struct PacketTimeSize
 {
     inline PacketTimeSize(DWORD timestamp, DWORD size) : timestamp(timestamp), size(size) {}
 
     DWORD timestamp;
     DWORD size;
-};
+};*/
 
 class RTMPPublisher : public NetworkStream
 {
     friend class DelayedPublisher;
 
-    List<PacketTimeSize> packetSizeRecord;
-    DWORD outputRateSize;
+    /*List<PacketTimeSize> packetSizeRecord;
+    DWORD outputRateSize;*/
 
     bool numStartFrames, bNetworkStrain;
     double dNetworkStrain;
-    int ignoreCount;
-    DWORD currentBufferSize, sendTime;
-    DWORD bufferTime, outputRateWindowTime, dropThreshold, connectTime;
-    List<NetworkPacket> queuedPackets;
 
+    //-----------------------------------------------
+    // stream startup stuff
     bool bStreamStarted;
     bool bConnecting, bConnected;
+    DWORD firstTimestamp;
+    bool bSentFirstKeyframe, bSentFirstAudio;
+
+    //-----------------------------------------------
+    // frame drop stuff
+
+    DWORD minFramedropTimestsamp;
+    DWORD dropThreshold;
+    List<NetworkPacket> queuedPackets;
+    UINT currentBufferSize, outputRateWindowTime;
 
     static DWORD WINAPI CreateConnectionThread(RTMPPublisher *publisher);
 
@@ -95,9 +103,6 @@ protected:
     UINT numPFramesDumped;
     UINT numBFramesDumped;
 
-    DWORD numVideoPacketsBuffered;
-    DWORD firstBufferedVideoFrameTimestamp;
-
     BYTE *dataBuffer;
     int dataBufferSize;
 
@@ -105,6 +110,8 @@ protected:
 
     latencymode_t lowLatencyMode;
     int latencyFactor;
+    int totalTimesWaited;
+    int totalBytesWaited;
 
     void SendLoop();
     void SocketLoop();
@@ -115,7 +122,7 @@ protected:
     void DropFrame(UINT id);
     bool DoIFrameDelay(bool bBFramesOnly);
 
-    void ProcessPackets(DWORD timestamp);
+    void ProcessPackets();
 
 public:
     RTMPPublisher();

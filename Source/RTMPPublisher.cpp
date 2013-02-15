@@ -72,19 +72,9 @@ RTMPPublisher::RTMPPublisher()
 
     //------------------------------------------
 
-    bufferTime = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("FrameDropBufferTime"), 1400);
-    if(bufferTime < 1000) bufferTime = 1000;
-    else if(bufferTime > 10000) bufferTime = 10000;
-
-    connectTime = bufferTime-600; //connect about 600 milliseconds before we start sending
-    outputRateWindowTime = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("OutputRateWindowTime"), 1000);
-    if(outputRateWindowTime < 200)       outputRateWindowTime = 200;
-    else if(outputRateWindowTime > 4000) outputRateWindowTime = 4000;
-
-    dropThreshold = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("FrameDropThreshold"), 500);
+    dropThreshold = AppConfig->GetInt(TEXT("Publish"), TEXT("FrameDropThreshold"), 500);
     if(dropThreshold < 50)        dropThreshold = 50;
     else if(dropThreshold > 1000) dropThreshold = 1000;
-    dropThreshold += bufferTime;
 
     if (AppConfig->GetInt(TEXT("Publish"), TEXT("LowLatencyMode"), 0))
     {
@@ -127,6 +117,8 @@ bool RTMPPublisher::Init(RTMP *rtmpIn, UINT tcpBufferSize)
     int curTCPBufSize, curTCPBufSizeSize = sizeof(curTCPBufSize);
     getsockopt (rtmp->m_sb.sb_socket, SOL_SOCKET, SO_SNDBUF, (char *)&curTCPBufSize, &curTCPBufSizeSize);
 
+    Log(TEXT("SO_SNDBUF was at %u"), curTCPBufSize);
+
     if(curTCPBufSize < int(tcpBufferSize))
     {
         setsockopt (rtmp->m_sb.sb_socket, SOL_SOCKET, SO_SNDBUF, (const char *)&tcpBufferSize, sizeof(tcpBufferSize));
@@ -134,8 +126,8 @@ bool RTMPPublisher::Init(RTMP *rtmpIn, UINT tcpBufferSize)
         if(curTCPBufSize != tcpBufferSize)
             Log(TEXT("Could not set SO_SNDBUF to %u, value is now %u"), tcpBufferSize, curTCPBufSize);
     }
-    else
-        Log(TEXT("SO_SNDBUF already at %u"), curTCPBufSize);
+
+    Log(TEXT("SO_SNDBUF is now %u"), tcpBufferSize);
 
     //------------------------------------------
 
@@ -237,6 +229,8 @@ RTMPPublisher::~RTMPPublisher()
     double dBFrameDropPercentage = double(numBFramesDumped)/NumTotalVideoFrames()*100.0;
     double dPFrameDropPercentage = double(numPFramesDumped)/NumTotalVideoFrames()*100.0;
 
+    Log(TEXT("Number of times waited to send: %d, Waited for a total of %d bytes"), totalTimesWaited, totalBytesWaited);
+
     Log(TEXT("Number of b-frames dropped: %u (%0.2g%%), Number of p-frames dropped: %u (%0.2g%%), Total %u (%0.2g%%)"),
         numBFramesDumped, dBFrameDropPercentage,
         numPFramesDumped, dPFrameDropPercentage,
@@ -246,115 +240,125 @@ RTMPPublisher::~RTMPPublisher()
         Log(TEXT("average send time: %u"), totalTime/totalCalls);*/
 
     strRTMPErrors.Clear();
+
     //--------------------------
 }
 
-void RTMPPublisher::ProcessPackets(DWORD timestamp)
+void RTMPPublisher::ProcessPackets()
 {
-    if(queuedPackets.Num())
+    if(!bStreamStarted)
     {
-        DWORD queueTime = queuedPackets.Last().timestamp-queuedPackets[0].timestamp;
-        DWORD adjustedOutputRateSize = outputRateSize*bufferTime/outputRateWindowTime;
+        BeginPublishingInternal();
+        bStreamStarted = true;
+    }
 
-        //Log(TEXT("queueTime: %u, adjustedOutputRateSize: %u, currentBufferSize: %u, queuedPackets.Num: %u, timestamp: %u"), queueTime, adjustedOutputRateSize, currentBufferSize, queuedPackets.Num(), timestamp);
+    if (queuedPackets.Num() && minFramedropTimestsamp < queuedPackets[0].timestamp)
+    {
+        DWORD queueDuration = (queuedPackets.Last().timestamp - queuedPackets[0].timestamp);
 
-        if (queueTime)
-            dNetworkStrain = (double(queueTime)/double(dropThreshold));
-
-        if( bStreamStarted &&
-            !ignoreCount &&
-            queueTime > dropThreshold)
+        if(queueDuration >= dropThreshold)
         {
-            if(currentBufferSize > adjustedOutputRateSize)
-            {
-                //Log(TEXT("killing frames"));
-                while(currentBufferSize > adjustedOutputRateSize)
-                {
-                    if(!DoIFrameDelay(false))
-                        break;
-                }
+            minFramedropTimestsamp = queuedPackets.Last().timestamp;
 
-                bNetworkStrain = true;
-            }
-            /*else
-                Log(TEXT("ignoring frames"));*/
+            OSDebugOut(TEXT("dropped at %u, threshold is %u, total duration is %u\r\n"), currentBufferSize, dropThreshold, queueDuration);
+            //what the hell, just flush it all for now as a test and force a keyframe 1 second after
+            while(DoIFrameDelay(false));
 
-            ignoreCount = int(queuedPackets.Num());
+            if(packetWaitType > PacketType_VideoLow)
+                App->RequestKeyframe(1000);
         }
     }
 
-    if(!bConnected && !bConnecting && timestamp > connectTime && !bStopping)
+    if(queuedPackets.Num())
+        ReleaseSemaphore(hSendSempahore, 1, NULL);
+}
+
+void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)
+{
+    if(!bConnected && !bConnecting && !bStopping)
     {
         hConnectionThread = OSCreateThread((XTHREAD)CreateConnectionThread, this);
         bConnecting = true;
     }
 
-    if(timestamp >= bufferTime)
-    {
-        if(bConnected)
-        {
-            if(!bStreamStarted)
-            {
-                BeginPublishingInternal();
-                bStreamStarted = true;
-
-                DWORD timeAdjust = timestamp-bufferTime;
-                bufferTime += timeAdjust;
-                dropThreshold += timeAdjust;
-
-                Log(TEXT("bufferTime: %u, outputRateWindowTime: %u, dropThreshold: %u"), bufferTime, outputRateWindowTime, dropThreshold);
-            }
-
-            sendTime = timestamp-bufferTime;
-            ReleaseSemaphore(hSendSempahore, 1, NULL);
-        }
-    }
-}
-
-void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)
-{
     if(!bStopping)
     {
-        totalFrames++;
-        if(type != PacketType_Audio)
-            totalVideoFrames++;
-
-        bool bAddPacket = false;
-        if(type >= packetWaitType)
-        {
-            if(type != PacketType_Audio)
-                packetWaitType = PacketType_VideoDisposable;
-
-            bAddPacket = true;
-        }
-
         OSEnterMutex(hDataMutex);
 
-        if(bAddPacket)
+        if(bConnected)
         {
-            List<BYTE> paddedData;
-            paddedData.SetSize(size+RTMP_MAX_HEADER_SIZE);
-            mcpy(paddedData.Array()+RTMP_MAX_HEADER_SIZE, data, size);
+            ProcessPackets();
 
-            currentBufferSize += paddedData.Num();
+            bool bSend = bSentFirstKeyframe;
 
-            UINT droppedFrameVal = queuedPackets.Num() ? queuedPackets.Last().distanceFromDroppedFrame+1 : 10000;
+            if(!bSentFirstKeyframe)
+            {
+                if(type == PacketType_VideoHighest)
+                {
+                    firstTimestamp = timestamp;
+                    bSend = true;
 
-            NetworkPacket *queuedPacket = queuedPackets.CreateNew();
-            queuedPacket->distanceFromDroppedFrame = droppedFrameVal;
-            queuedPacket->data.TransferFrom(paddedData);
-            queuedPacket->timestamp = timestamp;
-            queuedPacket->type = type;
+                    OSDebugOut(TEXT("got keyframe: %u\r\n"), OSGetTime());
+                }
+            }
+
+            if(bSend)
+            {
+                timestamp -= firstTimestamp;
+
+                if(!bSentFirstAudio && type == PacketType_Audio)
+                {
+                    timestamp = 0;
+                    bSentFirstAudio = true;
+                }
+
+                totalFrames++;
+                if(type != PacketType_Audio)
+                    totalVideoFrames++;
+
+                bool bAddPacket = false;
+                if(type >= packetWaitType)
+                {
+                    if(type != PacketType_Audio)
+                        packetWaitType = PacketType_VideoDisposable;
+
+                    bAddPacket = true;
+                }
+
+                if(bAddPacket)
+                {
+                    List<BYTE> paddedData;
+                    paddedData.SetSize(size+RTMP_MAX_HEADER_SIZE);
+                    mcpy(paddedData.Array()+RTMP_MAX_HEADER_SIZE, data, size);
+
+                    if(!bSentFirstKeyframe)
+                    {
+                        DataPacket sei;
+                        App->GetVideoEncoder()->GetSEI(sei);
+                        paddedData.InsertArray(RTMP_MAX_HEADER_SIZE+5, sei.lpPacket, sei.size);
+
+                        bSentFirstKeyframe = true;
+                    }
+
+                    currentBufferSize += paddedData.Num();
+
+                    UINT droppedFrameVal = queuedPackets.Num() ? queuedPackets.Last().distanceFromDroppedFrame+1 : 10000;
+
+                    NetworkPacket *queuedPacket = queuedPackets.CreateNew();
+                    queuedPacket->distanceFromDroppedFrame = droppedFrameVal;
+                    queuedPacket->data.TransferFrom(paddedData);
+                    queuedPacket->timestamp = timestamp;
+                    queuedPacket->type = type;
+                }
+                else
+                {
+                    if(type < PacketType_VideoHigh)
+                        numBFramesDumped++;
+                    else
+                        numPFramesDumped++;
+                }
+            }
         }
-        else
-        {
-            if(type < PacketType_VideoHigh)
-                numBFramesDumped++;
-            else
-                numPFramesDumped++;
-        }
-
-        ProcessPackets(timestamp);
 
         OSLeaveMutex(hDataMutex);
     }
@@ -600,6 +604,14 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
         failReason = Str("Connection.InvalidStream");
         goto end;
     }
+
+    //-----------------------------------------
+
+    OSDebugOut(TEXT("Connected: %u\r\n"), OSGetTime());
+
+    App->RequestKeyframe(2000);
+
+    //-----------------------------------------
 
     bSuccess = true;
 
@@ -921,40 +933,16 @@ void RTMPPublisher::SendLoop()
                 break;
             }
 
-            bool bFoundPacket = false;
-
-            if(queuedPackets[0].timestamp < sendTime)
-            {
-                NetworkPacket &packet = queuedPackets[0];
-
-                bFoundPacket = true;
-                currentBufferSize -= packet.data.Num();
-            }
-            else
-            {
-                OSLeaveMutex(hDataMutex);
-                break;
-            }
-
             List<BYTE> packetData;
             PacketType type       = queuedPackets[0].type;
             DWORD      timestamp  = queuedPackets[0].timestamp;
             packetData.TransferFrom(queuedPackets[0].data);
 
+            currentBufferSize -= packetData.Num();
+
             queuedPackets.Remove(0);
 
             OSLeaveMutex(hDataMutex);
-
-            //--------------------------------------------
-
-            if(ignoreCount > 0)
-            {
-                if(--ignoreCount == 0)
-                {
-                    //Log(TEXT("ignore complete"));
-                    bNetworkStrain = false;
-                }
-            }
 
             //--------------------------------------------
 
@@ -982,14 +970,9 @@ void RTMPPublisher::SendLoop()
                 RUNONCE Log(TEXT("okay, this is strange"));
             }
 
-            /*QWORD sendTimeTotal = OSGetTimeMicroseconds()-sendTimeStart;
-            Log(TEXT("send time: %llu"), sendTimeTotal);
-            totalTime += sendTimeTotal;
-            totalCalls++;*/
-
             //----------------------------------------------------------
 
-            outputRateSize += packetData.Num();
+            /*outputRateSize += packetData.Num();
             packetSizeRecord << PacketTimeSize(timestamp, packetData.Num());
             if(packetSizeRecord.Num())
             {
@@ -1004,7 +987,7 @@ void RTMPPublisher::SendLoop()
 
                 if(packetID != 0)
                     packetSizeRecord.RemoveRange(0, packetID);
-            }
+            }*/
 
             bytesSent += packetData.Num();
         }
@@ -1179,7 +1162,10 @@ retrySend:
     {
         ULONG idealSendBacklog;
 
-        Log(TEXT("RTMPPublisher::BufferedSend: Socket buffer is full (%d / %d bytes), waiting to send %d bytes"), network->curDataBufferLen, network->dataBufferSize, len);
+        //Log(TEXT("RTMPPublisher::BufferedSend: Socket buffer is full (%d / %d bytes), waiting to send %d bytes"), network->curDataBufferLen, network->dataBufferSize, len);
+        ++network->totalTimesWaited;
+        network->totalBytesWaited += len;
+
         OSLeaveMutex(network->hDataBufferMutex);
 
         if (!idealsendbacklogquery(sb->sb_socket, &idealSendBacklog))

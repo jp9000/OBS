@@ -80,6 +80,8 @@ class X264Encoder : public VideoEncoder
 
     int fps_ms;
 
+    bool bRequestKeyframe;
+
     UINT width, height;
 
     String curPreset, curTune;
@@ -89,7 +91,7 @@ class X264Encoder : public VideoEncoder
     bool bUseCBR, bUseCFR;
 
     List<VideoPacket> CurrentPackets;
-    List<BYTE> HeaderPacket;
+    List<BYTE> HeaderPacket, SEIData;
 
     INT64 delayOffset;
 
@@ -244,6 +246,7 @@ public:
         }
 
         if(bUse444) paramData.i_csp = X264_CSP_I444;
+        else paramData.i_csp = X264_CSP_I420;
 
         x264 = x264_encoder_open(&paramData);
         if(!x264)
@@ -273,10 +276,19 @@ public:
         packets.Clear();
         ClearPackets();
 
+        if(bRequestKeyframe)
+            picIn->i_type = X264_TYPE_IDR;
+
         if(x264_encoder_encode(x264, &nalOut, &nalNum, picIn, &picOut) < 0)
         {
             AppWarning(TEXT("x264 encode failed"));
             return false;
+        }
+
+        if(bRequestKeyframe)
+        {
+            picIn->i_type = X264_TYPE_AUTO;
+            bRequestKeyframe = false;
         }
 
         if(!bFirstFrameProcessed && nalNum)
@@ -324,7 +336,21 @@ public:
         {
             x264_nal_t &nal = nalOut[i];
 
-            if(nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE || nal.i_type == NAL_SEI)
+            if(nal.i_type == NAL_SEI)
+            {
+                SEIData.Clear();
+
+                BYTE *skip = nal.p_payload;
+                while(*(skip++) != 0x1);
+                int skipBytes = (int)(skip-nal.p_payload);
+
+                int newPayloadSize = (nal.i_payload-skipBytes);
+                BufferOutputSerializer packetOut(SEIData);
+
+                packetOut.OutputDword(htonl(newPayloadSize));
+                packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
+            }
+            else if(nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE)
             {
                 BYTE *skip = nal.p_payload;
                 while(*(skip++) != 0x1);
@@ -340,13 +366,21 @@ public:
 
                 if(bNewPacket)
                 {
-                    packetOut.OutputByte((nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SEI) ? 0x17 : 0x27);
+                    packetOut.OutputByte((nal.i_type == NAL_SLICE_IDR) ? 0x17 : 0x27);
                     packetOut.OutputByte(1);
                     packetOut.Serialize(timeOffsetAddr, 3);
                 }
 
                 packetOut.OutputDword(htonl(newPayloadSize));
                 packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
+
+                switch(nal.i_ref_idc)
+                {
+                    case NAL_PRIORITY_DISPOSABLE:   packetTypes << PacketType_VideoDisposable;  break;
+                    case NAL_PRIORITY_LOW:          packetTypes << PacketType_VideoLow;         break;
+                    case NAL_PRIORITY_HIGH:         packetTypes << PacketType_VideoHigh;        break;
+                    case NAL_PRIORITY_HIGHEST:      packetTypes << PacketType_VideoHighest;     break;
+                }
             }
             /*else if(nal.i_type == NAL_SPS)
             {
@@ -371,14 +405,6 @@ public:
             }*/
             else
                 continue;
-
-            switch(nal.i_ref_idc)
-            {
-                case NAL_PRIORITY_DISPOSABLE:   packetTypes << PacketType_VideoDisposable;  break;
-                case NAL_PRIORITY_LOW:          packetTypes << PacketType_VideoLow;         break;
-                case NAL_PRIORITY_HIGH:         packetTypes << PacketType_VideoHigh;        break;
-                case NAL_PRIORITY_HIGHEST:      packetTypes << PacketType_VideoHighest;     break;
-            }
         }
 
         packets.SetSize(CurrentPackets.Num());
@@ -387,6 +413,9 @@ public:
             packets[i].lpPacket = CurrentPackets[i].Packet.Array();
             packets[i].size     = CurrentPackets[i].Packet.Num();
         }
+
+        if(!packets.Num())
+            OSDebugOut(TEXT("returned nothing\r\n"));
 
         return true;
     }
@@ -433,6 +462,12 @@ public:
         packet.size     = HeaderPacket.Num();
     }
 
+    virtual void GetSEI(DataPacket &packet)
+    {
+        packet.lpPacket = SEIData.Array();
+        packet.size     = SEIData.Num();
+    }
+
     int GetBitRate() const {return paramData.rc.i_vbv_max_bitrate;}
 
     String GetInfoString() const
@@ -470,6 +505,11 @@ public:
             Log(TEXT("Could not set new encoder bitrate, error value %u"), retVal);
 
         return retVal == 0;
+    }
+
+    virtual void RequestKeyframe()
+    {
+        bRequestKeyframe = true;
     }
 };
 
