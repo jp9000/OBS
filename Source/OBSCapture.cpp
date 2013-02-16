@@ -349,6 +349,9 @@ void OBS::Start()
 
     strOutputFile.FindReplace(TEXT("\\"), TEXT("/"));
 
+    if(strOutputFile.IsValid() && strOutputFile[strOutputFile.Length()-1] != '/')
+        strOutputFile.AppendChar('/');
+
     if (bWriteToFile)
     {
         if(OSFileExists(strOutputFile))
