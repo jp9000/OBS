@@ -12,6 +12,8 @@
 #define IDC_INFO                        1006
 #define IDC_STRETCHTOSCREEN2            1007
 #define IDC_IGNOREASPECT                1007
+#define IDC_GAMMA                       1035
+#define IDC_GAMMAVAL                    1151
 
 // Next default values for new objects
 // 

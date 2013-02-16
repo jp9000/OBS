@@ -21,7 +21,6 @@
 
 uniform Texture2D diffuseTexture;
 uniform float2 baseDimensionI;
-uniform float  gamma;
 
 SamplerState textureSampler
 {
@@ -91,7 +90,6 @@ float4 main(VertData input) : SV_Target
     rgba += diffuseTexture.Sample(textureSampler, (floorVal+float2(1.5, 2.5)) * baseDimensionI) * pixelMat._32;
     rgba += diffuseTexture.Sample(textureSampler, (floorVal+float2(2.5, 2.5)) * baseDimensionI) * pixelMat._33;
     rgba /= 5.0625;
-    rgba.rgb = pow(rgba.rgb, gamma);
 
     const float4x4 yuvMat  = {0.257, -0.148,  0.439, 0.0,
                               0.504, -0.291, -0.368, 0.0,

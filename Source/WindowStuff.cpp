@@ -3239,3 +3239,17 @@ INT_PTR CALLBACK OBS::PluginsDialogProc(HWND hwnd, UINT message, WPARAM wParam, 
 
     return FALSE;
 }
+
+int SetSliderText(HWND hwndParent, int controlSlider, int controlText)
+{
+    HWND hwndSlider = GetDlgItem(hwndParent, controlSlider);
+    HWND hwndText   = GetDlgItem(hwndParent, controlText);
+
+    int sliderVal = (int)SendMessage(hwndSlider, TBM_GETPOS, 0, 0);
+    float floatVal = float(sliderVal)*0.01f;
+
+    SetWindowText(hwndText, FormattedString(TEXT("%.02f"), floatVal));
+
+    return sliderVal;
+}
+

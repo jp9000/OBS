@@ -20,8 +20,9 @@
 uniform Texture2D diffuseTexture;
 uniform float4 outputColor;
 uniform float4 colorKey;
-uniform float similarity;
-uniform float blend;
+uniform float  similarity;
+uniform float  blend;
+uniform float  gamma = 1.0;
 
 SamplerState textureSampler
 {
@@ -44,5 +45,8 @@ float4 main(VertData input) : SV_Target
     float colorDiff = length(rgbx.rgb - colorKey.rgb);
     rgbx.a = saturate(max(colorDiff-similarity, 0.0)/blend);
 
-    return rgbx * outputColor;
+    float4 outColor = rgbx * outputColor;
+    outColor.rgb = pow(outColor.rgb, gamma);
+
+    return outColor;
 }

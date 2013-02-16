@@ -40,6 +40,7 @@ struct WindowInfo
 
 struct ConfigDialogData
 {
+    CTSTR lpName;
     XElement *data;
     List<WindowInfo> windowData;
     StringList adminWindows;
@@ -163,6 +164,19 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
     } while (hwndCurrent = GetNextWindow(hwndCurrent, GW_HWNDNEXT));
 }
 
+int SetSliderText(HWND hwndParent, int controlSlider, int controlText)
+{
+    HWND hwndSlider = GetDlgItem(hwndParent, controlSlider);
+    HWND hwndText   = GetDlgItem(hwndParent, controlText);
+
+    int sliderVal = (int)SendMessage(hwndSlider, TBM_GETPOS, 0, 0);
+    float floatVal = float(sliderVal)*0.01f;
+
+    SetWindowText(hwndText, FormattedString(TEXT("%.02f"), floatVal));
+
+    return sliderVal;
+}
+
 INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch(message)
@@ -190,8 +204,34 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 EnableWindow(GetDlgItem(hwnd, IDC_INVERTMOUSEONCLICK), bCaptureMouse);
                 EnableWindow(GetDlgItem(hwnd, IDC_IGNOREASPECT), bStretchImage);
 
+                //------------------------------------------
+
+                int gammaVal = data->GetInt(TEXT("gamma"), 100);
+
+                HWND hwndTemp = GetDlgItem(hwnd, IDC_GAMMA);
+                SendMessage(hwndTemp, TBM_CLEARTICS, FALSE, 0);
+                SendMessage(hwndTemp, TBM_SETRANGE, FALSE, MAKELPARAM(50, 175));
+                SendMessage(hwndTemp, TBM_SETTIC, 0, 100);
+                SendMessage(hwndTemp, TBM_SETPOS, TRUE, gammaVal);
+
+                SetSliderText(hwnd, IDC_GAMMA, IDC_GAMMAVAL);
+
                 return TRUE;
             }
+
+        case WM_HSCROLL:
+            {
+                if(GetDlgCtrlID((HWND)lParam) == IDC_GAMMA)
+                {
+                    int gamma = SetSliderText(hwnd, IDC_GAMMA, IDC_GAMMAVAL);
+
+                    ConfigDialogData *info = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
+                    ImageSource *source = API->GetSceneImageSource(info->lpName);
+                    if(source)
+                        source->SetInt(TEXT("gamma"), gamma);
+                }
+            }
+            break;
 
         case WM_COMMAND:
             switch(LOWORD(wParam))
@@ -262,10 +302,26 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         data->SetInt(TEXT("ignoreAspect"), SendMessage(GetDlgItem(hwnd, IDC_IGNOREASPECT), BM_GETCHECK, 0, 0) == BST_CHECKED);
                         data->SetInt(TEXT("captureMouse"), SendMessage(GetDlgItem(hwnd, IDC_CAPTUREMOUSE), BM_GETCHECK, 0, 0) == BST_CHECKED);
                         data->SetInt(TEXT("invertMouse"),  SendMessage(GetDlgItem(hwnd, IDC_INVERTMOUSEONCLICK), BM_GETCHECK, 0, 0) == BST_CHECKED);
+
+                        data->SetInt(TEXT("gamma"),        (int)SendMessage(GetDlgItem(hwnd, IDC_GAMMA), TBM_GETPOS, 0, 0));
+
+                        EndDialog(hwnd, LOWORD(wParam));
                     }
+                    break;
 
                 case IDCANCEL:
-                    EndDialog(hwnd, LOWORD(wParam));
+                    {
+                        ConfigDialogData *info = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
+                        ImageSource *source = API->GetSceneImageSource(info->lpName);
+                        XElement *data = info->data;
+
+                        if(source)
+                        {
+                            source->SetInt(TEXT("gamma"), data->GetInt(TEXT("gamma"), 100));
+                        }
+
+                        EndDialog(hwnd, LOWORD(wParam));
+                    }
             }
             break;
 
@@ -289,6 +345,7 @@ bool STDCALL ConfigureGraphicsCaptureSource(XElement *element, bool bCreating)
 
     ConfigDialogData *configData = new ConfigDialogData;
     configData->data = data;
+    configData->lpName = element->GetName();
 
     if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_CONFIG), API->GetMainWindow(), ConfigureDialogProc, (LPARAM)configData) == IDOK)
     {

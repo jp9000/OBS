@@ -197,8 +197,12 @@ void GraphicsCaptureSource::BeginScene()
     bIgnoreAspect = data->GetInt(TEXT("ignoreAspect")) != 0;
     bCaptureMouse = data->GetInt(TEXT("captureMouse"), 1) != 0;
 
+    gamma = data->GetInt(TEXT("gamma"), 100);
+
     if(bCaptureMouse && data->GetInt(TEXT("invertMouse")))
         invertShader = CreatePixelShaderFromFile(TEXT("shaders\\InvertTexture.pShader"));
+
+    drawShader = CreatePixelShaderFromFile(TEXT("shaders\\DrawTexture_ColorAdjust.pShader"));
 
     AttemptCapture();
 }
@@ -327,6 +331,12 @@ void GraphicsCaptureSource::EndScene()
         invertShader = NULL;
     }
 
+    if(drawShader)
+    {
+        delete drawShader;
+        drawShader = NULL;
+    }
+
     if(cursorTexture)
     {
         delete cursorTexture;
@@ -391,6 +401,15 @@ void GraphicsCaptureSource::Render(const Vect2 &pos, const Vect2 &size)
 {
     if(capture)
     {
+        Shader *lastShader = GetCurrentPixelShader();
+
+        float fGamma = float(-(gamma-100) + 100) * 0.01f;
+
+        LoadPixelShader(drawShader);
+        HANDLE hGamma = drawShader->GetParameterByName(TEXT("gamma"));
+        if(hGamma)
+            drawShader->SetFloat(hGamma, fGamma);
+
         //----------------------------------------------------------
         // capture mouse
 
@@ -519,21 +538,19 @@ void GraphicsCaptureSource::Render(const Vect2 &pos, const Vect2 &size)
 
                 newCursorSize *= texStretch;
 
-                Shader *lastShader;
                 bool bInvertCursor = false;
                 if(invertShader)
                 {
-                    lastShader = GetCurrentPixelShader();
                     if(bInvertCursor = ((GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0 || (GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0))
                         LoadPixelShader(invertShader);
                 }
 
                 DrawSprite(cursorTexture, 0xFFFFFFFF, newCursorPos.x, newCursorPos.y+newCursorSize.y, newCursorPos.x+newCursorSize.x, newCursorPos.y);
-
-                if(bInvertCursor)
-                    LoadPixelShader(lastShader);
             }
         }
+
+        if(lastShader)
+            LoadPixelShader(lastShader);
     }
 }
 
@@ -546,4 +563,14 @@ void GraphicsCaptureSource::UpdateSettings()
 {
     EndScene();
     BeginScene();
+}
+
+void GraphicsCaptureSource::SetInt(CTSTR lpName, int iVal)
+{
+    if(scmpi(lpName, TEXT("gamma")) == 0)
+    {
+        gamma = iVal;
+        if(gamma < 50)        gamma = 50;
+        else if(gamma > 175)  gamma = 175;
+    }
 }

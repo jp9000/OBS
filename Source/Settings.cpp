@@ -1142,19 +1142,6 @@ LRESULT WINAPI ResolutionEditSubclassProc(HWND hwnd, UINT message, WPARAM wParam
     return CallWindowProc((WNDPROC)editProc, hwnd, message, wParam, lParam);
 }
 
-float SetSliderText(HWND hwndParent, int controlSlider, int controlText)
-{
-    HWND hwndSlider = GetDlgItem(hwndParent, controlSlider);
-    HWND hwndText   = GetDlgItem(hwndParent, controlText);
-
-    int sliderVal = (int)SendMessage(hwndSlider, TBM_GETPOS, 0, 0);
-    float floatVal = float(sliderVal)*0.01f;
-
-    SetWindowText(hwndText, FormattedString(TEXT("%.02f"), floatVal));
-
-    return floatVal;
-}
-
 INT_PTR CALLBACK OBS::VideoSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HWND hwndTemp;
@@ -1282,33 +1269,11 @@ INT_PTR CALLBACK OBS::VideoSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
 
                 //--------------------------------------------
 
-                int gammaVal = AppConfig->GetInt(TEXT("Video"), TEXT("Gamma"), 100);
-
-                hwndTemp = GetDlgItem(hwnd, IDC_GAMMA);
-                SendMessage(hwndTemp, TBM_CLEARTICS, FALSE, 0);
-                SendMessage(hwndTemp, TBM_SETRANGE, FALSE, MAKELPARAM(50, 175));
-                SendMessage(hwndTemp, TBM_SETTIC, 0, 100);
-                SendMessage(hwndTemp, TBM_SETPOS, TRUE, gammaVal);
-
-                SetSliderText(hwnd, IDC_GAMMA, IDC_GAMMAVAL);
-
-                //--------------------------------------------
-
                 ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_HIDE);
                 App->SetChangedSettings(false);
 
                 return TRUE;
             }
-
-        case WM_HSCROLL:
-            {
-                if(GetDlgCtrlID((HWND)lParam) == IDC_GAMMA)
-                {
-                    App->gamma = SetSliderText(hwnd, IDC_GAMMA, IDC_GAMMAVAL);
-                    App->SetChangedSettings(true);
-                }
-            }
-            break;
 
         case WM_COMMAND:
             {
@@ -1896,12 +1861,6 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
 void OBS::CancelSettings()
 {
-    if(curSettingsSelection == Settings_Video)
-    {
-        gamma = float(AppConfig->GetInt(TEXT("Video"), TEXT("Gamma"), 100))*0.01f;
-        if(gamma < 0.5f)        gamma = 0.5f;
-        else if(gamma > 1.75)   gamma = 1.75f;
-    }
 }
 
 void OBS::ApplySettings()

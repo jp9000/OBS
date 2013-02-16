@@ -105,7 +105,11 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
     }
 
     bUseQPC = bIsMic = bMic;
-    err = mmEnumerator->GetDevice(lpID, &mmDevice);
+
+    if (scmpi(lpID, TEXT("Default")) == 0)
+        err = mmEnumerator->GetDefaultAudioEndpoint(bMic ? eCapture : eRender, bMic ? eCommunications : eConsole, &mmDevice);
+    else
+        err = mmEnumerator->GetDevice(lpID, &mmDevice);
 
     if(FAILED(err))
     {

@@ -18,3 +18,5 @@
 
 
 #pragma once
+
+int SetSliderText(HWND hwndParent, int controlSlider, int controlText);

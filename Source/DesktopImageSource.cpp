@@ -47,6 +47,7 @@ class DesktopImageSource : public ImageSource
     UINT     keySimilarity, keyBlend;
 
     UINT     opacity;
+    int      gamma;
 
     //-------------------------
     // win 8 capture stuff
@@ -374,6 +375,7 @@ public:
 
         Vect2 ulCoord = Vect2(0.0f, 0.0f),
               lrCoord = Vect2(1.0f, 1.0f);
+
         if(bWindows8MonitorCapture)
         {
             LONG monitorWidth  = monitorData.rect.right-monitorData.rect.left;
@@ -392,6 +394,8 @@ public:
 
         if(lastRendered)
         {
+            float fGamma = float(-(gamma-100) + 100) * 0.01f;
+
             Shader *lastPixelShader = GetCurrentPixelShader();
 
             float fOpacity = float(opacity)*0.01f;
@@ -400,6 +404,9 @@ public:
             if(bUseColorKey)
             {
                 LoadPixelShader(colorKeyShader);
+                HANDLE hGamma = colorKeyShader->GetParameterByName(TEXT("gamma"));
+                if(hGamma)
+                    colorKeyShader->SetFloat(hGamma, fGamma);
 
                 float fSimilarity = float(keySimilarity)*0.01f;
                 float fBlend      = float(keyBlend)*0.01f;
@@ -416,6 +423,10 @@ public:
             else
             {
                 LoadPixelShader(alphaIgnoreShader);
+                HANDLE hGamma = alphaIgnoreShader->GetParameterByName(TEXT("gamma"));
+                if(hGamma)
+                    alphaIgnoreShader->SetFloat(hGamma, fGamma);
+
                 DrawSpriteEx(lastRendered, (opacity255<<24) | 0xFFFFFF,
                         pos.x, pos.y, pos.x+size.x, pos.y+size.y,
                         ulCoord.x, ulCoord.y,
@@ -467,6 +478,10 @@ public:
         int y  = data->GetInt(TEXT("captureY"));
         int cx = data->GetInt(TEXT("captureCX"), 32);
         int cy = data->GetInt(TEXT("captureCY"), 32);
+
+        gamma = data->GetInt(TEXT("gamma"), 100);
+        if(gamma < 50)        gamma = 50;
+        else if(gamma > 175)  gamma = 175;
 
         UINT newMonitor = data->GetInt(TEXT("monitor"));
         if(newMonitor > App->NumMonitors())
@@ -577,6 +592,12 @@ public:
         else if(scmpi(lpName, TEXT("opacity")) == 0)
         {
             opacity = (UINT)iVal;
+        }
+        else if(scmpi(lpName, TEXT("gamma")) == 0)
+        {
+            gamma = iVal;
+            if(gamma < 50)        gamma = 50;
+            else if(gamma > 175)  gamma = 175;
         }
     }
 };
@@ -1263,6 +1284,20 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 SendMessage(GetDlgItem(hwnd, IDC_OPACITY2), UDM_SETRANGE32, 0, 100);
                 SendMessage(GetDlgItem(hwnd, IDC_OPACITY2), UDM_SETPOS32, 0, opacity);
 
+                //------------------------------------------
+
+                int gammaVal = data->GetInt(TEXT("gamma"), 100);
+
+                hwndTemp = GetDlgItem(hwnd, IDC_GAMMA);
+                SendMessage(hwndTemp, TBM_CLEARTICS, FALSE, 0);
+                SendMessage(hwndTemp, TBM_SETRANGE, FALSE, MAKELPARAM(50, 175));
+                SendMessage(hwndTemp, TBM_SETTIC, 0, 100);
+                SendMessage(hwndTemp, TBM_SETPOS, TRUE, gammaVal);
+
+                SetSliderText(hwnd, IDC_GAMMA, IDC_GAMMAVAL);
+
+                //--------------------------------------------
+
                 return TRUE;
             }
 
@@ -1324,6 +1359,20 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 ImageSource *source = API->GetSceneImageSource(configData->lpName);
                 if(source)
                     source->SetInt(TEXT("useColorKey"), true);
+            }
+            break;
+
+        case WM_HSCROLL:
+            {
+                if(GetDlgCtrlID((HWND)lParam) == IDC_GAMMA)
+                {
+                    int gamma = SetSliderText(hwnd, IDC_GAMMA, IDC_GAMMAVAL);
+
+                    ConfigDesktopSourceInfo *configData = (ConfigDesktopSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
+                    ImageSource *source = API->GetSceneImageSource(configData->lpName);
+                    if(source)
+                        source->SetInt(TEXT("gamma"), gamma);
+                }
             }
             break;
 
@@ -1692,6 +1741,11 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                         UINT opacity = (UINT)SendMessage(GetDlgItem(hwnd, IDC_OPACITY2), UDM_GETPOS32, 0, 0);
                         data->SetInt(TEXT("opacity"), opacity);
+
+                        //---------------------------------
+
+                        int gamma = (int)SendMessage(GetDlgItem(hwnd, IDC_GAMMA), TBM_GETPOS, 0, 0);
+                        data->SetInt(TEXT("gamma"), gamma);
                     }
 
                 case IDCANCEL:
@@ -1707,6 +1761,7 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                             source->SetInt(TEXT("keySimilarity"), data->GetInt(TEXT("keySimilarity"), 10));
                             source->SetInt(TEXT("keyBlend"),      data->GetInt(TEXT("keyBlend"), 0));
                             source->SetInt(TEXT("opacity"),       data->GetInt(TEXT("opacity"), 100));
+                            source->SetInt(TEXT("gamma"),         data->GetInt(TEXT("gamma"), 100));
                         }
                     }
 

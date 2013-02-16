@@ -19,7 +19,6 @@
 
 uniform Texture2D diffuseTexture;
 uniform float2 baseDimensionI;
-uniform float  gamma;
 
 SamplerState textureSampler
 {
@@ -43,8 +42,6 @@ float4 main(VertData input) : SV_Target
 
     //a nice quick colorspace conversion
     float4 rgba = diffuseTexture.Sample(textureSampler, (input.texCoord)*baseDimensionI);
-    rgba.rgb = pow(rgba.rgb, gamma);
-
     float4 yuvx = mul(float4(rgba.rgb, 1.0), yuvMat);
     return float4(saturate(yuvx.zxy), rgba.a);
 }

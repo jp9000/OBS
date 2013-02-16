@@ -37,11 +37,13 @@ class GraphicsCaptureSource : public ImageSource
     DWORD targetProcessID;
     UINT warningID;
 
+    int gamma;
+
     POINT cursorPos;
     int xHotspot, yHotspot;
     bool bMouseCaptured, bMouseDown;
     HCURSOR hCurrentCursor;
-    Shader *invertShader;
+    Shader *invertShader, *drawShader;
     Texture *cursorTexture;
 
     HANDLE hSignalRestart, hSignalEnd;
@@ -69,4 +71,6 @@ public:
     Vect2 GetSize() const;
 
     void UpdateSettings();
+
+    void SetInt(CTSTR lpName, int iVal);
 };

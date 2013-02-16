@@ -47,7 +47,10 @@ struct BlankAudioPlayback
         if(FAILED(err))
             CrashError(TEXT("Could not create IMMDeviceEnumerator"));
 
-        err = mmEnumerator->GetDevice(lpDevice, &mmDevice);
+        if (scmpi(lpDevice, TEXT("Default")) == 0)
+            err = mmEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &mmDevice);
+        else
+            err = mmEnumerator->GetDevice(lpDevice, &mmDevice);
         if(FAILED(err))
             CrashError(TEXT("Could not create IMMDevice"));
 

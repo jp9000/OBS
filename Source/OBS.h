@@ -401,7 +401,7 @@ class OBS
     bool    bTransitioning;
     float   transitionAlpha;
 
-    Shader  *mainVertexShader, *mainPixelShader, *previewPixelShader, *yuvScalePixelShader;
+    Shader  *mainVertexShader, *mainPixelShader, *yuvScalePixelShader;
     Shader  *solidVertexShader, *solidPixelShader;
 
     //---------------------------------------------------
@@ -513,7 +513,6 @@ class OBS
     UINT    scaleCX,  scaleCY;
     UINT    outputCX, outputCY;
     float   downscale;
-    float   gamma;
     UINT    frameTime, fps;
     bool    bUsing444;
 

@@ -19,6 +19,7 @@
 
 uniform Texture2D diffuseTexture;
 uniform float4 outputColor;
+uniform float  gamma = 1.0;
 
 SamplerState textureSampler
 {
@@ -38,5 +39,8 @@ float4 main(VertData input) : SV_Target
     float4 rgbx = diffuseTexture.Sample(textureSampler, input.texCoord);
     rgbx.a = 1.0;
 
-    return rgbx * outputColor;
+    float4 outColor = rgbx * outputColor;
+    outColor.rgb = pow(outColor.rgb, gamma);
+
+    return outColor;
 }

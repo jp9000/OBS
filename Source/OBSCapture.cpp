@@ -141,10 +141,6 @@ void OBS::Start()
     baseCX = AppConfig->GetInt(TEXT("Video"), TEXT("BaseWidth"),  defCX);
     baseCY = AppConfig->GetInt(TEXT("Video"), TEXT("BaseHeight"), defCY);
 
-    gamma = float(AppConfig->GetInt(TEXT("Video"), TEXT("Gamma"), 100))*0.01f;
-    if(gamma < 0.5f)        gamma = 0.5f;
-    else if(gamma > 1.75f)  gamma = 1.75f;
-
     baseCX = MIN(MAX(baseCX, 128), 4096);
     baseCY = MIN(MAX(baseCY, 128), 4096);
 
@@ -176,8 +172,6 @@ void OBS::Start()
 
     solidVertexShader   = CreateVertexShaderFromFile(TEXT("shaders/DrawSolid.vShader"));
     solidPixelShader    = CreatePixelShaderFromFile(TEXT("shaders/DrawSolid.pShader"));
-
-    previewPixelShader  = CreatePixelShaderFromFile(TEXT("shaders/DrawTexture_ColorAdjust.pShader"));
 
     //------------------------------------------------------------------
 
@@ -245,9 +239,6 @@ void OBS::Start()
 
     Log(TEXT("Playback device %s"), strPlaybackDevice.Array());
     playbackDevices.FreeData();
-
-    if(strPlaybackDevice.CompareI(TEXT("Default")))
-        GetDefaultSpeakerID(strPlaybackDevice);
 
     desktopAudio = CreateAudioSource(false, strPlaybackDevice);
 
@@ -552,7 +543,6 @@ void OBS::Stop()
 
     delete mainVertexShader;
     delete mainPixelShader;
-    delete previewPixelShader;
     delete yuvScalePixelShader;
 
     delete solidVertexShader;
@@ -560,7 +550,6 @@ void OBS::Stop()
 
     mainVertexShader = NULL;
     mainPixelShader = NULL;
-    previewPixelShader = NULL;
     yuvScalePixelShader = NULL;
 
     solidVertexShader = NULL;
