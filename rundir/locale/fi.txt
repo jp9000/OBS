@@ -184,7 +184,7 @@ Settings.Video.Monitor              "Näyttö:"
 Settings.Video.Resolution           "Resoluutio:"
 
 Sources.BitmapSource            "Kuva"
-Sources.GameCaptureSource       "Pelin GAkaappaus"
+Sources.GameCaptureSource       "Pelin kaappaus"
 Sources.GlobalSource            "Yleinen lähde"
 Sources.SoftwareCaptureSource   "Ruudunkaappaus"
 Sources.TextSource              "Teksti"
