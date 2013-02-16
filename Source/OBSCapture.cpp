@@ -349,26 +349,38 @@ void OBS::Start()
 
     strOutputFile.FindReplace(TEXT("\\"), TEXT("/"));
 
-    if(strOutputFile.IsValid() && strOutputFile[strOutputFile.Length()-1] != '/')
-        strOutputFile.AppendChar('/');
-
     if (bWriteToFile)
     {
-        if(OSFileExists(strOutputFile))
+        OSFindData ofd;
+        HANDLE hFind = NULL;
+        bool bUseDateTimeName = true;
+
+        if(hFind = OSFindFirstFile(strOutputFile, ofd))
         {
-            String strFileWithoutExtension = GetPathWithoutExtension(strOutputFile);
             String strFileExtension = GetPathExtension(strOutputFile);
+            String strFileWithoutExtension = GetPathWithoutExtension(strOutputFile);
             UINT curFile = 0;
 
-            String strNewFilePath;
-            do 
+            if(strFileExtension.IsValid() && !ofd.bDirectory)
             {
-                strNewFilePath.Clear() << strFileWithoutExtension << TEXT(" (") << FormattedString(TEXT("%02u"), ++curFile) << TEXT(").") << strFileExtension;
-            } while(OSFileExists(strNewFilePath));
+                String strNewFilePath;
+                do 
+                {
+                    strNewFilePath.Clear() << strFileWithoutExtension << TEXT(" (") << FormattedString(TEXT("%02u"), ++curFile) << TEXT(").") << strFileExtension;
+                } while(OSFileExists(strNewFilePath));
 
-            strOutputFile = strNewFilePath;
+                strOutputFile = strNewFilePath;
+
+                bUseDateTimeName = false;
+            }
+
+            if(ofd.bDirectory)
+                strOutputFile.AppendChar('/');
+
+            OSFindClose(hFind);
         }
-        else
+
+        if(bUseDateTimeName)
         {
             String strFileName = GetPathFileName(strOutputFile);
 
