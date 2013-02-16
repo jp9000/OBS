@@ -401,7 +401,7 @@ class OBS
     bool    bTransitioning;
     float   transitionAlpha;
 
-    Shader  *mainVertexShader, *mainPixelShader, *yuvScalePixelShader;
+    Shader  *mainVertexShader, *mainPixelShader, *previewPixelShader, *yuvScalePixelShader;
     Shader  *solidVertexShader, *solidPixelShader;
 
     //---------------------------------------------------
@@ -459,6 +459,7 @@ class OBS
         EnableWindow(GetDlgItem(hwndSettings, IDC_APPLY), (bSettingsChanged = bChanged));
     }
 
+    void   CancelSettings();
     void   ApplySettings();
 
     void   RefreshDownscales(HWND hwnd, int cx, int cy);
@@ -512,6 +513,7 @@ class OBS
     UINT    scaleCX,  scaleCY;
     UINT    outputCX, outputCY;
     float   downscale;
+    float   gamma;
     UINT    frameTime, fps;
     bool    bUsing444;
 

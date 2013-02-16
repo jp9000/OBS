@@ -579,7 +579,10 @@ void OBS::MainCaptureLoop()
             SetRenderTarget(NULL);
 
             LoadVertexShader(mainVertexShader);
-            LoadPixelShader(mainPixelShader);
+            LoadPixelShader(previewPixelShader);
+
+            HANDLE hGamma = previewPixelShader->GetParameterByName(TEXT("gamma"));
+            previewPixelShader->SetFloat(hGamma, -(gamma-1.0f) + 1.0f);
 
             Ortho(0.0f, renderFrameSize.x, renderFrameSize.y, 0.0f, -100.0f, 100.0f);
             SetViewport(0.0f, 0.0f, renderFrameSize.x, renderFrameSize.y);
@@ -614,6 +617,9 @@ void OBS::MainCaptureLoop()
 
         LoadVertexShader(mainVertexShader);
         LoadPixelShader(yuvScalePixelShader);
+
+        HANDLE hGamma = yuvScalePixelShader->GetParameterByName(TEXT("gamma"));
+        yuvScalePixelShader->SetFloat(hGamma, -(gamma-1.0f) + 1.0f);
 
         Texture *yuvRenderTexture = yuvRenderTextures[curRenderTarget];
         SetRenderTarget(yuvRenderTexture);

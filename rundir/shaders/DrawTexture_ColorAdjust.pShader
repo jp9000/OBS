@@ -18,7 +18,7 @@
 
 
 uniform Texture2D diffuseTexture;
-uniform float2 baseDimensionI;
+uniform float4 outputColor;
 uniform float  gamma;
 
 SamplerState textureSampler
@@ -36,23 +36,7 @@ struct VertData
 
 float4 main(VertData input) : SV_Target
 {
-    float2 texAdjust = (input.texCoord-0.5)*2.0;
-    float2 floorVal = floor(texAdjust+0.001);
-
-    float4 rgba;
-    rgba  = diffuseTexture.Sample(textureSampler, (floorVal+float2(0.5f, 0.5f)) * baseDimensionI);
-    rgba += diffuseTexture.Sample(textureSampler, (floorVal+float2(1.5f, 0.5f)) * baseDimensionI);
-    rgba += diffuseTexture.Sample(textureSampler, (floorVal+float2(0.5f, 1.5f)) * baseDimensionI);
-    rgba += diffuseTexture.Sample(textureSampler, (floorVal+float2(1.5f, 1.5f)) * baseDimensionI);
-    rgba *= 0.25;
-    rgba.rgb = pow(rgba.rgb, gamma);
-
-    const float4x4 yuvMat  = {0.257, -0.148,  0.439, 0.0,
-                              0.504, -0.291, -0.368, 0.0,
-                              0.098,  0.439, -0.071, 0.0,
-                              0.0625, 0.50,   0.50,  1.0};
-
-    //a nice quick colorspace conversion
-    float4 yuvx = mul(float4(rgba.rgb, 1.0), yuvMat);
-    return float4(saturate(yuvx.zxy), rgba.a);
+    float4 outColor = diffuseTexture.Sample(textureSampler, input.texCoord) * outputColor;
+    outColor.rgb = pow(outColor.rgb, gamma);
+    return outColor;
 }

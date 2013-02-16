@@ -65,6 +65,7 @@
 #define IDC_FPS_EDIT                    1031
 #define IDC_SIZEX                       1033
 #define IDC_SIZEY                       1034
+#define IDC_GAMMA                       1035
 #define IDC_USECUSTOM                   1036
 #define IDC_USEMONITOR                  1037
 #define IDC_DISABLEAERO                 1038
@@ -226,6 +227,7 @@
 #define IDC_EDIT2                       1147
 #define IDC_LATENCYTUNE                 1147
 #define IDC_SETSTREAMSIZE               1148
+#define IDC_GAMMAVAL                    1151
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -260,7 +262,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        141
 #define _APS_NEXT_COMMAND_VALUE         40048
-#define _APS_NEXT_CONTROL_VALUE         1149
+#define _APS_NEXT_CONTROL_VALUE         1152
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
