@@ -214,6 +214,7 @@ public:
 
     bool    Open(CTSTR lpFile);
     void    Close(bool bSave=false);
+    void    Save();
 
     inline bool IsOpen() const {return RootElement != NULL;}
 

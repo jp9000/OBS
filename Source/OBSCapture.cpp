@@ -60,6 +60,8 @@ void OBS::Start()
 
     OSEnterMutex (hStartupShutdownMutex);
 
+    scenesConfig.Save();
+
     //-------------------------------------------------------------
 
     fps = AppConfig->GetInt(TEXT("Video"), TEXT("FPS"), 30);

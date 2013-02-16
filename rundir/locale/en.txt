@@ -54,11 +54,12 @@ Listbox.SetHotkey   "Set Hotkey"
 MainMenu.File       "&File"
 MainMenu.Help       "&Help"
 MainMenu.Profiles   "&Profiles"
-MainMenu.Settings   "&Settings..."
+MainMenu.Settings   "&Settings"
 
 MainMenu.Settings.AlwaysOnTop "&Always On Top"
 
 MainMenu.File.Exit  "E&xit"
+MainMenu.File.Save  "&Save"
 
 MainMenu.Help.Contents      "&Contents"
 MainMenu.Help.VisitWebsite  "Visit Website"

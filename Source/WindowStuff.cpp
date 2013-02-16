@@ -1996,6 +1996,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     DialogBox(hinstMain, MAKEINTRESOURCE(IDD_GLOBAL_SOURCES), hwnd, (DLGPROC)OBS::GlobalSourcesProc);
                     break;
 
+                case ID_FILE_SAVE2:
+                    App->scenesConfig.Save();
+                    break;
+
                 case ID_FILE_EXIT:
                 case ID_EXIT:
                     PostQuitMessage(0);

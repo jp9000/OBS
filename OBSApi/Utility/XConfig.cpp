@@ -1010,7 +1010,18 @@ bool  XConfig::Open(CTSTR lpFile)
 
 void  XConfig::Close(bool bSave)
 {
-    if(RootElement && bSave)
+    if(bSave)
+        Save();
+
+    delete RootElement;
+    RootElement = NULL;
+
+    strFileName.Clear();
+}
+
+void  XConfig::Save()
+{
+    if(RootElement)
     {
         XFile file;
         file.Open(strFileName, XFILE_WRITE, XFILE_CREATEALWAYS);
@@ -1019,9 +1030,4 @@ void  XConfig::Close(bool bSave)
 
         file.Close();
     }
-
-    delete RootElement;
-    RootElement = NULL;
-
-    strFileName.Clear();
 }
