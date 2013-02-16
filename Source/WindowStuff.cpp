@@ -747,6 +747,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                                     if(!ci->configProc(newSourceElement, true))
                                     {
                                         sources->RemoveElement(newSourceElement);
+                                        App->EnableSceneSwitching(true);
                                         break;
                                     }
                                 }
