@@ -373,6 +373,10 @@ DWORD WINAPI CheckUpdateThread (VOID *arg)
                             goto abortUpdate;
                         }
 
+                        //force OBS to perform another update check immediately after updating in case of issues
+                        //with the new version
+                        GlobalConfig->SetInt(TEXT("General"), TEXT("LastUpdateCheck"), 0);
+
                         //since we're in a separate thread we can't just PostQuitMessage ourselves
                         SendMessage(hwndMain, WM_CLOSE, 0, 0);
                     }
