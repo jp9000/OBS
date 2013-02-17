@@ -54,6 +54,19 @@ struct VideoPacket
 
 const float baseCRF = 22.0f;
 
+bool valid_x264_string(const String &str, const char **x264StringList)
+{
+    bool bValidString = false;
+
+    do
+    {
+        if(str.CompareI(String(*x264StringList)))
+            return true;
+    } while (*++x264StringList != 0);
+
+    return false;
+}
+
 class X264Encoder : public VideoEncoder
 {
     x264_param_t paramData;
@@ -69,7 +82,7 @@ class X264Encoder : public VideoEncoder
 
     UINT width, height;
 
-    String curPreset;
+    String curPreset, curTune;
 
     bool bFirstFrameProcessed;
 
@@ -101,14 +114,62 @@ class X264Encoder : public VideoEncoder
 public:
     X264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitrate, int bufferSize, bool bUseCFR)
     {
+        curPreset = preset;
+
         fps_ms = 1000/fps;
+
+        StringList paramList;
+
+        BOOL bUseCustomParams = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCustomSettings"));
+        if(bUseCustomParams)
+        {
+            String strCustomParams = AppConfig->GetString(TEXT("Video Encoding"), TEXT("CustomSettings"));
+            strCustomParams.KillSpaces();
+
+            if(strCustomParams.IsValid())
+            {
+                Log(TEXT("Using custom x264 settings: \"%s\""), strCustomParams.Array());
+
+                strCustomParams.GetTokenList(paramList, ' ', FALSE);
+                for(UINT i=0; i<paramList.Num(); i++)
+                {
+                    String &strParam = paramList[i];
+                    if(!schr(strParam, '='))
+                        continue;
+
+                    String strParamName = strParam.GetToken(0, '=');
+                    String strParamVal  = strParam.GetTokenOffset(1, '=');
+
+                    if(strParamName.CompareI(TEXT("preset")))
+                    {
+                        if(valid_x264_string(strParamVal, (const char**)x264_preset_names))
+                            curPreset = strParamVal;
+                        else
+                            Log(TEXT("invalid preset: %s"), strParamVal.Array());
+
+                        paramList.Remove(i--);
+                    }
+                    else if(strParamName.CompareI(TEXT("tune")))
+                    {
+                        if(valid_x264_string(strParamVal, (const char**)x264_tune_names))
+                            curTune = strParamVal;
+                        else
+                            Log(TEXT("invalid tune: %s"), strParamVal.Array());
+
+                        paramList.Remove(i--);
+                    }
+                }
+            }
+        }
 
         zero(&paramData, sizeof(paramData));
 
-        curPreset = preset;
         LPSTR lpPreset = curPreset.CreateUTF8String();
-        x264_param_default_preset(&paramData, lpPreset, NULL);
+        LPSTR lpTune = curTune.CreateUTF8String();
 
+        x264_param_default_preset(&paramData, lpPreset, lpTune);
+
+        Free(lpTune);
         Free(lpPreset);
 
         this->width  = width;
@@ -154,56 +215,31 @@ public:
         paramData.pf_log                = get_x264_log;
         paramData.i_log_level           = X264_LOG_INFO;
 
-        BOOL bUseCustomParams = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCustomSettings"));
-        if(bUseCustomParams)
+        for(UINT i=0; i<paramList.Num(); i++)
         {
-            String strCustomParams = AppConfig->GetString(TEXT("Video Encoding"), TEXT("CustomSettings"));
-            strCustomParams.KillSpaces();
+            String &strParam = paramList[i];
+            if(!schr(strParam, '='))
+                continue;
 
-            if(strCustomParams.IsValid())
+            String strParamName = strParam.GetToken(0, '=');
+            String strParamVal  = strParam.GetTokenOffset(1, '=');
+
+            if( strParamName.CompareI(TEXT("fps")) || 
+                strParamName.CompareI(TEXT("force-cfr")))
             {
-                Log(TEXT("Using custom x264 settings: \"%s\""), strCustomParams.Array());
+                Log(TEXT("The custom x264 command '%s' is unsupported, use the application settings instead"), strParam.Array());
+                continue;
+            }
+            else
+            {
+                LPSTR lpParam = strParamName.CreateUTF8String();
+                LPSTR lpVal   = strParamVal.CreateUTF8String();
 
-                StringList paramList;
-                strCustomParams.GetTokenList(paramList, ' ', FALSE);
-                for(UINT i=0; i<paramList.Num(); i++)
-                {
-                    String &strParam = paramList[i];
-                    if(!schr(strParam, '='))
-                        continue;
+                if(x264_param_parse(&paramData, lpParam, lpVal) != 0)
+                    Log(TEXT("The custom x264 command '%s' failed"), strParam.Array());
 
-                    String strParamName = strParam.GetToken(0, '=');
-                    String strParamVal  = strParam.GetTokenOffset(1, '=');
-
-                    if( strParamName.CompareI(TEXT("fps")) /*|| 
-                        strParamName.CompareI(TEXT("force-cfr"))*/)
-                    {
-                        continue;
-                    }
-                    else if(strParamName.CompareI(TEXT("preset")))
-                    {
-                        LPSTR lpVal = strParamVal.CreateUTF8String();
-                        x264_param_default_preset(&paramData, lpVal, NULL);
-                        Free(lpVal);
-                    }
-                    else if(strParamName.CompareI(TEXT("tune")))
-                    {
-                        LPSTR lpVal = strParamVal.CreateUTF8String();
-                        x264_param_default_preset(&paramData, NULL, lpVal);
-                        Free(lpVal);
-                    }
-                    else
-                    {
-                        LPSTR lpParam = strParamName.CreateUTF8String();
-                        LPSTR lpVal   = strParamVal.CreateUTF8String();
-
-                        if(x264_param_parse(&paramData, lpParam, lpVal) != 0)
-                            Log(TEXT("The custom x264 command '%s' failed"), strParam.Array());
-
-                        Free(lpParam);
-                        Free(lpVal);
-                    }
-                }
+                Free(lpParam);
+                Free(lpVal);
             }
         }
 

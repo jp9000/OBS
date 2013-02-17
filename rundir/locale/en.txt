@@ -123,14 +123,13 @@ Settings.Advanced.VideoEncoderCPUTradeoffToolTip    "Setting this value higher r
 Settings.Advanced.VideoEncoderSettings              "Custom x264 Encoder Settings"
 Settings.Advanced.VideoEncoderSettingsTooltip       "This allows you to set custom x264 encoder settings.  In the form of [parameter]=[value] (e.g. \"vbv-maxrate=1000 vbv-bufsize=1000\")."
 
-Settings.Audio.PlaybackDevice       "Desktop Audio Device:"
 Settings.Audio.Device               "Microphone/Auxiliary Audio Device:"
-
 Settings.Audio.ForceMicMono         "Force Microphone/Auxiliary to Mono:"
 Settings.Audio.MicBoost             "Mic/Aux Boost (multiple):"
 Settings.Audio.MicTimeOffset        "Mic Time Offset (milliseconds):"
 Settings.Audio.MuteDesktopHotkey    "Mute/Unmute Desktop Hotkey:"
 Settings.Audio.MuteMicHotkey        "Mute/Unmute Mic Hotkey:"
+Settings.Audio.PlaybackDevice       "Desktop Audio Device:"
 Settings.Audio.PushToTalkDelay      "Push-to-talk Delay (milliseconds):"
 Settings.Audio.PushToTalkHotkey     "Use Push-to-talk:"
 
@@ -194,7 +193,7 @@ Sources.TransitionSource        "Image Slide Show"
 Sources.BitmapSource.Color      "Color:"
 Sources.BitmapSource.Empty      "No bitmap entered.  Please browse and select a bitmap"
 Sources.BitmapSource.Opacity    "Opacity:"
-Sources.BitmapSource.Monitor    "Check for changes:"
+Sources.BitmapSource.Monitor    "Check for file changes:"
 
 Sources.GameCaptureSource.Application       "Application:"
 Sources.GameCaptureSource.IgnoreAspect      "Ignore aspect ratio"
