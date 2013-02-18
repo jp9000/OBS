@@ -44,4 +44,12 @@ services : {
       "Primary" :    rtmp://publish.dailymotion.com/publish-dm
     }
   }
+  Hashd.tv : {
+    id : 7
+    servers : {
+      "US Dallas, TX"     : rtmp://edge-dal1.hashd.tv/live
+      "EU Amsterdam, NL"  : rtmp://edge-ams1.hashd.tv/live
+    }
+  }
+  
 }
