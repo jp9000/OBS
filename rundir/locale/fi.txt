@@ -59,6 +59,7 @@ MainMenu.Profiles   "&Profiilit"
 MainMenu.Settings.AlwaysOnTop "&Aina päällimmäisenä"
 
 MainMenu.File.Exit  "&Sulje"
+MainMenu.File.Save  "&Tallenna"
 
 MainMenu.Help.Contents      "S&isältö"
 MainMenu.Help.VisitWebsite  "&Kotisivu"
