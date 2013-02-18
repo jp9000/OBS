@@ -2,7 +2,7 @@
 
 ; Define your application name
 !define APPNAME "Open Broadcaster Software"
-!define APPNAMEANDVERSION "Open Broadcaster Software 0.47a"
+!define APPNAMEANDVERSION "Open Broadcaster Software 0.471b"
 
 ; Additional script dependencies
 !include WinVer.nsh
@@ -124,6 +124,9 @@ Section "Open Broadcaster Software" Section1
 	File "..\rundir\plugins\DShowPlugin\shaders\*.?Shader"
 	SetOutPath "$INSTDIR\plugins\GraphicsCapture\"
 	File "..\GraphicsCapture\GraphicsCaptureHook\Release\GraphicsCaptureHook.dll"
+	File "..\GraphicsCapture\GraphicsCaptureHook\x64\Release\GraphicsCaptureHook64.dll"
+	File "..\injectHelper\Release\injectHelper.exe"
+	File "..\injectHelper\x64\Release\injectHelper64.exe"
 	${if} ${RunningX64}
 		SetOutPath "$INSTDIR\64bit\"
 		File "..\x64\Release\OBS.exe"
@@ -144,7 +147,10 @@ Section "Open Broadcaster Software" Section1
 		SetOutPath "$INSTDIR\64bit\plugins\DShowPlugin\shaders\"
 		File "..\rundir\plugins\DShowPlugin\shaders\*.?Shader"
 		SetOutPath "$INSTDIR\64bit\plugins\GraphicsCapture\"
-		File "..\GraphicsCapture\GraphicsCaptureHook\x64\Release\GraphicsCaptureHook.dll"
+		File "..\GraphicsCapture\GraphicsCaptureHook\Release\GraphicsCaptureHook.dll"
+		File "..\GraphicsCapture\GraphicsCaptureHook\x64\Release\GraphicsCaptureHook64.dll"
+		File "..\injectHelper\Release\injectHelper.exe"
+		File "..\injectHelper\x64\Release\injectHelper64.exe"
 	${endif}
 
 	WriteUninstaller "$INSTDIR\uninstall.exe"
@@ -204,7 +210,8 @@ Section Uninstall
 	Delete "$INSTDIR\plugins\GraphicsCapture.dll"
 	Delete "$INSTDIR\plugins\DShowPlugin\locale\*.txt"
 	Delete "$INSTDIR\plugins\DShowPlugin\shaders\*.?Shader"
-	Delete "$INSTDIR\plugins\GraphicsCapture\GraphicsCaptureHook.dll"
+	Delete "$INSTDIR\plugins\GraphicsCapture\*.dll"
+	Delete "$INSTDIR\plugins\GraphicsCapture\*.exe"
 	${if} ${RunningX64}
 		Delete "$INSTDIR\64bit\OBS.exe"
 		Delete "$INSTDIR\64bit\libx264-129.dll"
@@ -218,7 +225,8 @@ Section Uninstall
 		Delete "$INSTDIR\64bit\plugins\GraphicsCapture.dll"
 		Delete "$INSTDIR\64bit\plugins\DShowPlugin\locale\*.txt"
 		Delete "$INSTDIR\64bit\plugins\DShowPlugin\shaders\*.?Shader"
-		Delete "$INSTDIR\64bit\plugins\GraphicsCapture\GraphicsCaptureHook.dll"
+		Delete "$INSTDIR\64bit\plugins\GraphicsCapture\*.dll"
+		Delete "$INSTDIR\64bit\plugins\GraphicsCapture\*.exe"
 	${endif}
 
 	; Remove remaining directories
