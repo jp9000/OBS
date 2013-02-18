@@ -755,6 +755,7 @@ void RTMPPublisher::SocketLoop()
                 }
                 else if (ret == 0)
                 {
+                    errorCode = 0;
                     fatalError = TRUE;
                 }
 
