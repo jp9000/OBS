@@ -409,6 +409,15 @@ void __cdecl OSDebugOut(const TCHAR *format, ...)
     OSDebugOutva(format, arglist);
 }
 
+CTSTR STDCALL OSGetErrorString(DWORD errorCode)
+{
+    static TCHAR errorString[2048];
+
+    FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, errorCode, 0, errorString, _countof(errorString)-1, NULL);
+    errorString[_countof(errorString)-1] = 0;
+
+    return errorString;
+}
 
 
 HANDLE STDCALL OSLoadLibrary(CTSTR lpFile)
