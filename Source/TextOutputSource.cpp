@@ -327,26 +327,9 @@ class TextOutputSource : public ImageSource
         ClampVal(textSize.cx, 32, 8192);
         ClampVal(textSize.cy, 32, 8192);
 
-        if(textureSize.cx != textSize.cx || textureSize.cy != textSize.cy)
-        {
-            if(texture)
-            {
-                delete texture;
-                texture = NULL;
-            }
+        //----------------------------------------------------------------------
+        // write image
 
-            mcpy(&textureSize, &textSize, sizeof(textureSize));
-            texture = CreateGDITexture(textSize.cx, textSize.cy);
-        }
-
-        if(!texture)
-        {
-            AppWarning(TEXT("TextSource::UpdateTexture: could not create texture"));
-            DeleteObject(hFont);
-            return;
-        }
-
-        if(texture->GetDC(hdc))
         {
             HDC hTempDC = CreateCompatibleDC(NULL);
 
@@ -358,13 +341,13 @@ class TextOutputSource : public ImageSource
             BITMAPINFOHEADER &bih = bi.bmiHeader;
             bih.biSize = sizeof(bih);
             bih.biBitCount = 32;
-            bih.biWidth  = textureSize.cx;
-            bih.biHeight = textureSize.cy;
+            bih.biWidth  = textSize.cx;
+            bih.biHeight = textSize.cy;
             bih.biPlanes = 1;
 
             HBITMAP hBitmap = CreateDIBSection(hTempDC, &bi, DIB_RGB_COLORS, &lpBits, NULL, 0);
- 
-            Gdiplus::Bitmap      bmp(textureSize.cx, textureSize.cy, 4*textureSize.cx, PixelFormat32bppARGB, (BYTE*)lpBits);
+
+            Gdiplus::Bitmap      bmp(textSize.cx, textSize.cy, 4*textSize.cx, PixelFormat32bppARGB, (BYTE*)lpBits);
 
             graphics = new Gdiplus::Graphics(&bmp); 
 
@@ -372,12 +355,12 @@ class TextOutputSource : public ImageSource
 
             DWORD bkColor;
 
-			if(backgroundOpacity == 0 && scrollSpeed !=0)
+		    if(backgroundOpacity == 0 && scrollSpeed !=0)
                 bkColor = 1<<24 | (color&0x00FFFFFF);
             else
                 bkColor = ((strCurrentText.IsValid() || bUseExtents) ? GetAlphaVal(backgroundOpacity) : GetAlphaVal(0)) | (backgroundColor&0x00FFFFFF);
 
-            if((textureSize.cx > boundingBox.Width  || textureSize.cy > boundingBox.Height) && !bUseExtents)
+            if((textSize.cx > boundingBox.Width  || textSize.cy > boundingBox.Height) && !bUseExtents)
             {
                 stat = graphics->Clear(Gdiplus::Color( 0x00000000));
                 if(stat != Gdiplus::Ok)
@@ -401,6 +384,7 @@ class TextOutputSource : public ImageSource
             graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
             
             if(strCurrentText.IsValid())
+            {
                 if(bUseOutline)
                 {
                     boundingBox.Offset(outlineSize/2, outlineSize/2);
@@ -420,20 +404,36 @@ class TextOutputSource : public ImageSource
                     if(stat != Gdiplus::Ok)
                         AppWarning(TEXT("TextSource::UpdateTexture: Graphics::DrawString failed: %u"), (int)stat);
                 }
-
-            
-            HBITMAP hbmpOld = (HBITMAP)SelectObject(hTempDC, hBitmap);
-
-            BitBlt(hdc, 0, 0, textureSize.cx, textureSize.cy, hTempDC, 0, 0, SRCCOPY);
-
-            SelectObject(hTempDC, hbmpOld);
-            DeleteDC(hTempDC);
-            DeleteObject(hBitmap);
+            }
 
             delete brush;
             delete graphics;
 
-            texture->ReleaseDC();
+            //----------------------------------------------------------------------
+            // upload texture
+
+            if(textureSize.cx != textSize.cx || textureSize.cy != textSize.cy)
+            {
+                if(texture)
+                {
+                    delete texture;
+                    texture = NULL;
+                }
+
+                mcpy(&textureSize, &textSize, sizeof(textureSize));
+                texture = CreateTexture(textSize.cx, textSize.cy, GS_BGRA, lpBits, FALSE, FALSE);
+            }
+            else if(texture)
+                texture->SetImage(lpBits, GS_IMAGEFORMAT_BGRA, 4*textSize.cx);
+
+            if(!texture)
+            {
+                AppWarning(TEXT("TextSource::UpdateTexture: could not create texture"));
+                DeleteObject(hFont);
+            }
+
+            DeleteDC(hTempDC);
+            DeleteObject(hBitmap);
         }
     }
 
@@ -569,10 +569,10 @@ public:
                 }
 
                 LoadSamplerState(ss);
-                DrawSpriteEx(texture, outputColor, pos.x, pos.y+newSize.y, pos.x+newSize.x, pos.y, ul.x, ul.y, lr.x, lr.y);
+                DrawSpriteEx(texture, outputColor, pos.x, pos.y, pos.x+newSize.x, pos.y+newSize.y, ul.x, ul.y, lr.x, lr.y);
             }
             else
-                DrawSprite(texture, outputColor, pos.x, pos.y+newSize.y, pos.x+newSize.x, pos.y);
+                DrawSprite(texture, outputColor, pos.x, pos.y, pos.x+newSize.x, pos.y+newSize.y);
 
             if(bUseExtents && !bWrap)
                 SetScissorRect(NULL);
