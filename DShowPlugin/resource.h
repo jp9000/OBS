@@ -43,6 +43,9 @@
 #define IDC_TIMEOFFSET                  1033
 #define IDC_CHECK1                      1034
 #define IDC_NOBUFFERING                 1034
+#define IDC_CUSTOM1                     1035
+#define IDC_VOLUME                      1035
+#define IDC_VOLMETER                    1036
 
 // Next default values for new objects
 // 
@@ -50,7 +53,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        107
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1035
+#define _APS_NEXT_CONTROL_VALUE         1037
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

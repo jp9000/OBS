@@ -515,14 +515,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Source\VolumeControl.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Source\VolumeMeter.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Source\WindowStuff.cpp"
 				>
 			</File>
@@ -574,14 +566,6 @@
 			</File>
 			<File
 				RelativePath=".\Source\Updater.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Source\VolumeControl.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Source\VolumeMeter.h"
 				>
 			</File>
 			<File

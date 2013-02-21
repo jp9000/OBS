@@ -922,6 +922,12 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET), soundOutputType == 1);
                 EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET_EDIT), soundOutputType == 1);
+                EnableWindow(GetDlgItem(hwnd, IDC_VOLUME), soundOutputType != 0);
+
+                //------------------------------------------
+
+                float fVol = configData->data->GetFloat(TEXT("volume"), 1.0f);
+                SetVolumeControlValue(GetDlgItem(hwnd, IDC_VOLUME), fVol);
 
                 //------------------------------------------
 
@@ -1040,18 +1046,27 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 case IDC_NOSOUND:
                 case IDC_PLAYDESKTOPSOUND:
-                    if(HIWORD(wParam) == BN_CLICKED)
-                    {
-                        EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET), FALSE);
-                        EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET_EDIT), FALSE);
-                    }
-                    break;
-
                 case IDC_OUTPUTSOUND:
                     if(HIWORD(wParam) == BN_CLICKED)
                     {
-                        EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET), TRUE);
-                        EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET_EDIT), TRUE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET),      LOWORD(wParam) == IDC_OUTPUTSOUND);
+                        EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET_EDIT), LOWORD(wParam) == IDC_OUTPUTSOUND);
+                        EnableWindow(GetDlgItem(hwnd, IDC_VOLUME),          LOWORD(wParam) != IDC_NOSOUND);
+                    }
+                    break;
+
+                case IDC_VOLUME:
+                    if(HIWORD(wParam) == VOLN_ADJUSTING || HIWORD(wParam) == VOLN_FINALVALUE)
+                    {
+                        if(IsWindowEnabled((HWND)lParam))
+                        {
+                            float fVol = GetVolumeControlValue((HWND)lParam);
+
+                            ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
+                            ImageSource *source = API->GetSceneImageSource(configData->lpName);
+                            if(source)
+                                source->SetFloat(TEXT("volume"), fVol);
+                        }
                     }
                     break;
 
@@ -1540,6 +1555,9 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         int soundTimeOffset = (int)SendMessage(GetDlgItem(hwnd, IDC_TIMEOFFSET), UDM_GETPOS32, 0, 0);
                         configData->data->SetInt(TEXT("soundTimeOffset"), soundTimeOffset);
 
+                        float fVol = GetVolumeControlValue(GetDlgItem(hwnd, IDC_VOLUME));
+                        configData->data->SetFloat(TEXT("volume"), fVol);
+
                         //------------------------------------------
 
                         BOOL bUseChromaKey = SendMessage(GetDlgItem(hwnd, IDC_USECHROMAKEY), BM_GETCHECK, 0, 0) == BST_CHECKED;
@@ -1570,6 +1588,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         if(source)
                         {
                             source->SetInt(TEXT("timeOffset"),          configData->data->GetInt(TEXT("soundTimeOffset"), 0));
+                            source->SetFloat(TEXT("volume"),            configData->data->GetFloat(TEXT("volume"), 1.0f));
 
                             source->SetInt(TEXT("flipImage"),           configData->data->GetInt(TEXT("flipImage"), 0));
                             source->SetInt(TEXT("flipImageHorizontal"), configData->data->GetInt(TEXT("flipImageHorizontal"), 0));
@@ -1638,6 +1657,8 @@ ImageSource* STDCALL CreateDShowSource(XElement *data)
 bool LoadPlugin()
 {
     InitColorControl(hinstMain);
+    InitVolumeControl(hinstMain);
+    InitVolumeMeter(hinstMain);
 
     pluginLocale = new LocaleStringLookup;
 

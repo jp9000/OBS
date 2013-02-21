@@ -18,7 +18,7 @@
 ********************************************************************************/
 
 
-#include "Main.h"
+#include "OBSApi.h"
 
 float maxLinear;
 float minLinear;
@@ -224,7 +224,7 @@ void VolumeMeterData::DrawVolumeMeter(HDC hDC)
     DeleteObject(hbmpTemp);
 }
 
-void InitVolumeMeter()
+void InitVolumeMeter(HINSTANCE hInst)
 {
     /*initiate threshold values */
     maxLinear = DBtoLog(VOL_MAX);
@@ -237,7 +237,7 @@ void InitVolumeMeter()
     wnd.hbrBackground = NULL;
     wnd.hCursor = LoadCursor(NULL, IDC_ARROW);
     wnd.hIcon = NULL;
-    wnd.hInstance = hinstMain;
+    wnd.hInstance = hInst;
     wnd.lpfnWndProc = VolumeMeterProc;
     wnd.lpszClassName = VOLUME_METER_CLASS;
     wnd.lpszMenuName = NULL;

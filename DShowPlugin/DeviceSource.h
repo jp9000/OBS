@@ -90,6 +90,9 @@ class DeviceSource : public ImageSource
     WAVEFORMATEX            audioFormat;
     DeviceAudioSource       *audioOut;
 
+    bool bRequestVolume;
+    float fNewVol;
+
     //---------------------------------
 
     DeviceColorType colorType;
@@ -170,7 +173,8 @@ public:
     void BeginScene();
     void EndScene();
 
-    virtual void SetInt(CTSTR lpName, int iVal);
+    void SetInt(CTSTR lpName, int iVal);
+    void SetFloat(CTSTR lpName, float fValue);
 
     Vect2 GetSize() const {return Vect2(float(renderCX), float(renderCY));}
 };

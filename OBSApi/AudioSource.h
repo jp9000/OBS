@@ -37,6 +37,7 @@ struct AudioSegment
     }
 };
 
+
 class BASE_EXPORT AudioSource
 {
     bool bResample;
@@ -75,6 +76,10 @@ class BASE_EXPORT AudioSource
 
     //-----------------------------------------
 
+    float sourceVolume;
+
+    //-----------------------------------------
+
 protected:
 
     void InitAudioData(bool bFloat, UINT channels, UINT samplesPerSec, UINT bitsPerSample, UINT blockSize, DWORD channelMask);
@@ -92,6 +97,7 @@ public:
 
     //-----------------------------------------
 
+    AudioSource();
     virtual ~AudioSource();
 
     virtual UINT QueryAudio(float curVolume);
@@ -110,5 +116,8 @@ public:
 
     inline int  GetTimeOffset() const {return timeOffset;}
     inline void SetTimeOffset(int newOffset) {timeOffset = newOffset;}
+
+    inline void SetVolume(float fVal) {sourceVolume = fabsf(fVal);}
+    inline float GetVolume() const {return sourceVolume;}
 };
 

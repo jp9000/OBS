@@ -17,7 +17,7 @@
 ********************************************************************************/
 
 
-#include "Main.h"
+#include "OBSApi.h"
 
 struct VolumeControlData
 {
@@ -307,10 +307,8 @@ LRESULT CALLBACK VolumeControlProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                         }
                     case VOLN_TOGGLEMUTE:
                         {
-                            UINT id = (UINT)GetWindowLongPtr(hwnd, GWLP_ID);
-                            ToggleVolumeControlMute(GetDlgItem(hwndMain, id));
-
-                            SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(id, VOLN_FINALVALUE), (LPARAM)hwnd);
+                            ToggleVolumeControlMute(hwnd);
+                            SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(GetDlgCtrlID(hwnd), VOLN_FINALVALUE), (LPARAM)hwnd);
                         }    
                 }
                     
@@ -393,7 +391,7 @@ void VolumeControlData::DrawVolumeControl(HDC hDC)
     DeleteObject(hRed);
 }
 
-void InitVolumeControl()
+void InitVolumeControl(HINSTANCE hInst)
 {
     WNDCLASS wnd;
 
@@ -402,7 +400,7 @@ void InitVolumeControl()
     wnd.hbrBackground = NULL;
     wnd.hCursor = LoadCursor(NULL, IDC_ARROW);
     wnd.hIcon = NULL;
-    wnd.hInstance = hinstMain;
+    wnd.hInstance = hInst;
     wnd.lpfnWndProc = VolumeControlProc;
     wnd.lpszClassName = VOLUME_CONTROL_CLASS;
     wnd.lpszMenuName = NULL;

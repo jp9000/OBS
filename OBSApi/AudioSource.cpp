@@ -30,7 +30,7 @@ inline QWORD GetQWDif(QWORD val1, QWORD val2)
     return (val1 > val2) ? (val1-val2) : (val2-val1);
 }
 
-inline void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
+void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
 {
     float sum = 0.0f;
     int totalFloatsStore = totalFloats;
@@ -54,6 +54,11 @@ inline void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
         buffer[i] *= mulVal;
 }
 
+
+AudioSource::AudioSource()
+{
+    sourceVolume = 1.0f;
+}
 
 AudioSource::~AudioSource()
 {
@@ -576,7 +581,7 @@ UINT AudioSource::QueryAudio(float curVolume)
                 AudioSegment &newSegment = *audioSegments.CreateNew();
                 newSegment.audioData.CopyArray(newBuffer, numAudioFrames*2);
                 newSegment.timestamp = lastUsedTimestamp;
-                MultiplyAudioBuffer(newSegment.audioData.Array(), numAudioFrames*2, curVolume);
+                MultiplyAudioBuffer(newSegment.audioData.Array(), numAudioFrames*2, curVolume*sourceVolume);
 
                 lastSentTimestamp = lastUsedTimestamp;
             }
@@ -610,7 +615,7 @@ UINT AudioSource::QueryAudio(float curVolume)
                     AudioSegment &newSegment = *audioSegments.CreateNew();
                     newSegment.audioData.CopyArray(storageBuffer.Array(), (441*2));
                     newSegment.timestamp = lastUsedTimestamp;
-                    MultiplyAudioBuffer(newSegment.audioData.Array(), 441*2, curVolume);
+                    MultiplyAudioBuffer(newSegment.audioData.Array(), 441*2, curVolume*sourceVolume);
 
                     storageBuffer.RemoveRange(0, (441*2));
                 }
@@ -631,7 +636,7 @@ UINT AudioSource::QueryAudio(float curVolume)
                         AudioSegment &newSegment = *audioSegments.CreateNew();
                         newSegment.audioData.CopyArray(storageBuffer.Array(), (441*2));
                         storageBuffer.RemoveRange(0, (441*2));
-                        MultiplyAudioBuffer(newSegment.audioData.Array(), 441*2, curVolume);
+                        MultiplyAudioBuffer(newSegment.audioData.Array(), 441*2, curVolume*sourceVolume);
 
                         newSegment.timestamp = lastUsedTimestamp;
 

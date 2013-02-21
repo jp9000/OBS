@@ -145,8 +145,8 @@ OBS::OBS()
 
     InitHotkeyExControl(hinstMain);
     InitColorControl(hinstMain);
-    InitVolumeControl();
-    InitVolumeMeter();
+    InitVolumeControl(hinstMain);
+    InitVolumeMeter(hinstMain);
 
     //-----------------------------------------------------
     // load locale

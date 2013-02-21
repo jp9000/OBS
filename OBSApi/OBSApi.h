@@ -133,3 +133,5 @@ inline QWORD GetQPCTimeMS(LONGLONG clockFreq)
 #include "AudioSource.h"
 #include "HotkeyControlEx.h"
 #include "ColorControl.h"
+#include "VolumeControl.h"
+#include "VolumeMeter.h"

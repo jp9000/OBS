@@ -372,6 +372,14 @@
 				RelativePath=".\Scene.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\VolumeControl.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\VolumeMeter.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Headers"
@@ -404,6 +412,14 @@
 			</File>
 			<File
 				RelativePath=".\Scene.h"
+				>
+			</File>
+			<File
+				RelativePath=".\VolumeControl.h"
+				>
+			</File>
+			<File
+				RelativePath=".\VolumeMeter.h"
 				>
 			</File>
 		</Filter>

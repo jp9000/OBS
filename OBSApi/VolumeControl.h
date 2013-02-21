@@ -21,11 +21,11 @@
 
 #define VOLUME_CONTROL_CLASS TEXT("OBSVolumeControl")
 
-void InitVolumeControl();
-void SetVolumeControlIcons(HWND hwnd, HICON hiconPlay, HICON hiconMute);
-float ToggleVolumeControlMute(HWND hwnd);
-float SetVolumeControlValue(HWND hwnd, float fValue);
-float GetVolumeControlValue(HWND hwnd);
+BASE_EXPORT void InitVolumeControl(HINSTANCE hInst);
+BASE_EXPORT void SetVolumeControlIcons(HWND hwnd, HICON hiconPlay, HICON hiconMute);
+BASE_EXPORT float ToggleVolumeControlMute(HWND hwnd);
+BASE_EXPORT float SetVolumeControlValue(HWND hwnd, float fValue);
+BASE_EXPORT float GetVolumeControlValue(HWND hwnd);
 
 
 #define VOLN_ADJUSTING  0x300

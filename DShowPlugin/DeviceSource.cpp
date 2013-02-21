@@ -21,6 +21,9 @@
 
 DWORD STDCALL PackPlanarThread(ConvertData *data);
 
+#define NEAR_SILENT  3000
+#define NEAR_SILENTf 3000.0
+
 
 bool DeviceSource::Init(XElement *data)
 {
@@ -184,6 +187,8 @@ bool DeviceSource::LoadFilters()
     bFlipHorizontal = data->GetInt(TEXT("flipImageHorizontal")) != 0;
 
     opacity = data->GetInt(TEXT("opacity"), 100);
+
+    float volume = data->GetFloat(TEXT("volume"), 1.0f);
 
     //------------------------------------------------
     // chrom key stuff
@@ -502,6 +507,16 @@ bool DeviceSource::LoadFilters()
             AppWarning(TEXT("DShowPlugin: failed to create audio renderer, result = %08lX"), err);
             soundOutputType = 0;
         }
+
+        IBasicAudio *basicAudio;
+        if(SUCCEEDED(audioFilter->QueryInterface(IID_IBasicAudio, (void**)&basicAudio)))
+        {
+            long lVol = long((double(volume)*NEAR_SILENTf)-NEAR_SILENTf);
+            if(lVol <= -NEAR_SILENT)
+                lVol = -10000;
+            basicAudio->put_Volume(lVol);
+            basicAudio->Release();
+        }
     }
 
     if(soundOutputType != 0)
@@ -574,6 +589,8 @@ bool DeviceSource::LoadFilters()
         audioOut = new DeviceAudioSource;
         audioOut->Initialize(this);
         API->AddAudioSource(audioOut);
+
+        audioOut->SetVolume(volume);
     }
 
     bSucceeded = true;
@@ -810,6 +827,29 @@ void DeviceSource::Preprocess()
 {
     if(!bCapturing)
         return;
+
+    //----------------------------------------
+
+    if(bRequestVolume)
+    {
+        if(audioOut)
+            audioOut->SetVolume(fNewVol);
+        else if(audioFilter)
+        {
+            IBasicAudio *basicAudio;
+            if(SUCCEEDED(audioFilter->QueryInterface(IID_IBasicAudio, (void**)&basicAudio)))
+            {
+                long lVol = long((double(fNewVol)*NEAR_SILENTf)-NEAR_SILENTf);
+                if(lVol <= -NEAR_SILENT)
+                    lVol = -10000;
+                basicAudio->put_Volume(lVol);
+                basicAudio->Release();
+            }
+        }
+        bRequestVolume = false;
+    }
+
+    //----------------------------------------
 
     IMediaSample *lastSample = NULL;
 
@@ -1075,5 +1115,17 @@ void DeviceSource::SetInt(CTSTR lpName, int iVal)
             if(audioOut)
                 audioOut->SetTimeOffset(iVal);
         }
+    }
+}
+
+void DeviceSource::SetFloat(CTSTR lpName, float fValue)
+{
+    if(!bCapturing)
+        return;
+
+    if(scmpi(lpName, TEXT("volume")) == 0)
+    {
+        fNewVol = fValue;
+        bRequestVolume = true;
     }
 }

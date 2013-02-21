@@ -393,8 +393,6 @@ void OBS::MainCaptureLoop()
 
     while(bRunning)
     {
-        QueryPerformanceFrequency(&clockFreq);
-
 #ifdef USE_100NS_TIME
         QWORD renderStartTime = GetQPCTime100NS(clockFreq.QuadPart);
 
