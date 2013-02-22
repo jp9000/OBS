@@ -2545,13 +2545,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
         if(App->bRenderViewEnabled && App->bRunning)
             return 1L;
         else
-        {
-            RECT rc;
-            HDC hdc = (HDC) wParam;
-            GetClientRect(hwnd, &rc);
-            FillRect(hdc, &rc, (HBRUSH)(COLOR_WINDOWFRAME + 1));
-            return 1L;
-        }
+            return DefWindowProc(hwnd, message, wParam, lParam);
     }
     else if(message == WM_LBUTTONDOWN)
     {
@@ -3100,7 +3094,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
             }
         }
     }
-    else if(message == WM_RBUTTONDOWN)
+    else if(message == WM_RBUTTONUP)
     {
         HMENU hPopup = CreatePopupMenu();
         AppendMenu(hPopup, MF_STRING | (App->bRenderViewEnabled ? MF_CHECKED : 0), ID_TOGGLERENDERVIEW, Str("RenderView.EnableView"));
@@ -3113,8 +3107,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
         {
             case ID_TOGGLERENDERVIEW:
                 App->bRenderViewEnabled = !App->bRenderViewEnabled;
-                if(!App->bRenderViewEnabled)
-                    App->bForceRenderViewErase = true;
+                App->bForceRenderViewErase = !App->bRenderViewEnabled;
                 break;
         }
 
