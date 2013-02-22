@@ -2540,8 +2540,19 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
 {
     HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
 
-    if(message == WM_ERASEBKGND && App->bRunning)
-        return 1;
+    if(message == WM_ERASEBKGND)
+    {
+        if(App->bRenderViewEnabled && App->bRunning)
+            return 1L;
+        else
+        {
+            RECT rc;
+            HDC hdc = (HDC) wParam;
+            GetClientRect(hwnd, &rc);
+            FillRect(hdc, &rc, (HBRUSH)(COLOR_WINDOWFRAME + 1));
+            return 1L;
+        }
+    }
     else if(message == WM_LBUTTONDOWN)
     {
         POINTS pos;
@@ -3102,6 +3113,8 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
         {
             case ID_TOGGLERENDERVIEW:
                 App->bRenderViewEnabled = !App->bRenderViewEnabled;
+                if(!App->bRenderViewEnabled)
+                    App->bForceRenderViewErase = true;
                 break;
         }
 
