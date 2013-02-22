@@ -147,7 +147,7 @@ IBaseFilter* GetExceptionDevice(CTSTR lpGUID)
     return NULL;
 }
 
-IBaseFilter* GetDeviceByValue(WSTR lpType, CTSTR lpName, WSTR lpType2, CTSTR lpName2)
+IBaseFilter* GetDeviceByValue(const IID &enumType, WSTR lpType, CTSTR lpName, WSTR lpType2, CTSTR lpName2)
 {
     //---------------------------------
     // exception devices
@@ -167,7 +167,7 @@ IBaseFilter* GetDeviceByValue(WSTR lpType, CTSTR lpName, WSTR lpType2, CTSTR lpN
         return NULL;
     }
 
-    err = deviceEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory, &videoDeviceEnum, 0);
+    err = deviceEnum->CreateClassEnumerator(enumType, &videoDeviceEnum, 0);
     if(FAILED(err))
     {
         AppWarning(TEXT("GetDeviceByName: deviceEnum->CreateClassEnumerator failed, result = %08lX"), err);
@@ -194,16 +194,21 @@ IBaseFilter* GetDeviceByValue(WSTR lpType, CTSTR lpName, WSTR lpType2, CTSTR lpN
         {
             VARIANT valueThingy;
             VARIANT valueThingy2;
-            valueThingy.vt  = VT_BSTR;
+            VariantInit(&valueThingy);
+            VariantInit(&valueThingy2);
+            /*valueThingy.vt  = VT_BSTR;
             valueThingy.pbstrVal = NULL;
 
             valueThingy2.vt = VT_BSTR;
-            valueThingy2.bstrVal = NULL;
+            valueThingy2.bstrVal = NULL;*/
 
             if(SUCCEEDED(propertyData->Read(lpType, &valueThingy, NULL)))
             {
                 if(lpType2 && lpName2)
-                    propertyData->Read(lpType2, &valueThingy2, NULL);
+                {
+                    if(FAILED(propertyData->Read(lpType2, &valueThingy2, NULL)))
+                        nop();
+                }
 
                 SafeRelease(propertyData);
 
@@ -261,7 +266,7 @@ IBaseFilter* GetDeviceByValue(WSTR lpType, CTSTR lpName, WSTR lpType2, CTSTR lpN
 }
 
 
-IPin* GetOutputPin(IBaseFilter *filter)
+IPin* GetOutputPin(IBaseFilter *filter, const GUID *majorType)
 {
     IPin *foundPin = NULL;
 
@@ -274,8 +279,42 @@ IPin* GetOutputPin(IBaseFilter *filter)
             ULONG num;
             while(pins->Next(1, &curPin, &num) == S_OK)
             {
+                if(majorType)
+                {
+                    AM_MEDIA_TYPE *pinMediaType;
+
+                    IEnumMediaTypes *mediaTypesEnum;
+                    if(FAILED(curPin->EnumMediaTypes(&mediaTypesEnum)))
+                    {
+                        SafeRelease(curPin);
+                        continue;
+                    }
+
+                    ULONG curVal = 0;
+                    HRESULT hRes = mediaTypesEnum->Next(1, &pinMediaType, &curVal);
+
+                    mediaTypesEnum->Release();
+
+                    if(hRes != S_OK)
+                    {
+                        SafeRelease(curPin);
+                        continue;
+                    }
+
+                    BOOL bDesiredMediaType = (pinMediaType->majortype == *majorType);
+                    DeleteMediaType(pinMediaType);
+
+                    if(!bDesiredMediaType)
+                    {
+                        SafeRelease(curPin);
+                        continue;
+                    }
+                }
+
+                //------------------------------
+
                 PIN_DIRECTION pinDir;
-                if(SUCCEEDED(curPin->QueryDirection(&pinDir))) 
+                if(SUCCEEDED(curPin->QueryDirection(&pinDir)))
                 {
                     if(pinDir == PINDIR_OUTPUT)
                     {
@@ -297,6 +336,7 @@ IPin* GetOutputPin(IBaseFilter *filter)
                                 {
                                     SafeRelease(propertySet);
                                     SafeRelease(pins);
+
                                     return curPin;
                                 }
                             }
@@ -1229,10 +1269,15 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                             EnableWindow(GetDlgItem(hwnd, IDOK), TRUE);
 
                             ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
-                            IBaseFilter *filter = GetDeviceByValue(L"FriendlyName", configData->deviceNameList[id], L"DevicePath", configData->deviceIDList[id]);
+                            IBaseFilter *filter = GetDeviceByValue(CLSID_VideoInputDeviceCategory,
+                                                                   L"FriendlyName", configData->deviceNameList[id],
+                                                                   L"DevicePath", configData->deviceIDList[id]);
                             if(filter)
                             {
-                                IPin *outputPin = GetOutputPin(filter);
+                                //--------------------------------
+                                // get video info
+
+                                IPin *outputPin = GetOutputPin(filter, &MEDIATYPE_Video);
                                 if(outputPin)
                                 {
                                     configData->ClearOutputList();
@@ -1249,6 +1294,34 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                                     }
 
                                     outputPin->Release();
+                                    outputPin = NULL;
+                                }
+
+                                //--------------------------------
+                                // get audio info
+
+                                bool bHasAudio = false;
+
+                                outputPin = GetOutputPin(filter, &MEDIATYPE_Audio);
+                                if(outputPin)
+                                {
+                                    bHasAudio = true;
+                                    outputPin->Release();
+                                }
+
+                                EnableWindow(GetDlgItem(hwnd, IDC_NOSOUND),          bHasAudio);
+                                EnableWindow(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), bHasAudio);
+                                EnableWindow(GetDlgItem(hwnd, IDC_OUTPUTSOUND),      bHasAudio);
+                                EnableWindow(GetDlgItem(hwnd, IDC_VOLUME),           bHasAudio);
+
+                                if(!bHasAudio)
+                                {
+                                    SendMessage(GetDlgItem(hwnd, IDC_NOSOUND),          BM_SETCHECK, BST_CHECKED,   0);
+                                    SendMessage(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), BM_SETCHECK, BST_UNCHECKED, 0);
+                                    SendMessage(GetDlgItem(hwnd, IDC_OUTPUTSOUND),      BM_SETCHECK, BST_UNCHECKED, 0);
+
+                                    EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET),      FALSE);
+                                    EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET_EDIT), FALSE);
                                 }
 
                                 filter->Release();
@@ -1424,7 +1497,9 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         if(id != CB_ERR)
                         {
                             ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
-                            IBaseFilter *filter = GetDeviceByValue(L"FriendlyName", configData->deviceNameList[id], L"DevicePath", configData->deviceIDList[id]);
+                            IBaseFilter *filter = GetDeviceByValue(CLSID_VideoInputDeviceCategory,
+                                                                   L"FriendlyName", configData->deviceNameList[id],
+                                                                   L"DevicePath", configData->deviceIDList[id]);
                             if(filter)
                             {
                                 ISpecifyPropertyPages *propPages;

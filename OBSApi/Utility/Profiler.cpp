@@ -196,13 +196,16 @@ ProfilerNode::ProfilerNode(CTSTR lpName, bool bSingularize)
         if(!parent->lpName) return; //profiling was disabled when parent was created, so exit to avoid inconsistent results
 
         ProfileNodeInfo *parentInfo = parent->info;
-        info = parentInfo->FindSubProfile(lpName);
-        if(!info)
+        if(parentInfo)
         {
-            info = new ProfileNodeInfo;
-            parentInfo->Children << info;
-            info->lpName = lpName;
-            info->bSingular = bSingularize;
+            info = parentInfo->FindSubProfile(lpName);
+            if(!info)
+            {
+                info = new ProfileNodeInfo;
+                parentInfo->Children << info;
+                info->lpName = lpName;
+                info->bSingular = bSingularize;
+            }
         }
     }
     else if(bProfilingEnabled)

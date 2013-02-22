@@ -211,7 +211,7 @@ bool DeviceSource::LoadFilters()
 
     if(strDeviceName.IsValid())
     {
-        deviceFilter = GetDeviceByValue(L"FriendlyName", strDeviceName, L"DevicePath", strDeviceID);
+        deviceFilter = GetDeviceByValue(CLSID_VideoInputDeviceCategory, L"FriendlyName", strDeviceName, L"DevicePath", strDeviceID);
         if(!deviceFilter)
         {
             AppWarning(TEXT("DShowPlugin: Invalid device: name '%s', path '%s'"), strDeviceName.Array(), strDeviceID.Array());
@@ -226,7 +226,7 @@ bool DeviceSource::LoadFilters()
             goto cleanFinish;
         }
 
-        deviceFilter = GetDeviceByValue(L"FriendlyName", strDevice);
+        deviceFilter = GetDeviceByValue(CLSID_VideoInputDeviceCategory, L"FriendlyName", strDevice);
         if(!deviceFilter)
         {
             AppWarning(TEXT("DShowPlugin: Could not create device filter"));
@@ -234,7 +234,7 @@ bool DeviceSource::LoadFilters()
         }
     }
 
-    devicePin = GetOutputPin(deviceFilter);
+    devicePin = GetOutputPin(deviceFilter, &MEDIATYPE_Video);
     if(!devicePin)
     {
         AppWarning(TEXT("DShowPlugin: Could not get device video pin"));
