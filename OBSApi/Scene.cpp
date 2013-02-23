@@ -39,12 +39,12 @@ void SceneItem::SetRender(bool render)
 void SceneItem::Update()
 {
     pos = Vect2(element->GetFloat(TEXT("x")), element->GetFloat(TEXT("y")));
-    //size = Vect2(element->GetFloat(TEXT("cx"), 100), element->GetFloat(TEXT("cy"), 100));
+    size = Vect2(element->GetFloat(TEXT("cx"), 100.0f), element->GetFloat(TEXT("cy"), 100.0f));
 
     //just reset the size if configuration changed, that way the user doesn't have to screw with the size
-    if(source) size = source->GetSize();
-    element->SetInt(TEXT("cx"), int(size.x));
-    element->SetInt(TEXT("cy"), int(size.y));
+    //if(source) size = source->GetSize();
+    /*element->SetInt(TEXT("cx"), int(size.x));
+    element->SetInt(TEXT("cy"), int(size.y));*/
 }
 
 void SceneItem::MoveUp()

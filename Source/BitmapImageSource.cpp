@@ -424,19 +424,16 @@ bool STDCALL ConfigureBitmapSource(XElement *element, bool bCreating)
 
     if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_CONFIGUREBITMAPSOURCE), hwndMain, ConfigureBitmapProc, (LPARAM)&configInfo) == IDOK)
     {
-        if(bCreating)
-        {
-            CTSTR lpBitmap = data->GetString(TEXT("path"));
+        CTSTR lpBitmap = data->GetString(TEXT("path"));
 
-            D3DX10_IMAGE_INFO ii;
-            if(SUCCEEDED(D3DX10GetImageInfoFromFile(lpBitmap, NULL, &ii, NULL)))
-            {
-                element->SetInt(TEXT("cx"), ii.Width);
-                element->SetInt(TEXT("cy"), ii.Height);
-            }
-            else
-                AppWarning(TEXT("ConfigureBitmapSource: could not get image info for bitmap '%s'"), lpBitmap);
+        D3DX10_IMAGE_INFO ii;
+        if(SUCCEEDED(D3DX10GetImageInfoFromFile(lpBitmap, NULL, &ii, NULL)))
+        {
+            element->SetInt(TEXT("cx"), ii.Width);
+            element->SetInt(TEXT("cy"), ii.Height);
         }
+        else
+            AppWarning(TEXT("ConfigureBitmapSource: could not get image info for bitmap '%s'"), lpBitmap);
 
         return true;
     }

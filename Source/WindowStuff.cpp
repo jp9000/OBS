@@ -765,10 +765,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                                 UINT numSources = sources->NumElements();
 
                                 // clear selection/focus for all items before adding the new item
-
                                 ListView_SetItemState(hwnd , -1 , 0, LVIS_SELECTED | LVIS_FOCUSED);
-
-
                                 ListView_SetItemCount(hwnd, numSources);
                                 
                                 App->bChangingSources = true;
@@ -781,6 +778,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                                 ListView_EnsureVisible(hwnd, 0, false);
                                 ListView_SetItemState(hwnd, 0, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
                                 ListView_SetSelectionMark(hwnd, 0);
+
                                 App->ReportSourcesAddedOrRemoved();
                             }
                         }
@@ -816,23 +814,45 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                     }
 
                 case ID_LISTBOX_CONFIG:
-                    App->EnableSceneSwitching(false);
-
-                    if(curClassInfo->configProc(selectedElement, false))
                     {
-                        if(App->bRunning)
+                        Vect2 multiple;
+
+                        App->EnableSceneSwitching(false);
+
+                        ImageSource *source = selectedSceneItems[0]->GetSource();
+                        if(source)
                         {
-                            App->EnterSceneMutex();
+                            Vect2 curSize = Vect2(selectedElement->GetFloat(TEXT("cx"), 32.0f), selectedElement->GetFloat(TEXT("cy"), 32.0f));
+                            Vect2 baseSize = source->GetSize();
 
-                            if(selectedSceneItems[0]->GetSource())
-                                selectedSceneItems[0]->GetSource()->UpdateSettings();
-                            selectedSceneItems[0]->Update();
-
-                            App->LeaveSceneMutex();
+                            multiple = curSize/baseSize;
                         }
-                    }
 
-                    App->EnableSceneSwitching(true);
+                        if(curClassInfo->configProc && curClassInfo->configProc(selectedElement, false))
+                        {
+                            if(App->bRunning)
+                            {
+                                App->EnterSceneMutex();
+
+                                if(source)
+                                {
+                                    Vect2 newSize = Vect2(selectedElement->GetFloat(TEXT("cx"), 32.0f), selectedElement->GetFloat(TEXT("cy"), 32.0f));
+                                    newSize *= multiple;
+
+                                    selectedElement->SetFloat(TEXT("cx"), newSize.x);
+                                    selectedElement->SetFloat(TEXT("cy"), newSize.y);
+
+                                    selectedSceneItems[0]->GetSource()->UpdateSettings();
+                                }
+
+                                selectedSceneItems[0]->Update();
+
+                                App->LeaveSceneMutex();
+                            }
+                        }
+
+                        App->EnableSceneSwitching(true);
+                    }
                     break;
 
                 case ID_LISTBOX_MOVEUP:

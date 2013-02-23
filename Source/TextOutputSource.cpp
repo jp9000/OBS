@@ -1210,7 +1210,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                             HDC hDC = CreateCompatibleDC(NULL);
 
                             Gdiplus::Font font(hDC, &lf);
-                            
+
                             if(!font.IsAvailable())
                             {
                                 String strError = Str("Sources.TextSource.FontNotFound");
@@ -1235,7 +1235,6 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
                                 format.SetFormatFlags(formatFlags);
                                 format.SetTrimming(Gdiplus::StringTrimmingWord);
-
 
                                 Gdiplus::RectF rcf;
                                 graphics.MeasureString(strOutputText, -1, &font, Gdiplus::PointF(0.0f, 0.0f), &format, &rcf);
