@@ -606,6 +606,12 @@ void OBS::MainCaptureLoop()
                     scene->RenderSelections();
             }
         }
+        else if(bForceRenderViewErase)
+        {
+            InvalidateRect(hwndRenderFrame, NULL, TRUE);
+            UpdateWindow(hwndRenderFrame);
+            bForceRenderViewErase = false;
+        }
 
         //------------------------------------
         // actual stream output

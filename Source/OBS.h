@@ -494,6 +494,7 @@ class OBS
     bool    bAlwaysOnTop;
     bool    bEditMode;
     bool    bRenderViewEnabled;
+    bool    bForceRenderViewErase;
     bool    bShowFPS;
     bool    bMouseMoved;
     bool    bMouseDown;
