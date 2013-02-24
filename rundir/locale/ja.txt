@@ -196,7 +196,7 @@ Sources.GameCaptureSource.RequiresAdmin     "次のプログラムをキャプ�
 Sources.GameCaptureSource.StretchToScreen   "映像を拡大縮小させる"
 
 Sources.SoftwareCaptureSource.CaptureLayered        "レイヤードウィンドウをキャプチャする"
-Sources.SoftwareCaptureSource.CompatibilityMode     "互換性モード:"
+Sources.SoftwareCaptureSource.CompatibilityMode     "互換性モード"
 Sources.SoftwareCaptureSource.EntireWindow          "ウィンドウ全部"
 Sources.SoftwareCaptureSource.InnerWindow           "ウィンドウ内部"
 Sources.SoftwareCaptureSource.InvertMouseOnClick    "クリック時にカーソルを反転する"
