@@ -50,6 +50,13 @@ class DesktopImageSource : public ImageSource
     int      gamma;
 
     //-------------------------
+    // stuff for compatibility mode
+    bool     bCompatibilityMode;
+    HDC      hdcCompatible;
+    HBITMAP  hbmpCompatible, hbmpOld;
+    BYTE     *captureBits;
+
+    //-------------------------
     // win 8 capture stuff
     Texture  *cursorTexture;
     int      xHotspot, yHotspot;
@@ -94,6 +101,13 @@ public:
         delete cursorTexture;
         delete alphaIgnoreShader;
         delete colorKeyShader;
+
+        if(bCompatibilityMode)
+        {
+            SelectObject(hdcCompatible, hbmpOld);
+            DeleteDC(hdcCompatible);
+            DeleteObject(hbmpCompatible);
+        }
     }
 
     void Tick(float fSeconds)
@@ -200,6 +214,47 @@ public:
         }
     }
 
+    HDC GetCurrentHDC()
+    {
+        HDC hDC = NULL;
+
+        Texture *captureTexture = renderTextures[curCaptureTexture];
+
+        if(bCompatibilityMode)
+        {
+            hDC = hdcCompatible;
+            //zero(captureBits, width*height*4);
+        }
+        else if(captureTexture)
+            captureTexture->GetDC(hDC);
+
+        return hDC;
+    }
+
+    void ReleaseCurrentHDC(HDC hDC)
+    {
+        Texture *captureTexture = renderTextures[curCaptureTexture];
+
+        if(!bCompatibilityMode)
+            captureTexture->ReleaseDC();
+    }
+
+    void EndPreprocess()
+    {
+        if(bCompatibilityMode)
+        {
+            renderTextures[0]->SetImage(captureBits, GS_IMAGEFORMAT_BGRA, width*4);
+            lastRendered = renderTextures[0];
+        }
+        else
+        {
+            lastRendered = renderTextures[curCaptureTexture];
+
+            if(++curCaptureTexture == NUM_CAPTURE_TEXTURES)
+                curCaptureTexture = 0;
+        }
+    }
+
     void Preprocess()
     {
         if(bWindows8MonitorCapture)
@@ -208,10 +263,8 @@ public:
             return;
         }
 
-        Texture *captureTexture = renderTextures[curCaptureTexture];
-
         HDC hDC;
-        if(captureTexture && captureTexture->GetDC(hDC))
+        if(hDC = GetCurrentHDC())
         {
             //----------------------------------------------------------
             // capture screen
@@ -255,7 +308,7 @@ public:
                     bWindowNotFound = true;
                 if(hwndCapture && (IsIconic(hwndCapture) || !IsWindowVisible(hwndCapture)))
                 {
-                    captureTexture->ReleaseDC();
+                    ReleaseCurrentHDC(hDC);
                     //bWindowMinimized = true;
 
                     if(!warningID)
@@ -296,8 +349,6 @@ public:
                 //CAPTUREBLT causes mouse flicker, so make capturing layered optional
                 if(!BitBlt(hDC, 0, 0, width, height, hCaptureDC, captureRect.left, captureRect.top, bCaptureLayered ? SRCCOPY|CAPTUREBLT : SRCCOPY))
                 {
-                    int chi = GetLastError();
-
                     RUNONCE AppWarning(TEXT("Capture BitBlt failed..  just so you know"));
                 }
             }
@@ -347,22 +398,14 @@ public:
                 }
             }
 
-            captureTexture->ReleaseDC();
+            ReleaseCurrentHDC(hDC);
         }
         else
         {
             RUNONCE AppWarning(TEXT("Failed to get DC from capture surface"));
         }
 
-        lastRendered = captureTexture;
-
-        if(++curCaptureTexture == NUM_CAPTURE_TEXTURES)
-            curCaptureTexture = 0;
-    }
-
-    void RenderWindows8MonitorCapture(const Vect2 &pos, const Vect2 &size)
-    {
-        
+        EndPreprocess();
     }
 
     void Render(const Vect2 &pos, const Vect2 &size)
@@ -415,10 +458,6 @@ public:
                 colorKeyShader->SetFloat(colorKeyShader->GetParameter(3), fSimilarity);
                 colorKeyShader->SetFloat(colorKeyShader->GetParameter(4), fBlend);
 
-                DrawSpriteEx(lastRendered, (opacity255<<24) | 0xFFFFFF,
-                        pos.x, pos.y, pos.x+size.x, pos.y+size.y,
-                        ulCoord.x, ulCoord.y,
-                        lrCoord.x, lrCoord.y);
             }
             else
             {
@@ -426,12 +465,18 @@ public:
                 HANDLE hGamma = alphaIgnoreShader->GetParameterByName(TEXT("gamma"));
                 if(hGamma)
                     alphaIgnoreShader->SetFloat(hGamma, fGamma);
-
-                DrawSpriteEx(lastRendered, (opacity255<<24) | 0xFFFFFF,
-                        pos.x, pos.y, pos.x+size.x, pos.y+size.y,
-                        ulCoord.x, ulCoord.y,
-                        lrCoord.x, lrCoord.y);
             }
+
+            if(bCompatibilityMode)
+                DrawSpriteEx(lastRendered, (opacity255<<24) | 0xFFFFFF,
+                    pos.x, pos.y+size.y, pos.x+size.x, pos.y,
+                    ulCoord.x, ulCoord.y,
+                    lrCoord.x, lrCoord.y);
+            else
+                DrawSpriteEx(lastRendered, (opacity255<<24) | 0xFFFFFF,
+                    pos.x, pos.y, pos.x+size.x, pos.y+size.y,
+                    ulCoord.x, ulCoord.y,
+                    lrCoord.x, lrCoord.y);
 
             LoadPixelShader(lastPixelShader);
 
@@ -479,6 +524,10 @@ public:
         int cx = data->GetInt(TEXT("captureCX"), 32);
         int cy = data->GetInt(TEXT("captureCY"), 32);
 
+        bool bNewCompatibleMode = data->GetInt(TEXT("compatibilityMode")) != 0;
+        if(bNewCompatibleMode && (OSGetVersion() >= 8 && newCaptureType == 0))
+            bNewCompatibleMode = false;
+
         gamma = data->GetInt(TEXT("gamma"), 100);
         if(gamma < 50)        gamma = 50;
         else if(gamma > 175)  gamma = 175;
@@ -489,7 +538,8 @@ public:
 
         if( captureRect.left != x || captureRect.right != (x+cx) || captureRect.top != cy || captureRect.bottom != (y+cy) ||
             newCaptureType != captureType || !strNewWindowClass.CompareI(strWindowClass) || !strNewWindow.CompareI(strWindow) ||
-            bNewClientCapture != bClientCapture || (OSGetVersion() >= 8 && newMonitor != monitor))
+            bNewClientCapture != bClientCapture || (OSGetVersion() >= 8 && newMonitor != monitor) ||
+            bNewCompatibleMode != bCompatibilityMode)
         {
             for(int i=0; i<NUM_CAPTURE_TEXTURES; i++)
             {
@@ -509,12 +559,25 @@ public:
                 cursorTexture = NULL;
             }
 
+            if(bCompatibilityMode)
+            {
+                SelectObject(hdcCompatible, hbmpOld);
+                DeleteDC(hdcCompatible);
+                DeleteObject(hbmpCompatible);
+
+                hdcCompatible = NULL;
+                hbmpCompatible = NULL;
+                captureBits = NULL;
+            }
+
             hCurrentCursor = NULL;
 
             captureType        = newCaptureType;
             strWindow          = strNewWindow;
             strWindowClass     = strNewWindowClass;
             bClientCapture     = bNewClientCapture;
+
+            bCompatibilityMode = bNewCompatibleMode;
 
             captureRect.left   = x;
             captureRect.top    = y;
@@ -547,8 +610,28 @@ public:
             width  = cx;
             height = cy;
 
+            if(bCompatibilityMode)
+            {
+                hdcCompatible = CreateCompatibleDC(NULL);
+
+                BITMAPINFO bi;
+                zero(&bi, sizeof(bi));
+
+                BITMAPINFOHEADER &bih = bi.bmiHeader;
+                bih.biSize = sizeof(bih);
+                bih.biBitCount = 32;
+                bih.biWidth  = width;
+                bih.biHeight = height;
+                bih.biPlanes = 1;
+
+                hbmpCompatible = CreateDIBSection(hdcCompatible, &bi, DIB_RGB_COLORS, (void**)&captureBits, NULL, 0);
+                hbmpOld = (HBITMAP)SelectObject(hdcCompatible, hbmpCompatible);
+            }
+
             if(bWindows8MonitorCapture)
                 duplicator = GS->CreateOutputDuplicator(deviceOutputID);
+            else if(bCompatibilityMode)
+                renderTextures[0] = CreateTexture(width, height, GS_BGRA, NULL, FALSE, FALSE);
             else
             {
                 for(UINT i=0; i<NUM_CAPTURE_TEXTURES; i++)
@@ -1201,15 +1284,18 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                 //-----------------------------------------------------
 
-                bool bMouseCapture = data->GetInt(TEXT("captureMouse"), 1) != FALSE;
+                bool bMouseCapture = data->GetInt(TEXT("captureMouse"), 1) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_CAPTUREMOUSE), BM_SETCHECK, (bMouseCapture) ? BST_CHECKED : BST_UNCHECKED, 0);
 
-                bool bCaptureLayered = data->GetInt(TEXT("captureLayered"), 0) != FALSE;
+                bool bCaptureLayered = data->GetInt(TEXT("captureLayered"), 0) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_CAPTURELAYERED), BM_SETCHECK, (bCaptureLayered) ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 ti.lpszText = (LPWSTR)Str("Sources.SoftwareCaptureSource.CaptureLayeredTip");
                 ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_CAPTURELAYERED);
                 SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+
+                bool bCompatibilityMode = data->GetInt(TEXT("compatibilityMode"), 0) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_COMPATIBILITYMODE), BM_SETCHECK, (bCompatibilityMode) ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 //-----------------------------------------------------
 
@@ -1382,11 +1468,20 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 case IDC_MONITORCAPTURE:
                     SetDesktopCaptureType(hwnd, 0);
                     PostMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_MONITOR, 0), 0);
+
+                    if(OSGetVersion() >= 8)
+                    {
+                        EnableWindow(GetDlgItem(hwnd, IDC_COMPATIBILITYMODE), FALSE);
+                        SendMessage(GetDlgItem(hwnd, IDC_COMPATIBILITYMODE), BM_SETCHECK, BST_UNCHECKED, 0);
+                    }
                     break;
 
                 case IDC_WINDOWCAPTURE:
                     SetDesktopCaptureType(hwnd, 1);
                     PostMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_WINDOW, 0), 0);
+
+                    if(OSGetVersion() >= 8)
+                        EnableWindow(GetDlgItem(hwnd, IDC_COMPATIBILITYMODE), TRUE);
                     break;
 
                 case IDC_REGIONCAPTURE:
@@ -1697,6 +1792,7 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                         BOOL bCaptureMouse = SendMessage(GetDlgItem(hwnd, IDC_CAPTUREMOUSE), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         BOOL bCaptureLayered = SendMessage(GetDlgItem(hwnd, IDC_CAPTURELAYERED), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        BOOL bCompatibilityMode = SendMessage(GetDlgItem(hwnd, IDC_COMPATIBILITYMODE), BM_GETCHECK, 0, 0) == BST_CHECKED;
 
                         //---------------------------------
 
@@ -1719,6 +1815,8 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                         data->SetInt(TEXT("captureMouse"),  bCaptureMouse);
 
                         data->SetInt(TEXT("captureLayered"), bCaptureLayered);
+
+                        data->SetInt(TEXT("compatibilityMode"), bCompatibilityMode);
 
                         data->SetInt(TEXT("captureX"),      posX);
                         data->SetInt(TEXT("captureY"),      posY);

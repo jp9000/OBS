@@ -81,6 +81,7 @@
 #define IDC_FADEINONLY                  1041
 #define IDC_OPACITY                     1041
 #define IDC_USETEXTEXTENTS              1041
+#define IDC_CUSTOMBUFFER                1041
 #define IDC_SERVEREDIT                  1042
 #define IDC_USESENDBUFFER               1042
 #define IDC_FORCEMONO                   1042
@@ -184,6 +185,8 @@
 #define IDC_USEOUTLINE                  1099
 #define IDC_LOWLATENCYMODE              1099
 #define IDC_TIMER1                      1100
+#define IDC_CAPTURERAM                  1100
+#define IDC_COMPATIBILITYMODE           1100
 #define IDC_PROGRESS1                   1101
 #define IDC_DASHBOARDLINK_STATIC        1102
 #define IDC_DASHBOARDLINK               1103
@@ -215,6 +218,7 @@
 #define IDC_ITALIC                      1127
 #define IDC_TIMELEFT                    1127
 #define IDC_UNLOCKHIGHFPS               1128
+#define IDC_USETRIPLEBUFFERING          1129
 #define IDC_CANCEL                      1130
 #define IDC_PRIORITY                    1132
 #define IDC_USECBR                      1133
@@ -228,6 +232,8 @@
 #define IDC_LATENCYTUNE                 1147
 #define IDC_SETSTREAMSIZE               1148
 #define IDC_GAMMAVAL                    1151
+#define IDC_SCENEBUFFERTIME_EDIT        1152
+#define IDC_SCENEBUFFERTIME             1153
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -264,7 +270,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        141
 #define _APS_NEXT_COMMAND_VALUE         40050
-#define _APS_NEXT_CONTROL_VALUE         1152
+#define _APS_NEXT_CONTROL_VALUE         1154
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

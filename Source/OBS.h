@@ -21,13 +21,11 @@
 
 class Scene;
 
-#define NUM_RENDER_BUFFERS 2
+#define RENDER_BUFFER_ARRAY_NUM 3
 
 static const int minClientWidth  = 700;
 static const int minClientHeight = 200;
 
-
-#define OUTPUT_BUFFER_TIME 400
 
 
 struct AudioDeviceInfo
@@ -392,10 +390,11 @@ class OBS
     //---------------------------------------------------
     // graphics stuff
 
-    ID3D10Texture2D *copyTextures[NUM_RENDER_BUFFERS];
+    UINT numRenderBuffers;
 
-    Texture *mainRenderTextures[NUM_RENDER_BUFFERS];
-    Texture *yuvRenderTextures[NUM_RENDER_BUFFERS];
+    ID3D10Texture2D *copyTextures[RENDER_BUFFER_ARRAY_NUM];
+    Texture         *mainRenderTextures[RENDER_BUFFER_ARRAY_NUM];
+    Texture         *yuvRenderTextures[RENDER_BUFFER_ARRAY_NUM];
 
     Texture *transitionTexture;
     bool    bTransitioning;
@@ -529,6 +528,8 @@ class OBS
 
     //---------------------------------------------------
     // main capture loop stuff
+
+    int bufferingTime;
 
     HANDLE  hMainThread;
     HANDLE  hSceneMutex;

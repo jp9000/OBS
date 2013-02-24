@@ -438,8 +438,14 @@ INT_PTR CALLBACK OBS::EncoderSettingsProc(HWND hwnd, UINT message, WPARAM wParam
 
                 //--------------------------------------------
 
-                LoadSettingEditInt(GetDlgItem(hwnd, IDC_MAXBITRATE), TEXT("Video Encoding"), TEXT("MaxBitrate"), 1000);
-                LoadSettingEditInt(GetDlgItem(hwnd, IDC_BUFFERSIZE), TEXT("Video Encoding"), TEXT("BufferSize"), 1000);
+                bool bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR")) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_USECBR), BM_SETCHECK, bUseCBR ? BST_CHECKED : BST_UNCHECKED, 0);
+                EnableWindow(GetDlgItem(hwnd, IDC_QUALITY), !bUseCBR);
+
+                //--------------------------------------------
+
+                int bitrate    = LoadSettingEditInt(GetDlgItem(hwnd, IDC_MAXBITRATE), TEXT("Video Encoding"), TEXT("MaxBitrate"), 1000);
+                int buffersize = LoadSettingEditInt(GetDlgItem(hwnd, IDC_BUFFERSIZE), TEXT("Video Encoding"), TEXT("BufferSize"), 1000);
 
                 ti.lpszText = (LPWSTR)Str("Settings.Encoding.Video.MaxBitRateTooltip");
                 ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_MAXBITRATE);
@@ -448,6 +454,19 @@ INT_PTR CALLBACK OBS::EncoderSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                 ti.lpszText = (LPWSTR)Str("Settings.Encoding.Video.BufferSizeTooltip");
                 ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_BUFFERSIZE);
                 SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+
+                //--------------------------------------------
+
+                bool bHasUseBufferSizeValue = AppConfig->HasKey(TEXT("Video Encoding"), TEXT("UseBufferSize")) != 0;
+
+                bool bUseBufferSize;
+                if(!bHasUseBufferSizeValue)
+                    bUseBufferSize = buffersize != bitrate;
+                else
+                    bUseBufferSize = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseBufferSize"), 0) != 0;
+
+                SendMessage(GetDlgItem(hwnd, IDC_CUSTOMBUFFER), BM_SETCHECK, bUseBufferSize ? BST_CHECKED : BST_UNCHECKED, 0);
+                EnableWindow(GetDlgItem(hwnd, IDC_BUFFERSIZE), bUseBufferSize);
 
                 //--------------------------------------------
 
@@ -510,9 +529,40 @@ INT_PTR CALLBACK OBS::EncoderSettingsProc(HWND hwnd, UINT message, WPARAM wParam
                         break;
 
                     case IDC_MAXBITRATE:
+                        if(HIWORD(wParam) == EN_CHANGE)
+                        {
+                            bool bCustomBuffer = SendMessage(GetDlgItem(hwnd, IDC_CUSTOMBUFFER), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                            if (!bCustomBuffer)
+                            {
+                                String strText = GetEditText((HWND)lParam);
+                                SetWindowText(GetDlgItem(hwnd, IDC_BUFFERSIZE), strText);
+                            }
+
+                            bDataChanged = true;
+                        }
+                        break;
+
                     case IDC_BUFFERSIZE:
                         if(HIWORD(wParam) == EN_CHANGE)
                             bDataChanged = true;
+                        break;
+
+                    case IDC_CUSTOMBUFFER:
+                    case IDC_USECBR:
+                        if (HIWORD(wParam) == BN_CLICKED)
+                        {
+                            bool bChecked = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
+                            if(LOWORD(wParam) == IDC_CUSTOMBUFFER)
+                            {
+                                EnableWindow(GetDlgItem(hwnd, IDC_BUFFERSIZE), bChecked);
+                                if(!bChecked)
+                                    SetWindowText(GetDlgItem(hwnd, IDC_BUFFERSIZE), GetEditText(GetDlgItem(hwnd, IDC_MAXBITRATE)));
+                            }
+                            else if(LOWORD(wParam) == IDC_USECBR)
+                                EnableWindow(GetDlgItem(hwnd, IDC_QUALITY), !bChecked);
+
+                            bDataChanged = true;
+                        }
                         break;
                 }
 
@@ -1619,6 +1669,12 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 //------------------------------------
 
+                UINT sceneBufferingTime = GlobalConfig->GetInt(TEXT("General"), TEXT("SceneBufferingTime"), 400);
+                SendMessage(GetDlgItem(hwnd, IDC_SCENEBUFFERTIME), UDM_SETRANGE32, 100, 1000);
+                SendMessage(GetDlgItem(hwnd, IDC_SCENEBUFFERTIME), UDM_SETPOS32, 0, sceneBufferingTime);
+
+                //------------------------------------
+
                 bool bUseMTOptimizations = AppConfig->GetInt(TEXT("General"), TEXT("UseMultithreadedOptimizations"), TRUE) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_USEMULTITHREADEDOPTIMIZATIONS), BM_SETCHECK, bUseMTOptimizations ? BST_CHECKED : BST_UNCHECKED, 0);
 
@@ -1647,9 +1703,6 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                 bool bUseCFR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCFR"), 0) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_USECFR), BM_SETCHECK, bUseCFR ? BST_CHECKED : BST_UNCHECKED, 0);
 
-                bool bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR")) != 0;
-                SendMessage(GetDlgItem(hwnd, IDC_USECBR), BM_SETCHECK, bUseCBR ? BST_CHECKED : BST_UNCHECKED, 0);
-
                 //------------------------------------
 
                 bool bUseCustomX264Settings = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCustomSettings")) != 0;
@@ -1666,6 +1719,11 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                 SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
                 EnableWindow(GetDlgItem(hwnd, IDC_VIDEOENCODERSETTINGS), bUseCustomX264Settings);
+
+                //--------------------------------------------
+
+                bool bUseTripleBuffering = GlobalConfig->GetInt(TEXT("Video"), TEXT("UseTripleBuffering"), false) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_USETRIPLEBUFFERING), BM_SETCHECK, bUseTripleBuffering ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 //------------------------------------
 
@@ -1698,7 +1756,7 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                 //------------------------------------
 
                 int globalAudioTimeAdjust = GlobalConfig->GetInt(TEXT("Audio"), TEXT("GlobalAudioTimeAdjust"));
-                SendMessage(GetDlgItem(hwnd, IDC_AUDIOTIMEADJUST), UDM_SETRANGE32, -(OUTPUT_BUFFER_TIME-50), 1000);
+                SendMessage(GetDlgItem(hwnd, IDC_AUDIOTIMEADJUST), UDM_SETRANGE32, -(App->bufferingTime-50), 1000);
                 SendMessage(GetDlgItem(hwnd, IDC_AUDIOTIMEADJUST), UDM_SETPOS32, 0, globalAudioTimeAdjust);
 
                 //------------------------------------
@@ -1774,6 +1832,7 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                     }
                     break;
 
+                case IDC_SCENEBUFFERTIME_EDIT:
                 case IDC_AUDIOTIMEADJUST_EDIT:
                 case IDC_VIDEOENCODERSETTINGS:
                 case IDC_LATENCYTUNE:
@@ -1839,8 +1898,8 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                     }
                     break;
 
+                case IDC_USETRIPLEBUFFERING:
                 case IDC_SYNCTOVIDEOTIME:
-                case IDC_USECBR:
                 case IDC_USECFR:
                 case IDC_USEHIGHQUALITYRESAMPLING:
                 case IDC_USEMULTITHREADEDOPTIMIZATIONS:
@@ -1893,6 +1952,13 @@ void OBS::ApplySettings()
                 int curSel = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_AUDIOFORMAT), CB_GETCURSEL, 0, 0);
                 if(curSel != CB_ERR)
                     AppConfig->SetInt(TEXT("Audio Encoding"), TEXT("Format"), curSel);
+
+                bool bUseCBR = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USECBR), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("UseCBR"), bUseCBR);
+
+                bool bCustomBuffer = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_CUSTOMBUFFER), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("UseBufferSize"), bCustomBuffer);
+
                 break;
             }
 
@@ -2164,13 +2230,13 @@ void OBS::ApplySettings()
 
                 //--------------------------------------------------
 
-                bool bUseCFR = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USECFR), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("UseCFR"),            bUseCFR);
+                UINT sceneBufferTime = (UINT)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_SCENEBUFFERTIME), UDM_GETPOS32, 0, 0);
+                GlobalConfig->SetInt(TEXT("General"), TEXT("SceneBufferingTime"), sceneBufferTime);
 
                 //--------------------------------------------------
 
-                bool bUseCBR = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USECBR), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("UseCBR"),            bUseCBR);
+                bool bUseCFR = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USECFR), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("UseCFR"),            bUseCFR);
 
                 //--------------------------------------------------
 
@@ -2184,6 +2250,11 @@ void OBS::ApplySettings()
 
                 BOOL bUnlockFPS = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_UNLOCKHIGHFPS), BM_GETCHECK, 0, 0) == BST_CHECKED;
                 AppConfig->SetInt   (TEXT("Video"), TEXT("UnlockFPS"), bUnlockFPS);
+
+                //------------------------------------
+
+                bool bUseTripleBuffering = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USETRIPLEBUFFERING), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                GlobalConfig->SetInt(TEXT("Video"), TEXT("UseTripleBuffering"), bUseTripleBuffering);
 
                 //------------------------------------
 

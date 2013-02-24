@@ -131,6 +131,9 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
+    bufferingTime = GlobalConfig->GetInt(TEXT("General"), TEXT("SceneBufferingTime"), 400);
+    numRenderBuffers = GlobalConfig->GetInt(TEXT("General"), TEXT("UseTripleBuffering"), FALSE) ? 2 : 3;
+
     int monitorID = AppConfig->GetInt(TEXT("Video"), TEXT("Monitor"));
     if(monitorID >= (int)monitors.Num())
         monitorID = 0;
@@ -197,7 +200,7 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
-    for(int i=0; i<NUM_RENDER_BUFFERS; i++)
+    for(UINT i=0; i<numRenderBuffers; i++)
     {
         mainRenderTextures[i] = CreateRenderTarget(baseCX, baseCY, GS_BGRA, FALSE);
         yuvRenderTextures[i]  = CreateRenderTarget(outputCX, outputCY, GS_BGRA, FALSE);
@@ -217,7 +220,7 @@ void OBS::Start()
     td.Usage            = D3D10_USAGE_STAGING;
     td.CPUAccessFlags   = D3D10_CPU_ACCESS_READ;
 
-    for(UINT i=0; i<NUM_RENDER_BUFFERS; i++)
+    for(UINT i=0; i<numRenderBuffers; i++)
     {
         HRESULT err = GetD3D()->CreateTexture2D(&td, NULL, &copyTextures[i]);
         if(FAILED(err))
@@ -539,7 +542,7 @@ void OBS::Stop()
 
     //-------------------------------------------------------------
 
-    for(int i=0; i<NUM_RENDER_BUFFERS; i++)
+    for(int i=0; i<numRenderBuffers; i++)
     {
         delete mainRenderTextures[i];
         delete yuvRenderTextures[i];
@@ -548,7 +551,7 @@ void OBS::Stop()
         yuvRenderTextures[i] = NULL;
     }
 
-    for(UINT i=0; i<NUM_RENDER_BUFFERS; i++)
+    for(UINT i=0; i<numRenderBuffers; i++)
     {
         SafeRelease(copyTextures[i]);
     }
@@ -740,7 +743,7 @@ bool OBS::QueryNewAudio(QWORD &timestamp)
     if(desktopAudio->GetEarliestTimestamp(desktopTimestamp))
         timestamp = desktopTimestamp;
 
-    if(desktopAudio->GetBufferedTime() >= OUTPUT_BUFFER_TIME)
+    if(desktopAudio->GetBufferedTime() >= App->bufferingTime)
         return true;
 
     return false;

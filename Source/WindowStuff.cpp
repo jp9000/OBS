@@ -816,16 +816,20 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 case ID_LISTBOX_CONFIG:
                     {
                         Vect2 multiple;
+                        ImageSource *source;
 
                         App->EnableSceneSwitching(false);
 
-                        ImageSource *source = selectedSceneItems[0]->GetSource();
-                        if(source)
+                        if(App->bRunning)
                         {
-                            Vect2 curSize = Vect2(selectedElement->GetFloat(TEXT("cx"), 32.0f), selectedElement->GetFloat(TEXT("cy"), 32.0f));
-                            Vect2 baseSize = source->GetSize();
+                            source = selectedSceneItems[0]->GetSource();
+                            if(source)
+                            {
+                                Vect2 curSize = Vect2(selectedElement->GetFloat(TEXT("cx"), 32.0f), selectedElement->GetFloat(TEXT("cy"), 32.0f));
+                                Vect2 baseSize = source->GetSize();
 
-                            multiple = curSize/baseSize;
+                                multiple = curSize/baseSize;
+                            }
                         }
 
                         if(curClassInfo->configProc && curClassInfo->configProc(selectedElement, false))
