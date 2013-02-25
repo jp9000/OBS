@@ -123,9 +123,9 @@ Settings.Advanced.VideoEncoderCPUTradeoffToolTip    "Tämän asetuksen nostamine
 Settings.Advanced.VideoEncoderSettings              "Valinnaiset x264-pakkausasetukset"
 Settings.Advanced.VideoEncoderSettingsTooltip       "Tähän voit syöttää valinnaiset x264-pakkausasetukset.  Malliksi [asetus]=[arvo] (esim. \"vbv-maxrate=1000 vbv-bufsize=1000\")."
 
+Settings.Audio.DesktopBoost         "Työpöydän äänentehostus (kerroin):"
 Settings.Audio.PlaybackDevice       "Toistolaite:"
 Settings.Audio.Device               "Mikrofoni/muu -äänilaite:"
-
 Settings.Audio.ForceMicMono         "Pakota mikrofoni yksikanavaiseksi:"
 Settings.Audio.MicBoost             "Mikrofonin tehonlisäys (kerroin):"
 Settings.Audio.MicTimeOffset        "Mikrofonin viive (millisekunteina):"
