@@ -92,6 +92,8 @@
 #define IDC_URL_STATIC                  1043
 #define IDC_FORCEMONO2                  1043
 #define IDC_USEMICTIMESTAMP             1043
+#define IDC_USEMICTIME                  1043
+#define IDC_USEMICQPC                   1043
 #define IDC_PLAYPATH_STATIC             1044
 #define IDC_SCROLLSPEED3                1044
 #define IDC_EXTENTHEIGHT_EDIT           1044

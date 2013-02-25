@@ -146,6 +146,8 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
     {
         Log(TEXT("------------------------------------------"));
         Log(TEXT("Using auxilary audio input: %s"), GetDeviceName());
+
+        bUseQPC = GlobalConfig->GetInt(TEXT("Audio"), TEXT("UseMicQPC")) != 0;
     }
     else
     {
@@ -281,30 +283,7 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
 
         if(bIsMic)
         {
-            newTimestamp = App->GetAudioTime();//+GetTimeOffset();
-
-            if(bUseQPC)
-            {
-                QWORD qpcVal = qpcTimestamp;
-                if(qpcVal > newTimestamp)
-                {
-                    if(qpcVal-newTimestamp < 200)
-                        newTimestamp = qpcVal;
-                    else
-                        bUseQPC = false;
-                }
-                else
-                {
-                    if(newTimestamp-qpcVal < 200)
-                        newTimestamp = qpcVal;
-                    else
-                        bUseQPC = false;
-                }
-
-                if(!bUseQPC)
-                    Log(TEXT("timestamps for '%s' just decided to go wacky.  reverting to desktop time.  PRAISE WONDERFUL DEVICE DRIVERS"), GetDeviceName());
-            }
-
+            newTimestamp = (bUseQPC) ? qpcTimestamp : App->GetAudioTime();
             newTimestamp += GetTimeOffset();
         }
         else

@@ -459,7 +459,7 @@ OBS::OBS()
     for(UINT i=0; i<numScenes; i++)
     {
         XElement *scene = scenes->GetElementByID(i);
-        scene->SetString(TEXT("class"), TEXT("Scene"));
+        //scene->SetString(TEXT("class"), TEXT("Scene"));
         SendMessage(hwndTemp, LB_ADDSTRING, 0, (LPARAM)scene->GetName());
     }
 
@@ -953,7 +953,7 @@ void OBS::ReloadIniSettings()
 
     //-------------------------------------------
     // desktop boost
-    DWORD desktopBoostMultiple = AppConfig->GetInt(TEXT("Audio"), TEXT("DesktopBoostMultiple"), 1);
+    DWORD desktopBoostMultiple = GlobalConfig->GetInt(TEXT("Audio"), TEXT("DesktopBoostMultiple"), 1);
     if(desktopBoostMultiple < 1)
         desktopBoostMultiple = 1;
     else if(desktopBoostMultiple > 20)
