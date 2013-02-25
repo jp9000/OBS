@@ -163,7 +163,10 @@
 #define IDC_MICTIMEOFFSET               1083
 #define IDC_DELAY                       1084
 #define IDC_OUTLINETHICKNESS_EDIT       1084
+#define IDC_DESKTOPBOOST_EDIT           1084
 #define IDC_BACKGROUNDOPACITY_EDIT      1085
+#define IDC_MICBOOST2                   1085
+#define IDC_DESKTOPBOOST                1085
 #define IDC_USESYNCFIX                  1086
 #define IDC_CLEARPUSHTOTALK             1088
 #define IDC_CLEARMUTEMIC                1089

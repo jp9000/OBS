@@ -562,13 +562,13 @@ class OBS
     HANDLE  hSoundThread, hSoundDataMutex;//, hRequestAudioEvent;
     QWORD   latestAudioTime;
 
-    float   desktopVol, micVol, curMicVol;
+    float   desktopVol, micVol, curMicVol, curDesktopVol;
     float   desktopPeak, micPeak;
     float   desktopMax, micMax;
     float   desktopMag, micMag;
     List<FrameAudio> pendingAudioFrames;
     bool    bForceMicMono;
-    float   micBoost;
+    float   desktopBoost, micBoost;
 
     HANDLE hAuxAudioMutex;
 

@@ -542,7 +542,7 @@ void OBS::Stop()
 
     //-------------------------------------------------------------
 
-    for(int i=0; i<numRenderBuffers; i++)
+    for(UINT i=0; i<numRenderBuffers; i++)
     {
         delete mainRenderTextures[i];
         delete yuvRenderTextures[i];
@@ -714,13 +714,13 @@ bool OBS::QueryNewAudio(QWORD &timestamp)
     timestamp = INVALID_LL;
 
     QWORD desktopTimestamp;
-    while((audioRet = desktopAudio->QueryAudio(desktopVol)) != NoAudioAvailable)
+    while((audioRet = desktopAudio->QueryAudio(curDesktopVol)) != NoAudioAvailable)
     {
         bNewAudio = true;
 
         OSEnterMutex(hAuxAudioMutex);
         for(UINT i=0; i<auxAudioSources.Num(); i++)
-            auxAudioSources[i]->QueryAudio(desktopVol);
+            auxAudioSources[i]->QueryAudio(curDesktopVol);
         OSLeaveMutex(hAuxAudioMutex);
 
         if(micAudio != NULL)
@@ -731,7 +731,7 @@ bool OBS::QueryNewAudio(QWORD &timestamp)
     {
         OSEnterMutex(hAuxAudioMutex);
         for(UINT i=0; i<auxAudioSources.Num(); i++)
-            auxAudioSources[i]->QueryAudio(desktopVol);
+            auxAudioSources[i]->QueryAudio(curDesktopVol);
         OSLeaveMutex(hAuxAudioMutex);
 
         if(micAudio)
@@ -847,6 +847,8 @@ void OBS::MainAudioLoop()
         UINT desktopAudioFrames = 0, micAudioFrames = 0;
         UINT latestDesktopAudioFrames = 0, latestMicAudioFrames = 0;
 
+        curDesktopVol = desktopVol * desktopBoost;
+
         if(bUsingPushToTalk)
             curMicVol = bPushToTalkOn ? micVol : 0.0f;
         else
@@ -854,7 +856,7 @@ void OBS::MainAudioLoop()
 
         curMicVol *= micBoost;
 
-        bool bDesktopMuted = (desktopVol < EPSILON);
+        bool bDesktopMuted = (curDesktopVol < EPSILON);
         bool bMicEnabled   = (micAudio != NULL);
 
         QWORD timestamp;
@@ -909,7 +911,7 @@ void OBS::MainAudioLoop()
             /*multiply samples by volume and compute RMS and max of samples*/
             float desktopRMS = 0, micRMS = 0, desktopMx = 0, micMx = 0;
             if(latestDesktopBuffer)
-                CalculateVolumeLevels(mixedLatestDesktopSamples.Array(), latestDesktopAudioFrames*2, desktopVol, desktopRMS, desktopMx);
+                CalculateVolumeLevels(mixedLatestDesktopSamples.Array(), latestDesktopAudioFrames*2, curDesktopVol, desktopRMS, desktopMx);
             if(bMicEnabled && latestMicBuffer)
                 CalculateVolumeLevels(latestMicBuffer, latestMicAudioFrames*2, curMicVol, micRMS, micMx);
 

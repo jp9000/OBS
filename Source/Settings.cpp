@@ -1532,6 +1532,16 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
 
                 //--------------------------------------------
 
+                DWORD desktopBoost = AppConfig->GetInt(TEXT("Audio"), TEXT("DesktopBoostMultiple"), 1);
+                if(desktopBoost < 1)
+                    desktopBoost = 1;
+                else if(desktopBoost > 20)
+                    desktopBoost = 20;
+                SendMessage(GetDlgItem(hwnd, IDC_DESKTOPBOOST), UDM_SETRANGE32, 1, 20);
+                SendMessage(GetDlgItem(hwnd, IDC_DESKTOPBOOST), UDM_SETPOS32, 0, desktopBoost);
+
+                //--------------------------------------------
+
                 DWORD micBoost = AppConfig->GetInt(TEXT("Audio"), TEXT("MicBoostMultiple"), 1);
                 if(micBoost < 1)
                     micBoost = 1;
@@ -1584,6 +1594,7 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                         break;
 
                     case IDC_MICTIMEOFFSET_EDIT:
+                    case IDC_DESKTOPBOOST_EDIT:
                     case IDC_MICBOOST_EDIT:
                     case IDC_PUSHTOTALKHOTKEY:
                     case IDC_MUTEMICHOTKEY:
@@ -2063,7 +2074,6 @@ void OBS::ApplySettings()
                 break;
             }
 
-
         case Settings_Video:
             {
                 int curSel = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_MONITOR), CB_GETCURSEL, 0, 0);
@@ -2189,6 +2199,16 @@ void OBS::ApplySettings()
 
                 App->bForceMicMono = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_FORCEMONO), BM_GETCHECK, 0, 0) == BST_CHECKED;
                 AppConfig->SetInt(TEXT("Audio"), TEXT("ForceMicMono"), bForceMicMono);
+
+                //------------------------------------
+
+                DWORD desktopBoostMultiple = (DWORD)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_DESKTOPBOOST), UDM_GETPOS32, 0, 0);
+                if(desktopBoostMultiple < 1)
+                    desktopBoostMultiple = 1;
+                else if(desktopBoostMultiple > 20)
+                    desktopBoostMultiple = 20;
+                AppConfig->SetInt(TEXT("Audio"), TEXT("DesktopBoostMultiple"), desktopBoostMultiple);
+                App->desktopBoost = float(desktopBoostMultiple);
 
                 //------------------------------------
 
