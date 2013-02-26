@@ -71,7 +71,6 @@
 #define IDC_DISABLEAERO                 1038
 #define IDC_DISABLEMIC                  1040
 #define IDC_CHECK1                      1041
-#define IDC_USEI444                     1041
 #define IDC_RESETSIZE                   1041
 #define IDC_CAPTUREMOUSE                1041
 #define IDC_BUFFERSENDS                 1041

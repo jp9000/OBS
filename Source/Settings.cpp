@@ -1957,9 +1957,6 @@ void OBS::ApplySettings()
                 if(bufSize < 100) bitrate = bufSize;
                 AppConfig->SetInt(TEXT("Video Encoding"), TEXT("BufferSize"), bufSize);
 
-                BOOL bUse444 = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USEI444), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                AppConfig->SetInt(TEXT("Video Encoding"), TEXT("Use444"), bUse444);
-
                 String strTemp = GetCBText(GetDlgItem(hwndCurrentSettings, IDC_AUDIOCODEC));
                 AppConfig->SetString(TEXT("Audio Encoding"), TEXT("Codec"), strTemp);
 

@@ -340,7 +340,9 @@ void OBS::Start()
     int bufferSize = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("BufferSize"), 1000);
     int quality    = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Quality"),    8);
     String preset  = AppConfig->GetString(TEXT("Video Encoding"), TEXT("Preset"),     TEXT("veryfast"));
-    bUsing444      = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Use444"),     0) != 0;
+    bUsing444      = false;
+
+    AppConfig->SetInt(TEXT("Video Encoding"), TEXT("Use444"), 0);
     
     if(bUsing444)
         bUseCFR = false;
