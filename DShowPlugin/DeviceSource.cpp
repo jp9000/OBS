@@ -642,6 +642,9 @@ cleanFinish:
     else
         bReadyToDraw = false;
 
+    if(!renderCX) renderCX = 32;
+    if(!renderCY) renderCY = 32;
+
     //-----------------------------------------------------
     // create the texture regardless, will just show up as red to indicate failure
     BYTE *textureData = (BYTE*)Allocate(renderCX*renderCY*4);
