@@ -50,6 +50,21 @@ class RTMPPublisher : public NetworkStream
     /*List<PacketTimeSize> packetSizeRecord;
     DWORD outputRateSize;*/
 
+    //-----------------------------------------------
+
+    static DWORD WINAPI CreateConnectionThread(RTMPPublisher *publisher);
+
+    void BeginPublishingInternal();
+
+    static int BufferedSend(RTMPSockBuf *sb, const char *buf, int len, RTMPPublisher *network);
+
+    static String strRTMPErrors;
+
+    static void librtmpErrorCallback(int level, const char *format, va_list vl);
+    static String GetRTMPErrors();
+
+protected:
+
     bool numStartFrames, bNetworkStrain;
     double dNetworkStrain;
 
@@ -64,22 +79,13 @@ class RTMPPublisher : public NetworkStream
     // frame drop stuff
 
     DWORD minFramedropTimestsamp;
-    DWORD dropThreshold;
+    DWORD dropThreshold, bframeDropThreshold;
     List<NetworkPacket> queuedPackets;
-    UINT currentBufferSize, outputRateWindowTime;
+    UINT currentBufferSize;//, outputRateWindowTime;
+    UINT lastBFrameDropTime;
 
-    static DWORD WINAPI CreateConnectionThread(RTMPPublisher *publisher);
+    //-----------------------------------------------
 
-    void BeginPublishingInternal();
-
-    static int BufferedSend(RTMPSockBuf *sb, const char *buf, int len, RTMPPublisher *network);
-
-    static String strRTMPErrors;
-
-    static void librtmpErrorCallback(int level, const char *format, va_list vl);
-    static String GetRTMPErrors();
-
-protected:
     RTMP *rtmp;
 
     HANDLE hSendSempahore;
@@ -122,7 +128,9 @@ protected:
     void DropFrame(UINT id);
     bool DoIFrameDelay(bool bBFramesOnly);
 
-    void ProcessPackets();
+    virtual void ProcessPackets();
+
+    virtual void RequestKeyframe(int waitTime);
 
 public:
     RTMPPublisher();

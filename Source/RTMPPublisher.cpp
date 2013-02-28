@@ -72,6 +72,10 @@ RTMPPublisher::RTMPPublisher()
 
     //------------------------------------------
 
+    bframeDropThreshold = AppConfig->GetInt(TEXT("Publish"), TEXT("BFrameDropThreshold"), 200);
+    if(bframeDropThreshold < 50)        bframeDropThreshold = 50;
+    else if(bframeDropThreshold > 1000) bframeDropThreshold = 1000;
+
     dropThreshold = AppConfig->GetInt(TEXT("Publish"), TEXT("FrameDropThreshold"), 500);
     if(dropThreshold < 50)        dropThreshold = 50;
     else if(dropThreshold > 1000) dropThreshold = 1000;
@@ -256,16 +260,27 @@ void RTMPPublisher::ProcessPackets()
     {
         DWORD queueDuration = (queuedPackets.Last().timestamp - queuedPackets[0].timestamp);
 
-        if(queueDuration >= dropThreshold)
+        DWORD curTime = OSGetTime();
+
+        if (queueDuration >= dropThreshold)
         {
             minFramedropTimestsamp = queuedPackets.Last().timestamp;
 
-            OSDebugOut(TEXT("dropped at %u, threshold is %u, total duration is %u\r\n"), currentBufferSize, dropThreshold, queueDuration);
+            OSDebugOut(TEXT("dropped all at %u, threshold is %u, total duration is %u\r\n"), currentBufferSize, dropThreshold, queueDuration);
+
             //what the hell, just flush it all for now as a test and force a keyframe 1 second after
-            while(DoIFrameDelay(false));
+            while (DoIFrameDelay(false));
 
             if(packetWaitType > PacketType_VideoLow)
-                App->RequestKeyframe(1000);
+                RequestKeyframe(1000);
+        }
+        else if (queueDuration >= bframeDropThreshold && curTime-lastBFrameDropTime >= dropThreshold)
+        {
+            OSDebugOut(TEXT("dropped b-frames at %u, threshold is %u, total duration is %u\r\n"), currentBufferSize, bframeDropThreshold, queueDuration);
+
+            while (DoIFrameDelay(true));
+
+            lastBFrameDropTime = curTime;
         }
     }
 
@@ -609,7 +624,7 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
 
     OSDebugOut(TEXT("Connected: %u\r\n"), OSGetTime());
 
-    App->RequestKeyframe(2000);
+    publisher->RequestKeyframe(1000);
 
     //-----------------------------------------
 
@@ -1146,6 +1161,11 @@ bool RTMPPublisher::DoIFrameDelay(bool bBFramesOnly)
     }
 
     return false;
+}
+
+void RTMPPublisher::RequestKeyframe(int waitTime)
+{
+    App->RequestKeyframe(waitTime);
 }
 
 int RTMPPublisher::BufferedSend(RTMPSockBuf *sb, const char *buf, int len, RTMPPublisher *network)

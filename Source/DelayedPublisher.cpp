@@ -24,16 +24,13 @@
 NetworkStream* CreateRTMPPublisher();
 
 
-class DelayedPublisher : public NetworkStream
+class DelayedPublisher : public RTMPPublisher
 {
     DWORD delayTime;
     DWORD lastTimestamp;
-    List<NetworkPacket> queuedPackets;
+    List<NetworkPacket> delayedPackets;
 
-    RTMPPublisher *outputStream;
-
-    bool bConnected;
-    bool bStreamEnding, bCancelEnd;
+    bool bStreamEnding, bCancelEnd, bDelayConnected;
 
     static INT_PTR CALLBACK EndDelayProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
@@ -61,42 +58,51 @@ class DelayedPublisher : public NetworkStream
         return 0;
     }
 
-    void ProcessPackets(DWORD timestamp)
+    void ProcessDelayedPackets(DWORD timestamp)
     {
         if(bCancelEnd)
             return;
 
         if(timestamp >= delayTime)
         {
-            if(!bConnected)
+            if(!bConnected && !bConnecting && !bStopping)
             {
-                outputStream = (RTMPPublisher*)CreateRTMPPublisher();
-                bConnected = true;
+                hConnectionThread = OSCreateThread((XTHREAD)CreateConnectionThread, this);
+                bConnecting = true;
             }
 
-            DWORD sendTime = timestamp-delayTime;
-            for(UINT i=0; i<queuedPackets.Num(); i++)
+            if(bConnected)
             {
-                NetworkPacket &packet = queuedPackets[i];
-                if(packet.timestamp <= sendTime)
+                if(!bDelayConnected)
                 {
-                    outputStream->SendPacket(packet.data.Array(), packet.data.Num(), packet.timestamp, packet.type);
-                    packet.data.Clear();
-                    queuedPackets.Remove(i--);
+                    delayTime = timestamp;
+                    bDelayConnected = true;
+                }
+
+                DWORD sendTime = timestamp-delayTime;
+                for(UINT i=0; i<delayedPackets.Num(); i++)
+                {
+                    NetworkPacket &packet = delayedPackets[i];
+                    if(packet.timestamp <= sendTime)
+                    {
+                        RTMPPublisher::SendPacket(packet.data.Array(), packet.data.Num(), packet.timestamp, packet.type);
+                        packet.data.Clear();
+                        delayedPackets.Remove(i--);
+                    }
                 }
             }
         }
     }
 
 public:
-    inline DelayedPublisher(DWORD delayTime)
+    inline DelayedPublisher(DWORD delayTime) : RTMPPublisher()
     {
         this->delayTime = delayTime;
     }
 
     ~DelayedPublisher()
     {
-        if(!outputStream || !outputStream->bStopping)
+        if(!bStopping)
         {
             bStreamEnding = true;
             HWND hwndProgressDialog = CreateDialogParam(hinstMain, MAKEINTRESOURCE(IDD_ENDINGDELAY), hwndMain, (DLGPROC)EndDelayProc, (LPARAM)this);
@@ -111,7 +117,7 @@ public:
             DWORD lastTimeLeft = -1;
 
             DWORD firstTime = OSGetTime();
-            while(queuedPackets.Num() && !bCancelEnd)
+            while(delayedPackets.Num() && !bCancelEnd)
             {
                 ProcessEvents();
 
@@ -129,8 +135,8 @@ public:
                     lastTimeLeft = timeLeft;
                 }
 
-                ProcessPackets(lastTimestamp+timeElapsed);
-                if(outputStream && outputStream->bStopping)
+                ProcessDelayedPackets(lastTimestamp+timeElapsed);
+                if(bStopping)
                     bCancelEnd = true;
 
                 Sleep(10);
@@ -139,17 +145,15 @@ public:
             DestroyWindow(hwndProgressDialog);
         }
 
-        for(UINT i=0; i<queuedPackets.Num(); i++)
-            queuedPackets[i].data.Clear();
-
-        delete outputStream;
+        for(UINT i=0; i<delayedPackets.Num(); i++)
+            delayedPackets[i].data.Clear();
     }
 
     void SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)
     {
-        ProcessPackets(timestamp);
+        ProcessDelayedPackets(timestamp);
 
-        NetworkPacket *newPacket = queuedPackets.CreateNew();
+        NetworkPacket *newPacket = delayedPackets.CreateNew();
         newPacket->data.CopyArray(data, size);
         newPacket->timestamp = timestamp;
         newPacket->type = type;
@@ -157,13 +161,8 @@ public:
         lastTimestamp = timestamp;
     }
 
-    void BeginPublishing() {}
-
-    double GetPacketStrain() const {return (outputStream) ? outputStream->GetPacketStrain() : 0;}
-    QWORD GetCurrentSentBytes() {return (outputStream) ? outputStream->GetCurrentSentBytes() : 0;}
-    DWORD NumDroppedFrames() const {return (outputStream) ? outputStream->NumDroppedFrames() : 0;}
-    DWORD NumTotalVideoFrames() const {return (outputStream) ? outputStream->NumTotalVideoFrames() : 1;}
-
+    //keyframes cannot really be requested because everything is delayed
+    void RequestKeyframe(int waitTime) {}
 };
 
 
