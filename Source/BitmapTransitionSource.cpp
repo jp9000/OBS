@@ -18,7 +18,10 @@
 
 
 #include "Main.h"
+#include <time.h>
 
+#define MIN_TRANSITION_TIME 3
+#define MAX_TRANSITION_TIME 600
 
 const float fadeTime = 1.5f;
 
@@ -36,11 +39,21 @@ class BitmapTransitionSource : public ImageSource
     float transitionTime;
 
     UINT  curTexture;
+    UINT  nextTexture;
+
     float curTransitionTime;
     float curFadeValue;
     bool  bTransitioning;
 
     bool  bFadeInOnly;
+    bool  bDisableFading;
+    bool  bRandomize;
+
+    inline int lrand(int limit)
+    {
+        // return a random number in the interval [0 , limit)
+        return int( ( (double)rand() / (RAND_MAX + 1) ) * limit );
+    }
 
     void CreateErrorTexture()
     {
@@ -69,17 +82,30 @@ public:
 
     void Tick(float fSeconds)
     {
-        if(bTransitioning)
+        if(bTransitioning && textures.Num() > 1)
         {
-            curFadeValue += fSeconds;
+            if(bDisableFading)
+                curFadeValue = fadeTime;
+            else
+                curFadeValue += fSeconds;
 
             if(curFadeValue >= fadeTime)
             {
                 curFadeValue = 0.0f;
                 bTransitioning = false;
-
-                if(++curTexture == textures.Num())
-                    curTexture = 0;
+                
+                if(bRandomize)
+                {
+                    curTexture = nextTexture;
+                    while((nextTexture = lrand(textures.Num())) == curTexture);
+                }
+                else
+                {
+                    if(++curTexture == textures.Num())
+                        curTexture = 0;
+                    
+                    nextTexture = (curTexture == textures.Num()-1) ? 0 : curTexture+1;
+                }
             }
         }
 
@@ -140,7 +166,6 @@ public:
                 else
                     DrawBitmap(curTexture, 1.0f-curAlpha, pos, size);
 
-                UINT nextTexture = (curTexture == textures.Num()-1) ? 0 : curTexture+1;
                 DrawBitmap(nextTexture, curAlpha, pos, size);
             }
             else
@@ -193,19 +218,34 @@ public:
         //------------------------------------
 
         transitionTime = data->GetFloat(TEXT("transitionTime"));
-        if(transitionTime < 5)
-            transitionTime = 5;
-        else if(transitionTime > 30)
-            transitionTime = 30;
+        if(transitionTime < MIN_TRANSITION_TIME)
+            transitionTime = MIN_TRANSITION_TIME;
+        else if(transitionTime > MAX_TRANSITION_TIME)
+            transitionTime = MAX_TRANSITION_TIME;
 
         //------------------------------------
 
         bFadeInOnly = data->GetInt(TEXT("fadeInOnly")) != 0;
+        bDisableFading = data->GetInt(TEXT("disableFading")) != 0;
+        bRandomize = data->GetInt(TEXT("randomize")) != 0;
 
         //------------------------------------
 
         curTransitionTime = 0.0f;
         curTexture = 0;
+
+        if(bRandomize)
+        {
+            srand( (unsigned)time( NULL ) );
+            if(textures.Num() > 1)
+            {
+                curTexture = lrand(textures.Num());
+                while((nextTexture = lrand(textures.Num())) == curTexture);
+            }
+        }
+        else
+            nextTexture = (curTexture == textures.Num()-1) ? 0 : curTexture+1;
+
         bTransitioning = false;
         curFadeValue = 0.0f;
     }
@@ -257,7 +297,7 @@ INT_PTR CALLBACK ConfigureBitmapTransitionProc(HWND hwnd, UINT message, WPARAM w
                 hwndTemp = GetDlgItem(hwnd, IDC_TRANSITIONTIME);
 
                 UINT transitionTime = configInfo->data->GetInt(TEXT("transitionTime"));
-                SendMessage(hwndTemp, UDM_SETRANGE32, 3, 600);
+                SendMessage(hwndTemp, UDM_SETRANGE32, MIN_TRANSITION_TIME, MAX_TRANSITION_TIME);
 
                 if(!transitionTime)
                     transitionTime = 10;
@@ -272,7 +312,14 @@ INT_PTR CALLBACK ConfigureBitmapTransitionProc(HWND hwnd, UINT message, WPARAM w
                 //--------------------------
 
                 BOOL bFadeInOnly = configInfo->data->GetInt(TEXT("fadeInOnly"));
+                BOOL bDisableFading = configInfo->data->GetInt(TEXT("disableFading"));
+                BOOL bRandomize = configInfo->data->GetInt(TEXT("randomize"));
                 SendMessage(GetDlgItem(hwnd, IDC_FADEINONLY), BM_SETCHECK, bFadeInOnly ? BST_CHECKED : BST_UNCHECKED, 0);
+                SendMessage(GetDlgItem(hwnd, IDC_DISABLEFADING), BM_SETCHECK, bDisableFading ? BST_CHECKED : BST_UNCHECKED, 0);
+                SendMessage(GetDlgItem(hwnd, IDC_RANDOMIZE), BM_SETCHECK, bRandomize ? BST_CHECKED : BST_UNCHECKED, 0);
+                
+                
+                EnableWindow(GetDlgItem(hwnd, IDC_FADEINONLY), !bDisableFading);
 
                 return TRUE;
             }
@@ -389,6 +436,13 @@ INT_PTR CALLBACK ConfigureBitmapTransitionProc(HWND hwnd, UINT message, WPARAM w
                     }
                     break;
 
+                case IDC_DISABLEFADING:
+                    {
+                        BOOL bDisableFading = SendMessage(GetDlgItem(hwnd, IDC_DISABLEFADING), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        EnableWindow(GetDlgItem(hwnd, IDC_FADEINONLY), !bDisableFading);
+                    }
+                    break;
+
                 case IDOK:
                     {
                         HWND hwndBitmaps = GetDlgItem(hwnd, IDC_BITMAPS);
@@ -426,7 +480,11 @@ INT_PTR CALLBACK ConfigureBitmapTransitionProc(HWND hwnd, UINT message, WPARAM w
                         configInfo->data->SetInt(TEXT("transitionTime"), transitionTime);
 
                         BOOL bFadeInOnly = SendMessage(GetDlgItem(hwnd, IDC_FADEINONLY), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        BOOL bDisableFading = SendMessage(GetDlgItem(hwnd, IDC_DISABLEFADING), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        BOOL bRandomize = SendMessage(GetDlgItem(hwnd, IDC_RANDOMIZE), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         configInfo->data->SetInt(TEXT("fadeInOnly"), bFadeInOnly);
+                        configInfo->data->SetInt(TEXT("disableFading"), bDisableFading);
+                        configInfo->data->SetInt(TEXT("randomize"), bRandomize);
                     }
 
                 case IDCANCEL:
