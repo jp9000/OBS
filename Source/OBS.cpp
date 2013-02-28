@@ -556,7 +556,7 @@ OBS::OBS()
                 }
                 else
                 {
-                    Log(TEXT("Failed to load plugin %s, %d"), strLocation, GetLastError());
+                    Log(TEXT("Failed to load plugin %s, %d"), strLocation.Array(), GetLastError());
                 }
             }
         } while (OSFindNextFile(hFind, ofd));
