@@ -13,7 +13,7 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// “ú–{Œê resources
+// Japanese resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_JPN)
 #ifdef _WIN32
@@ -369,7 +369,7 @@ BEGIN
     CONTROL         "Settings.Audio.UseMicQPC",IDC_USEMICQPC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,223,332,10
 END
 
-IDD_CONFIGURETRANSITIONSOURCE DIALOGEX 0, 0, 338, 198
+IDD_CONFIGURETRANSITIONSOURCE DIALOGEX 0, 0, 338, 216
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Sources.TransitionSource"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -377,16 +377,20 @@ BEGIN
     RTEXT           "Sources.TransitionSource.TimeBetweenBitmaps",IDC_STATIC,4,9,151,8
     EDITTEXT        IDC_TRANSITIONTIME_EDIT,159,7,51,14,ES_AUTOHSCROLL | ES_READONLY
     CONTROL         "",IDC_TRANSITIONTIME,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,211,7,10,14
-    LTEXT           "Sources.TransitionSource.Bitmaps",IDC_STATIC,4,44,164,8
-    PUSHBUTTON      "Add",IDC_ADD,250,57,81,14
-    LISTBOX         IDC_BITMAPS,10,58,237,112,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Remove",IDC_REMOVE,250,73,81,14
-    DEFPUSHBUTTON   "OK",IDOK,227,177,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,281,177,50,14
-    PUSHBUTTON      "MoveUp",IDC_MOVEUPWARD,250,108,81,14
-    PUSHBUTTON      "MoveDown",IDC_MOVEDOWNWARD,250,124,81,14
+    LTEXT           "Sources.TransitionSource.Bitmaps",IDC_STATIC,4,63,164,8
+    PUSHBUTTON      "Add",IDC_ADD,250,76,81,14
+    LISTBOX         IDC_BITMAPS,10,76,237,112,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Remove",IDC_REMOVE,250,92,81,14
+    DEFPUSHBUTTON   "OK",IDOK,227,195,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,281,195,50,14
+    PUSHBUTTON      "MoveUp",IDC_MOVEUPWARD,250,127,81,14
+    PUSHBUTTON      "MoveDown",IDC_MOVEDOWNWARD,250,143,81,14
     CONTROL         "Sources.TransitionSource.FadeInOnly",IDC_FADEINONLY,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,24,163,10,WS_EX_RIGHT
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,35,163,10,WS_EX_RIGHT
+    CONTROL         "Sources.TransitionSource.DisableFading",IDC_DISABLEFADING,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,25,163,10,WS_EX_RIGHT
+    CONTROL         "Sources.TransitionSource.Randomize",IDC_RANDOMIZE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,45,163,10,WS_EX_RIGHT
 END
 
 IDD_BUILDINGMP4 DIALOGEX 0, 0, 316, 51
@@ -586,7 +590,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 331
         TOPMARGIN, 7
-        BOTTOMMARGIN, 191
+        BOTTOMMARGIN, 209
     END
 
     IDD_BUILDINGMP4, DIALOG
@@ -740,7 +744,7 @@ END
 //
 
 IDC_COLORPICKER         CURSOR                  "cursor1.cur"
-#endif    // “ú–{Œê resources
+#endif    // Japanese resources
 /////////////////////////////////////////////////////////////////////////////
 
 
