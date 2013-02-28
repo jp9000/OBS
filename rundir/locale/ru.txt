@@ -238,7 +238,7 @@ Sources.SoftwareCaptureSource.Similarity            "Порог срабатыв
 Sources.SoftwareCaptureSource.Size                  "Размер:"
 Sources.SoftwareCaptureSource.SpillReduction        "Уменьшение разброса:"
 Sources.SoftwareCaptureSource.UseColorKey           "Использовать ключевой цвет:"
-Sources.SoftwareCaptureSource.Window                "Процесс:"
+Sources.SoftwareCaptureSource.Window                "Окно:"
 Sources.SoftwareCaptureSource.WindowCapture         "Захват окна"
 Sources.SoftwareCaptureSource.WindowCaptureTooltip  "Aero может быть включено при использовании только функции захвата окна. Изображение не обновляется, если целевое окно свернуто. Захват с помощью этой функции обычно быстрее, чем захват всего экрана или области экрана. Если Aero включено, окна, перекрывающие целевое окно, не будут видны."
 Sources.SoftwareCaptureSource.WindowMinimized       "Окно минимизировано"
