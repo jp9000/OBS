@@ -160,27 +160,27 @@ VideoOutputType GetVideoOutputType(const AM_MEDIA_TYPE &media_type)
 const int inputPriority[] =
 {
     1,
-    11,
-    12,
-    12,
-
-    10,
-    10,
-
-    -1,
-    -1,
-
-    13,
-    13,
-    13,
-    13,
-
+    6,
     7,
+    7,
+
+    12,
+    12,
+
+    -1,
     -1,
 
+    13,
+    13,
+    13,
+    13,
+
     5,
-    5,
-    5,
+    -1,
+
+    10,
+    10,
+    10,
 
     9
 };

@@ -1532,6 +1532,16 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
 
                 //--------------------------------------------
 
+                DWORD desktopBoost = GlobalConfig->GetInt(TEXT("Audio"), TEXT("DesktopBoostMultiple"), 1);
+                if(desktopBoost < 1)
+                    desktopBoost = 1;
+                else if(desktopBoost > 20)
+                    desktopBoost = 20;
+                SendMessage(GetDlgItem(hwnd, IDC_DESKTOPBOOST), UDM_SETRANGE32, 1, 20);
+                SendMessage(GetDlgItem(hwnd, IDC_DESKTOPBOOST), UDM_SETPOS32, 0, desktopBoost);
+
+                //--------------------------------------------
+
                 DWORD micBoost = AppConfig->GetInt(TEXT("Audio"), TEXT("MicBoostMultiple"), 1);
                 if(micBoost < 1)
                     micBoost = 1;
@@ -1542,13 +1552,15 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
 
                 //--------------------------------------------
 
+                int bufferTime = GlobalConfig->GetInt(TEXT("General"), TEXT("SceneBufferingTime"), 400);
+
                 int micTimeOffset = AppConfig->GetInt(TEXT("Audio"), TEXT("MicTimeOffset"), 0);
-                if(micTimeOffset < -150)
-                    micTimeOffset = -150;
+                if(micTimeOffset < -bufferTime)
+                    micTimeOffset = -bufferTime;
                 else if(micTimeOffset > 3000)
                     micTimeOffset = 3000;
 
-                SendMessage(GetDlgItem(hwnd, IDC_MICTIMEOFFSET), UDM_SETRANGE32, -150, 3000);
+                SendMessage(GetDlgItem(hwnd, IDC_MICTIMEOFFSET), UDM_SETRANGE32, -bufferTime, 3000);
                 SendMessage(GetDlgItem(hwnd, IDC_MICTIMEOFFSET), UDM_SETPOS32, 0, micTimeOffset);
 
                 //--------------------------------------------
@@ -1584,6 +1596,7 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                         break;
 
                     case IDC_MICTIMEOFFSET_EDIT:
+                    case IDC_DESKTOPBOOST_EDIT:
                     case IDC_MICBOOST_EDIT:
                     case IDC_PUSHTOTALKHOTKEY:
                     case IDC_MUTEMICHOTKEY:
@@ -1755,8 +1768,17 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 //------------------------------------
 
+                bool bUseMicQPC = GlobalConfig->GetInt(TEXT("Audio"), TEXT("UseMicQPC")) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_USEMICQPC), BM_SETCHECK, bUseMicQPC ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                //------------------------------------
+
+                int bufferTime = GlobalConfig->GetInt(TEXT("General"), TEXT("SceneBufferingTime"), 400);
+
+                //GlobalConfig->SetInt(TEXT("Audio"), TEXT("GlobalAudioTimeAdjust"), 0);
+
                 int globalAudioTimeAdjust = GlobalConfig->GetInt(TEXT("Audio"), TEXT("GlobalAudioTimeAdjust"));
-                SendMessage(GetDlgItem(hwnd, IDC_AUDIOTIMEADJUST), UDM_SETRANGE32, -(App->bufferingTime-50), 1000);
+                SendMessage(GetDlgItem(hwnd, IDC_AUDIOTIMEADJUST), UDM_SETRANGE32, -bufferTime, 1000);
                 SendMessage(GetDlgItem(hwnd, IDC_AUDIOTIMEADJUST), UDM_SETPOS32, 0, globalAudioTimeAdjust);
 
                 //------------------------------------
@@ -1898,6 +1920,7 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                     }
                     break;
 
+                case IDC_USEMICQPC:
                 case IDC_USETRIPLEBUFFERING:
                 case IDC_SYNCTOVIDEOTIME:
                 case IDC_USECFR:
@@ -1939,9 +1962,6 @@ void OBS::ApplySettings()
                 UINT bufSize = GetEditText(GetDlgItem(hwndCurrentSettings, IDC_BUFFERSIZE)).ToInt();
                 if(bufSize < 100) bitrate = bufSize;
                 AppConfig->SetInt(TEXT("Video Encoding"), TEXT("BufferSize"), bufSize);
-
-                BOOL bUse444 = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USEI444), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                AppConfig->SetInt(TEXT("Video Encoding"), TEXT("Use444"), bUse444);
 
                 String strTemp = GetCBText(GetDlgItem(hwndCurrentSettings, IDC_AUDIOCODEC));
                 AppConfig->SetString(TEXT("Audio Encoding"), TEXT("Codec"), strTemp);
@@ -2062,7 +2082,6 @@ void OBS::ApplySettings()
 
                 break;
             }
-
 
         case Settings_Video:
             {
@@ -2192,6 +2211,16 @@ void OBS::ApplySettings()
 
                 //------------------------------------
 
+                DWORD desktopBoostMultiple = (DWORD)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_DESKTOPBOOST), UDM_GETPOS32, 0, 0);
+                if(desktopBoostMultiple < 1)
+                    desktopBoostMultiple = 1;
+                else if(desktopBoostMultiple > 20)
+                    desktopBoostMultiple = 20;
+                GlobalConfig->SetInt(TEXT("Audio"), TEXT("DesktopBoostMultiple"), desktopBoostMultiple);
+                App->desktopBoost = float(desktopBoostMultiple);
+
+                //------------------------------------
+
                 DWORD micBoostMultiple = (DWORD)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_MICBOOST), UDM_GETPOS32, 0, 0);
                 if(micBoostMultiple < 1)
                     micBoostMultiple = 1;
@@ -2265,6 +2294,11 @@ void OBS::ApplySettings()
 
                 BOOL bSyncToVideoTime = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_SYNCTOVIDEOTIME), BM_GETCHECK, 0, 0) == BST_CHECKED;
                 AppConfig->SetInt   (TEXT("Audio"), TEXT("SyncToVideoTime"), bSyncToVideoTime);
+
+                //--------------------------------------------------
+
+                BOOL bUseMicQPC = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USEMICQPC), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                GlobalConfig->SetInt(TEXT("Audio"), TEXT("UseMicQPC"), bUseMicQPC);
 
                 //--------------------------------------------------
 

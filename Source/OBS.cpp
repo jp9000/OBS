@@ -459,7 +459,7 @@ OBS::OBS()
     for(UINT i=0; i<numScenes; i++)
     {
         XElement *scene = scenes->GetElementByID(i);
-        scene->SetString(TEXT("class"), TEXT("Scene"));
+        //scene->SetString(TEXT("class"), TEXT("Scene"));
         SendMessage(hwndTemp, LB_ADDSTRING, 0, (LPARAM)scene->GetName());
     }
 
@@ -556,7 +556,7 @@ OBS::OBS()
                 }
                 else
                 {
-                    Log(TEXT("Failed to load plugin %s, %d"), strLocation, GetLastError());
+                    Log(TEXT("Failed to load plugin %s, %d"), strLocation.Array(), GetLastError());
                 }
             }
         } while (OSFindNextFile(hFind, ofd));
@@ -952,13 +952,22 @@ void OBS::ReloadIniSettings()
     SetVolumeControlValue(hwndTemp, AppConfig->GetFloat(TEXT("Audio"), TEXT("DesktopVolume"), 0.0f));
 
     //-------------------------------------------
+    // desktop boost
+    DWORD desktopBoostMultiple = GlobalConfig->GetInt(TEXT("Audio"), TEXT("DesktopBoostMultiple"), 1);
+    if(desktopBoostMultiple < 1)
+        desktopBoostMultiple = 1;
+    else if(desktopBoostMultiple > 20)
+        desktopBoostMultiple = 20;
+    desktopBoost = float(desktopBoostMultiple);
+
+    //-------------------------------------------
     // mic boost
-    DWORD micBoostPercentage = AppConfig->GetInt(TEXT("Audio"), TEXT("MicBoostMultiple"), 1);
-    if(micBoostPercentage < 1)
-        micBoostPercentage = 1;
-    else if(micBoostPercentage > 20)
-        micBoostPercentage = 20;
-    micBoost = float(micBoostPercentage);
+    DWORD micBoostMultiple = AppConfig->GetInt(TEXT("Audio"), TEXT("MicBoostMultiple"), 1);
+    if(micBoostMultiple < 1)
+        micBoostMultiple = 1;
+    else if(micBoostMultiple > 20)
+        micBoostMultiple = 20;
+    micBoost = float(micBoostMultiple);
 
     //-------------------------------------------
     // dashboard

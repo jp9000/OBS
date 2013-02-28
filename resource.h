@@ -71,7 +71,6 @@
 #define IDC_DISABLEAERO                 1038
 #define IDC_DISABLEMIC                  1040
 #define IDC_CHECK1                      1041
-#define IDC_USEI444                     1041
 #define IDC_RESETSIZE                   1041
 #define IDC_CAPTUREMOUSE                1041
 #define IDC_BUFFERSENDS                 1041
@@ -87,11 +86,16 @@
 #define IDC_FORCEMONO                   1042
 #define IDC_SCROLLSPEED                 1042
 #define IDC_OPACITY2                    1042
+#define IDC_DISABLEFADING               1042
 #define IDC_CHANNELNAME_STATIC          1043
 #define IDC_EXTENTWIDTH_EDIT            1043
 #define IDC_URL_STATIC                  1043
 #define IDC_FORCEMONO2                  1043
 #define IDC_USEMICTIMESTAMP             1043
+#define IDC_USEMICTIME                  1043
+#define IDC_USEMICQPC                   1043
+#define IDC_FADEINONLY3                 1043
+#define IDC_RANDOMIZE                   1043
 #define IDC_PLAYPATH_STATIC             1044
 #define IDC_SCROLLSPEED3                1044
 #define IDC_EXTENTHEIGHT_EDIT           1044
@@ -163,7 +167,10 @@
 #define IDC_MICTIMEOFFSET               1083
 #define IDC_DELAY                       1084
 #define IDC_OUTLINETHICKNESS_EDIT       1084
+#define IDC_DESKTOPBOOST_EDIT           1084
 #define IDC_BACKGROUNDOPACITY_EDIT      1085
+#define IDC_MICBOOST2                   1085
+#define IDC_DESKTOPBOOST                1085
 #define IDC_USESYNCFIX                  1086
 #define IDC_CLEARPUSHTOTALK             1088
 #define IDC_CLEARMUTEMIC                1089

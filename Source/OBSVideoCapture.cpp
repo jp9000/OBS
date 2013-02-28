@@ -745,6 +745,8 @@ void OBS::MainCaptureLoop()
                     }
                     else
                     {
+                        outTimes[curOutBuffer] = (DWORD)curStreamTime;
+
                         picOut.img.i_stride[0] = map.RowPitch;
                         picOut.img.plane[0]    = (uint8_t*)map.pData;
                     }

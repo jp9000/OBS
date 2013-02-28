@@ -59,9 +59,8 @@ struct MemoryCopyData
 
 struct SharedTexData
 {
-    UINT        lastRendered;
     LONGLONG    frameTime;
-    DWORD       texHandles[2];
+    DWORD       texHandle;
 };
 
 struct CaptureInfo
