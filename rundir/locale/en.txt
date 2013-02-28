@@ -267,6 +267,8 @@ Sources.TransitionSource.Bitmaps            "Bitmaps:"
 Sources.TransitionSource.Empty              "There are no bitmaps entered to display."
 Sources.TransitionSource.FadeInOnly         "Fade In Only:"
 Sources.TransitionSource.TimeBetweenBitmaps "Time between images (seconds):"
+Sources.TransitionSource.DisableFading      "Disable Fading:"
+Sources.TransitionSource.Randomize          "Randomize:"
 
 Updater.DownloadNow         "Would you like to download them now?"
 Updater.NewUpdates          "The following updates are available:\r\n\r\n"

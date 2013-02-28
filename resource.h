@@ -86,6 +86,7 @@
 #define IDC_FORCEMONO                   1042
 #define IDC_SCROLLSPEED                 1042
 #define IDC_OPACITY2                    1042
+#define IDC_DISABLEFADING               1042
 #define IDC_CHANNELNAME_STATIC          1043
 #define IDC_EXTENTWIDTH_EDIT            1043
 #define IDC_URL_STATIC                  1043
@@ -93,6 +94,8 @@
 #define IDC_USEMICTIMESTAMP             1043
 #define IDC_USEMICTIME                  1043
 #define IDC_USEMICQPC                   1043
+#define IDC_FADEINONLY3                 1043
+#define IDC_RANDOMIZE                   1043
 #define IDC_PLAYPATH_STATIC             1044
 #define IDC_SCROLLSPEED3                1044
 #define IDC_EXTENTHEIGHT_EDIT           1044
