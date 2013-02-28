@@ -414,9 +414,6 @@ public:
             packets[i].size     = CurrentPackets[i].Packet.Num();
         }
 
-        if(!packets.Num())
-            OSDebugOut(TEXT("returned nothing\r\n"));
-
         return true;
     }
 
