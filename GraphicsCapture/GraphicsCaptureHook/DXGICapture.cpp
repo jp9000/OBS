@@ -280,13 +280,13 @@ bool InitDXGICapture()
 
                     device->Release();
                 }
+
+                factory->Release();
             }
             else
             {
                 RUNONCE logOutput << "InitDXGICapture: could not create IDXGIFactory" << endl;
             }
-
-            factory->Release();
         }
         else
         {
