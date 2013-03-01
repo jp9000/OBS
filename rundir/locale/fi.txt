@@ -264,8 +264,10 @@ Sources.TextSource.Wrap               "Sido"
 
 Sources.TransitionSource.Bitmaps            "Kuvakartat:"
 Sources.TransitionSource.Empty              "Kuvakarttoja ei ole asetettu."
-Sources.TransitionSource.FadeInOnly         "Lisää näkyvyyttä:"
+Sources.TransitionSource.FadeInOnly         "Häivytys sisään:"
 Sources.TransitionSource.TimeBetweenBitmaps "Aika kuvien valissä (sekunnit):"
+Sources.TransitionSource.DisableFading      "Poista häivytys käytöstä:"
+Sources.TransitionSource.Randomize          "Satunnaista:"
 
 Updater.DownloadNow         "Haluaisitko ladata ne nyt?"
 Updater.NewUpdates          "Seuraavat päivitykset ovat saatavilla:\r\n\r\n"
