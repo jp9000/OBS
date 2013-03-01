@@ -162,7 +162,7 @@ IUnknown* CreateDummyDevice()
     }
 
     //------------------------------------------------------
-    // d3d10.1
+    // d3d10.1 -- actually I think 10.1 will always be extended upon 10, so basically this code may never be called
 
     SHGetFolderPath(NULL, CSIDL_SYSTEM_DIR, NULL, SHGFP_TYPE_CURRENT, lpDllPath);
     wcscat_s(lpDllPath, MAX_PATH, TEXT("\\d3d10_1.dll"));
