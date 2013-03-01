@@ -869,3 +869,10 @@ void D3D10System::ResizeView()
     backBuffer->Release();
 }
 
+void D3D10System::CopyTexture(Texture *texDest, Texture *texSrc)
+{
+    D3D10Texture *d3d10Dest = static_cast<D3D10Texture*>(texDest);
+    D3D10Texture *d3d10Src  = static_cast<D3D10Texture*>(texSrc);
+
+    d3d->CopyResource(d3d10Dest->texture, d3d10Src->texture);
+}

@@ -78,8 +78,6 @@ ID3D10Device1           *shareDevice = NULL;
 ID3D10Resource          *copyTextureIntermediary = NULL;
 extern HANDLE           sharedHandle;
 
-extern bool             bD3D101Hooked;
-
 HMODULE                 hD3D9Dll = NULL;
 
 int                     patchType = 0;
@@ -246,7 +244,6 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
 
     HRESULT hErr;
 
-    bD3D101Hooked = true;
     HMODULE hD3D10_1 = LoadLibrary(TEXT("d3d10_1.dll"));
     if(!hD3D10_1)
     {
@@ -990,7 +987,11 @@ bool InitD3D9Capture()
 {
     bool bSuccess = false;
 
-    hD3D9Dll = GetModuleHandle(TEXT("d3d9.dll"));
+    TCHAR lpD3D9Path[MAX_PATH];
+    SHGetFolderPath(NULL, CSIDL_SYSTEM_DIR, NULL, SHGFP_TYPE_CURRENT, lpD3D9Path);
+    wcscat_s(lpD3D9Path, MAX_PATH, TEXT("\\d3d9.dll"));
+
+    hD3D9Dll = GetModuleHandle(lpD3D9Path);
     if(hD3D9Dll)
     {
         D3D9CREATEEXPROC d3d9CreateEx = (D3D9CREATEEXPROC)GetProcAddress(hD3D9Dll, "Direct3DCreate9Ex");

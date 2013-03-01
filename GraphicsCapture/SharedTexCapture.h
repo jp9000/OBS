@@ -22,8 +22,7 @@
 
 class SharedTexCapture : public GraphicsCaptureMethod
 {
-    Texture *sharedTexture;
-    Texture *copyTexture;
+    Texture *sharedTexture, *copyTexture;
 
     HWND hwndTarget;
 

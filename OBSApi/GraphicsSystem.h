@@ -508,6 +508,9 @@ protected:
     int curMatrix;
 
     virtual void ResetViewMatrix()=0;
+
+public:
+    virtual void CopyTexture(Texture *texDest, Texture *texSrc)=0;
 };
 
 
