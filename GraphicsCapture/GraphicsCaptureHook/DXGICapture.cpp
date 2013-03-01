@@ -48,6 +48,7 @@ DOCAPTUREPROC captureProc = NULL;
 DOCLEARPROC   clearProc = NULL;
 
 extern LPVOID lpCurrentSwap;
+extern LPVOID lpCurrentDevice;
 
 void SetupDXGIStuff(IDXGISwapChain *swap)
 {
@@ -99,6 +100,7 @@ HRESULT STDMETHODCALLTYPE DXGISwapResizeBuffersHook(IDXGISwapChain *swap, UINT b
     clearProc       = NULL;
     captureProc     = NULL;
     lpCurrentSwap   = NULL;
+    lpCurrentDevice = NULL;
     bTargetAcquired = false;
 
     giswapResizeBuffers.Unhook();
