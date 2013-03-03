@@ -19,6 +19,7 @@
 
 #include "Main.h"
 #include <intrin.h>
+#include <mmsystem.h>
 
 
 //primarily main window stuff an initialization/destruction code
@@ -174,6 +175,12 @@ OBS::OBS()
     RegisterImageSourceClass(TEXT("GlobalSource"), Str("Sources.GlobalSource"), (OBSCREATEPROC)CreateGlobalSource, (OBSCONFIGPROC)OBS::ConfigGlobalSource);
 
     RegisterImageSourceClass(TEXT("TextSource"), Str("Sources.TextSource"), (OBSCREATEPROC)CreateTextSource, (OBSCONFIGPROC)ConfigureTextSource);
+
+    //-----------------------------------------------------
+    // Setup OS scheduler
+
+    schedulerPeriod = 0;
+    setOsSchedulerPeriod(4); // Request 4ms scheduler period so the audio loop gets two chances per frame to process
 
     //-----------------------------------------------------
     // render frame class
@@ -626,6 +633,9 @@ OBS::~OBS()
         FreeLibrary(pluginInfo.hModule);
         pluginInfo.strFile.Clear();
     }
+
+    // Reset OS scheduler
+    releaseOsSchedulerPeriod();
 
     //DestroyWindow(hwndMain);
 
@@ -1349,4 +1359,83 @@ void OBS::SetSourceRender(CTSTR sourceName, bool render)
             break;
         }
     }
+}
+
+int OBS::detectOsSchedulerPeriod()
+{
+    // Force scheduler refresh by sleeping for more than 1/64 sec (Which is the
+    // default Windows scheduler frequency)
+    OSSleepMicrosecond(20000);
+
+    // Brute force detection
+    unsigned int schedPeriod = UINT_MAX;
+    unsigned int schedPrev = timeGetTime();
+    int schedCount = 0;
+    for(;;)
+    {
+        unsigned int next = timeGetTime();
+        if(next == schedPrev)
+            continue;
+        unsigned int diff = next - schedPrev;
+
+        // Did the time change by the same amount?
+        if(diff == schedPeriod)
+        {
+            if(++schedCount == 5) // Identical results = Certain
+                break;
+        }
+
+        // Is the difference faster than our previous guess?
+        if(diff < schedPeriod)
+        {
+            schedPeriod = diff; // Difference is
+            schedCount = 0;
+        }
+    }
+
+    return schedPeriod;
+}
+
+void OBS::setOsSchedulerPeriod(unsigned int desiredMinPeriod)
+{
+    TIMECAPS schedPtc;
+
+    schedulerPeriod = desiredMinPeriod;
+
+    // Log current resolution
+    Log(TEXT("Previous OS scheduler period = %d ms"), detectOsSchedulerPeriod());
+
+    // Get supported range
+    if(timeGetDevCaps(&schedPtc, sizeof(schedPtc)) == TIMERR_NOERROR)
+    {
+        Log(TEXT("Supported OS scheduler period range = [%d..%d] ms"), schedPtc.wPeriodMin, schedPtc.wPeriodMax);
+
+        // Stay within the valid range
+        schedulerPeriod = max(schedulerPeriod, schedPtc.wPeriodMin);
+
+        // Set as close to our target as possible
+        if(timeBeginPeriod(schedulerPeriod) == TIMERR_NOERROR)
+        {
+            Log(TEXT("Set OS scheduler period to %d ms"), schedulerPeriod);
+
+            // Verify that we actually changed the resolution
+            Log(TEXT("Verified current OS scheduler period = %d ms"), detectOsSchedulerPeriod());
+        }
+        else
+        {
+            Log(TEXT("Failed to set OS scheduler period to %d ms"), schedulerPeriod);
+            schedulerPeriod = 0;
+        }
+    }
+    else
+    {
+        Log(TEXT("Failed to get supported OS scheduler periods"));
+        schedulerPeriod = 0;
+    }
+}
+
+void OBS::releaseOsSchedulerPeriod()
+{
+    if(schedulerPeriod)
+        timeEndPeriod(schedulerPeriod);
 }
