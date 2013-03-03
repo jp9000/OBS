@@ -568,14 +568,23 @@ class OBS
     QWORD   latestAudioTime;
 
     float   desktopVol, micVol, curMicVol, curDesktopVol;
-    float   desktopPeak, micPeak;
-    float   desktopMax, micMax;
-    float   desktopMag, micMag;
+    float   desktopPeak, micPeak, micRawPeak;
+    float   desktopMax, micMax, micRawMax;
+    float   desktopMag, micMag, micRawMag;
     List<FrameAudio> pendingAudioFrames;
     bool    bForceMicMono;
     float   desktopBoost, micBoost;
 
+    // Noise gate
+    float   micNgOpenThreshold, micNgCloseThreshold, micNgAttackTime, micNgHoldTime, micNgReleaseTime; // Configuration
+    float   micNgAtten; // Current gate multiplier
+    float   micNgLvl;  // Input level with delayed decay
+    float   micNgHeldTime; // The amount of time we've held the gate open after it we hit the close threshold
+    bool    micNgIsOpen;
+
     HANDLE hAuxAudioMutex;
+
+    void ApplyNoiseGate(float *buffer, int totalFloats);
 
     //---------------------------------------------------
     // hotkey stuff
