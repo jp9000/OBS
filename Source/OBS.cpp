@@ -1047,7 +1047,7 @@ void OBS::ReloadIniSettings()
 void OBS::UpdateAudioMeters()
 {
     SetVolumeMeterValue(GetDlgItem(hwndMain, ID_DESKTOPVOLUMEMETER), desktopMag, desktopMax, desktopPeak);
-    SetVolumeMeterValue(GetDlgItem(hwndMain, ID_MICVOLUMEMETER), micRawMag, micRawMax, micRawPeak, micMag, micMax, micPeak);
+    SetVolumeMeterValue(GetDlgItem(hwndMain, ID_MICVOLUMEMETER), /*micRawMag, micRawMax, micRawPeak,*/ micMag, micMax, micPeak);
 }
 
 HICON OBS::GetIcon(HINSTANCE hInst, int resource)

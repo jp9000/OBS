@@ -912,10 +912,10 @@ void OBS::MainAudioLoop()
     micPeak = micRawPeak = desktopPeak = VOL_MIN;
 
     // Noise gate, FIXME: User configuration
-    micNgOpenThreshold = 0.2f;
+    micNgOpenThreshold = 0.05f;
     micNgCloseThreshold = 0.005f;
     micNgAttackTime = 0.1f;
-    micNgHoldTime = 0.3f;
+    micNgHoldTime = 0.2f;
     micNgReleaseTime = 0.2f;
     micNgAtten = 0.0f;
     micNgLvl = 0.0f;
@@ -1006,10 +1006,12 @@ void OBS::MainAudioLoop()
             if(bMicEnabled && latestMicBuffer)
             {
                 // Get raw volume levels before DSP processing
-                CalculateVolumeLevels(latestMicBuffer, latestMicAudioFrames*2, curMicVol, micRawRMS, micRawMx);
+                // TODO: This doesn't work as we don't process the audio immediately
+                //CalculateVolumeLevels(latestMicBuffer, latestMicAudioFrames*2, curMicVol, micRawRMS, micRawMx);
 
                 // Apply DSP
-                ApplyNoiseGate(latestMicBuffer, latestMicAudioFrames*2);
+                //ApplyNoiseGate(latestMicBuffer, latestMicAudioFrames*2);
+                ApplyNoiseGate(micBuffer, micAudioFrames*2);
             }
 
             //----------------------------------------------------------------------------
