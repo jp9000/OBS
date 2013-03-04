@@ -237,7 +237,7 @@ public:
         else
             videoDecodeTimes.Last().count++;
 
-        INT compositionOffset = videoFrame.compositionOffset;
+        INT compositionOffset = videoFrames.Last().compositionOffset;
         if(!compositionOffsets.Num() || compositionOffsets.Last().val != (UINT)compositionOffset)
         {
             OffsetVal newVal;
