@@ -31,6 +31,11 @@ struct AudioSegment
     List<float> audioData;
     QWORD timestamp;
 
+    inline AudioSegment(float *data, UINT numFloats, QWORD timestamp) : timestamp(timestamp)
+    {
+        audioData.CopyArray(data, numFloats);
+    }
+
     inline void ClearData()
     {
         audioData.Clear();
@@ -46,7 +51,11 @@ class BASE_EXPORT AudioSource
 
     //-----------------------------------------
 
-    List<AudioSegment> audioSegments;
+    List<AudioFilter*> audioFilters;
+
+    //-----------------------------------------
+
+    List<AudioSegment*> audioSegments;
 
     bool bFirstBaseFrameReceived;
     QWORD lastSentTimestamp;
@@ -79,6 +88,8 @@ class BASE_EXPORT AudioSource
     float sourceVolume;
 
     //-----------------------------------------
+
+    void AddAudioSegment(AudioSegment *segment, float curVolume);
 
 protected:
 
@@ -119,5 +130,13 @@ public:
 
     inline void SetVolume(float fVal) {sourceVolume = fabsf(fVal);}
     inline float GetVolume() const {return sourceVolume;}
+
+    inline UINT NumAudioFilters() const {return audioFilters.Num();}
+    inline AudioFilter* GetAudioFilter(UINT id) {if(audioFilters.Num() > id) return audioFilters[id]; return NULL;}
+
+    inline void AddAudioFilter(AudioFilter *filter) {audioFilters << filter;}
+    inline void InsertAudioFilter(UINT pos, AudioFilter *filter) {audioFilters.Insert(pos, filter);}
+    inline void RemoveAudioFilter(AudioFilter *filter) {audioFilters.RemoveItem(filter);}
+    inline void RemoveAudioFilter(UINT id) {if(audioFilters.Num() > id) audioFilters.Remove(id);}
 };
 

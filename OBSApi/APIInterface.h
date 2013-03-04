@@ -170,6 +170,16 @@ public:
     virtual float GetMicVolume() = 0;
     virtual void ToggleMicMute() = 0;
     virtual bool GetMicMuted() = 0;
+
+    virtual DWORD GetOBSVersion() const=0;
+    virtual bool IsTestVersion() const=0;
+
+    //something about audio sources being modifiable by plugins, all good stuff
+    virtual UINT NumAuxAudioSources() const=0;
+    virtual AudioSource* GetAuxAudioSource(UINT id)=0;
+
+    virtual AudioSource* GetDesktopAudioSource()=0;
+    virtual AudioSource* GetMicAudioSource()=0;
 };
 
 BASE_EXPORT extern APIInterface *API;
@@ -268,3 +278,13 @@ BASE_EXPORT void OBSSetDesktopVolume(float val, bool finalValue);
 BASE_EXPORT float OBSGetDesktopVolume();
 BASE_EXPORT void OBSToggleDesktopMute();
 BASE_EXPORT bool OBSGetDesktopMuted();
+
+BASE_EXPORT DWORD OBSGetVersion();
+BASE_EXPORT bool OBSIsTestVersion();
+
+BASE_EXPORT UINT OBSNumAuxAudioSources();
+BASE_EXPORT AudioSource* OBSGetAuxAudioSource(UINT id);
+
+BASE_EXPORT AudioSource* OBSGetDesktopAudioSource();
+BASE_EXPORT AudioSource* OBSGetMicAudioSource();
+
