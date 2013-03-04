@@ -520,7 +520,7 @@ OBS::OBS()
     HANDLE hFind = OSFindFirstFile(TEXT("plugins/*.dll"), ofd);
     if(hFind)
     {
-        do 
+        do
         {
             if(!ofd.bDirectory) //why would someone give a directory a .dll extension in the first place?  pranksters.
             {
@@ -536,16 +536,14 @@ OBS::OBS()
                         PluginInfo *pluginInfo = plugins.CreateNew();
                         pluginInfo->hModule = hPlugin;
                         pluginInfo->strFile = ofd.fileName;
+                        pluginInfo->startStreamCallback  = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartStream");
+                        pluginInfo->stopStreamCallback   = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopStream");
 
-                        GETPLUGINNAMEPROC getName = (GETPLUGINNAMEPROC)GetProcAddress(hPlugin, "GetPluginName");
+                        //GETPLUGINNAMEPROC getName = (GETPLUGINNAMEPROC)GetProcAddress(hPlugin, "GetPluginName");
 
-                        CTSTR lpName;
-                        if(getName)
-                            lpName = getName();
-                        else
-                            lpName = TEXT("<unknown>");
+                        //CTSTR lpName = (getName) ? getName() : TEXT("<unknown>");
 
-                        //FIXME: log this somewhere else, it comes before the OBS version info and looks weird.
+                        //FIXME: TODO: log this somewhere else, it comes before the OBS version info and looks weird.
                         //Log(TEXT("Loaded plugin '%s', %s"), lpName, strLocation);
                     }
                     else

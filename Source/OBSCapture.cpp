@@ -424,6 +424,16 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
+    for (UINT i=0; i<plugins.Num(); i++)
+    {
+        OBS_CALLBACK startStreamProc = plugins[i].startStreamCallback;
+
+        if (startStreamProc)
+            (*startStreamProc)();
+    }
+
+    //-------------------------------------------------------------
+
     if(!bTestStream && bWriteToFile && strOutputFile.IsValid())
     {
         String strFileExtension = GetPathExtension(strOutputFile);
@@ -432,6 +442,8 @@ void OBS::Start()
         else if(strFileExtension.CompareI(TEXT("mp4")))
             fileStream = CreateMP4FileStream(strOutputFile);
     }
+
+    //-------------------------------------------------------------
 
     hMainThread = OSCreateThread((XTHREAD)OBS::MainCaptureThread, NULL);
 
@@ -497,6 +509,16 @@ void OBS::Stop()
     //-------------------------------------------------------------
 
     StopBlankSoundPlayback();
+
+    //-------------------------------------------------------------
+
+    for (UINT i=0; i<plugins.Num(); i++)
+    {
+        OBS_CALLBACK stopStreamCallback = plugins[i].stopStreamCallback;
+
+        if (stopStreamCallback)
+            (*stopStreamCallback)();
+    }
 
     //-------------------------------------------------------------
 

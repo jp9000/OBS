@@ -391,6 +391,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\AudioFilter.h"
+				>
+			</File>
+			<File
 				RelativePath=".\AudioSource.h"
 				>
 			</File>

@@ -130,6 +130,7 @@ inline QWORD GetQPCTimeMS(LONGLONG clockFreq)
 #include "GraphicsSystem.h"
 #include "Scene.h"
 #include "APIInterface.h"
+#include "AudioFilter.h"
 #include "AudioSource.h"
 #include "HotkeyControlEx.h"
 #include "ColorControl.h"

@@ -169,6 +169,16 @@ public:
     virtual float GetMicVolume() = 0;
     virtual void ToggleMicMute() = 0;
     virtual bool GetMicMuted() = 0;
+
+    virtual DWORD GetOBSVersion() const=0;
+    virtual bool IsTestVersion() const=0;
+
+    //something about audio sources being modifiable by plugins, all good stuff
+    virtual UINT NumAuxAudioSources() const=0;
+    virtual AudioSource* GetAuxAudioSource(UINT id)=0;
+
+    virtual AudioSource* GetDesktopAudioSource()=0;
+    virtual AudioSource* GetMicAudioSource()=0;
 };
 
 BASE_EXPORT extern APIInterface *API;

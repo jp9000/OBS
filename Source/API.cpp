@@ -456,6 +456,31 @@ public:
     virtual float GetMicVolume()                                     {return App->GetMicVolume();}
     virtual void ToggleMicMute()                                     {App->ToggleMicMute();}
     virtual bool GetMicMuted()                                       {return App->GetMicMuted();}
+
+    virtual DWORD GetOBSVersion() const {return OBS_VERSION;}
+
+#ifdef OBS_TEST_BUILD
+    virtual bool IsTestVersion() const {return 1;}
+#else
+    virtual bool IsTestVersion() const {return 0;}
+#endif
+
+    virtual UINT NumAuxAudioSources() const
+    {
+        return App->auxAudioSources.Num();
+    }
+
+    virtual AudioSource* GetAuxAudioSource(UINT id)
+    {
+        if(App->auxAudioSources.Num() > id)
+            return App->auxAudioSources[id];
+
+        AppWarning(TEXT("Tried to get an aux audio source that doesn't exist!"));
+        return NULL;
+    }
+
+    virtual AudioSource* GetDesktopAudioSource()    {return App->desktopAudio;}
+    virtual AudioSource* GetMicAudioSource()        {return App->micAudio;}
 };
 
 APIInterface* CreateOBSApiInterface()

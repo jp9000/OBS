@@ -20,33 +20,13 @@
 #pragma once
 
 
+struct AudioSegment;
 
-inline DXGI_FORMAT FixCopyTextureFormat(DXGI_FORMAT format)
+class AudioFilter
 {
-    switch(format)
-    {
-    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB: return DXGI_FORMAT_B8G8R8A8_UNORM;
-    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB: return DXGI_FORMAT_R8G8B8A8_UNORM;
-    }
+public:
+    inline AudioFilter() {}
+    virtual ~AudioFilter() {}
 
-    return format;
-}
-
-inline GSColorFormat ConvertGIBackBufferFormat(DXGI_FORMAT format)
-{
-    switch(format)
-    {
-    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
-    case DXGI_FORMAT_R8G8B8A8_UNORM:
-        return GS_RGBA;
-    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
-    case DXGI_FORMAT_B8G8R8A8_UNORM:
-        return GS_BGRA;
-    case DXGI_FORMAT_R10G10B10A2_UNORM: return GS_R10G10B10A2;
-    case DXGI_FORMAT_B8G8R8X8_UNORM:    return GS_BGR;
-    case DXGI_FORMAT_B5G5R5A1_UNORM:    return GS_B5G5R5A1;
-    case DXGI_FORMAT_B5G6R5_UNORM:      return GS_B5G6R5;
-    }
-
-    return GS_UNKNOWNFORMAT;
-}
+    virtual AudioSegment* Process(AudioSegment *segment)=0;
+};

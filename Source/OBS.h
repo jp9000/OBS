@@ -246,10 +246,14 @@ struct ClassInfo
 
 //----------------------------
 
+typedef void (*OBS_CALLBACK)();
+
 struct PluginInfo
 {
     String strFile;
     HMODULE hModule;
+
+    OBS_CALLBACK startStreamCallback, stopStreamCallback;
 };
 
 //----------------------------
