@@ -47,10 +47,8 @@ public:
     inline bool IsData() const     {return type == XConfig_Data;}
     inline bool IsElement() const  {return type == XConfig_Element;}
 
-    inline CTSTR GetName() const            {return strName;}
-    inline String GetNameX() const          {return strName;}
-    inline void  SetName(CTSTR lpName)      {strName = lpName;}
-    inline void  SetNameX(String lpName)    {strName = lpName;}
+    inline CTSTR GetName() const        {return strName;}
+    inline void  SetName(CTSTR lpName)  {strName = lpName;}
 };
 
 

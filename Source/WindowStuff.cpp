@@ -92,7 +92,7 @@ INT_PTR CALLBACK OBS::EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM 
                                 sources = App->sceneElement->CreateElement(TEXT("sources"));
 
                             XElement *found = sources->GetElement(str);
-                            if(found != NULL && found->GetNameX() != strOut)
+                            if(found != NULL && strOut != found->GetName())
                             {
                                 String strExists = Str("NameExists");
                                 strExists.FindReplace(TEXT("$1"), str);
@@ -209,7 +209,7 @@ INT_PTR CALLBACK OBS::EnterSceneNameDialogProc(HWND hwnd, UINT message, WPARAM w
 
                         XElement *scenes = App->scenesConfig.GetElement(TEXT("scenes"));
                         XElement *found = scenes->GetElement(str);
-                        if(found != NULL && found->GetNameX() != strOut)
+                        if(found != NULL && strOut != found->GetName())
                         {
                             String strExists = Str("NameExists");
                             strExists.FindReplace(TEXT("$1"), str);
@@ -521,7 +521,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                     {
                         App->EnableSceneSwitching(false);
 
-                        String strName = item->GetNameX();
+                        String strName = item->GetName();
                         if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSceneNameDialogProc, (LPARAM)&strName) == IDOK)
                         {
                             SendMessage(hwnd, LB_DELETESTRING, curSel, 0);
@@ -1497,7 +1497,7 @@ INT_PTR CALLBACK OBS::EnterGlobalSourceNameDialogProc(HWND hwnd, UINT message, W
                         if(globals)
                         {
                             XElement *found = globals->GetElement(str);
-                            if(found != NULL && found->GetNameX() != strOut)
+                            if(found != NULL && strOut != found->GetName())
                             {
                                 String strExists = Str("NameExists");
                                 strExists.FindReplace(TEXT("$1"), str);
@@ -1722,7 +1722,7 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
 
                         XElement *element = globals->GetElementByID(id);
 
-                        String strName = element->GetNameX();
+                        String strName = element->GetName();
                         if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterGlobalSourceNameDialogProc, (LPARAM)&strName) == IDOK)
                         {
                             SendMessage(hwndSources, LB_DELETESTRING, id, 0);
