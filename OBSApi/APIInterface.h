@@ -276,3 +276,13 @@ BASE_EXPORT void OBSSetDesktopVolume(float val, bool finalValue);
 BASE_EXPORT float OBSGetDesktopVolume();
 BASE_EXPORT void OBSToggleDesktopMute();
 BASE_EXPORT bool OBSGetDesktopMuted();
+
+BASE_EXPORT DWORD OBSGetVersion();
+BASE_EXPORT bool OBSIsTestVersion();
+
+BASE_EXPORT UINT OBSNumAuxAudioSources();
+BASE_EXPORT AudioSource* OBSGetAuxAudioSource(UINT id);
+
+BASE_EXPORT AudioSource* OBSGetDesktopAudioSource();
+BASE_EXPORT AudioSource* OBSGetMicAudioSource();
+
