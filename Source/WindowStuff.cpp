@@ -2580,7 +2580,11 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
         if(App->bEditMode && App->scene)
         {
             Vect2 mousePos = Vect2(float(pos.x), float(pos.y));
-            Vect2 framePos = mousePos*(App->GetBaseSize()/App->GetRenderFrameSize());
+            Vect2 framePos;
+            if(App->renderFrameIn1To1Mode)
+                framePos = mousePos*(App->GetBaseSize()/App->GetOutputSize());
+            else
+                framePos = mousePos*(App->GetBaseSize()/App->GetRenderFrameSize());
 
             bool bControlDown = HIBYTE(GetKeyState(VK_LCONTROL)) != 0 || HIBYTE(GetKeyState(VK_RCONTROL)) != 0;
 
@@ -2670,7 +2674,11 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                 List<SceneItem*> items;
                 App->scene->GetSelectedItems(items);
 
-                Vect2 scaleValI = (App->GetRenderFrameSize()/App->GetBaseSize());
+                Vect2 scaleValI;
+                if(App->renderFrameIn1To1Mode)
+                    scaleValI = (App->GetOutputSize()/App->GetBaseSize());
+                else
+                    scaleValI = (App->GetRenderFrameSize()/App->GetBaseSize());
 
                 bool bInside = false;
 
@@ -2698,7 +2706,11 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
             else
             {
                 Vect2 baseRenderSize = App->GetBaseSize();
-                Vect2 scaleVal = (baseRenderSize/App->GetRenderFrameSize());
+                Vect2 scaleVal;
+                if(App->renderFrameIn1To1Mode)
+                    scaleVal = (baseRenderSize/App->GetOutputSize());
+                else
+                    scaleVal = (baseRenderSize/App->GetRenderFrameSize());
                 Vect2 framePos = mousePos*scaleVal;
                 Vect2 scaleValI = 1.0f/scaleVal;
 
@@ -3047,7 +3059,11 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
 
                 if(!App->bMouseMoved)
                 {
-                    Vect2 framePos = mousePos*(App->GetBaseSize()/App->GetRenderFrameSize());
+                    Vect2 framePos;
+                    if(App->renderFrameIn1To1Mode)
+                        framePos = mousePos*(App->GetBaseSize()/App->GetOutputSize());
+                    else
+                        framePos = mousePos*(App->GetBaseSize()/App->GetRenderFrameSize());
 
                     App->scene->GetItemsOnPoint(framePos, items);
 

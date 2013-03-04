@@ -203,6 +203,8 @@ OBS::OBS()
     //-----------------------------------------------------
     // create main window
 
+    renderFrameIn1To1Mode = true; // FIXME: User option
+
     int fullscreenX = GetSystemMetrics(SM_CXFULLSCREEN);
     int fullscreenY = GetSystemMetrics(SM_CYFULLSCREEN);
 
@@ -673,17 +675,16 @@ OBS::~OBS()
 void OBS::ResizeRenderFrame(bool bRedrawRenderFrame)
 {
     int x = controlPadding, y = controlPadding;
-
-    UINT newRenderFrameWidth  = clientWidth  - (controlPadding*2);
-    UINT newRenderFrameHeight = clientHeight - (controlPadding*2) - totalControlAreaHeight;
-
-    Vect2 renderSize = Vect2(float(newRenderFrameWidth), float(newRenderFrameHeight));
-
-    float renderAspect = renderSize.x/renderSize.y;
-    float mainAspect;
     
+    // Get output steam size and aspect ratio
+    int curCX, curCY;
+    float mainAspect;
     if(bRunning)
+    {
+        curCX = outputCX;
+        curCY = outputCY;
         mainAspect = float(baseCX)/float(baseCY);
+    }
     else
     {
         int monitorID = AppConfig->GetInt(TEXT("Video"), TEXT("Monitor"));
@@ -694,24 +695,49 @@ void OBS::ResizeRenderFrame(bool bRedrawRenderFrame)
         int defCX = screenRect.right  - screenRect.left;
         int defCY = screenRect.bottom - screenRect.top;
 
-        int curCX = AppConfig->GetInt(TEXT("Video"), TEXT("BaseWidth"),  defCX);
-        int curCY = AppConfig->GetInt(TEXT("Video"), TEXT("BaseHeight"), defCY);
+        // Calculate output size using the same algorithm that's in OBS::Start()
+        float scale = AppConfig->GetFloat(TEXT("Video"), TEXT("Downscale"), 1.0f);
+        curCX = AppConfig->GetInt(TEXT("Video"), TEXT("BaseWidth"),  defCX);
+        curCY = AppConfig->GetInt(TEXT("Video"), TEXT("BaseHeight"), defCY);
+        curCX = MIN(MAX(curCX, 128), 4096);
+        curCY = MIN(MAX(curCY, 128), 4096);
+        curCX = UINT(double(curCX) / double(scale));
+        curCY = UINT(double(curCY) / double(scale));
+        curCX = curCX & 0xFFFFFFFC; // Align width to 128bit for fast SSE YUV4:2:0 conversion
+        curCY = curCY & 0xFFFFFFFE;
+
         mainAspect = float(curCX)/float(curCY);
     }
 
-    if(renderAspect > mainAspect)
+    // Get area to render in
+    UINT newRenderFrameWidth  = clientWidth  - (controlPadding*2);
+    UINT newRenderFrameHeight = clientHeight - (controlPadding*2) - totalControlAreaHeight;
+    if(renderFrameIn1To1Mode)
     {
-        renderSize.x = renderSize.y*mainAspect;
-        x += int((float(newRenderFrameWidth)-renderSize.x)*0.5f);
+        x = max(x, (clientWidth - curCX) / 2);
+        y = max(y, (clientHeight - totalControlAreaHeight - curCY) / 2);
+        newRenderFrameWidth  = min((UINT)curCX, newRenderFrameWidth);
+        newRenderFrameHeight = min((UINT)curCY, newRenderFrameHeight);
     }
     else
     {
-        renderSize.y = renderSize.x/mainAspect;
-        y += int((float(newRenderFrameHeight)-renderSize.y)*0.5f);
-    }
+        Vect2 renderSize = Vect2(float(newRenderFrameWidth), float(newRenderFrameHeight));
+        float renderAspect = renderSize.x/renderSize.y;
 
-    newRenderFrameWidth  = int(renderSize.x+0.5f)&0xFFFFFFFE;
-    newRenderFrameHeight = int(renderSize.y+0.5f)&0xFFFFFFFE;
+        if(renderAspect > mainAspect)
+        {
+            renderSize.x = renderSize.y*mainAspect;
+            x += int((float(newRenderFrameWidth)-renderSize.x)*0.5f);
+        }
+        else
+        {
+            renderSize.y = renderSize.x/mainAspect;
+            y += int((float(newRenderFrameHeight)-renderSize.y)*0.5f);
+        }
+
+        newRenderFrameWidth  = int(renderSize.x+0.5f)&0xFFFFFFFE;
+        newRenderFrameHeight = int(renderSize.y+0.5f)&0xFFFFFFFE;
+    }
 
     SetWindowPos(hwndRenderFrame, NULL, x, y, newRenderFrameWidth, newRenderFrameHeight, SWP_NOOWNERZORDER);
 

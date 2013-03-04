@@ -414,7 +414,8 @@ public:
     virtual void GetRenderFrameSize(UINT &width, UINT &height) const    {App->GetRenderFrameSize(width, height);}
     virtual void GetOutputSize(UINT &width, UINT &height) const         {App->GetOutputSize(width, height);}
 
-    virtual UINT GetMaxFPS() const              {return App->bRunning ? App->fps : AppConfig->GetInt(TEXT("Video"), TEXT("FPS"), 30);}
+    virtual UINT GetMaxFPS() const                  {return App->bRunning ? App->fps : AppConfig->GetInt(TEXT("Video"), TEXT("FPS"), 30);}
+    virtual bool GetRenderFrameIn1To1Mode() const   {return App->renderFrameIn1To1Mode;}
 
     virtual CTSTR GetLanguage() const           {return App->strLanguage;}
 
