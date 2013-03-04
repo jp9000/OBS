@@ -2558,6 +2558,8 @@ ItemModifyType GetItemModifyType(const Vect2 &mousePos, const Vect2 &itemPos, co
 enum
 {
     ID_TOGGLERENDERVIEW=1,
+    ID_PREVIEWSCALETOFITMODE=2,
+    ID_PREVIEW1TO1MODE=3,
 };
 
 LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -3137,6 +3139,9 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
     else if(message == WM_RBUTTONUP)
     {
         HMENU hPopup = CreatePopupMenu();
+        AppendMenu(hPopup, MF_STRING | (!App->renderFrameIn1To1Mode ? MF_CHECKED : 0), ID_PREVIEWSCALETOFITMODE, Str("RenderView.ViewModeScaleToFit"));
+        AppendMenu(hPopup, MF_STRING | (App->renderFrameIn1To1Mode ? MF_CHECKED : 0), ID_PREVIEW1TO1MODE, Str("RenderView.ViewMode1To1"));
+        AppendMenu(hPopup, MF_SEPARATOR, 0, 0);
         AppendMenu(hPopup, MF_STRING | (App->bRenderViewEnabled ? MF_CHECKED : 0), ID_TOGGLERENDERVIEW, Str("RenderView.EnableView"));
 
         POINT p;
@@ -3148,6 +3153,14 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
             case ID_TOGGLERENDERVIEW:
                 App->bRenderViewEnabled = !App->bRenderViewEnabled;
                 App->bForceRenderViewErase = !App->bRenderViewEnabled;
+                break;
+            case ID_PREVIEWSCALETOFITMODE:
+                App->renderFrameIn1To1Mode = false;
+                App->ResizeRenderFrame(true);
+                break;
+            case ID_PREVIEW1TO1MODE:
+                App->renderFrameIn1To1Mode = true;
+                App->ResizeRenderFrame(true);
                 break;
         }
 
