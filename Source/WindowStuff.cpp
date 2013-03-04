@@ -2442,6 +2442,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 else
                     screenSize.top = screenSize.bottom - newHeight;
 
+                // We need to recalculate the render frame position when in 1:1 mode
+                if(App->renderFrameIn1To1Mode)
+                    App->ResizeRenderFrame(true);
+
                 return TRUE;
             }
 
