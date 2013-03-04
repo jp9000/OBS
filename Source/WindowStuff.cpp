@@ -2442,6 +2442,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 else
                     screenSize.top = screenSize.bottom - newHeight;
 
+                // We need to recalculate the render frame position when in 1:1 mode
+                if(App->renderFrameIn1To1Mode)
+                    App->ResizeRenderFrame(true);
+
                 return TRUE;
             }
 
@@ -2558,6 +2562,8 @@ ItemModifyType GetItemModifyType(const Vect2 &mousePos, const Vect2 &itemPos, co
 enum
 {
     ID_TOGGLERENDERVIEW=1,
+    ID_PREVIEWSCALETOFITMODE=2,
+    ID_PREVIEW1TO1MODE=3,
 };
 
 LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -2580,7 +2586,11 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
         if(App->bEditMode && App->scene)
         {
             Vect2 mousePos = Vect2(float(pos.x), float(pos.y));
-            Vect2 framePos = mousePos*(App->GetBaseSize()/App->GetRenderFrameSize());
+            Vect2 framePos;
+            if(App->renderFrameIn1To1Mode)
+                framePos = mousePos*(App->GetBaseSize()/App->GetOutputSize());
+            else
+                framePos = mousePos*(App->GetBaseSize()/App->GetRenderFrameSize());
 
             bool bControlDown = HIBYTE(GetKeyState(VK_LCONTROL)) != 0 || HIBYTE(GetKeyState(VK_RCONTROL)) != 0;
 
@@ -2670,7 +2680,11 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                 List<SceneItem*> items;
                 App->scene->GetSelectedItems(items);
 
-                Vect2 scaleValI = (App->GetRenderFrameSize()/App->GetBaseSize());
+                Vect2 scaleValI;
+                if(App->renderFrameIn1To1Mode)
+                    scaleValI = (App->GetOutputSize()/App->GetBaseSize());
+                else
+                    scaleValI = (App->GetRenderFrameSize()/App->GetBaseSize());
 
                 bool bInside = false;
 
@@ -2698,7 +2712,11 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
             else
             {
                 Vect2 baseRenderSize = App->GetBaseSize();
-                Vect2 scaleVal = (baseRenderSize/App->GetRenderFrameSize());
+                Vect2 scaleVal;
+                if(App->renderFrameIn1To1Mode)
+                    scaleVal = (baseRenderSize/App->GetOutputSize());
+                else
+                    scaleVal = (baseRenderSize/App->GetRenderFrameSize());
                 Vect2 framePos = mousePos*scaleVal;
                 Vect2 scaleValI = 1.0f/scaleVal;
 
@@ -3047,7 +3065,11 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
 
                 if(!App->bMouseMoved)
                 {
-                    Vect2 framePos = mousePos*(App->GetBaseSize()/App->GetRenderFrameSize());
+                    Vect2 framePos;
+                    if(App->renderFrameIn1To1Mode)
+                        framePos = mousePos*(App->GetBaseSize()/App->GetOutputSize());
+                    else
+                        framePos = mousePos*(App->GetBaseSize()/App->GetRenderFrameSize());
 
                     App->scene->GetItemsOnPoint(framePos, items);
 
@@ -3121,6 +3143,9 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
     else if(message == WM_RBUTTONUP)
     {
         HMENU hPopup = CreatePopupMenu();
+        AppendMenu(hPopup, MF_STRING | (!App->renderFrameIn1To1Mode ? MF_CHECKED : 0), ID_PREVIEWSCALETOFITMODE, Str("RenderView.ViewModeScaleToFit"));
+        AppendMenu(hPopup, MF_STRING | (App->renderFrameIn1To1Mode ? MF_CHECKED : 0), ID_PREVIEW1TO1MODE, Str("RenderView.ViewMode1To1"));
+        AppendMenu(hPopup, MF_SEPARATOR, 0, 0);
         AppendMenu(hPopup, MF_STRING | (App->bRenderViewEnabled ? MF_CHECKED : 0), ID_TOGGLERENDERVIEW, Str("RenderView.EnableView"));
 
         POINT p;
@@ -3132,6 +3157,14 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
             case ID_TOGGLERENDERVIEW:
                 App->bRenderViewEnabled = !App->bRenderViewEnabled;
                 App->bForceRenderViewErase = !App->bRenderViewEnabled;
+                break;
+            case ID_PREVIEWSCALETOFITMODE:
+                App->renderFrameIn1To1Mode = false;
+                App->ResizeRenderFrame(true);
+                break;
+            case ID_PREVIEW1TO1MODE:
+                App->renderFrameIn1To1Mode = true;
+                App->ResizeRenderFrame(true);
                 break;
         }
 

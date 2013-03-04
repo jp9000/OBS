@@ -85,7 +85,9 @@ Plugins.Filename    "File name:"
 
 Reconnecting.Retrying   "Could not reconnect.  Retrying"
 
-RenderView.EnableView   "Enable View"
+RenderView.EnableView           "Enable View"
+RenderView.ViewModeScaleToFit   "Scale to fit mode"
+RenderView.ViewMode1To1         "1:1 mode"
 
 Scene.Hotkey            "Scene Hotkey"
 Scene.MissingSources    "Was unable to load all image sources due to either invalid settings or missing plugins"

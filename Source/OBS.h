@@ -482,6 +482,7 @@ class OBS
     bool    bUseMultithreadedOptimizations;
     bool    bRunning;
     int     renderFrameWidth, renderFrameHeight;
+    bool    renderFrameIn1To1Mode;
     int     borderXSize, borderYSize;
     int     clientWidth, clientHeight;
     bool    bSizeChanging;

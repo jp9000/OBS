@@ -110,6 +110,7 @@ public:
     virtual void GetRenderFrameSize(UINT &width, UINT &height) const=0;
     virtual void GetOutputSize(UINT &width, UINT &height) const=0;
     virtual UINT GetMaxFPS() const=0;
+    virtual bool GetRenderFrameIn1To1Mode() const=0;
 
     virtual CTSTR GetLanguage() const=0;
 
@@ -216,6 +217,7 @@ BASE_EXPORT void OBSGetBaseSize(UINT &width, UINT &height);
 BASE_EXPORT void OBSGetRenderFrameSize(UINT &width, UINT &height);
 BASE_EXPORT void OBSGetOutputSize(UINT &width, UINT &height);
 BASE_EXPORT UINT OBSGetMaxFPS();
+BASE_EXPORT bool OBSGetIn1To1Mode();
 
 BASE_EXPORT CTSTR OBSGetLanguage();
 
