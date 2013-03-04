@@ -83,13 +83,16 @@ INT_PTR CALLBACK OBS::EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM 
 
                         SendMessage(GetDlgItem(hwnd, IDC_NAME), WM_GETTEXT, str.Length()+1, (LPARAM)str.Array());
 
+                        String &strOut = *(String*)GetWindowLongPtr(hwnd, DWLP_USER);
+
                         if(App->sceneElement)
                         {
                             XElement *sources = App->sceneElement->GetElement(TEXT("sources"));
                             if(!sources)
                                 sources = App->sceneElement->CreateElement(TEXT("sources"));
 
-                            if(sources->GetElement(str) != NULL)
+                            XElement *found = sources->GetElement(str);
+                            if(found != NULL && found->GetNameX() != strOut)
                             {
                                 String strExists = Str("NameExists");
                                 strExists.FindReplace(TEXT("$1"), str);
@@ -98,7 +101,6 @@ INT_PTR CALLBACK OBS::EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM 
                             }
                         }
 
-                        String &strOut = *(String*)GetWindowLongPtr(hwnd, DWLP_USER);
                         strOut = str;
                     }
 
@@ -203,8 +205,11 @@ INT_PTR CALLBACK OBS::EnterSceneNameDialogProc(HWND hwnd, UINT message, WPARAM w
 
                         SendMessage(GetDlgItem(hwnd, IDC_NAME), WM_GETTEXT, str.Length()+1, (LPARAM)str.Array());
 
+                        String &strOut = *(String*)GetWindowLongPtr(hwnd, DWLP_USER);
+
                         XElement *scenes = App->scenesConfig.GetElement(TEXT("scenes"));
-                        if(scenes->GetElement(str) != NULL)
+                        XElement *found = scenes->GetElement(str);
+                        if(found != NULL && found->GetNameX() != strOut)
                         {
                             String strExists = Str("NameExists");
                             strExists.FindReplace(TEXT("$1"), str);
@@ -212,7 +217,6 @@ INT_PTR CALLBACK OBS::EnterSceneNameDialogProc(HWND hwnd, UINT message, WPARAM w
                             break;
                         }
 
-                        String &strOut = *(String*)GetWindowLongPtr(hwnd, DWLP_USER);
                         strOut = str;
                     }
 
@@ -517,7 +521,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                     {
                         App->EnableSceneSwitching(false);
 
-                        String strName;
+                        String strName = item->GetNameX();
                         if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSceneNameDialogProc, (LPARAM)&strName) == IDOK)
                         {
                             SendMessage(hwnd, LB_DELETESTRING, curSel, 0);
@@ -1461,11 +1465,16 @@ INT_PTR CALLBACK OBS::EnterGlobalSourceNameDialogProc(HWND hwnd, UINT message, W
     switch(message)
     {
         case WM_INITDIALOG:
-            SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
-            LocalizeWindow(hwnd);
+            {
+                SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
+                LocalizeWindow(hwnd);
 
-            //SetFocus(GetDlgItem(hwnd, IDC_NAME));
-            return TRUE;
+                String &strOut = *(String*)GetWindowLongPtr(hwnd, DWLP_USER);
+                SetWindowText(GetDlgItem(hwnd, IDC_NAME), strOut);
+
+                //SetFocus(GetDlgItem(hwnd, IDC_NAME));
+                return TRUE;
+            }
 
         case WM_COMMAND:
             switch(LOWORD(wParam))
@@ -1482,10 +1491,13 @@ INT_PTR CALLBACK OBS::EnterGlobalSourceNameDialogProc(HWND hwnd, UINT message, W
 
                         SendMessage(GetDlgItem(hwnd, IDC_NAME), WM_GETTEXT, str.Length()+1, (LPARAM)str.Array());
 
+                        String &strOut = *(String*)GetWindowLongPtr(hwnd, DWLP_USER);
+
                         XElement *globals = App->scenesConfig.GetElement(TEXT("global sources"));
                         if(globals)
                         {
-                            if(globals->GetElement(str) != NULL)
+                            XElement *found = globals->GetElement(str);
+                            if(found != NULL && found->GetNameX() != strOut)
                             {
                                 String strExists = Str("NameExists");
                                 strExists.FindReplace(TEXT("$1"), str);
@@ -1494,7 +1506,6 @@ INT_PTR CALLBACK OBS::EnterGlobalSourceNameDialogProc(HWND hwnd, UINT message, W
                             }
                         }
 
-                        String &strOut = *(String*)GetWindowLongPtr(hwnd, DWLP_USER);
                         strOut = str;
                     }
 
@@ -1711,7 +1722,7 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
 
                         XElement *element = globals->GetElementByID(id);
 
-                        String strName;
+                        String strName = element->GetNameX();
                         if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterGlobalSourceNameDialogProc, (LPARAM)&strName) == IDOK)
                         {
                             SendMessage(hwndSources, LB_DELETESTRING, id, 0);
