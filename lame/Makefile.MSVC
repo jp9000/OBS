@@ -238,8 +238,8 @@ CC_OPTS = $(CC_OPTS) /DFLOAT8=float /DREAL_IS_FLOAT=1
 
 CC_OPTS = $(CC_OPTS) /DNDEBUG /MT
 
-LN_OPTS = /nologo /opt:NOWIN98 /pdb:none
-LN_DLL = /nologo /DLL /opt:NOWIN98
+LN_OPTS = /nologo /pdb:none
+LN_DLL = /nologo /DLL
 
 CC_OUT = /Fo
 LN_OUT = /OUT:
