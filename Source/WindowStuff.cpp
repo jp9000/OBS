@@ -92,7 +92,7 @@ INT_PTR CALLBACK OBS::EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM 
                                 sources = App->sceneElement->CreateElement(TEXT("sources"));
 
                             XElement *foundSource = sources->GetElement(str);
-                            if(foundSource != NULL && !strOut.CompareI(foundSource->GetName()))
+                            if(foundSource != NULL && strOut != foundSource->GetName())
                             {
                                 String strExists = Str("NameExists");
                                 strExists.FindReplace(TEXT("$1"), str);
@@ -209,7 +209,7 @@ INT_PTR CALLBACK OBS::EnterSceneNameDialogProc(HWND hwnd, UINT message, WPARAM w
 
                         XElement *scenes = App->scenesConfig.GetElement(TEXT("scenes"));
                         XElement *foundScene = scenes->GetElement(str);
-                        if(foundScene != NULL && !strOut.CompareI(foundScene->GetName()))
+                        if(foundScene != NULL && strOut != foundScene->GetName())
                         {
                             String strExists = Str("NameExists");
                             strExists.FindReplace(TEXT("$1"), str);
@@ -1495,7 +1495,7 @@ INT_PTR CALLBACK OBS::EnterGlobalSourceNameDialogProc(HWND hwnd, UINT message, W
                         if(globals)
                         {
                             XElement *foundSource = globals->GetElement(str);
-                            if(foundSource != NULL && !strOut.CompareI(foundSource->GetName()))
+                            if(foundSource != NULL && strOut != foundSource->GetName())
                             {
                                 String strExists = Str("NameExists");
                                 strExists.FindReplace(TEXT("$1"), str);
