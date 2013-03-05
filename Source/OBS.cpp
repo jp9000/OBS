@@ -1008,10 +1008,13 @@ void OBS::ReloadIniSettings()
 
     bUsingPushToTalk = AppConfig->GetInt(TEXT("Audio"), TEXT("UsePushToTalk")) != 0;
     DWORD hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey"));
+    DWORD hotkey2 = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey2"));
     pushToTalkDelay = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkDelay"), 200);
 
     if(bUsingPushToTalk && hotkey)
         pushToTalkHotkeyID = API->CreateHotkey(hotkey, OBS::PushToTalkHotkey, NULL);
+    if(bUsingPushToTalk && hotkey2)
+        pushToTalkHotkeyID = API->CreateHotkey(hotkey2, OBS::PushToTalkHotkey, NULL);
 
     hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("MuteMicHotkey"));
     if(hotkey)
