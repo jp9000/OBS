@@ -20,6 +20,10 @@
 #include "GraphicsCapture.h"
 
 
+typedef HANDLE (WINAPI *CRTPROC)(HANDLE, LPSECURITY_ATTRIBUTES, SIZE_T, LPTHREAD_START_ROUTINE, LPVOID, DWORD, LPDWORD);
+typedef BOOL   (WINAPI *WPMPROC)(HANDLE, LPVOID, LPCVOID, SIZE_T, SIZE_T*);
+
+
 BOOL WINAPI InjectLibrary(HANDLE hProcess, CTSTR lpDLL)
 {
     UPARAM procAddress;
@@ -33,20 +37,32 @@ BOOL WINAPI InjectLibrary(HANDLE hProcess, CTSTR lpDLL)
 
     dwSize = ssize((TCHAR*)lpDLL);
 
+    char pWPMStr[19], pCRTStr[19];
+    mcpy(pWPMStr, "X}f{j_}`lj||Bjb`}v", 19); //WriteProcessMemory with each character xor'ed by 15
+    mcpy(pCRTStr, "L}jn{j]jb`{j[g}jnk", 19); //CreateRemoteThread with each character xor'ed by 15
+
+    for(int i=0; i<18; i++) pWPMStr[i] ^= 15;
+    for(int i=0; i<18; i++) pCRTStr[i] ^= 15;
+
+    HMODULE hK32 = GetModuleHandle(TEXT("KERNEL32"));
+
+    WPMPROC pWriteProcessMemory = (WPMPROC)GetProcAddress(hK32, pWPMStr);
+    CRTPROC pCreateRemoteThread = (CRTPROC)GetProcAddress(hK32, pCRTStr);
+
     lpStr = (LPVOID)VirtualAllocEx(hProcess, NULL, dwSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     if(!lpStr) goto end;
 
-    bWorks = WriteProcessMemory(hProcess, lpStr, (LPVOID)lpDLL, dwSize, &writtenSize);
+    bWorks = (*pWriteProcessMemory)(hProcess, lpStr, (LPVOID)lpDLL, dwSize, &writtenSize);
     if(!bWorks) goto end;
 
 #ifdef UNICODE
-    procAddress = (UPARAM)GetProcAddress(GetModuleHandle(TEXT("KERNEL32")), "LoadLibraryW");
+    procAddress = (UPARAM)GetProcAddress(hK32, "LoadLibraryW");
 #else
-    procAddress = (UPARAM)GetProcAddress(GetModuleHandle(TEXT("KERNEL32")), "LoadLibraryA");
+    procAddress = (UPARAM)GetProcAddress(hK32, "LoadLibraryA");
 #endif
     if(!procAddress) goto end;
 
-    hThread = CreateRemoteThread(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)procAddress, lpStr, 0, &dwTemp);
+    hThread = (*pCreateRemoteThread)(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)procAddress, lpStr, 0, &dwTemp);
     if(!hThread) goto end;
 
     if(WaitForSingleObject(hThread, 200) == WAIT_OBJECT_0)

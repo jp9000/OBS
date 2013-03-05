@@ -27,6 +27,9 @@ typedef unsigned __int64 UPARAM;
 typedef unsigned long UPARAM;
 #endif
 
+typedef HANDLE (WINAPI *CRTPROC)(HANDLE, LPSECURITY_ATTRIBUTES, SIZE_T, LPTHREAD_START_ROUTINE, LPVOID, DWORD, LPDWORD);
+typedef BOOL   (WINAPI *WPMPROC)(HANDLE, LPVOID, LPCVOID, SIZE_T, SIZE_T*);
+
 BOOL WINAPI InjectLibrary(HANDLE hProcess, const wchar_t *pDLL, DWORD dwLen)
 {
     DWORD   dwTemp, dwSize, lastError;
@@ -35,21 +38,38 @@ BOOL WINAPI InjectLibrary(HANDLE hProcess, const wchar_t *pDLL, DWORD dwLen)
     LPVOID  pStr = NULL;
     UPARAM  procAddress;
     SIZE_T  writtenSize;
+    char pWPMStr[19], pCRTStr[19];
+    int i;
+
+    WPMPROC pWriteProcessMemory;
+    CRTPROC pCreateRemoteThread;
+    HMODULE hK32;
 
     if (!hProcess) return 0;
 
     dwSize = (dwLen+1) * sizeof(wchar_t);
 
+    memcpy(pWPMStr, "X}f{j_}`lj||Bjb`}v", 19); //WriteProcessMemory with each character xor'ed by 15
+    memcpy(pCRTStr, "L}jn{j]jb`{j[g}jnk", 19); //CreateRemoteThread with each character xor'ed by 15
+
+    for(i=0; i<18; i++) pWPMStr[i] ^= 15;
+    for(i=0; i<18; i++) pCRTStr[i] ^= 15;
+
+    hK32 = GetModuleHandle(TEXT("KERNEL32"));
+
+    pWriteProcessMemory = (WPMPROC)GetProcAddress(hK32, pWPMStr);
+    pCreateRemoteThread = (CRTPROC)GetProcAddress(hK32, pCRTStr);
+
     pStr = (LPVOID)VirtualAllocEx(hProcess, NULL, dwSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     if (!pStr) goto end;
 
-    bSuccess = WriteProcessMemory(hProcess, pStr, (LPVOID)pDLL, dwSize, &writtenSize);
+    bSuccess = (*pWriteProcessMemory)(hProcess, pStr, (LPVOID)pDLL, dwSize, &writtenSize);
     if (!bSuccess) goto end;
 
     procAddress = (UPARAM)GetProcAddress(GetModuleHandle(TEXT("KERNEL32")), "LoadLibraryW");
     if (!procAddress) goto end;
 
-    hThread = CreateRemoteThread(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)procAddress,
+    hThread = (*pCreateRemoteThread)(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)procAddress,
                                  pStr, 0, &dwTemp);
     if (!hThread) goto end;
 

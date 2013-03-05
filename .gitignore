@@ -9,7 +9,15 @@ x64/
 installer/32bit
 installer/upload
 installer/64bit
+ipch/
 
+*.sdf
+*.opensdf
+*.xml
+*.ipch
+*.filters
+*.css
+*.xslt
 *.aps
 *.suo
 *.ncb

@@ -634,6 +634,7 @@ UINT AudioSource::QueryAudio(float curVolume)
                         AudioSegment *newSegment = new AudioSegment(storageBuffer.Array(), 441*2, lastUsedTimestamp);
                         storageBuffer.RemoveRange(0, (441*2));
                         AddAudioSegment(newSegment, curVolume*sourceVolume);
+                        storageBuffer.RemoveRange(0, (441*2));
 
                         if(!bFirst)
                             lastSentTimestamp = lastUsedTimestamp;

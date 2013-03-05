@@ -91,8 +91,8 @@ INT_PTR CALLBACK OBS::EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM 
                             if(!sources)
                                 sources = App->sceneElement->CreateElement(TEXT("sources"));
 
-                            XElement *found = sources->GetElement(str);
-                            if(found != NULL && strOut != found->GetName())
+                            XElement *foundSource = sources->GetElement(str);
+                            if(foundSource != NULL && !strOut.CompareI(foundSource->GetName()))
                             {
                                 String strExists = Str("NameExists");
                                 strExists.FindReplace(TEXT("$1"), str);
@@ -208,8 +208,8 @@ INT_PTR CALLBACK OBS::EnterSceneNameDialogProc(HWND hwnd, UINT message, WPARAM w
                         String &strOut = *(String*)GetWindowLongPtr(hwnd, DWLP_USER);
 
                         XElement *scenes = App->scenesConfig.GetElement(TEXT("scenes"));
-                        XElement *found = scenes->GetElement(str);
-                        if(found != NULL && strOut != found->GetName())
+                        XElement *foundScene = scenes->GetElement(str);
+                        if(foundScene != NULL && !strOut.CompareI(foundScene->GetName()))
                         {
                             String strExists = Str("NameExists");
                             strExists.FindReplace(TEXT("$1"), str);
@@ -1469,12 +1469,10 @@ INT_PTR CALLBACK OBS::EnterGlobalSourceNameDialogProc(HWND hwnd, UINT message, W
                 SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
                 LocalizeWindow(hwnd);
 
-                String &strOut = *(String*)GetWindowLongPtr(hwnd, DWLP_USER);
+                String &strOut = *(String*)lParam;
                 SetWindowText(GetDlgItem(hwnd, IDC_NAME), strOut);
-
-                //SetFocus(GetDlgItem(hwnd, IDC_NAME));
-                return TRUE;
             }
+            return TRUE;
 
         case WM_COMMAND:
             switch(LOWORD(wParam))
@@ -1496,8 +1494,8 @@ INT_PTR CALLBACK OBS::EnterGlobalSourceNameDialogProc(HWND hwnd, UINT message, W
                         XElement *globals = App->scenesConfig.GetElement(TEXT("global sources"));
                         if(globals)
                         {
-                            XElement *found = globals->GetElement(str);
-                            if(found != NULL && strOut != found->GetName())
+                            XElement *foundSource = globals->GetElement(str);
+                            if(foundSource != NULL && !strOut.CompareI(foundSource->GetName()))
                             {
                                 String strExists = Str("NameExists");
                                 strExists.FindReplace(TEXT("$1"), str);

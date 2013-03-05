@@ -1,9 +1,9 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GraphicsCapture", "GraphicsCapture.vcproj", "{7BB0C67E-9CDD-4ABB-8728-41F2BE5C54D8}"
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GraphicsCapture", "GraphicsCapture.vcxproj", "{7BB0C67E-9CDD-4ABB-8728-41F2BE5C54D8}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GraphicsCaptureHook", "GraphicsCaptureHook\GraphicsCaptureHook.vcproj", "{12111D5C-819C-4BAF-9783-E6AF8CBC2700}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GraphicsCaptureHook", "GraphicsCaptureHook\GraphicsCaptureHook.vcxproj", "{12111D5C-819C-4BAF-9783-E6AF8CBC2700}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
