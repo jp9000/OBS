@@ -1504,7 +1504,7 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                 BOOL bPushToTalk = AppConfig->GetInt(TEXT("Audio"), TEXT("UsePushToTalk"));
                 SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALK), BM_SETCHECK, bPushToTalk ? BST_CHECKED : BST_UNCHECKED, 0);
                 EnableWindow(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY), bPushToTalk);
-				EnableWindow(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY2), bPushToTalk);
+                EnableWindow(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY2), bPushToTalk);
                 EnableWindow(GetDlgItem(hwnd, IDC_CLEARPUSHTOTALK), bPushToTalk);
                 EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY_EDIT), bPushToTalk);
                 EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY), bPushToTalk);
@@ -1591,7 +1591,7 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                         {
                             BOOL bUsePushToTalk = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
                             EnableWindow(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY), bUsePushToTalk);
-							EnableWindow(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY2), bUsePushToTalk);
+                            EnableWindow(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY2), bUsePushToTalk);
                             EnableWindow(GetDlgItem(hwnd, IDC_CLEARPUSHTOTALK), bUsePushToTalk);
                             EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY_EDIT), bUsePushToTalk);
                             EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY), bUsePushToTalk);
@@ -2172,7 +2172,7 @@ void OBS::ApplySettings()
 
                 AppConfig->SetInt(TEXT("Audio"), TEXT("UsePushToTalk"), bUsingPushToTalk);
                 AppConfig->SetInt(TEXT("Audio"), TEXT("PushToTalkHotkey"), hotkey);
-				AppConfig->SetInt(TEXT("Audio"), TEXT("PushToTalkHotkey2"), hotkey2);
+                AppConfig->SetInt(TEXT("Audio"), TEXT("PushToTalkHotkey2"), hotkey2);
                 AppConfig->SetInt(TEXT("Audio"), TEXT("PushToTalkDelay"), pushToTalkDelay);
 
                 if(App->pushToTalkHotkeyID)
