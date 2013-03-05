@@ -13,13 +13,11 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// 日本語 resources
+// Japanese (Japan) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_JPN)
-#ifdef _WIN32
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 #pragma code_page(932)
-#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -174,8 +172,8 @@ BEGIN
     RTEXT           "Settings.Audio.Device",IDC_STATIC,5,29,138,8
     COMBOBOX        IDC_MICDEVICES,145,27,226,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Settings.Audio.PushToTalkHotkey",IDC_PUSHTOTALK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,46,143,10,WS_EX_RIGHT
-    CONTROL         "カスタム1",IDC_PUSHTOTALKHOTKEY,"OBSHotkeyControlEx",WS_TABSTOP,161,44,80,14
-    PUSHBUTTON      "ClearHotkey",IDC_CLEARPUSHTOTALK,242,44,73,14
+    CONTROL         "カスタム1",IDC_PUSHTOTALKHOTKEY,"OBSHotkeyControlEx",WS_TABSTOP,159,44,63,14
+    PUSHBUTTON      "ClearHotkey",IDC_CLEARPUSHTOTALK,298,44,73,14
     RTEXT           "Settings.Audio.PushToTalkDelay",IDC_STATIC,5,65,138,8
     EDITTEXT        IDC_PTTDELAY_EDIT,145,62,40,14,ES_AUTOHSCROLL
     CONTROL         "",IDC_PTTDELAY,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,186,62,10,14
@@ -196,6 +194,7 @@ BEGIN
     EDITTEXT        IDC_MICTIMEOFFSET_EDIT,144,172,40,14,ES_AUTOHSCROLL
     CONTROL         "",IDC_MICTIMEOFFSET,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,184,172,11,14
     LTEXT           "Settings.Info",IDC_INFO,5,205,408,37,NOT WS_VISIBLE
+    CONTROL         "カスタム2",IDC_PUSHTOTALKHOTKEY2,"OBSHotkeyControlEx",WS_TABSTOP,229,44,63,14
 END
 
 IDD_ENTERNAME DIALOGEX 0, 0, 265, 49
@@ -474,7 +473,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO 
+GUIDELINES DESIGNINFO
 BEGIN
     IDD_SETTINGS, DIALOG
     BEGIN
@@ -656,7 +655,7 @@ END
 // Accelerator
 //
 
-IDR_ACCELERATOR1 ACCELERATORS 
+IDR_ACCELERATOR1 ACCELERATORS
 BEGIN
     "C",            IDA_SOURCE_CENTER,      VIRTKEY, CONTROL, NOINVERT
     VK_DELETE,      IDA_SOURCE_DELETE,      VIRTKEY, NOINVERT
@@ -712,7 +711,7 @@ END
 // Menu
 //
 
-IDR_MAINMENU MENU 
+IDR_MAINMENU MENU
 BEGIN
     POPUP "MainMenu.File"
     BEGIN
@@ -747,7 +746,7 @@ END
 //
 
 IDC_COLORPICKER         CURSOR                  "cursor1.cur"
-#endif    // 日本語 resources
+#endif    // Japanese (Japan) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
