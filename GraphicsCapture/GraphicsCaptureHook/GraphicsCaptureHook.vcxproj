@@ -57,7 +57,10 @@
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Label="UserMacros">
+    <WindowsSDK80Path Condition="('$(WindowsSDK80Path)'=='')And(Exists('C:\Program Files (x86)\Windows Kits\8.0\'))">C:\Program Files (x86)\Windows Kits\8.0\</WindowsSDK80Path>
+    <WindowsSDK80Path Condition="('$(WindowsSDK80Path)'=='')And(!Exists('C:\Program Files (x86)\Windows Kits\8.0\'))">$(WindowsSdkDir)</WindowsSDK80Path>
+  </PropertyGroup>
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</OutDir>
@@ -84,10 +87,10 @@
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(WindowsSdkDir)Lib\win8\um\x86;$(DXSDK_DIR)Lib\x86;$(LibraryPath)</LibraryPath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(WindowsSdkDir)Lib\win8\um\x86;$(DXSDK_DIR)Lib\x86;$(LibraryPath)</LibraryPath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(WindowsSdkDir)Lib\win8\um\x64;$(DXSDK_DIR)Lib\x64;$(LibraryPath)</LibraryPath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(WindowsSdkDir)Lib\win8\um\x64;$(DXSDK_DIR)Lib\x64;$(LibraryPath)</LibraryPath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(WindowsSDK80Path)Lib\win8\um\x86;$(DXSDK_DIR)Lib\x86;$(LibraryPath)</LibraryPath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(WindowsSDK80Path)Lib\win8\um\x86;$(DXSDK_DIR)Lib\x86;$(LibraryPath)</LibraryPath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(WindowsSDK80Path)Lib\win8\um\x64;$(DXSDK_DIR)Lib\x64;$(LibraryPath)</LibraryPath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(WindowsSDK80Path)Lib\win8\um\x64;$(DXSDK_DIR)Lib\x64;$(LibraryPath)</LibraryPath>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(WindowsSDK80Path)Include\um;$(WindowsSDK80Path)Include\shared;$(DXSDK_DIR)Include;$(IncludePath)</IncludePath>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(WindowsSDK80Path)Include\um;$(WindowsSDK80Path)Include\shared;$(DXSDK_DIR)Include;$(IncludePath)</IncludePath>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(WindowsSDK80Path)Include\um;$(WindowsSDK80Path)Include\shared;$(DXSDK_DIR)Include;$(IncludePath)</IncludePath>
