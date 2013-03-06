@@ -732,63 +732,6 @@ inline float toDB(float RMS)
     return db;
 }
 
-void OBS::ApplyNoiseGate(float *buffer, int totalFloats)
-{
-    // We assume stereo input
-    if(totalFloats % 2)
-        return; // Odd number of samples
-
-    // OBS is currently hard-coded to 44.1ksps
-    const float SAMPLE_RATE_F = 44100.0f;
-    const float dtPerSample = 1.0f / SAMPLE_RATE_F;
-
-    // Convert configuration times into per-sample amounts
-    const float attackRate = 1.0f / (micNgAttackTime * SAMPLE_RATE_F);
-    const float releaseRate = 1.0f / (micNgReleaseTime * SAMPLE_RATE_F);
-
-    // Determine level decay rate. We don't want human voice (75-300Hz) to cross the close
-    // threshold if the previous peak crosses the open threshold. 75Hz at 44.1ksps is ~590
-    // samples between peaks.
-    const float thresholdDiff = micNgOpenThreshold - micNgCloseThreshold;
-    const float minDecayPeriod = (1.0f / 75.0f) * SAMPLE_RATE_F; // ~590 samples
-    const float decayRate = thresholdDiff / minDecayPeriod;
-
-    // We can't use SSE as the processing of each sample depends on the processed
-    // result of the previous sample.
-    for(int i = 0; i < totalFloats; i += 2)
-    {
-        // Get current input level
-        float curLvl = abs(buffer[i] + buffer[i+1]) * 0.5f;
-
-        // Test thresholds
-        if(curLvl > micNgOpenThreshold && !micNgIsOpen)
-            micNgIsOpen = true;
-        if(micNgLvl < micNgCloseThreshold && micNgIsOpen)
-        {
-            micNgHeldTime = 0.0f;
-            micNgIsOpen = false;
-        }
-
-        // Decay level slowly so human voice (75-300Hz) doesn't cross the close threshold
-        // (Essentially a peak detector with very fast decay)
-        micNgLvl = max(micNgLvl, curLvl) - decayRate;
-
-        // Apply gate state to attenuation
-        if(micNgIsOpen)
-            micNgAtten = min(1.0f, micNgAtten + attackRate);
-        else
-        {
-            micNgHeldTime += dtPerSample;
-            if(micNgHeldTime > micNgHoldTime)
-                micNgAtten = max(0.0f, micNgAtten - releaseRate);
-        }
-
-        // Multiple input by gate multiplier (0.0f if fully closed, 1.0f if fully open)
-        buffer[i] *= micNgAtten;
-        buffer[i+1] *= micNgAtten;
-    }
-}
-
 bool OBS::QueryNewAudio(QWORD &timestamp)
 {
     bool bNewAudio = false;
@@ -908,23 +851,11 @@ void OBS::MainAudioLoop()
 
     UINT curAudioFrame = 0;
 
-    micMax = micRawMax = desktopMax = VOL_MIN;
-    micPeak = micRawPeak = desktopPeak = VOL_MIN;
-
-    // Noise gate, FIXME: User configuration
-    micNgOpenThreshold = 0.05f;
-    micNgCloseThreshold = 0.005f;
-    micNgAttackTime = 0.1f;
-    micNgHoldTime = 0.2f;
-    micNgReleaseTime = 0.2f;
-    micNgAtten = 0.0f;
-    micNgLvl = 0.0f;
-    micNgHeldTime = 0.0f;
-    micNgIsOpen = false;
+    micMax = desktopMax = VOL_MIN;
+    micPeak = desktopPeak = VOL_MIN;
 
     UINT audioFramesSinceMeterUpdate = 0;
     UINT audioFramesSinceMicMaxUpdate = 0;
-    UINT audioFramesSinceMicRawMaxUpdate = 0;
     UINT audioFramesSinceDesktopMaxUpdate = 0;
 
     List<float> mixedLatestDesktopSamples;
@@ -998,23 +929,6 @@ void OBS::MainAudioLoop()
             OSLeaveMutex(hAuxAudioMutex);
 
             //----------------------------------------------------------------------------
-            // Apply microphone audio DSPs
-
-            // Store unmodified volume levels so we can test the DSPs
-            float micRawRMS = 0.0f, micRawMx = 0.0f;
-
-            if(bMicEnabled && latestMicBuffer)
-            {
-                // Get raw volume levels before DSP processing
-                // TODO: This doesn't work as we don't process the audio immediately
-                //CalculateVolumeLevels(latestMicBuffer, latestMicAudioFrames*2, curMicVol, micRawRMS, micRawMx);
-
-                // Apply DSP
-                //ApplyNoiseGate(latestMicBuffer, latestMicAudioFrames*2);
-                ApplyNoiseGate(micBuffer, micAudioFrames*2);
-            }
-
-            //----------------------------------------------------------------------------
 
             UINT totalFloats = desktopAudioFrames*2;
 
@@ -1030,10 +944,8 @@ void OBS::MainAudioLoop()
             /*convert RMS and Max of samples to dB*/            
             desktopRMS = toDB(desktopRMS);
             micRMS = toDB(micRMS);
-            micRawRMS = toDB(micRawRMS);
             desktopMx = toDB(desktopMx);
             micMx = toDB(micMx);
-            micRawMx = toDB(micRawMx);
 
             /* update max if sample max is greater or after 1 second */
             float maxAlpha = 0.15f;
@@ -1045,15 +957,6 @@ void OBS::MainAudioLoop()
             else
             {
                 micMax = maxAlpha * micMx + (1.0f - maxAlpha) * micMax;
-            }
-
-            if(micRawMx > micRawMax)
-            {
-                micRawMax = micRawMx;
-            }
-            else
-            {
-                micRawMax = maxAlpha * micRawMx + (1.0f - maxAlpha) * micRawMax;
             }
 
             if(desktopMx > desktopMax)
@@ -1076,16 +979,6 @@ void OBS::MainAudioLoop()
                 audioFramesSinceMicMaxUpdate += desktopAudioFrames;
             }
 
-            if(micRawMax > micRawPeak || audioFramesSinceMicRawMaxUpdate > peakMeterDelayFrames)
-            {
-                micRawPeak = micRawMax;
-                audioFramesSinceMicRawMaxUpdate = 0;
-            }
-            else
-            {
-                audioFramesSinceMicRawMaxUpdate += desktopAudioFrames;
-            }
-
             if(desktopMax > desktopPeak || audioFramesSinceDesktopMaxUpdate > peakMeterDelayFrames)
             {
                 desktopPeak = desktopMax;
@@ -1100,7 +993,6 @@ void OBS::MainAudioLoop()
             float rmsAlpha = 0.15f;
             desktopMag = rmsAlpha * desktopRMS + desktopMag * (1.0f - rmsAlpha);
             micMag = rmsAlpha * micRMS + micMag * (1.0f - rmsAlpha);
-            micRawMag = rmsAlpha * micRawRMS + micRawMag * (1.0f - rmsAlpha);
 
             /*update the meter about every 50ms*/
             audioFramesSinceMeterUpdate += desktopAudioFrames;
@@ -1146,7 +1038,6 @@ void OBS::MainAudioLoop()
 
     desktopMag = desktopMax = desktopPeak = VOL_MIN;
     micMag = micMax = micPeak = VOL_MIN;
-    micRawMag = micRawMax = micRawPeak = VOL_MIN;
 
     PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_MICVOLUMEMETER, VOLN_METERED), 0);
 

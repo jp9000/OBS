@@ -280,3 +280,6 @@ Updater.UpdatesAvailable    "Updates are available"
 
 Settings.Advanced.LatencyTuning          "Latency tuning factor:"
 Settings.Advanced.AutomaticLatency       "Automatic low latency mode:"
+
+Plugins.NoiseGate.PluginName        "Microphone Noise Gate"
+Plugins.NoiseGate.PluginDescription "Reduces microphone noise by automatically muting the microphone if you are not talking."
