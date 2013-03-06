@@ -119,24 +119,24 @@ public:
 
     virtual QWORD GetBufferedTime();
 
-    virtual void StartCapture() {}
-    virtual void StopCapture() {}
+    virtual void StartCapture();
+    virtual void StopCapture();
 
-    inline UINT GetChannelCount() const {return inputChannels;}
-    inline UINT GetSamplesPerSec() const {return inputSamplesPerSec;}
+    UINT GetChannelCount() const;
+    UINT GetSamplesPerSec() const;
 
-    inline int  GetTimeOffset() const {return timeOffset;}
-    inline void SetTimeOffset(int newOffset) {timeOffset = newOffset;}
+    int  GetTimeOffset() const;
+    void SetTimeOffset(int newOffset);
 
-    inline void SetVolume(float fVal) {sourceVolume = fabsf(fVal);}
-    inline float GetVolume() const {return sourceVolume;}
+    void SetVolume(float fVal);
+    float GetVolume() const;
 
-    inline UINT NumAudioFilters() const {return audioFilters.Num();}
-    inline AudioFilter* GetAudioFilter(UINT id) {if(audioFilters.Num() > id) return audioFilters[id]; return NULL;}
+    UINT NumAudioFilters() const;
+    AudioFilter* GetAudioFilter(UINT id);
 
-    inline void AddAudioFilter(AudioFilter *filter) {audioFilters << filter;}
-    inline void InsertAudioFilter(UINT pos, AudioFilter *filter) {audioFilters.Insert(pos, filter);}
-    inline void RemoveAudioFilter(AudioFilter *filter) {audioFilters.RemoveItem(filter);}
-    inline void RemoveAudioFilter(UINT id) {if(audioFilters.Num() > id) audioFilters.Remove(id);}
+    void AddAudioFilter(AudioFilter *filter);
+    void InsertAudioFilter(UINT pos, AudioFilter *filter);
+    void RemoveAudioFilter(AudioFilter *filter);
+    void RemoveAudioFilter(UINT id);
 };
 

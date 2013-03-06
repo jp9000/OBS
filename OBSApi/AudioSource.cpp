@@ -734,3 +734,22 @@ QWORD AudioSource::GetBufferedTime()
     return 0;
 }
 
+void AudioSource::StartCapture() {}
+void AudioSource::StopCapture() {}
+
+UINT AudioSource::GetChannelCount() const {return inputChannels;}
+UINT AudioSource::GetSamplesPerSec() const {return inputSamplesPerSec;}
+
+int  AudioSource::GetTimeOffset() const {return timeOffset;}
+void AudioSource::SetTimeOffset(int newOffset) {timeOffset = newOffset;}
+
+void AudioSource::SetVolume(float fVal) {sourceVolume = fabsf(fVal);}
+float AudioSource::GetVolume() const {return sourceVolume;}
+
+UINT AudioSource::NumAudioFilters() const {return audioFilters.Num();}
+AudioFilter* AudioSource::GetAudioFilter(UINT id) {if(audioFilters.Num() > id) return audioFilters[id]; return NULL;}
+
+void AudioSource::AddAudioFilter(AudioFilter *filter) {audioFilters << filter;}
+void AudioSource::InsertAudioFilter(UINT pos, AudioFilter *filter) {audioFilters.Insert(pos, filter);}
+void AudioSource::RemoveAudioFilter(AudioFilter *filter) {audioFilters.RemoveItem(filter);}
+void AudioSource::RemoveAudioFilter(UINT id) {if(audioFilters.Num() > id) audioFilters.Remove(id);}
