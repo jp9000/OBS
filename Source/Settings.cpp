@@ -1504,12 +1504,15 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                 BOOL bPushToTalk = AppConfig->GetInt(TEXT("Audio"), TEXT("UsePushToTalk"));
                 SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALK), BM_SETCHECK, bPushToTalk ? BST_CHECKED : BST_UNCHECKED, 0);
                 EnableWindow(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY), bPushToTalk);
+                EnableWindow(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY2), bPushToTalk);
                 EnableWindow(GetDlgItem(hwnd, IDC_CLEARPUSHTOTALK), bPushToTalk);
                 EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY_EDIT), bPushToTalk);
                 EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY), bPushToTalk);
 
                 DWORD hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey"));
                 SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY), HKM_SETHOTKEY, hotkey, 0);
+                DWORD hotkey2 = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey2"));
+                SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY2), HKM_SETHOTKEY, hotkey2, 0);
 
                 int pttDelay = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkDelay"), 200);
                 SendMessage(GetDlgItem(hwnd, IDC_PTTDELAY), UDM_SETRANGE32, 0, 2000);
@@ -1588,6 +1591,7 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                         {
                             BOOL bUsePushToTalk = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
                             EnableWindow(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY), bUsePushToTalk);
+                            EnableWindow(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY2), bUsePushToTalk);
                             EnableWindow(GetDlgItem(hwnd, IDC_CLEARPUSHTOTALK), bUsePushToTalk);
                             EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY_EDIT), bUsePushToTalk);
                             EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY), bUsePushToTalk);
@@ -1599,6 +1603,7 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                     case IDC_DESKTOPBOOST_EDIT:
                     case IDC_MICBOOST_EDIT:
                     case IDC_PUSHTOTALKHOTKEY:
+                    case IDC_PUSHTOTALKHOTKEY2:
                     case IDC_MUTEMICHOTKEY:
                     case IDC_MUTEDESKTOPHOTKEY:
                     case IDC_PTTDELAY_EDIT:
@@ -1610,6 +1615,7 @@ INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, 
                         if(HIWORD(wParam) == BN_CLICKED)
                         {
                             SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY), HKM_SETHOTKEY, 0, 0);
+                            SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY2), HKM_SETHOTKEY, 0, 0);
                             App->SetChangedSettings(true);
                         }
                         break;
@@ -2156,6 +2162,7 @@ void OBS::ApplySettings()
 
                 bUsingPushToTalk = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_PUSHTOTALK), BM_GETCHECK, 0, 0) == BST_CHECKED;
                 DWORD hotkey = (DWORD)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_PUSHTOTALKHOTKEY), HKM_GETHOTKEY, 0, 0);
+                DWORD hotkey2 = (DWORD)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_PUSHTOTALKHOTKEY2), HKM_GETHOTKEY, 0, 0);
 
                 pushToTalkDelay = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_PTTDELAY), UDM_GETPOS32, 0, 0);
                 if(pushToTalkDelay < 0)
@@ -2165,6 +2172,7 @@ void OBS::ApplySettings()
 
                 AppConfig->SetInt(TEXT("Audio"), TEXT("UsePushToTalk"), bUsingPushToTalk);
                 AppConfig->SetInt(TEXT("Audio"), TEXT("PushToTalkHotkey"), hotkey);
+                AppConfig->SetInt(TEXT("Audio"), TEXT("PushToTalkHotkey2"), hotkey2);
                 AppConfig->SetInt(TEXT("Audio"), TEXT("PushToTalkDelay"), pushToTalkDelay);
 
                 if(App->pushToTalkHotkeyID)
@@ -2175,6 +2183,8 @@ void OBS::ApplySettings()
 
                 if(App->bUsingPushToTalk && hotkey)
                     pushToTalkHotkeyID = API->CreateHotkey(hotkey, OBS::PushToTalkHotkey, NULL);
+                if(App->bUsingPushToTalk && hotkey2)
+                    pushToTalkHotkeyID = API->CreateHotkey(hotkey2, OBS::PushToTalkHotkey, NULL);
 
                 //------------------------------------
 

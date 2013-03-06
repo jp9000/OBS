@@ -125,13 +125,25 @@ HRESULT STDMETHODCALLTYPE DXGISwapPresentHook(IDXGISwapChain *swap, UINT syncInt
     return hRes;
 }
 
-typedef HRESULT (WINAPI* D3D10CREATEDEVICEPROC)(IDXGIAdapter*, D3D10_DRIVER_TYPE, HMODULE, UINT, UINT, IUnknown**);
-typedef HRESULT (WINAPI* D3D10CREATEDEVICE1PROC)(IDXGIAdapter *, D3D10_DRIVER_TYPE, HMODULE, UINT, D3D10_FEATURE_LEVEL1, UINT, IUnknown**);
-typedef HRESULT (WINAPI* D3D11CREATEDEVICEPROC)(IDXGIAdapter*, D3D_DRIVER_TYPE, HMODULE, UINT, CONST D3D_FEATURE_LEVEL*, UINT FeatureLevels, UINT, IUnknown**, D3D_FEATURE_LEVEL*, ID3D11DeviceContext**);
+typedef HRESULT (WINAPI *D3D10CREATEPROC)(IDXGIAdapter*, D3D10_DRIVER_TYPE, HMODULE, UINT, UINT, DXGI_SWAP_CHAIN_DESC*, IDXGISwapChain**, IUnknown**);
+typedef HRESULT (WINAPI *D3D101CREATEPROC)(IDXGIAdapter*, D3D10_DRIVER_TYPE, HMODULE, UINT, D3D10_FEATURE_LEVEL1, UINT, DXGI_SWAP_CHAIN_DESC*, IDXGISwapChain**, IUnknown**);
+typedef HRESULT (WINAPI*D3D11CREATEPROC)(IDXGIAdapter*, D3D_DRIVER_TYPE, HMODULE, UINT, D3D_FEATURE_LEVEL*, UINT, UINT, DXGI_SWAP_CHAIN_DESC*, IDXGISwapChain**, IUnknown**, D3D_FEATURE_LEVEL*, IUnknown**);
 
 
-IUnknown* CreateDummyDevice()
+IDXGISwapChain* CreateDummySwap()
 {
+    DXGI_SWAP_CHAIN_DESC swapDesc;
+    ZeroMemory(&swapDesc, sizeof(swapDesc));
+    swapDesc.BufferCount = 2;
+    swapDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapDesc.BufferDesc.Width  = 2;
+    swapDesc.BufferDesc.Height = 2;
+    swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapDesc.OutputWindow = hwndSender;
+    swapDesc.SampleDesc.Count = 1;
+    swapDesc.Windowed = TRUE;
+
+    IDXGISwapChain *swap = NULL;
     IUnknown *device = NULL;
 
     HRESULT hErr;
@@ -146,18 +158,23 @@ IUnknown* CreateDummyDevice()
     HMODULE hDll = GetModuleHandle(lpDllPath);
     if(hDll)
     {
-        D3D10CREATEDEVICEPROC d3d10Create = (D3D10CREATEDEVICEPROC)GetProcAddress(hDll, "D3D10CreateDevice");
+        D3D10CREATEPROC d3d10Create = (D3D10CREATEPROC)GetProcAddress(hDll, "D3D10CreateDeviceAndSwapChain");
+
         if(d3d10Create)
         {
-            hErr = (*d3d10Create)(NULL, D3D10_DRIVER_TYPE_NULL, NULL, 0, D3D10_SDK_VERSION, &device);
-            if(SUCCEEDED(hErr))
-                return device;
+            hErr = (*d3d10Create)(NULL, D3D10_DRIVER_TYPE_NULL, NULL, 0, D3D10_SDK_VERSION, &swapDesc, &swap, &device);
 
-            RUNONCE logOutput << "CreateDummyDevice: D3D10CreateDevice failed, result = " << UINT(hErr) << endl;
+            if(SUCCEEDED(hErr))
+            {
+                device->Release();
+                return swap;
+            }
+
+            RUNONCE logOutput << "CreateDummySwap: D3D10CreateDeviceAndSwapChain failed, result = " << UINT(hErr) << endl;
         }
         else
         {
-            RUNONCE logOutput << "CreateDummyDevice: D3D10CreateDevice not found" << endl;
+            RUNONCE logOutput << "CreateDummySwap: D3D10CreateDeviceAndSwapChain not found" << endl;
         }
     }
 
@@ -170,18 +187,22 @@ IUnknown* CreateDummyDevice()
     hDll = GetModuleHandle(lpDllPath);
     if(hDll)
     {
-        D3D10CREATEDEVICE1PROC d3d101Create = (D3D10CREATEDEVICE1PROC)GetProcAddress(hDll, "D3D10CreateDevice1");
+        D3D101CREATEPROC d3d101Create = (D3D101CREATEPROC)GetProcAddress(hDll, "D3D10CreateDeviceAndSwapChain1");
         if(d3d101Create)
         {
-            hErr = (*d3d101Create)(NULL, D3D10_DRIVER_TYPE_NULL, NULL, 0, D3D10_FEATURE_LEVEL_10_1, D3D10_1_SDK_VERSION, &device);
-            if(SUCCEEDED(hErr))
-                return device;
+            hErr = (*d3d101Create)(NULL, D3D10_DRIVER_TYPE_NULL, NULL, 0, D3D10_FEATURE_LEVEL_10_1, D3D10_1_SDK_VERSION, &swapDesc, &swap, &device);
 
-            RUNONCE logOutput << "CreateDummyDevice: D3D10CreateDevice1 failed, result = " << UINT(hErr) << endl;
+            if(SUCCEEDED(hErr))
+            {
+                device->Release();
+                return swap;
+            }
+
+            RUNONCE logOutput << "CreateDummyDevice: D3D10CreateDeviceAndSwapChain1 failed, result = " << UINT(hErr) << endl;
         }
         else
         {
-            RUNONCE logOutput << "CreateDummyDevice: D3D10CreateDevice1 not found" << endl;
+            RUNONCE logOutput << "CreateDummyDevice: D3D10CreateDeviceAndSwapChain1 not found" << endl;
         }
     }
 
@@ -194,7 +215,7 @@ IUnknown* CreateDummyDevice()
     hDll = GetModuleHandle(lpDllPath);
     if(hDll)
     {
-        D3D11CREATEDEVICEPROC d3d11Create = (D3D11CREATEDEVICEPROC)GetProcAddress(hDll, "D3D11CreateDevice");
+        D3D11CREATEPROC d3d11Create = (D3D11CREATEPROC)GetProcAddress(hDll, "D3D11CreateDeviceAndSwapChain");
         if(d3d11Create)
         {
             D3D_FEATURE_LEVEL desiredLevels[6] =
@@ -208,20 +229,20 @@ IUnknown* CreateDummyDevice()
             };
             D3D_FEATURE_LEVEL receivedLevel;
 
-            ID3D11DeviceContext *context;
-
-            hErr = (*d3d11Create)(NULL, D3D_DRIVER_TYPE_NULL, NULL, 0, desiredLevels, 6, D3D11_SDK_VERSION, &device, &receivedLevel, &context);
+            IUnknown *context;
+            hErr = (*d3d11Create)(NULL, D3D_DRIVER_TYPE_NULL, NULL, 0, desiredLevels, 6, D3D11_SDK_VERSION, &swapDesc, &swap, &device, &receivedLevel, &context);
             if(SUCCEEDED(hErr))
             {
                 context->Release();
-                return device;
+                device->Release();
+                return swap;
             }
 
-            RUNONCE logOutput << "CreateDummyDevice: D3D11CreateDevice failed, result = " << UINT(hErr) << endl;
+            RUNONCE logOutput << "CreateDummyDevice: D3D11CreateDeviceAndSwapChain failed, result = " << UINT(hErr) << endl;
         }
         else
         {
-            RUNONCE logOutput << "CreateDummyDevice: D3D11CreateDevice not found" << endl;
+            RUNONCE logOutput << "CreateDummyDevice: D3D11CreateDeviceAndSwapChain not found" << endl;
         }
     }
 
@@ -239,60 +260,19 @@ bool InitDXGICapture()
     HMODULE hDXGIDll = GetModuleHandle(lpDXGIPath);
     if(hDXGIDll)
     {
-        CREATEDXGIFACTORYPROC dxgiCreateFactory = (CREATEDXGIFACTORYPROC)GetProcAddress(hDXGIDll, "CreateDXGIFactory");
-        if(dxgiCreateFactory)
+        IDXGISwapChain *swap = CreateDummySwap();
+        if(swap)
         {
-            HRESULT hErr;
+            bSuccess = true;
 
-            IDXGIFactory *factory;
-            if(SUCCEEDED(hErr = (*dxgiCreateFactory)(__uuidof(IDXGIFactory), (void**)&factory)))
-            {
-                DXGI_SWAP_CHAIN_DESC swapDesc;
-                ZeroMemory(&swapDesc, sizeof(swapDesc));
-                swapDesc.BufferCount = 2;
-                swapDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-                swapDesc.BufferDesc.Width  = 2;
-                swapDesc.BufferDesc.Height = 2;
-                swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-                swapDesc.OutputWindow = hwndSender;
-                swapDesc.SampleDesc.Count = 1;
-                swapDesc.Windowed = TRUE;
+            UPARAM *vtable = *(UPARAM**)swap;
+            giswapPresent.Hook((FARPROC)*(vtable+(32/4)), (FARPROC)DXGISwapPresentHook);
+            giswapResizeBuffers.Hook((FARPROC)*(vtable+(52/4)), (FARPROC)DXGISwapResizeBuffersHook);
 
-                IUnknown *device = CreateDummyDevice();
-                if(device)
-                {
-                    IDXGISwapChain *swap;
-                    if(SUCCEEDED(hErr = factory->CreateSwapChain(device, &swapDesc, &swap)))
-                    {
-                        bSuccess = true;
+            SafeRelease(swap);
 
-                        UPARAM *vtable = *(UPARAM**)swap;
-                        giswapPresent.Hook((FARPROC)*(vtable+(32/4)), (FARPROC)DXGISwapPresentHook);
-                        giswapResizeBuffers.Hook((FARPROC)*(vtable+(52/4)), (FARPROC)DXGISwapResizeBuffersHook);
-
-                        SafeRelease(swap);
-
-                        giswapPresent.Rehook();
-                        giswapResizeBuffers.Rehook();
-                    }
-                    else
-                    {
-                        RUNONCE logOutput << "InitDXGICapture: factory->CreateSwapChain failed, result = " << UINT(hErr) << endl;
-                    }
-
-                    device->Release();
-                }
-
-                factory->Release();
-            }
-            else
-            {
-                RUNONCE logOutput << "InitDXGICapture: could not create IDXGIFactory" << endl;
-            }
-        }
-        else
-        {
-            RUNONCE logOutput << "InitDXGICapture: could not get address of CreateDXGIFactory" << endl;
+            giswapPresent.Rehook();
+            giswapResizeBuffers.Rehook();
         }
     }
 
