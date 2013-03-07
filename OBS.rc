@@ -220,7 +220,7 @@ BEGIN
                     "Button",BS_AUTORADIOBUTTON,7,49,365,10
     RTEXT           "Sources.SoftwareCaptureSource.Window",IDC_STATIC,7,68,96,8
     COMBOBOX        IDC_WINDOW,107,66,197,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Sources.SoftwareCaptureSource.Refresh",IDC_REFRESH,310,65,62,14
+    PUSHBUTTON      "Refresh",IDC_REFRESH,310,65,62,14
     CONTROL         "Sources.SoftwareCaptureSource.InnerWindow",IDC_INNERWINDOW,
                     "Button",BS_AUTORADIOBUTTON,106,83,266,10
     CONTROL         "Sources.SoftwareCaptureSource.EntireWindow",IDC_OUTERWINDOW,
