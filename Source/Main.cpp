@@ -365,6 +365,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     hinstMain = hInstance;
     
+    SetProcessDEPPolicy(PROCESS_DEP_ENABLE | PROCESS_DEP_DISABLE_ATL_THUNK_EMULATION);
     InitializeExceptionHandler();
 
     ULONG_PTR gdipToken;
