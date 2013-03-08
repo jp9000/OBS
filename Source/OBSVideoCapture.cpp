@@ -197,6 +197,9 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
         {
             VideoPacketData &packet = curSegment.packets[i];
 
+            if(packet.type == PacketType_VideoHighest)
+                bRequestKeyframe = false;
+
             //Log(TEXT("v:%u, %llu"), curSegment.timestamp, frameInfo.firstFrameTime+curSegment.timestamp);
 
             network->SendPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, packet.type);
@@ -437,6 +440,19 @@ void OBS::MainCaptureLoop()
         lastStreamTime = qwTime;
 #endif
 
+        //------------------------------------
+
+        if(bRequestKeyframe && keyframeWait > 0)
+        {
+            keyframeWait -= int(frameDelta);
+
+            if(keyframeWait <= 0)
+            {
+                GetVideoEncoder()->RequestKeyframe();
+                bRequestKeyframe = false;
+            }
+        }
+
         if(!bPushToTalkDown && pushToTalkTimeLeft > 0)
         {
             pushToTalkTimeLeft -= int(frameDelta);
@@ -585,11 +601,17 @@ void OBS::MainCaptureLoop()
             if(bTransitioning)
             {
                 BlendFunction(GS_BLEND_ONE, GS_BLEND_ZERO);
-                DrawSprite(transitionTexture, 0xFFFFFFFF, 0.0f, 0.0f, renderFrameSize.x, renderFrameSize.y);
+                if(renderFrameIn1To1Mode)
+                    DrawSprite(transitionTexture, 0xFFFFFFFF, 0.0f, 0.0f, outputSize.x, outputSize.y);
+                else
+                    DrawSprite(transitionTexture, 0xFFFFFFFF, 0.0f, 0.0f, renderFrameSize.x, renderFrameSize.y);
                 BlendFunction(GS_BLEND_FACTOR, GS_BLEND_INVFACTOR, transitionAlpha);
             }
 
-            DrawSprite(mainRenderTextures[curRenderTarget], 0xFFFFFFFF, 0.0f, 0.0f, renderFrameSize.x, renderFrameSize.y);
+            if(renderFrameIn1To1Mode)
+                DrawSprite(mainRenderTextures[curRenderTarget], 0xFFFFFFFF, 0.0f, 0.0f, outputSize.x, outputSize.y);
+            else
+                DrawSprite(mainRenderTextures[curRenderTarget], 0xFFFFFFFF, 0.0f, 0.0f, renderFrameSize.x, renderFrameSize.y);
 
             Ortho(0.0f, renderFrameSize.x, renderFrameSize.y, 0.0f, -100.0f, 100.0f);
 
@@ -600,7 +622,10 @@ void OBS::MainCaptureLoop()
                 LoadPixelShader(solidPixelShader);
                 solidPixelShader->SetColor(solidPixelShader->GetParameter(0), 0xFFFF0000);
 
-                Ortho(0.0f, baseSize.x, baseSize.y, 0.0f, -100.0f, 100.0f);
+                if(renderFrameIn1To1Mode)
+                    Ortho(0.0f, renderFrameSize.x * downscale, renderFrameSize.y * downscale, 0.0f, -100.0f, 100.0f);
+                else
+                    Ortho(0.0f, baseSize.x, baseSize.y, 0.0f, -100.0f, 100.0f);
 
                 if(scene)
                     scene->RenderSelections();

@@ -66,7 +66,7 @@ AudioSource::~AudioSource()
         src_delete((SRC_STATE*)resampler);
 
     for(UINT i=0; i<audioSegments.Num(); i++)
-        audioSegments[i].ClearData();
+        delete audioSegments[i];
 }
 
 union TripleToLong
@@ -181,6 +181,21 @@ const float surroundMix4 = dbMinus6;
 
 const float attn5dot1 = 1.0f / (1.0f + centerMix + surroundMix);
 const float attn4dotX = 1.0f / (1.0f + surroundMix4);
+
+void AudioSource::AddAudioSegment(AudioSegment *newSegment, float curVolume)
+{
+    for (UINT i=0; i<audioFilters.Num(); i++)
+    {
+        if (newSegment)
+            newSegment = audioFilters[i]->Process(newSegment);
+    }
+
+    if (newSegment)
+    {
+        MultiplyAudioBuffer(newSegment->audioData.Array(), newSegment->audioData.Num(), curVolume*sourceVolume);
+        audioSegments << newSegment;
+    }
+}
 
 UINT AudioSource::QueryAudio(float curVolume)
 {
@@ -578,10 +593,8 @@ UINT AudioSource::QueryAudio(float curVolume)
                 if(adjustVal < 10)
                     lastUsedTimestamp += 10-adjustVal;
 
-                AudioSegment &newSegment = *audioSegments.CreateNew();
-                newSegment.audioData.CopyArray(newBuffer, numAudioFrames*2);
-                newSegment.timestamp = lastUsedTimestamp;
-                MultiplyAudioBuffer(newSegment.audioData.Array(), numAudioFrames*2, curVolume*sourceVolume);
+                AudioSegment *newSegment = new AudioSegment(newBuffer, numAudioFrames*2, lastUsedTimestamp);
+                AddAudioSegment(newSegment, curVolume*sourceVolume);
 
                 lastSentTimestamp = lastUsedTimestamp;
             }
@@ -606,26 +619,11 @@ UINT AudioSource::QueryAudio(float curVolume)
                 //------------------------
                 // add new data
 
-                if(lastUsedTimestamp > lastSentTimestamp)
-                {
-                    QWORD adjustVal = (lastUsedTimestamp-lastSentTimestamp);
-                    if(adjustVal < 10)
-                        lastUsedTimestamp += 10-adjustVal;
-
-                    AudioSegment &newSegment = *audioSegments.CreateNew();
-                    newSegment.audioData.CopyArray(storageBuffer.Array(), (441*2));
-                    newSegment.timestamp = lastUsedTimestamp;
-                    MultiplyAudioBuffer(newSegment.audioData.Array(), 441*2, curVolume*sourceVolume);
-
-                    storageBuffer.RemoveRange(0, (441*2));
-                }
-
-                //------------------------
-                // if still data pending (can happen)
-
+                bool bFirst = true;
                 while(storageBuffer.Num() >= (441*2))
                 {
-                    lastUsedTimestamp += 10;
+                    if(!bFirst)
+                        lastUsedTimestamp += 10;
 
                     if(lastUsedTimestamp > lastSentTimestamp)
                     {
@@ -633,15 +631,16 @@ UINT AudioSource::QueryAudio(float curVolume)
                         if(adjustVal < 10)
                             lastUsedTimestamp += 10-adjustVal;
 
-                        AudioSegment &newSegment = *audioSegments.CreateNew();
-                        newSegment.audioData.CopyArray(storageBuffer.Array(), (441*2));
+                        AudioSegment *newSegment = new AudioSegment(storageBuffer.Array(), 441*2, lastUsedTimestamp);
+                        AddAudioSegment(newSegment, curVolume*sourceVolume);
                         storageBuffer.RemoveRange(0, (441*2));
-                        MultiplyAudioBuffer(newSegment.audioData.Array(), 441*2, curVolume*sourceVolume);
 
-                        newSegment.timestamp = lastUsedTimestamp;
-
-                        lastSentTimestamp = lastUsedTimestamp;
+                        if(!bFirst)
+                            lastSentTimestamp = lastUsedTimestamp;
                     }
+
+                    if(bFirst)
+                        bFirst = false;
                 }
             }
         }
@@ -658,7 +657,7 @@ bool AudioSource::GetEarliestTimestamp(QWORD &timestamp)
 {
     if(audioSegments.Num())
     {
-        timestamp = audioSegments[0].timestamp;
+        timestamp = audioSegments[0]->timestamp;
         return true;
     }
 
@@ -672,9 +671,11 @@ bool AudioSource::GetBuffer(float **buffer, UINT *numFrames, QWORD targetTimesta
 
     while(audioSegments.Num())
     {
-        if(audioSegments[0].timestamp < targetTimestamp)
+        if(audioSegments[0]->timestamp < targetTimestamp)
         {
-            audioSegments[0].audioData.Clear();
+            Log(TEXT("Audio timestamp for device '%s' was behind target timestamp by %llu!  Had to delete audio segment."),
+                                                              GetDeviceName(), targetTimestamp-audioSegments[0]->timestamp);
+            delete audioSegments[0];
             audioSegments.Remove(0);
         }
         else
@@ -685,13 +686,15 @@ bool AudioSource::GetBuffer(float **buffer, UINT *numFrames, QWORD targetTimesta
     {
         bool bUseSegment = false;
 
-        AudioSegment &segment = audioSegments[0];
+        AudioSegment *segment = audioSegments[0];
 
-        QWORD difference = (segment.timestamp-targetTimestamp);
+        QWORD difference = (segment->timestamp-targetTimestamp);
         if(difference <= 10)
         {
             //Log(TEXT("segment.timestamp: %llu, targetTimestamp: %llu"), segment.timestamp, targetTimestamp);
-            outputBuffer.TransferFrom(segment.audioData);
+            outputBuffer.TransferFrom(segment->audioData);
+
+            delete segment;
             audioSegments.Remove(0);
 
             bSuccess = true;
@@ -712,7 +715,7 @@ bool AudioSource::GetNewestFrame(float **buffer, UINT *numFrames)
     {
         if(audioSegments.Num())
         {
-            List<float> &data = audioSegments.Last().audioData;
+            List<float> &data = audioSegments.Last()->audioData;
             *buffer = data.Array();
             *numFrames = data.Num()/2;
             return true;
@@ -725,8 +728,27 @@ bool AudioSource::GetNewestFrame(float **buffer, UINT *numFrames)
 QWORD AudioSource::GetBufferedTime()
 {
     if(audioSegments.Num())
-        return audioSegments.Last().timestamp - audioSegments[0].timestamp;
+        return audioSegments.Last()->timestamp - audioSegments[0]->timestamp;
 
     return 0;
 }
 
+void AudioSource::StartCapture() {}
+void AudioSource::StopCapture() {}
+
+UINT AudioSource::GetChannelCount() const {return inputChannels;}
+UINT AudioSource::GetSamplesPerSec() const {return inputSamplesPerSec;}
+
+int  AudioSource::GetTimeOffset() const {return timeOffset;}
+void AudioSource::SetTimeOffset(int newOffset) {timeOffset = newOffset;}
+
+void AudioSource::SetVolume(float fVal) {sourceVolume = fabsf(fVal);}
+float AudioSource::GetVolume() const {return sourceVolume;}
+
+UINT AudioSource::NumAudioFilters() const {return audioFilters.Num();}
+AudioFilter* AudioSource::GetAudioFilter(UINT id) {if(audioFilters.Num() > id) return audioFilters[id]; return NULL;}
+
+void AudioSource::AddAudioFilter(AudioFilter *filter) {audioFilters << filter;}
+void AudioSource::InsertAudioFilter(UINT pos, AudioFilter *filter) {audioFilters.Insert(pos, filter);}
+void AudioSource::RemoveAudioFilter(AudioFilter *filter) {audioFilters.RemoveItem(filter);}
+void AudioSource::RemoveAudioFilter(UINT id) {if(audioFilters.Num() > id) audioFilters.Remove(id);}

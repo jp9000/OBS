@@ -294,11 +294,9 @@ LRESULT CALLBACK VolumeControlProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                     case VOLN_FINALVALUE:
                     case VOLN_ADJUSTING:
                         {
-                            float val = *(float*)lParam;
+							/* float in lParam hack */
+                            float val = *((float*)&lParam);
                             SetVolumeControlValue(hwnd, val);
-                            
-                            /* free volume value on heap */
-                            free((void*) lParam);
                             
                             /* send message to obsproc to update volumes */
                             UINT id = (UINT)GetWindowLongPtr(hwnd, GWLP_ID);

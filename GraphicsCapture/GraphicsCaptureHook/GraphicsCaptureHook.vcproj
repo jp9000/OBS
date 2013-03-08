@@ -365,6 +365,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DXGICapture.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\GraphicsCaptureHook.cpp"
 				>
 			</File>

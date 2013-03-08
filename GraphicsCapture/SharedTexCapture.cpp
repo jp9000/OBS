@@ -25,8 +25,8 @@ void SharedTexCapture::Destroy()
     delete sharedTexture;
     sharedTexture = NULL;
 
-    /*delete copyTexture;
-    copyTexture = NULL;*/
+    delete copyTexture;
+    copyTexture = NULL;
 
     bInitialized = false;
 
@@ -72,7 +72,7 @@ bool SharedTexCapture::Init(CaptureInfo &info)
         return false;
     }
 
-    //copyTexture = GS->CreateTexture(info.cx, info.cy, (GSColorFormat)info.format, 0, FALSE, TRUE);
+    copyTexture = GS->CreateTexture(info.cx, info.cy, (GSColorFormat)info.format, 0, FALSE, TRUE);
 
     Log(TEXT("SharedTexCapture hooked"));
 
@@ -82,8 +82,8 @@ bool SharedTexCapture::Init(CaptureInfo &info)
 
 Texture* SharedTexCapture::LockTexture()
 {
-    //GS->CopyTexture(copyTexture, sharedTexture);
-    return sharedTexture;
+    GS->CopyTexture(copyTexture, sharedTexture);
+    return copyTexture;
 }
 
 void SharedTexCapture::UnlockTexture()

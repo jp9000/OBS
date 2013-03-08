@@ -193,7 +193,10 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
     fnEnumerateLoadedModules64 (hProcess, (PENUMLOADED_MODULES_CALLBACK64)EnumerateLoadedModulesProcInfo, (VOID *)&moduleInfo);
     slwr (moduleInfo.moduleName);
 
+    String strModuleInfo;
     String crashMessage;
+
+    fnEnumerateLoadedModules64(hProcess, (PENUMLOADED_MODULES_CALLBACK64)RecordAllLoadedModules, (VOID *)&strModuleInfo);
 
     crashMessage << 
         TEXT("OBS has encountered an unhandled exception and has terminated. If you are able to\r\n")
@@ -320,14 +323,12 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
         crashDumpLog.WriteStr(TEXT("\r\nA minidump could not be created. Please check dbghelp.dll is present.\r\n"));
     }
 
-    String strModuleInfo;
     crashDumpLog.WriteStr("\r\nList of loaded modules:\r\n");
 #ifdef _WIN64
     crashDumpLog.WriteStr("Base Address                      Module\r\n");
 #else
     crashDumpLog.WriteStr("Base Address      Module\r\n");
 #endif
-    fnEnumerateLoadedModules64(hProcess, (PENUMLOADED_MODULES_CALLBACK64)RecordAllLoadedModules, (VOID *)&strModuleInfo);
     crashDumpLog.WriteStr(strModuleInfo);
 
     crashDumpLog.Close();

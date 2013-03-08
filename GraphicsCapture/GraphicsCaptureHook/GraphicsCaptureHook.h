@@ -24,6 +24,7 @@
 #define _WIN32_WINNT   0x0600
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <shlobj.h>
 
 #pragma intrinsic(memcpy, memset, memcmp)
 
@@ -36,6 +37,12 @@
 #include <sstream>
 #include <fstream>
 using namespace std;
+
+#ifdef _WIN64
+#define CSIDL_SYSTEM_DIR CSIDL_SYSTEMX86
+#else
+#define CSIDL_SYSTEM_DIR CSIDL_SYSTEM
+#endif
 
 //arghh I hate defines like this
 #define RUNONCE static bool bRunOnce = false; if(!bRunOnce && (bRunOnce = true))
@@ -231,24 +238,14 @@ UINT InitializeSharedMemoryCPUCapture(UINT textureSize, DWORD *totalSize, Memory
 UINT InitializeSharedMemoryGPUCapture(SharedTexData **texData);
 void DestroySharedMemory();
 
-//memory capture APIs
 bool InitD3D9Capture();
-bool InitD3D10Capture();
+bool InitDXGICapture();
 bool InitGLCapture();
 bool InitDDrawCapture();
 
 void FreeD3D9Capture();
-void FreeD3D10Capture();
+void FreeDXGICapture();
 void FreeGLCapture();
 void FreeDDrawCapture();
-
-//shared texture APIs
-bool InitD3D9ExCapture();
-bool InitD3D101Capture();
-bool InitD3D11Capture();
-
-void FreeD3D9ExCapture();
-void FreeD3D101Capture();
-void FreeD3D11Capture();
 
 void QuickLog(LPCSTR lpText);

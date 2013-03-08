@@ -424,6 +424,16 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
+    for (UINT i=0; i<plugins.Num(); i++)
+    {
+        OBS_CALLBACK startStreamProc = plugins[i].startStreamCallback;
+
+        if (startStreamProc)
+            (*startStreamProc)();
+    }
+
+    //-------------------------------------------------------------
+
     if(!bTestStream && bWriteToFile && strOutputFile.IsValid())
     {
         String strFileExtension = GetPathExtension(strOutputFile);
@@ -432,6 +442,8 @@ void OBS::Start()
         else if(strFileExtension.CompareI(TEXT("mp4")))
             fileStream = CreateMP4FileStream(strOutputFile);
     }
+
+    //-------------------------------------------------------------
 
     hMainThread = OSCreateThread((XTHREAD)OBS::MainCaptureThread, NULL);
 
@@ -500,6 +512,19 @@ void OBS::Stop()
 
     //-------------------------------------------------------------
 
+    for (UINT i=0; i<plugins.Num(); i++)
+    {
+        OBS_CALLBACK stopStreamCallback = plugins[i].stopStreamCallback;
+
+        if (stopStreamCallback)
+            (*stopStreamCallback)();
+    }
+
+    //-------------------------------------------------------------
+
+    delete fileStream;
+    fileStream = NULL;
+
     delete network;
     network = NULL;
 
@@ -508,9 +533,6 @@ void OBS::Stop()
 
     delete desktopAudio;
     desktopAudio = NULL;
-
-    delete fileStream;
-    fileStream = NULL;
 
     delete audioEncoder;
     audioEncoder = NULL;
@@ -1023,5 +1045,14 @@ void OBS::MainAudioLoop()
         pendingAudioFrames[i].audioData.Clear();
 
     AvRevertMmThreadCharacteristics(hTask);
+}
+
+void OBS::RequestKeyframe(int waitTime)
+{
+    if(bRequestKeyframe && waitTime > keyframeWait)
+        return;
+
+    bRequestKeyframe = true;
+    keyframeWait = waitTime;
 }
 

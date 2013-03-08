@@ -83,13 +83,16 @@ INT_PTR CALLBACK OBS::EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM 
 
                         SendMessage(GetDlgItem(hwnd, IDC_NAME), WM_GETTEXT, str.Length()+1, (LPARAM)str.Array());
 
+                        String &strOut = *(String*)GetWindowLongPtr(hwnd, DWLP_USER);
+
                         if(App->sceneElement)
                         {
                             XElement *sources = App->sceneElement->GetElement(TEXT("sources"));
                             if(!sources)
                                 sources = App->sceneElement->CreateElement(TEXT("sources"));
 
-                            if(sources->GetElement(str) != NULL)
+                            XElement *foundSource = sources->GetElement(str);
+                            if(foundSource != NULL && strOut != foundSource->GetName())
                             {
                                 String strExists = Str("NameExists");
                                 strExists.FindReplace(TEXT("$1"), str);
@@ -98,7 +101,6 @@ INT_PTR CALLBACK OBS::EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM 
                             }
                         }
 
-                        String &strOut = *(String*)GetWindowLongPtr(hwnd, DWLP_USER);
                         strOut = str;
                     }
 
@@ -203,8 +205,11 @@ INT_PTR CALLBACK OBS::EnterSceneNameDialogProc(HWND hwnd, UINT message, WPARAM w
 
                         SendMessage(GetDlgItem(hwnd, IDC_NAME), WM_GETTEXT, str.Length()+1, (LPARAM)str.Array());
 
+                        String &strOut = *(String*)GetWindowLongPtr(hwnd, DWLP_USER);
+
                         XElement *scenes = App->scenesConfig.GetElement(TEXT("scenes"));
-                        if(scenes->GetElement(str) != NULL)
+                        XElement *foundScene = scenes->GetElement(str);
+                        if(foundScene != NULL && strOut != foundScene->GetName())
                         {
                             String strExists = Str("NameExists");
                             strExists.FindReplace(TEXT("$1"), str);
@@ -212,7 +217,6 @@ INT_PTR CALLBACK OBS::EnterSceneNameDialogProc(HWND hwnd, UINT message, WPARAM w
                             break;
                         }
 
-                        String &strOut = *(String*)GetWindowLongPtr(hwnd, DWLP_USER);
                         strOut = str;
                     }
 
@@ -517,7 +521,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                     {
                         App->EnableSceneSwitching(false);
 
-                        String strName;
+                        String strName = item->GetName();
                         if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSceneNameDialogProc, (LPARAM)&strName) == IDOK)
                         {
                             SendMessage(hwnd, LB_DELETESTRING, curSel, 0);
@@ -1461,10 +1465,13 @@ INT_PTR CALLBACK OBS::EnterGlobalSourceNameDialogProc(HWND hwnd, UINT message, W
     switch(message)
     {
         case WM_INITDIALOG:
-            SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
-            LocalizeWindow(hwnd);
+            {
+                SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
+                LocalizeWindow(hwnd);
 
-            //SetFocus(GetDlgItem(hwnd, IDC_NAME));
+                String &strOut = *(String*)lParam;
+                SetWindowText(GetDlgItem(hwnd, IDC_NAME), strOut);
+            }
             return TRUE;
 
         case WM_COMMAND:
@@ -1482,10 +1489,13 @@ INT_PTR CALLBACK OBS::EnterGlobalSourceNameDialogProc(HWND hwnd, UINT message, W
 
                         SendMessage(GetDlgItem(hwnd, IDC_NAME), WM_GETTEXT, str.Length()+1, (LPARAM)str.Array());
 
+                        String &strOut = *(String*)GetWindowLongPtr(hwnd, DWLP_USER);
+
                         XElement *globals = App->scenesConfig.GetElement(TEXT("global sources"));
                         if(globals)
                         {
-                            if(globals->GetElement(str) != NULL)
+                            XElement *foundSource = globals->GetElement(str);
+                            if(foundSource != NULL && strOut != foundSource->GetName())
                             {
                                 String strExists = Str("NameExists");
                                 strExists.FindReplace(TEXT("$1"), str);
@@ -1494,7 +1504,6 @@ INT_PTR CALLBACK OBS::EnterGlobalSourceNameDialogProc(HWND hwnd, UINT message, W
                             }
                         }
 
-                        String &strOut = *(String*)GetWindowLongPtr(hwnd, DWLP_USER);
                         strOut = str;
                     }
 
@@ -1711,7 +1720,7 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
 
                         XElement *element = globals->GetElementByID(id);
 
-                        String strName;
+                        String strName = element->GetName();
                         if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterGlobalSourceNameDialogProc, (LPARAM)&strName) == IDOK)
                         {
                             SendMessage(hwndSources, LB_DELETESTRING, id, 0);
@@ -2442,6 +2451,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 else
                     screenSize.top = screenSize.bottom - newHeight;
 
+                // We need to recalculate the render frame position when in 1:1 mode
+                if(App->renderFrameIn1To1Mode)
+                    App->ResizeRenderFrame(true);
+
                 return TRUE;
             }
 
@@ -2558,6 +2571,8 @@ ItemModifyType GetItemModifyType(const Vect2 &mousePos, const Vect2 &itemPos, co
 enum
 {
     ID_TOGGLERENDERVIEW=1,
+    ID_PREVIEWSCALETOFITMODE=2,
+    ID_PREVIEW1TO1MODE=3,
 };
 
 LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -2580,7 +2595,11 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
         if(App->bEditMode && App->scene)
         {
             Vect2 mousePos = Vect2(float(pos.x), float(pos.y));
-            Vect2 framePos = mousePos*(App->GetBaseSize()/App->GetRenderFrameSize());
+            Vect2 framePos;
+            if(App->renderFrameIn1To1Mode)
+                framePos = mousePos*(App->GetBaseSize()/App->GetOutputSize());
+            else
+                framePos = mousePos*(App->GetBaseSize()/App->GetRenderFrameSize());
 
             bool bControlDown = HIBYTE(GetKeyState(VK_LCONTROL)) != 0 || HIBYTE(GetKeyState(VK_RCONTROL)) != 0;
 
@@ -2670,7 +2689,11 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                 List<SceneItem*> items;
                 App->scene->GetSelectedItems(items);
 
-                Vect2 scaleValI = (App->GetRenderFrameSize()/App->GetBaseSize());
+                Vect2 scaleValI;
+                if(App->renderFrameIn1To1Mode)
+                    scaleValI = (App->GetOutputSize()/App->GetBaseSize());
+                else
+                    scaleValI = (App->GetRenderFrameSize()/App->GetBaseSize());
 
                 bool bInside = false;
 
@@ -2698,7 +2721,11 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
             else
             {
                 Vect2 baseRenderSize = App->GetBaseSize();
-                Vect2 scaleVal = (baseRenderSize/App->GetRenderFrameSize());
+                Vect2 scaleVal;
+                if(App->renderFrameIn1To1Mode)
+                    scaleVal = (baseRenderSize/App->GetOutputSize());
+                else
+                    scaleVal = (baseRenderSize/App->GetRenderFrameSize());
                 Vect2 framePos = mousePos*scaleVal;
                 Vect2 scaleValI = 1.0f/scaleVal;
 
@@ -3047,7 +3074,11 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
 
                 if(!App->bMouseMoved)
                 {
-                    Vect2 framePos = mousePos*(App->GetBaseSize()/App->GetRenderFrameSize());
+                    Vect2 framePos;
+                    if(App->renderFrameIn1To1Mode)
+                        framePos = mousePos*(App->GetBaseSize()/App->GetOutputSize());
+                    else
+                        framePos = mousePos*(App->GetBaseSize()/App->GetRenderFrameSize());
 
                     App->scene->GetItemsOnPoint(framePos, items);
 
@@ -3121,6 +3152,9 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
     else if(message == WM_RBUTTONUP)
     {
         HMENU hPopup = CreatePopupMenu();
+        AppendMenu(hPopup, MF_STRING | (!App->renderFrameIn1To1Mode ? MF_CHECKED : 0), ID_PREVIEWSCALETOFITMODE, Str("RenderView.ViewModeScaleToFit"));
+        AppendMenu(hPopup, MF_STRING | (App->renderFrameIn1To1Mode ? MF_CHECKED : 0), ID_PREVIEW1TO1MODE, Str("RenderView.ViewMode1To1"));
+        AppendMenu(hPopup, MF_SEPARATOR, 0, 0);
         AppendMenu(hPopup, MF_STRING | (App->bRenderViewEnabled ? MF_CHECKED : 0), ID_TOGGLERENDERVIEW, Str("RenderView.EnableView"));
 
         POINT p;
@@ -3132,6 +3166,14 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
             case ID_TOGGLERENDERVIEW:
                 App->bRenderViewEnabled = !App->bRenderViewEnabled;
                 App->bForceRenderViewErase = !App->bRenderViewEnabled;
+                break;
+            case ID_PREVIEWSCALETOFITMODE:
+                App->renderFrameIn1To1Mode = false;
+                App->ResizeRenderFrame(true);
+                break;
+            case ID_PREVIEW1TO1MODE:
+                App->renderFrameIn1To1Mode = true;
+                App->ResizeRenderFrame(true);
                 break;
         }
 

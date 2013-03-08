@@ -83,6 +83,7 @@ void OBSGetBaseSize(UINT &width, UINT &height)          {API->GetBaseSize(width,
 void OBSGetRenderFrameSize(UINT &width, UINT &height)   {API->GetRenderFrameSize(width, height);}
 void OBSGetOutputSize(UINT &width, UINT &height)        {API->GetOutputSize(width, height);}
 UINT OBSGetMaxFPS()                                     {return API->GetMaxFPS();}
+bool OBSGetRenderFrameIn1To1Mode()                      {return API->GetRenderFrameIn1To1Mode();}
 
 CTSTR OBSGetLanguage()          {return API->GetLanguage();}
 
@@ -126,3 +127,12 @@ void OBSSetMicVolume(float val, bool finalValue)            {API->SetMicVolume(v
 float OBSGetMicVolume()                                     {return API->GetMicVolume();}
 void OBSToggleMicMute()                                     {API->ToggleMicMute();}
 bool OBSGetMicMuted()                                       {return API->GetMicMuted();}
+
+DWORD OBSGetVersion()                       {return API->GetOBSVersion();}
+bool OBSIsTestVersion()                     {return API->IsTestVersion();}
+
+UINT OBSNumAuxAudioSources()                {return API->NumAuxAudioSources();}
+AudioSource* OBSGetAuxAudioSource(UINT id)  {return API->GetAuxAudioSource(id);}
+
+AudioSource* OBSGetDesktopAudioSource()     {return API->GetDesktopAudioSource();}
+AudioSource* OBSGetMicAudioSource()         {return API->GetMicAudioSource();}

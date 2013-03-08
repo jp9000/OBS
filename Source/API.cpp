@@ -414,7 +414,8 @@ public:
     virtual void GetRenderFrameSize(UINT &width, UINT &height) const    {App->GetRenderFrameSize(width, height);}
     virtual void GetOutputSize(UINT &width, UINT &height) const         {App->GetOutputSize(width, height);}
 
-    virtual UINT GetMaxFPS() const              {return App->bRunning ? App->fps : AppConfig->GetInt(TEXT("Video"), TEXT("FPS"), 30);}
+    virtual UINT GetMaxFPS() const                  {return App->bRunning ? App->fps : AppConfig->GetInt(TEXT("Video"), TEXT("FPS"), 30);}
+    virtual bool GetRenderFrameIn1To1Mode() const   {return App->renderFrameIn1To1Mode;}
 
     virtual CTSTR GetLanguage() const           {return App->strLanguage;}
 
@@ -456,6 +457,31 @@ public:
     virtual float GetMicVolume()                                     {return App->GetMicVolume();}
     virtual void ToggleMicMute()                                     {App->ToggleMicMute();}
     virtual bool GetMicMuted()                                       {return App->GetMicMuted();}
+
+    virtual DWORD GetOBSVersion() const {return OBS_VERSION;}
+
+#ifdef OBS_TEST_BUILD
+    virtual bool IsTestVersion() const {return 1;}
+#else
+    virtual bool IsTestVersion() const {return 0;}
+#endif
+
+    virtual UINT NumAuxAudioSources() const
+    {
+        return App->auxAudioSources.Num();
+    }
+
+    virtual AudioSource* GetAuxAudioSource(UINT id)
+    {
+        if(App->auxAudioSources.Num() > id)
+            return App->auxAudioSources[id];
+
+        AppWarning(TEXT("Tried to get an aux audio source that doesn't exist!"));
+        return NULL;
+    }
+
+    virtual AudioSource* GetDesktopAudioSource()    {return App->desktopAudio;}
+    virtual AudioSource* GetMicAudioSource()        {return App->micAudio;}
 };
 
 APIInterface* CreateOBSApiInterface()
@@ -745,14 +771,15 @@ void OBS::SetDesktopVolume(float val, bool finalValue)
     val = min(1.0f, max(0, val));
     HWND desktop = GetDlgItem(hwndMain, ID_DESKTOPVOLUME);
     
-    /* Allocate value on heap so we can send it's pointer in message */
-    float* valTemp = (float*)malloc(sizeof(float));
-    *valTemp = val;
+	/* float in lParam hack */
+    LPARAM temp;
+	float* tempFloatPointer = (float*)&temp;
+	*tempFloatPointer = val;
     
     /*Send message to desktop volume control and have it handle it*/
     PostMessage(desktop, WM_COMMAND, 
         MAKEWPARAM(ID_DESKTOPVOLUME, finalValue?VOLN_FINALVALUE:VOLN_ADJUSTING),
-        (LPARAM)valTemp);
+        (LPARAM)temp);
 }
 
 float OBS::GetDesktopVolume()
@@ -779,14 +806,15 @@ void OBS::SetMicVolume(float val, bool finalValue)
     val = min(1.0f, max(0, val));
     HWND mic = GetDlgItem(hwndMain, ID_MICVOLUME);
     
-    /* Allocate value on heap so we can send it's pointer in message */
-    float* valTemp = (float*)malloc(sizeof(float));
-    *valTemp = val;
+	/* float in lParam hack */
+    LPARAM temp;
+	float* tempFloatPointer = (float*)&temp;
+	*tempFloatPointer = val;
 
     /*Send message to microphone volume control and have it handle it*/
-    PostMessage(mic, WM_COMMAND, 
+    PostMessage(mic, WM_COMMAND ,
         MAKEWPARAM(ID_MICVOLUME, finalValue?VOLN_FINALVALUE:VOLN_ADJUSTING),
-        (LPARAM)valTemp);
+        (LPARAM)temp);
 }
 
 float OBS::GetMicVolume()

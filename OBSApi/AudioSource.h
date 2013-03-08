@@ -31,6 +31,11 @@ struct AudioSegment
     List<float> audioData;
     QWORD timestamp;
 
+    inline AudioSegment(float *data, UINT numFloats, QWORD timestamp) : timestamp(timestamp)
+    {
+        audioData.CopyArray(data, numFloats);
+    }
+
     inline void ClearData()
     {
         audioData.Clear();
@@ -46,7 +51,11 @@ class BASE_EXPORT AudioSource
 
     //-----------------------------------------
 
-    List<AudioSegment> audioSegments;
+    List<AudioFilter*> audioFilters;
+
+    //-----------------------------------------
+
+    List<AudioSegment*> audioSegments;
 
     bool bFirstBaseFrameReceived;
     QWORD lastSentTimestamp;
@@ -80,6 +89,8 @@ class BASE_EXPORT AudioSource
 
     //-----------------------------------------
 
+    void AddAudioSegment(AudioSegment *segment, float curVolume);
+
 protected:
 
     void InitAudioData(bool bFloat, UINT channels, UINT samplesPerSec, UINT bitsPerSample, UINT blockSize, DWORD channelMask);
@@ -108,16 +119,24 @@ public:
 
     virtual QWORD GetBufferedTime();
 
-    virtual void StartCapture() {}
-    virtual void StopCapture() {}
+    virtual void StartCapture();
+    virtual void StopCapture();
 
-    inline UINT GetChannelCount() const {return inputChannels;}
-    inline UINT GetSamplesPerSec() const {return inputSamplesPerSec;}
+    UINT GetChannelCount() const;
+    UINT GetSamplesPerSec() const;
 
-    inline int  GetTimeOffset() const {return timeOffset;}
-    inline void SetTimeOffset(int newOffset) {timeOffset = newOffset;}
+    int  GetTimeOffset() const;
+    void SetTimeOffset(int newOffset);
 
-    inline void SetVolume(float fVal) {sourceVolume = fabsf(fVal);}
-    inline float GetVolume() const {return sourceVolume;}
+    void SetVolume(float fVal);
+    float GetVolume() const;
+
+    UINT NumAudioFilters() const;
+    AudioFilter* GetAudioFilter(UINT id);
+
+    void AddAudioFilter(AudioFilter *filter);
+    void InsertAudioFilter(UINT pos, AudioFilter *filter);
+    void RemoveAudioFilter(AudioFilter *filter);
+    void RemoveAudioFilter(UINT id);
 };
 

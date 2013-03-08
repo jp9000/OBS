@@ -82,6 +82,19 @@ class MP4FileStream : public VideoFileStream
     List<BYTE>      endBuffer;
     List<UINT>      boxOffsets;
 
+    //chunk stuiff
+    UINT64 connectedAudioSampleOffset, connectedVideoSampleOffset;
+    UINT64 curVideoChunkOffset, curAudioChunkOffset;
+    UINT numVideoSamples, numAudioSamples;
+    List<UINT64> videoChunks, audioChunks;
+    List<SampleToChunk> videoSampleToChunk, audioSampleToChunk;
+
+    //decode times and composition offsets
+    UINT64 lastAudioTimeVal;
+    UINT64 audioFrameSize;
+    List<OffsetVal> videoDecodeTimes, audioDecodeTimes;
+    List<OffsetVal> compositionOffsets;
+
     UINT64 mdatStart, mdatStop;
 
     bool bSentFirstVideoPacket;
@@ -157,44 +170,44 @@ public:
 
         bMP3 = scmp(App->GetAudioEncoder()->GetCodec(), TEXT("MP3")) == 0;
 
+        audioFrameSize = App->GetAudioEncoder()->GetFrameSize();
+
         bStreamOpened = true;
 
         return true;
     }
 
-    template<typename T> inline void GetChunkInfo(List<T> &data, List<UINT64> &chunks, List<SampleToChunk> &sampleToChunks)
+    template<typename T> void GetChunkInfo(const T &data, UINT index,
+                                                  List<UINT64> &chunks, List<SampleToChunk> &sampleToChunks,
+                                                  UINT64 &curChunkOffset, UINT64 &connectedSampleOffset, UINT &numSamples)
     {
-        UINT64 curChunkOffset;
-        UINT64 connectedSampleOffset;
-        UINT numSamples = 0;
-
-        for(UINT i=0; i<data.Num(); i++)
+        UINT64 curOffset = data.fileOffset;
+        if(index == 0)
+            curChunkOffset = curOffset;
+        else
         {
-            UINT64 curOffset = data[i].fileOffset;
-            if(i == 0)
-                curChunkOffset = curOffset;
-            else
+            if(curOffset != connectedSampleOffset)
             {
-                if(curOffset != connectedSampleOffset)
+                chunks << curChunkOffset;
+                if(!sampleToChunks.Num() || sampleToChunks.Last().samplesPerChunk != numSamples)
                 {
-                    chunks << curChunkOffset;
-                    if(!sampleToChunks.Num() || sampleToChunks.Last().samplesPerChunk != numSamples)
-                    {
-                        SampleToChunk stc;
-                        stc.firstChunkID = chunks.Num();
-                        stc.samplesPerChunk = numSamples;
-                        sampleToChunks << stc;
-                    }
-
-                    curChunkOffset = curOffset;
-                    numSamples = 0;
+                    SampleToChunk stc;
+                    stc.firstChunkID = chunks.Num();
+                    stc.samplesPerChunk = numSamples;
+                    sampleToChunks << stc;
                 }
-            }
 
-            numSamples++;
-            connectedSampleOffset = curOffset+data[i].size;
+                curChunkOffset = curOffset;
+                numSamples = 0;
+            }
         }
 
+        numSamples++;
+        connectedSampleOffset = curOffset+data.size;
+    }
+
+    inline void EndChunkInfo(List<UINT64> &chunks, List<SampleToChunk> &sampleToChunks, UINT64 &curChunkOffset, UINT &numSamples)
+    {
         chunks << curChunkOffset;
         if(!sampleToChunks.Num() || sampleToChunks.Last().samplesPerChunk != numSamples)
         {
@@ -203,6 +216,67 @@ public:
             stc.samplesPerChunk = numSamples;
             sampleToChunks << stc;
         }
+    }
+
+    void GetVideoDecodeTime(MP4VideoFrameInfo &videoFrame, bool bLast)
+    {
+        UINT frameTime;
+
+        if(bLast)
+            frameTime = videoDecodeTimes.Last().val;
+        else
+            frameTime = videoFrame.timestamp-videoFrames.Last().timestamp;
+
+        if(!videoDecodeTimes.Num() || videoDecodeTimes.Last().val != (UINT)frameTime)
+        {
+            OffsetVal newVal;
+            newVal.count = 1;
+            newVal.val = (UINT)frameTime;
+            videoDecodeTimes << newVal;
+        }
+        else
+            videoDecodeTimes.Last().count++;
+
+        INT compositionOffset = videoFrames.Last().compositionOffset;
+        if(!compositionOffsets.Num() || compositionOffsets.Last().val != (UINT)compositionOffset)
+        {
+            OffsetVal newVal;
+            newVal.count = 1;
+            newVal.val = (UINT)compositionOffset;
+            compositionOffsets << newVal;
+        }
+        else
+            compositionOffsets.Last().count++;
+    }
+
+    void GetAudioDecodeTime(MP4AudioFrameInfo &audioFrame, bool bLast)
+    {
+        UINT frameTime;
+        if(bLast)
+            frameTime = audioDecodeTimes.Last().val;
+        else
+        {
+            UINT64 newTimeVal = lastAudioTimeVal+audioFrameSize;
+            if(audioFrames.Num() > 1)
+            {
+                UINT64 convertedTime = ConvertToAudioTime(audioFrame.timestamp, audioFrameSize*(audioFrames.Num()+1));
+                if(convertedTime > newTimeVal)
+                    newTimeVal = convertedTime;
+            }
+
+            frameTime = UINT(newTimeVal - lastAudioTimeVal);
+            lastAudioTimeVal = newTimeVal;
+        }
+
+        if(!audioDecodeTimes.Num() || audioDecodeTimes.Last().val != (UINT)frameTime)
+        {
+            OffsetVal newVal;
+            newVal.count = 1;
+            newVal.val = (UINT)frameTime;
+            audioDecodeTimes << newVal;
+        }
+        else
+            audioDecodeTimes.Last().count++;
     }
 
     ~MP4FileStream()
@@ -255,90 +329,12 @@ public:
         }
 
         //-------------------------------------------
-        // get chunk info
-        List<UINT64> videoChunks, audioChunks;
-        List<SampleToChunk> videoSampleToChunk, audioSampleToChunk;
 
-        GetChunkInfo<MP4VideoFrameInfo>(videoFrames, videoChunks, videoSampleToChunk);
-        GetChunkInfo<MP4AudioFrameInfo>(audioFrames, audioChunks, audioSampleToChunk);
+        EndChunkInfo(videoChunks, videoSampleToChunk, curVideoChunkOffset, numVideoSamples);
+        EndChunkInfo(audioChunks, audioSampleToChunk, curAudioChunkOffset, numAudioSamples);
 
-        //-------------------------------------------
-        // build decode time list and composition offset list
-        List<OffsetVal> decodeTimes;
-        List<OffsetVal> compositionOffsets;
-
-        for(UINT i=0; i<videoFrames.Num(); i++)
-        {
-            UINT frameTime;
-            if(i == videoFrames.Num()-1)
-                frameTime = decodeTimes.Last().val;
-            else
-                frameTime = videoFrames[i+1].timestamp-videoFrames[i].timestamp;
-
-            if(!decodeTimes.Num() || decodeTimes.Last().val != (UINT)frameTime)
-            {
-                OffsetVal newVal;
-                newVal.count = 1;
-                newVal.val = (UINT)frameTime;
-                decodeTimes << newVal;
-            }
-            else
-                decodeTimes.Last().count++;
-
-            INT compositionOffset = videoFrames[i].compositionOffset;
-            if(!compositionOffsets.Num() || compositionOffsets.Last().val != (UINT)compositionOffset)
-            {
-                OffsetVal newVal;
-                newVal.count = 1;
-                newVal.val = (UINT)compositionOffset;
-                compositionOffsets << newVal;
-            }
-            else
-                compositionOffsets.Last().count++;
-
-            SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, (i*20)/videoFrames.Num(), 0);
-            ProcessEvents();
-        }
-
-        SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 20, 0);
-
-        //-------------------------------------------
-        // build audio decode time list
-        List<OffsetVal> audioDecodeTimes;
-
-        UINT64 lastAudioTimeVal = 0;
-
-        for(UINT i=0; i<audioFrames.Num(); i++)
-        {
-            UINT frameTime;
-            if(i == audioFrames.Num()-1)
-                frameTime = audioDecodeTimes.Last().val;
-            else
-            {
-                UINT64 newTimeVal = lastAudioTimeVal+audioFrameSize;
-                if(i)
-                {
-                    UINT64 convertedTime = ConvertToAudioTime(audioFrames[i+1].timestamp, audioFrameSize*(i+1));
-                    if(convertedTime > newTimeVal)
-                        newTimeVal = convertedTime;
-                }
-
-                frameTime = UINT(newTimeVal - lastAudioTimeVal);
-                lastAudioTimeVal = newTimeVal;
-            }
-
-            if(!audioDecodeTimes.Num() || audioDecodeTimes.Last().val != (UINT)frameTime)
-            {
-                OffsetVal newVal;
-                newVal.count = 1;
-                newVal.val = (UINT)frameTime;
-                audioDecodeTimes << newVal;
-            }
-            else
-                audioDecodeTimes.Last().count++;
-
-            ProcessEvents();
-        }
+        GetVideoDecodeTime(videoFrames.Last(), true);
+        GetAudioDecodeTime(audioFrames.Last(), true);
 
         UINT audioUnitDuration = fastHtonl(UINT(lastAudioTimeVal));
 
@@ -450,7 +446,7 @@ public:
                 output.OutputDword(macTime); //modified time
                 output.OutputDword(DWORD_BE(44100)); //time scale
                 output.OutputDword(audioUnitDuration);
-                output.OutputDword(DWORD_BE(0x15c70000));
+                output.OutputDword(bMP3 ? DWORD_BE(0x55c40000) : DWORD_BE(0x15c70000));
               PopBox(); //mdhd
               PushBox(output, DWORD_BE('hdlr'));
                 output.OutputDword(0); //version and flags (none)
@@ -668,11 +664,11 @@ public:
                   PopBox(); //stsd
                   PushBox(output, DWORD_BE('stts')); //frame times
                     output.OutputDword(0); //version and flags (none)
-                    output.OutputDword(fastHtonl(decodeTimes.Num()));
-                    for(UINT i=0; i<decodeTimes.Num(); i++)
+                    output.OutputDword(fastHtonl(videoDecodeTimes.Num()));
+                    for(UINT i=0; i<videoDecodeTimes.Num(); i++)
                     {
-                        output.OutputDword(fastHtonl(decodeTimes[i].count));
-                        output.OutputDword(fastHtonl(decodeTimes[i].val));
+                        output.OutputDword(fastHtonl(videoDecodeTimes[i].count));
+                        output.OutputDword(fastHtonl(videoDecodeTimes[i].val));
                     }
                   PopBox(); //stts
 
@@ -825,6 +821,13 @@ public:
             audioFrame.fileOffset   = offset;
             audioFrame.size         = copySize;
             audioFrame.timestamp    = timestamp;
+
+            GetChunkInfo<MP4AudioFrameInfo>(audioFrame, audioFrames.Num(), audioChunks, audioSampleToChunk,
+                                            curAudioChunkOffset, connectedAudioSampleOffset, numAudioSamples);
+
+            if(audioFrames.Num())
+                GetAudioDecodeTime(audioFrame, false);
+
             audioFrames << audioFrame;
         }
         else
@@ -869,6 +872,13 @@ public:
                 frameInfo.size              = totalCopied;
                 frameInfo.timestamp         = timestamp;
                 frameInfo.compositionOffset = timeOffset;
+
+                GetChunkInfo<MP4VideoFrameInfo>(frameInfo, videoFrames.Num(), videoChunks, videoSampleToChunk,
+                                                curVideoChunkOffset, connectedVideoSampleOffset, numVideoSamples);
+
+                if(videoFrames.Num())
+                    GetVideoDecodeTime(frameInfo, false);
+
                 videoFrames << frameInfo;
             }
             else

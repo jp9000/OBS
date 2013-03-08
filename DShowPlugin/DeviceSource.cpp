@@ -327,12 +327,12 @@ bool DeviceSource::LoadFilters()
     // log video info
 
     {
-        String strTest = FormattedString(TEXT("    device: %s,\r\n    device id %s,\r\n    chosen type: %s, usingFourCC: %s, res: %ux%u - %ux%u, fps: %g-%g"),
+        String strTest = FormattedString(TEXT("    device: %s,\r\n    device id %s,\r\n    chosen type: %s, usingFourCC: %s, res: %ux%u - %ux%u, frameIntervals: %llu-%llu"),
             strDevice.Array(), strDeviceID.Array(),
             EnumToName[(int)bestOutput->videoType],
             bestOutput->bUsingFourCC ? TEXT("true") : TEXT("false"),
             bestOutput->minCX, bestOutput->minCY, bestOutput->maxCX, bestOutput->maxCY,
-            10000000.0/double(bestOutput->maxFrameInterval), 10000000.0/double(bestOutput->minFrameInterval));
+            bestOutput->minFrameInterval, bestOutput->maxFrameInterval);
 
         BITMAPINFOHEADER *bmiHeader = GetVideoBMIHeader(bestOutput->mediaType);
 
@@ -868,6 +868,13 @@ void DeviceSource::Preprocess()
 
     if(lastSample)
     {
+        REFERENCE_TIME refTimeStart, refTimeFinish;
+        lastSample->GetTime(&refTimeStart, &refTimeFinish);
+
+        static REFERENCE_TIME lastRefTime = 0;
+        Log(TEXT("refTimeStart: %llu, refTimeFinish: %llu, offset = %llu"), refTimeStart, refTimeFinish, refTimeStart-lastRefTime);
+        lastRefTime = refTimeStart;
+
         BYTE *lpImage = NULL;
         if(colorType == DeviceOutputType_RGB)
         {

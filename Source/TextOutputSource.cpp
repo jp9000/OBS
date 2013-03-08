@@ -60,6 +60,7 @@ class TextOutputSource : public ImageSource
     bool        bUseOutline;
     float       outlineSize;
     DWORD       outlineColor;
+    UINT        outlineOpacity;
 
     bool        bUseExtents;
     UINT        extentWidth, extentHeight;
@@ -91,7 +92,8 @@ class TextOutputSource : public ImageSource
         outlinePath = path.Clone();
 
         // Outline color and size
-        Gdiplus::Pen pen(Gdiplus::Color(GetAlphaVal(opacity) | (outlineColor&0xFFFFFF)), outlineSize);
+        UINT tmpOpacity = (UINT)((((float)opacity * 0.01f) * ((float)outlineOpacity * 0.01f)) * 100.0f);
+        Gdiplus::Pen pen(Gdiplus::Color(GetAlphaVal(tmpOpacity) | (outlineColor&0xFFFFFF)), outlineSize);
         pen.SetLineJoin(Gdiplus::LineJoinRound);
         
         // Widen the outline
@@ -608,9 +610,10 @@ public:
         baseSize.x  = data->GetFloat(TEXT("baseSizeCX"), 100);
         baseSize.y  = data->GetFloat(TEXT("baseSizeCY"), 100);
 
-        bUseOutline = data->GetInt(TEXT("useOutline")) != 0;
-        outlineColor= data->GetInt(TEXT("outlineColor"), 0xFFFFFF);
-        outlineSize = data->GetFloat(TEXT("outlineSize"), 2);
+        bUseOutline    = data->GetInt(TEXT("useOutline")) != 0;
+        outlineColor   = data->GetInt(TEXT("outlineColor"), 0xFFFFFF);
+        outlineSize    = data->GetFloat(TEXT("outlineSize"), 2);
+        outlineOpacity = data->GetInt(TEXT("outlineOpacity"), 100);
 
         backgroundColor   = data->GetInt(TEXT("backgroundColor"), 0xFF000000);
         backgroundOpacity = data->GetInt(TEXT("backgroundOpacity"), 0);
@@ -674,6 +677,8 @@ public:
             bUseOutline = iValue != 0;
         else if(scmpi(lpName, TEXT("outlineColor")) == 0)
             outlineColor = iValue;
+        else if(scmpi(lpName, TEXT("outlineOpacity")) == 0)
+            outlineOpacity = iValue;
         else if(scmpi(lpName, TEXT("backgroundColor")) == 0)
             backgroundColor = iValue;
         else if(scmpi(lpName, TEXT("backgroundOpacity")) == 0)
@@ -843,6 +848,9 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
                 CCSetColor(GetDlgItem(hwnd, IDC_OUTLINECOLOR), data->GetInt(TEXT("outlineColor"), 0xFFFFFFFF));
 
+                SendMessage(GetDlgItem(hwnd, IDC_OUTLINEOPACITY), UDM_SETRANGE32, 0, 100);
+                SendMessage(GetDlgItem(hwnd, IDC_OUTLINEOPACITY), UDM_SETPOS32, 0, data->GetInt(TEXT("outlineOpacity"), 100));
+
                 //-----------------------------------------
 
                 bChecked = data->GetInt(TEXT("useTextExtents"), 0) != 0;
@@ -953,6 +961,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                 case IDC_EXTENTHEIGHT_EDIT:
                 case IDC_BACKGROUNDOPACITY_EDIT:
                 case IDC_TEXTOPACITY_EDIT:
+                case IDC_OUTLINEOPACITY_EDIT:
                 case IDC_OUTLINETHICKNESS_EDIT:
                 case IDC_SCROLLSPEED_EDIT:
                     if(HIWORD(wParam) == EN_CHANGE && bInitializedDialog)
@@ -971,6 +980,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                                 case IDC_EXTENTWIDTH_EDIT:          source->SetInt(TEXT("extentWidth"), val); break;
                                 case IDC_EXTENTHEIGHT_EDIT:         source->SetInt(TEXT("extentHeight"), val); break;
                                 case IDC_TEXTOPACITY_EDIT:          source->SetInt(TEXT("textOpacity"), val); break;
+                                case IDC_OUTLINEOPACITY_EDIT:       source->SetInt(TEXT("outlineOpacity"), val); break;
                                 case IDC_BACKGROUNDOPACITY_EDIT:    source->SetInt(TEXT("backgroundOpacity"), val); break;
                                 case IDC_OUTLINETHICKNESS_EDIT:     source->SetFloat(TEXT("outlineSize"), (float)val); break;
                                 case IDC_SCROLLSPEED_EDIT:          source->SetInt(TEXT("scrollSpeed"), val); break;
@@ -1029,6 +1039,8 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                             EnableWindow(GetDlgItem(hwnd, IDC_OUTLINETHICKNESS_EDIT), bChecked);
                             EnableWindow(GetDlgItem(hwnd, IDC_OUTLINETHICKNESS), bChecked);
                             EnableWindow(GetDlgItem(hwnd, IDC_OUTLINECOLOR), bChecked);
+                            EnableWindow(GetDlgItem(hwnd, IDC_OUTLINEOPACITY_EDIT), bChecked);
+                            EnableWindow(GetDlgItem(hwnd, IDC_OUTLINEOPACITY), bChecked);
                         }
                     }
                     break;
@@ -1282,6 +1294,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                         data->SetInt(TEXT("useOutline"), bUseOutline);
                         data->SetInt(TEXT("outlineColor"), CCGetColor(GetDlgItem(hwnd, IDC_OUTLINECOLOR)));
                         data->SetFloat(TEXT("outlineSize"), outlineSize);
+                        data->SetInt(TEXT("outlineOpacity"), (UINT)SendMessage(GetDlgItem(hwnd, IDC_OUTLINEOPACITY), UDM_GETPOS32, 0, 0));
 
                         data->SetInt(TEXT("useTextExtents"), bUseTextExtents);
                         data->SetInt(TEXT("extentWidth"), extentWidth);

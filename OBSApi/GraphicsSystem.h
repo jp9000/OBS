@@ -390,24 +390,24 @@ public:
 
     //----------------------------------------------------
     //Matrix Functions
-    inline void  MatrixPush();
-    inline void  MatrixPop();
-    inline void  MatrixSet(const Matrix &m);
-    inline void  MatrixGet(Vect &v, Quat &q);
-    inline void  MatrixGet(Matrix &m);
+    void  MatrixPush();
+    void  MatrixPop();
+    void  MatrixSet(const Matrix &m);
+    void  MatrixGet(Vect &v, Quat &q);
+    void  MatrixGet(Matrix &m);
 
-    inline void  MatrixIdentity();
+    void  MatrixIdentity();
 
-    inline void  MatrixMultiply(const Matrix &m);
-    inline void  MatrixRotate(float x, float y, float z, float a);
-    inline void  MatrixRotate(const AxisAngle &aa);
-    inline void  MatrixRotate(const Quat &q);
+    void  MatrixMultiply(const Matrix &m);
+    void  MatrixRotate(float x, float y, float z, float a);
+    void  MatrixRotate(const AxisAngle &aa);
+    void  MatrixRotate(const Quat &q);
 
-    inline void  MatrixTranslate(float x, float y);
-    inline void  MatrixTranslate(const Vect2 &pos);
-    inline void  MatrixScale(const Vect2 &scale);
-    inline void  MatrixScale(float x, float y);
-    inline void  MatrixTranspose();
+    void  MatrixTranslate(float x, float y);
+    void  MatrixTranslate(const Vect2 &pos);
+    void  MatrixScale(const Vect2 &scale);
+    void  MatrixScale(float x, float y);
+    void  MatrixTranspose();
 
 
     //----------------------------------------------------
@@ -476,7 +476,7 @@ public:
     void  TexCoord(float u, float v, int idTexture=0);
     void  TexCoord(const UVCoord &uv, int idTexture=0);
 
-    inline void  Vertex(const Vect2 &v2) {Vertex(Vect(v2));}
+    void  Vertex(const Vect2 &v2) {Vertex(Vect(v2));}
 
     void DrawSprite(Texture *texture, DWORD color, float x, float y, float x2 = -998.0f, float y2 = -998.0f);
     virtual void DrawSpriteEx(Texture *texture, DWORD color, float x, float y, float x2 = -998.0f, float y2 = -998.0f, float u = -998.0f, float v = -998.0f, float u2 = -998.0f, float v2 = -998.0f)=0;
@@ -508,6 +508,9 @@ protected:
     int curMatrix;
 
     virtual void ResetViewMatrix()=0;
+
+public:
+    virtual void CopyTexture(Texture *texDest, Texture *texSrc)=0;
 };
 
 

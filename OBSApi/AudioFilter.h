@@ -20,24 +20,13 @@
 #pragma once
 
 
-class SharedTexCapture : public GraphicsCaptureMethod
+struct AudioSegment;
+
+class AudioFilter
 {
-    Texture *sharedTexture, *copyTexture;
-
-    HWND hwndTarget;
-
-    HANDLE hFileMap;
-    LPBYTE sharedMemory;
-    SharedTexData *texData;
-
-    UINT curTextureID;
-
-    bool bInitialized;
-
 public:
-    void Destroy();
-    virtual bool Init(CaptureInfo &info);
+    inline AudioFilter() {}
+    virtual ~AudioFilter() {}
 
-    virtual Texture* LockTexture();
-    virtual void UnlockTexture();
+    virtual AudioSegment* Process(AudioSegment *segment)=0;
 };
