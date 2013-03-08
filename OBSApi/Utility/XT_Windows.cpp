@@ -698,7 +698,7 @@ BOOL   STDCALL OSGetLoadedModuleList(HANDLE hProcess, StringList &ModuleList)
     HMODULE hMods[1024];
     DWORD count;
 
-    if (EnumProcessModules(hProcess, hMods, sizeof(hMods), &count))
+    if (EnumProcessModulesEx(hProcess, hMods, sizeof(hMods), &count, LIST_MODULES_ALL))
     {
         for (UINT i=0; i<(count / sizeof(HMODULE)); i++)
         {
