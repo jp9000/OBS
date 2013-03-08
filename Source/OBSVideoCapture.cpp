@@ -703,8 +703,9 @@ void OBS::MainCaptureLoop()
                 bFirstImage = false;
             else
             {
+                HRESULT result;
                 D3D10_MAPPED_TEXTURE2D map;
-                if(SUCCEEDED(prevTexture->Map(0, D3D10_MAP_READ, 0, &map)))
+                if(SUCCEEDED(result = prevTexture->Map(0, D3D10_MAP_READ, 0, &map)))
                 {
                     int prevOutBuffer = (curOutBuffer == 0) ? NUM_OUT_BUFFERS-1 : curOutBuffer-1;
                     int nextOutBuffer = (curOutBuffer == NUM_OUT_BUFFERS-1) ? 0 : curOutBuffer+1;
@@ -807,6 +808,11 @@ void OBS::MainCaptureLoop()
                     }
 
                     curOutBuffer = nextOutBuffer;
+                }
+                else
+                {
+                    //We have to crash, or we end up deadlocking the thread when the convert threads are never signalled
+                    CrashError (TEXT("Texture->Map failed: 0x%08x"), result);
                 }
             }
 
