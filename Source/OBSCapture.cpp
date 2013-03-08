@@ -522,6 +522,9 @@ void OBS::Stop()
 
     //-------------------------------------------------------------
 
+    delete fileStream;
+    fileStream = NULL;
+
     delete network;
     network = NULL;
 
@@ -530,9 +533,6 @@ void OBS::Stop()
 
     delete desktopAudio;
     desktopAudio = NULL;
-
-    delete fileStream;
-    fileStream = NULL;
 
     delete audioEncoder;
     audioEncoder = NULL;
