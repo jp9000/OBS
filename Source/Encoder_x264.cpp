@@ -433,7 +433,13 @@ public:
         packet.size     = HeaderPacket.Num();
     }
 
-    int GetBitRate() const {return paramData.rc.i_vbv_max_bitrate;}
+    int GetBitRate() const
+    {
+        if (paramData.rc.i_vbv_max_bitrate)
+            return paramData.rc.i_vbv_max_bitrate;
+        else
+            return paramData.rc.i_bitrate;
+    }
 
     String GetInfoString() const
     {
