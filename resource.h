@@ -225,7 +225,6 @@
 #define IDC_ITALIC                      1127
 #define IDC_TIMELEFT                    1127
 #define IDC_UNLOCKHIGHFPS               1128
-#define IDC_USETRIPLEBUFFERING          1129
 #define IDC_CANCEL                      1130
 #define IDC_PRIORITY                    1132
 #define IDC_USECBR                      1133

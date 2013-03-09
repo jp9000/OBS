@@ -241,7 +241,7 @@ void STDCALL SleepTo(LONGLONG clockFreq, QWORD qw100NSTime)
 void OBS::MainCaptureLoop()
 {
     int curRenderTarget = 0, curYUVTexture = 0, curCopyTexture = 0;
-    int copyWait = numRenderBuffers-1;
+    int copyWait = NUM_RENDER_BUFFERS-1;
 
     bSentHeaders = false;
     bFirstAudioPacket = true;
@@ -696,7 +696,7 @@ void OBS::MainCaptureLoop()
 
             if(!bEncode)
             {
-                if(curYUVTexture == (numRenderBuffers-1))
+                if(curYUVTexture == (NUM_RENDER_BUFFERS-1))
                     curYUVTexture = 0;
                 else
                     curYUVTexture++;
@@ -707,7 +707,7 @@ void OBS::MainCaptureLoop()
         {
             curStreamTime = qwTime-firstFrameTime;
 
-            UINT prevCopyTexture = (curCopyTexture == 0) ? numRenderBuffers-1 : curCopyTexture-1;
+            UINT prevCopyTexture = (curCopyTexture == 0) ? NUM_RENDER_BUFFERS-1 : curCopyTexture-1;
 
             ID3D10Texture2D *copyTexture = copyTextures[curCopyTexture];
             profileIn("CopyResource");
@@ -841,12 +841,12 @@ void OBS::MainCaptureLoop()
                 }
             }
 
-            if(curCopyTexture == (numRenderBuffers-1))
+            if(curCopyTexture == (NUM_RENDER_BUFFERS-1))
                 curCopyTexture = 0;
             else
                 curCopyTexture++;
 
-            if(curYUVTexture == (numRenderBuffers-1))
+            if(curYUVTexture == (NUM_RENDER_BUFFERS-1))
                 curYUVTexture = 0;
             else
                 curYUVTexture++;
@@ -854,7 +854,7 @@ void OBS::MainCaptureLoop()
 
         lastRenderTarget = curRenderTarget;
 
-        if(curRenderTarget == (numRenderBuffers-1))
+        if(curRenderTarget == (NUM_RENDER_BUFFERS-1))
             curRenderTarget = 0;
         else
             curRenderTarget++;

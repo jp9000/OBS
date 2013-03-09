@@ -1741,11 +1741,6 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
                 //--------------------------------------------
 
-                bool bUseTripleBuffering = GlobalConfig->GetInt(TEXT("Video"), TEXT("UseTripleBuffering"), false) != 0;
-                SendMessage(GetDlgItem(hwnd, IDC_USETRIPLEBUFFERING), BM_SETCHECK, bUseTripleBuffering ? BST_CHECKED : BST_UNCHECKED, 0);
-
-                //------------------------------------
-
                 bool bUnlockFPS = AppConfig->GetInt(TEXT("Video"), TEXT("UnlockFPS")) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_UNLOCKHIGHFPS), BM_SETCHECK, bUnlockFPS ? BST_CHECKED : BST_UNCHECKED, 0);
 
@@ -1927,7 +1922,6 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
                     break;
 
                 case IDC_USEMICQPC:
-                case IDC_USETRIPLEBUFFERING:
                 case IDC_SYNCTOVIDEOTIME:
                 case IDC_USECFR:
                 case IDC_USEHIGHQUALITYRESAMPLING:
@@ -2289,11 +2283,6 @@ void OBS::ApplySettings()
 
                 BOOL bUnlockFPS = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_UNLOCKHIGHFPS), BM_GETCHECK, 0, 0) == BST_CHECKED;
                 AppConfig->SetInt   (TEXT("Video"), TEXT("UnlockFPS"), bUnlockFPS);
-
-                //------------------------------------
-
-                bool bUseTripleBuffering = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USETRIPLEBUFFERING), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                GlobalConfig->SetInt(TEXT("Video"), TEXT("UseTripleBuffering"), bUseTripleBuffering);
 
                 //------------------------------------
 

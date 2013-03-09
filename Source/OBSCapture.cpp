@@ -131,9 +131,6 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
-    bufferingTime = GlobalConfig->GetInt(TEXT("General"), TEXT("SceneBufferingTime"), 400);
-    numRenderBuffers = GlobalConfig->GetInt(TEXT("General"), TEXT("UseTripleBuffering"), FALSE) ? 2 : 3;
-
     int monitorID = AppConfig->GetInt(TEXT("Video"), TEXT("Monitor"));
     if(monitorID >= (int)monitors.Num())
         monitorID = 0;
@@ -202,7 +199,7 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
-    for(UINT i=0; i<numRenderBuffers; i++)
+    for(UINT i=0; i<NUM_RENDER_BUFFERS; i++)
     {
         mainRenderTextures[i] = CreateRenderTarget(baseCX, baseCY, GS_BGRA, FALSE);
         yuvRenderTextures[i]  = CreateRenderTarget(outputCX, outputCY, GS_BGRA, FALSE);
@@ -222,7 +219,7 @@ void OBS::Start()
     td.Usage            = D3D10_USAGE_STAGING;
     td.CPUAccessFlags   = D3D10_CPU_ACCESS_READ;
 
-    for(UINT i=0; i<numRenderBuffers; i++)
+    for(UINT i=0; i<NUM_RENDER_BUFFERS; i++)
     {
         HRESULT err = GetD3D()->CreateTexture2D(&td, NULL, &copyTextures[i]);
         if(FAILED(err))
@@ -406,6 +403,10 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
+    bufferingTime = GlobalConfig->GetInt(TEXT("General"), TEXT("SceneBufferingTime"), 400);
+
+    //-------------------------------------------------------------
+
     bForceMicMono = AppConfig->GetInt(TEXT("Audio"), TEXT("ForceMicMono")) != 0;
     bRecievedFirstAudioFrame = false;
 
@@ -568,7 +569,7 @@ void OBS::Stop()
 
     //-------------------------------------------------------------
 
-    for(UINT i=0; i<numRenderBuffers; i++)
+    for(UINT i=0; i<NUM_RENDER_BUFFERS; i++)
     {
         delete mainRenderTextures[i];
         delete yuvRenderTextures[i];
@@ -577,7 +578,7 @@ void OBS::Stop()
         yuvRenderTextures[i] = NULL;
     }
 
-    for(UINT i=0; i<numRenderBuffers; i++)
+    for(UINT i=0; i<NUM_RENDER_BUFFERS; i++)
     {
         SafeRelease(copyTextures[i]);
     }
