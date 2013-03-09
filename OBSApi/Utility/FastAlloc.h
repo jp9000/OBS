@@ -25,7 +25,7 @@ public:
     FastAlloc();
     virtual ~FastAlloc();
 
-    virtual void * _Allocate(size_t dwSize);
+    virtual void * __restrict _Allocate(size_t dwSize);
 
     virtual void * _ReAllocate(LPVOID lpData, size_t dwSize);
 
