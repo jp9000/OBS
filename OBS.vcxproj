@@ -305,24 +305,6 @@
   <ItemGroup>
     <ResourceCompile Include="OBS.rc" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="libfaac\libfaac.vcxproj">
-      <Project>{9cc48c6e-92eb-4814-ad37-97ab3622ab65}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="librtmp\librtmp.vcxproj">
-      <Project>{22bf0ee3-cdcd-4925-a5f6-0a94cb5d4db1}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="libsamplerate\libsamplerate.vcxproj">
-      <Project>{47afdbef-f15f-4bc0-b436-5be443c3f80f}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="OBSApi\OBSApi.vcxproj">
-      <Project>{11a35235-dd48-41e2-8f40-825c78024bc0}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

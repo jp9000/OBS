@@ -6,12 +6,25 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "librtmp", "librtmp\librtmp.vcxproj", "{22BF0EE3-CDCD-4925-A5F6-0A94CB5D4DB1}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libsamplerate", "libsamplerate\libsamplerate.vcxproj", "{47AFDBEF-F15F-4BC0-B436-5BE443C3F80F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9CC48C6E-92EB-4814-AD37-97AB3622AB65} = {9CC48C6E-92EB-4814-AD37-97AB3622AB65}
+		{22BF0EE3-CDCD-4925-A5F6-0A94CB5D4DB1} = {22BF0EE3-CDCD-4925-A5F6-0A94CB5D4DB1}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OBS", "OBS.vcxproj", "{221C92F4-3416-43F1-8E4E-78657AFD0111}"
+	ProjectSection(ProjectDependencies) = postProject
+		{11A35235-DD48-41E2-8F40-825C78024BC0} = {11A35235-DD48-41E2-8F40-825C78024BC0}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OBSApi", "OBSApi\OBSApi.vcxproj", "{11A35235-DD48-41E2-8F40-825C78024BC0}"
+	ProjectSection(ProjectDependencies) = postProject
+		{47AFDBEF-F15F-4BC0-B436-5BE443C3F80F} = {47AFDBEF-F15F-4BC0-B436-5BE443C3F80F}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DShowPlugin", "DShowPlugin\DShowPlugin.vcxproj", "{D75E4F7D-0CC8-4F0F-B8A2-5E384A27753C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{11A35235-DD48-41E2-8F40-825C78024BC0} = {11A35235-DD48-41E2-8F40-825C78024BC0}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GraphicsCapture", "GraphicsCapture\GraphicsCapture.vcxproj", "{7BB0C67E-9CDD-4ABB-8728-41F2BE5C54D8}"
 	ProjectSection(ProjectDependencies) = postProject
