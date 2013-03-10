@@ -22,11 +22,11 @@
 // NoiseGateFilter class
 
 NoiseGateFilter::NoiseGateFilter(NoiseGate *parent)
-    : m_parent(parent)
-    , m_attenuation(0.0f)
-    , m_level(0.0f)
-    , m_heldTime(0.0f)
-    , m_isOpen(false)
+    : parent(parent)
+    , attenuation(0.0f)
+    , level(0.0f)
+    , heldTime(0.0f)
+    , isOpen(false)
 {
 }
 
@@ -51,13 +51,13 @@ void NoiseGateFilter::ApplyNoiseGate(float *buffer, int totalFloats)
     const float dtPerSample = 1.0f / SAMPLE_RATE_F;
 
     // Convert configuration times into per-sample amounts
-    const float attackRate = 1.0f / (m_parent->m_attackTime * SAMPLE_RATE_F);
-    const float releaseRate = 1.0f / (m_parent->m_releaseTime * SAMPLE_RATE_F);
+    const float attackRate = 1.0f / (parent->attackTime * SAMPLE_RATE_F);
+    const float releaseRate = 1.0f / (parent->releaseTime * SAMPLE_RATE_F);
 
     // Determine level decay rate. We don't want human voice (75-300Hz) to cross the close
     // threshold if the previous peak crosses the open threshold. 75Hz at 44.1ksps is ~590
     // samples between peaks.
-    const float thresholdDiff = m_parent->m_openThreshold - m_parent->m_closeThreshold;
+    const float thresholdDiff = parent->openThreshold - parent->closeThreshold;
     const float minDecayPeriod = (1.0f / 75.0f) * SAMPLE_RATE_F; // ~590 samples
     const float decayRate = thresholdDiff / minDecayPeriod;
 
@@ -69,31 +69,31 @@ void NoiseGateFilter::ApplyNoiseGate(float *buffer, int totalFloats)
         float curLvl = abs(buffer[i] + buffer[i+1]) * 0.5f;
 
         // Test thresholds
-        if(curLvl > m_parent->m_openThreshold && !m_isOpen)
-            m_isOpen = true;
-        if(m_level < m_parent->m_closeThreshold && m_isOpen)
+        if(curLvl > parent->openThreshold && !isOpen)
+            isOpen = true;
+        if(level < parent->closeThreshold && isOpen)
         {
-            m_heldTime = 0.0f;
-            m_isOpen = false;
+            heldTime = 0.0f;
+            isOpen = false;
         }
 
         // Decay level slowly so human voice (75-300Hz) doesn't cross the close threshold
         // (Essentially a peak detector with very fast decay)
-        m_level = max(m_level, curLvl) - decayRate;
+        level = max(level, curLvl) - decayRate;
 
         // Apply gate state to attenuation
-        if(m_isOpen)
-            m_attenuation = min(1.0f, m_attenuation + attackRate);
+        if(isOpen)
+            attenuation = min(1.0f, attenuation + attackRate);
         else
         {
-            m_heldTime += dtPerSample;
-            if(m_heldTime > m_parent->m_holdTime)
-                m_attenuation = max(0.0f, m_attenuation - releaseRate);
+            heldTime += dtPerSample;
+            if(heldTime > parent->holdTime)
+                attenuation = max(0.0f, attenuation - releaseRate);
         }
 
         // Multiple input by gate multiplier (0.0f if fully closed, 1.0f if fully open)
-        buffer[i] *= m_attenuation;
-        buffer[i+1] *= m_attenuation;
+        buffer[i] *= attenuation;
+        buffer[i+1] *= attenuation;
     }
 }
 
@@ -105,13 +105,13 @@ HINSTANCE NoiseGate::s_hinstDLL = NULL;
 NoiseGate *NoiseGate::s_instance = NULL;
 
 NoiseGate::NoiseGate()
-    : m_micSource(NULL)
-    , m_filter(NULL)
-    , m_openThreshold(0.05f) // FIXME: Configurable
-    , m_closeThreshold(0.005f)
-    , m_attackTime(0.1f)
-    , m_holdTime(0.2f)
-    , m_releaseTime(0.2f)
+    : micSource(NULL)
+    , filter(NULL)
+    , openThreshold(0.05f) // FIXME: Configurable
+    , closeThreshold(0.005f)
+    , attackTime(0.1f)
+    , holdTime(0.2f)
+    , releaseTime(0.2f)
 {
 }
 
@@ -123,21 +123,21 @@ NoiseGate::~NoiseGate()
 
 void NoiseGate::StreamStarted()
 {
-    m_micSource = OBSGetMicAudioSource();
-    if(m_micSource == NULL)
+    micSource = OBSGetMicAudioSource();
+    if(micSource == NULL)
         return; // No microphone
-    m_filter = new NoiseGateFilter(this);
-    m_micSource->AddAudioFilter(m_filter);
+    filter = new NoiseGateFilter(this);
+    micSource->AddAudioFilter(filter);
 }
 
 void NoiseGate::StreamStopped()
 {
-    if(m_filter) {
-        m_micSource->RemoveAudioFilter(m_filter);
-        delete m_filter;
-        m_filter = NULL;
+    if(filter) {
+        micSource->RemoveAudioFilter(filter);
+        delete filter;
+        filter = NULL;
     }
-    m_micSource = NULL;
+    micSource = NULL;
 }
 
 //============================================================================

@@ -31,13 +31,13 @@ class NoiseGateFilter : public AudioFilter
     // Private members
 
 private:
-    NoiseGate *     m_parent;
+    NoiseGate *     parent;
     
     // State
-    float   m_attenuation; // Current gate multiplier
-    float   m_level;  // Input level with delayed decay
-    float   m_heldTime; // The amount of time we've held the gate open after it we hit the close threshold
-    bool    m_isOpen;
+    float   attenuation; // Current gate multiplier
+    float   level;  // Input level with delayed decay
+    float   heldTime; // The amount of time we've held the gate open after it we hit the close threshold
+    bool    isOpen;
 
     //-----------------------------------------------------------------------
     // Constructor/destructor
@@ -74,15 +74,15 @@ public:
     // Private members
 
 private:
-    AudioSource *       m_micSource;
-    NoiseGateFilter *   m_filter;
+    AudioSource *       micSource;
+    NoiseGateFilter *   filter;
 
     // User configuration
-    float   m_openThreshold;
-    float   m_closeThreshold;
-    float   m_attackTime;
-    float   m_holdTime;
-    float   m_releaseTime;
+    float   openThreshold;
+    float   closeThreshold;
+    float   attackTime;
+    float   holdTime;
+    float   releaseTime;
 
     //-----------------------------------------------------------------------
     // Constructor/destructor
