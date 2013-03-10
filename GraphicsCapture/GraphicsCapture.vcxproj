@@ -227,12 +227,6 @@
   <ItemGroup>
     <ResourceCompile Include="GraphicsCapture.rc" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\OBSApi\OBSApi.vcxproj">
-      <Project>{11a35235-dd48-41e2-8f40-825c78024bc0}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

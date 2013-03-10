@@ -409,6 +409,15 @@ void __cdecl OSDebugOut(const TCHAR *format, ...)
     OSDebugOutva(format, arglist);
 }
 
+CTSTR STDCALL OSGetErrorString(DWORD errorCode)
+{
+    static TCHAR errorString[2048];
+
+    FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, errorCode, 0, errorString, _countof(errorString)-1, NULL);
+    errorString[_countof(errorString)-1] = 0;
+
+    return errorString;
+}
 
 
 HANDLE STDCALL OSLoadLibrary(CTSTR lpFile)
@@ -689,7 +698,7 @@ BOOL   STDCALL OSGetLoadedModuleList(HANDLE hProcess, StringList &ModuleList)
     HMODULE hMods[1024];
     DWORD count;
 
-    if (EnumProcessModules(hProcess, hMods, sizeof(hMods), &count))
+    if (EnumProcessModulesEx(hProcess, hMods, sizeof(hMods), &count, LIST_MODULES_ALL))
     {
         for (UINT i=0; i<(count / sizeof(HMODULE)); i++)
         {

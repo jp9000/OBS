@@ -1,0 +1,106 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{13c7e79e-dcbc-4157-af5a-79bbe67971b0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="CaptureFilter.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="DeviceAudio.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="DeviceSource.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="DShowPlugin.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="ImageMadness.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="MediaInfoStuff.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CaptureFilter.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="DeviceSource.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="DShowPlugin.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="MediaInfoStuff.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cursor1.cur">
+      <Filter>Resources</Filter>
+    </None>
+    <None Include="..\rundir\plugins\DShowPlugin\shaders\ChromaKey_HDYCToRGB.pShader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\rundir\plugins\DShowPlugin\shaders\ChromaKey_RGB.pShader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\rundir\plugins\DShowPlugin\shaders\ChromaKey_UYVToRGB.pShader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\rundir\plugins\DShowPlugin\shaders\ChromaKey_YUVToRGB.pShader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\rundir\plugins\DShowPlugin\shaders\ChromaKey_YUXVToRGB.pShader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\rundir\plugins\DShowPlugin\shaders\ChromaKey_YVUToRGB.pShader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\rundir\plugins\DShowPlugin\shaders\ChromaKey_YVXUToRGB.pShader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\rundir\plugins\DShowPlugin\shaders\HDYCToRGB.pShader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\rundir\plugins\DShowPlugin\shaders\UYVToRGB.pShader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\rundir\plugins\DShowPlugin\shaders\YUVToRGB.pShader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\rundir\plugins\DShowPlugin\shaders\YUXVToRGB.pShader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\rundir\plugins\DShowPlugin\shaders\YVUToRGB.pShader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\rundir\plugins\DShowPlugin\shaders\YVXUToRGB.pShader">
+      <Filter>Shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="DShowPlugin.rc">
+      <Filter>Resources</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

@@ -102,7 +102,7 @@ DebugAlloc::~DebugAlloc()
     }
 }
 
-void * DebugAlloc::_Allocate(size_t dwSize)
+void * __restrict DebugAlloc::_Allocate(size_t dwSize)
 {
     if(!dwSize) return NULL;
 
@@ -241,7 +241,7 @@ void DebugAlloc::_Free(LPVOID lpData)
 }
 
 
-void* DefaultAlloc::_Allocate(size_t dwSize)
+void* __restrict DefaultAlloc::_Allocate(size_t dwSize)
 {
     return malloc(dwSize);
 }

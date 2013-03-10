@@ -632,7 +632,6 @@ UINT AudioSource::QueryAudio(float curVolume)
                             lastUsedTimestamp += 10-adjustVal;
 
                         AudioSegment *newSegment = new AudioSegment(storageBuffer.Array(), 441*2, lastUsedTimestamp);
-                        storageBuffer.RemoveRange(0, (441*2));
                         AddAudioSegment(newSegment, curVolume*sourceVolume);
                         storageBuffer.RemoveRange(0, (441*2));
 
@@ -734,3 +733,22 @@ QWORD AudioSource::GetBufferedTime()
     return 0;
 }
 
+void AudioSource::StartCapture() {}
+void AudioSource::StopCapture() {}
+
+UINT AudioSource::GetChannelCount() const {return inputChannels;}
+UINT AudioSource::GetSamplesPerSec() const {return inputSamplesPerSec;}
+
+int  AudioSource::GetTimeOffset() const {return timeOffset;}
+void AudioSource::SetTimeOffset(int newOffset) {timeOffset = newOffset;}
+
+void AudioSource::SetVolume(float fVal) {sourceVolume = fabsf(fVal);}
+float AudioSource::GetVolume() const {return sourceVolume;}
+
+UINT AudioSource::NumAudioFilters() const {return audioFilters.Num();}
+AudioFilter* AudioSource::GetAudioFilter(UINT id) {if(audioFilters.Num() > id) return audioFilters[id]; return NULL;}
+
+void AudioSource::AddAudioFilter(AudioFilter *filter) {audioFilters << filter;}
+void AudioSource::InsertAudioFilter(UINT pos, AudioFilter *filter) {audioFilters.Insert(pos, filter);}
+void AudioSource::RemoveAudioFilter(AudioFilter *filter) {audioFilters.RemoveItem(filter);}
+void AudioSource::RemoveAudioFilter(UINT id) {if(audioFilters.Num() > id) audioFilters.Remove(id);}

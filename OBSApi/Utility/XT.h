@@ -158,6 +158,8 @@ BASE_EXPORT BOOL   STDCALL OSDebuggerPresent();
 BASE_EXPORT void __cdecl   OSDebugOutva(const TCHAR *format, va_list argptr);
 BASE_EXPORT void __cdecl   OSDebugOut(const TCHAR *format, ...);
 
+BASE_EXPORT CTSTR STDCALL  OSGetErrorString(DWORD errorCode);
+
 BASE_EXPORT BOOL   STDCALL OSGetLoadedModuleList(HANDLE hProcess, StringList &ModuleList);
 BASE_EXPORT BOOL   STDCALL OSIncompatibleModulesLoaded();
 BASE_EXPORT BOOL   STDCALL OSIncompatiblePatchesLoaded(String &errors);

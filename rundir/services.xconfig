@@ -51,5 +51,10 @@ services : {
       "EU Amsterdam, NL"  : rtmp://edge-ams1.hashd.tv/live
     }
   }
-  
+  TGamers.ru : {
+    id : 8
+    servers : {
+      "RU Moscow" : rtmp://stream3.tgamers.ru
+    }
+  }
 }

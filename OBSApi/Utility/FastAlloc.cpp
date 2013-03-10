@@ -137,7 +137,7 @@ void   FastAlloc::ErrorTermination()
     }
 }
 
-void * FastAlloc::_Allocate(size_t dwSize)
+void * __restrict FastAlloc::_Allocate(size_t dwSize)
 {
     OSEnterMutex(hAllocationMutex);
 

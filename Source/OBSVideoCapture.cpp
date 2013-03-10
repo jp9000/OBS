@@ -241,7 +241,7 @@ void STDCALL SleepTo(LONGLONG clockFreq, QWORD qw100NSTime)
 void OBS::MainCaptureLoop()
 {
     int curRenderTarget = 0, curYUVTexture = 0, curCopyTexture = 0;
-    int copyWait = numRenderBuffers-1;
+    int copyWait = NUM_RENDER_BUFFERS-1;
 
     bSentHeaders = false;
     bFirstAudioPacket = true;
@@ -696,7 +696,7 @@ void OBS::MainCaptureLoop()
 
             if(!bEncode)
             {
-                if(curYUVTexture == (numRenderBuffers-1))
+                if(curYUVTexture == (NUM_RENDER_BUFFERS-1))
                     curYUVTexture = 0;
                 else
                     curYUVTexture++;
@@ -707,7 +707,7 @@ void OBS::MainCaptureLoop()
         {
             curStreamTime = qwTime-firstFrameTime;
 
-            UINT prevCopyTexture = (curCopyTexture == 0) ? numRenderBuffers-1 : curCopyTexture-1;
+            UINT prevCopyTexture = (curCopyTexture == 0) ? NUM_RENDER_BUFFERS-1 : curCopyTexture-1;
 
             ID3D10Texture2D *copyTexture = copyTextures[curCopyTexture];
             profileIn("CopyResource");
@@ -728,8 +728,9 @@ void OBS::MainCaptureLoop()
                 bFirstImage = false;
             else
             {
+                HRESULT result;
                 D3D10_MAPPED_TEXTURE2D map;
-                if(SUCCEEDED(prevTexture->Map(0, D3D10_MAP_READ, 0, &map)))
+                if(SUCCEEDED(result = prevTexture->Map(0, D3D10_MAP_READ, 0, &map)))
                 {
                     int prevOutBuffer = (curOutBuffer == 0) ? NUM_OUT_BUFFERS-1 : curOutBuffer-1;
                     int nextOutBuffer = (curOutBuffer == NUM_OUT_BUFFERS-1) ? 0 : curOutBuffer+1;
@@ -833,14 +834,19 @@ void OBS::MainCaptureLoop()
 
                     curOutBuffer = nextOutBuffer;
                 }
+                else
+                {
+                    //We have to crash, or we end up deadlocking the thread when the convert threads are never signalled
+                    CrashError (TEXT("Texture->Map failed: 0x%08x"), result);
+                }
             }
 
-            if(curCopyTexture == (numRenderBuffers-1))
+            if(curCopyTexture == (NUM_RENDER_BUFFERS-1))
                 curCopyTexture = 0;
             else
                 curCopyTexture++;
 
-            if(curYUVTexture == (numRenderBuffers-1))
+            if(curYUVTexture == (NUM_RENDER_BUFFERS-1))
                 curYUVTexture = 0;
             else
                 curYUVTexture++;
@@ -848,7 +854,7 @@ void OBS::MainCaptureLoop()
 
         lastRenderTarget = curRenderTarget;
 
-        if(curRenderTarget == (numRenderBuffers-1))
+        if(curRenderTarget == (NUM_RENDER_BUFFERS-1))
             curRenderTarget = 0;
         else
             curRenderTarget++;

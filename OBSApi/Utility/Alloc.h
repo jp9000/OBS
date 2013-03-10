@@ -26,12 +26,12 @@ class BASE_EXPORT Alloc
 public:
     virtual ~Alloc()  {}
 
-    virtual void * _Allocate(size_t dwSize)=0;
+    virtual void * __restrict _Allocate(size_t dwSize)=0;
     virtual void * _ReAllocate(LPVOID lpData, size_t dwSize)=0;
     virtual void   _Free(LPVOID lpData)=0;
     virtual void   ErrorTermination()=0;
 
-    inline void *operator new(size_t dwSize)
+    inline void  *operator new(size_t dwSize)
     {
         return malloc(dwSize);
     }
@@ -69,7 +69,7 @@ inline void Free(void *lpData)   {MainAllocator->_Free(lpData);}
 //========================================================
 #ifdef _DEBUG
 
-    inline void* _debug_Allocate(size_t size, TCHAR *lpFile, unsigned int dwLine)                    {dwAllocCurLine = dwLine;lpAllocCurFile = lpFile;return MainAllocator->_Allocate(size);}
+    inline void* __restrict _debug_Allocate(size_t size, TCHAR *lpFile, unsigned int dwLine)                    {dwAllocCurLine = dwLine;lpAllocCurFile = lpFile;return MainAllocator->_Allocate(size);}
     inline void* _debug_ReAllocate(void* lpData, size_t size, TCHAR *lpFile, unsigned int dwLine)    {dwAllocCurLine = dwLine;lpAllocCurFile = lpFile;return MainAllocator->_ReAllocate(lpData, size);}
 
     #define Allocate(size)              _debug_Allocate(size, TEXT(__FILE__), __LINE__)

@@ -117,6 +117,8 @@
       <StripPrivateSymbols>..\rundir\pdb32\stripped\$(TargetName).pdb</StripPrivateSymbols>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
+      <AdditionalOptions>
+      </AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>copy $(OutDir)$(ProjectName).dll ..\rundir</Command>
@@ -138,13 +140,13 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>winmm.lib;psapi.lib;libsamplerate.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>../libsamplerate/x64/debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>..\rundir\pdb64\$(TargetName).pdb</ProgramDatabaseFile>
       <StripPrivateSymbols>..\rundir\pdb64\stripped\$(TargetName).pdb</StripPrivateSymbols>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX64</TargetMachine>
+      <AdditionalDependencies>winmm.lib;psapi.lib;libsamplerate.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy $(OutDir)$(ProjectName).dll ..\rundir</Command>
@@ -205,6 +207,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX64</TargetMachine>
+      <AdditionalOptions>
+      </AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>copy $(OutDir)$(ProjectName).dll ..\rundir</Command>
@@ -261,16 +265,6 @@
     <ClInclude Include="Utility\XT.h" />
     <ClInclude Include="Utility\XT_Windows.h" />
     <ClInclude Include="Utility\XTLocalization.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\libsamplerate\libsamplerate.vcxproj">
-      <Project>{47afdbef-f15f-4bc0-b436-5be443c3f80f}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-      <Private>true</Private>
-      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
-      <LinkLibraryDependencies>true</LinkLibraryDependencies>
-      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

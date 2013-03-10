@@ -28,7 +28,7 @@ public:
     DebugAlloc();
     virtual ~DebugAlloc();
 
-    virtual void * _Allocate(size_t dwSize);
+    virtual void * __restrict _Allocate(size_t dwSize);
     virtual void * _ReAllocate(LPVOID lpData, size_t dwSize);
     virtual void   _Free(LPVOID lpData);
 };
@@ -45,7 +45,7 @@ BASE_EXPORT void SetMemoryBreakID(int id);
 class BASE_EXPORT DefaultAlloc : public Alloc
 {
 public:
-    virtual void * _Allocate(size_t dwSize);
+    virtual void * __restrict _Allocate(size_t dwSize);
 
     virtual void * _ReAllocate(LPVOID lpData, size_t dwSize);
 

@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="amf.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="hashswf.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="log.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="parseurl.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="rtmp.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="amf.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="bytes.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="dh.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="dhgroups.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="handshake.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="http.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="log.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="rtmp.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="rtmp_sys.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="stdint.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,236 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="Source\API.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\BlankAudioPlayback.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\BandwidthAnalysis.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\BitmapImageSource.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\BitmapTransitionSource.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\CodeTokenizer.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\CrashDumpHandler.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\D3D10OutputDuplicator.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\D3D10ShaderProcessor.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\D3D10System.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\D3D10VertexBuffer.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DesktopImageSource.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Encoder_AAC.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Encoder_x264.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Encoder_MP3.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\FLVFileStream.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\GetAudioDevices.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\GlobalSource.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Hacks.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\HTTPClient.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\ImageProcessing.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Main.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\MMDeviceAudioSource.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\MP4FileStream.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\NullOutput.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\OBS.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\OBSCapture.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\OBSEvents.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\OBSHotkeyHandlers.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\OBSVideoCapture.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RTMPPublisher.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RTMPStuff.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\TextOutputSource.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\WindowStuff.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Updater.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\libnsgif.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Settings.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DelayedPublisher.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\D3D10Texture.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\D3D10Shader.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source\D3D10System.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\CrashDumpHandler.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\CodeTokenizer.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\HTTPClient.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\libnsgif.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Main.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\OBS.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RTMPPublisher.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RTMPStuff.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Updater.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\WindowStuff.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cursor1.cur">
+      <Filter>Resources</Filter>
+    </None>
+    <None Include="ui\mic2-muted.ico">
+      <Filter>Resources</Filter>
+    </None>
+    <None Include="ui\mic2.ico">
+      <Filter>Resources</Filter>
+    </None>
+    <None Include="ui\speaker-muted.ico">
+      <Filter>Resources</Filter>
+    </None>
+    <None Include="ui\speaker.ico">
+      <Filter>Resources</Filter>
+    </None>
+    <None Include="ui\test2\test.ico">
+      <Filter>Resources</Filter>
+    </None>
+    <None Include="ui\test2\test48.ico">
+      <Filter>Resources</Filter>
+    </None>
+    <None Include="rundir\shaders\DownscaleYUV1.5.pShader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="rundir\shaders\DrawYUVTexture.pShader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="rundir\shaders\DownscaleYUV2.25.pShader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="rundir\shaders\DownscaleYUV2.pShader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="rundir\shaders\DownscaleYUV3.pShader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="rundir\shaders\DrawSolid.pShader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="rundir\shaders\DrawSolid.vShader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="rundir\shaders\DrawTexture.pShader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="rundir\shaders\DrawTexture.vShader">
+      <Filter>Shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{37253580-c8f2-4488-9f8e-85782dea399d}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{c7980321-beda-4354-870e-0819ae11464d}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{7d178c27-342a-4100-9daa-c360d22d977d}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{a2d93ce3-630d-408d-8a9e-89dc2532938e}</UniqueIdentifier>
+      <Extensions>pShader;vShader</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="OBS.rc">
+      <Filter>Resources</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

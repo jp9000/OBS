@@ -771,14 +771,15 @@ void OBS::SetDesktopVolume(float val, bool finalValue)
     val = min(1.0f, max(0, val));
     HWND desktop = GetDlgItem(hwndMain, ID_DESKTOPVOLUME);
     
-    /* Allocate value on heap so we can send it's pointer in message */
-    float* valTemp = (float*)malloc(sizeof(float));
-    *valTemp = val;
+	/* float in lParam hack */
+    LPARAM temp;
+	float* tempFloatPointer = (float*)&temp;
+	*tempFloatPointer = val;
     
     /*Send message to desktop volume control and have it handle it*/
     PostMessage(desktop, WM_COMMAND, 
         MAKEWPARAM(ID_DESKTOPVOLUME, finalValue?VOLN_FINALVALUE:VOLN_ADJUSTING),
-        (LPARAM)valTemp);
+        (LPARAM)temp);
 }
 
 float OBS::GetDesktopVolume()
@@ -805,14 +806,15 @@ void OBS::SetMicVolume(float val, bool finalValue)
     val = min(1.0f, max(0, val));
     HWND mic = GetDlgItem(hwndMain, ID_MICVOLUME);
     
-    /* Allocate value on heap so we can send it's pointer in message */
-    float* valTemp = (float*)malloc(sizeof(float));
-    *valTemp = val;
+	/* float in lParam hack */
+    LPARAM temp;
+	float* tempFloatPointer = (float*)&temp;
+	*tempFloatPointer = val;
 
     /*Send message to microphone volume control and have it handle it*/
-    PostMessage(mic, WM_COMMAND, 
+    PostMessage(mic, WM_COMMAND ,
         MAKEWPARAM(ID_MICVOLUME, finalValue?VOLN_FINALVALUE:VOLN_ADJUSTING),
-        (LPARAM)valTemp);
+        (LPARAM)temp);
 }
 
 float OBS::GetMicVolume()
