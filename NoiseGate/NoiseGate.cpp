@@ -101,8 +101,8 @@ void NoiseGateFilter::ApplyNoiseGate(float *buffer, int totalFloats)
 // NoiseGate class
 
 // Statics
-HINSTANCE NoiseGate::s_hinstDLL = NULL;
-NoiseGate *NoiseGate::s_instance = NULL;
+HINSTANCE NoiseGate::hinstDLL = NULL;
+NoiseGate *NoiseGate::instance = NULL;
 
 NoiseGate::NoiseGate()
     : micSource(NULL)
@@ -145,32 +145,32 @@ void NoiseGate::StreamStopped()
 
 bool LoadPlugin()
 {
-    if(NoiseGate::s_instance != NULL)
+    if(NoiseGate::instance != NULL)
         return false;
-    NoiseGate::s_instance = new NoiseGate();
+    NoiseGate::instance = new NoiseGate();
     return true;
 }
 
 void UnloadPlugin()
 {
-    if(NoiseGate::s_instance == NULL)
+    if(NoiseGate::instance == NULL)
         return;
-    delete NoiseGate::s_instance;
-    NoiseGate::s_instance = NULL;
+    delete NoiseGate::instance;
+    NoiseGate::instance = NULL;
 }
 
 void OnStartStream()
 {
-    if(NoiseGate::s_instance == NULL)
+    if(NoiseGate::instance == NULL)
         return;
-    NoiseGate::s_instance->StreamStarted();
+    NoiseGate::instance->StreamStarted();
 }
 
 void OnStopStream()
 {
-    if(NoiseGate::s_instance == NULL)
+    if(NoiseGate::instance == NULL)
         return;
-    NoiseGate::s_instance->StreamStopped();
+    NoiseGate::instance->StreamStopped();
 }
 
 CTSTR GetPluginName()
@@ -186,6 +186,6 @@ CTSTR GetPluginDescription()
 BOOL CALLBACK DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     if(fdwReason == DLL_PROCESS_ATTACH)
-        NoiseGate::s_hinstDLL = hinstDLL;
+        NoiseGate::hinstDLL = hinstDLL;
     return TRUE;
 }

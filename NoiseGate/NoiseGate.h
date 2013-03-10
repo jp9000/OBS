@@ -67,8 +67,8 @@ class NoiseGate
     // Static members
 
 public:
-    static HINSTANCE    s_hinstDLL;
-    static NoiseGate *  s_instance;
+    static HINSTANCE    hinstDLL;
+    static NoiseGate *  instance;
     
     //-----------------------------------------------------------------------
     // Private members
