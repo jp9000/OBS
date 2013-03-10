@@ -22,6 +22,9 @@
 
 typedef HANDLE (WINAPI *CRTPROC)(HANDLE, LPSECURITY_ATTRIBUTES, SIZE_T, LPTHREAD_START_ROUTINE, LPVOID, DWORD, LPDWORD);
 typedef BOOL   (WINAPI *WPMPROC)(HANDLE, LPVOID, LPCVOID, SIZE_T, SIZE_T*);
+typedef LPVOID (WINAPI *VAEPROC)(HANDLE, LPVOID, SIZE_T, DWORD, DWORD);
+typedef BOOL   (WINAPI *VFEPROC)(HANDLE, LPVOID, SIZE_T, DWORD);
+typedef HANDLE (WINAPI *OPPROC) (DWORD, BOOL, DWORD);
 
 
 BOOL WINAPI InjectLibrary(HANDLE hProcess, CTSTR lpDLL)
@@ -37,29 +40,52 @@ BOOL WINAPI InjectLibrary(HANDLE hProcess, CTSTR lpDLL)
 
     dwSize = ssize((TCHAR*)lpDLL);
 
-    char pWPMStr[19], pCRTStr[19];
-    mcpy(pWPMStr, "X}f{j_}`lj||Bjb`}v", 19); //WriteProcessMemory with each character xor'ed by 15
-    mcpy(pCRTStr, "L}jn{j]jb`{j[g}jnk", 19); //CreateRemoteThread with each character xor'ed by 15
+    //--------------------------------------------------------
 
-    for(int i=0; i<18; i++) pWPMStr[i] ^= 15;
-    for(int i=0; i<18; i++) pCRTStr[i] ^= 15;
+    int obfSize = 12;
+
+    char pWPMStr[19], pCRTStr[19], pVAEStr[15], pVFEStr[14], pLLStr[13];
+    mcpy(pWPMStr, "RvnrdPqmni|}Dmfegm", 19); //WriteProcessMemory with each character obfuscated
+    mcpy(pCRTStr, "FvbgueQg`c{k]`yotp", 19); //CreateRemoteThread with each character obfuscated
+    mcpy(pVAEStr, "WiqvpekGeddiHt", 15);     //VirtualAllocEx with each character obfuscated
+    mcpy(pVFEStr, "Wiqvpek@{mnOu", 14);      //VirtualFreeEx with each character obfuscated
+    mcpy(pLLStr,  "MobfImethzr", 12);        //LoadLibrary with each character obfuscated
+
+#ifdef UNICODE
+    pLLStr[11] = 'W';
+#else
+    pLLStr[11] = 'A';
+#endif
+    pLLStr[12] = 0;
+
+    obfSize += 6;
+    for (int i=0; i<obfSize; i++) pWPMStr[i] ^= i^5;
+    for (int i=0; i<obfSize; i++) pCRTStr[i] ^= i^5;
+
+    obfSize -= 4;
+    for (int i=0; i<obfSize; i++) pVAEStr[i] ^= i^1;
+
+    obfSize -= 1;
+    for (int i=0; i<obfSize; i++) pVFEStr[i] ^= i^1;
+
+    obfSize -= 2;
+    for (int i=0; i<obfSize; i++) pLLStr[i]  ^= i^1;
 
     HMODULE hK32 = GetModuleHandle(TEXT("KERNEL32"));
-
     WPMPROC pWriteProcessMemory = (WPMPROC)GetProcAddress(hK32, pWPMStr);
     CRTPROC pCreateRemoteThread = (CRTPROC)GetProcAddress(hK32, pCRTStr);
+    VAEPROC pVirtualAllocEx     = (VAEPROC)GetProcAddress(hK32, pVAEStr);
+    VFEPROC pVirtualFreeEx      = (VFEPROC)GetProcAddress(hK32, pVFEStr);
 
-    lpStr = (LPVOID)VirtualAllocEx(hProcess, NULL, dwSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    //--------------------------------------------------------
+
+    lpStr = (LPVOID)(*pVirtualAllocEx)(hProcess, NULL, dwSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     if(!lpStr) goto end;
 
     bWorks = (*pWriteProcessMemory)(hProcess, lpStr, (LPVOID)lpDLL, dwSize, &writtenSize);
     if(!bWorks) goto end;
 
-#ifdef UNICODE
-    procAddress = (UPARAM)GetProcAddress(hK32, "LoadLibraryW");
-#else
-    procAddress = (UPARAM)GetProcAddress(hK32, "LoadLibraryA");
-#endif
+    procAddress = (UPARAM)GetProcAddress(hK32, pLLStr);
     if(!procAddress) goto end;
 
     hThread = (*pCreateRemoteThread)(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)procAddress, lpStr, 0, &dwTemp);
@@ -82,7 +108,7 @@ end:
     if(hThread)
         CloseHandle(hThread);
     if(lpStr)
-        VirtualFreeEx(hProcess, lpStr, 0, MEM_RELEASE);
+        (*pVirtualFreeEx)(hProcess, lpStr, 0, MEM_RELEASE);
 
     if(!bRet)
         SetLastError(lastError);
@@ -309,7 +335,13 @@ void GraphicsCaptureSource::AttemptCapture()
     //-------------------------------------------
     // see if we already hooked the process.  if not, inject DLL
 
-    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, targetProcessID);
+    char pOPStr[12];
+    mcpy(pOPStr, "NpflUvhel{x", 12); //OpenProcess obfuscated
+    for (int i=0; i<11; i++) pOPStr[i] ^= i^1;
+
+    OPPROC pOpenProcess = (OPPROC)GetProcAddress(GetModuleHandle(TEXT("KERNEL32")), pOPStr);
+
+    HANDLE hProcess = (*pOpenProcess)(PROCESS_ALL_ACCESS, FALSE, targetProcessID);
     if(hProcess)
     {
         hwndCapture = hwndTarget;
