@@ -17,6 +17,7 @@
 ********************************************************************************/
 
 #include "NoiseGate.h"
+#include "resource.h"
 
 //============================================================================
 // NoiseGateFilter class
@@ -98,6 +99,77 @@ void NoiseGateFilter::ApplyNoiseGate(float *buffer, int totalFloats)
 }
 
 //============================================================================
+// NoiseGateConfigWindow class
+
+NoiseGateConfigWindow::NoiseGateConfigWindow(NoiseGate *parent, HWND parentHwnd)
+    : parent(parent)
+    , parentHwnd(parentHwnd)
+    , hwnd(NULL)
+{
+}
+
+NoiseGateConfigWindow::~NoiseGateConfigWindow()
+{
+}
+
+INT_PTR CALLBACK NoiseGateConfigWindow::DialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    // Get the pointer to our class instance
+    NoiseGateConfigWindow *window = (NoiseGateConfigWindow *)GetWindowLongPtr(hwnd, DWLP_USER);
+
+    switch(message)
+    {
+    default:
+        // Unhandled
+        break;
+    case WM_INITDIALOG:
+        SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
+        window = (NoiseGateConfigWindow *)lParam;
+        window->hwnd = hwnd;
+        window->MsgInitDialog();
+        return TRUE;
+    case WM_COMMAND:
+        if(window != NULL)
+            return window->MsgCommand(wParam, lParam);
+        break;
+    }
+
+    return FALSE;
+}
+
+/**
+ * Display the dialog and begin its message loop. Returns \t{true} if the
+ * user clicked the "OK" button.
+ */
+bool NoiseGateConfigWindow::Process()
+{
+    INT_PTR res = DialogBoxParam(parent->hinstDLL, MAKEINTRESOURCE(IDD_CONFIGURENOISEGATE), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
+    if(res == IDOK)
+        return true;
+    return false;
+}
+
+void NoiseGateConfigWindow::MsgInitDialog()
+{
+    LocalizeWindow(hwnd);
+}
+
+INT_PTR NoiseGateConfigWindow::MsgCommand(WPARAM wParam, LPARAM lParam)
+{
+    switch(LOWORD(wParam))
+    {
+    case IDOK:
+        EndDialog(hwnd, LOWORD(wParam)); // Return IDOK (1)
+        return TRUE;
+    case IDCANCEL:
+        EndDialog(hwnd, LOWORD(wParam)); // Return IDCANCEL (2)
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+//============================================================================
 // NoiseGate class
 
 // Statics
@@ -140,6 +212,12 @@ void NoiseGate::StreamStopped()
     micSource = NULL;
 }
 
+void NoiseGate::ShowConfigDialog(HWND parentHwnd)
+{
+    NoiseGateConfigWindow dialog(this, parentHwnd);
+    dialog.Process();
+}
+
 //============================================================================
 // Plugin entry points
 
@@ -157,6 +235,13 @@ void UnloadPlugin()
         return;
     delete NoiseGate::instance;
     NoiseGate::instance = NULL;
+}
+
+void ConfigPlugin(HWND parentHwnd)
+{
+    if(NoiseGate::instance == NULL)
+        return;
+    NoiseGate::instance->ShowConfigDialog(parentHwnd);
 }
 
 void OnStartStream()

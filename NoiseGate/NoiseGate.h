@@ -57,11 +57,52 @@ private:
 };
 
 //============================================================================
+// NoiseGateConfigWindow class
+
+class NoiseGateConfigWindow
+{
+    //-----------------------------------------------------------------------
+    // Private members
+
+private:
+    NoiseGate *     parent;
+    HWND            parentHwnd;
+    HWND            hwnd;
+
+    //-----------------------------------------------------------------------
+    // Static methods
+
+public:
+    static INT_PTR CALLBACK DialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+
+    //-----------------------------------------------------------------------
+    // Constructor/destructor
+
+public:
+    NoiseGateConfigWindow(NoiseGate *parent, HWND parentHwnd);
+    ~NoiseGateConfigWindow();
+
+    //-----------------------------------------------------------------------
+    // Methods
+
+public:
+    bool Process();
+
+    //-----------------------------------------------------------------------
+    // Message processing
+
+private:
+    void MsgInitDialog();
+    INT_PTR MsgCommand(WPARAM wParam, LPARAM lParam);
+};
+
+//============================================================================
 // NoiseGate class
 
 class NoiseGate
 {
     friend class NoiseGateFilter;
+    friend class NoiseGateConfigWindow;
 
     //-----------------------------------------------------------------------
     // Static members
@@ -97,6 +138,7 @@ public:
 public:
     void StreamStarted();
     void StreamStopped();
+    void ShowConfigDialog(HWND parentHwnd);
 };
 
 //============================================================================
@@ -104,6 +146,7 @@ public:
 
 extern "C" __declspec(dllexport) bool LoadPlugin();
 extern "C" __declspec(dllexport) void UnloadPlugin();
+extern "C" __declspec(dllexport) void ConfigPlugin(HWND parentHwnd);
 extern "C" __declspec(dllexport) void OnStartStream();
 extern "C" __declspec(dllexport) void OnStopStream();
 extern "C" __declspec(dllexport) CTSTR GetPluginName();
