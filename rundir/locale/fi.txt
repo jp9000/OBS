@@ -127,6 +127,11 @@ Settings.Advanced.VideoEncoderCPUTradeoffToolTip    "Tämän asetuksen nostamine
 Settings.Advanced.VideoEncoderSettings              "Valinnaiset x264-pakkausasetukset"
 Settings.Advanced.VideoEncoderSettingsTooltip       "Tähän voit syöttää valinnaiset x264-pakkausasetukset.  Malliksi [asetus]=[arvo] (esim. \"vbv-maxrate=1000 vbv-bufsize=1000\")."
 
+Settings.Advanced.Priority.Idle         "Idlaa"
+Settings.Advanced.Priority.Normal       "Tavallinen"
+Settings.Advanced.Priority.AboveNormal  "Tavallista korkeampi"
+Settings.Advanced.Priority.High         "Korkea"
+
 Settings.Audio.DesktopBoost         "Työpöydän äänentehostus (kerroin):"
 Settings.Audio.PlaybackDevice       "Toistolaite:"
 Settings.Audio.Device               "Mikrofoni/muu -äänilaite:"
