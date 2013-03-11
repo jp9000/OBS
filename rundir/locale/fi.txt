@@ -129,8 +129,8 @@ Settings.Advanced.VideoEncoderSettingsTooltip       "Tähän voit syöttää val
 
 Settings.Advanced.Priority.Idle         "Idlaa"
 Settings.Advanced.Priority.Normal       "Tavallinen"
-Settings.Advanced.Priority.AboveNormal  "Tavallista korkeampi"
-Settings.Advanced.Priority.High         "Korkea"
+Settings.Advanced.Priority.AboveNormal  "Korkeampi"
+Settings.Advanced.Priority.High         "Korkein"
 
 Settings.Audio.DesktopBoost         "Työpöydän äänentehostus (kerroin):"
 Settings.Audio.PlaybackDevice       "Toistolaite:"
