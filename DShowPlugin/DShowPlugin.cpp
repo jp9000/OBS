@@ -1474,7 +1474,6 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                             if(!bHasAudio)
                             {
-                                MessageBox(NULL, L"Auh.", L"Meh.", MB_OK);
                                 SendMessage(GetDlgItem(hwnd, IDC_NOSOUND),          BM_SETCHECK, BST_UNCHECKED, 0);
                                 SendMessage(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), BM_SETCHECK, BST_UNCHECKED, 0);
                                 SendMessage(GetDlgItem(hwnd, IDC_OUTPUTSOUND),      BM_SETCHECK, BST_UNCHECKED, 0);
