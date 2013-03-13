@@ -82,6 +82,7 @@ class DeviceSource : public ImageSource
     IMediaControl           *control;
 
     IBaseFilter             *deviceFilter;
+    IBaseFilter             *audioDeviceFilter;
     CaptureFilter           *captureFilter;
     IBaseFilter             *audioFilter;
 
@@ -98,7 +99,8 @@ class DeviceSource : public ImageSource
     DeviceColorType colorType;
 
     String          strDevice, strDeviceName, strDeviceID;
-    bool            bFlipVertical, bFlipHorizontal;
+    String          strAudioDevice, strAudioName, strAudioID;
+    bool            bFlipVertical, bFlipHorizontal, bDShowHasAudio;
     UINT64          frameInterval;
     UINT            renderCX, renderCY;
     BOOL            bUseCustomResolution;
