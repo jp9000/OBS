@@ -200,6 +200,8 @@
 #define IDC_COLOR                       1104
 #define IDC_USEHIGHQUALITYRESAMPLING    1105
 #define IDC_OUTLINECOLOR                1105
+#define IDC_COLORKEY                    1105
+#define IDC_KEYCOLOR                    1105
 #define IDC_USETEXT                     1106
 #define IDC_USEVIDEOSYNC                1106
 #define IDC_SYNCTOVIDEOTIME             1106
