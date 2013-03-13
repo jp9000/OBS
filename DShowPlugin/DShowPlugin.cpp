@@ -22,7 +22,6 @@
 //todo: 1700 line file.  this is another one of those abominations.
 //fix it jim
 
-
 extern "C" __declspec(dllexport) bool LoadPlugin();
 extern "C" __declspec(dllexport) void UnloadPlugin();
 extern "C" __declspec(dllexport) CTSTR GetPluginName();
@@ -271,89 +270,86 @@ IBaseFilter* GetDeviceByValue(const IID &enumType, WSTR lpType, CTSTR lpName, WS
 IPin* GetOutputPin(IBaseFilter *filter, const GUID *majorType)
 {
     IPin *foundPin = NULL;
+    IEnumPins *pins;
 
-    if(filter)
+    if(!filter) return NULL;
+    if(FAILED(filter->EnumPins(&pins))) return NULL;
+
+    IPin *curPin;
+    ULONG num;
+    while(pins->Next(1, &curPin, &num) == S_OK)
     {
-        IEnumPins *pins;
-        if(SUCCEEDED(filter->EnumPins(&pins)))
+        if(majorType)
         {
-            IPin *curPin;
-            ULONG num;
-            while(pins->Next(1, &curPin, &num) == S_OK)
+            AM_MEDIA_TYPE *pinMediaType;
+
+            IEnumMediaTypes *mediaTypesEnum;
+            if(FAILED(curPin->EnumMediaTypes(&mediaTypesEnum)))
             {
-                if(majorType)
-                {
-                    AM_MEDIA_TYPE *pinMediaType;
-
-                    IEnumMediaTypes *mediaTypesEnum;
-                    if(FAILED(curPin->EnumMediaTypes(&mediaTypesEnum)))
-                    {
-                        SafeRelease(curPin);
-                        continue;
-                    }
-
-                    ULONG curVal = 0;
-                    HRESULT hRes = mediaTypesEnum->Next(1, &pinMediaType, &curVal);
-
-                    mediaTypesEnum->Release();
-
-                    if(hRes != S_OK)
-                    {
-                        SafeRelease(curPin);
-                        continue;
-                    }
-
-                    BOOL bDesiredMediaType = (pinMediaType->majortype == *majorType);
-                    DeleteMediaType(pinMediaType);
-
-                    if(!bDesiredMediaType)
-                    {
-                        SafeRelease(curPin);
-                        continue;
-                    }
-                }
-
-                //------------------------------
-
-                PIN_DIRECTION pinDir;
-                if(SUCCEEDED(curPin->QueryDirection(&pinDir)))
-                {
-                    if(pinDir == PINDIR_OUTPUT)
-                    {
-                        IKsPropertySet *propertySet;
-                        if(SUCCEEDED(curPin->QueryInterface(IID_IKsPropertySet, (void**)&propertySet)))
-                        {
-                            GUID pinCategory;
-                            DWORD retSize;
-
-                            PIN_INFO chi;
-                            curPin->QueryPinInfo(&chi);
-
-                            if(chi.pFilter)
-                                chi.pFilter->Release();
-
-                            if(SUCCEEDED(propertySet->Get(AMPROPSETID_Pin, AMPROPERTY_PIN_CATEGORY, NULL, 0, &pinCategory, sizeof(GUID), &retSize)))
-                            {
-                                if(pinCategory == PIN_CATEGORY_CAPTURE)
-                                {
-                                    SafeRelease(propertySet);
-                                    SafeRelease(pins);
-
-                                    return curPin;
-                                }
-                            }
-
-                            SafeRelease(propertySet);
-                        }
-                    }
-                }
-
                 SafeRelease(curPin);
+                continue;
             }
 
-            SafeRelease(pins);
+            ULONG curVal = 0;
+            HRESULT hRes = mediaTypesEnum->Next(1, &pinMediaType, &curVal);
+
+            mediaTypesEnum->Release();
+
+            if(hRes != S_OK)
+            {
+                SafeRelease(curPin);
+                continue;
+            }
+
+            BOOL bDesiredMediaType = (pinMediaType->majortype == *majorType);
+            DeleteMediaType(pinMediaType);
+
+            if(!bDesiredMediaType)
+            {
+                SafeRelease(curPin);
+                continue;
+            }
         }
+
+        //------------------------------
+
+        PIN_DIRECTION pinDir;
+        if(SUCCEEDED(curPin->QueryDirection(&pinDir)))
+        {
+            if(pinDir == PINDIR_OUTPUT)
+            {
+                IKsPropertySet *propertySet;
+                if(SUCCEEDED(curPin->QueryInterface(IID_IKsPropertySet, (void**)&propertySet)))
+                {
+                    GUID pinCategory;
+                    DWORD retSize;
+
+                    PIN_INFO chi;
+                    curPin->QueryPinInfo(&chi);
+
+                    if(chi.pFilter)
+                        chi.pFilter->Release();
+
+                    if(SUCCEEDED(propertySet->Get(AMPROPSETID_Pin, AMPROPERTY_PIN_CATEGORY, NULL, 0, &pinCategory, sizeof(GUID), &retSize)))
+                    {
+                        if(pinCategory == PIN_CATEGORY_CAPTURE)
+                        {
+                            SafeRelease(propertySet);
+                            SafeRelease(pins);
+
+                            return curPin;
+                        }
+                    }
+
+                    SafeRelease(propertySet);
+                }
+            }
+        }
+
+        SafeRelease(curPin);
     }
+
+    SafeRelease(pins);
 
     return foundPin;
 }
@@ -702,8 +698,6 @@ void FillOutListOfDevices(HWND hwndCombo, GUID matchGUID, StringList *deviceList
     IMoniker *deviceInfo;
     DWORD count;
 
-    //StringList deviceList;
-
     while(videoDeviceEnum->Next(1, &deviceInfo, &count) == S_OK)
     {
         IPropertyBag *propertyData;
@@ -895,21 +889,6 @@ void OpenPropertyPages(HWND hwnd, String devicename, String deviceid, GUID match
 
     return;
 }
-
-bool CheckCrossbar(String deviceID, ConfigDialogData *configData) {
-    unsigned int cycle = 0;
-
-    if(configData->crossbarIDList.Num() < 1) return false;
-
-    while(cycle < configData->crossbarIDList.Num())
-    {
-        if( configData->crossbarIDList[cycle] == deviceID) return true;
-        cycle++;
-    }
-
-    return false;
-}
-
 
 INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -1254,8 +1233,12 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                             if(configData->bDShowHasAudio) {
                                 EnableWindow(GetDlgItem(hwnd, IDC_AUDIOLIST),        bForceCustomAudioChk);
+                                ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_DEVICELIST, CBN_SELCHANGE), (LPARAM)GetDlgItem(hwnd, IDC_DEVICELIST));
+                                if(bForceCustomAudioChk) ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_DEVICELIST, CBN_SELCHANGE), (LPARAM)GetDlgItem(hwnd, IDC_AUDIOLIST));
                             }
-                            else EnableWindow(GetDlgItem(hwnd, IDC_AUDIOLIST),        true);
+                            else {
+                                EnableWindow(GetDlgItem(hwnd, IDC_AUDIOLIST),        true);
+                            }
                         }
                     }
                     break;
@@ -1328,7 +1311,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 case IDC_REFRESH:
                     {
                         HWND hwndDeviceList = GetDlgItem(hwnd, IDC_DEVICELIST);
-                        HWND hwndAudioDeviceList = GetDlgItem(hwnd, IDC_DEVICELIST);
+                        HWND hwndAudioDeviceList = GetDlgItem(hwnd, IDC_AUDIOLIST);
                         HWND hwndCrossbarList = GetDlgItem(hwnd, IDC_CROSSBARLIST);
 
                         ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
@@ -1338,7 +1321,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         FillOutListOfDevices(GetDlgItem(hwnd, IDC_CROSSBARLIST), AM_KSCATEGORY_CROSSBAR, &configData->crossbarList, &configData->crossbarIDList);
 
                         SendMessage(hwndDeviceList, CB_SETCURSEL, 0, 0);
-                        ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_DEVICELIST, CBN_SELCHANGE), (LPARAM)hwndAudioDeviceList);
+                        ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_DEVICELIST, CBN_SELCHANGE), (LPARAM)hwndDeviceList);
                         SendMessage(hwndDeviceList, CB_SETCURSEL, 0, 0);
                         ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_AUDIOLIST, CBN_SELCHANGE), (LPARAM)hwndAudioDeviceList);
                         SendMessage(hwndCrossbarList, CB_SETCURSEL, 0, 0);
@@ -1491,6 +1474,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                             if(!bHasAudio)
                             {
+                                MessageBox(NULL, L"Auh.", L"Meh.", MB_OK);
                                 SendMessage(GetDlgItem(hwnd, IDC_NOSOUND),          BM_SETCHECK, BST_UNCHECKED, 0);
                                 SendMessage(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), BM_SETCHECK, BST_UNCHECKED, 0);
                                 SendMessage(GetDlgItem(hwnd, IDC_OUTPUTSOUND),      BM_SETCHECK, BST_UNCHECKED, 0);
