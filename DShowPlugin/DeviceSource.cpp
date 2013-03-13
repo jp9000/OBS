@@ -184,7 +184,7 @@ bool DeviceSource::LoadFilters()
     strDevice = data->GetString(TEXT("device"));
     strDeviceName = data->GetString(TEXT("deviceName"));
     strDeviceID = data->GetString(TEXT("deviceID"));
-    strAudioDevice = data->GetString(TEXT("audiodevice"));
+    strAudioDevice = data->GetString(TEXT("audioDevice"));
     strAudioName = data->GetString(TEXT("audioDeviceName"));
     strAudioID = data->GetString(TEXT("audioDeviceID"));
     bDShowHasAudio = data->GetInt(TEXT("dshowHasAudio")) != 0;
@@ -1079,14 +1079,15 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
 
 void DeviceSource::UpdateSettings()
 {
-    String strNewDevice     = data->GetString(TEXT("device"));
-    UINT64 newFrameInterval = data->GetInt(TEXT("frameInterval"));
-    UINT newCX              = data->GetInt(TEXT("resolutionWidth"));
-    UINT newCY              = data->GetInt(TEXT("resolutionHeight"));
-    BOOL bNewCustom         = data->GetInt(TEXT("customResolution"));
-    UINT newPreferredType   = data->GetInt(TEXT("usePreferredType")) != 0 ? data->GetInt(TEXT("preferredType")) : -1;
+    String strNewDevice         = data->GetString(TEXT("device"));
+    String strNewAudioDevice    = data->GetString(TEXT("audioDevice"));
+    UINT64 newFrameInterval     = data->GetInt(TEXT("frameInterval"));
+    UINT newCX                  = data->GetInt(TEXT("resolutionWidth"));
+    UINT newCY                  = data->GetInt(TEXT("resolutionHeight"));
+    BOOL bNewCustom             = data->GetInt(TEXT("customResolution"));
+    UINT newPreferredType       = data->GetInt(TEXT("usePreferredType")) != 0 ? data->GetInt(TEXT("preferredType")) : -1;
 
-    if(renderCX != newCX || renderCY != newCY || frameInterval != newFrameInterval || newPreferredType != preferredOutputType || !strDevice.CompareI(strNewDevice) || bNewCustom != bUseCustomResolution)
+    if(renderCX != newCX || renderCY != newCY || frameInterval != newFrameInterval || newPreferredType != preferredOutputType || !strDevice.CompareI(strNewDevice) || !strAudioDevice.CompareI(strNewAudioDevice) || bNewCustom != bUseCustomResolution)
     {
         API->EnterSceneMutex();
 
