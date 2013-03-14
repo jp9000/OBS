@@ -20,6 +20,22 @@
 #include "resource.h"
 
 //============================================================================
+// Helpers
+
+inline float rmsToDb(float rms)
+{
+    float db = 20.0f * log10(rms);
+    if(!_finite(db))
+        return VOL_MIN;
+    return db;
+}
+
+inline float dbToRms(float db)
+{
+    return pow(10.0f, db / 20.0f);
+}
+
+//============================================================================
 // NoiseGateFilter class
 
 NoiseGateFilter::NoiseGateFilter(NoiseGate *parent)
@@ -175,7 +191,10 @@ void NoiseGateConfigWindow::SetTrackbarCaption(int controlId, int db)
 void NoiseGateConfigWindow::RepaintVolume()
 {
     float rms, max, peak;
-    OBSGetCurMicVolumeStats(&rms, &max, &peak);
+
+    rms = max = peak = -96.0f;
+    if(OBSGetStreaming())
+        OBSGetCurMicVolumeStats(&rms, &max, &peak);
     //SetWindowText(GetDlgItem(hwnd, IDC_OPENTHRES_DB), FormattedString(TEXT("%.3f"), rms));
     //SetWindowText(GetDlgItem(hwnd, IDC_CLOSETHRES_DB), FormattedString(TEXT("%d"), (int)((rms + 96.0f) * 4.0f)));
     SendMessage(GetDlgItem(hwnd, IDC_CURVOL), PBM_SETPOS, (int)((rms + 96.0f) * 4.0f), 0);
@@ -183,37 +202,51 @@ void NoiseGateConfigWindow::RepaintVolume()
 
 void NoiseGateConfigWindow::MsgInitDialog()
 {
+    float val;
     HWND ctrlHwnd;
 
     LocalizeWindow(hwnd);
 
     // Volume preview
+    // FIXME: Don't use a progress bar as the default Windows style smoothly interpolates between
+    //        values making if difficult to see the real sound level.
     ctrlHwnd = GetDlgItem(hwnd, IDC_CURVOL);
     SendMessage(ctrlHwnd, PBM_SETRANGE32, 0, CURVOL_RESOLUTION); // Bottom = 0, top = CURVOL_RESOLUTION
     RepaintVolume(); // Repaint immediately
-    SetTimer(hwnd, REPAINT_TIMER_ID, 16, NULL); // Repaint every 16ms ~= 60fps
+    SetTimer(hwnd, REPAINT_TIMER_ID, 16, NULL); // Repaint every 16ms (~60fps)
 
     // Close threshold trackbar (Control uses positive values)
-    SetTrackbarCaption(IDC_CLOSETHRES_DB, -10);
+    val = rmsToDb(parent->closeThreshold);
+    SetTrackbarCaption(IDC_CLOSETHRES_DB, (int)val);
     ctrlHwnd = GetDlgItem(hwnd, IDC_CLOSETHRES_SLIDER);
     SendMessage(ctrlHwnd, TBM_SETRANGEMIN, FALSE, 0);
     SendMessage(ctrlHwnd, TBM_SETRANGEMAX, FALSE, 96);
-    SendMessage(ctrlHwnd, TBM_SETPOS, TRUE, 10);
+    SendMessage(ctrlHwnd, TBM_SETPOS, TRUE, -(int)val);
 
     // Open threshold trackbar (Control uses positive values)
-    SetTrackbarCaption(IDC_OPENTHRES_DB, -10);
+    val = rmsToDb(parent->openThreshold);
+    SetTrackbarCaption(IDC_OPENTHRES_DB, (int)val);
     ctrlHwnd = GetDlgItem(hwnd, IDC_OPENTHRES_SLIDER);
     SendMessage(ctrlHwnd, TBM_SETRANGEMIN, FALSE, 0);
     SendMessage(ctrlHwnd, TBM_SETRANGEMAX, FALSE, 96);
-    SendMessage(ctrlHwnd, TBM_SETPOS, TRUE, 10);
+    SendMessage(ctrlHwnd, TBM_SETPOS, TRUE, -(int)val);
+
+    // Attack, hold and release times
+    SetWindowText(GetDlgItem(hwnd, IDC_ATTACKTIME_EDIT), IntString((int)(parent->attackTime * 1000.0f)));
+    SetWindowText(GetDlgItem(hwnd, IDC_HOLDTIME_EDIT), IntString((int)(parent->holdTime * 1000.0f)));
+    SetWindowText(GetDlgItem(hwnd, IDC_RELEASETIME_EDIT), IntString((int)(parent->releaseTime * 1000.0f)));
 
     // Enable/disable stream button
     ctrlHwnd = GetDlgItem(hwnd, IDC_PREVIEWON);
     if(OBSGetStreaming())
     {
-        // If OBS is already streaming don't let the user stop from this window
         SetWindowText(ctrlHwnd, Str("Plugins.NoiseGate.DisablePreview"));
-        EnableWindow(ctrlHwnd, FALSE);
+
+        // If not in preview mode then prevent the user from stopping the stream from this window
+        if(OBSGetPreviewOnly())
+            EnableWindow(ctrlHwnd, TRUE);
+        else
+            EnableWindow(ctrlHwnd, FALSE);
     }
     else
     {
