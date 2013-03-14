@@ -533,15 +533,6 @@ class OBS
     double curStrain;
 
     //---------------------------------------------------
-    // OS scheduler period
-
-    unsigned int    schedulerPeriod; // ms
-
-    int detectOsSchedulerPeriod();
-    void setOsSchedulerPeriod(unsigned int desiredMinPeriod);
-    void releaseOsSchedulerPeriod();
-
-    //---------------------------------------------------
     // main capture loop stuff
 
     int bufferingTime;
