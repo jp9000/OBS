@@ -180,6 +180,9 @@ public:
 
     virtual AudioSource* GetDesktopAudioSource()=0;
     virtual AudioSource* GetMicAudioSource()=0;
+
+    virtual void GetCurDesktopVolumeStats(float *rms, float *max, float *peak) const=0;
+    virtual void GetCurMicVolumeStats(float *rms, float *max, float *peak) const=0;
 };
 
 BASE_EXPORT extern APIInterface *API;
@@ -288,3 +291,5 @@ BASE_EXPORT AudioSource* OBSGetAuxAudioSource(UINT id);
 BASE_EXPORT AudioSource* OBSGetDesktopAudioSource();
 BASE_EXPORT AudioSource* OBSGetMicAudioSource();
 
+BASE_EXPORT void OBSGetCurDesktopVolumeStats(float *rms, float *max, float *peak);
+BASE_EXPORT void OBSGetCurMicVolumeStats(float *rms, float *max, float *peak);
