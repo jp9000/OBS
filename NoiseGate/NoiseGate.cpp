@@ -37,6 +37,7 @@ NoiseGateFilter::~NoiseGateFilter()
 
 AudioSegment *NoiseGateFilter::Process(AudioSegment *segment)
 {
+    // We process even if the filter is disabled so that it's state is updated for when it gets enabled again
     ApplyNoiseGate(segment->audioData.Array(), segment->audioData.Num());
     return segment;
 }
@@ -93,8 +94,10 @@ void NoiseGateFilter::ApplyNoiseGate(float *buffer, int totalFloats)
         }
 
         // Multiple input by gate multiplier (0.0f if fully closed, 1.0f if fully open)
-        buffer[i] *= attenuation;
-        buffer[i+1] *= attenuation;
+        if(parent->isEnabled) {
+            buffer[i] *= attenuation;
+            buffer[i+1] *= attenuation;
+        }
     }
 }
 
@@ -130,7 +133,16 @@ INT_PTR CALLBACK NoiseGateConfigWindow::DialogProc(HWND hwnd, UINT message, WPAR
         return TRUE;
     case WM_COMMAND:
         if(window != NULL)
-            return window->MsgCommand(wParam, lParam);
+            return window->MsgClicked(LOWORD(wParam), (HWND)lParam);
+        break;
+    case WM_VSCROLL:
+    case WM_HSCROLL:
+        if(window != NULL)
+            return window->MsgScroll(message == WM_VSCROLL, wParam, lParam);
+        break;
+    case WM_TIMER:
+        if(window != NULL)
+            return window->MsgTimer((int)wParam);
         break;
     }
 
@@ -149,23 +161,142 @@ bool NoiseGateConfigWindow::Process()
     return false;
 }
 
-void NoiseGateConfigWindow::MsgInitDialog()
+/**
+ * Sets the caption of the open and close threshold trackbars ("-24 dB")
+ */
+void NoiseGateConfigWindow::SetTrackbarCaption(int controlId, int db)
 {
-    LocalizeWindow(hwnd);
+    SetWindowText(GetDlgItem(hwnd, controlId), FormattedString(TEXT("%d dB"), db));
 }
 
-INT_PTR NoiseGateConfigWindow::MsgCommand(WPARAM wParam, LPARAM lParam)
+/**
+ * Updates the current audio volume control.
+ */
+void NoiseGateConfigWindow::RepaintVolume()
 {
-    switch(LOWORD(wParam))
+    float rms, max, peak;
+    OBSGetCurMicVolumeStats(&rms, &max, &peak);
+    //SetWindowText(GetDlgItem(hwnd, IDC_OPENTHRES_DB), FormattedString(TEXT("%.3f"), rms));
+    //SetWindowText(GetDlgItem(hwnd, IDC_CLOSETHRES_DB), FormattedString(TEXT("%d"), (int)((rms + 96.0f) * 4.0f)));
+    SendMessage(GetDlgItem(hwnd, IDC_CURVOL), PBM_SETPOS, (int)((rms + 96.0f) * 4.0f), 0);
+}
+
+void NoiseGateConfigWindow::MsgInitDialog()
+{
+    HWND ctrlHwnd;
+
+    LocalizeWindow(hwnd);
+
+    // Volume preview
+    ctrlHwnd = GetDlgItem(hwnd, IDC_CURVOL);
+    SendMessage(ctrlHwnd, PBM_SETRANGE32, 0, CURVOL_RESOLUTION); // Bottom = 0, top = CURVOL_RESOLUTION
+    RepaintVolume(); // Repaint immediately
+    SetTimer(hwnd, REPAINT_TIMER_ID, 16, NULL); // Repaint every 16ms ~= 60fps
+
+    // Close threshold trackbar (Control uses positive values)
+    SetTrackbarCaption(IDC_CLOSETHRES_DB, -10);
+    ctrlHwnd = GetDlgItem(hwnd, IDC_CLOSETHRES_SLIDER);
+    SendMessage(ctrlHwnd, TBM_SETRANGEMIN, FALSE, 0);
+    SendMessage(ctrlHwnd, TBM_SETRANGEMAX, FALSE, 96);
+    SendMessage(ctrlHwnd, TBM_SETPOS, TRUE, 10);
+
+    // Open threshold trackbar (Control uses positive values)
+    SetTrackbarCaption(IDC_OPENTHRES_DB, -10);
+    ctrlHwnd = GetDlgItem(hwnd, IDC_OPENTHRES_SLIDER);
+    SendMessage(ctrlHwnd, TBM_SETRANGEMIN, FALSE, 0);
+    SendMessage(ctrlHwnd, TBM_SETRANGEMAX, FALSE, 96);
+    SendMessage(ctrlHwnd, TBM_SETPOS, TRUE, 10);
+
+    // Enable/disable stream button
+    ctrlHwnd = GetDlgItem(hwnd, IDC_PREVIEWON);
+    if(OBSGetStreaming())
     {
+        // If OBS is already streaming don't let the user stop from this window
+        SetWindowText(ctrlHwnd, Str("Plugins.NoiseGate.DisablePreview"));
+        EnableWindow(ctrlHwnd, FALSE);
+    }
+    else
+    {
+        SetWindowText(ctrlHwnd, Str("Plugins.NoiseGate.EnablePreview"));
+        EnableWindow(ctrlHwnd, TRUE);
+    }
+}
+
+INT_PTR NoiseGateConfigWindow::MsgClicked(int controlId, HWND controlHwnd)
+{
+    switch(controlId)
+    {
+    default:
+        // Unknown button
+        break;
     case IDOK:
-        EndDialog(hwnd, LOWORD(wParam)); // Return IDOK (1)
-        return TRUE;
     case IDCANCEL:
-        EndDialog(hwnd, LOWORD(wParam)); // Return IDCANCEL (2)
+        EndDialog(hwnd, controlId); // Return IDOK (1) or IDCANCEL (2)
+        return TRUE;
+    case IDC_PREVIEWON:
+        // Toggle stream preview
+        if(OBSGetStreaming())
+        {
+            OBSStartStopPreview();
+            parent->isEnabled = true;
+            SetWindowText(controlHwnd, Str("Plugins.NoiseGate.EnablePreview"));
+        }
+        else
+        {
+            OBSStartStopPreview();
+            parent->isEnabled = false;
+            SetWindowText(controlHwnd, Str("Plugins.NoiseGate.DisablePreview"));
+        }
         return TRUE;
     }
 
+    return FALSE;
+}
+
+
+INT_PTR NoiseGateConfigWindow::MsgScroll(bool vertical, WPARAM wParam, LPARAM lParam)
+{
+    if(lParam == NULL)
+        return FALSE;
+    HWND barHwnd = (HWND)lParam;
+
+    // Determine the current value of the trackbar
+    int pos;
+    switch(LOWORD(wParam))
+    {
+    case SB_THUMBPOSITION:
+    case SB_THUMBTRACK: // The user dragged the slider
+        pos = -HIWORD(wParam);
+        break;
+    default: // Everything else
+        pos = -(int)SendMessage(barHwnd, TBM_GETPOS, 0, 0);
+        break;
+    }
+
+    // Figure out which trackbar it was
+    if(barHwnd == GetDlgItem(hwnd, IDC_CLOSETHRES_SLIDER))
+    {
+        // User modified the close threshold trackbar
+        SetTrackbarCaption(IDC_CLOSETHRES_DB, pos);
+        return TRUE;
+    }
+    else if(barHwnd == GetDlgItem(hwnd, IDC_OPENTHRES_SLIDER))
+    {
+        // User modified the open threshold trackbar
+        SetTrackbarCaption(IDC_OPENTHRES_DB, pos);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+INT_PTR NoiseGateConfigWindow::MsgTimer(int timerId)
+{
+    if(timerId == REPAINT_TIMER_ID)
+    {
+        RepaintVolume();
+        return TRUE;
+    }
     return FALSE;
 }
 
@@ -179,6 +310,7 @@ NoiseGate *NoiseGate::instance = NULL;
 NoiseGate::NoiseGate()
     : micSource(NULL)
     , filter(NULL)
+    , isEnabled(true)
     , openThreshold(0.05f) // FIXME: Configurable
     , closeThreshold(0.005f)
     , attackTime(0.1f)
@@ -215,7 +347,10 @@ void NoiseGate::StreamStopped()
 void NoiseGate::ShowConfigDialog(HWND parentHwnd)
 {
     NoiseGateConfigWindow dialog(this, parentHwnd);
+    if(OBSGetStreaming())
+        isEnabled = false; // Disable the filter if we are currently streaming
     dialog.Process();
+    isEnabled = true; // Force enable
 }
 
 //============================================================================

@@ -62,6 +62,13 @@ private:
 class NoiseGateConfigWindow
 {
     //-----------------------------------------------------------------------
+    // Constants
+
+private:
+    static const int    REPAINT_TIMER_ID = 1;
+    static const int    CURVOL_RESOLUTION = 96 * 4 - 1; // 0.25 dB resolution for a (-96..0) dB range
+
+    //-----------------------------------------------------------------------
     // Private members
 
 private:
@@ -88,12 +95,18 @@ public:
 public:
     bool Process();
 
+private:
+    void SetTrackbarCaption(int controlId, int db);
+    void RepaintVolume();
+
     //-----------------------------------------------------------------------
     // Message processing
 
 private:
     void MsgInitDialog();
-    INT_PTR MsgCommand(WPARAM wParam, LPARAM lParam);
+    INT_PTR MsgClicked(int controlId, HWND controlHwnd);
+    INT_PTR MsgScroll(bool vertical, WPARAM wParam, LPARAM lParam);
+    INT_PTR MsgTimer(int timerId);
 };
 
 //============================================================================
@@ -119,6 +132,7 @@ private:
     NoiseGateFilter *   filter;
 
     // User configuration
+    bool    isEnabled;
     float   openThreshold;
     float   closeThreshold;
     float   attackTime;
