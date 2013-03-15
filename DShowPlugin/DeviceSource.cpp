@@ -520,13 +520,7 @@ bool DeviceSource::LoadFilters()
 
     if(soundOutputType == 1)
     {
-        if(bDShowHasAudio) {
-            audioFilter = new CaptureFilter(this, MEDIATYPE_Audio, expectedAudioType);
-        }
-        else {
-            audioFilter = new CaptureFilter(this, MEDIATYPE_Audio, expectedAudioType);
-            //audioFilter = GetDeviceByValue(CLSID_AudioInputDeviceCategory, L"FriendlyName", strAudioName, L"DevicePath", strAudioID);
-        }
+        audioFilter = new CaptureFilter(this, MEDIATYPE_Audio, expectedAudioType);
         if(!audioFilter)
         {
             AppWarning(TEXT("Failed to create audio capture filter"));
