@@ -31,7 +31,7 @@ copy ..\graphicscapture\release\graphicscapture.dll .\32bit\plugins
 copy ..\graphicscapture\graphicscapturehook\release\graphicscapturehook.dll .\32bit\plugins\graphicscapture
 copy ..\graphicscapture\graphicscapturehook\x64\release\graphicscapturehook64.dll .\32bit\plugins\graphicscapture
 copy ..\injectHelper\x64\release\injectHelper64.exe .\32bit\plugins\graphicscapture
-copy ..\x264\libs\32bit\libx264-129.dll .\32bit
+copy ..\x264\libs\32bit\libx264-130.dll .\32bit
 
 copy ..\x64\release\obs.exe .\64bit\
 copy ..\obsapi\x64\release\obsapi.dll .\64bit\
@@ -47,7 +47,7 @@ copy ..\graphicscapture\x64\release\graphicscapture.dll .\64bit\plugins
 copy ..\graphicscapture\graphicscapturehook\release\graphicscapturehook.dll .\64bit\plugins\graphicscapture
 copy ..\graphicscapture\graphicscapturehook\x64\release\graphicscapturehook64.dll .\64bit\plugins\graphicscapture
 copy ..\injectHelper\release\injectHelper.exe .\64bit\plugins\graphicscapture
-copy ..\x264\libs\64bit\libx264-129.dll .\64bit
+copy ..\x264\libs\64bit\libx264-130.dll .\64bit
 
 mkdir upload
 mkdir upload\DirectShowPlugin
@@ -91,13 +91,13 @@ copy ..\release\obs.exe .\upload\OBS\32bit\
 copy ..\obsapi\release\obsapi.dll .\upload\OBS\32bit\
 copy ..\rundir\OBSHelp.chm .\upload\OBS\32bit\
 copy ..\rundir\pdb32\stripped\*.pdb .\upload\OBS\32bit\
-copy ..\x264\libs\32bit\libx264-129.dll .\upload\OBS\32bit
+copy ..\x264\libs\32bit\libx264-130.dll .\upload\OBS\32bit
 
 copy ..\x64\release\obs.exe .\upload\OBS\64bit\
 copy ..\obsapi\x64\release\obsapi.dll .\upload\OBS\64bit\
 copy ..\rundir\OBSHelp.chm .\upload\OBS\64bit\
 copy ..\rundir\pdb64\stripped\*.pdb .\upload\OBS\64bit\
-copy ..\x264\libs\64bit\libx264-129.dll .\upload\OBS\64bit
+copy ..\x264\libs\64bit\libx264-130.dll .\upload\OBS\64bit
 
 copy ..\rundir\locale\*.txt .\upload\OBS\locale\
 

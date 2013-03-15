@@ -178,10 +178,17 @@ bool DeviceSource::LoadFilters()
     //------------------------------------------------
     // basic initialization vars
 
+    bool bCheckForceAudio = data->GetInt(TEXT("forceCustomAudioDevice")) != 0;
+
     bUseCustomResolution = data->GetInt(TEXT("customResolution"));
     strDevice = data->GetString(TEXT("device"));
     strDeviceName = data->GetString(TEXT("deviceName"));
     strDeviceID = data->GetString(TEXT("deviceID"));
+    strAudioDevice = data->GetString(TEXT("audioDevice"));
+    strAudioName = data->GetString(TEXT("audioDeviceName"));
+    strAudioID = data->GetString(TEXT("audioDeviceID"));
+    bDShowHasAudio = data->GetInt(TEXT("dshowHasAudio")) != 0;
+    if(bCheckForceAudio) bDShowHasAudio = 0;
 
     bFlipVertical = data->GetInt(TEXT("flipImage")) != 0;
     bFlipHorizontal = data->GetInt(TEXT("flipImageHorizontal")) != 0;
@@ -212,6 +219,12 @@ bool DeviceSource::LoadFilters()
     if(strDeviceName.IsValid())
     {
         deviceFilter = GetDeviceByValue(CLSID_VideoInputDeviceCategory, L"FriendlyName", strDeviceName, L"DevicePath", strDeviceID);
+        if(!bDShowHasAudio) {
+            audioDeviceFilter = GetDeviceByValue(CLSID_AudioInputDeviceCategory, L"FriendlyName", strAudioName, L"DevicePath", strAudioID);
+            if(!audioDeviceFilter) {
+                AppWarning(TEXT("DShowPlugin: Invalid audio device: name '%s', path '%s'"), strAudioName.Array(), strAudioID.Array());
+            }
+        }
         if(!deviceFilter)
         {
             AppWarning(TEXT("DShowPlugin: Invalid device: name '%s', path '%s'"), strDeviceName.Array(), strDeviceID.Array());
@@ -227,6 +240,12 @@ bool DeviceSource::LoadFilters()
         }
 
         deviceFilter = GetDeviceByValue(CLSID_VideoInputDeviceCategory, L"FriendlyName", strDevice);
+        if(!bDShowHasAudio) {
+            audioDeviceFilter = GetDeviceByValue(CLSID_AudioInputDeviceCategory, L"FriendlyName", strAudioDevice);
+            if(!audioDeviceFilter) {
+                AppWarning(TEXT("DShowPlugin: Could not create audio device filter"));
+            }
+        }
         if(!deviceFilter)
         {
             AppWarning(TEXT("DShowPlugin: Could not create device filter"));
@@ -245,7 +264,12 @@ bool DeviceSource::LoadFilters()
 
     if(soundOutputType != 0)
     {
-        err = capture->FindPin(deviceFilter, PINDIR_OUTPUT, &PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, FALSE, 0, &audioPin);
+        if(!bDShowHasAudio) {
+            err = capture->FindPin(audioDeviceFilter, PINDIR_OUTPUT, &PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, FALSE, 0, &audioPin);
+        }
+        else {
+            err = capture->FindPin(deviceFilter, PINDIR_OUTPUT, &PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, FALSE, 0, &audioPin);
+        }
         if(FAILED(err))
         {
             Log(TEXT("DShowPlugin: No audio pin, result = %lX"), err);
@@ -344,6 +368,8 @@ bool DeviceSource::LoadFilters()
             strTest << FormattedString(TEXT(", fourCC: '%S'\r\n"), fourcc);
         else
             strTest << FormattedString(TEXT(", fourCC: %08lX\r\n"), bmiHeader->biCompression);
+
+        if(!bDShowHasAudio) strTest << FormattedString(TEXT("    audio device: %s,\r\n    audio device id %s,\r\n"), strAudioDevice.Array(), strAudioID.Array());
 
         Log(TEXT("------------------------------------------"));
         Log(strTest.Array());
@@ -471,8 +497,9 @@ bool DeviceSource::LoadFilters()
 
             audioConfig->Release();
         }
-        else
+        else {
             soundOutputType = 0;
+        }
     }
 
     //------------------------------------------------
@@ -493,10 +520,16 @@ bool DeviceSource::LoadFilters()
 
     if(soundOutputType == 1)
     {
-        audioFilter = new CaptureFilter(this, MEDIATYPE_Audio, expectedAudioType);
+        if(bDShowHasAudio) {
+            audioFilter = new CaptureFilter(this, MEDIATYPE_Audio, expectedAudioType);
+        }
+        else {
+            audioFilter = new CaptureFilter(this, MEDIATYPE_Audio, expectedAudioType);
+            //audioFilter = GetDeviceByValue(CLSID_AudioInputDeviceCategory, L"FriendlyName", strAudioName, L"DevicePath", strAudioID);
+        }
         if(!audioFilter)
         {
-            AppWarning(TEXT("Failed to create audio ccapture filter"));
+            AppWarning(TEXT("Failed to create audio capture filter"));
             soundOutputType = 0;
         }
     }
@@ -538,6 +571,13 @@ bool DeviceSource::LoadFilters()
         AppWarning(TEXT("DShowPlugin: Failed to add device filter to graph, result = %08lX"), err);
         goto cleanFinish;
     }
+    if(!bDShowHasAudio) {
+        if(FAILED(err = graph->AddFilter(audioDeviceFilter, NULL)))
+        {
+            AppWarning(TEXT("DShowPlugin: Failed to add audio device filter to graph, result = %08lX"), err);
+            goto cleanFinish;
+        }
+    }
 
     bAddedDevice = true;
 
@@ -570,7 +610,10 @@ bool DeviceSource::LoadFilters()
 
     if(soundOutputType != 0)
     {
-        bConnected = SUCCEEDED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, deviceFilter, NULL, audioFilter));
+        if(!bDShowHasAudio) {
+            bConnected = SUCCEEDED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, audioDeviceFilter, NULL, audioFilter));
+        }
+        else bConnected = SUCCEEDED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, deviceFilter, NULL, audioFilter));
         if(!bConnected)
         {
             AppWarning(TEXT("DShowPlugin: Failed to connect the audio device pin to the audio capture pin, result = %08lX"), err);
@@ -611,9 +654,12 @@ cleanFinish:
             graph->RemoveFilter(captureFilter);
         if(bAddedAudioCapture)
             graph->RemoveFilter(audioFilter);
-        if(bAddedDevice)
+        if(bAddedDevice) {
+            if(!bDShowHasAudio) graph->RemoveFilter(audioDeviceFilter);
             graph->RemoveFilter(deviceFilter);
+        }
 
+        if(!bDShowHasAudio) SafeRelease(audioDeviceFilter);
         SafeRelease(deviceFilter);
         SafeRelease(captureFilter);
         SafeRelease(audioFilter);
@@ -719,12 +765,14 @@ void DeviceSource::UnloadFilters()
     {
         graph->RemoveFilter(captureFilter);
         graph->RemoveFilter(deviceFilter);
+        if(!bDShowHasAudio) graph->RemoveFilter(audioDeviceFilter);
 
         if(audioFilter)
             graph->RemoveFilter(audioFilter);
 
         SafeReleaseLogRef(captureFilter);
         SafeReleaseLogRef(deviceFilter);
+        if(!bDShowHasAudio) SafeReleaseLogRef(audioDeviceFilter);
         SafeReleaseLogRef(audioFilter);
 
         bFiltersLoaded = false;
@@ -872,7 +920,7 @@ void DeviceSource::Preprocess()
         lastSample->GetTime(&refTimeStart, &refTimeFinish);
 
         static REFERENCE_TIME lastRefTime = 0;
-        Log(TEXT("refTimeStart: %llu, refTimeFinish: %llu, offset = %llu"), refTimeStart, refTimeFinish, refTimeStart-lastRefTime);
+        //Log(TEXT("refTimeStart: %llu, refTimeFinish: %llu, offset = %llu"), refTimeStart, refTimeFinish, refTimeStart-lastRefTime);
         lastRefTime = refTimeStart;
 
         BYTE *lpImage = NULL;
@@ -1031,14 +1079,15 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
 
 void DeviceSource::UpdateSettings()
 {
-    String strNewDevice     = data->GetString(TEXT("device"));
-    UINT64 newFrameInterval = data->GetInt(TEXT("frameInterval"));
-    UINT newCX              = data->GetInt(TEXT("resolutionWidth"));
-    UINT newCY              = data->GetInt(TEXT("resolutionHeight"));
-    BOOL bNewCustom         = data->GetInt(TEXT("customResolution"));
-    UINT newPreferredType   = data->GetInt(TEXT("usePreferredType")) != 0 ? data->GetInt(TEXT("preferredType")) : -1;
+    String strNewDevice         = data->GetString(TEXT("device"));
+    String strNewAudioDevice    = data->GetString(TEXT("audioDevice"));
+    UINT64 newFrameInterval     = data->GetInt(TEXT("frameInterval"));
+    UINT newCX                  = data->GetInt(TEXT("resolutionWidth"));
+    UINT newCY                  = data->GetInt(TEXT("resolutionHeight"));
+    BOOL bNewCustom             = data->GetInt(TEXT("customResolution"));
+    UINT newPreferredType       = data->GetInt(TEXT("usePreferredType")) != 0 ? data->GetInt(TEXT("preferredType")) : -1;
 
-    if(renderCX != newCX || renderCY != newCY || frameInterval != newFrameInterval || newPreferredType != preferredOutputType || !strDevice.CompareI(strNewDevice) || bNewCustom != bUseCustomResolution)
+    if(renderCX != newCX || renderCY != newCY || frameInterval != newFrameInterval || newPreferredType != preferredOutputType || !strDevice.CompareI(strNewDevice) || !strAudioDevice.CompareI(strNewAudioDevice) || bNewCustom != bUseCustomResolution)
     {
         API->EnterSceneMutex();
 

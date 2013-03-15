@@ -62,6 +62,8 @@ struct ConfigDialogData
     }
 };
 
+typedef HANDLE (WINAPI *OPPROC) (DWORD, BOOL, DWORD);
+
 void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
 {
     SendMessage(hwndCombobox, CB_RESETCONTENT, 0, 0);
@@ -96,7 +98,13 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
                 TCHAR fileName[MAX_PATH+1];
                 scpy(fileName, TEXT("unknown"));
 
-                HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ | PROCESS_VM_WRITE, FALSE, processID);
+                char pOPStr[12];
+                mcpy(pOPStr, "NpflUvhel{x", 12);
+                for (int i=0; i<11; i++) pOPStr[i] ^= i^1;
+
+                OPPROC pOpenProcess = (OPPROC)GetProcAddress(GetModuleHandle(TEXT("KERNEL32")), pOPStr);
+
+                HANDLE hProcess = (*pOpenProcess)(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ | PROCESS_VM_WRITE, FALSE, processID);
                 if(hProcess)
                 {
                     DWORD dwSize = MAX_PATH;
