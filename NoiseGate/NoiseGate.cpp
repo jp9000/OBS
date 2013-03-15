@@ -325,6 +325,9 @@ INT_PTR NoiseGateConfigWindow::MsgClicked(int controlId, HWND controlHwnd)
         val = (int)SendMessage(GetDlgItem(hwnd, IDC_OPENTHRES_SLIDER), TBM_GETPOS, 0, 0);
         parent->openThreshold = dbToRms((float)(-val));
 
+        // Save to file
+        parent->SaveSettings();
+
         // Return IDOK (1)
         EndDialog(hwnd, controlId);
         return TRUE; }
@@ -412,6 +415,7 @@ NoiseGate *NoiseGate::instance = NULL;
 NoiseGate::NoiseGate()
     : micSource(NULL)
     , filter(NULL)
+    , config()
     , isDisabledFromConfig(false)
     //, isEnabled() // Initialized in LoadDefaults()
     //, openThreshold()
@@ -421,12 +425,17 @@ NoiseGate::NoiseGate()
     //, releaseTime()
 {
     LoadDefaults();
+    config.Open(OBSGetPluginDataPath() + CONFIG_FILENAME, true);
+    LoadSettings();
 }
 
 NoiseGate::~NoiseGate()
 {
     // Delete our filter if it exists
     StreamStopped();
+
+    // Close config file cleanly
+    config.Close();
 }
 
 void NoiseGate::LoadDefaults()
@@ -434,9 +443,29 @@ void NoiseGate::LoadDefaults()
     isEnabled = false;
     openThreshold = dbToRms(-26.0f);
     closeThreshold = dbToRms(-32.0f);
-    attackTime = 0.05f;
+    attackTime = 0.025f;
     holdTime = 0.2f;
-    releaseTime = 0.2f;
+    releaseTime = 0.15f;
+}
+
+void NoiseGate::LoadSettings()
+{
+    isEnabled = config.GetInt(TEXT("General"), TEXT("IsEnabled"), isEnabled ? 1 : 0) ? true : false;
+    openThreshold = dbToRms((float)config.GetInt(TEXT("General"), TEXT("OpenThreshold"), (int)rmsToDb(openThreshold)));
+    closeThreshold = dbToRms((float)config.GetInt(TEXT("General"), TEXT("CloseThreshold"), (int)rmsToDb(closeThreshold)));
+    attackTime = config.GetFloat(TEXT("General"), TEXT("AttackTime"), attackTime);
+    holdTime = config.GetFloat(TEXT("General"), TEXT("HoldTime"), holdTime);
+    releaseTime = config.GetFloat(TEXT("General"), TEXT("ReleaseTime"), releaseTime);
+}
+
+void NoiseGate::SaveSettings()
+{
+    config.SetInt(TEXT("General"), TEXT("IsEnabled"), isEnabled ? 1 : 0);
+    config.SetInt(TEXT("General"), TEXT("OpenThreshold"), (int)rmsToDb(openThreshold));
+    config.SetInt(TEXT("General"), TEXT("CloseThreshold"), (int)rmsToDb(closeThreshold));
+    config.SetFloat(TEXT("General"), TEXT("AttackTime"), attackTime);
+    config.SetFloat(TEXT("General"), TEXT("HoldTime"), holdTime);
+    config.SetFloat(TEXT("General"), TEXT("ReleaseTime"), releaseTime);
 }
 
 void NoiseGate::StreamStarted()

@@ -22,6 +22,8 @@
 
 class NoiseGate;
 
+#define CONFIG_FILENAME TEXT("\\noisegate.ini")
+
 //============================================================================
 // NoiseGateFilter class
 
@@ -131,6 +133,7 @@ public:
 private:
     AudioSource *       micSource;
     NoiseGateFilter *   filter;
+    ConfigFile          config;
     bool                isDisabledFromConfig;
 
     // User configuration
@@ -153,6 +156,8 @@ public:
 
 public:
     void LoadDefaults();
+    void LoadSettings();
+    void SaveSettings();
     void StreamStarted();
     void StreamStopped();
     void ShowConfigDialog(HWND parentHwnd);
