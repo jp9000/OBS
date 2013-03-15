@@ -872,7 +872,7 @@ void DeviceSource::Preprocess()
         lastSample->GetTime(&refTimeStart, &refTimeFinish);
 
         static REFERENCE_TIME lastRefTime = 0;
-        Log(TEXT("refTimeStart: %llu, refTimeFinish: %llu, offset = %llu"), refTimeStart, refTimeFinish, refTimeStart-lastRefTime);
+        //Log(TEXT("refTimeStart: %llu, refTimeFinish: %llu, offset = %llu"), refTimeStart, refTimeFinish, refTimeStart-lastRefTime);
         lastRefTime = refTimeStart;
 
         BYTE *lpImage = NULL;
