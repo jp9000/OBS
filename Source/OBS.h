@@ -581,8 +581,6 @@ class OBS
 
     HANDLE hAuxAudioMutex;
 
-    void ApplyNoiseGate(float *buffer, int totalFloats);
-
     //---------------------------------------------------
     // hotkey stuff
 
