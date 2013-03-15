@@ -53,8 +53,18 @@ NoiseGateFilter::~NoiseGateFilter()
 
 AudioSegment *NoiseGateFilter::Process(AudioSegment *segment)
 {
-    // We process even if the filter is disabled so that it's state is updated for when it gets enabled again
-    ApplyNoiseGate(segment->audioData.Array(), segment->audioData.Num());
+    if(parent->isEnabled)
+    {
+        ApplyNoiseGate(segment->audioData.Array(), segment->audioData.Num());
+    }
+    else
+    {
+        // Reset state
+        attenuation = 0.0f;
+        level = 0.0f;
+        heldTime = 0.0f;
+        isOpen = false;
+    }
     return segment;
 }
 
@@ -109,8 +119,10 @@ void NoiseGateFilter::ApplyNoiseGate(float *buffer, int totalFloats)
                 attenuation = max(0.0f, attenuation - releaseRate);
         }
 
-        // Multiple input by gate multiplier (0.0f if fully closed, 1.0f if fully open)
-        if(parent->isEnabled) {
+        // Test if disabled from the config window here so that the above state calculations
+        // are still processed when playing around with the configuration
+        if(!parent->isDisabledFromConfig) {
+            // Multiple input by gate multiplier (0.0f if fully closed, 1.0f if fully open)
             buffer[i] *= attenuation;
             buffer[i+1] *= attenuation;
         }
@@ -195,25 +207,26 @@ void NoiseGateConfigWindow::RepaintVolume()
     rms = max = peak = -96.0f;
     if(OBSGetStreaming())
         OBSGetCurMicVolumeStats(&rms, &max, &peak);
-    //SetWindowText(GetDlgItem(hwnd, IDC_OPENTHRES_DB), FormattedString(TEXT("%.3f"), rms));
-    //SetWindowText(GetDlgItem(hwnd, IDC_CLOSETHRES_DB), FormattedString(TEXT("%d"), (int)((rms + 96.0f) * 4.0f)));
-    SendMessage(GetDlgItem(hwnd, IDC_CURVOL), PBM_SETPOS, (int)((rms + 96.0f) * 4.0f), 0);
+    //SetWindowText(GetDlgItem(hwnd, IDC_OPENTHRES_DB), FormattedString(TEXT("%.3f"), max));
+    //SetWindowText(GetDlgItem(hwnd, IDC_CLOSETHRES_DB), FormattedString(TEXT("%d"), (int)((max + 96.0f) * 4.0f)));
+    SendMessage(GetDlgItem(hwnd, IDC_CURVOL), PBM_SETPOS, (int)((max + 96.0f) * 4.0f), 0);
 }
 
-void NoiseGateConfigWindow::MsgInitDialog()
+/**
+ * Reload the configuration settings from the main object. Useful for resetting to defaults.
+ */
+void NoiseGateConfigWindow::RefreshConfig()
 {
     float val;
     HWND ctrlHwnd;
 
-    LocalizeWindow(hwnd);
+    // Gate enabled
+    SendMessage(GetDlgItem(hwnd, IDC_ENABLEGATE), BM_SETCHECK, parent->isEnabled ? BST_CHECKED : BST_UNCHECKED, 0);
 
-    // Volume preview
-    // FIXME: Don't use a progress bar as the default Windows style smoothly interpolates between
-    //        values making if difficult to see the real sound level.
-    ctrlHwnd = GetDlgItem(hwnd, IDC_CURVOL);
-    SendMessage(ctrlHwnd, PBM_SETRANGE32, 0, CURVOL_RESOLUTION); // Bottom = 0, top = CURVOL_RESOLUTION
-    RepaintVolume(); // Repaint immediately
-    SetTimer(hwnd, REPAINT_TIMER_ID, 16, NULL); // Repaint every 16ms (~60fps)
+    // Attack, hold and release times
+    SetWindowText(GetDlgItem(hwnd, IDC_ATTACKTIME_EDIT), IntString((int)(parent->attackTime * 1000.0f)));
+    SetWindowText(GetDlgItem(hwnd, IDC_HOLDTIME_EDIT), IntString((int)(parent->holdTime * 1000.0f)));
+    SetWindowText(GetDlgItem(hwnd, IDC_RELEASETIME_EDIT), IntString((int)(parent->releaseTime * 1000.0f)));
 
     // Close threshold trackbar (Control uses positive values)
     val = rmsToDb(parent->closeThreshold);
@@ -230,11 +243,24 @@ void NoiseGateConfigWindow::MsgInitDialog()
     SendMessage(ctrlHwnd, TBM_SETRANGEMIN, FALSE, 0);
     SendMessage(ctrlHwnd, TBM_SETRANGEMAX, FALSE, 96);
     SendMessage(ctrlHwnd, TBM_SETPOS, TRUE, -(int)val);
+}
 
-    // Attack, hold and release times
-    SetWindowText(GetDlgItem(hwnd, IDC_ATTACKTIME_EDIT), IntString((int)(parent->attackTime * 1000.0f)));
-    SetWindowText(GetDlgItem(hwnd, IDC_HOLDTIME_EDIT), IntString((int)(parent->holdTime * 1000.0f)));
-    SetWindowText(GetDlgItem(hwnd, IDC_RELEASETIME_EDIT), IntString((int)(parent->releaseTime * 1000.0f)));
+void NoiseGateConfigWindow::MsgInitDialog()
+{
+    HWND ctrlHwnd;
+
+    LocalizeWindow(hwnd);
+
+    // Load settings from parent object
+    RefreshConfig();
+
+    // Volume preview
+    // FIXME: Don't use a progress bar as the default Windows style smoothly interpolates between
+    //        values making if difficult to see the real sound level.
+    ctrlHwnd = GetDlgItem(hwnd, IDC_CURVOL);
+    SendMessage(ctrlHwnd, PBM_SETRANGE32, 0, CURVOL_RESOLUTION); // Bottom = 0, top = CURVOL_RESOLUTION
+    RepaintVolume(); // Repaint immediately
+    SetTimer(hwnd, REPAINT_TIMER_ID, 16, NULL); // Repaint every 16ms (~60fps)
 
     // Enable/disable stream button
     ctrlHwnd = GetDlgItem(hwnd, IDC_PREVIEWON);
@@ -262,24 +288,67 @@ INT_PTR NoiseGateConfigWindow::MsgClicked(int controlId, HWND controlHwnd)
     default:
         // Unknown button
         break;
-    case IDOK:
+    case IDOK: {
+        String str;
+        int val;
+        HWND ctrlHwnd;
+
+        // Gate enabled
+        if(SendMessage(GetDlgItem(hwnd, IDC_ENABLEGATE), BM_GETCHECK, 0, 0) == BST_CHECKED)
+            parent->isEnabled = true;
+        else
+            parent->isEnabled = false;
+
+        // Attack time
+        ctrlHwnd = GetDlgItem(hwnd, IDC_ATTACKTIME_EDIT);
+        str.SetLength(GetWindowTextLength(ctrlHwnd));
+        GetWindowText(ctrlHwnd, str, str.Length() + 1);
+        parent->attackTime = (float)str.ToInt() * 0.001f;
+
+        // Hold time
+        ctrlHwnd = GetDlgItem(hwnd, IDC_HOLDTIME_EDIT);
+        str.SetLength(GetWindowTextLength(ctrlHwnd));
+        GetWindowText(ctrlHwnd, str, str.Length() + 1);
+        parent->holdTime = (float)str.ToInt() * 0.001f;
+
+        // Release time
+        ctrlHwnd = GetDlgItem(hwnd, IDC_RELEASETIME_EDIT);
+        str.SetLength(GetWindowTextLength(ctrlHwnd));
+        GetWindowText(ctrlHwnd, str, str.Length() + 1);
+        parent->releaseTime = (float)str.ToInt() * 0.001f;
+
+        // Close threshold
+        val = (int)SendMessage(GetDlgItem(hwnd, IDC_CLOSETHRES_SLIDER), TBM_GETPOS, 0, 0);
+        parent->closeThreshold = dbToRms((float)(-val));
+
+        // Open threshold
+        val = (int)SendMessage(GetDlgItem(hwnd, IDC_OPENTHRES_SLIDER), TBM_GETPOS, 0, 0);
+        parent->openThreshold = dbToRms((float)(-val));
+
+        // Return IDOK (1)
+        EndDialog(hwnd, controlId);
+        return TRUE; }
     case IDCANCEL:
-        EndDialog(hwnd, controlId); // Return IDOK (1) or IDCANCEL (2)
+        EndDialog(hwnd, controlId); // Return IDCANCEL (2)
         return TRUE;
     case IDC_PREVIEWON:
         // Toggle stream preview
         if(OBSGetStreaming())
         {
             OBSStartStopPreview();
-            parent->isEnabled = true;
+            parent->isDisabledFromConfig = false;
             SetWindowText(controlHwnd, Str("Plugins.NoiseGate.EnablePreview"));
         }
         else
         {
             OBSStartStopPreview();
-            parent->isEnabled = false;
+            parent->isDisabledFromConfig = true;
             SetWindowText(controlHwnd, Str("Plugins.NoiseGate.DisablePreview"));
         }
+        return TRUE;
+    case IDC_RESETTODEFAULTS:
+        parent->LoadDefaults();
+        RefreshConfig();
         return TRUE;
     }
 
@@ -343,19 +412,31 @@ NoiseGate *NoiseGate::instance = NULL;
 NoiseGate::NoiseGate()
     : micSource(NULL)
     , filter(NULL)
-    , isEnabled(true)
-    , openThreshold(0.05f) // FIXME: Configurable
-    , closeThreshold(0.005f)
-    , attackTime(0.1f)
-    , holdTime(0.2f)
-    , releaseTime(0.2f)
+    , isDisabledFromConfig(false)
+    //, isEnabled() // Initialized in LoadDefaults()
+    //, openThreshold()
+    //, closeThreshold()
+    //, attackTime()
+    //, holdTime()
+    //, releaseTime()
 {
+    LoadDefaults();
 }
 
 NoiseGate::~NoiseGate()
 {
     // Delete our filter if it exists
     StreamStopped();
+}
+
+void NoiseGate::LoadDefaults()
+{
+    isEnabled = false;
+    openThreshold = dbToRms(-26.0f);
+    closeThreshold = dbToRms(-32.0f);
+    attackTime = 0.05f;
+    holdTime = 0.2f;
+    releaseTime = 0.2f;
 }
 
 void NoiseGate::StreamStarted()
@@ -381,9 +462,9 @@ void NoiseGate::ShowConfigDialog(HWND parentHwnd)
 {
     NoiseGateConfigWindow dialog(this, parentHwnd);
     if(OBSGetStreaming())
-        isEnabled = false; // Disable the filter if we are currently streaming
+        isDisabledFromConfig = true; // Disable the filter if we are currently streaming
     dialog.Process();
-    isEnabled = true; // Force enable
+    isDisabledFromConfig = false; // Force enable
 }
 
 //============================================================================

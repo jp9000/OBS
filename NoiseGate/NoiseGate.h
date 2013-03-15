@@ -98,6 +98,7 @@ public:
 private:
     void SetTrackbarCaption(int controlId, int db);
     void RepaintVolume();
+    void RefreshConfig();
 
     //-----------------------------------------------------------------------
     // Message processing
@@ -130,6 +131,7 @@ public:
 private:
     AudioSource *       micSource;
     NoiseGateFilter *   filter;
+    bool                isDisabledFromConfig;
 
     // User configuration
     bool    isEnabled;
@@ -150,6 +152,7 @@ public:
     // Methods
 
 public:
+    void LoadDefaults();
     void StreamStarted();
     void StreamStopped();
     void ShowConfigDialog(HWND parentHwnd);

@@ -13,31 +13,35 @@
 // Dialog resources
 //
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_CONFIGURENOISEGATE DIALOG 0, 0, 246, 231
+IDD_CONFIGURENOISEGATE DIALOG 0, 0, 336, 230
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_VISIBLE | WS_POPUP | WS_SYSMENU
 CAPTION "Plugins.NoiseGate.ConfigureTitle"
 FONT 8, "Ms Shell Dlg"
 {
-    DEFPUSHBUTTON   "OK", IDOK, 126, 210, 54, 14
-    PUSHBUTTON      "Cancel", IDCANCEL, 186, 210, 54, 14
-    CONTROL         "", IDC_OPENTHRES_SLIDER, TRACKBAR_CLASS, WS_TABSTOP | TBS_VERT | TBS_BOTH | TBS_NOTICKS, 210, 36, 20, 145
-    CONTROL         "", IDC_CLOSETHRES_SLIDER, TRACKBAR_CLASS, WS_TABSTOP | TBS_VERT | TBS_BOTH | TBS_NOTICKS, 162, 36, 20, 145
-    CONTROL         "", IDC_CURVOL, PROGRESS_CLASS, PBS_VERTICAL, 186, 42, 15, 135
-    PUSHBUTTON      "Plugins.NoiseGate.EnablePreview", IDC_PREVIEWON, 150, 6, 90, 14
-    CTEXT           "Plugins.NoiseGate.CloseThreshold", IDC_STATIC, 150, 186, 42, 20, SS_CENTER
-    CTEXT           "Plugins.NoiseGate.OpenThreshold", IDC_STATIC, 198, 186, 42, 20, SS_CENTER
-    RTEXT           "Plugins.NoiseGate.AttackTime", IDC_STATIC, 6, 96, 72, 8, SS_RIGHT
-    RTEXT           "Plugins.NoiseGate.HoldTime", IDC_STATIC, 6, 114, 72, 8, SS_RIGHT
-    RTEXT           "Plugins.NoiseGate.ReleaseTime", IDC_STATIC, 6, 132, 72, 8, SS_RIGHT
-    EDITTEXT        IDC_ATTACKTIME_EDIT, 84, 90, 42, 14, ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        IDC_HOLDTIME_EDIT, 84, 108, 42, 14, ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        IDC_RELEASETIME_EDIT, 84, 126, 42, 14, ES_AUTOHSCROLL | ES_NUMBER
-    LTEXT           "ms", IDC_STATIC, 132, 132, 10, 8, SS_LEFT
-    LTEXT           "ms", IDC_STATIC, 132, 114, 10, 8, SS_LEFT
-    LTEXT           "ms", IDC_STATIC, 132, 96, 10, 8, SS_LEFT
-    CTEXT           "0 dB", IDC_CLOSETHRES_DB, 156, 30, 30, 8, SS_CENTER
-    PUSHBUTTON      "Plugins.NoiseGate.RevertToDefaults", IDC_REVERTDEFAULTS, 6, 210, 84, 14
-    CTEXT           "0 dB", IDC_OPENTHRES_DB, 204, 30, 30, 8, SS_CENTER
-    RTEXT           "Plugins.NoiseGate.EnableNoiseGate", IDC_STATIC, 6, 78, 72, 8, SS_RIGHT
-    AUTOCHECKBOX    "", IDC_ENABLEGATE, 84, 78, 12, 8
+    DEFPUSHBUTTON   "OK", IDOK, 216, 210, 54, 14
+    PUSHBUTTON      "Cancel", IDCANCEL, 276, 210, 54, 14
+    CONTROL         "", IDC_OPENTHRES_SLIDER, TRACKBAR_CLASS, WS_TABSTOP | TBS_VERT | TBS_BOTH | TBS_NOTICKS, 72, 48, 20, 145
+    CONTROL         "", IDC_CLOSETHRES_SLIDER, TRACKBAR_CLASS, WS_TABSTOP | TBS_VERT | TBS_BOTH | TBS_NOTICKS, 24, 48, 20, 145
+    CONTROL         "", IDC_CURVOL, PROGRESS_CLASS, PBS_VERTICAL, 48, 54, 15, 135
+    PUSHBUTTON      "Plugins.NoiseGate.EnablePreview", IDC_PREVIEWON, 12, 18, 90, 14
+    CTEXT           "Plugins.NoiseGate.CloseThreshold", IDC_STATIC, 12, 198, 42, 18, SS_CENTER
+    CTEXT           "Plugins.NoiseGate.OpenThreshold", IDC_STATIC, 60, 198, 42, 18, SS_CENTER
+    RTEXT           "Plugins.NoiseGate.AttackTime", IDC_STATIC, 132, 36, 78, 8, SS_RIGHT
+    RTEXT           "Plugins.NoiseGate.HoldTime", IDC_STATIC, 132, 54, 78, 8, SS_RIGHT
+    RTEXT           "Plugins.NoiseGate.ReleaseTime", IDC_STATIC, 132, 72, 78, 8, SS_RIGHT
+    EDITTEXT        IDC_ATTACKTIME_EDIT, 216, 30, 42, 14, ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_HOLDTIME_EDIT, 216, 48, 42, 14, ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_RELEASETIME_EDIT, 216, 66, 42, 14, ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "ms", IDC_STATIC, 264, 72, 10, 8, SS_LEFT
+    LTEXT           "ms", IDC_STATIC, 264, 54, 10, 8, SS_LEFT
+    LTEXT           "ms", IDC_STATIC, 264, 36, 10, 8, SS_LEFT
+    PUSHBUTTON      "Plugins.NoiseGate.ResetToDefaults", IDC_RESETTODEFAULTS, 114, 210, 78, 14
+    CTEXT           "0 dB", IDC_OPENTHRES_DB, 66, 36, 30, 8, SS_CENTER
+    RTEXT           "Plugins.NoiseGate.EnableNoiseGate", IDC_STATIC, 132, 18, 78, 8, SS_RIGHT
+    AUTOCHECKBOX    "", IDC_ENABLEGATE, 216, 18, 12, 8
+    CTEXT           "0 dB", IDC_CLOSETHRES_DB, 18, 36, 30, 8, SS_CENTER
+    GROUPBOX        "Plugins.NoiseGate.General", IDC_STATIC, 114, 6, 216, 84
+    GROUPBOX        "Plugins.NoiseGate.Thresholds", IDC_STATIC, 6, 6, 102, 216
+    GROUPBOX        "Plugins.NoiseGate.Help", IDC_STATIC, 114, 96, 216, 108
+    LTEXT           "Plugins.NoiseGate.HelpText", IDC_STATIC, 120, 108, 204, 90, SS_LEFT
 }
