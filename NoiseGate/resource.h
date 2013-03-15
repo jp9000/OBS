@@ -3,6 +3,7 @@
 #endif
 
 #define IDD_CONFIGURENOISEGATE                  101
+#define IDC_ENABLEGATE                          1001
 #define IDC_CURVOL                              1007
 #define IDC_PREVIEWON                           1010
 #define IDC_CLOSETHRES_SLIDER                   1018
