@@ -136,3 +136,6 @@ AudioSource* OBSGetAuxAudioSource(UINT id)  {return API->GetAuxAudioSource(id);}
 
 AudioSource* OBSGetDesktopAudioSource()     {return API->GetDesktopAudioSource();}
 AudioSource* OBSGetMicAudioSource()         {return API->GetMicAudioSource();}
+
+void OBSGetCurDesktopVolumeStats(float *rms, float *max, float *peak)   {API->GetCurDesktopVolumeStats(rms, max, peak);}
+void OBSGetCurMicVolumeStats(float *rms, float *max, float *peak)       {API->GetCurMicVolumeStats(rms, max, peak);}

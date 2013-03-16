@@ -25,13 +25,15 @@ float minLinear;
 
 struct VolumeMeterData
 {
-    float curVolume, curMax, curPeak;
+    float curTopVolume, curTopMax, curTopPeak;
+    float curBotVolume, curBotMax, curBotPeak;
     float graduations[16];
 
     DWORD drawColor;
     long  cx,cy;
     HBRUSH  hRed, hGreen,hGreenDark, hBlack, hGray, hLightGray;
 
+    void DrawSingleBar(HDC hDC, LONG x, LONG y, LONG w, LONG h, float rmsScale, float maxScale, float peakScale, bool peakMaxed);
     void DrawVolumeMeter(HDC hDC);
 };
 
@@ -46,23 +48,28 @@ inline VolumeMeterData* GetVolumeMeterData(HWND hwnd)
     return (VolumeMeterData*)GetWindowLongPtr(hwnd, 0);
 }
 
-float SetVolumeMeterValue(HWND hwnd, float fVal, float fMax, float fPeak)
+float SetVolumeMeterValue(HWND hwnd, float fTopVal, float fTopMax, float fTopPeak, float fBotVal, float fBotMax, float fBotPeak)
 {
     VolumeMeterData *meter = GetVolumeMeterData(hwnd);
     if(!meter)
         CrashError(TEXT("SetVolumeMeterValue called on a control that's not a volume control"));
 
-    float lastVal = meter->curVolume;
+    float lastBotVal = meter->curBotVolume;
 
-    meter->curVolume = fVal;
-    meter->curMax = max(VOL_MIN, fMax);
-    meter->curPeak = fPeak;
+    meter->curTopVolume = fTopVal;
+    meter->curTopMax = max(VOL_MIN, fTopMax);
+    meter->curTopPeak = fTopPeak;
+
+    // Use the same values as the top bar if the bottom bar wasn't specified
+    meter->curBotVolume = fBotVal == FLT_MIN ? fTopVal : fBotVal;
+    meter->curBotMax = max(VOL_MIN, fBotMax == FLT_MIN ? fTopMax : fBotMax);
+    meter->curBotPeak = fBotPeak == FLT_MIN ? fTopPeak : fBotPeak;
 
     HDC hDC = GetDC(hwnd);
     meter->DrawVolumeMeter(hDC);
     ReleaseDC(hwnd, hDC);
 
-    return lastVal;
+    return lastBotVal;
 }
 
 LRESULT CALLBACK VolumeMeterProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -79,9 +86,13 @@ LRESULT CALLBACK VolumeMeterProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                 zero(meter, sizeof(VolumeMeterData));
                 SetWindowLongPtr(hwnd, 0, (LONG_PTR)meter);
 
-                meter->curVolume = VOL_MIN;
-                meter->curMax = VOL_MIN;
-                meter->curPeak = VOL_MIN;
+                meter->curTopVolume = VOL_MIN;
+                meter->curTopMax = VOL_MIN;
+                meter->curTopPeak = VOL_MIN;
+
+                meter->curBotVolume = VOL_MIN;
+                meter->curBotMax = VOL_MIN;
+                meter->curBotPeak = VOL_MIN;
                 
                 meter->cx = pCreateData->cx;
                 meter->cy = pCreateData->cy;
@@ -151,57 +162,73 @@ LRESULT CALLBACK VolumeMeterProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
     return 0;
 }
 
-void VolumeMeterData::DrawVolumeMeter(HDC hDC)
+void VolumeMeterData::DrawSingleBar(HDC hDC, LONG x, LONG y, LONG w, LONG h, float rmsScale, float maxScale, float peakScale, bool peakMaxed)
 {
-    HDC hdcTemp = CreateCompatibleDC(hDC);
-    HBITMAP hbmpTemp = CreateCompatibleBitmap(hDC, cx, cy);
-    SelectObject(hdcTemp, hbmpTemp);
+    // Draw background area
+    RECT meterGray = {0, y, x + w, y + h};
+    FillRect(hDC, &meterGray, hLightGray);
 
-    RECT clientRect = {0, 0, cx, cy};
-    FillRect(hdcTemp, &clientRect, (HBRUSH)COLOR_WINDOW);
+    // Fill the area below the RMS value with a solid color
+    RECT meterRMS = {0, y, x + (LONG)(w * rmsScale), y + h};
+    FillRect(hDC, &meterRMS, hGreenDark);
 
-    int cxAdjust = cx;
-    
-    const int padding = 1;
-
-    /* bound volume values */
-    float workingVol = max(VOL_MIN, curVolume);
-    workingVol = min(VOL_MAX, workingVol);
-    float workingMax = max(VOL_MIN, curMax);
-    workingMax = min(VOL_MAX, workingMax);
-
-    /* convert dB to logarithmic then to linear scale [0, 1] */
-    float rmsScale = (DBtoLog(workingVol) - minLinear) / (maxLinear - minLinear);
-    float maxScale = (DBtoLog(workingMax) - minLinear) / (maxLinear - minLinear);
-
-    LONG yStart = 0, yEnd = cy - 5;
-    RECT meterRMS = {0, yStart, (LONG)(cx * rmsScale), yEnd};
-    RECT meterGray = {0, 0, cx, yEnd};
-    
-    FillRect(hdcTemp, &meterGray, hLightGray);
-    FillRect(hdcTemp, &meterRMS, hGreenDark);
-
-    /* gradient info setup */
-    TRIVERTEX        vert[2] ;
+    // Draw a gradient between RMS and max values
+    TRIVERTEX        vert[2];
     GRADIENT_RECT    gRect;
-    vert [0] .x      = (LONG)(cx * rmsScale);
-    vert [0] .y      = 0;
+    vert [0] .x      = x + (LONG)(w * rmsScale);
+    vert [0] .y      = y;
     vert [0] .Red    = 0x2000;
     vert [0] .Green  = 0x7d00;
     vert [0] .Blue   = 0x1700;
     vert [0] .Alpha  = 0x0000;
-    vert [1] .x      = (LONG)(cx * maxScale);
-    vert [1] .y      = yEnd; 
+    vert [1] .x      = x + (LONG)(w * maxScale);
+    vert [1] .y      = y + h;
     vert [1] .Red    = 0x3e00;
     vert [1] .Green  = 0xf100;
     vert [1] .Blue   = 0x2b00;
     vert [1] .Alpha  = 0x0000;
     gRect.UpperLeft  = 0;
     gRect.LowerRight = 1;
-    GdiGradientFill(hdcTemp,vert,2,&gRect,1,GRADIENT_FILL_RECT_H);
+    GdiGradientFill(hDC, vert, 2, &gRect, 1, GRADIENT_FILL_RECT_H);
 
-    
-    
+    // Draw peak sample indicator
+    if(peakMaxed)
+        peakScale = 1.0f;
+    RECT graduation = {x + (LONG)(w * peakScale) - ((peakMaxed)?1:0), y, x + ((LONG)(w * peakScale)) + 1, y + h};
+    FillRect(hDC, &graduation, (peakMaxed)?hRed:hBlack);
+}
+
+void VolumeMeterData::DrawVolumeMeter(HDC hDC)
+{
+    HDC hdcTemp = CreateCompatibleDC(hDC);
+    HBITMAP hbmpTemp = CreateCompatibleBitmap(hDC, cx, cy);
+    SelectObject(hdcTemp, hbmpTemp);
+
+    // Fill background with the window color
+    RECT clientRect = {0, 0, cx, cy};
+    FillRect(hdcTemp, &clientRect, (HBRUSH)COLOR_WINDOW);
+
+    float workVol, workMax, rmsScale, maxScale, peakScale;
+    bool peakMaxed;
+
+    // Draw top bar
+    workVol = min(VOL_MAX, max(VOL_MIN, curTopVolume)); // Bound volume levels
+    workMax = min(VOL_MAX, max(VOL_MIN, curTopMax));
+    rmsScale = (DBtoLog(workVol) - minLinear) / (maxLinear - minLinear); // Convert dB to logarithmic then to linear scale [0, 1]
+    maxScale = (DBtoLog(workMax) - minLinear) / (maxLinear - minLinear);
+    peakScale = (DBtoLog(curTopPeak) - minLinear) / (maxLinear - minLinear);
+    peakMaxed = curTopPeak >= 0.0f;
+    DrawSingleBar(hdcTemp, 0, 0, cx, 2, rmsScale, maxScale, peakScale, peakMaxed);
+
+    // Draw bottom bar
+    workVol = min(VOL_MAX, max(VOL_MIN, curBotVolume)); // Bound volume levels
+    workMax = min(VOL_MAX, max(VOL_MIN, curBotMax));
+    rmsScale = (DBtoLog(workVol) - minLinear) / (maxLinear - minLinear); // Convert dB to logarithmic then to linear scale [0, 1]
+    maxScale = (DBtoLog(workMax) - minLinear) / (maxLinear - minLinear);
+    peakScale = (DBtoLog(curBotPeak) - minLinear) / (maxLinear - minLinear);
+    peakMaxed = curBotPeak >= 0.0f;
+    DrawSingleBar(hdcTemp, 0, 2, cx, cy - 5 - 2, rmsScale, maxScale, peakScale, peakMaxed);
+
     /* draw 6dB graduations */
     for(int i = 0; i < 16; i++)
     {
@@ -209,14 +236,6 @@ void VolumeMeterData::DrawVolumeMeter(HDC hDC)
         RECT graduation = {(LONG)(cx * scale), cy - 4, ((LONG)(cx * scale)) + 1, cy};
         FillRect(hdcTemp, &graduation, hGray);
     }
-    
-    /* draw peak sample indicator */
-    float peakScale = (DBtoLog(curPeak) - minLinear) / (maxLinear - minLinear);
-    bool maxxed = curPeak >= 0;
-    if(maxxed)
-        peakScale = 1.0f;
-    RECT graduation = {(LONG)(cx * peakScale) - ((maxxed)?1:0), 0, ((LONG)(cx * peakScale)) + 1, cy};
-    FillRect(hdcTemp, &graduation, (maxxed)?hRed:hBlack);
 
     BitBlt(hDC, 0, 0, cx, cy, hdcTemp, 0, 0, SRCCOPY);
 

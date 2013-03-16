@@ -35,6 +35,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GraphicsCaptureHook", "Grap
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "injectHelper", "injectHelper\injectHelper.vcxproj", "{E03BF070-E830-46BB-8442-5771F7E5F301}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NoiseGate", "NoiseGate\NoiseGate.vcxproj", "{5465C79D-01DF-406C-AB2D-9C0764917131}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -115,6 +117,12 @@ Global
 		{E03BF070-E830-46BB-8442-5771F7E5F301}.Release|Win32.Build.0 = Release|Win32
 		{E03BF070-E830-46BB-8442-5771F7E5F301}.Release|x64.ActiveCfg = Release|x64
 		{E03BF070-E830-46BB-8442-5771F7E5F301}.Release|x64.Build.0 = Release|x64
+		{5465C79D-01DF-406C-AB2D-9C0764917131}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5465C79D-01DF-406C-AB2D-9C0764917131}.Debug|Win32.Build.0 = Debug|Win32
+		{5465C79D-01DF-406C-AB2D-9C0764917131}.Debug|x64.ActiveCfg = Debug|Win32
+		{5465C79D-01DF-406C-AB2D-9C0764917131}.Release|Win32.ActiveCfg = Release|Win32
+		{5465C79D-01DF-406C-AB2D-9C0764917131}.Release|Win32.Build.0 = Release|Win32
+		{5465C79D-01DF-406C-AB2D-9C0764917131}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
