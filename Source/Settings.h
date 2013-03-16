@@ -49,7 +49,7 @@ public:
 public:
     // Interface
     virtual CTSTR GetCategory() const;
-    virtual HWND CreatePane(HINSTANCE hInstance, HWND parentHwnd);
+    virtual HWND CreatePane(HWND parentHwnd);
     virtual void DestroyPane();
     virtual INT_PTR ProcMessage(UINT message, WPARAM wParam, LPARAM lParam);
     virtual void ApplySettings();
@@ -74,7 +74,7 @@ public:
 public:
     // Interface
     virtual CTSTR GetCategory() const;
-    virtual HWND CreatePane(HINSTANCE hInstance, HWND parentHwnd);
+    virtual HWND CreatePane(HWND parentHwnd);
     virtual void DestroyPane();
     virtual INT_PTR ProcMessage(UINT message, WPARAM wParam, LPARAM lParam);
     virtual void ApplySettings();
@@ -116,7 +116,7 @@ public:
 public:
     // Interface
     virtual CTSTR GetCategory() const;
-    virtual HWND CreatePane(HINSTANCE hInstance, HWND parentHwnd);
+    virtual HWND CreatePane(HWND parentHwnd);
     virtual void DestroyPane();
     virtual INT_PTR ProcMessage(UINT message, WPARAM wParam, LPARAM lParam);
     virtual void ApplySettings();
@@ -144,7 +144,7 @@ private:
 public:
     // Interface
     virtual CTSTR GetCategory() const;
-    virtual HWND CreatePane(HINSTANCE hInstance, HWND parentHwnd);
+    virtual HWND CreatePane(HWND parentHwnd);
     virtual void DestroyPane();
     virtual INT_PTR ProcMessage(UINT message, WPARAM wParam, LPARAM lParam);
     virtual void ApplySettings();
@@ -186,7 +186,7 @@ public:
 public:
     // Interface
     virtual CTSTR GetCategory() const;
-    virtual HWND CreatePane(HINSTANCE hInstance, HWND parentHwnd);
+    virtual HWND CreatePane(HWND parentHwnd);
     virtual void DestroyPane();
     virtual INT_PTR ProcMessage(UINT message, WPARAM wParam, LPARAM lParam);
     virtual void ApplySettings();
@@ -211,7 +211,7 @@ public:
 public:
     // Interface
     virtual CTSTR GetCategory() const;
-    virtual HWND CreatePane(HINSTANCE hInstance, HWND parentHwnd);
+    virtual HWND CreatePane(HWND parentHwnd);
     virtual void DestroyPane();
     virtual INT_PTR ProcMessage(UINT message, WPARAM wParam, LPARAM lParam);
     virtual void ApplySettings();

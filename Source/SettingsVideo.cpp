@@ -73,9 +73,9 @@ CTSTR SettingsVideo::GetCategory() const
     return name;
 }
 
-HWND SettingsVideo::CreatePane(HINSTANCE hInstance, HWND parentHwnd)
+HWND SettingsVideo::CreatePane(HWND parentHwnd)
 {
-    hwnd = CreateDialogParam(hInstance, MAKEINTRESOURCE(IDD_SETTINGS_VIDEO), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
+    hwnd = CreateDialogParam(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_VIDEO), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
     return hwnd;
 }
 

@@ -130,69 +130,86 @@ void NoiseGateFilter::ApplyNoiseGate(float *buffer, int totalFloats)
 }
 
 //============================================================================
-// NoiseGateConfigWindow class
+// NoiseGateSettings class
 
-NoiseGateConfigWindow::NoiseGateConfigWindow(NoiseGate *parent, HWND parentHwnd)
-    : parent(parent)
-    , parentHwnd(parentHwnd)
-    , hwnd(NULL)
+NoiseGateSettings::NoiseGateSettings(NoiseGate *parent)
+    : SettingsPane()
+    , parent(parent)
 {
 }
 
-NoiseGateConfigWindow::~NoiseGateConfigWindow()
+NoiseGateSettings::~NoiseGateSettings()
 {
 }
 
-INT_PTR CALLBACK NoiseGateConfigWindow::DialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+CTSTR NoiseGateSettings::GetCategory() const
 {
-    // Get the pointer to our class instance
-    NoiseGateConfigWindow *window = (NoiseGateConfigWindow *)GetWindowLongPtr(hwnd, DWLP_USER);
-
-    switch(message)
-    {
-    default:
-        // Unhandled
-        break;
-    case WM_INITDIALOG:
-        SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
-        window = (NoiseGateConfigWindow *)lParam;
-        window->hwnd = hwnd;
-        window->MsgInitDialog();
-        return TRUE;
-    case WM_COMMAND:
-        if(window != NULL)
-            return window->MsgClicked(LOWORD(wParam), (HWND)lParam);
-        break;
-    case WM_VSCROLL:
-    case WM_HSCROLL:
-        if(window != NULL)
-            return window->MsgScroll(message == WM_VSCROLL, wParam, lParam);
-        break;
-    case WM_TIMER:
-        if(window != NULL)
-            return window->MsgTimer((int)wParam);
-        break;
-    }
-
-    return FALSE;
+    static CTSTR name = Str("Plugins.NoiseGate.PluginName");
+    return name;
 }
 
-/**
- * Display the dialog and begin its message loop. Returns \t{true} if the
- * user clicked the "OK" button.
- */
-bool NoiseGateConfigWindow::Process()
+HWND NoiseGateSettings::CreatePane(HWND parentHwnd)
 {
-    INT_PTR res = DialogBoxParam(parent->hinstDLL, MAKEINTRESOURCE(IDD_CONFIGURENOISEGATE), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
-    if(res == IDOK)
-        return true;
-    return false;
+    hwnd = CreateDialogParam(NoiseGate::hinstDLL, MAKEINTRESOURCE(IDD_CONFIGURENOISEGATE), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
+    return hwnd;
+}
+
+void NoiseGateSettings::DestroyPane()
+{
+    DestroyWindow(hwnd);
+    hwnd = NULL;
+}
+
+void NoiseGateSettings::ApplySettings()
+{
+    String str;
+    int val;
+    HWND ctrlHwnd;
+
+    // Gate enabled
+    if(SendMessage(GetDlgItem(hwnd, IDC_ENABLEGATE), BM_GETCHECK, 0, 0) == BST_CHECKED)
+        parent->isEnabled = true;
+    else
+        parent->isEnabled = false;
+
+    // Attack time
+    ctrlHwnd = GetDlgItem(hwnd, IDC_ATTACKTIME_EDIT);
+    str.SetLength(GetWindowTextLength(ctrlHwnd));
+    GetWindowText(ctrlHwnd, str, str.Length() + 1);
+    parent->attackTime = (float)str.ToInt() * 0.001f;
+
+    // Hold time
+    ctrlHwnd = GetDlgItem(hwnd, IDC_HOLDTIME_EDIT);
+    str.SetLength(GetWindowTextLength(ctrlHwnd));
+    GetWindowText(ctrlHwnd, str, str.Length() + 1);
+    parent->holdTime = (float)str.ToInt() * 0.001f;
+
+    // Release time
+    ctrlHwnd = GetDlgItem(hwnd, IDC_RELEASETIME_EDIT);
+    str.SetLength(GetWindowTextLength(ctrlHwnd));
+    GetWindowText(ctrlHwnd, str, str.Length() + 1);
+    parent->releaseTime = (float)str.ToInt() * 0.001f;
+
+    // Close threshold
+    val = (int)SendMessage(GetDlgItem(hwnd, IDC_CLOSETHRES_SLIDER), TBM_GETPOS, 0, 0);
+    parent->closeThreshold = dbToRms((float)(-val));
+
+    // Open threshold
+    val = (int)SendMessage(GetDlgItem(hwnd, IDC_OPENTHRES_SLIDER), TBM_GETPOS, 0, 0);
+    parent->openThreshold = dbToRms((float)(-val));
+
+    // Save to file
+    parent->SaveSettings();
+}
+
+void NoiseGateSettings::CancelSettings()
+{
 }
 
 /**
  * Sets the caption of the open and close threshold trackbars ("-24 dB")
  */
-void NoiseGateConfigWindow::SetTrackbarCaption(int controlId, int db)
+void NoiseGateSettings::SetTrackbarCaption(int controlId, int db)
 {
     SetWindowText(GetDlgItem(hwnd, controlId), FormattedString(TEXT("%d dB"), db));
 }
@@ -200,7 +217,7 @@ void NoiseGateConfigWindow::SetTrackbarCaption(int controlId, int db)
 /**
  * Updates the current audio volume control.
  */
-void NoiseGateConfigWindow::RepaintVolume()
+void NoiseGateSettings::RepaintVolume()
 {
     float rms, max, peak;
 
@@ -215,7 +232,7 @@ void NoiseGateConfigWindow::RepaintVolume()
 /**
  * Reload the configuration settings from the main object. Useful for resetting to defaults.
  */
-void NoiseGateConfigWindow::RefreshConfig()
+void NoiseGateSettings::RefreshConfig()
 {
     float val;
     HWND ctrlHwnd;
@@ -245,9 +262,34 @@ void NoiseGateConfigWindow::RefreshConfig()
     SendMessage(ctrlHwnd, TBM_SETPOS, TRUE, -(int)val);
 }
 
-void NoiseGateConfigWindow::MsgInitDialog()
+INT_PTR NoiseGateSettings::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch(message)
+    {
+    case WM_INITDIALOG:
+        MsgInitDialog();
+        return TRUE;
+    case WM_DESTROY:
+        MsgDestroy();
+        return TRUE;
+    case WM_COMMAND:
+        return MsgClicked(LOWORD(wParam), HIWORD(wParam), (HWND)lParam);
+    case WM_VSCROLL:
+    case WM_HSCROLL:
+        return MsgScroll(message == WM_VSCROLL, wParam, lParam);
+    case WM_TIMER:
+        return MsgTimer((int)wParam);
+    }
+    return FALSE;
+}
+
+void NoiseGateSettings::MsgInitDialog()
 {
     HWND ctrlHwnd;
+
+    // Disable the filter if we are currently streaming
+    if(OBSGetStreaming())
+        parent->isDisabledFromConfig = true;
 
     LocalizeWindow(hwnd);
 
@@ -279,61 +321,33 @@ void NoiseGateConfigWindow::MsgInitDialog()
         SetWindowText(ctrlHwnd, Str("Plugins.NoiseGate.EnablePreview"));
         EnableWindow(ctrlHwnd, TRUE);
     }
+
+    SetChangedSettings(false);
 }
 
-INT_PTR NoiseGateConfigWindow::MsgClicked(int controlId, HWND controlHwnd)
+void NoiseGateSettings::MsgDestroy()
+{
+    // Make sure the filter is enabled again
+    parent->isDisabledFromConfig = false;
+}
+
+INT_PTR NoiseGateSettings::MsgClicked(int controlId, int code, HWND controlHwnd)
 {
     switch(controlId)
     {
     default:
         // Unknown button
         break;
-    case IDOK: {
-        String str;
-        int val;
-        HWND ctrlHwnd;
-
-        // Gate enabled
-        if(SendMessage(GetDlgItem(hwnd, IDC_ENABLEGATE), BM_GETCHECK, 0, 0) == BST_CHECKED)
-            parent->isEnabled = true;
-        else
-            parent->isEnabled = false;
-
-        // Attack time
-        ctrlHwnd = GetDlgItem(hwnd, IDC_ATTACKTIME_EDIT);
-        str.SetLength(GetWindowTextLength(ctrlHwnd));
-        GetWindowText(ctrlHwnd, str, str.Length() + 1);
-        parent->attackTime = (float)str.ToInt() * 0.001f;
-
-        // Hold time
-        ctrlHwnd = GetDlgItem(hwnd, IDC_HOLDTIME_EDIT);
-        str.SetLength(GetWindowTextLength(ctrlHwnd));
-        GetWindowText(ctrlHwnd, str, str.Length() + 1);
-        parent->holdTime = (float)str.ToInt() * 0.001f;
-
-        // Release time
-        ctrlHwnd = GetDlgItem(hwnd, IDC_RELEASETIME_EDIT);
-        str.SetLength(GetWindowTextLength(ctrlHwnd));
-        GetWindowText(ctrlHwnd, str, str.Length() + 1);
-        parent->releaseTime = (float)str.ToInt() * 0.001f;
-
-        // Close threshold
-        val = (int)SendMessage(GetDlgItem(hwnd, IDC_CLOSETHRES_SLIDER), TBM_GETPOS, 0, 0);
-        parent->closeThreshold = dbToRms((float)(-val));
-
-        // Open threshold
-        val = (int)SendMessage(GetDlgItem(hwnd, IDC_OPENTHRES_SLIDER), TBM_GETPOS, 0, 0);
-        parent->openThreshold = dbToRms((float)(-val));
-
-        // Save to file
-        parent->SaveSettings();
-
-        // Return IDOK (1)
-        EndDialog(hwnd, controlId);
-        return TRUE; }
-    case IDCANCEL:
-        EndDialog(hwnd, controlId); // Return IDCANCEL (2)
-        return TRUE;
+    case IDC_ATTACKTIME_EDIT:
+    case IDC_HOLDTIME_EDIT:
+    case IDC_RELEASETIME_EDIT:
+        if(code == EN_CHANGE) // Modified the text box
+            SetChangedSettings(true);
+        break;
+    case IDC_ENABLEGATE:
+        if(code == BN_CLICKED) // Changed the check box
+            SetChangedSettings(true);
+        break;
     case IDC_PREVIEWON:
         // Toggle stream preview
         if(OBSGetStreaming())
@@ -350,16 +364,20 @@ INT_PTR NoiseGateConfigWindow::MsgClicked(int controlId, HWND controlHwnd)
         }
         return TRUE;
     case IDC_RESETTODEFAULTS:
-        parent->LoadDefaults();
-        RefreshConfig();
+        // Display message box as resetting to defaults overrides our settings in memory
+        if(MessageBox(hwnd, Str("Plugins.NoiseGate.ConfirmReset"), Str("Plugins.NoiseGate.ResetToDefaults"), MB_YESNO) == IDYES) {
+            parent->LoadDefaults();
+            RefreshConfig();
+            parent->SaveSettings(); // Be consistent by also writing to file
+            SetChangedSettings(false);
+        }
         return TRUE;
     }
 
     return FALSE;
 }
 
-
-INT_PTR NoiseGateConfigWindow::MsgScroll(bool vertical, WPARAM wParam, LPARAM lParam)
+INT_PTR NoiseGateSettings::MsgScroll(bool vertical, WPARAM wParam, LPARAM lParam)
 {
     if(lParam == NULL)
         return FALSE;
@@ -383,19 +401,21 @@ INT_PTR NoiseGateConfigWindow::MsgScroll(bool vertical, WPARAM wParam, LPARAM lP
     {
         // User modified the close threshold trackbar
         SetTrackbarCaption(IDC_CLOSETHRES_DB, pos);
+        SetChangedSettings(true);
         return TRUE;
     }
     else if(barHwnd == GetDlgItem(hwnd, IDC_OPENTHRES_SLIDER))
     {
         // User modified the open threshold trackbar
         SetTrackbarCaption(IDC_OPENTHRES_DB, pos);
+        SetChangedSettings(true);
         return TRUE;
     }
 
     return FALSE;
 }
 
-INT_PTR NoiseGateConfigWindow::MsgTimer(int timerId)
+INT_PTR NoiseGateSettings::MsgTimer(int timerId)
 {
     if(timerId == REPAINT_TIMER_ID)
     {
@@ -415,6 +435,7 @@ NoiseGate *NoiseGate::instance = NULL;
 NoiseGate::NoiseGate()
     : micSource(NULL)
     , filter(NULL)
+    , settings(NULL)
     , config()
     , isDisabledFromConfig(false)
     //, isEnabled() // Initialized in LoadDefaults()
@@ -427,12 +448,20 @@ NoiseGate::NoiseGate()
     LoadDefaults();
     config.Open(OBSGetPluginDataPath() + CONFIG_FILENAME, true);
     LoadSettings();
+
+    // Create settings pane
+    settings = new NoiseGateSettings(this);
+    OBSAddSettingsPane(settings);
 }
 
 NoiseGate::~NoiseGate()
 {
     // Delete our filter if it exists
     StreamStopped();
+
+    // Delete settings pane
+    OBSRemoveSettingsPane(settings);
+    delete settings;
 
     // Close config file cleanly
     config.Close();
@@ -487,15 +516,6 @@ void NoiseGate::StreamStopped()
     micSource = NULL;
 }
 
-void NoiseGate::ShowConfigDialog(HWND parentHwnd)
-{
-    NoiseGateConfigWindow dialog(this, parentHwnd);
-    if(OBSGetStreaming())
-        isDisabledFromConfig = true; // Disable the filter if we are currently streaming
-    dialog.Process();
-    isDisabledFromConfig = false; // Force enable
-}
-
 //============================================================================
 // Plugin entry points
 
@@ -513,13 +533,6 @@ void UnloadPlugin()
         return;
     delete NoiseGate::instance;
     NoiseGate::instance = NULL;
-}
-
-void ConfigPlugin(HWND parentHwnd)
-{
-    if(NoiseGate::instance == NULL)
-        return;
-    NoiseGate::instance->ShowConfigDialog(parentHwnd);
 }
 
 void OnStartStream()

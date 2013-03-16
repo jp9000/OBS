@@ -53,9 +53,9 @@ CTSTR SettingsPublish::GetCategory() const
     return name;
 }
 
-HWND SettingsPublish::CreatePane(HINSTANCE hInstance, HWND parentHwnd)
+HWND SettingsPublish::CreatePane(HWND parentHwnd)
 {
-    hwnd = CreateDialogParam(hInstance, MAKEINTRESOURCE(IDD_SETTINGS_PUBLISH), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
+    hwnd = CreateDialogParam(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_PUBLISH), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
     return hwnd;
 }
 

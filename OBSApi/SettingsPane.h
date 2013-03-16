@@ -52,7 +52,7 @@ protected:
 
 public:
     virtual CTSTR GetCategory() const = 0;
-    virtual HWND CreatePane(HINSTANCE hInstance, HWND parentHwnd) = 0;
+    virtual HWND CreatePane(HWND parentHwnd) = 0;
     virtual void DestroyPane() = 0;
     virtual INT_PTR ProcMessage(UINT message, WPARAM wParam, LPARAM lParam) = 0;
     virtual void ApplySettings() = 0;

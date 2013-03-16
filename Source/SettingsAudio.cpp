@@ -39,9 +39,9 @@ CTSTR SettingsAudio::GetCategory() const
     return name;
 }
 
-HWND SettingsAudio::CreatePane(HINSTANCE hInstance, HWND parentHwnd)
+HWND SettingsAudio::CreatePane(HWND parentHwnd)
 {
-    hwnd = CreateDialogParam(hInstance, MAKEINTRESOURCE(IDD_SETTINGS_AUDIO), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
+    hwnd = CreateDialogParam(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_AUDIO), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
     return hwnd;
 }
 

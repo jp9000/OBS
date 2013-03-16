@@ -188,7 +188,7 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                 if(App->settingsPanes.Num() >= 1)
                     App->currentSettingsPane = App->settingsPanes[0];
                 if(App->currentSettingsPane != NULL)
-                    App->hwndCurrentSettings = App->currentSettingsPane->CreatePane(hinstMain, hwnd);
+                    App->hwndCurrentSettings = App->currentSettingsPane->CreatePane(hwnd);
                 if(App->hwndCurrentSettings != NULL)
                 {
                     SetWindowPos(App->hwndCurrentSettings, NULL, subDialogRect.left, subDialogRect.top, 0, 0, SWP_NOSIZE);
@@ -238,7 +238,7 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                         if(sel >= 0 && sel < (int)App->settingsPanes.Num())
                             App->currentSettingsPane = App->settingsPanes[sel];
                         if(App->currentSettingsPane != NULL)
-                            App->hwndCurrentSettings = App->currentSettingsPane->CreatePane(hinstMain, hwnd);
+                            App->hwndCurrentSettings = App->currentSettingsPane->CreatePane(hwnd);
                         if(App->hwndCurrentSettings)
                         {
                             SetWindowPos(App->hwndCurrentSettings, NULL, subDialogRect.left, subDialogRect.top, 0, 0, SWP_NOSIZE);

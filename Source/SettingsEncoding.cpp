@@ -37,9 +37,9 @@ CTSTR SettingsEncoding::GetCategory() const
     return name;
 }
 
-HWND SettingsEncoding::CreatePane(HINSTANCE hInstance, HWND parentHwnd)
+HWND SettingsEncoding::CreatePane(HWND parentHwnd)
 {
-    hwnd = CreateDialogParam(hInstance, MAKEINTRESOURCE(IDD_SETTINGS_ENCODING), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
+    hwnd = CreateDialogParam(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_ENCODING), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
     return hwnd;
 }
 

@@ -40,9 +40,9 @@ CTSTR SettingsAdvanced::GetCategory() const
     return name;
 }
 
-HWND SettingsAdvanced::CreatePane(HINSTANCE hInstance, HWND parentHwnd)
+HWND SettingsAdvanced::CreatePane(HWND parentHwnd)
 {
-    hwnd = CreateDialogParam(hInstance, MAKEINTRESOURCE(IDD_SETTINGS_ADVANCED), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
+    hwnd = CreateDialogParam(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_ADVANCED), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
     return hwnd;
 }
 
