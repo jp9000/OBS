@@ -118,15 +118,9 @@ String LoadSettingTextComboString(HWND hwnd, CTSTR lpConfigSection, CTSTR lpConf
 
 //============================================================================
 
-struct AudioDeviceStorage {
-    AudioDeviceList *playbackDevices;
-    AudioDeviceList *recordingDevices;
-};
-
 enum SettingsSelection
 {
-    Settings_Audio = 4,
-    Settings_Advanced,
+    Settings_Advanced = 5
 };
 
 void OBS::AddSettingsPane(SettingsPane *pane)
@@ -145,237 +139,10 @@ void OBS::AddBuiltInSettingsPanes()
     AddSettingsPane(new SettingsEncoding());
     AddSettingsPane(new SettingsPublish());
     AddSettingsPane(new SettingsVideo());
+    AddSettingsPane(new SettingsAudio());
 }
 
 CTSTR preset_names[7] = {TEXT("ultrafast"), TEXT("superfast"), TEXT("veryfast"), TEXT("faster"), TEXT("fast"), TEXT("medium"), TEXT("slow")};
-
-INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    switch(message)
-    {
-        case WM_INITDIALOG:
-            {
-                LocalizeWindow(hwnd);
-
-                //--------------------------------------------
-
-                AudioDeviceStorage *storage = new AudioDeviceStorage;
-
-                storage->playbackDevices = new AudioDeviceList;
-                GetAudioDevices((*storage->playbackDevices), ADT_PLAYBACK);
-
-                storage->recordingDevices = new AudioDeviceList;
-                GetAudioDevices((*storage->recordingDevices), ADT_RECORDING);
-
-                HWND hwndTemp = GetDlgItem(hwnd, IDC_MICDEVICES);
-                HWND hwndPlayback = GetDlgItem(hwnd, IDC_PLAYBACKDEVICES);
-
-                for(UINT i=0; i<storage->playbackDevices->devices.Num(); i++)
-                    SendMessage(hwndPlayback, CB_ADDSTRING, 0, (LPARAM)storage->playbackDevices->devices[i].strName.Array());
-
-                for(UINT i=0; i<storage->recordingDevices->devices.Num(); i++)
-                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)storage->recordingDevices->devices[i].strName.Array());
-
-                String strPlaybackID = AppConfig->GetString(TEXT("Audio"), TEXT("PlaybackDevice"), storage->playbackDevices->devices[0].strID);
-                String strDeviceID = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), storage->recordingDevices->devices[0].strID);
-
-                UINT iPlaybackDevice;
-                for(iPlaybackDevice=0; iPlaybackDevice<storage->playbackDevices->devices.Num(); iPlaybackDevice++)
-                {
-                    if(storage->playbackDevices->devices[iPlaybackDevice].strID == strPlaybackID)
-                    {
-                        SendMessage(hwndPlayback, CB_SETCURSEL, iPlaybackDevice, 0);
-                        break;
-                    }
-                }
-
-                UINT iDevice;
-                for(iDevice=0; iDevice<storage->recordingDevices->devices.Num(); iDevice++)
-                {
-                    if(storage->recordingDevices->devices[iDevice].strID == strDeviceID)
-                    {
-                        SendMessage(hwndTemp, CB_SETCURSEL, iDevice, 0);
-                        break;
-                    }
-                }
-
-                if(iPlaybackDevice == storage->playbackDevices->devices.Num())
-                {
-                    AppConfig->SetString(TEXT("Audio"), TEXT("PlaybackDevice"), storage->playbackDevices->devices[0].strID);
-                    SendMessage(hwndPlayback, CB_SETCURSEL, 0, 0);
-                }
-
-                if(iDevice == storage->recordingDevices->devices.Num())
-                {
-                    AppConfig->SetString(TEXT("Audio"), TEXT("Device"), storage->recordingDevices->devices[0].strID);
-                    SendMessage(hwndTemp, CB_SETCURSEL, 0, 0);
-                }
-
-                //--------------------------------------------
-
-                SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)storage);
-
-                BOOL bPushToTalk = AppConfig->GetInt(TEXT("Audio"), TEXT("UsePushToTalk"));
-                SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALK), BM_SETCHECK, bPushToTalk ? BST_CHECKED : BST_UNCHECKED, 0);
-                EnableWindow(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY), bPushToTalk);
-                EnableWindow(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY2), bPushToTalk);
-                EnableWindow(GetDlgItem(hwnd, IDC_CLEARPUSHTOTALK), bPushToTalk);
-                EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY_EDIT), bPushToTalk);
-                EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY), bPushToTalk);
-
-                DWORD hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey"));
-                SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY), HKM_SETHOTKEY, hotkey, 0);
-                DWORD hotkey2 = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey2"));
-                SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY2), HKM_SETHOTKEY, hotkey2, 0);
-
-                int pttDelay = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkDelay"), 200);
-                SendMessage(GetDlgItem(hwnd, IDC_PTTDELAY), UDM_SETRANGE32, 0, 2000);
-                SendMessage(GetDlgItem(hwnd, IDC_PTTDELAY), UDM_SETPOS32, 0, pttDelay);
-
-                //--------------------------------------------
-
-                hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("MuteMicHotkey"));
-                SendMessage(GetDlgItem(hwnd, IDC_MUTEMICHOTKEY), HKM_SETHOTKEY, hotkey, 0);
-
-                //--------------------------------------------
-
-                hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("MuteDesktopHotkey"));
-                SendMessage(GetDlgItem(hwnd, IDC_MUTEDESKTOPHOTKEY), HKM_SETHOTKEY, hotkey, 0);
-
-                //--------------------------------------------
-
-                BOOL bForceMono = AppConfig->GetInt(TEXT("Audio"), TEXT("ForceMicMono"));
-                SendMessage(GetDlgItem(hwnd, IDC_FORCEMONO), BM_SETCHECK, bForceMono ? BST_CHECKED : BST_UNCHECKED, 0);
-
-                //--------------------------------------------
-
-                DWORD desktopBoost = GlobalConfig->GetInt(TEXT("Audio"), TEXT("DesktopBoostMultiple"), 1);
-                if(desktopBoost < 1)
-                    desktopBoost = 1;
-                else if(desktopBoost > 20)
-                    desktopBoost = 20;
-                SendMessage(GetDlgItem(hwnd, IDC_DESKTOPBOOST), UDM_SETRANGE32, 1, 20);
-                SendMessage(GetDlgItem(hwnd, IDC_DESKTOPBOOST), UDM_SETPOS32, 0, desktopBoost);
-
-                //--------------------------------------------
-
-                DWORD micBoost = AppConfig->GetInt(TEXT("Audio"), TEXT("MicBoostMultiple"), 1);
-                if(micBoost < 1)
-                    micBoost = 1;
-                else if(micBoost > 20)
-                    micBoost = 20;
-                SendMessage(GetDlgItem(hwnd, IDC_MICBOOST), UDM_SETRANGE32, 1, 20);
-                SendMessage(GetDlgItem(hwnd, IDC_MICBOOST), UDM_SETPOS32, 0, micBoost);
-
-                //--------------------------------------------
-
-                int bufferTime = GlobalConfig->GetInt(TEXT("General"), TEXT("SceneBufferingTime"), 400);
-
-                int micTimeOffset = AppConfig->GetInt(TEXT("Audio"), TEXT("MicTimeOffset"), 0);
-                if(micTimeOffset < -bufferTime)
-                    micTimeOffset = -bufferTime;
-                else if(micTimeOffset > 3000)
-                    micTimeOffset = 3000;
-
-                SendMessage(GetDlgItem(hwnd, IDC_MICTIMEOFFSET), UDM_SETRANGE32, -bufferTime, 3000);
-                SendMessage(GetDlgItem(hwnd, IDC_MICTIMEOFFSET), UDM_SETPOS32, 0, micTimeOffset);
-
-                //--------------------------------------------
-
-                App->SetChangedSettings(false);
-                return TRUE;
-            }
-
-        case WM_DESTROY:
-            {
-                AudioDeviceStorage* storage = (AudioDeviceStorage*)GetWindowLongPtr(hwnd, DWLP_USER);
-                delete storage->recordingDevices;
-                delete storage->playbackDevices;
-                delete storage;
-            }
-
-        case WM_COMMAND:
-            {
-                bool bDataChanged = false;
-
-                switch(LOWORD(wParam))
-                {
-                    case IDC_PUSHTOTALK:
-                        if(HIWORD(wParam) == BN_CLICKED)
-                        {
-                            BOOL bUsePushToTalk = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
-                            EnableWindow(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY), bUsePushToTalk);
-                            EnableWindow(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY2), bUsePushToTalk);
-                            EnableWindow(GetDlgItem(hwnd, IDC_CLEARPUSHTOTALK), bUsePushToTalk);
-                            EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY_EDIT), bUsePushToTalk);
-                            EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY), bUsePushToTalk);
-                            App->SetChangedSettings(true);
-                        }
-                        break;
-
-                    case IDC_MICTIMEOFFSET_EDIT:
-                    case IDC_DESKTOPBOOST_EDIT:
-                    case IDC_MICBOOST_EDIT:
-                    case IDC_PUSHTOTALKHOTKEY:
-                    case IDC_PUSHTOTALKHOTKEY2:
-                    case IDC_MUTEMICHOTKEY:
-                    case IDC_MUTEDESKTOPHOTKEY:
-                    case IDC_PTTDELAY_EDIT:
-                        if(HIWORD(wParam) == EN_CHANGE)
-                            App->SetChangedSettings(true);
-                        break;
-
-                    case IDC_CLEARPUSHTOTALK:
-                        if(HIWORD(wParam) == BN_CLICKED)
-                        {
-                            SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY), HKM_SETHOTKEY, 0, 0);
-                            SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY2), HKM_SETHOTKEY, 0, 0);
-                            App->SetChangedSettings(true);
-                        }
-                        break;
-
-                    case IDC_CLEARMUTEMIC:
-                        if(HIWORD(wParam) == BN_CLICKED)
-                        {
-                            SendMessage(GetDlgItem(hwnd, IDC_MUTEMICHOTKEY), HKM_SETHOTKEY, 0, 0);
-                            App->SetChangedSettings(true);
-                        }
-                        break;
-
-                    case IDC_CLEARMUTEDESKTOP:
-                        if(HIWORD(wParam) == BN_CLICKED)
-                        {
-                            SendMessage(GetDlgItem(hwnd, IDC_MUTEDESKTOPHOTKEY), HKM_SETHOTKEY, 0, 0);
-                            App->SetChangedSettings(true);
-                        }
-                        break;
-
-                    case IDC_FORCEMONO:
-                        if(HIWORD(wParam) == BN_CLICKED)
-                            App->SetChangedSettings(true);
-                        break;
-
-                    case IDC_MICDEVICES:
-                        if(HIWORD(wParam) == CBN_SELCHANGE)
-                            bDataChanged = true;
-                        break;
-
-                    case IDC_PLAYBACKDEVICES:
-                        if(HIWORD(wParam) == CBN_SELCHANGE)
-                            bDataChanged = true;
-                        break;
-                }
-
-                if(bDataChanged)
-                {
-                    ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-                    App->SetChangedSettings(true);
-                }
-                break;
-            }
-    }
-    return FALSE;
-}
 
 INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -674,135 +441,6 @@ void OBS::ApplySettings()
     // FIXME: This is temporary until all the built-in panes are ported to the new interface
     switch(curSettingsSelection)
     {
-        case Settings_Audio:
-            {
-                AudioDeviceStorage *storage = (AudioDeviceStorage*)GetWindowLongPtr(hwndCurrentSettings, DWLP_USER);
-                UINT iPlaybackDevice = (UINT)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_PLAYBACKDEVICES), CB_GETCURSEL, 0, 0);
-                String strPlaybackDevice;
-
-                if(iPlaybackDevice == CB_ERR) {
-                    strPlaybackDevice = TEXT("Default");
-                }
-                else {
-                    strPlaybackDevice = storage->playbackDevices->devices[iPlaybackDevice].strID;
-                }
-
-                AppConfig->SetString(TEXT("Audio"), TEXT("PlaybackDevice"), strPlaybackDevice);
-
-                UINT iDevice = (UINT)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_MICDEVICES), CB_GETCURSEL, 0, 0);
-
-                String strDevice;
-
-                if(iDevice == CB_ERR)
-                    strDevice = TEXT("Disable");
-                else
-                    strDevice = storage->recordingDevices->devices[iDevice].strID;
-
-
-                AppConfig->SetString(TEXT("Audio"), TEXT("Device"), strDevice);
-
-
-                if(strDevice.CompareI(TEXT("Disable")))
-                    EnableWindow(GetDlgItem(hwndMain, ID_MICVOLUME), FALSE);
-                else
-                    EnableWindow(GetDlgItem(hwndMain, ID_MICVOLUME), TRUE);
-
-                //------------------------------------
-
-                bUsingPushToTalk = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_PUSHTOTALK), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                DWORD hotkey = (DWORD)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_PUSHTOTALKHOTKEY), HKM_GETHOTKEY, 0, 0);
-                DWORD hotkey2 = (DWORD)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_PUSHTOTALKHOTKEY2), HKM_GETHOTKEY, 0, 0);
-
-                pushToTalkDelay = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_PTTDELAY), UDM_GETPOS32, 0, 0);
-                if(pushToTalkDelay < 0)
-                    pushToTalkDelay = 0;
-                else if(pushToTalkDelay > 2000)
-                    pushToTalkDelay = 2000;
-
-                AppConfig->SetInt(TEXT("Audio"), TEXT("UsePushToTalk"), bUsingPushToTalk);
-                AppConfig->SetInt(TEXT("Audio"), TEXT("PushToTalkHotkey"), hotkey);
-                AppConfig->SetInt(TEXT("Audio"), TEXT("PushToTalkHotkey2"), hotkey2);
-                AppConfig->SetInt(TEXT("Audio"), TEXT("PushToTalkDelay"), pushToTalkDelay);
-
-                if(App->pushToTalkHotkeyID)
-                {
-                    API->DeleteHotkey(App->pushToTalkHotkeyID);
-                    App->pushToTalkHotkeyID = 0;
-                }
-
-                if(App->bUsingPushToTalk && hotkey)
-                    pushToTalkHotkeyID = API->CreateHotkey(hotkey, OBS::PushToTalkHotkey, NULL);
-                if(App->bUsingPushToTalk && hotkey2)
-                    pushToTalkHotkeyID = API->CreateHotkey(hotkey2, OBS::PushToTalkHotkey, NULL);
-
-                //------------------------------------
-
-                hotkey = (DWORD)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_MUTEMICHOTKEY), HKM_GETHOTKEY, 0, 0);
-                AppConfig->SetInt(TEXT("Audio"), TEXT("MuteMicHotkey"), hotkey);
-
-                if(App->muteMicHotkeyID)
-                {
-                    API->DeleteHotkey(App->muteMicHotkeyID);
-                    App->muteDesktopHotkeyID = 0;
-                }
-
-                if(hotkey)
-                    muteMicHotkeyID = API->CreateHotkey(hotkey, OBS::MuteMicHotkey, NULL);
-
-                //------------------------------------
-
-                hotkey = (DWORD)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_MUTEDESKTOPHOTKEY), HKM_GETHOTKEY, 0, 0);
-                AppConfig->SetInt(TEXT("Audio"), TEXT("MuteDesktopHotkey"), hotkey);
-
-                if(App->muteDesktopHotkeyID)
-                {
-                    API->DeleteHotkey(App->muteDesktopHotkeyID);
-                    App->muteDesktopHotkeyID = 0;
-                }
-
-                if(hotkey)
-                    muteDesktopHotkeyID = API->CreateHotkey(hotkey, OBS::MuteDesktopHotkey, NULL);
-
-                //------------------------------------
-
-                App->bForceMicMono = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_FORCEMONO), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                AppConfig->SetInt(TEXT("Audio"), TEXT("ForceMicMono"), bForceMicMono);
-
-                //------------------------------------
-
-                DWORD desktopBoostMultiple = (DWORD)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_DESKTOPBOOST), UDM_GETPOS32, 0, 0);
-                if(desktopBoostMultiple < 1)
-                    desktopBoostMultiple = 1;
-                else if(desktopBoostMultiple > 20)
-                    desktopBoostMultiple = 20;
-                GlobalConfig->SetInt(TEXT("Audio"), TEXT("DesktopBoostMultiple"), desktopBoostMultiple);
-                App->desktopBoost = float(desktopBoostMultiple);
-
-                //------------------------------------
-
-                DWORD micBoostMultiple = (DWORD)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_MICBOOST), UDM_GETPOS32, 0, 0);
-                if(micBoostMultiple < 1)
-                    micBoostMultiple = 1;
-                else if(micBoostMultiple > 20)
-                    micBoostMultiple = 20;
-                AppConfig->SetInt(TEXT("Audio"), TEXT("MicBoostMultiple"), micBoostMultiple);
-                App->micBoost = float(micBoostMultiple);
-
-                //------------------------------------
-
-                int micTimeOffset = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_MICTIMEOFFSET), UDM_GETPOS32, 0, 0);
-                if(micTimeOffset < -150)
-                    micTimeOffset = -150;
-                else if(micTimeOffset > 3000)
-                    micTimeOffset = 3000;
-                AppConfig->SetInt(TEXT("Audio"), TEXT("MicTimeOffset"), micTimeOffset);
-
-                if(App->bRunning && App->micAudio)
-                    App->micAudio->SetTimeOffset(micTimeOffset);
-
-                break;
-            }
-
         case Settings_Advanced:
             {
                 String strTemp = GetCBText(GetDlgItem(hwndCurrentSettings, IDC_PRESET));
@@ -901,7 +539,6 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                 }
 
                 // FIXME: These are temporary until all the built-in panes are ported to the new interface
-                SendMessage(GetDlgItem(hwnd, IDC_SETTINGSLIST), LB_ADDSTRING, 0, (LPARAM)Str("Settings.Audio"));
                 SendMessage(GetDlgItem(hwnd, IDC_SETTINGSLIST), LB_ADDSTRING, 0, (LPARAM)Str("Settings.Advanced"));
 
                 RECT subDialogRect;
@@ -975,9 +612,6 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                             // FIXME: This is all temporary until all the built-in panes are ported to the new interface
                             switch(sel)
                             {
-                                case Settings_Audio:
-                                    App->hwndCurrentSettings = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_AUDIO), hwnd, (DLGPROC)OBS::AudioSettingsProc);
-                                    break;
                                 case Settings_Advanced:
                                     App->hwndCurrentSettings = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_ADVANCED), hwnd, (DLGPROC)OBS::AdvancedSettingsProc);
                                     break;

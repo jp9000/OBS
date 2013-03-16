@@ -149,3 +149,45 @@ public:
     virtual void ApplySettings();
     virtual void CancelSettings();
 };
+
+//============================================================================
+// SettingsAudio class
+
+class SettingsAudio : public SettingsPane
+{
+    //-----------------------------------------------------------------------
+    // Private data structures
+
+private:
+    // This should be converted to class members
+    struct AudioDeviceStorage
+    {
+        AudioDeviceList *playbackDevices;
+        AudioDeviceList *recordingDevices;
+    };
+
+    //-----------------------------------------------------------------------
+    // Private members
+
+private:
+    AudioDeviceStorage * storage;
+
+    //-----------------------------------------------------------------------
+    // Constructor/destructor
+
+public:
+    SettingsAudio();
+    virtual ~SettingsAudio();
+
+    //-----------------------------------------------------------------------
+    // Methods
+
+public:
+    // Interface
+    virtual CTSTR GetCategory() const;
+    virtual HWND CreatePane(HINSTANCE hInstance, HWND parentHwnd);
+    virtual void DestroyPane();
+    virtual INT_PTR ProcMessage(UINT message, WPARAM wParam, LPARAM lParam);
+    virtual void ApplySettings();
+    virtual void CancelSettings();
+};

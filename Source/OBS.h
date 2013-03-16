@@ -480,7 +480,7 @@ private:
     friend class SettingsEncoding;
     friend class SettingsPublish;
     friend class SettingsVideo;
-    static INT_PTR CALLBACK AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+    friend class SettingsAudio;
     static INT_PTR CALLBACK AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
     //---------------------------------------------------
