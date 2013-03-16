@@ -906,7 +906,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 HWND hwndDeviceList     = GetDlgItem(hwnd, IDC_DEVICELIST);
                 HWND hwndAudioList      = GetDlgItem(hwnd, IDC_AUDIOLIST);
-                HWND hwndCrossbarlist   = GetDlgItem(hwnd, IDC_CROSSBARLIST);
+                HWND hwndCrossbarList   = GetDlgItem(hwnd, IDC_CROSSBARLIST);
                 HWND hwndResolutionList = GetDlgItem(hwnd, IDC_RESOLUTION);
                 HWND hwndFPS            = GetDlgItem(hwnd, IDC_FPS);
                 HWND hwndFlip           = GetDlgItem(hwnd, IDC_FLIPIMAGE);
@@ -939,12 +939,12 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 SendMessage(GetDlgItem(hwnd, IDC_CUSTOMRESOLUTION), BM_SETCHECK, bCustomResolution ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 LocalizeWindow(hwnd, pluginLocale);
-                FillOutListOfDevices(GetDlgItem(hwnd, IDC_DEVICELIST), CLSID_VideoInputDeviceCategory, &configData->deviceNameList, &configData->deviceIDList);
-                FillOutListOfDevices(GetDlgItem(hwnd, IDC_AUDIOLIST), CLSID_AudioInputDeviceCategory, &configData->audioNameList, &configData->audioIDList);
-                FillOutListOfDevices(GetDlgItem(hwnd, IDC_CROSSBARLIST), AM_KSCATEGORY_CROSSBAR, &configData->crossbarList, &configData->crossbarIDList);
+                FillOutListOfDevices(hwndDeviceList, CLSID_VideoInputDeviceCategory, &configData->deviceNameList, &configData->deviceIDList);
+                FillOutListOfDevices(hwndAudioList, CLSID_AudioInputDeviceCategory, &configData->audioNameList, &configData->audioIDList);
+                FillOutListOfDevices(hwndCrossbarList, AM_KSCATEGORY_CROSSBAR, &configData->crossbarList, &configData->crossbarIDList);
 
-                SendMessage(hwndCrossbarlist, CB_SETCURSEL, 0, 0);
-                ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_CROSSBARLIST, CBN_SELCHANGE), (LPARAM)hwndCrossbarlist);
+                SendMessage(hwndCrossbarList, CB_SETCURSEL, 0, 0);
+                ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_CROSSBARLIST, CBN_SELCHANGE), (LPARAM)hwndCrossbarList);
 
                 UINT deviceID = CB_ERR;
                 UINT audioDeviceID = CB_ERR;
@@ -1316,16 +1316,15 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
 
-                        FillOutListOfDevices(GetDlgItem(hwnd, IDC_DEVICELIST), CLSID_VideoInputDeviceCategory, &configData->deviceNameList, &configData->deviceIDList);
-                        FillOutListOfDevices(GetDlgItem(hwnd, IDC_AUDIOLIST), CLSID_AudioInputDeviceCategory, &configData->audioNameList, &configData->audioIDList);
-                        FillOutListOfDevices(GetDlgItem(hwnd, IDC_CROSSBARLIST), AM_KSCATEGORY_CROSSBAR, &configData->crossbarList, &configData->crossbarIDList);
+                        FillOutListOfDevices(hwndDeviceList, CLSID_VideoInputDeviceCategory, &configData->deviceNameList, &configData->deviceIDList);
+                        FillOutListOfDevices(hwndAudioDeviceList, CLSID_AudioInputDeviceCategory, &configData->audioNameList, &configData->audioIDList);
+                        FillOutListOfDevices(hwndCrossbarList, AM_KSCATEGORY_CROSSBAR, &configData->crossbarList, &configData->crossbarIDList);
 
                         SendMessage(hwndDeviceList, CB_SETCURSEL, 0, 0);
                         ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_DEVICELIST, CBN_SELCHANGE), (LPARAM)hwndDeviceList);
-                        SendMessage(hwndDeviceList, CB_SETCURSEL, 0, 0);
+                        SendMessage(hwndAudioDeviceList, CB_SETCURSEL, 0, 0);
                         ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_AUDIOLIST, CBN_SELCHANGE), (LPARAM)hwndAudioDeviceList);
                         SendMessage(hwndCrossbarList, CB_SETCURSEL, 0, 0);
-                        ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_CROSSBARLIST, CBN_SELCHANGE), (LPARAM)hwndCrossbarList);
 
                         break;
                     }
