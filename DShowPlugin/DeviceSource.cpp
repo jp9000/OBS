@@ -219,12 +219,14 @@ bool DeviceSource::LoadFilters()
     if(strDeviceName.IsValid())
     {
         deviceFilter = GetDeviceByValue(CLSID_VideoInputDeviceCategory, L"FriendlyName", strDeviceName, L"DevicePath", strDeviceID);
-        if(!bDShowHasAudio) {
+
+        if(bDShowHasAudio) {
             audioDeviceFilter = GetDeviceByValue(CLSID_AudioInputDeviceCategory, L"FriendlyName", strAudioName, L"DevicePath", strAudioID);
             if(!audioDeviceFilter) {
                 AppWarning(TEXT("DShowPlugin: Invalid audio device: name '%s', path '%s'"), strAudioName.Array(), strAudioID.Array());
             }
         }
+
         if(!deviceFilter)
         {
             AppWarning(TEXT("DShowPlugin: Invalid device: name '%s', path '%s'"), strDeviceName.Array(), strDeviceID.Array());
@@ -240,12 +242,14 @@ bool DeviceSource::LoadFilters()
         }
 
         deviceFilter = GetDeviceByValue(CLSID_VideoInputDeviceCategory, L"FriendlyName", strDevice);
-        if(!bDShowHasAudio) {
+
+        if(bDShowHasAudio) {
             audioDeviceFilter = GetDeviceByValue(CLSID_AudioInputDeviceCategory, L"FriendlyName", strAudioDevice);
             if(!audioDeviceFilter) {
                 AppWarning(TEXT("DShowPlugin: Could not create audio device filter"));
             }
         }
+
         if(!deviceFilter)
         {
             AppWarning(TEXT("DShowPlugin: Could not create device filter"));
@@ -266,10 +270,10 @@ bool DeviceSource::LoadFilters()
     {
         if(!bDShowHasAudio) {
             err = capture->FindPin(audioDeviceFilter, PINDIR_OUTPUT, &PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, FALSE, 0, &audioPin);
-        }
-        else {
+        } else {
             err = capture->FindPin(deviceFilter, PINDIR_OUTPUT, &PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, FALSE, 0, &audioPin);
         }
+
         if(FAILED(err))
         {
             Log(TEXT("DShowPlugin: No audio pin, result = %lX"), err);
@@ -549,10 +553,7 @@ bool DeviceSource::LoadFilters()
     if(soundOutputType != 0)
     {
         if(FAILED(err = graph->AddFilter(audioFilter, NULL)))
-        {
             AppWarning(TEXT("DShowPlugin: Failed to add audio capture filter to graph, result = %08lX"), err);
-            goto cleanFinish;
-        }
 
         bAddedAudioCapture = true;
     }
@@ -565,12 +566,11 @@ bool DeviceSource::LoadFilters()
         AppWarning(TEXT("DShowPlugin: Failed to add device filter to graph, result = %08lX"), err);
         goto cleanFinish;
     }
-    if(!bDShowHasAudio) {
+
+    if(bDShowHasAudio)
+    {
         if(FAILED(err = graph->AddFilter(audioDeviceFilter, NULL)))
-        {
             AppWarning(TEXT("DShowPlugin: Failed to add audio device filter to graph, result = %08lX"), err);
-            goto cleanFinish;
-        }
     }
 
     bAddedDevice = true;
@@ -604,10 +604,11 @@ bool DeviceSource::LoadFilters()
 
     if(soundOutputType != 0)
     {
-        if(!bDShowHasAudio) {
+        if(!bDShowHasAudio)
             bConnected = SUCCEEDED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, audioDeviceFilter, NULL, audioFilter));
-        }
-        else bConnected = SUCCEEDED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, deviceFilter, NULL, audioFilter));
+        else
+            bConnected = SUCCEEDED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, deviceFilter, NULL, audioFilter));
+
         if(!bConnected)
         {
             AppWarning(TEXT("DShowPlugin: Failed to connect the audio device pin to the audio capture pin, result = %08lX"), err);
