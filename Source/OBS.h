@@ -481,7 +481,7 @@ private:
     friend class SettingsPublish;
     friend class SettingsVideo;
     friend class SettingsAudio;
-    static INT_PTR CALLBACK AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+    friend class SettingsAdvanced;
 
     //---------------------------------------------------
     // mainly manly main window stuff

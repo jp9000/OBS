@@ -266,6 +266,7 @@
     <ClCompile Include="Source\RTMPPublisher.cpp" />
     <ClCompile Include="Source\RTMPStuff.cpp" />
     <ClCompile Include="Source\Settings.cpp" />
+    <ClCompile Include="Source\SettingsAdvanced.cpp" />
     <ClCompile Include="Source\SettingsAudio.cpp" />
     <ClCompile Include="Source\SettingsEncoding.cpp" />
     <ClCompile Include="Source\SettingsGeneral.cpp" />

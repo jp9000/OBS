@@ -191,3 +191,28 @@ public:
     virtual void ApplySettings();
     virtual void CancelSettings();
 };
+
+//============================================================================
+// SettingsAdvanced class
+
+class SettingsAdvanced : public SettingsPane
+{
+    //-----------------------------------------------------------------------
+    // Constructor/destructor
+
+public:
+    SettingsAdvanced();
+    virtual ~SettingsAdvanced();
+
+    //-----------------------------------------------------------------------
+    // Methods
+
+public:
+    // Interface
+    virtual CTSTR GetCategory() const;
+    virtual HWND CreatePane(HINSTANCE hInstance, HWND parentHwnd);
+    virtual void DestroyPane();
+    virtual INT_PTR ProcMessage(UINT message, WPARAM wParam, LPARAM lParam);
+    virtual void ApplySettings();
+    virtual void CancelSettings();
+};
