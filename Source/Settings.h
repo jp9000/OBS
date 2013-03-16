@@ -79,3 +79,45 @@ public:
     virtual void ApplySettings();
     virtual void CancelSettings();
 };
+
+//============================================================================
+// SettingsPublish class
+
+class SettingsPublish : public SettingsPane
+{
+    //-----------------------------------------------------------------------
+    // Private data structures
+
+private:
+    // This should be converted to class members
+    struct PublishDialogData
+    {
+        UINT mode;
+        LONG fileControlOffset;
+    };
+
+    //-----------------------------------------------------------------------
+    // Private members
+
+private:
+    PublishDialogData * data;
+
+    //-----------------------------------------------------------------------
+    // Constructor/destructor
+
+public:
+    SettingsPublish();
+    virtual ~SettingsPublish();
+
+    //-----------------------------------------------------------------------
+    // Methods
+
+public:
+    // Interface
+    virtual CTSTR GetCategory() const;
+    virtual HWND CreatePane(HINSTANCE hInstance, HWND parentHwnd);
+    virtual void DestroyPane();
+    virtual INT_PTR ProcMessage(UINT message, WPARAM wParam, LPARAM lParam);
+    virtual void ApplySettings();
+    virtual void CancelSettings();
+};
