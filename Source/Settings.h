@@ -121,3 +121,31 @@ public:
     virtual void ApplySettings();
     virtual void CancelSettings();
 };
+
+//============================================================================
+// SettingsVideo class
+
+class SettingsVideo : public SettingsPane
+{
+    //-----------------------------------------------------------------------
+    // Constructor/destructor
+
+public:
+    SettingsVideo();
+    virtual ~SettingsVideo();
+
+    //-----------------------------------------------------------------------
+    // Methods
+
+private:
+    void RefreshDownscales(HWND hwnd, int cx, int cy);
+
+public:
+    // Interface
+    virtual CTSTR GetCategory() const;
+    virtual HWND CreatePane(HINSTANCE hInstance, HWND parentHwnd);
+    virtual void DestroyPane();
+    virtual INT_PTR ProcMessage(UINT message, WPARAM wParam, LPARAM lParam);
+    virtual void ApplySettings();
+    virtual void CancelSettings();
+};

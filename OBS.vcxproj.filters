@@ -133,6 +133,9 @@
     <ClCompile Include="Source\SettingsPublish.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Source\SettingsVideo.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\D3D10System.h">

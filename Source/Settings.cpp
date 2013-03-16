@@ -125,12 +125,9 @@ struct AudioDeviceStorage {
 
 enum SettingsSelection
 {
-    Settings_Video = 3,
-    Settings_Audio,
+    Settings_Audio = 4,
     Settings_Advanced,
 };
-
-BOOL CALLBACK MonitorInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, List<MonitorInfo> &monitors);
 
 void OBS::AddSettingsPane(SettingsPane *pane)
 {
@@ -147,330 +144,10 @@ void OBS::AddBuiltInSettingsPanes()
     AddSettingsPane(new SettingsGeneral());
     AddSettingsPane(new SettingsEncoding());
     AddSettingsPane(new SettingsPublish());
+    AddSettingsPane(new SettingsVideo());
 }
 
 CTSTR preset_names[7] = {TEXT("ultrafast"), TEXT("superfast"), TEXT("veryfast"), TEXT("faster"), TEXT("fast"), TEXT("medium"), TEXT("slow")};
-
-const int multiplierCount = 5;
-const float downscaleMultipliers[multiplierCount] = {1.0f, 1.5f, 2.0f, 2.25f, 3.0f};
-
-void OBS::RefreshDownscales(HWND hwnd, int cx, int cy)
-{
-    int lastID = (int)SendMessage(hwnd, CB_GETCURSEL, 0, 0);
-
-    SendMessage(hwnd, CB_RESETCONTENT, 0, 0);
-
-    float downscale = AppConfig->GetFloat(TEXT("Video"), TEXT("Downscale"));
-    bool bFoundVal = false;
-
-    for(int i=0; i<multiplierCount; i++)
-    {
-        float multiplier = downscaleMultipliers[i];
-
-        int scaleCX = int(float(cx)/multiplier) & 0xFFFFFFFE;
-        int scaleCY = int(float(cy)/multiplier) & 0xFFFFFFFE;
-
-        String strText;
-        if(i == 0)
-            strText << Str("None") << TEXT("  (") << IntString(scaleCX) << TEXT("x") << IntString(scaleCY) << TEXT(")");
-        else
-            strText << FormattedString(TEXT("%0.2f"), multiplier) << TEXT("  (") << IntString(scaleCX) << TEXT("x") << IntString(scaleCY) << TEXT(")");
-
-        int id = (int)SendMessage(hwnd, CB_ADDSTRING, 0, (LPARAM)strText.Array());
-        SendMessage(hwnd, CB_SETITEMDATA, id, (LPARAM)*(DWORD*)&multiplier);
-
-        if(CloseFloat(downscale, multiplier))
-        {
-            if(lastID == CB_ERR)
-                SendMessage(hwnd, CB_SETCURSEL, id, 0);
-            downscale = multiplier;
-            bFoundVal = true;
-        }
-    }
-
-    if(!bFoundVal)
-    {
-        AppConfig->SetFloat(TEXT("Video"), TEXT("Downscale"), 1.0f);
-        if(lastID == CB_ERR)
-            SendMessage(hwnd, CB_SETCURSEL, 0, 0);
-
-        SetChangedSettings(true);
-    }
-
-    if(lastID != CB_ERR)
-        SendMessage(hwnd, CB_SETCURSEL, lastID, 0);
-}
-
-FARPROC editProc = NULL;
-
-LRESULT WINAPI ResolutionEditSubclassProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    if( ((message == WM_KEYDOWN) && (wParam == VK_RETURN)) ||
-        (message == WM_KILLFOCUS) )
-    {
-        String strText = GetEditText(hwnd);
-        if(ValidIntString(strText))
-        {
-            int iVal = strText.ToInt();
-
-            if(iVal < 128)
-                strText = TEXT("128");
-            else if(iVal > 4096)
-                strText = TEXT("4096");
-            else
-                return CallWindowProc((WNDPROC)editProc, hwnd, message, wParam, lParam);
-        }
-        else
-            strText = TEXT("128");
-
-        SetWindowText(hwnd, strText);
-    }
-
-    return CallWindowProc((WNDPROC)editProc, hwnd, message, wParam, lParam);
-}
-
-INT_PTR CALLBACK OBS::VideoSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    HWND hwndTemp;
-    switch(message)
-    {
-        case WM_INITDIALOG:
-            {
-                LocalizeWindow(hwnd);
-
-                //--------------------------------------------
-
-                HWND hwndToolTip = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL, WS_POPUP|TTS_NOPREFIX|TTS_ALWAYSTIP,
-                    CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-                    hwnd, NULL, hinstMain, NULL);
-
-                TOOLINFO ti;
-                zero(&ti, sizeof(ti));
-                ti.cbSize = sizeof(ti);
-                ti.uFlags = TTF_SUBCLASS|TTF_IDISHWND;
-                ti.hwnd = hwnd;
-
-                SendMessage(hwndToolTip, TTM_SETMAXTIPWIDTH, 0, 500);
-                SendMessage(hwndToolTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 8000);
-
-                //--------------------------------------------
-
-                hwndTemp = GetDlgItem(hwnd, IDC_MONITOR);
-
-                App->monitors.Clear();
-                EnumDisplayMonitors(NULL, NULL, (MONITORENUMPROC)MonitorInfoEnumProc, (LPARAM)&App->monitors);
-
-                for(UINT i=0; i<App->monitors.Num(); i++)
-                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)IntString(i+1).Array());
-
-                int monitorID = LoadSettingComboInt(hwndTemp, TEXT("Video"), TEXT("Monitor"), 0, App->monitors.Num()-1);
-                if(monitorID > (int)App->monitors.Num())
-                    monitorID = 0;
-
-                //--------------------------------------------
-
-                SendMessage(GetDlgItem(hwnd, IDC_USECUSTOM), BM_SETCHECK, BST_CHECKED, 0);
-                EnableWindow(GetDlgItem(hwnd, IDC_MONITOR), FALSE);
-
-                //--------------------------------------------
-
-                int cx, cy;
-                if(!AppConfig->HasKey(TEXT("Video"), TEXT("BaseWidth")) || !AppConfig->HasKey(TEXT("Video"), TEXT("BaseHeight")))
-                {
-                    cx = App->monitors[monitorID].rect.right  - App->monitors[monitorID].rect.left;
-                    cy = App->monitors[monitorID].rect.bottom - App->monitors[monitorID].rect.top;
-                    AppConfig->SetInt(TEXT("Video"), TEXT("BaseWidth"),  cx);
-                    AppConfig->SetInt(TEXT("Video"), TEXT("BaseHeight"), cy);
-                }
-                else
-                {
-                    cx = AppConfig->GetInt(TEXT("Video"), TEXT("BaseWidth"));
-                    cy = AppConfig->GetInt(TEXT("Video"), TEXT("BaseHeight"));
-
-                    if(cx < 128)        cx = 128;
-                    else if(cx > 4096)  cx = 4096;
-
-                    if(cy < 128)        cy = 128;
-                    else if(cy > 4096)  cy = 4096;
-                }
-
-
-                hwndTemp = GetDlgItem(hwnd, IDC_SIZEX);
-                editProc = (FARPROC)GetWindowLongPtr(hwndTemp, GWLP_WNDPROC);
-                SetWindowLongPtr(hwndTemp, GWLP_WNDPROC, (LONG_PTR)ResolutionEditSubclassProc);
-                SetWindowText(hwndTemp, IntString(cx).Array());
-
-                hwndTemp = GetDlgItem(hwnd, IDC_SIZEY);
-                SetWindowLongPtr(hwndTemp, GWLP_WNDPROC, (LONG_PTR)ResolutionEditSubclassProc);
-                SetWindowText(hwndTemp, IntString(cy).Array());
-
-                //--------------------------------------------
-
-                hwndTemp = GetDlgItem(hwnd, IDC_DISABLEAERO);
-
-                if(OSGetVersion() == 8)
-                    EnableWindow(hwndTemp, FALSE);
-
-                BOOL bDisableAero = AppConfig->GetInt(TEXT("Video"), TEXT("DisableAero"), 0);
-                SendMessage(hwndTemp, BM_SETCHECK, bDisableAero ? BST_CHECKED : 0, 0);
-
-                ti.lpszText = (LPWSTR)Str("Settings.Video.DisableAeroTooltip");
-                ti.uId = (UINT_PTR)hwndTemp;
-                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
-
-                //--------------------------------------------
-
-                BOOL bUnlockFPS = AppConfig->GetInt(TEXT("Video"), TEXT("UnlockFPS"));
-                int topFPS = bUnlockFPS ? 120 : 60;
-
-                hwndTemp = GetDlgItem(hwnd, IDC_FPS);
-                SendMessage(hwndTemp, UDM_SETRANGE32, 10, topFPS);
-
-                int fps = AppConfig->GetInt(TEXT("Video"), TEXT("FPS"), 30);
-                if(!AppConfig->HasKey(TEXT("Video"), TEXT("FPS")))
-                {
-                    AppConfig->SetInt(TEXT("Video"), TEXT("FPS"), 30);
-                    fps = 30;
-                }
-                else if(fps < 10)
-                {
-                    AppConfig->SetInt(TEXT("Video"), TEXT("FPS"), 10);
-                    fps = 10;
-                }
-                else if(fps > topFPS)
-                {
-                    AppConfig->SetInt(TEXT("Video"), TEXT("FPS"), topFPS);
-                    fps = topFPS;
-                }
-
-                SendMessage(hwndTemp, UDM_SETPOS32, 0, fps);
-
-                //--------------------------------------------
-
-                hwndTemp = GetDlgItem(hwnd, IDC_DOWNSCALE);
-                App->RefreshDownscales(hwndTemp, cx, cy);
-
-                ti.lpszText = (LPWSTR)Str("Settings.Video.DownscaleTooltip");
-                ti.uId = (UINT_PTR)hwndTemp;
-                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
-
-                //--------------------------------------------
-
-                ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_HIDE);
-                App->SetChangedSettings(false);
-
-                return TRUE;
-            }
-
-        case WM_COMMAND:
-            {
-                bool bDataChanged = false;
-
-                switch(LOWORD(wParam))
-                {
-                    case IDC_MONITOR:
-                        {
-                            if(HIWORD(wParam) != CBN_SELCHANGE)
-                                break;
-
-                            int sel = (int)SendMessage(GetDlgItem(hwnd, IDC_MONITOR), CB_GETCURSEL, 0, 0);
-                            if(sel != CB_ERR)
-                            {
-                                if(sel >= (int)App->monitors.Num())
-                                    sel = 0;
-
-                                MonitorInfo &monitor = App->monitors[sel];
-
-                                int cx, cy;
-                                cx = monitor.rect.right  - monitor.rect.left;
-                                cy = monitor.rect.bottom - monitor.rect.top;
-
-                                SetWindowText(GetDlgItem(hwnd, IDC_SIZEX), IntString(cx).Array());
-                                SetWindowText(GetDlgItem(hwnd, IDC_SIZEY), IntString(cy).Array());
-                            }
-                            break;
-                        }
-
-                    case IDC_USECUSTOM:
-                        SendMessage(GetDlgItem(hwnd, IDC_SIZEX), EM_SETREADONLY, FALSE, 0);
-                        SendMessage(GetDlgItem(hwnd, IDC_SIZEY), EM_SETREADONLY, FALSE, 0);
-                        EnableWindow(GetDlgItem(hwnd, IDC_MONITOR), FALSE);
-                        break;
-
-                    case IDC_USEMONITOR:
-                        {
-                            SendMessage(GetDlgItem(hwnd, IDC_SIZEX), EM_SETREADONLY, TRUE, 0);
-                            SendMessage(GetDlgItem(hwnd, IDC_SIZEY), EM_SETREADONLY, TRUE, 0);
-                            EnableWindow(GetDlgItem(hwnd, IDC_MONITOR), TRUE);
-
-                            int sel = (int)SendMessage(GetDlgItem(hwnd, IDC_MONITOR), CB_GETCURSEL, 0, 0);
-                            if(sel != CB_ERR)
-                            {
-                                if(sel >= (int)App->monitors.Num())
-                                    sel = 0;
-
-                                MonitorInfo &monitor = App->monitors[sel];
-
-                                int cx, cy;
-                                cx = monitor.rect.right  - monitor.rect.left;
-                                cy = monitor.rect.bottom - monitor.rect.top;
-
-                                SetWindowText(GetDlgItem(hwnd, IDC_SIZEX), IntString(cx).Array());
-                                SetWindowText(GetDlgItem(hwnd, IDC_SIZEY), IntString(cy).Array());
-                            }
-                            break;
-                        }
-
-                    case IDC_SIZEX:
-                    case IDC_SIZEY:
-                        {
-                            if(HIWORD(wParam) != EN_CHANGE)
-                                break;
-
-                            String strInt = GetEditText((HWND)lParam);
-                            int iVal = strInt.ToInt();
-
-                            int cx = GetEditText(GetDlgItem(hwnd, IDC_SIZEX)).ToInt();
-                            int cy = GetEditText(GetDlgItem(hwnd, IDC_SIZEY)).ToInt();
-
-                            if(cx < 128)        cx = 128;
-                            else if(cx > 4096)  cx = 4096;
-
-                            if(cy < 128)        cy = 128;
-                            else if(cy > 4096)  cy = 4096;
-
-                            App->RefreshDownscales(GetDlgItem(hwnd, IDC_DOWNSCALE), cx, cy);
-
-                            bDataChanged = true;
-                            break;
-                        }
-
-                    case IDC_DISABLEAERO:
-                        if(HIWORD(wParam) == BN_CLICKED)
-                            bDataChanged = true;
-                        break;
-
-                    case IDC_FPS_EDIT:
-                        if(HIWORD(wParam) == EN_CHANGE)
-                            bDataChanged = true;
-                        break;
-
-                    case IDC_DOWNSCALE:
-                        if(HIWORD(wParam) == CBN_SELCHANGE)
-                            bDataChanged = true;
-                        break;
-                }
-
-                if(bDataChanged)
-                {
-                    ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-                    App->SetChangedSettings(true);
-                }
-                break;
-            }
-    }
-    return FALSE;
-}
 
 INT_PTR CALLBACK OBS::AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -997,42 +674,6 @@ void OBS::ApplySettings()
     // FIXME: This is temporary until all the built-in panes are ported to the new interface
     switch(curSettingsSelection)
     {
-        case Settings_Video:
-            {
-                int curSel = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_MONITOR), CB_GETCURSEL, 0, 0);
-                if(curSel != CB_ERR)
-                    AppConfig->SetInt(TEXT("Video"), TEXT("Monitor"), curSel);
-
-                int iVal = GetEditText(GetDlgItem(hwndCurrentSettings, IDC_SIZEX)).ToInt();
-                if(iVal >=  128)
-                    AppConfig->SetInt(TEXT("Video"), TEXT("BaseWidth"), iVal);
-
-                iVal = GetEditText(GetDlgItem(hwndCurrentSettings, IDC_SIZEY)).ToInt();
-                if(iVal >= 128)
-                    AppConfig->SetInt(TEXT("Video"), TEXT("BaseHeight"), iVal);
-
-                BOOL bDisableAero = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_DISABLEAERO), BM_GETCHECK, 0, 0) == BST_CHECKED ? TRUE : FALSE;
-                AppConfig->SetInt(TEXT("Video"), TEXT("DisableAero"), bDisableAero);
-
-                BOOL bFailed;
-                int fps = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_FPS), UDM_GETPOS32, 0, (LPARAM)&bFailed);
-                AppConfig->SetInt(TEXT("Video"), TEXT("FPS"), (bFailed) ? 30 : fps);
-
-                curSel = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_DOWNSCALE), CB_GETCURSEL, 0, 0);
-                if(curSel != CB_ERR)
-                    AppConfig->SetFloat(TEXT("Video"), TEXT("Downscale"), downscaleMultipliers[curSel]);
-
-                int gammaVal = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_GAMMA), TBM_GETPOS, 0, 0);
-                AppConfig->SetInt(TEXT("Video"), TEXT("Gamma"), gammaVal);
-
-                //------------------------------------
-
-                if(!bRunning)
-                    ResizeWindow(false);
-
-                break;
-            }
-
         case Settings_Audio:
             {
                 AudioDeviceStorage *storage = (AudioDeviceStorage*)GetWindowLongPtr(hwndCurrentSettings, DWLP_USER);
@@ -1260,7 +901,6 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                 }
 
                 // FIXME: These are temporary until all the built-in panes are ported to the new interface
-                SendMessage(GetDlgItem(hwnd, IDC_SETTINGSLIST), LB_ADDSTRING, 0, (LPARAM)Str("Settings.Video"));
                 SendMessage(GetDlgItem(hwnd, IDC_SETTINGSLIST), LB_ADDSTRING, 0, (LPARAM)Str("Settings.Audio"));
                 SendMessage(GetDlgItem(hwnd, IDC_SETTINGSLIST), LB_ADDSTRING, 0, (LPARAM)Str("Settings.Advanced"));
 
@@ -1335,9 +975,6 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                             // FIXME: This is all temporary until all the built-in panes are ported to the new interface
                             switch(sel)
                             {
-                                case Settings_Video:
-                                    App->hwndCurrentSettings = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_VIDEO), hwnd, (DLGPROC)OBS::VideoSettingsProc);
-                                    break;
                                 case Settings_Audio:
                                     App->hwndCurrentSettings = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_AUDIO), hwnd, (DLGPROC)OBS::AudioSettingsProc);
                                     break;

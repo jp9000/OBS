@@ -469,8 +469,6 @@ class OBS
     void   CancelSettings();
     void   ApplySettings();
 
-    void   RefreshDownscales(HWND hwnd, int cx, int cy);
-
     // Settings panes
 public:
     void   AddSettingsPane(SettingsPane *pane);
@@ -481,7 +479,7 @@ private:
     friend class SettingsGeneral;
     friend class SettingsEncoding;
     friend class SettingsPublish;
-    static INT_PTR CALLBACK VideoSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+    friend class SettingsVideo;
     static INT_PTR CALLBACK AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
