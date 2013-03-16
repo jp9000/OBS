@@ -268,7 +268,7 @@ bool DeviceSource::LoadFilters()
 
     if(soundOutputType != 0)
     {
-        if(!bDShowHasAudio) {
+        if(bDShowHasAudio) {
             err = capture->FindPin(audioDeviceFilter, PINDIR_OUTPUT, &PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, FALSE, 0, &audioPin);
         } else {
             err = capture->FindPin(deviceFilter, PINDIR_OUTPUT, &PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, FALSE, 0, &audioPin);
