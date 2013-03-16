@@ -22,16 +22,50 @@
 #include "SettingsPane.h"
 
 //============================================================================
+// Helpers
+
+int LoadSettingEditInt(HWND hwnd, CTSTR lpConfigSection, CTSTR lpConfigName, int defVal);
+String LoadSettingEditString(HWND hwnd, CTSTR lpConfigSection, CTSTR lpConfigName, CTSTR lpDefault);
+int LoadSettingComboInt(HWND hwnd, CTSTR lpConfigSection, CTSTR lpConfigName, int defVal, int maxVal);
+String LoadSettingComboString(HWND hwnd, CTSTR lpConfigSection, CTSTR lpConfigName, CTSTR lpDefault);
+String LoadSettingTextComboString(HWND hwnd, CTSTR lpConfigSection, CTSTR lpConfigName, CTSTR lpDefault);
+
+//============================================================================
 // SettingsGeneral class
 
 class SettingsGeneral : public SettingsPane
 {
     //-----------------------------------------------------------------------
     // Constructor/destructor
-    
+
 public:
     SettingsGeneral();
     virtual ~SettingsGeneral();
+
+    //-----------------------------------------------------------------------
+    // Methods
+
+public:
+    // Interface
+    virtual CTSTR GetCategory() const;
+    virtual HWND CreatePane(HINSTANCE hInstance, HWND parentHwnd);
+    virtual void DestroyPane();
+    virtual INT_PTR ProcMessage(UINT message, WPARAM wParam, LPARAM lParam);
+    virtual void ApplySettings();
+    virtual void CancelSettings();
+};
+
+//============================================================================
+// SettingsEncoding class
+
+class SettingsEncoding : public SettingsPane
+{
+    //-----------------------------------------------------------------------
+    // Constructor/destructor
+
+public:
+    SettingsEncoding();
+    virtual ~SettingsEncoding();
 
     //-----------------------------------------------------------------------
     // Methods

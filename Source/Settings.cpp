@@ -23,36 +23,8 @@
 #include <Winsock2.h>
 #include <iphlpapi.h>
 
-struct AudioDeviceStorage {
-    AudioDeviceList *playbackDevices;
-    AudioDeviceList *recordingDevices;
-};
-
-enum SettingsSelection
-{
-    Settings_Encoding = 1,
-    Settings_Publish,
-    Settings_Video,
-    Settings_Audio,
-    Settings_Advanced,
-};
-
-BOOL CALLBACK MonitorInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, List<MonitorInfo> &monitors);
-
-void OBS::AddSettingsPane(SettingsPane *pane)
-{
-    settingsPanes.Add(pane);
-}
-
-void OBS::RemoveSettingsPane(SettingsPane *pane)
-{
-    settingsPanes.RemoveItem(pane);
-}
-
-void OBS::AddBuiltInSettingsPanes()
-{
-    AddSettingsPane(new SettingsGeneral());
-}
+//============================================================================
+// Helpers
 
 int LoadSettingEditInt(HWND hwnd, CTSTR lpConfigSection, CTSTR lpConfigName, int defVal)
 {
@@ -144,185 +116,40 @@ String LoadSettingTextComboString(HWND hwnd, CTSTR lpConfigSection, CTSTR lpConf
     return strVal;
 }
 
+//============================================================================
+
+struct AudioDeviceStorage {
+    AudioDeviceList *playbackDevices;
+    AudioDeviceList *recordingDevices;
+};
+
+enum SettingsSelection
+{
+    Settings_Publish = 2,
+    Settings_Video,
+    Settings_Audio,
+    Settings_Advanced,
+};
+
+BOOL CALLBACK MonitorInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, List<MonitorInfo> &monitors);
+
+void OBS::AddSettingsPane(SettingsPane *pane)
+{
+    settingsPanes.Add(pane);
+}
+
+void OBS::RemoveSettingsPane(SettingsPane *pane)
+{
+    settingsPanes.RemoveItem(pane);
+}
+
+void OBS::AddBuiltInSettingsPanes()
+{
+    AddSettingsPane(new SettingsGeneral());
+    AddSettingsPane(new SettingsEncoding());
+}
 
 CTSTR preset_names[7] = {TEXT("ultrafast"), TEXT("superfast"), TEXT("veryfast"), TEXT("faster"), TEXT("fast"), TEXT("medium"), TEXT("slow")};
-
-INT_PTR CALLBACK OBS::EncoderSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    switch(message)
-    {
-        case WM_INITDIALOG:
-            {
-                HWND hwndTemp;
-                LocalizeWindow(hwnd);
-
-                //--------------------------------------------
-
-                HWND hwndToolTip = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL, WS_POPUP|TTS_NOPREFIX|TTS_ALWAYSTIP,
-                                                  CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-                                                  hwnd, NULL, hinstMain, NULL);
-
-                TOOLINFO ti;
-                zero(&ti, sizeof(ti));
-                ti.cbSize = sizeof(ti);
-                ti.uFlags = TTF_SUBCLASS|TTF_IDISHWND;
-                ti.hwnd = hwnd;
-
-                SendMessage(hwndToolTip, TTM_SETMAXTIPWIDTH, 0, 500);
-                SendMessage(hwndToolTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 8000);
-
-                //--------------------------------------------
-
-                hwndTemp = GetDlgItem(hwnd, IDC_QUALITY);
-                for(int i=0; i<=10; i++)
-                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)IntString(i).Array());
-
-                LoadSettingComboString(hwndTemp, TEXT("Video Encoding"), TEXT("Quality"), TEXT("8"));
-
-                ti.lpszText = (LPWSTR)Str("Settings.Encoding.Video.QualityTooltip");
-                ti.uId = (UINT_PTR)hwndTemp;
-                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
-
-                //--------------------------------------------
-
-                bool bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR")) != 0;
-                SendMessage(GetDlgItem(hwnd, IDC_USECBR), BM_SETCHECK, bUseCBR ? BST_CHECKED : BST_UNCHECKED, 0);
-                EnableWindow(GetDlgItem(hwnd, IDC_QUALITY), !bUseCBR);
-
-                //--------------------------------------------
-
-                int bitrate    = LoadSettingEditInt(GetDlgItem(hwnd, IDC_MAXBITRATE), TEXT("Video Encoding"), TEXT("MaxBitrate"), 1000);
-                int buffersize = LoadSettingEditInt(GetDlgItem(hwnd, IDC_BUFFERSIZE), TEXT("Video Encoding"), TEXT("BufferSize"), 1000);
-
-                ti.lpszText = (LPWSTR)Str("Settings.Encoding.Video.MaxBitRateTooltip");
-                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_MAXBITRATE);
-                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
-
-                ti.lpszText = (LPWSTR)Str("Settings.Encoding.Video.BufferSizeTooltip");
-                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_BUFFERSIZE);
-                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
-
-                //--------------------------------------------
-
-                bool bHasUseBufferSizeValue = AppConfig->HasKey(TEXT("Video Encoding"), TEXT("UseBufferSize")) != 0;
-
-                bool bUseBufferSize;
-                if(!bHasUseBufferSizeValue)
-                    bUseBufferSize = buffersize != bitrate;
-                else
-                    bUseBufferSize = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseBufferSize"), 0) != 0;
-
-                SendMessage(GetDlgItem(hwnd, IDC_CUSTOMBUFFER), BM_SETCHECK, bUseBufferSize ? BST_CHECKED : BST_UNCHECKED, 0);
-                EnableWindow(GetDlgItem(hwnd, IDC_BUFFERSIZE), bUseBufferSize);
-
-                //--------------------------------------------
-
-                hwndTemp = GetDlgItem(hwnd, IDC_AUDIOCODEC);
-
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("MP3"));
-#ifdef USE_AAC
-                if(OSGetVersion() >= 7)
-                {
-                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("AAC"));
-                    LoadSettingComboString(hwndTemp, TEXT("Audio Encoding"), TEXT("Codec"), TEXT("AAC"));
-                }
-                else
-                    LoadSettingComboString(hwndTemp, TEXT("Audio Encoding"), TEXT("Codec"), TEXT("MP3"));
-#else
-                LoadSettingComboString(hwndTemp, TEXT("Audio Encoding"), TEXT("Codec"), TEXT("MP3"));
-#endif
-
-                //--------------------------------------------
-
-                hwndTemp = GetDlgItem(hwnd, IDC_AUDIOBITRATE);
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("48"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("64"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("96"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("128"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("160"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("192"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("256"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("320"));
-
-                LoadSettingComboString(hwndTemp, TEXT("Audio Encoding"), TEXT("Bitrate"), TEXT("96"));
-
-                //--------------------------------------------
-
-                hwndTemp = GetDlgItem(hwnd, IDC_AUDIOFORMAT);
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("44.1khz mono"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("44.1khz stereo"));
-
-                LoadSettingComboInt(hwndTemp, TEXT("Audio Encoding"), TEXT("Format"), 1, 1);
-
-                //--------------------------------------------
-
-                ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_HIDE);
-                App->SetChangedSettings(false);
-                return TRUE;
-            }
-
-        case WM_COMMAND:
-            {
-                bool bDataChanged = false;
-
-                switch(LOWORD(wParam))
-                {
-                    case IDC_QUALITY:
-                    case IDC_AUDIOCODEC:
-                    case IDC_AUDIOBITRATE:
-                    case IDC_AUDIOFORMAT:
-                        if(HIWORD(wParam) == CBN_SELCHANGE)
-                            bDataChanged = true;
-                        break;
-
-                    case IDC_MAXBITRATE:
-                        if(HIWORD(wParam) == EN_CHANGE)
-                        {
-                            bool bCustomBuffer = SendMessage(GetDlgItem(hwnd, IDC_CUSTOMBUFFER), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                            if (!bCustomBuffer)
-                            {
-                                String strText = GetEditText((HWND)lParam);
-                                SetWindowText(GetDlgItem(hwnd, IDC_BUFFERSIZE), strText);
-                            }
-
-                            bDataChanged = true;
-                        }
-                        break;
-
-                    case IDC_BUFFERSIZE:
-                        if(HIWORD(wParam) == EN_CHANGE)
-                            bDataChanged = true;
-                        break;
-
-                    case IDC_CUSTOMBUFFER:
-                    case IDC_USECBR:
-                        if (HIWORD(wParam) == BN_CLICKED)
-                        {
-                            bool bChecked = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
-                            if(LOWORD(wParam) == IDC_CUSTOMBUFFER)
-                            {
-                                EnableWindow(GetDlgItem(hwnd, IDC_BUFFERSIZE), bChecked);
-                                if(!bChecked)
-                                    SetWindowText(GetDlgItem(hwnd, IDC_BUFFERSIZE), GetEditText(GetDlgItem(hwnd, IDC_MAXBITRATE)));
-                            }
-                            else if(LOWORD(wParam) == IDC_USECBR)
-                                EnableWindow(GetDlgItem(hwnd, IDC_QUALITY), !bChecked);
-
-                            bDataChanged = true;
-                        }
-                        break;
-                }
-
-                if(bDataChanged)
-                {
-                    ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-                    App->SetChangedSettings(true);
-                }
-                break;
-            }
-    }
-    return FALSE;
-}
 
 enum
 {
@@ -1690,45 +1517,23 @@ INT_PTR CALLBACK OBS::AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wPara
 
 void OBS::CancelSettings()
 {
+    if(App->currentSettingsPane != NULL)
+        App->currentSettingsPane->CancelSettings();
 }
 
 void OBS::ApplySettings()
 {
+    if(App->currentSettingsPane != NULL)
+    {
+        App->currentSettingsPane->ApplySettings();
+        bSettingsChanged = false;
+        EnableWindow(GetDlgItem(hwndSettings, IDC_APPLY), FALSE);
+        return;
+    }
+
+    // FIXME: This is temporary until all the built-in panes are ported to the new interface
     switch(curSettingsSelection)
     {
-        case Settings_Encoding:
-            {
-                int quality = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_QUALITY), CB_GETCURSEL, 0, 0);
-                if(quality != CB_ERR)
-                    AppConfig->SetInt(TEXT("Video Encoding"), TEXT("Quality"), quality);
-
-                UINT bitrate = GetEditText(GetDlgItem(hwndCurrentSettings, IDC_MAXBITRATE)).ToInt();
-                if(bitrate < 100) bitrate = 100;
-                AppConfig->SetInt(TEXT("Video Encoding"), TEXT("MaxBitrate"), bitrate);
-
-                UINT bufSize = GetEditText(GetDlgItem(hwndCurrentSettings, IDC_BUFFERSIZE)).ToInt();
-                if(bufSize < 100) bitrate = bufSize;
-                AppConfig->SetInt(TEXT("Video Encoding"), TEXT("BufferSize"), bufSize);
-
-                String strTemp = GetCBText(GetDlgItem(hwndCurrentSettings, IDC_AUDIOCODEC));
-                AppConfig->SetString(TEXT("Audio Encoding"), TEXT("Codec"), strTemp);
-
-                strTemp = GetCBText(GetDlgItem(hwndCurrentSettings, IDC_AUDIOBITRATE));
-                AppConfig->SetString(TEXT("Audio Encoding"), TEXT("Bitrate"), strTemp);
-
-                int curSel = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_AUDIOFORMAT), CB_GETCURSEL, 0, 0);
-                if(curSel != CB_ERR)
-                    AppConfig->SetInt(TEXT("Audio Encoding"), TEXT("Format"), curSel);
-
-                bool bUseCBR = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_USECBR), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("UseCBR"), bUseCBR);
-
-                bool bCustomBuffer = SendMessage(GetDlgItem(hwndCurrentSettings, IDC_CUSTOMBUFFER), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("UseBufferSize"), bCustomBuffer);
-
-                break;
-            }
-
         case Settings_Publish:
             {
                 int curSel = (int)SendMessage(GetDlgItem(hwndCurrentSettings, IDC_MODE), CB_GETCURSEL, 0, 0);
@@ -2093,7 +1898,6 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                 }
 
                 // FIXME: These are temporary until all the built-in panes are ported to the new interface
-                SendMessage(GetDlgItem(hwnd, IDC_SETTINGSLIST), LB_ADDSTRING, 0, (LPARAM)Str("Settings.Encoding"));
                 SendMessage(GetDlgItem(hwnd, IDC_SETTINGSLIST), LB_ADDSTRING, 0, (LPARAM)Str("Settings.Publish"));
                 SendMessage(GetDlgItem(hwnd, IDC_SETTINGSLIST), LB_ADDSTRING, 0, (LPARAM)Str("Settings.Video"));
                 SendMessage(GetDlgItem(hwnd, IDC_SETTINGSLIST), LB_ADDSTRING, 0, (LPARAM)Str("Settings.Audio"));
@@ -2170,9 +1974,6 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                             // FIXME: This is all temporary until all the built-in panes are ported to the new interface
                             switch(sel)
                             {
-                                case Settings_Encoding:
-                                    App->hwndCurrentSettings = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_ENCODING), hwnd, (DLGPROC)OBS::EncoderSettingsProc);
-                                    break;
                                 case Settings_Publish:
                                     App->hwndCurrentSettings = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_PUBLISH), hwnd, (DLGPROC)OBS::PublishSettingsProc);
                                     break;
@@ -2198,36 +1999,21 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                     }
                 case IDOK:
                     if(App->bSettingsChanged)
-                    {
-                        if(App->currentSettingsPane != NULL)
-                            App->currentSettingsPane->ApplySettings();
-                        else
-                            App->ApplySettings(); // FIXME: This is temporary until all the built-in panes are ported to the new interface
-                    }
+                        App->ApplySettings();
                     EndDialog(hwnd, IDOK);
                     App->hwndSettings = NULL;
                     break;
 
                 case IDCANCEL:
                     if(App->bSettingsChanged)
-                    {
-                        if(App->currentSettingsPane != NULL)
-                            App->currentSettingsPane->CancelSettings();
-                        else
-                            App->CancelSettings(); // FIXME: This is temporary until all the built-in panes are ported to the new interface
-                    }
+                        App->CancelSettings();
                     EndDialog(hwnd, IDCANCEL);
                     App->hwndSettings = NULL;
                     break;
 
                 case IDC_APPLY:
                     if(App->bSettingsChanged)
-                    {
-                        if(App->currentSettingsPane != NULL)
-                            App->currentSettingsPane->ApplySettings();
-                        else
-                            App->ApplySettings(); // FIXME: This is temporary until all the built-in panes are ported to the new interface
-                    }
+                        App->ApplySettings();
                     break;
             }
             break;
