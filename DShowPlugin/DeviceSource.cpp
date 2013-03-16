@@ -373,7 +373,7 @@ bool DeviceSource::LoadFilters()
         else
             strTest << FormattedString(TEXT(", fourCC: %08lX\r\n"), bmiHeader->biCompression);
 
-        if(!bDShowHasAudio) strTest << FormattedString(TEXT("    audio device: %s,\r\n    audio device id %s,\r\n"), strAudioDevice.Array(), strAudioID.Array());
+        if(bDShowHasAudio) strTest << FormattedString(TEXT("    audio device: %s,\r\n    audio device id %s,\r\n"), strAudioDevice.Array(), strAudioID.Array());
 
         Log(TEXT("------------------------------------------"));
         Log(strTest.Array());
@@ -604,7 +604,7 @@ bool DeviceSource::LoadFilters()
 
     if(soundOutputType != 0)
     {
-        if(!bDShowHasAudio)
+        if(bDShowHasAudio)
             bConnected = SUCCEEDED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, audioDeviceFilter, NULL, audioFilter));
         else
             bConnected = SUCCEEDED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, deviceFilter, NULL, audioFilter));
@@ -650,11 +650,11 @@ cleanFinish:
         if(bAddedAudioCapture)
             graph->RemoveFilter(audioFilter);
         if(bAddedDevice) {
-            if(!bDShowHasAudio) graph->RemoveFilter(audioDeviceFilter);
+            if(bDShowHasAudio) graph->RemoveFilter(audioDeviceFilter);
             graph->RemoveFilter(deviceFilter);
         }
 
-        if(!bDShowHasAudio) SafeRelease(audioDeviceFilter);
+        if(bDShowHasAudio) SafeRelease(audioDeviceFilter);
         SafeRelease(deviceFilter);
         SafeRelease(captureFilter);
         SafeRelease(audioFilter);
@@ -760,14 +760,14 @@ void DeviceSource::UnloadFilters()
     {
         graph->RemoveFilter(captureFilter);
         graph->RemoveFilter(deviceFilter);
-        if(!bDShowHasAudio) graph->RemoveFilter(audioDeviceFilter);
+        if(bDShowHasAudio) graph->RemoveFilter(audioDeviceFilter);
 
         if(audioFilter)
             graph->RemoveFilter(audioFilter);
 
         SafeReleaseLogRef(captureFilter);
         SafeReleaseLogRef(deviceFilter);
-        if(!bDShowHasAudio) SafeReleaseLogRef(audioDeviceFilter);
+        if(bDShowHasAudio) SafeReleaseLogRef(audioDeviceFilter);
         SafeReleaseLogRef(audioFilter);
 
         bFiltersLoaded = false;
