@@ -566,7 +566,7 @@ struct ConfigDialogData
     StringList crossbarIDList;
     bool bGlobalSource;
     bool bCreating;
-    bool bDShowHasAudio, bForceCustomAudioDevice, bHasAudio;
+    bool bDeviceHasAudio;
 
     ~ConfigDialogData()
     {
@@ -916,7 +916,6 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 bool bFlipVertical   = configData->data->GetInt(TEXT("flipImage")) != 0;
                 bool bFlipHorizontal = configData->data->GetInt(TEXT("flipImageHorizontal")) != 0;
-                configData->bDShowHasAudio = configData->data->GetInt(TEXT("dshowHasAudio")) != 0;
 
                 SendMessage(hwndFlip, BM_SETCHECK, bFlipVertical ? BST_CHECKED : BST_UNCHECKED, 0);
                 SendMessage(hwndFlipHorizontal, BM_SETCHECK, bFlipHorizontal ? BST_CHECKED : BST_UNCHECKED, 0);
@@ -1008,9 +1007,11 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                     case 1: hwndTemp = GetDlgItem(hwnd, IDC_OUTPUTSOUND); break;
                     case 2: hwndTemp = GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND); break;
                 }
+
                 bool bForceCustomAudioDevice = configData->data->GetInt(TEXT("forceCustomAudioDevice")) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_FORCECUSTOMAUDIO), BM_SETCHECK, bForceCustomAudioDevice ? BST_CHECKED : BST_UNCHECKED, 0);
-                EnableWindow(GetDlgItem(hwnd, IDC_AUDIOLIST),        bForceCustomAudioDevice);
+
+                EnableWindow(GetDlgItem(hwnd, IDC_AUDIOLIST), !configData->bDeviceHasAudio || bForceCustomAudioDevice);
 
                 SendMessage(hwndTemp, BM_SETCHECK, BST_CHECKED, 0);
 
@@ -1226,18 +1227,17 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         if(HIWORD(wParam) == BN_CLICKED)
                         {
                             ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
-                            HWND hwndForceAudio = (HWND)lParam;
-                            BOOL bForceCustomAudioChk = SendMessage(hwndForceAudio, BM_GETCHECK, 0, 0) == BST_CHECKED;
+                            BOOL bForceCustomAudioChk = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
 
-                            configData->data->SetInt(TEXT("forceCustomAudioDevice"), bForceCustomAudioChk);
-
-                            if(configData->bDShowHasAudio) {
+                            if(configData->bDeviceHasAudio) {
                                 EnableWindow(GetDlgItem(hwnd, IDC_AUDIOLIST),        bForceCustomAudioChk);
                                 ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_DEVICELIST, CBN_SELCHANGE), (LPARAM)GetDlgItem(hwnd, IDC_DEVICELIST));
-                                if(bForceCustomAudioChk) ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_DEVICELIST, CBN_SELCHANGE), (LPARAM)GetDlgItem(hwnd, IDC_AUDIOLIST));
+
+                                if(bForceCustomAudioChk)
+                                    ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_DEVICELIST, CBN_SELCHANGE), (LPARAM)GetDlgItem(hwnd, IDC_AUDIOLIST));
                             }
                             else {
-                                EnableWindow(GetDlgItem(hwnd, IDC_AUDIOLIST),        true);
+                                EnableWindow(GetDlgItem(hwnd, IDC_AUDIOLIST), TRUE);
                             }
                         }
                     }
@@ -1396,14 +1396,13 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                                     outputPin->Release();
                                 }
 
-                                configData->bDShowHasAudio = bHasAudio;
+                                configData->bDeviceHasAudio = bHasAudio;
 
                                 EnableWindow(GetDlgItem(hwnd, IDC_NOSOUND),          bHasAudio);
                                 EnableWindow(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), bHasAudio);
                                 EnableWindow(GetDlgItem(hwnd, IDC_OUTPUTSOUND),      bHasAudio);
                                 EnableWindow(GetDlgItem(hwnd, IDC_VOLUME),           bHasAudio);
-                                if(!bForceCustomAudioDevice && bHasAudio) EnableWindow(GetDlgItem(hwnd, IDC_AUDIOLIST),        false);
-                                else if(!bHasAudio) EnableWindow(GetDlgItem(hwnd, IDC_AUDIOLIST),        true);
+                                EnableWindow(GetDlgItem(hwnd, IDC_AUDIOLIST),        !bHasAudio || bForceCustomAudioDevice);
 
                                 if(!bHasAudio)
                                 {
@@ -1458,6 +1457,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                             // get audio info
 
                             bool bHasAudio = false;
+                            BOOL bForceCustomAudioDevice = SendMessage(GetDlgItem(hwnd, IDC_FORCECUSTOMAUDIO) , BM_GETCHECK, 0, 0) == BST_CHECKED;
 
                             IPin *outputPin = GetOutputPin(filter, &MEDIATYPE_Audio);
                             if(outputPin)
@@ -1470,7 +1470,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                             EnableWindow(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), bHasAudio);
                             EnableWindow(GetDlgItem(hwnd, IDC_OUTPUTSOUND),      bHasAudio);
                             EnableWindow(GetDlgItem(hwnd, IDC_VOLUME),           bHasAudio);
-                            if(!configData->bDShowHasAudio) EnableWindow(GetDlgItem(hwnd, IDC_AUDIOLIST),        bHasAudio);
+                            if(!configData->bDeviceHasAudio || bForceCustomAudioDevice) EnableWindow(GetDlgItem(hwnd, IDC_AUDIOLIST),        bHasAudio);
 
                             if(!bHasAudio)
                             {
@@ -1658,14 +1658,11 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         UINT deviceID = (UINT)SendMessage(GetDlgItem(hwnd, IDC_DEVICELIST), CB_GETCURSEL, 0, 0);
                         if(deviceID == CB_ERR)
                             break;
-                        UINT audioDeviceID;
+                        UINT audioDeviceID = (UINT)SendMessage(GetDlgItem(hwnd, IDC_AUDIOLIST), CB_GETCURSEL, 0, 0);
+                        if(audioDeviceID == CB_ERR)
+                            break;
 
                         ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
-
-                        if(!configData->bDShowHasAudio) { audioDeviceID = (UINT)SendMessage(GetDlgItem(hwnd, IDC_AUDIOLIST), CB_GETCURSEL, 0, 0);
-                            if(audioDeviceID == CB_ERR)
-                                break;
-                        }
 
                         SIZE resolution;
                         if(!GetResolution(GetDlgItem(hwnd, IDC_RESOLUTION), resolution, FALSE))
@@ -1728,19 +1725,24 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         configData->data->SetString(TEXT("deviceName"), configData->deviceNameList[deviceID]);
                         configData->data->SetString(TEXT("deviceID"), configData->deviceIDList[deviceID]);
 
-                        if(!configData->bDShowHasAudio) {
-                            configData->data->SetString(TEXT("audioDevice"), strAudioDevice);
-                            configData->data->SetString(TEXT("audioDeviceName"), configData->audioNameList[audioDeviceID]);
-                            configData->data->SetString(TEXT("audioDeviceID"), configData->audioIDList[audioDeviceID]);
-                        }
+                        bool bForceCustomAudioDevice = SendMessage(GetDlgItem(hwnd, IDC_FORCECUSTOMAUDIO), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        configData->data->SetInt(TEXT("forceCustomAudioDevice"), bForceCustomAudioDevice);
 
-                        configData->data->SetInt(TEXT("dshowHasAudio"), configData->bDShowHasAudio);
+                        configData->data->SetString(TEXT("audioDevice"), strAudioDevice);
+                        configData->data->SetString(TEXT("audioDeviceName"), configData->audioNameList[audioDeviceID]);
+                        configData->data->SetString(TEXT("audioDeviceID"), configData->audioIDList[audioDeviceID]);
+
                         configData->data->SetInt(TEXT("customResolution"), bCustomResolution);
                         configData->data->SetInt(TEXT("resolutionWidth"), resolution.cx);
                         configData->data->SetInt(TEXT("resolutionHeight"), resolution.cy);
                         configData->data->SetInt(TEXT("frameInterval"), UINT(frameInterval));
                         configData->data->SetInt(TEXT("flipImage"), bFlip);
                         configData->data->SetInt(TEXT("flipImageHorizontal"), bFlipHorizontal);
+
+                        //------------------------------------------
+
+                        BOOL bForceCustomAudioChk = SendMessage(GetDlgItem(hwnd, IDC_FORCECUSTOMAUDIO), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        configData->data->SetInt(TEXT("forceCustomAudioDevice"), bForceCustomAudioChk);
 
                         //------------------------------------------
 
@@ -1768,10 +1770,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                             soundOutputType = 1;
                         else if(SendMessage(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), BM_GETCHECK, 0, 0) == BST_CHECKED)
                             soundOutputType = 2;
-                        bool bForceCustomAudioDevice = SendMessage(GetDlgItem(hwnd, IDC_FORCECUSTOMAUDIO), BM_GETCHECK, 0, 0) == BST_CHECKED;
 
                         configData->data->SetInt(TEXT("soundOutputType"), soundOutputType);
-                        configData->data->SetInt(TEXT("forceCustomAudioDevice"), bForceCustomAudioDevice);
 
                         int soundTimeOffset = (int)SendMessage(GetDlgItem(hwnd, IDC_TIMEOFFSET), UDM_GETPOS32, 0, 0);
                         configData->data->SetInt(TEXT("soundTimeOffset"), soundTimeOffset);

@@ -100,7 +100,7 @@ class DeviceSource : public ImageSource
 
     String          strDevice, strDeviceName, strDeviceID;
     String          strAudioDevice, strAudioName, strAudioID;
-    bool            bFlipVertical, bFlipHorizontal, bDShowHasAudio;
+    bool            bFlipVertical, bFlipHorizontal, bDeviceHasAudio;
     UINT64          frameInterval;
     UINT            renderCX, renderCY;
     BOOL            bUseCustomResolution;
