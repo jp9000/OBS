@@ -35,7 +35,7 @@ bool DeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *tim
 
         *buffer = outputBuffer.Array();
         *numFrames = sampleFrameCount;
-        *timestamp = API->GetAudioTime()+GetTimeOffset();
+        *timestamp = API->GetAudioTime();
 
         return true;
     }
@@ -88,7 +88,7 @@ bool DeviceAudioSource::Initialize(DeviceSource *parent)
     inputChannels      = device->audioFormat.nChannels;
     inputSamplesPerSec = device->audioFormat.nSamplesPerSec;
 
-    sampleFrameCount   = inputSamplesPerSec/100;
+    sampleFrameCount   = inputSamplesPerSec/50;
     sampleSegmentSize  = inputBlockSize*sampleFrameCount;
 
     outputBuffer.SetSize(sampleSegmentSize);
