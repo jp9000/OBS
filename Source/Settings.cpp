@@ -18,6 +18,7 @@
 
 
 #include "Main.h"
+#include "Settings.h"
 
 #include <Winsock2.h>
 #include <iphlpapi.h>
@@ -29,8 +30,7 @@ struct AudioDeviceStorage {
 
 enum SettingsSelection
 {
-    Settings_General,
-    Settings_Encoding,
+    Settings_Encoding = 1,
     Settings_Publish,
     Settings_Video,
     Settings_Audio,
@@ -39,272 +39,19 @@ enum SettingsSelection
 
 BOOL CALLBACK MonitorInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, List<MonitorInfo> &monitors);
 
-BOOL IsValidFileName(CTSTR lpFileName)
+void OBS::AddSettingsPane(SettingsPane *pane)
 {
-    if(!lpFileName || !*lpFileName)
-        return FALSE;
-
-    CTSTR lpTemp = lpFileName;
-
-    do 
-    {
-        if( *lpTemp == '\\' ||
-            *lpTemp == '/'  ||
-            *lpTemp == ':'  ||
-            *lpTemp == '*'  ||
-            *lpTemp == '?'  ||
-            *lpTemp == '"'  ||
-            *lpTemp == '<'  ||
-            *lpTemp == '>')
-        {
-            return FALSE;
-        }
-    } while (*++lpTemp);
-
-    return TRUE;
+    settingsPanes.Add(pane);
 }
 
-INT_PTR CALLBACK OBS::GeneralSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+void OBS::RemoveSettingsPane(SettingsPane *pane)
 {
-    switch(message)
-    {
-        case WM_INITDIALOG:
-            {
-                LocalizeWindow(hwnd);
+    settingsPanes.RemoveItem(pane);
+}
 
-                //----------------------------------------------
-
-                HWND hwndTemp = GetDlgItem(hwnd, IDC_LANGUAGE);
-
-                OSFindData ofd;
-                HANDLE hFind;
-                if(hFind = OSFindFirstFile(TEXT("locale/*.txt"), ofd))
-                {
-                    do 
-                    {
-                        if(ofd.bDirectory) continue;
-
-                        String langCode = GetPathFileName(ofd.fileName);
-
-                        LocaleNativeName *langInfo = GetLocaleNativeName(langCode);
-                        if(langInfo)
-                        {
-                            UINT id = (UINT)SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)langInfo->lpNative);
-                            SendMessage(hwndTemp, CB_SETITEMDATA, id, (LPARAM)langInfo->lpCode);
-
-                            if(App->strLanguage.CompareI(langCode))
-                                SendMessage(hwndTemp, CB_SETCURSEL, id, 0);
-                        }
-                    } while(OSFindNextFile(hFind, ofd));
-
-                    OSFindClose(hFind);
-                }
-
-                //----------------------------------------------
-
-                String strCurProfile = GlobalConfig->GetString(TEXT("General"), TEXT("Profile"));
-
-                hwndTemp = GetDlgItem(hwnd, IDC_PROFILE);
-
-                StringList profileList;
-                GetProfiles(profileList);
-
-                for(UINT i=0; i<profileList.Num(); i++)
-                {
-                    UINT id = (UINT)SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)profileList[i].Array());
-                    if(profileList[i].CompareI(strCurProfile))
-                        SendMessage(hwndTemp, CB_SETCURSEL, id, 0);
-                }
-
-                EnableWindow(GetDlgItem(hwnd, IDC_ADD),     FALSE);
-                EnableWindow(GetDlgItem(hwnd, IDC_RENAME),  FALSE);
-
-                UINT numItems = (UINT)SendMessage(GetDlgItem(hwnd, IDC_PROFILE), CB_GETCOUNT, 0, 0);
-                EnableWindow(GetDlgItem(hwnd, IDC_REMOVE),  (numItems > 1));
-
-                //----------------------------------------------
-
-                App->SetChangedSettings(false);
-                return TRUE;
-            }
-
-        case WM_COMMAND:
-            switch(LOWORD(wParam))
-            {
-                case IDC_LANGUAGE:
-                    {
-                        if(HIWORD(wParam) != CBN_SELCHANGE)
-                            break;
-
-                        HWND hwndTemp = (HWND)lParam;
-
-                        SetWindowText(GetDlgItem(hwnd, IDC_INFO), Str("Settings.General.Restart"));
-                        ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-
-                        int curSel = (int)SendMessage(hwndTemp, CB_GETCURSEL, 0, 0);
-                        if(curSel != CB_ERR)
-                        {
-                            String strLanguageCode = (CTSTR)SendMessage(hwndTemp, CB_GETITEMDATA, curSel, 0);
-                            GlobalConfig->SetString(TEXT("General"), TEXT("Language"), strLanguageCode);
-                        }
-                        break;
-                    }
-
-                case IDC_PROFILE:
-                    if(HIWORD(wParam) == CBN_EDITCHANGE)
-                    {
-                        String strText = GetEditText((HWND)lParam).KillSpaces();
-
-                        EnableWindow(GetDlgItem(hwnd, IDC_REMOVE),  FALSE);
-
-                        if(strText.IsValid())
-                        {
-                            if(IsValidFileName(strText))
-                            {
-                                String strCurProfile = GlobalConfig->GetString(TEXT("General"), TEXT("Profile"));
-
-                                UINT id = (UINT)SendMessage((HWND)lParam, CB_FINDSTRINGEXACT, -1, (LPARAM)strText.Array());
-                                EnableWindow(GetDlgItem(hwnd, IDC_ADD),     (id == CB_ERR));
-                                EnableWindow(GetDlgItem(hwnd, IDC_RENAME),  (id == CB_ERR) || strCurProfile.CompareI(strText));
-
-                                ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_HIDE);
-                                break;
-                            }
-
-                            SetWindowText(GetDlgItem(hwnd, IDC_INFO), Str("Settings.General.InvalidName"));
-                            ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-                        }
-                        else
-                            ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_HIDE);
-
-                        EnableWindow(GetDlgItem(hwnd, IDC_ADD),     FALSE);
-                        EnableWindow(GetDlgItem(hwnd, IDC_RENAME),  FALSE);
-                    }
-                    else if(HIWORD(wParam) == CBN_SELCHANGE)
-                    {
-                        EnableWindow(GetDlgItem(hwnd, IDC_ADD),     FALSE);
-                        EnableWindow(GetDlgItem(hwnd, IDC_RENAME),  FALSE);
-
-                        String strProfile = GetCBText((HWND)lParam);
-                        String strProfilePath;
-                        strProfilePath << lpAppDataPath << TEXT("\\profiles\\") << strProfile << TEXT(".ini");
-
-                        if(!AppConfig->Open(strProfilePath))
-                        {
-                            MessageBox(hwnd, TEXT("Error - unable to open ini file"), NULL, 0);
-                            break;
-                        }
-
-                        App->ReloadIniSettings();
-
-                        SetWindowText(GetDlgItem(hwnd, IDC_INFO), Str("Settings.Info"));
-                        ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-
-                        GlobalConfig->SetString(TEXT("General"), TEXT("Profile"), strProfile);
-                        ResetProfileMenu();
-
-                        UINT numItems = (UINT)SendMessage(GetDlgItem(hwnd, IDC_PROFILE), CB_GETCOUNT, 0, 0);
-                        EnableWindow(GetDlgItem(hwnd, IDC_REMOVE),  (numItems > 1));
-
-                        if(!App->bRunning)
-                            App->ResizeWindow(false);
-                    }
-                    break;
-
-                case IDC_RENAME:
-                case IDC_ADD:
-                    if(HIWORD(wParam) == BN_CLICKED)
-                    {
-                        HWND hwndProfileList = GetDlgItem(hwnd, IDC_PROFILE);
-                        String strProfile = GetEditText(hwndProfileList).KillSpaces();
-                        SetWindowText(hwndProfileList, strProfile);
-
-                        if(strProfile.IsEmpty())
-                            break;
-
-                        bool bRenaming = (LOWORD(wParam) == IDC_RENAME);
-
-                        String strCurProfile = GlobalConfig->GetString(TEXT("General"), TEXT("Profile"));
-                        String strCurProfilePath;
-                        strCurProfilePath << lpAppDataPath << TEXT("\\profiles\\") << strCurProfile << TEXT(".ini");
-
-                        String strProfilePath;
-                        strProfilePath << lpAppDataPath << TEXT("\\profiles\\") << strProfile << TEXT(".ini");
-
-                        if((!bRenaming || !strProfilePath.CompareI(strCurProfilePath)) && OSFileExists(strProfilePath))
-                            MessageBox(hwnd, Str("Settings.General.ProfileExists"), NULL, 0);
-                        else
-                        {
-                            if(bRenaming)
-                            {
-                                if(!MoveFile(strCurProfilePath, strProfilePath))
-                                    break;
-
-                                AppConfig->SetFilePath(strProfilePath);
-
-                                UINT curID = (UINT)SendMessage(hwndProfileList, CB_FINDSTRINGEXACT, -1, (LPARAM)strCurProfile.Array());
-                                if(curID != CB_ERR)
-                                    SendMessage(hwndProfileList, CB_DELETESTRING, curID, 0);
-                            }
-                            else
-                            {
-                                if(!AppConfig->SaveAs(strProfilePath))
-                                {
-                                    MessageBox(hwnd, TEXT("Error - unable to create new profile, could not create file"), NULL, 0);
-                                    break;
-                                }
-                            }
-
-                            UINT id = (UINT)SendMessage(hwndProfileList, CB_ADDSTRING, 0, (LPARAM)strProfile.Array());
-                            SendMessage(hwndProfileList, CB_SETCURSEL, id, 0);
-                            GlobalConfig->SetString(TEXT("General"), TEXT("Profile"), strProfile);
-
-                            UINT numItems = (UINT)SendMessage(hwndProfileList, CB_GETCOUNT, 0, 0);
-                            EnableWindow(GetDlgItem(hwnd, IDC_REMOVE),  (numItems > 1));
-                            EnableWindow(GetDlgItem(hwnd, IDC_RENAME),  FALSE);
-                            EnableWindow(GetDlgItem(hwnd, IDC_ADD),     FALSE);
-
-                            ResetProfileMenu();
-                        }
-                    }
-                    break;
-
-                case IDC_REMOVE:
-                    {
-                        HWND hwndProfileList = GetDlgItem(hwnd, IDC_PROFILE);
-
-                        String strCurProfile = GlobalConfig->GetString(TEXT("General"), TEXT("Profile"));
-
-                        UINT numItems = (UINT)SendMessage(hwndProfileList, CB_GETCOUNT, 0, 0);
-
-                        String strConfirm = Str("Settings.General.ConfirmDelete");
-                        strConfirm.FindReplace(TEXT("$1"), strCurProfile);
-                        if(MessageBox(hwnd, strConfirm, Str("DeleteConfirm.Title"), MB_YESNO) == IDYES)
-                        {
-                            UINT id = (UINT)SendMessage(hwndProfileList, CB_FINDSTRINGEXACT, -1, (LPARAM)strCurProfile.Array());
-                            if(id != CB_ERR)
-                            {
-                                SendMessage(hwndProfileList, CB_DELETESTRING, id, 0);
-                                if(id == numItems-1)
-                                    id--;
-
-                                SendMessage(hwndProfileList, CB_SETCURSEL, id, 0);
-                                GeneralSettingsProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_PROFILE, CBN_SELCHANGE), (LPARAM)hwndProfileList);
-
-                                String strCurProfilePath;
-                                strCurProfilePath << lpAppDataPath << TEXT("\\profiles\\") << strCurProfile << TEXT(".ini");
-                                OSDeleteFile(strCurProfilePath);
-
-                                ResetProfileMenu();
-                            }
-                        }
-
-                        break;
-                    }
-            }
-
-    }
-    return FALSE;
+void OBS::AddBuiltInSettingsPanes()
+{
+    AddSettingsPane(new SettingsGeneral());
 }
 
 int LoadSettingEditInt(HWND hwnd, CTSTR lpConfigSection, CTSTR lpConfigName, int defVal)
@@ -2336,7 +2083,16 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
 
                 LocalizeWindow(hwnd);
 
-                SendMessage(GetDlgItem(hwnd, IDC_SETTINGSLIST), LB_ADDSTRING, 0, (LPARAM)Str("Settings.General"));
+                // Add setting categories from the pane list
+                for(unsigned int i = 0; i < App->settingsPanes.Num(); i++)
+                {
+                    SettingsPane *pane = App->settingsPanes[i];
+                    if(pane == NULL)
+                        continue;
+                    SendMessage(GetDlgItem(hwnd, IDC_SETTINGSLIST), LB_ADDSTRING, 0, (LPARAM)pane->GetCategory());
+                }
+
+                // FIXME: These are temporary until all the built-in panes are ported to the new interface
                 SendMessage(GetDlgItem(hwnd, IDC_SETTINGSLIST), LB_ADDSTRING, 0, (LPARAM)Str("Settings.Encoding"));
                 SendMessage(GetDlgItem(hwnd, IDC_SETTINGSLIST), LB_ADDSTRING, 0, (LPARAM)Str("Settings.Publish"));
                 SendMessage(GetDlgItem(hwnd, IDC_SETTINGSLIST), LB_ADDSTRING, 0, (LPARAM)Str("Settings.Video"));
@@ -2349,10 +2105,19 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
 
                 SendMessage(GetDlgItem(hwnd, IDC_SETTINGSLIST), LB_SETCURSEL, 0, 0);
 
+                // Load the first settings pane from the list
                 App->curSettingsSelection = 0;
-                App->hwndCurrentSettings = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_GENERAL), hwnd, (DLGPROC)OBS::GeneralSettingsProc);
-                SetWindowPos(App->hwndCurrentSettings, NULL, subDialogRect.left, subDialogRect.top, 0, 0, SWP_NOSIZE);
-                ShowWindow(App->hwndCurrentSettings, SW_SHOW);
+                App->hwndCurrentSettings = NULL;
+                App->currentSettingsPane = NULL;
+                if(App->settingsPanes.Num() >= 1)
+                    App->currentSettingsPane = App->settingsPanes[0];
+                if(App->currentSettingsPane != NULL)
+                    App->hwndCurrentSettings = App->currentSettingsPane->CreatePane(hinstMain, hwnd);
+                if(App->hwndCurrentSettings != NULL)
+                {
+                    SetWindowPos(App->hwndCurrentSettings, NULL, subDialogRect.left, subDialogRect.top, 0, 0, SWP_NOSIZE);
+                    ShowWindow(App->hwndCurrentSettings, SW_SHOW);
+                }
 
                 return TRUE;
             }
@@ -2385,33 +2150,42 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
 
                         App->curSettingsSelection = sel;
 
-                        DestroyWindow(App->hwndCurrentSettings);
+                        if(App->currentSettingsPane != NULL)
+                            App->currentSettingsPane->DestroyPane();
+                        else
+                            DestroyWindow(App->hwndCurrentSettings); // FIXME: This is temporary until all the built-in panes are ported to the new interface
+                        App->currentSettingsPane = NULL;
                         App->hwndCurrentSettings = NULL;
 
                         RECT subDialogRect;
                         GetWindowRect(GetDlgItem(hwnd, IDC_SUBDIALOG), &subDialogRect);
                         ScreenToClient(hwnd, (LPPOINT)&subDialogRect.left);
 
-                        switch(sel)
+                        if(sel >= 0 && sel < (int)App->settingsPanes.Num())
+                            App->currentSettingsPane = App->settingsPanes[sel];
+                        if(App->currentSettingsPane != NULL)
+                            App->hwndCurrentSettings = App->currentSettingsPane->CreatePane(hinstMain, hwnd);
+                        else
                         {
-                            case Settings_General:
-                                App->hwndCurrentSettings = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_GENERAL), hwnd, (DLGPROC)OBS::GeneralSettingsProc);
-                                break;
-                            case Settings_Encoding:
-                                App->hwndCurrentSettings = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_ENCODING), hwnd, (DLGPROC)OBS::EncoderSettingsProc);
-                                break;
-                            case Settings_Publish:
-                                App->hwndCurrentSettings = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_PUBLISH), hwnd, (DLGPROC)OBS::PublishSettingsProc);
-                                break;
-                            case Settings_Video:
-                                App->hwndCurrentSettings = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_VIDEO), hwnd, (DLGPROC)OBS::VideoSettingsProc);
-                                break;
-                            case Settings_Audio:
-                                App->hwndCurrentSettings = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_AUDIO), hwnd, (DLGPROC)OBS::AudioSettingsProc);
-                                break;
-                            case Settings_Advanced:
-                                App->hwndCurrentSettings = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_ADVANCED), hwnd, (DLGPROC)OBS::AdvancedSettingsProc);
-                                break;
+                            // FIXME: This is all temporary until all the built-in panes are ported to the new interface
+                            switch(sel)
+                            {
+                                case Settings_Encoding:
+                                    App->hwndCurrentSettings = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_ENCODING), hwnd, (DLGPROC)OBS::EncoderSettingsProc);
+                                    break;
+                                case Settings_Publish:
+                                    App->hwndCurrentSettings = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_PUBLISH), hwnd, (DLGPROC)OBS::PublishSettingsProc);
+                                    break;
+                                case Settings_Video:
+                                    App->hwndCurrentSettings = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_VIDEO), hwnd, (DLGPROC)OBS::VideoSettingsProc);
+                                    break;
+                                case Settings_Audio:
+                                    App->hwndCurrentSettings = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_AUDIO), hwnd, (DLGPROC)OBS::AudioSettingsProc);
+                                    break;
+                                case Settings_Advanced:
+                                    App->hwndCurrentSettings = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_ADVANCED), hwnd, (DLGPROC)OBS::AdvancedSettingsProc);
+                                    break;
+                            }
                         }
 
                         if(App->hwndCurrentSettings)
@@ -2424,21 +2198,36 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                     }
                 case IDOK:
                     if(App->bSettingsChanged)
-                        App->ApplySettings();
+                    {
+                        if(App->currentSettingsPane != NULL)
+                            App->currentSettingsPane->ApplySettings();
+                        else
+                            App->ApplySettings(); // FIXME: This is temporary until all the built-in panes are ported to the new interface
+                    }
                     EndDialog(hwnd, IDOK);
                     App->hwndSettings = NULL;
                     break;
 
                 case IDCANCEL:
                     if(App->bSettingsChanged)
-                        App->CancelSettings();
+                    {
+                        if(App->currentSettingsPane != NULL)
+                            App->currentSettingsPane->CancelSettings();
+                        else
+                            App->CancelSettings(); // FIXME: This is temporary until all the built-in panes are ported to the new interface
+                    }
                     EndDialog(hwnd, IDCANCEL);
                     App->hwndSettings = NULL;
                     break;
 
                 case IDC_APPLY:
                     if(App->bSettingsChanged)
-                        App->ApplySettings();
+                    {
+                        if(App->currentSettingsPane != NULL)
+                            App->currentSettingsPane->ApplySettings();
+                        else
+                            App->ApplySettings(); // FIXME: This is temporary until all the built-in panes are ported to the new interface
+                    }
                     break;
             }
             break;

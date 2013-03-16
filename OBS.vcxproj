@@ -266,6 +266,8 @@
     <ClCompile Include="Source\RTMPPublisher.cpp" />
     <ClCompile Include="Source\RTMPStuff.cpp" />
     <ClCompile Include="Source\Settings.cpp" />
+    <ClCompile Include="Source\SettingsGeneral.cpp" />
+    <ClCompile Include="Source\SettingsPane.cpp" />
     <ClCompile Include="Source\TextOutputSource.cpp" />
     <ClCompile Include="Source\Updater.cpp" />
     <ClCompile Include="Source\WindowStuff.cpp" />
@@ -281,6 +283,8 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="Source\RTMPPublisher.h" />
     <ClInclude Include="Source\RTMPStuff.h" />
+    <ClInclude Include="Source\Settings.h" />
+    <ClInclude Include="Source\SettingsPane.h" />
     <ClInclude Include="Source\Updater.h" />
     <ClInclude Include="Source\WindowStuff.h" />
   </ItemGroup>

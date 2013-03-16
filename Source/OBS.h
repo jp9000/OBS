@@ -20,6 +20,7 @@
 #pragma once
 
 class Scene;
+class SettingsPane;
 
 #define NUM_RENDER_BUFFERS 2
 
@@ -453,10 +454,12 @@ class OBS
     //---------------------------------------------------
     // settings window
 
-    int     curSettingsSelection;
-    HWND    hwndSettings;
-    HWND    hwndCurrentSettings;
-    bool    bSettingsChanged;
+    int                 curSettingsSelection;
+    HWND                hwndSettings;
+    HWND                hwndCurrentSettings;
+    bool                bSettingsChanged;
+    List<SettingsPane*> settingsPanes;
+    SettingsPane *      currentSettingsPane;
 
     inline void SetChangedSettings(bool bChanged)
     {
@@ -468,7 +471,14 @@ class OBS
 
     void   RefreshDownscales(HWND hwnd, int cx, int cy);
 
-    static INT_PTR CALLBACK GeneralSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+    // Settings panes
+public:
+    void   AddSettingsPane(SettingsPane *pane);
+    void   RemoveSettingsPane(SettingsPane *pane);
+private:
+    void   AddBuiltInSettingsPanes();
+
+    friend class SettingsGeneral;
     static INT_PTR CALLBACK EncoderSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK VideoSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
