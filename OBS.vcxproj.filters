@@ -124,9 +124,6 @@
     <ClCompile Include="Source\SettingsGeneral.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Source\SettingsPane.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Source\SettingsEncoding.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -178,9 +175,6 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="Source\WindowStuff.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\SettingsPane.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="Source\Settings.h">

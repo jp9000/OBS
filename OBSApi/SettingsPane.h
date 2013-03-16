@@ -18,12 +18,12 @@
 
 #pragma once
 
-#include "Main.h"
+#include "OBSApi.h"
 
 //============================================================================
 // SettingsPane class
 
-class SettingsPane
+class BASE_EXPORT SettingsPane
 {
     //-----------------------------------------------------------------------
     // Private members

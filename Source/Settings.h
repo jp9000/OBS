@@ -20,6 +20,7 @@
 #pragma once
 
 #include "SettingsPane.h"
+#include "Main.h"
 
 //============================================================================
 // Helpers

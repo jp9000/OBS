@@ -35,7 +35,7 @@ SettingsPane::~SettingsPane()
  */
 void SettingsPane::SetChangedSettings(bool isModified)
 {
-    App->SetChangedSettings(isModified);
+    API->SetChangedSettings(isModified);
 }
 
 INT_PTR CALLBACK SettingsPane::DialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
