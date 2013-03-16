@@ -30,6 +30,14 @@ SettingsPane::~SettingsPane()
 {
 }
 
+/**
+ * Should be called whenever the user modifies a setting that has not been saved to disk.
+ */
+void SettingsPane::SetChangedSettings(bool isModified)
+{
+    App->SetChangedSettings(isModified);
+}
+
 INT_PTR CALLBACK SettingsPane::DialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     // Get the pointer to our class instance

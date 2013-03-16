@@ -312,7 +312,7 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 //--------------------------------------------
 
-                App->SetChangedSettings(false);
+                SetChangedSettings(false);
                 return TRUE;
             }
 
@@ -339,7 +339,7 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                             EnableWindow(GetDlgItem(hwnd, IDC_CLEARPUSHTOTALK), bUsePushToTalk);
                             EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY_EDIT), bUsePushToTalk);
                             EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY), bUsePushToTalk);
-                            App->SetChangedSettings(true);
+                            SetChangedSettings(true);
                         }
                         break;
 
@@ -352,7 +352,7 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     case IDC_MUTEDESKTOPHOTKEY:
                     case IDC_PTTDELAY_EDIT:
                         if(HIWORD(wParam) == EN_CHANGE)
-                            App->SetChangedSettings(true);
+                            SetChangedSettings(true);
                         break;
 
                     case IDC_CLEARPUSHTOTALK:
@@ -360,7 +360,7 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                         {
                             SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY), HKM_SETHOTKEY, 0, 0);
                             SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY2), HKM_SETHOTKEY, 0, 0);
-                            App->SetChangedSettings(true);
+                            SetChangedSettings(true);
                         }
                         break;
 
@@ -368,7 +368,7 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                         if(HIWORD(wParam) == BN_CLICKED)
                         {
                             SendMessage(GetDlgItem(hwnd, IDC_MUTEMICHOTKEY), HKM_SETHOTKEY, 0, 0);
-                            App->SetChangedSettings(true);
+                            SetChangedSettings(true);
                         }
                         break;
 
@@ -376,13 +376,13 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                         if(HIWORD(wParam) == BN_CLICKED)
                         {
                             SendMessage(GetDlgItem(hwnd, IDC_MUTEDESKTOPHOTKEY), HKM_SETHOTKEY, 0, 0);
-                            App->SetChangedSettings(true);
+                            SetChangedSettings(true);
                         }
                         break;
 
                     case IDC_FORCEMONO:
                         if(HIWORD(wParam) == BN_CLICKED)
-                            App->SetChangedSettings(true);
+                            SetChangedSettings(true);
                         break;
 
                     case IDC_MICDEVICES:
@@ -399,7 +399,7 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 if(bDataChanged)
                 {
                     ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-                    App->SetChangedSettings(true);
+                    SetChangedSettings(true);
                 }
                 break;
             }

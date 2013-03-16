@@ -194,7 +194,7 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 //--------------------------------------------
 
                 ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_HIDE);
-                App->SetChangedSettings(false);
+                SetChangedSettings(false);
                 return TRUE;
             }
 
@@ -253,7 +253,7 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 if(bDataChanged)
                 {
                     ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-                    App->SetChangedSettings(true);
+                    SetChangedSettings(true);
                 }
                 break;
             }

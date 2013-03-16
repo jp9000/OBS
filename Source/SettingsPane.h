@@ -47,6 +47,9 @@ public:
     //-----------------------------------------------------------------------
     // Methods
 
+protected:
+    void SetChangedSettings(bool isModified);
+
 public:
     virtual CTSTR GetCategory() const = 0;
     virtual HWND CreatePane(HINSTANCE hInstance, HWND parentHwnd) = 0;

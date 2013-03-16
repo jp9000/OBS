@@ -145,7 +145,7 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 //----------------------------------------------
 
-                App->SetChangedSettings(false);
+                SetChangedSettings(false);
                 return TRUE;
             }
 

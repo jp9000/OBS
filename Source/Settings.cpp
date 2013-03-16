@@ -135,6 +135,13 @@ void OBS::AddBuiltInSettingsPanes()
     AddSettingsPane(new SettingsAdvanced());
 }
 
+void OBS::SetChangedSettings(bool bChanged)
+{
+    if(hwndSettings == NULL)
+        return;
+    EnableWindow(GetDlgItem(hwndSettings, IDC_APPLY), (bSettingsChanged = bChanged));
+}
+
 void OBS::CancelSettings()
 {
     if(App->currentSettingsPane != NULL)

@@ -301,7 +301,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 //need this as some of the dialog item sets above trigger the notifications
                 ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_HIDE);
-                App->SetChangedSettings(false);
+                SetChangedSettings(false);
                 return TRUE;
             }
 
@@ -315,7 +315,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                         EnableWindow(GetDlgItem(hwnd, IDC_VIDEOENCODERSETTINGS), bUseVideoEncoderSettings);
 
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-                        App->SetChangedSettings(true);
+                        SetChangedSettings(true);
                     }
                     break;
 
@@ -326,7 +326,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                     if(HIWORD(wParam) == EN_CHANGE)
                     {
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-                        App->SetChangedSettings(true);
+                        SetChangedSettings(true);
                     }
                     break;
 
@@ -337,7 +337,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                     if(HIWORD(wParam) == BN_CLICKED)
                     {
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-                        App->SetChangedSettings(true);
+                        SetChangedSettings(true);
                     }
                     break;*/
 
@@ -348,7 +348,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                         EnableWindow(GetDlgItem(hwnd, IDC_SENDBUFFERSIZE), bUseSendBuffer);
 
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-                        App->SetChangedSettings(true);
+                        SetChangedSettings(true);
                     }
                     break;
 
@@ -369,7 +369,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                             {
                                 bHasWarned = TRUE;
                                 ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-                                App->SetChangedSettings(true);
+                                SetChangedSettings(true);
                             }
                         }
                     }
@@ -381,7 +381,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                     if(HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == CBN_EDITCHANGE)
                     {
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-                        App->SetChangedSettings(true);
+                        SetChangedSettings(true);
                     }
                     break;
 
@@ -395,7 +395,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                     if(HIWORD(wParam) == BN_CLICKED)
                     {
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-                        App->SetChangedSettings(true);
+                        SetChangedSettings(true);
                     }
                     break;
             }

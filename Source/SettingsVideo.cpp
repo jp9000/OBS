@@ -125,7 +125,7 @@ void SettingsVideo::RefreshDownscales(HWND hwnd, int cx, int cy)
         if(lastID == CB_ERR)
             SendMessage(hwnd, CB_SETCURSEL, 0, 0);
 
-        App->SetChangedSettings(true);
+        SetChangedSettings(true);
     }
 
     if(lastID != CB_ERR)
@@ -298,7 +298,7 @@ INT_PTR SettingsVideo::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 //--------------------------------------------
 
                 ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_HIDE);
-                App->SetChangedSettings(false);
+                SetChangedSettings(false);
 
                 return TRUE;
             }
@@ -405,7 +405,7 @@ INT_PTR SettingsVideo::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 if(bDataChanged)
                 {
                     ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-                    App->SetChangedSettings(true);
+                    SetChangedSettings(true);
                 }
                 break;
             }

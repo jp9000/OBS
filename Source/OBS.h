@@ -461,11 +461,7 @@ class OBS
     List<SettingsPane*> settingsPanes;
     SettingsPane *      currentSettingsPane;
 
-    inline void SetChangedSettings(bool bChanged)
-    {
-        EnableWindow(GetDlgItem(hwndSettings, IDC_APPLY), (bSettingsChanged = bChanged));
-    }
-
+    void   SetChangedSettings(bool bChanged);
     void   CancelSettings();
     void   ApplySettings();
 
@@ -476,6 +472,7 @@ public:
 private:
     void   AddBuiltInSettingsPanes();
 
+    friend class SettingsPane;
     friend class SettingsGeneral;
     friend class SettingsEncoding;
     friend class SettingsPublish;

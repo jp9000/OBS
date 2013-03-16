@@ -373,7 +373,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 //--------------------------------------------
 
                 ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_HIDE);
-                App->SetChangedSettings(false);
+                SetChangedSettings(false);
 
                 return TRUE;
             }
@@ -392,7 +392,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 if(nmHdr->idFrom == IDC_AUTORECONNECT_TIMEOUT)
                 {
                     if(nmHdr->code == UDN_DELTAPOS)
-                        App->SetChangedSettings(true);
+                        SetChangedSettings(true);
                 }
 
                 break;
@@ -539,13 +539,13 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                             EnableWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT_TIMEOUT),       bAutoReconnect);
                             EnableWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT_TIMEOUT_EDIT),  bAutoReconnect);
 
-                            App->SetChangedSettings(true);
+                            SetChangedSettings(true);
                         }
                         break;
 
                     case IDC_AUTORECONNECT_TIMEOUT_EDIT:
                         if(HIWORD(wParam) == EN_CHANGE)
-                            App->SetChangedSettings(true);
+                            SetChangedSettings(true);
                         break;
 
                     case IDC_DELAY_EDIT:
@@ -628,7 +628,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     case IDC_STOPSTREAMHOTKEY:
                     case IDC_DASHBOARDLINK:
                         if(HIWORD(wParam) == EN_CHANGE)
-                            App->SetChangedSettings(true);
+                            SetChangedSettings(true);
                         break;
 
                     case IDC_PLAYPATH:
@@ -644,7 +644,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                             if(SendMessage(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY), HKM_GETHOTKEY, 0, 0))
                             {
                                 SendMessage(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY), HKM_SETHOTKEY, 0, 0);
-                                App->SetChangedSettings(true);
+                                SetChangedSettings(true);
                             }
                         }
                         break;
@@ -655,7 +655,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                             if(SendMessage(GetDlgItem(hwnd, IDC_STOPSTREAMHOTKEY), HKM_GETHOTKEY, 0, 0))
                             {
                                 SendMessage(GetDlgItem(hwnd, IDC_STOPSTREAMHOTKEY), HKM_SETHOTKEY, 0, 0);
-                                App->SetChangedSettings(true);
+                                SetChangedSettings(true);
                             }
                         }
                         break;
@@ -669,7 +669,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 if(bDataChanged)
                 {
                     ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-                    App->SetChangedSettings(true);
+                    SetChangedSettings(true);
                 }
                 break;
             }
