@@ -1080,8 +1080,9 @@ void DeviceSource::UpdateSettings()
     UINT newCY                  = data->GetInt(TEXT("resolutionHeight"));
     BOOL bNewCustom             = data->GetInt(TEXT("customResolution"));
     UINT newPreferredType       = data->GetInt(TEXT("usePreferredType")) != 0 ? data->GetInt(TEXT("preferredType")) : -1;
+    UINT newSoundOutputType     = data->GetInt(TEXT("soundOutputType"));
 
-    if(renderCX != newCX || renderCY != newCY || frameInterval != newFrameInterval || newPreferredType != preferredOutputType || !strDevice.CompareI(strNewDevice) || !strAudioDevice.CompareI(strNewAudioDevice) || bNewCustom != bUseCustomResolution)
+    if(newSoundOutputType != soundOutputType || renderCX != newCX || renderCY != newCY || frameInterval != newFrameInterval || newPreferredType != preferredOutputType || !strDevice.CompareI(strNewDevice) || !strAudioDevice.CompareI(strNewAudioDevice) || bNewCustom != bUseCustomResolution)
     {
         API->EnterSceneMutex();
 
