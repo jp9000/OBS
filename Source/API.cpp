@@ -482,6 +482,20 @@ public:
 
     virtual AudioSource* GetDesktopAudioSource()    {return App->desktopAudio;}
     virtual AudioSource* GetMicAudioSource()        {return App->micAudio;}
+
+    virtual void GetCurDesktopVolumeStats(float *rms, float *max, float *peak) const
+    {
+        *rms = App->desktopMag;
+        *max = App->desktopMax;
+        *peak = App->desktopPeak;
+    }
+
+    virtual void GetCurMicVolumeStats(float *rms, float *max, float *peak) const
+    {
+        *rms = App->micMag;
+        *max = App->micMax;
+        *peak = App->micPeak;
+    }
 };
 
 APIInterface* CreateOBSApiInterface()
