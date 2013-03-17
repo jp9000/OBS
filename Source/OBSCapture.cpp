@@ -747,7 +747,7 @@ bool OBS::QueryNewAudio(QWORD &timestamp)
 
         OSEnterMutex(hAuxAudioMutex);
         for(UINT i=0; i<auxAudioSources.Num(); i++)
-            auxAudioSources[i]->QueryAudio(curDesktopVol);
+            auxAudioSources[i]->QueryAudio(auxAudioSources[i]->GetVolume());
         OSLeaveMutex(hAuxAudioMutex);
 
         if(micAudio != NULL)
@@ -758,7 +758,7 @@ bool OBS::QueryNewAudio(QWORD &timestamp)
     {
         OSEnterMutex(hAuxAudioMutex);
         for(UINT i=0; i<auxAudioSources.Num(); i++)
-            auxAudioSources[i]->QueryAudio(curDesktopVol);
+            auxAudioSources[i]->QueryAudio(auxAudioSources[i]->GetVolume());
         OSLeaveMutex(hAuxAudioMutex);
 
         if(micAudio)
@@ -896,6 +896,14 @@ void OBS::MainAudioLoop()
 
             desktopAudio->GetBuffer(&desktopBuffer, &desktopAudioFrames, timestamp);
             desktopAudio->GetNewestFrame(&latestDesktopBuffer, &latestDesktopAudioFrames);
+
+            UINT totalFloats = desktopAudioFrames*2;
+            if(bDesktopMuted)
+            {
+                // Clearing the desktop audio buffer before mixing in the auxiliary audio sources.
+                zero(desktopBuffer, sizeof(*desktopBuffer)*totalFloats);
+            }
+
             if(micAudio != NULL)
             {
                 micAudio->GetBuffer(&micBuffer, &micAudioFrames, timestamp);
@@ -931,14 +939,15 @@ void OBS::MainAudioLoop()
 
             //----------------------------------------------------------------------------
 
-            UINT totalFloats = desktopAudioFrames*2;
+            //UINT totalFloats = desktopAudioFrames*2;
 
             //----------------------------------------------------------------------------
 
             /*multiply samples by volume and compute RMS and max of samples*/
             float desktopRMS = 0, micRMS = 0, desktopMx = 0, micMx = 0;
+            // Use 1.0f instead of curDesktopVol, since aux audio sources already have their volume set, and shouldn't be boosted anyway.
             if(latestDesktopBuffer)
-                CalculateVolumeLevels(mixedLatestDesktopSamples.Array(), latestDesktopAudioFrames*2, curDesktopVol, desktopRMS, desktopMx);
+                CalculateVolumeLevels(mixedLatestDesktopSamples.Array(), latestDesktopAudioFrames*2, 1.0f, desktopRMS, desktopMx);
             if(bMicEnabled && latestMicBuffer)
                 CalculateVolumeLevels(latestMicBuffer, latestMicAudioFrames*2, curMicVol, micRMS, micMx);
 
@@ -1006,9 +1015,6 @@ void OBS::MainAudioLoop()
             //----------------------------------------------------------------------------
             // mix mic and desktop sound, using SSE2 if available
             // also, it's perfectly fine to just mix into the returned buffer
-
-            if(bDesktopMuted)
-                zero(desktopBuffer, sizeof(*desktopBuffer)*totalFloats);
 
             if(bMicEnabled)
                 MixAudio(desktopBuffer, micBuffer, totalFloats, bForceMicMono);

@@ -64,6 +64,9 @@
     <ClCompile Include="Utility\XT_Windows.cpp">
       <Filter>Utility\Source</Filter>
     </ClCompile>
+    <ClCompile Include="SettingsPane.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ColorControl.h">
@@ -146,6 +149,9 @@
     </ClInclude>
     <ClInclude Include="Utility\XTLocalization.h">
       <Filter>Utility\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="SettingsPane.h">
+      <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

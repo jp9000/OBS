@@ -121,6 +121,24 @@
     <ClCompile Include="Source\D3D10Shader.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Source\SettingsGeneral.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SettingsEncoding.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SettingsPublish.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SettingsVideo.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SettingsAudio.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SettingsAdvanced.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\D3D10System.h">
@@ -157,6 +175,9 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="Source\WindowStuff.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Settings.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
