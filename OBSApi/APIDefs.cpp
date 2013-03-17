@@ -139,3 +139,6 @@ AudioSource* OBSGetMicAudioSource()         {return API->GetMicAudioSource();}
 
 void OBSGetCurDesktopVolumeStats(float *rms, float *max, float *peak)   {API->GetCurDesktopVolumeStats(rms, max, peak);}
 void OBSGetCurMicVolumeStats(float *rms, float *max, float *peak)       {API->GetCurMicVolumeStats(rms, max, peak);}
+
+void OBSAddSettingsPane(SettingsPane *pane)     {API->AddSettingsPane(pane);}
+void OBSRemoveSettingsPane(SettingsPane *pane)  {API->RemoveSettingsPane(pane);}

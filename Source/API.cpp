@@ -326,6 +326,7 @@ class OBSAPIInterface : public APIInterface
     void HandleHotkeys();
 
     virtual bool UseHighQualityResampling() const {return AppConfig->GetInt(TEXT("Audio"), TEXT("UseHighQualityResampling"), FALSE) != 0;}
+    virtual void SetChangedSettings(bool isModified) {App->SetChangedSettings(isModified);}
 
 public:
     virtual void EnterSceneMutex() {App->EnterSceneMutex();}
@@ -496,6 +497,9 @@ public:
         *max = App->micMax;
         *peak = App->micPeak;
     }
+
+    virtual void AddSettingsPane(SettingsPane *pane)    {App->AddSettingsPane(pane);}
+    virtual void RemoveSettingsPane(SettingsPane *pane) {App->RemoveSettingsPane(pane);}
 };
 
 APIInterface* CreateOBSApiInterface()

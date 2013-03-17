@@ -222,6 +222,7 @@
     <ClCompile Include="HotkeyControlEx.cpp" />
     <ClCompile Include="OBSApi.cpp" />
     <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="SettingsPane.cpp" />
     <ClCompile Include="VolumeControl.cpp" />
     <ClCompile Include="VolumeMeter.cpp" />
     <ClCompile Include="Utility\ConfigFile.cpp" />
@@ -246,6 +247,7 @@
     <ClInclude Include="HotkeyControlEx.h" />
     <ClInclude Include="OBSApi.h" />
     <ClInclude Include="Scene.h" />
+    <ClInclude Include="SettingsPane.h" />
     <ClInclude Include="VolumeControl.h" />
     <ClInclude Include="VolumeMeter.h" />
     <ClInclude Include="Utility\Alloc.h" />
