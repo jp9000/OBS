@@ -248,24 +248,27 @@ bool DeviceSource::LoadFilters()
         {
             err = capture->FindPin(deviceFilter, PINDIR_OUTPUT, &PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, FALSE, 0, &audioPin);
             bDeviceHasAudio = SUCCEEDED(err);
-            if(!bDeviceHasAudio)
-            {
-                if(strDeviceName.IsValid())
-                {
-                    audioDeviceFilter = GetDeviceByValue(CLSID_AudioInputDeviceCategory, L"FriendlyName", strAudioName, L"DevicePath", strAudioID);
-                    if(!audioDeviceFilter)
-                        AppWarning(TEXT("DShowPlugin: Invalid audio device: name '%s', path '%s'"), strAudioName.Array(), strAudioID.Array());
-                }
-                else if(strAudioDevice.IsValid())
-                {
-                    audioDeviceFilter = GetDeviceByValue(CLSID_AudioInputDeviceCategory, L"FriendlyName", strAudioDevice);
-                    if(!audioDeviceFilter)
-                        AppWarning(TEXT("DShowPlugin: Could not create audio device filter"));
-                }
+        }
+        else
+            bDeviceHasAudio = false;
 
-                if(audioDeviceFilter)
-                    err = capture->FindPin(audioDeviceFilter, PINDIR_OUTPUT, &PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, FALSE, 0, &audioPin);
+        if(!bDeviceHasAudio)
+        {
+            if(strDeviceName.IsValid())
+            {
+                audioDeviceFilter = GetDeviceByValue(CLSID_AudioInputDeviceCategory, L"FriendlyName", strAudioName, L"DevicePath", strAudioID);
+                if(!audioDeviceFilter)
+                    AppWarning(TEXT("DShowPlugin: Invalid audio device: name '%s', path '%s'"), strAudioName.Array(), strAudioID.Array());
             }
+            else if(strAudioDevice.IsValid())
+            {
+                audioDeviceFilter = GetDeviceByValue(CLSID_AudioInputDeviceCategory, L"FriendlyName", strAudioDevice);
+                if(!audioDeviceFilter)
+                    AppWarning(TEXT("DShowPlugin: Could not create audio device filter"));
+            }
+
+            if(audioDeviceFilter)
+                err = capture->FindPin(audioDeviceFilter, PINDIR_OUTPUT, &PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, FALSE, 0, &audioPin);
         }
 
         if(FAILED(err))
