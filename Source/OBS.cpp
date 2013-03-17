@@ -512,6 +512,12 @@ OBS::OBS()
                 sceneHotkeys << hotkeyInfo;
         }
     }
+    
+    //-----------------------------------------------------
+    // Add built-in settings panes
+
+    currentSettingsPane = NULL;
+    AddBuiltInSettingsPanes();
 
     //-----------------------------------------------------
     // load plugins

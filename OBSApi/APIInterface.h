@@ -75,10 +75,12 @@ class APIInterface
 {
     friend class OBS;
     friend class AudioSource;
+    friend class SettingsPane;
+
+    virtual bool UseHighQualityResampling() const=0;
+    virtual void SetChangedSettings(bool isModified)=0;
 
 public:
-    virtual bool UseHighQualityResampling() const=0;
-
     virtual ~APIInterface() {}
 
     virtual void EnterSceneMutex()=0;
@@ -183,6 +185,9 @@ public:
 
     virtual void GetCurDesktopVolumeStats(float *rms, float *max, float *peak) const=0;
     virtual void GetCurMicVolumeStats(float *rms, float *max, float *peak) const=0;
+
+    virtual void AddSettingsPane(SettingsPane *pane)=0;
+    virtual void RemoveSettingsPane(SettingsPane *pane)=0;
 };
 
 BASE_EXPORT extern APIInterface *API;
@@ -293,3 +298,6 @@ BASE_EXPORT AudioSource* OBSGetMicAudioSource();
 
 BASE_EXPORT void OBSGetCurDesktopVolumeStats(float *rms, float *max, float *peak);
 BASE_EXPORT void OBSGetCurMicVolumeStats(float *rms, float *max, float *peak);
+
+BASE_EXPORT void OBSAddSettingsPane(SettingsPane *pane);
+BASE_EXPORT void OBSRemoveSettingsPane(SettingsPane *pane);
