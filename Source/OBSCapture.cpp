@@ -900,10 +900,8 @@ void OBS::MainAudioLoop()
             UINT totalFloats = desktopAudioFrames*2;
             if(bDesktopMuted)
             {
-                // Clearing the desktop audio buffer before mixing in the auxiliary audio sources and resetting the desktop volume,
-                // since this is for some reason used when mixing in the aux sources. This probably needs a more proper fix, but it works.
+                // Clearing the desktop audio buffer before mixing in the auxiliary audio sources.
                 zero(desktopBuffer, sizeof(*desktopBuffer)*totalFloats);
-                curDesktopVol = 1.0f;
             }
 
             if(micAudio != NULL)
@@ -947,8 +945,9 @@ void OBS::MainAudioLoop()
 
             /*multiply samples by volume and compute RMS and max of samples*/
             float desktopRMS = 0, micRMS = 0, desktopMx = 0, micMx = 0;
+            // Use 1.0f instead of curDesktopVol, since aux audio sources already have their volume set, and shouldn't be boosted anyway.
             if(latestDesktopBuffer)
-                CalculateVolumeLevels(mixedLatestDesktopSamples.Array(), latestDesktopAudioFrames*2, curDesktopVol, desktopRMS, desktopMx);
+                CalculateVolumeLevels(mixedLatestDesktopSamples.Array(), latestDesktopAudioFrames*2, 1.0f, desktopRMS, desktopMx);
             if(bMicEnabled && latestMicBuffer)
                 CalculateVolumeLevels(latestMicBuffer, latestMicAudioFrames*2, curMicVol, micRMS, micMx);
 
