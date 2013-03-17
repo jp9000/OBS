@@ -747,7 +747,7 @@ bool OBS::QueryNewAudio(QWORD &timestamp)
 
         OSEnterMutex(hAuxAudioMutex);
         for(UINT i=0; i<auxAudioSources.Num(); i++)
-            auxAudioSources[i]->QueryAudio(curDesktopVol);
+            auxAudioSources[i]->QueryAudio(auxAudioSources[i]->GetVolume());
         OSLeaveMutex(hAuxAudioMutex);
 
         if(micAudio != NULL)
@@ -758,7 +758,7 @@ bool OBS::QueryNewAudio(QWORD &timestamp)
     {
         OSEnterMutex(hAuxAudioMutex);
         for(UINT i=0; i<auxAudioSources.Num(); i++)
-            auxAudioSources[i]->QueryAudio(curDesktopVol);
+            auxAudioSources[i]->QueryAudio(auxAudioSources[i]->GetVolume());
         OSLeaveMutex(hAuxAudioMutex);
 
         if(micAudio)
@@ -896,6 +896,16 @@ void OBS::MainAudioLoop()
 
             desktopAudio->GetBuffer(&desktopBuffer, &desktopAudioFrames, timestamp);
             desktopAudio->GetNewestFrame(&latestDesktopBuffer, &latestDesktopAudioFrames);
+
+            UINT totalFloats = desktopAudioFrames*2;
+            if(bDesktopMuted)
+            {
+                // Clearing the desktop audio buffer before mixing in the auxiliary audio sources and resetting the desktop volume,
+                // since this is for some reason used when mixing in the aux sources. This probably needs a more proper fix, but it works.
+                zero(desktopBuffer, sizeof(*desktopBuffer)*totalFloats);
+                curDesktopVol = 1.0f;
+            }
+
             if(micAudio != NULL)
             {
                 micAudio->GetBuffer(&micBuffer, &micAudioFrames, timestamp);
@@ -931,7 +941,7 @@ void OBS::MainAudioLoop()
 
             //----------------------------------------------------------------------------
 
-            UINT totalFloats = desktopAudioFrames*2;
+            //UINT totalFloats = desktopAudioFrames*2;
 
             //----------------------------------------------------------------------------
 
@@ -1006,9 +1016,6 @@ void OBS::MainAudioLoop()
             //----------------------------------------------------------------------------
             // mix mic and desktop sound, using SSE2 if available
             // also, it's perfectly fine to just mix into the returned buffer
-
-            if(bDesktopMuted)
-                zero(desktopBuffer, sizeof(*desktopBuffer)*totalFloats);
 
             if(bMicEnabled)
                 MixAudio(desktopBuffer, micBuffer, totalFloats, bForceMicMono);
