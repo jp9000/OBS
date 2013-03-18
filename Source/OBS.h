@@ -487,10 +487,17 @@ private:
     bool    bTestStream;
     bool    bUseMultithreadedOptimizations;
     bool    bRunning;
-    int     renderFrameWidth, renderFrameHeight;
+    int     renderFrameWidth, renderFrameHeight; // The size of the preview only
+    int     renderFrameX, renderFrameY; // The offset of the preview inside the preview control
+    int     renderFrameCtrlWidth, renderFrameCtrlHeight; // The size of the entire preview control
+    int     oldRenderFrameCtrlWidth, oldRenderFrameCtrlHeight; // The size of the entire preview control before the user began to resize the window
+    HWND    hwndRenderMessage; // The text in the middle of the main window
     bool    renderFrameIn1To1Mode;
     int     borderXSize, borderYSize;
     int     clientWidth, clientHeight;
+    bool    bPanelVisible;
+    bool    bPanelVisibleProcessed;
+    bool    bDragResize;
     bool    bSizeChanging;
     bool    bResizeRenderView;
 
@@ -502,6 +509,7 @@ private:
     bool    bDisableSceneSwitching;
     bool    bChangingSources;
     bool    bAlwaysOnTop;
+    bool    bFullscreenMode;
     bool    bEditMode;
     bool    bRenderViewEnabled;
     bool    bForceRenderViewErase;
@@ -512,6 +520,10 @@ private:
     Vect2   startMousePos, lastMousePos;
     ItemModifyType modifyType;
     SceneItem *scaleItem;
+
+    HMENU           hmenuMain; // Main window menu so we can hide it in fullscreen mode
+    WINDOWPLACEMENT fullscreenPrevPlacement;
+    bool            fullscreenPrevPanelVisible;
 
     int     cpuInfo[4];
     bool    bSSE2Available;
@@ -557,7 +569,7 @@ private:
     QWORD firstSceneTimestamp;
     QWORD latestVideoTime;
 
-    bool bUseCFR;
+    bool bUseCFR, bDupeFrames;
 
     bool bWriteToFile;
     VideoFileStream *fileStream;
@@ -706,6 +718,13 @@ private:
 
     static DWORD STDCALL HotkeyThread(LPVOID lpUseless);
 
+    // Helpers for converting between window and actual coordinates for the preview
+    static Vect2 MapWindowToFramePos(Vect2 mousePos);
+    static Vect2 MapFrameToWindowPos(Vect2 framePos);
+    static Vect2 MapWindowToFrameSize(Vect2 windowSize);
+    static Vect2 MapFrameToWindowSize(Vect2 frameSize);
+    static Vect2 GetWindowToFrameScale();
+    static Vect2 GetFrameToWindowScale();
 
     static INT_PTR CALLBACK EnterGlobalSourceNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -719,6 +738,8 @@ private:
     static INT_PTR CALLBACK SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
     void ResizeRenderFrame(bool bRedrawRenderFrame);
+    void UpdateRenderViewMessage();
+    void ProcessPanelVisibile(bool fromResizeWindow = false);
 
     void ToggleCapturing();
 
@@ -750,6 +771,7 @@ public:
     ~OBS();
 
     void ResizeWindow(bool bRedrawRenderFrame);
+    void SetFullscreenMode(bool fullscreen);
 
     void RequestKeyframe(int waitTime);
 
@@ -775,8 +797,10 @@ public:
 
     void GetBaseSize(UINT &width, UINT &height) const;
 
-    inline void GetRenderFrameSize(UINT &width, UINT &height) const    {width = renderFrameWidth; height = renderFrameHeight;}
-    inline void GetOutputSize(UINT &width, UINT &height) const         {width = outputCX;         height = outputCY;}
+    inline void GetRenderFrameSize(UINT &width, UINT &height) const         {width = renderFrameWidth; height = renderFrameHeight;}
+    inline void GetRenderFrameOffset(UINT &x, UINT &y) const                {x = renderFrameX; y = renderFrameY;}
+    inline void GetRenderFrameControlSize(UINT &width, UINT &height) const  {width = renderFrameCtrlWidth; height = renderFrameCtrlHeight;}
+    inline void GetOutputSize(UINT &width, UINT &height) const              {width = outputCX;         height = outputCY;}
 
     inline Vect2 GetBaseSize() const
     {
@@ -785,8 +809,10 @@ public:
         return Vect2(float(width), float(height));
     }
 
-    inline Vect2 GetOutputSize()      const {return Vect2(float(outputCX), float(outputCY));}
-    inline Vect2 GetRenderFrameSize() const {return Vect2(float(renderFrameWidth), float(renderFrameHeight));}
+    inline Vect2 GetOutputSize()      const         {return Vect2(float(outputCX), float(outputCY));}
+    inline Vect2 GetRenderFrameSize() const         {return Vect2(float(renderFrameWidth), float(renderFrameHeight));}
+    inline Vect2 GetRenderFrameOffset() const       {return Vect2(float(renderFrameX), float(renderFrameY));}
+    inline Vect2 GetRenderFrameControlSize() const  {return Vect2(float(renderFrameCtrlWidth), float(renderFrameCtrlHeight));}
 
     inline bool SSE2Available() const {return bSSE2Available;}
 

@@ -57,7 +57,8 @@ MainMenu.Help       "&Help"
 MainMenu.Profiles   "&Profiles"
 MainMenu.Settings   "&Settings"
 
-MainMenu.Settings.AlwaysOnTop "&Always On Top"
+MainMenu.Settings.AlwaysOnTop       "&Always On Top"
+MainMenu.Settings.FullscreenMode    "&Fullscreen Preview Mode"
 
 MainMenu.File.Exit  "E&xit"
 MainMenu.File.Save  "&Save"
@@ -68,6 +69,8 @@ MainMenu.Help.VisitWebsite  "Visit Website"
 MainMenu.Settings.OpenConfigFolder  "Open &Configuration Folder"
 MainMenu.Settings.OpenLogFolder     "Open &Log Folder"
 
+MainWindow.BeginMessage     "Not streaming\n\nClick \"Start Streaming\" or \"Preview Stream\" to begin"
+MainWindow.PreviewDisabled  "Preview disabled"
 MainWindow.Dashboard        "Dashboard"
 MainWindow.DroppedFrames    "Dropped Frames:"
 MainWindow.Exit             "Exit"
@@ -87,6 +90,7 @@ Plugins.Filename    "File name:"
 Reconnecting.Retrying   "Could not reconnect.  Retrying"
 
 RenderView.EnableView           "Enable View"
+RenderView.DisplayPanel         "Enable Control Panel"
 RenderView.ViewModeScaleToFit   "Scale to fit mode"
 RenderView.ViewMode1To1         "1:1 mode"
 

@@ -2049,6 +2049,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     }
                     break;
 
+                case ID_FULLSCREENMODE:
+                    App->SetFullscreenMode(!App->bFullscreenMode);
+                    break;
+
                 case ID_HELP_VISITWEBSITE:
                     ShellExecute(NULL, TEXT("open"), TEXT("http://www.obsproject.com"), 0, 0, SW_SHOWNORMAL);
                     break;
@@ -2196,6 +2200,12 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
                 case IDA_SOURCE_MOVETOBOTTOM:
                     App->MoveSourcesToBottom();
+                    break;
+
+                case IDCANCEL:
+                    // This actually means the user pressed the ESC key
+                    if(App->bFullscreenMode)
+                        App->SetFullscreenMode(false);
                     break;
 
                 default:
@@ -2406,15 +2416,19 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
             }
             break;
 
+        case WM_ENTERSIZEMOVE:
+            App->bDragResize = true;
+            break;
+
         case WM_EXITSIZEMOVE:
             if(App->bSizeChanging)
             {
                 RECT client;
                 GetClientRect(hwnd, &client);
 
-                //todo: bSizeChanging = false never gets set because this never gets called when maximizing
                 App->ResizeWindow(true);
                 App->bSizeChanging = false;
+                App->bDragResize = false;
             }
             break;
 
@@ -2451,10 +2465,6 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 else
                     screenSize.top = screenSize.bottom - newHeight;
 
-                // We need to recalculate the render frame position when in 1:1 mode
-                if(App->renderFrameIn1To1Mode)
-                    App->ResizeRenderFrame(true);
-
                 return TRUE;
             }
 
@@ -2470,7 +2480,9 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     App->bSizeChanging = true;
 
                     if(wParam != SIZE_MINIMIZED)
-                        App->ResizeWindow(false);
+                        App->ResizeWindow(!App->bDragResize);
+                    if(!App->bDragResize)
+                        App->bSizeChanging = false;
                 }
                 break;
             }
@@ -2570,10 +2582,70 @@ ItemModifyType GetItemModifyType(const Vect2 &mousePos, const Vect2 &itemPos, co
 
 enum
 {
-    ID_TOGGLERENDERVIEW=1,
-    ID_PREVIEWSCALETOFITMODE=2,
-    ID_PREVIEW1TO1MODE=3,
+    ID_TOGGLERENDERVIEW = 1,
+    ID_TOGGLEPANEL,
+    ID_TOGGLEFULLSCREEN,
+    ID_PREVIEWSCALETOFITMODE,
+    ID_PREVIEW1TO1MODE,
 };
+
+/**
+ * Maps a point in window coordinates to frame coordinates.
+ */
+Vect2 OBS::MapWindowToFramePos(Vect2 mousePos)
+{
+    if(App->renderFrameIn1To1Mode)
+        return (mousePos - App->GetRenderFrameOffset()) * (App->GetBaseSize() / App->GetOutputSize());
+    return (mousePos - App->GetRenderFrameOffset()) * (App->GetBaseSize() / App->GetRenderFrameSize());
+}
+
+/**
+ * Maps a point in frame coordinates to window coordinates.
+ */
+Vect2 OBS::MapFrameToWindowPos(Vect2 framePos)
+{
+    if(App->renderFrameIn1To1Mode)
+        return framePos * (App->GetOutputSize() / App->GetBaseSize()) + App->GetRenderFrameOffset();
+    return framePos * (App->GetRenderFrameSize() / App->GetBaseSize()) + App->GetRenderFrameOffset();
+}
+
+/**
+ * Maps a size in window coordinates to frame coordinates.
+ */
+Vect2 OBS::MapWindowToFrameSize(Vect2 windowSize)
+{
+    if(App->renderFrameIn1To1Mode)
+        return windowSize * (App->GetBaseSize() / App->GetOutputSize());
+    return windowSize * (App->GetBaseSize() / App->GetRenderFrameSize());
+}
+
+/**
+ * Maps a size in frame coordinates to window coordinates.
+ */
+Vect2 OBS::MapFrameToWindowSize(Vect2 frameSize)
+{
+    if(App->renderFrameIn1To1Mode)
+        return frameSize * (App->GetOutputSize() / App->GetBaseSize());
+    return frameSize * (App->GetRenderFrameSize() / App->GetBaseSize());
+}
+
+/**
+ * Returns the scale of the window relative to the actual frame size. E.g.
+ * if the window is twice the size of the frame this will return "0.5".
+ */
+Vect2 OBS::GetWindowToFrameScale()
+{
+    return MapWindowToFrameSize(Vect2(1.0f, 1.0f));
+}
+
+/**
+ * Returns the scale of the frame relative to the window size. E.g.
+ * if the window is twice the size of the frame this will return "2.0".
+ */
+Vect2 OBS::GetFrameToWindowScale()
+{
+    return MapFrameToWindowSize(Vect2(1.0f, 1.0f));
+}
 
 LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -2595,11 +2667,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
         if(App->bEditMode && App->scene)
         {
             Vect2 mousePos = Vect2(float(pos.x), float(pos.y));
-            Vect2 framePos;
-            if(App->renderFrameIn1To1Mode)
-                framePos = mousePos*(App->GetBaseSize()/App->GetOutputSize());
-            else
-                framePos = mousePos*(App->GetBaseSize()/App->GetRenderFrameSize());
+            Vect2 framePos = MapWindowToFramePos(mousePos);
 
             bool bControlDown = HIBYTE(GetKeyState(VK_LCONTROL)) != 0 || HIBYTE(GetKeyState(VK_RCONTROL)) != 0;
 
@@ -2679,7 +2747,6 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
             POINTS pos;
             pos.x = (short)LOWORD(lParam);
             pos.y = (short)HIWORD(lParam);
-
             Vect2 mousePos = Vect2(float(pos.x), float(pos.y));
 
             SceneItem *&scaleItem = App->scaleItem; //just reduces a bit of typing
@@ -2688,12 +2755,6 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
             {
                 List<SceneItem*> items;
                 App->scene->GetSelectedItems(items);
-
-                Vect2 scaleValI;
-                if(App->renderFrameIn1To1Mode)
-                    scaleValI = (App->GetOutputSize()/App->GetBaseSize());
-                else
-                    scaleValI = (App->GetRenderFrameSize()/App->GetBaseSize());
 
                 bool bInside = false;
 
@@ -2704,8 +2765,9 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                 {
                     SceneItem *item = items[i];
 
-                    Vect2 adjPos  = item->GetPos()  * scaleValI;
-                    Vect2 adjSize = item->GetSize() * scaleValI;
+                    // Get item in window coordinates
+                    Vect2 adjPos  = MapFrameToWindowPos(item->GetPos());
+                    Vect2 adjSize = MapFrameToWindowSize(item->GetSize());
 
                     ItemModifyType curType = GetItemModifyType(mousePos, adjPos, adjSize);
                     if(curType > ItemModifyType_Move)
@@ -2721,13 +2783,8 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
             else
             {
                 Vect2 baseRenderSize = App->GetBaseSize();
-                Vect2 scaleVal;
-                if(App->renderFrameIn1To1Mode)
-                    scaleVal = (baseRenderSize/App->GetOutputSize());
-                else
-                    scaleVal = (baseRenderSize/App->GetRenderFrameSize());
-                Vect2 framePos = mousePos*scaleVal;
-                Vect2 scaleValI = 1.0f/scaleVal;
+                Vect2 scaleVal = GetWindowToFrameScale();
+                Vect2 framePos = MapWindowToFramePos(mousePos);
 
                 if(!App->bMouseMoved && mousePos.Dist(App->startMousePos) > 2.0f)
                 {
@@ -3074,12 +3131,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
 
                 if(!App->bMouseMoved)
                 {
-                    Vect2 framePos;
-                    if(App->renderFrameIn1To1Mode)
-                        framePos = mousePos*(App->GetBaseSize()/App->GetOutputSize());
-                    else
-                        framePos = mousePos*(App->GetBaseSize()/App->GetRenderFrameSize());
-
+                    Vect2 framePos = MapWindowToFramePos(mousePos);
                     App->scene->GetItemsOnPoint(framePos, items);
 
                     if(bControlDown && App->bItemWasSelected)
@@ -3156,6 +3208,9 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
         AppendMenu(hPopup, MF_STRING | (App->renderFrameIn1To1Mode ? MF_CHECKED : 0), ID_PREVIEW1TO1MODE, Str("RenderView.ViewMode1To1"));
         AppendMenu(hPopup, MF_SEPARATOR, 0, 0);
         AppendMenu(hPopup, MF_STRING | (App->bRenderViewEnabled ? MF_CHECKED : 0), ID_TOGGLERENDERVIEW, Str("RenderView.EnableView"));
+        AppendMenu(hPopup, MF_STRING | (App->bPanelVisible ? MF_CHECKED : 0), ID_TOGGLEPANEL, Str("RenderView.DisplayPanel"));
+        AppendMenu(hPopup, MF_SEPARATOR, 0, 0);
+        AppendMenu(hPopup, MF_STRING | (App->bFullscreenMode ? MF_CHECKED : 0), ID_TOGGLEFULLSCREEN, Str("MainMenu.Settings.FullscreenMode"));
 
         POINT p;
         GetCursorPos(&p);
@@ -3166,6 +3221,20 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
             case ID_TOGGLERENDERVIEW:
                 App->bRenderViewEnabled = !App->bRenderViewEnabled;
                 App->bForceRenderViewErase = !App->bRenderViewEnabled;
+                App->UpdateRenderViewMessage();
+                break;
+            case ID_TOGGLEPANEL:
+                App->bPanelVisible = !App->bPanelVisible;
+                App->bPanelVisibleProcessed = false;
+
+                // If the user toggles the panel in fullscreen mode then forget if
+                // it was visible or not before entering fullscreen mode
+                App->fullscreenPrevPanelVisible = App->bPanelVisible;
+
+                App->ResizeWindow(true);
+                break;
+            case ID_TOGGLEFULLSCREEN:
+                App->SetFullscreenMode(!App->bFullscreenMode);
                 break;
             case ID_PREVIEWSCALETOFITMODE:
                 App->renderFrameIn1To1Mode = false;

@@ -270,17 +270,18 @@
 #define ID_HELP_VISITWEBSITE            40043
 #define ID_MAINMENU_MAINMENU40044       40044
 #define ID_ALWAYSONTOP                  40045
-#define ID_MAINMENU                     40046
-#define ID_MAINMENU_NOTHINGHERE         40047
-#define ID_MAINMENU_MAINMENU40048       40048
-#define ID_FILE_SAVE2                   40049
+#define ID_FULLSCREENMODE               40046
+#define ID_MAINMENU                     40047
+#define ID_MAINMENU_NOTHINGHERE         40048
+#define ID_MAINMENU_MAINMENU40048       40049
+#define ID_FILE_SAVE2                   40050
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        141
-#define _APS_NEXT_COMMAND_VALUE         40050
+#define _APS_NEXT_COMMAND_VALUE         40051
 #define _APS_NEXT_CONTROL_VALUE         1157
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

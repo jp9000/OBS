@@ -20,7 +20,7 @@
 #include "Main.h"
 #include <Avrt.h>
 
-VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR);
+VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR, bool bDupeFrames);
 AudioEncoder* CreateMP3Encoder(UINT bitRate);
 AudioEncoder* CreateAACEncoder(UINT bitRate);
 
@@ -102,7 +102,7 @@ void OBS::Start()
     String strError;
 
     if(bTestStream)
-        network = CreateNullNetwork();
+        network = CreateBandwidthAnalyzer();
     else
     {
         switch(networkMode)
@@ -339,14 +339,17 @@ void OBS::Start()
     int bufferSize = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("BufferSize"), 1000);
     int quality    = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Quality"),    8);
     String preset  = AppConfig->GetString(TEXT("Video Encoding"), TEXT("Preset"),     TEXT("veryfast"));
-    bUsing444      = false;
+    bUsing444      = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Use444"),     0) != 0;
 
-    AppConfig->SetInt(TEXT("Video Encoding"), TEXT("Use444"), 0);
-    
+    bDupeFrames = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("DupeFrames"), 1) != 0;
+
     if(bUsing444)
-        bUseCFR = false;
+        bDupeFrames = bUseCFR = false;
     else
+    {
         bUseCFR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCFR"), 0) != 0;
+        if(bUseCFR) bDupeFrames = true;
+    }
 
     //-------------------------------------------------------------
 
@@ -421,7 +424,12 @@ void OBS::Start()
     //-------------------------------------------------------------
 
     ctsOffset = 0;
-    videoEncoder = CreateX264Encoder(fps, outputCX, outputCY, quality, preset, bUsing444, maxBitRate, bufferSize, bUseCFR);
+    videoEncoder = CreateX264Encoder(fps, outputCX, outputCY, quality, preset, bUsing444, maxBitRate, bufferSize, bUseCFR, bDupeFrames);
+
+    //-------------------------------------------------------------
+
+    // Ensure that the render frame is properly sized
+    ResizeRenderFrame(true);
 
     //-------------------------------------------------------------
 
@@ -467,6 +475,8 @@ void OBS::Start()
     
     SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, 0, 0, 0);
     SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
+
+    UpdateRenderViewMessage();
 
     OSLeaveMutex (hStartupShutdownMutex);
 }
@@ -663,6 +673,8 @@ void OBS::Stop()
     SetThreadExecutionState(ES_CONTINUOUS);
 
     bTestStream = false;
+
+    UpdateRenderViewMessage();
 
     OSLeaveMutex(hStartupShutdownMutex);
 }

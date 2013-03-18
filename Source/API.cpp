@@ -407,13 +407,24 @@ public:
     virtual UINT CreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARAM param);
     virtual void DeleteHotkey(UINT hotkeyID);
 
-    virtual Vect2 GetBaseSize() const           {return Vect2(float(App->baseCX), float(App->baseCY));}
-    virtual Vect2 GetRenderFrameSize() const    {return Vect2(float(App->renderFrameWidth), float(App->renderFrameHeight));}
-    virtual Vect2 GetOutputSize() const         {return Vect2(float(App->outputCX), float(App->outputCY));}
+    virtual Vect2 GetBaseSize() const               {return Vect2(float(App->baseCX), float(App->baseCY));}
+    virtual Vect2 GetRenderFrameSize() const        {return Vect2(float(App->renderFrameWidth), float(App->renderFrameHeight));}
+    virtual Vect2 GetRenderFrameOffset() const      {return Vect2(float(App->renderFrameX), float(App->renderFrameY));}
+    virtual Vect2 GetRenderFrameControlSize() const {return Vect2(float(App->renderFrameCtrlWidth), float(App->renderFrameCtrlHeight));}
+    virtual Vect2 GetOutputSize() const             {return Vect2(float(App->outputCX), float(App->outputCY));}
 
-    virtual void GetBaseSize(UINT &width, UINT &height) const           {App->GetBaseSize(width, height);}
-    virtual void GetRenderFrameSize(UINT &width, UINT &height) const    {App->GetRenderFrameSize(width, height);}
-    virtual void GetOutputSize(UINT &width, UINT &height) const         {App->GetOutputSize(width, height);}
+    virtual void GetBaseSize(UINT &width, UINT &height) const               {App->GetBaseSize(width, height);}
+    virtual void GetRenderFrameSize(UINT &width, UINT &height) const        {App->GetRenderFrameSize(width, height);}
+    virtual void GetRenderFrameOffset(UINT &x, UINT &y) const               {App->GetRenderFrameOffset(x, y);}
+    virtual void GetRenderFrameControlSize(UINT &width, UINT &height) const {App->GetRenderFrameControlSize(width, height);}
+    virtual void GetOutputSize(UINT &width, UINT &height) const             {App->GetOutputSize(width, height);}
+
+    virtual Vect2 MapWindowToFramePos(Vect2 mousePos) const     {return App->MapWindowToFramePos(mousePos);}
+    virtual Vect2 MapFrameToWindowPos(Vect2 framePos) const     {return App->MapFrameToWindowPos(framePos);}
+    virtual Vect2 MapWindowToFrameSize(Vect2 windowSize) const  {return App->MapWindowToFrameSize(windowSize);}
+    virtual Vect2 MapFrameToWindowSize(Vect2 frameSize) const   {return App->MapFrameToWindowSize(frameSize);}
+    virtual Vect2 GetWindowToFrameScale() const                 {return App->GetWindowToFrameScale();}
+    virtual Vect2 GetFrameToWindowScale() const                 {return App->GetFrameToWindowScale();}
 
     virtual UINT GetMaxFPS() const                  {return App->bRunning ? App->fps : AppConfig->GetInt(TEXT("Video"), TEXT("FPS"), 30);}
     virtual bool GetRenderFrameIn1To1Mode() const   {return App->renderFrameIn1To1Mode;}

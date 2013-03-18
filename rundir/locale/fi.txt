@@ -286,7 +286,7 @@ Updater.UpdatesAvailable    "Päivityksiä on saatavilla"
 Settings.Advanced.LatencyTuning          "Latenssin säätökerroin:"
 Settings.Advanced.AutomaticLatency       "Automaattinen latenssin määritys:"
 
-Plugins.NoiseGate.PluginName        "Microphone Noise Gate"
+Plugins.NoiseGate.PluginName        "Mikrofonin Noise Gate"
 Plugins.NoiseGate.PluginDescription "Vähentää mikrofonin ääntä automaattisesti hiljentämällä linjan, kun et puhu."
 Plugins.NoiseGate.Thresholds        "Kynnykset"
 Plugins.NoiseGate.General           "Yleinen"

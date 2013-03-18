@@ -588,32 +588,43 @@ void OBS::MainCaptureLoop()
 
         if(bRenderView)
         {
-            Vect2 renderFrameSize = Vect2(float(renderFrameWidth), float(renderFrameHeight));
+            // Cache
+            const Vect2 renderFrameSize = GetRenderFrameSize();
+            const Vect2 renderFrameOffset = GetRenderFrameOffset();
+            const Vect2 renderFrameCtrlSize = GetRenderFrameControlSize();
 
             SetRenderTarget(NULL);
 
             LoadVertexShader(mainVertexShader);
             LoadPixelShader(mainPixelShader);
 
-            Ortho(0.0f, renderFrameSize.x, renderFrameSize.y, 0.0f, -100.0f, 100.0f);
-            SetViewport(0.0f, 0.0f, renderFrameSize.x, renderFrameSize.y);
+            Ortho(0.0f, renderFrameCtrlSize.x, renderFrameCtrlSize.y, 0.0f, -100.0f, 100.0f);
+            if(renderFrameCtrlSize.x != oldRenderFrameCtrlWidth || renderFrameCtrlSize.y != oldRenderFrameCtrlHeight)
+            {
+                // User is drag resizing the window. We don't recreate the swap chains so our coordinates are wrong
+                SetViewport(0.0f, 0.0f, oldRenderFrameCtrlWidth, oldRenderFrameCtrlHeight);
+            }
+            else
+                SetViewport(0.0f, 0.0f, renderFrameCtrlSize.x, renderFrameCtrlSize.y);
+
+            // Draw background (Black if fullscreen, window colour otherwise)
+            if(bFullscreenMode)
+                ClearColorBuffer(0x000000);
+            else
+                ClearColorBuffer(GetSysColor(COLOR_BTNFACE));
 
             if(bTransitioning)
             {
                 BlendFunction(GS_BLEND_ONE, GS_BLEND_ZERO);
-                if(renderFrameIn1To1Mode)
-                    DrawSprite(transitionTexture, 0xFFFFFFFF, 0.0f, 0.0f, outputSize.x, outputSize.y);
-                else
-                    DrawSprite(transitionTexture, 0xFFFFFFFF, 0.0f, 0.0f, renderFrameSize.x, renderFrameSize.y);
+                DrawSprite(transitionTexture, 0xFFFFFFFF,
+                        renderFrameOffset.x, renderFrameOffset.y,
+                        renderFrameOffset.x + renderFrameSize.x, renderFrameOffset.y + renderFrameSize.y);
                 BlendFunction(GS_BLEND_FACTOR, GS_BLEND_INVFACTOR, transitionAlpha);
             }
 
-            if(renderFrameIn1To1Mode)
-                DrawSprite(mainRenderTextures[curRenderTarget], 0xFFFFFFFF, 0.0f, 0.0f, outputSize.x, outputSize.y);
-            else
-                DrawSprite(mainRenderTextures[curRenderTarget], 0xFFFFFFFF, 0.0f, 0.0f, renderFrameSize.x, renderFrameSize.y);
-
-            Ortho(0.0f, renderFrameSize.x, renderFrameSize.y, 0.0f, -100.0f, 100.0f);
+            DrawSprite(mainRenderTextures[curRenderTarget], 0xFFFFFFFF,
+                    renderFrameOffset.x, renderFrameOffset.y,
+                    renderFrameOffset.x + renderFrameSize.x, renderFrameOffset.y + renderFrameSize.y);
 
             //draw selections if in edit mode
             if(bEditMode && !bSizeChanging)
@@ -621,11 +632,6 @@ void OBS::MainCaptureLoop()
                 LoadVertexShader(solidVertexShader);
                 LoadPixelShader(solidPixelShader);
                 solidPixelShader->SetColor(solidPixelShader->GetParameter(0), 0xFFFF0000);
-
-                if(renderFrameIn1To1Mode)
-                    Ortho(0.0f, renderFrameSize.x * downscale, renderFrameSize.y * downscale, 0.0f, -100.0f, 100.0f);
-                else
-                    Ortho(0.0f, baseSize.x, baseSize.y, 0.0f, -100.0f, 100.0f);
 
                 if(scene)
                     scene->RenderSelections();
@@ -788,7 +794,7 @@ void OBS::MainCaptureLoop()
                         frameInfo.firstFrameTime = firstFrameTime;
                         frameInfo.prevTexture = prevTexture;
 
-                        if(bUseCFR)
+                        if(bDupeFrames)
                         {
                             while(cfrTime < curFrameTimestamp)
                             {
@@ -830,6 +836,11 @@ void OBS::MainCaptureLoop()
 
                             ProcessFrame(frameInfo);
                         }
+                    }
+
+                    if(bUsing444)
+                    {
+                        prevTexture->Unmap(0);
                     }
 
                     curOutBuffer = nextOutBuffer;
@@ -943,6 +954,6 @@ void OBS::MainCaptureLoop()
     Free(convertInfo);
 
     Log(TEXT("Total frames rendered: %d, number of frames that lagged: %d (%0.2f%%) (it's okay for some frames to lag)"), numTotalFrames, numLongFrames, (double(numLongFrames)/double(numTotalFrames))*100.0);
-    if(bUseCFR)
-        Log(TEXT("Total duplicated CFR frames: %d"), numTotalDuplicatedFrames);
+    if(bDupeFrames)
+        Log(TEXT("Total duplicated frames: %d (%0.2f%%)"), numTotalDuplicatedFrames, (double(numTotalDuplicatedFrames)/double(numTotalFrames))*100.0);
 }
