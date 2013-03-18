@@ -794,7 +794,7 @@ void OBS::MainCaptureLoop()
                         frameInfo.firstFrameTime = firstFrameTime;
                         frameInfo.prevTexture = prevTexture;
 
-                        if(bUseCFR)
+                        if(bDupeFrames)
                         {
                             while(cfrTime < curFrameTimestamp)
                             {
@@ -836,6 +836,11 @@ void OBS::MainCaptureLoop()
 
                             ProcessFrame(frameInfo);
                         }
+                    }
+
+                    if(bUsing444)
+                    {
+                        prevTexture->Unmap(0);
                     }
 
                     curOutBuffer = nextOutBuffer;
@@ -949,6 +954,6 @@ void OBS::MainCaptureLoop()
     Free(convertInfo);
 
     Log(TEXT("Total frames rendered: %d, number of frames that lagged: %d (%0.2f%%) (it's okay for some frames to lag)"), numTotalFrames, numLongFrames, (double(numLongFrames)/double(numTotalFrames))*100.0);
-    if(bUseCFR)
-        Log(TEXT("Total duplicated CFR frames: %d"), numTotalDuplicatedFrames);
+    if(bDupeFrames)
+        Log(TEXT("Total duplicated frames: %d (%0.2f%%)"), numTotalDuplicatedFrames, (double(numTotalDuplicatedFrames)/double(numTotalFrames))*100.0);
 }

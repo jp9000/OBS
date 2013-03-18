@@ -885,44 +885,22 @@ void OBS::ProcessPanelVisibile(bool fromResizeWindow)
     if(bPanelVisibleProcessed)
         return; // Already done
 
-    if(bPanelVisible)
-    { // Panel is visible
-        ShowWindow(GetDlgItem(hwndMain, ID_MICVOLUME), SW_SHOW);
-        ShowWindow(GetDlgItem(hwndMain, ID_DESKTOPVOLUME), SW_SHOW);
-        ShowWindow(GetDlgItem(hwndMain, ID_MICVOLUMEMETER), SW_SHOW);
-        ShowWindow(GetDlgItem(hwndMain, ID_DESKTOPVOLUMEMETER), SW_SHOW);
-        ShowWindow(GetDlgItem(hwndMain, ID_SETTINGS), SW_SHOW);
-        ShowWindow(GetDlgItem(hwndMain, ID_STARTSTOP), SW_SHOW);
-        ShowWindow(GetDlgItem(hwndMain, ID_SCENEEDITOR), SW_SHOW);
-        ShowWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), SW_SHOW);
-        ShowWindow(GetDlgItem(hwndMain, ID_GLOBALSOURCES), SW_SHOW);
-        ShowWindow(GetDlgItem(hwndMain, ID_PLUGINS), SW_SHOW);
-        //ShowWindow(GetDlgItem(hwndMain, ID_DASHBOARD), SW_SHOW); // Done in ResizeWindow()
-        ShowWindow(GetDlgItem(hwndMain, ID_EXIT), SW_SHOW);
-        ShowWindow(GetDlgItem(hwndMain, ID_SCENES_TEXT), SW_SHOW);
-        ShowWindow(GetDlgItem(hwndMain, ID_SOURCES_TEXT), SW_SHOW);
-        ShowWindow(GetDlgItem(hwndMain, ID_SCENES), SW_SHOW);
-        ShowWindow(GetDlgItem(hwndMain, ID_SOURCES), SW_SHOW);
-    }
-    else
-    { // Panel is invisible
-        ShowWindow(GetDlgItem(hwndMain, ID_MICVOLUME), SW_HIDE);
-        ShowWindow(GetDlgItem(hwndMain, ID_DESKTOPVOLUME), SW_HIDE);
-        ShowWindow(GetDlgItem(hwndMain, ID_MICVOLUMEMETER), SW_HIDE);
-        ShowWindow(GetDlgItem(hwndMain, ID_DESKTOPVOLUMEMETER), SW_HIDE);
-        ShowWindow(GetDlgItem(hwndMain, ID_SETTINGS), SW_HIDE);
-        ShowWindow(GetDlgItem(hwndMain, ID_STARTSTOP), SW_HIDE);
-        ShowWindow(GetDlgItem(hwndMain, ID_SCENEEDITOR), SW_HIDE);
-        ShowWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), SW_HIDE);
-        ShowWindow(GetDlgItem(hwndMain, ID_GLOBALSOURCES), SW_HIDE);
-        ShowWindow(GetDlgItem(hwndMain, ID_PLUGINS), SW_HIDE);
-        ShowWindow(GetDlgItem(hwndMain, ID_DASHBOARD), SW_HIDE);
-        ShowWindow(GetDlgItem(hwndMain, ID_EXIT), SW_HIDE);
-        ShowWindow(GetDlgItem(hwndMain, ID_SCENES_TEXT), SW_HIDE);
-        ShowWindow(GetDlgItem(hwndMain, ID_SOURCES_TEXT), SW_HIDE);
-        ShowWindow(GetDlgItem(hwndMain, ID_SCENES), SW_HIDE);
-        ShowWindow(GetDlgItem(hwndMain, ID_SOURCES), SW_HIDE);
-    }
+    ShowWindow(GetDlgItem(hwndMain, ID_MICVOLUME), bPanelVisible ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hwndMain, ID_DESKTOPVOLUME), bPanelVisible ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hwndMain, ID_MICVOLUMEMETER), bPanelVisible ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hwndMain, ID_DESKTOPVOLUMEMETER), bPanelVisible ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hwndMain, ID_SETTINGS), bPanelVisible ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hwndMain, ID_STARTSTOP), bPanelVisible ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hwndMain, ID_SCENEEDITOR), bPanelVisible ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), bPanelVisible ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hwndMain, ID_GLOBALSOURCES), bPanelVisible ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hwndMain, ID_PLUGINS), bPanelVisible ? SW_SHOW : SW_HIDE);
+    if(!bPanelVisible) ShowWindow(GetDlgItem(hwndMain, ID_DASHBOARD), SW_HIDE);
+    ShowWindow(GetDlgItem(hwndMain, ID_EXIT), bPanelVisible ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hwndMain, ID_SCENES_TEXT), bPanelVisible ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hwndMain, ID_SOURCES_TEXT), bPanelVisible ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hwndMain, ID_SCENES), bPanelVisible ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hwndMain, ID_SOURCES), bPanelVisible ? SW_SHOW : SW_HIDE);
 
     bPanelVisibleProcessed = true;
 

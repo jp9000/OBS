@@ -569,7 +569,7 @@ private:
     QWORD firstSceneTimestamp;
     QWORD latestVideoTime;
 
-    bool bUseCFR;
+    bool bUseCFR, bDupeFrames;
 
     bool bWriteToFile;
     VideoFileStream *fileStream;
