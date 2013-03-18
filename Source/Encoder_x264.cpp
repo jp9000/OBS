@@ -88,7 +88,7 @@ class X264Encoder : public VideoEncoder
 
     bool bFirstFrameProcessed;
 
-    bool bUseCBR, bUseCFR;
+    bool bUseCBR, bUseCFR, bDupeFrames;
 
     List<VideoPacket> CurrentPackets;
     List<BYTE> HeaderPacket, SEIData;
@@ -114,7 +114,7 @@ class X264Encoder : public VideoEncoder
     }
 
 public:
-    X264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitrate, int bufferSize, bool bUseCFR)
+    X264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitrate, int bufferSize, bool bUseCFR, bool bDupeFrames)
     {
         curPreset = preset;
 
@@ -187,6 +187,7 @@ public:
 
         bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR")) != 0;
         this->bUseCFR = bUseCFR;
+        this->bDupeFrames = bDupeFrames;
 
         SetBitRateParams(maxBitrate, bufferSize);
 
@@ -298,11 +299,12 @@ public:
         }
 
         INT64 ts = INT64(outputTimestamp);
-        int timeOffset = int((picOut.i_pts+delayOffset)-ts);
+        int timeOffset;
 
-        if(bUseCFR)
+        if(bDupeFrames)
         {
-            //if CFR's being used, the shift will be insignificant, so just don't bother adjusting audio
+            //if frame duplication is being used, the shift will be insignificant, so just don't bother adjusting audio
+            timeOffset = int(picOut.i_pts-picOut.i_dts);
             timeOffset += frameShift;
 
             if(nalNum && timeOffset < 0)
@@ -313,6 +315,7 @@ public:
         }
         else
         {
+            timeOffset = int((picOut.i_pts+delayOffset)-ts);
             timeOffset += ctsOffset;
 
             //dynamically adjust the CTS for the stream if it gets lower than the current value
@@ -324,7 +327,7 @@ public:
             }
         }
 
-        //Log(TEXT("dts: %d, pts: %d, timestamp: %d, offset: %d"), picOut.i_dts, picOut.i_pts, outputTimestamp, timeOffset);
+        //Log(TEXT("inpts: %005d, dts: %005d, pts: %005d, timestamp: %005d, offset: %005d, newoffset: %005d"), picIn->i_pts, picOut.i_dts, picOut.i_pts, outputTimestamp, timeOffset, picOut.i_pts-picOut.i_dts);
 
         timeOffset = htonl(timeOffset);
 
@@ -517,8 +520,8 @@ public:
 };
 
 
-VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR)
+VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR, bool bDupeFrames)
 {
-    return new X264Encoder(fps, width, height, quality, preset, bUse444, maxBitRate, bufferSize, bUseCFR);
+    return new X264Encoder(fps, width, height, quality, preset, bUse444, maxBitRate, bufferSize, bUseCFR, bDupeFrames);
 }
 
