@@ -523,6 +523,7 @@ private:
 
     HMENU           hmenuMain; // Main window menu so we can hide it in fullscreen mode
     WINDOWPLACEMENT fullscreenPrevPlacement;
+    bool            fullscreenPrevPanelVisible;
 
     int     cpuInfo[4];
     bool    bSSE2Available;

@@ -2202,6 +2202,12 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     App->MoveSourcesToBottom();
                     break;
 
+                case IDCANCEL:
+                    // This actually means the user pressed the ESC key
+                    if(App->bFullscreenMode)
+                        App->SetFullscreenMode(false);
+                    break;
+
                 default:
                     {
                         UINT id = LOWORD(wParam);
@@ -3220,6 +3226,11 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
             case ID_TOGGLEPANEL:
                 App->bPanelVisible = !App->bPanelVisible;
                 App->bPanelVisibleProcessed = false;
+
+                // If the user toggles the panel in fullscreen mode then forget if
+                // it was visible or not before entering fullscreen mode
+                App->fullscreenPrevPanelVisible = App->bPanelVisible;
+
                 App->ResizeWindow(true);
                 break;
             case ID_TOGGLEFULLSCREEN:

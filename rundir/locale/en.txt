@@ -58,7 +58,7 @@ MainMenu.Profiles   "&Profiles"
 MainMenu.Settings   "&Settings"
 
 MainMenu.Settings.AlwaysOnTop       "&Always On Top"
-MainMenu.Settings.FullscreenMode    "&Fullscreen Mode"
+MainMenu.Settings.FullscreenMode    "&Fullscreen Preview Mode"
 
 MainMenu.File.Exit  "E&xit"
 MainMenu.File.Save  "&Save"

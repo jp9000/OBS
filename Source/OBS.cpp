@@ -820,9 +820,21 @@ void OBS::SetFullscreenMode(bool fullscreen)
     App->bFullscreenMode = fullscreen;
     if(fullscreen)
     {
+        // Exit edit mode ensuring that the button is toggled as well
+        if(bEditMode)
+            SendMessage(GetDlgItem(hwndMain, ID_SCENEEDITOR), BM_CLICK, 0, 0);
+
         // Remember current window placement
         fullscreenPrevPlacement.length = sizeof(fullscreenPrevPlacement);
         GetWindowPlacement(hwndMain, &fullscreenPrevPlacement);
+
+        // Remember if the control panel is visible and hide it
+        fullscreenPrevPanelVisible = bPanelVisible;
+        if(bPanelVisible)
+        {
+            bPanelVisible = false;
+            bPanelVisibleProcessed = false;
+        }
 
         // Hide borders
         LONG style = GetWindowLong(hwndMain, GWL_STYLE);
@@ -847,11 +859,21 @@ void OBS::SetFullscreenMode(bool fullscreen)
         // Show menu and status bar
         SetMenu(hwndMain, hmenuMain);
 
+        // Restore control panel visible state
+        if(fullscreenPrevPanelVisible != bPanelVisible)
+        {
+            bPanelVisible = fullscreenPrevPanelVisible;
+            bPanelVisibleProcessed = false;
+        }
+
         // Restore original window size
         SetWindowPlacement(hwndMain, &fullscreenPrevPlacement);
 
         // Update menu checkboxes
         CheckMenuItem(hmenuMain, ID_FULLSCREENMODE, MF_UNCHECKED);
+
+        // Disable always-on-top if needed
+        SetWindowPos(hwndMain, (App->bAlwaysOnTop)?HWND_TOPMOST:HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
     }
 }
 
