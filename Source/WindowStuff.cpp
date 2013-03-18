@@ -2451,9 +2451,8 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 else
                     screenSize.top = screenSize.bottom - newHeight;
 
-                // We need to recalculate the render frame position when in 1:1 mode
-                if(App->renderFrameIn1To1Mode)
-                    App->ResizeRenderFrame(true);
+                // Recalculate the render frame position
+                App->ResizeRenderFrame(true);
 
                 return TRUE;
             }
@@ -2581,8 +2580,8 @@ enum
 Vect2 OBS::MapWindowToFramePos(Vect2 mousePos)
 {
     if(App->renderFrameIn1To1Mode)
-        return mousePos * (App->GetBaseSize() / App->GetOutputSize());
-    return mousePos * (App->GetBaseSize() / App->GetRenderFrameSize());
+        return (mousePos - App->GetRenderFrameOffset()) * (App->GetBaseSize() / App->GetOutputSize());
+    return (mousePos - App->GetRenderFrameOffset()) * (App->GetBaseSize() / App->GetRenderFrameSize());
 }
 
 /**
@@ -2591,8 +2590,8 @@ Vect2 OBS::MapWindowToFramePos(Vect2 mousePos)
 Vect2 OBS::MapFrameToWindowPos(Vect2 framePos)
 {
     if(App->renderFrameIn1To1Mode)
-        return framePos * (App->GetOutputSize() / App->GetBaseSize());
-    return framePos * (App->GetRenderFrameSize() / App->GetBaseSize());
+        return framePos * (App->GetOutputSize() / App->GetBaseSize()) + App->GetRenderFrameOffset();
+    return framePos * (App->GetRenderFrameSize() / App->GetBaseSize()) + App->GetRenderFrameOffset();
 }
 
 /**
@@ -3204,6 +3203,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
             case ID_TOGGLERENDERVIEW:
                 App->bRenderViewEnabled = !App->bRenderViewEnabled;
                 App->bForceRenderViewErase = !App->bRenderViewEnabled;
+                App->UpdateRenderViewMessage();
                 break;
             case ID_PREVIEWSCALETOFITMODE:
                 App->renderFrameIn1To1Mode = false;

@@ -79,11 +79,13 @@ Vect2 OBSGetBaseSize()          {return API->GetBaseSize();}
 Vect2 OBSGetRenderFrameSize()   {return API->GetRenderFrameSize();}
 Vect2 OBSGetOutputSize()        {return API->GetOutputSize();}
 
-void OBSGetBaseSize(UINT &width, UINT &height)          {API->GetBaseSize(width, height);}
-void OBSGetRenderFrameSize(UINT &width, UINT &height)   {API->GetRenderFrameSize(width, height);}
-void OBSGetOutputSize(UINT &width, UINT &height)        {API->GetOutputSize(width, height);}
-UINT OBSGetMaxFPS()                                     {return API->GetMaxFPS();}
-bool OBSGetRenderFrameIn1To1Mode()                      {return API->GetRenderFrameIn1To1Mode();}
+void OBSGetBaseSize(UINT &width, UINT &height)                  {API->GetBaseSize(width, height);}
+void OBSGetRenderFrameSize(UINT &width, UINT &height)           {API->GetRenderFrameSize(width, height);}
+void OBSGetRenderFrameOffset(UINT &x, UINT &y)                  {API->GetRenderFrameOffset(x, y);}
+void OBSGetRenderFrameControlSize(UINT &width, UINT &height)    {API->GetRenderFrameControlSize(width, height);}
+void OBSGetOutputSize(UINT &width, UINT &height)                {API->GetOutputSize(width, height);}
+UINT OBSGetMaxFPS()                                             {return API->GetMaxFPS();}
+bool OBSGetRenderFrameIn1To1Mode()                              {return API->GetRenderFrameIn1To1Mode();}
 
 CTSTR OBSGetLanguage()          {return API->GetLanguage();}
 

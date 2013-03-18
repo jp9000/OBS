@@ -588,32 +588,34 @@ void OBS::MainCaptureLoop()
 
         if(bRenderView)
         {
-            Vect2 renderFrameSize = Vect2(float(renderFrameWidth), float(renderFrameHeight));
+            // Cache
+            const Vect2 renderFrameSize = GetRenderFrameSize();
+            const Vect2 renderFrameOffset = GetRenderFrameOffset();
+            const Vect2 renderFrameCtrlSize = GetRenderFrameControlSize();
 
             SetRenderTarget(NULL);
 
             LoadVertexShader(mainVertexShader);
             LoadPixelShader(mainPixelShader);
 
-            Ortho(0.0f, renderFrameSize.x, renderFrameSize.y, 0.0f, -100.0f, 100.0f);
-            SetViewport(0.0f, 0.0f, renderFrameSize.x, renderFrameSize.y);
+            Ortho(0.0f, renderFrameCtrlSize.x, renderFrameCtrlSize.y, 0.0f, -100.0f, 100.0f);
+            SetViewport(0.0f, 0.0f, renderFrameCtrlSize.x, renderFrameCtrlSize.y);
+
+            // Draw background
+            ClearColorBuffer(GetSysColor(COLOR_BTNFACE));
 
             if(bTransitioning)
             {
                 BlendFunction(GS_BLEND_ONE, GS_BLEND_ZERO);
-                if(renderFrameIn1To1Mode)
-                    DrawSprite(transitionTexture, 0xFFFFFFFF, 0.0f, 0.0f, outputSize.x, outputSize.y);
-                else
-                    DrawSprite(transitionTexture, 0xFFFFFFFF, 0.0f, 0.0f, renderFrameSize.x, renderFrameSize.y);
+                DrawSprite(transitionTexture, 0xFFFFFFFF,
+                        renderFrameOffset.x, renderFrameOffset.y,
+                        renderFrameOffset.x + renderFrameSize.x, renderFrameOffset.y + renderFrameSize.y);
                 BlendFunction(GS_BLEND_FACTOR, GS_BLEND_INVFACTOR, transitionAlpha);
             }
 
-            if(renderFrameIn1To1Mode)
-                DrawSprite(mainRenderTextures[curRenderTarget], 0xFFFFFFFF, 0.0f, 0.0f, outputSize.x, outputSize.y);
-            else
-                DrawSprite(mainRenderTextures[curRenderTarget], 0xFFFFFFFF, 0.0f, 0.0f, renderFrameSize.x, renderFrameSize.y);
-
-            Ortho(0.0f, renderFrameSize.x, renderFrameSize.y, 0.0f, -100.0f, 100.0f);
+            DrawSprite(mainRenderTextures[curRenderTarget], 0xFFFFFFFF,
+                    renderFrameOffset.x, renderFrameOffset.y,
+                    renderFrameOffset.x + renderFrameSize.x, renderFrameOffset.y + renderFrameSize.y);
 
             //draw selections if in edit mode
             if(bEditMode && !bSizeChanging)
@@ -621,11 +623,6 @@ void OBS::MainCaptureLoop()
                 LoadVertexShader(solidVertexShader);
                 LoadPixelShader(solidPixelShader);
                 solidPixelShader->SetColor(solidPixelShader->GetParameter(0), 0xFFFF0000);
-
-                if(renderFrameIn1To1Mode)
-                    Ortho(0.0f, renderFrameSize.x * downscale, renderFrameSize.y * downscale, 0.0f, -100.0f, 100.0f);
-                else
-                    Ortho(0.0f, baseSize.x, baseSize.y, 0.0f, -100.0f, 100.0f);
 
                 if(scene)
                     scene->RenderSelections();

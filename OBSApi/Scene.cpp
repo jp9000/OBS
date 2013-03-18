@@ -242,19 +242,9 @@ void Scene::RenderSelections()
         SceneItem *item = sceneItems[i];
         if(item->bSelected)
         {
-            Vect2 pos  = item->GetPos()+1.0f;
-            Vect2 size = item->GetSize()-2.0f;
-
-            Vect2 baseSize = API->GetBaseSize();
-            Vect2 outputSize = API->GetOutputSize();
-            Vect2 frameSize  = API->GetRenderFrameSize();
-            float sizeAdjust;
-            if(API->GetRenderFrameIn1To1Mode())
-                sizeAdjust = baseSize.x/outputSize.x;
-            else
-                sizeAdjust = baseSize.x/frameSize.x;
-
-            Vect2 selectBoxSize = Vect2(10.0f, 10.0f)*sizeAdjust;
+            Vect2 pos  = API->MapFrameToWindowPos(item->GetPos())+1.0f;
+            Vect2 size = API->MapFrameToWindowSize(item->GetSize())-2.0f;
+            Vect2 selectBoxSize = Vect2(10.0f, 10.0f);
 
             DrawBox(pos, selectBoxSize);
             DrawBox((pos+size)-selectBoxSize, selectBoxSize);

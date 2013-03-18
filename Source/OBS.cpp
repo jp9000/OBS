@@ -184,7 +184,7 @@ OBS::OBS()
 
     wc.lpszClassName = OBS_RENDERFRAME_CLASS;
     wc.lpfnWndProc = (WNDPROC)OBS::RenderFrameProc;
-    wc.hbrBackground = (HBRUSH)GetStockObject(GRAY_BRUSH);
+    wc.hbrBackground = GetSysColorBrush(COLOR_BTNFACE);
 
     if(!RegisterClass(&wc))
         CrashError(TEXT("Could not register render frame class"));
@@ -275,6 +275,14 @@ OBS::OBS()
         hwndMain, NULL, hinstMain, NULL);
     if(!hwndRenderFrame)
         CrashError(TEXT("Could not create render frame"));
+
+    //-----------------------------------------------------
+    // render frame text
+
+    hwndRenderMessage = CreateWindow(TEXT("STATIC"), Str("MainWindow.BeginMessage"),
+        WS_CHILDWINDOW|WS_VISIBLE|WS_CLIPSIBLINGS|SS_CENTER,
+        0, 0, 0, 0, hwndRenderFrame, NULL, hinstMain, NULL);
+    SendMessage(hwndRenderMessage, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 
     //-----------------------------------------------------
     // scenes listbox
@@ -676,10 +684,33 @@ OBS::~OBS()
         OSCloseMutex(hHotkeyMutex);
 }
 
+/**
+ * Controls which message should be displayed in the middle of the main window.
+ */
+void OBS::UpdateRenderViewMessage()
+{
+    if(bRunning)
+    {
+        if(bRenderViewEnabled)
+        {
+            // Message should be invisible
+            ShowWindow(hwndRenderMessage, SW_HIDE);
+        }
+        else
+        {
+            ShowWindow(hwndRenderMessage, SW_SHOW);
+            SetWindowText(hwndRenderMessage, Str("MainWindow.PreviewDisabled"));
+        }
+    }
+    else
+    {
+        ShowWindow(hwndRenderMessage, SW_SHOW);
+        SetWindowText(hwndRenderMessage, Str("MainWindow.BeginMessage"));
+    }
+}
+
 void OBS::ResizeRenderFrame(bool bRedrawRenderFrame)
 {
-    int x = controlPadding, y = controlPadding;
-    
     // Get output steam size and aspect ratio
     int curCX, curCY;
     float mainAspect;
@@ -687,14 +718,14 @@ void OBS::ResizeRenderFrame(bool bRedrawRenderFrame)
     {
         curCX = outputCX;
         curCY = outputCY;
-        mainAspect = float(baseCX)/float(baseCY);
+        mainAspect = float(curCX)/float(curCY);
     }
     else
     {
+        // Default to the monitor's resolution if the base size is undefined
         int monitorID = AppConfig->GetInt(TEXT("Video"), TEXT("Monitor"));
         if(monitorID >= (int)monitors.Num())
             monitorID = 0;
-
         RECT &screenRect = monitors[monitorID].rect;
         int defCX = screenRect.right  - screenRect.left;
         int defCY = screenRect.bottom - screenRect.top;
@@ -714,54 +745,55 @@ void OBS::ResizeRenderFrame(bool bRedrawRenderFrame)
     }
 
     // Get area to render in
-    UINT newRenderFrameWidth  = clientWidth  - (controlPadding*2);
-    UINT newRenderFrameHeight = clientHeight - (controlPadding*2) - totalControlAreaHeight;
+    int x, y;
+    UINT controlWidth  = clientWidth;
+    UINT controlHeight = clientHeight - controlPadding - totalControlAreaHeight;
+    UINT newRenderFrameWidth, newRenderFrameHeight;
     if(renderFrameIn1To1Mode)
     {
-        x = max(x, (clientWidth - curCX) / 2);
-        y = max(y, (clientHeight - totalControlAreaHeight - curCY) / 2);
-        newRenderFrameWidth  = min((UINT)curCX, newRenderFrameWidth);
-        newRenderFrameHeight = min((UINT)curCY, newRenderFrameHeight);
+        newRenderFrameWidth  = (UINT)curCX;
+        newRenderFrameHeight = (UINT)curCY;
+        x = (int)controlWidth / 2 - curCX / 2;
+        y = (int)controlHeight / 2 - curCY / 2;
     }
     else
-    {
-        Vect2 renderSize = Vect2(float(newRenderFrameWidth), float(newRenderFrameHeight));
+    { // Scale to fit with a small amount of padding around the top, left and right sides
+        Vect2 renderSize = Vect2(float(controlWidth - controlPadding * 2), float(controlHeight - controlPadding));
         float renderAspect = renderSize.x/renderSize.y;
 
         if(renderAspect > mainAspect)
         {
             renderSize.x = renderSize.y*mainAspect;
-            x += int((float(newRenderFrameWidth)-renderSize.x)*0.5f);
+            x = int((float(controlWidth)-renderSize.x)*0.5f);
+            y = controlPadding;
         }
         else
         {
             renderSize.y = renderSize.x/mainAspect;
-            y += int((float(newRenderFrameHeight)-renderSize.y)*0.5f);
+            x = controlPadding;
+            y = int((float(controlHeight)-renderSize.y)*0.5f);
         }
 
+        // Round and ensure even size
         newRenderFrameWidth  = int(renderSize.x+0.5f)&0xFFFFFFFE;
         newRenderFrameHeight = int(renderSize.y+0.5f)&0xFFFFFFFE;
     }
 
-    SetWindowPos(hwndRenderFrame, NULL, x, y, newRenderFrameWidth, newRenderFrameHeight, SWP_NOOWNERZORDER);
+    // Fill the majority of the window with the 3D scene. We'll render everything in DirectX
+    SetWindowPos(hwndRenderFrame, NULL, 0, 0, controlWidth, controlHeight, SWP_NOOWNERZORDER);
 
     //----------------------------------------------
 
-    if(bRunning)
-    {
-        if(bRedrawRenderFrame)
-        {
-            renderFrameWidth  = newRenderFrameWidth;
-            renderFrameHeight = newRenderFrameHeight;
-
-            bResizeRenderView = true;
-        }
-    }
-    else
-    {
-        renderFrameWidth  = newRenderFrameWidth;
-        renderFrameHeight = newRenderFrameHeight;
-    }
+    renderFrameX = x;
+    renderFrameY = y;
+    renderFrameWidth  = newRenderFrameWidth;
+    renderFrameHeight = newRenderFrameHeight;
+    renderFrameCtrlWidth  = controlWidth;
+    renderFrameCtrlHeight = controlHeight;
+    if(bRunning && bRedrawRenderFrame)
+        bResizeRenderView = true;
+    if(!bRunning)
+        InvalidateRect(hwndRenderFrame, NULL, true); // Repaint text
 }
 
 
@@ -819,6 +851,11 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
     SendMessage(hwndTemp, SB_SETPARTS, 5, (LPARAM)parts);
 
     int resetXPos = xStart+listControlWidth*2;
+
+    //-----------------------------------------------------
+
+    UpdateRenderViewMessage();
+    SetWindowPos(hwndRenderMessage, NULL, 0, renderFrameCtrlHeight / 2 - 10, renderFrameCtrlWidth, 50, flags & ~SWP_SHOWWINDOW);
 
     //-----------------------------------------------------
 

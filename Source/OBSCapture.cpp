@@ -425,6 +425,11 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
+    // Ensure that the render frame is properly sized
+    ResizeRenderFrame(true);
+
+    //-------------------------------------------------------------
+
     for (UINT i=0; i<plugins.Num(); i++)
     {
         OBS_CALLBACK startStreamProc = plugins[i].startStreamCallback;
@@ -467,6 +472,8 @@ void OBS::Start()
     
     SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, 0, 0, 0);
     SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
+
+    UpdateRenderViewMessage();
 
     OSLeaveMutex (hStartupShutdownMutex);
 }
@@ -663,6 +670,8 @@ void OBS::Stop()
     SetThreadExecutionState(ES_CONTINUOUS);
 
     bTestStream = false;
+
+    UpdateRenderViewMessage();
 
     OSLeaveMutex(hStartupShutdownMutex);
 }

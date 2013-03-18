@@ -104,15 +104,27 @@ public:
     virtual UINT CreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARAM param)=0;
     virtual void DeleteHotkey(UINT hotkeyID)=0;
 
-    virtual Vect2 GetBaseSize() const=0;          //get the base scene size
-    virtual Vect2 GetRenderFrameSize() const=0;   //get the render frame size
-    virtual Vect2 GetOutputSize() const=0;        //get the stream output size
+    virtual Vect2 GetBaseSize() const=0;                //get the base scene size
+    virtual Vect2 GetRenderFrameSize() const=0;         //get the render frame size
+    virtual Vect2 GetRenderFrameOffset() const=0;       //get the render frame offset inside the control
+    virtual Vect2 GetRenderFrameControlSize() const=0;  //get the render frame control size
+    virtual Vect2 GetOutputSize() const=0;              //get the stream output size
 
     virtual void GetBaseSize(UINT &width, UINT &height) const=0;
     virtual void GetRenderFrameSize(UINT &width, UINT &height) const=0;
+    virtual void GetRenderFrameOffset(UINT &x, UINT &y) const=0;
+    virtual void GetRenderFrameControlSize(UINT &width, UINT &height) const=0;
     virtual void GetOutputSize(UINT &width, UINT &height) const=0;
     virtual UINT GetMaxFPS() const=0;
     virtual bool GetRenderFrameIn1To1Mode() const=0;
+
+    // Helpers for GetRenderFrame*() methods
+    virtual Vect2 MapWindowToFramePos(Vect2 mousePos) const=0;
+    virtual Vect2 MapFrameToWindowPos(Vect2 framePos) const=0;
+    virtual Vect2 MapWindowToFrameSize(Vect2 windowSize) const=0;
+    virtual Vect2 MapFrameToWindowSize(Vect2 frameSize) const=0;
+    virtual Vect2 GetWindowToFrameScale() const=0;
+    virtual Vect2 GetFrameToWindowScale() const=0;
 
     virtual CTSTR GetLanguage() const=0;
 
@@ -223,6 +235,8 @@ BASE_EXPORT Vect2 OBSGetOutputSize();        //get the stream output size
 
 BASE_EXPORT void OBSGetBaseSize(UINT &width, UINT &height);
 BASE_EXPORT void OBSGetRenderFrameSize(UINT &width, UINT &height);
+BASE_EXPORT void OBSGetRenderFrameOffset(UINT &x, UINT &y);
+BASE_EXPORT void OBSGetRenderFrameControlSize(UINT &width, UINT &height);
 BASE_EXPORT void OBSGetOutputSize(UINT &width, UINT &height);
 BASE_EXPORT UINT OBSGetMaxFPS();
 BASE_EXPORT bool OBSGetIn1To1Mode();

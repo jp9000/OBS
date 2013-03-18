@@ -68,6 +68,8 @@ MainMenu.Help.VisitWebsite  "Visit Website"
 MainMenu.Settings.OpenConfigFolder  "Open &Configuration Folder"
 MainMenu.Settings.OpenLogFolder     "Open &Log Folder"
 
+MainWindow.BeginMessage     "Not streaming\n\nClick \"Start Streaming\" or \"Preview Stream\" to begin"
+MainWindow.PreviewDisabled  "Preview disabled"
 MainWindow.Dashboard        "Dashboard"
 MainWindow.DroppedFrames    "Dropped Frames:"
 MainWindow.Exit             "Exit"

@@ -487,7 +487,10 @@ private:
     bool    bTestStream;
     bool    bUseMultithreadedOptimizations;
     bool    bRunning;
-    int     renderFrameWidth, renderFrameHeight;
+    int     renderFrameWidth, renderFrameHeight; // The size of the preview only
+    int     renderFrameX, renderFrameY; // The offset of the preview inside the preview control
+    int     renderFrameCtrlWidth, renderFrameCtrlHeight; // The size of the entire preview control
+    HWND    hwndRenderMessage; // The text in the middle of the main window
     bool    renderFrameIn1To1Mode;
     int     borderXSize, borderYSize;
     int     clientWidth, clientHeight;
@@ -726,6 +729,7 @@ private:
     static INT_PTR CALLBACK SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
     void ResizeRenderFrame(bool bRedrawRenderFrame);
+    void UpdateRenderViewMessage();
 
     void ToggleCapturing();
 
@@ -782,8 +786,10 @@ public:
 
     void GetBaseSize(UINT &width, UINT &height) const;
 
-    inline void GetRenderFrameSize(UINT &width, UINT &height) const    {width = renderFrameWidth; height = renderFrameHeight;}
-    inline void GetOutputSize(UINT &width, UINT &height) const         {width = outputCX;         height = outputCY;}
+    inline void GetRenderFrameSize(UINT &width, UINT &height) const         {width = renderFrameWidth; height = renderFrameHeight;}
+    inline void GetRenderFrameOffset(UINT &x, UINT &y) const                {x = renderFrameX; y = renderFrameY;}
+    inline void GetRenderFrameControlSize(UINT &width, UINT &height) const  {width = renderFrameCtrlWidth; height = renderFrameCtrlHeight;}
+    inline void GetOutputSize(UINT &width, UINT &height) const              {width = outputCX;         height = outputCY;}
 
     inline Vect2 GetBaseSize() const
     {
@@ -792,8 +798,10 @@ public:
         return Vect2(float(width), float(height));
     }
 
-    inline Vect2 GetOutputSize()      const {return Vect2(float(outputCX), float(outputCY));}
-    inline Vect2 GetRenderFrameSize() const {return Vect2(float(renderFrameWidth), float(renderFrameHeight));}
+    inline Vect2 GetOutputSize()      const         {return Vect2(float(outputCX), float(outputCY));}
+    inline Vect2 GetRenderFrameSize() const         {return Vect2(float(renderFrameWidth), float(renderFrameHeight));}
+    inline Vect2 GetRenderFrameOffset() const       {return Vect2(float(renderFrameX), float(renderFrameY));}
+    inline Vect2 GetRenderFrameControlSize() const  {return Vect2(float(renderFrameCtrlWidth), float(renderFrameCtrlHeight));}
 
     inline bool SSE2Available() const {return bSSE2Available;}
 
