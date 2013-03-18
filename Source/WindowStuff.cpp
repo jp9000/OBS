@@ -2459,9 +2459,6 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 else
                     screenSize.top = screenSize.bottom - newHeight;
 
-                // Recalculate the render frame position
-                App->ResizeRenderFrame(true);
-
                 return TRUE;
             }
 
@@ -2477,7 +2474,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     App->bSizeChanging = true;
 
                     if(wParam != SIZE_MINIMIZED)
-                        App->ResizeWindow(true);
+                        App->ResizeWindow(!App->bDragResize);
                     if(!App->bDragResize)
                         App->bSizeChanging = false;
                 }

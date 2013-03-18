@@ -599,7 +599,13 @@ void OBS::MainCaptureLoop()
             LoadPixelShader(mainPixelShader);
 
             Ortho(0.0f, renderFrameCtrlSize.x, renderFrameCtrlSize.y, 0.0f, -100.0f, 100.0f);
-            SetViewport(0.0f, 0.0f, renderFrameCtrlSize.x, renderFrameCtrlSize.y);
+            if(renderFrameCtrlSize.x != oldRenderFrameCtrlWidth || renderFrameCtrlSize.y != oldRenderFrameCtrlHeight)
+            {
+                // User is drag resizing the window. We don't recreate the swap chains so our coordinates are wrong
+                SetViewport(0.0f, 0.0f, oldRenderFrameCtrlWidth, oldRenderFrameCtrlHeight);
+            }
+            else
+                SetViewport(0.0f, 0.0f, renderFrameCtrlSize.x, renderFrameCtrlSize.y);
 
             // Draw background (Black if fullscreen, window colour otherwise)
             if(bFullscreenMode)

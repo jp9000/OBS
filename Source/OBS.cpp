@@ -798,10 +798,18 @@ void OBS::ResizeRenderFrame(bool bRedrawRenderFrame)
     renderFrameHeight = newRenderFrameHeight;
     renderFrameCtrlWidth  = controlWidth;
     renderFrameCtrlHeight = controlHeight;
-    if(bRunning && bRedrawRenderFrame)
-        bResizeRenderView = true;
     if(!bRunning)
+    {
+        oldRenderFrameCtrlWidth = renderFrameCtrlWidth;
+        oldRenderFrameCtrlHeight = renderFrameCtrlHeight;
         InvalidateRect(hwndRenderFrame, NULL, true); // Repaint text
+    }
+    else if(bRunning && bRedrawRenderFrame)
+    {
+        oldRenderFrameCtrlWidth = renderFrameCtrlWidth;
+        oldRenderFrameCtrlHeight = renderFrameCtrlHeight;
+        bResizeRenderView = true;
+    }
 }
 
 void OBS::SetFullscreenMode(bool fullscreen)
@@ -898,7 +906,7 @@ void OBS::ProcessPanelVisibile(bool fromResizeWindow)
 
     // HACK: Force resize to fix dashboard button. The setting should not be calculated every resize
     if(bPanelVisible && !fromResizeWindow)
-        ResizeWindow(true);
+        ResizeWindow(false);
 }
 
 void OBS::GetBaseSize(UINT &width, UINT &height) const
