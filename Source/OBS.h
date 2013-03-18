@@ -20,6 +20,7 @@
 #pragma once
 
 class Scene;
+class SettingsPane;
 
 #define NUM_RENDER_BUFFERS 2
 
@@ -453,27 +454,31 @@ class OBS
     //---------------------------------------------------
     // settings window
 
-    int     curSettingsSelection;
-    HWND    hwndSettings;
-    HWND    hwndCurrentSettings;
-    bool    bSettingsChanged;
+    int                 curSettingsSelection;
+    HWND                hwndSettings;
+    HWND                hwndCurrentSettings;
+    bool                bSettingsChanged;
+    List<SettingsPane*> settingsPanes;
+    SettingsPane *      currentSettingsPane;
 
-    inline void SetChangedSettings(bool bChanged)
-    {
-        EnableWindow(GetDlgItem(hwndSettings, IDC_APPLY), (bSettingsChanged = bChanged));
-    }
-
+    void   SetChangedSettings(bool bChanged);
     void   CancelSettings();
     void   ApplySettings();
 
-    void   RefreshDownscales(HWND hwnd, int cx, int cy);
+    // Settings panes
+public:
+    void   AddSettingsPane(SettingsPane *pane);
+    void   RemoveSettingsPane(SettingsPane *pane);
+private:
+    void   AddBuiltInSettingsPanes();
 
-    static INT_PTR CALLBACK GeneralSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-    static INT_PTR CALLBACK EncoderSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-    static INT_PTR CALLBACK PublishSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-    static INT_PTR CALLBACK VideoSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-    static INT_PTR CALLBACK AudioSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-    static INT_PTR CALLBACK AdvancedSettingsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+    friend class SettingsPane;
+    friend class SettingsGeneral;
+    friend class SettingsEncoding;
+    friend class SettingsPublish;
+    friend class SettingsVideo;
+    friend class SettingsAudio;
+    friend class SettingsAdvanced;
 
     //---------------------------------------------------
     // mainly manly main window stuff

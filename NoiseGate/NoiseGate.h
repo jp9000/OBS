@@ -59,9 +59,9 @@ private:
 };
 
 //============================================================================
-// NoiseGateConfigWindow class
+// NoiseGateSettings class
 
-class NoiseGateConfigWindow
+class NoiseGateSettings : public SettingsPane
 {
     //-----------------------------------------------------------------------
     // Constants
@@ -74,42 +74,38 @@ private:
     // Private members
 
 private:
-    NoiseGate *     parent;
-    HWND            parentHwnd;
-    HWND            hwnd;
-
-    //-----------------------------------------------------------------------
-    // Static methods
-
-public:
-    static INT_PTR CALLBACK DialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+    NoiseGate * parent;
 
     //-----------------------------------------------------------------------
     // Constructor/destructor
 
 public:
-    NoiseGateConfigWindow(NoiseGate *parent, HWND parentHwnd);
-    ~NoiseGateConfigWindow();
+    NoiseGateSettings(NoiseGate *parent);
+    virtual ~NoiseGateSettings();
 
     //-----------------------------------------------------------------------
     // Methods
-
-public:
-    bool Process();
 
 private:
     void SetTrackbarCaption(int controlId, int db);
     void RepaintVolume();
     void RefreshConfig();
 
-    //-----------------------------------------------------------------------
     // Message processing
-
-private:
     void MsgInitDialog();
-    INT_PTR MsgClicked(int controlId, HWND controlHwnd);
+    void MsgDestroy();
+    INT_PTR MsgClicked(int controlId, int code, HWND controlHwnd);
     INT_PTR MsgScroll(bool vertical, WPARAM wParam, LPARAM lParam);
     INT_PTR MsgTimer(int timerId);
+
+public:
+    // Interface
+    virtual CTSTR GetCategory() const;
+    virtual HWND CreatePane(HWND parentHwnd);
+    virtual void DestroyPane();
+    virtual INT_PTR ProcMessage(UINT message, WPARAM wParam, LPARAM lParam);
+    virtual void ApplySettings();
+    virtual void CancelSettings();
 };
 
 //============================================================================
@@ -118,7 +114,7 @@ private:
 class NoiseGate
 {
     friend class NoiseGateFilter;
-    friend class NoiseGateConfigWindow;
+    friend class NoiseGateSettings;
 
     //-----------------------------------------------------------------------
     // Static members
@@ -133,6 +129,7 @@ public:
 private:
     AudioSource *       micSource;
     NoiseGateFilter *   filter;
+    NoiseGateSettings * settings;
     ConfigFile          config;
     bool                isDisabledFromConfig;
 
@@ -160,7 +157,6 @@ public:
     void SaveSettings();
     void StreamStarted();
     void StreamStopped();
-    void ShowConfigDialog(HWND parentHwnd);
 };
 
 //============================================================================
@@ -168,7 +164,6 @@ public:
 
 extern "C" __declspec(dllexport) bool LoadPlugin();
 extern "C" __declspec(dllexport) void UnloadPlugin();
-extern "C" __declspec(dllexport) void ConfigPlugin(HWND parentHwnd);
 extern "C" __declspec(dllexport) void OnStartStream();
 extern "C" __declspec(dllexport) void OnStopStream();
 extern "C" __declspec(dllexport) CTSTR GetPluginName();
