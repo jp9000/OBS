@@ -494,6 +494,9 @@ private:
     bool    renderFrameIn1To1Mode;
     int     borderXSize, borderYSize;
     int     clientWidth, clientHeight;
+    bool    bPanelVisible;
+    bool    bPanelVisibleProcessed;
+    bool    bDragResize;
     bool    bSizeChanging;
     bool    bResizeRenderView;
 
@@ -730,6 +733,7 @@ private:
 
     void ResizeRenderFrame(bool bRedrawRenderFrame);
     void UpdateRenderViewMessage();
+    void ProcessPanelVisibile(bool fromResizeWindow = false);
 
     void ToggleCapturing();
 

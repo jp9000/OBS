@@ -258,6 +258,9 @@ OBS::OBS()
         y = posY;
     }
 
+    bPanelVisible = true;
+    bPanelVisibleProcessed = false; // Force immediate process
+
     hwndMain = CreateWindowEx(WS_EX_CONTROLPARENT|WS_EX_WINDOWEDGE, OBS_WINDOW_CLASS, OBS_VERSION_STRING,
         WS_OVERLAPPED | WS_THICKFRAME | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN,
         x, y, cx, cy, NULL, NULL, hinstMain, NULL);
@@ -495,6 +498,7 @@ OBS::OBS()
 
     API = CreateOBSApiInterface();
 
+    bDragResize = false;
     ResizeWindow(false);
     ShowWindow(hwndMain, SW_SHOW);
 
@@ -747,7 +751,9 @@ void OBS::ResizeRenderFrame(bool bRedrawRenderFrame)
     // Get area to render in
     int x, y;
     UINT controlWidth  = clientWidth;
-    UINT controlHeight = clientHeight - controlPadding - totalControlAreaHeight;
+    UINT controlHeight = clientHeight;
+    if(bPanelVisible)
+        controlHeight -= totalControlAreaHeight + controlPadding;
     UINT newRenderFrameWidth, newRenderFrameHeight;
     if(renderFrameIn1To1Mode)
     {
@@ -757,20 +763,20 @@ void OBS::ResizeRenderFrame(bool bRedrawRenderFrame)
         y = (int)controlHeight / 2 - curCY / 2;
     }
     else
-    { // Scale to fit with a small amount of padding around the top, left and right sides
-        Vect2 renderSize = Vect2(float(controlWidth - controlPadding * 2), float(controlHeight - controlPadding));
+    { // Scale to fit
+        Vect2 renderSize = Vect2(float(controlWidth), float(controlHeight));
         float renderAspect = renderSize.x/renderSize.y;
 
         if(renderAspect > mainAspect)
         {
             renderSize.x = renderSize.y*mainAspect;
             x = int((float(controlWidth)-renderSize.x)*0.5f);
-            y = controlPadding;
+            y = 0;
         }
         else
         {
             renderSize.y = renderSize.x/mainAspect;
-            x = controlPadding;
+            x = 0;
             y = int((float(controlHeight)-renderSize.y)*0.5f);
         }
 
@@ -796,6 +802,59 @@ void OBS::ResizeRenderFrame(bool bRedrawRenderFrame)
         InvalidateRect(hwndRenderFrame, NULL, true); // Repaint text
 }
 
+/**
+ * Show or hide the control panel.
+ */
+void OBS::ProcessPanelVisibile(bool fromResizeWindow)
+{
+    if(bPanelVisibleProcessed)
+        return; // Already done
+
+    if(bPanelVisible)
+    { // Panel is visible
+        ShowWindow(GetDlgItem(hwndMain, ID_MICVOLUME), SW_SHOW);
+        ShowWindow(GetDlgItem(hwndMain, ID_DESKTOPVOLUME), SW_SHOW);
+        ShowWindow(GetDlgItem(hwndMain, ID_MICVOLUMEMETER), SW_SHOW);
+        ShowWindow(GetDlgItem(hwndMain, ID_DESKTOPVOLUMEMETER), SW_SHOW);
+        ShowWindow(GetDlgItem(hwndMain, ID_SETTINGS), SW_SHOW);
+        ShowWindow(GetDlgItem(hwndMain, ID_STARTSTOP), SW_SHOW);
+        ShowWindow(GetDlgItem(hwndMain, ID_SCENEEDITOR), SW_SHOW);
+        ShowWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), SW_SHOW);
+        ShowWindow(GetDlgItem(hwndMain, ID_GLOBALSOURCES), SW_SHOW);
+        ShowWindow(GetDlgItem(hwndMain, ID_PLUGINS), SW_SHOW);
+        //ShowWindow(GetDlgItem(hwndMain, ID_DASHBOARD), SW_SHOW); // Done in ResizeWindow()
+        ShowWindow(GetDlgItem(hwndMain, ID_EXIT), SW_SHOW);
+        ShowWindow(GetDlgItem(hwndMain, ID_SCENES_TEXT), SW_SHOW);
+        ShowWindow(GetDlgItem(hwndMain, ID_SOURCES_TEXT), SW_SHOW);
+        ShowWindow(GetDlgItem(hwndMain, ID_SCENES), SW_SHOW);
+        ShowWindow(GetDlgItem(hwndMain, ID_SOURCES), SW_SHOW);
+    }
+    else
+    { // Panel is invisible
+        ShowWindow(GetDlgItem(hwndMain, ID_MICVOLUME), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndMain, ID_DESKTOPVOLUME), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndMain, ID_MICVOLUMEMETER), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndMain, ID_DESKTOPVOLUMEMETER), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndMain, ID_SETTINGS), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndMain, ID_STARTSTOP), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndMain, ID_SCENEEDITOR), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndMain, ID_GLOBALSOURCES), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndMain, ID_PLUGINS), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndMain, ID_DASHBOARD), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndMain, ID_EXIT), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndMain, ID_SCENES_TEXT), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndMain, ID_SOURCES_TEXT), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndMain, ID_SCENES), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndMain, ID_SOURCES), SW_HIDE);
+    }
+
+    bPanelVisibleProcessed = true;
+
+    // HACK: Force resize to fix dashboard button. The setting should not be calculated every resize
+    if(bPanelVisible && !fromResizeWindow)
+        ResizeWindow(true);
+}
 
 void OBS::GetBaseSize(UINT &width, UINT &height) const
 {
@@ -858,6 +917,12 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
     SetWindowPos(hwndRenderMessage, NULL, 0, renderFrameCtrlHeight / 2 - 10, renderFrameCtrlWidth, 50, flags & ~SWP_SHOWWINDOW);
 
     //-----------------------------------------------------
+
+    // Don't waste time resizing invisible controls
+    if(!bPanelVisibleProcessed)
+        ProcessPanelVisibile(true);
+    if(!bPanelVisible)
+        return;
 
     xPos = resetXPos;
     yPos = yStart;

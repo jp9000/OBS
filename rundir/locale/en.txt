@@ -89,6 +89,7 @@ Plugins.Filename    "File name:"
 Reconnecting.Retrying   "Could not reconnect.  Retrying"
 
 RenderView.EnableView           "Enable View"
+RenderView.DisplayPanel         "Enable Control Panel"
 RenderView.ViewModeScaleToFit   "Scale to fit mode"
 RenderView.ViewMode1To1         "1:1 mode"
 

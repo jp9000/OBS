@@ -2406,15 +2406,19 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
             }
             break;
 
+        case WM_ENTERSIZEMOVE:
+            App->bDragResize = true;
+            break;
+
         case WM_EXITSIZEMOVE:
             if(App->bSizeChanging)
             {
                 RECT client;
                 GetClientRect(hwnd, &client);
 
-                //todo: bSizeChanging = false never gets set because this never gets called when maximizing
                 App->ResizeWindow(true);
                 App->bSizeChanging = false;
+                App->bDragResize = false;
             }
             break;
 
@@ -2470,6 +2474,8 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
                     if(wParam != SIZE_MINIMIZED)
                         App->ResizeWindow(true);
+                    if(!App->bDragResize)
+                        App->bSizeChanging = false;
                 }
                 break;
             }
@@ -2570,8 +2576,9 @@ ItemModifyType GetItemModifyType(const Vect2 &mousePos, const Vect2 &itemPos, co
 enum
 {
     ID_TOGGLERENDERVIEW=1,
-    ID_PREVIEWSCALETOFITMODE=2,
-    ID_PREVIEW1TO1MODE=3,
+    ID_TOGGLEPANEL=2,
+    ID_PREVIEWSCALETOFITMODE=3,
+    ID_PREVIEW1TO1MODE=4,
 };
 
 /**
@@ -3193,6 +3200,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
         AppendMenu(hPopup, MF_STRING | (App->renderFrameIn1To1Mode ? MF_CHECKED : 0), ID_PREVIEW1TO1MODE, Str("RenderView.ViewMode1To1"));
         AppendMenu(hPopup, MF_SEPARATOR, 0, 0);
         AppendMenu(hPopup, MF_STRING | (App->bRenderViewEnabled ? MF_CHECKED : 0), ID_TOGGLERENDERVIEW, Str("RenderView.EnableView"));
+        AppendMenu(hPopup, MF_STRING | (App->bPanelVisible ? MF_CHECKED : 0), ID_TOGGLEPANEL, Str("RenderView.DisplayPanel"));
 
         POINT p;
         GetCursorPos(&p);
@@ -3204,6 +3212,11 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                 App->bRenderViewEnabled = !App->bRenderViewEnabled;
                 App->bForceRenderViewErase = !App->bRenderViewEnabled;
                 App->UpdateRenderViewMessage();
+                break;
+            case ID_TOGGLEPANEL:
+                App->bPanelVisible = !App->bPanelVisible;
+                App->bPanelVisibleProcessed = false;
+                App->ResizeWindow(true);
                 break;
             case ID_PREVIEWSCALETOFITMODE:
                 App->renderFrameIn1To1Mode = false;
