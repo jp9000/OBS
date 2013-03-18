@@ -2469,7 +2469,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     App->bSizeChanging = true;
 
                     if(wParam != SIZE_MINIMIZED)
-                        App->ResizeWindow(false);
+                        App->ResizeWindow(true);
                 }
                 break;
             }
