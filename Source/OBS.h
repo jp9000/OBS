@@ -706,6 +706,13 @@ private:
 
     static DWORD STDCALL HotkeyThread(LPVOID lpUseless);
 
+    // Helpers for converting between window and actual coordinates for the preview
+    static Vect2 MapWindowToFramePos(Vect2 mousePos);
+    static Vect2 MapFrameToWindowPos(Vect2 framePos);
+    static Vect2 MapWindowToFrameSize(Vect2 windowSize);
+    static Vect2 MapFrameToWindowSize(Vect2 frameSize);
+    static Vect2 GetWindowToFrameScale();
+    static Vect2 GetFrameToWindowScale();
 
     static INT_PTR CALLBACK EnterGlobalSourceNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
