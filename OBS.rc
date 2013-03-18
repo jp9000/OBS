@@ -734,6 +734,7 @@ BEGIN
         MENUITEM "MainMenu.Settings",           ID_SETTINGS_SETTINGS
         MENUITEM SEPARATOR
         MENUITEM "MainMenu.Settings.AlwaysOnTop", ID_ALWAYSONTOP
+        MENUITEM "MainMenu.Settings.FullscreenMode", ID_FULLSCREENMODE
         MENUITEM SEPARATOR
         MENUITEM "MainMenu.Settings.OpenConfigFolder", ID_SETTINGS_OPENCONFIGFOLDER
         MENUITEM "MainMenu.Settings.OpenLogFolder", ID_SETTINGS_OPENLOGFOLDER

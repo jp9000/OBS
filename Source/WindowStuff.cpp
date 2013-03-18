@@ -2049,6 +2049,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     }
                     break;
 
+                case ID_FULLSCREENMODE:
+                    App->SetFullscreenMode(!App->bFullscreenMode);
+                    break;
+
                 case ID_HELP_VISITWEBSITE:
                     ShellExecute(NULL, TEXT("open"), TEXT("http://www.obsproject.com"), 0, 0, SW_SHOWNORMAL);
                     break;
@@ -2575,10 +2579,11 @@ ItemModifyType GetItemModifyType(const Vect2 &mousePos, const Vect2 &itemPos, co
 
 enum
 {
-    ID_TOGGLERENDERVIEW=1,
-    ID_TOGGLEPANEL=2,
-    ID_PREVIEWSCALETOFITMODE=3,
-    ID_PREVIEW1TO1MODE=4,
+    ID_TOGGLERENDERVIEW = 1,
+    ID_TOGGLEPANEL,
+    ID_TOGGLEFULLSCREEN,
+    ID_PREVIEWSCALETOFITMODE,
+    ID_PREVIEW1TO1MODE,
 };
 
 /**
@@ -3201,6 +3206,8 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
         AppendMenu(hPopup, MF_SEPARATOR, 0, 0);
         AppendMenu(hPopup, MF_STRING | (App->bRenderViewEnabled ? MF_CHECKED : 0), ID_TOGGLERENDERVIEW, Str("RenderView.EnableView"));
         AppendMenu(hPopup, MF_STRING | (App->bPanelVisible ? MF_CHECKED : 0), ID_TOGGLEPANEL, Str("RenderView.DisplayPanel"));
+        AppendMenu(hPopup, MF_SEPARATOR, 0, 0);
+        AppendMenu(hPopup, MF_STRING | (App->bFullscreenMode ? MF_CHECKED : 0), ID_TOGGLEFULLSCREEN, Str("MainMenu.Settings.FullscreenMode"));
 
         POINT p;
         GetCursorPos(&p);
@@ -3217,6 +3224,9 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                 App->bPanelVisible = !App->bPanelVisible;
                 App->bPanelVisibleProcessed = false;
                 App->ResizeWindow(true);
+                break;
+            case ID_TOGGLEFULLSCREEN:
+                App->SetFullscreenMode(!App->bFullscreenMode);
                 break;
             case ID_PREVIEWSCALETOFITMODE:
                 App->renderFrameIn1To1Mode = false;

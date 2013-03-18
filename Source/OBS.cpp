@@ -261,14 +261,16 @@ OBS::OBS()
     bPanelVisible = true;
     bPanelVisibleProcessed = false; // Force immediate process
 
+    bFullscreenMode = false;
+
     hwndMain = CreateWindowEx(WS_EX_CONTROLPARENT|WS_EX_WINDOWEDGE, OBS_WINDOW_CLASS, OBS_VERSION_STRING,
         WS_OVERLAPPED | WS_THICKFRAME | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN,
         x, y, cx, cy, NULL, NULL, hinstMain, NULL);
     if(!hwndMain)
         CrashError(TEXT("Could not create main window"));
 
-    HMENU hMenu = GetMenu(hwndMain);
-    LocalizeMenu(hMenu);
+    hmenuMain = GetMenu(hwndMain);
+    LocalizeMenu(hmenuMain);
 
     //-----------------------------------------------------
     // render frame
@@ -800,6 +802,49 @@ void OBS::ResizeRenderFrame(bool bRedrawRenderFrame)
         bResizeRenderView = true;
     if(!bRunning)
         InvalidateRect(hwndRenderFrame, NULL, true); // Repaint text
+}
+
+void OBS::SetFullscreenMode(bool fullscreen)
+{
+    if(App->bFullscreenMode == fullscreen)
+        return; // Nothing to do
+
+    App->bFullscreenMode = fullscreen;
+    if(fullscreen)
+    {
+        // Remember current window placement
+        fullscreenPrevPlacement.length = sizeof(fullscreenPrevPlacement);
+        GetWindowPlacement(hwndMain, &fullscreenPrevPlacement);
+
+        // Hide borders
+        LONG style = GetWindowLong(hwndMain, GWL_STYLE);
+        SetWindowLong(hwndMain, GWL_STYLE, style & ~(WS_CAPTION | WS_THICKFRAME));
+
+        // Hide menu and status bar
+        SetMenu(hwndMain, NULL);
+
+        // Fill entire screen
+        // TODO: SM_CXSCREEN is for primary monitor only. Use MonitorFromWindow() for multi-monitor support
+        SetWindowPos(hwndMain, HWND_TOPMOST, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), SWP_FRAMECHANGED);
+
+        // Update menu checkboxes
+        CheckMenuItem(hmenuMain, ID_FULLSCREENMODE, MF_CHECKED);
+    }
+    else
+    {
+        // Show borders
+        LONG style = GetWindowLong(hwndMain, GWL_STYLE);
+        SetWindowLong(hwndMain, GWL_STYLE, style | WS_CAPTION | WS_THICKFRAME);
+
+        // Show menu and status bar
+        SetMenu(hwndMain, hmenuMain);
+
+        // Restore original window size
+        SetWindowPlacement(hwndMain, &fullscreenPrevPlacement);
+
+        // Update menu checkboxes
+        CheckMenuItem(hmenuMain, ID_FULLSCREENMODE, MF_UNCHECKED);
+    }
 }
 
 /**

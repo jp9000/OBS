@@ -508,6 +508,7 @@ private:
     bool    bDisableSceneSwitching;
     bool    bChangingSources;
     bool    bAlwaysOnTop;
+    bool    bFullscreenMode;
     bool    bEditMode;
     bool    bRenderViewEnabled;
     bool    bForceRenderViewErase;
@@ -518,6 +519,9 @@ private:
     Vect2   startMousePos, lastMousePos;
     ItemModifyType modifyType;
     SceneItem *scaleItem;
+
+    HMENU           hmenuMain; // Main window menu so we can hide it in fullscreen mode
+    WINDOWPLACEMENT fullscreenPrevPlacement;
 
     int     cpuInfo[4];
     bool    bSSE2Available;
@@ -765,6 +769,7 @@ public:
     ~OBS();
 
     void ResizeWindow(bool bRedrawRenderFrame);
+    void SetFullscreenMode(bool fullscreen);
 
     void RequestKeyframe(int waitTime);
 

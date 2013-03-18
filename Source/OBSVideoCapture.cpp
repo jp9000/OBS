@@ -601,8 +601,11 @@ void OBS::MainCaptureLoop()
             Ortho(0.0f, renderFrameCtrlSize.x, renderFrameCtrlSize.y, 0.0f, -100.0f, 100.0f);
             SetViewport(0.0f, 0.0f, renderFrameCtrlSize.x, renderFrameCtrlSize.y);
 
-            // Draw background
-            ClearColorBuffer(GetSysColor(COLOR_BTNFACE));
+            // Draw background (Black if fullscreen, window colour otherwise)
+            if(bFullscreenMode)
+                ClearColorBuffer(0x000000);
+            else
+                ClearColorBuffer(GetSysColor(COLOR_BTNFACE));
 
             if(bTransitioning)
             {
