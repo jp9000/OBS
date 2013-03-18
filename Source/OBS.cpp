@@ -844,15 +844,15 @@ void OBS::SetFullscreenMode(bool fullscreen)
         SetMenu(hwndMain, NULL);
 
         // Fill entire screen
-		HMONITOR monitorForWidow = MonitorFromWindow(hwndMain, MONITOR_DEFAULTTONEAREST);
-		MONITORINFO monitorInfo;
-		monitorInfo.cbSize = sizeof(monitorInfo);
-		GetMonitorInfo(monitorForWidow, &monitorInfo);
-		int x = monitorInfo.rcMonitor.left;
-		int y = monitorInfo.rcMonitor.top;
-		int cx = monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left;
-		int cy = monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top;
-		SetWindowPos(hwndMain, HWND_TOPMOST, x, y, cx, cy, SWP_FRAMECHANGED);
+        HMONITOR monitorForWidow = MonitorFromWindow(hwndMain, MONITOR_DEFAULTTONEAREST);
+        MONITORINFO monitorInfo;
+        monitorInfo.cbSize = sizeof(monitorInfo);
+        GetMonitorInfo(monitorForWidow, &monitorInfo);
+        int x = monitorInfo.rcMonitor.left;
+        int y = monitorInfo.rcMonitor.top;
+        int cx = monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left;
+        int cy = monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top;
+        SetWindowPos(hwndMain, HWND_TOPMOST, x, y, cx, cy, SWP_FRAMECHANGED);
 
         // Update menu checkboxes
         CheckMenuItem(hmenuMain, ID_FULLSCREENMODE, MF_CHECKED);
@@ -882,8 +882,8 @@ void OBS::SetFullscreenMode(bool fullscreen)
         // Disable always-on-top if needed
         SetWindowPos(hwndMain, (App->bAlwaysOnTop)?HWND_TOPMOST:HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 
-		// Workaround: If the window is maximized, resize isn't called, so do it manually
-		ResizeWindow(false);
+        // Workaround: If the window is maximized, resize isn't called, so do it manually
+        ResizeWindow(false);
     }
 }
 
