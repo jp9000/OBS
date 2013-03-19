@@ -25,7 +25,7 @@ class SettingsPane;
 #define NUM_RENDER_BUFFERS 2
 
 static const int minClientWidth  = 700;
-static const int minClientHeight = 200;
+static const int minClientHeight = 275;
 
 
 
