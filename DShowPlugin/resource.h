@@ -47,11 +47,11 @@
 #define IDC_TIMEOFFSET                  1033
 #define IDC_CHECK1                      1034
 #define IDC_NOBUFFERING                 1034
-#define IDC_FORCECUSTOMSOUND            1034
 #define IDC_FORCECUSTOMAUDIO            1034
 #define IDC_CUSTOM1                     1035
 #define IDC_VOLUME                      1035
 #define IDC_VOLMETER                    1036
+#define IDC_POINTFILTERING              1036
 
 // Next default values for new objects
 // 

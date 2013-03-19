@@ -1033,12 +1033,14 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 //------------------------------------------
 
-                BOOL  bUseChromaKey = configData->data->GetInt(TEXT("useChromaKey"), 0);
-                DWORD keyColor      = configData->data->GetInt(TEXT("keyColor"), 0xFFFFFFFF);
-                UINT  similarity    = configData->data->GetInt(TEXT("keySimilarity"), 0);
-                UINT  blend         = configData->data->GetInt(TEXT("keyBlend"), 80);
-                UINT  gamma         = configData->data->GetInt(TEXT("keySpillReduction"), 50);
+                BOOL  bUseChromaKey         = configData->data->GetInt(TEXT("useChromaKey"), 0);
+                BOOL  bUsePointFiltering    = configData->data->GetInt(TEXT("usePointFiltering"), 0);
+                DWORD keyColor              = configData->data->GetInt(TEXT("keyColor"), 0xFFFFFFFF);
+                UINT  similarity            = configData->data->GetInt(TEXT("keySimilarity"), 0);
+                UINT  blend                 = configData->data->GetInt(TEXT("keyBlend"), 80);
+                UINT  gamma                 = configData->data->GetInt(TEXT("keySpillReduction"), 50);
 
+                SendMessage(GetDlgItem(hwnd, IDC_POINTFILTERING), BM_SETCHECK, bUsePointFiltering ? BST_CHECKED : BST_UNCHECKED, 0);
                 SendMessage(GetDlgItem(hwnd, IDC_USECHROMAKEY), BM_SETCHECK, bUseChromaKey ? BST_CHECKED : BST_UNCHECKED, 0);
                 CCSetColor(GetDlgItem(hwnd, IDC_COLOR), keyColor);
 
@@ -1719,6 +1721,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         BOOL bFlip = SendMessage(GetDlgItem(hwnd, IDC_FLIPIMAGE), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         BOOL bFlipHorizontal = SendMessage(GetDlgItem(hwnd, IDC_FLIPIMAGEH), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         BOOL bCustomResolution = SendMessage(GetDlgItem(hwnd, IDC_CUSTOMRESOLUTION), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        BOOL bUsePointFiltering = SendMessage(GetDlgItem(hwnd, IDC_POINTFILTERING), BM_GETCHECK, 0, 0) == BST_CHECKED;
 
                         configData->data->SetString(TEXT("device"), strDevice);
                         configData->data->SetString(TEXT("deviceName"), configData->deviceNameList[deviceID]);
@@ -1737,6 +1740,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         configData->data->SetInt(TEXT("frameInterval"), UINT(frameInterval));
                         configData->data->SetInt(TEXT("flipImage"), bFlip);
                         configData->data->SetInt(TEXT("flipImageHorizontal"), bFlipHorizontal);
+                        configData->data->SetInt(TEXT("usePointFiltering"), bUsePointFiltering);
 
                         //------------------------------------------
 
@@ -1812,6 +1816,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                             source->SetInt(TEXT("flipImage"),           configData->data->GetInt(TEXT("flipImage"), 0));
                             source->SetInt(TEXT("flipImageHorizontal"), configData->data->GetInt(TEXT("flipImageHorizontal"), 0));
+                            source->SetInt(TEXT("usePointFiltering"),   configData->data->GetInt(TEXT("usePointFiltering"), 0));
                             source->SetInt(TEXT("opacity"),             configData->data->GetInt(TEXT("opacity"), 100));
 
                             source->SetInt(TEXT("useChromaKey"),        configData->data->GetInt(TEXT("useChromaKey"), 0));

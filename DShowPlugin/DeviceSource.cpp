@@ -18,6 +18,7 @@
 
 
 #include "DShowPlugin.h"
+#include <D3D10.h>
 
 DWORD STDCALL PackPlanarThread(ConvertData *data);
 
@@ -190,6 +191,7 @@ bool DeviceSource::LoadFilters()
 
     bFlipVertical = data->GetInt(TEXT("flipImage")) != 0;
     bFlipHorizontal = data->GetInt(TEXT("flipImageHorizontal")) != 0;
+    bUsePointFiltering = data->GetInt(TEXT("usePointFiltering")) != 0;
 
     opacity = data->GetInt(TEXT("opacity"), 100);
 
@@ -1023,10 +1025,10 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
     if(texture && bReadyToDraw)
     {
         Shader *oldShader = GetCurrentPixelShader();
+
         if(colorConvertShader)
         {
             LoadPixelShader(colorConvertShader);
-
             if(bUseChromaKey)
             {
                 float fSimilarity = float(keySimilarity)/1000.0f;
@@ -1063,6 +1065,14 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
 
         float fOpacity = float(opacity)*0.01f;
         DWORD opacity255 = DWORD(fOpacity*255.0f);
+
+        if(bUsePointFiltering) {
+            SamplerState *sampler;
+            SamplerInfo samplerinfo;
+            samplerinfo.filter = GS_FILTER_POINT;
+            sampler = CreateSamplerState(samplerinfo);
+            LoadSamplerState(sampler, 0);
+        }
 
         if(bFlip)
             DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y);
