@@ -503,6 +503,10 @@ OBS::OBS()
     bDragResize = false;
     ResizeWindow(false);
     ShowWindow(hwndMain, SW_SHOW);
+    if(GlobalConfig->GetInt(TEXT("General"), TEXT("Maximized")))
+    { // Window was maximized last session
+        SendMessage(hwndMain, WM_SYSCOMMAND, SC_MAXIMIZE, 0);
+    }
 
     // make sure sources listview column widths are as expected after obs window is shown
 
@@ -649,13 +653,19 @@ OBS::~OBS()
 
     //DestroyWindow(hwndMain);
 
-    RECT rcWindow;
-    GetWindowRect(hwndMain, &rcWindow);
-
-    GlobalConfig->SetInt(TEXT("General"), TEXT("PosX"),   rcWindow.left);
-    GlobalConfig->SetInt(TEXT("General"), TEXT("PosY"),   rcWindow.top);
-    GlobalConfig->SetInt(TEXT("General"), TEXT("Width"),  clientWidth);
-    GlobalConfig->SetInt(TEXT("General"), TEXT("Height"), clientHeight);
+    // Remember window state for next launch
+    WINDOWPLACEMENT placement;
+    placement.length = sizeof(placement);
+    GetWindowPlacement(hwndMain, &placement);
+    GlobalConfig->SetInt(TEXT("General"), TEXT("PosX"), placement.rcNormalPosition.left);
+    GlobalConfig->SetInt(TEXT("General"), TEXT("PosY"), placement.rcNormalPosition.top);
+    GlobalConfig->SetInt(TEXT("General"), TEXT("Width"),
+            placement.rcNormalPosition.right - placement.rcNormalPosition.left -
+            GetSystemMetrics(SM_CXSIZEFRAME) * 2);
+    GlobalConfig->SetInt(TEXT("General"), TEXT("Height"),
+            placement.rcNormalPosition.bottom - placement.rcNormalPosition.top -
+            GetSystemMetrics(SM_CYSIZEFRAME) * 2 - GetSystemMetrics(SM_CYCAPTION) - GetSystemMetrics(SM_CYMENU));
+    GlobalConfig->SetInt(TEXT("General"), TEXT("Maximized"), placement.showCmd == SW_SHOWMAXIMIZED ? 1 : 0);
 
     scenesConfig.Close(true);
 
