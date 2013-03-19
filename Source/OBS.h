@@ -252,7 +252,6 @@ struct ClassInfo
 
 /* Event callback signiture definitions */
 typedef void (*OBS_CALLBACK)();
-typedef void (*OBS_STREAM_STARTSTOP_CALLBACK)(bool /*previewOnly*/);
 typedef void (*OBS_STREAM_STATUS_CALLBACK)(bool /*streaming*/, bool /*previewOnly*/,
                                            UINT /*bytesPerSec*/, double /*strain*/, 
                                            UINT /*totalStreamtime*/, UINT /*numTotalFrames*/, 
@@ -269,10 +268,10 @@ struct PluginInfo
     /* Event Callbacks */
 
     /* called on stream starting */
-    OBS_STREAM_STARTSTOP_CALLBACK startStreamCallback;
+    OBS_CALLBACK startStreamCallback;
     
     /* called on stream stopping */
-    OBS_STREAM_STARTSTOP_CALLBACK stopStreamCallback;
+    OBS_CALLBACK stopStreamCallback;
 
     /* called when stream stats are updated in stats window */
     OBS_STREAM_STATUS_CALLBACK streamStatusCallback;
@@ -916,8 +915,8 @@ public:
     //---------------------------------------------------------------------------
 
     // event reporting functions
-    virtual void ReportStartStreamTrigger(bool previewOnly);
-    virtual void ReportStopStreamTrigger(bool previewOnly);
+    virtual void ReportStartStreamTrigger();
+    virtual void ReportStopStreamTrigger();
     virtual void ReportStreamStatus(bool streaming, bool previewOnly = false, 
                                    UINT bytesPerSec = 0, double strain = 0, 
                                    UINT totalStreamtime = 0, UINT numTotalFrames = 0,

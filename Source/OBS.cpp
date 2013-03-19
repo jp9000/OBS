@@ -562,8 +562,8 @@ OBS::OBS()
                         pluginInfo->strFile = ofd.fileName;
 
                         /* get event callbacks for the plugin */
-                        pluginInfo->startStreamCallback  = (OBS_STREAM_STARTSTOP_CALLBACK)GetProcAddress(hPlugin, "OnStartStream");
-                        pluginInfo->stopStreamCallback   = (OBS_STREAM_STARTSTOP_CALLBACK)GetProcAddress(hPlugin, "OnStopStream");
+                        pluginInfo->startStreamCallback  = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartStream");
+                        pluginInfo->stopStreamCallback   = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopStream");
                         pluginInfo->streamStatusCallback  = (OBS_STREAM_STATUS_CALLBACK)GetProcAddress(hPlugin, "OnStreamStatus");
                         pluginInfo->sceneSwitchCallback   = (OBS_SCENE_SWITCH_CALLBACK)GetProcAddress(hPlugin, "OnSceneSwitch");
                         pluginInfo->scenesChangedCallback  = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnScenesChanged");

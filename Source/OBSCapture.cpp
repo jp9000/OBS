@@ -461,7 +461,7 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
-    ReportStartStreamTrigger(bTestStream);
+    ReportStartStreamTrigger();
     
     SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, 0, 0, 0);
     SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
@@ -477,7 +477,7 @@ void OBS::Stop()
 
     OSEnterMutex(hStartupShutdownMutex);
 
-    ReportStopStreamTrigger(bTestStream);
+    ReportStopStreamTrigger();
 
     bRunning = false;
     if(hMainThread)

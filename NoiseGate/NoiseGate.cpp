@@ -535,14 +535,14 @@ void UnloadPlugin()
     NoiseGate::instance = NULL;
 }
 
-void OnStartStream(bool previewOnly)
+void OnStartStream()
 {
     if(NoiseGate::instance == NULL)
         return;
     NoiseGate::instance->StreamStarted();
 }
 
-void OnStopStream(bool previewOnly)
+void OnStopStream()
 {
     if(NoiseGate::instance == NULL)
         return;

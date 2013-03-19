@@ -19,24 +19,24 @@
 
 #include "Main.h"
 
-void OBS::ReportStartStreamTrigger(bool previewOnly)
+void OBS::ReportStartStreamTrigger()
 {
     for (UINT i=0; i<plugins.Num(); i++)
     {
-        OBS_STREAM_STARTSTOP_CALLBACK callback = plugins[i].startStreamCallback;
+        OBS_CALLBACK callback = plugins[i].startStreamCallback;
 
         if (callback)
-            (*callback)(previewOnly);
+            (*callback)();
     }
 }
-void OBS::ReportStopStreamTrigger(bool previewOnly)
+void OBS::ReportStopStreamTrigger()
 {
     for (UINT i=0; i<plugins.Num(); i++)
     {
-        OBS_STREAM_STARTSTOP_CALLBACK callback = plugins[i].stopStreamCallback;
+        OBS_CALLBACK callback = plugins[i].stopStreamCallback;
 
         if (callback)
-            (*callback)(previewOnly);
+            (*callback)();
     }
 }
 
