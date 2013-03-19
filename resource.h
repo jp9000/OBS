@@ -67,6 +67,7 @@
 #define IDC_SIZEY                       1034
 #define IDC_GAMMA                       1035
 #define IDC_USECUSTOM                   1036
+#define IDC_POINTFILTERING              1036
 #define IDC_USEMONITOR                  1037
 #define IDC_DISABLEAERO                 1038
 #define IDC_DISABLEMIC                  1040

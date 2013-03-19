@@ -18,7 +18,6 @@
 
 
 #include "DShowPlugin.h"
-#include <D3D10.h>
 
 DWORD STDCALL PackPlanarThread(ConvertData *data);
 
