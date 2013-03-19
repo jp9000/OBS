@@ -66,8 +66,8 @@ struct AudioDeviceList
 };
 
 enum AudioDeviceType {
-	ADT_PLAYBACK,
-	ADT_RECORDING
+    ADT_PLAYBACK,
+    ADT_RECORDING
 };
 
 void GetAudioDevices(AudioDeviceList &deviceList, AudioDeviceType deviceType);
@@ -250,14 +250,51 @@ struct ClassInfo
 
 //----------------------------
 
+/* Event callback signiture definitions */
 typedef void (*OBS_CALLBACK)();
+typedef void (*OBS_STREAM_STARTSTOP_CALLBACK)(bool /*previewOnly*/);
+typedef void (*OBS_STREAM_STATUS_CALLBACK)(bool /*streaming*/, bool /*previewOnly*/,
+                                           UINT /*bytesPerSec*/, double /*strain*/, 
+                                           UINT /*totalStreamtime*/, UINT /*numTotalFrames*/, 
+                                           UINT /*numDroppedFrames*/, UINT /*fps*/);
+typedef void (*OBS_SCENE_SWITCH_CALLBACK)(CTSTR);
+typedef void (*OBS_SOURCE_CHANGED_CALLBACK)(CTSTR /*sourceName*/, XElement* /*source*/); 
+typedef void (*OBS_VOLUME_CHANGED_CALLBACK)(float /*level*/, bool /*muted*/, bool /*finalFalue*/);
 
 struct PluginInfo
 {
     String strFile;
     HMODULE hModule;
 
-    OBS_CALLBACK startStreamCallback, stopStreamCallback;
+    /* Event Callbacks */
+
+    /* called on stream starting */
+    OBS_STREAM_STARTSTOP_CALLBACK startStreamCallback;
+    
+    /* called on stream stopping */
+    OBS_STREAM_STARTSTOP_CALLBACK stopStreamCallback;
+
+    /* called when stream stats are updated in stats window */
+    OBS_STREAM_STATUS_CALLBACK streamStatusCallback;
+
+    /* called when scenes are switched */
+    OBS_SCENE_SWITCH_CALLBACK sceneSwitchCallback;
+    
+    /* called when a scene is renamed, added, removed, or moved */
+    OBS_CALLBACK scenesChangedCallback;
+
+    /* called when the source order is changed */
+    OBS_CALLBACK sourceOrderChangedCallback;
+    
+    /* called when a source is changed in some way */
+    OBS_SOURCE_CHANGED_CALLBACK sourceChangedCallback;
+
+    /* called when a sources have been added or removed */
+    OBS_CALLBACK sourcesAddedOrRemovedCallback;
+
+    /* called when audio source volumes have changed */
+    OBS_VOLUME_CHANGED_CALLBACK micVolumeChangeCallback;
+    OBS_VOLUME_CHANGED_CALLBACK desktopVolumeChangeCallback;
 };
 
 //----------------------------
@@ -875,17 +912,8 @@ public:
     virtual float GetMicVolume();
     virtual void ToggleMicMute();
     virtual bool GetMicMuted();
-    
 
     //---------------------------------------------------------------------------
-    // event stuff 
-    List<OBSTriggerHandler*> triggerHandlers;
-
-    //---------------------------------------------------------------------------
-
-    // add remove event listeners
-    virtual void AddOBSEventListener(OBSTriggerHandler *handler);
-    virtual void RemoveOBSEventListener(OBSTriggerHandler *handler);
 
     // event reporting functions
     virtual void ReportStartStreamTrigger(bool previewOnly);

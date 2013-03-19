@@ -560,8 +560,18 @@ OBS::OBS()
                         PluginInfo *pluginInfo = plugins.CreateNew();
                         pluginInfo->hModule = hPlugin;
                         pluginInfo->strFile = ofd.fileName;
-                        pluginInfo->startStreamCallback  = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartStream");
-                        pluginInfo->stopStreamCallback   = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopStream");
+
+                        /* get event callbacks for the plugin */
+                        pluginInfo->startStreamCallback  = (OBS_STREAM_STARTSTOP_CALLBACK)GetProcAddress(hPlugin, "OnStartStream");
+                        pluginInfo->stopStreamCallback   = (OBS_STREAM_STARTSTOP_CALLBACK)GetProcAddress(hPlugin, "OnStopStream");
+                        pluginInfo->streamStatusCallback  = (OBS_STREAM_STATUS_CALLBACK)GetProcAddress(hPlugin, "OnStreamStatus");
+                        pluginInfo->sceneSwitchCallback   = (OBS_SCENE_SWITCH_CALLBACK)GetProcAddress(hPlugin, "OnSceneSwitch");
+                        pluginInfo->scenesChangedCallback  = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnScenesChanged");
+                        pluginInfo->sourceOrderChangedCallback   = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnSourceOrderChanged");
+                        pluginInfo->sourceChangedCallback  = (OBS_SOURCE_CHANGED_CALLBACK)GetProcAddress(hPlugin, "OnSourceChanged");
+                        pluginInfo->sourcesAddedOrRemovedCallback   = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnSourcesAddedOrRemoved");
+                        pluginInfo->micVolumeChangeCallback  = (OBS_VOLUME_CHANGED_CALLBACK)GetProcAddress(hPlugin, "OnMicVolumeChanged");
+                        pluginInfo->desktopVolumeChangeCallback   = (OBS_VOLUME_CHANGED_CALLBACK)GetProcAddress(hPlugin, "OnDesktopVolumeChanged");
 
                         //GETPLUGINNAMEPROC getName = (GETPLUGINNAMEPROC)GetProcAddress(hPlugin, "GetPluginName");
 

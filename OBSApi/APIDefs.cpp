@@ -116,10 +116,6 @@ bool OBSGetPreviewOnly()        {return API->GetPreviewOnly();}
 void OBSSetSourceOrder(StringList &sourceNames)             {API->SetSourceOrder(sourceNames);}
 void OBSSetSourceRender(CTSTR lpSource, bool render)        {API->SetSourceRender(lpSource, render);}
 
-/* add/remove trigger handler functions */
-void OBSAddEventListener(OBSTriggerHandler *handler)        {API->AddOBSEventListener(handler);}
-void OBSRemoveEventListener(OBSTriggerHandler *handler)     {API->RemoveOBSEventListener(handler);}
-
 void OBSSetDesktopVolume(float val, bool finalValue)        {API->SetDesktopVolume(val, finalValue);}
 float OBSGetDesktopVolume()                                 {return API->GetDesktopVolume();}
 void OBSToggleDesktopMute()                                 {API->ToggleDesktopMute();}

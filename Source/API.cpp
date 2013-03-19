@@ -450,16 +450,6 @@ public:
 
     virtual CTSTR GetAppPath() const            {return lpAppPath;}
 
-    virtual void AddOBSEventListener(OBSTriggerHandler *handler)
-    {
-        App->AddOBSEventListener(handler);
-    }
-
-    virtual void RemoveOBSEventListener(OBSTriggerHandler *handler)
-    {
-        App->RemoveOBSEventListener(handler);
-    }
-
     virtual void SetDesktopVolume(float val, bool finalValue)        {App->SetDesktopVolume(val, finalValue);}
     virtual float GetDesktopVolume()                                 {return App->GetDesktopVolume();}
     virtual void ToggleDesktopMute()                                 {App->ToggleDesktopMute();}
