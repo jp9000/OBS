@@ -299,6 +299,7 @@
     <None Include="ui\mic2.ico" />
     <None Include="ui\speaker-muted.ico" />
     <None Include="ui\speaker.ico" />
+    <None Include="ui\test2\recording.ico" />
     <None Include="ui\test2\test.ico" />
     <None Include="ui\test2\test48.ico" />
     <None Include="rundir\shaders\DownscaleYUV1.5.pShader" />

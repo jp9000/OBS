@@ -169,6 +169,8 @@ Settings.General.ConfirmDelete  "Are you sure you wish to remove the profile '$1
 Settings.General.InvalidName    "Profile names cannot use the following characters:\r\n\\ / : * ? \" < > |"
 Settings.General.Language       "Language:"
 Settings.General.Profile        "Setting Profile:"
+Settings.General.Notification   "Notification Area Icon"
+Settings.General.NotificationMinimize    "Minimize to Notification Area"
 Settings.General.Restart        "Changing the language will require restarting OBS.\r\n\r\n..Though I suppose if you're changing the language you can't understand this"
 
 Settings.Publish.AutoReconnect          "Auto-Reconnect:"
