@@ -140,6 +140,7 @@ public:
 
 private:
     void RefreshDownscales(HWND hwnd, int cx, int cy);
+    void RefreshFilters(HWND hwndParent, bool bGetConfig);
 
 public:
     // Interface

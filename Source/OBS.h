@@ -536,6 +536,7 @@ private:
     UINT    scaleCX,  scaleCY;
     UINT    outputCX, outputCY;
     float   downscale;
+    int     downscaleType;
     UINT    frameTime, fps;
     bool    bUsing444;
 

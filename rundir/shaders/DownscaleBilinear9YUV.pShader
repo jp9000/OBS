@@ -1,5 +1,5 @@
 /********************************************************************************
- Copyright (C) 2012 Hugh Bailey <obs.jim@gmail.com>
+ Copyright (C) 2013 Hugh Bailey <obs.jim@gmail.com>
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -35,15 +35,24 @@ struct VertData
 
 float4 main(VertData input) : SV_Target
 {
-    float2 texAdjust = (input.texCoord-0.5)*2.0;
-    float2 floorVal = floor(texAdjust+0.001);
+    float2 texCoord = input.texCoord;
 
+    float2 adjust = baseDimensionI;
     float4 rgba;
-    rgba  = diffuseTexture.Sample(textureSampler, (floorVal+float2(0.5f, 0.5f)) * baseDimensionI);
-    rgba += diffuseTexture.Sample(textureSampler, (floorVal+float2(1.5f, 0.5f)) * baseDimensionI);
-    rgba += diffuseTexture.Sample(textureSampler, (floorVal+float2(0.5f, 1.5f)) * baseDimensionI);
-    rgba += diffuseTexture.Sample(textureSampler, (floorVal+float2(1.5f, 1.5f)) * baseDimensionI);
-    rgba *= 0.25;
+    rgba.rgb  = diffuseTexture.Sample(textureSampler, texCoord).rgb;
+    rgba.rgb += diffuseTexture.Sample(textureSampler, texCoord + float2(-adjust.x, -adjust.y)).rgb;
+    rgba.rgb += diffuseTexture.Sample(textureSampler, texCoord + float2(-adjust.x,       0.0)).rgb;
+    rgba.rgb += diffuseTexture.Sample(textureSampler, texCoord + float2(-adjust.x,  adjust.y)).rgb;
+    rgba.rgb += diffuseTexture.Sample(textureSampler, texCoord + float2(      0.0, -adjust.y)).rgb;
+    rgba.rgb += diffuseTexture.Sample(textureSampler, texCoord + float2(      0.0,  adjust.y)).rgb;
+    rgba.rgb += diffuseTexture.Sample(textureSampler, texCoord + float2( adjust.x, -adjust.y)).rgb;
+    rgba.rgb += diffuseTexture.Sample(textureSampler, texCoord + float2( adjust.x,       0.0)).rgb;
+    rgba.rgb += diffuseTexture.Sample(textureSampler, texCoord + float2( adjust.x,  adjust.y)).rgb;
+    rgba.rgb /= 9.0;
+
+    rgba.a = 1.0;
+
+    //-------------------------------------------------------------
 
     const float4x4 yuvMat  = {0.257, -0.148,  0.439, 0.0,
                               0.504, -0.291, -0.368, 0.0,

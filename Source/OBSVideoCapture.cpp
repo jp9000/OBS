@@ -602,7 +602,7 @@ void OBS::MainCaptureLoop()
             if(renderFrameCtrlSize.x != oldRenderFrameCtrlWidth || renderFrameCtrlSize.y != oldRenderFrameCtrlHeight)
             {
                 // User is drag resizing the window. We don't recreate the swap chains so our coordinates are wrong
-                SetViewport(0.0f, 0.0f, oldRenderFrameCtrlWidth, oldRenderFrameCtrlHeight);
+                SetViewport(0.0f, 0.0f, (float)oldRenderFrameCtrlWidth, (float)oldRenderFrameCtrlHeight);
             }
             else
                 SetViewport(0.0f, 0.0f, renderFrameCtrlSize.x, renderFrameCtrlSize.y);
@@ -653,7 +653,10 @@ void OBS::MainCaptureLoop()
         Texture *yuvRenderTexture = yuvRenderTextures[curRenderTarget];
         SetRenderTarget(yuvRenderTexture);
 
-        yuvScalePixelShader->SetVector2(hScaleVal, 1.0f/baseSize);
+        if(downscale < 2.01)
+            yuvScalePixelShader->SetVector2(hScaleVal, 1.0f/baseSize);
+        else if(downscale < 3.01)
+            yuvScalePixelShader->SetVector2(hScaleVal, 1.0f/(outputSize*3.0f));
 
         Ortho(0.0f, outputSize.x, outputSize.y, 0.0f, -100.0f, 100.0f);
         SetViewport(0.0f, 0.0f, outputSize.x, outputSize.y);
@@ -664,11 +667,11 @@ void OBS::MainCaptureLoop()
         if(bTransitioning)
         {
             BlendFunction(GS_BLEND_ONE, GS_BLEND_ZERO);
-            DrawSpriteEx(transitionTexture, 0xFFFFFFFF, 0.0f, 0.0f, scaleSize.x, scaleSize.y, 0.0f, 0.0f, scaleSize.x, scaleSize.y);
+            DrawSpriteEx(transitionTexture, 0xFFFFFFFF, 0.0f, 0.0f, scaleSize.x, scaleSize.y, 0.0f, 0.0f, 1.0f, 1.0f);
             BlendFunction(GS_BLEND_FACTOR, GS_BLEND_INVFACTOR, transitionAlpha);
         }
 
-        DrawSpriteEx(mainRenderTextures[curRenderTarget], 0xFFFFFFFF, 0.0f, 0.0f, outputSize.x, outputSize.y, 0.0f, 0.0f, outputSize.x, outputSize.y);
+        DrawSpriteEx(mainRenderTextures[curRenderTarget], 0xFFFFFFFF, 0.0f, 0.0f, outputSize.x, outputSize.y, 0.0f, 0.0f, 1.0f, 1.0f);
 
         //------------------------------------
 

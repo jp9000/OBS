@@ -48,6 +48,8 @@
 #define IDC_BINDIP                      1014
 #define IDC_MAXBITRATE                  1015
 #define IDC_COLORPICKER                 1015
+#define IDC_DOWNSCALE2                  1015
+#define IDC_FILTER                      1015
 #define IDC_BUFFERSIZE                  1016
 #define IDC_AUDIOCODEC                  1017
 #define IDC_USECOLORKEY                 1017
