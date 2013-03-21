@@ -312,6 +312,7 @@ void OBS::Start()
     //-------------------------------------------------------------
 
     bRunning = true;
+    UpdateNotificationAreaIcon();
 
     if(sceneElement)
     {
@@ -484,6 +485,7 @@ void OBS::Stop()
     ReportStopStreamTrigger();
 
     bRunning = false;
+    UpdateNotificationAreaIcon();
     if(hMainThread)
     {
         OSTerminateThread(hMainThread, 20000);

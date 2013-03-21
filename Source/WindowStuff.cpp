@@ -2484,6 +2484,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     if(!App->bDragResize)
                         App->bSizeChanging = false;
                 }
+                else if (wParam == SIZE_MINIMIZED && AppConfig->GetInt(TEXT("General"), TEXT("MinimizeToNotificationArea"), 0) != 0)
+                {
+                    ShowWindow(hwnd, SW_HIDE);
+                }
                 break;
             }
 
@@ -2537,11 +2541,44 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
             App->SetStatusBarData();
             break;
 
+        case OBS_NOTIFICATIONAREA:
+            switch (lParam) {
+            case WM_LBUTTONUP:
+                {
+                    bool bMinimizeToNotificationArea = AppConfig->GetInt(TEXT("General"), TEXT("MinimizeToNotificationArea"), 0) != 0;
+                    if (bMinimizeToNotificationArea)
+                    {
+                        if (IsWindowVisible(hwnd))
+                        {
+                            ShowWindow(hwnd, SW_MINIMIZE);
+                            ShowWindow(hwnd, SW_HIDE);
+                        }
+                        else
+                        {
+                            ShowWindow(hwnd, SW_SHOW);
+                            ShowWindow(hwnd, SW_RESTORE);
+                        }
+                    }
+                    else
+                    {
+                        if (IsIconic(hwnd))
+                            ShowWindow(hwnd, SW_RESTORE);
+                        else
+                            ShowWindow(hwnd, SW_MINIMIZE);
+                    }
+                }
+            }
+            break;
+
         case WM_CLOSE:
             PostQuitMessage(0);
             break;
 
         default:
+            if (message == App->wmExplorerRestarted)
+            {
+                App->UpdateNotificationAreaIcon();
+            }
             return DefWindowProc(hwnd, message, wParam, lParam);
     }
 

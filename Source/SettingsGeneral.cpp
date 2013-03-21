@@ -79,6 +79,17 @@ void SettingsGeneral::DestroyPane()
 
 void SettingsGeneral::ApplySettings()
 {
+    //--------------------------------------------------
+
+    bool bShowNotificationAreaIcon = SendMessage(GetDlgItem(hwnd, IDC_NOTIFICATIONICON), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    AppConfig->SetInt(TEXT("General"), TEXT("ShowNotificationAreaIcon"), bShowNotificationAreaIcon);
+    if (bShowNotificationAreaIcon)
+        App->ShowNotificationAreaIcon();
+    else
+        App->HideNotificationAreaIcon();
+
+    bool bMinimizeToNotificationArea = SendMessage(GetDlgItem(hwnd, IDC_MINIZENOTIFICATION), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    AppConfig->SetInt(TEXT("General"), TEXT("MinimizeToNotificationArea"), bMinimizeToNotificationArea);
 }
 
 void SettingsGeneral::CancelSettings()
@@ -142,6 +153,14 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 UINT numItems = (UINT)SendMessage(GetDlgItem(hwnd, IDC_PROFILE), CB_GETCOUNT, 0, 0);
                 EnableWindow(GetDlgItem(hwnd, IDC_REMOVE),  (numItems > 1));
+
+                //----------------------------------------------
+
+                bool bShowNotificationAreaIcon = AppConfig->GetInt(TEXT("General"), TEXT("ShowNotificationAreaIcon"), 0) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_NOTIFICATIONICON), BM_SETCHECK, bShowNotificationAreaIcon ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                bool bMinimizeToNotificationArea = AppConfig->GetInt(TEXT("General"), TEXT("MinimizeToNotificationArea"), 0) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_MINIZENOTIFICATION), BM_SETCHECK, bMinimizeToNotificationArea ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 //----------------------------------------------
 
@@ -322,6 +341,22 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                         break;
                     }
+
+                case IDC_NOTIFICATIONICON:
+                    if (SendMessage(GetDlgItem(hwnd, IDC_NOTIFICATIONICON), BM_GETCHECK, 0, 0) == BST_UNCHECKED)
+                    {
+                        SendMessage(GetDlgItem(hwnd, IDC_MINIZENOTIFICATION), BM_SETCHECK, BST_UNCHECKED, 0);
+                    }
+                    SetChangedSettings(true);
+                    break;
+
+                case IDC_MINIZENOTIFICATION:
+                    if (SendMessage(GetDlgItem(hwnd, IDC_MINIZENOTIFICATION), BM_GETCHECK, 0, 0) == BST_CHECKED)
+                    {
+                        SendMessage(GetDlgItem(hwnd, IDC_NOTIFICATIONICON), BM_SETCHECK, BST_CHECKED, 0);
+                    }
+                    SetChangedSettings(true);
+                    break;
             }
 
     }
