@@ -437,16 +437,6 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
-    for (UINT i=0; i<plugins.Num(); i++)
-    {
-        OBS_CALLBACK startStreamProc = plugins[i].startStreamCallback;
-
-        if (startStreamProc)
-            (*startStreamProc)();
-    }
-
-    //-------------------------------------------------------------
-
     if(!bTestStream && bWriteToFile && strOutputFile.IsValid())
     {
         String strFileExtension = GetPathExtension(strOutputFile);
@@ -475,7 +465,7 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
-    ReportStartStreamTrigger(bTestStream);
+    ReportStartStreamTrigger();
     
     SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, 0, 0, 0);
     SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
@@ -490,6 +480,8 @@ void OBS::Stop()
     if(!bRunning) return;
 
     OSEnterMutex(hStartupShutdownMutex);
+
+    ReportStopStreamTrigger();
 
     bRunning = false;
     if(hMainThread)
@@ -524,16 +516,6 @@ void OBS::Stop()
     //-------------------------------------------------------------
 
     StopBlankSoundPlayback();
-
-    //-------------------------------------------------------------
-
-    for (UINT i=0; i<plugins.Num(); i++)
-    {
-        OBS_CALLBACK stopStreamCallback = plugins[i].stopStreamCallback;
-
-        if (stopStreamCallback)
-            (*stopStreamCallback)();
-    }
 
     //-------------------------------------------------------------
 
@@ -647,8 +629,6 @@ void OBS::Stop()
 
     Log(TEXT("=====Stream End======================================================================="));
     
-    ReportStopStreamTrigger(bTestStream);
-
     if(streamReport.IsValid())
     {
         MessageBox(hwndMain, streamReport.Array(), Str("StreamReport"), MB_ICONINFORMATION|MB_OK);

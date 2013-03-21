@@ -42,7 +42,7 @@ class DesktopImageSource : public ImageSource
 
     UINT     warningID;
 
-    bool     bUseColorKey;
+    bool     bUseColorKey, bUsePointFiltering;
     DWORD    keyColor;
     UINT     keySimilarity, keyBlend;
 
@@ -467,6 +467,14 @@ public:
                     alphaIgnoreShader->SetFloat(hGamma, fGamma);
             }
 
+            if(bUsePointFiltering) {
+                SamplerState *sampler;
+                SamplerInfo samplerinfo;
+                samplerinfo.filter = GS_FILTER_POINT;
+                sampler = CreateSamplerState(samplerinfo);
+                LoadSamplerState(sampler, 0);
+            }
+
             if(bCompatibilityMode)
                 DrawSpriteEx(lastRendered, (opacity255<<24) | 0xFFFFFF,
                     pos.x, pos.y+size.y, pos.x+size.x, pos.y,
@@ -518,6 +526,8 @@ public:
 
         bCaptureMouse   = data->GetInt(TEXT("captureMouse"), 1);
         bCaptureLayered = data->GetInt(TEXT("captureLayered"), 0);
+
+        bool bNewUsePointFiltering = data->GetInt(TEXT("usePointFiltering"), 0) != 0;
 
         int x  = data->GetInt(TEXT("captureX"));
         int y  = data->GetInt(TEXT("captureY"));
@@ -578,6 +588,7 @@ public:
             bClientCapture     = bNewClientCapture;
 
             bCompatibilityMode = bNewCompatibleMode;
+            bUsePointFiltering = bNewUsePointFiltering;
 
             captureRect.left   = x;
             captureRect.top    = y;
@@ -645,6 +656,7 @@ public:
         keyColor        = data->GetInt(TEXT("keyColor"), 0xFFFFFFFF);
         keySimilarity   = data->GetInt(TEXT("keySimilarity"), 10);
         keyBlend        = data->GetInt(TEXT("keyBlend"), 0);
+        bUsePointFiltering = data->GetInt(TEXT("usePointFiltering"), 0) != 0;
 
         bUseColorKey = bNewUseColorKey;
 
@@ -1346,6 +1358,9 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 DWORD keyColor      = data->GetInt(TEXT("keyColor"), 0xFFFFFFFF);
                 UINT  similarity    = data->GetInt(TEXT("keySimilarity"), 10);
                 UINT  blend         = data->GetInt(TEXT("keyBlend"), 0);
+                
+                BOOL  bUsePointFiltering = data->GetInt(TEXT("usePointFiltering"), 0);
+                SendMessage(GetDlgItem(hwnd, IDC_POINTFILTERING), BM_SETCHECK, bUsePointFiltering ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 SendMessage(GetDlgItem(hwnd, IDC_USECOLORKEY), BM_SETCHECK, bUseColorKey ? BST_CHECKED : BST_UNCHECKED, 0);
                 CCSetColor(GetDlgItem(hwnd, IDC_COLOR), keyColor);
@@ -1793,6 +1808,7 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                         BOOL bCaptureMouse = SendMessage(GetDlgItem(hwnd, IDC_CAPTUREMOUSE), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         BOOL bCaptureLayered = SendMessage(GetDlgItem(hwnd, IDC_CAPTURELAYERED), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         BOOL bCompatibilityMode = SendMessage(GetDlgItem(hwnd, IDC_COMPATIBILITYMODE), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        BOOL bUsePointFiltering = SendMessage(GetDlgItem(hwnd, IDC_POINTFILTERING), BM_GETCHECK, 0, 0) == BST_CHECKED;
 
                         //---------------------------------
 
@@ -1817,6 +1833,8 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                         data->SetInt(TEXT("captureLayered"), bCaptureLayered);
 
                         data->SetInt(TEXT("compatibilityMode"), bCompatibilityMode);
+
+                        data->SetInt(TEXT("usePointFiltering"), bUsePointFiltering);
 
                         data->SetInt(TEXT("captureX"),      posX);
                         data->SetInt(TEXT("captureY"),      posY);

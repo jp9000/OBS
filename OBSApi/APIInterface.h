@@ -38,37 +38,6 @@ enum StreamInfoPriority
 };
 
 //-------------------------------------------------------------------
-class OBSTriggerHandler
-{
-public:
-    /* called on stream starting */
-    virtual void StreamStarting(bool /*previewOnly*/){};
-    /* called on stream stopping */
-    virtual void StreamStopping(bool /*previewOnly*/){};
-
-    /* called when stream stats are updated in stats window */
-    virtual void StreamStatus(bool /*streaming*/, bool /*previewOnly*/, 
-                              UINT /*bytesPerSec*/, double /*strain*/, 
-                              UINT /*totalStreamtime*/, UINT /*numTotalFrames*/,
-                              UINT /*numDroppedFrames*/, UINT /*fps*/){};
-
-    /* called when scenes are switched */
-    virtual void ScenesSwitching(CTSTR /*scene*/){};
-    /* called when a scene is added or removed */
-    virtual void ScenesChanged(){};
-    /* called when the source order is changed */
-    virtual void SourceOrderChanged(){};
-    /* called when a source is changed in some way */
-    virtual void SourceChanged(CTSTR /*sourceName*/, XElement* /*source*/ ){};
-    /* called when a sources have been added or removed */
-    virtual void SourcesAddedOrRemoved(){};
-    
-    /* called when audio source volumes have changed */
-    virtual void MicVolumeChanged(float /*level*/, bool /*muted*/, bool /*finalValue*/) {};
-    virtual void DesktopVolumeChanged(float /*level*/, bool /*muted*/, bool /*finalValue*/) {};
-};
-
-//-------------------------------------------------------------------
 // API interface, plugins should not ever use, use C funcs below
 
 class APIInterface
@@ -171,10 +140,6 @@ public:
     virtual void SetSourceOrder(StringList &sourceNames)=0;
     virtual void SetSourceRender(CTSTR lpSource, bool render) = 0;
 
-    /* add/remove trigger handler functions */
-    virtual void AddOBSEventListener(OBSTriggerHandler *handler) = 0;
-    virtual void RemoveOBSEventListener(OBSTriggerHandler *handler) = 0;
-
     virtual void SetDesktopVolume(float val, bool finalValue) = 0;
     virtual float GetDesktopVolume() = 0;
     virtual void ToggleDesktopMute() = 0;
@@ -269,10 +234,6 @@ BASE_EXPORT bool OBSGetPreviewOnly();
 
 BASE_EXPORT void OBSSetSourceOrder(StringList &sourceNames);
 BASE_EXPORT void OBSSetSourceRender(CTSTR lpSource, bool render);
-
-/* add/remove trigger handler functions */
-BASE_EXPORT void OBSAddEventListener(OBSTriggerHandler *handler);
-BASE_EXPORT void OBSRemoveEventListener(OBSTriggerHandler *handler);
 
 inline ImageSource* OBSGetSceneImageSource(CTSTR lpImageSource)
 {

@@ -503,6 +503,10 @@ OBS::OBS()
     bDragResize = false;
     ResizeWindow(false);
     ShowWindow(hwndMain, SW_SHOW);
+    if(GlobalConfig->GetInt(TEXT("General"), TEXT("Maximized")))
+    { // Window was maximized last session
+        SendMessage(hwndMain, WM_SYSCOMMAND, SC_MAXIMIZE, 0);
+    }
 
     // make sure sources listview column widths are as expected after obs window is shown
 
@@ -556,8 +560,18 @@ OBS::OBS()
                         PluginInfo *pluginInfo = plugins.CreateNew();
                         pluginInfo->hModule = hPlugin;
                         pluginInfo->strFile = ofd.fileName;
+
+                        /* get event callbacks for the plugin */
                         pluginInfo->startStreamCallback  = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartStream");
                         pluginInfo->stopStreamCallback   = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopStream");
+                        pluginInfo->streamStatusCallback  = (OBS_STREAM_STATUS_CALLBACK)GetProcAddress(hPlugin, "OnStreamStatus");
+                        pluginInfo->sceneSwitchCallback   = (OBS_SCENE_SWITCH_CALLBACK)GetProcAddress(hPlugin, "OnSceneSwitch");
+                        pluginInfo->scenesChangedCallback  = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnScenesChanged");
+                        pluginInfo->sourceOrderChangedCallback   = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnSourceOrderChanged");
+                        pluginInfo->sourceChangedCallback  = (OBS_SOURCE_CHANGED_CALLBACK)GetProcAddress(hPlugin, "OnSourceChanged");
+                        pluginInfo->sourcesAddedOrRemovedCallback   = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnSourcesAddedOrRemoved");
+                        pluginInfo->micVolumeChangeCallback  = (OBS_VOLUME_CHANGED_CALLBACK)GetProcAddress(hPlugin, "OnMicVolumeChanged");
+                        pluginInfo->desktopVolumeChangeCallback   = (OBS_VOLUME_CHANGED_CALLBACK)GetProcAddress(hPlugin, "OnDesktopVolumeChanged");
 
                         //GETPLUGINNAMEPROC getName = (GETPLUGINNAMEPROC)GetProcAddress(hPlugin, "GetPluginName");
 
@@ -649,13 +663,19 @@ OBS::~OBS()
 
     //DestroyWindow(hwndMain);
 
-    RECT rcWindow;
-    GetWindowRect(hwndMain, &rcWindow);
-
-    GlobalConfig->SetInt(TEXT("General"), TEXT("PosX"),   rcWindow.left);
-    GlobalConfig->SetInt(TEXT("General"), TEXT("PosY"),   rcWindow.top);
-    GlobalConfig->SetInt(TEXT("General"), TEXT("Width"),  clientWidth);
-    GlobalConfig->SetInt(TEXT("General"), TEXT("Height"), clientHeight);
+    // Remember window state for next launch
+    WINDOWPLACEMENT placement;
+    placement.length = sizeof(placement);
+    GetWindowPlacement(hwndMain, &placement);
+    GlobalConfig->SetInt(TEXT("General"), TEXT("PosX"), placement.rcNormalPosition.left);
+    GlobalConfig->SetInt(TEXT("General"), TEXT("PosY"), placement.rcNormalPosition.top);
+    GlobalConfig->SetInt(TEXT("General"), TEXT("Width"),
+            placement.rcNormalPosition.right - placement.rcNormalPosition.left -
+            GetSystemMetrics(SM_CXSIZEFRAME) * 2);
+    GlobalConfig->SetInt(TEXT("General"), TEXT("Height"),
+            placement.rcNormalPosition.bottom - placement.rcNormalPosition.top -
+            GetSystemMetrics(SM_CYSIZEFRAME) * 2 - GetSystemMetrics(SM_CYCAPTION) - GetSystemMetrics(SM_CYMENU));
+    GlobalConfig->SetInt(TEXT("General"), TEXT("Maximized"), placement.showCmd == SW_SHOWMAXIMIZED ? 1 : 0);
 
     scenesConfig.Close(true);
 

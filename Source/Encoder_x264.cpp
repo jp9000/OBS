@@ -84,7 +84,7 @@ class X264Encoder : public VideoEncoder
 
     UINT width, height;
 
-    String curPreset, curTune;
+    String curPreset, curTune, curProfile;
 
     bool bFirstFrameProcessed;
 
@@ -160,6 +160,15 @@ public:
 
                         paramList.Remove(i--);
                     }
+                    else if(strParamName.CompareI(TEXT("profile")))
+                    {
+                        if(valid_x264_string(strParamVal, (const char **)x264_profile_names))
+                            curProfile = strParamVal;
+                        else
+                            Log(TEXT("invalid profile: %s"), strParamVal.Array());
+
+                        paramList.Remove(i--);
+                    }
                 }
             }
         }
@@ -169,7 +178,8 @@ public:
         LPSTR lpPreset = curPreset.CreateUTF8String();
         LPSTR lpTune = curTune.CreateUTF8String();
 
-        x264_param_default_preset(&paramData, lpPreset, lpTune);
+        if (x264_param_default_preset(&paramData, lpPreset, lpTune))
+            Log(TEXT("Failed to set x264 defaults: %s/%s"), curPreset.Array(), curTune.Array());
 
         Free(lpTune);
         Free(lpPreset);
@@ -248,6 +258,16 @@ public:
 
         if(bUse444) paramData.i_csp = X264_CSP_I444;
         else paramData.i_csp = X264_CSP_I420;
+
+        if (curProfile)
+        {
+            LPSTR lpProfile = curProfile.CreateUTF8String();
+
+            if (x264_param_apply_profile (&paramData, lpProfile))
+                Log(TEXT("Failed to set x264 profile: %s"), curProfile.Array());
+
+            Free(lpProfile);
+        }
 
         x264 = x264_encoder_open(&paramData);
         if(!x264)

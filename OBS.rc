@@ -236,6 +236,8 @@ BEGIN
     RTEXT           "Gamma",IDC_STATIC,4,147,90,8
     CONTROL         "",IDC_GAMMA,"msctls_trackbar32",TBS_BOTH | WS_TABSTOP,97,139,216,26
     LTEXT           ".numbers!",IDC_GAMMAVAL,318,147,66,8
+    CONTROL         "Sources.SoftwareCaptureSource.PointFiltering",IDC_POINTFILTERING,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,162,250,10
     GROUPBOX        "Sources.SoftwareCaptureSource.RegionCapture",IDC_STATIC,7,174,308,67
     CONTROL         "Sources.SoftwareCaptureSource.RegionCapture",IDC_REGIONCAPTURE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,185,130,10,WS_EX_RIGHT
