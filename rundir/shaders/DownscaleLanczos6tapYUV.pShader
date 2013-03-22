@@ -1,0 +1,102 @@
+uniform Texture2D diffuseTexture;
+uniform float2 baseDimensionI;
+
+SamplerState textureSampler
+{
+    AddressU  = Clamp;
+    AddressV  = Clamp;
+    Filter    = Linear;
+};
+
+struct VertData
+{
+    float4 pos      : SV_Position;
+    float2 texCoord : TexCoord0;
+};
+
+float sinc(float x)
+{
+    const float PIval = 3.1415926535897932384626433832795;
+    return sin(x * PIval) / (x * PIval);
+}
+	
+float weight(float x, float radius)
+{
+    float ax = abs(x);
+    if (x == 0.0)
+        return 1.0;
+    else if (ax < radius)
+        return sinc(x) * sinc(x / radius);
+    else
+        return 0.0;
+}
+	
+float3 weight3(float x)
+{
+    return float3(
+        weight(x * 2.0 + 0.0 * 2.0 - 3.0, 3.0),
+        weight(x * 2.0 + 1.0 * 2.0 - 3.0, 3.0),
+        weight(x * 2.0 + 2.0 * 2.0 - 3.0, 3.0));
+}
+
+float3 pixel(float xpos, float ypos)
+{
+    return diffuseTexture.Sample(textureSampler, float2(xpos, ypos)).rgb;
+}
+
+float3 get_line(float ypos, float3 xpos1, float3 xpos2, float3 linetaps1, float3 linetaps2)
+{
+    return
+        pixel(xpos1.r, ypos) * linetaps1.r +
+        pixel(xpos1.g, ypos) * linetaps2.r +
+        pixel(xpos1.b, ypos) * linetaps1.g +
+        pixel(xpos2.r, ypos) * linetaps2.g +
+        pixel(xpos2.g, ypos) * linetaps1.b +
+        pixel(xpos2.b, ypos) * linetaps2.b; 
+}
+
+float4 main(VertData input) : SV_Target
+{
+    float2 stepxy = baseDimensionI;
+    float2 pos = input.texCoord + stepxy * 0.5;
+    float2 f = frac(pos / stepxy);
+
+    float3 linetaps1   = weight3((1.0 - f.x) / 2.0);
+    float3 linetaps2   = weight3((1.0 - f.x) / 2.0 + 0.5);
+    float3 columntaps1 = weight3((1.0 - f.y) / 2.0);
+    float3 columntaps2 = weight3((1.0 - f.y) / 2.0 + 0.5);
+
+    //make sure all taps added together is exactly 1.0, otherwise some (very small) distortion can occur
+    float suml = linetaps1.r   + linetaps1.g   + linetaps1.b   + linetaps2.r   + linetaps2.g   + linetaps2.b;
+    float sumc = columntaps1.r + columntaps1.g + columntaps1.b + columntaps2.r + columntaps2.g + columntaps2.b;
+    linetaps1 /= suml;
+    linetaps2 /= suml;
+    columntaps1 /= sumc;
+    columntaps2 /= sumc;
+
+    float2 xystart = (-2.5 - f) * stepxy + pos;
+    float3 xpos1 = float3(xystart.x, xystart.x + stepxy.x, xystart.x + stepxy.x * 2.0);
+    float3 xpos2 = float3(xystart.x + stepxy.x * 3.0, xystart.x + stepxy.x * 4.0, xystart.x + stepxy.x * 5.0);
+
+    float4 rgba;
+    rgba.rgb =
+        get_line(xystart.y                 , xpos1, xpos2, linetaps1, linetaps2) * columntaps1.r +
+        get_line(xystart.y + stepxy.y      , xpos1, xpos2, linetaps1, linetaps2) * columntaps2.r +
+        get_line(xystart.y + stepxy.y * 2.0, xpos1, xpos2, linetaps1, linetaps2) * columntaps1.g +
+        get_line(xystart.y + stepxy.y * 3.0, xpos1, xpos2, linetaps1, linetaps2) * columntaps2.g +
+        get_line(xystart.y + stepxy.y * 4.0, xpos1, xpos2, linetaps1, linetaps2) * columntaps1.b +
+        get_line(xystart.y + stepxy.y * 5.0, xpos1, xpos2, linetaps1, linetaps2) * columntaps2.b;
+
+    rgba.a = 1.0;
+
+    //-------------------------------------------------------------
+
+    const float4x4 yuvMat  = {0.257, -0.148,  0.439, 0.0,
+                              0.504, -0.291, -0.368, 0.0,
+                              0.098,  0.439, -0.071, 0.0,
+                              0.0625, 0.50,   0.50,  1.0};
+
+    //a nice quick colorspace conversion
+    float4 yuvx = mul(float4(rgba.rgb, 1.0), yuvMat);
+    return float4(saturate(yuvx.zxy), rgba.a);
+}

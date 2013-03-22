@@ -1,5 +1,5 @@
 /********************************************************************************
- Copyright (C) 2012 Hugh Bailey <obs.jim@gmail.com>
+ Copyright (C) 2013 Hugh Bailey <obs.jim@gmail.com>
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -16,8 +16,6 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 ********************************************************************************/
 
-
-//1.5 downscale requires kind of a lot of sampling, more sampling than there are pixels on the base texture
 
 uniform Texture2D diffuseTexture;
 uniform float2 baseDimensionI;
@@ -37,28 +35,11 @@ struct VertData
 
 float4 main(VertData input) : SV_Target
 {
-    float2 texAdjust = (input.texCoord-0.5)*1.5;
-    float2 floorVal = floor(texAdjust+0.001);
-    float2 offset = (texAdjust-floorVal);
-
-    float2x2 pixelMat = {1.0, 1.0, 1.0, 1.0};
-
-    if(offset.x > 0.4)
-        pixelMat._11_21 = 0.5;
-    else
-        pixelMat._12_22 = 0.5;
-
-    if(offset.y > 0.4)
-        pixelMat._11_12 *= 0.5;
-    else
-        pixelMat._21_22 *= 0.5;
-
     float4 rgba;
-    rgba  = diffuseTexture.Sample(textureSampler, (floorVal+float2(0.5, 0.5)) * baseDimensionI) * pixelMat._11;
-    rgba += diffuseTexture.Sample(textureSampler, (floorVal+float2(1.5, 0.5)) * baseDimensionI) * pixelMat._12;
-    rgba += diffuseTexture.Sample(textureSampler, (floorVal+float2(0.5, 1.5)) * baseDimensionI) * pixelMat._21;
-    rgba += diffuseTexture.Sample(textureSampler, (floorVal+float2(1.5, 1.5)) * baseDimensionI) * pixelMat._22;
-    rgba /= 2.25;
+    rgba.rgb = diffuseTexture.Sample(textureSampler, input.texCoord);
+    rgba.a = 1.0;
+
+    //-------------------------------------------------------------
 
     const float4x4 yuvMat  = {0.257, -0.148,  0.439, 0.0,
                               0.504, -0.291, -0.368, 0.0,

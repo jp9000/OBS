@@ -139,6 +139,7 @@ void OBS::Start()
     int defCX = screenRect.right  - screenRect.left;
     int defCY = screenRect.bottom - screenRect.top;
 
+    downscaleType = AppConfig->GetInt(TEXT("Video"), TEXT("Filter"), 0);
     downscale = AppConfig->GetFloat(TEXT("Video"), TEXT("Downscale"), 1.0f);
     baseCX = AppConfig->GetInt(TEXT("Video"), TEXT("BaseWidth"),  defCX);
     baseCY = AppConfig->GetInt(TEXT("Video"), TEXT("BaseHeight"), defCY);
@@ -179,17 +180,20 @@ void OBS::Start()
 
     //------------------------------------------------------------------
 
-    CTSTR lpShader = NULL;
+    CTSTR lpShader;
     if(CloseFloat(downscale, 1.0))
         lpShader = TEXT("shaders/DrawYUVTexture.pShader");
-    else if(CloseFloat(downscale, 1.5))
-        lpShader = TEXT("shaders/DownscaleYUV1.5.pShader");
-    else if(CloseFloat(downscale, 2.0))
-        lpShader = TEXT("shaders/DownscaleYUV2.pShader");
-    else if(CloseFloat(downscale, 2.25))
-        lpShader = TEXT("shaders/DownscaleYUV2.25.pShader");
-    else if(CloseFloat(downscale, 3.0))
-        lpShader = TEXT("shaders/DownscaleYUV3.pShader");
+    else if(downscale < 2.01)
+    {
+        switch(downscaleType)
+        {
+            case 0: lpShader = TEXT("shaders/DownscaleBilinear1YUV.pShader"); break;
+            case 1: lpShader = TEXT("shaders/DownscaleBicubicYUV.pShader"); break;
+            case 2: lpShader = TEXT("shaders/DownscaleLanczos6tapYUV.pShader"); break;
+        }
+    }
+    else if(downscale < 3.01)
+        lpShader = TEXT("shaders/DownscaleBilinear9YUV.pShader");
     else
         CrashError(TEXT("Invalid downscale value (must be either 1.0, 1.5, 2.0, 2.25, or 3.0)"));
 
@@ -308,6 +312,7 @@ void OBS::Start()
     //-------------------------------------------------------------
 
     bRunning = true;
+    UpdateNotificationAreaIcon();
 
     if(sceneElement)
     {
@@ -433,16 +438,6 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
-    for (UINT i=0; i<plugins.Num(); i++)
-    {
-        OBS_CALLBACK startStreamProc = plugins[i].startStreamCallback;
-
-        if (startStreamProc)
-            (*startStreamProc)();
-    }
-
-    //-------------------------------------------------------------
-
     if(!bTestStream && bWriteToFile && strOutputFile.IsValid())
     {
         String strFileExtension = GetPathExtension(strOutputFile);
@@ -471,7 +466,7 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
-    ReportStartStreamTrigger(bTestStream);
+    ReportStartStreamTrigger();
     
     SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, 0, 0, 0);
     SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
@@ -487,7 +482,10 @@ void OBS::Stop()
 
     OSEnterMutex(hStartupShutdownMutex);
 
+    ReportStopStreamTrigger();
+
     bRunning = false;
+    UpdateNotificationAreaIcon();
     if(hMainThread)
     {
         OSTerminateThread(hMainThread, 20000);
@@ -520,16 +518,6 @@ void OBS::Stop()
     //-------------------------------------------------------------
 
     StopBlankSoundPlayback();
-
-    //-------------------------------------------------------------
-
-    for (UINT i=0; i<plugins.Num(); i++)
-    {
-        OBS_CALLBACK stopStreamCallback = plugins[i].stopStreamCallback;
-
-        if (stopStreamCallback)
-            (*stopStreamCallback)();
-    }
 
     //-------------------------------------------------------------
 
@@ -643,8 +631,6 @@ void OBS::Stop()
 
     Log(TEXT("=====Stream End======================================================================="));
     
-    ReportStopStreamTrigger(bTestStream);
-
     if(streamReport.IsValid())
     {
         MessageBox(hwndMain, streamReport.Array(), Str("StreamReport"), MB_ICONINFORMATION|MB_OK);

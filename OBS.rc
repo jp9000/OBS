@@ -139,12 +139,14 @@ BEGIN
     CONTROL         "Settings.Video.Monitor",IDC_USEMONITOR,"Button",BS_AUTORADIOBUTTON,22,31,116,10
     COMBOBOX        IDC_MONITOR,144,30,36,126,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Settings.Video.Downscale",IDC_STATIC,4,61,138,8
-    COMBOBOX        IDC_DOWNSCALE,144,59,151,126,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Settings.Video.FPS",IDC_STATIC,4,80,138,8
-    EDITTEXT        IDC_FPS_EDIT,144,77,40,14,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "",IDC_FPS,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,185,77,10,14
-    LTEXT           "Settings.Info",IDC_INFO,7,117,418,37,NOT WS_VISIBLE
-    CONTROL         "Settings.Video.DisableAero",IDC_DISABLEAERO,"Button",BS_AUTOCHECKBOX | BS_LEFTTEXT | WS_TABSTOP,4,96,149,10,WS_EX_RIGHT
+    COMBOBOX        IDC_DOWNSCALE,144,59,144,126,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Settings.Video.Filter",IDC_STATIC,4,78,138,8
+    COMBOBOX        IDC_FILTER,144,76,234,126,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Settings.Video.FPS",IDC_STATIC,4,96,138,8
+    EDITTEXT        IDC_FPS_EDIT,144,93,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_FPS,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,185,93,10,14
+    LTEXT           "Settings.Info",IDC_INFO,7,133,418,37,NOT WS_VISIBLE
+    CONTROL         "Settings.Video.DisableAero",IDC_DISABLEAERO,"Button",BS_AUTOCHECKBOX | BS_LEFTTEXT | WS_TABSTOP,4,112,149,10,WS_EX_RIGHT
 END
 
 IDD_SETTINGS_GENERAL DIALOGEX 0, 0, 427, 336
@@ -160,6 +162,10 @@ BEGIN
     PUSHBUTTON      "Rename",IDC_RENAME,224,58,76,14
     PUSHBUTTON      "Remove",IDC_REMOVE,301,58,75,14
     LTEXT           "Settings.General.Restart",IDC_INFO,7,145,409,48,NOT WS_VISIBLE
+    CONTROL         "Settings.General.Notification",IDC_NOTIFICATIONICON,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,172,94,108,10,WS_EX_RIGHT
+    CONTROL         "Settings.General.NotificationMinimize",IDC_MINIZENOTIFICATION,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,146,110,134,10,WS_EX_RIGHT
 END
 
 IDD_SETTINGS_AUDIO DIALOGEX 0, 0, 427, 336
@@ -646,6 +652,7 @@ IDI_SOUND_MIC           ICON                    "ui\\mic2.ico"
 IDI_SOUND_MIC_MUTED     ICON                    "ui\\mic2-muted.ico"
 IDI_SOUND_DESKTOP       ICON                    "ui\\speaker.ico"
 IDI_SOUND_DESKTOP_MUTED ICON                    "ui\\speaker-muted.ico"
+IDI_ICON2               ICON                    "ui\\test2\\recording.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //

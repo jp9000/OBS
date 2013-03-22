@@ -20,9 +20,6 @@
 #pragma once
 
 
-class GraphicsCaptureSource;
-
-
 class GraphicsCaptureSource : public ImageSource
 {
     GraphicsCaptureMethod *capture;
@@ -30,8 +27,11 @@ class GraphicsCaptureSource : public ImageSource
 
     XElement *data;
 
+    bool bUseHotkey;
+    DWORD hotkey, hotkeyID;
     String strWindowClass;
-    HWND hwndTarget, hwndCapture;
+
+    HWND hwndTarget, hwndCapture, hwndNextTarget;
     bool bCapturing, bErrorAcquiring, bFlip, bStretch, bIgnoreAspect, bCaptureMouse;
     UINT captureWaitCount;
     DWORD targetProcessID;
@@ -57,6 +57,8 @@ class GraphicsCaptureSource : public ImageSource
     void EndCapture();
 
     void AttemptCapture();
+
+    static void CaptureHotkey(DWORD hotkey, GraphicsCaptureSource *capture, bool bDown);
 
 public:
     bool Init(XElement *data);

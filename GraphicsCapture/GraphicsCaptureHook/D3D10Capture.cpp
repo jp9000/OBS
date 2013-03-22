@@ -201,6 +201,23 @@ void DoD3D10Capture(IDXGISwapChain *swap)
 
         if(bHasTextures)
         {
+            LONGLONG timeVal = OSGetTimeMicroseconds();
+
+            //check keep alive state, dumb but effective
+            if(bCapturing)
+            {
+                if((timeVal-keepAliveTime) > 3000000)
+                {
+                    HANDLE hKeepAlive = OpenEvent(EVENT_ALL_ACCESS, FALSE, strKeepAlive.c_str());
+                    if(hKeepAlive)
+                        CloseHandle(hKeepAlive);
+                    else
+                        ClearD3D10Data();
+
+                    keepAliveTime = timeVal;
+                }
+            }
+
             LONGLONG frameTime;
             if(bCapturing)
             {
@@ -208,7 +225,6 @@ void DoD3D10Capture(IDXGISwapChain *swap)
                 {
                     if(frameTime = texData->frameTime)
                     {
-                        LONGLONG timeVal = OSGetTimeMicroseconds();
                         LONGLONG timeElapsed = timeVal-lastTime;
 
                         if(timeElapsed >= frameTime)

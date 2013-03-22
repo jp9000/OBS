@@ -52,8 +52,8 @@ LRESULT WINAPI ResolutionEditSubclassProc(HWND hwnd, UINT message, WPARAM wParam
     return CallWindowProc((WNDPROC)editProc, hwnd, message, wParam, lParam);
 }
 
-const int multiplierCount = 5;
-const float downscaleMultipliers[multiplierCount] = {1.0f, 1.5f, 2.0f, 2.25f, 3.0f};
+const int multiplierCount = 9;
+const float downscaleMultipliers[multiplierCount] = {1.0f, 1.25f, 1.5f, 1.75f, 2.0f, 2.25f, 2.5f, 2.75f, 3.0f};
 
 //============================================================================
 // SettingsVideo class
@@ -132,6 +132,41 @@ void SettingsVideo::RefreshDownscales(HWND hwnd, int cx, int cy)
         SendMessage(hwnd, CB_SETCURSEL, lastID, 0);
 }
 
+void SettingsVideo::RefreshFilters(HWND hwndParent, bool bGetConfig)
+{
+    HWND hwndFilter = GetDlgItem(hwndParent, IDC_FILTER);
+    HWND hwndDownscale = GetDlgItem(hwndParent, IDC_DOWNSCALE);
+
+    int curFilter;
+    if(bGetConfig)
+        curFilter = AppConfig->GetInt(TEXT("Video"), TEXT("Filter"), 0);
+    else
+        curFilter = (int)SendMessage(GetDlgItem(hwnd, IDC_FILTER), CB_GETCURSEL, 0, 0);
+
+    float downscale = 1.0f;
+
+    int curSel = (int)SendMessage(GetDlgItem(hwnd, IDC_DOWNSCALE), CB_GETCURSEL, 0, 0);
+    if(curSel != CB_ERR)
+        downscale = downscaleMultipliers[curSel];
+
+    SendMessage(hwndFilter, CB_RESETCONTENT, 0, 0);
+    if(downscale < 2.01)
+    {
+        SendMessage(hwndFilter, CB_ADDSTRING, 0, (LPARAM)Str("Settings.Video.Filter.Bilinear"));
+        SendMessage(hwndFilter, CB_ADDSTRING, 0, (LPARAM)Str("Settings.Video.Filter.Bicubic"));
+        SendMessage(hwndFilter, CB_ADDSTRING, 0, (LPARAM)Str("Settings.Video.Filter.Lanczos"));
+
+        SendMessage(hwndFilter, CB_SETCURSEL, curFilter, 0);
+    }
+    else
+    {
+        SendMessage(hwndFilter, CB_ADDSTRING, 0, (LPARAM)Str("Settings.Video.Filter.Bilinear"));
+        SendMessage(hwndFilter, CB_SETCURSEL, 0, 0);
+    }
+
+    EnableWindow(hwndFilter, (downscale > 1.01));
+}
+
 void SettingsVideo::ApplySettings()
 {
     int curSel = (int)SendMessage(GetDlgItem(hwnd, IDC_MONITOR), CB_GETCURSEL, 0, 0);
@@ -156,6 +191,10 @@ void SettingsVideo::ApplySettings()
     curSel = (int)SendMessage(GetDlgItem(hwnd, IDC_DOWNSCALE), CB_GETCURSEL, 0, 0);
     if(curSel != CB_ERR)
         AppConfig->SetFloat(TEXT("Video"), TEXT("Downscale"), downscaleMultipliers[curSel]);
+
+    curSel = (int)SendMessage(GetDlgItem(hwnd, IDC_FILTER), CB_GETCURSEL, 0, 0);
+    if(curSel == CB_ERR) curSel = 0;
+    AppConfig->SetInt(TEXT("Video"), TEXT("Filter"), curSel);
 
     int gammaVal = (int)SendMessage(GetDlgItem(hwnd, IDC_GAMMA), TBM_GETPOS, 0, 0);
     AppConfig->SetInt(TEXT("Video"), TEXT("Gamma"), gammaVal);
@@ -297,6 +336,10 @@ INT_PTR SettingsVideo::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 //--------------------------------------------
 
+                RefreshFilters(hwnd, true);
+
+                //--------------------------------------------
+
                 ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_HIDE);
                 SetChangedSettings(false);
 
@@ -396,9 +439,17 @@ INT_PTR SettingsVideo::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                             bDataChanged = true;
                         break;
 
-                    case IDC_DOWNSCALE:
+                    case IDC_FILTER:
                         if(HIWORD(wParam) == CBN_SELCHANGE)
                             bDataChanged = true;
+                        break;
+
+                    case IDC_DOWNSCALE:
+                        if(HIWORD(wParam) == CBN_SELCHANGE)
+                        {
+                            bDataChanged = true;
+                            RefreshFilters(hwnd, false);
+                        }
                         break;
                 }
 

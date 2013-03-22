@@ -136,7 +136,7 @@ GraphicsCaptureSource::~GraphicsCaptureSource()
     EndScene(); //should never actually need to be called, but doing it anyway just to be safe
 }
 
-bool GetCaptureInfo(CaptureInfo &ci, DWORD processID)
+static bool GetCaptureInfo(CaptureInfo &ci, DWORD processID)
 {
     HANDLE hFileMap = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, String() << INFO_MEMORY << int(processID));
     if(hFileMap == NULL)
@@ -241,6 +241,8 @@ void GraphicsCaptureSource::EndCapture()
         capture = NULL;
     }
 
+    if(hOBSIsAlive)
+        CloseHandle(hOBSIsAlive);
     if(hSignalRestart)
         CloseHandle(hSignalRestart);
     if(hSignalEnd)
@@ -250,7 +252,7 @@ void GraphicsCaptureSource::EndCapture()
     if(hSignalExit)
         CloseHandle(hSignalExit);
 
-    hSignalRestart = hSignalEnd = hSignalReady = hSignalExit = NULL;
+    hSignalRestart = hSignalEnd = hSignalReady = hSignalExit = hOBSIsAlive = NULL;
 
     bErrorAcquiring = false;
 
@@ -269,9 +271,7 @@ void GraphicsCaptureSource::EndCapture()
 void GraphicsCaptureSource::Preprocess()
 {
     if(hSignalExit && WaitForSingleObject(hSignalExit, 0) == WAIT_OBJECT_0)
-    {
         EndCapture();
-    }
 
     if(bCapturing && !hSignalReady && targetProcessID)
         hSignalReady = GetEvent(String() << CAPTURE_READY_EVENT << int(targetProcessID));
@@ -293,6 +293,12 @@ void GraphicsCaptureSource::BeginScene()
     bIgnoreAspect = data->GetInt(TEXT("ignoreAspect")) != 0;
     bCaptureMouse = data->GetInt(TEXT("captureMouse"), 1) != 0;
 
+    bUseHotkey = data->GetInt(TEXT("useHotkey"), 0) != 0;
+    hotkey = data->GetInt(TEXT("hotkey"), VK_F12);
+
+    if (bUseHotkey)
+        hotkeyID = OBSCreateHotkey(hotkey, (OBSHOTKEYPROC)GraphicsCaptureSource::CaptureHotkey, (UPARAM)this);
+
     gamma = data->GetInt(TEXT("gamma"), 100);
 
     if(bCaptureMouse && data->GetInt(TEXT("invertMouse")))
@@ -305,8 +311,15 @@ void GraphicsCaptureSource::BeginScene()
 
 void GraphicsCaptureSource::AttemptCapture()
 {
-    hwndTarget = FindWindow(strWindowClass, NULL);
-    if(hwndTarget)
+    if (!bUseHotkey)
+        hwndTarget = FindWindow(strWindowClass, NULL);
+    else
+    {
+        hwndTarget = hwndNextTarget;
+        hwndNextTarget = NULL;
+    }
+
+    if (hwndTarget)
     {
         GetWindowThreadProcessId(hwndTarget, &targetProcessID);
         if(!targetProcessID)
@@ -318,7 +331,7 @@ void GraphicsCaptureSource::AttemptCapture()
     }
     else
     {
-        if(!warningID)
+        if (!bUseHotkey && !warningID)
             warningID = API->AddStreamInfo(Str("Sources.SoftwareCaptureSource.WindowNotFound"), StreamInfoPriority_High);
 
         bCapturing = false;
@@ -344,6 +357,13 @@ void GraphicsCaptureSource::AttemptCapture()
     HANDLE hProcess = (*pOpenProcess)(PROCESS_ALL_ACCESS, FALSE, targetProcessID);
     if(hProcess)
     {
+        //-------------------------------------------
+        // load keepalive event
+
+        hOBSIsAlive = CreateEvent(NULL, FALSE, FALSE, String() << OBS_KEEPALIVE_EVENT << int(targetProcessID));
+
+        //-------------------------------------------
+
         hwndCapture = hwndTarget;
 
         hSignalRestart = OpenEvent(EVENT_ALL_ACCESS, FALSE, String() << RESTART_CAPTURE_EVENT << int(targetProcessID));
@@ -456,6 +476,12 @@ void GraphicsCaptureSource::AttemptCapture()
 
         CloseHandle(hProcess);
         hProcess = NULL;
+
+        if (!bCapturing)
+        {
+            CloseHandle(hOBSIsAlive);
+            hOBSIsAlive = NULL;
+        }
     }
     else
     {
@@ -491,10 +517,14 @@ void GraphicsCaptureSource::EndScene()
         cursorTexture = NULL;
     }
 
-    if(!bCapturing)
+    if (hotkeyID)
     {
-        return;
+        OBSDeleteHotkey(hotkeyID);
+        hotkeyID = 0;
     }
+
+    if(!bCapturing)
+        return;
 
     bCapturing = false;
 
@@ -515,7 +545,8 @@ void GraphicsCaptureSource::Tick(float fSeconds)
     if(!bCapturing && !bErrorAcquiring)
     {
         captureCheckInterval += fSeconds;
-        if(captureCheckInterval >= 3.0f)
+        if ((!bUseHotkey && captureCheckInterval >= 3.0f) ||
+            (bUseHotkey && hwndNextTarget != NULL))
         {
             AttemptCapture();
             captureCheckInterval = 0.0f;
@@ -523,8 +554,10 @@ void GraphicsCaptureSource::Tick(float fSeconds)
     }
     else
     {
-        if(!IsWindow(hwndCapture))
+        if(!IsWindow(hwndCapture) || (bUseHotkey && hwndNextTarget != hwndTarget))
             EndCapture();
+        else
+            hwndNextTarget = NULL;
     }
 }
 
@@ -721,4 +754,10 @@ void GraphicsCaptureSource::SetInt(CTSTR lpName, int iVal)
         if(gamma < 50)        gamma = 50;
         else if(gamma > 175)  gamma = 175;
     }
+}
+
+void GraphicsCaptureSource::CaptureHotkey(DWORD hotkey, GraphicsCaptureSource *capture, bool bDown)
+{
+    if (bDown)
+        capture->hwndNextTarget = GetForegroundWindow();
 }

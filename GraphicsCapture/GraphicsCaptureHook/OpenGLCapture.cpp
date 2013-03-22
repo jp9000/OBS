@@ -429,6 +429,23 @@ void HandleGLSceneUpdate(HDC hDC)
 
         if(bHasTextures)
         {
+            LONGLONG timeVal = OSGetTimeMicroseconds();
+
+            //check keep alive state, dumb but effective
+            if(bCapturing)
+            {
+                if((timeVal-keepAliveTime) > 3000000)
+                {
+                    HANDLE hKeepAlive = OpenEvent(EVENT_ALL_ACCESS, FALSE, strKeepAlive.c_str());
+                    if(hKeepAlive)
+                        CloseHandle(hKeepAlive);
+                    else
+                        ClearGLData();
+
+                    keepAliveTime = timeVal;
+                }
+            }
+
             LONGLONG frameTime;
             if(bCapturing)
             {
@@ -436,7 +453,6 @@ void HandleGLSceneUpdate(HDC hDC)
                 {
                     if(frameTime = copyData->frameTime)
                     {
-                        LONGLONG timeVal = OSGetTimeMicroseconds();
                         LONGLONG timeElapsed = timeVal-lastTime;
 
                         if(timeElapsed >= frameTime)

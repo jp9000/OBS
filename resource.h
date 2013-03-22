@@ -31,6 +31,7 @@
 #define IDD_BUILDINGMP4                 137
 #define IDD_CONFIGURETEXTSOURCE         139
 #define IDD_ENDINGDELAY                 140
+#define IDI_ICON2                       142
 #define IDC_SETTINGSLIST                1006
 #define IDC_SUBDIALOG                   1007
 #define IDC_MODE                        1008
@@ -48,6 +49,8 @@
 #define IDC_BINDIP                      1014
 #define IDC_MAXBITRATE                  1015
 #define IDC_COLORPICKER                 1015
+#define IDC_DOWNSCALE2                  1015
+#define IDC_FILTER                      1015
 #define IDC_BUFFERSIZE                  1016
 #define IDC_AUDIOCODEC                  1017
 #define IDC_USECOLORKEY                 1017
@@ -82,6 +85,7 @@
 #define IDC_OPACITY                     1041
 #define IDC_USETEXTEXTENTS              1041
 #define IDC_CUSTOMBUFFER                1041
+#define IDC_NOTIFICATIONICON            1041
 #define IDC_SERVEREDIT                  1042
 #define IDC_USESENDBUFFER               1042
 #define IDC_FORCEMONO                   1042
@@ -192,6 +196,7 @@
 #define IDC_CAPTURELAYERED              1099
 #define IDC_USEOUTLINE                  1099
 #define IDC_LOWLATENCYMODE              1099
+#define IDC_MINIZENOTIFICATION          1099
 #define IDC_TIMER1                      1100
 #define IDC_CAPTURERAM                  1100
 #define IDC_COMPATIBILITYMODE           1100
@@ -281,7 +286,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        141
+#define _APS_NEXT_RESOURCE_VALUE        143
 #define _APS_NEXT_COMMAND_VALUE         40051
 #define _APS_NEXT_CONTROL_VALUE         1157
 #define _APS_NEXT_SYMED_VALUE           101

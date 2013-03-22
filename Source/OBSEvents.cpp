@@ -19,30 +19,24 @@
 
 #include "Main.h"
 
-void OBS::AddOBSEventListener(OBSTriggerHandler *handler)
+void OBS::ReportStartStreamTrigger()
 {
-    triggerHandlers.Add(handler);
-}
-
-void OBS::RemoveOBSEventListener(OBSTriggerHandler *handler)
-{
-    triggerHandlers.RemoveItem(handler);
-}
-
-void OBS::ReportStartStreamTrigger(bool previewOnly)
-{
-    for(UINT i = 0; i < triggerHandlers.Num(); i++)
+    for (UINT i=0; i<plugins.Num(); i++)
     {
-        OBSTriggerHandler* handler = triggerHandlers[i];
-        handler->StreamStarting(previewOnly);
+        OBS_CALLBACK callback = plugins[i].startStreamCallback;
+
+        if (callback)
+            (*callback)();
     }
 }
-void OBS::ReportStopStreamTrigger(bool previewOnly)
+void OBS::ReportStopStreamTrigger()
 {
-    for(UINT i = 0; i < triggerHandlers.Num(); i++)
+    for (UINT i=0; i<plugins.Num(); i++)
     {
-        OBSTriggerHandler* handler = triggerHandlers[i];
-        handler->StreamStopping(previewOnly);
+        OBS_CALLBACK callback = plugins[i].stopStreamCallback;
+
+        if (callback)
+            (*callback)();
     }
 }
 
@@ -51,73 +45,90 @@ void OBS::ReportStreamStatus(bool streaming, bool previewOnly,
                                UINT totalStreamtime, UINT numTotalFrames,
                                UINT numDroppedFrames, UINT fps)
 {
-    for(UINT i = 0; i < triggerHandlers.Num(); i++)
+    for (UINT i=0; i<plugins.Num(); i++)
     {
-        OBSTriggerHandler* handler = triggerHandlers[i];
-        handler->StreamStatus(streaming, previewOnly, bytesPerSec, strain, 
-                                    totalStreamtime, numTotalFrames, numDroppedFrames, fps);
+        OBS_STREAM_STATUS_CALLBACK callback = plugins[i].streamStatusCallback;
+
+        if (callback)
+            (*callback)(streaming, previewOnly, bytesPerSec, 
+                        strain, totalStreamTime, numTotalFrames, 
+                        numDroppedFrames, fps);
     }
 }
 
 void OBS::ReportSwitchScenes(CTSTR scene)
 {
-    for(UINT i = 0; i < triggerHandlers.Num(); i++)
+    for (UINT i=0; i<plugins.Num(); i++)
     {
-        OBSTriggerHandler* handler = triggerHandlers[i];
-        handler->ScenesSwitching(scene);
+        OBS_SCENE_SWITCH_CALLBACK callback = plugins[i].sceneSwitchCallback;
+
+        if (callback)
+            (*callback)(scene);
     }
 }
 
 void OBS::ReportScenesChanged()
 {
-    for(UINT i = 0; i < triggerHandlers.Num(); i++)
+    for (UINT i=0; i<plugins.Num(); i++)
     {
-        OBSTriggerHandler* handler = triggerHandlers[i];
-        handler->ScenesChanged();
+        OBS_CALLBACK callback = plugins[i].scenesChangedCallback;
+
+        if (callback)
+            (*callback)();
     }
 }
 
 void OBS::ReportSourceOrderChanged()
 {
-    for(UINT i = 0; i < triggerHandlers.Num(); i++)
+    for (UINT i=0; i<plugins.Num(); i++)
     {
-        OBSTriggerHandler* handler = triggerHandlers[i];
-        handler->SourceOrderChanged();
+        OBS_CALLBACK callback = plugins[i].sourceOrderChangedCallback;
+
+        if (callback)
+            (*callback)();
     }
 }
 
 void OBS::ReportSourceChanged(CTSTR sourceName, XElement* source)
 {
-    for(UINT i = 0; i < triggerHandlers.Num(); i++)
+    for (UINT i=0; i<plugins.Num(); i++)
     {
-        OBSTriggerHandler* handler = triggerHandlers[i];
-        handler->SourceChanged(sourceName, source);
+        OBS_SOURCE_CHANGED_CALLBACK callback = plugins[i].sourceChangedCallback;
+
+        if (callback)
+            (*callback)(sourceName, source);
     }
 }
 
 void OBS::ReportSourcesAddedOrRemoved()
 {
-    for(UINT i = 0; i < triggerHandlers.Num(); i++)
+    for (UINT i=0; i<plugins.Num(); i++)
     {
-        OBSTriggerHandler* handler = triggerHandlers[i];
-        handler->SourcesAddedOrRemoved();
+        OBS_CALLBACK callback = plugins[i].sourcesAddedOrRemovedCallback;
+
+        if (callback)
+            (*callback)();
     }
 }
 
 void OBS::ReportMicVolumeChange(float level, bool muted, bool finalValue)
 {
-    for(UINT i = 0; i < triggerHandlers.Num(); i++)
+    for (UINT i=0; i<plugins.Num(); i++)
     {
-        OBSTriggerHandler* handler = triggerHandlers[i];
-        handler->MicVolumeChanged(level, muted, finalValue);
+        OBS_VOLUME_CHANGED_CALLBACK callback = plugins[i].micVolumeChangeCallback;
+
+        if (callback)
+            (*callback)(level, muted, finalValue);
     }
 }
 
 void OBS::ReportDesktopVolumeChange(float level, bool muted, bool finalValue)
 {
-    for(UINT i = 0; i < triggerHandlers.Num(); i++)
+    for (UINT i=0; i<plugins.Num(); i++)
     {
-        OBSTriggerHandler* handler = triggerHandlers[i];
-        handler->DesktopVolumeChanged(level, muted, finalValue);
+        OBS_VOLUME_CHANGED_CALLBACK callback = plugins[i].desktopVolumeChangeCallback;
+
+        if (callback)
+            (*callback)(level, muted, finalValue);
     }
 }
