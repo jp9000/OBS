@@ -170,7 +170,7 @@ Settings.General.ConfirmDelete  "Haluatko varmasti poistaa '$1'-profiilin?"
 Settings.General.InvalidName    "Profiilien nimet eivät voi sisältää seuraavia merkkejä:\r\n\\ / : * ? \" < > |"
 Settings.General.Language       "Kieli:"
 Settings.General.Profile        "Asetusprofiili:"
-Settings.General.Restart        "Kielen vaihtaminen vaatii ohjelman uudelleenkäynnistyksen.\r\n\r\n..Luulen kyllä että jos haluat vaihtaa kielen niin et ymmärrä tätä?"
+Settings.General.Restart        "Kielen vaihtaminen vaatii ohjelman uudelleenkäynnistyksen."
 
 Settings.Publish.AutoReconnect          "Autom. uudelleenyhdistys:"
 Settings.Publish.AutoReconnectTimeout   "Autom. uudelleenyhdistyksen väliaika:"
