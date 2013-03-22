@@ -341,6 +341,7 @@ enum
     OBS_SETSOURCEORDER,
     OBS_SETSOURCERENDER,
     OBS_UPDATESTATUSBAR,
+    OBS_NOTIFICATIONAREA,
 };
 
 //----------------------------
@@ -657,6 +658,12 @@ private:
     void MainAudioLoop();
 
     //---------------------------------------------------
+    // notification area icon
+    UINT wmExplorerRestarted;
+    bool bNotificationAreaIcon;
+    BOOL SetNotificationAreaIcon(DWORD dwMessage, int idIcon, const String &tooltip);
+
+    //---------------------------------------------------
     // random bla-haa
 
     String  streamReport;
@@ -930,6 +937,10 @@ public:
     virtual void ReportMicVolumeChange(float level, bool muted, bool finalValue);
     virtual void ReportDesktopVolumeChange(float level, bool muted, bool finalValue);
 
+    // notification area icon functions
+    BOOL ShowNotificationAreaIcon();
+    BOOL UpdateNotificationAreaIcon();
+    BOOL HideNotificationAreaIcon();
 };
 
 LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo);

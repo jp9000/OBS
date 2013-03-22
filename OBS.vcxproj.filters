@@ -230,6 +230,9 @@
     <None Include="rundir\shaders\DrawTexture.vShader">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="ui\test2\recording.ico">
+      <Filter>Resources</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">

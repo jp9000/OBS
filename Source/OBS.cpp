@@ -447,6 +447,16 @@ OBS::OBS()
     SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 
     //-----------------------------------------------------
+    // notification area
+
+    bNotificationAreaIcon = false;
+    wmExplorerRestarted = RegisterWindowMessage(TEXT("TaskbarCreated"));
+    if (AppConfig->GetInt(TEXT("General"), TEXT("ShowNotificationAreaIcon"), 0) != 0)
+    {
+        ShowNotificationAreaIcon();
+    }
+
+    //-----------------------------------------------------
     // populate scenes
 
     hwndTemp = GetDlgItem(hwndMain, ID_SCENES);
@@ -659,6 +669,11 @@ OBS::~OBS()
 
         FreeLibrary(pluginInfo.hModule);
         pluginInfo.strFile.Clear();
+    }
+
+    if (AppConfig->GetInt(TEXT("General"), TEXT("ShowNotificationAreaIcon"), 0) != 0)
+    {
+        App->HideNotificationAreaIcon();
     }
 
     //DestroyWindow(hwndMain);
@@ -1540,4 +1555,52 @@ void OBS::SetSourceRender(CTSTR sourceName, bool render)
             break;
         }
     }
+}
+
+BOOL OBS::SetNotificationAreaIcon(DWORD dwMessage, int idIcon, const String &tooltip)
+{
+    NOTIFYICONDATA niData;
+    ZeroMemory(&niData, sizeof(NOTIFYICONDATA));
+    niData.cbSize = sizeof(niData);
+    niData.hWnd = hwndMain;
+    niData.uID = 0;
+    if (NIM_DELETE != dwMessage)
+    {
+        niData.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+        niData.uCallbackMessage = OBS_NOTIFICATIONAREA;
+        niData.hIcon = LoadIcon(hinstMain, MAKEINTRESOURCE(idIcon));
+        lstrcpy(niData.szTip, tooltip);
+    }
+    return Shell_NotifyIcon(dwMessage, &niData);
+}
+
+BOOL OBS::ShowNotificationAreaIcon()
+{
+    BOOL result = FALSE;
+    int idIcon = bRunning ? IDI_ICON2 : IDI_ICON1;
+    String tooltip(TEXT("OBS"));
+
+    if (!bNotificationAreaIcon)
+    {
+        bNotificationAreaIcon = true;
+        result = SetNotificationAreaIcon(NIM_ADD, idIcon, tooltip);
+    }
+    else
+    {
+        result = SetNotificationAreaIcon(NIM_MODIFY, idIcon, tooltip);
+    }
+    return result;
+}
+
+BOOL OBS::UpdateNotificationAreaIcon()
+{
+    if (bNotificationAreaIcon)
+        return ShowNotificationAreaIcon();
+    return TRUE;
+}
+
+BOOL OBS::HideNotificationAreaIcon()
+{
+    bNotificationAreaIcon = false;
+    return SetNotificationAreaIcon(NIM_DELETE, 0, TEXT(""));
 }
