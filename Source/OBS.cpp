@@ -916,10 +916,11 @@ void OBS::SetFullscreenMode(bool fullscreen)
 
         // Disable always-on-top if needed
         SetWindowPos(hwndMain, (App->bAlwaysOnTop)?HWND_TOPMOST:HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
-
-        // Workaround: If the window is maximized, resize isn't called, so do it manually
-        ResizeWindow(false);
     }
+
+    // Workaround: If the window is maximized, resize isn't called, so do it manually
+    // Also, when going into fullscreen, this can prevent pixelation
+    ResizeWindow(true);
 }
 
 /**
