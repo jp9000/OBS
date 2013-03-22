@@ -241,6 +241,8 @@ void GraphicsCaptureSource::EndCapture()
         capture = NULL;
     }
 
+    if(hOBSIsAlive)
+        CloseHandle(hOBSIsAlive);
     if(hSignalRestart)
         CloseHandle(hSignalRestart);
     if(hSignalEnd)
@@ -250,7 +252,7 @@ void GraphicsCaptureSource::EndCapture()
     if(hSignalExit)
         CloseHandle(hSignalExit);
 
-    hSignalRestart = hSignalEnd = hSignalReady = hSignalExit = NULL;
+    hSignalRestart = hSignalEnd = hSignalReady = hSignalExit = hOBSIsAlive = NULL;
 
     bErrorAcquiring = false;
 
@@ -344,6 +346,13 @@ void GraphicsCaptureSource::AttemptCapture()
     HANDLE hProcess = (*pOpenProcess)(PROCESS_ALL_ACCESS, FALSE, targetProcessID);
     if(hProcess)
     {
+        //-------------------------------------------
+        // load keepalive event
+
+        hOBSIsAlive = CreateEvent(NULL, FALSE, FALSE, String() << OBS_KEEPALIVE_EVENT << int(targetProcessID));
+
+        //-------------------------------------------
+
         hwndCapture = hwndTarget;
 
         hSignalRestart = OpenEvent(EVENT_ALL_ACCESS, FALSE, String() << RESTART_CAPTURE_EVENT << int(targetProcessID));
@@ -456,6 +465,12 @@ void GraphicsCaptureSource::AttemptCapture()
 
         CloseHandle(hProcess);
         hProcess = NULL;
+
+        if (!bCapturing)
+        {
+            CloseHandle(hOBSIsAlive);
+            hOBSIsAlive = NULL;
+        }
     }
     else
     {

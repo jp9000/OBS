@@ -225,6 +225,9 @@ extern CaptureInfo *infoMem;
 
 extern fstream logOutput;
 
+extern wstring  strKeepAlive;
+extern LONGLONG keepAliveTime;
+
 void WINAPI OSInitializeTimer();
 LONGLONG WINAPI OSGetTimeMicroseconds();
 

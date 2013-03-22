@@ -611,6 +611,22 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
 
     if(bHasTextures)
     {
+        //check keep alive state, dumb but effective
+        if(bCapturing)
+        {
+            LONGLONG curTime = OSGetTimeMicroseconds();
+            if((curTime-keepAliveTime) > 3000000)
+            {
+                HANDLE hKeepAlive = OpenEvent(EVENT_ALL_ACCESS, FALSE, strKeepAlive.c_str());
+                if(hKeepAlive)
+                    CloseHandle(hKeepAlive);
+                else
+                    ClearD3D9Data();
+
+                keepAliveTime = curTime;
+            }
+        }
+
         LONGLONG frameTime;
         if(bCapturing)
         {

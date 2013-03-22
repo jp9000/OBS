@@ -42,12 +42,17 @@ LARGE_INTEGER clockFreq, startTime;
 LONGLONG prevElapsedTime;
 DWORD startTick;
 
+wstring strKeepAlive;
+LONGLONG keepAliveTime = 0;
+
+
 void WINAPI OSInitializeTimer()
 {
     QueryPerformanceFrequency(&clockFreq);
     QueryPerformanceCounter(&startTime);
     startTick = GetTickCount();
     prevElapsedTime = 0;
+    keepAliveTime = 0;
 }
 
 LONGLONG WINAPI OSGetTimeMicroseconds()
@@ -261,6 +266,10 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
 
     if(!logOutput.is_open())
         logOutput.open(lpLogPath, ios_base::in | ios_base::out | ios_base::trunc);
+
+    wstringstream str;
+    str << OBS_KEEPALIVE_EVENT << int(GetCurrentProcessId());
+    strKeepAlive = str.str();
 
     WNDCLASS wc;
     ZeroMemory(&wc, sizeof(wc));
