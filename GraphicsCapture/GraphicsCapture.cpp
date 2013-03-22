@@ -82,7 +82,7 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
             DWORD exStyles = (DWORD)GetWindowLongPtr(hwndCurrent, GWL_EXSTYLE);
             DWORD styles = (DWORD)GetWindowLongPtr(hwndCurrent, GWL_STYLE);
 
-            if( (exStyles & WS_EX_TOOLWINDOW) == 0 && (styles & WS_CHILD) == 0 /*&& hwndParent == NULL*/)
+            if((exStyles & WS_EX_TOOLWINDOW) == 0 && (styles & WS_CHILD) == 0 /*&& hwndParent == NULL*/)
             {
                 String strWindowName;
                 strWindowName.SetLength(GetWindowTextLength(hwndCurrent));
@@ -214,6 +214,20 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 //------------------------------------------
 
+                bool bUseHotkey = data->GetInt(TEXT("useHotkey"), 0) != 0;
+
+                EnableWindow(GetDlgItem(hwnd, IDC_APPLIST),     !bUseHotkey);
+                EnableWindow(GetDlgItem(hwnd, IDC_REFRESH),     !bUseHotkey);
+                EnableWindow(GetDlgItem(hwnd, IDC_HOTKEY),       bUseHotkey);
+
+                DWORD hotkey = data->GetInt(TEXT("hotkey"), VK_F12);
+                SendMessage(GetDlgItem(hwnd, IDC_HOTKEY), HKM_SETHOTKEY, hotkey, 0);
+
+                SendMessage(GetDlgItem(hwnd, IDC_SELECTAPP), BM_SETCHECK, bUseHotkey ? BST_UNCHECKED : BST_CHECKED, 0);
+                SendMessage(GetDlgItem(hwnd, IDC_USEHOTKEY), BM_SETCHECK, bUseHotkey ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                //------------------------------------------
+
                 int gammaVal = data->GetInt(TEXT("gamma"), 100);
 
                 HWND hwndTemp = GetDlgItem(hwnd, IDC_GAMMA);
@@ -248,6 +262,18 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                     {
                         BOOL bCaptureMouse = SendMessage(GetDlgItem(hwnd, IDC_CAPTUREMOUSE), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         EnableWindow(GetDlgItem(hwnd, IDC_INVERTMOUSEONCLICK), bCaptureMouse);
+                    }
+                    break;
+
+                case IDC_SELECTAPP:
+                case IDC_USEHOTKEY:
+                    if (HIWORD(wParam) == BN_CLICKED)
+                    {
+                        bool bUseHotkey = LOWORD(wParam) == IDC_USEHOTKEY;
+
+                        EnableWindow(GetDlgItem(hwnd, IDC_APPLIST),     !bUseHotkey);
+                        EnableWindow(GetDlgItem(hwnd, IDC_REFRESH),     !bUseHotkey);
+                        EnableWindow(GetDlgItem(hwnd, IDC_HOTKEY),       bUseHotkey);
                     }
                     break;
 
@@ -310,6 +336,9 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         data->SetInt(TEXT("ignoreAspect"), SendMessage(GetDlgItem(hwnd, IDC_IGNOREASPECT), BM_GETCHECK, 0, 0) == BST_CHECKED);
                         data->SetInt(TEXT("captureMouse"), SendMessage(GetDlgItem(hwnd, IDC_CAPTUREMOUSE), BM_GETCHECK, 0, 0) == BST_CHECKED);
                         data->SetInt(TEXT("invertMouse"),  SendMessage(GetDlgItem(hwnd, IDC_INVERTMOUSEONCLICK), BM_GETCHECK, 0, 0) == BST_CHECKED);
+
+                        data->SetInt(TEXT("useHotkey"),    SendMessage(GetDlgItem(hwnd, IDC_USEHOTKEY), BM_GETCHECK, 0, 0) == BST_CHECKED);
+                        data->SetInt(TEXT("hotkey"),       (DWORD)SendMessage(GetDlgItem(hwnd, IDC_HOTKEY), HKM_GETHOTKEY, 0, 0));
 
                         data->SetInt(TEXT("gamma"),        (int)SendMessage(GetDlgItem(hwnd, IDC_GAMMA), TBM_GETPOS, 0, 0));
 
@@ -384,6 +413,8 @@ ImageSource* STDCALL CreateGraphicsCaptureSource(XElement *data)
 
 bool LoadPlugin()
 {
+    InitHotkeyExControl(hinstMain);
+
     textureMutexes[0] = CreateMutex(NULL, NULL, TEXTURE_MUTEX1);
     if(!textureMutexes[0])
     {
