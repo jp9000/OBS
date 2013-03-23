@@ -3261,13 +3261,12 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                 App->UpdateRenderViewMessage();
                 break;
             case ID_TOGGLEPANEL:
-                App->bPanelVisible = !App->bPanelVisible;
+                if (App->bFullscreenMode)
+                    App->bPanelVisibleFullscreen = !App->bPanelVisibleFullscreen;
+                else
+                    App->bPanelVisibleWindowed = !App->bPanelVisibleWindowed;
+                App->bPanelVisible = App->bFullscreenMode ? App->bPanelVisibleFullscreen : App->bPanelVisibleWindowed;
                 App->bPanelVisibleProcessed = false;
-
-                // If the user toggles the panel in fullscreen mode then forget if
-                // it was visible or not before entering fullscreen mode
-                App->fullscreenPrevPanelVisible = App->bPanelVisible;
-
                 App->ResizeWindow(true);
                 break;
             case ID_TOGGLEFULLSCREEN:

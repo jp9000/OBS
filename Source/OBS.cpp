@@ -258,7 +258,9 @@ OBS::OBS()
         y = posY;
     }
 
-    bPanelVisible = true;
+    bPanelVisibleWindowed = GlobalConfig->GetInt(TEXT("General"), TEXT("PanelVisibleWindowed"), 1);
+    bPanelVisibleFullscreen = GlobalConfig->GetInt(TEXT("General"), TEXT("PanelVisibleFullscreen"), 0);
+    bPanelVisible = bPanelVisibleWindowed; // Assuming OBS always starts windowed
     bPanelVisibleProcessed = false; // Force immediate process
 
     bFullscreenMode = false;
@@ -691,6 +693,10 @@ OBS::~OBS()
             placement.rcNormalPosition.bottom - placement.rcNormalPosition.top -
             GetSystemMetrics(SM_CYSIZEFRAME) * 2 - GetSystemMetrics(SM_CYCAPTION) - GetSystemMetrics(SM_CYMENU));
     GlobalConfig->SetInt(TEXT("General"), TEXT("Maximized"), placement.showCmd == SW_SHOWMAXIMIZED ? 1 : 0);
+    
+    // Save control panel visibility
+    GlobalConfig->SetInt(TEXT("General"), TEXT("PanelVisibleWindowed"), bPanelVisibleWindowed ? 1 : 0);
+    GlobalConfig->SetInt(TEXT("General"), TEXT("PanelVisibleFullscreen"), bPanelVisibleFullscreen ? 1 : 0);
 
     scenesConfig.Close(true);
 
@@ -863,11 +869,9 @@ void OBS::SetFullscreenMode(bool fullscreen)
         fullscreenPrevPlacement.length = sizeof(fullscreenPrevPlacement);
         GetWindowPlacement(hwndMain, &fullscreenPrevPlacement);
 
-        // Remember if the control panel is visible and hide it
-        fullscreenPrevPanelVisible = bPanelVisible;
-        if(bPanelVisible)
-        {
-            bPanelVisible = false;
+        // Update panel visibility if required
+        if(bPanelVisible != bPanelVisibleFullscreen) {
+            bPanelVisible = bPanelVisibleFullscreen;
             bPanelVisibleProcessed = false;
         }
 
@@ -901,10 +905,9 @@ void OBS::SetFullscreenMode(bool fullscreen)
         // Show menu and status bar
         SetMenu(hwndMain, hmenuMain);
 
-        // Restore control panel visible state
-        if(fullscreenPrevPanelVisible != bPanelVisible)
-        {
-            bPanelVisible = fullscreenPrevPanelVisible;
+        // Restore control panel visible state if required
+        if(bPanelVisible != bPanelVisibleWindowed) {
+            bPanelVisible = bPanelVisibleWindowed;
             bPanelVisibleProcessed = false;
         }
 
