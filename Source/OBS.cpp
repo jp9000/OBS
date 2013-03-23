@@ -258,8 +258,8 @@ OBS::OBS()
         y = posY;
     }
 
-    bPanelVisibleWindowed = GlobalConfig->GetInt(TEXT("General"), TEXT("PanelVisibleWindowed"), 1);
-    bPanelVisibleFullscreen = GlobalConfig->GetInt(TEXT("General"), TEXT("PanelVisibleFullscreen"), 0);
+    bPanelVisibleWindowed = GlobalConfig->GetInt(TEXT("General"), TEXT("PanelVisibleWindowed"), 1) == 1;
+    bPanelVisibleFullscreen = GlobalConfig->GetInt(TEXT("General"), TEXT("PanelVisibleFullscreen"), 0) == 1;
     bPanelVisible = bPanelVisibleWindowed; // Assuming OBS always starts windowed
     bPanelVisibleProcessed = false; // Force immediate process
 
