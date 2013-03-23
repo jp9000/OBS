@@ -52,6 +52,9 @@
 #define IDC_VOLUME                      1035
 #define IDC_VOLMETER                    1036
 #define IDC_POINTFILTERING              1036
+#define IDC_DELAY_EDIT                  1037
+#define IDC_VIDEODELAY                  1038
+#define IDC_DELAY                       1038
 
 // Next default values for new objects
 // 

@@ -17,7 +17,7 @@ DeviceSelection.ExistsInScene           "A source using this device already exis
 DeviceSelection.ExistsSomewhere         "This device is currently being used as a source in one or more scenes."
 DeviceSelection.FlipImage               "Flip Image Vertically"
 DeviceSelection.FlipImageHorizontal     "Flip Image Horizontally"
-DeviceSelection.ForceCustomAudio	"Force Custom Audio Device"
+DeviceSelection.ForceCustomAudio        "Use Custom Audio Device"
 DeviceSelection.FPS                     "FPS:"
 DeviceSelection.GlobalExists            "A global source using this device already exists."
 DeviceSelection.InvalidResolution       "Invalid Resolution"
