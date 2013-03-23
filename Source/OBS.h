@@ -328,6 +328,7 @@ enum
     ID_GLOBALSOURCES,
     ID_PLUGINS,
     ID_DASHBOARD,
+    ID_MINIMIZERESTORE,
 
     ID_SWITCHPROFILE,
 };
@@ -801,6 +802,7 @@ private:
 
     void CallHotkey(DWORD hotkeyID, bool bDown);
 
+    static void AddProfilesToMenu(HMENU menu);
     static void ResetProfileMenu();
 
     void SetStatusBarData();
