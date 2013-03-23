@@ -1238,6 +1238,22 @@ void OBS::ReloadIniSettings()
     hotkey = AppConfig->GetInt(TEXT("Publish"), TEXT("StartStreamHotkey"));
     if(hotkey)
         startStreamHotkeyID = API->CreateHotkey(hotkey, OBS::StartStreamHotkey, NULL);
+
+    //-------------------------------------------
+    // Notification Area icon
+    bool showIcon = AppConfig->GetInt(TEXT("General"), TEXT("ShowNotificationAreaIcon"), 0) != 0;
+    bool minimizeToIcon = AppConfig->GetInt(TEXT("General"), TEXT("MinimizeToNotificationArea"), 0) != 0;
+    if (showIcon)
+    {
+        ShowNotificationAreaIcon();
+        if (minimizeToIcon && IsIconic(hwndMain))
+            ShowWindow(hwndMain, SW_HIDE);
+    }
+    else
+        HideNotificationAreaIcon();
+    if (!minimizeToIcon && !IsWindowVisible(hwndMain))
+        ShowWindow(hwndMain, SW_SHOW);
+
 }
 
 
