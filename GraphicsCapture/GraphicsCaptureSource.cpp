@@ -554,7 +554,7 @@ void GraphicsCaptureSource::Tick(float fSeconds)
     }
     else
     {
-        if(!IsWindow(hwndCapture) || (bUseHotkey && hwndNextTarget != hwndTarget))
+        if(!IsWindow(hwndCapture) || (bUseHotkey && hwndNextTarget && hwndNextTarget != hwndTarget))
             EndCapture();
         else
             hwndNextTarget = NULL;
