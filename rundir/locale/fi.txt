@@ -171,7 +171,7 @@ Settings.General.InvalidName    "Profiilien nimet eivät voi sisältää seuraav
 Settings.General.Language       "Kieli:"
 Settings.General.Profile        "Asetusprofiili:"
 Settings.General.Notification   "Ilmoitusalueen kuvake"
-Settings.General.NotificationMinimize    Minimoi ilmoitusalueelle"
+Settings.General.NotificationMinimize    "Minimoi ilmoitusalueelle"
 Settings.General.ShowObs        "Näytä OBS"
 Settings.General.HideObs        "Piilota OBS"
 Settings.General.Restart        "Kielen vaihtaminen vaatii ohjelman uudelleenkäynnistyksen."
