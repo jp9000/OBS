@@ -171,6 +171,8 @@ Settings.General.Language       "Language:"
 Settings.General.Profile        "Setting Profile:"
 Settings.General.Notification   "Notification Area Icon"
 Settings.General.NotificationMinimize    "Minimize to Notification Area"
+Settings.General.ShowObs        "Show OBS"
+Settings.General.HideObs        "Hide OBS"
 Settings.General.Restart        "Changing the language will require restarting OBS.\r\n\r\n..Though I suppose if you're changing the language you can't understand this"
 
 Settings.Publish.AutoReconnect          "Auto-Reconnect:"

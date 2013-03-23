@@ -1984,21 +1984,10 @@ INT_PTR CALLBACK OBS::ReconnectDialogProc(HWND hwnd, UINT message, WPARAM wParam
 
 //----------------------------
 
-void OBS::ResetProfileMenu()
+void OBS::AddProfilesToMenu(HMENU menu)
 {
     StringList profileList;
     GetProfiles(profileList);
-
-    HMENU hmenuMain = GetMenu(hwndMain);
-
-    MENUITEMINFO mii;
-    zero(&mii, sizeof(mii));
-    mii.cbSize = sizeof(mii);
-
-    HMENU hmenuProfiles = GetSubMenu(hmenuMain, 2);
-
-    while(DeleteMenu(hmenuProfiles, 0, MF_BYPOSITION));
-
     for(UINT i=0; i<profileList.Num(); i++)
     {
         String &strProfile = profileList[i];
@@ -2007,8 +1996,18 @@ void OBS::ResetProfileMenu()
         if(strProfile.CompareI(GetCurrentProfile()))
             flags |= MF_CHECKED;
 
-        AppendMenu(hmenuProfiles, flags, ID_SWITCHPROFILE+i, strProfile.Array());
+        AppendMenu(menu, flags, ID_SWITCHPROFILE+i, strProfile.Array());
     }
+}
+
+//----------------------------
+
+void OBS::ResetProfileMenu()
+{
+    HMENU hmenuMain = GetMenu(hwndMain);
+    HMENU hmenuProfiles = GetSubMenu(hmenuMain, 2);
+    while(DeleteMenu(hmenuProfiles, 0, MF_BYPOSITION));
+    AddProfilesToMenu(hmenuProfiles);
 }
 
 //----------------------------
@@ -2168,6 +2167,32 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
                 case ID_STARTSTOP:
                     App->ToggleCapturing();
+                    break;
+
+                case ID_MINIMIZERESTORE:
+                    {
+                        bool bMinimizeToNotificationArea = AppConfig->GetInt(TEXT("General"), TEXT("MinimizeToNotificationArea"), 0) != 0;
+                        if (bMinimizeToNotificationArea)
+                        {
+                            if (IsWindowVisible(hwnd))
+                            {
+                                ShowWindow(hwnd, SW_MINIMIZE);
+                                ShowWindow(hwnd, SW_HIDE);
+                            }
+                            else
+                            {
+                                ShowWindow(hwnd, SW_SHOW);
+                                ShowWindow(hwnd, SW_RESTORE);
+                            }
+                        }
+                        else
+                        {
+                            if (IsIconic(hwnd))
+                                ShowWindow(hwnd, SW_RESTORE);
+                            else
+                                ShowWindow(hwnd, SW_MINIMIZE);
+                        }
+                    }
                     break;
 
                 case IDA_SOURCE_DELETE:
@@ -2542,31 +2567,38 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
             break;
 
         case OBS_NOTIFICATIONAREA:
-            switch (lParam) {
-            case WM_LBUTTONUP:
-                {
-                    bool bMinimizeToNotificationArea = AppConfig->GetInt(TEXT("General"), TEXT("MinimizeToNotificationArea"), 0) != 0;
-                    if (bMinimizeToNotificationArea)
+            // the point is to only perform the show/hide (minimize) or the menu creation if no modal dialogs are opened
+            // if a modal dialog is topmost, then simply focus it
+            switch (lParam)
+            {
+                case WM_LBUTTONUP:
+                    if (IsWindowEnabled(hwnd))
+                        PostMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_MINIMIZERESTORE, 0), 0);
+                    else
+                        SetForegroundWindow(GetWindow(hwnd, GW_ENABLEDPOPUP));
+                    break;
+                case WM_RBUTTONUP:
+                    if (IsWindowEnabled(hwnd))
                     {
-                        if (IsWindowVisible(hwnd))
+                        HMENU hMenu = CreatePopupMenu();
+                        if (AppConfig->GetInt(TEXT("General"), TEXT("MinimizeToNotificationArea"), 0) != 0)
                         {
-                            ShowWindow(hwnd, SW_MINIMIZE);
-                            ShowWindow(hwnd, SW_HIDE);
+                            AppendMenu(hMenu, MF_STRING, ID_MINIMIZERESTORE, IsWindowVisible(hwnd) ? Str("Settings.General.HideObs") : Str("Settings.General.ShowObs"));
+                            AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
                         }
-                        else
-                        {
-                            ShowWindow(hwnd, SW_SHOW);
-                            ShowWindow(hwnd, SW_RESTORE);
-                        }
+                        AddProfilesToMenu(hMenu);
+                        AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
+                        AppendMenu(hMenu, MF_STRING, ID_FILE_EXIT, Str("MainWindow.Exit"));
+                    
+                        SetForegroundWindow(hwnd);
+                        POINT p;
+                        GetCursorPos(&p);
+                        TrackPopupMenu(hMenu, TPM_LEFTALIGN, p.x, p.y, 0, hwnd, NULL);
+                        DestroyMenu(hMenu);
                     }
                     else
-                    {
-                        if (IsIconic(hwnd))
-                            ShowWindow(hwnd, SW_RESTORE);
-                        else
-                            ShowWindow(hwnd, SW_MINIMIZE);
-                    }
-                }
+                        SetForegroundWindow(GetWindow(hwnd, GW_ENABLEDPOPUP));
+                    break;
             }
             break;
 
