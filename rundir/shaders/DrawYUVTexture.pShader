@@ -41,7 +41,7 @@ float4 main(VertData input) : SV_Target
                               0.0625, 0.50,   0.50,  1.0};
 
     //a nice quick colorspace conversion
-    float4 rgba = diffuseTexture.Sample(textureSampler, (input.texCoord)*baseDimensionI);
+    float4 rgba = diffuseTexture.Sample(textureSampler, input.texCoord);
     float4 yuvx = mul(float4(rgba.rgb, 1.0), yuvMat);
     return float4(saturate(yuvx.zxy), rgba.a);
 }

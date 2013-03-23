@@ -88,7 +88,7 @@ bool DeviceAudioSource::Initialize(DeviceSource *parent)
     inputChannels      = device->audioFormat.nChannels;
     inputSamplesPerSec = device->audioFormat.nSamplesPerSec;
 
-    sampleFrameCount   = inputSamplesPerSec/50;
+    sampleFrameCount   = inputSamplesPerSec/100;
     sampleSegmentSize  = inputBlockSize*sampleFrameCount;
 
     outputBuffer.SetSize(sampleSegmentSize);
