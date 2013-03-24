@@ -645,7 +645,7 @@ struct ConfigDialogData
 CTSTR lpExceptionNames[DEV_EXCEPTION_COUNT] = {TEXT("Elgato Game Capture HD")};
 CTSTR lpExceptionGUIDs[DEV_EXCEPTION_COUNT] = {TEXT("{39F50F4C-99E1-464a-B6F9-D605B4FB5918}")};
 
-void FillOutListOfDevices(HWND hwndCombo, GUID matchGUID, StringList *deviceList, StringList *deviceIDList)
+bool FillOutListOfDevices(HWND hwndCombo, GUID matchGUID, StringList *deviceList, StringList *deviceIDList)
 {
     deviceIDList->Clear();
     deviceList->Clear();
@@ -677,7 +677,7 @@ void FillOutListOfDevices(HWND hwndCombo, GUID matchGUID, StringList *deviceList
     if(FAILED(err))
     {
         AppWarning(TEXT("FillOutListDevices: CoCreateInstance for the device enum failed, result = %08lX"), err);
-        return;
+        return false;
     }
 
     err = deviceEnum->CreateClassEnumerator(matchGUID, &videoDeviceEnum, 0);
@@ -685,13 +685,13 @@ void FillOutListOfDevices(HWND hwndCombo, GUID matchGUID, StringList *deviceList
     {
         AppWarning(TEXT("FillOutListDevices: deviceEnum->CreateClassEnumerator failed, result = %08lX"), err);
         deviceEnum->Release();
-        return;
+        return false;
     }
 
     SafeRelease(deviceEnum);
 
     if(err == S_FALSE) //no devices
-        return;
+        return false;
 
     //------------------------------------------
 
@@ -744,6 +744,8 @@ void FillOutListOfDevices(HWND hwndCombo, GUID matchGUID, StringList *deviceList
     }
 
     SafeRelease(videoDeviceEnum);
+
+    return true;
 }
 
 
@@ -941,10 +943,13 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 LocalizeWindow(hwnd, pluginLocale);
                 FillOutListOfDevices(hwndDeviceList, CLSID_VideoInputDeviceCategory, &configData->deviceNameList, &configData->deviceIDList);
                 FillOutListOfDevices(hwndAudioList, CLSID_AudioInputDeviceCategory, &configData->audioNameList, &configData->audioIDList);
-                FillOutListOfDevices(hwndCrossbarList, AM_KSCATEGORY_CROSSBAR, &configData->crossbarList, &configData->crossbarIDList);
+                
+                bool bCrossbarAvailable = FillOutListOfDevices(hwndCrossbarList, AM_KSCATEGORY_CROSSBAR, &configData->crossbarList, &configData->crossbarIDList);
 
-                SendMessage(hwndCrossbarList, CB_SETCURSEL, 0, 0);
-                ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_CROSSBARLIST, CBN_SELCHANGE), (LPARAM)hwndCrossbarList);
+                if(bCrossbarAvailable)
+                    SendMessage(hwndCrossbarList, CB_SETCURSEL, 0, 0);
+                EnableWindow(GetDlgItem(hwnd, IDC_CROSSBAR), bCrossbarAvailable);
+                EnableWindow(hwndCrossbarList, bCrossbarAvailable);
 
                 UINT deviceID = CB_ERR;
                 UINT audioDeviceID = CB_ERR;
@@ -1321,6 +1326,13 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         FillOutListOfDevices(hwndDeviceList, CLSID_VideoInputDeviceCategory, &configData->deviceNameList, &configData->deviceIDList);
                         FillOutListOfDevices(hwndAudioDeviceList, CLSID_AudioInputDeviceCategory, &configData->audioNameList, &configData->audioIDList);
                         FillOutListOfDevices(hwndCrossbarList, AM_KSCATEGORY_CROSSBAR, &configData->crossbarList, &configData->crossbarIDList);
+
+                        bool bCrossbarAvailable = FillOutListOfDevices(hwndCrossbarList, AM_KSCATEGORY_CROSSBAR, &configData->crossbarList, &configData->crossbarIDList);
+
+                        if(bCrossbarAvailable)
+                            SendMessage(hwndCrossbarList, CB_SETCURSEL, 0, 0);
+                        EnableWindow(GetDlgItem(hwnd, IDC_CROSSBAR), bCrossbarAvailable);
+                        EnableWindow(hwndCrossbarList, bCrossbarAvailable);
 
                         SendMessage(hwndDeviceList, CB_SETCURSEL, 0, 0);
                         ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_DEVICELIST, CBN_SELCHANGE), (LPARAM)hwndDeviceList);
