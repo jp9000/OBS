@@ -295,7 +295,7 @@ Sources.TransitionSource.DisableFading      "Disable Fading:"
 Sources.TransitionSource.Randomize          "Randomize:"
 
 Updater.DownloadNow         "Would you like to download them now?"
-Updater.Newl          "The following updates are available:\r\n\r\n"
+Updater.NewUpdates          "The following updates are available:\r\n\r\n"
 Updater.RunningWarning      "OBS will be restarted to install the updates.\r\n\r\nAre you sure you want to continue?"
 Updater.UpdatesAvailable    "Updates are available"
 
