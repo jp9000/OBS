@@ -134,7 +134,7 @@ Settings.Advanced.VideoEncoderSettingsTooltip       "This allows you to set cust
 
 Settings.Advanced.Priority.Idle         "Idle"
 Settings.Advanced.Priority.Normal       "Normal"
-Settings.Advanced.Priority.AboveNormal  "AboveNormal"
+Settings.Advanced.Priority.AboveNormal  "Above Normal"
 Settings.Advanced.Priority.High         "High"
 
 Settings.Audio.DesktopBoost         "Desktop Boost (multiple):"
@@ -295,7 +295,7 @@ Sources.TransitionSource.DisableFading      "Disable Fading:"
 Sources.TransitionSource.Randomize          "Randomize:"
 
 Updater.DownloadNow         "Would you like to download them now?"
-Updater.NewUpdates          "The following updates are available:\r\n\r\n"
+Updater.Newl          "The following updates are available:\r\n\r\n"
 Updater.RunningWarning      "OBS will be restarted to install the updates.\r\n\r\nAre you sure you want to continue?"
 Updater.UpdatesAvailable    "Updates are available"
 
