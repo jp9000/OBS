@@ -895,7 +895,7 @@ void OpenPropertyPages(HWND hwnd, String devicename, String deviceid, GUID match
 INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static bool bSelectingColor = false;
-    static bool bMouseDown = false;
+    static bool bMouseDown = false, audioInputDevicesPresent = true;
     static ColorSelectionData colorData;
 
     switch(message)
@@ -942,7 +942,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 LocalizeWindow(hwnd, pluginLocale);
                 FillOutListOfDevices(hwndDeviceList, CLSID_VideoInputDeviceCategory, &configData->deviceNameList, &configData->deviceIDList);
-                FillOutListOfDevices(hwndAudioList, CLSID_AudioInputDeviceCategory, &configData->audioNameList, &configData->audioIDList);
+                
+                audioInputDevicesPresent = FillOutListOfDevices(hwndAudioList, CLSID_AudioInputDeviceCategory, &configData->audioNameList, &configData->audioIDList);
                 
                 bool bCrossbarAvailable = FillOutListOfDevices(hwndCrossbarList, AM_KSCATEGORY_CROSSBAR, &configData->crossbarList, &configData->crossbarIDList);
 
@@ -981,16 +982,21 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                     }
                 }
 
-                if(audioDeviceID == CB_ERR)
+                if(audioInputDevicesPresent)
                 {
-                    SendMessage(hwndAudioList, CB_SETCURSEL, 0, 0);
-                    ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_AUDIOLIST, CBN_SELCHANGE), (LPARAM)hwndAudioList);
+                    if(audioDeviceID == CB_ERR)
+                    {
+                        SendMessage(hwndAudioList, CB_SETCURSEL, 0, 0);
+                        ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_AUDIOLIST, CBN_SELCHANGE), (LPARAM)hwndAudioList);
+                    }
+                    else
+                    {
+                        SendMessage(hwndAudioList, CB_SETCURSEL, audioDeviceID, 0);
+                        ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_AUDIOLIST, CBN_SELCHANGE), (LPARAM)hwndAudioList);
+                    }
                 }
-                else
-                {
-                    SendMessage(hwndAudioList, CB_SETCURSEL, audioDeviceID, 0);
-                    ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_AUDIOLIST, CBN_SELCHANGE), (LPARAM)hwndAudioList);
-                }
+                EnableWindow(hwndAudioList, audioInputDevicesPresent);
+                EnableWindow(GetDlgItem(hwnd, IDC_CONFIGAUDIO), audioInputDevicesPresent);
 
                 ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_CUSTOMRESOLUTION, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDC_CUSTOMRESOLUTION));
 
@@ -1324,8 +1330,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
 
                         FillOutListOfDevices(hwndDeviceList, CLSID_VideoInputDeviceCategory, &configData->deviceNameList, &configData->deviceIDList);
-                        FillOutListOfDevices(hwndAudioDeviceList, CLSID_AudioInputDeviceCategory, &configData->audioNameList, &configData->audioIDList);
-                        FillOutListOfDevices(hwndCrossbarList, AM_KSCATEGORY_CROSSBAR, &configData->crossbarList, &configData->crossbarIDList);
+                        audioInputDevicesPresent = FillOutListOfDevices(hwndAudioDeviceList, CLSID_AudioInputDeviceCategory, &configData->audioNameList, &configData->audioIDList);
 
                         bool bCrossbarAvailable = FillOutListOfDevices(hwndCrossbarList, AM_KSCATEGORY_CROSSBAR, &configData->crossbarList, &configData->crossbarIDList);
 
@@ -1336,8 +1341,16 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         SendMessage(hwndDeviceList, CB_SETCURSEL, 0, 0);
                         ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_DEVICELIST, CBN_SELCHANGE), (LPARAM)hwndDeviceList);
-                        SendMessage(hwndAudioDeviceList, CB_SETCURSEL, 0, 0);
-                        ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_AUDIOLIST, CBN_SELCHANGE), (LPARAM)hwndAudioDeviceList);
+
+
+                        if(audioInputDevicesPresent)
+                        {
+                            SendMessage(hwndAudioDeviceList, CB_SETCURSEL, 0, 0);
+                            ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_AUDIOLIST, CBN_SELCHANGE), (LPARAM)hwndAudioDeviceList);
+                        }
+                        EnableWindow(hwndAudioDeviceList, audioInputDevicesPresent);
+                        EnableWindow(GetDlgItem(hwnd, IDC_CONFIGAUDIO), audioInputDevicesPresent);
+
                         SendMessage(hwndCrossbarList, CB_SETCURSEL, 0, 0);
 
                         break;
@@ -1671,9 +1684,6 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         UINT deviceID = (UINT)SendMessage(GetDlgItem(hwnd, IDC_DEVICELIST), CB_GETCURSEL, 0, 0);
                         if(deviceID == CB_ERR)
                             break;
-                        UINT audioDeviceID = (UINT)SendMessage(GetDlgItem(hwnd, IDC_AUDIOLIST), CB_GETCURSEL, 0, 0);
-                        if(audioDeviceID == CB_ERR)
-                            break;
 
                         ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
 
@@ -1685,7 +1695,6 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         }
 
                         String strDevice = GetCBText(GetDlgItem(hwnd, IDC_DEVICELIST), deviceID);
-                        String strAudioDevice = GetCBText(GetDlgItem(hwnd, IDC_AUDIOLIST), audioDeviceID);
                         String strFPS = GetEditText(GetDlgItem(hwnd, IDC_FPS));
                         if(schr(strFPS, '-'))
                         {
@@ -1742,9 +1751,16 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         bool bForceCustomAudioDevice = SendMessage(GetDlgItem(hwnd, IDC_FORCECUSTOMAUDIO), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         configData->data->SetInt(TEXT("forceCustomAudioDevice"), bForceCustomAudioDevice);
 
-                        configData->data->SetString(TEXT("audioDevice"), strAudioDevice);
-                        configData->data->SetString(TEXT("audioDeviceName"), configData->audioNameList[audioDeviceID]);
-                        configData->data->SetString(TEXT("audioDeviceID"), configData->audioIDList[audioDeviceID]);
+                        if(audioInputDevicesPresent)
+                        {
+                            UINT audioDeviceID = (UINT)SendMessage(GetDlgItem(hwnd, IDC_AUDIOLIST), CB_GETCURSEL, 0, 0);
+                            if(audioDeviceID == CB_ERR)
+                                break;
+                            String strAudioDevice = GetCBText(GetDlgItem(hwnd, IDC_AUDIOLIST), audioDeviceID);
+                            configData->data->SetString(TEXT("audioDevice"), strAudioDevice);
+                            configData->data->SetString(TEXT("audioDeviceName"), configData->audioNameList[audioDeviceID]);
+                            configData->data->SetString(TEXT("audioDeviceID"), configData->audioIDList[audioDeviceID]);
+                        }
 
                         configData->data->SetInt(TEXT("customResolution"), bCustomResolution);
                         configData->data->SetInt(TEXT("resolutionWidth"), resolution.cx);
