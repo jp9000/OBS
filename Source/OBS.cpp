@@ -258,7 +258,9 @@ OBS::OBS()
         y = posY;
     }
 
-    bPanelVisible = true;
+    bPanelVisibleWindowed = GlobalConfig->GetInt(TEXT("General"), TEXT("PanelVisibleWindowed"), 1) != 0;
+    bPanelVisibleFullscreen = GlobalConfig->GetInt(TEXT("General"), TEXT("PanelVisibleFullscreen"), 0) != 0;
+    bPanelVisible = bPanelVisibleWindowed; // Assuming OBS always starts windowed
     bPanelVisibleProcessed = false; // Force immediate process
 
     bFullscreenMode = false;
@@ -691,6 +693,10 @@ OBS::~OBS()
             placement.rcNormalPosition.bottom - placement.rcNormalPosition.top -
             GetSystemMetrics(SM_CYSIZEFRAME) * 2 - GetSystemMetrics(SM_CYCAPTION) - GetSystemMetrics(SM_CYMENU));
     GlobalConfig->SetInt(TEXT("General"), TEXT("Maximized"), placement.showCmd == SW_SHOWMAXIMIZED ? 1 : 0);
+    
+    // Save control panel visibility
+    GlobalConfig->SetInt(TEXT("General"), TEXT("PanelVisibleWindowed"), bPanelVisibleWindowed ? 1 : 0);
+    GlobalConfig->SetInt(TEXT("General"), TEXT("PanelVisibleFullscreen"), bPanelVisibleFullscreen ? 1 : 0);
 
     scenesConfig.Close(true);
 
@@ -863,11 +869,9 @@ void OBS::SetFullscreenMode(bool fullscreen)
         fullscreenPrevPlacement.length = sizeof(fullscreenPrevPlacement);
         GetWindowPlacement(hwndMain, &fullscreenPrevPlacement);
 
-        // Remember if the control panel is visible and hide it
-        fullscreenPrevPanelVisible = bPanelVisible;
-        if(bPanelVisible)
-        {
-            bPanelVisible = false;
+        // Update panel visibility if required
+        if(bPanelVisible != bPanelVisibleFullscreen) {
+            bPanelVisible = bPanelVisibleFullscreen;
             bPanelVisibleProcessed = false;
         }
 
@@ -901,10 +905,9 @@ void OBS::SetFullscreenMode(bool fullscreen)
         // Show menu and status bar
         SetMenu(hwndMain, hmenuMain);
 
-        // Restore control panel visible state
-        if(fullscreenPrevPanelVisible != bPanelVisible)
-        {
-            bPanelVisible = fullscreenPrevPanelVisible;
+        // Restore control panel visible state if required
+        if(bPanelVisible != bPanelVisibleWindowed) {
+            bPanelVisible = bPanelVisibleWindowed;
             bPanelVisibleProcessed = false;
         }
 
@@ -931,22 +934,24 @@ void OBS::ProcessPanelVisibile(bool fromResizeWindow)
     if(bPanelVisibleProcessed)
         return; // Already done
 
-    ShowWindow(GetDlgItem(hwndMain, ID_MICVOLUME), bPanelVisible ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_DESKTOPVOLUME), bPanelVisible ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_MICVOLUMEMETER), bPanelVisible ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_DESKTOPVOLUMEMETER), bPanelVisible ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_SETTINGS), bPanelVisible ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_STARTSTOP), bPanelVisible ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_SCENEEDITOR), bPanelVisible ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), bPanelVisible ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_GLOBALSOURCES), bPanelVisible ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_PLUGINS), bPanelVisible ? SW_SHOW : SW_HIDE);
+    const int visible = bPanelVisible ? SW_SHOW : SW_HIDE;
+
+    ShowWindow(GetDlgItem(hwndMain, ID_MICVOLUME), visible);
+    ShowWindow(GetDlgItem(hwndMain, ID_DESKTOPVOLUME), visible);
+    ShowWindow(GetDlgItem(hwndMain, ID_MICVOLUMEMETER), visible);
+    ShowWindow(GetDlgItem(hwndMain, ID_DESKTOPVOLUMEMETER), visible);
+    ShowWindow(GetDlgItem(hwndMain, ID_SETTINGS), visible);
+    ShowWindow(GetDlgItem(hwndMain, ID_STARTSTOP), visible);
+    ShowWindow(GetDlgItem(hwndMain, ID_SCENEEDITOR), visible);
+    ShowWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), visible);
+    ShowWindow(GetDlgItem(hwndMain, ID_GLOBALSOURCES), visible);
+    ShowWindow(GetDlgItem(hwndMain, ID_PLUGINS), visible);
     if(!bPanelVisible) ShowWindow(GetDlgItem(hwndMain, ID_DASHBOARD), SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_EXIT), bPanelVisible ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_SCENES_TEXT), bPanelVisible ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_SOURCES_TEXT), bPanelVisible ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_SCENES), bPanelVisible ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hwndMain, ID_SOURCES), bPanelVisible ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hwndMain, ID_EXIT), visible);
+    ShowWindow(GetDlgItem(hwndMain, ID_SCENES_TEXT), visible);
+    ShowWindow(GetDlgItem(hwndMain, ID_SOURCES_TEXT), visible);
+    ShowWindow(GetDlgItem(hwndMain, ID_SCENES), visible);
+    ShowWindow(GetDlgItem(hwndMain, ID_SOURCES), visible);
 
     bPanelVisibleProcessed = true;
 
