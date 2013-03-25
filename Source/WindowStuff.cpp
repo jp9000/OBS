@@ -2588,6 +2588,18 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                         }
                         AddProfilesToMenu(hMenu);
                         AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
+                        if (App->bRunning)
+                        {
+                            if (App->bTestStream)
+                                AppendMenu(hMenu, MF_STRING, ID_TESTSTREAM, Str("MainWindow.StopTest"));
+                            else
+                                AppendMenu(hMenu, MF_STRING, ID_STARTSTOP, Str("MainWindow.StopStream"));
+                        }
+                        else
+                            AppendMenu(hMenu, MF_STRING, ID_STARTSTOP, Str("MainWindow.StartStream"));
+                        if (!IsIconic(hwnd))
+                            AppendMenu(hMenu, MF_STRING | (App->bFullscreenMode ? MF_CHECKED : 0), ID_FULLSCREENMODE, Str("MainMenu.Settings.FullscreenMode"));
+                        AppendMenu(hMenu, MF_STRING | (App->bAlwaysOnTop ? MF_CHECKED : 0), ID_ALWAYSONTOP, Str("MainMenu.Settings.AlwaysOnTop"));
                         AppendMenu(hMenu, MF_STRING, ID_FILE_EXIT, Str("MainWindow.Exit"));
                     
                         SetForegroundWindow(hwnd);
