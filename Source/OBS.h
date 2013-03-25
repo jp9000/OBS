@@ -533,6 +533,8 @@ private:
     bool    renderFrameIn1To1Mode;
     int     borderXSize, borderYSize;
     int     clientWidth, clientHeight;
+    bool    bPanelVisibleWindowed;
+    bool    bPanelVisibleFullscreen;
     bool    bPanelVisible;
     bool    bPanelVisibleProcessed;
     bool    bDragResize;
@@ -561,7 +563,6 @@ private:
 
     HMENU           hmenuMain; // Main window menu so we can hide it in fullscreen mode
     WINDOWPLACEMENT fullscreenPrevPlacement;
-    bool            fullscreenPrevPanelVisible;
 
     int     cpuInfo[4];
     bool    bSSE2Available;
