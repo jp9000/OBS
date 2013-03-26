@@ -339,10 +339,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     LPWSTR *args = CommandLineToArgvW(GetCommandLineW(), &numArgs);
 
     bool bDisableMutex = false;
+    bool bIsPortable = false;
+
     for(int i=1; i<numArgs; i++)
     {
         if(scmpi(args[i], TEXT("-multi")) == 0)
             bDisableMutex = true;
+        else if(scmpi(args[i], TEXT("-portable")) == 0)
+            bIsPortable = true;
     }
 
     LocalFree(args);
@@ -382,11 +386,24 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         //always make sure we're running inside our app folder so that locale files and plugins work
         SetWorkingFolder();
 
+        //get current working dir
+        String strDirectory;
+        UINT dirSize = GetCurrentDirectory(0, 0);
+        strDirectory.SetLength(dirSize);
+        GetCurrentDirectory(dirSize, strDirectory.Array());
+
+        scpy(lpAppPath, strDirectory);
+
         TSTR lpAllocator = NULL;
 
         {
-            SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, lpAppDataPath);
-            scat_n(lpAppDataPath, TEXT("\\OBS"), 4);
+            if(bIsPortable)
+                scpy(lpAppDataPath, lpAppPath);
+            else
+            {
+                SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, lpAppDataPath);
+                scat_n(lpAppDataPath, TEXT("\\OBS"), 4);
+            }
 
             if(!OSFileExists(lpAppDataPath) && !OSCreateDirectory(lpAppDataPath))
                 CrashError(TEXT("Couldn't create directory '%s'"), lpAppDataPath);
@@ -436,13 +453,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         //EnableMemoryTracking(true, 8961);
 
         //--------------------------------------------
-
-        String strDirectory;
-        UINT dirSize = GetCurrentDirectory(0, 0);
-        strDirectory.SetLength(dirSize);
-        GetCurrentDirectory(dirSize, strDirectory.Array());
-
-        scpy(lpAppPath, strDirectory);
 
         GlobalConfig->SetString(TEXT("General"), TEXT("LastAppDirectory"), strDirectory.Array());
 
