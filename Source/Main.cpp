@@ -37,6 +37,7 @@ HINSTANCE   hinstMain       = NULL;
 ConfigFile  *GlobalConfig   = NULL;
 ConfigFile  *AppConfig      = NULL;
 OBS         *App            = NULL;
+bool        bIsPortable     = false;
 TCHAR       lpAppPath[MAX_PATH];
 TCHAR       lpAppDataPath[MAX_PATH];
 
@@ -339,7 +340,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     LPWSTR *args = CommandLineToArgvW(GetCommandLineW(), &numArgs);
 
     bool bDisableMutex = false;
-    bool bIsPortable = false;
 
     for(int i=1; i<numArgs; i++)
     {
@@ -393,6 +393,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         GetCurrentDirectory(dirSize, strDirectory.Array());
 
         scpy(lpAppPath, strDirectory);
+
+        //if -portable isn't specified in command line check if there's a file named "obs_portable_mode" in current working dir, if so, obs goes into portable mode
+        if(!bIsPortable)
+        {
+            String strPMFileName = lpAppPath;
+            strPMFileName += TEXT("\\obs_portable_mode");
+            if(OSFileExists(strPMFileName))
+                bIsPortable = true;
+        }
 
         TSTR lpAllocator = NULL;
 

@@ -637,7 +637,8 @@ OBS::OBS()
     currentTime.QuadPart /= 10000000;
     currentTime.QuadPart -= 13000000000;
 
-    if (currentTime.QuadPart - lastUpdateTime.QuadPart >= 3600)
+    //note - don't check for updates if obs is in portable mode (the updater makes assumptions that user data is in appdata [R1CH])
+    if (currentTime.QuadPart - lastUpdateTime.QuadPart >= 3600 && !bIsPortable)
     {
         GlobalConfig->SetInt(TEXT("General"), TEXT("LastUpdateCheck"), (int)currentTime.QuadPart);
         OSCloseThread(OSCreateThread((XTHREAD)CheckUpdateThread, NULL));
