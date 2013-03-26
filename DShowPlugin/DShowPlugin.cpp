@@ -19,7 +19,7 @@
 
 #include "DShowPlugin.h"
 
-//todo: 1700 line file.  this is another one of those abominations.
+//todo: super long file.  this is another one of those abominations.
 //fix it jim
 
 extern "C" __declspec(dllexport) bool LoadPlugin();
@@ -1009,6 +1009,12 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 //------------------------------------------
 
+                DWORD delayTime = configData->data->GetInt(TEXT("delayTime"));
+                SendMessage(GetDlgItem(hwnd, IDC_DELAY), UDM_SETRANGE32, 0, 8000);
+                SendMessage(GetDlgItem(hwnd, IDC_DELAY), UDM_SETPOS32, 0, delayTime);
+
+                //------------------------------------------
+
                 HWND hwndTemp;
 
                 int soundOutputType = configData->data->GetInt(TEXT("soundOutputType"));
@@ -1276,6 +1282,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                     }
                     break;
 
+                case IDC_DELAY_EDIT:
                 case IDC_TIMEOFFSET_EDIT:
                 case IDC_OPACITY_EDIT:
                 case IDC_BASETHRESHOLD_EDIT:
@@ -1293,6 +1300,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                                 HWND hwndVal = NULL;
                                 switch(LOWORD(wParam))
                                 {
+                                    case IDC_DELAY_EDIT:            hwndVal = GetDlgItem(hwnd, IDC_DELAY); break;
                                     case IDC_TIMEOFFSET_EDIT:       hwndVal = GetDlgItem(hwnd, IDC_TIMEOFFSET); break;
                                     case IDC_OPACITY_EDIT:          hwndVal = GetDlgItem(hwnd, IDC_OPACITY); break;
                                     case IDC_BASETHRESHOLD_EDIT:    hwndVal = GetDlgItem(hwnd, IDC_BASETHRESHOLD); break;
@@ -1303,6 +1311,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                                 int val = (int)SendMessage(hwndVal, UDM_GETPOS32, 0, 0);
                                 switch(LOWORD(wParam))
                                 {
+                                    case IDC_DELAY_EDIT:            source->SetInt(TEXT("delayTime"), val); break;
                                     case IDC_TIMEOFFSET_EDIT:       source->SetInt(TEXT("timeOffset"), val); break;
                                     case IDC_OPACITY_EDIT:          source->SetInt(TEXT("opacity"), val); break;
                                     case IDC_BASETHRESHOLD_EDIT:    source->SetInt(TEXT("keySimilarity"), val); break;
@@ -1794,6 +1803,9 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         configData->data->SetInt(TEXT("usePreferredType"), bUsePreferredType);
                         configData->data->SetInt(TEXT("preferredType"), preferredType);
 
+                        DWORD delayTime = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_DELAY), UDM_GETPOS32, 0, 0);
+                        configData->data->SetInt(TEXT("delayTime"), delayTime);
+
                         //------------------------------------------
 
                         int soundOutputType = 0;
@@ -1839,6 +1851,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         if(source)
                         {
+                            source->SetInt(TEXT("delayTime"),           configData->data->GetInt(TEXT("delayTime"), 0));
+
                             source->SetInt(TEXT("timeOffset"),          configData->data->GetInt(TEXT("soundTimeOffset"), 0));
                             source->SetFloat(TEXT("volume"),            configData->data->GetFloat(TEXT("volume"), 1.0f));
 

@@ -36,15 +36,31 @@ enum DeviceColorType
     DeviceOutputType_HDYC,
 };
 
+struct SampleData {
+    LPBYTE lpData;
+    LONGLONG startTime, stopTime;
+    volatile long refs;
+
+    inline SampleData() {refs = 1;}
+    inline ~SampleData() {Free(lpData);}
+
+    inline void AddRef() {++refs;}
+    inline void Release()
+    {
+        if(!InterlockedDecrement(&refs))
+            delete this;
+    }
+};
+
 struct ConvertData
 {
     LPBYTE input, output;
-    IMediaSample *sample;
+    SampleData *sample;
     HANDLE hSignalConvert, hSignalComplete;
-    bool bKillThread;
-    UINT width, height;
-    UINT pitch;
-    UINT startY, endY;
+    bool   bKillThread;
+    UINT   width, height;
+    UINT   pitch;
+    UINT   startY, endY;
 };
 
 class DeviceSource;
@@ -59,6 +75,8 @@ class DeviceAudioSource : public AudioSource
     List<BYTE> sampleBuffer;
     List<BYTE> outputBuffer;
 
+    int delayTime, offset;
+
 protected:
     virtual bool GetNextBuffer(void **buffer, UINT *numFrames, QWORD *timestamp);
     virtual void ReleaseBuffer();
@@ -70,6 +88,9 @@ public:
     ~DeviceAudioSource();
 
     void ReceiveAudio(IMediaSample *sample);
+
+    inline void SetDelayTime(int delayTime) {this->delayTime = delayTime; SetTimeOffset(delayTime+offset);}
+    inline void SetAudioOffset(int offset) {this->offset = offset; SetTimeOffset(delayTime+offset);}
 };
 
 class DeviceSource : public ImageSource
@@ -118,7 +139,8 @@ class DeviceSource : public ImageSource
     XElement        *data;
     UINT            texturePitch;
     bool            bCapturing, bFiltersLoaded;
-    IMediaSample    *curSample;
+    int             delayTime;
+    List<SampleData*> samples;
     Shader          *colorConvertShader;
 
     UINT            opacity;
@@ -148,7 +170,9 @@ class DeviceSource : public ImageSource
     void FlushSamples()
     {
         OSEnterMutex(hSampleMutex);
-        SafeRelease(curSample);
+        for (UINT i=0; i<samples.Num(); i++)
+            delete samples[i];
+        samples.Clear();
         OSLeaveMutex(hSampleMutex);
     }
 

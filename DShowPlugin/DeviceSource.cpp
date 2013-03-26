@@ -77,6 +77,8 @@ DeviceSource::~DeviceSource()
     SafeRelease(capture);
     SafeRelease(graph);
 
+    FlushSamples();
+
     if(hConvertThreads)
         Free(hConvertThreads);
 
@@ -191,6 +193,8 @@ bool DeviceSource::LoadFilters()
     bFlipVertical = data->GetInt(TEXT("flipImage")) != 0;
     bFlipHorizontal = data->GetInt(TEXT("flipImageHorizontal")) != 0;
     bUsePointFiltering = data->GetInt(TEXT("usePointFiltering")) != 0;
+
+    delayTime = data->GetInt(TEXT("delayTime"))*10000;
 
     opacity = data->GetInt(TEXT("opacity"), 100);
 
@@ -628,6 +632,8 @@ bool DeviceSource::LoadFilters()
         audioOut->Initialize(this);
         API->AddAudioSource(audioOut);
 
+        audioOut->SetAudioOffset(soundTimeOffset);
+        audioOut->SetDelayTime(delayTime/10000);
         audioOut->SetVolume(volume);
     }
 
@@ -837,13 +843,23 @@ void DeviceSource::ReceiveVideo(IMediaSample *sample)
 {
     if(bCapturing)
     {
-        OSEnterMutex(hSampleMutex);
+        BYTE *pointer;
+        if (sample)
+        {
+            if (SUCCEEDED(sample->GetPointer(&pointer)))
+            {
+                SampleData *data = new SampleData;
 
-        SafeRelease(curSample);
-        curSample = sample;
-        curSample->AddRef();
+                data->lpData = (LPBYTE)Allocate(sample->GetActualDataLength());
+                mcpy(data->lpData, pointer, sample->GetActualDataLength());
 
-        OSLeaveMutex(hSampleMutex);
+                sample->GetTime(&data->startTime, &data->stopTime);
+
+                OSEnterMutex(hSampleMutex);
+                samples << data;
+                OSLeaveMutex(hSampleMutex);
+            }
+        }
     }
 }
 
@@ -855,16 +871,15 @@ void DeviceSource::ReceiveAudio(IMediaSample *sample)
     }
 }
 
-DWORD STDCALL PackPlanarThread(ConvertData *data)
+static DWORD STDCALL PackPlanarThread(ConvertData *data)
 {
     do
     {
         WaitForSingleObject(data->hSignalConvert, INFINITE);
         if(data->bKillThread) break;
 
-        IMediaSample *sample = data->sample;
         PackPlanar(data->output, data->input, data->width, data->height, data->pitch, data->startY, data->endY);
-        sample->Release();
+        data->sample->Release();
 
         SetEvent(data->hSignalComplete);
     }while(!data->bKillThread);
@@ -900,13 +915,24 @@ void DeviceSource::Preprocess()
 
     //----------------------------------------
 
-    IMediaSample *lastSample = NULL;
+    SampleData *lastSample = NULL;
 
     OSEnterMutex(hSampleMutex);
-    if(curSample)
+    if(samples.Num())
     {
-        lastSample = curSample;
-        curSample = NULL;
+        QWORD sampleTime = samples.Last()->startTime - samples[0]->startTime;
+
+        while (sampleTime >= delayTime) {
+            delete lastSample;
+
+            lastSample = samples[0];
+            samples.Remove(0);
+
+            if (!samples.Num())
+                break;
+
+            sampleTime = samples.Last()->startTime - samples[0]->startTime;
+        }
     }
     OSLeaveMutex(hSampleMutex);
 
@@ -914,21 +940,18 @@ void DeviceSource::Preprocess()
 
     if(lastSample)
     {
-        REFERENCE_TIME refTimeStart, refTimeFinish;
+        /*REFERENCE_TIME refTimeStart, refTimeFinish;
         lastSample->GetTime(&refTimeStart, &refTimeFinish);
 
         static REFERENCE_TIME lastRefTime = 0;
-        //Log(TEXT("refTimeStart: %llu, refTimeFinish: %llu, offset = %llu"), refTimeStart, refTimeFinish, refTimeStart-lastRefTime);
-        lastRefTime = refTimeStart;
+        Log(TEXT("refTimeStart: %llu, refTimeFinish: %llu, offset = %llu"), refTimeStart, refTimeFinish, refTimeStart-lastRefTime);
+        lastRefTime = refTimeStart;*/
 
-        BYTE *lpImage = NULL;
         if(colorType == DeviceOutputType_RGB)
         {
             if(texture)
             {
-                if(SUCCEEDED(lastSample->GetPointer(&lpImage)))
-                    texture->SetImage(lpImage, GS_IMAGEFORMAT_BGRX, renderCX*4);
-
+                texture->SetImage(lastSample->lpData, GS_IMAGEFORMAT_BGRX, renderCX*4);
                 bReadyToDraw = true;
             }
         }
@@ -950,33 +973,27 @@ void DeviceSource::Preprocess()
                 else
                     bFirstFrame = false;
 
-                if(SUCCEEDED(lastSample->GetPointer(&lpImage)))
-                {
-                    for(int i=0; i<numThreads; i++)
-                        lastSample->AddRef();
+                for(int i=0; i<numThreads; i++)
+                    lastSample->AddRef();
 
-                    for(int i=0; i<numThreads; i++)
-                    {
-                        convertData[i].input    = lpImage;
-                        convertData[i].pitch    = texturePitch;
-                        convertData[i].output   = lpImageBuffer;
-                        convertData[i].sample   = lastSample;
-                        SetEvent(convertData[i].hSignalConvert);
-                    }
+                for(int i=0; i<numThreads; i++)
+                {
+                    convertData[i].input    = lastSample->lpData;
+                    convertData[i].sample   = lastSample;
+                    convertData[i].pitch    = texturePitch;
+                    convertData[i].output   = lpImageBuffer;
+                    SetEvent(convertData[i].hSignalConvert);
                 }
             }
             else
             {
-                if(SUCCEEDED(lastSample->GetPointer(&lpImage)))
-                {
-                    LPBYTE lpData;
-                    UINT pitch;
+                LPBYTE lpData;
+                UINT pitch;
 
-                    if(texture->Map(lpData, pitch))
-                    {
-                        PackPlanar(lpData, lpImage, renderCX, renderCY, pitch, 0, renderCY);
-                        texture->Unmap();
-                    }
+                if(texture->Map(lpData, pitch))
+                {
+                    PackPlanar(lpData, lastSample->lpData, renderCX, renderCY, pitch, 0, renderCY);
+                    texture->Unmap();
                 }
 
                 bReadyToDraw = true;
@@ -984,32 +1001,26 @@ void DeviceSource::Preprocess()
         }
         else if(colorType == DeviceOutputType_YVYU || colorType == DeviceOutputType_YUY2)
         {
-            if(SUCCEEDED(lastSample->GetPointer(&lpImage)))
-            {
-                LPBYTE lpData;
-                UINT pitch;
+            LPBYTE lpData;
+            UINT pitch;
 
-                if(texture->Map(lpData, pitch))
-                {
-                    Convert422To444(lpData, lpImage, pitch, true);
-                    texture->Unmap();
-                }
+            if(texture->Map(lpData, pitch))
+            {
+                Convert422To444(lpData, lastSample->lpData, pitch, true);
+                texture->Unmap();
             }
 
             bReadyToDraw = true;
         }
         else if(colorType == DeviceOutputType_UYVY || colorType == DeviceOutputType_HDYC)
         {
-            if(SUCCEEDED(lastSample->GetPointer(&lpImage)))
-            {
-                LPBYTE lpData;
-                UINT pitch;
+            LPBYTE lpData;
+            UINT pitch;
 
-                if(texture->Map(lpData, pitch))
-                {
-                    Convert422To444(lpData, lpImage, pitch, false);
-                    texture->Unmap();
-                }
+            if(texture->Map(lpData, pitch))
+            {
+                Convert422To444(lpData, lastSample->lpData, pitch, false);
+                texture->Unmap();
             }
 
             bReadyToDraw = true;
@@ -1179,7 +1190,13 @@ void DeviceSource::SetInt(CTSTR lpName, int iVal)
         else if(scmpi(lpName, TEXT("timeOffset")) == 0)
         {
             if(audioOut)
-                audioOut->SetTimeOffset(iVal);
+                audioOut->SetAudioOffset(iVal);
+        }
+        else if(scmpi(lpName, TEXT("delayTime")) == 0)
+        {
+            delayTime = iVal*10000;
+            if (audioOut)
+                audioOut->SetDelayTime(iVal);
         }
     }
 }

@@ -25,6 +25,7 @@ copy ..\rundir\pdb32\stripped\*.pdb .\32bit\
 copy ..\rundir\locale\*.txt .\32bit\locale\
 copy ..\rundir\shaders\*.?Shader .\32bit\shaders\
 copy ..\dshowplugin\release\dshowplugin.dll .\32bit\plugins
+copy ..\noisegate\release\noisegate.dll .\32bit\plugins
 copy ..\rundir\plugins\dshowplugin\locale\*.txt .\32bit\plugins\dshowplugin\locale\
 copy ..\rundir\plugins\dshowplugin\shaders\*.?Shader .\32bit\plugins\dshowplugin\shaders\
 copy ..\graphicscapture\release\graphicscapture.dll .\32bit\plugins
@@ -41,6 +42,7 @@ copy ..\rundir\pdb64\stripped\*.pdb .\64bit\
 copy ..\rundir\locale\*.txt .\64bit\locale\
 copy ..\rundir\shaders\*.?Shader .\64bit\shaders\
 copy ..\dshowplugin\x64\release\dshowplugin.dll .\64bit\plugins
+copy ..\noisegate\x64\release\noisegate.dll .\64bit\plugins
 copy ..\rundir\plugins\dshowplugin\locale\*.txt .\64bit\plugins\dshowplugin\locale\
 copy ..\rundir\plugins\dshowplugin\shaders\*.?Shader .\64bit\plugins\dshowplugin\shaders\
 copy ..\graphicscapture\x64\release\graphicscapture.dll .\64bit\plugins
