@@ -68,7 +68,7 @@ MainMenu.Settings.OpenConfigFolder  "Открыть папку &конфигур
 MainMenu.Settings.OpenLogFolder     "Открыть папку &журнала"
 
 MainWindow.Dashboard        "Панель"
-MainWindow.DroppedFrames    "Пропущенные кадры:"
+MainWindow.DroppedFrames    "Потери кадров:"
 MainWindow.Exit             "Выход"
 MainWindow.Plugins          "Плагины"
 MainWindow.SceneEditor      "Изменение сцены"
