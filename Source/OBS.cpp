@@ -277,7 +277,7 @@ OBS::OBS()
     //-----------------------------------------------------
     // render frame
 
-    hwndRenderFrame = CreateWindow(OBS_RENDERFRAME_CLASS, NULL, WS_CHILDWINDOW|WS_VISIBLE,
+    hwndRenderFrame = CreateWindow(OBS_RENDERFRAME_CLASS, NULL, WS_CHILDWINDOW | WS_VISIBLE | WS_CLIPCHILDREN,
         0, 0, 0, 0,
         hwndMain, NULL, hinstMain, NULL);
     if(!hwndRenderFrame)
