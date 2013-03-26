@@ -1603,7 +1603,7 @@ BOOL OBS::SetNotificationAreaIcon(DWORD dwMessage, int idIcon, const String &too
 BOOL OBS::ShowNotificationAreaIcon()
 {
     BOOL result = FALSE;
-    int idIcon = bRunning ? IDI_ICON2 : IDI_ICON1;
+    int idIcon = (bRunning && !bTestStream) ? IDI_ICON2 : IDI_ICON1;
     String tooltip(TEXT("OBS"));
 
     if (!bNotificationAreaIcon)

@@ -472,6 +472,9 @@ void OBS::Start()
 
     UpdateRenderViewMessage();
 
+    //update notification icon to reflect current status
+    UpdateNotificationAreaIcon();
+
     OSLeaveMutex (hStartupShutdownMutex);
 }
 
@@ -628,7 +631,10 @@ void OBS::Stop()
     ClearStreamInfo();
 
     Log(TEXT("=====Stream End======================================================================="));
-    
+
+    //update notification icon to reflect current status
+    UpdateNotificationAreaIcon();
+
     if(streamReport.IsValid())
     {
         MessageBox(hwndMain, streamReport.Array(), Str("StreamReport"), MB_ICONINFORMATION|MB_OK);
