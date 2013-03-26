@@ -900,6 +900,8 @@ void OBS::MainCaptureLoop()
         else
             SleepTo(clockFreq.QuadPart, sleepTargetTime);
 #else
+        GetD3D()->Flush();
+
         DWORD renderStopTime = OSGetTime();
         DWORD totalTime = renderStopTime-renderStartTime;
 
