@@ -733,6 +733,8 @@ OBS::~OBS()
         OSCloseMutex(hInfoMutex);
     if(hHotkeyMutex)
         OSCloseMutex(hHotkeyMutex);
+
+    App = NULL;
 }
 
 /**
