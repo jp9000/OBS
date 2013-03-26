@@ -214,7 +214,7 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
 }
 
 
-//#define USE_100NS_TIME 1
+#define USE_100NS_TIME 1
 
 #ifdef USE_100NS_TIME
 void STDCALL SleepTo(LONGLONG clockFreq, QWORD qw100NSTime)
