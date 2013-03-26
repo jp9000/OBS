@@ -400,9 +400,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             if(bIsPortable)
                 scpy(lpAppDataPath, lpAppPath);
             else
+            {
                 SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, lpAppDataPath);
-
-            scat_n(lpAppDataPath, TEXT("\\OBS"), 4);
+                scat_n(lpAppDataPath, TEXT("\\OBS"), 4);
+            }
 
             if(!OSFileExists(lpAppDataPath) && !OSCreateDirectory(lpAppDataPath))
                 CrashError(TEXT("Couldn't create directory '%s'"), lpAppDataPath);
