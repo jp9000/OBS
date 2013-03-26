@@ -152,43 +152,94 @@ String GetEditText(HWND hwndEdit)
     return strText;
 }
 
-LPBYTE GetCursorData(HICON hIcon, ICONINFO &ii, UINT &size)
+static LPBYTE GetBitmapData(HBITMAP hBmp, BITMAP &bmp)
 {
-    BITMAP bmp;
-    HBITMAP hBmp = ii.hbmColor ? ii.hbmColor : ii.hbmMask;
+    if (!hBmp)
+        return NULL;
 
-    if(GetObject(hBmp, sizeof(bmp), &bmp) != 0)
-    {
-        BITMAPINFO bi;
-        zero(&bi, sizeof(bi));
+    int test;
+    if ((test = GetObject(hBmp, sizeof(DIBSECTION), NULL)) != 0) {
 
-        size = bmp.bmWidth;
+        DIBSECTION *chi = (DIBSECTION*)Allocate(test);
+        GetObject(hBmp, test, chi);
 
-        void* lpBits;
+        Free(chi);
+        int test1 = 4;
+    }
 
-        BITMAPINFOHEADER &bih = bi.bmiHeader;
-        bih.biSize = sizeof(bih);
-        bih.biBitCount = 32;
-        bih.biWidth  = bmp.bmWidth;
-        bih.biHeight = bmp.bmHeight;
-        bih.biPlanes = 1;
+    if (GetObject(hBmp, sizeof(bmp), &bmp) != 0) {
+        UINT bitmapDataSize = bmp.bmHeight*bmp.bmWidth*bmp.bmBitsPixel;
+        bitmapDataSize >>= 3;
 
-        HDC hTempDC = CreateCompatibleDC(NULL);
-        HBITMAP hBitmap = CreateDIBSection(hTempDC, &bi, DIB_RGB_COLORS, &lpBits, NULL, 0);
-        HBITMAP hbmpOld = (HBITMAP)SelectObject(hTempDC, hBitmap);
+        LPBYTE lpBitmapData = (LPBYTE)Allocate(bitmapDataSize);
+        GetBitmapBits(hBmp, bitmapDataSize, lpBitmapData);
 
-        zero(lpBits, bmp.bmHeight*bmp.bmWidth*4);
-        DrawIcon(hTempDC, 0, 0, hIcon);
-
-        LPBYTE lpData = (LPBYTE)Allocate(bmp.bmHeight*bmp.bmWidth*4);
-        mcpy(lpData, lpBits, bmp.bmHeight*bmp.bmWidth*4);
-
-        SelectObject(hTempDC, hbmpOld);
-        DeleteObject(hBitmap);
-        DeleteDC(hTempDC);
-
-        return lpData;
+        return lpBitmapData;
     }
 
     return NULL;
+}
+
+static inline BYTE BitToAlpha(LPBYTE lp1BitTex, int pixel, bool bInvert)
+{
+    BYTE pixelByte = lp1BitTex[pixel/8];
+    BYTE pixelVal = pixelByte >> (7-(pixel%8)) & 1;
+
+    if (bInvert)
+        return pixelVal ? 0xFF : 0;
+    else
+        return pixelVal ? 0 : 0xFF;
+}
+
+LPBYTE GetCursorData(HICON hIcon, ICONINFO &ii, UINT &width, UINT &height)
+{
+    BITMAP bmpColor, bmpMask;
+    LPBYTE lpBitmapData = NULL, lpMaskData = NULL;
+
+    if (lpBitmapData = GetBitmapData(ii.hbmColor, bmpColor)) {
+        if (bmpColor.bmBitsPixel < 32) {
+            Free(lpBitmapData);
+            return NULL;
+        }
+
+        if (lpMaskData = GetBitmapData(ii.hbmMask, bmpMask)) {
+            int pixels = bmpColor.bmHeight*bmpColor.bmWidth;
+            bool bHasAlpha = false;
+
+            //god-awful horrible hack to detect 24bit cursor
+            for (int i=0; i<pixels; i++) {
+                if (lpBitmapData[i*4 + 3] != 0) {
+                    bHasAlpha = true;
+                    break;
+                }
+            }
+
+            if (!bHasAlpha) {
+                for (int i=0; i<pixels; i++) {
+                    lpBitmapData[i*4 + 3] = BitToAlpha(lpMaskData, i, false);
+                }
+            }
+
+            Free(lpMaskData);
+        }
+
+        width  = bmpColor.bmWidth;
+        height = bmpColor.bmHeight;
+    } else if (lpMaskData = GetBitmapData(ii.hbmMask, bmpMask)) {
+        bmpMask.bmHeight /= 2;
+
+        int pixels = bmpMask.bmHeight*bmpMask.bmWidth;
+        lpBitmapData = (LPBYTE)Allocate(pixels*4);
+        zero(lpBitmapData, pixels*4);
+
+        for (int i=0; i<pixels; i++)
+            lpBitmapData[i*4 + 3] = BitToAlpha(lpMaskData+(pixels>>3), i, true);
+
+        Free(lpMaskData);
+
+        width  = bmpMask.bmWidth;
+        height = bmpMask.bmHeight;
+    }
+
+    return lpBitmapData;
 }

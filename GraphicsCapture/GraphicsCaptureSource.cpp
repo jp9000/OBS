@@ -627,11 +627,11 @@ void GraphicsCaptureSource::Render(const Vect2 &pos, const Vect2 &size)
                                 xHotspot = int(ii.xHotspot);
                                 yHotspot = int(ii.yHotspot);
 
-                                UINT size;
-                                LPBYTE lpData = GetCursorData(hIcon, ii, size);
+                                UINT width, height;
+                                LPBYTE lpData = GetCursorData(hIcon, ii, width, height);
                                 if(lpData)
                                 {
-                                    cursorTexture = CreateTexture(size, size, GS_BGRA, lpData, FALSE);
+                                    cursorTexture = CreateTexture(width, height, GS_BGRA, lpData, FALSE);
                                     if(cursorTexture)
                                         bMouseCaptured = true;
 
@@ -726,7 +726,7 @@ void GraphicsCaptureSource::Render(const Vect2 &pos, const Vect2 &size)
                         LoadPixelShader(invertShader);
                 }
 
-                DrawSprite(cursorTexture, 0xFFFFFFFF, newCursorPos.x, newCursorPos.y+newCursorSize.y, newCursorPos.x+newCursorSize.x, newCursorPos.y);
+                DrawSprite(cursorTexture, 0xFFFFFFFF, newCursorPos.x, newCursorPos.y, newCursorPos.x+newCursorSize.x, newCursorPos.y+newCursorSize.y);
             }
         }
 

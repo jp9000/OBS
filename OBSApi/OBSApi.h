@@ -46,7 +46,7 @@ BASE_EXPORT String GetLVText(HWND hwndList, UINT id);
 BASE_EXPORT String GetCBText(HWND hwndCombo, UINT id=CB_ERR);
 BASE_EXPORT String GetEditText(HWND hwndEdit);
 
-BASE_EXPORT LPBYTE GetCursorData(HICON hIcon, ICONINFO &ii, UINT &size);
+BASE_EXPORT LPBYTE GetCursorData(HICON hIcon, ICONINFO &ii, UINT &width, UINT &height);
 
 
 #define SafeReleaseLogRef(var) if(var) {ULONG chi = var->Release(); OSDebugOut(TEXT("releasing %s, %d refs were left\r\n"), L#var, chi); var = NULL;}
