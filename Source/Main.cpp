@@ -387,12 +387,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         SetWorkingFolder();
 
         //get current working dir
-        String strDirectory;
-        UINT dirSize = GetCurrentDirectory(0, 0);
-        strDirectory.SetLength(dirSize);
-        GetCurrentDirectory(dirSize, strDirectory.Array());
+        {
+            String strDirectory;
+            UINT dirSize = GetCurrentDirectory(0, 0);
+            strDirectory.SetLength(dirSize);
+            GetCurrentDirectory(dirSize, strDirectory.Array());
 
-        scpy(lpAppPath, strDirectory);
+            scpy(lpAppPath, strDirectory);
+        }
 
         //if -portable isn't specified in command line check if there's a file named "obs_portable_mode" in current working dir, if so, obs goes into portable mode
         if(!bIsPortable)
@@ -463,7 +465,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         //--------------------------------------------
 
-        GlobalConfig->SetString(TEXT("General"), TEXT("LastAppDirectory"), strDirectory.Array());
+        GlobalConfig->SetString(TEXT("General"), TEXT("LastAppDirectory"), lpAppPath);
 
         //--------------------------------------------
 
