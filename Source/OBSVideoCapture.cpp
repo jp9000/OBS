@@ -398,6 +398,7 @@ void OBS::MainCaptureLoop()
     {
 #ifdef USE_100NS_TIME
         QWORD renderStartTime = GetQPCTime100NS(clockFreq.QuadPart);
+        totalStreamTime = DWORD((renderStartTime-streamTimeStart)/10000);
 
         if(sleepTargetTime == 0 || bWasLaggedFrame)
             sleepTargetTime = renderStartTime;
