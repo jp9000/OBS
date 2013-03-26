@@ -157,16 +157,6 @@ static LPBYTE GetBitmapData(HBITMAP hBmp, BITMAP &bmp)
     if (!hBmp)
         return NULL;
 
-    int test;
-    if ((test = GetObject(hBmp, sizeof(DIBSECTION), NULL)) != 0) {
-
-        DIBSECTION *chi = (DIBSECTION*)Allocate(test);
-        GetObject(hBmp, test, chi);
-
-        Free(chi);
-        int test1 = 4;
-    }
-
     if (GetObject(hBmp, sizeof(bmp), &bmp) != 0) {
         UINT bitmapDataSize = bmp.bmHeight*bmp.bmWidth*bmp.bmBitsPixel;
         bitmapDataSize >>= 3;
