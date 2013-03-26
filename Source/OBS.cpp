@@ -725,6 +725,9 @@ OBS::~OBS()
     delete API;
     API = NULL;
 
+    for (UINT i=0; i<settingsPanes.Num(); i++)
+        delete settingsPanes[i];
+
     if(hInfoMutex)
         OSCloseMutex(hInfoMutex);
     if(hHotkeyMutex)
