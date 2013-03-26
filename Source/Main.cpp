@@ -372,7 +372,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     const Gdiplus::GdiplusStartupInput gdipInput;
     Gdiplus::GdiplusStartup(&gdipToken, &gdipInput, NULL);
 
-    if(InitXT(NULL, TEXT("FastAlloc")))
+    if(InitXT(NULL, TEXT("DefaultAlloc")))
     {
         InitSockets();
         //CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -432,6 +432,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
             LoadGlobalIni();
         }
+
+        //EnableMemoryTracking(true, 8961);
 
         //--------------------------------------------
 
