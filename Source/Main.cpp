@@ -530,7 +530,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             }
         }
 
-        delete App;
+        OBS *appSave = App;
+        App = NULL;
+        delete appSave;
 
         //--------------------------------------------
 

@@ -2619,7 +2619,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
             break;
 
         default:
-            if (message == App->wmExplorerRestarted)
+            if (App && message == App->wmExplorerRestarted)
             {
                 App->UpdateNotificationAreaIcon();
             }
