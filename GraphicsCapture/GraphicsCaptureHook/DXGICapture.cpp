@@ -253,27 +253,19 @@ bool InitDXGICapture()
 {
     bool bSuccess = false;
 
-    TCHAR lpDXGIPath[MAX_PATH];
-    SHGetFolderPath(NULL, CSIDL_SYSTEM_DIR, NULL, SHGFP_TYPE_CURRENT, lpDXGIPath);
-    wcscat_s(lpDXGIPath, MAX_PATH, TEXT("\\dxgi.dll"));
-
-    HMODULE hDXGIDll = GetModuleHandle(lpDXGIPath);
-    if(hDXGIDll)
+    IDXGISwapChain *swap = CreateDummySwap();
+    if(swap)
     {
-        IDXGISwapChain *swap = CreateDummySwap();
-        if(swap)
-        {
-            bSuccess = true;
+        bSuccess = true;
 
-            UPARAM *vtable = *(UPARAM**)swap;
-            giswapPresent.Hook((FARPROC)*(vtable+(32/4)), (FARPROC)DXGISwapPresentHook);
-            giswapResizeBuffers.Hook((FARPROC)*(vtable+(52/4)), (FARPROC)DXGISwapResizeBuffersHook);
+        UPARAM *vtable = *(UPARAM**)swap;
+        giswapPresent.Hook((FARPROC)*(vtable+(32/4)), (FARPROC)DXGISwapPresentHook);
+        giswapResizeBuffers.Hook((FARPROC)*(vtable+(52/4)), (FARPROC)DXGISwapResizeBuffersHook);
 
-            SafeRelease(swap);
+        SafeRelease(swap);
 
-            giswapPresent.Rehook();
-            giswapResizeBuffers.Rehook();
-        }
+        giswapPresent.Rehook();
+        giswapResizeBuffers.Rehook();
     }
 
     return bSuccess;
