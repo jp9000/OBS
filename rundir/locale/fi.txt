@@ -89,7 +89,7 @@ Plugins.Filename    "Tiedostonimi:"
 
 Reconnecting.Retrying   "Yhdistys epäonnistui. Yhdistetään uudelleen"
 
-RenderView.EnableView           "Näytä näkymä"
+RenderView.EnableView           "Näytä esikatselu"
 RenderView.DisplayPanel         "Ohjauspaneelin käyttö"
 RenderView.ViewModeScaleToFit   "Skaalaa sovittaen"
 RenderView.ViewMode1To1         "1:1 moodi"
