@@ -37,7 +37,7 @@ class AACEncoder : public AudioEncoder
     List<BYTE>  aacBuffer;
     List<BYTE>  header;
 
-    List<QWORD> bufferedTimestamps;
+    CircularList<QWORD> bufferedTimestamps;
     QWORD curEncodeTimestamp;
     bool bFirstFrame;
 

@@ -43,7 +43,7 @@ public:
         return num-1;
     }
 
-    unsigned int SafeAdd(const T& val)
+    inline unsigned int SafeAdd(const T& val)
     {
         UINT i;
         for(i=0; i<num; i++)
@@ -747,6 +747,238 @@ public:
     }
 };
 
+//===================================================================
+// CircularList
+//   a list designed around minimizing allocation and data movement.
+//   NOTE: to maximize speed, does not resize downward.
+//   apologies, this was surprisingly complicated to write
+//
+//   code annoyance rating: hide yo kids, hide yo wives, hide yo husbands
+//===================================================================
+
+template<typename T> class CircularList : protected List<T>
+{
+    unsigned int startID, endID;
+    unsigned int storedNum;
+
+    inline unsigned int GetRealIndex(unsigned int index)
+    {
+        if (startID == 0) {
+            return index;
+        } else {
+            unsigned int newIndex = startID + index;
+            if (newIndex >= num)
+                newIndex -= num;
+
+            return newIndex;
+        }
+    }
+
+public:
+    inline CircularList() : startID(0), endID(0), storedNum(0) {}
+
+    inline unsigned int Add(const T& val)
+    {
+        if (storedNum == num) {
+            if (startID == 0) {
+                List::Add(val);
+
+                if (storedNum != 0)
+                    ++endID;
+            } else {
+                List::SetSize(storedNum+1);
+                mcpyrev(array+startID+1, array+startID, (storedNum-startID)*sizeof(T));
+                mcpy(array+startID, &val, sizeof(T));
+                ++startID;
+                ++endID;
+            }
+        } else {
+            if (storedNum > 0)
+                endID = (endID == num-1) ? 0 : endID+1;
+            mcpy(array+endID, &val, sizeof(T));
+        }
+
+        return storedNum++;
+    }
+
+    inline void Insert(unsigned int index, const T& val)
+    {
+        unsigned int realID = GetRealIndex(index);
+
+        if (storedNum == num) {
+            List::Insert(realID, val);
+
+            if (realID == (num-1)) {
+                endID = realID;
+            } else if (index == (num-1)) {
+                ++startID;
+                ++endID;
+            } else {
+                if (startID > realID)
+                    ++startID;
+                if (endID >= realID)
+                    ++endID;
+            }
+        } else {
+            if (realID == endID+1) {
+                ++endID;
+                mcpy(array+endID, &val, sizeof(T));
+            } else if (realID == startID) {
+                if (storedNum > 0)
+                    startID = (startID == 0) ? num-1 : startID-1;
+                mcpy(array+startID, &val, sizeof(T));
+            } else if (realID <= endID && endID < (num-1)) {
+                unsigned int count = endID-realID+1;
+
+                mcpyrev(array+realID+1, array+realID, count*sizeof(T));
+                mcpy(array+realID, &val, sizeof(T));
+                ++endID;
+            } else if (index == storedNum && realID == 0) {
+
+                endID = realID;
+                mcpy(array, &val, sizeof(T));
+            } else {
+                unsigned int count = realID-startID;
+
+                mcpy(array+startID-1, array+startID, count*sizeof(T));
+                --realID;
+                mcpy(array+realID, &val, sizeof(T));
+                --startID;
+            }
+        }
+
+        ++storedNum;
+    }
+
+    inline void Remove(unsigned int index)
+    {
+        unsigned int realID = GetRealIndex(index);
+
+        if (realID == endID) {
+            endID = (endID == 0) ? num-1 : endID-1;
+        } else if (realID == startID) {
+            startID = (startID == num-1) ? 0 : startID+1;
+        } else if (realID < endID) {
+            unsigned int count = endID-realID;
+            mcpy(array+realID, array+realID+1, count*sizeof(T));
+            --endID;
+        } else if (realID > startID) {
+            unsigned int count = realID-startID;
+            mcpyrev(array+startID+1, array+startID, count*sizeof(T));
+            ++startID;
+        }
+
+        --storedNum;
+
+        if (!storedNum)
+            startID = endID = 0;
+    }
+
+    inline void RemoveItem(const T& obj)
+    {
+        for (unsigned int i=0; i<storedNum; i++) {
+            if (GetElement(i) == obj) {
+                Remove(i);
+                return;
+            }
+        }
+    }
+
+    inline void SetBaseSize(unsigned int newSize)
+    {
+        if (newSize > num) {
+            unsigned int endPoint = num;
+
+            List::SetSize(newSize);
+
+            if (endID < startID) {
+                unsigned int count = (num-endPoint);
+                mcpyrev(array+startID+count, array+startID, count*sizeof(T));
+            }
+        }
+    }
+
+    inline unsigned int Num() const
+    {
+        return storedNum;
+    }
+
+    inline void Clear()
+    {
+        storedNum = startID = endID = 0;
+        List::Clear();
+    }
+
+    inline T* CreateNew()
+    {
+        T addVal;
+        zero(&addVal, sizeof(T));
+        Add(addVal);
+
+        return array+endID;
+    }
+
+    inline T* InsertNew(int index)
+    {
+        T ins;
+        zero(&ins, sizeof(T));
+        Insert(index, ins);
+
+        return array+GetRealIndex(index);
+    }
+
+    inline List<T>& operator<<(const T& val)
+    {
+        Add(val);
+        return *this;
+    }
+
+    inline T& GetElement(unsigned int index)
+    {
+        if(index >= storedNum) CrashError(TEXT("Out of range!  CircularList::GetElement(%d)"), index);
+        return array[GetRealIndex(index)];
+    }
+
+    inline T& operator[](unsigned int index)
+    {
+        if(index >= storedNum) CrashError(TEXT("Out of range!  CircularList::operator[](%d)"), index);
+        return array[GetRealIndex(index)];
+    }
+
+    inline T& operator[](unsigned int index) const
+    {
+        if(index >= storedNum) CrashError(TEXT("Out of range!  CircularList::operator[](%d)"), index);
+        return array[GetRealIndex(index)];
+    }
+
+    inline void SwapValues(UINT valA, UINT valB)
+    {
+        List::SwapValues(GetRealID(valA), GetRealID(valB));
+    }
+
+    inline void MoveElement(UINT valFrom, UINT valTo)
+    {
+        if(valFrom >= storedNum || valTo >= storedNum) {
+            AppWarning(TEXT("CircularList::MoveElement:  invalid values"));
+            return;
+        }
+
+        T val;
+        mcpy(&val, array+GetRealIndex(valFrom), sizeof(T));
+        Remove(valFrom);
+        Insert(valTo, val);
+
+        zero(&val, sizeof(T));
+    }
+
+    inline T& Last() const
+    {
+        assert(num);
+        return array[endID];
+    }
+};
+
+//===================================================================
 
 class BASE_EXPORT BufferInputSerializer : public Serializer
 {

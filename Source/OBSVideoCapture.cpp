@@ -156,12 +156,12 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
                 {
                     UINT audioTimestamp = UINT(pendingAudioFrames[0].timestamp-frameInfo.firstFrameTime);
 
-                    if(bFirstAudioPacket)
+                    /*if(bFirstAudioPacket)
                     {
                         audioTimestamp = 0;
                         bFirstAudioPacket = false;
                     }
-                    else
+                    else*/
                         audioTimestamp += curCTSOffset;
 
                     //stop sending audio packets when we reach an audio timestamp greater than the video timestamp
@@ -185,6 +185,8 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
                         }
                     }
                 }
+                else
+                    nop();
 
                 pendingAudioFrames[0].audioData.Clear();
                 pendingAudioFrames.Remove(0);

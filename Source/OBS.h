@@ -108,6 +108,15 @@ public:
 
 //-------------------------------------------------------------------
 
+struct TimedPacket
+{
+    List<BYTE> data;
+    DWORD timestamp;
+    PacketType type;
+};
+
+//-------------------------------------------------------------------
+
 class VideoFileStream
 {
 public:
@@ -597,10 +606,10 @@ private:
     HANDLE  hMainThread;
     HANDLE  hSceneMutex;
 
-    List<VideoSegment> bufferedVideo;
+    CircularList<VideoSegment> bufferedVideo;
 
-    List<UINT> bufferedTimes;
-    List<UINT> ctsOffsets;
+    CircularList<UINT> bufferedTimes;
+    CircularList<UINT> ctsOffsets;
 
     bool bRecievedFirstAudioFrame, bSentHeaders, bFirstAudioPacket;
 
@@ -632,7 +641,7 @@ private:
     float   desktopPeak, micPeak;
     float   desktopMax, micMax;
     float   desktopMag, micMag;
-    List<FrameAudio> pendingAudioFrames;
+    CircularList<FrameAudio> pendingAudioFrames;
     bool    bForceMicMono;
     float   desktopBoost, micBoost;
 
@@ -657,6 +666,7 @@ private:
 
     static DWORD STDCALL MainAudioThread(LPVOID lpUnused);
     bool QueryNewAudio(QWORD &timestamp);
+    void EncodeAudioSegment(float *buffer, UINT numFrames, QWORD timestamp);
     void MainAudioLoop();
 
     //---------------------------------------------------

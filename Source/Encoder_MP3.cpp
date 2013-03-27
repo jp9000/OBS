@@ -45,7 +45,7 @@ class MP3Encoder : public AudioEncoder
     UINT outputFrameSize;
     UINT curBitRate;
 
-    List<QWORD> bufferedTimestamps;
+    CircularList<QWORD> bufferedTimestamps;
     QWORD curEncodeTimestamp;
     DWORD frameCounter;
     bool bFirstFrame;

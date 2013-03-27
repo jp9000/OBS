@@ -735,49 +735,6 @@ inline float toDB(float RMS)
     return db;
 }
 
-bool OBS::QueryNewAudio(QWORD &timestamp)
-{
-    bool bNewAudio = false;
-
-    UINT audioRet;
-    timestamp = INVALID_LL;
-
-    QWORD desktopTimestamp;
-    while((audioRet = desktopAudio->QueryAudio(curDesktopVol)) != NoAudioAvailable)
-    {
-        bNewAudio = true;
-
-        OSEnterMutex(hAuxAudioMutex);
-        for(UINT i=0; i<auxAudioSources.Num(); i++)
-            auxAudioSources[i]->QueryAudio(auxAudioSources[i]->GetVolume());
-        OSLeaveMutex(hAuxAudioMutex);
-
-        if(micAudio != NULL)
-            micAudio->QueryAudio(curMicVol);
-    }
-
-    if(bNewAudio)
-    {
-        OSEnterMutex(hAuxAudioMutex);
-        for(UINT i=0; i<auxAudioSources.Num(); i++)
-            auxAudioSources[i]->QueryAudio(auxAudioSources[i]->GetVolume());
-        OSLeaveMutex(hAuxAudioMutex);
-
-        if(micAudio)
-        {
-            while((audioRet = micAudio->QueryAudio(curMicVol)) != NoAudioAvailable);
-        }
-    }
-
-    if(desktopAudio->GetEarliestTimestamp(desktopTimestamp))
-        timestamp = desktopTimestamp;
-
-    if(desktopAudio->GetBufferedTime() >= App->bufferingTime)
-        return true;
-
-    return false;
-}
-
 void MixAudio(float *bufferDest, float *bufferSrc, UINT totalFloats, bool bForceMono)
 {
     UINT floatsLeft = totalFloats;
@@ -845,14 +802,70 @@ void MixAudio(float *bufferDest, float *bufferSrc, UINT totalFloats, bool bForce
     }
 }
 
+bool OBS::QueryNewAudio(QWORD &timestamp)
+{
+    bool bNewAudio = false;
+
+    UINT audioRet;
+    timestamp = INVALID_LL;
+
+    QWORD desktopTimestamp;
+    while((audioRet = desktopAudio->QueryAudio(curDesktopVol)) != NoAudioAvailable)
+    {
+        bNewAudio = true;
+
+        OSEnterMutex(hAuxAudioMutex);
+        for(UINT i=0; i<auxAudioSources.Num(); i++)
+            auxAudioSources[i]->QueryAudio(auxAudioSources[i]->GetVolume());
+        OSLeaveMutex(hAuxAudioMutex);
+
+        if(micAudio != NULL)
+            micAudio->QueryAudio(curMicVol);
+    }
+
+    if(bNewAudio)
+    {
+        OSEnterMutex(hAuxAudioMutex);
+        for(UINT i=0; i<auxAudioSources.Num(); i++)
+            auxAudioSources[i]->QueryAudio(auxAudioSources[i]->GetVolume());
+        OSLeaveMutex(hAuxAudioMutex);
+
+        if(micAudio)
+        {
+            while((audioRet = micAudio->QueryAudio(curMicVol)) != NoAudioAvailable);
+        }
+    }
+
+    if(desktopAudio->GetEarliestTimestamp(desktopTimestamp))
+        timestamp = desktopTimestamp;
+
+    if(desktopAudio->GetBufferedTime() >= App->bufferingTime)
+        return true;
+
+    return false;
+}
+
+void OBS::EncodeAudioSegment(float *buffer, UINT numFrames, QWORD timestamp)
+{
+    DataPacket packet;
+    if(audioEncoder->Encode(buffer, numFrames, packet, timestamp))
+    {
+        OSEnterMutex(hSoundDataMutex);
+
+        FrameAudio *frameAudio = pendingAudioFrames.CreateNew();
+        frameAudio->audioData.CopyArray(packet.lpPacket, packet.size);
+        frameAudio->timestamp = timestamp;
+
+        OSLeaveMutex(hSoundDataMutex);
+    }
+}
+
 void OBS::MainAudioLoop()
 {
     DWORD taskID = 0;
     HANDLE hTask = AvSetMmThreadCharacteristics(TEXT("Pro Audio"), &taskID);
 
     bPushToTalkOn = false;
-
-    UINT curAudioFrame = 0;
 
     micMax = desktopMax = VOL_MIN;
     micPeak = desktopPeak = VOL_MIN;
@@ -862,6 +875,11 @@ void OBS::MainAudioLoop()
     UINT audioFramesSinceDesktopMaxUpdate = 0;
 
     List<float> mixedLatestDesktopSamples;
+
+    List<float> blank10msSample;
+    blank10msSample.SetSize(882);
+
+    QWORD lastAudioTime = 0;
 
     while(TRUE)
     {
@@ -891,6 +909,14 @@ void OBS::MainAudioLoop()
         QWORD timestamp;
         while(QueryNewAudio(timestamp))
         {
+            if (!lastAudioTime)
+                lastAudioTime = App->GetSceneTimestamp();
+
+            if (lastAudioTime < timestamp) {
+                while ((lastAudioTime+=10) < timestamp)
+                    EncodeAudioSegment(blank10msSample.Array(), 441, lastAudioTime);
+            }
+
             //----------------------------------------------------------------------------
             // get latest sample for calculating the volume levels
 
@@ -1021,22 +1047,7 @@ void OBS::MainAudioLoop()
             if(bMicEnabled)
                 MixAudio(desktopBuffer, micBuffer, totalFloats, bForceMicMono);
 
-            DataPacket packet;
-            if(audioEncoder->Encode(desktopBuffer, totalFloats>>1, packet, timestamp))
-            {
-                OSEnterMutex(hSoundDataMutex);
-
-                FrameAudio *frameAudio = pendingAudioFrames.CreateNew();
-                frameAudio->audioData.CopyArray(packet.lpPacket, packet.size);
-                frameAudio->timestamp = timestamp;
-
-                /*DWORD calcTimestamp = DWORD(double(curAudioFrame)*double(GetAudioEncoder()->GetFrameSize())/44.1);
-                Log(TEXT("returned timestamp: %u, calculated timestamp: %u"), timestamp, calcTimestamp);*/
-
-                curAudioFrame++;
-
-                OSLeaveMutex(hSoundDataMutex);
-            }
+            EncodeAudioSegment(desktopBuffer, totalFloats>>1, lastAudioTime);
         }
 
         //-----------------------------------------------
