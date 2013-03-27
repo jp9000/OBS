@@ -62,7 +62,7 @@ inline UINT64 ConvertToAudioTime(DWORD timestamp, UINT64 minVal)
 }
 
 
-//code annoyance rating: fairly nightmarish
+//code annoyance rating: nightmarish
 
 class MP4FileStream : public VideoFileStream
 {
@@ -97,7 +97,6 @@ class MP4FileStream : public VideoFileStream
 
     UINT64 mdatStart, mdatStop;
 
-    bool bSentFirstVideoPacket;
     bool bCancelMP4Build;
 
     void PushBox(BufferOutputSerializer &output, DWORD boxName)
@@ -259,7 +258,7 @@ public:
             UINT64 newTimeVal = lastAudioTimeVal+audioFrameSize;
             if(audioFrames.Num() > 1)
             {
-                UINT64 convertedTime = ConvertToAudioTime(audioFrame.timestamp, audioFrameSize*(audioFrames.Num()+1));
+                UINT64 convertedTime = ConvertToAudioTime(audioFrame.timestamp, audioFrameSize*audioFrames.Num());
                 if(convertedTime > newTimeVal)
                     newTimeVal = convertedTime;
             }
@@ -285,6 +284,8 @@ public:
             return;
 
         App->EnableSceneSwitching(false);
+
+        //---------------------------------------------------
 
         HWND hwndProgressDialog = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_BUILDINGMP4), hwndMain, (DLGPROC)MP4ProgressDialogProc);
         SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETRANGE32, 0, 100);
@@ -795,11 +796,6 @@ public:
 
     virtual void AddPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)
     {
-        if(!bSentFirstVideoPacket && type != PacketType_Audio)
-        {
-            bSentFirstVideoPacket = true;
-        }
-
         UINT64 offset = fileOut.GetPos();
 
         if(type == PacketType_Audio)
@@ -826,7 +822,7 @@ public:
                                             curAudioChunkOffset, connectedAudioSampleOffset, numAudioSamples);
 
             if(audioFrames.Num())
-                GetAudioDecodeTime(audioFrame, false);
+                GetAudioDecodeTime(audioFrames.Last(), false);
 
             audioFrames << audioFrame;
         }
