@@ -75,12 +75,21 @@ protected:
     DWORD firstTimestamp;
     bool bSentFirstKeyframe, bSentFirstAudio;
 
+    CircularList<TimedPacket> bufferedPackets;
+    DWORD audioTimeOffset;
+    bool bBufferFull;
+
+    bool bFirstKeyframe;
+    UINT FindClosestBufferIndex(DWORD timestamp);
+    void InitializeBuffer();
+    void SendPacketForReal(BYTE *data, UINT size, DWORD timestamp, PacketType type);
+
     //-----------------------------------------------
     // frame drop stuff
 
     DWORD minFramedropTimestsamp;
     DWORD dropThreshold, bframeDropThreshold;
-    List<NetworkPacket> queuedPackets;
+    CircularList<NetworkPacket> queuedPackets;
     UINT currentBufferSize;//, outputRateWindowTime;
     UINT lastBFrameDropTime;
 
