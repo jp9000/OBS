@@ -21,6 +21,7 @@
 #include <shellapi.h>
 #include <uxtheme.h>
 #include <vsstyle.h>
+#include <MMSystem.h>
 
 
 //hello, you've come into the file I hate the most.
@@ -2521,6 +2522,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
             if(wParam == 0)
             {
+                PlaySound((LPCTSTR)SND_ALIAS_SYSTEMASTERISK, NULL, SND_ALIAS_ID | SND_ASYNC);
                 if(!App->bAutoReconnect)
                     MessageBox(hwnd, Str("Connection.Disconnected"), NULL, 0);
                 else
