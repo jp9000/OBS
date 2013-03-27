@@ -21,6 +21,8 @@
 #include "RTMPStuff.h"
 #include "RTMPPublisher.h"
 
+#define MAX_BUFFERED_PACKETS 10
+
 String RTMPPublisher::strRTMPErrors;
 
 //QWORD totalCalls = 0, totalTime = 0;
@@ -62,6 +64,8 @@ String RTMPPublisher::GetRTMPErrors()
 
 RTMPPublisher::RTMPPublisher()
 {
+    bufferedPackets.SetBaseSize(MAX_BUFFERED_PACKETS);
+
     hSendSempahore = CreateSemaphore(NULL, 0, 0x7FFFFFFFL, NULL);
     if(!hSendSempahore)
         CrashError(TEXT("RTMPPublisher: Could not create semaphore"));
@@ -186,6 +190,11 @@ RTMPPublisher::~RTMPPublisher()
     if(hDataMutex)
         OSCloseMutex(hDataMutex);
 
+    while (bufferedPackets.Num()) {
+        bufferedPackets[0].data.Clear();
+        bufferedPackets.Remove(0);
+    }
+
     //wake up and shut down the buffered sender
     SetEvent(hWriteEvent);
     SetEvent(hBufferEvent);
@@ -248,6 +257,43 @@ RTMPPublisher::~RTMPPublisher()
     //--------------------------
 }
 
+UINT RTMPPublisher::FindClosestBufferIndex(DWORD timestamp)
+{
+    UINT index;
+    for (index=0; index<bufferedPackets.Num(); index++) {
+        if (bufferedPackets[index].timestamp > timestamp)
+            break;
+    }
+
+    return index;
+}
+
+void RTMPPublisher::InitializeBuffer()
+{
+    bool bFirstAudio = true;
+    for (UINT i=0; i<bufferedPackets.Num(); i++) {
+        TimedPacket &packet = bufferedPackets[i];
+
+        //first, get the audio time offset from the first audio packet
+        if (packet.type == PacketType_Audio) {
+            if (bFirstAudio) {
+                audioTimeOffset = packet.timestamp;
+                bFirstAudio = false;
+            }
+
+            DWORD newTimestamp = packet.timestamp-audioTimeOffset;
+
+            UINT newIndex = FindClosestBufferIndex(newTimestamp);
+            if (newIndex < i) {
+                bufferedPackets.MoveElement(i, newIndex);
+                bufferedPackets[newIndex].timestamp = newTimestamp;
+            } else {
+                bufferedPackets[i].timestamp = newTimestamp;
+            }
+        }
+    }
+}
+
 void RTMPPublisher::ProcessPackets()
 {
     if(!bStreamStarted)
@@ -296,6 +342,54 @@ void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketTyp
         bConnecting = true;
     }
 
+    if (bFirstKeyframe) {
+        if (!bConnected || type != PacketType_VideoHighest)
+            return;
+
+        firstTimestamp = timestamp;
+        bFirstKeyframe = false;
+    }
+
+    if (bufferedPackets.Num() == MAX_BUFFERED_PACKETS) {
+        if (!bBufferFull) {
+            InitializeBuffer();
+            bBufferFull = true;
+        }
+
+        TimedPacket packet;
+        mcpy(&packet, &bufferedPackets[0], sizeof(TimedPacket));
+        bufferedPackets.Remove(0);
+
+        SendPacketForReal(packet.data.Array(), packet.data.Num(), packet.timestamp, packet.type);
+    }
+
+    timestamp -= firstTimestamp;
+
+    TimedPacket *packet;
+    UINT newID;
+    if (type == PacketType_Audio) {
+        timestamp -= audioTimeOffset;
+
+        newID = FindClosestBufferIndex(timestamp);
+        packet = bufferedPackets.InsertNew(newID);
+    } else {
+        packet = bufferedPackets.CreateNew();
+    }
+
+    packet->data.CopyArray(data, size);
+    packet->timestamp = timestamp;
+    packet->type = type;
+
+    /*for (UINT i=0; i<bufferedPackets.Num(); i++)
+    {
+        if (bufferedPackets[i].data.Array() == 0)
+            nop();
+    }*/
+}
+
+void RTMPPublisher::SendPacketForReal(BYTE *data, UINT size, DWORD timestamp, PacketType type)
+{
+    //Log(TEXT("packet| timestamp: %u, type: %u, bytes: %u"), timestamp, (UINT)type, size);
     if(!bStopping)
     {
         OSEnterMutex(hDataMutex);
@@ -310,7 +404,6 @@ void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketTyp
             {
                 if(type == PacketType_VideoHighest)
                 {
-                    firstTimestamp = timestamp;
                     bSend = true;
 
                     OSDebugOut(TEXT("got keyframe: %u\r\n"), OSGetTime());
@@ -319,8 +412,6 @@ void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketTyp
 
             if(bSend)
             {
-                timestamp -= firstTimestamp;
-
                 if(!bSentFirstAudio && type == PacketType_Audio)
                 {
                     timestamp = 0;
@@ -362,6 +453,8 @@ void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketTyp
                     NetworkPacket *queuedPacket = queuedPackets.CreateNew();
                     queuedPacket->distanceFromDroppedFrame = droppedFrameVal;
                     queuedPacket->data.TransferFrom(paddedData);
+                    if (queuedPacket->data.Num() == 0)
+                        nop();
                     queuedPacket->timestamp = timestamp;
                     queuedPacket->type = type;
                 }
