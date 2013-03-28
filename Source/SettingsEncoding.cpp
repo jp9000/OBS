@@ -174,7 +174,9 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 hwndTemp = GetDlgItem(hwnd, IDC_AUDIOBITRATE);
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("48"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("64"));
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("80"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("96"));
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("112"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("128"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("160"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("192"));
