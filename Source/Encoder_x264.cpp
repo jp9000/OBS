@@ -226,7 +226,7 @@ public:
         paramData.i_timebase_den        = 1000;
 
         paramData.pf_log                = get_x264_log;
-        paramData.i_log_level           = X264_LOG_INFO;
+        paramData.i_log_level           = X264_LOG_WARNING;
 
         for(UINT i=0; i<paramList.Num(); i++)
         {
