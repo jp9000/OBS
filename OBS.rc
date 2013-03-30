@@ -163,9 +163,9 @@ BEGIN
     PUSHBUTTON      "Remove",IDC_REMOVE,301,58,75,14
     LTEXT           "Settings.General.Restart",IDC_INFO,7,145,409,48,NOT WS_VISIBLE
     CONTROL         "Settings.General.Notification",IDC_NOTIFICATIONICON,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,172,94,108,10,WS_EX_RIGHT
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,94,264,10,WS_EX_RIGHT
     CONTROL         "Settings.General.NotificationMinimize",IDC_MINIZENOTIFICATION,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,146,110,134,10,WS_EX_RIGHT
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,110,261,10,WS_EX_RIGHT
 END
 
 IDD_SETTINGS_AUDIO DIALOGEX 0, 0, 427, 336
