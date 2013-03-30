@@ -376,7 +376,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     const Gdiplus::GdiplusStartupInput gdipInput;
     Gdiplus::GdiplusStartup(&gdipToken, &gdipInput, NULL);
 
-    if(InitXT(NULL, TEXT("DefaultAlloc")))
+    if(InitXT(NULL, TEXT("FastAlloc")))
     {
         InitSockets();
         //CoInitializeEx(NULL, COINIT_MULTITHREADED);
