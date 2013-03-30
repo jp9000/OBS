@@ -384,6 +384,11 @@ void AddOutput(AM_MEDIA_TYPE *pMT, BYTE *capsData, bool bAllowV2, List<MediaOutp
                 outputInfo->minCY = pVSCC->MinOutputSize.cy;
                 outputInfo->maxCY = pVSCC->MaxOutputSize.cy;
 
+                if (!outputInfo->minCX || !outputInfo->minCY || !outputInfo->maxCX || !outputInfo->maxCY) {
+                    outputInfo->minCX = outputInfo->maxCX = bmiHeader->biWidth;
+                    outputInfo->minCY = outputInfo->maxCY = bmiHeader->biHeight;
+                }
+
                 //actually due to the other code in GetResolutionFPSInfo, we can have this granularity
                 // back to the way it was.  now, even if it's corrupted, it will always work
                 outputInfo->xGranularity = max(pVSCC->OutputGranularityX, 1);

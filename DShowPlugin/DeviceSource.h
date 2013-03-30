@@ -38,7 +38,7 @@ enum DeviceColorType
 
 struct SampleData {
     LPBYTE lpData;
-    LONGLONG startTime, stopTime;
+    LONGLONG startTime;
     volatile long refs;
 
     inline SampleData() {refs = 1;}

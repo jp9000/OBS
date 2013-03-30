@@ -853,7 +853,8 @@ void DeviceSource::ReceiveVideo(IMediaSample *sample)
                 data->lpData = (LPBYTE)Allocate(sample->GetActualDataLength());
                 mcpy(data->lpData, pointer, sample->GetActualDataLength());
 
-                sample->GetTime(&data->startTime, &data->stopTime);
+                LONGLONG stopTime;
+                sample->GetTime(&data->startTime, &stopTime);
 
                 OSEnterMutex(hSampleMutex);
                 samples << data;
