@@ -392,7 +392,12 @@ void OBS::MainCaptureLoop()
     //----------------------------------------
 
     QWORD curStreamTime = 0, lastStreamTime, firstFrameTime = GetQPCTimeMS(clockFreq.QuadPart);
+
+#ifdef USE_100NS_TIME
+    lastStreamTime = GetQPCTime100NS(clockFreq.QuadPart)-frameTime100ns;
+#else
     lastStreamTime = firstFrameTime-frameTime;
+#endif
 
     bool bFirstAudioPacket = true;
 
