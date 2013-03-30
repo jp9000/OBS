@@ -55,14 +55,7 @@ void SetupDXGIStuff(IDXGISwapChain *swap)
     IUnknown *deviceUnk, *device;
     if(SUCCEEDED(swap->GetDevice(__uuidof(IUnknown), (void**)&deviceUnk)))
     {
-        if(SUCCEEDED(deviceUnk->QueryInterface(__uuidof(ID3D11Device), (void**)&device)))
-        {
-            logOutput << "DXGI: Found D3D 11" << endl;
-            SetupD3D11(swap);
-            captureProc = DoD3D11Capture;
-            clearProc   = ClearD3D11Data;
-        }
-        else if(SUCCEEDED(deviceUnk->QueryInterface(__uuidof(ID3D10Device), (void**)&device)))
+        if(SUCCEEDED(deviceUnk->QueryInterface(__uuidof(ID3D10Device), (void**)&device)))
         {
             logOutput << "DXGI: Found D3D 10" << endl;
             SetupD3D10(swap);
@@ -75,6 +68,13 @@ void SetupDXGIStuff(IDXGISwapChain *swap)
             SetupD3D101(swap);
             captureProc = DoD3D101Capture;
             clearProc   = ClearD3D101Data;
+        }
+        else if(SUCCEEDED(deviceUnk->QueryInterface(__uuidof(ID3D11Device), (void**)&device)))
+        {
+            logOutput << "DXGI: Found D3D 11" << endl;
+            SetupD3D11(swap);
+            captureProc = DoD3D11Capture;
+            clearProc   = ClearD3D11Data;
         }
         else
         {
@@ -148,14 +148,73 @@ IDXGISwapChain* CreateDummySwap()
 
     HRESULT hErr;
 
+    TCHAR lpDllPath[MAX_PATH];
+    HMODULE hDll;
+
+    //------------------------------------------------------
+    // d3d10
+
+    SHGetFolderPath(NULL, CSIDL_SYSTEM, NULL, SHGFP_TYPE_CURRENT, lpDllPath);
+    wcscat_s(lpDllPath, MAX_PATH, TEXT("\\d3d10.dll"));
+
+    hDll = GetModuleHandle(lpDllPath);
+    if(hDll)
+    {
+        D3D10CREATEPROC d3d10Create = (D3D10CREATEPROC)GetProcAddress(hDll, "D3D10CreateDeviceAndSwapChain");
+
+        if(d3d10Create)
+        {
+            hErr = (*d3d10Create)(NULL, D3D10_DRIVER_TYPE_NULL, NULL, 0, D3D10_SDK_VERSION, &swapDesc, &swap, &device);
+
+            if(SUCCEEDED(hErr))
+            {
+                device->Release();
+                return swap;
+            }
+
+            RUNONCE logOutput << "CreateDummySwap: D3D10CreateDeviceAndSwapChain failed, result = " << UINT(hErr) << endl;
+        }
+        else
+        {
+            RUNONCE logOutput << "CreateDummySwap: D3D10CreateDeviceAndSwapChain not found" << endl;
+        }
+    }
+
+    //------------------------------------------------------
+    // d3d10.1 -- actually I think 10.1 will always be extended upon 10, so basically this code may never be called
+
+    SHGetFolderPath(NULL, CSIDL_SYSTEM, NULL, SHGFP_TYPE_CURRENT, lpDllPath);
+    wcscat_s(lpDllPath, MAX_PATH, TEXT("\\d3d10_1.dll"));
+
+    hDll = GetModuleHandle(lpDllPath);
+    if(hDll)
+    {
+        D3D101CREATEPROC d3d101Create = (D3D101CREATEPROC)GetProcAddress(hDll, "D3D10CreateDeviceAndSwapChain1");
+        if(d3d101Create)
+        {
+            hErr = (*d3d101Create)(NULL, D3D10_DRIVER_TYPE_NULL, NULL, 0, D3D10_FEATURE_LEVEL_10_1, D3D10_1_SDK_VERSION, &swapDesc, &swap, &device);
+
+            if(SUCCEEDED(hErr))
+            {
+                device->Release();
+                return swap;
+            }
+
+            RUNONCE logOutput << "CreateDummyDevice: D3D10CreateDeviceAndSwapChain1 failed, result = " << UINT(hErr) << endl;
+        }
+        else
+        {
+            RUNONCE logOutput << "CreateDummyDevice: D3D10CreateDeviceAndSwapChain1 not found" << endl;
+        }
+    }
+
     //------------------------------------------------------
     // d3d11 - check this first always if possible
 
-    TCHAR lpDllPath[MAX_PATH];
-    SHGetFolderPath(NULL, CSIDL_SYSTEM_DIR, NULL, SHGFP_TYPE_CURRENT, lpDllPath);
+    SHGetFolderPath(NULL, CSIDL_SYSTEM, NULL, SHGFP_TYPE_CURRENT, lpDllPath);
     wcscat_s(lpDllPath, MAX_PATH, TEXT("\\d3d11.dll"));
 
-    HMODULE hDll = GetModuleHandle(lpDllPath);
+    hDll = GetModuleHandle(lpDllPath);
     if(hDll)
     {
         D3D11CREATEPROC d3d11Create = (D3D11CREATEPROC)GetProcAddress(hDll, "D3D11CreateDeviceAndSwapChain");
@@ -186,63 +245,6 @@ IDXGISwapChain* CreateDummySwap()
         else
         {
             RUNONCE logOutput << "CreateDummyDevice: D3D11CreateDeviceAndSwapChain not found" << endl;
-        }
-    }
-
-    //------------------------------------------------------
-    // d3d10
-
-    SHGetFolderPath(NULL, CSIDL_SYSTEM_DIR, NULL, SHGFP_TYPE_CURRENT, lpDllPath);
-    wcscat_s(lpDllPath, MAX_PATH, TEXT("\\d3d10.dll"));
-
-    hDll = GetModuleHandle(lpDllPath);
-    if(hDll)
-    {
-        D3D10CREATEPROC d3d10Create = (D3D10CREATEPROC)GetProcAddress(hDll, "D3D10CreateDeviceAndSwapChain");
-
-        if(d3d10Create)
-        {
-            hErr = (*d3d10Create)(NULL, D3D10_DRIVER_TYPE_NULL, NULL, 0, D3D10_SDK_VERSION, &swapDesc, &swap, &device);
-
-            if(SUCCEEDED(hErr))
-            {
-                device->Release();
-                return swap;
-            }
-
-            RUNONCE logOutput << "CreateDummySwap: D3D10CreateDeviceAndSwapChain failed, result = " << UINT(hErr) << endl;
-        }
-        else
-        {
-            RUNONCE logOutput << "CreateDummySwap: D3D10CreateDeviceAndSwapChain not found" << endl;
-        }
-    }
-
-    //------------------------------------------------------
-    // d3d10.1 -- actually I think 10.1 will always be extended upon 10, so basically this code may never be called
-
-    SHGetFolderPath(NULL, CSIDL_SYSTEM_DIR, NULL, SHGFP_TYPE_CURRENT, lpDllPath);
-    wcscat_s(lpDllPath, MAX_PATH, TEXT("\\d3d10_1.dll"));
-
-    hDll = GetModuleHandle(lpDllPath);
-    if(hDll)
-    {
-        D3D101CREATEPROC d3d101Create = (D3D101CREATEPROC)GetProcAddress(hDll, "D3D10CreateDeviceAndSwapChain1");
-        if(d3d101Create)
-        {
-            hErr = (*d3d101Create)(NULL, D3D10_DRIVER_TYPE_NULL, NULL, 0, D3D10_FEATURE_LEVEL_10_1, D3D10_1_SDK_VERSION, &swapDesc, &swap, &device);
-
-            if(SUCCEEDED(hErr))
-            {
-                device->Release();
-                return swap;
-            }
-
-            RUNONCE logOutput << "CreateDummyDevice: D3D10CreateDeviceAndSwapChain1 failed, result = " << UINT(hErr) << endl;
-        }
-        else
-        {
-            RUNONCE logOutput << "CreateDummyDevice: D3D10CreateDeviceAndSwapChain1 not found" << endl;
         }
     }
 

@@ -38,11 +38,6 @@
 #include <fstream>
 using namespace std;
 
-#ifdef _WIN64
-#define CSIDL_SYSTEM_DIR CSIDL_SYSTEMX86
-#else
-#define CSIDL_SYSTEM_DIR CSIDL_SYSTEM
-#endif
 
 //arghh I hate defines like this
 #define RUNONCE static bool bRunOnce = false; if(!bRunOnce && (bRunOnce = true))

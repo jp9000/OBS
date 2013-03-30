@@ -1003,7 +1003,7 @@ bool InitD3D9Capture()
     bool bSuccess = false;
 
     TCHAR lpD3D9Path[MAX_PATH];
-    SHGetFolderPath(NULL, CSIDL_SYSTEM_DIR, NULL, SHGFP_TYPE_CURRENT, lpD3D9Path);
+    SHGetFolderPath(NULL, CSIDL_SYSTEM, NULL, SHGFP_TYPE_CURRENT, lpD3D9Path);
     wcscat_s(lpD3D9Path, MAX_PATH, TEXT("\\d3d9.dll"));
 
     hD3D9Dll = GetModuleHandle(lpD3D9Path);
