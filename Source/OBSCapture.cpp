@@ -102,7 +102,7 @@ void OBS::Start()
     String strError;
 
     if(bTestStream)
-        network = CreateBandwidthAnalyzer();
+        network = CreateNullNetwork();
     else
     {
         switch(networkMode)
