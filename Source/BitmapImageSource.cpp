@@ -171,6 +171,7 @@ class BitmapImageSource : public ImageSource
 public:
     BitmapImageSource(XElement *data)
     {
+        //EnableMemoryTracking(true);
         this->data = data;
         UpdateSettings();
 
@@ -187,6 +188,9 @@ public:
 
         if(lpGifData)
             Free(lpGifData);
+
+        delete colorKeyShader;
+        delete alphaIgnoreShader;
 
         if (changeMonitor)
             OSMonitorFileDestroy(changeMonitor);
