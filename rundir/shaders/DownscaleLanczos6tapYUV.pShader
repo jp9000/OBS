@@ -1,3 +1,6 @@
+//lanczos sharper (some ridiculously complex interpolation type that I can't pronounce)
+//note - this shader is adapted from the GPL bsnes shader, very good stuff there.
+
 uniform Texture2D diffuseTexture;
 uniform float2 baseDimensionI;
 
