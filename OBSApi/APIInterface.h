@@ -46,10 +46,9 @@ class APIInterface
     friend class AudioSource;
     friend class SettingsPane;
 
-    virtual bool UseHighQualityResampling() const=0;
-    virtual void SetChangedSettings(bool isModified)=0;
-
 public:
+    virtual bool UseHighQualityResampling() const=0;
+
     virtual ~APIInterface() {}
 
     virtual void EnterSceneMutex()=0;
@@ -75,25 +74,12 @@ public:
 
     virtual Vect2 GetBaseSize() const=0;                //get the base scene size
     virtual Vect2 GetRenderFrameSize() const=0;         //get the render frame size
-    virtual Vect2 GetRenderFrameOffset() const=0;       //get the render frame offset inside the control
-    virtual Vect2 GetRenderFrameControlSize() const=0;  //get the render frame control size
     virtual Vect2 GetOutputSize() const=0;              //get the stream output size
 
     virtual void GetBaseSize(UINT &width, UINT &height) const=0;
     virtual void GetRenderFrameSize(UINT &width, UINT &height) const=0;
-    virtual void GetRenderFrameOffset(UINT &x, UINT &y) const=0;
-    virtual void GetRenderFrameControlSize(UINT &width, UINT &height) const=0;
     virtual void GetOutputSize(UINT &width, UINT &height) const=0;
     virtual UINT GetMaxFPS() const=0;
-    virtual bool GetRenderFrameIn1To1Mode() const=0;
-
-    // Helpers for GetRenderFrame*() methods
-    virtual Vect2 MapWindowToFramePos(Vect2 mousePos) const=0;
-    virtual Vect2 MapFrameToWindowPos(Vect2 framePos) const=0;
-    virtual Vect2 MapWindowToFrameSize(Vect2 windowSize) const=0;
-    virtual Vect2 MapFrameToWindowSize(Vect2 frameSize) const=0;
-    virtual Vect2 GetWindowToFrameScale() const=0;
-    virtual Vect2 GetFrameToWindowScale() const=0;
 
     virtual CTSTR GetLanguage() const=0;
 
@@ -140,6 +126,9 @@ public:
     virtual void SetSourceOrder(StringList &sourceNames)=0;
     virtual void SetSourceRender(CTSTR lpSource, bool render) = 0;
 
+    virtual void Invalid01() {}
+    virtual void Invalid02() {}
+
     virtual void SetDesktopVolume(float val, bool finalValue) = 0;
     virtual float GetDesktopVolume() = 0;
     virtual void ToggleDesktopMute() = 0;
@@ -165,6 +154,24 @@ public:
 
     virtual void AddSettingsPane(SettingsPane *pane)=0;
     virtual void RemoveSettingsPane(SettingsPane *pane)=0;
+
+    virtual void SetChangedSettings(bool isModified)=0;
+
+    virtual Vect2 GetRenderFrameOffset() const=0;       //get the render frame offset inside the control
+    virtual Vect2 GetRenderFrameControlSize() const=0;  //get the render frame control size
+
+    virtual void GetRenderFrameOffset(UINT &x, UINT &y) const=0;
+    virtual void GetRenderFrameControlSize(UINT &width, UINT &height) const=0;
+
+    virtual bool GetRenderFrameIn1To1Mode() const=0;
+
+    // Helpers for GetRenderFrame*() methods
+    virtual Vect2 MapWindowToFramePos(Vect2 mousePos) const=0;
+    virtual Vect2 MapFrameToWindowPos(Vect2 framePos) const=0;
+    virtual Vect2 MapWindowToFrameSize(Vect2 windowSize) const=0;
+    virtual Vect2 MapFrameToWindowSize(Vect2 frameSize) const=0;
+    virtual Vect2 GetWindowToFrameScale() const=0;
+    virtual Vect2 GetFrameToWindowScale() const=0;
 };
 
 BASE_EXPORT extern APIInterface *API;
