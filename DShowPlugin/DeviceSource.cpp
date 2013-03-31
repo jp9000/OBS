@@ -1036,6 +1036,7 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
     if(texture && bReadyToDraw)
     {
         Shader *oldShader = GetCurrentPixelShader();
+        SamplerState *sampler = NULL;
 
         if(colorConvertShader)
         {
@@ -1078,7 +1079,6 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
         DWORD opacity255 = DWORD(fOpacity*255.0f);
 
         if(bUsePointFiltering) {
-            SamplerState *sampler;
             SamplerInfo samplerinfo;
             samplerinfo.filter = GS_FILTER_POINT;
             sampler = CreateSamplerState(samplerinfo);
@@ -1089,6 +1089,8 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
             DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y);
         else
             DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y+size.y, x2, pos.y);
+
+        if(bUsePointFiltering) delete(sampler);
 
         if(colorConvertShader)
             LoadPixelShader(oldShader);

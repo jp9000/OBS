@@ -410,6 +410,7 @@ public:
 
     void Render(const Vect2 &pos, const Vect2 &size)
     {
+        SamplerState *sampler = NULL;
         /*if(bWindows8MonitorCapture)
         {
             RenderWindows8MonitorCapture(pos, size);
@@ -468,7 +469,6 @@ public:
             }
 
             if(bUsePointFiltering) {
-                SamplerState *sampler;
                 SamplerInfo samplerinfo;
                 samplerinfo.filter = GS_FILTER_POINT;
                 sampler = CreateSamplerState(samplerinfo);
@@ -485,6 +485,8 @@ public:
                     pos.x, pos.y, pos.x+size.x, pos.y+size.y,
                     ulCoord.x, ulCoord.y,
                     lrCoord.x, lrCoord.y);
+
+            if(bUsePointFiltering) delete(sampler);
 
             LoadPixelShader(lastPixelShader);
 
