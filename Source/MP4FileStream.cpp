@@ -99,6 +99,8 @@ class MP4FileStream : public VideoFileStream
 
     bool bCancelMP4Build;
 
+    bool bSentSEI;
+
     void PushBox(BufferOutputSerializer &output, DWORD boxName)
     {
         boxOffsets.Insert(0, endBuffer.Num());
@@ -848,8 +850,18 @@ public:
             }
             else
             {
-                totalCopied = size-5;
-                fileOut.Serialize(data+5, totalCopied);
+                if (!bSentSEI) {
+                    DataPacket sei;
+                    App->GetVideoEncoder()->GetSEI(sei);
+
+                    fileOut.Serialize(sei.lpPacket, sei.size);
+                    totalCopied += sei.size;
+
+                    bSentSEI = true;
+                }
+
+                totalCopied += size-5;
+                fileOut.Serialize(data+5, size-5);
             }
 
             if(!videoFrames.Num() || timestamp != lastVideoTimestamp)

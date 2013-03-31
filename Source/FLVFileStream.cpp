@@ -30,20 +30,40 @@ class FLVFileStream : public VideoFileStream
     UINT64 metaDataPos;
     DWORD lastTimeStamp;
 
-    bool bSentFirstPacket;
+    bool bSentFirstPacket, bSentSEI;
 
     void AppendFLVPacket(LPBYTE lpData, UINT size, BYTE type, DWORD timestamp)
     {
-        UINT networkDataSize  = fastHtonl(size);
-        UINT networkTimestamp = fastHtonl(timestamp);
-        UINT streamID = 0;
-        fileOut.OutputByte(type);
-        fileOut.Serialize(((LPBYTE)(&networkDataSize))+1,  3);
-        fileOut.Serialize(((LPBYTE)(&networkTimestamp))+1, 3);
-        fileOut.Serialize(&networkTimestamp, 1);
-        fileOut.Serialize(&streamID, 3);
-        fileOut.Serialize(lpData, size);
-        fileOut.OutputDword(fastHtonl(size+14));
+        if (!bSentSEI && type == 9) {
+            DataPacket sei;
+            App->GetVideoEncoder()->GetSEI(sei);
+
+            UINT networkDataSize  = fastHtonl(size+sei.size);
+            UINT networkTimestamp = fastHtonl(timestamp);
+            UINT streamID = 0;
+            fileOut.OutputByte(type);
+            fileOut.Serialize(((LPBYTE)(&networkDataSize))+1,  3);
+            fileOut.Serialize(((LPBYTE)(&networkTimestamp))+1, 3);
+            fileOut.Serialize(&networkTimestamp, 1);
+            fileOut.Serialize(&streamID, 3);
+            fileOut.Serialize(lpData, 5);
+            fileOut.Serialize(sei.lpPacket, sei.size);
+            fileOut.Serialize(lpData+5, size-5);
+            fileOut.OutputDword(fastHtonl(size+14));
+
+            bSentSEI = true;
+        } else {
+            UINT networkDataSize  = fastHtonl(size);
+            UINT networkTimestamp = fastHtonl(timestamp);
+            UINT streamID = 0;
+            fileOut.OutputByte(type);
+            fileOut.Serialize(((LPBYTE)(&networkDataSize))+1,  3);
+            fileOut.Serialize(((LPBYTE)(&networkTimestamp))+1, 3);
+            fileOut.Serialize(&networkTimestamp, 1);
+            fileOut.Serialize(&streamID, 3);
+            fileOut.Serialize(lpData, size);
+            fileOut.OutputDword(fastHtonl(size+14));
+        }
 
         lastTimeStamp = timestamp;
     }
