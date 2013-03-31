@@ -246,7 +246,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     if(services)
                     {
                         XElement *service = NULL;
-                        DWORD numServices = services->NumElements();
+                        numServices = services->NumElements();
                         for(UINT i=0; i<numServices; i++)
                         {
                             XElement *curService = services->GetElementByID(i);

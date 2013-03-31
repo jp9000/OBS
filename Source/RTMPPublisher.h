@@ -75,7 +75,7 @@ protected:
     DWORD firstTimestamp;
     bool bSentFirstKeyframe, bSentFirstAudio;
 
-    CircularList<TimedPacket> bufferedPackets;
+    List<TimedPacket> bufferedPackets;
     DWORD audioTimeOffset;
     bool bBufferFull;
 
@@ -89,7 +89,7 @@ protected:
 
     DWORD minFramedropTimestsamp;
     DWORD dropThreshold, bframeDropThreshold;
-    CircularList<NetworkPacket> queuedPackets;
+    List<NetworkPacket> queuedPackets;
     UINT currentBufferSize;//, outputRateWindowTime;
     UINT lastBFrameDropTime;
 

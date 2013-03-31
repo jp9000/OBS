@@ -44,7 +44,7 @@ void GetDisplayDevices(DeviceOutputs &deviceList)
             Log(TEXT("------------------------------------------"));
 
             DXGI_ADAPTER_DESC adapterDesc;
-            if(err = SUCCEEDED(giAdapter->GetDesc(&adapterDesc)))
+            if(SUCCEEDED(err = giAdapter->GetDesc(&adapterDesc)))
             {
                 DeviceOutputData &deviceData = *deviceList.devices.CreateNew();
                 deviceData.strDevice = adapterDesc.Description;
@@ -101,7 +101,7 @@ void LogVideoCardStats()
             Log(TEXT("------------------------------------------"));
 
             DXGI_ADAPTER_DESC adapterDesc;
-            if(err = SUCCEEDED(giAdapter->GetDesc(&adapterDesc)))
+            if(SUCCEEDED(err = giAdapter->GetDesc(&adapterDesc)))
             {
                 Log(TEXT("Adapter %u"), i);
                 Log(TEXT("  Video Adapter: %s"), adapterDesc.Description);

@@ -277,7 +277,7 @@ bool OBS::SetScene(CTSTR lpScene)
     SendMessage(hwndSources, WM_SETREDRAW, (WPARAM)TRUE, (LPARAM) 0);
     RedrawWindow(hwndSources, NULL, NULL, RDW_ERASE | RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN);
 
-    if(scene && newScene->HasMissingSources())
+    if(scene && newScene && newScene->HasMissingSources())
         MessageBox(hwndMain, Str("Scene.MissingSources"), NULL, 0);
 
     if(bRunning)

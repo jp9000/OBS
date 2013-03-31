@@ -64,7 +64,7 @@ String RTMPPublisher::GetRTMPErrors()
 
 RTMPPublisher::RTMPPublisher()
 {
-    bufferedPackets.SetBaseSize(MAX_BUFFERED_PACKETS);
+    //bufferedPackets.SetBaseSize(MAX_BUFFERED_PACKETS);
 
     hSendSempahore = CreateSemaphore(NULL, 0, 0x7FFFFFFFL, NULL);
     if(!hSendSempahore)
@@ -285,7 +285,14 @@ void RTMPPublisher::InitializeBuffer()
 
             UINT newIndex = FindClosestBufferIndex(newTimestamp);
             if (newIndex < i) {
-                bufferedPackets.MoveElement(i, newIndex);
+                //bufferedPackets.MoveElement(i, newIndex);
+
+                TimedPacket movePacket;
+                mcpy(&movePacket, bufferedPackets+i, sizeof(movePacket));
+                bufferedPackets.Remove(i);
+                bufferedPackets.Insert(newIndex, movePacket);
+                zero(&movePacket, sizeof(movePacket));
+
                 bufferedPackets[newIndex].timestamp = newTimestamp;
             } else {
                 bufferedPackets[i].timestamp = newTimestamp;

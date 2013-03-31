@@ -140,7 +140,7 @@ class DeviceSource : public ImageSource
     UINT            texturePitch;
     bool            bCapturing, bFiltersLoaded;
     int             delayTime;
-    CircularList<SampleData*> samples;
+    List<SampleData*> samples;
     Shader          *colorConvertShader;
 
     UINT            opacity;

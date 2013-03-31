@@ -220,7 +220,8 @@ ProfilerNode::ProfilerNode(CTSTR lpName, bool bSingularize)
     else
         return;
 
-    ++info->numCalls;
+    if (info)
+        ++info->numCalls;
 
     this->lpName = lpName;
 

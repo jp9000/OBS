@@ -55,7 +55,7 @@ class BASE_EXPORT AudioSource
 
     //-----------------------------------------
 
-    CircularList<AudioSegment*> audioSegments;
+    List<AudioSegment*> audioSegments;
 
     bool bFirstBaseFrameReceived;
     QWORD lastSentTimestamp;

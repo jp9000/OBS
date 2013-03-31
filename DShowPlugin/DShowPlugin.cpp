@@ -727,12 +727,12 @@ bool FillOutListOfDevices(HWND hwndCombo, GUID matchGUID, StringList *deviceList
                     String strDeviceName = (CWSTR)friendlyNameValue.bstrVal;
                     deviceList->Add(strDeviceName);
 
-                    UINT count = 0;
+                    UINT count2 = 0;
                     UINT id = INVALID;
-                    while((id = deviceList->FindNextValueIndexI(strDeviceName, id)) != INVALID) count++;
+                    while((id = deviceList->FindNextValueIndexI(strDeviceName, id)) != INVALID) count2++;
 
-                    if(count > 1)
-                        strDeviceName << TEXT(" (") << UIntString(count) << TEXT(")");
+                    if(count2 > 1)
+                        strDeviceName << TEXT(" (") << UIntString(count2) << TEXT(")");
 
                     String strDeviceID = (CWSTR)devicePathValue.bstrVal;
                     if(hwndCombo != NULL) SendMessage(hwndCombo, CB_ADDSTRING, 0, (LPARAM)strDeviceName.Array());

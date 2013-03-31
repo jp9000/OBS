@@ -606,10 +606,10 @@ private:
     HANDLE  hMainThread;
     HANDLE  hSceneMutex;
 
-    CircularList<VideoSegment> bufferedVideo;
+    List<VideoSegment> bufferedVideo;
 
-    CircularList<UINT> bufferedTimes;
-    CircularList<UINT> ctsOffsets;
+    List<UINT> bufferedTimes;
+    List<UINT> ctsOffsets;
 
     bool bRecievedFirstAudioFrame, bSentHeaders, bFirstAudioPacket;
 
@@ -641,7 +641,7 @@ private:
     float   desktopPeak, micPeak;
     float   desktopMax, micMax;
     float   desktopMag, micMag;
-    CircularList<FrameAudio> pendingAudioFrames;
+    List<FrameAudio> pendingAudioFrames;
     bool    bForceMicMono;
     float   desktopBoost, micBoost;
 

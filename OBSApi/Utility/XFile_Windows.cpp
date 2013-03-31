@@ -186,13 +186,13 @@ UINT64 XFile::SetPos(INT64 iPos, DWORD dwMoveMethod)  //uses the SetFilePointer 
 
     if(!hFile) return 0;
 
-    DWORD moveValue;
+    DWORD moveValue = FILE_CURRENT;
 
     switch(dwMoveMethod)
     {
-        case XFILE_CURPOS:
-            moveValue = FILE_CURRENT;
-            break;
+        //case XFILE_CURPOS:
+        //    moveValue = FILE_CURRENT;
+        //    break;
 
         case XFILE_END:
             moveValue = FILE_END;

@@ -857,6 +857,11 @@ void DeviceSource::ReceiveVideo(IMediaSample *sample)
                 sample->GetTime(&data->startTime, &stopTime);
 
                 OSEnterMutex(hSampleMutex);
+                if (samples.Num() > 0) {
+                    delete samples[0];
+                    samples.Remove(0);
+                }
+
                 samples << data;
                 OSLeaveMutex(hSampleMutex);
             }
@@ -923,7 +928,7 @@ void DeviceSource::Preprocess()
     {
         QWORD sampleTime = samples.Last()->startTime - samples[0]->startTime;
 
-        while (sampleTime >= delayTime) {
+        while (sampleTime >= 0) {//delayTime) {
             delete lastSample;
 
             lastSample = samples[0];
