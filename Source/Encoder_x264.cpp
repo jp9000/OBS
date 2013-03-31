@@ -355,20 +355,49 @@ public:
 
         VideoPacket *newPacket = NULL;
 
+        PacketType bestType = PacketType_VideoDisposable;
+        bool bFoundFrame = false;
+
         for(int i=0; i<nalNum; i++)
         {
             x264_nal_t &nal = nalOut[i];
 
             if(nal.i_type == NAL_SEI)
             {
-                SEIData.Clear();
-
                 BYTE *skip = nal.p_payload;
                 while(*(skip++) != 0x1);
                 int skipBytes = (int)(skip-nal.p_payload);
 
                 int newPayloadSize = (nal.i_payload-skipBytes);
-                BufferOutputSerializer packetOut(SEIData);
+
+                if (nal.p_payload[skipBytes+1] == 0x5) {
+                    SEIData.Clear();
+                    BufferOutputSerializer packetOut(SEIData);
+
+                    packetOut.OutputDword(htonl(newPayloadSize));
+                    packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
+                } else {
+                    if (!newPacket)
+                        newPacket = CurrentPackets.CreateNew();
+
+                    BufferOutputSerializer packetOut(newPacket->Packet);
+
+                    packetOut.OutputDword(htonl(newPayloadSize));
+                    packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
+                }
+            }
+            else if(nal.i_type == NAL_FILLER)
+            {
+                BYTE *skip = nal.p_payload;
+                while(*(skip++) != 0x1);
+                int skipBytes = (int)(skip-nal.p_payload);
+
+                int newPayloadSize = (nal.i_payload-skipBytes);
+
+                if (!newPacket)
+                    newPacket = CurrentPackets.CreateNew();
+
+                BufferOutputSerializer packetOut(newPacket->Packet);
 
                 packetOut.OutputDword(htonl(newPayloadSize));
                 packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
@@ -379,30 +408,30 @@ public:
                 while(*(skip++) != 0x1);
                 int skipBytes = (int)(skip-nal.p_payload);
 
-                bool bNewPacket = (!newPacket);
-
-                if(bNewPacket)
+                if (!newPacket)
                     newPacket = CurrentPackets.CreateNew();
+
+                if (!bFoundFrame)
+                {
+                    newPacket->Packet.Insert(0, (nal.i_type == NAL_SLICE_IDR) ? 0x17 : 0x27);
+                    newPacket->Packet.Insert(1, 1);
+                    newPacket->Packet.InsertArray(2, timeOffsetAddr, 3);
+
+                    bFoundFrame = true;
+                }
 
                 int newPayloadSize = (nal.i_payload-skipBytes);
                 BufferOutputSerializer packetOut(newPacket->Packet);
-
-                if(bNewPacket)
-                {
-                    packetOut.OutputByte((nal.i_type == NAL_SLICE_IDR) ? 0x17 : 0x27);
-                    packetOut.OutputByte(1);
-                    packetOut.Serialize(timeOffsetAddr, 3);
-                }
 
                 packetOut.OutputDword(htonl(newPayloadSize));
                 packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
 
                 switch(nal.i_ref_idc)
                 {
-                    case NAL_PRIORITY_DISPOSABLE:   packetTypes << PacketType_VideoDisposable;  break;
-                    case NAL_PRIORITY_LOW:          packetTypes << PacketType_VideoLow;         break;
-                    case NAL_PRIORITY_HIGH:         packetTypes << PacketType_VideoHigh;        break;
-                    case NAL_PRIORITY_HIGHEST:      packetTypes << PacketType_VideoHighest;     break;
+                    case NAL_PRIORITY_DISPOSABLE:   bestType = MAX(bestType, PacketType_VideoDisposable);  break;
+                    case NAL_PRIORITY_LOW:          bestType = MAX(bestType, PacketType_VideoLow);         break;
+                    case NAL_PRIORITY_HIGH:         bestType = MAX(bestType, PacketType_VideoHigh);        break;
+                    case NAL_PRIORITY_HIGHEST:      bestType = MAX(bestType, PacketType_VideoHighest);     break;
                 }
             }
             /*else if(nal.i_type == NAL_SPS)
@@ -429,6 +458,8 @@ public:
             else
                 continue;
         }
+
+        packetTypes << bestType;
 
         packets.SetSize(CurrentPackets.Num());
         for(UINT i=0; i<packets.Num(); i++)
