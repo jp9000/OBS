@@ -1588,10 +1588,13 @@ void OBS::SetSourceRender(CTSTR sourceName, bool render)
 BOOL OBS::SetNotificationAreaIcon(DWORD dwMessage, int idIcon, const String &tooltip)
 {
     NOTIFYICONDATA niData;
+    BOOL result;
+    
     ZeroMemory(&niData, sizeof(NOTIFYICONDATA));
     niData.cbSize = sizeof(niData);
     niData.hWnd = hwndMain;
     niData.uID = 0;
+    
     if (NIM_DELETE != dwMessage)
     {
         niData.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
@@ -1599,7 +1602,13 @@ BOOL OBS::SetNotificationAreaIcon(DWORD dwMessage, int idIcon, const String &too
         niData.hIcon = LoadIcon(hinstMain, MAKEINTRESOURCE(idIcon));
         lstrcpy(niData.szTip, tooltip);
     }
-    return Shell_NotifyIcon(dwMessage, &niData);
+
+    result = Shell_NotifyIcon(dwMessage, &niData);
+
+    if(niData.hIcon)
+       DestroyIcon(niData.hIcon);
+
+    return result;
 }
 
 BOOL OBS::ShowNotificationAreaIcon()
