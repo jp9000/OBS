@@ -15,7 +15,7 @@ Libraries:
   libmp3lame             - a most non-lame library for encoding mp3 audio
   libfaac                - an excellent open source library for encoding AAC
   librtmp                - a nice open source library for the RTMP protocol
-  libresamplerate        - secret monkeys make awesome code.
+  libsamplerate          - secret monkeys make awesome code.
 
 Notable super awesome testers:
   Kyle "Kendobear" Asher - A guy who spent weeks helping pinpoint a bug

@@ -7,7 +7,7 @@ Required (and included) libraries:
     libmp3lame      - MP3 encoder           - obs/lame
     libfaac         - AAC encoder           - obs/libfaac
     librtmp         - RTMP protocol         - obs/librtmp
-    libresamplerate - audio resampler       - obs/libresamplerate
+    libsamplerate   - audio resampler       - obs/libsamplerate
     libx264         - x264 encoder          - obs/x264
 
   To compile OBS and all its sub-libraries, you can use OBS-All.sln
