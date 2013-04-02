@@ -164,14 +164,14 @@ IBaseFilter* GetDeviceByValue(const IID &enumType, WSTR lpType, CTSTR lpName, WS
     err = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC, IID_ICreateDevEnum, (void**)&deviceEnum);
     if(FAILED(err))
     {
-        AppWarning(TEXT("GetDeviceByName: CoCreateInstance for the device enum failed, result = %08lX"), err);
+        AppWarning(TEXT("GetDeviceByValue: CoCreateInstance for the device enum failed, result = %08lX"), err);
         return NULL;
     }
 
     err = deviceEnum->CreateClassEnumerator(enumType, &videoDeviceEnum, 0);
     if(FAILED(err))
     {
-        AppWarning(TEXT("GetDeviceByName: deviceEnum->CreateClassEnumerator failed, result = %08lX"), err);
+        AppWarning(TEXT("GetDeviceByValue: deviceEnum->CreateClassEnumerator failed, result = %08lX"), err);
         deviceEnum->Release();
         return NULL;
     }
@@ -221,7 +221,7 @@ IBaseFilter* GetDeviceByValue(const IID &enumType, WSTR lpType, CTSTR lpName, WS
                     err = deviceInfo->BindToObject(NULL, 0, IID_IBaseFilter, (void**)&filter);
                     if(FAILED(err))
                     {
-                        AppWarning(TEXT("GetDeviceByName: deviceInfo->BindToObject failed, result = %08lX"), err);
+                        AppWarning(TEXT("GetDeviceByValue: deviceInfo->BindToObject failed, result = %08lX"), err);
                         continue;
                     }
 
