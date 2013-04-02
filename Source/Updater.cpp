@@ -360,9 +360,15 @@ DWORD WINAPI CheckUpdateThread (VOID *arg)
                         execInfo.cbSize = sizeof(execInfo);
                         execInfo.lpFile = updateFilePath;
 #ifndef _WIN64
-                        execInfo.lpParameters = TEXT("Win32");
+                        if (bIsPortable)
+                            execInfo.lpParameters = TEXT("Win32 Portable");
+                        else
+                            execInfo.lpParameters = TEXT("Win32");
 #else
-                        execInfo.lpParameters = TEXT("Win64");
+                        if (bIsPortable)
+                            execInfo.lpParameters = TEXT("Win64 Portable");
+                        else
+                            execInfo.lpParameters = TEXT("Win64");
 #endif
                         execInfo.lpDirectory = cwd;
                         execInfo.nShow = SW_SHOWNORMAL;
