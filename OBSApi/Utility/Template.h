@@ -956,10 +956,10 @@ public:
         List::SwapValues(GetRealID(valA), GetRealID(valB));
     }
 
-    inline void MoveElement(UINT valFrom, UINT valTo)
+    inline void MoveItem(UINT valFrom, UINT valTo)
     {
         if(valFrom >= storedNum || valTo >= storedNum) {
-            AppWarning(TEXT("CircularList::MoveElement:  invalid values"));
+            AppWarning(TEXT("CircularList::MoveItem:  invalid values"));
             return;
         }
 
