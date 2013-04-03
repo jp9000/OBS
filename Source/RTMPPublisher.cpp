@@ -66,6 +66,8 @@ RTMPPublisher::RTMPPublisher()
 {
     //bufferedPackets.SetBaseSize(MAX_BUFFERED_PACKETS);
 
+    bFirstKeyframe = true;
+
     hSendSempahore = CreateSemaphore(NULL, 0, 0x7FFFFFFFL, NULL);
     if(!hSendSempahore)
         CrashError(TEXT("RTMPPublisher: Could not create semaphore"));
@@ -257,6 +259,17 @@ RTMPPublisher::~RTMPPublisher()
     //--------------------------
 }
 
+UINT RTMPPublisher::FindClosestQueueIndex(DWORD timestamp)
+{
+    UINT index;
+    for (index=0; index<queuedPackets.Num(); index++) {
+        if (queuedPackets[index].timestamp > timestamp)
+            break;
+    }
+
+    return index;
+}
+
 UINT RTMPPublisher::FindClosestBufferIndex(DWORD timestamp)
 {
     UINT index;
@@ -285,14 +298,7 @@ void RTMPPublisher::InitializeBuffer()
 
             UINT newIndex = FindClosestBufferIndex(newTimestamp);
             if (newIndex < i) {
-                //bufferedPackets.MoveElement(i, newIndex);
-
-                TimedPacket movePacket;
-                mcpy(&movePacket, bufferedPackets+i, sizeof(movePacket));
-                bufferedPackets.Remove(i);
-                bufferedPackets.Insert(newIndex, movePacket);
-                zero(&movePacket, sizeof(movePacket));
-
+                bufferedPackets.MoveItem(i, newIndex);
                 bufferedPackets[newIndex].timestamp = newTimestamp;
             } else {
                 bufferedPackets[i].timestamp = newTimestamp;
@@ -457,11 +463,11 @@ void RTMPPublisher::SendPacketForReal(BYTE *data, UINT size, DWORD timestamp, Pa
 
                     UINT droppedFrameVal = queuedPackets.Num() ? queuedPackets.Last().distanceFromDroppedFrame+1 : 10000;
 
-                    NetworkPacket *queuedPacket = queuedPackets.CreateNew();
+                    UINT id = FindClosestQueueIndex(timestamp);
+
+                    NetworkPacket *queuedPacket = queuedPackets.InsertNew(id);
                     queuedPacket->distanceFromDroppedFrame = droppedFrameVal;
                     queuedPacket->data.TransferFrom(paddedData);
-                    if (queuedPacket->data.Num() == 0)
-                        nop();
                     queuedPacket->timestamp = timestamp;
                     queuedPacket->type = type;
                 }

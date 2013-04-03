@@ -80,6 +80,7 @@ protected:
     bool bBufferFull;
 
     bool bFirstKeyframe;
+    UINT FindClosestQueueIndex(DWORD timestamp);
     UINT FindClosestBufferIndex(DWORD timestamp);
     void InitializeBuffer();
     void SendPacketForReal(BYTE *data, UINT size, DWORD timestamp, PacketType type);
