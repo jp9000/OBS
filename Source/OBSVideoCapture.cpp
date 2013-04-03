@@ -223,9 +223,9 @@ void STDCALL SleepTo(LONGLONG clockFreq, QWORD qw100NSTime)
 {
     QWORD t = GetQPCTime100NS(clockFreq);
 
-    unsigned int milliseconds = (unsigned int)((qw100NSTime - t)/10000);
+    signed int milliseconds = (unsigned int)((qw100NSTime - t)/10000);
     if (milliseconds > 1) //also accounts for windows 8 sleep problem
-        Sleep(--milliseconds);
+        Sleep(milliseconds);
 
     for (;;)
     {
