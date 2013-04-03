@@ -219,20 +219,20 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
 #define USE_100NS_TIME 1
 
 #ifdef USE_100NS_TIME
-void STDCALL SleepTo(LONGLONG clockFreq, QWORD qw100NSTime)
+void STDCALL SleepTo(QWORD qw100NSTime)
 {
-    QWORD t = GetQPCTime100NS(clockFreq);
+    QWORD t = GetQPCTime100NS();
 
     if (t >= qw100NSTime)
         return;
 
     unsigned int milliseconds = (unsigned int)((qw100NSTime - t)/10000);
     if (milliseconds > 1) //also accounts for windows 8 sleep problem
-        Sleep(milliseconds);
+        OSSleep(milliseconds);
 
     for (;;)
     {
-        t = GetQPCTime100NS(clockFreq);
+        t = GetQPCTime100NS();
         if (t >= qw100NSTime)
             return;
         Sleep(0);
@@ -288,14 +288,11 @@ void OBS::MainCaptureLoop()
     //----------------------------------------
     // time/timestamp stuff
 
-    LARGE_INTEGER clockFreq;
-    QueryPerformanceFrequency(&clockFreq);
-
     bufferedTimes.Clear();
     ctsOffsets.Clear();
 
 #ifdef USE_100NS_TIME
-    QWORD streamTimeStart = GetQPCTime100NS(clockFreq.QuadPart);
+    QWORD streamTimeStart = GetQPCTime100NS();
     QWORD frameTime100ns = 10000000/fps;
 
     QWORD sleepTargetTime = 0;
@@ -307,7 +304,7 @@ void OBS::MainCaptureLoop()
 
     lastAudioTimestamp = 0;
 
-    latestVideoTime = firstSceneTimestamp = GetQPCTimeMS(clockFreq.QuadPart);
+    latestVideoTime = firstSceneTimestamp = GetQPCTimeMS();
 
     DWORD fpsTimeNumerator = 1000-(frameTime*fps);
     DWORD fpsTimeDenominator = fps;
@@ -394,10 +391,10 @@ void OBS::MainCaptureLoop()
 
     //----------------------------------------
 
-    QWORD curStreamTime = 0, lastStreamTime, firstFrameTime = GetQPCTimeMS(clockFreq.QuadPart);
+    QWORD curStreamTime = 0, lastStreamTime, firstFrameTime = GetQPCTimeMS();
 
 #ifdef USE_100NS_TIME
-    lastStreamTime = GetQPCTime100NS(clockFreq.QuadPart)-frameTime100ns;
+    lastStreamTime = GetQPCTime100NS()-frameTime100ns;
 #else
     lastStreamTime = firstFrameTime-frameTime;
 #endif
@@ -407,7 +404,7 @@ void OBS::MainCaptureLoop()
     while(bRunning)
     {
 #ifdef USE_100NS_TIME
-        QWORD renderStartTime = GetQPCTime100NS(clockFreq.QuadPart);
+        QWORD renderStartTime = GetQPCTime100NS();
         totalStreamTime = DWORD((renderStartTime-streamTimeStart)/10000);
 
         if(sleepTargetTime == 0 || bWasLaggedFrame)
@@ -440,7 +437,7 @@ void OBS::MainCaptureLoop()
 
         lastStreamTime = renderStartTime;
 #else
-        QWORD qwTime = GetQPCTimeMS(clockFreq.QuadPart);
+        QWORD qwTime = GetQPCTimeMS();
         latestVideoTime = qwTime;
 
         QWORD frameDelta = qwTime-lastStreamTime;
@@ -903,13 +900,13 @@ void OBS::MainCaptureLoop()
         // frame sync
 
 #ifdef USE_100NS_TIME
-        QWORD renderStopTime = GetQPCTime100NS(clockFreq.QuadPart);
+        QWORD renderStopTime = GetQPCTime100NS();
         sleepTargetTime += frameTime100ns;
 
         if(bWasLaggedFrame = (sleepTargetTime <= renderStopTime))
             numLongFrames++;
         else
-            SleepTo(clockFreq.QuadPart, sleepTargetTime);
+            SleepTo(sleepTargetTime);
 #else
         DWORD renderStopTime = OSGetTime();
         DWORD totalTime = renderStopTime-renderStartTime;

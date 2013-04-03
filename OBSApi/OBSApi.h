@@ -102,29 +102,8 @@ inline BOOL CloseDouble(double f1, double f2, double precision=0.001)
 
 // this actually can't work without a 128bit integer
 // ..however it -can- work with doubles, and should still be accurate
-inline QWORD GetQPCTime100NS(LONGLONG clockFreq)
-{
-    LARGE_INTEGER currentTime;
-    QueryPerformanceCounter(&currentTime);
-
-    double timeVal = double(currentTime.QuadPart);
-    timeVal *= 10000000.0;
-    timeVal /= double(clockFreq);
-
-    return QWORD(timeVal);
-}
-
-inline QWORD GetQPCTimeMS(LONGLONG clockFreq)
-{
-    LARGE_INTEGER currentTime;
-    QueryPerformanceCounter(&currentTime);
-
-    QWORD timeVal = currentTime.QuadPart;
-    timeVal *= 1000;
-    timeVal /= clockFreq;
-
-    return timeVal;
-}
+BASE_EXPORT QWORD GetQPCTime100NS();
+BASE_EXPORT QWORD GetQPCTimeMS();
 
 //-------------------------------------------
 

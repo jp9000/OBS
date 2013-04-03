@@ -233,3 +233,29 @@ LPBYTE GetCursorData(HICON hIcon, ICONINFO &ii, UINT &width, UINT &height)
 
     return lpBitmapData;
 }
+
+extern LARGE_INTEGER clockFreq;
+
+QWORD GetQPCTime100NS()
+{
+    LARGE_INTEGER currentTime;
+    QueryPerformanceCounter(&currentTime);
+
+    double timeVal = double(currentTime.QuadPart);
+    timeVal *= 10000000.0;
+    timeVal /= double(clockFreq.QuadPart);
+
+    return QWORD(timeVal);
+}
+
+QWORD GetQPCTimeMS()
+{
+    LARGE_INTEGER currentTime;
+    QueryPerformanceCounter(&currentTime);
+
+    QWORD timeVal = currentTime.QuadPart;
+    timeVal *= 1000;
+    timeVal /= clockFreq.QuadPart;
+
+    return timeVal;
+}

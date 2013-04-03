@@ -291,9 +291,7 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
             //we're doing all these checks because device timestamps are only reliable "sometimes"
             if(!bFirstFrameReceived)
             {
-                LARGE_INTEGER clockFreq;
-                QueryPerformanceFrequency(&clockFreq);
-                QWORD curTime = GetQPCTimeMS(clockFreq.QuadPart);
+                QWORD curTime = GetQPCTimeMS();
 
                 newTimestamp = qpcTimestamp;
 
