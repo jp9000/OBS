@@ -47,7 +47,7 @@ class APIInterface
     friend class SettingsPane;
 
 public:
-    virtual bool UseHighQualityResampling() const=0;
+    virtual void Invalid03() const {}
 
     virtual ~APIInterface() {}
 

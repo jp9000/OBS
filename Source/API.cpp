@@ -325,17 +325,17 @@ class OBSAPIInterface : public APIInterface
 
     void HandleHotkeys();
 
-    virtual bool UseHighQualityResampling() const {return AppConfig->GetInt(TEXT("Audio"), TEXT("UseHighQualityResampling"), FALSE) != 0;}
     virtual void SetChangedSettings(bool isModified) {App->SetChangedSettings(isModified);}
 
 public:
     virtual void EnterSceneMutex() {App->EnterSceneMutex();}
     virtual void LeaveSceneMutex() {App->LeaveSceneMutex();}
-    
+
     virtual void StartStopStream()
     {
         PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_STARTSTOP, 0), 0);
     }
+
     virtual void StartStopPreview()
     {
         PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_TESTSTREAM, 0), 0);
