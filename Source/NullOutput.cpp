@@ -45,12 +45,15 @@ public:
 
 class NullNetwork : public NetworkStream
 {
-    virtual void SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type) {}
+    virtual void SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type) {bytesSent += size;framesRendered++;}
 
     double GetPacketStrain() const {return 0;}
-    QWORD GetCurrentSentBytes() {return 0;}
+    QWORD GetCurrentSentBytes() {return bytesSent;}
     virtual DWORD NumDroppedFrames() const {return 0;}
-    virtual DWORD NumTotalVideoFrames() const {return 1;}
+    virtual DWORD NumTotalVideoFrames() const {return framesRendered;}
+private:
+    DWORD bytesSent;
+    DWORD framesRendered;
 };
 
 
