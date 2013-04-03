@@ -848,7 +848,7 @@ void OBS::ResizeRenderFrame(bool bRedrawRenderFrame)
     {
         oldRenderFrameCtrlWidth = renderFrameCtrlWidth;
         oldRenderFrameCtrlHeight = renderFrameCtrlHeight;
-        InvalidateRect(hwndRenderFrame, NULL, true); // Repaint text
+        InvalidateRect(hwndRenderMessage, NULL, true); // Repaint text
     }
     else if(bRunning && bRedrawRenderFrame)
     {
