@@ -90,11 +90,6 @@ void SettingsAdvanced::ApplySettings()
 
     //------------------------------------
 
-    BOOL bUseHQResampling = SendMessage(GetDlgItem(hwnd, IDC_USEHIGHQUALITYRESAMPLING), BM_GETCHECK, 0, 0) == BST_CHECKED;
-    AppConfig->SetInt   (TEXT("Audio"), TEXT("UseHighQualityResampling"), bUseHQResampling);
-
-    //--------------------------------------------------
-
     BOOL bSyncToVideoTime = SendMessage(GetDlgItem(hwnd, IDC_SYNCTOVIDEOTIME), BM_GETCHECK, 0, 0) == BST_CHECKED;
     AppConfig->SetInt   (TEXT("Audio"), TEXT("SyncToVideoTime"), bSyncToVideoTime);
 
@@ -216,15 +211,6 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 ti.lpszText = (LPWSTR)Str("Settings.Advanced.DisableD3DCompatibilityModeTooltip");
                 ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_DISABLED3DCOMPATIBILITY);
                 SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);*/
-
-                //------------------------------------
-
-                bool bUseHQResampling = AppConfig->GetInt(TEXT("Audio"), TEXT("UseHighQualityResampling"), FALSE) != 0;
-                SendMessage(GetDlgItem(hwnd, IDC_USEHIGHQUALITYRESAMPLING), BM_SETCHECK, bUseHQResampling ? BST_CHECKED : BST_UNCHECKED, 0);
-
-                ti.lpszText = (LPWSTR)Str("Settings.Advanced.UseHighQualityResamplingTooltip");
-                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_USEHIGHQUALITYRESAMPLING);
-                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
                 //------------------------------------
 
@@ -388,7 +374,6 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 case IDC_USEMICQPC:
                 case IDC_SYNCTOVIDEOTIME:
                 case IDC_USECFR:
-                case IDC_USEHIGHQUALITYRESAMPLING:
                 case IDC_USEMULTITHREADEDOPTIMIZATIONS:
                 case IDC_UNLOCKHIGHFPS:
                 case IDC_LATENCYMETHOD:

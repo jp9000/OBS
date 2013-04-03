@@ -95,8 +95,8 @@ void AudioSource::InitAudioData(bool bFloat, UINT channels, UINT samplesPerSec, 
     {
         int errVal;
 
-        int converterType = API->UseHighQualityResampling() ? SRC_SINC_FASTEST : SRC_LINEAR;
-        resampler = src_new(converterType, 2, &errVal);//SRC_SINC_FASTEST//SRC_ZERO_ORDER_HOLD
+        int converterType = SRC_SINC_FASTEST;
+        resampler = src_new(converterType, 2, &errVal);
         if(!resampler)
             CrashError(TEXT("AudioSource::InitAudioData: Could not initiate resampler"));
 

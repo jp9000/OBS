@@ -204,7 +204,6 @@
 #define IDC_DASHBOARDLINK_STATIC        1102
 #define IDC_DASHBOARDLINK               1103
 #define IDC_COLOR                       1104
-#define IDC_USEHIGHQUALITYRESAMPLING    1105
 #define IDC_OUTLINECOLOR                1105
 #define IDC_COLORKEY                    1105
 #define IDC_KEYCOLOR                    1105
