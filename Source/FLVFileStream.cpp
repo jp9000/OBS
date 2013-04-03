@@ -49,7 +49,7 @@ class FLVFileStream : public VideoFileStream
             fileOut.Serialize(lpData, 5);
             fileOut.Serialize(sei.lpPacket, sei.size);
             fileOut.Serialize(lpData+5, size-5);
-            fileOut.OutputDword(fastHtonl(size+14));
+            fileOut.OutputDword(fastHtonl(size+sei.size+14));
 
             bSentSEI = true;
         } else {
