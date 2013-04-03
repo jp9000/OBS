@@ -468,7 +468,7 @@ void OBS::Start()
     ReportStartStreamTrigger();
     
     SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, 0, 0, 0);
-    SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
+    SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED | ES_DISPLAY_REQUIRED);
 
     UpdateRenderViewMessage();
 
