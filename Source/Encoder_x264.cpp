@@ -56,8 +56,6 @@ const float baseCRF = 22.0f;
 
 bool valid_x264_string(const String &str, const char **x264StringList)
 {
-    bool bValidString = false;
-
     do
     {
         if(str.CompareI(String(*x264StringList)))

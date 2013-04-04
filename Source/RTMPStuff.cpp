@@ -222,20 +222,20 @@ char* OBS::EncMetaData(char *enc, char *pend, bool bFLVFile)
     int    audioBitRate  = GetAudioEncoder()->GetBitRate();
     CTSTR  lpAudioCodec  = GetAudioEncoder()->GetCodec();
 
-    double audioCodecID;
+    //double audioCodecID;
     const AVal *av_codecFourCC;
 
 #ifdef USE_AAC
     if(scmpi(lpAudioCodec, TEXT("AAC")) == 0)
     {
         av_codecFourCC = &av_mp4a;
-        audioCodecID = 10.0;
+        //audioCodecID = 10.0;
     }
     else
 #endif
     {
         av_codecFourCC = &av_mp3;
-        audioCodecID = 2.0;
+        //audioCodecID = 2.0;
     }
 
     if(bFLVFile)

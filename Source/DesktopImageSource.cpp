@@ -132,8 +132,6 @@ public:
 
         if(duplicator)
         {
-            Texture *newTex = NULL;
-
             switch(duplicator->AquireNextFrame(0))
             {
                 case DuplicatorInfo_Lost:
@@ -276,7 +274,7 @@ public:
 
             bMouseCaptured = bCaptureMouse && GetCursorInfo(&ci);
 
-            bool bWindowMinimized = false, bWindowNotFound = false;
+            bool bWindowNotFound = false;
             HWND hwndCapture = NULL;
             if(captureType == 1)
             {
@@ -719,8 +717,6 @@ void RefreshWindowList(HWND hwndCombobox, StringList &classList)
         {
             RECT clientRect;
             GetClientRect(hwndCurrent, &clientRect);
-
-            HWND hwndParent = GetParent(hwndCurrent);
 
             DWORD exStyles = (DWORD)GetWindowLongPtr(hwndCurrent, GWL_EXSTYLE);
             DWORD styles = (DWORD)GetWindowLongPtr(hwndCurrent, GWL_STYLE);

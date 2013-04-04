@@ -257,8 +257,6 @@ void OBS::MainCaptureLoop()
 
     HANDLE hScaleVal = yuvScalePixelShader->GetParameterByName(TEXT("baseDimensionI"));
 
-    LPVOID nullBuff = NULL;
-
     //----------------------------------------
     // x264 input buffers
 
@@ -299,6 +297,7 @@ void OBS::MainCaptureLoop()
     bool bWasLaggedFrame = false;
 #else
     DWORD streamTimeStart = OSGetTime();
+    DWORD fpsTimeAdjust = 0;
 #endif
     totalStreamTime = 0;
 
@@ -308,8 +307,6 @@ void OBS::MainCaptureLoop()
 
     DWORD fpsTimeNumerator = 1000-(frameTime*fps);
     DWORD fpsTimeDenominator = fps;
-    DWORD fpsTimeAdjust = 0;
-
     DWORD cfrTime = 0;
     DWORD cfrTimeAdjust = 0;
 
@@ -399,7 +396,7 @@ void OBS::MainCaptureLoop()
     lastStreamTime = firstFrameTime-frameTime;
 #endif
 
-    bool bFirstAudioPacket = true;
+    //bool bFirstAudioPacket = true;
 
     while(bRunning)
     {

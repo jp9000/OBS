@@ -392,7 +392,6 @@ Texture* D3D10Texture::CreateGDITexture(unsigned int width, unsigned int height)
     td.Usage            = D3D10_USAGE_DEFAULT;
     td.MiscFlags        = D3D10_RESOURCE_MISC_GDI_COMPATIBLE;
 
-    LPBYTE lpData = NULL;
     D3D10_SUBRESOURCE_DATA srd;
     zero(&srd, sizeof(srd));
 
@@ -509,7 +508,7 @@ void CopyPackedRGB(BYTE *lpDest, BYTE *lpSource, UINT nPixels)
 
     DWORD *lpDWDest = (DWORD*)lpDest;
     DWORD *lpDWSrc  = (DWORD*)lpSource;
-    DWORD *lpEnd    = (DWORD*)(lpSource+alignedBytes);
+
     while(nDWords)
     {
         switch(curComponent)
@@ -557,7 +556,7 @@ void D3D10Texture::SetImage(void *lpData, GSImageFormat imageFormat, UINT pitch)
     }
 
     bool bMatchingFormat = false;
-    UINT pixelBytes = 0;
+    UINT pixelBytes = 0;    //What is this needed for?
 
     switch(format)
     {
@@ -605,8 +604,6 @@ void D3D10Texture::SetImage(void *lpData, GSImageFormat imageFormat, UINT pitch)
     //-------------------------------------------------------------------------
     else
     {
-        UINT rowWidth = width*pixelBytes;
-
         if(pitch == map.RowPitch)
         {
             if(App->SSE2Available())

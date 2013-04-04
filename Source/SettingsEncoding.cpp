@@ -60,7 +60,7 @@ void SettingsEncoding::ApplySettings()
     AppConfig->SetInt(TEXT("Video Encoding"), TEXT("MaxBitrate"), bitrate);
 
     UINT bufSize = GetEditText(GetDlgItem(hwnd, IDC_BUFFERSIZE)).ToInt();
-    if(bufSize < 100) bitrate = bufSize;
+    //if(bufSize < 100) bufSize = bitrate;  //R1CH: Allow users to enter 0 buffer size to disable VBV, its protected by checkbox anyway
     AppConfig->SetInt(TEXT("Video Encoding"), TEXT("BufferSize"), bufSize);
 
     String strTemp = GetCBText(GetDlgItem(hwnd, IDC_AUDIOCODEC));

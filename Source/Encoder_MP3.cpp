@@ -105,10 +105,7 @@ public:
             curEncodeTimestamp = timestamp + ((outputFrameSize-lastSampleSize)*10/441);
         }
 
-        int framenum1 = lame_get_frameNum(lgf);
         int ret = lame_encode_buffer_interleaved_ieee_float(lgf, (float*)input, numInputFrames, MP3OutputBuffer.Array()+1, dwMP3MaxSize);
-
-        int framesEncoded = lame_get_frameNum(lgf)-framenum1;
 
         if(ret < 0)
         {

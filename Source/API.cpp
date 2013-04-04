@@ -581,6 +581,7 @@ UINT OBSAPIInterface::CreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARA
     if(!hotkey)
         return 0;
 
+    //FIXME: vk and fsModifiers aren't used?
     DWORD vk = LOBYTE(hotkey);
     DWORD modifier = HIBYTE(hotkey);
     DWORD fsModifiers = 0;

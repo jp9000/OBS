@@ -240,7 +240,6 @@ RTMPPublisher::~RTMPPublisher()
         queuedPackets[i].data.Clear();
     queuedPackets.Clear();
 
-    double dTotalFrames = double(totalFrames);
     double dBFrameDropPercentage = double(numBFramesDumped)/NumTotalVideoFrames()*100.0;
     double dPFrameDropPercentage = double(numPFramesDumped)/NumTotalVideoFrames()*100.0;
 
@@ -355,7 +354,8 @@ void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketTyp
         bConnecting = true;
     }
 
-    if (bFirstKeyframe) {
+    if (bFirstKeyframe)
+    {
         if (!bConnected || type != PacketType_VideoHighest)
             return;
 
@@ -363,8 +363,10 @@ void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketTyp
         bFirstKeyframe = false;
     }
 
-    if (bufferedPackets.Num() == MAX_BUFFERED_PACKETS) {
-        if (!bBufferFull) {
+    if (bufferedPackets.Num() == MAX_BUFFERED_PACKETS)
+    {
+        if (!bBufferFull)
+        {
             InitializeBuffer();
             bBufferFull = true;
         }
@@ -379,13 +381,17 @@ void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketTyp
     timestamp -= firstTimestamp;
 
     TimedPacket *packet;
-    UINT newID;
-    if (type == PacketType_Audio) {
+    
+    if (type == PacketType_Audio)
+    {
+        UINT newID;
         timestamp -= audioTimeOffset;
 
         newID = FindClosestBufferIndex(timestamp);
         packet = bufferedPackets.InsertNew(newID);
-    } else {
+    }
+    else
+    {
         packet = bufferedPackets.CreateNew();
     }
 
@@ -773,12 +779,12 @@ end:
 double RTMPPublisher::GetPacketStrain() const
 {
     return (curDataBufferLen / (double)dataBufferSize) * 100.0;
-    if(packetWaitType >= PacketType_VideoHigh)
+    /*if(packetWaitType >= PacketType_VideoHigh)
         return min(100.0, dNetworkStrain*100.0);
     else if(bNetworkStrain)
         return dNetworkStrain*66.0;
 
-    return dNetworkStrain*33.0;
+    return dNetworkStrain*33.0;*/
 }
 
 QWORD RTMPPublisher::GetCurrentSentBytes()

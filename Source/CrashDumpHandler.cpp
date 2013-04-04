@@ -57,7 +57,7 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
     SYMBOL_INFO         *symInfo;
     DWORD64             fnOffset;
     TCHAR               logPath[MAX_PATH];
-    TCHAR               dumpPath[MAX_PATH];
+
     OSVERSIONINFOEX     osInfo;
     SYSTEMTIME          timeInfo;
 
@@ -75,8 +75,6 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
     DWORD                       i;
     DWORD64                     InstructionPtr;
     DWORD                       imageType;
-
-    BOOL                        wantUpload = TRUE;
 
     TCHAR                       searchPath[MAX_PATH], *p;
 
@@ -296,6 +294,7 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
     //generate a minidump if possible
     if (fnMiniDumpWriteDump)
     {
+        TCHAR     dumpPath[MAX_PATH];
         HANDLE    hFile;
 
         tsprintf_s (dumpPath, _countof(dumpPath)-1, TEXT("%s\\crashDumps\\OBSCrashDump%.4d-%.2d-%.2d_%d.dmp"), lpAppDataPath, timeInfo.wYear, timeInfo.wMonth, timeInfo.wDay, i);

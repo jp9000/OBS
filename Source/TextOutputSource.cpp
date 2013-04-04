@@ -731,7 +731,7 @@ void DoCancelStuff(HWND hwnd)
 {
     ConfigTextSourceInfo *configInfo = (ConfigTextSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
     ImageSource *source = API->GetSceneImageSource(configInfo->lpName);
-    XElement *data = configInfo->data;
+    //XElement *data = configInfo->data;
 
     if(source)
         source->UpdateSettings();

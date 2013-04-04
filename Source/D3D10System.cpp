@@ -23,7 +23,6 @@
 void GetDisplayDevices(DeviceOutputs &deviceList)
 {
     HRESULT err;
-    UINT count = 0;
 
     deviceList.ClearData();
 
@@ -453,8 +452,6 @@ void D3D10System::LoadVertexBuffer(VertexBuffer* vb)
 {
     if(vb != curVertexBuffer)
     {
-        UINT offset = 0;
-
         D3D10VertexBuffer *d3dVB = static_cast<D3D10VertexBuffer*>(vb);
         if(curVertexShader)
         {

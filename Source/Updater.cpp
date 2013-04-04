@@ -51,7 +51,6 @@ VOID GenerateGUID(String &strGUID)
 
 BOOL CalculateFileHash (TCHAR *path, BYTE *hash)
 {
-    BYTE buff[65536];
     HCRYPTHASH hHash;
 
     if (!CryptCreateHash(hProvider, CALG_SHA1, 0, 0, &hHash))
@@ -61,6 +60,8 @@ BOOL CalculateFileHash (TCHAR *path, BYTE *hash)
 
     if (file.Open(path, XFILE_READ, OPEN_EXISTING))
     {
+        BYTE buff[65536];
+
         for (;;)
         {
             DWORD read = file.Read(buff, sizeof(buff));
@@ -226,11 +227,11 @@ BOOL ParseUpdateManifest (TCHAR *path, BOOL *updatesAvailable, String &descripti
             filePath << path;
             filePath << fileName;
 
-            BYTE fileHash[20];
-            TCHAR fileHashString[41];
-
             if (OSFileExists(filePath))
             {
+                BYTE fileHash[20];
+                TCHAR fileHashString[41];
+
                 if (!CalculateFileHash(filePath, fileHash))
                     continue;
                 

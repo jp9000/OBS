@@ -34,9 +34,9 @@ void WINAPI FreeMediaType(AM_MEDIA_TYPE& mt)
 
 HRESULT WINAPI CopyMediaType(AM_MEDIA_TYPE *pmtTarget, const AM_MEDIA_TYPE *pmtSource)
 {
-    *pmtTarget = *pmtSource;
-
     if(!pmtSource || !pmtTarget) return S_FALSE;
+
+    *pmtTarget = *pmtSource;
 
     if(pmtSource->cbFormat && pmtSource->pbFormat)
     {
@@ -195,7 +195,7 @@ bool GetVideoOutputTypes(const List<MediaOutputInfo> &outputList, UINT width, UI
     for(UINT i=0; i<outputList.Num(); i++)
     {
         MediaOutputInfo &outputInfo = outputList[i];
-        VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(outputInfo.mediaType->pbFormat);
+        //VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(outputInfo.mediaType->pbFormat);
 
         if( outputInfo.minCX <= width                    && outputInfo.maxCX >= width &&
             outputInfo.minCY <= height                   && outputInfo.maxCY >= height &&
@@ -223,7 +223,7 @@ MediaOutputInfo* GetBestMediaOutput(const List<MediaOutputInfo> &outputList, UIN
     for(UINT i=0; i<outputList.Num(); i++)
     {
         MediaOutputInfo &outputInfo = outputList[i];
-        VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(outputInfo.mediaType->pbFormat);
+        //VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(outputInfo.mediaType->pbFormat);
 
         if( outputInfo.minCX <= width  && outputInfo.maxCX >= width &&
             outputInfo.minCY <= height && outputInfo.maxCY >= height)

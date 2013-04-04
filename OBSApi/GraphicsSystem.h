@@ -118,6 +118,7 @@ struct VBData
 
         if(s.IsLoading())
         {
+            //FIXME: ???
             s << dwSize;
             UVList.SetSize(dwSize);
         }

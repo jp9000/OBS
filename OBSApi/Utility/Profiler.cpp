@@ -145,13 +145,13 @@ BOOL bProfilingEnabled = FALSE;
 HANDLE hProfilerTimer = NULL;
 
 
-void STDCALL EnableProfiling(BOOL bEnable, float minPercentage, float minTime)
+void STDCALL EnableProfiling(BOOL bEnable, float pminPercentage, float pminTime)
 {
     //if(engine && !engine->InEditor())
     bProfilingEnabled = bEnable;
 
-    minPercentage = minPercentage;
-    minTime = minTime;
+    minPercentage = pminPercentage;
+    minTime = pminTime;
 }
 
 void STDCALL DumpProfileData()

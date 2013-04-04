@@ -131,7 +131,7 @@ protected:
 
     void SendLoop();
     void SocketLoop();
-    int RTMPPublisher::FlushDataBuffer();
+    int FlushDataBuffer();
     static DWORD SendThread(RTMPPublisher *publisher);
     static DWORD SocketThread(RTMPPublisher *publisher);
 

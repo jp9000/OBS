@@ -914,7 +914,6 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 void OBS::DeleteItems()
 {
     HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
-    UINT numSelected = ListView_GetSelectedCount(hwndSources);
     int numItems = ListView_GetItemCount(hwndSources);
 
     List<SceneItem*> selectedSceneItems;
@@ -987,7 +986,6 @@ void OBS::DeleteItems()
 void OBS::SetSourceOrder(StringList &sourceNames)
 {
     HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
-    UINT numSelected = ListView_GetSelectedCount(hwndSources);
     int numItems = ListView_GetItemCount(hwndSources);
 
     if(numItems == 0)
@@ -1042,7 +1040,6 @@ void OBS::SetSourceOrder(StringList &sourceNames)
 void OBS::MoveSourcesUp()
 {
     HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
-    UINT numSelected = ListView_GetSelectedCount(hwndSources);
     int numItems = ListView_GetItemCount(hwndSources);
     UINT focusedItem = -1, selectionMark;
 
@@ -1184,7 +1181,6 @@ void OBS::MoveSourcesDown()
 void OBS::MoveSourcesToTop()
 {
     HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
-    UINT numSelected = ListView_GetSelectedCount(hwndSources);
     int numItems = ListView_GetItemCount(hwndSources);
     UINT focusedItem = -1, selectionMark;
 
@@ -1259,7 +1255,6 @@ void OBS::MoveSourcesToTop()
 void OBS::MoveSourcesToBottom()
 {
     HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
-    UINT numSelected = ListView_GetSelectedCount(hwndSources);
     int numItems = ListView_GetItemCount(hwndSources);
     UINT focusedItem = -1, selectionMark;
 
@@ -2278,7 +2273,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
         case WM_NOTIFY:
             {
                 NMHDR nmh = *(LPNMHDR)lParam;
-                static bool bHighlighted;
+
                 switch(wParam)
                 {
                     case ID_SOURCES:
@@ -2473,10 +2468,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 int newWidth  = MAX(screenSize.right  - screenSize.left, minClientWidth+App->borderXSize);
                 int newHeight = MAX(screenSize.bottom - screenSize.top , minClientHeight+App->borderYSize);
 
-                int maxCX = GetSystemMetrics(SM_CXFULLSCREEN);
+                /*int maxCX = GetSystemMetrics(SM_CXFULLSCREEN);
                 int maxCY = GetSystemMetrics(SM_CYFULLSCREEN);
 
-                /*if(newWidth > maxCX)
+                if(newWidth > maxCX)
                     newWidth = maxCX;
                 if(newHeight > maxCY)
                     newHeight = maxCY;*/
@@ -2838,8 +2833,6 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
             {
                 List<SceneItem*> items;
                 App->scene->GetSelectedItems(items);
-
-                bool bInside = false;
 
                 App->scaleItem = NULL;
                 App->modifyType = ItemModifyType_None;

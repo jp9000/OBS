@@ -141,11 +141,11 @@ void SettingsVideo::RefreshFilters(HWND hwndParent, bool bGetConfig)
     if(bGetConfig)
         curFilter = AppConfig->GetInt(TEXT("Video"), TEXT("Filter"), 0);
     else
-        curFilter = (int)SendMessage(GetDlgItem(hwnd, IDC_FILTER), CB_GETCURSEL, 0, 0);
+        curFilter = (int)SendMessage(hwndFilter, CB_GETCURSEL, 0, 0);
 
     float downscale = 1.0f;
 
-    int curSel = (int)SendMessage(GetDlgItem(hwnd, IDC_DOWNSCALE), CB_GETCURSEL, 0, 0);
+    int curSel = (int)SendMessage(hwndDownscale, CB_GETCURSEL, 0, 0);
     if(curSel != CB_ERR)
         downscale = downscaleMultipliers[curSel];
 
@@ -410,9 +410,6 @@ INT_PTR SettingsVideo::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                         {
                             if(HIWORD(wParam) != EN_CHANGE)
                                 break;
-
-                            String strInt = GetEditText((HWND)lParam);
-                            int iVal = strInt.ToInt();
 
                             int cx = GetEditText(GetDlgItem(hwnd, IDC_SIZEX)).ToInt();
                             int cy = GetEditText(GetDlgItem(hwnd, IDC_SIZEY)).ToInt();

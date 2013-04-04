@@ -143,6 +143,8 @@ public:
             ret = file.SetPos(INT64(GetPos())+offset, XFILE_BEGIN);
         else if(seekType == SERIALIZE_SEEK_END)
             ret = file.SetPos(offset, XFILE_END);
+        else
+            return 0;
 
         Cache();
 

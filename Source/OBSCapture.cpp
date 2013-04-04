@@ -372,11 +372,12 @@ void OBS::Start()
         {
             String strFileExtension = GetPathExtension(strOutputFile);
             String strFileWithoutExtension = GetPathWithoutExtension(strOutputFile);
-            UINT curFile = 0;
 
             if(strFileExtension.IsValid() && !ofd.bDirectory)
             {
                 String strNewFilePath;
+                UINT curFile = 0;
+
                 do 
                 {
                     strNewFilePath.Clear() << strFileWithoutExtension << TEXT(" (") << FormattedString(TEXT("%02u"), ++curFile) << TEXT(").") << strFileExtension;
@@ -806,11 +807,10 @@ bool OBS::QueryNewAudio(QWORD &timestamp)
 {
     bool bNewAudio = false;
 
-    UINT audioRet;
     timestamp = INVALID_LL;
 
     QWORD desktopTimestamp;
-    while((audioRet = desktopAudio->QueryAudio(curDesktopVol)) != NoAudioAvailable)
+    while((desktopAudio->QueryAudio(curDesktopVol)) != NoAudioAvailable)
     {
         bNewAudio = true;
 
@@ -832,7 +832,7 @@ bool OBS::QueryNewAudio(QWORD &timestamp)
 
         if(micAudio)
         {
-            while((audioRet = micAudio->QueryAudio(curMicVol)) != NoAudioAvailable);
+            while((micAudio->QueryAudio(curMicVol)) != NoAudioAvailable);
         }
     }
 

@@ -117,15 +117,16 @@ LRESULT CALLBACK VolumeMeterProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             {
                 meter = GetVolumeMeterData(hwnd);
                 
-                DeleteObject(meter->hRed);
-                DeleteObject(meter->hGreen);
-                DeleteObject(meter->hGreenDark);
-                DeleteObject(meter->hBlack);
-                DeleteObject(meter->hGray);
-                DeleteObject(meter->hLightGray);
-                
                 if(meter)
+                {
+                    DeleteObject(meter->hRed);
+                    DeleteObject(meter->hGreen);
+                    DeleteObject(meter->hGreenDark);
+                    DeleteObject(meter->hBlack);
+                    DeleteObject(meter->hGray);
+                    DeleteObject(meter->hLightGray);
                     free(meter);
+                }
 
                 break;
             }

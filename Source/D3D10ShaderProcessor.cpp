@@ -231,8 +231,7 @@ BOOL ShaderProcessor::ProcessShader(CTSTR input)
                 TSTR lpSavedPos = lpTemp;
                 String savedToken = curToken;
 
-                BOOL bUniform;
-                if(bUniform = (curToken == TEXT("uniform")))
+                if(curToken == TEXT("uniform"))
                     HandMeAToken(curToken);
 
                 String strType = curToken;
@@ -284,8 +283,6 @@ BOOL ShaderProcessor::ProcessShader(CTSTR input)
                     }
                     else
                     {
-                        UINT paramID = Params.Num();
-
                         ShaderParam *param = Params.CreateNew();
                         param->name = strName;
 

@@ -544,6 +544,7 @@ public:
     {
         if(s.IsLoading())
         {
+            //FIXME: ???
             UINT num;
             s << num;
             list.SetSize(num);

@@ -266,7 +266,6 @@ BOOL CodeTokenizer::GetNextTokenEval(String &token, BOOL *bFloatOccurance, int c
     TSTR lpLastSafePos = lpTemp;
     String curVal, curToken;
     BOOL bFoundNumber = FALSE;
-    BOOL bUsedBracers = FALSE;
 
     if(!GetNextToken(curToken)) return FALSE;
 
@@ -291,8 +290,6 @@ BOOL CodeTokenizer::GetNextTokenEval(String &token, BOOL *bFloatOccurance, int c
             token = TEXT("(");
             return TRUE;
         }
-
-        bUsedBracers = TRUE;
     }
 
     if(curToken == TEXT("-") && iswdigit(*lpTemp))

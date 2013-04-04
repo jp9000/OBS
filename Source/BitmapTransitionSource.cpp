@@ -513,11 +513,11 @@ bool STDCALL ConfigureBitmapTransitionSource(XElement *element, bool bCreating)
     configInfo.data = data;
 
     return (DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_CONFIGURETRANSITIONSOURCE), hwndMain, ConfigureBitmapTransitionProc, (LPARAM)&configInfo) == IDOK);
-    {
+    /*{
         element->SetInt(TEXT("cx"), configInfo.cx);
         element->SetInt(TEXT("cy"), configInfo.cy);
         return true;
     }
 
-    return false;
+    return false;*/
 }
