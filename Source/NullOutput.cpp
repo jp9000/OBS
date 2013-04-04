@@ -52,7 +52,7 @@ class NullNetwork : public NetworkStream
     virtual DWORD NumDroppedFrames() const {return 0;}
     virtual DWORD NumTotalVideoFrames() const {return framesRendered;}
 private:
-    DWORD bytesSent;
+    QWORD bytesSent;
     DWORD framesRendered;
 };
 
