@@ -769,7 +769,7 @@ gif_result gif_decode_frame(gif_animation *gif, unsigned int frame) {
     unsigned int *frame_data = 0;    // Set to 0 for no warnings
     unsigned int *frame_scanline;
     unsigned int save_buffer_position;
-    unsigned int return_value = 0;
+    gif_result return_value = GIF_OK;
     unsigned int x, y, decode_y, burst_bytes;
     int last_undisposed_frame = (frame - 1);
     register unsigned char colour;

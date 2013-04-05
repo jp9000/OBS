@@ -228,6 +228,22 @@ public:
 
                 if(newFrame != curFrame)
                 {
+                    UINT lastFrame;
+
+                    //animation might have looped, if so make sure we decode from frame 0
+                    if (newFrame < curFrame)
+                        lastFrame = 0;
+                    else
+                        lastFrame = curFrame + 1;
+
+                    //we need to decode any frames we missed for consistency
+                    for (UINT i = lastFrame; i < newFrame; i++)
+                    {
+                        if (gif_decode_frame(&gif, i) != GIF_OK)
+                            return;
+                    }
+
+                    //now decode and display the actual frame we want
                     if (gif_decode_frame(&gif, newFrame) == GIF_OK)
                         texture->SetImage(gif.frame_image, GS_IMAGEFORMAT_RGBA, gif.width*4);
 
