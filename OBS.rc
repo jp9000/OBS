@@ -165,7 +165,7 @@ BEGIN
     CONTROL         "Settings.General.Notification",IDC_NOTIFICATIONICON,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,94,264,10,WS_EX_RIGHT
     CONTROL         "Settings.General.NotificationMinimize",IDC_MINIZENOTIFICATION,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,110,261,10,WS_EX_RIGHT
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,110,264,10,WS_EX_RIGHT
 END
 
 IDD_SETTINGS_AUDIO DIALOGEX 0, 0, 427, 336
