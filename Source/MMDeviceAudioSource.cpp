@@ -37,7 +37,7 @@ class MMDeviceAudioSource : public AudioSource
     bool bIsMic;
     bool bFirstFrameReceived;
 
-    UINT32 numFramesRead;
+    //UINT32 numFramesRead;
 
     String strDeviceName;
 
@@ -45,11 +45,14 @@ class MMDeviceAudioSource : public AudioSource
     QWORD lastVideoTime;
     QWORD curVideoTime;
 
-    UINT32 lastNumFramesRead;
     UINT sampleWindowSize;
     List<float> inputBuffer;
+    UINT inputBufferSize;
+    QWORD firstTimestamp;
 
     bool bUseQPC;
+
+    QWORD GetTimestamp(QWORD qpcTimestamp);
 
 protected:
     virtual bool GetNextBuffer(void **buffer, UINT *numFrames, QWORD *timestamp);
@@ -231,7 +234,7 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
 
     //-----------------------------------------------------------------
 
-    InitAudioData(bFloat, inputChannels, inputSamplesPerSec, inputBitsPerSample, inputBlockSize, inputChannelMask);
+    InitAudioData(bFloat, inputChannels, inputSamplesPerSec, inputBitsPerSample, inputBlockSize, inputChannelMask, !bMic);
 
     return true;
 }
@@ -248,7 +251,132 @@ void MMDeviceAudioSource::StopCapture()
         mmClient->Stop();
 }
 
+QWORD MMDeviceAudioSource::GetTimestamp(QWORD qpcTimestamp)
+{
+    QWORD newTimestamp;
+
+    if(bIsMic)
+    {
+        newTimestamp = (bUseQPC) ? qpcTimestamp : App->GetAudioTime();
+        newTimestamp += GetTimeOffset();
+    }
+    else
+    {
+        //we're doing all these checks because device timestamps are only reliable "sometimes"
+        if(!bFirstFrameReceived)
+        {
+            QWORD curTime = GetQPCTimeMS();
+
+            newTimestamp = qpcTimestamp;
+
+            curVideoTime = lastVideoTime = App->GetVideoTime();
+
+            if(bUseVideoTime || newTimestamp < (curTime-App->bufferingTime) || newTimestamp > (curTime+2000))
+            {
+                if(!bUseVideoTime)
+                    Log(TEXT("Bad timestamp detected, syncing audio to video time"));
+                else
+                    Log(TEXT("Syncing audio to video time"));
+
+                SetTimeOffset(GetTimeOffset()-int(lastVideoTime-App->GetSceneTimestamp()));
+                bUseVideoTime = true;
+
+                newTimestamp = lastVideoTime+GetTimeOffset();
+            }
+
+            bFirstFrameReceived = true;
+        }
+        else
+        {
+            QWORD newVideoTime = App->GetVideoTime();
+
+            if(newVideoTime != lastVideoTime)
+                curVideoTime = lastVideoTime = newVideoTime;
+            else
+                curVideoTime += 10;
+
+            newTimestamp = (bUseVideoTime) ? curVideoTime : qpcTimestamp;
+            newTimestamp += GetTimeOffset();
+        }
+
+        App->latestAudioTime = newTimestamp;
+    }
+
+    return newTimestamp;
+}
+
 bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *timestamp)
+{
+    UINT captureSize = 0;
+    HRESULT hRes;
+    
+    while (true) {
+        hRes = mmCapture->GetNextPacketSize(&captureSize);
+
+        if (FAILED(hRes)) {
+            RUNONCE AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: GetNextPacketSize failed, result = %08lX"), hRes);
+            return false;
+        }
+
+        if (!captureSize)
+            return false;
+
+        //---------------------------------------------------------
+
+        LPBYTE captureBuffer;
+        UINT32 numFramesRead;
+        DWORD dwFlags = 0;
+
+        UINT64 devPosition, qpcTimestamp;
+        hRes = mmCapture->GetBuffer(&captureBuffer, &numFramesRead, &dwFlags, &devPosition, &qpcTimestamp);
+
+        if (FAILED(hRes)) {
+            RUNONCE AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: GetBuffer failed, result = %08lX"), hRes);
+            return false;
+        }
+
+        qpcTimestamp /= 10000;
+
+        if (!inputBufferSize) {
+            firstTimestamp = GetTimestamp(qpcTimestamp);
+        }
+
+        //---------------------------------------------------------
+
+        UINT totalFloatsRead = numFramesRead*GetChannelCount();
+        UINT newInputBufferSize = inputBufferSize + totalFloatsRead;
+        if (newInputBufferSize > inputBuffer.Num()) {
+            inputBuffer.SetSize(newInputBufferSize);
+        }
+
+        SSECopy(inputBuffer.Array()+inputBufferSize, captureBuffer, totalFloatsRead*sizeof(float));
+        inputBufferSize = newInputBufferSize;
+
+        mmCapture->ReleaseBuffer(numFramesRead);
+
+        //---------------------------------------------------------
+
+        if (inputBufferSize >= sampleWindowSize*GetChannelCount())
+            break;
+    }
+
+    *numFrames = sampleWindowSize;
+    *buffer = (void*)inputBuffer.Array();
+    *timestamp = firstTimestamp;
+
+    return true;
+}
+
+void MMDeviceAudioSource::ReleaseBuffer()
+{
+    UINT sampleSizeFloats = sampleWindowSize*GetChannelCount();
+    if (inputBufferSize > sampleSizeFloats)
+        SSECopy(inputBuffer.Array(), inputBuffer.Array()+sampleSizeFloats, inputBufferSize-sampleSizeFloats);
+
+    inputBufferSize -= sampleSizeFloats;
+}
+
+/*bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *timestamp)
 {
     UINT captureSize = 0;
     HRESULT err = mmCapture->GetNextPacketSize(&captureSize);
@@ -345,3 +473,4 @@ void MMDeviceAudioSource::ReleaseBuffer()
 {
     mmCapture->ReleaseBuffer(numFramesRead);
 }
+*/

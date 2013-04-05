@@ -80,9 +80,10 @@ union TripleToLong
     };
 };
 
-void AudioSource::InitAudioData(bool bFloat, UINT channels, UINT samplesPerSec, UINT bitsPerSample, UINT blockSize, DWORD channelMask)
+void AudioSource::InitAudioData(bool bFloat, UINT channels, UINT samplesPerSec, UINT bitsPerSample, UINT blockSize, DWORD channelMask, bool bSmoothTimestamps)
 {
     this->bFloat = bFloat;
+    this->bSmoothTimestamps = bSmoothTimestamps;
     inputChannels = channels;
     inputSamplesPerSec = samplesPerSec;
     inputBitsPerSample = bitsPerSample;
@@ -575,16 +576,15 @@ UINT AudioSource::QueryAudio(float curVolume)
 
         float *newBuffer = (bResample) ? tempResampleBuffer.Array() : tempBuffer.Array();
 
-        if(storageBuffer.Num() == 0 && numAudioFrames == 441)
-        {
+        if (bSmoothTimestamps) {
             lastUsedTimestamp += 10;
 
             QWORD difVal = GetQWDif(newTimestamp, lastUsedTimestamp);
             if(difVal > 70)
             {
-                //Log(TEXT("----------------------------1\r\nlastUsedTimestamp before: %llu"), lastUsedTimestamp);
+                //OSDebugOut(TEXT("----------------------------1\r\nlastUsedTimestamp before: %llu - device: %s\r\n"), lastUsedTimestamp, GetDeviceName());
                 lastUsedTimestamp = newTimestamp;
-                //Log(TEXT("lastUsedTimestamp after: %llu"), lastUsedTimestamp);
+                //OSDebugOut(TEXT("lastUsedTimestamp after: %llu\r\n"), lastUsedTimestamp);
             }
 
             if(lastUsedTimestamp > lastSentTimestamp)
@@ -598,51 +598,10 @@ UINT AudioSource::QueryAudio(float curVolume)
 
                 lastSentTimestamp = lastUsedTimestamp;
             }
-        }
-        else
-        {
-            UINT storedFrames = storageBuffer.Num();
-
-            storageBuffer.AppendArray(newBuffer, numAudioFrames*2);
-            if(storageBuffer.Num() >= (441*2))
-            {
-                lastUsedTimestamp += 10;
-
-                QWORD difVal = GetQWDif(newTimestamp, lastUsedTimestamp);
-                if(difVal > 70)
-                {
-                    //Log(TEXT("----------------------------2\r\nlastUsedTimestamp before: %llu"), lastUsedTimestamp);
-                    lastUsedTimestamp = newTimestamp - (QWORD(storedFrames)/2*1000/44100);
-                    //Log(TEXT("lastUsedTimestamp after: %llu"), lastUsedTimestamp);
-                }
-
-                //------------------------
-                // add new data
-
-                bool bFirst = true;
-                while(storageBuffer.Num() >= (441*2))
-                {
-                    if(!bFirst)
-                        lastUsedTimestamp += 10;
-
-                    if(lastUsedTimestamp > lastSentTimestamp)
-                    {
-                        QWORD adjustVal = (lastUsedTimestamp-lastSentTimestamp);
-                        if(adjustVal < 10)
-                            lastUsedTimestamp += 10-adjustVal;
-
-                        AudioSegment *newSegment = new AudioSegment(storageBuffer.Array(), 441*2, lastUsedTimestamp);
-                        AddAudioSegment(newSegment, curVolume*sourceVolume);
-                        storageBuffer.RemoveRange(0, (441*2));
-
-                        if(!bFirst)
-                            lastSentTimestamp = lastUsedTimestamp;
-                    }
-
-                    if(bFirst)
-                        bFirst = false;
-                }
-            }
+        } else {
+           // OSDebugOut(TEXT("newTimestamp: %llu\r\n"), newTimestamp);
+            AudioSegment *newSegment = new AudioSegment(newBuffer, numAudioFrames*2, newTimestamp);
+            AddAudioSegment(newSegment, curVolume*sourceVolume);
         }
 
         //-----------------------------------------------------------------------------
@@ -673,7 +632,7 @@ bool AudioSource::GetBuffer(float **buffer, UINT *numFrames, QWORD targetTimesta
     {
         if(audioSegments[0]->timestamp < targetTimestamp)
         {
-            Log(TEXT("Audio timestamp for device '%s' was behind target timestamp by %llu!  Had to delete audio segment."),
+            Log(TEXT("Audio timestamp for device '%s' was behind target timestamp by %llu!  Had to delete audio segment.\r\n"),
                                                               GetDeviceName(), targetTimestamp-audioSegments[0]->timestamp);
             delete audioSegments[0];
             audioSegments.Remove(0);

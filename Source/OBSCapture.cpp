@@ -818,7 +818,7 @@ bool OBS::QueryNewAudio(QWORD &timestamp)
             micAudio->QueryAudio(curMicVol);
     }
 
-    if(bNewAudio)
+    /*if(bNewAudio)
     {
         OSEnterMutex(hAuxAudioMutex);
         for(UINT i=0; i<auxAudioSources.Num(); i++)
@@ -829,7 +829,7 @@ bool OBS::QueryNewAudio(QWORD &timestamp)
         {
             while((micAudio->QueryAudio(curMicVol)) != NoAudioAvailable);
         }
-    }
+    }*/
 
     if(desktopAudio->GetEarliestTimestamp(desktopTimestamp))
         timestamp = desktopTimestamp;
