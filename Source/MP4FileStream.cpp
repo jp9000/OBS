@@ -336,8 +336,11 @@ public:
         EndChunkInfo(videoChunks, videoSampleToChunk, curVideoChunkOffset, numVideoSamples);
         EndChunkInfo(audioChunks, audioSampleToChunk, curAudioChunkOffset, numAudioSamples);
 
-        GetVideoDecodeTime(videoFrames.Last(), true);
-        GetAudioDecodeTime(audioFrames.Last(), true);
+        if (numVideoSamples > 1)
+            GetVideoDecodeTime(videoFrames.Last(), true);
+
+        if (numAudioSamples > 1)
+            GetAudioDecodeTime(audioFrames.Last(), true);
 
         UINT audioUnitDuration = fastHtonl(UINT(lastAudioTimeVal));
 
