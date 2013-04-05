@@ -957,4 +957,4 @@ public:
 };
 
 LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo);
-
+String CurrentDateTime();
