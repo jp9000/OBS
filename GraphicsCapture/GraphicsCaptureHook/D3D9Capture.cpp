@@ -577,6 +577,8 @@ DWORD CopyD3D9CPUTextureThread(LPVOID lpUseless)
 
 void DoD3D9DrawStuff(IDirect3DDevice9 *device)
 {
+    HRESULT hErr;
+
     if(bStopRequested)
     {
         ClearD3D9Data();
@@ -661,14 +663,14 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
                             IDirect3DSurface9 *texture = textures[curCapture];
                             IDirect3DSurface9 *backBuffer = NULL;
 
-                            if(SUCCEEDED(device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &backBuffer)))
-                            {
-                                if(FAILED(device->StretchRect(backBuffer, NULL, copyD3D9TextureGame, NULL, D3DTEXF_NONE)))
-                                {
-                                    RUNONCE logOutput << "DoD3D9DrawStuff: device->StretchRect failed" << endl;
+                            if (SUCCEEDED(hErr = device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &backBuffer))) {
+                                if (FAILED(hErr = device->StretchRect(backBuffer, NULL, copyD3D9TextureGame, NULL, D3DTEXF_NONE))) {
+                                    RUNONCE logOutput << "DoD3D9DrawStuff: device->StretchRect failed, result = " << unsigned int(hErr) << endl;
                                 }
 
                                 backBuffer->Release();
+                            } else {
+                                RUNONCE logOutput << "DoD3D9DrawStuff: device->GetBackBuffer failed, result = " << unsigned int(hErr) << endl;
                             }
 
                             curCapture = nextCapture;
@@ -750,7 +752,6 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
                                     OSLeaveMutex(dataMutexes[nextCapture]);
                                 }
 
-                                HRESULT hErr;
                                 if(FAILED(hErr = device->GetRenderTargetData(prevSourceTexture, targetTexture)))
                                 {
                                     int test = 0;
