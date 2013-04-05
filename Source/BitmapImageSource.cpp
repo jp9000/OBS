@@ -257,7 +257,7 @@ public:
             if(bUseColorKey)
             {
                 Shader *lastPixelShader = GetCurrentPixelShader();
-                DWORD alpha = DWORD(double(opacity)*2.55);
+                DWORD alpha = ((opacity*255/100)&0xFF);
                 DWORD outputColor = (alpha << 24) | color&0xFFFFFF;
                 LoadPixelShader(colorKeyShader);
 
@@ -271,8 +271,9 @@ public:
                 DrawSprite(texture, outputColor, pos.x, pos.y, pos.x+size.x, pos.y+size.y);
                 LoadPixelShader(lastPixelShader);
             }
-            else {
-                DWORD alpha = DWORD(double(opacity)*2.55);
+            else
+            {
+                DWORD alpha = ((opacity*255/100)&0xFF);
                 DWORD outputColor = (alpha << 24) | color&0xFFFFFF;
                 DrawSprite(texture, outputColor, pos.x, pos.y, pos.x+size.x, pos.y+size.y);
             }
