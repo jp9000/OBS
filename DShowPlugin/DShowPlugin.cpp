@@ -161,7 +161,7 @@ IBaseFilter* GetDeviceByValue(const IID &enumType, WSTR lpType, CTSTR lpName, WS
     IEnumMoniker *videoDeviceEnum;
 
     HRESULT err;
-    err = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC, IID_ICreateDevEnum, (void**)&deviceEnum);
+    err = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER, IID_ICreateDevEnum, (void**)&deviceEnum);
     if(FAILED(err))
     {
         AppWarning(TEXT("GetDeviceByValue: CoCreateInstance for the device enum failed, result = %08lX"), err);
@@ -567,8 +567,6 @@ struct ConfigDialogData
     StringList deviceIDList;
     StringList audioNameList;
     StringList audioIDList;
-    StringList crossbarList;
-    StringList crossbarIDList;
     bool bGlobalSource;
     bool bCreating;
     bool bDeviceHasAudio;
@@ -678,7 +676,7 @@ bool FillOutListOfDevices(HWND hwndCombo, GUID matchGUID, StringList *deviceList
     IEnumMoniker *videoDeviceEnum;
 
     HRESULT err;
-    err = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC, IID_ICreateDevEnum, (void**)&deviceEnum);
+    err = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER, IID_ICreateDevEnum, (void**)&deviceEnum);
     if(FAILED(err))
     {
         AppWarning(TEXT("FillOutListDevices: CoCreateInstance for the device enum failed, result = %08lX"), err);
@@ -869,38 +867,75 @@ struct ColorSelectionData
     }
 };
 
-void OpenPropertyPages(HWND hwnd, String devicename, String deviceid, GUID matchGUID) {
-    IBaseFilter *filter = GetDeviceByValue(matchGUID,
-                                            L"FriendlyName", devicename,
-                                            L"DevicePath", deviceid);
-    if(filter)
-    {
-        ISpecifyPropertyPages *propPages;
-        CAUUID cauuid;
+static void OpenPropertyPages(HWND hwnd, IUnknown *propObject)
+{
+    if(!propObject)
+        return;
 
-        if(SUCCEEDED(filter->QueryInterface(IID_ISpecifyPropertyPages, (void**)&propPages)))
+    ISpecifyPropertyPages *propPages;
+    CAUUID cauuid;
+
+    if(SUCCEEDED(propObject->QueryInterface(IID_ISpecifyPropertyPages, (void**)&propPages)))
+    {
+        if(SUCCEEDED(propPages->GetPages(&cauuid)))
         {
-            if(SUCCEEDED(propPages->GetPages(&cauuid)))
+            if(cauuid.cElems)
             {
-                if(cauuid.cElems)
-                {
-                    OleCreatePropertyFrame(hwnd, 0, 0, NULL, 1, (LPUNKNOWN*)&filter, cauuid.cElems, cauuid.pElems, 0, 0, NULL);
-                    CoTaskMemFree(cauuid.pElems);
-                }
+                OleCreatePropertyFrame(hwnd, 0, 0, NULL, 1, (LPUNKNOWN*)&propObject, cauuid.cElems, cauuid.pElems, 0, 0, NULL);
+                CoTaskMemFree(cauuid.pElems);
             }
-            propPages->Release();
         }
 
+        propPages->Release();
+    }
+}
+
+static void OpenPropertyPagesByName(HWND hwnd, String devicename, String deviceid, GUID matchGUID)
+{
+    IBaseFilter *filter = GetDeviceByValue(matchGUID,
+                                           L"FriendlyName", devicename,
+                                           L"DevicePath", deviceid);
+
+    if(filter)
+    {
+        OpenPropertyPages(hwnd, filter);
         filter->Release();
     }
+}
 
-    return;
+static IAMCrossbar *GetFilterCrossbar(IBaseFilter *filter)
+{
+    IAMCrossbar *crossbar = NULL;
+    IGraphBuilder *graph = NULL;
+    ICaptureGraphBuilder2 *capture = NULL;
+    IAMStreamConfig *configVideo = NULL;
+
+    if (FAILED(CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, (REFIID)IID_IFilterGraph, (void**)&graph)))
+        goto crossbar_exit;
+    if (FAILED(CoCreateInstance(CLSID_CaptureGraphBuilder2, NULL, CLSCTX_INPROC_SERVER, (REFIID)IID_ICaptureGraphBuilder2, (void**)&capture)))
+        goto crossbar_exit;
+    if (FAILED(capture->SetFiltergraph(graph)))
+        goto crossbar_exit;
+    if (FAILED(graph->AddFilter(filter, L"Capture device")))
+        goto crossbar_exit;
+
+    capture->FindInterface(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video, filter, IID_IAMStreamConfig, (void**)&configVideo);
+    capture->FindInterface(NULL, NULL, filter, IID_IAMCrossbar, (void**)&crossbar);
+
+    graph->RemoveFilter(filter);
+
+crossbar_exit:
+    SafeRelease(configVideo);
+    SafeRelease(capture);
+    SafeRelease(graph);
+
+    return crossbar;
 }
 
 INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static bool bSelectingColor = false;
-    static bool bMouseDown = false, audioInputDevicesPresent = true;
+    static bool bMouseDown = false, bAudioDevicesPresent = true;
     static ColorSelectionData colorData;
 
     switch(message)
@@ -913,7 +948,6 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 HWND hwndDeviceList     = GetDlgItem(hwnd, IDC_DEVICELIST);
                 HWND hwndAudioList      = GetDlgItem(hwnd, IDC_AUDIOLIST);
-                HWND hwndCrossbarList   = GetDlgItem(hwnd, IDC_CROSSBARLIST);
                 HWND hwndResolutionList = GetDlgItem(hwnd, IDC_RESOLUTION);
                 HWND hwndFPS            = GetDlgItem(hwnd, IDC_FPS);
                 HWND hwndFlip           = GetDlgItem(hwnd, IDC_FLIPIMAGE);
@@ -947,23 +981,10 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 LocalizeWindow(hwnd, pluginLocale);
                 FillOutListOfDevices(hwndDeviceList, CLSID_VideoInputDeviceCategory, &configData->deviceNameList, &configData->deviceIDList);
-                
-                audioInputDevicesPresent = FillOutListOfDevices(hwndAudioList, CLSID_AudioInputDeviceCategory, &configData->audioNameList, &configData->audioIDList);
-                
-                bool bCrossbarAvailable = FillOutListOfDevices(hwndCrossbarList, AM_KSCATEGORY_CROSSBAR, &configData->crossbarList, &configData->crossbarIDList);
-
-                if(bCrossbarAvailable)
-                    SendMessage(hwndCrossbarList, CB_SETCURSEL, 0, 0);
-                EnableWindow(GetDlgItem(hwnd, IDC_CROSSBAR), bCrossbarAvailable);
-                EnableWindow(hwndCrossbarList, bCrossbarAvailable);
 
                 UINT deviceID = CB_ERR;
-                UINT audioDeviceID = CB_ERR;
                 if(strDevice.IsValid() && cx > 0 && cy > 0 && frameInterval > 0)
                     deviceID = (UINT)SendMessage(hwndDeviceList, CB_FINDSTRINGEXACT, -1, (LPARAM)strDevice.Array());
-                if(strAudioDevice.IsValid())
-                    audioDeviceID = (UINT)SendMessage(hwndAudioList, CB_FINDSTRINGEXACT, -1, (LPARAM)strAudioDevice.Array());
-
 
                 if(deviceID == CB_ERR)
                 {
@@ -987,22 +1008,6 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                     }
                 }
 
-                if(audioInputDevicesPresent)
-                {
-                    if(audioDeviceID == CB_ERR)
-                    {
-                        SendMessage(hwndAudioList, CB_SETCURSEL, 0, 0);
-                        ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_AUDIOLIST, CBN_SELCHANGE), (LPARAM)hwndAudioList);
-                    }
-                    else
-                    {
-                        SendMessage(hwndAudioList, CB_SETCURSEL, audioDeviceID, 0);
-                        ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_AUDIOLIST, CBN_SELCHANGE), (LPARAM)hwndAudioList);
-                    }
-                }
-                EnableWindow(hwndAudioList, audioInputDevicesPresent);
-                EnableWindow(GetDlgItem(hwnd, IDC_CONFIGAUDIO), audioInputDevicesPresent);
-
                 ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_CUSTOMRESOLUTION, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDC_CUSTOMRESOLUTION));
 
                 HWND hwndPreferredList = GetDlgItem(hwnd, IDC_PREFERREDOUTPUT);
@@ -1014,11 +1019,32 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 //------------------------------------------
 
-                DWORD delayTime = configData->data->GetInt(TEXT("delayTime"));
+                bool bUseBuffering = configData->data->GetInt(TEXT("useBuffering")) != 0;
+                EnableWindow(GetDlgItem(hwnd, IDC_DELAY_EDIT), bUseBuffering);
+                EnableWindow(GetDlgItem(hwnd, IDC_DELAY),      bUseBuffering);
+
+                SendMessage(GetDlgItem(hwnd, IDC_USEBUFFERING), BM_SETCHECK, bUseBuffering ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                DWORD bufferTime = configData->data->GetInt(TEXT("bufferTime"));
                 SendMessage(GetDlgItem(hwnd, IDC_DELAY), UDM_SETRANGE32, 0, 8000);
-                SendMessage(GetDlgItem(hwnd, IDC_DELAY), UDM_SETPOS32, 0, delayTime);
+                SendMessage(GetDlgItem(hwnd, IDC_DELAY), UDM_SETPOS32, 0, bufferTime);
 
                 //------------------------------------------
+
+                UINT audioDeviceID = CB_ERR;
+                if(strAudioDevice.IsValid())
+                    audioDeviceID = (UINT)SendMessage(hwndAudioList, CB_FINDSTRINGEXACT, -1, (LPARAM)strAudioDevice.Array());
+
+                if(audioDeviceID == CB_ERR)
+                {
+                    SendMessage(hwndAudioList, CB_SETCURSEL, 0, 0);
+                    ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_AUDIOLIST, CBN_SELCHANGE), (LPARAM)hwndAudioList);
+                }
+                else
+                {
+                    SendMessage(hwndAudioList, CB_SETCURSEL, audioDeviceID, 0);
+                    ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_AUDIOLIST, CBN_SELCHANGE), (LPARAM)hwndAudioList);
+                }
 
                 HWND hwndTemp;
 
@@ -1029,11 +1055,6 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                     case 1: hwndTemp = GetDlgItem(hwnd, IDC_OUTPUTSOUND); break;
                     case 2: hwndTemp = GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND); break;
                 }
-
-                bool bForceCustomAudioDevice = configData->data->GetInt(TEXT("forceCustomAudioDevice")) != 0;
-                SendMessage(GetDlgItem(hwnd, IDC_FORCECUSTOMAUDIO), BM_SETCHECK, bForceCustomAudioDevice ? BST_CHECKED : BST_UNCHECKED, 0);
-
-                EnableWindow(GetDlgItem(hwnd, IDC_AUDIOLIST), !configData->bDeviceHasAudio || bForceCustomAudioDevice);
 
                 SendMessage(hwndTemp, BM_SETCHECK, BST_CHECKED, 0);
 
@@ -1163,6 +1184,15 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         break;
                     }
 
+                case IDC_USEBUFFERING:
+                    if (HIWORD(wParam) == BN_CLICKED) {
+                        bool bUseBuffering = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
+
+                        EnableWindow(GetDlgItem(hwnd, IDC_DELAY_EDIT), bUseBuffering);
+                        EnableWindow(GetDlgItem(hwnd, IDC_DELAY),      bUseBuffering);
+                    }
+                    break;
+
                 case IDC_NOSOUND:
                 case IDC_PLAYDESKTOPSOUND:
                 case IDC_OUTPUTSOUND:
@@ -1246,27 +1276,6 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         break;
                     }
 
-                case IDC_FORCECUSTOMAUDIO:
-                    {
-                        if(HIWORD(wParam) == BN_CLICKED)
-                        {
-                            ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
-                            BOOL bForceCustomAudioChk = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
-
-                            if(configData->bDeviceHasAudio) {
-                                EnableWindow(GetDlgItem(hwnd, IDC_AUDIOLIST),        bForceCustomAudioChk);
-                                ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_DEVICELIST, CBN_SELCHANGE), (LPARAM)GetDlgItem(hwnd, IDC_DEVICELIST));
-
-                                if(bForceCustomAudioChk)
-                                    ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_DEVICELIST, CBN_SELCHANGE), (LPARAM)GetDlgItem(hwnd, IDC_AUDIOLIST));
-                            }
-                            else {
-                                EnableWindow(GetDlgItem(hwnd, IDC_AUDIOLIST), TRUE);
-                            }
-                        }
-                    }
-                    break;
-
                 case IDC_FLIPIMAGE:
                 case IDC_FLIPIMAGEH:
                     if(HIWORD(wParam) == BN_CLICKED)
@@ -1316,7 +1325,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                                 int val = (int)SendMessage(hwndVal, UDM_GETPOS32, 0, 0);
                                 switch(LOWORD(wParam))
                                 {
-                                    case IDC_DELAY_EDIT:            source->SetInt(TEXT("delayTime"), val); break;
+                                    case IDC_DELAY_EDIT:            source->SetInt(TEXT("bufferTime"), val); break;
                                     case IDC_TIMEOFFSET_EDIT:       source->SetInt(TEXT("timeOffset"), val); break;
                                     case IDC_OPACITY_EDIT:          source->SetInt(TEXT("opacity"), val); break;
                                     case IDC_BASETHRESHOLD_EDIT:    source->SetInt(TEXT("keySimilarity"), val); break;
@@ -1339,33 +1348,23 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                     {
                         HWND hwndDeviceList = GetDlgItem(hwnd, IDC_DEVICELIST);
                         HWND hwndAudioDeviceList = GetDlgItem(hwnd, IDC_AUDIOLIST);
-                        HWND hwndCrossbarList = GetDlgItem(hwnd, IDC_CROSSBARLIST);
 
                         ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
 
                         FillOutListOfDevices(hwndDeviceList, CLSID_VideoInputDeviceCategory, &configData->deviceNameList, &configData->deviceIDList);
-                        audioInputDevicesPresent = FillOutListOfDevices(hwndAudioDeviceList, CLSID_AudioInputDeviceCategory, &configData->audioNameList, &configData->audioIDList);
-
-                        bool bCrossbarAvailable = FillOutListOfDevices(hwndCrossbarList, AM_KSCATEGORY_CROSSBAR, &configData->crossbarList, &configData->crossbarIDList);
-
-                        if(bCrossbarAvailable)
-                            SendMessage(hwndCrossbarList, CB_SETCURSEL, 0, 0);
-                        EnableWindow(GetDlgItem(hwnd, IDC_CROSSBAR), bCrossbarAvailable);
-                        EnableWindow(hwndCrossbarList, bCrossbarAvailable);
+                        bAudioDevicesPresent = FillOutListOfDevices(hwndAudioDeviceList, CLSID_AudioInputDeviceCategory, &configData->audioNameList, &configData->audioIDList);
 
                         SendMessage(hwndDeviceList, CB_SETCURSEL, 0, 0);
                         ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_DEVICELIST, CBN_SELCHANGE), (LPARAM)hwndDeviceList);
 
 
-                        if(audioInputDevicesPresent)
+                        if(bAudioDevicesPresent)
                         {
                             SendMessage(hwndAudioDeviceList, CB_SETCURSEL, 0, 0);
                             ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_AUDIOLIST, CBN_SELCHANGE), (LPARAM)hwndAudioDeviceList);
                         }
-                        EnableWindow(hwndAudioDeviceList, audioInputDevicesPresent);
-                        EnableWindow(GetDlgItem(hwnd, IDC_CONFIGAUDIO), audioInputDevicesPresent);
-
-                        SendMessage(hwndCrossbarList, CB_SETCURSEL, 0, 0);
+                        EnableWindow(hwndAudioDeviceList, bAudioDevicesPresent);
+                        EnableWindow(GetDlgItem(hwnd, IDC_CONFIGAUDIO), bAudioDevicesPresent);
 
                         break;
                     }
@@ -1387,18 +1386,21 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         }
                         else
                         {
+                            ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
+
+                            HWND hwndAudioList = GetDlgItem(hwnd, IDC_AUDIOLIST);
+
                             BOOL bCustomResolution = SendMessage(GetDlgItem(hwnd, IDC_CUSTOMRESOLUTION) , BM_GETCHECK, 0, 0) == BST_CHECKED;
-                            BOOL bForceCustomAudioDevice = SendMessage(GetDlgItem(hwnd, IDC_FORCECUSTOMAUDIO) , BM_GETCHECK, 0, 0) == BST_CHECKED;
 
                             EnableWindow(GetDlgItem(hwnd, IDC_RESOLUTION), bCustomResolution);
                             EnableWindow(GetDlgItem(hwnd, IDC_FPS), bCustomResolution);
                             EnableWindow(GetDlgItem(hwnd, IDC_CONFIG), TRUE);
                             EnableWindow(GetDlgItem(hwnd, IDOK), TRUE);
 
-                            ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
                             IBaseFilter *filter = GetDeviceByValue(CLSID_VideoInputDeviceCategory,
                                                                    L"FriendlyName", configData->deviceNameList[id],
                                                                    L"DevicePath", configData->deviceIDList[id]);
+
                             if(filter)
                             {
                                 //--------------------------------
@@ -1424,35 +1426,13 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                                     outputPin = NULL;
                                 }
 
-                                //--------------------------------
-                                // get audio info
-
-                                bool bHasAudio = false;
+                                IAMCrossbar *crossbar = GetFilterCrossbar(filter);
+                                EnableWindow(GetDlgItem(hwnd, IDC_CROSSBAR), crossbar != NULL);
+                                SafeRelease(crossbar);
 
                                 outputPin = GetOutputPin(filter, &MEDIATYPE_Audio);
-                                if(outputPin)
-                                {
-                                    bHasAudio = true;
-                                    outputPin->Release();
-                                }
-
-                                configData->bDeviceHasAudio = bHasAudio;
-
-                                EnableWindow(GetDlgItem(hwnd, IDC_NOSOUND),          bHasAudio);
-                                EnableWindow(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), bHasAudio);
-                                EnableWindow(GetDlgItem(hwnd, IDC_OUTPUTSOUND),      bHasAudio);
-                                EnableWindow(GetDlgItem(hwnd, IDC_VOLUME),           bHasAudio);
-                                EnableWindow(GetDlgItem(hwnd, IDC_AUDIOLIST),        !bHasAudio || bForceCustomAudioDevice);
-
-                                if(!bHasAudio)
-                                {
-                                    SendMessage(GetDlgItem(hwnd, IDC_NOSOUND),          BM_SETCHECK, BST_UNCHECKED,   0);
-                                    SendMessage(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), BM_SETCHECK, BST_UNCHECKED, 0);
-                                    SendMessage(GetDlgItem(hwnd, IDC_OUTPUTSOUND),      BM_SETCHECK, BST_UNCHECKED, 0);
-
-                                    EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET),      FALSE);
-                                    EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET_EDIT), FALSE);
-                                }
+                                configData->bDeviceHasAudio = (outputPin != NULL);
+                                SafeRelease(outputPin);
 
                                 filter->Release();
                             }
@@ -1477,6 +1457,41 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                                 SendMessage(hwndResolutions, CB_SETCURSEL, 0, 0);
                                 ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_RESOLUTION, CBN_SELCHANGE), (LPARAM)hwndResolutions);
                             }
+
+                            //-------------------------------------------------
+                            // get audio devices
+
+                            bAudioDevicesPresent = FillOutListOfDevices(hwndAudioList, CLSID_AudioInputDeviceCategory, &configData->audioNameList, &configData->audioIDList);
+
+                            if (configData->bDeviceHasAudio) {
+                                CTSTR lpName = PluginStr("DeviceSelection.UseDeviceAudio");
+
+                                SendMessage(hwndAudioList, CB_INSERTSTRING, 0, (LPARAM)lpName);
+                                configData->audioNameList.Insert(0, lpName);
+                                configData->audioIDList.Insert(0, NULL);
+                            }
+
+                            EnableWindow(hwndAudioList, bAudioDevicesPresent);
+
+                            if (!bAudioDevicesPresent)
+                                EnableWindow(GetDlgItem(hwnd, IDC_CONFIGAUDIO), FALSE);
+
+                            bool bHasAudio = configData->bDeviceHasAudio || bAudioDevicesPresent;
+
+                            EnableWindow(GetDlgItem(hwnd, IDC_NOSOUND),          bHasAudio);
+                            EnableWindow(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), bHasAudio);
+                            EnableWindow(GetDlgItem(hwnd, IDC_OUTPUTSOUND),      bHasAudio);
+                            EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET),       bHasAudio);
+                            EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET_EDIT),  bHasAudio);
+
+                            if (bHasAudio) {
+                                SendMessage(hwndAudioList, CB_SETCURSEL, 0, 0);
+                                ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_AUDIOLIST, CBN_SELCHANGE), (LPARAM)hwndAudioList);
+                            } else {
+                                SendMessage(GetDlgItem(hwnd, IDC_NOSOUND),          BM_SETCHECK, BST_CHECKED,   0);
+                                SendMessage(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), BM_SETCHECK, BST_UNCHECKED, 0);
+                                SendMessage(GetDlgItem(hwnd, IDC_OUTPUTSOUND),      BM_SETCHECK, BST_UNCHECKED, 0);
+                            }
                         }
                     }
                     break;
@@ -1489,43 +1504,21 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
                         IBaseFilter *filter = GetDeviceByValue(CLSID_AudioInputDeviceCategory,
-                                                                L"FriendlyName", configData->audioNameList[id],
-                                                                L"DevicePath", configData->audioIDList[id]);
-                        if(filter)
-                        {
-                            //--------------------------------
-                            // get audio info
-
-                            bool bHasAudio = false;
-                            BOOL bForceCustomAudioDevice = SendMessage(GetDlgItem(hwnd, IDC_FORCECUSTOMAUDIO) , BM_GETCHECK, 0, 0) == BST_CHECKED;
-
-                            IPin *outputPin = GetOutputPin(filter, &MEDIATYPE_Audio);
-                            if(outputPin)
-                            {
-                                bHasAudio = true;
-                                outputPin->Release();
-                            }
-
-                            EnableWindow(GetDlgItem(hwnd, IDC_NOSOUND),          bHasAudio);
-                            EnableWindow(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), bHasAudio);
-                            EnableWindow(GetDlgItem(hwnd, IDC_OUTPUTSOUND),      bHasAudio);
-                            EnableWindow(GetDlgItem(hwnd, IDC_VOLUME),           bHasAudio);
-                            if(!configData->bDeviceHasAudio || bForceCustomAudioDevice) EnableWindow(GetDlgItem(hwnd, IDC_AUDIOLIST),        bHasAudio);
-
-                            if(!bHasAudio)
-                            {
-                                SendMessage(GetDlgItem(hwnd, IDC_NOSOUND),          BM_SETCHECK, BST_UNCHECKED, 0);
-                                SendMessage(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), BM_SETCHECK, BST_UNCHECKED, 0);
-                                SendMessage(GetDlgItem(hwnd, IDC_OUTPUTSOUND),      BM_SETCHECK, BST_UNCHECKED, 0);
-
-                                EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET),      FALSE);
-                                EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET_EDIT), FALSE);
-                            }
+                                                               L"FriendlyName", configData->audioNameList[id],
+                                                               L"DevicePath", configData->audioIDList[id]);
+                        if (filter) {
+                            EnableWindow(GetDlgItem(hwnd, IDC_CONFIGAUDIO), TRUE);
 
                             filter->Release();
+                        } else {
+                            EnableWindow(GetDlgItem(hwnd, IDC_CONFIGAUDIO), FALSE);
                         }
 
-                            
+                        EnableWindow(GetDlgItem(hwnd, IDC_NOSOUND),          TRUE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), TRUE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_OUTPUTSOUND),      TRUE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET),       TRUE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET_EDIT),  TRUE);
                     }
                     break;
 
@@ -1669,25 +1662,44 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                     }
                     break;
 
-                    case IDC_CONFIG:
-                    case IDC_CONFIGAUDIO:
-                    case IDC_CROSSBAR:
+                case IDC_CONFIG:
+                case IDC_CONFIGAUDIO:
+                case IDC_CROSSBAR:
                     {
                         UINT id;
                         ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
+                        IBaseFilter *filter;
+
                         switch(LOWORD(wParam))
                         {
                             case IDC_CONFIG:
                                 id = (UINT)SendMessage(GetDlgItem(hwnd, IDC_DEVICELIST), CB_GETCURSEL, 0, 0);
-                                if(id != CB_ERR) OpenPropertyPages(hwnd, configData->deviceNameList[id], configData->deviceIDList[id], CLSID_VideoInputDeviceCategory);
+                                if(id != CB_ERR) OpenPropertyPagesByName(hwnd, configData->deviceNameList[id], configData->deviceIDList[id], CLSID_VideoInputDeviceCategory);
                                 break;
                             case IDC_CONFIGAUDIO:
                                 id = (UINT)SendMessage(GetDlgItem(hwnd, IDC_AUDIOLIST), CB_GETCURSEL, 0, 0);
-                                if(id != CB_ERR) OpenPropertyPages(hwnd, configData->audioNameList[id], configData->audioIDList[id], CLSID_AudioInputDeviceCategory);
+                                if(id != CB_ERR) OpenPropertyPagesByName(hwnd, configData->audioNameList[id], configData->audioIDList[id], CLSID_AudioInputDeviceCategory);
                                 break;
+
                             case IDC_CROSSBAR:
-                                id = (UINT)SendMessage(GetDlgItem(hwnd, IDC_CROSSBARLIST), CB_GETCURSEL, 0, 0);
-                                if(id != CB_ERR) OpenPropertyPages(hwnd, configData->crossbarList[id], configData->crossbarIDList[id], AM_KSCATEGORY_CROSSBAR);
+                                id = (UINT)SendMessage(GetDlgItem(hwnd, IDC_DEVICELIST), CB_GETCURSEL, 0, 0);
+                                if (id == CB_ERR)
+                                    break;
+
+                                filter = GetDeviceByValue(CLSID_VideoInputDeviceCategory,
+                                                          L"FriendlyName", configData->deviceNameList[id],
+                                                          L"DevicePath", configData->deviceIDList[id]);
+
+                                if (filter) {
+                                    IAMCrossbar *crossbar = GetFilterCrossbar(filter);
+                                    if (crossbar) {
+                                        OpenPropertyPages(hwnd, crossbar);
+                                        crossbar->Release();
+                                    }
+
+                                    filter->Release();
+                                }
+
                                 break;
                         }
                         break;
@@ -1762,20 +1774,6 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         configData->data->SetString(TEXT("deviceName"), configData->deviceNameList[deviceID]);
                         configData->data->SetString(TEXT("deviceID"), configData->deviceIDList[deviceID]);
 
-                        bool bForceCustomAudioDevice = SendMessage(GetDlgItem(hwnd, IDC_FORCECUSTOMAUDIO), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                        configData->data->SetInt(TEXT("forceCustomAudioDevice"), bForceCustomAudioDevice);
-
-                        if(audioInputDevicesPresent)
-                        {
-                            UINT audioDeviceID = (UINT)SendMessage(GetDlgItem(hwnd, IDC_AUDIOLIST), CB_GETCURSEL, 0, 0);
-                            if(audioDeviceID == CB_ERR)
-                                break;
-                            String strAudioDevice = GetCBText(GetDlgItem(hwnd, IDC_AUDIOLIST), audioDeviceID);
-                            configData->data->SetString(TEXT("audioDevice"), strAudioDevice);
-                            configData->data->SetString(TEXT("audioDeviceName"), configData->audioNameList[audioDeviceID]);
-                            configData->data->SetString(TEXT("audioDeviceID"), configData->audioIDList[audioDeviceID]);
-                        }
-
                         configData->data->SetInt(TEXT("customResolution"), bCustomResolution);
                         configData->data->SetInt(TEXT("resolutionWidth"), resolution.cx);
                         configData->data->SetInt(TEXT("resolutionHeight"), resolution.cy);
@@ -1783,11 +1781,6 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         configData->data->SetInt(TEXT("flipImage"), bFlip);
                         configData->data->SetInt(TEXT("flipImageHorizontal"), bFlipHorizontal);
                         configData->data->SetInt(TEXT("usePointFiltering"), bUsePointFiltering);
-
-                        //------------------------------------------
-
-                        BOOL bForceCustomAudioChk = SendMessage(GetDlgItem(hwnd, IDC_FORCECUSTOMAUDIO), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                        configData->data->SetInt(TEXT("forceCustomAudioDevice"), bForceCustomAudioChk);
 
                         //------------------------------------------
 
@@ -1808,16 +1801,32 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         configData->data->SetInt(TEXT("usePreferredType"), bUsePreferredType);
                         configData->data->SetInt(TEXT("preferredType"), preferredType);
 
-                        DWORD delayTime = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_DELAY), UDM_GETPOS32, 0, 0);
-                        configData->data->SetInt(TEXT("delayTime"), delayTime);
+                        bool bUseBuffering = SendMessage(GetDlgItem(hwnd, IDC_USEBUFFERING), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        configData->data->SetInt(TEXT("useBuffering"), bUseBuffering);
+
+                        DWORD bufferTime = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_DELAY), UDM_GETPOS32, 0, 0);
+                        configData->data->SetInt(TEXT("bufferTime"), bufferTime);
 
                         //------------------------------------------
 
                         int soundOutputType = 0;
-                        if(SendMessage(GetDlgItem(hwnd, IDC_OUTPUTSOUND), BM_GETCHECK, 0, 0) == BST_CHECKED)
-                            soundOutputType = 1;
-                        else if(SendMessage(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), BM_GETCHECK, 0, 0) == BST_CHECKED)
-                            soundOutputType = 2;
+                        UINT audioDeviceID = (UINT)SendMessage(GetDlgItem(hwnd, IDC_AUDIOLIST), CB_GETCURSEL, 0, 0);
+
+                        if (audioDeviceID != CB_ERR) {
+                            if (bAudioDevicesPresent) {
+                                String strAudioDevice = GetCBText(GetDlgItem(hwnd, IDC_AUDIOLIST), audioDeviceID);
+                                configData->data->SetString(TEXT("audioDevice"), strAudioDevice);
+                                configData->data->SetString(TEXT("audioDeviceName"), configData->audioNameList[audioDeviceID]);
+                                configData->data->SetString(TEXT("audioDeviceID"), configData->audioIDList[audioDeviceID]);
+                            }
+
+                            configData->data->SetInt(TEXT("forceCustomAudioDevice"), (!configData->bDeviceHasAudio || audioDeviceID != 0));
+
+                            if(SendMessage(GetDlgItem(hwnd, IDC_OUTPUTSOUND), BM_GETCHECK, 0, 0) == BST_CHECKED)
+                                soundOutputType = 1;
+                            else if(SendMessage(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), BM_GETCHECK, 0, 0) == BST_CHECKED)
+                                soundOutputType = 2;
+                        }
 
                         configData->data->SetInt(TEXT("soundOutputType"), soundOutputType);
 
@@ -1856,7 +1865,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         if(source)
                         {
-                            source->SetInt(TEXT("delayTime"),           configData->data->GetInt(TEXT("delayTime"), 0));
+                            source->SetInt(TEXT("bufferTime"),          configData->data->GetInt(TEXT("bufferTime"), 0));
 
                             source->SetInt(TEXT("timeOffset"),          configData->data->GetInt(TEXT("soundTimeOffset"), 0));
                             source->SetFloat(TEXT("volume"),            configData->data->GetFloat(TEXT("volume"), 1.0f));

@@ -93,7 +93,7 @@ bool DeviceAudioSource::Initialize(DeviceSource *parent)
 
     outputBuffer.SetSize(sampleSegmentSize);
 
-    InitAudioData(bFloat, inputChannels, inputSamplesPerSec, inputBitsPerSample, inputBlockSize, inputChannelMask);
+    InitAudioData(bFloat, inputChannels, inputSamplesPerSec, inputBitsPerSample, inputBlockSize, inputChannelMask, false);
 
     return true;
 }
@@ -105,17 +105,20 @@ DeviceAudioSource::~DeviceAudioSource()
 }
 
 
-void DeviceAudioSource::ReceiveAudio(IMediaSample *sample)
+void DeviceAudioSource::ReceiveAudio(LPBYTE lpData, UINT dataLength)
 {
-    if(sample)
+    if(lpData)
     {
-        BYTE *pData;
-        if(SUCCEEDED(sample->GetPointer(&pData)))
-        {
-            OSEnterMutex(hAudioMutex);
-            sampleBuffer.AppendArray(pData, sample->GetActualDataLength());
-            OSLeaveMutex(hAudioMutex);
-        }
+        OSEnterMutex(hAudioMutex);
+        sampleBuffer.AppendArray(lpData, dataLength);
+        OSLeaveMutex(hAudioMutex);
     }
+}
+
+void DeviceAudioSource::FlushSamples()
+{
+    OSEnterMutex(hAudioMutex);
+    sampleBuffer.Clear();
+    OSLeaveMutex(hAudioMutex);
 }
 

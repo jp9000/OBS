@@ -37,12 +37,16 @@ enum DeviceColorType
 };
 
 struct SampleData {
+    //IMediaSample *sample;
     LPBYTE lpData;
-    LONGLONG startTime;
+    long dataLength;
+
+    bool bAudio;
+    LONGLONG timestamp;
     volatile long refs;
 
     inline SampleData() {refs = 1;}
-    inline ~SampleData() {Free(lpData);}
+    inline ~SampleData() {Free(lpData);} //sample->Release();}
 
     inline void AddRef() {++refs;}
     inline void Release()
@@ -75,7 +79,7 @@ class DeviceAudioSource : public AudioSource
     List<BYTE> sampleBuffer;
     List<BYTE> outputBuffer;
 
-    int delayTime, offset;
+    int offset;
 
 protected:
     virtual bool GetNextBuffer(void **buffer, UINT *numFrames, QWORD *timestamp);
@@ -87,10 +91,11 @@ public:
     bool Initialize(DeviceSource *parent);
     ~DeviceAudioSource();
 
-    void ReceiveAudio(IMediaSample *sample);
+    void ReceiveAudio(LPBYTE lpData, UINT dataLength);
 
-    inline void SetDelayTime(int delayTime) {this->delayTime = delayTime; SetTimeOffset(delayTime+offset);}
-    inline void SetAudioOffset(int offset) {this->offset = offset; SetTimeOffset(delayTime+offset);}
+    void FlushSamples();
+
+    inline void SetAudioOffset(int offset) {this->offset = offset; SetTimeOffset(offset);}
 };
 
 class DeviceSource : public ImageSource
@@ -135,13 +140,18 @@ class DeviceSource : public ImageSource
     bool            bOutputAudioToDesktop;
 
     Texture         *texture;
-    HANDLE          hSampleMutex;
     XElement        *data;
     UINT            texturePitch;
     bool            bCapturing, bFiltersLoaded;
-    int             delayTime;
-    List<SampleData*> samples;
     Shader          *colorConvertShader;
+
+    bool            bUseBuffering;
+    HANDLE          hStopSampleEvent;
+    HANDLE          hSampleMutex;
+    HANDLE          hSampleThread;
+    UINT            bufferTime;
+    SampleData      *latestVideoSample;
+    List<SampleData*> samples;
 
     UINT            opacity;
 
@@ -173,19 +183,22 @@ class DeviceSource : public ImageSource
         for (UINT i=0; i<samples.Num(); i++)
             delete samples[i];
         samples.Clear();
+        SafeRelease(latestVideoSample);
         OSLeaveMutex(hSampleMutex);
     }
 
     void SetAudioInfo(AM_MEDIA_TYPE *audioMediaType, GUID &expectedAudioType);
 
-    void ReceiveVideo(IMediaSample *sample);
-    void ReceiveAudio(IMediaSample *sample);
+    UINT GetSampleInsertIndex(LONGLONG timestamp);
+    void ReceiveMediaSample(IMediaSample *sample, bool bAudio);
 
     bool LoadFilters();
     void UnloadFilters();
 
     void Start();
     void Stop();
+
+    static DWORD WINAPI SampleThread(DeviceSource *source);
 
 public:
     bool Init(XElement *data);

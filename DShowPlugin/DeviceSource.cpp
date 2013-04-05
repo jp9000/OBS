@@ -194,11 +194,12 @@ bool DeviceSource::LoadFilters()
     bFlipHorizontal = data->GetInt(TEXT("flipImageHorizontal")) != 0;
     bUsePointFiltering = data->GetInt(TEXT("usePointFiltering")) != 0;
 
-    delayTime = data->GetInt(TEXT("delayTime"))*10000;
-
     opacity = data->GetInt(TEXT("opacity"), 100);
 
     float volume = data->GetFloat(TEXT("volume"), 1.0f);
+
+    bUseBuffering = data->GetInt(TEXT("useBuffering")) != 0;
+    bufferTime = data->GetInt(TEXT("bufferTime"))*10000;
 
     //------------------------------------------------
     // chrom key stuff
@@ -626,6 +627,18 @@ bool DeviceSource::LoadFilters()
         goto cleanFinish;
     }
 
+    if (bUseBuffering) {
+        if (!(hStopSampleEvent = CreateEvent(NULL, FALSE, FALSE, NULL))) {
+            AppWarning(TEXT("DShowPlugin: Failed to create stop event"), err);
+            goto cleanFinish;
+        }
+
+        if (!(hSampleThread = OSCreateThread((XTHREAD)SampleThread, this))) {
+            AppWarning(TEXT("DShowPlugin: Failed to create sample thread"), err);
+            goto cleanFinish;
+        }
+    }
+
     if(soundOutputType == 1)
     {
         audioOut = new DeviceAudioSource;
@@ -633,7 +646,6 @@ bool DeviceSource::LoadFilters()
         API->AddAudioSource(audioOut);
 
         audioOut->SetAudioOffset(soundTimeOffset);
-        audioOut->SetDelayTime(delayTime/10000);
         audioOut->SetVolume(volume);
     }
 
@@ -668,6 +680,18 @@ cleanFinish:
         SafeRelease(captureFilter);
         SafeRelease(audioFilter);
         SafeRelease(control);
+
+        if (hSampleThread) {
+            SetEvent(hStopSampleEvent);
+            WaitForSingleObject(hSampleThread, INFINITE);
+            CloseHandle(hSampleThread);
+            hSampleThread = NULL;
+        }
+
+        if (hStopSampleEvent) {
+            CloseHandle(hStopSampleEvent);
+            hStopSampleEvent = NULL;
+        }
 
         if(colorConvertShader)
         {
@@ -732,6 +756,16 @@ cleanFinish:
 
 void DeviceSource::UnloadFilters()
 {
+    if (hSampleThread) {
+        SetEvent(hStopSampleEvent);
+        WaitForSingleObject(hSampleThread, INFINITE);
+        CloseHandle(hSampleThread);
+        CloseHandle(hStopSampleEvent);
+
+        hSampleThread = NULL;
+        hStopSampleEvent = NULL;
+    }
+
     if(texture)
     {
         delete texture;
@@ -839,48 +873,166 @@ void DeviceSource::EndScene()
     Stop();
 }
 
-void DeviceSource::ReceiveVideo(IMediaSample *sample)
+DWORD DeviceSource::SampleThread(DeviceSource *source)
 {
-    if(bCapturing)
-    {
-        BYTE *pointer;
-        if (sample)
-        {
-            if (SUCCEEDED(sample->GetPointer(&pointer)))
-            {
-                SampleData *data = new SampleData;
+    HANDLE hSampleMutex = source->hSampleMutex;
+    LONGLONG lastTime = GetQPCTime100NS(), bufferTime = 0, frameWait = 0, curBufferTime = source->bufferTime;
+    LONGLONG lastSampleTime = 0;
 
-                data->lpData = (LPBYTE)Allocate(sample->GetActualDataLength());
-                mcpy(data->lpData, pointer, sample->GetActualDataLength());
+    bool bFirstFrame = true;
+    bool bFirstDelay = true;
 
-                LONGLONG stopTime;
-                sample->GetTime(&data->startTime, &stopTime);
+    while (WaitForSingleObject(source->hStopSampleEvent, 4) == WAIT_TIMEOUT) {
+        LONGLONG t = GetQPCTime100NS();
+        LONGLONG delta = t-lastTime;
+        lastTime = t;
 
-                OSEnterMutex(hSampleMutex);
-                if (samples.Num() > 0) {
-                    delete samples[0];
-                    samples.Remove(0);
+        OSEnterMutex(hSampleMutex);
+
+        if (source->samples.Num()) {
+            if (bFirstFrame) {
+                bFirstFrame = false;
+                lastSampleTime = source->samples[0]->timestamp;
+            }
+
+            //wait until the requested delay has been buffered before processing packets
+            if (bufferTime >= source->bufferTime) {
+                frameWait += delta;
+
+                //if delay time was adjusted downward, remove packets accordingly
+                bool bBufferTimeChanged = (curBufferTime != source->bufferTime);
+                if (bBufferTimeChanged) {
+                    if (curBufferTime > source->bufferTime) {
+                        if (source->audioOut)
+                            source->audioOut->FlushSamples();
+
+                        LONGLONG lostTime = curBufferTime - source->bufferTime;
+                        bufferTime -= lostTime;
+
+                        if (source->samples.Num()) {
+                            LONGLONG startTime = source->samples[0]->timestamp;
+
+                            while (source->samples.Num()) {
+                                SampleData *sample = source->samples[0];
+
+                                if ((sample->timestamp - startTime) >= lostTime)
+                                    break;
+
+                                lastSampleTime = sample->timestamp;
+
+                                sample->Release();
+                                source->samples.Remove(0);
+                            }
+                        }
+                    }
+
+                    curBufferTime = source->bufferTime;
                 }
 
-                samples << data;
-                OSLeaveMutex(hSampleMutex);
+                while (source->samples.Num()) {
+                    SampleData *sample = source->samples[0];
+
+                    LONGLONG timestamp = sample->timestamp;
+                    LONGLONG sampleTime = timestamp - lastSampleTime;
+
+                    //sometimes timestamps can go to shit with horrible garbage devices.
+                    //so, bypass any unusual timestamp offsets.
+                    if (sampleTime < -6000000 || sampleTime > 6000000) {
+                        //OSDebugOut(TEXT("sample time: %lld\r\n"), sampleTime);
+                        sampleTime = 0;
+                    }
+
+                    if (frameWait < sampleTime)
+                        break;
+
+                    if (sample->bAudio) {
+                        if (source->audioOut)
+                            source->audioOut->ReceiveAudio(sample->lpData, sample->dataLength);
+
+                        sample->Release();
+                    } else {
+                        SafeRelease(source->latestVideoSample);
+                        source->latestVideoSample = sample;
+                    }
+
+                    source->samples.Remove(0);
+
+                    if (sampleTime > 0)
+                        frameWait -= sampleTime;
+
+                    lastSampleTime = timestamp;
+                }
             }
         }
+
+        OSLeaveMutex(hSampleMutex);
+
+        if (!bFirstFrame && bufferTime < source->bufferTime)
+            bufferTime += delta;
     }
+
+    return 0;
 }
 
-void DeviceSource::ReceiveAudio(IMediaSample *sample)
+UINT DeviceSource::GetSampleInsertIndex(LONGLONG timestamp)
 {
-    if(bCapturing && audioOut)
-    {
-        audioOut->ReceiveAudio(sample);
+    UINT index;
+    for (index=0; index<samples.Num(); index++) {
+        if (samples[index]->timestamp > timestamp)
+            return index;
+    }
+
+    return index;
+}
+
+void DeviceSource::ReceiveMediaSample(IMediaSample *sample, bool bAudio)
+{
+    if (!sample)
+        return;
+
+    if (bCapturing) {
+        BYTE *pointer;
+
+        if (SUCCEEDED(sample->GetPointer(&pointer))) {
+            SampleData *data = NULL;
+            
+            if (bUseBuffering || !bAudio) {
+                data = new SampleData;
+                data->bAudio = bAudio;
+                data->dataLength = sample->GetActualDataLength();
+                data->lpData = (LPBYTE)Allocate(data->dataLength);//pointer; //
+                /*data->sample = sample;
+                sample->AddRef();*/
+
+                SSECopy(data->lpData, pointer, data->dataLength);
+
+                LONGLONG stopTime;
+                sample->GetTime(&data->timestamp, &stopTime);
+            }
+
+            //Log(TEXT("timestamp: %lld, bAudio - %s"), data->timestamp, bAudio ? TEXT("true") : TEXT("false"));
+
+            OSEnterMutex(hSampleMutex);
+
+            if (bUseBuffering) {
+                UINT id = GetSampleInsertIndex(data->timestamp);
+                samples.Insert(id, data);
+            } else if (bAudio) {
+                if (audioOut)
+                    audioOut->ReceiveAudio(pointer, sample->GetActualDataLength());
+            } else {
+                SafeRelease(latestVideoSample);
+                latestVideoSample = data;
+            }
+
+            OSLeaveMutex(hSampleMutex);
+        }
     }
 }
 
 static DWORD STDCALL PackPlanarThread(ConvertData *data)
 {
-    do
-    {
+    do {
         WaitForSingleObject(data->hSignalConvert, INFINITE);
         if(data->bKillThread) break;
 
@@ -924,23 +1076,13 @@ void DeviceSource::Preprocess()
     SampleData *lastSample = NULL;
 
     OSEnterMutex(hSampleMutex);
-    if(samples.Num())
-    {
-        QWORD sampleTime = samples.Last()->startTime - samples[0]->startTime;
 
-        while (sampleTime >= 0) {//delayTime) {
-            delete lastSample;
+    lastSample = latestVideoSample;
+    latestVideoSample = NULL;
 
-            lastSample = samples[0];
-            samples.Remove(0);
-
-            if (!samples.Num())
-                break;
-
-            sampleTime = samples.Last()->startTime - samples[0]->startTime;
-        }
-    }
     OSLeaveMutex(hSampleMutex);
+
+    //----------------------------------------
 
     int numThreads = MAX(OSGetTotalCores()-2, 1);
 
@@ -1112,8 +1254,12 @@ void DeviceSource::UpdateSettings()
     BOOL bNewCustom             = data->GetInt(TEXT("customResolution"));
     UINT newPreferredType       = data->GetInt(TEXT("usePreferredType")) != 0 ? data->GetInt(TEXT("preferredType")) : -1;
     UINT newSoundOutputType     = data->GetInt(TEXT("soundOutputType"));
+    bool bNewUseBuffering       = data->GetInt(TEXT("useBuffering")) != 0;
 
-    if(newSoundOutputType != soundOutputType || renderCX != newCX || renderCY != newCY || frameInterval != newFrameInterval || newPreferredType != preferredOutputType || !strDevice.CompareI(strNewDevice) || !strAudioDevice.CompareI(strNewAudioDevice) || bNewCustom != bUseCustomResolution)
+    if(newSoundOutputType != soundOutputType || renderCX != newCX || renderCY != newCY ||
+       frameInterval != newFrameInterval || newPreferredType != preferredOutputType ||
+       !strDevice.CompareI(strNewDevice) || !strAudioDevice.CompareI(strNewAudioDevice) ||
+       bNewCustom != bUseCustomResolution || bNewUseBuffering != bUseBuffering)
     {
         API->EnterSceneMutex();
 
@@ -1200,11 +1346,9 @@ void DeviceSource::SetInt(CTSTR lpName, int iVal)
             if(audioOut)
                 audioOut->SetAudioOffset(iVal);
         }
-        else if(scmpi(lpName, TEXT("delayTime")) == 0)
+        else if(scmpi(lpName, TEXT("bufferTime")) == 0)
         {
-            delayTime = iVal*10000;
-            if (audioOut)
-                audioOut->SetDelayTime(iVal);
+            bufferTime = iVal*10000;
         }
     }
 }

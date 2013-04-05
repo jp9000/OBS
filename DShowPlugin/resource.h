@@ -7,7 +7,6 @@
 #define IDC_CONFIG                      1002
 #define IDC_AUDIOLIST                   1003
 #define IDC_CONFIGAUDIO                 1004
-#define IDC_CROSSBARLIST                1006
 #define IDC_CROSSBAR                    1007
 #define IDC_RESOLUTION                  1008
 #define IDC_FPS_EDIT                    1009
@@ -15,6 +14,8 @@
 #define IDC_REFRESH                     1011
 #define IDC_FPS2                        1012
 #define IDC_USEPREFERREDOUTPUT          1012
+#define IDC_USEPREFERREDOUTPUT2         1013
+#define IDC_USEBUFFERING                1013
 #define IDC_FLIPIMAGE                   1014
 #define IDC_BUTTON1                     1015
 #define IDC_CUSTOM                      1015
@@ -46,8 +47,6 @@
 #define IDC_TIMEOFFSET_EDIT             1032
 #define IDC_TIMEOFFSET                  1033
 #define IDC_CHECK1                      1034
-#define IDC_NOBUFFERING                 1034
-#define IDC_FORCECUSTOMAUDIO            1034
 #define IDC_CUSTOM1                     1035
 #define IDC_VOLUME                      1035
 #define IDC_VOLMETER                    1036

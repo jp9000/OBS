@@ -198,9 +198,9 @@ STDMETHODIMP CapturePin::Receive(IMediaSample *pSample)
     if(pSample)
     {
         if(expectedMajorType == MEDIATYPE_Video)
-            source->ReceiveVideo(pSample);
+            source->ReceiveMediaSample(pSample, false);
         else if(expectedMajorType == MEDIATYPE_Audio)
-            source->ReceiveAudio(pSample);
+            source->ReceiveMediaSample(pSample, true);
     }
     return S_OK;
 }
