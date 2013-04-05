@@ -729,6 +729,7 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     if(!RTMP_ConnectStream(rtmp, 0))
     {
         failReason = Str("Connection.InvalidStream");
+        bCanRetry = true;
         goto end;
     }
 
@@ -762,7 +763,9 @@ end:
             App->SetStreamReport(failReason);
 
         if(!publisher->bStopping)
-            PostMessage(hwndMain, OBS_REQUESTSTOP, 1, 0);
+            PostMessage(hwndMain, OBS_REQUESTSTOP, bCanRetry ? 0 : 1, 0);
+
+        Log(TEXT("Connection to %s failed: %s"), strURL.Array(), failReason.Array());
 
         publisher->bStopping = true;
     }
@@ -860,6 +863,7 @@ void RTMPPublisher::SocketLoop()
 
         if (WSAEnumNetworkEvents (rtmp->m_sb.sb_socket, NULL, &networkEvents))
         {
+            //App->SetStreamReport(FormattedString(TEXT("Disconnected: WSAEnumNetworkEvents failed, %d"), WSAGetLastError()).Array());
             Log(TEXT("RTMPPublisher::SocketLoop: Aborting due to WSAEnumNetworkEvents failure, %d"), WSAGetLastError());
             App->PostStopMessage();
             bStopping = true;
@@ -868,6 +872,7 @@ void RTMPPublisher::SocketLoop()
 
         if (networkEvents.lNetworkEvents & FD_CLOSE)
         {
+            //App->SetStreamReport(FormattedString(TEXT("Disconnected: Socket was closed, error %d"), networkEvents.iErrorCode[FD_CLOSE_BIT]).Array());
             Log(TEXT("RTMPPublisher::SocketLoop: Aborting due to FD_CLOSE, error %d"), networkEvents.iErrorCode[FD_CLOSE_BIT]);
             App->PostStopMessage();
             bStopping = true;
@@ -901,6 +906,7 @@ void RTMPPublisher::SocketLoop()
                 if (fatalError)
                 {
                     Log(TEXT("RTMPPublisher::SocketLoop: Socket error, recv() returned %d, GetLastError() %d"), ret, errorCode);
+                    //App->SetStreamReport(FormattedString(TEXT("Disconnected: Socket receive failed, error %d"), errorCode));
                     OSLeaveMutex(hDataBufferMutex);
                     App->PostStopMessage();
                     bStopping = true;
@@ -997,6 +1003,7 @@ void RTMPPublisher::SocketLoop()
                     {
                         //connection closed, or connection was aborted / socket closed / etc, that's a fatal error for us.
                         Log(TEXT("RTMPPublisher::SocketLoop: Socket error, send() returned %d, GetLastError() %d"), ret, errorCode);
+                        //App->SetStreamReport(FormattedString(TEXT("Disconnected: Socket send failed, error %d"), errorCode));
                         OSLeaveMutex(hDataBufferMutex);
                         App->PostStopMessage();
                         bStopping = true;

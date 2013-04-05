@@ -2517,11 +2517,21 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
             if(wParam == 0)
             {
-                PlaySound((LPCTSTR)SND_ALIAS_SYSTEMASTERISK, NULL, SND_ALIAS_ID | SND_ASYNC);
                 if(!App->bAutoReconnect)
-                    MessageBox(hwnd, Str("Connection.Disconnected"), NULL, 0);
+                {
+                    if(App->streamReport.IsValid())
+                    {
+                        MessageBox(hwndMain, App->streamReport.Array(), Str("StreamReport"), MB_ICONEXCLAMATION);
+                        App->streamReport.Clear();
+                    }
+                    else
+                        MessageBox(hwnd, Str("Connection.Disconnected"), NULL, MB_ICONEXCLAMATION);
+                }
                 else
                 {
+                    //FIXME: show some kind of non-modal notice to the user explaining why they got disconnected
+                    //status bar would be nice, but that only renders when we're streaming.
+                    PlaySound((LPCTSTR)SND_ALIAS_SYSTEMASTERISK, NULL, SND_ALIAS_ID | SND_ASYNC);
                     App->bReconnecting = false;
                     DialogBox(hinstMain, MAKEINTRESOURCE(IDD_RECONNECTING), hwnd, OBS::ReconnectDialogProc);
                 }

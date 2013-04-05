@@ -636,12 +636,6 @@ void OBS::Stop()
     //update notification icon to reflect current status
     UpdateNotificationAreaIcon();
 
-    if(streamReport.IsValid())
-    {
-        MessageBox(hwndMain, streamReport.Array(), Str("StreamReport"), MB_ICONINFORMATION|MB_OK);
-        streamReport.Clear();
-    }
-
     
     SetWindowText(GetDlgItem(hwndMain, ID_TESTSTREAM), Str("MainWindow.TestStream"));
     EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), TRUE);
