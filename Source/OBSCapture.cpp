@@ -18,6 +18,7 @@
 
 
 #include "Main.h"
+#include <time.h>
 #include <Avrt.h>
 
 VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR, bool bDupeFrames);
@@ -127,7 +128,7 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
-    Log(TEXT("=====Stream Start====================================================================="));
+    Log(TEXT("=====Stream Start: %s==============================================="), CurrentDateTime().Array());
 
     //-------------------------------------------------------------
 
@@ -631,7 +632,7 @@ void OBS::Stop()
 
     ClearStreamInfo();
 
-    Log(TEXT("=====Stream End======================================================================="));
+    Log(TEXT("=====Stream End: %s================================================="), CurrentDateTime().Array());
 
     //update notification icon to reflect current status
     UpdateNotificationAreaIcon();
@@ -1068,5 +1069,16 @@ void OBS::RequestKeyframe(int waitTime)
 
     bRequestKeyframe = true;
     keyframeWait = waitTime;
+}
+
+
+String CurrentDateTime()
+{
+    time_t     now = time(0);
+    struct tm  tstruct;
+    char       buf[80];
+    tstruct = *localtime(&now);
+    strftime(buf, sizeof(buf), "%Y-%m-%d, %X", &tstruct);
+    return buf;
 }
 
