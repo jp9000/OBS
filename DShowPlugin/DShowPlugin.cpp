@@ -1502,23 +1502,35 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         HWND hwndDevices = (HWND)lParam;
                         UINT id = (UINT)SendMessage(hwndDevices, CB_GETCURSEL, 0, 0);
 
-                        ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
-                        IBaseFilter *filter = GetDeviceByValue(CLSID_AudioInputDeviceCategory,
-                                                               L"FriendlyName", configData->audioNameList[id],
-                                                               L"DevicePath", configData->audioIDList[id]);
-                        if (filter) {
-                            EnableWindow(GetDlgItem(hwnd, IDC_CONFIGAUDIO), TRUE);
+                        if (id == CB_ERR) {
+                            SendMessage(GetDlgItem(hwnd, IDC_NOSOUND),          BM_SETCHECK, BST_CHECKED,   0);
+                            SendMessage(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), BM_SETCHECK, BST_UNCHECKED, 0);
+                            SendMessage(GetDlgItem(hwnd, IDC_OUTPUTSOUND),      BM_SETCHECK, BST_UNCHECKED, 0);
 
-                            filter->Release();
+                            EnableWindow(GetDlgItem(hwnd, IDC_NOSOUND),          FALSE);
+                            EnableWindow(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), FALSE);
+                            EnableWindow(GetDlgItem(hwnd, IDC_OUTPUTSOUND),      FALSE);
+                            EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET),       FALSE);
+                            EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET_EDIT),  FALSE);
                         } else {
-                            EnableWindow(GetDlgItem(hwnd, IDC_CONFIGAUDIO), FALSE);
-                        }
+                            ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
+                            IBaseFilter *filter = GetDeviceByValue(CLSID_AudioInputDeviceCategory,
+                                                                   L"FriendlyName", configData->audioNameList[id],
+                                                                   L"DevicePath", configData->audioIDList[id]);
+                            if (filter) {
+                                EnableWindow(GetDlgItem(hwnd, IDC_CONFIGAUDIO), TRUE);
 
-                        EnableWindow(GetDlgItem(hwnd, IDC_NOSOUND),          TRUE);
-                        EnableWindow(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), TRUE);
-                        EnableWindow(GetDlgItem(hwnd, IDC_OUTPUTSOUND),      TRUE);
-                        EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET),       TRUE);
-                        EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET_EDIT),  TRUE);
+                                filter->Release();
+                            } else {
+                                EnableWindow(GetDlgItem(hwnd, IDC_CONFIGAUDIO), FALSE);
+                            }
+
+                            EnableWindow(GetDlgItem(hwnd, IDC_NOSOUND),          TRUE);
+                            EnableWindow(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), TRUE);
+                            EnableWindow(GetDlgItem(hwnd, IDC_OUTPUTSOUND),      TRUE);
+                            EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET),       TRUE);
+                            EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET_EDIT),  TRUE);
+                        }
                     }
                     break;
 
