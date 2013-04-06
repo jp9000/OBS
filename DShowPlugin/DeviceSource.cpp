@@ -882,7 +882,7 @@ DWORD DeviceSource::SampleThread(DeviceSource *source)
     bool bFirstFrame = true;
     bool bFirstDelay = true;
 
-    while (WaitForSingleObject(source->hStopSampleEvent, 4) == WAIT_TIMEOUT) {
+    while (WaitForSingleObject(source->hStopSampleEvent, 2) == WAIT_TIMEOUT) {
         LONGLONG t = GetQPCTime100NS();
         LONGLONG delta = t-lastTime;
         lastTime = t;
