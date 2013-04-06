@@ -37,7 +37,10 @@ DeviceSelection.Sound                   "Ääni"
 DeviceSelection.SoundOffset             "Äänen viive (millisekunteina):
 DeviceSelection.SpillReduction          "Värivuodon vähennys (1-1000):"
 DeviceSelection.UnsupportedResolution   "Laite ei tue tätä resoluutiota"
+DeviceSelection.UseBuffering            "Käytä puskurointia (millisekunteina):"
 DeviceSelection.UseChromaKey            "Käytä läpinäkyvää taustaa"
+DeviceSelection.UseDeviceAudio          "(Käytä äänilaitetta)"
+DeviceSelection.Video                   "Kuva"
 
 Plugin.Description  "Tämä lisäosa sallii sinun lisätä DirectShow videolaitteita (webcam, videokaappari..)."
 Plugin.Name         "DirectShow videolaite -lisäosa"
