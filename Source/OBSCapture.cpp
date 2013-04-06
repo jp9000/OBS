@@ -917,7 +917,7 @@ void OBS::MainAudioLoop()
 
             float *latestDesktopBuffer = NULL, *latestMicBuffer = NULL;
 
-            desktopAudio->GetBuffer(&desktopBuffer, &desktopAudioFrames, timestamp);
+            desktopAudio->GetBuffer(&desktopBuffer, &desktopAudioFrames, timestamp-10);
             desktopAudio->GetNewestFrame(&latestDesktopBuffer, &latestDesktopAudioFrames);
 
             UINT totalFloats = desktopAudioFrames*2;
@@ -929,7 +929,7 @@ void OBS::MainAudioLoop()
 
             if(micAudio != NULL)
             {
-                micAudio->GetBuffer(&micBuffer, &micAudioFrames, timestamp);
+                micAudio->GetBuffer(&micBuffer, &micAudioFrames, timestamp-10);
                 micAudio->GetNewestFrame(&latestMicBuffer, &latestMicAudioFrames);
             }
 
@@ -954,7 +954,7 @@ void OBS::MainAudioLoop()
             {
                 float *auxBuffer;
 
-                if(auxAudioSources[i]->GetBuffer(&auxBuffer, &desktopAudioFrames, timestamp))
+                if(auxAudioSources[i]->GetBuffer(&auxBuffer, &desktopAudioFrames, timestamp-10))
                     MixAudio(desktopBuffer, auxBuffer, desktopAudioFrames*2, false);
             }
 

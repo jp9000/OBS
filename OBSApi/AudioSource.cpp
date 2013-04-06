@@ -648,7 +648,7 @@ bool AudioSource::GetBuffer(float **buffer, UINT *numFrames, QWORD targetTimesta
         AudioSegment *segment = audioSegments[0];
 
         QWORD difference = (segment->timestamp-targetTimestamp);
-        if(difference <= 10)
+        if(difference <= 20)
         {
             //Log(TEXT("segment.timestamp: %llu, targetTimestamp: %llu"), segment.timestamp, targetTimestamp);
             outputBuffer.TransferFrom(segment->audioData);
