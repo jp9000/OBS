@@ -45,6 +45,7 @@ enum
     ID_LISTBOX_FITTOSCREEN,
     ID_LISTBOX_RESETSIZE,
     ID_LISTBOX_RENAME,
+    ID_LISTBOX_COPY,
     ID_LISTBOX_HOTKEY,
     ID_LISTBOX_CONFIG,
 
@@ -366,6 +367,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
         {
             String strRemove       = Str("Remove");
             String strRename       = Str("Rename");
+            String strCopy         = Str("Copy");
             String strMoveUp       = Str("MoveUp");
             String strMoveDown     = Str("MoveDown");
             String strMoveTop      = Str("MoveToTop");
@@ -405,6 +407,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
             if(id == ID_SCENES && numSelected)
             {
+                AppendMenu(hMenu, MF_STRING, ID_LISTBOX_COPY,           strCopy);
                 AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
                 AppendMenu(hMenu, MF_STRING, ID_LISTBOX_HOTKEY, Str("Listbox.SetHotkey"));
             }
@@ -536,7 +539,41 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                         App->EnableSceneSwitching(true);
                         break;
                     }
+                case ID_LISTBOX_COPY:
+                    {
+                        App->EnableSceneSwitching(false);
+                        
+                        String strName = Str("Scene");
+                        GetNewSceneName(strName);
 
+                        if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSceneNameDialogProc, (LPARAM)&strName) == IDOK)
+                        {
+                            UINT classID = 0;   // ID_LISTBOX_ADD - ID_LISTBOX_ADD
+                            ClassInfo &ci = App->sceneClasses[classID];
+
+                            XElement *scenes = App->scenesConfig.GetElement(TEXT("scenes"));
+                            XElement *newSceneElement = scenes->CopyAndAddElement(item, strName);
+
+                            newSceneElement->SetString(TEXT("class"), ci.strClass);
+                            if(ci.configProc)
+                            {
+                                if(!ci.configProc(newSceneElement, true))
+                                {
+                                    scenes->RemoveElement(newSceneElement);
+                                    break;
+                                }
+                            }
+
+                            UINT newID = (UINT)SendMessage(hwnd, LB_ADDSTRING, 0, (LPARAM)strName.Array());
+                            PostMessage(hwnd, LB_SETCURSEL, newID, 0);
+                            PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_SCENES, LBN_SELCHANGE), (LPARAM)hwnd);
+                            App->ReportScenesChanged();
+                        }
+
+                        App->EnableSceneSwitching(true);
+
+                        break;
+                    }
                 case ID_LISTBOX_CONFIG:
                     App->EnableSceneSwitching(false);
 
