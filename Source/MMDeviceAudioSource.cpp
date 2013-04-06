@@ -311,6 +311,11 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
     HRESULT hRes;
     
     while (true) {
+        if (inputBufferSize >= sampleWindowSize*GetChannelCount())
+            break;
+
+        //---------------------------------------------------------
+
         hRes = mmCapture->GetNextPacketSize(&captureSize);
 
         if (FAILED(hRes)) {
@@ -335,29 +340,28 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
             return false;
         }
 
+        if (inputBufferSize) {
+            double timeAdjust = double(inputBufferSize/GetChannelCount());
+            timeAdjust /= (double(GetSamplesPerSec())*0.0000001);
+
+            qpcTimestamp -= UINT64(timeAdjust);
+        }
+
         qpcTimestamp /= 10000;
 
-        if (!inputBufferSize) {
-            firstTimestamp = GetTimestamp(qpcTimestamp);
-        }
+        firstTimestamp = GetTimestamp(qpcTimestamp);
 
         //---------------------------------------------------------
 
         UINT totalFloatsRead = numFramesRead*GetChannelCount();
         UINT newInputBufferSize = inputBufferSize + totalFloatsRead;
-        if (newInputBufferSize > inputBuffer.Num()) {
+        if (newInputBufferSize > inputBuffer.Num())
             inputBuffer.SetSize(newInputBufferSize);
-        }
 
         SSECopy(inputBuffer.Array()+inputBufferSize, captureBuffer, totalFloatsRead*sizeof(float));
         inputBufferSize = newInputBufferSize;
 
         mmCapture->ReleaseBuffer(numFramesRead);
-
-        //---------------------------------------------------------
-
-        if (inputBufferSize >= sampleWindowSize*GetChannelCount())
-            break;
     }
 
     *numFrames = sampleWindowSize;
@@ -371,7 +375,7 @@ void MMDeviceAudioSource::ReleaseBuffer()
 {
     UINT sampleSizeFloats = sampleWindowSize*GetChannelCount();
     if (inputBufferSize > sampleSizeFloats)
-        SSECopy(inputBuffer.Array(), inputBuffer.Array()+sampleSizeFloats, inputBufferSize-sampleSizeFloats);
+        SSECopy(inputBuffer.Array(), inputBuffer.Array()+sampleSizeFloats, (inputBufferSize-sampleSizeFloats)*sizeof(float));
 
     inputBufferSize -= sampleSizeFloats;
 }
