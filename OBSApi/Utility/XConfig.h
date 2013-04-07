@@ -171,7 +171,7 @@ public:
     XElement* GetElementByItem(CTSTR lpName, CTSTR lpItemName, CTSTR lpItemValue) const;
     XElement* CreateElement(CTSTR lpName);
     XElement* InsertElement(UINT pos, CTSTR lpName);
-    XElement* CopyAndAddElement(XElement* element, CTSTR lpNewName);
+    XElement* CopyElement(XElement* element, CTSTR lpNewName);
     void  GetElementList(CTSTR lpName, List<XElement*> &Elements) const;
     void  RemoveElement(XElement *element);
     void  RemoveElement(CTSTR lpName);

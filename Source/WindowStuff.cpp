@@ -552,7 +552,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                             ClassInfo &ci = App->sceneClasses[classID];
 
                             XElement *scenes = App->scenesConfig.GetElement(TEXT("scenes"));
-                            XElement *newSceneElement = scenes->CopyAndAddElement(item, strName);
+                            XElement *newSceneElement = scenes->CopyElement(item, strName);
 
                             newSceneElement->SetString(TEXT("class"), ci.strClass);
                             if(ci.configProc)

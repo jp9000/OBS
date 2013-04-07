@@ -417,7 +417,8 @@ XElement* XElement::CreateElement(CTSTR lpName)
     return newElement;
 }
 
-XElement* XElement::NewElementCopy(XElement* element, bool bSelfAsRoot) {
+XElement* XElement::NewElementCopy(XElement* element, bool bSelfAsRoot)
+{
    XElement *newElement = NULL;
    
    if (bSelfAsRoot) {
@@ -440,7 +441,8 @@ XElement* XElement::NewElementCopy(XElement* element, bool bSelfAsRoot) {
    return newElement;
 }
 
-XElement* XElement::CopyAndAddElement(XElement* element, CTSTR lpNewName) {
+XElement* XElement::CopyElement(XElement* element, CTSTR lpNewName)
+{
    assert(lpNewName);
    assert(element);
 
