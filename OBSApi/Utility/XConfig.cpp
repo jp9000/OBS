@@ -417,6 +417,42 @@ XElement* XElement::CreateElement(CTSTR lpName)
     return newElement;
 }
 
+XElement* XElement::NewElementCopy(XElement* element, bool bSelfAsRoot) {
+   XElement *newElement = NULL;
+   
+   if (bSelfAsRoot) {
+        newElement = this;
+   } else {
+        newElement = new XElement(this->file, this, element->strName);
+   }
+
+   for(DWORD i=0; i < element->SubItems.Num(); i++)
+   {
+        XBaseItem *sub = element->SubItems[i];
+        if (sub->GetType() == XConfig_Data) {
+           XDataItem *subdata = static_cast<XDataItem *>(sub);
+           newElement->SubItems << new XDataItem(subdata->strName, subdata->strData);
+        } else {
+           newElement->SubItems << newElement->NewElementCopy( static_cast<XElement *>(sub), false );
+        }
+   }
+
+   return newElement;
+}
+
+XElement* XElement::CopyAndAddElement(XElement* element, CTSTR lpNewName) {
+   assert(lpNewName);
+   assert(element);
+
+   XElement *newElement = new XElement(file, this, lpNewName);
+
+   newElement->NewElementCopy(element, true);
+
+   SubItems << newElement;
+
+   return newElement;
+}
+
 XElement* XElement::InsertElement(UINT pos, CTSTR lpName)
 {
     assert(lpName);
