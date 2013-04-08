@@ -2537,8 +2537,11 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     App->clientHeight = client.bottom;
                     App->bSizeChanging = true;
 
-                    if(wParam != SIZE_MINIMIZED)
+                    if(wParam == SIZE_MAXIMIZED)
+                        App->ResizeWindow(true);
+                    else
                         App->ResizeWindow(!App->bDragResize);
+
                     if(!App->bDragResize)
                         App->bSizeChanging = false;
                 }
