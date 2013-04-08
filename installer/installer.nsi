@@ -60,14 +60,20 @@ Function PreReqCheck
 		${EndIf}
 		
 		; Check Vista Platform Update
-		nsexec::exectostack "wmic qfe where HotFixID='KB971512' get HotFixID /Format:list"
+		nsexec::exectostack "$SYSDIR\wbem\wmic.exe qfe where HotFixID='KB971512' get HotFixID /Format:list"
 		pop $0
 		pop $0
 		strcpy $1 $0 17 6
 		strcmps $1 "HotFixID=KB971512" gotPatch
 			MessageBox MB_YESNO|MB_ICONEXCLAMATION "${APPNAME} requires the Windows Vista Platform Update. Would you like to download it?" IDYES putrue IDNO pufalse
 			putrue:
-				ExecShell "open" "http://www.microsoft.com/en-us/download/details.aspx?id=3274"
+				${If} ${RunningX64}
+					; 64 bit
+					ExecShell "open" "http://www.microsoft.com/en-us/download/details.aspx?id=4390"
+				${Else}
+					; 32 bit
+					ExecShell "open" "http://www.microsoft.com/en-us/download/details.aspx?id=3274"
+				${EndIf}
 			pufalse:
 			Quit
 		gotPatch:
@@ -106,7 +112,7 @@ Section "Open Broadcaster Software" Section1
 	; Set Section Files and Shortcuts
 	SetOutPath "$INSTDIR\"
 	File "..\Release\OBS.exe"
-	File "..\x264\libs\32bit\libx264-129.dll"
+	File "..\x264\libs\32bit\libx264-130.dll"
 	File "..\OBSAPI\Release\OBSApi.dll"
 	File "..\rundir\services.xconfig"
 	File "..\rundir\OBSHelp.chm"
@@ -130,7 +136,7 @@ Section "Open Broadcaster Software" Section1
 	${if} ${RunningX64}
 		SetOutPath "$INSTDIR\64bit\"
 		File "..\x64\Release\OBS.exe"
-		File "..\x264\libs\64bit\libx264-129.dll"
+		File "..\x264\libs\64bit\libx264-130.dll"
 		File "..\OBSAPI\x64\Release\OBSApi.dll"
 		File "..\rundir\services.xconfig"
 		File "..\rundir\OBSHelp.chm"
@@ -199,7 +205,7 @@ Section Uninstall
 
 	; Clean up Open Broadcaster Software
 	Delete "$INSTDIR\OBS.exe"
-	Delete "$INSTDIR\libx264-129.dll"
+	Delete "$INSTDIR\libx264-130.dll"
 	Delete "$INSTDIR\OBSApi.dll"
 	Delete "$INSTDIR\services.xconfig"
 	Delete "$INSTDIR\*.chm"
@@ -214,7 +220,7 @@ Section Uninstall
 	Delete "$INSTDIR\plugins\GraphicsCapture\*.exe"
 	${if} ${RunningX64}
 		Delete "$INSTDIR\64bit\OBS.exe"
-		Delete "$INSTDIR\64bit\libx264-129.dll"
+		Delete "$INSTDIR\64bit\libx264-130.dll"
 		Delete "$INSTDIR\64bit\OBSApi.dll"
 		Delete "$INSTDIR\64bit\services.xconfig"
 		Delete "$INSTDIR\64bit\*.chm"
