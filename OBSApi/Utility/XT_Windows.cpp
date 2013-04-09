@@ -750,7 +750,8 @@ BOOL   STDCALL OSIncompatiblePatchesLoaded(String &errors)
 
                 if (opCode == 0xE9)
                 {
-                    if (moduleList.HasValue(TEXT("ts3overlay_hook_win32.dll")))
+                    if (moduleList.HasValue(TEXT("ts3overlay_hook_win32.dll")) ||
+                        moduleList.HasValue(TEXT("ts3overlay_hook_win64.dll")))
                     {
                         errors << TEXT("TeamSpeak 3 overlay has loaded into OBS and will cause problems. Please set \"Disable Loading\" for OBS.EXE in your TeamSpeak 3 overlay settings or visit http://bit.ly/OBSTS3 for help."); 
                         ret = TRUE;
