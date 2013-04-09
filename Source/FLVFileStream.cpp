@@ -34,7 +34,7 @@ class FLVFileStream : public VideoFileStream
 
     void AppendFLVPacket(LPBYTE lpData, UINT size, BYTE type, DWORD timestamp)
     {
-        if (!bSentSEI && type == 9) {
+        if (!bSentSEI && type == 9 && lpData[0] == 0x17 && lpData[1] == 0x1) { //send SEI with first keyframe packet
             DataPacket sei;
             App->GetVideoEncoder()->GetSEI(sei);
 
