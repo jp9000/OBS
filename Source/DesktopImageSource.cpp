@@ -132,7 +132,7 @@ public:
 
         if(duplicator)
         {
-            switch(duplicator->AquireNextFrame(0))
+            switch(duplicator->AcquireNextFrame(0))
             {
                 case DuplicatorInfo_Lost:
                     {

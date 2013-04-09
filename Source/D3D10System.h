@@ -319,7 +319,7 @@ public:
     bool Init(UINT output);
     virtual ~D3D10OutputDuplicator();
 
-    virtual DuplicatorInfo AquireNextFrame(UINT timeout);
+    virtual DuplicatorInfo AcquireNextFrame(UINT timeout);
     virtual Texture* GetCopyTexture();
     virtual Texture* GetCursorTex(POINT* pos);
 };

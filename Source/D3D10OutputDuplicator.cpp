@@ -78,11 +78,11 @@ D3D10OutputDuplicator::~D3D10OutputDuplicator()
     delete copyTex;
 }
 
-DuplicatorInfo D3D10OutputDuplicator::AquireNextFrame(UINT timeout)
+DuplicatorInfo D3D10OutputDuplicator::AcquireNextFrame(UINT timeout)
 {
     if(!duplicator)
     {
-        AppWarning(TEXT("D3D10OutputDuplicator::AquireNextFrame: Well, apparently there's no duplicator."));
+        AppWarning(TEXT("D3D10OutputDuplicator::AcquireNextFrame: Well, apparently there's no duplicator."));
         return DuplicatorInfo_Error;
     }
 
@@ -105,7 +105,7 @@ DuplicatorInfo D3D10OutputDuplicator::AquireNextFrame(UINT timeout)
     if(FAILED(hRes = tempResource->QueryInterface(__uuidof(ID3D10Texture2D), (void**)&texVal)))
     {
         SafeRelease(tempResource);
-        AppWarning(TEXT("D3D10OutputDuplicator::AquireNextFrame: could not query interface, result = 0x%08lX"), hRes);
+        AppWarning(TEXT("D3D10OutputDuplicator::AcquireNextFrame: could not query interface, result = 0x%08lX"), hRes);
         return DuplicatorInfo_Error;
     }
 
