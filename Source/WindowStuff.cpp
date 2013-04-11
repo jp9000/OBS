@@ -2393,7 +2393,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                             if(itemText.IsValid())
                                             {
                                                 bkMode = SetBkMode(hdc, TRANSPARENT);
-                                                DrawText(hdc, itemText, slen(itemText), &textRect, DT_LEFT | DT_END_ELLIPSIS | DT_VCENTER | DT_SINGLELINE );
+                                                DrawText(hdc, itemText, slen(itemText), &textRect, DT_LEFT | DT_END_ELLIPSIS | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX );
                                                 SetBkMode(hdc, bkMode);
                                             }
                                         }
