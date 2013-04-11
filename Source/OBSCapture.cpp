@@ -97,6 +97,14 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
+    String processPriority = AppConfig->GetString(TEXT("General"), TEXT("Priority"), TEXT("Normal"));
+    if (!scmp(processPriority, TEXT("Idle")))
+        SetPriorityClass(GetCurrentProcess(), IDLE_PRIORITY_CLASS);
+    else if (!scmp(processPriority, TEXT("Above Normal")))
+        SetPriorityClass(GetCurrentProcess(), ABOVE_NORMAL_PRIORITY_CLASS);
+    else if (!scmp(processPriority, TEXT("High")))
+        SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
+
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
     DWORD delayTime = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("Delay"));
 
@@ -657,6 +665,10 @@ void OBS::Stop()
 
     SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, 1, 0, 0);
     SetThreadExecutionState(ES_CONTINUOUS);
+
+    String processPriority = AppConfig->GetString(TEXT("General"), TEXT("Priority"), TEXT("Normal"));
+    if (scmp(processPriority, TEXT("Normal")))
+        SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
 
     bTestStream = false;
 
