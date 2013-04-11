@@ -2199,7 +2199,9 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     break;
 
                 case ID_STARTSTOP:
+                    EnableWindow(GetDlgItem(hwnd, ID_STARTSTOP), false);
                     App->ToggleCapturing();
+                    EnableWindow(GetDlgItem(hwnd, ID_STARTSTOP), true);
                     break;
 
                 case ID_MINIMIZERESTORE:
