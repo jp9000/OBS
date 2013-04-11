@@ -198,6 +198,7 @@ Settings.Publish.Mode.FileOnly      "Tallennus"
 Settings.Publish.Mode.LiveStream    "Lähetys"
 
 Settings.Video.Custom               "Valinnainen:"
+Settings.Video.Device               "Näytönohjain:"
 Settings.Video.DisableAero          "Poista Aero käytöstä:"
 Settings.Video.DisableAeroTooltip   "Aeron poistaminen käytöstä on suositeltavaa kaapatessa ruudulta"
 Settings.Video.Downscale            "Resoluution skaalaus:"
