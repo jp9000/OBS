@@ -1,4 +1,4 @@
-/********************************************************************************
+﻿/********************************************************************************
  Copyright (C) 2012 Hugh Bailey <obs.jim@gmail.com>
 
  This program is free software; you can redistribute it and/or modify
@@ -1426,7 +1426,10 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                                     outputPin = NULL;
                                 }
 
-                                IAMCrossbar *crossbar = GetFilterCrossbar(filter);
+                                String strDeviceName = configData->deviceNameList[id];
+                                bool bIsElworkaroundo = sstri(strDeviceName, TEXT("elgato")) != NULL; //HAHAHAHAHAHAHA HOW F***ING WONDERFUL. 自殺したい
+
+                                IAMCrossbar *crossbar = bIsElworkaroundo ? NULL : GetFilterCrossbar(filter);
                                 EnableWindow(GetDlgItem(hwnd, IDC_CROSSBAR), crossbar != NULL);
                                 SafeRelease(crossbar);
 
@@ -1703,7 +1706,10 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                                                           L"DevicePath", configData->deviceIDList[id]);
 
                                 if (filter) {
-                                    IAMCrossbar *crossbar = GetFilterCrossbar(filter);
+                                    String strDeviceName = configData->deviceNameList[id];
+                                    bool bIsElworkaroundo = sstri(strDeviceName, TEXT("elgato")) != NULL; //HAHAHAHAHAHAHA HOW F***ING WONDERFUL. 自殺したい
+
+                                    IAMCrossbar *crossbar = bIsElworkaroundo ? NULL : GetFilterCrossbar(filter);
                                     if (crossbar) {
                                         OpenPropertyPages(hwnd, crossbar);
                                         crossbar->Release();

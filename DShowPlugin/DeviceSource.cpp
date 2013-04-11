@@ -810,7 +810,7 @@ void DeviceSource::UnloadFilters()
 
         SafeReleaseLogRef(captureFilter);
         SafeReleaseLogRef(deviceFilter);
-        if(!bDeviceHasAudio) SafeReleaseLogRef(audioDeviceFilter);
+        SafeReleaseLogRef(audioDeviceFilter);
         SafeReleaseLogRef(audioFilter);
 
         bFiltersLoaded = false;
