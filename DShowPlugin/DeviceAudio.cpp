@@ -93,7 +93,7 @@ bool DeviceAudioSource::Initialize(DeviceSource *parent)
 
     outputBuffer.SetSize(sampleSegmentSize);
 
-    InitAudioData(bFloat, inputChannels, inputSamplesPerSec, inputBitsPerSample, inputBlockSize, inputChannelMask, false);
+    InitAudioData(bFloat, inputChannels, inputSamplesPerSec, inputBitsPerSample, inputBlockSize, inputChannelMask);
 
     return true;
 }

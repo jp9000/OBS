@@ -41,6 +41,8 @@ class MMDeviceAudioSource : public AudioSource
 
     String strDeviceName;
 
+    QWORD lastUsedTimestamp;
+
     bool bUseVideoTime;
     QWORD lastVideoTime;
     QWORD curVideoTime;
@@ -234,7 +236,7 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
 
     //-----------------------------------------------------------------
 
-    InitAudioData(bFloat, inputChannels, inputSamplesPerSec, inputBitsPerSample, inputBlockSize, inputChannelMask, !bMic);
+    InitAudioData(bFloat, inputChannels, inputSamplesPerSec, inputBitsPerSample, inputBlockSize, inputChannelMask);
 
     return true;
 }
@@ -259,6 +261,8 @@ QWORD MMDeviceAudioSource::GetTimestamp(QWORD qpcTimestamp)
     {
         newTimestamp = (bUseQPC) ? qpcTimestamp : App->GetAudioTime();
         newTimestamp += GetTimeOffset();
+
+        return newTimestamp;
     }
     else
     {
@@ -276,13 +280,15 @@ QWORD MMDeviceAudioSource::GetTimestamp(QWORD qpcTimestamp)
                 if(!bUseVideoTime)
                     Log(TEXT("Bad timestamp detected, syncing audio to video time"));
                 else
-                    Log(TEXT("Syncing audio to video time"));
+                    Log(TEXT("Syncing audio to video time (WARNING: you should not be doing this if you are just having webcam desync, that's a separate issue)"));
 
                 SetTimeOffset(GetTimeOffset()-int(lastVideoTime-App->GetSceneTimestamp()));
                 bUseVideoTime = true;
 
                 newTimestamp = lastVideoTime+GetTimeOffset();
             }
+
+            lastUsedTimestamp = newTimestamp;
 
             bFirstFrameReceived = true;
         }
@@ -297,12 +303,23 @@ QWORD MMDeviceAudioSource::GetTimestamp(QWORD qpcTimestamp)
 
             newTimestamp = (bUseVideoTime) ? curVideoTime : qpcTimestamp;
             newTimestamp += GetTimeOffset();
+
+            lastUsedTimestamp += 10;
         }
 
-        App->latestAudioTime = newTimestamp;
-    }
+        //------------------------------------------------------
+        // timestamp smoothing
 
-    return newTimestamp;
+        QWORD difVal = GetQWDif(newTimestamp, lastUsedTimestamp);
+        if (difVal > 70)
+            lastUsedTimestamp = newTimestamp;
+
+        //------------------------------------------------------
+
+        App->latestAudioTime = lastUsedTimestamp;
+
+        return lastUsedTimestamp;
+    }
 }
 
 bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *timestamp)

@@ -100,8 +100,11 @@ inline BOOL CloseDouble(double f1, double f2, double precision=0.001)
     return fabs(f1-f2) <= precision;
 }
 
-// this actually can't work without a 128bit integer
-// ..however it -can- work with doubles, and should still be accurate
+inline QWORD GetQWDif(QWORD val1, QWORD val2)
+{
+    return (val1 > val2) ? (val1-val2) : (val2-val1);
+}
+
 BASE_EXPORT QWORD GetQPCTime100NS();
 BASE_EXPORT QWORD GetQPCTimeMS();
 

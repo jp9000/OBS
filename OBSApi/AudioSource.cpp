@@ -25,11 +25,6 @@
 #define KSAUDIO_SPEAKER_2POINT1     (KSAUDIO_SPEAKER_STEREO|SPEAKER_LOW_FREQUENCY)
 
 
-inline QWORD GetQWDif(QWORD val1, QWORD val2)
-{
-    return (val1 > val2) ? (val1-val2) : (val2-val1);
-}
-
 void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
 {
     float sum = 0.0f;
@@ -80,10 +75,9 @@ union TripleToLong
     };
 };
 
-void AudioSource::InitAudioData(bool bFloat, UINT channels, UINT samplesPerSec, UINT bitsPerSample, UINT blockSize, DWORD channelMask, bool bSmoothTimestamps)
+void AudioSource::InitAudioData(bool bFloat, UINT channels, UINT samplesPerSec, UINT bitsPerSample, UINT blockSize, DWORD channelMask)
 {
     this->bFloat = bFloat;
-    this->bSmoothTimestamps = bSmoothTimestamps;
     inputChannels = channels;
     inputSamplesPerSec = samplesPerSec;
     inputBitsPerSample = bitsPerSample;
@@ -566,42 +560,14 @@ UINT AudioSource::QueryAudio(float curVolume)
 
         //-----------------------------------------------------------------------------
         // sort all audio frames into 10 millisecond increments (done because not all devices output in 10ms increments)
-        // NOTE: 0.457+ - instead of using the timestamps from windows, just compare and make sure it stays within a 100ms of their timestamps
-
-        if(!bFirstBaseFrameReceived)
-        {
-            lastUsedTimestamp = newTimestamp;
-            bFirstBaseFrameReceived = true;
-        }
 
         float *newBuffer = (bResample) ? tempResampleBuffer.Array() : tempBuffer.Array();
 
-        if (bSmoothTimestamps) {
-            lastUsedTimestamp += 10;
-
-            QWORD difVal = GetQWDif(newTimestamp, lastUsedTimestamp);
-            if(difVal > 70)
-            {
-                //OSDebugOut(TEXT("----------------------------1\r\nlastUsedTimestamp before: %llu - device: %s\r\n"), lastUsedTimestamp, GetDeviceName());
-                lastUsedTimestamp = newTimestamp;
-                //OSDebugOut(TEXT("lastUsedTimestamp after: %llu\r\n"), lastUsedTimestamp);
-            }
-
-            if(lastUsedTimestamp > lastSentTimestamp)
-            {
-                QWORD adjustVal = (lastUsedTimestamp-lastSentTimestamp);
-                if(adjustVal < 10)
-                    lastUsedTimestamp += 10-adjustVal;
-
-                AudioSegment *newSegment = new AudioSegment(newBuffer, numAudioFrames*2, lastUsedTimestamp);
-                AddAudioSegment(newSegment, curVolume*sourceVolume);
-
-                lastSentTimestamp = lastUsedTimestamp;
-            }
-        } else {
-           // OSDebugOut(TEXT("newTimestamp: %llu\r\n"), newTimestamp);
+        if(newTimestamp >= lastSentTimestamp+10) {
             AudioSegment *newSegment = new AudioSegment(newBuffer, numAudioFrames*2, newTimestamp);
             AddAudioSegment(newSegment, curVolume*sourceVolume);
+
+            lastSentTimestamp = newTimestamp;
         }
 
         //-----------------------------------------------------------------------------

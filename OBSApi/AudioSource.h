@@ -57,8 +57,6 @@ class BASE_EXPORT AudioSource
 
     List<AudioSegment*> audioSegments;
 
-    bool bSmoothTimestamps;
-    bool bFirstBaseFrameReceived;
     QWORD lastSentTimestamp;
     int timeOffset;
 
@@ -82,8 +80,6 @@ class BASE_EXPORT AudioSource
     UINT  inputBlockSize;
     DWORD inputChannelMask;
 
-    QWORD lastUsedTimestamp;
-
     //-----------------------------------------
 
     float sourceVolume;
@@ -94,7 +90,7 @@ class BASE_EXPORT AudioSource
 
 protected:
 
-    void InitAudioData(bool bFloat, UINT channels, UINT samplesPerSec, UINT bitsPerSample, UINT blockSize, DWORD channelMask, bool bSmoothTimestamps);
+    void InitAudioData(bool bFloat, UINT channels, UINT samplesPerSec, UINT bitsPerSample, UINT blockSize, DWORD channelMask);
 
     //-----------------------------------------
 
