@@ -197,6 +197,7 @@ Settings.Publish.Mode.FileOnly      "File Output Only"
 Settings.Publish.Mode.LiveStream    "Live Stream"
 
 Settings.Video.Custom               "Custom:"
+Settings.Video.Device               "Video Adapter:"
 Settings.Video.DisableAero          "Disable Aero at startup:"
 Settings.Video.DisableAeroTooltip   "Disabling Aero is recommended if using software monitor capture"
 Settings.Video.Downscale            "Resolution Downscale:"

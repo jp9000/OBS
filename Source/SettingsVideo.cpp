@@ -169,6 +169,11 @@ void SettingsVideo::RefreshFilters(HWND hwndParent, bool bGetConfig)
 
 void SettingsVideo::ApplySettings()
 {
+    UINT adapterID = (UINT)SendMessage(GetDlgItem(hwnd, IDC_DEVICE), CB_GETCURSEL, 0, 0);
+    if (adapterID == CB_ERR)
+        adapterID = 0;
+    GlobalConfig->SetInt(TEXT("Video"), TEXT("Adapter"), adapterID);
+
     int curSel = (int)SendMessage(GetDlgItem(hwnd, IDC_MONITOR), CB_GETCURSEL, 0, 0);
     if(curSel != CB_ERR)
         AppConfig->SetInt(TEXT("Video"), TEXT("Monitor"), curSel);
@@ -232,6 +237,21 @@ INT_PTR SettingsVideo::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 SendMessage(hwndToolTip, TTM_SETMAXTIPWIDTH, 0, 500);
                 SendMessage(hwndToolTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 8000);
+
+                //--------------------------------------------
+
+                DeviceOutputs outputs;
+                GetDisplayDevices(outputs);
+
+                hwndTemp = GetDlgItem(hwnd, IDC_DEVICE);
+                for (UINT i=0; i<outputs.devices.Num(); i++) {
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)outputs.devices[i].strDevice.Array());
+                }
+
+                UINT adapterID = GlobalConfig->GetInt(TEXT("Video"), TEXT("Adapter"), 0);
+                if (adapterID >= outputs.devices.Num())
+                    adapterID = 0;
+                SendMessage(hwndTemp, CB_SETCURSEL, adapterID, 0);
 
                 //--------------------------------------------
 

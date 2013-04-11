@@ -45,27 +45,29 @@ void GetDisplayDevices(DeviceOutputs &deviceList)
             DXGI_ADAPTER_DESC adapterDesc;
             if(SUCCEEDED(err = giAdapter->GetDesc(&adapterDesc)))
             {
-                DeviceOutputData &deviceData = *deviceList.devices.CreateNew();
-                deviceData.strDevice = adapterDesc.Description;
+                if (adapterDesc.DedicatedVideoMemory != 0) {
+                    DeviceOutputData &deviceData = *deviceList.devices.CreateNew();
+                    deviceData.strDevice = adapterDesc.Description;
 
-                UINT j=0;
-                IDXGIOutput *giOutput;
-                while(giAdapter->EnumOutputs(j++, &giOutput) == S_OK)
-                {
-                    DXGI_OUTPUT_DESC outputDesc;
-                    if(SUCCEEDED(giOutput->GetDesc(&outputDesc)))
+                    UINT j=0;
+                    IDXGIOutput *giOutput;
+                    while(giAdapter->EnumOutputs(j++, &giOutput) == S_OK)
                     {
-                        if(outputDesc.AttachedToDesktop)
+                        DXGI_OUTPUT_DESC outputDesc;
+                        if(SUCCEEDED(giOutput->GetDesc(&outputDesc)))
                         {
-                            deviceData.monitorNameList << outputDesc.DeviceName;
+                            if(outputDesc.AttachedToDesktop)
+                            {
+                                deviceData.monitorNameList << outputDesc.DeviceName;
 
-                            MonitorInfo &monitorInfo = *deviceData.monitors.CreateNew();
-                            monitorInfo.hMonitor = outputDesc.Monitor;
-                            mcpy(&monitorInfo.rect, &outputDesc.DesktopCoordinates, sizeof(RECT));
+                                MonitorInfo &monitorInfo = *deviceData.monitors.CreateNew();
+                                monitorInfo.hMonitor = outputDesc.Monitor;
+                                mcpy(&monitorInfo.rect, &outputDesc.DesktopCoordinates, sizeof(RECT));
+                            }
                         }
-                    }
 
-                    giOutput->Release();
+                        giOutput->Release();
+                    }
                 }
             }
             else
@@ -97,15 +99,16 @@ void LogVideoCardStats()
 
         while(factory->EnumAdapters1(i++, &giAdapter) == S_OK)
         {
-            Log(TEXT("------------------------------------------"));
-
             DXGI_ADAPTER_DESC adapterDesc;
             if(SUCCEEDED(err = giAdapter->GetDesc(&adapterDesc)))
             {
-                Log(TEXT("Adapter %u"), i);
-                Log(TEXT("  Video Adapter: %s"), adapterDesc.Description);
-                Log(TEXT("  Video Adapter Dedicated Video Memory: %u"), adapterDesc.DedicatedVideoMemory);
-                Log(TEXT("  Video Adapter Shared System Memory: %u"), adapterDesc.SharedSystemMemory);
+                if (adapterDesc.DedicatedVideoMemory > 0) {
+                    Log(TEXT("------------------------------------------"));
+                    Log(TEXT("Adapter %u"), i);
+                    Log(TEXT("  Video Adapter: %s"), adapterDesc.Description);
+                    Log(TEXT("  Video Adapter Dedicated Video Memory: %u"), adapterDesc.DedicatedVideoMemory);
+                    Log(TEXT("  Video Adapter Shared System Memory: %u"), adapterDesc.SharedSystemMemory);
+                }
             }
             else
                 AppWarning(TEXT("Could not query adapter %u"), i);
@@ -128,12 +131,14 @@ D3D10System::D3D10System()
     REFIID iidVal = __uuidof(IDXGIFactory1);
 #endif
 
+    UINT adapterID = GlobalConfig->GetInt(TEXT("Video"), TEXT("Adapter"), 0);
+
     IDXGIFactory1 *factory;
     if(FAILED(err = CreateDXGIFactory1(iidVal, (void**)&factory)))
         CrashError(TEXT("Could not create DXGI factory"));
 
     IDXGIAdapter1 *adapter;
-    if(FAILED(err = factory->EnumAdapters1(0, &adapter)))
+    if(FAILED(err = factory->EnumAdapters1(adapterID, &adapter)))
         CrashError(TEXT("Could not get DXGI adapter"));
 
     //------------------------------------------------------------------

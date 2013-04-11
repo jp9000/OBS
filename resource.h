@@ -52,6 +52,8 @@
 #define IDC_DOWNSCALE2                  1015
 #define IDC_FILTER                      1015
 #define IDC_BUFFERSIZE                  1016
+#define IDC_FILTER2                     1016
+#define IDC_DEVICE                      1016
 #define IDC_AUDIOCODEC                  1017
 #define IDC_USECOLORKEY                 1017
 #define IDC_AUDIOFORMAT                 1018
