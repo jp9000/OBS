@@ -44,6 +44,10 @@ enum
     ID_LISTBOX_CENTER,
     ID_LISTBOX_CENTERHOR,
     ID_LISTBOX_CENTERVER,
+    ID_LISTBOX_MOVELEFT,
+    ID_LISTBOX_MOVETOP,
+    ID_LISTBOX_MOVERIGHT,
+    ID_LISTBOX_MOVEBOTTOM,
     ID_LISTBOX_FITTOSCREEN,
     ID_LISTBOX_RESETSIZE,
     ID_LISTBOX_RENAME,
@@ -367,19 +371,23 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
         if(numItems && bSelected)
         {
-            String strRemove       = Str("Remove");
-            String strRename       = Str("Rename");
-            String strCopy         = Str("Copy");
-            String strMoveUp       = Str("MoveUp");
-            String strMoveDown     = Str("MoveDown");
-            String strMoveTop      = Str("MoveToTop");
-            String strMoveToBottom = Str("MoveToBottom");
-            String strPositionSize = Str("Listbox.Positioning");
-            String strCenter       = Str("Listbox.Center");
-            String strCenterHor    = Str("Listbox.CenterHorizontally");
-            String strCenterVer    = Str("Listbox.CenterVertically");
-            String strFitToScreen  = Str("Listbox.FitToScreen");
-            String strResize       = Str("Listbox.ResetSize");
+            String strRemove               = Str("Remove");
+            String strRename               = Str("Rename");
+            String strCopy                 = Str("Copy");
+            String strMoveUp               = Str("MoveUp");
+            String strMoveDown             = Str("MoveDown");
+            String strMoveTop              = Str("MoveToTop");
+            String strMoveToBottom         = Str("MoveToBottom");
+            String strPositionSize         = Str("Listbox.Positioning");
+            String strCenter               = Str("Listbox.Center");
+            String strCenterHor            = Str("Listbox.CenterHorizontally");
+            String strCenterVer            = Str("Listbox.CenterVertically");
+            String strMoveLeftOfCanvas     = Str("Listbox.MoveLeft");
+            String strMoveTopOfCanvas      = Str("Listbox.MoveTop");
+            String strMoveRightOfCanvas    = Str("Listbox.MoveRight");
+            String strMoveBottomOfCanvas   = Str("Listbox.MoveBottom");
+            String strFitToScreen          = Str("Listbox.FitToScreen");
+            String strResize               = Str("Listbox.ResetSize");
 
             if(id == ID_SOURCES)
             {
@@ -427,6 +435,11 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_CENTER,         strCenter);
                 AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_CENTERHOR,         strCenterHor);
                 AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_CENTERVER,         strCenterVer);
+                AppendMenu(hmenuPositioning, MF_SEPARATOR, 0, 0);
+                AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_MOVELEFT,         strMoveLeftOfCanvas);
+                AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_MOVETOP,         strMoveTopOfCanvas);
+                AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_MOVERIGHT,         strMoveRightOfCanvas);
+                AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_MOVEBOTTOM,         strMoveBottomOfCanvas);
 
                 AppendMenu(hMenu, MF_STRING|MF_POPUP, (UINT_PTR)hmenuPositioning, strPositionSize.Array());
             }
@@ -936,6 +949,22 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                     App->CenterItems(false, true);
                     break;
 
+                case ID_LISTBOX_MOVELEFT:
+                    App->MoveItemsToEdge(-1, 0);
+                    break;
+
+                case ID_LISTBOX_MOVETOP:
+                    App->MoveItemsToEdge(0, -1);
+                    break;
+
+                case ID_LISTBOX_MOVERIGHT:
+                    App->MoveItemsToEdge(1, 0);
+                    break;
+
+                case ID_LISTBOX_MOVEBOTTOM:
+                    App->MoveItemsToEdge(0, 1);
+                    break;
+
                 case ID_LISTBOX_FITTOSCREEN:
                     App->FitItemsToScreen();
                     break;
@@ -1397,6 +1426,37 @@ void OBS::CenterItems(bool horizontal, bool vertical)
                 item->pos.x = (baseSize.x*0.5f)-(item->size.x*0.5f);
             if (vertical)
                 item->pos.y = (baseSize.y*0.5f)-(item->size.y*0.5f);
+
+            XElement *itemElement = item->GetElement();
+            if (horizontal)
+                itemElement->SetInt(TEXT("x"), int(item->pos.x));
+            if (vertical)
+                itemElement->SetInt(TEXT("y"), int(item->pos.y));
+        }
+    }
+}
+
+void OBS::MoveItemsToEdge(int horizontal, int vertical)
+{
+    if(App->bRunning)
+    {
+        List<SceneItem*> selectedItems;
+        App->scene->GetSelectedItems(selectedItems);
+
+        Vect2 baseSize = App->GetBaseSize();
+
+        for(UINT i=0; i<selectedItems.Num(); i++)
+        {
+            SceneItem *item = selectedItems[i];
+            if (horizontal == 1)
+                item->pos.x = baseSize.x - item->size.x;
+            if (horizontal == -1)
+                item->pos.x = 0.0f;
+
+            if (vertical == 1)
+                item->pos.y =  baseSize.y - item->size.y;
+            if (vertical == -1)
+                item->pos.y = 0.0f;
 
             XElement *itemElement = item->GetElement();
             if (horizontal)

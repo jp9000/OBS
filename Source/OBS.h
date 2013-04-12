@@ -753,6 +753,7 @@ private:
     void MoveSourcesToTop();
     void MoveSourcesToBottom();
     void CenterItems(bool horizontal, bool vertical);
+    void MoveItemsToEdge(int horizontal, int vertical);
     void MoveItemsByPixels(int dx, int dy);
     void FitItemsToScreen();
     void ResetItemSizes();
