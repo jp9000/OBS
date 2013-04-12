@@ -222,8 +222,17 @@ LPBYTE GetCursorData(HICON hIcon, ICONINFO &ii, UINT &width, UINT &height)
         lpBitmapData = (LPBYTE)Allocate(pixels*4);
         zero(lpBitmapData, pixels*4);
 
-        for (int i=0; i<pixels; i++)
-            lpBitmapData[i*4 + 3] = BitToAlpha(lpMaskData+(pixels>>3), i, true);
+        UINT bottom = bmpMask.bmWidthBytes*bmpMask.bmHeight;
+
+        for (int i=0; i<pixels; i++) {
+            BYTE transparentVal = BitToAlpha(lpMaskData,        i, false);
+            BYTE colorVal       = BitToAlpha(lpMaskData+bottom, i, true);
+
+            if (!transparentVal)
+                lpBitmapData[i*4 + 3] = colorVal; //as an alternative to xoring, shows inverted as black
+            else
+                *(LPDWORD)(lpBitmapData+(i*4)) = colorVal ? 0xFFFFFFFF : 0xFF000000;
+        }
 
         Free(lpMaskData);
 
