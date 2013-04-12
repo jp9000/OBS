@@ -397,8 +397,14 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 strMoveTop      << TEXT("\tCtrl-Home");
                 strMoveToBottom << TEXT("\tCtrl-End");
                 strCenter       << TEXT("\tCtrl-C");
+                strCenterVer    << TEXT("\tCtrl-Shift-C");
+                strCenterHor    << TEXT("\tCtrl-Alt-C");
                 strFitToScreen  << TEXT("\tCtrl-F");
                 strResize       << TEXT("\tCtrl-R");
+                strMoveLeftOfCanvas << TEXT("\tCtrl-A");
+                strMoveTopOfCanvas << TEXT("\tCtrl-W");
+                strMoveRightOfCanvas << TEXT("\tCtrl-D");
+                strMoveBottomOfCanvas << TEXT("\tCtrl-S");
             }
 
             AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
@@ -2316,6 +2322,30 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
                 case IDA_SOURCE_CENTER:
                     App->CenterItems(true, true);
+                    break;
+
+                case IDA_SOURCE_CENTER_VER:
+                    App->CenterItems(false, true);
+                    break;
+
+                case IDA_SOURCE_CENTER_HOR:
+                    App->CenterItems(true, false);
+                    break;
+
+                case IDA_SOURCE_LEFT_CANVAS:
+                    App->MoveItemsToEdge(-1, 0);
+                    break;
+
+                case IDA_SOURCE_TOP_CANVAS:
+                    App->MoveItemsToEdge(0, -1);
+                    break;
+
+                case IDA_SOURCE_RIGHT_CANVAS:
+                    App->MoveItemsToEdge(1, 0);
+                    break;
+
+                case IDA_SOURCE_BOTTOM_CANVAS:
+                    App->MoveItemsToEdge(0, 1);
                     break;
 
                 case IDA_SOURCE_FITTOSCREEN:
