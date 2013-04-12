@@ -401,10 +401,10 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 strCenterHor    << TEXT("\tCtrl-Alt-C");
                 strFitToScreen  << TEXT("\tCtrl-F");
                 strResize       << TEXT("\tCtrl-R");
-                strMoveLeftOfCanvas << TEXT("\tCtrl-A");
-                strMoveTopOfCanvas << TEXT("\tCtrl-W");
-                strMoveRightOfCanvas << TEXT("\tCtrl-D");
-                strMoveBottomOfCanvas << TEXT("\tCtrl-S");
+                strMoveLeftOfCanvas << TEXT("\tCtrl-Alt-Left");
+                strMoveTopOfCanvas << TEXT("\tCtrl-Alt-Up");
+                strMoveRightOfCanvas << TEXT("\tCtrl-Alt-Right");
+                strMoveBottomOfCanvas << TEXT("\tCtrl-Alt-Down");
             }
 
             AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
