@@ -243,8 +243,14 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
 
 void MMDeviceAudioSource::StartCapture()
 {
-    if(mmClient)
+    if(mmClient) {
         mmClient->Start();
+
+        /*UINT64 freq;
+        mmClock->GetFrequency(&freq);
+
+        Log(TEXT("frequency for device '%s' is %llu, samples per sec is %u"), GetDeviceName(), freq, this->GetSamplesPerSec());*/
+    }
 }
 
 void MMDeviceAudioSource::StopCapture()
@@ -311,8 +317,13 @@ QWORD MMDeviceAudioSource::GetTimestamp(QWORD qpcTimestamp)
         // timestamp smoothing
 
         QWORD difVal = GetQWDif(newTimestamp, lastUsedTimestamp);
-        if (difVal > 70)
+
+        //Log(TEXT("qpc timestamp: %llu, lastUsed: %llu, dif: %llu"), newTimestamp, lastUsedTimestamp, difVal);
+
+        if (difVal > 70) {
+            //Log(TEXT("A timestamp adjustment was encountered for device %s"), GetDeviceName());
             lastUsedTimestamp = newTimestamp;
+        }
 
         //------------------------------------------------------
 
@@ -325,11 +336,18 @@ QWORD MMDeviceAudioSource::GetTimestamp(QWORD qpcTimestamp)
 bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *timestamp)
 {
     UINT captureSize = 0;
+    bool bFirstRun = true;
     HRESULT hRes;
     
     while (true) {
-        if (inputBufferSize >= sampleWindowSize*GetChannelCount())
+        if (inputBufferSize >= sampleWindowSize*GetChannelCount()) {
+            if (bFirstRun) {
+                if (!bIsMic)
+                    App->latestAudioTime = lastUsedTimestamp += 10;
+                firstTimestamp += 10;
+            }
             break;
+        }
 
         //---------------------------------------------------------
 
@@ -364,8 +382,11 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
             qpcTimestamp -= UINT64(timeAdjust);
         }
 
-        qpcTimestamp /= 10000;
+        /*if (!bIsMic) {
+            Log(TEXT("f: %u, i: %u, qpc: %llu"), numFramesRead, inputBufferSize != 0, qpcTimestamp);
+        }*/
 
+        qpcTimestamp /= 10000;
         firstTimestamp = GetTimestamp(qpcTimestamp);
 
         //---------------------------------------------------------
@@ -379,6 +400,8 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
         inputBufferSize = newInputBufferSize;
 
         mmCapture->ReleaseBuffer(numFramesRead);
+
+        bFirstRun = false;
     }
 
     *numFrames = sampleWindowSize;
