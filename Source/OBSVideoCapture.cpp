@@ -856,7 +856,36 @@ void OBS::MainCaptureLoop()
                 else
                 {
                     //We have to crash, or we end up deadlocking the thread when the convert threads are never signalled
-                    CrashError (TEXT("Texture->Map failed: 0x%08x"), result);
+                    if (result == DXGI_ERROR_DEVICE_REMOVED)
+                    {
+                        String message;
+
+                        HRESULT reason = GetD3D()->GetDeviceRemovedReason();
+
+                        switch (reason)
+                        {
+                        case DXGI_ERROR_DEVICE_RESET:
+                        case DXGI_ERROR_DEVICE_HUNG:
+                            message = TEXT("Your video card or driver froze and was reset. Please check for possible hardware / driver issues.");
+                            break;
+                        case DXGI_ERROR_DEVICE_REMOVED:
+                            message = TEXT("Your video card disappeared from the system. Please check for possible hardware / driver issues.");
+                            break;
+                        case DXGI_ERROR_DRIVER_INTERNAL_ERROR:
+                            message = TEXT("Your video driver reported an internal error. Please check for possible hardware / driver issues.");
+                            break;
+                        case DXGI_ERROR_INVALID_CALL:
+                            message = TEXT("Your video driver reported an invalid call. Please check for possible driver issues.");
+                            break;
+                        default:
+                            message = TEXT("DXGI_ERROR_DEVICE_REMOVED");
+                            break;
+                        }
+
+                        CrashError (TEXT("Texture->Map failed: 0x%08x 0x%08x\r\n\r\n%s"), result, reason, message.Array());
+                    }
+                    else
+                        CrashError (TEXT("Texture->Map failed: 0x%08x"), result);
                 }
             }
 
