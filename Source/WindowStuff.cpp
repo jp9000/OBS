@@ -42,6 +42,8 @@ enum
     ID_LISTBOX_MOVETOTOP,
     ID_LISTBOX_MOVETOBOTTOM,
     ID_LISTBOX_CENTER,
+    ID_LISTBOX_CENTERHOR,
+    ID_LISTBOX_CENTERVER,
     ID_LISTBOX_FITTOSCREEN,
     ID_LISTBOX_RESETSIZE,
     ID_LISTBOX_RENAME,
@@ -374,6 +376,8 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
             String strMoveToBottom = Str("MoveToBottom");
             String strPositionSize = Str("Listbox.Positioning");
             String strCenter       = Str("Listbox.Center");
+            String strCenterHor    = Str("Listbox.CenterHorizontally");
+            String strCenterVer    = Str("Listbox.CenterVertically");
             String strFitToScreen  = Str("Listbox.FitToScreen");
             String strResize       = Str("Listbox.ResetSize");
 
@@ -417,9 +421,12 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
 
                 HMENU hmenuPositioning = CreatePopupMenu();
-                AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_CENTER,         strCenter);
                 AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_FITTOSCREEN,    strFitToScreen);
                 AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_RESETSIZE,      strResize);
+                AppendMenu(hmenuPositioning, MF_SEPARATOR, 0, 0);
+                AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_CENTER,         strCenter);
+                AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_CENTERHOR,         strCenterHor);
+                AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_CENTERVER,         strCenterVer);
 
                 AppendMenu(hMenu, MF_STRING|MF_POPUP, (UINT_PTR)hmenuPositioning, strPositionSize.Array());
             }
@@ -918,7 +925,15 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                     break;
 
                 case ID_LISTBOX_CENTER:
-                    App->CenterItems();
+                    App->CenterItems(true, true);
+                    break;
+
+                case ID_LISTBOX_CENTERHOR:
+                    App->CenterItems(true, false);
+                    break;
+
+                case ID_LISTBOX_CENTERVER:
+                    App->CenterItems(false, true);
                     break;
 
                 case ID_LISTBOX_FITTOSCREEN:
@@ -1366,7 +1381,7 @@ void OBS::MoveSourcesToBottom()
     ReportSourceOrderChanged();
 }
 
-void OBS::CenterItems()
+void OBS::CenterItems(bool horizontal, bool vertical)
 {
     if(App->bRunning)
     {
@@ -1378,11 +1393,16 @@ void OBS::CenterItems()
         for(UINT i=0; i<selectedItems.Num(); i++)
         {
             SceneItem *item = selectedItems[i];
-            item->pos = (baseSize*0.5f)-(item->size*0.5f);
+            if (horizontal)
+                item->pos.x = (baseSize.x*0.5f)-(item->size.x*0.5f);
+            if (vertical)
+                item->pos.y = (baseSize.y*0.5f)-(item->size.y*0.5f);
 
             XElement *itemElement = item->GetElement();
-            itemElement->SetInt(TEXT("x"), int(item->pos.x));
-            itemElement->SetInt(TEXT("y"), int(item->pos.y));
+            if (horizontal)
+                itemElement->SetInt(TEXT("x"), int(item->pos.x));
+            if (vertical)
+                itemElement->SetInt(TEXT("y"), int(item->pos.y));
         }
     }
 }
@@ -2235,7 +2255,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     break;
 
                 case IDA_SOURCE_CENTER:
-                    App->CenterItems();
+                    App->CenterItems(true, true);
                     break;
 
                 case IDA_SOURCE_FITTOSCREEN:
