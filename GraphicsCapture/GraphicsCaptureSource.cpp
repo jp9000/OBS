@@ -270,14 +270,6 @@ void GraphicsCaptureSource::EndCapture()
 
 void GraphicsCaptureSource::Preprocess()
 {
-    if(hSignalExit && WaitForSingleObject(hSignalExit, 0) == WAIT_OBJECT_0)
-        EndCapture();
-
-    if(bCapturing && !hSignalReady && targetProcessID)
-        hSignalReady = GetEvent(String() << CAPTURE_READY_EVENT << int(targetProcessID));
-
-    if(hSignalReady && (WaitForSingleObject(hSignalReady, 0) == WAIT_OBJECT_0))
-        NewCapture();
 }
 
 void GraphicsCaptureSource::BeginScene()
@@ -534,6 +526,15 @@ void GraphicsCaptureSource::EndScene()
 
 void GraphicsCaptureSource::Tick(float fSeconds)
 {
+    if(hSignalExit && WaitForSingleObject(hSignalExit, 0) == WAIT_OBJECT_0)
+        EndCapture();
+
+    if(bCapturing && !hSignalReady && targetProcessID)
+        hSignalReady = GetEvent(String() << CAPTURE_READY_EVENT << int(targetProcessID));
+
+    if(hSignalReady && (WaitForSingleObject(hSignalReady, 0) == WAIT_OBJECT_0))
+        NewCapture();
+
     if(bCapturing && !capture)
     {
         if(++captureWaitCount >= API->GetMaxFPS())
