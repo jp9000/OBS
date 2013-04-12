@@ -51,6 +51,7 @@ class MMDeviceAudioSource : public AudioSource
     List<float> inputBuffer;
     UINT inputBufferSize;
     QWORD firstTimestamp;
+    QWORD lastQPCTimestamp;
 
     bool bUseQPC;
 
@@ -338,14 +339,12 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
     UINT captureSize = 0;
     bool bFirstRun = true;
     HRESULT hRes;
-    
+
     while (true) {
         if (inputBufferSize >= sampleWindowSize*GetChannelCount()) {
-            if (bFirstRun) {
-                if (!bIsMic)
-                    App->latestAudioTime = lastUsedTimestamp += 10;
-                firstTimestamp += 10;
-            }
+            if (bFirstRun)
+                lastQPCTimestamp += 10;
+            firstTimestamp = GetTimestamp(lastQPCTimestamp);
             break;
         }
 
@@ -387,7 +386,7 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
         }*/
 
         qpcTimestamp /= 10000;
-        firstTimestamp = GetTimestamp(qpcTimestamp);
+        lastQPCTimestamp = qpcTimestamp;
 
         //---------------------------------------------------------
 
