@@ -208,10 +208,12 @@ void DoD3D101Capture(IDXGISwapChain *swap)
                 if((timeVal-keepAliveTime) > 3000000)
                 {
                     HANDLE hKeepAlive = OpenEvent(EVENT_ALL_ACCESS, FALSE, strKeepAlive.c_str());
-                    if(hKeepAlive)
+                    if (hKeepAlive) {
                         CloseHandle(hKeepAlive);
-                    else
+                    } else {
                         ClearD3D101Data();
+                        bCapturing = false;
+                    }
 
                     keepAliveTime = timeVal;
                 }

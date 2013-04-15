@@ -59,9 +59,14 @@ class HookData
     FARPROC hookFunc;
     bool bHooked;
     bool b64bitJump;
+    CRITICAL_SECTION criticalSection;
+    bool bInitialized;
 
 public:
-    inline HookData() : bHooked(false), func(NULL), hookFunc(NULL), b64bitJump(false) {}
+    inline HookData()
+    {
+        ZeroMemory(this, sizeof(HookData));
+    }
 
     inline bool Hook(FARPROC funcIn, FARPROC hookFuncIn)
     {
@@ -78,6 +83,12 @@ public:
             }
 
             Unhook();
+            LeaveCriticalSection(&criticalSection);
+        }
+        else
+        {
+            InitializeCriticalSection(&criticalSection);
+            bInitialized = true;
         }
 
         func = funcIn;
@@ -95,6 +106,8 @@ public:
 
     inline void Rehook()
     {
+        LeaveCriticalSection(&criticalSection);
+
         if(bHooked || !func)
             return;
 
@@ -133,6 +146,9 @@ public:
 
     inline void Unhook()
     {
+        if (bInitialized)
+            EnterCriticalSection(&criticalSection);
+
         if(!bHooked || !func)
             return;
 
@@ -144,7 +160,18 @@ public:
 
         bHooked = false;
     }
+
+    inline void ClearHook()
+    {
+        if (bInitialized) {
+            Unhook();
+            LeaveCriticalSection(&criticalSection);
+
+            ZeroMemory(this, sizeof(HookData));
+        }
+    }
 };
+
 
 inline FARPROC GetVTable(LPVOID ptr, UINT funcOffset)
 {

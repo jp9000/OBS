@@ -437,10 +437,12 @@ void HandleGLSceneUpdate(HDC hDC)
                 if((timeVal-keepAliveTime) > 3000000)
                 {
                     HANDLE hKeepAlive = OpenEvent(EVENT_ALL_ACCESS, FALSE, strKeepAlive.c_str());
-                    if(hKeepAlive)
+                    if (hKeepAlive) {
                         CloseHandle(hKeepAlive);
-                    else
+                    } else {
                         ClearGLData();
+                        bCapturing = false;
+                    }
 
                     keepAliveTime = timeVal;
                 }
@@ -691,4 +693,6 @@ void FreeGLCapture()
     glHookSwapLayerBuffers.Unhook();
     glHookwglSwapBuffers.Unhook();
     glHookDeleteContext.Unhook();
+
+    ClearGLData();
 }

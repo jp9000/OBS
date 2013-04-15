@@ -491,23 +491,14 @@ void GraphicsCaptureSource::EndScene()
         capture = NULL;
     }
 
-    if(invertShader)
-    {
-        delete invertShader;
-        invertShader = NULL;
-    }
+    delete invertShader;
+    invertShader = NULL;
 
-    if(drawShader)
-    {
-        delete drawShader;
-        drawShader = NULL;
-    }
+    delete drawShader;
+    drawShader = NULL;
 
-    if(cursorTexture)
-    {
-        delete cursorTexture;
-        cursorTexture = NULL;
-    }
+    delete cursorTexture;
+    cursorTexture = NULL;
 
     if (hotkeyID)
     {

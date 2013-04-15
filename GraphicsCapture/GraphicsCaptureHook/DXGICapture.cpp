@@ -273,8 +273,16 @@ bool InitDXGICapture()
     return bSuccess;
 }
 
+void ClearD3D10Data();
+void ClearD3D101Data();
+void ClearD3D11Data();
+
 void FreeDXGICapture()
 {
     giswapPresent.Unhook();
     giswapResizeBuffers.Unhook();
+
+    ClearD3D10Data();
+    ClearD3D101Data();
+    ClearD3D11Data();
 }

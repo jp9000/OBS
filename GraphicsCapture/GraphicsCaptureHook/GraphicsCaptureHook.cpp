@@ -249,6 +249,58 @@ fstream logOutput;
 
 #define SENDER_WINDOWCLASS TEXT("OBSGraphicsCaptureSender")
 
+static void ClearDLLData()
+{
+    if(hSignalRestart)
+        CloseHandle(hSignalRestart);
+    if(hSignalEnd)
+        CloseHandle(hSignalEnd);
+    if(hSignalReady)
+        CloseHandle(hSignalReady);
+    if(hSignalExit)
+    {
+        SetEvent(hSignalExit);
+        CloseHandle(hSignalExit);
+    }
+
+    if(infoMem)
+    {
+        UnmapViewOfFile(lpSharedMemory);
+        CloseHandle(hInfoFileMap);
+        lpSharedMemory = NULL;
+        hInfoFileMap = NULL;
+    }
+
+    hSignalRestart = hSignalReady = hSignalEnd = hSignalExit = NULL;
+
+    hFileMap = NULL;
+    lpSharedMemory = NULL;
+
+    if(hwndSender)
+        DestroyWindow(hwndSender);
+
+    for(UINT i=0; i<2; i++)
+    {
+        if(textureMutexes[i])
+            CloseHandle(textureMutexes[i]);
+        textureMutexes[i] = NULL;
+    }
+
+    if(logOutput.is_open())
+        logOutput.close();
+}
+
+static void FreeSelf()
+{
+    FreeGLCapture();
+    FreeD3D9Capture();
+    FreeDXGICapture();
+
+    ClearDLLData();
+
+    FreeLibraryAndExitThread(hinstMain, 0);
+}
+
 DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
 {
     bool bSuccess = false;
@@ -325,16 +377,42 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
                 textureMutexes[1] = OpenMutex(MUTEX_ALL_ACCESS, FALSE, TEXTURE_MUTEX2);
                 if(textureMutexes[1])
                 {
+                    int attempCount = 100;
                     while(!AttemptToHookSomething())
+                    {
+                        // unload self 
+                        if (--attempCount <= 0) {
+                            FreeSelf();
+                            return 0;
+                        }
+
                         Sleep(50);
+                    }
 
                     MSG msg;
-                    while(GetMessage(&msg, NULL, 0, 0))
+                    while (1)
                     {
-                        TranslateMessage(&msg);
-                        DispatchMessage(&msg);
+                        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+                            if (msg.message == WM_QUIT) {
+                                FreeSelf();
+                                return 0;
+                            }
 
-                        AttemptToHookSomething();
+                            TranslateMessage(&msg);
+                            DispatchMessage(&msg);
+                        }
+
+                        if (!bCapturing) {
+                            if (--attempCount <= 0) {
+                                FreeSelf();
+                                return 0;
+                            }
+
+                            AttemptToHookSomething();
+                        } else {
+                            attempCount = 100;
+                        }
+                        Sleep(50);
                     }
 
                     CloseHandle(textureMutexes[1]);
@@ -372,44 +450,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpBlah)
     }
     else if(dwReason == DLL_PROCESS_DETACH)
     {
-        /*FreeGLCapture();
-        FreeD3D9Capture();
-        FreeD3D10Capture();
-        FreeD3D101Capture();
-        FreeD3D11Capture();*/
-
-        if(hSignalRestart)
-            CloseHandle(hSignalRestart);
-        if(hSignalEnd)
-            CloseHandle(hSignalEnd);
-        if(hSignalReady)
-            CloseHandle(hSignalReady);
-        if(hSignalExit)
-        {
-            SetEvent(hSignalExit);
-            CloseHandle(hSignalExit);
-        }
-
-        if(infoMem)
-        {
-            UnmapViewOfFile(lpSharedMemory);
-            CloseHandle(hInfoFileMap);
-        }
-
-        hFileMap = NULL;
-        lpSharedMemory = NULL;
-
-        if(hwndSender)
-            DestroyWindow(hwndSender);
-
-        for(UINT i=0; i<2; i++)
-        {
-            if(textureMutexes[i])
-                CloseHandle(textureMutexes[i]);
-        }
-
-        if(logOutput.is_open())
-            logOutput.close();
+        ClearDLLData();
     }
 
     return TRUE;

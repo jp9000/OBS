@@ -621,10 +621,12 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
             if((timeVal-keepAliveTime) > 3000000)
             {
                 HANDLE hKeepAlive = OpenEvent(EVENT_ALL_ACCESS, FALSE, strKeepAlive.c_str());
-                if(hKeepAlive)
+                if (hKeepAlive) {
                     CloseHandle(hKeepAlive);
-                else
+                } else {
                     ClearD3D9Data();
+                    bCapturing = false;
+                }
 
                 keepAliveTime = timeVal;
             }
@@ -1070,4 +1072,6 @@ void FreeD3D9Capture()
     d3d9EndScene.Unhook();
     d3d9ResetEx.Unhook();
     d3d9Reset.Unhook();
+
+    ClearD3D9Data();
 }

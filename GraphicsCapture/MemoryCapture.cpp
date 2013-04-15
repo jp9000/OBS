@@ -138,6 +138,8 @@ Texture* MemoryCapture::LockTexture()
                         SSECopy(curOutput, curInput, bestPitch);
                     }
                 }
+
+                texture->Unmap();
             }
             ReleaseMutex(hMutex);
         }
@@ -151,5 +153,4 @@ Texture* MemoryCapture::LockTexture()
 
 void MemoryCapture::UnlockTexture()
 {
-    texture->Unmap();
 }
