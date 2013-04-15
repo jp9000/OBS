@@ -456,6 +456,7 @@ INT_PTR SettingsVideo::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                             bDataChanged = true;
                         break;
 
+                    case IDC_DEVICE:
                     case IDC_FILTER:
                         if(HIWORD(wParam) == CBN_SELCHANGE)
                             bDataChanged = true;
