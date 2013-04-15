@@ -282,6 +282,12 @@
 #define ID_MAINMENU_NOTHINGHERE         40048
 #define ID_MAINMENU_MAINMENU40048       40049
 #define ID_FILE_SAVE2                   40050
+#define IDA_SOURCE_LEFT_CANVAS          40051
+#define IDA_SOURCE_TOP_CANVAS           40052
+#define IDA_SOURCE_RIGHT_CANVAS         40053
+#define IDA_SOURCE_BOTTOM_CANVAS        40054
+#define IDA_SOURCE_CENTER_VER           40055
+#define IDA_SOURCE_CENTER_HOR           40056
 
 // Next default values for new objects
 // 
