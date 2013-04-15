@@ -213,10 +213,11 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                         {
                             int id = MessageBox(hwnd, Str("Settings.SaveChangesPrompt"), Str("Settings.SaveChangesTitle"), MB_YESNOCANCEL);
 
-                            if(id == IDCANCEL)
-                            {
+                            if (id == IDNO)
                                 App->CancelSettings();
 
+                            if(id == IDCANCEL)
+                            {
                                 SendMessage((HWND)lParam, LB_SETCURSEL, App->curSettingsSelection, 0);
                                 break;
                             }
