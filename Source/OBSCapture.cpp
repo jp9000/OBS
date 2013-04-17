@@ -745,8 +745,6 @@ inline float toDB(float RMS)
 
 void OBS::QueryAudioBuffers(bool bQueriedDesktopDebugParam)
 {
-    static int chi = 0;
-
     if (!latestAudioTime) {
         desktopAudio->GetEarliestTimestamp(latestAudioTime); //will always return true
     } else {
@@ -827,9 +825,9 @@ void OBS::MainAudioLoop()
     UINT audioFramesSinceMicMaxUpdate = 0;
     UINT audioFramesSinceDesktopMaxUpdate = 0;
 
-    List<float> inputBuffer, latestBuffer;
-    inputBuffer.SetSize(audioSampleSize*2);
-    latestBuffer.SetSize(audioSampleSize*2);
+    List<float> mixBuffer, levelsBuffer;
+    mixBuffer.SetSize(audioSampleSize*2);
+    levelsBuffer.SetSize(audioSampleSize*2);
 
     latestAudioTime = 0;
 
@@ -862,8 +860,8 @@ void OBS::MainAudioLoop()
             QWORD lastAudioTime = bufferedAudioTimes[0];
             bufferedAudioTimes.Remove(0);
 
-            zero(inputBuffer.Array(),  audioSampleSize*2*sizeof(float));
-            zero(latestBuffer.Array(), audioSampleSize*2*sizeof(float));
+            zero(mixBuffer.Array(),    audioSampleSize*2*sizeof(float));
+            zero(levelsBuffer.Array(), audioSampleSize*2*sizeof(float));
 
             //----------------------------------------------------------------------------
             // get latest sample for calculating the volume levels
@@ -882,10 +880,10 @@ void OBS::MainAudioLoop()
             // mix desktop samples
 
             if (desktopBuffer)
-                MixAudio(inputBuffer.Array(), desktopBuffer, audioSampleSize*2, false);
+                MixAudio(mixBuffer.Array(), desktopBuffer, audioSampleSize*2, false);
 
             if (latestDesktopBuffer)
-                MixAudio(latestBuffer.Array(), latestDesktopBuffer, audioSampleSize*2, false);
+                MixAudio(levelsBuffer.Array(), latestDesktopBuffer, audioSampleSize*2, false);
 
             //----------------------------------------------------------------------------
             // get latest aux volume level samples and mix
@@ -896,7 +894,7 @@ void OBS::MainAudioLoop()
                 float *latestAuxBuffer;
 
                 if(auxAudioSources[i]->GetNewestFrame(&latestAuxBuffer))
-                    MixAudio(latestBuffer.Array(), latestAuxBuffer, audioSampleSize*2, false);
+                    MixAudio(levelsBuffer.Array(), latestAuxBuffer, audioSampleSize*2, false);
             }
 
             //----------------------------------------------------------------------------
@@ -906,7 +904,7 @@ void OBS::MainAudioLoop()
                 float *auxBuffer;
 
                 if(auxAudioSources[i]->GetBuffer(&auxBuffer, lastAudioTime))
-                    MixAudio(inputBuffer.Array(), auxBuffer, audioSampleSize*2, false);
+                    MixAudio(mixBuffer.Array(), auxBuffer, audioSampleSize*2, false);
             }
 
             OSLeaveMutex(hAuxAudioMutex);
@@ -917,7 +915,7 @@ void OBS::MainAudioLoop()
 
             float desktopRMS = 0, micRMS = 0, desktopMx = 0, micMx = 0;
             if (latestDesktopBuffer)
-                CalculateVolumeLevels(latestBuffer.Array(), audioSampleSize*2, 1.0f, desktopRMS, desktopMx);
+                CalculateVolumeLevels(levelsBuffer.Array(), audioSampleSize*2, 1.0f, desktopRMS, desktopMx);
             if (bMicEnabled && latestMicBuffer)
                 CalculateVolumeLevels(latestMicBuffer, audioSampleSize*2, curMicVol, micRMS, micMx);
 
@@ -983,9 +981,9 @@ void OBS::MainAudioLoop()
             // also, it's perfectly fine to just mix into the returned buffer
 
             if (bMicEnabled && micBuffer)
-                MixAudio(inputBuffer.Array(), micBuffer, audioSampleSize*2, bForceMicMono);
+                MixAudio(mixBuffer.Array(), micBuffer, audioSampleSize*2, bForceMicMono);
 
-            EncodeAudioSegment(inputBuffer.Array(), audioSampleSize, lastAudioTime);
+            EncodeAudioSegment(mixBuffer.Array(), audioSampleSize, lastAudioTime);
         }
 
         //-----------------------------------------------
