@@ -758,20 +758,6 @@ void OBS::QueryAudioBuffers(bool bQueriedDesktopDebugParam)
         latestAudioTime += 10;
     }
 
-    if (!bQueriedDesktopDebugParam) {
-        QWORD curTimeMS = App->GetVideoTime()-App->GetSceneTimestamp();
-        UINT curTimeTotalSec = (UINT)(curTimeMS/1000);
-        UINT curTimeTotalMin = curTimeTotalSec/60;
-        UINT curTimeHr  = curTimeTotalMin/60;
-        UINT curTimeMin = curTimeTotalMin-(curTimeHr*60);
-        UINT curTimeSec = curTimeTotalSec-(curTimeTotalMin*60);
-        ++chi;
-
-        Log(TEXT("WELL I'LL BE DARN TOOTIN', %02u, %u:%02u:%02u"), chi, curTimeHr, curTimeMin, curTimeSec);
-    } else {
-        chi = 0;
-    }
-
     bufferedAudioTimes << latestAudioTime;
 
     OSEnterMutex(hAuxAudioMutex);
@@ -822,6 +808,9 @@ void OBS::EncodeAudioSegment(float *buffer, UINT numFrames, QWORD timestamp)
     }
 }
 
+const int audioSamplesPerSec = 44100;
+const int audioSampleSize = audioSamplesPerSec/100;
+
 void OBS::MainAudioLoop()
 {
     DWORD taskID = 0;
@@ -839,8 +828,8 @@ void OBS::MainAudioLoop()
     UINT audioFramesSinceDesktopMaxUpdate = 0;
 
     List<float> inputBuffer, latestBuffer;
-    inputBuffer.SetSize(882);
-    latestBuffer.SetSize(882);
+    inputBuffer.SetSize(audioSampleSize*2);
+    latestBuffer.SetSize(audioSampleSize*2);
 
     latestAudioTime = 0;
 
@@ -873,8 +862,8 @@ void OBS::MainAudioLoop()
             QWORD lastAudioTime = bufferedAudioTimes[0];
             bufferedAudioTimes.Remove(0);
 
-            zero(inputBuffer.Array(),  882*sizeof(float));
-            zero(latestBuffer.Array(), 882*sizeof(float));
+            zero(inputBuffer.Array(),  audioSampleSize*2*sizeof(float));
+            zero(latestBuffer.Array(), audioSampleSize*2*sizeof(float));
 
             //----------------------------------------------------------------------------
             // get latest sample for calculating the volume levels
@@ -893,10 +882,10 @@ void OBS::MainAudioLoop()
             // mix desktop samples
 
             if (desktopBuffer)
-                MixAudio(inputBuffer.Array(), desktopBuffer, 882, false);
+                MixAudio(inputBuffer.Array(), desktopBuffer, audioSampleSize*2, false);
 
             if (latestDesktopBuffer)
-                MixAudio(latestBuffer.Array(), latestDesktopBuffer, 882, false);
+                MixAudio(latestBuffer.Array(), latestDesktopBuffer, audioSampleSize*2, false);
 
             //----------------------------------------------------------------------------
             // get latest aux volume level samples and mix
@@ -907,7 +896,7 @@ void OBS::MainAudioLoop()
                 float *latestAuxBuffer;
 
                 if(auxAudioSources[i]->GetNewestFrame(&latestAuxBuffer))
-                    MixAudio(latestBuffer.Array(), latestAuxBuffer, 882, false);
+                    MixAudio(latestBuffer.Array(), latestAuxBuffer, audioSampleSize*2, false);
             }
 
             //----------------------------------------------------------------------------
@@ -917,7 +906,7 @@ void OBS::MainAudioLoop()
                 float *auxBuffer;
 
                 if(auxAudioSources[i]->GetBuffer(&auxBuffer, lastAudioTime))
-                    MixAudio(inputBuffer.Array(), auxBuffer, 882, false);
+                    MixAudio(inputBuffer.Array(), auxBuffer, audioSampleSize*2, false);
             }
 
             OSLeaveMutex(hAuxAudioMutex);
@@ -928,9 +917,9 @@ void OBS::MainAudioLoop()
 
             float desktopRMS = 0, micRMS = 0, desktopMx = 0, micMx = 0;
             if (latestDesktopBuffer)
-                CalculateVolumeLevels(latestBuffer.Array(), 882, 1.0f, desktopRMS, desktopMx);
+                CalculateVolumeLevels(latestBuffer.Array(), audioSampleSize*2, 1.0f, desktopRMS, desktopMx);
             if (bMicEnabled && latestMicBuffer)
-                CalculateVolumeLevels(latestMicBuffer, 882, curMicVol, micRMS, micMx);
+                CalculateVolumeLevels(latestMicBuffer, audioSampleSize*2, curMicVol, micRMS, micMx);
 
             //----------------------------------------------------------------------------
             // convert RMS and Max of samples to dB 
@@ -944,7 +933,7 @@ void OBS::MainAudioLoop()
             // update max if sample max is greater or after 1 second
 
             float maxAlpha = 0.15f;
-            UINT peakMeterDelayFrames = 44100 * 3;
+            UINT peakMeterDelayFrames = audioSamplesPerSec * 3;
 
             if (micMx > micMax)
                 micMax = micMx;
@@ -963,14 +952,14 @@ void OBS::MainAudioLoop()
                 micPeak = micMax;
                 audioFramesSinceMicMaxUpdate = 0;
             } else {
-                audioFramesSinceMicMaxUpdate += 441;
+                audioFramesSinceMicMaxUpdate += audioSampleSize;
             }
 
             if (desktopMax > desktopPeak || audioFramesSinceDesktopMaxUpdate > peakMeterDelayFrames) {
                 desktopPeak = desktopMax;
                 audioFramesSinceDesktopMaxUpdate = 0;
             } else {
-                audioFramesSinceDesktopMaxUpdate += 441;
+                audioFramesSinceDesktopMaxUpdate += audioSampleSize;
             }
 
             //----------------------------------------------------------------------------
@@ -983,7 +972,7 @@ void OBS::MainAudioLoop()
             //----------------------------------------------------------------------------
             // update the meter about every 50ms
 
-            audioFramesSinceMeterUpdate += 441;
+            audioFramesSinceMeterUpdate += audioSampleSize;
             if (audioFramesSinceMeterUpdate >= 2205) {
                 PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_MICVOLUMEMETER, VOLN_METERED), 0);
                 audioFramesSinceMeterUpdate = 0;
@@ -994,9 +983,9 @@ void OBS::MainAudioLoop()
             // also, it's perfectly fine to just mix into the returned buffer
 
             if (bMicEnabled && micBuffer)
-                MixAudio(inputBuffer.Array(), micBuffer, 882, bForceMicMono);
+                MixAudio(inputBuffer.Array(), micBuffer, audioSampleSize*2, bForceMicMono);
 
-            EncodeAudioSegment(inputBuffer.Array(), 441, lastAudioTime);
+            EncodeAudioSegment(inputBuffer.Array(), audioSampleSize, lastAudioTime);
         }
 
         //-----------------------------------------------
