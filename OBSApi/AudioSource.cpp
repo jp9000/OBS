@@ -589,7 +589,18 @@ bool AudioSource::GetEarliestTimestamp(QWORD &timestamp)
     return false;
 }
 
-bool AudioSource::GetBuffer(float **buffer, UINT *numFrames, QWORD targetTimestamp)
+bool AudioSource::GetLatestTimestamp(QWORD &timestamp)
+{
+    if(audioSegments.Num())
+    {
+        timestamp = audioSegments.Last()->timestamp;
+        return true;
+    }
+
+    return false;
+}
+
+bool AudioSource::GetBuffer(float **buffer, QWORD targetTimestamp)
 {
     bool bSuccess = false;
     outputBuffer.Clear();
@@ -614,7 +625,7 @@ bool AudioSource::GetBuffer(float **buffer, UINT *numFrames, QWORD targetTimesta
         AudioSegment *segment = audioSegments[0];
 
         QWORD difference = (segment->timestamp-targetTimestamp);
-        if(difference <= 20)
+        if(difference <= 10)
         {
             //Log(TEXT("segment.timestamp: %llu, targetTimestamp: %llu"), segment.timestamp, targetTimestamp);
             outputBuffer.TransferFrom(segment->audioData);
@@ -629,20 +640,18 @@ bool AudioSource::GetBuffer(float **buffer, UINT *numFrames, QWORD targetTimesta
     outputBuffer.SetSize(441*2);
 
     *buffer = outputBuffer.Array();
-    *numFrames = outputBuffer.Num()/2;
 
     return bSuccess;
 }
 
-bool AudioSource::GetNewestFrame(float **buffer, UINT *numFrames)
+bool AudioSource::GetNewestFrame(float **buffer)
 {
-    if(buffer && numFrames)
+    if(buffer)
     {
         if(audioSegments.Num())
         {
             List<float> &data = audioSegments.Last()->audioData;
             *buffer = data.Array();
-            *numFrames = data.Num()/2;
             return true;
         }
     }

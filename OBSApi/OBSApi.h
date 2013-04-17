@@ -107,6 +107,7 @@ inline QWORD GetQWDif(QWORD val1, QWORD val2)
 
 BASE_EXPORT QWORD GetQPCTime100NS();
 BASE_EXPORT QWORD GetQPCTimeMS();
+BASE_EXPORT void MixAudio(float *bufferDest, float *bufferSrc, UINT totalFloats, bool bForceMono);
 
 //-------------------------------------------
 

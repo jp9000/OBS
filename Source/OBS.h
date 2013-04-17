@@ -608,8 +608,8 @@ private:
 
     List<VideoSegment> bufferedVideo;
 
-    List<UINT> bufferedTimes;
-    List<UINT> ctsOffsets;
+    CircularList<UINT> bufferedTimes;
+    CircularList<UINT> ctsOffsets;
 
     bool bRecievedFirstAudioFrame, bSentHeaders, bFirstAudioPacket;
 
@@ -633,6 +633,8 @@ private:
 
     //---------------------------------------------------
     // main audio capture loop stuff
+
+    CircularList<QWORD> bufferedAudioTimes;
 
     HANDLE  hSoundThread, hSoundDataMutex;//, hRequestAudioEvent;
     QWORD   latestAudioTime;
@@ -665,7 +667,8 @@ private:
     bool bStartStreamHotkeyDown, bStopStreamHotkeyDown;
 
     static DWORD STDCALL MainAudioThread(LPVOID lpUnused);
-    bool QueryNewAudio(QWORD &timestamp);
+    void QueryAudioBuffers(bool bQueriedDesktopDebugParam);
+    bool QueryNewAudio();
     void EncodeAudioSegment(float *buffer, UINT numFrames, QWORD timestamp);
     void MainAudioLoop();
 
