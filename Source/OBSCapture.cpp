@@ -973,7 +973,7 @@ void OBS::MainAudioLoop()
             // update the meter about every 50ms
 
             audioFramesSinceMeterUpdate += audioSampleSize;
-            if (audioFramesSinceMeterUpdate >= 2205) {
+            if (audioFramesSinceMeterUpdate >= (audioSampleSize*5)) {
                 PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_MICVOLUMEMETER, VOLN_METERED), 0);
                 audioFramesSinceMeterUpdate = 0;
             }
