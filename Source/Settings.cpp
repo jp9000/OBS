@@ -278,6 +278,7 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                         {
                             SetWindowPos(App->hwndCurrentSettings, NULL, subDialogRect.left, subDialogRect.top, 0, 0, SWP_NOSIZE);
                             ShowWindow(App->hwndCurrentSettings, SW_SHOW);
+                            SetFocus(GetDlgItem(hwnd, IDC_SETTINGSLIST));
                         }
 
                         break;
