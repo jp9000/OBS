@@ -287,7 +287,7 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
 
                         break;
                     }
-                    
+
                 case IDC_DEFAULTS:
                     App->currentSettingsPane->SetDefaults();
                     break;
