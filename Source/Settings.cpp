@@ -133,6 +133,7 @@ void OBS::AddBuiltInSettingsPanes()
     AddSettingsPane(new SettingsVideo());
     AddSettingsPane(new SettingsAudio());
     AddSettingsPane(new SettingsAdvanced());
+    numberOfBuiltInSettingsPanes = 6;
 }
 
 void OBS::SetChangedSettings(bool bChanged)
@@ -160,6 +161,25 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
 {
     switch(message)
     {
+        case WM_VKEYTOITEM:
+            {
+                if (GetDlgItem(hwnd, IDC_SETTINGSLIST) != (HWND)lParam)
+                    break;
+
+                OSDebugOut(TEXT("Some key on the settings list.\r\n"));
+                DWORD key = LOWORD(wParam);
+                int sel = HIWORD(wParam);
+                if (key == 38 && sel == App->numberOfBuiltInSettingsPanes + 1) {
+                    return App->numberOfBuiltInSettingsPanes - 1;
+                }
+
+                if (key == 40 && sel == App->numberOfBuiltInSettingsPanes - 1) {
+                    return App->numberOfBuiltInSettingsPanes + 1;
+                }
+                
+                return -1;
+            }
+            break;
         case WM_INITDIALOG:
             {
                 App->hwndSettings = hwnd;
@@ -169,6 +189,10 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                 // Add setting categories from the pane list
                 for(unsigned int i = 0; i < App->settingsPanes.Num(); i++)
                 {
+                    if (i == App->numberOfBuiltInSettingsPanes)
+                        // Plugin settings pages go after a separator
+                        SendMessage(GetDlgItem(hwnd, IDC_SETTINGSLIST), LB_ADDSTRING, 0, (LPARAM)TEXT("----------"));
+
                     SettingsPane *pane = App->settingsPanes[i];
                     if(pane == NULL)
                         continue;
@@ -209,9 +233,19 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                             break;
 
                         int sel = (int)SendMessage((HWND)lParam, LB_GETCURSEL, 0, 0);
-                        if(sel == App->curSettingsSelection)
+
+                        if (sel == App->numberOfBuiltInSettingsPanes) {
+                            sel = App->curSettingsSelection;
+                            if (sel < App->numberOfBuiltInSettingsPanes)
+                                SendMessage((HWND)lParam, LB_SETCURSEL, App->curSettingsSelection, 0);
+                            else
+                                SendMessage((HWND)lParam, LB_SETCURSEL, App->curSettingsSelection + 1, 0);
                             break;
-                        else if(App->bSettingsChanged)
+                        }
+                        if (sel > App->numberOfBuiltInSettingsPanes)
+                            --sel;
+
+                        if(App->bSettingsChanged)
                         {
                             int id = MessageBox(hwnd, Str("Settings.SaveChangesPrompt"), Str("Settings.SaveChangesTitle"), MB_YESNOCANCEL);
 
@@ -248,6 +282,7 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                             ShowWindow(App->hwndCurrentSettings, SW_SHOW);
 
                             ShowWindow(GetDlgItem(hwnd, IDC_DEFAULTS), App->currentSettingsPane->HasDefaults());
+                            SetFocus(GetDlgItem(hwnd, IDC_SETTINGSLIST));
                         }
 
                         break;
