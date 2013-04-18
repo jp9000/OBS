@@ -507,6 +507,7 @@ class OBS
     bool                bSettingsChanged;
     List<SettingsPane*> settingsPanes;
     SettingsPane *      currentSettingsPane;
+    int                 numberOfBuiltInSettingsPanes;
 
     void   SetChangedSettings(bool bChanged);
     void   CancelSettings();
