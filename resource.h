@@ -3,6 +3,7 @@
 // Used by OBS.rc
 //
 #define IDC_DEFAULTS                    3
+#define IDOK2                           3
 #define IDC_APPLY                       4
 #define IDD_SETTINGS                    101
 #define IDI_ICON1                       109
@@ -295,7 +296,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        143
 #define _APS_NEXT_COMMAND_VALUE         40051
-#define _APS_NEXT_CONTROL_VALUE         1157
+#define _APS_NEXT_CONTROL_VALUE         1159
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

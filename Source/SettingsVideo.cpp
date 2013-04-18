@@ -214,6 +214,21 @@ void SettingsVideo::CancelSettings()
 {
 }
 
+bool SettingsVideo::HasDefaults() const
+{
+    return false;
+}
+
+/*void SettingsVideo::SetDefaults()
+{
+    SendMessage(GetDlgItem(hwnd, IDC_DEVICE), CB_SETCURSEL, 0, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_DISABLEAERO), BM_SETCHECK, BST_UNCHECKED, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_FILTER), CB_SETCURSEL, 0, 0);
+
+    ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
+    SetChangedSettings(true);
+}*/
+
 INT_PTR SettingsVideo::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 {
     HWND hwndTemp;

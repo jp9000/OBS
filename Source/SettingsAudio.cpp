@@ -181,6 +181,33 @@ void SettingsAudio::CancelSettings()
 {
 }
 
+bool SettingsAudio::HasDefaults() const
+{
+    return false;
+}
+
+/*void SettingsAudio::SetDefaults()
+{
+    SendMessage(GetDlgItem(hwnd, IDC_PLAYBACKDEVICES), CB_SETCURSEL, 0, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_MICDEVICES), CB_SETCURSEL, 0, 0);
+
+    SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALK), BM_SETCHECK, BST_UNCHECKED, 0);
+    EnableWindow(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY), FALSE);
+    EnableWindow(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY2), FALSE);
+    EnableWindow(GetDlgItem(hwnd, IDC_CLEARPUSHTOTALK), FALSE);
+    EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY_EDIT), FALSE);
+    EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY), FALSE);
+
+    SendMessage(GetDlgItem(hwnd, IDC_MUTEMICHOTKEY), HKM_SETHOTKEY, 0, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_MUTEDESKTOPHOTKEY), HKM_SETHOTKEY, 0, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_DESKTOPBOOST), UDM_SETPOS32, 0, 1);
+    SendMessage(GetDlgItem(hwnd, IDC_MICBOOST), UDM_SETPOS32, 0, 1);
+    SendMessage(GetDlgItem(hwnd, IDC_MICTIMEOFFSET), UDM_SETPOS32, 0, 0);
+
+    ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
+    SetChangedSettings(true);
+}*/
+
 INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch(message)

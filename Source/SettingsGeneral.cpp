@@ -96,6 +96,11 @@ void SettingsGeneral::CancelSettings()
 {
 }
 
+bool SettingsGeneral::HasDefaults() const
+{
+    return false;
+}
+
 INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch(message)

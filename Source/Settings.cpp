@@ -193,6 +193,8 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                 {
                     SetWindowPos(App->hwndCurrentSettings, NULL, subDialogRect.left, subDialogRect.top, 0, 0, SWP_NOSIZE);
                     ShowWindow(App->hwndCurrentSettings, SW_SHOW);
+
+                    ShowWindow(GetDlgItem(hwnd, IDC_DEFAULTS), App->currentSettingsPane->HasDefaults());
                 }
 
                 return TRUE;
@@ -244,10 +246,17 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                         {
                             SetWindowPos(App->hwndCurrentSettings, NULL, subDialogRect.left, subDialogRect.top, 0, 0, SWP_NOSIZE);
                             ShowWindow(App->hwndCurrentSettings, SW_SHOW);
+
+                            ShowWindow(GetDlgItem(hwnd, IDC_DEFAULTS), App->currentSettingsPane->HasDefaults());
                         }
 
                         break;
                     }
+                    
+                case IDC_DEFAULTS:
+                    App->currentSettingsPane->SetDefaults();
+                    break;
+
                 case IDOK:
                     if(App->bSettingsChanged)
                         App->ApplySettings();

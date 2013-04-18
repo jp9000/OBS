@@ -58,3 +58,7 @@ INT_PTR CALLBACK SettingsPane::DialogProc(HWND hwnd, UINT message, WPARAM wParam
         return instance->ProcMessage(message, wParam, lParam);
     return FALSE;
 }
+
+void SettingsPane::SetDefaults()
+{
+}

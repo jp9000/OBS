@@ -206,6 +206,11 @@ void NoiseGateSettings::CancelSettings()
 {
 }
 
+bool NoiseGateSettings::HasDefaults() const
+{
+    return false;
+}
+
 /**
  * Sets the caption of the open and close threshold trackbars ("-24 dB")
  */

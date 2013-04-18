@@ -168,6 +168,11 @@ void SettingsPublish::CancelSettings()
 {
 }
 
+bool SettingsPublish::HasDefaults() const
+{
+    return false;
+}
+
 INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 {
     HWND hwndTemp;

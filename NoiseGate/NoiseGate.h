@@ -106,6 +106,7 @@ public:
     virtual INT_PTR ProcMessage(UINT message, WPARAM wParam, LPARAM lParam);
     virtual void ApplySettings();
     virtual void CancelSettings();
+    virtual bool HasDefaults() const;
 };
 
 //============================================================================

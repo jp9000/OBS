@@ -84,6 +84,11 @@ void SettingsEncoding::CancelSettings()
 {
 }
 
+bool SettingsEncoding::HasDefaults() const
+{
+    return false;
+}
+
 INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch(message)
