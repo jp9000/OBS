@@ -164,18 +164,18 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
         case WM_VKEYTOITEM:
             {
                 if (GetDlgItem(hwnd, IDC_SETTINGSLIST) != (HWND)lParam)
-                    break;
+                    return -1;
 
-                OSDebugOut(TEXT("Some key on the settings list.\r\n"));
+                if ((int)App->settingsPanes.Num() == App->numberOfBuiltInSettingsPanes)
+                    return -1; // No plugin panes, so no special handling needed
+
                 DWORD key = LOWORD(wParam);
                 int sel = HIWORD(wParam);
-                if (key == 38 && sel == App->numberOfBuiltInSettingsPanes + 1) {
+                if (key == 38 && sel == App->numberOfBuiltInSettingsPanes + 1)
                     return App->numberOfBuiltInSettingsPanes - 1;
-                }
 
-                if (key == 40 && sel == App->numberOfBuiltInSettingsPanes - 1) {
+                if (key == 40 && sel == App->numberOfBuiltInSettingsPanes - 1)
                     return App->numberOfBuiltInSettingsPanes + 1;
-                }
                 
                 return -1;
             }
