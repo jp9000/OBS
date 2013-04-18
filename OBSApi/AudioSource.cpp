@@ -558,16 +558,38 @@ UINT AudioSource::QueryAudio(float curVolume)
             numAudioFrames = data.output_frames_gen;
         }
 
+        //------------------------------------------------------
+        // timestamp smoothing (keep audio within 50ms of target time)
+
+        if (!lastUsedTimestamp)
+            lastUsedTimestamp = newTimestamp;
+        else
+            lastUsedTimestamp += 10;
+
+        QWORD difVal = GetQWDif(newTimestamp, lastUsedTimestamp);
+
+        if (difVal > 50) {
+            /*QWORD curTimeMS = App->GetVideoTime()-App->GetSceneTimestamp();
+            UINT curTimeTotalSec = (UINT)(curTimeMS/1000);
+            UINT curTimeTotalMin = curTimeTotalSec/60;
+            UINT curTimeHr  = curTimeTotalMin/60;
+            UINT curTimeMin = curTimeTotalMin-(curTimeHr*60);
+            UINT curTimeSec = curTimeTotalSec-(curTimeTotalMin*60);
+
+            Log(TEXT("A timestamp adjustment was encountered for device %s, approximate stream time is: %u:%u:%u, prev value: %llu, new value: %llu"), GetDeviceName(), curTimeHr, curTimeMin, curTimeSec, lastUsedTimestamp, newTimestamp);*/
+            lastUsedTimestamp = newTimestamp;
+        }
+
         //-----------------------------------------------------------------------------
         // sort all audio frames into 10 millisecond increments (done because not all devices output in 10ms increments)
 
         float *newBuffer = (bResample) ? tempResampleBuffer.Array() : tempBuffer.Array();
 
-        if(newTimestamp >= lastSentTimestamp+10) {
-            AudioSegment *newSegment = new AudioSegment(newBuffer, numAudioFrames*2, newTimestamp);
+        if(lastUsedTimestamp >= lastSentTimestamp+10) {
+            AudioSegment *newSegment = new AudioSegment(newBuffer, numAudioFrames*2, lastUsedTimestamp);
             AddAudioSegment(newSegment, curVolume*sourceVolume);
 
-            lastSentTimestamp = newTimestamp;
+            lastSentTimestamp = lastUsedTimestamp;
         }
 
         //-----------------------------------------------------------------------------

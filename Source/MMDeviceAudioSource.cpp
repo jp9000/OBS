@@ -41,8 +41,6 @@ class MMDeviceAudioSource : public AudioSource
 
     String strDeviceName;
 
-    QWORD lastUsedTimestamp;
-
     bool bUseVideoTime;
     QWORD lastVideoTime;
     QWORD curVideoTime;
@@ -297,8 +295,6 @@ QWORD MMDeviceAudioSource::GetTimestamp(QWORD qpcTimestamp)
                 newTimestamp = lastVideoTime+GetTimeOffset();
             }
 
-            lastUsedTimestamp = newTimestamp;
-
             bFirstFrameReceived = true;
         }
         else
@@ -312,32 +308,11 @@ QWORD MMDeviceAudioSource::GetTimestamp(QWORD qpcTimestamp)
 
             newTimestamp = (bUseVideoTime) ? curVideoTime : qpcTimestamp;
             newTimestamp += GetTimeOffset();
-
-            lastUsedTimestamp += 10;
         }
-
-        //------------------------------------------------------
-        // timestamp smoothing
-
-        QWORD difVal = GetQWDif(newTimestamp, lastUsedTimestamp);
 
         //Log(TEXT("qpc timestamp: %llu, lastUsed: %llu, dif: %llu"), newTimestamp, lastUsedTimestamp, difVal);
 
-        if (difVal > 70) {
-            /*QWORD curTimeMS = App->GetVideoTime()-App->GetSceneTimestamp();
-            UINT curTimeTotalSec = (UINT)(curTimeMS/1000);
-            UINT curTimeTotalMin = curTimeTotalSec/60;
-            UINT curTimeHr  = curTimeTotalMin/60;
-            UINT curTimeMin = curTimeTotalMin-(curTimeHr*60);
-            UINT curTimeSec = curTimeTotalSec-(curTimeTotalMin*60);
-
-            Log(TEXT("A timestamp adjustment was encountered for device %s, approximate stream time is: %u:%u:%u, prev value: %llu, new value: %llu"), GetDeviceName(), curTimeHr, curTimeMin, curTimeSec, lastUsedTimestamp, newTimestamp);*/
-            lastUsedTimestamp = newTimestamp;
-        }
-
-        //Log(TEXT("got some desktop audio, timestamp: %llu"), lastUsedTimestamp);
-
-        return lastUsedTimestamp;
+        return newTimestamp;
     }
 }
 

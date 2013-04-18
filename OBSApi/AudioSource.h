@@ -57,6 +57,7 @@ class BASE_EXPORT AudioSource
 
     List<AudioSegment*> audioSegments;
 
+    QWORD lastUsedTimestamp;
     QWORD lastSentTimestamp;
     int timeOffset;
 
