@@ -74,10 +74,10 @@ DeviceSource::~DeviceSource()
     Stop();
     UnloadFilters();
 
-    SafeRelease(capture);
-    SafeRelease(graph);
-
     FlushSamples();
+
+    SafeReleaseLogRef(capture);
+    SafeReleaseLogRef(graph);
 
     if(hConvertThreads)
         Free(hConvertThreads);
