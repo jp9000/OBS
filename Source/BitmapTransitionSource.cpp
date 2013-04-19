@@ -361,9 +361,7 @@ INT_PTR CALLBACK ConfigureBitmapTransitionProc(HWND hwnd, UINT message, WPARAM w
                                 String strPath;
                                 strPath << newDirectory << TEXT("\\") << lpCurFile;
 
-                                UINT idExisting = (UINT)SendMessage(GetDlgItem(hwnd, IDC_BITMAPS), LB_FINDSTRINGEXACT, -1, (LPARAM)strPath.Array());
-                                if(idExisting == LB_ERR)
-                                    SendMessage(GetDlgItem(hwnd, IDC_BITMAPS), LB_ADDSTRING, 0, (LPARAM)strPath.Array());
+                                SendMessage(GetDlgItem(hwnd, IDC_BITMAPS), LB_ADDSTRING, 0, (LPARAM)strPath.Array());
 
                                 lpCurFile += slen(lpCurFile)+1;
                             }
