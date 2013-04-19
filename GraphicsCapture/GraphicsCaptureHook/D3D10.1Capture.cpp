@@ -212,6 +212,7 @@ void DoD3D101Capture(IDXGISwapChain *swap)
                         CloseHandle(hKeepAlive);
                     } else {
                         ClearD3D101Data();
+                        logOutput << "Keepalive no longer found on d3d10.1, freeing capture data" << endl;
                         bCapturing = false;
                     }
 
