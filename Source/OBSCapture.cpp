@@ -166,8 +166,6 @@ void OBS::Start()
     bUseMultithreadedOptimizations = AppConfig->GetInt(TEXT("General"), TEXT("UseMultithreadedOptimizations"), TRUE) != 0;
     Log(TEXT("  Multithreaded optimizations: %s"), (CTSTR)(bUseMultithreadedOptimizations ? TEXT("On") : TEXT("Off")));
 
-    GlobalConfig->SetInt(TEXT("Audio"), TEXT("GlobalAudioTimeAdjust"), 0);
-
     //------------------------------------------------------------------
 
     Log(TEXT("  Base resolution: %ux%u"), baseCX, baseCY);
