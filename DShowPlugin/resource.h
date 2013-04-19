@@ -42,7 +42,6 @@
 #define IDC_OPACITY                     1028
 #define IDC_OUTPUTSOUND                 1029
 #define IDC_PLAYDESKTOPSOUND            1030
-#define IDC_NOSOUND                     1031
 #define IDC_EDIT1                       1032
 #define IDC_TIMEOFFSET_EDIT             1032
 #define IDC_TIMEOFFSET                  1033

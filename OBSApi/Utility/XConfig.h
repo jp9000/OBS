@@ -97,6 +97,16 @@ public:
             SubItems.SwapValues(i, SubItems.Num()-1-i);
     }
 
+    inline bool HasItem(CTSTR lpName) const
+    {
+        for (UINT i=0; i<SubItems.Num(); i++) {
+            if (SubItems[i]->strName.CompareI(lpName))
+                return true;
+        }
+
+        return false;
+    }
+
     CTSTR GetString(CTSTR lpName, TSTR def=NULL) const;
     int   GetInt(CTSTR lpName, int def=0) const;
     float GetFloat(CTSTR lpName, float def=0.0f) const;

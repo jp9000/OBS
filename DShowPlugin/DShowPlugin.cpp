@@ -1036,22 +1036,16 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                     audioDeviceID = (UINT)SendMessage(hwndAudioList, CB_FINDSTRINGEXACT, -1, (LPARAM)strAudioDevice.Array());
 
                 if(audioDeviceID == CB_ERR)
-                {
-                    SendMessage(hwndAudioList, CB_SETCURSEL, 0, 0);
-                    ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_AUDIOLIST, CBN_SELCHANGE), (LPARAM)hwndAudioList);
-                }
+                    SendMessage(hwndAudioList, CB_SETCURSEL, configData->bDeviceHasAudio ? 1 : 0, 0); //yes, I know, but the output is not a bool
                 else
-                {
                     SendMessage(hwndAudioList, CB_SETCURSEL, audioDeviceID, 0);
-                    ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_AUDIOLIST, CBN_SELCHANGE), (LPARAM)hwndAudioList);
-                }
+
+                //------------------------------------------
 
                 HWND hwndTemp;
-
-                int soundOutputType = configData->data->GetInt(TEXT("soundOutputType"));
-                switch(soundOutputType)
-                {
-                    case 0: hwndTemp = GetDlgItem(hwnd, IDC_NOSOUND); break;
+                int soundOutputType = configData->data->GetInt(TEXT("soundOutputType"), 1);
+                switch(soundOutputType) {
+                    case 0:
                     case 1: hwndTemp = GetDlgItem(hwnd, IDC_OUTPUTSOUND); break;
                     case 2: hwndTemp = GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND); break;
                 }
@@ -1061,6 +1055,11 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET), soundOutputType == 1);
                 EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET_EDIT), soundOutputType == 1);
                 EnableWindow(GetDlgItem(hwnd, IDC_VOLUME), soundOutputType != 0);
+
+                if (soundOutputType == 0)
+                    SendMessage(hwndAudioList, CB_SETCURSEL, 0, 0);
+
+                ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_AUDIOLIST, CBN_SELCHANGE), (LPARAM)hwndAudioList);
 
                 //------------------------------------------
 
@@ -1193,17 +1192,6 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                     }
                     break;
 
-                case IDC_NOSOUND:
-                case IDC_PLAYDESKTOPSOUND:
-                case IDC_OUTPUTSOUND:
-                    if(HIWORD(wParam) == BN_CLICKED)
-                    {
-                        EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET),      LOWORD(wParam) == IDC_OUTPUTSOUND);
-                        EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET_EDIT), LOWORD(wParam) == IDC_OUTPUTSOUND);
-                        EnableWindow(GetDlgItem(hwnd, IDC_VOLUME),          LOWORD(wParam) != IDC_NOSOUND);
-                    }
-                    break;
-
                 case IDC_VOLUME:
                     if(HIWORD(wParam) == VOLN_ADJUSTING || HIWORD(wParam) == VOLN_FINALVALUE)
                     {
@@ -1229,14 +1217,14 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         if(source)
                             source->SetInt(TEXT("useChromaKey"), bUseChromaKey);
 
-                        EnableWindow(GetDlgItem(hwnd, IDC_COLOR), bUseChromaKey);
-                        EnableWindow(GetDlgItem(hwnd, IDC_SELECTCOLOR), bUseChromaKey);
-                        EnableWindow(GetDlgItem(hwnd, IDC_BASETHRESHOLD_EDIT), bUseChromaKey);
-                        EnableWindow(GetDlgItem(hwnd, IDC_BASETHRESHOLD), bUseChromaKey);
-                        EnableWindow(GetDlgItem(hwnd, IDC_BLEND_EDIT), bUseChromaKey);
-                        EnableWindow(GetDlgItem(hwnd, IDC_BLEND), bUseChromaKey);
+                        EnableWindow(GetDlgItem(hwnd, IDC_COLOR),               bUseChromaKey);
+                        EnableWindow(GetDlgItem(hwnd, IDC_SELECTCOLOR),         bUseChromaKey);
+                        EnableWindow(GetDlgItem(hwnd, IDC_BASETHRESHOLD_EDIT),  bUseChromaKey);
+                        EnableWindow(GetDlgItem(hwnd, IDC_BASETHRESHOLD),       bUseChromaKey);
+                        EnableWindow(GetDlgItem(hwnd, IDC_BLEND_EDIT),          bUseChromaKey);
+                        EnableWindow(GetDlgItem(hwnd, IDC_BLEND),               bUseChromaKey);
                         EnableWindow(GetDlgItem(hwnd, IDC_SPILLREDUCTION_EDIT), bUseChromaKey);
-                        EnableWindow(GetDlgItem(hwnd, IDC_SPILLREDUCTION), bUseChromaKey);
+                        EnableWindow(GetDlgItem(hwnd, IDC_SPILLREDUCTION),      bUseChromaKey);
                         break;
                     }
 
@@ -1474,27 +1462,29 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                                 configData->audioIDList.Insert(0, NULL);
                             }
 
+                            CTSTR pDisabled = Str("Disable");
+                            SendMessage(hwndAudioList, CB_INSERTSTRING, 0, (LPARAM)pDisabled);
+                            configData->audioNameList.Insert(0, pDisabled);
+                            configData->audioIDList.Insert(0, TEXT("Disabled"));
+
                             EnableWindow(hwndAudioList, bAudioDevicesPresent);
 
                             if (!bAudioDevicesPresent)
                                 EnableWindow(GetDlgItem(hwnd, IDC_CONFIGAUDIO), FALSE);
 
-                            bool bHasAudio = configData->bDeviceHasAudio || bAudioDevicesPresent;
+                            bool bHasAudio = configData->bDeviceHasAudio;
 
-                            EnableWindow(GetDlgItem(hwnd, IDC_NOSOUND),          bHasAudio);
                             EnableWindow(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), bHasAudio);
                             EnableWindow(GetDlgItem(hwnd, IDC_OUTPUTSOUND),      bHasAudio);
                             EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET),       bHasAudio);
                             EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET_EDIT),  bHasAudio);
 
-                            if (bHasAudio) {
+                            if (bHasAudio)
+                                SendMessage(hwndAudioList, CB_SETCURSEL, 1, 0);
+                            else
                                 SendMessage(hwndAudioList, CB_SETCURSEL, 0, 0);
-                                ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_AUDIOLIST, CBN_SELCHANGE), (LPARAM)hwndAudioList);
-                            } else {
-                                SendMessage(GetDlgItem(hwnd, IDC_NOSOUND),          BM_SETCHECK, BST_CHECKED,   0);
-                                SendMessage(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), BM_SETCHECK, BST_UNCHECKED, 0);
-                                SendMessage(GetDlgItem(hwnd, IDC_OUTPUTSOUND),      BM_SETCHECK, BST_UNCHECKED, 0);
-                            }
+
+                            ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_AUDIOLIST, CBN_SELCHANGE), (LPARAM)hwndAudioList);
                         }
                     }
                     break;
@@ -1505,12 +1495,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         HWND hwndDevices = (HWND)lParam;
                         UINT id = (UINT)SendMessage(hwndDevices, CB_GETCURSEL, 0, 0);
 
-                        if (id == CB_ERR) {
-                            SendMessage(GetDlgItem(hwnd, IDC_NOSOUND),          BM_SETCHECK, BST_CHECKED,   0);
-                            SendMessage(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), BM_SETCHECK, BST_UNCHECKED, 0);
-                            SendMessage(GetDlgItem(hwnd, IDC_OUTPUTSOUND),      BM_SETCHECK, BST_UNCHECKED, 0);
-
-                            EnableWindow(GetDlgItem(hwnd, IDC_NOSOUND),          FALSE);
+                        if (id == CB_ERR || id == 0) {
+                            EnableWindow(GetDlgItem(hwnd, IDC_CONFIGAUDIO),      FALSE);
                             EnableWindow(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), FALSE);
                             EnableWindow(GetDlgItem(hwnd, IDC_OUTPUTSOUND),      FALSE);
                             EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET),       FALSE);
@@ -1528,7 +1514,6 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                                 EnableWindow(GetDlgItem(hwnd, IDC_CONFIGAUDIO), FALSE);
                             }
 
-                            EnableWindow(GetDlgItem(hwnd, IDC_NOSOUND),          TRUE);
                             EnableWindow(GetDlgItem(hwnd, IDC_PLAYDESKTOPSOUND), TRUE);
                             EnableWindow(GetDlgItem(hwnd, IDC_OUTPUTSOUND),      TRUE);
                             EnableWindow(GetDlgItem(hwnd, IDC_TIMEOFFSET),       TRUE);

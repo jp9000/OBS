@@ -246,7 +246,9 @@ bool DeviceSource::LoadFilters()
         goto cleanFinish;
     }
 
-    soundOutputType = data->GetInt(TEXT("soundOutputType"));
+    soundOutputType = data->GetInt(TEXT("soundOutputType")); //0 is for backward-compatibility
+    if (strAudioID.CompareI(TEXT("Disabled")))
+        soundOutputType = 0;
 
     if(soundOutputType != 0)
     {
