@@ -857,7 +857,7 @@ void OBS::MainAudioLoop()
         bool bMicEnabled   = (micAudio != NULL);
 
         while (QueryNewAudio()) {
-            QWORD lastAudioTime = bufferedAudioTimes[0];
+            QWORD timestamp = bufferedAudioTimes[0];
             bufferedAudioTimes.Remove(0);
 
             zero(mixBuffer.Array(),    audioSampleSize*2*sizeof(float));
@@ -868,11 +868,11 @@ void OBS::MainAudioLoop()
 
             float *latestDesktopBuffer = NULL, *latestMicBuffer = NULL;
 
-            desktopAudio->GetBuffer(&desktopBuffer, lastAudioTime);
+            desktopAudio->GetBuffer(&desktopBuffer, timestamp);
             desktopAudio->GetNewestFrame(&latestDesktopBuffer);
 
             if (micAudio != NULL) {
-                micAudio->GetBuffer(&micBuffer, lastAudioTime);
+                micAudio->GetBuffer(&micBuffer, timestamp);
                 micAudio->GetNewestFrame(&latestMicBuffer);
             }
 
@@ -903,7 +903,7 @@ void OBS::MainAudioLoop()
             for (UINT i=0; i<auxAudioSources.Num(); i++) {
                 float *auxBuffer;
 
-                if(auxAudioSources[i]->GetBuffer(&auxBuffer, lastAudioTime))
+                if(auxAudioSources[i]->GetBuffer(&auxBuffer, timestamp))
                     MixAudio(mixBuffer.Array(), auxBuffer, audioSampleSize*2, false);
             }
 
@@ -983,7 +983,7 @@ void OBS::MainAudioLoop()
             if (bMicEnabled && micBuffer)
                 MixAudio(mixBuffer.Array(), micBuffer, audioSampleSize*2, bForceMicMono);
 
-            EncodeAudioSegment(mixBuffer.Array(), audioSampleSize, lastAudioTime);
+            EncodeAudioSegment(mixBuffer.Array(), audioSampleSize, timestamp);
         }
 
         //-----------------------------------------------
