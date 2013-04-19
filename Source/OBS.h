@@ -253,6 +253,7 @@ struct ClassInfo
     String strName;
     OBSCREATEPROC createProc;
     OBSCONFIGPROC configProc;
+    bool bDeprecated;
 
     inline void FreeData() {strClass.Clear(); strName.Clear();}
 };
@@ -517,6 +518,7 @@ class OBS
 public:
     void   AddSettingsPane(SettingsPane *pane);
     void   RemoveSettingsPane(SettingsPane *pane);
+
 private:
     void   AddBuiltInSettingsPanes();
 
@@ -918,8 +920,8 @@ public:
 
     //---------------------------------------------------------------------------
 
-    virtual void RegisterSceneClass(CTSTR lpClassName, CTSTR lpDisplayName, OBSCREATEPROC createProc, OBSCONFIGPROC configProc);
-    virtual void RegisterImageSourceClass(CTSTR lpClassName, CTSTR lpDisplayName, OBSCREATEPROC createProc, OBSCONFIGPROC configProc);
+    virtual void RegisterSceneClass(CTSTR lpClassName, CTSTR lpDisplayName, OBSCREATEPROC createProc, OBSCONFIGPROC configProc, bool bDeprecated);
+    virtual void RegisterImageSourceClass(CTSTR lpClassName, CTSTR lpDisplayName, OBSCREATEPROC createProc, OBSCONFIGPROC configProc, bool bDeprecated);
 
     virtual ImageSource* CreateImageSource(CTSTR lpClassName, XElement *data);
 

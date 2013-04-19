@@ -240,9 +240,9 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,120,283,10
     CONTROL         "Sources.SoftwareCaptureSource.CompatibilityMode",IDC_COMPATIBILITYMODE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,132,283,10
-    RTEXT           "Gamma",IDC_STATIC,4,147,90,8
-    CONTROL         "",IDC_GAMMA,"msctls_trackbar32",TBS_BOTH | WS_TABSTOP,97,139,216,26
-    LTEXT           ".numbers!",IDC_GAMMAVAL,318,147,66,8
+    RTEXT           "Gamma",IDC_STATIC,4,149,90,8
+    CONTROL         "",IDC_GAMMA,"msctls_trackbar32",TBS_BOTH | WS_TABSTOP,97,141,216,26
+    LTEXT           ".numbers!",IDC_GAMMAVAL,318,149,66,8
     CONTROL         "Sources.SoftwareCaptureSource.PointFiltering",IDC_POINTFILTERING,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,162,250,10
     GROUPBOX        "Sources.SoftwareCaptureSource.RegionCapture",IDC_STATIC,7,174,308,67
@@ -485,6 +485,106 @@ BEGIN
     CTEXT           "",IDC_TIMELEFT,7,8,244,8
 END
 
+IDD_CONFIGUREWINDOWCAPTURE DIALOGEX 0, 0, 379, 319
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Sources.SoftwareCaptureSource.WindowCapture"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,268,298,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,322,298,50,14
+    GROUPBOX        "Sources.SoftwareCaptureSource.ColorKey",IDC_STATIC,7,206,308,87
+    CONTROL         "Sources.SoftwareCaptureSource.UseColorKey",IDC_USECOLORKEY,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,220,130,10,WS_EX_RIGHT
+    RTEXT           "Color",IDC_STATIC,18,238,117,8
+    CONTROL         "",IDC_COLOR,"OBSColorControl",WS_TABSTOP,138,234,28,14
+    PUSHBUTTON      "Sources.SoftwareCaptureSource.Select",IDC_SELECT,169,234,64,14
+    RTEXT           "Sources.SoftwareCaptureSource.Similarity",IDC_STATIC,18,257,117,8
+    EDITTEXT        IDC_BASETHRESHOLD_EDIT,137,254,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_BASETHRESHOLD,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,178,254,11,14
+    RTEXT           "Sources.SoftwareCaptureSource.Blend",IDC_STATIC,17,274,117,8
+    EDITTEXT        IDC_BLEND_EDIT,137,273,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_BLEND,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,177,273,11,14
+    RTEXT           "Sources.BitmapSource.Opacity",IDC_STATIC,7,114,118,8
+    EDITTEXT        IDC_OPACITY_EDIT,129,111,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_OPACITY2,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,168,111,11,14
+    RTEXT           "Sources.SoftwareCaptureSource.Window",IDC_STATIC,11,10,96,8
+    COMBOBOX        IDC_WINDOW,111,7,197,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Refresh",IDC_REFRESH,310,7,62,14
+    CONTROL         "Sources.SoftwareCaptureSource.InnerWindow",IDC_INNERWINDOW,
+                    "Button",BS_AUTORADIOBUTTON,109,25,253,10
+    CONTROL         "Sources.SoftwareCaptureSource.EntireWindow",IDC_OUTERWINDOW,
+                    "Button",BS_AUTORADIOBUTTON,109,36,253,10
+    CONTROL         "Sources.SoftwareCaptureSource.MouseCapture",IDC_CAPTUREMOUSE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,50,283,10
+    CONTROL         "Sources.SoftwareCaptureSource.CompatibilityMode",IDC_COMPATIBILITYMODE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,62,283,10
+    RTEXT           "Gamma",IDC_STATIC,7,79,90,8
+    CONTROL         "",IDC_GAMMA,"msctls_trackbar32",TBS_BOTH | WS_TABSTOP,101,71,216,26
+    LTEXT           ".numbers!",IDC_GAMMAVAL,321,79,41,8
+    CONTROL         "Sources.SoftwareCaptureSource.PointFiltering",IDC_POINTFILTERING,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,94,250,10
+    GROUPBOX        "Sources.SoftwareCaptureSource.RegionCapture",IDC_STATIC,7,132,308,67
+    CONTROL         "Sources.SoftwareCaptureSource.RegionCapture",IDC_REGIONCAPTURE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,143,130,10,WS_EX_RIGHT
+    RTEXT           "Sources.SoftwareCaptureSource.Position",IDC_STATIC,17,161,116,8
+    EDITTEXT        IDC_POSX,137,158,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_POSY,179,158,40,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Sources.SoftwareCaptureSource.SelectRegion",IDC_SELECTREGION,223,158,77,14
+    RTEXT           "Sources.SoftwareCaptureSource.Size",IDC_STATIC,17,179,116,8
+    EDITTEXT        IDC_SIZEX,137,177,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_SIZEY,179,177,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    PUSHBUTTON      "Sources.SoftwareCaptureSource.SetStreamSize",IDC_SETSTREAMSIZE,7,298,150,14
+END
+
+IDD_CONFIGUREMONITORCAPTURE DIALOGEX 0, 0, 433, 346
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Sources.SoftwareCaptureSource.MonitorCapture"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,322,325,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,376,325,50,14
+    RTEXT           "Sources.SoftwareCaptureSource.Monitor",IDC_STATIC,7,9,96,8
+    COMBOBOX        IDC_MONITOR,107,7,38,126,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Sources.SoftwareCaptureSource.ColorKey",IDC_STATIC,7,194,308,87
+    CONTROL         "Sources.SoftwareCaptureSource.UseColorKey",IDC_USECOLORKEY,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,208,130,10,WS_EX_RIGHT
+    RTEXT           "Color",IDC_STATIC,18,226,117,8
+    CONTROL         "",IDC_COLOR,"OBSColorControl",WS_TABSTOP,138,223,28,14
+    PUSHBUTTON      "Sources.SoftwareCaptureSource.Select",IDC_SELECT,169,223,64,14
+    RTEXT           "Sources.SoftwareCaptureSource.Similarity",IDC_STATIC,18,245,117,8
+    EDITTEXT        IDC_BASETHRESHOLD_EDIT,137,242,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_BASETHRESHOLD,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,178,242,11,14
+    RTEXT           "Sources.SoftwareCaptureSource.Blend",IDC_STATIC,17,263,117,8
+    EDITTEXT        IDC_BLEND_EDIT,137,261,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_BLEND,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,177,261,11,14
+    RTEXT           "Sources.BitmapSource.Opacity",IDC_STATIC,7,103,118,8
+    EDITTEXT        IDC_OPACITY_EDIT,129,100,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_OPACITY2,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,168,100,11,14
+    CONTROL         "Sources.SoftwareCaptureSource.MouseCapture",IDC_CAPTUREMOUSE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,26,283,10
+    CONTROL         "Sources.SoftwareCaptureSource.CaptureLayered",IDC_CAPTURELAYERED,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,38,283,10
+    CONTROL         "Sources.SoftwareCaptureSource.CompatibilityMode",IDC_COMPATIBILITYMODE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,50,283,10
+    RTEXT           "Gamma",IDC_STATIC,7,68,90,8
+    CONTROL         "",IDC_GAMMA,"msctls_trackbar32",TBS_BOTH | WS_TABSTOP,101,60,216,26
+    LTEXT           ".numbers!",IDC_GAMMAVAL,321,68,41,8
+    CONTROL         "Sources.SoftwareCaptureSource.PointFiltering",IDC_POINTFILTERING,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,82,250,10
+    GROUPBOX        "Sources.SoftwareCaptureSource.RegionCapture",IDC_STATIC,7,120,308,67
+    CONTROL         "Sources.SoftwareCaptureSource.RegionCapture",IDC_REGIONCAPTURE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,132,130,10,WS_EX_RIGHT
+    RTEXT           "Sources.SoftwareCaptureSource.Position",IDC_STATIC,17,149,116,8
+    EDITTEXT        IDC_POSX,137,146,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_POSY,179,146,40,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Sources.SoftwareCaptureSource.SelectRegion",IDC_SELECTREGION,223,146,77,14
+    RTEXT           "Sources.SoftwareCaptureSource.Size",IDC_STATIC,17,167,116,8
+    EDITTEXT        IDC_SIZEX,137,165,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_SIZEY,179,165,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    PUSHBUTTON      "Sources.SoftwareCaptureSource.SetStreamSize",IDC_SETSTREAMSIZE,7,325,150,14
+    LTEXT           "",IDC_WARNING,7,285,419,33
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -636,6 +736,22 @@ BEGIN
         RIGHTMARGIN, 251
         TOPMARGIN, 7
         BOTTOMMARGIN, 43
+    END
+
+    IDD_CONFIGUREWINDOWCAPTURE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 372
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 312
+    END
+
+    IDD_CONFIGUREMONITORCAPTURE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 426
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 339
     END
 END
 #endif    // APSTUDIO_INVOKED

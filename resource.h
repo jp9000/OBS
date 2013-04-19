@@ -33,6 +33,9 @@
 #define IDD_CONFIGURETEXTSOURCE         139
 #define IDD_ENDINGDELAY                 140
 #define IDI_ICON2                       142
+#define IDD_CONFIGUREWINDOWCAPTURE      143
+#define IDD_MONITORCAPTURE              144
+#define IDD_CONFIGUREMONITORCAPTURE     144
 #define IDC_SETTINGSLIST                1006
 #define IDC_SUBDIALOG                   1007
 #define IDC_MODE                        1008
@@ -253,6 +256,7 @@
 #define IDC_OUTLINEOPACITY_EDIT         1154
 #define IDC_OUTLINEOPACITY              1155
 #define IDC_PUSHTOTALKHOTKEY2           1156
+#define IDC_WARNING                     1159
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -294,9 +298,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        143
+#define _APS_NEXT_RESOURCE_VALUE        145
 #define _APS_NEXT_COMMAND_VALUE         40051
-#define _APS_NEXT_CONTROL_VALUE         1159
+#define _APS_NEXT_CONTROL_VALUE         1160
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

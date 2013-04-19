@@ -20,7 +20,7 @@
 #include "Main.h"
 
 
-void OBS::RegisterSceneClass(CTSTR lpClassName, CTSTR lpDisplayName, OBSCREATEPROC createProc, OBSCONFIGPROC configProc)
+void OBS::RegisterSceneClass(CTSTR lpClassName, CTSTR lpDisplayName, OBSCREATEPROC createProc, OBSCONFIGPROC configProc, bool bDeprecated)
 {
     if(!lpClassName || !*lpClassName)
     {
@@ -40,14 +40,15 @@ void OBS::RegisterSceneClass(CTSTR lpClassName, CTSTR lpDisplayName, OBSCREATEPR
         return;
     }
 
-    ClassInfo *classInfo  = sceneClasses.CreateNew();
-    classInfo->strClass   = lpClassName;
-    classInfo->strName    = lpDisplayName;
-    classInfo->createProc = createProc;
-    classInfo->configProc = configProc;
+    ClassInfo *classInfo   = sceneClasses.CreateNew();
+    classInfo->strClass    = lpClassName;
+    classInfo->strName     = lpDisplayName;
+    classInfo->createProc  = createProc;
+    classInfo->configProc  = configProc;
+    classInfo->bDeprecated = bDeprecated;
 }
 
-void OBS::RegisterImageSourceClass(CTSTR lpClassName, CTSTR lpDisplayName, OBSCREATEPROC createProc, OBSCONFIGPROC configProc)
+void OBS::RegisterImageSourceClass(CTSTR lpClassName, CTSTR lpDisplayName, OBSCREATEPROC createProc, OBSCONFIGPROC configProc, bool bDeprecated)
 {
     if(!lpClassName || !*lpClassName)
     {
@@ -67,11 +68,12 @@ void OBS::RegisterImageSourceClass(CTSTR lpClassName, CTSTR lpDisplayName, OBSCR
         return;
     }
 
-    ClassInfo *classInfo  = imageSourceClasses.CreateNew();
-    classInfo->strClass   = lpClassName;
-    classInfo->strName    = lpDisplayName;
-    classInfo->createProc = createProc;
-    classInfo->configProc = configProc;
+    ClassInfo *classInfo   = imageSourceClasses.CreateNew();
+    classInfo->strClass    = lpClassName;
+    classInfo->strName     = lpDisplayName;
+    classInfo->createProc  = createProc;
+    classInfo->configProc  = configProc;
+    classInfo->bDeprecated = bDeprecated;
 }
 
 Scene* OBS::CreateScene(CTSTR lpClassName, XElement *data)
@@ -353,12 +355,12 @@ public:
     
     virtual void RegisterSceneClass(CTSTR lpClassName, CTSTR lpDisplayName, OBSCREATEPROC createProc, OBSCONFIGPROC configProc)
     {
-        App->RegisterSceneClass(lpClassName, lpDisplayName, createProc, configProc);
+        App->RegisterSceneClass(lpClassName, lpDisplayName, createProc, configProc, false);
     }
 
     virtual void RegisterImageSourceClass(CTSTR lpClassName, CTSTR lpDisplayName, OBSCREATEPROC createProc, OBSCONFIGPROC configProc)
     {
-        App->RegisterImageSourceClass(lpClassName, lpDisplayName, createProc, configProc);
+        App->RegisterImageSourceClass(lpClassName, lpDisplayName, createProc, configProc, false);
     }
 
     virtual ImageSource* CreateImageSource(CTSTR lpClassName, XElement *data)

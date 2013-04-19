@@ -18,6 +18,7 @@
 
 
 #include "Main.h"
+#include <dwmapi.h>
 
 
 #define NUM_CAPTURE_TEXTURES 2
@@ -772,6 +773,7 @@ struct ConfigDesktopSourceInfo
 {
     CTSTR lpName;
     XElement *data;
+    int dialogID;
     StringList strClasses;
 };
 
@@ -1217,6 +1219,7 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
     static bool bSelectingColor = false;
     static bool bMouseDown = false;
     static ColorSelectionData colorData;
+    HWND hwndTemp;
 
     switch(message)
     {
@@ -1245,52 +1248,74 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 ConfigDesktopSourceInfo *info = (ConfigDesktopSourceInfo*)lParam;
                 XElement *data = info->data;
 
-                HWND hwndTemp = GetDlgItem(hwnd, IDC_MONITOR);
-                for(UINT i=0; i<App->NumMonitors(); i++)
-                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)UIntString(i+1).Array());
-                SendMessage(hwndTemp, CB_SETCURSEL, 0, 0);
+                if (info->dialogID == IDD_CONFIGUREMONITORCAPTURE || info->dialogID == IDD_CONFIGUREDESKTOPSOURCE) {
+                    hwndTemp = GetDlgItem(hwnd, IDC_MONITOR);
+                    for(UINT i=0; i<App->NumMonitors(); i++)
+                        SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)UIntString(i+1).Array());
+                    SendMessage(hwndTemp, CB_SETCURSEL, 0, 0);
+
+                    if (OSGetVersion() > 7) {
+                        EnableWindow(GetDlgItem(hwnd, IDC_CAPTURELAYERED), FALSE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_COMPATIBILITYMODE), (info->dialogID != IDD_CONFIGUREMONITORCAPTURE));
+                    }
+                }
 
                 UINT captureType = data->GetInt(TEXT("captureType"), 0);
-                SetDesktopCaptureType(hwnd, captureType);
+
+                if (info->dialogID == IDD_CONFIGUREDESKTOPSOURCE)
+                    SetDesktopCaptureType(hwnd, captureType);
 
                 //-----------------------------------------------------
 
-                hwndTemp = GetDlgItem(hwnd, IDC_MONITOR);
-                UINT monitor = data->GetInt(TEXT("monitor"));
-                SendMessage(hwndTemp, CB_SETCURSEL, monitor, 0);
-
-                ti.lpszText = (LPWSTR)Str("Sources.SoftwareCaptureSource.MonitorCaptureTooltip");
-                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_MONITORCAPTURE);
-                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+                if (info->dialogID == IDD_CONFIGUREMONITORCAPTURE || info->dialogID == IDD_CONFIGUREDESKTOPSOURCE) {
+                    hwndTemp = GetDlgItem(hwnd, IDC_MONITOR);
+                    UINT monitor = data->GetInt(TEXT("monitor"));
+                    SendMessage(hwndTemp, CB_SETCURSEL, monitor, 0);
+                }
 
                 //-----------------------------------------------------
 
-                HWND hwndWindowList = GetDlgItem(hwnd, IDC_WINDOW);
+                if (info->dialogID == IDD_CONFIGUREMONITORCAPTURE) {
+                    String strWarnings;
+                    if (OSGetVersion() < 8) {
+                        strWarnings << Str("Sources.SoftwareCaptureSource.Warning");
 
-                ti.lpszText = (LPWSTR)Str("Sources.SoftwareCaptureSource.WindowCaptureTooltip");
-                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_WINDOWCAPTURE);
-                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+                        BOOL bComposition;
+                        DwmIsCompositionEnabled(&bComposition);
+                        if (bComposition)
+                            strWarnings << TEXT("\r\n") << Str("Sources.SoftwareCaptureSource.WarningAero");
+                    }
 
-                CTSTR lpWindowName = data->GetString(TEXT("window"));
-                CTSTR lpWindowClass = data->GetString(TEXT("windowClass"));
-                BOOL bInnerWindow = (BOOL)data->GetInt(TEXT("innerWindow"), 1);
+                    SetWindowText(GetDlgItem(hwnd, IDC_WARNING), strWarnings);
+                }
 
-                RefreshWindowList(hwndWindowList, info->strClasses);
+                //-----------------------------------------------------
 
-                UINT windowID = 0;
-                if(lpWindowName)
-                    windowID = (UINT)SendMessage(hwndWindowList, CB_FINDSTRINGEXACT, -1, (LPARAM)lpWindowName);
+                bool bFoundWindow = false;
+                if (info->dialogID == IDD_CONFIGUREWINDOWCAPTURE || info->dialogID == IDD_CONFIGUREDESKTOPSOURCE) {
+                    HWND hwndWindowList = GetDlgItem(hwnd, IDC_WINDOW);
 
-                bool bFoundWindow = (windowID != CB_ERR);
-                if(!bFoundWindow)
-                    windowID = 0;
+                    CTSTR lpWindowName = data->GetString(TEXT("window"));
+                    CTSTR lpWindowClass = data->GetString(TEXT("windowClass"));
+                    BOOL bInnerWindow = (BOOL)data->GetInt(TEXT("innerWindow"), 1);
 
-                SendMessage(hwndWindowList, CB_SETCURSEL, windowID, 0);
+                    RefreshWindowList(hwndWindowList, info->strClasses);
 
-                if(bInnerWindow)
-                    SendMessage(GetDlgItem(hwnd, IDC_INNERWINDOW), BM_SETCHECK, BST_CHECKED, 0);
-                else
-                    SendMessage(GetDlgItem(hwnd, IDC_OUTERWINDOW), BM_SETCHECK, BST_CHECKED, 0);
+                    UINT windowID = 0;
+                    if(lpWindowName)
+                        windowID = (UINT)SendMessage(hwndWindowList, CB_FINDSTRINGEXACT, -1, (LPARAM)lpWindowName);
+
+                    bFoundWindow = (windowID != CB_ERR);
+                    if(!bFoundWindow)
+                        windowID = 0;
+
+                    SendMessage(hwndWindowList, CB_SETCURSEL, windowID, 0);
+
+                    if(bInnerWindow)
+                        SendMessage(GetDlgItem(hwnd, IDC_INNERWINDOW), BM_SETCHECK, BST_CHECKED, 0);
+                    else
+                        SendMessage(GetDlgItem(hwnd, IDC_OUTERWINDOW), BM_SETCHECK, BST_CHECKED, 0);
+                }
 
                 //-----------------------------------------------------
 
@@ -1397,6 +1422,9 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                 //--------------------------------------------
 
+                if (info->dialogID == IDD_CONFIGUREWINDOWCAPTURE)
+                    PostMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_WINDOW, 0), 0);
+
                 return TRUE;
             }
 
@@ -1499,7 +1527,17 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                 case IDC_REGIONCAPTURE:
                     {
-                        UINT captureType = (SendMessage(GetDlgItem(hwnd, IDC_WINDOWCAPTURE), BM_GETCHECK, 0, 0) == BST_CHECKED) ? 1 : 0;
+                        ConfigDesktopSourceInfo *info = (ConfigDesktopSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
+
+                        UINT captureType = 0;
+                        
+                        if (info->dialogID == IDD_CONFIGUREDESKTOPSOURCE)
+                            captureType = (SendMessage(GetDlgItem(hwnd, IDC_WINDOWCAPTURE), BM_GETCHECK, 0, 0) == BST_CHECKED) ? 1 : 0;
+                        else if (info->dialogID == IDD_CONFIGUREMONITORCAPTURE)
+                            captureType = 0;
+                        else
+                            captureType = 1;
+
                         BOOL bRegion = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
 
                         EnableWindow(GetDlgItem(hwnd, IDC_POSX),            bRegion);
@@ -1528,13 +1566,21 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                         //--------------------------------------------
 
-                        UINT captureType = (SendMessage(GetDlgItem(hwnd, IDC_WINDOWCAPTURE), BM_GETCHECK, 0, 0) == BST_CHECKED) ? 1 : 0;
+                        ConfigDesktopSourceInfo *info = (ConfigDesktopSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
+
+                        UINT captureType = 0;
+                        
+                        if (info->dialogID == IDD_CONFIGUREDESKTOPSOURCE)
+                            captureType = (SendMessage(GetDlgItem(hwnd, IDC_WINDOWCAPTURE), BM_GETCHECK, 0, 0) == BST_CHECKED) ? 1 : 0;
+                        else if (info->dialogID == IDD_CONFIGUREMONITORCAPTURE)
+                            captureType = 0;
+                        else
+                            captureType = 1;
+
                         BOOL bRegion = (SendMessage(GetDlgItem(hwnd, IDC_REGIONCAPTURE), BM_GETCHECK, 0, 0) == BST_CHECKED);
 
                         if(bRegion && captureType == 1)
                         {
-                            ConfigDesktopSourceInfo *info = (ConfigDesktopSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
-
                             UINT windowID = (UINT)SendMessage(GetDlgItem(hwnd, IDC_WINDOW), CB_GETCURSEL, 0, 0);
                             if(windowID == CB_ERR) windowID = 0;
 
@@ -1769,28 +1815,44 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                 case IDOK:
                     {
+                        ConfigDesktopSourceInfo *info = (ConfigDesktopSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
+
                         UINT captureType = 0;
-                        if(SendMessage(GetDlgItem(hwnd, IDC_MONITORCAPTURE), BM_GETCHECK, 0, 0) == BST_CHECKED)
+
+                        if (info->dialogID == IDD_CONFIGUREDESKTOPSOURCE) {
+                            if(SendMessage(GetDlgItem(hwnd, IDC_MONITORCAPTURE), BM_GETCHECK, 0, 0) == BST_CHECKED)
+                                captureType = 0;
+                            else if(SendMessage(GetDlgItem(hwnd, IDC_WINDOWCAPTURE), BM_GETCHECK, 0, 0) == BST_CHECKED)
+                                captureType = 1;
+                        } else if (info->dialogID == IDD_CONFIGUREMONITORCAPTURE) {
                             captureType = 0;
-                        else if(SendMessage(GetDlgItem(hwnd, IDC_WINDOWCAPTURE), BM_GETCHECK, 0, 0) == BST_CHECKED)
+                        } else { //IDD_CONFIGUREWINDOWCAPTURE
                             captureType = 1;
+                        }
 
                         BOOL bRegion = (SendMessage(GetDlgItem(hwnd, IDC_REGIONCAPTURE), BM_GETCHECK, 0, 0) == BST_CHECKED);
 
-                        UINT monitorID = (UINT)SendMessage(GetDlgItem(hwnd, IDC_MONITOR), CB_GETCURSEL, 0, 0);
+                        UINT monitorID = 0;
+
+                        if (info->dialogID == IDD_CONFIGUREDESKTOPSOURCE || info->dialogID == IDD_CONFIGUREMONITORCAPTURE)
+                            monitorID = (UINT)SendMessage(GetDlgItem(hwnd, IDC_MONITOR), CB_GETCURSEL, 0, 0);
                         if(monitorID == CB_ERR) monitorID = 0;
 
-                        UINT windowID = (UINT)SendMessage(GetDlgItem(hwnd, IDC_WINDOW), CB_GETCURSEL, 0, 0);
+                        UINT windowID = 0;
+                        if (info->dialogID == IDD_CONFIGUREDESKTOPSOURCE || info->dialogID == IDD_CONFIGUREWINDOWCAPTURE)
+                            windowID = (UINT)SendMessage(GetDlgItem(hwnd, IDC_WINDOW), CB_GETCURSEL, 0, 0);
                         if(windowID == CB_ERR) windowID = 0;
-
-                        ConfigDesktopSourceInfo *info = (ConfigDesktopSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
 
                         if(captureType == 1 && windowID >= info->strClasses.Num())
                             break;
 
-                        String strWindow = GetCBText(GetDlgItem(hwnd, IDC_WINDOW), windowID);
+                        BOOL bInnerWindow = FALSE;
+                        String strWindow;
 
-                        BOOL bInnerWindow = SendMessage(GetDlgItem(hwnd, IDC_INNERWINDOW), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        if (info->dialogID == IDD_CONFIGUREDESKTOPSOURCE || info->dialogID == IDD_CONFIGUREWINDOWCAPTURE) {
+                            strWindow = GetCBText(GetDlgItem(hwnd, IDC_WINDOW), windowID);
+                            bInnerWindow = SendMessage(GetDlgItem(hwnd, IDC_INNERWINDOW), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        }
 
                         UINT posX, posY, sizeX, sizeY;
                         posX  = GetEditText(GetDlgItem(hwnd, IDC_POSX)).ToInt();
@@ -1803,8 +1865,10 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                         if(sizeY < 32)
                             sizeY = 32;
 
+                        BOOL bCaptureLayered = FALSE;
                         BOOL bCaptureMouse = SendMessage(GetDlgItem(hwnd, IDC_CAPTUREMOUSE), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                        BOOL bCaptureLayered = SendMessage(GetDlgItem(hwnd, IDC_CAPTURELAYERED), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        if (info->dialogID == IDD_CONFIGUREDESKTOPSOURCE || info->dialogID == IDD_CONFIGUREMONITORCAPTURE)
+                            bCaptureLayered = SendMessage(GetDlgItem(hwnd, IDC_CAPTURELAYERED), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         BOOL bCompatibilityMode = SendMessage(GetDlgItem(hwnd, IDC_COMPATIBILITYMODE), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         BOOL bUsePointFiltering = SendMessage(GetDlgItem(hwnd, IDC_POINTFILTERING), BM_GETCHECK, 0, 0) == BST_CHECKED;
 
@@ -1889,7 +1953,7 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
 bool bMadeCaptureRegionClass = false;
 
-bool STDCALL ConfigureDesktopSource(XElement *element, bool bInitialize)
+static bool STDCALL ConfigureDesktopSource2(XElement *element, bool bInitialize, int dialogID)
 {
     if(!bMadeCaptureRegionClass)
     {
@@ -1918,8 +1982,9 @@ bool STDCALL ConfigureDesktopSource(XElement *element, bool bInitialize)
     ConfigDesktopSourceInfo info;
     info.data = data;
     info.lpName = element->GetName();
+    info.dialogID = dialogID;
 
-    if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_CONFIGUREDESKTOPSOURCE), hwndMain, ConfigDesktopSourceProc, (LPARAM)&info) == IDOK)
+    if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(dialogID), hwndMain, ConfigDesktopSourceProc, (LPARAM)&info) == IDOK)
     {
         element->SetInt(TEXT("cx"), data->GetInt(TEXT("captureCX")));
         element->SetInt(TEXT("cy"), data->GetInt(TEXT("captureCY")));
@@ -1927,4 +1992,19 @@ bool STDCALL ConfigureDesktopSource(XElement *element, bool bInitialize)
     }
 
     return false;
+}
+
+bool STDCALL ConfigureDesktopSource(XElement *element, bool bInitialize)
+{
+    return ConfigureDesktopSource2(element, bInitialize, IDD_CONFIGUREDESKTOPSOURCE);
+}
+
+bool STDCALL ConfigureWindowCaptureSource(XElement *element, bool bInitialize)
+{
+    return ConfigureDesktopSource2(element, bInitialize, IDD_CONFIGUREWINDOWCAPTURE);
+}
+
+bool STDCALL ConfigureMonitorCaptureSource(XElement *element, bool bInitialize)
+{
+    return ConfigureDesktopSource2(element, bInitialize, IDD_CONFIGUREMONITORCAPTURE);
 }

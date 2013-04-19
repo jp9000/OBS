@@ -30,6 +30,8 @@ typedef CTSTR (*GETPLUGINNAMEPROC)();
 
 ImageSource* STDCALL CreateDesktopSource(XElement *data);
 bool STDCALL ConfigureDesktopSource(XElement *data, bool bCreating);
+bool STDCALL ConfigureWindowCaptureSource(XElement *data, bool bCreating);
+bool STDCALL ConfigureMonitorCaptureSource(XElement *data, bool bCreating);
 
 ImageSource* STDCALL CreateBitmapSource(XElement *data);
 bool STDCALL ConfigureBitmapSource(XElement *element, bool bCreating);
@@ -167,13 +169,15 @@ OBS::OBS()
     //-----------------------------------------------------
     // load classes
 
-    RegisterSceneClass(TEXT("Scene"), Str("Scene"), (OBSCREATEPROC)CreateNormalScene, NULL);
-    RegisterImageSourceClass(TEXT("DesktopImageSource"), Str("Sources.SoftwareCaptureSource"), (OBSCREATEPROC)CreateDesktopSource, (OBSCONFIGPROC)ConfigureDesktopSource);
-    RegisterImageSourceClass(TEXT("BitmapImageSource"), Str("Sources.BitmapSource"), (OBSCREATEPROC)CreateBitmapSource, (OBSCONFIGPROC)ConfigureBitmapSource);
-    RegisterImageSourceClass(TEXT("BitmapTransitionSource"), Str("Sources.TransitionSource"), (OBSCREATEPROC)CreateBitmapTransitionSource, (OBSCONFIGPROC)ConfigureBitmapTransitionSource);
-    RegisterImageSourceClass(TEXT("GlobalSource"), Str("Sources.GlobalSource"), (OBSCREATEPROC)CreateGlobalSource, (OBSCONFIGPROC)OBS::ConfigGlobalSource);
+    RegisterSceneClass(TEXT("Scene"), Str("Scene"), (OBSCREATEPROC)CreateNormalScene, NULL, false);
+    RegisterImageSourceClass(TEXT("DesktopImageSource"), Str("Sources.SoftwareCaptureSource"), (OBSCREATEPROC)CreateDesktopSource, (OBSCONFIGPROC)ConfigureDesktopSource, true);
+    RegisterImageSourceClass(TEXT("WindowCaptureSource"), Str("Sources.SoftwareCaptureSource.WindowCapture"), (OBSCREATEPROC)CreateDesktopSource, (OBSCONFIGPROC)ConfigureWindowCaptureSource, false);
+    RegisterImageSourceClass(TEXT("MonitorCaptureSource"), Str("Sources.SoftwareCaptureSource.MonitorCapture"), (OBSCREATEPROC)CreateDesktopSource, (OBSCONFIGPROC)ConfigureMonitorCaptureSource, false);
+    RegisterImageSourceClass(TEXT("BitmapImageSource"), Str("Sources.BitmapSource"), (OBSCREATEPROC)CreateBitmapSource, (OBSCONFIGPROC)ConfigureBitmapSource, false);
+    RegisterImageSourceClass(TEXT("BitmapTransitionSource"), Str("Sources.TransitionSource"), (OBSCREATEPROC)CreateBitmapTransitionSource, (OBSCONFIGPROC)ConfigureBitmapTransitionSource, false);
+    RegisterImageSourceClass(TEXT("GlobalSource"), Str("Sources.GlobalSource"), (OBSCREATEPROC)CreateGlobalSource, (OBSCONFIGPROC)OBS::ConfigGlobalSource, false);
 
-    RegisterImageSourceClass(TEXT("TextSource"), Str("Sources.TextSource"), (OBSCREATEPROC)CreateTextSource, (OBSCONFIGPROC)ConfigureTextSource);
+    RegisterImageSourceClass(TEXT("TextSource"), Str("Sources.TextSource"), (OBSCREATEPROC)CreateTextSource, (OBSCONFIGPROC)ConfigureTextSource, false);
 
     //-----------------------------------------------------
     // render frame class

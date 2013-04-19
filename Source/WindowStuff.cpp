@@ -329,6 +329,9 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
             for(UINT i=0; i<App->sceneClasses.Num(); i++)
             {
+                if (App->sceneClasses[i].bDeprecated)
+                    continue;
+
                 String strAdd = Str("Listbox.Add");
                 strAdd.FindReplace(TEXT("$1"), App->sceneClasses[i].strName);
                 AppendMenu(hMenu, MF_STRING, ID_LISTBOX_ADD+i, strAdd.Array());
@@ -343,6 +346,9 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
             for(UINT i=0; i<App->imageSourceClasses.Num(); i++)
             {
+                if (App->imageSourceClasses[i].bDeprecated)
+                    continue;
+
                 String strAdd = App->imageSourceClasses[i].strName;
 
                 if(App->imageSourceClasses[i].strClass == TEXT("GlobalSource"))
