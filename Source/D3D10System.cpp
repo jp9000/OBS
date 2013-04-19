@@ -771,6 +771,13 @@ void D3D10System::SetScissorRect(XRect *pRect)
     }
 }
 
+void D3D10System::SetCropping(float top, float left, float bottom, float right)
+{
+    curCropping[0] = top;
+    curCropping[1] = left;
+    curCropping[2] = bottom;
+    curCropping[3] = right;
+}
 
 void D3D10System::DrawSpriteEx(Texture *texture, DWORD color, float x, float y, float x2, float y2, float u, float v, float u2, float v2)
 {
@@ -793,7 +800,8 @@ void D3D10System::DrawSpriteEx(Texture *texture, DWORD color, float x, float y, 
         x2 = float(texture->Width());
         y2 = float(texture->Height());
     }
-    if(u == -998.0f && v == -998.0f)
+
+    /*if(u == -998.0f && v == -998.0f)
     {
         u = 0.0f;
         v = 0.0f;
@@ -802,7 +810,23 @@ void D3D10System::DrawSpriteEx(Texture *texture, DWORD color, float x, float y, 
     {
         u2 = 1.0f;
         v2 = 1.0f;
-    }
+    }*/
+
+    //FIXME: this breaks for h/v flipped sources, detect and workaround.
+
+    //top
+    v = curCropping[0] / (y2 - y);
+    y += curCropping[0];
+
+    //left
+    u = curCropping[1] / (x2 - x);
+    x += curCropping[1];
+    
+    //bottom
+    u2 = 1.0f - (curCropping[2] / (x2 - x));
+
+    //right
+    v2 = 1.0f - (curCropping[3] / (y2 - y));
 
     VBData *data = spriteVertexBuffer->GetData();
     data->VertList[0].Set(x,  y,  0.0f);
