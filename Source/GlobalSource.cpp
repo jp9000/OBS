@@ -107,6 +107,9 @@ bool STDCALL OBS::ConfigGlobalSource(XElement *element, bool bCreating)
         if(!classInfo->configProc(globalSourceElement, bCreating))
             return false;
 
+        element->SetInt(TEXT("cx"), globalSourceElement->GetInt(TEXT("cx")));
+        element->SetInt(TEXT("cy"), globalSourceElement->GetInt(TEXT("cy")));
+
         if(App->bRunning)
         {
             for(UINT i=0; i<App->globalSources.Num(); i++)
