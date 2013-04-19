@@ -441,6 +441,7 @@ void HandleGLSceneUpdate(HDC hDC)
                         CloseHandle(hKeepAlive);
                     } else {
                         ClearGLData();
+                    logOutput << "Keepalive no longer found on gl, freeing capture data" << endl;
                         bCapturing = false;
                     }
 
