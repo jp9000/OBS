@@ -170,6 +170,10 @@ SceneItem* Scene::InsertImageSource(UINT pos, XElement *sourceElement)
     item->source = source;
     item->pos = Vect2(x, y);
     item->size = Vect2(cx, cy);
+    item->crop.w = sourceElement->GetFloat(TEXT("crop.top"));
+    item->crop.x = sourceElement->GetFloat(TEXT("crop.left"));
+    item->crop.y = sourceElement->GetFloat(TEXT("crop.bottom"));
+    item->crop.z = sourceElement->GetFloat(TEXT("crop.right"));
     item->SetRender(render);
 
     API->EnterSceneMutex();
@@ -231,7 +235,11 @@ void Scene::Render()
     {
         SceneItem *item = sceneItems[i];
         if(item->source && item->bRender)
+        {
+            GS->SetCropping (item->crop.w, item->crop.x, item->crop.y, item->crop.z);
             item->source->Render(item->pos, item->size);
+            GS->SetCropping (0.0f, 0.0f, 0.0f, 0.0f);
+        }
     }
 }
 

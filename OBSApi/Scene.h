@@ -81,6 +81,7 @@ class BASE_EXPORT SceneItem
 
     Vect2 startPos, startSize;
     Vect2 pos, size;
+    Vect4 crop;
 
     bool bSelected;
     bool bRender;

@@ -482,6 +482,7 @@ public:
     void DrawSprite(Texture *texture, DWORD color, float x, float y, float x2 = -998.0f, float y2 = -998.0f);
     virtual void DrawSpriteEx(Texture *texture, DWORD color, float x, float y, float x2 = -998.0f, float y2 = -998.0f, float u = -998.0f, float v = -998.0f, float u2 = -998.0f, float v2 = -998.0f)=0;
     virtual void DrawBox(const Vect2 &upperLeft, const Vect2 &size)=0;
+    virtual void SetCropping(float top, float left, float bottom, float right)=0;
 
 
     //----------------------------------------------------
