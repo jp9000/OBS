@@ -66,7 +66,7 @@ void GraphicsSystem::DrawSprite(Texture *texture, DWORD color, float x, float y,
 {
     assert(texture);
 
-    DrawSpriteEx(texture, color, x, y, x2, y2);
+    DrawSpriteEx(texture, color, x, y, x2, y2, 0.0f, 0.0f, 1.0f, 1.0f);
 }
 
 

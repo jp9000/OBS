@@ -479,8 +479,8 @@ public:
 
     void  Vertex(const Vect2 &v2) {Vertex(Vect(v2));}
 
-    void DrawSprite(Texture *texture, DWORD color, float x, float y, float x2 = -998.0f, float y2 = -998.0f);
-    virtual void DrawSpriteEx(Texture *texture, DWORD color, float x, float y, float x2 = -998.0f, float y2 = -998.0f, float u = -998.0f, float v = -998.0f, float u2 = -998.0f, float v2 = -998.0f)=0;
+    void DrawSprite(Texture *texture, DWORD color, float x, float y, float x2, float y2);
+    virtual void DrawSpriteEx(Texture *texture, DWORD color, float x, float y, float x2, float y2, float u, float v, float u2, float v2)=0;
     virtual void DrawBox(const Vect2 &upperLeft, const Vect2 &size)=0;
     virtual void SetCropping(float top, float left, float bottom, float right)=0;
 
@@ -606,9 +606,11 @@ inline void  Frustum(float left, float right, float top, float bottom, float zne
 inline void  SetViewport(float x, float y, float width, float height) {GS->SetViewport(x, y, width, height);}
 inline void  SetScissorRect(XRect *pRect=NULL)                        {GS->SetScissorRect(pRect);}
 
-inline void DrawSprite(Texture *texture, DWORD color, float x, float y, float x2 = -998.0f, float y2 = -998.0f)
+inline void DrawSprite(Texture *texture, DWORD color, float x, float y)
+    {if (!texture) return; GS->DrawSprite(texture, color, x, y, (float)texture->Width(), (float)texture->Height());}
+inline void DrawSprite(Texture *texture, DWORD color, float x, float y, float x2, float y2)
     {GS->DrawSprite(texture, color, x, y, x2, y2);}
-inline void DrawSpriteEx(Texture *texture, DWORD color, float x, float y, float x2 = -998.0f, float y2 = -998.0f, float u = -998.0f, float v = -998.0f, float u2 = -998.0f, float v2 = -998.0f)
+inline void DrawSpriteEx(Texture *texture, DWORD color, float x, float y, float x2, float y2, float u, float v, float u2, float v2)
     {GS->DrawSpriteEx(texture, color, x, y, x2, y2, u, v, u2, v2);}
 inline void DrawBox(const Vect2 &upperLeft, const Vect2 &size)
     {GS->DrawBox(upperLeft, size);}

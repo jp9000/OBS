@@ -453,7 +453,7 @@ public:
     virtual void  SetScissorRect(XRect *pRect=NULL);
 
 
-    virtual void  DrawSpriteEx(Texture *texture, DWORD color, float x, float y, float x2 = -1.0f, float y2 = -1.0f, float u = -1.0f, float v = -1.0f, float u2 = -1.0f, float v2 = -1.0f);
+    virtual void  DrawSpriteEx(Texture *texture, DWORD color, float x, float y, float x2, float y2, float u, float v, float u2, float v2);
     virtual void  DrawBox(const Vect2 &upperLeft, const Vect2 &size);
     virtual void  SetCropping(float top, float left, float bottom, float right);
 

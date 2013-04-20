@@ -771,12 +771,13 @@ void D3D10System::SetScissorRect(XRect *pRect)
     }
 }
 
-void D3D10System::SetCropping(float top, float left, float bottom, float right)
+//(jim) hey, I changed this to x, y, x2, y2
+void D3D10System::SetCropping(float left, float top, float right, float bottom)
 {
-    curCropping[0] = top;
-    curCropping[1] = left;
-    curCropping[2] = bottom;
-    curCropping[3] = right;
+    curCropping[0] = left;
+    curCropping[1] = top;
+    curCropping[2] = right;
+    curCropping[3] = bottom;
 }
 
 void D3D10System::DrawSpriteEx(Texture *texture, DWORD color, float x, float y, float x2, float y2, float u, float v, float u2, float v2)
@@ -795,38 +796,35 @@ void D3D10System::DrawSpriteEx(Texture *texture, DWORD color, float x, float y, 
     if(hColor)
         curPixelShader->SetColor(hColor, color);
 
-    if(x2 == -998.0f && y2 == -998.0f)
-    {
-        x2 = float(texture->Width());
-        y2 = float(texture->Height());
-    }
+    //------------------------------
+    // crop positional values
 
-    /*if(u == -998.0f && v == -998.0f)
-    {
-        u = 0.0f;
-        v = 0.0f;
-    }
-    if(u2 == -998.0f && v2 == -998.0f)
-    {
-        u2 = 1.0f;
-        v2 = 1.0f;
-    }*/
+    Vect2 totalSize = Vect2(x2-x, y2-y);
+    Vect2 invMult   = Vect2(totalSize.x < 0.0f ? -1.0f : 1.0f, totalSize.y < 0.0f ? -1.0f : 1.0f);
+    totalSize.Abs();
 
-    //FIXME: this breaks for h/v flipped sources, detect and workaround.
+    x  += curCropping[0] * invMult.x;
+    y  += curCropping[1] * invMult.y;
+    x2 -= curCropping[2] * invMult.x;
+    y2 -= curCropping[3] * invMult.y;
 
-    //top
-    v = curCropping[0] / (y2 - y);
-    y += curCropping[0];
+    //------------------------------
+    // crop texture coordinate values
 
-    //left
-    u = curCropping[1] / (x2 - x);
-    x += curCropping[1];
-    
-    //bottom
-    u2 = 1.0f - (curCropping[2] / (x2 - x));
+    float cropMult[4];
+    cropMult[0] = curCropping[0]/totalSize.x;
+    cropMult[1] = curCropping[1]/totalSize.y;
+    cropMult[2] = curCropping[2]/totalSize.x;
+    cropMult[3] = curCropping[3]/totalSize.y;
 
-    //right
-    v2 = 1.0f - (curCropping[3] / (y2 - y));
+    Vect2 totalUVSize = Vect2(u2-u, v2-v);
+    u  += cropMult[0] * totalUVSize.x;
+    v  += cropMult[1] * totalUVSize.y;
+    u2 -= cropMult[2] * totalUVSize.x;
+    v2 -= cropMult[3] * totalUVSize.y;
+
+    //------------------------------
+    // draw
 
     VBData *data = spriteVertexBuffer->GetData();
     data->VertList[0].Set(x,  y,  0.0f);
