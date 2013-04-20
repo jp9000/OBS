@@ -179,6 +179,9 @@ const float attn4dotX = 1.0f / (1.0f + surroundMix4);
 
 void AudioSource::AddAudioSegment(AudioSegment *newSegment, float curVolume)
 {
+    if (newSegment)
+        MultiplyAudioBuffer(newSegment->audioData.Array(), newSegment->audioData.Num(), curVolume*sourceVolume);
+
     for (UINT i=0; i<audioFilters.Num(); i++)
     {
         if (newSegment)
@@ -186,10 +189,7 @@ void AudioSource::AddAudioSegment(AudioSegment *newSegment, float curVolume)
     }
 
     if (newSegment)
-    {
-        MultiplyAudioBuffer(newSegment->audioData.Array(), newSegment->audioData.Num(), curVolume*sourceVolume);
         audioSegments << newSegment;
-    }
 }
 
 UINT AudioSource::QueryAudio(float curVolume)
