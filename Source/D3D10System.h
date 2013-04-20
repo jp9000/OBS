@@ -455,7 +455,7 @@ public:
 
     virtual void  DrawSpriteEx(Texture *texture, DWORD color, float x, float y, float x2, float y2, float u, float v, float u2, float v2);
     virtual void  DrawBox(const Vect2 &upperLeft, const Vect2 &size);
-    virtual void  SetCropping(float top, float left, float bottom, float right);
+    virtual void  SetCropping(float left, float top, float right, float bottom);
 
     virtual void CopyTexture(Texture *texDest, Texture *texSrc);
 };
