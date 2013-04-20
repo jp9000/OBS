@@ -198,28 +198,28 @@ void DoD3D101Capture(IDXGISwapChain *swap)
             }
         }
 
+        LONGLONG timeVal = OSGetTimeMicroseconds();
+
+        //check keep alive state, dumb but effective
+        if(bCapturing)
+        {
+            if((timeVal-keepAliveTime) > 3000000)
+            {
+                HANDLE hKeepAlive = OpenEvent(EVENT_ALL_ACCESS, FALSE, strKeepAlive.c_str());
+                if (hKeepAlive) {
+                    CloseHandle(hKeepAlive);
+                } else {
+                    ClearD3D101Data();
+                    logOutput << "Keepalive no longer found on d3d10.1, freeing capture data" << endl;
+                    bCapturing = false;
+                }
+
+                keepAliveTime = timeVal;
+            }
+        }
+
         if(bHasTextures)
         {
-            LONGLONG timeVal = OSGetTimeMicroseconds();
-
-            //check keep alive state, dumb but effective
-            if(bCapturing)
-            {
-                if((timeVal-keepAliveTime) > 3000000)
-                {
-                    HANDLE hKeepAlive = OpenEvent(EVENT_ALL_ACCESS, FALSE, strKeepAlive.c_str());
-                    if (hKeepAlive) {
-                        CloseHandle(hKeepAlive);
-                    } else {
-                        ClearD3D101Data();
-                        logOutput << "Keepalive no longer found on d3d10.1, freeing capture data" << endl;
-                        bCapturing = false;
-                    }
-
-                    keepAliveTime = timeVal;
-                }
-            }
-
             LONGLONG frameTime;
             if(bCapturing)
             {
