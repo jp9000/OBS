@@ -36,6 +36,7 @@ DeviceSelection.Sound             "Аудио"
 DeviceSelection.SoundOffset       "Временное смещение звука (мс):
 DeviceSelection.SpillReduction    "Уменьшение разброса (1-1000):"
 DeviceSelection.UnsupportedResolution   "Это устройство не поддерживает такое разрешение"
+DeviceSelection.UseBuffering            "Буферизация (мс):"
 DeviceSelection.UseChromaKey      "Использовать Chroma Key"
 DeviceSelection.Video                   "Видео"
 
