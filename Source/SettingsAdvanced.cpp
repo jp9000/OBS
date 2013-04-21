@@ -62,7 +62,14 @@ void SettingsAdvanced::ApplySettings()
     bool bUseMTOptimizations = SendMessage(GetDlgItem(hwnd, IDC_USEMULTITHREADEDOPTIMIZATIONS), BM_GETCHECK, 0, 0) == BST_CHECKED;
     AppConfig->SetInt(TEXT("General"), TEXT("UseMultithreadedOptimizations"), bUseMTOptimizations);
 
-    strTemp = GetCBText(GetDlgItem(hwnd, IDC_PRIORITY));
+    int priority = (int)SendMessage(GetDlgItem(hwnd, IDC_PRIORITY), CB_GETCURSEL, 0, 0);
+    switch (priority) {
+    case 0: strTemp = TEXT("High"); break;
+    case 1: strTemp = TEXT("Above Normal"); break;
+    case 2: strTemp = TEXT("Normal"); break;
+    case 3: strTemp = TEXT("Idle"); break;
+    }
+
     AppConfig->SetString(TEXT("General"), TEXT("Priority"), strTemp);
 
     //--------------------------------------------------
@@ -182,12 +189,20 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 SendMessage(GetDlgItem(hwnd, IDC_USEMULTITHREADEDOPTIMIZATIONS), BM_SETCHECK, bUseMTOptimizations ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 HWND hwndTemp = GetDlgItem(hwnd, IDC_PRIORITY);
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("High"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("Above Normal"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("Normal"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("Idle"));
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)Str("Settings.Advanced.Priority.High"));
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)Str("Settings.Advanced.Priority.AboveNormal"));
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)Str("Settings.Advanced.Priority.Normal"));
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)Str("Settings.Advanced.Priority.Idle"));
 
-                LoadSettingComboString(hwndTemp, TEXT("General"), TEXT("Priority"), TEXT("Normal"));
+                CTSTR pStr = AppConfig->GetStringPtr(TEXT("General"), TEXT("Priority"), TEXT("Normal"));
+                if (scmpi(pStr, TEXT("Idle")) == 0)
+                    SendMessage(hwndTemp, CB_SETCURSEL, 3, 0);
+                else if (scmpi(pStr, TEXT("Normal")) == 0)
+                    SendMessage(hwndTemp, CB_SETCURSEL, 2, 0);
+                else if (scmpi(pStr, TEXT("Above Normal")) == 0)
+                    SendMessage(hwndTemp, CB_SETCURSEL, 1, 0);
+                else if (scmpi(pStr, TEXT("High")) == 0)
+                    SendMessage(hwndTemp, CB_SETCURSEL, 0, 0);
 
                 //--------------------------------------------
 
