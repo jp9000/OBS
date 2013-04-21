@@ -2563,7 +2563,23 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                             ClassInfo *curClassInfo = App->GetImageSourceClass(selectedElement->GetString(TEXT("class")));
                             if(curClassInfo && curClassInfo->configProc)
                             {
+                                Vect2 multiple;
+                                ImageSource *source;
+
                                 App->EnableSceneSwitching(false);
+
+                                if(App->bRunning)
+                                {
+                                    SceneItem* selectedItem = App->scene->GetSceneItem(selectedID);
+                                    source = selectedItem->GetSource();
+                                    if(source)
+                                    {
+                                        Vect2 curSize = Vect2(selectedElement->GetFloat(TEXT("cx"), 32.0f), selectedElement->GetFloat(TEXT("cy"), 32.0f));
+                                        Vect2 baseSize = source->GetSize();
+
+                                        multiple = curSize/baseSize;
+                                    }
+                                }
 
                                 if(curClassInfo->configProc(selectedElement, false))
                                 {
@@ -2573,11 +2589,16 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
                                         if(App->scene)
                                         {
+                                            Vect2 newSize = Vect2(selectedElement->GetFloat(TEXT("cx"), 32.0f), selectedElement->GetFloat(TEXT("cy"), 32.0f));
+                                            newSize *= multiple;
+
+                                            selectedElement->SetFloat(TEXT("cx"), newSize.x);
+                                            selectedElement->SetFloat(TEXT("cy"), newSize.y);
+
                                             SceneItem* selectedItem = App->scene->GetSceneItem(selectedID);
                                             if(selectedItem->GetSource())
                                                 selectedItem->GetSource()->UpdateSettings();
                                             selectedItem->Update();
-
                                         }
 
                                         App->LeaveSceneMutex();

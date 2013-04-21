@@ -585,19 +585,6 @@ bool DeviceSource::LoadFilters()
     //------------------------------------------------
     // connect all pins and set up the whole capture thing
 
-    /*if(bNoBuffering)
-    {
-        IMediaFilter *mediaFilter;
-        if(SUCCEEDED(graph->QueryInterface(IID_IMediaFilter, (void**)&mediaFilter)))
-        {
-            if(FAILED(mediaFilter->SetSyncSource(NULL)))
-                AppWarning(TEXT("DShowPlugin: Failed to set sync source, result = %08lX"), err);
-
-            Log(TEXT("Disabling buffering (hopefully)"));
-            mediaFilter->Release();
-        }
-    }*/
-
     //THANK THE NINE DIVINES I FINALLY GOT IT WORKING
     bool bConnected = SUCCEEDED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video, deviceFilter, NULL, captureFilter));
     if(!bConnected)
@@ -672,7 +659,7 @@ cleanFinish:
 
         if(bAddedDevice)
         {
-            if(!bDeviceHasAudio)
+            if(!bDeviceHasAudio && audioDeviceFilter)
                 graph->RemoveFilter(audioDeviceFilter);
             graph->RemoveFilter(deviceFilter);
         }
