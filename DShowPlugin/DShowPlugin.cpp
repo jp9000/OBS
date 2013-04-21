@@ -1823,7 +1823,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                                 configData->data->SetString(TEXT("audioDeviceID"), configData->audioIDList[audioDeviceID]);
                             }
 
-                            configData->data->SetInt(TEXT("forceCustomAudioDevice"), (!configData->bDeviceHasAudio || audioDeviceID != 0));
+                            configData->data->SetInt(TEXT("forceCustomAudioDevice"), (!configData->bDeviceHasAudio || audioDeviceID > 1));
 
                             if(SendMessage(GetDlgItem(hwnd, IDC_OUTPUTSOUND), BM_GETCHECK, 0, 0) == BST_CHECKED)
                                 soundOutputType = 1;
