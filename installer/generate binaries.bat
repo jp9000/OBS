@@ -64,6 +64,9 @@ mkdir upload\GraphicsCapturePlugin\32bit
 mkdir upload\GraphicsCapturePlugin\32bit\GraphicsCapture
 mkdir upload\GraphicsCapturePlugin\64bit
 mkdir upload\GraphicsCapturePlugin\64bit\GraphicsCapture
+mkdir upload\NoiseGatePlugin
+mkdir upload\NoiseGatePlugin\32bit
+mkdir upload\NoiseGatePlugin\64bit
 mkdir upload\OBS
 mkdir upload\OBS\32bit
 mkdir upload\OBS\64bit
@@ -88,6 +91,9 @@ copy ..\graphicscapture\x64\release\graphicscapture.dll .\upload\GraphicsCapture
 copy ..\graphicscapture\graphicscapturehook\release\graphicscapturehook.dll .\upload\GraphicsCapturePlugin\64bit\GraphicsCapture\
 copy ..\graphicscapture\graphicscapturehook\x64\release\graphicscapturehook64.dll .\upload\GraphicsCapturePlugin\64bit\GraphicsCapture\
 copy ..\injectHelper\release\injectHelper.exe .\upload\GraphicsCapturePlugin\64bit\GraphicsCapture\
+
+copy ..\NoiseGate\release\noisegate.dll .\upload\NoiseGatePlugin\32bit\
+copy ..\NoiseGate\x64\release\noisegate.dll .\upload\NoiseGatePlugin\64bit\
 
 copy ..\release\obs.exe .\upload\OBS\32bit\
 copy ..\obsapi\release\obsapi.dll .\upload\OBS\32bit\
