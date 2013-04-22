@@ -591,7 +591,7 @@ public:
     {
         strFont     = data->GetString(TEXT("font"), TEXT("Arial"));
         color       = data->GetInt(TEXT("color"), 0xFF000000);
-        size        = data->GetInt(TEXT("fontSize"), 12);
+        size        = data->GetInt(TEXT("fontSize"), 48);
         opacity     = data->GetInt(TEXT("textOpacity"), 100);
         scrollSpeed = data->GetInt(TEXT("scrollSpeed"), 0);
         bBold       = data->GetInt(TEXT("bold"), 0) != 0;
@@ -809,7 +809,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                 //-----------------------------------------
 
                 SendMessage(GetDlgItem(hwnd, IDC_TEXTSIZE), UDM_SETRANGE32, 5, 2048);
-                SendMessage(GetDlgItem(hwnd, IDC_TEXTSIZE), UDM_SETPOS32, 0, data->GetInt(TEXT("fontSize"), 12));
+                SendMessage(GetDlgItem(hwnd, IDC_TEXTSIZE), UDM_SETPOS32, 0, data->GetInt(TEXT("fontSize"), 48));
 
                 //-----------------------------------------
 
