@@ -2,7 +2,7 @@
 
 ; Define your application name
 !define APPNAME "Open Broadcaster Software"
-!define APPNAMEANDVERSION "Open Broadcaster Software 0.472b"
+!define APPNAMEANDVERSION "Open Broadcaster Software 0.50b"
 
 ; Additional script dependencies
 !include WinVer.nsh
@@ -115,7 +115,7 @@ Section "Open Broadcaster Software" Section1
 	File "..\x264\libs\32bit\libx264-130.dll"
 	File "..\OBSAPI\Release\OBSApi.dll"
 	File "..\rundir\services.xconfig"
-	File "..\rundir\OBSHelp.chm"
+	File "..\OBSHelp\OBSHelp.chm"
 	File "..\rundir\pdb32\stripped\*.pdb"
 	SetOutPath "$INSTDIR\locale"
 	File "..\rundir\locale\*.txt"
@@ -140,7 +140,7 @@ Section "Open Broadcaster Software" Section1
 		File "..\x264\libs\64bit\libx264-130.dll"
 		File "..\OBSAPI\x64\Release\OBSApi.dll"
 		File "..\rundir\services.xconfig"
-		File "..\rundir\OBSHelp.chm"
+		File "..\OBSHelp\OBSHelp.chm"
 		File "..\rundir\pdb64\stripped\*.pdb"
 		SetOutPath "$INSTDIR\64bit\locale"
 		File "..\rundir\locale\*.txt"
