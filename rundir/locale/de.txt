@@ -1,4 +1,4 @@
-﻿Add                 "Hinzufügen"
+Add                 "Hinzufügen"
 Apply               "Übernehmen"
 Browse              "Durchsuchen"
 BuildingMP4Dialog   "Erstelle MP4 Datei..."
@@ -118,10 +118,10 @@ Settings.SaveChangesPrompt  "Möchten Sie ihre Einstellungen speichern und anwen
 Settings.SaveChangesTitle   "Einstellungen speichern?"
 Settings.Video              "Video"
 
-Settings.Advanced.AutomaticLatency       			"Automatic-low-latency-Modus:"
+Settings.Advanced.AutomaticLatency                  "Automatic-low-latency-Modus:"
 Settings.Advanced.BindToIP                          "Netzwerkinterface:"
 Settings.Advanced.GlobalAudioTimeAdjust             "Globaler Audio/Zeit Offset (in Millisekunden):"
-Settings.Advanced.LatencyTuning          			"Faktor zur Latenzanpassung:"
+Settings.Advanced.LatencyTuning                     "Faktor zur Latenzanpassung:"
 Settings.Advanced.Network                           "Netzwerk"
 Settings.Advanced.PresetWarning                     "WARNUNG! Die Änderung des x264 Presets kann schwerwiegende negative Auswirkungen auf die Stream-Qualität und CPU-Auslastung haben.\r\n\r\nÄnderen Sie diese Einstellung nicht, wenn Sie nicht voll und ganz verstehen welche Auswirkungen die Presets auf den Stream haben.\r\n\r\nBehandeln Sie alle Anleitungen, die eine Änderung dieses Wertes vorschlagen, mit Vorsicht. Sie sollten so gut wie nie eine andere Einstellung als die Standardeinstellung (veryfast) verwenden müssen.\r\n\r\nSind Sie sicher, dass Sie das Preset ändern wollen?"
 Settings.Advanced.ProcessPriority                   "Prozesspriorität:"
