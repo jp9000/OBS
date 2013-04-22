@@ -197,12 +197,12 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 CTSTR pStr = AppConfig->GetStringPtr(TEXT("General"), TEXT("Priority"), TEXT("Normal"));
                 if (scmpi(pStr, TEXT("Idle")) == 0)
                     SendMessage(hwndTemp, CB_SETCURSEL, 3, 0);
-                else if (scmpi(pStr, TEXT("Normal")) == 0)
-                    SendMessage(hwndTemp, CB_SETCURSEL, 2, 0);
                 else if (scmpi(pStr, TEXT("Above Normal")) == 0)
                     SendMessage(hwndTemp, CB_SETCURSEL, 1, 0);
                 else if (scmpi(pStr, TEXT("High")) == 0)
                     SendMessage(hwndTemp, CB_SETCURSEL, 0, 0);
+                else //Normal
+                    SendMessage(hwndTemp, CB_SETCURSEL, 2, 0);
 
                 //--------------------------------------------
 

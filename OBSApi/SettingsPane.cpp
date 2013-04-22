@@ -59,6 +59,11 @@ INT_PTR CALLBACK SettingsPane::DialogProc(HWND hwnd, UINT message, WPARAM wParam
     return FALSE;
 }
 
+bool SettingsPane::HasDefaults() const
+{
+    return false;
+}
+
 void SettingsPane::SetDefaults()
 {
 }
