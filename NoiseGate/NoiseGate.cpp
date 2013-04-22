@@ -208,7 +208,18 @@ void NoiseGateSettings::CancelSettings()
 
 bool NoiseGateSettings::HasDefaults() const
 {
-    return false;
+    return true;
+}
+
+void NoiseGateSettings::SetDefaults()
+{
+    if(MessageBox(hwnd, Str("Plugins.NoiseGate.ConfirmReset"), Str("Plugins.NoiseGate.ResetToDefaults"), MB_YESNO) == IDYES)
+    {
+        parent->LoadDefaults();
+        RefreshConfig();
+        parent->SaveSettings();
+        SetChangedSettings(false);
+    }
 }
 
 /**
@@ -366,15 +377,6 @@ INT_PTR NoiseGateSettings::MsgClicked(int controlId, int code, HWND controlHwnd)
             OBSStartStopPreview();
             parent->isDisabledFromConfig = true;
             SetWindowText(controlHwnd, Str("Plugins.NoiseGate.DisablePreview"));
-        }
-        return TRUE;
-    case IDC_RESETTODEFAULTS:
-        // Display message box as resetting to defaults overrides our settings in memory
-        if(MessageBox(hwnd, Str("Plugins.NoiseGate.ConfirmReset"), Str("Plugins.NoiseGate.ResetToDefaults"), MB_YESNO) == IDYES) {
-            parent->LoadDefaults();
-            RefreshConfig();
-            parent->SaveSettings(); // Be consistent by also writing to file
-            SetChangedSettings(false);
         }
         return TRUE;
     }

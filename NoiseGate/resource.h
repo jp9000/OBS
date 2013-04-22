@@ -13,4 +13,3 @@
 #define IDC_ATTACKTIME_EDIT                     1026
 #define IDC_OPENTHRES_DB                        1028
 #define IDC_CLOSETHRES_DB                       1029
-#define IDC_RESETTODEFAULTS                     1031

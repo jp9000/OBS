@@ -107,6 +107,7 @@ public:
     virtual void ApplySettings();
     virtual void CancelSettings();
     virtual bool HasDefaults() const;
+    virtual void SetDefaults();
 };
 
 //============================================================================
