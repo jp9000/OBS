@@ -47,6 +47,12 @@ GlobalSources.DeleteConfirm "Jos poistat yleisen lähteen, se poistetaan myös k
 
 Listbox.Add         "Lisää $1"
 Listbox.Center      "Keskitä"
+Listbox.CenterHorizontally "Keskitä vaakasuunnassa"
+Listbox.CenterVertically "Keskitä pystysuunnassa"
+Listbox.MoveTop "Siirrä ylös"
+Listbox.MoveRight "Siirrä oikealle"
+Listbox.MoveBottom "Siirä alas"
+Listbox.MoveLeft "Siirrä vasemmalle"
 Listbox.Config      "Ominaisuudet"
 Listbox.FitToScreen "Sovita ruudulle"
 Listbox.Positioning "Paikka/Koko"
