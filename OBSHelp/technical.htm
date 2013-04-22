@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<title>OBS Documentation: Technical Explanations</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" media="screen" href="style.css"  type="text/css" />
+</head>
+
+<body>
+
+<div class="topthingy">
+  <h2>Technical Explanations of most OBS settings</h2></div>
+<div class="rightthingy"><br/>
+<div class="topthingy"><h3>General</h3></div>
+<p>This section should be self explanatory.</p>
+
+<div class="topthingy"><h3>Encoding</h3></div>
+
+<blockquote><h4>Video Encoding</h4>
+<p><strong>  Quality Balance</strong><br />
+  When using variable bitrate, this controls the CRF (constant rate factor) parameter in x264 (10 is CRF 22, 0 is CRF 32).  This is only used with variable bitrate, and determines how the video encoder should spend bits for quality.  This value is not used and disabled if using CBR (constant bitrate).  Generally the value you should set this to depends on your bitrate, resolution, and FPS.  If you have a high bitrate relative to your resolution/FPS, you can safely set this higher, but if you have a lower bitrate relative to your resolution/FPS, higher values will cause pixellation in higher motion scenes, so the value needs to be lowered.  If you get undesirable pixellation on higher motion, it generally means you should turn down this value until it stops, or increase your bitrate.</p>
+
+<ul>
+  <li>Recommended: Varies depending on resolution/fps relative to the bitrate.  5 is usually the "safest" value for most situations.</li>
+</ul>
+
+<p><strong>Max Bitrate</strong><br />
+Basically tells the video encoder (x264) to target this bitrate in kbps. If using variable bitrate, the actual bitrate will vary depending on the complexity of the scene.  Combined with the audio bitrate, this will determine how much upload you want to be used. If you have high upload speed, keep in mind that your viewers will require an equivalent download speed to be able to view your stream, so you probably don't want to go over 3500kbps or so unless you're a partnered streamer and have access to the transcoders (lower resolution selections for viewers).</p>
+
+<ul>
+  <li>Recommended: 70%-80% of your upload speed or 3500kbps (whichever is lower)</li>
+</ul>
+
+<p><strong>Buffer Size</strong><br />
+This ties in closely with the bitrate. x264 will encode everything into a fixed size buffer of this size. If there is a sudden scene change and high motion, it can fill up this buffer at a rate faster than the average max bitrate. Eg if you have a bitrate of 3000 and a buffer of 6000, x264 could decide that if a scene is complex enough, to use 5000 of the 6000 buffer at once. This makes your actual network bitrate quite spiky, which can lead to latency issues if queuing occurs on your modem or router. Raising this makes the stream bitrate more spiky but improves quality, reducing this makes the bitrate more tightly controlled and closer to the max bitrate setting. Don't set this too high as the client-side decode buffer will also need to be this big, and you have no control over that.</p>
+
+<ul>
+  <li>Recommended: Same as bitrate</li>
+</ul>
+
+<p><strong>Use CBR</strong><br />
+This will set x264 to use constant bitrate rather than variable bitrate. The "quality" setting will have no effect as the quality will be determined entirely by your bitrate, and x264 will try to ensure your stream goes out at exactly at bitrate specified. This results in a less spiky (bandwidth wise) stream, but will also cause both you and your viewers to consume more total bandwidth as scenes with no motion at all will still use the specified bitrate.</p>
+
+<p>CBR can help with QoS/latency issues caused by variable bitrate as TCP is not well designed for variable bandwidth. The quality cost of CBR is quite low and the issues it can fix such as viewers complaining of lag when there are no dropped frames can make this worth using, and it also eliminates the burden of having to pick an appropriate quality value.</p>
+
+<ul>
+  <li>Recommended: Generally safe to have on unless you're worried about total bandwidth usage.</li>
+  </ul></blockquote>
+<blockquote>
+  <h4>    Audio Encoding</h4>
+
+<p><strong>    Codec</strong><br />
+  AAC is higher quality at a lower bitrate. MP3 is marginally faster but lower quality.  AAC is also recommended for file output, as MP3 isn't really supported in MP4 files.</p>
+
+<ul>
+  <li>Recommended: AAC</li>
+</ul>
+
+<p><strong>Bitrate</strong><br />
+Controls the bitrate (and thus quality) of audio. Don't set this lower than 96kbps unless you're really constrained for bandwidth.</p>
+
+<ul>
+  <li>Recommended: 96 - 128kbps</li>
+</ul>
+</blockquote>
+<div class="topthingy"><h3>Broadcast Settings</h3></div>
+<p>  Everything here should be fairly self-explanatory. One thing to keep in mind, if you're using Twitch or Own3D, make sure to select the closest server to you to minimize latency. If you're using Twitch, try JTVPing from http://www.teamliquid.net/forum/viewmessage.php?topic_id=326034 to find your best server.</p>
+
+<p><strong><a name="MNI" />Minimize Network Impact</strong><br />
+If you experience high ping / latency issues when you are streaming, try enabling this option to reduce how often OBS outputs data to the network. This comes at the risk of increased frame drops if the connection to the streaming server is poor.</p>
+
+<div class="topthingy"><h3>Video</h3></div>
+<p><strong>Base Resolution</strong><br />
+This is the main resolution of your scene. This should generally by the same as your monitor resolution, so you can select a monitor to make it match. If you want to stream at a lower resolution, the Resolution Downscale option will provide the best quality. If you really want to stream at a certain resolution, eg 1280x720, you can type it in directly under "Custom". Please keep in mind that if your desktop is 16:10, you should enter a 16:10 custom resolution too (eg 1152x720), or your sources will not scale correctly and you will have black bars on your stream.</p>
+
+<ul>
+  <li>Recommended: Match your monitor resolution.</li>
+</ul>
+
+<p><strong>Resolution Downscale</strong><br />
+This allows you to reduce the resolution that the stream is encoded at in a high quality way. If you want to stream at 1280x720 (720p) and your monitor is 1920x1080 (1080p), it is best to use a Base Resolution of 1920x1080 and select 1280x720 from this list. Using the downscale option is like using anti-aliasing - it will make things like text and sharp lines look a lot nicer than if you just set your base resolution to 1280x720.</p>
+
+<p>Keep in mind that the resolution of your stream directly impacts how much CPU time and bitrate is required, so if you have a slow CPU or a low upload speed, reducing resolution is one of the best ways to improve things.</p>
+
+<ul>
+  <li>Recommended: Depends on your CPU and upload speed.</li>
+</ul>
+
+<p><strong>FPS</strong><br />
+How many frames per second to target. If you have a high end system, 60 fps looks very fluid and is preferred for fast action games like FPS / fighting games. A higher frame rate is directly tied to an increase in CPU requirements, eg 60 fps will require twice as much CPU power as 30 fps. However, 60 fps may not require twice the bitrate, since the improvement in fluidity from 30 fps to 60 fps means there is less time for the eye to notice a quality loss. If you find you have a great CPU but low upload, increasing FPS is one of the best ways to improve quality.</p>
+
+<ul>
+  <li>Recommended: 30 fps for most configurations, 60 fps if you have the CPU to support it and appropriate bandwidth to accommodate.</li>
+</ul>
+
+<p><strong>Disable Aero</strong><br />
+This will turn off Aero (desktop compositing) on Windows Vista or Windows 7. If you are using Software Capture and using monitor capture, disabling Aero will result in higher performance capture. Conversely, if you are using window capture, you want to keep Aero on, as then OBS can copy directly from the individual window surface that Aero maintains, which is higher performance and also works even when the window is obscured.</p>
+
+<ul>
+  <li>Recommended: Disable Aero only if using monitor capture, leave enabled if using window capture. If using neither, disabling Aero can have a very minor performance improvement for games.</li>
+</ul>
+
+<div class="topthingy"><h3>Audio</h3></div>
+<p>Most of this should be self explanatory. If you do not use a mic or other auxiliary input, set this to Disabled to conserve some resources.</p>
+
+<div class="topthingy"><h3>Advanced</h3></div>
+<p class="red_marker"><strong>Changing advanced options should never be done unless you fully understand what you are doing. You can very easily end up with a bad quality stream, throughput problems or excessive CPU usage by changing these settings.</strong></p>
+<p><strong>Use Multithreaded Optimizations</strong><br />
+This will use multiple threads for color space conversion, maximizing benefit from multi-core CPUs. There's almost no need to ever turn this off.</p>
+
+<ul>
+  <li>Recommended: On</li>
+  </ul>
+<p><strong>Process Priority Class</strong><br />
+    Set the windows priority for the OBS process. If you are streaming high CPU games and you want your stream to be the best quality regardless of how laggy your game gets, you can set the process class to Above Normal, which will guarantee OBS gets any CPU it needs before any other apps. This can very easily cause your games and other apps to lag.</p>
+
+<ul>
+  <li>Recommended: Normal</li>
+</ul>
+
+<p><strong>x264 CPU Preset</strong><br />
+This is an internal quality / time tradeoff scale in x264. A faster preset means less time will be spent encoding, but the image quality will be worse. A slower preset will increase CPU usage, but the image quality will be slightly better. You will almost always get better quality improvements from either a higher FPS, higher resolution or an increased bitrate. Changing this setting to improve quality is not recommended as the improvements are very minor and come at a great CPU cost. Going faster than veryfast will also disable many x264 optimizations and your stream quality will suffer. If you have constant CPU usage (eg a capture card) and know for certain you have spare CPU resources, you can set a slower preset for a very minor quality improvement. If you notice you have low FPS or lagged frames, you may have set your preset too slow.</p>
+
+<ul>
+  <li>Recommended: veryfast</li>
+</ul>
+
+<p><strong>Use CFR</strong><br />
+This will force OBS to output at a constant frame rate, duplicating frames if necessary to achieve this. This is intended to make the video file compatible with editors that cannot handle VFR. Not recommended unless you are creating videos for further editing and you are having problems.</p>
+
+<ul>
+  <li>Recommended: Off</li>
+</ul>
+
+<p><strong>Custom x264 Encoding Settings</strong><br />
+If you understand x264 internals, you can override any of the internal x264 parameters here. Do not paste anything that you may have found in any guides, you should never need to specify anything here. This is mainly for developers or users who understand the x264 internals to be able to experiment with x264.</p>
+
+<ul>
+  <li>Recommended: None</li>
+</ul>
+
+<p><strong>Force Audio Time to Sync To Video Time</strong><br />
+This will construct audio timestamps from the video source, usually you would do this if experiencing A/V sync issues with a bad audio device.</p>
+
+<ul>
+  <li>Recommended: Off, unless you are having sync issues.</li>
+</ul>
+
+<p><strong>Allow 61-120 FPS Entry</strong><br />
+Allows you go go above 60 FPS on the Video settings. Most people only have 60 Hz screens, so going higher FPS is almost never needed. This is an advanced option for people looking to experiment only.</p>
+
+<ul>
+  <li>Recommended: Off</li>
+</ul>
+
+<p><strong>Use Higher Quality Audio Resampling</strong><br />
+If your audio source is not 44,100 KHz, OBS will resample it. This setting enables sinc interpolation instead of linear interpolation, which results in slightly higher quality at the expense of a small increase in CPU usage. Some users report a hiss / static sound is present when this option is off, in which case you may want to turn it on.</p>
+
+<ul>
+  <li>Recommended: Off</li>
+</ul>
+
+<p><strong>Bind To Interface</strong><br />
+If you have multiple network interfaces, select the one which you wish OBS to use.</p>
+
+<ul>
+  <li>Recommended: Default</li>
+</ul>
+
+<p><strong>Latency Tuning Factor<br />
+Automatic Low Latency Mode</strong><br />
+These are advanced options used to fine tune the "Minimize network impact" option. The effect varies depending on the network conditions. You should not touch these unless instructed to do so by a developer.</p>
+
+<br/><br/><br/><br/>
+
+</div>
+
+</body>
+</html>

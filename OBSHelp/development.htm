@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<title>OBS Documentation: Development</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" media="screen" href="style.css"  type="text/css" />
+</head>
+
+<body>
+
+
+<div class="topthingy">
+  <h2>Development</h2>
+  </div>
+  
+<div class="rightthingy"><br/>
+  <table width="800" border="0">
+    <tr>
+      <td colspan="2" align="left">Communication and Downloads</td>
+    </tr>
+    <tr>
+      <td align="left" width="50px">&nbsp;</td>
+      <td align="left"><a href="http://obsproject.com/forum/viewforum.php?f=21" target="new">Development Forum</a></td>
+    </tr>
+    <tr>
+      <td align="left">&nbsp;</td>
+      <td align="left"><a href="http://webchat.quakenet.org/?channels=obsproject" target="new">Live Chat Support</a></td>
+    </tr>
+    <tr>
+      <td align="left">&nbsp;</td>
+      <td align="left"><a href="https://github.com/jp9000/OBS" target="new">GitHub OBS</a></td>
+    </tr>
+    <tr>
+      <td colspan="2" align="left">&nbsp;</td>
+    </tr>
+    <tr>
+      <td colspan="2" align="left">Compilation Infos</td>
+    </tr>
+    <tr>
+      <td align="left">&nbsp;</td>
+      <td align="left">You will need a working Windows 8 SDK and DirectX SDK</td>
+    </tr>
+    <tr>
+      <td align="left">&nbsp;</td>
+      <td align="left"><a href="http://msdn.microsoft.com/en-us/windows/desktop/hh852363.aspx" target="new">Windows 8 Software Development Kit</a></td>
+    </tr>
+    <tr>
+      <td align="left">&nbsp;</td>
+      <td align="left"><a href="http://www.microsoft.com/en-us/download/details.aspx?id=6812" target="new">DirectX Software Development Kit</a></td>
+    </tr>
+    <tr>
+      <td align="left">&nbsp;</td>
+      <td align="left">&nbsp;</td>
+    </tr>
+    <tr>
+      <td colspan="2" align="left">Excerpt from INSTALL file</td>
+    </tr>
+    <tr>
+      <td align="left">&nbsp;</td>
+      <td align="left"><p>---------------------------------------------<br />
+        Compiling<br />
+        ---------------------------------------------</p>
+        <p>Required (and included) libraries:<br />
+          libmp3lame      - MP3 encoder           - obs/lame<br />
+          libfaac         - AAC encoder           - obs/libfaac<br />
+          librtmp         - RTMP protocol         - obs/librtmp<br />
+          libsamplerate   - audio resampler       - obs/libsamplerate<br />
+          libx264         - x264 encoder          - obs/x264</p>
+        <p> To compile OBS and all its sub-libraries, you can use OBS-All.sln<br />
+          and compile everything all at once, or you can compile everything<br />
+          individually yourself.  x264 and libmp3lame are pre-compiled for<br />
+          convenience.<br />
+        </p>
+        <p>---------------------------------------------<br />
+          Windows SDK<br />
+          ---------------------------------------------<br />
+          It requires the latest windows SDK, as it uses features from<br />
+          windows vista, windows 7 and 8.  The windows 8 SDK should also come<br />
+          with the latest DirectX includes and libraries<br />
+        </p>
+        <p>---------------------------------------------<br />
+          Compiling LAME (if desired)<br />
+          ---------------------------------------------</p>
+        <p> I compile lame through the VC makefile.</p>
+        <p> Command line:  nmake -f Makefile.MSVC CPU=P3</p>
+        <p> Get nasm if you want to compile with assembly, otherwise use ASM=NO<br />
+          command line option.  Use MSVCVER=Win64 to compile 64bit.  View<br />
+          lame/makefile.msvc for more info.<br />
+        </p>
+        <p>---------------------------------------------<br />
+          Compiling x264 (if desired)<br />
+          ---------------------------------------------</p>
+        <p> x264 is slightly more troublesome, primarily because it's written in<br />
+          C99, yasm, and compile configuration is totally dependent on bash<br />
+          scripts.  Usually it's recommended to cross-compile on linux, but I just<br />
+          used msys and mingw for windows. There's a guide on how to get x264<br />
+          compiled on windows at http://doom10.org/index.php?topic=26.0</p>
+        <p> Make sure to use the --enable-win32thread configuration option,<br />
+          though I suppose you could make it use posix threads with a bit of work,<br />
+          but it's fairly pointless and you'd probably have to add some more stuff<br />
+          to the Hacks.cpp file.</p>
+        <p>If compiling static (which I don't do anymore), please make sure to<br />
+          include the static libgcc.a that your mingw provides.  Depending on your<br />
+          mingw version you may need to add/remove stuff from Hacks.cpp to get it<br />
+          properly working.  It sucks, I know, but I'm not the one who decided to<br />
+          make x264 uncompilable on microsoft's C compiler.</p>
+        <p>&nbsp;</p>
+        <p>---------------------------------------------<br />
+          Other notes<br />
+          ---------------------------------------------</p>
+        <p> You may have noted that every single library I use is statically linked.<br />
+          Even the CRT is static on all projects.  Personally, I despise having any<br />
+          outside DLL dependencies.  Having to install the damn visual studio<br />
+          runtimes every single time you install an application is the most annoying<br />
+          thing on earth.  Sure, I understand why they're used, and I know that there<br />
+          are often vulnerabilities that need to be patched, but I personally go<br />
+          around it by centralizing all such stuff in the utility library (see the<br />
+          Utility files in OBSApi).  Generally when I get an application I like it<br />
+          to work right from the start with as little setup as possible.  It's a<br />
+          personal preference.</p>
+        <p> If you need to allocate, use the Allocate and Free functions.  new and<br />
+          delete is automatically wrapped to these as well.</p>
+        <p> At some point in time I will get around to some proper documentation of<br />
+          the utility library, but in the mean time, look around in the utility files<br />
+      of OBSApi if you wish.</p></td>
+    </tr>
+  </table>
+
+<br/><br/><br/><br/>
+</div>
+
+
+</body>
+</html>

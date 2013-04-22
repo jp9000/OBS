@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<title>OBS Documentation: Video Settings</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" media="screen" href="style.css"  type="text/css" />
+</head>
+
+<body>
+
+<div class="topthingy">
+  <h2>Video Settings</h2></div>
+<div class="rightthingy"><br/>
+<img src="Images/videosettings.jpg" alt="Video Settings"></img>
+
+<h3>Base Resolution</h3>
+
+<p>The base resolution is what the scene is internally rendered at.  You can select the resolution of one of your monitors, or you can enter a custom resolution to render at.  If using a capture card, it is recommended that you set the resolution to what your capture card is set to for a 1:1 pixel ratio.</p>
+
+<h3>Resolution Downscale</h3>
+
+<p>This will downscale your scene before encoding and sending.  This is generally done so you can maintain higher and more consistent video quality at the cost of image size.  Note that the scene is still rendered at the base resolution; this only affects the output.  Using this can reduce CPU usage greatly as less data has to be transferred over the bus and less data has to be encoded.</p>
+
+<p>To maximize rendering efficiency and reduce frame lag, downscaling is done on the video card, and only the selectable downscales are available for use.  An option for software downscaling may become available in the future.</p>
+<h3>Filter</h3>
+<p>While downscaling is active you have 3 different Filters to choose from for a better looking downscale:</p>
+<ul>
+  <li>    Bilinear (fastest)</li>
+  <li>    Bicubic sharper (good detail, 16 samples)</li>
+  <li>    Lanczos (best detail, 36 samples)</li>
+</ul>
+<h3>FPS</h3>
+<p>This is your target output frames per second.  Note that this will not affect bandwidth, but it can affect quality.  Higher framerates require higher encoding bitrates to maintain quality.  Higher FPS will also require more encoding and thus more CPU usage.</p>
+
+<h3>Disable Aero</h3>
+
+<p>This option will make it so the application disables aero on startup.  This is highly recommended if you absolutely have to use Monitor Capture on windows 7 or vista. If you are not using Monitor Capture on windows 7/vista, you should leave this unchecked</p>
+
+<br/><br/><br/><br/>
+
+</div>
+
+</body>
+</html>
+

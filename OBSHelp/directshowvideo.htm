@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<title>OBS Documentation: DirectShow Video Plugin</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" media="screen" href="style.css"  type="text/css" />
+</head>
+
+<body>
+
+<div class="topthingy">
+  <h2>Video Capture Device</h2></div>
+<div class="rightthingy"><br/>
+  <img src="Images/DirectShowVideoPlugin.JPG" alt="Video Capture Plugin"/>
+  <div class="topthingy">
+  <h3>Device</h3></div>
+  <p>Select your Video Capture Device to be used for capture</p>
+  <ul>
+    <li>      Configure : 
+    Open the configuration dialog of your device</li>
+    <li>Refresh : Refreshes the list of devices</li>
+    <li>Open Crossbar : Open the crossbar of your device (let´s you select Input and Output Pins)</li>
+  </ul>
+  <h3>Flip Image Vertically/Horizontally</h3>
+  <p>As described, flip the image as choosen. Remember, this is not rotating.</p>
+  <h3>Use point filtering</h3>
+  <p>Point filtering can be useful if you change your Input resolution on stream.  </p>
+  <h3>Opacity</h3>
+  <p>Change the Opacity of your Video Capture Source</p>
+<div class="topthingy">
+  <h3>Video</h3></div>
+  <ul>
+    <li>Custom Resolution: Activate the following settings
+      <ul>
+        <li>Resolution : Set a custom resolution</li>
+        <li>FPS : Set a custom framerate (often the Input Hz frequency)</li>
+        <li>Output Format : Color Format to be used for Input</li>
+        <li>Use Buffering (miliseconds) : Buffer the Input of your video capture device (useful for synchronising Video and Audio)</li>
+      </ul>
+    </li>
+  </ul>
+  <div class="topthingy"><h3>Audio</h3></div>
+  <ul>
+    <li>Audio Input Device: Lets you select the desired Device for Audio Input
+      <ul>
+        <li>No Audio : Deactivates this device</li>
+        <li>Output audio to stream only
+          <ul>
+            <li>Audio Time Offset (miliseconds): Offset the playback of your Audio device to synchronise it to your Video)</li>
+          </ul>
+        </li>
+        <li>Output audio to desktop </li>
+      </ul>
+    </li>
+  </ul>
+  <div class="topthingy"><h3>Chroma Key</h3></div>
+  <p>This feature lets you use a greenscreen for example and remove the green parts of your webcam footage.</p>
+  <p>Use Chroma Key activates chroma keying. Select your desired Color and choose the Similarity/Blend and Spill Reduction until you like the result.</p>
+
+<br/><br/><br/><br/>
+</div>
+
+</body>
+</html>

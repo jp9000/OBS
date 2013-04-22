@@ -1,0 +1,41 @@
+[OPTIONS]
+Compatibility=1.1 or later
+Compiled file=OBS.chm
+Contents file=Table of Contents.hhc
+Default Window=Window1
+Default topic=overview.htm
+Display compile progress=Yes
+Full-text search=Yes
+Language=0x409 âpåÍ (ïƒçë)
+Title=OBS: Help
+
+[WINDOWS]
+Window1="OBS Help File","Table of Contents.hhc",,"overview.htm","overview.htm",,,,,0x42520,,0x3006,[271,93,1588,1031],,,,,,,0
+
+
+[FILES]
+advanced.htm
+advancedsettings.htm
+audiosettings.htm
+authors.htm
+basic.htm
+broadcastsettings.htm
+directshowvideo.htm
+editmode.htm
+encodingsettings.htm
+gamecapture.htm
+generalsettings.htm
+gettingstarted.htm
+globalsources.htm
+hotkeys.htm
+image.htm
+imgsld.htm
+mainwindow.htm
+overview.htm
+sources.htm
+text.htm
+videosettings.htm
+whatcapture.htm
+
+[INFOTYPES]
+

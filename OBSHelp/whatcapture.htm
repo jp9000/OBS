@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<title>OBS Documentation: Technical Explanations</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" media="screen" href="style.css"  type="text/css" />
+</head>
+
+<body>
+
+<div class="topthingy"><h3>Which capture method?</h3></div>
+<blockquote>
+
+<p><h3>  General Recommendation</h3>
+My recommendation is to use either window capture or game capture if capturing games.  They are the most efficient methods of capturing.  Use monitor capture only if you need to, unless on windows 8 where it performs very well.  Note that only game capture can capture games running in fullscreen mode.</p>
+
+<p><h3>  Monitor capture on windows 7 and windows vista</h3>
+  On windows vista and windows 7, monitor capture is the least efficient, I repeat, <b><u>least efficient</u></b> method of capture.  On windows 8, however, it is highly efficient and is done entirely via graphics processor memory, and is perfectly fine to use.  If you're using windows vista or windows 7 I would recommend only using this if you absolutely need to capture your desktop.  Otherwise use window capture or game capture, as they are far more efficient.  If you absolutely must use this <b>on windows vista/7, you <u>must</u> disable aero</b> (in video settings) or turn off aero in windows, otherwise capture will be even less efficient.  <b>You cannot capture games running in fullscreen mode with this capture method</b></p>
+
+<p><h3>  Monitor capture on windows 8</h3>
+  On windows 8, monitor capture is highly efficient due to new directx features only allowed in windows 8, which microsoft could have easily implemented into windows 7 but chose not to because why improve an older operating system when they can force people to upgrade to newer operating systems for extra cash.  ...Anyway, monitor capture on windows 8 is very fast and efficient, and is done almost entirely by the graphics processor with little CPU usage at all. <b>You cannot capture games running in fullscreen mode with this capture method</b></p>
+
+<p><h3>  Window Capture</h3>
+  Window capture is a very efficient method of capturing only a single window.  When aero is enabled it can also increase performance, so <b>aero is recommended to be enabled when using window capture</b>.  It is almost as good as game capture, and generally far more stable.  However, <b>you cannot capture games running in fullscreen mode with this capture method</b>.  Running games in borderless windowed mode with window capture is one of the most stable and efficient methods of capture.</p>
+
+<p><h3>  Game Capture</h3>
+  Game capture is the most efficient method when capturing games.  For DirectX games it is fastest and most efficient method of capture.  It is also the <b>only method of capturing games running in fullscreen mode</b>.  However, due to the fact that it must inject into the game process to capture frames directly from the game, <b>it's not guaranteed to be stable</b>.  Also, <b>only DirectX 9, 10, 10.1, 11, and OpenGL games are currently supported for game capture.</b>  OpenGL games can be a bit slower for capturing due to the fact that it cannot efficiently capture the texture directly.</p>
+</blockquote>
+
+<br/><br/><br/><br/>
+
+</div>
+
+</body>
+</html>

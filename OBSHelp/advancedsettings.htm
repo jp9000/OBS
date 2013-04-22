@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<title>OBS Documentation: Advanced Settings</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" media="screen" href="style.css"  type="text/css" />
+</head>
+
+<body>
+
+<div class="topthingy">
+  <h2>Advanced Settings</h2></div>
+<div class="rightthingy"><br/>
+  <img src="Images/advancedsettings.JPG" alt="Advanced Settings"/>
+  <p class="red_marker"><strong>Changing advanced options should never be done unless you fully understand what you are doing. You can very easily end up with a bad quality stream, throughput problems or excessive CPU usage by changing these settings.</strong></p>
+<p><strong>Use Multithreaded Optimizations</strong><br />
+This will use multiple threads for color space conversion, maximizing benefit from multi-core CPUs. There's almost no need to ever turn this off.</p>
+<ul>
+  <li>Recommended: On</li>
+</ul>
+<p><strong>Process Priority Class</strong><br />
+  Sets the process priority for OBS.  As encoding can consume a lot of CPU, setting this to say "above normal" can sometimes be useful to ensure capturing and encoding is done in a more timely fashion.</p>
+<ul>
+  <li>Recommended: Normal or Above Normal</li>
+</ul>
+<p><strong>x264 CPU Preset</strong><br />
+  This setting determines how much CPU you want the video encoder (x264) to dedicate for encoding.  Settings this to a slower/lower value means the encoder will use more CPU to try to improve quality, setting this to a faster/higher will cut certain quality features in order to reduce CPU usage.  Generally, the best setting is "veryfast", as it arguable gives the best tradeoff between CPU usage and quality.  If you have a slower CPU or a CPU with two or fewer cores, sometimes using "superfast" and "ultrafast" are recommended in order to further reduce CPU usage, though at the cost of quality.  Setting it to "faster", "fast", and below is generally not recommended and does not improve quality enough to where the increased CPU usage is justifiable.</p>
+<ul>
+  <li>Recommended: veryfast</li>
+</ul>
+<p><strong>Use CFR</strong><br />
+  This will force OBS to output at a constant frame rate, duplicating frames if necessary to achieve this. This is intended to make the video files compatible with editors and decoders that don't properly support variable frame rate.</p>
+<ul>
+  <li>Recommended: Off (On if editing video files)</li>
+</ul>
+<p><strong>Custom x264 Encoding Settings</strong><br />
+  If you understand x264 internals, you can override any of the internal x264 parameters here. It is highly recommended that you do not paste anything that you may have found in any guides, you should almost never actually need to specify anything here. This is mainly for developers or users who understand the x264 internals.</p>
+<ul>
+  <li>Recommended: None</li>
+</ul>
+<p><strong>Force desktop audio to use video timestamps as a base for audio time</strong><br />
+  This will construct desktop audio timestamps from the video timestamps rather than obtain timestamps directly from windows itself.  This is only for the desktop audio, this is not for mic/auxilary/webcam/device sync.</p>
+<ul>
+  <li>Recommended: Off, unless you are having desktop audio sync issues (this should actually never happen anymore, if this happens email Jim immidiately)</li>
+</ul>
+<p><strong>Allow 61-120 FPS Entry</strong><br />
+  Allows you set values above 60 FPS on the Video settings. Most people only have 60 Hz screens, so going higher FPS is almost never needed and will increase encoder CPU usage. This is an advanced option for people looking to experiment only.</p>
+<ul>
+  <li>Recommended: Off</li>
+</ul>
+<p><strong>Bind To Interface</strong><br />
+  If you have multiple network interfaces, select the one which you wish OBS to use.</p>
+<ul>
+  <li>Recommended: Default</li>
+</ul>
+<p><strong>Latency Tuning Factor<br />
+  Automatic Low Latency Mode</strong><br />
+  These are advanced options used to fine tune the &quot;Minimize network impact&quot; option. The effect varies depending on the network conditions. Higher value increases spacing between packets. This is a very last-resort option for precise fine tuning of packet intervals</p>
+
+<br/><br/><br/><br/>
+</div>
+
+</body>
+</html>

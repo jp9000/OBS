@@ -1,0 +1,49 @@
+@charset "utf-8";
+/* CSS Document */
+body
+{
+    font-family: arial;
+    font-size: 1em;
+    color: black;
+	background: #f0f0f0 url('Images/white_carbon2.png');
+    margin: 0;
+    padding: 0;
+}
+img { 
+   border:1px solid #021a40;
+}
+.topthingy
+{
+    height: 50px;
+    padding: 20px;
+	background-color: white;
+	border:1px solid #021a40;
+}
+
+.rightthingy
+{
+    margin-left: 20px;
+    margin-right: 80px;
+    margin-bottom: 50px;
+    min-width: 600px;
+	width: 800px;
+}
+
+p
+{
+    margin-top: 6px;
+    margin-left: 10px;
+}
+
+p.value
+{
+    margin: 0 0 0 30px;
+}
+
+hr
+{
+    margin-top: 20px;
+}
+.red_marker {
+	color: #F00;
+}

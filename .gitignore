@@ -31,5 +31,7 @@ ipch/
 *.lnk
 *.chm
 
+!OBSHelp/*.css
+!OBSHelp/*.htm
 !x264/libs/64bit/*.dll
 !x264/libs/32bit/*.dll
