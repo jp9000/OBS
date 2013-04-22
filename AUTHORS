@@ -1,31 +1,115 @@
-Authors:
-  Hugh "Jim" Bailey (obs.jim@gmail.com) - Damnit Jim!
-  Richard "R1CH" Stanway
+---------------------------------------------------
+Maintainer/Original Author:
+---------------------------------------------------
+  Hugh "Jim" Bailey (obs.jim@gmail.com) - Damnit Jim!  Primary contributer.
+                                          Whines a lot about stupid stuff.
 
+---------------------------------------------------
+Contributors:
+---------------------------------------------------
+  Richard "R1CH" Stanway   - Auto-Updater, high quality network code, bug
+                             fixes, design improvements, and frequent
+                             additions.
+
+  Bill Hamilton            - Added useful API interfaces, added audio meters
+                             and improved the audio code, made the remote
+                             plugin, and is a super classy individual.
+
+  Muf                      - Experimentation with new technology, mathamatical
+                             support/discussion.  Helped develop/test frame
+                             drop code and helped develop the chroma key
+                             shaders, and helps with the more intricate details
+                             of broadcast/display standards.
+
+  paibox                   - Crossbar support for devices, alternate audio
+                             device support for devices through directshow,
+                             as well as bugfixes and various other minor
+                             features.
+
+  HomeWorld                - Many many bug fixes, improved the text source
+                             code significantly.  Text.  Loves text on the
+                             stream.  A lot.  Added a rather disturbing
+                             amount of features for text.
+
+  ThoNohT                  - Bug fixes, many minor additions, translation,
+                             features such as moving sources via arrow keys,
+                             additional menu options,
+
+  Lucas Murray             - Added noise gate plugin, refactored settings
+                             code, added 1:1 and fullscreen display.
+                             Then...  well.
+
+  fox1337                  - Added tray icon and notification code
+
+  others                   - Thanks to all the others who have contributed
+                             bugfixes, adjustments, tweaks, and features.
+
+---------------------------------------------------
+Obsproject.com website, artwork, and listening to Jim's incomprehensible
+venting:
+---------------------------------------------------
+  Taylor "Warchamp7" Giampaolo
+
+---------------------------------------------------
 Translations:
-  Andres Lasn                           - Estonian translation
-  Johannes Grill and Johannes Kroker    - German translations
-  August Kind Svendsen                  - Norwegian translation
-  Alan Antunes                          - French translation
-  Hath Ington                           - Bulgarian translation
-  xuok, R3mbrant, and Woona             - Russian translations
-  Joni "Arkkis" Nieminen                - Finnish translations
+---------------------------------------------------
+  Estonian    - Andres Lasn
+  German      - Johannes Grill and Johannes Kroker
+  Norwegian   - August Kind Svendsen
+  French      - Soopah, Alan Antunes
+  Bulgarian   - Hath Ington
+  Russian     - Corwin, xuok, R3mbrant, and Woona
+  Finnish     - Joni "Arkkis" Nieminen
+  Dutch       - Muf, ThoNohT, and others
+  Others      - Thanks to all the other authors whos names I have not written
+                down.
 
+---------------------------------------------------
 Libraries:
-  x264                   - fantastic open source h264 encoding library
-  libmp3lame             - a most non-lame library for encoding mp3 audio
-  libfaac                - an excellent open source library for encoding AAC
-  librtmp                - a nice open source library for the RTMP protocol
-  libsamplerate          - secret monkeys make awesome code.
+---------------------------------------------------
+  x264                   - The best h264 encoding library
+  libmp3lame             - A most non-lame library for encoding mp3 audio
+  libfaac                - An excellent open source library for encoding AAC
+  librtmp                - A nice open source library for the RTMP protocol
+  libsamplerate          - Secret monkeys make top resampling code.
 
+---------------------------------------------------
+Patient insane people who frequently help out in chat and on forums:
+---------------------------------------------------
+  Krazy
+  dodgepong
+  jack0r
+  Zephiris
+  hilalpro (even though we can disagree at times)
+  and all the other people who help out on the forums to allow the devs to
+  focus on code
+
+---------------------------------------------------
 Notable super awesome testers:
-  Kyle "Kendobear" Asher - A guy who spent weeks helping pinpoint a bug
-                           specific to his system.  This guy deserves a
-                           medal for his patience.
+---------------------------------------------------
+  Kyle "Kendobear" Asher - A guy who spent weeks helping test sync and timing
+                           code.  This guy deserves a medal for his patience.
 
   D2Ultima/Frostshocker/Modnite - These guys helped me test the major network
                                   code updates, as well as helped point out
                                   compatibility issues for certain systems.
                                   The greatly improved network code would not
-                                  have been possible without their help.
+                                  have been possible without their testing.
 
+  Frostshocker - Helping get rid of all elgato-related issues and allowing Jim
+                 to vent about how much he hates capture devices.
+
+  Krazy - Always an eager guinea pig.
+
+  Any person who went through hours of testing.  Seriously, those people are
+  crazy awesome and I need to remember more of their names because there are
+  many of them.
+
+  Tons of others - Thanks to everyone else on the forums for reporting bugs,
+                   and thanks to all who come by chat to patiently go through
+                   bugfixing and testing for me.
+
+---------------------------------------------------
+Other super awesome people:
+---------------------------------------------------
+  You, if you actually read this.  Also, thank you if you find this app useful.
