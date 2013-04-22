@@ -1,6 +1,6 @@
 [OPTIONS]
 Compatibility=1.1 or later
-Compiled file=OBS.chm
+Compiled file=OBSHelp.chm
 Contents file=Table of Contents.hhc
 Default Window=Window1
 Default topic=overview.htm
