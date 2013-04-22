@@ -25,7 +25,6 @@ FONT 8, "Ms Shell Dlg", 0, 0, 1
     EDITTEXT        IDC_ATTACKTIME_EDIT, 252, 30, 42, 14, ES_AUTOHSCROLL | ES_NUMBER
     EDITTEXT        IDC_HOLDTIME_EDIT, 252, 48, 42, 14, ES_AUTOHSCROLL | ES_NUMBER
     EDITTEXT        IDC_RELEASETIME_EDIT, 252, 66, 42, 14, ES_AUTOHSCROLL | ES_NUMBER
-    PUSHBUTTON      "Plugins.NoiseGate.ResetToDefaults", IDC_RESETTODEFAULTS, 6, 318, 78, 14
     GROUPBOX        "Plugins.NoiseGate.Thresholds", IDC_STATIC, 6, 6, 102, 216
     GROUPBOX        "Plugins.NoiseGate.General", IDC_STATIC, 114, 6, 306, 84
     RTEXT           "Plugins.NoiseGate.AttackTime", IDC_STATIC, 126, 33, 124, 8, SS_RIGHT
