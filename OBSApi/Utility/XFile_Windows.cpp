@@ -352,7 +352,7 @@ BOOL IsSafeFilename(CTSTR path)
 
     while (*p)
     {
-        if (!isalnum(*p) && *p != '.' && *p != '/' && *p != '_' && *p != '-')
+        if (!isalnum(*p) && *p != ' ' && *p != '.' && *p != '/' && *p != '_' && *p != '-')
             return FALSE;
         p++;
     }
