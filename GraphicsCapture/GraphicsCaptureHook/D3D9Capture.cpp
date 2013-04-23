@@ -967,13 +967,13 @@ void SetupD3D9(IDirect3DDevice9 *device)
             d3d->Release();
         }
 
-        FARPROC curRelease = GetVTable(device, (8/4));
+        /*FARPROC curRelease = GetVTable(device, (8/4));
         if(curRelease != newD3D9Release)
         {
             oldD3D9Release = curRelease;
             newD3D9Release = (FARPROC)D3D9Release;
             SetVTable(device, (8/4), newD3D9Release);
-        }
+        }*/
 
         FARPROC curPresent = GetVTable(device, (68/4));
         d3d9Present.Hook(curPresent, (FARPROC)D3D9Present);
