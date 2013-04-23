@@ -22,6 +22,7 @@
 #include "../libsamplerate/samplerate.h"
 
 #define KSAUDIO_SPEAKER_4POINT1     (KSAUDIO_SPEAKER_QUAD|SPEAKER_LOW_FREQUENCY)
+#define KSAUDIO_SPEAKER_3POINT1     (KSAUDIO_SPEAKER_STEREO|SPEAKER_FRONT_CENTER|SPEAKER_LOW_FREQUENCY)
 #define KSAUDIO_SPEAKER_2POINT1     (KSAUDIO_SPEAKER_STEREO|SPEAKER_LOW_FREQUENCY)
 
 
@@ -130,6 +131,23 @@ void AudioSource::InitAudioData(bool bFloat, UINT channels, UINT samplesPerSec, 
 
     if(inputChannels > 2)
     {
+        switch(inputChannelMask)
+        {
+            case KSAUDIO_SPEAKER_QUAD:              Log(TEXT("Using quad speaker setup"));                          break; //ocd anyone?
+            case KSAUDIO_SPEAKER_2POINT1:           Log(TEXT("Using 2.1 speaker setup"));                           break;
+            case KSAUDIO_SPEAKER_3POINT1:           Log(TEXT("Using 3.1 speaker setup"));                           break;
+            case KSAUDIO_SPEAKER_4POINT1:           Log(TEXT("Using 4.1 speaker setup"));                           break;
+            case KSAUDIO_SPEAKER_SURROUND:          Log(TEXT("Using basic surround speaker setup"));                break;
+            case KSAUDIO_SPEAKER_5POINT1:           Log(TEXT("Using 5.1 speaker setup"));                           break;
+            case KSAUDIO_SPEAKER_5POINT1_SURROUND:  Log(TEXT("Using 5.1 surround speaker setup"));                  break;
+            case KSAUDIO_SPEAKER_7POINT1:           Log(TEXT("Using 7.1 speaker setup (experimental)"));            break;
+            case KSAUDIO_SPEAKER_7POINT1_SURROUND:  Log(TEXT("Using 7.1 surround speaker setup (experimental)"));   break;
+            default:
+                Log(TEXT("Using unknown speaker setup: 0x%lX, %d channels"), inputChannels, inputChannelMask);
+                inputChannelMask = 0;
+                break;
+        }
+
         if(inputChannelMask == 0)
         {
             switch(inputChannels)
@@ -139,24 +157,9 @@ void AudioSource::InitAudioData(bool bFloat, UINT channels, UINT samplesPerSec, 
                 case 5: inputChannelMask = KSAUDIO_SPEAKER_4POINT1; break;
                 case 6: inputChannelMask = KSAUDIO_SPEAKER_5POINT1; break;
                 case 8: inputChannelMask = KSAUDIO_SPEAKER_7POINT1; break;
+                default:
+                    CrashError(TEXT("Unknown speaker setup, no downmixer available."));
             }
-        }
-
-        switch(inputChannelMask)
-        {
-            case KSAUDIO_SPEAKER_QUAD:              Log(TEXT("Using quad speaker setup"));                          break; //ocd anyone?
-            case KSAUDIO_SPEAKER_2POINT1:           Log(TEXT("Using 2.1 speaker setup"));                           break;
-            case KSAUDIO_SPEAKER_4POINT1:           Log(TEXT("Using 4.1 speaker setup"));                           break;
-            case KSAUDIO_SPEAKER_SURROUND:          Log(TEXT("Using basic surround speaker setup"));                break;
-            case KSAUDIO_SPEAKER_5POINT1:           Log(TEXT("Using 5.1 speaker setup"));                           break;
-            case KSAUDIO_SPEAKER_5POINT1_SURROUND:  Log(TEXT("Using 5.1 surround speaker setup"));                  break;
-            case KSAUDIO_SPEAKER_7POINT1:           Log(TEXT("Using 7.1 speaker setup (experimental)"));            break;
-            case KSAUDIO_SPEAKER_7POINT1_SURROUND:  Log(TEXT("Using 7.1 surround speaker setup (experimental)"));   break;
-
-            default:
-                Log(TEXT("Using unknown speaker setup: 0x%lX"), inputChannelMask);
-                CrashError(TEXT("Speaker setup not yet implemented -- dear god of all the audio APIs, the one I -have- to use doesn't support resampling or downmixing.  fabulous."));
-                break;
         }
     }
 }
@@ -359,6 +362,24 @@ UINT AudioSource::QueryAudio(float curVolume)
                     inputTemp  += 3;
                 }
             }
+            else if(inputChannelMask == KSAUDIO_SPEAKER_3POINT1)
+            {
+                UINT numFloats = numAudioFrames*4;
+                float *endTemp = inputTemp+numFloats;
+
+                while(inputTemp < endTemp)
+                {
+                    float left          = inputTemp[0];
+                    float right         = inputTemp[1];
+                    float frontCenter   = inputTemp[2];
+                    float lowFreq       = inputTemp[3];
+
+                    *(outputTemp++) = left;
+                    *(outputTemp++) = right;
+
+                    inputTemp  += 4;
+                }
+            }
             else if(inputChannelMask == KSAUDIO_SPEAKER_4POINT1)
             {
                 UINT numFloats = numAudioFrames*5;
@@ -559,7 +580,7 @@ UINT AudioSource::QueryAudio(float curVolume)
         }
 
         //------------------------------------------------------
-        // timestamp smoothing (keep audio within 50ms of target time)
+        // timestamp smoothing (keep audio within 70ms of target time)
 
         if (!lastUsedTimestamp)
             lastUsedTimestamp = newTimestamp;
@@ -568,7 +589,7 @@ UINT AudioSource::QueryAudio(float curVolume)
 
         QWORD difVal = GetQWDif(newTimestamp, lastUsedTimestamp);
 
-        if (difVal > 50) {
+        if (difVal > 70) {
             /*QWORD curTimeMS = App->GetVideoTime()-App->GetSceneTimestamp();
             UINT curTimeTotalSec = (UINT)(curTimeMS/1000);
             UINT curTimeTotalMin = curTimeTotalSec/60;
@@ -581,7 +602,6 @@ UINT AudioSource::QueryAudio(float curVolume)
         }
 
         //-----------------------------------------------------------------------------
-        // sort all audio frames into 10 millisecond increments (done because not all devices output in 10ms increments)
 
         float *newBuffer = (bResample) ? tempResampleBuffer.Array() : tempBuffer.Array();
 
