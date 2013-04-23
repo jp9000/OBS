@@ -163,12 +163,14 @@ Section "Open Broadcaster Software" Section1
 
 	WriteUninstaller "$INSTDIR\uninstall.exe"
 
+	SetOutPath "$INSTDIR\"
 	CreateShortCut "$DESKTOP\Open Broadcaster Software.lnk" "$INSTDIR\OBS.exe"
 	CreateDirectory "$SMPROGRAMS\Open Broadcaster Software"
 	CreateShortCut "$SMPROGRAMS\Open Broadcaster Software\Open Broadcaster Software (32bit).lnk" "$INSTDIR\OBS.exe"
 	CreateShortCut "$SMPROGRAMS\Open Broadcaster Software\Uninstall.lnk" "$INSTDIR\uninstall.exe"
 
 	${if} ${RunningX64}
+		SetOutPath "$INSTDIR\64bit\"
 		CreateShortCut "$SMPROGRAMS\Open Broadcaster Software\Open Broadcaster Software (64bit).lnk" "$INSTDIR\64bit\OBS.exe"
 	${endif}
 
