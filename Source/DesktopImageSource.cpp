@@ -843,10 +843,14 @@ void SelectTargetWindow(HWND hwnd)
     if(rc.bottom < 32)
         rc.bottom = 32;
 
-    SetWindowText(GetDlgItem(hwnd, IDC_POSX),  IntString(rc.left).Array());
-    SetWindowText(GetDlgItem(hwnd, IDC_POSY),  IntString(rc.top).Array());
-    SetWindowText(GetDlgItem(hwnd, IDC_SIZEX), IntString(rc.right).Array());
-    SetWindowText(GetDlgItem(hwnd, IDC_SIZEY), IntString(rc.bottom).Array());
+    BOOL bRegion = SendMessage(GetDlgItem(hwnd, IDC_REGIONCAPTURE), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    if(!bRegion)
+    {
+        SetWindowText(GetDlgItem(hwnd, IDC_POSX),  IntString(rc.left).Array());
+        SetWindowText(GetDlgItem(hwnd, IDC_POSY),  IntString(rc.top).Array());
+        SetWindowText(GetDlgItem(hwnd, IDC_SIZEX), IntString(rc.right).Array());
+        SetWindowText(GetDlgItem(hwnd, IDC_SIZEY), IntString(rc.bottom).Array());
+    }
 }
 
 struct RegionWindowData
