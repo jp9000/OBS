@@ -790,7 +790,7 @@ void SetDesktopCaptureType(HWND hwnd, UINT type)
     EnableWindow(GetDlgItem(hwnd, IDC_INNERWINDOW), type == 1);
 }
 
-void SelectTargetWindow(HWND hwnd)
+void SelectTargetWindow(HWND hwnd, bool bRefresh)
 {
     HWND hwndWindowList = GetDlgItem(hwnd, IDC_WINDOW);
     UINT windowID = (UINT)SendMessage(hwndWindowList, CB_GETCURSEL, 0, 0);
@@ -844,7 +844,7 @@ void SelectTargetWindow(HWND hwnd)
         rc.bottom = 32;
 
     BOOL bRegion = SendMessage(GetDlgItem(hwnd, IDC_REGIONCAPTURE), BM_GETCHECK, 0, 0) == BST_CHECKED;
-    if(!bRegion)
+    if(!bRegion || bRefresh)
     {
         SetWindowText(GetDlgItem(hwnd, IDC_POSX),  IntString(rc.left).Array());
         SetWindowText(GetDlgItem(hwnd, IDC_POSY),  IntString(rc.top).Array());
@@ -1703,7 +1703,7 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 case IDC_WINDOW:
                 case IDC_OUTERWINDOW:
                 case IDC_INNERWINDOW:
-                    SelectTargetWindow(hwnd);
+                    SelectTargetWindow(hwnd, HIWORD(wParam)==CBN_SELCHANGE);
                     break;
 
                 case IDC_REFRESH:
