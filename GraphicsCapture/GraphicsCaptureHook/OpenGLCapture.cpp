@@ -216,6 +216,7 @@ void ClearGLData()
     lastTime = 0;
     curCapture = 0;
     curCPUTexture = 0;
+    keepAliveTime = 0;
     pCopyData = NULL;
 }
 
@@ -432,7 +433,10 @@ void HandleGLSceneUpdate(HDC hDC)
         //check keep alive state, dumb but effective
         if(bCapturing)
         {
-            if((timeVal-keepAliveTime) > 3000000)
+            if (!keepAliveTime)
+                keepAliveTime = timeVal;
+
+            if((timeVal-keepAliveTime) > 5000000)
             {
                 HANDLE hKeepAlive = OpenEvent(EVENT_ALL_ACCESS, FALSE, strKeepAlive.c_str());
                 if (hKeepAlive) {

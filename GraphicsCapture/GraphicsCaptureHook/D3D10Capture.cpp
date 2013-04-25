@@ -51,6 +51,7 @@ void ClearD3D10Data()
     SafeRelease(copyD3D10TextureGame);
 
     DestroySharedMemory();
+    keepAliveTime = 0;
 }
 
 void SetupD3D10(IDXGISwapChain *swapChain)
@@ -204,7 +205,10 @@ void DoD3D10Capture(IDXGISwapChain *swap)
         //check keep alive state, dumb but effective
         if(bCapturing)
         {
-            if((timeVal-keepAliveTime) > 3000000)
+            if (!keepAliveTime)
+                keepAliveTime = timeVal;
+
+            if((timeVal-keepAliveTime) > 5000000)
             {
                 HANDLE hKeepAlive = OpenEvent(EVENT_ALL_ACCESS, FALSE, strKeepAlive.c_str());
                 if (hKeepAlive) {
