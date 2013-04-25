@@ -39,6 +39,8 @@ class MMDeviceAudioSource : public AudioSource
 
     //UINT32 numFramesRead;
 
+    UINT32 numTimesInARowNewDataSeen;
+
     String strDeviceName;
 
     bool bUseVideoTime;
@@ -152,6 +154,8 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
         Log(TEXT("Using auxilary audio input: %s"), GetDeviceName());
 
         bUseQPC = GlobalConfig->GetInt(TEXT("Audio"), TEXT("UseMicQPC")) != 0;
+        if (bUseQPC)
+            Log(TEXT("Using Mic QPC timestamps"));
     }
     else
     {
@@ -321,11 +325,34 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
     UINT captureSize = 0;
     bool bFirstRun = true;
     HRESULT hRes;
+    UINT64 devPosition, qpcTimestamp;
+    LPBYTE captureBuffer;
+    UINT32 numFramesRead;
+    DWORD dwFlags = 0;
 
     while (true) {
         if (inputBufferSize >= sampleWindowSize*GetChannelCount()) {
-            if (bFirstRun)
+            if (bFirstRun) {
                 lastQPCTimestamp += 10;
+            } else if (bIsMic && !bUseQPC) {
+                captureSize = 0;
+                mmCapture->GetNextPacketSize(&captureSize);
+
+                //throws away worthless mic data that's sampling faster than the desktop buffer.
+                //disgusting fix for stupid worthless mic issues.
+                if (captureSize > 0) {
+                    ++numTimesInARowNewDataSeen;
+
+                    if (numTimesInARowNewDataSeen > 500) {
+                        if (SUCCEEDED(mmCapture->GetBuffer(&captureBuffer, &numFramesRead, &dwFlags, &devPosition, &qpcTimestamp))) {
+                            mmCapture->ReleaseBuffer(numFramesRead);
+                            numTimesInARowNewDataSeen = 0;
+                        }
+                    }
+                } else {
+                    numTimesInARowNewDataSeen = 0;
+                }
+            }
             firstTimestamp = GetTimestamp(lastQPCTimestamp);
             break;
         }
@@ -344,11 +371,6 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
 
         //---------------------------------------------------------
 
-        LPBYTE captureBuffer;
-        UINT32 numFramesRead;
-        DWORD dwFlags = 0;
-
-        UINT64 devPosition, qpcTimestamp;
         hRes = mmCapture->GetBuffer(&captureBuffer, &numFramesRead, &dwFlags, &devPosition, &qpcTimestamp);
 
         if (FAILED(hRes)) {
@@ -362,10 +384,6 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
 
             qpcTimestamp -= UINT64(timeAdjust);
         }
-
-        /*if (!bIsMic) {
-            Log(TEXT("f: %u, i: %u, qpc: %llu"), numFramesRead, inputBufferSize != 0, qpcTimestamp);
-        }*/
 
         qpcTimestamp /= 10000;
         lastQPCTimestamp = qpcTimestamp;
