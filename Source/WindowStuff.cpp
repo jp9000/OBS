@@ -2834,12 +2834,11 @@ ItemModifyType GetItemModifyType(const Vect2 &mousePos, const Vect2 &itemPos, co
         return ItemModifyType_ScaleTopRight;
     else if(mousePos.CloseTo(Vect2(itemPos.x, lowerRight.y), 10.0f))
         return ItemModifyType_ScaleBottomLeft;
-
-    if(CloseFloat(mousePos.x, itemPos.x, 4.0f))
+    else if(CloseFloat(mousePos.x, itemPos.x, 4.0f)) 
         return ItemModifyType_ScaleLeft;
     else if(CloseFloat(mousePos.x, lowerRight.x, 4.0f))
         return ItemModifyType_ScaleRight;
-    else if(CloseFloat(mousePos.y, itemPos.y, 4.0f))
+    else if (CloseFloat(mousePos.y, itemPos.y, 4.0f)) 
         return ItemModifyType_ScaleTop;
     else if(CloseFloat(mousePos.y, lowerRight.y, 4.0f))
         return ItemModifyType_ScaleBottom;
@@ -2912,6 +2911,61 @@ Vect2 OBS::GetWindowToFrameScale()
 Vect2 OBS::GetFrameToWindowScale()
 {
     return MapFrameToWindowSize(Vect2(1.0f, 1.0f));
+}
+
+bool OBS::EnsureCropValid(SceneItem *&scaleItem, Vect2 &minSize, Vect2 &snapSize, bool bControlDown) 
+{
+    // left
+    if (scaleItem->crop.w > (scaleItem->size.x / 2) - minSize.x) 
+    {
+        scaleItem->crop.w = (scaleItem->size.x / 2) - minSize.x;
+    }
+    // top
+    if (scaleItem->crop.x > (scaleItem->size.y / 2) - minSize.y) 
+    {
+        scaleItem->crop.x = (scaleItem->size.y / 2) - minSize.y;
+    }
+    // right
+    if (scaleItem->crop.y > (scaleItem->size.x / 2) - minSize.x) 
+    {
+        scaleItem->crop.y = (scaleItem->size.x / 2) - minSize.x;
+    }
+    // bottom
+    if (scaleItem->crop.z > (scaleItem->size.y / 2) - minSize.y) 
+    {
+        scaleItem->crop.z = (scaleItem->size.y / 2) - minSize.y;
+    }
+  
+    if (!bControlDown) 
+    {
+        // left
+        if(CloseFloat(scaleItem->crop.w, 0.0f, snapSize.x))
+        {
+            scaleItem->crop.w = 0.0f;
+        }
+        // top
+        if(CloseFloat(scaleItem->crop.x, 0.0f, snapSize.y))
+        {
+            scaleItem->crop.x = 0.0f;
+        }
+        // right
+        if(CloseFloat(scaleItem->crop.y, 0.0f, snapSize.x))
+        {
+            scaleItem->crop.y = 0.0f;
+        }
+        // bottom
+        if(CloseFloat(scaleItem->crop.z, 0.0f, snapSize.y))
+        {
+            scaleItem->crop.z = 0.0f;
+        }
+    }
+
+    scaleItem->crop.w = (scaleItem->crop.w < 0.0f) ? 0.0f : scaleItem->crop.w;
+    scaleItem->crop.x = (scaleItem->crop.x < 0.0f) ? 0.0f : scaleItem->crop.x;
+    scaleItem->crop.y = (scaleItem->crop.y < 0.0f) ? 0.0f : scaleItem->crop.y;
+    scaleItem->crop.z = (scaleItem->crop.z < 0.0f) ? 0.0f : scaleItem->crop.z;
+
+    return true;
 }
 
 LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -3033,7 +3087,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                     // Get item in window coordinates
                     Vect2 adjPos  = MapFrameToWindowPos(item->GetPos());
                     Vect2 adjSize = MapFrameToWindowSize(item->GetSize());
-
+                    
                     ItemModifyType curType = GetItemModifyType(mousePos, adjPos, adjSize);
                     if(curType > ItemModifyType_Move)
                     {
@@ -3061,6 +3115,24 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                 {
                     bool bControlDown = HIBYTE(GetKeyState(VK_LCONTROL)) != 0 || HIBYTE(GetKeyState(VK_RCONTROL)) != 0;
                     bool bKeepAspect = HIBYTE(GetKeyState(VK_LSHIFT)) == 0 && HIBYTE(GetKeyState(VK_RSHIFT)) == 0;
+                    bool isCropping = HIBYTE(GetKeyState(VK_MENU)) != 0;
+
+                    if (isCropping) {
+                        switch(App->modifyType) {
+                            case ItemModifyType_ScaleTop:
+                                App->modifyType = ItemModifyType_CropTop;
+                                break;
+                            case ItemModifyType_ScaleLeft:
+                                App->modifyType = ItemModifyType_CropLeft;
+                                break;
+                            case ItemModifyType_ScaleRight:
+                                App->modifyType = ItemModifyType_CropRight;
+                                break;
+                            case ItemModifyType_ScaleBottom:
+                                App->modifyType = ItemModifyType_CropBottom;
+                                break;
+                        }
+                    }
 
                     List<SceneItem*> items;
                     App->scene->GetSelectedItems(items);
@@ -3136,6 +3208,8 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                             }
 
                         case ItemModifyType_ScaleBottom:
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+
                             scaleItem->size.y = scaleItem->startSize.y+totalAdjust.y;
                             if(scaleItem->size.y < minSize.y)
                                 scaleItem->size.y = minSize.y;
@@ -3156,8 +3230,15 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                             else
                                 scaleItem->size.x = scaleItem->startSize.x;
                             break;
+                            
+                        case ItemModifyType_CropBottom: 
+                            scaleItem->crop.z = (totalAdjust.y < 0.0f) ? abs(totalAdjust.y) : 0.0f;
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+                            break;
 
                         case ItemModifyType_ScaleTop:
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+
                             scaleItem->size.y = scaleItem->startSize.y-totalAdjust.y;
                             if(scaleItem->size.y < minSize.y)
                                 scaleItem->size.y = minSize.y;
@@ -3178,14 +3259,21 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                             scaleItem->pos.y = scaleItem->startPos.y+totalAdjust.y;
                             break;
 
+                        case ItemModifyType_CropTop: 
+                            scaleItem->crop.x = (totalAdjust.y > 0.0f) ? totalAdjust.y : 0.0f;
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+                            break;
+
                         case ItemModifyType_ScaleRight:
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+
                             scaleItem->size.x = scaleItem->startSize.x+totalAdjust.x;
                             if(scaleItem->size.x < minSize.x)
                                 scaleItem->size.x = minSize.x;
 
                             if(!bControlDown)
                             {
-                                float right = scaleItem->pos.x+scaleItem->size.x;
+                                float right = scaleItem->pos.x + scaleItem->size.x;
 
                                 if(CloseFloat(right, baseRenderSize.x, snapSize.x))
                                 {
@@ -3199,8 +3287,14 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                             else
                                 scaleItem->size.y = scaleItem->startSize.y;
                             break;
-
+                        case ItemModifyType_CropRight: 
+                            scaleItem->crop.y = (totalAdjust.x < 0.0f) ? abs(totalAdjust.x) : 0.0f;
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+                            break;
+                            
                         case ItemModifyType_ScaleLeft:
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+
                             scaleItem->size.x = scaleItem->startSize.x-totalAdjust.x;
                             if(scaleItem->size.x < minSize.x)
                                 scaleItem->size.x = minSize.x;
@@ -3221,8 +3315,14 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                             totalAdjust.x = scaleItem->startSize.x-scaleItem->size.x;
                             scaleItem->pos.x = scaleItem->startPos.x+totalAdjust.x;
                             break;
+                        case ItemModifyType_CropLeft: 
+                            scaleItem->crop.w = (totalAdjust.x > 0.0f) ? abs(totalAdjust.x) : 0.0f;
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+                            break;
 
                         case ItemModifyType_ScaleBottomRight:
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+
                             scaleItem->size = scaleItem->startSize+totalAdjust;
                             scaleItem->size.ClampMin(minSize);
 
@@ -3253,6 +3353,8 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                             break;
 
                         case ItemModifyType_ScaleTopLeft:
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+                            
                             scaleItem->size = scaleItem->startSize-totalAdjust;
                             scaleItem->size.ClampMin(minSize);
 
@@ -3280,6 +3382,8 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                             break;
 
                         case ItemModifyType_ScaleBottomLeft:
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+                            
                             scaleItem->size.x = scaleItem->startSize.x-totalAdjust.x;
                             scaleItem->size.y = scaleItem->startSize.y+totalAdjust.y;
                             scaleItem->size.ClampMin(minSize);
@@ -3313,6 +3417,8 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                             break;
 
                         case ItemModifyType_ScaleTopRight:
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+
                             scaleItem->size.x = scaleItem->startSize.x+totalAdjust.x;
                             scaleItem->size.y = scaleItem->startSize.y-totalAdjust.y;
                             scaleItem->size.ClampMin(minSize);
@@ -3362,11 +3468,15 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                     SetCursor(LoadCursor(NULL, IDC_SIZENWSE));
                     return 0;
 
+                case ItemModifyType_CropLeft:
+                case ItemModifyType_CropRight:
                 case ItemModifyType_ScaleLeft:
                 case ItemModifyType_ScaleRight:
                     SetCursor(LoadCursor(NULL, IDC_SIZEWE));
                     return 0;
 
+                case ItemModifyType_CropTop:
+                case ItemModifyType_CropBottom:
                 case ItemModifyType_ScaleTop:
                 case ItemModifyType_ScaleBottom:
                     SetCursor(LoadCursor(NULL, IDC_SIZENS));
@@ -3457,6 +3567,10 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                         itemElement->SetInt(TEXT("y"),  int(item->pos.y));
                         itemElement->SetInt(TEXT("cx"), int(item->size.x));
                         itemElement->SetInt(TEXT("cy"), int(item->size.y));
+                        itemElement->SetFloat(TEXT("crop.left"), item->crop.w);
+                        itemElement->SetFloat(TEXT("crop.top"), item->crop.x);
+                        itemElement->SetFloat(TEXT("crop.right"), item->crop.y);
+                        itemElement->SetFloat(TEXT("crop.bottom"), item->crop.z);
                     }
 
                     App->modifyType = ItemModifyType_None;
