@@ -981,6 +981,7 @@ bool  XConfig::Open(CTSTR lpFile)
     }
 
     //-------------------------------------
+
     XFile file;
 
     if(!file.Open(lpFile, XFILE_READ, XFILE_OPENALWAYS))
@@ -1001,13 +1002,13 @@ bool  XConfig::Open(CTSTR lpFile)
     //-------------------------------------
     // remove comments
 
-    TSTR lpComment, lpEndComment;
+    /*TSTR lpComment, lpEndComment;
 
     while(lpComment = sstr(lpFileData, TEXT("/*")))
-    {
-        lpEndComment = sstr(lpFileData, TEXT("*/"));
+    {*/
+        //lpEndComment = sstr(lpFileData, TEXT("*/"));
 
-        assert(lpEndComment);
+        /*assert(lpEndComment);
         assert(lpComment < lpEndComment);
 
         if(!lpEndComment || (lpComment > lpEndComment))
@@ -1021,7 +1022,7 @@ bool  XConfig::Open(CTSTR lpFile)
         }
 
         mcpy(lpComment, lpEndComment+3, slen(lpEndComment+3)+1);
-    }
+    }*/
 
     //-------------------------------------
 
