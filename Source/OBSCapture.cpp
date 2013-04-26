@@ -352,7 +352,7 @@ void OBS::Start()
     String preset  = AppConfig->GetString(TEXT("Video Encoding"), TEXT("Preset"),     TEXT("veryfast"));
     bUsing444      = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Use444"),     0) != 0;
 
-    bDupeFrames = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("DupeFrames"), 1) != 0;
+    bDupeFrames = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("DupeFrames"), 0) != 0;
 
     if(bUsing444)
         bDupeFrames = bUseCFR = false;
