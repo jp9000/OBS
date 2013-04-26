@@ -982,9 +982,12 @@ void DeviceSource::ReceiveMediaSample(IMediaSample *sample, bool bAudio)
     if (bCapturing) {
         BYTE *pointer;
 
+        if (!sample->GetActualDataLength())
+            return;
+
         if (SUCCEEDED(sample->GetPointer(&pointer))) {
             SampleData *data = NULL;
-            
+
             if (bUseBuffering || !bAudio) {
                 data = new SampleData;
                 data->bAudio = bAudio;
