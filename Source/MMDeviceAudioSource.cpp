@@ -343,7 +343,7 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
                 if (captureSize > 0) {
                     ++numTimesInARowNewDataSeen;
 
-                    if (numTimesInARowNewDataSeen > 500) {
+                    if (numTimesInARowNewDataSeen > 1000) {
                         if (SUCCEEDED(mmCapture->GetBuffer(&captureBuffer, &numFramesRead, &dwFlags, &devPosition, &qpcTimestamp))) {
                             mmCapture->ReleaseBuffer(numFramesRead);
                             numTimesInARowNewDataSeen = 0;
