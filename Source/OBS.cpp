@@ -1382,6 +1382,7 @@ void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
     SelectObject(hdcTemp, hbmpTemp);
 
     SelectObject(hdcTemp, GetCurrentObject(dis.hDC, OBJ_FONT));
+    SetTextColor(hdcTemp, GetTextColor(dis.hDC));
 
     //HBRUSH  hColorBrush = CreateSolidBrush((green<<8)|red);
 
