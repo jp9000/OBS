@@ -634,12 +634,18 @@ void OBS::MainCaptureLoop()
             //draw selections if in edit mode
             if(bEditMode && !bSizeChanging)
             {
-                LoadVertexShader(solidVertexShader);
-                LoadPixelShader(solidPixelShader);
-                solidPixelShader->SetColor(solidPixelShader->GetParameter(0), 0xFFFF0000);
+                
 
-                if(scene)
+                if(scene) {
+                    LoadVertexShader(solidVertexShader);
+                    LoadPixelShader(solidPixelShader);
+                    solidPixelShader->SetColor(solidPixelShader->GetParameter(0), 0xFFFF0000);
                     scene->RenderSelections();
+                    LoadVertexShader(solidVertexShader);
+                    LoadPixelShader(solidPixelShader);
+                    solidPixelShader->SetColor(solidPixelShader->GetParameter(0), 0xFF00FF00);
+                    scene->RenderCroppings();
+                }
             }
         }
         else if(bForceRenderViewErase)

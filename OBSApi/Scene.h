@@ -152,6 +152,7 @@ public:
     virtual void UpdateSettings() {}
 
     virtual void RenderSelections();
+    virtual void RenderCroppings();
 
     virtual void BeginScene();
     virtual void EndScene();

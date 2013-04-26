@@ -363,12 +363,16 @@ enum ItemModifyType
     ItemModifyType_Move,
     ItemModifyType_ScaleBottomLeft,
     ItemModifyType_ScaleLeft,
+    ItemModifyType_CropLeft,
     ItemModifyType_ScaleTopLeft,
     ItemModifyType_ScaleTop,
+    ItemModifyType_CropTop,
     ItemModifyType_ScaleTopRight,
     ItemModifyType_ScaleRight,
+    ItemModifyType_CropRight,
     ItemModifyType_ScaleBottomRight,
     ItemModifyType_ScaleBottom,
+    ItemModifyType_CropBottom
 };
 
 //----------------------------
@@ -788,6 +792,9 @@ private:
     static Vect2 MapFrameToWindowSize(Vect2 frameSize);
     static Vect2 GetWindowToFrameScale();
     static Vect2 GetFrameToWindowScale();
+
+    // helper to valid crops as you scale items
+    static bool EnsureCropValid(SceneItem *&item, Vect2 &minSize, Vect2 &snapSize, bool bControlDown);
 
     static INT_PTR CALLBACK EnterGlobalSourceNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
