@@ -2552,6 +2552,9 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                             if(hitInfo.flags & LVHT_ONITEMSTATEICON)
                                 break;
                             
+                            if(!App->sceneElement)
+                                break;
+
                             XElement *sourcesElement = App->sceneElement->GetElement(TEXT("sources"));
                             if(!sourcesElement)
                                 break;
