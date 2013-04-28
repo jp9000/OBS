@@ -277,9 +277,11 @@ bool DeviceSource::LoadFilters()
 
             if(audioDeviceFilter)
                 err = capture->FindPin(audioDeviceFilter, PINDIR_OUTPUT, &PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, FALSE, 0, &audioPin);
+            else
+                err = E_FAIL;
         }
 
-        if(FAILED(err))
+        if(FAILED(err) || !audioPin)
         {
             Log(TEXT("DShowPlugin: No audio pin, result = %lX"), err);
             soundOutputType = 0;
