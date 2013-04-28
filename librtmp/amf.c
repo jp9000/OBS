@@ -392,6 +392,14 @@ AMFProp_Encode(AMFObjectProperty *prop, char *pBuffer, char *pBufEnd)
         pBuffer = AMF_Encode(&prop->p_vu.p_object, pBuffer, pBufEnd);
         break;
 
+    case AMF_ECMA_ARRAY:
+        pBuffer = AMF_EncodeEcmaArray(&prop->p_vu.p_object, pBuffer, pBufEnd);
+        break;
+
+    case AMF_STRICT_ARRAY:
+        pBuffer = AMF_EncodeArray(&prop->p_vu.p_object, pBuffer, pBufEnd);
+        break;
+
     default:
         RTMP_Log(RTMP_LOGERROR, "%s, invalid type. %d", __FUNCTION__, prop->p_type);
         pBuffer = NULL;
@@ -703,7 +711,6 @@ AMFProp_Decode(AMFObjectProperty *prop, const char *pBuffer, int nSize,
         if (nRes == -1)
             return -1;
         nSize -= nRes;
-        prop->p_type = AMF_OBJECT;
         break;
     }
     case AMF_OBJECT_END:
@@ -721,7 +728,6 @@ AMFProp_Decode(AMFObjectProperty *prop, const char *pBuffer, int nSize,
         if (nRes == -1)
             return -1;
         nSize -= nRes;
-        prop->p_type = AMF_OBJECT;
         break;
     }
     case AMF_DATE:
@@ -818,6 +824,18 @@ AMFProp_Dump(AMFObjectProperty *prop)
         AMF_Dump(&prop->p_vu.p_object);
         return;
     }
+    else if (prop->p_type == AMF_ECMA_ARRAY)
+    {
+        RTMP_Log(RTMP_LOGDEBUG, "Property: <%sECMA_ARRAY>", strRes);
+        AMF_Dump(&prop->p_vu.p_object);
+        return;
+    }
+    else if (prop->p_type == AMF_STRICT_ARRAY)
+    {
+        RTMP_Log(RTMP_LOGDEBUG, "Property: <%sSTRICT_ARRAY>", strRes);
+        AMF_Dump(&prop->p_vu.p_object);
+        return;
+    }
 
     switch (prop->p_type)
     {
@@ -887,6 +905,76 @@ AMF_Encode(AMFObject *obj, char *pBuffer, char *pBufEnd)
         return NULL;			/* no room for the end marker */
 
     pBuffer = AMF_EncodeInt24(pBuffer, pBufEnd, AMF_OBJECT_END);
+
+    return pBuffer;
+}
+
+char *
+AMF_EncodeEcmaArray(AMFObject *obj, char *pBuffer, char *pBufEnd)
+{
+    int i;
+
+    if (pBuffer+4 >= pBufEnd)
+        return NULL;
+
+    *pBuffer++ = AMF_ECMA_ARRAY;
+
+    pBuffer = AMF_EncodeInt32(pBuffer, pBufEnd, obj->o_num);
+
+    for (i = 0; i < obj->o_num; i++)
+    {
+        char *res = AMFProp_Encode(&obj->o_props[i], pBuffer, pBufEnd);
+        if (res == NULL)
+        {
+            RTMP_Log(RTMP_LOGERROR, "AMF_Encode - failed to encode property in index %d",
+                     i);
+            break;
+        }
+        else
+        {
+            pBuffer = res;
+        }
+    }
+
+    if (pBuffer + 3 >= pBufEnd)
+        return NULL;			/* no room for the end marker */
+
+    pBuffer = AMF_EncodeInt24(pBuffer, pBufEnd, AMF_OBJECT_END);
+
+    return pBuffer;
+}
+
+char *
+AMF_EncodeArray(AMFObject *obj, char *pBuffer, char *pBufEnd)
+{
+    int i;
+
+    if (pBuffer+4 >= pBufEnd)
+        return NULL;
+
+    *pBuffer++ = AMF_STRICT_ARRAY;
+
+    pBuffer = AMF_EncodeInt32(pBuffer, pBufEnd, obj->o_num);
+
+    for (i = 0; i < obj->o_num; i++)
+    {
+        char *res = AMFProp_Encode(&obj->o_props[i], pBuffer, pBufEnd);
+        if (res == NULL)
+        {
+            RTMP_Log(RTMP_LOGERROR, "AMF_Encode - failed to encode property in index %d",
+                     i);
+            break;
+        }
+        else
+        {
+            pBuffer = res;
+        }
+    }
+
+    //if (pBuffer + 3 >= pBufEnd)
+    //  return NULL;			/* no room for the end marker */
+
+    //pBuffer = AMF_EncodeInt24(pBuffer, pBufEnd, AMF_OBJECT_END);
 
     return pBuffer;
 }

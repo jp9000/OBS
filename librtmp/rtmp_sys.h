@@ -74,22 +74,48 @@
 #include "rtmp.h"
 
 #ifdef USE_POLARSSL
+#include <polarssl/version.h>
 #include <polarssl/net.h>
 #include <polarssl/ssl.h>
 #include <polarssl/havege.h>
+#if POLARSSL_VERSION_NUMBER < 0x01010000
+#define havege_random	havege_rand
+#endif
+#if POLARSSL_VERSION_NUMBER >= 0x01020000
+#define	SSL_SET_SESSION(S,resume,timeout,ctx)	ssl_set_session(S,ctx)
+#else
+#define	SSL_SET_SESSION(S,resume,timeout,ctx)	ssl_set_session(S,resume,timeout,ctx)
+#endif
 typedef struct tls_ctx
 {
     havege_state hs;
     ssl_session ssn;
 } tls_ctx;
+typedef struct tls_server_ctx
+{
+    havege_state *hs;
+    x509_cert cert;
+    rsa_context key;
+    ssl_session ssn;
+    const char *dhm_P, *dhm_G;
+} tls_server_ctx;
+
 #define TLS_CTX tls_ctx *
 #define TLS_client(ctx,s)	s = malloc(sizeof(ssl_context)); ssl_init(s);\
 	ssl_set_endpoint(s, SSL_IS_CLIENT); ssl_set_authmode(s, SSL_VERIFY_NONE);\
-	ssl_set_rng(s, havege_rand, &ctx->hs);\
+	ssl_set_rng(s, havege_random, &ctx->hs);\
 	ssl_set_ciphersuites(s, ssl_default_ciphersuites);\
-	ssl_set_session(s, 1, 600, &ctx->ssn)
+	SSL_SET_SESSION(s, 1, 600, &ctx->ssn)
+#define TLS_server(ctx,s)	s = malloc(sizeof(ssl_context)); ssl_init(s);\
+	ssl_set_endpoint(s, SSL_IS_SERVER); ssl_set_authmode(s, SSL_VERIFY_NONE);\
+	ssl_set_rng(s, havege_random, ((tls_server_ctx*)ctx)->hs);\
+	ssl_set_ciphersuites(s, ssl_default_ciphersuites);\
+	SSL_SET_SESSION(s, 1, 600, &((tls_server_ctx*)ctx)->ssn);\
+	ssl_set_own_cert(s, &((tls_server_ctx*)ctx)->cert, &((tls_server_ctx*)ctx)->key);\
+	ssl_set_dh_param(s, ((tls_server_ctx*)ctx)->dhm_P, ((tls_server_ctx*)ctx)->dhm_G)
 #define TLS_setfd(s,fd)	ssl_set_bio(s, net_recv, &fd, net_send, &fd)
 #define TLS_connect(s)	ssl_handshake(s)
+#define TLS_accept(s)	ssl_handshake(s)
 #define TLS_read(s,b,l)	ssl_read(s,(unsigned char *)b,l)
 #define TLS_write(s,b,l)	ssl_write(s,(unsigned char *)b,l)
 #define TLS_shutdown(s)	ssl_close_notify(s)
@@ -104,8 +130,10 @@ typedef struct tls_ctx
 } tls_ctx;
 #define TLS_CTX	tls_ctx *
 #define TLS_client(ctx,s)	gnutls_init((gnutls_session_t *)(&s), GNUTLS_CLIENT); gnutls_priority_set(s, ctx->prios); gnutls_credentials_set(s, GNUTLS_CRD_CERTIFICATE, ctx->cred)
+#define TLS_server(ctx,s)	gnutls_init((gnutls_session_t *)(&s), GNUTLS_SERVER); gnutls_priority_set_direct(s, "NORMAL", NULL); gnutls_credentials_set(s, GNUTLS_CRD_CERTIFICATE, ctx)
 #define TLS_setfd(s,fd)	gnutls_transport_set_ptr(s, (gnutls_transport_ptr_t)(long)fd)
 #define TLS_connect(s)	gnutls_handshake(s)
+#define TLS_accept(s)	gnutls_handshake(s)
 #define TLS_read(s,b,l)	gnutls_record_recv(s,b,l)
 #define TLS_write(s,b,l)	gnutls_record_send(s,b,l)
 #define TLS_shutdown(s)	gnutls_bye(s, GNUTLS_SHUT_RDWR)
@@ -114,8 +142,10 @@ typedef struct tls_ctx
 #else	/* USE_OPENSSL */
 #define TLS_CTX	SSL_CTX *
 #define TLS_client(ctx,s)	s = SSL_new(ctx)
+#define TLS_server(ctx,s)	s = SSL_new(ctx)
 #define TLS_setfd(s,fd)	SSL_set_fd(s,fd)
 #define TLS_connect(s)	SSL_connect(s)
+#define TLS_accept(s)	SSL_accept(s)
 #define TLS_read(s,b,l)	SSL_read(s,b,l)
 #define TLS_write(s,b,l)	SSL_write(s,b,l)
 #define TLS_shutdown(s)	SSL_shutdown(s)

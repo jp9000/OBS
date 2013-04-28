@@ -105,6 +105,9 @@ extern "C"
     double AMF_DecodeNumber(const char *data);
 
     char *AMF_Encode(AMFObject * obj, char *pBuffer, char *pBufEnd);
+    char *AMF_EncodeEcmaArray(AMFObject *obj, char *pBuffer, char *pBufEnd);
+    char *AMF_EncodeArray(AMFObject *obj, char *pBuffer, char *pBufEnd);
+
     int AMF_Decode(AMFObject * obj, const char *pBuffer, int nSize,
                    int bDecodeName);
     int AMF_DecodeArray(AMFObject * obj, const char *pBuffer, int nSize,

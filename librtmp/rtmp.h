@@ -30,12 +30,13 @@
 #if !defined(NO_CRYPTO) && !defined(CRYPTO)
 #define CRYPTO
 #else
-#include "amf.h"
 typedef size_t off_t;
 #endif
 
 #pragma warning(disable:4996) //depricated warnings
 #pragma warning(disable:4244) //64bit defensive mechanism, fixed the ones that mattered
+
+#include "amf.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -159,6 +160,8 @@ extern "C"
         AVal subscribepath;
         AVal usherToken;
         AVal token;
+        AVal pubUser;
+        AVal pubPasswd;
         AMFObject extras;
         int edepth;
 
@@ -177,6 +180,13 @@ extern "C"
 
         int protocol;
         int timeout;		/* connection timeout in seconds */
+
+#define RTMP_PUB_NAME   0x0001  /* send login to server */
+#define RTMP_PUB_RESP   0x0002  /* send salted password hash */
+#define RTMP_PUB_ALLOC  0x0004  /* allocated data for new tcUrl & app */
+#define RTMP_PUB_CLEAN  0x0008  /* need to free allocated data for newer tcUrl & app at exit */
+#define RTMP_PUB_CLATE  0x0010  /* late clean tcUrl & app at exit */
+        int pFlags;
 
         unsigned short socksport;
         unsigned short port;
@@ -272,9 +282,11 @@ extern "C"
         int m_numCalls;
         RTMP_METHOD *m_methodCalls;	/* remote method calls queue */
 
-        RTMPPacket *m_vecChannelsIn[RTMP_CHANNELS];
-        RTMPPacket *m_vecChannelsOut[RTMP_CHANNELS];
-        int m_channelTimestamp[RTMP_CHANNELS];	/* abs timestamp of last packet */
+        int m_channelsAllocatedIn;
+        int m_channelsAllocatedOut;
+        RTMPPacket **m_vecChannelsIn;
+        RTMPPacket **m_vecChannelsOut;
+        int *m_channelTimestamp;	/* abs timestamp of last packet */
 
         double m_fAudioCodecs;	/* audioCodecs for the connect packet */
         double m_fVideoCodecs;	/* videoCodecs for the connect packet */
@@ -330,6 +342,7 @@ extern "C"
     int RTMP_Connect0(RTMP *r, struct sockaddr *svc);
     int RTMP_Connect1(RTMP *r, RTMPPacket *cp);
     int RTMP_Serve(RTMP *r);
+    int RTMP_TLS_Accept(RTMP *r, void *ctx);
 
     int RTMP_ReadPacket(RTMP *r, RTMPPacket *packet);
     int RTMP_SendPacket(RTMP *r, RTMPPacket *packet, int queue);
@@ -351,6 +364,9 @@ extern "C"
     RTMP *RTMP_Alloc(void);
     void RTMP_Free(RTMP *r);
     void RTMP_EnableWrite(RTMP *r);
+
+    void *RTMP_TLS_AllocServerContext(const char* cert, const char* key);
+    void RTMP_TLS_FreeServerContext(void *ctx);
 
     int RTMP_LibVersion(void);
     void RTMP_UserInterrupt(void);	/* user typed Ctrl-C */
