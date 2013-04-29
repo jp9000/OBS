@@ -95,6 +95,8 @@ public:
 
     inline Vect2 GetPos() const                 {return pos;}
     inline Vect2 GetSize() const                {return size;}
+    inline Vect4 GetCrop() const                {return crop;}
+    inline bool IsCropped() const               {return !(CloseFloat(crop.w, 0.0f) && CloseFloat(crop.x, 0.0f) && CloseFloat(crop.y, 0.0f) && CloseFloat(crop.z, 0.0f));}
 
     inline void SetPos(const Vect2 &newPos)     {pos = newPos;}
     inline void SetSize(const Vect2 &newSize)   {size = newSize;}
@@ -151,8 +153,7 @@ public:
 
     virtual void UpdateSettings() {}
 
-    virtual void RenderSelections();
-    virtual void RenderCroppings();
+    virtual void RenderSelections(Shader *solidPixelShader);
 
     virtual void BeginScene();
     virtual void EndScene();
