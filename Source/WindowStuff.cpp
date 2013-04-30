@@ -2625,11 +2625,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
             {
                 RECT client;
                 GetClientRect(hwnd, &client);
-
                 App->ResizeWindow(true);
                 App->bSizeChanging = false;
-                App->bDragResize = false;
             }
+            App->bDragResize = false;
             break;
 
         case WM_DRAWITEM:
