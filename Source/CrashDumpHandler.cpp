@@ -191,6 +191,11 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
     fnEnumerateLoadedModules64 (hProcess, (PENUMLOADED_MODULES_CALLBACK64)EnumerateLoadedModulesProcInfo, (VOID *)&moduleInfo);
     slwr (moduleInfo.moduleName);
 
+    BOOL isPlugin = FALSE;
+
+    if (sstr (moduleInfo.moduleName, TEXT("plugins\\")))
+        isPlugin = TRUE;
+
     String strModuleInfo;
     String crashMessage;
 
@@ -302,11 +307,13 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
         hFile = CreateFile (dumpPath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
         if (hFile != INVALID_HANDLE_VALUE)
         {
+            MINIDUMP_TYPE dumpFlags = (MINIDUMP_TYPE)(MiniDumpWithIndirectlyReferencedMemory | MiniDumpWithUnloadedModules | MiniDumpWithProcessThreadData);
+
             miniInfo.ClientPointers = TRUE;
             miniInfo.ExceptionPointers = exceptionInfo;
             miniInfo.ThreadId = GetCurrentThreadId ();
 
-            if (fnMiniDumpWriteDump (hProcess, GetCurrentProcessId(), hFile, MiniDumpWithIndirectlyReferencedMemory, &miniInfo, NULL, NULL))
+            if (fnMiniDumpWriteDump (hProcess, GetCurrentProcessId(), hFile, dumpFlags, &miniInfo, NULL, NULL))
             {
                 crashDumpLog.WriteStr(FormattedString(TEXT("\r\nA minidump was saved to %s.\r\nPlease include this file when posting a crash report.\r\n"), dumpPath));
             }
