@@ -231,21 +231,24 @@ BOOL  STDCALL OSFindNextFile(HANDLE hFind, OSFindData &findData)
     WIN32_FIND_DATA wfd;
     BOOL bSuccess = FindNextFile(hFind, &wfd);
 
-    BOOL bFoundDumbDir;
-    do
+    if (bSuccess)
     {
-        bFoundDumbDir = FALSE;
-        if( (scmp(wfd.cFileName, TEXT("..")) == 0) ||
-            (scmp(wfd.cFileName, TEXT(".")) == 0)  )
+        BOOL bFoundDumbDir;
+        do
         {
-            if(!FindNextFile(hFind, &wfd))
+            bFoundDumbDir = FALSE;
+            if( (scmp(wfd.cFileName, TEXT("..")) == 0) ||
+                (scmp(wfd.cFileName, TEXT(".")) == 0)  )
             {
-                bSuccess = FALSE;
-                break;
+                if(!FindNextFile(hFind, &wfd))
+                {
+                    bSuccess = FALSE;
+                    break;
+                }
+                bFoundDumbDir = TRUE;
             }
-            bFoundDumbDir = TRUE;
-        }
-    }while(bFoundDumbDir);
+        }while(bFoundDumbDir);
+    }
 
     if(bSuccess)
     {
