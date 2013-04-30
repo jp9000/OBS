@@ -79,6 +79,7 @@ void SettingsPublish::ApplySettings()
     }
 
     String strTemp = GetEditText(GetDlgItem(hwnd, IDC_PLAYPATH));
+    strTemp.KillSpaces();
     AppConfig->SetString(TEXT("Publish"), TEXT("PlayPath"), strTemp);
 
     if(serviceID == 0)
