@@ -718,13 +718,20 @@ String XConfig::ProcessString(TSTR &lpTemp)
     TSTR lpStart = lpTemp;
 
     BOOL bFoundEnd = FALSE;
+    BOOL bPreviousWasEscaped = FALSE;
     while(*++lpTemp)
     {
-        if(*lpTemp == '"' && lpTemp[-1] != '\\')
+        if (*lpTemp == '\\' && lpTemp[-1] == '\\')
+        {
+            bPreviousWasEscaped = TRUE;
+            continue;
+        }
+        if(*lpTemp == '"' && (bPreviousWasEscaped || lpTemp[-1] != '\\'))
         {
             bFoundEnd = TRUE;
             break;
         }
+        bPreviousWasEscaped = FALSE;
     }
 
     if(!bFoundEnd)
