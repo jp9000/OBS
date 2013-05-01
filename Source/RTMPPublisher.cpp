@@ -974,6 +974,8 @@ void RTMPPublisher::SocketLoop()
                         memmove(dataBuffer, dataBuffer + ret, curDataBufferLen - ret);
                     curDataBufferLen -= ret;
 
+                    bytesSent += ret;
+
                     SetEvent(hBufferSpaceAvailableEvent);
                 }
                 else
@@ -1123,7 +1125,7 @@ void RTMPPublisher::SendLoop()
                     packetSizeRecord.RemoveRange(0, packetID);
             }*/
 
-            bytesSent += packetData.Num();
+            //bytesSent += packetData.Num();
         }
     }
 }
