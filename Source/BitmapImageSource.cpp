@@ -150,7 +150,9 @@ class BitmapImageSource : public ImageSource
     gif_animation gif;
     LPBYTE lpGifData;
     List<float> animationTimes;
-    UINT curFrame, curLoop;
+    BYTE **animationFrameCache;
+    BYTE *animationFrameData;
+    UINT curFrame, curLoop, lastDecodedFrame;
     float curTime;
     float updateImageTime;
 
@@ -230,22 +232,32 @@ public:
                 {
                     UINT lastFrame;
 
-                    //animation might have looped, if so make sure we decode from frame 0
-                    if (newFrame < curFrame)
-                        lastFrame = 0;
-                    else
-                        lastFrame = curFrame + 1;
-
-                    //we need to decode any frames we missed for consistency
-                    for (UINT i = lastFrame; i < newFrame; i++)
+                    if (!animationFrameCache[newFrame])
                     {
-                        if (gif_decode_frame(&gif, i) != GIF_OK)
-                            return;
+                        //animation might have looped, if so make sure we decode from frame 0
+                        if (newFrame < lastDecodedFrame)
+                            lastFrame = 0;
+                        else
+                            lastFrame = lastDecodedFrame + 1;
+
+                        //we need to decode any frames we missed for consistency
+                        for (UINT i = lastFrame; i < newFrame; i++)
+                        {
+                            if (gif_decode_frame(&gif, i) != GIF_OK)
+                                return;
+                        }
+
+                        //now decode and display the actual frame we want
+                        if (gif_decode_frame(&gif, newFrame) == GIF_OK)
+                        {
+                            animationFrameCache[newFrame] = animationFrameData + (newFrame * (gif.width * gif.height * 4));
+                            SSECopy (animationFrameCache[newFrame], gif.frame_image, gif.width * gif.height * 4);
+                        }
+
+                        lastDecodedFrame = newFrame;
                     }
 
-                    //now decode and display the actual frame we want
-                    if (gif_decode_frame(&gif, newFrame) == GIF_OK)
-                        texture->SetImage(gif.frame_image, GS_IMAGEFORMAT_RGBA, gif.width*4);
+                    texture->SetImage(animationFrameCache[newFrame], GS_IMAGEFORMAT_RGBA, gif.width*4);
 
                     curFrame = newFrame;
                 }
@@ -302,6 +314,11 @@ public:
         {
             bIsAnimatedGif = false;
             gif_finalise(&gif);
+
+            Free(animationFrameCache);
+            animationFrameCache = NULL;
+            Free(animationFrameData);
+            animationFrameData = NULL;
         }
 
         if(lpGifData)
@@ -365,6 +382,12 @@ public:
             {
                 gif_decode_frame(&gif, 0);
                 texture = CreateTexture(gif.width, gif.height, GS_RGBA, gif.frame_image, FALSE, FALSE);
+
+                animationFrameCache = (BYTE **)Allocate(gif.frame_count * sizeof(BYTE *));
+                memset(animationFrameCache, 0, gif.frame_count * sizeof(BYTE *));
+
+                animationFrameData = (BYTE *)Allocate(gif.frame_count * gif.width * gif.height * 4);
+                memset(animationFrameData, 0, gif.frame_count * gif.width * gif.height * 4);
 
                 for(UINT i=0; i<gif.frame_count; i++)
                 {
