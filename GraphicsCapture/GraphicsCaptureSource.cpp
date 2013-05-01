@@ -138,7 +138,7 @@ GraphicsCaptureSource::~GraphicsCaptureSource()
 
 static bool GetCaptureInfo(CaptureInfo &ci, DWORD processID)
 {
-    HANDLE hFileMap = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, String() << INFO_MEMORY << int(processID));
+    HANDLE hFileMap = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, String() << INFO_MEMORY << UINT(processID));
     if(hFileMap == NULL)
     {
         AppWarning(TEXT("GetCaptureInfo: Could not open file mapping"));
@@ -168,6 +168,7 @@ void GraphicsCaptureSource::NewCapture()
 {
     if(capture)
     {
+        Log(TEXT("GraphicsCaptureSource::NewCapture:  eliminating old capture"));
         capture->Destroy();
         delete capture;
         capture = NULL;
@@ -175,7 +176,7 @@ void GraphicsCaptureSource::NewCapture()
 
     if(!hSignalRestart)
     {
-        hSignalRestart = GetEvent(String() << RESTART_CAPTURE_EVENT << int(targetProcessID));
+        hSignalRestart = GetEvent(String() << RESTART_CAPTURE_EVENT << UINT(targetProcessID));
         if(!hSignalRestart)
         {
             RUNONCE AppWarning(TEXT("GraphicsCaptureSource::NewCapture:  Could not create restart event"));
@@ -183,21 +184,21 @@ void GraphicsCaptureSource::NewCapture()
         }
     }
 
-    hSignalEnd = GetEvent(String() << END_CAPTURE_EVENT << int(targetProcessID));
+    hSignalEnd = GetEvent(String() << END_CAPTURE_EVENT << UINT(targetProcessID));
     if(!hSignalEnd)
     {
         RUNONCE AppWarning(TEXT("GraphicsCaptureSource::NewCapture:  Could not create end event"));
         return;
     }
 
-    hSignalReady = GetEvent(String() << CAPTURE_READY_EVENT << int(targetProcessID));
+    hSignalReady = GetEvent(String() << CAPTURE_READY_EVENT << UINT(targetProcessID));
     if(!hSignalReady)
     {
         RUNONCE AppWarning(TEXT("GraphicsCaptureSource::NewCapture:  Could not create ready event"));
         return;
     }
 
-    hSignalExit = GetEvent(String() << APP_EXIT_EVENT << int(targetProcessID));
+    hSignalExit = GetEvent(String() << APP_EXIT_EVENT << UINT(targetProcessID));
     if(!hSignalExit)
     {
         RUNONCE AppWarning(TEXT("GraphicsCaptureSource::NewCapture:  Could not create exit event"));
@@ -352,13 +353,13 @@ void GraphicsCaptureSource::AttemptCapture()
         //-------------------------------------------
         // load keepalive event
 
-        hOBSIsAlive = CreateEvent(NULL, FALSE, FALSE, String() << OBS_KEEPALIVE_EVENT << int(targetProcessID));
+        hOBSIsAlive = CreateEvent(NULL, FALSE, FALSE, String() << OBS_KEEPALIVE_EVENT << UINT(targetProcessID));
 
         //-------------------------------------------
 
         hwndCapture = hwndTarget;
 
-        hSignalRestart = OpenEvent(EVENT_ALL_ACCESS, FALSE, String() << RESTART_CAPTURE_EVENT << int(targetProcessID));
+        hSignalRestart = OpenEvent(EVENT_ALL_ACCESS, FALSE, String() << RESTART_CAPTURE_EVENT << UINT(targetProcessID));
         if(hSignalRestart)
         {
             SetEvent(hSignalRestart);
@@ -517,14 +518,36 @@ void GraphicsCaptureSource::EndScene()
 
 void GraphicsCaptureSource::Tick(float fSeconds)
 {
-    if(hSignalExit && WaitForSingleObject(hSignalExit, 0) == WAIT_OBJECT_0)
+    if(hSignalExit && WaitForSingleObject(hSignalExit, 0) == WAIT_OBJECT_0) {
+        Log(TEXT("Exit signal received, terminating capture"));
         EndCapture();
+    }
 
     if(bCapturing && !hSignalReady && targetProcessID)
-        hSignalReady = GetEvent(String() << CAPTURE_READY_EVENT << int(targetProcessID));
+        hSignalReady = GetEvent(String() << CAPTURE_READY_EVENT << UINT(targetProcessID));
 
-    if(hSignalReady && (WaitForSingleObject(hSignalReady, 0) == WAIT_OBJECT_0))
-        NewCapture();
+    if (hSignalReady) {
+        DWORD val = WaitForSingleObject(hSignalReady, 0);
+        if (val == WAIT_OBJECT_0)
+            NewCapture();
+        /*else if (val != WAIT_TIMEOUT)
+            Log(TEXT("what the heck?  val is 0x%08lX"), val);*/
+    }
+
+    /*    static int floong = 0;
+
+        if (floong++ == 30) {
+            Log(TEXT("valid, bCapturing = %s"), bCapturing ? TEXT("true") : TEXT("false"));
+            floong = 0;
+        }
+    } else {
+        static int floong = 0;
+
+        if (floong++ == 30) {
+            Log(TEXT("not valid, bCapturing = %s"), bCapturing ? TEXT("true") : TEXT("false"));
+            floong = 0;
+        }
+    }*/
 
     if(bCapturing && !capture)
     {
@@ -546,10 +569,15 @@ void GraphicsCaptureSource::Tick(float fSeconds)
     }
     else
     {
-        if(!IsWindow(hwndCapture) || (bUseHotkey && hwndNextTarget && hwndNextTarget != hwndTarget))
+        if(!IsWindow(hwndCapture)) {
+            Log(TEXT("Capture window 0x%08lX invalid or changing, terminating capture"), DWORD(hwndCapture));
             EndCapture();
-        else
+        } else if (bUseHotkey && hwndNextTarget && hwndNextTarget != hwndTarget) {
+            Log(TEXT("Capture hotkey triggered for new window, terminating capture"));
+            EndCapture();
+        } else {
             hwndNextTarget = NULL;
+        }
     }
 }
 
@@ -748,7 +776,7 @@ void GraphicsCaptureSource::SetInt(CTSTR lpName, int iVal)
     }
 }
 
-void GraphicsCaptureSource::CaptureHotkey(DWORD hotkey, GraphicsCaptureSource *capture, bool bDown)
+void STDCALL GraphicsCaptureSource::CaptureHotkey(DWORD hotkey, GraphicsCaptureSource *capture, bool bDown)
 {
     if (bDown)
         capture->hwndNextTarget = GetForegroundWindow();

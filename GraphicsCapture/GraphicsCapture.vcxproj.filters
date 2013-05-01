@@ -27,6 +27,9 @@
     <ClCompile Include="SharedTexCapture.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="WindowCapture.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GlobalCaptureStuff.h">
@@ -45,6 +48,9 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="SharedTexCapture.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="WindowCapture.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>

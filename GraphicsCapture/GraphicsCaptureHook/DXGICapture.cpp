@@ -172,11 +172,11 @@ IDXGISwapChain* CreateDummySwap()
                 return swap;
             }
 
-            RUNONCE logOutput << "CreateDummySwap: D3D10CreateDeviceAndSwapChain failed, result = " << UINT(hErr) << endl;
+            RUNEVERYRESET logOutput << "CreateDummySwap: D3D10CreateDeviceAndSwapChain failed, result = " << UINT(hErr) << endl;
         }
         else
         {
-            RUNONCE logOutput << "CreateDummySwap: D3D10CreateDeviceAndSwapChain not found" << endl;
+            RUNEVERYRESET logOutput << "CreateDummySwap: D3D10CreateDeviceAndSwapChain not found" << endl;
         }
     }
 
@@ -200,11 +200,11 @@ IDXGISwapChain* CreateDummySwap()
                 return swap;
             }
 
-            RUNONCE logOutput << "CreateDummyDevice: D3D10CreateDeviceAndSwapChain1 failed, result = " << UINT(hErr) << endl;
+            RUNEVERYRESET logOutput << "CreateDummyDevice: D3D10CreateDeviceAndSwapChain1 failed, result = " << UINT(hErr) << endl;
         }
         else
         {
-            RUNONCE logOutput << "CreateDummyDevice: D3D10CreateDeviceAndSwapChain1 not found" << endl;
+            RUNEVERYRESET logOutput << "CreateDummyDevice: D3D10CreateDeviceAndSwapChain1 not found" << endl;
         }
     }
 
@@ -240,11 +240,11 @@ IDXGISwapChain* CreateDummySwap()
                 return swap;
             }
 
-            RUNONCE logOutput << "CreateDummyDevice: D3D11CreateDeviceAndSwapChain failed, result = " << UINT(hErr) << endl;
+            RUNEVERYRESET logOutput << "CreateDummyDevice: D3D11CreateDeviceAndSwapChain failed, result = " << UINT(hErr) << endl;
         }
         else
         {
-            RUNONCE logOutput << "CreateDummyDevice: D3D11CreateDeviceAndSwapChain not found" << endl;
+            RUNEVERYRESET logOutput << "CreateDummyDevice: D3D11CreateDeviceAndSwapChain not found" << endl;
         }
     }
 

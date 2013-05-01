@@ -217,7 +217,10 @@ void ClearGLData()
     curCapture = 0;
     curCPUTexture = 0;
     keepAliveTime = 0;
+    resetCount++;
     pCopyData = NULL;
+
+    logOutput << "---------------------- Cleared OpenGL Capture ----------------------" << endl;
 }
 
 DWORD CopyGLCPUTextureThread(LPVOID lpUseless);

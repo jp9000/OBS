@@ -39,6 +39,9 @@
     <ClCompile Include="OpenGLCapture.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="D3D9LogStuff.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DXGIStuff.h">

@@ -77,6 +77,10 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
             RECT clientRect;
             GetClientRect(hwndCurrent, &clientRect);
 
+            String strWindowName;
+            strWindowName.SetLength(GetWindowTextLength(hwndCurrent));
+            GetWindowText(hwndCurrent, strWindowName, strWindowName.Length()+1);
+
             HWND hwndParent = GetParent(hwndCurrent);
 
             DWORD exStyles = (DWORD)GetWindowLongPtr(hwndCurrent, GWL_EXSTYLE);
@@ -84,9 +88,6 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
 
             if((exStyles & WS_EX_TOOLWINDOW) == 0 && (styles & WS_CHILD) == 0 /*&& hwndParent == NULL*/)
             {
-                String strWindowName;
-                strWindowName.SetLength(GetWindowTextLength(hwndCurrent));
-                GetWindowText(hwndCurrent, strWindowName, strWindowName.Length()+1);
 
                 //-------
 

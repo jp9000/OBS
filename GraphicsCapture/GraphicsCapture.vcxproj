@@ -215,6 +215,7 @@
     <ClCompile Include="GraphicsCaptureSource.cpp" />
     <ClCompile Include="MemoryCapture.cpp" />
     <ClCompile Include="SharedTexCapture.cpp" />
+    <ClCompile Include="WindowCapture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GlobalCaptureStuff.h" />
@@ -223,6 +224,7 @@
     <ClInclude Include="MemoryCapture.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SharedTexCapture.h" />
+    <ClInclude Include="WindowCapture.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GraphicsCapture.rc" />

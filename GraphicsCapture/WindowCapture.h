@@ -19,44 +19,18 @@
 
 #pragma once
 
-#include "OBSApi.h"
-#include "resource.h"
 
-#include "GlobalCaptureStuff.h"
-
-//-----------------------------------------------------------
-
-extern HINSTANCE hinstMain;
-extern HANDLE textureMutexes[2];
-
-//-----------------------------------------------------------
-
-class GraphicsCaptureMethod
+class WindowCapture : public GraphicsCaptureMethod
 {
+    Texture *sharedTexture;
+    HWND hwndTarget;
+
+    UINT cx, cy;
+
 public:
-    virtual ~GraphicsCaptureMethod() {}
-    virtual bool Init(CaptureInfo &info)=0;
-    virtual void Destroy()=0;
+    void Destroy();
+    virtual bool Init(CaptureInfo &info);
 
-    virtual Texture* LockTexture()=0;
-    virtual void UnlockTexture()=0;
+    virtual Texture* LockTexture();
+    virtual void UnlockTexture();
 };
-
-//-----------------------------------------------------------
-
-inline BOOL Is64BitWindows()
-{
-#if defined(_WIN64)
-    return TRUE;
-#elif defined(_WIN32)
-    BOOL f64 = FALSE;
-    return IsWow64Process(GetCurrentProcess(), &f64) && f64;
-#endif
-}
-
-//-----------------------------------------------------------
-
-#include "MemoryCapture.h"
-#include "SharedTexCapture.h"
-#include "WindowCapture.h"
-#include "GraphicsCaptureSource.h"

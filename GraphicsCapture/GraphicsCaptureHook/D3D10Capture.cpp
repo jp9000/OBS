@@ -52,6 +52,9 @@ void ClearD3D10Data()
 
     DestroySharedMemory();
     keepAliveTime = 0;
+    resetCount++;
+
+    logOutput << "---------------------- Cleared D3D10 Capture ----------------------" << endl;
 }
 
 void SetupD3D10(IDXGISwapChain *swapChain)
@@ -64,15 +67,20 @@ void SetupD3D10(IDXGISwapChain *swapChain)
         d3d10CaptureInfo.format = ConvertGIBackBufferFormat(scd.BufferDesc.Format);
         if(d3d10CaptureInfo.format != GS_UNKNOWNFORMAT)
         {
-            if( dxgiFormat          != scd.BufferDesc.Format ||
-                d3d10CaptureInfo.cx != scd.BufferDesc.Width  ||
-                d3d10CaptureInfo.cy != scd.BufferDesc.Height )
+            if( dxgiFormat                   != scd.BufferDesc.Format ||
+                d3d10CaptureInfo.cx          != scd.BufferDesc.Width  ||
+                d3d10CaptureInfo.cy          != scd.BufferDesc.Height ||
+                d3d10CaptureInfo.hwndCapture != (DWORD)scd.OutputWindow)
             {
                 dxgiFormat = FixCopyTextureFormat(scd.BufferDesc.Format);
                 d3d10CaptureInfo.cx = scd.BufferDesc.Width;
                 d3d10CaptureInfo.cy = scd.BufferDesc.Height;
                 d3d10CaptureInfo.hwndCapture = (DWORD)scd.OutputWindow;
                 bIsMultisampled = scd.SampleDesc.Count > 1;
+
+                logOutput << "found dxgi format (dx10) of: " << UINT(dxgiFormat) <<
+                    ", size: {" << scd.BufferDesc.Width << ", " << scd.BufferDesc.Height <<
+                    "}, multisampled: " << (bIsMultisampled ? "true" : "false") << endl;
             }
         }
     }
@@ -103,13 +111,13 @@ bool DoD3D10Hook(ID3D10Device *device)
     ID3D10Texture2D *d3d10Tex;
     if(FAILED(hErr = device->CreateTexture2D(&texGameDesc, NULL, &d3d10Tex)))
     {
-        RUNONCE logOutput << "DoD3D10Hook: failed to create intermediary texture, result = " << UINT(hErr) << endl;
+        RUNEVERYRESET logOutput << "DoD3D10Hook: failed to create intermediary texture, result = " << UINT(hErr) << endl;
         return false;
     }
 
     if(FAILED(hErr = d3d10Tex->QueryInterface(__uuidof(ID3D10Resource), (void**)&copyD3D10TextureGame)))
     {
-        RUNONCE logOutput << "DoD3D10Hook: d3d10Tex->QueryInterface(ID3D10Resource) failed, result = " << UINT(hErr) << endl;
+        RUNEVERYRESET logOutput << "DoD3D10Hook: d3d10Tex->QueryInterface(ID3D10Resource) failed, result = " << UINT(hErr) << endl;
         d3d10Tex->Release();
         return false;
     }
@@ -117,14 +125,14 @@ bool DoD3D10Hook(ID3D10Device *device)
     IDXGIResource *res;
     if(FAILED(hErr = d3d10Tex->QueryInterface(IID_IDXGIResource, (void**)&res)))
     {
-        RUNONCE logOutput << "DoD3D10Hook: d3d10Tex->QueryInterface(IDXGIResource) failed, result = " << UINT(hErr) << endl;
+        RUNEVERYRESET logOutput << "DoD3D10Hook: d3d10Tex->QueryInterface(IDXGIResource) failed, result = " << UINT(hErr) << endl;
         d3d10Tex->Release();
         return false;
     }
 
     if(FAILED(res->GetSharedHandle(&sharedHandle)))
     {
-        RUNONCE logOutput << "DoD3D10Hook: res->GetSharedHandle failed, result = " << UINT(hErr) << endl;
+        RUNEVERYRESET logOutput << "DoD3D10Hook: res->GetSharedHandle failed, result = " << UINT(hErr) << endl;
         d3d10Tex->Release();
         res->Release();
         return false;

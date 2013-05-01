@@ -26,6 +26,7 @@ HANDLE hSignalReady=NULL, hSignalExit=NULL;
 HINSTANCE hinstMain = NULL;
 HWND hwndSender = NULL, hwndOBS = NULL;
 HANDLE textureMutexes[2] = {NULL, NULL};
+int  resetCount = 1;
 bool bStopRequested = false;
 bool bCapturing = true;
 bool bTargetAcquired = false;
@@ -265,11 +266,13 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
     wcscat_s(lpLogPath, MAX_PATH, TEXT("\\OBS\\pluginData\\captureHookLog.txt"));
 
     if(!logOutput.is_open())
-        logOutput.open(lpLogPath, ios_base::in | ios_base::out | ios_base::trunc);
+        logOutput.open(lpLogPath, ios_base::in | ios_base::out | ios_base::trunc, _SH_DENYNO);
 
     wstringstream str;
-    str << OBS_KEEPALIVE_EVENT << int(GetCurrentProcessId());
+    str << OBS_KEEPALIVE_EVENT << UINT(GetCurrentProcessId());
     strKeepAlive = str.str();
+
+    logOutput << "we're booting up.." << endl;
 
     WNDCLASS wc;
     ZeroMemory(&wc, sizeof(wc));
@@ -314,40 +317,46 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
         return 0;
     }
 
-    if(RegisterClass(&wc))
-    {
+    if (RegisterClass(&wc)) {
         hwndSender = CreateWindow(SENDER_WINDOWCLASS, NULL, 0, 0, 0, 0, 0, NULL, 0, hinstMain, 0);
-        if(hwndSender)
-        {
+        if (hwndSender) {
             textureMutexes[0] = OpenMutex(MUTEX_ALL_ACCESS, FALSE, TEXTURE_MUTEX1);
-            if(textureMutexes[0])
-            {
+            if (textureMutexes[0]) {
                 textureMutexes[1] = OpenMutex(MUTEX_ALL_ACCESS, FALSE, TEXTURE_MUTEX2);
-                if(textureMutexes[1])
-                {
-                    while(!AttemptToHookSomething())
-                        Sleep(50);
+                if (textureMutexes[1]) {
+                    logOutput << "(half life scientist) everything..  seems to be in order" << endl;
 
                     MSG msg;
-                    while(GetMessage(&msg, NULL, 0, 0))
-                    {
-                        TranslateMessage(&msg);
-                        DispatchMessage(&msg);
-
+                    while (1) {
                         AttemptToHookSomething();
+
+                        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+                            TranslateMessage(&msg);
+                            DispatchMessage(&msg);
+                        }
+
+                        Sleep(50);
                     }
 
                     CloseHandle(textureMutexes[1]);
                     textureMutexes[1] = NULL;
+                } else {
+                    logOutput << "could not open texture mutex 2" << endl;
                 }
 
                 CloseHandle(textureMutexes[0]);
                 textureMutexes[0] = NULL;
+            } else {
+                logOutput << "could not open texture mutex 1" << endl;
             }
 
             DestroyWindow(hwndSender);
+        } else {
+            logOutput << "could not create sender window" << endl;
         }
     }
+
+    logOutput << "exit out of the main thread loop somehow" << endl;
 
     return 0;
 }

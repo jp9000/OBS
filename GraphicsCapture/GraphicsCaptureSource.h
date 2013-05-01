@@ -58,7 +58,7 @@ class GraphicsCaptureSource : public ImageSource
 
     void AttemptCapture();
 
-    static void CaptureHotkey(DWORD hotkey, GraphicsCaptureSource *capture, bool bDown);
+    static void STDCALL CaptureHotkey(DWORD hotkey, GraphicsCaptureSource *capture, bool bDown);
 
 public:
     bool Init(XElement *data);

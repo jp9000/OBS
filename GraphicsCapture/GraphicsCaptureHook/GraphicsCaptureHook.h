@@ -40,7 +40,9 @@ using namespace std;
 
 
 //arghh I hate defines like this
-#define RUNONCE static bool bRunOnce = false; if(!bRunOnce && (bRunOnce = true))
+#define RUNONCE static bool bRunOnce = false; if(!bRunOnce && (bRunOnce = true)) 
+#define RUNEVERY(v) static int __runCount = 0; if(__runCount == 50) __runCount = 0; if(!__runCount++) 
+#define RUNEVERYRESET static int __resetCount = 0; if(__resetCount != resetCount && (__resetCount = resetCount)) 
 
 
 #define SafeRelease(var) if(var) {var->Release(); var = NULL;}
@@ -195,6 +197,14 @@ inline void SSECopy(void *lpDest, void *lpSource, UINT size)
     }
 }
 
+inline string IntString(DWORD val)
+{
+    stringstream ss;
+    ss << val;
+
+    return ss.str();
+}
+
 typedef ULONG (WINAPI *RELEASEPROC)(LPVOID);
 
 #include "../GlobalCaptureStuff.h"
@@ -204,6 +214,7 @@ enum GSColorFormat {GS_UNKNOWNFORMAT, GS_ALPHA, GS_GRAYSCALE, GS_RGB, GS_RGBA, G
 extern HINSTANCE hinstMain;
 extern HANDLE textureMutexes[2];
 extern bool bCapturing;
+extern int  resetCount;
 extern bool bStopRequested;
 extern bool bTargetAcquired;
 
