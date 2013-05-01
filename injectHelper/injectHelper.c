@@ -29,36 +29,36 @@ typedef unsigned long UPARAM;
 
 BOOL LoadSeDebugPrivilege()
 {
-	DWORD	err;
-	HANDLE	hToken;
-	LUID	Val;
-	TOKEN_PRIVILEGES tp;
+    DWORD   err;
+    HANDLE  hToken;
+    LUID    Val;
+    TOKEN_PRIVILEGES tp;
 
-	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken))
-	{
-		err = GetLastError ();
-		return FALSE;
-	}
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken))
+    {
+        err = GetLastError();
+        return FALSE;
+    }
 
-	if (!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Val))
-	{
-		err = GetLastError ();
-		return FALSE;
-	}
+    if (!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Val))
+    {
+        err = GetLastError();
+        return FALSE;
+    }
 
-	tp.PrivilegeCount = 1;
-	tp.Privileges[0].Luid = Val;
-	tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+    tp.PrivilegeCount = 1;
+    tp.Privileges[0].Luid = Val;
+    tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 
-	if (!AdjustTokenPrivileges(hToken, FALSE, &tp, sizeof (tp), NULL, NULL))
-	{
-		err = GetLastError ();
-		return FALSE;
-	}
+    if (!AdjustTokenPrivileges(hToken, FALSE, &tp, sizeof (tp), NULL, NULL))
+    {
+        err = GetLastError();
+        return FALSE;
+    }
 
-	CloseHandle(hToken);
+    CloseHandle(hToken);
 
-	return TRUE;
+    return TRUE;
 }
 
 typedef HANDLE (WINAPI *CRTPROC)(HANDLE, LPSECURITY_ATTRIBUTES, SIZE_T, LPTHREAD_START_ROUTINE, LPVOID, DWORD, LPDWORD);
