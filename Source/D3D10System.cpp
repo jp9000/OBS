@@ -40,7 +40,7 @@ void GetDisplayDevices(DeviceOutputs &deviceList)
 
         while(factory->EnumAdapters1(i++, &giAdapter) == S_OK)
         {
-            Log(TEXT("------------------------------------------"));
+            //Log(TEXT("------------------------------------------"));
 
             DXGI_ADAPTER_DESC adapterDesc;
             if(SUCCEEDED(err = giAdapter->GetDesc(&adapterDesc)))
