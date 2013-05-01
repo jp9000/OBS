@@ -54,6 +54,39 @@ BOOL bDisableComposition = FALSE;
 
 HANDLE hOBSMutex = NULL;
 
+BOOL LoadSeDebugPrivilege()
+{
+	DWORD	err;
+	HANDLE	hToken;
+	LUID	Val;
+	TOKEN_PRIVILEGES tp;
+
+	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken))
+	{
+		err = GetLastError ();
+		return FALSE;
+	}
+
+	if (!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Val))
+	{
+		err = GetLastError ();
+		return FALSE;
+	}
+
+	tp.PrivilegeCount = 1;
+	tp.Privileges[0].Luid = Val;
+	tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+	if (!AdjustTokenPrivileges(hToken, FALSE, &tp, sizeof (tp), NULL, NULL))
+	{
+		err = GetLastError ();
+		return FALSE;
+	}
+
+	CloseHandle(hToken);
+
+	return TRUE;
+}
 
 void LogSystemStats()
 {
@@ -336,6 +369,8 @@ void SetWorkingFolder(void)
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+    LoadSeDebugPrivilege();
+
     int numArgs;
     LPWSTR *args = CommandLineToArgvW(GetCommandLineW(), &numArgs);
 
@@ -352,8 +387,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     LocalFree(args);
 
     //------------------------------------------------------------
-
     //make sure only one instance of the application can be open at a time
+
     hOBSMutex = CreateMutex(NULL, TRUE, TEXT("OBSMutex"));
     if(!bDisableMutex && GetLastError() == ERROR_ALREADY_EXISTS)
     {

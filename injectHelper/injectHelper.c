@@ -27,6 +27,40 @@ typedef unsigned __int64 UPARAM;
 typedef unsigned long UPARAM;
 #endif
 
+BOOL LoadSeDebugPrivilege()
+{
+	DWORD	err;
+	HANDLE	hToken;
+	LUID	Val;
+	TOKEN_PRIVILEGES tp;
+
+	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken))
+	{
+		err = GetLastError ();
+		return FALSE;
+	}
+
+	if (!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Val))
+	{
+		err = GetLastError ();
+		return FALSE;
+	}
+
+	tp.PrivilegeCount = 1;
+	tp.Privileges[0].Luid = Val;
+	tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+	if (!AdjustTokenPrivileges(hToken, FALSE, &tp, sizeof (tp), NULL, NULL))
+	{
+		err = GetLastError ();
+		return FALSE;
+	}
+
+	CloseHandle(hToken);
+
+	return TRUE;
+}
+
 typedef HANDLE (WINAPI *CRTPROC)(HANDLE, LPSECURITY_ATTRIBUTES, SIZE_T, LPTHREAD_START_ROUTINE, LPVOID, DWORD, LPDWORD);
 typedef BOOL   (WINAPI *WPMPROC)(HANDLE, LPVOID, LPCVOID, SIZE_T, SIZE_T*);
 typedef LPVOID (WINAPI *VAEPROC)(HANDLE, LPVOID, SIZE_T, DWORD, DWORD);
@@ -148,6 +182,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
     /* -------------------------- */
 
     LPWSTR *pCommandLineArgs = CommandLineToArgvW(pCommandLineW, &numArgs);
+
+    LoadSeDebugPrivilege();
+
     if (numArgs > 1)
     {
         procID = wcstoul(pCommandLineArgs[1], NULL, 10);
