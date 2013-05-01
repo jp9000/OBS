@@ -402,6 +402,7 @@ public:
 
                 curTime = 0.0f;
                 curFrame = 0;
+                lastDecodedFrame = 0;
             }
             else
             {
