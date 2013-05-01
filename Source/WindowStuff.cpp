@@ -2571,7 +2571,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
                                 App->EnableSceneSwitching(false);
 
-                                if(App->bRunning)
+                                if(App->bRunning && App->scene)
                                 {
                                     SceneItem* selectedItem = App->scene->GetSceneItem(selectedID);
                                     source = selectedItem->GetSource();

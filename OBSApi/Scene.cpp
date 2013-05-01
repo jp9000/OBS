@@ -177,7 +177,7 @@ SceneItem* Scene::InsertImageSource(UINT pos, XElement *sourceElement)
     item->SetRender(render);
 
     API->EnterSceneMutex();
-    if(bSceneStarted) source->BeginScene();
+    if(bSceneStarted && source) source->BeginScene();
     sceneItems.Insert(pos, item);
     API->LeaveSceneMutex();
 

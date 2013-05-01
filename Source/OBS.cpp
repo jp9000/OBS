@@ -471,7 +471,7 @@ OBS::OBS()
     strScenesConfig << lpAppDataPath << TEXT("\\scenes.xconfig");
 
     if(!scenesConfig.Open(strScenesConfig))
-        CrashError(TEXT("Could not open '%s'"), strScenesConfig);
+        CrashError(TEXT("Could not open '%s'"), strScenesConfig.Array());
 
     XElement *scenes = scenesConfig.GetElement(TEXT("scenes"));
     if(!scenes)
@@ -598,7 +598,7 @@ OBS::OBS()
                     }
                     else
                     {
-                        Log(TEXT("Failed to initialize plugin %s"), strLocation);
+                        Log(TEXT("Failed to initialize plugin %s"), strLocation.Array());
                         FreeLibrary(hPlugin);
                     }
                 }
@@ -1402,7 +1402,7 @@ void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
 
     if(dis.itemID == 4)
     {
-        DWORD green = 0xFF, red = 0xFF;
+        DWORD green = 0xFF, red;
 
         statusBarData.bytesPerSec = App->bytesPerSec;
         statusBarData.strain = App->curStrain;

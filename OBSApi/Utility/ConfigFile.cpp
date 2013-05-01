@@ -98,7 +98,7 @@ void ConfigFile::LoadData()
     {
         lpNextLine = schr(lpCurLine, '\r');
         if (!lpNextLine)
-            CrashError(TEXT("Your %s file is corrupt, please delete it and re-launch OBS."), strFileName);
+            CrashError(TEXT("Your %s file is corrupt, please delete it and re-launch OBS."), strFileName.Array());
         *lpNextLine = 0;
 
         if((*lpCurLine == '[') && (*(lpNextLine-1) == ']'))
@@ -112,7 +112,7 @@ void ConfigFile::LoadData()
         {
             TSTR lpValuePtr = schr(lpCurLine, '=');
             if (!lpValuePtr)
-                CrashError(TEXT("Your %s file is corrupt, please delete it and re-launch OBS."), strFileName);
+                CrashError(TEXT("Your %s file is corrupt, please delete it and re-launch OBS."), strFileName.Array());
 
             if(lpValuePtr[1] != 0)
             {

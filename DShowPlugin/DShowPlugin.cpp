@@ -766,7 +766,7 @@ bool GetResolution(HWND hwndResolution, SIZE &resolution, BOOL bSelChange)
     String strCX = strResolution.GetToken(0, 'x');
     String strCY = strResolution.GetToken(1, 'x');
 
-    if(strCX.IsEmpty() || strCX.IsEmpty() || !ValidIntString(strCX) || !ValidIntString(strCY))
+    if(strCX.IsEmpty() || strCY.IsEmpty() || !ValidIntString(strCX) || !ValidIntString(strCY))
         return false;
 
     UINT cx = strCX.ToInt();

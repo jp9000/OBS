@@ -216,7 +216,7 @@ void SetupIni()
     strIni.Clear() << lpAppDataPath << TEXT("\\profiles\\") << strProfile << TEXT(".ini");
 
     if(!AppConfig->Create(strIni))
-        CrashError(TEXT("Could not create '%s'"), strIni);
+        CrashError(TEXT("Could not create '%s'"), strIni.Array());
 
     AppConfig->SetString(TEXT("Audio"),          TEXT("Device"),        TEXT("Default"));
     AppConfig->SetFloat (TEXT("Audio"),          TEXT("MicVolume"),     1.0f);
