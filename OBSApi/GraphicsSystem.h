@@ -413,7 +413,7 @@ public:
 
     //----------------------------------------------------
     //Texture Functions
-    virtual Texture*        CreateTextureFromSharedHandle(unsigned int width, unsigned int height, GSColorFormat colorFormat, HANDLE handle)=0;
+    virtual Texture*        CreateTextureFromSharedHandle(unsigned int width, unsigned int height, HANDLE handle)=0;
     virtual Texture*        CreateTexture(unsigned int width, unsigned int height, GSColorFormat colorFormat, void *lpData, BOOL bBuildMipMaps, BOOL bStatic)=0;
     virtual Texture*        CreateTextureFromFile(CTSTR lpFile, BOOL bBuildMipMaps)=0;
     virtual Texture*        CreateRenderTarget(unsigned int width, unsigned int height, GSColorFormat colorFormat, BOOL bGenMipMaps)=0;

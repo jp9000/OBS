@@ -65,7 +65,7 @@ bool SharedTexCapture::Init(CaptureInfo &info)
     texData = (SharedTexData*)sharedMemory;
     texData->frameTime = 1000000/API->GetMaxFPS()/2;
 
-    sharedTexture = GS->CreateTextureFromSharedHandle(info.cx, info.cy, (GSColorFormat)info.format, (HANDLE)texData->texHandle);
+    sharedTexture = GS->CreateTextureFromSharedHandle(info.cx, info.cy, (HANDLE)texData->texHandle);
     if(!sharedTexture)
     {
         AppWarning(TEXT("SharedTexCapture::Init: Could not create shared texture"));

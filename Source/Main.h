@@ -72,10 +72,10 @@ extern bool         bIsPortable;
 extern TCHAR        lpAppPath[MAX_PATH];
 extern TCHAR        lpAppDataPath[MAX_PATH];
 
-#define OBS_VERSION             0x005001 //version number is 0xMMmmtt (Major.minor.test - yes I know it's hex)
-#define OBS_VERSION_STRING_ANSI "Open Broadcaster Software v0.51b"
+#define OBS_VERSION             0x005201 //version number is 0xMMmmtt (Major.minor.test - yes I know it's hex)
+#define OBS_VERSION_STRING_ANSI "Open Broadcaster Software v0.51.01b (kamehameha test build)"
 #define OBS_VERSION_STRING      TEXT(OBS_VERSION_STRING_ANSI)
-//#define OBS_TEST_BUILD          1 //define this if releasing a test build to disable the auto updater
+#define OBS_TEST_BUILD          1 //define this if releasing a test build to disable the auto updater
 
 #ifdef _DEBUG
 #define OBS_DISABLE_AUTOUPDATE 1

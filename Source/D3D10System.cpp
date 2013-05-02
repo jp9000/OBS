@@ -332,9 +332,9 @@ void D3D10System::Init()
 
 ////////////////////////////
 //Texture Functions
-Texture* D3D10System::CreateTextureFromSharedHandle(unsigned int width, unsigned int height, GSColorFormat colorFormat, HANDLE handle)
+Texture* D3D10System::CreateTextureFromSharedHandle(unsigned int width, unsigned int height, HANDLE handle)
 {
-    return D3D10Texture::CreateFromSharedHandle(width, height, colorFormat, handle);
+    return D3D10Texture::CreateFromSharedHandle(width, height, handle);
 }
 
 Texture* D3D10System::CreateTexture(unsigned int width, unsigned int height, GSColorFormat colorFormat, void *lpData, BOOL bBuildMipMaps, BOOL bStatic)

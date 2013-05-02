@@ -32,6 +32,18 @@ const UINT formatPitch[] = {0, 1, 1, 4, 4, 4, 4, 8, 16, 0, 0, 0};
 const D3D10_TEXTURE_ADDRESS_MODE convertAddressMode[] = {D3D10_TEXTURE_ADDRESS_CLAMP, D3D10_TEXTURE_ADDRESS_WRAP, D3D10_TEXTURE_ADDRESS_MIRROR, D3D10_TEXTURE_ADDRESS_BORDER, D3D10_TEXTURE_ADDRESS_MIRROR_ONCE};
 const D3D10_FILTER convertFilter[] = {D3D10_FILTER_MIN_MAG_MIP_LINEAR, D3D10_FILTER_MIN_MAG_MIP_POINT, D3D10_FILTER_ANISOTROPIC, D3D10_FILTER_MIN_MAG_POINT_MIP_LINEAR, D3D10_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT, D3D10_FILTER_MIN_POINT_MAG_MIP_LINEAR, D3D10_FILTER_MIN_LINEAR_MAG_MIP_POINT, D3D10_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR, D3D10_FILTER_MIN_MAG_LINEAR_MIP_POINT};
 
+inline GSColorFormat GetGSFormatFromDXGIFormat(DXGI_FORMAT dxgiFormat)
+{
+    UINT numVals = sizeof(convertFormat)/sizeof(DXGI_FORMAT);
+
+    for (UINT i=0; i<numVals; i++) {
+        if (convertFormat[i] == dxgiFormat)
+            return (GSColorFormat)i;
+    }
+
+    return GS_UNKNOWNFORMAT;
+}
+
 SamplerState* D3D10SamplerState::CreateSamplerState(SamplerInfo &info)
 {
     D3D10_SAMPLER_DESC sampDesc;
@@ -68,15 +80,9 @@ D3D10SamplerState::~D3D10SamplerState()
 }
 
 
-Texture* D3D10Texture::CreateFromSharedHandle(unsigned int width, unsigned int height, GSColorFormat colorFormat, HANDLE handle)
+Texture* D3D10Texture::CreateFromSharedHandle(unsigned int width, unsigned int height, HANDLE handle)
 {
     HRESULT err;
-
-    if(colorFormat >= GS_DXT1)
-    {
-        AppWarning(TEXT("D3D10Texture::CreateFromSharedHandle: tried to a blank DXT shared texture."));
-        return NULL;
-    }
 
     if(!handle)
     {
@@ -103,15 +109,18 @@ Texture* D3D10Texture::CreateFromSharedHandle(unsigned int width, unsigned int h
 
     //------------------------------------------
 
-    DXGI_FORMAT format = convertFormat[(UINT)colorFormat];
+    D3D10_TEXTURE2D_DESC td;
+    texVal->GetDesc(&td);
+
+    //------------------------------------------
 
     D3D10_SHADER_RESOURCE_VIEW_DESC resourceDesc;
     zero(&resourceDesc, sizeof(resourceDesc));
-    resourceDesc.Format              = format;
+    resourceDesc.Format              = td.Format;
     resourceDesc.ViewDimension       = D3D10_SRV_DIMENSION_TEXTURE2D;
     resourceDesc.Texture2D.MipLevels = 1;
 
-    ID3D10ShaderResourceView *resource;
+    ID3D10ShaderResourceView *resource = NULL;
     if(FAILED(err = GetD3D()->CreateShaderResourceView(texVal, &resourceDesc, &resource)))
     {
         SafeRelease(texVal);
@@ -122,7 +131,7 @@ Texture* D3D10Texture::CreateFromSharedHandle(unsigned int width, unsigned int h
     //------------------------------------------
 
     D3D10Texture *newTex = new D3D10Texture;
-    newTex->format = colorFormat;
+    newTex->format = GetGSFormatFromDXGIFormat(td.Format);;
     newTex->resource = resource;
     newTex->texture = texVal;
     newTex->bDynamic = false;

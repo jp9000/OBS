@@ -107,7 +107,7 @@ class D3D10Texture : public Texture
     bool bGDICompatible;
     bool bDynamic;
 
-    static Texture* CreateFromSharedHandle(unsigned int width, unsigned int height, GSColorFormat colorFormat, HANDLE handle);
+    static Texture* CreateFromSharedHandle(unsigned int width, unsigned int height, HANDLE handle);
     static Texture* CreateTexture(unsigned int width, unsigned int height, GSColorFormat colorFormat, void *lpData, BOOL bGenMipMaps, BOOL bStatic);
     static Texture* CreateFromFile(CTSTR lpFile, BOOL bBuildMipMaps);
     static Texture* CreateRenderTarget(unsigned int width, unsigned int height, GSColorFormat colorFormat, BOOL bGenMipMaps);
@@ -395,7 +395,7 @@ public:
 
     ////////////////////////////
     //Texture Functions
-    virtual Texture*        CreateTextureFromSharedHandle(unsigned int width, unsigned int height, GSColorFormat colorFormat, HANDLE handle);
+    virtual Texture*        CreateTextureFromSharedHandle(unsigned int width, unsigned int height, HANDLE handle);
     virtual Texture*        CreateTexture(unsigned int width, unsigned int height, GSColorFormat colorFormat, void *lpData, BOOL bBuildMipMaps, BOOL bStatic);
     virtual Texture*        CreateTextureFromFile(CTSTR lpFile, BOOL bBuildMipMaps);
     virtual Texture*        CreateRenderTarget(unsigned int width, unsigned int height, GSColorFormat colorFormat, BOOL bGenMipMaps);
