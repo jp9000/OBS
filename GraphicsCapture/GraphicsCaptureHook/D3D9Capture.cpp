@@ -206,7 +206,7 @@ void ClearD3D9Data()
     resetCount++;
     pCopyData = NULL;
 
-    logOutput << "---------------------- Cleared D3D9 Capture ----------------------" << endl;
+    logOutput << CurrentTimeString() << "---------------------- Cleared D3D9 Capture ----------------------" << endl;
 }
 
 GSColorFormat ConvertDX9BackBufferFormat(D3DFORMAT format)
@@ -251,42 +251,42 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
     HMODULE hD3D10_1 = LoadLibrary(TEXT("d3d10_1.dll"));
     if(!hD3D10_1)
     {
-        RUNEVERYRESET logOutput << "DoD3D9GPUHook: Could not load D3D10.1" << endl;
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9GPUHook: Could not load D3D10.1" << endl;
         goto finishGPUHook;
     }
 
     HMODULE hDXGI = LoadLibrary(TEXT("dxgi.dll"));
     if(!hDXGI)
     {
-        RUNEVERYRESET logOutput << "DoD3D9GPUHook: Could not load dxgi" << endl;
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9GPUHook: Could not load dxgi" << endl;
         goto finishGPUHook;
     }
 
     CREATEDXGIFACTORY1PROC createDXGIFactory1 = (CREATEDXGIFACTORY1PROC)GetProcAddress(hDXGI, "CreateDXGIFactory1");
     if(!createDXGIFactory1)
     {
-        RUNEVERYRESET logOutput << "DoD3D9GPUHook: Could not load 'CreateDXGIFactory1'" << endl;
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9GPUHook: Could not load 'CreateDXGIFactory1'" << endl;
         goto finishGPUHook;
     }
 
     PFN_D3D10_CREATE_DEVICE1 d3d10CreateDevice1 = (PFN_D3D10_CREATE_DEVICE1)GetProcAddress(hD3D10_1, "D3D10CreateDevice1");
     if(!d3d10CreateDevice1)
     {
-        RUNEVERYRESET logOutput << "DoD3D9GPUHook: Could not load 'D3D10CreateDevice1'" << endl;
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9GPUHook: Could not load 'D3D10CreateDevice1'" << endl;
         goto finishGPUHook;
     }
 
     IDXGIFactory1 *factory;
     if(FAILED(hErr = (*createDXGIFactory1)(__uuidof(IDXGIFactory1), (void**)&factory)))
     {
-        RUNEVERYRESET logOutput << "DoD3D9GPUHook: CreateDXGIFactory1 failed, result = " << (UINT)hErr << endl;
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9GPUHook: CreateDXGIFactory1 failed, result = " << (UINT)hErr << endl;
         goto finishGPUHook;
     }
 
     IDXGIAdapter1 *adapter;
     if(FAILED(hErr = factory->EnumAdapters1(0, &adapter)))
     {
-        RUNEVERYRESET logOutput << "DoD3D9GPUHook: factory->EnumAdapters1 failed, result = " << (UINT)hErr << endl;
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9GPUHook: factory->EnumAdapters1 failed, result = " << (UINT)hErr << endl;
         factory->Release();
         goto finishGPUHook;
     }
@@ -295,7 +295,7 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
     {
         if(FAILED(hErr = (*d3d10CreateDevice1)(adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_FEATURE_LEVEL_9_3, D3D10_1_SDK_VERSION, &shareDevice)))
         {
-            RUNEVERYRESET logOutput << "DoD3D9GPUHook: Could not create D3D10.1 device, result = " << (UINT)hErr << endl;
+            RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9GPUHook: Could not create D3D10.1 device, result = " << (UINT)hErr << endl;
             adapter->Release();
             factory->Release();
             goto finishGPUHook;
@@ -321,13 +321,13 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
     ID3D10Texture2D *d3d101Tex;
     if(FAILED(hErr = shareDevice->CreateTexture2D(&texGameDesc, NULL, &d3d101Tex)))
     {
-        RUNEVERYRESET logOutput << "DoD3D9GPUHook: shareDevice->CreateTexture2D failed, result = " << (UINT)hErr << endl;
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9GPUHook: shareDevice->CreateTexture2D failed, result = " << (UINT)hErr << endl;
         goto finishGPUHook;
     }
 
     if(FAILED(hErr = d3d101Tex->QueryInterface(__uuidof(ID3D10Resource), (void**)&copyTextureIntermediary)))
     {
-        RUNEVERYRESET logOutput << "DoD3D9GPUHook: d3d101Tex->QueryInterface(ID3D10Resource) failed, result = " << (UINT)hErr << endl;
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9GPUHook: d3d101Tex->QueryInterface(ID3D10Resource) failed, result = " << (UINT)hErr << endl;
         d3d101Tex->Release();
         goto finishGPUHook;
     }
@@ -335,14 +335,14 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
     IDXGIResource *res;
     if(FAILED(hErr = d3d101Tex->QueryInterface(IID_IDXGIResource, (void**)&res)))
     {
-        RUNEVERYRESET logOutput << "DoD3D9GPUHook: d3d101Tex->QueryInterface(IDXGIResource) failed, result = " << (UINT)hErr << endl;
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9GPUHook: d3d101Tex->QueryInterface(IDXGIResource) failed, result = " << (UINT)hErr << endl;
         d3d101Tex->Release();
         goto finishGPUHook;
     }
 
     if(FAILED(res->GetSharedHandle(&sharedHandle)))
     {
-        RUNEVERYRESET logOutput << "DoD3D9GPUHook: res->GetSharedHandle failed, result = " << (UINT)hErr << endl;
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9GPUHook: res->GetSharedHandle failed, result = " << (UINT)hErr << endl;
         d3d101Tex->Release();
         res->Release();
         goto finishGPUHook;
@@ -367,7 +367,7 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
         }
         else
         {
-            RUNEVERYRESET logOutput << "DoD3D9GPUHook: unable to change memory protection, result = " << GetLastError() << endl;
+            RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9GPUHook: unable to change memory protection, result = " << GetLastError() << endl;
             goto finishGPUHook;
         }
     }
@@ -375,7 +375,7 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
     IDirect3DTexture9 *d3d9Tex;
     if(FAILED(hErr = device->CreateTexture(d3d9CaptureInfo.cx, d3d9CaptureInfo.cy, 1, D3DUSAGE_RENDERTARGET, (D3DFORMAT)d3d9Format, D3DPOOL_DEFAULT, &d3d9Tex, &sharedHandle)))
     {
-        RUNEVERYRESET logOutput << "DoD3D9GPUHook: opening intermediary texture failed, result = " << (UINT)hErr << endl;
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9GPUHook: opening intermediary texture failed, result = " << (UINT)hErr << endl;
         goto finishGPUHook;
     }
 
@@ -387,7 +387,7 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
 
     if(FAILED(hErr = d3d9Tex->GetSurfaceLevel(0, &copyD3D9TextureGame)))
     {
-        RUNEVERYRESET logOutput << "DoD3D9GPUHook: d3d9Tex->GetSurfaceLevel failed, result = " << (UINT)hErr << endl;
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9GPUHook: d3d9Tex->GetSurfaceLevel failed, result = " << (UINT)hErr << endl;
         d3d9Tex->Release();
         goto finishGPUHook;
     }
@@ -397,7 +397,7 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
     d3d9CaptureInfo.mapID = InitializeSharedMemoryGPUCapture(&texData);
     if(!d3d9CaptureInfo.mapID)
     {
-        RUNEVERYRESET logOutput << "DoD3D9GPUHook: failed to initialize shared memory" << endl;
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9GPUHook: failed to initialize shared memory" << endl;
         goto finishGPUHook;
     }
 
@@ -414,14 +414,14 @@ finishGPUHook:
 
         memcpy(infoMem, &d3d9CaptureInfo, sizeof(CaptureInfo));
         if (!SetEvent(hSignalReady))
-            logOutput << "SetEvent(hSignalReady) failed, GetLastError = " << UINT(GetLastError()) << endl;
+            logOutput << CurrentTimeString() << "SetEvent(hSignalReady) failed, GetLastError = " << UINT(GetLastError()) << endl;
 
-        logOutput << "DoD3D9GPUHook: success";
+        logOutput << CurrentTimeString() << "DoD3D9GPUHook: success";
 
         if (bD3D9Ex)
-            logOutput << " - d3d9ex";
+            logOutput << CurrentTimeString() << " - d3d9ex";
 
-        logOutput << endl;
+        logOutput << CurrentTimeString() << endl;
     }
     else
         ClearD3D9Data();
@@ -439,7 +439,7 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
     {
         if(FAILED(hErr = device->CreateOffscreenPlainSurface(d3d9CaptureInfo.cx, d3d9CaptureInfo.cy, (D3DFORMAT)d3d9Format, D3DPOOL_SYSTEMMEM, &textures[i], NULL)))
         {
-            RUNEVERYRESET logOutput << "DoD3D9CPUHook: device->CreateOffscreenPlainSurface " << i << " failed, result = " << (UINT)hErr << endl;
+            RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9CPUHook: device->CreateOffscreenPlainSurface " << i << " failed, result = " << (UINT)hErr << endl;
             bSuccess = false;
             break;
         }
@@ -449,7 +449,7 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
             D3DLOCKED_RECT lr;
             if(FAILED(hErr = textures[i]->LockRect(&lr, NULL, D3DLOCK_READONLY)))
             {
-                RUNEVERYRESET logOutput << "DoD3D9CPUHook: textures[" << i << "]->LockRect failed, result = " << (UINT)hErr << endl;
+                RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9CPUHook: textures[" << i << "]->LockRect failed, result = " << (UINT)hErr << endl;
                 bSuccess = false;
                 break;
             }
@@ -465,21 +465,21 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
         {
             if(FAILED(hErr = device->CreateRenderTarget(d3d9CaptureInfo.cx, d3d9CaptureInfo.cy, (D3DFORMAT)d3d9Format, D3DMULTISAMPLE_NONE, 0, FALSE, &copyD3D9Textures[i], NULL)))
             {
-                RUNEVERYRESET logOutput << "DoD3D9CPUHook: device->CreateTexture " << i << " failed, result = " << (UINT)hErr << endl;
+                RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9CPUHook: device->CreateTexture " << i << " failed, result = " << (UINT)hErr << endl;
                 bSuccess = false;
                 break;
             }
 
             if(FAILED(hErr = device->CreateQuery(D3DQUERYTYPE_EVENT, &queries[i])))
             {
-                RUNEVERYRESET logOutput << "DoD3D9CPUHook: device->CreateQuery " << i << " failed, result = " << (UINT)hErr << endl;
+                RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9CPUHook: device->CreateQuery " << i << " failed, result = " << (UINT)hErr << endl;
                 bSuccess = false;
                 break;
             }
 
             if(!(dataMutexes[i] = OSCreateMutex()))
             {
-                RUNEVERYRESET logOutput << "DoD3D9CPUHook: OSCreateMutex " << i << " failed, GetLastError = " << GetLastError() << endl;
+                RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9CPUHook: OSCreateMutex " << i << " failed, GetLastError = " << GetLastError() << endl;
                 bSuccess = false;
                 break;
             }
@@ -494,13 +494,13 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
         {
             if(!(hCopyEvent = CreateEvent(NULL, FALSE, FALSE, NULL)))
             {
-                RUNEVERYRESET logOutput << "DoD3D9CPUHook: CreateEvent failed, GetLastError = " << GetLastError() << endl;
+                RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9CPUHook: CreateEvent failed, GetLastError = " << GetLastError() << endl;
                 bSuccess = false;
             }
         }
         else
         {
-            RUNEVERYRESET logOutput << "DoD3D9CPUHook: CreateThread failed, GetLastError = " << GetLastError() << endl;
+            RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9CPUHook: CreateThread failed, GetLastError = " << GetLastError() << endl;
             bSuccess = false;
         }
     }
@@ -510,7 +510,7 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
         d3d9CaptureInfo.mapID = InitializeSharedMemoryCPUCapture(pitch*d3d9CaptureInfo.cy, &d3d9CaptureInfo.mapSize, &copyData, textureBuffers);
         if(!d3d9CaptureInfo.mapID)
         {
-            RUNEVERYRESET logOutput << "DoD3D9CPUHook: failed to initialize shared memory" << endl;
+            RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9CPUHook: failed to initialize shared memory" << endl;
             bSuccess = false;
         }
     }
@@ -528,7 +528,7 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
         memcpy(infoMem, &d3d9CaptureInfo, sizeof(CaptureInfo));
         SetEvent(hSignalReady);
 
-        logOutput << "DoD3D9CPUHook: success" << endl;
+        logOutput << CurrentTimeString() << "DoD3D9CPUHook: success" << endl;
     }
     else
         ClearD3D9Data();
@@ -541,7 +541,7 @@ DWORD CopyD3D9CPUTextureThread(LPVOID lpUseless)
     HANDLE hEvent = NULL;
     if(!DuplicateHandle(GetCurrentProcess(), hCopyEvent, GetCurrentProcess(), &hEvent, NULL, FALSE, DUPLICATE_SAME_ACCESS))
     {
-        logOutput << "CopyD3D9CPUTextureThread: couldn't duplicate handle" << endl;
+        logOutput << CurrentTimeString() << "CopyD3D9CPUTextureThread: couldn't duplicate handle" << endl;
         return 0;
     }
 
@@ -589,6 +589,15 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
 {
     HRESULT hErr;
 
+    if(bCapturing && WaitForSingleObject(hSignalEnd, 0) == WAIT_OBJECT_0)
+        bStopRequested = true;
+
+    if(bCapturing && !IsWindow(hwndOBS))
+    {
+        hwndOBS = NULL;
+        bStopRequested = true;
+    }
+
     if(bStopRequested)
     {
         ClearD3D9Data();
@@ -600,10 +609,10 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
     {
         hwndOBS = FindWindow(OBS_WINDOW_CLASS, NULL);
         if(hwndOBS) {
-            logOutput << "received restart event, capturing" << endl;
+            logOutput << CurrentTimeString() << "received restart event, capturing" << endl;
             bCapturing = true;
         } else {
-            logOutput << "received restart event, but couldn't find window" << endl;
+            logOutput << CurrentTimeString() << "received restart event, but couldn't find window" << endl;
         }
     }
 
@@ -638,7 +647,7 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
                 CloseHandle(hKeepAlive);
             } else {
                 ClearD3D9Data();
-                logOutput << "Keepalive no longer found on d3d9, freeing capture data" << endl;
+                logOutput << CurrentTimeString() << "Keepalive no longer found on d3d9, freeing capture data" << endl;
                 bCapturing = false;
             }
 
@@ -682,12 +691,12 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
                             IDirect3DSurface9 *backBuffer = NULL;
 
                             if (FAILED(hErr = device->GetRenderTarget(0, &backBuffer))) {
-                                RUNEVERYRESET logOutput << "D3D9DrawStuff: GetRenderTarget failed, result = " << unsigned int(hErr) << endl;
+                                RUNEVERYRESET logOutput << CurrentTimeString() << "D3D9DrawStuff: GetRenderTarget failed, result = " << unsigned int(hErr) << endl;
                             }
 
                             if (!backBuffer) {
                                 if (FAILED(hErr = device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &backBuffer))) {
-                                    RUNEVERYRESET logOutput << "DoD3D9DrawStuff: device->GetBackBuffer failed, result = " << unsigned int(hErr) << endl;
+                                    RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9DrawStuff: device->GetBackBuffer failed, result = " << unsigned int(hErr) << endl;
                                 }
                             }
 
@@ -695,9 +704,9 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
                                 {RUNEVERYRESET LogD3D9SurfaceInfo(backBuffer);}
 
                                 if (FAILED(hErr = device->StretchRect(backBuffer, NULL, copyD3D9TextureGame, NULL, D3DTEXF_NONE))) {
-                                    RUNEVERYRESET logOutput << "DoD3D9DrawStuff: device->StretchRect failed, result = " << unsigned int(hErr) << endl;
+                                    RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9DrawStuff: device->StretchRect failed, result = " << unsigned int(hErr) << endl;
                                 } else {
-                                    RUNEVERYRESET logOutput << "successfully capturing d3d9 frames via GPU" << endl;
+                                    RUNEVERYRESET logOutput << CurrentTimeString() << "successfully capturing d3d9 frames via GPU" << endl;
                                 }
 
                                 backBuffer->Release();
@@ -742,15 +751,6 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
 
                     if(timeElapsed >= frameTime)
                     {
-                        if(!IsWindow(hwndOBS))
-                        {
-                            hwndOBS = NULL;
-                            bStopRequested = true;
-                        }
-
-                        if(WaitForSingleObject(hSignalEnd, 0) == WAIT_OBJECT_0)
-                            bStopRequested = true;
-
                         lastTime += frameTime;
                         if(timeElapsed > frameTime*2)
                             lastTime = timeVal;
@@ -786,7 +786,7 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
                                 {
                                     int test = 0;
                                 } else {
-                                    RUNEVERYRESET logOutput << "successfully capturing d3d9 frames via CPU" << endl;
+                                    RUNEVERYRESET logOutput << CurrentTimeString() << "successfully capturing d3d9 frames via CPU" << endl;
                                 }
 
                                 queries[nextCapture]->Issue(D3DISSUE_END);
@@ -798,9 +798,10 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
                     }
                 }
             }
-        }
-        else
+        } else {
+            RUNEVERYRESET logOutput << CurrentTimeString() << "no longer capturing, terminating d3d9 capture" << endl;
             ClearD3D9Data();
+        }
     }
 }
 
@@ -816,7 +817,7 @@ ULONG STDMETHODCALLTYPE D3D9Release(IDirect3DDevice9 *device)
     {
         if(refVal == 15)
         {
-            logOutput << "d3d9 capture terminated by the application" << endl;
+            logOutput << CurrentTimeString() << "d3d9 capture terminated by the application" << endl;
 
             ClearD3D9Data();
             lpCurrentDevice = NULL;
@@ -836,7 +837,7 @@ HRESULT STDMETHODCALLTYPE D3D9EndScene(IDirect3DDevice9 *device)
 {
     d3d9EndScene.Unhook();
 
-    RUNEVERYRESET logOutput << "D3D9EndScene called" << endl;
+    RUNEVERYRESET logOutput << CurrentTimeString() << "D3D9EndScene called" << endl;
 
     if(lpCurrentDevice == NULL)
     {
@@ -867,7 +868,7 @@ HRESULT STDMETHODCALLTYPE D3D9Present(IDirect3DDevice9 *device, CONST RECT* pSou
 {
     d3d9Present.Unhook();
 
-    RUNEVERYRESET logOutput << "D3D9Present called" << endl;
+    RUNEVERYRESET logOutput << CurrentTimeString() << "D3D9Present called" << endl;
 
     if(!presentRecurse)
         DoD3D9DrawStuff(device);
@@ -886,7 +887,7 @@ HRESULT STDMETHODCALLTYPE D3D9PresentEx(IDirect3DDevice9Ex *device, CONST RECT* 
 {
     d3d9PresentEx.Unhook();
 
-    RUNEVERYRESET logOutput << "D3D9PresentEx called" << endl;
+    RUNEVERYRESET logOutput << CurrentTimeString() << "D3D9PresentEx called" << endl;
 
     if(!presentRecurse)
         DoD3D9DrawStuff(device);
@@ -905,7 +906,7 @@ HRESULT STDMETHODCALLTYPE D3D9SwapPresent(IDirect3DSwapChain9 *swap, CONST RECT*
 {
     d3d9SwapPresent.Unhook();
 
-    RUNEVERYRESET logOutput << "D3D9SwapPresent called" << endl;
+    RUNEVERYRESET logOutput << CurrentTimeString() << "D3D9SwapPresent called" << endl;
 
     if(!presentRecurse)
         DoD3D9DrawStuff((IDirect3DDevice9*)lpCurrentDevice);
@@ -924,7 +925,7 @@ HRESULT STDMETHODCALLTYPE D3D9Reset(IDirect3DDevice9 *device, D3DPRESENT_PARAMET
 {
     d3d9Reset.Unhook();
 
-    RUNEVERYRESET logOutput << "D3D9Reset called" << endl;
+    RUNEVERYRESET logOutput << CurrentTimeString() << "D3D9Reset called" << endl;
 
     ClearD3D9Data();
 
@@ -949,7 +950,7 @@ HRESULT STDMETHODCALLTYPE D3D9ResetEx(IDirect3DDevice9Ex *device, D3DPRESENT_PAR
     d3d9ResetEx.Unhook();
     d3d9Reset.Unhook();
 
-    RUNEVERYRESET logOutput << "D3D9ResetEx called" << endl;
+    RUNEVERYRESET logOutput << CurrentTimeString() << "D3D9ResetEx called" << endl;
 
     ClearD3D9Data();
 
@@ -1039,7 +1040,7 @@ void SetupD3D9(IDirect3DDevice9 *device)
             d3d9ResetEx.Rehook();
         }
 
-        logOutput << "successfully set up d3d9 hooks" << endl;
+        logOutput << CurrentTimeString() << "successfully set up d3d9 hooks" << endl;
 
         swapChain->Release();
     }
@@ -1094,19 +1095,19 @@ bool InitD3D9Capture()
                 }
                 else
                 {
-                    RUNEVERYRESET logOutput << "InitD3D9Capture: d3d9ex->CreateDeviceEx failed, result: " << (UINT)hRes << endl;
+                    RUNEVERYRESET logOutput << CurrentTimeString() << "InitD3D9Capture: d3d9ex->CreateDeviceEx failed, result: " << (UINT)hRes << endl;
                 }
 
                 d3d9ex->Release();
             }
             else
             {
-                RUNEVERYRESET logOutput << "InitD3D9Capture: Direct3DCreate9Ex failed, result: " << (UINT)hRes << endl;
+                RUNEVERYRESET logOutput << CurrentTimeString() << "InitD3D9Capture: Direct3DCreate9Ex failed, result: " << (UINT)hRes << endl;
             }
         }
         else
         {
-            RUNEVERYRESET logOutput << "InitD3D9Capture: could not load address of Direct3DCreate9Ex" << endl;
+            RUNEVERYRESET logOutput << CurrentTimeString() << "InitD3D9Capture: could not load address of Direct3DCreate9Ex" << endl;
         }
     }
 

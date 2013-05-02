@@ -333,25 +333,25 @@ void LogPresentParams(D3DPRESENT_PARAMETERS &pp)
         strName.resize(testLen);
         GetWindowTextA(pp.hDeviceWindow, (char*)strName.c_str(), testLen);
 
-        logOutput << "found d3d9 present params for window: " << strName << endl;
+        logOutput << CurrentTimeString() << "found d3d9 present params for window: " << strName << endl;
     }
 
-    logOutput << "D3DPRESENT_PARAMETERS {" << endl;
-    logOutput << "\t" "BackBufferWidth: " << pp.BackBufferWidth << endl;
-    logOutput << "\t" "BackBufferHeight: " << pp.BackBufferHeight << endl;
-    logOutput << "\t" "BackBufferFormat: " << GetD3D9FormatName(pp.BackBufferFormat) << endl;
-    logOutput << "\t" "BackBufferCount: " << pp.BackBufferCount << endl;
-    logOutput << "\t" "MultiSampleType: " << GetD3D9MultiSampleTypeName(pp.MultiSampleType) << endl;
-    logOutput << "\t" "MultiSampleQuality: " << pp.MultiSampleQuality << endl;
-    logOutput << "\t" "SwapEffect: " << GetD3D9SwapEffectName(pp.SwapEffect) << endl;
-    logOutput << "\t" "hDeviceWindow: " << DWORD(pp.hDeviceWindow) << endl;
-    logOutput << "\t" "Windowed: " << (pp.Windowed ? "true" : "false") << endl;
-    logOutput << "\t" "EnableAutoDepthStencil: " << (pp.EnableAutoDepthStencil ? "true" : "false") << endl;
-    logOutput << "\t" "AutoDepthStencilFormat: " << GetD3D9FormatName(pp.AutoDepthStencilFormat) << endl;
-    logOutput << "\t" "Flags: " << GetD3D9D3DPPFlagsString(pp.Flags) << endl;
-    logOutput << "\t" "FullScreen_RefreshRateInHz: " << pp.FullScreen_RefreshRateInHz << endl;
-    logOutput << "\t" "PresentationInterval: " << pp.PresentationInterval << endl;
-    logOutput << "};" << endl;
+    logOutput << CurrentTimeString() << "D3DPRESENT_PARAMETERS {" << endl;
+    logOutput << CurrentTimeString() << "\t" "BackBufferWidth: " << pp.BackBufferWidth << endl;
+    logOutput << CurrentTimeString() << "\t" "BackBufferHeight: " << pp.BackBufferHeight << endl;
+    logOutput << CurrentTimeString() << "\t" "BackBufferFormat: " << GetD3D9FormatName(pp.BackBufferFormat) << endl;
+    logOutput << CurrentTimeString() << "\t" "BackBufferCount: " << pp.BackBufferCount << endl;
+    logOutput << CurrentTimeString() << "\t" "MultiSampleType: " << GetD3D9MultiSampleTypeName(pp.MultiSampleType) << endl;
+    logOutput << CurrentTimeString() << "\t" "MultiSampleQuality: " << pp.MultiSampleQuality << endl;
+    logOutput << CurrentTimeString() << "\t" "SwapEffect: " << GetD3D9SwapEffectName(pp.SwapEffect) << endl;
+    logOutput << CurrentTimeString() << "\t" "hDeviceWindow: " << DWORD(pp.hDeviceWindow) << endl;
+    logOutput << CurrentTimeString() << "\t" "Windowed: " << (pp.Windowed ? "true" : "false") << endl;
+    logOutput << CurrentTimeString() << "\t" "EnableAutoDepthStencil: " << (pp.EnableAutoDepthStencil ? "true" : "false") << endl;
+    logOutput << CurrentTimeString() << "\t" "AutoDepthStencilFormat: " << GetD3D9FormatName(pp.AutoDepthStencilFormat) << endl;
+    logOutput << CurrentTimeString() << "\t" "Flags: " << GetD3D9D3DPPFlagsString(pp.Flags) << endl;
+    logOutput << CurrentTimeString() << "\t" "FullScreen_RefreshRateInHz: " << pp.FullScreen_RefreshRateInHz << endl;
+    logOutput << CurrentTimeString() << "\t" "PresentationInterval: " << pp.PresentationInterval << endl;
+    logOutput << CurrentTimeString() << "};" << endl;
 }
 
 void LogD3D9SurfaceInfo(IDirect3DSurface9 *surf)
@@ -361,17 +361,17 @@ void LogD3D9SurfaceInfo(IDirect3DSurface9 *surf)
     D3DSURFACE_DESC sd;
     ZeroMemory(&sd, sizeof(sd));
     if (SUCCEEDED(surf->GetDesc(&sd))) {
-        logOutput << "D3DSURFACE_DESC {" << endl;
-        logOutput << "\t" "Format: " << GetD3D9FormatName(sd.Format) << endl;
-        logOutput << "\t" "Type: " << GetD3D9ResourceTypeName(sd.Type) << endl;
-        logOutput << "\t" "Usage: " << GetD3D9UsageString(sd.Usage) << endl;
-        logOutput << "\t" "Pool: " << GetD3D9PoolName(sd.Pool) << endl;
-        logOutput << "\t" "MultiSampleType: " << GetD3D9MultiSampleTypeName(sd.MultiSampleType) << endl;
-        logOutput << "\t" "MultiSampleQuality: " << sd.MultiSampleQuality << endl;
-        logOutput << "\t" "Width: " << sd.Width << endl;
-        logOutput << "\t" "Height: " << sd.Height << endl;
-        logOutput << "};" << endl;
+        logOutput << CurrentTimeString() << "D3DSURFACE_DESC {" << endl;
+        logOutput << CurrentTimeString() << "\t" "Format: " << GetD3D9FormatName(sd.Format) << endl;
+        logOutput << CurrentTimeString() << "\t" "Type: " << GetD3D9ResourceTypeName(sd.Type) << endl;
+        logOutput << CurrentTimeString() << "\t" "Usage: " << GetD3D9UsageString(sd.Usage) << endl;
+        logOutput << CurrentTimeString() << "\t" "Pool: " << GetD3D9PoolName(sd.Pool) << endl;
+        logOutput << CurrentTimeString() << "\t" "MultiSampleType: " << GetD3D9MultiSampleTypeName(sd.MultiSampleType) << endl;
+        logOutput << CurrentTimeString() << "\t" "MultiSampleQuality: " << sd.MultiSampleQuality << endl;
+        logOutput << CurrentTimeString() << "\t" "Width: " << sd.Width << endl;
+        logOutput << CurrentTimeString() << "\t" "Height: " << sd.Height << endl;
+        logOutput << CurrentTimeString() << "};" << endl;
     } else {
-        logOutput << "could not get D3DSURFACE_DESC from backbuffer for some reason" << endl;
+        logOutput << CurrentTimeString() << "could not get D3DSURFACE_DESC from backbuffer for some reason" << endl;
     }
 }

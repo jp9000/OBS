@@ -19,6 +19,8 @@
 
 #include "GraphicsCaptureHook.h"
 
+#include <time.h>
+
 
 HANDLE hSignalRestart=NULL, hSignalEnd=NULL;
 HANDLE hSignalReady=NULL, hSignalExit=NULL;
@@ -45,6 +47,27 @@ DWORD startTick;
 
 wstring strKeepAlive;
 LONGLONG keepAliveTime = 0;
+
+
+string CurrentDateTimeString()
+{
+    time_t     now = time(0);
+    struct tm  tstruct;
+    char       buf[80];
+    tstruct = *localtime(&now);
+    strftime(buf, sizeof(buf), "%Y-%m-%d, %X: ", &tstruct);
+    return string(buf);
+}
+
+string CurrentTimeString()
+{
+    time_t     now = time(0);
+    struct tm  tstruct;
+    char       buf[80];
+    tstruct = *localtime(&now);
+    strftime(buf, sizeof(buf), "%X: ", &tstruct);
+    return string(buf);
+}
 
 
 void WINAPI OSInitializeTimer()
@@ -219,19 +242,19 @@ inline bool AttemptToHookSomething()
     bool bFoundSomethingToHook = false;
     if(!bD3D9Hooked && InitD3D9Capture())
     {
-        logOutput << "D3D9 Present" << endl;
+        logOutput << CurrentTimeString() << "D3D9 Present" << endl;
         bFoundSomethingToHook = true;
         bD3D9Hooked = true;
     }
     if(!bDXGIHooked && InitDXGICapture())
     {
-        logOutput << "DXGI Present" << endl;
+        logOutput << CurrentTimeString() << "DXGI Present" << endl;
         bFoundSomethingToHook = true;
         bDXGIHooked = true;
     }
     if(!bGLHooked && InitGLCapture())
     {
-        logOutput << "GL Present" << endl;
+        logOutput << CurrentTimeString() << "GL Present" << endl;
         bFoundSomethingToHook = true;
         bGLHooked = true;
     }
@@ -272,7 +295,7 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
     str << OBS_KEEPALIVE_EVENT << UINT(GetCurrentProcessId());
     strKeepAlive = str.str();
 
-    logOutput << "we're booting up.." << endl;
+    logOutput << CurrentDateTimeString() << "we're booting up: " << endl;
 
     WNDCLASS wc;
     ZeroMemory(&wc, sizeof(wc));
@@ -297,14 +320,14 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
     hInfoFileMap = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(CaptureInfo), strInfoMemory.str().c_str());
     if(!hInfoFileMap)
     {
-        logOutput << "CaptureThread: could not info file mapping" << endl;
+        logOutput << CurrentTimeString() << "CaptureThread: could not info file mapping" << endl;
         return 0;
     }
 
     infoMem = (CaptureInfo*)MapViewOfFile(hInfoFileMap, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(CaptureInfo));
     if(!infoMem)
     {
-        logOutput << "CaptureThread: could not map view of info shared memory" << endl;
+        logOutput << CurrentTimeString() << "CaptureThread: could not map view of info shared memory" << endl;
         CloseHandle(hInfoFileMap);
         hInfoFileMap = NULL;
         return 0;
@@ -313,7 +336,7 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
     hwndOBS = FindWindow(OBS_WINDOW_CLASS, NULL);
     if(!hwndOBS)
     {
-        logOutput << "CaptureThread: could not find main application window?  wtf?  seriously?" << endl;
+        logOutput << CurrentTimeString() << "CaptureThread: could not find main application window?  wtf?  seriously?" << endl;
         return 0;
     }
 
@@ -324,7 +347,7 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
             if (textureMutexes[0]) {
                 textureMutexes[1] = OpenMutex(MUTEX_ALL_ACCESS, FALSE, TEXTURE_MUTEX2);
                 if (textureMutexes[1]) {
-                    logOutput << "(half life scientist) everything..  seems to be in order" << endl;
+                    logOutput << CurrentTimeString() << "(half life scientist) everything..  seems to be in order" << endl;
 
                     MSG msg;
                     while (1) {
@@ -341,22 +364,22 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
                     CloseHandle(textureMutexes[1]);
                     textureMutexes[1] = NULL;
                 } else {
-                    logOutput << "could not open texture mutex 2" << endl;
+                    logOutput << CurrentTimeString() << "could not open texture mutex 2" << endl;
                 }
 
                 CloseHandle(textureMutexes[0]);
                 textureMutexes[0] = NULL;
             } else {
-                logOutput << "could not open texture mutex 1" << endl;
+                logOutput << CurrentTimeString() << "could not open texture mutex 1" << endl;
             }
 
             DestroyWindow(hwndSender);
         } else {
-            logOutput << "could not create sender window" << endl;
+            logOutput << CurrentTimeString() << "could not create sender window" << endl;
         }
     }
 
-    logOutput << "exit out of the main thread loop somehow" << endl;
+    logOutput << CurrentTimeString() << "exit out of the main thread loop somehow" << endl;
 
     return 0;
 }

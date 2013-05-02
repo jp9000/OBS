@@ -53,11 +53,12 @@ void ClearD3D101Data()
     keepAliveTime = 0;
     resetCount++;
 
-    logOutput << "---------------------- Cleared D3D10.1 Capture ----------------------" << endl;
+    logOutput << CurrentTimeString() << "---------------------- Cleared D3D10.1 Capture ----------------------" << endl;
 }
 
 void SetupD3D101(IDXGISwapChain *swapChain)
 {
+    logOutput << CurrentTimeString() << "setting up d3d10.1 data" << endl;
     ClearD3D101Data();
 
     DXGI_SWAP_CHAIN_DESC scd;
@@ -66,7 +67,7 @@ void SetupD3D101(IDXGISwapChain *swapChain)
         d3d101CaptureInfo.format = ConvertGIBackBufferFormat(scd.BufferDesc.Format);
         if(d3d101CaptureInfo.format != GS_UNKNOWNFORMAT)
         {
-            if( dxgiFormat                   != scd.BufferDesc.Format ||
+            if( dxgiFormat                    != scd.BufferDesc.Format ||
                 d3d101CaptureInfo.cx          != scd.BufferDesc.Width  ||
                 d3d101CaptureInfo.cy          != scd.BufferDesc.Height ||
                 d3d101CaptureInfo.hwndCapture != (DWORD)scd.OutputWindow)
@@ -77,7 +78,7 @@ void SetupD3D101(IDXGISwapChain *swapChain)
                 d3d101CaptureInfo.hwndCapture = (DWORD)scd.OutputWindow;
                 bIsMultisampled = scd.SampleDesc.Count > 1;
 
-                logOutput << "found dxgi format (dx10.1) of: " << UINT(dxgiFormat) <<
+                logOutput << CurrentTimeString() << "found dxgi format (dx10.1) of: " << UINT(dxgiFormat) <<
                     ", size: {" << scd.BufferDesc.Width << ", " << scd.BufferDesc.Height <<
                     "}, multisampled: " << (bIsMultisampled ? "true" : "false") << endl;
             }
@@ -110,13 +111,13 @@ bool DoD3D101Hook(ID3D10Device *device)
     ID3D10Texture2D *d3d101Tex;
     if(FAILED(hErr = device->CreateTexture2D(&texGameDesc, NULL, &d3d101Tex)))
     {
-        RUNEVERYRESET logOutput << "DoD3D101Hook: failed to create intermediary texture, result = " << UINT(hErr) << endl;
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D101Hook: failed to create intermediary texture, result = " << UINT(hErr) << endl;
         return false;
     }
 
     if(FAILED(hErr = d3d101Tex->QueryInterface(__uuidof(ID3D10Resource), (void**)&copyD3D101TextureGame)))
     {
-        RUNEVERYRESET logOutput << "DoD3D101Hook: d3d101Tex->QueryInterface(ID3D10Resource) failed, result = " << UINT(hErr) << endl;
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D101Hook: d3d101Tex->QueryInterface(ID3D10Resource) failed, result = " << UINT(hErr) << endl;
         d3d101Tex->Release();
         return false;
     }
@@ -124,14 +125,14 @@ bool DoD3D101Hook(ID3D10Device *device)
     IDXGIResource *res;
     if(FAILED(hErr = d3d101Tex->QueryInterface(IID_IDXGIResource, (void**)&res)))
     {
-        RUNEVERYRESET logOutput << "DoD3D101Hook: d3d101Tex->QueryInterface(IDXGIResource) failed, result = " << UINT(hErr) << endl;
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D101Hook: d3d101Tex->QueryInterface(IDXGIResource) failed, result = " << UINT(hErr) << endl;
         d3d101Tex->Release();
         return false;
     }
 
     if(FAILED(res->GetSharedHandle(&sharedHandle)))
     {
-        RUNEVERYRESET logOutput << "DoD3D101Hook: res->GetSharedHandle failed, result = " << UINT(hErr) << endl;
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D101Hook: res->GetSharedHandle failed, result = " << UINT(hErr) << endl;
         d3d101Tex->Release();
         res->Release();
         return false;
@@ -145,9 +146,20 @@ bool DoD3D101Hook(ID3D10Device *device)
 
 void DoD3D101Capture(IDXGISwapChain *swap)
 {
+    HRESULT hRes;
+
     ID3D10Device *device = NULL;
     if(SUCCEEDED(swap->GetDevice(__uuidof(ID3D10Device), (void**)&device)))
     {
+        if(bCapturing && WaitForSingleObject(hSignalEnd, 0) == WAIT_OBJECT_0)
+            bStopRequested = true;
+
+        if(bCapturing && !IsWindow(hwndOBS))
+        {
+            hwndOBS = NULL;
+            bStopRequested = true;
+        }
+
         if(!lpCurrentDevice)
         {
             lpCurrentDevice = device;
@@ -163,6 +175,8 @@ void DoD3D101Capture(IDXGISwapChain *swap)
 
         if(bCapturing && bStopRequested)
         {
+            RUNEVERYRESET logOutput << CurrentTimeString() << "stop requested, terminating d3d10.1 capture" << endl;
+
             ClearD3D101Data();
             bCapturing = false;
             bStopRequested = false;
@@ -198,7 +212,7 @@ void DoD3D101Capture(IDXGISwapChain *swap)
                     memcpy(infoMem, &d3d101CaptureInfo, sizeof(CaptureInfo));
                     SetEvent(hSignalReady);
 
-                    logOutput << "DoD3D101Hook: success" << endl;
+                    logOutput << CurrentTimeString() << "DoD3D101Hook: success" << endl;
                 }
                 else
                 {
@@ -222,7 +236,7 @@ void DoD3D101Capture(IDXGISwapChain *swap)
                     CloseHandle(hKeepAlive);
                 } else {
                     ClearD3D101Data();
-                    logOutput << "Keepalive no longer found on d3d10.1, freeing capture data" << endl;
+                    logOutput << CurrentTimeString() << "Keepalive no longer found on d3d10.1, freeing capture data" << endl;
                     bCapturing = false;
                 }
 
@@ -243,15 +257,6 @@ void DoD3D101Capture(IDXGISwapChain *swap)
 
                         if(timeElapsed >= frameTime)
                         {
-                            if(!IsWindow(hwndOBS))
-                            {
-                                hwndOBS = NULL;
-                                bStopRequested = true;
-                            }
-
-                            if(WaitForSingleObject(hSignalEnd, 0) == WAIT_OBJECT_0)
-                                bStopRequested = true;
-
                             lastTime += frameTime;
                             if(timeElapsed > frameTime*2)
                                 lastTime = timeVal;
@@ -259,23 +264,28 @@ void DoD3D101Capture(IDXGISwapChain *swap)
                             DWORD nextCapture = curCapture == 0 ? 1 : 0;
 
                             ID3D10Resource *backBuffer = NULL;
-                            if(SUCCEEDED(swap->GetBuffer(0, IID_ID3D10Resource, (void**)&backBuffer)))
+                            if(SUCCEEDED(hRes = swap->GetBuffer(0, IID_ID3D10Resource, (void**)&backBuffer)))
                             {
                                 if(bIsMultisampled)
                                     device->ResolveSubresource(copyD3D101TextureGame, 0, backBuffer, 0, dxgiFormat);
                                 else
                                     device->CopyResource(copyD3D101TextureGame, backBuffer);
 
+                                RUNEVERYRESET logOutput << CurrentTimeString() << "successfully capturing d3d10.1 frames via GPU" << endl;
+
                                 backBuffer->Release();
+                            } else {
+                                RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D101Capture: swap->GetBuffer failed: result = " << UINT(hRes) << endl;
                             }
 
                             curCapture = nextCapture;
                         }
                     }
                 }
-            }
-            else
+            } else {
+                RUNEVERYRESET logOutput << CurrentTimeString() << "no longer capturing, terminating d3d10.1 capture" << endl;
                 ClearD3D101Data();
+            }
         }
     }
 

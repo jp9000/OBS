@@ -220,7 +220,7 @@ void ClearGLData()
     resetCount++;
     pCopyData = NULL;
 
-    logOutput << "---------------------- Cleared OpenGL Capture ----------------------" << endl;
+    logOutput << CurrentTimeString() << "---------------------- Cleared OpenGL Capture ----------------------" << endl;
 }
 
 DWORD CopyGLCPUTextureThread(LPVOID lpUseless);
@@ -244,7 +244,7 @@ void DoGLCPUHook(RECT &rc)
 
         if(!(glDataMutexes[i] = OSCreateMutex()))
         {
-            logOutput << "DoGLCPUHook: OSCreateMutex " << i << " failed, GetLastError = " << GetLastError();
+            logOutput << CurrentTimeString() << "DoGLCPUHook: OSCreateMutex " << i << " failed, GetLastError = " << GetLastError();
             bSuccess = false;
             break;
         }
@@ -260,13 +260,13 @@ void DoGLCPUHook(RECT &rc)
         {
             if(!(hCopyEvent = CreateEvent(NULL, FALSE, FALSE, NULL)))
             {
-                logOutput << "DoGLCPUHook: CreateEvent failed, GetLastError = " << GetLastError();
+                logOutput << CurrentTimeString() << "DoGLCPUHook: CreateEvent failed, GetLastError = " << GetLastError();
                 bSuccess = false;
             }
         }
         else
         {
-            logOutput << "DoGLCPUHook: CreateThread failed, GetLastError = " << GetLastError();
+            logOutput << CurrentTimeString() << "DoGLCPUHook: CreateThread failed, GetLastError = " << GetLastError();
             bSuccess = false;
         }
     }
@@ -289,7 +289,7 @@ void DoGLCPUHook(RECT &rc)
         memcpy(infoMem, &glcaptureInfo, sizeof(CaptureInfo));
         SetEvent(hSignalReady);
 
-        logOutput << "DoGLCPUHook: success" << endl;
+        logOutput << CurrentTimeString() << "DoGLCPUHook: success" << endl;
 
         OSInitializeTimer();
     }
@@ -304,7 +304,7 @@ DWORD CopyGLCPUTextureThread(LPVOID lpUseless)
     HANDLE hEvent = NULL;
     if(!DuplicateHandle(GetCurrentProcess(), hCopyEvent, GetCurrentProcess(), &hEvent, NULL, FALSE, DUPLICATE_SAME_ACCESS))
     {
-        logOutput << "CopyGLCPUTextureThread: couldn't duplicate handle" << endl;
+        logOutput << CurrentTimeString() << "CopyGLCPUTextureThread: couldn't duplicate handle" << endl;
         return 0;
     }
 
@@ -356,6 +356,7 @@ void HandleGLSceneUpdate(HDC hDC)
 {
     if(!bTargetAcquired && hdcAcquiredDC == NULL)
     {
+        logOutput << CurrentTimeString() << "setting up gl data" << endl;
         PIXELFORMATDESCRIPTOR pfd;
 
         hwndTarget = WindowFromDC(hDC);
@@ -375,8 +376,19 @@ void HandleGLSceneUpdate(HDC hDC)
 
     if(hDC == hdcAcquiredDC)
     {
+        if(bCapturing && WaitForSingleObject(hSignalEnd, 0) == WAIT_OBJECT_0)
+            bStopRequested = true;
+
+        if(bCapturing && !IsWindow(hwndOBS))
+        {
+            hwndOBS = NULL;
+            bStopRequested = true;
+        }
+
         if(bCapturing && bStopRequested)
         {
+            RUNEVERYRESET logOutput << CurrentTimeString() << "stop requested, terminating gl capture" << endl;
+
             ClearGLData();
             bCapturing = false;
             bStopRequested = false;
@@ -402,10 +414,12 @@ void HandleGLSceneUpdate(HDC hDC)
                 lastCY = rc.bottom;
             }
 
-            if(OSGetTimeMicroseconds()-reacquireTime >= 3000000) //3 second to reacquire
+            if(OSGetTimeMicroseconds()-reacquireTime >= 3000000) { //3 second to reacquire
+                RUNEVERYRESET logOutput << CurrentTimeString() << "reacquiring gl due to resize..." << endl;
                 bReacquiring = false;
-            else
+            } else {
                 return;
+            }
         }
 
         if(bCapturing && (!bHasTextures || rc.right != glcaptureInfo.cx || rc.bottom != glcaptureInfo.cy))
@@ -446,7 +460,7 @@ void HandleGLSceneUpdate(HDC hDC)
                     CloseHandle(hKeepAlive);
                 } else {
                     ClearGLData();
-                    logOutput << "Keepalive no longer found on gl, freeing capture data" << endl;
+                    logOutput << CurrentTimeString() << "Keepalive no longer found on gl, freeing capture data" << endl;
                     bCapturing = false;
                 }
 
@@ -467,15 +481,6 @@ void HandleGLSceneUpdate(HDC hDC)
 
                         if(timeElapsed >= frameTime)
                         {
-                            if(!IsWindow(hwndOBS))
-                            {
-                                hwndOBS = NULL;
-                                bStopRequested = true;
-                            }
-
-                            if(WaitForSingleObject(hSignalEnd, 0) == WAIT_OBJECT_0)
-                                bStopRequested = true;
-
                             lastTime += frameTime;
                             if(timeElapsed > frameTime*2)
                                 lastTime = timeVal;
@@ -507,7 +512,11 @@ void HandleGLSceneUpdate(HDC hDC)
                                 curCPUTexture = nextCapture;
                                 glLockedTextures[nextCapture] = true;
 
+                                RUNEVERYRESET logOutput << CurrentTimeString() << "successfully capturing gl frames via RAM" << endl;
+
                                 SetEvent(hCopyEvent);
+                            } else {
+                                RUNEVERYRESET logOutput << CurrentTimeString() << "one or more gl frames failed to capture for some reason" << endl;
                             }
 
                             //----------------------------------
@@ -519,8 +528,10 @@ void HandleGLSceneUpdate(HDC hDC)
                     }
                 }
             }
-            else
+            else {
+                RUNEVERYRESET logOutput << CurrentTimeString() << "no longer capturing, terminating gl capture" << endl;
                 ClearGLData();
+            }
         }
     }
 }

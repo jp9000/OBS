@@ -57,21 +57,21 @@ void SetupDXGIStuff(IDXGISwapChain *swap)
     {
         if(SUCCEEDED(deviceUnk->QueryInterface(__uuidof(ID3D10Device), (void**)&device)))
         {
-            logOutput << "DXGI: Found D3D 10" << endl;
+            logOutput << CurrentTimeString() << "DXGI: Found D3D 10" << endl;
             SetupD3D10(swap);
             captureProc = DoD3D10Capture;
             clearProc   = ClearD3D10Data;
         }
         else if(SUCCEEDED(deviceUnk->QueryInterface(__uuidof(ID3D10Device1), (void**)&device)))
         {
-            logOutput << "DXGI: Found D3D 10.1" << endl;
+            logOutput << CurrentTimeString() << "DXGI: Found D3D 10.1" << endl;
             SetupD3D101(swap);
             captureProc = DoD3D101Capture;
             clearProc   = ClearD3D101Data;
         }
         else if(SUCCEEDED(deviceUnk->QueryInterface(__uuidof(ID3D11Device), (void**)&device)))
         {
-            logOutput << "DXGI: Found D3D 11" << endl;
+            logOutput << CurrentTimeString() << "DXGI: Found D3D 11" << endl;
             SetupD3D11(swap);
             captureProc = DoD3D11Capture;
             clearProc   = ClearD3D11Data;
@@ -172,11 +172,11 @@ IDXGISwapChain* CreateDummySwap()
                 return swap;
             }
 
-            RUNEVERYRESET logOutput << "CreateDummySwap: D3D10CreateDeviceAndSwapChain failed, result = " << UINT(hErr) << endl;
+            RUNEVERYRESET logOutput << CurrentTimeString() << "CreateDummySwap: D3D10CreateDeviceAndSwapChain failed, result = " << UINT(hErr) << endl;
         }
         else
         {
-            RUNEVERYRESET logOutput << "CreateDummySwap: D3D10CreateDeviceAndSwapChain not found" << endl;
+            RUNEVERYRESET logOutput << CurrentTimeString() << "CreateDummySwap: D3D10CreateDeviceAndSwapChain not found" << endl;
         }
     }
 
@@ -200,11 +200,11 @@ IDXGISwapChain* CreateDummySwap()
                 return swap;
             }
 
-            RUNEVERYRESET logOutput << "CreateDummyDevice: D3D10CreateDeviceAndSwapChain1 failed, result = " << UINT(hErr) << endl;
+            RUNEVERYRESET logOutput << CurrentTimeString() << "CreateDummyDevice: D3D10CreateDeviceAndSwapChain1 failed, result = " << UINT(hErr) << endl;
         }
         else
         {
-            RUNEVERYRESET logOutput << "CreateDummyDevice: D3D10CreateDeviceAndSwapChain1 not found" << endl;
+            RUNEVERYRESET logOutput << CurrentTimeString() << "CreateDummyDevice: D3D10CreateDeviceAndSwapChain1 not found" << endl;
         }
     }
 
@@ -240,11 +240,11 @@ IDXGISwapChain* CreateDummySwap()
                 return swap;
             }
 
-            RUNEVERYRESET logOutput << "CreateDummyDevice: D3D11CreateDeviceAndSwapChain failed, result = " << UINT(hErr) << endl;
+            RUNEVERYRESET logOutput << CurrentTimeString() << "CreateDummyDevice: D3D11CreateDeviceAndSwapChain failed, result = " << UINT(hErr) << endl;
         }
         else
         {
-            RUNEVERYRESET logOutput << "CreateDummyDevice: D3D11CreateDeviceAndSwapChain not found" << endl;
+            RUNEVERYRESET logOutput << CurrentTimeString() << "CreateDummyDevice: D3D11CreateDeviceAndSwapChain not found" << endl;
         }
     }
 

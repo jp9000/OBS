@@ -234,6 +234,9 @@ extern fstream logOutput;
 extern wstring  strKeepAlive;
 extern LONGLONG keepAliveTime;
 
+string CurrentDateTimeString();
+string CurrentTimeString();
+
 void WINAPI OSInitializeTimer();
 LONGLONG WINAPI OSGetTimeMicroseconds();
 
