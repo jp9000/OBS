@@ -136,7 +136,7 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
-    Log(TEXT("=====Stream Start: %s==============================================="), CurrentDateTime().Array());
+    Log(TEXT("=====Stream Start: %s==============================================="), CurrentDateTimeString().Array());
 
     //-------------------------------------------------------------
 
@@ -638,7 +638,7 @@ void OBS::Stop()
 
     ClearStreamInfo();
 
-    Log(TEXT("=====Stream End: %s================================================="), CurrentDateTime().Array());
+    Log(TEXT("=====Stream End: %s================================================="), CurrentDateTimeString().Array());
 
     //update notification icon to reflect current status
     UpdateNotificationAreaIcon();
@@ -1011,13 +1011,4 @@ void OBS::RequestKeyframe(int waitTime)
 }
 
 
-String CurrentDateTime()
-{
-    time_t     now = time(0);
-    struct tm  tstruct;
-    char       buf[80];
-    tstruct = *localtime(&now);
-    strftime(buf, sizeof(buf), "%Y-%m-%d, %X", &tstruct);
-    return buf;
-}
 

@@ -304,6 +304,8 @@ void GraphicsCaptureSource::BeginScene()
 
 void GraphicsCaptureSource::AttemptCapture()
 {
+    //Log(TEXT("attempting to capture.."));
+
     if (!bUseHotkey)
         hwndTarget = FindWindow(strWindowClass, NULL);
     else

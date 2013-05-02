@@ -193,7 +193,12 @@ void __cdecl Logva(const TCHAR *format, va_list argptr)
 {
     if(!format) return;
 
-    String strOut = FormattedStringva(format, argptr);
+    String strCurTime = CurrentTimeString();
+    strCurTime << TEXT(": ");
+    String strOut = strCurTime;
+    strOut << FormattedStringva(format, argptr);
+
+    strOut.FindReplace(TEXT("\n"), String() << TEXT("\n") << strCurTime);
 
     OpenLogFile();
     LogFile.WriteAsUTF8(strOut, strOut.Length());
