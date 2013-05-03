@@ -696,7 +696,7 @@ void GraphicsCaptureSource::Render(const Vect2 &pos, const Vect2 &size)
                 {
                     float xDif = fabsf(totalSize.x-texSize.x);
                     float yDif = fabsf(totalSize.y-texSize.y);
-                    float multiplyVal = (xDif < yDif) ? (totalSize.x/texSize.x) : (totalSize.y/texSize.y);
+                    float multiplyVal = (xDif > yDif) ? (totalSize.x/texSize.x) : (totalSize.y/texSize.y);
                         
                     texStretch *= texSize*multiplyVal;
                     texPos = center-(texStretch*0.5f);
