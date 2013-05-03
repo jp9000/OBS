@@ -186,7 +186,11 @@ public:
     ~BitmapImageSource()
     {
         if(bIsAnimatedGif)
+        {
             gif_finalise(&gif);
+            Free(animationFrameCache);
+            Free(animationFrameData);
+        }
 
         if(lpGifData)
             Free(lpGifData);
