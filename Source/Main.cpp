@@ -317,6 +317,15 @@ void WINAPI ProcessEvents()
     }
 }
 
+int HasSSE2Support ()
+{
+    int cpuInfo[4];
+
+    __cpuid(cpuInfo, 1);
+
+    return (cpuInfo[3] & (1<<26)) != 0;
+}
+
 typedef BOOL (WINAPI *getUserModeExceptionProc)(LPDWORD);
 typedef BOOL (WINAPI *setUserModeExceptionProc)(DWORD);
 
@@ -369,6 +378,12 @@ void SetWorkingFolder(void)
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+    if (!HasSSE2Support())
+    {
+        MessageBox (NULL, TEXT("OBS requires an SSE2-compatible CPU."), TEXT("Unsupported CPU"), MB_ICONERROR);
+        return 1;
+    }
+
     LoadSeDebugPrivilege();
 
     int numArgs;
