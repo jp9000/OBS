@@ -255,7 +255,7 @@ public:
                         if (gif_decode_frame(&gif, newFrame) == GIF_OK)
                         {
                             animationFrameCache[newFrame] = animationFrameData + (newFrame * (gif.width * gif.height * 4));
-                            SSECopy (animationFrameCache[newFrame], gif.frame_image, gif.width * gif.height * 4);
+                            memcpy(animationFrameCache[newFrame], gif.frame_image, gif.width * gif.height * 4);
                         }
 
                         lastDecodedFrame = newFrame;

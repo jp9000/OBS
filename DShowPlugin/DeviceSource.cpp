@@ -998,7 +998,7 @@ void DeviceSource::ReceiveMediaSample(IMediaSample *sample, bool bAudio)
                 /*data->sample = sample;
                 sample->AddRef();*/
 
-                SSECopy(data->lpData, pointer, data->dataLength);
+                memcpy(data->lpData, pointer, data->dataLength);
 
                 LONGLONG stopTime;
                 sample->GetTime(&data->timestamp, &stopTime);

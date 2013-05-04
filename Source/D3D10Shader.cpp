@@ -440,11 +440,7 @@ void  D3D10Shader::UpdateParams()
             return;
         }
 
-        if(App->SSE2Available())
-            SSECopy(outData, shaderConstantData.Array(), shaderConstantData.Num());
-        else
-            mcpy(outData, shaderConstantData.Array(), shaderConstantData.Num());
-
+        mcpy(outData, shaderConstantData.Array(), shaderConstantData.Num());
         constantBuffer->Unmap();
     }
 }

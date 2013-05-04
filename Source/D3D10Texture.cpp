@@ -614,12 +614,7 @@ void D3D10Texture::SetImage(void *lpData, GSImageFormat imageFormat, UINT pitch)
     else
     {
         if(pitch == map.RowPitch)
-        {
-            if(App->SSE2Available())
-                SSECopy(map.pData, lpData, pitch*height);
-            else
-                mcpy(map.pData, lpData, pitch*height);
-        }
+            mcpy(map.pData, lpData, pitch*height);
         else
         {
             UINT bestPitch = MIN(pitch, map.RowPitch);
@@ -631,7 +626,7 @@ void D3D10Texture::SetImage(void *lpData, GSImageFormat imageFormat, UINT pitch)
                     LPBYTE curInput  = ((LPBYTE)lpData)    + (pitch*y);
                     LPBYTE curOutput = ((LPBYTE)map.pData) + (map.RowPitch*y);
 
-                    SSECopy(curOutput, curInput, bestPitch);
+                    mcpy(curOutput, curInput, bestPitch);
                 }
             }
             else

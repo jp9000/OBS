@@ -167,36 +167,6 @@ inline void SetVTable(LPVOID ptr, UINT funcOffset, FARPROC funcAddress)
     //VirtualProtect((LPVOID)(vtable+funcOffset), sizeof(UPARAM), oldProtect, &oldProtect);
 }
 
-inline void SSECopy(void *lpDest, void *lpSource, UINT size)
-{
-    UINT alignedSize = size&0xFFFFFFF0;
-
-    if(UPARAM(lpDest)&0xF || UPARAM(lpSource)&0xF) //if unaligned revert to normal copy
-    {
-        memcpy(lpDest, lpSource, size);
-        return;
-    }
-
-    register __m128i *mDest = (__m128i*)lpDest;
-    register __m128i *mSrc  = (__m128i*)lpSource;
-
-    {
-        register UINT numCopies = alignedSize>>4;
-        while(numCopies--)
-        {
-            _mm_store_si128(mDest, *mSrc);
-            mDest++;
-            mSrc++;
-        }
-    }
-
-    {
-        UINT sizeTemp = size-alignedSize;
-        if(sizeTemp)
-            memcpy(mDest, mSrc, sizeTemp);
-    }
-}
-
 inline string IntString(DWORD val)
 {
     stringstream ss;

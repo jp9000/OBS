@@ -395,7 +395,7 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
         if (newInputBufferSize > inputBuffer.Num())
             inputBuffer.SetSize(newInputBufferSize);
 
-        SSECopy(inputBuffer.Array()+inputBufferSize, captureBuffer, totalFloatsRead*sizeof(float));
+        mcpy(inputBuffer.Array()+inputBufferSize, captureBuffer, totalFloatsRead*sizeof(float));
         inputBufferSize = newInputBufferSize;
 
         mmCapture->ReleaseBuffer(numFramesRead);
@@ -414,7 +414,7 @@ void MMDeviceAudioSource::ReleaseBuffer()
 {
     UINT sampleSizeFloats = sampleWindowSize*GetChannelCount();
     if (inputBufferSize > sampleSizeFloats)
-        SSECopy(inputBuffer.Array(), inputBuffer.Array()+sampleSizeFloats, (inputBufferSize-sampleSizeFloats)*sizeof(float));
+        mcpy(inputBuffer.Array(), inputBuffer.Array()+sampleSizeFloats, (inputBufferSize-sampleSizeFloats)*sizeof(float));
 
     inputBufferSize -= sampleSizeFloats;
 }

@@ -314,7 +314,7 @@ UINT AudioSource::QueryAudio(float curVolume)
         }
         else if(inputChannels == 2) //straight up copy
         {
-            SSECopy(dataOutputBuffer, captureBuffer, numAudioFrames*2*sizeof(float));
+            memcpy(dataOutputBuffer, captureBuffer, numAudioFrames*2*sizeof(float));
         }
         else
         {

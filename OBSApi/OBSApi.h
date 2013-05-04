@@ -52,36 +52,6 @@ BASE_EXPORT LPBYTE GetCursorData(HICON hIcon, ICONINFO &ii, UINT &width, UINT &h
 #define SafeReleaseLogRef(var) if(var) {ULONG chi = var->Release(); OSDebugOut(TEXT("releasing %s, %d refs were left\r\n"), L#var, chi); var = NULL;}
 #define SafeRelease(var) if(var) {var->Release(); var = NULL;}
 
-inline void SSECopy(void *lpDest, void *lpSource, UINT size)
-{
-    UINT alignedSize = size&0xFFFFFFF0;
-
-    if(UPARAM(lpDest)&0xF || UPARAM(lpSource)&0xF) //if unaligned revert to normal copy
-    {
-        mcpy(lpDest, lpSource, size);
-        return;
-    }
-
-    register __m128i *mDest = (__m128i*)lpDest;
-    register __m128i *mSrc  = (__m128i*)lpSource;
-
-    {
-        register UINT numCopies = alignedSize>>4;
-        while(numCopies--)
-        {
-            _mm_store_si128(mDest, *mSrc);
-            mDest++;
-            mSrc++;
-        }
-    }
-
-    {
-        UINT sizeTemp = size-alignedSize;
-        if(sizeTemp)
-            mcpy(mDest, mSrc, sizeTemp);
-    }
-}
-
 //big endian conversion functions
 #define QWORD_BE(val) (((val>>56)&0xFF) | (((val>>48)&0xFF)<<8) | (((val>>40)&0xFF)<<16) | (((val>>32)&0xFF)<<24) | \
     (((val>>24)&0xFF)<<32) | (((val>>16)&0xFF)<<40) | (((val>>8)&0xFF)<<48) | ((val&0xFF)<<56))

@@ -125,7 +125,7 @@ Texture* MemoryCapture::LockTexture()
             if(texture->Map(lpData, texPitch))
             {
                 if(pitch == texPitch)
-                    SSECopy(lpData, textureBuffers[curTexture], pitch*height);
+                    memcpy(lpData, textureBuffers[curTexture], pitch*height);
                 else
                 {
                     UINT bestPitch = MIN(pitch, texPitch);
@@ -135,7 +135,7 @@ Texture* MemoryCapture::LockTexture()
                         LPBYTE curInput  = ((LPBYTE)input)  + (pitch*y);
                         LPBYTE curOutput = ((LPBYTE)lpData) + (texPitch*y);
 
-                        SSECopy(curOutput, curInput, bestPitch);
+                        memcpy(curOutput, curInput, bestPitch);
                     }
                 }
 

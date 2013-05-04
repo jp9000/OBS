@@ -180,10 +180,7 @@ void D3D10VertexBuffer::FlushBuffers()
         return;
     }
 
-    if(App->SSE2Available())
-        SSECopy(outData, data->VertList.Array(), sizeof(Vect)*numVerts);
-    else
-        mcpy(outData, data->VertList.Array(), sizeof(Vect)*numVerts);
+    mcpy(outData, data->VertList.Array(), sizeof(Vect)*numVerts);
 
     vertexBuffer->Unmap();
 
@@ -197,11 +194,7 @@ void D3D10VertexBuffer::FlushBuffers()
             return;
         }
 
-        if(App->SSE2Available())
-            SSECopy(outData, data->NormalList.Array(), sizeof(Vect)*numVerts);
-        else
-            mcpy(outData, data->NormalList.Array(), sizeof(Vect)*numVerts);
-
+        mcpy(outData, data->NormalList.Array(), sizeof(Vect)*numVerts);
         normalBuffer->Unmap();
     }
 
@@ -215,11 +208,7 @@ void D3D10VertexBuffer::FlushBuffers()
             return;
         }
 
-        if(App->SSE2Available())
-            SSECopy(outData, data->ColorList.Array(), sizeof(Vect)*numVerts);
-        else
-            mcpy(outData, data->ColorList.Array(), sizeof(Vect)*numVerts);
-
+        mcpy(outData, data->ColorList.Array(), sizeof(Vect)*numVerts);
         colorBuffer->Unmap();
     }
 
@@ -233,11 +222,7 @@ void D3D10VertexBuffer::FlushBuffers()
             return;
         }
 
-        if(App->SSE2Available())
-            SSECopy(outData, data->TangentList.Array(), sizeof(Vect)*numVerts);
-        else
-            mcpy(outData, data->TangentList.Array(), sizeof(Vect)*numVerts);
-
+        mcpy(outData, data->TangentList.Array(), sizeof(Vect)*numVerts);
         tangentBuffer->Unmap();
     }
 
@@ -257,11 +242,7 @@ void D3D10VertexBuffer::FlushBuffers()
                 return;
             }
 
-            if(App->SSE2Available())
-                SSECopy(outData, textureVerts.Array(), sizeof(UVCoord)*numVerts);
-            else
-                mcpy(outData, textureVerts.Array(), sizeof(UVCoord)*numVerts);
-
+            mcpy(outData, textureVerts.Array(), sizeof(UVCoord)*numVerts);
             buffer->Unmap();
         }
     }

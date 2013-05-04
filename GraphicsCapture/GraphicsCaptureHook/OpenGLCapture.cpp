@@ -331,7 +331,7 @@ DWORD CopyGLCPUTextureThread(LPVOID lpUseless)
 
             if(lastRendered != -1)
             {
-                SSECopy(textureBuffers[lastRendered], data, glcaptureInfo.pitch*glcaptureInfo.cy);
+                memcpy(textureBuffers[lastRendered], data, glcaptureInfo.pitch*glcaptureInfo.cy);
                 ReleaseMutex(textureMutexes[lastRendered]);
                 copyData->lastRendered = (UINT)lastRendered;
             }

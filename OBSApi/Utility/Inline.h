@@ -23,17 +23,14 @@
 #pragma warning(disable : 4035)
 
 
-#ifdef WIN32
-    #pragma intrinsic(memcpy, memset, memcmp)
-#endif
-
 
 #ifndef USE_CUSTOM_MEMORY_FUNCTIONS
 
-inline void STDCALL mcpy(void *pDest, const void *pSrc, size_t iLen)
+#define mcpy memcpy
+/*inline void STDCALL mcpy(void *pDest, const void *pSrc, size_t iLen)
 {
     memcpy(pDest, pSrc, iLen);
-}
+}*/
 
 #endif
 
