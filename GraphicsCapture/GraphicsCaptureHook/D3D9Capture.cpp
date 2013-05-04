@@ -419,9 +419,9 @@ finishGPUHook:
         logOutput << CurrentTimeString() << "DoD3D9GPUHook: success";
 
         if (bD3D9Ex)
-            logOutput << CurrentTimeString() << " - d3d9ex";
+            logOutput << " - d3d9ex";
 
-        logOutput << CurrentTimeString() << endl;
+        logOutput << endl;
     }
     else
         ClearD3D9Data();
@@ -568,7 +568,7 @@ DWORD CopyD3D9CPUTextureThread(LPVOID lpUseless)
 
             if(lastRendered != -1)
             {
-                SSECopy(textureBuffers[lastRendered], data, d3d9CaptureInfo.pitch*d3d9CaptureInfo.cy);
+                memcpy(textureBuffers[lastRendered], data, d3d9CaptureInfo.pitch*d3d9CaptureInfo.cy);
                 ReleaseMutex(textureMutexes[lastRendered]);
                 copyData->lastRendered = (UINT)lastRendered;
             }
@@ -977,11 +977,9 @@ void LogPresentParams(D3DPRESENT_PARAMETERS &pp);
 void SetupD3D9(IDirect3DDevice9 *device)
 {
     IDirect3DSwapChain9 *swapChain = NULL;
-    if(SUCCEEDED(device->GetSwapChain(0, &swapChain)))
-    {
+    if (SUCCEEDED(device->GetSwapChain(0, &swapChain))) {
         D3DPRESENT_PARAMETERS pp;
-        if(SUCCEEDED(swapChain->GetPresentParameters(&pp)))
-        {
+        if (SUCCEEDED(swapChain->GetPresentParameters(&pp))) {
             d3d9CaptureInfo.format = ConvertDX9BackBufferFormat(pp.BackBufferFormat);
             dxgiFormat = GetDXGIFormat(pp.BackBufferFormat);
 
@@ -1000,6 +998,8 @@ void SetupD3D9(IDirect3DDevice9 *device)
                     d3d9CaptureInfo.hwndCapture = (DWORD)pp.hDeviceWindow;
                 }
             }
+        } else {
+            RUNEVERYRESET logOutput << CurrentTimeString() << "failed to get d3d9 present params while initializing hooks" << endl;
         }
 
         IDirect3D9 *d3d;
@@ -1043,6 +1043,8 @@ void SetupD3D9(IDirect3DDevice9 *device)
         logOutput << CurrentTimeString() << "successfully set up d3d9 hooks" << endl;
 
         swapChain->Release();
+    } else {
+        RUNEVERYRESET logOutput << CurrentTimeString() << "failed to get d3d9 swap chain to initialize hooks" << endl;
     }
 
     lastTime = 0;
