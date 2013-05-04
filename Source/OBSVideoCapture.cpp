@@ -26,7 +26,7 @@ extern "C"
 }
 
 
-void Convert444to420(LPBYTE input, int width, int pitch, int height, int startY, int endY, LPBYTE *output, bool bSSE2Available);
+void Convert444to420(LPBYTE input, int width, int pitch, int height, int startY, int endY, LPBYTE *output);
 
 
 DWORD STDCALL OBS::MainCaptureThread(LPVOID lpUnused)
@@ -52,7 +52,7 @@ DWORD STDCALL Convert444Thread(Convert444Data *data)
         WaitForSingleObject(data->hSignalConvert, INFINITE);
         if(data->bKillThread) break;
 
-        Convert444to420(data->input, data->width, data->pitch, data->height, data->startY, data->endY, data->output, App->SSE2Available());
+        Convert444to420(data->input, data->width, data->pitch, data->height, data->startY, data->endY, data->output);
 
         SetEvent(data->hSignalComplete);
     }while(!data->bKillThread);
@@ -777,7 +777,7 @@ void OBS::MainCaptureLoop()
                         else
                         {
                             outTimes[curOutBuffer] = (DWORD)curStreamTime;
-                            Convert444to420((LPBYTE)map.pData, outputCX, map.RowPitch, outputCY, 0, outputCY, picOut.img.plane, SSE2Available());
+                            Convert444to420((LPBYTE)map.pData, outputCX, map.RowPitch, outputCY, 0, outputCY, picOut.img.plane);
                             prevTexture->Unmap(0);
                         }
 

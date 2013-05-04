@@ -585,7 +585,6 @@ private:
     WINDOWPLACEMENT fullscreenPrevPlacement;
 
     int     cpuInfo[4];
-    bool    bSSE2Available;
 
     //---------------------------------------------------
     // resolution/fps/downscale/etc settings
@@ -888,8 +887,6 @@ public:
     inline Vect2 GetRenderFrameSize() const         {return Vect2(float(renderFrameWidth), float(renderFrameHeight));}
     inline Vect2 GetRenderFrameOffset() const       {return Vect2(float(renderFrameX), float(renderFrameY));}
     inline Vect2 GetRenderFrameControlSize() const  {return Vect2(float(renderFrameCtrlWidth), float(renderFrameCtrlHeight));}
-
-    inline bool SSE2Available() const {return bSSE2Available;}
 
     inline AudioEncoder* GetAudioEncoder() const {return audioEncoder;}
     inline VideoEncoder* GetVideoEncoder() const {return videoEncoder;}

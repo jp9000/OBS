@@ -37,9 +37,11 @@
     #define C64
 #endif
 
-#if defined(WIN32) && defined(C64)
+/*#if defined(WIN32) && defined(C64)
     #define USE_SSE
-#endif
+#endif*/
+
+#define USE_SSE 1
 
 #ifdef USE_SSE
     #include <xmmintrin.h>

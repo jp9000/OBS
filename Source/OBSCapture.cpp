@@ -692,7 +692,7 @@ inline void CalculateVolumeLevels(float *buffer, int totalFloats, float mulVal, 
 
     float Max = 0.0f;
 
-    if(App->SSE2Available() && (UPARAM(buffer) & 0xF) == 0)
+    if((UPARAM(buffer) & 0xF) == 0)
     {
         UINT alignedFloats = totalFloats & 0xFFFFFFFC;
         __m128 sseMulVal = _mm_set_ps1(mulVal);
@@ -975,7 +975,7 @@ void OBS::MainAudioLoop()
             }
 
             //----------------------------------------------------------------------------
-            // mix mic and desktop sound, using SSE2 if available
+            // mix mic and desktop sound
             // also, it's perfectly fine to just mix into the returned buffer
 
             if (bMicEnabled && micBuffer)

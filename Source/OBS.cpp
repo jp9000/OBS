@@ -129,10 +129,6 @@ OBS::OBS()
 {
     App = this;
 
-    __cpuid(cpuInfo, 1);
-
-    bSSE2Available = (cpuInfo[3] & (1<<26)) != 0;
-
     hSceneMutex = OSCreateMutex();
     hAuxAudioMutex = OSCreateMutex();
 
