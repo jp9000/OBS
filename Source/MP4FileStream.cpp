@@ -526,7 +526,7 @@ public:
                   PopBox(); //stsc
 
                   SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 30, 0);
-                  ProcessEvents();
+                  //ProcessEvents();
 
                   PushBox(output, DWORD_BE('stsz')); //sample sizes
                     output.OutputDword(0); //version and flags (none)
@@ -537,7 +537,7 @@ public:
                   PopBox();
 
                   SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 40, 0);
-                  ProcessEvents();
+                  //ProcessEvents();
 
                   if(audioChunks.Num() && audioChunks.Last() > 0xFFFFFFFFLL)
                   {
@@ -563,7 +563,7 @@ public:
           PopBox(); //trak
 
           SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 50, 0);
-          ProcessEvents();
+          //ProcessEvents();
 
           //------------------------------------------------------
           // video track
@@ -679,7 +679,7 @@ public:
                   PopBox(); //stts
 
                   SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 60, 0);
-                  ProcessEvents();
+                  //ProcessEvents();
 
                   PushBox(output, DWORD_BE('stss')); //list of keyframe (i-frame) IDs
                     output.OutputDword(0); //version and flags (none)
@@ -699,7 +699,7 @@ public:
                   PopBox(); //ctts
 
                   SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 70, 0);
-                  ProcessEvents();
+                  //ProcessEvents();
 
                   PushBox(output, DWORD_BE('stsc')); //sample to chunk list
                     output.OutputDword(0); //version and flags (none)
@@ -744,7 +744,7 @@ public:
           PopBox(); //trak
 
           SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 80, 0);
-          ProcessEvents();
+          //ProcessEvents();
 
           //------------------------------------------------------
           // info thingy
