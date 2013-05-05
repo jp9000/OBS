@@ -783,7 +783,7 @@ void D3D10System::SetCropping(float left, float top, float right, float bottom)
 void D3D10System::DrawSpriteEx(Texture *texture, DWORD color, float x, float y, float x2, float y2, float u, float v, float u2, float v2)
 {
     if(!curPixelShader)
-        return;
+        return; 
 
     if(!texture)
     {
@@ -802,6 +802,18 @@ void D3D10System::DrawSpriteEx(Texture *texture, DWORD color, float x, float y, 
     Vect2 totalSize = Vect2(x2-x, y2-y);
     Vect2 invMult   = Vect2(totalSize.x < 0.0f ? -1.0f : 1.0f, totalSize.y < 0.0f ? -1.0f : 1.0f);
     totalSize.Abs();
+
+    if(y2-y < 0) {
+        float tempFloat = curCropping[1];
+        curCropping[1] = curCropping[3];
+        curCropping[3] = tempFloat;
+    }
+
+    if(x2-x < 0) {
+        float tempFloat = curCropping[0];
+        curCropping[0] = curCropping[2];
+        curCropping[2] = tempFloat;
+    }
 
     x  += curCropping[0] * invMult.x;
     y  += curCropping[1] * invMult.y;
