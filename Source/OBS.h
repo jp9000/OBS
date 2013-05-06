@@ -27,7 +27,12 @@ class SettingsPane;
 static const int minClientWidth  = 700;
 static const int minClientHeight = 275;
 
-
+enum edges {
+    edgeLeft = 0x01,
+    edgeRight = 0x02,
+    edgeTop = 0x04,
+    edgeBottom = 0x08,
+};
 
 struct AudioDeviceInfo
 {
@@ -797,7 +802,7 @@ private:
     static Vect2 GetFrameToWindowScale();
 
     // helper to valid crops as you scale items
-    static bool EnsureCropValid(SceneItem *&item, Vect2 &minSize, Vect2 &snapSize, bool bControlDown);
+    static bool EnsureCropValid(SceneItem *&item, Vect2 &minSize, Vect2 &snapSize, bool bControlDown, BYTE cropEdges);
 
     static INT_PTR CALLBACK EnterGlobalSourceNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);

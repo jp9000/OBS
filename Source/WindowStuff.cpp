@@ -2928,27 +2928,27 @@ Vect2 OBS::GetFrameToWindowScale()
     return MapFrameToWindowSize(Vect2(1.0f, 1.0f));
 }
 
-bool OBS::EnsureCropValid(SceneItem *&scaleItem, Vect2 &minSize, Vect2 &snapSize, bool bControlDown) 
+bool OBS::EnsureCropValid(SceneItem *&scaleItem, Vect2 &minSize, Vect2 &snapSize, bool bControlDown, BYTE cropEdges) 
 {
     // left
-    if (scaleItem->crop.x > (scaleItem->size.x / 2) - minSize.x) 
+    if (scaleItem->crop.x > (scaleItem->size.x - scaleItem->crop.w - 32) - minSize.x && cropEdges & edgeLeft)
     {
-        scaleItem->crop.x = (scaleItem->size.x / 2) - minSize.x;
+        scaleItem->crop.x = (scaleItem->size.x - scaleItem->crop.w - 32) - minSize.x;
     }
     // top
-    if (scaleItem->crop.y > (scaleItem->size.y / 2) - minSize.y) 
+    if (scaleItem->crop.y > (scaleItem->size.y - scaleItem->crop.z - 32) - minSize.y && cropEdges & edgeTop)
     {
-        scaleItem->crop.y = (scaleItem->size.y / 2) - minSize.y;
+        scaleItem->crop.y = (scaleItem->size.y - scaleItem->crop.z - 32) - minSize.y;
     }
     // right
-    if (scaleItem->crop.w > (scaleItem->size.x / 2) - minSize.x) 
+    if (scaleItem->crop.w > (scaleItem->size.x + scaleItem->crop.x - 32) - minSize.x && cropEdges & edgeRight)
     {
-        scaleItem->crop.w = (scaleItem->size.x / 2) - minSize.x;
+        scaleItem->crop.w = (scaleItem->size.x + scaleItem->crop.x - 32) - minSize.x;
     }
     // bottom
-    if (scaleItem->crop.z > (scaleItem->size.y / 2) - minSize.y) 
+    if (scaleItem->crop.z > (scaleItem->size.y + scaleItem->crop.y - 32) - minSize.y && cropEdges & edgeBottom)
     {
-        scaleItem->crop.z = (scaleItem->size.y / 2) - minSize.y;
+        scaleItem->crop.z = (scaleItem->size.y + scaleItem->crop.y - 32) - minSize.y;
     }
   
     if (!bControlDown) 
@@ -2975,9 +2975,9 @@ bool OBS::EnsureCropValid(SceneItem *&scaleItem, Vect2 &minSize, Vect2 &snapSize
         }
     }
 
-    scaleItem->crop.w = (scaleItem->crop.w < 0.0f) ? 0.0f : scaleItem->crop.w;
     scaleItem->crop.x = (scaleItem->crop.x < 0.0f) ? 0.0f : scaleItem->crop.x;
     scaleItem->crop.y = (scaleItem->crop.y < 0.0f) ? 0.0f : scaleItem->crop.y;
+    scaleItem->crop.w = (scaleItem->crop.w < 0.0f) ? 0.0f : scaleItem->crop.w;
     scaleItem->crop.z = (scaleItem->crop.z < 0.0f) ? 0.0f : scaleItem->crop.z;
 
     return true;
@@ -3241,7 +3241,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                             }
 
                         case ItemModifyType_ScaleBottom:
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeBottom);
 
                             scaleItem->size.y = scaleItem->startSize.y+totalAdjust.y;
                             if(scaleItem->size.y < minSize.y)
@@ -3266,50 +3266,50 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                             
                         case ItemModifyType_CropTop: 
                             scaleItem->crop.y = (frameStartMousePos.y - scaleItem->pos.y) + totalAdjust.y;
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeTop);
                             break;
 
                         case ItemModifyType_CropBottom: 
                             scaleItem->crop.z = (scaleItem->pos.y + scaleItem->size.y - frameStartMousePos.y) - totalAdjust.y;
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeBottom);
                             break;
 
                         case ItemModifyType_CropLeft: 
                             scaleItem->crop.x = (frameStartMousePos.x - scaleItem->pos.x) + totalAdjust.x;
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeLeft);
                             break;
 
                         case ItemModifyType_CropRight: 
                             scaleItem->crop.w = (scaleItem->pos.x + scaleItem->size.x - frameStartMousePos.x) - totalAdjust.x;
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeRight);
                             break;
                             
                         case ItemModifyType_CropBottomLeft:
                             scaleItem->crop.z = (scaleItem->pos.y + scaleItem->size.y - frameStartMousePos.y) - totalAdjust.y;
                             scaleItem->crop.x = (frameStartMousePos.x - scaleItem->pos.x) + totalAdjust.x;
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeLeft | edgeBottom);
                             break;
 
                         case ItemModifyType_CropBottomRight:
                             scaleItem->crop.z = (scaleItem->pos.y + scaleItem->size.y - frameStartMousePos.y) - totalAdjust.y;
                             scaleItem->crop.w = (scaleItem->pos.x + scaleItem->size.x - frameStartMousePos.x) - totalAdjust.x;
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeRight | edgeBottom);
                             break;
 
                         case ItemModifyType_CropTopLeft:
                             scaleItem->crop.y = (frameStartMousePos.y - scaleItem->pos.y) + totalAdjust.y;
                             scaleItem->crop.x = (frameStartMousePos.x - scaleItem->pos.x) + totalAdjust.x;
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeLeft | edgeTop);
                             break;
 
                         case ItemModifyType_CropTopRight:
                             scaleItem->crop.y = (frameStartMousePos.y - scaleItem->pos.y) + totalAdjust.y;
                             scaleItem->crop.w = (scaleItem->pos.x + scaleItem->size.x - frameStartMousePos.x) - totalAdjust.x;
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeRight | edgeTop);
                             break;
 
                         case ItemModifyType_ScaleTop:
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeTop);
 
                             scaleItem->size.y = scaleItem->startSize.y-totalAdjust.y;
                             if(scaleItem->size.y < minSize.y)
@@ -3332,7 +3332,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                             break;
 
                         case ItemModifyType_ScaleRight:
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeRight);
 
                             scaleItem->size.x = scaleItem->startSize.x+totalAdjust.x;
                             if(scaleItem->size.x < minSize.x)
@@ -3356,7 +3356,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                             break;
 
                         case ItemModifyType_ScaleLeft:
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeLeft);
 
                             scaleItem->size.x = scaleItem->startSize.x-totalAdjust.x;
                             if(scaleItem->size.x < minSize.x)
@@ -3380,7 +3380,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                             break;
 
                         case ItemModifyType_ScaleBottomRight:
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeRight | edgeBottom);
 
                             scaleItem->size = scaleItem->startSize+totalAdjust;
                             scaleItem->size.ClampMin(minSize);
@@ -3414,7 +3414,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                             break;
 
                         case ItemModifyType_ScaleTopLeft:
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeLeft | edgeTop);
                             
                             scaleItem->size = scaleItem->startSize-totalAdjust;
                             scaleItem->size.ClampMin(minSize);
@@ -3444,7 +3444,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                             break;
 
                         case ItemModifyType_ScaleBottomLeft:
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeLeft | edgeBottom);
                             
                             scaleItem->size.x = scaleItem->startSize.x-totalAdjust.x;
                             scaleItem->size.y = scaleItem->startSize.y+totalAdjust.y;
@@ -3480,7 +3480,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                             break;
 
                         case ItemModifyType_ScaleTopRight:
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeRight | edgeTop);
 
                             scaleItem->size.x = scaleItem->startSize.x+totalAdjust.x;
                             scaleItem->size.y = scaleItem->startSize.y-totalAdjust.y;
