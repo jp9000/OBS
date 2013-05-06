@@ -78,11 +78,11 @@ RTMPPublisher::RTMPPublisher()
 
     //------------------------------------------
 
-    bframeDropThreshold = AppConfig->GetInt(TEXT("Publish"), TEXT("BFrameDropThreshold"), 200);
+    bframeDropThreshold = AppConfig->GetInt(TEXT("Publish"), TEXT("BFrameDropThreshold"), 400);
     if(bframeDropThreshold < 50)        bframeDropThreshold = 50;
     else if(bframeDropThreshold > 1000) bframeDropThreshold = 1000;
 
-    dropThreshold = AppConfig->GetInt(TEXT("Publish"), TEXT("FrameDropThreshold"), 500);
+    dropThreshold = AppConfig->GetInt(TEXT("Publish"), TEXT("FrameDropThreshold"), 600);
     if(dropThreshold < 50)        dropThreshold = 50;
     else if(dropThreshold > 1000) dropThreshold = 1000;
 
