@@ -611,6 +611,7 @@ private:
     DWORD captureFPS;
     DWORD curFramesDropped;
     DWORD totalStreamTime;
+    bool bFirstConnect;
     double curStrain;
 
     //---------------------------------------------------

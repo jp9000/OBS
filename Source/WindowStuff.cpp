@@ -2698,7 +2698,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
             if(wParam == 0)
             {
-                if(!App->bAutoReconnect)
+                if((App->bFirstConnect && App->totalStreamTime < 10000) || !App->bAutoReconnect)
                 {
                     if(App->streamReport.IsValid())
                     {

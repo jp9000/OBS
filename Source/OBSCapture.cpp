@@ -110,6 +110,8 @@ void OBS::Start()
 
     String strError;
 
+    bFirstConnect = !bReconnecting;
+
     if(bTestStream)
         network = CreateNullNetwork();
     else
