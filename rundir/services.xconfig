@@ -2,7 +2,7 @@ services : {
   Twitch / Justin.tv : {
     id : 1
     servers : {
-      "Global Load Balancing Service"        : rtmp://live-3c.justin.tv/app
+      "US West: San Francisco, CA"           : rtmp://live.justin.tv/app
       "Asia: Singapore"                      : rtmp://live-sin-backup.justin.tv/app
       "EU: Amsterdam, NL"                    : rtmp://live-ams.justin.tv/app
       "EU: Frankfurt, DE"                    : rtmp://live-fra.justin.tv/app
@@ -17,7 +17,6 @@ services : {
       "US Midwest: Chicago, IL"              : rtmp://live-ord.justin.tv/app
       "US West: Los Angeles, CA"             : rtmp://live-lax.justin.tv/app
       "US West: Los Angeles, CA (Secondary)" : rtmp://live-lax-backup.justin.tv/app
-      "US West: San Francisco, CA"           : rtmp://live.justin.tv/app
     }
   }
   "Vaughn Live" : {
