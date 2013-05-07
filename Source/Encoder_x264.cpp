@@ -193,7 +193,7 @@ public:
         //paramData.i_frame_reference     = 1; //ref=1
         //paramData.i_threads             = 4;
 
-        bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR")) != 0;
+        bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
         this->bUseCFR = bUseCFR;
         this->bDupeFrames = bDupeFrames;
 
