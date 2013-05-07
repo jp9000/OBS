@@ -34,6 +34,37 @@ void SceneItem::SetRender(bool render)
 {
     element->SetInt(TEXT("render"), (int)((render)?1:0));
     bRender = render;
+
+    if (bRender) {
+        CTSTR lpClass = element->GetString(TEXT("class"));
+
+        if (!lpClass) {
+            AppWarning(TEXT("No class for source '%s' in scene '%s'"), element->GetName(), API->GetSceneElement()->GetName());
+        } else {
+            source = API->CreateImageSource(lpClass, element->GetElement(TEXT("data")));
+            if(!source) {
+                AppWarning(TEXT("Could not create image source '%s' in scene '%s'"), element->GetName(), API->GetSceneElement()->GetName());
+            } else {
+                API->EnterSceneMutex();
+                if (parent && parent->bSceneStarted)
+                    source->BeginScene();
+                API->LeaveSceneMutex();
+            }
+        }
+    } else {
+        if (source) {
+            API->EnterSceneMutex();
+
+            ImageSource *src = source;
+            source = NULL;
+
+            if (parent && parent->bSceneStarted)
+                src->EndScene();
+            delete src;
+
+            API->LeaveSceneMutex();
+        }
+    }
 }
 
 void SceneItem::Update()
@@ -146,28 +177,16 @@ SceneItem* Scene::InsertImageSource(UINT pos, XElement *sourceElement)
         pos = sceneItems.Num();
     }
 
-    CTSTR lpClass = sourceElement->GetString(TEXT("class"));
-    ImageSource *source = NULL;
-
-    if(!lpClass)
-        AppWarning(TEXT("No class for source '%s' in scene '%s'"), sourceElement->GetName(), API->GetSceneElement()->GetName());
-    else
-    {
-        source = API->CreateImageSource(lpClass, sourceElement->GetElement(TEXT("data")));
-        if(!source)
-            AppWarning(TEXT("Could not create image source '%s' in scene '%s'"), sourceElement->GetName(), API->GetSceneElement()->GetName());
-    }
+    bool render = sourceElement->GetInt(TEXT("render"), 1) > 0;
 
     float x  = sourceElement->GetFloat(TEXT("x"));
     float y  = sourceElement->GetFloat(TEXT("y"));
     float cx = sourceElement->GetFloat(TEXT("cx"), 100);
     float cy = sourceElement->GetFloat(TEXT("cy"), 100);
-    bool render = sourceElement->GetInt(TEXT("render"), 1) > 0;
 
     SceneItem *item = new SceneItem;
     item->element = sourceElement;
     item->parent = this;
-    item->source = source;
     item->pos = Vect2(x, y);
     item->size = Vect2(cx, cy);
     item->crop.w = sourceElement->GetFloat(TEXT("crop.right"));
@@ -177,12 +196,11 @@ SceneItem* Scene::InsertImageSource(UINT pos, XElement *sourceElement)
     item->SetRender(render);
 
     API->EnterSceneMutex();
-    if(bSceneStarted && source) source->BeginScene();
     sceneItems.Insert(pos, item);
     API->LeaveSceneMutex();
 
-    if(!source)
-        bMissingSources = true;
+    /*if(!source)
+        bMissingSources = true;*/
 
     return item;
 }
