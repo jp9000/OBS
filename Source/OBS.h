@@ -933,6 +933,11 @@ public:
 
     //---------------------------------------------------------------------------
 
+    UINT NumPlugins() const {return plugins.Num();}
+    const PluginInfo *GetPluginInfo(UINT idx) const {if (idx < plugins.Num()) return plugins+idx; else return NULL;}
+
+    //---------------------------------------------------------------------------
+
     virtual void RegisterSceneClass(CTSTR lpClassName, CTSTR lpDisplayName, OBSCREATEPROC createProc, OBSCONFIGPROC configProc, bool bDeprecated);
     virtual void RegisterImageSourceClass(CTSTR lpClassName, CTSTR lpDisplayName, OBSCREATEPROC createProc, OBSCONFIGPROC configProc, bool bDeprecated);
 

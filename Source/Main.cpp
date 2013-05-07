@@ -88,6 +88,15 @@ BOOL LoadSeDebugPrivilege()
     return TRUE;
 }
 
+static void LogModule(CTSTR lpModuleName, HMODULE addr)
+{
+#ifdef _WIN64
+    Log(TEXT("%016X %s"), addr, lpModuleName);
+#else
+    Log(TEXT("%08X         %s"), addr, lpModuleName);
+#endif
+}
+
 void LogSystemStats()
 {
     HKEY key;
@@ -152,6 +161,21 @@ void LogSystemStats()
     BOOL bComposition;
     DwmIsCompositionEnabled(&bComposition);
     Log(TEXT("Aero is %s"), bComposition ? TEXT("Enabled") : TEXT("Disabled"));
+
+    HMODULE hOBS    = GetModuleHandle(NULL);
+    HMODULE hOBSApi = GetModuleHandle(TEXT("OBSApi"));
+
+    Log(TEXT("-------------------------------"));
+    Log(TEXT("OBS Modules:"));
+    Log(TEXT("Base Address     Module"));
+
+    LogModule(TEXT("OBS.exe"), hOBS);
+    LogModule(TEXT("OBSApi.dll"), hOBSApi);
+
+    for (UINT i=0; i<App->NumPlugins(); i++) {
+        const PluginInfo *info = App->GetPluginInfo(i);
+        LogModule(info->strFile, info->hModule);
+    }
 
     LogVideoCardStats();
 }
