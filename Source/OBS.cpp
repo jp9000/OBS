@@ -25,6 +25,7 @@
 
 
 typedef bool (*LOADPLUGINPROC)();
+typedef bool (*LOADPLUGINAPIVERPROC)(UINT);
 typedef void (*UNLOADPLUGINPROC)();
 typedef CTSTR (*GETPLUGINNAMEPROC)();
 
@@ -566,9 +567,18 @@ OBS::OBS()
                 HMODULE hPlugin = LoadLibrary(strLocation);
                 if(hPlugin)
                 {
-                    LOADPLUGINPROC loadPlugin = (LOADPLUGINPROC)GetProcAddress(hPlugin, "LoadPlugin");
-                    if(loadPlugin && loadPlugin())
-                    {
+                    bool bLoaded = false;
+
+                    //slightly redundant I suppose seeing as both these things are being added at the same time
+                    LOADPLUGINAPIVERPROC loadPluginAPIVer = (LOADPLUGINAPIVERPROC)GetProcAddress(hPlugin, "LoadPluginAPIVer");
+                    if (loadPluginAPIVer) {
+                        bLoaded = loadPluginAPIVer(OBSGetAPIVersion());
+                    } else {
+                        LOADPLUGINPROC loadPlugin = (LOADPLUGINPROC)GetProcAddress(hPlugin, "LoadPlugin");
+                        bLoaded = loadPlugin && loadPlugin();
+                    }
+
+                    if (bLoaded) {
                         PluginInfo *pluginInfo = plugins.CreateNew();
                         pluginInfo->hModule = hPlugin;
                         pluginInfo->strFile = ofd.fileName;

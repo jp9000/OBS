@@ -140,3 +140,5 @@ void OBSGetCurMicVolumeStats(float *rms, float *max, float *peak)       {API->Ge
 
 void OBSAddSettingsPane(SettingsPane *pane)     {API->AddSettingsPane(pane);}
 void OBSRemoveSettingsPane(SettingsPane *pane)  {API->RemoveSettingsPane(pane);}
+
+UINT OBSGetAPIVersion()                         {return 0x0100;}

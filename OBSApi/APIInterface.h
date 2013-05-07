@@ -283,3 +283,6 @@ BASE_EXPORT void OBSGetCurMicVolumeStats(float *rms, float *max, float *peak);
 
 BASE_EXPORT void OBSAddSettingsPane(SettingsPane *pane);
 BASE_EXPORT void OBSRemoveSettingsPane(SettingsPane *pane);
+
+/** gets API version.  version is formatted: 0xMMmm */
+BASE_EXPORT UINT OBSGetAPIVersion();
