@@ -207,7 +207,7 @@ SceneItem* Scene::InsertImageSource(UINT pos, XElement *sourceElement)
 
 void Scene::RemoveImageSource(SceneItem *item)
 {
-    if(bSceneStarted) item->source->EndScene();
+    if(bSceneStarted && item->source) item->source->EndScene();
     item->GetElement()->GetParent()->RemoveElement(item->GetElement());
     sceneItems.RemoveItem(item);
     delete item;
