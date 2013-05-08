@@ -161,25 +161,6 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
 {
     switch(message)
     {
-        case WM_VKEYTOITEM:
-            {
-                if (GetDlgItem(hwnd, IDC_SETTINGSLIST) != (HWND)lParam)
-                    return -1;
-
-                if ((int)App->settingsPanes.Num() == App->numberOfBuiltInSettingsPanes)
-                    return -1; // No plugin panes, so no special handling needed
-
-                DWORD key = LOWORD(wParam);
-                int sel = HIWORD(wParam);
-                if (key == 38 && sel == App->numberOfBuiltInSettingsPanes + 1)
-                    return App->numberOfBuiltInSettingsPanes - 1;
-
-                if (key == 40 && sel == App->numberOfBuiltInSettingsPanes - 1)
-                    return App->numberOfBuiltInSettingsPanes + 1;
-                
-                return -1;
-            }
-            break;
         case WM_INITDIALOG:
             {
                 App->hwndSettings = hwnd;
@@ -189,10 +170,6 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                 // Add setting categories from the pane list
                 for(unsigned int i = 0; i < App->settingsPanes.Num(); i++)
                 {
-                    if (i == App->numberOfBuiltInSettingsPanes)
-                        // Plugin settings pages go after a separator
-                        SendMessage(GetDlgItem(hwnd, IDC_SETTINGSLIST), LB_ADDSTRING, 0, (LPARAM)TEXT("----------"));
-
                     SettingsPane *pane = App->settingsPanes[i];
                     if(pane == NULL)
                         continue;
@@ -209,20 +186,97 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                 App->curSettingsSelection = 0;
                 App->hwndCurrentSettings = NULL;
                 App->currentSettingsPane = NULL;
+
                 if(App->settingsPanes.Num() >= 1)
                     App->currentSettingsPane = App->settingsPanes[0];
+
                 if(App->currentSettingsPane != NULL)
                     App->hwndCurrentSettings = App->currentSettingsPane->CreatePane(hwnd);
+
                 if(App->hwndCurrentSettings != NULL)
                 {
                     SetWindowPos(App->hwndCurrentSettings, NULL, subDialogRect.left, subDialogRect.top, 0, 0, SWP_NOSIZE);
                     ShowWindow(App->hwndCurrentSettings, SW_SHOW);
-
                     ShowWindow(GetDlgItem(hwnd, IDC_DEFAULTS), App->currentSettingsPane->HasDefaults());
                 }
 
                 return TRUE;
             }
+
+        case WM_DRAWITEM: 
+            PDRAWITEMSTRUCT pdis;
+            pdis = (PDRAWITEMSTRUCT) lParam;
+
+            if(pdis->CtlID != IDC_SETTINGSLIST || pdis->itemID == -1)
+                break;
+
+            switch(pdis->itemAction)
+            {
+                case ODA_SELECT:
+                case ODA_DRAWENTIRE:
+                    {
+                        int cy, bkMode;
+                        TEXTMETRIC tm;
+                        COLORREF oldTextColor;
+                        TCHAR itemText[MAX_PATH];
+
+                        oldTextColor = GetTextColor(pdis->hDC);
+
+                        if(pdis->itemState & ODS_SELECTED)
+                        {
+                            FillRect(pdis->hDC, &pdis->rcItem, (HBRUSH)(COLOR_HIGHLIGHT + 1));
+                            SetTextColor(pdis->hDC, GetSysColor(COLOR_HIGHLIGHTTEXT));
+                        }
+                        else
+                            FillRect(pdis->hDC, &pdis->rcItem, (HBRUSH)(COLOR_WINDOW + 1));
+
+                        SendMessage(pdis->hwndItem, LB_GETTEXT, pdis->itemID, (LPARAM)itemText);
+
+                        GetTextMetrics(pdis->hDC, &tm);
+                        cy = (pdis->rcItem.bottom + pdis->rcItem.top - tm.tmHeight) / 2;
+
+                        bkMode = SetBkMode(pdis->hDC, TRANSPARENT);
+
+                        if(slen(itemText) > 0)
+                            TextOut(pdis->hDC, 6, cy, itemText, slen(itemText));
+
+                        SetBkMode(pdis->hDC, bkMode);
+                        SetTextColor(pdis->hDC, oldTextColor);
+
+                        if(App->settingsPanes.Num() > (UINT)App->numberOfBuiltInSettingsPanes)
+                        {
+                            if(pdis->itemID == (App->numberOfBuiltInSettingsPanes - 1))
+                            {
+                                HGDIOBJ origPen;
+                                origPen = SelectObject(pdis->hDC, GetStockObject(DC_PEN));
+                                SetDCPenColor(pdis->hDC, GetSysColor(COLOR_WINDOWTEXT));
+
+                                MoveToEx(pdis->hDC, pdis->rcItem.left, pdis->rcItem.bottom-1, NULL);
+                                LineTo(pdis->hDC, pdis->rcItem.right, pdis->rcItem.bottom-1);
+
+                                SelectObject(pdis->hDC, origPen);
+                            }
+                            if(pdis->itemID == App->numberOfBuiltInSettingsPanes)
+                            {
+                                HGDIOBJ origPen;
+                                origPen = SelectObject(pdis->hDC, GetStockObject(DC_PEN));
+                                SetDCPenColor(pdis->hDC, GetSysColor(COLOR_WINDOWTEXT));
+
+                                MoveToEx(pdis->hDC, pdis->rcItem.left, pdis->rcItem.top, NULL);
+                                LineTo(pdis->hDC, pdis->rcItem.right, pdis->rcItem.top);
+
+                                SelectObject(pdis->hDC, origPen);
+                            }
+                        }
+
+                        break;
+                    }
+
+                case ODA_FOCUS:
+                    break;
+            }
+
+            break;
 
         case WM_COMMAND:
             switch(LOWORD(wParam))
@@ -234,16 +288,9 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
 
                         int sel = (int)SendMessage((HWND)lParam, LB_GETCURSEL, 0, 0);
 
-                        if (sel == App->numberOfBuiltInSettingsPanes) {
-                            sel = App->curSettingsSelection;
-                            if (sel < App->numberOfBuiltInSettingsPanes)
-                                SendMessage((HWND)lParam, LB_SETCURSEL, App->curSettingsSelection, 0);
-                            else
-                                SendMessage((HWND)lParam, LB_SETCURSEL, App->curSettingsSelection + 1, 0);
+                        // No need to continue if we're on the same panel
+                        if(sel == App->curSettingsSelection)
                             break;
-                        }
-                        if (sel > App->numberOfBuiltInSettingsPanes)
-                            --sel;
 
                         if(App->bSettingsChanged)
                         {
