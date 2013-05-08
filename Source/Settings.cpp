@@ -228,7 +228,10 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                             SetTextColor(pdis->hDC, GetSysColor(COLOR_HIGHLIGHTTEXT));
                         }
                         else
+                        {
                             FillRect(pdis->hDC, &pdis->rcItem, (HBRUSH)(COLOR_WINDOW + 1));
+                            SetTextColor(pdis->hDC, GetSysColor(COLOR_WINDOWTEXT));
+                        }
 
                         SendMessage(pdis->hwndItem, LB_GETTEXT, pdis->itemID, (LPARAM)itemText);
 
@@ -249,7 +252,7 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                             {
                                 HGDIOBJ origPen;
                                 origPen = SelectObject(pdis->hDC, GetStockObject(DC_PEN));
-                                SetDCPenColor(pdis->hDC, GetSysColor(COLOR_WINDOWTEXT));
+                                SetDCPenColor(pdis->hDC, GetSysColor(COLOR_GRAYTEXT));
 
                                 MoveToEx(pdis->hDC, pdis->rcItem.left, pdis->rcItem.bottom-1, NULL);
                                 LineTo(pdis->hDC, pdis->rcItem.right, pdis->rcItem.bottom-1);
@@ -260,7 +263,7 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                             {
                                 HGDIOBJ origPen;
                                 origPen = SelectObject(pdis->hDC, GetStockObject(DC_PEN));
-                                SetDCPenColor(pdis->hDC, GetSysColor(COLOR_WINDOWTEXT));
+                                SetDCPenColor(pdis->hDC, GetSysColor(COLOR_GRAYTEXT));
 
                                 MoveToEx(pdis->hDC, pdis->rcItem.left, pdis->rcItem.top, NULL);
                                 LineTo(pdis->hDC, pdis->rcItem.right, pdis->rcItem.top);

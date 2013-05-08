@@ -2472,7 +2472,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                         SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
                                     }
                                     else
+                                    {
                                         FillRect(hdc, &itemRect, (HBRUSH)(COLOR_WINDOW + 1));
+                                        SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
+                                    }
                                    
 
                                     HTHEME hTheme = OpenThemeData(hwnd, TEXT("BUTTON"));
