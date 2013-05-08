@@ -2,7 +2,7 @@
 
 ; Define your application name
 !define APPNAME "Open Broadcaster Software"
-!define APPNAMEANDVERSION "Open Broadcaster Software 0.50b"
+!define APPNAMEANDVERSION "Open Broadcaster Software 0.52b"
 
 ; Additional script dependencies
 !include WinVer.nsh
@@ -117,7 +117,7 @@ Section "Open Broadcaster Software" Section1
 	File "..\rundir\services.xconfig"
 	File "..\OBSHelp\OBSHelp.chm"
 	File "..\rundir\pdb32\stripped\*.pdb"
-	File "%WindowsSDK80Path%Debuggers\x86\dbghelp.dll"
+	File "$%WindowsSDK80Path%Debuggers\x86\dbghelp.dll"
 	SetOutPath "$INSTDIR\locale"
 	File "..\rundir\locale\*.txt"
 	SetOutPath "$INSTDIR\shaders\"
@@ -143,7 +143,7 @@ Section "Open Broadcaster Software" Section1
 		File "..\rundir\services.xconfig"
 		File "..\OBSHelp\OBSHelp.chm"
 		File "..\rundir\pdb64\stripped\*.pdb"
-		File "%WindowsSDK80Path%Debuggers\x64\dbghelp.dll"
+		File "$%WindowsSDK80Path%Debuggers\x64\dbghelp.dll"
 		SetOutPath "$INSTDIR\64bit\locale"
 		File "..\rundir\locale\*.txt"
 		SetOutPath "$INSTDIR\64bit\shaders\"

@@ -15,6 +15,12 @@ and compile everything all at once, or you can compile everything
 individually yourself.  x264 and libmp3lame are pre-compiled for
 convenience.
 
+  Required environment variables:
+    WindowsSDK80Path - Points to windows sdk path.  Must include ending
+                       backslash.
+    DXSDK_DIR        - Points to DirectX SDK path.  Must include ending
+                       backslash.
+
 
 ---------------------------------------------
     Windows SDK
