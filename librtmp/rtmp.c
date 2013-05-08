@@ -162,6 +162,32 @@ RTMP_GetTime()
 #endif
 }
 
+const char *
+socketerror(int err)
+{
+    static char buff[1024];
+
+    if (FormatMessageA (FORMAT_MESSAGE_FROM_SYSTEM, NULL, err, 0, buff, sizeof(buff), NULL))
+    {
+        int i, len;
+        buff[sizeof(buff)-1] = '\0';
+        len = strlen (buff);
+        for (i = 0; i < len; i++)
+        {
+            if (buff[i] == '\r' || buff[i] == '\n')
+            {
+                memmove (buff + i, buff + i + 1, len - i);
+                i--;
+                len--;
+            }
+        }
+        return buff;
+    }
+
+    strcpy (buff, "unknown error");
+    return buff;
+}
+
 void
 RTMP_UserInterrupt()
 {
@@ -1111,8 +1137,8 @@ RTMP_Connect0(RTMP *r, struct sockaddr * service)
             if (bind(r->m_sb.sb_socket, (const struct sockaddr *)&r->m_bindIP.addr, r->m_bindIP.addrLen) < 0)
             {
                 int err = GetSockError();
-                RTMP_Log(RTMP_LOGERROR, "%s, failed to bind socket. %d (%s)",
-                         __FUNCTION__, err, strerror(err));
+                RTMP_Log(RTMP_LOGERROR, "%s, failed to bind socket: %s (%d)",
+                         __FUNCTION__, socketerror(err), err);
                 RTMP_Close(r);
                 return FALSE;
             }
@@ -1121,8 +1147,8 @@ RTMP_Connect0(RTMP *r, struct sockaddr * service)
         if (connect(r->m_sb.sb_socket, service, sizeof(struct sockaddr)) < 0)
         {
             int err = GetSockError();
-            RTMP_Log(RTMP_LOGERROR, "%s, failed to connect socket. %d (%s)",
-                     __FUNCTION__, err, strerror(err));
+            RTMP_Log(RTMP_LOGERROR, "%s, failed to connect socket: %s (%d)",
+                     __FUNCTION__, socketerror(err), err);
             RTMP_Close(r);
             return FALSE;
         }
@@ -3168,6 +3194,8 @@ static const AVal av_NetStream_Play_PublishNotify =
 static const AVal av_NetStream_Play_UnpublishNotify =
     AVC("NetStream.Play.UnpublishNotify");
 static const AVal av_NetStream_Publish_Start = AVC("NetStream.Publish.Start");
+static const AVal av_NetStream_Publish_Rejected = AVC("NetStream.Publish.Rejected");
+static const AVal av_NetStream_Publish_Denied = AVC("NetStream.Publish.Denied");
 static const AVal av_NetConnection_Connect_Rejected =
     AVC("NetConnection.Connect.Rejected");
 
@@ -3385,20 +3413,27 @@ HandleInvoke(RTMP *r, const char *body, unsigned int nBodySize)
     else if (AVMATCH(&method, &av_onStatus))
     {
         AMFObject obj2;
-        AVal code, level;
+        AVal code, level, description;
         AMFProp_GetObject(AMF_GetProp(&obj, NULL, 3), &obj2);
         AMFProp_GetString(AMF_GetProp(&obj2, &av_code, -1), &code);
         AMFProp_GetString(AMF_GetProp(&obj2, &av_level, -1), &level);
+        AMFProp_GetString(AMF_GetProp(&obj2, &av_description, -1), &description);
 
         RTMP_Log(RTMP_LOGDEBUG, "%s, onStatus: %s", __FUNCTION__, code.av_val);
         if (AVMATCH(&code, &av_NetStream_Failed)
                 || AVMATCH(&code, &av_NetStream_Play_Failed)
                 || AVMATCH(&code, &av_NetStream_Play_StreamNotFound)
-                || AVMATCH(&code, &av_NetConnection_Connect_InvalidApp))
+                || AVMATCH(&code, &av_NetConnection_Connect_InvalidApp)
+                || AVMATCH(&code, &av_NetStream_Publish_Rejected)
+                || AVMATCH(&code, &av_NetStream_Publish_Denied))
         {
             r->m_stream_id = -1;
             RTMP_Close(r);
-            RTMP_Log(RTMP_LOGERROR, "Closing connection: %s", code.av_val);
+
+            if (description.av_len)
+                RTMP_Log(RTMP_LOGERROR, "%s:\n%s (%s)", r->Link.tcUrl.av_val, code.av_val, description.av_val);
+            else
+                RTMP_Log(RTMP_LOGERROR, "%s:\n%s", r->Link.tcUrl.av_val, code.av_val);
         }
 
         else if (AVMATCH(&code, &av_NetStream_Play_Start)
@@ -3836,7 +3871,7 @@ RTMP_ReadPacket(RTMP *r, RTMPPacket *packet)
 
     if (ReadN(r, (char *)hbuf, 1) == 0)
     {
-        RTMP_Log(RTMP_LOGERROR, "%s, failed to read RTMP packet header", __FUNCTION__);
+        RTMP_Log(RTMP_LOGDEBUG, "%s, failed to read RTMP packet header", __FUNCTION__);
         return FALSE;
     }
 
@@ -4536,15 +4571,25 @@ RTMPSockBuf_Fill(RTMPSockBuf *sb)
         {
             nBytes = recv(sb->sb_socket, sb->sb_start + sb->sb_size, nBytes, 0);
         }
-        if (nBytes != -1)
+        if (nBytes > 0)
         {
             sb->sb_size += nBytes;
         }
+        else if (nBytes == 0)
+        {
+            RTMP_Log(RTMP_LOGERROR, "%s, remote host closed connection",
+                     __FUNCTION__);            
+        }
         else
         {
+            int level;
             int sockerr = GetSockError();
-            RTMP_Log(RTMP_LOGDEBUG, "%s, recv returned %d. GetSockError(): %d (%s)",
-                     __FUNCTION__, nBytes, sockerr, strerror(sockerr));
+            if (sockerr == EWOULDBLOCK || sockerr == EAGAIN)
+                level = RTMP_LOGDEBUG;
+            else
+                level = RTMP_LOGERROR;
+            RTMP_Log(level, "%s, recv returned %d. GetSockError(): %d (%s)",
+                     __FUNCTION__, nBytes, sockerr, socketerror(sockerr));
             if (sockerr == EINTR && !RTMP_ctrlC)
                 continue;
 

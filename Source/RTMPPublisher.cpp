@@ -729,6 +729,7 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     if(!RTMP_ConnectStream(rtmp, 0))
     {
         failReason = Str("Connection.InvalidStream");
+        failReason << TEXT("\r\n\r\n") << RTMPPublisher::GetRTMPErrors();
         bCanRetry = true;
         goto end;
     }
