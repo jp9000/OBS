@@ -109,6 +109,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <ExceptionHandling>false</ExceptionHandling>
+      <PrecompiledHeaderFile>GraphicsCapture.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <AdditionalDependencies>OBSApi.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -139,6 +140,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <ExceptionHandling>false</ExceptionHandling>
+      <PrecompiledHeaderFile>GraphicsCapture.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <AdditionalDependencies>OBSApi.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -167,6 +169,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <ExceptionHandling>false</ExceptionHandling>
+      <PrecompiledHeaderFile>GraphicsCapture.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <AdditionalDependencies>OBSApi.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -200,6 +203,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <ExceptionHandling>false</ExceptionHandling>
+      <PrecompiledHeaderFile>GraphicsCapture.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <AdditionalDependencies>OBSApi.lib;%(AdditionalDependencies)</AdditionalDependencies>

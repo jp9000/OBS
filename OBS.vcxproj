@@ -108,6 +108,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <PrecompiledHeaderFile>Main.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <AdditionalOptions>/ignore:4049 /ignore:4217 %(AdditionalOptions)</AdditionalOptions>
@@ -143,6 +144,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <ExceptionHandling>false</ExceptionHandling>
+      <PrecompiledHeaderFile>Main.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <AdditionalDependencies>Avrt.lib;dwmapi.lib;comctl32.lib;dxgi.lib;dxguid.lib;d3d10_1.lib;d3dx10.lib;ws2_32.lib;Iphlpapi.lib;Winmm.lib;librtmp.lib;libmp3lame-static.lib;libfaac.lib;dsound.lib;obsapi.lib;shell32.lib;gdiplus.lib;mfplat.lib;Mfuuid.lib;Winhttp.lib;libx264.lib;UxTheme.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -175,6 +177,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <PrecompiledHeaderFile>Main.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <AdditionalOptions>/ignore:4049 /ignore:4217 %(AdditionalOptions)</AdditionalOptions>
@@ -214,6 +217,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <PrecompiledHeaderFile>Main.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <AdditionalDependencies>Avrt.lib;dwmapi.lib;comctl32.lib;dxgi.lib;dxguid.lib;d3d10_1.lib;d3dx10.lib;ws2_32.lib;Iphlpapi.lib;Winmm.lib;librtmp.lib;libmp3lame-static.lib;libfaac.lib;dsound.lib;obsapi.lib;shell32.lib;gdiplus.lib;mfplat.lib;Mfuuid.lib;Winhttp.lib;libx264.lib;UxTheme.lib;%(AdditionalDependencies)</AdditionalDependencies>
