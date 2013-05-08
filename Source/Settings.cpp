@@ -252,7 +252,7 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                             {
                                 HGDIOBJ origPen;
                                 origPen = SelectObject(pdis->hDC, GetStockObject(DC_PEN));
-                                SetDCPenColor(pdis->hDC, GetSysColor(COLOR_GRAYTEXT));
+                                SetDCPenColor(pdis->hDC, GetSysColor(COLOR_BTNSHADOW));
 
                                 MoveToEx(pdis->hDC, pdis->rcItem.left, pdis->rcItem.top, NULL);
                                 LineTo(pdis->hDC, pdis->rcItem.right, pdis->rcItem.top);
