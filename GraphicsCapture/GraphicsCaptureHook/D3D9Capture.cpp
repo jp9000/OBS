@@ -82,6 +82,8 @@ HMODULE                 hD3D9Dll = NULL;
 
 int                     patchType = 0;
 
+extern bool             bDXGIHooked;
+
 
 
 bool CompareMemory(const LPVOID lpVal1, const LPVOID lpVal2, UINT nBytes)
@@ -245,6 +247,8 @@ typedef HRESULT (WINAPI *CREATEDXGIFACTORY1PROC)(REFIID riid, void **ppFactory);
 void DoD3D9GPUHook(IDirect3DDevice9 *device)
 {
     BOOL bSuccess = false;
+
+    bDXGIHooked = true;
 
     HRESULT hErr;
 
@@ -1090,10 +1094,14 @@ bool InitD3D9Capture()
                     UPARAM *vtable = *(UPARAM**)deviceEx;
 
                     d3d9EndScene.Hook((FARPROC)*(vtable+(168/4)), (FARPROC)D3D9EndScene);
+                    /*d3d9ResetEx.Hook((FARPROC)*(vtable+(528/4)), (FARPROC)D3D9ResetEx);
+                    d3d9Reset.Hook((FARPROC)*(vtable+(64/4)), (FARPROC)D3D9Reset);*/
 
                     deviceEx->Release();
 
                     d3d9EndScene.Rehook();
+                    /*d3d9Reset.Rehook();
+                    d3d9ResetEx.Rehook();*/
                 }
                 else
                 {
