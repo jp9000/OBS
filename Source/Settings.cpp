@@ -248,17 +248,6 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
 
                         if(App->settingsPanes.Num() > (UINT)App->numberOfBuiltInSettingsPanes)
                         {
-                            if(pdis->itemID == (App->numberOfBuiltInSettingsPanes - 1))
-                            {
-                                HGDIOBJ origPen;
-                                origPen = SelectObject(pdis->hDC, GetStockObject(DC_PEN));
-                                SetDCPenColor(pdis->hDC, GetSysColor(COLOR_GRAYTEXT));
-
-                                MoveToEx(pdis->hDC, pdis->rcItem.left, pdis->rcItem.bottom-1, NULL);
-                                LineTo(pdis->hDC, pdis->rcItem.right, pdis->rcItem.bottom-1);
-
-                                SelectObject(pdis->hDC, origPen);
-                            }
                             if(pdis->itemID == App->numberOfBuiltInSettingsPanes)
                             {
                                 HGDIOBJ origPen;
