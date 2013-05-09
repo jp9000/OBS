@@ -279,6 +279,7 @@ BASE_EXPORT extern BOOL bDebugBreak;
 #include "Alloc.h"
 #include "FastAlloc.h"
 #include "DebugAlloc.h"
+#include "AlignedAlloc.h"
 #include "Template.h"
 #include "XString.h"
 #include "XMath.h"

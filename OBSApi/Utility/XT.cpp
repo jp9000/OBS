@@ -75,6 +75,8 @@ void STDCALL ResetXTAllocator(CTSTR lpAllocator)
         MainAllocator = new DebugAlloc;
     else if (scmpi(lpAllocator, TEXT("DefaultAlloc")) == 0)
         MainAllocator = new DefaultAlloc;
+    else if (scmpi(lpAllocator, TEXT("AlignedAlloc")) == 0)
+        MainAllocator = new AlignedAlloc;
     else if (scmpi(lpAllocator, TEXT("SeriousMemoryDebuggingAlloc")) == 0)
         MainAllocator = new SeriousMemoryDebuggingAlloc;
     else
