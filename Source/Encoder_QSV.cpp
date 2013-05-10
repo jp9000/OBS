@@ -71,6 +71,7 @@ namespace
         {
             pnFrameRateExtN = fr;
             pnFrameRateExtD = 1;
+            return;
         }
 
         fr = (mfxU32)(dFrameRate * 1.001 + .5);
@@ -79,6 +80,7 @@ namespace
         {
             pnFrameRateExtN = fr * 1000;
             pnFrameRateExtD = 1001;
+            return;
         }
 
         pnFrameRateExtN = (mfxU32)(dFrameRate * 10000 + .5);
@@ -166,6 +168,8 @@ public:
                 break;
             }
         }
+
+        session.SetPriority(MFX_PRIORITY_HIGH);
 
         fps = fps_;
 

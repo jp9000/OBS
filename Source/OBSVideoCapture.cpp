@@ -1057,7 +1057,10 @@ void OBS::MainCaptureLoop()
                 delete outPics[i].mfxOut;
         else
             for(int i=0; i<NUM_OUT_BUFFERS; i++)
+            {
                 x264_picture_clean(outPics[i].picOut);
+                delete outPics[i].picOut;
+            }
     }
 
     Free(h420Threads);
