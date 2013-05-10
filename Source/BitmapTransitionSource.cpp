@@ -112,7 +112,7 @@ public:
         curTransitionTime += fSeconds;
         if(curTransitionTime >= transitionTime)
         {
-            curTransitionTime = 0.0f;;
+            curTransitionTime = 0.0f;
 
             curFadeValue = 0.0f;
             bTransitioning = true;
@@ -225,7 +225,7 @@ public:
 
         //------------------------------------
 
-        bFadeInOnly = data->GetInt(TEXT("fadeInOnly")) != 0;
+        bFadeInOnly = data->GetInt(TEXT("fadeInOnly"), 1) != 0;
         bDisableFading = data->GetInt(TEXT("disableFading")) != 0;
         bRandomize = data->GetInt(TEXT("randomize")) != 0;
 
@@ -311,7 +311,7 @@ INT_PTR CALLBACK ConfigureBitmapTransitionProc(HWND hwnd, UINT message, WPARAM w
 
                 //--------------------------
 
-                BOOL bFadeInOnly = configInfo->data->GetInt(TEXT("fadeInOnly"));
+                BOOL bFadeInOnly = configInfo->data->GetInt(TEXT("fadeInOnly"), 1);
                 BOOL bDisableFading = configInfo->data->GetInt(TEXT("disableFading"));
                 BOOL bRandomize = configInfo->data->GetInt(TEXT("randomize"));
                 SendMessage(GetDlgItem(hwnd, IDC_FADEINONLY), BM_SETCHECK, bFadeInOnly ? BST_CHECKED : BST_UNCHECKED, 0);
