@@ -20,6 +20,7 @@
 #include "Main.h"
 
 #include <inttypes.h>
+#include "mfxstructures.h"
 extern "C"
 {
 #include "../x264/x264.h"
@@ -27,6 +28,7 @@ extern "C"
 
 
 void Convert444to420(LPBYTE input, int width, int pitch, int height, int startY, int endY, LPBYTE *output);
+void Convert444toNV12(LPBYTE input, int width, int pitch, int height, int startY, int endY, LPBYTE *output);
 
 
 DWORD STDCALL OBS::MainCaptureThread(LPVOID lpUnused)
@@ -40,6 +42,7 @@ struct Convert444Data
 {
     LPBYTE input;
     LPBYTE output[3];
+    bool bNV12;
     bool bKillThread;
     HANDLE hSignalConvert, hSignalComplete;
     int width, height, pitch, startY, endY;
@@ -51,8 +54,10 @@ DWORD STDCALL Convert444Thread(Convert444Data *data)
     {
         WaitForSingleObject(data->hSignalConvert, INFINITE);
         if(data->bKillThread) break;
-
-        Convert444to420(data->input, data->width, data->pitch, data->height, data->startY, data->endY, data->output);
+        if(data->bNV12)
+            Convert444toNV12(data->input, data->width, data->pitch, data->height, data->startY, data->endY, data->output);
+        else
+            Convert444to420(data->input, data->width, data->pitch, data->height, data->startY, data->endY, data->output);
 
         SetEvent(data->hSignalComplete);
     }while(!data->bKillThread);
@@ -88,9 +93,25 @@ bool OBS::BufferVideoData(const List<DataPacket> &inputPackets, const List<Packe
 
 #define NUM_OUT_BUFFERS 3
 
-struct FrameProcessInfo
+struct EncoderPicture
 {
     x264_picture_t *picOut;
+    mfxFrameSurface1 *mfxOut;
+    EncoderPicture() : picOut(nullptr), mfxOut(nullptr) {}
+};
+
+bool operator==(const EncoderPicture& lhs, const EncoderPicture& rhs)
+{
+    if(lhs.picOut && rhs.picOut)
+        return lhs.picOut == rhs.picOut;
+    if(lhs.mfxOut && rhs.mfxOut)
+        return lhs.mfxOut == rhs.mfxOut;
+    return false;
+}
+
+struct FrameProcessInfo
+{
+    EncoderPicture *pic;
     ID3D10Texture2D *prevTexture;
 
     DWORD frameTimestamp;
@@ -113,7 +134,7 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
 
     profileIn("call to encoder");
 
-    videoEncoder->Encode(frameInfo.picOut, videoPackets, videoPacketTypes, bufferedTimes[0], ctsOffset);
+    videoEncoder->Encode(frameInfo.pic->picOut ? (LPVOID)frameInfo.pic->picOut : (LPVOID)frameInfo.pic->mfxOut, videoPackets, videoPacketTypes, bufferedTimes[0], ctsOffset);
     if(bUsing444) frameInfo.prevTexture->Unmap(0);
 
     ctsOffsets << ctsOffset;
@@ -262,25 +283,55 @@ void OBS::MainCaptureLoop()
 
     int curOutBuffer = 0;
 
-    x264_picture_t *lastPic = NULL;
-    x264_picture_t outPics[NUM_OUT_BUFFERS];
+    bool bUsingQSV = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
+    if(bUsingQSV)
+        bUsing444 = false;
+
+    EncoderPicture lastPic;
+    EncoderPicture outPics[NUM_OUT_BUFFERS];
     DWORD outTimes[NUM_OUT_BUFFERS] = {0, 0, 0};
+    List<mfxU8> qsvBuffer;
 
     for(int i=0; i<NUM_OUT_BUFFERS; i++)
-        x264_picture_init(&outPics[i]);
+    {
+        if(bUsingQSV)
+        {
+            outPics[i].mfxOut = new mfxFrameSurface1;
+            memset(outPics[i].mfxOut, 0, sizeof(mfxFrameSurface1));
+            outPics[i].mfxOut->Data.Pitch = outputCX;
+        }
+        else
+        {
+            outPics[i].picOut = new x264_picture_t;
+            x264_picture_init(outPics[i].picOut);
+        }
+    }
 
     if(bUsing444)
     {
         for(int i=0; i<NUM_OUT_BUFFERS; i++)
         {
-            outPics[i].img.i_csp   = X264_CSP_BGRA; //although the x264 input says BGR, x264 actually will expect packed UYV
-            outPics[i].img.i_plane = 1;
+            outPics[i].picOut->img.i_csp   = X264_CSP_BGRA; //although the x264 input says BGR, x264 actually will expect packed UYV
+            outPics[i].picOut->img.i_plane = 1;
         }
     }
     else
     {
-        for(int i=0; i<NUM_OUT_BUFFERS; i++)
-            x264_picture_alloc(&outPics[i], X264_CSP_I420, outputCX, outputCY);
+        if(bUsingQSV)
+        {
+            size_t perBuffer = 2 * outputCX * outputCY;
+            qsvBuffer.SetSize(unsigned(NUM_OUT_BUFFERS * perBuffer + 15));
+            mfxU8 *aligned = (mfxU8*)(((size_t)qsvBuffer.Array()+15)/16*16);
+            for(int i=0; i < NUM_OUT_BUFFERS; i++)
+            {
+                outPics[i].mfxOut->Data.Y = aligned;
+                outPics[i].mfxOut->Data.UV = aligned + outputCX * outputCY;
+                aligned += perBuffer;
+            }
+        }
+        else
+            for(int i=0; i<NUM_OUT_BUFFERS; i++)
+                x264_picture_alloc(outPics[i].picOut, X264_CSP_I420, outputCX, outputCY);
     }
 
     //----------------------------------------
@@ -358,6 +409,7 @@ void OBS::MainCaptureLoop()
         convertInfo[i].height = outputCY;
         convertInfo[i].hSignalConvert  = CreateEvent(NULL, FALSE, FALSE, NULL);
         convertInfo[i].hSignalComplete = CreateEvent(NULL, FALSE, FALSE, NULL);
+        convertInfo[i].bNV12 = bUsingQSV;
 
         if(i == 0)
             convertInfo[i].startY = 0;
@@ -749,9 +801,9 @@ void OBS::MainCaptureLoop()
                     int prevOutBuffer = (curOutBuffer == 0) ? NUM_OUT_BUFFERS-1 : curOutBuffer-1;
                     int nextOutBuffer = (curOutBuffer == NUM_OUT_BUFFERS-1) ? 0 : curOutBuffer+1;
 
-                    x264_picture_t &prevPicOut = outPics[prevOutBuffer];
-                    x264_picture_t &picOut = outPics[curOutBuffer];
-                    x264_picture_t &nextPicOut = outPics[nextOutBuffer];
+                    EncoderPicture &prevPicOut = outPics[prevOutBuffer];
+                    EncoderPicture &picOut = outPics[curOutBuffer];
+                    EncoderPicture &nextPicOut = outPics[nextOutBuffer];
 
                     if(!bUsing444)
                     {
@@ -765,9 +817,17 @@ void OBS::MainCaptureLoop()
                             {
                                 convertInfo[i].input     = (LPBYTE)map.pData;
                                 convertInfo[i].pitch     = map.RowPitch;
-                                convertInfo[i].output[0] = nextPicOut.img.plane[0];
-                                convertInfo[i].output[1] = nextPicOut.img.plane[1];
-                                convertInfo[i].output[2] = nextPicOut.img.plane[2];
+                                if(bUsingQSV)
+                                {
+                                    convertInfo[i].output[0] = nextPicOut.mfxOut->Data.Y;
+                                    convertInfo[i].output[1] = nextPicOut.mfxOut->Data.UV;
+                                }
+                                else
+                                {
+                                    convertInfo[i].output[0] = nextPicOut.picOut->img.plane[0];
+                                    convertInfo[i].output[1] = nextPicOut.picOut->img.plane[1];
+                                    convertInfo[i].output[2] = nextPicOut.picOut->img.plane[2];
+								}
                                 SetEvent(convertInfo[i].hSignalConvert);
                             }
 
@@ -777,7 +837,10 @@ void OBS::MainCaptureLoop()
                         else
                         {
                             outTimes[curOutBuffer] = (DWORD)curStreamTime;
-                            Convert444to420((LPBYTE)map.pData, outputCX, map.RowPitch, outputCY, 0, outputCY, picOut.img.plane);
+                            if(bUsingQSV)
+                                Convert444toNV12((LPBYTE)map.pData, outputCX, map.RowPitch, outputCY, 0, outputCY, &picOut.mfxOut->Data.Y);
+                            else
+                                Convert444to420((LPBYTE)map.pData, outputCX, map.RowPitch, outputCY, 0, outputCY, picOut.picOut->img.plane);
                             prevTexture->Unmap(0);
                         }
 
@@ -787,8 +850,8 @@ void OBS::MainCaptureLoop()
                     {
                         outTimes[curOutBuffer] = (DWORD)curStreamTime;
 
-                        picOut.img.i_stride[0] = map.RowPitch;
-                        picOut.img.plane[0]    = (uint8_t*)map.pData;
+                        picOut.picOut->img.i_stride[0] = map.RowPitch;
+                        picOut.picOut->img.plane[0]    = (uint8_t*)map.pData;
                     }
 
                     if(bEncode)
@@ -816,7 +879,7 @@ void OBS::MainCaptureLoop()
 
                                 DWORD halfTime = (frameTimeAdjust+1)/2;
 
-                                x264_picture_t *nextPic = (curFrameTimestamp-cfrTime <= halfTime) ? &picOut : &prevPicOut;
+                                EncoderPicture &nextPic = (curFrameTimestamp-cfrTime <= halfTime) ? picOut : prevPicOut;
                                 //Log(TEXT("cfrTime: %u, time: %u"), cfrTime, curFrameTimestamp);
 
                                 //these lines are just for counting duped frames
@@ -825,8 +888,11 @@ void OBS::MainCaptureLoop()
                                 else
                                     lastPic = nextPic;
 
-                                frameInfo.picOut = nextPic;
-                                frameInfo.picOut->i_pts = cfrTime;
+                                frameInfo.pic = &nextPic;
+                                if(bUsingQSV)
+                                    frameInfo.pic->mfxOut->Data.TimeStamp = cfrTime;
+                                else
+                                    frameInfo.pic->picOut->i_pts = cfrTime;
                                 frameInfo.frameTimestamp = cfrTime;
                                 ProcessFrame(frameInfo);
 
@@ -837,9 +903,12 @@ void OBS::MainCaptureLoop()
                         }
                         else
                         {
-                            picOut.i_pts = curFrameTimestamp;
+                            if(bUsingQSV)
+                                picOut.mfxOut->Data.TimeStamp = curFrameTimestamp;
+                            else
+                                picOut.picOut->i_pts = curFrameTimestamp;
 
-                            frameInfo.picOut = &picOut;
+                            frameInfo.pic = &picOut;
                             frameInfo.frameTimestamp = curFrameTimestamp;
 
                             ProcessFrame(frameInfo);
@@ -983,8 +1052,12 @@ void OBS::MainCaptureLoop()
             }
         }
 
-        for(int i=0; i<NUM_OUT_BUFFERS; i++)
-            x264_picture_clean(&outPics[i]);
+        if(bUsingQSV)
+            for(int i = 0; i < NUM_OUT_BUFFERS; i++)
+                delete outPics[i].mfxOut;
+        else
+            for(int i=0; i<NUM_OUT_BUFFERS; i++)
+                x264_picture_clean(outPics[i].picOut);
     }
 
     Free(h420Threads);
