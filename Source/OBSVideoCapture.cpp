@@ -290,7 +290,6 @@ void OBS::MainCaptureLoop()
     EncoderPicture lastPic;
     EncoderPicture outPics[NUM_OUT_BUFFERS];
     DWORD outTimes[NUM_OUT_BUFFERS] = {0, 0, 0};
-    List<mfxU8> qsvBuffer;
 
     for(int i=0; i<NUM_OUT_BUFFERS; i++)
     {
@@ -317,19 +316,7 @@ void OBS::MainCaptureLoop()
     }
     else
     {
-        if(bUsingQSV)
-        {
-            size_t perBuffer = 2 * outputCX * outputCY;
-            qsvBuffer.SetSize(unsigned(NUM_OUT_BUFFERS * perBuffer + 15));
-            mfxU8 *aligned = (mfxU8*)(((size_t)qsvBuffer.Array()+15)/16*16);
-            for(int i=0; i < NUM_OUT_BUFFERS; i++)
-            {
-                outPics[i].mfxOut->Data.Y = aligned;
-                outPics[i].mfxOut->Data.UV = aligned + outputCX * outputCY;
-                aligned += perBuffer;
-            }
-        }
-        else
+        if(!bUsingQSV)
             for(int i=0; i<NUM_OUT_BUFFERS; i++)
                 x264_picture_alloc(outPics[i].picOut, X264_CSP_I420, outputCX, outputCY);
     }
@@ -819,8 +806,10 @@ void OBS::MainCaptureLoop()
                                 convertInfo[i].pitch     = map.RowPitch;
                                 if(bUsingQSV)
                                 {
-                                    convertInfo[i].output[0] = nextPicOut.mfxOut->Data.Y;
-                                    convertInfo[i].output[1] = nextPicOut.mfxOut->Data.UV;
+                                    mfxFrameData& data = nextPicOut.mfxOut->Data;
+                                    videoEncoder->RequestBuffers(&data);
+                                    convertInfo[i].output[0] = data.Y;
+                                    convertInfo[i].output[1] = data.UV;
                                 }
                                 else
                                 {
@@ -838,7 +827,12 @@ void OBS::MainCaptureLoop()
                         {
                             outTimes[curOutBuffer] = (DWORD)curStreamTime;
                             if(bUsingQSV)
-                                Convert444toNV12((LPBYTE)map.pData, outputCX, map.RowPitch, outputCY, 0, outputCY, &picOut.mfxOut->Data.Y);
+                            {
+                                mfxFrameData& data = picOut.mfxOut->Data;
+                                videoEncoder->RequestBuffers(&data);
+                                LPBYTE output[] = {data.Y, data.UV};
+                                Convert444toNV12((LPBYTE)map.pData, outputCX, map.RowPitch, outputCY, 0, outputCY, output);
+                            }
                             else
                                 Convert444to420((LPBYTE)map.pData, outputCX, map.RowPitch, outputCY, 0, outputCY, picOut.picOut->img.plane);
                             prevTexture->Unmap(0);

@@ -159,6 +159,8 @@ class VideoEncoder
 protected:
     virtual bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, int &ctsOffset)=0;
 
+    virtual void RequestBuffers(LPVOID buffers) {}
+
 public:
     virtual ~VideoEncoder() {}
 
