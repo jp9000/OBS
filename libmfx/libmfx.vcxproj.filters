@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{20b8eb72-a70e-48ae-bef6-4c0f7d3c8b03}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{f8aff41f-a375-4e72-8dbf-1d983abb4775}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mfx_critical_section.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mfx_dispatcher.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mfx_dispatcher_log.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mfx_dxva2_device.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mfx_function_table.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mfx_library_iterator.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mfx_load_dll.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mfx_win_reg_key.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\mfx_critical_section.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mfx_dispatcher.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mfx_dispatcher_log.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mfx_dxva2_device.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mfx_exposed_functions_list.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mfx_library_iterator.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mfx_load_dll.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mfx_win_reg_key.h">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

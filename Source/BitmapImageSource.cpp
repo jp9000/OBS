@@ -252,7 +252,8 @@ public:
                         }
 
                         //now decode and display the actual frame we want
-                        if (gif_decode_frame(&gif, newFrame) == GIF_OK)
+                        int ret = gif_decode_frame(&gif, newFrame);
+                        if (ret == GIF_OK)
                         {
                             animationFrameCache[newFrame] = animationFrameData + (newFrame * (gif.width * gif.height * 4));
                             memcpy(animationFrameCache[newFrame], gif.frame_image, gif.width * gif.height * 4);
@@ -261,7 +262,8 @@ public:
                         lastDecodedFrame = newFrame;
                     }
 
-                    texture->SetImage(animationFrameCache[newFrame], GS_IMAGEFORMAT_RGBA, gif.width*4);
+                    if (animationFrameCache[newFrame])
+                        texture->SetImage(animationFrameCache[newFrame], GS_IMAGEFORMAT_RGBA, gif.width*4);
 
                     curFrame = newFrame;
                 }
@@ -399,7 +401,12 @@ public:
                     if (frameTime == 0.0f)
                         frameTime = 0.1f;
                     animationTimes << frameTime;
+
+                    if (gif_decode_frame(&gif, i) != GIF_OK)
+                        Log (TEXT("BitmapImageSource: Warning, couldn't decode frame %d of %s"), i, data->GetString(TEXT("path")));
                 }
+
+                gif_decode_frame(&gif, 0);
 
                 fullSize.x = float(gif.width);
                 fullSize.y = float(gif.height);

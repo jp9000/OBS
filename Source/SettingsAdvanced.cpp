@@ -97,6 +97,11 @@ void SettingsAdvanced::ApplySettings()
 
     //------------------------------------
 
+    BOOL bUseQSV = SendMessage(GetDlgItem(hwnd, IDC_USEQSV), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("UseQSV"), bUseQSV);
+
+    //------------------------------------
+
     BOOL bSyncToVideoTime = SendMessage(GetDlgItem(hwnd, IDC_SYNCTOVIDEOTIME), BM_GETCHECK, 0, 0) == BST_CHECKED;
     AppConfig->SetInt   (TEXT("Audio"), TEXT("SyncToVideoTime"), bSyncToVideoTime);
 
@@ -143,6 +148,7 @@ void SettingsAdvanced::SetDefaults()
     SendMessage(GetDlgItem(hwnd, IDC_USEVIDEOENCODERSETTINGS), BM_SETCHECK, BST_UNCHECKED, 0);
     EnableWindow(GetDlgItem(hwnd, IDC_VIDEOENCODERSETTINGS), FALSE);
     SendMessage(GetDlgItem(hwnd, IDC_UNLOCKHIGHFPS), BM_SETCHECK, BST_UNCHECKED, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_USEQSV), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_SYNCTOVIDEOTIME), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_USEMICQPC), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_AUDIOTIMEADJUST), UDM_SETPOS32, 0, 0);
@@ -243,6 +249,11 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 bool bUnlockFPS = AppConfig->GetInt(TEXT("Video"), TEXT("UnlockFPS")) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_UNLOCKHIGHFPS), BM_SETCHECK, bUnlockFPS ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                //------------------------------------
+
+                bool bUseQSV = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_USEQSV), BM_SETCHECK, bUseQSV ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 //------------------------------------
 
@@ -407,6 +418,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 case IDC_USEMULTITHREADEDOPTIMIZATIONS:
                 case IDC_UNLOCKHIGHFPS:
                 case IDC_LATENCYMETHOD:
+                case IDC_USEQSV:
                     if(HIWORD(wParam) == BN_CLICKED)
                     {
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
