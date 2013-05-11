@@ -1064,7 +1064,7 @@ LRESULT WINAPI RegionWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         if(bLeft)
         {
             if(rc.right-rc.left < 16)
-                rc.left = rc.right-32;
+                rc.left = rc.right-16;
         }
         else
         {
@@ -1104,7 +1104,7 @@ LRESULT WINAPI RegionWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         GetWindowRect(hwnd, &rc);
 
         if(rc.right-rc.left < 16)
-            rc.right = rc.left+32;
+            rc.right = rc.left+16;
         if(rc.bottom-rc.top < 16)
             rc.bottom = rc.top+16;
 
