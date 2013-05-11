@@ -33,6 +33,7 @@ ipch/
 *.zip
 *.lnk
 *.chm
+*~
 
 !OBSHelp/*.css
 !OBSHelp/*.htm

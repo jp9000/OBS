@@ -655,6 +655,16 @@ double STDCALL OSGetTimeDoubleMS()
     return double(elapsedTime) * 1000.0 / double(clockFreq.QuadPart);
 }
 
+QWORD STDCALL OSGetThreadTime(HANDLE thread)
+{
+#define TO_QWORD(t) (((QWORD)t.dwHighDateTime)<<32 | (QWORD)t.dwLowDateTime)
+    FILETIME user, create, exit, kernel;
+    if(!GetThreadTimes(thread, &create, &exit, &kernel, &user))
+        return -1;
+    return (TO_QWORD(user) + TO_QWORD(kernel))/10;
+#undef TO_QWORD
+}
+
 
 UINT STDCALL OSGetProcessorCount()
 {
@@ -665,6 +675,11 @@ HANDLE STDCALL OSCreateThread(XTHREAD lpThreadFunc, LPVOID param)
 {
     DWORD dummy;
     return CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)lpThreadFunc, param, 0, &dummy);
+}
+
+HANDLE STDCALL OSGetCurrentThread()
+{
+	return GetCurrentThread();
 }
 
 BOOL   STDCALL OSWaitForThread(HANDLE hThread, LPDWORD ret)
