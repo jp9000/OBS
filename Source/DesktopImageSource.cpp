@@ -838,10 +838,10 @@ void SelectTargetWindow(HWND hwnd, bool bRefresh)
     rc.bottom -= rc.top;
     rc.right -= rc.left;
 
-    if(rc.right < 32)
-        rc.right = 32;
-    if(rc.bottom < 32)
-        rc.bottom = 32;
+    if(rc.right < 16)
+        rc.right = 16;
+    if(rc.bottom < 16)
+        rc.bottom = 16;
 
     BOOL bRegion = SendMessage(GetDlgItem(hwnd, IDC_REGIONCAPTURE), BM_GETCHECK, 0, 0) == BST_CHECKED;
     if(!bRegion || bRefresh)
@@ -1063,24 +1063,24 @@ LRESULT WINAPI RegionWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 
         if(bLeft)
         {
-            if(rc.right-rc.left < 32)
+            if(rc.right-rc.left < 16)
                 rc.left = rc.right-32;
         }
         else
         {
-            if(rc.right-rc.left < 32)
-                rc.right = rc.left+32;
+            if(rc.right-rc.left < 16)
+                rc.right = rc.left+16;
         }
 
         if(bTop)
         {
-            if(rc.bottom-rc.top < 32)
-                rc.top = rc.bottom-32;
+            if(rc.bottom-rc.top < 16)
+                rc.top = rc.bottom-16;
         }
         else
         {
-            if(rc.bottom-rc.top < 32)
-                rc.bottom = rc.top+32;
+            if(rc.bottom-rc.top < 16)
+                rc.bottom = rc.top+16;
         }
 
         if(regionWindowData.hwndCaptureWindow)
@@ -1103,10 +1103,10 @@ LRESULT WINAPI RegionWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         RECT rc;
         GetWindowRect(hwnd, &rc);
 
-        if(rc.right-rc.left < 32)
+        if(rc.right-rc.left < 16)
             rc.right = rc.left+32;
-        if(rc.bottom-rc.top < 32)
-            rc.bottom = rc.top+32;
+        if(rc.bottom-rc.top < 16)
+            rc.bottom = rc.top+16;
 
         SetWindowText(GetDlgItem(regionWindowData.hwndConfigDialog, IDC_SIZEX), IntString(rc.right-rc.left).Array());
         SetWindowText(GetDlgItem(regionWindowData.hwndConfigDialog, IDC_SIZEY), IntString(rc.bottom-rc.top).Array());
@@ -1364,10 +1364,10 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                     sizeX = data->GetInt(TEXT("captureCX"), 32);
                     sizeY = data->GetInt(TEXT("captureCY"), 32);
 
-                    if(sizeX < 32)
-                        sizeX = 32;
-                    if(sizeY < 32)
-                        sizeY = 32;
+                    if(sizeX < 16)
+                        sizeX = 16;
+                    if(sizeY < 16)
+                        sizeY = 16;
 
                     SetWindowText(GetDlgItem(hwnd, IDC_POSX),  IntString(posX).Array());
                     SetWindowText(GetDlgItem(hwnd, IDC_POSY),  IntString(posY).Array());
@@ -1688,10 +1688,10 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                         cx = monitor.rect.right-monitor.rect.left;
                         cy = monitor.rect.bottom-monitor.rect.top;
 
-                        if(cx < 32)
-                            cx = 32;
-                        if(cy < 32)
-                            cy = 32;
+                        if(cx < 16)
+                            cx = 16;
+                        if(cy < 16)
+                            cy = 16;
 
                         SetWindowText(GetDlgItem(hwnd, IDC_POSX),  IntString(x).Array());
                         SetWindowText(GetDlgItem(hwnd, IDC_POSY),  IntString(y).Array());
@@ -1864,10 +1864,10 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                         sizeX = GetEditText(GetDlgItem(hwnd, IDC_SIZEX)).ToInt();
                         sizeY = GetEditText(GetDlgItem(hwnd, IDC_SIZEY)).ToInt();
 
-                        if(sizeX < 32)
-                            sizeX = 32;
-                        if(sizeY < 32)
-                            sizeY = 32;
+                        if(sizeX < 16)
+                            sizeX = 16;
+                        if(sizeY < 16)
+                            sizeY = 16;
 
                         BOOL bCaptureLayered = FALSE;
                         BOOL bCaptureMouse = SendMessage(GetDlgItem(hwnd, IDC_CAPTUREMOUSE), BM_GETCHECK, 0, 0) == BST_CHECKED;
