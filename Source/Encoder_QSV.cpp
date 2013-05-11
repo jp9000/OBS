@@ -645,6 +645,8 @@ public:
     {
         bRequestKeyframe = true;
     }
+
+    virtual bool isQSV() { return true; }
 };
 
 VideoEncoder* CreateQSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR, bool bDupeFrames)

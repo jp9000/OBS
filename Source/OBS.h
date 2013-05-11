@@ -174,6 +174,8 @@ public:
     virtual void RequestKeyframe() {}
 
     virtual String GetInfoString() const=0;
+
+    virtual bool isQSV() { return false; }
 };
 
 //-------------------------------------------------------------------

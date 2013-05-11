@@ -283,7 +283,7 @@ void OBS::MainCaptureLoop()
 
     int curOutBuffer = 0;
 
-    bool bUsingQSV = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
+    bool bUsingQSV = videoEncoder->isQSV();//AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
     if(bUsingQSV)
         bUsing444 = false;
 
