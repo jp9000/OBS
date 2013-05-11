@@ -138,6 +138,7 @@ BASE_EXPORT int    STDCALL OSGetVersion();
 BASE_EXPORT int    STDCALL OSGetTotalCores();
 BASE_EXPORT int    STDCALL OSGetLogicalCores();
 BASE_EXPORT HANDLE STDCALL OSCreateThread(XTHREAD lpThreadFunc, LPVOID param);
+BASE_EXPORT HANDLE STDCALL OSGetCurrentThread();
 BASE_EXPORT BOOL   STDCALL OSWaitForThread(HANDLE hThread, LPDWORD ret);
 BASE_EXPORT BOOL   STDCALL OSCloseThread(HANDLE hThread);
 BASE_EXPORT BOOL   STDCALL OSTerminateThread(HANDLE hThread, DWORD waitMS=100);
@@ -152,6 +153,7 @@ BASE_EXPORT void   STDCALL OSSetMainAppWindow(HANDLE window);
 
 BASE_EXPORT DWORD  STDCALL OSGetTime();
 BASE_EXPORT QWORD  STDCALL OSGetTimeMicroseconds();
+BASE_EXPORT QWORD  STDCALL OSGetThreadTime(HANDLE hThread);
 
 BASE_EXPORT void __cdecl   OSMessageBoxva(const TCHAR *format, va_list argptr);
 BASE_EXPORT void __cdecl   OSMessageBox(const TCHAR *format, ...);

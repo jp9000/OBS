@@ -461,6 +461,17 @@ void OBS::MainCaptureLoop()
         bool bRenderView = !IsIconic(hwndMain) && bRenderViewEnabled;
 
         profileIn("frame");
+        
+        List<ProfilerNode> threadedProfilers;
+        if(bUseThreaded420)
+        {
+            threadedProfilers.SetSize(numThreads);
+            for(int i = 0; i < numThreads; i++)
+            {
+                ::new (&threadedProfilers[i]) ProfilerNode(TEXT("Convert444Threads"), true);
+                threadedProfilers[i].MonitorThread(h420Threads[i]);
+            }
+        }
 
 #ifdef USE_100NS_TIME
         QWORD qwTime = renderStartTime/10000;
@@ -979,6 +990,13 @@ void OBS::MainCaptureLoop()
         }
 
         profileOut;
+        if(bUseThreaded420)
+        {
+            for(int i = 0; i < numThreads; i++)
+            {
+                threadedProfilers[i].~ProfilerNode();
+            }
+        }
         profileOut;
 
         //------------------------------------
