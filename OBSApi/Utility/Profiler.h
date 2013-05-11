@@ -26,7 +26,9 @@ struct ProfileNodeInfo;
 class BASE_EXPORT ProfilerNode
 {
     CTSTR lpName;
-    QWORD startTime;
+    QWORD startTime,
+          cpuStartTime;
+    HANDLE thread;
     ProfilerNode *parent;
     bool bSingularNode;
     ProfileNodeInfo *info;
@@ -34,6 +36,7 @@ class BASE_EXPORT ProfilerNode
 public:
     ProfilerNode(CTSTR name, bool bSingularize=false);
     ~ProfilerNode();
+    void MonitorThread(HANDLE thread);
 };
 
 BASE_EXPORT extern ProfilerNode *__curProfilerNode;

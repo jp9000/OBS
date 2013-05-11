@@ -51,13 +51,15 @@ struct BASE_EXPORT ProfileNodeInfo
 
     DWORD numCalls;
     DWORD avgTimeElapsed;
+    DWORD avgCpuTime;
     double avgPercentage;
     double childPercentage;
     double unaccountedPercentage;
 
     bool bSingular;
 
-    QWORD totalTimeElapsed;
+    QWORD totalTimeElapsed,
+          cpuTimeElapsed;
 
     ProfileNodeInfo *parent;
     List<ProfileNodeInfo*> Children;
@@ -65,6 +67,8 @@ struct BASE_EXPORT ProfileNodeInfo
     void calculateProfileData(int rootCallCount)
     {
         avgTimeElapsed = (DWORD)(totalTimeElapsed/(QWORD)rootCallCount);
+        avgCpuTime = (DWORD)(cpuTimeElapsed/(QWORD)rootCallCount);
+
         
         if(parent)  avgPercentage = (double(avgTimeElapsed)/double(parent->avgTimeElapsed))*parent->avgPercentage;
         else        avgPercentage = 100.0f;
@@ -100,13 +104,15 @@ struct BASE_EXPORT ProfileNodeInfo
         int perFrameCalls = numCalls/rootCallCount;
 
         float fTimeTaken = (float)MicroToMS(avgTimeElapsed);
+        float cpuTime = (float)MicroToMS(avgCpuTime);
+        float totalCpuTime = (float)cpuTimeElapsed*0.001;
 
         if(avgPercentage >= minPercentage && fTimeTaken >= minTime)
         {
             if(Children.Num())
-                Log(TEXT("%s%s - [%.3g%%] [avg time: %g ms] [avg calls per frame: %d] [children: %.3g%%] [unaccounted: %.3g%%]"), lpIndent, lpName, avgPercentage, fTimeTaken, perFrameCalls, childPercentage, unaccountedPercentage);
+                Log(TEXT("%s%s - [%.3g%%] [avg time: %g ms (cpu time: avg %g ms, total %g ms)] [avg calls per frame: %d] [children: %.3g%%] [unaccounted: %.3g%%]"), lpIndent, lpName, avgPercentage, fTimeTaken, cpuTime, totalCpuTime, perFrameCalls, childPercentage, unaccountedPercentage);
             else
-                Log(TEXT("%s%s - [%.3g%%] [avg time: %g ms] [avg calls per frame: %d]"), lpIndent, lpName, avgPercentage, fTimeTaken, perFrameCalls);
+                Log(TEXT("%s%s - [%.3g%%] [avg time: %g ms (cpu time: avg %g ms, total %g ms)] [avg calls per frame: %d]"), lpIndent, lpName, avgPercentage, fTimeTaken, cpuTime, totalCpuTime, perFrameCalls);
         }
 
         for(unsigned int i=0; i<Children.Num(); i++)
@@ -226,6 +232,8 @@ ProfilerNode::ProfilerNode(CTSTR lpName, bool bSingularize)
     this->lpName = lpName;
 
     startTime = OSGetTimeMicroseconds();
+
+    MonitorThread(OSGetCurrentThread());
 }
 
 ProfilerNode::~ProfilerNode()
@@ -237,8 +245,18 @@ ProfilerNode::~ProfilerNode()
     {
         DWORD curTime = (DWORD)(newTime-startTime);
         info->totalTimeElapsed += curTime;
+        if(thread)
+            info->cpuTimeElapsed += (DWORD)(OSGetThreadTime(thread) - cpuStartTime);
     }
 
     if(!bSingularNode)
         __curProfilerNode = parent;
+}
+
+void ProfilerNode::MonitorThread(HANDLE thread_)
+{
+    if(!thread_)
+        return;
+    thread = thread_;
+    cpuStartTime = OSGetThreadTime(thread);
 }
