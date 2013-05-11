@@ -129,10 +129,11 @@ class QSVEncoder : public VideoEncoder
         mfxFrameSurface1 surf;
         mfxBitstream bs;
         mfxSyncPoint sp;
+        bool keyframe;
     };
     List<encode_task> encode_tasks;
 
-    unsigned oldest, insert, in_use;
+    unsigned oldest, insert, encode, in_use;
 
     int fps;
 
@@ -143,6 +144,7 @@ class QSVEncoder : public VideoEncoder
     bool bFirstFrameProcessed;
 
     bool bUseCBR, bUseCFR, bDupeFrames;
+    unsigned deferredFrames;
 
     List<VideoPacket> CurrentPackets;
     List<BYTE> HeaderPacket, SEIData;
@@ -185,14 +187,20 @@ public:
         bDupeFrames = bDupeFrames_;
 
         memset(&params, 0, sizeof(params));
-        params.AsyncDepth = 0;
+        //params.AsyncDepth = 0;
         params.mfx.CodecId = MFX_CODEC_AVC;
-        params.mfx.TargetUsage = MFX_TARGETUSAGE_BEST_QUALITY;
-        params.mfx.TargetKbps = maxBitrate;
+        params.mfx.TargetUsage = MFX_TARGETUSAGE_BEST_QUALITY;//SPEED;
+        params.mfx.TargetKbps = (mfxU16)(maxBitrate*0.9);
         params.mfx.MaxKbps = maxBitrate;
-        params.mfx.InitialDelayInKB = 1;
+        //params.mfx.InitialDelayInKB = 1;
         //params.mfx.GopRefDist = 1;
         //params.mfx.NumRefFrame = 0;
+        params.mfx.GopPicSize = 61;
+        params.mfx.GopRefDist = 3;
+        params.mfx.GopOptFlag = 2;
+        params.mfx.IdrInterval = 2;
+        params.mfx.NumSlice = 1;
+
         params.mfx.RateControlMethod = bUseCBR ? MFX_RATECONTROL_CBR : MFX_RATECONTROL_VBR;
         params.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY;
 
@@ -258,6 +266,7 @@ public:
 
         oldest = 0;
         insert = 0;
+        encode = 0;
         in_use = 0;
 
         Log(TEXT("Using %u encode tasks"), encode_tasks.Num());
@@ -270,6 +279,8 @@ public:
 
         memset(&ctrl, 0, sizeof(ctrl));
         ctrl.FrameType = MFX_FRAMETYPE_I | MFX_FRAMETYPE_REF | MFX_FRAMETYPE_IDR;
+
+        deferredFrames = 0;
 
         DataPacket packet;
         GetHeaders(packet);
@@ -311,7 +322,7 @@ public:
 
             List<x264_nal_t> nalOut;
             mfxU8 *start = bs.Data + bs.DataOffset,
-                *end = bs.Data + bs.DataOffset + bs.DataLength;
+                  *end = bs.Data + bs.DataOffset + bs.DataLength;
             static mfxU8 start_seq[] = {0, 0, 1};
             start = std::search(start, end, start_seq, start_seq+3);
             while(start != end)
@@ -332,14 +343,15 @@ public:
             packets.Clear();
             ClearPackets();
 
+
             if(!bFirstFrameProcessed && nalNum)
             {
-                //delayOffset = -picOut.i_dts;
+                delayOffset = 0;//bs.TimeStamp/90;
                 bFirstFrameProcessed = true;
             }
 
             INT64 ts = INT64(outputTimestamp);
-            int timeOffset = 0;//int((picOut.i_pts+delayOffset)-ts);
+            int timeOffset = int(bs.TimeStamp/90+delayOffset-ts);//int((picOut.i_pts+delayOffset)-ts);
 
             if(bDupeFrames)
             {
@@ -488,7 +500,7 @@ public:
 
     bool Encode(LPVOID picInPtr, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, int &ctsOffset)
     {
-        profileIn("Output frames");
+        profileIn("ProcessEncodedFrame");
         ProcessEncodedFrame(packets, packetTypes, outputTimestamp, ctsOffset);
         if(in_use == encode_tasks.Num())
         {
@@ -499,35 +511,44 @@ public:
         encode_task& task = encode_tasks[insert];
         insert = (insert+1)%encode_tasks.Num();
         in_use += 1;
+        task.keyframe = bRequestKeyframe;
+        bRequestKeyframe = false;
         mfxBitstream& bs = task.bs;
-        bs.DataLength = 0;
-        bs.DataOffset = 0;
         mfxFrameSurface1& surf = task.surf;
         mfxFrameSurface1& pic = *(mfxFrameSurface1*)picInPtr;
         profileIn("setup new frame");
-        //memcpy(surf.Data.Y, pic.Data.Y, width*height);
-        //memcpy(surf.Data.UV, pic.Data.UV, width*height);
+        bs.DataLength = 0;
+        bs.DataOffset = 0;
         surf.Data.Pitch = pic.Data.Pitch;
         surf.Data.TimeStamp = pic.Data.TimeStamp*90;
         profileOut;
         mfxSyncPoint& sp = task.sp;
         mfxStatus sts;
-        profileIn("Schedule new Frame");
-        for(;;)
+        profileIn("EncodeFrameAsync");
+        unsigned limit = encode < insert ? insert : insert + encode_tasks.Num();
+        for(unsigned i = encode;i < limit; i++)
         {
-            sts = enc->EncodeFrameAsync(bRequestKeyframe ? &ctrl : nullptr, &surf, &bs, &sp);
+            encode_task& task = encode_tasks[encode];
+            mfxBitstream& bs = task.bs;
+            mfxFrameSurface1& surf = task.surf;
+            mfxSyncPoint& sp = task.sp;
+            for(;;)
+            {
+                sts = enc->EncodeFrameAsync(task.keyframe ? &ctrl : nullptr, &surf, &bs, &sp);
 
-            if(sts == MFX_ERR_NONE || sp)
-                break;
-            if(sts == MFX_WRN_DEVICE_BUSY)
-                Sleep(1);
-            if(!sp) //sts == MFX_ERR_MORE_DATA usually; retry the call (see MSDK examples)
-                Log(TEXT("returned status %i"), sts);
+                if(sts == MFX_ERR_NONE || sp)
+                    break;
+                if(sts == MFX_WRN_DEVICE_BUSY)
+                {
+                    deferredFrames += 1;
+                    return false;
+                }
+                //if(!sp); //sts == MFX_ERR_MORE_DATA usually; retry the call (see MSDK examples)
+                //Log(TEXT("returned status %i, %u"), sts, insert);
+            }
+            encode = (encode+1)%encode_tasks.Num();
         }
         profileOut;
-
-        if(bRequestKeyframe)
-            bRequestKeyframe = false;
 
         return true;
     }
