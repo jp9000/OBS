@@ -327,8 +327,6 @@ public:
     {
         if(!in_use)
             return;
-        unsigned pending_tasks = in_use;
-        while(in_use)
         {
             encode_task& task = encode_tasks[oldest];
             auto& sp = task.sp;
