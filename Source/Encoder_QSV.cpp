@@ -311,13 +311,14 @@ public:
             return;
         for(unsigned i = 0; i < frames.Num(); i++)
         {
-            if(frames[i].Locked)
+            if(frames[i].Locked || frames[i].FrameOrder)
                 continue;
             mfxFrameData& data = frames[i];
             mfxFrameData& buff = *(mfxFrameData*)buffers;
             buff.Y = data.Y;
             buff.UV = data.UV;
-            buff.FrameOrder = i;
+            buff.FrameOrder = i+1;
+            data.FrameOrder = i+1;
             return;
         }
         Log(TEXT("Error: all frames are in use"));
@@ -517,6 +518,7 @@ public:
                 packets[i].lpPacket = CurrentPackets[i].Packet.Array();
                 packets[i].size     = CurrentPackets[i].Packet.Num();
             }
+            task.frame->FrameOrder = 0;
             task.frame->Locked = false;
         }
     }
@@ -540,7 +542,7 @@ public:
         mfxFrameSurface1& surf = task.surf;
         mfxFrameSurface1& pic = *(mfxFrameSurface1*)picInPtr;
         profileIn("setup new frame");
-        mfxFrameData& frame = frames[pic.Data.FrameOrder];
+        mfxFrameData& frame = frames[pic.Data.FrameOrder-1];
         frame.Locked = true;
         task.frame = &frame;
         bs.DataLength = 0;
