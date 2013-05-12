@@ -115,6 +115,8 @@ struct VideoPacket
 
 class QSVEncoder : public VideoEncoder
 {
+    mfxVersion ver;
+
     MFXVideoSession session;
 
     mfxVideoParam params;
@@ -175,13 +177,19 @@ public:
         for(int i = 0; i < sizeof(validImpl)/sizeof(validImpl[0]); i++)
         {
             mfxIMPL impl = validImpl[i];
-            mfxVersion ver = version;
-            auto result = session.Init(impl, &ver);
-            if(result == MFX_ERR_NONE)
+            ver = version;
+            mfxStatus result = MFX_ERR_UNKNOWN;
+            for(ver.Minor = 6; ver.Minor >= 4; ver.Minor -= 2)
             {
-                Log(TEXT("QSV version %u.%u using %s"), ver.Major, ver.Minor, implStr[impl]);
-                break;
+                result = session.Init(impl, &ver);
+                if(result == MFX_ERR_NONE)
+                {
+                    Log(TEXT("QSV version %u.%u using %s"), ver.Major, ver.Minor, implStr[impl]);
+                    break;
+                }
             }
+            if(result == MFX_ERR_NONE)
+                break;
         }
 
         session.SetPriority(MFX_PRIORITY_HIGH);
