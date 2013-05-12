@@ -22,6 +22,37 @@
 
 //-------------------------------------------------------------------
 
+
+
+
+
+struct Interaction {
+    enum Type {
+        KEYBOARD = 0x00,
+        MOUSE_MOVE = 0x80,
+        MOUSE_LBUTTONUP,
+        
+    };
+
+    enum Type type;
+    
+    Vect2 renderSize;
+
+    union {
+        struct {
+            float x;
+            float y;
+        } pos;
+        struct {
+            TCHAR c;
+        } key;
+    } data;
+
+    Interaction() {
+        memset(&data, 0, sizeof(data));
+    }
+};
+
 class BASE_EXPORT ImageSource
 {
 public:
@@ -29,6 +60,8 @@ public:
     virtual void Preprocess() {}
     virtual void Tick(float fSeconds) {}
     virtual void Render(const Vect2 &pos, const Vect2 &size)=0;
+
+    virtual void ProcessInteraction(Interaction &interaction) {}
 
     virtual Vect2 GetSize() const=0;
 

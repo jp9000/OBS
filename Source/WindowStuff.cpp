@@ -3554,6 +3554,36 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                     SetCursor(LoadCursor(NULL, IDC_ARROW));
                     return 0;
             }
+        } else {
+            if (App->scene) {
+                POINTS pos;
+                pos.x = (short)LOWORD(lParam);
+                pos.y = (short)HIWORD(lParam);
+
+                Vect2 mousePos = Vect2(float(pos.x), float(pos.y));
+                Vect2 scaleVal = GetWindowToFrameScale();
+
+                List<SceneItem*> items;
+
+                Vect2 framePos = MapWindowToFramePos(mousePos);
+                App->scene->GetItemsOnPoint(framePos, items);
+
+                if (items.Num()) {
+                    SceneItem *& item = items.Last();
+
+                    Interaction interaction;
+                    
+                    interaction.type = Interaction::MOUSE_MOVE;
+                    interaction.renderSize = item->size;
+
+                    Vect2 mouseRelPos = (framePos - item->GetPos());
+                    interaction.data.pos.x = mouseRelPos.x;
+                    interaction.data.pos.y = mouseRelPos.y;
+
+                    item->GetSource()->ProcessInteraction(interaction);
+                }
+            }
+
         }
     }
     else if(message == WM_LBUTTONUP)
@@ -3645,6 +3675,33 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                 }
 
                 App->bMouseDown = false;
+            }
+        } else if (App->scene) {
+            POINTS pos;
+            pos.x = (short)LOWORD(lParam);
+            pos.y = (short)HIWORD(lParam);
+
+            Vect2 mousePos = Vect2(float(pos.x), float(pos.y));
+            Vect2 scaleVal = GetWindowToFrameScale();
+
+            List<SceneItem*> items;
+
+            Vect2 framePos = MapWindowToFramePos(mousePos);
+            App->scene->GetItemsOnPoint(framePos, items);
+
+            if (items.Num()) {
+                SceneItem *& item = items.Last();
+
+                Interaction interaction;
+                    
+                interaction.type = Interaction::MOUSE_LBUTTONUP;
+                interaction.renderSize = item->size;
+
+                Vect2 mouseRelPos = (framePos - item->GetPos());
+                interaction.data.pos.x = mouseRelPos.x;
+                interaction.data.pos.y = mouseRelPos.y;
+
+                item->GetSource()->ProcessInteraction(interaction);
             }
         }
     }
