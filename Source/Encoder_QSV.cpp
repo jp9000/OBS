@@ -150,6 +150,8 @@ class QSVEncoder : public VideoEncoder
     bool bUseCBR, bUseCFR, bDupeFrames;
     unsigned deferredFrames;
 
+    CircularList<mfxU64> dts_vals;
+
     List<VideoPacket> CurrentPackets;
     List<BYTE> HeaderPacket, SEIData;
 
@@ -370,8 +372,10 @@ public:
                 bFirstFrameProcessed = true;
             }
 
-            INT64 ts = INT64(outputTimestamp);
+            INT64 ts = INT64(dts_vals[0]);
             int timeOffset = int(bs.TimeStamp/90+delayOffset-ts);//int((picOut.i_pts+delayOffset)-ts);
+
+            dts_vals.Remove(0);
 
             if(bDupeFrames)
             {
@@ -547,6 +551,9 @@ public:
         surf.Data.UV = frame.UV;
         surf.Data.Pitch = pic.Data.Pitch;
         surf.Data.TimeStamp = pic.Data.TimeStamp*90;
+
+        dts_vals << pic.Data.TimeStamp;
+
         pic.Data.Y = nullptr;
         pic.Data.UV = nullptr;
         pic.Data.FrameOrder = 0;

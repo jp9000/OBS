@@ -134,7 +134,6 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
 
     profileIn("call to encoder");
 
-
     videoEncoder->Encode(frameInfo.pic->picOut ? (LPVOID)frameInfo.pic->picOut : (LPVOID)frameInfo.pic->mfxOut, videoPackets, videoPacketTypes, bufferedTimes[0], ctsOffset);
     if(bUsing444) frameInfo.prevTexture->Unmap(0);
     if(videoEncoder->isQSV())
