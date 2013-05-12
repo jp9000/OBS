@@ -127,6 +127,7 @@ Settings.Advanced.UnlockHigherFPS                   "Salli 60-120fps kuva-asetuk
 Settings.Advanced.UseCBR                            "Käytä Constant Bitrate -asetusta (CBR)"
 Settings.Advanced.UseCFR                            "Käytä Constant Framerate -asetusta (CFR)"
 Settings.Advanced.UseMultithreadedOptimizations     "Optimoi monelle ytimelle"
+Settings.Advanced.UseQSV                            "Käytä Quick Sync -ominaisuutta"
 Settings.Advanced.SyncToVideoTime                   "Pakota äänen synkronoituminen videon aikaan"
 Settings.Advanced.SceneBufferTime                   "Skenen puskurointiaika (ms):"
 Settings.Advanced.VideoEncoderCPUTradeoffToolTip    "Tämän asetuksen nostaminen vähentää prosessorin käyttöä laadun kustannuksella.  Laskeminen taas nostaa laatua, mutta lisää prosessorin käyttöä.\r\n\r\nSuositus: Very Fast"
@@ -137,8 +138,6 @@ Settings.Advanced.Priority.Idle         "Idlaa"
 Settings.Advanced.Priority.Normal       "Tavallinen"
 Settings.Advanced.Priority.AboveNormal  "Korkeampi"
 Settings.Advanced.Priority.High         "Korkein"
-
-
 
 Settings.Audio.DesktopBoost         "Työpöydän äänentehostus (kerroin):"
 Settings.Audio.PlaybackDevice       "Toistolaite:"
