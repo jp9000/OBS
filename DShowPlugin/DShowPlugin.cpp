@@ -772,7 +772,7 @@ bool GetResolution(HWND hwndResolution, SIZE &resolution, BOOL bSelChange)
     UINT cx = strCX.ToInt();
     UINT cy = strCY.ToInt();
 
-    if(cx < 32 || cy < 32 || cx > 4096 || cy > 4096)
+    if(cx < 32 || cy < 32 || cx > 8192 || cy > 8192)
         return false;
 
     resolution.cx = cx;

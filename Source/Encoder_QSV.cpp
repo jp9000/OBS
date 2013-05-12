@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 #include "mfxplugin++.h"
 
 #include <algorithm>
+#include <memory>
 
 extern "C"
 {
@@ -122,7 +123,6 @@ class QSVEncoder : public VideoEncoder
 
     mfxEncodeCtrl ctrl;
     
-    List<mfxU8> surf_buff;
     List<mfxU8> bs_buff;
     struct encode_task
     {
@@ -130,10 +130,14 @@ class QSVEncoder : public VideoEncoder
         mfxBitstream bs;
         mfxSyncPoint sp;
         bool keyframe;
+        mfxFrameData* frame;
     };
     List<encode_task> encode_tasks;
 
     unsigned oldest, insert, encode, in_use;
+
+    List<mfxU8> frame_buff;
+    List<mfxFrameData> frames;
 
     int fps;
 
@@ -145,6 +149,8 @@ class QSVEncoder : public VideoEncoder
 
     bool bUseCBR, bUseCFR, bDupeFrames;
     unsigned deferredFrames;
+
+    CircularList<mfxU64> dts_vals;
 
     List<VideoPacket> CurrentPackets;
     List<BYTE> HeaderPacket, SEIData;
@@ -240,14 +246,10 @@ public:
         encode_tasks.SetSize(num_surf);
 
         const unsigned bs_size = max(query.mfx.BufferSizeInKB*1000, bufferSize*1024/8);
-        bs_buff.SetSize(bs_size * num_surf + 31);
+        bs_buff.SetSize(bs_size * encode_tasks.Num() + 31);
         params.mfx.BufferSizeInKB = bs_size/1000;
 
-        const unsigned surf_size = width*height*2;
-        surf_buff.SetSize(surf_size * num_surf + 15);
-
         mfxU8* bs_start = (mfxU8*)(((size_t)bs_buff.Array() + 31)/32*32);
-        mfxU8* surf_start = (mfxU8*)(((size_t)surf_buff.Array() + 15)/16*16);
         for(unsigned i = 0; i < encode_tasks.Num(); i++)
         {
             encode_tasks[i].sp = nullptr;
@@ -255,13 +257,25 @@ public:
             mfxFrameSurface1& surf = encode_tasks[i].surf;
             memset(&surf, 0, sizeof(mfxFrameSurface1));
             memcpy(&surf.Info, &params.mfx.FrameInfo, sizeof(params.mfx.FrameInfo));
-            surf.Data.Y = surf_start + i*surf_size;
-            surf.Data.UV = surf_start + i*surf_size + width*height;
             
             mfxBitstream& bs = encode_tasks[i].bs;
             memset(&bs, 0, sizeof(mfxBitstream));
             bs.Data = bs_start + i*bs_size;
             bs.MaxLength = bs_size;
+        }
+
+        frames.SetSize(num_surf+3); //+NUM_OUT_BUFFERS
+
+        const unsigned frame_size = width*height*2;
+        frame_buff.SetSize(frame_size * frames.Num() + 15);
+
+        mfxU8* frame_start = (mfxU8*)(((size_t)frame_buff.Array() + 15)/16*16);
+        for(unsigned i = 0; i < frames.Num(); i++)
+        {
+            mfxFrameData& frame = frames[i];
+            memset(&frame, 0, sizeof(mfxFrameData));
+            frame.Y = frame_start + i*frame_size;
+            frame.UV = frame_start + i*frame_size + width*height;
         }
 
         oldest = 0;
@@ -295,10 +309,18 @@ public:
     {
         if(!buffers)
             return;
-        mfxFrameData& data = encode_tasks[insert].surf.Data;
-        mfxFrameData& buff = *(mfxFrameData*)buffers;
-        buff.Y = data.Y;
-        buff.UV = data.UV;
+        for(unsigned i = 0; i < frames.Num(); i++)
+        {
+            if(frames[i].Locked)
+                continue;
+            mfxFrameData& data = frames[i];
+            mfxFrameData& buff = *(mfxFrameData*)buffers;
+            buff.Y = data.Y;
+            buff.UV = data.UV;
+            buff.FrameOrder = i;
+            return;
+        }
+        Log(TEXT("Error: all frames are in use"));
     }
 
     void ProcessEncodedFrame(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, int &ctsOffset, mfxU32 wait=0)
@@ -350,8 +372,10 @@ public:
                 bFirstFrameProcessed = true;
             }
 
-            INT64 ts = INT64(outputTimestamp);
+            INT64 ts = INT64(dts_vals[0]);
             int timeOffset = int(bs.TimeStamp/90+delayOffset-ts);//int((picOut.i_pts+delayOffset)-ts);
+
+            dts_vals.Remove(0);
 
             if(bDupeFrames)
             {
@@ -495,6 +519,7 @@ public:
                 packets[i].lpPacket = CurrentPackets[i].Packet.Array();
                 packets[i].size     = CurrentPackets[i].Packet.Num();
             }
+            task.frame->Locked = false;
         }
     }
 
@@ -517,10 +542,21 @@ public:
         mfxFrameSurface1& surf = task.surf;
         mfxFrameSurface1& pic = *(mfxFrameSurface1*)picInPtr;
         profileIn("setup new frame");
+        mfxFrameData& frame = frames[pic.Data.FrameOrder];
+        frame.Locked = true;
+        task.frame = &frame;
         bs.DataLength = 0;
         bs.DataOffset = 0;
+        surf.Data.Y = frame.Y;
+        surf.Data.UV = frame.UV;
         surf.Data.Pitch = pic.Data.Pitch;
         surf.Data.TimeStamp = pic.Data.TimeStamp*90;
+
+        dts_vals << pic.Data.TimeStamp;
+
+        pic.Data.Y = nullptr;
+        pic.Data.UV = nullptr;
+        pic.Data.FrameOrder = 0;
         profileOut;
         mfxSyncPoint& sp = task.sp;
         mfxStatus sts;
@@ -645,6 +681,8 @@ public:
     {
         bRequestKeyframe = true;
     }
+
+    virtual bool isQSV() { return true; }
 };
 
 VideoEncoder* CreateQSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR, bool bDupeFrames)

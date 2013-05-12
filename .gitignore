@@ -3,6 +3,7 @@
 
 tests and backups/
 publish/
+Release_MD/
 Release/
 Debug/
 x64/
@@ -11,6 +12,8 @@ installer/upload
 installer/64bit
 ipch/
 
+*.log
+*.tlog
 *.sdf
 *.opensdf
 *.xml
