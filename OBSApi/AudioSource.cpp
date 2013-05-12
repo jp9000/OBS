@@ -529,7 +529,7 @@ UINT AudioSource::QueryAudio(float curVolume)
                     // combine the rear/side channels first , baaam! 5.1
                     rearLeft  = (rearLeft  + sideLeft)  * 0.5f;
                     rearRight = (rearRight + sideRight) * 0.5f;
-                    
+
                     // downmix to stereo as in 5.1 case
                     *(outputTemp++) = (left  + center + rearLeft  * surroundMix) * attn5dot1;
                     *(outputTemp++) = (right + center + rearRight * surroundMix) * attn5dot1;
