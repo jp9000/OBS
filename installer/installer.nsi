@@ -2,7 +2,7 @@
 
 ; Define your application name
 !define APPNAME "Open Broadcaster Software"
-!define APPNAMEANDVERSION "Open Broadcaster Software 0.52b"
+!define APPNAMEANDVERSION "Open Broadcaster Software 0.522b"
 
 ; Additional script dependencies
 !include WinVer.nsh
@@ -176,6 +176,7 @@ Section "Open Broadcaster Software" Section1
 		CreateShortCut "$SMPROGRAMS\Open Broadcaster Software\Open Broadcaster Software (64bit).lnk" "$INSTDIR\64bit\OBS.exe"
 	${endif}
 
+	SetOutPath "$INSTDIR\"
 SectionEnd
 
 Section -FinishSection

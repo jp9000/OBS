@@ -2699,27 +2699,25 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
         case OBS_REQUESTSTOP:
             App->Stop();
 
-            if(wParam == 0)
+            if((App->bFirstConnect && App->totalStreamTime < 10000) || !App->bAutoReconnect)
             {
-                if((App->bFirstConnect && App->totalStreamTime < 10000) || !App->bAutoReconnect)
+                if(App->streamReport.IsValid())
                 {
-                    if(App->streamReport.IsValid())
-                    {
-                        MessageBox(hwndMain, App->streamReport.Array(), Str("StreamReport"), MB_ICONEXCLAMATION);
-                        App->streamReport.Clear();
-                    }
-                    else
-                        MessageBox(hwnd, Str("Connection.Disconnected"), NULL, MB_ICONEXCLAMATION);
+                    MessageBox(hwndMain, App->streamReport.Array(), Str("StreamReport"), MB_ICONEXCLAMATION);
+                    App->streamReport.Clear();
                 }
                 else
-                {
-                    //FIXME: show some kind of non-modal notice to the user explaining why they got disconnected
-                    //status bar would be nice, but that only renders when we're streaming.
-                    PlaySound((LPCTSTR)SND_ALIAS_SYSTEMASTERISK, NULL, SND_ALIAS_ID | SND_ASYNC);
-                    App->bReconnecting = false;
-                    DialogBox(hinstMain, MAKEINTRESOURCE(IDD_RECONNECTING), hwnd, OBS::ReconnectDialogProc);
-                }
+                    MessageBox(hwnd, Str("Connection.Disconnected"), NULL, MB_ICONEXCLAMATION);
             }
+            else if(wParam == 0)
+            {
+                //FIXME: show some kind of non-modal notice to the user explaining why they got disconnected
+                //status bar would be nice, but that only renders when we're streaming.
+                PlaySound((LPCTSTR)SND_ALIAS_SYSTEMASTERISK, NULL, SND_ALIAS_ID | SND_ASYNC);
+                App->bReconnecting = false;
+                DialogBox(hinstMain, MAKEINTRESOURCE(IDD_RECONNECTING), hwnd, OBS::ReconnectDialogProc);
+            }
+
             break;
 
         case OBS_CALLHOTKEY:
