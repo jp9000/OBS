@@ -71,30 +71,29 @@ void Convert444to420(LPBYTE input, int width, int pitch, int height, int startY,
     }
 }
 
-void Convert444toNV12(LPBYTE input, int width, int pitch, int height, int startY, int endY, LPBYTE *output)
+void Convert444toNV12(LPBYTE input, int width, int inPitch, int outPitch, int height, int startY, int endY, LPBYTE *output)
 {
     LPBYTE lumPlane     = output[0];
     LPBYTE uvPlane		= output[1];
 
-    int  chrPitch       = width>>1;
     __m128i lumMask = _mm_set1_epi32(0x0000FF00);
     __m128i uvMask = _mm_set1_epi16(0x00FF);
 
     for(int y=startY; y<endY; y+=2)
     {
-        int yPos    = y*pitch;
-        int chrYPos = ((y>>1)*chrPitch);
-        int lumYPos = y*width;
+        int yPos    = y*inPitch;
+        int uvYPos = (y>>1)*outPitch;
+        int lumYPos = y*outPitch;
 
         for(int x=0; x<width; x+=4)
         {
             LPBYTE lpImagePos = input+yPos+(x*4);
-            int chrPos  = chrYPos + (x>>1);
+            int uvPos  = uvYPos + x;
             int lumPos0 = lumYPos + x;
-            int lumPos1 = lumPos0+width;
+            int lumPos1 = lumPos0 + outPitch;
 
             __m128i line1 = _mm_load_si128((__m128i*)lpImagePos);
-            __m128i line2 = _mm_load_si128((__m128i*)(lpImagePos+pitch));
+            __m128i line2 = _mm_load_si128((__m128i*)(lpImagePos+inPitch));
 
             //pack lum vals
             {
@@ -111,8 +110,7 @@ void Convert444toNV12(LPBYTE input, int width, int pitch, int height, int startY
                 __m128i avgVal = _mm_srai_epi16(_mm_add_epi64(addVal, _mm_shuffle_epi32(addVal, _MM_SHUFFLE(2, 3, 0, 1))), 2);
                 avgVal = _mm_shuffle_epi32(avgVal, _MM_SHUFFLE(3, 1, 2, 0));
 
-
-                *(LPUINT)(uvPlane+chrPos*2) = _mm_packus_epi16(avgVal, avgVal).m128i_u32[0];
+                *(LPUINT)(uvPlane+uvPos) = _mm_packus_epi16(avgVal, avgVal).m128i_u32[0];
             }
         }
     }

@@ -272,16 +272,21 @@ public:
 
         frames.SetSize(num_surf+3); //+NUM_OUT_BUFFERS
 
-        const unsigned frame_size = width*height*2;
+        const unsigned lum_channel_size = fi.Width*fi.Height,
+                       uv_channel_size = fi.Width*fi.Height,
+                       frame_size = lum_channel_size + uv_channel_size;
         frame_buff.SetSize(frame_size * frames.Num() + 15);
 
         mfxU8* frame_start = (mfxU8*)(((size_t)frame_buff.Array() + 15)/16*16);
+        memset(frame_start, 0, frame_size * frames.Num());
         for(unsigned i = 0; i < frames.Num(); i++)
         {
             mfxFrameData& frame = frames[i];
             memset(&frame, 0, sizeof(mfxFrameData));
-            frame.Y = frame_start + i*frame_size;
-            frame.UV = frame_start + i*frame_size + width*height;
+            frame.Y = frame_start + i * frame_size;
+            frame.UV = frame_start + i * frame_size + lum_channel_size;
+            frame.V = frame.UV + 1;
+            frame.Pitch = fi.Width;
         }
 
         oldest = 0;
@@ -323,6 +328,7 @@ public:
             mfxFrameData& buff = *(mfxFrameData*)buffers;
             buff.Y = data.Y;
             buff.UV = data.UV;
+            buff.Pitch = data.Pitch;
             buff.FrameOrder = i+1;
             data.FrameOrder = i+1;
             return;
@@ -378,7 +384,7 @@ public:
         }
 
         INT64 ts = INT64(outputTimestamp);
-        int timeOffset = int(bs.TimeStamp/90+delayOffset-ts);
+        int timeOffset;
 
         if(bDupeFrames)
         {
@@ -550,7 +556,8 @@ public:
         bs.DataOffset = 0;
         surf.Data.Y = frame.Y;
         surf.Data.UV = frame.UV;
-        surf.Data.Pitch = pic.Data.Pitch;
+        surf.Data.V = frame.V;
+        surf.Data.Pitch = frame.Pitch;
         surf.Data.TimeStamp = pic.Data.TimeStamp*90;
 
         pic.Data.Y = nullptr;

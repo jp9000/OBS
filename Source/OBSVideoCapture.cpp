@@ -28,7 +28,7 @@ extern "C"
 
 
 void Convert444to420(LPBYTE input, int width, int pitch, int height, int startY, int endY, LPBYTE *output);
-void Convert444toNV12(LPBYTE input, int width, int pitch, int height, int startY, int endY, LPBYTE *output);
+void Convert444toNV12(LPBYTE input, int width, int inPitch, int outPitch, int height, int startY, int endY, LPBYTE *output);
 
 
 DWORD STDCALL OBS::MainCaptureThread(LPVOID lpUnused)
@@ -45,7 +45,7 @@ struct Convert444Data
     bool bNV12;
     bool bKillThread;
     HANDLE hSignalConvert, hSignalComplete;
-    int width, height, pitch, startY, endY;
+    int width, height, inPitch, outPitch, startY, endY;
 };
 
 DWORD STDCALL Convert444Thread(Convert444Data *data)
@@ -55,9 +55,9 @@ DWORD STDCALL Convert444Thread(Convert444Data *data)
         WaitForSingleObject(data->hSignalConvert, INFINITE);
         if(data->bKillThread) break;
         if(data->bNV12)
-            Convert444toNV12(data->input, data->width, data->pitch, data->height, data->startY, data->endY, data->output);
+            Convert444toNV12(data->input, data->width, data->inPitch, data->outPitch, data->height, data->startY, data->endY, data->output);
         else
-            Convert444to420(data->input, data->width, data->pitch, data->height, data->startY, data->endY, data->output);
+            Convert444to420(data->input, data->width, data->inPitch, data->height, data->startY, data->endY, data->output);
 
         SetEvent(data->hSignalComplete);
     }while(!data->bKillThread);
@@ -302,7 +302,6 @@ void OBS::MainCaptureLoop()
         {
             outPics[i].mfxOut = new mfxFrameSurface1;
             memset(outPics[i].mfxOut, 0, sizeof(mfxFrameSurface1));
-            outPics[i].mfxOut->Data.Pitch = outputCX;
             mfxFrameData& data = outPics[i].mfxOut->Data;
             videoEncoder->RequestBuffers(&data);
         }
@@ -821,10 +820,11 @@ void OBS::MainCaptureLoop()
                             for(int i=0; i<numThreads; i++)
                             {
                                 convertInfo[i].input     = (LPBYTE)map.pData;
-                                convertInfo[i].pitch     = map.RowPitch;
+                                convertInfo[i].inPitch   = map.RowPitch;
                                 if(bUsingQSV)
                                 {
                                     mfxFrameData& data = nextPicOut.mfxOut->Data;
+                                    convertInfo[i].outPitch  = data.Pitch;
                                     convertInfo[i].output[0] = data.Y;
                                     convertInfo[i].output[1] = data.UV;
                                 }
@@ -847,7 +847,7 @@ void OBS::MainCaptureLoop()
                             {
                                 mfxFrameData& data = picOut.mfxOut->Data;
                                 LPBYTE output[] = {data.Y, data.UV};
-                                Convert444toNV12((LPBYTE)map.pData, outputCX, map.RowPitch, outputCY, 0, outputCY, output);
+                                Convert444toNV12((LPBYTE)map.pData, outputCX, map.RowPitch, data.Pitch, outputCY, 0, outputCY, output);
                             }
                             else
                                 Convert444to420((LPBYTE)map.pData, outputCX, map.RowPitch, outputCY, 0, outputCY, picOut.picOut->img.plane);
