@@ -136,7 +136,9 @@ class QSVEncoder : public VideoEncoder
     };
     List<encode_task> encode_tasks;
 
-    unsigned oldest, insert, encode, in_use;
+    CircularList<unsigned> encoded_tasks,
+                           queued_tasks,
+                           idle_tasks;
 
     List<mfxU8> frame_buff;
     List<mfxFrameData> frames;
@@ -268,6 +270,8 @@ public:
             memset(&bs, 0, sizeof(mfxBitstream));
             bs.Data = bs_start + i*bs_size;
             bs.MaxLength = bs_size;
+
+            idle_tasks << i;
         }
 
         frames.SetSize(num_surf+3); //+NUM_OUT_BUFFERS
@@ -288,11 +292,6 @@ public:
             frame.V = frame.UV + 1;
             frame.Pitch = fi.Width;
         }
-
-        oldest = 0;
-        insert = 0;
-        encode = 0;
-        in_use = 0;
 
         Log(TEXT("Using %u encode tasks"), encode_tasks.Num());
         Log(TEXT("Buffer size: %u configured, %u suggested by QSV; using %u"),
@@ -338,17 +337,14 @@ public:
 
     void ProcessEncodedFrame(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, int &ctsOffset, mfxU32 wait=0)
     {
-        if(!in_use)
+        if(!encoded_tasks.Num())
             return;
 
-        encode_task& task = encode_tasks[oldest];
+        encode_task& task = encode_tasks[encoded_tasks[0]];
         auto& sp = task.sp;
         if(MFXVideoCORE_SyncOperation(session, sp, wait) != MFX_ERR_NONE)
             return;
         sp = nullptr;
-        in_use -= 1;
-
-        oldest = (oldest+1)%encode_tasks.Num();
 
         mfxBitstream& bs = task.bs;
 
@@ -533,13 +529,15 @@ public:
         }
         task.frame->FrameOrder = 0;
         task.frame->Locked = false;
+        idle_tasks << encoded_tasks[0];
+        encoded_tasks.Remove(0);
     }
 
     void QueueEncodeTask(mfxFrameSurface1& pic)
     {
-        encode_task& task = encode_tasks[insert];
-        insert = (insert+1)%encode_tasks.Num();
-        in_use += 1;
+        encode_task& task = encode_tasks[idle_tasks[0]];
+        queued_tasks << idle_tasks[0];
+        idle_tasks.Remove(0);
 
         task.keyframe = bRequestKeyframe;
         bRequestKeyframe = false;
@@ -569,7 +567,7 @@ public:
     {
         profileIn("ProcessEncodedFrame");
         ProcessEncodedFrame(packets, packetTypes, outputTimestamp, ctsOffset);
-        if(in_use == encode_tasks.Num())
+        if(!idle_tasks.Num())
         {
             Log(TEXT("Error: all encode tasks in use, stalling pipeline"));
             ProcessEncodedFrame(packets, packetTypes, outputTimestamp, ctsOffset, INFINITE);
@@ -580,10 +578,9 @@ public:
         QueueEncodeTask(pic);
 
         profileIn("EncodeFrameAsync");
-        unsigned limit = encode < insert ? insert : insert + encode_tasks.Num();
-        for(unsigned i = encode; i < limit; i++)
+        while(queued_tasks.Num())
         {
-            encode_task& task = encode_tasks[encode];
+            encode_task& task = encode_tasks[queued_tasks[0]];
             mfxBitstream& bs = task.bs;
             mfxFrameSurface1& surf = task.surf;
             mfxSyncPoint& sp = task.sp;
@@ -601,7 +598,8 @@ public:
                 //if(!sp); //sts == MFX_ERR_MORE_DATA usually; retry the call (see MSDK examples)
                 //Log(TEXT("returned status %i, %u"), sts, insert);
             }
-            encode = (encode+1)%encode_tasks.Num();
+            encoded_tasks << queued_tasks[0];
+            queued_tasks.Remove(0);
         }
         profileOut;
 
