@@ -59,7 +59,11 @@ struct BASE_EXPORT ProfileNodeInfo
     bool bSingular;
 
     QWORD totalTimeElapsed,
-          cpuTimeElapsed;
+          lastTimeElapsed,
+          cpuTimeElapsed,
+          lastCpuTimeElapsed;
+
+    DWORD lastCall;
 
     ProfileNodeInfo *parent;
     List<ProfileNodeInfo*> Children;
@@ -119,6 +123,23 @@ struct BASE_EXPORT ProfileNodeInfo
             Children[i]->dumpData(rootCallCount, indent+1);
     }
 
+    void dumpLastData(int callNum, int indent=0)
+    {
+        if(lastCall != callNum)
+            return;
+
+        String indentStr;
+        for(int i=0; i<indent; i++)
+            indentStr << TEXT("| ");
+
+        CTSTR lpIndent = indent == 0 ? TEXT("") : indentStr.Array();
+
+        Log(TEXT("%s%s - [time: %g ms (cpu time: %g ms)]"), lpIndent, lpName, MicroToMS((DWORD)lastTimeElapsed), MicroToMS((DWORD)lastCpuTimeElapsed));
+
+        for(unsigned int i=0; i<Children.Num(); i++)
+            Children[i]->dumpLastData(callNum, indent+1);
+    }
+
     ProfileNodeInfo* FindSubProfile(CTSTR lpName)
     {
         for(unsigned int i=0; i<Children.Num(); i++)
@@ -168,6 +189,18 @@ void STDCALL DumpProfileData()
         Log(TEXT("=============================================================="));
         for(unsigned int i=0; i<ProfileNodeInfo::profilerData.Num(); i++)
             ProfileNodeInfo::profilerData[i].dumpData(ProfileNodeInfo::profilerData[i].numCalls);
+        Log(TEXT("==============================================================\r\n"));
+    }
+}
+
+void STDCALL DumpLastProfileData()
+{
+    if(ProfileNodeInfo::profilerData.Num())
+    {
+        Log(TEXT("\r\nProfiler result for the last frame:"));
+        Log(TEXT("=============================================================="));
+        for(unsigned int i=0; i<ProfileNodeInfo::profilerData.Num(); i++)
+            ProfileNodeInfo::profilerData[i].dumpLastData(ProfileNodeInfo::profilerData[i].lastCall);
         Log(TEXT("==============================================================\r\n"));
     }
 }
@@ -227,7 +260,13 @@ ProfilerNode::ProfilerNode(CTSTR lpName, bool bSingularize)
         return;
 
     if (info)
+    {
         ++info->numCalls;
+        if(!parent)
+            info->lastCall = info->numCalls;
+        else
+            info->lastCall = parent->info->numCalls;
+    }
 
     this->lpName = lpName;
 
@@ -245,8 +284,13 @@ ProfilerNode::~ProfilerNode()
     {
         DWORD curTime = (DWORD)(newTime-startTime);
         info->totalTimeElapsed += curTime;
+        info->lastTimeElapsed = curTime;
         if(thread)
-            info->cpuTimeElapsed += (DWORD)(OSGetThreadTime(thread) - cpuStartTime);
+        {
+            DWORD cpuTime = DWORD(OSGetThreadTime(thread) - cpuStartTime);
+            info->cpuTimeElapsed += cpuTime;
+            info->lastCpuTimeElapsed = cpuTime;
+        }
     }
 
     if(!bSingularNode)

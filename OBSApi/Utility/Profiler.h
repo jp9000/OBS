@@ -60,4 +60,5 @@ BASE_EXPORT extern BOOL bProfilingEnabled;
 
 BASE_EXPORT void STDCALL EnableProfiling(BOOL bEnable, float minPercentage=0.0f, float minTime=0.0f);
 BASE_EXPORT void STDCALL DumpProfileData();
+BASE_EXPORT void STDCALL DumpLastProfileData();
 BASE_EXPORT void STDCALL FreeProfileData();

@@ -277,6 +277,9 @@ void OBS::MainCaptureLoop()
     bSentHeaders = false;
     bFirstAudioPacket = true;
 
+    bool bLogLongFramesProfile = GlobalConfig->GetInt(TEXT("General"), TEXT("LogLongFramesProfile"), 1) != 0;
+    float logLongFramesProfilePercentage = GlobalConfig->GetFloat(TEXT("General"), TEXT("LogLongFramesProfilePercentage"), 10.f);
+
     Vect2 baseSize    = Vect2(float(baseCX), float(baseCY));
     Vect2 outputSize  = Vect2(float(outputCX), float(outputCY));
     Vect2 scaleSize   = Vect2(float(scaleCX), float(scaleCY));
@@ -1016,7 +1019,11 @@ void OBS::MainCaptureLoop()
         sleepTargetTime += frameTime100ns;
 
         if(bWasLaggedFrame = (sleepTargetTime <= renderStopTime))
+        {
             numLongFrames++;
+            if(bLogLongFramesProfile && (numLongFrames/float(max(1, numTotalFrames)) * 100.) > logLongFramesProfilePercentage)
+                DumpLastProfileData();
+        }
         else
             SleepTo(sleepTargetTime);
 #else
@@ -1024,7 +1031,11 @@ void OBS::MainCaptureLoop()
         DWORD totalTime = renderStopTime-renderStartTime;
 
         if(totalTime > frameTimeAdjust)
+        {
             numLongFrames++;
+            if(bLogLongFramesProfile && (numLongFrames/float(max(1, numTotalFrames)) * 100.) > logLongFramesProfilePercentage)
+                DumpLastProfileData();
+        }
         else if(totalTime < frameTimeAdjust)
             OSSleep(frameTimeAdjust-totalTime);
 #endif
