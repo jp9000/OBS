@@ -928,7 +928,7 @@ public:
         return array+GetRealIndex(index);
     }
 
-    inline List<T>& operator<<(const T& val)
+    inline CircularList<T>& operator<<(const T& val)
     {
         Add(val);
         return *this;
