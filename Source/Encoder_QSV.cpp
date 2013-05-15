@@ -104,6 +104,20 @@ namespace
         Log(TEXT("Failed to initialize QSV hardware session"));
         return false;
     }
+
+#define MFX_TIME_FACTOR 90
+    template<class T>
+    auto timestampFromMS(T t) -> decltype(t*MFX_TIME_FACTOR)
+    {
+        return t*MFX_TIME_FACTOR;
+    }
+
+    template<class T>
+    auto msFromTimestamp(T t) -> decltype(t/MFX_TIME_FACTOR)
+    {
+        return t/MFX_TIME_FACTOR;
+    }
+#undef MFX_TIME_FACTOR
 }
 
 struct VideoPacket
@@ -144,6 +158,8 @@ class QSVEncoder : public VideoEncoder
     List<mfxFrameData> frames;
 
     int fps;
+
+    bool bUsingDecodeTimestamp;
 
     bool bRequestKeyframe;
 
@@ -306,6 +322,8 @@ public:
 
         deferredFrames = 0;
 
+        bUsingDecodeTimestamp = false && ver.Minor >= 6;
+
         DataPacket packet;
         GetHeaders(packet);
     }
@@ -371,7 +389,17 @@ public:
         packets.Clear();
         ClearPackets();
 
-        INT64 dts = (bs.DecodeTimeStamp != MFX_TIMESTAMP_UNKNOWN && ver.Minor == 6) ? bs.DecodeTimeStamp/90 : outputTimestamp;
+        INT64 dts;
+
+        if(bUsingDecodeTimestamp && bs.DecodeTimeStamp != MFX_TIMESTAMP_UNKNOWN)
+        {
+            dts = msFromTimestamp(bs.DecodeTimeStamp);
+        }
+        else
+            dts = outputTimestamp;
+
+        INT64 in_pts = msFromTimestamp(task.surf.Data.TimeStamp),
+              out_pts = msFromTimestamp(bs.TimeStamp);
 
         if(!bFirstFrameProcessed && nalNum)
         {
@@ -385,7 +413,7 @@ public:
         if(bDupeFrames)
         {
             //if frame duplication is being used, the shift will be insignificant, so just don't bother adjusting audio
-            timeOffset = int(bs.TimeStamp/90-dts);
+            timeOffset = int(out_pts-dts);
             timeOffset += frameShift;
 
             if(nalNum && timeOffset < 0)
@@ -396,7 +424,7 @@ public:
         }
         else
         {
-            timeOffset = int(bs.TimeStamp/90+delayOffset-ts);
+            timeOffset = int(out_pts+delayOffset-ts);
             timeOffset += ctsOffset;
 
             //dynamically adjust the CTS for the stream if it gets lower than the current value
@@ -556,7 +584,7 @@ public:
         surf.Data.UV = frame.UV;
         surf.Data.V = frame.V;
         surf.Data.Pitch = frame.Pitch;
-        surf.Data.TimeStamp = pic.Data.TimeStamp*90;
+        surf.Data.TimeStamp = timestampFromMS(pic.Data.TimeStamp);
 
         pic.Data.Y = nullptr;
         pic.Data.UV = nullptr;
