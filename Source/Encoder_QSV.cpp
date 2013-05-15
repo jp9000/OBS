@@ -150,7 +150,8 @@ class QSVEncoder : public VideoEncoder
     };
     List<encode_task> encode_tasks;
 
-    CircularList<unsigned> encoded_tasks,
+    CircularList<unsigned> msdk_locked_tasks,
+                           encoded_tasks,
                            queued_tasks,
                            idle_tasks;
 
@@ -265,7 +266,7 @@ public:
         memcpy(&query, &params, sizeof(params));
         enc->GetVideoParam(&query);
 
-        unsigned num_surf = max(6, req.NumFrameSuggested+1);
+        unsigned num_surf = max(6, req.NumFrameSuggested + params.AsyncDepth);
 
         encode_tasks.SetSize(num_surf);
 
@@ -362,7 +363,6 @@ public:
         auto& sp = task.sp;
         if(MFXVideoCORE_SyncOperation(session, sp, wait) != MFX_ERR_NONE)
             return;
-        sp = nullptr;
 
         mfxBitstream& bs = task.bs;
 
@@ -555,10 +555,27 @@ public:
             packets[i].lpPacket = CurrentPackets[i].Packet.Array();
             packets[i].size     = CurrentPackets[i].Packet.Num();
         }
-        task.frame->FrameOrder = 0;
-        task.frame->Locked = false;
-        idle_tasks << encoded_tasks[0];
+
+        msdk_locked_tasks << encoded_tasks[0];
         encoded_tasks.Remove(0);
+    }
+
+    void CleanupLockedTasks()
+    {
+        for(unsigned i = 0; i < msdk_locked_tasks.Num();)
+        {
+            encode_task& task = encode_tasks[msdk_locked_tasks[i]];
+            if(task.surf.Data.Locked)
+            {
+                i++;
+                continue;
+            }
+            task.frame->FrameOrder = 0;
+            task.frame->Locked = false;
+            task.sp = nullptr;
+            idle_tasks << msdk_locked_tasks[i];
+            msdk_locked_tasks.Remove(i);
+        }
     }
 
     void QueueEncodeTask(mfxFrameSurface1& pic)
@@ -602,6 +619,8 @@ public:
         }
         profileOut;
 
+        CleanupLockedTasks();
+
         mfxFrameSurface1& pic = *(mfxFrameSurface1*)picInPtr;
         QueueEncodeTask(pic);
 
@@ -616,7 +635,7 @@ public:
             {
                 auto sts = enc->EncodeFrameAsync(task.keyframe ? &ctrl : nullptr, &surf, &bs, &sp);
 
-                if(sts == MFX_ERR_NONE || sp)
+                if(sts == MFX_ERR_NONE || (MFX_ERR_NONE < sts && sp))
                     break;
                 if(sts == MFX_WRN_DEVICE_BUSY)
                 {
