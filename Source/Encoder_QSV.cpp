@@ -611,15 +611,31 @@ public:
     bool Encode(LPVOID picInPtr, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, int &ctsOffset)
     {
         profileIn("ProcessEncodedFrame");
-        ProcessEncodedFrame(packets, packetTypes, outputTimestamp, ctsOffset);
-        if(!idle_tasks.Num())
+        mfxU32 wait = 0;
+        bool bMessageLogged = false;
+        do
         {
-            Log(TEXT("Error: all encode tasks in use, stalling pipeline"));
-            ProcessEncodedFrame(packets, packetTypes, outputTimestamp, ctsOffset, INFINITE);
-        }
-        profileOut;
+            if(!packets.Num())
+                ProcessEncodedFrame(packets, packetTypes, outputTimestamp, ctsOffset, wait);
 
-        CleanupLockedTasks();
+            CleanupLockedTasks();
+
+            if(idle_tasks.Num())
+                break;
+
+            if(wait == INFINITE)
+            {
+                if(!bMessageLogged)
+                    Log(TEXT("Error: encoder is taking too long, consider decreasing your FPS/increasing your bitrate"));
+                bMessageLogged = true;
+                Sleep(1); //wait for locked tasks to unlock
+            }
+            else
+                Log(TEXT("Error: all encode tasks in use, stalling pipeline"));
+            wait = INFINITE;
+        }
+        while(!idle_tasks.Num());
+        profileOut;
 
         mfxFrameSurface1& pic = *(mfxFrameSurface1*)picInPtr;
         QueueEncodeTask(pic);
