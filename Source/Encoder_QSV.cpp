@@ -305,7 +305,16 @@ public:
 
         mfxFrameAllocRequest req;
         memset(&req, 0, sizeof(req));
-        enc->QueryIOSurf(&params, &req);
+        auto sts = enc->QueryIOSurf(&params, &req);
+        if(sts == MFX_WRN_PARTIAL_ACCELERATION) //FIXME: remove when a fixed version is available
+            Log(TEXT("\r\n===================================================================================\r\n")
+                TEXT("Error: QSV hardware acceleration unavailable due to a driver bug. Reduce the number\r\n")
+                TEXT("       of monitors connected to you graphics card or configure your Intel graphics\r\n")
+                TEXT("       card to be the primary device.\r\n")
+                TEXT("       Refer to http://software.intel.com/en-us/forums/topic/359368#comment-1722674\r\n")
+                TEXT("       for more information.\r\n")
+                TEXT("===================================================================================\r\n")
+                TEXT("\r\nContinuing with decreased performance"));
 
         enc->Init(&params);
 
