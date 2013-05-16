@@ -446,6 +446,9 @@ void OBS::MainCaptureLoop()
 
     //bool bFirstAudioPacket = true;
 
+    List<ProfilerNode> threadedProfilers;
+    bool bUsingThreadedProfilers = false;
+
     while(bRunning)
     {
 #ifdef USE_100NS_TIME
@@ -470,17 +473,6 @@ void OBS::MainCaptureLoop()
         bool bRenderView = !IsIconic(hwndMain) && bRenderViewEnabled;
 
         profileIn("frame");
-        
-        List<ProfilerNode> threadedProfilers;
-        if(bUseThreaded420)
-        {
-            threadedProfilers.SetSize(numThreads);
-            for(int i = 0; i < numThreads; i++)
-            {
-                ::new (&threadedProfilers[i]) ProfilerNode(TEXT("Convert444Threads"), true);
-                threadedProfilers[i].MonitorThread(h420Threads[i]);
-            }
-        }
 
 #ifdef USE_100NS_TIME
         QWORD qwTime = renderStartTime/10000;
@@ -820,6 +812,10 @@ void OBS::MainCaptureLoop()
                         {
                             outTimes[nextOutBuffer] = (DWORD)curStreamTime;
 
+                            bool firstRun = threadedProfilers.Num() == 0;
+                            if(firstRun)
+                                threadedProfilers.SetSize(numThreads);
+
                             for(int i=0; i<numThreads; i++)
                             {
                                 convertInfo[i].input     = (LPBYTE)map.pData;
@@ -837,6 +833,11 @@ void OBS::MainCaptureLoop()
                                     convertInfo[i].output[1] = nextPicOut.picOut->img.plane[1];
                                     convertInfo[i].output[2] = nextPicOut.picOut->img.plane[2];
 								}
+                                if(!firstRun)
+                                    threadedProfilers[i].~ProfilerNode();
+                                ::new (&threadedProfilers[i]) ProfilerNode(TEXT("Convert444Threads"), true);
+                                threadedProfilers[i].MonitorThread(h420Threads[i]);
+                                bUsingThreadedProfilers = true;
                                 SetEvent(convertInfo[i].hSignalConvert);
                             }
 
@@ -998,13 +999,6 @@ void OBS::MainCaptureLoop()
         }
 
         profileOut;
-        if(bUseThreaded420)
-        {
-            for(int i = 0; i < numThreads; i++)
-            {
-                threadedProfilers[i].~ProfilerNode();
-            }
-        }
         profileOut;
 
         //------------------------------------
@@ -1055,6 +1049,8 @@ void OBS::MainCaptureLoop()
                 {
                     convertInfo[i].bKillThread = true;
                     SetEvent(convertInfo[i].hSignalConvert);
+                    if(bUsingThreadedProfilers)
+                        threadedProfilers[i].~ProfilerNode();
 
                     OSTerminateThread(h420Threads[i], 10000);
                     h420Threads[i] = NULL;
