@@ -185,6 +185,53 @@ class QSVEncoder : public VideoEncoder
         CurrentPackets.Clear();
     }
 
+#ifndef SEI_USER_DATA_UNREGISTERED
+#define SEI_USER_DATA_UNREGISTERED 0x5
+#endif
+
+    void InitSEIData()
+    {
+        List<BYTE> sei_message,
+                   payload;
+
+        sei_message << SEI_USER_DATA_UNREGISTERED;
+
+        const mfxU8 UUID[] = { 0x6d, 0x1a, 0x26, 0xa0, 0xbd, 0xdc, 0x11, 0xe2,   //ISO-11578 UUID
+                               0x90, 0x24, 0x00, 0x50, 0xc2, 0x49, 0x00, 0x48 }; //6d1a26a0-bddc-11e2-9024-0050c2490048
+        payload.AppendArray(UUID, 16);
+
+        String str;
+        str << TEXT("QSV hardware encoder options:")
+            << TEXT(" rate control: ") << (bUseCBR ? TEXT("cbr") : TEXT("vbr"))
+            << TEXT("; target bitrate: ") << params.mfx.TargetKbps
+            << TEXT("; max bitrate: ") << params.mfx.MaxKbps
+            << TEXT("; buffersize: ") << params.mfx.BufferSizeInKB*1000/1024*8
+            << TEXT("; API level: ") << ver.Major << TEXT(".") << ver.Minor;
+
+        LPSTR info = str.CreateUTF8String();
+        payload.AppendArray((LPBYTE)info, (unsigned)strlen(info)+1);
+        Free(info);
+
+        payload << 0x80;
+
+        unsigned payload_size = payload.Num();
+        while(payload_size > 255)
+        {
+            sei_message << 0xff;
+            payload_size -= 255;
+        }
+        sei_message << payload_size;
+
+        sei_message.AppendList(payload);
+
+        sei_message << 0x80;
+
+        BufferOutputSerializer packetOut(SEIData);
+
+        packetOut.OutputDword(htonl(sei_message.Num()));
+        packetOut.Serialize(sei_message.Array(), sei_message.Num());
+    }
+
 #define ALIGN16(value)                      (((value + 15) >> 4) << 4) // round up to a multiple of 16
 public:
     QSVEncoder(int fps_, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitrate, int bufferSize, bool bUseCFR_, bool bDupeFrames_)
@@ -309,6 +356,8 @@ public:
             frame.V = frame.UV + 1;
             frame.Pitch = fi.Width;
         }
+
+        InitSEIData();
 
         Log(TEXT("Using %u encode tasks"), encode_tasks.Num());
         Log(TEXT("Buffer size: %u configured, %u suggested by QSV; using %u"),
@@ -458,7 +507,7 @@ public:
 
                 int newPayloadSize = (nal.i_payload-skipBytes);
 
-                if (nal.p_payload[skipBytes+1] == 0x5) {
+                if (nal.p_payload[skipBytes+1] == SEI_USER_DATA_UNREGISTERED) {
                     SEIData.Clear();
                     BufferOutputSerializer packetOut(SEIData);
 
