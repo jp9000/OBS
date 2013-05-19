@@ -206,6 +206,7 @@ bool DXGI1Device::Init(const mfxU32 adapterNum)
         // get the number of adapters
         curAdapter = 0;
         maxAdapters = 0;
+        mfxU32 outputs = 0;
         do
         {
             // get the required adapted
@@ -215,24 +216,36 @@ bool DXGI1Device::Init(const mfxU32 adapterNum)
                 break;
             }
 
-            // if it is the required adapter, save the interface
-            if (curAdapter == adapterNum)
+            mfxU32 curOutput = 0;
+            HRESULT h;
+            do
             {
-                m_pDXGIAdapter1 = pAdapter;
-            }
-            else
-            {
-                pAdapter->Release();
-            }
+                IDXGIOutput *out;
+                h = pAdapter->EnumOutputs(curOutput, &out);
+                
+                if(FAILED(h))
+                    break;
 
-            // get the next adapter
+                // if it is the required adapter, save the interface
+                if (outputs == adapterNum)
+                    m_pDXGIAdapter1 = pAdapter;
+
+                out->Release();
+                
+                outputs += 1;
+                curOutput += 1;
+            } while(!m_pDXGIAdapter1 && SUCCEEDED(h));
+
+            if(!m_pDXGIAdapter1)
+                pAdapter->Release();
+
             curAdapter += 1;
 
-        } while (SUCCEEDED(hRes));
+        } while (!m_pDXGIAdapter1 && SUCCEEDED(hRes));
         maxAdapters = curAdapter;
 
         // there is no required adapter
-        if (adapterNum >= maxAdapters)
+        if (adapterNum >= outputs)
         {
             return false;
         }
