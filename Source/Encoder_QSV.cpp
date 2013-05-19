@@ -49,7 +49,10 @@ namespace
         TO_STR(MFX_IMPL_SOFTWARE),
         TO_STR(MFX_IMPL_HARDWARE),
         TO_STR(MFX_IMPL_AUTO_ANY),
-        TO_STR(MFX_IMPL_HARDWARE_ANY)
+        TO_STR(MFX_IMPL_HARDWARE_ANY),
+        TO_STR(MFX_IMPL_HARDWARE2),
+        TO_STR(MFX_IMPL_HARDWARE3),
+        TO_STR(MFX_IMPL_HARDWARE4)
     };
     const TCHAR* usageStr[] = {
         TO_STR(MFX_TARGETUSAGE_UNKNOWN),
@@ -248,7 +251,9 @@ public:
                 result = session.Init(impl, &ver);
                 if(result == MFX_ERR_NONE)
                 {
-                    Log(TEXT("QSV version %u.%u using %s"), ver.Major, ver.Minor, implStr[impl]);
+                    mfxIMPL actual;
+                    session.QueryIMPL(&actual);
+                    Log(TEXT("QSV version %u.%u using %s (actual: %s)"), ver.Major, ver.Minor, implStr[impl], implStr[actual]);
                     break;
                 }
             }
