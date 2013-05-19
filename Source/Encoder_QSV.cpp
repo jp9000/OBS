@@ -537,22 +537,22 @@ public:
                     packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
                 }
             }
-            /*else if(nal.i_type == NAL_FILLER) //QSV does not produce NAL_FILLER
+            else if(nal.i_type == NAL_AUD)
             {
-            BYTE *skip = nal.p_payload;
-            while(*(skip++) != 0x1);
-            int skipBytes = (int)(skip-nal.p_payload);
+                BYTE *skip = nal.p_payload;
+                while(*(skip++) != 0x1);
+                int skipBytes = (int)(skip-nal.p_payload);
 
-            int newPayloadSize = (nal.i_payload-skipBytes);
+                int newPayloadSize = (nal.i_payload-skipBytes);
 
-            if (!newPacket)
-            newPacket = CurrentPackets.CreateNew();
+                if (!newPacket)
+                    newPacket = CurrentPackets.CreateNew();
 
-            BufferOutputSerializer packetOut(newPacket->Packet);
+                BufferOutputSerializer packetOut(newPacket->Packet);
 
-            packetOut.OutputDword(htonl(newPayloadSize));
-            packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
-            }*/
+                packetOut.OutputDword(htonl(newPayloadSize));
+                packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
+            }
             else if(nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE)
             {
                 BYTE *skip = nal.p_payload;
