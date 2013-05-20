@@ -49,7 +49,10 @@ namespace
         TO_STR(MFX_IMPL_SOFTWARE),
         TO_STR(MFX_IMPL_HARDWARE),
         TO_STR(MFX_IMPL_AUTO_ANY),
-        TO_STR(MFX_IMPL_HARDWARE_ANY)
+        TO_STR(MFX_IMPL_HARDWARE_ANY),
+        TO_STR(MFX_IMPL_HARDWARE2),
+        TO_STR(MFX_IMPL_HARDWARE3),
+        TO_STR(MFX_IMPL_HARDWARE4)
     };
     const TCHAR* usageStr[] = {
         TO_STR(MFX_TARGETUSAGE_UNKNOWN),
@@ -248,7 +251,9 @@ public:
                 result = session.Init(impl, &ver);
                 if(result == MFX_ERR_NONE)
                 {
-                    Log(TEXT("QSV version %u.%u using %s"), ver.Major, ver.Minor, implStr[impl]);
+                    mfxIMPL actual;
+                    session.QueryIMPL(&actual);
+                    Log(TEXT("QSV version %u.%u using %s (actual: %s)"), ver.Major, ver.Minor, implStr[impl], implStr[actual]);
                     break;
                 }
             }
@@ -532,22 +537,22 @@ public:
                     packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
                 }
             }
-            /*else if(nal.i_type == NAL_FILLER) //QSV does not produce NAL_FILLER
+            else if(nal.i_type == NAL_AUD)
             {
-            BYTE *skip = nal.p_payload;
-            while(*(skip++) != 0x1);
-            int skipBytes = (int)(skip-nal.p_payload);
+                BYTE *skip = nal.p_payload;
+                while(*(skip++) != 0x1);
+                int skipBytes = (int)(skip-nal.p_payload);
 
-            int newPayloadSize = (nal.i_payload-skipBytes);
+                int newPayloadSize = (nal.i_payload-skipBytes);
 
-            if (!newPacket)
-            newPacket = CurrentPackets.CreateNew();
+                if (!newPacket)
+                    newPacket = CurrentPackets.CreateNew();
 
-            BufferOutputSerializer packetOut(newPacket->Packet);
+                BufferOutputSerializer packetOut(newPacket->Packet);
 
-            packetOut.OutputDword(htonl(newPayloadSize));
-            packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
-            }*/
+                packetOut.OutputDword(htonl(newPayloadSize));
+                packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
+            }
             else if(nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE)
             {
                 BYTE *skip = nal.p_payload;
