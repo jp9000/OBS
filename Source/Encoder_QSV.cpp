@@ -136,7 +136,8 @@ class QSVEncoder : public VideoEncoder
 
     MFXVideoSession session;
 
-    mfxVideoParam params;
+    mfxVideoParam params,
+                  query;
 
     std::unique_ptr<MFXVideoENCODE> enc;
 
@@ -207,8 +208,8 @@ class QSVEncoder : public VideoEncoder
         str << TEXT("QSV hardware encoder options:")
             << TEXT(" rate control: ") << (bUseCBR ? TEXT("cbr") : TEXT("vbr"))
             << TEXT("; target bitrate: ") << params.mfx.TargetKbps
-            << TEXT("; max bitrate: ") << params.mfx.MaxKbps
-            << TEXT("; buffersize: ") << params.mfx.BufferSizeInKB*1000/1024*8
+            << TEXT("; max bitrate: ") << query.mfx.MaxKbps
+            << TEXT("; buffersize: ") << query.mfx.BufferSizeInKB*8
             << TEXT("; API level: ") << ver.Major << TEXT(".") << ver.Minor;
 
         LPSTR info = str.CreateUTF8String();
@@ -273,8 +274,9 @@ public:
         //params.AsyncDepth = 0;
         params.mfx.CodecId = MFX_CODEC_AVC;
         params.mfx.TargetUsage = MFX_TARGETUSAGE_BEST_QUALITY;//SPEED;
-        params.mfx.TargetKbps = (mfxU16)(maxBitrate*0.9);
+        params.mfx.TargetKbps = maxBitrate;
         params.mfx.MaxKbps = maxBitrate;
+        params.mfx.BufferSizeInKB = bufferSize/8;
         //params.mfx.InitialDelayInKB = 1;
         //params.mfx.GopRefDist = 1;
         //params.mfx.NumRefFrame = 0;
@@ -323,15 +325,14 @@ public:
 
         enc->Init(&params);
 
-        decltype(params) query;
         memcpy(&query, &params, sizeof(params));
         enc->GetVideoParam(&query);
 
-        unsigned num_surf = max(6, req.NumFrameSuggested + params.AsyncDepth);
+        unsigned num_surf = max(6, req.NumFrameSuggested + query.AsyncDepth);
 
         encode_tasks.SetSize(num_surf);
 
-        const unsigned bs_size = max(query.mfx.BufferSizeInKB*1000, bufferSize*1024/8);
+        const unsigned bs_size = (max(query.mfx.BufferSizeInKB*1000, bufferSize/8*1000)+31)/32*32;
         bs_buff.SetSize(bs_size * encode_tasks.Num() + 31);
         params.mfx.BufferSizeInKB = bs_size/1000;
 
@@ -374,8 +375,6 @@ public:
         InitSEIData();
 
         Log(TEXT("Using %u encode tasks"), encode_tasks.Num());
-        Log(TEXT("Buffer size: %u configured, %u suggested by QSV; using %u"),
-            bufferSize, query.mfx.BufferSizeInKB*1000*8/1024, params.mfx.BufferSizeInKB*1000*8/1024);
 
         Log(TEXT("------------------------------------------"));
         Log(TEXT("%s"), GetInfoString().Array());
@@ -804,7 +803,7 @@ public:
 
         if(!bUseCBR)
         {
-            strInfo << TEXT("\r\n    buffer size: ") << IntString(params.mfx.BufferSizeInKB*1000*8/1024);
+            strInfo << TEXT("\r\n    buffer size: ") << IntString(params.mfx.BufferSizeInKB*8);
         }
 
         return strInfo;
