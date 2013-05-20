@@ -852,7 +852,7 @@ private:
 
 public:
     OBS();
-    ~OBS();
+    virtual ~OBS();
 
     void ResizeWindow(bool bRedrawRenderFrame);
     void SetFullscreenMode(bool fullscreen);

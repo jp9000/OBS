@@ -36,6 +36,7 @@
 
 #define USE_AAC 1
 
+#pragma warning(default : 4265)
 
 //-------------------------------------------
 // direct3d 10.1
