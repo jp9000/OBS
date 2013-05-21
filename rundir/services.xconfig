@@ -53,7 +53,7 @@ services : {
   TGamers.ru : {
     id : 8
     servers : {
-      "RU Moscow" : rtmp://stream3.tgamers.ru
+      "RU Moscow" : rtmp://tgamers.ru/live
     }
   }
 }
