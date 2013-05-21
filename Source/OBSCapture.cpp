@@ -304,11 +304,21 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 
+    bool bDisableEncoding = false;
+
+    if (bTestStream)
+        bDisableEncoding = GlobalConfig->GetInt(TEXT("General"), TEXT("DisablePreviewEncoding"), false) != 0;
+
+    //-------------------------------------------------------------
+
     UINT bitRate = (UINT)AppConfig->GetInt(TEXT("Audio Encoding"), TEXT("Bitrate"), 96);
     String strEncoder = AppConfig->GetString(TEXT("Audio Encoding"), TEXT("Codec"), TEXT("AAC"));
 
+    if (bDisableEncoding)
+        audioEncoder = CreateNullAudioEncoder();
+    else
 #ifdef USE_AAC
-    if(strEncoder.CompareI(TEXT("AAC")) && OSGetVersion() >= 7)
+    if(strEncoder.CompareI(TEXT("AAC")))// && OSGetVersion() >= 7)
         audioEncoder = CreateAACEncoder(bitRate);
     else
 #endif
@@ -440,8 +450,11 @@ void OBS::Start()
 
     ctsOffset = 0;
     videoEncoder = nullptr;
-    if(AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0)
+    if (bDisableEncoding)
+        videoEncoder = CreateNullVideoEncoder();
+    else if(GlobalConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0)
         videoEncoder = CreateQSVEncoder(fps, outputCX, outputCY, quality, preset, bUsing444, maxBitRate, bufferSize, bUseCFR, bDupeFrames);
+
     if(!videoEncoder)
         videoEncoder = CreateX264Encoder(fps, outputCX, outputCY, quality, preset, bUsing444, maxBitRate, bufferSize, bUseCFR, bDupeFrames);
 

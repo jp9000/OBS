@@ -206,6 +206,8 @@
 #define IDC_TIMER1                      1100
 #define IDC_CAPTURERAM                  1100
 #define IDC_COMPATIBILITYMODE           1100
+#define IDC_USEMULTITHREADEDOPTIMIZATIONS2 1100
+#define IDC_DISABLEPREVIEWENCODING      1100
 #define IDC_PROGRESS1                   1101
 #define IDC_DASHBOARDLINK_STATIC        1102
 #define IDC_DASHBOARDLINK               1103

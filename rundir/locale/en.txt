@@ -120,6 +120,7 @@ Settings.Video              "Video"
 
 Settings.Advanced.AutomaticLatency                  "Automatic low latency mode:"
 Settings.Advanced.BindToIP                          "Bind To Interface:"
+Settings.Advanced.DisablePreviewEncoding            "Disable encoding while previewing"
 Settings.Advanced.GlobalAudioTimeAdjust             "Global Audio Time Offset (milliseconds):"
 Settings.Advanced.LatencyTuning                     "Latency tuning factor:"
 Settings.Advanced.Network                           "Network"

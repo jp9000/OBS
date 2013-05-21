@@ -79,6 +79,11 @@ void SettingsAdvanced::ApplySettings()
 
     //--------------------------------------------------
 
+    bool bDisablePreviewEncoding = SendMessage(GetDlgItem(hwnd, IDC_DISABLEPREVIEWENCODING), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    GlobalConfig->SetInt(TEXT("General"), TEXT("DisablePreviewEncoding"), bDisablePreviewEncoding);
+
+    //--------------------------------------------------
+
     bool bUseCFR = SendMessage(GetDlgItem(hwnd, IDC_USECFR), BM_GETCHECK, 0, 0) == BST_CHECKED;
     AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("UseCFR"),            bUseCFR);
 
@@ -98,7 +103,7 @@ void SettingsAdvanced::ApplySettings()
     //------------------------------------
 
     BOOL bUseQSV = SendMessage(GetDlgItem(hwnd, IDC_USEQSV), BM_GETCHECK, 0, 0) == BST_CHECKED;
-    AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("UseQSV"), bUseQSV);
+    GlobalConfig->SetInt(TEXT("Video Encoding"), TEXT("UseQSV"), bUseQSV);
 
     //------------------------------------
 
@@ -210,6 +215,11 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 else //Normal
                     SendMessage(hwndTemp, CB_SETCURSEL, 2, 0);
 
+                //------------------------------------
+
+                bool bDisablePreviewEncoding = GlobalConfig->GetInt(TEXT("General"), TEXT("DisablePreviewEncoding"), false) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_DISABLEPREVIEWENCODING), BM_SETCHECK, bDisablePreviewEncoding ? BST_CHECKED : BST_UNCHECKED, 0);
+
                 //--------------------------------------------
 
                 hwndTemp = GetDlgItem(hwnd, IDC_PRESET);
@@ -252,7 +262,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 //------------------------------------
 
-                bool bUseQSV = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
+                bool bUseQSV = GlobalConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_USEQSV), BM_SETCHECK, bUseQSV ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 //------------------------------------
@@ -412,6 +422,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                     }
                     break;
 
+                case IDC_DISABLEPREVIEWENCODING:
                 case IDC_USEMICQPC:
                 case IDC_SYNCTOVIDEOTIME:
                 case IDC_USECFR:

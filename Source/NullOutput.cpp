@@ -23,7 +23,7 @@
 class NullVideoEncoder : public VideoEncoder
 {
 public:
-    virtual bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, int &ctsOffset) {return true;}
+    virtual bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, int &ctsOffset) {return false;}
     virtual void GetHeaders(DataPacket &packet) {}
     virtual int  GetBitRate() const {return 0;}
     virtual String GetInfoString() const {return String();}
@@ -35,7 +35,7 @@ public:
 class NullAudioEncoder : public AudioEncoder
 {
 public:
-    virtual bool    Encode(float *input, UINT numInputFrames, DataPacket &packet, QWORD &timestamp) {return true;}
+    virtual bool    Encode(float *input, UINT numInputFrames, DataPacket &packet, QWORD &timestamp) {return false;}
     virtual void    GetHeaders(DataPacket &packet) {}
     virtual UINT    GetFrameSize() const {return 0;}
     virtual int     GetBitRate() const {return 0;}

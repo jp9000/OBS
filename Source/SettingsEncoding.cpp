@@ -163,7 +163,7 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("MP3"));
 #ifdef USE_AAC
-                if(OSGetVersion() >= 7)
+                if(1)//OSGetVersion() >= 7)
                 {
                     SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("AAC"));
                     LoadSettingComboString(hwndTemp, TEXT("Audio Encoding"), TEXT("Codec"), TEXT("AAC"));
