@@ -118,8 +118,9 @@ Settings.SaveChangesPrompt  "Möchten Sie ihre Einstellungen speichern und anwen
 Settings.SaveChangesTitle   "Einstellungen speichern?"
 Settings.Video              "Video"
 
-Settings.Advanced.AutomaticLatency                  "Automatic-low-latency-Modus:"
+Settings.Advanced.AutomaticLatency                  "Automatischer niedrig Latenz Modus:"
 Settings.Advanced.BindToIP                          "Netzwerkinterface:"
+Settings.Advanced.DisablePreviewEncoding            "Deaktiviere Kodierung während der Vorschau"
 Settings.Advanced.GlobalAudioTimeAdjust             "Globaler Audio/Zeit Offset (in Millisekunden):"
 Settings.Advanced.LatencyTuning                     "Faktor zur Latenzanpassung:"
 Settings.Advanced.Network                           "Netzwerk"
@@ -130,6 +131,7 @@ Settings.Advanced.UnlockHigherFPS                   "Erlaube 61-120 Bilder/Sekun
 Settings.Advanced.UseCBR                            "Beutze konstante Bitrate (CBR)"
 Settings.Advanced.UseCFR                            "Benutze CFR"
 Settings.Advanced.UseMultithreadedOptimizations     "Nutze Multithread Optimierungen"
+Settings.Advanced.UseQSV                            "Benutze Quick Sync"
 Settings.Advanced.SceneBufferTime                   "Szenen Puffer Zeit (Millisekunden):"
 Settings.Advanced.SyncToVideoTime                   "Synchronisation der Audio- zur Videozeit erzwingen"
 Settings.Advanced.VideoEncoderCPUTradeoff           "x264 CPU Voreinstellung:"
