@@ -140,9 +140,9 @@ Settings.Advanced.VideoEncoderSettings              "Aktiviere benutzerdefiniert
 Settings.Advanced.VideoEncoderSettingsTooltip       "Dies erlaubt eigene x264 Encoder Einstellungen zu nutzen.  Im Format: [Parameter]=[Wert] (z.B. \"vbv-maxrate=1000 vbv-bufsize=1000\")."
 
 Settings.Advanced.Priority.Idle         "Untätig"
-Settings.Advanced.Priority.Normal       "Normale"
-Settings.Advanced.Priority.AboveNormal  "Oberhalb Normalen"
-Settings.Advanced.Priority.High         "High"
+Settings.Advanced.Priority.Normal       "Normal"
+Settings.Advanced.Priority.AboveNormal  "Über Normal"
+Settings.Advanced.Priority.High         "Hoch"
 
 Settings.Audio.DesktopBoost         "Desktop Verstärkung (Multiplikator):"
 Settings.Audio.Device               "Mic./Aux Audio Gerät:"
