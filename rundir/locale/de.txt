@@ -128,7 +128,7 @@ Settings.Advanced.PresetWarning                     "WARNUNG! Die Änderung des 
 Settings.Advanced.ProcessPriority                   "Prozesspriorität:"
 Settings.Advanced.SendBufferSize                    "Größe des Sendepuffers:"
 Settings.Advanced.UnlockHigherFPS                   "Erlaube 61-120 Bilder/Sekunde in den Video Einstellungen"
-Settings.Advanced.UseCBR                            "Beutze konstante Bitrate (CBR)"
+Settings.Advanced.UseCBR                            "Benutze konstante Bitrate (CBR)"
 Settings.Advanced.UseCFR                            "Benutze CFR"
 Settings.Advanced.UseMultithreadedOptimizations     "Nutze Multithread Optimierungen"
 Settings.Advanced.UseQSV                            "Benutze Quick Sync"
@@ -139,9 +139,9 @@ Settings.Advanced.VideoEncoderCPUTradeoffToolTip    "Diesen Wert höher(schnelle
 Settings.Advanced.VideoEncoderSettings              "Aktiviere benutzerdefinierte x264 Encoder Einstellungen"
 Settings.Advanced.VideoEncoderSettingsTooltip       "Dies erlaubt eigene x264 Encoder Einstellungen zu nutzen.  Im Format: [Parameter]=[Wert] (z.B. \"vbv-maxrate=1000 vbv-bufsize=1000\")."
 
-Settings.Advanced.Priority.Idle         "Idle"
-Settings.Advanced.Priority.Normal       "Normal"
-Settings.Advanced.Priority.AboveNormal  "Above Normal"
+Settings.Advanced.Priority.Idle         "Untätig"
+Settings.Advanced.Priority.Normal       "Normale"
+Settings.Advanced.Priority.AboveNormal  "Oberhalb Normalen"
 Settings.Advanced.Priority.High         "High"
 
 Settings.Audio.DesktopBoost         "Desktop Verstärkung (Multiplikator):"
