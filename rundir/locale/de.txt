@@ -141,7 +141,7 @@ Settings.Advanced.VideoEncoderSettingsTooltip       "Dies erlaubt eigene x264 En
 
 Settings.Advanced.Priority.Idle         "Untätig"
 Settings.Advanced.Priority.Normal       "Normal"
-Settings.Advanced.Priority.AboveNormal  "Über Normal"
+Settings.Advanced.Priority.AboveNormal  "Höher als Normal"
 Settings.Advanced.Priority.High         "Hoch"
 
 Settings.Audio.DesktopBoost         "Desktop Verstärkung (Multiplikator):"
