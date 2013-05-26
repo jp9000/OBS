@@ -400,12 +400,16 @@ public:
     {
         if(!buffers)
             return;
+
+        mfxFrameData& buff = *(mfxFrameData*)buffers;
+        if(buff.MemId && !frames[(unsigned)buff.MemId-1].Locked) //Reuse buffer if not in use
+            return;
+
         for(unsigned i = 0; i < frames.Num(); i++)
         {
             if(frames[i].Locked || frames[i].MemId)
                 continue;
             mfxFrameData& data = frames[i];
-            mfxFrameData& buff = *(mfxFrameData*)buffers;
             buff.Y = data.Y;
             buff.UV = data.UV;
             buff.Pitch = data.Pitch;
