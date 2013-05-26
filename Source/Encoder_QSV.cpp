@@ -402,15 +402,15 @@ public:
             return;
         for(unsigned i = 0; i < frames.Num(); i++)
         {
-            if(frames[i].Locked || frames[i].FrameOrder)
+            if(frames[i].Locked || frames[i].MemId)
                 continue;
             mfxFrameData& data = frames[i];
             mfxFrameData& buff = *(mfxFrameData*)buffers;
             buff.Y = data.Y;
             buff.UV = data.UV;
             buff.Pitch = data.Pitch;
-            buff.FrameOrder = i+1;
-            data.FrameOrder = i+1;
+            buff.MemId = mfxMemId(i+1);
+            data.MemId = mfxMemId(i+1);
             return;
         }
         Log(TEXT("Error: all frames are in use"));
@@ -632,8 +632,8 @@ public:
                 i++;
                 continue;
             }
-            task.frame->FrameOrder = 0;
             task.frame->Locked = false;
+            task.frame->MemId = 0;
             task.sp = nullptr;
             idle_tasks << msdk_locked_tasks[i];
             msdk_locked_tasks.Remove(i);
@@ -651,7 +651,7 @@ public:
 
         mfxBitstream& bs = task.bs;
         mfxFrameSurface1& surf = task.surf;
-        mfxFrameData& frame = frames[pic.Data.FrameOrder-1];
+        mfxFrameData& frame = frames[(unsigned)pic.Data.MemId-1];
         mfxSyncPoint& sp = task.sp;
 
         frame.Locked = true;
@@ -667,7 +667,7 @@ public:
 
         pic.Data.Y = nullptr;
         pic.Data.UV = nullptr;
-        pic.Data.FrameOrder = 0;
+        pic.Data.MemId = 0;
     }
 
     bool Encode(LPVOID picInPtr, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, int &ctsOffset)
