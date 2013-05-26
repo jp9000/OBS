@@ -636,8 +636,8 @@ public:
                 i++;
                 continue;
             }
-            task.frame->Locked = false;
             task.frame->MemId = 0;
+            task.frame->Locked -= 1;
             task.sp = nullptr;
             idle_tasks << msdk_locked_tasks[i];
             msdk_locked_tasks.Remove(i);
@@ -658,7 +658,7 @@ public:
         mfxFrameData& frame = frames[(unsigned)pic.Data.MemId-1];
         mfxSyncPoint& sp = task.sp;
 
-        frame.Locked = true;
+        frame.Locked += 1;
         task.frame = &frame;
 
         bs.DataLength = 0;
@@ -668,10 +668,6 @@ public:
         surf.Data.V = frame.V;
         surf.Data.Pitch = frame.Pitch;
         surf.Data.TimeStamp = timestampFromMS(pic.Data.TimeStamp);
-
-        pic.Data.Y = nullptr;
-        pic.Data.UV = nullptr;
-        pic.Data.MemId = 0;
     }
 
     bool Encode(LPVOID picInPtr, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, int &ctsOffset)

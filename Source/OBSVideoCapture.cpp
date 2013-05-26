@@ -136,11 +136,6 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
 
     videoEncoder->Encode(frameInfo.pic->picOut ? (LPVOID)frameInfo.pic->picOut : (LPVOID)frameInfo.pic->mfxOut, videoPackets, videoPacketTypes, bufferedTimes[0], ctsOffset);
     if(bUsing444) frameInfo.prevTexture->Unmap(0);
-    if(videoEncoder->isQSV())
-    {
-        mfxFrameData& data = frameInfo.pic->mfxOut->Data;
-        videoEncoder->RequestBuffers(&data);
-    }
 
     ctsOffsets << ctsOffset;
 
@@ -823,6 +818,7 @@ void OBS::MainCaptureLoop()
                                 if(bUsingQSV)
                                 {
                                     mfxFrameData& data = nextPicOut.mfxOut->Data;
+                                    videoEncoder->RequestBuffers(&data);
                                     convertInfo[i].outPitch  = data.Pitch;
                                     convertInfo[i].output[0] = data.Y;
                                     convertInfo[i].output[1] = data.UV;
@@ -850,6 +846,7 @@ void OBS::MainCaptureLoop()
                             if(bUsingQSV)
                             {
                                 mfxFrameData& data = picOut.mfxOut->Data;
+                                videoEncoder->RequestBuffers(&data);
                                 LPBYTE output[] = {data.Y, data.UV};
                                 Convert444toNV12((LPBYTE)map.pData, outputCX, map.RowPitch, data.Pitch, outputCY, 0, outputCY, output);
                             }
