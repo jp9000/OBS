@@ -109,7 +109,7 @@ struct BASE_EXPORT ProfileNodeInfo
 
         float fTimeTaken = (float)MicroToMS(avgTimeElapsed);
         float cpuTime = (float)MicroToMS(avgCpuTime);
-        float totalCpuTime = (float)cpuTimeElapsed*0.001;
+        float totalCpuTime = (float)cpuTimeElapsed*0.001f;
 
         if(avgPercentage >= minPercentage && fTimeTaken >= minTime)
         {
