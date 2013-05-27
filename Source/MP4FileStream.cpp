@@ -289,8 +289,8 @@ public:
 
         //---------------------------------------------------
 
-        HWND hwndProgressDialog = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_BUILDINGMP4), hwndMain, (DLGPROC)MP4ProgressDialogProc);
-        SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETRANGE32, 0, 100);
+        //HWND hwndProgressDialog = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_BUILDINGMP4), hwndMain, (DLGPROC)MP4ProgressDialogProc);
+        //SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETRANGE32, 0, 100);
 
         mdatStop = fileOut.GetPos();
 
@@ -344,7 +344,7 @@ public:
 
         UINT audioUnitDuration = fastHtonl(UINT(lastAudioTimeVal));
 
-        SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 25, 0);
+        //SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 25, 0);
 
         //-------------------------------------------
         // sound descriptor thingy.  this part made me die a little inside admittedly.
@@ -525,7 +525,7 @@ public:
                     }
                   PopBox(); //stsc
 
-                  SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 30, 0);
+                  //SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 30, 0);
                   //ProcessEvents();
 
                   PushBox(output, DWORD_BE('stsz')); //sample sizes
@@ -536,7 +536,7 @@ public:
                         output.OutputDword(fastHtonl(audioFrames[i].size));
                   PopBox();
 
-                  SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 40, 0);
+                  //SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 40, 0);
                   //ProcessEvents();
 
                   if(audioChunks.Num() && audioChunks.Last() > 0xFFFFFFFFLL)
@@ -562,7 +562,7 @@ public:
             PopBox(); //mdia
           PopBox(); //trak
 
-          SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 50, 0);
+          //SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 50, 0);
           //ProcessEvents();
 
           //------------------------------------------------------
@@ -678,7 +678,7 @@ public:
                     }
                   PopBox(); //stts
 
-                  SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 60, 0);
+                  //SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 60, 0);
                   //ProcessEvents();
 
                   PushBox(output, DWORD_BE('stss')); //list of keyframe (i-frame) IDs
@@ -698,7 +698,7 @@ public:
                     }
                   PopBox(); //ctts
 
-                  SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 70, 0);
+                  //SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 70, 0);
                   //ProcessEvents();
 
                   PushBox(output, DWORD_BE('stsc')); //sample to chunk list
@@ -743,7 +743,7 @@ public:
             PopBox(); //mdia
           PopBox(); //trak
 
-          SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 80, 0);
+          //SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 80, 0);
           //ProcessEvents();
 
           //------------------------------------------------------
@@ -796,7 +796,7 @@ public:
 
         App->EnableSceneSwitching(true);
 
-        DestroyWindow(hwndProgressDialog);
+        //DestroyWindow(hwndProgressDialog);
     }
 
     virtual void AddPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)

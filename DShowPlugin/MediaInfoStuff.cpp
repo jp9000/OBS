@@ -211,6 +211,7 @@ bool GetVideoOutputTypes(const List<MediaOutputInfo> &outputList, UINT width, UI
 
     return types.Num() != 0;
 }
+
 MediaOutputInfo* GetBestMediaOutput(const List<MediaOutputInfo> &outputList, UINT width, UINT height, UINT preferredType, UINT64 &frameInterval)
 {
     MediaOutputInfo *bestMediaOutput = NULL;
