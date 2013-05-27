@@ -3,7 +3,7 @@ ClassName       "Устройство"
 DeviceSelection "Выбор устройства"
 OK              "OK"
 
-CrossbarSelection.Open                  "Открыть кроссбар"
+CrossbarSelection.Open                  "Кроссбар"
 
 DeviceSelection.AudioDevice             "Аудио устройство:"
 DeviceSelection.Blend             "Смешивание (1-1000):"
