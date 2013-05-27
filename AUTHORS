@@ -26,6 +26,8 @@ Contributors:
                              as well as bugfixes and various other minor
                              features.
 
+  Palana                   - Intel Quick Sync Video encoding implementation. Wonder what's next :)
+
   HomeWorld                - Many many bug fixes, improved the text source
                              code significantly.  Text.  Loves text on the
                              stream.  A lot.  Added a rather disturbing
@@ -33,7 +35,7 @@ Contributors:
 
   ThoNohT                  - Bug fixes, many minor additions, translation,
                              features such as moving sources via arrow keys,
-                             additional menu options,
+                             additional menu options.
 
   Lucas Murray             - Added noise gate plugin, refactored settings
                              code, added 1:1 and fullscreen display.
