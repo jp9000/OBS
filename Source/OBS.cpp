@@ -571,11 +571,9 @@ OBS::OBS()
 
                     //slightly redundant I suppose seeing as both these things are being added at the same time
                     LOADPLUGINAPIVERPROC loadPluginAPIVer = (LOADPLUGINAPIVERPROC)GetProcAddress(hPlugin, "LoadPluginAPIVer");
-                    bool bAPIVer = true; // Default to true, so we still load plugins without LoadPluginAPIVer
                     if (loadPluginAPIVer) {
-                        bAPIVer = loadPluginAPIVer(OBSGetAPIVersion());
-                    }
-                    if (bAPIVer) {
+                        bLoaded = loadPluginAPIVer(OBSGetAPIVersion());
+                    } else {
                         LOADPLUGINPROC loadPlugin = (LOADPLUGINPROC)GetProcAddress(hPlugin, "LoadPlugin");
                         bLoaded = loadPlugin && loadPlugin();
                     }
