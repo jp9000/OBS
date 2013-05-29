@@ -310,12 +310,13 @@ LRESULT CALLBACK NoiseGateSettings::PBSubclassProc(HWND hWnd, UINT uMsg, WPARAM 
         {
             RECT clRect, eclRect;
             PAINTSTRUCT ps;
-            int orientation, position;
             PBRANGE pbRange;
+            int orientation, position;
+            float perc;
 
             HBRUSH hGold  = CreateSolidBrush(0x37AFD4);
 
-            orientation = (GetWindowLongPtr(hWnd, GWL_STYLE) & PBS_VERTICAL) ? 1:0;  //0 = horizontal, 1 = vertical
+            orientation = GetWindowLongPtr(hWnd, GWL_STYLE) & PBS_VERTICAL;  // false = horizontal, true = vertical
 
             position = (int)SendMessage(hWnd, PBM_GETPOS, 0, 0);
 
@@ -326,22 +327,21 @@ LRESULT CALLBACK NoiseGateSettings::PBSubclassProc(HWND hWnd, UINT uMsg, WPARAM 
 
             HDC hDC = BeginPaint(hWnd, &ps);
             
+            perc = float(position - pbRange.iLow) / float(pbRange.iHigh - pbRange.iLow);
+
             if(orientation)
             {
-                clRect.top = clRect.bottom - int(float(clRect.bottom - clRect.top) * float(position - pbRange.iLow) / (float)(pbRange.iHigh - pbRange.iLow));
+                clRect.top = clRect.bottom - int(float(clRect.bottom - clRect.top) * perc);
                 eclRect.bottom = clRect.top;
-
-                FillRect(hDC, &eclRect, (HBRUSH)COLOR_WINDOW);
-                FillRect(hDC, &clRect, hGold);
             }
             else
             {
-                clRect.right = clRect.left + int(float(clRect.right - clRect.left) * float(position - pbRange.iLow) / (float)(pbRange.iHigh - pbRange.iLow));
+                clRect.right = clRect.left + int(float(clRect.right - clRect.left) * perc);
                 eclRect.left = clRect.right;
-
-                FillRect(hDC, &eclRect, (HBRUSH)COLOR_WINDOW);
-                FillRect(hDC, &clRect, hGold);
             }
+
+            FillRect(hDC, &eclRect, (HBRUSH)COLOR_WINDOW);
+            FillRect(hDC, &clRect, hGold);
 
             DeleteObject(hGold);
 
