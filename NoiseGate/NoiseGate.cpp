@@ -311,12 +311,13 @@ LRESULT CALLBACK NoiseGateSettings::PBSubclassProc(HWND hWnd, UINT uMsg, WPARAM 
             RECT clRect, eclRect;
             PAINTSTRUCT ps;
             PBRANGE pbRange;
-            int orientation, position;
+            int position;
+            bool orientation;
             float perc;
 
             HBRUSH hGreen  = CreateSolidBrush(0x32CD32);
 
-            orientation = GetWindowLongPtr(hWnd, GWL_STYLE) & PBS_VERTICAL;  // false = horizontal, true = vertical
+            orientation = (GetWindowLongPtr(hWnd, GWL_STYLE) & PBS_VERTICAL) == PBS_VERTICAL;  // false = horizontal, true = vertical
 
             position = (int)SendMessage(hWnd, PBM_GETPOS, 0, 0);
 
@@ -367,7 +368,7 @@ void NoiseGateSettings::MsgInitDialog()
     RefreshConfig();
 
     // Volume preview
-    // Custom drawn progress bar
+    // Custom drawn progress bar, beware, static member
     ctrlHwnd = GetDlgItem(hwnd, IDC_CURVOL);
     SetWindowSubclass(ctrlHwnd, PBSubclassProc, 0, 0);
 
