@@ -108,6 +108,7 @@ public:
     virtual void CancelSettings();
     virtual bool HasDefaults() const;
     virtual void SetDefaults();
+    static LRESULT CALLBACK PBSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 };
 
 //============================================================================
