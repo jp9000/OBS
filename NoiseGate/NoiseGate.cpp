@@ -314,7 +314,7 @@ LRESULT CALLBACK NoiseGateSettings::PBSubclassProc(HWND hWnd, UINT uMsg, WPARAM 
             int orientation, position;
             float perc;
 
-            HBRUSH hGold  = CreateSolidBrush(0x37AFD4);
+            HBRUSH hGreen  = CreateSolidBrush(0x32CD32);
 
             orientation = GetWindowLongPtr(hWnd, GWL_STYLE) & PBS_VERTICAL;  // false = horizontal, true = vertical
 
@@ -341,9 +341,9 @@ LRESULT CALLBACK NoiseGateSettings::PBSubclassProc(HWND hWnd, UINT uMsg, WPARAM 
             }
 
             FillRect(hDC, &eclRect, (HBRUSH)COLOR_WINDOW);
-            FillRect(hDC, &clRect, hGold);
+            FillRect(hDC, &clRect, hGreen);
 
-            DeleteObject(hGold);
+            DeleteObject(hGreen);
 
             EndPaint(hWnd, &ps);
 
