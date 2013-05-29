@@ -25,7 +25,7 @@
 
 
 typedef bool (*LOADPLUGINPROC)();
-typedef bool (*LOADPLUGINAPIVERPROC)(UINT);
+typedef bool (*LOADPLUGINEXPROC)(UINT);
 typedef void (*UNLOADPLUGINPROC)();
 typedef CTSTR (*GETPLUGINNAMEPROC)();
 
@@ -570,9 +570,9 @@ OBS::OBS()
                     bool bLoaded = false;
 
                     //slightly redundant I suppose seeing as both these things are being added at the same time
-                    LOADPLUGINAPIVERPROC loadPluginAPIVer = (LOADPLUGINAPIVERPROC)GetProcAddress(hPlugin, "LoadPluginAPIVer");
-                    if (loadPluginAPIVer) {
-                        bLoaded = loadPluginAPIVer(OBSGetAPIVersion());
+                    LOADPLUGINEXPROC loadPluginEx = (LOADPLUGINEXPROC)GetProcAddress(hPlugin, "LoadPluginEx");
+                    if (loadPluginEx) {
+                        bLoaded = loadPluginEx(OBSGetAPIVersion());
                     } else {
                         LOADPLUGINPROC loadPlugin = (LOADPLUGINPROC)GetProcAddress(hPlugin, "LoadPlugin");
                         bLoaded = loadPlugin && loadPlugin();
