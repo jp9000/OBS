@@ -216,7 +216,6 @@
     <ClInclude Include="frame.h" />
     <ClInclude Include="huffman.h" />
     <ClInclude Include="hufftab.h" />
-    <ClInclude Include="joint.h" />
     <ClInclude Include="ltp.h" />
     <ClInclude Include="psych.h" />
     <ClInclude Include="tns.h" />

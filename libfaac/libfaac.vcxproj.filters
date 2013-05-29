@@ -82,9 +82,6 @@
     <ClInclude Include="hufftab.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="joint.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ltp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
