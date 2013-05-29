@@ -299,6 +299,60 @@ INT_PTR NoiseGateSettings::ProcMessage(UINT message, WPARAM wParam, LPARAM lPara
     return FALSE;
 }
 
+LRESULT CALLBACK NoiseGateSettings::PBSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+{
+    switch(uMsg)
+    {
+    case WM_ERASEBKGND:
+        return TRUE;
+
+    case WM_PAINT:
+        {
+            RECT clRect, eclRect;
+            PAINTSTRUCT ps;
+            PBRANGE pbRange;
+            int orientation, position;
+            float perc;
+
+            HBRUSH hGold  = CreateSolidBrush(0x37AFD4);
+
+            orientation = GetWindowLongPtr(hWnd, GWL_STYLE) & PBS_VERTICAL;  // false = horizontal, true = vertical
+
+            position = (int)SendMessage(hWnd, PBM_GETPOS, 0, 0);
+
+            SendMessage(hWnd, PBM_GETRANGE, TRUE, (LPARAM)&pbRange);
+
+            GetClientRect(hWnd, &clRect);
+            memcpy(&eclRect, &clRect, sizeof(RECT));
+
+            HDC hDC = BeginPaint(hWnd, &ps);
+            
+            perc = float(position - pbRange.iLow) / float(pbRange.iHigh - pbRange.iLow);
+
+            if(orientation)
+            {
+                clRect.top = clRect.bottom - int(float(clRect.bottom - clRect.top) * perc);
+                eclRect.bottom = clRect.top;
+            }
+            else
+            {
+                clRect.right = clRect.left + int(float(clRect.right - clRect.left) * perc);
+                eclRect.left = clRect.right;
+            }
+
+            FillRect(hDC, &eclRect, (HBRUSH)COLOR_WINDOW);
+            FillRect(hDC, &clRect, hGold);
+
+            DeleteObject(hGold);
+
+            EndPaint(hWnd, &ps);
+
+            return TRUE;
+        }
+    }
+    return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+}
+
 void NoiseGateSettings::MsgInitDialog()
 {
     HWND ctrlHwnd;
@@ -313,9 +367,10 @@ void NoiseGateSettings::MsgInitDialog()
     RefreshConfig();
 
     // Volume preview
-    // FIXME: Don't use a progress bar as the default Windows style smoothly interpolates between
-    //        values making if difficult to see the real sound level.
+    // Custom drawn progress bar
     ctrlHwnd = GetDlgItem(hwnd, IDC_CURVOL);
+    SetWindowSubclass(ctrlHwnd, PBSubclassProc, 0, 0);
+
     SendMessage(ctrlHwnd, PBM_SETRANGE32, 0, CURVOL_RESOLUTION); // Bottom = 0, top = CURVOL_RESOLUTION
     RepaintVolume(); // Repaint immediately
     SetTimer(hwnd, REPAINT_TIMER_ID, 16, NULL); // Repaint every 16ms (~60fps)
