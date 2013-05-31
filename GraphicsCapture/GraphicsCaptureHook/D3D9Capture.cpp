@@ -310,6 +310,28 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
     factory->Release();
 
     //------------------------------------------------
+
+    IDirect3DSurface9 *backBuffer;
+    hErr = device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &backBuffer);
+    if (FAILED(hErr)) {
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9GPUHook: Could not get back buffer, result = " << (UINT)hErr << endl;
+        goto finishGPUHook;
+    }
+
+    D3DSURFACE_DESC sd;
+    ZeroMemory(&sd, sizeof(sd));
+    if (FAILED(hErr = backBuffer->GetDesc(&sd))) {
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9GPUHook: Could not get back buffer surface info, result = " << (UINT)hErr << endl;
+        goto finishGPUHook;
+    }
+
+    //sometimes the backbuffer does not actually match the swap chain size,
+    //so you have to use the backbuffer size to get the right value
+    d3d9CaptureInfo.cx = sd.Width;
+    d3d9CaptureInfo.cy = sd.Height;
+    backBuffer->Release();
+
+    //------------------------------------------------
     D3D10_TEXTURE2D_DESC texGameDesc;
     ZeroMemory(&texGameDesc, sizeof(texGameDesc));
     texGameDesc.Width               = d3d9CaptureInfo.cx;
@@ -439,31 +461,63 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
     HRESULT hErr;
     UINT pitch;
 
-    for(UINT i=0; i<NUM_BUFFERS; i++)
+    //------------------------------------------------
+
+    IDirect3DSurface9 *backBuffer;
+    D3DSURFACE_DESC sd;
+    ZeroMemory(&sd, sizeof(sd));
+
+    hErr = device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &backBuffer);
+    if (FAILED(hErr)) {
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9CPUHook: Could not get back buffer, result = " << (UINT)hErr << endl;
+        bSuccess = false;
+    }
+
+    if (bSuccess)
     {
-        if(FAILED(hErr = device->CreateOffscreenPlainSurface(d3d9CaptureInfo.cx, d3d9CaptureInfo.cy, (D3DFORMAT)d3d9Format, D3DPOOL_SYSTEMMEM, &textures[i], NULL)))
-        {
-            RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9CPUHook: device->CreateOffscreenPlainSurface " << i << " failed, result = " << (UINT)hErr << endl;
+        if (FAILED(hErr = backBuffer->GetDesc(&sd))) {
+            RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9CPUHook: Could not get back buffer surface info, result = " << (UINT)hErr << endl;
             bSuccess = false;
-            break;
         }
 
-        if(i == (NUM_BUFFERS-1))
+    }
+
+    if (bSuccess)
+    {
+        //sometimes the backbuffer does not actually match the swap chain size,
+        //so you have to use the backbuffer size to get the right value
+        d3d9CaptureInfo.cx = sd.Width;
+        d3d9CaptureInfo.cy = sd.Height;
+        backBuffer->Release();
+
+        for(UINT i=0; i<NUM_BUFFERS; i++)
         {
-            D3DLOCKED_RECT lr;
-            if(FAILED(hErr = textures[i]->LockRect(&lr, NULL, D3DLOCK_READONLY)))
+            if(FAILED(hErr = device->CreateOffscreenPlainSurface(d3d9CaptureInfo.cx, d3d9CaptureInfo.cy, (D3DFORMAT)d3d9Format, D3DPOOL_SYSTEMMEM, &textures[i], NULL)))
             {
-                RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9CPUHook: textures[" << i << "]->LockRect failed, result = " << (UINT)hErr << endl;
+                RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9CPUHook: device->CreateOffscreenPlainSurface " << i << " failed, result = " << (UINT)hErr << endl;
                 bSuccess = false;
                 break;
             }
 
-            pitch = lr.Pitch;
-            textures[i]->UnlockRect();
+            if(i == (NUM_BUFFERS-1))
+            {
+                D3DLOCKED_RECT lr;
+                if(FAILED(hErr = textures[i]->LockRect(&lr, NULL, D3DLOCK_READONLY)))
+                {
+                    RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9CPUHook: textures[" << i << "]->LockRect failed, result = " << (UINT)hErr << endl;
+                    bSuccess = false;
+                    break;
+                }
+
+                pitch = lr.Pitch;
+                textures[i]->UnlockRect();
+            }
         }
     }
 
-    if(bSuccess)
+    //------------------------------------------------
+
+    if (bSuccess)
     {
         for(UINT i=0; i<NUM_BUFFERS; i++)
         {
