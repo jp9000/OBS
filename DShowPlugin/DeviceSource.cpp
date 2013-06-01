@@ -1241,7 +1241,6 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
             DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y+size.y, x2, pos.y);
 
         if(bUsePointFiltering) delete(sampler);
-		delete(drawShader);
 
         if(colorConvertShader)
             LoadPixelShader(oldShader);
