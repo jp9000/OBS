@@ -155,6 +155,8 @@ class DeviceSource : public ImageSource
 
     UINT            opacity;
 
+    int				gamma;
+
     //---------------------------------
 
     LPBYTE          lpImageBuffer;

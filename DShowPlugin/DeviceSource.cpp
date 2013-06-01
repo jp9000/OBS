@@ -1177,6 +1177,7 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
     if(texture && bReadyToDraw)
     {
         Shader *oldShader = GetCurrentPixelShader();
+		Shader *drawShader = CreatePixelShaderFromFile(TEXT("shaders\\DrawTexture_ColorAdjust.pShader"));
         SamplerState *sampler = NULL;
 
         if(colorConvertShader)
@@ -1216,6 +1217,9 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
             x2 = x+size.x;
         }
 
+		gamma = data->GetInt(TEXT("gamma"), 100);
+
+		float fGamma = float(-(gamma-100) + 100) * 0.01f;
         float fOpacity = float(opacity)*0.01f;
         DWORD opacity255 = DWORD(fOpacity*255.0f);
 
@@ -1226,12 +1230,18 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
             LoadSamplerState(sampler, 0);
         }
 
+        LoadPixelShader(drawShader);
+        HANDLE hGamma = drawShader->GetParameterByName(TEXT("gamma"));
+        if(hGamma)
+            drawShader->SetFloat(hGamma, fGamma);
+
         if(bFlip)
             DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y);
         else
             DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y+size.y, x2, pos.y);
 
         if(bUsePointFiltering) delete(sampler);
+		delete(drawShader);
 
         if(colorConvertShader)
             LoadPixelShader(oldShader);

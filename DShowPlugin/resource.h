@@ -53,6 +53,8 @@
 #define IDC_DELAY_EDIT                  1037
 #define IDC_VIDEODELAY                  1038
 #define IDC_DELAY                       1038
+#define IDC_GAMMA2                      1039
+#define IDC_GAMMAVAL                    1151
 
 // Next default values for new objects
 // 
