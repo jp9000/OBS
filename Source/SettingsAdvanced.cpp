@@ -22,6 +22,8 @@
 #include <Winsock2.h>
 #include <iphlpapi.h>
 
+bool CheckQSVHardwareSupport(bool log);
+
 //============================================================================
 // SettingsAdvanced class
 
@@ -262,6 +264,9 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 SendMessage(GetDlgItem(hwnd, IDC_UNLOCKHIGHFPS), BM_SETCHECK, bUnlockFPS ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 //------------------------------------
+
+                bool bHasQSV = CheckQSVHardwareSupport(false);
+                EnableWindow(GetDlgItem(hwnd, IDC_USEQSV), bHasQSV);
 
                 bool bUseQSV = GlobalConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_USEQSV), BM_SETCHECK, bUseQSV ? BST_CHECKED : BST_UNCHECKED, 0);

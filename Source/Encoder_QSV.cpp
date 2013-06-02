@@ -91,23 +91,6 @@ namespace
         pnFrameRateExtD = 10000;
     }
 
-    bool CheckQSVHardwareSupport()
-    {
-        MFXVideoSession test;
-        for(int i = 0; i < sizeof(validImpl)/sizeof(validImpl[0]); i++)
-        {
-            mfxIMPL impl = validImpl[i];
-            mfxVersion ver = version;
-            auto result = test.Init(impl, &ver);
-            if(result != MFX_ERR_NONE)
-                continue;
-            Log(TEXT("Found QSV hardware support"));
-            return true;
-        }
-        Log(TEXT("Failed to initialize QSV hardware session"));
-        return false;
-    }
-
 #define MFX_TIME_FACTOR 90
     template<class T>
     auto timestampFromMS(T t) -> decltype(t*MFX_TIME_FACTOR)
@@ -121,6 +104,25 @@ namespace
         return t/MFX_TIME_FACTOR;
     }
 #undef MFX_TIME_FACTOR
+}
+
+bool CheckQSVHardwareSupport(bool log=true)
+{
+    MFXVideoSession test;
+    for(int i = 0; i < sizeof(validImpl)/sizeof(validImpl[0]); i++)
+    {
+        mfxIMPL impl = validImpl[i];
+        mfxVersion ver = version;
+        auto result = test.Init(impl, &ver);
+        if(result != MFX_ERR_NONE)
+            continue;
+        if(log)
+            Log(TEXT("Found QSV hardware support"));
+        return true;
+    }
+    if(log)
+        Log(TEXT("Failed to initialize QSV hardware session"));
+    return false;
 }
 
 struct VideoPacket
