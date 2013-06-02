@@ -18,6 +18,8 @@
 
 
 uniform Texture2D diffuseTexture;
+uniform float4 outputColor;
+uniform float gamma;
 
 SamplerState textureSampler
 {
@@ -44,5 +46,9 @@ float4 main(VertData input) : SV_Target
                          yuvx.r + (2.01562*yuvx.g),
                          1.0);
 
-    return saturate(rgbx);
+	rgbx = saturate(rgbx);
+
+	rgbx.rgb = pow(rgbx.rgb, gamma);
+
+    return rgbx;
 }

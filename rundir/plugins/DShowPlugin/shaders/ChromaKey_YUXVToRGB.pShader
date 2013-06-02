@@ -25,6 +25,7 @@ uniform float2 pixelSize;
 uniform float keySimilarity;
 uniform float keyBlend;
 uniform float keySpill;
+uniform float gamma;
 
 SamplerState textureSampler
 {
@@ -89,6 +90,8 @@ float4 main(VertData input) : SV_Target
     rgbx.rgb = saturate(spillDesaturation)*(1.0-spillVal) + rgbx.rgb*spillVal;
 
     //-----------------------------
+
+	rgbx.rgb = pow(rgbx.rgb, gamma);
 
     return rgbx * outputColor;
 }

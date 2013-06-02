@@ -1920,7 +1920,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                             source->SetInt(TEXT("keySimilarity"),       configData->data->GetInt(TEXT("keySimilarity"), 0));
                             source->SetInt(TEXT("keyBlend"),            configData->data->GetInt(TEXT("keyBlend"), 80));
                             source->SetInt(TEXT("keySpillReduction"),   configData->data->GetInt(TEXT("keySpillReduction"), 50));
-                            source->SetInt(TEXT("gamma"),				configData->data->GetInt(TEXT("gamma"), 100));
+                            source->SetInt(TEXT("gamma"),               configData->data->GetInt(TEXT("gamma"), 100));
                         }
                     }
 
