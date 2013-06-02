@@ -271,19 +271,15 @@ public:
         bDupeFrames = bDupeFrames_;
 
         memset(&params, 0, sizeof(params));
-        //params.AsyncDepth = 0;
         params.mfx.CodecId = MFX_CODEC_AVC;
-        params.mfx.TargetUsage = MFX_TARGETUSAGE_BEST_QUALITY;//SPEED;
+        params.mfx.TargetUsage = MFX_TARGETUSAGE_BEST_QUALITY;
         params.mfx.TargetKbps = maxBitrate;
         params.mfx.MaxKbps = maxBitrate;
         params.mfx.BufferSizeInKB = bufferSize/8;
-        //params.mfx.InitialDelayInKB = 1;
-        //params.mfx.GopRefDist = 1;
-        //params.mfx.NumRefFrame = 0;
-        params.mfx.GopPicSize = 61;
-        params.mfx.GopRefDist = 3;
-        params.mfx.GopOptFlag = MFX_GOP_STRICT;
-        params.mfx.IdrInterval = 2;
+        params.mfx.GopOptFlag = MFX_GOP_CLOSED | MFX_GOP_STRICT;
+        params.mfx.GopPicSize = 250;
+        params.mfx.GopRefDist = 8;
+        params.mfx.IdrInterval = 0;
         params.mfx.NumSlice = 1;
 
         params.mfx.RateControlMethod = bUseCBR ? MFX_RATECONTROL_CBR : MFX_RATECONTROL_VBR;
