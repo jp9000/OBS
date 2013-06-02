@@ -305,6 +305,46 @@ public:
         this->width  = width;
         this->height = height;
 
+        BOOL bUseCustomParams = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCustomSettings"))
+                             && AppConfig->GetInt(TEXT("Video Encoding"), TEXT("QSVUseVideoEncoderSettings"));
+        if(bUseCustomParams)
+        {
+            StringList paramList;
+            String strCustomParams = AppConfig->GetString(TEXT("Video Encoding"), TEXT("CustomSettings"));
+            strCustomParams.KillSpaces();
+
+            if(strCustomParams.IsValid())
+            {
+                Log(TEXT("Using custom x264 settings: \"%s\""), strCustomParams.Array());
+
+                strCustomParams.GetTokenList(paramList, ' ', FALSE);
+                for(UINT i=0; i<paramList.Num(); i++)
+                {
+                    String &strParam = paramList[i];
+                    if(!schr(strParam, '='))
+                        continue;
+
+                    String strParamName = strParam.GetToken(0, '=');
+                    String strParamVal  = strParam.GetTokenOffset(1, '=');
+
+                    if(strParamName == "keyint")
+                    {
+                        int keyint = strParamVal.ToInt();
+                        if(keyint < 0)
+                            continue;
+                        params.mfx.GopPicSize = keyint;
+                    }
+                    else if(strParamName == "bframes")
+                    {
+                        int bframes = strParamVal.ToInt();
+                        if(bframes < 0)
+                            continue;
+                        params.mfx.GopRefDist = bframes;
+                    }
+                }
+            }
+        }
+
         enc.reset(new MFXVideoENCODE(session));
         enc->Close();
 
