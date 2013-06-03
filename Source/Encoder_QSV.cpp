@@ -91,23 +91,6 @@ namespace
         pnFrameRateExtD = 10000;
     }
 
-    bool CheckQSVHardwareSupport()
-    {
-        MFXVideoSession test;
-        for(int i = 0; i < sizeof(validImpl)/sizeof(validImpl[0]); i++)
-        {
-            mfxIMPL impl = validImpl[i];
-            mfxVersion ver = version;
-            auto result = test.Init(impl, &ver);
-            if(result != MFX_ERR_NONE)
-                continue;
-            Log(TEXT("Found QSV hardware support"));
-            return true;
-        }
-        Log(TEXT("Failed to initialize QSV hardware session"));
-        return false;
-    }
-
 #define MFX_TIME_FACTOR 90
     template<class T>
     auto timestampFromMS(T t) -> decltype(t*MFX_TIME_FACTOR)
@@ -121,6 +104,25 @@ namespace
         return t/MFX_TIME_FACTOR;
     }
 #undef MFX_TIME_FACTOR
+}
+
+bool CheckQSVHardwareSupport(bool log=true)
+{
+    MFXVideoSession test;
+    for(int i = 0; i < sizeof(validImpl)/sizeof(validImpl[0]); i++)
+    {
+        mfxIMPL impl = validImpl[i];
+        mfxVersion ver = version;
+        auto result = test.Init(impl, &ver);
+        if(result != MFX_ERR_NONE)
+            continue;
+        if(log)
+            Log(TEXT("Found QSV hardware support"));
+        return true;
+    }
+    if(log)
+        Log(TEXT("Failed to initialize QSV hardware session"));
+    return false;
 }
 
 struct VideoPacket
@@ -271,19 +273,15 @@ public:
         bDupeFrames = bDupeFrames_;
 
         memset(&params, 0, sizeof(params));
-        //params.AsyncDepth = 0;
         params.mfx.CodecId = MFX_CODEC_AVC;
-        params.mfx.TargetUsage = MFX_TARGETUSAGE_BEST_QUALITY;//SPEED;
+        params.mfx.TargetUsage = MFX_TARGETUSAGE_BEST_QUALITY;
         params.mfx.TargetKbps = maxBitrate;
         params.mfx.MaxKbps = maxBitrate;
         params.mfx.BufferSizeInKB = bufferSize/8;
-        //params.mfx.InitialDelayInKB = 1;
-        //params.mfx.GopRefDist = 1;
-        //params.mfx.NumRefFrame = 0;
-        params.mfx.GopPicSize = 61;
-        params.mfx.GopRefDist = 3;
-        params.mfx.GopOptFlag = MFX_GOP_STRICT;
-        params.mfx.IdrInterval = 2;
+        params.mfx.GopOptFlag = MFX_GOP_CLOSED | MFX_GOP_STRICT;
+        params.mfx.GopPicSize = 250;
+        params.mfx.GopRefDist = 8;
+        params.mfx.IdrInterval = 0;
         params.mfx.NumSlice = 1;
 
         params.mfx.RateControlMethod = bUseCBR ? MFX_RATECONTROL_CBR : MFX_RATECONTROL_VBR;
@@ -306,6 +304,46 @@ public:
 
         this->width  = width;
         this->height = height;
+
+        BOOL bUseCustomParams = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCustomSettings"))
+                             && AppConfig->GetInt(TEXT("Video Encoding"), TEXT("QSVUseVideoEncoderSettings"));
+        if(bUseCustomParams)
+        {
+            StringList paramList;
+            String strCustomParams = AppConfig->GetString(TEXT("Video Encoding"), TEXT("CustomSettings"));
+            strCustomParams.KillSpaces();
+
+            if(strCustomParams.IsValid())
+            {
+                Log(TEXT("Using custom x264 settings: \"%s\""), strCustomParams.Array());
+
+                strCustomParams.GetTokenList(paramList, ' ', FALSE);
+                for(UINT i=0; i<paramList.Num(); i++)
+                {
+                    String &strParam = paramList[i];
+                    if(!schr(strParam, '='))
+                        continue;
+
+                    String strParamName = strParam.GetToken(0, '=');
+                    String strParamVal  = strParam.GetTokenOffset(1, '=');
+
+                    if(strParamName == "keyint")
+                    {
+                        int keyint = strParamVal.ToInt();
+                        if(keyint < 0)
+                            continue;
+                        params.mfx.GopPicSize = keyint;
+                    }
+                    else if(strParamName == "bframes")
+                    {
+                        int bframes = strParamVal.ToInt();
+                        if(bframes < 0)
+                            continue;
+                        params.mfx.GopRefDist = bframes;
+                    }
+                }
+            }
+        }
 
         enc.reset(new MFXVideoENCODE(session));
         enc->Close();

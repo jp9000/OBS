@@ -144,6 +144,7 @@ class DeviceSource : public ImageSource
     UINT            texturePitch;
     bool            bCapturing, bFiltersLoaded;
     Shader          *colorConvertShader;
+    Shader          *drawShader;
 
     bool            bUseBuffering;
     HANDLE          hStopSampleEvent;
@@ -154,6 +155,8 @@ class DeviceSource : public ImageSource
     List<SampleData*> samples;
 
     UINT            opacity;
+
+    int             gamma;
 
     //---------------------------------
 

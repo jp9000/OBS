@@ -834,6 +834,8 @@ void DeviceSource::Start()
     if(bCapturing || !control)
         return;
 
+    drawShader = CreatePixelShaderFromFile(TEXT("shaders\\DrawTexture_ColorAdjust.pShader"));
+
     HRESULT err;
     if(FAILED(err = control->Run()))
     {
@@ -846,6 +848,9 @@ void DeviceSource::Start()
 
 void DeviceSource::Stop()
 {
+    delete drawShader;
+    drawShader = NULL;
+
     if(!bCapturing)
         return;
 
@@ -1179,6 +1184,9 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
         Shader *oldShader = GetCurrentPixelShader();
         SamplerState *sampler = NULL;
 
+        gamma = data->GetInt(TEXT("gamma"), 100);
+        float fGamma = float(-(gamma-100) + 100) * 0.01f;
+
         if(colorConvertShader)
         {
             LoadPixelShader(colorConvertShader);
@@ -1196,6 +1204,15 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
                 colorConvertShader->SetFloat  (colorConvertShader->GetParameterByName(TEXT("keySimilarity")),   fSimilarity);
                 colorConvertShader->SetFloat  (colorConvertShader->GetParameterByName(TEXT("keyBlend")),        fBlendVal);
                 colorConvertShader->SetFloat  (colorConvertShader->GetParameterByName(TEXT("keySpill")),        fSpillVal);
+            }
+            colorConvertShader->SetFloat  (colorConvertShader->GetParameterByName(TEXT("gamma")),           fGamma);
+        }
+        else {
+            if(fGamma != 1.0f && bFiltersLoaded) {
+                LoadPixelShader(drawShader);
+                HANDLE hGamma = drawShader->GetParameterByName(TEXT("gamma"));
+                if(hGamma)
+                    drawShader->SetFloat(hGamma, fGamma);
             }
         }
 
@@ -1233,7 +1250,7 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
 
         if(bUsePointFiltering) delete(sampler);
 
-        if(colorConvertShader)
+        if(colorConvertShader || fGamma != 1.0f)
             LoadPixelShader(oldShader);
     }
 }

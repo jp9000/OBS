@@ -914,6 +914,19 @@ static void OpenPropertyPagesByName(HWND hwnd, String devicename, String devicei
     }
 }
 
+int SetSliderText(HWND hwndParent, int controlSlider, int controlText)
+{
+    HWND hwndSlider = GetDlgItem(hwndParent, controlSlider);
+    HWND hwndText   = GetDlgItem(hwndParent, controlText);
+
+    int sliderVal = (int)SendMessage(hwndSlider, TBM_GETPOS, 0, 0);
+    float floatVal = float(sliderVal)*0.01f;
+
+    SetWindowText(hwndText, FormattedString(TEXT("%.02f"), floatVal));
+
+    return sliderVal;
+}
+
 static IAMCrossbar *GetFilterCrossbar(IBaseFilter *filter)
 {
     IAMCrossbar *crossbar = NULL;
@@ -978,6 +991,16 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 SendMessage(GetDlgItem(hwnd, IDC_OPACITY), UDM_SETRANGE32, 0, 100);
                 SendMessage(GetDlgItem(hwnd, IDC_OPACITY), UDM_SETPOS32, 0, opacity);
+
+                int gammaVal = configData->data->GetInt(TEXT("gamma"), 100);
+
+                HWND hwndTemp = GetDlgItem(hwnd, IDC_GAMMA2);
+                SendMessage(hwndTemp, TBM_CLEARTICS, FALSE, 0);
+                SendMessage(hwndTemp, TBM_SETRANGE, FALSE, MAKELPARAM(50, 175));
+                SendMessage(hwndTemp, TBM_SETTIC, 0, 100);
+                SendMessage(hwndTemp, TBM_SETPOS, TRUE, gammaVal);
+
+                SetSliderText(hwnd, IDC_GAMMA2, IDC_GAMMAVAL);
 
                 //------------------------------------------
 
@@ -1053,7 +1076,6 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 //------------------------------------------
 
-                HWND hwndTemp;
                 int soundOutputType = configData->data->GetInt(TEXT("soundOutputType"), 1);
                 switch(soundOutputType) {
                     case 0:
@@ -1178,6 +1200,20 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 ImageSource *source = API->GetSceneImageSource(configData->lpName);
                 if(source)
                     source->SetInt(TEXT("useChromaKey"), true);
+            }
+            break;
+
+        case WM_HSCROLL:
+            {
+                if(GetDlgCtrlID((HWND)lParam) == IDC_GAMMA2)
+                {
+                    int gamma = SetSliderText(hwnd, IDC_GAMMA2, IDC_GAMMAVAL);
+
+                    ConfigDialogData *info = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
+                    ImageSource *source = API->GetSceneImageSource(info->lpName);
+                    if(source)
+                        source->SetInt(TEXT("gamma"), gamma);
+                }
             }
             break;
 
@@ -1795,6 +1831,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         configData->data->SetInt(TEXT("flipImage"), bFlip);
                         configData->data->SetInt(TEXT("flipImageHorizontal"), bFlipHorizontal);
                         configData->data->SetInt(TEXT("usePointFiltering"), bUsePointFiltering);
+                        configData->data->SetInt(TEXT("gamma"), (int)SendMessage(GetDlgItem(hwnd, IDC_GAMMA2), TBM_GETPOS, 0, 0));
 
                         //------------------------------------------
 
@@ -1894,6 +1931,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                             source->SetInt(TEXT("keySimilarity"),       configData->data->GetInt(TEXT("keySimilarity"), 0));
                             source->SetInt(TEXT("keyBlend"),            configData->data->GetInt(TEXT("keyBlend"), 80));
                             source->SetInt(TEXT("keySpillReduction"),   configData->data->GetInt(TEXT("keySpillReduction"), 50));
+                            source->SetInt(TEXT("gamma"),               configData->data->GetInt(TEXT("gamma"), 100));
                         }
                     }
 

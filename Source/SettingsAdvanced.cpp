@@ -22,6 +22,8 @@
 #include <Winsock2.h>
 #include <iphlpapi.h>
 
+bool CheckQSVHardwareSupport(bool log);
+
 //============================================================================
 // SettingsAdvanced class
 
@@ -105,6 +107,9 @@ void SettingsAdvanced::ApplySettings()
     BOOL bUseQSV = SendMessage(GetDlgItem(hwnd, IDC_USEQSV), BM_GETCHECK, 0, 0) == BST_CHECKED;
     GlobalConfig->SetInt(TEXT("Video Encoding"), TEXT("UseQSV"), bUseQSV);
 
+    BOOL bQSVUseVideoEncoderSettings = SendMessage(GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    AppConfig->SetInt(TEXT("Video Encoding"), TEXT("QSVUseVideoEncoderSettings"), bQSVUseVideoEncoderSettings);
+
     //------------------------------------
 
     BOOL bSyncToVideoTime = SendMessage(GetDlgItem(hwnd, IDC_SYNCTOVIDEOTIME), BM_GETCHECK, 0, 0) == BST_CHECKED;
@@ -154,6 +159,8 @@ void SettingsAdvanced::SetDefaults()
     EnableWindow(GetDlgItem(hwnd, IDC_VIDEOENCODERSETTINGS), FALSE);
     SendMessage(GetDlgItem(hwnd, IDC_UNLOCKHIGHFPS), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_USEQSV), BM_SETCHECK, BST_UNCHECKED, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS), BM_SETCHECK, BST_UNCHECKED, 0);
+    EnableWindow(GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS), FALSE);
     SendMessage(GetDlgItem(hwnd, IDC_SYNCTOVIDEOTIME), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_USEMICQPC), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_AUDIOTIMEADJUST), UDM_SETPOS32, 0, 0);
@@ -263,8 +270,20 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 //------------------------------------
 
+                bool bHasQSV = CheckQSVHardwareSupport(false);
+                EnableWindow(GetDlgItem(hwnd, IDC_USEQSV), bHasQSV);
+
                 bool bUseQSV = GlobalConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_USEQSV), BM_SETCHECK, bUseQSV ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                bool bQSVUseVideoEncoderSettings = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("QSVUseVideoEncoderSettings")) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS), BM_SETCHECK, bQSVUseVideoEncoderSettings ? BST_CHECKED : BST_UNCHECKED, 0);
+                
+                ti.lpszText = (LPWSTR)Str("Settings.Advanced.QSVUseVideoEncoderSettingsTooltip");
+                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS);
+                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+
+                EnableWindow(GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS), bHasQSV && bUseQSV);
 
                 //------------------------------------
 
@@ -423,6 +442,12 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                     }
                     break;
 
+                case IDC_USEQSV:
+                    if(HIWORD(wParam) == BN_CLICKED)
+                    {
+                        bool bUseQSV = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        EnableWindow(GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS), bUseQSV);
+                    }
                 case IDC_DISABLEPREVIEWENCODING:
                 case IDC_USEMICQPC:
                 case IDC_SYNCTOVIDEOTIME:
@@ -430,7 +455,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 case IDC_USEMULTITHREADEDOPTIMIZATIONS:
                 case IDC_UNLOCKHIGHFPS:
                 case IDC_LATENCYMETHOD:
-                case IDC_USEQSV:
+                case IDC_QSVUSEVIDEOENCODERSETTINGS:
                     if(HIWORD(wParam) == BN_CLICKED)
                     {
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
