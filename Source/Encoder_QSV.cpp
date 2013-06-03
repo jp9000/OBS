@@ -151,8 +151,8 @@ class QSVEncoder : public VideoEncoder
         mfxFrameSurface1 surf;
         mfxBitstream bs;
         mfxSyncPoint sp;
-        bool keyframe;
-        mfxFrameData* frame;
+        mfxEncodeCtrl *ctrl;
+        mfxFrameData *frame;
     };
     List<encode_task> encode_tasks;
 
@@ -378,6 +378,7 @@ public:
         for(unsigned i = 0; i < encode_tasks.Num(); i++)
         {
             encode_tasks[i].sp = nullptr;
+            encode_tasks[i].ctrl = nullptr;
 
             mfxFrameSurface1& surf = encode_tasks[i].surf;
             memset(&surf, 0, sizeof(mfxFrameSurface1));
@@ -688,7 +689,10 @@ public:
         queued_tasks << idle_tasks[0];
         idle_tasks.Remove(0);
 
-        task.keyframe = bRequestKeyframe;
+        if(bRequestKeyframe)
+            task.ctrl = &ctrl;
+        else
+            task.ctrl = nullptr;
         bRequestKeyframe = false;
 
         mfxBitstream& bs = task.bs;
@@ -749,7 +753,7 @@ public:
             mfxSyncPoint& sp = task.sp;
             for(;;)
             {
-                auto sts = enc->EncodeFrameAsync(task.keyframe ? &ctrl : nullptr, &surf, &bs, &sp);
+                auto sts = enc->EncodeFrameAsync(task.ctrl, &surf, &bs, &sp);
 
                 if(sts == MFX_ERR_NONE || (MFX_ERR_NONE < sts && sp))
                     break;
