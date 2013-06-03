@@ -34,6 +34,10 @@ HINSTANCE hinstMain = NULL;
 #define DSHOW_CLASSNAME TEXT("DeviceCapture")
 
 
+//CTSTR lpRoxioVideoCaptureGUID = TEXT("{6994AD05-93EF-11D0-A3-CC-00-A0-C9-22-31-96}");
+const GUID PIN_CATEGORY_ROXIOCAPTURE = {0x6994AD05, 0x93EF, 0x11D0, {0xA3, 0xCC, 0x00, 0xA0, 0xC9, 0x22, 0x31, 0x96}};
+
+
 bool SourceListHasDevice(CTSTR lpDevice, XElement *sourceList)
 {
     UINT numSources = sourceList->NumElements();
@@ -105,11 +109,11 @@ bool CurrentDeviceExists(CTSTR lpDevice, bool bGlobal, bool &isGlobal)
     return false;
 }
 
-IBaseFilter* GetExceptionDevice(CTSTR lpGUID)
+bool GetGUIDFromString(CTSTR lpGUID, GUID &targetGUID)
 {
     String strGUID = lpGUID;
     if(strGUID.Length() != 38)
-        return NULL;
+        return false;
 
     strGUID = strGUID.Mid(1, strGUID.Length()-1);
 
@@ -117,7 +121,7 @@ IBaseFilter* GetExceptionDevice(CTSTR lpGUID)
     strGUID.GetTokenList(GUIDData, '-', FALSE);
 
     if (GUIDData.Num() != 5)
-        return NULL;
+        return false;
 
     if (GUIDData[0].Length() != 8  ||
         GUIDData[1].Length() != 4  ||
@@ -125,10 +129,8 @@ IBaseFilter* GetExceptionDevice(CTSTR lpGUID)
         GUIDData[3].Length() != 4  ||
         GUIDData[4].Length() != 12 )
     {
-        return NULL;
+        return false;
     }
-
-    GUID targetGUID;
     targetGUID.Data1 = (UINT)tstring_base_to_uint(GUIDData[0], NULL, 16);
     targetGUID.Data2 = (WORD)tstring_base_to_uint(GUIDData[1], NULL, 16);
     targetGUID.Data3 = (WORD)tstring_base_to_uint(GUIDData[2], NULL, 16);
@@ -140,6 +142,15 @@ IBaseFilter* GetExceptionDevice(CTSTR lpGUID)
     targetGUID.Data4[5] = (BYTE)tstring_base_to_uint(GUIDData[4].Mid(6, 8), NULL, 16);
     targetGUID.Data4[6] = (BYTE)tstring_base_to_uint(GUIDData[4].Mid(8, 10), NULL, 16);
     targetGUID.Data4[7] = (BYTE)tstring_base_to_uint(GUIDData[4].Right(2), NULL, 16);
+
+    return true;
+}
+
+IBaseFilter* GetExceptionDevice(CTSTR lpGUID)
+{
+    GUID targetGUID;
+    if (!GetGUIDFromString(lpGUID, targetGUID))
+        return NULL;
 
     IBaseFilter *filter;
     if(SUCCEEDED(CoCreateInstance(targetGUID, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter, (void**)&filter)))
@@ -332,7 +343,7 @@ IPin* GetOutputPin(IBaseFilter *filter, const GUID *majorType)
 
                     if(SUCCEEDED(propertySet->Get(AMPROPSETID_Pin, AMPROPERTY_PIN_CATEGORY, NULL, 0, &pinCategory, sizeof(GUID), &retSize)))
                     {
-                        if(pinCategory == PIN_CATEGORY_CAPTURE)
+                        if(pinCategory == PIN_CATEGORY_CAPTURE || pinCategory == PIN_CATEGORY_ROXIOCAPTURE)
                         {
                             SafeRelease(propertySet);
                             SafeRelease(pins);

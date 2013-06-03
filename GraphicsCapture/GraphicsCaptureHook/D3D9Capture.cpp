@@ -463,7 +463,7 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
 
     //------------------------------------------------
 
-    IDirect3DSurface9 *backBuffer;
+    IDirect3DSurface9 *backBuffer = NULL;
     D3DSURFACE_DESC sd;
     ZeroMemory(&sd, sizeof(sd));
 
@@ -479,8 +479,9 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
             RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9CPUHook: Could not get back buffer surface info, result = " << (UINT)hErr << endl;
             bSuccess = false;
         }
-
     }
+
+    SafeRelease(backBuffer);
 
     if (bSuccess)
     {
@@ -488,7 +489,6 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
         //so you have to use the backbuffer size to get the right value
         d3d9CaptureInfo.cx = sd.Width;
         d3d9CaptureInfo.cy = sd.Height;
-        backBuffer->Release();
 
         for(UINT i=0; i<NUM_BUFFERS; i++)
         {

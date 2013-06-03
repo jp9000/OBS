@@ -62,7 +62,7 @@ If compiling static (which I don't do anymore), please make sure to
 include the static libgcc.a that your mingw provides.  Depending on your
 mingw version you may need to add/remove stuff from Hacks.cpp to get it
 properly working.  It sucks, I know, but I'm not the one who decided to
-make x264 uncompilable on microsoft's C compiler.
+make x264 uncompilable on microsoft's (admittedly worthless) C compiler.
 
 
 
