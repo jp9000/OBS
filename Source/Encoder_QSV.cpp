@@ -143,7 +143,14 @@ class QSVEncoder : public VideoEncoder
 
     std::unique_ptr<MFXVideoENCODE> enc;
 
-    mfxEncodeCtrl ctrl;
+    List<mfxU8> sei_message_buffer;
+
+    List<mfxPayload> sei_payloads;
+
+    List<mfxPayload*> sei_payload_list;
+
+    mfxEncodeCtrl ctrl,
+                  sei_ctrl;
     
     List<mfxU8> bs_buff;
     struct encode_task
@@ -172,7 +179,8 @@ class QSVEncoder : public VideoEncoder
 
     UINT width, height;
 
-    bool bFirstFrameProcessed;
+    bool bFirstFrameProcessed,
+         bFirstFrameQueued;
 
     bool bUseCBR, bUseCFR, bDupeFrames;
     unsigned deferredFrames;
@@ -195,12 +203,46 @@ class QSVEncoder : public VideoEncoder
 #define SEI_USER_DATA_UNREGISTERED 0x5
 #endif
 
-    void InitSEIData()
+    void AddSEIData(const List<mfxU8>& payload, mfxU16 type)
     {
-        List<BYTE> sei_message,
-                   payload;
+        unsigned offset = sei_message_buffer.Num();
 
-        sei_message << SEI_USER_DATA_UNREGISTERED;
+        unsigned type_ = type;
+        while(type_ > 255)
+        {
+            sei_message_buffer << 0xff;
+            type_ -= 255;
+        }
+        sei_message_buffer << type;
+
+        unsigned payload_size = payload.Num();
+        while(payload_size > 255)
+        {
+            sei_message_buffer << 0xff;
+            payload_size -= 255;
+        }
+        sei_message_buffer << payload_size;
+
+        sei_message_buffer.AppendList(payload);
+
+        mfxPayload& sei_payload = *sei_payloads.CreateNew();
+
+        memset(&sei_payload, 0, sizeof(sei_payload));
+
+        sei_payload.Type = type;
+        sei_payload.BufSize = sei_message_buffer.Num()-offset;
+        sei_payload.NumBit = sei_payload.BufSize*8;
+        sei_payload.Data = sei_message_buffer.Array()+offset;
+
+        sei_payload_list << &sei_payload;
+
+        sei_ctrl.Payload = sei_payload_list.Array();
+        sei_ctrl.NumPayload = sei_payload_list.Num();
+    }
+
+    void InitSEIUserData()
+    {
+        List<mfxU8> payload;
 
         const mfxU8 UUID[] = { 0x6d, 0x1a, 0x26, 0xa0, 0xbd, 0xdc, 0x11, 0xe2,   //ISO-11578 UUID
                                0x90, 0x24, 0x00, 0x50, 0xc2, 0x49, 0x00, 0x48 }; //6d1a26a0-bddc-11e2-9024-0050c2490048
@@ -218,30 +260,13 @@ class QSVEncoder : public VideoEncoder
         payload.AppendArray((LPBYTE)info, (unsigned)strlen(info)+1);
         Free(info);
 
-        payload << 0x80;
-
-        unsigned payload_size = payload.Num();
-        while(payload_size > 255)
-        {
-            sei_message << 0xff;
-            payload_size -= 255;
-        }
-        sei_message << payload_size;
-
-        sei_message.AppendList(payload);
-
-        sei_message << 0x80;
-
-        BufferOutputSerializer packetOut(SEIData);
-
-        packetOut.OutputDword(htonl(sei_message.Num()));
-        packetOut.Serialize(sei_message.Array(), sei_message.Num());
+        AddSEIData(payload, SEI_USER_DATA_UNREGISTERED);
     }
 
 #define ALIGN16(value)                      (((value + 15) >> 4) << 4) // round up to a multiple of 16
 public:
     QSVEncoder(int fps_, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitrate, int bufferSize, bool bUseCFR_, bool bDupeFrames_)
-        : enc(nullptr)
+        : enc(nullptr), bFirstFrameProcessed(false), bFirstFrameQueued(false)
     {
         Log(TEXT("------------------------------------------"));
         for(int i = 0; i < sizeof(validImpl)/sizeof(validImpl[0]); i++)
@@ -411,7 +436,6 @@ public:
             frame.Pitch = fi.Width;
         }
 
-        InitSEIData();
 
         Log(TEXT("Using %u encode tasks"), encode_tasks.Num());
 
@@ -421,6 +445,10 @@ public:
 
         memset(&ctrl, 0, sizeof(ctrl));
         ctrl.FrameType = MFX_FRAMETYPE_I | MFX_FRAMETYPE_REF | MFX_FRAMETYPE_IDR;
+
+        memset(&sei_ctrl, 0, sizeof(sei_ctrl));
+
+        InitSEIUserData();
 
         deferredFrames = 0;
 
@@ -474,7 +502,7 @@ public:
         List<x264_nal_t> nalOut;
         mfxU8 *start = bs.Data + bs.DataOffset,
               *end = bs.Data + bs.DataOffset + bs.DataLength;
-        static mfxU8 start_seq[] = {0, 0, 1};
+        const static mfxU8 start_seq[] = {0, 0, 1};
         start = std::search(start, end, start_seq, start_seq+3);
         while(start != end)
         {
@@ -562,21 +590,57 @@ public:
                 int skipBytes = (int)(skip-nal.p_payload);
 
                 int newPayloadSize = (nal.i_payload-skipBytes);
+                BYTE *sei_start = skip+1;
+                while(sei_start < (nal.p_payload+nal.i_payload))
+                {
+                    BYTE *sei = sei_start;
+                    int sei_type = 0;
+                    while(*sei == 0xff)
+                    {
+                        sei_type += 0xff;
+                        sei += 1;
+                    }
+                    sei_type += *sei++;
 
-                if (nal.p_payload[skipBytes+1] == SEI_USER_DATA_UNREGISTERED) {
-                    SEIData.Clear();
-                    BufferOutputSerializer packetOut(SEIData);
+                    int payload_size = 0;
+                    while(*sei == 0xff)
+                    {
+                        payload_size += 0xff;
+                        sei += 1;
+                    }
+                    payload_size += *sei++;
 
-                    packetOut.OutputDword(htonl(newPayloadSize));
-                    packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
-                } else {
-                    if (!newPacket)
-                        newPacket = CurrentPackets.CreateNew();
+                    const static BYTE emulation_prevention_pattern[] = {0, 0, 3};
+                    BYTE *search = sei;
+                    for(BYTE *search = sei;;)
+                    {
+                        search = std::search(search, sei+payload_size, emulation_prevention_pattern, emulation_prevention_pattern+3);
+                        if(search == sei+payload_size)
+                            break;
+                        payload_size += 1;
+                        search += 3;
+                    }
 
-                    BufferOutputSerializer packetOut(newPacket->Packet);
+                    int sei_size = sei-sei_start + payload_size;
+                    sei_start[-1] = NAL_SEI;
 
-                    packetOut.OutputDword(htonl(newPayloadSize));
-                    packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
+                    if(sei_type == SEI_USER_DATA_UNREGISTERED) {
+                        Log(TEXT("Sei Data!"));
+                        SEIData.Clear();
+                        BufferOutputSerializer packetOut(SEIData);
+
+                        packetOut.OutputDword(htonl(sei_size+1));
+                        packetOut.Serialize(sei_start-1, sei_size+1);
+                    } else {
+                        if (!newPacket)
+                            newPacket = CurrentPackets.CreateNew();
+
+                        BufferOutputSerializer packetOut(newPacket->Packet);
+
+                        packetOut.OutputDword(htonl(sei_size+1));
+                        packetOut.Serialize(sei_start-1, sei_size+1);
+                    }
+                    sei_start += sei_size;
                 }
             }
             else if(nal.i_type == NAL_AUD)
@@ -694,6 +758,10 @@ public:
         else
             task.ctrl = nullptr;
         bRequestKeyframe = false;
+
+        if(!bFirstFrameQueued)
+            task.ctrl = &sei_ctrl;
+        bFirstFrameQueued = true;
 
         mfxBitstream& bs = task.bs;
         mfxFrameSurface1& surf = task.surf;
