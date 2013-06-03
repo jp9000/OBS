@@ -57,7 +57,7 @@ DWORD STDCALL Convert444Thread(Convert444Data *data)
         if(data->bNV12)
             Convert444toNV12(data->input, data->width, data->inPitch, data->outPitch, data->height, data->startY, data->endY, data->output);
         else
-            Convert444to420(data->input, data->width, data->inPitch, data->height, data->startY, data->endY, data->output);
+            Convert444toNV12(data->input, data->width, data->inPitch, data->width, data->height, data->startY, data->endY, data->output);
 
         SetEvent(data->hSignalComplete);
     }while(!data->bKillThread);
@@ -322,7 +322,7 @@ void OBS::MainCaptureLoop()
     {
         if(!bUsingQSV)
             for(int i=0; i<NUM_OUT_BUFFERS; i++)
-                x264_picture_alloc(outPics[i].picOut, X264_CSP_I420, outputCX, outputCY);
+                x264_picture_alloc(outPics[i].picOut, X264_CSP_NV12, outputCX, outputCY);
     }
 
     //----------------------------------------
@@ -851,7 +851,7 @@ void OBS::MainCaptureLoop()
                                 Convert444toNV12((LPBYTE)map.pData, outputCX, map.RowPitch, data.Pitch, outputCY, 0, outputCY, output);
                             }
                             else
-                                Convert444to420((LPBYTE)map.pData, outputCX, map.RowPitch, outputCY, 0, outputCY, picOut.picOut->img.plane);
+                                Convert444toNV12((LPBYTE)map.pData, outputCX, map.RowPitch, outputCX, outputCY, 0, outputCY, picOut.picOut->img.plane);
                             prevTexture->Unmap(0);
                         }
 
