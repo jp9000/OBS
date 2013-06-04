@@ -1670,7 +1670,7 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                 case IDC_ADD:
                     {
                         HMENU hMenu = CreatePopupMenu();
-                        
+
                         for(UINT i=0; i<App->imageSourceClasses.Num(); i++)
                         {
                             if(App->imageSourceClasses[i].strClass != TEXT("GlobalSource"))
