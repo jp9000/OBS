@@ -12,6 +12,7 @@ installer/upload
 installer/64bit
 ipch/
 
+*.clbin
 *.log
 *.tlog
 *.sdf
