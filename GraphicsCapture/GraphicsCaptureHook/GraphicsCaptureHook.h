@@ -95,9 +95,9 @@ public:
         return true;
     }
 
-    inline void Rehook()
+    inline void Rehook(bool bForce=false)
     {
-        if(bHooked || !func)
+        if((!bForce && bHooked) || !func)
             return;
 
         UPARAM startAddr = UPARAM(func);

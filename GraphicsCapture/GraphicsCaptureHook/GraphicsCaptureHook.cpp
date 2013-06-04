@@ -48,6 +48,10 @@ DWORD startTick;
 wstring strKeepAlive;
 LONGLONG keepAliveTime = 0;
 
+CRITICAL_SECTION d3d9EndMutex;
+
+void CheckD3D9Capture();
+
 
 string CurrentDateTimeString()
 {
@@ -240,12 +244,18 @@ bool bDirectDrawHooked = false;
 inline bool AttemptToHookSomething()
 {
     bool bFoundSomethingToHook = false;
-    if(!bD3D9Hooked && InitD3D9Capture())
-    {
-        logOutput << CurrentTimeString() << "D3D9 Present" << endl;
-        bFoundSomethingToHook = true;
-        bD3D9Hooked = true;
+    if(!bD3D9Hooked) {
+        if (InitD3D9Capture()) {
+            logOutput << CurrentTimeString() << "D3D9 Present" << endl;
+            bFoundSomethingToHook = true;
+            bD3D9Hooked = true;
+        }
+    } else {
+        //occasionally, certain applications can reset the d3d9 hook, or clear it, or something.
+        //so, we forcibly make sure that the d3d9 function is still hooked.
+        CheckD3D9Capture();
     }
+
     if(!bDXGIHooked && InitDXGICapture())
     {
         logOutput << CurrentTimeString() << "DXGI Present" << endl;
@@ -296,6 +306,8 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
     strKeepAlive = str.str();
 
     logOutput << CurrentDateTimeString() << "we're booting up: " << endl;
+
+    InitializeCriticalSection(&d3d9EndMutex);
 
     WNDCLASS wc;
     ZeroMemory(&wc, sizeof(wc));

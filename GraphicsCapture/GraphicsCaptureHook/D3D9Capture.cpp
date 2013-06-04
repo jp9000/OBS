@@ -35,6 +35,8 @@ HookData                d3d9SwapPresent;
 FARPROC                 oldD3D9Release = NULL;
 FARPROC                 newD3D9Release = NULL;
 
+extern CRITICAL_SECTION d3d9EndMutex;
+
 LPVOID                  lpCurrentDevice = NULL;
 DWORD                   d3d9Format = 0;
 
@@ -893,6 +895,8 @@ ULONG STDMETHODCALLTYPE D3D9Release(IDirect3DDevice9 *device)
 
 HRESULT STDMETHODCALLTYPE D3D9EndScene(IDirect3DDevice9 *device)
 {
+    EnterCriticalSection(&d3d9EndMutex);
+
     d3d9EndScene.Unhook();
 
     RUNEVERYRESET logOutput << CurrentTimeString() << "D3D9EndScene called" << endl;
@@ -918,6 +922,8 @@ HRESULT STDMETHODCALLTYPE D3D9EndScene(IDirect3DDevice9 *device)
 
     HRESULT hRes = device->EndScene();
     d3d9EndScene.Rehook();
+
+    LeaveCriticalSection(&d3d9EndMutex);
 
     return hRes;
 }
@@ -1176,6 +1182,13 @@ bool InitD3D9Capture()
     }
 
     return bSuccess;
+}
+
+void CheckD3D9Capture()
+{
+    EnterCriticalSection(&d3d9EndMutex);
+    d3d9EndScene.Rehook(true);
+    LeaveCriticalSection(&d3d9EndMutex);
 }
 
 void FreeD3D9Capture()
