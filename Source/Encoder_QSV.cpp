@@ -207,13 +207,13 @@ class QSVEncoder : public VideoEncoder
     {
         unsigned offset = sei_message_buffer.Num();
 
-        unsigned type_ = type;
+        mfxU16 type_ = type;
         while(type_ > 255)
         {
             sei_message_buffer << 0xff;
             type_ -= 255;
         }
-        sei_message_buffer << type;
+        sei_message_buffer << (mfxU8)type_;
 
         unsigned payload_size = payload.Num();
         while(payload_size > 255)
@@ -340,7 +340,7 @@ public:
 
             if(strCustomParams.IsValid())
             {
-                Log(TEXT("Using custom x264 settings: \"%s\""), strCustomParams.Array());
+                Log(TEXT("Using custom encoder settings: \"%s\""), strCustomParams.Array());
 
                 strCustomParams.GetTokenList(paramList, ' ', FALSE);
                 for(UINT i=0; i<paramList.Num(); i++)
@@ -621,11 +621,10 @@ public:
                         search += 3;
                     }
 
-                    int sei_size = sei-sei_start + payload_size;
+                    int sei_size = (int)(sei-sei_start) + payload_size;
                     sei_start[-1] = NAL_SEI;
 
                     if(sei_type == SEI_USER_DATA_UNREGISTERED) {
-                        Log(TEXT("Sei Data!"));
                         SEIData.Clear();
                         BufferOutputSerializer packetOut(SEIData);
 
