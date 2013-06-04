@@ -41,7 +41,7 @@
 
 #include "x264_config.h"
 
-#define X264_BUILD 130
+#define X264_BUILD 133
 
 /* Application developers planning to link against a shared library version of
  * libx264 from a Microsoft Visual Studio or similar development environment
@@ -474,10 +474,18 @@ typedef struct x264_param_t
 
     int b_fake_interlaced;
 
+    int b_opencl;            /* use OpenCL when available */
+    int i_opencl_device;     /* specify count of GPU devices to skip, for CLI users */
+    void *opencl_device_id;  /* pass explicit cl_device_id as void*, for API users */
+    char *psz_clbin_file;    /* compiled OpenCL kernel cache file */
+
     /* Slicing parameters */
     int i_slice_max_size;    /* Max size per slice in bytes; includes estimated NAL overhead. */
     int i_slice_max_mbs;     /* Max number of MBs per slice; overrides i_slice_count. */
+    int i_slice_min_mbs;     /* Min number of MBs per slice */
     int i_slice_count;       /* Number of slices per frame: forces rectangular slices. */
+    int i_slice_count_max;   /* Absolute cap on slices per frame; stops applying slice-max-size
+                              * and slice-max-mbs if this is reached. */
 
     /* Optional callback for freeing this x264_param_t when it is done being used.
      * Only used when the x264_param_t sits in memory for an indefinite period of time,
@@ -491,7 +499,7 @@ typedef struct x264_param_t
      * is done encoding.
      *
      * This callback MUST do the following in order to work correctly:
-     * 1) Have available an output buffer of at least size nal->i_payload*3/2 + 5 + 16.
+     * 1) Have available an output buffer of at least size nal->i_payload*3/2 + 5 + 64.
      * 2) Call x264_nal_encode( h, dst, nal ), where dst is the output buffer.
      * After these steps, the content of nal is valid and can be used in the same way as if
      * the NAL unit were output by x264_encoder_encode.
