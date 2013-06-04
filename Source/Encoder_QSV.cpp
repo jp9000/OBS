@@ -579,7 +579,7 @@ public:
         PacketType bestType = PacketType_VideoDisposable;
         bool bFoundFrame = false;
 
-        for(size_t i=0; i<nalNum; i++)
+        for(unsigned i=0; i<nalNum; i++)
         {
             x264_nal_t &nal = nalOut[i];
 
