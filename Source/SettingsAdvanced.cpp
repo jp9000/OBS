@@ -105,7 +105,7 @@ void SettingsAdvanced::ApplySettings()
     //------------------------------------
 
     BOOL bUseQSV = SendMessage(GetDlgItem(hwnd, IDC_USEQSV), BM_GETCHECK, 0, 0) == BST_CHECKED;
-    GlobalConfig->SetInt(TEXT("Video Encoding"), TEXT("UseQSV"), bUseQSV);
+    AppConfig->SetInt(TEXT("Video Encoding"), TEXT("UseQSV"), bUseQSV);
 
     BOOL bQSVUseVideoEncoderSettings = SendMessage(GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS), BM_GETCHECK, 0, 0) == BST_CHECKED;
     AppConfig->SetInt(TEXT("Video Encoding"), TEXT("QSVUseVideoEncoderSettings"), bQSVUseVideoEncoderSettings);
@@ -273,7 +273,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 bool bHasQSV = CheckQSVHardwareSupport(false);
                 EnableWindow(GetDlgItem(hwnd, IDC_USEQSV), bHasQSV);
 
-                bool bUseQSV = GlobalConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
+                bool bUseQSV = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_USEQSV), BM_SETCHECK, bUseQSV ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 bool bQSVUseVideoEncoderSettings = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("QSVUseVideoEncoderSettings")) != 0;

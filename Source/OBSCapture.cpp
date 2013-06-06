@@ -452,7 +452,7 @@ void OBS::Start()
     videoEncoder = nullptr;
     if (bDisableEncoding)
         videoEncoder = CreateNullVideoEncoder();
-    else if(GlobalConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0)
+    else if(AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0)
         videoEncoder = CreateQSVEncoder(fps, outputCX, outputCY, quality, preset, bUsing444, maxBitRate, bufferSize, bUseCFR, bDupeFrames);
 
     if(!videoEncoder)
