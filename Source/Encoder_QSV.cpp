@@ -183,7 +183,6 @@ class QSVEncoder : public VideoEncoder
          bFirstFrameQueued;
 
     bool bUseCBR, bUseCFR, bDupeFrames;
-    unsigned deferredFrames;
 
     List<VideoPacket> CurrentPackets;
     List<BYTE> HeaderPacket, SEIData;
@@ -450,8 +449,6 @@ public:
 
         InitSEIUserData();
 
-        deferredFrames = 0;
-
         bUsingDecodeTimestamp = false && ver.Minor >= 6;
 
         DataPacket packet;
@@ -512,6 +509,25 @@ public:
             nal.i_type = start[3]&0x1f;
             if(nal.i_type == NAL_SLICE_IDR)
                 nal.i_ref_idc = NAL_PRIORITY_HIGHEST;
+            else if(nal.i_type == NAL_SLICE)
+            {
+                switch(bs.FrameType & (MFX_FRAMETYPE_REF | (MFX_FRAMETYPE_S-1)))
+                {
+                case MFX_FRAMETYPE_REF|MFX_FRAMETYPE_I:
+                case MFX_FRAMETYPE_REF|MFX_FRAMETYPE_P:
+                    nal.i_ref_idc = NAL_PRIORITY_HIGH;
+                    break;
+                case MFX_FRAMETYPE_REF|MFX_FRAMETYPE_B:
+                    nal.i_ref_idc = NAL_PRIORITY_LOW;
+                    break;
+                case MFX_FRAMETYPE_B:
+                    nal.i_ref_idc = NAL_PRIORITY_DISPOSABLE;
+                    break;
+                default:
+                    Log(TEXT("Unhandled frametype %u"), bs.FrameType);
+                }
+            }
+            start[3] = ((nal.i_ref_idc<<5)&0x60) | nal.i_type;
             nal.p_payload = start;
             nal.i_payload = int(next-start);
             nalOut << nal;
@@ -825,10 +841,7 @@ public:
                 if(sts == MFX_ERR_NONE || (MFX_ERR_NONE < sts && sp))
                     break;
                 if(sts == MFX_WRN_DEVICE_BUSY)
-                {
-                    deferredFrames += 1;
                     return false;
-                }
                 //if(!sp); //sts == MFX_ERR_MORE_DATA usually; retry the call (see MSDK examples)
                 //Log(TEXT("returned status %i, %u"), sts, insert);
             }
