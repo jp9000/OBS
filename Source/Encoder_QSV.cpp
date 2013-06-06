@@ -364,7 +364,7 @@ public:
                         int bframes = strParamVal.ToInt();
                         if(bframes < 0)
                             continue;
-                        params.mfx.GopRefDist = bframes;
+                        params.mfx.GopRefDist = bframes+1;
                     }
                 }
             }
