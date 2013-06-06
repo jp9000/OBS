@@ -706,8 +706,8 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
             if (hKeepAlive) {
                 CloseHandle(hKeepAlive);
             } else {
-                ClearD3D9Data();
                 logOutput << CurrentTimeString() << "Keepalive no longer found on d3d9, freeing capture data" << endl;
+                ClearD3D9Data();
                 bCapturing = false;
             }
 
