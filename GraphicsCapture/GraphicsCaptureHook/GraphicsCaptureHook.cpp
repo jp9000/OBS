@@ -283,6 +283,8 @@ fstream logOutput;
 
 #define SENDER_WINDOWCLASS TEXT("OBSGraphicsCaptureSender")
 
+HANDLE dummyEvent = NULL;
+
 DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
 {
     bool bSuccess = false;
@@ -297,6 +299,8 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
     TCHAR lpLogPath[MAX_PATH];
     SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, lpLogPath);
     wcscat_s(lpLogPath, MAX_PATH, TEXT("\\OBS\\pluginData\\captureHookLog.txt"));
+
+    dummyEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
     if(!logOutput.is_open())
         logOutput.open(lpLogPath, ios_base::in | ios_base::out | ios_base::trunc, _SH_DENYNO);
@@ -359,18 +363,22 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
             if (textureMutexes[0]) {
                 textureMutexes[1] = OpenMutex(MUTEX_ALL_ACCESS, FALSE, TEXTURE_MUTEX2);
                 if (textureMutexes[1]) {
+                    while(!AttemptToHookSomething())
+                        Sleep(50);
+
                     logOutput << CurrentTimeString() << "(half life scientist) everything..  seems to be in order" << endl;
 
                     MSG msg;
-                    while (1) {
+                    while (MsgWaitForMultipleObjects(1, &dummyEvent, FALSE, 3000, QS_ALLPOSTMESSAGE)) {
+                    //while (1) {
                         AttemptToHookSomething();
 
-                        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+                        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
                             TranslateMessage(&msg);
                             DispatchMessage(&msg);
                         }
 
-                        Sleep(50);
+                        //Sleep(50);
                     }
 
                     CloseHandle(textureMutexes[1]);
@@ -433,6 +441,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpBlah)
             SetEvent(hSignalExit);
             CloseHandle(hSignalExit);
         }
+
+        if (dummyEvent)
+            CloseHandle(dummyEvent);
 
         if(infoMem)
         {
