@@ -542,7 +542,7 @@ bool DeviceSource::LoadFilters()
     }
     else if(soundOutputType == 2)
     {
-        if(FAILED(err = CoCreateInstance(CLSID_AudioRender, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter, (void**)&audioFilter)))
+        if(FAILED(err = CoCreateInstance(CLSID_DSoundRender, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter, (void**)&audioFilter)))
         {
             AppWarning(TEXT("DShowPlugin: failed to create audio renderer, result = %08lX"), err);
             soundOutputType = 0;
