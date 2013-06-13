@@ -673,8 +673,14 @@ UINT STDCALL OSGetProcessorCount()
 
 HANDLE STDCALL OSCreateThread(XTHREAD lpThreadFunc, LPVOID param)
 {
+    HANDLE hThread;
     DWORD dummy;
-    return CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)lpThreadFunc, param, 0, &dummy);
+
+    hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)lpThreadFunc, param, 0, &dummy);
+    if (!hThread)
+        CrashError (TEXT("CreateThread 0x%p failed: %d"), (LPVOID)lpThreadFunc, GetLastError());
+    
+    return hThread;
 }
 
 HANDLE STDCALL OSGetCurrentThread()
