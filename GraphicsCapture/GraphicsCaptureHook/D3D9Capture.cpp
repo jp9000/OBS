@@ -104,10 +104,23 @@ bool CompareMemory(const LPVOID lpVal1, const LPVOID lpVal2, UINT nBytes)
 
 #ifdef _WIN64
 
-#define NUM_KNOWN_PATCHES 0
-#define PATCH_COMPARE_SIZE 1
-UPARAM patch_offsets[1] = {0};
-UPARAM patch_compare[1][PATCH_COMPARE_SIZE] = {{0}};
+#define NUM_KNOWN_PATCHES 3
+#define PATCH_COMPARE_SIZE 13
+UPARAM patch_offsets[NUM_KNOWN_PATCHES] = {0x550C5, 0x1841E5, 0x54FE6};
+BYTE patch_compare[NUM_KNOWN_PATCHES][PATCH_COMPARE_SIZE] =
+{
+    {0x48, 0x8b, 0x81, 0xb8, 0x3d, 0x00, 0x00, 0x39, 0x98, 0x68, 0x50, 0x00, 0x00},  //win7 - 6.1.7601.17514
+    {0x49, 0x8b, 0x85, 0xb8, 0x3d, 0x00, 0x00, 0x39, 0x88, 0xc8, 0x50, 0x00, 0x00},  //win8 - 6.2.9200.16384
+    {0x48, 0x8b, 0x81, 0xb8, 0x3d, 0x00, 0x00, 0x39, 0x98, 0x68, 0x50, 0x00, 0x00},  //win7 - 6.1.7600.16385
+};
+
+#define PATCH_SIZE 2
+BYTE patch[NUM_KNOWN_PATCHES][PATCH_SIZE] =
+{
+    {0xEB, 0x12},
+    {0x90, 0x90},
+    {0xEB, 0x12},
+};
 
 #else
 
@@ -119,6 +132,14 @@ BYTE patch_compare[NUM_KNOWN_PATCHES][PATCH_COMPARE_SIZE] =
     {0x8b, 0x89, 0xe8, 0x29, 0x00, 0x00, 0x39, 0xb9, 0x80, 0x4b, 0x00, 0x00},  //win7 - 6.1.7601.17514
     {0x8b, 0x80, 0xe8, 0x29, 0x00, 0x00, 0x39, 0x90, 0xb0, 0x4b, 0x00, 0x00},  //win8 - 6.2.9200.16384
     {0x8b, 0x89, 0xe8, 0x29, 0x00, 0x00, 0x39, 0xb9, 0x80, 0x4b, 0x00, 0x00},  //win7 - 6.1.7600.16385
+};
+
+#define PATCH_SIZE 1
+BYTE patch[NUM_KNOWN_PATCHES][PATCH_SIZE] =
+{
+    {0xEB},
+    {0xEB},
+    {0xEB},
 };
 
 #endif
@@ -383,15 +404,15 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
     //------------------------------------------------
 
     LPBYTE patchAddress = (patchType != 0) ? GetD3D9PatchAddress() : NULL;
-    BYTE savedByte;
+    BYTE savedData[PATCH_SIZE];
     DWORD dwOldProtect;
 
     if(patchAddress)
     {
-        if(VirtualProtect(patchAddress, 1, PAGE_EXECUTE_READWRITE, &dwOldProtect))
+        if(VirtualProtect(patchAddress, PATCH_SIZE, PAGE_EXECUTE_READWRITE, &dwOldProtect))
         {
-            savedByte = *patchAddress;
-            *patchAddress = 0xEB;
+            memcpy(savedData, patchAddress, PATCH_SIZE);
+            memcpy(patchAddress, patch[patchType-1], PATCH_SIZE);
         }
         else
         {
@@ -409,8 +430,8 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
 
     if(patchAddress)
     {
-        *patchAddress = savedByte;
-        VirtualProtect(patchAddress, 1, dwOldProtect, &dwOldProtect);
+        memcpy(patchAddress, savedData, PATCH_SIZE);
+        VirtualProtect(patchAddress, PATCH_SIZE, dwOldProtect, &dwOldProtect);
     }
 
     if(FAILED(hErr = d3d9Tex->GetSurfaceLevel(0, &copyD3D9TextureGame)))
