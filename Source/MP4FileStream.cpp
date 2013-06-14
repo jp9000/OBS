@@ -681,11 +681,14 @@ public:
                   //SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 60, 0);
                   //ProcessEvents();
 
-                  PushBox(output, DWORD_BE('stss')); //list of keyframe (i-frame) IDs
-                    output.OutputDword(0); //version and flags (none)
-                    output.OutputDword(fastHtonl(IFrameIDs.Num()));
-                    output.Serialize(IFrameIDs.Array(), IFrameIDs.Num()*sizeof(UINT));
-                  PopBox(); //stss
+                  if (IFrameIDs.Num())
+                  {
+                      PushBox(output, DWORD_BE('stss')); //list of keyframe (i-frame) IDs
+                        output.OutputDword(0); //version and flags (none)
+                        output.OutputDword(fastHtonl(IFrameIDs.Num()));
+                        output.Serialize(IFrameIDs.Array(), IFrameIDs.Num()*sizeof(UINT));
+                      PopBox(); //stss
+                  }
                   PushBox(output, DWORD_BE('ctts')); //list of composition time offsets
                     output.OutputDword(0); //version (0) and flags (none)
                     //output.OutputDword(DWORD_BE(0x01000000)); //version (1) and flags (none)

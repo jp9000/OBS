@@ -807,14 +807,15 @@ String& String::RemoveChar(UINT pos)
         return *this;
     }
     
-    --curLength;
-    if(curLength == 0)
+    
+    if(curLength == 1)
         Clear();
     else
     {
         if(pos < curLength)
             mcpy(lpString+pos, lpString+pos+1, (curLength-pos)*sizeof(TCHAR));
-        lpString = (TSTR)ReAllocate(lpString, (curLength+1)*sizeof(TCHAR));
+        lpString = (TSTR)ReAllocate(lpString, (curLength)*sizeof(TCHAR));
+        --curLength;
     }
 
     return *this;

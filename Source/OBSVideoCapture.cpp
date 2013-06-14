@@ -752,7 +752,15 @@ void OBS::MainCaptureLoop()
         {
             //audio sometimes takes a bit to start -- do not start processing frames until audio has started capturing
             if(!bRecievedFirstAudioFrame)
+            {
+                static bool bWarnedAboutNoAudio = false;
+                if (qwTime-firstFrameTime > 10000 && !bWarnedAboutNoAudio)
+                {
+                    bWarnedAboutNoAudio = true;
+                    AddStreamInfo (TEXT ("WARNING: OBS is not receiving audio frames. Please check your audio devices."), StreamInfoPriority_Critical); 
+                }
                 bEncode = false;
+            }
             else if(bFirstFrame)
             {
                 firstFrameTime = qwTime;

@@ -590,7 +590,7 @@ public:
     void UpdateSettings()
     {
         strFont     = data->GetString(TEXT("font"), TEXT("Arial"));
-        color       = data->GetInt(TEXT("color"), 0xFF000000);
+        color       = data->GetInt(TEXT("color"), 0xFFFFFFFF);
         size        = data->GetInt(TEXT("fontSize"), 48);
         opacity     = data->GetInt(TEXT("textOpacity"), 100);
         scrollSpeed = data->GetInt(TEXT("scrollSpeed"), 0);
@@ -611,7 +611,7 @@ public:
         baseSize.y  = data->GetFloat(TEXT("baseSizeCY"), 100);
 
         bUseOutline    = data->GetInt(TEXT("useOutline")) != 0;
-        outlineColor   = data->GetInt(TEXT("outlineColor"), 0xFFFFFF);
+        outlineColor   = data->GetInt(TEXT("outlineColor"), 0xFF000000);
         outlineSize    = data->GetFloat(TEXT("outlineSize"), 2);
         outlineOpacity = data->GetInt(TEXT("outlineOpacity"), 100);
 
@@ -813,7 +813,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
                 //-----------------------------------------
 
-                CCSetColor(GetDlgItem(hwnd, IDC_COLOR), data->GetInt(TEXT("color"), 0xFF000000));
+                CCSetColor(GetDlgItem(hwnd, IDC_COLOR), data->GetInt(TEXT("color"), 0xFFFFFFFF));
 
                 SendMessage(GetDlgItem(hwnd, IDC_TEXTOPACITY), UDM_SETRANGE32, 0, 100);
                 SendMessage(GetDlgItem(hwnd, IDC_TEXTOPACITY), UDM_SETPOS32, 0, data->GetInt(TEXT("textOpacity"), 100));
@@ -846,7 +846,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                 SendMessage(GetDlgItem(hwnd, IDC_OUTLINETHICKNESS), UDM_SETRANGE32, 1, 20);
                 SendMessage(GetDlgItem(hwnd, IDC_OUTLINETHICKNESS), UDM_SETPOS32, 0, data->GetInt(TEXT("outlineSize"), 2));
 
-                CCSetColor(GetDlgItem(hwnd, IDC_OUTLINECOLOR), data->GetInt(TEXT("outlineColor"), 0xFFFFFFFF));
+                CCSetColor(GetDlgItem(hwnd, IDC_OUTLINECOLOR), data->GetInt(TEXT("outlineColor"), 0xFF000000));
 
                 SendMessage(GetDlgItem(hwnd, IDC_OUTLINEOPACITY), UDM_SETRANGE32, 0, 100);
                 SendMessage(GetDlgItem(hwnd, IDC_OUTLINEOPACITY), UDM_SETPOS32, 0, data->GetInt(TEXT("outlineOpacity"), 100));
