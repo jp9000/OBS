@@ -49,9 +49,6 @@ void TerminateSockets();
 
 void LogVideoCardStats();
 
-BOOL bCompositionEnabled = TRUE;
-BOOL bDisableComposition = FALSE;
-
 HANDLE hOBSMutex = NULL;
 
 BOOL LoadSeDebugPrivilege()
@@ -581,14 +578,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         //--------------------------------------------
 
-        bDisableComposition = AppConfig->GetInt(TEXT("Video"), TEXT("DisableAero"), 0);
+        BOOL bDisableComposition = AppConfig->GetInt(TEXT("Video"), TEXT("DisableAero"), 0);
 
-        DwmIsCompositionEnabled(&bCompositionEnabled);
         if(bDisableComposition)
-        {
-            if(bCompositionEnabled)
-                DwmEnableComposition(DWM_EC_DISABLECOMPOSITION);
-        }
+          DwmEnableComposition(DWM_EC_DISABLECOMPOSITION);
 
         //--------------------------------------------
 
@@ -615,7 +608,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         delete AppConfig;
         delete GlobalConfig;
 
-        if(bDisableComposition && bCompositionEnabled)
+        if(bDisableComposition)
             DwmEnableComposition(DWM_EC_ENABLECOMPOSITION);
 
         TerminateSockets();

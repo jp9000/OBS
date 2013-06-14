@@ -18,6 +18,7 @@
 ********************************************************************************/
 
 #include "Settings.h"
+#include <Dwmapi.h>
 
 //============================================================================
 // Helpers
@@ -208,6 +209,11 @@ void SettingsVideo::ApplySettings()
 
     if(!App->bRunning)
         App->ResizeWindow(false);
+
+    if (bDisableAero)
+        DwmEnableComposition(DWM_EC_DISABLECOMPOSITION);
+    else
+        DwmEnableComposition(DWM_EC_ENABLECOMPOSITION);
 }
 
 void SettingsVideo::CancelSettings()
