@@ -1929,7 +1929,7 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                         int gamma = (int)SendMessage(GetDlgItem(hwnd, IDC_GAMMA), TBM_GETPOS, 0, 0);
                         data->SetInt(TEXT("gamma"), gamma);
 
-                        if (OSGetVersion() < 8)
+                        if (captureType = 0 && OSGetVersion() < 8)
                         {
                             BOOL bComposition;
                             DwmIsCompositionEnabled(&bComposition);
