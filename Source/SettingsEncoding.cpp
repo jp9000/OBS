@@ -63,6 +63,10 @@ void SettingsEncoding::ApplySettings()
     //if(bufSize < 100) bufSize = bitrate;  //R1CH: Allow users to enter 0 buffer size to disable VBV, its protected by checkbox anyway
     AppConfig->SetInt(TEXT("Video Encoding"), TEXT("BufferSize"), bufSize);
 
+    if(App->GetVideoEncoder() != NULL) {
+        if(App->GetVideoEncoder()->DynamicBitrateSupported())   App->GetVideoEncoder()->SetBitRate(bitrate, bufSize);
+    }
+
     String strTemp = GetCBText(GetDlgItem(hwnd, IDC_AUDIOCODEC));
     AppConfig->SetString(TEXT("Audio Encoding"), TEXT("Codec"), strTemp);
 
