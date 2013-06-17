@@ -110,6 +110,7 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     GROUPBOX        "Settings.Encoding.Video",IDC_STATIC,4,2,417,69
     CONTROL         "Settings.Advanced.UseCBR",IDC_USECBR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,15,150,10,WS_EX_RIGHT
+    CONTROL         "Settings.Advanced.PadCBR",IDC_PADCBR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,212,15,150,10,WS_EX_RIGHT
     RTEXT           "Settings.Encoding.Video.Quality",IDC_STATIC,10,31,138,8
     COMBOBOX        IDC_QUALITY,152,29,61,62,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Settings.Encoding.Video.CustomBuffer",IDC_CUSTOMBUFFER,

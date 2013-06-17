@@ -248,6 +248,7 @@
 #define IDC_QSVUSEVIDEOENCODERSETTINGS  1131
 #define IDC_PRIORITY                    1132
 #define IDC_USECBR                      1133
+#define IDC_PADCBR                      1134
 #define IDC_COMBO1                      1139
 #define IDC_DISABLECTSADJUST            1140
 #define IDC_USECFR                      1141

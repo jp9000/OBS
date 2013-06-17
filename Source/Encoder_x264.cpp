@@ -86,7 +86,7 @@ class X264Encoder : public VideoEncoder
 
     bool bFirstFrameProcessed;
 
-    bool bUseCBR, bUseCFR, bDupeFrames;
+    bool bUseCBR, bUseCFR, bDupeFrames, bPadCBR;
 
     List<VideoPacket> CurrentPackets;
     List<BYTE> HeaderPacket, SEIData;
@@ -194,6 +194,7 @@ public:
         //paramData.i_threads             = 4;
 
         bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
+        bPadCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 1) != 0;
         this->bUseCFR = bUseCFR;
         this->bDupeFrames = bDupeFrames;
 
@@ -201,7 +202,7 @@ public:
 
         if(bUseCBR)
         {
-            paramData.i_nal_hrd         = X264_NAL_HRD_CBR;
+            if(bPadCBR) paramData.i_nal_hrd         = X264_NAL_HRD_CBR;
             paramData.rc.i_rc_method    = X264_RC_ABR;
             paramData.rc.f_rf_constant  = 0.0f;
         }
