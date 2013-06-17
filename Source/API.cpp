@@ -645,8 +645,11 @@ void OBSAPIInterface::HandleHotkeys()
 
         hotkeyModifiers &= ~(HOTKEYF_EXT);
 
-        //changed so that it allows hotkeys to be pressed even if extra modiifers are pushed
-        bool bModifiersMatch = ((hotkeyModifiers & modifiers) == hotkeyModifiers);//(hotkeyModifiers == modifiers);
+        bool bModifiersMatch = false;
+        if (GlobalConfig->GetInt(TEXT("General"), TEXT("AllowOtherHotkeyModifiers"), true))
+            bModifiersMatch = ((hotkeyModifiers & modifiers) == hotkeyModifiers); //allows other modifiers to be pressed
+        else 
+            bModifiersMatch = (hotkeyModifiers == modifiers);
 
         if(hotkeyModifiers && !hotkeyVK) //modifier-only hotkey
         {
