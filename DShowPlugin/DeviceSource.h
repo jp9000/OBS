@@ -132,6 +132,8 @@ class DeviceSource : public ImageSource
     BOOL            bUseCustomResolution;
     UINT            preferredOutputType;
 
+    BYTE            deinterlacingType;
+
     bool            bFirstFrame;
     bool            bUseThreadedConversion;
     bool            bReadyToDraw;

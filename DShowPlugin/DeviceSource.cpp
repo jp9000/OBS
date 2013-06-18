@@ -210,6 +210,8 @@ bool DeviceSource::LoadFilters()
     keyBlend = data->GetInt(TEXT("keyBlend"), 80);
     keySpillReduction = data->GetInt(TEXT("keySpillReduction"), 50);
 
+    deinterlacingType =data->GetInt(TEXT("deinterlacingType"), 0);
+
     if(keyBaseColor.x < keyBaseColor.y && keyBaseColor.x < keyBaseColor.z)
         keyBaseColor -= keyBaseColor.x;
     else if(keyBaseColor.y < keyBaseColor.x && keyBaseColor.y < keyBaseColor.z)
@@ -1084,6 +1086,7 @@ void DeviceSource::Preprocess()
     //----------------------------------------
 
     int numThreads = MAX(OSGetTotalCores()-2, 1);
+    int lineSize = -1, currentLine = 0;
 
     if(lastSample)
     {
@@ -1094,6 +1097,38 @@ void DeviceSource::Preprocess()
         Log(TEXT("refTimeStart: %llu, refTimeFinish: %llu, offset = %llu"), refTimeStart, refTimeFinish, refTimeStart-lastRefTime);
         lastRefTime = refTimeStart;*/
 
+        switch(colorType) {
+            case DeviceOutputType_RGB:
+                lineSize = renderCX * 4;
+                break;
+            case DeviceOutputType_I420:
+            case DeviceOutputType_YV12:
+                lineSize = (renderCX * 12) / 8;
+                break;
+            case DeviceOutputType_YVYU:
+            case DeviceOutputType_YUY2:
+            case DeviceOutputType_UYVY:
+            case DeviceOutputType_HDYC:
+                lineSize = (renderCX * 2);
+                break;
+            default:
+                break;
+        }
+
+        if(lineSize != -1) {
+            switch(deinterlacingType) {
+                case 1: // Simple field discard deinterlacing
+                    while(currentLine < renderCY) {
+                        memcpy(lastSample->lpData+(currentLine*lineSize)+(lineSize),
+                            lastSample->lpData+(currentLine*lineSize), lineSize);
+                        currentLine += 2;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+ 
         if(colorType == DeviceOutputType_RGB)
         {
             if(texture)

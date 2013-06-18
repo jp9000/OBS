@@ -961,6 +961,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
     static bool bSelectingColor = false;
     static bool bMouseDown = false, bAudioDevicesPresent = true;
     static ColorSelectionData colorData;
+    static BYTE deinterlacingType;
 
     switch(message)
     {
@@ -1009,6 +1010,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 UINT cx  = configData->data->GetInt(TEXT("resolutionWidth"));
                 UINT cy  = configData->data->GetInt(TEXT("resolutionHeight"));
                 UINT64 frameInterval = configData->data->GetInt(TEXT("frameInterval"));
+
+                deinterlacingType = configData->data->GetInt(TEXT("deinterlacingType"));
 
                 BOOL bCustomResolution = configData->data->GetInt(TEXT("customResolution"));
                 SendMessage(GetDlgItem(hwnd, IDC_CUSTOMRESOLUTION), BM_SETCHECK, bCustomResolution ? BST_CHECKED : BST_UNCHECKED, 0);
@@ -1827,6 +1830,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         configData->data->SetInt(TEXT("customResolution"), bCustomResolution);
                         configData->data->SetInt(TEXT("resolutionWidth"), resolution.cx);
                         configData->data->SetInt(TEXT("resolutionHeight"), resolution.cy);
+                        configData->data->SetInt(TEXT("deinterlacingType"), deinterlacingType);
                         configData->data->SetInt(TEXT("frameInterval"), UINT(frameInterval));
                         configData->data->SetInt(TEXT("flipImage"), bFlip);
                         configData->data->SetInt(TEXT("flipImageHorizontal"), bFlipHorizontal);
