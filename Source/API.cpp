@@ -219,9 +219,6 @@ bool OBS::SetScene(CTSTR lpScene)
     if(!newSceneElement)
         return false;
 
-    if(API != NULL)
-       ReportSwitchScenes(lpScene);
-
     if(sceneElement == newSceneElement)
         return true;
 
@@ -305,6 +302,9 @@ bool OBS::SetScene(CTSTR lpScene)
 
         delete previousScene;
     }
+
+    if(API != NULL)
+       ReportSwitchScenes(lpScene);
 
     return true;
 }
