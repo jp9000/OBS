@@ -7,6 +7,7 @@
 #define IDC_CONFIG                      1002
 #define IDC_AUDIOLIST                   1003
 #define IDC_CONFIGAUDIO                 1004
+#define IDC_DEINTERLACELIST             1005
 #define IDC_CROSSBAR                    1007
 #define IDC_RESOLUTION                  1008
 #define IDC_FPS_EDIT                    1009

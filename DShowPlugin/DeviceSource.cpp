@@ -1124,13 +1124,6 @@ void DeviceSource::Preprocess()
                         currentLine += 2;
                     }
                     break;
-                case deinterlacing_Discard_Sharp: // Simple field discard deinterlacing
-                    while(currentLine < renderCY) {
-                        memcpy(lastSample->lpData+(currentLine*lineSize)+(lineSize),
-                            lastSample->lpData+(currentLine*lineSize), lineSize);
-                        currentLine += 2;
-                    }
-                    break;
                 default:
                     break;
             }
@@ -1290,7 +1283,6 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
                 case deinterlacing_Discard:
                     DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y, 0.0f, 0.0f, 1.0f, 0.5f);
                     break;
-                case deinterlacing_Discard_Sharp:
                 default:
                     DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y);
                     break;
@@ -1301,7 +1293,6 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
                 case deinterlacing_Discard:
                     DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y+size.y, x2, pos.y, 0.0f, 0.0f, 1.0f, 0.5f);
                     break;
-                case deinterlacing_Discard_Sharp:
                 default:
                     DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y+size.y, x2, pos.y);
                     break;
@@ -1323,14 +1314,17 @@ void DeviceSource::UpdateSettings()
     UINT newCX                  = data->GetInt(TEXT("resolutionWidth"));
     UINT newCY                  = data->GetInt(TEXT("resolutionHeight"));
     BOOL bNewCustom             = data->GetInt(TEXT("customResolution"));
+    UINT newDeinterlacingType   = data->GetInt(TEXT("deinterlacingType"));
     UINT newPreferredType       = data->GetInt(TEXT("usePreferredType")) != 0 ? data->GetInt(TEXT("preferredType")) : -1;
     UINT newSoundOutputType     = data->GetInt(TEXT("soundOutputType"));
     bool bNewUseBuffering       = data->GetInt(TEXT("useBuffering")) != 0;
+    UINT newGamma               = data->GetInt(TEXT("gamma"), 100);
 
     if(newSoundOutputType != soundOutputType || renderCX != newCX || renderCY != newCY ||
        frameInterval != newFrameInterval || newPreferredType != preferredOutputType ||
        !strDevice.CompareI(strNewDevice) || !strAudioDevice.CompareI(strNewAudioDevice) ||
-       bNewCustom != bUseCustomResolution || bNewUseBuffering != bUseBuffering)
+       bNewCustom != bUseCustomResolution || bNewUseBuffering != bUseBuffering ||
+       newGamma != gamma || newDeinterlacingType != deinterlacingType)
     {
         API->EnterSceneMutex();
 

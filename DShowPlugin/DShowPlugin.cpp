@@ -1011,7 +1011,14 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 UINT cy  = configData->data->GetInt(TEXT("resolutionHeight"));
                 UINT64 frameInterval = configData->data->GetInt(TEXT("frameInterval"));
 
+                hwndTemp = GetDlgItem(hwnd, IDC_DEINTERLACELIST);
+
+                // Populate deinterlacing type list like this, since there's only one for now.
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)L"None");
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)L"Field discard");
+
                 deinterlacingType = configData->data->GetInt(TEXT("deinterlacingType"));
+                SendMessage(hwndTemp, CB_SETCURSEL, deinterlacingType, 0);
 
                 BOOL bCustomResolution = configData->data->GetInt(TEXT("customResolution"));
                 SendMessage(GetDlgItem(hwnd, IDC_CUSTOMRESOLUTION), BM_SETCHECK, bCustomResolution ? BST_CHECKED : BST_UNCHECKED, 0);
@@ -1406,6 +1413,13 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         break;
                     }
+
+                case IDC_DEINTERLACELIST:
+                    if(HIWORD(wParam) == CBN_SELCHANGE)
+                    {
+                        deinterlacingType = (BYTE)SendMessage(GetDlgItem(hwnd, IDC_DEINTERLACELIST), CB_GETCURSEL, 0, 0);
+                    }
+                    break;
 
                 case IDC_DEVICELIST:
                     if(HIWORD(wParam) == CBN_SELCHANGE)
@@ -1823,6 +1837,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         BOOL bCustomResolution = SendMessage(GetDlgItem(hwnd, IDC_CUSTOMRESOLUTION), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         BOOL bUsePointFiltering = SendMessage(GetDlgItem(hwnd, IDC_POINTFILTERING), BM_GETCHECK, 0, 0) == BST_CHECKED;
 
+                        deinterlacingType = (BYTE)SendMessage(GetDlgItem(hwnd, IDC_DEINTERLACELIST), CB_GETCURSEL, 0, 0);
+
                         configData->data->SetString(TEXT("device"), strDevice);
                         configData->data->SetString(TEXT("deviceName"), configData->deviceNameList[deviceID]);
                         configData->data->SetString(TEXT("deviceID"), configData->deviceIDList[deviceID]);
@@ -1936,6 +1952,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                             source->SetInt(TEXT("keyBlend"),            configData->data->GetInt(TEXT("keyBlend"), 80));
                             source->SetInt(TEXT("keySpillReduction"),   configData->data->GetInt(TEXT("keySpillReduction"), 50));
                             source->SetInt(TEXT("gamma"),               configData->data->GetInt(TEXT("gamma"), 100));
+                            source->SetInt(TEXT("deinterlacingType"),   configData->data->GetInt(TEXT("deinterlacingType"), 0));
                         }
                     }
 
