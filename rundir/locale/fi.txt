@@ -106,7 +106,6 @@ Scene.MissingSources    "Kaikkia kuvalähteitä ei voitu ottaa käyttöön asetu
 
 Scene.Hotkey.AlreadyInUse                           "Tämä pikanäppäin jo käytössä."
 Scene.Hotkey.Hotkey                                 "Pikanäppäin:"
-Settings.Advanced.DisablePreviewEncoding            "Poista esikatselun enkoodaus käytöstä"
 Settings.Advanced                                   "Edistyneet"
 Settings.Audio                                      "Ääni"
 Settings.Encoding                                   "Kuvanpakkaus"
@@ -117,8 +116,9 @@ Settings.SaveChangesPrompt                          "Haluatko tallentaa ja ottaa
 Settings.SaveChangesTitle                           "Otetaanko asetukset käyttöön?"
 Settings.Video                                      "Kuva"
 
+Settings.Advanced.AllowOtherHotkeyModifiers         "Salli muut pikanäppäinten modifikaattorit"
 Settings.Advanced.BindToIP                          "Liitä sovittimeen:"
-
+Settings.Advanced.DisablePreviewEncoding            "Poista esikatselun enkoodaus käytöstä"
 Settings.Advanced.GlobalAudioTimeAdjust             "Äänen viiväistäminen (ms):"
 Settings.Advanced.Network                           "Verkko"
 Settings.Advanced.PresetWarning                     "VAROITUS! x264 presetin muuttaminen saattaa vaikuttaa negatiivisesti striimisi laatuun ja nostaa prosessorin käyttöä huomattavasti.\r\n\r\nÄlä vaihda tätä asetusta ellet tiedä täysin, miten se vaikuttaa striimiisi.\r\n\r\nKohtele oppaita, jotka kehottavat sinua vaihtamaan tätä, varovaisuudella. Sinun tarvitse muuttaa tätä asetusta lähes koskaan sen tavallisesta arvosta (veryfast).\r\n\r\nHaluatko varmasti vaihtaa presettiä?"
@@ -126,9 +126,12 @@ Settings.Advanced.ProcessPriority                   "Prosessin prioriteettiluokk
 Settings.Advanced.SendBufferSize                    "Lähetyspuskurin koko:"
 Settings.Advanced.UnlockHigherFPS                   "Salli 60-120fps kuva-asetuksissa"
 Settings.Advanced.UseCBR                            "Käytä Constant Bitrate -asetusta (CBR)"
+Settings.Advanced.PadCBR                            "Käytä CBR paddingia"
 Settings.Advanced.UseCFR                            "Käytä Constant Framerate -asetusta (CFR)"
 Settings.Advanced.UseMultithreadedOptimizations     "Optimoi monelle ytimelle"
 Settings.Advanced.UseQSV                            "Käytä Quick Sync -ominaisuutta"
+Settings.Advanced.QSVUseVideoEncoderSettings        "Käytä valinnaisia x264-asetuksia QSV:lle"
+Settings.Advanced.QSVUseVideoEncoderSettingsToolTip "Tukee tällä hetkellä vain seuraavia: keyint, bframes."
 Settings.Advanced.SyncToVideoTime                   "Pakota äänen synkronoituminen videon aikaan"
 Settings.Advanced.SceneBufferTime                   "Skenen puskurointiaika (ms):"
 Settings.Advanced.VideoEncoderCPUTradeoffToolTip    "Tämän asetuksen nostaminen vähentää prosessorin käyttöä laadun kustannuksella.  Laskeminen taas nostaa laatua, mutta lisää prosessorin käyttöä.\r\n\r\nSuositus: Very Fast"
