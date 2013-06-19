@@ -1117,7 +1117,14 @@ void DeviceSource::Preprocess()
 
         if(lineSize != -1) {
             switch(deinterlacingType) {
-                case 1: // Simple field discard deinterlacing
+                case deinterlacing_Discard: // Simple field discard deinterlacing
+                    while(currentLine < renderCY) {
+                        memcpy(lastSample->lpData+((currentLine/2)*lineSize)+(lineSize),
+                            lastSample->lpData+(currentLine*lineSize), lineSize);
+                        currentLine += 2;
+                    }
+                    break;
+                case deinterlacing_Discard_Sharp: // Simple field discard deinterlacing
                     while(currentLine < renderCY) {
                         memcpy(lastSample->lpData+(currentLine*lineSize)+(lineSize),
                             lastSample->lpData+(currentLine*lineSize), lineSize);
@@ -1278,10 +1285,28 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
             LoadSamplerState(sampler, 0);
         }
 
-        if(bFlip)
-            DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y);
-        else
-            DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y+size.y, x2, pos.y);
+        if(bFlip) {
+            switch(deinterlacingType) {
+                case deinterlacing_Discard:
+                    DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y, 0.0f, 0.0f, 1.0f, 0.5f);
+                    break;
+                case deinterlacing_Discard_Sharp:
+                default:
+                    DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y);
+                    break;
+            }
+        }
+        else {
+            switch(deinterlacingType) {
+                case deinterlacing_Discard:
+                    DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y+size.y, x2, pos.y, 0.0f, 0.0f, 1.0f, 0.5f);
+                    break;
+                case deinterlacing_Discard_Sharp:
+                default:
+                    DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y+size.y, x2, pos.y);
+                    break;
+            }
+        }
 
         if(bUsePointFiltering) delete(sampler);
 

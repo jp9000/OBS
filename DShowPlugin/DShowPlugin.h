@@ -41,3 +41,9 @@ bool GetClosestResolution(List<MediaOutputInfo> &outputList, SIZE &resolution, U
 
 extern LocaleStringLookup *pluginLocale;
 #define PluginStr(text) pluginLocale->LookupString(TEXT2(text))
+
+enum deinterLacingTypes {
+    deinterlacing_None,
+    deinterlacing_Discard,
+    deinterlacing_Discard_Sharp,
+};
