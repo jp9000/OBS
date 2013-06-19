@@ -46,8 +46,9 @@ services : {
   Hashd.tv : {
     id : 7
     servers : {
-      "US Dallas, TX"     : rtmp://edge-dal1.hashd.tv/ingest
+      "US Dallas, TX"     : rtmp://ingest-dal1.hashd.tv/live
       "EU Amsterdam, NL"  : rtmp://ingest-ams1.hashd.tv/live
+      "EU Frankfurt, DE"  : rtmp://ingest-ffm1.hashd.tv/live
     }
   }
   TGamers.ru : {
