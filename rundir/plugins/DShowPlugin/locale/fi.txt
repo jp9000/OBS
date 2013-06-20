@@ -4,6 +4,8 @@ ClassName       "Videokaappauslaite"
 DeviceSelection "Laitteen valinta"
 OK              "OK"
 
+DeinterlacingType.None                  "Ei mitään"
+
 CrossbarSelection.Open                  "Avaa Crossbar"
 
 DeviceSelection.AudioDevice             "Äänilaite:"
