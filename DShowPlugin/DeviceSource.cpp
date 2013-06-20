@@ -1281,7 +1281,7 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
         if(bFlip) {
             switch(deinterlacingType) {
                 case deinterlacing_Discard:
-                    DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y, 0.0f, 0.0f, 1.0f, 0.5f);
+                    if(texture != NULL) DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y, 0.0f, 0.0f, 1.0f, 0.5f);
                     break;
                 default:
                     DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y);
@@ -1291,7 +1291,7 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
         else {
             switch(deinterlacingType) {
                 case deinterlacing_Discard:
-                    DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y+size.y, x2, pos.y, 0.0f, 0.0f, 1.0f, 0.5f);
+                    if(texture != NULL) DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y+size.y, x2, pos.y, 0.0f, 0.0f, 1.0f, 0.5f);
                     break;
                 default:
                     DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y+size.y, x2, pos.y);
