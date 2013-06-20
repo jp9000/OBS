@@ -3,6 +3,9 @@ ClassName       "Video Capture Device"
 DeviceSelection "Device Selection"
 OK              "OK"
 
+DeinterlacingType.None                  "None"
+DeinterlacingType.Discard               "Field Discard"
+
 CrossbarSelection.Open                  "Open Crossbar"
 
 DeviceSelection.AudioDevice             "Audio Input Device:"

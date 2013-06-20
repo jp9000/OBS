@@ -1014,8 +1014,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 hwndTemp = GetDlgItem(hwnd, IDC_DEINTERLACELIST);
 
                 // Populate deinterlacing type list like this, since there's only one for now.
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)L"None");
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)L"Field discard");
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)pluginLocale->LookupString(L"DeinterlacingType.None"));
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)pluginLocale->LookupString(L"DeinterlacingType.Discard"));
 
                 deinterlacingType = configData->data->GetInt(TEXT("deinterlacingType"));
                 SendMessage(hwndTemp, CB_SETCURSEL, deinterlacingType, 0);
