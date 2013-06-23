@@ -214,7 +214,7 @@ bool LoadPlugin()
 
     LoadSettings();
 
-    SetInitialSceneVolumes();
+    OnSceneSwitch(OBSGetSceneName());
 
     return true;
 }
