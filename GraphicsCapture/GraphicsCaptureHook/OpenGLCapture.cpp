@@ -150,7 +150,7 @@ extern LONGLONG         lastTime;
 CaptureInfo             glcaptureInfo;
 
 //------------------------------------------------
-// nvidia specific
+// nvidia specific (but also works on AMD surprisingly)
 
 bool bNVCaptureAvailable = false;
 bool bFBOAvailable = false;
@@ -263,6 +263,11 @@ void ClearGLData()
         if (gl_sharedtex) {
             glDeleteBuffers(1, &gl_sharedtex);
             gl_sharedtex = 0;
+        }
+
+        if (gl_fbo) {
+            glDeleteFramebuffers(1, &gl_fbo);
+            gl_fbo = 0;
         }
 
         SafeRelease(copyTextureIntermediary);
