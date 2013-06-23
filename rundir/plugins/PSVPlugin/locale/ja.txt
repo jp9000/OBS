@@ -1,8 +1,8 @@
-Cancel          "ƒLƒƒƒ“ƒZƒ‹"
+ï»¿Cancel          "ã‚­ãƒ£ãƒ³ã‚»ãƒ«"
 OK              "OK"
 
-Plugin.Name             "ƒV[ƒ“–ˆ‚Ìƒ{ƒŠƒ…[ƒ€ƒvƒ‰ƒOƒCƒ“"
-Plugin.Description      "ƒV[ƒ“–ˆ‚Ìƒ{ƒŠƒ…[ƒ€‚Ìƒgƒ‰ƒbƒLƒ“ƒO‚ð‰Â”\‚É‚µ‚Ü‚·B"
+Plugin.Name             "ã‚·ãƒ¼ãƒ³æ¯Žã®ãƒœãƒªãƒ¥ãƒ¼ãƒ ãƒ—ãƒ©ã‚°ã‚¤ãƒ³"
+Plugin.Description      "ã‚·ãƒ¼ãƒ³æ¯Žã®ãƒœãƒªãƒ¥ãƒ¼ãƒ ã®ãƒˆãƒ©ãƒƒã‚­ãƒ³ã‚°ã‚’å¯èƒ½ã«ã—ã¾ã™ã€‚"
 
-Config.Caption          "ƒV[ƒ“–ˆ‚Ìƒ{ƒŠƒ…[ƒ€Ý’è"
-Config.Enable           "ƒV[ƒ“–ˆ‚Ìƒ{ƒŠƒ…[ƒ€‚Ìƒgƒ‰ƒbƒLƒ“ƒO‚ð—LŒø‚É‚·‚é"
+Config.Caption          "ã‚·ãƒ¼ãƒ³æ¯Žã®ãƒœãƒªãƒ¥ãƒ¼ãƒ è¨­å®š"
+Config.Enable           "ã‚·ãƒ¼ãƒ³æ¯Žã®ãƒœãƒªãƒ¥ãƒ¼ãƒ ã®ãƒˆãƒ©ãƒƒã‚­ãƒ³ã‚°ã‚’æœ‰åŠ¹ã«ã™ã‚‹"
