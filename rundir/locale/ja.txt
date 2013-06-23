@@ -244,7 +244,7 @@ Sources.GameCaptureSource.UseHotkey         "ホットキーを使用"
 
 Sources.SoftwareCaptureSource.Blend                 "ブレンド (1-100):"
 Sources.SoftwareCaptureSource.CaptureLayered        "レイヤードウィンドウをキャプチャする"
-
+Sources.SoftwareCaptureSource.CaptureLayeredTip     "エアロが無効になっている時に透明/カスタムレイヤードウィンドウをキャプチャします。有効にすると、マウスがちらつく原因となることがあります。特定のアプリケーションをキャプチャすることができない場合にのみ、これを有効にしてください。"
 Sources.SoftwareCaptureSource.ColorKey              "カラーキー"
 Sources.SoftwareCaptureSource.CompatibilityMode     "互換性モード"
 Sources.SoftwareCaptureSource.EntireWindow          "ウィンドウ全部"
