@@ -105,17 +105,23 @@ WGLCREATECONTEXTPROC    jimglCreateContext    = NULL;
 
 typedef void      (WINAPI *GLBUFFERDATAARBPROC) (GLenum target, GLsizeiptrARB size, const GLvoid* data, GLenum usage);
 typedef void      (WINAPI *GLDELETEBUFFERSARBPROC)(GLsizei n, const GLuint* buffers);
+typedef void      (WINAPI *GLDELETETEXTURESPROC)(GLsizei n, const GLuint* buffers);
 typedef void      (WINAPI *GLGENBUFFERSARBPROC)(GLsizei n, GLuint* buffers);
+typedef void      (WINAPI *GLGENTEXTURESPROC)(GLsizei n, GLuint* textures);
 typedef GLvoid*   (WINAPI *GLMAPBUFFERPROC)(GLenum target, GLenum access);
 typedef GLboolean (WINAPI *GLUNMAPBUFFERPROC)(GLenum target);
 typedef void      (WINAPI *GLBINDBUFFERPROC)(GLenum target, GLuint buffer);
+typedef void      (WINAPI *GLBINDTEXTUREPROC)(GLenum target, GLuint texture);
 
 GLBUFFERDATAARBPROC     glBufferData       = NULL;
 GLDELETEBUFFERSARBPROC  glDeleteBuffers    = NULL;
+GLDELETETEXTURESPROC    glDeleteTextures   = NULL;
 GLGENBUFFERSARBPROC     glGenBuffers       = NULL;
+GLGENTEXTURESPROC       glGenTextures      = NULL;
 GLMAPBUFFERPROC         glMapBuffer        = NULL;
 GLUNMAPBUFFERPROC       glUnmapBuffer      = NULL;
 GLBINDBUFFERPROC        glBindBuffer       = NULL;
+GLBINDTEXTUREPROC       glBindTexture      = NULL;
 
 //------------------------------------------------
 
@@ -261,7 +267,7 @@ void ClearGLData()
         }
 
         if (gl_sharedtex) {
-            glDeleteBuffers(1, &gl_sharedtex);
+            glDeleteTextures(1, &gl_sharedtex);
             gl_sharedtex = 0;
         }
 
@@ -425,7 +431,7 @@ void DoGLGPUHook(RECT &rc)
             goto finishGPUHook;
         }
 
-        glGenBuffers(1, &gl_sharedtex);
+        glGenTextures(1, &gl_sharedtex);
         gl_handle = wglDXRegisterObjectNV(gl_dxDevice, d3d101Tex, gl_sharedtex, GL_TEXTURE_2D, WGL_ACCESS_WRITE_DISCARD_NV);
 
         if (gl_handle == NULL) {
@@ -742,7 +748,7 @@ void HandleGLSceneUpdate(HDC hDC)
 
                                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, gl_fbo);
 
-                                glBindBuffer(GL_TEXTURE_2D, gl_sharedtex);
+                                glBindTexture(GL_TEXTURE_2D, gl_sharedtex);
                                 glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gl_sharedtex, 0);
 
                                 glReadBuffer(GL_BACK); //source
@@ -750,7 +756,7 @@ void HandleGLSceneUpdate(HDC hDC)
 
                                 glBlitFramebuffer(0, 0, glcaptureInfo.cx, glcaptureInfo.cy, 0, 0, glcaptureInfo.cx, glcaptureInfo.cy, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
-                                glBindBuffer(GL_TEXTURE_2D, 0);
+                                glBindTexture(GL_TEXTURE_2D, 0);
                                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
                                 wglDXUnlockObjectsNV(gl_dxDevice, 1, &gl_handle);
@@ -983,17 +989,21 @@ bool InitGLCapture()
 
                 glBufferData       = (GLBUFFERDATAARBPROC)     jimglGetProcAddress("glBufferData");
                 glDeleteBuffers    = (GLDELETEBUFFERSARBPROC)  jimglGetProcAddress("glDeleteBuffers");
+                glDeleteTextures   = (GLDELETETEXTURESPROC)    GetProcAddress(hGL, "glDeleteTextures");
                 glGenBuffers       = (GLGENBUFFERSARBPROC)     jimglGetProcAddress("glGenBuffers");
+                glGenTextures      = (GLGENTEXTURESPROC)       GetProcAddress(hGL, "glGenTextures");
                 glMapBuffer        = (GLMAPBUFFERPROC)         jimglGetProcAddress("glMapBuffer");
                 glUnmapBuffer      = (GLUNMAPBUFFERPROC)       jimglGetProcAddress("glUnmapBuffer");
                 glBindBuffer       = (GLBINDBUFFERPROC)        jimglGetProcAddress("glBindBuffer");
+                glBindTexture      = (GLBINDTEXTUREPROC)       GetProcAddress(hGL, "glBindTexture");
 
                 UINT lastErr = GetLastError();
 
                 RegisterNVCaptureStuff();
                 RegisterFBOStuff();
 
-                if(glBufferData && glDeleteBuffers && glGenBuffers && glMapBuffer && glUnmapBuffer && glBindBuffer)
+                if(glBufferData && glDeleteBuffers && glDeleteTextures && glGenBuffers &&
+                    glGenTextures && glMapBuffer && glUnmapBuffer && glBindBuffer && glBindTexture)
                 {
                     glHookSwapBuffers.Hook((FARPROC)SwapBuffers, (FARPROC)SwapBuffersHook);
                     glHookSwapLayerBuffers.Hook((FARPROC)jimglSwapLayerBuffers, (FARPROC)wglSwapLayerBuffersHook);
