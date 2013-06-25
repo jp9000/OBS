@@ -42,8 +42,16 @@ namespace
 #define TO_STR(a) TEXT(#a)
 
     const float baseCRF = 22.0f;
-    const mfxVersion version = {4, 1}; //Highest supported version on Sandy Bridge
-    const mfxIMPL validImpl[] = {MFX_IMPL_HARDWARE_ANY, MFX_IMPL_HARDWARE};
+    const struct {
+        mfxU32 type,
+               intf;
+        mfxVersion version;
+    } validImpl[] = {
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D11, {6, 1} },
+        { MFX_IMPL_HARDWARE,        MFX_IMPL_VIA_D3D11, {6, 1} },
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_ANY,   {4, 1} }, //Sandy Bridge
+        { MFX_IMPL_HARDWARE,        MFX_IMPL_VIA_ANY,   {4, 1} },
+    };
     const TCHAR* implStr[] = {
         TO_STR(MFX_IMPL_AUTO),
         TO_STR(MFX_IMPL_SOFTWARE),
@@ -63,6 +71,19 @@ namespace
         TO_STR(5),
         TO_STR(6),
         TO_STR(MFX_TARGETUSAGE_BEST_SPEED)
+    };
+
+    TCHAR* qsv_intf_str(const mfxU32 impl)
+    {
+        switch(impl & (-MFX_IMPL_VIA_ANY))
+        {
+#define VIA_STR(x) case MFX_IMPL_VIA_##x: return TEXT(" | ") TO_STR(MFX_IMPL_VIA_##x)
+            VIA_STR(ANY);
+            VIA_STR(D3D9);
+            VIA_STR(D3D11);
+#undef VIA_STR
+        default: return nullptr;
+        }
     };
 
     void ConvertFrameRate(mfxF64 dFrameRate, mfxU32& pnFrameRateExtN, mfxU32& pnFrameRateExtD)
@@ -109,11 +130,10 @@ namespace
 bool CheckQSVHardwareSupport(bool log=true)
 {
     MFXVideoSession test;
-    for(int i = 0; i < sizeof(validImpl)/sizeof(validImpl[0]); i++)
+    for(auto impl = std::begin(validImpl); impl != std::end(validImpl); impl++)
     {
-        mfxIMPL impl = validImpl[i];
-        mfxVersion ver = version;
-        auto result = test.Init(impl, &ver);
+        mfxVersion ver = impl->version;
+        auto result = test.Init(impl->type | impl->intf, &ver);
         if(result != MFX_ERR_NONE)
             continue;
         if(log)
@@ -268,24 +288,20 @@ public:
         : enc(nullptr), bFirstFrameProcessed(false), bFirstFrameQueued(false)
     {
         Log(TEXT("------------------------------------------"));
-        for(int i = 0; i < sizeof(validImpl)/sizeof(validImpl[0]); i++)
+
+        for(auto impl = std::begin(validImpl); impl != std::end(validImpl); impl++)
         {
-            mfxIMPL impl = validImpl[i];
-            ver = version;
-            mfxStatus result = MFX_ERR_UNKNOWN;
-            for(ver.Minor = 6; ver.Minor >= 4; ver.Minor -= 2)
-            {
-                result = session.Init(impl, &ver);
-                if(result == MFX_ERR_NONE)
-                {
-                    mfxIMPL actual;
-                    session.QueryIMPL(&actual);
-                    Log(TEXT("QSV version %u.%u using %s (actual: %s)"), ver.Major, ver.Minor, implStr[impl], implStr[actual]);
-                    break;
-                }
-            }
+            ver = impl->version;
+            auto result = session.Init(impl->type | impl->intf, &ver);
             if(result == MFX_ERR_NONE)
+            {
+                mfxIMPL actual;
+                session.QueryIMPL(&actual);
+                auto intf_str = qsv_intf_str(actual);
+                Log(TEXT("QSV version %u.%u using %s (actual: %s%s)"), ver.Major, ver.Minor,
+                    implStr[impl->type], implStr[actual & (MFX_IMPL_VIA_ANY - 1)], intf_str ? intf_str : TEXT(""));
                 break;
+            }
         }
 
         session.SetPriority(MFX_PRIORITY_HIGH);
@@ -302,7 +318,7 @@ public:
         params.mfx.TargetKbps = maxBitrate;
         params.mfx.MaxKbps = maxBitrate;
         params.mfx.BufferSizeInKB = bufferSize/8;
-        params.mfx.GopOptFlag = MFX_GOP_CLOSED | MFX_GOP_STRICT;
+        params.mfx.GopOptFlag = MFX_GOP_CLOSED;
         params.mfx.GopPicSize = 250;
         params.mfx.GopRefDist = 8;
         params.mfx.IdrInterval = 0;

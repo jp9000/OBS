@@ -172,6 +172,7 @@ mfxStatus DISPATCHER_EXPOSED_PREFIX(MFXInit)(mfxIMPL impl, mfxVersion *pVer, mfx
         {
             // initialize the library iterator
             mfxRes = libIterator.Init(implTypes[curImplIdx].implType,
+                                      implInterface != MFX_IMPL_VIA_D3D11,
                                       implTypes[curImplIdx].adapterID,
                                       currentStorage);
 

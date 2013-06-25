@@ -58,7 +58,7 @@ public:
 
     // Initialize device using DXGI 1.1 interface
     virtual
-    bool Init(const mfxU32 adapterNum) = 0;
+    bool Init(const bool countDisplays, const mfxU32 adapterNum) = 0;
 
     // Obtain graphic card's parameter
     mfxU32 GetVendorID(void) const;
@@ -113,7 +113,7 @@ public:
 
     // Initialize device
     virtual
-    bool Init(const mfxU32 adapterNum);
+    bool Init(const bool countDisplays, const mfxU32 adapterNum);
 
     // Close the object
     virtual
@@ -137,7 +137,7 @@ public:
     ~DXVA2Device(void);
 
     // Initialize device using DXGI 1.1 interface
-    bool InitDXGI1(const mfxU32 adapterNum);
+    bool InitDXGI1(const bool countDisplays, const mfxU32 adapterNum);
 
     // Obtain graphic card's parameter
     mfxU32 GetVendorID(void) const;

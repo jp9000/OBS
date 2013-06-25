@@ -90,7 +90,7 @@ void MFXLibraryIterator::Release(void)
 
 } // void MFXLibraryIterator::Release(void)
 
-mfxStatus MFXLibraryIterator::Init(eMfxImplType implType, const mfxU32 adapterNum, int storageID)
+mfxStatus MFXLibraryIterator::Init(eMfxImplType implType, const bool countDisplays, const mfxU32 adapterNum, int storageID)
 {
     DXVA2Device dxvaDevice;
     HKEY rootHKey;
@@ -121,7 +121,7 @@ mfxStatus MFXLibraryIterator::Init(eMfxImplType implType, const mfxU32 adapterNu
     m_implType = implType;
 
     // try to open DXGI 1.1 device to get hardware ID
-    if (!dxvaDevice.InitDXGI1(adapterNum))
+    if (!dxvaDevice.InitDXGI1(countDisplays, adapterNum))
     {
         DISPATCHER_LOG_INFO((("dxvaDevice.InitDXGI1(%d) Failed "), adapterNum ));
         return MFX_ERR_UNSUPPORTED;

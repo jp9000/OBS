@@ -164,7 +164,7 @@ void DXGI1Device::Close(void)
 
 } // void DXGI1Device::Close(void)
 
-bool DXGI1Device::Init(const mfxU32 adapterNum)
+bool DXGI1Device::Init(const bool countDisplays, const mfxU32 adapterNum)
 {
     // release the object before initialization
     Close();
@@ -181,7 +181,6 @@ bool DXGI1Device::Init(const mfxU32 adapterNum)
         IDXGIFactory1 *pFactory;
         IDXGIAdapter1 *pAdapter;
         DXGI_ADAPTER_DESC1 desc;
-        mfxU32 curAdapter, maxAdapters;
         HRESULT hRes;
 
         // load address of procedure to create DXGI 1.1 factory
@@ -203,53 +202,45 @@ bool DXGI1Device::Init(const mfxU32 adapterNum)
         }
         m_pDXGIFactory1 = pFactory;
 
-        // get the number of adapters
-        curAdapter = 0;
-        maxAdapters = 0;
-        mfxU32 outputs = 0;
-        do
+        if(countDisplays)
         {
-            // get the required adapted
-            hRes = pFactory->EnumAdapters1(curAdapter, &pAdapter);
-            if (FAILED(hRes))
-            {
-                break;
-            }
-
-            mfxU32 curOutput = 0;
-            HRESULT h;
-            do
+            UINT display = 0;
+            for(UINT adapter = 0; pFactory->EnumAdapters1(adapter, &pAdapter) != DXGI_ERROR_NOT_FOUND; adapter++)
             {
                 IDXGIOutput *out;
-                h = pAdapter->EnumOutputs(curOutput, &out);
-                
-                if(FAILED(h))
+                for(UINT start_display = display; pAdapter->EnumOutputs(display-start_display, &out) != DXGI_ERROR_NOT_FOUND; display++)
+                {
+                    out->Release();
+
+                    if (display != adapterNum)
+                        continue;
+
+                    m_pDXGIAdapter1 = pAdapter;
+                    break;
+                }
+
+                if(m_pDXGIAdapter1)
                     break;
 
-                // if it is the required adapter, save the interface
-                if (outputs == adapterNum)
-                    m_pDXGIAdapter1 = pAdapter;
-
-                out->Release();
-                
-                outputs += 1;
-                curOutput += 1;
-            } while(!m_pDXGIAdapter1 && SUCCEEDED(h));
-
-            if(!m_pDXGIAdapter1)
                 pAdapter->Release();
+            }
 
-            curAdapter += 1;
-
-        } while (!m_pDXGIAdapter1 && SUCCEEDED(hRes));
-        maxAdapters = curAdapter;
-
-        // there is no required adapter
-        if (adapterNum >= outputs)
+            // there is no required adapter
+            if (adapterNum > display)
+                return false;
+        }
+        else
         {
-            return false;
+            hRes = pFactory->EnumAdapters1(adapterNum, &pAdapter);
+            if(FAILED(hRes))
+                return false;
+
+            m_pDXGIAdapter1 = pAdapter;
         }
         pAdapter = (IDXGIAdapter1 *) m_pDXGIAdapter1;
+
+        if(!pAdapter)
+            return false;
 
         // get the adapter's parameters
         hRes = pAdapter->GetDesc1(&desc);
@@ -292,7 +283,7 @@ void DXVA2Device::Close(void)
 
 } // void DXVA2Device::Close(void)
 
-bool DXVA2Device::InitDXGI1(const mfxU32 adapterNum)
+bool DXVA2Device::InitDXGI1(const bool countDisplays, const mfxU32 adapterNum)
 {
     DXGI1Device dxgi1Device;
     bool bRes;
@@ -301,7 +292,7 @@ bool DXVA2Device::InitDXGI1(const mfxU32 adapterNum)
     Close();
 
     // create modern DXGI device
-    bRes = dxgi1Device.Init(adapterNum);
+    bRes = dxgi1Device.Init(countDisplays, adapterNum);
     if (false == bRes)
     {
         return false;

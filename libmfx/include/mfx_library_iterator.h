@@ -58,7 +58,7 @@ public:
     ~MFXLibraryIterator(void);
 
     // Initialize the iterator
-    mfxStatus Init(eMfxImplType implType, const mfxU32 adapterNum, int storageID);
+    mfxStatus Init(eMfxImplType implType, const bool countDisplays, const mfxU32 adapterNum, int storageID);
 
     // Get the next library path
     mfxStatus SelectDLLVersion(wchar_t *pPath, size_t pathSize, eMfxImplType *pImplType, mfxVersion minVersion);
