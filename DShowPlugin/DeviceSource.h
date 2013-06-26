@@ -133,6 +133,7 @@ class DeviceSource : public ImageSource
     UINT            preferredOutputType;
 
     BYTE            deinterlacingType;
+    bool            curField;
 
     bool            bFirstFrame;
     bool            bUseThreadedConversion;

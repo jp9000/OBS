@@ -45,4 +45,6 @@ extern LocaleStringLookup *pluginLocale;
 enum deinterLacingTypes {
     deinterlacing_None,
     deinterlacing_Discard,
+    deinterlacing_Retro_TFF,
+    deinterlacing_Retro_BFF,
 };

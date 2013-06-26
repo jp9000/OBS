@@ -1097,6 +1097,8 @@ void DeviceSource::Preprocess()
         Log(TEXT("refTimeStart: %llu, refTimeFinish: %llu, offset = %llu"), refTimeStart, refTimeFinish, refTimeStart-lastRefTime);
         lastRefTime = refTimeStart;*/
 
+        bool topFieldFirst = true;
+
         switch(colorType) {
             case DeviceOutputType_RGB:
                 lineSize = renderCX * 4;
@@ -1116,6 +1118,7 @@ void DeviceSource::Preprocess()
         }
 
         if(lineSize != -1) {
+            BYTE *tempBuffer = NULL;
             switch(deinterlacingType) {
                 case deinterlacing_Discard: // Simple field discard deinterlacing
                     while(currentLine < renderCY) {
@@ -1123,6 +1126,32 @@ void DeviceSource::Preprocess()
                             lastSample->lpData+(currentLine*lineSize), lineSize);
                         currentLine += 2;
                     }
+                    break;
+                case deinterlacing_Retro_BFF:
+                    topFieldFirst = false;
+                case deinterlacing_Retro_TFF:
+                    // Separate the fields based on top and bottom field first
+                    tempBuffer = (BYTE *)Allocate(lineSize*renderCY);
+
+                    while(currentLine < renderCY) {
+                        if(topFieldFirst) {
+                            memcpy(tempBuffer+(lineSize*(currentLine/2)), lastSample->lpData+(currentLine*lineSize), lineSize);
+                            memcpy(tempBuffer+(lineSize*(renderCY/2))+(lineSize*(currentLine/2)), lastSample->lpData+((currentLine+1)*lineSize), lineSize);
+                        }
+                        else {
+                            memcpy(tempBuffer+(lineSize*(currentLine/2)), lastSample->lpData+((currentLine+1)*lineSize), lineSize);
+                            memcpy(tempBuffer+(lineSize*(renderCY/2))+(lineSize*(currentLine/2)), lastSample->lpData+(currentLine*lineSize), lineSize);
+                        }
+                        currentLine += 2;
+                    }
+                    
+                    // Set the current field to the top one (in the buffer) in case we're dealing
+                    // with a device that has an irregular capture frame rate.
+                    curField = false;
+                    memcpy(lastSample->lpData, tempBuffer, lineSize*renderCY);
+
+                    Free(tempBuffer);
+                    tempBuffer = NULL;
                     break;
                 default:
                     break;
@@ -1283,6 +1312,16 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
                 case deinterlacing_Discard:
                     if(texture != NULL) DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y, 0.0f, 0.0f, 1.0f, 0.5f);
                     break;
+                case deinterlacing_Retro_BFF:
+                case deinterlacing_Retro_TFF:
+                    if(!curField) {
+                        if(texture != NULL) DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y, 0.0f, 0.0f, 1.0f, 0.5f);
+                    }
+                    else {
+                        if(texture != NULL) DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y, 0.0f, 0.5f, 1.0f, 1.0f);
+                    }
+                    curField = !curField;
+                    break;
                 default:
                     DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y);
                     break;
@@ -1290,6 +1329,16 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
         }
         else {
             switch(deinterlacingType) {
+                case deinterlacing_Retro_BFF:
+                case deinterlacing_Retro_TFF:
+                    if(!curField) {
+                        if(texture != NULL) DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y+size.y, x2, pos.y, 0.0f, 0.0f, 1.0f, 0.5f);
+                    }
+                    else {
+                        if(texture != NULL) DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y+size.y, x2, pos.y, 0.0f, 0.5f, 1.0f, 1.0f);
+                    }
+                    curField = !curField;
+                    break;
                 case deinterlacing_Discard:
                     if(texture != NULL) DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y+size.y, x2, pos.y, 0.0f, 0.0f, 1.0f, 0.5f);
                     break;

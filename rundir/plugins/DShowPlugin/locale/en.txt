@@ -5,6 +5,8 @@ OK              "OK"
 
 DeinterlacingType.None                  "None"
 DeinterlacingType.Discard               "Field Discard"
+DeinterlacingType.RetroTFF              "Retro/scandoubling (TFF)"
+DeinterlacingType.RetroBFF              "Retro/scandoubling (BFF)"
 
 CrossbarSelection.Open                  "Open Crossbar"
 
