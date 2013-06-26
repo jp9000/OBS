@@ -1134,7 +1134,10 @@ void DeviceSource::Preprocess()
                     tempBuffer = (BYTE *)Allocate(lineSize*renderCY);
 
                     while(currentLine < renderCY) {
-                        if(topFieldFirst) {
+                        // Check for irregular frame rates this way instead
+                        // Doesn't help if the device itself loses order of the fields,
+                        // but then again I'm not quite sure what would.
+                        if((topFieldFirst && !curField) || (!topFieldFirst && curField)) {
                             memcpy(tempBuffer+(lineSize*(currentLine/2)), lastSample->lpData+(currentLine*lineSize), lineSize);
                             memcpy(tempBuffer+(lineSize*(renderCY/2))+(lineSize*(currentLine/2)), lastSample->lpData+((currentLine+1)*lineSize), lineSize);
                         }
@@ -1145,9 +1148,6 @@ void DeviceSource::Preprocess()
                         currentLine += 2;
                     }
                     
-                    // Set the current field to the top one (in the buffer) in case we're dealing
-                    // with a device that has an irregular capture frame rate.
-                    curField = false;
                     memcpy(lastSample->lpData, tempBuffer, lineSize*renderCY);
 
                     Free(tempBuffer);
