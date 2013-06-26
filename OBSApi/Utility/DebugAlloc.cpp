@@ -243,17 +243,17 @@ void DebugAlloc::_Free(LPVOID lpData)
 
 void* __restrict DefaultAlloc::_Allocate(size_t dwSize)
 {
-    return malloc(dwSize);
+    return _aligned_malloc(dwSize, 16);
 }
 
 void* DefaultAlloc::_ReAllocate(LPVOID lpData, size_t dwSize)
 {
-    return (!lpData) ? malloc(dwSize) : realloc(lpData, dwSize);
+    return (!lpData) ? _aligned_malloc(dwSize, 16) : _aligned_realloc(lpData, dwSize, 16);
 }
 
 void DefaultAlloc::_Free(LPVOID lpData)
 {
-    free(lpData);
+    _aligned_free(lpData);
 }
 
 void DefaultAlloc::ErrorTermination()
