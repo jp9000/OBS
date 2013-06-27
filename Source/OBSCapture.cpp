@@ -473,6 +473,12 @@ void OBS::Start()
             fileStream = CreateFLVFileStream(strOutputFile);
         else if(strFileExtension.CompareI(TEXT("mp4")))
             fileStream = CreateMP4FileStream(strOutputFile);
+
+        if(!fileStream)
+        {
+            Log(TEXT("Warning - OBSCapture::Start: Unable to create the file stream. Check the file path in Broadcast Settings."));
+            MessageBox(hwndMain, Str("Capture.Start.FileStream.Warning"), Str("Capture.Start.FileStream.WarningCaption"), MB_OK | MB_ICONWARNING);        
+        }
     }
 
     //-------------------------------------------------------------

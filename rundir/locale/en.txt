@@ -108,6 +108,9 @@ Scene.MissingSources    "Was unable to load all image sources due to either inva
 Scene.Hotkey.AlreadyInUse   "This hotkey is already in use."
 Scene.Hotkey.Hotkey         "Hotkey:"
 
+Capture.Start.FileStream.WarningCaption             "Warning"
+Capture.Start.FileStream.Warning                    "Unable to create the file output stream.\n\nCheck the file path in Broadcast Settings."
+
 Settings.Advanced           "Advanced"
 Settings.Audio              "Audio"
 Settings.Encoding           "Encoding"
