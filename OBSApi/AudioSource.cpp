@@ -25,6 +25,9 @@
 #define KSAUDIO_SPEAKER_3POINT1     (KSAUDIO_SPEAKER_STEREO|SPEAKER_FRONT_CENTER|SPEAKER_LOW_FREQUENCY)
 #define KSAUDIO_SPEAKER_2POINT1     (KSAUDIO_SPEAKER_STEREO|SPEAKER_LOW_FREQUENCY)
 
+//comment to disable
+#define EXPERIMENTAL_DOWNMIXING_BYPASS
+
 
 void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
 {
@@ -433,6 +436,12 @@ UINT AudioSource::QueryAudio(float curVolume)
                 UINT numFloats = numAudioFrames*6;
                 float *endTemp = inputTemp+numFloats;
 
+#ifdef EXPERIMENTAL_DOWNMIXING_BYPASS
+                float *origInputTemp = inputTemp;
+                float *origOutputTemp = outputTemp;
+                int nTriggerStereo = 0;
+#endif
+
                 while(inputTemp < endTemp)
                 {
                     float left      = inputTemp[0];
@@ -468,8 +477,23 @@ UINT AudioSource::QueryAudio(float curVolume)
                     *(outputTemp++) = (left  + center  + rearLeft) * attn5dot1;
                     *(outputTemp++) = (right + center  + rearRight) * attn5dot1;
 
+#ifdef EXPERIMENTAL_DOWNMIXING_BYPASS
+                    if(center < 0.0001 && rearLeft < 0.0001 && rearRight <0.0001)
+                        nTriggerStereo++;
+#endif
+
                     inputTemp  += 6;
                 }
+
+#ifdef EXPERIMENTAL_DOWNMIXING_BYPASS
+                if(nTriggerStereo == numAudioFrames)
+                    while(origInputTemp < endTemp)
+                    {
+                        *(origOutputTemp++) = origInputTemp[0];
+                        *(origOutputTemp++) = origInputTemp[1];
+                        origInputTemp += 6;
+                    }
+#endif
             }
 
             // According to http://msdn.microsoft.com/en-us/library/windows/hardware/ff537083(v=vs.85).aspx
