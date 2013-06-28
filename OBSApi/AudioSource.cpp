@@ -28,8 +28,6 @@
 //comment to disable
 #define EXPERIMENTAL_DOWNMIXING_BYPASS
 
-#define EXCINTERVAL(x,y) (((x)<(y)) && ((x)>-(y)))
-
 void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
 {
     float sum = 0.0f;
@@ -477,13 +475,11 @@ UINT AudioSource::QueryAudio(float curVolume)
 
                     *(outputTemp++) = (left  + center  + rearLeft) * attn5dot1;
                     *(outputTemp++) = (right + center  + rearRight) * attn5dot1;
-                    
 
 #ifdef EXPERIMENTAL_DOWNMIXING_BYPASS
-                    if(EXCINTERVAL(center, 0.0001) && EXCINTERVAL(rearLeft, 0.0001) && EXCINTERVAL(rearRight, 0.0001))
+                    if(fabsf(center) < EPSILON && fabsf(rearLeft) < EPSILON && fabsf(rearRight) < EPSILON)
                         nTriggerStereo++;
 #endif
-
                     inputTemp  += 6;
                 }
 
