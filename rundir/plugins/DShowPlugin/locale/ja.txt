@@ -5,6 +5,8 @@ OK              "OK"
 
 DeinterlacingType.None                  "なし"
 DeinterlacingType.Discard               "フィールドの破棄"
+DeinterlacingType.RetroTFF              "レトロ (トップフィールドが先)"
+DeinterlacingType.RetroBFF              "レトロ (ボトムフィールドが先)"
 
 CrossbarSelection.Open                  "クロスバーを開く"
 
@@ -23,6 +25,7 @@ DeviceSelection.FlipImage               "垂直方向に反転する"
 DeviceSelection.FlipImageHorizontal     "水平方向に反転する"
 DeviceSelection.ForceCustomAudio        "カスタムオーディオデバイスを使用"
 DeviceSelection.FPS                     "FPS:"
+DeviceSelection.Gamma                   "ガンマ補正:"
 DeviceSelection.GlobalExists            "このデバイスを使用しているグローバルソースが既に存在しています。"
 DeviceSelection.InvalidResolution       "無効な解像度"
 DeviceSelection.NoSound                 "サウンドを無効にする"

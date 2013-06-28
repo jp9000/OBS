@@ -108,6 +108,9 @@ Scene.MissingSources    "不正な設定またはプラグインがないため�
 Scene.Hotkey.AlreadyInUse   "このホットキーは既に別のシーンで使われています。"
 Scene.Hotkey.Hotkey         "ホットキー:"
 
+Capture.Start.FileStream.WarningCaption             "警告"
+Capture.Start.FileStream.Warning                    "ファイル出力ストリームを作成することができません。\n\n配信設定でファイルのパスを確認してください。"
+
 Settings.Advanced           "詳細設定"
 Settings.Audio              "サウンド"
 Settings.Encoding           "エンコード"
