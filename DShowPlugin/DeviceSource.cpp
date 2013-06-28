@@ -1086,7 +1086,8 @@ void DeviceSource::Preprocess()
     //----------------------------------------
 
     int numThreads = MAX(OSGetTotalCores()-2, 1);
-    int lineSize = -1, currentLine = 0;
+    int lineSize = -1;
+    unsigned int currentLine = 0;
 
     if(lastSample)
     {
