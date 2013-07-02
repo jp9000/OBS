@@ -818,6 +818,9 @@ BOOL   STDCALL OSIncompatiblePatchesLoaded(String &errors)
 BOOL   STDCALL OSIncompatibleModulesLoaded()
 {
     StringList  moduleList;
+    
+    //Modules that will likely cause OBS to crash because they hooked it.
+    //This list is checked on stream start only.
 
     if (!OSGetLoadedModuleList(GetCurrentProcess(), moduleList))
         return 0;
@@ -826,10 +829,11 @@ BOOL   STDCALL OSIncompatibleModulesLoaded()
     {
         CTSTR moduleName = moduleList[i];
 
-        if (!scmp(moduleName, TEXT("dxtorycore.dll")) ||
-            !scmp(moduleName, TEXT("dxtorycore64.dll")) ||
-            !scmp(moduleName, TEXT("dxtorymm.dll")) ||
-            !scmp(moduleName, TEXT("dxtorymm64.dll")))
+        if (!scmp(moduleName, TEXT("dxtorycore.dll")) ||        //DXTory
+            !scmp(moduleName, TEXT("dxtorycore64.dll")) ||      //DXTory
+            !scmp(moduleName, TEXT("dxtorymm.dll")) ||          //DXTory
+            !scmp(moduleName, TEXT("dxtorymm64.dll")) ||        //DXTory
+            !scmp(moduleName, TEXT("atkdx11disp.dll")))         //ASUS OSD
         {
             return 1;
         }
