@@ -169,8 +169,8 @@ void SettingsAudio::ApplySettings()
     int micTimeOffset = (int)SendMessage(GetDlgItem(hwnd, IDC_MICTIMEOFFSET), UDM_GETPOS32, 0, 0);
     if(micTimeOffset < -150)
         micTimeOffset = -150;
-    else if(micTimeOffset > 3000)
-        micTimeOffset = 3000;
+    else if(micTimeOffset > 20000)
+        micTimeOffset = 20000;
     AppConfig->SetInt(TEXT("Audio"), TEXT("MicTimeOffset"), micTimeOffset);
 
     if(App->bRunning && App->micAudio)
@@ -331,10 +331,10 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 int micTimeOffset = AppConfig->GetInt(TEXT("Audio"), TEXT("MicTimeOffset"), 0);
                 if(micTimeOffset < -bufferTime)
                     micTimeOffset = -bufferTime;
-                else if(micTimeOffset > 3000)
-                    micTimeOffset = 3000;
+                else if(micTimeOffset > 20000)
+                    micTimeOffset = 20000;
 
-                SendMessage(GetDlgItem(hwnd, IDC_MICTIMEOFFSET), UDM_SETRANGE32, -bufferTime, 3000);
+                SendMessage(GetDlgItem(hwnd, IDC_MICTIMEOFFSET), UDM_SETRANGE32, -bufferTime, 20000);
                 SendMessage(GetDlgItem(hwnd, IDC_MICTIMEOFFSET), UDM_SETPOS32, 0, micTimeOffset);
 
                 //--------------------------------------------

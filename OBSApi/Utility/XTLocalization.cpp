@@ -552,7 +552,6 @@ LocaleNativeName nativeNames[] =
     {TEXT("zu"), TEXT("isiZulu")},
     {NULL, NULL}
 };
-//zh_cn = "简体中文", zh_tw "正體中文"
 
 LocaleNativeName* STDCALL GetLocaleNativeName(CTSTR lpCode)
 {
