@@ -726,7 +726,7 @@ void GraphicsCaptureSource::Render(const Vect2 &pos, const Vect2 &size)
             //----------------------------------------------------------
             // draw mouse
 
-            if(bMouseCaptured && cursorTexture)
+            if(bMouseCaptured && cursorTexture && GetForegroundWindow() == hwndCapture)
             {
                 Vect2 newCursorPos  = Vect2(float(cursorPos.x-xHotspot), float(cursorPos.y-xHotspot));
                 Vect2 newCursorSize = Vect2(float(cursorTexture->Width()), float(cursorTexture->Height()));

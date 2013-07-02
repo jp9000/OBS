@@ -357,7 +357,7 @@ public:
             //----------------------------------------------------------
             // capture mouse
 
-            if(bMouseCaptured)
+            if(bMouseCaptured && (captureType == 0 || (captureType == 1 && hwndFoundWindow == GetForegroundWindow())))
             {
                 if(ci.flags & CURSOR_SHOWING)
                 {
