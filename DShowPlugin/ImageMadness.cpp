@@ -20,10 +20,10 @@
 #include "DShowPlugin.h"
 
 //now properly takes CPU cache into account - it's just so much faster than it was.
-void PackPlanar(LPBYTE convertBuffer, LPBYTE lpPlanar, UINT renderCX, UINT renderCY, UINT pitch, UINT startY, UINT endY)
+void PackPlanar(LPBYTE convertBuffer, LPBYTE lpPlanar, UINT renderCX, UINT renderCY, UINT pitch, UINT startY, UINT endY, UINT linePitch, UINT lineShift)
 {
     LPBYTE output = convertBuffer;
-    LPBYTE input = lpPlanar;
+    LPBYTE input = lpPlanar + lineShift;
     LPBYTE input2 = input+(renderCX*renderCY);
     LPBYTE input3 = input2+(renderCX*renderCY/4);
 
@@ -33,10 +33,10 @@ void PackPlanar(LPBYTE convertBuffer, LPBYTE lpPlanar, UINT renderCX, UINT rende
 
     for(UINT y=halfStartY; y<halfY; y++)
     {
-        LPBYTE lpLum1 = input + y*2*renderCX;
-        LPBYTE lpLum2 = lpLum1 + renderCX;
-        LPBYTE lpChroma1 = input2 + y*halfX;
-        LPBYTE lpChroma2 = input3 + y*halfX;
+        LPBYTE lpLum1 = input + y*2*linePitch;
+        LPBYTE lpLum2 = lpLum1 + linePitch;
+        LPBYTE lpChroma1 = input2 + y*linePitch/2;
+        LPBYTE lpChroma2 = input3 + y*linePitch/2;
         LPDWORD output1 = (LPDWORD)(output + (y*2)*pitch);
         LPDWORD output2 = (LPDWORD)(((LPBYTE)output1)+pitch);
 
@@ -55,7 +55,7 @@ void PackPlanar(LPBYTE convertBuffer, LPBYTE lpPlanar, UINT renderCX, UINT rende
 
 void DeviceSource::Convert422To444(LPBYTE convertBuffer, LPBYTE lp422, UINT pitch, bool bLeadingY)
 {
-    DWORD size = renderCX*2;
+    DWORD size = lineSize;
     DWORD dwDWSize = size>>2;
 
     if(bLeadingY)
@@ -63,7 +63,7 @@ void DeviceSource::Convert422To444(LPBYTE convertBuffer, LPBYTE lp422, UINT pitc
         for(UINT y=0; y<renderCY; y++)
         {
             LPDWORD output = (LPDWORD)(convertBuffer+(y*pitch));
-            LPDWORD inputDW = (LPDWORD)(lp422+(y*size));
+            LPDWORD inputDW = (LPDWORD)(lp422+(y*linePitch)+lineShift);
             LPDWORD inputDWEnd = inputDW+dwDWSize;
 
             while(inputDW < inputDWEnd)
@@ -85,7 +85,7 @@ void DeviceSource::Convert422To444(LPBYTE convertBuffer, LPBYTE lp422, UINT pitc
         for(UINT y=0; y<renderCY; y++)
         {
             LPDWORD output = (LPDWORD)(convertBuffer+(y*pitch));
-            LPDWORD inputDW = (LPDWORD)(lp422+(y*size));
+            LPDWORD inputDW = (LPDWORD)(lp422+(y*linePitch)+lineShift);
             LPDWORD inputDWEnd = inputDW+dwDWSize;
 
             while(inputDW < inputDWEnd)
