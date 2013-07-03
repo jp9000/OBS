@@ -623,6 +623,63 @@ bool DeviceSource::LoadFilters()
         audioOut->SetVolume(volume);
     }
 
+    switch(colorType) {
+    case DeviceOutputType_RGB:
+        lineSize = renderCX * 4;
+        break;
+    case DeviceOutputType_I420:
+    case DeviceOutputType_YV12:
+        lineSize = renderCX; //per plane
+        break;
+    case DeviceOutputType_YVYU:
+    case DeviceOutputType_YUY2:
+    case DeviceOutputType_UYVY:
+    case DeviceOutputType_HDYC:
+        lineSize = (renderCX * 2);
+        break;
+    }
+
+    linePitch = lineSize;
+    lineShift = 0;
+    imageCX = renderCX;
+    imageCY = renderCY;
+
+    curField = false;
+    switch(deinterlacingType) {
+    case deinterlacing_Discard:
+        linePitch = lineSize * 2;
+        renderCY /= 2;
+        break;
+    case deinterlacing_Retro_BFF:
+        curField = true;
+    case deinterlacing_Retro_TFF:
+        lineSize *= 2;
+        linePitch = lineSize;
+        renderCY /= 2;
+        renderCX *= 2;
+    }
+
+    for(int i=0; i<numThreads; i++)
+    {
+        convertData[i].width  = lineSize;
+        convertData[i].height = imageCY;
+        convertData[i].sample = NULL;
+        convertData[i].hSignalConvert  = CreateEvent(NULL, FALSE, FALSE, NULL);
+        convertData[i].hSignalComplete = CreateEvent(NULL, FALSE, FALSE, NULL);
+        convertData[i].linePitch = linePitch;
+        convertData[i].lineShift = lineShift;
+
+        if(i == 0)
+            convertData[i].startY = 0;
+        else
+            convertData[i].startY = convertData[i-1].endY;
+
+        if(i == (numThreads-1))
+            convertData[i].endY = renderCY;
+        else
+            convertData[i].endY = ((renderCY/numThreads)*(i+1)) & 0xFFFFFFFE;
+    }
+
     bSucceeded = true;
 
 cleanFinish:
@@ -693,41 +750,6 @@ cleanFinish:
     if(!renderCX) renderCX = 32;
     if(!renderCY) renderCY = 32;
 
-    switch(colorType) {
-    case DeviceOutputType_RGB:
-        lineSize = renderCX * 4;
-        break;
-    case DeviceOutputType_I420:
-    case DeviceOutputType_YV12:
-        lineSize = renderCX; //per plane
-        break;
-    case DeviceOutputType_YVYU:
-    case DeviceOutputType_YUY2:
-    case DeviceOutputType_UYVY:
-    case DeviceOutputType_HDYC:
-        lineSize = (renderCX * 2);
-        break;
-    }
-
-    linePitch = lineSize;
-    lineShift = 0;
-    imageCX = renderCX;
-    imageCY = renderCY;
-
-    curField = false;
-    switch(deinterlacingType) {
-    case deinterlacing_Discard:
-        linePitch = lineSize * 2;
-        renderCY /= 2;
-        break;
-    case deinterlacing_Retro_BFF:
-        curField = true;
-    case deinterlacing_Retro_TFF:
-        lineSize *= 2;
-        linePitch = lineSize;
-        renderCY /= 2;
-        renderCX *= 2;
-    }
 
     //-----------------------------------------------------
     // create the texture regardless, will just show up as red to indicate failure
@@ -759,27 +781,6 @@ cleanFinish:
     }
 
     Free(textureData);
-
-    for(int i=0; i<numThreads; i++)
-    {
-        convertData[i].width  = lineSize;
-        convertData[i].height = imageCY;
-        convertData[i].sample = NULL;
-        convertData[i].hSignalConvert  = CreateEvent(NULL, FALSE, FALSE, NULL);
-        convertData[i].hSignalComplete = CreateEvent(NULL, FALSE, FALSE, NULL);
-        convertData[i].linePitch = linePitch;
-        convertData[i].lineShift = lineShift;
-
-        if(i == 0)
-            convertData[i].startY = 0;
-        else
-            convertData[i].startY = convertData[i-1].endY;
-
-        if(i == (numThreads-1))
-            convertData[i].endY = renderCY;
-        else
-            convertData[i].endY = ((renderCY/numThreads)*(i+1)) & 0xFFFFFFFE;
-    }
 
     bFiltersLoaded = bSucceeded;
     return bSucceeded;
