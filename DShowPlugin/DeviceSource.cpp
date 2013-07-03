@@ -1284,6 +1284,14 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
             x2 = x+size.x;
         }
 
+        float y = pos.y,
+              y2 = y+size.y;
+        if(!bFlip)
+        {
+            y2 = pos.y;
+            y = y2+size.y;
+        }
+
         float fOpacity = float(opacity)*0.01f;
         DWORD opacity255 = DWORD(fOpacity*255.0f);
 
@@ -1295,56 +1303,26 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
         }
 
 
-        if(bFlip) {
-            switch(deinterlacingType) {
-                case deinterlacing_Retro_BFF:
-                case deinterlacing_Retro_TFF:
-                    if(texture)
-                    {
-                        if(!curField)
-                            DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y, 0.f, 0.0f, .5f, 1.f);
-                        else
-                            DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y, .5f, 0.0f, 1.f, 1.f);
-                    }
-                    break;
-                case deinterlacing_Discard:
-                    if(texture != NULL) DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y, 0.0f, 0.0f, 1.f, 1.f);
-                    curField = !curField;
-                    break;
-                default:
-                    DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y);
-                    break;
-            }
-        }
-        else {
-            switch(deinterlacingType) {
-                case deinterlacing_Retro_BFF:
-                case deinterlacing_Retro_TFF:
-                    if(texture)
-                    {
-                        if(!curField)
-                            DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y, 0.f, 0.0f, .5f, 1.f);
-                        else
-                            DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y, .5f, 0.0f, 1.f, 1.f);
-                    }
-                    break;
-                case deinterlacing_Discard:
-                    if(texture != NULL) DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y, 0.0f, 0.0f, 1.f, 1.f);
-                    break;
-                default:
-                    DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y+size.y, x2, pos.y);
-                    break;
-            }
-        }
-        switch(deinterlacingType)
-        {
+
+        switch(deinterlacingType) {
         case deinterlacing_Retro_BFF:
         case deinterlacing_Retro_TFF:
+            if(texture)
+            {
+                if(!curField)
+                    DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, y, x2, y2, 0.f, 0.0f, .5f, 1.f);
+                else
+                    DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, y, x2, y2, .5f, 0.0f, 1.f, 1.f);
+            }
             if(bNewFrame)
             {
                 curField = !curField;
                 bNewFrame = false; //prevent switching from the second field to the first field
             }
+            break;
+        default:
+            DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, y, x2, y2);
+            break;
         }
 
         if(bUsePointFiltering) delete(sampler);
