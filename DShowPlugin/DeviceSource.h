@@ -19,7 +19,7 @@
 
 #pragma once
 
-void PackPlanar(LPBYTE convertBuffer, LPBYTE lpPlanar, UINT renderCX, UINT renderCY, UINT pitch, UINT startY, UINT endY);
+void PackPlanar(LPBYTE convertBuffer, LPBYTE lpPlanar, UINT renderCX, UINT renderCY, UINT pitch, UINT startY, UINT endY, UINT linePitch, UINT lineShift);
 
 enum DeviceColorType
 {
@@ -65,6 +65,7 @@ struct ConvertData
     UINT   width, height;
     UINT   pitch;
     UINT   startY, endY;
+    UINT   linePitch, lineShift;
 };
 
 class DeviceSource;
@@ -129,11 +130,13 @@ class DeviceSource : public ImageSource
     bool            bFlipVertical, bFlipHorizontal, bDeviceHasAudio, bUsePointFiltering;
     UINT64          frameInterval;
     UINT            renderCX, renderCY;
+    UINT            imageCX, imageCY;
+    UINT            linePitch, lineShift, lineSize;
     BOOL            bUseCustomResolution;
     UINT            preferredOutputType;
 
     BYTE            deinterlacingType;
-    bool            curField;
+    bool            curField, bNewFrame;
 
     bool            bFirstFrame;
     bool            bUseThreadedConversion;
@@ -221,6 +224,6 @@ public:
     void SetInt(CTSTR lpName, int iVal);
     void SetFloat(CTSTR lpName, float fValue);
 
-    Vect2 GetSize() const {return Vect2(float(renderCX), float(renderCY));}
+    Vect2 GetSize() const {return Vect2(float(imageCX), float(imageCY));}
 };
 

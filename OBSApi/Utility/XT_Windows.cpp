@@ -833,7 +833,8 @@ BOOL   STDCALL OSIncompatibleModulesLoaded()
             !scmp(moduleName, TEXT("dxtorycore64.dll")) ||      //DXTory
             !scmp(moduleName, TEXT("dxtorymm.dll")) ||          //DXTory
             !scmp(moduleName, TEXT("dxtorymm64.dll")) ||        //DXTory
-            !scmp(moduleName, TEXT("atkdx11disp.dll")))         //ASUS OSD
+            !scmp(moduleName, TEXT("atkdx11disp.dll")) ||       //ASUS OSD
+            !scmp(moduleName, TEXT("rtsshooks.dll")))           //EVGA Precision OSD
         {
             return 1;
         }

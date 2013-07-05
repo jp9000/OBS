@@ -330,26 +330,6 @@ bool DeviceSource::LoadFilters()
 
     preferredOutputType = (data->GetInt(TEXT("usePreferredType")) != 0) ? data->GetInt(TEXT("preferredType")) : -1;
 
-    int numThreads = MAX(OSGetTotalCores()-2, 1);
-    for(int i=0; i<numThreads; i++)
-    {
-        convertData[i].width  = renderCX;
-        convertData[i].height = renderCY;
-        convertData[i].sample = NULL;
-        convertData[i].hSignalConvert  = CreateEvent(NULL, FALSE, FALSE, NULL);
-        convertData[i].hSignalComplete = CreateEvent(NULL, FALSE, FALSE, NULL);
-
-        if(i == 0)
-            convertData[i].startY = 0;
-        else
-            convertData[i].startY = convertData[i-1].endY;
-
-        if(i == (numThreads-1))
-            convertData[i].endY = renderCY;
-        else
-            convertData[i].endY = ((renderCY/numThreads)*(i+1)) & 0xFFFFFFFE;
-    }
-
     bFirstFrame = true;
 
     //------------------------------------------------
@@ -423,7 +403,8 @@ bool DeviceSource::LoadFilters()
         AppWarning(TEXT("DShowPlugin: Could not create color space conversion pixel shader"));
         goto cleanFinish;
     }
-
+    
+    int numThreads = MAX(OSGetTotalCores()-2, 1);
     if(colorType == DeviceOutputType_YV12 || colorType == DeviceOutputType_I420)
     {
         for(int i=0; i<numThreads; i++)
@@ -642,6 +623,63 @@ bool DeviceSource::LoadFilters()
         audioOut->SetVolume(volume);
     }
 
+    switch(colorType) {
+    case DeviceOutputType_RGB:
+        lineSize = renderCX * 4;
+        break;
+    case DeviceOutputType_I420:
+    case DeviceOutputType_YV12:
+        lineSize = renderCX; //per plane
+        break;
+    case DeviceOutputType_YVYU:
+    case DeviceOutputType_YUY2:
+    case DeviceOutputType_UYVY:
+    case DeviceOutputType_HDYC:
+        lineSize = (renderCX * 2);
+        break;
+    }
+
+    linePitch = lineSize;
+    lineShift = 0;
+    imageCX = renderCX;
+    imageCY = renderCY;
+
+    curField = false;
+    switch(deinterlacingType) {
+    case deinterlacing_Discard:
+        linePitch = lineSize * 2;
+        renderCY /= 2;
+        break;
+    case deinterlacing_Retro_BFF:
+        curField = true;
+    case deinterlacing_Retro_TFF:
+        lineSize *= 2;
+        linePitch = lineSize;
+        renderCY /= 2;
+        renderCX *= 2;
+    }
+
+    for(int i=0; i<numThreads; i++)
+    {
+        convertData[i].width  = lineSize;
+        convertData[i].height = imageCY;
+        convertData[i].sample = NULL;
+        convertData[i].hSignalConvert  = CreateEvent(NULL, FALSE, FALSE, NULL);
+        convertData[i].hSignalComplete = CreateEvent(NULL, FALSE, FALSE, NULL);
+        convertData[i].linePitch = linePitch;
+        convertData[i].lineShift = lineShift;
+
+        if(i == 0)
+            convertData[i].startY = 0;
+        else
+            convertData[i].startY = convertData[i-1].endY;
+
+        if(i == (numThreads-1))
+            convertData[i].endY = renderCY;
+        else
+            convertData[i].endY = ((renderCY/numThreads)*(i+1)) & 0xFFFFFFFE;
+    }
+
     bSucceeded = true;
 
 cleanFinish:
@@ -711,6 +749,7 @@ cleanFinish:
 
     if(!renderCX) renderCX = 32;
     if(!renderCY) renderCY = 32;
+
 
     //-----------------------------------------------------
     // create the texture regardless, will just show up as red to indicate failure
@@ -1037,7 +1076,7 @@ static DWORD STDCALL PackPlanarThread(ConvertData *data)
         WaitForSingleObject(data->hSignalConvert, INFINITE);
         if(data->bKillThread) break;
 
-        PackPlanar(data->output, data->input, data->width, data->height, data->pitch, data->startY, data->endY);
+        PackPlanar(data->output, data->input, data->width, data->height, data->pitch, data->startY, data->endY, data->linePitch, data->lineShift);
         data->sample->Release();
 
         SetEvent(data->hSignalComplete);
@@ -1086,8 +1125,6 @@ void DeviceSource::Preprocess()
     //----------------------------------------
 
     int numThreads = MAX(OSGetTotalCores()-2, 1);
-    int lineSize = -1;
-    unsigned int currentLine = 0;
 
     if(lastSample)
     {
@@ -1098,72 +1135,19 @@ void DeviceSource::Preprocess()
         Log(TEXT("refTimeStart: %llu, refTimeFinish: %llu, offset = %llu"), refTimeStart, refTimeFinish, refTimeStart-lastRefTime);
         lastRefTime = refTimeStart;*/
 
-        bool topFieldFirst = true;
-
-        switch(colorType) {
-            case DeviceOutputType_RGB:
-                lineSize = renderCX * 4;
-                break;
-            case DeviceOutputType_I420:
-            case DeviceOutputType_YV12:
-                lineSize = (renderCX * 12) / 8;
-                break;
-            case DeviceOutputType_YVYU:
-            case DeviceOutputType_YUY2:
-            case DeviceOutputType_UYVY:
-            case DeviceOutputType_HDYC:
-                lineSize = (renderCX * 2);
-                break;
-            default:
-                break;
-        }
-
-        if(lineSize != -1) {
-            BYTE *tempBuffer = NULL;
-            switch(deinterlacingType) {
-                case deinterlacing_Discard: // Simple field discard deinterlacing
-                    while(currentLine < renderCY) {
-                        memcpy(lastSample->lpData+((currentLine/2)*lineSize)+(lineSize),
-                            lastSample->lpData+(currentLine*lineSize), lineSize);
-                        currentLine += 2;
-                    }
-                    break;
-                case deinterlacing_Retro_BFF:
-                    topFieldFirst = false;
-                case deinterlacing_Retro_TFF:
-                    // Separate the fields based on top and bottom field first
-                    tempBuffer = (BYTE *)Allocate(lineSize*renderCY);
-
-                    while(currentLine < renderCY) {
-                        // Check for irregular frame rates this way instead
-                        // Doesn't help if the device itself loses order of the fields,
-                        // but then again I'm not quite sure what would.
-                        if((topFieldFirst && !curField) || (!topFieldFirst && curField)) {
-                            memcpy(tempBuffer+(lineSize*(currentLine/2)), lastSample->lpData+(currentLine*lineSize), lineSize);
-                            memcpy(tempBuffer+(lineSize*(renderCY/2))+(lineSize*(currentLine/2)), lastSample->lpData+((currentLine+1)*lineSize), lineSize);
-                        }
-                        else {
-                            memcpy(tempBuffer+(lineSize*(currentLine/2)), lastSample->lpData+((currentLine+1)*lineSize), lineSize);
-                            memcpy(tempBuffer+(lineSize*(renderCY/2))+(lineSize*(currentLine/2)), lastSample->lpData+(currentLine*lineSize), lineSize);
-                        }
-                        currentLine += 2;
-                    }
-                    
-                    memcpy(lastSample->lpData, tempBuffer, lineSize*renderCY);
-
-                    Free(tempBuffer);
-                    tempBuffer = NULL;
-                    break;
-                default:
-                    break;
-            }
+        switch(deinterlacingType)
+        {
+        case deinterlacing_Retro_BFF:
+        case deinterlacing_Retro_TFF:
+            curField = (deinterlacingType == deinterlacing_Retro_BFF); //select first field
+            bNewFrame = true;
         }
  
         if(colorType == DeviceOutputType_RGB)
         {
             if(texture)
             {
-                texture->SetImage(lastSample->lpData, GS_IMAGEFORMAT_BGRX, renderCX*4);
+                texture->SetImage(lastSample->lpData, GS_IMAGEFORMAT_BGRX, linePitch);
                 bReadyToDraw = true;
             }
         }
@@ -1190,10 +1174,12 @@ void DeviceSource::Preprocess()
 
                 for(int i=0; i<numThreads; i++)
                 {
-                    convertData[i].input    = lastSample->lpData;
-                    convertData[i].sample   = lastSample;
-                    convertData[i].pitch    = texturePitch;
-                    convertData[i].output   = lpImageBuffer;
+                    convertData[i].input     = lastSample->lpData;
+                    convertData[i].sample    = lastSample;
+                    convertData[i].pitch     = texturePitch;
+                    convertData[i].output    = lpImageBuffer;
+                    convertData[i].linePitch = linePitch;
+                    convertData[i].lineShift = lineShift;
                     SetEvent(convertData[i].hSignalConvert);
                 }
             }
@@ -1204,7 +1190,7 @@ void DeviceSource::Preprocess()
 
                 if(texture->Map(lpData, pitch))
                 {
-                    PackPlanar(lpData, lastSample->lpData, renderCX, renderCY, pitch, 0, renderCY);
+                    PackPlanar(lpData, lastSample->lpData, renderCX, imageCY, pitch, 0, renderCY, linePitch, lineShift);
                     texture->Unmap();
                 }
 
@@ -1298,6 +1284,14 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
             x2 = x+size.x;
         }
 
+        float y = pos.y,
+              y2 = y+size.y;
+        if(!bFlip)
+        {
+            y2 = pos.y;
+            y = y2+size.y;
+        }
+
         float fOpacity = float(opacity)*0.01f;
         DWORD opacity255 = DWORD(fOpacity*255.0f);
 
@@ -1308,45 +1302,27 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
             LoadSamplerState(sampler, 0);
         }
 
-        if(bFlip) {
-            switch(deinterlacingType) {
-                case deinterlacing_Discard:
-                    if(texture != NULL) DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y, 0.0f, 0.0f, 1.0f, 0.5f);
-                    break;
-                case deinterlacing_Retro_BFF:
-                case deinterlacing_Retro_TFF:
-                    if(!curField) {
-                        if(texture != NULL) DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y, 0.0f, 0.0f, 1.0f, 0.5f);
-                    }
-                    else {
-                        if(texture != NULL) DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y, 0.0f, 0.5f, 1.0f, 1.0f);
-                    }
-                    curField = !curField;
-                    break;
-                default:
-                    DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y, x2, pos.y+size.y);
-                    break;
+
+
+        switch(deinterlacingType) {
+        case deinterlacing_Retro_BFF:
+        case deinterlacing_Retro_TFF:
+            if(texture)
+            {
+                if(!curField)
+                    DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, y, x2, y2, 0.f, 0.0f, .5f, 1.f);
+                else
+                    DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, y, x2, y2, .5f, 0.0f, 1.f, 1.f);
             }
-        }
-        else {
-            switch(deinterlacingType) {
-                case deinterlacing_Retro_BFF:
-                case deinterlacing_Retro_TFF:
-                    if(!curField) {
-                        if(texture != NULL) DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y+size.y, x2, pos.y, 0.0f, 0.0f, 1.0f, 0.5f);
-                    }
-                    else {
-                        if(texture != NULL) DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y+size.y, x2, pos.y, 0.0f, 0.5f, 1.0f, 1.0f);
-                    }
-                    curField = !curField;
-                    break;
-                case deinterlacing_Discard:
-                    if(texture != NULL) DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y+size.y, x2, pos.y, 0.0f, 0.0f, 1.0f, 0.5f);
-                    break;
-                default:
-                    DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, pos.y+size.y, x2, pos.y);
-                    break;
+            if(bNewFrame)
+            {
+                curField = !curField;
+                bNewFrame = false; //prevent switching from the second field to the first field
             }
+            break;
+        default:
+            DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, y, x2, y2);
+            break;
         }
 
         if(bUsePointFiltering) delete(sampler);
@@ -1370,7 +1346,7 @@ void DeviceSource::UpdateSettings()
     bool bNewUseBuffering       = data->GetInt(TEXT("useBuffering")) != 0;
     UINT newGamma               = data->GetInt(TEXT("gamma"), 100);
 
-    if(newSoundOutputType != soundOutputType || renderCX != newCX || renderCY != newCY ||
+    if(newSoundOutputType != soundOutputType || imageCX != newCX || imageCY != newCY ||
        frameInterval != newFrameInterval || newPreferredType != preferredOutputType ||
        !strDevice.CompareI(strNewDevice) || !strAudioDevice.CompareI(strNewAudioDevice) ||
        bNewCustom != bUseCustomResolution || bNewUseBuffering != bUseBuffering ||
