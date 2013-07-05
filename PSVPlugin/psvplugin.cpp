@@ -16,6 +16,14 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 ********************************************************************************/
 
+/*
+    TODO:
+        - Move config to settings panel
+        - Add an option to clear saved volumes for all scenes
+        - Show every scene with it's volume levels in the settings panel and add ability to change volumes for active/inactive scene(s).
+        - Possibly add a custom dialog triggered by a hotkey as an alternative for the behaviour described previously
+*/
+
 #include "psvplugin.h"
 
 HINSTANCE   hInstance;
@@ -37,10 +45,10 @@ void SaveSettings()
 void CleanupPSVSettings()
 {
     // TO BE IMPLEMENTED
-    // remove all the stuff added to scenes by this plugin
+    // remove all the stuff added to scenes config file by this plugin
 }
 
-void SetInitialSceneVolumes()
+void SaveInitialVolumes()
 {
     float dVol, mVol;
     bool dMuted, mMuted;
@@ -65,7 +73,7 @@ void SetInitialSceneVolumes()
     OnMicVolumeChanged(mVol, mMuted, true);
 }
 
-void RestoreInitialSceneVolumes()
+void RestoreInitialVolumes()
 {
     OBSSetDesktopVolume(config.GetFloat(TEXT("General"), TEXT("PrevDesktopVolume")), true);
 
@@ -99,9 +107,9 @@ INT_PTR CALLBACK ConfigDlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
             bPSVEnabled = SendMessage(GetDlgItem(hWnd, IDC_TOGGLEPSV), BM_GETCHECK, 0, 0) == BST_CHECKED;
 
             if(bPSVEnabled && !bPrevPSVEnabled)
-                SetInitialSceneVolumes();
+                SaveInitialVolumes();
             else if (!bPSVEnabled && bPrevPSVEnabled)
-                RestoreInitialSceneVolumes();
+                RestoreInitialVolumes();
 
             SaveSettings();
 
@@ -130,7 +138,7 @@ void OnMicVolumeChanged(float level, bool muted, bool finalValue)
         if(!muted)
             sceneElement->SetFloat(TEXT("psvMicVolume"), level);
 
-        sceneElement->SetInt(TEXT("psvMicMFV"), muted ? PSV_VOL_MUTED : 0 | finalValue ? PSV_VOL_FINAL : 0);
+        sceneElement->SetInt(TEXT("psvMicMFV"), muted ? PSV_VOL_MUTED : 0);
     }
 }
 
@@ -148,7 +156,7 @@ void OnDesktopVolumeChanged(float level, bool muted, bool finalValue)
         if(!muted)
             sceneElement->SetFloat(TEXT("psvDesktopVolume"), level);
 
-        sceneElement->SetInt(TEXT("psvDesktopMFV"), muted ? PSV_VOL_MUTED : 0 | finalValue ? PSV_VOL_FINAL : 0);
+        sceneElement->SetInt(TEXT("psvDesktopMFV"), muted ? PSV_VOL_MUTED : 0);
     }
 }
 
@@ -157,7 +165,7 @@ void OnSceneSwitch(CTSTR scene)
     XElement *sceneElement;
     float desktopVolumeLevel, micVolumeLevel;
     int dMFV, mMFV;
-    bool desktopMuted, micMuted, finalDesktopLevel, finalMicLevel;
+    bool desktopMuted, micMuted;
 
     if(!bPSVEnabled)
         return;
@@ -173,17 +181,15 @@ void OnSceneSwitch(CTSTR scene)
         mMFV = sceneElement->GetInt(TEXT("psvMicMFV"));
 
         desktopMuted = (dMFV & PSV_VOL_MUTED) == PSV_VOL_MUTED;
-        finalDesktopLevel = (dMFV & PSV_VOL_FINAL) == PSV_VOL_FINAL;
 
         micMuted = (mMFV & PSV_VOL_MUTED) == PSV_VOL_MUTED;
-        finalMicLevel = (mMFV & PSV_VOL_FINAL) == PSV_VOL_FINAL;
 
-        OBSSetDesktopVolume(desktopVolumeLevel, finalDesktopLevel);
+        OBSSetDesktopVolume(desktopVolumeLevel, true);
 
         if(desktopMuted)
             OBSToggleDesktopMute();
 
-        OBSSetMicVolume(micVolumeLevel, finalMicLevel);
+        OBSSetMicVolume(micVolumeLevel, true);
 
         if(micMuted)
             OBSToggleMicMute();

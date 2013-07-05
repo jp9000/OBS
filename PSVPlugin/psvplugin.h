@@ -22,11 +22,8 @@
 #include "resource.h"
 
 
-enum
-{
-    PSV_VOL_MUTED = 1,
-    PSV_VOL_FINAL = 2
-};
+#define PSV_VOL_MUTED 1
+
 
 
 #define CONFIG_FILE TEXT("\\psv.ini")
