@@ -1435,9 +1435,9 @@ void OBS::CenterItems(bool horizontal, bool vertical)
         {
             SceneItem *item = selectedItems[i];
             if (horizontal)
-                item->pos.x = (baseSize.x*0.5f)-(item->size.x*0.5f);
+                item->pos.x = (baseSize.x*0.5f)-((item->size.x + item->crop.x - item->crop.w)*0.5f);
             if (vertical)
-                item->pos.y = (baseSize.y*0.5f)-(item->size.y*0.5f);
+                item->pos.y = (baseSize.y*0.5f)-((item->size.y + item->crop.y - item->crop.z)*0.5f);
 
             XElement *itemElement = item->GetElement();
             if (horizontal)
@@ -1461,14 +1461,14 @@ void OBS::MoveItemsToEdge(int horizontal, int vertical)
         {
             SceneItem *item = selectedItems[i];
             if (horizontal == 1)
-                item->pos.x = baseSize.x - item->size.x;
+                item->pos.x = baseSize.x - item->size.x + item->crop.w;
             if (horizontal == -1)
-                item->pos.x = 0.0f;
+                item->pos.x = -item->crop.x;
 
             if (vertical == 1)
-                item->pos.y =  baseSize.y - item->size.y;
+                item->pos.y =  baseSize.y - item->size.y + item->crop.z;
             if (vertical == -1)
-                item->pos.y = 0.0f;
+                item->pos.y = -item->crop.y;
 
             XElement *itemElement = item->GetElement();
             if (horizontal)
@@ -2847,8 +2847,6 @@ ItemModifyType GetItemModifyType(const Vect2 &mousePos, const Vect2 &itemPos, co
     else if(mousePos.CloseTo(Vect2(croppedItemPos.x, croppedLowerRight.y), epsilon))
         return ItemModifyType_ScaleBottomLeft;
 
-    // TODO: Corner cropping
-
     epsilon = 4.0f;
 
     // Edge sizing
@@ -2945,14 +2943,14 @@ bool OBS::EnsureCropValid(SceneItem *&scaleItem, Vect2 &minSize, Vect2 &snapSize
         scaleItem->crop.y = (scaleItem->size.y - scaleItem->crop.z - 32) - minSize.y;
     }
     // right
-    if (scaleItem->crop.w > (scaleItem->size.x + scaleItem->crop.x - 32) - minSize.x && cropEdges & edgeRight)
+    if (scaleItem->crop.w > (scaleItem->size.x - scaleItem->crop.x - 32) - minSize.x && cropEdges & edgeRight)
     {
-        scaleItem->crop.w = (scaleItem->size.x + scaleItem->crop.x - 32) - minSize.x;
+        scaleItem->crop.w = (scaleItem->size.x - scaleItem->crop.x - 32) - minSize.x;
     }
     // bottom
-    if (scaleItem->crop.z > (scaleItem->size.y + scaleItem->crop.y - 32) - minSize.y && cropEdges & edgeBottom)
+    if (scaleItem->crop.z > (scaleItem->size.y - scaleItem->crop.y - 32) - minSize.y && cropEdges & edgeBottom)
     {
-        scaleItem->crop.z = (scaleItem->size.y + scaleItem->crop.y - 32) - minSize.y;
+        scaleItem->crop.z = (scaleItem->size.y - scaleItem->crop.y - 32) - minSize.y;
     }
   
     if (!bControlDown) 
