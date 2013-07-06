@@ -169,8 +169,16 @@ public:
         for(int i=sceneItems.Num() - 1; i >= 0; i--)
         {
             SceneItem *item = sceneItems[i];
+
+            Vect2 scale = (item->GetSource() ? item->GetSource()->GetSize() : item->GetSize()) / item->GetSize();
+            Vect4 crop = item->GetCrop();
+            crop.x /= scale.x; crop.y /= scale.y;
+            crop.z /= scale.y; crop.w /= scale.x;
+
             Vect2 upperLeft  = item->GetPos();
+            upperLeft.x += crop.x; upperLeft.y += crop.y;
             Vect2 lowerRight = upperLeft+item->GetSize();
+            lowerRight.x -= crop.w; lowerRight.y -= crop.z;
             if(item->bRender && pos.x >= upperLeft.x && pos.y >= upperLeft.y && pos.x <= lowerRight.x && pos.y <= lowerRight.y)
                 items << item;
         }
