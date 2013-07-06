@@ -252,9 +252,11 @@ void Scene::Render()
     for(int i=sceneItems.Num()-1; i>=0; i--)
     {
         SceneItem *item = sceneItems[i];
+        Vect2 baseScale = item->GetSource() ? item->GetSource()->GetSize() : item->GetSize();
+        Vect2 cropFactor = baseScale / item->GetSize();
         if(item->source && item->bRender)
         {
-            GS->SetCropping (item->crop.x, item->crop.y, item->crop.w, item->crop.z);
+            GS->SetCropping (item->crop.x / cropFactor.x, item->crop.y / cropFactor.y, item->crop.w / cropFactor.x, item->crop.z / cropFactor.y);
             item->source->Render(item->pos, item->size);
             GS->SetCropping (0.0f, 0.0f, 0.0f, 0.0f);
         }
@@ -269,41 +271,59 @@ void Scene::RenderSelections(Shader *solidPixelShader)
 
         if(item->bSelected)
         {
+            Vect2 baseScale = item->GetSource() ? item->GetSource()->GetSize() : item->GetSize();
+            Vect2 cropFactor = baseScale / item->GetSize();
+            Vect4 crop = item->GetCrop();
+            crop.x /= cropFactor.x; crop.y /= cropFactor.y;
+            crop.z /= cropFactor.y; crop.w /= cropFactor.x;
+
             Vect2 pos  = API->MapFrameToWindowPos(item->GetPos())+1.0f;
             Vect2 scale = API->GetFrameToWindowScale();
-            pos.x += item->GetCrop().x * scale.x;
-            pos.y += item->GetCrop().y * scale.y;
+            crop.x *= scale.x; crop.y *= scale.y;
+            crop.z *= scale.y; crop.w *= scale.x;
+            pos.x += crop.x;
+            pos.y += crop.y;
             Vect2 size = API->MapFrameToWindowSize(item->GetSize())-2.0f;
-            size.x -= (item->GetCrop().x + item->GetCrop().w) * scale.x;
-            size.y -= (item->GetCrop().y + item->GetCrop().z) * scale.y;
-            
+            size.x -= (crop.x + crop.w);
+            size.y -= (crop.y + crop.z);
             Vect2 selectBoxSize = Vect2(10.0f, 10.0f);
             
             DrawBox(pos, selectBoxSize);
             DrawBox((pos+size)-selectBoxSize, selectBoxSize);
             DrawBox(pos+Vect2(size.x-selectBoxSize.x, 0.0f), selectBoxSize);
             DrawBox(pos+Vect2(0.0f, size.y-selectBoxSize.y), selectBoxSize);
-            
 
             // Top
-            if (CloseFloat(item->crop.y, 0.0f)) solidPixelShader->SetColor(solidPixelShader->GetParameter(0), 0xFF0000);
+            if (CloseFloat(crop.y, 0.0f)) solidPixelShader->SetColor(solidPixelShader->GetParameter(0), 0xFF0000);
             else solidPixelShader->SetColor(solidPixelShader->GetParameter(0), 0x00FF00);
             DrawBox(pos, Vect2(size.x, 0.0f));
 
             // Left
-            if (CloseFloat(item->crop.x, 0.0f)) solidPixelShader->SetColor(solidPixelShader->GetParameter(0), 0xFF0000);
+            if (CloseFloat(crop.x, 0.0f)) solidPixelShader->SetColor(solidPixelShader->GetParameter(0), 0xFF0000);
             else solidPixelShader->SetColor(solidPixelShader->GetParameter(0), 0x00FF00);
             DrawBox(pos, Vect2(0.0f, size.y));
 
             // Right
-            if (CloseFloat(item->crop.w, 0.0f)) solidPixelShader->SetColor(solidPixelShader->GetParameter(0), 0xFF0000);
+            if (CloseFloat(crop.w, 0.0f)) solidPixelShader->SetColor(solidPixelShader->GetParameter(0), 0xFF0000);
             else solidPixelShader->SetColor(solidPixelShader->GetParameter(0), 0x00FF00);
             DrawBox(pos+Vect2(size.x, 0.0f), Vect2(0.0f, size.y));
 
             // Bottom
-            if (CloseFloat(item->crop.z, 0.0f)) solidPixelShader->SetColor(solidPixelShader->GetParameter(0), 0xFF0000);
+            if (CloseFloat(crop.z, 0.0f)) solidPixelShader->SetColor(solidPixelShader->GetParameter(0), 0xFF0000);
             else solidPixelShader->SetColor(solidPixelShader->GetParameter(0), 0x00FF00);
             DrawBox(pos+Vect2(0.0f, size.y), Vect2(size.x, 0.0f));
+
+//#define DRAW_UNCROPPED_SELECTION_BOX
+#ifdef DRAW_UNCROPPED_SELECTION_BOX
+            Vect2 realPos = API->MapFrameToWindowPos(item->GetPos());
+            Vect2 realSize = item->GetSize() * scale;
+            solidPixelShader->SetColor(solidPixelShader->GetParameter(0), 0xFFFFFF);
+            solidPixelShader->SetColor(solidPixelShader->GetParameter(0), 0xFFFFFF);
+            DrawBox(realPos, Vect2(0.0f, realSize.y));
+            DrawBox(realPos, Vect2(realSize.x, 0.0f));
+            DrawBox(realPos+Vect2(realSize.x, 0.0f), Vect2(0.0f, realSize.y));
+            DrawBox(realPos+Vect2(0.0f, realSize.y), Vect2(realSize.x, 0.0f));
+#endif
         }
     }
 }
