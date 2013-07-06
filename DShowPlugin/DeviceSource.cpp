@@ -403,13 +403,6 @@ bool DeviceSource::LoadFilters()
         AppWarning(TEXT("DShowPlugin: Could not create color space conversion pixel shader"));
         goto cleanFinish;
     }
-    
-    int numThreads = MAX(OSGetTotalCores()-2, 1);
-    if(colorType == DeviceOutputType_YV12 || colorType == DeviceOutputType_I420)
-    {
-        for(int i=0; i<numThreads; i++)
-            hConvertThreads[i] = OSCreateThread((XTHREAD)PackPlanarThread, convertData+i);
-    }
 
     //------------------------------------------------
     // set chroma details
@@ -659,6 +652,7 @@ bool DeviceSource::LoadFilters()
         renderCX *= 2;
     }
 
+    int numThreads = MAX(OSGetTotalCores()-2, 1);
     for(int i=0; i<numThreads; i++)
     {
         convertData[i].width  = lineSize;
@@ -678,6 +672,12 @@ bool DeviceSource::LoadFilters()
             convertData[i].endY = renderCY;
         else
             convertData[i].endY = ((renderCY/numThreads)*(i+1)) & 0xFFFFFFFE;
+    }
+
+    if(colorType == DeviceOutputType_YV12 || colorType == DeviceOutputType_I420)
+    {
+        for(int i=0; i<numThreads; i++)
+            hConvertThreads[i] = OSCreateThread((XTHREAD)PackPlanarThread, convertData+i);
     }
 
     bSucceeded = true;

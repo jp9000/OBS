@@ -35,8 +35,8 @@ void PackPlanar(LPBYTE convertBuffer, LPBYTE lpPlanar, UINT renderCX, UINT rende
     {
         LPBYTE lpLum1 = input + y*2*linePitch;
         LPBYTE lpLum2 = lpLum1 + linePitch;
-        LPBYTE lpChroma1 = input2 + y*linePitch/2;
-        LPBYTE lpChroma2 = input3 + y*linePitch/2;
+        LPBYTE lpChroma1 = input2 + y*(linePitch/2);
+        LPBYTE lpChroma2 = input3 + y*(linePitch/2);
         LPDWORD output1 = (LPDWORD)(output + (y*2)*pitch);
         LPDWORD output2 = (LPDWORD)(((LPBYTE)output1)+pitch);
 
