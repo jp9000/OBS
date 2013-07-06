@@ -369,7 +369,7 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
                     logOutput << CurrentTimeString() << "(half life scientist) everything..  seems to be in order" << endl;
 
                     MSG msg;
-                    while (MsgWaitForMultipleObjects(1, &dummyEvent, FALSE, 3000, QS_ALLPOSTMESSAGE) == WAIT_TIMEOUT) {
+                    while (MsgWaitForMultipleObjects(1, &dummyEvent, FALSE, 3000, QS_ALLPOSTMESSAGE) != WAIT_ABANDONED_0) {
                     //while (1) {
                         AttemptToHookSomething();
 
