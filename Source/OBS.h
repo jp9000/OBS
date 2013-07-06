@@ -780,6 +780,7 @@ private:
     void MoveItemsByPixels(int dx, int dy);
     void FitItemsToScreen();
     void ResetItemSizes();
+    void ResetItemCrops();
 
     void Start();
     void Stop();

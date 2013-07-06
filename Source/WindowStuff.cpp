@@ -50,6 +50,7 @@ enum
     ID_LISTBOX_MOVEBOTTOM,
     ID_LISTBOX_FITTOSCREEN,
     ID_LISTBOX_RESETSIZE,
+    ID_LISTBOX_RESETCROP,
     ID_LISTBOX_RENAME,
     ID_LISTBOX_COPY,
     ID_LISTBOX_HOTKEY,
@@ -394,6 +395,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
             String strMoveBottomOfCanvas   = Str("Listbox.MoveBottom");
             String strFitToScreen          = Str("Listbox.FitToScreen");
             String strResize               = Str("Listbox.ResetSize");
+            String strResetCrop            = Str("Listbox.ResetCrop");
 
             if(id == ID_SOURCES)
             {
@@ -411,6 +413,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 strMoveTopOfCanvas << TEXT("\tCtrl-Alt-Up");
                 strMoveRightOfCanvas << TEXT("\tCtrl-Alt-Right");
                 strMoveBottomOfCanvas << TEXT("\tCtrl-Alt-Down");
+                strResetCrop    << TEXT("\tCtrl-Alt-R");
             }
 
             AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
@@ -443,6 +446,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 HMENU hmenuPositioning = CreatePopupMenu();
                 AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_FITTOSCREEN,    strFitToScreen);
                 AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_RESETSIZE,      strResize);
+                AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_RESETCROP,      strResetCrop);
                 AppendMenu(hmenuPositioning, MF_SEPARATOR, 0, 0);
                 AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_CENTER,         strCenter);
                 AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_CENTERHOR,         strCenterHor);
@@ -983,6 +987,10 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
                 case ID_LISTBOX_RESETSIZE:
                     App->ResetItemSizes();
+                    break;
+
+                case ID_LISTBOX_RESETCROP:
+                    App->ResetItemCrops();
                     break;
             }
         }
@@ -1578,6 +1586,30 @@ void OBS::ResetItemSizes()
                 XElement *itemElement = item->GetElement();
                 itemElement->SetInt(TEXT("cx"), int(item->size.x));
                 itemElement->SetInt(TEXT("cy"), int(item->size.y));
+            }
+        }
+    }
+}
+
+void OBS::ResetItemCrops()
+{
+    if(App->bRunning)
+    {
+        List<SceneItem*> selectedItems;
+        App->scene->GetSelectedItems(selectedItems);
+
+        for(UINT i=0; i<selectedItems.Num(); i++)
+        {
+            SceneItem *item = selectedItems[i];
+            if(item->source)
+            {
+                item->crop = Vect4(0, 0, 0, 0);
+
+                XElement *itemElement = item->GetElement();
+                itemElement->SetFloat(TEXT("crop.left"), item->crop.x);
+                itemElement->SetFloat(TEXT("crop.top"), item->crop.y);
+                itemElement->SetFloat(TEXT("crop.right"), item->crop.w);
+                itemElement->SetFloat(TEXT("crop.bottom"), item->crop.z);
             }
         }
     }
@@ -2363,6 +2395,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
                 case IDA_SOURCE_RESETSIZE:
                     App->ResetItemSizes();
+                    break;
+
+                case IDA_SOURCE_RESETCROP:
+                    App->ResetItemCrops();
                     break;
 
                 case IDA_SOURCE_MOVEUP:

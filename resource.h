@@ -301,6 +301,7 @@
 #define IDA_SOURCE_BOTTOM_CANVAS        40054
 #define IDA_SOURCE_CENTER_VER           40055
 #define IDA_SOURCE_CENTER_HOR           40056
+#define IDA_SOURCE_RESETCROP            40057
 
 // Next default values for new objects
 // 

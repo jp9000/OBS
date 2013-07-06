@@ -59,6 +59,7 @@ Listbox.FitToScreen        "Fit to screen"
 Listbox.Positioning        "Position/Size"
 Listbox.ResetSize          "Reset Size"
 Listbox.SetHotkey          "Set Hotkey"
+ListBox.ResetCrop          "Reset Cropping"
 
 MainMenu.File       "&File"
 MainMenu.Help       "&Help"
