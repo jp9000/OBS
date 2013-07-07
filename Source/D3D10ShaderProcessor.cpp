@@ -62,7 +62,7 @@ bool GetSemanticInfo(const String &strSemantic, SemanticInfo &info)
 }
 
 
-BOOL ShaderProcessor::ProcessShader(CTSTR input)
+BOOL ShaderProcessor::ProcessShader(CTSTR input, CTSTR filename)
 {
     String curToken;
 
@@ -87,6 +87,29 @@ BOOL ShaderProcessor::ProcessShader(CTSTR input)
             ++curInsideCount;
         else if(curToken[0] == ')')
             --curInsideCount;
+        else if(curToken[0] == '#') //preprocessor
+        {
+            HandMeAToken(curToken);
+            if(scmpi_n(curToken, TEXT("include"), 7) == 0)
+            {
+                GetNextToken(curToken);
+                if(curToken[0] == '<')
+                    EscapeLikeTheWind(TEXT(">")); //TODO: handle #include <foo> directives
+                String parent(filename);
+                auto num = parent.NumTokens('/');
+                String loadFile = curToken.Mid(1, curToken.Length()-1);
+                parent.FindReplace(parent.GetTokenOffset(num-1, '/'), loadFile);
+                
+                XFile ShaderFile;
+
+                if(!ShaderFile.Open(parent, XFILE_READ, XFILE_OPENEXISTING))
+                    continue;
+
+                String strShader;
+                ShaderFile.ReadFileToString(strShader);
+                ProcessShader(strShader, parent);
+            }
+        }
         else if(!curInsideCount && bNewCodeLine) //not inside any code, so this is some sort of declaration (function/struct/var)
         {
             if(curToken == TEXT("struct"))
