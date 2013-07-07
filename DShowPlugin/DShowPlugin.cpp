@@ -1092,7 +1092,9 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 //------------------------------------------
 
-                bool bUseBuffering = configData->data->GetInt(TEXT("useBuffering")) != 0;
+                bool bDefaultUseBuffering = (sstr(strDevice, TEXT("Elgato")) != NULL) ? true : false;
+
+                bool bUseBuffering = configData->data->GetInt(TEXT("useBuffering"), bDefaultUseBuffering) != 0;
                 EnableWindow(GetDlgItem(hwnd, IDC_DELAY_EDIT), bUseBuffering);
                 EnableWindow(GetDlgItem(hwnd, IDC_DELAY),      bUseBuffering);
 
@@ -1519,6 +1521,16 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                                 SafeRelease(outputPin);
 
                                 filter->Release();
+                            }
+
+                            HWND hwndUseBuffering = GetDlgItem(hwnd, IDC_USEBUFFERING);
+
+                            if (1) {//sstri(configData->deviceNameList[id], TEXT("Elgato")) != NULL) {
+                                SendMessage(hwndUseBuffering, BM_SETCHECK, BST_CHECKED, 0);
+                                ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_USEBUFFERING, BN_CLICKED), (LPARAM)hwndUseBuffering);
+                            } else {
+                                SendMessage(hwndUseBuffering, BM_SETCHECK, BST_UNCHECKED, 0);
+                                ConfigureDialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_USEBUFFERING, BN_CLICKED), (LPARAM)hwndUseBuffering);
                             }
 
                             //-------------------------------------------------
