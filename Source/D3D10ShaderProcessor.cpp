@@ -112,7 +112,20 @@ BOOL ShaderProcessor::ProcessShader(CTSTR input, CTSTR filename)
         }
         else if(!curInsideCount && bNewCodeLine) //not inside any code, so this is some sort of declaration (function/struct/var)
         {
-            if(curToken == TEXT("struct"))
+            if(curToken == TEXT("class"))
+            {
+                while(GetNextToken(curToken))
+                {
+                    if(curToken[0] == '{')
+                        curInsideCount++;
+                    else if(curToken[0] == '}')
+                        curInsideCount--;
+                    else if(curToken[0] == ';')
+                        if(curInsideCount == 0)
+                            continue;
+                }
+            }
+            else if(curToken == TEXT("struct"))
             {
                 //try to see if this is the vertex definition structure
                 bool bFoundDefinitionStruct = false;
