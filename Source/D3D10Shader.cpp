@@ -85,7 +85,7 @@ Shader* D3D10VertexShader::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
     String errorString;
 
     ShaderProcessor shaderProcessor;
-    if(!shaderProcessor.ProcessShader(lpShader))
+    if(!shaderProcessor.ProcessShader(lpShader, lpFileName))
         AppWarning(TEXT("Unable to process vertex shader '%s'"), lpFileName); //don't exit, leave it to the actual shader compiler to tell the errors
 
     //-----------------------------------------------
@@ -168,7 +168,7 @@ Shader* D3D10PixelShader::CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)
     String errorString;
 
     ShaderProcessor shaderProcessor;
-    if(!shaderProcessor.ProcessShader(lpShader))
+    if(!shaderProcessor.ProcessShader(lpShader, lpFileName))
         AppWarning(TEXT("Unable to process pixel shader '%s'"), lpFileName); //don't exit, leave it to the actual shader compiler to tell the errors
 
     //-----------------------------------------------
