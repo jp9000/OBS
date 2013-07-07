@@ -311,7 +311,7 @@ bool DeviceSource::LoadFilters()
     else
     {
         SIZE size;
-        if (!GetClosestResolution(outputList, size, frameInterval))
+        if (!GetClosestResolutionFPS(outputList, size, frameInterval, true))
         {
             AppWarning(TEXT("DShowPlugin: Unable to find appropriate resolution"));
             renderCX = renderCY = 64;

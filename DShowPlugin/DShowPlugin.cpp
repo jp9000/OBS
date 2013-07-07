@@ -499,7 +499,18 @@ struct FPSInfo
     List<FPSInterval> supportedIntervals;
 };
 
-bool GetClosestResolution(List<MediaOutputInfo> &outputList, SIZE &resolution, UINT64 &frameInterval)
+static inline UINT64 GetFrameIntervalDist(UINT64 minInterval, UINT64 maxInterval, UINT64 desiredInterval)
+{
+    INT64 minDist = INT64(minInterval)-INT64(desiredInterval);
+    INT64 maxDist = INT64(desiredInterval)-INT64(maxInterval);
+
+    if (minDist < 0) minDist = 0;
+    if (maxDist < 0) maxDist = 0;
+
+    return UINT64(MAX(minDist, maxDist));
+}
+
+bool GetClosestResolutionFPS(List<MediaOutputInfo> &outputList, SIZE &resolution, UINT64 &frameInterval, bool bPrioritizeFPS)
 {
     LONG width, height;
     UINT64 internalFrameInterval = 10000000/UINT64(API->GetMaxFPS());
@@ -508,7 +519,8 @@ bool GetClosestResolution(List<MediaOutputInfo> &outputList, SIZE &resolution, U
     LONG bestDistance = 0x7FFFFFFF;
     SIZE bestSize;
     UINT64 maxFrameInterval = 0;
-    UINT64 bestFrameInterval = 0xFFFFFFFFFFFFFFFFLL;
+    UINT64 minFrameInterval = 0;
+    UINT64 bestFrameIntervalDist = 0xFFFFFFFFFFFFFFFFLL;
 
     for(UINT i=0; i<outputList.Num(); i++)
     {
@@ -523,7 +535,7 @@ bool GetClosestResolution(List<MediaOutputInfo> &outputList, SIZE &resolution, U
 
             if(distWidth > bestDistance)
             {
-                outputWidth  += outputInfo.xGranularity;
+                outputWidth += outputInfo.xGranularity;
                 continue;
             }
 
@@ -535,13 +547,27 @@ bool GetClosestResolution(List<MediaOutputInfo> &outputList, SIZE &resolution, U
                     break;
 
                 LONG totalDist = distHeight+distWidth;
-                if((totalDist <= bestDistance) || (totalDist == bestDistance && outputInfo.minFrameInterval < bestFrameInterval))
-                {
+
+                UINT64 frameIntervalDist = GetFrameIntervalDist(outputInfo.minFrameInterval,
+                    outputInfo.maxFrameInterval, internalFrameInterval);
+
+                bool bBetter;
+                if (bPrioritizeFPS)
+                    bBetter = (frameIntervalDist != bestFrameIntervalDist) ?
+                        (frameIntervalDist < bestFrameIntervalDist) :
+                        (totalDist < bestDistance);
+                else
+                    bBetter = (totalDist != bestDistance) ?
+                        (totalDist < bestDistance) :
+                        (frameIntervalDist < bestFrameIntervalDist);
+
+                if (bBetter) {
                     bestDistance = totalDist;
                     bestSize.cx = outputWidth;
                     bestSize.cy = outputHeight;
                     maxFrameInterval = outputInfo.maxFrameInterval;
-                    bestFrameInterval = outputInfo.minFrameInterval;
+                    minFrameInterval = outputInfo.minFrameInterval;
+                    bestFrameIntervalDist = frameIntervalDist;
                 }
 
                 outputHeight += outputInfo.yGranularity;
@@ -558,8 +584,8 @@ bool GetClosestResolution(List<MediaOutputInfo> &outputList, SIZE &resolution, U
 
         if(internalFrameInterval > maxFrameInterval)
             frameInterval = maxFrameInterval;
-        else if(internalFrameInterval < bestFrameInterval)
-            frameInterval = bestFrameInterval;
+        else if(internalFrameInterval < minFrameInterval)
+            frameInterval = minFrameInterval;
         else
             frameInterval = internalFrameInterval;
         return true;
@@ -1499,7 +1525,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                             SIZE size;
                             UINT64 frameInterval;
-                            if(GetClosestResolution(configData->outputList, size, frameInterval))
+                            if(GetClosestResolutionFPS(configData->outputList, size, frameInterval, true))
                             {
                                 String strResolution;
                                 strResolution << UIntString(size.cx) << TEXT("x") << UIntString(size.cy);
