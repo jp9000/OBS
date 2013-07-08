@@ -42,9 +42,32 @@ bool GetClosestResolutionFPS(List<MediaOutputInfo> &outputList, SIZE &resolution
 extern LocaleStringLookup *pluginLocale;
 #define PluginStr(text) pluginLocale->LookupString(TEXT2(text))
 
-enum deinterLacingTypes {
-    deinterlacing_None,
-    deinterlacing_Discard,
-    deinterlacing_Retro_TFF,
-    deinterlacing_Retro_BFF,
+enum DeinterlacingType {
+    DEINTERLACING_NONE,
+    DEINTERLACING_DISCARD,
+    DEINTERLACING_RETRO,
+    DEINTERLACING_BLEND,
+    DEINTERLACING_BLEND2x,
+    DEINTERLACING_LINEAR,
+    DEINTERLACING_LINEAR2x,
+    DEINTERLACING_YADIF,
+    DEINTERLACING_YADIF2x,
+    DEINTERLACING__DEBUG,
+    DEINTERLACING_TYPE_LAST
+};
+
+enum DeinterlacingFieldOrder {
+    FIELD_ORDER_NONE,
+    FIELD_ORDER_TFF = 1,
+    FIELD_ORDER_BFF,
+};
+
+enum DeinterlacingProcessor {
+    DEINTERLACING_PROCESSOR_CPU = 1,
+    DEINTERLACING_PROCESSOR_GPU,
+};
+
+struct DeinterlacerConfig {
+    int    type, fieldOrder, processor;
+    bool   doublesFramerate;
 };
