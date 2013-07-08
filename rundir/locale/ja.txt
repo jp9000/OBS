@@ -1,5 +1,4 @@
-﻿
-Add                 "追加"
+﻿Add                 "追加"
 Apply               "適用"
 Browse              "参照"
 BuildingMP4Dialog   "MP4ファイルを作ります"
@@ -136,6 +135,7 @@ Settings.Advanced.SendBufferSize                    "送信バッファの大き
 Settings.Advanced.UnlockHigherFPS                   "61-120FPSを有効にする"
 Settings.Advanced.UseCBR                            "CBRを有効にする"
 Settings.Advanced.PadCBR                            "CBRパディングを有効にする"
+Settings.Advanced.PadCBRToolTip                     "通常のCBRに対しては、有効が既定値。\n\r配信中の目標ビットレートを変更することが予想される場合を除き、\n\r無効にしないでください。"
 Settings.Advanced.UseCFR                            "CFRを有効にする"
 Settings.Advanced.UseMultithreadedOptimizations     "マルチスレッドの最適化を使用"
 Settings.Advanced.UseQSV                            "Quick Sync を使用"
