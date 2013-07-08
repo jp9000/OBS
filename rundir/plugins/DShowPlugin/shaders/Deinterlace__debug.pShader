@@ -1,0 +1,44 @@
+/********************************************************************************
+ Copyright (C) 2012 Hugh Bailey <obs.jim@gmail.com>
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+********************************************************************************/
+
+#include "Deinterlace_base.pShader"
+
+float4 main(VertData input) : SV_Target
+{
+	//input.texCoord.x *= 2;
+	//return sample_pixel(fmod(input.texCoord, 1), 1*(input.texCoord<1), YADIF);
+	//return sample_pixel(input.texCoord, 1, YADIF);
+	//return sample_pixel(input.texCoord, 0, WEAVE);
+	float2 texCoord = input.texCoord;// * 2;
+	if(texCoord.y < .5)
+	{
+		input.texCoord.y *= 2;
+		return sample_pixel_2x(input.texCoord, field_order, BLEND2x);
+		/*if(texCoord.x < .5)
+			return sample_pixel(texCoord*2, 1*(texCoord.y < 1), YADIF*(texCoord.x<1));
+		else
+			return sample_pixel(float2(texCoord.x*2-1, texCoord.y*2), 0, YADIF);*/
+	}
+	else
+	{
+		if(texCoord.x < .5)
+			return sample_pixel(input.texCoord*2-float2(0, 1), 1, WEAVE);
+		else
+			return sample_pixel(input.texCoord*2-1, 0, WEAVE);
+	}
+}

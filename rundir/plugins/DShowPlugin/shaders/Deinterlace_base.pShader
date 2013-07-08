@@ -1,0 +1,196 @@
+/********************************************************************************
+ Copyright (C) 2012 Hugh Bailey <obs.jim@gmail.com>
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+********************************************************************************/
+
+uniform Texture2D diffuseTexture;
+uniform Texture2D prevTex;
+uniform bool field_order;
+
+#define WEAVE 0
+#define YADIF 1
+#define BLEND 2
+#define BLEND2x 3
+#define LINEAR 4
+#define LINEAR2x 5
+#define DISCARD 6
+#define DISCARD2x 7
+
+int3 select(int2 texel, int x, int y)
+{
+	return int3(texel+int2(x, y), 0);
+}
+
+float4 load_at(int2 texel, int x, int y, int field)
+{
+	if(field == 0)
+		return diffuseTexture.Load(int3(texel+int2(x, y), 0));
+	else
+		return prevTex.Load(int3(texel+int2(x, y), 0));
+}
+
+#define YADIF_UPDATE(c, level)\
+	if(score.c < spatial_score.c)\
+	{\
+		spatial_score.c = score.c;\
+		spatial_pred.c = (load_at(texel, level, -1, field) + load_at(texel, -level, 1, field)).c/2;\
+
+#define YADIF_CHECK_ONE(level, c)\
+{\
+	float4 score = abs(load_at(texel, -1+level, 1, field) - load_at(texel, -1-level, -1, field))+\
+	       abs(load_at(texel, level, 1, field) - load_at(texel, -level, -1, field))+\
+	       abs(load_at(texel, 1+level, 1, field) - load_at(texel, 1-level, -1, field));\
+	YADIF_UPDATE(c, level) }\
+}
+
+#define YADIF_CHECK(level)\
+{\
+	float4 score = abs(load_at(texel, -1+level, 1, field) - load_at(texel, -1-level, -1, field))+\
+		       abs(load_at(texel, level, 1, field) - load_at(texel, -level, -1, field))+\
+		       abs(load_at(texel, 1+level, 1, field) - load_at(texel, 1-level, -1, field));\
+	YADIF_UPDATE(r, level) YADIF_CHECK_ONE(level*2, r) }\
+	YADIF_UPDATE(g, level) YADIF_CHECK_ONE(level*2, g) }\
+	YADIF_UPDATE(b, level) YADIF_CHECK_ONE(level*2, b) }\
+	YADIF_UPDATE(a, level) YADIF_CHECK_ONE(level*2, a) }\
+}
+
+float4 texel_at_yadif(int2 texel, int field)
+{
+	Texture2D tex = diffuseTexture;
+
+	if((texel.y%2) == field)
+		return load_at(texel, 0, 0, field);
+
+	float4 b = (prevTex.Load(select(texel, 0, 2)) + tex.Load(select(texel, 0, 2)))/2,
+	       c = load_at(texel, 0, 1, field),
+	       d = (prevTex.Load(select(texel, 0, 0)) + tex.Load(select(texel, 0, 0)))/2,
+	       e = load_at(texel, 0, -1, field),
+	       f = (prevTex.Load(select(texel, 0, -2)) + tex.Load(select(texel, 0, -2)))/2;
+
+	float4 temporal_diff0 = (abs(prevTex.Load(select(texel, 0, 0)) - tex.Load(select(texel, 0, 0))))/2,
+	       temporal_diff1 = (abs(prevTex.Load(select(texel, 0, 1))-c) + abs(prevTex.Load(select(texel, 0, -1))-e))/2,
+	       temporal_diff2 = (abs(tex.Load(select(texel, 0, 1))-c) + abs(tex.Load(select(texel, 0, -1))-e))/2,
+	       diff = max(temporal_diff0, max(temporal_diff1, temporal_diff2));
+
+	float4 spatial_pred = (c+e)/2,
+	       spatial_score = abs(load_at(texel, -1, 1, field)-load_at(texel, -1, -1, field))+
+		       	       abs(c-e)+
+			       abs(load_at(texel, 1, 1, field)-load_at(texel, 1, -1, field))-1;
+
+	YADIF_CHECK(-1)
+	YADIF_CHECK(1)
+
+	float4 max_ = max(d-e, max(d-c, min(b-c, f-e))),
+	       min_ = min(d-e, min(d-c, max(b-c, f-e)));
+
+	diff = max(diff, max(min_, -max_));
+
+#define YADIF_SPATIAL(c)\
+{\
+	if(spatial_pred.c > d.c + diff.c)\
+		spatial_pred.c = d.c + diff.c;\
+	else if(spatial_pred.c < d.c - diff.c)\
+		spatial_pred.c = d.c - diff.c;\
+}
+	YADIF_SPATIAL(r)
+	YADIF_SPATIAL(g)
+	YADIF_SPATIAL(b)
+	YADIF_SPATIAL(a)
+
+	return spatial_pred;
+}
+
+float4 texel_at_blend(int2 texel, int field)
+{
+	return (diffuseTexture.Load(int3(texel, 0)) + diffuseTexture.Load(int3(texel.x, texel.y+1, 0)))/2;
+}
+
+float4 texel_at_blend_2x(int2 texel, int field)
+{
+	if(field_order != field)
+		return (diffuseTexture.Load(int3(texel.x, texel.y, 0)) + prevTex.Load(int3(texel.x, texel.y+1, 0)))/2;
+	return (diffuseTexture.Load(int3(texel.x, texel.y, 0)) + diffuseTexture.Load(int3(texel.x, texel.y+1, 0)))/2;
+}
+
+float4 texel_at_linear(int2 texel, int field)
+{
+	if(field == texel.y%2)
+		return diffuseTexture.Load(int3(texel, 0));
+	return (diffuseTexture.Load(int3(texel+int2(0, -1), 0))+diffuseTexture.Load(int3(texel+int2(0, 1), 0)))/2;
+}
+
+float4 texel_at_linear2x(int2 texel, int field)
+{
+	return texel_at_linear(texel, 1-field);
+}
+
+float4 texel_at_discard(int2 texel, int field)
+{
+	Texture2D tex = diffuseTexture;
+	return tex.Load(int3(texel.x, texel.y/2*2+field, 0));
+}
+
+float4 texel_at_discard2x(int2 texel, int field)
+{
+	return texel_at_discard(texel, 1-field);
+}
+
+float4 texel_at_weave(int2 texel, int field)
+{
+	if(field != 0)
+		return prevTex.Load(int3(texel, 0));
+	return diffuseTexture.Load(int3(texel, 0));
+}
+
+#define DISPATCH(name, func)\
+	case name: return func(coord, field); break;
+float4 sample_texel(float2 coord, int field, int name)
+{
+	switch(name)
+	{
+		DISPATCH(YADIF, texel_at_yadif)
+		DISPATCH(BLEND, texel_at_blend)
+		DISPATCH(BLEND2x, texel_at_blend_2x)
+		DISPATCH(LINEAR, texel_at_linear)
+		DISPATCH(LINEAR2x, texel_at_linear2x)
+		DISPATCH(DISCARD, texel_at_discard)
+		DISPATCH(DISCARD2x, texel_at_discard2x)
+		default: return texel_at_weave(coord, field); break;
+	}
+}
+#undef DISPATCH
+
+float4 sample_pixel(float2 coord, bool field, int func)
+{
+	Texture2D tex = diffuseTexture;
+	float2 size = 0;
+	float miplevels;
+	tex.GetDimensions(0, size.x, size.y, miplevels);
+	float2 uv = coord*size;
+	return sample_texel(uv, field, func);
+}
+
+float4 sample_pixel_2x(float2 coord, bool field, int func)
+{
+	coord.x *= 2;
+	return sample_pixel(coord-floor(coord), field*(coord.x>1)+(1-field)*(coord.x<1), func);
+}
+
+struct VertData
+{
+    float4 pos      : SV_Position;
+    float2 texCoord : TexCoord0;
+};

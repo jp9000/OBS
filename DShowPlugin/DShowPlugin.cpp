@@ -30,6 +30,19 @@ extern "C" __declspec(dllexport) CTSTR GetPluginDescription();
 LocaleStringLookup *pluginLocale = NULL;
 HINSTANCE hinstMain = NULL;
 
+extern DeinterlacerConfig deinterlacerConfigs[DEINTERLACING_TYPE_LAST];
+CTSTR deinterlacerLocalizations[DEINTERLACING_TYPE_LAST] = {
+    TEXT("DeinterlacingType.None"),
+    TEXT("DeinterlacingType.Discard"),
+    TEXT("DeinterlacingType.Retro"),
+    TEXT("DeinterlacingType.Blend"),
+    TEXT("DeinterlacingType.Blend2x"),
+    TEXT("DeinterlacingType.Linear"),
+    TEXT("DeinterlacingType.Linear2x"),
+    TEXT("DeinterlacingType.Yadif"),
+    TEXT("DeinterlacingType.Yadif2x"),
+    TEXT("DeinterlacingType.Debug")
+};
 
 #define DSHOW_CLASSNAME TEXT("DeviceCapture")
 
@@ -987,7 +1000,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
     static bool bSelectingColor = false;
     static bool bMouseDown = false, bAudioDevicesPresent = true;
     static ColorSelectionData colorData;
-    static BYTE deinterlacingType;
+    static DeinterlacerConfig deinterlacingConfig;
 
     switch(message)
     {
@@ -1021,13 +1034,13 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 int gammaVal = configData->data->GetInt(TEXT("gamma"), 100);
 
-                HWND hwndTemp = GetDlgItem(hwnd, IDC_GAMMA2);
+                HWND hwndTemp = GetDlgItem(hwnd, IDC_GAMMA);
                 SendMessage(hwndTemp, TBM_CLEARTICS, FALSE, 0);
                 SendMessage(hwndTemp, TBM_SETRANGE, FALSE, MAKELPARAM(50, 175));
                 SendMessage(hwndTemp, TBM_SETTIC, 0, 100);
                 SendMessage(hwndTemp, TBM_SETPOS, TRUE, gammaVal);
 
-                SetSliderText(hwnd, IDC_GAMMA2, IDC_GAMMAVAL);
+                SetSliderText(hwnd, IDC_GAMMA, IDC_GAMMAVAL);
 
                 //------------------------------------------
 
@@ -1037,17 +1050,58 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 UINT cy  = configData->data->GetInt(TEXT("resolutionHeight"));
                 UINT64 frameInterval = configData->data->GetInt(TEXT("frameInterval"));
 
+                //------------------------------------------
+
+                deinterlacingConfig.type        = configData->data->GetInt(TEXT("deinterlacingType"));
+                deinterlacingConfig.fieldOrder  = configData->data->GetInt(TEXT("deinterlacingFieldOrder"));
+                deinterlacingConfig.processor   = configData->data->GetInt(TEXT("deinterlacingProcessor"));
+                if(deinterlacingConfig.type >= DEINTERLACING_TYPE_LAST)
+                    deinterlacingConfig.type = DEINTERLACING_NONE;
+
                 hwndTemp = GetDlgItem(hwnd, IDC_DEINTERLACELIST);
 
-                // Populate deinterlacing type list like this, since there's only one for now.
-                // Actually, there's more than one, but uhh...
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)pluginLocale->LookupString(L"DeinterlacingType.None"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)pluginLocale->LookupString(L"DeinterlacingType.Discard"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)pluginLocale->LookupString(L"DeinterlacingType.RetroTFF"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)pluginLocale->LookupString(L"DeinterlacingType.RetroBFF"));
+                // Populate deinterlacing type list
+                for(size_t i = 0; i < DEINTERLACING_TYPE_LAST; i++)
+                {
+#ifndef _DEBUG
+                    if(i == DEINTERLACING__DEBUG)
+                        continue;
+#endif
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)pluginLocale->LookupString(deinterlacerLocalizations[i]));
 
-                deinterlacingType = configData->data->GetInt(TEXT("deinterlacingType"));
-                SendMessage(hwndTemp, CB_SETCURSEL, deinterlacingType, 0);
+                    DeinterlacerConfig& config = deinterlacerConfigs[i];
+                    if(deinterlacingConfig.type != config.type)
+                        continue;
+                    
+                    const int deintProcBoth = (DEINTERLACING_PROCESSOR_CPU | DEINTERLACING_PROCESSOR_GPU);
+                    
+                    HWND checkbox = GetDlgItem(hwnd, IDC_GPUDEINT);
+                    EnableWindow(checkbox, config.processor == deintProcBoth);
+                    if(config.processor != deintProcBoth && deinterlacingConfig.processor != config.processor)
+                    {
+                        configData->data->SetInt(TEXT("deinterlacingGPU"), config.processor);
+                        deinterlacingConfig.processor = config.processor;
+                    }
+                    Button_SetCheck(checkbox, deinterlacingConfig.processor == DEINTERLACING_PROCESSOR_GPU);
+
+                    const int deintFieldsBoth = (FIELD_ORDER_TFF | FIELD_ORDER_BFF);
+
+                    HWND tff = GetDlgItem(hwnd, IDC_TFF),
+                         bff = GetDlgItem(hwnd, IDC_BFF);
+                    if(config.fieldOrder != deintFieldsBoth && deinterlacingConfig.fieldOrder != config.fieldOrder)
+                    {
+                        configData->data->SetInt(TEXT("deinterlacingFieldOrder"), config.fieldOrder);
+                        deinterlacingConfig.fieldOrder = config.fieldOrder;
+                    }
+                    Button_SetCheck(tff, deinterlacingConfig.fieldOrder == FIELD_ORDER_TFF);
+                    Button_SetCheck(bff, deinterlacingConfig.fieldOrder == FIELD_ORDER_BFF);
+                    EnableWindow(tff, config.fieldOrder & FIELD_ORDER_TFF);
+                    EnableWindow(bff, config.fieldOrder & FIELD_ORDER_BFF);
+                }
+
+                SendMessage(hwndTemp, CB_SETCURSEL, deinterlacingConfig.type, 0);
+
+                //------------------------------------------
 
                 BOOL bCustomResolution = configData->data->GetInt(TEXT("customResolution"));
                 SendMessage(GetDlgItem(hwnd, IDC_CUSTOMRESOLUTION), BM_SETCHECK, bCustomResolution ? BST_CHECKED : BST_UNCHECKED, 0);
@@ -1246,9 +1300,9 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
         case WM_HSCROLL:
             {
-                if(GetDlgCtrlID((HWND)lParam) == IDC_GAMMA2)
+                if(GetDlgCtrlID((HWND)lParam) == IDC_GAMMA)
                 {
-                    int gamma = SetSliderText(hwnd, IDC_GAMMA2, IDC_GAMMAVAL);
+                    int gamma = SetSliderText(hwnd, IDC_GAMMA, IDC_GAMMAVAL);
 
                     ConfigDialogData *info = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
                     ImageSource *source = API->GetSceneImageSource(info->lpName);
@@ -1448,7 +1502,37 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 case IDC_DEINTERLACELIST:
                     if(HIWORD(wParam) == CBN_SELCHANGE)
                     {
-                        deinterlacingType = (BYTE)SendMessage(GetDlgItem(hwnd, IDC_DEINTERLACELIST), CB_GETCURSEL, 0, 0);
+                        ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);;
+                        int confId = (int)SendMessage(GetDlgItem(hwnd, IDC_DEINTERLACELIST), CB_GETCURSEL, 0, 0);
+                        
+                        deinterlacingConfig.type        = configData->data->GetInt(TEXT("deinterlacingType"));
+                        deinterlacingConfig.fieldOrder  = configData->data->GetInt(TEXT("deinterlacingFieldOrder"));
+                        deinterlacingConfig.processor   = configData->data->GetInt(TEXT("deinterlacingGPU"));
+                        if(deinterlacingConfig.type >= DEINTERLACING_TYPE_LAST)
+                            deinterlacingConfig.type = DEINTERLACING_NONE;
+
+                        DeinterlacerConfig& config = deinterlacerConfigs[confId];
+
+                        const int deintProcBoth = (DEINTERLACING_PROCESSOR_CPU | DEINTERLACING_PROCESSOR_GPU);
+
+                        HWND checkbox = GetDlgItem(hwnd, IDC_GPUDEINT);
+                        EnableWindow(checkbox, config.processor == deintProcBoth);
+                        if(config.processor != deintProcBoth && deinterlacingConfig.processor != config.processor)
+                            deinterlacingConfig.processor = config.processor;
+                        Button_SetCheck(checkbox, deinterlacingConfig.processor == DEINTERLACING_PROCESSOR_GPU);
+
+                        const int deintFieldsBoth = (FIELD_ORDER_TFF | FIELD_ORDER_BFF);
+
+                        HWND tff = GetDlgItem(hwnd, IDC_TFF),
+                            bff = GetDlgItem(hwnd, IDC_BFF);
+                        if(config.fieldOrder != deintFieldsBoth && deinterlacingConfig.fieldOrder != config.fieldOrder)
+                            deinterlacingConfig.fieldOrder = config.fieldOrder;
+                        else if(deinterlacingConfig.fieldOrder != config.fieldOrder && (config.fieldOrder & deinterlacingConfig.fieldOrder) == 0)
+                            deinterlacingConfig.fieldOrder = config.fieldOrder & FIELD_ORDER_TFF ? FIELD_ORDER_TFF : FIELD_ORDER_BFF;
+                        Button_SetCheck(tff, deinterlacingConfig.fieldOrder == FIELD_ORDER_TFF);
+                        Button_SetCheck(bff, deinterlacingConfig.fieldOrder == FIELD_ORDER_BFF);
+                        EnableWindow(tff, config.fieldOrder & FIELD_ORDER_TFF);
+                        EnableWindow(bff, config.fieldOrder & FIELD_ORDER_BFF);
                     }
                     break;
 
@@ -1878,7 +1962,12 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         BOOL bCustomResolution = SendMessage(GetDlgItem(hwnd, IDC_CUSTOMRESOLUTION), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         BOOL bUsePointFiltering = SendMessage(GetDlgItem(hwnd, IDC_POINTFILTERING), BM_GETCHECK, 0, 0) == BST_CHECKED;
 
-                        deinterlacingType = (BYTE)SendMessage(GetDlgItem(hwnd, IDC_DEINTERLACELIST), CB_GETCURSEL, 0, 0);
+                        int deintId = (int)SendMessage(GetDlgItem(hwnd, IDC_DEINTERLACELIST), CB_GETCURSEL, 0, 0);
+                        deinterlacingConfig = deinterlacerConfigs[deintId];
+                        bool tff = SendMessage(GetDlgItem(hwnd, IDC_TFF), BM_GETCHECK, 0, 0) == BST_CHECKED,
+                             bff = SendMessage(GetDlgItem(hwnd, IDC_BFF), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        deinterlacingConfig.fieldOrder = tff ? FIELD_ORDER_TFF : (bff ? FIELD_ORDER_BFF : FIELD_ORDER_NONE);
+                        deinterlacingConfig.processor = SendMessage(GetDlgItem(hwnd, IDC_GPUDEINT), BM_GETCHECK, 0, 0) == BST_CHECKED ? DEINTERLACING_PROCESSOR_GPU : DEINTERLACING_PROCESSOR_CPU;
 
                         configData->data->SetString(TEXT("device"), strDevice);
                         configData->data->SetString(TEXT("deviceName"), configData->deviceNameList[deviceID]);
@@ -1887,12 +1976,16 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         configData->data->SetInt(TEXT("customResolution"), bCustomResolution);
                         configData->data->SetInt(TEXT("resolutionWidth"), resolution.cx);
                         configData->data->SetInt(TEXT("resolutionHeight"), resolution.cy);
-                        configData->data->SetInt(TEXT("deinterlacingType"), deinterlacingType);
                         configData->data->SetInt(TEXT("frameInterval"), UINT(frameInterval));
                         configData->data->SetInt(TEXT("flipImage"), bFlip);
                         configData->data->SetInt(TEXT("flipImageHorizontal"), bFlipHorizontal);
                         configData->data->SetInt(TEXT("usePointFiltering"), bUsePointFiltering);
-                        configData->data->SetInt(TEXT("gamma"), (int)SendMessage(GetDlgItem(hwnd, IDC_GAMMA2), TBM_GETPOS, 0, 0));
+                        configData->data->SetInt(TEXT("gamma"), (int)SendMessage(GetDlgItem(hwnd, IDC_GAMMA), TBM_GETPOS, 0, 0));
+                        
+                        configData->data->SetInt(TEXT("deinterlacingType"), deinterlacingConfig.type);
+                        configData->data->SetInt(TEXT("deinterlacingFieldOrder"), deinterlacingConfig.fieldOrder);
+                        configData->data->SetInt(TEXT("deinterlacingProcessor"), deinterlacingConfig.processor);
+                        configData->data->SetInt(TEXT("deinterlacingDoublesFramerate"), deinterlacingConfig.doublesFramerate);
 
                         //------------------------------------------
 
@@ -1977,23 +2070,26 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         if(source)
                         {
-                            source->SetInt(TEXT("bufferTime"),          configData->data->GetInt(TEXT("bufferTime"), 0));
+                            source->SetInt(TEXT("bufferTime"),                      configData->data->GetInt(TEXT("bufferTime"), 0));
 
-                            source->SetInt(TEXT("timeOffset"),          configData->data->GetInt(TEXT("soundTimeOffset"), 0));
-                            source->SetFloat(TEXT("volume"),            configData->data->GetFloat(TEXT("volume"), 1.0f));
+                            source->SetInt(TEXT("timeOffset"),                      configData->data->GetInt(TEXT("soundTimeOffset"), 0));
+                            source->SetFloat(TEXT("volume"),                        configData->data->GetFloat(TEXT("volume"), 1.0f));
 
-                            source->SetInt(TEXT("flipImage"),           configData->data->GetInt(TEXT("flipImage"), 0));
-                            source->SetInt(TEXT("flipImageHorizontal"), configData->data->GetInt(TEXT("flipImageHorizontal"), 0));
-                            source->SetInt(TEXT("usePointFiltering"),   configData->data->GetInt(TEXT("usePointFiltering"), 0));
-                            source->SetInt(TEXT("opacity"),             configData->data->GetInt(TEXT("opacity"), 100));
+                            source->SetInt(TEXT("flipImage"),                       configData->data->GetInt(TEXT("flipImage"), 0));
+                            source->SetInt(TEXT("flipImageHorizontal"),             configData->data->GetInt(TEXT("flipImageHorizontal"), 0));
+                            source->SetInt(TEXT("usePointFiltering"),               configData->data->GetInt(TEXT("usePointFiltering"), 0));
+                            source->SetInt(TEXT("opacity"),                         configData->data->GetInt(TEXT("opacity"), 100));
 
-                            source->SetInt(TEXT("useChromaKey"),        configData->data->GetInt(TEXT("useChromaKey"), 0));
-                            source->SetInt(TEXT("keyColor"),            configData->data->GetInt(TEXT("keyColor"), 0xFFFFFFFF));
-                            source->SetInt(TEXT("keySimilarity"),       configData->data->GetInt(TEXT("keySimilarity"), 0));
-                            source->SetInt(TEXT("keyBlend"),            configData->data->GetInt(TEXT("keyBlend"), 80));
-                            source->SetInt(TEXT("keySpillReduction"),   configData->data->GetInt(TEXT("keySpillReduction"), 50));
-                            source->SetInt(TEXT("gamma"),               configData->data->GetInt(TEXT("gamma"), 100));
-                            source->SetInt(TEXT("deinterlacingType"),   configData->data->GetInt(TEXT("deinterlacingType"), 0));
+                            source->SetInt(TEXT("useChromaKey"),                    configData->data->GetInt(TEXT("useChromaKey"), 0));
+                            source->SetInt(TEXT("keyColor"),                        configData->data->GetInt(TEXT("keyColor"), 0xFFFFFFFF));
+                            source->SetInt(TEXT("keySimilarity"),                   configData->data->GetInt(TEXT("keySimilarity"), 0));
+                            source->SetInt(TEXT("keyBlend"),                        configData->data->GetInt(TEXT("keyBlend"), 80));
+                            source->SetInt(TEXT("keySpillReduction"),               configData->data->GetInt(TEXT("keySpillReduction"), 50));
+                            source->SetInt(TEXT("gamma"),                           configData->data->GetInt(TEXT("gamma"), 100));
+                            source->SetInt(TEXT("deinterlacingType"),               configData->data->GetInt(TEXT("deinterlacingType"), 0));
+                            source->SetInt(TEXT("deinterlacingFieldOrder"),         configData->data->GetInt(TEXT("deinterlacingFieldOrder"), 0));
+                            source->SetInt(TEXT("deinterlacingProcessor"),          configData->data->GetInt(TEXT("deinterlacingProcessor"), 0));
+                            source->SetInt(TEXT("deinterlacingDoublesFramerate"),   configData->data->GetInt(TEXT("deinterlacingDoublesFramerate"), 0));
                         }
                     }
 

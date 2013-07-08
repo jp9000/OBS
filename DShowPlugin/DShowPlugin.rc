@@ -47,10 +47,27 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
+// Cursor
+//
+
+IDC_COLORPICKER         CURSOR                  "cursor1.cur"
+#endif    // Japanese (Japan) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
 // Dialog
 //
 
-IDD_CONFIG DIALOGEX 0, 0, 428, 281
+IDD_CONFIG DIALOGEX 0, 0, 429, 295
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "DeviceSelection"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -68,51 +85,54 @@ BEGIN
     RTEXT           "DeviceSelection.Opacity",IDC_STATIC,144,38,117,8
     EDITTEXT        IDC_OPACITY_EDIT,264,35,40,14,ES_AUTOHSCROLL | ES_NUMBER
     CONTROL         "",IDC_OPACITY,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,304,35,11,14
-    GROUPBOX        "DeviceSelection.Video",IDC_STATIC,7,67,216,101
+    GROUPBOX        "DeviceSelection.Video",IDC_STATIC,6,79,216,101
     CONTROL         "DeviceSelection.CustomResolution",IDC_CUSTOMRESOLUTION,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,79,130,10,WS_EX_RIGHT
-    RTEXT           "DeviceSelection.Resolution",IDC_STATIC,18,96,117,8
-    COMBOBOX        IDC_RESOLUTION,138,93,76,72,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "DeviceSelection.FPS",IDC_STATIC,18,113,117,8
-    COMBOBOX        IDC_FPS,138,111,76,56,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,91,130,10,WS_EX_RIGHT
+    RTEXT           "DeviceSelection.Resolution",IDC_STATIC,17,108,117,8
+    COMBOBOX        IDC_RESOLUTION,137,105,76,72,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "DeviceSelection.FPS",IDC_STATIC,17,125,117,8
+    COMBOBOX        IDC_FPS,137,123,76,56,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     CONTROL         "DeviceSelection.PreferredType",IDC_USEPREFERREDOUTPUT,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,132,117,10,WS_EX_RIGHT
-    COMBOBOX        IDC_PREFERREDOUTPUT,138,130,76,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "DeviceSelection.UseBuffering",IDC_USEBUFFERING,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,151,117,10,WS_EX_RIGHT
-    EDITTEXT        IDC_DELAY_EDIT,138,148,40,14,ES_AUTOHSCROLL
-    CONTROL         "",IDC_DELAY,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,178,148,10,14
-    GROUPBOX        "DeviceSelection.Sound",IDC_STATIC,234,67,187,136,WS_GROUP
-    LTEXT           "DeviceSelection.AudioDevice",IDC_STATIC,243,84,117,8
-    COMBOBOX        IDC_AUDIOLIST,243,96,169,12,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "DeviceSelection.Config",IDC_CONFIGAUDIO,335,112,78,13
-    CONTROL         "ÉJÉXÉ^ÉÄ1",IDC_VOLUME,"OBSVolumeControl",WS_TABSTOP,243,131,118,19
-    CONTROL         "DeviceSelection.OutputSound",IDC_OUTPUTSOUND,"Button",BS_AUTORADIOBUTTON,243,156,163,10
-    LTEXT           "DeviceSelection.SoundOffset",IDC_STATIC,239,171,117,8,NOT WS_GROUP,WS_EX_RIGHT
-    EDITTEXT        IDC_TIMEOFFSET_EDIT,361,168,40,14,ES_AUTOHSCROLL
-    CONTROL         "",IDC_TIMEOFFSET,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,401,168,11,14
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,144,117,10,WS_EX_RIGHT
+    COMBOBOX        IDC_PREFERREDOUTPUT,137,142,76,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "DeviceSelection.UseBuffering",IDC_USEBUFFERING,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,163,117,10,WS_EX_RIGHT
+    EDITTEXT        IDC_DELAY_EDIT,137,160,40,14,ES_AUTOHSCROLL
+    CONTROL         "",IDC_DELAY,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,177,160,11,14
+    GROUPBOX        "DeviceSelection.Sound",IDC_STATIC,233,79,187,136,WS_GROUP
+    LTEXT           "DeviceSelection.AudioDevice",IDC_STATIC,242,96,117,8
+    COMBOBOX        IDC_AUDIOLIST,242,108,169,12,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "DeviceSelection.Config",IDC_CONFIGAUDIO,334,124,78,13
+    CONTROL         "OBSVolumeControl",IDC_VOLUME,"OBSVolumeControl",WS_TABSTOP,242,143,118,19
+    CONTROL         "DeviceSelection.OutputSound",IDC_OUTPUTSOUND,"Button",BS_AUTORADIOBUTTON,242,168,163,10
+    LTEXT           "DeviceSelection.SoundOffset",IDC_STATIC,238,183,117,8,NOT WS_GROUP,WS_EX_RIGHT
+    EDITTEXT        IDC_TIMEOFFSET_EDIT,360,180,40,14,ES_AUTOHSCROLL
+    CONTROL         "",IDC_TIMEOFFSET,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,400,180,11,14
     CONTROL         "DeviceSelection.PlayToDesktop",IDC_PLAYDESKTOPSOUND,
-                    "Button",BS_AUTORADIOBUTTON,243,186,163,10
-    GROUPBOX        "DeviceSelection.ChromaKey",IDC_STATIC,7,174,216,99
-    CONTROL         "DeviceSelection.UseChromaKey",IDC_USECHROMAKEY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,186,130,10,WS_EX_RIGHT
-    RTEXT           "DeviceSelection.Color",IDC_STATIC,14,202,117,8
-    CONTROL         "",IDC_COLOR,"OBSColorControl",WS_TABSTOP,133,199,28,14
-    PUSHBUTTON      "DeviceSelection.Select",IDC_SELECTCOLOR,166,199,50,14
-    RTEXT           "DeviceSelection.Similarity",IDC_STATIC,14,220,117,8
-    EDITTEXT        IDC_BASETHRESHOLD_EDIT,132,218,40,14,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "",IDC_BASETHRESHOLD,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,173,218,10,14
-    RTEXT           "DeviceSelection.Blend",IDC_STATIC,12,236,117,8
-    EDITTEXT        IDC_BLEND_EDIT,132,235,40,14,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "",IDC_BLEND,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,172,235,11,14
-    RTEXT           "DeviceSelection.SpillReduction",IDC_STATIC,12,252,117,8
-    EDITTEXT        IDC_SPILLREDUCTION_EDIT,132,251,40,14,ES_AUTOHSCROLL
-    CONTROL         "",IDC_SPILLREDUCTION,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,172,251,11,14
-    DEFPUSHBUTTON   "OK",IDOK,313,260,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,371,260,50,14
-    RTEXT           "DeviceSelection.Gamma",IDC_STATIC,235,208,95,8
-    CONTROL         "",IDC_GAMMA2,"msctls_trackbar32",TBS_BOTH | WS_TABSTOP,230,220,191,26
-    LTEXT           ".numbers!",IDC_GAMMAVAL,336,208,54,8
+                    "Button",BS_AUTORADIOBUTTON,242,198,163,10
+    GROUPBOX        "DeviceSelection.ChromaKey",IDC_STATIC,6,186,216,99
+    CONTROL         "DeviceSelection.UseChromaKey",IDC_USECHROMAKEY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,198,130,10,WS_EX_RIGHT
+    RTEXT           "DeviceSelection.Color",IDC_STATIC,13,214,117,8
+    CONTROL         "",IDC_COLOR,"OBSColorControl",WS_TABSTOP,132,211,28,14
+    PUSHBUTTON      "DeviceSelection.Select",IDC_SELECTCOLOR,165,211,50,14
+    RTEXT           "DeviceSelection.Similarity",IDC_STATIC,13,232,117,8
+    EDITTEXT        IDC_BASETHRESHOLD_EDIT,131,230,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_BASETHRESHOLD,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,172,230,11,14
+    RTEXT           "DeviceSelection.Blend",IDC_STATIC,11,248,117,8
+    EDITTEXT        IDC_BLEND_EDIT,131,247,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_BLEND,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,171,247,11,14
+    RTEXT           "DeviceSelection.SpillReduction",IDC_STATIC,11,264,117,8
+    EDITTEXT        IDC_SPILLREDUCTION_EDIT,131,263,40,14,ES_AUTOHSCROLL
+    CONTROL         "",IDC_SPILLREDUCTION,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,171,263,11,14
+    DEFPUSHBUTTON   "OK",IDOK,312,272,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,370,272,50,14
+    RTEXT           "DeviceSelection.Gamma",IDC_STATIC,234,220,95,8
+    CONTROL         "",IDC_GAMMA,"msctls_trackbar32",TBS_BOTH | WS_TABSTOP,229,232,191,26
+    LTEXT           ".numbers!",IDC_GAMMAVAL,335,220,54,8
     RTEXT           "DeviceSelection.Deinterlacing",IDC_STATIC,3,54,117,8
     COMBOBOX        IDC_DEINTERLACELIST,125,51,133,12,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "DeviceSelection.TopFieldFirst",IDC_TFF,"Button",BS_AUTORADIOBUTTON | BS_RIGHT | WS_TABSTOP,14,68,119,10,WS_EX_RIGHT
+    CONTROL         "DeviceSelection.BottomFieldFirst",IDC_BFF,"Button",BS_AUTORADIOBUTTON | BS_RIGHT | WS_TABSTOP,154,68,119,10,WS_EX_RIGHT
+    CONTROL         "DeviceSelection.GPUDeinterlacing",IDC_GPUDEINT,"Button",BS_AUTOCHECKBOX | BS_RIGHT | WS_TABSTOP,294,68,119,10,WS_EX_RIGHT
 END
 
 
@@ -127,21 +147,14 @@ BEGIN
     IDD_CONFIG, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 421
+        RIGHTMARGIN, 422
         TOPMARGIN, 7
-        BOTTOMMARGIN, 274
+        BOTTOMMARGIN, 288
     END
 END
 #endif    // APSTUDIO_INVOKED
 
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Cursor
-//
-
-IDC_COLORPICKER         CURSOR                  "cursor1.cur"
-#endif    // Japanese (Japan) resources
+#endif    // English resources
 /////////////////////////////////////////////////////////////////////////////
 
 

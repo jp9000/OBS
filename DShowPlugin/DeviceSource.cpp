@@ -24,6 +24,18 @@ DWORD STDCALL PackPlanarThread(ConvertData *data);
 #define NEAR_SILENT  3000
 #define NEAR_SILENTf 3000.0
 
+DeinterlacerConfig deinterlacerConfigs[DEINTERLACING_TYPE_LAST] = {
+    {DEINTERLACING_NONE,        FIELD_ORDER_NONE,                   DEINTERLACING_PROCESSOR_CPU},
+    {DEINTERLACING_DISCARD,     FIELD_ORDER_TFF | FIELD_ORDER_BFF,  DEINTERLACING_PROCESSOR_CPU},
+    {DEINTERLACING_RETRO,       FIELD_ORDER_TFF | FIELD_ORDER_BFF,  DEINTERLACING_PROCESSOR_CPU | DEINTERLACING_PROCESSOR_GPU,  true},
+    {DEINTERLACING_BLEND,       FIELD_ORDER_NONE,                   DEINTERLACING_PROCESSOR_GPU},
+    {DEINTERLACING_BLEND2x,     FIELD_ORDER_TFF | FIELD_ORDER_BFF,  DEINTERLACING_PROCESSOR_GPU,                                true},
+    {DEINTERLACING_LINEAR,      FIELD_ORDER_TFF | FIELD_ORDER_BFF,  DEINTERLACING_PROCESSOR_GPU},
+    {DEINTERLACING_LINEAR2x,    FIELD_ORDER_TFF | FIELD_ORDER_BFF,  DEINTERLACING_PROCESSOR_GPU,                                true},
+    {DEINTERLACING_YADIF,       FIELD_ORDER_TFF | FIELD_ORDER_BFF,  DEINTERLACING_PROCESSOR_GPU},
+    {DEINTERLACING_YADIF2x,     FIELD_ORDER_TFF | FIELD_ORDER_BFF,  DEINTERLACING_PROCESSOR_GPU,                                true},
+    {DEINTERLACING__DEBUG,      FIELD_ORDER_TFF | FIELD_ORDER_BFF,  DEINTERLACING_PROCESSOR_GPU},
+};
 
 bool DeviceSource::Init(XElement *data)
 {
@@ -89,13 +101,15 @@ DeviceSource::~DeviceSource()
         OSCloseMutex(hSampleMutex);
 }
 
+#define SHADER_PATH TEXT("plugins/DShowPlugin/shaders/")
+
 String DeviceSource::ChooseShader()
 {
     if(colorType == DeviceOutputType_RGB && !bUseChromaKey)
         return String();
 
     String strShader;
-    strShader << TEXT("plugins/DShowPlugin/shaders/");
+    strShader << SHADER_PATH;
 
     if(bUseChromaKey)
         strShader << TEXT("ChromaKey_");
@@ -116,6 +130,35 @@ String DeviceSource::ChooseShader()
         strShader << TEXT("RGB.pShader");
 
     return strShader;
+}
+
+String DeviceSource::ChooseDeinterlacingShader()
+{
+    String shader;
+    shader << SHADER_PATH << TEXT("Deinterlace_");
+
+#ifdef _DEBUG
+#define DEBUG__ _DEBUG
+#undef _DEBUG
+#endif
+#define SELECT(x) case DEINTERLACING_##x: shader << String(TEXT(#x)).MakeLower(); break;
+    switch(deinterlacer.type)
+    {
+        SELECT(RETRO)
+        SELECT(BLEND)
+        SELECT(BLEND2x)
+        SELECT(LINEAR)
+        SELECT(LINEAR2x)
+        SELECT(YADIF)
+        SELECT(YADIF2x)
+        SELECT(_DEBUG)
+    }
+    return shader << TEXT(".pShader");
+#undef SELECT
+#ifdef DEBUG__
+#define _DEBUG DEBUG__
+#undef DEBUG__
+#endif
 }
 
 const float yuv709Mat[16] = { 0.2126f,  0.7152f,  0.0722f, 0.0625f,
@@ -209,8 +252,11 @@ bool DeviceSource::LoadFilters()
     keySimilarity = data->GetInt(TEXT("keySimilarity"));
     keyBlend = data->GetInt(TEXT("keyBlend"), 80);
     keySpillReduction = data->GetInt(TEXT("keySpillReduction"), 50);
-
-    deinterlacingType =data->GetInt(TEXT("deinterlacingType"), 0);
+    
+    deinterlacer.type               = data->GetInt(TEXT("deinterlacingType"), 0);
+    deinterlacer.fieldOrder         = data->GetInt(TEXT("deinterlacingFieldOrder"), 0);
+    deinterlacer.processor          = data->GetInt(TEXT("deinterlacingProcessor"), 0);
+    deinterlacer.doublesFramerate   = data->GetInt(TEXT("deinterlacingDoublesFramerate"), 0) != 0;
 
     if(keyBaseColor.x < keyBaseColor.y && keyBaseColor.x < keyBaseColor.z)
         keyBaseColor -= keyBaseColor.x;
@@ -637,19 +683,42 @@ bool DeviceSource::LoadFilters()
     imageCX = renderCX;
     imageCY = renderCY;
 
-    curField = false;
-    switch(deinterlacingType) {
-    case deinterlacing_Discard:
+    deinterlacer.imageCX = renderCX;
+    deinterlacer.imageCY = renderCY;
+
+    if(deinterlacer.doublesFramerate)
+        deinterlacer.imageCX *= 2;
+
+    switch(deinterlacer.type) {
+    case DEINTERLACING_DISCARD:
+        deinterlacer.imageCY = renderCY/2;
         linePitch = lineSize * 2;
         renderCY /= 2;
         break;
-    case deinterlacing_Retro_BFF:
-        curField = true;
-    case deinterlacing_Retro_TFF:
-        lineSize *= 2;
-        linePitch = lineSize;
-        renderCY /= 2;
-        renderCX *= 2;
+    case DEINTERLACING_RETRO:
+        deinterlacer.imageCY = renderCY/2;
+        if(deinterlacer.processor != DEINTERLACING_PROCESSOR_GPU)
+        {
+            lineSize *= 2;
+            linePitch = lineSize;
+            renderCY /= 2;
+            renderCX *= 2;
+        }
+    case DEINTERLACING__DEBUG:
+        deinterlacer.imageCX *= 2;
+        deinterlacer.imageCY *= 2;
+    case DEINTERLACING_BLEND2x:
+    //case DEINTERLACING_MEAN2x:
+    case DEINTERLACING_YADIF:
+    case DEINTERLACING_YADIF2x:
+        deinterlacer.needsPreviousFrame = true;
+        break;
+    }
+
+    if(deinterlacer.type != DEINTERLACING_NONE && deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
+    {
+        deinterlacer.vertexShader = CreateVertexShaderFromFile(TEXT("shaders/DrawTexture.vShader"));
+        deinterlacer.pixelShader = CreatePixelShaderFromFile(ChooseDeinterlacingShader());
     }
 
     int numThreads = MAX(OSGetTotalCores()-2, 1);
@@ -759,11 +828,19 @@ cleanFinish:
     {
         msetd(textureData, 0xFFFF0000, renderCX*renderCY*4);
         texture = CreateTexture(renderCX, renderCY, GS_BGR, textureData, FALSE, FALSE);
+        if(deinterlacer.needsPreviousFrame)
+             previousTexture = CreateTexture(renderCX, renderCY, GS_BGR, textureData, FALSE, FALSE);
+        if(deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
+             deinterlacer.texture = CreateRenderTarget(deinterlacer.imageCX, deinterlacer.imageCY, GS_BGRA, FALSE);
     }
     else //if we're working with planar YUV, we can just use regular RGB textures instead
     {
         msetd(textureData, 0xFF0000FF, renderCX*renderCY*4);
         texture = CreateTexture(renderCX, renderCY, GS_RGB, textureData, FALSE, FALSE);
+        if(deinterlacer.needsPreviousFrame)
+             previousTexture = CreateTexture(renderCX, renderCY, GS_RGB, textureData, FALSE, FALSE);
+        if(deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
+             deinterlacer.texture = CreateRenderTarget(deinterlacer.imageCX, deinterlacer.imageCY, GS_BGRA, FALSE);
     }
 
     if(bSucceeded && bUseThreadedConversion)
@@ -802,6 +879,8 @@ void DeviceSource::UnloadFilters()
     {
         delete texture;
         texture = NULL;
+        delete previousTexture;
+        previousTexture = NULL;
     }
 
     int numThreads = MAX(OSGetTotalCores()-2, 1);
@@ -1135,13 +1214,14 @@ void DeviceSource::Preprocess()
         Log(TEXT("refTimeStart: %llu, refTimeFinish: %llu, offset = %llu"), refTimeStart, refTimeFinish, refTimeStart-lastRefTime);
         lastRefTime = refTimeStart;*/
 
-        switch(deinterlacingType)
+        if(previousTexture)
         {
-        case deinterlacing_Retro_BFF:
-        case deinterlacing_Retro_TFF:
-            curField = (deinterlacingType == deinterlacing_Retro_BFF); //select first field
-            bNewFrame = true;
+            Texture *tmp = texture;
+            texture = previousTexture;
+            previousTexture = tmp;
         }
+        deinterlacer.curField = deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU ? false : (deinterlacer.fieldOrder == FIELD_ORDER_BFF);
+        deinterlacer.bNewFrame = true;
  
         if(colorType == DeviceOutputType_RGB)
         {
@@ -1225,6 +1305,35 @@ void DeviceSource::Preprocess()
         }
 
         lastSample->Release();
+
+        if(bReadyToDraw && deinterlacer.type != DEINTERLACING_NONE && deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
+        {
+            SetRenderTarget(deinterlacer.texture);
+
+            Shader *oldVertShader = GetCurrentVertexShader();
+            LoadVertexShader(deinterlacer.vertexShader);
+            
+            Shader *oldShader = GetCurrentPixelShader();
+            LoadPixelShader(deinterlacer.pixelShader);
+
+            HANDLE hField = deinterlacer.pixelShader->GetParameterByName(TEXT("field_order"));
+            if(hField)
+                deinterlacer.pixelShader->SetBool(hField, deinterlacer.fieldOrder == FIELD_ORDER_BFF);
+            
+            Ortho(0.0f, float(deinterlacer.imageCX), float(deinterlacer.imageCY), 0.0f, -100.0f, 100.0f);
+            SetViewport(0.0f, 0.0f, float(deinterlacer.imageCX), float(deinterlacer.imageCY));
+
+            if(previousTexture)
+                LoadTexture(previousTexture, 1);
+
+            DrawSpriteEx(texture, 0xFFFFFFFF, 0.0f, 0.0f, float(deinterlacer.imageCX), float(deinterlacer.imageCY), 0.0f, 0.0f, 1.0f, 1.0f);
+
+            if(previousTexture)
+                LoadTexture(nullptr, 1);
+
+            LoadPixelShader(oldShader);
+            LoadVertexShader(oldVertShader);
+        }
     }
 }
 
@@ -1304,25 +1413,19 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
 
 
 
-        switch(deinterlacingType) {
-        case deinterlacing_Retro_BFF:
-        case deinterlacing_Retro_TFF:
-            if(texture)
-            {
-                if(!curField)
-                    DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, y, x2, y2, 0.f, 0.0f, .5f, 1.f);
-                else
-                    DrawSpriteEx(texture, (opacity255<<24) | 0xFFFFFF, x, y, x2, y2, .5f, 0.0f, 1.f, 1.f);
-            }
-            if(bNewFrame)
-            {
-                curField = !curField;
-                bNewFrame = false; //prevent switching from the second field to the first field
-            }
-            break;
-        default:
-            DrawSprite(texture, (opacity255<<24) | 0xFFFFFF, x, y, x2, y2);
-            break;
+        if(deinterlacer.doublesFramerate)
+        {
+            if(!deinterlacer.curField)
+                DrawSpriteEx(deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU ? deinterlacer.texture : texture, (opacity255<<24) | 0xFFFFFF, x, y, x2, y2, 0.f, 0.0f, .5f, 1.f);
+            else
+                DrawSpriteEx(deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU ? deinterlacer.texture : texture, (opacity255<<24) | 0xFFFFFF, x, y, x2, y2, .5f, 0.0f, 1.f, 1.f);
+        }
+        else
+            DrawSprite(deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU ? deinterlacer.texture : texture, (opacity255<<24) | 0xFFFFFF, x, y, x2, y2);
+        if(deinterlacer.bNewFrame)
+        {
+            deinterlacer.curField = !deinterlacer.curField;
+            deinterlacer.bNewFrame = false; //prevent switching from the second field to the first field
         }
 
         if(bUsePointFiltering) delete(sampler);
@@ -1340,17 +1443,21 @@ void DeviceSource::UpdateSettings()
     UINT newCX                  = data->GetInt(TEXT("resolutionWidth"));
     UINT newCY                  = data->GetInt(TEXT("resolutionHeight"));
     BOOL bNewCustom             = data->GetInt(TEXT("customResolution"));
-    UINT newDeinterlacingType   = data->GetInt(TEXT("deinterlacingType"));
     UINT newPreferredType       = data->GetInt(TEXT("usePreferredType")) != 0 ? data->GetInt(TEXT("preferredType")) : -1;
     UINT newSoundOutputType     = data->GetInt(TEXT("soundOutputType"));
     bool bNewUseBuffering       = data->GetInt(TEXT("useBuffering")) != 0;
     UINT newGamma               = data->GetInt(TEXT("gamma"), 100);
 
+    int newDeintType            = data->GetInt(TEXT("deinterlacingType"));
+    int newDeintFieldOrder      = data->GetInt(TEXT("deinterlacingFieldOrder"));
+    int newDeintProcessor       = data->GetInt(TEXT("deinterlacingProcessor"));
+
     if(newSoundOutputType != soundOutputType || imageCX != newCX || imageCY != newCY ||
        frameInterval != newFrameInterval || newPreferredType != preferredOutputType ||
        !strDevice.CompareI(strNewDevice) || !strAudioDevice.CompareI(strNewAudioDevice) ||
        bNewCustom != bUseCustomResolution || bNewUseBuffering != bUseBuffering ||
-       newGamma != gamma || newDeinterlacingType != deinterlacingType)
+       newGamma != gamma || newDeintType != deinterlacer.type ||
+       newDeintFieldOrder != deinterlacer.fieldOrder || newDeintProcessor != deinterlacer.processor)
     {
         API->EnterSceneMutex();
 
