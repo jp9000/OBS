@@ -53,6 +53,9 @@ class GraphicsCaptureSource : public ImageSource
 
     float captureCheckInterval;
 
+    DWORD foregroundPID;
+    DWORD foregroundCheckCount;
+
     void NewCapture();
     void EndCapture();
 

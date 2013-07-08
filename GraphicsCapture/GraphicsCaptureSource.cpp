@@ -261,6 +261,8 @@ void GraphicsCaptureSource::EndCapture()
     captureCheckInterval = -1.0f;
     hwndCapture = NULL;
     targetProcessID = 0;
+    foregroundPID = 0;
+    foregroundCheckCount = 0;
 
     if(warningID)
     {
@@ -726,7 +728,14 @@ void GraphicsCaptureSource::Render(const Vect2 &pos, const Vect2 &size)
             //----------------------------------------------------------
             // draw mouse
 
-            if(bMouseCaptured && cursorTexture && GetForegroundWindow() == hwndCapture)
+            if (!foregroundCheckCount)
+            {
+                //only check for foreground window every 10 frames since this involves two syscalls
+                GetWindowThreadProcessId(GetForegroundWindow(), &foregroundPID);
+                foregroundCheckCount = 10;
+            }
+
+            if(bMouseCaptured && cursorTexture && foregroundPID == targetProcessID)
             {
                 Vect2 newCursorPos  = Vect2(float(cursorPos.x-xHotspot), float(cursorPos.y-xHotspot));
                 Vect2 newCursorSize = Vect2(float(cursorTexture->Width()), float(cursorTexture->Height()));
@@ -748,6 +757,8 @@ void GraphicsCaptureSource::Render(const Vect2 &pos, const Vect2 &size)
 
                 DrawSprite(cursorTexture, 0xFFFFFFFF, newCursorPos.x, newCursorPos.y, newCursorPos.x+newCursorSize.x, newCursorPos.y+newCursorSize.y);
             }
+
+            foregroundCheckCount--;
         }
 
         if(lastShader)
