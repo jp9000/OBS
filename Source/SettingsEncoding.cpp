@@ -141,6 +141,10 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 EnableWindow(GetDlgItem(hwnd, IDC_QUALITY), !bUseCBR);
                 EnableWindow(GetDlgItem(hwnd, IDC_PADCBR), bUseCBR);
 
+                ti.lpszText = (LPWSTR)Str("Settings.Advanced.PadCBRToolTip");
+                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_PADCBR);
+                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+
                 //--------------------------------------------
 
                 int bitrate    = LoadSettingEditInt(GetDlgItem(hwnd, IDC_MAXBITRATE), TEXT("Video Encoding"), TEXT("MaxBitrate"), 1000);
