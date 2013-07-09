@@ -836,8 +836,8 @@ cleanFinish:
     else
         bReadyToDraw = false;
 
-    if(!renderCX) renderCX = 32;
-    if(!renderCY) renderCY = 32;
+    if(!renderCX) {renderCX = 32; imageCX = renderCX;}
+    if(!renderCY) {renderCY = 32; imageCY = renderCY;}
 
 
     //-----------------------------------------------------
@@ -848,18 +848,18 @@ cleanFinish:
     {
         msetd(textureData, 0xFFFF0000, renderCX*renderCY*4);
         texture = CreateTexture(renderCX, renderCY, GS_BGR, textureData, FALSE, FALSE);
-        if(deinterlacer.needsPreviousFrame)
+        if(bSucceeded && deinterlacer.needsPreviousFrame)
             previousTexture = CreateTexture(renderCX, renderCY, GS_BGR, textureData, FALSE, FALSE);
-        if(deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
+        if(bSucceeded && deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
             deinterlacer.texture.reset(CreateRenderTarget(deinterlacer.imageCX, deinterlacer.imageCY, GS_BGRA, FALSE));
     }
     else //if we're working with planar YUV, we can just use regular RGB textures instead
     {
         msetd(textureData, 0xFF0000FF, renderCX*renderCY*4);
         texture = CreateTexture(renderCX, renderCY, GS_RGB, textureData, FALSE, FALSE);
-        if(deinterlacer.needsPreviousFrame)
+        if(bSucceeded && deinterlacer.needsPreviousFrame)
             previousTexture = CreateTexture(renderCX, renderCY, GS_RGB, textureData, FALSE, FALSE);
-        if(deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
+        if(bSucceeded && deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
             deinterlacer.texture.reset(CreateRenderTarget(deinterlacer.imageCX, deinterlacer.imageCY, GS_BGRA, FALSE));
     }
 
@@ -1332,7 +1332,10 @@ void DeviceSource::Preprocess()
 
         lastSample->Release();
 
-        if(bReadyToDraw && deinterlacer.type != DEINTERLACING_NONE && deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
+        if(bReadyToDraw &&
+            deinterlacer.type != DEINTERLACING_NONE &&
+            deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU &&
+            deinterlacer.texture.get())
         {
             SetRenderTarget(deinterlacer.texture.get());
 
@@ -1438,7 +1441,7 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
         }
 
 
-        Texture *tex = deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU ? deinterlacer.texture.get() : texture;
+        Texture *tex = (deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU && deinterlacer.texture.get()) ? deinterlacer.texture.get() : texture;
         if(deinterlacer.doublesFramerate)
         {
             if(!deinterlacer.curField)

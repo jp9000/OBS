@@ -42,6 +42,11 @@ float4 load_at(int2 texel, int x, int y, int field)
 		return prevTex.Load(int3(texel+int2(x, y), 0));
 }
 
+/*
+Port of YADIF filter from MPlayer
+YADIF filter Copyright (C) 2006 Michael Niedermayer <michaelni@gmx.at>
+*/
+
 #define YADIF_UPDATE(c, level)\
 	if(score.c < spatial_score.c)\
 	{\
