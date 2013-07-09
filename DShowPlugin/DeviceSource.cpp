@@ -218,6 +218,26 @@ bool DeviceSource::LoadFilters()
     HRESULT err;
     String strShader;
 
+    if(graph == NULL) {
+        err = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, (REFIID)IID_IFilterGraph, (void**)&graph);
+        if(FAILED(err))
+        {
+            AppWarning(TEXT("DShowPlugin: Failed to build IGraphBuilder, result = %08lX"), err);
+            goto cleanFinish;
+        }
+    }
+
+    if(capture == NULL) {
+        err = CoCreateInstance(CLSID_CaptureGraphBuilder2, NULL, CLSCTX_INPROC_SERVER, (REFIID)IID_ICaptureGraphBuilder2, (void**)&capture);
+        if(FAILED(err))
+        {
+            AppWarning(TEXT("DShowPlugin: Failed to build ICaptureGraphBuilder2, result = %08lX"), err);
+            goto cleanFinish;
+        }
+
+        capture->SetFiltergraph(graph);
+    }
+
     bUseThreadedConversion = API->UseMultithreadedOptimizations() && (OSGetTotalCores() > 1);
 
     //------------------------------------------------
@@ -948,6 +968,9 @@ void DeviceSource::UnloadFilters()
         Free(lpImageBuffer);
         lpImageBuffer = NULL;
     }
+
+    if(capture != NULL) { SafeReleaseLogRef(capture); capture = NULL; }
+    if(graph != NULL) { SafeReleaseLogRef(graph); graph = NULL; }
 
     SafeRelease(control);
 }
