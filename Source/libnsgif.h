@@ -42,6 +42,10 @@ typedef enum {
     GIF_END_OF_FRAME = -7
 } gif_result;
 
+/*    Maximum LZW bits available
+*/
+#define GIF_MAX_LZW 12
+
 /*    The GIF frame data
 */
 typedef struct gif_frame {
@@ -109,6 +113,28 @@ typedef struct gif_animation {
     BOOL global_colours;                /**< whether the GIF has a global colour table */
     unsigned int *global_colour_table;        /**< global colour table */
     unsigned int *local_colour_table;        /**< local colour table */
+
+
+    /*    General LZW values. They are NO LONGER shared for all GIFs being decoded BECAUSE
+          THAT IS A TERRIBLE IDEA TO SAVE 10Kb or so per GIF.
+    */
+    unsigned char buf[4];
+    unsigned char *direct;
+
+    int table[2][(1 << GIF_MAX_LZW)];
+    unsigned char stack[(1 << GIF_MAX_LZW) * 2];
+    unsigned char *stack_pointer;
+    int code_size, set_code_size;
+    int max_code, max_code_size;
+    int clear_code, end_code;
+    int curbit, lastbit, last_byte;
+    int firstcode, oldcode;
+    BOOL zero_data_block;
+    BOOL get_done;
+
+    /*    Whether to clear the decoded image rather than plot
+    */
+    BOOL clear_image;
 } gif_animation;
 
 void gif_create(gif_animation *gif, gif_bitmap_callback_vt *bitmap_callbacks);
