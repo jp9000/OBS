@@ -59,6 +59,7 @@ Listbox.FitToScreen "An Bildschirm anpassen"
 Listbox.Positioning "Position/Größe"
 Listbox.ResetSize   "Größe zurücksetzen"
 Listbox.SetHotkey   "Hotkey setzen"
+ListBox.ResetCrop   "Zuschneiden zurücksetzen"
 
 MainMenu.File       "&Datei"
 MainMenu.Help       "&Hilfe"
@@ -108,6 +109,9 @@ Scene.MissingSources    "Konnte wegen defekter oder fehlender Plugins nicht alle
 Scene.Hotkey.AlreadyInUse   "Dieser Hotkey wird bereits verwendet
 Scene.Hotkey.Hotkey         "Hotkey:"
 
+Capture.Start.FileStream.WarningCaption "Warnung"
+Capture.Start.FileStream.Warning "Fehler beim erstellen der Ausgabe-Datei.\n\nBitte überprüfen Sie den Dateipfad in den Broadcast Einstellungen."
+
 Settings.Advanced           "Erweitert"
 Settings.Audio              "Audio"
 Settings.Encoding           "Kodierung"
@@ -131,6 +135,7 @@ Settings.Advanced.SendBufferSize                    "Größe des Sendepuffers:"
 Settings.Advanced.UnlockHigherFPS                   "Erlaube 61-120 Bilder/Sekunde in den Video Einstellungen"
 Settings.Advanced.UseCBR                            "Benutze konstante Bitrate (CBR)"
 Settings.Advanced.PadCBR                            "Benutze CBR padding"
+Settings.Advanced.PadCBRToolTip                     "Standard is aktiviert für normales CBR.\n\rÄndern Sie die Einstellungen nicht, wenn Sie nicht vorhaben die Bitrate wärend des Streamens zu verändern."
 Settings.Advanced.UseCFR                            "Benutze CFR"
 Settings.Advanced.UseMultithreadedOptimizations     "Nutze Multithread Optimierungen"
 Settings.Advanced.UseQSV                            "Benutze Quick Sync"
@@ -143,7 +148,7 @@ Settings.Advanced.VideoEncoderCPUTradeoffToolTip    "Diesen Wert höher(schnelle
 Settings.Advanced.VideoEncoderSettings              "Aktiviere benutzerdefinierte x264 Encoder Einstellungen"
 Settings.Advanced.VideoEncoderSettingsTooltip       "Dies erlaubt eigene x264 Encoder Einstellungen zu nutzen.  Im Format: [Parameter]=[Wert] (z.B. \"vbv-maxrate=1000 vbv-bufsize=1000\")."
 
-Settings.Advanced.Priority.Idle         "Untätig"
+Settings.Advanced.Priority.Idle         "Niedrig"
 Settings.Advanced.Priority.Normal       "Normal"
 Settings.Advanced.Priority.AboveNormal  "Höher als Normal"
 Settings.Advanced.Priority.High         "Hoch"
@@ -184,7 +189,7 @@ Settings.General.Notification   "Benachrichtigungsbereich Icon"
 Settings.General.NotificationMinimize    "In Benachrichtigungsbereich minimieren"
 Settings.General.ShowObs        "Zeige OBS"
 Settings.General.HideObs        "Verstecke OBS"
-Settings.General.Restart        "Das ändern der Sprache benötigt einen neustart von OBS."
+Settings.General.Restart        "Das ändern der Sprache benötigt einen Neustart von OBS."
 
 Settings.Publish.AutoReconnect          "Auto-Reconnect:"
 Settings.Publish.AutoReconnectTimeout   "Auto-Reconnect Zeitüberschreitung:"
@@ -306,10 +311,10 @@ Sources.TransitionSource.TimeBetweenBitmaps "Zeit zwischen den Bildern (in Sekun
 Sources.TransitionSource.DisableFading      "Einblenden deaktivieren:"
 Sources.TransitionSource.Randomize          "Zufallswahl:"
 
-Updater.DownloadNow         "Möchten Sie die Updates jetzt herunterladen?"
-Updater.NewUpdates          "Folgende Updates sind verfügbar:\r\n\r\n"
+Updater.DownloadNow         "Möchten Sie die Aktualisierung jetzt herunterladen?"
+Updater.NewUpdates          "Folgende Aktualisierungen sind verfügbar:\r\n\r\n"
 Updater.RunningWarning      "OBS wird für die Installation der Updates neu gestartet.\r\n\r\nMöchten Sie fortfahren?"
-Updater.UpdatesAvailable    "Updates verfügbar"
+Updater.UpdatesAvailable    "Aktualisierungen verfügbar"
 
 Plugins.NoiseGate.PluginName        "Mikrofon Rauschsperre"
 Plugins.NoiseGate.PluginDescription "Reduziert das Mikrofon rauschen, indem es automatisch das Mikrofon deaktiviert, wenn du nicht sprichst."
