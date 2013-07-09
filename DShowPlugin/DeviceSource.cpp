@@ -717,8 +717,8 @@ bool DeviceSource::LoadFilters()
 
     if(deinterlacer.type != DEINTERLACING_NONE && deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
     {
-        deinterlacer.vertexShader = CreateVertexShaderFromFile(TEXT("shaders/DrawTexture.vShader"));
-        deinterlacer.pixelShader = CreatePixelShaderFromFile(ChooseDeinterlacingShader());
+        deinterlacer.vertexShader.reset(CreateVertexShaderFromFile(TEXT("shaders/DrawTexture.vShader")));
+        deinterlacer.pixelShader.reset(CreatePixelShaderFromFile(ChooseDeinterlacingShader()));
     }
 
     int numThreads = MAX(OSGetTotalCores()-2, 1);
@@ -829,18 +829,18 @@ cleanFinish:
         msetd(textureData, 0xFFFF0000, renderCX*renderCY*4);
         texture = CreateTexture(renderCX, renderCY, GS_BGR, textureData, FALSE, FALSE);
         if(deinterlacer.needsPreviousFrame)
-             previousTexture = CreateTexture(renderCX, renderCY, GS_BGR, textureData, FALSE, FALSE);
+            previousTexture = CreateTexture(renderCX, renderCY, GS_BGR, textureData, FALSE, FALSE);
         if(deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
-             deinterlacer.texture = CreateRenderTarget(deinterlacer.imageCX, deinterlacer.imageCY, GS_BGRA, FALSE);
+            deinterlacer.texture.reset(CreateRenderTarget(deinterlacer.imageCX, deinterlacer.imageCY, GS_BGRA, FALSE));
     }
     else //if we're working with planar YUV, we can just use regular RGB textures instead
     {
         msetd(textureData, 0xFF0000FF, renderCX*renderCY*4);
         texture = CreateTexture(renderCX, renderCY, GS_RGB, textureData, FALSE, FALSE);
         if(deinterlacer.needsPreviousFrame)
-             previousTexture = CreateTexture(renderCX, renderCY, GS_RGB, textureData, FALSE, FALSE);
+            previousTexture = CreateTexture(renderCX, renderCY, GS_RGB, textureData, FALSE, FALSE);
         if(deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
-             deinterlacer.texture = CreateRenderTarget(deinterlacer.imageCX, deinterlacer.imageCY, GS_BGRA, FALSE);
+            deinterlacer.texture.reset(CreateRenderTarget(deinterlacer.imageCX, deinterlacer.imageCY, GS_BGRA, FALSE));
     }
 
     if(bSucceeded && bUseThreadedConversion)
@@ -879,6 +879,9 @@ void DeviceSource::UnloadFilters()
     {
         delete texture;
         texture = NULL;
+    }
+    if(previousTexture)
+    {
         delete previousTexture;
         previousTexture = NULL;
     }
@@ -1308,13 +1311,13 @@ void DeviceSource::Preprocess()
 
         if(bReadyToDraw && deinterlacer.type != DEINTERLACING_NONE && deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
         {
-            SetRenderTarget(deinterlacer.texture);
+            SetRenderTarget(deinterlacer.texture.get());
 
             Shader *oldVertShader = GetCurrentVertexShader();
-            LoadVertexShader(deinterlacer.vertexShader);
+            LoadVertexShader(deinterlacer.vertexShader.get());
             
             Shader *oldShader = GetCurrentPixelShader();
-            LoadPixelShader(deinterlacer.pixelShader);
+            LoadPixelShader(deinterlacer.pixelShader.get());
 
             HANDLE hField = deinterlacer.pixelShader->GetParameterByName(TEXT("field_order"));
             if(hField)
@@ -1412,16 +1415,16 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
         }
 
 
-
+        Texture *tex = deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU ? deinterlacer.texture.get() : texture;
         if(deinterlacer.doublesFramerate)
         {
             if(!deinterlacer.curField)
-                DrawSpriteEx(deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU ? deinterlacer.texture : texture, (opacity255<<24) | 0xFFFFFF, x, y, x2, y2, 0.f, 0.0f, .5f, 1.f);
+                DrawSpriteEx(tex, (opacity255<<24) | 0xFFFFFF, x, y, x2, y2, 0.f, 0.0f, .5f, 1.f);
             else
-                DrawSpriteEx(deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU ? deinterlacer.texture : texture, (opacity255<<24) | 0xFFFFFF, x, y, x2, y2, .5f, 0.0f, 1.f, 1.f);
+                DrawSpriteEx(tex, (opacity255<<24) | 0xFFFFFF, x, y, x2, y2, .5f, 0.0f, 1.f, 1.f);
         }
         else
-            DrawSprite(deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU ? deinterlacer.texture : texture, (opacity255<<24) | 0xFFFFFF, x, y, x2, y2);
+            DrawSprite(tex, (opacity255<<24) | 0xFFFFFF, x, y, x2, y2);
         if(deinterlacer.bNewFrame)
         {
             deinterlacer.curField = !deinterlacer.curField;

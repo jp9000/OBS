@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <memory>
+
 void PackPlanar(LPBYTE convertBuffer, LPBYTE lpPlanar, UINT renderCX, UINT renderCY, UINT pitch, UINT startY, UINT endY, UINT linePitch, UINT lineShift);
 
 enum DeviceColorType
@@ -136,15 +138,15 @@ class DeviceSource : public ImageSource
     UINT            preferredOutputType;
 
     struct {
-        int         type; //DeinterlacingType
-        char        fieldOrder; //DeinterlacingFieldOrder
-        char        processor; //DeinterlacingProcessor
-        bool        curField, bNewFrame;
-        bool        doublesFramerate;
-        bool        needsPreviousFrame;
-        Texture     *texture;
-        UINT        imageCX, imageCY;
-        Shader      *vertexShader, *pixelShader;
+        int                         type; //DeinterlacingType
+        char                        fieldOrder; //DeinterlacingFieldOrder
+        char                        processor; //DeinterlacingProcessor
+        bool                        curField, bNewFrame;
+        bool                        doublesFramerate;
+        bool                        needsPreviousFrame;
+        std::unique_ptr<Texture>    texture;
+        UINT                        imageCX, imageCY;
+        std::unique_ptr<Shader>     vertexShader, pixelShader;
     } deinterlacer;
 
     bool            bFirstFrame;
