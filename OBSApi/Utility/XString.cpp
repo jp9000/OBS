@@ -1577,7 +1577,7 @@ TCHAR *STDCALL schr(const TCHAR *strSrc, const TCHAR chr)
 
 TCHAR *STDCALL sstr(const TCHAR *strSrc, const TCHAR *strSearch)
 {
-    if(!strSearch) return NULL;
+    if(!strSearch || !strSrc) return NULL;
 
     int lenSearch = slen(strSearch);
     int len = slen(strSrc)-lenSearch;
@@ -1638,7 +1638,7 @@ TCHAR *STDCALL schri(const TCHAR *strSrc, TCHAR chr)
 
 TCHAR *STDCALL sstri(const TCHAR *strSrc, const TCHAR *strSearch)
 {
-    if(!strSearch) return NULL;
+    if(!strSearch || !strSrc) return NULL;
 
     int lenSearch = slen(strSearch);
     int len = slen(strSrc)-lenSearch;
