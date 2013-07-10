@@ -42,7 +42,7 @@ namespace
 #define TO_STR(a) TEXT(#a)
 
     const float baseCRF = 22.0f;
-    const struct {
+    const struct impl_parameters {
         mfxU32 type,
                intf;
         mfxVersion version;
@@ -60,7 +60,8 @@ namespace
         TO_STR(MFX_IMPL_HARDWARE_ANY),
         TO_STR(MFX_IMPL_HARDWARE2),
         TO_STR(MFX_IMPL_HARDWARE3),
-        TO_STR(MFX_IMPL_HARDWARE4)
+        TO_STR(MFX_IMPL_HARDWARE4),
+        TEXT("MFX_IMPL_UNKNOWN")
     };
     const TCHAR* usageStr[] = {
         TO_STR(MFX_TARGETUSAGE_UNKNOWN),
@@ -73,7 +74,7 @@ namespace
         TO_STR(MFX_TARGETUSAGE_BEST_SPEED)
     };
 
-    TCHAR* qsv_intf_str(const mfxU32 impl)
+    CTSTR qsv_intf_str(const mfxU32 impl)
     {
         switch(impl & (-MFX_IMPL_VIA_ANY))
         {
@@ -82,7 +83,7 @@ namespace
             VIA_STR(D3D9);
             VIA_STR(D3D11);
 #undef VIA_STR
-        default: return nullptr;
+        default: return TEXT("");
         }
     };
 
@@ -287,25 +288,6 @@ public:
     QSVEncoder(int fps_, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitrate, int bufferSize, bool bUseCFR_, bool bDupeFrames_)
         : enc(nullptr), bFirstFrameProcessed(false), bFirstFrameQueued(false)
     {
-        Log(TEXT("------------------------------------------"));
-
-        for(auto impl = std::begin(validImpl); impl != std::end(validImpl); impl++)
-        {
-            ver = impl->version;
-            auto result = session.Init(impl->type | impl->intf, &ver);
-            if(result == MFX_ERR_NONE)
-            {
-                mfxIMPL actual;
-                session.QueryIMPL(&actual);
-                auto intf_str = qsv_intf_str(actual);
-                Log(TEXT("QSV version %u.%u using %s (actual: %s%s)"), ver.Major, ver.Minor,
-                    implStr[impl->type], implStr[actual & (MFX_IMPL_VIA_ANY - 1)], intf_str ? intf_str : TEXT(""));
-                break;
-            }
-        }
-
-        session.SetPriority(MFX_PRIORITY_HIGH);
-
         fps = fps_;
 
         bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR")) != 0;
@@ -345,6 +327,9 @@ public:
         this->width  = width;
         this->height = height;
 
+        bool bHaveCustomImpl = false;
+        impl_parameters custom = { 0 };
+
         BOOL bUseCustomParams = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCustomSettings"))
                              && AppConfig->GetInt(TEXT("Video Encoding"), TEXT("QSVUseVideoEncoderSettings"));
         if(bUseCustomParams)
@@ -381,16 +366,90 @@ public:
                             continue;
                         params.mfx.GopRefDist = bframes+1;
                     }
+                    else if(strParamName == "qsvimpl")
+                    {
+                        StringList bits;
+                        strParamVal.GetTokenList(bits, ',', true);
+                        if(bits.Num() < 3)
+                            continue;
+
+                        StringList version;
+                        bits[2].GetTokenList(version, '.', false);
+                        if(version.Num() < 2)
+                            continue;
+
+                        custom.type = bits[0].ToInt();
+                        auto& intf = bits[1].MakeLower();
+                        custom.intf = intf == "d3d11" ? MFX_IMPL_VIA_D3D11 : (intf == "d3d9" ? MFX_IMPL_VIA_D3D9 : MFX_IMPL_VIA_ANY);
+                        custom.version.Major = version[0].ToInt();
+                        custom.version.Minor = version[1].ToInt();
+                        bHaveCustomImpl = true;
+                    }
                 }
             }
         }
 
-        enc.reset(new MFXVideoENCODE(session));
-        enc->Close();
-
         mfxFrameAllocRequest req;
         memset(&req, 0, sizeof(req));
-        auto sts = enc->QueryIOSurf(&params, &req);
+
+        auto log_impl = [&](mfxIMPL impl, const mfxIMPL intf) {
+            mfxIMPL actual;
+            session.QueryIMPL(&actual);
+            auto intf_str = qsv_intf_str(intf),
+                 actual_intf_str = qsv_intf_str(actual);
+            auto length = std::distance(std::begin(implStr), std::end(implStr));
+            if(impl > length) impl = static_cast<mfxIMPL>(length-1);
+            Log(TEXT("QSV version %u.%u using %s%s (actual: %s%s)"), ver.Major, ver.Minor,
+                implStr[impl], intf_str, implStr[actual & (MFX_IMPL_VIA_ANY - 1)], actual_intf_str);
+        };
+
+        Log(TEXT("------------------------------------------"));
+
+        auto try_impl = [&](impl_parameters impl_params) -> mfxStatus {
+            enc.reset(nullptr);
+            session.Close();
+
+            ver = impl_params.version;
+            auto result = session.Init(impl_params.type | impl_params.intf, &ver);
+            if(result < 0) return result;
+
+            enc.reset(new MFXVideoENCODE(session));
+            enc->Close();
+            return enc->QueryIOSurf(&params, &req);
+        };
+
+        mfxStatus sts;
+        if(bHaveCustomImpl)
+        {
+            sts = try_impl(custom);
+            if(sts <= 0)
+                Log(TEXT("Could not initialize session using custom settings"));
+            else
+                log_impl(custom.type, custom.intf);
+        }
+
+        if(!enc.get())
+        {
+            decltype(std::begin(validImpl)) best = nullptr;
+            for(auto impl = std::begin(validImpl); impl != std::end(validImpl); impl++)
+            {
+                sts = try_impl(*impl);
+                if(sts == MFX_WRN_PARTIAL_ACCELERATION && !best)
+                    best = impl;
+                if(sts != MFX_ERR_NONE)
+                    continue;
+                log_impl(impl->type, impl->intf);
+                break;
+            }
+            if(!enc.get())
+            {
+                sts = try_impl(*best);
+                log_impl(best->type, best->intf);
+            }
+        }
+
+        session.SetPriority(MFX_PRIORITY_HIGH);
+
         if(sts == MFX_WRN_PARTIAL_ACCELERATION) //FIXME: remove when a fixed version is available
             Log(TEXT("\r\n===================================================================================\r\n")
                 TEXT("Error: QSV hardware acceleration unavailable due to a driver bug. Reduce the number\r\n")
