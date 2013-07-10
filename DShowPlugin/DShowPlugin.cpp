@@ -1146,7 +1146,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 //------------------------------------------
 
-                bool bDefaultUseBuffering = (sstri(strDevice, TEXT("Elgato")) != NULL) ? true : false;
+                bool bDefaultUseBuffering = strDevice.IsValid() && (sstri(strDevice, TEXT("Elgato")) != NULL);
 
                 bool bUseBuffering = configData->data->GetInt(TEXT("useBuffering"), bDefaultUseBuffering) != 0;
                 EnableWindow(GetDlgItem(hwnd, IDC_DELAY_EDIT), bUseBuffering);
