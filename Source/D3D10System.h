@@ -174,7 +174,7 @@ struct ShaderSampler
 
 struct ShaderProcessor : CodeTokenizer
 {
-    BOOL ProcessShader(CTSTR input);
+    BOOL ProcessShader(CTSTR input, CTSTR filename);
     BOOL AddState(SamplerInfo &info, String &stateName, String &stateVal);
 
     UINT nTextures;

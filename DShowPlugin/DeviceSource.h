@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <memory>
+
 void PackPlanar(LPBYTE convertBuffer, LPBYTE lpPlanar, UINT renderCX, UINT renderCY, UINT pitch, UINT startY, UINT endY, UINT linePitch, UINT lineShift);
 
 enum DeviceColorType
@@ -135,8 +137,17 @@ class DeviceSource : public ImageSource
     BOOL            bUseCustomResolution;
     UINT            preferredOutputType;
 
-    BYTE            deinterlacingType;
-    bool            curField, bNewFrame;
+    struct {
+        int                         type; //DeinterlacingType
+        char                        fieldOrder; //DeinterlacingFieldOrder
+        char                        processor; //DeinterlacingProcessor
+        bool                        curField, bNewFrame;
+        bool                        doublesFramerate;
+        bool                        needsPreviousFrame;
+        std::unique_ptr<Texture>    texture;
+        UINT                        imageCX, imageCY;
+        std::unique_ptr<Shader>     vertexShader, pixelShader;
+    } deinterlacer;
 
     bool            bFirstFrame;
     bool            bUseThreadedConversion;
@@ -145,7 +156,7 @@ class DeviceSource : public ImageSource
     int             soundOutputType;
     bool            bOutputAudioToDesktop;
 
-    Texture         *texture;
+    Texture         *texture, *previousTexture;
     XElement        *data;
     UINT            texturePitch;
     bool            bCapturing, bFiltersLoaded;
@@ -183,6 +194,7 @@ class DeviceSource : public ImageSource
     //---------------------------------
 
     String ChooseShader();
+    String ChooseDeinterlacingShader();
 
     void Convert422To444(LPBYTE convertBuffer, LPBYTE lp422, UINT pitch, bool bLeadingY);
 

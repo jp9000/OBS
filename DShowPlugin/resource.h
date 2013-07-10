@@ -35,7 +35,6 @@
 #define IDC_BLEND                       1022
 #define IDC_GAMMA_EDIT                  1023
 #define IDC_SPILLREDUCTION_EDIT         1023
-#define IDC_GAMMA                       1024
 #define IDC_SPILLREDUCTION              1024
 #define IDC_FLIPIMAGEH                  1025
 #define IDC_PREFERREDOUTPUT             1026
@@ -47,14 +46,16 @@
 #define IDC_TIMEOFFSET_EDIT             1032
 #define IDC_TIMEOFFSET                  1033
 #define IDC_CHECK1                      1034
-#define IDC_CUSTOM1                     1035
+#define IDC_TFF                         1034
 #define IDC_VOLUME                      1035
 #define IDC_VOLMETER                    1036
 #define IDC_POINTFILTERING              1036
 #define IDC_DELAY_EDIT                  1037
 #define IDC_VIDEODELAY                  1038
 #define IDC_DELAY                       1038
-#define IDC_GAMMA2                      1039
+#define IDC_GAMMA                       1039
+#define IDC_BFF                         1040
+#define IDC_GPUDEINT                    1041
 #define IDC_GAMMAVAL                    1151
 
 // Next default values for new objects

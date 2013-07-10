@@ -88,10 +88,6 @@
 */
 #define GIF_INVALID_FRAME -1
 
-/*    Maximum LZW bits available
-*/
-#define GIF_MAX_LZW 12
-
 /* Transparent colour
 */
 #define GIF_TRANSPARENT_COLOUR 0x00
@@ -132,30 +128,8 @@ static void gif_init_LZW(gif_animation *gif);
 static BOOL gif_next_LZW(gif_animation *gif);
 static int gif_next_code(gif_animation *gif, int code_size);
 
-/*    General LZW values. They are shared for all GIFs being decoded, and
-    thus we can't handle progressive decoding efficiently without having
-    the data for each image which would use an extra 10Kb or so per GIF.
-*/
-static unsigned char buf[4];
-static unsigned char *direct;
-static int maskTbl[16] = {0x0000, 0x0001, 0x0003, 0x0007, 0x000f, 0x001f, 0x003f, 0x007f,
-              0x00ff, 0x01ff, 0x03ff, 0x07ff, 0x0fff, 0x1fff, 0x3fff, 0x7fff};
-static int table[2][(1 << GIF_MAX_LZW)];
-static unsigned char stack[(1 << GIF_MAX_LZW) * 2];
-static unsigned char *stack_pointer;
-static int code_size, set_code_size;
-static int max_code, max_code_size;
-static int clear_code, end_code;
-static int curbit, lastbit, last_byte;
-static int firstcode, oldcode;
-static BOOL zero_data_block = FALSE;
-static BOOL get_done;
-
-/*    Whether to clear the decoded image rather than plot
-*/
-static BOOL clear_image = FALSE;
-
-
+const static int maskTbl[16] = {0x0000, 0x0001, 0x0003, 0x0007, 0x000f, 0x001f, 0x003f, 0x007f,
+                0x00ff, 0x01ff, 0x03ff, 0x07ff, 0x0fff, 0x1fff, 0x3fff, 0x7fff};
 
 /**    Initialises necessary gif_animation members.
 */
@@ -786,7 +760,7 @@ gif_result gif_decode_frame(gif_animation *gif, unsigned int frame) {
         return GIF_OK;
     }
 
-    if ((!clear_image) && ((int)frame == gif->decoded_frame))
+    if ((!gif->clear_image) && ((int)frame == gif->decoded_frame))
         return GIF_OK;
 
     /*    Get the start of our frame data and the end of the GIF data
@@ -869,7 +843,7 @@ gif_result gif_decode_frame(gif_animation *gif, unsigned int frame) {
             goto gif_decode_frame_exit;
         }
         colour_table = gif->local_colour_table;
-        if (!clear_image) {
+        if (!gif->clear_image) {
             for (index = 0; index < colour_table_size; index++) {
                 /* Gif colour map contents are r,g,b.
                  *
@@ -915,7 +889,7 @@ gif_result gif_decode_frame(gif_animation *gif, unsigned int frame) {
 
     /*    If we are clearing the image we just clear, if not decode
     */
-    if (!clear_image) {
+    if (!gif->clear_image) {
         /*    Ensure we have enough data for a 1-byte LZW code size + 1-byte gif trailer
         */
         if (gif_bytes < 2) {
@@ -938,10 +912,10 @@ gif_result gif_decode_frame(gif_animation *gif, unsigned int frame) {
              * transparency we likely wouldn't want to do that. */
             /* memset((char*)frame_data, colour_table[gif->background_index], gif->width * gif->height * sizeof(int)); */
         } else if ((frame != 0) && (gif->frames[frame - 1].disposal_method == GIF_FRAME_CLEAR)) {
-            clear_image = TRUE;
+            gif->clear_image = TRUE;
             if ((return_value = gif_decode_frame(gif, (frame - 1))) != GIF_OK)
                 goto gif_decode_frame_exit;
-            clear_image = FALSE;
+            gif->clear_image = FALSE;
         /*    If the previous frame's disposal method requires we restore the previous
          *    image, find the last image set to "do not dispose" and get that frame data
         */
@@ -967,20 +941,20 @@ gif_result gif_decode_frame(gif_animation *gif, unsigned int frame) {
 
         /*    Initialise the LZW decoding
         */
-        set_code_size = gif_data[0];
+        gif->set_code_size = gif_data[0];
         gif->buffer_position = (gif_data - gif->gif_data) + 1;
 
         /*    Set our code variables
         */
-        code_size = set_code_size + 1;
-        clear_code = (1 << set_code_size);
-        end_code = clear_code + 1;
-        max_code_size = clear_code << 1;
-        max_code = clear_code + 2;
-        curbit = lastbit = 0;
-        last_byte = 2;
-        get_done = FALSE;
-        direct = buf;
+        gif->code_size = gif->set_code_size + 1;
+        gif->clear_code = (1 << gif->set_code_size);
+        gif->end_code = gif->clear_code + 1;
+        gif->max_code_size = gif->clear_code << 1;
+        gif->max_code = gif->clear_code + 2;
+        gif->curbit = gif->lastbit = 0;
+        gif->last_byte = 2;
+        gif->get_done = FALSE;
+        gif->direct = gif->buf;
         gif_init_LZW(gif);
 
         /*    Decompress the data
@@ -997,13 +971,13 @@ gif_result gif_decode_frame(gif_animation *gif, unsigned int frame) {
             */
             x = width;
             while (x > 0) {
-                burst_bytes = (stack_pointer - stack);
+                burst_bytes = (gif->stack_pointer - gif->stack);
                 if (burst_bytes > 0) {
                     if (burst_bytes > x)
                         burst_bytes = x;
                     x -= burst_bytes;
                     while (burst_bytes-- > 0) {
-                        colour = *--stack_pointer;
+                        colour = *--gif->stack_pointer;
                         if (((gif->frames[frame].transparency) &&
                             (colour != gif->frames[frame].transparency_index)) ||
                             (!gif->frames[frame].transparency))
@@ -1156,26 +1130,26 @@ void gif_init_LZW(gif_animation *gif) {
     int i;
 
     gif->current_error = 0;
-    if (clear_code >= (1 << GIF_MAX_LZW)) {
-        stack_pointer = stack;
+    if (gif->clear_code >= (1 << GIF_MAX_LZW)) {
+        gif->stack_pointer = gif->stack;
         gif->current_error = GIF_FRAME_DATA_ERROR;
         return;
     }
 
     /* initialise our table */
-    memset(table, 0x00, (1 << GIF_MAX_LZW) * 8);
-    for (i = 0; i < clear_code; ++i)
-        table[1][i] = i;
+    memset(gif->table, 0x00, (1 << GIF_MAX_LZW) * 8);
+    for (i = 0; i < gif->clear_code; ++i)
+        gif->table[1][i] = i;
 
     /* update our LZW parameters */
-    code_size = set_code_size + 1;
-    max_code_size = clear_code << 1;
-    max_code = clear_code + 2;
-    stack_pointer = stack;
+    gif->code_size = gif->set_code_size + 1;
+    gif->max_code_size = gif->clear_code << 1;
+    gif->max_code = gif->clear_code + 2;
+    gif->stack_pointer = gif->stack;
     do {
-        firstcode = oldcode = gif_next_code(gif, code_size);
-    } while (firstcode == clear_code);
-    *stack_pointer++ =firstcode;
+        gif->firstcode = gif->oldcode = gif_next_code(gif, gif->code_size);
+    } while (gif->firstcode == gif->clear_code);
+    *gif->stack_pointer++ =gif->firstcode;
 }
 
 
@@ -1184,16 +1158,16 @@ static BOOL gif_next_LZW(gif_animation *gif) {
     int block_size;
     int new_code;
 
-    code = gif_next_code(gif, code_size);
+    code = gif_next_code(gif, gif->code_size);
     if (code < 0) {
           gif->current_error = code;
         return FALSE;
-    } else if (code == clear_code) {
+    } else if (code == gif->clear_code) {
         gif_init_LZW(gif);
         return TRUE;
-    } else if (code == end_code) {
+    } else if (code == gif->end_code) {
         /* skip to the end of our data so multi-image GIFs work */
-        if (zero_data_block) {
+        if (gif->zero_data_block) {
             gif->current_error = GIF_FRAME_DATA_ERROR;
             return FALSE;
         }
@@ -1207,42 +1181,42 @@ static BOOL gif_next_LZW(gif_animation *gif) {
     }
 
     incode = code;
-    if (code >= max_code) {
-        *stack_pointer++ = firstcode;
-        code = oldcode;
+    if (code >= gif->max_code) {
+        *gif->stack_pointer++ = gif->firstcode;
+        code = gif->oldcode;
     }
 
     /* The following loop is the most important in the GIF decoding cycle as every
      * single pixel passes through it.
      *
-     * Note: our stack is always big enough to hold a complete decompressed chunk. */
-    while (code >= clear_code) {
-        *stack_pointer++ = table[1][code];
-        new_code = table[0][code];
-        if (new_code < clear_code) {
+     * Note: our gif->stack is always big enough to hold a complete decompressed chunk. */
+    while (code >= gif->clear_code) {
+        *gif->stack_pointer++ = gif->table[1][code];
+        new_code = gif->table[0][code];
+        if (new_code < gif->clear_code) {
             code = new_code;
             break;
         }
-        *stack_pointer++ = table[1][new_code];
-        code = table[0][new_code];
+        *gif->stack_pointer++ = gif->table[1][new_code];
+        code = gif->table[0][new_code];
         if (code == new_code) {
               gif->current_error = GIF_FRAME_DATA_ERROR;
             return FALSE;
         }
     }
 
-    *stack_pointer++ = firstcode = table[1][code];
+    *gif->stack_pointer++ = gif->firstcode = gif->table[1][code];
 
-    if ((code = max_code) < (1 << GIF_MAX_LZW)) {
-        table[0][code] = oldcode;
-        table[1][code] = firstcode;
-        ++max_code;
-        if ((max_code >= max_code_size) && (max_code_size < (1 << GIF_MAX_LZW))) {
-            max_code_size = max_code_size << 1;
-            ++code_size;
+    if ((code = gif->max_code) < (1 << GIF_MAX_LZW)) {
+        gif->table[0][code] = gif->oldcode;
+        gif->table[1][code] = gif->firstcode;
+        ++gif->max_code;
+        if ((gif->max_code >= gif->max_code_size) && (gif->max_code_size < (1 << GIF_MAX_LZW))) {
+            gif->max_code_size = gif->max_code_size << 1;
+            ++gif->code_size;
         }
     }
-    oldcode = incode;
+    gif->oldcode = incode;
     return TRUE;
 }
 
@@ -1250,39 +1224,39 @@ static int gif_next_code(gif_animation *gif, int code_size) {
     int i, j, end, count, ret;
     unsigned char *b;
 
-    end = curbit + code_size;
-    if (end >= lastbit) {
-        if (get_done)
+    end = gif->curbit + gif->code_size;
+    if (end >= gif->lastbit) {
+        if (gif->get_done)
             return GIF_END_OF_FRAME;
-        buf[0] = direct[last_byte - 2];
-        buf[1] = direct[last_byte - 1];
+        gif->buf[0] = gif->direct[gif->last_byte - 2];
+        gif->buf[1] = gif->direct[gif->last_byte - 1];
 
         /* get the next block */
-        direct = gif->gif_data + gif->buffer_position;
-        zero_data_block = ((count = direct[0]) == 0);
+        gif->direct = gif->gif_data + gif->buffer_position;
+        gif->zero_data_block = ((count = gif->direct[0]) == 0);
         if ((gif->buffer_position + count) >= gif->buffer_size)
             return GIF_INSUFFICIENT_FRAME_DATA;
         if (count == 0)
-            get_done = TRUE;
+            gif->get_done = TRUE;
         else {
-            direct -= 1;
-            buf[2] = direct[2];
-            buf[3] = direct[3];
+            gif->direct -= 1;
+            gif->buf[2] = gif->direct[2];
+            gif->buf[3] = gif->direct[3];
         }
         gif->buffer_position += count + 1;
 
         /* update our variables */
-        last_byte = 2 + count;
-        curbit = (curbit - lastbit) + 16;
-        lastbit = (2 + count) << 3;
-        end = curbit + code_size;
+        gif->last_byte = 2 + count;
+        gif->curbit = (gif->curbit - gif->lastbit) + 16;
+        gif->lastbit = (2 + count) << 3;
+        end = gif->curbit + gif->code_size;
     }
 
-    i = curbit >> 3;
+    i = gif->curbit >> 3;
     if (i < 2)
-        b = buf;
+        b = gif->buf;
     else
-        b = direct;
+        b = gif->direct;
 
     ret = b[i];
     j = (end >> 3) - 1;
@@ -1291,7 +1265,7 @@ static int gif_next_code(gif_animation *gif, int code_size) {
         if (i < j)
             ret |= (b[i + 2] << 16);
     }
-    ret = (ret >> (curbit % 8)) & maskTbl[code_size];
-    curbit += code_size;
+    ret = (ret >> (gif->curbit % 8)) & maskTbl[gif->code_size];
+    gif->curbit += gif->code_size;
     return ret;
 }
