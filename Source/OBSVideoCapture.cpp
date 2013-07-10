@@ -757,7 +757,7 @@ void OBS::MainCaptureLoop()
                 if (qwTime-firstFrameTime > 10000 && !bWarnedAboutNoAudio)
                 {
                     bWarnedAboutNoAudio = true;
-                    AddStreamInfo (TEXT ("WARNING: OBS is not receiving audio frames. Please check your audio devices."), StreamInfoPriority_Critical); 
+                    //AddStreamInfo (TEXT ("WARNING: OBS is not receiving audio frames. Please check your audio devices."), StreamInfoPriority_Critical); 
                 }
                 bEncode = false;
             }
