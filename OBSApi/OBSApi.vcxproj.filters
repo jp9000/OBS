@@ -153,6 +153,9 @@
     <ClInclude Include="SettingsPane.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
@@ -174,5 +177,8 @@
       <UniqueIdentifier>{d0560106-adb4-4e7a-9d24-2e1ec753ca95}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="OBSApi.rc" />
   </ItemGroup>
 </Project>

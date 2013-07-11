@@ -253,6 +253,7 @@
     <ClInclude Include="GraphicsSystem.h" />
     <ClInclude Include="HotkeyControlEx.h" />
     <ClInclude Include="OBSApi.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SettingsPane.h" />
     <ClInclude Include="VolumeControl.h" />
@@ -274,6 +275,9 @@
     <ClInclude Include="Utility\XT.h" />
     <ClInclude Include="Utility\XT_Windows.h" />
     <ClInclude Include="Utility\XTLocalization.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="OBSApi.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

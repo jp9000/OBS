@@ -231,6 +231,10 @@
     <ClInclude Include="DXGIStuff.h" />
     <ClInclude Include="..\GlobalCaptureStuff.h" />
     <ClInclude Include="GraphicsCaptureHook.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="GraphicsCaptureHook.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
