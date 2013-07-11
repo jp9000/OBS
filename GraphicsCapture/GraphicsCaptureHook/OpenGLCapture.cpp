@@ -134,6 +134,8 @@ HookData                glHookDeleteContext;
 #define                 NUM_BUFFERS 2
 #define                 ZERO_ARRAY {0, 0}
 
+extern CRITICAL_SECTION glMutex;
+
 GLuint                  gltextures[NUM_BUFFERS] = ZERO_ARRAY;
 HDC                     hdcAcquiredDC = NULL;
 HWND                    hwndTarget = NULL;
@@ -294,6 +296,7 @@ void ClearGLData()
 
     DestroySharedMemory();
     bHasTextures = false;
+    hdcAcquiredDC = NULL;
     texData = NULL;
     copyData = NULL;
     copyWait = 0;
@@ -615,7 +618,7 @@ LONG lastCX=0, lastCY=0;
 
 void HandleGLSceneUpdate(HDC hDC)
 {
-    if(!bTargetAcquired && hdcAcquiredDC == NULL)
+    if(hdcAcquiredDC == NULL)
     {
         logOutput << CurrentTimeString() << "setting up gl data" << endl;
         PIXELFORMATDESCRIPTOR pfd;
@@ -825,6 +828,9 @@ void HandleGLSceneUpdate(HDC hDC)
                 ClearGLData();
             }
         }
+    } else {
+        RUNEVERYRESET logOutput << CurrentTimeString() << "new GL DC found, terminating gl capture" << endl;
+        ClearGLData();
     }
 }
 
@@ -838,44 +844,68 @@ static void HandleGLSceneDestroy()
 
 static BOOL WINAPI SwapBuffersHook(HDC hDC)
 {
+    //EnterCriticalSection(&glMutex);
+
+    RUNEVERYRESET logOutput << CurrentTimeString() << "SwapBuffers(" << UINT(hDC) << ") Called" << endl;
+
     HandleGLSceneUpdate(hDC);
 
     glHookSwapBuffers.Unhook();
     BOOL bResult = SwapBuffers(hDC);
     glHookSwapBuffers.Rehook(); 
 
+    //LeaveCriticalSection(&glMutex);
+
     return bResult;
 }
 
 static BOOL WINAPI wglSwapLayerBuffersHook(HDC hDC, UINT fuPlanes)
 {
+    //EnterCriticalSection(&glMutex);
+
+    RUNEVERYRESET logOutput << CurrentTimeString() << "wglSwapLayerBuffers(" << UINT(hDC) << ", " << fuPlanes << ") Called" << endl;
+
     HandleGLSceneUpdate(hDC);
 
     glHookSwapLayerBuffers.Unhook();
     BOOL bResult = jimglSwapLayerBuffers(hDC, fuPlanes);
     glHookSwapLayerBuffers.Rehook();
 
+    //LeaveCriticalSection(&glMutex);
+
     return bResult;
 }
 
 static BOOL WINAPI wglSwapBuffersHook(HDC hDC)
 {
+    //EnterCriticalSection(&glMutex);
+
+    RUNEVERYRESET logOutput << CurrentTimeString() << "wglSwapBuffers(" << UINT(hDC) << ") Called" << endl;
+
     HandleGLSceneUpdate(hDC);
 
     glHookwglSwapBuffers.Unhook();
     BOOL bResult = jimglSwapBuffers(hDC);
     glHookwglSwapBuffers.Rehook();
 
+    //LeaveCriticalSection(&glMutex);
+
     return bResult;
 }
 
 static BOOL WINAPI wglDeleteContextHook(HGLRC hRC)
 {
+    //EnterCriticalSection(&glMutex);
+
+    RUNEVERYRESET logOutput << CurrentTimeString() << "wglDeleteContext Called" << endl;
+
     HandleGLSceneDestroy();
 
     glHookDeleteContext.Unhook();
     BOOL bResult = jimglDeleteContext(hRC);
     glHookDeleteContext.Rehook();
+
+    //LeaveCriticalSection(&glMutex);
 
     return bResult;
 }
@@ -1038,6 +1068,18 @@ bool InitGLCapture()
     }
 
     return bSuccess;
+}
+
+void CheckGLCapture()
+{
+    /*EnterCriticalSection(&glMutex);
+
+    glHookSwapBuffers.Rehook(true);
+    glHookSwapLayerBuffers.Rehook(true);
+    glHookwglSwapBuffers.Rehook(true);
+    glHookDeleteContext.Rehook(true);
+
+    LeaveCriticalSection(&glMutex);*/
 }
 
 void FreeGLCapture()

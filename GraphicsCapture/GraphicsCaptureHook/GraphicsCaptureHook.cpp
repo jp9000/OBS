@@ -49,8 +49,10 @@ wstring strKeepAlive;
 LONGLONG keepAliveTime = 0;
 
 CRITICAL_SECTION d3d9EndMutex;
+CRITICAL_SECTION glMutex;
 
 void CheckD3D9Capture();
+void CheckGLCapture();
 
 
 string CurrentDateTimeString()
@@ -262,11 +264,12 @@ inline bool AttemptToHookSomething()
         bFoundSomethingToHook = true;
         bDXGIHooked = true;
     }
-    if(!bGLHooked && InitGLCapture())
-    {
+    if(!bGLHooked && InitGLCapture()) {
         logOutput << CurrentTimeString() << "GL Present" << endl;
         bFoundSomethingToHook = true;
         bGLHooked = true;
+    } else {
+        CheckGLCapture();
     }
     /*
     if(!bDirectDrawHooked && InitDDrawCapture())
@@ -312,6 +315,7 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
     logOutput << CurrentDateTimeString() << "we're booting up: " << endl;
 
     InitializeCriticalSection(&d3d9EndMutex);
+    InitializeCriticalSection(&glMutex);
 
     WNDCLASS wc;
     ZeroMemory(&wc, sizeof(wc));
