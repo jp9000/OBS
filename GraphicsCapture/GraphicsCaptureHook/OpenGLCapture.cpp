@@ -88,18 +88,22 @@ typedef BOOL   (WINAPI *WGLSWAPBUFFERSPROC)(HDC);
 typedef BOOL   (WINAPI *WGLDELETECONTEXTPROC)(HGLRC);
 typedef PROC   (WINAPI *WGLGETPROCADDRESSPROC)(LPCSTR);
 typedef BOOL   (WINAPI *WGLMAKECURRENTPROC)(HDC, HGLRC);
+typedef HDC    (WINAPI *WGLGETCURRENTDCPROC)();
+typedef HGLRC  (WINAPI *WGLGETCURRENTCONTEXTPROC)();
 typedef HGLRC  (WINAPI *WGLCREATECONTEXTPROC)(HDC);
 
-GLREADBUFFERPROC        glReadBuffer          = NULL;
-GLDRAWBUFFERPROC        glDrawBuffer          = NULL;
-GLREADPIXELSPROC        glReadPixels          = NULL;
-GLGETERRORPROC          glGetError            = NULL;
-WGLSWAPLAYERBUFFERSPROC jimglSwapLayerBuffers = NULL;
-WGLSWAPBUFFERSPROC      jimglSwapBuffers      = NULL;
-WGLDELETECONTEXTPROC    jimglDeleteContext    = NULL;
-WGLGETPROCADDRESSPROC   jimglGetProcAddress   = NULL;
-WGLMAKECURRENTPROC      jimglMakeCurrent      = NULL;
-WGLCREATECONTEXTPROC    jimglCreateContext    = NULL;
+GLREADBUFFERPROC         glReadBuffer           = NULL;
+GLDRAWBUFFERPROC         glDrawBuffer           = NULL;
+GLREADPIXELSPROC         glReadPixels           = NULL;
+GLGETERRORPROC           glGetError             = NULL;
+WGLSWAPLAYERBUFFERSPROC  jimglSwapLayerBuffers  = NULL;
+WGLSWAPBUFFERSPROC       jimglSwapBuffers       = NULL;
+WGLDELETECONTEXTPROC     jimglDeleteContext     = NULL;
+WGLGETPROCADDRESSPROC    jimglGetProcAddress    = NULL;
+WGLMAKECURRENTPROC       jimglMakeCurrent       = NULL;
+WGLGETCURRENTDCPROC      jimglGetCurrentDC      = NULL;
+WGLGETCURRENTCONTEXTPROC jimglGetCurrentContext = NULL;
+WGLCREATECONTEXTPROC     jimglCreateContext     = NULL;
 
 //------------------------------------------------
 
@@ -908,7 +912,15 @@ static BOOL WINAPI wglDeleteContextHook(HGLRC hRC)
 
     RUNEVERYRESET logOutput << CurrentTimeString() << "wglDeleteContext Called" << endl;
 
-    HandleGLSceneDestroy();
+    if (hdcAcquiredDC && bTargetAcquired)
+    {
+        HDC hLastHDC = jimglGetCurrentDC();
+        HGLRC hLastHGLRC = jimglGetCurrentContext();
+
+        jimglMakeCurrent(hdcAcquiredDC, hRC);
+        HandleGLSceneDestroy();
+        jimglMakeCurrent(hLastHDC, hLastHGLRC);
+    }
 
     glHookDeleteContext.Unhook();
     BOOL bResult = jimglDeleteContext(hRC);
@@ -989,19 +1001,22 @@ bool InitGLCapture()
     HMODULE hGL = GetModuleHandle(TEXT("opengl32.dll"));
     if(hGL && hwndOpenGLSetupWindow)
     {
-        glReadBuffer          = (GLREADBUFFERPROC)       GetProcAddress(hGL, "glReadBuffer");
-        glDrawBuffer          = (GLDRAWBUFFERPROC)       GetProcAddress(hGL, "glDrawBuffer");
-        glReadPixels          = (GLREADPIXELSPROC)       GetProcAddress(hGL, "glReadPixels");
-        glGetError            = (GLGETERRORPROC)         GetProcAddress(hGL, "glGetError");
-        jimglSwapLayerBuffers = (WGLSWAPLAYERBUFFERSPROC)GetProcAddress(hGL, "wglSwapLayerBuffers");
-        jimglSwapBuffers      = (WGLSWAPBUFFERSPROC)     GetProcAddress(hGL, "wglSwapBuffers");
-        jimglDeleteContext    = (WGLDELETECONTEXTPROC)   GetProcAddress(hGL, "wglDeleteContext");
-        jimglGetProcAddress   = (WGLGETPROCADDRESSPROC)  GetProcAddress(hGL, "wglGetProcAddress");
-        jimglMakeCurrent      = (WGLMAKECURRENTPROC)     GetProcAddress(hGL, "wglMakeCurrent");
-        jimglCreateContext    = (WGLCREATECONTEXTPROC)   GetProcAddress(hGL, "wglCreateContext");
+        glReadBuffer           = (GLREADBUFFERPROC)        GetProcAddress(hGL, "glReadBuffer");
+        glDrawBuffer           = (GLDRAWBUFFERPROC)        GetProcAddress(hGL, "glDrawBuffer");
+        glReadPixels           = (GLREADPIXELSPROC)        GetProcAddress(hGL, "glReadPixels");
+        glGetError             = (GLGETERRORPROC)          GetProcAddress(hGL, "glGetError");
+        jimglSwapLayerBuffers  = (WGLSWAPLAYERBUFFERSPROC) GetProcAddress(hGL, "wglSwapLayerBuffers");
+        jimglSwapBuffers       = (WGLSWAPBUFFERSPROC)      GetProcAddress(hGL, "wglSwapBuffers");
+        jimglDeleteContext     = (WGLDELETECONTEXTPROC)    GetProcAddress(hGL, "wglDeleteContext");
+        jimglGetProcAddress    = (WGLGETPROCADDRESSPROC)   GetProcAddress(hGL, "wglGetProcAddress");
+        jimglMakeCurrent       = (WGLMAKECURRENTPROC)      GetProcAddress(hGL, "wglMakeCurrent");
+        jimglGetCurrentDC      = (WGLGETCURRENTDCPROC)     GetProcAddress(hGL, "wglGetCurrentDC");
+        jimglGetCurrentContext = (WGLGETCURRENTCONTEXTPROC)GetProcAddress(hGL, "wglGetCurrentContext");
+        jimglCreateContext     = (WGLCREATECONTEXTPROC)    GetProcAddress(hGL, "wglCreateContext");
 
         if( !glReadBuffer || !glReadPixels || !glGetError || !jimglSwapLayerBuffers || !jimglSwapBuffers ||
-            !jimglDeleteContext || !jimglGetProcAddress || !jimglMakeCurrent || !jimglCreateContext)
+            !jimglDeleteContext || !jimglGetProcAddress || !jimglMakeCurrent || !jimglGetCurrentDC ||
+            !jimglGetCurrentContext || !jimglCreateContext)
         {
             return false;
         }
