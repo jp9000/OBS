@@ -431,17 +431,26 @@ void DoGLGPUHook(RECT &rc)
         gl_dxDevice = wglDXOpenDeviceNV(shareDevice);
         if (gl_dxDevice == NULL) {
             RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: wglDXOpenDeviceNV failed" << endl;
+            d3d101Tex->Release();
+            res->Release();
             goto finishGPUHook;
         }
 
         glGenTextures(1, &gl_sharedtex);
-        gl_handle = wglDXRegisterObjectNV(gl_dxDevice, d3d101Tex, gl_sharedtex, GL_TEXTURE_2D, WGL_ACCESS_WRITE_DISCARD_NV);
+        gl_handle = wglDXRegisterObjectNV(gl_dxDevice, copyTextureIntermediary, gl_sharedtex, GL_TEXTURE_2D, WGL_ACCESS_WRITE_DISCARD_NV);
 
         if (gl_handle == NULL) {
             RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: wglDXRegisterObjectNV failed" << endl;
+            d3d101Tex->Release();
+            res->Release();
             goto finishGPUHook;
         }
     }
+
+    {RUNEVERYRESET logOutput << CurrentTimeString() << "share device: " << UINT(shareDevice) << endl;}
+    {RUNEVERYRESET logOutput << CurrentTimeString() << "share texture: " << UINT(copyTextureIntermediary) << endl;}
+    {RUNEVERYRESET logOutput << CurrentTimeString() << "share device handle: " << UINT(gl_dxDevice) << endl;}
+    {RUNEVERYRESET logOutput << CurrentTimeString() << "share texture handle: " << UINT(gl_handle) << endl;}
 
     glGenFramebuffers(1, &gl_fbo);
 
