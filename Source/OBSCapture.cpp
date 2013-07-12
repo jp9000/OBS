@@ -78,13 +78,20 @@ void OBS::Start()
     }
 
     //-------------------------------------------------------------
-
+retryHookTest:
     if (OSIncompatibleModulesLoaded())
     {
-        OSLeaveMutex (hStartupShutdownMutex);
-        MessageBox(hwndMain, Str("IncompatibleModules"), NULL, MB_ICONERROR);
         Log(TEXT("Incompatible modules detected."));
-        return;
+        int ret = MessageBox(hwndMain, Str("IncompatibleModules"), NULL, MB_ICONERROR | MB_ABORTRETRYIGNORE);
+        if (ret == IDABORT)
+        {
+            OSLeaveMutex (hStartupShutdownMutex);
+            return;
+        }
+        else if (ret == IDRETRY)
+        {
+            goto retryHookTest;
+        }
     }
 
     String strPatchesError;
