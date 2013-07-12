@@ -185,6 +185,21 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
         GetVersionEx ((OSVERSIONINFO *)&osInfo);
     }
 
+    String cpuInfo;
+    HKEY key;
+
+    // get cpu info
+    if(RegOpenKey(HKEY_LOCAL_MACHINE, TEXT("HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0"), &key) == ERROR_SUCCESS)
+    {
+        DWORD dwSize = 1024;
+        cpuInfo.SetLength(dwSize);
+        if (RegQueryValueEx(key, TEXT("ProcessorNameString"), NULL, NULL, (LPBYTE)cpuInfo.Array(), &dwSize) != ERROR_SUCCESS)
+            cpuInfo = TEXT("<unable to query>");
+        RegCloseKey(key);
+    }
+    else
+        cpuInfo = TEXT("<unable to query>");
+
     //determine which module the crash occured in
     scpy (moduleInfo.moduleName, TEXT("<unknown>"));
     moduleInfo.faultAddress = InstructionPtr;
@@ -215,7 +230,7 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
     crashDumpLog.WriteStr(FormattedString(TEXT("**** UNHANDLED EXCEPTION: %x\r\nFault address: %I64p (%s)\r\n"), exceptionInfo->ExceptionRecord->ExceptionCode, InstructionPtr, moduleInfo.moduleName));
 
     crashDumpLog.WriteStr(TEXT("OBS version: ") OBS_VERSION_STRING TEXT("\r\n"));
-    crashDumpLog.WriteStr(FormattedString(TEXT("Windows version: %d.%d (Build %d) %s\r\n\r\n"), osInfo.dwMajorVersion, osInfo.dwMinorVersion, osInfo.dwBuildNumber, osInfo.szCSDVersion));
+    crashDumpLog.WriteStr(FormattedString(TEXT("Windows version: %d.%d (Build %d) %s\r\nCPU: %s\r\n\r\n"), osInfo.dwMajorVersion, osInfo.dwMinorVersion, osInfo.dwBuildNumber, osInfo.szCSDVersion, cpuInfo.Array()));
 
     crashDumpLog.WriteStr(TEXT("Crashing thread stack trace:\r\n"));
 #ifdef _WIN64
