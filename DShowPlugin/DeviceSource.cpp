@@ -745,7 +745,7 @@ bool DeviceSource::LoadFilters()
     for(int i=0; i<numThreads; i++)
     {
         convertData[i].width  = lineSize;
-        convertData[i].height = imageCY;
+        convertData[i].height = renderCY;
         convertData[i].sample = NULL;
         convertData[i].hSignalConvert  = CreateEvent(NULL, FALSE, FALSE, NULL);
         convertData[i].hSignalComplete = CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -1296,7 +1296,7 @@ void DeviceSource::Preprocess()
 
                 if(texture->Map(lpData, pitch))
                 {
-                    PackPlanar(lpData, lastSample->lpData, renderCX, imageCY, pitch, 0, renderCY, linePitch, lineShift);
+                    PackPlanar(lpData, lastSample->lpData, renderCX, renderCY, pitch, 0, renderCY, linePitch, lineShift);
                     texture->Unmap();
                 }
 
