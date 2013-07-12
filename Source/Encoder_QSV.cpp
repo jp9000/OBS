@@ -49,6 +49,8 @@ namespace
     } validImpl[] = {
         { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D11, {6, 1} },
         { MFX_IMPL_HARDWARE,        MFX_IMPL_VIA_D3D11, {6, 1} },
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_ANY,   {6, 1} }, //Ivy Bridge+ with non-functional D3D11 support?
+        { MFX_IMPL_HARDWARE,        MFX_IMPL_VIA_ANY,   {6, 1} },
         { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_ANY,   {4, 1} }, //Sandy Bridge
         { MFX_IMPL_HARDWARE,        MFX_IMPL_VIA_ANY,   {4, 1} },
     };
