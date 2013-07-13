@@ -95,7 +95,8 @@ public:
 
     inline Vect2 GetPos() const                 {return pos;}
     inline Vect2 GetSize() const                {return size;}
-    inline Vect4 GetCrop() const                {return crop;}
+    inline Vect2 GetScale() const               {return source ? (source->GetSize() / size) : Vect2(1.0f, 1.0f);}
+    
     inline bool IsCropped() const               {return !(CloseFloat(crop.w, 0.0f) && CloseFloat(crop.x, 0.0f) && CloseFloat(crop.y, 0.0f) && CloseFloat(crop.z, 0.0f));}
 
     inline void SetPos(const Vect2 &newPos)     {pos = newPos;}
@@ -108,6 +109,7 @@ public:
 
     void SetName(CTSTR lpNewName);
     void SetRender(bool render);
+    Vect4 GetCrop();
 
     void Update();
 
@@ -171,14 +173,11 @@ public:
             SceneItem *item = sceneItems[i];
 
             Vect2 scale = (item->GetSource() ? item->GetSource()->GetSize() : item->GetSize()) / item->GetSize();
-            Vect4 crop = item->GetCrop();
-            crop.x /= scale.x; crop.y /= scale.y;
-            crop.z /= scale.y; crop.w /= scale.x;
 
             Vect2 upperLeft  = item->GetPos();
-            upperLeft.x += crop.x; upperLeft.y += crop.y;
+            upperLeft.x += item->GetCrop().x; upperLeft.y += item->GetCrop().y;
             Vect2 lowerRight = upperLeft+item->GetSize();
-            lowerRight.x -= crop.w; lowerRight.y -= crop.z;
+            lowerRight.x -= item->GetCrop().w; lowerRight.y -= item->GetCrop().z;
             if(item->bRender && pos.x >= upperLeft.x && pos.y >= upperLeft.y && pos.x <= lowerRight.x && pos.y <= lowerRight.y)
                 items << item;
         }

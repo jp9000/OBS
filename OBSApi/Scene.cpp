@@ -67,6 +67,15 @@ void SceneItem::SetRender(bool render)
     }
 }
 
+Vect4 SceneItem::GetCrop()
+{
+    Vect4 scaledCrop = crop;
+    Vect2 scale = GetScale();
+    scaledCrop.x /= scale.x; scaledCrop.y /= scale.y;
+    scaledCrop.z /= scale.y; scaledCrop.w /= scale.x;
+    return scaledCrop;
+}
+
 void SceneItem::Update()
 {
     pos = Vect2(element->GetFloat(TEXT("x")), element->GetFloat(TEXT("y")));
@@ -252,11 +261,9 @@ void Scene::Render()
     for(int i=sceneItems.Num()-1; i>=0; i--)
     {
         SceneItem *item = sceneItems[i];
-        Vect2 baseScale = item->GetSource() ? item->GetSource()->GetSize() : item->GetSize();
-        Vect2 cropFactor = baseScale / item->GetSize();
         if(item->source && item->bRender)
         {
-            GS->SetCropping (item->crop.x / cropFactor.x, item->crop.y / cropFactor.y, item->crop.w / cropFactor.x, item->crop.z / cropFactor.y);
+            GS->SetCropping (item->GetCrop().x, item->GetCrop().y, item->GetCrop().w, item->GetCrop().z);
             item->source->Render(item->pos, item->size);
             GS->SetCropping (0.0f, 0.0f, 0.0f, 0.0f);
         }
@@ -274,9 +281,6 @@ void Scene::RenderSelections(Shader *solidPixelShader)
             Vect2 baseScale = item->GetSource() ? item->GetSource()->GetSize() : item->GetSize();
             Vect2 cropFactor = baseScale / item->GetSize();
             Vect4 crop = item->GetCrop();
-            crop.x /= cropFactor.x; crop.y /= cropFactor.y;
-            crop.z /= cropFactor.y; crop.w /= cropFactor.x;
-
             Vect2 pos  = API->MapFrameToWindowPos(item->GetPos())+1.0f;
             Vect2 scale = API->GetFrameToWindowScale();
             crop.x *= scale.x; crop.y *= scale.y;
