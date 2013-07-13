@@ -1537,10 +1537,10 @@ void OBS::FitItemsToScreen()
             if(item->source)
             {
                 Vect2 itemSize = item->source->GetSize();
+                itemSize.x -= (item->crop.x + item->crop.w);
+                itemSize.y -= (item->crop.y + item->crop.z);
 
-                Vect2 pos = Vect2(0.0f, 0.0f);
                 Vect2 size = baseSize;
-
                 double sourceAspect = double(itemSize.x)/double(itemSize.y);
                 if(!CloseDouble(baseAspect, sourceAspect))
                 {
@@ -1548,18 +1548,22 @@ void OBS::FitItemsToScreen()
                         size.y = float(double(size.x) / sourceAspect);
                     else
                         size.x = float(double(size.y) * sourceAspect);
-
-                    pos = (baseSize-size)*0.5f;
-
-                    pos.x = (float)round(pos.x);
-                    pos.y = (float)round(pos.y);
-
+            
                     size.x = (float)round(size.x);
                     size.y = (float)round(size.y);
                 }
 
-                item->pos  = pos;
+                Vect2 scale = itemSize / size;
+                size.x += (item->crop.x + item->crop.w) / scale.x;
+                size.y += (item->crop.y + item->crop.z) / scale.y;
                 item->size = size;
+
+                Vect2 pos;
+                pos.x = (baseSize.x*0.5f)-((item->size.x + item->GetCrop().x - item->GetCrop().w)*0.5f);
+                pos.y = (baseSize.y*0.5f)-((item->size.y + item->GetCrop().y - item->GetCrop().z)*0.5f);
+                pos.x = (float)round(pos.x);
+                pos.y = (float)round(pos.y);
+                item->pos  = pos;
 
                 XElement *itemElement = item->GetElement();
                 itemElement->SetInt(TEXT("x"),  int(pos.x));
