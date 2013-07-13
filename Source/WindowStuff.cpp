@@ -1442,10 +1442,15 @@ void OBS::CenterItems(bool horizontal, bool vertical)
         for(UINT i=0; i<selectedItems.Num(); i++)
         {
             SceneItem *item = selectedItems[i];
+			Vect2 scale = (item->GetSource() ? item->GetSource()->GetSize() : item->GetSize()) / item->GetSize();
+			Vect4 crop = item->GetCrop();
+			crop.x /= scale.x; crop.y /= scale.y;
+			crop.z /= scale.y; crop.w /= scale.x;
+
             if (horizontal)
-                item->pos.x = (baseSize.x*0.5f)-((item->size.x + item->crop.x - item->crop.w)*0.5f);
+                item->pos.x = (baseSize.x*0.5f)-((item->size.x + crop.x - crop.w)*0.5f);
             if (vertical)
-                item->pos.y = (baseSize.y*0.5f)-((item->size.y + item->crop.y - item->crop.z)*0.5f);
+                item->pos.y = (baseSize.y*0.5f)-((item->size.y + crop.y - crop.z)*0.5f);
 
             XElement *itemElement = item->GetElement();
             if (horizontal)
@@ -1468,15 +1473,20 @@ void OBS::MoveItemsToEdge(int horizontal, int vertical)
         for(UINT i=0; i<selectedItems.Num(); i++)
         {
             SceneItem *item = selectedItems[i];
+			Vect2 scale = (item->GetSource() ? item->GetSource()->GetSize() : item->GetSize()) / item->GetSize();
+			Vect4 crop = item->GetCrop();
+			crop.x /= scale.x; crop.y /= scale.y;
+			crop.z /= scale.y; crop.w /= scale.x;
+
             if (horizontal == 1)
-                item->pos.x = baseSize.x - item->size.x + item->crop.w;
+                item->pos.x = baseSize.x - item->size.x + crop.w;
             if (horizontal == -1)
-                item->pos.x = -item->crop.x;
+                item->pos.x = crop.x;
 
             if (vertical == 1)
-                item->pos.y =  baseSize.y - item->size.y + item->crop.z;
+                item->pos.y =  baseSize.y - item->size.y + crop.z;
             if (vertical == -1)
-                item->pos.y = -item->crop.y;
+                item->pos.y = crop.y;
 
             XElement *itemElement = item->GetElement();
             if (horizontal)
