@@ -96,7 +96,7 @@ BOOL ShaderProcessor::ProcessShader(CTSTR input, CTSTR filename)
                 if(curToken[0] == '<')
                     EscapeLikeTheWind(TEXT(">")); //TODO: handle #include <foo> directives
                 String parent(filename);
-                auto num = parent.NumTokens('/');
+                int num = parent.NumTokens('/');
                 String loadFile = curToken.Mid(1, curToken.Length()-1);
                 parent.FindReplace(parent.GetTokenOffset(num-1, '/'), loadFile);
                 
