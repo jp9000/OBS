@@ -969,8 +969,8 @@ void DeviceSource::UnloadFilters()
         lpImageBuffer = NULL;
     }
 
-    if(capture != NULL) { SafeReleaseLogRef(capture); capture = NULL; }
-    if(graph != NULL) { SafeReleaseLogRef(graph); graph = NULL; }
+    SafeReleaseLogRef(capture);
+    SafeReleaseLogRef(graph);
 
     SafeRelease(control);
 }
