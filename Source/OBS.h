@@ -585,6 +585,7 @@ private:
     bool    bShowFPS;
     bool    bMouseMoved;
     bool    bMouseDown;
+    bool    bRMouseDown;
     bool    bItemWasSelected;
     Vect2   startMousePos, lastMousePos;
     ItemModifyType modifyType;
@@ -768,6 +769,8 @@ private:
     }
 
     //---------------------------------------------------
+
+    void TrackModifyListbox(HWND hwnd, int ret);
 
     void DeleteItems();
     void SetSourceOrder(StringList &sourceNames);

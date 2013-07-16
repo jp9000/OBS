@@ -58,6 +58,13 @@ enum
 
     ID_LISTBOX_ADD,
 
+    // Render frame related.
+    ID_TOGGLERENDERVIEW,
+    ID_TOGGLEPANEL,
+    ID_TOGGLEFULLSCREEN,
+    ID_PREVIEWSCALETOFITMODE,
+    ID_PREVIEW1TO1MODE,
+
     ID_LISTBOX_GLOBALSOURCE=5000,
 };
 
@@ -376,90 +383,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
             bSelected = ListView_GetSelectedCount(hwnd) != 0;
         }
 
-        if(numItems && bSelected)
-        {
-            String strRemove               = Str("Remove");
-            String strRename               = Str("Rename");
-            String strCopy                 = Str("Copy");
-            String strMoveUp               = Str("MoveUp");
-            String strMoveDown             = Str("MoveDown");
-            String strMoveTop              = Str("MoveToTop");
-            String strMoveToBottom         = Str("MoveToBottom");
-            String strPositionSize         = Str("Listbox.Positioning");
-            String strCenter               = Str("Listbox.Center");
-            String strCenterHor            = Str("Listbox.CenterHorizontally");
-            String strCenterVer            = Str("Listbox.CenterVertically");
-            String strMoveLeftOfCanvas     = Str("Listbox.MoveLeft");
-            String strMoveTopOfCanvas      = Str("Listbox.MoveTop");
-            String strMoveRightOfCanvas    = Str("Listbox.MoveRight");
-            String strMoveBottomOfCanvas   = Str("Listbox.MoveBottom");
-            String strFitToScreen          = Str("Listbox.FitToScreen");
-            String strResize               = Str("Listbox.ResetSize");
-            String strResetCrop            = Str("Listbox.ResetCrop");
-
-            if(id == ID_SOURCES)
-            {
-                strRemove       << TEXT("\tDel");
-                strMoveUp       << TEXT("\tCtrl-Up");
-                strMoveDown     << TEXT("\tCtrl-Down");
-                strMoveTop      << TEXT("\tCtrl-Home");
-                strMoveToBottom << TEXT("\tCtrl-End");
-                strCenter       << TEXT("\tCtrl-C");
-                strCenterVer    << TEXT("\tCtrl-Shift-C");
-                strCenterHor    << TEXT("\tCtrl-Alt-C");
-                strFitToScreen  << TEXT("\tCtrl-F");
-                strResize       << TEXT("\tCtrl-R");
-                strMoveLeftOfCanvas << TEXT("\tCtrl-Alt-Left");
-                strMoveTopOfCanvas << TEXT("\tCtrl-Alt-Up");
-                strMoveRightOfCanvas << TEXT("\tCtrl-Alt-Right");
-                strMoveBottomOfCanvas << TEXT("\tCtrl-Alt-Down");
-                strResetCrop    << TEXT("\tCtrl-Alt-R");
-            }
-
-            AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
-            AppendMenu(hMenu, MF_STRING, ID_LISTBOX_REMOVE,         strRemove);
-            AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
-            AppendMenu(hMenu, MF_STRING, ID_LISTBOX_MOVEUP,         strMoveUp);
-            AppendMenu(hMenu, MF_STRING, ID_LISTBOX_MOVEDOWN,       strMoveDown);
-            AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
-            AppendMenu(hMenu, MF_STRING, ID_LISTBOX_MOVETOTOP,      strMoveTop);
-            AppendMenu(hMenu, MF_STRING, ID_LISTBOX_MOVETOBOTTOM,   strMoveToBottom);
-
-            UINT numSelected = (id==ID_SOURCES)?(ListView_GetSelectedCount(hwnd)):((UINT)SendMessage(hwnd, LB_GETSELCOUNT, 0, 0));
-            if(id == ID_SCENES || numSelected == 1)
-            {
-                AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
-                AppendMenu(hMenu, MF_STRING, ID_LISTBOX_RENAME,         strRename);
-            }
-
-            if(id == ID_SCENES && numSelected)
-            {
-                AppendMenu(hMenu, MF_STRING, ID_LISTBOX_COPY,           strCopy);
-                AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
-                AppendMenu(hMenu, MF_STRING, ID_LISTBOX_HOTKEY, Str("Listbox.SetHotkey"));
-            }
-
-            if(id == ID_SOURCES)
-            {
-                AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
-
-                HMENU hmenuPositioning = CreatePopupMenu();
-                AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_FITTOSCREEN,    strFitToScreen);
-                AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_RESETSIZE,      strResize);
-                AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_RESETCROP,      strResetCrop);
-                AppendMenu(hmenuPositioning, MF_SEPARATOR, 0, 0);
-                AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_CENTER,         strCenter);
-                AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_CENTERHOR,         strCenterHor);
-                AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_CENTERVER,         strCenterVer);
-                AppendMenu(hmenuPositioning, MF_SEPARATOR, 0, 0);
-                AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_MOVELEFT,         strMoveLeftOfCanvas);
-                AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_MOVETOP,         strMoveTopOfCanvas);
-                AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_MOVERIGHT,         strMoveRightOfCanvas);
-                AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_MOVEBOTTOM,         strMoveBottomOfCanvas);
-
-                AppendMenu(hMenu, MF_STRING|MF_POPUP, (UINT_PTR)hmenuPositioning, strPositionSize.Array());
-            }
-        }
+        AppendModifyListbox(hwnd, hMenu, id, numItems, bSelected);
 
         POINT p;
         GetCursorPos(&p);
@@ -762,237 +686,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
             }
 
             int ret = (int)TrackPopupMenuEx(hMenu, TPM_RETURNCMD | TPM_LEFTALIGN | TPM_RIGHTBUTTON, p.x, p.y, hwndMain, NULL);
-            switch(ret)
-            {
-                default:
-                    if(ret >= ID_LISTBOX_ADD)
-                    {
-                        App->EnableSceneSwitching(false);
-
-                        ClassInfo *ci;
-                        if(ret >= ID_LISTBOX_GLOBALSOURCE)
-                            ci = App->GetImageSourceClass(TEXT("GlobalSource"));
-                        else
-                        {
-                            UINT classID = ret-ID_LISTBOX_ADD;
-                            ci = App->imageSourceClasses+classID;
-                        }
-
-                        String strName;
-                        if(ret >= ID_LISTBOX_GLOBALSOURCE)
-                        {
-                            List<CTSTR> sourceNames;
-                            App->GetGlobalSourceNames(sourceNames);
-                            strName = sourceNames[ret-ID_LISTBOX_GLOBALSOURCE];
-                        }
-                        else
-                            strName = ci->strName;
-
-                        GetNewSourceName(strName);
-
-                        if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSourceNameDialogProc, (LPARAM)&strName) == IDOK)
-                        {
-                            XElement *sources = curSceneElement->GetElement(TEXT("sources"));
-                            if(!sources)
-                                sources = curSceneElement->CreateElement(TEXT("sources"));
-                            XElement *newSourceElement = sources->InsertElement(0, strName);
-                            newSourceElement->SetInt(TEXT("render"), 1);
-
-                            if(ret >= ID_LISTBOX_GLOBALSOURCE)
-                            {
-                                newSourceElement->SetString(TEXT("class"), TEXT("GlobalSource"));
-                                
-                                List<CTSTR> sourceNames;
-                                App->GetGlobalSourceNames(sourceNames);
-
-                                CTSTR lpName = sourceNames[ret-ID_LISTBOX_GLOBALSOURCE];
-
-                                XElement *data = newSourceElement->CreateElement(TEXT("data"));
-                                data->SetString(TEXT("name"), lpName);
-
-                                XElement *globalElement = App->GetGlobalSourceElement(lpName);
-                                if(globalElement)
-                                {
-                                    newSourceElement->SetInt(TEXT("cx"), globalElement->GetInt(TEXT("cx"), 100));
-                                    newSourceElement->SetInt(TEXT("cy"), globalElement->GetInt(TEXT("cy"), 100));
-                                }
-                            }
-                            else
-                            {
-                                newSourceElement->SetString(TEXT("class"), ci->strClass);
-                                if(ci->configProc)
-                                {
-                                    if(!ci->configProc(newSourceElement, true))
-                                    {
-                                        sources->RemoveElement(newSourceElement);
-                                        App->EnableSceneSwitching(true);
-                                        break;
-                                    }
-                                }
-                            }
-
-                            if(App->sceneElement == curSceneElement)
-                            {
-                                if(App->bRunning)
-                                {
-                                    App->EnterSceneMutex();
-                                    App->scene->InsertImageSource(0, newSourceElement);
-                                    App->LeaveSceneMutex();
-                                }
-
-                                UINT numSources = sources->NumElements();
-
-                                // clear selection/focus for all items before adding the new item
-                                ListView_SetItemState(hwnd , -1 , 0, LVIS_SELECTED | LVIS_FOCUSED);
-                                ListView_SetItemCount(hwnd, numSources);
-                                
-                                App->bChangingSources = true;
-                                App->InsertSourceItem(0, (LPWSTR)strName.Array(), true);
-                                App->bChangingSources = false;
-
-                                SetFocus(hwnd);
-                                
-                                // make sure the added item is visible/selected/focused and selection mark moved to it.
-                                ListView_EnsureVisible(hwnd, 0, false);
-                                ListView_SetItemState(hwnd, 0, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
-                                ListView_SetSelectionMark(hwnd, 0);
-
-                                App->ReportSourcesAddedOrRemoved();
-                            }
-                        }
-
-                        App->EnableSceneSwitching(true);
-                    }
-                    break;
-
-                case ID_LISTBOX_REMOVE:
-                    App->DeleteItems();
-                    break;
-
-                case ID_LISTBOX_RENAME:
-                    {
-                        App->EnableSceneSwitching(false);
-
-                        String strName = selectedElement->GetName();
-                        TSTR oldStrName = sdup(strName.Array());
-                        if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSourceNameDialogProc, (LPARAM)&strName) == IDOK)
-                        {
-                            ListView_SetItemText(hwnd, curSel, 0, strName.Array());
-                            selectedElement->SetName(strName);
-                            
-                            App->ReportSourceChanged(oldStrName, selectedElement);
-                            Free((void*)oldStrName);
-                            
-                            ListView_SetColumnWidth(hwnd, 0, LVSCW_AUTOSIZE_USEHEADER);
-                            ListView_SetColumnWidth(hwnd, 1, LVSCW_AUTOSIZE_USEHEADER);
-                        }
-
-                        App->EnableSceneSwitching(true);
-                        break;
-                    }
-
-                case ID_LISTBOX_CONFIG:
-                    {
-                        Vect2 multiple;
-                        ImageSource *source;
-
-                        App->EnableSceneSwitching(false);
-
-                        if(App->bRunning)
-                        {
-                            source = selectedSceneItems[0]->GetSource();
-                            if(source)
-                            {
-                                Vect2 curSize = Vect2(selectedElement->GetFloat(TEXT("cx"), 32.0f), selectedElement->GetFloat(TEXT("cy"), 32.0f));
-                                Vect2 baseSize = source->GetSize();
-
-                                multiple = curSize/baseSize;
-                            }
-                        }
-
-                        if(curClassInfo->configProc && curClassInfo->configProc(selectedElement, false))
-                        {
-                            if(App->bRunning)
-                            {
-                                App->EnterSceneMutex();
-
-                                if(source)
-                                {
-                                    Vect2 newSize = Vect2(selectedElement->GetFloat(TEXT("cx"), 32.0f), selectedElement->GetFloat(TEXT("cy"), 32.0f));
-                                    newSize *= multiple;
-
-                                    selectedElement->SetFloat(TEXT("cx"), newSize.x);
-                                    selectedElement->SetFloat(TEXT("cy"), newSize.y);
-
-                                    selectedSceneItems[0]->GetSource()->UpdateSettings();
-                                }
-
-                                selectedSceneItems[0]->Update();
-
-                                App->LeaveSceneMutex();
-                            }
-                        }
-
-                        App->EnableSceneSwitching(true);
-                    }
-                    break;
-
-                case ID_LISTBOX_MOVEUP:
-                    App->MoveSourcesUp();
-                    break;
-
-                case ID_LISTBOX_MOVEDOWN:
-                    App->MoveSourcesDown();
-                    break;
-
-                case ID_LISTBOX_MOVETOTOP:
-                    App->MoveSourcesToTop();
-                    break;
-
-                case ID_LISTBOX_MOVETOBOTTOM:
-                    App->MoveSourcesToBottom();
-                    break;
-
-                case ID_LISTBOX_CENTER:
-                    App->CenterItems(true, true);
-                    break;
-
-                case ID_LISTBOX_CENTERHOR:
-                    App->CenterItems(true, false);
-                    break;
-
-                case ID_LISTBOX_CENTERVER:
-                    App->CenterItems(false, true);
-                    break;
-
-                case ID_LISTBOX_MOVELEFT:
-                    App->MoveItemsToEdge(-1, 0);
-                    break;
-
-                case ID_LISTBOX_MOVETOP:
-                    App->MoveItemsToEdge(0, -1);
-                    break;
-
-                case ID_LISTBOX_MOVERIGHT:
-                    App->MoveItemsToEdge(1, 0);
-                    break;
-
-                case ID_LISTBOX_MOVEBOTTOM:
-                    App->MoveItemsToEdge(0, 1);
-                    break;
-
-                case ID_LISTBOX_FITTOSCREEN:
-                    App->FitItemsToScreen();
-                    break;
-
-                case ID_LISTBOX_RESETSIZE:
-                    App->ResetItemSizes();
-                    break;
-
-                case ID_LISTBOX_RESETCROP:
-                    App->ResetItemCrops();
-                    break;
-            }
+            App->TrackModifyListbox(hwnd, ret);
         }
 
         DestroyMenu(hMenu);
@@ -1007,6 +701,373 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
     else
     {
         return CallWindowProc(listboxProc, hwnd, message, wParam, lParam);
+    }
+}
+
+void OBS::TrackModifyListbox(HWND hwnd, int ret)
+{
+    UINT numSelected = (ListView_GetSelectedCount(hwnd));
+    XElement *selectedElement = NULL;
+    ClassInfo *curClassInfo = NULL;
+    if(numSelected == 1)
+    {
+        UINT selectedID = ListView_GetNextItem(hwnd, -1, LVNI_SELECTED);
+        XElement *sourcesElement = App->sceneElement->GetElement(TEXT("sources"));
+        selectedElement = sourcesElement->GetElementByID(selectedID);
+        curClassInfo = App->GetImageSourceClass(selectedElement->GetString(TEXT("class")));
+    }
+
+    switch(ret)
+    {
+        // General render frame stuff above here
+        case ID_TOGGLERENDERVIEW:
+            App->bRenderViewEnabled = !App->bRenderViewEnabled;
+            App->bForceRenderViewErase = !App->bRenderViewEnabled;
+            App->UpdateRenderViewMessage();
+            break;
+        case ID_TOGGLEPANEL:
+            if (App->bFullscreenMode)
+                App->bPanelVisibleFullscreen = !App->bPanelVisibleFullscreen;
+            else
+                App->bPanelVisibleWindowed = !App->bPanelVisibleWindowed;
+            App->bPanelVisible = App->bFullscreenMode ? App->bPanelVisibleFullscreen : App->bPanelVisibleWindowed;
+            App->bPanelVisibleProcessed = false;
+            App->ResizeWindow(true);
+            break;
+        case ID_TOGGLEFULLSCREEN:
+            App->SetFullscreenMode(!App->bFullscreenMode);
+            break;
+        case ID_PREVIEWSCALETOFITMODE:
+            App->renderFrameIn1To1Mode = false;
+            App->ResizeRenderFrame(true);
+            break;
+        case ID_PREVIEW1TO1MODE:
+            App->renderFrameIn1To1Mode = true;
+            App->ResizeRenderFrame(true);
+            break;
+
+        // Sources below here
+        default:
+            if(ret >= ID_LISTBOX_ADD)
+            {
+                App->EnableSceneSwitching(false);
+
+                ClassInfo *ci;
+                if(ret >= ID_LISTBOX_GLOBALSOURCE)
+                    ci = App->GetImageSourceClass(TEXT("GlobalSource"));
+                else
+                {
+                    UINT classID = ret-ID_LISTBOX_ADD;
+                    ci = App->imageSourceClasses+classID;
+                }
+
+                String strName;
+                if(ret >= ID_LISTBOX_GLOBALSOURCE)
+                {
+                    List<CTSTR> sourceNames;
+                    App->GetGlobalSourceNames(sourceNames);
+                    strName = sourceNames[ret-ID_LISTBOX_GLOBALSOURCE];
+                }
+                else
+                    strName = ci->strName;
+
+                GetNewSourceName(strName);
+
+                if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSourceNameDialogProc, (LPARAM)&strName) == IDOK)
+                {
+                    XElement *curSceneElement = App->sceneElement;
+                    XElement *sources = curSceneElement->GetElement(TEXT("sources"));
+                    if(!sources)
+                        sources = curSceneElement->CreateElement(TEXT("sources"));
+                    XElement *newSourceElement = sources->InsertElement(0, strName);
+                    newSourceElement->SetInt(TEXT("render"), 1);
+
+                    if(ret >= ID_LISTBOX_GLOBALSOURCE)
+                    {
+                        newSourceElement->SetString(TEXT("class"), TEXT("GlobalSource"));
+                                
+                        List<CTSTR> sourceNames;
+                        App->GetGlobalSourceNames(sourceNames);
+
+                        CTSTR lpName = sourceNames[ret-ID_LISTBOX_GLOBALSOURCE];
+
+                        XElement *data = newSourceElement->CreateElement(TEXT("data"));
+                        data->SetString(TEXT("name"), lpName);
+
+                        XElement *globalElement = App->GetGlobalSourceElement(lpName);
+                        if(globalElement)
+                        {
+                            newSourceElement->SetInt(TEXT("cx"), globalElement->GetInt(TEXT("cx"), 100));
+                            newSourceElement->SetInt(TEXT("cy"), globalElement->GetInt(TEXT("cy"), 100));
+                        }
+                    }
+                    else
+                    {
+                        newSourceElement->SetString(TEXT("class"), ci->strClass);
+                        if(ci->configProc)
+                        {
+                            if(!ci->configProc(newSourceElement, true))
+                            {
+                                sources->RemoveElement(newSourceElement);
+                                App->EnableSceneSwitching(true);
+                                break;
+                            }
+                        }
+                    }
+
+                    if(App->sceneElement == curSceneElement)
+                    {
+                        if(App->bRunning)
+                        {
+                            App->EnterSceneMutex();
+                            App->scene->InsertImageSource(0, newSourceElement);
+                            App->LeaveSceneMutex();
+                        }
+
+                        UINT numSources = sources->NumElements();
+
+                        // clear selection/focus for all items before adding the new item
+                        ListView_SetItemState(hwnd , -1 , 0, LVIS_SELECTED | LVIS_FOCUSED);
+                        ListView_SetItemCount(hwnd, numSources);
+                                
+                        App->bChangingSources = true;
+                        App->InsertSourceItem(0, (LPWSTR)strName.Array(), true);
+                        App->bChangingSources = false;
+
+                        SetFocus(hwnd);
+                                
+                        // make sure the added item is visible/selected/focused and selection mark moved to it.
+                        ListView_EnsureVisible(hwnd, 0, false);
+                        ListView_SetItemState(hwnd, 0, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+                        ListView_SetSelectionMark(hwnd, 0);
+
+                        App->ReportSourcesAddedOrRemoved();
+                    }
+                }
+
+                App->EnableSceneSwitching(true);
+            }
+            break;
+
+        case ID_LISTBOX_REMOVE:
+            App->DeleteItems();
+            break;
+
+        case ID_LISTBOX_RENAME:
+            {
+                App->EnableSceneSwitching(false);
+
+                String strName = selectedElement->GetName();
+                TSTR oldStrName = sdup(strName.Array());
+                if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSourceNameDialogProc, (LPARAM)&strName) == IDOK)
+                {
+                    int curSel = (int)SendMessage(hwnd, LB_GETCURSEL, 0, 0);
+                    ListView_SetItemText(hwnd, curSel, 0, strName.Array());
+                    selectedElement->SetName(strName);
+                            
+                    App->ReportSourceChanged(oldStrName, selectedElement);
+                    Free((void*)oldStrName);
+                            
+                    ListView_SetColumnWidth(hwnd, 0, LVSCW_AUTOSIZE_USEHEADER);
+                    ListView_SetColumnWidth(hwnd, 1, LVSCW_AUTOSIZE_USEHEADER);
+                }
+
+                App->EnableSceneSwitching(true);
+                break;
+            }
+
+        case ID_LISTBOX_CONFIG:
+            {
+                Vect2 multiple;
+                ImageSource *source;
+
+                App->EnableSceneSwitching(false);
+
+                List<SceneItem*> selectedSceneItems;
+                if(App->scene)
+                    App->scene->GetSelectedItems(selectedSceneItems);
+
+                if(App->bRunning)
+                {
+                    source = selectedSceneItems[0]->GetSource();
+                    if(source)
+                    {
+                        Vect2 curSize = Vect2(selectedElement->GetFloat(TEXT("cx"), 32.0f), selectedElement->GetFloat(TEXT("cy"), 32.0f));
+                        Vect2 baseSize = source->GetSize();
+
+                        multiple = curSize/baseSize;
+                    }
+                }
+                if(curClassInfo->configProc && curClassInfo->configProc(selectedElement, false))
+                {
+                    if(App->bRunning)
+                    {
+                        App->EnterSceneMutex();
+
+                        if(source)
+                        {
+                            Vect2 newSize = Vect2(selectedElement->GetFloat(TEXT("cx"), 32.0f), selectedElement->GetFloat(TEXT("cy"), 32.0f));
+                            newSize *= multiple;
+
+                            selectedElement->SetFloat(TEXT("cx"), newSize.x);
+                            selectedElement->SetFloat(TEXT("cy"), newSize.y);
+
+                            selectedSceneItems[0]->GetSource()->UpdateSettings();
+                        }
+
+                        selectedSceneItems[0]->Update();
+
+                        App->LeaveSceneMutex();
+                    }
+                }
+
+                App->EnableSceneSwitching(true);
+            }
+            break;
+
+        case ID_LISTBOX_MOVEUP:
+            App->MoveSourcesUp();
+            break;
+
+        case ID_LISTBOX_MOVEDOWN:
+            App->MoveSourcesDown();
+            break;
+
+        case ID_LISTBOX_MOVETOTOP:
+            App->MoveSourcesToTop();
+            break;
+
+        case ID_LISTBOX_MOVETOBOTTOM:
+            App->MoveSourcesToBottom();
+            break;
+
+        case ID_LISTBOX_CENTER:
+            App->CenterItems(true, true);
+            break;
+
+        case ID_LISTBOX_CENTERHOR:
+            App->CenterItems(true, false);
+            break;
+
+        case ID_LISTBOX_CENTERVER:
+            App->CenterItems(false, true);
+            break;
+
+        case ID_LISTBOX_MOVELEFT:
+            App->MoveItemsToEdge(-1, 0);
+            break;
+
+        case ID_LISTBOX_MOVETOP:
+            App->MoveItemsToEdge(0, -1);
+            break;
+
+        case ID_LISTBOX_MOVERIGHT:
+            App->MoveItemsToEdge(1, 0);
+            break;
+
+        case ID_LISTBOX_MOVEBOTTOM:
+            App->MoveItemsToEdge(0, 1);
+            break;
+
+        case ID_LISTBOX_FITTOSCREEN:
+            App->FitItemsToScreen();
+            break;
+
+        case ID_LISTBOX_RESETSIZE:
+            App->ResetItemSizes();
+            break;
+
+        case ID_LISTBOX_RESETCROP:
+            App->ResetItemCrops();
+            break;
+    }
+}
+
+void AppendModifyListbox(HWND hwnd, HMENU hMenu, int id, int numItems, bool bSelected)
+{
+    if(numItems && bSelected)
+    {
+        String strRemove               = Str("Remove");
+        String strRename               = Str("Rename");
+        String strCopy                 = Str("Copy");
+        String strMoveUp               = Str("MoveUp");
+        String strMoveDown             = Str("MoveDown");
+        String strMoveTop              = Str("MoveToTop");
+        String strMoveToBottom         = Str("MoveToBottom");
+        String strPositionSize         = Str("Listbox.Positioning");
+        String strCenter               = Str("Listbox.Center");
+        String strCenterHor            = Str("Listbox.CenterHorizontally");
+        String strCenterVer            = Str("Listbox.CenterVertically");
+        String strMoveLeftOfCanvas     = Str("Listbox.MoveLeft");
+        String strMoveTopOfCanvas      = Str("Listbox.MoveTop");
+        String strMoveRightOfCanvas    = Str("Listbox.MoveRight");
+        String strMoveBottomOfCanvas   = Str("Listbox.MoveBottom");
+        String strFitToScreen          = Str("Listbox.FitToScreen");
+        String strResize               = Str("Listbox.ResetSize");
+        String strResetCrop            = Str("Listbox.ResetCrop");
+
+        if(id == ID_SOURCES)
+        {
+            strRemove       << TEXT("\tDel");
+            strMoveUp       << TEXT("\tCtrl-Up");
+            strMoveDown     << TEXT("\tCtrl-Down");
+            strMoveTop      << TEXT("\tCtrl-Home");
+            strMoveToBottom << TEXT("\tCtrl-End");
+            strCenter       << TEXT("\tCtrl-C");
+            strCenterVer    << TEXT("\tCtrl-Shift-C");
+            strCenterHor    << TEXT("\tCtrl-Alt-C");
+            strFitToScreen  << TEXT("\tCtrl-F");
+            strResize       << TEXT("\tCtrl-R");
+            strMoveLeftOfCanvas << TEXT("\tCtrl-Alt-Left");
+            strMoveTopOfCanvas << TEXT("\tCtrl-Alt-Up");
+            strMoveRightOfCanvas << TEXT("\tCtrl-Alt-Right");
+            strMoveBottomOfCanvas << TEXT("\tCtrl-Alt-Down");
+            strResetCrop    << TEXT("\tCtrl-Alt-R");
+        }
+
+        AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
+        AppendMenu(hMenu, MF_STRING, ID_LISTBOX_REMOVE,         strRemove);
+        AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
+        AppendMenu(hMenu, MF_STRING, ID_LISTBOX_MOVEUP,         strMoveUp);
+        AppendMenu(hMenu, MF_STRING, ID_LISTBOX_MOVEDOWN,       strMoveDown);
+        AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
+        AppendMenu(hMenu, MF_STRING, ID_LISTBOX_MOVETOTOP,      strMoveTop);
+        AppendMenu(hMenu, MF_STRING, ID_LISTBOX_MOVETOBOTTOM,   strMoveToBottom);
+
+        UINT numSelected = (id==ID_SOURCES)?(ListView_GetSelectedCount(hwnd)):((UINT)SendMessage(hwnd, LB_GETSELCOUNT, 0, 0));
+        if(id == ID_SCENES || numSelected == 1)
+        {
+            AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
+            AppendMenu(hMenu, MF_STRING, ID_LISTBOX_RENAME,         strRename);
+        }
+
+        if(id == ID_SCENES && numSelected)
+        {
+            AppendMenu(hMenu, MF_STRING, ID_LISTBOX_COPY,           strCopy);
+            AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
+            AppendMenu(hMenu, MF_STRING, ID_LISTBOX_HOTKEY, Str("Listbox.SetHotkey"));
+        }
+
+        if(id == ID_SOURCES)
+        {
+            AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
+
+            HMENU hmenuPositioning = CreatePopupMenu();
+            AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_FITTOSCREEN,    strFitToScreen);
+            AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_RESETSIZE,      strResize);
+            AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_RESETCROP,      strResetCrop);
+            AppendMenu(hmenuPositioning, MF_SEPARATOR, 0, 0);
+            AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_CENTER,         strCenter);
+            AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_CENTERHOR,         strCenterHor);
+            AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_CENTERVER,         strCenterVer);
+            AppendMenu(hmenuPositioning, MF_SEPARATOR, 0, 0);
+            AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_MOVELEFT,         strMoveLeftOfCanvas);
+            AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_MOVETOP,         strMoveTopOfCanvas);
+            AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_MOVERIGHT,         strMoveRightOfCanvas);
+            AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_MOVEBOTTOM,         strMoveBottomOfCanvas);
+
+            AppendMenu(hMenu, MF_STRING|MF_POPUP, (UINT_PTR)hmenuPositioning, strPositionSize.Array());
+        }
     }
 }
 
@@ -2907,15 +2968,6 @@ ItemModifyType GetItemModifyType(const Vect2 &mousePos, const Vect2 &itemPos, co
     return ItemModifyType_Move;
 }
 
-enum
-{
-    ID_TOGGLERENDERVIEW = 1,
-    ID_TOGGLEPANEL,
-    ID_TOGGLEFULLSCREEN,
-    ID_PREVIEWSCALETOFITMODE,
-    ID_PREVIEW1TO1MODE,
-};
-
 /**
  * Maps a point in window coordinates to frame coordinates.
  */
@@ -3070,13 +3122,13 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
         else
             return DefWindowProc(hwnd, message, wParam, lParam);
     }
-    else if(message == WM_LBUTTONDOWN)
+    else if(message == WM_LBUTTONDOWN || message == WM_RBUTTONDOWN)
     {
         POINTS pos;
         pos.x = (short)LOWORD(lParam);
         pos.y = (short)HIWORD(lParam);
 
-        if(App->bEditMode && App->scene)
+        if((App->bEditMode || message == WM_RBUTTONDOWN) && App->scene)
         {
             Vect2 mousePos = Vect2(float(pos.x), float(pos.y));
             Vect2 framePos = MapWindowToFramePos(mousePos);
@@ -3112,8 +3164,9 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                     ListView_SetItemState(hwndSources, topItem->GetID(), LVIS_SELECTED, LVIS_SELECTED);
                     App->bChangingSources = false;
 
-                    if(App->modifyType == ItemModifyType_None)
-                        App->modifyType = ItemModifyType_Move;
+                    if (App->bEditMode)
+                        if(App->modifyType == ItemModifyType_None)
+                            App->modifyType = ItemModifyType_Move;
                 }
                 else if(!bControlDown) //clicked on empty space without control
                 {
@@ -3136,15 +3189,20 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                 }
             }
 
-            App->bMouseDown = true;
-            App->lastMousePos = App->startMousePos = mousePos;
-
-            App->scene->GetSelectedItems(items);
-            for(UINT i=0; i<items.Num(); i++)
+            if (message == WM_LBUTTONDOWN)
             {
-                items[i]->startPos  = items[i]->pos;
-                items[i]->startSize = items[i]->size;
+                App->bMouseDown = true;
+                App->lastMousePos = App->startMousePos = mousePos;
+
+                App->scene->GetSelectedItems(items);
+                for(UINT i=0; i<items.Num(); i++)
+                {
+                    items[i]->startPos  = items[i]->pos;
+                    items[i]->startSize = items[i]->size;
+                }
             }
+            else
+                App->bRMouseDown = true;
         }
         else
         {
@@ -3690,15 +3748,15 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
             }
         }
     }
-    else if(message == WM_LBUTTONUP)
+    else if(message == WM_LBUTTONUP || message == WM_RBUTTONUP)
     {
-        if(App->bEditMode && App->scene)
+        if((App->bEditMode || message == WM_RBUTTONUP) && App->scene)
         {
             POINTS pos;
             pos.x = (short)LOWORD(lParam);
             pos.y = (short)HIWORD(lParam);
 
-            if(App->bMouseDown)
+            if(App->bMouseDown || App->bRMouseDown)
             {
                 Vect2 mousePos = Vect2(float(pos.x), float(pos.y));
 
@@ -3751,7 +3809,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                         }
                     }
                 }
-                else
+                else if(message == WM_LBUTTONUP)
                 {
                     App->scene->GetSelectedItems(items);
 
@@ -3779,54 +3837,34 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                 }
 
                 App->bMouseDown = false;
+                App->bRMouseDown = false;
             }
         }
-    }
-    else if(message == WM_RBUTTONUP)
-    {
-        HMENU hPopup = CreatePopupMenu();
-        AppendMenu(hPopup, MF_STRING | (!App->renderFrameIn1To1Mode ? MF_CHECKED : 0), ID_PREVIEWSCALETOFITMODE, Str("RenderView.ViewModeScaleToFit"));
-        AppendMenu(hPopup, MF_STRING | (App->renderFrameIn1To1Mode ? MF_CHECKED : 0), ID_PREVIEW1TO1MODE, Str("RenderView.ViewMode1To1"));
-        AppendMenu(hPopup, MF_SEPARATOR, 0, 0);
-        AppendMenu(hPopup, MF_STRING | (App->bRenderViewEnabled ? MF_CHECKED : 0), ID_TOGGLERENDERVIEW, Str("RenderView.EnableView"));
-        AppendMenu(hPopup, MF_STRING | (App->bPanelVisible ? MF_CHECKED : 0), ID_TOGGLEPANEL, Str("RenderView.DisplayPanel"));
-        AppendMenu(hPopup, MF_SEPARATOR, 0, 0);
-        AppendMenu(hPopup, MF_STRING | (App->bFullscreenMode ? MF_CHECKED : 0), ID_TOGGLEFULLSCREEN, Str("MainMenu.Settings.FullscreenMode"));
-
-        POINT p;
-        GetCursorPos(&p);
-
-        int ret = (int)TrackPopupMenuEx(hPopup, TPM_RETURNCMD | TPM_LEFTALIGN | TPM_RIGHTBUTTON, p.x, p.y, hwndMain, NULL);
-        switch(ret)
+        if(message == WM_RBUTTONUP)
         {
-            case ID_TOGGLERENDERVIEW:
-                App->bRenderViewEnabled = !App->bRenderViewEnabled;
-                App->bForceRenderViewErase = !App->bRenderViewEnabled;
-                App->UpdateRenderViewMessage();
-                break;
-            case ID_TOGGLEPANEL:
-                if (App->bFullscreenMode)
-                    App->bPanelVisibleFullscreen = !App->bPanelVisibleFullscreen;
-                else
-                    App->bPanelVisibleWindowed = !App->bPanelVisibleWindowed;
-                App->bPanelVisible = App->bFullscreenMode ? App->bPanelVisibleFullscreen : App->bPanelVisibleWindowed;
-                App->bPanelVisibleProcessed = false;
-                App->ResizeWindow(true);
-                break;
-            case ID_TOGGLEFULLSCREEN:
-                App->SetFullscreenMode(!App->bFullscreenMode);
-                break;
-            case ID_PREVIEWSCALETOFITMODE:
-                App->renderFrameIn1To1Mode = false;
-                App->ResizeRenderFrame(true);
-                break;
-            case ID_PREVIEW1TO1MODE:
-                App->renderFrameIn1To1Mode = true;
-                App->ResizeRenderFrame(true);
-                break;
-        }
+            HMENU hPopup = CreatePopupMenu();
+            AppendMenu(hPopup, MF_STRING | (!App->renderFrameIn1To1Mode ? MF_CHECKED : 0), ID_PREVIEWSCALETOFITMODE, Str("RenderView.ViewModeScaleToFit"));
+            AppendMenu(hPopup, MF_STRING | (App->renderFrameIn1To1Mode ? MF_CHECKED : 0), ID_PREVIEW1TO1MODE, Str("RenderView.ViewMode1To1"));
+            AppendMenu(hPopup, MF_SEPARATOR, 0, 0);
+            AppendMenu(hPopup, MF_STRING | (App->bRenderViewEnabled ? MF_CHECKED : 0), ID_TOGGLERENDERVIEW, Str("RenderView.EnableView"));
+            AppendMenu(hPopup, MF_STRING | (App->bPanelVisible ? MF_CHECKED : 0), ID_TOGGLEPANEL, Str("RenderView.DisplayPanel"));
+            AppendMenu(hPopup, MF_SEPARATOR, 0, 0);
+            AppendMenu(hPopup, MF_STRING | (App->bFullscreenMode ? MF_CHECKED : 0), ID_TOGGLEFULLSCREEN, Str("MainMenu.Settings.FullscreenMode"));
+        
+            HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
+            int numItems = ListView_GetItemCount(hwndSources);
+            bool bSelected = ListView_GetSelectedCount(hwndSources) != 0;
 
-        DestroyMenu(hPopup);
+            AppendModifyListbox(hwndSources, hPopup, ID_SOURCES, numItems, bSelected);
+
+            POINT p;
+            GetCursorPos(&p);
+
+            int ret = (int)TrackPopupMenuEx(hPopup, TPM_RETURNCMD | TPM_LEFTALIGN | TPM_RIGHTBUTTON, p.x, p.y, hwndMain, NULL);
+            App->TrackModifyListbox(hwnd, ret);
+
+            DestroyMenu(hPopup);
+        }
     }
     else if(message == WM_GETDLGCODE && App->bEditMode)
     {
