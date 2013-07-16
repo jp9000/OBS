@@ -3855,7 +3855,8 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
             int numItems = ListView_GetItemCount(hwndSources);
             bool bSelected = ListView_GetSelectedCount(hwndSources) != 0;
 
-            AppendModifyListbox(hwndSources, hPopup, ID_SOURCES, numItems, bSelected);
+            if (App->IsRunning())
+                AppendModifyListbox(hwndSources, hPopup, ID_SOURCES, numItems, bSelected);
 
             POINT p;
             GetCursorPos(&p);
