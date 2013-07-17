@@ -36,7 +36,7 @@ void STDCALL SceneHotkey(DWORD hotkey, UPARAM param, bool bDown);
 
 enum
 {
-    ID_LISTBOX_REMOVE=1,
+    ID_LISTBOX_REMOVE = 1,
     ID_LISTBOX_MOVEUP,
     ID_LISTBOX_MOVEDOWN,
     ID_LISTBOX_MOVETOTOP,
@@ -56,14 +56,14 @@ enum
     ID_LISTBOX_HOTKEY,
     ID_LISTBOX_CONFIG,
 
-    ID_LISTBOX_ADD,
-
     // Render frame related.
     ID_TOGGLERENDERVIEW,
     ID_TOGGLEPANEL,
     ID_TOGGLEFULLSCREEN,
     ID_PREVIEWSCALETOFITMODE,
     ID_PREVIEW1TO1MODE,
+
+    ID_LISTBOX_ADD,
 
     ID_LISTBOX_GLOBALSOURCE=5000,
 };
@@ -706,12 +706,13 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
 void OBS::TrackModifyListbox(HWND hwnd, int ret)
 {
-    UINT numSelected = (ListView_GetSelectedCount(hwnd));
+    HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
+    UINT numSelected = (ListView_GetSelectedCount(hwndSources));
     XElement *selectedElement = NULL;
     ClassInfo *curClassInfo = NULL;
     if(numSelected == 1)
     {
-        UINT selectedID = ListView_GetNextItem(hwnd, -1, LVNI_SELECTED);
+        UINT selectedID = ListView_GetNextItem(hwndSources, -1, LVNI_SELECTED);
         XElement *sourcesElement = App->sceneElement->GetElement(TEXT("sources"));
         selectedElement = sourcesElement->GetElementByID(selectedID);
         curClassInfo = App->GetImageSourceClass(selectedElement->GetString(TEXT("class")));
@@ -827,19 +828,19 @@ void OBS::TrackModifyListbox(HWND hwnd, int ret)
                         UINT numSources = sources->NumElements();
 
                         // clear selection/focus for all items before adding the new item
-                        ListView_SetItemState(hwnd , -1 , 0, LVIS_SELECTED | LVIS_FOCUSED);
-                        ListView_SetItemCount(hwnd, numSources);
+                        ListView_SetItemState(hwndSources , -1 , 0, LVIS_SELECTED | LVIS_FOCUSED);
+                        ListView_SetItemCount(hwndSources, numSources);
                                 
                         App->bChangingSources = true;
                         App->InsertSourceItem(0, (LPWSTR)strName.Array(), true);
                         App->bChangingSources = false;
 
-                        SetFocus(hwnd);
+                        SetFocus(hwndSources);
                                 
                         // make sure the added item is visible/selected/focused and selection mark moved to it.
-                        ListView_EnsureVisible(hwnd, 0, false);
-                        ListView_SetItemState(hwnd, 0, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
-                        ListView_SetSelectionMark(hwnd, 0);
+                        ListView_EnsureVisible(hwndSources, 0, false);
+                        ListView_SetItemState(hwndSources, 0, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+                        ListView_SetSelectionMark(hwndSources, 0);
 
                         App->ReportSourcesAddedOrRemoved();
                     }
@@ -861,15 +862,15 @@ void OBS::TrackModifyListbox(HWND hwnd, int ret)
                 TSTR oldStrName = sdup(strName.Array());
                 if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSourceNameDialogProc, (LPARAM)&strName) == IDOK)
                 {
-                    int curSel = (int)SendMessage(hwnd, LB_GETCURSEL, 0, 0);
-                    ListView_SetItemText(hwnd, curSel, 0, strName.Array());
+                    int curSel = (int)SendMessage(hwndSources, LB_GETCURSEL, 0, 0);
+                    ListView_SetItemText(hwndSources, curSel, 0, strName.Array());
                     selectedElement->SetName(strName);
                             
                     App->ReportSourceChanged(oldStrName, selectedElement);
                     Free((void*)oldStrName);
                             
-                    ListView_SetColumnWidth(hwnd, 0, LVSCW_AUTOSIZE_USEHEADER);
-                    ListView_SetColumnWidth(hwnd, 1, LVSCW_AUTOSIZE_USEHEADER);
+                    ListView_SetColumnWidth(hwndSources, 0, LVSCW_AUTOSIZE_USEHEADER);
+                    ListView_SetColumnWidth(hwndSources, 1, LVSCW_AUTOSIZE_USEHEADER);
                 }
 
                 App->EnableSceneSwitching(true);
@@ -1005,6 +1006,7 @@ void AppendModifyListbox(HWND hwnd, HMENU hMenu, int id, int numItems, bool bSel
         String strFitToScreen          = Str("Listbox.FitToScreen");
         String strResize               = Str("Listbox.ResetSize");
         String strResetCrop            = Str("Listbox.ResetCrop");
+        String strConfig               = Str("Listbox.Config");
 
         if(id == ID_SOURCES)
         {
