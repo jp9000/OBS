@@ -770,6 +770,7 @@ private:
 
     //---------------------------------------------------
 
+    void AppendModifyListbox(HWND hwnd, HMENU hMenu, int id, int numItems, bool bSelected);
     void TrackModifyListbox(HWND hwnd, int ret);
 
     void DeleteItems();

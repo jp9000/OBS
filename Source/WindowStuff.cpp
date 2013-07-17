@@ -383,7 +383,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
             bSelected = ListView_GetSelectedCount(hwnd) != 0;
         }
 
-        AppendModifyListbox(hwnd, hMenu, id, numItems, bSelected);
+        App->AppendModifyListbox(hwnd, hMenu, id, numItems, bSelected);
 
         POINT p;
         GetCursorPos(&p);
@@ -664,26 +664,6 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
             if(selectedSceneItems.Num() < 1)
                 nop();
-
-            UINT numSelected = (ListView_GetSelectedCount(hwnd));
-
-            XElement *selectedElement = NULL;
-
-            ClassInfo *curClassInfo = NULL;
-            if(numSelected == 1)
-            {
-                UINT selectedID = ListView_GetNextItem(hwnd, -1, LVNI_SELECTED);
-                
-                XElement *sourcesElement = App->sceneElement->GetElement(TEXT("sources"));
-                selectedElement = sourcesElement->GetElementByID(selectedID);
-
-                curClassInfo = App->GetImageSourceClass(selectedElement->GetString(TEXT("class")));
-                if(curClassInfo && curClassInfo->configProc)
-                {
-                    AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
-                    AppendMenu(hMenu, MF_STRING, ID_LISTBOX_CONFIG, Str("Listbox.Config"));
-                }
-            }
 
             int ret = (int)TrackPopupMenuEx(hMenu, TPM_RETURNCMD | TPM_LEFTALIGN | TPM_RIGHTBUTTON, p.x, p.y, hwndMain, NULL);
             App->TrackModifyListbox(hwnd, ret);
@@ -984,7 +964,7 @@ void OBS::TrackModifyListbox(HWND hwnd, int ret)
     }
 }
 
-void AppendModifyListbox(HWND hwnd, HMENU hMenu, int id, int numItems, bool bSelected)
+void OBS::AppendModifyListbox(HWND hwnd, HMENU hMenu, int id, int numItems, bool bSelected)
 {
     if(numItems && bSelected)
     {
@@ -1069,6 +1049,24 @@ void AppendModifyListbox(HWND hwnd, HMENU hMenu, int id, int numItems, bool bSel
             AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_MOVEBOTTOM,         strMoveBottomOfCanvas);
 
             AppendMenu(hMenu, MF_STRING|MF_POPUP, (UINT_PTR)hmenuPositioning, strPositionSize.Array());
+
+            UINT numSelected = (ListView_GetSelectedCount(hwnd));
+            XElement *selectedElement = NULL;
+            ClassInfo *curClassInfo = NULL;
+            if(numSelected == 1)
+            {
+                UINT selectedID = ListView_GetNextItem(hwnd, -1, LVNI_SELECTED);
+                
+                XElement *sourcesElement = App->sceneElement->GetElement(TEXT("sources"));
+                selectedElement = sourcesElement->GetElementByID(selectedID);
+
+                curClassInfo = App->GetImageSourceClass(selectedElement->GetString(TEXT("class")));
+                if(curClassInfo && curClassInfo->configProc)
+                {
+                    AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
+                    AppendMenu(hMenu, MF_STRING, ID_LISTBOX_CONFIG, Str("Listbox.Config"));
+                }
+            }
         }
     }
 }
@@ -3858,7 +3856,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
             bool bSelected = ListView_GetSelectedCount(hwndSources) != 0;
 
             if (App->IsRunning())
-                AppendModifyListbox(hwndSources, hPopup, ID_SOURCES, numItems, bSelected);
+                App->AppendModifyListbox(hwndSources, hPopup, ID_SOURCES, numItems, bSelected);
 
             POINT p;
             GetCursorPos(&p);

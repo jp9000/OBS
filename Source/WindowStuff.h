@@ -20,4 +20,3 @@
 #pragma once
 
 int SetSliderText(HWND hwndParent, int controlSlider, int controlText);
-void AppendModifyListbox(HWND hwnd, HMENU hMenu, int id, int numItems, bool bSelected);
