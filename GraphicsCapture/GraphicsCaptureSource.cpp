@@ -91,7 +91,7 @@ BOOL WINAPI InjectLibrary(HANDLE hProcess, CTSTR lpDLL)
     hThread = (*pCreateRemoteThread)(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)procAddress, lpStr, 0, &dwTemp);
     if(!hThread) goto end;
 
-    if(WaitForSingleObject(hThread, 200) == WAIT_OBJECT_0)
+    if(WaitForSingleObject(hThread, 2000) == WAIT_OBJECT_0)
     {
         DWORD dw;
         GetExitCodeThread(hThread, &dw);
