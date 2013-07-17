@@ -350,36 +350,6 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
             if(!App->sceneElement)
                 return 0;
 
-            HMENU hmenuAdd = CreatePopupMenu();
-
-            for(UINT i=0; i<App->imageSourceClasses.Num(); i++)
-            {
-                if (App->imageSourceClasses[i].bDeprecated)
-                    continue;
-
-                String strAdd = App->imageSourceClasses[i].strName;
-
-                if(App->imageSourceClasses[i].strClass == TEXT("GlobalSource"))
-                {
-                    List<CTSTR> sourceNames;
-                    App->GetGlobalSourceNames(sourceNames);
-
-                    if(!sourceNames.Num())
-                        continue;
-
-                    HMENU hmenuGlobals = CreatePopupMenu();
-
-                    for(UINT j=0; j<sourceNames.Num(); j++)
-                        AppendMenu(hmenuGlobals, MF_STRING, ID_LISTBOX_GLOBALSOURCE+j, sourceNames[j]);
-
-                    AppendMenu(hmenuAdd, MF_STRING|MF_POPUP, (UINT_PTR)hmenuGlobals, strAdd.Array());
-                }
-                else
-                    AppendMenu(hmenuAdd, MF_STRING, ID_LISTBOX_ADD+i, strAdd.Array());
-            }
-
-            AppendMenu(hMenu, MF_STRING|MF_POPUP, (UINT_PTR)hmenuAdd, Str("Add"));
-
             bSelected = ListView_GetSelectedCount(hwnd) != 0;
         }
 
@@ -966,6 +936,42 @@ void OBS::TrackModifyListbox(HWND hwnd, int ret)
 
 void OBS::AppendModifyListbox(HWND hwnd, HMENU hMenu, int id, int numItems, bool bSelected)
 {
+    if(GetMenuItemCount(hMenu) > 0 && id == ID_SOURCES)
+        AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
+
+        if(id == ID_SOURCES)
+        {
+            HMENU hmenuAdd = CreatePopupMenu();
+
+            for(UINT i=0; i<App->imageSourceClasses.Num(); i++)
+            {
+                if (App->imageSourceClasses[i].bDeprecated)
+                    continue;
+
+                String strAdd = App->imageSourceClasses[i].strName;
+
+                if(App->imageSourceClasses[i].strClass == TEXT("GlobalSource"))
+                {
+                    List<CTSTR> sourceNames;
+                    App->GetGlobalSourceNames(sourceNames);
+
+                    if(!sourceNames.Num())
+                        continue;
+
+                    HMENU hmenuGlobals = CreatePopupMenu();
+
+                    for(UINT j=0; j<sourceNames.Num(); j++)
+                        AppendMenu(hmenuGlobals, MF_STRING, ID_LISTBOX_GLOBALSOURCE+j, sourceNames[j]);
+
+                    AppendMenu(hmenuAdd, MF_STRING|MF_POPUP, (UINT_PTR)hmenuGlobals, strAdd.Array());
+                }
+                else
+                    AppendMenu(hmenuAdd, MF_STRING, ID_LISTBOX_ADD+i, strAdd.Array());
+            }
+
+            AppendMenu(hMenu, MF_STRING|MF_POPUP, (UINT_PTR)hmenuAdd, Str("Add"));
+        }
+
     if(numItems && bSelected)
     {
         String strRemove               = Str("Remove");
@@ -1008,32 +1014,20 @@ void OBS::AppendModifyListbox(HWND hwnd, HMENU hMenu, int id, int numItems, bool
         }
 
         AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
-        AppendMenu(hMenu, MF_STRING, ID_LISTBOX_REMOVE,         strRemove);
-        AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
-        AppendMenu(hMenu, MF_STRING, ID_LISTBOX_MOVEUP,         strMoveUp);
-        AppendMenu(hMenu, MF_STRING, ID_LISTBOX_MOVEDOWN,       strMoveDown);
-        AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
-        AppendMenu(hMenu, MF_STRING, ID_LISTBOX_MOVETOTOP,      strMoveTop);
-        AppendMenu(hMenu, MF_STRING, ID_LISTBOX_MOVETOBOTTOM,   strMoveToBottom);
 
-        UINT numSelected = (id==ID_SOURCES)?(ListView_GetSelectedCount(hwnd)):((UINT)SendMessage(hwnd, LB_GETSELCOUNT, 0, 0));
-        if(id == ID_SCENES || numSelected == 1)
+        HMENU hMenuOrder = CreatePopupMenu();
+
+        AppendMenu(hMenuOrder, MF_STRING, ID_LISTBOX_MOVEUP,         strMoveUp);
+        AppendMenu(hMenuOrder, MF_STRING, ID_LISTBOX_MOVEDOWN,       strMoveDown);
+        AppendMenu(hMenuOrder, MF_SEPARATOR, 0, 0);
+        AppendMenu(hMenuOrder, MF_STRING, ID_LISTBOX_MOVETOTOP,      strMoveTop);
+        AppendMenu(hMenuOrder, MF_STRING, ID_LISTBOX_MOVETOBOTTOM,   strMoveToBottom);
+
+        AppendMenu(hMenu, MF_STRING|MF_POPUP, (UINT_PTR)hMenuOrder, Str("Order"));
+
+
+        if (id == ID_SOURCES)
         {
-            AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
-            AppendMenu(hMenu, MF_STRING, ID_LISTBOX_RENAME,         strRename);
-        }
-
-        if(id == ID_SCENES && numSelected)
-        {
-            AppendMenu(hMenu, MF_STRING, ID_LISTBOX_COPY,           strCopy);
-            AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
-            AppendMenu(hMenu, MF_STRING, ID_LISTBOX_HOTKEY, Str("Listbox.SetHotkey"));
-        }
-
-        if(id == ID_SOURCES)
-        {
-            AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
-
             HMENU hmenuPositioning = CreatePopupMenu();
             AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_FITTOSCREEN,    strFitToScreen);
             AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_RESETSIZE,      strResize);
@@ -1049,7 +1043,28 @@ void OBS::AppendModifyListbox(HWND hwnd, HMENU hMenu, int id, int numItems, bool
             AppendMenu(hmenuPositioning, MF_STRING, ID_LISTBOX_MOVEBOTTOM,         strMoveBottomOfCanvas);
 
             AppendMenu(hMenu, MF_STRING|MF_POPUP, (UINT_PTR)hmenuPositioning, strPositionSize.Array());
+        }
 
+        /////AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
+        AppendMenu(hMenu, MF_STRING, ID_LISTBOX_REMOVE,         strRemove);
+
+
+        UINT numSelected = (id==ID_SOURCES)?(ListView_GetSelectedCount(hwnd)):((UINT)SendMessage(hwnd, LB_GETSELCOUNT, 0, 0));
+        if(id == ID_SCENES || numSelected == 1)
+        {
+            /////AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
+            AppendMenu(hMenu, MF_STRING, ID_LISTBOX_RENAME,         strRename);
+        }
+
+        if(id == ID_SCENES && numSelected)
+        {
+            AppendMenu(hMenu, MF_STRING, ID_LISTBOX_COPY,           strCopy);
+            AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
+            AppendMenu(hMenu, MF_STRING, ID_LISTBOX_HOTKEY, Str("Listbox.SetHotkey"));
+        }
+
+        if(id == ID_SOURCES)
+        {
             UINT numSelected = (ListView_GetSelectedCount(hwnd));
             XElement *selectedElement = NULL;
             ClassInfo *curClassInfo = NULL;
@@ -3843,14 +3858,18 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
         if(message == WM_RBUTTONUP)
         {
             HMENU hPopup = CreatePopupMenu();
-            AppendMenu(hPopup, MF_STRING | (!App->renderFrameIn1To1Mode ? MF_CHECKED : 0), ID_PREVIEWSCALETOFITMODE, Str("RenderView.ViewModeScaleToFit"));
-            AppendMenu(hPopup, MF_STRING | (App->renderFrameIn1To1Mode ? MF_CHECKED : 0), ID_PREVIEW1TO1MODE, Str("RenderView.ViewMode1To1"));
-            AppendMenu(hPopup, MF_SEPARATOR, 0, 0);
-            AppendMenu(hPopup, MF_STRING | (App->bRenderViewEnabled ? MF_CHECKED : 0), ID_TOGGLERENDERVIEW, Str("RenderView.EnableView"));
-            AppendMenu(hPopup, MF_STRING | (App->bPanelVisible ? MF_CHECKED : 0), ID_TOGGLEPANEL, Str("RenderView.DisplayPanel"));
-            AppendMenu(hPopup, MF_SEPARATOR, 0, 0);
+
             AppendMenu(hPopup, MF_STRING | (App->bFullscreenMode ? MF_CHECKED : 0), ID_TOGGLEFULLSCREEN, Str("MainMenu.Settings.FullscreenMode"));
-        
+
+            HMENU hMenuPreview = CreatePopupMenu();
+            AppendMenu(hMenuPreview, MF_STRING | (!App->renderFrameIn1To1Mode ? MF_CHECKED : 0), ID_PREVIEWSCALETOFITMODE, Str("RenderView.ViewModeScaleToFit"));
+            AppendMenu(hMenuPreview, MF_STRING | (App->renderFrameIn1To1Mode ? MF_CHECKED : 0), ID_PREVIEW1TO1MODE, Str("RenderView.ViewMode1To1"));
+            AppendMenu(hMenuPreview, MF_SEPARATOR, 0, 0);
+            AppendMenu(hMenuPreview, MF_STRING | (App->bRenderViewEnabled ? MF_CHECKED : 0), ID_TOGGLERENDERVIEW, Str("RenderView.EnableView"));
+            AppendMenu(hMenuPreview, MF_STRING | (App->bPanelVisible ? MF_CHECKED : 0), ID_TOGGLEPANEL, Str("RenderView.DisplayPanel"));
+            
+            AppendMenu(hPopup, MF_STRING|MF_POPUP, (UINT_PTR)hMenuPreview, Str("Preview"));
+
             HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
             int numItems = ListView_GetItemCount(hwndSources);
             bool bSelected = ListView_GetSelectedCount(hwndSources) != 0;

@@ -1,4 +1,6 @@
 Add                 "Add"
+Preview             "Preview"
+Order               "Order"
 Apply               "Apply"
 Browse              "Browse..."
 BuildingMP4Dialog   "Building MP4"
