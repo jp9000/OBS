@@ -878,10 +878,6 @@ void OBS::SetFullscreenMode(bool fullscreen)
     App->bFullscreenMode = fullscreen;
     if(fullscreen)
     {
-        // Exit edit mode ensuring that the button is toggled as well
-        if(bEditMode)
-            SendMessage(GetDlgItem(hwndMain, ID_SCENEEDITOR), BM_CLICK, 0, 0);
-
         // Remember current window placement
         fullscreenPrevPlacement.length = sizeof(fullscreenPrevPlacement);
         GetWindowPlacement(hwndMain, &fullscreenPrevPlacement);
