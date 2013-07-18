@@ -1,0 +1,8 @@
+Cancel                  "Abbrechen"
+OK                      "OK"
+
+Plugin.Name             "Szenenabhängige Lautstärke Plugin"
+Plugin.Description      "Erlaubt das individuelle speichern der Lautstärkeeinstellung jeder Szene."
+
+Config.Caption          "Szenen Lautstärke Konfiguration"
+Config.Enable           "Aktiviere szenenabhängige Lautstärkespeicherung"
