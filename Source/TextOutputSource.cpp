@@ -842,6 +842,8 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                 EnableWindow(GetDlgItem(hwnd, IDC_OUTLINETHICKNESS_EDIT), bChecked);
                 EnableWindow(GetDlgItem(hwnd, IDC_OUTLINETHICKNESS), bChecked);
                 EnableWindow(GetDlgItem(hwnd, IDC_OUTLINECOLOR), bChecked);
+                EnableWindow(GetDlgItem(hwnd, IDC_OUTLINEOPACITY_EDIT), bChecked);
+                EnableWindow(GetDlgItem(hwnd, IDC_OUTLINEOPACITY), bChecked);
 
                 SendMessage(GetDlgItem(hwnd, IDC_OUTLINETHICKNESS), UDM_SETRANGE32, 1, 20);
                 SendMessage(GetDlgItem(hwnd, IDC_OUTLINETHICKNESS), UDM_SETPOS32, 0, data->GetInt(TEXT("outlineSize"), 2));
