@@ -1,4 +1,6 @@
 Add                 "Hinzufügen"
+Preview             "Vorschau"
+Order               "Reihenfolge"
 Apply               "Übernehmen"
 Browse              "Durchsuchen"
 BuildingMP4Dialog   "Erstelle MP4 Datei..."
