@@ -3439,7 +3439,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                                 scaleItem->crop.y = amount * cropFactor.y;
                                 scaleItem->crop.z = amount * cropFactor.y;
                             }
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeLeft | edgeBottom | (!bKeepAspect & edgeAll), !bKeepAspect);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeLeft | edgeBottom | (!bKeepAspect ? edgeAll : 0), !bKeepAspect);
                             break;
 
                         case ItemModifyType_CropBottomRight:
@@ -3456,7 +3456,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                                 scaleItem->crop.y = amount * cropFactor.y;
                                 scaleItem->crop.z = amount * cropFactor.y;
                             }
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeRight | edgeBottom | (!bKeepAspect & edgeAll), !bKeepAspect);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeRight | edgeBottom | (!bKeepAspect ? edgeAll : 0), !bKeepAspect);
                             break;
 
                         case ItemModifyType_CropTopLeft:
@@ -3473,7 +3473,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                                 scaleItem->crop.y = amount * cropFactor.y;
                                 scaleItem->crop.z = amount * cropFactor.y;
                             }
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeLeft | edgeTop | (!bKeepAspect & edgeAll), !bKeepAspect);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeLeft | edgeTop | (!bKeepAspect ? edgeAll : 0), !bKeepAspect);
                             break;
 
                         case ItemModifyType_CropTopRight:
@@ -3490,7 +3490,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                                 scaleItem->crop.y = amount * cropFactor.y;
                                 scaleItem->crop.z = amount * cropFactor.y;
                             }
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeRight | edgeTop | (!bKeepAspect & edgeAll), !bKeepAspect);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeRight | edgeTop | (!bKeepAspect ? edgeAll : 0), !bKeepAspect);
                             break;
 
                         case ItemModifyType_ScaleBottom:
