@@ -3861,21 +3861,31 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
 
             AppendMenu(hPopup, MF_STRING | (App->bFullscreenMode ? MF_CHECKED : 0), ID_TOGGLEFULLSCREEN, Str("MainMenu.Settings.FullscreenMode"));
 
-            HMENU hMenuPreview = CreatePopupMenu();
+            HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
+            int numItems = ListView_GetItemCount(hwndSources);
+            bool bSelected = ListView_GetSelectedCount(hwndSources) != 0;
+            HMENU hMenuPreview;
+
+            if (App->IsRunning() && bSelected)
+                hMenuPreview = CreatePopupMenu();
+            else
+            {
+                hMenuPreview = hPopup;
+                AppendMenu(hMenuPreview, MF_SEPARATOR, 0, 0);
+            }
+
             AppendMenu(hMenuPreview, MF_STRING | (!App->renderFrameIn1To1Mode ? MF_CHECKED : 0), ID_PREVIEWSCALETOFITMODE, Str("RenderView.ViewModeScaleToFit"));
             AppendMenu(hMenuPreview, MF_STRING | (App->renderFrameIn1To1Mode ? MF_CHECKED : 0), ID_PREVIEW1TO1MODE, Str("RenderView.ViewMode1To1"));
             AppendMenu(hMenuPreview, MF_SEPARATOR, 0, 0);
             AppendMenu(hMenuPreview, MF_STRING | (App->bRenderViewEnabled ? MF_CHECKED : 0), ID_TOGGLERENDERVIEW, Str("RenderView.EnableView"));
             AppendMenu(hMenuPreview, MF_STRING | (App->bPanelVisible ? MF_CHECKED : 0), ID_TOGGLEPANEL, Str("RenderView.DisplayPanel"));
-            
-            AppendMenu(hPopup, MF_STRING|MF_POPUP, (UINT_PTR)hMenuPreview, Str("Preview"));
-
-            HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
-            int numItems = ListView_GetItemCount(hwndSources);
-            bool bSelected = ListView_GetSelectedCount(hwndSources) != 0;
 
             if (App->IsRunning())
+            {
+                if (bSelected)
+                    AppendMenu(hPopup, MF_STRING|MF_POPUP, (UINT_PTR)hMenuPreview, Str("Preview"));
                 App->AppendModifyListbox(hwndSources, hPopup, ID_SOURCES, numItems, bSelected);
+            }
 
             POINT p;
             GetCursorPos(&p);
