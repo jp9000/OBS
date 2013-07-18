@@ -3041,7 +3041,7 @@ Vect2 OBS::GetFrameToWindowScale()
     return MapFrameToWindowSize(Vect2(1.0f, 1.0f));
 }
 
-bool OBS::EnsureCropValid(SceneItem *&scaleItem, Vect2 &minSize, Vect2 &snapSize, bool bControlDown, BYTE cropEdges, bool cropSymmetric) 
+bool OBS::EnsureCropValid(SceneItem *&scaleItem, Vect2 &minSize, Vect2 &snapSize, bool bControlDown, int cropEdges, bool cropSymmetric) 
 {
     Vect2 scale = (scaleItem->GetSource() ? scaleItem->GetSource()->GetSize() : scaleItem->GetSize()) / scaleItem->GetSize();
 
@@ -3339,7 +3339,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                     }
                      
 
-                    BYTE edgeAll = edgeLeft | edgeRight | edgeBottom | edgeTop;
+                    int edgeAll = edgeLeft | edgeRight | edgeBottom | edgeTop;
                     //more clusterf*** action, straight to your doorstep.  does moving, scaling, snapping, as well as keeping aspect ratio with shift down
                     switch(App->modifyType)
                     {
@@ -3401,28 +3401,28 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                             scaleItem->crop.y = ((frameStartMousePos.y - scaleItem->pos.y) + totalAdjust.y) * cropFactor.y;
                             if (!bKeepAspect)
                                 scaleItem->crop.z = ((frameStartMousePos.y - scaleItem->pos.y) + totalAdjust.y) * cropFactor.y;
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeTop | (!bKeepAspect & edgeBottom), !bKeepAspect);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeTop | (!bKeepAspect ? edgeBottom : 0), !bKeepAspect);
                             break;
 
                         case ItemModifyType_CropBottom: 
                             scaleItem->crop.z = ((scaleItem->pos.y + scaleItem->size.y - frameStartMousePos.y) - totalAdjust.y) * cropFactor.y;
                             if (!bKeepAspect)
                                 scaleItem->crop.y = ((scaleItem->pos.y + scaleItem->size.y - frameStartMousePos.y) - totalAdjust.y) * cropFactor.y;
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeBottom | (!bKeepAspect & edgeTop), !bKeepAspect);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeBottom | (!bKeepAspect ? edgeTop : 0), !bKeepAspect);
                             break;
 
                         case ItemModifyType_CropLeft: 
                             scaleItem->crop.x = ((frameStartMousePos.x - scaleItem->pos.x) + totalAdjust.x) * cropFactor.x;
                             if (!bKeepAspect)
                                 scaleItem->crop.w = ((frameStartMousePos.x - scaleItem->pos.x) + totalAdjust.x) * cropFactor.x;
-                                EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeLeft | (!bKeepAspect & edgeRight), !bKeepAspect);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeLeft | (!bKeepAspect ? edgeRight : 0), !bKeepAspect);
                             break;
 
                         case ItemModifyType_CropRight: 
                             scaleItem->crop.w = ((scaleItem->pos.x + scaleItem->size.x - frameStartMousePos.x) - totalAdjust.x) * cropFactor.x;
                             if (!bKeepAspect)
                                 scaleItem->crop.x = ((scaleItem->pos.x + scaleItem->size.x - frameStartMousePos.x) - totalAdjust.x) * cropFactor.x;
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeRight | (!bKeepAspect & edgeLeft), !bKeepAspect);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeRight | (!bKeepAspect ? edgeLeft : 0), !bKeepAspect);
                             break;
                             
                         case ItemModifyType_CropBottomLeft:
