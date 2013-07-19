@@ -3356,11 +3356,9 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                                     {
                                         Vect2 pos = item->pos;
                                         Vect2 bottomRight = pos+item->size;
-                                        pos.x += item->GetCrop().x;
-                                        pos.y += item->GetCrop().y;
-                                        bottomRight.x -= item->GetCrop().w;
-                                        bottomRight.y -= item->GetCrop().z;
-                                        
+                                        pos += item->GetCropTL();
+                                        bottomRight += item->GetCropBR();
+
                                         bool bVerticalSnap = true;
                                         if(CloseFloat(pos.x, 0.0f, snapSize.x))
                                             item->pos.x = -item->GetCrop().x;
