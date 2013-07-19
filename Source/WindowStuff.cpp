@@ -3494,235 +3494,282 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                             break;
 
                         case ItemModifyType_ScaleBottom:
-
-                            scaleItem->size.y = scaleItem->startSize.y+totalAdjust.y;
-                            if(scaleItem->size.y < minSize.y)
-                                scaleItem->size.y = minSize.y;
-
-                            if(!bControlDown)
                             {
-                                float bottom = scaleItem->pos.y+scaleItem->size.y-scaleItem->GetCrop().z;
+                                Vect2 pos = scaleItem->pos + scaleItem->GetCropTL();
 
-                                if(CloseFloat(bottom, baseRenderSize.y, snapSize.y))
+                                scaleItem->size.y = scaleItem->startSize.y+totalAdjust.y;
+                                if(scaleItem->size.y < minSize.y)
+                                    scaleItem->size.y = minSize.y;
+
+                                if(!bControlDown)
                                 {
-                                    bottom = baseRenderSize.y;
-                                    scaleItem->size.y = bottom-scaleItem->pos.y+scaleItem->GetCrop().z;
+                                    float bottom = scaleItem->pos.y+scaleItem->size.y-scaleItem->GetCrop().z;
+
+                                    if(CloseFloat(bottom, baseRenderSize.y, snapSize.y))
+                                    {
+                                        bottom = baseRenderSize.y;
+                                        scaleItem->size.y = bottom-scaleItem->pos.y+scaleItem->GetCrop().z;
+                                    }
                                 }
+
+                                if(bKeepAspect)
+                                    scaleItem->size.x = scaleItem->size.y*baseScaleAspect;
+                                else
+                                    scaleItem->size.x = scaleItem->startSize.x;
+
+                                EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeAll, false);
+
+                                scaleItem->pos = pos - scaleItem->GetCropTL();
                             }
-
-                            if(bKeepAspect)
-                                scaleItem->size.x = scaleItem->size.y*baseScaleAspect;
-                            else
-                                scaleItem->size.x = scaleItem->startSize.x;
-
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeAll, false);
                             break;
 
                         case ItemModifyType_ScaleTop:
-                            scaleItem->size.y = scaleItem->startSize.y-totalAdjust.y;
-                            if(scaleItem->size.y < minSize.y)
-                                scaleItem->size.y = minSize.y;
-
-                            if(!bControlDown)
                             {
-                                float top = scaleItem->startPos.y+(scaleItem->startSize.y-scaleItem->size.y)+scaleItem->GetCrop().x;
-                                if(CloseFloat(top, 0.0f, snapSize.y))
-                                    scaleItem->size.y = scaleItem->startPos.y+scaleItem->startSize.y+scaleItem->GetCrop().x;
+                                Vect2 pos = scaleItem->pos + scaleItem->size + scaleItem->GetCropBR();
+
+                                scaleItem->size.y = scaleItem->startSize.y-totalAdjust.y;
+                                if(scaleItem->size.y < minSize.y)
+                                    scaleItem->size.y = minSize.y;
+
+                                if(!bControlDown)
+                                {
+                                    float top = scaleItem->startPos.y+(scaleItem->startSize.y-scaleItem->size.y)+scaleItem->GetCrop().x;
+                                    if(CloseFloat(top, 0.0f, snapSize.y))
+                                        scaleItem->size.y = scaleItem->startPos.y+scaleItem->startSize.y+scaleItem->GetCrop().x;
+                                }
+
+                                if(bKeepAspect)
+                                    scaleItem->size.x = scaleItem->size.y*baseScaleAspect;
+                                else
+                                    scaleItem->size.x = scaleItem->startSize.x;
+
+                                totalAdjust.y = scaleItem->startSize.y-scaleItem->size.y;
+                                scaleItem->pos.y = scaleItem->startPos.y+totalAdjust.y;
+
+                                EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeAll, false);
+
+                                scaleItem->pos = pos - scaleItem->GetCropBR() - scaleItem->size;
                             }
-
-                            if(bKeepAspect)
-                                scaleItem->size.x = scaleItem->size.y*baseScaleAspect;
-                            else
-                                scaleItem->size.x = scaleItem->startSize.x;
-
-                            totalAdjust.y = scaleItem->startSize.y-scaleItem->size.y;
-                            scaleItem->pos.y = scaleItem->startPos.y+totalAdjust.y;
-
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeAll, false);
                             break;
 
                         case ItemModifyType_ScaleRight:
-                            scaleItem->size.x = scaleItem->startSize.x+totalAdjust.x;
-                            if(scaleItem->size.x < minSize.x)
-                                scaleItem->size.x = minSize.x;
-
-                            if(!bControlDown)
                             {
-                                float right = scaleItem->pos.x + scaleItem->size.x-scaleItem->GetCrop().y;
+                                Vect2 pos = scaleItem->pos + scaleItem->GetCropTL();
 
-                                if(CloseFloat(right, baseRenderSize.x, snapSize.x))
+                                scaleItem->size.x = scaleItem->startSize.x+totalAdjust.x;
+                                if(scaleItem->size.x < minSize.x)
+                                    scaleItem->size.x = minSize.x;
+
+                                if(!bControlDown)
                                 {
-                                    right = baseRenderSize.x;
-                                    scaleItem->size.x = right-scaleItem->pos.x+scaleItem->GetCrop().y;
+                                    float right = scaleItem->pos.x + scaleItem->size.x-scaleItem->GetCrop().y;
+
+                                    if(CloseFloat(right, baseRenderSize.x, snapSize.x))
+                                    {
+                                        right = baseRenderSize.x;
+                                        scaleItem->size.x = right-scaleItem->pos.x+scaleItem->GetCrop().y;
+                                    }
                                 }
+
+                                if(bKeepAspect)
+                                    scaleItem->size.y = scaleItem->size.x/baseScaleAspect;
+                                else
+                                    scaleItem->size.y = scaleItem->startSize.y;
+
+                                EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeAll, false);
+
+                                scaleItem->pos = pos - scaleItem->GetCropTL();
                             }
-
-                            if(bKeepAspect)
-                                scaleItem->size.y = scaleItem->size.x/baseScaleAspect;
-                            else
-                                scaleItem->size.y = scaleItem->startSize.y;
-
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeAll, false);
                             break;
 
                         case ItemModifyType_ScaleLeft:
-                            scaleItem->size.x = scaleItem->startSize.x-totalAdjust.x;
-                            if(scaleItem->size.x < minSize.x)
-                                scaleItem->size.x = minSize.x;
-
-                            if(!bControlDown)
                             {
-                                float left = scaleItem->startPos.x+(scaleItem->startSize.x-scaleItem->size.x)+scaleItem->GetCrop().w;
+                                Vect2 pos = scaleItem->pos + scaleItem->size + scaleItem->GetCropBR();
 
-                                if(CloseFloat(left, 0.0f, snapSize.x))
-                                    scaleItem->size.x = scaleItem->startPos.x+scaleItem->startSize.x+scaleItem->GetCrop().w;
+                                scaleItem->size.x = scaleItem->startSize.x-totalAdjust.x;
+                                if(scaleItem->size.x < minSize.x)
+                                    scaleItem->size.x = minSize.x;
+
+                                if(!bControlDown)
+                                {
+                                    float left = scaleItem->startPos.x+(scaleItem->startSize.x-scaleItem->size.x)+scaleItem->GetCrop().w;
+
+                                    if(CloseFloat(left, 0.0f, snapSize.x))
+                                        scaleItem->size.x = scaleItem->startPos.x+scaleItem->startSize.x+scaleItem->GetCrop().w;
+                                }
+
+                                if(bKeepAspect)
+                                    scaleItem->size.y = scaleItem->size.x/baseScaleAspect;
+                                else
+                                    scaleItem->size.y = scaleItem->startSize.y;
+
+                                totalAdjust.x = scaleItem->startSize.x-scaleItem->size.x;
+                                scaleItem->pos.x = scaleItem->startPos.x+totalAdjust.x;
+
+                                EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeAll, false);
+
+                                scaleItem->pos = pos - scaleItem->GetCropBR() - scaleItem->size;
                             }
-
-                            if(bKeepAspect)
-                                scaleItem->size.y = scaleItem->size.x/baseScaleAspect;
-                            else
-                                scaleItem->size.y = scaleItem->startSize.y;
-
-                            totalAdjust.x = scaleItem->startSize.x-scaleItem->size.x;
-                            scaleItem->pos.x = scaleItem->startPos.x+totalAdjust.x;
-
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeAll, false);
                             break;
 
                         case ItemModifyType_ScaleBottomRight:
-                            scaleItem->size = scaleItem->startSize+totalAdjust;
-                            scaleItem->size.ClampMin(minSize);
-
-                            if(!bControlDown)
                             {
-                                Vect2 cropPart = Vect2(scaleItem->GetCrop().y, scaleItem->GetCrop().z);
-                                Vect2 lowerRight = scaleItem->pos+scaleItem->size-cropPart;
+                                Vect2 pos = scaleItem->pos + scaleItem->GetCropTL();
+
+                                scaleItem->size = scaleItem->startSize+totalAdjust;
+                                scaleItem->size.ClampMin(minSize);
+
+                                if(!bControlDown)
+                                {
+                                    Vect2 cropPart = Vect2(scaleItem->GetCrop().y, scaleItem->GetCrop().z);
+                                    Vect2 lowerRight = scaleItem->pos+scaleItem->size-cropPart;
                                 
 
-                                if(CloseFloat(lowerRight.x, baseRenderSize.x, snapSize.x))
-                                {
-                                    lowerRight.x = baseRenderSize.x;
-                                    scaleItem->size.x = lowerRight.x-scaleItem->pos.x+cropPart.x;
+                                    if(CloseFloat(lowerRight.x, baseRenderSize.x, snapSize.x))
+                                    {
+                                        lowerRight.x = baseRenderSize.x;
+                                        scaleItem->size.x = lowerRight.x-scaleItem->pos.x+cropPart.x;
+                                    }
+                                    if(CloseFloat(lowerRight.y, baseRenderSize.y, snapSize.y))
+                                    {
+                                        lowerRight.y = baseRenderSize.y;
+                                        scaleItem->size.y = lowerRight.y-scaleItem->pos.y+cropPart.y;
+                                    }
                                 }
-                                if(CloseFloat(lowerRight.y, baseRenderSize.y, snapSize.y))
+
+                                if(bKeepAspect)
                                 {
-                                    lowerRight.y = baseRenderSize.y;
-                                    scaleItem->size.y = lowerRight.y-scaleItem->pos.y+cropPart.y;
+                                    float scaleAspect = scaleItem->size.x/scaleItem->size.y;
+                                    if(scaleAspect < baseScaleAspect)
+                                        scaleItem->size.x = scaleItem->size.y*baseScaleAspect;
+                                    else if(scaleAspect > baseScaleAspect)
+                                        scaleItem->size.y = scaleItem->size.x/baseScaleAspect;
                                 }
-                            }
 
-                            if(bKeepAspect)
-                            {
-                                float scaleAspect = scaleItem->size.x/scaleItem->size.y;
-                                if(scaleAspect < baseScaleAspect)
-                                    scaleItem->size.x = scaleItem->size.y*baseScaleAspect;
-                                else if(scaleAspect > baseScaleAspect)
-                                    scaleItem->size.y = scaleItem->size.x/baseScaleAspect;
-                            }
+                                EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeAll, false);
 
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeAll, false);
+                                scaleItem->pos = pos - scaleItem->GetCropTL();
+                            }
                             break;
 
                         case ItemModifyType_ScaleTopLeft:
-                            scaleItem->size = scaleItem->startSize-totalAdjust;
-                            scaleItem->size.ClampMin(minSize);
-
-                            if(!bControlDown)
                             {
-                                Vect2 cropPart = Vect2(scaleItem->crop.w, scaleItem->crop.x);
-                                Vect2 topLeft = scaleItem->startPos+(scaleItem->startSize-scaleItem->size)+cropPart;
+                                Vect2 pos = scaleItem->pos + scaleItem->size + scaleItem->GetCropBR();
 
-                                if(CloseFloat(topLeft.x, 0.0f, snapSize.x))
-                                    scaleItem->size.x = scaleItem->startPos.x+scaleItem->startSize.x+cropPart.x;
-                                if(CloseFloat(topLeft.y, 0.0f, snapSize.y))
-                                    scaleItem->size.y = scaleItem->startPos.y+scaleItem->startSize.y+cropPart.y;
+                                scaleItem->size = scaleItem->startSize-totalAdjust;
+                                scaleItem->size.ClampMin(minSize);
+
+                                if(!bControlDown)
+                                {
+                                    Vect2 cropPart = Vect2(scaleItem->crop.w, scaleItem->crop.x);
+                                    Vect2 topLeft = scaleItem->startPos+(scaleItem->startSize-scaleItem->size)+cropPart;
+
+                                    if(CloseFloat(topLeft.x, 0.0f, snapSize.x))
+                                        scaleItem->size.x = scaleItem->startPos.x+scaleItem->startSize.x+cropPart.x;
+                                    if(CloseFloat(topLeft.y, 0.0f, snapSize.y))
+                                        scaleItem->size.y = scaleItem->startPos.y+scaleItem->startSize.y+cropPart.y;
+                                }
+
+                                if(bKeepAspect)
+                                {
+                                    float scaleAspect = scaleItem->size.x/scaleItem->size.y;
+                                    if(scaleAspect < baseScaleAspect)
+                                        scaleItem->size.x = scaleItem->size.y*baseScaleAspect;
+                                    else if(scaleAspect > baseScaleAspect)
+                                        scaleItem->size.y = scaleItem->size.x/baseScaleAspect;
+                                }
+
+                                totalAdjust = scaleItem->startSize-scaleItem->size;
+                                scaleItem->pos = scaleItem->startPos+totalAdjust;
+
+                                EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeAll, false);
+
+                                scaleItem->pos = pos - scaleItem->GetCropBR() - scaleItem->size;
                             }
-
-                            if(bKeepAspect)
-                            {
-                                float scaleAspect = scaleItem->size.x/scaleItem->size.y;
-                                if(scaleAspect < baseScaleAspect)
-                                    scaleItem->size.x = scaleItem->size.y*baseScaleAspect;
-                                else if(scaleAspect > baseScaleAspect)
-                                    scaleItem->size.y = scaleItem->size.x/baseScaleAspect;
-                            }
-
-                            totalAdjust = scaleItem->startSize-scaleItem->size;
-                            scaleItem->pos = scaleItem->startPos+totalAdjust;
-
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeAll, false);
                             break;
 
                         case ItemModifyType_ScaleBottomLeft:
-                            scaleItem->size.x = scaleItem->startSize.x-totalAdjust.x;
-                            scaleItem->size.y = scaleItem->startSize.y+totalAdjust.y;
-                            scaleItem->size.ClampMin(minSize);
-
-                            if(!bControlDown)
                             {
-                                Vect2 cropPart = Vect2(scaleItem->GetCrop().w, scaleItem->GetCrop().z);
-                                float left = scaleItem->startPos.x+(scaleItem->startSize.x-scaleItem->size.x)+cropPart.x;
-                                float bottom = scaleItem->pos.y+scaleItem->size.y-cropPart.y;
+                                Vect2 pos = scaleItem->pos + Vect2(scaleItem->size.x, 0) + scaleItem->GetCropTR();
 
-                                if(CloseFloat(left, 0.0f, snapSize.x))
-                                    scaleItem->size.x = scaleItem->startPos.x+scaleItem->startSize.x+cropPart.x;
+                                scaleItem->size.x = scaleItem->startSize.x-totalAdjust.x;
+                                scaleItem->size.y = scaleItem->startSize.y+totalAdjust.y;
+                                scaleItem->size.ClampMin(minSize);
 
-                                if(CloseFloat(bottom, baseRenderSize.y, snapSize.y))
+                                if(!bControlDown)
                                 {
-                                    bottom = baseRenderSize.y;
-                                    scaleItem->size.y = bottom-scaleItem->pos.y+cropPart.y;
+                                    Vect2 cropPart = Vect2(scaleItem->GetCrop().w, scaleItem->GetCrop().z);
+                                    float left = scaleItem->startPos.x+(scaleItem->startSize.x-scaleItem->size.x)+cropPart.x;
+                                    float bottom = scaleItem->pos.y+scaleItem->size.y-cropPart.y;
+
+                                    if(CloseFloat(left, 0.0f, snapSize.x))
+                                        scaleItem->size.x = scaleItem->startPos.x+scaleItem->startSize.x+cropPart.x;
+
+                                    if(CloseFloat(bottom, baseRenderSize.y, snapSize.y))
+                                    {
+                                        bottom = baseRenderSize.y;
+                                        scaleItem->size.y = bottom-scaleItem->pos.y+cropPart.y;
+                                    }
                                 }
+
+                                if(bKeepAspect)
+                                {
+                                    float scaleAspect = scaleItem->size.x/scaleItem->size.y;
+                                    if(scaleAspect < baseScaleAspect)
+                                        scaleItem->size.x = scaleItem->size.y*baseScaleAspect;
+                                    else if(scaleAspect > baseScaleAspect)
+                                        scaleItem->size.y = scaleItem->size.x/baseScaleAspect;
+                                }
+
+                                totalAdjust.x = scaleItem->startSize.x-scaleItem->size.x;
+                                scaleItem->pos.x = scaleItem->startPos.x+totalAdjust.x;
+
+                                EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeAll, false);
+
+                                scaleItem->pos = pos - scaleItem->GetCropTR() - Vect2(scaleItem->size.x, 0);
                             }
-
-                            if(bKeepAspect)
-                            {
-                                float scaleAspect = scaleItem->size.x/scaleItem->size.y;
-                                if(scaleAspect < baseScaleAspect)
-                                    scaleItem->size.x = scaleItem->size.y*baseScaleAspect;
-                                else if(scaleAspect > baseScaleAspect)
-                                    scaleItem->size.y = scaleItem->size.x/baseScaleAspect;
-                            }
-
-                            totalAdjust.x = scaleItem->startSize.x-scaleItem->size.x;
-                            scaleItem->pos.x = scaleItem->startPos.x+totalAdjust.x;
-
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeAll, false);
                             break;
 
                         case ItemModifyType_ScaleTopRight:
-                            scaleItem->size.x = scaleItem->startSize.x+totalAdjust.x;
-                            scaleItem->size.y = scaleItem->startSize.y-totalAdjust.y;
-                            scaleItem->size.ClampMin(minSize);
-
-                            if(!bControlDown)
                             {
-                                Vect2 cropPart = Vect2(scaleItem->GetCrop().y, scaleItem->GetCrop().x);
-                                float right = scaleItem->pos.x+scaleItem->size.x-cropPart.x;
-                                float top = scaleItem->startPos.y+(scaleItem->startSize.y-scaleItem->size.y)+cropPart.y;
+                                Vect2 pos = scaleItem->pos + Vect2(0, scaleItem->size.y) + scaleItem->GetCropBL();
 
-                                if(CloseFloat(right, baseRenderSize.x, snapSize.x))
+                                scaleItem->size.x = scaleItem->startSize.x+totalAdjust.x;
+                                scaleItem->size.y = scaleItem->startSize.y-totalAdjust.y;
+                                scaleItem->size.ClampMin(minSize);
+
+                                if(!bControlDown)
                                 {
-                                    right = baseRenderSize.x;
-                                    scaleItem->size.x = right-scaleItem->pos.x+cropPart.x;
+                                    Vect2 cropPart = Vect2(scaleItem->GetCrop().y, scaleItem->GetCrop().x);
+                                    float right = scaleItem->pos.x+scaleItem->size.x-cropPart.x;
+                                    float top = scaleItem->startPos.y+(scaleItem->startSize.y-scaleItem->size.y)+cropPart.y;
+
+                                    if(CloseFloat(right, baseRenderSize.x, snapSize.x))
+                                    {
+                                        right = baseRenderSize.x;
+                                        scaleItem->size.x = right-scaleItem->pos.x+cropPart.x;
+                                    }
+
+                                    if(CloseFloat(top, 0.0f, snapSize.y))
+                                        scaleItem->size.y = scaleItem->startPos.y+scaleItem->startSize.y+cropPart.y;
                                 }
 
-                                if(CloseFloat(top, 0.0f, snapSize.y))
-                                    scaleItem->size.y = scaleItem->startPos.y+scaleItem->startSize.y+cropPart.y;
+                                if(bKeepAspect)
+                                {
+                                    float scaleAspect = scaleItem->size.x/scaleItem->size.y;
+                                    if(scaleAspect < baseScaleAspect)
+                                        scaleItem->size.x = scaleItem->size.y*baseScaleAspect;
+                                    else if(scaleAspect > baseScaleAspect)
+                                        scaleItem->size.y = scaleItem->size.x/baseScaleAspect;
+                                }
+
+                                totalAdjust.y = scaleItem->startSize.y-scaleItem->size.y;
+                                scaleItem->pos.y = scaleItem->startPos.y+totalAdjust.y;
+
+                                EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeAll, false);
+
+                                scaleItem->pos = pos - scaleItem->GetCropBL() - Vect2(0, scaleItem->size.y);
                             }
-
-                            if(bKeepAspect)
-                            {
-                                float scaleAspect = scaleItem->size.x/scaleItem->size.y;
-                                if(scaleAspect < baseScaleAspect)
-                                    scaleItem->size.x = scaleItem->size.y*baseScaleAspect;
-                                else if(scaleAspect > baseScaleAspect)
-                                    scaleItem->size.y = scaleItem->size.x/baseScaleAspect;
-                            }
-
-                            totalAdjust.y = scaleItem->startSize.y-scaleItem->size.y;
-                            scaleItem->pos.y = scaleItem->startPos.y+totalAdjust.y;
-
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeAll, false);
                             break;
 
                     }

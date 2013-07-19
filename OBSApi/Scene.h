@@ -110,7 +110,11 @@ public:
     void SetName(CTSTR lpNewName);
     void SetRender(bool render);
     Vect4 GetCrop();
-
+    Vect2 GetCropTL();
+    Vect2 GetCropTR();
+    Vect2 GetCropBR();
+    Vect2 GetCropBL();
+    
     void Update();
 
     void MoveUp();
