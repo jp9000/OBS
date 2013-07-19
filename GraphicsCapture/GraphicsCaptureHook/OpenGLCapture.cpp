@@ -318,7 +318,7 @@ DWORD CopyGLCPUTextureThread(LPVOID lpUseless);
 
 typedef HRESULT (WINAPI *CREATEDXGIFACTORY1PROC)(REFIID riid, void **ppFactory);
 
-void DoGLGPUHook(RECT &rc)
+static bool DoGLGPUHook(RECT &rc)
 {
     bUseSharedTextures = true;
     glcaptureInfo.cx = rc.right;
@@ -488,9 +488,11 @@ finishGPUHook:
             logOutput << CurrentTimeString() << "SetEvent(hSignalReady) failed, GetLastError = " << UINT(GetLastError()) << endl;
 
         logOutput << CurrentTimeString() << "DoGLGPUHook: success" << endl;
+        return true;
     }
-    else
-        ClearGLData();
+
+    ClearGLData();
+    return false;
 }
 
 void DoGLCPUHook(RECT &rc)
@@ -568,10 +570,10 @@ void DoGLCPUHook(RECT &rc)
 
 void DoGLHook(RECT &rc)
 {
-    if (bFBOAvailable && bNVCaptureAvailable)
-        DoGLGPUHook(rc);
-    else
-        DoGLCPUHook(rc);
+    if (bFBOAvailable && bNVCaptureAvailable && DoGLGPUHook(rc))
+            return;
+
+    DoGLCPUHook(rc);
 }
 
 DWORD CopyGLCPUTextureThread(LPVOID lpUseless)
