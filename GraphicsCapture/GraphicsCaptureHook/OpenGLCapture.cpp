@@ -224,8 +224,6 @@ extern HANDLE           sharedHandle;
 GLuint gl_fbo       = 0;
 GLuint gl_sharedtex = 0;
 
-extern HMODULE          hD3D9Dll;
-
 extern bool             bDXGIHooked;
 
 
@@ -341,7 +339,7 @@ static bool DoGLGPUHook(RECT &rc)
         goto finishGPUHook;
     }
 
-    D3D9CREATEEXPROC d3d9CreateEx = (D3D9CREATEEXPROC)GetProcAddress(hD3D9Dll, "Direct3DCreate9Ex");
+    D3D9CREATEEXPROC d3d9CreateEx = (D3D9CREATEEXPROC)GetProcAddress(hD3D9, "Direct3DCreate9Ex");
     if(!d3d9CreateEx)
     {
         RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: Could not load 'Direct3DCreate9Ex'" << endl;
