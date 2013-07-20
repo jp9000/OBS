@@ -496,6 +496,9 @@ void OBS::MainCaptureLoop()
         lastStreamTime = qwTime;
 #endif
 
+        bool bUpdateBPS = false;
+        profileIn("frame preprocessing and rendering");
+
         //------------------------------------
 
         if(bRequestKeyframe && keyframeWait > 0)
@@ -552,7 +555,6 @@ void OBS::MainCaptureLoop()
 
         QWORD curBytesSent = network->GetCurrentSentBytes();
         curFramesDropped = network->NumDroppedFrames();
-        bool bUpdateBPS = false;
 
         bpsTime += fSeconds;
         if(bpsTime > 1.0f)
@@ -735,6 +737,8 @@ void OBS::MainCaptureLoop()
             static_cast<D3D10System*>(GS)->swap->Present(0, 0);
 
         OSLeaveMutex(hSceneMutex);
+
+        profileOut;
 
         //------------------------------------
         // present/upload
@@ -1008,12 +1012,14 @@ void OBS::MainCaptureLoop()
             lastFramesDropped = curFramesDropped;
         }
 
-        profileOut;
-        profileOut;
-
         //------------------------------------
         // we're about to sleep so we should flush the d3d command queue
+        profileIn("flush");
         GetD3D()->Flush();
+        profileOut;
+
+        profileOut; //video encoding and uploading
+        profileOut; //frame
 
         //------------------------------------
         // frame sync
