@@ -21,6 +21,10 @@ mkdir 64bit\plugins\GraphicsCapture
 mkdir 64bit\plugins\PSVPlugin
 mkdir 64bit\plugins\PSVPlugin\locale
 
+mkdir pdbs
+mkdir pdbs\32bit
+mkdir pdbs\64bit
+
 copy ..\release\obs.exe .\32bit\
 copy ..\obsapi\release\obsapi.dll .\32bit\
 copy ..\OBSHelp\OBSHelp.chm .\32bit\
@@ -60,6 +64,9 @@ copy ..\graphicscapture\graphicscapturehook\x64\release\graphicscapturehook64.dl
 copy ..\injectHelper\release\injectHelper.exe .\64bit\plugins\graphicscapture
 copy ..\x264\libs\64bit\libx264-136.dll .\64bit
 copy "%WindowsSDK80Path%Debuggers\x64\dbghelp.dll" .\64bit
+
+copy ..\rundir\pdb32\*.pdb .\pdbs\32bit
+copy ..\rundir\pdb64\*.pdb .\pdbs\64bit
 
 mkdir upload
 mkdir upload\DirectShowPlugin
