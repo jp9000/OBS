@@ -76,6 +76,28 @@ Vect4 SceneItem::GetCrop()
     return scaledCrop;
 }
 
+// The following functions return the difference in x/y coordinates, not the absolute distances.
+Vect2 SceneItem::GetCropTL()
+{
+    return Vect2(GetCrop().x, GetCrop().y);
+}
+
+Vect2 SceneItem::GetCropTR()
+{
+    return Vect2(-GetCrop().w, GetCrop().y);
+}
+
+Vect2 SceneItem::GetCropBR()
+{
+    return Vect2(-GetCrop().w, -GetCrop().z);
+}
+
+Vect2 SceneItem::GetCropBL()
+{
+    return Vect2(GetCrop().x, -GetCrop().z);
+}
+
+
 void SceneItem::Update()
 {
     pos = Vect2(element->GetFloat(TEXT("x")), element->GetFloat(TEXT("y")));

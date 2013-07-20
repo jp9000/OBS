@@ -110,7 +110,11 @@ public:
     void SetName(CTSTR lpNewName);
     void SetRender(bool render);
     Vect4 GetCrop();
-
+    Vect2 GetCropTL();
+    Vect2 GetCropTR();
+    Vect2 GetCropBR();
+    Vect2 GetCropBL();
+    
     void Update();
 
     void MoveUp();
@@ -175,9 +179,9 @@ public:
             Vect2 scale = (item->GetSource() ? item->GetSource()->GetSize() : item->GetSize()) / item->GetSize();
 
             Vect2 upperLeft  = item->GetPos();
-            upperLeft.x += item->GetCrop().x; upperLeft.y += item->GetCrop().y;
+            upperLeft += item->GetCropTL();
             Vect2 lowerRight = upperLeft+item->GetSize();
-            lowerRight.x -= item->GetCrop().w; lowerRight.y -= item->GetCrop().z;
+            lowerRight += item->GetCropBR();
             if(item->bRender && pos.x >= upperLeft.x && pos.y >= upperLeft.y && pos.x <= lowerRight.x && pos.y <= lowerRight.y)
                 items << item;
         }
