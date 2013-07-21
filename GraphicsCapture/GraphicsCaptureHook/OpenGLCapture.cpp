@@ -224,7 +224,7 @@ extern HANDLE           sharedHandle;
 GLuint gl_fbo       = 0;
 GLuint gl_sharedtex = 0;
 
-extern bool             bDXGIHooked;
+extern bool             bD3D9Hooked;
 
 
 void ClearGLData()
@@ -328,7 +328,7 @@ static bool DoGLGPUHook(RECT &rc)
 
     BOOL bSuccess = false;
 
-    bDXGIHooked = true;
+    bD3D9Hooked = true;
 
     HRESULT hErr;
 
@@ -362,7 +362,7 @@ static bool DoGLGPUHook(RECT &rc)
     pp.BackBufferHeight         = 2;
     pp.BackBufferWidth          = 2;
 
-    hErr = d3d9ex->CreateDeviceEx(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwndD3DWindow,
+    hErr = d3d9ex->CreateDeviceEx(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, NULL,
         D3DCREATE_HARDWARE_VERTEXPROCESSING|D3DCREATE_NOWINDOWCHANGES|D3DCREATE_MULTITHREADED, &pp, NULL, &d3d9exDevice);
     if (FAILED(hErr)) {
         RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: Could not create D3D9Ex device" << endl;
