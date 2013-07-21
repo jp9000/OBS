@@ -330,6 +330,13 @@ void OBS::MainCaptureLoop()
                 x264_picture_alloc(outPics[i].picOut, X264_CSP_NV12, outputCX, outputCY);
     }
 
+    int bCongestionControl = AppConfig->GetInt (TEXT("Video Encoding"), TEXT("CongestionControl"), 0);
+    bool bDynamicBitrateSupported = App->GetVideoEncoder()->DynamicBitrateSupported();
+    int defaultBitRate = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("MaxBitrate"), 1000);
+    int currentBitRate = defaultBitRate;
+    QWORD lastAdjustmentTime = 0;
+    UINT adjustmentStreamId = 0;
+
     //----------------------------------------
     // time/timestamp stuff
 
@@ -995,6 +1002,51 @@ void OBS::MainCaptureLoop()
                 curYUVTexture = 0;
             else
                 curYUVTexture++;
+
+            if (bCongestionControl && bDynamicBitrateSupported && !bTestStream)
+            {
+                if (curStrain > 25)
+                {
+                    if (qwTime - lastAdjustmentTime > 1500)
+                    {
+                        if (currentBitRate > 100)
+                        {
+                            currentBitRate = (int)(currentBitRate * (1.0 - (curStrain / 400)));
+                            App->GetVideoEncoder()->SetBitRate(currentBitRate, -1);
+                            if (!adjustmentStreamId)
+                                adjustmentStreamId = App->AddStreamInfo (FormattedString(TEXT("Congestion detected, dropping bitrate to %d kbps"), currentBitRate).Array(), StreamInfoPriority_Low);
+                            else
+                                App->SetStreamInfo(adjustmentStreamId, FormattedString(TEXT("Congestion detected, dropping bitrate to %d kbps"), currentBitRate).Array());
+
+                            bUpdateBPS = true;
+                        }
+
+                        lastAdjustmentTime = qwTime;
+                    }
+                }
+                else if (currentBitRate < defaultBitRate && curStrain < 5 && lastStrain < 5)
+                {
+                    if (qwTime - lastAdjustmentTime > 5000)
+                    {
+                        if (currentBitRate < defaultBitRate)
+                        {
+                            currentBitRate += (int)(defaultBitRate * 0.05);
+                            if (currentBitRate > defaultBitRate)
+                                currentBitRate = defaultBitRate;
+                        }
+
+                        App->GetVideoEncoder()->SetBitRate(currentBitRate, -1);
+                        /*if (!adjustmentStreamId)
+                            App->AddStreamInfo (FormattedString(TEXT("Congestion clearing, raising bitrate to %d kbps"), currentBitRate).Array(), StreamInfoPriority_Low);
+                        else
+                            App->SetStreamInfo(adjustmentStreamId, FormattedString(TEXT("Congestion clearing, raising bitrate to %d kbps"), currentBitRate).Array());*/
+
+                        bUpdateBPS = true;
+
+                        lastAdjustmentTime = qwTime;
+                    }
+                }
+            }
         }
 
         lastRenderTarget = curRenderTarget;

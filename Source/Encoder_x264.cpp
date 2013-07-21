@@ -104,8 +104,13 @@ class X264Encoder : public VideoEncoder
 
     inline void SetBitRateParams(DWORD maxBitrate, DWORD bufferSize)
     {
-        paramData.rc.i_vbv_max_bitrate  = maxBitrate; //vbv-maxrate
-        paramData.rc.i_vbv_buffer_size  = bufferSize; //vbv-bufsize
+        //-1 means ignore so we don't have to know both settings
+
+        if (maxBitrate != -1)
+            paramData.rc.i_vbv_max_bitrate  = maxBitrate; //vbv-maxrate
+
+        if (bufferSize != -1)
+            paramData.rc.i_vbv_buffer_size  = bufferSize; //vbv-bufsize
 
         if(bUseCBR)
             paramData.rc.i_bitrate = maxBitrate;
@@ -549,7 +554,7 @@ public:
 
     virtual bool DynamicBitrateSupported() const
     {
-        return true;
+        return (paramData.i_nal_hrd != X264_NAL_HRD_CBR);
     }
 
     virtual bool SetBitRate(DWORD maxBitrate, DWORD bufferSize)
