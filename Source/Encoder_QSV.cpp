@@ -901,6 +901,9 @@ public:
         while(!idle_tasks.Num());
         profileOut;
 
+        if (!picInPtr)
+            return true;
+
         mfxFrameSurface1& pic = *(mfxFrameSurface1*)picInPtr;
         QueueEncodeTask(pic);
 

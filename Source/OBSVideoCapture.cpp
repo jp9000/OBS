@@ -131,10 +131,16 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
     VideoSegment curSegment;
     bool bProcessedFrame, bSendFrame = false;
     int curCTSOffset = 0;
+    VOID *picIn;
 
     profileIn("call to encoder");
 
-    videoEncoder->Encode(frameInfo.pic->picOut ? (LPVOID)frameInfo.pic->picOut : (LPVOID)frameInfo.pic->mfxOut, videoPackets, videoPacketTypes, bufferedTimes[0], ctsOffset);
+    if (!bRunning)
+        picIn = NULL;
+    else
+        picIn = frameInfo.pic->picOut ? (LPVOID)frameInfo.pic->picOut : (LPVOID)frameInfo.pic->mfxOut;
+
+    videoEncoder->Encode(picIn, videoPackets, videoPacketTypes, bufferedTimes[0], ctsOffset);
     if(bUsing444) frameInfo.prevTexture->Unmap(0);
 
     ctsOffsets << ctsOffset;
@@ -342,6 +348,7 @@ void OBS::MainCaptureLoop()
 
     bufferedTimes.Clear();
     ctsOffsets.Clear();
+    int bufferedFrames = 1; //to avoid constantly polling number of frames
 
 #ifdef USE_100NS_TIME
     QWORD streamTimeStart = GetQPCTime100NS();
@@ -456,7 +463,7 @@ void OBS::MainCaptureLoop()
     List<ProfilerNode> threadedProfilers;
     bool bUsingThreadedProfilers = false;
 
-    while(bRunning)
+    while(bRunning || bufferedFrames)
     {
 #ifdef USE_100NS_TIME
         QWORD renderStartTime = GetQPCTime100NS();
@@ -948,6 +955,9 @@ void OBS::MainCaptureLoop()
 
                             ProcessFrame(frameInfo);
                         }
+
+                        if (!bRunning)
+                            bufferedFrames = videoEncoder->GetBufferedFrames ();
                     }
 
                     if(bUsing444)

@@ -572,6 +572,11 @@ public:
     {
         bRequestKeyframe = true;
     }
+
+    virtual int GetBufferedFrames()
+    {
+        return x264_encoder_delayed_frames(x264);
+    }
 };
 
 

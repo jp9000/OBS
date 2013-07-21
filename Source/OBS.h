@@ -176,6 +176,7 @@ public:
     virtual String GetInfoString() const=0;
 
     virtual bool isQSV() { return false; }
+    virtual int GetBufferedFrames() { return 0; }
 };
 
 //-------------------------------------------------------------------
