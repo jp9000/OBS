@@ -583,13 +583,17 @@ void LogInterfaceType (RTMP *rtmp)
         {
             DWORD speed = row.dwSpeed / 1000000;
             TCHAR *type;
+            String otherType;
 
             if (row.dwType == IF_TYPE_ETHERNET_CSMACD)
                 type = TEXT("ethernet");
             else if (row.dwType == IF_TYPE_IEEE80211)
                 type = TEXT("802.11");
             else
-                type = FormattedString (TEXT("type %d"), row.dwType);
+            {
+                otherType = FormattedString (TEXT("type %d"), row.dwType);
+                type = otherType.Array();
+            }
 
             Log (TEXT("  Interface: %S (%s, %d mbps)\n"), row.bDescr, type, speed);
         }
