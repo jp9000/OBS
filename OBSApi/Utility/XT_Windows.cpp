@@ -711,7 +711,10 @@ BOOL   STDCALL OSTerminateThread(HANDLE hThread, DWORD waitMS)
     assert (hThread);
 
     if(WaitForSingleObjectEx(hThread, waitMS, 0) == WAIT_TIMEOUT)
+    {
+        Log (TEXT("WARNING: Forcibly terminated a thread after %d ms timeout!"));
         TerminateThread(hThread, 0);
+    }
 
     CloseHandle(hThread);
     return 1;
