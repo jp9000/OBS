@@ -575,6 +575,9 @@ void OBS::CallHotkey(DWORD hotkeyID, bool bDown)
 
     OSLeaveMutex(hHotkeyMutex);
 
+    if (!hotkeyProc)
+        return;
+
     hotkeyProc(hotkey, param, bDown);
 }
 
