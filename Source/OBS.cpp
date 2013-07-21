@@ -1104,15 +1104,10 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
 
     xPos = resetXPos;
 
-    BOOL bStreamOutput = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode")) == 0;
-
-    strDashboard = AppConfig->GetString(TEXT("Publish"), TEXT("Dashboard"));
-    BOOL bShowDashboardButton = strDashboard.IsValid() && bStreamOutput;
-
     SetWindowPos(GetDlgItem(hwndMain, ID_DASHBOARD), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
     xPos += controlWidth;
 
-    ShowWindow(GetDlgItem(hwndMain, ID_DASHBOARD), bShowDashboardButton ? SW_SHOW : SW_HIDE);
+    UpdateDashboardButton();
 
     SetWindowPos(GetDlgItem(hwndMain, ID_EXIT), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
     xPos += controlWidth;
@@ -1222,6 +1217,7 @@ void OBS::ReloadIniSettings()
     // dashboard
     strDashboard = AppConfig->GetString(TEXT("Publish"), TEXT("Dashboard"));
     strDashboard.KillSpaces();
+    UpdateDashboardButton();
 
     //-------------------------------------------
     // hotkeys
@@ -1647,4 +1643,15 @@ BOOL OBS::HideNotificationAreaIcon()
 {
     bNotificationAreaIcon = false;
     return SetNotificationAreaIcon(NIM_DELETE, 0, TEXT(""));
+}
+
+BOOL OBS::UpdateDashboardButton()
+{
+    //Are we in live stream mode, and do we have a non-empty dashboard string?
+    BOOL bStreamOutput = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode")) == 0;
+    BOOL bDashboardValid = strDashboard.IsValid();
+
+    BOOL bShowDashboardButton = bPanelVisible && bStreamOutput && bDashboardValid;
+
+    return ShowWindow(GetDlgItem(hwndMain, ID_DASHBOARD), bShowDashboardButton ? SW_SHOW : SW_HIDE);
 }
