@@ -112,7 +112,7 @@ Scene.Hotkey.Hotkey                                 "Pikanäppäin:"
 Capture.Start.FileStream.WarningCaption             "Varoitus"
 Capture.Start.FileStream.Warning                    "Tiedostoon ei voida kirjoittaa.\n\nVarmista tiedoston polku \"Lähetysasetuksista\"."
 
-Settings.Advanced                                   "Edistyneet"
+Settings.Advanced                                   "Lisäasetukset"
 Settings.Audio                                      "Ääni"
 Settings.Encoding                                   "Kuvanpakkaus"
 Settings.General                                    "Yleiset"
