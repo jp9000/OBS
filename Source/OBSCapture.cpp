@@ -79,9 +79,10 @@ void OBS::Start()
 
     //-------------------------------------------------------------
 retryHookTest:
+    bool alreadyWarnedAboutModules = false;
     if (OSIncompatibleModulesLoaded())
     {
-        Log(TEXT("Incompatible modules detected."));
+        Log(TEXT("Incompatible modules (pre-D3D) detected."));
         int ret = MessageBox(hwndMain, Str("IncompatibleModules"), NULL, MB_ICONERROR | MB_ABORTRETRYIGNORE);
         if (ret == IDABORT)
         {
@@ -92,6 +93,8 @@ retryHookTest:
         {
             goto retryHookTest;
         }
+
+        alreadyWarnedAboutModules = true;
     }
 
     String strPatchesError;
@@ -186,6 +189,31 @@ retryHookTest:
 
     GS = new D3D10System;
     GS->Init();
+
+    //Thanks to ASUS OSD hooking the goddamn user mode driver framework (!!!!), we have to re-check for dangerous
+    //hooks after initializing D3D.
+retryHookTestV2:
+    if (!alreadyWarnedAboutModules)
+    {
+        if (OSIncompatibleModulesLoaded())
+        {
+            Log(TEXT("Incompatible modules (post-D3D) detected."));
+            int ret = MessageBox(hwndMain, Str("IncompatibleModules"), NULL, MB_ICONERROR | MB_ABORTRETRYIGNORE);
+            if (ret == IDABORT)
+            {
+                //FIXME: really need a better way to abort startup than this...
+                delete network;
+                delete GS;
+
+                OSLeaveMutex (hStartupShutdownMutex);
+                return;
+            }
+            else if (ret == IDRETRY)
+            {
+                goto retryHookTestV2;
+            }
+        }
+    }
 
     //-------------------------------------------------------------
 
