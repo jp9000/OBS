@@ -812,7 +812,7 @@ private:
     static Vect2 GetFrameToWindowScale();
 
     // helper to valid crops as you scale items
-    static bool EnsureCropValid(SceneItem *&item, Vect2 &minSize, Vect2 &snapSize, bool bControlDown, int cropEdges, bool cropSymmetric);
+    static bool EnsureCropValid(SceneItem *&scaleItem, Vect2 &minSize, Vect2 &snapSize, bool bControlDown, int cropEdges, bool cropSymmetric);
 
     static INT_PTR CALLBACK EnterGlobalSourceNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -847,6 +847,9 @@ private:
 
     static void AddProfilesToMenu(HMENU menu);
     static void ResetProfileMenu();
+
+    static String GetApplicationName();
+    static void ResetApplicationName();
 
     void SetStatusBarData();
 

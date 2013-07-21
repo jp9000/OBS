@@ -268,7 +268,7 @@ OBS::OBS()
 
     bFullscreenMode = false;
 
-    hwndMain = CreateWindowEx(WS_EX_CONTROLPARENT|WS_EX_WINDOWEDGE, OBS_WINDOW_CLASS, OBS_VERSION_STRING,
+    hwndMain = CreateWindowEx(WS_EX_CONTROLPARENT|WS_EX_WINDOWEDGE, OBS_WINDOW_CLASS, GetApplicationName(),
         WS_OVERLAPPED | WS_THICKFRAME | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN,
         x, y, cx, cy, NULL, NULL, hinstMain, NULL);
     if(!hwndMain)
@@ -1623,16 +1623,15 @@ BOOL OBS::ShowNotificationAreaIcon()
 {
     BOOL result = FALSE;
     int idIcon = (bRunning && !bTestStream) ? IDI_ICON2 : IDI_ICON1;
-    String tooltip(TEXT("OBS"));
 
     if (!bNotificationAreaIcon)
     {
         bNotificationAreaIcon = true;
-        result = SetNotificationAreaIcon(NIM_ADD, idIcon, tooltip);
+        result = SetNotificationAreaIcon(NIM_ADD, idIcon, GetApplicationName());
     }
     else
     {
-        result = SetNotificationAreaIcon(NIM_MODIFY, idIcon, tooltip);
+        result = SetNotificationAreaIcon(NIM_MODIFY, idIcon, GetApplicationName());
     }
     return result;
 }
