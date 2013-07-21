@@ -247,6 +247,8 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                         GlobalConfig->SetString(TEXT("General"), TEXT("Profile"), strProfile);
                         App->ResetProfileMenu();
+                        App->ResetApplicationName();
+                        App->UpdateNotificationAreaIcon();
 
                         UINT numItems = (UINT)SendMessage(GetDlgItem(hwnd, IDC_PROFILE), CB_GETCOUNT, 0, 0);
                         EnableWindow(GetDlgItem(hwnd, IDC_REMOVE),  (numItems > 1));
