@@ -2254,6 +2254,22 @@ void OBS::ResetProfileMenu()
 
 //----------------------------
 
+String OBS::GetApplicationName()
+{
+    String name;
+    name << App->GetCurrentProfile() << TEXT(" - ") << OBS_VERSION_STRING;
+    return name;
+}
+
+//----------------------------
+
+void OBS::ResetApplicationName()
+{
+    SetWindowText(hwndMain, GetApplicationName());
+}
+
+//----------------------------
+
 LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch(message)
@@ -2540,6 +2556,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                 GlobalConfig->SetString(TEXT("General"), TEXT("Profile"), strProfile);
                                 App->ReloadIniSettings();
                                 ResetProfileMenu();
+                                ResetApplicationName();
                             }
                         }
                     }
