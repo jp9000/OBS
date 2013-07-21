@@ -109,6 +109,9 @@ protected:
     HANDLE hDataBufferMutex;
     HANDLE hConnectionThread;
 
+    HANDLE hSendLoopExit;
+    HANDLE hSocketLoopExit;
+
     bool bStopping;
 
     int packetWaitType;
@@ -140,6 +143,7 @@ protected:
     bool DoIFrameDelay(bool bBFramesOnly);
 
     virtual void ProcessPackets();
+    virtual void FlushBufferedPackets();
 
     virtual void RequestKeyframe(int waitTime);
 
