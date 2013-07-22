@@ -993,6 +993,8 @@ public:
     BOOL ShowNotificationAreaIcon();
     BOOL UpdateNotificationAreaIcon();
     BOOL HideNotificationAreaIcon();
+
+    BOOL UpdateDashboardButton();
 };
 
 LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo);
