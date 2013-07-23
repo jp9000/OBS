@@ -161,6 +161,7 @@ bool RTMPPublisher::Init(RTMP *rtmpIn, UINT tcpBufferSize)
 
     hSendLoopExit = CreateEvent(NULL, FALSE, FALSE, NULL);
     hSocketLoopExit = CreateEvent(NULL, FALSE, FALSE, NULL);
+    hSendBacklogEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
     hDataBufferMutex = OSCreateMutex();
 
@@ -235,7 +236,8 @@ RTMPPublisher::~RTMPPublisher()
         //at once, and Twitch at shows the offline screen as soon as the connection is severed even if there are
         //pending video frames.
 
-        Sleep (500);    //for now
+        if (RTMP_IsConnected(rtmp))
+            Sleep (500);    //for now
         RTMP_Close(rtmp);
     }
 
@@ -263,6 +265,9 @@ RTMPPublisher::~RTMPPublisher()
 
     if (hSocketLoopExit)
         CloseHandle(hSocketLoopExit);
+
+    if (hSendBacklogEvent)
+        CloseHandle(hSendBacklogEvent);
 
     if (hBufferSpaceAvailableEvent)
         CloseHandle(hBufferSpaceAvailableEvent);
@@ -919,6 +924,26 @@ int RTMPPublisher::FlushDataBuffer()
     return ret;
 }
 
+void RTMPPublisher::SetupSendBacklogEvent()
+{
+    OVERLAPPED overlapped;
+
+    zero (&overlapped, sizeof(overlapped));
+
+    overlapped.hEvent = hSendBacklogEvent;
+
+    idealsendbacklognotify(rtmp->m_sb.sb_socket, &overlapped, NULL);
+}
+
+void RTMPPublisher::FatalSocketShutdown()
+{
+    //We close the socket manually to avoid trying to run cleanup code during the shutdown cycle since
+    //if we're being called the socket is already in an unusable state.
+    closesocket(rtmp->m_sb.sb_socket);
+    rtmp->m_sb.sb_socket = -1;
+    App->PostStopMessage();
+}
+
 void RTMPPublisher::SocketLoop()
 {
     bool canWrite = false;
@@ -958,10 +983,13 @@ void RTMPPublisher::SocketLoop()
         delayTime = 0;
     }
 
-    HANDLE hObjects[2];
+    SetupSendBacklogEvent ();
+
+    HANDLE hObjects[3];
 
     hObjects[0] = hWriteEvent;
     hObjects[1] = hBufferEvent;
+    hObjects[2] = hSendBacklogEvent;
 
     for (;;)
     {
@@ -979,15 +1007,17 @@ void RTMPPublisher::SocketLoop()
             OSLeaveMutex(hDataBufferMutex);
         }
 
-        int status = WaitForMultipleObjects (2, hObjects, FALSE, INFINITE);
+        int status = WaitForMultipleObjects (3, hObjects, FALSE, INFINITE);
         if (status == WAIT_ABANDONED || status == WAIT_FAILED)
         {
             Log(TEXT("RTMPPublisher::SocketLoop: Aborting due to WaitForMultipleObjects failure"));
+            App->PostStopMessage();
             return;
         }
 
         if (status == WAIT_OBJECT_0)
         {
+            //Socket event
             if (WSAEnumNetworkEvents (rtmp->m_sb.sb_socket, NULL, &networkEvents))
             {
                 Log(TEXT("RTMPPublisher::SocketLoop: Aborting due to WSAEnumNetworkEvents failure, %d"), WSAGetLastError());
@@ -1000,8 +1030,11 @@ void RTMPPublisher::SocketLoop()
 
             if (networkEvents.lNetworkEvents & FD_CLOSE)
             {
-                Log(TEXT("RTMPPublisher::SocketLoop: Aborting due to FD_CLOSE, error %d"), networkEvents.iErrorCode[FD_CLOSE_BIT]);
-                App->PostStopMessage();
+                if (bStopping)
+                    Log(TEXT("RTMPPublisher::SocketLoop: Aborting due to FD_CLOSE during shutdown, buffered data lost, error %d"), networkEvents.iErrorCode[FD_CLOSE_BIT]);
+                else
+                    Log(TEXT("RTMPPublisher::SocketLoop: Aborting due to FD_CLOSE, error %d"), networkEvents.iErrorCode[FD_CLOSE_BIT]);
+                FatalSocketShutdown ();
                 return;
             }
 
@@ -1032,12 +1065,32 @@ void RTMPPublisher::SocketLoop()
                     if (fatalError)
                     {
                         Log(TEXT("RTMPPublisher::SocketLoop: Socket error, recv() returned %d, GetLastError() %d"), ret, errorCode);
-                        OSLeaveMutex(hDataBufferMutex);
-                        App->PostStopMessage();
+                        FatalSocketShutdown ();
                         return;
                     }
                 }
             }
+        }
+        else if (status == WAIT_OBJECT_0 + 2)
+        {
+            //Ideal send backlog event
+            ULONG idealSendBacklog;
+
+            if (!idealsendbacklogquery(rtmp->m_sb.sb_socket, &idealSendBacklog))
+            {
+                int curTCPBufSize, curTCPBufSizeSize = sizeof(curTCPBufSize);
+                getsockopt (rtmp->m_sb.sb_socket, SOL_SOCKET, SO_SNDBUF, (char *)&curTCPBufSize, &curTCPBufSizeSize);
+
+                if (curTCPBufSize < (int)idealSendBacklog)
+                {
+                    int bufferSize = (int)idealSendBacklog;
+                    setsockopt(rtmp->m_sb.sb_socket, SOL_SOCKET, SO_SNDBUF, (const char *)&bufferSize, sizeof(bufferSize));
+                    Log(TEXT("RTMPPublisher::Socketloop: Increasing socket send buffer to ISB %d"), idealSendBacklog);
+                }
+            }
+
+            SetupSendBacklogEvent ();
+            continue;
         }
         
         if (canWrite)
@@ -1106,7 +1159,7 @@ void RTMPPublisher::SocketLoop()
                         //connection closed, or connection was aborted / socket closed / etc, that's a fatal error for us.
                         Log(TEXT("RTMPPublisher::SocketLoop: Socket error, send() returned %d, GetLastError() %d"), ret, errorCode);
                         OSLeaveMutex(hDataBufferMutex);
-                        App->PostStopMessage();
+                        FatalSocketShutdown ();
                         return;
                     }
                 }
@@ -1123,7 +1176,7 @@ void RTMPPublisher::SocketLoop()
         }
     }
 
-    Log(TEXT("RTMPPublisher::SocketLoop: Aborting due to hSocketLoopExit loop exit"));
+    Log(TEXT("RTMPPublisher::SocketLoop: Graceful loop exit"));
 }
 
 void RTMPPublisher::SendLoop()
@@ -1367,32 +1420,22 @@ int RTMPPublisher::BufferedSend(RTMPSockBuf *sb, const char *buf, int len, RTMPP
     bool bComplete = false;
     int fullLen = len;
 
+    //We may have been disconnected mid-shutdown or something, just pretend we wrote the data
+    //to avoid blocking if the send loop exited.
+    if (!RTMP_IsConnected(network->rtmp))
+        return len;
+
 retrySend:
 
     OSEnterMutex(network->hDataBufferMutex);
 
     if (network->curDataBufferLen + len >= network->dataBufferSize)
     {
-        ULONG idealSendBacklog;
-
         //Log(TEXT("RTMPPublisher::BufferedSend: Socket buffer is full (%d / %d bytes), waiting to send %d bytes"), network->curDataBufferLen, network->dataBufferSize, len);
         ++network->totalTimesWaited;
         network->totalBytesWaited += len;
 
         OSLeaveMutex(network->hDataBufferMutex);
-
-        if (!idealsendbacklogquery(sb->sb_socket, &idealSendBacklog))
-        {
-            int curTCPBufSize, curTCPBufSizeSize = sizeof(curTCPBufSize);
-            getsockopt (sb->sb_socket, SOL_SOCKET, SO_SNDBUF, (char *)&curTCPBufSize, &curTCPBufSizeSize);
-
-            if (curTCPBufSize < (int)idealSendBacklog)
-            {
-                int bufferSize = (int)idealSendBacklog;
-                setsockopt(sb->sb_socket, SOL_SOCKET, SO_SNDBUF, (const char *)&bufferSize, sizeof(bufferSize));
-                Log(TEXT("RTMPPublisher::BufferedSend: Increasing socket send buffer to ISB %d"), idealSendBacklog, curTCPBufSize);
-            }
-        }
 
         int status = WaitForSingleObject(network->hBufferSpaceAvailableEvent, INFINITE);
         if (status == WAIT_ABANDONED || status == WAIT_FAILED)

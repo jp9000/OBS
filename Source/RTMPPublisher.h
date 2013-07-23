@@ -111,6 +111,7 @@ protected:
 
     HANDLE hSendLoopExit;
     HANDLE hSocketLoopExit;
+    HANDLE hSendBacklogEvent;
 
     bool bStopping;
 
@@ -136,6 +137,8 @@ protected:
     void SendLoop();
     void SocketLoop();
     int FlushDataBuffer();
+    void SetupSendBacklogEvent();
+    void FatalSocketShutdown();
     static DWORD SendThread(RTMPPublisher *publisher);
     static DWORD SocketThread(RTMPPublisher *publisher);
 

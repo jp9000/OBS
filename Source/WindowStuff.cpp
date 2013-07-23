@@ -2835,6 +2835,9 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
             }
 
         case OBS_REQUESTSTOP:
+            if (!App->IsRunning())
+                break;
+
             App->Stop();
 
             if((App->bFirstConnect && App->totalStreamTime < 10000) || !App->bAutoReconnect)
