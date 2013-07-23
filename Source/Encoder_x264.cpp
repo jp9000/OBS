@@ -301,7 +301,7 @@ public:
         packets.Clear();
         ClearPackets();
 
-        if(bRequestKeyframe)
+        if(bRequestKeyframe && picIn)
             picIn->i_type = X264_TYPE_IDR;
 
         if(x264_encoder_encode(x264, &nalOut, &nalNum, picIn, &picOut) < 0)
@@ -310,7 +310,7 @@ public:
             return false;
         }
 
-        if(bRequestKeyframe)
+        if(bRequestKeyframe && picIn)
         {
             picIn->i_type = X264_TYPE_AUTO;
             bRequestKeyframe = false;
