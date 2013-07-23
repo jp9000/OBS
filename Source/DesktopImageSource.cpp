@@ -348,7 +348,7 @@ public:
                 //CAPTUREBLT causes mouse flicker, so make capturing layered optional
                 if(!BitBlt(hDC, 0, 0, width, height, hCaptureDC, captureRect.left, captureRect.top, bCaptureLayered ? SRCCOPY|CAPTUREBLT : SRCCOPY))
                 {
-                    RUNONCE AppWarning(TEXT("Capture BitBlt failed..  just so you know"));
+                    RUNONCE AppWarning(TEXT("Capture BitBlt failed (%d)..  just so you know"), GetLastError());
                 }
             }
 
