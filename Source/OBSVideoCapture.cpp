@@ -432,6 +432,7 @@ void OBS::MainCaptureLoop()
             convertInfo[i].endY = ((outputCY/numThreads)*(i+1)) & 0xFFFFFFFE;
     }
 
+    bool bEncode;
     bool bFirstFrame = true;
     bool bFirstImage = true;
     bool bFirst420Encode = true;
@@ -463,7 +464,7 @@ void OBS::MainCaptureLoop()
     List<ProfilerNode> threadedProfilers;
     bool bUsingThreadedProfilers = false;
 
-    while(bRunning || bufferedFrames)
+    while(bRunning || (bEncode && bufferedFrames))
     {
 #ifdef USE_100NS_TIME
         QWORD renderStartTime = GetQPCTime100NS();
@@ -759,7 +760,7 @@ void OBS::MainCaptureLoop()
 
         profileIn("video encoding and uploading");
 
-        bool bEncode = true;
+        bEncode = true;
 
         if(copyWait)
         {

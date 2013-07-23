@@ -224,11 +224,11 @@ RTMPPublisher::~RTMPPublisher()
 
     //OSDebugOut (TEXT("*** ~RTMPPublisher hSocketThread terminated (%d queued, %d buffered, %d data)\n"), queuedPackets.Num(), bufferedPackets.Num(), curDataBufferLen);
 
-    //at this point nothing should be in the buffer, flush out what remains and make it blocking
-    FlushDataBuffer();
-
     if(rtmp)
     {
+        //at this point nothing should be in the buffer, flush out what remains and make it blocking
+        FlushDataBuffer();
+
         //disable the buffered send, so RTMP_Close writes directly to the net
         rtmp->m_bCustomSend = 0;
 
