@@ -836,10 +836,14 @@ BOOL   STDCALL OSIncompatibleModulesLoaded()
             !scmp(moduleName, TEXT("dxtorycore64.dll")) ||      //DXTory
             !scmp(moduleName, TEXT("dxtorymm.dll")) ||          //DXTory
             !scmp(moduleName, TEXT("dxtorymm64.dll")) ||        //DXTory
-            !scmp(moduleName, TEXT("atkdx11disp.dll")) ||       //ASUS OSD
             !scmp(moduleName, TEXT("rtsshooks.dll")))           //EVGA Precision OSD
         {
             return 1;
+        }
+        else if (!scmp(moduleName, TEXT("atkdx11disp.dll")))     //ASUS GamerOSD
+        {
+            //ASUS GamerOSD is so terrible we can't even cleanly shutdown once it loads, trying to unload D3D crashes too (!)
+            CrashError (TEXT("ASUS GamerOSD has been detected. This program installs user mode driver hooks which will corrupt the Direct3D state and crash OBS. Please uninstall ASUS GamerOSD if you wish to use OBS."));
         }
     }
 
