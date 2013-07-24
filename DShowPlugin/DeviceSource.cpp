@@ -1015,6 +1015,46 @@ void DeviceSource::EndScene()
     Stop();
 }
 
+bool SourceListHasDevice(CTSTR lpDevice, XElement *sourceList);
+
+void DeviceSource::GlobalSourceLeaveScene()
+{
+    if(soundOutputType == 1) {
+        audioOut->SetVolume(0.0f);
+    }
+    if(soundOutputType == 2) {
+        IBasicAudio *basicAudio;
+        if(SUCCEEDED(audioFilter->QueryInterface(IID_IBasicAudio, (void**)&basicAudio)))
+        {
+            long lVol = long((double(0.0)*NEAR_SILENTf)-NEAR_SILENTf);
+            if(lVol <= -NEAR_SILENT)
+                lVol = -10000;
+            basicAudio->put_Volume(lVol);
+            basicAudio->Release();
+        }
+    }
+}
+
+void DeviceSource::GlobalSourceEnterScene()
+{
+    float sourceVolume = data->GetFloat(TEXT("volume"), 1.0f);
+
+    if(soundOutputType == 1) {
+        audioOut->SetVolume(sourceVolume);
+    }
+    if(soundOutputType == 2) {
+        IBasicAudio *basicAudio;
+        if(SUCCEEDED(audioFilter->QueryInterface(IID_IBasicAudio, (void**)&basicAudio)))
+        {
+            long lVol = long((double(sourceVolume)*NEAR_SILENTf)-NEAR_SILENTf);
+            if(lVol <= -NEAR_SILENT)
+                lVol = -10000;
+            basicAudio->put_Volume(lVol);
+            basicAudio->Release();
+        }
+    }
+}
+
 DWORD DeviceSource::SampleThread(DeviceSource *source)
 {
     HANDLE hSampleMutex = source->hSampleMutex;

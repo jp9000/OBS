@@ -741,6 +741,7 @@ void OBS::TrackModifyListbox(HWND hwnd, int ret)
                         App->GetGlobalSourceNames(sourceNames);
 
                         CTSTR lpName = sourceNames[ret-ID_LISTBOX_GLOBALSOURCE];
+                        if(App->bRunning) App->GetGlobalSource(lpName)->GlobalSourceEnterScene();
 
                         XElement *data = newSourceElement->CreateElement(TEXT("data"));
                         data->SetString(TEXT("name"), lpName);
@@ -1126,7 +1127,28 @@ void OBS::DeleteItems()
 
                 for(UINT i=0; i<selectedSceneItems.Num(); i++)
                 {
+                    bool globalSourcesRemain = false;
+
                     SceneItem *item = selectedSceneItems[i];
+                    XElement *source = selectedSceneItems[i]->GetElement();
+                    String className = source->GetString(TEXT("class"));
+
+                    if(className == "GlobalSource") {
+                        String globalSourceName = source->GetElement(TEXT("data"))->GetString(TEXT("name"));
+
+                        for(UINT j=0; j<scene->sceneItems.Num(); j++) {
+                            XElement *compareSource = scene->sceneItems[j]->GetElement()->GetElement(TEXT("data"));
+                            String globalSourceCompareName = compareSource->GetString(TEXT("name"));
+                            SceneItem *compareItem = scene->sceneItems[j];
+                            if(globalSourceName == globalSourceCompareName && item != compareItem) {
+                                globalSourcesRemain = true;
+                            }
+                        }
+
+                        if(!globalSourcesRemain) {
+                            App->GetGlobalSource(globalSourceName)->GlobalSourceLeaveScene();
+                        }
+                    }
                     App->scene->RemoveImageSource(item);
                 }
             }

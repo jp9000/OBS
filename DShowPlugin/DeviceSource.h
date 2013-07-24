@@ -233,6 +233,9 @@ public:
     void BeginScene();
     void EndScene();
 
+    void GlobalSourceEnterScene();
+    void GlobalSourceLeaveScene();
+
     void SetInt(CTSTR lpName, int iVal);
     void SetFloat(CTSTR lpName, float fValue);
 

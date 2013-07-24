@@ -37,6 +37,9 @@ public:
     virtual void BeginScene() {}
     virtual void EndScene() {}
 
+    virtual void GlobalSourceLeaveScene() {}
+    virtual void GlobalSourceEnterScene() {}
+
     virtual void SetFloat(CTSTR lpName, float fValue) {}
     virtual void SetInt(CTSTR lpName, int iValue) {}
     virtual void SetString(CTSTR lpName, CTSTR lpVal) {}
