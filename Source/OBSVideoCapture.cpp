@@ -469,7 +469,7 @@ void OBS::MainCaptureLoop()
     List<ProfilerNode> threadedProfilers;
     bool bUsingThreadedProfilers = false;
 
-    while(!bShutdownMainThread || (bEncode && bufferedFrames))
+    while(!bShutdownMainThread || (bEncode && bufferedFrames && !bTestStream))
     {
 #ifdef USE_100NS_TIME
         QWORD renderStartTime = GetQPCTime100NS();
@@ -1172,26 +1172,29 @@ void OBS::MainCaptureLoop()
     }
 
     //flush all video frames in the "scene buffering time" buffer
-    QWORD startTime = GetQPCTimeMS();
-    DWORD baseTimestamp = bufferedVideo[0].timestamp;
-    for(UINT i=0; i<bufferedVideo.Num(); i++)
+    if (bufferedVideo.Num())
     {
-        //we measure our own time rather than sleep between frames due to potential sleep drift
-        QWORD curTime;
-        do
+        QWORD startTime = GetQPCTimeMS();
+        DWORD baseTimestamp = bufferedVideo[0].timestamp;
+        for(UINT i=0; i<bufferedVideo.Num(); i++)
         {
-            curTime = GetQPCTimeMS();
-            OSSleep (1);
-        } while (curTime - startTime < bufferedVideo[i].timestamp - baseTimestamp);
+            //we measure our own time rather than sleep between frames due to potential sleep drift
+            QWORD curTime;
+            do
+            {
+                curTime = GetQPCTimeMS();
+                OSSleep (1);
+            } while (curTime - startTime < bufferedVideo[i].timestamp - baseTimestamp);
 
-        int curCTSOffset = ctsOffsets[0];
-        ctsOffsets.Remove(0);
+            int curCTSOffset = ctsOffsets[0];
+            ctsOffsets.Remove(0);
 
-        SendFrame(bufferedVideo[i], firstFrameTime, curCTSOffset);
-        bufferedVideo[i].Clear();
+            SendFrame(bufferedVideo[i], firstFrameTime, curCTSOffset);
+            bufferedVideo[i].Clear();
+        }
+
+        bufferedVideo.Clear();
     }
-
-    bufferedVideo.Clear();
 
     Free(h420Threads);
     Free(convertInfo);
