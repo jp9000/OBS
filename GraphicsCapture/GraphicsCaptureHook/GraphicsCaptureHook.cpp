@@ -288,6 +288,17 @@ fstream logOutput;
 
 HANDLE dummyEvent = NULL;
 
+
+#define TIMER_ID 431879
+BOOL GetMessageTimeout(MSG &msg, DWORD timeout)
+{
+    BOOL ret;
+    SetTimer(NULL, TIMER_ID, timeout, NULL);
+    ret = GetMessage(&msg, NULL, 0, 0);
+    KillTimer(NULL, TIMER_ID);
+    return ret;
+}
+
 DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
 {
     bool bSuccess = false;
@@ -361,7 +372,7 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
     }
 
     if (RegisterClass(&wc)) {
-        hwndSender = CreateWindow(SENDER_WINDOWCLASS, NULL, 0, 0, 0, 0, 0, NULL, 0, hinstMain, 0);
+        hwndSender = CreateWindow(SENDER_WINDOWCLASS, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, hinstMain, 0);
         if (hwndSender) {
             textureMutexes[0] = OpenMutex(MUTEX_ALL_ACCESS, FALSE, TEXTURE_MUTEX1);
             if (textureMutexes[0]) {
@@ -373,16 +384,10 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
                     logOutput << CurrentTimeString() << "(half life scientist) everything..  seems to be in order" << endl;
 
                     MSG msg;
-                    while (MsgWaitForMultipleObjects(1, &dummyEvent, FALSE, 3000, QS_ALLPOSTMESSAGE) != WAIT_ABANDONED_0) {
-                    //while (1) {
+                    while (GetMessageTimeout(msg, 3000)) {
                         AttemptToHookSomething();
-
-                        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-                            TranslateMessage(&msg);
-                            DispatchMessage(&msg);
-                        }
-
-                        //Sleep(50);
+                        TranslateMessage(&msg);
+                        DispatchMessage(&msg);
                     }
 
                     CloseHandle(textureMutexes[1]);
@@ -403,7 +408,7 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
         }
     }
 
-    logOutput << CurrentTimeString() << "exit out of the main thread loop somehow" << endl;
+    logOutput << CurrentTimeString() << "WARNING: exit out of the main thread loop somehow" << endl;
 
     return 0;
 }
