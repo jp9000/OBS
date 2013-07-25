@@ -192,6 +192,7 @@ RTMPPublisher::~RTMPPublisher()
         OSCloseThread(hConnectionThread);
     }
 
+    //send all remaining buffered packets, this may block since it respects timestamps
     FlushBufferedPackets ();
 
     //OSDebugOut (TEXT("%d queued after flush\n"), queuedPackets.Num());
@@ -231,10 +232,10 @@ RTMPPublisher::~RTMPPublisher()
     {
         if (RTMP_IsConnected(rtmp))
         {
-            //at this point nothing should be in the buffer, flush out what remains and make it blocking
+            //at this point nothing should be in the buffer, flush out what remains to the net and make it blocking
             FlushDataBuffer();
 
-            //disable the buffered send, so RTMP_* functions write directly to the net
+            //disable the buffered send, so RTMP_* functions write directly to the net (and thus block)
             rtmp->m_bCustomSend = 0;
 
             //manually shut down the stream and issue a graceful socket shutdown
@@ -376,16 +377,24 @@ void RTMPPublisher::InitializeBuffer()
 
 void RTMPPublisher::FlushBufferedPackets()
 {
-    unsigned i;
+    if (!bufferedPackets.Num())
+        return;
 
-    //ideally we need some kind of delay here, since we are dumping up to seconds worth of timestamps to the network
-    //at once, and Twitch at shows the offline screen as soon as the connection is severed even if there are
-    //pending video frames.
+    QWORD startTime = GetQPCTimeMS();
+    DWORD baseTimestamp = bufferedPackets[0].timestamp;
 
-    for (i = 0; i < bufferedPackets.Num(); i++)
+    for (unsigned int i = 0; i < bufferedPackets.Num(); i++)
     {
         TimedPacket packet;
         packet = bufferedPackets[i];
+
+        QWORD curTime;
+        do
+        {
+            curTime = GetQPCTimeMS();
+            OSSleep (1);
+        } while (curTime - startTime < packet.timestamp - baseTimestamp);
+
         SendPacketForReal(packet.data.Array(), packet.data.Num(), packet.timestamp, packet.type);
     }
 
@@ -438,7 +447,7 @@ void RTMPPublisher::ProcessPackets()
 
 void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)
 {
-    //OSDebugOut (TEXT("SendPacket (%08x)\n"), quickHash(data,size));
+    //OSDebugOut (TEXT("%u: SendPacket (%08x)\n"), OSGetTime(), quickHash(data,size));
     if(!bConnected && !bConnecting && !bStopping)
     {
         hConnectionThread = OSCreateThread((XTHREAD)CreateConnectionThread, this);
@@ -499,7 +508,7 @@ void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketTyp
 
 void RTMPPublisher::SendPacketForReal(BYTE *data, UINT size, DWORD timestamp, PacketType type)
 {
-    //OSDebugOut (TEXT("SendPacketForReal (%08x)\n"), quickHash(data,size));
+    //OSDebugOut (TEXT("%u: SendPacketForReal (%08x)\n"), OSGetTime(), quickHash(data,size));
     //Log(TEXT("packet| timestamp: %u, type: %u, bytes: %u"), timestamp, (UINT)type, size);
 
     OSEnterMutex(hDataMutex);
@@ -943,6 +952,7 @@ int RTMPPublisher::FlushDataBuffer()
     //OSDebugOut (TEXT("*** ~RTMPPublisher FlushDataBuffer (%d)\n"), curDataBufferLen);
     
     //make it blocking again
+    WSAEventSelect(rtmp->m_sb.sb_socket, NULL, 0);
     ioctlsocket(rtmp->m_sb.sb_socket, FIONBIO, &zero);
 
     OSEnterMutex(hDataBufferMutex);
