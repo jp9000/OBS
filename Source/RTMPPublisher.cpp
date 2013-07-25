@@ -159,8 +159,8 @@ bool RTMPPublisher::Init(RTMP *rtmpIn, UINT tcpBufferSize)
     hBufferSpaceAvailableEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
     hWriteEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-    hSendLoopExit = CreateEvent(NULL, FALSE, FALSE, NULL);
-    hSocketLoopExit = CreateEvent(NULL, FALSE, FALSE, NULL);
+    hSendLoopExit = CreateEvent(NULL, TRUE, FALSE, NULL);
+    hSocketLoopExit = CreateEvent(NULL, TRUE, FALSE, NULL);
     hSendBacklogEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
     hDataBufferMutex = OSCreateMutex();
@@ -182,7 +182,7 @@ bool RTMPPublisher::Init(RTMP *rtmpIn, UINT tcpBufferSize)
 
 RTMPPublisher::~RTMPPublisher()
 {
-    //OSDebugOut (TEXT("*** ~RTMPPublisher (%d queued, %d buffered)\n"), queuedPackets.Num(), bufferedPackets.Num());
+    //OSDebugOut (TEXT("*** ~RTMPPublisher (%d queued, %d buffered, %d data)\n"), queuedPackets.Num(), bufferedPackets.Num(), curDataBufferLen);
     bStopping = true;
 
     //we're in the middle of connecting! wait for that to happen to avoid all manner of race conditions
@@ -218,6 +218,9 @@ RTMPPublisher::~RTMPPublisher()
         //mark the socket loop to shut down after the buffer is empty
         SetEvent(hSocketLoopExit);
 
+        //wake it up in case it already is empty
+        SetEvent(hBufferEvent);
+
         //wait 60 sec for it to exit
         OSTerminateThread(hSocketThread, 60000);
     }
@@ -226,18 +229,39 @@ RTMPPublisher::~RTMPPublisher()
 
     if(rtmp)
     {
-        //at this point nothing should be in the buffer, flush out what remains and make it blocking
-        FlushDataBuffer();
-
-        //disable the buffered send, so RTMP_Close writes directly to the net
-        rtmp->m_bCustomSend = 0;
-
-        //ideally we need some kind of delay here, since we just dumped several seconds worth of timestamps to the network
-        //at once, and Twitch at shows the offline screen as soon as the connection is severed even if there are
-        //pending video frames.
-
         if (RTMP_IsConnected(rtmp))
-            Sleep (500);    //for now
+        {
+            //at this point nothing should be in the buffer, flush out what remains and make it blocking
+            FlushDataBuffer();
+
+            //disable the buffered send, so RTMP_* functions write directly to the net
+            rtmp->m_bCustomSend = 0;
+
+            //manually shut down the stream and issue a graceful socket shutdown
+            RTMP_DeleteStream(rtmp);
+
+            shutdown(rtmp->m_sb.sb_socket, SD_SEND);
+
+            //this waits for the socket shutdown to complete gracefully
+            for (;;)
+            {
+                char buff[1024];
+                int ret;
+
+                ret = recv(rtmp->m_sb.sb_socket, buff, sizeof(buff), 0);
+                if (!ret)
+                    break;
+                else if (ret == -1)
+                {
+                    Log(TEXT("~RTMPublisher: Received error %d while waiting for graceful shutdown."), WSAGetLastError());
+                    break;
+                }
+            }
+
+            //OSDebugOut(TEXT("Graceful shutdown complete.\n"));
+        }
+
+        //this closes the socket if not already done
         RTMP_Close(rtmp);
     }
 
@@ -353,6 +377,11 @@ void RTMPPublisher::InitializeBuffer()
 void RTMPPublisher::FlushBufferedPackets()
 {
     unsigned i;
+
+    //ideally we need some kind of delay here, since we are dumping up to seconds worth of timestamps to the network
+    //at once, and Twitch at shows the offline screen as soon as the connection is severed even if there are
+    //pending video frames.
+
     for (i = 0; i < bufferedPackets.Num(); i++)
     {
         TimedPacket packet;
@@ -1031,7 +1060,7 @@ void RTMPPublisher::SocketLoop()
             if (networkEvents.lNetworkEvents & FD_CLOSE)
             {
                 if (bStopping)
-                    Log(TEXT("RTMPPublisher::SocketLoop: Aborting due to FD_CLOSE during shutdown, buffered data lost, error %d"), networkEvents.iErrorCode[FD_CLOSE_BIT]);
+                    Log(TEXT("RTMPPublisher::SocketLoop: Aborting due to FD_CLOSE during shutdown, %d bytes lost, error %d"), curDataBufferLen, networkEvents.iErrorCode[FD_CLOSE_BIT]);
                 else
                     Log(TEXT("RTMPPublisher::SocketLoop: Aborting due to FD_CLOSE, error %d"), networkEvents.iErrorCode[FD_CLOSE_BIT]);
                 FatalSocketShutdown ();
@@ -1085,7 +1114,7 @@ void RTMPPublisher::SocketLoop()
                 {
                     int bufferSize = (int)idealSendBacklog;
                     setsockopt(rtmp->m_sb.sb_socket, SOL_SOCKET, SO_SNDBUF, (const char *)&bufferSize, sizeof(bufferSize));
-                    Log(TEXT("RTMPPublisher::Socketloop: Increasing socket send buffer to ISB %d"), idealSendBacklog);
+                    Log(TEXT("RTMPPublisher::Socketloop: Increasing send buffer to ISB %d (buffer: %d / %d)"), idealSendBacklog, curDataBufferLen, dataBufferSize);
                 }
             }
 
