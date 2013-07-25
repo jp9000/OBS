@@ -118,6 +118,78 @@ struct FrameProcessInfo
     QWORD firstFrameTime;
 };
 
+void OBS::SendFrame(VideoSegment &curSegment, QWORD firstFrameTime, int curCTSOffset)
+{
+    if(!bSentHeaders)
+    {
+        network->BeginPublishing();
+        bSentHeaders = true;
+    }
+
+    OSEnterMutex(hSoundDataMutex);
+
+    if(pendingAudioFrames.Num())
+    {
+        while(pendingAudioFrames.Num())
+        {
+            if(firstFrameTime < pendingAudioFrames[0].timestamp)
+            {
+                UINT audioTimestamp = UINT(pendingAudioFrames[0].timestamp-firstFrameTime);
+
+                /*if(bFirstAudioPacket)
+                {
+                    audioTimestamp = 0;
+                    bFirstAudioPacket = false;
+                }
+                else*/
+                    audioTimestamp += curCTSOffset;
+
+                //stop sending audio packets when we reach an audio timestamp greater than the video timestamp
+                if(audioTimestamp > curSegment.timestamp)
+                    break;
+
+                if(audioTimestamp == 0 || audioTimestamp > lastAudioTimestamp)
+                {
+                    List<BYTE> &audioData = pendingAudioFrames[0].audioData;
+                    if(audioData.Num())
+                    {
+                        //Log(TEXT("a:%u, %llu, cts: %d"), audioTimestamp, frameInfo.firstFrameTime+audioTimestamp-curCTSOffset, curCTSOffset);
+
+                        network->SendPacket(audioData.Array(), audioData.Num(), audioTimestamp, PacketType_Audio);
+                        if(fileStream)
+                            fileStream->AddPacket(audioData.Array(), audioData.Num(), audioTimestamp, PacketType_Audio);
+
+                        audioData.Clear();
+
+                        lastAudioTimestamp = audioTimestamp;
+                    }
+                }
+            }
+            else
+                nop();
+
+            pendingAudioFrames[0].audioData.Clear();
+            pendingAudioFrames.Remove(0);
+        }
+    }
+
+    OSLeaveMutex(hSoundDataMutex);
+
+    for(UINT i=0; i<curSegment.packets.Num(); i++)
+    {
+        VideoPacketData &packet = curSegment.packets[i];
+
+        if(packet.type == PacketType_VideoHighest)
+            bRequestKeyframe = false;
+
+        //Log(TEXT("v:%u, %llu"), curSegment.timestamp, frameInfo.firstFrameTime+curSegment.timestamp);
+
+        network->SendPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, packet.type);
+        if(fileStream)
+            fileStream->AddPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, packet.type);
+    }
+}
+
 bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
 {
     List<DataPacket> videoPackets;
@@ -135,7 +207,7 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
 
     profileIn("call to encoder");
 
-    if (!bRunning)
+    if (bShutdownMainThread)
         picIn = NULL;
     else
         picIn = frameInfo.pic->picOut ? (LPVOID)frameInfo.pic->picOut : (LPVOID)frameInfo.pic->mfxOut;
@@ -156,6 +228,8 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
         curCTSOffset = ctsOffsets[0];
         ctsOffsets.Remove(0);
     }
+    else
+        nop();
 
     profileOut;
 
@@ -166,76 +240,7 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
 
     //send headers before the first frame if not yet sent
     if(bSendFrame)
-    {
-        if(!bSentHeaders)
-        {
-            network->BeginPublishing();
-            bSentHeaders = true;
-        }
-
-        OSEnterMutex(hSoundDataMutex);
-
-        if(pendingAudioFrames.Num())
-        {
-            while(pendingAudioFrames.Num())
-            {
-                if(frameInfo.firstFrameTime < pendingAudioFrames[0].timestamp)
-                {
-                    UINT audioTimestamp = UINT(pendingAudioFrames[0].timestamp-frameInfo.firstFrameTime);
-
-                    /*if(bFirstAudioPacket)
-                    {
-                        audioTimestamp = 0;
-                        bFirstAudioPacket = false;
-                    }
-                    else*/
-                        audioTimestamp += curCTSOffset;
-
-                    //stop sending audio packets when we reach an audio timestamp greater than the video timestamp
-                    if(audioTimestamp > curSegment.timestamp)
-                        break;
-
-                    if(audioTimestamp == 0 || audioTimestamp > lastAudioTimestamp)
-                    {
-                        List<BYTE> &audioData = pendingAudioFrames[0].audioData;
-                        if(audioData.Num())
-                        {
-                            //Log(TEXT("a:%u, %llu, cts: %d"), audioTimestamp, frameInfo.firstFrameTime+audioTimestamp-curCTSOffset, curCTSOffset);
-
-                            network->SendPacket(audioData.Array(), audioData.Num(), audioTimestamp, PacketType_Audio);
-                            if(fileStream)
-                                fileStream->AddPacket(audioData.Array(), audioData.Num(), audioTimestamp, PacketType_Audio);
-
-                            audioData.Clear();
-
-                            lastAudioTimestamp = audioTimestamp;
-                        }
-                    }
-                }
-                else
-                    nop();
-
-                pendingAudioFrames[0].audioData.Clear();
-                pendingAudioFrames.Remove(0);
-            }
-        }
-
-        OSLeaveMutex(hSoundDataMutex);
-
-        for(UINT i=0; i<curSegment.packets.Num(); i++)
-        {
-            VideoPacketData &packet = curSegment.packets[i];
-
-            if(packet.type == PacketType_VideoHighest)
-                bRequestKeyframe = false;
-
-            //Log(TEXT("v:%u, %llu"), curSegment.timestamp, frameInfo.firstFrameTime+curSegment.timestamp);
-
-            network->SendPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, packet.type);
-            if(fileStream)
-                fileStream->AddPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, packet.type);
-        }
-    }
+        SendFrame(curSegment, frameInfo.firstFrameTime, curCTSOffset);
 
     profileOut;
 
@@ -464,7 +469,7 @@ void OBS::MainCaptureLoop()
     List<ProfilerNode> threadedProfilers;
     bool bUsingThreadedProfilers = false;
 
-    while(bRunning || (bEncode && bufferedFrames))
+    while(!bShutdownMainThread || (bEncode && bufferedFrames))
     {
 #ifdef USE_100NS_TIME
         QWORD renderStartTime = GetQPCTime100NS();
@@ -957,7 +962,7 @@ void OBS::MainCaptureLoop()
                             ProcessFrame(frameInfo);
                         }
 
-                        if (!bRunning)
+                        if (bShutdownMainThread)
                             bufferedFrames = videoEncoder->GetBufferedFrames ();
                     }
 
@@ -1165,6 +1170,28 @@ void OBS::MainCaptureLoop()
                 delete outPics[i].picOut;
             }
     }
+
+    //flush all video frames in the "scene buffering time" buffer
+    QWORD startTime = GetQPCTimeMS();
+    DWORD baseTimestamp = bufferedVideo[0].timestamp;
+    for(UINT i=0; i<bufferedVideo.Num(); i++)
+    {
+        //we measure our own time rather than sleep between frames due to potential sleep drift
+        QWORD curTime;
+        do
+        {
+            curTime = GetQPCTimeMS();
+            OSSleep (1);
+        } while (curTime - startTime < bufferedVideo[i].timestamp - baseTimestamp);
+
+        int curCTSOffset = ctsOffsets[0];
+        ctsOffsets.Remove(0);
+
+        SendFrame(bufferedVideo[i], firstFrameTime, curCTSOffset);
+        bufferedVideo[i].Clear();
+    }
+
+    bufferedVideo.Clear();
 
     Free(h420Threads);
     Free(convertInfo);

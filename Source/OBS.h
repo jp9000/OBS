@@ -555,6 +555,7 @@ private:
     bool    bTestStream;
     bool    bUseMultithreadedOptimizations;
     bool    bRunning;
+    bool    bShutdownMainThread;
     int     renderFrameWidth, renderFrameHeight; // The size of the preview only
     int     renderFrameX, renderFrameY; // The offset of the preview inside the preview control
     int     renderFrameCtrlWidth, renderFrameCtrlHeight; // The size of the entire preview control
@@ -650,6 +651,7 @@ private:
 
     static DWORD STDCALL MainCaptureThread(LPVOID lpUnused);
     bool BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, VideoSegment &segmentOut);
+    void SendFrame(VideoSegment &curSegment, QWORD firstFrameTime, int curCTFOffset);
     bool ProcessFrame(FrameProcessInfo &frameInfo);
     void MainCaptureLoop();
 
@@ -828,7 +830,7 @@ private:
 
     void ResizeRenderFrame(bool bRedrawRenderFrame);
     void UpdateRenderViewMessage();
-    void ProcessPanelVisibile(bool fromResizeWindow = false);
+    void ProcessPanelVisible(bool fromResizeWindow = false);
 
     void ToggleCapturing();
 

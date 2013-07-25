@@ -554,14 +554,20 @@ void OBS::Stop()
 
     OSEnterMutex(hStartupShutdownMutex);
 
-    ReportStopStreamTrigger();
+    //we only want the capture thread to stop first, so we can ensure all packets are flushed
+    bShutdownMainThread = true;
 
-    bRunning = false;
     if(hMainThread)
     {
         OSTerminateThread(hMainThread, 20000);
         hMainThread = NULL;
     }
+
+    bShutdownMainThread = false;
+
+    bRunning = false;
+
+    ReportStopStreamTrigger();
 
     for(UINT i=0; i<globalSources.Num(); i++)
         globalSources[i].source->EndScene();
@@ -718,10 +724,6 @@ void OBS::Stop()
     ClearStatusBar();
 
     InvalidateRect(hwndRenderFrame, NULL, TRUE);
-
-    for(UINT i=0; i<bufferedVideo.Num(); i++)
-        bufferedVideo[i].Clear();
-    bufferedVideo.Clear();
 
     SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, 1, 0, 0);
     SetThreadExecutionState(ES_CONTINUOUS);
