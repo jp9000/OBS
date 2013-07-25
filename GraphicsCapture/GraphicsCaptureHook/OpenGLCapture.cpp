@@ -19,7 +19,13 @@
 
 #include "GraphicsCaptureHook.h"
 
+//#define USE_D3D9_GL_INTEROP
+
+#ifdef USE_D3D9_GL_INTEROP
 #include <D3D9.h>
+#else
+#include <D3D10_1.h>
+#endif
 
 
 typedef unsigned int GLenum;
@@ -212,10 +218,18 @@ GLFRAMEBUFFERTEXTURE2DPROC glFramebufferTexture2D = NULL;
 #define GL_COLOR_ATTACHMENT0 0x8CE0
 #define GL_COLOR_ATTACHMENT1 0x8CE1
 
+#ifdef USE_D3D9_GL_INTEROP
 static IDirect3D9Ex       *d3d9ex        = NULL;
 static IDirect3DDevice9Ex *d3d9exDevice  = NULL;
 static IDirect3DTexture9  *d3d9exTexture = NULL;
-static HWND               hwndD3DWindow  = NULL;
+extern bool               bD3D9Hooked;
+#else
+extern ID3D10Device1    *shareDevice;
+extern ID3D10Resource   *copyTextureIntermediary;
+extern bool             bDXGIHooked;
+#endif
+
+static HWND             hwndD3DWindow  = NULL;
 
 extern BOOL             bUseSharedTextures;
 extern SharedTexData    *texData;
@@ -223,8 +237,6 @@ extern HANDLE           sharedHandle;
 
 GLuint gl_fbo       = 0;
 GLuint gl_sharedtex = 0;
-
-extern bool             bD3D9Hooked;
 
 
 void ClearGLData()
@@ -283,9 +295,14 @@ void ClearGLData()
             gl_fbo = 0;
         }
 
+#ifdef USE_D3D9_GL_INTEROP
         SafeRelease(d3d9exTexture);
         SafeRelease(d3d9exDevice);
         SafeRelease(d3d9ex);
+#else
+        SafeRelease(copyTextureIntermediary);
+        SafeRelease(shareDevice);
+#endif
     } else if(bHasTextures) {
         glDeleteBuffers(NUM_BUFFERS, gltextures);
         ZeroMemory(gltextures, sizeof(gltextures));
@@ -318,6 +335,7 @@ void ClearGLData()
 
 DWORD CopyGLCPUTextureThread(LPVOID lpUseless);
 
+#ifdef USE_D3D9_GL_INTEROP
 typedef HRESULT (WINAPI*D3D9CREATEEXPROC)(UINT, IDirect3D9Ex**);
 
 static bool DoGLGPUHook(RECT &rc)
@@ -436,6 +454,189 @@ finishGPUHook:
         return false;
     }
 }
+
+#else
+
+typedef HRESULT (WINAPI *CREATEDXGIFACTORY1PROC)(REFIID riid, void **ppFactory);
+
+static bool DoGLGPUHook(RECT &rc)
+{
+    bUseSharedTextures = true;
+    glcaptureInfo.cx = rc.right;
+    glcaptureInfo.cy = rc.bottom;
+
+    BOOL bSuccess = false;
+
+    bDXGIHooked = true;
+
+    HRESULT hErr;
+
+    HMODULE hD3D10_1 = LoadLibrary(TEXT("d3d10_1.dll"));
+    if(!hD3D10_1)
+    {
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: Could not load D3D10.1" << endl;
+        goto finishGPUHook;
+    }
+
+    HMODULE hDXGI = LoadLibrary(TEXT("dxgi.dll"));
+    if(!hDXGI)
+    {
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: Could not load dxgi" << endl;
+        goto finishGPUHook;
+    }
+
+    CREATEDXGIFACTORY1PROC createDXGIFactory1 = (CREATEDXGIFACTORY1PROC)GetProcAddress(hDXGI, "CreateDXGIFactory1");
+    if(!createDXGIFactory1)
+    {
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: Could not load 'CreateDXGIFactory1'" << endl;
+        goto finishGPUHook;
+    }
+
+    PFN_D3D10_CREATE_DEVICE1 d3d10CreateDevice1 = (PFN_D3D10_CREATE_DEVICE1)GetProcAddress(hD3D10_1, "D3D10CreateDevice1");
+    if(!d3d10CreateDevice1)
+    {
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: Could not load 'D3D10CreateDevice1'" << endl;
+        goto finishGPUHook;
+    }
+
+    IDXGIFactory1 *factory;
+    if(FAILED(hErr = (*createDXGIFactory1)(__uuidof(IDXGIFactory1), (void**)&factory)))
+    {
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9GPUHook: CreateDXGIFactory1 failed, result = " << (UINT)hErr << endl;
+        goto finishGPUHook;
+    }
+
+    IDXGIAdapter1 *adapter;
+    if(FAILED(hErr = factory->EnumAdapters1(0, &adapter)))
+    {
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: factory->EnumAdapters1 failed, result = " << (UINT)hErr << endl;
+        factory->Release();
+        goto finishGPUHook;
+    }
+
+    if(FAILED(hErr = (*d3d10CreateDevice1)(adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_FEATURE_LEVEL_10_1, D3D10_1_SDK_VERSION, &shareDevice)))
+    {
+        if(FAILED(hErr = (*d3d10CreateDevice1)(adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_FEATURE_LEVEL_9_3, D3D10_1_SDK_VERSION, &shareDevice)))
+        {
+            RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: Could not create D3D10.1 device, result = " << (UINT)hErr << endl;
+            adapter->Release();
+            factory->Release();
+            goto finishGPUHook;
+        }
+    }
+
+    adapter->Release();
+    factory->Release();
+
+    //------------------------------------------------
+
+    D3D10_TEXTURE2D_DESC texGameDesc;
+    ZeroMemory(&texGameDesc, sizeof(texGameDesc));
+    texGameDesc.Width               = glcaptureInfo.cx;
+    texGameDesc.Height              = glcaptureInfo.cy;
+    texGameDesc.MipLevels           = 1;
+    texGameDesc.ArraySize           = 1;
+    texGameDesc.Format              = DXGI_FORMAT_B8G8R8X8_UNORM;
+    texGameDesc.SampleDesc.Count    = 1;
+    texGameDesc.BindFlags           = D3D10_BIND_RENDER_TARGET|D3D10_BIND_SHADER_RESOURCE;
+    texGameDesc.Usage               = D3D10_USAGE_DEFAULT;
+    texGameDesc.MiscFlags           = D3D10_RESOURCE_MISC_SHARED;
+
+    ID3D10Texture2D *d3d101Tex;
+    if(FAILED(hErr = shareDevice->CreateTexture2D(&texGameDesc, NULL, &d3d101Tex)))
+    {
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: shareDevice->CreateTexture2D failed, result = " << (UINT)hErr << endl;
+        goto finishGPUHook;
+    }
+
+    if(FAILED(hErr = d3d101Tex->QueryInterface(__uuidof(ID3D10Resource), (void**)&copyTextureIntermediary)))
+    {
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: d3d101Tex->QueryInterface(ID3D10Resource) failed, result = " << (UINT)hErr << endl;
+        d3d101Tex->Release();
+        goto finishGPUHook;
+    }
+
+    IDXGIResource *res;
+    if(FAILED(hErr = d3d101Tex->QueryInterface(IID_IDXGIResource, (void**)&res)))
+    {
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: d3d101Tex->QueryInterface(IDXGIResource) failed, result = " << (UINT)hErr << endl;
+        d3d101Tex->Release();
+        goto finishGPUHook;
+    }
+
+    if(FAILED(res->GetSharedHandle(&sharedHandle)))
+    {
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: res->GetSharedHandle failed, result = " << (UINT)hErr << endl;
+        d3d101Tex->Release();
+        res->Release();
+        goto finishGPUHook;
+    }
+
+    if (bNVCaptureAvailable) {
+        gl_dxDevice = wglDXOpenDeviceNV(shareDevice);
+        if (gl_dxDevice == NULL) {
+            RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: wglDXOpenDeviceNV failed" << endl;
+            d3d101Tex->Release();
+            res->Release();
+            goto finishGPUHook;
+        }
+
+        glGenTextures(1, &gl_sharedtex);
+        gl_handle = wglDXRegisterObjectNV(gl_dxDevice, copyTextureIntermediary, gl_sharedtex, GL_TEXTURE_2D, WGL_ACCESS_WRITE_DISCARD_NV);
+
+        if (gl_handle == NULL) {
+            RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: wglDXRegisterObjectNV failed" << endl;
+            d3d101Tex->Release();
+            res->Release();
+            goto finishGPUHook;
+        }
+    }
+
+    {RUNEVERYRESET logOutput << CurrentTimeString() << "share device: " << UINT(shareDevice) << endl;}
+    {RUNEVERYRESET logOutput << CurrentTimeString() << "share texture: " << UINT(copyTextureIntermediary) << endl;}
+    {RUNEVERYRESET logOutput << CurrentTimeString() << "share device handle: " << UINT(gl_dxDevice) << endl;}
+    {RUNEVERYRESET logOutput << CurrentTimeString() << "share texture handle: " << UINT(gl_handle) << endl;}
+
+    glGenFramebuffers(1, &gl_fbo);
+
+    d3d101Tex->Release();
+    res->Release();
+    res = NULL;
+
+    //------------------------------------------------
+
+    glcaptureInfo.mapID = InitializeSharedMemoryGPUCapture(&texData);
+    if(!glcaptureInfo.mapID)
+    {
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: failed to initialize shared memory" << endl;
+        goto finishGPUHook;
+    }
+
+    bSuccess = IsWindow(hwndOBS);
+
+finishGPUHook:
+
+    if(bSuccess)
+    {
+        bHasTextures = true;
+        glcaptureInfo.captureType = CAPTURETYPE_SHAREDTEX;
+        glcaptureInfo.hwndCapture = (DWORD)hwndTarget;
+        glcaptureInfo.bFlip = TRUE;
+        texData->texHandle = (DWORD)sharedHandle;
+
+        memcpy(infoMem, &glcaptureInfo, sizeof(CaptureInfo));
+        if (!SetEvent(hSignalReady))
+            logOutput << CurrentTimeString() << "SetEvent(hSignalReady) failed, GetLastError = " << UINT(GetLastError()) << endl;
+
+        logOutput << CurrentTimeString() << "DoGLGPUHook: success" << endl;
+        return true;
+    }
+
+    ClearGLData();
+    return false;
+}
+
+#endif
 
 void DoGLCPUHook(RECT &rc)
 {
