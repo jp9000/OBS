@@ -35,7 +35,7 @@ bool DeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *tim
 
         *buffer = outputBuffer.Array();
         *numFrames = sampleFrameCount;
-        *timestamp = API->GetAudioTime();
+        *timestamp = API->GetAudioTime()+GetTimeOffset();
 
         return true;
     }
