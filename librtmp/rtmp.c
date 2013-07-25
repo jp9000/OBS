@@ -1404,6 +1404,9 @@ RTMP_DeleteStream(RTMP *r)
 
     r->m_bPlaying = FALSE;
 
+    if ((r->Link.protocol & RTMP_FEATURE_WRITE))
+        SendFCUnpublish(r);
+
     SendDeleteStream(r, r->m_stream_id);
     r->m_stream_id = -1;
 }
