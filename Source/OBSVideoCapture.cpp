@@ -1199,7 +1199,7 @@ void OBS::MainCaptureLoop()
     Free(h420Threads);
     Free(convertInfo);
 
-    Log(TEXT("Total frames rendered: %d, number of frames that lagged: %d (%0.2f%%) (it's okay for some frames to lag)"), numTotalFrames, numLongFrames, (double(numLongFrames)/double(numTotalFrames))*100.0);
+    Log(TEXT("Total frames rendered: %d, number of late frames: %d (%0.2f%%) (it's okay for some frames to be late)"), numTotalFrames, numLongFrames, (double(numLongFrames)/double(numTotalFrames))*100.0);
     if(bDupeFrames)
-        Log(TEXT("Total duplicated frames: %d (%0.2f%%)"), numTotalDuplicatedFrames, (double(numTotalDuplicatedFrames)/double(numTotalFrames))*100.0);
+        Log(TEXT("Total duplicated frames to ensure constant framerate: %d (%0.2f%%)"), numTotalDuplicatedFrames, (double(numTotalDuplicatedFrames)/double(numTotalFrames))*100.0);
 }
