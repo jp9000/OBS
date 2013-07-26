@@ -407,13 +407,13 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
     *buffer = (void*)inputBuffer.Array();
     *timestamp = firstTimestamp;
 
-    if (bIsMic) {
+    /*if (bIsMic) {
         static QWORD lastTimestamp = 0;
         if (firstTimestamp != lastTimestamp+10)
             Log(TEXT("A: %llu, difference: %llu"), firstTimestamp, firstTimestamp-lastTimestamp);
 
         lastTimestamp = firstTimestamp;
-    }
+    }*/
 
     return true;
 }
