@@ -921,6 +921,10 @@ void HandleGLSceneUpdate(HDC hDC)
                                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
                                 wglDXUnlockObjectsNV(gl_dxDevice, 1, &gl_handle);
+
+#ifndef USE_D3D9_GL_INTEROP
+                                shareDevice->Flush();
+#endif
                             }
                         }
                     }
