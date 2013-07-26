@@ -290,7 +290,8 @@ bool OBS::SetScene(CTSTR lpScene)
             XElement *source = scene->sceneItems[i]->GetElement();
             String className = source->GetString(TEXT("class"));
             if(className == "GlobalSource") {
-                String globalSourceName = source->GetElement(TEXT("data"))->GetString(TEXT("name"));
+                XElement *globalSourceData = source->GetElement(TEXT("data"));
+                String globalSourceName = globalSourceData->GetString(TEXT("name"));
                 if(App->GetGlobalSource(globalSourceName) != NULL) {
                     App->GetGlobalSource(globalSourceName)->GlobalSourceLeaveScene();
                 }
@@ -311,13 +312,14 @@ bool OBS::SetScene(CTSTR lpScene)
             XElement *source = scene->sceneItems[i]->GetElement();
             String className = source->GetString(TEXT("class"));
             if(className == "GlobalSource") {
-                String globalSourceName = source->GetElement(TEXT("data"))->GetString(TEXT("name"));
+                XElement *globalSourceData = source->GetElement(TEXT("data"));
+                String globalSourceName = globalSourceData->GetString(TEXT("name"));
                 if(App->GetGlobalSource(globalSourceName) != NULL) {
                     App->GetGlobalSource(globalSourceName)->GlobalSourceEnterScene();
                 }
             }
         }
-
+		
         if(!bTransitioning)
         {
             bTransitioning = true;
