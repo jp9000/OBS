@@ -1176,6 +1176,8 @@ void OBS::MainCaptureLoop()
     {
         QWORD startTime = GetQPCTimeMS();
         DWORD baseTimestamp = bufferedVideo[0].timestamp;
+        UINT curCTSOffset = 0;
+
         for(UINT i=0; i<bufferedVideo.Num(); i++)
         {
             //we measure our own time rather than sleep between frames due to potential sleep drift
@@ -1186,8 +1188,10 @@ void OBS::MainCaptureLoop()
                 OSSleep (1);
             } while (curTime - startTime < bufferedVideo[i].timestamp - baseTimestamp);
 
-            int curCTSOffset = ctsOffsets[0];
-            ctsOffsets.Remove(0);
+            if (ctsOffsets.Num()) {
+                curCTSOffset = ctsOffsets[0];
+                ctsOffsets.Remove(0);
+            }
 
             SendFrame(bufferedVideo[i], firstFrameTime, curCTSOffset);
             bufferedVideo[i].Clear();
