@@ -252,7 +252,7 @@ void MMDeviceAudioSource::StartCapture()
         UINT64 freq;
         mmClock->GetFrequency(&freq);
 
-        Log(TEXT("frequency for device '%s' is %llu, samples per sec is %u"), GetDeviceName(), freq, this->GetSamplesPerSec());
+        Log(TEXT("MMDeviceAudioSource: Frequency for device '%s' is %llu, samples per sec is %u"), GetDeviceName(), freq, this->GetSamplesPerSec());
     }
 }
 

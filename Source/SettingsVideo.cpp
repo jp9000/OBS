@@ -211,9 +211,15 @@ void SettingsVideo::ApplySettings()
         App->ResizeWindow(false);
 
     if (bDisableAero)
+    {
+        Log(TEXT("Settings::Video: Disabling Aero"));
         DwmEnableComposition(DWM_EC_DISABLECOMPOSITION);
+    }
     else
+    {
+        Log(TEXT("Settings::Video: Enabling Aero"));
         DwmEnableComposition(DWM_EC_ENABLECOMPOSITION);
+    }
 }
 
 void SettingsVideo::CancelSettings()

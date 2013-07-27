@@ -64,7 +64,13 @@ void SettingsEncoding::ApplySettings()
     AppConfig->SetInt(TEXT("Video Encoding"), TEXT("BufferSize"), bufSize);
 
     if(App->GetVideoEncoder() != NULL) {
-        if(App->GetVideoEncoder()->DynamicBitrateSupported())   App->GetVideoEncoder()->SetBitRate(bitrate, bufSize);
+        if(App->GetVideoEncoder()->DynamicBitrateSupported())
+        {
+            int oldBitrate = App->GetVideoEncoder()->GetBitRate();
+            App->GetVideoEncoder()->SetBitRate(bitrate, bufSize);
+            if(oldBitrate != bitrate)
+                Log(FormattedString(TEXT("Settings::Encoding: Changing bitrate from %dkb/s to %dkb/s"), oldBitrate, bitrate));
+        }
     }
 
     String strTemp = GetCBText(GetDlgItem(hwnd, IDC_AUDIOCODEC));
