@@ -319,7 +319,7 @@ bool OBS::SetScene(CTSTR lpScene)
                 }
             }
         }
-		
+
         if(!bTransitioning)
         {
             bTransitioning = true;
