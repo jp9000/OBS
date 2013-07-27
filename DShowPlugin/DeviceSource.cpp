@@ -1015,8 +1015,6 @@ void DeviceSource::EndScene()
     Stop();
 }
 
-bool SourceListHasDevice(CTSTR lpDevice, XElement *sourceList);
-
 void DeviceSource::GlobalSourceLeaveScene()
 {
     if(soundOutputType == 1) {
