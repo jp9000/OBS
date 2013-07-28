@@ -2279,7 +2279,7 @@ void OBS::ResetProfileMenu()
 String OBS::GetApplicationName()
 {
     String name;
-    name << App->GetCurrentProfile() << TEXT(" - ") << OBS_VERSION_STRING;
+    name << OBS_VERSION_STRING << TEXT(" -profile: ") << App->GetCurrentProfile();
     return name;
 }
 
