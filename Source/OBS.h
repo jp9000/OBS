@@ -24,8 +24,11 @@ class SettingsPane;
 
 #define NUM_RENDER_BUFFERS 2
 
-static const int minClientWidth  = 700;
+static const int minClientWidth  = 640;
 static const int minClientHeight = 275;
+
+static const int defaultClientWidth  = 640;
+static const int defaultClientHeight = 553;
 
 enum edges {
     edgeLeft = 0x01,

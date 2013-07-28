@@ -216,8 +216,8 @@ OBS::OBS()
     borderYSize += GetSystemMetrics(SM_CYMENU);
     borderYSize += GetSystemMetrics(SM_CYCAPTION);
 
-    clientWidth  = GlobalConfig->GetInt(TEXT("General"), TEXT("Width"),  700);
-    clientHeight = GlobalConfig->GetInt(TEXT("General"), TEXT("Height"), 553);
+    clientWidth  = GlobalConfig->GetInt(TEXT("General"), TEXT("Width"),  defaultClientWidth);
+    clientHeight = GlobalConfig->GetInt(TEXT("General"), TEXT("Height"), defaultClientHeight);
 
     if(clientWidth < minClientWidth)
         clientWidth = minClientWidth;
