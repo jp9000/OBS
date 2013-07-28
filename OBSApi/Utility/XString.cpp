@@ -19,10 +19,6 @@
 
 #include "XT.h"
 
-#include <time.h>
-
-
-
 //forgive the mess
 
 
@@ -1921,24 +1917,4 @@ INT64 tstoi64(TCHAR *lpInt)
 UINT64 tstoui64(TCHAR *lpInt)
 {
     return (UINT64)tstring_base_to_uint64(lpInt, NULL, 10);
-}
-
-String CurrentTimeString()
-{
-    time_t     now = time(0);
-    struct tm  tstruct;
-    char       buf[80];
-    tstruct = *localtime(&now);
-    strftime(buf, sizeof(buf), "%X", &tstruct);
-    return buf;
-}
-
-String CurrentDateTimeString()
-{
-    time_t     now = time(0);
-    struct tm  tstruct;
-    char       buf[80];
-    tstruct = *localtime(&now);
-    strftime(buf, sizeof(buf), "%Y-%m-%d, %X", &tstruct);
-    return buf;
 }

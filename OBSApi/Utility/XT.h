@@ -33,6 +33,8 @@
 
 #include <typeinfo.h>
 
+#include <time.h>
+
 #if defined(_WIN64) && !defined(C64)
     #define C64
 #endif
@@ -177,6 +179,8 @@ BASE_EXPORT void __cdecl   AppWarning(const TCHAR *format, ...);
 BASE_EXPORT void   STDCALL TraceCrash(const TCHAR *trackName);
 BASE_EXPORT void   STDCALL TraceCrashEnd();
 
+BASE_EXPORT String CurrentTimeString();
+BASE_EXPORT String CurrentDateTimeString();
 
 //-----------------------------------------
 //Base functions

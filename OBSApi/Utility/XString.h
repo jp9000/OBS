@@ -572,7 +572,3 @@ BASE_EXPORT String FloatString(double f);
 BASE_EXPORT int STDCALL GetStringLine(const TCHAR *lpStart, const TCHAR *lpOffset);
 
 BASE_EXPORT String STDCALL GetStringSection(const TCHAR *lpStart, const TCHAR *lpOffset);
-
-
-BASE_EXPORT String CurrentTimeString();
-BASE_EXPORT String CurrentDateTimeString();

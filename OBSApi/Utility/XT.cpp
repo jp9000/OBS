@@ -284,3 +284,22 @@ void __cdecl CrashError(const TCHAR *format, ...)
     CriticalExit();
 }
 
+String CurrentTimeString()
+{
+    time_t     now = time(0);
+    struct tm  tstruct;
+    char       buf[80];
+    tstruct = *localtime(&now);
+    strftime(buf, sizeof(buf), "%X", &tstruct);
+    return buf;
+}
+
+String CurrentDateTimeString()
+{
+    time_t     now = time(0);
+    struct tm  tstruct;
+    char       buf[80];
+    tstruct = *localtime(&now);
+    strftime(buf, sizeof(buf), "%Y-%m-%d, %X", &tstruct);
+    return buf;
+}
