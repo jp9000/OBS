@@ -765,6 +765,9 @@ BOOL   STDCALL OSIncompatiblePatchesLoaded(String &errors)
     //TeamSpeak 3 Overlay (hooks CreateDXGIFactory1 in such a way that it fails when called by OBS)
     //Webroot Secureanywhere (hooks GDI calls and prevents OBS from screen capturing among other issues)
 
+    bool ts3_hook_present = false;
+
+    //Older plugin version hooks DXGI
     HMODULE dxGI = GetModuleHandle(TEXT("DXGI.DLL"));
     if (dxGI)
     {
@@ -780,12 +783,62 @@ BOOL   STDCALL OSIncompatiblePatchesLoaded(String &errors)
                     if (moduleList.HasValue(TEXT("ts3overlay_hook_win32.dll")) ||
                         moduleList.HasValue(TEXT("ts3overlay_hook_win64.dll")))
                     {
-                        errors << TEXT("TeamSpeak 3 overlay has loaded into OBS and will cause problems. Please set \"Disable Loading\" for OBS.EXE in your TeamSpeak 3 overlay settings or visit http://bit.ly/OBSTS3 for help."); 
-                        ret = TRUE;
+                        ts3_hook_present = true;
                     }
                 }
             }
         }
+    }
+
+    //Newer plugin hooks D3D
+    HMODULE d3d = GetModuleHandle(TEXT("d3d10_1.dll"));
+    if (d3d)
+    {
+        FARPROC createDevice = GetProcAddress(d3d, "D3D10CreateDeviceAndSwapChain1");
+        if (createDevice)
+        {
+            if (!IsBadReadPtr(createDevice, 5))
+            {
+                BYTE opCode = *(BYTE *)createDevice;
+
+                if (opCode == 0xE9)
+                {
+                    if (moduleList.HasValue(TEXT("ts3overlay_hook_win32.dll")) ||
+                        moduleList.HasValue(TEXT("ts3overlay_hook_win64.dll")))
+                    {
+                        ts3_hook_present = true;
+                    }
+                }
+            }
+        }
+    }
+
+    d3d = GetModuleHandle(TEXT("d3d11.dll"));
+    if (d3d)
+    {
+        FARPROC createDevice = GetProcAddress(d3d, "D3D11CreateDeviceAndSwapChain");
+        if (createDevice)
+        {
+            if (!IsBadReadPtr(createDevice, 5))
+            {
+                BYTE opCode = *(BYTE *)createDevice;
+
+                if (opCode == 0xE9)
+                {
+                    if (moduleList.HasValue(TEXT("ts3overlay_hook_win32.dll")) ||
+                        moduleList.HasValue(TEXT("ts3overlay_hook_win64.dll")))
+                    {
+                        ts3_hook_present = true;
+                    }
+                }
+            }
+        }
+    }
+
+    if (ts3_hook_present)
+    {
+        errors << TEXT("TeamSpeak 3 overlay has loaded into OBS and will cause crashing and instability. Please set \"Disable Loading\" for OBS.EXE in your TeamSpeak 3 overlay settings or visit http://bit.ly/OBSTS3 for help."); 
+        ret = TRUE;
     }
 
     //I'm just going to make this a warning that pops up when the app starts instead of actually preventing people from using the app
