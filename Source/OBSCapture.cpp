@@ -559,7 +559,7 @@ void OBS::Stop()
 
     if(hMainThread)
     {
-        OSTerminateThread(hMainThread, 20000);
+        OSTerminateThread(hMainThread, 60000);
         hMainThread = NULL;
     }
 

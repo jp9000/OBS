@@ -712,7 +712,12 @@ BOOL   STDCALL OSTerminateThread(HANDLE hThread, DWORD waitMS)
 
     if(WaitForSingleObjectEx(hThread, waitMS, 0) == WAIT_TIMEOUT)
     {
-        Log (TEXT("WARNING: Forcibly terminated a thread after %d ms timeout!"));
+        Log (TEXT("WARNING: Forcibly terminating a thread after %d ms timeout!"), waitMS);
+
+        //force a crash report. if we're terminating threads, something terribly wrong is happening, best
+        //to get a report of that rather than let corruption from thread termination continue to propagate
+        //and cause harder to debug errors.
+        DebugBreak ();
         TerminateThread(hThread, 0);
     }
 
