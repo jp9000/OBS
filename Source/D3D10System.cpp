@@ -163,6 +163,17 @@ D3D10System::D3D10System()
 
     D3D10_FEATURE_LEVEL1 level = bDisableCompatibilityMode ? D3D10_FEATURE_LEVEL_10_1 : D3D10_FEATURE_LEVEL_9_3;
 
+    String adapterName;
+    DXGI_ADAPTER_DESC desc;
+    if (adapter->GetDesc(&desc) == S_OK)
+        adapterName = desc.Description;
+    else
+        adapterName = TEXT("<unknown>");
+
+    adapterName.KillSpaces();
+
+    Log(TEXT("Loading up D3D10 on %s..."), adapterName.Array());
+
     //D3D10_CREATE_DEVICE_DEBUG
     //D3D11_DRIVER_TYPE_REFERENCE, D3D11_DRIVER_TYPE_HARDWARE
     err = D3D10CreateDeviceAndSwapChain1(adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, createFlags, level, D3D10_1_SDK_VERSION, &swapDesc, &swap, &d3d);
@@ -174,14 +185,12 @@ D3D10System::D3D10System()
     }
 
     if(FAILED(err))
-        CrashError(TEXT("Could not create D3D10 device and swap chain.  This error can happen for one of the following reasons:\r\n\r\n1.) Your GPU is not supported (DirectX 10 support is required - many integrated laptop GPUs do not support DX10)\r\n2.) You're running Windows Vista without the \"Platform Update\"\r\n3.) Your video card drivers are out of date"));
+        CrashError(TEXT("Could not initialize DirectX 10 on %s.  This error can happen for one of the following reasons:\r\n\r\n1.) Your GPU is not supported (DirectX 10 is required - note that many integrated laptop GPUs do not support DX10)\r\n2.) You're running Windows Vista without the \"Platform Update\"\r\n3.) Your video card drivers are out of date\r\n\r\nIf you are using a laptop with NVIDIA Optimus or AMD Switchable Graphics, make sure OBS is set to run on the high performance GPU in your driver settings."), adapterName.Array());
 
     adapter->Release();
     factory->Release();
 
     //------------------------------------------------------------------
-
-    Log(TEXT("Loading up D3D10..."));
 
     D3D10_DEPTH_STENCIL_DESC depthDesc;
     zero(&depthDesc, sizeof(depthDesc));
