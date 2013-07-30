@@ -134,6 +134,8 @@ protected:
     int totalTimesWaited;
     int totalBytesWaited;
 
+    bool bFastInitialKeyframe;
+
     void SendLoop();
     void SocketLoop();
     int FlushDataBuffer();

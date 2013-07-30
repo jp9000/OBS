@@ -116,6 +116,8 @@ RTMPPublisher::RTMPPublisher()
     }
     else
         lowLatencyMode = LL_MODE_NONE;
+    
+    bFastInitialKeyframe = AppConfig->GetInt(TEXT("Publish"), TEXT("FastInitialKeyframe"), 0) == 1;
 
     strRTMPErrors.Clear();
 }
@@ -166,6 +168,8 @@ bool RTMPPublisher::Init(RTMP *rtmpIn, UINT tcpBufferSize)
     hDataBufferMutex = OSCreateMutex();
 
     dataBufferSize = (App->GetVideoEncoder()->GetBitRate() + App->GetAudioEncoder()->GetBitRate()) / 8 * 1024;
+    if (dataBufferSize < 131072)
+        dataBufferSize = 131072;
 
     dataBuffer = (BYTE *)Allocate(dataBufferSize);
 
@@ -359,6 +363,7 @@ void RTMPPublisher::InitializeBuffer()
         if (packet.type == PacketType_Audio) {
             if (bFirstAudio) {
                 audioTimeOffset = packet.timestamp;
+                OSDebugOut(TEXT("Set audio offset: %d\n"), audioTimeOffset);
                 bFirstAudio = false;
             }
 
@@ -418,11 +423,11 @@ void RTMPPublisher::ProcessPackets()
 
             DWORD curTime = OSGetTime();
 
-            if (queueDuration >= dropThreshold)
+            if (queueDuration >= dropThreshold + audioTimeOffset)
             {
                 minFramedropTimestsamp = queuedPackets.Last().timestamp;
 
-                OSDebugOut(TEXT("dropped all at %u, threshold is %u, total duration is %u\r\n"), currentBufferSize, dropThreshold, queueDuration);
+                OSDebugOut(TEXT("dropped all at %u, threshold is %u, total duration is %u, %d in queue\r\n"), currentBufferSize, dropThreshold + audioTimeOffset, queueDuration, queuedPackets.Num());
 
                 //what the hell, just flush it all for now as a test and force a keyframe 1 second after
                 while (DoIFrameDelay(false));
@@ -430,9 +435,9 @@ void RTMPPublisher::ProcessPackets()
                 if(packetWaitType > PacketType_VideoLow)
                     RequestKeyframe(1000);
             }
-            else if (queueDuration >= bframeDropThreshold && curTime-lastBFrameDropTime >= dropThreshold)
+            else if (queueDuration >= bframeDropThreshold + audioTimeOffset && curTime-lastBFrameDropTime >= dropThreshold + audioTimeOffset)
             {
-                OSDebugOut(TEXT("dropped b-frames at %u, threshold is %u, total duration is %u\r\n"), currentBufferSize, bframeDropThreshold, queueDuration);
+                OSDebugOut(TEXT("dropped b-frames at %u, threshold is %u, total duration is %u\r\n"), currentBufferSize, bframeDropThreshold + audioTimeOffset, queueDuration);
 
                 while (DoIFrameDelay(true));
 
@@ -447,21 +452,55 @@ void RTMPPublisher::ProcessPackets()
 
 void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)
 {
-    //OSDebugOut (TEXT("%u: SendPacket (%08x)\n"), OSGetTime(), quickHash(data,size));
     if(!bConnected && !bConnecting && !bStopping)
     {
         hConnectionThread = OSCreateThread((XTHREAD)CreateConnectionThread, this);
         bConnecting = true;
     }
 
-    if (bFirstKeyframe)
+    if (bFastInitialKeyframe)
     {
-        if (!bConnected || type != PacketType_VideoHighest)
-            return;
+        if (!bConnected)
+        {
+            //while not connected, keep at most one keyframe buffered
+            if (type != PacketType_VideoHighest)
+                return;
+        
+            bufferedPackets.Clear();
+        }
 
-        firstTimestamp = timestamp;
-        bFirstKeyframe = false;
+        if (bConnected && bFirstKeyframe)
+        {
+            bFirstKeyframe = false;
+            firstTimestamp = timestamp;
+
+            //send out our buffered keyframe immediately, unless this packet happens to also be a keyframe
+            if (type != PacketType_VideoHighest && bufferedPackets.Num() == 1)
+            {
+                TimedPacket packet;
+                mcpy(&packet, &bufferedPackets[0], sizeof(TimedPacket));
+                bufferedPackets.Remove(0);
+                packet.timestamp = 0;
+
+                SendPacketForReal(packet.data.Array(), packet.data.Num(), packet.timestamp, packet.type);
+            }
+            else
+                bufferedPackets.Clear();
+        }
     }
+    else
+    {
+        if (bFirstKeyframe)
+        {
+            if (!bConnected || type != PacketType_VideoHighest)
+                return;
+
+            firstTimestamp = timestamp;
+            bFirstKeyframe = false;
+        }
+    }
+
+    //OSDebugOut (TEXT("%u: SendPacket (%d bytes - %08x @ %u)\n"), OSGetTime(), size, quickHash(data,size), timestamp);
 
     if (bufferedPackets.Num() == MAX_BUFFERED_PACKETS)
     {
@@ -508,7 +547,7 @@ void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketTyp
 
 void RTMPPublisher::SendPacketForReal(BYTE *data, UINT size, DWORD timestamp, PacketType type)
 {
-    //OSDebugOut (TEXT("%u: SendPacketForReal (%08x)\n"), OSGetTime(), quickHash(data,size));
+    //OSDebugOut (TEXT("%u: SendPacketForReal (%d bytes - %08x @ %u, type %d)\n"), OSGetTime(), size, quickHash(data,size), timestamp, type);
     //Log(TEXT("packet| timestamp: %u, type: %u, bytes: %u"), timestamp, (UINT)type, size);
 
     OSEnterMutex(hDataMutex);
