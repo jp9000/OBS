@@ -30,6 +30,12 @@
     <ClCompile Include="rtmp.c">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="md5.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="cencode.c">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="amf.h">
@@ -60,6 +66,12 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="stdint.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="md5.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="cencode.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>

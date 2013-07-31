@@ -305,7 +305,13 @@ RTMPPublisher::~RTMPPublisher()
         CloseHandle(hWriteEvent);
 
     if(rtmp)
+    {
+        if (rtmp->Link.pubUser.av_val)
+            Free(rtmp->Link.pubUser.av_val);
+        if (rtmp->Link.pubPasswd.av_val)
+            Free(rtmp->Link.pubPasswd.av_val);
         RTMP_Free(rtmp);
+    }
 
     //--------------------------
 
@@ -859,6 +865,21 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     {
         failReason = Str("Connection.CouldNotParseURL");
         goto end;
+    }
+
+    char *rtmpUser = AppConfig->GetString(TEXT("Publish"), TEXT("Username")).CreateUTF8String();
+    char *rtmpPass = AppConfig->GetString(TEXT("Publish"), TEXT("Password")).CreateUTF8String();
+
+    if (rtmpUser)
+    {
+        rtmp->Link.pubUser.av_val = rtmpUser;
+        rtmp->Link.pubUser.av_len = strlen(rtmpUser);
+    }
+
+    if (rtmpPass)
+    {
+        rtmp->Link.pubPasswd.av_val = rtmpPass;
+        rtmp->Link.pubPasswd.av_len = strlen(rtmpPass);
     }
 
     RTMP_EnableWrite(rtmp); //set it to publish

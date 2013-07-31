@@ -118,6 +118,7 @@ static int SendFCSubscribe(RTMP *r, AVal *subscribepath);
 static int SendPlay(RTMP *r);
 static int SendBytesReceived(RTMP *r);
 static int SendUsherToken(RTMP *r, AVal *usherToken);
+static int SendFCUnpublish(RTMP *r);
 
 #if 0				/* unused */
 static int SendBGHasStream(RTMP *r, double dId, AVal *playpath);
@@ -2702,7 +2703,7 @@ AV_clear(RTMP_METHOD *vals, int num)
 }
 
 
-#ifdef CRYPTO
+#if defined(CRYPTO) || defined(USE_ONLY_MD5)
 static int
 b64enc(const unsigned char *input, int length, char *output, int maxsize)
 {
@@ -2726,6 +2727,13 @@ b64enc(const unsigned char *input, int length, char *output, int maxsize)
         RTMP_Log(RTMP_LOGDEBUG, "%s, error", __FUNCTION__);
         return 0;
     }
+#elif defined(USE_ONLY_MD5)
+    base64_encodestate state;
+
+    base64_init_encodestate(&state);
+    output += base64_encode_block((const char *)input, length, output, &state);
+    base64_encode_blockend(output, &state);
+
 #else   /* USE_OPENSSL */
     BIO *bmem, *b64;
     BUF_MEM *bptr;
@@ -3058,7 +3066,7 @@ PublisherAuth(RTMP *r, AVal *description)
             MD5_Init(&md5ctx);
             MD5_Update(&md5ctx, user.av_val, user.av_len);
             MD5_Update(&md5ctx, ":", 1);
-            MD5_Update(&md5ctx, realm, sizeof(realm)-1);
+            MD5_Update(&md5ctx, (void *)realm, sizeof(realm)-1);
             MD5_Update(&md5ctx, ":", 1);
             MD5_Update(&md5ctx, r->Link.pubPasswd.av_val, r->Link.pubPasswd.av_len);
             MD5_Final(md5sum_val, &md5ctx);
@@ -3075,7 +3083,7 @@ PublisherAuth(RTMP *r, AVal *description)
                 apptmp.av_len = ptr - apptmp.av_val;
 
             MD5_Init(&md5ctx);
-            MD5_Update(&md5ctx, method, sizeof(method)-1);
+            MD5_Update(&md5ctx, (void *)method, sizeof(method)-1);
             MD5_Update(&md5ctx, ":/", 2);
             MD5_Update(&md5ctx, apptmp.av_val, apptmp.av_len);
             MD5_Final(md5sum_val, &md5ctx);
@@ -3094,7 +3102,7 @@ PublisherAuth(RTMP *r, AVal *description)
             MD5_Update(&md5ctx, ":", 1);
             MD5_Update(&md5ctx, cnonce, sizeof(cnonce)-1);
             MD5_Update(&md5ctx, ":", 1);
-            MD5_Update(&md5ctx, qop, sizeof(qop)-1);
+            MD5_Update(&md5ctx, (void *)qop, sizeof(qop)-1);
             MD5_Update(&md5ctx, ":", 1);
             MD5_Update(&md5ctx, hash2, HEXHASH_LEN);
             MD5_Final(md5sum_val, &md5ctx);
@@ -3345,7 +3353,7 @@ HandleInvoke(RTMP *r, const char *body, unsigned int nBodySize)
     }
     else if (AVMATCH(&method, &av__error))
     {
-#ifdef CRYPTO
+#if defined(CRYPTO) || defined(USE_ONLY_MD5)
         AVal methodInvoked = {0};
         int i;
 
@@ -3396,7 +3404,7 @@ HandleInvoke(RTMP *r, const char *body, unsigned int nBodySize)
     {
         RTMP_Log(RTMP_LOGERROR, "rtmp server requested close");
         RTMP_Close(r);
-#ifdef CRYPTO
+#if defined(CRYPTO) || defined(USE_ONLY_MD5)
         if ((r->Link.protocol & RTMP_FEATURE_WRITE) &&
                 !(r->Link.pFlags & RTMP_PUB_CLEAN) &&
                 (  !(r->Link.pFlags & RTMP_PUB_NAME) ||
@@ -4517,7 +4525,7 @@ RTMP_Close(RTMP *r)
         r->Link.lFlags ^= RTMP_LF_FTCU;
     }
 
-#ifdef CRYPTO
+#if defined(CRYPTO) || defined(USE_ONLY_MD5)
     if (!(r->Link.protocol & RTMP_FEATURE_WRITE) || (r->Link.pFlags & RTMP_PUB_CLEAN))
     {
         free(r->Link.playpath0.av_val);
@@ -4532,6 +4540,7 @@ RTMP_Close(RTMP *r)
         free(r->Link.tcUrl.av_val);
         r->Link.tcUrl.av_val = NULL;
     }
+#elif defined(CRYPTO)
     if (r->Link.dh)
     {
         MDH_free(r->Link.dh);

@@ -96,7 +96,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBRTMP_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_ONLY_MD5;WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBRTMP_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -134,7 +134,7 @@
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;LIBRTMP_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_ONLY_MD5;WIN32;NDEBUG;_WINDOWS;_USRDLL;LIBRTMP_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>
@@ -167,19 +167,23 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="amf.c" />
+    <ClCompile Include="cencode.c" />
     <ClCompile Include="hashswf.c" />
     <ClCompile Include="log.c" />
+    <ClCompile Include="md5.c" />
     <ClCompile Include="parseurl.c" />
     <ClCompile Include="rtmp.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="amf.h" />
     <ClInclude Include="bytes.h" />
+    <ClInclude Include="cencode.h" />
     <ClInclude Include="dh.h" />
     <ClInclude Include="dhgroups.h" />
     <ClInclude Include="handshake.h" />
     <ClInclude Include="http.h" />
     <ClInclude Include="log.h" />
+    <ClInclude Include="md5.h" />
     <ClInclude Include="rtmp.h" />
     <ClInclude Include="rtmp_sys.h" />
     <ClInclude Include="stdint.h" />
