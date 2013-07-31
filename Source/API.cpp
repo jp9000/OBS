@@ -231,10 +231,14 @@ bool OBS::SetScene(CTSTR lpScene)
         return false;
     }
 
+    DWORD sceneChangeStartTime;
+
     if(bRunning)
     {
         Log(TEXT("++++++++++++++++++++++++++++++++++++++++++++++++++++++"));
         Log(TEXT("  New Scene"));
+
+        sceneChangeStartTime = OSGetTime();
     }
 
     XElement *sceneData = newSceneElement->GetElement(TEXT("data"));
@@ -329,6 +333,10 @@ bool OBS::SetScene(CTSTR lpScene)
         OSLeaveMutex(hSceneMutex);
 
         delete previousScene;
+
+        DWORD sceneChangeTime = OSGetTime() - sceneChangeStartTime;
+        if (sceneChangeTime >= 500)
+            Log(TEXT("PERFORMANCE WARNING: Scene change took %u ms, maybe some sources should be global sources?"));
     }
 
     if(API != NULL)
