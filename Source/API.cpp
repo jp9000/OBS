@@ -336,7 +336,7 @@ bool OBS::SetScene(CTSTR lpScene)
 
         DWORD sceneChangeTime = OSGetTime() - sceneChangeStartTime;
         if (sceneChangeTime >= 500)
-            Log(TEXT("PERFORMANCE WARNING: Scene change took %u ms, maybe some sources should be global sources?"));
+            Log(TEXT("PERFORMANCE WARNING: Scene change took %u ms, maybe some sources should be global sources?"), sceneChangeTime);
     }
 
     if(API != NULL)
