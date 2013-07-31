@@ -110,6 +110,7 @@ typedef TCHAR               *TSTR;
 typedef const TCHAR         *CTSTR;
 
 typedef void                VOID,*LPVOID,*HANDLE;
+typedef const void          *LPCVOID;
 
 
 #define HIWORD(l)  ((WORD)((l) >> 16))

@@ -108,7 +108,7 @@ public:
         file.Close();
     }
 
-    void Serialize(LPVOID lpData, DWORD length)
+    void Serialize(LPCVOID lpData, DWORD length)
     {
         assert(lpData);
 
@@ -202,7 +202,7 @@ public:
         Free(Buffer);
     }
 
-    void Serialize(LPVOID lpData, DWORD length)
+    void Serialize(LPCVOID lpData, DWORD length)
     {
         assert(lpData);
 

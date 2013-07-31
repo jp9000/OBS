@@ -1063,7 +1063,7 @@ public:
 
     BOOL IsLoading() {return FALSE;}
 
-    void Serialize(LPVOID lpData, DWORD length)
+    void Serialize(LPCVOID lpData, DWORD length)
     {
         assert(lpData);
         assert(length);

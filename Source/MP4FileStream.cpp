@@ -103,15 +103,15 @@ class MP4FileStream : public VideoFileStream
 
     void PushBox(BufferOutputSerializer &output, DWORD boxName)
     {
-        boxOffsets.Insert(0, endBuffer.Num());
+        boxOffsets.Insert(0, (UINT)output.GetPos());
 
         output.OutputDword(0);
         output.OutputDword(boxName);
     }
 
-    void PopBox()
+    void PopBox(BufferOutputSerializer &output)
     {
-        DWORD boxSize = endBuffer.Num()-boxOffsets[0];
+        DWORD boxSize = (DWORD)output.GetPos()-boxOffsets[0];
         *(DWORD*)(endBuffer.Array()+boxOffsets[0]) = fastHtonl(boxSize);
 
         boxOffsets.Remove(0);
@@ -296,6 +296,9 @@ public:
 
         BufferOutputSerializer output(endBuffer);
 
+        //set a reasonable initial buffer size
+        endBuffer.SetSize((videoFrames.Num() + audioFrames.Num() * 4) + 131072);
+
         UINT64 audioFrameSize = App->GetAudioEncoder()->GetFrameSize();
 
         DWORD macTime = fastHtonl(DWORD(GetMacTime()));
@@ -307,7 +310,7 @@ public:
         LPCSTR lpVideoTrack = "Video Media Handler";
         LPCSTR lpAudioTrack = "Sound Media Handler";
 
-        char videoCompressionName[31] = "AVC Coding";
+        const char videoCompressionName[31] = "AVC Coding";
 
         //-------------------------------------------
         // get video headers
@@ -413,7 +416,7 @@ public:
             output.OutputDword(0); //selection(?) duration (time base units)
             output.OutputDword(0); //current time (0, time base units)
             output.OutputDword(DWORD_BE(3)); //next free track id (1-based rather than 0-based)
-          PopBox(); //mvhd
+          PopBox(output); //mvhd
 
           //------------------------------------------------------
           // audio track
@@ -435,7 +438,7 @@ public:
               output.OutputDword(DWORD_BE(0x00000000)); output.OutputDword(DWORD_BE(0x00000000)); output.OutputDword(DWORD_BE(0x40000000)); //window matrix row 3 (0.0, 0.0, 16384.0)
               output.OutputDword(0); //width (fixed point)
               output.OutputDword(0); //height (fixed point)
-            PopBox(); //tkhd
+            PopBox(output); //tkhd
             /*PushBox(output, DWORD_BE('edts'));
               PushBox(output, DWORD_BE('elst'));
                 output.OutputDword(0); //version and flags (none)
@@ -453,7 +456,7 @@ public:
                 output.OutputDword(DWORD_BE(44100)); //time scale
                 output.OutputDword(audioUnitDuration);
                 output.OutputDword(bMP3 ? DWORD_BE(0x55c40000) : DWORD_BE(0x15c70000));
-              PopBox(); //mdhd
+              PopBox(output); //mdhd
               PushBox(output, DWORD_BE('hdlr'));
                 output.OutputDword(0); //version and flags (none)
                 output.OutputDword(0); //quicktime type (none)
@@ -462,21 +465,21 @@ public:
                 output.OutputDword(0); //quicktime component reserved flags
                 output.OutputDword(0); //quicktime component reserved mask
                 output.Serialize((LPVOID)lpAudioTrack, (DWORD)strlen(lpAudioTrack)+1); //track name
-              PopBox(); //hdlr
+              PopBox(output); //hdlr
               PushBox(output, DWORD_BE('minf'));
                 PushBox(output, DWORD_BE('smhd'));
                   output.OutputDword(0); //version and flags (none)
                   output.OutputDword(0); //balance (fixed point)
-                PopBox(); //vdhd
+                PopBox(output); //vdhd
                 PushBox(output, DWORD_BE('dinf'));
                   PushBox(output, DWORD_BE('dref'));
                     output.OutputDword(0); //version and flags (none)
                     output.OutputDword(DWORD_BE(1)); //count
                     PushBox(output, DWORD_BE('url '));
                       output.OutputDword(DWORD_BE(0x00000001)); //version (0) and flags (1)
-                    PopBox(); //url
-                  PopBox(); //dref
-                PopBox(); //dinf
+                    PopBox(output); //url
+                  PopBox(output); //dref
+                PopBox(output); //dinf
                 PushBox(output, DWORD_BE('stbl'));
                   PushBox(output, DWORD_BE('stsd'));
                     output.OutputDword(0); //version and flags (none)
@@ -501,9 +504,9 @@ public:
                         output.OutputByte(0x80);*/
                         output.OutputByte(esDescriptor.Num());
                         output.Serialize((LPVOID)esDescriptor.Array(), esDescriptor.Num());
-                      PopBox();
-                    PopBox();
-                  PopBox(); //stsd
+                      PopBox(output);
+                    PopBox(output);
+                  PopBox(output); //stsd
                   PushBox(output, DWORD_BE('stts')); //list of keyframe (i-frame) IDs
                     output.OutputDword(0); //version and flags (none)
                     output.OutputDword(fastHtonl(audioDecodeTimes.Num()));
@@ -512,7 +515,7 @@ public:
                         output.OutputDword(fastHtonl(audioDecodeTimes[i].count));
                         output.OutputDword(fastHtonl(audioDecodeTimes[i].val));
                     }
-                  PopBox(); //stss
+                  PopBox(output); //stss
                   PushBox(output, DWORD_BE('stsc')); //sample to chunk list
                     output.OutputDword(0); //version and flags (none)
                     output.OutputDword(fastHtonl(audioSampleToChunk.Num()));
@@ -523,7 +526,7 @@ public:
                         output.OutputDword(fastHtonl(stc.samplesPerChunk));
                         output.OutputDword(DWORD_BE(1));
                     }
-                  PopBox(); //stsc
+                  PopBox(output); //stsc
 
                   //SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 30, 0);
                   //ProcessEvents();
@@ -534,7 +537,7 @@ public:
                     output.OutputDword(fastHtonl(audioFrames.Num()));
                     for(UINT i=0; i<audioFrames.Num(); i++)
                         output.OutputDword(fastHtonl(audioFrames[i].size));
-                  PopBox();
+                  PopBox(output);
 
                   //SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 40, 0);
                   //ProcessEvents();
@@ -546,7 +549,7 @@ public:
                       output.OutputDword(fastHtonl(audioChunks.Num()));
                       for(UINT i=0; i<audioChunks.Num(); i++)
                           output.OutputQword(fastHtonll(audioChunks[i]));
-                      PopBox(); //co64
+                      PopBox(output); //co64
                   }
                   else
                   {
@@ -555,12 +558,12 @@ public:
                         output.OutputDword(fastHtonl(audioChunks.Num()));
                         for(UINT i=0; i<audioChunks.Num(); i++)
                             output.OutputDword(fastHtonl((DWORD)audioChunks[i]));
-                      PopBox(); //stco
+                      PopBox(output); //stco
                   }
-                PopBox(); //stbl
-              PopBox(); //minf
-            PopBox(); //mdia
-          PopBox(); //trak
+                PopBox(output); //stbl
+              PopBox(output); //minf
+            PopBox(output); //mdia
+          PopBox(output); //trak
 
           //SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 50, 0);
           //ProcessEvents();
@@ -585,7 +588,7 @@ public:
               output.OutputDword(DWORD_BE(0x00000000)); output.OutputDword(DWORD_BE(0x00000000)); output.OutputDword(DWORD_BE(0x40000000)); //window matrix row 3 (0.0, 0.0, 16384.0)
               output.OutputDword(fastHtonl(width<<16));  //width (fixed point)
               output.OutputDword(fastHtonl(height<<16)); //height (fixed point)
-            PopBox(); //tkhd
+            PopBox(output); //tkhd
             /*PushBox(output, DWORD_BE('edts'));
               PushBox(output, DWORD_BE('elst'));
                 output.OutputDword(0); //version and flags (none)
@@ -603,7 +606,7 @@ public:
                 output.OutputDword(DWORD_BE(1000)); //time scale
                 output.OutputDword(videoDuration);
                 output.OutputDword(DWORD_BE(0x55c40000));
-              PopBox(); //mdhd
+              PopBox(output); //mdhd
               PushBox(output, DWORD_BE('hdlr'));
                 output.OutputDword(0); //version and flags (none)
                 output.OutputDword(0); //quicktime type (none)
@@ -612,7 +615,7 @@ public:
                 output.OutputDword(0); //quicktime component reserved flags
                 output.OutputDword(0); //quicktime component reserved mask
                 output.Serialize((LPVOID)lpVideoTrack, (DWORD)strlen(lpVideoTrack)+1); //track name
-              PopBox(); //hdlr
+              PopBox(output); //hdlr
               PushBox(output, DWORD_BE('minf'));
                 PushBox(output, DWORD_BE('vmhd'));
                   output.OutputDword(DWORD_BE(0x00000001)); //version (0) and flags (1)
@@ -620,16 +623,16 @@ public:
                   output.OutputWord(0); //quickdraw red value
                   output.OutputWord(0); //quickdraw green value
                   output.OutputWord(0); //quickdraw blue value
-                PopBox(); //vdhd
+                PopBox(output); //vdhd
                 PushBox(output, DWORD_BE('dinf'));
                   PushBox(output, DWORD_BE('dref'));
                     output.OutputDword(0); //version and flags (none)
                     output.OutputDword(DWORD_BE(1)); //count
                     PushBox(output, DWORD_BE('url '));
                       output.OutputDword(DWORD_BE(0x00000001)); //version (0) and flags (1)
-                    PopBox(); //url
-                  PopBox(); //dref
-                PopBox(); //dinf
+                    PopBox(output); //url
+                  PopBox(output); //dref
+                PopBox(output); //dinf
                 PushBox(output, DWORD_BE('stbl'));
                   PushBox(output, DWORD_BE('stsd'));
                     output.OutputDword(0); //version and flags (none)
@@ -665,9 +668,9 @@ public:
                         output.OutputByte(1); //pps count
                         output.OutputWord(fastHtons(PPS.Num())); //pps size
                         output.Serialize(PPS.Array(), PPS.Num()); //pps data
-                      PopBox(); //avcC
-                    PopBox(); //avc1
-                  PopBox(); //stsd
+                      PopBox(output); //avcC
+                    PopBox(output); //avc1
+                  PopBox(output); //stsd
                   PushBox(output, DWORD_BE('stts')); //frame times
                     output.OutputDword(0); //version and flags (none)
                     output.OutputDword(fastHtonl(videoDecodeTimes.Num()));
@@ -676,7 +679,7 @@ public:
                         output.OutputDword(fastHtonl(videoDecodeTimes[i].count));
                         output.OutputDword(fastHtonl(videoDecodeTimes[i].val));
                     }
-                  PopBox(); //stts
+                  PopBox(output); //stts
 
                   //SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 60, 0);
                   //ProcessEvents();
@@ -687,7 +690,7 @@ public:
                         output.OutputDword(0); //version and flags (none)
                         output.OutputDword(fastHtonl(IFrameIDs.Num()));
                         output.Serialize(IFrameIDs.Array(), IFrameIDs.Num()*sizeof(UINT));
-                      PopBox(); //stss
+                      PopBox(output); //stss
                   }
                   PushBox(output, DWORD_BE('ctts')); //list of composition time offsets
                     output.OutputDword(0); //version (0) and flags (none)
@@ -699,7 +702,7 @@ public:
                         output.OutputDword(fastHtonl(compositionOffsets[i].count));
                         output.OutputDword(fastHtonl(compositionOffsets[i].val));
                     }
-                  PopBox(); //ctts
+                  PopBox(output); //ctts
 
                   //SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 70, 0);
                   //ProcessEvents();
@@ -714,14 +717,14 @@ public:
                         output.OutputDword(fastHtonl(stc.samplesPerChunk));
                         output.OutputDword(DWORD_BE(1));
                     }
-                  PopBox(); //stsc
+                  PopBox(output); //stsc
                   PushBox(output, DWORD_BE('stsz')); //sample sizes
                     output.OutputDword(0); //version and flags (none)
                     output.OutputDword(0); //block size for all (0 if differing sizes)
                     output.OutputDword(fastHtonl(videoFrames.Num()));
                     for(UINT i=0; i<videoFrames.Num(); i++)
                         output.OutputDword(fastHtonl(videoFrames[i].size));
-                  PopBox();
+                  PopBox(output);
 
                   if(videoChunks.Num() && videoChunks.Last() > 0xFFFFFFFFLL)
                   {
@@ -730,7 +733,7 @@ public:
                       output.OutputDword(fastHtonl(videoChunks.Num()));
                       for(UINT i=0; i<videoChunks.Num(); i++)
                           output.OutputQword(fastHtonll(videoChunks[i]));
-                      PopBox(); //co64
+                      PopBox(output); //co64
                   }
                   else
                   {
@@ -739,12 +742,12 @@ public:
                         output.OutputDword(fastHtonl(videoChunks.Num()));
                         for(UINT i=0; i<videoChunks.Num(); i++)
                             output.OutputDword(fastHtonl((DWORD)videoChunks[i]));
-                      PopBox(); //stco
+                      PopBox(output); //stco
                   }
-                PopBox(); //stbl
-              PopBox(); //minf
-            PopBox(); //mdia
-          PopBox(); //trak
+                PopBox(output); //stbl
+              PopBox(output); //minf
+            PopBox(output); //mdia
+          PopBox(output); //trak
 
           //SendMessage(GetDlgItem(hwndProgressDialog, IDC_PROGRESS1), PBM_SETPOS, 80, 0);
           //ProcessEvents();
@@ -762,7 +765,7 @@ public:
                 output.OutputDword(0); //quicktime component reserved flag
                 output.OutputDword(0); //quicktime component reserved flag mask
                 output.OutputByte(0); //null string
-              PopBox(); //hdlr
+              PopBox(output); //hdlr
               PushBox(output, DWORD_BE('ilst'));
                 PushBox(output, DWORD_BE('\xa9too'));
                   PushBox(output, DWORD_BE('data'));
@@ -770,15 +773,15 @@ public:
                     output.OutputDword(0); //reserved
                     LPSTR lpVersion = OBS_VERSION_STRING_ANSI;
                     output.Serialize(lpVersion, (DWORD)strlen(lpVersion));
-                  PopBox(); //data
-                PopBox(); //@too
-              PopBox(); //ilst
-            PopBox(); //meta
-          PopBox(); //udta
+                  PopBox(output); //data
+                PopBox(output); //@too
+              PopBox(output); //ilst
+            PopBox(output); //meta
+          PopBox(output); //udta
 
-        PopBox(); //moov
+        PopBox(output); //moov
 
-        fileOut.Serialize(endBuffer.Array(), endBuffer.Num());
+        fileOut.Serialize(endBuffer.Array(), (DWORD)output.GetPos());
         fileOut.Close();
 
         XFile file;

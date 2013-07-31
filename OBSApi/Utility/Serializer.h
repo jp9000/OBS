@@ -32,7 +32,7 @@ public:
 
     virtual BOOL IsLoading()=0;
 
-    virtual void Serialize(LPVOID lpData, DWORD length)=0;
+    virtual void Serialize(LPCVOID lpData, DWORD length)=0;
 
     virtual UINT64 Seek(INT64 offset, DWORD seekType=SERIALIZE_SEEK_START)=0;
 
