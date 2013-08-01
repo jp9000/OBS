@@ -297,7 +297,7 @@ public:
         BufferOutputSerializer output(endBuffer);
 
         //set a reasonable initial buffer size
-        endBuffer.SetSize((videoFrames.Num() + audioFrames.Num() * 4) + 131072);
+        endBuffer.SetSize((videoFrames.Num() + audioFrames.Num()) * 20 + 131072);
 
         UINT64 audioFrameSize = App->GetAudioEncoder()->GetFrameSize();
 
