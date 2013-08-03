@@ -353,7 +353,7 @@ void OBS::MainCaptureLoop()
 
     bufferedTimes.Clear();
     ctsOffsets.Clear();
-    int bufferedFrames = 1; //to avoid constantly polling number of frames
+    bool bufferedFrames = true; //to avoid constantly polling number of frames
 
 #ifdef USE_100NS_TIME
     QWORD streamTimeStart = GetQPCTime100NS();
@@ -963,7 +963,7 @@ void OBS::MainCaptureLoop()
                         }
 
                         if (bShutdownMainThread)
-                            bufferedFrames = videoEncoder->GetBufferedFrames ();
+                            bufferedFrames = videoEncoder->HasBufferedFrames();
                     }
 
                     if(bUsing444)

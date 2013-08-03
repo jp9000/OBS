@@ -577,6 +577,11 @@ public:
     {
         return x264_encoder_delayed_frames(x264);
     }
+
+    virtual bool HasBufferedFrames()
+    {
+        return x264_encoder_delayed_frames(x264) > 0;
+    }
 };
 
 
