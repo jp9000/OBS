@@ -1002,6 +1002,8 @@ void OBS::MainCaptureLoop()
                             break;
                         }
 
+                        message << TEXT(" This error can also occur if you have enabled opencl in x264 custom settings.");
+
                         CrashError (TEXT("Texture->Map failed: 0x%08x 0x%08x\r\n\r\n%s"), result, reason, message.Array());
                     }
                     else
