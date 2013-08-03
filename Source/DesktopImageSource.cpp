@@ -192,7 +192,7 @@ public:
 
                                 UINT width, height;
                                 LPBYTE lpData = GetCursorData(hIcon, ii, width, height);
-                                if(lpData && widrh && height)
+                                if(lpData && width && height)
                                 {
                                     cursorTexture = CreateTexture(width, height, GS_BGRA, lpData, FALSE);
                                     if(cursorTexture)
