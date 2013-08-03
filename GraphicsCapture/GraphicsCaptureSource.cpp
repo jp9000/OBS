@@ -653,7 +653,7 @@ void GraphicsCaptureSource::Render(const Vect2 &pos, const Vect2 &size)
 
                                 UINT width, height;
                                 LPBYTE lpData = GetCursorData(hIcon, ii, width, height);
-                                if(lpData)
+                                if(lpData && width && height)
                                 {
                                     cursorTexture = CreateTexture(width, height, GS_BGRA, lpData, FALSE);
                                     if(cursorTexture)
