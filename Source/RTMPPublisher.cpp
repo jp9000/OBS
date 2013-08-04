@@ -873,13 +873,13 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     if (rtmpUser)
     {
         rtmp->Link.pubUser.av_val = rtmpUser;
-        rtmp->Link.pubUser.av_len = strlen(rtmpUser);
+        rtmp->Link.pubUser.av_len = (int)strlen(rtmpUser);
     }
 
     if (rtmpPass)
     {
         rtmp->Link.pubPasswd.av_val = rtmpPass;
-        rtmp->Link.pubPasswd.av_len = strlen(rtmpPass);
+        rtmp->Link.pubPasswd.av_len = (int)strlen(rtmpPass);
     }
 
     RTMP_EnableWrite(rtmp); //set it to publish
