@@ -64,6 +64,7 @@
 #define IDC_AUDIOBITRATE                1019
 #define IDC_MONITOR                     1019
 #define IDC_BASETHRESHOLD_EDIT          1020
+#define IDC_KEYFRAMEINTERVAL_EDIT       1020
 #define IDC_BASETHRESHOLD               1021
 #define IDC_BLEND_EDIT                  1022
 #define IDC_BLEND                       1023
@@ -162,6 +163,7 @@
 #define IDC_MICBOOST                    1079
 #define IDC_TEXTSIZE                    1079
 #define IDC_AUDIOTIMEADJUST             1079
+#define IDC_KEYFRAMEINTERVAL            1079
 #define IDC_AUTORECONNECT_TIMEOUT_STATIC 1080
 #define IDC_TEXTOPACITY_EDIT            1080
 #define IDC_PTTDELAY_EDIT               1080

@@ -217,11 +217,13 @@ public:
             paramData.rc.f_rf_constant  = baseCRF+float(10-quality);
         }
 
+        UINT keyframeInterval = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 6);
+
         paramData.b_vfr_input           = !bUseCFR;
         paramData.i_width               = width;
         paramData.i_height              = height;
-        paramData.vui.b_fullrange       = 0;          //specify full range input levels
-        //paramData.i_keyint_max          = fps*4;      //keyframe every 4 sec, should make this an option
+        paramData.vui.b_fullrange       = 0;
+        paramData.i_keyint_max          = fps*keyframeInterval;
 
         paramData.i_fps_num             = fps;
         paramData.i_fps_den             = 1;
