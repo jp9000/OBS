@@ -384,11 +384,13 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
                     logOutput << CurrentTimeString() << "(half life scientist) everything..  seems to be in order" << endl;
 
                     MSG msg;
-                    while (MsgWaitForMultipleObjects(1, &dummyEvent, FALSE, 3000, QS_ALLPOSTMESSAGE) != WAIT_ABANDONED_0) {
+                    while (MsgWaitForMultipleObjects(1, &dummyEvent, FALSE, 3000, QS_ALLINPUT) != WAIT_ABANDONED_0) {
                     //while (GetMessageTimeout(msg, 3000)) {
                         AttemptToHookSomething();
-                        TranslateMessage(&msg);
-                        DispatchMessage(&msg);
+                        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+                            TranslateMessage(&msg);
+                            DispatchMessage(&msg);
+                        }
                     }
 
                     CloseHandle(textureMutexes[1]);
