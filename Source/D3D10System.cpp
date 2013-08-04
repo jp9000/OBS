@@ -63,6 +63,16 @@ void GetDisplayDevices(DeviceOutputs &deviceList)
                                 MonitorInfo &monitorInfo = *deviceData.monitors.CreateNew();
                                 monitorInfo.hMonitor = outputDesc.Monitor;
                                 mcpy(&monitorInfo.rect, &outputDesc.DesktopCoordinates, sizeof(RECT));
+                                switch (outputDesc.Rotation) {
+                                case DXGI_MODE_ROTATION_ROTATE90:
+                                    monitorInfo.rotationDegrees = 90.0f;
+                                    break;
+                                case DXGI_MODE_ROTATION_ROTATE180:
+                                    monitorInfo.rotationDegrees = 180.0f;
+                                    break;
+                                case DXGI_MODE_ROTATION_ROTATE270:
+                                    monitorInfo.rotationDegrees = 270.0f;
+                                }
                             }
                         }
 
@@ -791,6 +801,11 @@ void D3D10System::SetCropping(float left, float top, float right, float bottom)
 
 void D3D10System::DrawSpriteEx(Texture *texture, DWORD color, float x, float y, float x2, float y2, float u, float v, float u2, float v2)
 {
+    DrawSpriteExRotate(texture, color, x, y, x2, y2, u, v, u2, v2, 0.0f);
+}
+
+void D3D10System::DrawSpriteExRotate(Texture *texture, DWORD color, float x, float y, float x2, float y2, float u, float v, float u2, float v2, float degrees)
+{
     if(!curPixelShader)
         return; 
 
@@ -858,6 +873,23 @@ void D3D10System::DrawSpriteEx(Texture *texture, DWORD color, float x, float y, 
     coords[1].Set(u,  v2);
     coords[2].Set(u2, v);
     coords[3].Set(u2, v2);
+
+    if (!CloseFloat(degrees, 0.0f)) {
+        Matrix rotMatrix;
+        rotMatrix.SetIdentity();
+        rotMatrix.Rotate(AxisAngle(0.0f, 0.0f, 1.0f, -RAD(degrees)));
+
+        Vect2 minVal = Vect2(0.0f, 0.0f);
+        for (int i = 0; i < 4; i++) {
+            Vect val = Vect(coords[i]);
+            val.TransformVector(rotMatrix);
+            coords[i] = val;
+            minVal.ClampMax(coords[i]);
+        }
+
+        for (int i = 0; i < 4; i++)
+            coords[i] -= minVal;
+    }
 
     spriteVertexBuffer->FlushBuffers();
 

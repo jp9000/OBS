@@ -50,6 +50,8 @@ class DesktopImageSource : public ImageSource
     UINT     opacity;
     int      gamma;
 
+    float    rotateDegrees;
+
     //-------------------------
     // stuff for compatibility mode
     bool     bCompatibilityMode;
@@ -480,10 +482,10 @@ public:
                     ulCoord.x, ulCoord.y,
                     lrCoord.x, lrCoord.y);
             else
-                DrawSpriteEx(lastRendered, (opacity255<<24) | 0xFFFFFF,
+                GS->DrawSpriteExRotate(lastRendered, (opacity255<<24) | 0xFFFFFF,
                     pos.x, pos.y, pos.x+size.x, pos.y+size.y,
                     ulCoord.x, ulCoord.y,
-                    lrCoord.x, lrCoord.y);
+                    lrCoord.x, lrCoord.y, rotateDegrees);
 
             if(bUsePointFiltering) delete(sampler);
 
@@ -600,8 +602,13 @@ public:
             const MonitorInfo &monitorInfo = App->GetMonitor(monitor);
             mcpy(&monitorData, &monitorInfo, sizeof(monitorInfo));
 
+            rotateDegrees = 0.0f;
+
             if(captureType == 0 && OSGetVersion() >= 8)
             {
+                LONG monitorWidth  = monitorInfo.rect.right-monitorInfo.rect.left;
+                LONG monitorHeight = monitorInfo.rect.bottom-monitorInfo.rect.top;
+
                 DeviceOutputs outputs;
                 GetDisplayDevices(outputs);
 
@@ -613,6 +620,7 @@ public:
                         if(outputs.devices[0].monitors[j].hMonitor == info.hMonitor)
                         {
                             deviceOutputID = j;
+                            rotateDegrees = outputs.devices[0].monitors[j].rotationDegrees;
                             bWindows8MonitorCapture = true;
                         }
                     }

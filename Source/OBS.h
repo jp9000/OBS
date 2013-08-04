@@ -198,6 +198,7 @@ struct MonitorInfo
 
     HMONITOR hMonitor;
     RECT rect;
+    float rotationDegrees;
 };
 
 struct DeviceOutputData
