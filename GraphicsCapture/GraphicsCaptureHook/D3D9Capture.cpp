@@ -717,9 +717,10 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
             //fix for when backbuffers aren't actually being properly used, instead get the
             //size/format of the actual current render target at time of present
             IDirect3DSurface9 *backBuffer = NULL;
-            if (FAILED(hErr = device->GetRenderTarget(0, &backBuffer))) {
+            if (SUCCEEDED(hErr = device->GetRenderTarget(0, &backBuffer))) {
                 D3DSURFACE_DESC sd;
                 ZeroMemory(&sd, sizeof(sd));
+
                 if (SUCCEEDED(backBuffer->GetDesc(&sd))) {
                     d3d9Format = sd.Format;
                     d3d9CaptureInfo.format = ConvertDX9BackBufferFormat(sd.Format);
@@ -728,6 +729,8 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
                     d3d9CaptureInfo.cx = sd.Width;
                     d3d9CaptureInfo.cy = sd.Height;
                 }
+
+                backBuffer->Release();
             }
 
             if(bUseSharedTextures)
