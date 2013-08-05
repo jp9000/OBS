@@ -88,6 +88,11 @@ void SettingsAdvanced::ApplySettings()
 
     bool bAllowOtherHotkeyModifiers = SendMessage(GetDlgItem(hwnd, IDC_ALLOWOTHERHOTKEYMODIFIERS), BM_GETCHECK, 0, 0) == BST_CHECKED;
     GlobalConfig->SetInt(TEXT("General"), TEXT("AllowOtherHotkeyModifiers"), bAllowOtherHotkeyModifiers);
+    
+    //--------------------------------------------------
+
+    UINT keyframeInt = (UINT)SendMessage(GetDlgItem(hwnd, IDC_KEYFRAMEINTERVAL), UDM_GETPOS32, 0, 0);
+    AppConfig->SetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), keyframeInt);
 
     //--------------------------------------------------
 
@@ -159,6 +164,7 @@ void SettingsAdvanced::SetDefaults()
     SendMessage(GetDlgItem(hwnd, IDC_USEMULTITHREADEDOPTIMIZATIONS), BM_SETCHECK, BST_CHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_PRIORITY), CB_SETCURSEL, 2, 0);
     SendMessage(GetDlgItem(hwnd, IDC_PRESET), CB_SETCURSEL, 2, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_KEYFRAMEINTERVAL), UDM_SETPOS32, 0, 0);
     SendMessage(GetDlgItem(hwnd, IDC_USECFR), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_USEVIDEOENCODERSETTINGS), BM_SETCHECK, BST_UNCHECKED, 0);
     EnableWindow(GetDlgItem(hwnd, IDC_VIDEOENCODERSETTINGS), FALSE);
@@ -276,6 +282,12 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 //--------------------------------------------
 
+                UINT keyframeInt = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 0);
+                SendMessage(GetDlgItem(hwnd, IDC_KEYFRAMEINTERVAL), UDM_SETRANGE32, 0, 20);
+                SendMessage(GetDlgItem(hwnd, IDC_KEYFRAMEINTERVAL), UDM_SETPOS32, 0, keyframeInt);
+
+                //--------------------------------------------
+
                 bool bUnlockFPS = AppConfig->GetInt(TEXT("Video"), TEXT("UnlockFPS")) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_UNLOCKHIGHFPS), BM_SETCHECK, bUnlockFPS ? BST_CHECKED : BST_UNCHECKED, 0);
 
@@ -387,6 +399,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                     }
                     break;
 
+                case IDC_KEYFRAMEINTERVAL_EDIT:
                 case IDC_SCENEBUFFERTIME_EDIT:
                 case IDC_AUDIOTIMEADJUST_EDIT:
                 case IDC_VIDEOENCODERSETTINGS:

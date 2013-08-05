@@ -217,13 +217,15 @@ public:
             paramData.rc.f_rf_constant  = baseCRF+float(10-quality);
         }
 
-        UINT keyframeInterval = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 6);
+        UINT keyframeInterval = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 0);
 
         paramData.b_vfr_input           = !bUseCFR;
         paramData.i_width               = width;
         paramData.i_height              = height;
         paramData.vui.b_fullrange       = 0;
-        paramData.i_keyint_max          = fps*keyframeInterval;
+
+        if (keyframeInterval)
+            paramData.i_keyint_max          = fps*keyframeInterval;
 
         paramData.i_fps_num             = fps;
         paramData.i_fps_den             = 1;

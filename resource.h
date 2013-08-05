@@ -163,10 +163,10 @@
 #define IDC_MICBOOST                    1079
 #define IDC_TEXTSIZE                    1079
 #define IDC_AUDIOTIMEADJUST             1079
-#define IDC_KEYFRAMEINTERVAL            1079
 #define IDC_AUTORECONNECT_TIMEOUT_STATIC 1080
 #define IDC_TEXTOPACITY_EDIT            1080
 #define IDC_PTTDELAY_EDIT               1080
+#define IDC_KEYFRAMEINTERVAL            1080
 #define IDC_RECONNECTING                1081
 #define IDC_SAVEPATH                    1081
 #define IDC_SCROLLSPEED_EDIT            1081

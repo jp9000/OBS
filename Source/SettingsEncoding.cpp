@@ -91,9 +91,6 @@ void SettingsEncoding::ApplySettings()
 
     bool bCustomBuffer = SendMessage(GetDlgItem(hwnd, IDC_CUSTOMBUFFER), BM_GETCHECK, 0, 0) == BST_CHECKED;
     AppConfig->SetInt(TEXT("Video Encoding"), TEXT("UseBufferSize"), bCustomBuffer);
-
-    UINT keyframeInt = (UINT)SendMessage(GetDlgItem(hwnd, IDC_KEYFRAMEINTERVAL), UDM_GETPOS32, 0, 0);
-    AppConfig->SetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), keyframeInt);
 }
 
 void SettingsEncoding::CancelSettings()
@@ -182,12 +179,6 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 //--------------------------------------------
 
-                UINT keyframeInt = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 6);
-                SendMessage(GetDlgItem(hwnd, IDC_KEYFRAMEINTERVAL), UDM_SETRANGE32, 2, 10);
-                SendMessage(GetDlgItem(hwnd, IDC_KEYFRAMEINTERVAL), UDM_SETPOS32, 0, keyframeInt);
-
-                //--------------------------------------------
-
                 hwndTemp = GetDlgItem(hwnd, IDC_AUDIOCODEC);
 
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("MP3"));
@@ -262,7 +253,6 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                         }
                         break;
 
-                    case IDC_KEYFRAMEINTERVAL_EDIT:
                     case IDC_BUFFERSIZE:
                         if(HIWORD(wParam) == EN_CHANGE)
                             bDataChanged = true;
