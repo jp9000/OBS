@@ -296,6 +296,8 @@ public:
         bUseCFR = bUseCFR_;
         bDupeFrames = bDupeFrames_;
 
+        UINT keyframeInterval = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 6);
+
         memset(&params, 0, sizeof(params));
         params.mfx.CodecId = MFX_CODEC_AVC;
         params.mfx.TargetUsage = MFX_TARGETUSAGE_BEST_QUALITY;
@@ -303,9 +305,8 @@ public:
         params.mfx.MaxKbps = maxBitrate;
         params.mfx.BufferSizeInKB = bufferSize/8;
         params.mfx.GopOptFlag = MFX_GOP_CLOSED;
-        params.mfx.GopPicSize = 250;
+        params.mfx.GopPicSize = fps*keyframeInterval;
         params.mfx.GopRefDist = 8;
-        params.mfx.IdrInterval = 0;
         params.mfx.NumSlice = 1;
 
         params.mfx.RateControlMethod = bUseCBR ? MFX_RATECONTROL_CBR : MFX_RATECONTROL_VBR;
