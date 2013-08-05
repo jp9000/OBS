@@ -7,7 +7,7 @@ OK              "OK"
 DeinterlacingType.None                  "Ei mitään"
 DeviceSelection.TopFieldFirst           "Ylin kenttä ensin"
 DeviceSelection.BottomFieldFirst        "Alin kenttä ensin"
-DeviceSelection.GPUDeinterlacing        "Käytä GPU:Ta"
+DeviceSelection.GPUDeinterlacing        "Käytä GPU:ta"
 
 CrossbarSelection.Open                  "Avaa Crossbar"
 
