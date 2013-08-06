@@ -22,7 +22,12 @@ services : {
   "Vaughn Live" : {
     id : 3
     servers : {
-      "US Chicago (Primary)"  : rtmp://live.vaughnlive.tv:443/live
+      "US: Chicago (Primary)"   : rtmp://live.vaughnlive.tv:443/live
+      "US: Dallas, TX"			    : rtmp://live-dal.vaughnlive.tv:443/live
+	    "US: Houston, TX"		      : rtmp://live-hou.vaughnlive.tv:443/live
+	    "US: Virginia, USA"			  : rtmp://live-iad.vaughnlive.tv:443/live
+	    "US: Salt Lake City, UT"	: rtmp://live-slc.vaughnlive.tv:443/live
+	    "EU: Frankfurt, Germany"	: rtmp://live-de.vaughnlive.tv:443/live
     }
   }
   iNSTAGIB.tv : {
