@@ -238,20 +238,17 @@ OBS::OBS()
     int x = (fullscreenX/2)-(cx/2);
     int y = (fullscreenY/2)-(cy/2);
 
-    int posX = GlobalConfig->GetInt(TEXT("General"), TEXT("PosX"));
-    int posY = GlobalConfig->GetInt(TEXT("General"), TEXT("PosY"));
+    int posX = GlobalConfig->GetInt(TEXT("General"), TEXT("PosX"), -9999);
+    int posY = GlobalConfig->GetInt(TEXT("General"), TEXT("PosY"), -9999);
 
     bool bInsideMonitors = false;
-    if(posX || posY)
+    for(UINT i=0; i<monitors.Num(); i++)
     {
-        for(UINT i=0; i<monitors.Num(); i++)
+        if( posX >= monitors[i].rect.left && posX < monitors[i].rect.right  &&
+            posY >= monitors[i].rect.top  && posY < monitors[i].rect.bottom )
         {
-            if( posX >= monitors[i].rect.left && posX < monitors[i].rect.right  &&
-                posY >= monitors[i].rect.top  && posY < monitors[i].rect.bottom )
-            {
-                bInsideMonitors = true;
-                break;
-            }
+            bInsideMonitors = true;
+            break;
         }
     }
 
