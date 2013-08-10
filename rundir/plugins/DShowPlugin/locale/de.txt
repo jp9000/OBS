@@ -56,5 +56,5 @@ DeviceSelection.UseChromaKey            "Benutze Chroma Key"
 DeviceSelection.UseDeviceAudio          "(Benutze Geräte Audio)"
 DeviceSelection.Video                   "Video"
 
-Plugin.Description  "Dieses Plugin erlaubt es DirectShow Video Devices zur Szene hinzuzufügen(etwa Webcams, Capturecards, etc.)"
+Plugin.Description  "Dieses Plugin erlaubt es DirectShow Video Devices zur Szene hinzuzufügen (etwa Webcams, Capturecards, etc.)"
 Plugin.Name         "DirectShow Video Geräte Plugin"
