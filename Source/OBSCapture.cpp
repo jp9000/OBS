@@ -706,6 +706,8 @@ void OBS::Stop()
 
     ClearStreamInfo();
 
+    DumpProfileData();
+    FreeProfileData();
     Log(TEXT("=====Stream End: %s================================================="), CurrentDateTimeString().Array());
 
     //update notification icon to reflect current status
