@@ -612,6 +612,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             DwmEnableComposition(DWM_EC_ENABLECOMPOSITION);
 
         TerminateSockets();
+
+        String strCaptureHookLog;
+        strCaptureHookLog << lpAppDataPath << L"\\pluginData\\captureHookLog.txt";
+        XFile captureHookLog;
+        if (captureHookLog.Open(strCaptureHookLog, XFILE_READ, XFILE_OPENEXISTING)) {
+            String strContents;
+            captureHookLog.ReadFileToString(strContents);
+            LogRaw(L"\r\n\r\nLast game capture log:");
+            LogRaw(strContents.Array(), strContents.Length());
+        }
     }
 
     Gdiplus::GdiplusShutdown(gdipToken);
