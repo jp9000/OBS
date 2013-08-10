@@ -713,8 +713,8 @@ void DoGLCPUHook(RECT &rc)
 
 void DoGLHook(RECT &rc)
 {
-    if (bFBOAvailable && bNVCaptureAvailable && DoGLGPUHook(rc))
-            return;
+    //if (bFBOAvailable && bNVCaptureAvailable && DoGLGPUHook(rc))
+    //        return;
 
     DoGLCPUHook(rc);
 }
