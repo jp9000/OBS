@@ -87,7 +87,6 @@ void STDCALL TerminateXT()
 {
     if(bBaseLoaded)
     {
-        DumpProfileData();
         FreeProfileData();
 
         delete locale;
@@ -188,6 +187,19 @@ void STDCALL CloseLogFile()
 }
 
 
+
+void __cdecl LogRaw(const TCHAR *text, UINT len)
+{
+    if(!text) return;
+
+    if (!len)
+        len = slen(text);
+
+    OpenLogFile();
+    LogFile.WriteAsUTF8(text, len);
+    LogFile.WriteAsUTF8(TEXT("\r\n"));
+    CloseLogFile();
+}
 
 void __cdecl Logva(const TCHAR *format, va_list argptr)
 {
