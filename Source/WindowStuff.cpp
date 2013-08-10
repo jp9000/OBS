@@ -3374,8 +3374,10 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                         }
                         else
                         {
-                            bKeepAspect = false; //if the source is missing (due to invalid setting or missing plugin), don't allow aspect lock
+                            // If a source is disabled (not rendered) or in case of a missing plugin do the right stuff anyway
+                            // This should fix cropping of disabled sources
                             baseScale = scaleItem->size;
+                            baseScaleAspect = baseScale.x/baseScale.y;
                         }
                         cropFactor = baseScale / scaleItem->GetSize();
                     }
