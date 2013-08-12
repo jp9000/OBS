@@ -342,26 +342,6 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
 
     //------------------------------------------------
 
-    //fix for when backbuffers aren't actually being properly used, instead get the
-    //size/format of the actual current render target at time of present
-    IDirect3DSurface9 *backBuffer = NULL;
-    if (SUCCEEDED(hErr = device->GetRenderTarget(0, &backBuffer))) {
-        D3DSURFACE_DESC sd;
-        ZeroMemory(&sd, sizeof(sd));
-
-        if (SUCCEEDED(backBuffer->GetDesc(&sd))) {
-            d3d9Format = sd.Format;
-            d3d9CaptureInfo.format = ConvertDX9BackBufferFormat(sd.Format);
-            dxgiFormat = GetDXGIFormat(sd.Format);
-
-            d3d9CaptureInfo.cx = sd.Width;
-            d3d9CaptureInfo.cy = sd.Height;
-        }
-
-        backBuffer->Release();
-    }
-
-    //------------------------------------------------
     D3D10_TEXTURE2D_DESC texGameDesc;
     ZeroMemory(&texGameDesc, sizeof(texGameDesc));
     texGameDesc.Width               = d3d9CaptureInfo.cx;
@@ -492,25 +472,6 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
     UINT pitch;
 
     //------------------------------------------------
-
-    //fix for when backbuffers aren't actually being properly used, instead get the
-    //size/format of the actual current render target at time of present
-    IDirect3DSurface9 *backBuffer = NULL;
-    if (SUCCEEDED(hErr = device->GetRenderTarget(0, &backBuffer))) {
-        D3DSURFACE_DESC sd;
-        ZeroMemory(&sd, sizeof(sd));
-
-        if (SUCCEEDED(backBuffer->GetDesc(&sd))) {
-            d3d9Format = sd.Format;
-            d3d9CaptureInfo.format = ConvertDX9BackBufferFormat(sd.Format);
-            dxgiFormat = GetDXGIFormat(sd.Format);
-
-            d3d9CaptureInfo.cx = sd.Width;
-            d3d9CaptureInfo.cy = sd.Height;
-        }
-
-        backBuffer->Release();
-    }
 
     if (bSuccess)
     {
@@ -706,6 +667,25 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
                 bUseSharedTextures = true;
             else
                 bUseSharedTextures = (patchType = GetD3D9PatchType()) != 0;
+
+            //fix for when backbuffers aren't actually being properly used, instead get the
+            //size/format of the actual current render target at time of present
+            IDirect3DSurface9 *backBuffer = NULL;
+            if (SUCCEEDED(hErr = device->GetRenderTarget(0, &backBuffer))) {
+                D3DSURFACE_DESC sd;
+                ZeroMemory(&sd, sizeof(sd));
+
+                if (SUCCEEDED(backBuffer->GetDesc(&sd))) {
+                    d3d9Format = sd.Format;
+                    d3d9CaptureInfo.format = ConvertDX9BackBufferFormat(sd.Format);
+                    dxgiFormat = GetDXGIFormat(sd.Format);
+
+                    d3d9CaptureInfo.cx = sd.Width;
+                    d3d9CaptureInfo.cy = sd.Height;
+                }
+
+                backBuffer->Release();
+            }
 
             if(bUseSharedTextures)
                 DoD3D9GPUHook(device);
