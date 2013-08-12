@@ -342,25 +342,24 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
 
     //------------------------------------------------
 
-    IDirect3DSurface9 *backBuffer;
-    hErr = device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &backBuffer);
-    if (FAILED(hErr)) {
-        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9GPUHook: Could not get back buffer, result = " << (UINT)hErr << endl;
-        goto finishGPUHook;
-    }
+    //fix for when backbuffers aren't actually being properly used, instead get the
+    //size/format of the actual current render target at time of present
+    IDirect3DSurface9 *backBuffer = NULL;
+    if (SUCCEEDED(hErr = device->GetRenderTarget(0, &backBuffer))) {
+        D3DSURFACE_DESC sd;
+        ZeroMemory(&sd, sizeof(sd));
 
-    D3DSURFACE_DESC sd;
-    ZeroMemory(&sd, sizeof(sd));
-    if (FAILED(hErr = backBuffer->GetDesc(&sd))) {
-        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9GPUHook: Could not get back buffer surface info, result = " << (UINT)hErr << endl;
-        goto finishGPUHook;
-    }
+        if (SUCCEEDED(backBuffer->GetDesc(&sd))) {
+            d3d9Format = sd.Format;
+            d3d9CaptureInfo.format = ConvertDX9BackBufferFormat(sd.Format);
+            dxgiFormat = GetDXGIFormat(sd.Format);
 
-    //sometimes the backbuffer does not actually match the swap chain size,
-    //so you have to use the backbuffer size to get the right value
-    d3d9CaptureInfo.cx = sd.Width;
-    d3d9CaptureInfo.cy = sd.Height;
-    backBuffer->Release();
+            d3d9CaptureInfo.cx = sd.Width;
+            d3d9CaptureInfo.cy = sd.Height;
+        }
+
+        backBuffer->Release();
+    }
 
     //------------------------------------------------
     D3D10_TEXTURE2D_DESC texGameDesc;
@@ -494,33 +493,27 @@ void DoD3D9CPUHook(IDirect3DDevice9 *device)
 
     //------------------------------------------------
 
+    //fix for when backbuffers aren't actually being properly used, instead get the
+    //size/format of the actual current render target at time of present
     IDirect3DSurface9 *backBuffer = NULL;
-    D3DSURFACE_DESC sd;
-    ZeroMemory(&sd, sizeof(sd));
+    if (SUCCEEDED(hErr = device->GetRenderTarget(0, &backBuffer))) {
+        D3DSURFACE_DESC sd;
+        ZeroMemory(&sd, sizeof(sd));
 
-    hErr = device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &backBuffer);
-    if (FAILED(hErr)) {
-        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9CPUHook: Could not get back buffer, result = " << (UINT)hErr << endl;
-        bSuccess = false;
-    }
+        if (SUCCEEDED(backBuffer->GetDesc(&sd))) {
+            d3d9Format = sd.Format;
+            d3d9CaptureInfo.format = ConvertDX9BackBufferFormat(sd.Format);
+            dxgiFormat = GetDXGIFormat(sd.Format);
 
-    if (bSuccess)
-    {
-        if (FAILED(hErr = backBuffer->GetDesc(&sd))) {
-            RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9CPUHook: Could not get back buffer surface info, result = " << (UINT)hErr << endl;
-            bSuccess = false;
+            d3d9CaptureInfo.cx = sd.Width;
+            d3d9CaptureInfo.cy = sd.Height;
         }
-    }
 
-    SafeRelease(backBuffer);
+        backBuffer->Release();
+    }
 
     if (bSuccess)
     {
-        //sometimes the backbuffer does not actually match the swap chain size,
-        //so you have to use the backbuffer size to get the right value
-        d3d9CaptureInfo.cx = sd.Width;
-        d3d9CaptureInfo.cy = sd.Height;
-
         for(UINT i=0; i<NUM_BUFFERS; i++)
         {
             if(FAILED(hErr = device->CreateOffscreenPlainSurface(d3d9CaptureInfo.cx, d3d9CaptureInfo.cy, (D3DFORMAT)d3d9Format, D3DPOOL_SYSTEMMEM, &textures[i], NULL)))
@@ -713,25 +706,6 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
                 bUseSharedTextures = true;
             else
                 bUseSharedTextures = (patchType = GetD3D9PatchType()) != 0;
-
-            //fix for when backbuffers aren't actually being properly used, instead get the
-            //size/format of the actual current render target at time of present
-            IDirect3DSurface9 *backBuffer = NULL;
-            if (SUCCEEDED(hErr = device->GetRenderTarget(0, &backBuffer))) {
-                D3DSURFACE_DESC sd;
-                ZeroMemory(&sd, sizeof(sd));
-
-                if (SUCCEEDED(backBuffer->GetDesc(&sd))) {
-                    d3d9Format = sd.Format;
-                    d3d9CaptureInfo.format = ConvertDX9BackBufferFormat(sd.Format);
-                    dxgiFormat = GetDXGIFormat(sd.Format);
-
-                    d3d9CaptureInfo.cx = sd.Width;
-                    d3d9CaptureInfo.cy = sd.Height;
-                }
-
-                backBuffer->Release();
-            }
 
             if(bUseSharedTextures)
                 DoD3D9GPUHook(device);
