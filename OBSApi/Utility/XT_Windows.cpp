@@ -908,7 +908,7 @@ BOOL   STDCALL OSIncompatibleModulesLoaded()
     return 0;
 }
 
-OSFileChangeData * STDCALL OSMonitorFileStart(String path)
+OSFileChangeData * STDCALL OSMonitorFileStart(String path, bool suppressLogging)
 {
     HANDLE hDirectory;
     OSFileChangeData *data = (OSFileChangeData *)Allocate(sizeof(*data));
@@ -940,15 +940,19 @@ OSFileChangeData * STDCALL OSMonitorFileStart(String path)
             int err = GetLastError();
             CloseHandle(data->directoryChange.hEvent);
             CloseHandle(hDirectory);
-            Log(TEXT("OSMonitorFileStart: Unable to monitor file '%s', error %d"), path.Array(), err);
+            if(!suppressLogging)
+                Log(TEXT("OSMonitorFileStart: Unable to monitor file '%s', error %d"), path.Array(), err);
             Free(data);
             return NULL;
         }
     }
     else
     {
-        int err = GetLastError();
-        Log(TEXT("OSMonitorFileStart: Unable to open directory '%s', error %d"), data->strDirectory, err);
+        if(!suppressLogging)
+        {
+            int err = GetLastError();
+            Log(TEXT("OSMonitorFileStart: Unable to open directory '%s', error %d"), data->strDirectory, err);
+        }
         Free(data);
         return NULL;
     }
