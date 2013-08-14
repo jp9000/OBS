@@ -248,8 +248,8 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 //--------------------------------------------
 
                 hwndTemp = GetDlgItem(hwnd, IDC_PRESET);
-                static const CTSTR preset_names[7] = {TEXT("ultrafast"), TEXT("superfast"), TEXT("veryfast"), TEXT("faster"), TEXT("fast"), TEXT("medium"), TEXT("slow")};
-                for(int i=0; i<7; i++)
+                static const CTSTR preset_names[8] = {TEXT("ultrafast"), TEXT("superfast"), TEXT("veryfast"), TEXT("faster"), TEXT("fast"), TEXT("medium"), TEXT("slow"), TEXT("slower")};
+                for(int i=0; i<8; i++)
                     SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)preset_names[i]);
 
                 LoadSettingComboString(hwndTemp, TEXT("Video Encoding"), TEXT("Preset"), TEXT("veryfast"));
