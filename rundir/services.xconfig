@@ -18,6 +18,11 @@ services : {
       "US West: Los Angeles, CA"             : rtmp://live-lax.justin.tv/app
       "US West: Los Angeles, CA (Secondary)" : rtmp://live-lax-backup.justin.tv/app
     }
+    recommended : {
+      "keyint"      : 2000
+      "ratecontrol" : "cbr"
+      "max bitrate" : 4000
+    }
   }
   "Vaughn Live" : {
     id : 3

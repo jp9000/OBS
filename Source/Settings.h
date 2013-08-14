@@ -104,6 +104,7 @@ private:
 
 private:
     PublishDialogData * data;
+    void SetWarningInfo();
 
     //-----------------------------------------------------------------------
     // Constructor/destructor

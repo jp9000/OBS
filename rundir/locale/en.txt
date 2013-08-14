@@ -214,6 +214,11 @@ Settings.Publish.Username               "User Name (if any):"
 Settings.Publish.Mode.FileOnly      "File Output Only"
 Settings.Publish.Mode.LiveStream    "Live Stream"
 
+Settings.Publish.Warning.BadSettings "WARNING: Your OBS settings are not optimized for use with %s. Please set the following:\r\n\r\n"
+Settings.Publish.Warning.UseCBR      "\tEncoding Settings: Enable CBR\r\n\r\n"
+Settings.Publish.Warning.Maxbitrate  "\tEncoding Settings: Reduce your maximum bitrate to %d\r\n\r\n"
+Settings.Publish.Warning.Keyint      "\tAdvanced Settings: Set a keyframe interval of %d seconds\r\n\r\n"
+
 Settings.Video.Custom               "Custom:"
 Settings.Video.Device               "Video Adapter:"
 Settings.Video.DisableAero          "Disable Aero:"

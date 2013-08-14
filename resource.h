@@ -72,6 +72,8 @@
 #define IDC_INFO                        1029
 #define IDC_FPS                         1030
 #define IDC_PROFILE                     1030
+#define IDC_INFO2                       1030
+#define IDC_WARNINGS                    1030
 #define IDC_FPS_EDIT                    1031
 #define IDC_SIZEX                       1033
 #define IDC_SIZEY                       1034

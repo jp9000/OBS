@@ -174,6 +174,91 @@ bool SettingsPublish::HasDefaults() const
     return false;
 }
 
+void SettingsPublish::SetWarningInfo()
+{
+    int serviceID = (int)SendMessage(GetDlgItem(hwnd, IDC_SERVICE), CB_GETCURSEL, 0, 0);
+
+    bool bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
+    int maxBitRate = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("MaxBitrate"), 1000);
+    int keyframeInt = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 0);
+
+    //ignore for non-livestreams
+    if (data->mode != 0)
+    {
+        SetDlgItemText(hwnd, IDC_WARNINGS, TEXT(""));
+        return;
+    }
+
+    int errors = 0;
+    String strWarnings;
+
+    XConfig serverData;
+    if(serverData.Open(TEXT("services.xconfig")))
+    {
+        XElement *services = serverData.GetElement(TEXT("services"));
+        if(services)
+        {
+            UINT numServices = services->NumElements();
+
+            for(UINT i=0; i<numServices; i++)
+            {
+                XElement *service = services->GetElementByID(i);
+                if (service->GetInt(TEXT("id")) == serviceID)
+                {
+                    strWarnings = FormattedString(Str("Settings.Publish.Warning.BadSettings"), service->GetName());
+
+                    //check to see if the service we're using has recommendations
+                    if (!service->HasItem(TEXT("recommended")))
+                    {
+                        SetDlgItemText(hwnd, IDC_WARNINGS, TEXT(""));
+                        return;
+                    }
+
+                    XElement *r = service->GetElement(TEXT("recommended"));
+
+                    if (r->HasItem(TEXT("ratecontrol")))
+                    {
+                        CTSTR rc = r->GetString(TEXT("ratecontrol"));
+                        if (!scmp (rc, TEXT("cbr")) && !bUseCBR)
+                        {
+                            errors++;
+                            strWarnings << Str("Settings.Publish.Warning.UseCBR");
+                        }
+                    }
+
+                    if (r->HasItem(TEXT("max bitrate")))
+                    {
+                        int max_bitrate = r->GetInt(TEXT("max bitrate"));
+                        if (maxBitRate > max_bitrate)
+                        {
+                            errors++;
+                            strWarnings << FormattedString(Str("Settings.Publish.Warning.Maxbitrate"), max_bitrate);
+                        }
+                    }
+
+                    if (r->HasItem(TEXT("keyint")))
+                    {
+                        int keyint = r->GetInt(TEXT("keyint"));
+                        if (!keyframeInt || keyframeInt * 1000 > keyint)
+                        {
+                            errors++;
+                            strWarnings << FormattedString(Str("Settings.Publish.Warning.Keyint"), keyint / 1000);
+                        }
+                    }
+
+                    break;
+                }
+            }
+        }
+    }
+
+    if (errors)
+        SetDlgItemText(hwnd, IDC_WARNINGS, strWarnings.Array());
+    else
+        SetDlgItemText(hwnd, IDC_WARNINGS, TEXT(""));
+
+}
+
 INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 {
     HWND hwndTemp;
@@ -378,11 +463,25 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 //--------------------------------------------
 
+                SetWarningInfo();
+
                 ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_HIDE);
                 SetChangedSettings(false);
 
                 return TRUE;
             }
+
+        case WM_CTLCOLORSTATIC:
+            {
+                switch (GetDlgCtrlID((HWND)lParam))
+                {
+                    case IDC_WARNINGS:
+                        SetTextColor((HDC)wParam, RGB(255, 0, 0));
+                        SetBkColor((HDC)wParam, COLORREF(GetSysColor(COLOR_3DFACE)));
+                        return (INT_PTR)GetSysColorBrush(COLOR_BTNFACE);
+                }
+            }
+            break;
 
         case WM_DESTROY:
             {
@@ -480,6 +579,8 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                             ShowWindow(GetDlgItem(hwnd, IDC_DELAY), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_SAVETOFILE), swShowControls);
 
+                            SetWarningInfo();
+
                             bDataChanged = true;
                             break;
                         }
@@ -535,6 +636,9 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                             bDataChanged = true;
                         }
+
+                        SetWarningInfo();
+
                         break;
 
                     case IDC_AUTORECONNECT:
