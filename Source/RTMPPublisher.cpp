@@ -206,8 +206,9 @@ RTMPPublisher::~RTMPPublisher()
         //this marks the thread to exit after current work is done
         SetEvent(hSendLoopExit);
 
-        //this wakes up the thread
+        //these wake up the thread
         ReleaseSemaphore(hSendSempahore, 1, NULL);
+        SetEvent(hBufferSpaceAvailableEvent);
 
         //wait 60 sec for it to exit
         OSTerminateThread(hSendThread, 60000);
@@ -1040,6 +1041,10 @@ void RTMPPublisher::FatalSocketShutdown()
     //if we're being called the socket is already in an unusable state.
     closesocket(rtmp->m_sb.sb_socket);
     rtmp->m_sb.sb_socket = -1;
+
+    //anything buffered is invalid now
+    curDataBufferLen = 0;
+
     App->PostStopMessage();
 }
 
@@ -1519,12 +1524,14 @@ int RTMPPublisher::BufferedSend(RTMPSockBuf *sb, const char *buf, int len, RTMPP
     bool bComplete = false;
     int fullLen = len;
 
-    //We may have been disconnected mid-shutdown or something, just pretend we wrote the data
-    //to avoid blocking if the send loop exited.
-    if (!RTMP_IsConnected(network->rtmp))
-        return len;
+    //NOTE: This function is called from the SendLoop thread, be careful of race conditions.
 
 retrySend:
+
+    //We may have been disconnected mid-shutdown or something, just pretend we wrote the data
+    //to avoid blocking if the socket loop exited.
+    if (!RTMP_IsConnected(network->rtmp))
+        return len;
 
     OSEnterMutex(network->hDataBufferMutex);
 
