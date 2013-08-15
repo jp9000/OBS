@@ -284,7 +284,7 @@ BOOL LocaleStringLookup::LoadStringFile(CTSTR lpFile, bool bClear)
         *lpValueStart = 0;
         lookupVal = lpTemp;
         *lpValueStart = prevChar;
-		lookupVal.KillSpaces();
+        lookupVal.KillSpaces();
 
         String value = ++lpValueStart;
         value.KillSpaces();
