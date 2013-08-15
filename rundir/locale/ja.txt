@@ -1,4 +1,4 @@
-Add="追加"
+﻿Add="追加"
 Preview="プレビュー"
 Order="順序"
 Apply="適用"
@@ -214,6 +214,10 @@ Settings.Publish.Username="ユーザ名 (もしあれば):"
 Settings.Publish.Mode.FileOnly="ローカル録画"
 Settings.Publish.Mode.LiveStream="配信"
 
+Settings.Publish.Warning.BadSettings="警告: %s を利用する場合のOBSの設定が最適化されていません。以下の設定をしてください:\r\n\r\n"
+Settings.Publish.Warning.UseCBR="\tエンコード設定: CBRを有効にして下さい\r\n\r\n"
+Settings.Publish.Warning.Maxbitrate="\tエンコード設定: 最大ビットレートを %d 以下に設定して下さい\r\n\r\n"
+Settings.Publish.Warning.Keyint="\t詳細設定: キーフレーム間隔を %d 秒に設定してください\r\n\r\n"
 
 Settings.Video.Custom="配信映像:"
 Settings.Video.Device="アダプタ:"
@@ -337,4 +341,3 @@ Plugins.NoiseGate.CloseThreshold="閉鎖\n閾値"
 Plugins.NoiseGate.AttackTime="動作開始時間 (ミリ秒):"
 Plugins.NoiseGate.HoldTime="保持時間 (ミリ秒):"
 Plugins.NoiseGate.ReleaseTime="解除時間 (ミリ秒):"
-
