@@ -1102,7 +1102,8 @@ void OBS::MainCaptureLoop()
         {
             numLongFrames++;
             if(bLogLongFramesProfile && (numLongFrames/float(max(1, numTotalFrames)) * 100.) > logLongFramesProfilePercentage)
-                DumpLastProfileData();
+                if(LOGLONGFRAMESDEFAULT)
+                    DumpLastProfileData();
         }
         else
             SleepTo(sleepTargetTime);
