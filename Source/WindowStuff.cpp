@@ -3322,6 +3322,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                 {
                     bool bControlDown = HIBYTE(GetKeyState(VK_LCONTROL)) != 0 || HIBYTE(GetKeyState(VK_RCONTROL)) != 0;
                     bool bKeepAspect = HIBYTE(GetKeyState(VK_LSHIFT)) == 0 && HIBYTE(GetKeyState(VK_RSHIFT)) == 0;
+                    bool bCropSymmetric = bKeepAspect;
                     bool isCropping = HIBYTE(GetKeyState(VK_MENU)) != 0;
 
                     if (isCropping) {
@@ -3370,15 +3371,13 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                         if(scaleItem->GetSource())
                         {
                             baseScale = scaleItem->GetSource()->GetSize();
-                            baseScaleAspect = baseScale.x/baseScale.y;
                         }
                         else
                         {
-                            // If a source is disabled (not rendered) or in case of a missing plugin do the right stuff anyway
-                            // This should fix cropping of disabled sources
+                            bKeepAspect = false; //if the source is missing (due to invalid setting or missing plugin), don't allow aspect lock
                             baseScale = scaleItem->size;
-                            baseScaleAspect = baseScale.x/baseScale.y;
                         }
+                        baseScaleAspect = baseScale.x/baseScale.y;
                         cropFactor = baseScale / scaleItem->GetSize();
                     }
                      
@@ -3441,34 +3440,34 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
 
                         case ItemModifyType_CropTop: 
                             scaleItem->crop.y = ((frameStartMousePos.y - scaleItem->pos.y) + totalAdjust.y) * cropFactor.y;
-                            if (!bKeepAspect)
+                            if (!bCropSymmetric)
                                 scaleItem->crop.z = ((frameStartMousePos.y - scaleItem->pos.y) + totalAdjust.y) * cropFactor.y;
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeTop | (!bKeepAspect ? edgeBottom : 0), !bKeepAspect);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeTop | (!bCropSymmetric ? edgeBottom : 0), !bCropSymmetric);
                             break;
 
                         case ItemModifyType_CropBottom: 
                             scaleItem->crop.z = ((scaleItem->pos.y + scaleItem->size.y - frameStartMousePos.y) - totalAdjust.y) * cropFactor.y;
-                            if (!bKeepAspect)
+                            if (!bCropSymmetric)
                                 scaleItem->crop.y = ((scaleItem->pos.y + scaleItem->size.y - frameStartMousePos.y) - totalAdjust.y) * cropFactor.y;
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeBottom | (!bKeepAspect ? edgeTop : 0), !bKeepAspect);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeBottom | (!bCropSymmetric ? edgeTop : 0), !bCropSymmetric);
                             break;
 
                         case ItemModifyType_CropLeft: 
                             scaleItem->crop.x = ((frameStartMousePos.x - scaleItem->pos.x) + totalAdjust.x) * cropFactor.x;
-                            if (!bKeepAspect)
+                            if (!bCropSymmetric)
                                 scaleItem->crop.w = ((frameStartMousePos.x - scaleItem->pos.x) + totalAdjust.x) * cropFactor.x;
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeLeft | (!bKeepAspect ? edgeRight : 0), !bKeepAspect);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeLeft | (!bCropSymmetric ? edgeRight : 0), !bCropSymmetric);
                             break;
 
                         case ItemModifyType_CropRight: 
                             scaleItem->crop.w = ((scaleItem->pos.x + scaleItem->size.x - frameStartMousePos.x) - totalAdjust.x) * cropFactor.x;
-                            if (!bKeepAspect)
+                            if (!bCropSymmetric)
                                 scaleItem->crop.x = ((scaleItem->pos.x + scaleItem->size.x - frameStartMousePos.x) - totalAdjust.x) * cropFactor.x;
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeRight | (!bKeepAspect ? edgeLeft : 0), !bKeepAspect);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeRight | (!bCropSymmetric ? edgeLeft : 0), !bCropSymmetric);
                             break;
                             
                         case ItemModifyType_CropBottomLeft:
-                            if (bKeepAspect)
+                            if (bCropSymmetric)
                             {
                                 scaleItem->crop.z = ((scaleItem->pos.y + scaleItem->size.y - frameStartMousePos.y) - totalAdjust.y) * cropFactor.y;
                                 scaleItem->crop.x = ((frameStartMousePos.x - scaleItem->pos.x) + totalAdjust.x) * cropFactor.x;
@@ -3481,11 +3480,11 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                                 scaleItem->crop.y = amount * cropFactor.y;
                                 scaleItem->crop.z = amount * cropFactor.y;
                             }
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeLeft | edgeBottom | (!bKeepAspect ? edgeAll : 0), !bKeepAspect);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeLeft | edgeBottom | (!bCropSymmetric ? edgeAll : 0), !bCropSymmetric);
                             break;
 
                         case ItemModifyType_CropBottomRight:
-                            if (bKeepAspect)
+                            if (bCropSymmetric)
                             {
                                 scaleItem->crop.z = ((scaleItem->pos.y + scaleItem->size.y - frameStartMousePos.y) - totalAdjust.y) * cropFactor.y;
                                 scaleItem->crop.w = ((scaleItem->pos.x + scaleItem->size.x - frameStartMousePos.x) - totalAdjust.x) * cropFactor.x;
@@ -3498,11 +3497,11 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                                 scaleItem->crop.y = amount * cropFactor.y;
                                 scaleItem->crop.z = amount * cropFactor.y;
                             }
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeRight | edgeBottom | (!bKeepAspect ? edgeAll : 0), !bKeepAspect);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeRight | edgeBottom | (!bCropSymmetric ? edgeAll : 0), !bCropSymmetric);
                             break;
 
                         case ItemModifyType_CropTopLeft:
-                            if (bKeepAspect)
+                            if (bCropSymmetric)
                             {
                                 scaleItem->crop.y = ((frameStartMousePos.y - scaleItem->pos.y) + totalAdjust.y) * cropFactor.y;
                                 scaleItem->crop.x = ((frameStartMousePos.x - scaleItem->pos.x) + totalAdjust.x) * cropFactor.x;
@@ -3515,11 +3514,11 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                                 scaleItem->crop.y = amount * cropFactor.y;
                                 scaleItem->crop.z = amount * cropFactor.y;
                             }
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeLeft | edgeTop | (!bKeepAspect ? edgeAll : 0), !bKeepAspect);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeLeft | edgeTop | (!bCropSymmetric ? edgeAll : 0), !bCropSymmetric);
                             break;
 
                         case ItemModifyType_CropTopRight:
-                            if (bKeepAspect)
+                            if (bCropSymmetric)
                             {
                                 scaleItem->crop.y = ((frameStartMousePos.y - scaleItem->pos.y) + totalAdjust.y) * cropFactor.y;
                                 scaleItem->crop.w = ((scaleItem->pos.x + scaleItem->size.x - frameStartMousePos.x) - totalAdjust.x) * cropFactor.x;
@@ -3532,7 +3531,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                                 scaleItem->crop.y = amount * cropFactor.y;
                                 scaleItem->crop.z = amount * cropFactor.y;
                             }
-                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeRight | edgeTop | (!bKeepAspect ? edgeAll : 0), !bKeepAspect);
+                            EnsureCropValid(scaleItem, minSize, snapSize, bControlDown, edgeRight | edgeTop | (!bCropSymmetric ? edgeAll : 0), !bCropSymmetric);
                             break;
 
                         case ItemModifyType_ScaleBottom:
