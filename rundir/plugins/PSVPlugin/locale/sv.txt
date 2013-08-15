@@ -1,8 +1,9 @@
-Cancel                  "Avbryt"
-OK                      "OK"
+Cancel="Avbryt"
+OK="OK"
 
-Plugin.Name             "Scenspecifik volym-plugin"
-Plugin.Description      "Tillåter separata volyminställningar för varje scen."
+Plugin.Name="Scenspecifik volym-plugin"
+Plugin.Description="Tillåter separata volyminställningar för varje scen."
 
-Config.Caption          "Scenspecifik volym - inställningar"
-Config.Enable           "Aktivera scenspecifik volym"
+Config.Caption="Scenspecifik volym - inställningar"
+Config.Enable="Aktivera scenspecifik volym"
+

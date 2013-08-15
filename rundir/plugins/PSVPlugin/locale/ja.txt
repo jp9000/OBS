@@ -1,8 +1,9 @@
-﻿Cancel          "キャンセル"
-OK              "OK"
+Cancel="キャンセル"
+OK="OK"
 
-Plugin.Name             "シーン毎のボリュームプラグイン"
-Plugin.Description      "シーン毎のボリュームのトラッキングを可能にします。"
+Plugin.Name="シーン毎のボリュームプラグイン"
+Plugin.Description="シーン毎のボリュームのトラッキングを可能にします。"
 
-Config.Caption          "シーン毎のボリューム設定"
-Config.Enable           "シーン毎のボリュームのトラッキングを有効にする"
+Config.Caption="シーン毎のボリューム設定"
+Config.Enable="シーン毎のボリュームのトラッキングを有効にする"
+

@@ -1,8 +1,9 @@
-Cancel                  "Cancel"
-OK                      "OK"
+Cancel="Cancel"
+OK="OK"
 
-Plugin.Name             "Per-Scene Volume Plugin"
-Plugin.Description      "Enables per-scene volume tracking."
+Plugin.Name="Per-Scene Volume Plugin"
+Plugin.Description="Enables per-scene volume tracking."
 
-Config.Caption          "Per-Scene Volume Config"
-Config.Enable           "Enable Per-Scene Volume Tracking"
+Config.Caption="Per-Scene Volume Config"
+Config.Enable="Enable Per-Scene Volume Tracking"
+

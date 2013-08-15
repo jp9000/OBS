@@ -275,7 +275,7 @@ BOOL LocaleStringLookup::LoadStringFile(CTSTR lpFile, bool bClear)
         //----------
 
         TSTR lpValueStart = lpTemp;
-        while(*lpValueStart && *lpValueStart != ' ' && *lpValueStart != L'　' && *lpValueStart != '\t')
+        while(*lpValueStart && *lpValueStart != '=')
             ++lpValueStart;
 
         String lookupVal, strVal;
@@ -284,8 +284,9 @@ BOOL LocaleStringLookup::LoadStringFile(CTSTR lpFile, bool bClear)
         *lpValueStart = 0;
         lookupVal = lpTemp;
         *lpValueStart = prevChar;
+        lookupVal.KillSpaces();
 
-        String value = lpValueStart;
+        String value = ++lpValueStart;
         value.KillSpaces();
         if(value.IsValid() && value[0] == '"')
         {
