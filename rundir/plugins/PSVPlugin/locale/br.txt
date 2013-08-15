@@ -1,0 +1,9 @@
+Cancel="Cancelar"
+OK="OK"
+
+Plugin.Name="Plugin de Volume por-cena"
+Plugin.Description="Permite o controle de volume por cena."
+
+Config.Caption="Configuração de Volume por-cena"
+Config.Enable="Habilitar o controle de Volume por-cena"
+

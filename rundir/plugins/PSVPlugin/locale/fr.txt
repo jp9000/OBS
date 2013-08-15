@@ -1,0 +1,9 @@
+Cancel="Annuler"
+OK="OK"
+
+Plugin.Name="Plugin de volume par scène"
+Plugin.Description="Permet le suivi du volume par scène."
+
+Config.Caption="Configurations du  volume par scène"
+Config.Enable="Activer le suivi du Volume par scène"
+
