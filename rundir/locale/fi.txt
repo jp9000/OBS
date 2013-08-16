@@ -214,6 +214,12 @@ Settings.Publish.Username="Käyttäjätunnus (jos olemassa):"
 Settings.Publish.Mode.FileOnly="Tallennus"
 Settings.Publish.Mode.LiveStream="Lähetys"
 
+Settings.Publish.Warning.BadSettings="Varoitus: OBSin asetuksia ei ole optimoitu %s-palvelun kanssa. Aseta seuraavasti:\r\n\r\n"
+Settings.Publish.Warning.UseCBR="\tEnkoodaus-asetukset: Kytke CBR päälle\r\n\r\n"
+Settings.Publish.Warning.Maxbitrate="\tEnkoodaus-asetukset: Laske bitrate-asetusta arvoon %d\r\n\r\n"
+Settings.Publish.Warning.MaxAudiobitrate="\tEnkoodaus-asetukset: Laske äänen bitrate-asetusta arvoon %d\r\n\r\n"
+Settings.Publish.Warning.Keyint="\tLisäasetukset: Aseta keyframe väli %d sekuntiin\r\n\r\n"
+
 
 Settings.Video.Custom="Valinnainen:"
 Settings.Video.Device="Näytönohjain:"
