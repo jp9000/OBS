@@ -342,3 +342,4 @@ Plugins.NoiseGate.AttackTime="Attack-tid (ms):"
 Plugins.NoiseGate.HoldTime="Hold-tid (ms):"
 Plugins.NoiseGate.ReleaseTime="Release-tid (ms):"
 
+

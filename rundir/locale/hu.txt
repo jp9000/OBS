@@ -252,3 +252,4 @@ Updater.RunningWarning="OBs most újra fog indulni a frissítések telepítésé
 Updater.UpdatesAvailable="Frissítések elérhetőek"
 
 
+

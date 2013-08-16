@@ -263,3 +263,4 @@ Updater.RunningWarning="OBS 将重新启动来安装更新。\r\n\r\n您确定�
 Updater.UpdatesAvailable="有可用的更新"
 
 
+

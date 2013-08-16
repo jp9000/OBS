@@ -1,0 +1,9 @@
+Cancel="Avbryt"
+OK="OK"
+
+Plugin.Name="Scenespesifikk volum-plugin"
+Plugin.Description="Aktiverer separate voluminnstillinger for hver scene."
+
+Config.Caption="Scenespesifikke voluminnstillinger"
+Config.Enable="Aktiver scenespesifikt volum"
+
