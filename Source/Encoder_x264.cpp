@@ -222,7 +222,10 @@ public:
         paramData.b_vfr_input           = !bUseCFR;
         paramData.i_width               = width;
         paramData.i_height              = height;
-        paramData.vui.b_fullrange       = 0;
+        paramData.vui.b_fullrange       = true;
+        paramData.vui.i_colorprim       = 1;
+        paramData.vui.i_transfer        = 1;
+        paramData.vui.i_colmatrix       = 1;
 
         if (keyframeInterval)
             paramData.i_keyint_max          = fps*keyframeInterval;
