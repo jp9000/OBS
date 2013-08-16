@@ -164,3 +164,4 @@ Sources.BitmapSource.Empty="Bitikaart pole sisestatud. Palun sisesta bitikaart."
 
 
 
+

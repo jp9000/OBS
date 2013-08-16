@@ -252,3 +252,4 @@ Updater.RunningWarning="Pastebejimas bus paleistas iš naujo idiegti naujinimus.
 Updater.UpdatesAvailable="Atnaujinimai yra prieinami"
 
 
+
