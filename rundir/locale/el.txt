@@ -324,3 +324,4 @@ Plugins.NoiseGate.AttackTime="Χρόνος προσβολής (msec):"
 Plugins.NoiseGate.HoldTime="Χρόνος αναμονής (msec):"
 Plugins.NoiseGate.ReleaseTime="Χρόνος διάχυσης (msec):"
 
+

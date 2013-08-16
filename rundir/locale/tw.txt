@@ -38,15 +38,15 @@ StreamReport="串流回報"
 BuildingMP4Dialog.Progress="建置 MP4 中，請稍候..."
 
 Connection.CouldNotConnect="無法連線到伺服器"
-Connection.CouldNotParseURL="無法剖析 URL"
-Connection.Disconnected="服務器中斷連線"
+Connection.CouldNotParseURL="無法分析 RTMP URL"
+Connection.Disconnected="伺服器中斷連線"
 Connection.InvalidStream="無法存取指定的頻道或串流金鑰。可能因為你提供的金鑰／頻道是無效的，或者是伺服器端以為你先前還未登出。"
 
 DeleteConfirm.Title="確定刪除已選擇的項目？"
 
 EndingDelay.TimeLeft="剩餘時間：$1"
 
-GlobalSources.DeleteConfirm="如果刪除全域來源，將會刪除所有包含這個全域來源的場景，確定要繼續嗎？"
+GlobalSources.DeleteConfirm="如果刪除全域來源，將會從所有場景刪除這個全域來源，確定要繼續嗎？"
 
 Listbox.Add="新增 $1"
 Listbox.Center="置中"
@@ -177,7 +177,7 @@ Settings.Encoding.Audio.Format="格式："
 Settings.Encoding.Video.BufferSize="緩衝大小 (kbit)："
 Settings.Encoding.Video.BufferSizeTooltip="緩衝的大小決定多少資料進行緩衝處理。此值尤其影響到高速移動的場景。如果您不知道如何使用，請將其設定與您的位元速率相同。請參閱説明檔的詳細資訊。"
 Settings.Encoding.Video.CustomBuffer="使用自訂緩衝大小"
-Settings.Encoding.Video.KeyframeInterval="關鍵影格間隔 (秒, 0=auto)："
+Settings.Encoding.Video.KeyframeInterval="關鍵影格間隔 (單位：秒，0 = 自動)："
 Settings.Encoding.Video.MaxBitRate="最大位元速率 (kb/s)："
 Settings.Encoding.Video.MaxBitRateTooltip="此設定用於影像的最大位元速率。注意，雖然平均位元速率等同此值，但這仍基於您的緩衝區大小。通常您要將此設定值低於您的上傳速率。\r\n\r\n 可使用網站 Speedtest.net 來測定您的上傳速率。"
 Settings.Encoding.Video.Quality="畫質平衡："
@@ -199,7 +199,7 @@ Settings.Publish.AutoReconnectTimeout="自動重新連線逾時："
 Settings.Publish.ChannelName="頻道名稱："
 Settings.Publish.DashboardLink="儀表板連結(如果存在)："
 Settings.Publish.Delay="延遲 (秒)："
-Settings.Publish.LowLatencyMode="網路碰撞最小化："
+Settings.Publish.LowLatencyMode="低延遲模式："
 Settings.Publish.Mode="模式："
 Settings.Publish.Password="密碼 (如果存在)："
 Settings.Publish.Playpath="播放路徑/串流碼 (如果存在)："
@@ -213,6 +213,13 @@ Settings.Publish.Username="使用者名稱 (如果存在)："
 
 Settings.Publish.Mode.FileOnly="只輸出檔案"
 Settings.Publish.Mode.LiveStream="直播串流"
+
+Settings.Publish.Warning.BadSettings="警告：你的 OBS 設定無法使用 %s 進行優化，請設定下列：\r\n\r\n "
+Settings.Publish.Warning.UseCBR="\t編譯設定：啟用 CBR\r\n\r\n"
+Settings.Publish.Warning.Maxbitrate="\t編譯設定：減少您的最大位元率至 %d\r\n\r\n"
+Settings.Publish.Warning.Keyint="\t進階設定：設定一個關鍵影格間隔為 %d 秒\r\n\r\n"
+Settings.Publish.Warning.MaxAudiobitrate="\t編碼設定：減低您的音訊位元率至 %d\r\n\r\n
+"
 
 Settings.Video.Custom="自訂："
 Settings.Video.Device="顯示卡："
@@ -229,7 +236,7 @@ Settings.Video.Filter.Bilinear="縱橫增值法 (最快速)"
 Settings.Video.Filter.Bicubic="環迴增值法-銳利 (較佳細節，參考 16 個樣本)"
 Settings.Video.Filter.Lanczos="Lanczos演算法 (最佳細節，參考 36 個樣本)"
 
-Sources.BitmapSource="點陣圖"
+Sources.BitmapSource="圖像"
 Sources.GameCaptureSource="遊戲擷取"
 Sources.GlobalSource="全域來源"
 Sources.SoftwareCaptureSource="軟體擷取"
@@ -237,7 +244,7 @@ Sources.TextSource="文字"
 Sources.TransitionSource="投影片"
 
 Sources.BitmapSource.Color="色彩："
-Sources.BitmapSource.Empty="沒有加入點陣圖。請瀏覽並選擇點陣圖。"
+Sources.BitmapSource.Empty="沒有加入圖像。請瀏覽並選擇圖像。"
 Sources.BitmapSource.Opacity="不透明度："
 Sources.BitmapSource.Monitor="檢查變更："
 
@@ -335,4 +342,6 @@ Plugins.NoiseGate.OpenThreshold="開啟\n閥值"
 Plugins.NoiseGate.CloseThreshold="關閉\n閥值"
 Plugins.NoiseGate.AttackTime="起音時間 (Attack time)(毫秒)："
 Plugins.NoiseGate.HoldTime="持續時間 (Hold time)(毫秒)："
-Plugins.NoiseGate.ReleaseTime="釋音時間 (Release time)(毫秒)
+Plugins.NoiseGate.ReleaseTime="釋音時間 (Release time)(毫秒)："
+
+

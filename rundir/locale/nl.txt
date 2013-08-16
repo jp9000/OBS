@@ -214,6 +214,10 @@ Settings.Publish.Username="Gebruikersnaam (indien van toepassing):"
 Settings.Publish.Mode.FileOnly="Alleen Bestandsuitvoer"
 Settings.Publish.Mode.LiveStream="Live Stream"
 
+Settings.Publish.Warning.BadSettings="WAARSCHUWING: Je OBS instellingen zijn niet geoptimaliseerd voor gebruik met %s. Stel het volgende in: \r\n\r\n"
+Settings.Publish.Warning.UseCBR="\tEncoding instellingen: Activeer CBR\r\n\r\n"
+Settings.Publish.Warning.Maxbitrate="\tEncoding instellingen: Reduceer je maximale bitrate tot %d\r\n\r\n"
+Settings.Publish.Warning.Keyint="\tGeavanceerde instellingen: Stel de tijd tussen keyframes in op %d seconden\r\n\r\n"
 
 Settings.Video.Custom="Aangepast:"
 Settings.Video.Device="Videoadapter:"
@@ -337,4 +341,5 @@ Plugins.NoiseGate.CloseThreshold="Sluit\ndrempel"
 Plugins.NoiseGate.AttackTime="Attack-tijd (milliseconden):"
 Plugins.NoiseGate.HoldTime="Hold-tijd (milliseconden):"
 Plugins.NoiseGate.ReleaseTime="Release-tijd (milliseconden):"
+
 
