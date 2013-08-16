@@ -63,7 +63,7 @@ BEGIN
     PUSHBUTTON      "Defaults",IDC_DEFAULTS,124,375,108,14
 END
 
-IDD_SETTINGS_PUBLISH DIALOGEX 0, 0, 427, 336
+IDD_SETTINGS_PUBLISH DIALOGEX 0, 0, 427, 352
 STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD | WS_SYSMENU
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -96,12 +96,12 @@ BEGIN
     RTEXT           "Settings.Publish.StopStreamHotkey",IDC_STOPSTREAMHOTKEY_STATIC,7,213,133,8
     CONTROL         "ÉJÉXÉ^ÉÄ1",IDC_STOPSTREAMHOTKEY,"OBSHotkeyControlEx",WS_TABSTOP,144,210,80,14
     PUSHBUTTON      "ClearHotkey",IDC_CLEARHOTKEY,225,210,66,14
-    LTEXT           "Settings.Info",IDC_INFO,7,309,408,20,NOT WS_VISIBLE
+    LTEXT           "Settings.Info",IDC_INFO,7,325,408,20,NOT WS_VISIBLE
     COMBOBOX        IDC_SERVERLIST,144,43,226,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     RTEXT           ".FMS URL:",IDC_URL_STATIC,4,46,138,8
     RTEXT           "Settings.Publish.Server",IDC_SERVER_STATIC,4,46,138,8
     EDITTEXT        IDC_URL,144,43,226,14,ES_AUTOHSCROLL
-    LTEXT           "Service Warnings Go Here",IDC_WARNINGS,7,236,408,60
+    LTEXT           "Service Warnings Go Here",IDC_WARNINGS,7,236,408,86
 END
 
 IDD_SETTINGS_ENCODING DIALOGEX 0, 0, 427, 336
@@ -619,7 +619,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 420
         TOPMARGIN, 7
-        BOTTOMMARGIN, 329
+        BOTTOMMARGIN, 345
     END
 
     IDD_SETTINGS_ENCODING, DIALOG
@@ -830,8 +830,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,5,4,2
- PRODUCTVERSION 0,5,4,2
+ FILEVERSION 0,5,5,0
+ PRODUCTVERSION 0,5,5,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -847,12 +847,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "Open Broadcaster Software"
-            VALUE "FileVersion", "0.5.4.2"
+            VALUE "FileVersion", "0.5.5.0"
             VALUE "InternalName", "OBS"
             VALUE "LegalCopyright", "Copyright (C) 2013"
             VALUE "OriginalFilename", "OBS.exe"
             VALUE "ProductName", "Open Broadcaster Software"
-            VALUE "ProductVersion", "0.5.4.2"
+            VALUE "ProductVersion", "0.5.5.0"
         END
     END
     BLOCK "VarFileInfo"

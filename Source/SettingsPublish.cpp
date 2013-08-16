@@ -181,6 +181,7 @@ void SettingsPublish::SetWarningInfo()
     bool bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
     int maxBitRate = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("MaxBitrate"), 1000);
     int keyframeInt = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 0);
+    int audioBitRate = AppConfig->GetInt(TEXT("Audio Encoding"), TEXT("Bitrate"), 96);
 
     //ignore for non-livestreams
     if (data->mode != 0)
@@ -233,6 +234,16 @@ void SettingsPublish::SetWarningInfo()
                         {
                             errors++;
                             strWarnings << FormattedString(Str("Settings.Publish.Warning.Maxbitrate"), max_bitrate);
+                        }
+                    }
+
+                    if (r->HasItem(TEXT("max audio bitrate")))
+                    {
+                        int maxaudio = r->GetInt(TEXT("max audio bitrate"));
+                        if (audioBitRate > maxaudio)
+                        {
+                            errors++;
+                            strWarnings << FormattedString(Str("Settings.Publish.Warning.MaxAudiobitrate"), maxaudio);
                         }
                     }
 
