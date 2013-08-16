@@ -218,6 +218,7 @@ Settings.Publish.Warning.BadSettings="VARNING: Dina OBS-inställningar är inte 
 Settings.Publish.Warning.UseCBR="\tKodningsinställningar: Aktivera CBR. (Constant Bit Rate)\r\n\r\n"
 Settings.Publish.Warning.Maxbitrate="\tKodningsinställningar: Sänk din maximala bithastighet till %d.\r\n\r\n"
 Settings.Publish.Warning.Keyint="\tAvancerade inställningar: Ange ett %d sekunders nyckelbildsintervall.\r\n\r\n"
+Settings.Publish.Warning.MaxAudiobitrate="\tKodningsinställningar: Sänk din ljud-bithastighet till %d\r\n\r\n"
 
 Settings.Video.Custom="Anpassad:"
 Settings.Video.Device="Grafikkort:"

@@ -1,4 +1,4 @@
-﻿Cancel="取消"
+Cancel="取消"
 ClassName="視訊擷取裝置"
 DeviceSelection="選擇裝置"
 OK="確定"
