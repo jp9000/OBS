@@ -226,6 +226,7 @@ extern bool               bD3D9Hooked;
 #else
 extern ID3D10Device1    *shareDevice;
 extern ID3D10Resource   *copyTextureIntermediary;
+IDXGISwapChain          *swapChain = NULL;
 extern bool             bDXGIHooked;
 #endif
 
@@ -301,6 +302,7 @@ void ClearGLData()
         SafeRelease(d3d9ex);
 #else
         SafeRelease(copyTextureIntermediary);
+        SafeRelease(swapChain);
         SafeRelease(shareDevice);
 #endif
     } else if(bHasTextures) {
@@ -471,6 +473,18 @@ static bool DoGLGPUHook(RECT &rc)
 
     HRESULT hErr;
 
+	DXGI_SWAP_CHAIN_DESC swapDesc;
+	ZeroMemory(&swapDesc, sizeof(swapDesc));
+	swapDesc.BufferCount = 2;
+	swapDesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	swapDesc.BufferDesc.Width  = 2;
+	swapDesc.BufferDesc.Height = 2;
+	swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	swapDesc.Flags = 0;
+	swapDesc.SampleDesc.Count = 1;
+	swapDesc.Windowed = TRUE;
+    swapDesc.OutputWindow = hwndD3DWindow;
+
     HMODULE hD3D10_1 = LoadLibrary(TEXT("d3d10_1.dll"));
     if(!hD3D10_1)
     {
@@ -492,10 +506,10 @@ static bool DoGLGPUHook(RECT &rc)
         goto finishGPUHook;
     }
 
-    PFN_D3D10_CREATE_DEVICE1 d3d10CreateDevice1 = (PFN_D3D10_CREATE_DEVICE1)GetProcAddress(hD3D10_1, "D3D10CreateDevice1");
-    if(!d3d10CreateDevice1)
+    PFN_D3D10_CREATE_DEVICE_AND_SWAP_CHAIN1 d3d10CreateDeviceAndSwapChain1 = (PFN_D3D10_CREATE_DEVICE_AND_SWAP_CHAIN1)GetProcAddress(hD3D10_1, "D3D10CreateDeviceAndSwapChain1");
+    if(!d3d10CreateDeviceAndSwapChain1)
     {
-        RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: Could not load 'D3D10CreateDevice1'" << endl;
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: Could not load 'D3D10CreateDeviceAndSwapChain1'" << endl;
         goto finishGPUHook;
     }
 
@@ -514,9 +528,9 @@ static bool DoGLGPUHook(RECT &rc)
         goto finishGPUHook;
     }
 
-    if(FAILED(hErr = (*d3d10CreateDevice1)(adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_FEATURE_LEVEL_10_1, D3D10_1_SDK_VERSION, &shareDevice)))
+    if(FAILED(hErr = (*d3d10CreateDeviceAndSwapChain1)(adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_FEATURE_LEVEL_10_1, D3D10_1_SDK_VERSION, &swapDesc, &swapChain, &shareDevice)))
     {
-        if(FAILED(hErr = (*d3d10CreateDevice1)(adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_FEATURE_LEVEL_9_3, D3D10_1_SDK_VERSION, &shareDevice)))
+        if(FAILED(hErr = (*d3d10CreateDeviceAndSwapChain1)(adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_FEATURE_LEVEL_9_3, D3D10_1_SDK_VERSION, &swapDesc, &swapChain, &shareDevice)))
         {
             RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: Could not create D3D10.1 device, result = " << (UINT)hErr << endl;
             adapter->Release();
@@ -713,8 +727,8 @@ void DoGLCPUHook(RECT &rc)
 
 void DoGLHook(RECT &rc)
 {
-    //if (bFBOAvailable && bNVCaptureAvailable && DoGLGPUHook(rc))
-    //        return;
+    if (bFBOAvailable && bNVCaptureAvailable && DoGLGPUHook(rc))
+            return;
 
     DoGLCPUHook(rc);
 }
@@ -923,7 +937,7 @@ void HandleGLSceneUpdate(HDC hDC)
                                 wglDXUnlockObjectsNV(gl_dxDevice, 1, &gl_handle);
 
 #ifndef USE_D3D9_GL_INTEROP
-                                shareDevice->Flush();
+                                swapChain->Present(0, 0);
 #endif
                             }
                         }
