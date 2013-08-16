@@ -218,6 +218,7 @@ Settings.Publish.Warning.BadSettings="WARNING: Your OBS settings are not optimiz
 Settings.Publish.Warning.UseCBR="\tEncoding Settings: Enable CBR\r\n\r\n"
 Settings.Publish.Warning.Maxbitrate="\tEncoding Settings: Reduce your maximum bitrate to %d\r\n\r\n"
 Settings.Publish.Warning.Keyint="\tAdvanced Settings: Set a keyframe interval of %d seconds\r\n\r\n"
+Settings.Publish.Warning.MaxAudiobitrate="\tEncoding Settings: Reduce your audio bitrate to %d\r\n\r\n"
 
 Settings.Video.Custom="Custom:"
 Settings.Video.Device="Video Adapter:"
