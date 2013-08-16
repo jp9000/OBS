@@ -341,3 +341,5 @@ Plugins.NoiseGate.CloseThreshold="閉鎖\n閾値"
 Plugins.NoiseGate.AttackTime="動作開始時間 (ミリ秒):"
 Plugins.NoiseGate.HoldTime="保持時間 (ミリ秒):"
 Plugins.NoiseGate.ReleaseTime="解除時間 (ミリ秒):"
+
+

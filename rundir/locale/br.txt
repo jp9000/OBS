@@ -338,3 +338,4 @@ Plugins.NoiseGate.AttackTime="Tempo de ataque (milissegundos):"
 Plugins.NoiseGate.HoldTime="Tempo de espera (milissegundos):"
 Plugins.NoiseGate.ReleaseTime="Tempo de liberação (milissegundos):"
 
+

@@ -331,3 +331,4 @@ Plugins.NoiseGate.AttackTime="어택 타임 (밀리세컨드):"
 Plugins.NoiseGate.HoldTime="홀드 타임 (밀리세컨드):"
 Plugins.NoiseGate.ReleaseTime="릴리즈 타임 (밀리세컨드):"
 
+

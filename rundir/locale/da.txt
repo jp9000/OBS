@@ -254,3 +254,4 @@ Updater.RunningWarning="OBS vil blive genstartet for at installere opdateringern
 Updater.UpdatesAvailable="Opdateringer er tilgængelige"
 
 
+

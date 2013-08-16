@@ -266,3 +266,4 @@ Updater.RunningWarning="OBS zostanie ponownie uruchomiony w celu zainstalowania 
 Updater.UpdatesAvailable="Dostępne są nowe aktualizacje"
 
 
+
