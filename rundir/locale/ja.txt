@@ -1,4 +1,4 @@
-﻿Add="追加"
+Add="追加"
 Preview="プレビュー"
 Order="順序"
 Apply="適用"
@@ -342,4 +342,5 @@ Plugins.NoiseGate.CloseThreshold="閉鎖\n閾値"
 Plugins.NoiseGate.AttackTime="動作開始時間 (ミリ秒):"
 Plugins.NoiseGate.HoldTime="保持時間 (ミリ秒):"
 Plugins.NoiseGate.ReleaseTime="解除時間 (ミリ秒):"
+
 
