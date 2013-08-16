@@ -1,4 +1,4 @@
-﻿Add="新增"
+Add="新增"
 Preview="預覽"
 Order="排列"
 Apply="套用"
