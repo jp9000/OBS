@@ -1128,9 +1128,62 @@ static void RegisterFBOStuff()
         logOutput << CurrentTimeString() << "FBO available" << endl;
 }
 
+static inline HWND CreateDummyWindow(LPCTSTR lpClass, LPCTSTR lpName)
+{
+    return CreateWindowEx (0,
+        lpClass, lpName,
+        WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
+        0, 0,
+        1, 1,
+        NULL,
+        NULL,
+        hinstMain,
+        NULL
+        );
+}
+
 bool InitGLCapture()
 {
+    static HWND hwndOpenGLSetupWindow = NULL;
     bool bSuccess = false;
+
+    if(!hwndOpenGLSetupWindow)
+    {
+        WNDCLASSEX windowClass;
+        ZeroMemory(&windowClass, sizeof(windowClass));
+
+        windowClass.cbSize = sizeof(windowClass);
+        windowClass.style = CS_OWNDC;
+        windowClass.lpfnWndProc = DefWindowProc;
+        windowClass.lpszClassName = TEXT("OBSOGLHookClass");
+        windowClass.hInstance = hinstMain;
+
+        if(RegisterClassEx(&windowClass))
+        {
+            hwndOpenGLSetupWindow = CreateDummyWindow(
+                TEXT("OBSOGLHookClass"),
+                TEXT("OBS OpenGL Context Window")
+                );
+        }
+    }
+
+    if (!hwndD3DWindow) {
+        WNDCLASSEX windowClass;
+        ZeroMemory(&windowClass, sizeof(windowClass));
+
+        windowClass.cbSize = sizeof(windowClass);
+        windowClass.style = CS_OWNDC;
+        windowClass.lpfnWndProc = DefWindowProc;
+        windowClass.lpszClassName = TEXT("OBSDummyD3D9WndClassForTheGPUHook");
+        windowClass.hInstance = hinstMain;
+
+        if (RegisterClassEx(&windowClass)) {
+            hwndD3DWindow = CreateDummyWindow(
+                TEXT("OBSDummyD3D9WndClassForTheGPUHook"),
+                TEXT("OBS OpenGL D3D9 Temp Device Window")
+                );
+        }
+    }
 
     HMODULE hGL = GetModuleHandle(TEXT("opengl32.dll"));
     if(hGL && hwndOpenGLSetupWindow)
@@ -1212,6 +1265,11 @@ bool InitGLCapture()
                     glHookSwapLayerBuffers.Rehook();
                     glHookwglSwapBuffers.Rehook();
                     glHookDeleteContext.Rehook();
+
+                    DestroyWindow(hwndOpenGLSetupWindow);
+                    hwndOpenGLSetupWindow = NULL;
+
+                    UnregisterClass(TEXT("OBSOGLHookClass"), hinstMain);
                 }
             }
 
