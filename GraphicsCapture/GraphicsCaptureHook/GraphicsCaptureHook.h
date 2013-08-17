@@ -196,6 +196,8 @@ extern HANDLE hSignalReady, hSignalExit;
 
 extern HWND hwndSender;
 extern HWND hwndOBS;
+extern HWND hwndD3DDummyWindow;
+extern HWND hwndOpenGLSetupWindow;
 
 extern CaptureInfo *infoMem;
 
