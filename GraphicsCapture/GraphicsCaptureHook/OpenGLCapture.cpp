@@ -230,8 +230,6 @@ IDXGISwapChain          *swapChain = NULL;
 extern bool             bDXGIHooked;
 #endif
 
-static HWND             hwndD3DWindow  = NULL;
-
 extern BOOL             bUseSharedTextures;
 extern SharedTexData    *texData;
 extern HANDLE           sharedHandle;
@@ -377,7 +375,7 @@ static bool DoGLGPUHook(RECT &rc)
     pp.SwapEffect               = D3DSWAPEFFECT_FLIP;
     pp.BackBufferFormat         = D3DFMT_A8R8G8B8;
     pp.BackBufferCount          = 1;
-    pp.hDeviceWindow            = hwndD3DWindow;
+    pp.hDeviceWindow            = hwndD3DDummyWindow;
     pp.PresentationInterval     = D3DPRESENT_INTERVAL_IMMEDIATE;
     pp.BackBufferHeight         = 2;
     pp.BackBufferWidth          = 2;
@@ -480,10 +478,9 @@ static bool DoGLGPUHook(RECT &rc)
 	swapDesc.BufferDesc.Width  = 2;
 	swapDesc.BufferDesc.Height = 2;
 	swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	swapDesc.Flags = 0;
 	swapDesc.SampleDesc.Count = 1;
 	swapDesc.Windowed = TRUE;
-    swapDesc.OutputWindow = hwndD3DWindow;
+    swapDesc.OutputWindow = hwndD3DDummyWindow;
 
     HMODULE hD3D10_1 = LoadLibrary(TEXT("d3d10_1.dll"));
     if(!hD3D10_1)
