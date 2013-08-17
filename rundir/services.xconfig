@@ -76,6 +76,6 @@ services : {
     }
     recommended : {
       "keyint"      : 2000
-    }	
+    }
   }
 }
