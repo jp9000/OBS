@@ -175,7 +175,6 @@ Section "Open Broadcaster Software" Section1
 	CreateShortCut "$DESKTOP\Open Broadcaster Software.lnk" "$INSTDIR\OBS.exe"
 	CreateDirectory "$SMPROGRAMS\Open Broadcaster Software"
 	CreateShortCut "$SMPROGRAMS\Open Broadcaster Software\Open Broadcaster Software (32bit).lnk" "$INSTDIR\OBS.exe"
-	CreateShortCut "$SMPROGRAMS\Open Broadcaster Software\Open Log Folder.lnk" "%AppData%\OBS\logs"
 	CreateShortCut "$SMPROGRAMS\Open Broadcaster Software\Uninstall.lnk" "$INSTDIR\uninstall.exe"
 
 	${if} ${RunningX64}
@@ -212,7 +211,6 @@ Section Uninstall
 	; Delete Shortcuts
 	Delete "$DESKTOP\Open Broadcaster Software.lnk"
 	Delete "$SMPROGRAMS\Open Broadcaster Software\Open Broadcaster Software (32bit).lnk"
-	Delete "$SMPROGRAMS\Open Broadcaster Software\Open Log Folder.lnk"
 	Delete "$SMPROGRAMS\Open Broadcaster Software\Uninstall.lnk"
 	${if} ${RunningX64}
 		Delete "$SMPROGRAMS\Open Broadcaster Software\Open Broadcaster Software (64bit).lnk"
