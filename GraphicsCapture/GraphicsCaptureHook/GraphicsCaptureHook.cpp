@@ -26,7 +26,7 @@ HANDLE hSignalRestart=NULL, hSignalEnd=NULL;
 HANDLE hSignalReady=NULL, hSignalExit=NULL;
 
 HINSTANCE hinstMain = NULL;
-HWND hwndSender = NULL, hwndOBS = NULL;
+HWND hwndSender = NULL, hwndOBS = NULL, hwndD3DDummyWindow = NULL, hwndOpenGLSetupWindow = NULL;
 HANDLE textureMutexes[2] = {NULL, NULL};
 int  resetCount = 1;
 bool bStopRequested = false;
@@ -245,6 +245,9 @@ bool bDirectDrawHooked = false;
 
 inline bool AttemptToHookSomething()
 {
+    if (!hwndSender || !hwndD3DDummyWindow || !hwndOpenGLSetupWindow)
+        return false;
+
     bool bFoundSomethingToHook = false;
     if(!bD3D9Hooked) {
         if (InitD3D9Capture()) {
@@ -299,6 +302,86 @@ BOOL GetMessageTimeout(MSG &msg, DWORD timeout)
     return ret;
 }
 
+static inline HWND CreateDummyWindow(LPCTSTR lpClass, LPCTSTR lpName)
+{
+    return CreateWindowEx (0,
+        lpClass, lpName,
+        WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
+        0, 0,
+        1, 1,
+        NULL,
+        NULL,
+        hinstMain,
+        NULL
+        );
+}
+
+
+static DWORD WINAPI DummyWindowThread(LPVOID lpBla)
+{
+    WNDCLASS wc;
+    ZeroMemory(&wc, sizeof(wc));
+    wc.style = CS_OWNDC;
+    wc.hInstance = hinstMain;
+    wc.lpfnWndProc = (WNDPROC)DefWindowProc;
+
+    wc.lpszClassName = TEXT("OBSOGLHookClass");
+    if (RegisterClass(&wc)) {
+        hwndOpenGLSetupWindow = CreateDummyWindow(
+            TEXT("OBSOGLHookClass"),
+            TEXT("OBS OpenGL Context Window")
+            );
+
+        if (!hwndOpenGLSetupWindow) {
+            logOutput << CurrentDateTimeString() << "could not create gl dummy window" << endl;
+            return 0;
+        }
+    } else {
+        logOutput << CurrentDateTimeString() << "could not create gl dummy window class" << endl;
+        return 0;
+    }
+
+    wc.lpszClassName = TEXT("OBSDummyD3D9WndClassForTheGPUHook");
+    if (RegisterClass(&wc)) {
+        hwndD3DDummyWindow = CreateDummyWindow(
+            TEXT("OBSDummyD3D9WndClassForTheGPUHook"),
+            TEXT("OBS OpenGL D3D Temp Device Window")
+            );
+
+        if (!hwndD3DDummyWindow) {
+            logOutput << CurrentDateTimeString() << "could not create gl d3d interop dummy window" << endl;
+            return 0;
+        }
+    } else {
+        logOutput << CurrentDateTimeString() << "could not create gl d3d interop dummy window class" << endl;
+        return 0;
+    }
+
+    wc.lpszClassName = SENDER_WINDOWCLASS;
+    if (RegisterClass(&wc)) {
+        hwndSender = CreateDummyWindow(
+            SENDER_WINDOWCLASS,
+            NULL
+            );
+
+        if (!hwndSender) {
+            logOutput << CurrentDateTimeString() << "could not create sender window" << endl;
+            return 0;
+        }
+    } else {
+        logOutput << CurrentDateTimeString() << "could not create sender window class" << endl;
+        return 0;
+    }
+
+    MSG msg;
+    while (GetMessage(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    return 0;
+}
+
 DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
 {
     bool bSuccess = false;
@@ -328,12 +411,6 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
     InitializeCriticalSection(&d3d9EndMutex);
     InitializeCriticalSection(&glMutex);
 
-    WNDCLASS wc;
-    ZeroMemory(&wc, sizeof(wc));
-    wc.hInstance = hinstMain;
-    wc.lpszClassName = SENDER_WINDOWCLASS;
-    wc.lpfnWndProc = (WNDPROC)DefWindowProc;
-
     DWORD procID = GetCurrentProcessId();
 
     wstringstream strRestartEvent, strEndEvent, strReadyEvent, strExitEvent, strInfoMemory;
@@ -347,6 +424,15 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
     hSignalEnd      = GetEvent(strEndEvent.str().c_str());
     hSignalReady    = GetEvent(strReadyEvent.str().c_str());
     hSignalExit     = GetEvent(strExitEvent.str().c_str());
+
+    DWORD bla;
+    HANDLE hWindowThread = CreateThread(NULL, 0, DummyWindowThread, NULL, 0, &bla);
+    if (!hWindowThread) {
+        logOutput << CurrentTimeString() << "CaptureThread: could not create window thread for some reason" << endl;
+        return 0;
+    }
+
+    CloseHandle(hWindowThread);
 
     hInfoFileMap = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(CaptureInfo), strInfoMemory.str().c_str());
     if(!hInfoFileMap)
@@ -371,51 +457,36 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
         return 0;
     }
 
-    if (RegisterClass(&wc)) {
-        hwndSender = CreateWindow(SENDER_WINDOWCLASS, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, hinstMain, 0);
-        if (hwndSender) {
-            textureMutexes[0] = OpenMutex(MUTEX_ALL_ACCESS, FALSE, TEXTURE_MUTEX1);
-            if (textureMutexes[0]) {
-                textureMutexes[1] = OpenMutex(MUTEX_ALL_ACCESS, FALSE, TEXTURE_MUTEX2);
-                if (textureMutexes[1]) {
-                    while(!AttemptToHookSomething())
-                        Sleep(50);
+    textureMutexes[0] = OpenMutex(MUTEX_ALL_ACCESS, FALSE, TEXTURE_MUTEX1);
+    if (textureMutexes[0]) {
+        textureMutexes[1] = OpenMutex(MUTEX_ALL_ACCESS, FALSE, TEXTURE_MUTEX2);
+        if (textureMutexes[1]) {
+            while(!AttemptToHookSomething())
+                Sleep(50);
 
-                    logOutput << CurrentTimeString() << "(half life scientist) everything..  seems to be in order" << endl;
+            logOutput << CurrentTimeString() << "(half life scientist) everything..  seems to be in order" << endl;
 
-                    MSG msg;
-                    while (MsgWaitForMultipleObjects(1, &dummyEvent, FALSE, 3000, QS_ALLINPUT) != WAIT_ABANDONED_0) {
-                    //while (GetMessageTimeout(msg, 3000)) {
-                        AttemptToHookSomething();
-                        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-                            TranslateMessage(&msg);
-                            DispatchMessage(&msg);
-                        }
-                    }
-
-                    CloseHandle(textureMutexes[1]);
-                    textureMutexes[1] = NULL;
-                } else {
-                    logOutput << CurrentTimeString() << "could not open texture mutex 2" << endl;
-                }
-
-                CloseHandle(textureMutexes[0]);
-                textureMutexes[0] = NULL;
-            } else {
-                logOutput << CurrentTimeString() << "could not open texture mutex 1" << endl;
+            while (1) {
+                AttemptToHookSomething();
+                Sleep(4000);
             }
 
-            DestroyWindow(hwndSender);
+            CloseHandle(textureMutexes[1]);
+            textureMutexes[1] = NULL;
         } else {
-            logOutput << CurrentTimeString() << "could not create sender window" << endl;
+            logOutput << CurrentTimeString() << "could not open texture mutex 2" << endl;
         }
+
+        CloseHandle(textureMutexes[0]);
+        textureMutexes[0] = NULL;
+    } else {
+        logOutput << CurrentTimeString() << "could not open texture mutex 1" << endl;
     }
 
     logOutput << CurrentTimeString() << "WARNING: exit out of the main thread loop somehow" << endl;
 
     return 0;
 }
-
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpBlah)
 {
