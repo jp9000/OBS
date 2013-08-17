@@ -806,7 +806,7 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
         XElement *services = serverData.GetElement(TEXT("services"));
         if(!services)
         {
-            failReason = TEXT("Could not any services in services.xconfig");
+            failReason = TEXT("Could not find any services in services.xconfig");
             goto end;
         }
 
