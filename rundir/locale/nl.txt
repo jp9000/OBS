@@ -218,6 +218,7 @@ Settings.Publish.Warning.BadSettings="WAARSCHUWING: Je OBS instellingen zijn nie
 Settings.Publish.Warning.UseCBR="\tEncoding instellingen: Activeer CBR\r\n\r\n"
 Settings.Publish.Warning.Maxbitrate="\tEncoding instellingen: Reduceer je maximale bitrate tot %d\r\n\r\n"
 Settings.Publish.Warning.Keyint="\tGeavanceerde instellingen: Stel de tijd tussen keyframes in op %d seconden\r\n\r\n"
+Settings.Publish.Warning.MaxAudiobitrate="\tEncoding instellingen: Reduceer je audio bitrate tot %d\r\n\r\n"
 
 Settings.Video.Custom="Aangepast:"
 Settings.Video.Device="Videoadapter:"
