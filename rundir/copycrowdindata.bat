@@ -3,7 +3,9 @@ setlocal enabledelayedexpansion
 for /D /r %%d in (crowdin\*) do (
 	set longlocale=%%~nd
 	set shortlocale=!longlocale:~0,2!
-	if !longlocale!==pt-BR (
+	if !longlocale!==en-PT (
+		set localename=pe
+	) else ( if !longlocale!==pt-BR (
 		set localename=br
 	) else ( if !longlocale!==pt-PT (
 		set localename=pt
@@ -19,7 +21,7 @@ for /D /r %%d in (crowdin\*) do (
 		set localename=tw
 	) else (
 		set localename=!longlocale:~-2!
-	) ) ) ) ) ) )
+	) ) ) ) ) ) ) )
 	for /f %%f in ("crowdin\!longlocale!\Main\!shortlocale!.ini") do set size=%%~zf
 	if !size! gtr 0 (
 		echo Found locale !longlocale!, copying to !localename!

@@ -11,6 +11,7 @@ installer/32bit
 installer/upload
 installer/64bit
 ipch/
+rundir/crowdin
 
 *.dat
 *.clbin
