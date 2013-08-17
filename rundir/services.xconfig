@@ -74,5 +74,8 @@ services : {
       "Primary Youtube ingest server" : rtmp://a.rtmp.youtube.com/live2
       "Backup Youtube ingest server" : rtmp://b.rtmp.youtube.com/live2?backup=1
     }
+    recommended : {
+      "keyint"      : 2000
+    }	
   }
 }
