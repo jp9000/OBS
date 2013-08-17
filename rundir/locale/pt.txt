@@ -1,15 +1,81 @@
+Add="Adicionar"
+Preview="Pré-Visualizar"
+Order="Ordem"
+Apply="Aplicar"
+Browse="Procurar..."
+Cancel="Cancelar"
+ClearHotkey="Limpar"
+Color="Cor"
+Default="Predefinição"
+Defaults="Predefinições"
+DeleteConfirm="Tem a certeza que deseja excluir os itens selecionados?"
+Desktop="Ambiente de trabalho"
+Disable="Desativar"
+EndingDelay="Finalizando stream com atraso..."
+EnterName="Por favor insira um nome"
+Gamma="Gama:"
+GlobalSources="Fontes globais..."
+MicrophoneFailure="Ocorreu um erro iniciando o áudio do microfone - este pode não estar conectado, ou outro aplicativo pode estar a usá-lo em modo exclusivo."
+MoveDown="Mover para baixo"
+MoveToBottom="Mover para o fundo"
+MoveToTop="Mover para o topo"
+MoveUp="Mover para cima"
+NameExists="'$1' já existe. Por favor, digite um nome diferente"
+None="Nenhum"
+OK="OK"
+Plugins="Plugins..."
+Reconnecting="Reconectando..."
+Refresh="Atualizar"
+Remove="Remover"
+Rename="Renomear"
+Copy="Copiar"
+Scene="Cena"
+Settings="Definições..."
 
 
+Connection.CouldNotConnect="Não foi possível conectar ao servidor"
+Connection.Disconnected="Desconectado pelo servidor"
+Connection.InvalidStream="Não foi possível acessar o canal especificado ou a chave da stream. Isto pode ser porque o canal/chave é inválido, ou porque o servidor ainda acha que você está logado."
+
+DeleteConfirm.Title="Remover os items selecionados?"
+
+EndingDelay.TimeLeft="Tempo restante: $1"
+
+GlobalSources.DeleteConfirm="Se você excluir uma fonte global, ela será removida de qualquer cena que a usa.  Tem certeza que deseja continuar?"
+
+Listbox.Add="Adicionar $1"
+Listbox.Center="Centrar"
+Listbox.CenterHorizontally="Centrar horizontalmente"
+Listbox.CenterVertically="Centrar verticalmente"
+Listbox.MoveTop="Mover para o topo"
+Listbox.MoveRight="Mover para a borda direita"
+Listbox.MoveBottom="Mover para o fundo"
+Listbox.MoveLeft="Mover para a borda esquerda"
+Listbox.Config="Propriedades"
+Listbox.FitToScreen="Ajustar ao ecrã"
+Listbox.Positioning="Posição/tamanho"
+Listbox.SetHotkey="Definir tecla de atalho"
+
+MainMenu.File="&Ficheiro"
+MainMenu.Help="&Ajuda"
+MainMenu.Profiles="&Perfis"
+MainMenu.Settings="&Definições"
+
+MainMenu.Settings.AlwaysOnTop="&Sempre em cima"
+
+MainMenu.File.Save="&Guardar"
+
+MainMenu.Help.Contents="&Conteúdos"
+MainMenu.Help.VisitWebsite="Visitar o website"
 
 
-
-
-
-
-
-
-
-
+MainWindow.PreviewDisabled="Pré-visualização desligada"
+MainWindow.Dashboard="Painel de controlo"
+MainWindow.Exit="Sair"
+MainWindow.Plugins="Plugins"
+MainWindow.SceneEditor="Editar cena"
+MainWindow.Scenes="Cenas:"
+MainWindow.Sources="Fontes:"
 
 
 

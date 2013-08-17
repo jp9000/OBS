@@ -494,6 +494,8 @@ LocaleNativeName nativeNames[] =
     {TEXT("or"), TEXT("ଓଡ଼ିଆ")},
     {TEXT("os"), TEXT("Ирон æвзаг")},
     {TEXT("pa"), TEXT("ਪੰਜਾਬੀ, پنجابی")},
+	// reserving this region code, but not displaying it in the UI until the translation is more complete :D
+	// {TEXT("pe"), TEXT("Pirate English")},
     {TEXT("pi"), TEXT("पाऴि ")},
     {TEXT("pl"), TEXT("polski")},
     {TEXT("ps"), TEXT("پښتو")},
