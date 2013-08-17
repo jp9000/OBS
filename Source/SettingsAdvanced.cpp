@@ -137,6 +137,11 @@ void SettingsAdvanced::ApplySettings()
 
     //--------------------------------------------------
 
+    BOOL bUseMicSyncFixHack = SendMessage(GetDlgItem(hwnd, IDC_MICSYNCFIX), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    GlobalConfig->SetInt(TEXT("Audio"), TEXT("UseMicSyncFixHack"), bUseMicSyncFixHack);
+
+    //--------------------------------------------------
+
     BOOL bLowLatencyAutoMode = SendMessage(GetDlgItem(hwnd, IDC_LATENCYMETHOD), BM_GETCHECK, 0, 0) == BST_CHECKED;
     int latencyFactor = GetDlgItemInt(hwnd, IDC_LATENCYTUNE, NULL, TRUE);
 
@@ -174,6 +179,7 @@ void SettingsAdvanced::SetDefaults()
     EnableWindow(GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS), FALSE);
     SendMessage(GetDlgItem(hwnd, IDC_SYNCTOVIDEOTIME), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_USEMICQPC), BM_SETCHECK, BST_UNCHECKED, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_MICSYNCFIX), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_AUDIOTIMEADJUST), UDM_SETPOS32, 0, 0);
     SendMessage(GetDlgItem(hwnd, IDC_LATENCYTUNE), UDM_SETPOS32, 0, 20);
     SendMessage(GetDlgItem(hwnd, IDC_LATENCYMETHOD), BM_SETCHECK, BST_UNCHECKED, 0);
@@ -317,6 +323,11 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 bool bUseMicQPC = GlobalConfig->GetInt(TEXT("Audio"), TEXT("UseMicQPC")) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_USEMICQPC), BM_SETCHECK, bUseMicQPC ? BST_CHECKED : BST_UNCHECKED, 0);
+                
+                //------------------------------------
+
+                BOOL bMicSyncFixHack = GlobalConfig->GetInt(TEXT("Audio"), TEXT("UseMicSyncFixHack"));
+                SendMessage(GetDlgItem(hwnd, IDC_MICSYNCFIX), BM_SETCHECK, bMicSyncFixHack ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 //------------------------------------
 
@@ -474,6 +485,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                     }
                 case IDC_DISABLEPREVIEWENCODING:
                 case IDC_ALLOWOTHERHOTKEYMODIFIERS:
+                case IDC_MICSYNCFIX:
                 case IDC_USEMICQPC:
                 case IDC_SYNCTOVIDEOTIME:
                 case IDC_USECFR:

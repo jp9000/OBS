@@ -53,6 +53,8 @@ class MMDeviceAudioSource : public AudioSource
     QWORD firstTimestamp;
     QWORD lastQPCTimestamp;
 
+    UINT32 angerThreshold;
+
     bool bUseQPC;
 
     QWORD GetTimestamp(QWORD qpcTimestamp);
@@ -111,6 +113,11 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
     }
 
     bIsMic = bMic;
+
+    if (bIsMic) {
+        BOOL bMicSyncFixHack = GlobalConfig->GetInt(TEXT("Audio"), TEXT("UseMicSyncFixHack"));
+        angerThreshold = bMicSyncFixHack ? 30 : 1000;
+    }
 
     if (scmpi(lpID, TEXT("Default")) == 0)
         err = mmEnumerator->GetDefaultAudioEndpoint(bMic ? eCapture : eRender, bMic ? eCommunications : eConsole, &mmDevice);
@@ -320,10 +327,6 @@ QWORD MMDeviceAudioSource::GetTimestamp(QWORD qpcTimestamp)
     }
 }
 
-//how often we have to see repeating available packets before we drop packets.
-//this is primarily due to worthless mic sampling issues and where mic data comes in big bursts.
-#define HOW_OFTEN_I_GET_ANGRY 30
-
 bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *timestamp)
 {
     UINT captureSize = 0;
@@ -347,7 +350,7 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
                 if (captureSize > 0) {
                     ++numTimesInARowNewDataSeen;
 
-                    if (numTimesInARowNewDataSeen > HOW_OFTEN_I_GET_ANGRY) {
+                    if (numTimesInARowNewDataSeen > angerThreshold) {
                         if (SUCCEEDED(mmCapture->GetBuffer(&captureBuffer, &numFramesRead, &dwFlags, &devPosition, &qpcTimestamp))) {
                             mmCapture->ReleaseBuffer(numFramesRead);
                             numTimesInARowNewDataSeen = 0;
