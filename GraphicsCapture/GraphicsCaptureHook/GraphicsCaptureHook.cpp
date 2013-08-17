@@ -383,10 +383,17 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
 
                     logOutput << CurrentTimeString() << "(half life scientist) everything..  seems to be in order" << endl;
 
+                    LONGLONG lastTime = OSGetTimeMicroseconds();
+
                     MSG msg;
-                    while (MsgWaitForMultipleObjects(1, &dummyEvent, FALSE, 3000, QS_ALLINPUT) != WAIT_ABANDONED_0) {
-                    //while (GetMessageTimeout(msg, 3000)) {
-                        AttemptToHookSomething();
+                    while (MsgWaitForMultipleObjects(1, &dummyEvent, FALSE, 4000, QS_ALLINPUT) != WAIT_ABANDONED_0) {
+                    //while (GetMessageTimeout(msg, 4000)) {
+                        LONGLONG curTime = OSGetTimeMicroseconds();
+                        if ((curTime-lastTime) > 4000000) {
+                            AttemptToHookSomething();
+                            lastTime = curTime;
+                        }
+
                         while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
                             TranslateMessage(&msg);
                             DispatchMessage(&msg);
