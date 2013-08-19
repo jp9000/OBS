@@ -223,6 +223,12 @@ retryHookTestV2:
     solidVertexShader   = CreateVertexShaderFromFile(TEXT("shaders/DrawSolid.vShader"));
     solidPixelShader    = CreatePixelShaderFromFile(TEXT("shaders/DrawSolid.pShader"));
 
+    if(!mainVertexShader || !mainPixelShader)
+        CrashError(TEXT("Unable to load DrawTexture shaders"));
+
+    if(!solidVertexShader || !solidPixelShader)
+        CrashError(TEXT("Unable to load DrawSolid shaders"));
+
     //------------------------------------------------------------------
 
     CTSTR lpShader;
