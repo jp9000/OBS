@@ -104,10 +104,11 @@ BASE_EXPORT BOOL   STDCALL OSCreateDirectory(CTSTR lpDirectory);
 BASE_EXPORT BOOL   STDCALL OSSetCurrentDirectory(CTSTR lpDirectory);
 BASE_EXPORT BOOL   STDCALL OSFileExists(CTSTR lpFile);
 
+BASE_EXPORT QWORD  STDCALL OSGetFileModificationTime(String path);
+
 BASE_EXPORT OSFileChangeData * STDCALL OSMonitorFileStart(String path, bool suppressLogging = false);
 BASE_EXPORT BOOL   STDCALL OSFileHasChanged (OSFileChangeData *data);
 BASE_EXPORT VOID   STDCALL OSMonitorFileDestroy (OSFileChangeData *data);
-
 
 BASE_EXPORT BOOL   STDCALL OSCreateMainWindow(int x, int y, int cx, int cy);
 BASE_EXPORT void   STDCALL OSDestroyMainWindow();
