@@ -1879,7 +1879,7 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                         BOOL bCaptureLayered = FALSE;
                         BOOL bCaptureMouse = SendMessage(GetDlgItem(hwnd, IDC_CAPTUREMOUSE), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                        if (info->dialogID == IDD_CONFIGUREDESKTOPSOURCE || info->dialogID == IDD_CONFIGUREMONITORCAPTURE)
+                        //if (info->dialogID == IDD_CONFIGUREDESKTOPSOURCE || info->dialogID == IDD_CONFIGUREMONITORCAPTURE)
                             bCaptureLayered = SendMessage(GetDlgItem(hwnd, IDC_CAPTURELAYERED), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         BOOL bCompatibilityMode = SendMessage(GetDlgItem(hwnd, IDC_COMPATIBILITYMODE), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         BOOL bUsePointFiltering = SendMessage(GetDlgItem(hwnd, IDC_POINTFILTERING), BM_GETCHECK, 0, 0) == BST_CHECKED;
