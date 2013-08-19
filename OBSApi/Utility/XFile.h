@@ -85,6 +85,7 @@ BASE_EXPORT String GetPathDirectory(CTSTR lpPath);
 BASE_EXPORT String GetPathWithoutExtension(CTSTR lpPath);
 BASE_EXPORT String GetPathExtension(CTSTR lpPath);
 BASE_EXPORT BOOL  IsSafeFilename (CTSTR path);
+BASE_EXPORT BOOL CreatePath(CTSTR lpPath);
 
 class BASE_EXPORT XFileInputSerializer : public Serializer
 {
