@@ -205,6 +205,10 @@ LRESULT CALLBACK VolumeControlProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
                     ReleaseCapture();
                     control->bHasCapture = false;
+
+                    HDC hDC = GetDC(hwnd);
+                    control->DrawVolumeControl(hDC);
+                    ReleaseDC(hwnd, hDC);
                 }
                 
                 break;
@@ -378,6 +382,22 @@ void VolumeControlData::DrawVolumeControl(HDC hDC)
 
         if(bDrawIcon)
             DrawIcon(hdcTemp, cx-32, 0, (visualVolume > VOLN_MUTELEVEL) ? hiconPlay : hiconMute);
+
+        if(visualVolume > VOLN_MUTELEVEL && bHasCapture)
+        {
+            HFONT hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+            HFONT hfontOld = (HFONT)SelectObject(hdcTemp, hFont);
+
+            SetTextColor(hdcTemp, GetSysColor(COLOR_WINDOWTEXT));
+        
+            SetBkMode(hdcTemp, TRANSPARENT);
+
+            String volText= FormattedString(TEXT("%d%%"), int(curVolume*100));
+
+            TextOut(hdcTemp, clientRect.left + (LONG)volSliceSize, clientRect.top, volText, slen(volText));
+        
+            SelectObject(hdcTemp, hfontOld);
+        }
     }
 
     BitBlt(hDC, 0, 0, cx, cy, hdcTemp, 0, 0, SRCCOPY);
