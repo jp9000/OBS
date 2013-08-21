@@ -1,3 +1,149 @@
+Add="הוסף"
+Preview="תצוגה מקדימה"
+Order="סדר"
+Apply="החל"
+Browse="עיון..."
+BuildingMP4Dialog="בונה קובץ MP4"
+Cancel="בטל"
+ClearHotkey="נקה"
+Color="צבע"
+Default="ברירת מחדל"
+Defaults="ברירות מחדל"
+DeleteConfirm="האם אתה בטוח שברצונך למחוק את הפריטים הנבחרים?"
+Desktop="שולחן עבודה"
+Disable="השבת"
+EndingDelay="מסיים סטרים מושהה..."
+EnterName="אנא הזן שם"
+Gamma="גאמה:"
+GlobalSources="מקורות גלובאליים..."
+MicrophoneFailure="אירעה שגיאה בעת אתחול שמע מהמיקרופון: יתכן והוא אינו מחובר, או שתוכנית אחרת משתמשת בו במצב בלעדי."
+MoveDown="הזז למטה"
+MoveUp="הזז למעלה"
+NameExists="'$1' כבר קיים. אנא הזן שם אחר"
+None="ללא"
+OK="אישור"
+Plugins="תוספים..."
+Reconnecting="מתחבר מחדש..."
+Refresh="רענן"
+Remove="הסר"
+Rename="שנה שם"
+Copy="העתק"
+Scene="סצינה"
+Settings="הגדרות..."
+StreamReport="דו\"ח סטרים"
+
+BuildingMP4Dialog.Progress="בונה קובץ MP4, אנא המתן..."
+
+Connection.CouldNotConnect="לא היתה אפשרות להתחבר לשרת"
+Connection.CouldNotParseURL="לא היתה אפשרות לנתח את כתובת ה RTMP"
+Connection.Disconnected="נותק על-ידי השרת"
+Connection.InvalidStream="לא ניתן לגשת לערוץ או למפתח הסטרים המבוקש. ייתכן והערוץ/מפתח אינם חוקיים או שהשרת עדיין חושב כי אתה מחובר אליו."
+
+DeleteConfirm.Title="האם למחוק את הפריטים הנבחרים?"
+
+EndingDelay.TimeLeft="זמן נותר: $1"
+
+GlobalSources.DeleteConfirm="במידה ותמחק מקור גלובאלי, הוא יוסר מכל הסצינות אשר משתמשות בו. האם אתה בטוח כי ברצונך להמשיך?"
+
+Listbox.Center="מרכז"
+Listbox.CenterHorizontally="מרכז אופקית"
+Listbox.CenterVertically="מרכז אנכית"
+Listbox.MoveRight="הזז לגבול ימני"
+Listbox.MoveBottom="הזז לקצה התחתון"
+Listbox.MoveLeft="הזז לקצה השמאלי"
+Listbox.Config="מאפיינים"
+Listbox.FitToScreen="התאם למסך"
+Listbox.ResetSize="אפס את הגודל"
+Listbox.SetHotkey="קבע מקש קיצור"
+ListBox.ResetCrop="אפס הגדרות חיתוך"
+
+MainMenu.Settings="&הגדרות"
+
+MainMenu.Settings.AlwaysOnTop="&תמיד עליון"
+MainMenu.Settings.FullscreenMode="&מצב תצוגה מקדימה במסך מלא"
+
+MainMenu.File.Exit="&צא"
+MainMenu.File.Save="&שמור"
+
+MainMenu.Help.Contents="&תוכן עניינים"
+MainMenu.Help.VisitWebsite="בקר באתר"
+
+MainMenu.Settings.OpenConfigFolder="פתח &תקיית הגדרות"
+MainMenu.Settings.OpenLogFolder="פתח &תקיית קבצי יומן"
+
+MainWindow.BeginMessage="לא בסטרים
+לחץ \"התחל סטרים\" או \"תצוגה מקדימה לסטרים\" בכדי להתחיל"
+MainWindow.PreviewDisabled="תצוגה מקדימה מבוטלת"
+MainWindow.Dashboard="לוח בקרה"
+MainWindow.Exit="צא"
+MainWindow.Plugins="תוספים"
+MainWindow.SceneEditor="ערוץ סצינה"
+MainWindow.Scenes="סצינות:"
+MainWindow.Sources="מקורות:"
+MainWindow.StartStream="התחל סטרים"
+MainWindow.StopStream="עצור סטרים"
+MainWindow.StopTest="עצור תצוגה מקדימה"
+MainWindow.TestStream="תצוגה מקדימה לסטרים"
+
+Plugins.Configure="הגדר"
+Plugins.Description="תיאור:"
+
+Reconnecting.Retrying="לא ניתן להתחבר מחדש. מנסה שוב"
+
+RenderView.EnableView="הפעל תצוגה"
+RenderView.DisplayPanel="הפעל לוח בקרה"
+RenderView.ViewModeScaleToFit="מצב התאמת קנה-מידה"
+RenderView.ViewMode1To1="מצב 1:1"
+
+Scene.MissingSources="לא היתה אפשרות לטעון את כל מקורות התמונה עקב הגדרות לא חוקיות או תוספים חסרים"
+
+Scene.Hotkey.AlreadyInUse="מקש קיצור זה כבר נמצא בשימוש."
+
+Capture.Start.FileStream.WarningCaption="אזהרה"
+Capture.Start.FileStream.Warning="אין אפשרות ליצור את קובץ פלט הסטרים
+בדוק את נתיב הקובץ בהגדרות שידור."
+
+Settings.Advanced="מתקדם"
+Settings.Audio="שמע"
+Settings.Encoding="קידוד"
+Settings.General="כללי"
+Settings.Info="הגדרות אלו יוחלו רק בפעם הבאה שתתחיל לשדר סטרים."
+Settings.Publish="הגדרות שידור"
+Settings.SaveChangesPrompt="האם ברצונך לשמור ולהחיל את השינויים שביצעת?"
+Settings.SaveChangesTitle="להחיל הגדרות?"
+Settings.Video="תמונה"
+
+Settings.Advanced.AutomaticLatency="מצב השהיה נמוכה אוטומטי:"
+Settings.Advanced.AllowOtherHotkeyModifiers="אפשר משתנים אחרים במקשי קיצור"
+Settings.Advanced.BindToIP="אגד עם ממשק:"
+Settings.Advanced.DisablePreviewEncoding="בטל קידוד בזמן שתצוגה מקדימה פעילה"
+Settings.Advanced.Network="רשת"
+Settings.Advanced.ProcessPriority="עדיפות תהליך"
+Settings.Advanced.SendBufferSize="גודל מאגר שליחה:"
+Settings.Advanced.UnlockHigherFPS="אפשר ערך של 120-61 פריימים לשנייה בהגדרות וידאו"
+Settings.Advanced.UseCBR="השתמש ב CBR"
+Settings.Advanced.PadCBR="אפשר ריפוד CBR"
+Settings.Advanced.UseCFR="השתמש ב CFR"
+Settings.Advanced.UseMultithreadedOptimizations="השתמש במיטוב מרובה נימים"
+Settings.Advanced.UseQSV="עשה שימוש ב Quick Sync"
+
+
+Settings.Audio.MicTimeOffset="קיזוז זמן מיקרופון (מילי-שניות):"
+Settings.Audio.MuteDesktopHotkey="מקש קיצור לצורך השתקה/ביטול השתקת שולחן עבודה:"
+Settings.Audio.PlaybackDevice="התקן שמע בשולחן עבודה:"
+Settings.Audio.PushToTalkDelay="השהיית לחץ-בכדי-לדבר (מילי-שניות):"
+Settings.Audio.PushToTalkHotkey="השתמש במצב לחץ-בכדי-לדבר:"
+Settings.Audio.UseMicQPC="השתמש בחותמות זמן מסוג Mic QPC"
+
+Settings.Encoding.Audio="קידוד שמע"
+Settings.Encoding.Video="קידוד תמונה"
+
+Settings.Encoding.Audio.Bitrate="קצב ביטים:"
+
+
+
+Settings.Publish.StartStreamHotkey="מקש קיצור להפעלת הסטרים:"
+Settings.Publish.StopStreamHotkey="מקש קיצור לעצירת הסטרים:"
 
 
 
@@ -5,33 +151,7 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Sources.GameCaptureSource.UseHotkey="השתמש במקש קיצור"
 
 
 
