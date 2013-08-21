@@ -1,3 +1,9 @@
+Cancel="취소"
+OK="확인"
 
+Plugin.Name="장면 별 볼륨 플러그인"
+Plugin.Description="장면 별 볼륨 추적을 활성화 합니다."
 
+Config.Caption="장면 별 볼륨 설정"
+Config.Enable="장면 별 볼륨 추적 활성화"
 
