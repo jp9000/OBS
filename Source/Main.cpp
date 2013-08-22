@@ -545,6 +545,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         //--------------------------------------------
 
+        DWORD colors[16];
+        for (int i=0; i<16; i++) {
+            String strColorIdx = "Color";
+            strColorIdx << IntString(i);
+            colors[i] = GlobalConfig->GetInt(TEXT("CustomColors"), strColorIdx, 0xFFFFFF);
+        }
+
+        CCSetCustomColors(colors);
+
         String strLogFileWildcard;
         strLogFileWildcard << lpAppDataPath << TEXT("\\logs\\*.log");
 
@@ -608,6 +617,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         delete App;
 
         //--------------------------------------------
+
+        CCGetCustomColors(colors);
+        for (int i=0; i<16; i++) {
+            String strColorIdx = "Color";
+            strColorIdx << IntString(i);
+            GlobalConfig->SetInt(TEXT("CustomColors"), strColorIdx, colors[i]);
+        }
 
         GlobalConfig->SetInt(TEXT("General"), TEXT("LastAppVersion"), OBS_VERSION);
 

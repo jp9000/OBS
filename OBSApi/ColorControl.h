@@ -24,6 +24,9 @@
 
 BASE_EXPORT void InitColorControl(HINSTANCE hInstance);
 
+BASE_EXPORT void CCSetCustomColors(DWORD *colors);
+BASE_EXPORT void CCGetCustomColors(DWORD *colors);
+
 BASE_EXPORT DWORD CCGetColor(HWND hwnd);
 BASE_EXPORT void  CCSetColor(HWND hwnd, DWORD color);
 BASE_EXPORT void  CCSetColor(HWND hwnd, const Color3 &color);

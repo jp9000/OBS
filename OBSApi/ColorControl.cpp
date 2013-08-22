@@ -37,6 +37,21 @@ void WINAPI DrawColorControl(HDC hDC, CCStruct *pCCData);
 LRESULT WINAPI ColorControlProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 
+static DWORD customColors[16] = {0xFFFFFF, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF,
+                                 0xFFFFFF, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF,
+                                 0xFFFFFF, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF,
+                                 0xFFFFFF, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF};
+
+void CCSetCustomColors(DWORD *colors)
+{
+    memcpy(customColors, colors, sizeof(DWORD)*16);
+}
+
+void CCGetCustomColors(DWORD *colors)
+{
+    memcpy(colors, customColors, sizeof(DWORD)*16);
+}
+
 
 LRESULT WINAPI ColorControlProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -116,7 +131,7 @@ LRESULT WINAPI ColorControlProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                 chooserData.hwndOwner = GetParent(hwnd);
                 chooserData.Flags = CC_RGBINIT | CC_FULLOPEN;
                 chooserData.rgbResult = pCCData->curColor;
-                chooserData.lpCustColors = pCCData->custColors;
+                chooserData.lpCustColors = customColors;
 
                 if(ChooseColor(&chooserData))
                 {
