@@ -328,6 +328,26 @@ BOOL   STDCALL OSFileExists(CTSTR lpFile)
     return FALSE;
 }
 
+QWORD STDCALL OSGetFileModificationTime(String path)
+{
+    HANDLE hFile;
+    if((hFile = CreateFile(path.Array(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
+        return -1;
+    FILETIME create, write;
+    BOOL res = GetFileTime(hFile, &create, nullptr, &write);
+    CloseHandle(hFile);
+    if(!res)
+        return -1;
+    ULARGE_INTEGER create_, write_;
+    create_.HighPart = create.dwHighDateTime;
+    create_.LowPart = create.dwLowDateTime;
+    write_.HighPart = write.dwHighDateTime;
+    write_.LowPart = write.dwLowDateTime;
+    if(write_.QuadPart > create_.QuadPart)
+        return write_.QuadPart;
+    return create_.QuadPart;
+}
+
 int   STDCALL OSProcessEvent()
 {
     MSG msg;

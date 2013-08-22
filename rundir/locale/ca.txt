@@ -1,5 +1,22 @@
+Add="Afegir"
+Preview="Vista prèvia"
+Cancel="Cancel·lar"
+ClearHotkey="Esborrar"
+Color="Color"
+Default="Per defecte"
+Defaults="Valors predeterminats"
+Disable="Desactivar"
+Gamma="Gamma:"
+MoveDown="Baixar"
+MoveUp="Pujar"
+None="Cap"
+Refresh="Actualitzar"
+Remove="Eliminar"
+Rename="Canvia el nom"
+Copy="Copiar"
 
 
+Connection.Disconnected="Desconnectat pel servidor"
 
 
 

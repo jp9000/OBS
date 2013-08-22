@@ -102,11 +102,18 @@ Reconnecting.Retrying="Ei saanud taasühendada.  Proovin uuesti"
 
 RenderView.EnableView="Luba vaade"
 RenderView.DisplayPanel="Luba kasutada juhtpaneeli"
+RenderView.ViewModeScaleToFit="Režiim: mahuta"
+RenderView.ViewMode1To1="Režiim: 1:1"
 
+Scene.Hotkey="Stseeni kiirklahv"
 Scene.MissingSources="Piltide allikaid ei suudetud valede sättete või puuduvate pluginate tõttu käivitada."
 
+Scene.Hotkey.AlreadyInUse="Kiirklahv juba kasutuses."
+Scene.Hotkey.Hotkey="Kiirklahv:"
 
+Capture.Start.FileStream.WarningCaption="Hoiatus"
 
+Settings.Advanced="Edasijõudnud"
 Settings.Audio="Heli"
 Settings.Encoding="Enkodeering"
 Settings.General="Üldine"
@@ -116,6 +123,10 @@ Settings.SaveChangesPrompt="Soovid muutused salvestada ja rakendada?"
 Settings.SaveChangesTitle="Rakenda muutused?"
 Settings.Video="Video"
 
+Settings.Advanced.AutomaticLatency="Automaatne madala latentsuse režiim:"
+Settings.Advanced.AllowOtherHotkeyModifiers="Luba muud tegurid kiirklahvidel"
+Settings.Advanced.BindToIP="Seo liidesega:"
+Settings.Advanced.DisablePreviewEncoding="Keela kodeering eelvaate ajal"
 
 
 Settings.Audio.Device="Mikrofoni/teised heliseadmed"

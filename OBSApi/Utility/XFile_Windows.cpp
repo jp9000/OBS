@@ -360,4 +360,17 @@ BOOL IsSafeFilename(CTSTR path)
     return TRUE;
 }
 
+
+BOOL CreatePath(CTSTR lpPath)
+{
+    if(OSFileExists(lpPath))
+        return true;
+    if(OSCreateDirectory(lpPath))
+        return true;
+    else
+        if(!CreatePath(GetPathDirectory(lpPath)))
+            return false;
+    return OSCreateDirectory(lpPath);
+}
+
 #endif

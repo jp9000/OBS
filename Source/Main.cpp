@@ -511,6 +511,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             if(!OSFileExists(strUpdatePath) && !OSCreateDirectory(strUpdatePath))
                 CrashError(TEXT("Couldn't create directory '%s'"), strUpdatePath.Array());
 
+            String strShaderCachePath = strAppDataPath + TEXT("\\shaderCache");
+            if(!OSFileExists(strShaderCachePath) && !OSCreateDirectory(strShaderCachePath))
+                CrashError(TEXT("Coudln't create directory '%s'"), strShaderCachePath.Array());
+
             LoadGlobalIni();
 
             String strAllocator = GlobalConfig->GetString(TEXT("General"), TEXT("Allocator"));

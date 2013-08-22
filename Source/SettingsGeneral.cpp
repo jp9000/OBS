@@ -312,6 +312,7 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                             EnableWindow(GetDlgItem(hwnd, IDC_ADD),     FALSE);
 
                             App->ResetProfileMenu();
+                            App->ResetApplicationName();
                         }
                     }
                     break;
