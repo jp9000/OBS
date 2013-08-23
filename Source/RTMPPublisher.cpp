@@ -210,8 +210,18 @@ RTMPPublisher::~RTMPPublisher()
         ReleaseSemaphore(hSendSempahore, 1, NULL);
         SetEvent(hBufferSpaceAvailableEvent);
 
-        //wait 60 sec for it to exit
-        OSTerminateThread(hSendThread, 60000);
+        //wait 50 sec for all data to finish sending
+        if (WaitForSingleObject(hSendThread, 50000) == WAIT_TIMEOUT)
+        {
+            Log(TEXT("~RTMPPublisher: Network appears stalled with %d / %d buffered, dropping connection!"), curDataBufferLen, dataBufferSize);
+            FatalSocketShutdown();
+
+            //this will wake up and flush the sendloop if it's still trying to send out stuff
+            ReleaseSemaphore(hSendSempahore, 1, NULL);
+            SetEvent(hBufferSpaceAvailableEvent);
+        }
+
+        OSTerminateThread(hSendThread, 10000);
     }
 
     if(hSendSempahore)
