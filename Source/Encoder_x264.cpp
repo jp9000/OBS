@@ -545,12 +545,12 @@ public:
                    TEXT("\r\n    preset: ")      << curPreset <<
                    TEXT("\r\n    CBR: ")         << CTSTR((bUseCBR) ? TEXT("yes") : TEXT("no")) <<
                    TEXT("\r\n    CFR: ")         << CTSTR((bUseCFR) ? TEXT("yes") : TEXT("no")) <<
-                   TEXT("\r\n    max bitrate: ") << IntString(paramData.rc.i_vbv_max_bitrate);
+                   TEXT("\r\n    max bitrate: ") << IntString(paramData.rc.i_vbv_max_bitrate) <<
+                   TEXT("\r\n    buffer size: ") << IntString(paramData.rc.i_vbv_buffer_size);
 
         if(!bUseCBR)
         {
-            strInfo << TEXT("\r\n    buffer size: ") << IntString(paramData.rc.i_vbv_buffer_size) << 
-                       TEXT("\r\n    quality: ")     << IntString(10-int(paramData.rc.f_rf_constant-baseCRF));
+            strInfo << TEXT("\r\n    quality: ")     << IntString(10-int(paramData.rc.f_rf_constant-baseCRF));
         }
 
         return strInfo;
