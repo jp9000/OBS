@@ -1,3 +1,5 @@
+MoveToBottom="To the bilge"
+MoveToTop="Move it topside"
 
 
 
@@ -16,6 +18,16 @@
 
 
 
+Capture.Start.FileStream.WarningCaption="Warnin'"
+
+
+
+
+
+
+
+
+Settings.General.Language="Lingo:"
 
 
 
@@ -26,14 +38,8 @@
 
 
 
-
-
-
-
-
-
-
-
+Sources.TextSource.Left="Portside"
+Sources.TextSource.Right="Starboard"
 
 
 

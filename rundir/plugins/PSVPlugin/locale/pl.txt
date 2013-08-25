@@ -1,3 +1,9 @@
+Cancel="Anuluj"
+OK="OK"
 
+Plugin.Name="Wtyczka śledząca poziom głośności w oparciu o sceny"
+Plugin.Description="Włącza śledzenie zmian poziomu głośności w oparciu o sceny."
 
+Config.Caption="Konfiguracja śledzenia poziomu głośności w oparciu o sceny"
+Config.Enable="Włącz śledzenie głośności w oparciu o sceny"
 

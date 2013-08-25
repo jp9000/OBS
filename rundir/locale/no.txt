@@ -1,3 +1,61 @@
+Add="Legg til"
+Preview="Forhåndsvisning"
+Order="Rekkefølge"
+Apply="Bruk"
+Browse="Bla igjennom"
+BuildingMP4Dialog="Bygger MP4"
+Cancel="Avbryt"
+ClearHotkey="Nullstill"
+Color="Farge"
+Default="Standard"
+Defaults="Standarder"
+DeleteConfirm="Er du sikker på at du vil slette valgte elementer?"
+Desktop="Skrivebord"
+Disable="Deaktiver"
+EndingDelay="Avslutter forsinket stream..."
+EnterName="Vennligst skriv inn et navn"
+Gamma="Gamma:"
+GlobalSources="Globale kilder ..."
+MicrophoneFailure="En feil oppstod ved aktivering av mikrofon-lyd, kanskje er den ikke plugget i, eller en annen applikasjon bruker den i eksklusiv modus."
+MoveDown="Flytt ned"
+MoveToBottom="Flytt til bunnen"
+MoveToTop="Flytt til toppen"
+MoveUp="Flytt opp"
+NameExists="'$1' eksisterer allerede. Vennligst fyll inn et annet navn"
+None="Ingen"
+OK="OK"
+Plugins="Innstikk ..."
+Reconnecting="Gjenopptar kobling ..."
+Refresh="Oppdater"
+Remove="Fjern"
+Rename="Gi nytt navn"
+Copy="Kopier"
+Scene="Scene"
+Settings="Innstillinger ..."
+StreamReport="Stream rapport"
+
+BuildingMP4Dialog.Progress="Oppretter MP4, vennligst vent ..."
+
+Connection.CouldNotConnect="Klarte ikke koble til server"
+Connection.CouldNotParseURL="Kan ikke analysere RTMP URL"
+Connection.Disconnected="Frakoblet av serveren"
+Connection.InvalidStream="Ikke tilgang til den angitte kanal eller stream-nøkkelen.  Dette kan være fordi nøkkelen/kanalen er ugyldig, eller fordi serveren fortsatt tror du er logget på."
+
+DeleteConfirm.Title="Slett merkede elementer?"
+
+EndingDelay.TimeLeft="Gjenstående tid: $1"
+
+GlobalSources.DeleteConfirm="Hvis du sletter en global kilde, fjernes den fra alle scene som bruker den.  Er du sikker på at du vil fortsette?"
+
+Listbox.Add="Legge til $1"
+Listbox.Center="Midtstill"
+Listbox.CenterHorizontally="Midtstill vannrett"
+Listbox.CenterVertically="Midtstill loddrett"
+Listbox.MoveTop="Flytt til toppen"
+Listbox.MoveRight="Flytt til høyre kant"
+Listbox.MoveBottom="Flytt til bunnen"
+Listbox.MoveLeft="Flytt til venstre kant"
+Listbox.Config="Egenskaper"
 
 
 
@@ -11,13 +69,22 @@
 
 
 
+Settings.Audio="Lyd"
+Settings.Encoding="Koding"
+Settings.General="Generelt"
+Settings.Info="Disse innstillingene bli ikke brukt før neste gang du begynner streamen."
+Settings.Publish="Kringkastingsinnstillinger"
+Settings.SaveChangesPrompt="Ønsker du å lagre og bruke endringene?"
+Settings.SaveChangesTitle="Lagre innstillingene?"
+Settings.Video="Video"
 
-
-
-
-
-
-
+Settings.Advanced.AutomaticLatency="Automatisk lav latency-modus:"
+Settings.Advanced.AllowOtherHotkeyModifiers="Tillate andre modifikatorer på hurtigtaster"
+Settings.Advanced.BindToIP="Bind til grensesnittet:"
+Settings.Advanced.DisablePreviewEncoding="Deaktivere koding under Forhåndsvisning"
+Settings.Advanced.GlobalAudioTimeAdjust="Global lyd tidsforskyvning (millisekunder):"
+Settings.Advanced.LatencyTuning="Ventetid tuningfaktor:"
+Settings.Advanced.Network="Nettverk"
 
 
 
