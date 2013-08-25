@@ -1,3 +1,9 @@
+Cancel="Mégse"
+OK="OK"
 
+Plugin.Name="Jelenetenkénti hangerő plugin"
+Plugin.Description="Jelenetenkénti hangerő követés bekapcsolása."
 
+Config.Caption="Jelenetenkénti hangerő beállítások"
+Config.Enable="Jelenetenkénti hangerő követés engedélyezése"
 
