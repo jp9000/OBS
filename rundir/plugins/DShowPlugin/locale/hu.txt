@@ -1,5 +1,23 @@
+Cancel="Mégse"
+ClassName="Videorögzítő eszköz"
+DeviceSelection="Eszköz kiválasztása"
+OK="OK"
+
+DeinterlacingType.None="Egyik sem"
+DeinterlacingType.Discard="Mező elvetése"
+DeviceSelection.BottomFieldFirst="Alsó mező először"
+DeviceSelection.GPUDeinterlacing="GPU használata"
 
 
+DeviceSelection.AudioDevice="Bemeneti hangeszköz:"
+DeviceSelection.ChromaKey="Chroma kulcs"
+DeviceSelection.ExistsInScene="Az eszközt használó forrás már létezik."
+DeviceSelection.ExistsSomewhere="Ez az eszköz jelenleg egy vagy több jeleneten is használatban van."
+DeviceSelection.PreferredType="Kimeneti formátum használata"
+DeviceSelection.Refresh="Frissítés"
+DeviceSelection.Resolution="Felbontás"
+DeviceSelection.Select="Kiválaszt"
+DeviceSelection.Sound="Hang"
 
-
+Plugin.Name="DirectShow videó eszköz csatlakozópont"
 
