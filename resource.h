@@ -270,6 +270,8 @@
 #define IDC_PUSHTOTALKHOTKEY2           1156
 #define IDC_WARNING                     1159
 #define IDC_MICSYNCFIX                  1160
+#define IDC_CHECK3                      1161
+#define IDC_SCROLLMODE                  1161
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -314,7 +316,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        145
 #define _APS_NEXT_COMMAND_VALUE         40051
-#define _APS_NEXT_CONTROL_VALUE         1161
+#define _APS_NEXT_CONTROL_VALUE         1162
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

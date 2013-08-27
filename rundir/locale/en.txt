@@ -313,6 +313,7 @@ Sources.TextSource.UseTextExtents="Use Custom Text Extents"
 Sources.TextSource.UseTextFromFile="Use Text From File (UTF-8 or compatible)"
 Sources.TextSource.VerticalScript="Vertical"
 Sources.TextSource.Wrap="Wrap"
+Sources.TextSource.Scroll="Scroll Mode"
 
 Sources.TransitionSource.Bitmaps="Bitmaps:"
 Sources.TransitionSource.Empty="There are no bitmaps entered to display."

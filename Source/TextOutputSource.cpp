@@ -66,6 +66,7 @@ class TextOutputSource : public ImageSource
     UINT        extentWidth, extentHeight;
 
     bool        bWrap;
+    bool        bScrollMode;
     int         align;
 
     Vect2       baseSize;
@@ -214,12 +215,48 @@ class TextOutputSource : public ImageSource
 
     }
 
+    float ProcessScrollMode(Gdiplus::Graphics *graphics, Gdiplus::Font *font, Gdiplus::RectF &layoutBox, Gdiplus::StringFormat *format)
+    {
+        StringList strList;
+        Gdiplus::RectF boundingBox;
+        
+        float offset = layoutBox.Height;
+
+        Gdiplus::RectF l2(0.0f ,0.0f , layoutBox.Width, 32000.0f); // Really, it needs to be OVER9000
+
+        strCurrentText.FindReplace(L"\n\r", L"\n");
+        strCurrentText.GetTokenList(strList,'\n');
+
+        if(strList.Num() != 0)
+            strCurrentText.Clear();
+        else 
+            return 0.0f;
+
+        for(int i = strList.Num() - 1; i >= 0; i--)
+        {
+            strCurrentText.InsertString(0, TEXT("\n"));
+            strCurrentText.InsertString(0, strList.GetElement((unsigned int)i).Array());
+
+            if(strCurrentText.IsValid())
+            {
+                graphics->MeasureString(strCurrentText, -1, font, l2, &boundingBox);
+                offset = layoutBox.Height - boundingBox.Height;
+            }
+            
+            if(offset < 0)
+                break;
+        }
+
+        return offset;
+    }
+
     void UpdateTexture()
     {
         HFONT hFont;
         Gdiplus::Status stat;
         Gdiplus::RectF layoutBox;
         SIZE textSize;
+        float offset;
 
         Gdiplus::RectF boundingBox(0.0f, 0.0f, 32.0f, 32.0f);
 
@@ -255,9 +292,21 @@ class TextOutputSource : public ImageSource
                     layoutBox.Height -= outlineSize;
                 }
 
-                stat = graphics->MeasureString(strCurrentText, -1, &font, layoutBox, &format, &boundingBox);
-                if(stat != Gdiplus::Ok)
-                    AppWarning(TEXT("TextSource::UpdateTexture: Gdiplus::Graphics::MeasureString failed: %u"), (int)stat);
+                if(!bVertical && bScrollMode)
+                {
+                    offset = ProcessScrollMode(graphics, &font, layoutBox, &format);
+
+                    boundingBox = layoutBox;
+                    boundingBox.Y = offset;
+                    if(offset < 0)
+                        boundingBox.Height -= offset;
+                }
+                else
+                {
+                    stat = graphics->MeasureString(strCurrentText, -1, &font, layoutBox, &format, &boundingBox);
+                    if(stat != Gdiplus::Ok)
+                        AppWarning(TEXT("TextSource::UpdateTexture: Gdiplus::Graphics::MeasureString failed: %u"), (int)stat);
+                }
             }
             else
             {
@@ -597,6 +646,7 @@ public:
         bBold       = data->GetInt(TEXT("bold"), 0) != 0;
         bItalic     = data->GetInt(TEXT("italic"), 0) != 0;
         bWrap       = data->GetInt(TEXT("wrap"), 0) != 0;
+        bScrollMode = data->GetInt(TEXT("scrollMode"), 0) != 0;
         bUnderline  = data->GetInt(TEXT("underline"), 0) != 0;
         bVertical   = data->GetInt(TEXT("vertical"), 0) != 0;
         bUseExtents = data->GetInt(TEXT("useTextExtents"), 0) != 0;
@@ -653,6 +703,8 @@ public:
             bItalic = iValue != 0;
         else if(scmpi(lpName, TEXT("wrap")) == 0)
             bWrap = iValue != 0;
+        else if(scmpi(lpName, TEXT("scrollMode")) == 0)
+            bScrollMode = iValue != 0;
         else if(scmpi(lpName, TEXT("underline")) == 0)
             bUnderline = iValue != 0;
         else if(scmpi(lpName, TEXT("vertical")) == 0)
@@ -866,6 +918,9 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                 EnableWindow(GetDlgItem(hwnd, IDC_WRAP), bChecked);
                 EnableWindow(GetDlgItem(hwnd, IDC_ALIGN), bChecked);
 
+                bool bVertical = data->GetInt(TEXT("vertical"), 0) != 0;
+                EnableWindow(GetDlgItem(hwnd, IDC_SCROLLMODE), bChecked && !bVertical);
+
                 SendMessage(GetDlgItem(hwnd, IDC_EXTENTWIDTH),  UDM_SETRANGE32, 32, 2048);
                 SendMessage(GetDlgItem(hwnd, IDC_EXTENTHEIGHT), UDM_SETRANGE32, 32, 2048);
                 SendMessage(GetDlgItem(hwnd, IDC_EXTENTWIDTH),  UDM_SETPOS32, 0, data->GetInt(TEXT("extentWidth"),  100));
@@ -873,6 +928,9 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
                 bool bWrap = data->GetInt(TEXT("wrap"), 0) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_WRAP), BM_SETCHECK, bWrap ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                bool bScrollMode = data->GetInt(TEXT("scrollMode"), 0) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_SCROLLMODE), BM_SETCHECK, bScrollMode ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 if(bChecked)
                     EnableWindow(GetDlgItem(hwnd, IDC_ALIGN), bWrap);
@@ -996,6 +1054,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                 case IDC_UNDERLINE:
                 case IDC_VERTICALSCRIPT:
                 case IDC_WRAP:
+                case IDC_SCROLLMODE:
                 case IDC_USEOUTLINE:
                 case IDC_USETEXTEXTENTS:
                     if(HIWORD(wParam) == BN_CLICKED && bInitializedDialog)
@@ -1014,13 +1073,26 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                                 case IDC_UNDERLINE:         source->SetInt(TEXT("underline"), bChecked); break;
                                 case IDC_VERTICALSCRIPT:    source->SetInt(TEXT("vertical"), bChecked); break;
                                 case IDC_WRAP:              source->SetInt(TEXT("wrap"), bChecked); break;
+                                case IDC_SCROLLMODE:        source->SetInt(TEXT("scrollMode"), bChecked); break;
                                 case IDC_USEOUTLINE:        source->SetInt(TEXT("useOutline"), bChecked); break;
                                 case IDC_USETEXTEXTENTS:    source->SetInt(TEXT("useTextExtents"), bChecked); break;
                             }
                         }
 
-                        if(LOWORD(wParam) == IDC_WRAP)
+                        if(LOWORD(wParam) == IDC_VERTICALSCRIPT)
+                        {
+                            bool bWrap = SendMessage(GetDlgItem(hwnd, IDC_WRAP), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                            bool bUseExtents = SendMessage(GetDlgItem(hwnd, IDC_USETEXTEXTENTS), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                            if(bWrap && bUseExtents)
+                                EnableWindow(GetDlgItem(hwnd, IDC_SCROLLMODE), !bChecked);
+                        }
+                        else if(LOWORD(wParam) == IDC_WRAP)
+                        {
                             EnableWindow(GetDlgItem(hwnd, IDC_ALIGN), bChecked);
+                            bool bVertical = SendMessage(GetDlgItem(hwnd, IDC_VERTICALSCRIPT), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                            if(!bVertical)
+                                EnableWindow(GetDlgItem(hwnd, IDC_SCROLLMODE), bChecked);
+                        }
                         else if(LOWORD(wParam) == IDC_USETEXTEXTENTS)
                         {
                             EnableWindow(GetDlgItem(hwnd, IDC_EXTENTWIDTH_EDIT), bChecked);
@@ -1030,11 +1102,15 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                             EnableWindow(GetDlgItem(hwnd, IDC_WRAP), bChecked);
 
                             bool bWrap = SendMessage(GetDlgItem(hwnd, IDC_WRAP), BM_GETCHECK, 0, 0) == BST_CHECKED;
-
+                            bool bVertical = SendMessage(GetDlgItem(hwnd, IDC_VERTICALSCRIPT), BM_GETCHECK, 0, 0) == BST_CHECKED;
                             EnableWindow(GetDlgItem(hwnd, IDC_ALIGN), bChecked);
+                            EnableWindow(GetDlgItem(hwnd, IDC_SCROLLMODE), bChecked);
 
                             if(bChecked)
+                            {
                                 EnableWindow(GetDlgItem(hwnd, IDC_ALIGN), bWrap);
+                                EnableWindow(GetDlgItem(hwnd, IDC_SCROLLMODE), !bVertical);
+                            }
                         }
                         else if(LOWORD(wParam) == IDC_USEOUTLINE)
                         {
@@ -1288,6 +1364,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                         data->SetInt(TEXT("italic"), bItalic);
                         data->SetInt(TEXT("vertical"), bVertical);
                         data->SetInt(TEXT("wrap"), SendMessage(GetDlgItem(hwnd, IDC_WRAP), BM_GETCHECK, 0, 0) == BST_CHECKED);
+                        data->SetInt(TEXT("scrollMode"), SendMessage(GetDlgItem(hwnd, IDC_SCROLLMODE), BM_GETCHECK, 0, 0) == BST_CHECKED);
                         data->SetInt(TEXT("underline"), SendMessage(GetDlgItem(hwnd, IDC_UNDERLINE), BM_GETCHECK, 0, 0) == BST_CHECKED);
 
                         data->SetInt(TEXT("backgroundColor"), CCGetColor(GetDlgItem(hwnd, IDC_BACKGROUNDCOLOR)));
