@@ -313,6 +313,7 @@ Sources.TextSource.UseTextExtents="Käytä valinnaisia tekstilaajennuksia"
 Sources.TextSource.UseTextFromFile="Käytä tiedostoa (UTF-8 tai yhteensopiva)"
 Sources.TextSource.VerticalScript="Pystysuunnassa"
 Sources.TextSource.Wrap="Sido"
+Sources.TextSource.Scroll="Vieritys-tila"
 
 Sources.TransitionSource.Bitmaps="Kuvakartat:"
 Sources.TransitionSource.Empty="Kuvakarttoja ei ole asetettu."

@@ -1,33 +1,192 @@
+Add="Ekle"
+Preview="Önizleme"
+Order="Sipariş Ver"
+Apply="Uygula"
+Browse="Gözat..."
+BuildingMP4Dialog="MP4 Oluşturuluyor"
+Cancel="İptal"
+ClearHotkey="Temizle"
+Color="Renk"
+Default="Varsayılan"
+Defaults="Varsayılanlar"
+DeleteConfirm="Seçili öğeleri silmek istediğinizden emin misiniz?"
+Desktop="Masaüstü"
+Disable="Devre Dışı Bırak"
+EndingDelay="Gecikmeli Stream Sonlandırılıyor ..."
+EnterName="Lütfen bir ad girin"
+Gamma="Gama:"
+GlobalSources="Genel Kaynaklar..."
+IncompatibleModules="OBS işleminde desteklenmeyen girişimler belirlendi.Lütfen OBS'in DXTroy,FRAPS,ASUS/MSI OSC gibi arayüz veya yakalama kullanan uygulamaların görmezden gel listesinde olduğundan emin olun.Bu görmezden gelme ayarlayını yaptıktan sonra veya bu tarz programları kapattıktan sonra değişikliklerin uygulanması için OBS'i tekrar başlatmalısınız.\r\n\r\nBütün bu uyarıları görmezden gelip OBS'nin kapanması riskine karşı devam edebilirsiniz."
+MicrophoneFailure="Mikrofon sesi yüklenirken bir hata meydana geldi - mikrofon takılı olmayabilir veya başka bir uygulama mikrofonu kullanıyor olabilir."
+MoveDown="Aşağı Taşı"
+MoveToBottom="En Alta taşı"
+MoveToTop="En üste taşı"
+MoveUp="Yukarı Taşı"
+NameExists="'$1' zaten mevcut.  Lütfen farklı bir ad girin"
+None="Hiçbiri"
+OK="Tamam"
+Plugins="Eklentiler..."
+Reconnecting="Yeniden bağlanıyor..."
+Refresh="Yenile"
+Remove="Kaldır"
+Rename="Yeniden adlandır"
+Copy="Kopyala"
+Scene="Sahne"
+Settings="Ayarlar..."
+StreamReport="Yayın Raporu"
+
+BuildingMP4Dialog.Progress="MP4 Oluşturuluyor , lütfen bekleyin ..."
+
+Connection.CouldNotConnect="Sunucuya bağlanılamadı"
+Connection.CouldNotParseURL="RTMP URL ayrıştırılamadı"
+Connection.Disconnected="Bağlantısı sunucu tarafından kesildi"
+Connection.InvalidStream="Seçilen yayına veya yayın anahtarına erişilemedi.Bu sorun , yayın anahtarının veya kanalının yanlış olmasından veya sistemin hala oturum açmış olduğunuzu düşünmesinden kaynaklanıyor olabilir."
+
+DeleteConfirm.Title="Seçili öğeler silinsin mi ?"
+
+EndingDelay.TimeLeft="Şu kadar zaman kaldı: $1"
+
+GlobalSources.DeleteConfirm="Eğer genel bir kaynağı silerseniz , kaynak onu kullanan bütün sahneler tarafından silinir.Devam etmek istiyor musunuz ?"
+
+Listbox.Add="Ekle $1"
+Listbox.Center="Merkez"
+Listbox.CenterHorizontally="Yataya Hizala"
+Listbox.CenterVertically="Dikeye Hizala"
+Listbox.MoveTop="En Üste Taşı"
+Listbox.MoveRight="Sağ Kenara Taşı"
+Listbox.MoveBottom="En Alta taşı"
+Listbox.MoveLeft="Sol Kenara Taşı"
+Listbox.Config="Özellikler"
+Listbox.FitToScreen="Ekrana Sığdır"
+Listbox.Positioning="Pozisyon/Boyut"
+Listbox.ResetSize="Boyutu Sıfırla"
+Listbox.SetHotkey="Kısayol Ayarla"
+ListBox.ResetCrop="Kırpmayı Sıfırla"
+
+MainMenu.File="&Dosya"
+MainMenu.Help="&Yardım"
+MainMenu.Profiles="&Profiller"
+MainMenu.Settings="&Ayarlar"
+
+MainMenu.Settings.AlwaysOnTop="&Her Zaman Üstte"
+MainMenu.Settings.FullscreenMode="&Tam Ekran Önizleme Modu"
+
+MainMenu.File.Exit="Ç&ıkış"
+MainMenu.File.Save="&Kaydet"
+
+MainMenu.Help.Contents="&Içerikler"
+MainMenu.Help.VisitWebsite="Siteyi Ziyaret Et"
+
+MainMenu.Settings.OpenConfigFolder="Ayar &Klasörünü Aç"
+MainMenu.Settings.OpenLogFolder="&Log Klasörünü Aç"
+
+MainWindow.BeginMessage="Yayın yapılmıyor\n\nBaşlamak için \"Yayını Başlat\" a veya \"Yayını Önizle\" ye basın"
+MainWindow.PreviewDisabled="Önizleme devre dışı"
+MainWindow.Dashboard="Kontrol paneli"
+MainWindow.DroppedFrames="Atlanan Kareler:"
+MainWindow.Exit="Çıkış"
+MainWindow.Plugins="Eklentiler"
+MainWindow.SceneEditor="Sahneyi Düzenle"
+MainWindow.Scenes="Sahneler:"
+MainWindow.Sources="Kaynaklar:"
+MainWindow.StartStream="Yayını Başlat"
+MainWindow.StopStream="Yayını Durdur"
+MainWindow.StopTest="Önizlemeyi Durdur"
+MainWindow.TestStream="Yayını Önizle"
+
+Plugins.Configure="Yapılandır"
+Plugins.Description="Açıklama:"
+Plugins.Filename="Dosya adı:"
+
+Reconnecting.Retrying="Tekrar bağlanılamadı.Tekrar deneniyor"
+
+RenderView.EnableView="Görüntüyü Aktifleştir"
+RenderView.DisplayPanel="Kontrol Panelini Aktifleştir"
+RenderView.ViewModeScaleToFit="Sığdırma Modunu Aç"
+RenderView.ViewMode1To1="1:1 Modu"
+
+Scene.Hotkey="Sahne Kısayolu"
+Scene.MissingSources="Eksik eklentiler veya yanlış ayarlamalar yüzünden bütün imaj kaynakları yüklenemedi"
+
+Scene.Hotkey.AlreadyInUse="Bu kısayol zaten kullanımda."
+Scene.Hotkey.Hotkey="Kısayol:"
+
+Capture.Start.FileStream.WarningCaption="Uyarı"
+Capture.Start.FileStream.Warning="Yayın çıkış dosyası oluşturulamadı.\n\nYayın Ayarlarından dosya yolunu kontrol edin."
+
+Settings.Advanced="Gelişmiş"
+Settings.Audio="Ses"
+Settings.Encoding="Kodlama"
+Settings.General="Genel"
+Settings.Info="Bu ayarlar siz tekrar yayına başlayana kadar uygulanmayacak."
+Settings.Publish="Yayın Ayarları"
+Settings.SaveChangesPrompt="Ayarları kaydedip uygulamak ister misiniz ?"
+Settings.SaveChangesTitle="Ayarlar uygulansın mı ?"
+Settings.Video="Video"
+
+Settings.Advanced.AutomaticLatency="Otomatik düşük gecikme modu:"
+Settings.Advanced.AllowOtherHotkeyModifiers="Kısayollarda diğer değiştiricilere izin ver"
+Settings.Advanced.BindToIP="Arabirime Bağla: "
+Settings.Advanced.DisablePreviewEncoding="Önizleme yaparken kodlamayı iptal et"
+Settings.Advanced.GlobalAudioTimeAdjust="Genel Ses Zamanı (milisaniye):"
+Settings.Advanced.LatencyTuning="Gecikme süre faktörü:"
+Settings.Advanced.Network="Ağ"
+Settings.Advanced.PresetWarning="DIKKAT!x264 için varsayılan ayarı değiştirmek yayın kalitenizde ve işlemci kullanımında olumsuz etkiler yaratabilir.\r\n\r\nAyarların sisteminizi nasıl etkieleyeceğini bilmiyorsanız ayarları değiştirmeyin.\r\n\r\nBu değişikliği öneren her rehbere güvenmeyin.Aslında bu ayarı varsayılandan değiştirmenize hiç gerek yok(hızlıca).\r\n\r\nDeğiştirmek istediğinizden emin misiniz ?"
+Settings.Advanced.ProcessPriority="Işlem Önceliği Sınıfı"
+Settings.Advanced.SendBufferSize="Arabellek Boyunu Gönder:"
+Settings.Advanced.UnlockHigherFPS="Video ayaralrında 61-120 FPS girişine izin ver"
+Settings.Advanced.UseCBR="CBR kullan"
+Settings.Advanced.PadCBR="CBR doldurmayı etkinleştir"
+Settings.Advanced.UseCFR="CFR kullan"
+Settings.Advanced.UseQSV="Hızlı Eşitleme Kullan"
+Settings.Advanced.QSVUseVideoEncoderSettings="QSV için özel x264 ayarları kullan"
+Settings.Advanced.QSVUseVideoEncoderSettingsToolTip="Şimdilik sadece keyint ve bframes destekliyor."
 
 
 
 
 
 
+Settings.General.Language="Dil:"
+Settings.General.Profile="Ayar Profili:"
+Settings.General.Notification="Bildirim Bölümü Simgesi"
+Settings.General.NotificationMinimize="Bildirim Bölümüne Küçült"
+Settings.General.ShowObs="OBS'i Göster"
+Settings.General.HideObs="OBS'i Gizle"
+Settings.General.Restart="Dili değiştirmek OBS'in yeniden başlatılmasını gerektirir.\r\n\n..Zaten dili değiştiriyorsanız bunu anlamıyorsunuzdur ..."
 
+Settings.Publish.AutoReconnect="Oto-Tekrar Bağlan:"
+Settings.Publish.AutoReconnectTimeout="Oto-Yeniden Bağlanma Zaman Aşımı:"
+Settings.Publish.ChannelName="Kanal Adı:"
+Settings.Publish.DashboardLink="Kontrol Paneli Linki (varsa):"
+Settings.Publish.Delay="Gecikme (saniye):"
+Settings.Publish.LowLatencyMode="Ağ Etkisini En Aza Indirge:"
+Settings.Publish.Mode="Mod:"
+Settings.Publish.Password="Şifre (varsa):"
+Settings.Publish.Playpath="Konum/Yayın Anahtarını Oynat (varsa):"
+Settings.Publish.SavePath="Dosya Yolu:"
+Settings.Publish.SaveToFile="Dosyaya kaydet:"
+Settings.Publish.Server="Sunucu:"
+Settings.Publish.Service="Yayın Servisi:"
+Settings.Publish.StartStreamHotkey="Yayını Başlatma Kısayolu:"
+Settings.Publish.StopStreamHotkey="Yayını Durdurma Kısayolu:"
+Settings.Publish.Username="Kullanıcı adı (varsa):"
 
+Settings.Publish.Mode.FileOnly="Sadece Dosya Çıkışı"
+Settings.Publish.Mode.LiveStream="Canlı Yayın"
 
+Settings.Publish.Warning.BadSettings="DIKKAT: OBS ayarlarınız %s ile beraber kullanım için ayarlanmış değil.Lütfen şu şekilde ayarlayın:\r\n\r\n"
+Settings.Publish.Warning.UseCBR="\tKodlama Ayarları: CBR'yi Etkinleştir\r\n\r\n"
+Settings.Publish.Warning.Maxbitrate="\tKodlama Ayarları: Maksimum bit hızını %d a indirge\r\n\r\n"
+Settings.Publish.Warning.Keyint="\tGelişmiş Ayarlar:%d nin anahtar kare aralık süresini ayarla \r\n\r\n"
+Settings.Publish.Warning.MaxAudiobitrate="\tKodlama Ayarları: Ses bit hızını %d e indirge \r\n\r\n"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Settings.Video.Custom="Özel:"
+Settings.Video.Device="Ekran Kartı:"
+Settings.Video.DisableAero="Aero'uu Kapat:"
+Settings.Video.DisableAeroTooltip="Eğer monötir yakalamayı kullanıyorsanız Aero'yu kapatmak şiddetle önerilir."
+Settings.Video.Downscale="Çözünürlük Düşürme:"
+Settings.Video.DownscaleTooltip="Düşürme , çözünürlüğü düşürürken video kalitesini arttırır."
 
 
 
