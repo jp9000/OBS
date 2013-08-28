@@ -313,6 +313,7 @@ Sources.TextSource.UseTextExtents="テキストの枠内を編集する"
 Sources.TextSource.UseTextFromFile="ファイルからテキストを使用 (UTF-8)"
 Sources.TextSource.VerticalScript="垂直"
 Sources.TextSource.Wrap="折り返す"
+Sources.TextSource.Scroll="スクロール モード"
 
 Sources.TransitionSource.Bitmaps="画像リスト:"
 Sources.TransitionSource.Empty="画像リストが空欄です。"

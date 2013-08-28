@@ -313,6 +313,7 @@ Sources.TextSource.UseTextExtents="Använd anpassad textgrad"
 Sources.TextSource.UseTextFromFile="Hämta text från fil (UTF-8 eller kompatibelt format)"
 Sources.TextSource.VerticalScript="Stående"
 Sources.TextSource.Wrap="Rulla runt"
+Sources.TextSource.Scroll="Rullningsläge"
 
 Sources.TransitionSource.Bitmaps="Bilder:"
 Sources.TransitionSource.Empty="Inga bilder valda att visas."

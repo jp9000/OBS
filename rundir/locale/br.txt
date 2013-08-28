@@ -46,7 +46,7 @@ DeleteConfirm.Title="Deseja excluir os itens selecionados?"
 
 EndingDelay.TimeLeft="Tempo restante: $1"
 
-GlobalSources.DeleteConfirm="Se você excluir uma fonte global, ele será removido de todas as cena que ele utiliza. Você tem certeza de que deseja continuar?"
+GlobalSources.DeleteConfirm="Se você excluir uma fonte global, ela será removida de todas as cenas em que ela é utilizada. Você tem certeza de que deseja continuar?"
 
 Listbox.Add="Adicionar $1"
 Listbox.Center="Centro"
@@ -108,8 +108,8 @@ RenderView.ViewMode1To1="Modo 1:1"
 Scene.Hotkey="Hotkey para Cena"
 Scene.MissingSources="Incapaz de carregar todas as fontes de imagem devido a configurações inválidas ou plugins que faltam."
 
-Scene.Hotkey.AlreadyInUse="Esta hotkey já está em uso."
-Scene.Hotkey.Hotkey="Hotkey:"
+Scene.Hotkey.AlreadyInUse="Este atalho já está em uso."
+Scene.Hotkey.Hotkey="Tecla de Atalho:"
 
 Capture.Start.FileStream.WarningCaption="Aviso"
 Capture.Start.FileStream.Warning="Não é possível criar o arquivo de saída stream.Cheque o caminho do arquivo de configurações de transmissão."
@@ -131,7 +131,7 @@ Settings.Advanced.DisablePreviewEncoding="Desativar a codificação, enquanto pr
 Settings.Advanced.GlobalAudioTimeAdjust="Tempo de compensação de áudio global (milissegundos):"
 Settings.Advanced.LatencyTuning="Fator de ajuste de latência:"
 Settings.Advanced.Network="Rede"
-Settings.Advanced.PresetWarning="AVISO! Mudando a predefinição do x264 pode ter graves efeitos negativos na sua qualidade de fluxo e uso da CPU. Não alterar essa configuração, a menos que você entender completamente as consequências de como a predefinição afeta sua transmissão.Trate qualquer guia que sugiram mudar isso com cautela. Você quase nunca precisará alterar esta opção do padrão (muito rápido).Você tem certeza que deseja alterar a predefinição?"
+Settings.Advanced.PresetWarning="AVISO! Mudar a predefinição do x264 pode gerar sérios efeitos negativos na qualidade da sua transmissão e no uso da CPU.\r\n\r\nNão mude esta configuração a menos que você entenda completamente das consequências de como a predefinição afeta sua transmissão.\r\n\r\nTrate qualquer guia que sugira a mudança disso com cautela. Você quase nunca precisará alterar essa opção do padrão (muito rápido).\r\n\r\nVocê tem certeza que deseja mudar esta predefinição?"
 Settings.Advanced.ProcessPriority="Prioridade do Processo"
 Settings.Advanced.SendBufferSize="Tamanho do Buffer de envio:"
 Settings.Advanced.UnlockHigherFPS="Permitir a entrada de 61-120 FPS em configurações de vídeo"
