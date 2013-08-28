@@ -46,7 +46,7 @@ public:
     {
         curBitRate = bitRate;
 
-        faac = faacEncOpen(44100, 2, &numReadSamples, &outputSize);
+        faac = faacEncOpen(48000, 2, &numReadSamples, &outputSize);
 
         //Log(TEXT("numReadSamples: %d"), numReadSamples);
         aacBuffer.SetSize(outputSize+2);
@@ -155,7 +155,7 @@ public:
             inputBuffer.RemoveRange(0, numReadSamples);
 
             bufferedTimestamps << curEncodeTimestamp;
-            curEncodeTimestamp = curTimestamp + (((numReadSamples-lastSampleSize)/2)*10/441);
+            curEncodeTimestamp = curTimestamp + (((numReadSamples-lastSampleSize)/2)/48);
         }
 
         return ret > 0;

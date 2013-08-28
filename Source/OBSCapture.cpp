@@ -876,7 +876,7 @@ void OBS::EncodeAudioSegment(float *buffer, UINT numFrames, QWORD timestamp)
     }
 }
 
-const int audioSamplesPerSec = 44100;
+const int audioSamplesPerSec = 48000;
 const int audioSampleSize = audioSamplesPerSec/100;
 
 void OBS::MainAudioLoop()

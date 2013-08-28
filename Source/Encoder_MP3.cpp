@@ -59,8 +59,8 @@ public:
         if(!lgf)
             CrashError(TEXT("Unable to open mp3 encoder"));
 
-        lame_set_in_samplerate(lgf, 44100);
-        lame_set_out_samplerate(lgf, 44100);
+        lame_set_in_samplerate(lgf, 48000);
+        lame_set_out_samplerate(lgf, 48000);
         lame_set_num_channels(lgf, 2);
         lame_set_mode(lgf, STEREO);
         lame_set_disable_reservoir(lgf, TRUE); //bit reservoir has to be disabled for seamless streaming
@@ -102,7 +102,7 @@ public:
             frameCounter -= outputFrameSize;
 
             bufferedTimestamps << curEncodeTimestamp;
-            curEncodeTimestamp = timestamp + ((outputFrameSize-lastSampleSize)*10/441);
+            curEncodeTimestamp = timestamp + ((outputFrameSize-lastSampleSize)/48);
         }
 
         int ret = lame_encode_buffer_interleaved_ieee_float(lgf, (float*)input, numInputFrames, MP3OutputBuffer.Array()+1, dwMP3MaxSize);

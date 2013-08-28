@@ -87,7 +87,7 @@ void AudioSource::InitAudioData(bool bFloat, UINT channels, UINT samplesPerSec, 
 
     //-----------------------------
 
-    if(inputSamplesPerSec != 44100)
+    if(inputSamplesPerSec != 48000)
     {
         int errVal;
 
@@ -96,12 +96,12 @@ void AudioSource::InitAudioData(bool bFloat, UINT channels, UINT samplesPerSec, 
         if(!resampler)
             CrashError(TEXT("AudioSource::InitAudioData: Could not initiate resampler"));
 
-        resampleRatio = 44100.0 / double(inputSamplesPerSec);
+        resampleRatio = 48000.0 / double(inputSamplesPerSec);
         bResample = true;
 
         //----------------------------------------------------
         // hack to get rid of that weird first quirky resampled packet size
-        // (always returns a non-441 sized packet on the first resample)
+        // (always returns a non-480 sized packet on the first resample)
 
         SRC_DATA data;
         data.src_ratio = resampleRatio;
@@ -679,7 +679,7 @@ bool AudioSource::GetBuffer(float **buffer, QWORD targetTimestamp)
         }
     }
 
-    outputBuffer.SetSize(441*2);
+    outputBuffer.SetSize(480*2);
 
     *buffer = outputBuffer.Array();
 

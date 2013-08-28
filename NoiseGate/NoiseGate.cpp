@@ -74,8 +74,8 @@ void NoiseGateFilter::ApplyNoiseGate(float *buffer, int totalFloats)
     if(totalFloats % 2)
         return; // Odd number of samples
 
-    // OBS is currently hard-coded to 44.1ksps
-    const float SAMPLE_RATE_F = 44100.0f;
+    // OBS is currently hard-coded to 48ksps
+    const float SAMPLE_RATE_F = 48000.0f;
     const float dtPerSample = 1.0f / SAMPLE_RATE_F;
 
     // Convert configuration times into per-sample amounts
@@ -83,10 +83,10 @@ void NoiseGateFilter::ApplyNoiseGate(float *buffer, int totalFloats)
     const float releaseRate = 1.0f / (parent->releaseTime * SAMPLE_RATE_F);
 
     // Determine level decay rate. We don't want human voice (75-300Hz) to cross the close
-    // threshold if the previous peak crosses the open threshold. 75Hz at 44.1ksps is ~590
+    // threshold if the previous peak crosses the open threshold. 75Hz at 48ksps is 640
     // samples between peaks.
     const float thresholdDiff = parent->openThreshold - parent->closeThreshold;
-    const float minDecayPeriod = (1.0f / 75.0f) * SAMPLE_RATE_F; // ~590 samples
+    const float minDecayPeriod = (1.0f / 75.0f) * SAMPLE_RATE_F; // 640 samples
     const float decayRate = thresholdDiff / minDecayPeriod;
 
     // We can't use SSE as the processing of each sample depends on the processed
