@@ -5,9 +5,6 @@ Apply="Приложи"
 Browse="Търси"
 BuildingMP4Dialog="Изграждане на МП4"
 Cancel="Откажи"
-ClearHotkey="изчистване
-ясно
-ясен"
 Color="Цвят"
 Default="По подразбиране"
 Defaults="По подразбиране"

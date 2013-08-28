@@ -1,3 +1,5 @@
+Cancel="Annullér"
+OK="OK"
 
 
 

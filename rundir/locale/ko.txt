@@ -212,7 +212,7 @@ Settings.Publish.StartStreamHotkey="방송 시작 단축키:"
 Settings.Publish.StopStreamHotkey="방송 중단 단축키:"
 Settings.Publish.Username="사용자 이름 (필요 시 입력):"
 
-Settings.Publish.Mode.FileOnly="파일을 재생"
+Settings.Publish.Mode.FileOnly="방송없이 녹화만"
 Settings.Publish.Mode.LiveStream="실황으로 방송"
 
 Settings.Publish.Warning.BadSettings="경고: %s 환경에 현재 OBS 세팅은 최적화되어 있지 않습니다. 다음과 같이 설정하여 주십시오:\r\n\r\n"
@@ -313,6 +313,7 @@ Sources.TextSource.UseTextExtents="사용자 정의 글씨 설정 사용"
 Sources.TextSource.UseTextFromFile="텍스트 파일 사용 (UTF-8 혹은 호환 형식)"
 Sources.TextSource.VerticalScript="수직"
 Sources.TextSource.Wrap="자동 줄 바꿈"
+Sources.TextSource.Scroll="스크롤 모드"
 
 Sources.TransitionSource.Bitmaps="이미지 리스트:"
 Sources.TransitionSource.Empty="표시할 이미지 파일이 지정되지 않았습니다."

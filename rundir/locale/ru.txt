@@ -313,6 +313,7 @@ Sources.TextSource.UseTextExtents="Свои размеры текстового 
 Sources.TextSource.UseTextFromFile="Текст из файла (UTF-8 или совместимый):"
 Sources.TextSource.VerticalScript="Вертикальный"
 Sources.TextSource.Wrap="Перенос"
+Sources.TextSource.Scroll="Режим прокрутки"
 
 Sources.TransitionSource.Bitmaps="Изображения:"
 Sources.TransitionSource.Empty="Не все картинки будут отображаться"
