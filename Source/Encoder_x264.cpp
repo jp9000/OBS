@@ -190,13 +190,7 @@ public:
         this->width  = width;
         this->height = height;
 
-        //warning: messing with x264 settings without knowing what they do can seriously screw things up
-
-        //ratetol
-        //qcomp
-
-        //paramData.i_frame_reference     = 1; //ref=1
-        //paramData.i_threads             = 4;
+        paramData.b_deterministic       = false;
 
         bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
         bPadCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 1) != 0;
