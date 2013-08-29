@@ -130,7 +130,7 @@ public:
                 DWORD timeLeftMinutes = timeLeft/60;
                 DWORD timeLeftSeconds = timeLeft%60;
 
-                if(timeLeft != lastTimeLeft)
+                if((timeLeft != lastTimeLeft) && (totalTimeLeft >= timeElapsed))
                 {
                     String strTimeLeft = strTimeLeftVal;
                     strTimeLeft.FindReplace(TEXT("$1"), FormattedString(TEXT("%u:%02u"), timeLeftMinutes, timeLeftSeconds));
