@@ -2,8 +2,8 @@ Cancel="取消"
 OK="確定"
 
 Plugin.Name="個別場景音量插件"
-Plugin.Description="可啟動以場景為單位的獨立音量追蹤"
+Plugin.Description="可啟動以場景為單位的獨立音量追蹤。"
 
 Config.Caption="個別場景音量設定"
-Config.Enable="啟動個別場景音量追蹤"
+Config.Enable="啟用個別場景音量追蹤"
 

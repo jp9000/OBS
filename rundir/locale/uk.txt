@@ -10,6 +10,11 @@ Disable="Вимкнути"
 EnterName="Будь ласка, введіть ім'я"
 Gamma="Гамма:"
 GlobalSources="Загальні джерела..."
+OK="OK"
+Plugins="Плагіни..."
+Refresh="Оновити"
+Copy="Копіювати"
+Settings="Настройки..."
 
 
 
