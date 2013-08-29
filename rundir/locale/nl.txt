@@ -313,6 +313,7 @@ Sources.TextSource.UseTextExtents="Aangepaste tekst-extents gebruiken"
 Sources.TextSource.UseTextFromFile="Tekst Uit Bestand Gebruiken (UTF-8 of compatible)"
 Sources.TextSource.VerticalScript="Verticaal"
 Sources.TextSource.Wrap="Terugloop"
+Sources.TextSource.Scroll="Scrollmodus"
 
 Sources.TransitionSource.Bitmaps="Bitmaps:"
 Sources.TransitionSource.Empty="Er zijn geen bitmaps ingevoerd om weer te geven."
