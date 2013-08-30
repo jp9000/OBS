@@ -1,3 +1,5 @@
+Cancel="Atšaukti"
+OK="Gerai"
 
 
 

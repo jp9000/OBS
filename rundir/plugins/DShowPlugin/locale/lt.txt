@@ -3,6 +3,11 @@ ClassName="Vaizdo irašymo irenginys"
 DeviceSelection="Prietaiso pasirinkimas"
 OK="Gerai"
 
+DeinterlacingType.None="Nė vienas"
+DeinterlacingType.Blend="Sumaišyti"
+DeinterlacingType.Blend2x="Sumaišyti2x"
+DeinterlacingType.Linear="Linijinis"
+DeinterlacingType.Linear2x="Linijinis2x"
 
 
 DeviceSelection.Blend="Mišinys (1-1000):"
