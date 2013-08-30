@@ -1,4 +1,4 @@
-﻿Add="新增"
+Add="新增"
 Preview="預覽"
 Order="排列"
 Apply="套用"
@@ -343,3 +343,5 @@ Plugins.NoiseGate.CloseThreshold="關閉\n閥值"
 Plugins.NoiseGate.AttackTime="起音時間 (Attack time)(毫秒)："
 Plugins.NoiseGate.HoldTime="持續時間 (Hold time)(毫秒)："
 Plugins.NoiseGate.ReleaseTime="釋音時間 (Release time)(毫秒)："
+
+

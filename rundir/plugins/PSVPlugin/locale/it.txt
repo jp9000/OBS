@@ -1,4 +1,4 @@
-﻿Cancel="Annulla"
+Cancel="Annulla"
 OK="OK"
 
 Plugin.Name="Plugin Volume Per-Scena"
@@ -6,3 +6,4 @@ Plugin.Description="Abilita tracciamento volume per-scena."
 
 Config.Caption="Configurazione Volume Per-Scena"
 Config.Enable="Abilita Tracciamento Volume Per-Scena"
+
