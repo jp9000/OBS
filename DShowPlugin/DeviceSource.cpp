@@ -161,15 +161,15 @@ String DeviceSource::ChooseDeinterlacingShader()
 #endif
 }
 
-const float yuv709Mat[16] = { 0.2126f,  0.7152f,  0.0722f, 0.0625f,
-                             -0.1150f, -0.3850f,  0.5000f, 0.50f,
-                              0.5000f, -0.4540f, -0.0460f, 0.50f,
-                              0.0f,     0.0f,     0.0f,    1.0f};
+const float yuv709Mat[16] = {0.182586f,  0.614231f,  0.062007f, 0.062745f,
+                            -0.100644f, -0.338572f,  0.439216f, 0.501961f,
+                             0.439216f, -0.398942f, -0.040274f, 0.501961f,
+                             0.000000f,  0.000000f,  0.000000f, 1.000000f};
 
-const float yuvMat[16] = { 0.257f,  0.504f,  0.098f, 0.0625f,
-                          -0.148f, -0.291f,  0.439f, 0.50f,
-                           0.439f, -0.368f, -0.071f, 0.50f,
-                           0.0f,    0.0f,    0.0f,   1.0f};
+const float yuvMat[16] = {0.256788f,  0.504129f,  0.097906f, 0.062745f,
+                         -0.148223f, -0.290993f,  0.439216f, 0.501961f,
+                          0.439216f, -0.367788f, -0.071427f, 0.501961f,
+                          0.000000f,  0.000000f,  0.000000f, 1.000000f};
 
 void DeviceSource::SetAudioInfo(AM_MEDIA_TYPE *audioMediaType, GUID &expectedAudioType)
 {
@@ -474,7 +474,7 @@ bool DeviceSource::LoadFilters()
     // set chroma details
 
     keyBaseColor = Color4().MakeFromRGBA(keyColor);
-    Matrix4x4TransformVect(keyChroma, (colorType == DeviceOutputType_HDYC) ? (float*)yuv709Mat : (float*)yuvMat, keyBaseColor);
+    Matrix4x4TransformVect(keyChroma, (colorType == DeviceOutputType_HDYC || colorType == DeviceOutputType_RGB) ? (float*)yuv709Mat : (float*)yuvMat, keyBaseColor);
     keyChroma *= 2.0f;
 
     //------------------------------------------------
@@ -1580,7 +1580,7 @@ void DeviceSource::SetInt(CTSTR lpName, int iVal)
             keyColor = (DWORD)iVal;
 
             keyBaseColor = Color4().MakeFromRGBA(keyColor);
-            Matrix4x4TransformVect(keyChroma, (colorType == DeviceOutputType_HDYC) ? (float*)yuv709Mat : (float*)yuvMat, keyBaseColor);
+            Matrix4x4TransformVect(keyChroma, (colorType == DeviceOutputType_HDYC || colorType == DeviceOutputType_RGB) ? (float*)yuv709Mat : (float*)yuvMat, keyBaseColor);
             keyChroma *= 2.0f;
 
             if(keyBaseColor.x < keyBaseColor.y && keyBaseColor.x < keyBaseColor.z)

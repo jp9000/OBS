@@ -36,15 +36,14 @@ struct VertData
 
 float4 main(VertData input) : SV_Target
 {
+    const float4x4 yuvMat = {1.164384,  1.164384,  1.164384, 0.0,
+                             0.000000, -0.391762,  2.017232, 0.0,
+                             1.596027, -0.812968,  0.000000, 0.0,
+                            -0.874202,  0.531668, -1.085631, 1.0};
+
     //a nice quick colorspace conversion
     float4 yuvx = diffuseTexture.Sample(textureSampler, input.texCoord).ragb;
-    yuvx -= float4(0.0625, 0.5, 0.5, 0.0);
-    yuvx.r *= 1.1640625;
-
-    float4 rgbx = float4(yuvx.r + (1.58593*yuvx.b),
-                         yuvx.r - (0.81250*yuvx.b) - (0.39062*yuvx.g),
-                         yuvx.r + (2.01562*yuvx.g),
-                         1.0);
+    float4 rgbx = mul(float4(yuvx.xyz, 1.0), yuvMat);
 
 	rgbx = saturate(rgbx);
 
