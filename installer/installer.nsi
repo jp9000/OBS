@@ -2,7 +2,7 @@
 
 ; Define your application name
 !define APPNAME "Open Broadcaster Software"
-!define APPNAMEANDVERSION "Open Broadcaster Software 0.552b"
+!define APPNAMEANDVERSION "Open Broadcaster Software 0.553b"
 
 ; Additional script dependencies
 !include WinVer.nsh
