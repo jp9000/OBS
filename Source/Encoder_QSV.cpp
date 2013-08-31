@@ -205,7 +205,7 @@ class QSVEncoder : public VideoEncoder
     bool bFirstFrameProcessed,
          bFirstFrameQueued;
 
-    bool bUseCBR, bUseCFR, bDupeFrames;
+    bool bUseCBR, bUseCFR;
 
     List<VideoPacket> CurrentPackets;
     List<BYTE> HeaderPacket, SEIData;
@@ -287,14 +287,13 @@ class QSVEncoder : public VideoEncoder
 
 #define ALIGN16(value)                      (((value + 15) >> 4) << 4) // round up to a multiple of 16
 public:
-    QSVEncoder(int fps_, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitrate, int bufferSize, bool bUseCFR_, bool bDupeFrames_)
+    QSVEncoder(int fps_, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitrate, int bufferSize, bool bUseCFR_)
         : enc(nullptr), bFirstFrameProcessed(false), bFirstFrameQueued(false)
     {
         fps = fps_;
 
         bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR")) != 0;
         bUseCFR = bUseCFR_;
-        bDupeFrames = bDupeFrames_;
 
         UINT keyframeInterval = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 6);
 
@@ -562,7 +561,7 @@ public:
         Log(TEXT("Error: all frames are in use"));
     }
 
-    void ProcessEncodedFrame(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, int &ctsOffset, mfxU32 wait=0)
+    void ProcessEncodedFrame(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, mfxU32 wait=0)
     {
         if(!encoded_tasks.Num())
             return;
@@ -637,30 +636,14 @@ public:
         INT64 ts = INT64(outputTimestamp);
         int timeOffset;
 
-        if(bDupeFrames)
-        {
-            //if frame duplication is being used, the shift will be insignificant, so just don't bother adjusting audio
-            timeOffset = int(out_pts-dts);
-            timeOffset += frameShift;
+        //if frame duplication is being used, the shift will be insignificant, so just don't bother adjusting audio
+        timeOffset = int(out_pts-dts);
+        timeOffset += frameShift;
 
-            if(nalNum && timeOffset < 0)
-            {
-                frameShift -= timeOffset;
-                timeOffset = 0;
-            }
-        }
-        else
+        if(nalNum && timeOffset < 0)
         {
-            timeOffset = int(out_pts+delayOffset-ts);
-            timeOffset += ctsOffset;
-
-            //dynamically adjust the CTS for the stream if it gets lower than the current value
-            //(thanks to cyrus for suggesting to do this instead of a single shift)
-            if(nalNum && timeOffset < 0)
-            {
-                ctsOffset -= timeOffset;
-                timeOffset = 0;
-            }
+            frameShift -= timeOffset;
+            timeOffset = 0;
         }
         //Log(TEXT("inpts: %005d, dts: %005d, pts: %005d, timestamp: %005d, offset: %005d, newoffset: %005d"), task.surf.Data.TimeStamp/90, dts, bs.TimeStamp/90, outputTimestamp, timeOffset, bs.TimeStamp/90-dts);
 
@@ -876,7 +859,7 @@ public:
         surf.Data.TimeStamp = timestampFromMS(pic.Data.TimeStamp);
     }
 
-    bool Encode(LPVOID picInPtr, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, int &ctsOffset)
+    bool Encode(LPVOID picInPtr, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp)
     {
         profileIn("ProcessEncodedFrame");
         mfxU32 wait = 0;
@@ -884,7 +867,7 @@ public:
         do
         {
             if(!packets.Num())
-                ProcessEncodedFrame(packets, packetTypes, outputTimestamp, ctsOffset, wait);
+                ProcessEncodedFrame(packets, packetTypes, outputTimestamp, wait);
 
             CleanupLockedTasks();
 
@@ -1056,9 +1039,9 @@ public:
     }
 };
 
-VideoEncoder* CreateQSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR, bool bDupeFrames)
+VideoEncoder* CreateQSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR)
 {
     if(CheckQSVHardwareSupport())
-        return new QSVEncoder(fps, width, height, quality, preset, bUse444, maxBitRate, bufferSize, bUseCFR, bDupeFrames);
+        return new QSVEncoder(fps, width, height, quality, preset, bUse444, maxBitRate, bufferSize, bUseCFR);
     return nullptr;
 }

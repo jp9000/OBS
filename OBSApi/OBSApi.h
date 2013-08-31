@@ -75,6 +75,7 @@ inline QWORD GetQWDif(QWORD val1, QWORD val2)
     return (val1 > val2) ? (val1-val2) : (val2-val1);
 }
 
+BASE_EXPORT QWORD GetQPCTimeNS();
 BASE_EXPORT QWORD GetQPCTime100NS();
 BASE_EXPORT QWORD GetQPCTimeMS();
 BASE_EXPORT void MixAudio(float *bufferDest, float *bufferSrc, UINT totalFloats, bool bForceMono);

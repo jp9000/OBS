@@ -21,8 +21,8 @@
 #include <time.h>
 #include <Avrt.h>
 
-VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR, bool bDupeFrames);
-VideoEncoder* CreateQSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR, bool bDupeFrames);
+VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR);
+VideoEncoder* CreateQSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR);
 AudioEncoder* CreateMP3Encoder(UINT bitRate);
 AudioEncoder* CreateAACEncoder(UINT bitRate);
 
@@ -404,17 +404,8 @@ retryHookTestV2:
     int bufferSize = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("BufferSize"), 1000);
     int quality    = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Quality"),    8);
     String preset  = AppConfig->GetString(TEXT("Video Encoding"), TEXT("Preset"),     TEXT("veryfast"));
-    bUsing444      = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Use444"),     0) != 0;
-
-    bDupeFrames = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("DupeFrames"), 0) != 0;
-
-    if(bUsing444)
-        bDupeFrames = bUseCFR = false;
-    else
-    {
-        bUseCFR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCFR"), 0) != 0;
-        if(bUseCFR) bDupeFrames = true;
-    }
+    bUsing444      = false;//AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Use444"),     0) != 0;
+    bUseCFR        = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCFR"), 0) != 0;
 
     //-------------------------------------------------------------
 
@@ -489,15 +480,14 @@ retryHookTestV2:
 
     //-------------------------------------------------------------
 
-    ctsOffset = 0;
     videoEncoder = nullptr;
     if (bDisableEncoding)
         videoEncoder = CreateNullVideoEncoder();
     else if(AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0)
-        videoEncoder = CreateQSVEncoder(fps, outputCX, outputCY, quality, preset, bUsing444, maxBitRate, bufferSize, bUseCFR, bDupeFrames);
+        videoEncoder = CreateQSVEncoder(fps, outputCX, outputCY, quality, preset, bUsing444, maxBitRate, bufferSize, bUseCFR);
 
     if(!videoEncoder)
-        videoEncoder = CreateX264Encoder(fps, outputCX, outputCY, quality, preset, bUsing444, maxBitRate, bufferSize, bUseCFR, bDupeFrames);
+        videoEncoder = CreateX264Encoder(fps, outputCX, outputCY, quality, preset, bUsing444, maxBitRate, bufferSize, bUseCFR);
 
 
     //-------------------------------------------------------------
@@ -524,7 +514,10 @@ retryHookTestV2:
 
     //-------------------------------------------------------------
 
-    hMainThread = OSCreateThread((XTHREAD)OBS::MainCaptureThread, NULL);
+    curFramePic = NULL;
+    ResetEvent(hVideoThread);
+    hEncodeThread = OSCreateThread((XTHREAD)OBS::EncodeThread, NULL);
+    hVideoThread = OSCreateThread((XTHREAD)OBS::MainCaptureThread, NULL);
 
     if(bTestStream)
     {
@@ -561,15 +554,21 @@ void OBS::Stop()
     OSEnterMutex(hStartupShutdownMutex);
 
     //we only want the capture thread to stop first, so we can ensure all packets are flushed
-    bShutdownMainThread = true;
+    bShutdownEncodeThread = true;
 
-    if(hMainThread)
+    if(hEncodeThread)
     {
-        OSTerminateThread(hMainThread, 60000);
-        hMainThread = NULL;
+        OSTerminateThread(hEncodeThread, 30000);
+        hEncodeThread = NULL;
     }
 
-    bShutdownMainThread = false;
+    if(hVideoThread)
+    {
+        OSTerminateThread(hVideoThread, 30000);
+        hVideoThread = NULL;
+    }
+
+    bShutdownEncodeThread = false;
 
     bRunning = false;
 

@@ -21,6 +21,7 @@
 
 class Scene;
 class SettingsPane;
+struct EncoderPicture;
 
 #define NUM_RENDER_BUFFERS 2
 
@@ -160,7 +161,7 @@ class VideoEncoder
     friend class OBS;
 
 protected:
-    virtual bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, int &ctsOffset)=0;
+    virtual bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp)=0;
 
     virtual void RequestBuffers(LPVOID buffers) {}
 
@@ -437,9 +438,8 @@ struct VideoSegment
 {
     List<VideoPacketData> packets;
     DWORD timestamp;
-    int ctsOffset;
 
-    inline VideoSegment() : timestamp(0), ctsOffset(0) {}
+    inline VideoSegment() : timestamp(0) {}
     inline ~VideoSegment() {Clear();}
     inline void Clear()
     {
@@ -561,7 +561,7 @@ private:
     bool    bTestStream;
     bool    bUseMultithreadedOptimizations;
     bool    bRunning;
-    bool    bShutdownMainThread;
+    volatile bool bShutdownVideoThread, bShutdownEncodeThread;
     int     renderFrameWidth, renderFrameHeight; // The size of the preview only
     int     renderFrameX, renderFrameY; // The offset of the preview inside the preview control
     int     renderFrameCtrlWidth, renderFrameCtrlHeight; // The size of the entire preview control
@@ -619,7 +619,6 @@ private:
     //---------------------------------------------------
     // stats
 
-    int ctsOffset;
     DWORD bytesPerSec;
     DWORD captureFPS;
     DWORD curFramesDropped;
@@ -632,13 +631,13 @@ private:
 
     int bufferingTime;
 
-    HANDLE  hMainThread;
+    HANDLE  hEncodeThread;
+    HANDLE  hVideoThread;
     HANDLE  hSceneMutex;
 
     List<VideoSegment> bufferedVideo;
 
     CircularList<UINT> bufferedTimes;
-    CircularList<UINT> ctsOffsets;
 
     bool bRecievedFirstAudioFrame, bSentHeaders, bFirstAudioPacket;
 
@@ -646,8 +645,9 @@ private:
 
     QWORD firstSceneTimestamp;
     QWORD latestVideoTime;
+    QWORD latestVideoTimeNS;
 
-    bool bUseCFR, bDupeFrames;
+    bool bUseCFR;
 
     bool bWriteToFile;
     VideoFileStream *fileStream;
@@ -655,10 +655,15 @@ private:
     bool bRequestKeyframe;
     int  keyframeWait;
 
+    EncoderPicture *curFramePic;
+    HANDLE hVideoEvent;
+
+    static DWORD STDCALL EncodeThread(LPVOID lpUnused);
     static DWORD STDCALL MainCaptureThread(LPVOID lpUnused);
     bool BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, VideoSegment &segmentOut);
-    void SendFrame(VideoSegment &curSegment, QWORD firstFrameTime, int curCTFOffset);
+    void SendFrame(VideoSegment &curSegment, QWORD firstFrameTime);
     bool ProcessFrame(FrameProcessInfo &frameInfo);
+    void EncodeLoop();  
     void MainCaptureLoop();
 
     //---------------------------------------------------

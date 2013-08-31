@@ -134,6 +134,7 @@ OBS::OBS()
 
     hSceneMutex = OSCreateMutex();
     hAuxAudioMutex = OSCreateMutex();
+    hVideoEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
     monitors.Clear();
     EnumDisplayMonitors(NULL, NULL, (MONITORENUMPROC)MonitorInfoEnumProc, (LPARAM)&monitors);
@@ -724,6 +725,9 @@ OBS::~OBS()
         sceneClasses[i].FreeData();
     for(UINT i=0; i<imageSourceClasses.Num(); i++)
         imageSourceClasses[i].FreeData();
+
+    if (hVideoEvent)
+        CloseHandle(hVideoEvent);
 
     if(hSceneMutex)
         OSCloseMutex(hSceneMutex);
