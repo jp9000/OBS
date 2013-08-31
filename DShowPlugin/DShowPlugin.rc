@@ -58,8 +58,8 @@ IDC_COLORPICKER         CURSOR                  "cursor1.cur"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,5,5,3
- PRODUCTVERSION 0,5,5,3
+ FILEVERSION 0,5,5,4
+ PRODUCTVERSION 0,5,5,4
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -75,12 +75,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "Open Broadcaster Software DirectShow Plugin"
-            VALUE "FileVersion", "0.5.5.3"
+            VALUE "FileVersion", "0.5.5.4"
             VALUE "InternalName", "DShowPlugin.dll"
             VALUE "LegalCopyright", "Copyright (C) 2013"
             VALUE "OriginalFilename", "DShowPlugin.dll"
             VALUE "ProductName", "Open Broadcaster Software DirectShow Plugin"
-            VALUE "ProductVersion", "0.5.5.3"
+            VALUE "ProductVersion", "0.5.5.4"
         END
     END
     BLOCK "VarFileInfo"
