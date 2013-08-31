@@ -1,4 +1,4 @@
-﻿Add="Aggiungi"
+Add="Aggiungi"
 Preview="Anteprima"
 Order="Ordina"
 Apply="Applica"
@@ -213,6 +213,7 @@ Settings.Publish.Username="Username (se necessario):"
 Settings.Publish.Mode.FileOnly="Solo su file"
 Settings.Publish.Mode.LiveStream="Live Stream"
 
+
 Settings.Video.Custom="Personalizzata:"
 Settings.Video.Device="Adattatore video:"
 Settings.Video.DisableAero="Disattiva Aero:"
@@ -335,3 +336,5 @@ Plugins.NoiseGate.CloseThreshold="Soglia di\nchiusura"
 Plugins.NoiseGate.AttackTime="Tempo di avvio (millisecondi):"
 Plugins.NoiseGate.HoldTime="Tempo di attesa (millisecondi):"
 Plugins.NoiseGate.ReleaseTime="Tempo di rilascio (millisecondi):"
+
+
