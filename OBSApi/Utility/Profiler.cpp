@@ -105,7 +105,7 @@ struct BASE_EXPORT ProfileNodeInfo
 
         CTSTR lpIndent = indent == 0 ? TEXT("") : indentStr.Array();
 
-        int perFrameCalls = numCalls/rootCallCount;
+        int perFrameCalls = (int)floor(numCalls/(double)rootCallCount+0.5);
 
         float fTimeTaken = (float)MicroToMS(avgTimeElapsed);
         float cpuTime = (float)MicroToMS(avgCpuTime);
