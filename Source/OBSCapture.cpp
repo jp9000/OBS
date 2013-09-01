@@ -455,8 +455,11 @@ retryHookTestV2:
                 SYSTEMTIME st;
                 GetLocalTime(&st);
 
-                String strDirectory = GetPathDirectory(strOutputFile);
-                strOutputFile = FormattedString(TEXT("%s/%u-%02u-%02u-%02u%02u-%02u.mp4"), strDirectory.Array(), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+                String strDirectory = GetPathDirectory(strOutputFile),
+                       extension = GetPathExtension(strOutputFile);
+                if(extension.IsEmpty())
+                    extension = TEXT("mp4");
+                strOutputFile = FormattedString(TEXT("%s/%u-%02u-%02u-%02u%02u-%02u.%s"), strDirectory.Array(), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, extension.Array());
             }
         }
     }
