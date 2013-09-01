@@ -405,7 +405,7 @@ retryHookTestV2:
     int quality    = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Quality"),    8);
     String preset  = AppConfig->GetString(TEXT("Video Encoding"), TEXT("Preset"),     TEXT("veryfast"));
     bUsing444      = false;//AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Use444"),     0) != 0;
-    bUseCFR        = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCFR"), 0) != 0;
+    bUseCFR        = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCFR"), 1) != 0;
 
     //-------------------------------------------------------------
 

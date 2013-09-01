@@ -170,7 +170,7 @@ void SettingsAdvanced::SetDefaults()
     SendMessage(GetDlgItem(hwnd, IDC_PRIORITY), CB_SETCURSEL, 2, 0);
     SendMessage(GetDlgItem(hwnd, IDC_PRESET), CB_SETCURSEL, 2, 0);
     SendMessage(GetDlgItem(hwnd, IDC_KEYFRAMEINTERVAL), UDM_SETPOS32, 0, 0);
-    SendMessage(GetDlgItem(hwnd, IDC_USECFR), BM_SETCHECK, BST_UNCHECKED, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_USECFR), BM_SETCHECK, BST_UNCHECKED, 1);
     SendMessage(GetDlgItem(hwnd, IDC_USEVIDEOENCODERSETTINGS), BM_SETCHECK, BST_UNCHECKED, 0);
     EnableWindow(GetDlgItem(hwnd, IDC_VIDEOENCODERSETTINGS), FALSE);
     SendMessage(GetDlgItem(hwnd, IDC_UNLOCKHIGHFPS), BM_SETCHECK, BST_UNCHECKED, 0);
@@ -266,7 +266,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 //------------------------------------
 
-                bool bUseCFR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCFR"), 0) != 0;
+                bool bUseCFR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCFR"), 1) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_USECFR), BM_SETCHECK, bUseCFR ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 //------------------------------------
