@@ -546,8 +546,6 @@ void OBS::MainCaptureLoop()
 
         bool bRenderView = !IsIconic(hwndMain) && bRenderViewEnabled;
 
-        profileIn("frame");
-
         QWORD renderStartTimeMS = renderStartTime/1000000;
 
         QWORD curStreamTime = latestVideoTimeNS;
@@ -560,6 +558,8 @@ void OBS::MainCaptureLoop()
         double fSeconds = double(frameDelta)*0.000000001;
         //lastStreamTime = renderStartTime;
         lastStreamTime = curStreamTime;
+
+        profileIn("frame");
 
         //Log(TEXT("Stream Time: %llu"), curStreamTime);
         //Log(TEXT("frameDelta: %lf"), fSeconds);
@@ -1067,7 +1067,7 @@ void OBS::MainCaptureLoop()
 
         QWORD renderStopTime = GetQPCTimeNS();
 
-        if(bWasLaggedFrame = (frameLengthNS <= (renderStopTime-renderStartTime)))
+        if(bWasLaggedFrame = (frameDelta > frameLengthNS))
         {
             numLongFrames++;
             if(bLogLongFramesProfile && (numLongFrames/float(max(1, numTotalFrames)) * 100.) > logLongFramesProfilePercentage)
