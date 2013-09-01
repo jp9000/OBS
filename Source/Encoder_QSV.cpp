@@ -861,7 +861,7 @@ public:
 
     bool Encode(LPVOID picInPtr, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp)
     {
-        profileIn("ProcessEncodedFrame");
+        //profileIn("ProcessEncodedFrame");
         mfxU32 wait = 0;
         bool bMessageLogged = false;
         do
@@ -886,7 +886,7 @@ public:
             wait = INFINITE;
         }
         while(!idle_tasks.Num());
-        profileOut;
+        //profileOut;
 
         if(picInPtr)
         {
@@ -894,7 +894,7 @@ public:
             QueueEncodeTask(pic);
         }
 
-        profileIn("EncodeFrameAsync");
+        //profileIn("EncodeFrameAsync");
 
         while(picInPtr && queued_tasks.Num())
         {
@@ -933,7 +933,7 @@ public:
             idle_tasks.Remove(0);
         }
 
-        profileOut;
+        //profileOut;
 
         return true;
     }
