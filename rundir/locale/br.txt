@@ -313,6 +313,7 @@ Sources.TextSource.UseTextExtents="Usar extensões de texto feito"
 Sources.TextSource.UseTextFromFile="Usar texto de um arquivo"
 Sources.TextSource.VerticalScript="Vertical"
 Sources.TextSource.Wrap="Enrolar"
+Sources.TextSource.Scroll="Modo de rolagem"
 
 Sources.TransitionSource.Bitmaps="Imagens:"
 Sources.TransitionSource.Empty="Não existem imagens de entrada para exibir."
