@@ -26,6 +26,8 @@ extern "C"
 #include "../x264/x264.h"
 }
 
+#include <memory>
+
 
 void Convert444to420(LPBYTE input, int width, int pitch, int height, int startY, int endY, LPBYTE *output);
 void Convert444toNV12(LPBYTE input, int width, int inPitch, int outPitch, int height, int startY, int endY, LPBYTE *output);
@@ -444,6 +446,8 @@ void OBS::MainCaptureLoop()
     int currentBitRate = defaultBitRate;
     QWORD lastAdjustmentTime = 0;
     UINT adjustmentStreamId = 0;
+
+    std::unique_ptr<ProfilerNode> encodeThreadProfiler;
 
     //----------------------------------------
     // time/timestamp stuff
@@ -940,7 +944,11 @@ void OBS::MainCaptureLoop()
                     }
 
                     if(bEncode)
+                    {
+                        encodeThreadProfiler.reset(::new ProfilerNode(TEXT("EncodeThread"), true));
+                        encodeThreadProfiler->MonitorThread(hEncodeThread);
                         curFramePic = &picOut;
+                    }
 
                     curOutBuffer = nextOutBuffer;
                 }
@@ -1078,6 +1086,8 @@ void OBS::MainCaptureLoop()
 
         numTotalFrames++;
     }
+
+    encodeThreadProfiler.reset();
 
     if(!bUsing444)
     {
