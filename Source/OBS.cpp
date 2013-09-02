@@ -587,7 +587,7 @@ OBS::OBS()
 #endif
 
     // TODO: Should these be stored in the config file?
-    bRenderViewEnabled = true;
+    bRenderViewEnabled = GlobalConfig->GetInt(TEXT("General"), TEXT("PreviewEnabled"), 1) != 0;
     bForceRenderViewErase = false;
     renderFrameIn1To1Mode = false;
 
@@ -707,6 +707,9 @@ OBS::~OBS()
     // Save control panel visibility
     GlobalConfig->SetInt(TEXT("General"), TEXT("PanelVisibleWindowed"), bPanelVisibleWindowed ? 1 : 0);
     GlobalConfig->SetInt(TEXT("General"), TEXT("PanelVisibleFullscreen"), bPanelVisibleFullscreen ? 1 : 0);
+
+    // Save preview enabled/disabled state
+    GlobalConfig->SetInt(TEXT("General"), TEXT("PreviewEnabled"), bRenderViewEnabled ? 1 : 0);
 
     scenesConfig.Close(true);
 
