@@ -1017,6 +1017,11 @@ void DeviceSource::EndScene()
 
 void DeviceSource::GlobalSourceLeaveScene()
 {
+    if (!enteredSceneCount)
+        return;
+    if (!--enteredSceneCount)
+        return;
+
     if(soundOutputType == 1) {
         audioOut->SetVolume(0.0f);
     }
@@ -1035,6 +1040,9 @@ void DeviceSource::GlobalSourceLeaveScene()
 
 void DeviceSource::GlobalSourceEnterScene()
 {
+    if (enteredSceneCount++)
+        return;
+
     float sourceVolume = data->GetFloat(TEXT("volume"), 1.0f);
 
     if(soundOutputType == 1) {

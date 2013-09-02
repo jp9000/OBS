@@ -34,20 +34,24 @@ void SceneItem::SetRender(bool render)
 {
     element->SetInt(TEXT("render"), (int)((render)?1:0));
     bRender = render;
+    CTSTR lpClass = element->GetString(TEXT("class"));
 
     if (bRender) {
-        CTSTR lpClass = element->GetString(TEXT("class"));
-
         if (!lpClass) {
             AppWarning(TEXT("No class for source '%s' in scene '%s'"), element->GetName(), API->GetSceneElement()->GetName());
         } else {
-            source = API->CreateImageSource(lpClass, element->GetElement(TEXT("data")));
+            XElement *data = element->GetElement(TEXT("data"));
+            source = API->CreateImageSource(lpClass, data);
             if(!source) {
                 AppWarning(TEXT("Could not create image source '%s' in scene '%s'"), element->GetName(), API->GetSceneElement()->GetName());
             } else {
                 API->EnterSceneMutex();
-                if (parent && parent->bSceneStarted)
+                if (parent && parent->bSceneStarted) {
                     source->BeginScene();
+
+                    if(scmp(lpClass, L"GlobalSource") == 0)
+                        source->GlobalSourceEnterScene();
+                }
                 API->LeaveSceneMutex();
             }
         }
@@ -57,6 +61,9 @@ void SceneItem::SetRender(bool render)
 
             ImageSource *src = source;
             source = NULL;
+
+            if(scmp(lpClass, L"GlobalSource") == 0)
+                src->GlobalSourceLeaveScene();
 
             if (parent && parent->bSceneStarted)
                 src->EndScene();
