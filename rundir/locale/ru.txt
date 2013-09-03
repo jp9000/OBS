@@ -61,7 +61,7 @@ Listbox.FitToScreen="По размеру экрана"
 Listbox.Positioning="Позиция/Размер"
 Listbox.ResetSize="Сбросить размер"
 Listbox.SetHotkey="Выбрать клавишу"
-ListBox.ResetCrop="Сброс обрезки"
+ListBox.ResetCrop="Сбросить кадрирование"
 
 MainMenu.File="&Файл"
 MainMenu.Help="П&омощь"

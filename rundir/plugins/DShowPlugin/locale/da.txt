@@ -3,6 +3,8 @@ ClassName="Video Optageenhed"
 DeviceSelection="Enhedsvalg"
 OK="OK"
 
+DeinterlacingType.None="Ingen"
+DeinterlacingType.Debug="Debug"
 
 
 DeviceSelection.Blend="Bland (1-1000):"

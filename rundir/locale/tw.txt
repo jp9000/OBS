@@ -18,6 +18,7 @@ Gamma="Gamma："
 GlobalSources="全域來源..."
 IncompatibleModules="偵測到不相容的 hook 模組。請確定 OBS 已新增到任何 overlay 或擷取程式的忽略清單中，如：DXTory、FRAPS、ASUS/MSI OSD 等。\r\n\r\n設定好忽略清單或關閉上述程式後，你需要重新啟動 OBS 以使設定生效。\r\n\r\n你也可以忽略這個警告，但可能會造成 OBS 無預警崩潰。"
 MicrophoneFailure="初始化麥克風音訊時出現錯誤：可能沒有插入麥克風，或其他應用程式在獨佔模式下使用麥克風。"
+MonitorNum="螢幕 $1"
 MoveDown="往下移一層"
 MoveToBottom="移到最下層"
 MoveToTop="移到最上層"
@@ -70,6 +71,7 @@ MainMenu.Settings="設定(&S)"
 
 MainMenu.Settings.AlwaysOnTop="總是在最上層(&A)"
 MainMenu.Settings.FullscreenMode="全螢幕預覽模式(&F)"
+MainMenu.Settings.Projector="投影至(&P)"
 
 MainMenu.File.Exit="退出(&X)"
 MainMenu.File.Save="儲存(&S)"
@@ -186,6 +188,7 @@ Settings.Encoding.Video.QualityTooltip="此設定會依據您的位元速率和�
 
 Settings.General.Add="新增"
 Settings.General.ConfirmDelete="確定要移除這個設定檔 '$1'？"
+Settings.General.EnableProjectorCursor="在投影螢幕上顯示游標"
 Settings.General.InvalidName="設定檔名稱不能包含以下字元：\r\n\\ / : * ? \" < > |"
 Settings.General.Language="語言："
 Settings.General.Profile="設定檔："

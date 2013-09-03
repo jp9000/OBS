@@ -18,6 +18,7 @@ Gamma="Gamma:"
 GlobalSources="Yleiset lähteet"
 IncompatibleModules="Yhteensopimattomia moduuleita havaittu. Varmista että olet piilottanut OBSin Frapsin, DXToryn tai muun ohjelmiston häiritsemästä.\r\n\r\nSinun saattaa täytyä uudelleenkäynnistää Open Broadcaster ja muut vastaavanlaiset sovellukset."
 MicrophoneFailure="Mikrofonin käyttöönotossa tapahtui virhe - Varmista että mikrofoni on vielä kytkettynä, eikä mikään muu ohjelmisto käytä sitä yksityisesti."
+MonitorNum="Monitori $1"
 MoveDown="Siirrä alas"
 MoveToBottom="Siirrä alimmaksi"
 MoveToTop="Siirrä ylimmäksi"
@@ -70,6 +71,7 @@ MainMenu.Settings="&Asetukset"
 
 MainMenu.Settings.AlwaysOnTop="&Aina päällimmäisenä"
 MainMenu.Settings.FullscreenMode="&Kokoruudun esikatselutila"
+MainMenu.Settings.Projector="&Projektori"
 
 MainMenu.File.Exit="&Sulje"
 MainMenu.File.Save="&Tallenna"
@@ -186,6 +188,7 @@ Settings.Encoding.Video.QualityTooltip="Tämä asetus yrittää tavoitetta tiett
 
 Settings.General.Add="Lisää uusi"
 Settings.General.ConfirmDelete="Haluatko varmasti poistaa '$1'-profiilin?"
+Settings.General.EnableProjectorCursor="Salli kursori projektorin yllä"
 Settings.General.InvalidName="Profiilien nimet eivät voi sisältää seuraavia merkkejä:\r\n\\ / : * ? \" < > |"
 Settings.General.Language="Kieli:"
 Settings.General.Profile="Asetusprofiili:"

@@ -18,6 +18,7 @@ Gamma="Gamma:"
 GlobalSources="Globala källor..."
 IncompatibleModules="Inkompatibla hook-moduler upptäcktes i OBS-processen. Vänligen försäkra dig om att OBS är tillagd i ignore-listan i captureprogram såsom DXTory, FRAPS, etc.\r\n\r\nDet är möjligt att du kan behöva starta om OBS och relaterade hook-baserade captureprogram för att ändringarna ska träda i kraft när du väl bekräftat dina nya inställningar."
 MicrophoneFailure="Ett fel uppstod när mikrofonljudet skulle initialiseras. Mikrofonen kan vara urkopplad, eller så använder ett annat program den i exklusivt läge."
+MonitorNum="Bildskärm $1"
 MoveDown="Flytta ned"
 MoveToBottom="Flytta längst ned"
 MoveToTop="Flytta längst upp"
@@ -70,6 +71,7 @@ MainMenu.Settings="&Inställningar"
 
 MainMenu.Settings.AlwaysOnTop="&Alltid längst fram"
 MainMenu.Settings.FullscreenMode="&Fullskärm-förvisningsläge"
+MainMenu.Settings.Projector="&Projektorskärm"
 
 MainMenu.File.Exit="&Avsluta"
 MainMenu.File.Save="&Spara"
@@ -186,6 +188,7 @@ Settings.Encoding.Video.QualityTooltip="Denna inställning försöker att hålla
 
 Settings.General.Add="Lägg till ny"
 Settings.General.ConfirmDelete="Vill du verkligen ta bort profilen '$1'?"
+Settings.General.EnableProjectorCursor="Visa muspekare över projektorbild"
 Settings.General.InvalidName="Profilnamn kan inte innehålla följande tecken:\r\n\\ / : * ? \" < > |"
 Settings.General.Language="Språk:"
 Settings.General.Profile="Inställningsprofil:"

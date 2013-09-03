@@ -18,6 +18,7 @@ Gamma="Gamma:"
 GlobalSources="Sorgenti Globali..."
 IncompatibleModules="Sono state riscontrate chiamate incompatibili nel processo OBS. Assicurati che OBS sia presente nella lista esclusioni di programmi di sovrapposizione immagini o cattura video come DXTory, FRAPS, ASUS/MSI OSD, etc.\r\nDopo aver chiuso o cambiato le impostazioni di tali programmi, dovrai chiudere e riaprire OBS per rendere attivi i cambiamenti.\r\n\r\nPuoi ignorare questo avviso e continuare comunque con il rischio che OBS chiuda inaspettatamente."
 MicrophoneFailure="Riscontrato un errore durante l'inizializzazione del microfono audio - potrebbe non essere correttamente collegato, oppure potrebbe essere in uso esclusivo da parte di un'altra applicazione."
+MonitorNum="Monitor $1"
 MoveDown="Sposta sotto"
 MoveToBottom="Sposta in fondo"
 MoveToTop="Sposta in primo piano"
@@ -70,6 +71,7 @@ MainMenu.Settings="&Impostazioni"
 
 MainMenu.Settings.AlwaysOnTop="Sempre in primo piano"
 MainMenu.Settings.FullscreenMode="Modalità &Anteprima a schermo intero"
+MainMenu.Settings.Projector="&Proiettore"
 
 MainMenu.File.Exit="&Esci"
 MainMenu.File.Save="&Salva"
@@ -186,6 +188,7 @@ Settings.Encoding.Video.QualityTooltip="Questa impostazione cercherà di mirare 
 
 Settings.General.Add="Aggiungi Nuovo"
 Settings.General.ConfirmDelete="Sei sicuro di voler eliminare il profilo '$1'?"
+Settings.General.EnableProjectorCursor="Abilitare il cursore su proiettore"
 Settings.General.InvalidName="Il nome del profilo non può contenere i seguenti caratteri:\r\n\\ / : * ? \" < > |"
 Settings.General.Language="Lingua:"
 Settings.General.Profile="Configurazione Profilo:"

@@ -18,6 +18,7 @@ Gamma="ガンマ補正:"
 GlobalSources="グローバルソース"
 IncompatibleModules="互換性のないモジュールがOBSプロセスで見つかりました。\r\n\r\nDXTory、FRAPS、ASUS/MSI OSDなどのキャプチャプログラムの除外リストにOBSが追加されているかを確認してください。\r\n\r\n除外設定の変更後に、OBSを再起動してください。\r\n\r\nOBSがクラッシュする危険性がありますがこの警告を無視して続行することもできます。"
 MicrophoneFailure="マイクの初期化エラーが発生しました。マイクが接続されていないか、他のプログラムが排他的にマイクを使用している可能性があります。"
+MonitorNum="$1 をモニターします。"
 MoveDown="下に移動"
 MoveToBottom="最下部に移動"
 MoveToTop="最上部に移動"
@@ -70,6 +71,7 @@ MainMenu.Settings="設定(&S)"
 
 MainMenu.Settings.AlwaysOnTop="常に手前に表示"
 MainMenu.Settings.FullscreenMode="全画面プレビュー"
+MainMenu.Settings.Projector="& プロジェクター"
 
 MainMenu.File.Exit="終了(&X)"
 MainMenu.File.Save="保存(&S)"
@@ -186,6 +188,7 @@ Settings.Encoding.Video.QualityTooltip="この設定は、指定したビット�
 
 Settings.General.Add="追加"
 Settings.General.ConfirmDelete="'$1'を削除してよろしいですか？"
+Settings.General.EnableProjectorCursor="プロジェクター上のカーソルを有効にします。"
 Settings.General.InvalidName="プロファイル名には次の文字は使用出来ません:\r\n\\ / : * ? \" < > |"
 Settings.General.Language="言語:"
 Settings.General.Profile="設定プロファイル:"

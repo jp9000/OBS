@@ -18,6 +18,7 @@ Gamma="Gamma:"
 GlobalSources="Fuentes globales"
 IncompatibleModules="Se encontraron módulos acoplados incompatibles con OBS. Por favor asegúrese que OBS está agregado a la lista de programas ignorados en aplicaciones como DXTORY, FRAPS, etc.\r\n\r\nLuego de cambiar la configuración de programas ignorados, reinicie OBS y dichos programas para que los cambios surtan efecto."
 MicrophoneFailure="Error al iniciar el micrófono - puede no encontrarse conectado o alguna aplicación podría estar usándolo de modo exclusivo."
+MonitorNum="Monitor $1"
 MoveDown="Abajo"
 MoveToBottom="Al fondo"
 MoveToTop="Al frente"
@@ -70,6 +71,7 @@ MainMenu.Settings="&Configuración"
 
 MainMenu.Settings.AlwaysOnTop="&Siempre en primer plano"
 MainMenu.Settings.FullscreenMode="&Preview pantalla completa"
+MainMenu.Settings.Projector="&Proyector"
 
 MainMenu.File.Exit="&Salir"
 MainMenu.File.Save="&Guardar"
@@ -186,6 +188,7 @@ Settings.Encoding.Video.QualityTooltip="Este valor intentará llegar a determina
 
 Settings.General.Add="Agregar nuevo"
 Settings.General.ConfirmDelete="Está seguro de eliminar el perfil '$1'?"
+Settings.General.EnableProjectorCursor="Habilitar puntero sobre proyector"
 Settings.General.InvalidName="Los nombres de perfil no pueden contener los siguientes caracteres:\r\n\\ / : * ? \" < > |"
 Settings.General.Language="Idioma:"
 Settings.General.Profile="Perfil de configuración:"

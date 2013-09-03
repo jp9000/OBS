@@ -18,6 +18,7 @@ Gamma="Gamma:"
 GlobalSources="Globale Quellen"
 IncompatibleModules="Inkompatibler Einschub im OBS-Prozess gefunden. Bitte stellen Sie sicher, dass OBS in den Ingnorierlisten von Aufnahmeprogrammen wie DXTory, FRAPS, ASUS/MSI OSD, etc. steht.\r\n\r\nWenn Sie die Ignorierlisten angepasst haben beziehungsweise die Programme geschlossen haben, müssen Sie eventuell OBS sowie alle Aufnahmeprogramme die Einschubmethoden benutzen, neustarten, damit die Änderungen wirksam werden."
 MicrophoneFailure="Es ist ein Fehler beim initialisieren des Mikrofons aufgetreten. Es ist eventuell nicht eingesteckt oder wird von einer anderen Anwendung exklusiv genutzt."
+MonitorNum="Monitor $1"
 MoveDown="Nach unten bewegen"
 MoveToBottom="Ganz nach unten bewegen"
 MoveToTop="Ganz nach oben bewegen"
@@ -70,6 +71,7 @@ MainMenu.Settings="&Einstellungen"
 
 MainMenu.Settings.AlwaysOnTop="Immer im &Vordergrund"
 MainMenu.Settings.FullscreenMode="&Vollbild Vorschau"
+MainMenu.Settings.Projector="&Projektor"
 
 MainMenu.File.Exit="&Beenden"
 MainMenu.File.Save="&Speichern"
@@ -186,6 +188,7 @@ Settings.Encoding.Video.QualityTooltip="Diese Einstellung versucht eine bestimmt
 
 Settings.General.Add="Hinzufügen"
 Settings.General.ConfirmDelete="Sind Sie sicher, dass Sie das Profil '$1' löschen möchten?"
+Settings.General.EnableProjectorCursor="Mauszeiger über Projektor anzeigen"
 Settings.General.InvalidName="Profilnamen dürfen folgende Zeichen nicht enthalten:\r\n\\ / : * ? \" < > |"
 Settings.General.Language="Sprache:"
 Settings.General.Profile="Einstellungsprofil:"

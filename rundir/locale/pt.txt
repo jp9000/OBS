@@ -18,6 +18,7 @@ Gamma="Gama:"
 GlobalSources="Fontes globais..."
 IncompatibleModules="Módulos de captura incompatíveis foram detectados no OBS. Por favor assegure-se que o OBS está adicionado na lista de programas ignorados em programas tais como DXTory, Fraps, ASUS/MSI OSD, etc. Após alterar a lista de programas ignorados ou fechá-los, poderá ter de reiniciar o OBS para as alteraçõe surtirem efeito.\r\n\r\nPoderá ignorar este aviso e continuar apesar de haver risco de o OBS encravar."
 MicrophoneFailure="Ocorreu um erro iniciando o áudio do microfone - este pode não estar conectado, ou outro aplicativo pode estar a usá-lo em modo exclusivo."
+MonitorNum="Monitor $1"
 MoveDown="Mover para baixo"
 MoveToBottom="Mover para o fundo"
 MoveToTop="Mover para o topo"
@@ -70,6 +71,7 @@ MainMenu.Settings="&Definições"
 
 MainMenu.Settings.AlwaysOnTop="&Sempre em cima"
 MainMenu.Settings.FullscreenMode="& Modo de visualização de tela cheia"
+MainMenu.Settings.Projector="&Projetor"
 
 MainMenu.File.Exit="Sair"
 MainMenu.File.Save="&Guardar"
@@ -186,6 +188,7 @@ Settings.Encoding.Video.QualityTooltip="Essa configuração tentará uma certa q
 
 Settings.General.Add="Adicionar novo"
 Settings.General.ConfirmDelete="Tem a certeza que deseja remover o perfil '$1'?"
+Settings.General.EnableProjectorCursor="Habilitar Cursor sobre o projetor"
 Settings.General.InvalidName="Nomes de perfis não podem usar os seguintes caracteres: \r\n\\ /: *? \" < > |"
 Settings.General.Language="Idioma:"
 Settings.General.Profile="Definições de Perfil:"
