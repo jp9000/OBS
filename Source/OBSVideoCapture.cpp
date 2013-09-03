@@ -1135,6 +1135,8 @@ void OBS::MainCaptureLoop()
         numTotalFrames++;
     }
 
+    DisableProjector();
+
     //encodeThreadProfiler.reset();
 
     if(!bUsing444)
