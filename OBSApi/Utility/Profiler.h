@@ -39,7 +39,7 @@ public:
     void MonitorThread(HANDLE thread);
 };
 
-BASE_EXPORT extern ProfilerNode *__curProfilerNode;
+//BASE_EXPORT extern ProfilerNode *__curProfilerNode;
 BASE_EXPORT extern BOOL bProfilingEnabled;
 
 #define ENABLE_PROFILING 1
