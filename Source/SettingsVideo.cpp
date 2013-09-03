@@ -351,7 +351,7 @@ INT_PTR SettingsVideo::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 int topFPS = bUnlockFPS ? 120 : 60;
 
                 hwndTemp = GetDlgItem(hwnd, IDC_FPS);
-                SendMessage(hwndTemp, UDM_SETRANGE32, 10, topFPS);
+                SendMessage(hwndTemp, UDM_SETRANGE32, 1, topFPS);
 
                 int fps = AppConfig->GetInt(TEXT("Video"), TEXT("FPS"), 30);
                 if(!AppConfig->HasKey(TEXT("Video"), TEXT("FPS")))
