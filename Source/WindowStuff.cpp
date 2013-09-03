@@ -3995,9 +3995,13 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                     String strMonitor = Str("MonitorNum");
                     strMonitor.FindReplace(L"$1", UIntString(i+1));
 
+                    const MonitorInfo &mi = App->GetMonitor(i);
+
+                    bool grayed = mi.hMonitor == MonitorFromWindow(hwndMain, MONITOR_DEFAULTTONULL);
+
                     bool enabled = App->bProjector && App->projectorMonitorID == i;
 
-                    AppendMenu(hProjector, MF_STRING | (enabled ? MF_CHECKED : 0),
+                    AppendMenu(hProjector, MF_STRING | (enabled ? MF_CHECKED : 0) | (grayed ? MF_GRAYED : 0),
                             ID_PROJECTOR+i+1, strMonitor);
                 }
 
