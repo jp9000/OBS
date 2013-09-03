@@ -272,6 +272,7 @@
 #define IDC_MICSYNCFIX                  1160
 #define IDC_CHECK3                      1161
 #define IDC_SCROLLMODE                  1161
+#define IDC_ENABLEPROJECTORCURSOR       1161
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -303,9 +304,13 @@
 #define ID_MAINMENU_MAINMENU40048       40049
 #define ID_FILE_SAVE2                   40050
 #define IDA_SOURCE_LEFT_CANVAS          40051
+#define ID_MAINMENU_NOTHINGHERE40051    40051
 #define IDA_SOURCE_TOP_CANVAS           40052
+#define ID_MAINMENU_MAINMENU40052       40052
 #define IDA_SOURCE_RIGHT_CANVAS         40053
+#define ID_MAINMENU_MAINMENU40053       40053
 #define IDA_SOURCE_BOTTOM_CANVAS        40054
+#define ID_SETTINGS_DISABLEPROJECTOR    40054
 #define IDA_SOURCE_CENTER_VER           40055
 #define IDA_SOURCE_CENTER_HOR           40056
 #define IDA_SOURCE_RESETCROP            40057
@@ -315,7 +320,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        145
-#define _APS_NEXT_COMMAND_VALUE         40051
+#define _APS_NEXT_COMMAND_VALUE         40055
 #define _APS_NEXT_CONTROL_VALUE         1162
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

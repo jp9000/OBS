@@ -90,6 +90,8 @@ void SettingsGeneral::ApplySettings()
 
     bool bMinimizeToNotificationArea = SendMessage(GetDlgItem(hwnd, IDC_MINIZENOTIFICATION), BM_GETCHECK, 0, 0) == BST_CHECKED;
     AppConfig->SetInt(TEXT("General"), TEXT("MinimizeToNotificationArea"), bMinimizeToNotificationArea);
+
+    GlobalConfig->SetInt(L"General", L"EnableProjectorCursor", App->bEnableProjectorCursor);
 }
 
 void SettingsGeneral::CancelSettings()
@@ -166,6 +168,12 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 bool bMinimizeToNotificationArea = AppConfig->GetInt(TEXT("General"), TEXT("MinimizeToNotificationArea"), 0) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_MINIZENOTIFICATION), BM_SETCHECK, bMinimizeToNotificationArea ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                //----------------------------------------------
+
+                App->bEnableProjectorCursor = GlobalConfig->GetInt(L"General", L"EnableProjectorCursor", 1) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_ENABLEPROJECTORCURSOR), BM_SETCHECK,
+                        App->bEnableProjectorCursor ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 //----------------------------------------------
 
@@ -364,6 +372,10 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                         SendMessage(GetDlgItem(hwnd, IDC_NOTIFICATIONICON), BM_SETCHECK, BST_CHECKED, 0);
                     }
                     SetChangedSettings(true);
+                    break;
+
+                case IDC_ENABLEPROJECTORCURSOR:
+                    App->bEnableProjectorCursor = (SendMessage(GetDlgItem(hwnd, IDC_ENABLEPROJECTORCURSOR), BM_GETCHECK, 0, 0) == BST_CHECKED);
                     break;
             }
 

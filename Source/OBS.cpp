@@ -1687,7 +1687,7 @@ void OBS::EnableProjector(UINT monitorID)
         L"OBS Projector Window",
         WS_VISIBLE|WS_POPUP, mi.rect.left, mi.rect.top,
         projectorWidth, projectorHeight,
-        hwndMain, NULL, hinstMain, NULL);
+        NULL, NULL, hinstMain, NULL);
 
     DXGI_SWAP_CHAIN_DESC swapDesc;
     zero(&swapDesc, sizeof(swapDesc));

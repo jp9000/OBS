@@ -596,6 +596,7 @@ private:
     bool    bChangingSources;
     bool    bAlwaysOnTop;
     bool    bProjector;
+    bool    bEnableProjectorCursor;
     UINT    projectorWidth, projectorHeight;
     UINT    projectorMonitorID;
     HWND    hwndProjector;

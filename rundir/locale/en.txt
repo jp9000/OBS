@@ -18,6 +18,7 @@ Gamma="Gamma:"
 GlobalSources="Global Sources..."
 IncompatibleModules="Incompatible hook modules were detected in the OBS process. Please make sure OBS is added to the ignore list of any overlay or capture programs such as DXTory, FRAPS, ASUS/MSI OSD, etc. After changing ignore settings or closing such programs, you may need to restart OBS for changes to take effect.\r\n\r\nYou may ignore this warning and continue anyway at the risk of possible OBS crashes."
 MicrophoneFailure="An error occurred initializing microphone audio - it may not be not plugged in, or another application could be using it in exclusive mode."
+MonitorNum="Monitor $1"
 MoveDown="Move Down"
 MoveToBottom="Move to Bottom"
 MoveToTop="Move to Top"
@@ -70,6 +71,7 @@ MainMenu.Settings="&Settings"
 
 MainMenu.Settings.AlwaysOnTop="&Always On Top"
 MainMenu.Settings.FullscreenMode="&Fullscreen Preview Mode"
+MainMenu.Settings.Projector="&Projector"
 
 MainMenu.File.Exit="E&xit"
 MainMenu.File.Save="&Save"
@@ -186,6 +188,7 @@ Settings.Encoding.Video.QualityTooltip="This setting will attempt to target a ce
 
 Settings.General.Add="Add New"
 Settings.General.ConfirmDelete="Are you sure you wish to remove the profile '$1'?"
+Settings.General.EnableProjectorCursor="Enable Cursor over projector"
 Settings.General.InvalidName="Profile names cannot use the following characters:\r\n\\ / : * ? \" < > |"
 Settings.General.Language="Language:"
 Settings.General.Profile="Setting Profile:"

@@ -153,6 +153,8 @@ retryHookTest:
 
     //-------------------------------------------------------------
 
+    bEnableProjectorCursor = GlobalConfig->GetInt(L"General", L"EnableProjectorCursor", 1) != 0;
+
     int monitorID = AppConfig->GetInt(TEXT("Video"), TEXT("Monitor"));
     if(monitorID >= (int)monitors.Num())
         monitorID = 0;
