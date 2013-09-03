@@ -117,7 +117,7 @@ class X264Encoder : public VideoEncoder
     }
 
 public:
-    X264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitrate, int bufferSize, bool bUseCFR)
+    X264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitrate, int bufferSize, bool bUseCFR)
     {
         curPreset = preset;
 
@@ -215,10 +215,10 @@ public:
         paramData.b_vfr_input           = !bUseCFR;
         paramData.i_width               = width;
         paramData.i_height              = height;
-        paramData.vui.b_fullrange       = true;
-        paramData.vui.i_colorprim       = 1;
-        paramData.vui.i_transfer        = 1;
-        paramData.vui.i_colmatrix       = 1;
+        paramData.vui.b_fullrange       = colorDesc.fullRange;
+        paramData.vui.i_colorprim       = colorDesc.primaries;
+        paramData.vui.i_transfer        = colorDesc.transfer;
+        paramData.vui.i_colmatrix       = colorDesc.matrix;
 
         if (keyframeInterval)
             paramData.i_keyint_max          = fps*keyframeInterval;
@@ -262,6 +262,11 @@ public:
 
         if(bUse444) paramData.i_csp = X264_CSP_I444;
         else paramData.i_csp = X264_CSP_I420;
+
+        colorDesc.fullRange = paramData.vui.b_fullrange;
+        colorDesc.primaries = paramData.vui.i_colorprim;
+        colorDesc.transfer  = paramData.vui.i_transfer;
+        colorDesc.matrix    = paramData.vui.i_colmatrix;
 
         if (curProfile)
         {
@@ -569,8 +574,8 @@ public:
 };
 
 
-VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR)
+VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR)
 {
-    return new X264Encoder(fps, width, height, quality, preset, bUse444, maxBitRate, bufferSize, bUseCFR);
+    return new X264Encoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR);
 }
 

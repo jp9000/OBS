@@ -415,6 +415,70 @@ void OBS::DrawPreview(const Vect2 &renderFrameSize, const Vect2 &renderFrameOffs
             renderFrameOffset.x + renderFrameSize.x, renderFrameOffset.y + renderFrameSize.y);
 }
 
+const float yuvFullMat[][16] = {
+    {0.000000f,  1.000000f,  0.000000f,  0.000000f,
+     0.000000f,  0.000000f,  1.000000f,  0.000000f,
+     1.000000f,  0.000000f,  0.000000f,  0.000000f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+
+    {0.250000f,  0.500000f,  0.250000f,  0.000000f,
+    -0.249020f,  0.498039f, -0.249020f,  0.501961f,
+     0.498039f,  0.000000f, -0.498039f,  0.501961f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+
+    {0.262700f,  0.678000f,  0.059300f,  0.000000f,
+    -0.139082f, -0.358957f,  0.498039f,  0.501961f,
+     0.498039f, -0.457983f, -0.040057f,  0.501961f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+
+    {0.212600f,  0.715200f,  0.072200f,  0.000000f,
+    -0.114123f, -0.383916f,  0.498039f,  0.501961f,
+     0.498039f, -0.452372f, -0.045667f,  0.501961f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+
+    {0.212200f,  0.701300f,  0.086500f,  0.000000f,
+    -0.115691f, -0.382348f,  0.498039f,  0.501961f,
+     0.498039f, -0.443355f, -0.054684f,  0.501961f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+
+    {0.299000f,  0.587000f,  0.114000f,  0.000000f,
+    -0.168074f, -0.329965f,  0.498039f,  0.501961f,
+     0.498039f, -0.417046f, -0.080994f,  0.501961f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+};
+
+const float yuvMat[][16] = {
+    {0.000000f,  0.858824f,  0.000000f,  0.062745f,
+     0.000000f,  0.000000f,  0.858824f,  0.062745f,
+     0.858824f,  0.000000f,  0.000000f,  0.062745f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+
+    {0.214706f,  0.429412f,  0.214706f,  0.062745f,
+    -0.219608f,  0.439216f, -0.219608f,  0.501961f,
+     0.439216f,  0.000000f, -0.439216f,  0.501961f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+
+    {0.225613f,  0.582282f,  0.050928f,  0.062745f,
+    -0.122655f, -0.316560f,  0.439216f,  0.501961f,
+     0.439216f, -0.403890f, -0.035325f,  0.501961f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+
+    {0.182586f,  0.614231f,  0.062007f,  0.062745f,
+    -0.100644f, -0.338572f,  0.439216f,  0.501961f,
+     0.439216f, -0.398942f, -0.040274f,  0.501961f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+
+    {0.182242f,  0.602293f,  0.074288f,  0.062745f,
+    -0.102027f, -0.337189f,  0.439216f,  0.501961f,
+     0.439216f, -0.390990f, -0.048226f,  0.501961f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+
+    {0.256788f,  0.504129f,  0.097906f,  0.062745f,
+    -0.148223f, -0.290993f,  0.439216f,  0.501961f,
+     0.439216f, -0.367788f, -0.071427f,  0.501961f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+};
+
 //todo: this function is an abomination, this is just disgusting.  fix it.
 //...seriously, this is really, really horrible.  I mean this is amazingly bad.
 void OBS::MainCaptureLoop()
@@ -432,6 +496,7 @@ void OBS::MainCaptureLoop()
     Vect2 outputSize  = Vect2(float(outputCX), float(outputCY));
     Vect2 scaleSize   = Vect2(float(scaleCX), float(scaleCY));
 
+    HANDLE hMatrix   = yuvScalePixelShader->GetParameterByName(TEXT("yuvMat"));
     HANDLE hScaleVal = yuvScalePixelShader->GetParameterByName(TEXT("baseDimensionI"));
 
     //----------------------------------------
@@ -820,6 +885,27 @@ void OBS::MainCaptureLoop()
 
         Texture *yuvRenderTexture = yuvRenderTextures[curRenderTarget];
         SetRenderTarget(yuvRenderTexture);
+
+        switch(colorDesc.matrix)
+        {
+        case ColorMatrix_GBR:
+            yuvScalePixelShader->SetMatrix(hMatrix, colorDesc.fullRange ? (float*)yuvFullMat[0] : (float*)yuvMat[0]);
+            break;
+        case ColorMatrix_YCgCo:
+            yuvScalePixelShader->SetMatrix(hMatrix, colorDesc.fullRange ? (float*)yuvFullMat[1] : (float*)yuvMat[1]);
+            break;
+        case ColorMatrix_BT2020NCL:
+            yuvScalePixelShader->SetMatrix(hMatrix, colorDesc.fullRange ? (float*)yuvFullMat[2] : (float*)yuvMat[2]);
+            break;
+        case ColorMatrix_BT709:
+            yuvScalePixelShader->SetMatrix(hMatrix, colorDesc.fullRange ? (float*)yuvFullMat[3] : (float*)yuvMat[3]);
+            break;
+        case ColorMatrix_SMPTE240M:
+            yuvScalePixelShader->SetMatrix(hMatrix, colorDesc.fullRange ? (float*)yuvFullMat[4] : (float*)yuvMat[4]);
+            break;
+        default:
+            yuvScalePixelShader->SetMatrix(hMatrix, colorDesc.fullRange ? (float*)yuvFullMat[5] : (float*)yuvMat[5]);
+        }
 
         if(downscale < 2.01)
             yuvScalePixelShader->SetVector2(hScaleVal, 1.0f/baseSize);

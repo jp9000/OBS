@@ -18,6 +18,7 @@
 
 
 uniform Texture2D diffuseTexture;
+uniform float4x4 yuvMat;
 uniform float2 baseDimensionI;
 
 SamplerState textureSampler
@@ -35,11 +36,6 @@ struct VertData
 
 float4 main(VertData input) : SV_Target
 {
-    const float4x4 yuvMat = {0.212600, -0.114123,  0.498039, 0.0,
-                             0.715200, -0.383916, -0.452372, 0.0,
-                             0.072200,  0.498039, -0.045667, 0.0,
-                             0.000000,  0.501961,  0.501961, 1.0};
-
     //a nice quick colorspace conversion
     float4 rgba = diffuseTexture.Sample(textureSampler, input.texCoord);
     float4 yuvx = mul(float4(rgba.rgb, 1.0), yuvMat);

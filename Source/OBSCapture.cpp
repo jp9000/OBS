@@ -21,8 +21,8 @@
 #include <time.h>
 #include <Avrt.h>
 
-VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR);
-VideoEncoder* CreateQSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR);
+VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR);
+VideoEncoder* CreateQSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR);
 AudioEncoder* CreateMP3Encoder(UINT bitRate);
 AudioEncoder* CreateAACEncoder(UINT bitRate);
 
@@ -499,14 +499,19 @@ retryHookTestV2:
 
     //-------------------------------------------------------------
 
+    colorDesc.fullRange = false;
+    colorDesc.primaries = ColorPrimaries_BT709;
+    colorDesc.transfer  = ColorTransfer_IEC6196621;
+    colorDesc.matrix    = outputCX >= 1280 || outputCY > 576 ? ColorMatrix_BT709 : ColorMatrix_SMPTE170M;
+
     videoEncoder = nullptr;
     if (bDisableEncoding)
         videoEncoder = CreateNullVideoEncoder();
     else if(AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0)
-        videoEncoder = CreateQSVEncoder(fps, outputCX, outputCY, quality, preset, bUsing444, maxBitRate, bufferSize, bUseCFR);
+        videoEncoder = CreateQSVEncoder(fps, outputCX, outputCY, quality, preset, bUsing444, colorDesc, maxBitRate, bufferSize, bUseCFR);
 
     if(!videoEncoder)
-        videoEncoder = CreateX264Encoder(fps, outputCX, outputCY, quality, preset, bUsing444, maxBitRate, bufferSize, bUseCFR);
+        videoEncoder = CreateX264Encoder(fps, outputCX, outputCY, quality, preset, bUsing444, colorDesc, maxBitRate, bufferSize, bUseCFR);
 
 
     //-------------------------------------------------------------

@@ -287,7 +287,7 @@ class QSVEncoder : public VideoEncoder
 
 #define ALIGN16(value)                      (((value + 15) >> 4) << 4) // round up to a multiple of 16
 public:
-    QSVEncoder(int fps_, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitrate, int bufferSize, bool bUseCFR_)
+    QSVEncoder(int fps_, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitrate, int bufferSize, bool bUseCFR_)
         : enc(nullptr), bFirstFrameProcessed(false), bFirstFrameQueued(false)
     {
         fps = fps_;
@@ -1039,9 +1039,9 @@ public:
     }
 };
 
-VideoEncoder* CreateQSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR)
+VideoEncoder* CreateQSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR)
 {
     if(CheckQSVHardwareSupport())
-        return new QSVEncoder(fps, width, height, quality, preset, bUse444, maxBitRate, bufferSize, bUseCFR);
+        return new QSVEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR);
     return nullptr;
 }
