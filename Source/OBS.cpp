@@ -1739,10 +1739,11 @@ void OBS::EnableProjector(UINT monitorID)
 {
     const MonitorInfo &mi = GetMonitor(monitorID);
 
-    projectorWidth  = mi.rect.right-mi.rect.left;
-    projectorHeight = mi.rect.bottom-mi.rect.top;
-    projectorX = mi.rect.left;
-    projectorY = mi.rect.top;
+    projectorMonitorID = monitorID;
+    projectorWidth     = mi.rect.right-mi.rect.left;
+    projectorHeight    = mi.rect.bottom-mi.rect.top;
+    projectorX         = mi.rect.left;
+    projectorY         = mi.rect.top;
 
     bPleaseEnableProjector = true;
 }
