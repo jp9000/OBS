@@ -86,8 +86,9 @@ extern TCHAR        lpAppDataPath[MAX_PATH];
 #define OBS_DISABLE_AUTOUPDATE 1
 #endif
 
-#define OBS_WINDOW_CLASS      TEXT("OBSWindowClass")
-#define OBS_RENDERFRAME_CLASS TEXT("RenderFrame")
+#define OBS_WINDOW_CLASS         TEXT("OBSWindowClass")
+#define OBS_RENDERFRAME_CLASS    TEXT("OBSRenderFrame")
+#define OBS_PROJECTORFRAME_CLASS TEXT("OBSProjectorFrame")
 
 inline UINT ConvertMSTo100NanoSec(UINT ms)
 {

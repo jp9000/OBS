@@ -194,6 +194,15 @@ OBS::OBS()
         CrashError(TEXT("Could not register render frame class"));
 
     //-----------------------------------------------------
+    // projector frame class
+    wc.lpszClassName = OBS_PROJECTORFRAME_CLASS;
+    wc.lpfnWndProc = (WNDPROC)OBS::ProjectorFrameProc;
+    wc.hbrBackground = GetSysColorBrush(COLOR_BTNFACE);
+
+    if(!RegisterClass(&wc))
+        CrashError(TEXT("Could not register projector frame class"));
+
+    //-----------------------------------------------------
     // main window class
     wc.lpszClassName = OBS_WINDOW_CLASS;
     wc.lpfnWndProc = (WNDPROC)OBSProc;
@@ -507,6 +516,7 @@ OBS::OBS()
 
     hHotkeyMutex = OSCreateMutex();
     hInfoMutex = OSCreateMutex();
+    projectorMutex = OSCreateMutex();
     hStartupShutdownMutex = OSCreateMutex();
 
     //-----------------------------------------------------
@@ -748,6 +758,8 @@ OBS::~OBS()
         OSCloseMutex(hInfoMutex);
     if(hHotkeyMutex)
         OSCloseMutex(hHotkeyMutex);
+    if (projectorMutex)
+        OSCloseMutex(projectorMutex);
 
     App = NULL;
 }
@@ -1658,4 +1670,89 @@ BOOL OBS::UpdateDashboardButton()
     BOOL bShowDashboardButton = bPanelVisible && bStreamOutput && bDashboardValid;
 
     return ShowWindow(GetDlgItem(hwndMain, ID_DASHBOARD), bShowDashboardButton ? SW_SHOW : SW_HIDE);
+}
+
+void OBS::EnableProjector(UINT monitorID)
+{
+    if (bProjector)
+        DisableProjector();
+
+    D3D10System *sys = static_cast<D3D10System*>(GS);
+    const MonitorInfo &mi = GetMonitor(monitorID);
+
+    projectorWidth  = mi.rect.right-mi.rect.left;
+    projectorHeight = mi.rect.bottom-mi.rect.top;
+
+    hwndProjector = CreateWindow(OBS_PROJECTORFRAME_CLASS,
+        L"OBS Projector Window",
+        WS_VISIBLE|WS_POPUP, mi.rect.left, mi.rect.top,
+        projectorWidth, projectorHeight,
+        hwndMain, NULL, hinstMain, NULL);
+
+    DXGI_SWAP_CHAIN_DESC swapDesc;
+    zero(&swapDesc, sizeof(swapDesc));
+    swapDesc.BufferCount = 2;
+    swapDesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    swapDesc.BufferDesc.Width  = projectorWidth;
+    swapDesc.BufferDesc.Height = projectorHeight;
+    swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapDesc.OutputWindow = hwndProjector;
+    swapDesc.SampleDesc.Count = 1;
+    swapDesc.Windowed = TRUE;
+
+    ID3D10Texture2D *backBuffer = NULL;
+    ID3D10RenderTargetView *target = NULL;
+
+    if (FAILED(sys->factory->CreateSwapChain(sys->d3d, &swapDesc, &projectorSwap))) {
+        AppWarning(L"Could not create projector swap chain");
+        goto exit;
+    }
+
+    if (FAILED(projectorSwap->GetBuffer(0, IID_ID3D10Texture2D, (void**)&backBuffer))) {
+        AppWarning(TEXT("Unable to get projector back buffer"));
+        goto exit;
+    }
+
+    if(FAILED(sys->d3d->CreateRenderTargetView(backBuffer, NULL, &target))) {
+        AppWarning(TEXT("Unable to get render view from projector back buffer"));
+        goto exit;
+    }
+
+    D3D10Texture *tex = new D3D10Texture();
+    tex->width        = projectorWidth;
+    tex->height       = projectorHeight;
+    tex->format       = GS_BGRA;
+    tex->texture      = backBuffer;
+    tex->renderTarget = target;
+
+    projectorTexture = tex;
+    bProjector = true;
+
+exit:
+    if (!bProjector) {
+        SafeRelease(projectorSwap);
+
+        DestroyWindow(hwndProjector);
+        hwndProjector = NULL;
+    }
+}
+
+void OBS::DisableProjector()
+{
+    if (!bProjector)
+        return;
+
+    OSEnterMutex(projectorMutex);
+
+    SafeRelease(projectorSwap);
+
+    delete projectorTexture;
+    projectorTexture = NULL;
+
+    DestroyWindow(hwndProjector);
+    hwndProjector = NULL;
+
+    bProjector = false;
+
+    OSLeaveMutex(projectorMutex);
 }

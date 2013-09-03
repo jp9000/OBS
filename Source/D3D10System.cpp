@@ -143,7 +143,6 @@ D3D10System::D3D10System()
 
     UINT adapterID = GlobalConfig->GetInt(TEXT("Video"), TEXT("Adapter"), 0);
 
-    IDXGIFactory1 *factory;
     if(FAILED(err = CreateDXGIFactory1(iidVal, (void**)&factory)))
         CrashError(TEXT("Could not create DXGI factory"));
 
@@ -160,7 +159,6 @@ D3D10System::D3D10System()
     swapDesc.BufferDesc.Width  = App->renderFrameWidth;
     swapDesc.BufferDesc.Height = App->renderFrameHeight;
     swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapDesc.Flags = 0;
     swapDesc.OutputWindow = hwndRenderFrame;
     swapDesc.SampleDesc.Count = 1;
     swapDesc.Windowed = TRUE;
@@ -198,7 +196,6 @@ D3D10System::D3D10System()
         CrashError(TEXT("Could not initialize DirectX 10 on %s.  This error can happen for one of the following reasons:\r\n\r\n1.) Your GPU is not supported (DirectX 10 is required - note that many integrated laptop GPUs do not support DX10)\r\n2.) You're running Windows Vista without the \"Platform Update\"\r\n3.) Your video card drivers are out of date\r\n\r\nIf you are using a laptop with NVIDIA Optimus or AMD Switchable Graphics, make sure OBS is set to run on the high performance GPU in your driver settings."), adapterName.Array());
 
     adapter->Release();
-    factory->Release();
 
     //------------------------------------------------------------------
 
@@ -287,6 +284,7 @@ D3D10System::~D3D10System()
     SafeRelease(swapRenderView);
     SafeRelease(swap);
     SafeRelease(d3d);
+    SafeRelease(factory);
 }
 
 void D3D10System::UnloadAllData()

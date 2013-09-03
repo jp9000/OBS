@@ -3168,6 +3168,21 @@ bool OBS::EnsureCropValid(SceneItem *&scaleItem, Vect2 &minSize, Vect2 &snapSize
     return true;
 }
 
+LRESULT CALLBACK OBS::ProjectorFrameProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message) {
+    case WM_KEYDOWN:
+        if (wParam == VK_ESCAPE)
+            App->DisableProjector();
+        break;
+
+    default:
+        return DefWindowProc(hwnd, message, wParam, lParam);
+    }
+
+    return 0;
+}
+
 LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);

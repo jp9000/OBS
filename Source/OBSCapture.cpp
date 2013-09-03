@@ -558,6 +558,8 @@ void OBS::Stop()
 
     OSEnterMutex(hStartupShutdownMutex);
 
+    DisableProjector();
+
     //we only want the capture thread to stop first, so we can ensure all packets are flushed
     bShutdownEncodeThread = true;
 
@@ -574,7 +576,6 @@ void OBS::Stop()
     }
 
     bShutdownEncodeThread = false;
-
     bRunning = false;
 
     ReportStopStreamTrigger();

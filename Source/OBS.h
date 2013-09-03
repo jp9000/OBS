@@ -451,6 +451,12 @@ struct VideoSegment
 
 //----------------------------
 
+enum PreviewDrawType {
+    Preview_Standard,
+    Preview_Fullscreen,
+    Preview_Projector
+};
+
 struct FrameProcessInfo;
 
 //todo: this class has become way too big, it's horrible, and I should be ashamed of myself
@@ -470,6 +476,7 @@ class OBS
     //---------------------------------------------------
     // graphics stuff
 
+    IDXGISwapChain  *projectorSwap;
     ID3D10Texture2D *copyTextures[NUM_RENDER_BUFFERS];
     Texture         *mainRenderTextures[NUM_RENDER_BUFFERS];
     Texture         *yuvRenderTextures[NUM_RENDER_BUFFERS];
@@ -586,6 +593,12 @@ private:
     bool    bDisableSceneSwitching;
     bool    bChangingSources;
     bool    bAlwaysOnTop;
+    bool    bProjector;
+    UINT    projectorWidth, projectorHeight;
+    UINT    projectorMonitorID;
+    HWND    hwndProjector;
+    HANDLE  projectorMutex;
+    Texture *projectorTexture;
     bool    bFullscreenMode;
     bool    bEditMode;
     bool    bRenderViewEnabled;
@@ -665,6 +678,8 @@ private:
     bool ProcessFrame(FrameProcessInfo &frameInfo);
     void EncodeLoop();  
     void MainCaptureLoop();
+
+    void DrawPreview(const Vect2 &renderFrameSize, const Vect2 &renderFrameOffset, const Vect2 &renderFrameCtrlSize, int curRenderTarget, PreviewDrawType type);
 
     //---------------------------------------------------
     // main audio capture loop stuff
@@ -835,6 +850,7 @@ private:
     static INT_PTR CALLBACK ReconnectDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static LRESULT CALLBACK ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static LRESULT CALLBACK RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK ProjectorFrameProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static LRESULT CALLBACK OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
     static INT_PTR CALLBACK SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -842,6 +858,9 @@ private:
     void ResizeRenderFrame(bool bRedrawRenderFrame);
     void UpdateRenderViewMessage();
     void ProcessPanelVisible(bool fromResizeWindow = false);
+
+    void EnableProjector(UINT monitorID);
+    void DisableProjector();
 
     void ToggleCapturing();
 

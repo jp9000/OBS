@@ -339,6 +339,7 @@ class D3D10System : public GraphicsSystem
     friend class D3D10VertexShader;
     friend class D3D10PixelShader;
 
+    IDXGIFactory1           *factory;
     ID3D10Device1           *d3d;
     IDXGISwapChain          *swap;
     ID3D10RenderTargetView  *swapRenderView;

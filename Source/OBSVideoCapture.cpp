@@ -379,6 +379,42 @@ void OBS::EncodeLoop()
     bShutdownVideoThread = true;
 }
 
+void OBS::DrawPreview(const Vect2 &renderFrameSize, const Vect2 &renderFrameOffset, const Vect2 &renderFrameCtrlSize, int curRenderTarget, PreviewDrawType type)
+{
+    LoadVertexShader(mainVertexShader);
+    LoadPixelShader(mainPixelShader);
+
+    Ortho(0.0f, renderFrameCtrlSize.x, renderFrameCtrlSize.y, 0.0f, -100.0f, 100.0f);
+    if(type != Preview_Projector
+       && (renderFrameCtrlSize.x != oldRenderFrameCtrlWidth
+           || renderFrameCtrlSize.y != oldRenderFrameCtrlHeight))
+    {
+        // User is drag resizing the window. We don't recreate the swap chains so our coordinates are wrong
+        SetViewport(0.0f, 0.0f, (float)oldRenderFrameCtrlWidth, (float)oldRenderFrameCtrlHeight);
+    }
+    else
+        SetViewport(0.0f, 0.0f, renderFrameCtrlSize.x, renderFrameCtrlSize.y);
+
+    // Draw background (Black if fullscreen/projector, window colour otherwise)
+    if(type == Preview_Fullscreen || type == Preview_Projector)
+        ClearColorBuffer(0x000000);
+    else
+        ClearColorBuffer(GetSysColor(COLOR_BTNFACE));
+
+    if(bTransitioning)
+    {
+        BlendFunction(GS_BLEND_ONE, GS_BLEND_ZERO);
+        DrawSprite(transitionTexture, 0xFFFFFFFF,
+                renderFrameOffset.x, renderFrameOffset.y,
+                renderFrameOffset.x + renderFrameSize.x, renderFrameOffset.y + renderFrameSize.y);
+        BlendFunction(GS_BLEND_FACTOR, GS_BLEND_INVFACTOR, transitionAlpha);
+    }
+
+    DrawSprite(mainRenderTextures[curRenderTarget], 0xFFFFFFFF,
+            renderFrameOffset.x, renderFrameOffset.y,
+            renderFrameOffset.x + renderFrameSize.x, renderFrameOffset.y + renderFrameSize.y);
+}
+
 //todo: this function is an abomination, this is just disgusting.  fix it.
 //...seriously, this is really, really horrible.  I mean this is amazingly bad.
 void OBS::MainCaptureLoop()
@@ -717,6 +753,36 @@ void OBS::MainCaptureLoop()
         //------------------------------------
         // render the mini view thingy
 
+        OSEnterMutex(projectorMutex);
+
+        if (bProjector) {
+            SetRenderTarget(projectorTexture);
+
+            Vect2 renderFrameSize, renderFrameOffset;
+            Vect2 projectorSize = Vect2(float(projectorWidth), float(projectorHeight));
+
+            float projectorAspect = (projectorSize.x / projectorSize.y);
+            float baseAspect = (baseSize.x / baseSize.y);
+
+            if (projectorAspect < baseAspect) {
+                float fProjectorWidth = float(projectorWidth);
+
+                renderFrameSize   = Vect2(fProjectorWidth, fProjectorWidth / baseAspect);
+                renderFrameOffset = Vect2(0.0f, (projectorSize.y-renderFrameSize.y) * 0.5f);
+            } else {
+                float fProjectorHeight = float(projectorHeight);
+
+                renderFrameSize   = Vect2(fProjectorHeight * baseAspect, fProjectorHeight);
+                renderFrameOffset = Vect2((projectorSize.x-renderFrameSize.x) * 0.5f, 0.0f);
+            }
+
+            DrawPreview(renderFrameSize, renderFrameOffset, projectorSize, curRenderTarget, Preview_Projector);
+
+            projectorSwap->Present(0, 0);
+        }
+
+        OSLeaveMutex(projectorMutex);
+
         if(bRenderView)
         {
             // Cache
@@ -725,37 +791,8 @@ void OBS::MainCaptureLoop()
             const Vect2 renderFrameCtrlSize = GetRenderFrameControlSize();
 
             SetRenderTarget(NULL);
-
-            LoadVertexShader(mainVertexShader);
-            LoadPixelShader(mainPixelShader);
-
-            Ortho(0.0f, renderFrameCtrlSize.x, renderFrameCtrlSize.y, 0.0f, -100.0f, 100.0f);
-            if(renderFrameCtrlSize.x != oldRenderFrameCtrlWidth || renderFrameCtrlSize.y != oldRenderFrameCtrlHeight)
-            {
-                // User is drag resizing the window. We don't recreate the swap chains so our coordinates are wrong
-                SetViewport(0.0f, 0.0f, (float)oldRenderFrameCtrlWidth, (float)oldRenderFrameCtrlHeight);
-            }
-            else
-                SetViewport(0.0f, 0.0f, renderFrameCtrlSize.x, renderFrameCtrlSize.y);
-
-            // Draw background (Black if fullscreen, window colour otherwise)
-            if(bFullscreenMode)
-                ClearColorBuffer(0x000000);
-            else
-                ClearColorBuffer(GetSysColor(COLOR_BTNFACE));
-
-            if(bTransitioning)
-            {
-                BlendFunction(GS_BLEND_ONE, GS_BLEND_ZERO);
-                DrawSprite(transitionTexture, 0xFFFFFFFF,
-                        renderFrameOffset.x, renderFrameOffset.y,
-                        renderFrameOffset.x + renderFrameSize.x, renderFrameOffset.y + renderFrameSize.y);
-                BlendFunction(GS_BLEND_FACTOR, GS_BLEND_INVFACTOR, transitionAlpha);
-            }
-
-            DrawSprite(mainRenderTextures[curRenderTarget], 0xFFFFFFFF,
-                    renderFrameOffset.x, renderFrameOffset.y,
-                    renderFrameOffset.x + renderFrameSize.x, renderFrameOffset.y + renderFrameSize.y);
+            DrawPreview(renderFrameSize, renderFrameOffset, renderFrameCtrlSize, curRenderTarget,
+                    bFullscreenMode ? Preview_Fullscreen : Preview_Standard);
 
             //draw selections if in edit mode
             if(bEditMode && !bSizeChanging)
