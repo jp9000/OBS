@@ -1,0 +1,90 @@
+Add="Dodaj"
+Preview="Predogled"
+Order="Vrstni red"
+Apply="Uporabi"
+Browse="Prebrskaj..."
+Cancel="Prekliči"
+ClearHotkey="Počisti"
+Color="Barva"
+Desktop="Namizje"
+Disable="Onemogoči"
+Reconnecting="Vnovično vzpostavljanje povezave..."
+Refresh="Osveži"
+Remove="Odstrani"
+Rename="Preimenuj"
+Copy="Kopiraj"
+Settings="Nastavitve..."
+
+
+
+
+EndingDelay.TimeLeft="Preostanek Časa: $1"
+
+
+Listbox.Config="Lastnosti"
+Listbox.ResetSize="Ponastavi velikost"
+
+
+
+
+MainMenu.Help.VisitWebsite="Obišči spletno stran"
+
+
+MainWindow.Dashboard="Nadzorna plošča"
+MainWindow.Exit="Izhod"
+MainWindow.Scenes="Prizori:"
+
+Plugins.Description="Opis:"
+
+
+
+
+
+Capture.Start.FileStream.WarningCaption="Opozorilo"
+
+Settings.Advanced="Napredno"
+Settings.Audio="Zvok"
+Settings.General="Splošno"
+Settings.Video="Video"
+
+Settings.Advanced.Network="Omrežje"
+
+
+
+
+
+
+Settings.General.Add="Dodaj Novo"
+Settings.General.Language="Jezik:"
+Settings.General.ShowObs="Pokaži OBS"
+Settings.General.HideObs="Skrij OBS"
+
+Settings.Publish.ChannelName="Ime Kanala:"
+
+
+
+Settings.Video.FPS="FPS:"
+
+
+Sources.GameCaptureSource="Zajem Igre"
+Sources.SoftwareCaptureSource="Zajem Programa"
+Sources.TextSource="Besedilo"
+
+Sources.BitmapSource.Color="Barva:"
+
+
+Sources.SoftwareCaptureSource.Size="Velikost:"
+
+Sources.TextSource.Align="Poravnaj:"
+Sources.TextSource.Bold="Krepko"
+Sources.TextSource.EnterText="Vnesite besedilo"
+Sources.TextSource.Font="Pisava:"
+Sources.TextSource.Italic="Ležeče"
+Sources.TextSource.Left="Levo"
+Sources.TextSource.Right="Desno"
+Sources.TextSource.Size="Velikost:"
+
+
+
+
+

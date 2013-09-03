@@ -1,0 +1,13 @@
+Cancel="Prekliči"
+OK="V redu"
+
+
+
+DeviceSelection.Device="Naprava:"
+DeviceSelection.FPS="FPS:"
+DeviceSelection.Refresh="Osveži"
+DeviceSelection.Resolution="Resolucija"
+DeviceSelection.Select="Izberi"
+DeviceSelection.Sound="Zvok"
+
+
