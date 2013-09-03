@@ -704,7 +704,7 @@ void OBS::TrackModifyListbox(HWND hwnd, int ret)
             {
                 UINT monitorID = ret-ID_PROJECTOR;
                 if (monitorID == 0)
-                    DisableProjector();
+                    App->bPleaseDisableProjector = true;
                 else
                     EnableProjector(monitorID-1);
             }

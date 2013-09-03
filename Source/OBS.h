@@ -595,6 +595,8 @@ private:
     bool    bDisableSceneSwitching;
     bool    bChangingSources;
     bool    bAlwaysOnTop;
+    bool    bPleaseEnableProjector;   //I'm just too lazy
+    bool    bPleaseDisableProjector;
     bool    bProjector;
     bool    bEnableProjectorCursor;
     UINT    projectorWidth, projectorHeight;
@@ -862,6 +864,7 @@ private:
     void UpdateRenderViewMessage();
     void ProcessPanelVisible(bool fromResizeWindow = false);
 
+    void ActuallyEnableProjector();
     void EnableProjector(UINT monitorID);
     void DisableProjector();
 

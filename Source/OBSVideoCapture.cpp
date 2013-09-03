@@ -318,7 +318,7 @@ void OBS::EncodeLoop()
 
             DWORD curFrameTimestamp = DWORD((sleepTargetTime/1000000) - firstFrameTimestamp);
 
-            profileIn("encoder frame");
+            profileIn("encoder thread frame");
 
             FrameProcessInfo frameInfo;
             frameInfo.firstFrameTime = firstFrameTimestamp;
@@ -599,11 +599,10 @@ void OBS::MainCaptureLoop()
         //lastStreamTime = renderStartTime;
         lastStreamTime = curStreamTime;
 
-        profileIn("frame");
+        profileIn("video thread frame");
 
         //Log(TEXT("Stream Time: %llu"), curStreamTime);
         //Log(TEXT("frameDelta: %lf"), fSeconds);
-
 
         bool bUpdateBPS = false;
         profileIn("frame preprocessing and rendering");
@@ -635,6 +634,11 @@ void OBS::MainCaptureLoop()
         //------------------------------------
 
         OSEnterMutex(hSceneMutex);
+
+        if (bPleaseEnableProjector)
+            ActuallyEnableProjector();
+        else if(bPleaseDisableProjector)
+            DisableProjector();
 
         if(bResizeRenderView)
         {
@@ -778,7 +782,7 @@ void OBS::MainCaptureLoop()
 
             DrawPreview(renderFrameSize, renderFrameOffset, projectorSize, curRenderTarget, Preview_Projector);
 
-            projectorSwap->Present(0, 0);
+            SetRenderTarget(NULL);
         }
 
         OSLeaveMutex(projectorMutex);
@@ -842,6 +846,13 @@ void OBS::MainCaptureLoop()
         DrawSpriteEx(mainRenderTextures[curRenderTarget], 0xFFFFFFFF, 0.0f, 0.0f, outputSize.x, outputSize.y, 0.0f, 0.0f, 1.0f, 1.0f);
 
         //------------------------------------
+
+        OSEnterMutex(projectorMutex);
+
+        if (bProjector && !copyWait)
+            projectorSwap->Present(0, 0);
+
+        OSLeaveMutex(projectorMutex);
 
         if(bRenderView && !copyWait)
             static_cast<D3D10System*>(GS)->swap->Present(0, 0);

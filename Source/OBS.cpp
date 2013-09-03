@@ -1672,22 +1672,9 @@ BOOL OBS::UpdateDashboardButton()
     return ShowWindow(GetDlgItem(hwndMain, ID_DASHBOARD), bShowDashboardButton ? SW_SHOW : SW_HIDE);
 }
 
-void OBS::EnableProjector(UINT monitorID)
+void OBS::ActuallyEnableProjector()
 {
-    if (bProjector)
-        DisableProjector();
-
     D3D10System *sys = static_cast<D3D10System*>(GS);
-    const MonitorInfo &mi = GetMonitor(monitorID);
-
-    projectorWidth  = mi.rect.right-mi.rect.left;
-    projectorHeight = mi.rect.bottom-mi.rect.top;
-
-    hwndProjector = CreateWindow(OBS_PROJECTORFRAME_CLASS,
-        L"OBS Projector Window",
-        WS_VISIBLE|WS_POPUP, mi.rect.left, mi.rect.top,
-        projectorWidth, projectorHeight,
-        NULL, NULL, hinstMain, NULL);
 
     DXGI_SWAP_CHAIN_DESC swapDesc;
     zero(&swapDesc, sizeof(swapDesc));
@@ -1735,6 +1722,27 @@ exit:
         DestroyWindow(hwndProjector);
         hwndProjector = NULL;
     }
+
+    bPleaseEnableProjector = false;
+}
+
+void OBS::EnableProjector(UINT monitorID)
+{
+    if (bProjector)
+        DisableProjector();
+
+    const MonitorInfo &mi = GetMonitor(monitorID);
+
+    projectorWidth  = mi.rect.right-mi.rect.left;
+    projectorHeight = mi.rect.bottom-mi.rect.top;
+
+    hwndProjector = CreateWindow(OBS_PROJECTORFRAME_CLASS,
+        L"OBS Projector Window",
+        WS_VISIBLE|WS_POPUP, mi.rect.left, mi.rect.top,
+        projectorWidth, projectorHeight,
+        NULL, NULL, hinstMain, NULL);
+
+    bPleaseEnableProjector = true;
 }
 
 void OBS::DisableProjector()
@@ -1753,6 +1761,7 @@ void OBS::DisableProjector()
     hwndProjector = NULL;
 
     bProjector = false;
+    bPleaseDisableProjector = false;
 
     OSLeaveMutex(projectorMutex);
 }
