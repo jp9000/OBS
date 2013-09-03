@@ -57,7 +57,7 @@ struct MP4AudioFrameInfo
 
 inline UINT64 ConvertToAudioTime(DWORD timestamp, UINT64 minVal)
 {
-    UINT val = UINT64(timestamp)*48000/1000;
+    UINT val = UINT64(timestamp)*App->GetSampleRateHz()/1000;
     return MAX(val, minVal);
 }
 
@@ -303,7 +303,7 @@ public:
 
         DWORD macTime = fastHtonl(DWORD(GetMacTime()));
         UINT videoDuration = fastHtonl(lastVideoTimestamp + App->GetFrameTime());
-        UINT audioDuration = fastHtonl(lastVideoTimestamp + DWORD(double(audioFrameSize)/48));
+        UINT audioDuration = fastHtonl(lastVideoTimestamp + DWORD(double(audioFrameSize)*1000.0/double(App->GetSampleRateHz())));
         UINT width, height;
         App->GetOutputSize(width, height);
 
@@ -453,7 +453,7 @@ public:
                 output.OutputDword(0); //version and flags (none)
                 output.OutputDword(macTime); //creation time
                 output.OutputDword(macTime); //modified time
-                output.OutputDword(DWORD_BE(48000)); //time scale
+                output.OutputDword(DWORD_BE(App->GetSampleRateHz())); //time scale
                 output.OutputDword(audioUnitDuration);
                 output.OutputDword(bMP3 ? DWORD_BE(0x55c40000) : DWORD_BE(0x15c70000));
               PopBox(output); //mdhd
@@ -495,7 +495,7 @@ public:
                       output.OutputWord(WORD_BE(16)); //sample size
                       output.OutputWord(0); //quicktime audio compression id
                       output.OutputWord(0); //quicktime audio packet size
-                      output.OutputDword(DWORD_BE(48000<<16)); //sample rate (fixed point)
+                      output.OutputDword(DWORD_BE(App->GetSampleRateHz()<<16)); //sample rate (fixed point)
                       PushBox(output, DWORD_BE('esds'));
                         output.OutputDword(0); //version and flags (none)
                         output.OutputByte(3); //ES descriptor type

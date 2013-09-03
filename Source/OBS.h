@@ -499,6 +499,8 @@ class OBS
     AudioSource  *micAudio;
     List<AudioSource*> auxAudioSources;
 
+    UINT sampleRateHz;
+
     AudioEncoder *audioEncoder;
 
     //---------------------------------------------------
@@ -912,6 +914,8 @@ public:
         auxAudioSources.RemoveItem(source);
         OSLeaveMutex(hAuxAudioMutex);
     }
+
+    inline UINT GetSampleRateHz() const {return sampleRateHz;}
 
     inline QWORD GetAudioTime() const {return latestAudioTime;}
     inline QWORD GetVideoTime() const {return latestVideoTime;}

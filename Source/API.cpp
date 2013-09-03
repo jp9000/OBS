@@ -539,6 +539,8 @@ public:
 
     virtual void AddSettingsPane(SettingsPane *pane)    {App->AddSettingsPane(pane);}
     virtual void RemoveSettingsPane(SettingsPane *pane) {App->RemoveSettingsPane(pane);}
+
+    virtual UINT GetSampleRateHz() const {return App->GetSampleRateHz();}
 };
 
 APIInterface* CreateOBSApiInterface()

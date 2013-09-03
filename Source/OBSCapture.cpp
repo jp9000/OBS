@@ -284,7 +284,20 @@ retryHookTestV2:
         }
     }
 
-    //-------------------------------------------------------------
+    //------------------------------------------------------------------
+
+    UINT format = AppConfig->GetInt(L"Audio Encoding", L"Format", 1);
+
+    switch (format) {
+    case 0: sampleRateHz = 44100; break;
+    default:
+    case 1: sampleRateHz = 48000; break;
+    }
+
+    Log(L"------------------------------------------");
+    Log(L"Audio Format: %uhz", sampleRateHz);
+
+    //------------------------------------------------------------------
 
     AudioDeviceList playbackDevices;
     GetAudioDevices(playbackDevices, ADT_PLAYBACK);
@@ -881,11 +894,11 @@ void OBS::EncodeAudioSegment(float *buffer, UINT numFrames, QWORD timestamp)
     }
 }
 
-const int audioSamplesPerSec = 48000;
-const int audioSampleSize = audioSamplesPerSec/100;
-
 void OBS::MainAudioLoop()
 {
+    const unsigned int audioSamplesPerSec = App->GetSampleRateHz();
+    const unsigned int audioSampleSize = audioSamplesPerSec/100;
+
     DWORD taskID = 0;
     HANDLE hTask = AvSetMmThreadCharacteristics(TEXT("Pro Audio"), &taskID);
 

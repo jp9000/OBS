@@ -265,7 +265,7 @@ char* OBS::EncMetaData(char *enc, char *pend, bool bFLVFile)
         enc = AMF_EncodeNamedString(enc, pend, &av_audiocodecid,    av_codecFourCC);//audioCodecID);//
 
     enc = AMF_EncodeNamedNumber(enc, pend, &av_audiodatarate,   double(audioBitRate)); //ex. 128kb\s
-    enc = AMF_EncodeNamedNumber(enc, pend, &av_audiosamplerate, 48000.0);
+    enc = AMF_EncodeNamedNumber(enc, pend, &av_audiosamplerate, double(App->GetSampleRateHz()));
     enc = AMF_EncodeNamedNumber(enc, pend, &av_audiosamplesize, 16.0);
     enc = AMF_EncodeNamedNumber(enc, pend, &av_audiochannels,   2.0);
     enc = AMF_EncodeNamedBoolean(enc, pend, &av_stereo,         true);

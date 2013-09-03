@@ -213,7 +213,8 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 //--------------------------------------------
 
                 hwndTemp = GetDlgItem(hwnd, IDC_AUDIOFORMAT);
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("48khz mono"));
+                //SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("48khz mono"));
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("44.1khz stereo"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("48khz stereo"));
 
                 LoadSettingComboInt(hwndTemp, TEXT("Audio Encoding"), TEXT("Format"), 1, 1);
