@@ -287,11 +287,20 @@ OBS::OBS()
     //-----------------------------------------------------
     // render frame
 
-    hwndRenderFrame = CreateWindow(OBS_RENDERFRAME_CLASS, NULL, WS_CHILDWINDOW | WS_VISIBLE | WS_CLIPCHILDREN,
+    hwndRenderFrame = CreateWindow(OBS_RENDERFRAME_CLASS, NULL,
+        WS_CHILDWINDOW | WS_VISIBLE | WS_CLIPCHILDREN,
         0, 0, 0, 0,
         hwndMain, NULL, hinstMain, NULL);
     if(!hwndRenderFrame)
         CrashError(TEXT("Could not create render frame"));
+
+    //-----------------------------------------------------
+    // projector window
+
+    hwndProjector = CreateWindow(OBS_PROJECTORFRAME_CLASS,
+        L"OBS Projector Window",
+        WS_POPUP, 0, 0, 0, 0,
+        NULL, NULL, hinstMain, NULL);
 
     //-----------------------------------------------------
     // render frame text
@@ -516,7 +525,6 @@ OBS::OBS()
 
     hHotkeyMutex = OSCreateMutex();
     hInfoMutex = OSCreateMutex();
-    projectorMutex = OSCreateMutex();
     hStartupShutdownMutex = OSCreateMutex();
 
     //-----------------------------------------------------
@@ -758,8 +766,6 @@ OBS::~OBS()
         OSCloseMutex(hInfoMutex);
     if(hHotkeyMutex)
         OSCloseMutex(hHotkeyMutex);
-    if (projectorMutex)
-        OSCloseMutex(projectorMutex);
 
     App = NULL;
 }
@@ -1674,6 +1680,8 @@ BOOL OBS::UpdateDashboardButton()
 
 void OBS::ActuallyEnableProjector()
 {
+    DisableProjector();
+
     D3D10System *sys = static_cast<D3D10System*>(GS);
 
     DXGI_SWAP_CHAIN_DESC swapDesc;
@@ -1686,6 +1694,9 @@ void OBS::ActuallyEnableProjector()
     swapDesc.OutputWindow = hwndProjector;
     swapDesc.SampleDesc.Count = 1;
     swapDesc.Windowed = TRUE;
+
+    if (!bShutdownEncodeThread)
+        SetWindowPos(hwndProjector, NULL, projectorX, projectorY, projectorWidth, projectorHeight, SWP_SHOWWINDOW);
 
     ID3D10Texture2D *backBuffer = NULL;
     ID3D10RenderTargetView *target = NULL;
@@ -1718,9 +1729,7 @@ void OBS::ActuallyEnableProjector()
 exit:
     if (!bProjector) {
         SafeRelease(projectorSwap);
-
-        DestroyWindow(hwndProjector);
-        hwndProjector = NULL;
+        SafeRelease(backBuffer);
     }
 
     bPleaseEnableProjector = false;
@@ -1728,40 +1737,26 @@ exit:
 
 void OBS::EnableProjector(UINT monitorID)
 {
-    if (bProjector)
-        DisableProjector();
-
     const MonitorInfo &mi = GetMonitor(monitorID);
 
     projectorWidth  = mi.rect.right-mi.rect.left;
     projectorHeight = mi.rect.bottom-mi.rect.top;
-
-    hwndProjector = CreateWindow(OBS_PROJECTORFRAME_CLASS,
-        L"OBS Projector Window",
-        WS_VISIBLE|WS_POPUP, mi.rect.left, mi.rect.top,
-        projectorWidth, projectorHeight,
-        NULL, NULL, hinstMain, NULL);
+    projectorX = mi.rect.left;
+    projectorY = mi.rect.top;
 
     bPleaseEnableProjector = true;
 }
 
 void OBS::DisableProjector()
 {
-    if (!bProjector)
-        return;
-
-    OSEnterMutex(projectorMutex);
-
     SafeRelease(projectorSwap);
 
     delete projectorTexture;
     projectorTexture = NULL;
 
-    DestroyWindow(hwndProjector);
-    hwndProjector = NULL;
-
     bProjector = false;
     bPleaseDisableProjector = false;
 
-    OSLeaveMutex(projectorMutex);
+    if (!bShutdownEncodeThread)
+        ShowWindow(hwndProjector, SW_HIDE);
 }

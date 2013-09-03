@@ -757,8 +757,6 @@ void OBS::MainCaptureLoop()
         //------------------------------------
         // render the mini view thingy
 
-        OSEnterMutex(projectorMutex);
-
         if (bProjector) {
             SetRenderTarget(projectorTexture);
 
@@ -784,8 +782,6 @@ void OBS::MainCaptureLoop()
 
             SetRenderTarget(NULL);
         }
-
-        OSLeaveMutex(projectorMutex);
 
         if(bRenderView)
         {
@@ -847,12 +843,8 @@ void OBS::MainCaptureLoop()
 
         //------------------------------------
 
-        OSEnterMutex(projectorMutex);
-
         if (bProjector && !copyWait)
             projectorSwap->Present(0, 0);
-
-        OSLeaveMutex(projectorMutex);
 
         if(bRenderView && !copyWait)
             static_cast<D3D10System*>(GS)->swap->Present(0, 0);

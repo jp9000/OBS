@@ -599,10 +599,10 @@ private:
     bool    bPleaseDisableProjector;
     bool    bProjector;
     bool    bEnableProjectorCursor;
+    UINT    projectorX, projectorY;
     UINT    projectorWidth, projectorHeight;
     UINT    projectorMonitorID;
     HWND    hwndProjector;
-    HANDLE  projectorMutex;
     Texture *projectorTexture;
     bool    bFullscreenMode;
     bool    bEditMode;

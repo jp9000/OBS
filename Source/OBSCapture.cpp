@@ -154,6 +154,7 @@ retryHookTest:
     //-------------------------------------------------------------
 
     bEnableProjectorCursor = GlobalConfig->GetInt(L"General", L"EnableProjectorCursor", 1) != 0;
+    bPleaseEnableProjector = bPleaseDisableProjector = false;
 
     int monitorID = AppConfig->GetInt(TEXT("Video"), TEXT("Monitor"));
     if(monitorID >= (int)monitors.Num())
@@ -573,10 +574,9 @@ void OBS::Stop()
 
     OSEnterMutex(hStartupShutdownMutex);
 
-    bPleaseDisableProjector = true;
-
     //we only want the capture thread to stop first, so we can ensure all packets are flushed
     bShutdownEncodeThread = true;
+    ShowWindow(hwndProjector, SW_HIDE);
 
     if(hEncodeThread)
     {

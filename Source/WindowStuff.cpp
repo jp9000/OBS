@@ -3182,7 +3182,11 @@ LRESULT CALLBACK OBS::ProjectorFrameProc(HWND hwnd, UINT message, WPARAM wParam,
     switch (message) {
     case WM_KEYDOWN:
         if (wParam == VK_ESCAPE)
-            App->DisableProjector();
+            App->bPleaseDisableProjector = true;
+        break;
+
+    case WM_CLOSE:
+        App->bPleaseDisableProjector = true;
         break;
 
     case WM_SETCURSOR:
