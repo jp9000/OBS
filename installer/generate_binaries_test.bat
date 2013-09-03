@@ -25,7 +25,12 @@ copy ..\release\obs.exe .\32bit\
 copy ..\obsapi\release\obsapi.dll .\32bit\
 copy ..\OBSHelp\OBSHelp.chm .\32bit\
 copy ..\rundir\services.xconfig .\32bit\
-copy ..\rundir\pdb32\*.pdb .\32bit\
+copy ..\rundir\pdb32\OBS.pdb .\32bit\
+copy ..\rundir\pdb32\OBSApi.pdb .\32bit\
+copy ..\rundir\pdb32\DShowPlugin.pdb .\32bit\plugins\
+copy ..\rundir\pdb32\GraphicsCapture.pdb .\32bit\plugins\
+copy ..\rundir\pdb32\NoiseGate.pdb .\32bit\plugins\
+copy ..\rundir\pdb32\PSVPlugin.pdb .\32bit\plugins\
 copy ..\rundir\locale\*.txt .\32bit\locale\
 copy ..\rundir\shaders\*.?Shader .\32bit\shaders\
 copy ..\dshowplugin\release\dshowplugin.dll .\32bit\plugins
@@ -45,7 +50,12 @@ copy ..\x64\release\obs.exe .\64bit\
 copy ..\obsapi\x64\release\obsapi.dll .\64bit\
 copy ..\OBSHelp\OBSHelp.chm .\64bit\
 copy ..\rundir\services.xconfig .\64bit\
-copy ..\rundir\pdb64\*.pdb .\64bit\
+copy ..\rundir\pdb64\OBS.pdb .\64bit\
+copy ..\rundir\pdb64\OBSApi.pdb .\64bit\
+copy ..\rundir\pdb64\DShowPlugin.pdb .\64bit\plugins\
+copy ..\rundir\pdb64\GraphicsCapture.pdb .\64bit\plugins\
+copy ..\rundir\pdb64\NoiseGate.pdb .\64bit\plugins\
+copy ..\rundir\pdb64\PSVPlugin.pdb .\64bit\plugins\
 copy ..\rundir\locale\*.txt .\64bit\locale\
 copy ..\rundir\shaders\*.?Shader .\64bit\shaders\
 copy ..\dshowplugin\x64\release\dshowplugin.dll .\64bit\plugins
