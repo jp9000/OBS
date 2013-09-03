@@ -169,7 +169,7 @@ struct BASE_EXPORT ProfileNodeInfo
 ProfilerNode *__curProfilerNode = NULL;
 List<ProfileNodeInfo> ProfileNodeInfo::profilerData;
 BOOL bProfilingEnabled = FALSE;
-HANDLE hProfilerTimer = NULL;
+HANDLE hProfilerMutex = NULL;
 
 
 void STDCALL EnableProfiling(BOOL bEnable, float pminPercentage, float pminTime)
@@ -237,6 +237,8 @@ ProfilerNode::ProfilerNode(CTSTR lpName, bool bSingularize)
         ProfileNodeInfo *parentInfo = parent->info;
         if(parentInfo)
         {
+            OSEnterMutex(hProfilerMutex);
+
             info = parentInfo->FindSubProfile(lpName);
             if(!info)
             {
@@ -245,16 +247,22 @@ ProfilerNode::ProfilerNode(CTSTR lpName, bool bSingularize)
                 info->lpName = lpName;
                 info->bSingular = bSingularize;
             }
+
+            OSLeaveMutex(hProfilerMutex);
         }
     }
     else if(bProfilingEnabled)
     {
+        OSEnterMutex(hProfilerMutex);
+
         info = ProfileNodeInfo::FindProfile(lpName);
         if(!info)
         {
             info = ProfileNodeInfo::profilerData.CreateNew();
             info->lpName = lpName;
         }
+
+        OSLeaveMutex(hProfilerMutex);
     }
     else
         return;

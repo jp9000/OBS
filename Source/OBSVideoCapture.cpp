@@ -318,7 +318,7 @@ void OBS::EncodeLoop()
 
             DWORD curFrameTimestamp = DWORD((sleepTargetTime/1000000) - firstFrameTimestamp);
 
-            //profileIn("encoder frame");
+            profileIn("encoder frame");
 
             FrameProcessInfo frameInfo;
             frameInfo.firstFrameTime = firstFrameTimestamp;
@@ -340,7 +340,7 @@ void OBS::EncodeLoop()
 
             lastPic = frameInfo.pic;
 
-            //profileOut;
+            profileOut;
 
             numTotalFrames++;
         }
@@ -483,7 +483,7 @@ void OBS::MainCaptureLoop()
     QWORD lastAdjustmentTime = 0;
     UINT adjustmentStreamId = 0;
 
-    std::unique_ptr<ProfilerNode> encodeThreadProfiler;
+    //std::unique_ptr<ProfilerNode> encodeThreadProfiler;
 
     //----------------------------------------
     // time/timestamp stuff
@@ -982,8 +982,8 @@ void OBS::MainCaptureLoop()
 
                     if(bEncode)
                     {
-                        encodeThreadProfiler.reset(::new ProfilerNode(TEXT("EncodeThread"), true));
-                        encodeThreadProfiler->MonitorThread(hEncodeThread);
+                        //encodeThreadProfiler.reset(::new ProfilerNode(TEXT("EncodeThread"), true));
+                        //encodeThreadProfiler->MonitorThread(hEncodeThread);
                         curFramePic = &picOut;
                     }
 
@@ -1124,7 +1124,7 @@ void OBS::MainCaptureLoop()
         numTotalFrames++;
     }
 
-    encodeThreadProfiler.reset();
+    //encodeThreadProfiler.reset();
 
     if(!bUsing444)
     {

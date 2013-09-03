@@ -32,6 +32,7 @@
 
 
 
+extern HANDLE hProfilerMutex;
 
 LARGE_INTEGER clockFreq, startTime;
 LONGLONG prevElapsedTime;
@@ -150,11 +151,15 @@ void   STDCALL OSInit()
             free(pInfo);
         }
     }
+
+    hProfilerMutex = OSCreateMutex();
 }
 
 void   STDCALL OSExit()
 {
     timeEndPeriod(1);
+
+    OSCloseMutex(hProfilerMutex);
 }
 
 
