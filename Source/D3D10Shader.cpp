@@ -204,7 +204,6 @@ Shader* D3D10PixelShader::CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)
     LPCSTR lpPSType = d3d10Sys->bDisableCompatibilityMode ? "ps_4_0" : "ps_4_0_level_9_3";
 
     String cacheFilename = FormattedString(TEXT("%s/shaderCache/%s.blob"), OBSGetAppDataPath(), lpFileName).FindReplace(TEXT("\\"), TEXT("/"));
-    Log(cacheFilename);
 
     List<BYTE> shaderBuffer;
     LPVOID shaderData;
