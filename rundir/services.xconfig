@@ -8,6 +8,7 @@ services : {
       "EU: Frankfurt, DE"                    : rtmp://live-fra.justin.tv/app
       "EU: London, UK"                       : rtmp://live-lhr.justin.tv/app
       "EU: London, UK (Secondary)"           : rtmp://live-lhr-backup.justin.tv/app
+      "EU: Stockholm, SE"                    : rtmp://live-arn.justin.tv/app
       "US Central: Dallas, TX"               : rtmp://live-dfw.justin.tv/app
       "US Central: San Antonio, TX"          : rtmp://live-dfw-backup.justin.tv/app
       "US East: Ashburn, VA"                 : rtmp://live-iad.justin.tv/app
