@@ -188,6 +188,7 @@ Settings.Encoding.Video.QualityTooltip="Deze instelling zal proberen een bepaald
 
 Settings.General.Add="Nieuw Toevoegen"
 Settings.General.ConfirmDelete="Weet je zeker dat je het profiel '$1' wil verwijderen?"
+Settings.General.EnableProjectorCursor="Toon cursor boven projector"
 Settings.General.InvalidName="Profielnamen mogen de volgende karakters niet bevatten:\r\n\r\n\\ / : * ? \" < > |"
 Settings.General.Language="Taal:"
 Settings.General.Profile="Instellingsprofiel:"
