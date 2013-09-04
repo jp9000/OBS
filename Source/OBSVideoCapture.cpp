@@ -306,10 +306,10 @@ void OBS::EncodeLoop()
     CircularList<QWORD> bufferedTimes;
 
     while(!bShutdownEncodeThread || (bufferedFrames && !bTestStream)) {
+        SetEvent(hVideoEvent);
         SleepToNS(sleepTargetTime);
         latestVideoTime = sleepTargetTime/1000000;
         latestVideoTimeNS = sleepTargetTime;
-        SetEvent(hVideoEvent);
 
         bufferedTimes << latestVideoTime;
 
