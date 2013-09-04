@@ -3982,8 +3982,6 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
         {
             HMENU hPopup = CreatePopupMenu();
 
-            AppendMenu(hPopup, MF_STRING | (App->bFullscreenMode ? MF_CHECKED : 0), ID_TOGGLEFULLSCREEN, Str("MainMenu.Settings.FullscreenMode"));
-
             //---------------------------------------------------
 
             if (App->bRunning) {
@@ -4006,9 +4004,12 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                 }
 
                 AppendMenu(hPopup, MF_STRING|MF_POPUP, (UINT_PTR)hProjector, Str("MainMenu.Settings.Projector"));
+                AppendMenu(hPopup, MF_SEPARATOR, 0, 0);
             }
 
             //---------------------------------------------------
+
+            AppendMenu(hPopup, MF_STRING | (App->bFullscreenMode ? MF_CHECKED : 0), ID_TOGGLEFULLSCREEN, Str("MainMenu.Settings.FullscreenMode"));
 
             HWND hwndSources = GetDlgItem(hwndMain, ID_SOURCES);
             int numItems = ListView_GetItemCount(hwndSources);

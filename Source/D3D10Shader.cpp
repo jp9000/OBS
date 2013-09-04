@@ -99,7 +99,7 @@ Shader* D3D10VertexShader::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
     SIZE_T shaderDataSize;
 
     ID3D10Blob *errorMessages = NULL, *shaderBlob = NULL;
-    
+
     HRESULT err;
 
     if(!OSFileExists(cacheFilename) || OSGetFileModificationTime(lpFileName) > OSGetFileModificationTime(cacheFilename))
@@ -131,7 +131,7 @@ Shader* D3D10VertexShader::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
 
         shaderData = shaderBlob->GetBufferPointer();
         shaderDataSize = shaderBlob->GetBufferSize();
-        
+
         CreatePath(GetPathDirectory(cacheFilename));
         XFile cacheFile(cacheFilename, XFILE_WRITE, XFILE_CREATEALWAYS);
         cacheFile.Write(shaderData, (DWORD)shaderDataSize);

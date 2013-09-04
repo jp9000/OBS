@@ -728,6 +728,7 @@ private:
     bool bRequestKeyframe;
     int  keyframeWait;
 
+    QWORD firstFrameTimestamp;
     EncoderPicture *curFramePic;
     HANDLE hVideoEvent;
 
