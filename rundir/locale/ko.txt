@@ -18,6 +18,7 @@ Gamma="감마:"
 GlobalSources="전역 소스..."
 IncompatibleModules="호환되지 않는 훅 모듈이 감지되었습니다. DXTory, FRAPS, 혹은 기타 캡쳐 프로그램의 대상에서 프로그램을 제외하여 주십시오 .\r\n\r\n설정을 마치더라도 문제 해결을 위해 프로그램과 관련 캡쳐 프로그램을 재시작해야 할 수도 있습니다."
 MicrophoneFailure="마이크 오디오 장치를 초기화하는데 오류가 발생하였습니다. 장치가 시스템에 연결이 되어있지 않거나, 다른 어플리케이션이 단독 모드로 사용하고 있을 수도 있습니다."
+MonitorNum="모니터 $1"
 MoveDown="아래로 내리기"
 MoveToBottom="가장 아래로 내리기"
 MoveToTop="가장 위로 올리기"
@@ -70,6 +71,7 @@ MainMenu.Settings="설정(&S)"
 
 MainMenu.Settings.AlwaysOnTop="항상 위로(&A)"
 MainMenu.Settings.FullscreenMode="전체화면 미리보기 모드(&F)"
+MainMenu.Settings.Projector="프로젝터(&P)"
 
 MainMenu.File.Exit="끝내기(&X)"
 MainMenu.File.Save="저장(&S)"
@@ -186,6 +188,7 @@ Settings.Encoding.Video.QualityTooltip="이 설정은 지정한 비트레이트 
 
 Settings.General.Add="새 추가"
 Settings.General.ConfirmDelete=" '$1' 프로파일을 제거 하시겠습니까??"
+Settings.General.EnableProjectorCursor="프로젝터 위로 커서 활성화"
 Settings.General.InvalidName="프로파일 이름에는 다음 문자를 사용할 수 없습니다:\r\n\\ / : * ? \" < > |"
 Settings.General.Language="언어:"
 Settings.General.Profile="사용할 프로파일:"
