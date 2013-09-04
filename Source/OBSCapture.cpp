@@ -589,13 +589,15 @@ void OBS::Stop()
         hEncodeThread = NULL;
     }
 
+    bShutdownVideoThread = true;
+    SetEvent(hVideoEvent);
+
     if(hVideoThread)
     {
         OSTerminateThread(hVideoThread, 30000);
         hVideoThread = NULL;
     }
 
-    bShutdownEncodeThread = false;
     bRunning = false;
 
     ReportStopStreamTrigger();
