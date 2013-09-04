@@ -71,7 +71,7 @@ MainMenu.Settings="設定(&S)"
 
 MainMenu.Settings.AlwaysOnTop="常に手前に表示"
 MainMenu.Settings.FullscreenMode="全画面プレビュー"
-MainMenu.Settings.Projector="& プロジェクター"
+MainMenu.Settings.Projector="プロジェクター"
 
 MainMenu.File.Exit="終了(&X)"
 MainMenu.File.Save="保存(&S)"

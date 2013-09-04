@@ -24,30 +24,64 @@ NameExists="'$1' вече съществува.  Моля въведете ра�
 None="Никакво"
 OK="OK"
 Plugins="Плъгини"
+Refresh="Опресняване"
 Remove="Премахни"
 Rename="Преименувай"
+Copy="Копиране"
 Scene="Сцена"
 Settings="Настройки"
 StreamReport="Стрийм рапорт"
 
+BuildingMP4Dialog.Progress="Създаване на MP4, моля изчакайте..."
 
+Connection.CouldNotConnect="Не може да се свърже със сървъра"
+Connection.CouldNotParseURL="Не може да се анализира RTMP URL"
+Connection.Disconnected="Изключен от сървъра"
+Connection.InvalidStream="Настоящият канал или стрийм ключ не е достъпен, Причината може да е поради невалиден ключ/канал, или защото сървърът предполага, че сте още логнат."
 
 DeleteConfirm.Title="Изтриване на избраните предмети?"
 
+EndingDelay.TimeLeft="Оставащо Време: $1"
 
 GlobalSources.DeleteConfirm="Ако премахнете глобален източник, той ще бъде изтрит от всички сцени - Продължаване?"
 
 Listbox.Add="Добави $1"
 Listbox.Center="Центрирай"
+Listbox.CenterHorizontally="Центрирай Хоризонтално"
+Listbox.CenterVertically="Центрирай Вертикално"
+Listbox.MoveTop="Премести Горе"
+Listbox.MoveRight="Премести в Десният Край"
+Listbox.MoveBottom="Премести Долу"
+Listbox.MoveLeft="Премести в Левият Край"
 Listbox.Config="Свойства"
+Listbox.FitToScreen="Сходно с екрана"
+Listbox.Positioning="Позиция/Размер"
 Listbox.ResetSize="Смени размера по подразбиране"
+Listbox.SetHotkey="Избери Клавишната Комбинация"
+ListBox.ResetCrop="Преустановяване на Изрязването"
 
+MainMenu.File="&Файл"
+MainMenu.Help="&Помощ"
+MainMenu.Profiles="&Профили"
+MainMenu.Settings="&Настройки"
 
 MainMenu.Settings.AlwaysOnTop="Винаги видим"
+MainMenu.Settings.FullscreenMode="&Преглед на Цял Екран"
+MainMenu.Settings.Projector="&Проектор"
 
+MainMenu.File.Exit="И&зход"
+MainMenu.File.Save="&Запис"
 
+MainMenu.Help.Contents="&Съдържание"
+MainMenu.Help.VisitWebsite="Посети Уебсайта"
 
+MainMenu.Settings.OpenConfigFolder="Отвори &Конфигурационната Папка"
+MainMenu.Settings.OpenLogFolder="Отвори &Папка с логове"
 
+MainWindow.BeginMessage="Не стриймвате\n\n\Кликнете на \"Започни да Стриймваш\" или \"Преглед на Стрийма\", за да започнете"
+MainWindow.PreviewDisabled="Прегледа е спрян"
+MainWindow.Dashboard="Табло"
+MainWindow.DroppedFrames="Отпаднали кадри:"
 MainWindow.Exit="Излизане"
 MainWindow.Plugins="Плъгини"
 MainWindow.SceneEditor="Редактирай сцена"
@@ -62,12 +96,22 @@ Plugins.Configure="Конфигурирай"
 Plugins.Description="Описание:"
 Plugins.Filename="Име на файл:"
 
+Reconnecting.Retrying="Не може да свържете наново.  Повторен опит"
 
+RenderView.EnableView="Разреши Изглед"
+RenderView.DisplayPanel="Разреши Контролен Панел"
+RenderView.ViewMode1To1="Режим 1:1"
 
+Scene.Hotkey="Сцена - Клавишна Комбинация"
 Scene.MissingSources="Видео източниците не можаха да бъдат заредени поради невалидни настройки или липсващи плугини"
 
+Scene.Hotkey.AlreadyInUse="Този клавиш е вече в употреба."
+Scene.Hotkey.Hotkey="Клавиш:"
 
+Capture.Start.FileStream.WarningCaption="Предупреждение"
+Capture.Start.FileStream.Warning="Не може да създаде стрийма на изходния файл.\n\nПоверете пътя на файла в Настройки на Излъчването."
 
+Settings.Advanced="Разширения"
 Settings.Audio="Звук"
 Settings.Encoding="Енкодинг"
 Settings.General="Основни"
@@ -77,6 +121,8 @@ Settings.SaveChangesPrompt="Запазване на настройките и п
 Settings.SaveChangesTitle="Прилагане на настройките?"
 Settings.Video="Видео"
 
+Settings.Advanced.AutomaticLatency="Автоматичен режим за ниска латентност:"
+Settings.Advanced.AllowOtherHotkeyModifiers="Позволи други модификатори на клавишите"
 
 
 Settings.Audio.Device="Микрофон/Aux звуково устройство:"
@@ -92,15 +138,28 @@ Settings.Encoding.Video.BufferSize="Размер на бъфер (kbit):"
 Settings.Encoding.Video.MaxBitRate="Макс битрейт (kb/s):"
 Settings.Encoding.Video.Quality="Качество:"
 
+Settings.General.InvalidName="Профил имената не позволяват използването на следните знаци: \r\n\\ /: *? \" < > |"
 Settings.General.Language="Език:"
+Settings.General.Profile="Настройка на профил:"
+Settings.General.Notification="Икона за зоната за уведомителни съобщения"
+Settings.General.NotificationMinimize="Намаляване до областта за уведомяване"
+Settings.General.ShowObs="Покажи OBS"
+Settings.General.HideObs="Скрий OBS"
 Settings.General.Restart="Сменянето на езика изисква рестарт на OBS.\r\n\r\n..Но предполагам че щом сменяш езика не можеш да разбереш това."
 
+Settings.Publish.AutoReconnect="Автоматично свързване:"
+Settings.Publish.AutoReconnectTimeout="Изчакване за автоматично свързване:"
 Settings.Publish.ChannelName="Име на канала:"
+Settings.Publish.DashboardLink="Връзка за Табло (ако има):"
+Settings.Publish.Delay="Забавяне (секунди):"
 Settings.Publish.Mode="Режим:"
 Settings.Publish.Password="Парола (ако има такава):"
 Settings.Publish.Playpath="Стрийм ключ (ако има такъв):"
+Settings.Publish.SavePath="Път до файла:"
+Settings.Publish.SaveToFile="Записване на файл:"
 Settings.Publish.Server="Сървър:"
 Settings.Publish.Service="Стрийминг услуга:"
+Settings.Publish.StopStreamHotkey="Спри стрийм - клавиш:"
 Settings.Publish.Username="Потребителско име (ако има такова):"
 
 Settings.Publish.Mode.LiveStream="Излъчване на живо"
