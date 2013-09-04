@@ -289,7 +289,6 @@ void OBS::EncodeLoop()
     QWORD streamTimeStart = GetQPCTimeNS();
     QWORD frameTimeNS = 1000000000/fps;
     bool bufferedFrames = true; //to avoid constantly polling number of frames
-    bool firstFrame = true;
     int numTotalDuplicatedFrames = 0, numTotalFrames = 0;
 
     bufferedTimes.Clear();
@@ -300,23 +299,26 @@ void OBS::EncodeLoop()
     latestVideoTime = firstSceneTimestamp = streamTimeStart/1000000;
     latestVideoTimeNS = streamTimeStart;
 
-    QWORD firstFrameTimestamp = 0;
+    firstFrameTimestamp = 0;
 
     EncoderPicture *lastPic = NULL;
 
+    CircularList<QWORD> bufferedTimes;
+
     while(!bShutdownEncodeThread || (bufferedFrames && !bTestStream)) {
-        SetEvent(hVideoEvent);
         SleepToNS(sleepTargetTime);
         latestVideoTime = sleepTargetTime/1000000;
         latestVideoTimeNS = sleepTargetTime;
+        SetEvent(hVideoEvent);
 
-        if (curFramePic) {
-            if (firstFrame) {
-                firstFrameTimestamp = DWORD(sleepTargetTime/1000000);
-                firstFrame = false;
-            }
+        bufferedTimes << latestVideoTime;
 
-            DWORD curFrameTimestamp = DWORD((sleepTargetTime/1000000) - firstFrameTimestamp);
+        if (curFramePic && firstFrameTimestamp) {
+            while (bufferedTimes[0] < firstFrameTimestamp)
+                bufferedTimes.Remove(0);
+
+            DWORD curFrameTimestamp = DWORD(bufferedTimes[0] - firstFrameTimestamp);
+            bufferedTimes.Remove(0);
 
             profileIn("encoder thread frame");
 
@@ -349,7 +351,7 @@ void OBS::EncodeLoop()
     }
 
     //flush all video frames in the "scene buffering time" buffer
-    if (!firstFrame && bufferedVideo.Num())
+    if (firstFrameTimestamp && bufferedVideo.Num())
     {
         QWORD startTime = GetQPCTimeMS();
         DWORD baseTimestamp = bufferedVideo[0].timestamp;
@@ -967,6 +969,7 @@ void OBS::MainCaptureLoop()
             else if(bFirstFrame)
             {
                 firstFrameTimeMS = renderStartTimeMS;
+                firstFrameTimestamp = curStreamTime/1000000;
                 bFirstFrame = false;
             }
 
