@@ -664,7 +664,6 @@ void OBS::MainCaptureLoop()
         //QWORD frameDelta = renderStartTime-lastStreamTime;
         double fSeconds = double(frameDelta)*0.000000001;
         //lastStreamTime = renderStartTime;
-        lastStreamTime = curStreamTime;
 
         profileIn("video thread frame");
 
@@ -968,8 +967,7 @@ void OBS::MainCaptureLoop()
             }
             else if(bFirstFrame)
             {
-                firstFrameTimeMS = renderStartTimeMS;
-                firstFrameTimestamp = curStreamTime/1000000;
+                firstFrameTimestamp = lastStreamTime/1000000;
                 bFirstFrame = false;
             }
 
@@ -981,6 +979,8 @@ void OBS::MainCaptureLoop()
                     curYUVTexture++;
             }
         }
+
+        lastStreamTime = curStreamTime;
 
         if(bEncode)
         {
