@@ -29,7 +29,7 @@ extern "C"
 #include <memory>
 
 
-void Convert444to420(LPBYTE input, int width, int pitch, int height, int startY, int endY, LPBYTE *output);
+void Convert444toI420(LPBYTE input, int width, int pitch, int height, int startY, int endY, LPBYTE *output);
 void Convert444toNV12(LPBYTE input, int width, int inPitch, int outPitch, int height, int startY, int endY, LPBYTE *output);
 
 

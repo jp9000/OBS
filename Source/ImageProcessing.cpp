@@ -19,7 +19,7 @@
 #include "Main.h"
 
 
-void Convert444to420(LPBYTE input, int width, int pitch, int height, int startY, int endY, LPBYTE *output)
+void Convert444toI420(LPBYTE input, int width, int pitch, int height, int startY, int endY, LPBYTE *output)
 {
     LPBYTE lumPlane     = output[0];
     LPBYTE uPlane       = output[1];
