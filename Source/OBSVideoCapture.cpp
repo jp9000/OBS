@@ -54,6 +54,7 @@ struct Convert444Data
     bool bKillThread;
     HANDLE hSignalConvert, hSignalComplete;
     int width, height, inPitch, outPitch, startY, endY;
+    DWORD numThreads;
 };
 
 DWORD STDCALL Convert444Thread(Convert444Data *data)
@@ -62,6 +63,7 @@ DWORD STDCALL Convert444Thread(Convert444Data *data)
     {
         WaitForSingleObject(data->hSignalConvert, INFINITE);
         if(data->bKillThread) break;
+        profileParallelSegment("Convert444Thread(s)", data->numThreads);
         if(data->bNV12)
             Convert444toNV12(data->input, data->width, data->inPitch, data->outPitch, data->height, data->startY, data->endY, data->output);
         else
@@ -604,6 +606,7 @@ void OBS::MainCaptureLoop()
         convertInfo[i].hSignalConvert  = CreateEvent(NULL, FALSE, FALSE, NULL);
         convertInfo[i].hSignalComplete = CreateEvent(NULL, FALSE, FALSE, NULL);
         convertInfo[i].bNV12 = bUsingQSV;
+        convertInfo[i].numThreads = numThreads;
 
         if(i == 0)
             convertInfo[i].startY = 0;
