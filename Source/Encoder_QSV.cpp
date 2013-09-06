@@ -345,6 +345,23 @@ public:
         this->width  = width;
         this->height = height;
 
+        List<mfxExtBuffer*> ext_params;
+
+        mfxExtVideoSignalInfo vsi;
+        zero(vsi);
+        vsi.Header.BufferId = MFX_EXTBUFF_VIDEO_SIGNAL_INFO;
+        vsi.Header.BufferSz = sizeof(vsi);
+
+        vsi.ColourDescriptionPresent = 1;
+        vsi.ColourPrimaries = colorDesc.primaries;
+        vsi.MatrixCoefficients = colorDesc.matrix;
+        vsi.TransferCharacteristics = colorDesc.transfer;
+        vsi.VideoFullRange = colorDesc.fullRange;
+        vsi.VideoFormat = 5; //unspecified
+
+        params.ExtParam = ext_params.Array();
+        params.NumExtParam = ext_params.Num();
+
         bool bHaveCustomImpl = false;
         impl_parameters custom = { 0 };
 
