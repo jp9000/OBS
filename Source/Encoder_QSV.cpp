@@ -137,6 +137,12 @@ namespace
     private:
         MutexLock() {}
     };
+
+    template <class T>
+    void zero(T& t, size_t size=sizeof(T))
+    {
+        memset(&t, 0, size);
+    }
 }
 
 bool CheckQSVHardwareSupport(bool log=true)
@@ -259,7 +265,7 @@ class QSVEncoder : public VideoEncoder
 
         mfxPayload& sei_payload = *sei_payloads.CreateNew();
 
-        memset(&sei_payload, 0, sizeof(sei_payload));
+        zero(sei_payload);
 
         sei_payload.Type = type;
         sei_payload.BufSize = sei_message_buffer.Num()-offset;
@@ -307,7 +313,7 @@ public:
         
         UINT keyframeInterval = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 6);
 
-        memset(&params, 0, sizeof(params));
+        zero(params);
         params.mfx.CodecId = MFX_CODEC_AVC;
         params.mfx.TargetUsage = MFX_TARGETUSAGE_BEST_QUALITY;
         params.mfx.TargetKbps = maxBitrate;
@@ -402,7 +408,7 @@ public:
         }
 
         mfxFrameAllocRequest req;
-        memset(&req, 0, sizeof(req));
+        zero(req);
 
         auto log_impl = [&](mfxIMPL impl, const mfxIMPL intf) {
             mfxIMPL actual;
@@ -492,11 +498,11 @@ public:
             encode_tasks[i].ctrl = nullptr;
 
             mfxFrameSurface1& surf = encode_tasks[i].surf;
-            memset(&surf, 0, sizeof(mfxFrameSurface1));
+            zero(surf);
             memcpy(&surf.Info, &params.mfx.FrameInfo, sizeof(params.mfx.FrameInfo));
             
             mfxBitstream& bs = encode_tasks[i].bs;
-            memset(&bs, 0, sizeof(mfxBitstream));
+            zero(bs);
             bs.Data = bs_start + i*bs_size;
             bs.MaxLength = bs_size;
 
@@ -511,11 +517,11 @@ public:
         frame_buff.SetSize(frame_size * frames.Num() + 15);
 
         mfxU8* frame_start = (mfxU8*)(((size_t)frame_buff.Array() + 15)/16*16);
-        memset(frame_start, 0, frame_size * frames.Num());
+        zero(*frame_start, frame_size * frames.Num());
         for(unsigned i = 0; i < frames.Num(); i++)
         {
             mfxFrameData& frame = frames[i];
-            memset(&frame, 0, sizeof(mfxFrameData));
+            zero(frame);
             frame.Y = frame_start + i * frame_size;
             frame.UV = frame_start + i * frame_size + lum_channel_size;
             frame.V = frame.UV + 1;
@@ -530,10 +536,10 @@ public:
         Log(TEXT("%s"), GetInfoString().Array());
         Log(TEXT("------------------------------------------"));
 
-        memset(&ctrl, 0, sizeof(ctrl));
+        zero(ctrl);
         ctrl.FrameType = MFX_FRAMETYPE_I | MFX_FRAMETYPE_REF | MFX_FRAMETYPE_IDR;
 
-        memset(&sei_ctrl, 0, sizeof(sei_ctrl));
+        zero(sei_ctrl);
 
         InitSEIUserData();
 
@@ -962,10 +968,10 @@ public:
         if(!HeaderPacket.Num())
         {
             mfxVideoParam header_query;
-            memset(&header_query, 0, sizeof(header_query));
+            zero(header_query);
             mfxU8 sps[100], pps[100];
             mfxExtCodingOptionSPSPPS headers;
-            memset(&headers, 0, sizeof(headers));
+            zero(headers);
             headers.Header.BufferId = MFX_EXTBUFF_CODING_OPTION_SPSPPS;
             headers.Header.BufferSz = sizeof(mfxExtCodingOptionSPSPPS);
             headers.SPSBuffer = sps;
