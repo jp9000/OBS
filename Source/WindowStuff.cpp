@@ -2993,14 +2993,6 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 ItemModifyType GetItemModifyType(const Vect2 &mousePos, const Vect2 &itemPos, const Vect2 &itemSize, const Vect4 &crop, const Vect2 &scaleVal)
 {
     Vect2 lowerRight = itemPos+itemSize;
-    if( mousePos.x < itemPos.x    ||
-        mousePos.y < itemPos.y    ||
-        mousePos.x > lowerRight.x ||
-        mousePos.y > lowerRight.y )
-    {
-        return ItemModifyType_None;
-    }
-
     float epsilon = 10.0f;
 
     Vect2 croppedItemPos = itemPos + Vect2(crop.x / scaleVal.x, crop.y / scaleVal.y);
