@@ -189,7 +189,7 @@ class QSVEncoder : public VideoEncoder
 
     mfxEncodeCtrl ctrl,
                   sei_ctrl;
-    
+
     List<mfxU8> bs_buff;
     struct encode_task
     {
@@ -310,7 +310,7 @@ public:
 
         bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR")) != 0;
         bUseCFR = bUseCFR_;
-        
+
         UINT keyframeInterval = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 6);
 
         zero(params);
@@ -517,7 +517,7 @@ public:
             mfxFrameSurface1& surf = encode_tasks[i].surf;
             zero(surf);
             memcpy(&surf.Info, &params.mfx.FrameInfo, sizeof(params.mfx.FrameInfo));
-            
+
             mfxBitstream& bs = encode_tasks[i].bs;
             zero(bs);
             bs.Data = bs_start + i*bs_size;
@@ -881,7 +881,7 @@ public:
         if(!bFirstFrameQueued)
             task.ctrl = &sei_ctrl;
         bFirstFrameQueued = true;
-        
+
         MutexLock lock(frame_mutex);
 
         mfxBitstream& bs = task.bs;
