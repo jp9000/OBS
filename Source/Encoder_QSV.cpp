@@ -128,6 +128,15 @@ namespace
         return t/MFX_TIME_FACTOR;
     }
 #undef MFX_TIME_FACTOR
+
+    struct MutexLock
+    {
+        HANDLE mutex;
+        ~MutexLock() { OSLeaveMutex(mutex); }
+        MutexLock(HANDLE mutex_) : mutex(mutex_) { OSEnterMutex(mutex); }
+    private:
+        MutexLock() {}
+    };
 }
 
 bool CheckQSVHardwareSupport(bool log=true)
@@ -193,6 +202,7 @@ class QSVEncoder : public VideoEncoder
 
     List<mfxU8> frame_buff;
     List<mfxFrameData> frames;
+    HANDLE frame_mutex;
 
     int fps;
 
@@ -294,7 +304,7 @@ public:
 
         bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR")) != 0;
         bUseCFR = bUseCFR_;
-
+        
         UINT keyframeInterval = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 6);
 
         memset(&params, 0, sizeof(params));
@@ -512,6 +522,7 @@ public:
             frame.Pitch = fi.Width;
         }
 
+        frame_mutex = OSCreateMutex();
 
         Log(TEXT("Using %u encode tasks"), encode_tasks.Num());
 
@@ -535,6 +546,7 @@ public:
     ~QSVEncoder()
     {
         ClearPackets();
+        OSCloseMutex(frame_mutex);
     }
 
     virtual void RequestBuffers(LPVOID buffers)
@@ -543,6 +555,9 @@ public:
             return;
 
         mfxFrameData& buff = *(mfxFrameData*)buffers;
+
+        MutexLock lock(frame_mutex);
+
         if(buff.MemId && !frames[(unsigned)buff.MemId-1].Locked) //Reuse buffer if not in use
             return;
 
@@ -809,6 +824,8 @@ public:
     {
         for(unsigned i = 0; i < msdk_locked_tasks.Num();)
         {
+            MutexLock lock(frame_mutex);
+
             encode_task& task = encode_tasks[msdk_locked_tasks[i]];
             if(task.surf.Data.Locked)
             {
@@ -841,6 +858,8 @@ public:
         if(!bFirstFrameQueued)
             task.ctrl = &sei_ctrl;
         bFirstFrameQueued = true;
+        
+        MutexLock lock(frame_mutex);
 
         mfxBitstream& bs = task.bs;
         mfxFrameSurface1& surf = task.surf;
