@@ -74,7 +74,7 @@ struct BASE_EXPORT ProfileNodeInfo
         avgTimeElapsed = (DWORD)(totalTimeElapsed/(QWORD)numCalls);
         avgCpuTime = (DWORD)(cpuTimeElapsed/(QWORD)numCalls);
 
-        
+
         if(parent)  avgPercentage = (double(avgTimeElapsed)/double(parent->avgTimeElapsed))*parent->avgPercentage;
         else        avgPercentage = 100.0f;
 
