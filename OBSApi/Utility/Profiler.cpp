@@ -50,6 +50,7 @@ struct BASE_EXPORT ProfileNodeInfo
     CTSTR lpName;
 
     DWORD numCalls;
+    DWORD numParallelCalls;
     DWORD avgTimeElapsed;
     DWORD avgCpuTime;
     double avgPercentage;
@@ -70,8 +71,8 @@ struct BASE_EXPORT ProfileNodeInfo
 
     void calculateProfileData(int rootCallCount)
     {
-        avgTimeElapsed = (DWORD)(totalTimeElapsed/(QWORD)rootCallCount);
-        avgCpuTime = (DWORD)(cpuTimeElapsed/(QWORD)rootCallCount);
+        avgTimeElapsed = (DWORD)(totalTimeElapsed/(QWORD)numCalls);
+        avgCpuTime = (DWORD)(cpuTimeElapsed/(QWORD)numCalls);
 
         
         if(parent)  avgPercentage = (double(avgTimeElapsed)/double(parent->avgTimeElapsed))*parent->avgPercentage;
@@ -97,7 +98,10 @@ struct BASE_EXPORT ProfileNodeInfo
     void dumpData(int rootCallCount, int indent=0)
     {
         if(indent == 0)
+        {
+            rootCallCount = (int)floor(rootCallCount/(double)numParallelCalls+0.5);
             calculateProfileData(rootCallCount);
+        }
 
         String indentStr;
         for(int i=0; i<indent; i++)
@@ -276,6 +280,8 @@ ProfilerNode::ProfilerNode(CTSTR lpName, bool bSingularize)
 
     MonitorThread(OSGetCurrentThread());
 
+    parallelCalls = 1;
+
 exit:
     OSLeaveMutex(hProfilerMutex);
 }
@@ -298,6 +304,7 @@ ProfilerNode::~ProfilerNode()
             info->cpuTimeElapsed += cpuTime;
             info->lastCpuTimeElapsed = cpuTime;
         }
+        info->numParallelCalls = parallelCalls;
     }
 
     if(!bSingularNode)
@@ -312,4 +319,9 @@ void ProfilerNode::MonitorThread(HANDLE thread_)
         return;
     thread = thread_;
     cpuStartTime = OSGetThreadTime(thread);
+}
+
+void ProfilerNode::SetParallelCallCount(DWORD num)
+{
+    parallelCalls = num;
 }
