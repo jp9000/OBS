@@ -3006,7 +3006,13 @@ ItemModifyType GetItemModifyType(const Vect2 &mousePos, const Vect2 &itemPos, co
     Vect2 croppedItemPos = itemPos + Vect2(crop.x / scaleVal.x, crop.y / scaleVal.y);
     Vect2 croppedLowerRight = lowerRight - Vect2(crop.w / scaleVal.x, crop.z / scaleVal.y);
 
-    
+    if( mousePos.x < croppedItemPos.x    ||
+        mousePos.y < croppedItemPos.y    ||
+        mousePos.x > croppedLowerRight.x ||
+        mousePos.y > croppedLowerRight.y )
+    {
+        return ItemModifyType_None;
+    }    
 
     // Corner sizing
     if(mousePos.CloseTo(croppedItemPos, epsilon))
