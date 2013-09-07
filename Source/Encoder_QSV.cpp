@@ -359,6 +359,8 @@ public:
         vsi.VideoFullRange = colorDesc.fullRange;
         vsi.VideoFormat = 5; //unspecified
 
+        ext_params << (mfxExtBuffer*)&vsi;
+
         params.ExtParam = ext_params.Array();
         params.NumExtParam = ext_params.Num();
 
