@@ -288,22 +288,27 @@ bool OBS::SetScene(CTSTR lpScene)
         //todo: cache scenes maybe?  undecided.  not really as necessary with global sources
         OSEnterMutex(hSceneMutex);
 
-        UINT numSources = scene->sceneItems.Num();
-        for(UINT i=0; i<numSources; i++)
+        UINT numSources;
+
+        if (scene)
         {
-            XElement *source = scene->sceneItems[i]->GetElement();
-            String className = source->GetString(TEXT("class"));
-            if(scene->sceneItems[i]->bRender && className == "GlobalSource") {
-                XElement *globalSourceData = source->GetElement(TEXT("data"));
-                String globalSourceName = globalSourceData->GetString(TEXT("name"));
-                if(App->GetGlobalSource(globalSourceName) != NULL) {
-                    App->GetGlobalSource(globalSourceName)->GlobalSourceLeaveScene();
+            //shutdown previous scene, if any
+            numSources = scene->sceneItems.Num();
+            for(UINT i=0; i<numSources; i++)
+            {
+                XElement *source = scene->sceneItems[i]->GetElement();
+                String className = source->GetString(TEXT("class"));
+                if(scene->sceneItems[i]->bRender && className == "GlobalSource") {
+                    XElement *globalSourceData = source->GetElement(TEXT("data"));
+                    String globalSourceName = globalSourceData->GetString(TEXT("name"));
+                    if(App->GetGlobalSource(globalSourceName) != NULL) {
+                        App->GetGlobalSource(globalSourceName)->GlobalSourceLeaveScene();
+                    }
                 }
             }
-        }
 
-        if(scene)
             scene->EndScene();
+        }
 
         Scene *previousScene = scene;
         scene = newScene;
