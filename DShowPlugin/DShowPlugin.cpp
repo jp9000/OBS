@@ -2113,22 +2113,20 @@ bool STDCALL ConfigureDShowSource(XElement *element, bool bCreating)
     if(!data)
         data = element->CreateElement(TEXT("data"));
 
-    ConfigDialogData *configData = new ConfigDialogData;
-    configData->lpName = element->GetName();
-    configData->data = data;
-    configData->bGlobalSource = (scmpi(element->GetParent()->GetName(), TEXT("global sources")) == 0);
-    configData->bCreating = bCreating;
+    ConfigDialogData configData;
+    configData.lpName = element->GetName();
+    configData.data = data;
+    configData.bGlobalSource = (scmpi(element->GetParent()->GetName(), TEXT("global sources")) == 0);
+    configData.bCreating = bCreating;
 
-    if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_CONFIG), API->GetMainWindow(), ConfigureDialogProc, (LPARAM)configData) == IDOK)
+    if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_CONFIG), API->GetMainWindow(), ConfigureDialogProc, (LPARAM)&configData) == IDOK)
     {
         element->SetInt(TEXT("cx"), data->GetInt(TEXT("resolutionWidth")));
         element->SetInt(TEXT("cy"), data->GetInt(TEXT("resolutionHeight")));
 
-        delete configData;
         return true;
     }
 
-    delete configData;
     return false;
 }
 
