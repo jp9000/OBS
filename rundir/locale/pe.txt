@@ -1,3 +1,4 @@
+Cancel="Avast"
 MoveToBottom="To the bilge"
 MoveToTop="Move it topside"
 
