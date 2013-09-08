@@ -587,7 +587,7 @@ OBS::OBS()
     ULARGE_INTEGER currentTime;
     FILETIME systemTime;
 
-    lastUpdateTime.QuadPart = GlobalConfig->GetInt(TEXT("General"), TEXT("LastUpdateCheck"), 0);
+    lastUpdateTime.QuadPart = GlobalConfig->GetInt(TEXT("General"), OBS_CONFIG_UPDATE_KEY, 0);
 
     GetSystemTimeAsFileTime(&systemTime);
     currentTime.LowPart = systemTime.dwLowDateTime;
@@ -599,7 +599,7 @@ OBS::OBS()
 
     if (currentTime.QuadPart - lastUpdateTime.QuadPart >= 3600)
     {
-        GlobalConfig->SetInt(TEXT("General"), TEXT("LastUpdateCheck"), (int)currentTime.QuadPart);
+        GlobalConfig->SetInt(TEXT("General"), OBS_CONFIG_UPDATE_KEY, (int)currentTime.QuadPart);
         OSCloseThread(OSCreateThread((XTHREAD)CheckUpdateThread, NULL));
     }
 #endif

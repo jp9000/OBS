@@ -86,6 +86,12 @@ extern TCHAR        lpAppDataPath[MAX_PATH];
 #define OBS_DISABLE_AUTOUPDATE 1
 #endif
 
+#if defined(_WIN64)
+#define OBS_CONFIG_UPDATE_KEY TEXT("LastUpdateCheck64")
+#else
+#define OBS_CONFIG_UPDATE_KEY TEXT("LastUpdateCheck")
+#endif
+
 #define OBS_WINDOW_CLASS         TEXT("OBSWindowClass")
 #define OBS_RENDERFRAME_CLASS    TEXT("OBSRenderFrame")
 #define OBS_PROJECTORFRAME_CLASS TEXT("OBSProjectorFrame")
