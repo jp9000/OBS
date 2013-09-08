@@ -320,13 +320,13 @@ void Scene::RenderSelections(Shader *solidPixelShader)
             Vect2 baseScale = item->GetSource() ? item->GetSource()->GetSize() : item->GetSize();
             Vect2 cropFactor = baseScale / item->GetSize();
             Vect4 crop = item->GetCrop();
-            Vect2 pos  = API->MapFrameToWindowPos(item->GetPos())+1.0f;
+            Vect2 pos  = API->MapFrameToWindowPos(item->GetPos());
             Vect2 scale = API->GetFrameToWindowScale();
             crop.x *= scale.x; crop.y *= scale.y;
             crop.z *= scale.y; crop.w *= scale.x;
             pos.x += crop.x;
             pos.y += crop.y;
-            Vect2 size = API->MapFrameToWindowSize(item->GetSize())-2.0f;
+            Vect2 size = API->MapFrameToWindowSize(item->GetSize());
             size.x -= (crop.x + crop.w);
             size.y -= (crop.y + crop.z);
             Vect2 selectBoxSize = Vect2(10.0f, 10.0f);
