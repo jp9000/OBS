@@ -19,9 +19,11 @@ for /D /r %%d in (crowdin\*) do (
 		set localename=zh
 	) else ( if !longlocale!==zh-TW (
 		set localename=tw
+	) else ( if !longlocale!==ur-PK (
+		set localename=ur
 	) else (
 		set localename=!longlocale:~-2!
-	) ) ) ) ) ) ) )
+	) ) ) ) ) ) ) ) )
 	for /f %%f in ("crowdin\!longlocale!\Main\!shortlocale!.ini") do set size=%%~zf
 	if !size! gtr 0 (
 		echo Found locale !longlocale!, copying to !localename!
