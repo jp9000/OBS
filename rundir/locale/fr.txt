@@ -18,6 +18,7 @@ Gamma="Gamma:"
 GlobalSources="Sources globales…"
 IncompatibleModules="Des modules de \"hook\" incompatibles ont été détectés dans le processus d'OBS. Vérifiez qu'OBS est ajouté à la liste des exclusions d'autres programmes de capture ou d'overlay tels que FRAPS, ASUS/MSI OSD, DXTory, etc.. Vous devrez peut-être redémarrer OBS pour que les changements prennent effet.\r\n\r\nVous pouvez ignorer cet avertissement et continuer au risque qu'OBS ne se bloque."
 MicrophoneFailure="Une erreur s'est produite lors de l'initialisation du microphone - il n'est peut être pas branché, ou une autre application pourrait l'utiliser en mode exclusif."
+MonitorNum="Moniteur $1"
 MoveDown="Déplacer vers le bas"
 MoveToBottom="Déplacer en bas"
 MoveToTop="Déplacer en haut"
@@ -70,6 +71,7 @@ MainMenu.Settings="&Paramètres"
 
 MainMenu.Settings.AlwaysOnTop="&Toujours au premier plan"
 MainMenu.Settings.FullscreenMode="Aperçu &Plein-écran"
+MainMenu.Settings.Projector="&Projecteur"
 
 MainMenu.File.Exit="&Quitter"
 MainMenu.File.Save="&Sauvegarder"
@@ -186,6 +188,7 @@ Settings.Encoding.Video.QualityTooltip="Ce paramètre va tenter d'obtenir une ce
 
 Settings.General.Add="Ajouter nouveau"
 Settings.General.ConfirmDelete="Êtes-vous sûr de vouloir supprimer le profil '$1'?"
+Settings.General.EnableProjectorCursor="Activer curseur sur le projecteur"
 Settings.General.InvalidName="Le nom des profils ne peut pas utiliser les caractères suivants:\r\n\\ / : * ? \" < > |"
 Settings.General.Language="Langue:"
 Settings.General.Profile="Profils des paramètres:"
