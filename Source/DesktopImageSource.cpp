@@ -118,7 +118,7 @@ public:
         if(bWindows8MonitorCapture && !duplicator)
         {
             retryAcquire += fSeconds;
-            if(retryAcquire > 3.0f)
+            if(retryAcquire > 0.1f)
             {
                 retryAcquire = 0.0f;
 
