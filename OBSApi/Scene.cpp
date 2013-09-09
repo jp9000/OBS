@@ -326,7 +326,7 @@ void Scene::RenderSelections(Shader *solidPixelShader)
             crop.z *= scale.y; crop.w *= scale.x;
             pos.x += crop.x;
             pos.y += crop.y;
-            Vect2 size = API->MapFrameToWindowSize(item->GetSize() + Vect2(1.0f, 1.0f));
+            Vect2 size = API->MapFrameToWindowSize(item->GetSize());
             size.x -= (crop.x + crop.w);
             size.y -= (crop.y + crop.z);
             Vect2 selectBoxSize = Vect2(10.0f, 10.0f);
