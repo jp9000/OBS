@@ -606,243 +606,255 @@ public:
         if(!encoded_tasks.Num())
             return;
 
-        encode_task& task = encode_tasks[encoded_tasks[0]];
-        auto& sp = task.sp;
-        if(MFXVideoCORE_SyncOperation(session, sp, wait) != MFX_ERR_NONE)
-            return;
+        bool logged_start = false;
 
-        mfxBitstream& bs = task.bs;
-
-        List<x264_nal_t> nalOut;
-        mfxU8 *start = bs.Data + bs.DataOffset,
-              *end = bs.Data + bs.DataOffset + bs.DataLength;
-        const static mfxU8 start_seq[] = {0, 0, 1};
-        start = std::search(start, end, start_seq, start_seq+3);
-        while(start != end)
+        for(unsigned i = 0; i < encoded_tasks.Num() && !packets.Num(); i++)
         {
-            decltype(start) next = std::search(start+1, end, start_seq, start_seq+3);
-            x264_nal_t nal;
-            nal.i_ref_idc = start[3]>>5;
-            nal.i_type = start[3]&0x1f;
-            if(nal.i_type == NAL_SLICE_IDR)
-                nal.i_ref_idc = NAL_PRIORITY_HIGHEST;
-            else if(nal.i_type == NAL_SLICE)
+            encode_task& task = encode_tasks[encoded_tasks[i]];
+            auto& sp = task.sp;
+
+            auto result = MFXVideoCORE_SyncOperation(session, sp, wait);
+            if(result == MFX_WRN_IN_EXECUTION)
+                continue;
+
+            if(result == MFX_ERR_NONE)
             {
-                switch(bs.FrameType & (MFX_FRAMETYPE_REF | (MFX_FRAMETYPE_S-1)))
+                mfxBitstream& bs = task.bs;
+
+                List<x264_nal_t> nalOut;
+                mfxU8 *start = bs.Data + bs.DataOffset,
+                    *end = bs.Data + bs.DataOffset + bs.DataLength;
+                const static mfxU8 start_seq[] = {0, 0, 1};
+                start = std::search(start, end, start_seq, start_seq+3);
+                while(start != end)
                 {
-                case MFX_FRAMETYPE_REF|MFX_FRAMETYPE_I:
-                case MFX_FRAMETYPE_REF|MFX_FRAMETYPE_P:
-                    nal.i_ref_idc = NAL_PRIORITY_HIGH;
-                    break;
-                case MFX_FRAMETYPE_REF|MFX_FRAMETYPE_B:
-                    nal.i_ref_idc = NAL_PRIORITY_LOW;
-                    break;
-                case MFX_FRAMETYPE_B:
-                    nal.i_ref_idc = NAL_PRIORITY_DISPOSABLE;
-                    break;
-                default:
-                    Log(TEXT("Unhandled frametype %u"), bs.FrameType);
-                }
-            }
-            start[3] = ((nal.i_ref_idc<<5)&0x60) | nal.i_type;
-            nal.p_payload = start;
-            nal.i_payload = int(next-start);
-            nalOut << nal;
-            start = next;
-        }
-        size_t nalNum = nalOut.Num();
-
-        packets.Clear();
-        ClearPackets();
-
-        INT64 dts;
-
-        if(bUsingDecodeTimestamp && bs.DecodeTimeStamp != MFX_TIMESTAMP_UNKNOWN)
-        {
-            dts = msFromTimestamp(bs.DecodeTimeStamp);
-        }
-        else
-            dts = outputTimestamp;
-
-        INT64 in_pts = msFromTimestamp(task.surf.Data.TimeStamp),
-              out_pts = msFromTimestamp(bs.TimeStamp);
-
-        if(!bFirstFrameProcessed && nalNum)
-        {
-            delayOffset = -dts;
-            bFirstFrameProcessed = true;
-        }
-
-        INT64 ts = INT64(outputTimestamp);
-        int timeOffset;
-
-        //if frame duplication is being used, the shift will be insignificant, so just don't bother adjusting audio
-        timeOffset = int(out_pts-dts);
-        timeOffset += frameShift;
-
-        if(nalNum && timeOffset < 0)
-        {
-            frameShift -= timeOffset;
-            timeOffset = 0;
-        }
-        //Log(TEXT("inpts: %005d, dts: %005d, pts: %005d, timestamp: %005d, offset: %005d, newoffset: %005d"), task.surf.Data.TimeStamp/90, dts, bs.TimeStamp/90, outputTimestamp, timeOffset, bs.TimeStamp/90-dts);
-
-        timeOffset = htonl(timeOffset);
-
-        BYTE *timeOffsetAddr = ((BYTE*)&timeOffset)+1;
-
-        VideoPacket *newPacket = NULL;
-
-        PacketType bestType = PacketType_VideoDisposable;
-        bool bFoundFrame = false;
-
-        for(unsigned i=0; i<nalNum; i++)
-        {
-            x264_nal_t &nal = nalOut[i];
-
-            if(nal.i_type == NAL_SEI)
-            {
-                BYTE *skip = nal.p_payload;
-                while(*(skip++) != 0x1);
-                int skipBytes = (int)(skip-nal.p_payload);
-
-                int newPayloadSize = (nal.i_payload-skipBytes);
-                BYTE *sei_start = skip+1;
-                while(sei_start < (nal.p_payload+nal.i_payload))
-                {
-                    BYTE *sei = sei_start;
-                    int sei_type = 0;
-                    while(*sei == 0xff)
+                    decltype(start) next = std::search(start+1, end, start_seq, start_seq+3);
+                    x264_nal_t nal;
+                    nal.i_ref_idc = start[3]>>5;
+                    nal.i_type = start[3]&0x1f;
+                    if(nal.i_type == NAL_SLICE_IDR)
+                        nal.i_ref_idc = NAL_PRIORITY_HIGHEST;
+                    else if(nal.i_type == NAL_SLICE)
                     {
-                        sei_type += 0xff;
-                        sei += 1;
-                    }
-                    sei_type += *sei++;
-
-                    int payload_size = 0;
-                    while(*sei == 0xff)
-                    {
-                        payload_size += 0xff;
-                        sei += 1;
-                    }
-                    payload_size += *sei++;
-
-                    const static BYTE emulation_prevention_pattern[] = {0, 0, 3};
-                    BYTE *search = sei;
-                    for(BYTE *search = sei;;)
-                    {
-                        search = std::search(search, sei+payload_size, emulation_prevention_pattern, emulation_prevention_pattern+3);
-                        if(search == sei+payload_size)
+                        switch(bs.FrameType & (MFX_FRAMETYPE_REF | (MFX_FRAMETYPE_S-1)))
+                        {
+                        case MFX_FRAMETYPE_REF|MFX_FRAMETYPE_I:
+                        case MFX_FRAMETYPE_REF|MFX_FRAMETYPE_P:
+                            nal.i_ref_idc = NAL_PRIORITY_HIGH;
                             break;
-                        payload_size += 1;
-                        search += 3;
+                        case MFX_FRAMETYPE_REF|MFX_FRAMETYPE_B:
+                            nal.i_ref_idc = NAL_PRIORITY_LOW;
+                            break;
+                        case MFX_FRAMETYPE_B:
+                            nal.i_ref_idc = NAL_PRIORITY_DISPOSABLE;
+                            break;
+                        default:
+                            Log(TEXT("Unhandled frametype %u"), bs.FrameType);
+                        }
                     }
+                    start[3] = ((nal.i_ref_idc<<5)&0x60) | nal.i_type;
+                    nal.p_payload = start;
+                    nal.i_payload = int(next-start);
+                    nalOut << nal;
+                    start = next;
+                }
+                size_t nalNum = nalOut.Num();
 
-                    int sei_size = (int)(sei-sei_start) + payload_size;
-                    sei_start[-1] = NAL_SEI;
+                packets.Clear();
+                ClearPackets();
 
-                    if(sei_type == SEI_USER_DATA_UNREGISTERED) {
-                        SEIData.Clear();
-                        BufferOutputSerializer packetOut(SEIData);
+                INT64 dts;
 
-                        packetOut.OutputDword(htonl(sei_size+1));
-                        packetOut.Serialize(sei_start-1, sei_size+1);
-                    } else {
+                if(bUsingDecodeTimestamp && bs.DecodeTimeStamp != MFX_TIMESTAMP_UNKNOWN)
+                {
+                    dts = msFromTimestamp(bs.DecodeTimeStamp);
+                }
+                else
+                    dts = outputTimestamp;
+
+                INT64 in_pts = msFromTimestamp(task.surf.Data.TimeStamp),
+                    out_pts = msFromTimestamp(bs.TimeStamp);
+
+                if(!bFirstFrameProcessed && nalNum)
+                {
+                    delayOffset = -dts;
+                    bFirstFrameProcessed = true;
+                }
+
+                INT64 ts = INT64(outputTimestamp);
+                int timeOffset;
+
+                //if frame duplication is being used, the shift will be insignificant, so just don't bother adjusting audio
+                timeOffset = int(out_pts-dts);
+                timeOffset += frameShift;
+
+                if(nalNum && timeOffset < 0)
+                {
+                    frameShift -= timeOffset;
+                    timeOffset = 0;
+                }
+                //Log(TEXT("inpts: %005d, dts: %005d, pts: %005d, timestamp: %005d, offset: %005d, newoffset: %005d"), task.surf.Data.TimeStamp/90, dts, bs.TimeStamp/90, outputTimestamp, timeOffset, bs.TimeStamp/90-dts);
+
+                timeOffset = htonl(timeOffset);
+
+                BYTE *timeOffsetAddr = ((BYTE*)&timeOffset)+1;
+
+                VideoPacket *newPacket = NULL;
+
+                PacketType bestType = PacketType_VideoDisposable;
+                bool bFoundFrame = false;
+
+                for(unsigned i=0; i<nalNum; i++)
+                {
+                    x264_nal_t &nal = nalOut[i];
+
+                    if(nal.i_type == NAL_SEI)
+                    {
+                        BYTE *skip = nal.p_payload;
+                        while(*(skip++) != 0x1);
+                        int skipBytes = (int)(skip-nal.p_payload);
+
+                        int newPayloadSize = (nal.i_payload-skipBytes);
+                        BYTE *sei_start = skip+1;
+                        while(sei_start < (nal.p_payload+nal.i_payload))
+                        {
+                            BYTE *sei = sei_start;
+                            int sei_type = 0;
+                            while(*sei == 0xff)
+                            {
+                                sei_type += 0xff;
+                                sei += 1;
+                            }
+                            sei_type += *sei++;
+
+                            int payload_size = 0;
+                            while(*sei == 0xff)
+                            {
+                                payload_size += 0xff;
+                                sei += 1;
+                            }
+                            payload_size += *sei++;
+
+                            const static BYTE emulation_prevention_pattern[] = {0, 0, 3};
+                            BYTE *search = sei;
+                            for(BYTE *search = sei;;)
+                            {
+                                search = std::search(search, sei+payload_size, emulation_prevention_pattern, emulation_prevention_pattern+3);
+                                if(search == sei+payload_size)
+                                    break;
+                                payload_size += 1;
+                                search += 3;
+                            }
+
+                            int sei_size = (int)(sei-sei_start) + payload_size;
+                            sei_start[-1] = NAL_SEI;
+
+                            if(sei_type == SEI_USER_DATA_UNREGISTERED) {
+                                SEIData.Clear();
+                                BufferOutputSerializer packetOut(SEIData);
+
+                                packetOut.OutputDword(htonl(sei_size+1));
+                                packetOut.Serialize(sei_start-1, sei_size+1);
+                            } else {
+                                if (!newPacket)
+                                    newPacket = CurrentPackets.CreateNew();
+
+                                BufferOutputSerializer packetOut(newPacket->Packet);
+
+                                packetOut.OutputDword(htonl(sei_size+1));
+                                packetOut.Serialize(sei_start-1, sei_size+1);
+                            }
+                            sei_start += sei_size;
+                        }
+                    }
+                    else if(nal.i_type == NAL_AUD)
+                    {
+                        BYTE *skip = nal.p_payload;
+                        while(*(skip++) != 0x1);
+                        int skipBytes = (int)(skip-nal.p_payload);
+
+                        int newPayloadSize = (nal.i_payload-skipBytes);
+
                         if (!newPacket)
                             newPacket = CurrentPackets.CreateNew();
 
                         BufferOutputSerializer packetOut(newPacket->Packet);
 
-                        packetOut.OutputDword(htonl(sei_size+1));
-                        packetOut.Serialize(sei_start-1, sei_size+1);
+                        packetOut.OutputDword(htonl(newPayloadSize));
+                        packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
                     }
-                    sei_start += sei_size;
+                    else if(nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE)
+                    {
+                        BYTE *skip = nal.p_payload;
+                        while(*(skip++) != 0x1);
+                        int skipBytes = (int)(skip-nal.p_payload);
+
+                        if (!newPacket)
+                            newPacket = CurrentPackets.CreateNew();
+
+                        if (!bFoundFrame)
+                        {
+                            newPacket->Packet.Insert(0, (nal.i_type == NAL_SLICE_IDR) ? 0x17 : 0x27);
+                            newPacket->Packet.Insert(1, 1);
+                            newPacket->Packet.InsertArray(2, timeOffsetAddr, 3);
+
+                            bFoundFrame = true;
+                        }
+
+                        int newPayloadSize = (nal.i_payload-skipBytes);
+                        BufferOutputSerializer packetOut(newPacket->Packet);
+
+                        packetOut.OutputDword(htonl(newPayloadSize));
+                        packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
+
+                        switch(nal.i_ref_idc)
+                        {
+                        case NAL_PRIORITY_DISPOSABLE:   bestType = MAX(bestType, PacketType_VideoDisposable);  break;
+                        case NAL_PRIORITY_LOW:          bestType = MAX(bestType, PacketType_VideoLow);         break;
+                        case NAL_PRIORITY_HIGH:         bestType = MAX(bestType, PacketType_VideoHigh);        break;
+                        case NAL_PRIORITY_HIGHEST:      bestType = MAX(bestType, PacketType_VideoHighest);     break;
+                        }
+                    }
+                    /*else if(nal.i_type == NAL_SPS)
+                    {
+                    VideoPacket *newPacket = CurrentPackets.CreateNew();
+                    BufferOutputSerializer headerOut(newPacket->Packet);
+
+                    headerOut.OutputByte(0x17);
+                    headerOut.OutputByte(0);
+                    headerOut.Serialize(timeOffsetAddr, 3);
+                    headerOut.OutputByte(1);
+                    headerOut.Serialize(nal.p_payload+5, 3);
+                    headerOut.OutputByte(0xff);
+                    headerOut.OutputByte(0xe1);
+                    headerOut.OutputWord(htons(nal.i_payload-4));
+                    headerOut.Serialize(nal.p_payload+4, nal.i_payload-4);
+
+                    x264_nal_t &pps = nalOut[i+1]; //the PPS always comes after the SPS
+
+                    headerOut.OutputByte(1);
+                    headerOut.OutputWord(htons(pps.i_payload-4));
+                    headerOut.Serialize(pps.p_payload+4, pps.i_payload-4);
+                    }*/
+                    else
+                        continue;
                 }
-            }
-            else if(nal.i_type == NAL_AUD)
-            {
-                BYTE *skip = nal.p_payload;
-                while(*(skip++) != 0x1);
-                int skipBytes = (int)(skip-nal.p_payload);
 
-                int newPayloadSize = (nal.i_payload-skipBytes);
+                packetTypes << bestType;
 
-                if (!newPacket)
-                    newPacket = CurrentPackets.CreateNew();
-
-                BufferOutputSerializer packetOut(newPacket->Packet);
-
-                packetOut.OutputDword(htonl(newPayloadSize));
-                packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
-            }
-            else if(nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE)
-            {
-                BYTE *skip = nal.p_payload;
-                while(*(skip++) != 0x1);
-                int skipBytes = (int)(skip-nal.p_payload);
-
-                if (!newPacket)
-                    newPacket = CurrentPackets.CreateNew();
-
-                if (!bFoundFrame)
+                packets.SetSize(CurrentPackets.Num());
+                for(UINT i=0; i<packets.Num(); i++)
                 {
-                    newPacket->Packet.Insert(0, (nal.i_type == NAL_SLICE_IDR) ? 0x17 : 0x27);
-                    newPacket->Packet.Insert(1, 1);
-                    newPacket->Packet.InsertArray(2, timeOffsetAddr, 3);
-
-                    bFoundFrame = true;
-                }
-
-                int newPayloadSize = (nal.i_payload-skipBytes);
-                BufferOutputSerializer packetOut(newPacket->Packet);
-
-                packetOut.OutputDword(htonl(newPayloadSize));
-                packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
-
-                switch(nal.i_ref_idc)
-                {
-                case NAL_PRIORITY_DISPOSABLE:   bestType = MAX(bestType, PacketType_VideoDisposable);  break;
-                case NAL_PRIORITY_LOW:          bestType = MAX(bestType, PacketType_VideoLow);         break;
-                case NAL_PRIORITY_HIGH:         bestType = MAX(bestType, PacketType_VideoHigh);        break;
-                case NAL_PRIORITY_HIGHEST:      bestType = MAX(bestType, PacketType_VideoHighest);     break;
+                    packets[i].lpPacket = CurrentPackets[i].Packet.Array();
+                    packets[i].size     = CurrentPackets[i].Packet.Num();
                 }
             }
-            /*else if(nal.i_type == NAL_SPS)
-            {
-            VideoPacket *newPacket = CurrentPackets.CreateNew();
-            BufferOutputSerializer headerOut(newPacket->Packet);
-
-            headerOut.OutputByte(0x17);
-            headerOut.OutputByte(0);
-            headerOut.Serialize(timeOffsetAddr, 3);
-            headerOut.OutputByte(1);
-            headerOut.Serialize(nal.p_payload+5, 3);
-            headerOut.OutputByte(0xff);
-            headerOut.OutputByte(0xe1);
-            headerOut.OutputWord(htons(nal.i_payload-4));
-            headerOut.Serialize(nal.p_payload+4, nal.i_payload-4);
-
-            x264_nal_t &pps = nalOut[i+1]; //the PPS always comes after the SPS
-
-            headerOut.OutputByte(1);
-            headerOut.OutputWord(htons(pps.i_payload-4));
-            headerOut.Serialize(pps.p_payload+4, pps.i_payload-4);
-            }*/
             else
-                continue;
+                Log(TEXT("QSV task %u (index %u) aborted."), encoded_tasks[i], i);
+
+            msdk_locked_tasks << encoded_tasks[i];
+            encoded_tasks.Remove(i);
         }
-
-        packetTypes << bestType;
-
-        packets.SetSize(CurrentPackets.Num());
-        for(UINT i=0; i<packets.Num(); i++)
-        {
-            packets[i].lpPacket = CurrentPackets[i].Packet.Array();
-            packets[i].size     = CurrentPackets[i].Packet.Num();
-        }
-
-        msdk_locked_tasks << encoded_tasks[0];
-        encoded_tasks.Remove(0);
     }
 
     void CleanupLockedTasks()
