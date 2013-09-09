@@ -189,7 +189,7 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
     UINT  inputSamplesPerSec;
     UINT  inputBitsPerSample;
     UINT  inputBlockSize;
-    DWORD inputChannelMask;
+    DWORD inputChannelMask = 0;
 
     //the internal audio engine should always use floats (or so I read), but I suppose just to be safe better check
     if(pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
