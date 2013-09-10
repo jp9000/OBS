@@ -1,8 +1,8 @@
 Add="Добави"
-Preview="Визуализация"
+Preview="Преглед"
 Order="Ред"
 Apply="Приложи"
-Browse="Търси"
+Browse="Избери..."
 BuildingMP4Dialog="Изграждане на МП4"
 Cancel="Откажи"
 Color="Цвят"
@@ -181,10 +181,10 @@ Settings.Video.Monitor="Монитор:"
 Settings.Video.Resolution="Базова резолюция:"
 
 
-Sources.BitmapSource="Битмап"
+Sources.BitmapSource="Изображение"
 Sources.GlobalSource="Глобален източник"
 
-Sources.BitmapSource.Empty="Няма избран битмап. Моля селектирайте валиден битмап файл."
+Sources.BitmapSource.Empty="Няма избрано битмап изображение. Моля изберете валиден битмап файл"
 
 
 
