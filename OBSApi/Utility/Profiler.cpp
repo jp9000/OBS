@@ -36,8 +36,15 @@ HANDLE hProfilerMutex = NULL;
 
 struct BASE_EXPORT ProfileNodeInfo
 {
+    ~ProfileNodeInfo()
+    {
+        FreeData();
+    }
+
     void FreeData()
     {
+        for(UINT i = 0; i < Children.Num(); i++)
+            Children[i].FreeData();
         Children.Clear();
     }
 
