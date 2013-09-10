@@ -63,7 +63,7 @@ DWORD STDCALL Convert444Thread(Convert444Data *data)
     {
         WaitForSingleObject(data->hSignalConvert, INFINITE);
         if(data->bKillThread) break;
-        profileParallelSegment("Convert444Thread(s)", data->numThreads);
+        profileParallelSegment("Convert444Thread", "Convert444Threads", data->numThreads);
         if(data->bNV12)
             Convert444toNV12(data->input, data->width, data->inPitch, data->outPitch, data->height, data->startY, data->endY, data->output);
         else
