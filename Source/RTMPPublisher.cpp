@@ -407,8 +407,7 @@ void RTMPPublisher::FlushBufferedPackets()
 
     for (unsigned int i = 0; i < bufferedPackets.Num(); i++)
     {
-        TimedPacket packet;
-        packet = bufferedPackets[i];
+        TimedPacket &packet = bufferedPackets[i];
 
         QWORD curTime;
         do
