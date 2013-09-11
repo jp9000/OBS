@@ -47,8 +47,10 @@ class MMDeviceAudioSource : public AudioSource
     QWORD lastVideoTime;
     QWORD curVideoTime;
 
+    bool bConvert; //*workaround alarm* shouldn't have to do this in here
     UINT sampleWindowSize;
     List<float> inputBuffer;
+    List<float> convertBuffer;
     UINT inputBufferSize;
     QWORD firstTimestamp;
     QWORD lastQPCTimestamp;
@@ -190,11 +192,12 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
     UINT  inputBitsPerSample;
     UINT  inputBlockSize;
     DWORD inputChannelMask = 0;
+    WAVEFORMATEXTENSIBLE *wfext = NULL;
 
     //the internal audio engine should always use floats (or so I read), but I suppose just to be safe better check
     if(pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
     {
-        WAVEFORMATEXTENSIBLE *wfext = (WAVEFORMATEXTENSIBLE*)pwfx;
+        wfext = (WAVEFORMATEXTENSIBLE*)pwfx;
         inputChannelMask = wfext->dwChannelMask;
 
         if(wfext->SubFormat != KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)
@@ -209,16 +212,31 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
         return false;
     }
 
-    bFloat              = true;
-    inputChannels       = pwfx->nChannels;
-    inputBitsPerSample  = 32;
-    inputBlockSize      = pwfx->nBlockAlign;
-    inputSamplesPerSec  = pwfx->nSamplesPerSec;
-
-    sampleWindowSize    = (inputSamplesPerSec/100);
+    bFloat                = true;
+    inputChannels         = pwfx->nChannels;
+    inputBitsPerSample    = 32;
+    inputBlockSize        = pwfx->nBlockAlign;
+    inputSamplesPerSec    = pwfx->nSamplesPerSec;
+    sampleWindowSize      = (inputSamplesPerSec/100);
 
     DWORD flags = bMic ? 0 : AUDCLNT_STREAMFLAGS_LOOPBACK;
+
     err = mmClient->Initialize(AUDCLNT_SHAREMODE_SHARED, flags, ConvertMSTo100NanoSec(5000), 0, pwfx, NULL);
+    //err = AUDCLNT_E_UNSUPPORTED_FORMAT;
+
+    if (err == AUDCLNT_E_UNSUPPORTED_FORMAT) { //workaround for razer kraken headset (bad drivers)
+        pwfx->nBlockAlign     = 2*pwfx->nChannels;
+        pwfx->nAvgBytesPerSec = inputSamplesPerSec*pwfx->nBlockAlign;
+        pwfx->wBitsPerSample  = 16;
+
+        wfext->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+        wfext->Samples.wValidBitsPerSample = 16;
+
+        bConvert = true;
+
+        err = mmClient->Initialize(AUDCLNT_SHAREMODE_SHARED, flags, ConvertMSTo100NanoSec(5000), 0, pwfx, NULL);
+    }
+
     if(FAILED(err))
     {
         AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not initialize audio client, result = %08lX"), (BOOL)bMic, err);
@@ -385,6 +403,19 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
             return false;
         }
 
+        UINT totalFloatsRead = numFramesRead*GetChannelCount();
+
+        if (bConvert) {
+            if (convertBuffer.Num() < totalFloatsRead)
+                convertBuffer.SetSize(totalFloatsRead);
+
+            short *shortBuffer = (short*)captureBuffer;
+            for (UINT i = 0; i < totalFloatsRead; i++)
+                convertBuffer[i] = float(shortBuffer[i])*(1.0f/32767.0f);
+
+            captureBuffer = (LPBYTE)convertBuffer.Array();
+        }
+
         if (inputBufferSize) {
             double timeAdjust = double(inputBufferSize/GetChannelCount());
             timeAdjust /= (double(GetSamplesPerSec())*0.0000001);
@@ -397,7 +428,6 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
 
         //---------------------------------------------------------
 
-        UINT totalFloatsRead = numFramesRead*GetChannelCount();
         UINT newInputBufferSize = inputBufferSize + totalFloatsRead;
         if (newInputBufferSize > inputBuffer.Num())
             inputBuffer.SetSize(newInputBufferSize);
