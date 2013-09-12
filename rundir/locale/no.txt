@@ -17,6 +17,7 @@ EnterName="Vennligst skriv inn et navn"
 Gamma="Gamma:"
 GlobalSources="Globale kilder ..."
 MicrophoneFailure="En feil oppstod ved aktivering av mikrofon-lyd, kanskje er den ikke plugget i, eller en annen applikasjon bruker den i eksklusiv modus."
+MonitorNum="Skjerm $1"
 MoveDown="Flytt ned"
 MoveToBottom="Flytt til bunnen"
 MoveToTop="Flytt til toppen"
@@ -56,19 +57,45 @@ Listbox.MoveRight="Flytt til høyre kant"
 Listbox.MoveBottom="Flytt til bunnen"
 Listbox.MoveLeft="Flytt til venstre kant"
 Listbox.Config="Egenskaper"
+Listbox.FitToScreen="Tilpass til vindu"
+Listbox.Positioning="Posisjon/størrelse"
+Listbox.ResetSize="Tilbakestill størrelse"
+Listbox.SetHotkey="Angi hurtigtast"
+
+MainMenu.File="&Fil"
+MainMenu.Help="&Hjelp"
+MainMenu.Profiles="&Profiler"
+MainMenu.Settings="&Instillinger"
+
+MainMenu.Settings.AlwaysOnTop="&Alltid øverst"
 
 
 
 
+MainWindow.Scenes="Scener:"
+MainWindow.Sources="Kilder:"
+MainWindow.StopTest="Stop Forhåndsvisning"
+MainWindow.TestStream="Forhåndsvis Strøm"
 
+Plugins.Configure="Konfigurer"
+Plugins.Description="Forklaring:"
+Plugins.Filename="Filnavn:"
 
+Reconnecting.Retrying="Kunne ikke gjenopprette tilkobling. Prøver på nytt"
 
+RenderView.EnableView="Aktiver visning"
+RenderView.DisplayPanel="Vis kontrollpanel"
+RenderView.ViewModeScaleToFit="Tilpass video til vindu"
 
+Scene.Hotkey="Hurtigtast til scene"
+Scene.MissingSources="Kunne ikke laste alle kilder på grunn av feil instillinger eller maglende pluginer"
 
+Scene.Hotkey.AlreadyInUse="Hurtigtasten er allerede i bruk."
+Scene.Hotkey.Hotkey="Hurtigtast:"
 
+Capture.Start.FileStream.WarningCaption="Advarsel"
 
-
-
+Settings.Advanced="Avansert"
 Settings.Audio="Lyd"
 Settings.Encoding="Koding"
 Settings.General="Generelt"
@@ -85,11 +112,18 @@ Settings.Advanced.DisablePreviewEncoding="Deaktivere koding under Forhåndsvisni
 Settings.Advanced.GlobalAudioTimeAdjust="Global lyd tidsforskyvning (millisekunder):"
 Settings.Advanced.LatencyTuning="Ventetid tuningfaktor:"
 Settings.Advanced.Network="Nettverk"
+Settings.Advanced.ProcessPriority="Prosessens prioritetsklasse"
+
+Settings.Advanced.Priority.AboveNormal="Over normal"
+Settings.Advanced.Priority.High="Høy"
+
+Settings.Audio.ForceMicMono="Tving Mikrofon/Auxiliary til Mono:"
+Settings.Audio.MicTimeOffset="Mikrofonforskyvning (millisekunder):"
 
 
+Settings.Encoding.Audio.Codec="Kodek:"
 
-
-
+Settings.Encoding.Video.BufferSize="Bufferstørrelse (kbit):"
 
 
 

@@ -188,6 +188,7 @@ Settings.Encoding.Video.QualityTooltip="Ta opcja spróbuje ustawić określoną 
 
 Settings.General.Add="Dodaj nowy"
 Settings.General.ConfirmDelete="Czy jesteś pewien, że chcesz usunąć profil: '$1'?"
+Settings.General.EnableProjectorCursor="Wyświetlaj kursor ponad projektorem"
 Settings.General.InvalidName="Nazwa profilu nie może zawierać następujących znaków:\r\n\\ / : * ? \" < > |"
 Settings.General.Language="Język:"
 Settings.General.Profile="Ustawienie profilu:"

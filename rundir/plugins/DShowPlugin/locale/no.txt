@@ -1,5 +1,18 @@
+Cancel="Avbryt"
+OK="OK"
+
+DeinterlacingType.None="Ingen"
+DeinterlacingType.Linear="Lineær"
+DeinterlacingType.Linear2x="Lineær2x"
+DeinterlacingType.Yadif="Yadif"
+DeinterlacingType.Yadif2x="Yadif2x"
+DeinterlacingType.Debug="Feilsøking"
+DeviceSelection.GPUDeinterlacing="Bruk GPU"
 
 
-
+DeviceSelection.Device="Enhet:"
+DeviceSelection.Deinterlacing="Deinterlacing:"
+DeviceSelection.ExistsInScene="En kilde bruker denne enheten allerede."
+DeviceSelection.ExistsSomewhere="Denne enheten brukes allerede som en kilde i en eller flere scener."
 
 
