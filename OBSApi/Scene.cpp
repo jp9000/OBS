@@ -292,19 +292,9 @@ void Scene::Render()
         SceneItem *item = sceneItems[i];
         if(item->source && item->bRender)
         {
-            Vect4 rCrop = item->GetCrop();
-            Vect2 itemPos = item->GetPos();
-            Vect2 itemSize = item->GetSize();
-            XRect scissorRect;
-
-            scissorRect.x  = int(itemPos.x + rCrop.x);
-            scissorRect.y  = int(itemPos.y + rCrop.y);
-            scissorRect.cx = int(itemSize.x - rCrop.w - rCrop.x);
-            scissorRect.cy = int(itemSize.y - rCrop.z - rCrop.y);
-
-            GS->SetScissorRect(&scissorRect);
+            GS->SetCropping (item->GetCrop().x, item->GetCrop().y, item->GetCrop().w, item->GetCrop().z);
             item->source->Render(item->pos, item->size);
-            GS->SetScissorRect(NULL);
+            GS->SetCropping (0.0f, 0.0f, 0.0f, 0.0f);
         }
     }
 }
