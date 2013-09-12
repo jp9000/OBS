@@ -2982,8 +2982,11 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
         default:
             if (App && message == App->wmExplorerRestarted)
             {
-                App->bNotificationAreaIcon = false;
-                App->ShowNotificationAreaIcon();
+                if(App->bNotificationAreaIcon)
+                {
+                    App->bNotificationAreaIcon = false;
+                    App->ShowNotificationAreaIcon();
+                }
             }
             return DefWindowProc(hwnd, message, wParam, lParam);
     }
