@@ -799,10 +799,10 @@ void D3D10System::SetCropping(float left, float top, float right, float bottom)
 
 void D3D10System::DrawSpriteEx(Texture *texture, DWORD color, float x, float y, float x2, float y2, float u, float v, float u2, float v2)
 {
-    DrawSpriteExRotate(texture, color, x, y, x2, y2, u, v, u2, v2, 0.0f);
+    DrawSpriteExRotate(texture, color, x, y, x2, y2, 0.0f, u, v, u2, v2, 0.0f);
 }
 
-void D3D10System::DrawSpriteExRotate(Texture *texture, DWORD color, float x, float y, float x2, float y2, float u, float v, float u2, float v2, float degrees)
+void D3D10System::DrawSpriteExRotate(Texture *texture, DWORD color, float x, float y, float x2, float y2, float degrees, float u, float v, float u2, float v2, float texDegrees)
 {
     if(!curPixelShader)
         return; 
@@ -866,16 +866,33 @@ void D3D10System::DrawSpriteExRotate(Texture *texture, DWORD color, float x, flo
     data->VertList[2].Set(x2, y,  0.0f);
     data->VertList[3].Set(x2, y2, 0.0f);
 
+    if (!CloseFloat(degrees, 0.0f)) {
+        List<Vect> &coords = data->VertList;
+
+        Vect2 center(x+totalSize.x/2, y+totalSize.y/2);
+
+        Matrix rotMatrix;
+        rotMatrix.SetIdentity();
+        rotMatrix.Rotate(AxisAngle(0.0f, 0.0f, 1.0f, RAD(degrees)));
+
+        for (int i = 0; i < 4; i++) {
+            Vect val = coords[i]-Vect(center);
+            val.TransformVector(rotMatrix);
+            coords[i] = val;
+            coords[i] += Vect(center);
+        }
+    }
+
     List<UVCoord> &coords = data->UVList[0];
     coords[0].Set(u,  v);
     coords[1].Set(u,  v2);
     coords[2].Set(u2, v);
     coords[3].Set(u2, v2);
 
-    if (!CloseFloat(degrees, 0.0f)) {
+    if (!CloseFloat(texDegrees, 0.0f)) {
         Matrix rotMatrix;
         rotMatrix.SetIdentity();
-        rotMatrix.Rotate(AxisAngle(0.0f, 0.0f, 1.0f, -RAD(degrees)));
+        rotMatrix.Rotate(AxisAngle(0.0f, 0.0f, 1.0f, -RAD(texDegrees)));
 
         Vect2 minVal = Vect2(0.0f, 0.0f);
         for (int i = 0; i < 4; i++) {

@@ -483,7 +483,7 @@ public:
                     lrCoord.x, lrCoord.y);
             else
                 GS->DrawSpriteExRotate(lastRendered, (opacity255<<24) | 0xFFFFFF,
-                    pos.x, pos.y, pos.x+size.x, pos.y+size.y,
+                    pos.x, pos.y, pos.x+size.x, pos.y+size.y, 0.0f,
                     ulCoord.x, ulCoord.y,
                     lrCoord.x, lrCoord.y, rotateDegrees);
 

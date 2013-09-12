@@ -459,7 +459,7 @@ public:
     virtual void  SetCropping(float left, float top, float right, float bottom);
 
     virtual void  CopyTexture(Texture *texDest, Texture *texSrc);
-    virtual void  DrawSpriteExRotate(Texture *texture, DWORD color, float x, float y, float x2, float y2, float u, float v, float u2, float v2, float degrees);
+    virtual void  DrawSpriteExRotate(Texture *texture, DWORD color, float x, float y, float x2, float y2, float degrees, float u, float v, float u2, float v2, float texDegrees);
 };
 
 inline ID3D10Device*        GetD3D()        {return static_cast<ID3D10Device*>(GS->GetDevice());}
