@@ -821,10 +821,11 @@ void D3D10System::DrawSpriteExRotate(Texture *texture, DWORD color, float x, flo
     //------------------------------
     // crop positional values
 
+    // commented cropping stuff
     Vect2 totalSize = Vect2(x2-x, y2-y);
-    Vect2 invMult   = Vect2(totalSize.x < 0.0f ? -1.0f : 1.0f, totalSize.y < 0.0f ? -1.0f : 1.0f);
+//    Vect2 invMult   = Vect2(totalSize.x < 0.0f ? -1.0f : 1.0f, totalSize.y < 0.0f ? -1.0f : 1.0f);
     totalSize.Abs();
-
+/*
     if(y2-y < 0) {
         float tempFloat = curCropping[1];
         curCropping[1] = curCropping[3];
@@ -856,7 +857,7 @@ void D3D10System::DrawSpriteExRotate(Texture *texture, DWORD color, float x, flo
     v  += cropMult[1] * totalUVSize.y;
     u2 -= cropMult[2] * totalUVSize.x;
     v2 -= cropMult[3] * totalUVSize.y;
-
+*/
     //------------------------------
     // draw
 
