@@ -49,10 +49,10 @@ namespace
     } validImpl[] = {
         { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D11, {6, 1} },
         { MFX_IMPL_HARDWARE,        MFX_IMPL_VIA_D3D11, {6, 1} },
-        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_ANY,   {6, 1} }, //Ivy Bridge+ with non-functional D3D11 support?
-        { MFX_IMPL_HARDWARE,        MFX_IMPL_VIA_ANY,   {6, 1} },
-        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_ANY,   {4, 1} }, //Sandy Bridge
-        { MFX_IMPL_HARDWARE,        MFX_IMPL_VIA_ANY,   {4, 1} },
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {6, 1} }, //Ivy Bridge+ with non-functional D3D11 support?
+        { MFX_IMPL_HARDWARE,        MFX_IMPL_VIA_D3D9,  {6, 1} },
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {4, 1} }, //Sandy Bridge
+        { MFX_IMPL_HARDWARE,        MFX_IMPL_VIA_D3D9,  {4, 1} },
     };
     const TCHAR* implStr[] = {
         TO_STR(MFX_IMPL_AUTO),
@@ -301,6 +301,11 @@ class QSVEncoder : public VideoEncoder
         AddSEIData(payload, SEI_USER_DATA_UNREGISTERED);
     }
 
+    void ForceD3D9Config()
+    {
+        GlobalConfig->SetInt(TEXT("Video Encoding"), TEXT("QSVDisableD3D11"), 1);
+    }
+
 #define ALIGN16(value)                      (((value + 15) >> 4) << 4) // round up to a multiple of 16
 public:
     QSVEncoder(int fps_, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitrate, int bufferSize, bool bUseCFR_)
@@ -463,17 +468,22 @@ public:
         if(bHaveCustomImpl)
         {
             sts = try_impl(custom);
-            if(sts <= 0)
-                Log(TEXT("Could not initialize session using custom settings"));
+            if(sts < 0)
+                AppWarning(TEXT("Could not initialize QSV session using custom settings"));
             else
                 log_impl(custom.type, custom.intf);
         }
 
-        if(!enc.get())
+        
+        bool disable_d3d11 = GlobalConfig->GetInt(TEXT("Video Encoding"), TEXT("QSVDisableD3D11")) != 0;
+
+        if(!enc)
         {
             decltype(std::begin(validImpl)) best = nullptr;
             for(auto impl = std::begin(validImpl); impl != std::end(validImpl); impl++)
             {
+                if(disable_d3d11 && impl->intf == MFX_IMPL_VIA_D3D11)
+                    continue;
                 sts = try_impl(*impl);
                 if(sts == MFX_WRN_PARTIAL_ACCELERATION && !best)
                     best = impl;
@@ -482,8 +492,10 @@ public:
                 log_impl(impl->type, impl->intf);
                 break;
             }
-            if(!enc.get())
+            if(!enc)
             {
+                if(!best)
+                    CrashError(TEXT("Failed to initialize QSV session."));
                 sts = try_impl(*best);
                 log_impl(best->type, best->intf);
             }
@@ -491,15 +503,21 @@ public:
 
         session.SetPriority(MFX_PRIORITY_HIGH);
 
-        if(sts == MFX_WRN_PARTIAL_ACCELERATION) //FIXME: remove when a fixed version is available
-            Log(TEXT("\r\n===================================================================================\r\n")
-                TEXT("Error: QSV hardware acceleration unavailable due to a driver bug. Reduce the number\r\n")
-                TEXT("       of monitors connected to you graphics card or configure your Intel graphics\r\n")
-                TEXT("       card to be the primary device.\r\n")
-                TEXT("       Refer to http://software.intel.com/en-us/forums/topic/359368#comment-1722674\r\n")
-                TEXT("       for more information.\r\n")
-                TEXT("===================================================================================\r\n")
-                TEXT("\r\nContinuing with decreased performance"));
+        if(sts == MFX_WRN_PARTIAL_ACCELERATION) //This indicates software encoding for most users, while others seem to get full hardware acceleration
+        {
+            mfxIMPL impl;
+            session.QueryIMPL(&impl);
+            if(impl & MFX_IMPL_VIA_D3D11)
+                AppWarning(TEXT("QSV hardware acceleration seems to be unavailable. It is safe to ignore this warning\n")
+                           TEXT("unless there are further problems like frame drops or artifacts in the video output.\n")
+                           TEXT("If you experience any of these problems try to connect at least one monitor to your\n")
+                           TEXT("iGPU or follow the guide at\n")
+                           TEXT("<http://mirillis.com/en/products/tutorials/action-tutorial-intel-quick-sync-setup_for_desktops.html>\n")
+                           TEXT("and enable advanced encoder settings (for qsv) with the line: qsvimpl=,d3d9,%d.%d"), ver.Major, ver.Minor);
+            else
+                AppWarning(TEXT("QSV hardware acceleration seems to be unavailable. It is safe to ignore this warning\n")
+                           TEXT("unless there are further problems like frame drops or artifacts in the video output.\n"));
+        }
 
         enc->Init(&params);
 
@@ -924,6 +942,7 @@ public:
         profileIn("ProcessEncodedFrame");
         mfxU32 wait = 0;
         bool bMessageLogged = false;
+        auto timeout_ms = OSGetTime() + 1500;
         do
         {
             if(!packets.Num())
@@ -939,6 +958,24 @@ public:
                 if(!bMessageLogged)
                     Log(TEXT("Error: encoder is taking too long, consider decreasing your FPS/increasing your bitrate"));
                 bMessageLogged = true;
+
+                if(OSGetTime() >= timeout_ms)
+                {
+                    mfxIMPL impl;
+                    session.QueryIMPL(&impl);
+                    if(impl & MFX_IMPL_VIA_D3D11)
+                    {
+                        ForceD3D9Config();
+                        CrashError(TEXT("QSV takes too long to encode frames. You are using QSV in Direct3D11 mode, possibly ")
+                                   TEXT("without any monitors connected to your iGPU. Please either connect a monitor to your ")
+                                   TEXT("iGPU or follow the guide at ")
+                                   TEXT("<http://mirillis.com/en/products/tutorials/action-tutorial-intel-quick-sync-setup_for_desktops.html> ")
+                                   TEXT("(copy the url from the latest logfile). Your custom encoder settings were updated."));
+                    }
+                    else
+                        CrashError(TEXT("QSV takes too long to encode frames."));
+                }
+
                 Sleep(1); //wait for locked tasks to unlock
             }
             else
