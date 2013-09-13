@@ -22,7 +22,7 @@ services : {
     recommended : {
       "keyint"      : 2000
       "ratecontrol" : "cbr"
-      "max bitrate" : 4000
+      "max bitrate" : 3500
       "max audio bitrate" : 160
     }
   }
