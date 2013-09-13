@@ -23,7 +23,8 @@ services : {
       "keyint"      : 2000
       "ratecontrol" : "cbr"
       "max bitrate" : 3500
-      "max audio bitrate" : 160
+      "max audio bitrate aac" : 160
+      "max audio bitrate mp3" : 128
     }
   }
   "Vaughn Live" : {
