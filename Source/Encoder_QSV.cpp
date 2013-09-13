@@ -412,12 +412,16 @@ public:
 
                         StringList version;
                         bits[2].GetTokenList(version, '.', false);
-                        if(version.Num() < 2)
+                        if(version.Num() != 2)
                             continue;
 
                         custom.type = bits[0].ToInt();
-                        auto& intf = bits[1].MakeLower();
+                        if(custom.type == 0)
+                            custom.type = MFX_IMPL_HARDWARE_ANY;
+
+                        auto &intf = bits[1].MakeLower();
                         custom.intf = intf == "d3d11" ? MFX_IMPL_VIA_D3D11 : (intf == "d3d9" ? MFX_IMPL_VIA_D3D9 : MFX_IMPL_VIA_ANY);
+
                         custom.version.Major = version[0].ToInt();
                         custom.version.Minor = version[1].ToInt();
                         bHaveCustomImpl = true;
