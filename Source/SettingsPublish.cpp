@@ -238,7 +238,7 @@ void SettingsPublish::SetWarningInfo()
                         }
                     }
 
-                    if (r->HasItem(TEXT("max audio bitrate aac")) && (!scmp(currentAudioCodec, TEXT("AAC")))
+                    if (r->HasItem(TEXT("max audio bitrate aac")) && (!scmp(currentAudioCodec, TEXT("AAC"))))
                     {
                         int maxaudioaac = r->GetInt(TEXT("max audio bitrate aac"));
                         if (audioBitRate > maxaudioaac)
@@ -248,7 +248,7 @@ void SettingsPublish::SetWarningInfo()
                         }
                     }
                     
-                    if (r->HasItem(TEXT("max audio bitrate mp3")) && (!scmp(currentAudioCodec, TEXT("MP3")))
+                    if (r->HasItem(TEXT("max audio bitrate mp3")) && (!scmp(currentAudioCodec, TEXT("MP3"))))
                     {
                         int maxaudiomp3 = r->GetInt(TEXT("max audio bitrate mp3"));
                         if (audioBitRate > maxaudiomp3)
