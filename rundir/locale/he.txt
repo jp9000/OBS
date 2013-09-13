@@ -261,7 +261,7 @@ Sources.GameCaptureSource.SelectApplication="בחר ביישום"
 Sources.GameCaptureSource.StretchToScreen="מתח את התמונה למסך"
 Sources.GameCaptureSource.UseHotkey="השתמש במקש קיצור"
 
-Sources.SoftwareCaptureSource.Blend="(מזג (1-100:"
+Sources.SoftwareCaptureSource.Blend="(מיזוג (1-100:"
 Sources.SoftwareCaptureSource.CaptureLayered="לכד חלונות אשר חופפים אחד מעל השני"
 Sources.SoftwareCaptureSource.CaptureLayeredTip="לכד חלונות שקופים / מותאמים אישית אשר חופפים אחד מעל השני בעת שממשק אירו מבוטל. עלול לגרום לסמן העכבר להבהב כאשר פעיל. הפעל אפשרות זו רק במידה ואינך מסוגל ללכוד אפליקציה ספציפית."
 Sources.SoftwareCaptureSource.ColorKey="מפתח צבע"
