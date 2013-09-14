@@ -71,6 +71,7 @@ class DesktopImageSource : public ImageSource
     bool     bMouseCaptured;
     POINT    cursorPos;
     HCURSOR  hCurrentCursor;
+    bool     bInInit;
 
     OutputDuplicator *duplicator;
 
@@ -78,7 +79,13 @@ public:
     DesktopImageSource(UINT frameTime, XElement *data)
     {
         this->data = data;
+        duplicator = NULL;
+        
+        bInInit = true;
+
         UpdateSettings();
+
+        bInInit = false;
 
         curCaptureTexture = 0;
         this->frameTime = frameTime;
@@ -113,12 +120,40 @@ public:
         }
     }
 
+    void BeginScene()
+    {
+        if(bWindows8MonitorCapture && !duplicator)
+            duplicator = GS->CreateOutputDuplicator(deviceOutputID);
+    }
+
+    void EndScene()
+    {
+        if(bWindows8MonitorCapture && duplicator)
+        {
+            delete duplicator;
+            duplicator = NULL;
+        }
+    }
+
+    //----------------------------------------------------------------------------------
+    // TODO  - have win8 monitor capture behave even when using it as a global source
+
+    void GlobalSourceEnterScene()
+    {
+    }
+    
+    void GlobalSourceLeaveScene()
+    {
+    }
+    
+    //----------------------------------------------------------------------------------
+
     void Tick(float fSeconds)
     {
         if(bWindows8MonitorCapture && !duplicator)
         {
             retryAcquire += fSeconds;
-            if(retryAcquire > 0.1f)
+            if(retryAcquire > 1.0f)
             {
                 retryAcquire = 0.0f;
 
@@ -650,7 +685,7 @@ public:
                 hbmpOld = (HBITMAP)SelectObject(hdcCompatible, hbmpCompatible);
             }
 
-            if(bWindows8MonitorCapture)
+            if(bWindows8MonitorCapture && !bInInit)
                 duplicator = GS->CreateOutputDuplicator(deviceOutputID);
             else if(bCompatibilityMode)
                 renderTextures[0] = CreateTexture(width, height, GS_BGRA, NULL, FALSE, FALSE);
