@@ -1,5 +1,5 @@
 Cancel="ביטול"
-ClassName="התקן לכידת תמונה"
+ClassName="התקן לכידת וידאו"
 DeviceSelection="בחירת התקן"
 OK="אישור"
 
@@ -54,8 +54,8 @@ DeviceSelection.UnsupportedResolution="התקן זה אינו תומך ברזו�
 DeviceSelection.UseBuffering="(בצע אגירה (אלפיות השנייה:"
 DeviceSelection.UseChromaKey="(מסך כחול) Chroma Key השתמש ב"
 DeviceSelection.UseDeviceAudio="(השתמש בשמע ישירות מההתקן)"
-DeviceSelection.Video="תמונה"
+DeviceSelection.Video="וידאו"
 
 Plugin.Description="('כגון מצלמות אינטרנט, כרטיסי לכידת וידאו וכו) DirectShow תוסף זה מאפשר לך להוסיף לסצינה התקני וידאו מסוג"
-Plugin.Name="DirectShow תוסף התקן תמונה מסוג"
+Plugin.Name="DirectShow תוסף התקן וידאו מסוג"
 
