@@ -611,6 +611,8 @@ public:
 
                 DeviceOutputs outputs;
                 GetDisplayDevices(outputs);
+                
+                bWindows8MonitorCapture = false;
 
                 if(outputs.devices.Num())
                 {
