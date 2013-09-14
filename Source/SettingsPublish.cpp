@@ -176,7 +176,7 @@ bool SettingsPublish::HasDefaults() const
 
 void SettingsPublish::SetWarningInfo()
 {
-    int serviceID = (int)SendMessage(GetDlgItem(hwnd, IDC_SERVICE), CB_GETCURSEL, 0, 0);
+    int serviceID = (int)SendMessage(GetDlgItem(hwnd, IDC_SERVICE), CB_GETITEMDATA, SendMessage(GetDlgItem(hwnd, IDC_SERVICE), CB_GETCURSEL, 0, 0), 0);
 
     bool bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
     int maxBitRate = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("MaxBitrate"), 1000);
