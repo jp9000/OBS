@@ -308,11 +308,12 @@ void OBS::EncodeLoop()
     CircularList<QWORD> bufferedTimes;
 
     while(!bShutdownEncodeThread || (bufferedFrames && !bTestStream)) {
-        SetEvent(hVideoEvent);
-        SleepToNS(sleepTargetTime);
+        SleepToNS(sleepTargetTime += (frameTimeNS/2));
         latestVideoTime = sleepTargetTime/1000000;
         latestVideoTimeNS = sleepTargetTime;
+        SetEvent(hVideoEvent);
 
+        SleepToNS(sleepTargetTime += (frameTimeNS/2));
         bufferedTimes << latestVideoTime;
 
         if (curFramePic && firstFrameTimestamp) {
@@ -348,8 +349,6 @@ void OBS::EncodeLoop()
 
             numTotalFrames++;
         }
-
-        sleepTargetTime += frameTimeNS;
     }
 
     //flush all video frames in the "scene buffering time" buffer
