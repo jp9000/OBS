@@ -894,9 +894,9 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
 
     RTMP_EnableWrite(rtmp); //set it to publish
 
-    /*rtmp->Link.swfUrl.av_len = rtmp->Link.tcUrl.av_len;
+    rtmp->Link.swfUrl.av_len = rtmp->Link.tcUrl.av_len;
     rtmp->Link.swfUrl.av_val = rtmp->Link.tcUrl.av_val;
-    rtmp->Link.pageUrl.av_len = rtmp->Link.tcUrl.av_len;
+    /*rtmp->Link.pageUrl.av_len = rtmp->Link.tcUrl.av_len;
     rtmp->Link.pageUrl.av_val = rtmp->Link.tcUrl.av_val;*/
     rtmp->Link.flashVer.av_val = "FMLE/3.0 (compatible; FMSc/1.0)";
     rtmp->Link.flashVer.av_len = (int)strlen(rtmp->Link.flashVer.av_val);
