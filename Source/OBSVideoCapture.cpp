@@ -240,12 +240,12 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
 }
 
 
-void STDCALL SleepToNS(QWORD qwNSTime)
+bool STDCALL SleepToNS(QWORD qwNSTime)
 {
     QWORD t = GetQPCTimeNS();
 
     if (t >= qwNSTime)
-        return;
+        return false;
 
     unsigned int milliseconds = (unsigned int)((qwNSTime - t)/1000000);
     if (milliseconds > 1) //also accounts for windows 8 sleep problem
@@ -255,17 +255,17 @@ void STDCALL SleepToNS(QWORD qwNSTime)
     {
         t = GetQPCTimeNS();
         if (t >= qwNSTime)
-            return;
+            return true;
         Sleep(1);
     }
 }
 
-void STDCALL SleepTo100NS(QWORD qw100NSTime)
+bool STDCALL SleepTo100NS(QWORD qw100NSTime)
 {
     QWORD t = GetQPCTime100NS();
 
     if (t >= qw100NSTime)
-        return;
+        return false;
 
     unsigned int milliseconds = (unsigned int)((qw100NSTime - t)/10000);
     if (milliseconds > 1) //also accounts for windows 8 sleep problem
@@ -275,7 +275,7 @@ void STDCALL SleepTo100NS(QWORD qw100NSTime)
     {
         t = GetQPCTime100NS();
         if (t >= qw100NSTime)
-            return;
+            return true;
         Sleep(1);
     }
 }
@@ -291,7 +291,7 @@ void OBS::EncodeLoop()
     QWORD streamTimeStart = GetQPCTimeNS();
     QWORD frameTimeNS = 1000000000/fps;
     bool bufferedFrames = true; //to avoid constantly polling number of frames
-    int numTotalDuplicatedFrames = 0, numTotalFrames = 0;
+    int numTotalDuplicatedFrames = 0, numTotalFrames = 0, numFramesSkipped = 0;
 
     bufferedTimes.Clear();
 
@@ -305,15 +305,27 @@ void OBS::EncodeLoop()
 
     EncoderPicture *lastPic = NULL;
 
+    int no_sleep_counter = 0;
     CircularList<QWORD> bufferedTimes;
 
     while(!bShutdownEncodeThread || (bufferedFrames && !bTestStream)) {
-        SleepToNS(sleepTargetTime += (frameTimeNS/2));
+        if (!SleepToNS(sleepTargetTime += (frameTimeNS/2)))
+            no_sleep_counter++;
+        else
+            no_sleep_counter = 0;
+
         latestVideoTime = sleepTargetTime/1000000;
         latestVideoTimeNS = sleepTargetTime;
-        SetEvent(hVideoEvent);
 
-        SleepToNS(sleepTargetTime += (frameTimeNS/2));
+        if (no_sleep_counter < 4)
+            SetEvent(hVideoEvent);
+        else
+            numFramesSkipped++;
+
+        if (!SleepToNS(sleepTargetTime += (frameTimeNS/2)))
+            no_sleep_counter++;
+        else
+            no_sleep_counter = 0;
         bufferedTimes << latestVideoTime;
 
         if (curFramePic && firstFrameTimestamp) {
@@ -376,7 +388,9 @@ void OBS::EncodeLoop()
         bufferedVideo.Clear();
     }
 
-    Log(TEXT("Total frames encoded: %d, total frames duplicated %d (%0.2f%%)"), numTotalFrames, numTotalDuplicatedFrames, (double(numTotalDuplicatedFrames)/double(numTotalFrames))*100.0);
+    Log(TEXT("Total frames encoded: %d, total frames duplicated: %d (%0.2f%%)"), numTotalFrames, numTotalDuplicatedFrames, (double(numTotalDuplicatedFrames)/double(numTotalFrames))*100.0);
+    if (numFramesSkipped)
+        Log(TEXT("Number of frames skipped due to encoder lag: %d (%0.2f%%)"), numFramesSkipped, (double(numFramesSkipped)/double(numTotalFrames))*100.0);
 
     SetEvent(hVideoEvent);
     bShutdownVideoThread = true;
