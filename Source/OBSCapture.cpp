@@ -77,6 +77,8 @@ void OBS::Start()
         bLoggedSystemStats = TRUE;
     }
 
+    OSCheckForBuggyDLLs();
+
     //-------------------------------------------------------------
 retryHookTest:
     bool alreadyWarnedAboutModules = false;

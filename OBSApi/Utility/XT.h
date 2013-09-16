@@ -170,6 +170,7 @@ BASE_EXPORT CTSTR STDCALL  OSGetErrorString(DWORD errorCode);
 BASE_EXPORT BOOL   STDCALL OSGetLoadedModuleList(HANDLE hProcess, StringList &ModuleList);
 BASE_EXPORT BOOL   STDCALL OSIncompatibleModulesLoaded();
 BASE_EXPORT BOOL   STDCALL OSIncompatiblePatchesLoaded(String &errors);
+BASE_EXPORT void   STDCALL OSCheckForBuggyDLLs ();
 
 BASE_EXPORT void __cdecl   LogRaw(const TCHAR *text, UINT len=0);
 BASE_EXPORT void __cdecl   Logva(const TCHAR *format, va_list argptr);
