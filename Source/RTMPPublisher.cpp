@@ -329,7 +329,7 @@ RTMPPublisher::~RTMPPublisher()
     for(UINT i=0; i<queuedPackets.Num(); i++)
         queuedPackets[i].data.Clear();
     queuedPackets.Clear();
-    
+
     double dBFrameDropPercentage = double(numBFramesDumped)/NumTotalVideoFrames()*100.0;
     double dPFrameDropPercentage = double(numPFramesDumped)/NumTotalVideoFrames()*100.0;
 

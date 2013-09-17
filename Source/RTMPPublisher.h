@@ -134,7 +134,7 @@ protected:
     int totalTimesWaited;
     int totalBytesWaited;
 
-    DWORD totalSendBytes;
+    QWORD totalSendBytes;
     DWORD totalSendPeriod;
     DWORD totalSendCount;
 
