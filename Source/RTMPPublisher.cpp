@@ -329,11 +329,12 @@ RTMPPublisher::~RTMPPublisher()
     for(UINT i=0; i<queuedPackets.Num(); i++)
         queuedPackets[i].data.Clear();
     queuedPackets.Clear();
-
+    
     double dBFrameDropPercentage = double(numBFramesDumped)/NumTotalVideoFrames()*100.0;
     double dPFrameDropPercentage = double(numPFramesDumped)/NumTotalVideoFrames()*100.0;
 
-    Log(TEXT("Average send payload: %d bytes, average send interval: %d ms"), totalSendBytes / totalSendCount, totalSendPeriod / totalSendCount);
+    if (totalSendCount)
+        Log(TEXT("Average send payload: %d bytes, average send interval: %d ms"), (DWORD)(totalSendBytes / totalSendCount), totalSendPeriod / totalSendCount);
 
     Log(TEXT("Number of times waited to send: %d, Waited for a total of %d bytes"), totalTimesWaited, totalBytesWaited);
 
