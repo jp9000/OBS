@@ -652,7 +652,7 @@ bool AudioSource::GetBuffer(float **buffer, QWORD targetTimestamp)
     {
         if(audioSegments[0]->timestamp < (targetTimestamp-10))
         {
-            Log(TEXT("Audio timestamp for device '%s' was behind target timestamp by %llu!  Had to delete audio segment.\r\n"),
+            Log(TEXT("Audio timestamp for device '%s' was behind target timestamp by %llu!  Had to delete audio segment."),
                                                               GetDeviceName(), targetTimestamp-audioSegments[0]->timestamp);
             delete audioSegments[0];
             audioSegments.Remove(0);
