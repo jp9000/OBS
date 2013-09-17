@@ -47,9 +47,7 @@ services : {
   GoodGame.ru : {
     id : 5
     servers : {
-      "Moscow M9"        : rtmp://stream.goodgame.ru:1940/live
-      "Moscow M10"       : rtmp://stream2.goodgame.ru:1940/live
-      "Saint-Petersburg" : rtmp://spb1.goodgame.ru:1940/live
+      "Primary"  :   rtmp://stream.goodgame.ru:1940/live
     }
   }
   DailyMotion : {
@@ -80,6 +78,13 @@ services : {
     }
     recommended : {
       "keyint"      : 2000
+    }
+  }
+  CyberGame.TV : {
+    id : 10
+    servers : {
+      "RU Origin"     : rtmp://st.cybergame.tv:1953/live
+      "RU Premium"  : rtmp://premium.cybergame.tv:1953/premium
     }
   }
 }
