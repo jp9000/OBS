@@ -134,6 +134,10 @@ protected:
     int totalTimesWaited;
     int totalBytesWaited;
 
+    DWORD totalSendBytes;
+    DWORD totalSendPeriod;
+    DWORD totalSendCount;
+
     bool bFastInitialKeyframe;
 
     void SendLoop();

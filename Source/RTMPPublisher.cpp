@@ -333,6 +333,8 @@ RTMPPublisher::~RTMPPublisher()
     double dBFrameDropPercentage = double(numBFramesDumped)/NumTotalVideoFrames()*100.0;
     double dPFrameDropPercentage = double(numPFramesDumped)/NumTotalVideoFrames()*100.0;
 
+    Log(TEXT("Average send payload: %d bytes, average send interval: %d ms"), totalSendBytes / totalSendCount, totalSendPeriod / totalSendCount);
+
     Log(TEXT("Number of times waited to send: %d, Waited for a total of %d bytes"), totalTimesWaited, totalBytesWaited);
 
     Log(TEXT("Number of b-frames dropped: %u (%0.2g%%), Number of p-frames dropped: %u (%0.2g%%), Total %u (%0.2g%%)"),
@@ -1063,6 +1065,7 @@ void RTMPPublisher::SocketLoop()
 
     int delayTime;
     int latencyPacketSize;
+    DWORD lastSendTime = 0;
 
     WSANETWORKEVENTS networkEvents;
 
@@ -1240,6 +1243,15 @@ void RTMPPublisher::SocketLoop()
                     curDataBufferLen -= ret;
 
                     bytesSent += ret;
+
+                    if (lastSendTime)
+                    {
+                        totalSendPeriod += OSGetTime() - lastSendTime;
+                        totalSendBytes += ret;
+                        totalSendCount++;
+                    }
+
+                    lastSendTime = OSGetTime();
 
                     SetEvent(hBufferSpaceAvailableEvent);
                 }
