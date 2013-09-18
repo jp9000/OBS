@@ -19,13 +19,15 @@
 
 #pragma once
 
+#pragma warning(disable: 4661)
+
 template<typename T> class List
 {
 private:
     List(const List&)/* = delete*/;
     List(List&&)/* = delete*/;
     List& operator=(const List&)/* = delete*/;
-    //List& operator=(List&&)/* = delete*/;
+    List& operator=(List&&)/* = delete*/;
 protected:
     T *array;
     unsigned int num;
