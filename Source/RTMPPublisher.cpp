@@ -420,10 +420,10 @@ void RTMPPublisher::FlushBufferedPackets()
         } while (curTime - startTime < packet.timestamp - baseTimestamp);
 
         SendPacketForReal(packet.data.Array(), packet.data.Num(), packet.timestamp, packet.type);
+
+        packet.data.Clear();
     }
 
-    for (int i = 0; i < bufferedPackets.Num(); i++)
-        bufferedPackets[i].data.Clear();
     bufferedPackets.Clear();
 }
 
