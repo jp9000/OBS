@@ -422,6 +422,8 @@ void RTMPPublisher::FlushBufferedPackets()
         SendPacketForReal(packet.data.Array(), packet.data.Num(), packet.timestamp, packet.type);
     }
 
+    for (int i = 0; i < bufferedPackets.Num(); i++)
+        bufferedPackets[i].data.Clear();
     bufferedPackets.Clear();
 }
 
