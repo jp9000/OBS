@@ -1,4 +1,4 @@
-Cancel="Annullér"
+Cancel="Annull?r"
 OK="OK"
 
 
