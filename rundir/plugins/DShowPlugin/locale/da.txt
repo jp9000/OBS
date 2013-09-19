@@ -5,6 +5,7 @@ OK="OK"
 
 DeinterlacingType.None="Ingen"
 DeinterlacingType.Debug="Debug"
+DeviceSelection.GPUDeinterlacing="Brug GPU"
 
 
 DeviceSelection.Blend="Bland (1-1000):"
@@ -33,6 +34,7 @@ DeviceSelection.Sound="Lyd"
 DeviceSelection.SpillReduction="Reduktion af Spild (1-1000):"
 DeviceSelection.UnsupportedResolution="Denne enhed understøtter ikke den opløsning"
 DeviceSelection.UseChromaKey="Brug Chroma Nøgle"
+DeviceSelection.Video="Video"
 
 Plugin.Description="Dette plugin muliggør at du kan tilfæje DirectShow videoenheder (webkameraer, optagekort, osv) to scenen"
 Plugin.Name="DirectShow Videoenhed Plugin"

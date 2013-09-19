@@ -54,18 +54,61 @@ Listbox.Center="Centrare"
 Listbox.CenterHorizontally="Centrare orizontal"
 Listbox.CenterVertically="Centrare vertical"
 Listbox.MoveTop="Mutare în sus"
+Listbox.MoveRight="Muta la dreapta marginea"
+Listbox.MoveBottom="Mutare în jos"
+Listbox.MoveLeft="Muta marginea la stânga"
+Listbox.Config="Proprietăţi"
+Listbox.FitToScreen="Se potrivesc pentru ecran"
+Listbox.Positioning="Poziţia/dimensiune"
+Listbox.ResetSize="Resetaţi dimensiunea"
+Listbox.SetHotkey="Setare Hotkey"
 
+MainMenu.File="&Fişier"
+MainMenu.Profiles="&Profile"
+MainMenu.Settings="&Setările"
 
+MainMenu.Settings.AlwaysOnTop="Întotdeauna pe partea de sus (&A)"
+MainMenu.Settings.FullscreenMode="Modul de previzualizare pe tot ecranul (&F)"
+MainMenu.Settings.Projector="&Proiector"
 
+MainMenu.File.Exit="Ieșire (&X)"
+MainMenu.File.Save="&Salva"
 
+MainMenu.Help.Contents="&Conţinutul"
+MainMenu.Help.VisitWebsite="Vizitaţi site-ul"
 
+MainMenu.Settings.OpenConfigFolder="Deschide folderul de configurare"
+MainMenu.Settings.OpenLogFolder="Deschide folderul de logouri"
 
+MainWindow.BeginMessage="Nu se streameaza\n\n Click \"Începe Streaming\" sau \"Previzualizare Stream\" pentru a începe"
+MainWindow.PreviewDisabled="Previzualizare dezactivat"
+MainWindow.Dashboard="Bord"
+MainWindow.DroppedFrames="Cadre pierdute:"
+MainWindow.Exit="Iesire"
+MainWindow.Plugins="Plugin-uri"
+MainWindow.SceneEditor="Editeaza scena"
+MainWindow.Scenes="Scene:"
+MainWindow.Sources="Surse:"
+MainWindow.StartStream="Începe de Streaming"
+MainWindow.StopStream="Stop streamingul"
+MainWindow.StopTest="Stop previzualizare"
+MainWindow.TestStream="Previzualizare Stream"
 
+Plugins.Configure="Configuraţi"
+Plugins.Filename="Nume fişier:"
 
+Reconnecting.Retrying="Nu s-a putut reconecta.  Se reîncearcă"
 
+RenderView.EnableView="Permite vizualizare"
+RenderView.DisplayPanel="Activa panoul de control"
+RenderView.ViewModeScaleToFit="Scaleaza pentru a se protrivi"
+RenderView.ViewMode1To1="mod 1:1"
 
+Scene.Hotkey="Scena Hotkey"
 
+Scene.Hotkey.Hotkey="Hotkey:"
 
+Capture.Start.FileStream.WarningCaption="Avertisment"
 
 
 
