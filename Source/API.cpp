@@ -815,7 +815,7 @@ void OBS::RemoveStreamInfo(UINT infoID)
 }
 
 //todo: get rid of this and use some sort of info window.  this is a really dumb design.  what was I thinking?
-String OBS::GetMostImportantInfo()
+String OBS::GetMostImportantInfo(StreamInfoPriority &priority)
 {
     OSEnterMutex(hInfoMutex);
 
@@ -831,6 +831,7 @@ String OBS::GetMostImportantInfo()
         }
     }
 
+    priority = (StreamInfoPriority)bestInfoPriority;
     String strInfo = lpBestInfo;
     OSLeaveMutex(hInfoMutex);
 

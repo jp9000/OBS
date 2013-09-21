@@ -603,6 +603,27 @@ BEGIN
     LTEXT           "",IDC_WARNING,7,285,419,33
 END
 
+IDD_STATS DIALOGEX 0, 0, 392, 132
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOOLWINDOW
+CAPTION "Stats"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    PUSHBUTTON      "Close",IDCANCEL,170,111,50,14
+    LTEXT           "MainWindow.DroppedFrames",IDC_STATIC,7,38,182,8,0,WS_EX_RIGHT
+    LTEXT           ".nothing to see here",IDC_DROPPEDFRAMES,197,38,188,8
+    LTEXT           "Stats.LateFrames",IDC_STATIC,7,53,182,8,0,WS_EX_RIGHT
+    LTEXT           ".hi there",IDC_LATEFRAMES,197,53,188,8
+    LTEXT           "Stats.SkippedFrames",IDC_STATIC,7,70,181,8,0,WS_EX_RIGHT
+    LTEXT           ".the moon is a space ship",IDC_SKIPPEDFRAMES,197,70,188,8
+    LTEXT           "Stats.TotalBytesTransferred",IDC_STATIC,7,87,182,8,0,WS_EX_RIGHT
+    LTEXT           ".nanto burei na mane",IDC_BYTESTRANSFERRED,197,87,188,8
+    LTEXT           "Stats.TotalFramesEncoded",IDC_STATIC,7,7,182,8,0,WS_EX_RIGHT
+    LTEXT           ".you've been hiding things from us too, keiichi-kun",IDC_TOTALFRAMES,196,7,189,8
+    LTEXT           "Stats.TotalFramesRendered",IDC_STATIC,7,22,182,8,0,WS_EX_RIGHT
+    LTEXT           ".*sets jim on fire*",IDC_TOTALFRAMES2,196,22,189,8
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -771,6 +792,14 @@ BEGIN
         RIGHTMARGIN, 426
         TOPMARGIN, 7
         BOTTOMMARGIN, 339
+    END
+
+    IDD_STATS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 385
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 125
     END
 END
 #endif    // APSTUDIO_INVOKED

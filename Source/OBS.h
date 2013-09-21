@@ -1032,7 +1032,7 @@ public:
     void SetStreamInfo(UINT infoID, CTSTR lpInfo);
     void SetStreamInfoPriority(UINT infoID, StreamInfoPriority priority);
     void RemoveStreamInfo(UINT infoID);
-    String GetMostImportantInfo();
+    String GetMostImportantInfo(StreamInfoPriority &priority);
 
     inline QWORD GetSceneTimestamp() {return firstSceneTimestamp;}
 

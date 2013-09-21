@@ -343,6 +343,9 @@ RTMPPublisher::~RTMPPublisher()
         numPFramesDumped, dPFrameDropPercentage,
         numBFramesDumped+numPFramesDumped, dBFrameDropPercentage+dPFrameDropPercentage);
 
+    Log(TEXT("Number of bytes sent: %llu: %llu"), totalSendBytes);
+
+
     /*if(totalCalls)
         Log(TEXT("average send time: %u"), totalTime/totalCalls);*/
 

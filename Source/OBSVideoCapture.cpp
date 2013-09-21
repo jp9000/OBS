@@ -303,6 +303,9 @@ void OBS::EncodeLoop()
 
     firstFrameTimestamp = 0;
 
+    UINT encoderInfo = 0;
+    QWORD messageTime = 0;
+
     EncoderPicture *lastPic = NULL;
 
     int no_sleep_counter = 0;
@@ -317,10 +320,24 @@ void OBS::EncodeLoop()
         latestVideoTime = sleepTargetTime/1000000;
         latestVideoTimeNS = sleepTargetTime;
 
-        if (no_sleep_counter < 4)
+        if (no_sleep_counter < 4) {
             SetEvent(hVideoEvent);
-        else
+            if (encoderInfo) {
+                if (messageTime == 0) {
+                    messageTime = latestVideoTime+3000;
+                } else if (latestVideoTime >= messageTime) {
+                    RemoveStreamInfo(encoderInfo);
+                    encoderInfo = 0;
+                    messageTime = 0;
+                }
+            }
+        } else {
             numFramesSkipped++;
+            if (!encoderInfo) {
+                encoderInfo = AddStreamInfo(Str("EncoderLag"), StreamInfoPriority_Critical);
+                messageTime = 0;
+            }
+        }
 
         if (!SleepToNS(sleepTargetTime += (frameTimeNS/2)))
             no_sleep_counter++;
