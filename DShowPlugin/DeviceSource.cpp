@@ -114,8 +114,6 @@ String DeviceSource::ChooseShader()
     if(bUseChromaKey)
         strShader << TEXT("ChromaKey_");
 
-    colorType = DeviceOutputType_HDYC;
-
     if(colorType == DeviceOutputType_I420)
         strShader << TEXT("YUVToRGB.pShader");
     else if(colorType == DeviceOutputType_YV12)
