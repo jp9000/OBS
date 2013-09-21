@@ -333,10 +333,9 @@ void OBS::EncodeLoop()
             }
         } else {
             numFramesSkipped++;
-            if (!encoderInfo) {
+            if (!encoderInfo)
                 encoderInfo = AddStreamInfo(Str("EncoderLag"), StreamInfoPriority_Critical);
-                messageTime = 0;
-            }
+            messageTime = 0;
         }
 
         if (!SleepToNS(sleepTargetTime += (frameTimeNS/2)))
