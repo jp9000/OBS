@@ -113,6 +113,7 @@ Scene.Hotkey.AlreadyInUse="Denne hotkey er allerede i brug."
 Scene.Hotkey.Hotkey="Hotkey:"
 
 Capture.Start.FileStream.WarningCaption="Advarsel"
+Capture.Start.FileStream.Warning="Kan ikke skabe fil output stream.\n\nKontroller filstien i Udsendelsesindstillinger."
 
 Settings.Advanced="Avanceret"
 Settings.Audio="Lyd"
@@ -286,6 +287,7 @@ Sources.TransitionSource.Empty="Der er ingen indtastede bitmaps at vise."
 Sources.TransitionSource.FadeInOnly="Kun Fade In:"
 Sources.TransitionSource.TimeBetweenBitmaps="Tid imellem billeder (sekunder):"
 Sources.TransitionSource.Randomize="Tilfældig:"
+
 
 Updater.DownloadNow="Ønsker du at downloade dem nu?"
 Updater.NewUpdates="Følgende opdateringer er tilgængelige:\r\n\r\n"

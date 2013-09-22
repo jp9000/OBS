@@ -140,3 +140,4 @@ Settings.Encoding.Video.BufferSize="Bufferstørrelse (kbit):"
 
 
 
+

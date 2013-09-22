@@ -304,6 +304,7 @@ Sources.TransitionSource.Empty="Kol kas nera bitmaps irašytas rodyti."
 Sources.TransitionSource.FadeInOnly="Tik blukinti:"
 Sources.TransitionSource.TimeBetweenBitmaps="Laikas tarp vaizdu (sekundemis):"
 
+
 Updater.DownloadNow="Noretumete atsisiusti juos dabar?"
 Updater.NewUpdates="Šie atnaujinimai yra prieinami:\r\n\r\n"
 Updater.RunningWarning="Pastebejimas bus paleistas iš naujo idiegti naujinimus. \r\n\r\nAr tikrai norite testi?"

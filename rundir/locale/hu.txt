@@ -306,6 +306,7 @@ Sources.TransitionSource.TimeBetweenBitmaps="Képek közötti idő (mp):"
 Sources.TransitionSource.DisableFading="Halványodás kikapcsolása:"
 Sources.TransitionSource.Randomize="Véletlenszerű:"
 
+
 Updater.DownloadNow="Szeretnéd most letölteni őket?"
 Updater.NewUpdates="A következő frissítések elérhetőek:\r\n\r\n"
 Updater.RunningWarning="OBs most újra fog indulni a frissítések telepítéséhez.\r\n\r\nBiztos hogy folytatni akarod?"

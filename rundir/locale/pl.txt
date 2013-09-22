@@ -325,6 +325,7 @@ Sources.TransitionSource.TimeBetweenBitmaps="Odstęp czasowy (sekundy):"
 Sources.TransitionSource.DisableFading="Wyłącz zanikanie:"
 Sources.TransitionSource.Randomize="Losuj:"
 
+
 Updater.DownloadNow="Czy chciałbyś je teraz pobrać?"
 Updater.NewUpdates="Następujące aktualizacje są dostępne:\r\n\r\n"
 Updater.RunningWarning="OBS zostanie ponownie uruchomiony w celu zainstalowania aktualizacji.\r\n\r\nJesteś pewien, że chcesz kontynuować?"

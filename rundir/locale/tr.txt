@@ -198,3 +198,4 @@ Settings.Video.DownscaleTooltip="Düşürme , çözünürlüğü düşürürken 
 
 
 
+

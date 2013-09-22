@@ -325,6 +325,7 @@ Sources.TransitionSource.TimeBetweenBitmaps="Tijd tussen afbeeldingen (seconden)
 Sources.TransitionSource.DisableFading="Fading uitschakelen:"
 Sources.TransitionSource.Randomize="Willekeurig:"
 
+
 Updater.DownloadNow="Wil je deze nu downloaden?"
 Updater.NewUpdates="De volgende updates zijn beschikbaar:\r\n\r\n"
 Updater.RunningWarning="OBS zal worden herstart om de updates te installeren.\r\n\r\nWeet je zeker dat je door wil gaan?"

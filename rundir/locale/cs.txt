@@ -303,6 +303,7 @@ Sources.TransitionSource.FadeInOnly="Rozetmít pouze:"
 Sources.TransitionSource.TimeBetweenBitmaps="Doba mezi obrazy (sekundy):"
 Sources.TransitionSource.Randomize="Náhodně:"
 
+
 Updater.DownloadNow="Chcete je nyní stáhnout?"
 Updater.NewUpdates="Následující aktualizace jsou k dispozici:\r\n\r\n"
 Updater.RunningWarning="OBS bude restartován pro instalaci updatů.\r\n\r\nOpravdu chcete pokračovat?"

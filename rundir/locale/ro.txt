@@ -132,3 +132,4 @@ Capture.Start.FileStream.WarningCaption="Avertisment"
 
 
 
+

@@ -325,6 +325,7 @@ Sources.TransitionSource.TimeBetweenBitmaps="Χρόνος μεταξύ των ε
 Sources.TransitionSource.DisableFading="Απενεργοποίηση Σταδιακού σβησίματος:"
 Sources.TransitionSource.Randomize="Τυχαίο:"
 
+
 Updater.DownloadNow="Θέλετε να γίνει λήψη τώρα;"
 Updater.NewUpdates="Οι ακόλουθες ενημερωμένες εκδόσεις είναι διαθέσιμες:\r\n\r\n"
 Updater.RunningWarning="OBS θα ξαναρχίσει να εγκαταστήσει τις ενημερωμένες εκδόσεις.\r\n\r\nΕίστε βέβαιοι ότι θέλετε να συνεχίσετε;"

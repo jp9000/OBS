@@ -4,6 +4,9 @@ DeviceSelection="Enhedsvalg"
 OK="OK"
 
 DeinterlacingType.None="Ingen"
+DeinterlacingType.Discard="Felt fjernet"
+DeinterlacingType.Linear="Lineær"
+DeinterlacingType.Linear2x="Lineær2x"
 DeinterlacingType.Debug="Debug"
 DeviceSelection.GPUDeinterlacing="Brug GPU"
 
