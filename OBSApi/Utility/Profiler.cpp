@@ -119,13 +119,45 @@ struct BASE_EXPORT ProfileNodeInfo
         if(avgPercentage >= minPercentage && fTimeTaken >= minTime)
         {
             if(Children.Num())
-                Log(TEXT("%s%s - [%.3g%%] [avg time: %g ms (cpu time: avg %g ms, total %g ms)] [avg calls per frame: %d] [children: %.3g%%] [unaccounted: %.3g%%]"), lpIndent, lpName, avgPercentage, fTimeTaken, cpuTime, totalCpuTime, perFrameCalls, childPercentage, unaccountedPercentage);
+                Log(TEXT("%s%s - [%.3g%%] [avg time: %g ms] [children: %.3g%%] [unaccounted: %.3g%%]"), lpIndent, lpName, avgPercentage, fTimeTaken, childPercentage, unaccountedPercentage);
             else
-                Log(TEXT("%s%s - [%.3g%%] [avg time: %g ms (cpu time: avg %g ms, total %g ms)] [avg calls per frame: %d]"), lpIndent, lpName, avgPercentage, fTimeTaken, cpuTime, totalCpuTime, perFrameCalls);
+                Log(TEXT("%s%s - [%.3g%%] [avg time: %g ms]"), lpIndent, lpName, avgPercentage, fTimeTaken);
         }
 
         for(unsigned int i=0; i<Children.Num(); i++)
             Children[i].dumpData(rootCallCount, indent+1);
+    }
+
+    void dumpCPUData(int rootCallCount, int indent=0)
+    {
+        if(indent == 0)
+        {
+            rootCallCount = (int)floor(rootCallCount/(double)numParallelCalls+0.5);
+            calculateProfileData(rootCallCount);
+        }
+
+        String indentStr;
+        for(int i=0; i<indent; i++)
+            indentStr << TEXT("| ");
+
+        CTSTR lpIndent = indent == 0 ? TEXT("") : indentStr.Array();
+
+        int perFrameCalls = (int)floor(numCalls/(double)rootCallCount+0.5);
+
+        float fTimeTaken = (float)MicroToMS(avgTimeElapsed);
+        float cpuTime = (float)MicroToMS(avgCpuTime);
+        float totalCpuTime = (float)cpuTimeElapsed*0.001f;
+
+        if(avgPercentage >= minPercentage && fTimeTaken >= minTime)
+        {
+            if(Children.Num())
+                Log(TEXT("%s%s - [cpu time: avg %g ms, total %g ms] [avg calls per frame: %d]"), lpIndent, lpName, cpuTime, totalCpuTime, perFrameCalls);
+            else
+                Log(TEXT("%s%s - [cpu time: avg %g ms, total %g ms] [avg calls per frame: %d]"), lpIndent, lpName, cpuTime, totalCpuTime, perFrameCalls);
+        }
+
+        for(unsigned int i=0; i<Children.Num(); i++)
+            Children[i].dumpCPUData(rootCallCount, indent+1);
     }
 
     void dumpLastData(int callNum, int indent=0)
@@ -225,10 +257,15 @@ void STDCALL DumpProfileData()
 {
     if(ProfileNodeInfo::profilerData.Num())
     {
-        Log(TEXT("\r\nProfiler results:\r\n"));
+        Log(TEXT("\r\nProfiler time results:\r\n"));
         Log(TEXT("=============================================================="));
         for(unsigned int i=0; i<ProfileNodeInfo::profilerData.Num(); i++)
             ProfileNodeInfo::profilerData[i].dumpData(ProfileNodeInfo::profilerData[i].numCalls);
+        Log(TEXT("==============================================================\r\n"));
+        Log(TEXT("\r\nProfiler CPU results:\r\n"));
+        Log(TEXT("=============================================================="));
+        for(unsigned int i=0; i<ProfileNodeInfo::profilerData.Num(); i++)
+            ProfileNodeInfo::profilerData[i].dumpCPUData(ProfileNodeInfo::profilerData[i].numCalls);
         Log(TEXT("==============================================================\r\n"));
     }
 }

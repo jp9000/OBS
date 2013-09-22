@@ -694,13 +694,12 @@ void OBS::MainCaptureLoop()
         double fSeconds = double(frameDelta)*0.000000001;
         //lastStreamTime = renderStartTime;
 
+        bool bUpdateBPS = false;
+
         profileIn("video thread frame");
 
         //Log(TEXT("Stream Time: %llu"), curStreamTime);
         //Log(TEXT("frameDelta: %lf"), fSeconds);
-
-        bool bUpdateBPS = false;
-        profileIn("frame preprocessing and rendering");
 
         //------------------------------------
 
@@ -972,7 +971,7 @@ void OBS::MainCaptureLoop()
         //------------------------------------
         // present/upload
 
-        profileIn("GPU download and color conversion");
+        profileIn("GPU download and conversion");
 
         bEncode = true;
 
@@ -1216,7 +1215,6 @@ void OBS::MainCaptureLoop()
         GetD3D()->Flush();
         profileOut;
 
-        profileOut; //video encoding and uploading
         profileOut; //frame
 
         //------------------------------------
