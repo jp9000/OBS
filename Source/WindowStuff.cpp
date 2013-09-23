@@ -486,6 +486,8 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                             XElement *newSceneElement = scenes->CopyElement(item, strName);
 
                             newSceneElement->SetString(TEXT("class"), ci.strClass);
+                            newSceneElement->SetInt(TEXT("hotkey"), 0);
+
                             if(ci.configProc)
                             {
                                 if(!ci.configProc(newSceneElement, true))
