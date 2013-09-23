@@ -1152,6 +1152,12 @@ void RTMPPublisher::SocketLoop()
 
             if (networkEvents.lNetworkEvents & FD_CLOSE)
             {
+                if (lastSendTime)
+                {
+                    DWORD diff = OSGetTime() - lastSendTime;
+                    Log(TEXT("RTMPPublisher::SocketLoop: Received FD_CLOSE, %u ms since last send (buffer: %d / %d)"), diff, curDataBufferLen, dataBufferSize);
+                }
+
                 if (bStopping)
                     Log(TEXT("RTMPPublisher::SocketLoop: Aborting due to FD_CLOSE during shutdown, %d bytes lost, error %d"), curDataBufferLen, networkEvents.iErrorCode[FD_CLOSE_BIT]);
                 else
