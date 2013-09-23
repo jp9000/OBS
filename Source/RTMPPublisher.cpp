@@ -1252,7 +1252,12 @@ void RTMPPublisher::SocketLoop()
 
                     if (lastSendTime)
                     {
-                        totalSendPeriod += OSGetTime() - lastSendTime;
+                        DWORD diff = OSGetTime() - lastSendTime;
+
+                        if (diff >= 1500)
+                            Log(TEXT("RTMPPublisher::SendLoop: Stalled for %u ms (buffer: %d / %d), unstable connection?"), diff, curDataBufferLen, dataBufferSize);
+
+                        totalSendPeriod += diff;
                         totalSendBytes += ret;
                         totalSendCount++;
                     }
