@@ -1192,8 +1192,8 @@ void OBS::ReloadIniSettings()
     hwndTemp = GetDlgItem(hwndMain, ID_MICVOLUME);
 
     if(!AppConfig->HasKey(TEXT("Audio"), TEXT("MicVolume")))
-        AppConfig->SetFloat(TEXT("Audio"), TEXT("MicVolume"), 0.0f);
-    SetVolumeControlValue(hwndTemp, AppConfig->GetFloat(TEXT("Audio"), TEXT("MicVolume"), 0.0f));
+        AppConfig->SetFloat(TEXT("Audio"), TEXT("MicVolume"), 1.0f);
+    SetVolumeControlValue(hwndTemp, AppConfig->GetFloat(TEXT("Audio"), TEXT("MicVolume"), 1.0f));
 
     AudioDeviceList audioDevices;
     GetAudioDevices(audioDevices, ADT_RECORDING);
