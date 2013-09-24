@@ -940,6 +940,8 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
 
     //-----------------------------------------
 
+    DWORD startTime = OSGetTime();
+
     if(!RTMP_Connect(rtmp, NULL))
     {
         failReason = Str("Connection.CouldNotConnect");
@@ -947,6 +949,8 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
         bCanRetry = true;
         goto end;
     }
+
+    Log(TEXT("Completed handshake with %s in %u ms."), strURL.Array(), OSGetTime() - startTime);
 
     if(!RTMP_ConnectStream(rtmp, 0))
     {
@@ -1261,7 +1265,7 @@ void RTMPPublisher::SocketLoop()
                         DWORD diff = OSGetTime() - lastSendTime;
 
                         if (diff >= 1500)
-                            Log(TEXT("RTMPPublisher::SendLoop: Stalled for %u ms (buffer: %d / %d), unstable connection?"), diff, curDataBufferLen, dataBufferSize);
+                            Log(TEXT("RTMPPublisher::SendLoop: Stalled for %u ms to write %d bytes (buffer: %d / %d), unstable connection?"), diff, ret, curDataBufferLen, dataBufferSize);
 
                         totalSendPeriod += diff;
                         totalSendBytes += ret;
