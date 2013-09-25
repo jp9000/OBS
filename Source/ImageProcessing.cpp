@@ -19,8 +19,9 @@
 #include "Main.h"
 
 
-void Convert444to420(LPBYTE input, int width, int pitch, int height, int startY, int endY, LPBYTE *output)
+void Convert444toI420(LPBYTE input, int width, int pitch, int height, int startY, int endY, LPBYTE *output)
 {
+    profileSegment("Convert444toI420");
     LPBYTE lumPlane     = output[0];
     LPBYTE uPlane       = output[1];
     LPBYTE vPlane       = output[2];
@@ -73,6 +74,7 @@ void Convert444to420(LPBYTE input, int width, int pitch, int height, int startY,
 
 void Convert444toNV12(LPBYTE input, int width, int inPitch, int outPitch, int height, int startY, int endY, LPBYTE *output)
 {
+    profileSegment("Convert444toNV12");
     LPBYTE lumPlane     = output[0];
     LPBYTE uvPlane		= output[1];
 

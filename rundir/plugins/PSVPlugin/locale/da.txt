@@ -1,5 +1,9 @@
 Cancel="Annullér"
 OK="OK"
 
+Plugin.Name="Per-scene lydstyrke plugin"
+Plugin.Description="Aktivérer per-scene lydstyrke sporing."
 
+Config.Caption="Per-scene lydstyrke indstilling"
+Config.Enable="Aktiver per-scene lydstyrke sporing"
 

@@ -34,6 +34,9 @@ public:
         UpdateSettings();
     }
 
+    virtual void GlobalSourceLeaveScene() {globalSource->GlobalSourceLeaveScene();}
+    virtual void GlobalSourceEnterScene() {globalSource->GlobalSourceEnterScene();}
+
     //called elsewhere automatically by the app
     //void Preprocess() {globalSource->Preprocess();}
     //void Tick(float fSeconds) {globalSource->Tick(fSeconds);}

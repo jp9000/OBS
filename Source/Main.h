@@ -73,10 +73,17 @@ extern bool         bIsPortable;
 extern TCHAR        lpAppPath[MAX_PATH];
 extern TCHAR        lpAppDataPath[MAX_PATH];
 
-#define OBS_VERSION             0x005504 //version number is 0xMMmmtt (Major.minor.test - yes I know it's hex)
-#define OBS_VERSION_STRING_ANSI "Open Broadcaster Software v0.554b"
-#define OBS_VERSION_STRING      TEXT(OBS_VERSION_STRING_ANSI)
+// this gets defined by the automatic building process
+#ifndef OBS_VERSION_SUFFIX
+#define OBS_VERSION_SUFFIX ""
+#endif
+
+#define OBS_VERSION             0x005700 //version number is 0xMMmmtt (Major.minor.test - yes I know it's hex)
+#define OBS_VERSION_STRING_RAW  "Open Broadcaster Software v0.57b"
 //#define OBS_TEST_BUILD          1 //define this if releasing a test build to disable the auto updater
+
+#define OBS_VERSION_STRING_ANSI OBS_VERSION_STRING_RAW OBS_VERSION_SUFFIX
+#define OBS_VERSION_STRING      TEXT(OBS_VERSION_STRING_RAW) TEXT(OBS_VERSION_SUFFIX)
 
 #ifdef _DEBUG
 #define OBS_DISABLE_AUTOUPDATE 1
@@ -86,8 +93,15 @@ extern TCHAR        lpAppDataPath[MAX_PATH];
 #define OBS_DISABLE_AUTOUPDATE 1
 #endif
 
-#define OBS_WINDOW_CLASS      TEXT("OBSWindowClass")
-#define OBS_RENDERFRAME_CLASS TEXT("RenderFrame")
+#if defined(_WIN64)
+#define OBS_CONFIG_UPDATE_KEY TEXT("LastUpdateCheck64")
+#else
+#define OBS_CONFIG_UPDATE_KEY TEXT("LastUpdateCheck")
+#endif
+
+#define OBS_WINDOW_CLASS         TEXT("OBSWindowClass")
+#define OBS_RENDERFRAME_CLASS    TEXT("OBSRenderFrame")
+#define OBS_PROJECTORFRAME_CLASS TEXT("OBSProjectorFrame")
 
 inline UINT ConvertMSTo100NanoSec(UINT ms)
 {

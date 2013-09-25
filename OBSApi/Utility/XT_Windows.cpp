@@ -32,6 +32,7 @@
 
 
 
+extern HANDLE hProfilerMutex;
 
 LARGE_INTEGER clockFreq, startTime;
 LONGLONG prevElapsedTime;
@@ -150,11 +151,15 @@ void   STDCALL OSInit()
             free(pInfo);
         }
     }
+
+    hProfilerMutex = OSCreateMutex();
 }
 
 void   STDCALL OSExit()
 {
     timeEndPeriod(1);
+
+    OSCloseMutex(hProfilerMutex);
 }
 
 
@@ -914,7 +919,8 @@ BOOL   STDCALL OSIncompatibleModulesLoaded()
             !scmp(moduleName, TEXT("dxtorycore64.dll")) ||      //DXTory
             !scmp(moduleName, TEXT("dxtorymm.dll")) ||          //DXTory
             !scmp(moduleName, TEXT("dxtorymm64.dll")) ||        //DXTory
-            !scmp(moduleName, TEXT("rtsshooks.dll")))           //EVGA Precision OSD
+            !scmp(moduleName, TEXT("rtsshooks.dll")) ||         //EVGA Precision OSD
+            !scmp(moduleName, TEXT("axonoverlay.dll")))         //Dolby Axon
         {
             return 1;
         }
@@ -926,6 +932,30 @@ BOOL   STDCALL OSIncompatibleModulesLoaded()
     }
 
     return 0;
+}
+
+//This function checks for DLLs that are known to cause problems, but we need to be more specific than a generic "incompatible modules"
+//message. As we expect these to change often, I'm not bothering with localization. These DLLs are generally buggy drivers, malware, etc
+VOID STDCALL OSCheckForBuggyDLLs ()
+{
+    StringList  moduleList;
+
+    if (!OSGetLoadedModuleList(GetCurrentProcess(), moduleList))
+        return;
+
+    if (moduleList.HasValue(TEXT("sendori.dll")))
+    {
+        Log(TEXT("BUGGY DLL DETECTED: sendori.dll"));
+        MessageBox (hwndMainAppWindow, TEXT("Your system appears to be infected with the Sendori malware, which can crash OBS and cause other problems. Please run a malware scan."), TEXT("Warning"), MB_ICONEXCLAMATION);
+    }
+
+    if (moduleList.HasValue(TEXT("qproxy.dll")))
+    {
+        Log(TEXT("BUGGY DLL DETECTED: qproxy.dll"));
+        MessageBox (hwndMainAppWindow, TEXT("Your system has an unknown LSP module installed which can cause OBS crashes / lag and other problems. Please remove qproxy.dll using a tool such as autoruns, or reset your TCP/IP settings (search KB299357 for more information)."), TEXT("Warning"), MB_ICONEXCLAMATION);
+    }
+
+    //FIXME: add a version check for bigfoot networks LSP (bfllr.dll), crashes OBS on old versions.
 }
 
 OSFileChangeData * STDCALL OSMonitorFileStart(String path, bool suppressLogging)

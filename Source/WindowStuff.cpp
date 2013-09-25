@@ -66,6 +66,7 @@ enum
     ID_LISTBOX_ADD,
 
     ID_LISTBOX_GLOBALSOURCE=5000,
+    ID_PROJECTOR=6000,
 };
 
 INT_PTR CALLBACK OBS::EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -485,6 +486,8 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                             XElement *newSceneElement = scenes->CopyElement(item, strName);
 
                             newSceneElement->SetString(TEXT("class"), ci.strClass);
+                            newSceneElement->SetInt(TEXT("hotkey"), 0);
+
                             if(ci.configProc)
                             {
                                 if(!ci.configProc(newSceneElement, true))
@@ -699,7 +702,15 @@ void OBS::TrackModifyListbox(HWND hwnd, int ret)
 
         // Sources below here
         default:
-            if(ret >= ID_LISTBOX_ADD)
+            if (ret >= ID_PROJECTOR)
+            {
+                UINT monitorID = ret-ID_PROJECTOR;
+                if (monitorID == 0)
+                    App->bPleaseDisableProjector = true;
+                else
+                    EnableProjector(monitorID-1);
+            }
+            else if(ret >= ID_LISTBOX_ADD)
             {
                 App->EnableSceneSwitching(false);
 
@@ -2973,7 +2984,11 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
         default:
             if (App && message == App->wmExplorerRestarted)
             {
-                App->UpdateNotificationAreaIcon();
+                if(App->bNotificationAreaIcon)
+                {
+                    App->bNotificationAreaIcon = false;
+                    App->ShowNotificationAreaIcon();
+                }
             }
             return DefWindowProc(hwnd, message, wParam, lParam);
     }
@@ -2984,20 +2999,18 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 ItemModifyType GetItemModifyType(const Vect2 &mousePos, const Vect2 &itemPos, const Vect2 &itemSize, const Vect4 &crop, const Vect2 &scaleVal)
 {
     Vect2 lowerRight = itemPos+itemSize;
-    if( mousePos.x < itemPos.x    ||
-        mousePos.y < itemPos.y    ||
-        mousePos.x > lowerRight.x ||
-        mousePos.y > lowerRight.y )
-    {
-        return ItemModifyType_None;
-    }
-
     float epsilon = 10.0f;
 
     Vect2 croppedItemPos = itemPos + Vect2(crop.x / scaleVal.x, crop.y / scaleVal.y);
     Vect2 croppedLowerRight = lowerRight - Vect2(crop.w / scaleVal.x, crop.z / scaleVal.y);
 
-    
+    if( mousePos.x < croppedItemPos.x    ||
+        mousePos.y < croppedItemPos.y    ||
+        mousePos.x > croppedLowerRight.x ||
+        mousePos.y > croppedLowerRight.y )
+    {
+        return ItemModifyType_None;
+    }    
 
     // Corner sizing
     if(mousePos.CloseTo(croppedItemPos, epsilon))
@@ -3166,6 +3179,32 @@ bool OBS::EnsureCropValid(SceneItem *&scaleItem, Vect2 &minSize, Vect2 &snapSize
     }
 
     return true;
+}
+
+LRESULT CALLBACK OBS::ProjectorFrameProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message) {
+    case WM_KEYDOWN:
+        if (wParam == VK_ESCAPE)
+            App->bPleaseDisableProjector = true;
+        break;
+
+    case WM_CLOSE:
+        App->bPleaseDisableProjector = true;
+        break;
+
+    case WM_SETCURSOR:
+        if (App->bEnableProjectorCursor)
+            return DefWindowProc(hwnd, message, wParam, lParam);
+        else
+            SetCursor(NULL);
+        break;
+
+    default:
+        return DefWindowProc(hwnd, message, wParam, lParam);
+    }
+
+    return 0;
 }
 
 LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -3946,6 +3985,33 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
         if(message == WM_RBUTTONUP)
         {
             HMENU hPopup = CreatePopupMenu();
+
+            //---------------------------------------------------
+
+            if (App->bRunning) {
+                HMENU hProjector = CreatePopupMenu();
+                AppendMenu(hProjector, MF_STRING | (App->bProjector ? 0 : MF_CHECKED),
+                        ID_PROJECTOR, Str("Disable"));
+                AppendMenu(hProjector, MF_SEPARATOR, 0, 0);
+                for (UINT i = 0; i < App->NumMonitors(); i++) {
+                    String strMonitor = Str("MonitorNum");
+                    strMonitor.FindReplace(L"$1", UIntString(i+1));
+
+                    const MonitorInfo &mi = App->GetMonitor(i);
+
+                    bool grayed = mi.hMonitor == MonitorFromWindow(hwndMain, MONITOR_DEFAULTTONULL);
+
+                    bool enabled = App->bProjector && App->projectorMonitorID == i;
+
+                    AppendMenu(hProjector, MF_STRING | (enabled ? MF_CHECKED : 0) | (grayed ? MF_GRAYED : 0),
+                            ID_PROJECTOR+i+1, strMonitor);
+                }
+
+                AppendMenu(hPopup, MF_STRING|MF_POPUP, (UINT_PTR)hProjector, Str("MainMenu.Settings.Projector"));
+                AppendMenu(hPopup, MF_SEPARATOR, 0, 0);
+            }
+
+            //---------------------------------------------------
 
             AppendMenu(hPopup, MF_STRING | (App->bFullscreenMode ? MF_CHECKED : 0), ID_TOGGLEFULLSCREEN, Str("MainMenu.Settings.FullscreenMode"));
 

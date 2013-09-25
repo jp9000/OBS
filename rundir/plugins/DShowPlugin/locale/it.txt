@@ -1,4 +1,4 @@
-﻿Cancel="Annulla"
+Cancel="Annulla"
 ClassName="Dispositivo di cattura video"
 DeviceSelection="Selezione dispositivo"
 OK="OK"
@@ -48,7 +48,7 @@ DeviceSelection.Resolution="Risoluzione"
 DeviceSelection.Select="Seleziona"
 DeviceSelection.Similarity="Somiglianza (1-1000):"
 DeviceSelection.Sound="Audio"
-DeviceSelection.SoundOffset="Intervallo di tempo audio (millisecondi):
+DeviceSelection.SoundOffset="\"Intervallo di tempo audio (millisecondi):"
 DeviceSelection.SpillReduction="Riduzione sbavatura del colore di sfondo (1-1000):"
 DeviceSelection.UnsupportedResolution="Questo dispositivo non supporta quella risoluzione"
 DeviceSelection.UseBuffering="Tempo per le operazioni di buffer (millisecondi):"
@@ -58,3 +58,4 @@ DeviceSelection.Video="Video"
 
 Plugin.Description="Questo plugin consente di aggiungere dispositivi video DirectShow (webcam, schede di acquisizione, etc) alla scena"
 Plugin.Name="Plugin dispositivo video DirectShow"
+

@@ -31,25 +31,27 @@ inline double MicroToMS(DWORD microseconds)
 }
 
 float minPercentage, minTime;
+HANDLE hProfilerMutex = NULL;
 
 
 struct BASE_EXPORT ProfileNodeInfo
 {
-    inline ~ProfileNodeInfo()
+    ~ProfileNodeInfo()
     {
         FreeData();
     }
 
     void FreeData()
     {
-        for(unsigned int i=0; i<Children.Num(); i++)
-            delete Children[i];
+        for(UINT i = 0; i < Children.Num(); i++)
+            Children[i].FreeData();
         Children.Clear();
     }
 
     CTSTR lpName;
 
     DWORD numCalls;
+    DWORD numParallelCalls;
     DWORD avgTimeElapsed;
     DWORD avgCpuTime;
     double avgPercentage;
@@ -66,14 +68,14 @@ struct BASE_EXPORT ProfileNodeInfo
     DWORD lastCall;
 
     ProfileNodeInfo *parent;
-    List<ProfileNodeInfo*> Children;
+    List<ProfileNodeInfo> Children;
 
     void calculateProfileData(int rootCallCount)
     {
-        avgTimeElapsed = (DWORD)(totalTimeElapsed/(QWORD)rootCallCount);
-        avgCpuTime = (DWORD)(cpuTimeElapsed/(QWORD)rootCallCount);
+        avgTimeElapsed = (DWORD)(totalTimeElapsed/(QWORD)numCalls);
+        avgCpuTime = (DWORD)(cpuTimeElapsed/(QWORD)numCalls);
 
-        
+
         if(parent)  avgPercentage = (double(avgTimeElapsed)/double(parent->avgTimeElapsed))*parent->avgPercentage;
         else        avgPercentage = 100.0f;
 
@@ -83,11 +85,11 @@ struct BASE_EXPORT ProfileNodeInfo
         {
             for(unsigned int i=0; i<Children.Num(); i++)
             {
-                Children[i]->parent = this;
-                Children[i]->calculateProfileData(rootCallCount);
+                Children[i].parent = this;
+                Children[i].calculateProfileData(rootCallCount);
 
-                if(!Children[i]->bSingular)
-                    childPercentage += Children[i]->avgPercentage;
+                if(!Children[i].bSingular)
+                    childPercentage += Children[i].avgPercentage;
             }
 
             unaccountedPercentage = avgPercentage-childPercentage;
@@ -97,7 +99,10 @@ struct BASE_EXPORT ProfileNodeInfo
     void dumpData(int rootCallCount, int indent=0)
     {
         if(indent == 0)
+        {
+            rootCallCount = (int)floor(rootCallCount/(double)numParallelCalls+0.5);
             calculateProfileData(rootCallCount);
+        }
 
         String indentStr;
         for(int i=0; i<indent; i++)
@@ -105,7 +110,7 @@ struct BASE_EXPORT ProfileNodeInfo
 
         CTSTR lpIndent = indent == 0 ? TEXT("") : indentStr.Array();
 
-        int perFrameCalls = numCalls/rootCallCount;
+        int perFrameCalls = (int)floor(numCalls/(double)rootCallCount+0.5);
 
         float fTimeTaken = (float)MicroToMS(avgTimeElapsed);
         float cpuTime = (float)MicroToMS(avgCpuTime);
@@ -114,13 +119,45 @@ struct BASE_EXPORT ProfileNodeInfo
         if(avgPercentage >= minPercentage && fTimeTaken >= minTime)
         {
             if(Children.Num())
-                Log(TEXT("%s%s - [%.3g%%] [avg time: %g ms (cpu time: avg %g ms, total %g ms)] [avg calls per frame: %d] [children: %.3g%%] [unaccounted: %.3g%%]"), lpIndent, lpName, avgPercentage, fTimeTaken, cpuTime, totalCpuTime, perFrameCalls, childPercentage, unaccountedPercentage);
+                Log(TEXT("%s%s - [%.3g%%] [avg time: %g ms] [children: %.3g%%] [unaccounted: %.3g%%]"), lpIndent, lpName, avgPercentage, fTimeTaken, childPercentage, unaccountedPercentage);
             else
-                Log(TEXT("%s%s - [%.3g%%] [avg time: %g ms (cpu time: avg %g ms, total %g ms)] [avg calls per frame: %d]"), lpIndent, lpName, avgPercentage, fTimeTaken, cpuTime, totalCpuTime, perFrameCalls);
+                Log(TEXT("%s%s - [%.3g%%] [avg time: %g ms]"), lpIndent, lpName, avgPercentage, fTimeTaken);
         }
 
         for(unsigned int i=0; i<Children.Num(); i++)
-            Children[i]->dumpData(rootCallCount, indent+1);
+            Children[i].dumpData(rootCallCount, indent+1);
+    }
+
+    void dumpCPUData(int rootCallCount, int indent=0)
+    {
+        if(indent == 0)
+        {
+            rootCallCount = (int)floor(rootCallCount/(double)numParallelCalls+0.5);
+            calculateProfileData(rootCallCount);
+        }
+
+        String indentStr;
+        for(int i=0; i<indent; i++)
+            indentStr << TEXT("| ");
+
+        CTSTR lpIndent = indent == 0 ? TEXT("") : indentStr.Array();
+
+        int perFrameCalls = (int)floor(numCalls/(double)rootCallCount+0.5);
+
+        float fTimeTaken = (float)MicroToMS(avgTimeElapsed);
+        float cpuTime = (float)MicroToMS(avgCpuTime);
+        float totalCpuTime = (float)cpuTimeElapsed*0.001f;
+
+        if(avgPercentage >= minPercentage && fTimeTaken >= minTime)
+        {
+            if(Children.Num())
+                Log(TEXT("%s%s - [cpu time: avg %g ms, total %g ms] [avg calls per frame: %d]"), lpIndent, lpName, cpuTime, totalCpuTime, perFrameCalls);
+            else
+                Log(TEXT("%s%s - [cpu time: avg %g ms, total %g ms] [avg calls per frame: %d]"), lpIndent, lpName, cpuTime, totalCpuTime, perFrameCalls);
+        }
+
+        for(unsigned int i=0; i<Children.Num(); i++)
+            Children[i].dumpCPUData(rootCallCount, indent+1);
     }
 
     void dumpLastData(int callNum, int indent=0)
@@ -137,15 +174,15 @@ struct BASE_EXPORT ProfileNodeInfo
         Log(TEXT("%s%s - [time: %g ms (cpu time: %g ms)]"), lpIndent, lpName, MicroToMS((DWORD)lastTimeElapsed), MicroToMS((DWORD)lastCpuTimeElapsed));
 
         for(unsigned int i=0; i<Children.Num(); i++)
-            Children[i]->dumpLastData(callNum, indent+1);
+            Children[i].dumpLastData(callNum, indent+1);
     }
 
     ProfileNodeInfo* FindSubProfile(CTSTR lpName)
     {
         for(unsigned int i=0; i<Children.Num(); i++)
         {
-            if(Children[i]->lpName == lpName)
-                return Children[i];
+            if(Children[i].lpName == lpName)
+                return &Children[i];
         }
 
         return NULL;
@@ -162,14 +199,49 @@ struct BASE_EXPORT ProfileNodeInfo
         return NULL;
     }
 
+    static void MergeProfileInfo(ProfileNodeInfo &info)
+    {
+        OSEnterMutex(hProfilerMutex);
+        ProfileNodeInfo *sum = FindProfile(info.lpName);
+        if(!sum)
+        {
+            sum = profilerData.CreateNew();
+            sum->lpName = info.lpName;
+        }
+        sum->MergeProfileInfo(&info, info.lastCall, sum->lastCall + info.lastCall);
+        OSLeaveMutex(hProfilerMutex);
+    }
+
+    void MergeProfileInfo(ProfileNodeInfo *info, DWORD rootLastCall, DWORD updatedLastCall)
+    {
+        bSingular = info->bSingular;
+        numCalls += info->numCalls;
+        if(lastCall == rootLastCall) lastCall = updatedLastCall;
+        totalTimeElapsed += info->totalTimeElapsed;
+        lastTimeElapsed = info->lastTimeElapsed;
+        cpuTimeElapsed += info->cpuTimeElapsed;
+        lastCpuTimeElapsed = info->lastCpuTimeElapsed;
+        numParallelCalls = info->numParallelCalls;
+        for(UINT i = 0; i < info->Children.Num(); i++)
+        {
+            ProfileNodeInfo &child = info->Children[i];
+            ProfileNodeInfo *sumChild = FindSubProfile(child.lpName);
+            if(!sumChild)
+            {
+                sumChild = Children.CreateNew();
+                sumChild->lpName = child.lpName;
+            }
+            sumChild->MergeProfileInfo(&child, rootLastCall, updatedLastCall);
+        }
+    }
+
     static List<ProfileNodeInfo> profilerData;
 };
 
 
-ProfilerNode *__curProfilerNode = NULL;
-List<ProfileNodeInfo> ProfileNodeInfo::profilerData;
+static __declspec(thread) ProfilerNode *__curProfilerNode = NULL;
 BOOL bProfilingEnabled = FALSE;
-HANDLE hProfilerTimer = NULL;
+List<ProfileNodeInfo> ProfileNodeInfo::profilerData;
 
 
 void STDCALL EnableProfiling(BOOL bEnable, float pminPercentage, float pminTime)
@@ -185,10 +257,15 @@ void STDCALL DumpProfileData()
 {
     if(ProfileNodeInfo::profilerData.Num())
     {
-        Log(TEXT("\r\nProfiler results:\r\n"));
+        Log(TEXT("\r\nProfiler time results:\r\n"));
         Log(TEXT("=============================================================="));
         for(unsigned int i=0; i<ProfileNodeInfo::profilerData.Num(); i++)
             ProfileNodeInfo::profilerData[i].dumpData(ProfileNodeInfo::profilerData[i].numCalls);
+        Log(TEXT("==============================================================\r\n"));
+        Log(TEXT("\r\nProfiler CPU results:\r\n"));
+        Log(TEXT("=============================================================="));
+        for(unsigned int i=0; i<ProfileNodeInfo::profilerData.Num(); i++)
+            ProfileNodeInfo::profilerData[i].dumpCPUData(ProfileNodeInfo::profilerData[i].numCalls);
         Log(TEXT("==============================================================\r\n"));
     }
 }
@@ -212,11 +289,8 @@ void STDCALL FreeProfileData()
     ProfileNodeInfo::profilerData.Clear();
 }
 
-ProfilerNode::ProfilerNode(CTSTR lpName, bool bSingularize)
+ProfilerNode::ProfilerNode(CTSTR lpName, bool bSingularize) : lpName(nullptr), parent(nullptr), info(nullptr)
 {
-    info = NULL;
-    this->lpName = NULL;
-
     parent = __curProfilerNode;
 
     if(bSingularNode = bSingularize)
@@ -233,28 +307,22 @@ ProfilerNode::ProfilerNode(CTSTR lpName, bool bSingularize)
     if(parent)
     {
         if(!parent->lpName) return; //profiling was disabled when parent was created, so exit to avoid inconsistent results
-
         ProfileNodeInfo *parentInfo = parent->info;
         if(parentInfo)
         {
             info = parentInfo->FindSubProfile(lpName);
             if(!info)
             {
-                info = new ProfileNodeInfo;
-                parentInfo->Children << info;
+                info = parentInfo->Children.CreateNew();
                 info->lpName = lpName;
-                info->bSingular = bSingularize;
+                info->bSingular = bSingularNode;
             }
         }
     }
     else if(bProfilingEnabled)
     {
-        info = ProfileNodeInfo::FindProfile(lpName);
-        if(!info)
-        {
-            info = ProfileNodeInfo::profilerData.CreateNew();
-            info->lpName = lpName;
-        }
+        info = new ProfileNodeInfo;
+        info->lpName = lpName;
     }
     else
         return;
@@ -273,15 +341,17 @@ ProfilerNode::ProfilerNode(CTSTR lpName, bool bSingularize)
     startTime = OSGetTimeMicroseconds();
 
     MonitorThread(OSGetCurrentThread());
+
+    parallelCalls = 1;
 }
 
 ProfilerNode::~ProfilerNode()
 {
-    QWORD newTime = OSGetTimeMicroseconds();
-
     //profiling was diabled when created
     if(lpName)
     {
+        QWORD newTime = OSGetTimeMicroseconds();
+
         DWORD curTime = (DWORD)(newTime-startTime);
         info->totalTimeElapsed += curTime;
         info->lastTimeElapsed = curTime;
@@ -291,10 +361,17 @@ ProfilerNode::~ProfilerNode()
             info->cpuTimeElapsed += cpuTime;
             info->lastCpuTimeElapsed = cpuTime;
         }
+        info->numParallelCalls = parallelCalls;
     }
 
     if(!bSingularNode)
         __curProfilerNode = parent;
+
+    if(!parent && info)
+    {
+        ProfileNodeInfo::MergeProfileInfo(*info);
+        delete info;
+    }
 }
 
 void ProfilerNode::MonitorThread(HANDLE thread_)
@@ -303,4 +380,9 @@ void ProfilerNode::MonitorThread(HANDLE thread_)
         return;
     thread = thread_;
     cpuStartTime = OSGetThreadTime(thread);
+}
+
+void ProfilerNode::SetParallelCallCount(DWORD num)
+{
+    parallelCalls = num;
 }

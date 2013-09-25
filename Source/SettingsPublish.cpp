@@ -176,12 +176,13 @@ bool SettingsPublish::HasDefaults() const
 
 void SettingsPublish::SetWarningInfo()
 {
-    int serviceID = (int)SendMessage(GetDlgItem(hwnd, IDC_SERVICE), CB_GETCURSEL, 0, 0);
+    int serviceID = (int)SendMessage(GetDlgItem(hwnd, IDC_SERVICE), CB_GETITEMDATA, SendMessage(GetDlgItem(hwnd, IDC_SERVICE), CB_GETCURSEL, 0, 0), 0);
 
     bool bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
     int maxBitRate = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("MaxBitrate"), 1000);
     int keyframeInt = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 0);
     int audioBitRate = AppConfig->GetInt(TEXT("Audio Encoding"), TEXT("Bitrate"), 96);
+    String currentAudioCodec = AppConfig->GetString(TEXT("Audio Encoding"), TEXT("Codec"), TEXT("AAC"));
 
     //ignore for non-livestreams
     if (data->mode != 0)
@@ -237,13 +238,23 @@ void SettingsPublish::SetWarningInfo()
                         }
                     }
 
-                    if (r->HasItem(TEXT("max audio bitrate")))
+                    if (r->HasItem(TEXT("max audio bitrate aac")) && (!scmp(currentAudioCodec, TEXT("AAC"))))
                     {
-                        int maxaudio = r->GetInt(TEXT("max audio bitrate"));
-                        if (audioBitRate > maxaudio)
+                        int maxaudioaac = r->GetInt(TEXT("max audio bitrate aac"));
+                        if (audioBitRate > maxaudioaac)
                         {
                             errors++;
-                            strWarnings << FormattedString(Str("Settings.Publish.Warning.MaxAudiobitrate"), maxaudio);
+                            strWarnings << FormattedString(Str("Settings.Publish.Warning.MaxAudiobitrate"), maxaudioaac);
+                        }
+                    }
+                    
+                    if (r->HasItem(TEXT("max audio bitrate mp3")) && (!scmp(currentAudioCodec, TEXT("MP3"))))
+                    {
+                        int maxaudiomp3 = r->GetInt(TEXT("max audio bitrate mp3"));
+                        if (audioBitRate > maxaudiomp3)
+                        {
+                            errors++;
+                            strWarnings << FormattedString(Str("Settings.Publish.Warning.MaxAudiobitrate"), maxaudiomp3);
                         }
                     }
 

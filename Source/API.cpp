@@ -288,22 +288,27 @@ bool OBS::SetScene(CTSTR lpScene)
         //todo: cache scenes maybe?  undecided.  not really as necessary with global sources
         OSEnterMutex(hSceneMutex);
 
-        UINT numSources = scene->sceneItems.Num();
-        for(UINT i=0; i<numSources; i++)
+        UINT numSources;
+
+        if (scene)
         {
-            XElement *source = scene->sceneItems[i]->GetElement();
-            String className = source->GetString(TEXT("class"));
-            if(className == "GlobalSource") {
-                XElement *globalSourceData = source->GetElement(TEXT("data"));
-                String globalSourceName = globalSourceData->GetString(TEXT("name"));
-                if(App->GetGlobalSource(globalSourceName) != NULL) {
-                    App->GetGlobalSource(globalSourceName)->GlobalSourceLeaveScene();
+            //shutdown previous scene, if any
+            numSources = scene->sceneItems.Num();
+            for(UINT i=0; i<numSources; i++)
+            {
+                XElement *source = scene->sceneItems[i]->GetElement();
+                String className = source->GetString(TEXT("class"));
+                if(scene->sceneItems[i]->bRender && className == "GlobalSource") {
+                    XElement *globalSourceData = source->GetElement(TEXT("data"));
+                    String globalSourceName = globalSourceData->GetString(TEXT("name"));
+                    if(App->GetGlobalSource(globalSourceName) != NULL) {
+                        App->GetGlobalSource(globalSourceName)->GlobalSourceLeaveScene();
+                    }
                 }
             }
-        }
 
-        if(scene)
             scene->EndScene();
+        }
 
         Scene *previousScene = scene;
         scene = newScene;
@@ -315,7 +320,7 @@ bool OBS::SetScene(CTSTR lpScene)
         {
             XElement *source = scene->sceneItems[i]->GetElement();
             String className = source->GetString(TEXT("class"));
-            if(className == "GlobalSource") {
+            if(scene->sceneItems[i]->bRender && className == "GlobalSource") {
                 XElement *globalSourceData = source->GetElement(TEXT("data"));
                 String globalSourceName = globalSourceData->GetString(TEXT("name"));
                 if(App->GetGlobalSource(globalSourceName) != NULL) {
@@ -539,6 +544,8 @@ public:
 
     virtual void AddSettingsPane(SettingsPane *pane)    {App->AddSettingsPane(pane);}
     virtual void RemoveSettingsPane(SettingsPane *pane) {App->RemoveSettingsPane(pane);}
+
+    virtual UINT GetSampleRateHz() const {return App->GetSampleRateHz();}
 };
 
 APIInterface* CreateOBSApiInterface()
@@ -808,7 +815,7 @@ void OBS::RemoveStreamInfo(UINT infoID)
 }
 
 //todo: get rid of this and use some sort of info window.  this is a really dumb design.  what was I thinking?
-String OBS::GetMostImportantInfo()
+String OBS::GetMostImportantInfo(StreamInfoPriority &priority)
 {
     OSEnterMutex(hInfoMutex);
 
@@ -824,6 +831,7 @@ String OBS::GetMostImportantInfo()
         }
     }
 
+    priority = (StreamInfoPriority)bestInfoPriority;
     String strInfo = lpBestInfo;
     OSLeaveMutex(hInfoMutex);
 

@@ -1,3 +1,9 @@
+Cancel="Katkesta"
+OK="OK"
 
+Plugin.Name="Stseeni heli plugin"
+Plugin.Description="Võimaldab ühe stseeni heli jälgimise."
 
+Config.Caption="Iga stseen heli konfiguratsioon"
+Config.Enable="Luba stseenipõhine heli jälgimine"
 

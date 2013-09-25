@@ -209,16 +209,19 @@ void SettingsVideo::ApplySettings()
 
     if(!App->bRunning)
         App->ResizeWindow(false);
-
-    if (bDisableAero)
+    
+    if(OSGetVersion() < 8)
     {
-        Log(TEXT("Settings::Video: Disabling Aero"));
-        DwmEnableComposition(DWM_EC_DISABLECOMPOSITION);
-    }
-    else
-    {
-        Log(TEXT("Settings::Video: Enabling Aero"));
-        DwmEnableComposition(DWM_EC_ENABLECOMPOSITION);
+        if (bDisableAero)
+        {
+            Log(TEXT("Settings::Video: Disabling Aero"));
+            DwmEnableComposition(DWM_EC_DISABLECOMPOSITION);
+        }
+        else
+        {
+            Log(TEXT("Settings::Video: Enabling Aero"));
+            DwmEnableComposition(DWM_EC_ENABLECOMPOSITION);
+        }
     }
 }
 
@@ -351,7 +354,7 @@ INT_PTR SettingsVideo::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 int topFPS = bUnlockFPS ? 120 : 60;
 
                 hwndTemp = GetDlgItem(hwnd, IDC_FPS);
-                SendMessage(hwndTemp, UDM_SETRANGE32, 10, topFPS);
+                SendMessage(hwndTemp, UDM_SETRANGE32, 1, topFPS);
 
                 int fps = AppConfig->GetInt(TEXT("Video"), TEXT("FPS"), 30);
                 if(!AppConfig->HasKey(TEXT("Video"), TEXT("FPS")))
@@ -359,10 +362,10 @@ INT_PTR SettingsVideo::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     AppConfig->SetInt(TEXT("Video"), TEXT("FPS"), 30);
                     fps = 30;
                 }
-                else if(fps < 10)
+                else if(fps < 1)
                 {
-                    AppConfig->SetInt(TEXT("Video"), TEXT("FPS"), 10);
-                    fps = 10;
+                    AppConfig->SetInt(TEXT("Video"), TEXT("FPS"), 1);
+                    fps = 1;
                 }
                 else if(fps > topFPS)
                 {

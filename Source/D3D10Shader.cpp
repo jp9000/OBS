@@ -99,7 +99,7 @@ Shader* D3D10VertexShader::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
     SIZE_T shaderDataSize;
 
     ID3D10Blob *errorMessages = NULL, *shaderBlob = NULL;
-    
+
     HRESULT err;
 
     if(!OSFileExists(cacheFilename) || OSGetFileModificationTime(lpFileName) > OSGetFileModificationTime(cacheFilename))
@@ -131,7 +131,7 @@ Shader* D3D10VertexShader::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
 
         shaderData = shaderBlob->GetBufferPointer();
         shaderDataSize = shaderBlob->GetBufferSize();
-        
+
         CreatePath(GetPathDirectory(cacheFilename));
         XFile cacheFile(cacheFilename, XFILE_WRITE, XFILE_CREATEALWAYS);
         cacheFile.Write(shaderData, (DWORD)shaderDataSize);
@@ -204,7 +204,6 @@ Shader* D3D10PixelShader::CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)
     LPCSTR lpPSType = d3d10Sys->bDisableCompatibilityMode ? "ps_4_0" : "ps_4_0_level_9_3";
 
     String cacheFilename = FormattedString(TEXT("%s/shaderCache/%s.blob"), OBSGetAppDataPath(), lpFileName).FindReplace(TEXT("\\"), TEXT("/"));
-    Log(cacheFilename);
 
     List<BYTE> shaderBuffer;
     LPVOID shaderData;

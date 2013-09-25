@@ -1,6 +1,6 @@
 Add="Ekle"
 Preview="Önizleme"
-Order="Sipariş Ver"
+Order="Düzen"
 Apply="Uygula"
 Browse="Gözat..."
 BuildingMP4Dialog="MP4 Oluşturuluyor"
@@ -20,7 +20,7 @@ IncompatibleModules="OBS işleminde desteklenmeyen girişimler belirlendi.Lütfe
 MicrophoneFailure="Mikrofon sesi yüklenirken bir hata meydana geldi - mikrofon takılı olmayabilir veya başka bir uygulama mikrofonu kullanıyor olabilir."
 MoveDown="Aşağı Taşı"
 MoveToBottom="En Alta taşı"
-MoveToTop="En üste taşı"
+MoveToTop="En Üste Taşı"
 MoveUp="Yukarı Taşı"
 NameExists="'$1' zaten mevcut.  Lütfen farklı bir ad girin"
 None="Hiçbiri"
@@ -187,6 +187,7 @@ Settings.Video.DisableAero="Aero'uu Kapat:"
 Settings.Video.DisableAeroTooltip="Eğer monötir yakalamayı kullanıyorsanız Aero'yu kapatmak şiddetle önerilir."
 Settings.Video.Downscale="Çözünürlük Düşürme:"
 Settings.Video.DownscaleTooltip="Düşürme , çözünürlüğü düşürürken video kalitesini arttırır."
+
 
 
 

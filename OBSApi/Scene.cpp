@@ -34,20 +34,24 @@ void SceneItem::SetRender(bool render)
 {
     element->SetInt(TEXT("render"), (int)((render)?1:0));
     bRender = render;
+    CTSTR lpClass = element->GetString(TEXT("class"));
 
     if (bRender) {
-        CTSTR lpClass = element->GetString(TEXT("class"));
-
         if (!lpClass) {
             AppWarning(TEXT("No class for source '%s' in scene '%s'"), element->GetName(), API->GetSceneElement()->GetName());
         } else {
-            source = API->CreateImageSource(lpClass, element->GetElement(TEXT("data")));
+            XElement *data = element->GetElement(TEXT("data"));
+            source = API->CreateImageSource(lpClass, data);
             if(!source) {
                 AppWarning(TEXT("Could not create image source '%s' in scene '%s'"), element->GetName(), API->GetSceneElement()->GetName());
             } else {
                 API->EnterSceneMutex();
-                if (parent && parent->bSceneStarted)
+                if (parent && parent->bSceneStarted) {
                     source->BeginScene();
+
+                    if(scmp(lpClass, L"GlobalSource") == 0)
+                        source->GlobalSourceEnterScene();
+                }
                 API->LeaveSceneMutex();
             }
         }
@@ -57,6 +61,9 @@ void SceneItem::SetRender(bool render)
 
             ImageSource *src = source;
             source = NULL;
+
+            if(scmp(lpClass, L"GlobalSource") == 0)
+                src->GlobalSourceLeaveScene();
 
             if (parent && parent->bSceneStarted)
                 src->EndScene();
@@ -303,13 +310,13 @@ void Scene::RenderSelections(Shader *solidPixelShader)
             Vect2 baseScale = item->GetSource() ? item->GetSource()->GetSize() : item->GetSize();
             Vect2 cropFactor = baseScale / item->GetSize();
             Vect4 crop = item->GetCrop();
-            Vect2 pos  = API->MapFrameToWindowPos(item->GetPos())+1.0f;
+            Vect2 pos  = API->MapFrameToWindowPos(item->GetPos());
             Vect2 scale = API->GetFrameToWindowScale();
             crop.x *= scale.x; crop.y *= scale.y;
             crop.z *= scale.y; crop.w *= scale.x;
             pos.x += crop.x;
             pos.y += crop.y;
-            Vect2 size = API->MapFrameToWindowSize(item->GetSize())-2.0f;
+            Vect2 size = API->MapFrameToWindowSize(item->GetSize());
             size.x -= (crop.x + crop.w);
             size.y -= (crop.y + crop.z);
             Vect2 selectBoxSize = Vect2(10.0f, 10.0f);

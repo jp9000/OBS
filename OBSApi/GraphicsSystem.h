@@ -513,7 +513,7 @@ protected:
 
 public:
     virtual void CopyTexture(Texture *texDest, Texture *texSrc)=0;
-    virtual void DrawSpriteExRotate(Texture *texture, DWORD color, float x, float y, float x2, float y2, float u, float v, float u2, float v2, float degrees)=0;
+    virtual void DrawSpriteExRotate(Texture *texture, DWORD color, float x, float y, float x2, float y2, float degrees, float u, float v, float u2, float v2, float texDegrees)=0;
 };
 
 

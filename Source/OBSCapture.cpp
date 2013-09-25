@@ -21,8 +21,8 @@
 #include <time.h>
 #include <Avrt.h>
 
-VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR, bool bDupeFrames);
-VideoEncoder* CreateQSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR, bool bDupeFrames);
+VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR);
+VideoEncoder* CreateQSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR);
 AudioEncoder* CreateMP3Encoder(UINT bitRate);
 AudioEncoder* CreateAACEncoder(UINT bitRate);
 
@@ -76,6 +76,8 @@ void OBS::Start()
         LogSystemStats();
         bLoggedSystemStats = TRUE;
     }
+
+    OSCheckForBuggyDLLs();
 
     //-------------------------------------------------------------
 retryHookTest:
@@ -152,6 +154,9 @@ retryHookTest:
     Log(TEXT("=====Stream Start: %s==============================================="), CurrentDateTimeString().Array());
 
     //-------------------------------------------------------------
+
+    bEnableProjectorCursor = GlobalConfig->GetInt(L"General", L"EnableProjectorCursor", 1) != 0;
+    bPleaseEnableProjector = bPleaseDisableProjector = false;
 
     int monitorID = AppConfig->GetInt(TEXT("Video"), TEXT("Monitor"));
     if(monitorID >= (int)monitors.Num())
@@ -284,7 +289,20 @@ retryHookTestV2:
         }
     }
 
-    //-------------------------------------------------------------
+    //------------------------------------------------------------------
+
+    UINT format = AppConfig->GetInt(L"Audio Encoding", L"Format", 1);
+
+    switch (format) {
+    case 0: sampleRateHz = 44100; break;
+    default:
+    case 1: sampleRateHz = 48000; break;
+    }
+
+    Log(L"------------------------------------------");
+    Log(L"Audio Format: %uhz", sampleRateHz);
+
+    //------------------------------------------------------------------
 
     AudioDeviceList playbackDevices;
     GetAudioDevices(playbackDevices, ADT_PLAYBACK);
@@ -404,17 +422,8 @@ retryHookTestV2:
     int bufferSize = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("BufferSize"), 1000);
     int quality    = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Quality"),    8);
     String preset  = AppConfig->GetString(TEXT("Video Encoding"), TEXT("Preset"),     TEXT("veryfast"));
-    bUsing444      = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Use444"),     0) != 0;
-
-    bDupeFrames = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("DupeFrames"), 0) != 0;
-
-    if(bUsing444)
-        bDupeFrames = bUseCFR = false;
-    else
-    {
-        bUseCFR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCFR"), 0) != 0;
-        if(bUseCFR) bDupeFrames = true;
-    }
+    bUsing444      = false;//AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Use444"),     0) != 0;
+    bUseCFR        = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCFR"), 1) != 0;
 
     //-------------------------------------------------------------
 
@@ -464,8 +473,11 @@ retryHookTestV2:
                 SYSTEMTIME st;
                 GetLocalTime(&st);
 
-                String strDirectory = GetPathDirectory(strOutputFile);
-                strOutputFile = FormattedString(TEXT("%s/%u-%02u-%02u-%02u%02u-%02u.mp4"), strDirectory.Array(), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+                String strDirectory = GetPathDirectory(strOutputFile),
+                       extension = GetPathExtension(strOutputFile);
+                if(extension.IsEmpty())
+                    extension = TEXT("mp4");
+                strOutputFile = FormattedString(TEXT("%s/%u-%02u-%02u-%02u%02u-%02u.%s"), strDirectory.Array(), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, extension.Array());
             }
         }
     }
@@ -489,15 +501,19 @@ retryHookTestV2:
 
     //-------------------------------------------------------------
 
-    ctsOffset = 0;
+    colorDesc.fullRange = false;
+    colorDesc.primaries = ColorPrimaries_BT709;
+    colorDesc.transfer  = ColorTransfer_IEC6196621;
+    colorDesc.matrix    = outputCX >= 1280 || outputCY > 576 ? ColorMatrix_BT709 : ColorMatrix_SMPTE170M;
+
     videoEncoder = nullptr;
     if (bDisableEncoding)
         videoEncoder = CreateNullVideoEncoder();
     else if(AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0)
-        videoEncoder = CreateQSVEncoder(fps, outputCX, outputCY, quality, preset, bUsing444, maxBitRate, bufferSize, bUseCFR, bDupeFrames);
+        videoEncoder = CreateQSVEncoder(fps, outputCX, outputCY, quality, preset, bUsing444, colorDesc, maxBitRate, bufferSize, bUseCFR);
 
     if(!videoEncoder)
-        videoEncoder = CreateX264Encoder(fps, outputCX, outputCY, quality, preset, bUsing444, maxBitRate, bufferSize, bUseCFR, bDupeFrames);
+        videoEncoder = CreateX264Encoder(fps, outputCX, outputCY, quality, preset, bUsing444, colorDesc, maxBitRate, bufferSize, bUseCFR);
 
 
     //-------------------------------------------------------------
@@ -524,7 +540,12 @@ retryHookTestV2:
 
     //-------------------------------------------------------------
 
-    hMainThread = OSCreateThread((XTHREAD)OBS::MainCaptureThread, NULL);
+    curFramePic = NULL;
+    bShutdownVideoThread = false;
+    bShutdownEncodeThread = false;
+    ResetEvent(hVideoThread);
+    hEncodeThread = OSCreateThread((XTHREAD)OBS::EncodeThread, NULL);
+    hVideoThread = OSCreateThread((XTHREAD)OBS::MainCaptureThread, NULL);
 
     if(bTestStream)
     {
@@ -561,15 +582,23 @@ void OBS::Stop()
     OSEnterMutex(hStartupShutdownMutex);
 
     //we only want the capture thread to stop first, so we can ensure all packets are flushed
-    bShutdownMainThread = true;
+    bShutdownEncodeThread = true;
+    ShowWindow(hwndProjector, SW_HIDE);
 
-    if(hMainThread)
+    if(hEncodeThread)
     {
-        OSTerminateThread(hMainThread, 60000);
-        hMainThread = NULL;
+        OSTerminateThread(hEncodeThread, 30000);
+        hEncodeThread = NULL;
     }
 
-    bShutdownMainThread = false;
+    bShutdownVideoThread = true;
+    SetEvent(hVideoEvent);
+
+    if(hVideoThread)
+    {
+        OSTerminateThread(hVideoThread, 30000);
+        hVideoThread = NULL;
+    }
 
     bRunning = false;
 
@@ -876,11 +905,11 @@ void OBS::EncodeAudioSegment(float *buffer, UINT numFrames, QWORD timestamp)
     }
 }
 
-const int audioSamplesPerSec = 44100;
-const int audioSampleSize = audioSamplesPerSec/100;
-
 void OBS::MainAudioLoop()
 {
+    const unsigned int audioSamplesPerSec = App->GetSampleRateHz();
+    const unsigned int audioSampleSize = audioSamplesPerSec/100;
+
     DWORD taskID = 0;
     HANDLE hTask = AvSetMmThreadCharacteristics(TEXT("Pro Audio"), &taskID);
 

@@ -245,6 +245,18 @@ LPBYTE GetCursorData(HICON hIcon, ICONINFO &ii, UINT &width, UINT &height)
 
 extern LARGE_INTEGER clockFreq;
 
+QWORD GetQPCTimeNS()
+{
+    LARGE_INTEGER currentTime;
+    QueryPerformanceCounter(&currentTime);
+
+    double timeVal = double(currentTime.QuadPart);
+    timeVal *= 1000000000.0;
+    timeVal /= double(clockFreq.QuadPart);
+
+    return QWORD(timeVal);
+}
+
 QWORD GetQPCTime100NS()
 {
     LARGE_INTEGER currentTime;

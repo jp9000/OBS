@@ -333,12 +333,18 @@ RTMPPublisher::~RTMPPublisher()
     double dBFrameDropPercentage = double(numBFramesDumped)/NumTotalVideoFrames()*100.0;
     double dPFrameDropPercentage = double(numPFramesDumped)/NumTotalVideoFrames()*100.0;
 
+    if (totalSendCount)
+        Log(TEXT("Average send payload: %d bytes, average send interval: %d ms"), (DWORD)(totalSendBytes / totalSendCount), totalSendPeriod / totalSendCount);
+
     Log(TEXT("Number of times waited to send: %d, Waited for a total of %d bytes"), totalTimesWaited, totalBytesWaited);
 
     Log(TEXT("Number of b-frames dropped: %u (%0.2g%%), Number of p-frames dropped: %u (%0.2g%%), Total %u (%0.2g%%)"),
         numBFramesDumped, dBFrameDropPercentage,
         numPFramesDumped, dPFrameDropPercentage,
         numBFramesDumped+numPFramesDumped, dBFrameDropPercentage+dPFrameDropPercentage);
+
+    Log(TEXT("Number of bytes sent: %llu"), totalSendBytes);
+
 
     /*if(totalCalls)
         Log(TEXT("average send time: %u"), totalTime/totalCalls);*/
@@ -407,8 +413,7 @@ void RTMPPublisher::FlushBufferedPackets()
 
     for (unsigned int i = 0; i < bufferedPackets.Num(); i++)
     {
-        TimedPacket packet;
-        packet = bufferedPackets[i];
+        TimedPacket &packet = bufferedPackets[i];
 
         QWORD curTime;
         do
@@ -418,6 +423,8 @@ void RTMPPublisher::FlushBufferedPackets()
         } while (curTime - startTime < packet.timestamp - baseTimestamp);
 
         SendPacketForReal(packet.data.Array(), packet.data.Num(), packet.timestamp, packet.type);
+
+        packet.data.Clear();
     }
 
     bufferedPackets.Clear();
@@ -895,9 +902,9 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
 
     RTMP_EnableWrite(rtmp); //set it to publish
 
-    /*rtmp->Link.swfUrl.av_len = rtmp->Link.tcUrl.av_len;
+    rtmp->Link.swfUrl.av_len = rtmp->Link.tcUrl.av_len;
     rtmp->Link.swfUrl.av_val = rtmp->Link.tcUrl.av_val;
-    rtmp->Link.pageUrl.av_len = rtmp->Link.tcUrl.av_len;
+    /*rtmp->Link.pageUrl.av_len = rtmp->Link.tcUrl.av_len;
     rtmp->Link.pageUrl.av_val = rtmp->Link.tcUrl.av_val;*/
     rtmp->Link.flashVer.av_val = "FMLE/3.0 (compatible; FMSc/1.0)";
     rtmp->Link.flashVer.av_len = (int)strlen(rtmp->Link.flashVer.av_val);
@@ -933,6 +940,8 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
 
     //-----------------------------------------
 
+    DWORD startTime = OSGetTime();
+
     if(!RTMP_Connect(rtmp, NULL))
     {
         failReason = Str("Connection.CouldNotConnect");
@@ -940,6 +949,8 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
         bCanRetry = true;
         goto end;
     }
+
+    Log(TEXT("Completed handshake with %s in %u ms."), strURL.Array(), OSGetTime() - startTime);
 
     if(!RTMP_ConnectStream(rtmp, 0))
     {
@@ -1064,6 +1075,7 @@ void RTMPPublisher::SocketLoop()
 
     int delayTime;
     int latencyPacketSize;
+    DWORD lastSendTime = 0;
 
     WSANETWORKEVENTS networkEvents;
 
@@ -1144,6 +1156,12 @@ void RTMPPublisher::SocketLoop()
 
             if (networkEvents.lNetworkEvents & FD_CLOSE)
             {
+                if (lastSendTime)
+                {
+                    DWORD diff = OSGetTime() - lastSendTime;
+                    Log(TEXT("RTMPPublisher::SocketLoop: Received FD_CLOSE, %u ms since last send (buffer: %d / %d)"), diff, curDataBufferLen, dataBufferSize);
+                }
+
                 if (bStopping)
                     Log(TEXT("RTMPPublisher::SocketLoop: Aborting due to FD_CLOSE during shutdown, %d bytes lost, error %d"), curDataBufferLen, networkEvents.iErrorCode[FD_CLOSE_BIT]);
                 else
@@ -1241,6 +1259,20 @@ void RTMPPublisher::SocketLoop()
                     curDataBufferLen -= ret;
 
                     bytesSent += ret;
+
+                    if (lastSendTime)
+                    {
+                        DWORD diff = OSGetTime() - lastSendTime;
+
+                        if (diff >= 1500)
+                            Log(TEXT("RTMPPublisher::SendLoop: Stalled for %u ms to write %d bytes (buffer: %d / %d), unstable connection?"), diff, ret, curDataBufferLen, dataBufferSize);
+
+                        totalSendPeriod += diff;
+                        totalSendBytes += ret;
+                        totalSendCount++;
+                    }
+
+                    lastSendTime = OSGetTime();
 
                     SetEvent(hBufferSpaceAvailableEvent);
                 }

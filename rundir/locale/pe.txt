@@ -1,3 +1,4 @@
+Cancel="Avast"
 MoveToBottom="To the bilge"
 MoveToTop="Move it topside"
 
@@ -40,6 +41,7 @@ Settings.General.Language="Lingo:"
 
 Sources.TextSource.Left="Portside"
 Sources.TextSource.Right="Starboard"
+
 
 
 

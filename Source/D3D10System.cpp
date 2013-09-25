@@ -143,7 +143,6 @@ D3D10System::D3D10System()
 
     UINT adapterID = GlobalConfig->GetInt(TEXT("Video"), TEXT("Adapter"), 0);
 
-    IDXGIFactory1 *factory;
     if(FAILED(err = CreateDXGIFactory1(iidVal, (void**)&factory)))
         CrashError(TEXT("Could not create DXGI factory"));
 
@@ -160,7 +159,6 @@ D3D10System::D3D10System()
     swapDesc.BufferDesc.Width  = App->renderFrameWidth;
     swapDesc.BufferDesc.Height = App->renderFrameHeight;
     swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapDesc.Flags = 0;
     swapDesc.OutputWindow = hwndRenderFrame;
     swapDesc.SampleDesc.Count = 1;
     swapDesc.Windowed = TRUE;
@@ -198,7 +196,6 @@ D3D10System::D3D10System()
         CrashError(TEXT("Could not initialize DirectX 10 on %s.  This error can happen for one of the following reasons:\r\n\r\n1.) Your GPU is not supported (DirectX 10 is required - note that many integrated laptop GPUs do not support DX10)\r\n2.) You're running Windows Vista without the \"Platform Update\"\r\n3.) Your video card drivers are out of date\r\n\r\nIf you are using a laptop with NVIDIA Optimus or AMD Switchable Graphics, make sure OBS is set to run on the high performance GPU in your driver settings."), adapterName.Array());
 
     adapter->Release();
-    factory->Release();
 
     //------------------------------------------------------------------
 
@@ -287,6 +284,7 @@ D3D10System::~D3D10System()
     SafeRelease(swapRenderView);
     SafeRelease(swap);
     SafeRelease(d3d);
+    SafeRelease(factory);
 }
 
 void D3D10System::UnloadAllData()
@@ -801,10 +799,10 @@ void D3D10System::SetCropping(float left, float top, float right, float bottom)
 
 void D3D10System::DrawSpriteEx(Texture *texture, DWORD color, float x, float y, float x2, float y2, float u, float v, float u2, float v2)
 {
-    DrawSpriteExRotate(texture, color, x, y, x2, y2, u, v, u2, v2, 0.0f);
+    DrawSpriteExRotate(texture, color, x, y, x2, y2, 0.0f, u, v, u2, v2, 0.0f);
 }
 
-void D3D10System::DrawSpriteExRotate(Texture *texture, DWORD color, float x, float y, float x2, float y2, float u, float v, float u2, float v2, float degrees)
+void D3D10System::DrawSpriteExRotate(Texture *texture, DWORD color, float x, float y, float x2, float y2, float degrees, float u, float v, float u2, float v2, float texDegrees)
 {
     if(!curPixelShader)
         return; 
@@ -868,16 +866,33 @@ void D3D10System::DrawSpriteExRotate(Texture *texture, DWORD color, float x, flo
     data->VertList[2].Set(x2, y,  0.0f);
     data->VertList[3].Set(x2, y2, 0.0f);
 
+    if (!CloseFloat(degrees, 0.0f)) {
+        List<Vect> &coords = data->VertList;
+
+        Vect2 center(x+totalSize.x/2, y+totalSize.y/2);
+
+        Matrix rotMatrix;
+        rotMatrix.SetIdentity();
+        rotMatrix.Rotate(AxisAngle(0.0f, 0.0f, 1.0f, RAD(degrees)));
+
+        for (int i = 0; i < 4; i++) {
+            Vect val = coords[i]-Vect(center);
+            val.TransformVector(rotMatrix);
+            coords[i] = val;
+            coords[i] += Vect(center);
+        }
+    }
+
     List<UVCoord> &coords = data->UVList[0];
     coords[0].Set(u,  v);
     coords[1].Set(u,  v2);
     coords[2].Set(u2, v);
     coords[3].Set(u2, v2);
 
-    if (!CloseFloat(degrees, 0.0f)) {
+    if (!CloseFloat(texDegrees, 0.0f)) {
         Matrix rotMatrix;
         rotMatrix.SetIdentity();
-        rotMatrix.Rotate(AxisAngle(0.0f, 0.0f, 1.0f, -RAD(degrees)));
+        rotMatrix.Rotate(AxisAngle(0.0f, 0.0f, 1.0f, -RAD(texDegrees)));
 
         Vect2 minVal = Vect2(0.0f, 0.0f);
         for (int i = 0; i < 4; i++) {

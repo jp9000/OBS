@@ -134,6 +134,7 @@ OBS::OBS()
 
     hSceneMutex = OSCreateMutex();
     hAuxAudioMutex = OSCreateMutex();
+    hVideoEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
     monitors.Clear();
     EnumDisplayMonitors(NULL, NULL, (MONITORENUMPROC)MonitorInfoEnumProc, (LPARAM)&monitors);
@@ -191,6 +192,15 @@ OBS::OBS()
 
     if(!RegisterClass(&wc))
         CrashError(TEXT("Could not register render frame class"));
+
+    //-----------------------------------------------------
+    // projector frame class
+    wc.lpszClassName = OBS_PROJECTORFRAME_CLASS;
+    wc.lpfnWndProc = (WNDPROC)OBS::ProjectorFrameProc;
+    wc.hbrBackground = GetSysColorBrush(COLOR_BTNFACE);
+
+    if(!RegisterClass(&wc))
+        CrashError(TEXT("Could not register projector frame class"));
 
     //-----------------------------------------------------
     // main window class
@@ -277,11 +287,20 @@ OBS::OBS()
     //-----------------------------------------------------
     // render frame
 
-    hwndRenderFrame = CreateWindow(OBS_RENDERFRAME_CLASS, NULL, WS_CHILDWINDOW | WS_VISIBLE | WS_CLIPCHILDREN,
+    hwndRenderFrame = CreateWindow(OBS_RENDERFRAME_CLASS, NULL,
+        WS_CHILDWINDOW | WS_VISIBLE | WS_CLIPCHILDREN,
         0, 0, 0, 0,
         hwndMain, NULL, hinstMain, NULL);
     if(!hwndRenderFrame)
         CrashError(TEXT("Could not create render frame"));
+
+    //-----------------------------------------------------
+    // projector window
+
+    hwndProjector = CreateWindow(OBS_PROJECTORFRAME_CLASS,
+        L"OBS Projector Window",
+        WS_POPUP, 0, 0, 0, 0,
+        NULL, NULL, hinstMain, NULL);
 
     //-----------------------------------------------------
     // render frame text
@@ -568,7 +587,7 @@ OBS::OBS()
     ULARGE_INTEGER currentTime;
     FILETIME systemTime;
 
-    lastUpdateTime.QuadPart = GlobalConfig->GetInt(TEXT("General"), TEXT("LastUpdateCheck"), 0);
+    lastUpdateTime.QuadPart = GlobalConfig->GetInt(TEXT("General"), OBS_CONFIG_UPDATE_KEY, 0);
 
     GetSystemTimeAsFileTime(&systemTime);
     currentTime.LowPart = systemTime.dwLowDateTime;
@@ -580,13 +599,13 @@ OBS::OBS()
 
     if (currentTime.QuadPart - lastUpdateTime.QuadPart >= 3600)
     {
-        GlobalConfig->SetInt(TEXT("General"), TEXT("LastUpdateCheck"), (int)currentTime.QuadPart);
+        GlobalConfig->SetInt(TEXT("General"), OBS_CONFIG_UPDATE_KEY, (int)currentTime.QuadPart);
         OSCloseThread(OSCreateThread((XTHREAD)CheckUpdateThread, NULL));
     }
 #endif
 
     // TODO: Should these be stored in the config file?
-    bRenderViewEnabled = true;
+    bRenderViewEnabled = GlobalConfig->GetInt(TEXT("General"), TEXT("PreviewEnabled"), 1) != 0;
     bForceRenderViewErase = false;
     renderFrameIn1To1Mode = false;
 
@@ -707,6 +726,9 @@ OBS::~OBS()
     GlobalConfig->SetInt(TEXT("General"), TEXT("PanelVisibleWindowed"), bPanelVisibleWindowed ? 1 : 0);
     GlobalConfig->SetInt(TEXT("General"), TEXT("PanelVisibleFullscreen"), bPanelVisibleFullscreen ? 1 : 0);
 
+    // Save preview enabled/disabled state
+    GlobalConfig->SetInt(TEXT("General"), TEXT("PreviewEnabled"), bRenderViewEnabled ? 1 : 0);
+
     scenesConfig.Close(true);
 
     for(UINT i=0; i<Icons.Num(); i++)
@@ -724,6 +746,9 @@ OBS::~OBS()
         sceneClasses[i].FreeData();
     for(UINT i=0; i<imageSourceClasses.Num(); i++)
         imageSourceClasses[i].FreeData();
+
+    if (hVideoEvent)
+        CloseHandle(hVideoEvent);
 
     if(hSceneMutex)
         OSCloseMutex(hSceneMutex);
@@ -1167,8 +1192,8 @@ void OBS::ReloadIniSettings()
     hwndTemp = GetDlgItem(hwndMain, ID_MICVOLUME);
 
     if(!AppConfig->HasKey(TEXT("Audio"), TEXT("MicVolume")))
-        AppConfig->SetFloat(TEXT("Audio"), TEXT("MicVolume"), 0.0f);
-    SetVolumeControlValue(hwndTemp, AppConfig->GetFloat(TEXT("Audio"), TEXT("MicVolume"), 0.0f));
+        AppConfig->SetFloat(TEXT("Audio"), TEXT("MicVolume"), 1.0f);
+    SetVolumeControlValue(hwndTemp, AppConfig->GetFloat(TEXT("Audio"), TEXT("MicVolume"), 1.0f));
 
     AudioDeviceList audioDevices;
     GetAudioDevices(audioDevices, ADT_RECORDING);
@@ -1441,10 +1466,19 @@ void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
     else
     {
         String strOutString;
+        DWORD color = 0x000000;
 
         switch(dis.itemID)
         {
-            case 0: strOutString << App->GetMostImportantInfo(); break;
+            case 0:
+                {
+                    StreamInfoPriority priority;
+                    strOutString << App->GetMostImportantInfo(priority);
+                    if (priority == StreamInfoPriority_Critical)
+                        color = 0x0000FF;
+                    break;
+                }
+
             case 1:
                 {
                     DWORD streamTimeSecondsTotal = App->totalStreamTime/1000;
@@ -1478,6 +1512,7 @@ void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
 
         if(strOutString.IsValid())
         {
+            SetTextColor(hdcTemp, color);
             SetBkMode(hdcTemp, TRANSPARENT);
             DrawText(hdcTemp, strOutString, strOutString.Length(), &rc, DT_VCENTER|DT_SINGLELINE|DT_LEFT);
         }
@@ -1651,4 +1686,88 @@ BOOL OBS::UpdateDashboardButton()
     BOOL bShowDashboardButton = bPanelVisible && bStreamOutput && bDashboardValid;
 
     return ShowWindow(GetDlgItem(hwndMain, ID_DASHBOARD), bShowDashboardButton ? SW_SHOW : SW_HIDE);
+}
+
+void OBS::ActuallyEnableProjector()
+{
+    DisableProjector();
+
+    D3D10System *sys = static_cast<D3D10System*>(GS);
+
+    DXGI_SWAP_CHAIN_DESC swapDesc;
+    zero(&swapDesc, sizeof(swapDesc));
+    swapDesc.BufferCount = 2;
+    swapDesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    swapDesc.BufferDesc.Width  = projectorWidth;
+    swapDesc.BufferDesc.Height = projectorHeight;
+    swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapDesc.OutputWindow = hwndProjector;
+    swapDesc.SampleDesc.Count = 1;
+    swapDesc.Windowed = TRUE;
+
+    if (!bShutdownEncodeThread)
+        SetWindowPos(hwndProjector, NULL, projectorX, projectorY, projectorWidth, projectorHeight, SWP_SHOWWINDOW);
+
+    ID3D10Texture2D *backBuffer = NULL;
+    ID3D10RenderTargetView *target = NULL;
+
+    if (FAILED(sys->factory->CreateSwapChain(sys->d3d, &swapDesc, &projectorSwap))) {
+        AppWarning(L"Could not create projector swap chain");
+        goto exit;
+    }
+
+    if (FAILED(projectorSwap->GetBuffer(0, IID_ID3D10Texture2D, (void**)&backBuffer))) {
+        AppWarning(TEXT("Unable to get projector back buffer"));
+        goto exit;
+    }
+
+    if(FAILED(sys->d3d->CreateRenderTargetView(backBuffer, NULL, &target))) {
+        AppWarning(TEXT("Unable to get render view from projector back buffer"));
+        goto exit;
+    }
+
+    D3D10Texture *tex = new D3D10Texture();
+    tex->width        = projectorWidth;
+    tex->height       = projectorHeight;
+    tex->format       = GS_BGRA;
+    tex->texture      = backBuffer;
+    tex->renderTarget = target;
+
+    projectorTexture = tex;
+    bProjector = true;
+
+exit:
+    if (!bProjector) {
+        SafeRelease(projectorSwap);
+        SafeRelease(backBuffer);
+    }
+
+    bPleaseEnableProjector = false;
+}
+
+void OBS::EnableProjector(UINT monitorID)
+{
+    const MonitorInfo &mi = GetMonitor(monitorID);
+
+    projectorMonitorID = monitorID;
+    projectorWidth     = mi.rect.right-mi.rect.left;
+    projectorHeight    = mi.rect.bottom-mi.rect.top;
+    projectorX         = mi.rect.left;
+    projectorY         = mi.rect.top;
+
+    bPleaseEnableProjector = true;
+}
+
+void OBS::DisableProjector()
+{
+    SafeRelease(projectorSwap);
+
+    delete projectorTexture;
+    projectorTexture = NULL;
+
+    bProjector = false;
+    bPleaseDisableProjector = false;
+
+    if (!bShutdownEncodeThread)
+        ShowWindow(hwndProjector, SW_HIDE);
 }

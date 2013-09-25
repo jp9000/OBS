@@ -18,6 +18,7 @@
 
 
 uniform Texture2D diffuseTexture;
+uniform float4x4 yuvMat;
 uniform float2 baseDimensionI;
 
 SamplerState textureSampler
@@ -40,11 +41,6 @@ float4 main(VertData input) : SV_Target
     rgba.a = 1.0;
 
     //-------------------------------------------------------------
-
-    const float4x4 yuvMat  = {0.257, -0.148,  0.439, 0.0,
-                              0.504, -0.291, -0.368, 0.0,
-                              0.098,  0.439, -0.071, 0.0,
-                              0.0625, 0.50,   0.50,  1.0};
 
     //a nice quick colorspace conversion
     float4 yuvx = mul(float4(rgba.rgb, 1.0), yuvMat);

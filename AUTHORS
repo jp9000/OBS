@@ -26,7 +26,7 @@ Contributors:
                              as well as bugfixes and various other minor
                              features.
 
-  Palana                   - Intel Quick Sync Video encoding implementation. Wonder what's next :)
+  Ruwen "Palana" Hahn      - Intel Quick Sync Video encoding implementation. Wonder what's next :)
 
   HomeWorld                - Many many bug fixes, improved the text source
                              code significantly.  Text.  Loves text on the
@@ -56,33 +56,37 @@ venting:
 Translations:
 ---------------------------------------------------
   Arabic                - BWU Wheelman
-  Bulgarian             - Hath Ington, SeanBrightside
+  Bulgarian             - dwigga, Hath Ington, SeanBrightside
   Catalan               - Kassidy Kearey
   Chinese Simplified    - Guijy
-  Chinese Traditional   - woodghost, You-Ruei Tzeng
-  Czech                 - crongame
-  Danish                - Crallebab
-  Dutch                 - Muf, ThoNohT
-  Estonian              - Andres Lasn, jaagup.kymmel, Mario Kuusk
+  Chinese Traditional   - Miaus Hall, woodghost, You-Ruei Tzeng
+  Czech                 - crongame, Jirka Michel
+  Danish                - Anders Urban, Crallebab, Jacob Nielsen, MikeyDK
+  Dutch                 - armin.altorffer, jasper.klaren.1, Muf, ThoNohT
+  Estonian              - Andres Lasn, jaagup.kymmel, Kristjan Hiis, Mario Kuusk
   Finnish               - Joni "Arkkis" Nieminen
-  French                - Alan Antunes, Bertran de Balanda Jordi, George Crawford, Jean Pierre Ponce, samcool_129, Soopah
+  French                - Alan Antunes, Antwan, Bertran de Balanda Jordi, George Crawford, Jean Pierre Ponce, Paradis, samcool_129, soopah
   German                - Gol D. Ace, Johannes Grill, Johannes Kroker, RobinJack0r, selebu
-  Hebrew                - AlderaaN
+  Greek                 - pragma
+  Hebrew                - AlderaaN, idan072
   Hungarian             - Kashimus
+  Italian               - Angelo Romano
   Japanese              - shousa
   Korean                - Seunghoon Yi, Wonjoo Noh
-  Lithuanian            - Martynas Jurgilas, zanza zanzaa
-  Norwegian             - August Kind Svendsen, Decicus, TCi
-  Norwegian Bokmal      - Jørgen D. Næss, Stian Schultz
-  Pirate English        - George Crawford, Gol D. Ace, Iotku, Patric Morgan, Tilen Kuzma
+  Lithuanian            - Pythlow Stubson, Martynas Jurgilas, zanza zanzaa
+  Norwegian             - areedw, August Kind Svendsen, Decicus, TCi
+  Norwegian Bokmal      - John, Jørgen D. Næss, Stian Schultz, Tore
+  Pirate English        - George Crawford, Gol D. Ace, Iotku, Jordi ♥ Daphne, lucas.cuminato, Neo_mat, Patric Morgan, TheKomputerKing, Tilen Kuzma
   Polish                - Jasiegg, Michał Durak, Unitax
   Portuguese            - Bruno Ferreira, mushiris, scrapy, Tiago Mendes
-  Portuguese, Brazilian - gmontanola, Ramon Gonzalez, Ramon Mendes, William Sanches
-  Russian               - Corwin, flex19, Кристиан Торрехон, R3mbrant, Sergei Fug1t1v3, Woona, xuok
-  Spanish               - cE.Luka'23, DalbertoRodriguez, Javier Colter, Jorge González Muñoz, NoFix, Roberto Lorenzo, Steve Correa, Vitamina P
+  Portuguese, Brazilian - gmontanola, lucas.cuminato, Ramon Gonzalez, Ramon Mendes, William Sanches
+  Romanian              - alincupunct, Eduard Francu
+  Russian               - Corwin, flex19, Кристиан Торрехон, Neo_mat, R3mbrant, Sergei Fug1t1v3, Woona, xuok
+  Slovenian             - ArcaneWater
+  Spanish               - cE.Luka'23, Christianlej, DalbertoRodriguez, Javier Colter, Jorge González Muñoz, NoFix, Roberto Lorenzo, Steve Correa, Vitamina P
   Swedish               - Bjorn Astrom
-  Turkish               - Burak Kaan Köse
-  Ukrainian             - Кристиан Торрехон
+  Turkish               - Burak Kaan Köse, Heratio
+  Ukrainian             - Кристиан Торрехон, Sirioga
   Others                - Thanks to all the other authors whos names I have not written
                           down.
 

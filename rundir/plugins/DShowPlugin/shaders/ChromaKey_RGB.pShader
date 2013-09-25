@@ -42,10 +42,10 @@ struct VertData
 
 float getSampleDist(float3 chromaKey, float3 rgb)
 {
-    const float4x4 yuvMat  = {0.257, -0.148,  0.439, 0.0,
-                              0.504, -0.291, -0.368, 0.0,
-                              0.098,  0.439, -0.071, 0.0,
-                              0.0625, 0.50,   0.50,  1.0};
+    const float4x4 yuvMat = {0.182586, -0.100644,  0.439216, 0.0,
+                             0.614231, -0.338572, -0.398942, 0.0,
+                             0.062007,  0.439216, -0.040274, 0.0,
+                             0.062745,  0.501961,  0.501961, 1.0};
 
     //a nice quick colorspace conversion
     float4 yuvx = mul(float4(rgb.rgb, 1.0), yuvMat);

@@ -172,6 +172,8 @@ public:
     virtual Vect2 MapFrameToWindowSize(Vect2 frameSize) const=0;
     virtual Vect2 GetWindowToFrameScale() const=0;
     virtual Vect2 GetFrameToWindowScale() const=0;
+
+    virtual UINT GetSampleRateHz() const=0;
 };
 
 BASE_EXPORT extern APIInterface *API;
@@ -286,3 +288,5 @@ BASE_EXPORT void OBSRemoveSettingsPane(SettingsPane *pane);
 
 /** gets API version.  version is formatted: 0xMMmm */
 BASE_EXPORT UINT OBSGetAPIVersion();
+
+BASE_EXPORT UINT OBSGetSampleRateHz();

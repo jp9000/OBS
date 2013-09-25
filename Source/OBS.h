@@ -21,6 +21,7 @@
 
 class Scene;
 class SettingsPane;
+struct EncoderPicture;
 
 #define NUM_RENDER_BUFFERS 2
 
@@ -160,7 +161,7 @@ class VideoEncoder
     friend class OBS;
 
 protected:
-    virtual bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, int &ctsOffset)=0;
+    virtual bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp)=0;
 
     virtual void RequestBuffers(LPVOID buffers) {}
 
@@ -373,6 +374,60 @@ enum
 
 //----------------------------
 
+enum ColorPrimaries
+{
+    ColorPrimaries_BT709 = 1,
+    ColorPrimaries_Unspecified,
+    ColorPrimaries_BT470M = 4,
+    ColorPrimaries_BT470BG,
+    ColorPrimaries_SMPTE170M,
+    ColorPrimaries_SMPTE240M,
+    ColorPrimaries_Film,
+    ColorPrimaries_BT2020
+};
+
+enum ColorTransfer
+{
+    ColorTransfer_BT709 = 1,
+    ColorTransfer_Unspecified,
+    ColorTransfer_BT470M = 4,
+    ColorTransfer_BT470BG,
+    ColorTransfer_SMPTE170M,
+    ColorTransfer_SMPTE240M,
+    ColorTransfer_Linear,
+    ColorTransfer_Log100,
+    ColorTransfer_Log316,
+    ColorTransfer_IEC6196624,
+    ColorTransfer_BT1361,
+    ColorTransfer_IEC6196621,
+    ColorTransfer_BT202010,
+    ColorTransfer_BT202012
+};
+
+enum ColorMatrix
+{
+    ColorMatrix_GBR = 0,
+    ColorMatrix_BT709,
+    ColorMatrix_Unspecified,
+    ColorMatrix_BT470M = 4,
+    ColorMatrix_BT470BG,
+    ColorMatrix_SMPTE170M,
+    ColorMatrix_SMPTE240M,
+    ColorMatrix_YCgCo,
+    ColorMatrix_BT2020NCL,
+    ColorMatrix_BT2020CL
+};
+
+struct ColorDescription
+{
+    int fullRange;
+    int primaries;
+    int transfer;
+    int matrix;
+};
+
+//----------------------------
+
 enum ItemModifyType
 {
     ItemModifyType_None,
@@ -437,9 +492,8 @@ struct VideoSegment
 {
     List<VideoPacketData> packets;
     DWORD timestamp;
-    int ctsOffset;
 
-    inline VideoSegment() : timestamp(0), ctsOffset(0) {}
+    inline VideoSegment() : timestamp(0) {}
     inline ~VideoSegment() {Clear();}
     inline void Clear()
     {
@@ -450,6 +504,12 @@ struct VideoSegment
 };
 
 //----------------------------
+
+enum PreviewDrawType {
+    Preview_Standard,
+    Preview_Fullscreen,
+    Preview_Projector
+};
 
 struct FrameProcessInfo;
 
@@ -470,6 +530,7 @@ class OBS
     //---------------------------------------------------
     // graphics stuff
 
+    IDXGISwapChain  *projectorSwap;
     ID3D10Texture2D *copyTextures[NUM_RENDER_BUFFERS];
     Texture         *mainRenderTextures[NUM_RENDER_BUFFERS];
     Texture         *yuvRenderTextures[NUM_RENDER_BUFFERS];
@@ -491,6 +552,8 @@ class OBS
     AudioSource  *desktopAudio;
     AudioSource  *micAudio;
     List<AudioSource*> auxAudioSources;
+
+    UINT sampleRateHz;
 
     AudioEncoder *audioEncoder;
 
@@ -561,7 +624,7 @@ private:
     bool    bTestStream;
     bool    bUseMultithreadedOptimizations;
     bool    bRunning;
-    bool    bShutdownMainThread;
+    volatile bool bShutdownVideoThread, bShutdownEncodeThread;
     int     renderFrameWidth, renderFrameHeight; // The size of the preview only
     int     renderFrameX, renderFrameY; // The offset of the preview inside the preview control
     int     renderFrameCtrlWidth, renderFrameCtrlHeight; // The size of the entire preview control
@@ -586,6 +649,15 @@ private:
     bool    bDisableSceneSwitching;
     bool    bChangingSources;
     bool    bAlwaysOnTop;
+    bool    bPleaseEnableProjector;   //I'm just too lazy
+    bool    bPleaseDisableProjector;
+    bool    bProjector;
+    bool    bEnableProjectorCursor;
+    UINT    projectorX, projectorY;
+    UINT    projectorWidth, projectorHeight;
+    UINT    projectorMonitorID;
+    HWND    hwndProjector;
+    Texture *projectorTexture;
     bool    bFullscreenMode;
     bool    bEditMode;
     bool    bRenderViewEnabled;
@@ -615,11 +687,11 @@ private:
     int     downscaleType;
     UINT    frameTime, fps;
     bool    bUsing444;
+    ColorDescription colorDesc;
 
     //---------------------------------------------------
     // stats
 
-    int ctsOffset;
     DWORD bytesPerSec;
     DWORD captureFPS;
     DWORD curFramesDropped;
@@ -632,13 +704,13 @@ private:
 
     int bufferingTime;
 
-    HANDLE  hMainThread;
+    HANDLE  hEncodeThread;
+    HANDLE  hVideoThread;
     HANDLE  hSceneMutex;
 
     List<VideoSegment> bufferedVideo;
 
     CircularList<UINT> bufferedTimes;
-    CircularList<UINT> ctsOffsets;
 
     bool bRecievedFirstAudioFrame, bSentHeaders, bFirstAudioPacket;
 
@@ -646,8 +718,9 @@ private:
 
     QWORD firstSceneTimestamp;
     QWORD latestVideoTime;
+    QWORD latestVideoTimeNS;
 
-    bool bUseCFR, bDupeFrames;
+    bool bUseCFR;
 
     bool bWriteToFile;
     VideoFileStream *fileStream;
@@ -655,11 +728,19 @@ private:
     bool bRequestKeyframe;
     int  keyframeWait;
 
+    QWORD firstFrameTimestamp;
+    EncoderPicture *curFramePic;
+    HANDLE hVideoEvent;
+
+    static DWORD STDCALL EncodeThread(LPVOID lpUnused);
     static DWORD STDCALL MainCaptureThread(LPVOID lpUnused);
     bool BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, VideoSegment &segmentOut);
-    void SendFrame(VideoSegment &curSegment, QWORD firstFrameTime, int curCTFOffset);
+    void SendFrame(VideoSegment &curSegment, QWORD firstFrameTime);
     bool ProcessFrame(FrameProcessInfo &frameInfo);
+    void EncodeLoop();  
     void MainCaptureLoop();
+
+    void DrawPreview(const Vect2 &renderFrameSize, const Vect2 &renderFrameOffset, const Vect2 &renderFrameCtrlSize, int curRenderTarget, PreviewDrawType type);
 
     //---------------------------------------------------
     // main audio capture loop stuff
@@ -830,6 +911,7 @@ private:
     static INT_PTR CALLBACK ReconnectDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static LRESULT CALLBACK ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static LRESULT CALLBACK RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK ProjectorFrameProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static LRESULT CALLBACK OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
     static INT_PTR CALLBACK SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -837,6 +919,10 @@ private:
     void ResizeRenderFrame(bool bRedrawRenderFrame);
     void UpdateRenderViewMessage();
     void ProcessPanelVisible(bool fromResizeWindow = false);
+
+    void ActuallyEnableProjector();
+    void EnableProjector(UINT monitorID);
+    void DisableProjector();
 
     void ToggleCapturing();
 
@@ -888,6 +974,8 @@ public:
         auxAudioSources.RemoveItem(source);
         OSLeaveMutex(hAuxAudioMutex);
     }
+
+    inline UINT GetSampleRateHz() const {return sampleRateHz;}
 
     inline QWORD GetAudioTime() const {return latestAudioTime;}
     inline QWORD GetVideoTime() const {return latestVideoTime;}
@@ -944,7 +1032,7 @@ public:
     void SetStreamInfo(UINT infoID, CTSTR lpInfo);
     void SetStreamInfoPriority(UINT infoID, StreamInfoPriority priority);
     void RemoveStreamInfo(UINT infoID);
-    String GetMostImportantInfo();
+    String GetMostImportantInfo(StreamInfoPriority &priority);
 
     inline QWORD GetSceneTimestamp() {return firstSceneTimestamp;}
 

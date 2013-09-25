@@ -2,4 +2,6 @@ Cancel="Zrušit"
 OK="Ok"
 
 
+Config.Caption="Nastavení hlasitosti pro každou scénu"
+Config.Enable="Povolit sledování hlasitosti každé scény"
 

@@ -1,9 +1,13 @@
 Add="Додати"
 Preview="Преперегляд"
 Apply="Прийняти"
+Browse="Огляд..."
+BuildingMP4Dialog="Зібрати MP4"
 Cancel="Скасувати"
 ClearHotkey="Очистити"
 Color="Колір"
+Default="За умовчанням"
+Defaults="За умовчанням"
 DeleteConfirm="Ви дійсно бажаєте видалити виділені елементи?"
 Desktop="Робочий стіл"
 Disable="Вимкнути"
@@ -12,10 +16,49 @@ Gamma="Гамма:"
 GlobalSources="Загальні джерела..."
 OK="OK"
 Plugins="Плагіни..."
+Reconnecting="Перепідключення..."
 Refresh="Оновити"
+Remove="Прибрати"
+Rename="Перейменувати"
 Copy="Копіювати"
+Scene="Сцена"
 Settings="Настройки..."
 
+BuildingMP4Dialog.Progress="Йде збірка MP4, будь ласка зачекайте..."
+
+Connection.CouldNotConnect="Не вдалося підключитися до сервера"
+Connection.CouldNotParseURL="Не вдалося проаналізувати RTMP URL"
+Connection.Disconnected="Відключення сервера"
+Connection.InvalidStream="Не можу отримати доступ до вказаного каналу або ключа потоку.  Це може бути тому, що ключ/канал є неприпустимим, або тому, що сервер все ще думає, що ви ввійшли до системи."
+
+DeleteConfirm.Title="Видалити виділені елементи?"
+
+EndingDelay.TimeLeft="Залишилося часу: $1"
+
+GlobalSources.DeleteConfirm="Якщо ви видалите глобальне джерело, його буде видалено з будь-якої сцени, яка використовує його.  Справді продовжити?"
+
+Listbox.Add="Додати $1"
+Listbox.Center="Центр"
+Listbox.CenterHorizontally="Центрувати по горизонталі"
+Listbox.CenterVertically="Центрувати по вертикалі"
+Listbox.Config="Властивості"
+Listbox.Positioning="Позиція/Розмір"
+Listbox.ResetSize="Скинути розмір"
+Listbox.SetHotkey="Встановити гарячу клавішу"
+ListBox.ResetCrop="Скинути кадрування"
+
+MainMenu.File="&Файл"
+MainMenu.Help="&Допомога"
+MainMenu.Profiles="&Профілі"
+MainMenu.Settings="&Налаштування"
+
+MainMenu.Settings.AlwaysOnTop="&Завжди зверху"
+MainMenu.Settings.FullscreenMode="&Повноекранний режим перегляду"
+
+MainMenu.File.Exit="Вихід"
+MainMenu.File.Save="&Зберегти"
+
+MainMenu.Help.Contents="&Вміст"
 
 
 
@@ -25,19 +68,35 @@ Settings="Настройки..."
 
 
 
+Settings.Publish="Параметри трансляції"
+Settings.SaveChangesPrompt="Зберегти і застосувати зміни?"
+Settings.SaveChangesTitle="Застосувати параметри?"
+Settings.Video="Відео"
 
+Settings.Advanced.BindToIP="Прив'язати до інтерфейсу:"
+Settings.Advanced.DisablePreviewEncoding="Вимкнути кодування під час попереднього перегляду"
+Settings.Advanced.GlobalAudioTimeAdjust="Глобальний зсув аудіо часу (мілісекунди):"
+Settings.Advanced.Network="Мережа"
+Settings.Advanced.PresetWarning="ПОПЕРЕДЖЕННЯ! При зміненя пресету x264 можуть бути серйозні негативні наслідки на якість потоку і споживання CPU.\r\n\r\nНе змінюйте цей параметр, якщо ви повністю не розумієте наслідки як пресет впливає на ваш потік.\r\n\r\nВивчіть спеціальни керівництва, в яких пропонується змінити це з обережністю. Вам не потрібно змінювати цей параметр за замовчуванням (veryfast).\r\n\r\nВи впевнені, що ви хочете змінити пресет?"
+Settings.Advanced.SendBufferSize="Розмір буфера відправки:"
+Settings.Advanced.UnlockHigherFPS="Дозволити запис 61-120 кадрів в секунду в налаштуваннях відео"
+Settings.Advanced.UseCBR="Використання CBR"
+Settings.Advanced.UseQSV="Використовувати швидку синхронізацію"
 
+Settings.Advanced.Priority.Idle="Простоювання"
+Settings.Advanced.Priority.Normal="Звичайний"
+Settings.Advanced.Priority.AboveNormal="Перевищення норми"
+Settings.Advanced.Priority.High="Високий"
 
+Settings.Audio.Device="Мікрофон/Допоміжні аудіо пристрої:"
+Settings.Audio.PushToTalkDelay="Push-to-talk затримка (мс):"
+Settings.Audio.PushToTalkHotkey="Використання Push-to-talk:"
 
+Settings.Encoding.Audio="Кодування аудіо"
+Settings.Encoding.Video="Кодування відео"
 
-
-
-
-
-
-
-
-
+Settings.Encoding.Audio.Bitrate="Бітрейт:"
+Settings.Encoding.Audio.Codec="Кодек:"
 
 
 

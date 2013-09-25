@@ -28,6 +28,7 @@ class BASE_EXPORT ProfilerNode
     CTSTR lpName;
     QWORD startTime,
           cpuStartTime;
+    DWORD parallelCalls;
     HANDLE thread;
     ProfilerNode *parent;
     bool bSingularNode;
@@ -37,23 +38,26 @@ public:
     ProfilerNode(CTSTR name, bool bSingularize=false);
     ~ProfilerNode();
     void MonitorThread(HANDLE thread);
+    void SetParallelCallCount(DWORD num);
 };
 
-BASE_EXPORT extern ProfilerNode *__curProfilerNode;
+//BASE_EXPORT extern ProfilerNode *__curProfilerNode;
 BASE_EXPORT extern BOOL bProfilingEnabled;
 
 #define ENABLE_PROFILING 1
 
 #ifdef ENABLE_PROFILING
-    #define profileSingularSegment(name)    ProfilerNode _curProfiler(TEXT(name), true);
-    #define profileSingularIn(name)         {ProfilerNode _curProfiler(TEXT(name), true);
-    #define profileSegment(name)            ProfilerNode _curProfiler(TEXT(name));
-    #define profileIn(name)                 {ProfilerNode _curProfiler(TEXT(name));
-    #define profileOut                      }
+    #define profileSingularSegment(name)                ProfilerNode _curProfiler(TEXT(name), true);
+    #define profileSingularIn(name)                     {ProfilerNode _curProfiler(TEXT(name), true);
+    #define profileSegment(name)                        ProfilerNode _curProfiler(TEXT(name));
+    #define profileParallelSegment(name, plural, num)   ProfilerNode _curProfiler(num == 1 ? TEXT(name) : TEXT(plural)); _curProfiler.SetParallelCallCount(num);
+    #define profileIn(name)                             {ProfilerNode _curProfiler(TEXT(name));
+    #define profileOut                                  }
 #else
     #define profileSingularSegment(name)
     #define profileSingularIn(name)
     #define profileSegment(name)
+    #define profileParallelSegment(name, plural, num)
     #define profileIn(name)
     #define profileOut
 #endif

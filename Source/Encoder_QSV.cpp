@@ -1,19 +1,19 @@
 /********************************************************************************
-Copyright (C) 2012 Hugh Bailey <obs.jim@gmail.com>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+ Copyright (C) 2013 Ruwen Hahn <palana@stunned.de>
+ 
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 ********************************************************************************/
 
 
@@ -49,10 +49,10 @@ namespace
     } validImpl[] = {
         { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D11, {6, 1} },
         { MFX_IMPL_HARDWARE,        MFX_IMPL_VIA_D3D11, {6, 1} },
-        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_ANY,   {6, 1} }, //Ivy Bridge+ with non-functional D3D11 support?
-        { MFX_IMPL_HARDWARE,        MFX_IMPL_VIA_ANY,   {6, 1} },
-        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_ANY,   {4, 1} }, //Sandy Bridge
-        { MFX_IMPL_HARDWARE,        MFX_IMPL_VIA_ANY,   {4, 1} },
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {6, 1} }, //Ivy Bridge+ with non-functional D3D11 support?
+        { MFX_IMPL_HARDWARE,        MFX_IMPL_VIA_D3D9,  {6, 1} },
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {4, 1} }, //Sandy Bridge
+        { MFX_IMPL_HARDWARE,        MFX_IMPL_VIA_D3D9,  {4, 1} },
     };
     const TCHAR* implStr[] = {
         TO_STR(MFX_IMPL_AUTO),
@@ -128,6 +128,21 @@ namespace
         return t/MFX_TIME_FACTOR;
     }
 #undef MFX_TIME_FACTOR
+
+    struct MutexLock
+    {
+        HANDLE mutex;
+        ~MutexLock() { OSLeaveMutex(mutex); }
+        MutexLock(HANDLE mutex_) : mutex(mutex_) { OSEnterMutex(mutex); }
+    private:
+        MutexLock() {}
+    };
+
+    template <class T>
+    void zero(T& t, size_t size=sizeof(T))
+    {
+        memset(&t, 0, size);
+    }
 }
 
 bool CheckQSVHardwareSupport(bool log=true)
@@ -174,7 +189,7 @@ class QSVEncoder : public VideoEncoder
 
     mfxEncodeCtrl ctrl,
                   sei_ctrl;
-    
+
     List<mfxU8> bs_buff;
     struct encode_task
     {
@@ -193,6 +208,7 @@ class QSVEncoder : public VideoEncoder
 
     List<mfxU8> frame_buff;
     List<mfxFrameData> frames;
+    HANDLE frame_mutex;
 
     int fps;
 
@@ -205,7 +221,7 @@ class QSVEncoder : public VideoEncoder
     bool bFirstFrameProcessed,
          bFirstFrameQueued;
 
-    bool bUseCBR, bUseCFR, bDupeFrames;
+    bool bUseCBR, bUseCFR;
 
     List<VideoPacket> CurrentPackets;
     List<BYTE> HeaderPacket, SEIData;
@@ -249,7 +265,7 @@ class QSVEncoder : public VideoEncoder
 
         mfxPayload& sei_payload = *sei_payloads.CreateNew();
 
-        memset(&sei_payload, 0, sizeof(sei_payload));
+        zero(sei_payload);
 
         sei_payload.Type = type;
         sei_payload.BufSize = sei_message_buffer.Num()-offset;
@@ -285,20 +301,24 @@ class QSVEncoder : public VideoEncoder
         AddSEIData(payload, SEI_USER_DATA_UNREGISTERED);
     }
 
+    void ForceD3D9Config()
+    {
+        GlobalConfig->SetInt(TEXT("Video Encoding"), TEXT("QSVDisableD3D11"), 1);
+    }
+
 #define ALIGN16(value)                      (((value + 15) >> 4) << 4) // round up to a multiple of 16
 public:
-    QSVEncoder(int fps_, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitrate, int bufferSize, bool bUseCFR_, bool bDupeFrames_)
+    QSVEncoder(int fps_, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitrate, int bufferSize, bool bUseCFR_)
         : enc(nullptr), bFirstFrameProcessed(false), bFirstFrameQueued(false)
     {
         fps = fps_;
 
         bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR")) != 0;
         bUseCFR = bUseCFR_;
-        bDupeFrames = bDupeFrames_;
 
         UINT keyframeInterval = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 6);
 
-        memset(&params, 0, sizeof(params));
+        zero(params);
         params.mfx.CodecId = MFX_CODEC_AVC;
         params.mfx.TargetUsage = MFX_TARGETUSAGE_BEST_QUALITY;
         params.mfx.TargetKbps = maxBitrate;
@@ -329,6 +349,25 @@ public:
 
         this->width  = width;
         this->height = height;
+
+        List<mfxExtBuffer*> ext_params;
+
+        mfxExtVideoSignalInfo vsi;
+        zero(vsi);
+        vsi.Header.BufferId = MFX_EXTBUFF_VIDEO_SIGNAL_INFO;
+        vsi.Header.BufferSz = sizeof(vsi);
+
+        vsi.ColourDescriptionPresent = 1;
+        vsi.ColourPrimaries = colorDesc.primaries;
+        vsi.MatrixCoefficients = colorDesc.matrix;
+        vsi.TransferCharacteristics = colorDesc.transfer;
+        vsi.VideoFullRange = colorDesc.fullRange;
+        vsi.VideoFormat = 5; //unspecified
+
+        ext_params << (mfxExtBuffer*)&vsi;
+
+        params.ExtParam = ext_params.Array();
+        params.NumExtParam = ext_params.Num();
 
         bool bHaveCustomImpl = false;
         impl_parameters custom = { 0 };
@@ -378,12 +417,16 @@ public:
 
                         StringList version;
                         bits[2].GetTokenList(version, '.', false);
-                        if(version.Num() < 2)
+                        if(version.Num() != 2)
                             continue;
 
                         custom.type = bits[0].ToInt();
-                        auto& intf = bits[1].MakeLower();
+                        if(custom.type == 0)
+                            custom.type = MFX_IMPL_HARDWARE_ANY;
+
+                        auto &intf = bits[1].MakeLower();
                         custom.intf = intf == "d3d11" ? MFX_IMPL_VIA_D3D11 : (intf == "d3d9" ? MFX_IMPL_VIA_D3D9 : MFX_IMPL_VIA_ANY);
+
                         custom.version.Major = version[0].ToInt();
                         custom.version.Minor = version[1].ToInt();
                         bHaveCustomImpl = true;
@@ -393,7 +436,7 @@ public:
         }
 
         mfxFrameAllocRequest req;
-        memset(&req, 0, sizeof(req));
+        zero(req);
 
         auto log_impl = [&](mfxIMPL impl, const mfxIMPL intf) {
             mfxIMPL actual;
@@ -425,17 +468,22 @@ public:
         if(bHaveCustomImpl)
         {
             sts = try_impl(custom);
-            if(sts <= 0)
-                Log(TEXT("Could not initialize session using custom settings"));
+            if(sts < 0)
+                AppWarning(TEXT("Could not initialize QSV session using custom settings"));
             else
                 log_impl(custom.type, custom.intf);
         }
 
-        if(!enc.get())
+        
+        bool disable_d3d11 = GlobalConfig->GetInt(TEXT("Video Encoding"), TEXT("QSVDisableD3D11")) != 0;
+
+        if(!enc)
         {
             decltype(std::begin(validImpl)) best = nullptr;
             for(auto impl = std::begin(validImpl); impl != std::end(validImpl); impl++)
             {
+                if(disable_d3d11 && impl->intf == MFX_IMPL_VIA_D3D11)
+                    continue;
                 sts = try_impl(*impl);
                 if(sts == MFX_WRN_PARTIAL_ACCELERATION && !best)
                     best = impl;
@@ -444,8 +492,10 @@ public:
                 log_impl(impl->type, impl->intf);
                 break;
             }
-            if(!enc.get())
+            if(!enc)
             {
+                if(!best)
+                    CrashError(TEXT("Failed to initialize QSV session."));
                 sts = try_impl(*best);
                 log_impl(best->type, best->intf);
             }
@@ -453,15 +503,21 @@ public:
 
         session.SetPriority(MFX_PRIORITY_HIGH);
 
-        if(sts == MFX_WRN_PARTIAL_ACCELERATION) //FIXME: remove when a fixed version is available
-            Log(TEXT("\r\n===================================================================================\r\n")
-                TEXT("Error: QSV hardware acceleration unavailable due to a driver bug. Reduce the number\r\n")
-                TEXT("       of monitors connected to you graphics card or configure your Intel graphics\r\n")
-                TEXT("       card to be the primary device.\r\n")
-                TEXT("       Refer to http://software.intel.com/en-us/forums/topic/359368#comment-1722674\r\n")
-                TEXT("       for more information.\r\n")
-                TEXT("===================================================================================\r\n")
-                TEXT("\r\nContinuing with decreased performance"));
+        if(sts == MFX_WRN_PARTIAL_ACCELERATION) //This indicates software encoding for most users, while others seem to get full hardware acceleration
+        {
+            mfxIMPL impl;
+            session.QueryIMPL(&impl);
+            if(impl & MFX_IMPL_VIA_D3D11)
+                AppWarning(TEXT("QSV hardware acceleration seems to be unavailable. It is safe to ignore this warning\n")
+                           TEXT("unless there are further problems like frame drops or artifacts in the video output.\n")
+                           TEXT("If you experience any of these problems try to connect at least one monitor to your\n")
+                           TEXT("iGPU or follow the guide at\n")
+                           TEXT("<http://mirillis.com/en/products/tutorials/action-tutorial-intel-quick-sync-setup_for_desktops.html>\n")
+                           TEXT("and enable advanced encoder settings (for qsv) with the line: qsvimpl=,d3d9,%d.%d"), ver.Major, ver.Minor);
+            else
+                AppWarning(TEXT("QSV hardware acceleration seems to be unavailable. It is safe to ignore this warning\n")
+                           TEXT("unless there are further problems like frame drops or artifacts in the video output.\n"));
+        }
 
         enc->Init(&params);
 
@@ -483,11 +539,11 @@ public:
             encode_tasks[i].ctrl = nullptr;
 
             mfxFrameSurface1& surf = encode_tasks[i].surf;
-            memset(&surf, 0, sizeof(mfxFrameSurface1));
+            zero(surf);
             memcpy(&surf.Info, &params.mfx.FrameInfo, sizeof(params.mfx.FrameInfo));
-            
+
             mfxBitstream& bs = encode_tasks[i].bs;
-            memset(&bs, 0, sizeof(mfxBitstream));
+            zero(bs);
             bs.Data = bs_start + i*bs_size;
             bs.MaxLength = bs_size;
 
@@ -502,17 +558,18 @@ public:
         frame_buff.SetSize(frame_size * frames.Num() + 15);
 
         mfxU8* frame_start = (mfxU8*)(((size_t)frame_buff.Array() + 15)/16*16);
-        memset(frame_start, 0, frame_size * frames.Num());
+        zero(*frame_start, frame_size * frames.Num());
         for(unsigned i = 0; i < frames.Num(); i++)
         {
             mfxFrameData& frame = frames[i];
-            memset(&frame, 0, sizeof(mfxFrameData));
+            zero(frame);
             frame.Y = frame_start + i * frame_size;
             frame.UV = frame_start + i * frame_size + lum_channel_size;
             frame.V = frame.UV + 1;
             frame.Pitch = fi.Width;
         }
 
+        frame_mutex = OSCreateMutex();
 
         Log(TEXT("Using %u encode tasks"), encode_tasks.Num());
 
@@ -520,10 +577,10 @@ public:
         Log(TEXT("%s"), GetInfoString().Array());
         Log(TEXT("------------------------------------------"));
 
-        memset(&ctrl, 0, sizeof(ctrl));
+        zero(ctrl);
         ctrl.FrameType = MFX_FRAMETYPE_I | MFX_FRAMETYPE_REF | MFX_FRAMETYPE_IDR;
 
-        memset(&sei_ctrl, 0, sizeof(sei_ctrl));
+        zero(sei_ctrl);
 
         InitSEIUserData();
 
@@ -536,6 +593,7 @@ public:
     ~QSVEncoder()
     {
         ClearPackets();
+        OSCloseMutex(frame_mutex);
     }
 
     virtual void RequestBuffers(LPVOID buffers)
@@ -544,6 +602,9 @@ public:
             return;
 
         mfxFrameData& buff = *(mfxFrameData*)buffers;
+
+        MutexLock lock(frame_mutex);
+
         if(buff.MemId && !frames[(unsigned)buff.MemId-1].Locked) //Reuse buffer if not in use
             return;
 
@@ -562,270 +623,268 @@ public:
         Log(TEXT("Error: all frames are in use"));
     }
 
-    void ProcessEncodedFrame(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, int &ctsOffset, mfxU32 wait=0)
+    void ProcessEncodedFrame(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, mfxU32 wait=0)
     {
         if(!encoded_tasks.Num())
             return;
 
-        encode_task& task = encode_tasks[encoded_tasks[0]];
-        auto& sp = task.sp;
-        if(MFXVideoCORE_SyncOperation(session, sp, wait) != MFX_ERR_NONE)
-            return;
+        bool logged_start = false;
 
-        mfxBitstream& bs = task.bs;
-
-        List<x264_nal_t> nalOut;
-        mfxU8 *start = bs.Data + bs.DataOffset,
-              *end = bs.Data + bs.DataOffset + bs.DataLength;
-        const static mfxU8 start_seq[] = {0, 0, 1};
-        start = std::search(start, end, start_seq, start_seq+3);
-        while(start != end)
+        for(unsigned i = 0; i < encoded_tasks.Num() && !packets.Num(); i++)
         {
-            decltype(start) next = std::search(start+1, end, start_seq, start_seq+3);
-            x264_nal_t nal;
-            nal.i_ref_idc = start[3]>>5;
-            nal.i_type = start[3]&0x1f;
-            if(nal.i_type == NAL_SLICE_IDR)
-                nal.i_ref_idc = NAL_PRIORITY_HIGHEST;
-            else if(nal.i_type == NAL_SLICE)
+            encode_task& task = encode_tasks[encoded_tasks[i]];
+            auto& sp = task.sp;
+
+            auto result = MFXVideoCORE_SyncOperation(session, sp, wait);
+            if(result == MFX_WRN_IN_EXECUTION)
+                continue;
+
+            if(result == MFX_ERR_NONE)
             {
-                switch(bs.FrameType & (MFX_FRAMETYPE_REF | (MFX_FRAMETYPE_S-1)))
+                mfxBitstream& bs = task.bs;
+
+                List<x264_nal_t> nalOut;
+                mfxU8 *start = bs.Data + bs.DataOffset,
+                    *end = bs.Data + bs.DataOffset + bs.DataLength;
+                const static mfxU8 start_seq[] = {0, 0, 1};
+                start = std::search(start, end, start_seq, start_seq+3);
+                while(start != end)
                 {
-                case MFX_FRAMETYPE_REF|MFX_FRAMETYPE_I:
-                case MFX_FRAMETYPE_REF|MFX_FRAMETYPE_P:
-                    nal.i_ref_idc = NAL_PRIORITY_HIGH;
-                    break;
-                case MFX_FRAMETYPE_REF|MFX_FRAMETYPE_B:
-                    nal.i_ref_idc = NAL_PRIORITY_LOW;
-                    break;
-                case MFX_FRAMETYPE_B:
-                    nal.i_ref_idc = NAL_PRIORITY_DISPOSABLE;
-                    break;
-                default:
-                    Log(TEXT("Unhandled frametype %u"), bs.FrameType);
-                }
-            }
-            start[3] = ((nal.i_ref_idc<<5)&0x60) | nal.i_type;
-            nal.p_payload = start;
-            nal.i_payload = int(next-start);
-            nalOut << nal;
-            start = next;
-        }
-        size_t nalNum = nalOut.Num();
-
-        packets.Clear();
-        ClearPackets();
-
-        INT64 dts;
-
-        if(bUsingDecodeTimestamp && bs.DecodeTimeStamp != MFX_TIMESTAMP_UNKNOWN)
-        {
-            dts = msFromTimestamp(bs.DecodeTimeStamp);
-        }
-        else
-            dts = outputTimestamp;
-
-        INT64 in_pts = msFromTimestamp(task.surf.Data.TimeStamp),
-              out_pts = msFromTimestamp(bs.TimeStamp);
-
-        if(!bFirstFrameProcessed && nalNum)
-        {
-            delayOffset = -dts;
-            bFirstFrameProcessed = true;
-        }
-
-        INT64 ts = INT64(outputTimestamp);
-        int timeOffset;
-
-        if(bDupeFrames)
-        {
-            //if frame duplication is being used, the shift will be insignificant, so just don't bother adjusting audio
-            timeOffset = int(out_pts-dts);
-            timeOffset += frameShift;
-
-            if(nalNum && timeOffset < 0)
-            {
-                frameShift -= timeOffset;
-                timeOffset = 0;
-            }
-        }
-        else
-        {
-            timeOffset = int(out_pts+delayOffset-ts);
-            timeOffset += ctsOffset;
-
-            //dynamically adjust the CTS for the stream if it gets lower than the current value
-            //(thanks to cyrus for suggesting to do this instead of a single shift)
-            if(nalNum && timeOffset < 0)
-            {
-                ctsOffset -= timeOffset;
-                timeOffset = 0;
-            }
-        }
-        //Log(TEXT("inpts: %005d, dts: %005d, pts: %005d, timestamp: %005d, offset: %005d, newoffset: %005d"), task.surf.Data.TimeStamp/90, dts, bs.TimeStamp/90, outputTimestamp, timeOffset, bs.TimeStamp/90-dts);
-
-        timeOffset = htonl(timeOffset);
-
-        BYTE *timeOffsetAddr = ((BYTE*)&timeOffset)+1;
-
-        VideoPacket *newPacket = NULL;
-
-        PacketType bestType = PacketType_VideoDisposable;
-        bool bFoundFrame = false;
-
-        for(unsigned i=0; i<nalNum; i++)
-        {
-            x264_nal_t &nal = nalOut[i];
-
-            if(nal.i_type == NAL_SEI)
-            {
-                BYTE *skip = nal.p_payload;
-                while(*(skip++) != 0x1);
-                int skipBytes = (int)(skip-nal.p_payload);
-
-                int newPayloadSize = (nal.i_payload-skipBytes);
-                BYTE *sei_start = skip+1;
-                while(sei_start < (nal.p_payload+nal.i_payload))
-                {
-                    BYTE *sei = sei_start;
-                    int sei_type = 0;
-                    while(*sei == 0xff)
+                    decltype(start) next = std::search(start+1, end, start_seq, start_seq+3);
+                    x264_nal_t nal;
+                    nal.i_ref_idc = start[3]>>5;
+                    nal.i_type = start[3]&0x1f;
+                    if(nal.i_type == NAL_SLICE_IDR)
+                        nal.i_ref_idc = NAL_PRIORITY_HIGHEST;
+                    else if(nal.i_type == NAL_SLICE)
                     {
-                        sei_type += 0xff;
-                        sei += 1;
-                    }
-                    sei_type += *sei++;
-
-                    int payload_size = 0;
-                    while(*sei == 0xff)
-                    {
-                        payload_size += 0xff;
-                        sei += 1;
-                    }
-                    payload_size += *sei++;
-
-                    const static BYTE emulation_prevention_pattern[] = {0, 0, 3};
-                    BYTE *search = sei;
-                    for(BYTE *search = sei;;)
-                    {
-                        search = std::search(search, sei+payload_size, emulation_prevention_pattern, emulation_prevention_pattern+3);
-                        if(search == sei+payload_size)
+                        switch(bs.FrameType & (MFX_FRAMETYPE_REF | (MFX_FRAMETYPE_S-1)))
+                        {
+                        case MFX_FRAMETYPE_REF|MFX_FRAMETYPE_I:
+                        case MFX_FRAMETYPE_REF|MFX_FRAMETYPE_P:
+                            nal.i_ref_idc = NAL_PRIORITY_HIGH;
                             break;
-                        payload_size += 1;
-                        search += 3;
+                        case MFX_FRAMETYPE_REF|MFX_FRAMETYPE_B:
+                            nal.i_ref_idc = NAL_PRIORITY_LOW;
+                            break;
+                        case MFX_FRAMETYPE_B:
+                            nal.i_ref_idc = NAL_PRIORITY_DISPOSABLE;
+                            break;
+                        default:
+                            Log(TEXT("Unhandled frametype %u"), bs.FrameType);
+                        }
                     }
+                    start[3] = ((nal.i_ref_idc<<5)&0x60) | nal.i_type;
+                    nal.p_payload = start;
+                    nal.i_payload = int(next-start);
+                    nalOut << nal;
+                    start = next;
+                }
+                size_t nalNum = nalOut.Num();
 
-                    int sei_size = (int)(sei-sei_start) + payload_size;
-                    sei_start[-1] = NAL_SEI;
+                packets.Clear();
+                ClearPackets();
 
-                    if(sei_type == SEI_USER_DATA_UNREGISTERED) {
-                        SEIData.Clear();
-                        BufferOutputSerializer packetOut(SEIData);
+                INT64 dts;
 
-                        packetOut.OutputDword(htonl(sei_size+1));
-                        packetOut.Serialize(sei_start-1, sei_size+1);
-                    } else {
+                if(bUsingDecodeTimestamp && bs.DecodeTimeStamp != MFX_TIMESTAMP_UNKNOWN)
+                {
+                    dts = msFromTimestamp(bs.DecodeTimeStamp);
+                }
+                else
+                    dts = outputTimestamp;
+
+                INT64 in_pts = msFromTimestamp(task.surf.Data.TimeStamp),
+                    out_pts = msFromTimestamp(bs.TimeStamp);
+
+                if(!bFirstFrameProcessed && nalNum)
+                {
+                    delayOffset = -dts;
+                    bFirstFrameProcessed = true;
+                }
+
+                INT64 ts = INT64(outputTimestamp);
+                int timeOffset;
+
+                //if frame duplication is being used, the shift will be insignificant, so just don't bother adjusting audio
+                timeOffset = int(out_pts-dts);
+                timeOffset += frameShift;
+
+                if(nalNum && timeOffset < 0)
+                {
+                    frameShift -= timeOffset;
+                    timeOffset = 0;
+                }
+                //Log(TEXT("inpts: %005d, dts: %005d, pts: %005d, timestamp: %005d, offset: %005d, newoffset: %005d"), task.surf.Data.TimeStamp/90, dts, bs.TimeStamp/90, outputTimestamp, timeOffset, bs.TimeStamp/90-dts);
+
+                timeOffset = htonl(timeOffset);
+
+                BYTE *timeOffsetAddr = ((BYTE*)&timeOffset)+1;
+
+                VideoPacket *newPacket = NULL;
+
+                PacketType bestType = PacketType_VideoDisposable;
+                bool bFoundFrame = false;
+
+                for(unsigned i=0; i<nalNum; i++)
+                {
+                    x264_nal_t &nal = nalOut[i];
+
+                    if(nal.i_type == NAL_SEI)
+                    {
+                        BYTE *skip = nal.p_payload;
+                        while(*(skip++) != 0x1);
+                        int skipBytes = (int)(skip-nal.p_payload);
+
+                        int newPayloadSize = (nal.i_payload-skipBytes);
+                        BYTE *sei_start = skip+1;
+                        while(sei_start < (nal.p_payload+nal.i_payload))
+                        {
+                            BYTE *sei = sei_start;
+                            int sei_type = 0;
+                            while(*sei == 0xff)
+                            {
+                                sei_type += 0xff;
+                                sei += 1;
+                            }
+                            sei_type += *sei++;
+
+                            int payload_size = 0;
+                            while(*sei == 0xff)
+                            {
+                                payload_size += 0xff;
+                                sei += 1;
+                            }
+                            payload_size += *sei++;
+
+                            const static BYTE emulation_prevention_pattern[] = {0, 0, 3};
+                            BYTE *search = sei;
+                            for(BYTE *search = sei;;)
+                            {
+                                search = std::search(search, sei+payload_size, emulation_prevention_pattern, emulation_prevention_pattern+3);
+                                if(search == sei+payload_size)
+                                    break;
+                                payload_size += 1;
+                                search += 3;
+                            }
+
+                            int sei_size = (int)(sei-sei_start) + payload_size;
+                            sei_start[-1] = NAL_SEI;
+
+                            if(sei_type == SEI_USER_DATA_UNREGISTERED) {
+                                SEIData.Clear();
+                                BufferOutputSerializer packetOut(SEIData);
+
+                                packetOut.OutputDword(htonl(sei_size+1));
+                                packetOut.Serialize(sei_start-1, sei_size+1);
+                            } else {
+                                if (!newPacket)
+                                    newPacket = CurrentPackets.CreateNew();
+
+                                BufferOutputSerializer packetOut(newPacket->Packet);
+
+                                packetOut.OutputDword(htonl(sei_size+1));
+                                packetOut.Serialize(sei_start-1, sei_size+1);
+                            }
+                            sei_start += sei_size;
+                        }
+                    }
+                    else if(nal.i_type == NAL_AUD)
+                    {
+                        BYTE *skip = nal.p_payload;
+                        while(*(skip++) != 0x1);
+                        int skipBytes = (int)(skip-nal.p_payload);
+
+                        int newPayloadSize = (nal.i_payload-skipBytes);
+
                         if (!newPacket)
                             newPacket = CurrentPackets.CreateNew();
 
                         BufferOutputSerializer packetOut(newPacket->Packet);
 
-                        packetOut.OutputDword(htonl(sei_size+1));
-                        packetOut.Serialize(sei_start-1, sei_size+1);
+                        packetOut.OutputDword(htonl(newPayloadSize));
+                        packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
                     }
-                    sei_start += sei_size;
+                    else if(nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE)
+                    {
+                        BYTE *skip = nal.p_payload;
+                        while(*(skip++) != 0x1);
+                        int skipBytes = (int)(skip-nal.p_payload);
+
+                        if (!newPacket)
+                            newPacket = CurrentPackets.CreateNew();
+
+                        if (!bFoundFrame)
+                        {
+                            newPacket->Packet.Insert(0, (nal.i_type == NAL_SLICE_IDR) ? 0x17 : 0x27);
+                            newPacket->Packet.Insert(1, 1);
+                            newPacket->Packet.InsertArray(2, timeOffsetAddr, 3);
+
+                            bFoundFrame = true;
+                        }
+
+                        int newPayloadSize = (nal.i_payload-skipBytes);
+                        BufferOutputSerializer packetOut(newPacket->Packet);
+
+                        packetOut.OutputDword(htonl(newPayloadSize));
+                        packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
+
+                        switch(nal.i_ref_idc)
+                        {
+                        case NAL_PRIORITY_DISPOSABLE:   bestType = MAX(bestType, PacketType_VideoDisposable);  break;
+                        case NAL_PRIORITY_LOW:          bestType = MAX(bestType, PacketType_VideoLow);         break;
+                        case NAL_PRIORITY_HIGH:         bestType = MAX(bestType, PacketType_VideoHigh);        break;
+                        case NAL_PRIORITY_HIGHEST:      bestType = MAX(bestType, PacketType_VideoHighest);     break;
+                        }
+                    }
+                    /*else if(nal.i_type == NAL_SPS)
+                    {
+                    VideoPacket *newPacket = CurrentPackets.CreateNew();
+                    BufferOutputSerializer headerOut(newPacket->Packet);
+
+                    headerOut.OutputByte(0x17);
+                    headerOut.OutputByte(0);
+                    headerOut.Serialize(timeOffsetAddr, 3);
+                    headerOut.OutputByte(1);
+                    headerOut.Serialize(nal.p_payload+5, 3);
+                    headerOut.OutputByte(0xff);
+                    headerOut.OutputByte(0xe1);
+                    headerOut.OutputWord(htons(nal.i_payload-4));
+                    headerOut.Serialize(nal.p_payload+4, nal.i_payload-4);
+
+                    x264_nal_t &pps = nalOut[i+1]; //the PPS always comes after the SPS
+
+                    headerOut.OutputByte(1);
+                    headerOut.OutputWord(htons(pps.i_payload-4));
+                    headerOut.Serialize(pps.p_payload+4, pps.i_payload-4);
+                    }*/
+                    else
+                        continue;
                 }
-            }
-            else if(nal.i_type == NAL_AUD)
-            {
-                BYTE *skip = nal.p_payload;
-                while(*(skip++) != 0x1);
-                int skipBytes = (int)(skip-nal.p_payload);
 
-                int newPayloadSize = (nal.i_payload-skipBytes);
+                packetTypes << bestType;
 
-                if (!newPacket)
-                    newPacket = CurrentPackets.CreateNew();
-
-                BufferOutputSerializer packetOut(newPacket->Packet);
-
-                packetOut.OutputDword(htonl(newPayloadSize));
-                packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
-            }
-            else if(nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE)
-            {
-                BYTE *skip = nal.p_payload;
-                while(*(skip++) != 0x1);
-                int skipBytes = (int)(skip-nal.p_payload);
-
-                if (!newPacket)
-                    newPacket = CurrentPackets.CreateNew();
-
-                if (!bFoundFrame)
+                packets.SetSize(CurrentPackets.Num());
+                for(UINT i=0; i<packets.Num(); i++)
                 {
-                    newPacket->Packet.Insert(0, (nal.i_type == NAL_SLICE_IDR) ? 0x17 : 0x27);
-                    newPacket->Packet.Insert(1, 1);
-                    newPacket->Packet.InsertArray(2, timeOffsetAddr, 3);
-
-                    bFoundFrame = true;
-                }
-
-                int newPayloadSize = (nal.i_payload-skipBytes);
-                BufferOutputSerializer packetOut(newPacket->Packet);
-
-                packetOut.OutputDword(htonl(newPayloadSize));
-                packetOut.Serialize(nal.p_payload+skipBytes, newPayloadSize);
-
-                switch(nal.i_ref_idc)
-                {
-                case NAL_PRIORITY_DISPOSABLE:   bestType = MAX(bestType, PacketType_VideoDisposable);  break;
-                case NAL_PRIORITY_LOW:          bestType = MAX(bestType, PacketType_VideoLow);         break;
-                case NAL_PRIORITY_HIGH:         bestType = MAX(bestType, PacketType_VideoHigh);        break;
-                case NAL_PRIORITY_HIGHEST:      bestType = MAX(bestType, PacketType_VideoHighest);     break;
+                    packets[i].lpPacket = CurrentPackets[i].Packet.Array();
+                    packets[i].size     = CurrentPackets[i].Packet.Num();
                 }
             }
-            /*else if(nal.i_type == NAL_SPS)
-            {
-            VideoPacket *newPacket = CurrentPackets.CreateNew();
-            BufferOutputSerializer headerOut(newPacket->Packet);
-
-            headerOut.OutputByte(0x17);
-            headerOut.OutputByte(0);
-            headerOut.Serialize(timeOffsetAddr, 3);
-            headerOut.OutputByte(1);
-            headerOut.Serialize(nal.p_payload+5, 3);
-            headerOut.OutputByte(0xff);
-            headerOut.OutputByte(0xe1);
-            headerOut.OutputWord(htons(nal.i_payload-4));
-            headerOut.Serialize(nal.p_payload+4, nal.i_payload-4);
-
-            x264_nal_t &pps = nalOut[i+1]; //the PPS always comes after the SPS
-
-            headerOut.OutputByte(1);
-            headerOut.OutputWord(htons(pps.i_payload-4));
-            headerOut.Serialize(pps.p_payload+4, pps.i_payload-4);
-            }*/
             else
-                continue;
+                Log(TEXT("QSV task %u (index %u) aborted."), encoded_tasks[i], i);
+
+            msdk_locked_tasks << encoded_tasks[i];
+            encoded_tasks.Remove(i);
         }
-
-        packetTypes << bestType;
-
-        packets.SetSize(CurrentPackets.Num());
-        for(UINT i=0; i<packets.Num(); i++)
-        {
-            packets[i].lpPacket = CurrentPackets[i].Packet.Array();
-            packets[i].size     = CurrentPackets[i].Packet.Num();
-        }
-
-        msdk_locked_tasks << encoded_tasks[0];
-        encoded_tasks.Remove(0);
     }
 
     void CleanupLockedTasks()
     {
         for(unsigned i = 0; i < msdk_locked_tasks.Num();)
         {
+            MutexLock lock(frame_mutex);
+
             encode_task& task = encode_tasks[msdk_locked_tasks[i]];
             if(task.surf.Data.Locked)
             {
@@ -859,6 +918,8 @@ public:
             task.ctrl = &sei_ctrl;
         bFirstFrameQueued = true;
 
+        MutexLock lock(frame_mutex);
+
         mfxBitstream& bs = task.bs;
         mfxFrameSurface1& surf = task.surf;
         mfxFrameData& frame = frames[(unsigned)pic.Data.MemId-1];
@@ -876,15 +937,16 @@ public:
         surf.Data.TimeStamp = timestampFromMS(pic.Data.TimeStamp);
     }
 
-    bool Encode(LPVOID picInPtr, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, int &ctsOffset)
+    bool Encode(LPVOID picInPtr, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp)
     {
         profileIn("ProcessEncodedFrame");
         mfxU32 wait = 0;
         bool bMessageLogged = false;
+        auto timeout_ms = OSGetTime() + 1500;
         do
         {
             if(!packets.Num())
-                ProcessEncodedFrame(packets, packetTypes, outputTimestamp, ctsOffset, wait);
+                ProcessEncodedFrame(packets, packetTypes, outputTimestamp, wait);
 
             CleanupLockedTasks();
 
@@ -896,6 +958,24 @@ public:
                 if(!bMessageLogged)
                     Log(TEXT("Error: encoder is taking too long, consider decreasing your FPS/increasing your bitrate"));
                 bMessageLogged = true;
+
+                if(OSGetTime() >= timeout_ms)
+                {
+                    mfxIMPL impl;
+                    session.QueryIMPL(&impl);
+                    if(impl & MFX_IMPL_VIA_D3D11)
+                    {
+                        ForceD3D9Config();
+                        CrashError(TEXT("QSV takes too long to encode frames. You are using QSV in Direct3D11 mode, possibly ")
+                                   TEXT("without any monitors connected to your iGPU. Please either connect a monitor to your ")
+                                   TEXT("iGPU or follow the guide at ")
+                                   TEXT("<http://mirillis.com/en/products/tutorials/action-tutorial-intel-quick-sync-setup_for_desktops.html> ")
+                                   TEXT("(copy the url from the latest logfile). Your custom encoder settings were updated."));
+                    }
+                    else
+                        CrashError(TEXT("QSV takes too long to encode frames."));
+                }
+
                 Sleep(1); //wait for locked tasks to unlock
             }
             else
@@ -960,10 +1040,10 @@ public:
         if(!HeaderPacket.Num())
         {
             mfxVideoParam header_query;
-            memset(&header_query, 0, sizeof(header_query));
+            zero(header_query);
             mfxU8 sps[100], pps[100];
             mfxExtCodingOptionSPSPPS headers;
-            memset(&headers, 0, sizeof(headers));
+            zero(headers);
             headers.Header.BufferId = MFX_EXTBUFF_CODING_OPTION_SPSPPS;
             headers.Header.BufferSz = sizeof(mfxExtCodingOptionSPSPPS);
             headers.SPSBuffer = sps;
@@ -1056,9 +1136,9 @@ public:
     }
 };
 
-VideoEncoder* CreateQSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR, bool bDupeFrames)
+VideoEncoder* CreateQSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR)
 {
     if(CheckQSVHardwareSupport())
-        return new QSVEncoder(fps, width, height, quality, preset, bUse444, maxBitRate, bufferSize, bUseCFR, bDupeFrames);
+        return new QSVEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR);
     return nullptr;
 }

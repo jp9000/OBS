@@ -26,10 +26,18 @@ extern "C"
 #include "../x264/x264.h"
 }
 
+#include <memory>
 
-void Convert444to420(LPBYTE input, int width, int pitch, int height, int startY, int endY, LPBYTE *output);
+
+void Convert444toI420(LPBYTE input, int width, int pitch, int height, int startY, int endY, LPBYTE *output);
 void Convert444toNV12(LPBYTE input, int width, int inPitch, int outPitch, int height, int startY, int endY, LPBYTE *output);
 
+
+DWORD STDCALL OBS::EncodeThread(LPVOID lpUnused)
+{
+    App->EncodeLoop();
+    return 0;
+}
 
 DWORD STDCALL OBS::MainCaptureThread(LPVOID lpUnused)
 {
@@ -46,6 +54,7 @@ struct Convert444Data
     bool bKillThread;
     HANDLE hSignalConvert, hSignalComplete;
     int width, height, inPitch, outPitch, startY, endY;
+    DWORD numThreads;
 };
 
 DWORD STDCALL Convert444Thread(Convert444Data *data)
@@ -54,6 +63,7 @@ DWORD STDCALL Convert444Thread(Convert444Data *data)
     {
         WaitForSingleObject(data->hSignalConvert, INFINITE);
         if(data->bKillThread) break;
+        profileParallelSegment("Convert444Thread", "Convert444Threads", data->numThreads);
         if(data->bNV12)
             Convert444toNV12(data->input, data->width, data->inPitch, data->outPitch, data->height, data->startY, data->endY, data->output);
         else
@@ -68,7 +78,6 @@ DWORD STDCALL Convert444Thread(Convert444Data *data)
 bool OBS::BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, VideoSegment &segmentOut)
 {
     VideoSegment &segmentIn = *bufferedVideo.CreateNew();
-    segmentIn.ctsOffset = ctsOffset;
     segmentIn.timestamp = timestamp;
 
     segmentIn.packets.SetSize(inputPackets.Num());
@@ -81,7 +90,6 @@ bool OBS::BufferVideoData(const List<DataPacket> &inputPackets, const List<Packe
     if((bufferedVideo.Last().timestamp-bufferedVideo[0].timestamp) >= UINT(App->bufferingTime))
     {
         segmentOut.packets.TransferFrom(bufferedVideo[0].packets);
-        segmentOut.ctsOffset = bufferedVideo[0].ctsOffset;
         segmentOut.timestamp = bufferedVideo[0].timestamp;
         bufferedVideo.Remove(0);
 
@@ -112,13 +120,12 @@ bool operator==(const EncoderPicture& lhs, const EncoderPicture& rhs)
 struct FrameProcessInfo
 {
     EncoderPicture *pic;
-    ID3D10Texture2D *prevTexture;
 
     DWORD frameTimestamp;
     QWORD firstFrameTime;
 };
 
-void OBS::SendFrame(VideoSegment &curSegment, QWORD firstFrameTime, int curCTSOffset)
+void OBS::SendFrame(VideoSegment &curSegment, QWORD firstFrameTime)
 {
     if(!bSentHeaders)
     {
@@ -136,14 +143,6 @@ void OBS::SendFrame(VideoSegment &curSegment, QWORD firstFrameTime, int curCTSOf
             {
                 UINT audioTimestamp = UINT(pendingAudioFrames[0].timestamp-firstFrameTime);
 
-                /*if(bFirstAudioPacket)
-                {
-                    audioTimestamp = 0;
-                    bFirstAudioPacket = false;
-                }
-                else*/
-                    audioTimestamp += curCTSOffset;
-
                 //stop sending audio packets when we reach an audio timestamp greater than the video timestamp
                 if(audioTimestamp > curSegment.timestamp)
                     break;
@@ -153,7 +152,7 @@ void OBS::SendFrame(VideoSegment &curSegment, QWORD firstFrameTime, int curCTSOf
                     List<BYTE> &audioData = pendingAudioFrames[0].audioData;
                     if(audioData.Num())
                     {
-                        //Log(TEXT("a:%u, %llu, cts: %d"), audioTimestamp, frameInfo.firstFrameTime+audioTimestamp-curCTSOffset, curCTSOffset);
+                        //Log(TEXT("a:%u, %llu"), audioTimestamp, frameInfo.firstFrameTime+audioTimestamp);
 
                         network->SendPacket(audioData.Array(), audioData.Num(), audioTimestamp, PacketType_Audio);
                         if(fileStream)
@@ -202,20 +201,16 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
 
     VideoSegment curSegment;
     bool bProcessedFrame, bSendFrame = false;
-    int curCTSOffset = 0;
     VOID *picIn;
 
-    profileIn("call to encoder");
+    //profileIn("call to encoder");
 
-    if (bShutdownMainThread)
+    if (bShutdownEncodeThread)
         picIn = NULL;
     else
         picIn = frameInfo.pic->picOut ? (LPVOID)frameInfo.pic->picOut : (LPVOID)frameInfo.pic->mfxOut;
 
-    videoEncoder->Encode(picIn, videoPackets, videoPacketTypes, bufferedTimes[0], ctsOffset);
-    if(bUsing444) frameInfo.prevTexture->Unmap(0);
-
-    ctsOffsets << ctsOffset;
+    videoEncoder->Encode(picIn, videoPackets, videoPacketTypes, bufferedTimes[0]);
 
     bProcessedFrame = (videoPackets.Num() != 0);
 
@@ -224,39 +219,53 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
     {
         bSendFrame = BufferVideoData(videoPackets, videoPacketTypes, bufferedTimes[0], curSegment);
         bufferedTimes.Remove(0);
-
-        curCTSOffset = ctsOffsets[0];
-        ctsOffsets.Remove(0);
     }
     else
         nop();
 
-    profileOut;
+    //profileOut;
 
     //------------------------------------
     // upload
 
-    profileIn("sending stuff out");
+    //profileIn("sending stuff out");
 
     //send headers before the first frame if not yet sent
     if(bSendFrame)
-        SendFrame(curSegment, frameInfo.firstFrameTime, curCTSOffset);
+        SendFrame(curSegment, frameInfo.firstFrameTime);
 
-    profileOut;
+    //profileOut;
 
     return bProcessedFrame;
 }
 
 
-#define USE_100NS_TIME 1
+bool STDCALL SleepToNS(QWORD qwNSTime)
+{
+    QWORD t = GetQPCTimeNS();
 
-#ifdef USE_100NS_TIME
-void STDCALL SleepTo(QWORD qw100NSTime)
+    if (t >= qwNSTime)
+        return false;
+
+    unsigned int milliseconds = (unsigned int)((qwNSTime - t)/1000000);
+    if (milliseconds > 1) //also accounts for windows 8 sleep problem
+        OSSleep(milliseconds);
+
+    for (;;)
+    {
+        t = GetQPCTimeNS();
+        if (t >= qwNSTime)
+            return true;
+        Sleep(1);
+    }
+}
+
+bool STDCALL SleepTo100NS(QWORD qw100NSTime)
 {
     QWORD t = GetQPCTime100NS();
 
     if (t >= qw100NSTime)
-        return;
+        return false;
 
     unsigned int milliseconds = (unsigned int)((qw100NSTime - t)/10000);
     if (milliseconds > 1) //also accounts for windows 8 sleep problem
@@ -266,17 +275,244 @@ void STDCALL SleepTo(QWORD qw100NSTime)
     {
         t = GetQPCTime100NS();
         if (t >= qw100NSTime)
-            return;
-        Sleep(0);
+            return true;
+        Sleep(1);
     }
 }
-#endif
 
 #ifdef OBS_TEST_BUILD
 #define LOGLONGFRAMESDEFAULT 1
 #else
 #define LOGLONGFRAMESDEFAULT 0
 #endif
+
+#define FRAME_SKIP_THRESHOLD 4
+
+void OBS::EncodeLoop()
+{
+    QWORD streamTimeStart = GetQPCTimeNS();
+    QWORD frameTimeNS = 1000000000/fps;
+    bool bufferedFrames = true; //to avoid constantly polling number of frames
+    int numTotalDuplicatedFrames = 0, numTotalFrames = 0, numFramesSkipped = 0;
+
+    bufferedTimes.Clear();
+
+    bool bUsingQSV = videoEncoder->isQSV();//GlobalConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
+
+    QWORD sleepTargetTime = streamTimeStart+frameTimeNS;
+    latestVideoTime = firstSceneTimestamp = streamTimeStart/1000000;
+    latestVideoTimeNS = streamTimeStart;
+
+    firstFrameTimestamp = 0;
+
+    UINT encoderInfo = 0;
+    QWORD messageTime = 0;
+
+    EncoderPicture *lastPic = NULL;
+
+    int no_sleep_counter = 0;
+    CircularList<QWORD> bufferedTimes;
+
+    while(!bShutdownEncodeThread || (bufferedFrames && !bTestStream)) {
+        if (!SleepToNS(sleepTargetTime += (frameTimeNS/2)))
+            no_sleep_counter++;
+        else
+            no_sleep_counter = 0;
+
+        latestVideoTime = sleepTargetTime/1000000;
+        latestVideoTimeNS = sleepTargetTime;
+
+        if (no_sleep_counter < FRAME_SKIP_THRESHOLD*2) {
+            SetEvent(hVideoEvent);
+            if (encoderInfo) {
+                if (messageTime == 0) {
+                    messageTime = latestVideoTime+3000;
+                } else if (latestVideoTime >= messageTime) {
+                    RemoveStreamInfo(encoderInfo);
+                    encoderInfo = 0;
+                    messageTime = 0;
+                }
+            }
+        } else {
+            numFramesSkipped++;
+            if (!encoderInfo)
+                encoderInfo = AddStreamInfo(Str("EncoderLag"), StreamInfoPriority_Critical);
+            messageTime = 0;
+        }
+
+        if (!SleepToNS(sleepTargetTime += (frameTimeNS/2)))
+            no_sleep_counter++;
+        else
+            no_sleep_counter = 0;
+        bufferedTimes << latestVideoTime;
+
+        if (curFramePic && firstFrameTimestamp) {
+            while (bufferedTimes[0] < firstFrameTimestamp)
+                bufferedTimes.Remove(0);
+
+            DWORD curFrameTimestamp = DWORD(bufferedTimes[0] - firstFrameTimestamp);
+            bufferedTimes.Remove(0);
+
+            profileIn("encoder thread frame");
+
+            FrameProcessInfo frameInfo;
+            frameInfo.firstFrameTime = firstFrameTimestamp;
+            frameInfo.frameTimestamp = curFrameTimestamp;
+            frameInfo.pic = curFramePic;
+
+            if (lastPic == frameInfo.pic)
+                numTotalDuplicatedFrames++;
+
+            if(bUsingQSV)
+                curFramePic->mfxOut->Data.TimeStamp = curFrameTimestamp;
+            else
+                curFramePic->picOut->i_pts = curFrameTimestamp;
+
+            ProcessFrame(frameInfo);
+
+            if (bShutdownEncodeThread)
+                bufferedFrames = videoEncoder->HasBufferedFrames();
+
+            lastPic = frameInfo.pic;
+
+            profileOut;
+
+            numTotalFrames++;
+        }
+    }
+
+    //flush all video frames in the "scene buffering time" buffer
+    if (firstFrameTimestamp && bufferedVideo.Num())
+    {
+        QWORD startTime = GetQPCTimeMS();
+        DWORD baseTimestamp = bufferedVideo[0].timestamp;
+
+        for(UINT i=0; i<bufferedVideo.Num(); i++)
+        {
+            //we measure our own time rather than sleep between frames due to potential sleep drift
+            QWORD curTime;
+            do
+            {
+                curTime = GetQPCTimeMS();
+                OSSleep (1);
+            } while (curTime - startTime < bufferedVideo[i].timestamp - baseTimestamp);
+
+            SendFrame(bufferedVideo[i], firstFrameTimestamp);
+            bufferedVideo[i].Clear();
+
+            numTotalFrames++;
+        }
+
+        bufferedVideo.Clear();
+    }
+
+    Log(TEXT("Total frames encoded: %d, total frames duplicated: %d (%0.2f%%)"), numTotalFrames, numTotalDuplicatedFrames, (double(numTotalDuplicatedFrames)/double(numTotalFrames))*100.0);
+    if (numFramesSkipped)
+        Log(TEXT("Number of frames skipped due to encoder lag: %d (%0.2f%%)"), numFramesSkipped, (double(numFramesSkipped)/double(numTotalFrames))*100.0);
+
+    SetEvent(hVideoEvent);
+    bShutdownVideoThread = true;
+}
+
+void OBS::DrawPreview(const Vect2 &renderFrameSize, const Vect2 &renderFrameOffset, const Vect2 &renderFrameCtrlSize, int curRenderTarget, PreviewDrawType type)
+{
+    LoadVertexShader(mainVertexShader);
+    LoadPixelShader(mainPixelShader);
+
+    Ortho(0.0f, renderFrameCtrlSize.x, renderFrameCtrlSize.y, 0.0f, -100.0f, 100.0f);
+    if(type != Preview_Projector
+       && (renderFrameCtrlSize.x != oldRenderFrameCtrlWidth
+           || renderFrameCtrlSize.y != oldRenderFrameCtrlHeight))
+    {
+        // User is drag resizing the window. We don't recreate the swap chains so our coordinates are wrong
+        SetViewport(0.0f, 0.0f, (float)oldRenderFrameCtrlWidth, (float)oldRenderFrameCtrlHeight);
+    }
+    else
+        SetViewport(0.0f, 0.0f, renderFrameCtrlSize.x, renderFrameCtrlSize.y);
+
+    // Draw background (Black if fullscreen/projector, window colour otherwise)
+    if(type == Preview_Fullscreen || type == Preview_Projector)
+        ClearColorBuffer(0x000000);
+    else
+        ClearColorBuffer(GetSysColor(COLOR_BTNFACE));
+
+    if(bTransitioning)
+    {
+        BlendFunction(GS_BLEND_ONE, GS_BLEND_ZERO);
+        DrawSprite(transitionTexture, 0xFFFFFFFF,
+                renderFrameOffset.x, renderFrameOffset.y,
+                renderFrameOffset.x + renderFrameSize.x, renderFrameOffset.y + renderFrameSize.y);
+        BlendFunction(GS_BLEND_FACTOR, GS_BLEND_INVFACTOR, transitionAlpha);
+    }
+
+    DrawSprite(mainRenderTextures[curRenderTarget], 0xFFFFFFFF,
+            renderFrameOffset.x, renderFrameOffset.y,
+            renderFrameOffset.x + renderFrameSize.x, renderFrameOffset.y + renderFrameSize.y);
+}
+
+const float yuvFullMat[][16] = {
+    {0.000000f,  1.000000f,  0.000000f,  0.000000f,
+     0.000000f,  0.000000f,  1.000000f,  0.000000f,
+     1.000000f,  0.000000f,  0.000000f,  0.000000f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+
+    {0.250000f,  0.500000f,  0.250000f,  0.000000f,
+    -0.249020f,  0.498039f, -0.249020f,  0.501961f,
+     0.498039f,  0.000000f, -0.498039f,  0.501961f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+
+    {0.262700f,  0.678000f,  0.059300f,  0.000000f,
+    -0.139082f, -0.358957f,  0.498039f,  0.501961f,
+     0.498039f, -0.457983f, -0.040057f,  0.501961f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+
+    {0.212600f,  0.715200f,  0.072200f,  0.000000f,
+    -0.114123f, -0.383916f,  0.498039f,  0.501961f,
+     0.498039f, -0.452372f, -0.045667f,  0.501961f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+
+    {0.212200f,  0.701300f,  0.086500f,  0.000000f,
+    -0.115691f, -0.382348f,  0.498039f,  0.501961f,
+     0.498039f, -0.443355f, -0.054684f,  0.501961f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+
+    {0.299000f,  0.587000f,  0.114000f,  0.000000f,
+    -0.168074f, -0.329965f,  0.498039f,  0.501961f,
+     0.498039f, -0.417046f, -0.080994f,  0.501961f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+};
+
+const float yuvMat[][16] = {
+    {0.000000f,  0.858824f,  0.000000f,  0.062745f,
+     0.000000f,  0.000000f,  0.858824f,  0.062745f,
+     0.858824f,  0.000000f,  0.000000f,  0.062745f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+
+    {0.214706f,  0.429412f,  0.214706f,  0.062745f,
+    -0.219608f,  0.439216f, -0.219608f,  0.501961f,
+     0.439216f,  0.000000f, -0.439216f,  0.501961f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+
+    {0.225613f,  0.582282f,  0.050928f,  0.062745f,
+    -0.122655f, -0.316560f,  0.439216f,  0.501961f,
+     0.439216f, -0.403890f, -0.035325f,  0.501961f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+
+    {0.182586f,  0.614231f,  0.062007f,  0.062745f,
+    -0.100644f, -0.338572f,  0.439216f,  0.501961f,
+     0.439216f, -0.398942f, -0.040274f,  0.501961f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+
+    {0.182242f,  0.602293f,  0.074288f,  0.062745f,
+    -0.102027f, -0.337189f,  0.439216f,  0.501961f,
+     0.439216f, -0.390990f, -0.048226f,  0.501961f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+
+    {0.256788f,  0.504129f,  0.097906f,  0.062745f,
+    -0.148223f, -0.290993f,  0.439216f,  0.501961f,
+     0.439216f, -0.367788f, -0.071427f,  0.501961f,
+     0.000000f,  0.000000f,  0.000000f,  1.000000f},
+};
 
 //todo: this function is an abomination, this is just disgusting.  fix it.
 //...seriously, this is really, really horrible.  I mean this is amazingly bad.
@@ -295,6 +531,7 @@ void OBS::MainCaptureLoop()
     Vect2 outputSize  = Vect2(float(outputCX), float(outputCY));
     Vect2 scaleSize   = Vect2(float(scaleCX), float(scaleCY));
 
+    HANDLE hMatrix   = yuvScalePixelShader->GetParameterByName(TEXT("yuvMat"));
     HANDLE hScaleVal = yuvScalePixelShader->GetParameterByName(TEXT("baseDimensionI"));
 
     //----------------------------------------
@@ -303,12 +540,10 @@ void OBS::MainCaptureLoop()
     int curOutBuffer = 0;
 
     bool bUsingQSV = videoEncoder->isQSV();//GlobalConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
-    if(bUsingQSV)
-        bUsing444 = false;
+    bUsing444 = false;
 
     EncoderPicture lastPic;
     EncoderPicture outPics[NUM_OUT_BUFFERS];
-    DWORD outTimes[NUM_OUT_BUFFERS] = {0, 0, 0};
 
     for(int i=0; i<NUM_OUT_BUFFERS; i++)
     {
@@ -348,33 +583,15 @@ void OBS::MainCaptureLoop()
     QWORD lastAdjustmentTime = 0;
     UINT adjustmentStreamId = 0;
 
+    //std::unique_ptr<ProfilerNode> encodeThreadProfiler;
+
     //----------------------------------------
     // time/timestamp stuff
 
-    bufferedTimes.Clear();
-    ctsOffsets.Clear();
-    bool bufferedFrames = true; //to avoid constantly polling number of frames
-
-#ifdef USE_100NS_TIME
-    QWORD streamTimeStart = GetQPCTime100NS();
-    QWORD frameTime100ns = 10000000/fps;
-
-    QWORD sleepTargetTime = 0;
     bool bWasLaggedFrame = false;
-#else
-    DWORD streamTimeStart = OSGetTime();
-    DWORD fpsTimeAdjust = 0;
-#endif
+
     totalStreamTime = 0;
-
     lastAudioTimestamp = 0;
-
-    latestVideoTime = firstSceneTimestamp = GetQPCTimeMS();
-
-    DWORD fpsTimeNumerator = 1000-(frameTime*fps);
-    DWORD fpsTimeDenominator = fps;
-    DWORD cfrTime = 0;
-    DWORD cfrTimeAdjust = 0;
 
     //----------------------------------------
     // start audio capture streams
@@ -390,8 +607,6 @@ void OBS::MainCaptureLoop()
     int numLongFrames = 0;
     int numTotalFrames = 0;
 
-    int numTotalDuplicatedFrames = 0;
-
     bytesPerSec = 0;
     captureFPS = 0;
     curFramesDropped = 0;
@@ -400,11 +615,8 @@ void OBS::MainCaptureLoop()
 
     QWORD lastBytesSent[3] = {0, 0, 0};
     DWORD lastFramesDropped = 0;
-#ifdef USE_100NS_TIME
     double bpsTime = 0.0;
-#else
-    float bpsTime = 0.0f;
-#endif
+
     double lastStrain = 0.0f;
     DWORD numSecondsWaited = 0;
 
@@ -425,6 +637,7 @@ void OBS::MainCaptureLoop()
         convertInfo[i].hSignalConvert  = CreateEvent(NULL, FALSE, FALSE, NULL);
         convertInfo[i].hSignalComplete = CreateEvent(NULL, FALSE, FALSE, NULL);
         convertInfo[i].bNV12 = bUsingQSV;
+        convertInfo[i].numThreads = numThreads;
 
         if(i == 0)
             convertInfo[i].startY = 0;
@@ -440,7 +653,7 @@ void OBS::MainCaptureLoop()
     bool bEncode;
     bool bFirstFrame = true;
     bool bFirstImage = true;
-    bool bFirst420Encode = true;
+    bool bFirstEncode = true;
     bool bUseThreaded420 = bUseMultithreadedOptimizations && (OSGetTotalCores() > 1) && !bUsing444;
 
     List<HANDLE> completeEvents;
@@ -456,68 +669,39 @@ void OBS::MainCaptureLoop()
 
     //----------------------------------------
 
-    QWORD curStreamTime = 0, lastStreamTime, firstFrameTime = GetQPCTimeMS();
+    QWORD streamTimeStart  = GetQPCTimeNS();
+    QWORD lastStreamTime   = 0;
+    QWORD firstFrameTimeMS = streamTimeStart/1000000;
+    QWORD frameLengthNS    = 1000000000/fps;
 
-#ifdef USE_100NS_TIME
-    lastStreamTime = GetQPCTime100NS()-frameTime100ns;
-#else
-    lastStreamTime = firstFrameTime-frameTime;
-#endif
-
-    //bool bFirstAudioPacket = true;
-
-    List<ProfilerNode> threadedProfilers;
-    bool bUsingThreadedProfilers = false;
-
-    while(!bShutdownMainThread || (bEncode && bufferedFrames && !bTestStream))
+    while(WaitForSingleObject(hVideoEvent, INFINITE) == WAIT_OBJECT_0)
     {
-#ifdef USE_100NS_TIME
-        QWORD renderStartTime = GetQPCTime100NS();
-        totalStreamTime = DWORD((renderStartTime-streamTimeStart)/10000);
+        if (bShutdownVideoThread)
+            break;
 
-        if(sleepTargetTime == 0 || bWasLaggedFrame)
-            sleepTargetTime = renderStartTime;
-#else
-        DWORD renderStartTime = OSGetTime();
-        totalStreamTime = renderStartTime-streamTimeStart;
-
-        DWORD frameTimeAdjust = frameTime;
-        fpsTimeAdjust += fpsTimeNumerator;
-        if(fpsTimeAdjust > fpsTimeDenominator)
-        {
-            fpsTimeAdjust -= fpsTimeDenominator;
-            ++frameTimeAdjust;
-        }
-#endif
+        QWORD renderStartTime = GetQPCTimeNS();
+        totalStreamTime = DWORD((renderStartTime-streamTimeStart)/1000000);
 
         bool bRenderView = !IsIconic(hwndMain) && bRenderViewEnabled;
 
-        profileIn("frame");
+        QWORD renderStartTimeMS = renderStartTime/1000000;
 
-#ifdef USE_100NS_TIME
-        QWORD qwTime = renderStartTime/10000;
-        latestVideoTime = qwTime;
-
-        QWORD frameDelta = renderStartTime-lastStreamTime;
-        double fSeconds = double(frameDelta)*0.0000001;
-
-        //Log(TEXT("frameDelta: %f"), fSeconds);
-
-        lastStreamTime = renderStartTime;
-#else
-        QWORD qwTime = GetQPCTimeMS();
-        latestVideoTime = qwTime;
-
-        QWORD frameDelta = qwTime-lastStreamTime;
-        float fSeconds = float(frameDelta)*0.001f;
-
-        //Log(TEXT("frameDelta: %llu"), frameDelta);
-
-        lastStreamTime = qwTime;
-#endif
+        QWORD curStreamTime = latestVideoTimeNS;
+        if (!lastStreamTime)
+            lastStreamTime = curStreamTime-frameLengthNS;
+        QWORD frameDelta = curStreamTime-lastStreamTime;
+        //if (!lastStreamTime)
+        //    lastStreamTime = renderStartTime-frameLengthNS;
+        //QWORD frameDelta = renderStartTime-lastStreamTime;
+        double fSeconds = double(frameDelta)*0.000000001;
+        //lastStreamTime = renderStartTime;
 
         bool bUpdateBPS = false;
-        profileIn("frame preprocessing and rendering");
+
+        profileIn("video thread frame");
+
+        //Log(TEXT("Stream Time: %llu"), curStreamTime);
+        //Log(TEXT("frameDelta: %lf"), fSeconds);
 
         //------------------------------------
 
@@ -546,6 +730,11 @@ void OBS::MainCaptureLoop()
         //------------------------------------
 
         OSEnterMutex(hSceneMutex);
+
+        if (bPleaseEnableProjector)
+            ActuallyEnableProjector();
+        else if(bPleaseDisableProjector)
+            DisableProjector();
 
         if(bResizeRenderView)
         {
@@ -664,6 +853,32 @@ void OBS::MainCaptureLoop()
         //------------------------------------
         // render the mini view thingy
 
+        if (bProjector) {
+            SetRenderTarget(projectorTexture);
+
+            Vect2 renderFrameSize, renderFrameOffset;
+            Vect2 projectorSize = Vect2(float(projectorWidth), float(projectorHeight));
+
+            float projectorAspect = (projectorSize.x / projectorSize.y);
+            float baseAspect = (baseSize.x / baseSize.y);
+
+            if (projectorAspect < baseAspect) {
+                float fProjectorWidth = float(projectorWidth);
+
+                renderFrameSize   = Vect2(fProjectorWidth, fProjectorWidth / baseAspect);
+                renderFrameOffset = Vect2(0.0f, (projectorSize.y-renderFrameSize.y) * 0.5f);
+            } else {
+                float fProjectorHeight = float(projectorHeight);
+
+                renderFrameSize   = Vect2(fProjectorHeight * baseAspect, fProjectorHeight);
+                renderFrameOffset = Vect2((projectorSize.x-renderFrameSize.x) * 0.5f, 0.0f);
+            }
+
+            DrawPreview(renderFrameSize, renderFrameOffset, projectorSize, curRenderTarget, Preview_Projector);
+
+            SetRenderTarget(NULL);
+        }
+
         if(bRenderView)
         {
             // Cache
@@ -672,37 +887,8 @@ void OBS::MainCaptureLoop()
             const Vect2 renderFrameCtrlSize = GetRenderFrameControlSize();
 
             SetRenderTarget(NULL);
-
-            LoadVertexShader(mainVertexShader);
-            LoadPixelShader(mainPixelShader);
-
-            Ortho(0.0f, renderFrameCtrlSize.x, renderFrameCtrlSize.y, 0.0f, -100.0f, 100.0f);
-            if(renderFrameCtrlSize.x != oldRenderFrameCtrlWidth || renderFrameCtrlSize.y != oldRenderFrameCtrlHeight)
-            {
-                // User is drag resizing the window. We don't recreate the swap chains so our coordinates are wrong
-                SetViewport(0.0f, 0.0f, (float)oldRenderFrameCtrlWidth, (float)oldRenderFrameCtrlHeight);
-            }
-            else
-                SetViewport(0.0f, 0.0f, renderFrameCtrlSize.x, renderFrameCtrlSize.y);
-
-            // Draw background (Black if fullscreen, window colour otherwise)
-            if(bFullscreenMode)
-                ClearColorBuffer(0x000000);
-            else
-                ClearColorBuffer(GetSysColor(COLOR_BTNFACE));
-
-            if(bTransitioning)
-            {
-                BlendFunction(GS_BLEND_ONE, GS_BLEND_ZERO);
-                DrawSprite(transitionTexture, 0xFFFFFFFF,
-                        renderFrameOffset.x, renderFrameOffset.y,
-                        renderFrameOffset.x + renderFrameSize.x, renderFrameOffset.y + renderFrameSize.y);
-                BlendFunction(GS_BLEND_FACTOR, GS_BLEND_INVFACTOR, transitionAlpha);
-            }
-
-            DrawSprite(mainRenderTextures[curRenderTarget], 0xFFFFFFFF,
-                    renderFrameOffset.x, renderFrameOffset.y,
-                    renderFrameOffset.x + renderFrameSize.x, renderFrameOffset.y + renderFrameSize.y);
+            DrawPreview(renderFrameSize, renderFrameOffset, renderFrameCtrlSize, curRenderTarget,
+                    bFullscreenMode ? Preview_Fullscreen : Preview_Standard);
 
             //draw selections if in edit mode
             if(bEditMode && !bSizeChanging)
@@ -731,6 +917,27 @@ void OBS::MainCaptureLoop()
         Texture *yuvRenderTexture = yuvRenderTextures[curRenderTarget];
         SetRenderTarget(yuvRenderTexture);
 
+        switch(colorDesc.matrix)
+        {
+        case ColorMatrix_GBR:
+            yuvScalePixelShader->SetMatrix(hMatrix, colorDesc.fullRange ? (float*)yuvFullMat[0] : (float*)yuvMat[0]);
+            break;
+        case ColorMatrix_YCgCo:
+            yuvScalePixelShader->SetMatrix(hMatrix, colorDesc.fullRange ? (float*)yuvFullMat[1] : (float*)yuvMat[1]);
+            break;
+        case ColorMatrix_BT2020NCL:
+            yuvScalePixelShader->SetMatrix(hMatrix, colorDesc.fullRange ? (float*)yuvFullMat[2] : (float*)yuvMat[2]);
+            break;
+        case ColorMatrix_BT709:
+            yuvScalePixelShader->SetMatrix(hMatrix, colorDesc.fullRange ? (float*)yuvFullMat[3] : (float*)yuvMat[3]);
+            break;
+        case ColorMatrix_SMPTE240M:
+            yuvScalePixelShader->SetMatrix(hMatrix, colorDesc.fullRange ? (float*)yuvFullMat[4] : (float*)yuvMat[4]);
+            break;
+        default:
+            yuvScalePixelShader->SetMatrix(hMatrix, colorDesc.fullRange ? (float*)yuvFullMat[5] : (float*)yuvMat[5]);
+        }
+
         if(downscale < 2.01)
             yuvScalePixelShader->SetVector2(hScaleVal, 1.0f/baseSize);
         else if(downscale < 3.01)
@@ -753,6 +960,9 @@ void OBS::MainCaptureLoop()
 
         //------------------------------------
 
+        if (bProjector && !copyWait)
+            projectorSwap->Present(0, 0);
+
         if(bRenderView && !copyWait)
             static_cast<D3D10System*>(GS)->swap->Present(0, 0);
 
@@ -763,7 +973,7 @@ void OBS::MainCaptureLoop()
         //------------------------------------
         // present/upload
 
-        profileIn("video encoding and uploading");
+        profileIn("GPU download and conversion");
 
         bEncode = true;
 
@@ -778,7 +988,7 @@ void OBS::MainCaptureLoop()
             if(!bRecievedFirstAudioFrame)
             {
                 static bool bWarnedAboutNoAudio = false;
-                if (qwTime-firstFrameTime > 10000 && !bWarnedAboutNoAudio)
+                if (renderStartTimeMS-firstFrameTimeMS > 10000 && !bWarnedAboutNoAudio)
                 {
                     bWarnedAboutNoAudio = true;
                     //AddStreamInfo (TEXT ("WARNING: OBS is not receiving audio frames. Please check your audio devices."), StreamInfoPriority_Critical); 
@@ -787,7 +997,7 @@ void OBS::MainCaptureLoop()
             }
             else if(bFirstFrame)
             {
-                firstFrameTime = qwTime;
+                firstFrameTimestamp = lastStreamTime/1000000;
                 bFirstFrame = false;
             }
 
@@ -800,16 +1010,16 @@ void OBS::MainCaptureLoop()
             }
         }
 
+        lastStreamTime = curStreamTime;
+
         if(bEncode)
         {
-            curStreamTime = qwTime-firstFrameTime;
-
             UINT prevCopyTexture = (curCopyTexture == 0) ? NUM_RENDER_BUFFERS-1 : curCopyTexture-1;
 
             ID3D10Texture2D *copyTexture = copyTextures[curCopyTexture];
             profileIn("CopyResource");
 
-            if(!bFirst420Encode && bUseThreaded420)
+            if(!bFirstEncode && bUseThreaded420)
             {
                 WaitForMultipleObjects(completeEvents.Num(), completeEvents.Array(), TRUE, INFINITE);
                 copyTexture->Unmap(0);
@@ -842,12 +1052,6 @@ void OBS::MainCaptureLoop()
 
                         if(bUseThreaded420)
                         {
-                            outTimes[nextOutBuffer] = (DWORD)curStreamTime;
-
-                            bool firstRun = threadedProfilers.Num() == 0;
-                            if(firstRun)
-                                threadedProfilers.SetSize(numThreads);
-
                             for(int i=0; i<numThreads; i++)
                             {
                                 convertInfo[i].input     = (LPBYTE)map.pData;
@@ -866,20 +1070,14 @@ void OBS::MainCaptureLoop()
                                     convertInfo[i].output[1] = nextPicOut.picOut->img.plane[1];
                                     convertInfo[i].output[2] = nextPicOut.picOut->img.plane[2];
 								}
-                                if(!firstRun)
-                                    threadedProfilers[i].~ProfilerNode();
-                                ::new (&threadedProfilers[i]) ProfilerNode(TEXT("Convert444Threads"), true);
-                                threadedProfilers[i].MonitorThread(h420Threads[i]);
-                                bUsingThreadedProfilers = true;
                                 SetEvent(convertInfo[i].hSignalConvert);
                             }
 
-                            if(bFirst420Encode)
-                                bFirst420Encode = bEncode = false;
+                            if(bFirstEncode)
+                                bFirstEncode = bEncode = false;
                         }
                         else
                         {
-                            outTimes[curOutBuffer] = (DWORD)curStreamTime;
                             if(bUsingQSV)
                             {
                                 mfxFrameData& data = picOut.mfxOut->Data;
@@ -894,81 +1092,12 @@ void OBS::MainCaptureLoop()
 
                         profileOut;
                     }
-                    else
-                    {
-                        outTimes[curOutBuffer] = (DWORD)curStreamTime;
-
-                        picOut.picOut->img.i_stride[0] = map.RowPitch;
-                        picOut.picOut->img.plane[0]    = (uint8_t*)map.pData;
-                    }
 
                     if(bEncode)
                     {
-                        DWORD curFrameTimestamp = outTimes[prevOutBuffer];
-                        //Log(TEXT("curFrameTimestamp: %u"), curFrameTimestamp);
-
-                        //------------------------------------
-
-                        FrameProcessInfo frameInfo;
-                        frameInfo.firstFrameTime = firstFrameTime;
-                        frameInfo.prevTexture = prevTexture;
-
-                        if(bDupeFrames)
-                        {
-                            while(cfrTime < curFrameTimestamp)
-                            {
-                                DWORD frameTimeAdjust = frameTime;
-                                cfrTimeAdjust += fpsTimeNumerator;
-                                if(cfrTimeAdjust > fpsTimeDenominator)
-                                {
-                                    cfrTimeAdjust -= fpsTimeDenominator;
-                                    ++frameTimeAdjust;
-                                }
-
-                                DWORD halfTime = (frameTimeAdjust+1)/2;
-
-                                EncoderPicture &nextPic = (curFrameTimestamp-cfrTime <= halfTime) ? picOut : prevPicOut;
-                                //Log(TEXT("cfrTime: %u, time: %u"), cfrTime, curFrameTimestamp);
-
-                                //these lines are just for counting duped frames
-                                if(nextPic == lastPic)
-                                    ++numTotalDuplicatedFrames;
-                                else
-                                    lastPic = nextPic;
-
-                                frameInfo.pic = &nextPic;
-                                if(bUsingQSV)
-                                    frameInfo.pic->mfxOut->Data.TimeStamp = cfrTime;
-                                else
-                                    frameInfo.pic->picOut->i_pts = cfrTime;
-                                frameInfo.frameTimestamp = cfrTime;
-                                ProcessFrame(frameInfo);
-
-                                cfrTime += frameTimeAdjust;
-
-                                //Log(TEXT("cfrTime: %u, chi frame: %u"), cfrTime, (curFrameTimestamp-cfrTime <= halfTime));
-                            }
-                        }
-                        else
-                        {
-                            if(bUsingQSV)
-                                picOut.mfxOut->Data.TimeStamp = curFrameTimestamp;
-                            else
-                                picOut.picOut->i_pts = curFrameTimestamp;
-
-                            frameInfo.pic = &picOut;
-                            frameInfo.frameTimestamp = curFrameTimestamp;
-
-                            ProcessFrame(frameInfo);
-                        }
-
-                        if (bShutdownMainThread)
-                            bufferedFrames = videoEncoder->HasBufferedFrames();
-                    }
-
-                    if(bUsing444)
-                    {
-                        prevTexture->Unmap(0);
+                        //encodeThreadProfiler.reset(::new ProfilerNode(TEXT("EncodeThread"), true));
+                        //encodeThreadProfiler->MonitorThread(hEncodeThread);
+                        curFramePic = &picOut;
                     }
 
                     curOutBuffer = nextOutBuffer;
@@ -1025,7 +1154,7 @@ void OBS::MainCaptureLoop()
             {
                 if (curStrain > 25)
                 {
-                    if (qwTime - lastAdjustmentTime > 1500)
+                    if (renderStartTimeMS - lastAdjustmentTime > 1500)
                     {
                         if (currentBitRate > 100)
                         {
@@ -1039,12 +1168,12 @@ void OBS::MainCaptureLoop()
                             bUpdateBPS = true;
                         }
 
-                        lastAdjustmentTime = qwTime;
+                        lastAdjustmentTime = renderStartTimeMS;
                     }
                 }
                 else if (currentBitRate < defaultBitRate && curStrain < 5 && lastStrain < 5)
                 {
-                    if (qwTime - lastAdjustmentTime > 5000)
+                    if (renderStartTimeMS - lastAdjustmentTime > 5000)
                     {
                         if (currentBitRate < defaultBitRate)
                         {
@@ -1061,7 +1190,7 @@ void OBS::MainCaptureLoop()
 
                         bUpdateBPS = true;
 
-                        lastAdjustmentTime = qwTime;
+                        lastAdjustmentTime = renderStartTimeMS;
                     }
                 }
             }
@@ -1088,42 +1217,28 @@ void OBS::MainCaptureLoop()
         GetD3D()->Flush();
         profileOut;
 
-        profileOut; //video encoding and uploading
         profileOut; //frame
 
         //------------------------------------
         // frame sync
 
-#ifdef USE_100NS_TIME
-        QWORD renderStopTime = GetQPCTime100NS();
-        sleepTargetTime += frameTime100ns;
+        QWORD renderStopTime = GetQPCTimeNS();
 
-        if(bWasLaggedFrame = (sleepTargetTime <= renderStopTime))
+        if(bWasLaggedFrame = (frameDelta > frameLengthNS))
         {
             numLongFrames++;
             if(bLogLongFramesProfile && (numLongFrames/float(max(1, numTotalFrames)) * 100.) > logLongFramesProfilePercentage)
                 DumpLastProfileData();
         }
-        else
-            SleepTo(sleepTargetTime);
-#else
-        DWORD renderStopTime = OSGetTime();
-        DWORD totalTime = renderStopTime-renderStartTime;
-
-        if(totalTime > frameTimeAdjust)
-        {
-            numLongFrames++;
-            if(bLogLongFramesProfile && (numLongFrames/float(max(1, numTotalFrames)) * 100.) > logLongFramesProfilePercentage)
-                DumpLastProfileData();
-        }
-        else if(totalTime < frameTimeAdjust)
-            OSSleep(frameTimeAdjust-totalTime);
-#endif
 
         //OSDebugOut(TEXT("Frame adjust time: %d, "), frameTimeAdjust-totalTime);
 
         numTotalFrames++;
     }
+
+    DisableProjector();
+
+    //encodeThreadProfiler.reset();
 
     if(!bUsing444)
     {
@@ -1135,8 +1250,6 @@ void OBS::MainCaptureLoop()
                 {
                     convertInfo[i].bKillThread = true;
                     SetEvent(convertInfo[i].hSignalConvert);
-                    if(bUsingThreadedProfilers)
-                        threadedProfilers[i].~ProfilerNode();
 
                     OSTerminateThread(h420Threads[i], 10000);
                     h420Threads[i] = NULL;
@@ -1155,7 +1268,7 @@ void OBS::MainCaptureLoop()
                 }
             }
 
-            if(!bFirst420Encode)
+            if(!bFirstEncode)
             {
                 ID3D10Texture2D *copyTexture = copyTextures[curCopyTexture];
                 copyTexture->Unmap(0);
@@ -1173,39 +1286,8 @@ void OBS::MainCaptureLoop()
             }
     }
 
-    //flush all video frames in the "scene buffering time" buffer
-    if (bufferedVideo.Num())
-    {
-        QWORD startTime = GetQPCTimeMS();
-        DWORD baseTimestamp = bufferedVideo[0].timestamp;
-        UINT curCTSOffset = 0;
-
-        for(UINT i=0; i<bufferedVideo.Num(); i++)
-        {
-            //we measure our own time rather than sleep between frames due to potential sleep drift
-            QWORD curTime;
-            do
-            {
-                curTime = GetQPCTimeMS();
-                OSSleep (1);
-            } while (curTime - startTime < bufferedVideo[i].timestamp - baseTimestamp);
-
-            if (ctsOffsets.Num()) {
-                curCTSOffset = ctsOffsets[0];
-                ctsOffsets.Remove(0);
-            }
-
-            SendFrame(bufferedVideo[i], firstFrameTime, curCTSOffset);
-            bufferedVideo[i].Clear();
-        }
-
-        bufferedVideo.Clear();
-    }
-
     Free(h420Threads);
     Free(convertInfo);
 
     Log(TEXT("Total frames rendered: %d, number of late frames: %d (%0.2f%%) (it's okay for some frames to be late)"), numTotalFrames, numLongFrames, (double(numLongFrames)/double(numTotalFrames))*100.0);
-    if(bDupeFrames)
-        Log(TEXT("Total duplicated frames to ensure constant framerate: %d (%0.2f%%)"), numTotalDuplicatedFrames, (double(numTotalDuplicatedFrames)/double(numTotalFrames))*100.0);
 }

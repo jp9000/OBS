@@ -263,6 +263,7 @@ Sources.TransitionSource.Empty="沒有加入要显示的点阵图。"
 Sources.TransitionSource.FadeInOnly="只有淡入："
 Sources.TransitionSource.TimeBetweenBitmaps="变换图片间隔 (秒)："
 
+
 Updater.DownloadNow="您现在想要下载他们吗？"
 Updater.NewUpdates="以下为可用的更新：\r\n\r\n"
 Updater.RunningWarning="OBS 将重新启动来安装更新。\r\n\r\n您确定要继续吗？"

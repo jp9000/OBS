@@ -86,7 +86,7 @@ class X264Encoder : public VideoEncoder
 
     bool bFirstFrameProcessed;
 
-    bool bUseCBR, bUseCFR, bDupeFrames, bPadCBR;
+    bool bUseCBR, bUseCFR, bPadCBR;
 
     List<VideoPacket> CurrentPackets;
     List<BYTE> HeaderPacket, SEIData;
@@ -117,13 +117,15 @@ class X264Encoder : public VideoEncoder
     }
 
 public:
-    X264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitrate, int bufferSize, bool bUseCFR, bool bDupeFrames)
+    X264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitrate, int bufferSize, bool bUseCFR)
     {
         curPreset = preset;
 
         fps_ms = 1000/fps;
 
         StringList paramList;
+
+        curProfile = AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"), TEXT("high"));
 
         BOOL bUseCustomParams = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCustomSettings"));
         if(bUseCustomParams)
@@ -190,24 +192,17 @@ public:
         this->width  = width;
         this->height = height;
 
-        //warning: messing with x264 settings without knowing what they do can seriously screw things up
-
-        //ratetol
-        //qcomp
-
-        //paramData.i_frame_reference     = 1; //ref=1
-        //paramData.i_threads             = 4;
+        paramData.b_deterministic       = false;
 
         bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
         bPadCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 1) != 0;
         this->bUseCFR = bUseCFR;
-        this->bDupeFrames = bDupeFrames;
 
         SetBitRateParams(maxBitrate, bufferSize);
 
         if(bUseCBR)
         {
-            if(bPadCBR) paramData.i_nal_hrd         = X264_NAL_HRD_CBR;
+            if(bPadCBR) paramData.i_nal_hrd = X264_NAL_HRD_CBR;
             paramData.rc.i_rc_method    = X264_RC_ABR;
             paramData.rc.f_rf_constant  = 0.0f;
         }
@@ -222,10 +217,13 @@ public:
         paramData.b_vfr_input           = !bUseCFR;
         paramData.i_width               = width;
         paramData.i_height              = height;
-        paramData.vui.b_fullrange       = 0;
+        paramData.vui.b_fullrange       = colorDesc.fullRange;
+        paramData.vui.i_colorprim       = colorDesc.primaries;
+        paramData.vui.i_transfer        = colorDesc.transfer;
+        paramData.vui.i_colmatrix       = colorDesc.matrix;
 
         if (keyframeInterval)
-            paramData.i_keyint_max          = fps*keyframeInterval;
+            paramData.i_keyint_max      = fps*keyframeInterval;
 
         paramData.i_fps_num             = fps;
         paramData.i_fps_den             = 1;
@@ -267,6 +265,11 @@ public:
         if(bUse444) paramData.i_csp = X264_CSP_I444;
         else paramData.i_csp = X264_CSP_I420;
 
+        colorDesc.fullRange = paramData.vui.b_fullrange;
+        colorDesc.primaries = paramData.vui.i_colorprim;
+        colorDesc.transfer  = paramData.vui.i_transfer;
+        colorDesc.matrix    = paramData.vui.i_colmatrix;
+
         if (curProfile)
         {
             LPSTR lpProfile = curProfile.CreateUTF8String();
@@ -295,7 +298,7 @@ public:
         x264_encoder_close(x264);
     }
 
-    bool Encode(LPVOID picInPtr, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, int &ctsOffset)
+    bool Encode(LPVOID picInPtr, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp)
     {
         x264_picture_t *picIn = (x264_picture_t*)picInPtr;
 
@@ -329,30 +332,14 @@ public:
         INT64 ts = INT64(outputTimestamp);
         int timeOffset;
 
-        if(bDupeFrames)
-        {
-            //if frame duplication is being used, the shift will be insignificant, so just don't bother adjusting audio
-            timeOffset = int(picOut.i_pts-picOut.i_dts);
-            timeOffset += frameShift;
+        //if frame duplication is being used, the shift will be insignificant, so just don't bother adjusting audio
+        timeOffset = int(picOut.i_pts-picOut.i_dts);
+        timeOffset += frameShift;
 
-            if(nalNum && timeOffset < 0)
-            {
-                frameShift -= timeOffset;
-                timeOffset = 0;
-            }
-        }
-        else
+        if(nalNum && timeOffset < 0)
         {
-            timeOffset = int((picOut.i_pts+delayOffset)-ts);
-            timeOffset += ctsOffset;
-
-            //dynamically adjust the CTS for the stream if it gets lower than the current value
-            //(thanks to cyrus for suggesting to do this instead of a single shift)
-            if(nalNum && timeOffset < 0)
-            {
-                ctsOffset -= timeOffset;
-                timeOffset = 0;
-            }
+            frameShift -= timeOffset;
+            timeOffset = 0;
         }
 
         //Log(TEXT("inpts: %005d, dts: %005d, pts: %005d, timestamp: %005d, offset: %005d, newoffset: %005d"), picIn->i_pts, picOut.i_dts, picOut.i_pts, outputTimestamp, timeOffset, picOut.i_pts-picOut.i_dts);
@@ -543,6 +530,8 @@ public:
                    TEXT("\r\n    fps: ")         << IntString(paramData.i_fps_num) <<
                    TEXT("\r\n    width: ")       << IntString(width) << TEXT(", height: ") << IntString(height) <<
                    TEXT("\r\n    preset: ")      << curPreset <<
+                   TEXT("\r\n    profile: ")     << curProfile <<
+                   TEXT("\r\n    keyint: ")      << paramData.i_keyint_max <<
                    TEXT("\r\n    CBR: ")         << CTSTR((bUseCBR) ? TEXT("yes") : TEXT("no")) <<
                    TEXT("\r\n    CFR: ")         << CTSTR((bUseCFR) ? TEXT("yes") : TEXT("no")) <<
                    TEXT("\r\n    max bitrate: ") << IntString(paramData.rc.i_vbv_max_bitrate) <<
@@ -589,8 +578,8 @@ public:
 };
 
 
-VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, int maxBitRate, int bufferSize, bool bUseCFR, bool bDupeFrames)
+VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR)
 {
-    return new X264Encoder(fps, width, height, quality, preset, bUse444, maxBitRate, bufferSize, bUseCFR, bDupeFrames);
+    return new X264Encoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR);
 }
 
