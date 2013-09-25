@@ -18,6 +18,8 @@ Copyright(c) 2011 - 2012 Intel Corporation. All Rights Reserved.
 #include <d3d11.h>
 #include <atlbase.h>
 
+#include "../../ComPtr.hpp"
+
 #include <dxgi1_2.h>
 
 class CD3D11Device: public CHWDevice
@@ -38,29 +40,29 @@ protected:
     virtual mfxStatus FillSCD(mfxHDL hWindow, DXGI_SWAP_CHAIN_DESC& scd);
     mfxStatus CreateVideoProcessor(mfxFrameSurface1 * pSrf);
 
-    CComPtr<ID3D11Device>                   m_pD3D11Device;
-    CComPtr<ID3D11DeviceContext>            m_pD3D11Ctx;
-    CComQIPtr<ID3D11VideoDevice>            m_pDX11VideoDevice;
-    CComQIPtr<ID3D11VideoContext>           m_pVideoContext;
-    CComPtr<ID3D11VideoProcessorEnumerator> m_VideoProcessorEnum;
+    ComPtr<ID3D11Device>                   m_pD3D11Device;
+    ComPtr<ID3D11DeviceContext>            m_pD3D11Ctx;
+    ComPtr<ID3D11VideoDevice>              m_pDX11VideoDevice; //QI
+    ComPtr<ID3D11VideoContext>             m_pVideoContext; //QI
+    ComPtr<ID3D11VideoProcessorEnumerator> m_VideoProcessorEnum;
 
-    CComQIPtr<IDXGIDevice1>                 m_pDXGIDev;
-    CComQIPtr<IDXGIAdapter>                 m_pAdapter;
+    ComPtr<IDXGIDevice1>                   m_pDXGIDev;
+    ComPtr<IDXGIAdapter>                   m_pAdapter;
 
-    CComPtr<IDXGIFactory2>                  m_pDXGIFactory;
+    ComPtr<IDXGIFactory2>                  m_pDXGIFactory;
 
-    CComPtr<IDXGISwapChain1>                m_pSwapChain;
-    CComPtr<ID3D11VideoProcessor>           m_pVideoProcessor;
+    ComPtr<IDXGISwapChain1>                m_pSwapChain;
+    ComPtr<ID3D11VideoProcessor>           m_pVideoProcessor;
 
 private:
-    CComPtr<ID3D11VideoProcessorInputView>  m_pInputViewLeft;
-    CComPtr<ID3D11VideoProcessorInputView>  m_pInputViewRight;
-    CComPtr<ID3D11VideoProcessorOutputView> m_pOutputView;
+    ComPtr<ID3D11VideoProcessorInputView>  m_pInputViewLeft;
+    ComPtr<ID3D11VideoProcessorInputView>  m_pInputViewRight;
+    ComPtr<ID3D11VideoProcessorOutputView> m_pOutputView;
 
-    CComPtr<ID3D11Texture2D>                m_pDXGIBackBuffer;
-    CComPtr<ID3D11Texture2D>                m_pTempTexture;
-    CComPtr<IDXGIDisplayControl>            m_pDisplayControl;
-    CComPtr<IDXGIOutput>                    m_pDXGIOutput;
+    ComPtr<ID3D11Texture2D>                m_pDXGIBackBuffer;
+    ComPtr<ID3D11Texture2D>                m_pTempTexture;
+    ComPtr<IDXGIDisplayControl>            m_pDisplayControl;
+    ComPtr<IDXGIOutput>                    m_pDXGIOutput;
     mfxU16                                  m_nViews;
     BOOL                                    m_bDefaultStereoEnabled;
 };

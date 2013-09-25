@@ -83,5 +83,8 @@
     <ClInclude Include="IntelSupport\include\vm\time_defs.h">
       <Filter>IntelSupport\Headers</Filter>
     </ClInclude>
+    <ClInclude Include="ComPtr.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

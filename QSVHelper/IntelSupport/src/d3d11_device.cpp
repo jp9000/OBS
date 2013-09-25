@@ -55,13 +55,13 @@ mfxStatus CD3D11Device::Init(
     };
     D3D_FEATURE_LEVEL pFeatureLevelsOut;
 
-    hres = CreateDXGIFactory(__uuidof(IDXGIFactory2), (void**)(&m_pDXGIFactory) );
+    hres = CreateDXGIFactory(__uuidof(IDXGIFactory2), (void**)(m_pDXGIFactory.Assign()) );
     if (FAILED(hres))
         return MFX_ERR_DEVICE_FAILED;
 
     if (m_nViews == 2 && hWindow)
     {
-        hres = m_pDXGIFactory->QueryInterface(__uuidof(IDXGIDisplayControl), (void **)&m_pDisplayControl);
+        hres = m_pDXGIFactory->QueryInterface(__uuidof(IDXGIDisplayControl), (void **)m_pDisplayControl.Assign());
         if (FAILED(hres))
             return MFX_ERR_DEVICE_FAILED;
         m_bDefaultStereoEnabled = m_pDisplayControl->IsStereoEnabled();
@@ -69,7 +69,7 @@ mfxStatus CD3D11Device::Init(
             m_pDisplayControl->SetStereoEnabled(TRUE);
     }
     
-    hres = m_pDXGIFactory->EnumAdapters(nAdapterNum,&m_pAdapter);
+    hres = m_pDXGIFactory->EnumAdapters(nAdapterNum, m_pAdapter.Assign());
     if (FAILED(hres))
         return MFX_ERR_DEVICE_FAILED;
 
@@ -80,9 +80,9 @@ mfxStatus CD3D11Device::Init(
                             FeatureLevels,
                             MSDK_ARRAY_LEN(FeatureLevels),
                             D3D11_SDK_VERSION,
-                            &m_pD3D11Device,
+                            m_pD3D11Device.Assign(),
                             &pFeatureLevelsOut,
-                            &m_pD3D11Ctx);
+                            m_pD3D11Ctx.Assign());
 
     if (FAILED(hres))    
         return MFX_ERR_DEVICE_FAILED;
@@ -91,12 +91,13 @@ mfxStatus CD3D11Device::Init(
     m_pDX11VideoDevice = m_pD3D11Device;
     m_pVideoContext = m_pD3D11Ctx;
     
-    MSDK_CHECK_POINTER(m_pDXGIDev.p, MFX_ERR_NULL_PTR);
-    MSDK_CHECK_POINTER(m_pDX11VideoDevice.p, MFX_ERR_NULL_PTR);
-    MSDK_CHECK_POINTER(m_pVideoContext.p, MFX_ERR_NULL_PTR);
+    MSDK_CHECK_POINTER(!!m_pDXGIDev, MFX_ERR_NULL_PTR);
+    MSDK_CHECK_POINTER(!!m_pDX11VideoDevice, MFX_ERR_NULL_PTR);
+    MSDK_CHECK_POINTER(!!m_pVideoContext, MFX_ERR_NULL_PTR);
 
     // turn on multithreading for the Context 
-    CComQIPtr<ID3D10Multithread> p_mt(m_pVideoContext);
+    ComPtr<ID3D10Multithread> p_mt;
+    p_mt = m_pVideoContext;
 
     if (p_mt)
         p_mt->SetMultithreadProtected(true);
@@ -111,7 +112,7 @@ mfxStatus CD3D11Device::Init(
         sts = FillSCD(hWindow, scd);
         MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
 
-        MSDK_CHECK_POINTER (m_pDXGIFactory.p, MFX_ERR_NULL_PTR);
+        MSDK_CHECK_POINTER (!!m_pDXGIFactory, MFX_ERR_NULL_PTR);
         DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {0};
         swapChainDesc.Width = 0;                                     // Use automatic sizing.
         swapChainDesc.Height = 0;
@@ -141,7 +142,7 @@ mfxStatus CD3D11Device::CreateVideoProcessor(mfxFrameSurface1 * pSrf)
 {
     HRESULT hres = S_OK;
 
-    if (m_VideoProcessorEnum.p || NULL == pSrf)
+    if (!!m_VideoProcessorEnum || NULL == pSrf)
         return MFX_ERR_NONE;
 
     //create video processor
@@ -160,11 +161,11 @@ mfxStatus CD3D11Device::CreateVideoProcessor(mfxFrameSurface1 * pSrf)
 
     ContentDesc.Usage = D3D11_VIDEO_USAGE_PLAYBACK_NORMAL;
 
-    hres = m_pDX11VideoDevice->CreateVideoProcessorEnumerator( &ContentDesc, &m_VideoProcessorEnum );
+    hres = m_pDX11VideoDevice->CreateVideoProcessorEnumerator( &ContentDesc, m_VideoProcessorEnum.Assign() );
     if (FAILED(hres))
         return MFX_ERR_DEVICE_FAILED;
 
-    hres = m_pDX11VideoDevice->CreateVideoProcessor( m_VideoProcessorEnum, 0, &m_pVideoProcessor );
+    hres = m_pDX11VideoDevice->CreateVideoProcessor( m_VideoProcessorEnum, 0, m_pVideoProcessor.Assign() );
     if (FAILED(hres))
         return MFX_ERR_DEVICE_FAILED;
     
@@ -183,7 +184,7 @@ mfxStatus CD3D11Device::GetHandle(mfxHandleType type, mfxHDL *pHdl)
 {
     if (MFX_HANDLE_D3D11_DEVICE == type)
     {
-        *pHdl = m_pD3D11Device.p;
+        *pHdl = *m_pD3D11Device.Assign();
         return MFX_ERR_NONE;
     }
     return MFX_ERR_UNSUPPORTED;
@@ -202,7 +203,7 @@ mfxStatus CD3D11Device::RenderFrame(mfxFrameSurface1 * pSrf, mfxFrameAllocator *
     sts = CreateVideoProcessor(pSrf);
     MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
     
-    hres = m_pSwapChain->GetBuffer(0, __uuidof( ID3D11Texture2D ), (void**)&m_pDXGIBackBuffer.p);
+    hres = m_pSwapChain->GetBuffer(0, __uuidof( ID3D11Texture2D ), (void**)m_pDXGIBackBuffer.Assign());
     if (FAILED(hres))
         return MFX_ERR_DEVICE_FAILED;
 
@@ -230,7 +231,7 @@ mfxStatus CD3D11Device::RenderFrame(mfxFrameSurface1 * pSrf, mfxFrameAllocator *
             m_pDXGIBackBuffer,
             m_VideoProcessorEnum,
             &OutputViewDesc,
-            &m_pOutputView.p );
+            m_pOutputView.Assign() );
         if (FAILED(hres))
             return MFX_ERR_DEVICE_FAILED;
     }
@@ -251,7 +252,7 @@ mfxStatus CD3D11Device::RenderFrame(mfxFrameSurface1 * pSrf, mfxFrameAllocator *
     if(!m_pTempTexture && m_nViews == 2)
     {
         pRTTexture2D->GetDesc(&RTTexture2DDesc);
-        hres = m_pD3D11Device->CreateTexture2D(&RTTexture2DDesc,NULL,&m_pTempTexture.p);
+        hres = m_pD3D11Device->CreateTexture2D(&RTTexture2DDesc,NULL, m_pTempTexture.Assign());
         if (FAILED(hres)) 
             return MFX_ERR_DEVICE_FAILED;
     }
@@ -263,7 +264,7 @@ mfxStatus CD3D11Device::RenderFrame(mfxFrameSurface1 * pSrf, mfxFrameAllocator *
             pRTTexture2D,
             m_VideoProcessorEnum,
             &InputViewDesc,
-            &m_pInputViewLeft.p );
+            m_pInputViewLeft.Assign() );
     
     }
     else if (2 == m_nViews && 0 == pSrf->Info.FrameId.ViewId)
@@ -273,7 +274,7 @@ mfxStatus CD3D11Device::RenderFrame(mfxFrameSurface1 * pSrf, mfxFrameAllocator *
             m_pTempTexture,
             m_VideoProcessorEnum,
             &InputViewDesc,
-            &m_pInputViewLeft.p );
+            m_pInputViewLeft.Assign() );
     }
     else
     {
@@ -281,7 +282,7 @@ mfxStatus CD3D11Device::RenderFrame(mfxFrameSurface1 * pSrf, mfxFrameAllocator *
             pRTTexture2D,
             m_VideoProcessorEnum,
             &InputViewDesc,
-            &m_pInputViewRight.p );
+            m_pInputViewRight.Assign() );
         
     }
     if (FAILED(hres))

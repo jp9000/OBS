@@ -104,6 +104,7 @@
     <ClCompile Include="QSVHelper.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ComPtr.hpp" />
     <ClInclude Include="Encoder.h" />
     <ClInclude Include="IntelSupport\include\base_allocator.h" />
     <ClInclude Include="IntelSupport\include\current_date.h" />
