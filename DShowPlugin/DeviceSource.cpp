@@ -1125,7 +1125,7 @@ DWORD DeviceSource::SampleThread(DeviceSource *source)
 
                     //sometimes timestamps can go to shit with horrible garbage devices.
                     //so, bypass any unusual timestamp offsets.
-                    if (sampleTime < -6000000 || sampleTime > 6000000) {
+                    if (sampleTime < -10000000 || sampleTime > 10000000) {
                         //OSDebugOut(TEXT("sample time: %lld\r\n"), sampleTime);
                         sampleTime = 0;
                     }
