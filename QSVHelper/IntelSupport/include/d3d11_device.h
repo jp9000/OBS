@@ -16,7 +16,6 @@ Copyright(c) 2011 - 2012 Intel Corporation. All Rights Reserved.
 #include "hw_device.h"
 #include <windows.h>
 #include <d3d11.h>
-#include <atlbase.h>
 
 #include "../../ComPtr.hpp"
 
