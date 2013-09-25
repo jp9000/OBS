@@ -125,6 +125,8 @@ public:
 
         StringList paramList;
 
+	curProfile = AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"), TEXT("high"));
+
         BOOL bUseCustomParams = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCustomSettings"));
         if(bUseCustomParams)
         {
@@ -200,7 +202,7 @@ public:
 
         if(bUseCBR)
         {
-            if(bPadCBR) paramData.i_nal_hrd         = X264_NAL_HRD_CBR;
+            if(bPadCBR) paramData.i_nal_hrd = X264_NAL_HRD_CBR;
             paramData.rc.i_rc_method    = X264_RC_ABR;
             paramData.rc.f_rf_constant  = 0.0f;
         }
@@ -221,7 +223,7 @@ public:
         paramData.vui.i_colmatrix       = colorDesc.matrix;
 
         if (keyframeInterval)
-            paramData.i_keyint_max          = fps*keyframeInterval;
+            paramData.i_keyint_max      = fps*keyframeInterval;
 
         paramData.i_fps_num             = fps;
         paramData.i_fps_den             = 1;
@@ -528,6 +530,8 @@ public:
                    TEXT("\r\n    fps: ")         << IntString(paramData.i_fps_num) <<
                    TEXT("\r\n    width: ")       << IntString(width) << TEXT(", height: ") << IntString(height) <<
                    TEXT("\r\n    preset: ")      << curPreset <<
+                   TEXT("\r\n    profile: ")     << curProfile <<
+                   TEXT("\r\n    keyint: ")      << paramData.i_keyint_max <<
                    TEXT("\r\n    CBR: ")         << CTSTR((bUseCBR) ? TEXT("yes") : TEXT("no")) <<
                    TEXT("\r\n    CFR: ")         << CTSTR((bUseCFR) ? TEXT("yes") : TEXT("no")) <<
                    TEXT("\r\n    max bitrate: ") << IntString(paramData.rc.i_vbv_max_bitrate) <<

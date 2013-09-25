@@ -56,6 +56,8 @@
 #define IDC_COLORPICKER                 1015
 #define IDC_DOWNSCALE2                  1015
 #define IDC_FILTER                      1015
+#define IDC_PRESET2                     1015
+#define IDC_X264PROFILE                 1015
 #define IDC_BUFFERSIZE                  1016
 #define IDC_FILTER2                     1016
 #define IDC_DEVICE                      1016

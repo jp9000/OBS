@@ -59,6 +59,11 @@ void SettingsAdvanced::ApplySettings()
     String strTemp = GetCBText(GetDlgItem(hwnd, IDC_PRESET));
     AppConfig->SetString(TEXT("Video Encoding"), TEXT("Preset"), strTemp);
 
+    //------------------------------------
+
+    strTemp = GetCBText(GetDlgItem(hwnd, IDC_X264PROFILE));
+    AppConfig->SetString(TEXT("Video Encoding"), TEXT("X264Profile"), strTemp);
+
     //--------------------------------------------------
 
     bool bUseMTOptimizations = SendMessage(GetDlgItem(hwnd, IDC_USEMULTITHREADEDOPTIMIZATIONS), BM_GETCHECK, 0, 0) == BST_CHECKED;
@@ -169,6 +174,7 @@ void SettingsAdvanced::SetDefaults()
     SendMessage(GetDlgItem(hwnd, IDC_USEMULTITHREADEDOPTIMIZATIONS), BM_SETCHECK, BST_CHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_PRIORITY), CB_SETCURSEL, 2, 0);
     SendMessage(GetDlgItem(hwnd, IDC_PRESET), CB_SETCURSEL, 2, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_X264PROFILE), CB_SETCURSEL, 1, 0);
     SendMessage(GetDlgItem(hwnd, IDC_KEYFRAMEINTERVAL), UDM_SETPOS32, 0, 0);
     SendMessage(GetDlgItem(hwnd, IDC_USECFR), BM_SETCHECK, BST_UNCHECKED, 1);
     SendMessage(GetDlgItem(hwnd, IDC_USEVIDEOENCODERSETTINGS), BM_SETCHECK, BST_UNCHECKED, 0);
@@ -250,6 +256,15 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 bool bAllowOtherHotkeyModifiers = GlobalConfig->GetInt(TEXT("General"), TEXT("AllowOtherHotkeyModifiers"), true) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_ALLOWOTHERHOTKEYMODIFIERS), BM_SETCHECK, bAllowOtherHotkeyModifiers ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                //--------------------------------------------
+
+                hwndTemp = GetDlgItem(hwnd, IDC_X264PROFILE);
+                static const CTSTR profile_names[3] = {TEXT("main"), TEXT("high")};
+                for(int i=0; i<2; i++)
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)profile_names[i]);
+
+                LoadSettingComboString(hwndTemp, TEXT("Video Encoding"), TEXT("X264Profile"), TEXT("high"));
 
                 //--------------------------------------------
 
@@ -467,6 +482,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                     }
                     break;
 
+                case IDC_X264PROFILE:
                 case IDC_SENDBUFFERSIZE:
                 case IDC_PRIORITY:
                 case IDC_BINDIP:

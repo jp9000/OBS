@@ -286,6 +286,8 @@ bool STDCALL SleepTo100NS(QWORD qw100NSTime)
 #define LOGLONGFRAMESDEFAULT 0
 #endif
 
+#define FRAME_SKIP_THRESHOLD 4
+
 void OBS::EncodeLoop()
 {
     QWORD streamTimeStart = GetQPCTimeNS();
@@ -320,7 +322,7 @@ void OBS::EncodeLoop()
         latestVideoTime = sleepTargetTime/1000000;
         latestVideoTimeNS = sleepTargetTime;
 
-        if (no_sleep_counter < 4) {
+        if (no_sleep_counter < FRAME_SKIP_THRESHOLD*2) {
             SetEvent(hVideoEvent);
             if (encoderInfo) {
                 if (messageTime == 0) {
