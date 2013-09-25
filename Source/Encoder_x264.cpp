@@ -125,7 +125,7 @@ public:
 
         StringList paramList;
 
-	curProfile = AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"), TEXT("high"));
+        curProfile = AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"), TEXT("high"));
 
         BOOL bUseCustomParams = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCustomSettings"));
         if(bUseCustomParams)
