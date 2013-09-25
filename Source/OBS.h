@@ -565,6 +565,8 @@ class OBS
     HDC                     hCaptureDC;
     List<MonitorInfo>       monitors;
 
+    UINT                    encoderSkipThreshold;
+
     XConfig                 scenesConfig;
     List<SceneHotkeyInfo>   sceneHotkeys;
     XElement                *sceneElement;

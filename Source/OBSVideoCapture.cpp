@@ -286,8 +286,6 @@ bool STDCALL SleepTo100NS(QWORD qw100NSTime)
 #define LOGLONGFRAMESDEFAULT 0
 #endif
 
-#define FRAME_SKIP_THRESHOLD 4
-
 void OBS::EncodeLoop()
 {
     QWORD streamTimeStart = GetQPCTimeNS();
@@ -310,7 +308,9 @@ void OBS::EncodeLoop()
 
     EncoderPicture *lastPic = NULL;
 
-    int no_sleep_counter = 0;
+    UINT skipThreshold = encoderSkipThreshold*2;
+    UINT no_sleep_counter = 0;
+
     CircularList<QWORD> bufferedTimes;
 
     while(!bShutdownEncodeThread || (bufferedFrames && !bTestStream)) {
@@ -322,7 +322,7 @@ void OBS::EncodeLoop()
         latestVideoTime = sleepTargetTime/1000000;
         latestVideoTimeNS = sleepTargetTime;
 
-        if (no_sleep_counter < FRAME_SKIP_THRESHOLD*2) {
+        if (no_sleep_counter < skipThreshold) {
             SetEvent(hVideoEvent);
             if (encoderInfo) {
                 if (messageTime == 0) {
@@ -968,8 +968,6 @@ void OBS::MainCaptureLoop()
 
         OSLeaveMutex(hSceneMutex);
 
-        profileOut;
-
         //------------------------------------
         // present/upload
 
@@ -1216,8 +1214,8 @@ void OBS::MainCaptureLoop()
         profileIn("flush");
         GetD3D()->Flush();
         profileOut;
-
-        profileOut; //frame
+        profileOut;
+	profileOut; //frame
 
         //------------------------------------
         // frame sync

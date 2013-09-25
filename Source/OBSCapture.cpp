@@ -184,6 +184,8 @@ retryHookTest:
     bUseMultithreadedOptimizations = AppConfig->GetInt(TEXT("General"), TEXT("UseMultithreadedOptimizations"), TRUE) != 0;
     Log(TEXT("  Multithreaded optimizations: %s"), (CTSTR)(bUseMultithreadedOptimizations ? TEXT("On") : TEXT("Off")));
 
+    encoderSkipThreshold = GlobalConfig->GetInt(TEXT("Video"), TEXT("EncoderSkipThreshold"), 8);
+
     //------------------------------------------------------------------
 
     Log(TEXT("  Base resolution: %ux%u"), baseCX, baseCY);
