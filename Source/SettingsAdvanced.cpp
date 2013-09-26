@@ -465,7 +465,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                         HWND hwndTemp = (HWND)lParam;
 
                         String strNewPreset = GetCBText(hwndTemp);
-                        if (scmp(strNewPreset.Array(), AppConfig->GetString(TEXT("Video Encoding"), TEXT("Preset"), TEXT("veryfast"))))
+                        if (scmp(strNewPreset.Array(), TEXT("veryfast")))
                         {
                             static BOOL bHasWarned = FALSE;
                             if (!bHasWarned && MessageBox(hwnd, Str("Settings.Advanced.PresetWarning"), NULL, MB_ICONEXCLAMATION | MB_YESNO) == IDNO)
