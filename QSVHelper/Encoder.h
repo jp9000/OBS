@@ -114,6 +114,8 @@ struct Encoder
 
         session.QueryIMPL(&actual);
 
+        bool d3d11_initialized = using_d3d11;
+
         if(using_d3d11 = (actual & MFX_IMPL_VIA_D3D11) == MFX_IMPL_VIA_D3D11)
         {
             mfxU32 device = 0;
@@ -126,7 +128,10 @@ struct Encoder
             default: exit_code = 1000; return MFX_ERR_DEVICE_FAILED;
             }
 
+            d3d11_alloc.Close();
+
             d3d11.Init(nullptr, 1, device);
+
             mfxHDL hdl = nullptr;
             d3d11.GetHandle(MFX_HANDLE_D3D11_DEVICE, &hdl);
             session.SetHandle(MFX_HANDLE_D3D11_DEVICE, hdl);
@@ -137,6 +142,13 @@ struct Encoder
             session.SetFrameAllocator(&d3d11_alloc);
             params->IOPattern = MFX_IOPATTERN_IN_VIDEO_MEMORY;
         }
+
+        if(!using_d3d11 && d3d11_initialized)
+        {
+            d3d11_alloc.Close();
+            params->IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY;
+        }
+
 
         encoder = MFXVideoENCODE(session);
 
