@@ -28,6 +28,7 @@
 #if (NTDDI_VERSION >= NTDDI_VERSION_FROM_WIN32_WINNT2(0x0602)) // >= _WIN32_WINNT_WIN8
     #define MFX_D3D11_SUPPORT 1 // Enable D3D11 support if SDK allows
 #else
+    #error "Windows SDK 7.1 or higher is required"
     #define MFX_D3D11_SUPPORT 0
 #endif
 #endif //defined(WIN32) || defined(WIN64)
