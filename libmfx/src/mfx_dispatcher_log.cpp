@@ -1,6 +1,6 @@
 /* ****************************************************************************** *\
 
-Copyright (C) 2012 Intel Corporation.  All rights reserved.
+Copyright (C) 2012-2013 Intel Corporation.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -224,7 +224,7 @@ void   DispatchLog::Write(int level, int opcode, char * msg, va_list argptr)
             
             case DL_SINK_PRINTF:
             {
-                char msg_formated[1024];
+                char msg_formated[1024] = {0};
 
                 if (NULL != msg && level != DL_LOADED_LIBRARY)
                 {
@@ -259,8 +259,8 @@ class ETWHandler : public IMsgHandler
 public:
     ETWHandler(const wchar_t * guid_str)
       : m_bUseFormatter(DISPATCHER_LOG_USE_FORMATING)
-      , m_EventHandle()
       , m_bProviderEnable()
+      , m_EventHandle()
     {
         GUID rguid = GUID_NULL;
         if (FAILED(CLSIDFromString(guid_str, &rguid)))

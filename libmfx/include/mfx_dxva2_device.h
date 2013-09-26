@@ -1,6 +1,6 @@
 /* ****************************************************************************** *\
 
-Copyright (C) 2012 Intel Corporation.  All rights reserved.
+Copyright (C) 2012-2013 Intel Corporation.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -35,14 +35,6 @@ File Name: mfx_dxva2_device.h
 
 #include <mfxdefs.h>
 
-#ifdef DXVA2DEVICE_LOG
-#include <stdio.h>
-#define DXVA2DEVICE_TRACE(expr) printf expr;
-#define DXVA2DEVICE_TRACE_OPERATION(expr) expr;
-#else
-#define DXVA2DEVICE_TRACE(expr)
-#define DXVA2DEVICE_TRACE_OPERATION(expr) 
-#endif
 
 namespace MFX
 {
@@ -58,7 +50,7 @@ public:
 
     // Initialize device using DXGI 1.1 interface
     virtual
-    bool Init(const bool countDisplays, const mfxU32 adapterNum) = 0;
+    bool Init(const mfxU32 adapterNum) = 0;
 
     // Obtain graphic card's parameter
     mfxU32 GetVendorID(void) const;
@@ -102,6 +94,32 @@ private:
     void operator=(const DXDevice &);
 };
 
+class D3D9Device : public DXDevice
+{
+public:
+    // Default constructor
+    D3D9Device(void);
+    // Destructor
+    virtual
+        ~D3D9Device(void);
+
+    // Initialize device using D3D v9 interface
+    virtual
+        bool Init(const mfxU32 adapterNum);
+
+    // Close the object
+    virtual
+        void Close(void);
+
+protected:
+
+    // Pointer to the D3D v9 interface
+    void *m_pD3D9;
+    // Pointer to the D3D v9 extended interface
+    void *m_pD3D9Ex;
+
+};
+
 class DXGI1Device : public DXDevice
 {
 public:
@@ -113,7 +131,7 @@ public:
 
     // Initialize device
     virtual
-    bool Init(const bool countDisplays, const mfxU32 adapterNum);
+    bool Init(const mfxU32 adapterNum);
 
     // Close the object
     virtual
@@ -136,8 +154,11 @@ public:
     // Destructor
     ~DXVA2Device(void);
 
+    // Initialize device using D3D v9 interface
+    bool InitD3D9(const mfxU32 adapterNum);
+
     // Initialize device using DXGI 1.1 interface
-    bool InitDXGI1(const bool countDisplays, const mfxU32 adapterNum);
+    bool InitDXGI1(const mfxU32 adapterNum);
 
     // Obtain graphic card's parameter
     mfxU32 GetVendorID(void) const;
@@ -150,6 +171,9 @@ public:
     void Close(void);
 
 protected:
+
+    // Get vendor & device IDs by alternative way (D3D9 in Remote Desktop sessions)
+    void UseAlternativeWay(const D3D9Device *pD3D9Device);
 
     // Number of adapters available
     mfxU32 m_numAdapters;

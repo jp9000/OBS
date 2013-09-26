@@ -1,6 +1,6 @@
 /* ****************************************************************************** *\
 
-Copyright (C) 2012 Intel Corporation.  All rights reserved.
+Copyright (C) 2012-2013 Intel Corporation.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -115,7 +115,8 @@ mfxStatus DISPATCHER_EXPOSED_PREFIX(MFXInit)(mfxIMPL impl, mfxVersion *pVer, mfx
     // implementation method masked from the input parameter
     const mfxIMPL implMethod = impl & (MFX_IMPL_VIA_ANY - 1);
     // implementation interface masked from the input parameter
-    const mfxIMPL implInterface = impl & -MFX_IMPL_VIA_ANY;
+    mfxIMPL implInterface = impl & -MFX_IMPL_VIA_ANY;
+    mfxIMPL implInterfaceOrig = implInterface;
     mfxVersion requiredVersion = {MFX_VERSION_MINOR, MFX_VERSION_MAJOR};
 
     // check error(s)
@@ -171,8 +172,8 @@ mfxStatus DISPATCHER_EXPOSED_PREFIX(MFXInit)(mfxIMPL impl, mfxVersion *pVer, mfx
         do
         {
             // initialize the library iterator
-            mfxRes = libIterator.Init(implTypes[curImplIdx].implType,
-                                      implInterface != MFX_IMPL_VIA_D3D11,
+            mfxRes = libIterator.Init(implTypes[curImplIdx].implType, 
+                                      implInterface,
                                       implTypes[curImplIdx].adapterID,
                                       currentStorage);
 
@@ -180,6 +181,14 @@ mfxStatus DISPATCHER_EXPOSED_PREFIX(MFXInit)(mfxIMPL impl, mfxVersion *pVer, mfx
             // looking for a suitable library with higher merit value.
             if (MFX_ERR_NONE == mfxRes)
             {
+            
+                if (
+                    !implInterface || 
+                    implInterface == MFX_IMPL_VIA_ANY)
+                {
+                    implInterface = libIterator.GetImplementationType();
+                }
+
                 do
                 {
                     eMfxImplType implType;
@@ -216,6 +225,7 @@ mfxStatus DISPATCHER_EXPOSED_PREFIX(MFXInit)(mfxIMPL impl, mfxVersion *pVer, mfx
 
     // use the default DLL search mechanism fail,
     // if hard-coded software library's path from the registry fails
+    implInterface = implInterfaceOrig;
     if (MFX_ERR_NONE != mfxRes)
     {
         // set current library index again
