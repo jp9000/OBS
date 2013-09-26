@@ -130,7 +130,9 @@ struct Encoder
 
             d3d11_alloc.Close();
 
-            d3d11.Init(nullptr, 1, device);
+            result = d3d11.Init(nullptr, 1, device);
+            if(result != MFX_ERR_NONE)
+                return result;
 
             mfxHDL hdl = nullptr;
             d3d11.GetHandle(MFX_HANDLE_D3D11_DEVICE, &hdl);
@@ -138,7 +140,10 @@ struct Encoder
 
             D3D11AllocatorParams alloc_params;
             alloc_params.pDevice = reinterpret_cast<ID3D11Device*>(hdl);
-            d3d11_alloc.Init(&alloc_params);
+            result = d3d11_alloc.Init(&alloc_params);
+            if(result != MFX_ERR_NONE)
+                return result;
+
             session.SetFrameAllocator(&d3d11_alloc);
             params->IOPattern = MFX_IOPATTERN_IN_VIDEO_MEMORY;
         }
