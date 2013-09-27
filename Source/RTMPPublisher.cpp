@@ -1217,7 +1217,7 @@ void RTMPPublisher::SocketLoop()
                 {
                     int bufferSize = (int)idealSendBacklog;
                     setsockopt(rtmp->m_sb.sb_socket, SOL_SOCKET, SO_SNDBUF, (const char *)&bufferSize, sizeof(bufferSize));
-                    Log(TEXT("RTMPPublisher::Socketloop: Increasing send buffer to ISB %d (buffer: %d / %d)"), idealSendBacklog, curDataBufferLen, dataBufferSize);
+                    Log(TEXT("RTMPPublisher::SocketLoop: Increasing send buffer to ISB %d (buffer: %d / %d)"), idealSendBacklog, curDataBufferLen, dataBufferSize);
                 }
             }
 
@@ -1265,7 +1265,7 @@ void RTMPPublisher::SocketLoop()
                         DWORD diff = OSGetTime() - lastSendTime;
 
                         if (diff >= 1500)
-                            Log(TEXT("RTMPPublisher::SendLoop: Stalled for %u ms to write %d bytes (buffer: %d / %d), unstable connection?"), diff, ret, curDataBufferLen, dataBufferSize);
+                            Log(TEXT("RTMPPublisher::SocketLoop: Stalled for %u ms to write %d bytes (buffer: %d / %d), unstable connection?"), diff, ret, curDataBufferLen, dataBufferSize);
 
                         totalSendPeriod += diff;
                         totalSendBytes += ret;
