@@ -184,7 +184,7 @@ mfxStatus CD3D11Device::GetHandle(mfxHandleType type, mfxHDL *pHdl)
 {
     if (MFX_HANDLE_D3D11_DEVICE == type)
     {
-        *pHdl = *m_pD3D11Device.Assign();
+        *pHdl = m_pD3D11Device;
         return MFX_ERR_NONE;
     }
     return MFX_ERR_UNSUPPORTED;
