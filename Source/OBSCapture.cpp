@@ -487,6 +487,7 @@ retryHookTestV2:
     //-------------------------------------------------------------
 
     bufferingTime = GlobalConfig->GetInt(TEXT("General"), TEXT("SceneBufferingTime"), 700);
+    Log(TEXT("Scene buffering time set to %u"), bufferingTime);
 
     //-------------------------------------------------------------
 
