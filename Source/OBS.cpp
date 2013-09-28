@@ -532,8 +532,7 @@ OBS::OBS()
     API = CreateOBSApiInterface();
 
     bDragResize = false;
-    ResizeWindow(false);
-    ShowWindow(hwndMain, SW_SHOW);
+
     if(GlobalConfig->GetInt(TEXT("General"), TEXT("Maximized")))
     { // Window was maximized last session
         SendMessage(hwndMain, WM_SYSCOMMAND, SC_MAXIMIZE, 0);
@@ -679,6 +678,10 @@ OBS::OBS()
 
         OSFindClose(hFind);
     }
+
+    ResizeWindow(false);
+    ShowWindow(hwndMain, SW_SHOW);
+
 }
 
 
