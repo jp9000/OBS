@@ -439,8 +439,9 @@ retryHookTestV2:
         OSFindData ofd;
         HANDLE hFind = NULL;
         bool bUseDateTimeName = true;
+	bool bOverwrite = GlobalConfig->GetInt(L"General", L"OverwriteRecordings", false) != 0;
 
-        if(hFind = OSFindFirstFile(strOutputFile, ofd))
+        if(!bOverwrite && (hFind = OSFindFirstFile(strOutputFile, ofd)))
         {
             String strFileExtension = GetPathExtension(strOutputFile);
             String strFileWithoutExtension = GetPathWithoutExtension(strOutputFile);
