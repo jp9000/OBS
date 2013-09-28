@@ -412,12 +412,13 @@ bool DeviceSource::LoadFilters()
     // log video info
 
     {
-        String strTest = FormattedString(TEXT("    device: %s,\r\n    device id %s,\r\n    chosen type: %s, usingFourCC: %s, res: %ux%u - %ux%u, frameIntervals: %llu-%llu"),
+        String strTest = FormattedString(TEXT("    device: %s,\r\n    device id %s,\r\n    chosen type: %s, usingFourCC: %s, res: %ux%u - %ux%u, frameIntervals: %llu-%llu\r\n    use buffering: %s - %u"),
             strDevice.Array(), strDeviceID.Array(),
             EnumToName[(int)bestOutput->videoType],
             bestOutput->bUsingFourCC ? TEXT("true") : TEXT("false"),
             bestOutput->minCX, bestOutput->minCY, bestOutput->maxCX, bestOutput->maxCY,
-            bestOutput->minFrameInterval, bestOutput->maxFrameInterval);
+            bestOutput->minFrameInterval, bestOutput->maxFrameInterval,
+	    bUseBuffering ? L"true" : L"false", bufferTime);
 
         BITMAPINFOHEADER *bmiHeader = GetVideoBMIHeader(bestOutput->mediaType);
 
