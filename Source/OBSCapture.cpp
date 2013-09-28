@@ -439,7 +439,7 @@ retryHookTestV2:
         OSFindData ofd;
         HANDLE hFind = NULL;
         bool bUseDateTimeName = true;
-	bool bOverwrite = GlobalConfig->GetInt(L"General", L"OverwriteRecordings", false) != 0;
+        bool bOverwrite = GlobalConfig->GetInt(L"General", L"OverwriteRecordings", false) != 0;
 
         if(!bOverwrite && (hFind = OSFindFirstFile(strOutputFile, ofd)))
         {
