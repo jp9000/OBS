@@ -650,7 +650,7 @@ bool AudioSource::GetBuffer(float **buffer, QWORD targetTimestamp)
 
     while(audioSegments.Num())
     {
-        if(audioSegments[0]->timestamp < (targetTimestamp-10))
+        if(audioSegments[0]->timestamp < targetTimestamp)
         {
             Log(TEXT("Audio timestamp for device '%s' was behind target timestamp by %llu!  Had to delete audio segment."),
                                                               GetDeviceName(), targetTimestamp-audioSegments[0]->timestamp);
@@ -668,7 +668,7 @@ bool AudioSource::GetBuffer(float **buffer, QWORD targetTimestamp)
         AudioSegment *segment = audioSegments[0];
 
         QWORD difference = (segment->timestamp-targetTimestamp);
-        if(difference <= 20)
+        if(difference <= 10)
         {
             //Log(TEXT("segment.timestamp: %llu, targetTimestamp: %llu"), segment.timestamp, targetTimestamp);
             outputBuffer.TransferFrom(segment->audioData);
