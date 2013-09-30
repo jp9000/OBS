@@ -153,6 +153,7 @@ Settings.Advanced.VideoEncoderCPUTradeoff="x264 CPU 설정:"
 Settings.Advanced.VideoEncoderCPUTradeoffToolTip="이 설정 값을 높일수록 방송화질이 떨어지지만 CPU 점유율을 낮출 수 있습니다.\r\n\r\n일반적인 상황에서는 '아주 빠름'으로 둘 것을 추천합니다."
 Settings.Advanced.VideoEncoderSettings="x264 인코더 사용자 정의 설정"
 Settings.Advanced.VideoEncoderSettingsTooltip="x264 인코더에 관련된 추가 명령어나 설정을 할 수 있습니다. 형식은 다음과 같습니다. [parameter]=[value] (예시: \"vbv-maxrate=1000 vbv-bufsize=1000\")."
+Settings,Advanced,X264Profile="x264 인코딩 프로파일:"
 
 Settings.Advanced.Priority.Idle="낮음"
 Settings.Advanced.Priority.Normal="보통"

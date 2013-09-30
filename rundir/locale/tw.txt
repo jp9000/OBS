@@ -153,6 +153,7 @@ Settings.Advanced.VideoEncoderCPUTradeoff="x264 CPU 預設："
 Settings.Advanced.VideoEncoderCPUTradeoffToolTip="設定更高的值會犧牲部分畫質以降低 CPU 的使用率。另一方面，設為較低的值能提高畫質但會加重 CPU 負載。\r\n\r\n建議設定：Very Fast"
 Settings.Advanced.VideoEncoderSettings="自訂 x264 編碼設定"
 Settings.Advanced.VideoEncoderSettingsTooltip="允許您自訂 x264 編碼設定。 在欄位中輸入 [參數]=[值] (例如：\"vbv-maxrate=1000 vbv-bufsize=1000\")。"
+Settings,Advanced,X264Profile="x264 編碼設定檔："
 
 Settings.Advanced.Priority.Idle="低"
 Settings.Advanced.Priority.Normal="標準"

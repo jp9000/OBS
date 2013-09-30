@@ -153,6 +153,7 @@ Settings.Advanced.VideoEncoderCPUTradeoff="x264-förinställning:"
 Settings.Advanced.VideoEncoderCPUTradeoffToolTip="Lägre hastighetsinställning ger något bättre streamkvalitet i utbyte mot processoranvändning, medan högre inställningar lättar lasten på din processor men försämrar kvaliteten. \r\n\r\nRekommendation: veryfast"
 Settings.Advanced.VideoEncoderSettings="Anpassade x264-kodningsinställningar"
 Settings.Advanced.VideoEncoderSettingsTooltip="Detta låter dig ange anpassade x264-kodningsinställningar i form av [parameter]=[värde]. (T.ex. \"vbv-maxrate=1000 vbv-bufsize=1000\")."
+Settings,Advanced,X264Profile="x264-kodningsprofil:"
 
 Settings.Advanced.Priority.Idle="Idle"
 Settings.Advanced.Priority.Normal="Normal"

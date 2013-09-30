@@ -154,6 +154,7 @@ Settings.Advanced.VideoEncoderCPUTradeoff="למעבד x264 תבנית:"
 Settings.Advanced.VideoEncoderCPUTradeoffToolTip="קביעת ערך גבוה יותר להגדרה זו תפחית את רמת ניצול המעבד על-ידי הקרבת אספקטים שונים מאיכות התמונה. מאידך, קביעת ערך נמוך יותר תעלה את איכות התמונה על חשבון צריכת משאבי מעבד גבוהים יותר.\r\n\r\nveryfast :הגדרה מומלצת"
 Settings.Advanced.VideoEncoderSettings="בהתאמה אישית x264 הגדרות מקודד"
 Settings.Advanced.VideoEncoderSettingsTooltip=".בהתאמה אישית x264 כאן תוכל לערוך את הגדרות מקודד\n\"vbv-maxrate=1000 vbv-bufsize=1000\" לדוגמה: [פרמטר]=[ערך] או"
+Settings,Advanced,X264Profile="x264 פרופיל מקודד:"
 
 Settings.Advanced.Priority.Idle="סרק"
 Settings.Advanced.Priority.Normal="רגילה"

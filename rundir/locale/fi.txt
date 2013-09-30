@@ -153,6 +153,7 @@ Settings.Advanced.VideoEncoderCPUTradeoff="x264 CPU Preset:"
 Settings.Advanced.VideoEncoderCPUTradeoffToolTip="Tämän asetuksen nostaminen vähentää prosessorin käyttöä laadun kustannuksella.  Laskeminen taas nostaa laatua, mutta lisää prosessorin käyttöä.\r\n\r\nSuositus: Very Fast"
 Settings.Advanced.VideoEncoderSettings="Valinnaiset x264-pakkausasetukset"
 Settings.Advanced.VideoEncoderSettingsTooltip="Tähän voit syöttää valinnaiset x264-pakkausasetukset.  Malliksi [asetus]=[arvo] (esim. \"vbv-maxrate=1000 vbv-bufsize=1000\")."
+Settings,Advanced,X264Profile="x264 enkoodaus-profiili:"
 
 Settings.Advanced.Priority.Idle="Idlaa"
 Settings.Advanced.Priority.Normal="Tavallinen"

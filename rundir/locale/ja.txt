@@ -153,6 +153,7 @@ Settings.Advanced.VideoEncoderCPUTradeoff="x264のプリセット:"
 Settings.Advanced.VideoEncoderCPUTradeoffToolTip="CPUの利用を調整するための設定です。「superfast」や「ultrafast」はCPU負荷を減らし品質を犠牲にします。一方、「faster」や「fast」以下はCPU負荷を増やすことで品質を向上させます。\r\n\r\n推奨:「veryfast」"
 Settings.Advanced.VideoEncoderSettings="x264の詳細設定"
 Settings.Advanced.VideoEncoderSettingsTooltip="x264のカスタムエンコード設定を指定可能。 [parameter]=[value] の書式 (例： \"vbv-maxrate=1000 vbv-bufsize=1000\")."
+Settings,Advanced,X264Profile="x264 エンコーディング プロファイル:"
 
 Settings.Advanced.Priority.Idle="低"
 Settings.Advanced.Priority.Normal="通常"

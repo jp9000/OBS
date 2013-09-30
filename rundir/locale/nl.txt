@@ -153,6 +153,7 @@ Settings.Advanced.VideoEncoderCPUTradeoff="x264 CPU Preset:"
 Settings.Advanced.VideoEncoderCPUTradeoffToolTip="Het verhogen van deze instelling vermindert CPU-gebruik door de kwaliteit op sommige vlakken te verminderen. Het verlagen van deze instelling daarentegen verhoogt de kwaliteit ten koste van meer CPU-gebruik.\r\n\r\nAanbevolen instelling: 'veryfast'"
 Settings.Advanced.VideoEncoderSettings="Aangepaste x264 Encoderinstellingen"
 Settings.Advanced.VideoEncoderSettingsTooltip="Hiermee kan je aangepaste x264 encoderinstellingen invoeren. Het formaat is [parameter]=[waarde] (bijv. \"vbv-maxrate=1000 vbv-bufsize=1000\")."
+Settings,Advanced,X264Profile="x264 Encoding Profiel:"
 
 Settings.Advanced.Priority.Idle="Laagst"
 Settings.Advanced.Priority.Normal="Normaal"
