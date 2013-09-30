@@ -38,7 +38,10 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Label="UserMacros">
+    <WindowsSDK80Path Condition="('$(WindowsSDK80Path)'=='')And(Exists('C:\Program Files (x86)\Windows Kits\8.0\'))">C:\Program Files (x86)\Windows Kits\8.0\</WindowsSDK80Path>
+    <WindowsSDK80Path Condition="('$(WindowsSDK80Path)'=='')And(!Exists('C:\Program Files (x86)\Windows Kits\8.0\'))">$(WindowsSdkDir)</WindowsSDK80Path>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(WindowsSDK80Path)Include\um;$(WindowsSDK80Path)Include\shared;$(DXSDK_DIR)Include;IntelSupport\include;IntelSupport\include\vm;$(IncludePath)</IncludePath>
