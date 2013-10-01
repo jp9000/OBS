@@ -153,7 +153,7 @@ Settings.Advanced.VideoEncoderCPUTradeoff="x264 CPU Preset:"
 Settings.Advanced.VideoEncoderCPUTradeoffToolTip="Setting this value higher reduces CPU usage by sacrificing certain aspects of quality.  On the other hand, setting this value lower increases quality at the cost of more CPU.\r\n\r\nRecommended: Very Fast"
 Settings.Advanced.VideoEncoderSettings="Custom x264 Encoder Settings"
 Settings.Advanced.VideoEncoderSettingsTooltip="This allows you to set custom x264 encoder settings.  In the form of [parameter]=[value] (e.g. \"vbv-maxrate=1000 vbv-bufsize=1000\")."
-Settings,Advanced,X264Profile="x264 Encoding Profile:"
+Settings.Advanced.X264Profile="x264 Encoding Profile:"
 
 Settings.Advanced.Priority.Idle="Idle"
 Settings.Advanced.Priority.Normal="Normal"
