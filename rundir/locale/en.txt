@@ -80,6 +80,7 @@ MainMenu.File.Save="&Save"
 
 MainMenu.Help.Contents="&Contents"
 MainMenu.Help.VisitWebsite="Visit Website"
+MainMenu.Help.CheckForUpdates="Check for &updates"
 
 MainMenu.Settings.OpenConfigFolder="Open &Configuration Folder"
 MainMenu.Settings.OpenLogFolder="Open &Log Folder"
@@ -339,6 +340,7 @@ Updater.DownloadNow="Would you like to download them now?"
 Updater.NewUpdates="The following updates are available:\r\n\r\n"
 Updater.RunningWarning="OBS will be restarted to install the updates.\r\n\r\nAre you sure you want to continue?"
 Updater.UpdatesAvailable="Updates are available"
+Updater.NoUpdatesAvailable="No updates are available"
 
 Plugins.NoiseGate.PluginName="Microphone Noise Gate"
 Plugins.NoiseGate.PluginDescription="Reduces microphone noise by automatically muting the microphone if you are not talking."

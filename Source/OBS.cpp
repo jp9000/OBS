@@ -599,7 +599,7 @@ OBS::OBS()
     if (currentTime.QuadPart - lastUpdateTime.QuadPart >= 3600)
     {
         GlobalConfig->SetInt(TEXT("General"), OBS_CONFIG_UPDATE_KEY, (int)currentTime.QuadPart);
-        OSCloseThread(OSCreateThread((XTHREAD)CheckUpdateThread, NULL));
+        OSCloseThread(OSCreateThread((XTHREAD)CheckUpdateThread, (LPVOID)0));
     }
 #endif
 

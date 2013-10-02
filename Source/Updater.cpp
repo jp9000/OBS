@@ -280,6 +280,9 @@ DWORD WINAPI CheckUpdateThread (VOID *arg)
     TCHAR extraHeaders[256];
     BYTE manifestHash[20];
     TCHAR manifestPath[MAX_PATH];
+    BOOL updatesAvailable;
+
+    BOOL notify = (BOOL)arg;
 
     tsprintf_s (manifestPath, _countof(manifestPath)-1, TEXT("%s\\updates\\packages.xconfig"), lpAppDataPath);
 
@@ -325,7 +328,6 @@ DWORD WINAPI CheckUpdateThread (VOID *arg)
         if (responseCode == 200 || responseCode == 304)
         {
             String updateInfo;
-            BOOL updatesAvailable;
 
             updateInfo = Str("Updater.NewUpdates");
 
@@ -391,6 +393,9 @@ DWORD WINAPI CheckUpdateThread (VOID *arg)
             }
         }
     }
+
+    if (notify && !updatesAvailable)
+        MessageBox (hwndMain, Str("Updater.NoUpdatesAvailable"), NULL, MB_ICONINFORMATION);
 
 abortUpdate:
 

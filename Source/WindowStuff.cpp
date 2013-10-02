@@ -2360,6 +2360,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     }
                     break;
 
+                case ID_HELP_CHECK_FOR_UPDATES:
+                    OSCloseThread(OSCreateThread((XTHREAD)CheckUpdateThread, (LPVOID)1));
+                    break;
+
                 case ID_DASHBOARD:
                     ShellExecute(NULL, TEXT("open"), App->strDashboard, 0, 0, SW_SHOWNORMAL);
                     break;
