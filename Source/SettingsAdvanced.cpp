@@ -476,9 +476,10 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                             {
                                 bHasWarned = TRUE;
                                 ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-                                SetChangedSettings(true);
                             }
                         }
+
+                        SetChangedSettings(true);
                     }
                     break;
 
