@@ -469,17 +469,13 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                         {
                             static BOOL bHasWarned = FALSE;
                             if (!bHasWarned && MessageBox(hwnd, Str("Settings.Advanced.PresetWarning"), NULL, MB_ICONEXCLAMATION | MB_YESNO) == IDNO)
-                            {
                                 LoadSettingComboString(hwndTemp, TEXT("Video Encoding"), TEXT("Preset"), TEXT("veryfast"));
-                            }
                             else
-                            {
                                 bHasWarned = TRUE;
-                                ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-                            }
                         }
 
                         SetChangedSettings(true);
+                        ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
                     }
                     break;
 
