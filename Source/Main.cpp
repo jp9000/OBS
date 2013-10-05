@@ -38,6 +38,7 @@ ConfigFile  *GlobalConfig   = NULL;
 ConfigFile  *AppConfig      = NULL;
 OBS         *App            = NULL;
 bool        bIsPortable     = false;
+bool        bStreamOnStart  = false;
 TCHAR       lpAppPath[MAX_PATH];
 TCHAR       lpAppDataPath[MAX_PATH];
 
@@ -418,6 +419,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             bDisableMutex = true;
         else if(scmpi(args[i], TEXT("-portable")) == 0)
             bIsPortable = true;
+        else if (scmpi(args[i], TEXT("-start")) == 0)
+            bStreamOnStart = true;
     }
 
     LocalFree(args);

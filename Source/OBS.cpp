@@ -682,6 +682,8 @@ OBS::OBS()
     ResizeWindow(false);
     ShowWindow(hwndMain, SW_SHOW);
 
+    if (bStreamOnStart)
+        PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_STARTSTOP, 0), NULL);
 }
 
 

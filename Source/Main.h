@@ -70,6 +70,7 @@ extern ConfigFile   *GlobalConfig;
 extern ConfigFile   *AppConfig;
 extern OBS          *App;
 extern bool         bIsPortable;
+extern bool         bStreamOnStart;
 extern TCHAR        lpAppPath[MAX_PATH];
 extern TCHAR        lpAppDataPath[MAX_PATH];
 
