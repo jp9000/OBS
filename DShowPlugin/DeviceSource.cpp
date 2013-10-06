@@ -365,6 +365,12 @@ bool DeviceSource::LoadFilters()
     //------------------------------------------------
     // initialize the basic video variables and data
 
+    if(FAILED(err = devicePin->QueryInterface(IID_IAMStreamConfig, (void**)&config)))
+    {
+        AppWarning(TEXT("DShowPlugin: Could not get IAMStreamConfig for device pin, result = %08lX"), err);
+        goto cleanFinish;
+    }
+
     renderCX = renderCY = 0;
     frameInterval = 0;
 
@@ -377,7 +383,23 @@ bool DeviceSource::LoadFilters()
     else
     {
         SIZE size;
-        if (!GetClosestResolutionFPS(outputList, size, frameInterval, true))
+
+        // blackmagic/decklink devices will display a black screen if the resolution/fps doesn't exactly match.
+        // they should rename the devices to blackscreen
+        if (sstri(strDeviceName, L"blackmagic") != NULL || sstri(strDeviceName, L"decklink") != NULL)
+        {
+            AM_MEDIA_TYPE *pmt;
+            config->GetFormat(&pmt);
+            VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pmt->pbFormat);
+
+            // Use "preferred" format from the device
+            size.cx = pVih->bmiHeader.biWidth;
+            size.cy = pVih->bmiHeader.biHeight;
+            frameInterval = pVih->AvgTimePerFrame;
+
+            DeleteMediaType(pmt);
+        }
+        else if (!GetClosestResolutionFPS(outputList, size, frameInterval, true))
         {
             AppWarning(TEXT("DShowPlugin: Unable to find appropriate resolution"));
             renderCX = renderCY = 64;
@@ -480,12 +502,6 @@ bool DeviceSource::LoadFilters()
 
     //------------------------------------------------
     // configure video pin
-
-    if(FAILED(err = devicePin->QueryInterface(IID_IAMStreamConfig, (void**)&config)))
-    {
-        AppWarning(TEXT("DShowPlugin: Could not get IAMStreamConfig for device pin, result = %08lX"), err);
-        goto cleanFinish;
-    }
 
     AM_MEDIA_TYPE outputMediaType;
     CopyMediaType(&outputMediaType, bestOutput->mediaType);
@@ -989,6 +1005,9 @@ void DeviceSource::Start()
         AppWarning(TEXT("DShowPlugin: control->Run failed, result = %08lX"), err);
         return;
     }
+
+    /*if (err == S_FALSE)
+        AppWarning(L"Ook");*/
 
     bCapturing = true;
 }
