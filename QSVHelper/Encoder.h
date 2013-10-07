@@ -168,9 +168,9 @@ struct Encoder
         Parameters query = params;
         encoder.GetVideoParam(query);
 
-        unsigned num_bitstreams = max(6, req.NumFrameSuggested + query->AsyncDepth)+3, //+NUM_OUT_BUFFERS
+        unsigned num_bitstreams = max(6, req.NumFrameSuggested + query->AsyncDepth),
                  num_surf = num_bitstreams * (using_d3d11 ? 2 : 1),
-                 num_frames = using_d3d11 ? num_bitstreams : num_surf,
+                 num_frames = using_d3d11 ? num_bitstreams : (num_surf + 3), //+NUM_OUT_BUFFERS
                  num_d3d11_frames = num_surf;
 
         encode_tasks.resize(num_bitstreams);
