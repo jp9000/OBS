@@ -39,7 +39,7 @@ Shader* GraphicsSystem::CreateVertexShaderFromFile(CTSTR lpFileName)
 {
     XFile ShaderFile;
 
-    if(!ShaderFile.Open(lpFileName, XFILE_READ, XFILE_OPENEXISTING))
+    if(!ShaderFile.Open(lpFileName, XFILE_READ|XFILE_SHARED, XFILE_OPENEXISTING))
         return NULL;
 
     String strShader;
@@ -52,7 +52,7 @@ Shader* GraphicsSystem::CreatePixelShaderFromFile(CTSTR lpFileName)
 {
     XFile ShaderFile;
 
-    if(!ShaderFile.Open(lpFileName, XFILE_READ, XFILE_OPENEXISTING))
+    if(!ShaderFile.Open(lpFileName, XFILE_READ|XFILE_SHARED, XFILE_OPENEXISTING))
         return NULL;
 
     String strShader;
