@@ -131,7 +131,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
         if(!encoder)
         {
             if(!best)
-                return 5;
+                return EXIT_NO_VALID_CONFIGURATION;
             auto ver = best->version;
             encoder.InitializeMFX(*best);
             log_file << "No valid implementation detected, using best implementation instead\n";

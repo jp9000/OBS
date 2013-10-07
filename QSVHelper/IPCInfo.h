@@ -62,3 +62,4 @@ typedef IPCSignal                                   ipc_stop;
 
 
 #define EXIT_INCOMPATIBLE_CONFIGURATION 10
+#define EXIT_NO_VALID_CONFIGURATION 5

@@ -358,6 +358,10 @@ public:
             {
             case EXIT_INCOMPATIBLE_CONFIGURATION:
                 CrashError(TEXT("QSVHelper.exe has exited because of an incompatible qsvimpl custom parameter (before response)"));
+            case EXIT_NO_VALID_CONFIGURATION:
+                if(OSGetVersion() < 8)
+                    CrashError(TEXT("QSVHelper.exe could not find a valid configuration. Make sure you have a (virtual) display connected to your iGPU"));
+                CrashError(TEXT("QSVHelper.exe could not find a valid configuration"));
             default:
                 CrashError(TEXT("QSVHelper.exe has exited with code %i (before response)"), code);
             }
