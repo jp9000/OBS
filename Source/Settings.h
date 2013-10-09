@@ -176,6 +176,9 @@ private:
 
     //-----------------------------------------------------------------------
     // Private members
+    bool bDisplayConnectedOnly;
+
+    void RefreshDevices();
 
 private:
     AudioDeviceStorage * storage;

@@ -172,6 +172,7 @@ Settings.Audio.MuteMicHotkey="Mute/Unmute Mic Hotkey:"
 Settings.Audio.PlaybackDevice="Desktop Audio Device:"
 Settings.Audio.PushToTalkDelay="Push-to-talk Delay (milliseconds):"
 Settings.Audio.PushToTalkHotkey="Use Push-to-talk:"
+Settings.Audio.ShowOnlyConnectedDevices="Show only connected devices"
 Settings.Audio.UseMicQPC="Use Mic QPC timestamps"
 
 Settings.Encoding.Audio="Audio Encoding"

@@ -210,6 +210,7 @@
 #define IDC_USEOUTLINE                  1099
 #define IDC_LOWLATENCYMODE              1099
 #define IDC_MINIZENOTIFICATION          1099
+#define IDC_CONNECTEDONLY               1099
 #define IDC_TIMER1                      1100
 #define IDC_CAPTURERAM                  1100
 #define IDC_COMPATIBILITYMODE           1100

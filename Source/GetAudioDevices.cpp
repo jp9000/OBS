@@ -25,7 +25,7 @@
 #include <Functiondiscoverykeys_devpkey.h>
 
 
-void GetAudioDevices(AudioDeviceList &deviceList, AudioDeviceType deviceType)
+void GetAudioDevices(AudioDeviceList &deviceList, AudioDeviceType deviceType, bool bConnectedOnly)
 {
     const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
     const IID IID_IMMDeviceEnumerator    = __uuidof(IMMDeviceEnumerator);
@@ -71,7 +71,11 @@ void GetAudioDevices(AudioDeviceList &deviceList, AudioDeviceType deviceType)
         break;
     }
 
-    err = mmEnumerator->EnumAudioEndpoints(audioDeviceType, DEVICE_STATE_ACTIVE | DEVICE_STATE_UNPLUGGED, &collection);
+    DWORD flags = DEVICE_STATE_ACTIVE;
+    if (!bConnectedOnly)
+        flags |= DEVICE_STATE_UNPLUGGED;
+
+    err = mmEnumerator->EnumAudioEndpoints(audioDeviceType, flags, &collection);
     if(FAILED(err))
     {
         AppWarning(TEXT("GetAudioDevices: Could not enumerate audio endpoints"));
