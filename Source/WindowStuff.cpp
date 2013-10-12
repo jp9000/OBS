@@ -818,6 +818,9 @@ void OBS::TrackModifyListbox(HWND hwnd, int ret)
 
         case ID_LISTBOX_RENAME:
             {
+                if (!selectedElement)
+                    break;
+
                 App->EnableSceneSwitching(false);
 
                 String strName = selectedElement->GetName();
@@ -849,6 +852,12 @@ void OBS::TrackModifyListbox(HWND hwnd, int ret)
                 List<SceneItem*> selectedSceneItems;
                 if(App->scene)
                     App->scene->GetSelectedItems(selectedSceneItems);
+
+                if (!selectedSceneItems.Num())
+                {
+                    App->EnableSceneSwitching(true);
+                    break;
+                }
 
                 if(App->bRunning)
                 {
