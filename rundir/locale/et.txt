@@ -149,6 +149,7 @@ Settings.Advanced.SceneBufferTime="Stseeni bufferdusaeg (millisekundites):"
 Settings.Advanced.SyncToVideoTime="Sunni töölaua heli kasutama video ajatempleid heli aja alusena"
 Settings.Advanced.VideoEncoderCPUTradeoff="x264 CPU säte:"
 Settings.Advanced.VideoEncoderSettings="Kohandatud x264 enkoodimis sätted"
+Settings.Advanced.X264Profile="x264 kodeeringu profiil:"
 
 Settings.Advanced.Priority.Idle="Tegevusetu"
 Settings.Advanced.Priority.Normal="Normaalne"
@@ -307,5 +308,7 @@ Stats.TotalFramesEncoded="Kokku kodeeritud raamid:"
 
 Plugins.NoiseGate.General="Üldine"
 Plugins.NoiseGate.Help="Abi"
+Plugins.NoiseGate.ResetToDefaults="Taasta algseaded"
+Plugins.NoiseGate.AttackTime="Rünnaku aeg (millisekundites):"
 
 

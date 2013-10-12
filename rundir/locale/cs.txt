@@ -147,7 +147,7 @@ Settings.Advanced.SceneBufferTime="Vyrovnávací čas scény (milisekundy):"
 Settings.Advanced.VideoEncoderCPUTradeoff="x264 CPU předvolba:"
 Settings.Advanced.VideoEncoderSettings="Vlastní nastavení x264 enkodéru"
 Settings.Advanced.VideoEncoderSettingsTooltip="Dovoluje Vám nastavit vlastní nastavení enkódování. Ve tvaru [parametr]=[hodnota] (např. \"vbv-maxrate=1000 vbv-bufsize=1000\")."
-Settings,Advanced,X264Profile="Enkódovací x264 profil:"
+Settings.Advanced.X264Profile="Enkódovací x264 profil:"
 
 Settings.Advanced.Priority.Idle="Nečinný"
 Settings.Advanced.Priority.Normal="Normální"

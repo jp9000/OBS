@@ -80,6 +80,7 @@ MainMenu.File.Save="&שמור"
 
 MainMenu.Help.Contents="&תוכן עניינים"
 MainMenu.Help.VisitWebsite="בקר באתר"
+MainMenu.Help.CheckForUpdates="בדוק אם קיימים &עדכונים"
 
 MainMenu.Settings.OpenConfigFolder="פתח &תיקיית הגדרות"
 MainMenu.Settings.OpenLogFolder="פתח &תיקיית קובצי יומן"
@@ -154,7 +155,7 @@ Settings.Advanced.VideoEncoderCPUTradeoff="למעבד x264 תבנית:"
 Settings.Advanced.VideoEncoderCPUTradeoffToolTip="קביעת ערך גבוה יותר להגדרה זו תפחית את רמת ניצול המעבד על-ידי הקרבת אספקטים שונים מאיכות התמונה. מאידך, קביעת ערך נמוך יותר תעלה את איכות התמונה על חשבון צריכת משאבי מעבד גבוהים יותר.\r\n\r\nveryfast :הגדרה מומלצת"
 Settings.Advanced.VideoEncoderSettings="בהתאמה אישית x264 הגדרות מקודד"
 Settings.Advanced.VideoEncoderSettingsTooltip=".בהתאמה אישית x264 כאן תוכל לערוך את הגדרות מקודד\n\"vbv-maxrate=1000 vbv-bufsize=1000\" לדוגמה: [פרמטר]=[ערך] או"
-Settings,Advanced,X264Profile="x264 פרופיל מקודד:"
+Settings.Advanced.X264Profile="x264 פרופיל מקודד:"
 
 Settings.Advanced.Priority.Idle="סרק"
 Settings.Advanced.Priority.Normal="רגילה"
@@ -172,6 +173,7 @@ Settings.Audio.MuteMicHotkey="מקש קיצור השתקה/ביטול מיקרו
 Settings.Audio.PlaybackDevice="התקן שמע בשולחן עבודה:"
 Settings.Audio.PushToTalkDelay="(השהיית לחץ-בכדי-לדבר (אלפיות:"
 Settings.Audio.PushToTalkHotkey="השתמש במצב לחץ-בכדי-לדבר:"
+Settings.Audio.ShowOnlyConnectedDevices="הצג התקנים מחוברים בלבד"
 Settings.Audio.UseMicQPC="QPC השתמש בחותמות זמן למיקרופון מסוג"
 
 Settings.Encoding.Audio="קידוד שמע"
@@ -340,6 +342,7 @@ Updater.DownloadNow="האם ברצונך להוריד אותם כעת?"
 Updater.NewUpdates="העדכונים הבאים זמינים:\r\n\r\n"
 Updater.RunningWarning="OBS יאותחל במטרה להתקין את העדכונים.\r\n\r\nהאם אתה בטוח שברצונך להמשיך?"
 Updater.UpdatesAvailable="עדכונים זמינים"
+Updater.NoUpdatesAvailable="אין עדכונים זמינים"
 
 Plugins.NoiseGate.PluginName="תכונת 'שער הרעש' למיקרופון"
 Plugins.NoiseGate.PluginDescription="מפחית את רעשי המיקרופון באופן אוטומטי על-ידי השתקת המיקרופון כשאתה לא מדבר."
