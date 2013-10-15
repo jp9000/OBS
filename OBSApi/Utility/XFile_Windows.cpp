@@ -37,6 +37,7 @@ XFile::XFile()
 XFile::XFile(CTSTR lpFile, DWORD dwAccess, DWORD dwCreationDisposition)
 {
     assert(lpFile);
+    bHasWritten = false;
     Open(lpFile, dwAccess, dwCreationDisposition);
 }
 
@@ -216,8 +217,9 @@ void XFile::Close()
 {
     if(hFile != INVALID_HANDLE_VALUE)
     {
-        if(bHasWritten)
-            ::FlushFileBuffers(hFile);
+        //this is not really necessary and kills performance
+        //if(bHasWritten)
+        //    ::FlushFileBuffers(hFile);
         CloseHandle(hFile);
         hFile = INVALID_HANDLE_VALUE;
     }

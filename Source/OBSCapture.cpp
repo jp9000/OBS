@@ -547,7 +547,7 @@ retryHookTestV2:
     curFramePic = NULL;
     bShutdownVideoThread = false;
     bShutdownEncodeThread = false;
-    ResetEvent(hVideoThread);
+    //ResetEvent(hVideoThread);
     hEncodeThread = OSCreateThread((XTHREAD)OBS::EncodeThread, NULL);
     hVideoThread = OSCreateThread((XTHREAD)OBS::MainCaptureThread, NULL);
 
