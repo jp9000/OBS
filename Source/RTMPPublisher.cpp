@@ -163,7 +163,7 @@ bool RTMPPublisher::Init(RTMP *rtmpIn, UINT tcpBufferSize)
 
     hSendLoopExit = CreateEvent(NULL, TRUE, FALSE, NULL);
     hSocketLoopExit = CreateEvent(NULL, TRUE, FALSE, NULL);
-    hSendBacklogEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    hSendBacklogEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
     hDataBufferMutex = OSCreateMutex();
 
@@ -1047,13 +1047,12 @@ int RTMPPublisher::FlushDataBuffer()
 
 void RTMPPublisher::SetupSendBacklogEvent()
 {
-    OVERLAPPED overlapped;
+    zero (&sendBacklogOverlapped, sizeof(sendBacklogOverlapped));
 
-    zero (&overlapped, sizeof(overlapped));
+    ResetEvent (hSendBacklogEvent);
+    sendBacklogOverlapped.hEvent = hSendBacklogEvent;
 
-    overlapped.hEvent = hSendBacklogEvent;
-
-    idealsendbacklognotify(rtmp->m_sb.sb_socket, &overlapped, NULL);
+    idealsendbacklognotify (rtmp->m_sb.sb_socket, &sendBacklogOverlapped, NULL);
 }
 
 void RTMPPublisher::FatalSocketShutdown()

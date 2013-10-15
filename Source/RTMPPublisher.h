@@ -111,7 +111,9 @@ protected:
 
     HANDLE hSendLoopExit;
     HANDLE hSocketLoopExit;
+
     HANDLE hSendBacklogEvent;
+    OVERLAPPED sendBacklogOverlapped;
 
     bool bStopping;
 
