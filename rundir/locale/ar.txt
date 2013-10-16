@@ -6,12 +6,136 @@ Browse="استعراض..."
 BuildingMP4Dialog="إخراج م ب 4"
 Cancel="إلغاء الأمر"
 ClearHotkey="محو"
+Close="اغلاق"
 Color="اللون"
 Default="الافتراضي"
 Defaults="الإفت"
 DeleteConfirm="هل أنت متأكد من أنك تريد حذف العناصر المحددة؟"
 Desktop="سطح المكتب"
 Disable="تعطيل"
+EncoderLag="تحذير:يتطلب وقت طويل للترميز , جاري تخطي بعض الفريمات!"
+EndingDelay="جاري انهاء البث المتأخر..."
+EnterName="الرجاء ادخال اسم"
+Gamma="الجاما:"
+GlobalSources="المصادر العامة..."
+MicrophoneFailure="حدث خطأ في بدأ تشغيل المايكروفون - قدي يكون غير موصول , او ان هناك برنامجاً اخر يستخدمه بشكل حصري."
+MonitorNum="الشاشة $1"
+MoveDown="تحريك للاسفل"
+MoveToBottom="التحريك للقاع"
+MoveToTop="التحريك للقمة"
+MoveUp="التحريك للاعلى"
+NameExists="'$1' هو موجود فعلاً. الرجاء اختيار اسم اخر"
+None="لا شيء"
+OK="موافق"
+Plugins="الاضافات..."
+Reconnecting="اعادة الاتصال..."
+Refresh="تحديث"
+Remove="حذف"
+Rename="اعادة تسمية"
+Copy="نسخ"
+Scene="مشهد"
+Settings="اعدادات..."
+StreamReport="تقرير البث"
+
+BuildingMP4Dialog.Progress="انشاء mp4 , الرجاء الانتظار..."
+
+Connection.CouldNotConnect="غير قادر على الاتصال بالسيرفر"
+Connection.CouldNotParseURL="غير قادر على تحليل رابط RTMP"
+Connection.Disconnected="تم فصل الاتصال من قبل السيرفر"
+Connection.InvalidStream="غير قادر على الوصول للقناة المحددة او مفتاح البث. قد يكون هذا بسبب ان المفتاح/القناة غير صحيحة , او بسبب ان السيرفر يعتبر انك لازلت في وضع تسجيل الدخول."
+
+DeleteConfirm.Title="حذف العنصر المختار ؟"
+
+EndingDelay.TimeLeft="الوقت المتبقي $1"
+
+GlobalSources.DeleteConfirm="اذا قمت بحذف مصدر عام , فإنه سيحذف من اي مشهد يستخدمه. هل انت متأكد بأنك تريد الاستمرار ؟"
+
+Listbox.Add="اضف $1"
+Listbox.Center="الوسط"
+Listbox.CenterHorizontally="الوسط افقياً"
+Listbox.CenterVertically="الوسط عامودياً"
+Listbox.MoveTop="تحريك للقمة"
+Listbox.MoveRight="التحريك الى الجهة اليمنى"
+Listbox.MoveBottom="التحريك للقاع"
+Listbox.MoveLeft="التحريك للجهة اليسرى"
+Listbox.Config="الخصائص"
+Listbox.FitToScreen="تمديد"
+Listbox.Positioning="الموضع/الحجم"
+Listbox.ResetSize="اعادة الحجم"
+Listbox.SetHotkey="وضع مفتاح اختصار"
+ListBox.ResetCrop="اعادة القص"
+
+MainMenu.File="&ملف"
+MainMenu.Help="م&ساعدة"
+MainMenu.Profiles="ال&بروفايل"
+MainMenu.Settings="ا&لاعدادات"
+
+MainMenu.Settings.AlwaysOnTop="الب&قاء فوق النوافذ الاخرى"
+MainMenu.Settings.FullscreenMode="المعاي&نة في وضع ملء الشاشة"
+MainMenu.Settings.Projector="العا&رض"
+
+MainMenu.File.Exit="&خروج"
+MainMenu.File.Save="&حفظ"
+
+MainMenu.Help.Contents="&المحتويات"
+MainMenu.Help.VisitWebsite="زيارة الموقع الالكتروني"
+MainMenu.Help.CheckForUpdates="&فحص التحديثات"
+
+MainMenu.Settings.OpenConfigFolder="فتح مجلد الا&عدادات"
+MainMenu.Settings.OpenLogFolder="ف&تح مجلد العمليات"
+
+MainWindow.BeginMessage="لا يبث حالياً\n\n اضغط على \"بدء البث\" او \"معاينة البث\" للبدء"
+MainWindow.PreviewDisabled="تم تعطيل المعاينة"
+MainWindow.Dashboard="لوحة المعلومات"
+MainWindow.DroppedFrames="الفريمات ( الاطارات) التي تم اسقاطها:"
+MainWindow.Exit="خروج"
+MainWindow.Plugins="الاضافات"
+MainWindow.SceneEditor="تحرير المشهد"
+MainWindow.Scenes="المشاهد:"
+MainWindow.Sources="المصادر:"
+MainWindow.StartStream="بدء البث"
+MainWindow.StopStream="ايقاف البث"
+MainWindow.StopTest="ايقاف المعاينة"
+
+Plugins.Configure="اعداد"
+Plugins.Description="التفاصيل:"
+Plugins.Filename="اسم الملف:"
+
+Reconnecting.Retrying="لم يتمكن من اعادة الاتصال. يحاول مرة اخرى"
+
+RenderView.EnableView="تمكين المشاهدة"
+RenderView.DisplayPanel="تمكين لوحة التحكم"
+RenderView.ViewMode1To1="وضع 1:1"
+
+Scene.MissingSources="لم يكن قادراً على تحميل كل مصادر الصور بسبب إما اعدادات خاطئة أو اضافة مفقودة"
+
+Scene.Hotkey.AlreadyInUse="هذا المفتاح مستخدم مسبقاً."
+Scene.Hotkey.Hotkey="المفتاح:"
+
+Capture.Start.FileStream.WarningCaption="تحذير"
+Capture.Start.FileStream.Warning="غير قادر على انشاء ملف البث.\n\n الرجاء التأكد من مسار الملف من اعدادات البث."
+
+Settings.Advanced="متقدم"
+Settings.Audio="الصوت"
+Settings.Encoding="الترميز"
+Settings.General="عام"
+Settings.Info="هذه الاعدادات سيتم تطبيقها عندما تقوم ببدء البث في المرة المقبلة."
+Settings.Publish="اعدادات البث"
+Settings.SaveChangesPrompt="هل تود حفظ و تطبيق التغييرات التي قمت بها ؟"
+Settings.SaveChangesTitle="تطبيق الاعدادت ؟
+"
+Settings.Video="الفيديو"
+
+
+
+
+
+
+
+Settings.General.Language="اللغة:"
+Settings.General.Restart="تغيير اللغة يتطلب اعادة تشغيل البرنامج.\r\n\r\n.. اظن بما انك تقوم بتغيير اللغة اذن انت لا تستطيع فهم هذه الجملة"
+
+Settings.Publish.AutoReconnect="اعادة الاتصال تلقائياً:"
 
 
 
@@ -21,33 +145,11 @@ Disable="تعطيل"
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Sources.TextSource.Bold="عريض"
+Sources.TextSource.Center="وسط"
+Sources.TextSource.EnterText="ادخل نص"
+Sources.TextSource.Size="الحجم:"
+Sources.TextSource.Underline="تسطير"
 
 
 
