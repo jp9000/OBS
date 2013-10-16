@@ -349,7 +349,7 @@ public:
         request->mode = request->MODE_ENCODE;
         request->obs_process_id = GetCurrentProcessId();
 
-        request->fps = fps_;
+        request->fps = fps;
         request->keyint = keyint;
         request->bframes = bframes;
         request->width = width;
