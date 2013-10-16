@@ -139,6 +139,20 @@ namespace
 
         return true;
     }
+
+    bool is_sandy_bridge()
+    {
+        int cpuInfo[4];
+        __cpuid(cpuInfo, 1);
+        BYTE model       = ((cpuInfo[0]>>4) & 0xF) + ((cpuInfo[0]>>12) & 0xF0);
+        BYTE family      = ((cpuInfo[0]>>8) & 0xF) + ((cpuInfo[0]>>20) & 0xFF);
+
+        // See Intel 64 and IA-32 Architectures Software Developer's Manual, Vol 3C Table 35-1
+        if(family != 6)
+            return false;
+
+        return model == 0x2A || model == 0x2D;
+    }
 }
 
 bool CheckQSVHardwareSupport(bool log=true)
@@ -240,10 +254,18 @@ class QSVEncoder : public VideoEncoder
 
 public:
 
-    QSVEncoder(int fps_, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitrate, int bufferSize, bool bUseCFR_)
-        : bFirstFrameProcessed(false), width(width), height(height), max_bitrate(maxBitrate)
+    QSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitrate, int bufferSize, bool bUseCFR_)
+        : fps(fps), bFirstFrameProcessed(false), width(width), height(height), max_bitrate(maxBitrate)
     {
-        fps = fps_;
+        if(is_sandy_bridge())
+        {
+            if(width > 1920 && height > 1200)
+                CrashError(TEXT("Your output resolution of %ux%u exceeds the maximum of 1920x1200 supported by QuickSync on Sandy Bridge based processors"), width, height);
+            else if(width > 1920)
+                CrashError(TEXT("Your output resolution width of %u exceeds the maximum of 1920 supported by QuickSync on Sandy Bridge based processors"), width);
+            else if(height > 1200)
+                CrashError(TEXT("Your output resolution height of %u exeeds the maximum of 1200 supported by QuickSync on Sandy Bridge based processors"), height);
+        }
 
         bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR")) != 0;
         bUseCFR = bUseCFR_;
