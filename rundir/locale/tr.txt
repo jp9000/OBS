@@ -6,18 +6,21 @@ Browse="Gözat..."
 BuildingMP4Dialog="MP4 Oluşturuluyor"
 Cancel="İptal"
 ClearHotkey="Temizle"
+Close="Kapat"
 Color="Renk"
 Default="Varsayılan"
 Defaults="Varsayılanlar"
 DeleteConfirm="Seçili öğeleri silmek istediğinizden emin misiniz?"
 Desktop="Masaüstü"
 Disable="Devre Dışı Bırak"
+EncoderLag="Uyarı: Kodlamak çok uzun sürüyor, bazı kareler atlanıyor!"
 EndingDelay="Gecikmeli Stream Sonlandırılıyor ..."
 EnterName="Lütfen bir ad girin"
 Gamma="Gama:"
 GlobalSources="Genel Kaynaklar..."
 IncompatibleModules="OBS işleminde desteklenmeyen girişimler belirlendi.Lütfen OBS'in DXTroy,FRAPS,ASUS/MSI OSC gibi arayüz veya yakalama kullanan uygulamaların görmezden gel listesinde olduğundan emin olun.Bu görmezden gelme ayarlayını yaptıktan sonra veya bu tarz programları kapattıktan sonra değişikliklerin uygulanması için OBS'i tekrar başlatmalısınız.\r\n\r\nBütün bu uyarıları görmezden gelip OBS'nin kapanması riskine karşı devam edebilirsiniz."
 MicrophoneFailure="Mikrofon sesi yüklenirken bir hata meydana geldi - mikrofon takılı olmayabilir veya başka bir uygulama mikrofonu kullanıyor olabilir."
+MonitorNum="Ekran $1"
 MoveDown="Aşağı Taşı"
 MoveToBottom="En Alta taşı"
 MoveToTop="En Üste Taşı"
@@ -70,12 +73,14 @@ MainMenu.Settings="&Ayarlar"
 
 MainMenu.Settings.AlwaysOnTop="&Her Zaman Üstte"
 MainMenu.Settings.FullscreenMode="&Tam Ekran Önizleme Modu"
+MainMenu.Settings.Projector="&Projektör"
 
 MainMenu.File.Exit="Ç&ıkış"
 MainMenu.File.Save="&Kaydet"
 
 MainMenu.Help.Contents="&Içerikler"
 MainMenu.Help.VisitWebsite="Siteyi Ziyaret Et"
+MainMenu.Help.CheckForUpdates="Güncellemeleri denetle (&U)"
 
 MainMenu.Settings.OpenConfigFolder="Ayar &Klasörünü Aç"
 MainMenu.Settings.OpenLogFolder="&Log Klasörünü Aç"
@@ -138,15 +143,27 @@ Settings.Advanced.UnlockHigherFPS="Video ayaralrında 61-120 FPS girişine izin 
 Settings.Advanced.UseCBR="CBR kullan"
 Settings.Advanced.PadCBR="CBR doldurmayı etkinleştir"
 Settings.Advanced.UseCFR="CFR kullan"
+Settings.Advanced.UseMultithreadedOptimizations="Çok işlemcili Optimizasyon Kullan"
 Settings.Advanced.UseQSV="Hızlı Eşitleme Kullan"
 Settings.Advanced.QSVUseVideoEncoderSettings="QSV için özel x264 ayarları kullan"
 Settings.Advanced.QSVUseVideoEncoderSettingsToolTip="Şimdilik sadece keyint ve bframes destekliyor."
+Settings.Advanced.SceneBufferTime="Sahne arabelleğe alma süresi (milisaniye):"
+
+Settings.Advanced.Priority.Idle="Boşta"
+Settings.Advanced.Priority.Normal="Normal"
+Settings.Advanced.Priority.AboveNormal="Normalin üstünde"
+Settings.Advanced.Priority.High="Yüksek"
 
 
+Settings.Encoding.Audio="Ses Kodlaması"
+Settings.Encoding.Video="Video Kodlaması"
+
+Settings.Encoding.Audio.Bitrate="Bit hızı:"
+Settings.Encoding.Audio.Codec="Kodek:"
+Settings.Encoding.Audio.Format="Biçim:"
 
 
-
-
+Settings.General.Add="Yeni Ekle"
 Settings.General.Language="Dil:"
 Settings.General.Profile="Ayar Profili:"
 Settings.General.Notification="Bildirim Bölümü Simgesi"
@@ -187,11 +204,23 @@ Settings.Video.DisableAero="Aero'uu Kapat:"
 Settings.Video.DisableAeroTooltip="Eğer monötir yakalamayı kullanıyorsanız Aero'yu kapatmak şiddetle önerilir."
 Settings.Video.Downscale="Çözünürlük Düşürme:"
 Settings.Video.DownscaleTooltip="Düşürme , çözünürlüğü düşürürken video kalitesini arttırır."
+Settings.Video.FPS="FPS:"
+Settings.Video.Monitor="Ekran:"
 
 
 
+Sources.BitmapSource.Color="Renk:"
+Sources.BitmapSource.Opacity="Opaklık:"
+Sources.BitmapSource.Monitor="Dosya değişikliklerini takip et:"
 
+Sources.GameCaptureSource.Application="Uygulama:"
+Sources.GameCaptureSource.IgnoreAspect="En boy oranını dikkate alma"
+Sources.GameCaptureSource.PluginName="Oyun Yakalama Eklentisi"
+Sources.GameCaptureSource.UseHotkey="Kısayol tuşu kullan"
 
+Sources.SoftwareCaptureSource.Monitor="Ekran:"
+Sources.SoftwareCaptureSource.MonitorCapture="Ekran Yakalama"
+Sources.SoftwareCaptureSource.Size="Boyut:"
 
 
 

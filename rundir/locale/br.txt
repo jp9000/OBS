@@ -172,6 +172,7 @@ Settings.Audio.MuteMicHotkey="Hotkey para Ativar/Desativar Microfone:"
 Settings.Audio.PlaybackDevice="Dispositivo de áudio do desktop:"
 Settings.Audio.PushToTalkDelay="Atraso de push-to-talk (milissegundos):"
 Settings.Audio.PushToTalkHotkey="Usar Push-to-talk:"
+Settings.Audio.ShowOnlyConnectedDevices="Mostrar apenas dispositivos conectados"
 Settings.Audio.UseMicQPC="Usar timestamps QPC para o microfone"
 
 Settings.Encoding.Audio="Codificação de Áudio"

@@ -1,0 +1,106 @@
+Add="Dodaj"
+Preview="Pregled"
+Order="Red"
+Apply="Primjeni"
+Browse="Pretraži..."
+BuildingMP4Dialog="Stvaranje MP4-a"
+Cancel="Odustani"
+ClearHotkey="Očisti"
+Close="Zatvori"
+Color="Boja"
+Default="Zadano"
+Defaults="Zadano"
+DeleteConfirm="Jeste li sigurni da želite izbrisati odabrane stavke?"
+Desktop="Desktop"
+Disable="Onemogući"
+EncoderLag="UPOZORENJE: Predugo kodiranje, preskačem frameove!"
+EndingDelay="Završavam stream sa kašnjenjem..."
+EnterName="Molim Vas unesite ime"
+Gamma="Gamma:"
+GlobalSources="Globalni izvori..."
+IncompatibleModules="Nekompatibilni hook-ovi su pronađeni u OBS procesu. Molim Vas uvijerite se da je OBS dodan na ignore listu svih overlay i capture programa poput DXTory, Fraps, Asus/MSI OSD itd. Nakon što ste promijenili liste ili zatvorili takve programe, možda ćete morati ponovo pokrenuti OBS da bi se promjene prihvatile.\r\n\r\nMožete ignorirati ovo upozorenje i nastaviti, ali se OBS može srušiti."
+MicrophoneFailure="Greška se dogodila pri inicijalizaciji mikrofona - možda nije priključen ili ga druga aplikacija koristi."
+MonitorNum="Ekran $1"
+MoveDown="Pomakni dolje"
+MoveToBottom="Pomakni na dno"
+MoveToTop="Pomakni na vrh"
+MoveUp="Pomakni gore"
+NameExists="'$1' već postoji. Molim Vas odaberite drugačije ime"
+None="Nijedan"
+OK="OK"
+Plugins="Pluginovi..."
+Reconnecting="Ponovno povezivanje..."
+Refresh="Osvježi"
+Remove="Ukloni"
+Rename="Preimenuj"
+Copy="Kopiraj"
+Scene="Scena"
+Settings="Postavke..."
+StreamReport="Izvještaj stream-a"
+
+BuildingMP4Dialog.Progress="Gradim MP4, molim pričekajte..."
+
+Connection.CouldNotConnect="Povezivanje na server nije moguće"
+Connection.CouldNotParseURL="Nije moguće otvoriti RTMP URL"
+Connection.Disconnected="Odspojen od servera"
+Connection.InvalidStream="Nije moguće pristupiti zadanom kanalu ili stream ključu. Ovo bi moglo biti zato što je ključ/kanal neispravan ili zato što server još uvijek misli da ste ulogirani."
+
+DeleteConfirm.Title="Izbriši označene stavke?"
+
+EndingDelay.TimeLeft="Preostalo vrijeme: $1"
+
+GlobalSources.DeleteConfirm="Ako izbrišete globalni izvor, biti će ukljonjeno iz svih scena u kojima se koristi. Jeste li sigurni da želite nastaviti?"
+
+Listbox.Add="Dodaj $1"
+Listbox.Center="Centriraj"
+Listbox.CenterHorizontally="Centriraj horizontalno"
+
+
+
+
+
+
+
+
+
+
+
+
+Capture.Start.FileStream.WarningCaption="Upozorenje"
+Capture.Start.FileStream.Warning="Nije moguće stvoriti datoteku stream-a.\n\nProvijerite putanju datoteke u Postavkama."
+
+Settings.Advanced="Napredno"
+Settings.Audio="Zvuk"
+Settings.Encoding="Kodiranje"
+Settings.General="Općenito"
+Settings.Info="Ove postavke neće biti primjenjene do sljedećeg stream-a."
+Settings.Publish="Postavke prenošenja"
+Settings.SaveChangesPrompt="Želite li spremiti i primjeniti promjene?"
+Settings.SaveChangesTitle="Primjeni postavke?"
+Settings.Video="Video"
+
+Settings.Advanced.AutomaticLatency="Automatski niski odaziv:"
+Settings.Advanced.AllowOtherHotkeyModifiers="Dozvoli druge modifiere na hotkeyevima"
+Settings.Advanced.DisablePreviewEncoding="Onemogući kodiranje pri pregledavanju"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
