@@ -118,6 +118,19 @@ void LogVideoCardStats()
                     Log(TEXT("  Video Adapter: %s"), adapterDesc.Description);
                     Log(TEXT("  Video Adapter Dedicated Video Memory: %u"), adapterDesc.DedicatedVideoMemory);
                     Log(TEXT("  Video Adapter Shared System Memory: %u"), adapterDesc.SharedSystemMemory);
+
+                    UINT j = 0;
+                    IDXGIOutput *output;
+                    while(SUCCEEDED(giAdapter->EnumOutputs(j++, &output)))
+                    {
+                        DXGI_OUTPUT_DESC desc;
+                        if(SUCCEEDED(output->GetDesc(&desc)))
+                            Log(TEXT("  Video Adapter Output %u: pos={%d, %d}, size={%d, %d}, attached=%s"), j,
+                                desc.DesktopCoordinates.left, desc.DesktopCoordinates.top,
+                                desc.DesktopCoordinates.right-desc.DesktopCoordinates.left, desc.DesktopCoordinates.bottom-desc.DesktopCoordinates.top,
+                                desc.AttachedToDesktop ? L"true" : L"false");
+                        output->Release();
+                    }
                 }
             }
             else
