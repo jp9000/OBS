@@ -1,3 +1,9 @@
+Cancel="Vazgeç"
+OK="Tamam"
 
+Plugin.Name="Her-Sahne İçin Ses Eklentisi"
+Plugin.Description="Her sahne için ses izlemeyi etkinleştirir."
 
+Config.Caption="Her Sahne İçin Ses Ayarları"
+Config.Enable="Her Sahne İçin Ses İzlemeyi Etkinleştir"
 

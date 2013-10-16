@@ -1,5 +1,23 @@
+Cancel="Vazgeç"
+ClassName="Video Yakalama Aygıtı"
+DeviceSelection="Aygıt Seçimi"
+OK="Tamam"
+
+DeinterlacingType.None="Hiçbiri"
+DeinterlacingType.Blend="Blend"
+DeinterlacingType.Blend2x="Blend2x"
+DeinterlacingType.Linear="Linear"
+DeinterlacingType.Linear2x="Linear2x"
+DeinterlacingType.Yadif="Yadif"
+DeinterlacingType.Yadif2x="Yadif2x"
+DeinterlacingType.Debug="Hata ayıklama"
 
 
-
+DeviceSelection.Color="Renk:"
+DeviceSelection.Device="Cihaz:"
+DeviceSelection.FPS="FPS:"
+DeviceSelection.Gamma="Gama:"
+DeviceSelection.Resolution="Çözünürlük"
+DeviceSelection.Sound="Ses"
 
 

@@ -1,42 +1,160 @@
+Add="Додај"
+Preview="Прегледај"
+Order="Наручи"
+Apply="Примени"
+Browse="Претражи..."
+BuildingMP4Dialog="Прављење MP4"
+Cancel="Прекинути"
+ClearHotkey="Очисти"
+Close="Затвори"
+Color="Боја"
+Default="Подразумевано"
+DeleteConfirm="Да ли сте сигурни да желите да обришете изабране ставке?"
+Desktop="Десктоп"
+Disable="Онемогући"
+EncoderLag="УПОЗОРЕЊЕ: Шифрирање предуго траје, прескачем фрејмове/оквире!"
+EndingDelay="Прекидање Одлаганог Стрима..."
+EnterName="Молим упишите име"
+GlobalSources="Глобални извори..."
+MicrophoneFailure="Грешка се појавила приликом покретања микрофона - могуће је да је искључен, или га друга апликација користи."
+MonitorNum="Екран $1"
+MoveDown="Спусти доле"
+MoveToBottom="Спусти на дно"
+MoveToTop="Помери на врх"
+MoveUp="Помери горе"
+NameExists="'$1' већ постоји. Молим укуцајте друго име"
+None="Ниједан"
+OK="У реду"
+Plugins="Додатци..."
+Reconnecting="Поновно повезивање..."
+Refresh="Освежи"
+Remove="Уклони"
+Rename="Преименуј"
+Copy="Копирај"
+Scene="Сцена"
+Settings="Подешавања..."
+StreamReport="Извештај Стрим-а"
+
+BuildingMP4Dialog.Progress="Прављење MP4, молимо сачекајте..."
+
+Connection.CouldNotConnect="Немогу да се повежем на сервер"
+Connection.CouldNotParseURL="Не могу рашчланити RTMP URL"
+Connection.Disconnected="Дисконеткован од стране сервера"
+Connection.InvalidStream="Не могу приступити одређеном каналу или стрим кључу. Ово је могуће, зато што је унети кључ/канал погрешан, или зато што сервер мисли да сте идаље улоговани."
+
+DeleteConfirm.Title="Избрисати одабране ставке?"
+
+EndingDelay.TimeLeft="Преостало време : $1"
+
+GlobalSources.DeleteConfirm="Ако избришете глобални извор, биће избрисан из сваке сцене у којој се користи. Да ли сте сигурни да желите да наставите?"
+
+Listbox.Add="Додај $1"
+Listbox.Center="Центар"
+Listbox.CenterHorizontally="Центрирај хоризонтално"
+Listbox.CenterVertically="Центрирај вертикално"
+Listbox.MoveRight="Помери на десни крај"
+Listbox.MoveLeft="Помери на леви крај"
+Listbox.Config="Параметри"
+Listbox.FitToScreen="Рашири по екрану"
+Listbox.Positioning="Позиција/Величина"
+Listbox.ResetSize="Ресетуј величину"
+Listbox.SetHotkey="Подеси пречицу"
+ListBox.ResetCrop="Ресетуј исецање"
+
+MainMenu.File="&Фајл"
+MainMenu.Help="&Помоћ"
+MainMenu.Profiles="&Профили"
+MainMenu.Settings="&Подешавања"
+
+MainMenu.Settings.AlwaysOnTop="&Увек на врху"
+MainMenu.Settings.FullscreenMode="&Прегледај у пуној величини"
+MainMenu.Settings.Projector="&Пројектор"
+
+MainMenu.File.Exit="Излаз (&X)"
+MainMenu.File.Save="&Сними"
+
+MainMenu.Help.Contents="&Садржај"
+MainMenu.Help.VisitWebsite="Посети Сајт"
+MainMenu.Help.CheckForUpdates="Провери да ли има доступних &апдејтова"
+
+MainMenu.Settings.OpenConfigFolder="Отвори &Конфигурациони фолдер"
+MainMenu.Settings.OpenLogFolder="Отвори &Извештајни фолдер"
+
+MainWindow.BeginMessage="Не стримујем \n\nКликни \"Покрени стримовање\" или \"Погледај изглед стрима\" да би почели"
+MainWindow.PreviewDisabled="Преглед онемогућен"
+MainWindow.Dashboard="Командна табла"
+MainWindow.Exit="Излаз"
+MainWindow.SceneEditor="Измени сцену"
+MainWindow.Scenes="Сцене:"
+MainWindow.Sources="Извори:"
+MainWindow.StartStream="Покрени Стримовање"
+MainWindow.StopStream="Заустави Стримовање"
+MainWindow.StopTest="Прекини преглед"
+MainWindow.TestStream="Прегледај стрим"
+
+Plugins.Configure="Конфигуриши"
+Plugins.Description="Опис:"
+Plugins.Filename="Име фајла:"
+
+Reconnecting.Retrying="Не могу се реконектовати. Покушавам поново"
+
+RenderView.EnableView="Омогући преглед"
+RenderView.DisplayPanel="Омогући контролну таблу"
 
 
 
 
 
 
+Settings.Advanced.Priority.Idle="Неактиван"
+Settings.Advanced.Priority.Normal="Нормалан"
+Settings.Advanced.Priority.AboveNormal="Изнад нормале"
+Settings.Advanced.Priority.High="Висок"
 
 
 
+Settings.Encoding.Audio.Codec="Кодеци:"
+
+
+Settings.General.Add="Додај нови"
+Settings.General.Language="Језик:"
+Settings.General.Profile="Подешавања профила:"
+Settings.General.ShowObs="Прикажи OBS"
+Settings.General.HideObs="Сакриј OBS"
+
+Settings.Publish.ChannelName="Име канала:"
+Settings.Publish.Password="Шифра (ако постоји):"
 
 
 
+Settings.Video.FPS="FPS:"
+Settings.Video.Monitor="Екран:"
+
+
+Sources.BitmapSource="Слика"
+Sources.TextSource="Текст"
+
+Sources.BitmapSource.Color="Боја:"
+Sources.BitmapSource.Opacity="Провидност:"
+
+
+Sources.SoftwareCaptureSource.EntireWindow="Цео прозор"
+Sources.SoftwareCaptureSource.Position="Позиција:"
+Sources.SoftwareCaptureSource.Select="Изабери"
+Sources.SoftwareCaptureSource.Window="Прозор:"
+
+Sources.TextSource.Align="Сложи:"
+Sources.TextSource.EnterText="Унесите текст"
+Sources.TextSource.FileNotFound="Не могу отворити фајл '$1'"
+Sources.TextSource.Left="Лево"
+Sources.TextSource.Right="Десно"
+Sources.TextSource.Size="Величина:"
+Sources.TextSource.OutlineThickness="Танкоћа:"
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Updater.DownloadNow="Да ли бисте желели да их преузмете одмах?"
+Updater.UpdatesAvailable="Надоградње су доступне"
 
 
 
