@@ -846,7 +846,7 @@ void OBS::TrackModifyListbox(HWND hwnd, int ret)
             {
                 App->EnableSceneSwitching(false);
 
-                if(curClassInfo->configProc && curClassInfo->configProc(selectedElement, false))
+                if(curClassInfo && curClassInfo->configProc && curClassInfo->configProc(selectedElement, false))
                 {
                     List<SceneItem*> selectedSceneItems;
                     if(App->scene)
