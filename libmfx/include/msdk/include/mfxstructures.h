@@ -1,10 +1,28 @@
 /******************************************************************************* *\
 
-INTEL CORPORATION PROPRIETARY INFORMATION
-This software is supplied under the terms of a license agreement or nondisclosure
-agreement with Intel Corporation and may not be copied or disclosed except in
-accordance with the terms of that agreement
-Copyright(c) 2007-2012 Intel Corporation. All Rights Reserved.
+Copyright (C) 2007-2013 Intel Corporation.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+- Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
+- Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
+- Neither the name of Intel Corporation nor the names of its contributors
+may be used to endorse or promote products derived from this software
+without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY INTEL CORPORATION "AS IS" AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL INTEL CORPORATION BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 File Name: mfxstructures.h
 
@@ -228,7 +246,8 @@ typedef struct {
             mfxU16  JPEGChromaFormat;
             mfxU16  Rotation;
             mfxU16  JPEGColorFormat;
-            mfxU16  reserved3[10];
+            mfxU16  InterleavedDec;
+            mfxU16  reserved3[9];
         };
         struct {   /* JPEG Encoding Options */
             mfxU16  Interleaved;
@@ -354,10 +373,18 @@ enum {
 
 /* TargetUsages: from 1 to 7 inclusive */
 enum {
+    MFX_TARGETUSAGE_1    =1,
+    MFX_TARGETUSAGE_2    =2,
+    MFX_TARGETUSAGE_3    =3,
+    MFX_TARGETUSAGE_4    =4,
+    MFX_TARGETUSAGE_5    =5,
+    MFX_TARGETUSAGE_6    =6,
+    MFX_TARGETUSAGE_7    =7,
+
     MFX_TARGETUSAGE_UNKNOWN         =0,
-    MFX_TARGETUSAGE_BEST_QUALITY    =1,
-    MFX_TARGETUSAGE_BALANCED        =4,
-    MFX_TARGETUSAGE_BEST_SPEED      =7
+    MFX_TARGETUSAGE_BEST_QUALITY    =MFX_TARGETUSAGE_1,
+    MFX_TARGETUSAGE_BALANCED        =MFX_TARGETUSAGE_4,
+    MFX_TARGETUSAGE_BEST_SPEED      =MFX_TARGETUSAGE_7
 };
 
 /* RateControlMethod */
@@ -368,7 +395,18 @@ enum {
     MFX_RATECONTROL_AVBR    =4,
     MFX_RATECONTROL_RESERVED1 =5,
     MFX_RATECONTROL_RESERVED2 =6,
-    MFX_RATECONTROL_RESERVED3 =100
+    MFX_RATECONTROL_RESERVED3 =100,
+    MFX_RATECONTROL_RESERVED4 =7,
+    MFX_RATECONTROL_LA        =8
+};
+
+/* Trellis control*/
+enum {
+    MFX_TRELLIS_UNKNOWN =0,
+    MFX_TRELLIS_OFF     =0x01,
+    MFX_TRELLIS_I       =0x02,
+    MFX_TRELLIS_P       =0x04,
+    MFX_TRELLIS_B       =0x08
 };
 
 typedef struct {
@@ -419,7 +457,9 @@ typedef struct {
     mfxU16      BitrateLimit;           /* tri-state option */
     mfxU16      MBBRC;                  /* tri-state option */
     mfxU16      ExtBRC;                 /* tri-state option */
-    mfxU16      reserved2[18];
+    mfxU16      LookAheadDepth;
+    mfxU16      Trellis; 
+    mfxU16      reserved2[16];
 } mfxExtCodingOption2;
 
 /* IntraPredBlockSize/InterPredBlockSize */
@@ -449,7 +489,11 @@ typedef struct _mfxEncryptedData mfxEncryptedData;
 
 typedef struct {
      union {
-         mfxEncryptedData* EncryptedData;
+        struct {
+            mfxEncryptedData* EncryptedData;
+            mfxExtBuffer **ExtParam;
+            mfxU16  NumExtParam;
+        };
          mfxU32  reserved[6];
      };
     mfxI64  DecodeTimeStamp; 
@@ -491,7 +535,10 @@ enum {
     MFX_EXTBUFF_AVC_TEMPORAL_LAYERS        = MFX_MAKEFOURCC('A','T','M','L'),
     MFX_EXTBUFF_CODING_OPTION2             = MFX_MAKEFOURCC('C','D','O','2'),
     MFX_EXTBUFF_VPP_IMAGE_STABILIZATION    = MFX_MAKEFOURCC('I','S','T','B'),
-    MFX_EXTBUFF_VPP_PICSTRUCT_DETECTION    = MFX_MAKEFOURCC('I','D','E','T')
+    MFX_EXTBUFF_VPP_PICSTRUCT_DETECTION    = MFX_MAKEFOURCC('I','D','E','T'),
+    MFX_EXTBUFF_ENCODER_CAPABILITY         = MFX_MAKEFOURCC('E','N','C','P'),
+    MFX_EXTBUFF_ENCODER_RESET_OPTION       = MFX_MAKEFOURCC('E','N','R','O'),
+    MFX_EXTBUFF_ENCODED_FRAME_INFO         = MFX_MAKEFOURCC('E','N','F','I')
 };
 
 /* VPP Conf: Do not use certain algorithms  */
@@ -747,10 +794,12 @@ typedef struct {
         mfxU32      FrameOrder;
         mfxU16      PicStruct;
         mfxU16      ViewId;
-        mfxU32      reserved[2];
+        mfxU16      LongTermIdx;
+        mfxU16      reserved[3];
     } PreferredRefList[32], RejectedRefList[16], LongTermRefList[16];
 
-    mfxU32      reserved[8];
+    mfxU16      ApplyLongTermIdx;
+    mfxU16      reserved[15];
 } mfxExtAVCRefListCtrl;
 
 enum {
@@ -811,6 +860,36 @@ typedef struct {
         mfxU16 reserved[3];
     }Layer[8];
 } mfxExtAvcTemporalLayers;
+
+typedef struct {
+    mfxExtBuffer Header;
+
+    mfxU32      MBPerSec;
+    mfxU16      reserved[58];
+} mfxExtEncoderCapability;
+
+typedef struct {
+    mfxExtBuffer Header;
+
+    mfxU16      StartNewSequence;
+    mfxU16      reserved[11];
+} mfxExtEncoderResetOption;
+
+typedef struct {
+    mfxExtBuffer    Header; 
+
+    mfxU32          FrameOrder;
+    mfxU16          PicStruct;
+    mfxU16          LongTermIdx;
+    mfxU16          reserved[8];
+
+    struct {
+            mfxU32      FrameOrder;
+            mfxU16      PicStruct;
+            mfxU16      LongTermIdx;
+            mfxU16      reserved[4];
+    } UsedRefListL0[32], UsedRefListL1[32];
+} mfxExtAVCEncodedFrameInfo;
 
 #ifdef __cplusplus
 } // extern "C"

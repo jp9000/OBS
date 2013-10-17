@@ -920,7 +920,9 @@ BOOL   STDCALL OSIncompatibleModulesLoaded()
             !scmp(moduleName, TEXT("dxtorymm.dll")) ||          //DXTory
             !scmp(moduleName, TEXT("dxtorymm64.dll")) ||        //DXTory
             !scmp(moduleName, TEXT("rtsshooks.dll")) ||         //EVGA Precision OSD
-            !scmp(moduleName, TEXT("axonoverlay.dll")))         //Dolby Axon
+            !scmp(moduleName, TEXT("axonoverlay.dll")) ||       //Dolby Axon
+            !scmp(moduleName, TEXT("action_x86.dll")) ||        //Action!
+            !scmp(moduleName, TEXT("action_x64.dll")))          //Action!
         {
             return 1;
         }

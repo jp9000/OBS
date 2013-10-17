@@ -1130,7 +1130,10 @@ RTMP_Connect0(RTMP *r, struct sockaddr * service)
     r->m_pausing = 0;
     r->m_fDuration = 0.0;
 
-    r->m_sb.sb_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    //best to be explicit, we need overlapped socket
+    //r->m_sb.sb_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    r->m_sb.sb_socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
+
     if (r->m_sb.sb_socket != -1)
     {
         if(r->m_bindIP.addrLen)

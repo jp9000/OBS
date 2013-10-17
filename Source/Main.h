@@ -70,6 +70,7 @@ extern ConfigFile   *GlobalConfig;
 extern ConfigFile   *AppConfig;
 extern OBS          *App;
 extern bool         bIsPortable;
+extern bool         bStreamOnStart;
 extern TCHAR        lpAppPath[MAX_PATH];
 extern TCHAR        lpAppDataPath[MAX_PATH];
 
@@ -78,8 +79,8 @@ extern TCHAR        lpAppDataPath[MAX_PATH];
 #define OBS_VERSION_SUFFIX ""
 #endif
 
-#define OBS_VERSION             0x005700 //version number is 0xMMmmtt (Major.minor.test - yes I know it's hex)
-#define OBS_VERSION_STRING_RAW  "Open Broadcaster Software v0.57b"
+#define OBS_VERSION             0x005800 //version number is 0xMMmmtt (Major.minor.test - yes I know it's hex)
+#define OBS_VERSION_STRING_RAW  "Open Broadcaster Software v0.58b"
 //#define OBS_TEST_BUILD          1 //define this if releasing a test build to disable the auto updater
 
 #define OBS_VERSION_STRING_ANSI OBS_VERSION_STRING_RAW OBS_VERSION_SUFFIX

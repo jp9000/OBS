@@ -38,6 +38,7 @@ ConfigFile  *GlobalConfig   = NULL;
 ConfigFile  *AppConfig      = NULL;
 OBS         *App            = NULL;
 bool        bIsPortable     = false;
+bool        bStreamOnStart  = false;
 TCHAR       lpAppPath[MAX_PATH];
 TCHAR       lpAppDataPath[MAX_PATH];
 
@@ -134,8 +135,8 @@ void LogSystemStats()
     int cpuInfo[4];
     __cpuid(cpuInfo, 1);
     BYTE cpuSteppingID  = cpuInfo[0] & 0xF;
-    BYTE cpuModel       = (cpuInfo[0]>>4) & 0xF;
-    BYTE cpuFamily      = (cpuInfo[0]>>8) & 0xF;
+    BYTE cpuModel       = ((cpuInfo[0]>>4) & 0xF) + ((cpuInfo[0]>>12) & 0xF0);
+    BYTE cpuFamily      = ((cpuInfo[0]>>8) & 0xF) + ((cpuInfo[0]>>20) & 0xFF);
     BYTE cpuType        = (cpuInfo[0]>>12) & 0x3;
     BYTE cpuExtModel    = (cpuInfo[0]>>17) & 0xF;
     BYTE cpuExtFamily   = (cpuInfo[0]>>21) & 0xFF;
@@ -418,6 +419,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             bDisableMutex = true;
         else if(scmpi(args[i], TEXT("-portable")) == 0)
             bIsPortable = true;
+        else if (scmpi(args[i], TEXT("-start")) == 0)
+            bStreamOnStart = true;
     }
 
     LocalFree(args);

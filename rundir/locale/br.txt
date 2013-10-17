@@ -41,9 +41,9 @@ StreamReport="Relatório da Transmissão"
 BuildingMP4Dialog.Progress="Criando MP4, por favor aguarde..."
 
 Connection.CouldNotConnect="Não foi possível conectar ao servidor."
-Connection.CouldNotParseURL="Não foi possível analisar URL."
+Connection.CouldNotParseURL="Não foi possível analisar a URL de RTMP"
 Connection.Disconnected="Desconectado pelo servidor."
-Connection.InvalidStream="Canal inválido ou playpath."
+Connection.InvalidStream="Não foi possível acessar o canal especificado ou a chave da transmissão. Isto pode ser porque o canal/chave é inválido, ou porque o servidor ainda acha que você está logado."
 
 DeleteConfirm.Title="Deseja excluir os itens selecionados?"
 
@@ -80,6 +80,7 @@ MainMenu.File.Save="&Salvar"
 
 MainMenu.Help.Contents="&Conteúdo"
 MainMenu.Help.VisitWebsite="Visite o Website"
+MainMenu.Help.CheckForUpdates="Verificar se há novas &atualizações"
 
 MainMenu.Settings.OpenConfigFolder="Abrir Pasta de Configuração"
 MainMenu.Settings.OpenLogFolder="Abrir Pasta de Logs"
@@ -153,6 +154,7 @@ Settings.Advanced.VideoEncoderCPUTradeoff="x264 Predefinição de CPU:"
 Settings.Advanced.VideoEncoderCPUTradeoffToolTip="Definir esse valor mais alto reduz o consumo da CPU e aspectos de qualidade de vídeo. Por outro lado, definindo esse valor inferior, aumentará a qualidade de vídeo e o consumo da CPU.\r\n\r\nRecomendado: Muito rápido."
 Settings.Advanced.VideoEncoderSettings="Configurações do Codificador x264"
 Settings.Advanced.VideoEncoderSettingsTooltip="Isso permite que você defina configurações personalizadas do codificador. Sob a forma de [parameter]=[value]  (e.g. \"vbv-maxrate=1000 vbv-bufsize=1000\")."
+Settings.Advanced.X264Profile="x264 Encoding Perfil:"
 
 Settings.Advanced.Priority.Idle="Ocioso"
 Settings.Advanced.Priority.Normal="Normal"
@@ -170,6 +172,7 @@ Settings.Audio.MuteMicHotkey="Hotkey para Ativar/Desativar Microfone:"
 Settings.Audio.PlaybackDevice="Dispositivo de áudio do desktop:"
 Settings.Audio.PushToTalkDelay="Atraso de push-to-talk (milissegundos):"
 Settings.Audio.PushToTalkHotkey="Usar Push-to-talk:"
+Settings.Audio.ShowOnlyConnectedDevices="Mostrar apenas dispositivos conectados"
 Settings.Audio.UseMicQPC="Usar timestamps QPC para o microfone"
 
 Settings.Encoding.Audio="Codificação de Áudio"
@@ -338,6 +341,7 @@ Updater.DownloadNow="Gostaria de baixá-los agora?"
 Updater.NewUpdates="As seguintes atualizações estão disponíveis:"
 Updater.RunningWarning="OBS será reiniciado para instalar as atualizações. Você tem certeza de que quer continuar?"
 Updater.UpdatesAvailable="Atualizações estão disponíveis"
+Updater.NoUpdatesAvailable="Nenhuma atualização disponivel"
 
 Plugins.NoiseGate.PluginName="Microfone Noise Gate"
 Plugins.NoiseGate.PluginDescription="Reduz o ruído de microfone por automaticamente silenciar o microfone, se você não está falando."

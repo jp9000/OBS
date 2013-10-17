@@ -1,6 +1,6 @@
 /* ****************************************************************************** *\
 
-Copyright (C) 2012 Intel Corporation.  All rights reserved.
+Copyright (C) 2012-2013 Intel Corporation.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -192,7 +192,7 @@ mfxStatus MFX_DISP_HANDLE::LoadSelectedDLL(const msdk_disp_char *pPath, eMfxImpl
 
         {
             DISPATCHER_LOG_BLOCK( ("MFXInit(%s,ver=%u.%u,session=0x%p)\n"
-                                , DispatcherLog_GetMFXImplString(impl).c_str()
+                                , DispatcherLog_GetMFXImplString(impl| implInterface).c_str()
                                 , apiVersion.Major
                                 , apiVersion.Minor
                                 , &session));

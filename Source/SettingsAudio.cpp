@@ -208,6 +208,70 @@ bool SettingsAudio::HasDefaults() const
     SetChangedSettings(true);
 }*/
 
+void SettingsAudio::RefreshDevices()
+{
+    if (storage) {
+        delete storage->recordingDevices;
+        delete storage->playbackDevices;
+    }
+    delete storage;
+
+    HWND hwndTemp = GetDlgItem(hwnd, IDC_MICDEVICES);
+    HWND hwndPlayback = GetDlgItem(hwnd, IDC_PLAYBACKDEVICES);
+
+    SendMessage(hwndTemp, CB_RESETCONTENT, 0, 0);
+    SendMessage(hwndPlayback, CB_RESETCONTENT, 0, 0);
+
+    storage = new AudioDeviceStorage;
+
+    storage->playbackDevices = new AudioDeviceList;
+    GetAudioDevices((*storage->playbackDevices), ADT_PLAYBACK, bDisplayConnectedOnly);
+
+    storage->recordingDevices = new AudioDeviceList;
+    GetAudioDevices((*storage->recordingDevices), ADT_RECORDING, bDisplayConnectedOnly);
+
+    for(UINT i=0; i<storage->playbackDevices->devices.Num(); i++)
+        SendMessage(hwndPlayback, CB_ADDSTRING, 0, (LPARAM)storage->playbackDevices->devices[i].strName.Array());
+
+    for(UINT i=0; i<storage->recordingDevices->devices.Num(); i++)
+        SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)storage->recordingDevices->devices[i].strName.Array());
+
+    String strPlaybackID = AppConfig->GetString(TEXT("Audio"), TEXT("PlaybackDevice"), storage->playbackDevices->devices[0].strID);
+    String strDeviceID = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), storage->recordingDevices->devices[0].strID);
+
+    UINT iPlaybackDevice;
+    for(iPlaybackDevice=0; iPlaybackDevice<storage->playbackDevices->devices.Num(); iPlaybackDevice++)
+    {
+        if(storage->playbackDevices->devices[iPlaybackDevice].strID == strPlaybackID)
+        {
+            SendMessage(hwndPlayback, CB_SETCURSEL, iPlaybackDevice, 0);
+            break;
+        }
+    }
+
+    UINT iDevice;
+    for(iDevice=0; iDevice<storage->recordingDevices->devices.Num(); iDevice++)
+    {
+        if(storage->recordingDevices->devices[iDevice].strID == strDeviceID)
+        {
+            SendMessage(hwndTemp, CB_SETCURSEL, iDevice, 0);
+            break;
+        }
+    }
+
+    if(iPlaybackDevice == storage->playbackDevices->devices.Num())
+    {
+        AppConfig->SetString(TEXT("Audio"), TEXT("PlaybackDevice"), storage->playbackDevices->devices[0].strID);
+        SendMessage(hwndPlayback, CB_SETCURSEL, 0, 0);
+    }
+
+    if(iDevice == storage->recordingDevices->devices.Num())
+    {
+        AppConfig->SetString(TEXT("Audio"), TEXT("Device"), storage->recordingDevices->devices[0].strID);
+        SendMessage(hwndTemp, CB_SETCURSEL, 0, 0);
+    }
+}
+
 INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch(message)
@@ -218,57 +282,9 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 //--------------------------------------------
 
-                storage = new AudioDeviceStorage;
-
-                storage->playbackDevices = new AudioDeviceList;
-                GetAudioDevices((*storage->playbackDevices), ADT_PLAYBACK);
-
-                storage->recordingDevices = new AudioDeviceList;
-                GetAudioDevices((*storage->recordingDevices), ADT_RECORDING);
-
-                HWND hwndTemp = GetDlgItem(hwnd, IDC_MICDEVICES);
-                HWND hwndPlayback = GetDlgItem(hwnd, IDC_PLAYBACKDEVICES);
-
-                for(UINT i=0; i<storage->playbackDevices->devices.Num(); i++)
-                    SendMessage(hwndPlayback, CB_ADDSTRING, 0, (LPARAM)storage->playbackDevices->devices[i].strName.Array());
-
-                for(UINT i=0; i<storage->recordingDevices->devices.Num(); i++)
-                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)storage->recordingDevices->devices[i].strName.Array());
-
-                String strPlaybackID = AppConfig->GetString(TEXT("Audio"), TEXT("PlaybackDevice"), storage->playbackDevices->devices[0].strID);
-                String strDeviceID = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), storage->recordingDevices->devices[0].strID);
-
-                UINT iPlaybackDevice;
-                for(iPlaybackDevice=0; iPlaybackDevice<storage->playbackDevices->devices.Num(); iPlaybackDevice++)
-                {
-                    if(storage->playbackDevices->devices[iPlaybackDevice].strID == strPlaybackID)
-                    {
-                        SendMessage(hwndPlayback, CB_SETCURSEL, iPlaybackDevice, 0);
-                        break;
-                    }
-                }
-
-                UINT iDevice;
-                for(iDevice=0; iDevice<storage->recordingDevices->devices.Num(); iDevice++)
-                {
-                    if(storage->recordingDevices->devices[iDevice].strID == strDeviceID)
-                    {
-                        SendMessage(hwndTemp, CB_SETCURSEL, iDevice, 0);
-                        break;
-                    }
-                }
-
-                if(iPlaybackDevice == storage->playbackDevices->devices.Num())
-                {
-                    AppConfig->SetString(TEXT("Audio"), TEXT("PlaybackDevice"), storage->playbackDevices->devices[0].strID);
-                    SendMessage(hwndPlayback, CB_SETCURSEL, 0, 0);
-                }
-
-                if(iDevice == storage->recordingDevices->devices.Num())
-                {
-                    AppConfig->SetString(TEXT("Audio"), TEXT("Device"), storage->recordingDevices->devices[0].strID);
-                    SendMessage(hwndTemp, CB_SETCURSEL, 0, 0);
-                }
+                bDisplayConnectedOnly = GlobalConfig->GetInt(L"Audio", L"DisplayConntectedOnly", true) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_CONNECTEDONLY), BM_SETCHECK, bDisplayConnectedOnly ? BST_CHECKED : BST_UNCHECKED, 0);
+                RefreshDevices();
 
                 //--------------------------------------------
 
@@ -326,7 +342,7 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 //--------------------------------------------
 
-                int bufferTime = GlobalConfig->GetInt(TEXT("General"), TEXT("SceneBufferingTime"), 400);
+                int bufferTime = GlobalConfig->GetInt(TEXT("General"), TEXT("SceneBufferingTime"), 700);
 
                 int micTimeOffset = AppConfig->GetInt(TEXT("Audio"), TEXT("MicTimeOffset"), 0);
                 if(micTimeOffset < -bufferTime)
@@ -368,6 +384,12 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                             EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY), bUsePushToTalk);
                             SetChangedSettings(true);
                         }
+                        break;
+
+                    case IDC_CONNECTEDONLY:
+                        bDisplayConnectedOnly = !bDisplayConnectedOnly;
+                        GlobalConfig->SetInt(L"Audio", L"DisplayConntectedOnly", bDisplayConnectedOnly);
+                        RefreshDevices();
                         break;
 
                     case IDC_MICTIMEOFFSET_EDIT:

@@ -532,8 +532,7 @@ OBS::OBS()
     API = CreateOBSApiInterface();
 
     bDragResize = false;
-    ResizeWindow(false);
-    ShowWindow(hwndMain, SW_SHOW);
+
     if(GlobalConfig->GetInt(TEXT("General"), TEXT("Maximized")))
     { // Window was maximized last session
         SendMessage(hwndMain, WM_SYSCOMMAND, SC_MAXIMIZE, 0);
@@ -600,7 +599,7 @@ OBS::OBS()
     if (currentTime.QuadPart - lastUpdateTime.QuadPart >= 3600)
     {
         GlobalConfig->SetInt(TEXT("General"), OBS_CONFIG_UPDATE_KEY, (int)currentTime.QuadPart);
-        OSCloseThread(OSCreateThread((XTHREAD)CheckUpdateThread, NULL));
+        OSCloseThread(OSCreateThread((XTHREAD)CheckUpdateThread, (LPVOID)0));
     }
 #endif
 
@@ -679,6 +678,12 @@ OBS::OBS()
 
         OSFindClose(hFind);
     }
+
+    ResizeWindow(false);
+    ShowWindow(hwndMain, SW_SHOW);
+
+    if (bStreamOnStart)
+        PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_STARTSTOP, 0), NULL);
 }
 
 

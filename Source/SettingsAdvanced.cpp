@@ -346,7 +346,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 //------------------------------------
 
-                int bufferTime = GlobalConfig->GetInt(TEXT("General"), TEXT("SceneBufferingTime"), 400);
+                int bufferTime = GlobalConfig->GetInt(TEXT("General"), TEXT("SceneBufferingTime"), 700);
 
                 int globalAudioTimeAdjust = GlobalConfig->GetInt(TEXT("Audio"), TEXT("GlobalAudioTimeAdjust"));
                 SendMessage(GetDlgItem(hwnd, IDC_AUDIOTIMEADJUST), UDM_SETRANGE32, -bufferTime, 1000);
@@ -465,20 +465,17 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                         HWND hwndTemp = (HWND)lParam;
 
                         String strNewPreset = GetCBText(hwndTemp);
-                        if (scmp(strNewPreset.Array(), AppConfig->GetString(TEXT("Video Encoding"), TEXT("Preset"), TEXT("veryfast"))))
+                        if (scmp(strNewPreset.Array(), TEXT("veryfast")))
                         {
                             static BOOL bHasWarned = FALSE;
                             if (!bHasWarned && MessageBox(hwnd, Str("Settings.Advanced.PresetWarning"), NULL, MB_ICONEXCLAMATION | MB_YESNO) == IDNO)
-                            {
                                 LoadSettingComboString(hwndTemp, TEXT("Video Encoding"), TEXT("Preset"), TEXT("veryfast"));
-                            }
                             else
-                            {
                                 bHasWarned = TRUE;
-                                ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-                                SetChangedSettings(true);
-                            }
                         }
+
+                        SetChangedSettings(true);
+                        ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
                     }
                     break;
 

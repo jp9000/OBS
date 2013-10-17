@@ -818,6 +818,9 @@ void OBS::TrackModifyListbox(HWND hwnd, int ret)
 
         case ID_LISTBOX_RENAME:
             {
+                if (!selectedElement)
+                    break;
+
                 App->EnableSceneSwitching(false);
 
                 String strName = selectedElement->GetName();
@@ -849,6 +852,12 @@ void OBS::TrackModifyListbox(HWND hwnd, int ret)
                 List<SceneItem*> selectedSceneItems;
                 if(App->scene)
                     App->scene->GetSelectedItems(selectedSceneItems);
+
+                if (!selectedSceneItems.Num())
+                {
+                    App->EnableSceneSwitching(true);
+                    break;
+                }
 
                 if(App->bRunning)
                 {
@@ -2358,6 +2367,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
                         ShellExecute(NULL, TEXT("open"), strHelpPath, 0, 0, SW_SHOWNORMAL);
                     }
+                    break;
+
+                case ID_HELP_CHECK_FOR_UPDATES:
+                    OSCloseThread(OSCreateThread((XTHREAD)CheckUpdateThread, (LPVOID)1));
                     break;
 
                 case ID_DASHBOARD:

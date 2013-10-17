@@ -30,6 +30,7 @@ DeviceSelection.Refresh="Frissítés"
 DeviceSelection.Resolution="Felbontás"
 DeviceSelection.Select="Kiválaszt"
 DeviceSelection.Sound="Hang"
+DeviceSelection.UnsupportedResolution="Az eszköz nem támogatja a felbontást"
 DeviceSelection.UseChromaKey="Chroma-kulcs használata"
 DeviceSelection.Video="Videó"
 

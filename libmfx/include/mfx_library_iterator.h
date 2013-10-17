@@ -1,6 +1,6 @@
 /* ****************************************************************************** *\
 
-Copyright (C) 2012 Intel Corporation.  All rights reserved.
+Copyright (C) 2012-2013 Intel Corporation.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -58,26 +58,29 @@ public:
     ~MFXLibraryIterator(void);
 
     // Initialize the iterator
-    mfxStatus Init(eMfxImplType implType, const bool countDisplays, const mfxU32 adapterNum, int storageID);
+    mfxStatus Init(eMfxImplType implType, mfxIMPL implInterface, const mfxU32 adapterNum, int storageID);
 
     // Get the next library path
     mfxStatus SelectDLLVersion(wchar_t *pPath, size_t pathSize, eMfxImplType *pImplType, mfxVersion minVersion);
+
+    // Return interface type on which Intel adapter was found (if any): D3D9 or D3D11
+    mfxIMPL GetImplementationType(); 
 
 protected:
 
     // Release the iterator
     void Release(void);
 
-    WinRegKey m_baseRegKey;                                     // (WinRegKey) main registry key
+    WinRegKey m_baseRegKey;                                     // (WinRegKey) main registry key    
 
-    // Required library implementation
-    eMfxImplType m_implType;
+    eMfxImplType m_implType;                                    // Required library implementation 
+    mfxIMPL m_implInterface;                                    // Required interface (D3D9, D3D11)
 
     mfxU32 m_vendorID;                                          // (mfxU32) property of used graphic card
     mfxU32 m_deviceID;                                          // (mfxU32) property of used graphic card
 
-    mfxU32 m_lastLibIndex;                                       // (mfxU32) index of previously returned library
-    mfxU32 m_lastLibMerit;                                       // (mfxU32) merit of previously returned library
+    mfxU32 m_lastLibIndex;                                      // (mfxU32) index of previously returned library
+    mfxU32 m_lastLibMerit;                                      // (mfxU32) merit of previously returned library
 
 private:
     // unimplemented by intent to make this class non-copyable

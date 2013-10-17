@@ -184,6 +184,8 @@ retryHookTest:
     bUseMultithreadedOptimizations = AppConfig->GetInt(TEXT("General"), TEXT("UseMultithreadedOptimizations"), TRUE) != 0;
     Log(TEXT("  Multithreaded optimizations: %s"), (CTSTR)(bUseMultithreadedOptimizations ? TEXT("On") : TEXT("Off")));
 
+    encoderSkipThreshold = GlobalConfig->GetInt(TEXT("Video"), TEXT("EncoderSkipThreshold"), fps/4);
+
     //------------------------------------------------------------------
 
     Log(TEXT("  Base resolution: %ux%u"), baseCX, baseCY);
@@ -437,8 +439,9 @@ retryHookTestV2:
         OSFindData ofd;
         HANDLE hFind = NULL;
         bool bUseDateTimeName = true;
+        bool bOverwrite = GlobalConfig->GetInt(L"General", L"OverwriteRecordings", false) != 0;
 
-        if(hFind = OSFindFirstFile(strOutputFile, ofd))
+        if(!bOverwrite && (hFind = OSFindFirstFile(strOutputFile, ofd)))
         {
             String strFileExtension = GetPathExtension(strOutputFile);
             String strFileWithoutExtension = GetPathWithoutExtension(strOutputFile);
@@ -484,7 +487,8 @@ retryHookTestV2:
 
     //-------------------------------------------------------------
 
-    bufferingTime = GlobalConfig->GetInt(TEXT("General"), TEXT("SceneBufferingTime"), 400);
+    bufferingTime = GlobalConfig->GetInt(TEXT("General"), TEXT("SceneBufferingTime"), 700);
+    Log(TEXT("Scene buffering time set to %u"), bufferingTime);
 
     //-------------------------------------------------------------
 
@@ -543,7 +547,7 @@ retryHookTestV2:
     curFramePic = NULL;
     bShutdownVideoThread = false;
     bShutdownEncodeThread = false;
-    ResetEvent(hVideoThread);
+    //ResetEvent(hVideoThread);
     hEncodeThread = OSCreateThread((XTHREAD)OBS::EncodeThread, NULL);
     hVideoThread = OSCreateThread((XTHREAD)OBS::MainCaptureThread, NULL);
 

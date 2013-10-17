@@ -210,6 +210,7 @@
 #define IDC_USEOUTLINE                  1099
 #define IDC_LOWLATENCYMODE              1099
 #define IDC_MINIZENOTIFICATION          1099
+#define IDC_CONNECTEDONLY               1099
 #define IDC_TIMER1                      1100
 #define IDC_CAPTURERAM                  1100
 #define IDC_COMPATIBILITYMODE           1100
@@ -323,13 +324,14 @@
 #define IDA_SOURCE_CENTER_VER           40055
 #define IDA_SOURCE_CENTER_HOR           40056
 #define IDA_SOURCE_RESETCROP            40057
+#define ID_HELP_CHECK_FOR_UPDATES       40058
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        146
-#define _APS_NEXT_COMMAND_VALUE         40055
+#define _APS_NEXT_RESOURCE_VALUE        147
+#define _APS_NEXT_COMMAND_VALUE         40060
 #define _APS_NEXT_CONTROL_VALUE         1168
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

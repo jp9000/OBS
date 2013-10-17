@@ -79,7 +79,7 @@ enum AudioDeviceType {
     ADT_RECORDING
 };
 
-void GetAudioDevices(AudioDeviceList &deviceList, AudioDeviceType deviceType);
+void GetAudioDevices(AudioDeviceList &deviceList, AudioDeviceType deviceType, bool ConntectedOnly=false);
 bool GetDefaultMicID(String &strVal);
 bool GetDefaultSpeakerID(String &strVal);
 
@@ -564,6 +564,8 @@ class OBS
     VideoEncoder            *videoEncoder;
     HDC                     hCaptureDC;
     List<MonitorInfo>       monitors;
+
+    UINT                    encoderSkipThreshold;
 
     XConfig                 scenesConfig;
     List<SceneHotkeyInfo>   sceneHotkeys;

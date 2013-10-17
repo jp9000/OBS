@@ -113,6 +113,7 @@ Section "Open Broadcaster Software" Section1
 	SetOutPath "$PROGRAMFILES32\OBS"
 	File "..\Release\OBS.exe"
 	File "..\x264\libs\32bit\libx264-136.dll"
+	File "..\QSVHelper\Release\QSVHelper.exe"
 	File "..\OBSAPI\Release\OBSApi.dll"
 	File "..\rundir\services.xconfig"
 	File "..\OBSHelp\OBSHelp.chm"
@@ -142,6 +143,7 @@ Section "Open Broadcaster Software" Section1
 		SetOutPath "$PROGRAMFILES64\OBS"
 		File "..\x64\Release\OBS.exe"
 		File "..\x264\libs\64bit\libx264-136.dll"
+		File "..\QSVHelper\Release\QSVHelper.exe"
 		File "..\OBSAPI\x64\Release\OBSApi.dll"
 		File "..\rundir\services.xconfig"
 		File "..\OBSHelp\OBSHelp.chm"
@@ -219,6 +221,7 @@ Section Uninstall
 	; Clean up Open Broadcaster Software
 	Delete "$PROGRAMFILES32\OBS\OBS.exe"
 	Delete "$PROGRAMFILES32\OBS\libx264-136.dll"
+	Delete "$PROGRAMFILES32\OBS\QSVHelper.exe"
 	Delete "$PROGRAMFILES32\OBS\OBSApi.dll"
 	Delete "$PROGRAMFILES32\OBS\services.xconfig"
 	Delete "$PROGRAMFILES32\OBS\*.chm"
@@ -238,6 +241,7 @@ Section Uninstall
 	${if} ${RunningX64}
 		Delete "$PROGRAMFILES64\OBS\OBS.exe"
 		Delete "$PROGRAMFILES64\OBS\libx264-136.dll"
+		Delete "$PROGRAMFILES64\OBS\QSVHelper.exe"
 		Delete "$PROGRAMFILES64\OBS\OBSApi.dll"
 		Delete "$PROGRAMFILES64\OBS\services.xconfig"
 		Delete "$PROGRAMFILES64\OBS\*.chm"

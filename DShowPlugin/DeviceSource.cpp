@@ -365,6 +365,12 @@ bool DeviceSource::LoadFilters()
     //------------------------------------------------
     // initialize the basic video variables and data
 
+    if(FAILED(err = devicePin->QueryInterface(IID_IAMStreamConfig, (void**)&config)))
+    {
+        AppWarning(TEXT("DShowPlugin: Could not get IAMStreamConfig for device pin, result = %08lX"), err);
+        goto cleanFinish;
+    }
+
     renderCX = renderCY = 0;
     frameInterval = 0;
 
@@ -377,7 +383,23 @@ bool DeviceSource::LoadFilters()
     else
     {
         SIZE size;
-        if (!GetClosestResolutionFPS(outputList, size, frameInterval, true))
+
+        // blackmagic/decklink devices will display a black screen if the resolution/fps doesn't exactly match.
+        // they should rename the devices to blackscreen
+        if (sstri(strDeviceName, L"blackmagic") != NULL || sstri(strDeviceName, L"decklink") != NULL)
+        {
+            AM_MEDIA_TYPE *pmt;
+            config->GetFormat(&pmt);
+            VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pmt->pbFormat);
+
+            // Use "preferred" format from the device
+            size.cx = pVih->bmiHeader.biWidth;
+            size.cy = pVih->bmiHeader.biHeight;
+            frameInterval = pVih->AvgTimePerFrame;
+
+            DeleteMediaType(pmt);
+        }
+        else if (!GetClosestResolutionFPS(outputList, size, frameInterval, true))
         {
             AppWarning(TEXT("DShowPlugin: Unable to find appropriate resolution"));
             renderCX = renderCY = 64;
@@ -412,12 +434,13 @@ bool DeviceSource::LoadFilters()
     // log video info
 
     {
-        String strTest = FormattedString(TEXT("    device: %s,\r\n    device id %s,\r\n    chosen type: %s, usingFourCC: %s, res: %ux%u - %ux%u, frameIntervals: %llu-%llu"),
+        String strTest = FormattedString(TEXT("    device: %s,\r\n    device id %s,\r\n    chosen type: %s, usingFourCC: %s, res: %ux%u - %ux%u, frameIntervals: %llu-%llu\r\n    use buffering: %s - %u"),
             strDevice.Array(), strDeviceID.Array(),
             EnumToName[(int)bestOutput->videoType],
             bestOutput->bUsingFourCC ? TEXT("true") : TEXT("false"),
             bestOutput->minCX, bestOutput->minCY, bestOutput->maxCX, bestOutput->maxCY,
-            bestOutput->minFrameInterval, bestOutput->maxFrameInterval);
+            bestOutput->minFrameInterval, bestOutput->maxFrameInterval,
+	    bUseBuffering ? L"true" : L"false", bufferTime);
 
         BITMAPINFOHEADER *bmiHeader = GetVideoBMIHeader(bestOutput->mediaType);
 
@@ -479,12 +502,6 @@ bool DeviceSource::LoadFilters()
 
     //------------------------------------------------
     // configure video pin
-
-    if(FAILED(err = devicePin->QueryInterface(IID_IAMStreamConfig, (void**)&config)))
-    {
-        AppWarning(TEXT("DShowPlugin: Could not get IAMStreamConfig for device pin, result = %08lX"), err);
-        goto cleanFinish;
-    }
 
     AM_MEDIA_TYPE outputMediaType;
     CopyMediaType(&outputMediaType, bestOutput->mediaType);
@@ -989,6 +1006,9 @@ void DeviceSource::Start()
         return;
     }
 
+    /*if (err == S_FALSE)
+        AppWarning(L"Ook");*/
+
     bCapturing = true;
 }
 
@@ -1125,7 +1145,7 @@ DWORD DeviceSource::SampleThread(DeviceSource *source)
 
                     //sometimes timestamps can go to shit with horrible garbage devices.
                     //so, bypass any unusual timestamp offsets.
-                    if (sampleTime < -6000000 || sampleTime > 6000000) {
+                    if (sampleTime < -10000000 || sampleTime > 10000000) {
                         //OSDebugOut(TEXT("sample time: %lld\r\n"), sampleTime);
                         sampleTime = 0;
                     }

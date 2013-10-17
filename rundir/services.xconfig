@@ -27,15 +27,13 @@ services : {
       "max audio bitrate mp3" : 128
     }
   }
-  "Vaughn Live" : {
+  "Vaughn Live / iNSTAGIB.tv" : {
     id : 3
     servers : {
-      "US: Chicago (Primary)"  : rtmp://live.vaughnlive.tv:443/live
-      "US: Dallas, TX"         : rtmp://live-dal.vaughnlive.tv:443/live
-      "US: Houston, TX"        : rtmp://live-hou.vaughnlive.tv:443/live
-      "US: Virginia, USA"      : rtmp://live-iad.vaughnlive.tv:443/live
-      "US: Salt Lake City, UT" : rtmp://live-slc.vaughnlive.tv:443/live
-      "EU: Frankfurt, Germany" : rtmp://live-de.vaughnlive.tv:443/live
+      "US: Primary"            : rtmp://live.vaughnsoft.net:443/live
+      "US: Virginia, USA"      : rtmp://live-iad.vaughnsoft.net:443/live
+      "US: Chicago, IL"        : rtmp://live-ord.vaughnsoft.net:443/live
+      "EU: Frankfurt, Germany" : rtmp://live-de.vaughnsoft.net:443/live
     }
   }
   iNSTAGIB.tv : {

@@ -233,26 +233,31 @@ MediaOutputInfo* GetBestMediaOutput(const List<MediaOutputInfo> &outputList, UIN
             if(priority == -1)
                 continue;
 
-            if( (!bUsePreferredType && (priority >= bestPriority || !bestMediaOutput)) ||
-                (bUsePreferredType && (UINT)outputInfo.videoType == preferredType))
+            UINT64 curInterval;
+            if(frameInterval > outputInfo.maxFrameInterval)
+                curInterval = outputInfo.maxFrameInterval;
+            else if(frameInterval < outputInfo.minFrameInterval)
+                curInterval = outputInfo.minFrameInterval;
+            else
+                curInterval = frameInterval;
+
+            UINT64 intervalDifference = (UINT64)_abs64(INT64(curInterval)-INT64(frameInterval));
+
+            if (intervalDifference > closestIntervalDifference)
+                continue;
+
+            bool better;
+            if (!bUsePreferredType)
+                better = priority > bestPriority || !bestMediaOutput || intervalDifference < closestIntervalDifference;
+            else
+                better = (UINT)outputInfo.videoType == preferredType && intervalDifference <= closestIntervalDifference;
+
+            if (better)
             {
-                UINT64 curInterval;
-                if(frameInterval > outputInfo.maxFrameInterval)
-                    curInterval = outputInfo.maxFrameInterval;
-                else if(frameInterval < outputInfo.minFrameInterval)
-                    curInterval = outputInfo.minFrameInterval;
-                else
-                    curInterval = frameInterval;
-
-                UINT64 intervalDifference = (UINT64)_abs64(INT64(curInterval)-INT64(frameInterval));
-
-                if(intervalDifference <= closestIntervalDifference)
-                {
-                    closestIntervalDifference = intervalDifference;
-                    bestFrameInterval = curInterval;
-                    bestMediaOutput = &outputInfo;
-                    bestPriority = priority;
-                }
+                closestIntervalDifference = intervalDifference;
+                bestFrameInterval = curInterval;
+                bestMediaOutput = &outputInfo;
+                bestPriority = priority;
             }
         }
     }
