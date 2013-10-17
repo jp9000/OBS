@@ -844,36 +844,29 @@ void OBS::TrackModifyListbox(HWND hwnd, int ret)
 
         case ID_LISTBOX_CONFIG:
             {
-                Vect2 multiple;
-                ImageSource *source;
-
                 App->EnableSceneSwitching(false);
 
-                List<SceneItem*> selectedSceneItems;
-                if(App->scene)
-                    App->scene->GetSelectedItems(selectedSceneItems);
-
-                if (!selectedSceneItems.Num())
-                {
-                    App->EnableSceneSwitching(true);
-                    break;
-                }
-
-                if(App->bRunning)
-                {
-                    source = selectedSceneItems[0]->GetSource();
-                    if(source)
-                    {
-                        Vect2 curSize = Vect2(selectedElement->GetFloat(TEXT("cx"), 32.0f), selectedElement->GetFloat(TEXT("cy"), 32.0f));
-                        Vect2 baseSize = source->GetSize();
-
-                        multiple = curSize/baseSize;
-                    }
-                }
                 if(curClassInfo->configProc && curClassInfo->configProc(selectedElement, false))
                 {
-                    if(App->bRunning)
+                    List<SceneItem*> selectedSceneItems;
+                    if(App->scene)
+                        App->scene->GetSelectedItems(selectedSceneItems);
+
+                    if(App->bRunning && selectedSceneItems.Num())
                     {
+                        Vect2 multiple;
+                        ImageSource *source;
+
+                        source = selectedSceneItems[0]->GetSource();
+
+                        if(source)
+                        {
+                            Vect2 curSize = Vect2(selectedElement->GetFloat(TEXT("cx"), 32.0f), selectedElement->GetFloat(TEXT("cy"), 32.0f));
+                            Vect2 baseSize = source->GetSize();
+
+                            multiple = curSize/baseSize;
+                        }
+
                         App->EnterSceneMutex();
 
                         if(source)
