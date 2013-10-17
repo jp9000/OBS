@@ -112,7 +112,7 @@ void LogVideoCardStats()
             DXGI_ADAPTER_DESC adapterDesc;
             if(SUCCEEDED(err = giAdapter->GetDesc(&adapterDesc)))
             {
-                if (adapterDesc.DedicatedVideoMemory > 0) {
+                if (!(adapterDesc.VendorId == 0x1414 && adapterDesc.DeviceId == 0x8c)) { // Ignore Microsoft Basic Render Driver
                     Log(TEXT("------------------------------------------"));
                     Log(TEXT("Adapter %u"), i);
                     Log(TEXT("  Video Adapter: %s"), adapterDesc.Description);
