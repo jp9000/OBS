@@ -255,6 +255,8 @@ bool OBS::SetScene(CTSTR lpScene)
 
     SendMessage(hwndSources, WM_SETREDRAW, (WPARAM)FALSE, (LPARAM) 0);
 
+    App->scaleItem = NULL;
+
     bChangingSources = true;
     ListView_DeleteAllItems(hwndSources);
 
