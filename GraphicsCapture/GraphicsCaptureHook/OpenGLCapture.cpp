@@ -82,12 +82,15 @@ typedef ptrdiff_t GLsizeiptrARB;
 #define GL_PIXEL_UNPACK_BUFFER_BINDING 0x88EF
 
 #define GL_TEXTURE_2D 0x0DE1
+#define GL_TEXTURE_BINDING_2D 0x8069
+#define GL_DRAW_FRAMEBUFFER_BINDING 0x8CA6
 
 //------------------------------------------------
 
 typedef void   (WINAPI *GLREADBUFFERPROC)(GLenum);
 typedef void   (WINAPI *GLDRAWBUFFERPROC)(GLenum mode);
 typedef void   (WINAPI *GLREADPIXELSPROC)(GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, GLvoid*);
+typedef void   (WINAPI *GLGETINTEGERVPROC)(GLenum pname, GLint *params);
 typedef GLenum (WINAPI *GLGETERRORPROC)();
 typedef BOOL   (WINAPI *WGLSWAPLAYERBUFFERSPROC)(HDC, UINT);
 typedef BOOL   (WINAPI *WGLSWAPBUFFERSPROC)(HDC);
@@ -101,6 +104,7 @@ typedef HGLRC  (WINAPI *WGLCREATECONTEXTPROC)(HDC);
 GLREADBUFFERPROC         glReadBuffer           = NULL;
 GLDRAWBUFFERPROC         glDrawBuffer           = NULL;
 GLREADPIXELSPROC         glReadPixels           = NULL;
+GLGETINTEGERVPROC        glGetIntegerv          = NULL;
 GLGETERRORPROC           glGetError             = NULL;
 WGLSWAPLAYERBUFFERSPROC  jimglSwapLayerBuffers  = NULL;
 WGLSWAPBUFFERSPROC       jimglSwapBuffers       = NULL;
@@ -659,6 +663,9 @@ void DoGLCPUHook(RECT &rc)
 
     DWORD dwSize = glcaptureInfo.cx*glcaptureInfo.cy*4;
 
+    GLint lastPPB;
+    glGetIntegerv(GL_PIXEL_PACK_BUFFER_BINDING, &lastPPB);
+
     BOOL bSuccess = true;
     for(UINT i=0; i<NUM_BUFFERS; i++)
     {
@@ -675,7 +682,7 @@ void DoGLCPUHook(RECT &rc)
         }
     }
 
-    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, lastPPB);
 
     if(bSuccess)
     {
@@ -918,6 +925,10 @@ void HandleGLSceneUpdate(HDC hDC)
 
                                 wglDXLockObjectsNV(gl_dxDevice, 1, &gl_handle);
 
+                                GLint lastFBO, lastTex2D;
+                                glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &lastFBO);
+                                glGetIntegerv(GL_TEXTURE_BINDING_2D, &lastTex2D);
+
                                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, gl_fbo);
 
                                 glBindTexture(GL_TEXTURE_2D, gl_sharedtex);
@@ -928,8 +939,8 @@ void HandleGLSceneUpdate(HDC hDC)
 
                                 glBlitFramebuffer(0, 0, glcaptureInfo.cx, glcaptureInfo.cy, 0, 0, glcaptureInfo.cx, glcaptureInfo.cy, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
-                                glBindTexture(GL_TEXTURE_2D, 0);
-                                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+                                glBindTexture(GL_TEXTURE_2D, lastTex2D);
+                                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, lastFBO);
 
                                 wglDXUnlockObjectsNV(gl_dxDevice, 1, &gl_handle);
 
@@ -1180,6 +1191,7 @@ bool InitGLCapture()
                 glMapBuffer        = (GLMAPBUFFERPROC)         jimglGetProcAddress("glMapBuffer");
                 glUnmapBuffer      = (GLUNMAPBUFFERPROC)       jimglGetProcAddress("glUnmapBuffer");
                 glBindBuffer       = (GLBINDBUFFERPROC)        jimglGetProcAddress("glBindBuffer");
+                glGetIntegerv      = (GLGETINTEGERVPROC)       GetProcAddress(hGL, "glGetIntegerv");
                 glBindTexture      = (GLBINDTEXTUREPROC)       GetProcAddress(hGL, "glBindTexture");
 
                 UINT lastErr = GetLastError();
@@ -1188,7 +1200,8 @@ bool InitGLCapture()
                 RegisterFBOStuff();
 
                 if(glBufferData && glDeleteBuffers && glDeleteTextures && glGenBuffers &&
-                    glGenTextures && glMapBuffer && glUnmapBuffer && glBindBuffer && glBindTexture)
+                    glGenTextures && glMapBuffer && glUnmapBuffer && glBindBuffer && glGetIntegerv &&
+                    glBindTexture)
                 {
                     glHookSwapBuffers.Hook((FARPROC)SwapBuffers, (FARPROC)SwapBuffersHook);
                     glHookSwapLayerBuffers.Hook((FARPROC)jimglSwapLayerBuffers, (FARPROC)wglSwapLayerBuffersHook);
