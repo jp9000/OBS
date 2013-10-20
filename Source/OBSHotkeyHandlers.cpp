@@ -56,7 +56,7 @@ void STDCALL OBS::PushToTalkHotkey(DWORD hotkey, UPARAM param, bool bDown)
     else if(App->pushToTalkDelay <= 0)
         App->bPushToTalkOn = false;
 
-    App->pushToTalkTimeLeft = App->pushToTalkDelay;
+    App->pushToTalkTimeLeft = App->pushToTalkDelay*1000000;
     OSDebugOut(TEXT("Actual delay: %d"), App->pushToTalkDelay);
 }
 

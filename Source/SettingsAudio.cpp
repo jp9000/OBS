@@ -98,7 +98,7 @@ void SettingsAudio::ApplySettings()
     AppConfig->SetInt(TEXT("Audio"), TEXT("UsePushToTalk"), App->bUsingPushToTalk);
     AppConfig->SetInt(TEXT("Audio"), TEXT("PushToTalkHotkey"), hotkey);
     AppConfig->SetInt(TEXT("Audio"), TEXT("PushToTalkHotkey2"), hotkey2);
-    AppConfig->SetInt(TEXT("Audio"), TEXT("PushToTalkDelay"), App->pushToTalkDelay);
+    AppConfig->SetInt(TEXT("Audio"), TEXT("PushToTalkDelay"), (int)App->pushToTalkDelay);
 
     if(App->pushToTalkHotkeyID)
     {
