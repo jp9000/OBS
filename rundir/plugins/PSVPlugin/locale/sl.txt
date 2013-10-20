@@ -1,3 +1,5 @@
+Cancel="Prekliči"
+OK="V redu"
 
 
 
