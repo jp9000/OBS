@@ -1,5 +1,5 @@
 Add="Adicionar"
-Preview="Pré-Visualizar"
+Preview="Visualização"
 Order="Ordem"
 Apply="Aplicar"
 Browse="Procurar..."

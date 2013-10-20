@@ -769,7 +769,7 @@ private:
     HANDLE hHotkeyThread;
 
     bool bUsingPushToTalk, bPushToTalkDown, bPushToTalkOn;
-    int pushToTalkDelay, pushToTalkTimeLeft;
+    long long pushToTalkDelay, pushToTalkTimeLeft;
 
     UINT pushToTalkHotkeyID;
     UINT muteMicHotkeyID;

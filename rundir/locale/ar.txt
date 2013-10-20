@@ -96,6 +96,7 @@ MainWindow.Sources="المصادر:"
 MainWindow.StartStream="بدء البث"
 MainWindow.StopStream="ايقاف البث"
 MainWindow.StopTest="ايقاف المعاينة"
+MainWindow.TestStream="معاينة البث"
 
 Plugins.Configure="اعداد"
 Plugins.Description="التفاصيل:"
@@ -107,6 +108,7 @@ RenderView.EnableView="تمكين المشاهدة"
 RenderView.DisplayPanel="تمكين لوحة التحكم"
 RenderView.ViewMode1To1="وضع 1:1"
 
+Scene.Hotkey="مفتاح إختصار المشهد "
 Scene.MissingSources="لم يكن قادراً على تحميل كل مصادر الصور بسبب إما اعدادات خاطئة أو اضافة مفقودة"
 
 Scene.Hotkey.AlreadyInUse="هذا المفتاح مستخدم مسبقاً."
@@ -126,6 +128,10 @@ Settings.SaveChangesTitle="تطبيق الاعدادت ؟
 "
 Settings.Video="الفيديو"
 
+Settings.Advanced.AutomaticLatency="الوضع التلقائي للكمون المنخفض :"
+Settings.Advanced.AllowOtherHotkeyModifiers="السماح بمعدلات أخرى على مفاتيح الاختصار"
+Settings.Advanced.BindToIP="الربط إلى الواجهة :"
+Settings.Advanced.DisablePreviewEncoding="تعطيل ترميز الفيديو أثناء المعاينة"
 
 
 
