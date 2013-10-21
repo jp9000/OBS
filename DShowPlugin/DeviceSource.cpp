@@ -383,27 +383,35 @@ bool DeviceSource::LoadFilters()
     else
     {
         SIZE size;
+        size.cx = 0;
+        size.cy = 0;
 
         // blackmagic/decklink devices will display a black screen if the resolution/fps doesn't exactly match.
         // they should rename the devices to blackscreen
-        if (sstri(strDeviceName, L"blackmagic") != NULL || sstri(strDeviceName, L"decklink") != NULL)
+        if (sstri(strDeviceName, L"blackmagic") != NULL || sstri(strDeviceName, L"decklink") != NULL ||
+            !GetClosestResolutionFPS(outputList, size, frameInterval, true))
         {
             AM_MEDIA_TYPE *pmt;
-            config->GetFormat(&pmt);
-            VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pmt->pbFormat);
+            if (SUCCEEDED(config->GetFormat(&pmt))) {
+                VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pmt->pbFormat);
 
-            // Use "preferred" format from the device
-            size.cx = pVih->bmiHeader.biWidth;
-            size.cy = pVih->bmiHeader.biHeight;
-            frameInterval = pVih->AvgTimePerFrame;
+                // Use "preferred" format from the device
+                size.cx = pVih->bmiHeader.biWidth;
+                size.cy = pVih->bmiHeader.biHeight;
+                frameInterval = pVih->AvgTimePerFrame;
 
-            DeleteMediaType(pmt);
-        }
-        else if (!GetClosestResolutionFPS(outputList, size, frameInterval, true))
-        {
-            AppWarning(TEXT("DShowPlugin: Unable to find appropriate resolution"));
-            renderCX = renderCY = 64;
-            goto cleanFinish;
+                DeleteMediaType(pmt);
+            } else {
+                if (!outputList.Num()) {
+                    AppWarning(L"DShowPlugin: Not even an output list!  What the f***");
+                    goto cleanFinish;
+                }
+
+                /* ..........elgato */
+                size.cx = outputList[0].maxCX;
+                size.cy = outputList[0].maxCY;
+                frameInterval = outputList[0].minFrameInterval;
+            }
         }
 
         renderCX = size.cx;
