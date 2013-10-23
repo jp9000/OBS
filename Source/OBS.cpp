@@ -538,11 +538,6 @@ OBS::OBS()
         SendMessage(hwndMain, WM_SYSCOMMAND, SC_MAXIMIZE, 0);
     }
 
-    // make sure sources listview column widths are as expected after obs window is shown
-
-    ListView_SetColumnWidth(hwndSources,0,LVSCW_AUTOSIZE_USEHEADER);
-    ListView_SetColumnWidth(hwndSources,1,LVSCW_AUTOSIZE_USEHEADER);
-
     //-----------------------------------------------------
 
     for(UINT i=0; i<numScenes; i++)
@@ -681,6 +676,11 @@ OBS::OBS()
 
     ResizeWindow(false);
     ShowWindow(hwndMain, SW_SHOW);
+
+    // make sure sources listview column widths are as expected after obs window is shown
+
+    ListView_SetColumnWidth(hwndSources,0,LVSCW_AUTOSIZE_USEHEADER);
+    ListView_SetColumnWidth(hwndSources,1,LVSCW_AUTOSIZE_USEHEADER);
 
     if (bStreamOnStart)
         PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_STARTSTOP, 0), NULL);
