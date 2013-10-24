@@ -846,27 +846,31 @@ void OBS::TrackModifyListbox(HWND hwnd, int ret)
             {
                 App->EnableSceneSwitching(false);
 
+                List<SceneItem*> selectedSceneItems;
+
+                if(App->scene)
+                    App->scene->GetSelectedItems(selectedSceneItems);
+		
+                ImageSource *source = NULL;
+                Vect2 multiple;
+
+                if(App->bRunning && selectedSceneItems.Num())
+                {
+                    source = selectedSceneItems[0]->GetSource();
+                    if(source)
+                    {
+                        Vect2 curSize = Vect2(selectedElement->GetFloat(TEXT("cx"), 32.0f), selectedElement->GetFloat(TEXT("cy"), 32.0f));
+                        Vect2 baseSize = source->GetSize();
+
+                        multiple = curSize/baseSize;
+                    }
+                }
+
                 if(curClassInfo && curClassInfo->configProc && curClassInfo->configProc(selectedElement, false))
                 {
-                    List<SceneItem*> selectedSceneItems;
-                    if(App->scene)
-                        App->scene->GetSelectedItems(selectedSceneItems);
 
                     if(App->bRunning && selectedSceneItems.Num())
                     {
-                        Vect2 multiple;
-                        ImageSource *source;
-
-                        source = selectedSceneItems[0]->GetSource();
-
-                        if(source)
-                        {
-                            Vect2 curSize = Vect2(selectedElement->GetFloat(TEXT("cx"), 32.0f), selectedElement->GetFloat(TEXT("cy"), 32.0f));
-                            Vect2 baseSize = source->GetSize();
-
-                            multiple = curSize/baseSize;
-                        }
-
                         App->EnterSceneMutex();
 
                         if(source)

@@ -118,7 +118,7 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
 
     if (bIsMic) {
         BOOL bMicSyncFixHack = GlobalConfig->GetInt(TEXT("Audio"), TEXT("UseMicSyncFixHack"));
-        angerThreshold = bMicSyncFixHack ? 30 : 1000;
+        angerThreshold = bMicSyncFixHack ? 40 : 1000;
     }
 
     if (scmpi(lpID, TEXT("Default")) == 0)
