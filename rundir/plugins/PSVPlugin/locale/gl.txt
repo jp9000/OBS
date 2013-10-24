@@ -1,0 +1,9 @@
+Cancel="Cancelar"
+OK="Aceptar"
+
+Plugin.Name="Plugin de volume individual por escena"
+Plugin.Description="Permite manter volumes de audio independientes por escena."
+
+Config.Caption="Configuración de volume por escena"
+Config.Enable="Habilitar o volume individual por escena"
+
