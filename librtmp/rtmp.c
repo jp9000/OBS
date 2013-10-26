@@ -1151,7 +1151,10 @@ RTMP_Connect0(RTMP *r, struct sockaddr * service)
         if (connect(r->m_sb.sb_socket, service, sizeof(struct sockaddr)) < 0)
         {
             int err = GetSockError();
-            RTMP_Log(RTMP_LOGERROR, "%s, failed to connect socket: %s (%d)",
+            if (err == 10061)
+                RTMP_Log(RTMP_LOGERROR, "%s is offline. Try a different server.", r->Link.hostname.av_val);
+            else
+                RTMP_Log(RTMP_LOGERROR, "%s, failed to connect socket: %s (%d)",
                      __FUNCTION__, socketerror(err), err);
             RTMP_Close(r);
             return FALSE;
