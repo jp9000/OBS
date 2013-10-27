@@ -1,4 +1,4 @@
-/********************************************************************************
+ï»¿/********************************************************************************
  Copyright (C) 2012 Hugh Bailey <obs.jim@gmail.com>
 
  This program is free software; you can redistribute it and/or modify
@@ -437,7 +437,7 @@ bool DeviceSource::LoadFilters()
         if (!outputList.Num()) {
             AppWarning(TEXT("DShowPlugin: Could not find appropriate resolution to create device image source"));
             goto cleanFinish;
-        } else { /* ƒGƒ‹ƒKƒbƒg©E */
+        } else { /* ã‚¨ãƒ«ã‚¬ãƒƒãƒˆï¼è‡ªæ®º */
             bestOutput = &outputList[0];
         }
     }
