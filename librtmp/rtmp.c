@@ -1152,7 +1152,9 @@ RTMP_Connect0(RTMP *r, struct sockaddr * service)
         {
             int err = GetSockError();
             if (err == 10061)
-                RTMP_Log(RTMP_LOGERROR, "%s is offline. Try a different server.", r->Link.hostname.av_val);
+                RTMP_Log(RTMP_LOGERROR, "%s is offline. Try a different server (10061).", r->Link.hostname.av_val);
+            else if (err == 10013)
+                RTMP_Log(RTMP_LOGERROR, "The connection is being blocked by a firewall or other security software (10013).");
             else
                 RTMP_Log(RTMP_LOGERROR, "%s, failed to connect socket: %s (%d)",
                      __FUNCTION__, socketerror(err), err);
