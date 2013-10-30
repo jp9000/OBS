@@ -60,10 +60,11 @@ services : {
       "EU Frankfurt, DE"  : rtmp://ingest-ffm1.hashd.tv/live
     }
   }
-  TGamers.ru : {
+  CashPlay.tv : {
     id : 8
     servers : {
-      "RU Moscow" : rtmp://tgamers.ru/live
+      "Primary, UK" : rtmp://live.cashplay.tv/live
+      "Low Priority, DE" : rtmp://de.live.cashplay.tv/live
     }
   }
   Youtube : {
