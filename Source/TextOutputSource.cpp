@@ -916,10 +916,8 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                 EnableWindow(GetDlgItem(hwnd, IDC_EXTENTWIDTH), bChecked);
                 EnableWindow(GetDlgItem(hwnd, IDC_EXTENTHEIGHT), bChecked);
                 EnableWindow(GetDlgItem(hwnd, IDC_WRAP), bChecked);
-                EnableWindow(GetDlgItem(hwnd, IDC_ALIGN), bChecked);
 
                 bool bVertical = data->GetInt(TEXT("vertical"), 0) != 0;
-                EnableWindow(GetDlgItem(hwnd, IDC_SCROLLMODE), bChecked && !bVertical);
 
                 SendMessage(GetDlgItem(hwnd, IDC_EXTENTWIDTH),  UDM_SETRANGE32, 32, 2048);
                 SendMessage(GetDlgItem(hwnd, IDC_EXTENTHEIGHT), UDM_SETRANGE32, 32, 2048);
@@ -932,9 +930,9 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                 bool bScrollMode = data->GetInt(TEXT("scrollMode"), 0) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_SCROLLMODE), BM_SETCHECK, bScrollMode ? BST_CHECKED : BST_UNCHECKED, 0);
 
-                if(bChecked)
-                    EnableWindow(GetDlgItem(hwnd, IDC_ALIGN), bWrap);
-
+                EnableWindow(GetDlgItem(hwnd, IDC_ALIGN), bChecked && bWrap);
+                EnableWindow(GetDlgItem(hwnd, IDC_SCROLLMODE), bChecked && bWrap && !bVertical);
+                
                 HWND hwndAlign = GetDlgItem(hwnd, IDC_ALIGN);
                 SendMessage(hwndAlign, CB_ADDSTRING, 0, (LPARAM)Str("Sources.TextSource.Left"));
                 SendMessage(hwndAlign, CB_ADDSTRING, 0, (LPARAM)Str("Sources.TextSource.Center"));
@@ -1083,15 +1081,15 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                         {
                             bool bWrap = SendMessage(GetDlgItem(hwnd, IDC_WRAP), BM_GETCHECK, 0, 0) == BST_CHECKED;
                             bool bUseExtents = SendMessage(GetDlgItem(hwnd, IDC_USETEXTEXTENTS), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                            if(bWrap && bUseExtents)
-                                EnableWindow(GetDlgItem(hwnd, IDC_SCROLLMODE), !bChecked);
+                            
+                            EnableWindow(GetDlgItem(hwnd, IDC_SCROLLMODE), bWrap && bUseExtents && !bChecked);
                         }
                         else if(LOWORD(wParam) == IDC_WRAP)
                         {
-                            EnableWindow(GetDlgItem(hwnd, IDC_ALIGN), bChecked);
                             bool bVertical = SendMessage(GetDlgItem(hwnd, IDC_VERTICALSCRIPT), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                            if(!bVertical)
-                                EnableWindow(GetDlgItem(hwnd, IDC_SCROLLMODE), bChecked);
+
+                            EnableWindow(GetDlgItem(hwnd, IDC_ALIGN), bChecked);
+                            EnableWindow(GetDlgItem(hwnd, IDC_SCROLLMODE), bChecked && !bVertical);
                         }
                         else if(LOWORD(wParam) == IDC_USETEXTEXTENTS)
                         {
@@ -1103,14 +1101,9 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
                             bool bWrap = SendMessage(GetDlgItem(hwnd, IDC_WRAP), BM_GETCHECK, 0, 0) == BST_CHECKED;
                             bool bVertical = SendMessage(GetDlgItem(hwnd, IDC_VERTICALSCRIPT), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                            EnableWindow(GetDlgItem(hwnd, IDC_ALIGN), bChecked);
-                            EnableWindow(GetDlgItem(hwnd, IDC_SCROLLMODE), bChecked);
-
-                            if(bChecked)
-                            {
-                                EnableWindow(GetDlgItem(hwnd, IDC_ALIGN), bWrap);
-                                EnableWindow(GetDlgItem(hwnd, IDC_SCROLLMODE), !bVertical);
-                            }
+                            
+                            EnableWindow(GetDlgItem(hwnd, IDC_ALIGN), bChecked && bWrap);
+                            EnableWindow(GetDlgItem(hwnd, IDC_SCROLLMODE), bChecked && bWrap && !bVertical);
                         }
                         else if(LOWORD(wParam) == IDC_USEOUTLINE)
                         {
