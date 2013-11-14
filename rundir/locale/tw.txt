@@ -226,6 +226,7 @@ Settings.Publish.Mode.LiveStream="直播串流"
 Settings.Publish.Warning.BadSettings="警告：您的 OBS 設定無法為 %s 進行優化，請更改下列設定：\r\n\r\n "
 Settings.Publish.Warning.UseCBR="\t編碼：啟用 CBR\r\n\r\n"
 Settings.Publish.Warning.Maxbitrate="\t編碼：您的最大位元率不得超過 %d\r\n\r\n"
+Settings.Publish.Warning.RecommendMainProfile="\t進階設定：此服務推薦的 x264 編碼設定檔為「main」。\r\n\r\n"
 Settings.Publish.Warning.Keyint="\t進階：將關鍵影格間隔設為 %d 秒\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\t編碼：您的音訊位元率不得超過 %d\r\n\r\n"
 

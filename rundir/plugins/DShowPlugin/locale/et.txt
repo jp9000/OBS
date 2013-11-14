@@ -5,6 +5,7 @@ OK="OK"
 
 DeinterlacingType.None="Puudub"
 DeinterlacingType.Discard="Loobu väljast"
+DeinterlacingType.Retro="Retro/Skänndubleerimine"
 DeinterlacingType.Blend="Sulanda"
 DeinterlacingType.Blend2x="Sulanda2x"
 DeinterlacingType.Linear="Lineaarne"
