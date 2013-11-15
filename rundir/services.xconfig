@@ -84,4 +84,14 @@ services : {
       "RU Premium"  : rtmp://premium.cybergame.tv:1953/premium
     }
   }
+  hitbox.tv : {
+    id : 11
+    servers : {
+      "Default"     : rtmp://live.hitbox.tv/push
+      "EU-East"     : rtmp://live.vie.hitbox.tv/push
+      "US-East"     : rtmp://live.vgn.hitbox.tv/push
+      "US-West"     : rtmp://live.lax.hitbox.tv/push
+      "Asia"        : rtmp://live.lax.hitbox.tv/push
+    }
+  }
 }
