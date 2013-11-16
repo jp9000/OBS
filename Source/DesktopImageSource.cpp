@@ -800,6 +800,8 @@ void RefreshWindowList(HWND hwndCombobox, StringList &classList)
                 String strText;
                 strText << TEXT("[") << GetPathFileName(strFileName) << TEXT("]: ") << strWindowName;
 
+                if(strWindowName.IsEmpty()) strWindowName = GetPathFileName(strFileName);
+
                 int id = (int)SendMessage(hwndCombobox, CB_ADDSTRING, 0, (LPARAM)strWindowName.Array());
                 SendMessage(hwndCombobox, CB_SETITEMDATA, id, (LPARAM)hwndCurrent);
 

@@ -1,4 +1,4 @@
-/********************************************************************************
+﻿/********************************************************************************
  Copyright (C) 2012 Hugh Bailey <obs.jim@gmail.com>
 
  This program is free software; you can redistribute it and/or modify
@@ -434,8 +434,12 @@ bool DeviceSource::LoadFilters()
     MediaOutputInfo *bestOutput = GetBestMediaOutput(outputList, renderCX, renderCY, preferredOutputType, frameInterval);
     if(!bestOutput)
     {
-        AppWarning(TEXT("DShowPlugin: Could not find appropriate resolution to create device image source"));
-        goto cleanFinish;
+        if (!outputList.Num()) {
+            AppWarning(TEXT("DShowPlugin: Could not find appropriate resolution to create device image source"));
+            goto cleanFinish;
+        } else { /* エルガット＝自殺 */
+            bestOutput = &outputList[0];
+        }
     }
 
     //------------------------------------------------

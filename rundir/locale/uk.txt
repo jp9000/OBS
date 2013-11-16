@@ -226,6 +226,7 @@ Settings.Publish.Mode.LiveStream="Прямий ефір"
 Settings.Publish.Warning.BadSettings="УВАГА: Ваші налаштування OBS не оптимізовані для роботи з %s. Будь ласка, встановіть такі параметри:\r\n\r\n"
 Settings.Publish.Warning.UseCBR="\tНалаштування кодування: ввімкніть CBR\r\n\r\n"
 Settings.Publish.Warning.Maxbitrate="\tНалаштування кодування: знизьте максимальний бітрейт до %d\r\n\r\n"
+Settings.Publish.Warning.RecommendMainProfile="\tРозширені налаштування: Для цього сервісу рекомендовано профіль кодування x264 'main'\r\n\r\n"
 Settings.Publish.Warning.Keyint="\tРозширені налаштування: встановити інтервал між ключовими кадрами в %d секунд\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tНалаштування кодування: зменшіть бітрейт аудіо до %d\r\n\r\n"
 

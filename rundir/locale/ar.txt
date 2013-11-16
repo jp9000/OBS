@@ -132,10 +132,19 @@ Settings.Advanced.AutomaticLatency="الوضع التلقائي للكمون ا�
 Settings.Advanced.AllowOtherHotkeyModifiers="السماح بمعدلات أخرى على مفاتيح الاختصار"
 Settings.Advanced.BindToIP="الربط إلى الواجهة :"
 Settings.Advanced.DisablePreviewEncoding="تعطيل ترميز الفيديو أثناء المعاينة"
+Settings.Advanced.VideoEncoderSettings="إعدادات مخصصة لترميز x264"
 
 
+Settings.Audio.MuteMicHotkey="زر إختصار لـ كتم/إلغاء كتم الميكروفون:"
+Settings.Audio.PushToTalkHotkey="إستخدام الضغط للتحدث :"
+Settings.Audio.ShowOnlyConnectedDevices="إظهار الأجهزة المتصلة فقط"
 
+Settings.Encoding.Audio="ترميز الصوت"
+Settings.Encoding.Video="ترميز الفيديو"
 
+Settings.Encoding.Audio.Bitrate="معدل النقل:"
+Settings.Encoding.Audio.Codec="الترميز:"
+Settings.Encoding.Audio.Format="الصيغة:"
 
 
 Settings.General.Language="اللغة:"
@@ -150,6 +159,11 @@ Settings.Publish.AutoReconnect="اعادة الاتصال تلقائياً:"
 
 
 
+Sources.SoftwareCaptureSource.Monitor="الشاشة:"
+Sources.SoftwareCaptureSource.MonitorCapture="تصوير الشاشة"
+Sources.SoftwareCaptureSource.MouseCapture="إظهار مؤشر الماوس"
+Sources.SoftwareCaptureSource.Size="الحجم:"
+Sources.SoftwareCaptureSource.Window="نافذة:"
 
 Sources.TextSource.Bold="عريض"
 Sources.TextSource.Center="وسط"

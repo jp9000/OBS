@@ -226,6 +226,7 @@ Settings.Publish.Mode.LiveStream="실황으로 방송"
 Settings.Publish.Warning.BadSettings="경고: %s 환경에 현재 OBS 세팅은 최적화되어 있지 않습니다. 다음과 같이 설정하여 주십시오:\r\n\r\n"
 Settings.Publish.Warning.UseCBR="\t인코딩 설정: CBR 활성화\r\n\r\n"
 Settings.Publish.Warning.Maxbitrate="\t인코딩 설정: 최대 비트레이트 값을 다음으로 낮추십시오 %d\r\n\r\n"
+Settings.Publish.Warning.RecommendMainProfile="\t고급 설정: 이 서비스를 위해서는 'main' 을 x264 인코딩 프로필로 추천합니다\r\n\r\n"
 Settings.Publish.Warning.Keyint="\t고급 설정: 키 프레임의 간격을 다음 값으로 설정하십시오 %d\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\t인코딩 설정: 오디오 비트레이트를 다음 값으로 내려주십시오 %d\r\n\r\n"
 

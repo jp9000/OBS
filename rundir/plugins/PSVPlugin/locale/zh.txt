@@ -1,3 +1,9 @@
+Cancel="取消"
+OK="确定"
 
+Plugin.Name="单场景音量插件"
+Plugin.Description="开启单场的景音量跟踪."
 
+Config.Caption="单场景音量设置"
+Config.Enable="开启单场景音量跟踪"
 

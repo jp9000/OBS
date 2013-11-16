@@ -226,6 +226,7 @@ Settings.Publish.Mode.LiveStream="Transmisión en vivo"
 Settings.Publish.Warning.BadSettings="ATENCIÓN: Sus preferencias en OBS no están optimizadas para usar con %s. Por favor, ajústelas de la siguiente forma:\r\n\r\n"
 Settings.Publish.Warning.UseCBR="\tConfiguración de codificación: CBR Activo\r\n\r\n"
 Settings.Publish.Warning.Maxbitrate="\tConfiguración de codificación: Reduzca su Bitrate máximo a %d\r\n\r\n"
+Settings.Publish.Warning.RecommendMainProfile="\tConfiguración avanzada: El perfil recomendado de codificación x264 es 'main' para este servicio\r\n\r\n"
 Settings.Publish.Warning.Keyint="\tAvanzado: Establezca un Intervalo de cuadros clave de %d segundos\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tConfiguración de codificación: Reduzca su Bitrate de audio a %d\r\n\r\n"
 

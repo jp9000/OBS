@@ -13,6 +13,7 @@ Defaults="Standarder"
 DeleteConfirm="Er du sikker på at du vil slette valgte elementer?"
 Desktop="Skrivebord"
 Disable="Deaktiver"
+EncoderLag="Advarsel: Tar for lang tid å kode, hopper over rammer!"
 EndingDelay="Avslutter forsinket stream..."
 EnterName="Vennligst skriv inn et navn"
 Gamma="Gamma:"
@@ -62,6 +63,7 @@ Listbox.FitToScreen="Tilpass til vindu"
 Listbox.Positioning="Posisjon/størrelse"
 Listbox.ResetSize="Tilbakestill størrelse"
 Listbox.SetHotkey="Angi hurtigtast"
+ListBox.ResetCrop="Tilbakestille beskjæring"
 
 MainMenu.File="&Fil"
 MainMenu.Help="&Hjelp"
@@ -71,10 +73,16 @@ MainMenu.Settings="&Instillinger"
 MainMenu.Settings.AlwaysOnTop="&Alltid øverst"
 
 
+MainMenu.Help.VisitWebsite="Besøk hjemmeside"
 
 
+MainWindow.Dashboard="Skrivebord"
+MainWindow.Exit="Avslutt"
+MainWindow.Plugins="Plugins"
 MainWindow.Scenes="Scener:"
 MainWindow.Sources="Kilder:"
+MainWindow.StartStream="Starte strømmen"
+MainWindow.StopStream="Stoppe strømmen"
 MainWindow.StopTest="Stop Forhåndsvisning"
 MainWindow.TestStream="Forhåndsvis Strøm"
 
@@ -87,6 +95,7 @@ Reconnecting.Retrying="Kunne ikke gjenopprette tilkobling. Prøver på nytt"
 RenderView.EnableView="Aktiver visning"
 RenderView.DisplayPanel="Vis kontrollpanel"
 RenderView.ViewModeScaleToFit="Tilpass video til vindu"
+RenderView.ViewMode1To1="1:1-modus"
 
 Scene.Hotkey="Hurtigtast til scene"
 Scene.MissingSources="Kunne ikke laste alle kilder på grunn av feil instillinger eller maglende pluginer"
@@ -114,11 +123,21 @@ Settings.Advanced.GlobalAudioTimeAdjust="Global lyd tidsforskyvning (millisekund
 Settings.Advanced.LatencyTuning="Ventetid tuningfaktor:"
 Settings.Advanced.Network="Nettverk"
 Settings.Advanced.ProcessPriority="Prosessens prioritetsklasse"
+Settings.Advanced.UseCBR="Bruk CBR"
+Settings.Advanced.PadCBR="Aktiver CBR utfylling"
+Settings.Advanced.UseCFR="Bruk CFR"
+Settings.Advanced.QSVUseVideoEncoderSettings="Bruk egendefinerte x 264 innstillinger for QSV"
+Settings.Advanced.VideoEncoderCPUTradeoff="x264 CPU forhåndsinnstilling:"
+Settings.Advanced.VideoEncoderSettings="Egendefinerte x264 Encoder innstillinger"
 
+Settings.Advanced.Priority.Idle="Inaktiv"
+Settings.Advanced.Priority.Normal="Normal"
 Settings.Advanced.Priority.AboveNormal="Over normal"
 Settings.Advanced.Priority.High="Høy"
 
+Settings.Audio.Device="Mikrofon/Aux Audio-enhet:"
 Settings.Audio.ForceMicMono="Tving Mikrofon/Auxiliary til Mono:"
+Settings.Audio.MicBoost="Mic/Aux Boost (flere):"
 Settings.Audio.MicTimeOffset="Mikrofonforskyvning (millisekunder):"
 
 
@@ -126,7 +145,18 @@ Settings.Encoding.Audio.Codec="Kodek:"
 
 Settings.Encoding.Video.BufferSize="Bufferstørrelse (kbit):"
 
+Settings.General.Language="Språk:"
+Settings.General.Profile="Innstilling profil:"
 
+Settings.Publish.ChannelName="Kanalnavn:"
+Settings.Publish.DashboardLink="Dashboard Link (hvis noen):"
+Settings.Publish.Delay="Forsinkelse (sekunder):"
+Settings.Publish.LowLatencyMode="Minimere påkjenning på nettverk:"
+Settings.Publish.Mode="Modus:"
+Settings.Publish.Password="Passord (hvis noen):"
+Settings.Publish.SavePath="Bane:"
+Settings.Publish.SaveToFile="Lagre til fil:"
+Settings.Publish.Server="Server:"
 
 
 

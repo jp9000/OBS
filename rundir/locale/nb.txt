@@ -226,6 +226,7 @@ Settings.Publish.Mode.LiveStream="Direkte stream"
 Settings.Publish.Warning.BadSettings="Advarsel: OBS-innstillingene er ikke optimalisert for bruk med %s. Angi følgende: \r\n\r\n"
 Settings.Publish.Warning.UseCBR="\tKodingsinnstillinger: Aktiver CBR\r\n\r\n"
 Settings.Publish.Warning.Maxbitrate="\tKodingsinnstillinger: Reduser maks bitrate til %d\r\n\r\n"
+Settings.Publish.Warning.RecommendMainProfile="\t Avanserte innstillinger: Anbefalt x264 kodingsprofil er 'main' for denne tjenesten\r\n\r\n"
 Settings.Publish.Warning.Keyint="\tAvanserte Innstillinger: Sett intervall av nøkkelbilde, %d sekunder\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tKodingsinnstillinger: Reduser lydbitraten til %d\r\n\r\n"
 

@@ -224,10 +224,11 @@ Settings.Publish.Username="שם משתמש (במידה וקיים):"
 Settings.Publish.Mode.FileOnly="שמור סטרים כקובץ בלבד"
 Settings.Publish.Mode.LiveStream="סטרים בשידור חי"
 
-Settings.Publish.Warning.BadSettings=":אנא הגדר את הערכים הבאים .%s שלך אינן ממוטבות לשימוב עם OBS אזהרה: הגדרות ה\r\n\r\n"
+Settings.Publish.Warning.BadSettings=":אנא הגדר את הערכים הבאים .%s שלך אינן ממוטבות לשימוש עם OBS אזהרה: הגדרות ה\r\n\r\n"
 Settings.Publish.Warning.UseCBR="\tהגדרות קידוד: אפשר CBR\r\n\r\n"
 Settings.Publish.Warning.Maxbitrate="\tהגדרות קידוד: הפחת את קצב הביטים המירבי שלך ל %d\r\n\r\n"
-Settings.Publish.Warning.Keyint="\tהגדרות מתקדמות: הגדר מרווח ערך keyframe של %d שניות\r\n\r\n"
+Settings.Publish.Warning.RecommendMainProfile="\t'main' אפשרויות מתקדמות: פרופיל קידוד 'איקס 264' מומלץ לשירות זה הינו\r\n\r\n"
+Settings.Publish.Warning.Keyint="\tשניות %d הגדרות מתקדמות: הגדר מרווח ערך בסך\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tהגדרות קידוד: הפחת את קצב הביטים של השמע שלך ל %d\r\n\r\n"
 
 Settings.Video.Custom="מותאמת אישית:"

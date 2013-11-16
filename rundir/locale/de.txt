@@ -226,6 +226,7 @@ Settings.Publish.Mode.LiveStream="Livestream"
 Settings.Publish.Warning.BadSettings="WARNUNG: Ihre Einstellungen sind nicht optimiert für die Benutzung mit %s. Bitte ändern Sie folgende Einstellungen:\r\n\r\n"
 Settings.Publish.Warning.UseCBR="\tKodierung: Aktivieren Sie CBR\r\n\r\n"
 Settings.Publish.Warning.Maxbitrate="\tKodierung: Reduzieren Sie Ihre maximale Bitrate auf %d\r\n\r\n"
+Settings.Publish.Warning.RecommendMainProfile="\tErweitert: Empfohlenes x264 Encoding Profil ist 'main' für diesen Service\r\n\r\n"
 Settings.Publish.Warning.Keyint="\tErweitert: Setzen Sie einen Keyframeintervall von %d Sekunden\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tKodierung: Reduzieren Sie Ihre Audiobitrate auf %d\r\n\r\n"
 

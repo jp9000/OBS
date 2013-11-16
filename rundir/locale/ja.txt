@@ -226,6 +226,7 @@ Settings.Publish.Mode.LiveStream="配信"
 Settings.Publish.Warning.BadSettings="警告: %s を利用する場合のOBSの設定が最適化されていません。以下の設定をしてください:\r\n\r\n"
 Settings.Publish.Warning.UseCBR="\tエンコード設定: CBRを有効にして下さい\r\n\r\n"
 Settings.Publish.Warning.Maxbitrate="\tエンコード設定: 映像ビットレートを %d 以下に設定して下さい\r\n\r\n"
+Settings.Publish.Warning.RecommendMainProfile="\t詳細設定： このサービスでは、x264のエンコードプロファイルは、'main'が推奨されています\r\n\r\n"
 Settings.Publish.Warning.Keyint="\t詳細設定: キーフレーム間隔を %d 秒に設定してください\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tエンコード設定: 音声ビットレートを %d 以下に設定して下さい\r\n\r\n"
 

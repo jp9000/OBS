@@ -226,6 +226,7 @@ Settings.Publish.Mode.LiveStream="Live Stream"
 Settings.Publish.Warning.BadSettings="WAARSCHUWING: Je OBS instellingen zijn niet geoptimaliseerd voor gebruik met %s. Stel het volgende in: \r\n\r\n"
 Settings.Publish.Warning.UseCBR="\tEncoding instellingen: Activeer CBR\r\n\r\n"
 Settings.Publish.Warning.Maxbitrate="\tEncoding instellingen: Reduceer je maximale bitrate tot %d\r\n\r\n"
+Settings.Publish.Warning.RecommendMainProfile="\tGeavanceerde instellingen: Het aangeraden x264 encoding profiel voor deze dienst is 'main'\r\n\r\n"
 Settings.Publish.Warning.Keyint="\tGeavanceerde instellingen: Stel de tijd tussen keyframes in op %d seconden\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tEncoding instellingen: Reduceer je audio bitrate tot %d\r\n\r\n"
 

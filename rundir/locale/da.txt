@@ -226,6 +226,7 @@ Settings.Publish.Mode.LiveStream="Live Stream"
 Settings.Publish.Warning.BadSettings="Advarsel: Indstillingerne i OBS er ikke optimeret til brug med %s. Angiv følgende: \r\n\r\n"
 Settings.Publish.Warning.UseCBR="\tIndstillinger For Indkodning: Aktiverer CBR\r\n\r\n"
 Settings.Publish.Warning.Maxbitrate="\tIndkodnings Indstillinger: Reducere Din Maksimale Bitrate Til %d\r\n\r\n"
+Settings.Publish.Warning.RecommendMainProfile="\tAvanceret indstillinger: Anbefalet x264 indkodningsprofil er 'main' for denne service.\r\n\r\n"
 Settings.Publish.Warning.Keyint="\tAvancerede indstillinger: angive keyframe interval til %d sekunder\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tIndkodnings Indstillinger: Reducere Din Maksimale Bitrate Til %d\r\n\r\n"
 

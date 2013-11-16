@@ -226,6 +226,7 @@ Settings.Publish.Mode.LiveStream="Nadawanie na żywo"
 Settings.Publish.Warning.BadSettings="UWAGA: twoje ustawienia OBS nie są zoptymalizowane do użycia z %s. Proszę zmienić następujące ustawienia:\r\n\r\n"
 Settings.Publish.Warning.UseCBR="\tUstawienia kodowania: włącz CBR\r\n\r\n"
 Settings.Publish.Warning.Maxbitrate="\tUstawienia kodowania: zmniejsz swoją maksymalną przepływność do %d\r\n\r\n"
+Settings.Publish.Warning.RecommendMainProfile="\tUstawienia zaawansowane: Zalecany profil enkodera x264 dla tego serwisu to 'main'\r\n\r\n"
 Settings.Publish.Warning.Keyint="\tUstawienia zaawansowane: ustaw interwał klatki kluczowej na %d sekundy\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tUstawienia kodowania: Zmniejsz swoją przepływność dźwięku do %d\r\n\r\n"
 

@@ -5,6 +5,7 @@ Apply="Uporabi"
 Browse="Prebrskaj..."
 Cancel="Prekliči"
 ClearHotkey="Počisti"
+Close="Zapri"
 Color="Barva"
 Default="Privzeto"
 Defaults="Privzete"
@@ -72,8 +73,10 @@ MainMenu.Settings.AlwaysOnTop="&Vedno na Vrhu"
 MainMenu.Settings.FullscreenMode="&Celozaslonski Predogled"
 
 MainMenu.File.Exit="I&zhod"
+MainMenu.File.Save="&Shrani"
 
 MainMenu.Help.VisitWebsite="Obišči spletno stran"
+MainMenu.Help.CheckForUpdates="Preveri za &posodobitve"
 
 
 MainWindow.Dashboard="Nadzorna plošča"

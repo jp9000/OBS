@@ -226,6 +226,7 @@ Settings.Publish.Mode.LiveStream="Прямой эфир"
 Settings.Publish.Warning.BadSettings="ПРЕДУПРЕЖДЕНИЕ: Ваши настройки OBS неоптимальны для работы с %s. Пожалуйста, установите следующие настройки:\r\n\r\n"
 Settings.Publish.Warning.UseCBR="\tНастройки кодирования: Включите CBR\r\n\r\n"
 Settings.Publish.Warning.Maxbitrate="\tНастройки кодирования: Уменьшите максимальный битрейт до %d\r\n\r\n"
+Settings.Publish.Warning.RecommendMainProfile="\tРасширенные настройки: Рекомендованный для этого сервиса профиль кодирования x264: 'main'\r\n\r\n"
 Settings.Publish.Warning.Keyint="\tРасширенные настройки: Установите интервал ключевых кадров на %d сек\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tНастройки кодирования: Уменьшите аудио битрейт до %d\r\n\r\n"
 
