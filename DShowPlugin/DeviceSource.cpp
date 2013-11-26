@@ -1559,8 +1559,19 @@ void DeviceSource::UpdateSettings()
     int newDeintFieldOrder      = data->GetInt(TEXT("deinterlacingFieldOrder"));
     int newDeintProcessor       = data->GetInt(TEXT("deinterlacingProcessor"));
 
-    if(newSoundOutputType != soundOutputType || imageCX != newCX || imageCY != newCY ||
-       frameInterval != newFrameInterval || newPreferredType != preferredOutputType ||
+    UINT64 frameIntervalDiff = 0;
+    bool bCheckSoundOutput = true;
+
+    if(newFrameInterval > frameInterval)
+        frameIntervalDiff = newFrameInterval - frameInterval;
+    else
+        frameIntervalDiff = frameInterval - newFrameInterval;
+
+    if(strNewAudioDevice == "Disable" && strAudioDevice == "Disable")
+        bCheckSoundOutput = false;
+
+    if((newSoundOutputType != soundOutputType && bCheckSoundOutput) || imageCX != newCX || imageCY != newCY ||
+       frameIntervalDiff >= 10 || newPreferredType != preferredOutputType ||
        !strDevice.CompareI(strNewDevice) || !strAudioDevice.CompareI(strNewAudioDevice) ||
        bNewCustom != bUseCustomResolution || bNewUseBuffering != bUseBuffering ||
        newGamma != gamma || newDeintType != deinterlacer.type ||
