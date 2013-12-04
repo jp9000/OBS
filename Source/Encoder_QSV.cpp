@@ -264,7 +264,7 @@ public:
             else if(width > 1920)
                 CrashError(TEXT("Your output resolution width of %u exceeds the maximum of 1920 supported by QuickSync on Sandy Bridge based processors"), width);
             else if(height > 1200)
-                CrashError(TEXT("Your output resolution height of %u exeeds the maximum of 1200 supported by QuickSync on Sandy Bridge based processors"), height);
+                CrashError(TEXT("Your output resolution height of %u exceeds the maximum of 1200 supported by QuickSync on Sandy Bridge based processors"), height);
         }
 
         bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR")) != 0;
