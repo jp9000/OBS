@@ -168,6 +168,23 @@ struct Encoder
         Parameters query = params;
         encoder.GetVideoParam(query);
 
+        switch (query->mfx.CodecProfile)
+        {
+        case MFX_PROFILE_AVC_BASELINE:
+        case MFX_PROFILE_AVC_CONSTRAINED_HIGH:
+        case MFX_PROFILE_AVC_CONSTRAINED_BASELINE:
+            init_res->bframe_delay = 0;
+
+        default:
+            init_res->bframe_delay = 1;
+        }
+
+        init_res->bframe_delay = min(init_res->bframe_delay,
+            min(query->mfx.GopRefDist > 1 ? (query->mfx.GopRefDist - 1) : 0,
+                query->mfx.GopPicSize > 2 ? (query->mfx.GopPicSize - 2) : 0));
+
+        init_res->frame_ticks = query->mfx.FrameInfo.FrameRateExtD / query->mfx.FrameInfo.FrameRateExtN * 90000;
+
         unsigned num_bitstreams = max(6, req.NumFrameSuggested + query->AsyncDepth),
                  num_surf = num_bitstreams * (using_d3d11 ? 2 : 1),
                  num_frames = using_d3d11 ? num_bitstreams : (num_surf + 3), //+NUM_OUT_BUFFERS
@@ -288,6 +305,7 @@ struct Encoder
             info.data_offset = task.bs.DataOffset;
             info.pic_struct = task.bs.PicStruct;
             info.frame_type = task.bs.FrameType;
+            info.decode_time_stamp = task.bs.DecodeTimeStamp;
 
             {
                 auto lock = lock_mutex(filled_bitstream);

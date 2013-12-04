@@ -46,6 +46,9 @@ struct init_response
 
     bool using_custom_impl;
 
+    uint16_t bframe_delay;
+    uint64_t frame_ticks;
+
     uint16_t bitstream_num,
              frame_num;
     uint32_t bitstream_size,
@@ -72,6 +75,7 @@ struct queued_frame
 struct bitstream_info
 {
     mfxU64 time_stamp;
+    mfxI64 decode_time_stamp;
     mfxU32 data_offset, data_length;
     mfxU16 pic_struct, frame_type;
 };
