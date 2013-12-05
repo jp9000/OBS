@@ -120,7 +120,9 @@ bool STDCALL OBS::ConfigGlobalSource(XElement *element, bool bCreating)
                 GlobalSourceInfo &info = App->globalSources[i];
                 if(info.strName.CompareI(lpGlobalSourceName) && info.source)
                 {
+                    App->EnterSceneMutex ();
                     info.source->UpdateSettings();
+                    App->LeaveSceneMutex ();
                     break;
                 }
             }
