@@ -183,7 +183,7 @@ struct Encoder
             min(query->mfx.GopRefDist > 1 ? (query->mfx.GopRefDist - 1) : 0,
                 query->mfx.GopPicSize > 2 ? (query->mfx.GopPicSize - 2) : 0));
 
-        init_res->frame_ticks = query->mfx.FrameInfo.FrameRateExtD / query->mfx.FrameInfo.FrameRateExtN * 90000;
+        init_res->frame_ticks = (uint64_t)((double)query->mfx.FrameInfo.FrameRateExtD / (double)query->mfx.FrameInfo.FrameRateExtN * 90000.);
 
         unsigned num_bitstreams = max(6, req.NumFrameSuggested + query->AsyncDepth),
                  num_surf = num_bitstreams * (using_d3d11 ? 2 : 1),

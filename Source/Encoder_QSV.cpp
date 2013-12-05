@@ -229,7 +229,10 @@ namespace
             }
 
             if (frames_out <= bframe_delay)
+            {
+                if (bframe_delay >= init_pts.Num()) CrashError(L"bframe_delay(%u) >= init_pts.Num(%u)", bframe_delay, init_pts.Num());
                 result = init_pts[(unsigned)frames_out] - init_pts[bframe_delay];
+            }
             else
             {
                 init_pts.Clear();
