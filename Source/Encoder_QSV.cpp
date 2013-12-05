@@ -226,11 +226,16 @@ namespace
                 int delay = (int)((bs_pts - bs_dts + frame_ticks / 2) / frame_ticks);
                 if (delay > 0)
                     bframe_delay = delay;
+                Log(L"Recalculated bframe_delay: %u, init_pts.Num: %u", bframe_delay, init_pts.Num());
             }
 
             if (frames_out <= bframe_delay)
             {
-                if (bframe_delay >= init_pts.Num()) CrashError(L"bframe_delay(%u) >= init_pts.Num(%u)", bframe_delay, init_pts.Num());
+                if (bframe_delay >= init_pts.Num())
+                {
+                    AppWarning(L"bframe_delay=%u >= init_pts.Num=%u", bframe_delay, init_pts.Num());
+                    bframe_delay = init_pts.Num() - 1;
+                }
                 result = init_pts[(unsigned)frames_out] - init_pts[bframe_delay];
             }
             else
