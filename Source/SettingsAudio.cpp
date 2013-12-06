@@ -63,6 +63,8 @@ void SettingsAudio::ApplySettings()
         strPlaybackDevice = storage->playbackDevices->devices[iPlaybackDevice].strID;
     }
 
+    AppConfig->SetInt(L"Audio", L"UseInputDevices", useInputDevices);
+
     AppConfig->SetString(TEXT("Audio"), TEXT("PlaybackDevice"), strPlaybackDevice);
 
     UINT iDevice = (UINT)SendMessage(GetDlgItem(hwnd, IDC_MICDEVICES), CB_GETCURSEL, 0, 0);
@@ -210,7 +212,7 @@ bool SettingsAudio::HasDefaults() const
     SetChangedSettings(true);
 }*/
 
-void SettingsAudio::RefreshDevices()
+void SettingsAudio::RefreshDevices(AudioDeviceType desktopDeviceType)
 {
     if (storage) {
         delete storage->recordingDevices;
@@ -227,10 +229,10 @@ void SettingsAudio::RefreshDevices()
     storage = new AudioDeviceStorage;
 
     storage->playbackDevices = new AudioDeviceList;
-    GetAudioDevices((*storage->playbackDevices), ADT_PLAYBACK, bDisplayConnectedOnly);
+    GetAudioDevices((*storage->playbackDevices), desktopDeviceType, bDisplayConnectedOnly, false);
 
     storage->recordingDevices = new AudioDeviceList;
-    GetAudioDevices((*storage->recordingDevices), ADT_RECORDING, bDisplayConnectedOnly);
+    GetAudioDevices((*storage->recordingDevices), ADT_RECORDING, bDisplayConnectedOnly, true);
 
     for(UINT i=0; i<storage->playbackDevices->devices.Num(); i++)
         SendMessage(hwndPlayback, CB_ADDSTRING, 0, (LPARAM)storage->playbackDevices->devices[i].strName.Array());
@@ -286,7 +288,11 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 bDisplayConnectedOnly = GlobalConfig->GetInt(L"Audio", L"DisplayConntectedOnly", true) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_CONNECTEDONLY), BM_SETCHECK, bDisplayConnectedOnly ? BST_CHECKED : BST_UNCHECKED, 0);
-                RefreshDevices();
+
+                useInputDevices = AppConfig->GetInt(L"Audio", L"UseInputDevices", false) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_USEINPUTDEVICES), BM_SETCHECK, useInputDevices ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                RefreshDevices(useInputDevices ? ADT_RECORDING : ADT_PLAYBACK);
 
                 //--------------------------------------------
 
@@ -389,10 +395,22 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                         break;
 
                     case IDC_CONNECTEDONLY:
-                        bDisplayConnectedOnly = !bDisplayConnectedOnly;
-                        GlobalConfig->SetInt(L"Audio", L"DisplayConntectedOnly", bDisplayConnectedOnly);
-                        RefreshDevices();
-                        break;
+                        {
+                            bDisplayConnectedOnly = !bDisplayConnectedOnly;
+                            GlobalConfig->SetInt(L"Audio", L"DisplayConntectedOnly", bDisplayConnectedOnly);
+
+                            RefreshDevices(useInputDevices ? ADT_RECORDING : ADT_PLAYBACK);
+                            SetChangedSettings(true);
+                            break;
+                        }
+
+                    case IDC_USEINPUTDEVICES:
+                        {
+                            useInputDevices = !useInputDevices;
+                            RefreshDevices(useInputDevices ? ADT_RECORDING : ADT_PLAYBACK);
+                            SetChangedSettings(true);
+                            break;
+                        }
 
                     case IDC_MICTIMEOFFSET_EDIT:
                     case IDC_DESKTOPBOOST_EDIT:

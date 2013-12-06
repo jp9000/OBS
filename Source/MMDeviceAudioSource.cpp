@@ -114,6 +114,8 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
         return false;
     }
 
+    bool useInputDevice = bMic || AppConfig->GetInt(L"Audio", L"UseInputDevices", false) != 0;
+
     bIsMic = bMic;
 
     if (bIsMic) {
@@ -122,7 +124,7 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
     }
 
     if (scmpi(lpID, TEXT("Default")) == 0)
-        err = mmEnumerator->GetDefaultAudioEndpoint(bMic ? eCapture : eRender, bMic ? eCommunications : eConsole, &mmDevice);
+        err = mmEnumerator->GetDefaultAudioEndpoint(useInputDevice ? eCapture : eRender, useInputDevice ? eCommunications : eConsole, &mmDevice);
     else
         err = mmEnumerator->GetDevice(lpID, &mmDevice);
 
@@ -219,7 +221,7 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
     inputSamplesPerSec    = pwfx->nSamplesPerSec;
     sampleWindowSize      = (inputSamplesPerSec/100);
 
-    DWORD flags = bMic ? 0 : AUDCLNT_STREAMFLAGS_LOOPBACK;
+    DWORD flags = useInputDevice ? 0 : AUDCLNT_STREAMFLAGS_LOOPBACK;
 
     err = mmClient->Initialize(AUDCLNT_SHAREMODE_SHARED, flags, ConvertMSTo100NanoSec(5000), 0, pwfx, NULL);
     //err = AUDCLNT_E_UNSUPPORTED_FORMAT;

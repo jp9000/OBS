@@ -79,7 +79,7 @@ enum AudioDeviceType {
     ADT_RECORDING
 };
 
-void GetAudioDevices(AudioDeviceList &deviceList, AudioDeviceType deviceType, bool ConntectedOnly=false);
+void GetAudioDevices(AudioDeviceList &deviceList, AudioDeviceType deviceType, bool ConntectedOnly=false, bool canDisable=false);
 bool GetDefaultMicID(String &strVal);
 bool GetDefaultSpeakerID(String &strVal);
 

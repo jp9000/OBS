@@ -307,7 +307,8 @@ retryHookTestV2:
     //------------------------------------------------------------------
 
     AudioDeviceList playbackDevices;
-    GetAudioDevices(playbackDevices, ADT_PLAYBACK);
+    bool useInputDevices = AppConfig->GetInt(L"Audio", L"UseInputDevices", false) != 0;
+    GetAudioDevices(playbackDevices, useInputDevices ? ADT_RECORDING : ADT_PLAYBACK);
 
     String strPlaybackDevice = AppConfig->GetString(TEXT("Audio"), TEXT("PlaybackDevice"), TEXT("Default"));
     if(strPlaybackDevice.IsEmpty() || !playbackDevices.HasID(strPlaybackDevice))
@@ -326,7 +327,7 @@ retryHookTestV2:
     }
 
     AudioDeviceList audioDevices;
-    GetAudioDevices(audioDevices, ADT_RECORDING);
+    GetAudioDevices(audioDevices, ADT_RECORDING, false, true);
 
     String strDevice = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), NULL);
     if(strDevice.IsEmpty() || !audioDevices.HasID(strDevice))
@@ -501,7 +502,8 @@ retryHookTestV2:
 
     //-------------------------------------------------------------
 
-    StartBlankSoundPlayback(strPlaybackDevice);
+    if (!useInputDevices)
+        StartBlankSoundPlayback(strPlaybackDevice);
 
     //-------------------------------------------------------------
 
@@ -729,7 +731,7 @@ void OBS::Stop()
     //-------------------------------------------------------------
 
     AudioDeviceList audioDevices;
-    GetAudioDevices(audioDevices, ADT_RECORDING);
+    GetAudioDevices(audioDevices, ADT_RECORDING, false, true);
 
     String strDevice = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), NULL);
     if(strDevice.IsEmpty() || !audioDevices.HasID(strDevice))

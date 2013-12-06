@@ -25,7 +25,7 @@
 #include <Functiondiscoverykeys_devpkey.h>
 
 
-void GetAudioDevices(AudioDeviceList &deviceList, AudioDeviceType deviceType, bool bConnectedOnly)
+void GetAudioDevices(AudioDeviceList &deviceList, AudioDeviceType deviceType, bool bConnectedOnly, bool canDisable)
 {
     const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
     const IID IID_IMMDeviceEnumerator    = __uuidof(IMMDeviceEnumerator);
@@ -43,10 +43,10 @@ void GetAudioDevices(AudioDeviceList &deviceList, AudioDeviceType deviceType, bo
 
     AudioDeviceInfo *info;
 
-    if(deviceType == ADT_RECORDING) {
-      info = deviceList.devices.CreateNew();
-      info->strID = TEXT("Disable");
-      info->strName = Str("Disable");
+    if (canDisable) {
+        info = deviceList.devices.CreateNew();
+        info->strID = TEXT("Disable");
+        info->strName = Str("Disable");
     }
 
     info = deviceList.devices.CreateNew();
