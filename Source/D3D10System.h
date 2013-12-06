@@ -232,6 +232,8 @@ protected:
 
     void UpdateParams();
 
+    static void DestroyCache();
+
 public:
     ~D3D10Shader();
 
