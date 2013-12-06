@@ -33,41 +33,6 @@ void D3D10Shader::LoadDefaults()
     }
 }
 
-void D3D10Shader::DestroyCache()
-{
-    String strCacheFiles[2];
-    
-    strCacheFiles[0] << OBSGetAppDataPath() << TEXT("\\shaderCache\\shaders");
-    strCacheFiles[1] << OBSGetAppDataPath() << TEXT("\\shaderCache\\plugins\\DShowPlugin\\shaders");
-    
-    for (int i = 0; i < _countof(strCacheFiles); i++)
-    {
-        String searchPath;
-        OSFindData ofd;
-
-        searchPath = FormattedString(TEXT("%s\\*.blob"), strCacheFiles[i].Array());
-
-        HANDLE hFind = OSFindFirstFile(searchPath, ofd);
-        if(hFind)
-        {
-            int numLogs = 0;
-            String strFirstLog;
-
-            do
-            {
-                if(ofd.bDirectory)
-                    continue;
-
-                String shaderPath = FormattedString(TEXT("%s\\%s"), strCacheFiles[i].Array(), ofd.fileName);
-
-                OSDeleteFile(shaderPath);
-            } while(OSFindNextFile(hFind, ofd));
-
-            OSFindClose(hFind);      
-        }
-    }
-}
-
 bool D3D10Shader::ProcessData(ShaderProcessor &processor, CTSTR lpFileName)
 {
     Params.TransferFrom(processor.Params);
@@ -114,6 +79,26 @@ bool D3D10Shader::ProcessData(ShaderProcessor &processor, CTSTR lpFileName)
     return true;
 }
 
+namespace
+{
+    String buildCacheName(CTSTR baseName)
+    {
+        DeviceOutputs outputs;
+        GetDisplayDevices(outputs);
+
+        UINT adapterID = GlobalConfig->GetInt(TEXT("Video"), TEXT("Adapter"), 0);
+
+        if (adapterID >= outputs.devices.Num()) adapterID = 0;
+
+        return FormattedString(TEXT("%s/%s.blob"), outputs.devices[adapterID].strDevice.Array(), baseName).FindReplace(TEXT("\\"), TEXT("/"));
+    }
+
+    String buildCachePath(String cacheName)
+    {
+        return FormattedString(L"%s/shaderCache/%s", OBSGetAppDataPath(), cacheName.Array());
+    }
+}
+
 Shader* D3D10VertexShader::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
 {
     String errorString;
@@ -127,12 +112,14 @@ Shader* D3D10VertexShader::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
     D3D10System *d3d10Sys = static_cast<D3D10System*>(GS);
     LPCSTR lpVSType = d3d10Sys->bDisableCompatibilityMode ? "vs_4_0" : "vs_4_0_level_9_3";
 
-    String cacheFilename = FormattedString(TEXT("%s/shaderCache/%s.blob"), OBSGetAppDataPath(), lpFileName).FindReplace(TEXT("\\"), TEXT("/"));
+    String cacheName = buildCacheName(lpFileName);
+
+    String cacheFilename = buildCachePath(cacheName);
 
     List<BYTE> shaderBuffer;
     LPVOID shaderData;
     SIZE_T shaderDataSize;
-    BOOL destroyed_cache = FALSE;
+    bool destroyed_cache = false;
 
     ID3D10Blob *errorMessages = NULL, *shaderBlob = NULL;
 
@@ -170,9 +157,11 @@ retryShaderLoad:
         shaderData = shaderBlob->GetBufferPointer();
         shaderDataSize = shaderBlob->GetBufferSize();
 
-        CreatePath(GetPathDirectory(cacheFilename));
-        XFile cacheFile(cacheFilename, XFILE_WRITE, XFILE_CREATEALWAYS);
-        cacheFile.Write(shaderData, (DWORD)shaderDataSize);
+        if (CreatePath(GetPathDirectory(cacheFilename)))
+        {
+            XFile cacheFile(cacheFilename, XFILE_WRITE, XFILE_CREATEALWAYS);
+            cacheFile.Write(shaderData, (DWORD)shaderDataSize);
+        }
     }
     else
     {
@@ -196,9 +185,9 @@ retryShaderLoad:
             CrashError(TEXT("Unable to create vertex shader '%s', result = %08lX"), lpFileName, err);
         else
         {
-            //Might be loading corrupt shader cache blobs, nuke them all and try again.
-            DestroyCache ();
-            destroyed_cache = TRUE;
+            Log(L"Failed to load cached shader '%s', retrying", cacheName.Array());
+            OSDeleteFile(cacheFilename);
+            destroyed_cache = true;
             goto retryShaderLoad;
         }
         SafeRelease(shaderBlob);
@@ -249,12 +238,14 @@ Shader* D3D10PixelShader::CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)
     D3D10System *d3d10Sys = static_cast<D3D10System*>(GS);
     LPCSTR lpPSType = d3d10Sys->bDisableCompatibilityMode ? "ps_4_0" : "ps_4_0_level_9_3";
 
-    String cacheFilename = FormattedString(TEXT("%s/shaderCache/%s.blob"), OBSGetAppDataPath(), lpFileName).FindReplace(TEXT("\\"), TEXT("/"));
+    String cacheName = buildCacheName(lpFileName);
+
+    String cacheFilename = buildCachePath(cacheName);
 
     List<BYTE> shaderBuffer;
     LPVOID shaderData;
     SIZE_T shaderDataSize;
-    BOOL destroyed_cache = FALSE;
+    bool destroyed_cache = false;
 
     ID3D10Blob *errorMessages = NULL, *shaderBlob = NULL;
     
@@ -292,9 +283,11 @@ retryShaderLoad:
         shaderData = shaderBlob->GetBufferPointer();
         shaderDataSize = shaderBlob->GetBufferSize();
         
-        CreatePath(GetPathDirectory(cacheFilename));
-        XFile cacheFile(cacheFilename, XFILE_WRITE, XFILE_CREATEALWAYS);
-        cacheFile.Write(shaderData, (DWORD)shaderDataSize);
+        if (CreatePath(GetPathDirectory(cacheFilename)))
+        {
+            XFile cacheFile(cacheFilename, XFILE_WRITE, XFILE_CREATEALWAYS);
+            cacheFile.Write(shaderData, (DWORD)shaderDataSize);
+        }
     }
     else
     {
@@ -317,9 +310,9 @@ retryShaderLoad:
             CrashError(TEXT("Unable to create pixel shader '%s', result = %08lX"), lpFileName, err);
         else
         {
-            //Might be loading corrupt shader cache blobs, nuke them all and try again.
-            DestroyCache ();
-            destroyed_cache = TRUE;
+            Log(L"Failed to load cached shader '%s', retrying", cacheName.Array());
+            OSDeleteFile(cacheFilename);
+            destroyed_cache = true;
             goto retryShaderLoad;
         }
         SafeRelease(shaderBlob);
