@@ -1205,12 +1205,14 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 BOOL  bUseChromaKey         = configData->data->GetInt(TEXT("useChromaKey"), 0);
                 BOOL  bUsePointFiltering    = configData->data->GetInt(TEXT("usePointFiltering"), 0);
+                BOOL  bPreserveSourceSize   = configData->data->GetInt(TEXT("preserveSourceSize"), 0);
                 DWORD keyColor              = configData->data->GetInt(TEXT("keyColor"), 0xFFFFFFFF);
                 UINT  similarity            = configData->data->GetInt(TEXT("keySimilarity"), 0);
                 UINT  blend                 = configData->data->GetInt(TEXT("keyBlend"), 80);
                 UINT  gamma                 = configData->data->GetInt(TEXT("keySpillReduction"), 50);
 
                 SendMessage(GetDlgItem(hwnd, IDC_POINTFILTERING), BM_SETCHECK, bUsePointFiltering ? BST_CHECKED : BST_UNCHECKED, 0);
+                SendMessage(GetDlgItem(hwnd, IDC_PRESERVESIZE), BM_SETCHECK, bPreserveSourceSize ? BST_CHECKED : BST_UNCHECKED, 0);
                 SendMessage(GetDlgItem(hwnd, IDC_USECHROMAKEY), BM_SETCHECK, bUseChromaKey ? BST_CHECKED : BST_UNCHECKED, 0);
                 CCSetColor(GetDlgItem(hwnd, IDC_COLOR), keyColor);
 
@@ -1961,6 +1963,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         BOOL bFlipHorizontal = SendMessage(GetDlgItem(hwnd, IDC_FLIPIMAGEH), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         BOOL bCustomResolution = SendMessage(GetDlgItem(hwnd, IDC_CUSTOMRESOLUTION), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         BOOL bUsePointFiltering = SendMessage(GetDlgItem(hwnd, IDC_POINTFILTERING), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        BOOL bPreserveSourceSize = SendMessage(GetDlgItem(hwnd, IDC_PRESERVESIZE), BM_GETCHECK, 0, 0) == BST_CHECKED;
 
                         int deintId = (int)SendMessage(GetDlgItem(hwnd, IDC_DEINTERLACELIST), CB_GETCURSEL, 0, 0);
                         deinterlacingConfig = deinterlacerConfigs[deintId];
@@ -1974,6 +1977,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         configData->data->SetString(TEXT("deviceID"), configData->deviceIDList[deviceID]);
 
                         configData->data->SetInt(TEXT("customResolution"), bCustomResolution);
+                        configData->data->SetFloat(TEXT("scaleFactor_x"), (float)resolution.cx / configData->data->GetFloat(TEXT("resolutionWidth"), 1.0f));
+                        configData->data->SetFloat(TEXT("scaleFactor_y"), (float)resolution.cy / configData->data->GetFloat(TEXT("resolutionHeight"), 1.0f));
                         configData->data->SetInt(TEXT("resolutionWidth"), resolution.cx);
                         configData->data->SetInt(TEXT("resolutionHeight"), resolution.cy);
                         configData->data->SetInt(TEXT("frameInterval"), UINT(frameInterval));
@@ -1981,6 +1986,9 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         configData->data->SetInt(TEXT("flipImageHorizontal"), bFlipHorizontal);
                         configData->data->SetInt(TEXT("usePointFiltering"), bUsePointFiltering);
                         configData->data->SetInt(TEXT("gamma"), (int)SendMessage(GetDlgItem(hwnd, IDC_GAMMA), TBM_GETPOS, 0, 0));
+
+                        configData->data->SetInt(TEXT("preserveSourceSize"), bPreserveSourceSize);
+                        configData->data->SetFloat(TEXT("scaleRatio"), (float)resolution.cx / configData->data->GetFloat(TEXT("resolutionWidth"), 1.0f));
                         
                         configData->data->SetInt(TEXT("deinterlacingType"), deinterlacingConfig.type);
                         configData->data->SetInt(TEXT("deinterlacingFieldOrder"), deinterlacingConfig.fieldOrder);
@@ -2090,6 +2098,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                             source->SetInt(TEXT("deinterlacingFieldOrder"),         configData->data->GetInt(TEXT("deinterlacingFieldOrder"), 0));
                             source->SetInt(TEXT("deinterlacingProcessor"),          configData->data->GetInt(TEXT("deinterlacingProcessor"), 0));
                             source->SetInt(TEXT("deinterlacingDoublesFramerate"),   configData->data->GetInt(TEXT("deinterlacingDoublesFramerate"), 0));
+
+                            source->SetInt(TEXT("preserveSourceSize"),              configData->data->GetInt(TEXT("preserveSourceSize"), 0));
                         }
                     }
 
@@ -2121,8 +2131,16 @@ bool STDCALL ConfigureDShowSource(XElement *element, bool bCreating)
 
     if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_CONFIG), API->GetMainWindow(), ConfigureDialogProc, (LPARAM)&configData) == IDOK)
     {
-        element->SetInt(TEXT("cx"), data->GetInt(TEXT("resolutionWidth")));
-        element->SetInt(TEXT("cy"), data->GetInt(TEXT("resolutionHeight")));
+        bool bPreserveSourceSize = data->GetInt(TEXT("preserveSourceSize")) != 0;
+        float scaleFactor_x = 1.0f, scaleFactor_y = 1.0f;
+
+        if(bPreserveSourceSize) {
+            scaleFactor_x = data->GetFloat(TEXT("scaleFactor_x"), 1.0f);
+            scaleFactor_y = data->GetFloat(TEXT("scaleFactor_y"), 1.0f);
+        }
+
+        element->SetFloat(TEXT("cx"), data->GetFloat(TEXT("resolutionWidth")) / scaleFactor_x);
+        element->SetFloat(TEXT("cy"), data->GetFloat(TEXT("resolutionHeight")) / scaleFactor_y);
 
         return true;
     }

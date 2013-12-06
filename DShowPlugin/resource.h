@@ -55,6 +55,7 @@
 #define IDC_DELAY                       1038
 #define IDC_GAMMA                       1039
 #define IDC_BFF                         1040
+#define IDC_PRESERVESIZE                1042
 #define IDC_GPUDEINT                    1041
 #define IDC_GAMMAVAL                    1151
 

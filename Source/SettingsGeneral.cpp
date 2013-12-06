@@ -93,6 +93,14 @@ void SettingsGeneral::ApplySettings()
     
     App->bEnableProjectorCursor = (SendMessage(GetDlgItem(hwnd, IDC_ENABLEPROJECTORCURSOR), BM_GETCHECK, 0, 0) == BST_CHECKED);
     GlobalConfig->SetInt(L"General", L"EnableProjectorCursor", App->bEnableProjectorCursor);
+
+    HWND hwndTemp = GetDlgItem(hwnd, IDC_LANGUAGE);
+    int curSel = (int)SendMessage(hwndTemp, CB_GETCURSEL, 0, 0);
+    if(curSel != CB_ERR)
+    {
+        String strLanguageCode = (CTSTR)SendMessage(hwndTemp, CB_GETITEMDATA, curSel, 0);
+        GlobalConfig->SetString(TEXT("General"), TEXT("Language"), strLanguageCode);
+    }
 }
 
 void SettingsGeneral::CancelSettings()
@@ -194,13 +202,7 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                         SetWindowText(GetDlgItem(hwnd, IDC_INFO), Str("Settings.General.Restart"));
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-
-                        int curSel = (int)SendMessage(hwndTemp, CB_GETCURSEL, 0, 0);
-                        if(curSel != CB_ERR)
-                        {
-                            String strLanguageCode = (CTSTR)SendMessage(hwndTemp, CB_GETITEMDATA, curSel, 0);
-                            GlobalConfig->SetString(TEXT("General"), TEXT("Language"), strLanguageCode);
-                        }
+                        SetChangedSettings(true);
                         break;
                     }
 

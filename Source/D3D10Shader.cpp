@@ -33,6 +33,41 @@ void D3D10Shader::LoadDefaults()
     }
 }
 
+void D3D10Shader::DestroyCache()
+{
+    String strCacheFiles[2];
+    
+    strCacheFiles[0] << OBSGetAppDataPath() << TEXT("\\shaderCache\\shaders");
+    strCacheFiles[1] << OBSGetAppDataPath() << TEXT("\\shaderCache\\plugins\\DShowPlugin\\shaders");
+    
+    for (int i = 0; i < _countof(strCacheFiles); i++)
+    {
+        String searchPath;
+        OSFindData ofd;
+
+        searchPath = FormattedString(TEXT("%s\\*.blob"), strCacheFiles[i].Array());
+
+        HANDLE hFind = OSFindFirstFile(searchPath, ofd);
+        if(hFind)
+        {
+            int numLogs = 0;
+            String strFirstLog;
+
+            do
+            {
+                if(ofd.bDirectory)
+                    continue;
+
+                String shaderPath = FormattedString(TEXT("%s\\%s"), strCacheFiles[i].Array(), ofd.fileName);
+
+                OSDeleteFile(shaderPath);
+            } while(OSFindNextFile(hFind, ofd));
+
+            OSFindClose(hFind);      
+        }
+    }
+}
+
 bool D3D10Shader::ProcessData(ShaderProcessor &processor, CTSTR lpFileName)
 {
     Params.TransferFrom(processor.Params);
@@ -69,7 +104,7 @@ bool D3D10Shader::ProcessData(ShaderProcessor &processor, CTSTR lpFileName)
         HRESULT err = GetD3D()->CreateBuffer(&bd, NULL, &constantBuffer);
         if(FAILED(err))
         {
-            AppWarning(TEXT("Unable to create constant buffer for shdaer '%s', result = %08lX"), lpFileName, err);
+            AppWarning(TEXT("Unable to create constant buffer for shader '%s', result = %08lX"), lpFileName, err);
             return false;
         }
     }
@@ -97,10 +132,13 @@ Shader* D3D10VertexShader::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
     List<BYTE> shaderBuffer;
     LPVOID shaderData;
     SIZE_T shaderDataSize;
+    BOOL destroyed_cache = FALSE;
 
     ID3D10Blob *errorMessages = NULL, *shaderBlob = NULL;
 
     HRESULT err;
+
+retryShaderLoad:
 
     if(!OSFileExists(cacheFilename) || OSGetFileModificationTime(lpFileName) > OSGetFileModificationTime(cacheFilename))
     {
@@ -154,7 +192,15 @@ Shader* D3D10VertexShader::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
     err = GetD3D()->CreateVertexShader(shaderData, shaderDataSize, &vShader);
     if(FAILED(err))
     {
-        CrashError(TEXT("Unable to create vertex shader '%s', result = %08lX"), lpFileName, err);
+        if (destroyed_cache)
+            CrashError(TEXT("Unable to create vertex shader '%s', result = %08lX"), lpFileName, err);
+        else
+        {
+            //Might be loading corrupt shader cache blobs, nuke them all and try again.
+            DestroyCache ();
+            destroyed_cache = TRUE;
+            goto retryShaderLoad;
+        }
         SafeRelease(shaderBlob);
         return NULL;
     }
@@ -208,10 +254,13 @@ Shader* D3D10PixelShader::CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)
     List<BYTE> shaderBuffer;
     LPVOID shaderData;
     SIZE_T shaderDataSize;
+    BOOL destroyed_cache = FALSE;
 
     ID3D10Blob *errorMessages = NULL, *shaderBlob = NULL;
     
     HRESULT err;
+
+retryShaderLoad:
 
     if(!OSFileExists(cacheFilename) || OSGetFileModificationTime(lpFileName) > OSGetFileModificationTime(cacheFilename))
     {
@@ -264,7 +313,15 @@ Shader* D3D10PixelShader::CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)
     err = GetD3D()->CreatePixelShader(shaderData, shaderDataSize, &pShader);
     if(FAILED(err))
     {
-        CrashError(TEXT("Unable to create pixel shader '%s', result = %08lX"), lpFileName, err);
+        if (destroyed_cache)
+            CrashError(TEXT("Unable to create pixel shader '%s', result = %08lX"), lpFileName, err);
+        else
+        {
+            //Might be loading corrupt shader cache blobs, nuke them all and try again.
+            DestroyCache ();
+            destroyed_cache = TRUE;
+            goto retryShaderLoad;
+        }
         SafeRelease(shaderBlob);
         return NULL;
     }

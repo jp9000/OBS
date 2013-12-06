@@ -440,6 +440,7 @@ retryHookTestV2:
         OSFindData ofd;
         HANDLE hFind = NULL;
         bool bUseDateTimeName = true;
+        bool bIsDirectory = true;
         bool bOverwrite = GlobalConfig->GetInt(L"General", L"OverwriteRecordings", false) != 0;
 
         if(!bOverwrite && (hFind = OSFindFirstFile(strOutputFile, ofd)))
@@ -460,6 +461,7 @@ retryHookTestV2:
                 strOutputFile = strNewFilePath;
 
                 bUseDateTimeName = false;
+                bIsDirectory = false;
             }
 
             if(ofd.bDirectory)
@@ -477,8 +479,12 @@ retryHookTestV2:
                 SYSTEMTIME st;
                 GetLocalTime(&st);
 
-                String strDirectory = GetPathDirectory(strOutputFile),
-                       extension = GetPathExtension(strOutputFile);
+                String strDirectory = GetPathDirectory(strOutputFile);
+                String extension;
+
+                if(!bIsDirectory)
+                    extension = GetPathExtension(strOutputFile);
+
                 if(extension.IsEmpty())
                     extension = TEXT("mp4");
                 strOutputFile = FormattedString(TEXT("%s/%u-%02u-%02u-%02u%02u-%02u.%s"), strDirectory.Array(), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, extension.Array());

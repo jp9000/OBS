@@ -140,19 +140,116 @@ namespace
         return true;
     }
 
-    bool is_sandy_bridge()
+    enum qsv_cpu_platform
+    {
+        QSV_CPU_PLATFORM_UNKNOWN,
+        QSV_CPU_PLATFORM_SNB,
+        QSV_CPU_PLATFORM_IVB,
+        QSV_CPU_PLATFORM_HSW
+    };
+
+    qsv_cpu_platform qsv_get_cpu_platform()
     {
         int cpuInfo[4];
         __cpuid(cpuInfo, 1);
-        BYTE model       = ((cpuInfo[0]>>4) & 0xF) + ((cpuInfo[0]>>12) & 0xF0);
-        BYTE family      = ((cpuInfo[0]>>8) & 0xF) + ((cpuInfo[0]>>20) & 0xFF);
+        BYTE model = ((cpuInfo[0] >> 4) & 0xF) + ((cpuInfo[0] >> 12) & 0xF0);
+        BYTE family = ((cpuInfo[0] >> 8) & 0xF) + ((cpuInfo[0] >> 20) & 0xFF);
 
         // See Intel 64 and IA-32 Architectures Software Developer's Manual, Vol 3C Table 35-1
-        if(family != 6)
-            return false;
+        if (family != 6)
+            return QSV_CPU_PLATFORM_UNKNOWN;
 
-        return model == 0x2A || model == 0x2D;
+        switch (model)
+        {
+        case 0x2a:
+        case 0x2d:
+            return QSV_CPU_PLATFORM_SNB;
+
+        case 0x3a:
+        case 0x3e:
+            return QSV_CPU_PLATFORM_IVB;
+
+        case 0x3c:
+        case 0x45:
+        case 0x46:
+            return QSV_CPU_PLATFORM_HSW;
+        }
+
+        return QSV_CPU_PLATFORM_UNKNOWN;
     }
+
+    struct DTSGenerator
+    {
+        bool ver_1_6;
+        bool bframes_pyramid;
+        unsigned bframe_delay;
+        bool use_bs_dts;
+
+        uint64_t frame_ticks;
+
+        uint64_t frames_out;
+
+        List<mfxI64> dts;
+
+        List<mfxI64> init_pts;
+
+        DTSGenerator() : ver_1_6(false), bframes_pyramid(false), bframe_delay(0), use_bs_dts(false) {}
+
+        void Init(unsigned bframe_delay_, mfxVersion &ver, bool use_cfr, uint64_t frame_ticks_)
+        {
+            bframe_delay = bframe_delay_;
+            ver_1_6 = (ver.Major >= 1 && ver.Minor >= 6);
+            bframes_pyramid = qsv_get_cpu_platform() >= QSV_CPU_PLATFORM_HSW;
+            use_bs_dts = ver_1_6 && use_cfr;
+            frame_ticks = frame_ticks_;
+        }
+
+        void add(uint64_t ts)
+        {
+            if (use_bs_dts)
+                return;
+
+            if (init_pts.Num() || frames_out == 0)
+                init_pts << ts;
+            dts << ts;
+        }
+
+        int64_t operator()(uint64_t bs_pts, int64_t bs_dts)
+        {
+            if (use_bs_dts)
+                return bs_dts;
+
+            int64_t result = bs_dts;
+
+            if (frames_out == 0 && ver_1_6 && bframes_pyramid)
+            {
+                int delay = (int)((bs_pts - bs_dts + frame_ticks / 2) / frame_ticks);
+                if (delay > 0)
+                    bframe_delay = delay;
+                Log(L"Recalculated bframe_delay: %u, init_pts.Num: %u", bframe_delay, init_pts.Num());
+            }
+
+            if (frames_out <= bframe_delay)
+            {
+                if (bframe_delay >= init_pts.Num())
+                {
+                    AppWarning(L"bframe_delay=%u >= init_pts.Num=%u", bframe_delay, init_pts.Num());
+                    bframe_delay = init_pts.Num() - 1;
+                }
+                result = init_pts[(unsigned)frames_out] - init_pts[bframe_delay];
+            }
+            else
+            {
+                init_pts.Clear();
+                result = dts[0];
+                dts.Remove(0);
+            }
+            //Log(L"bs_dts=%u dts.Num=%u frames_out=%u bframe_delay=%u result=%lli bs_pts=%llu bs_dts=%lli", use_bs_dts, dts.Num(), frames_out, bframe_delay, result, bs_pts, bs_dts);
+
+            frames_out += 1;
+            return result;
+        }
+    };
 }
 
 bool CheckQSVHardwareSupport(bool log=true)
@@ -224,6 +321,9 @@ class QSVEncoder : public VideoEncoder
 
     List<mfxFrameData> frames;
 
+    uint64_t out_frames;
+    DTSGenerator dts_gen;
+
     mfxU16 target_usage,
            max_bitrate;
 
@@ -257,14 +357,14 @@ public:
     QSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitrate, int bufferSize, bool bUseCFR_)
         : fps(fps), bFirstFrameProcessed(false), width(width), height(height), max_bitrate(maxBitrate)
     {
-        if(is_sandy_bridge())
+        if(qsv_get_cpu_platform() <= QSV_CPU_PLATFORM_IVB)
         {
             if(width > 1920 && height > 1200)
-                CrashError(TEXT("Your output resolution of %ux%u exceeds the maximum of 1920x1200 supported by QuickSync on Sandy Bridge based processors"), width, height);
+                CrashError(TEXT("Your output resolution of %ux%u exceeds the maximum of 1920x1200 supported by QuickSync on Sandy Bridge and Ivy Bridge based processors"), width, height);
             else if(width > 1920)
-                CrashError(TEXT("Your output resolution width of %u exceeds the maximum of 1920 supported by QuickSync on Sandy Bridge based processors"), width);
+                CrashError(TEXT("Your output resolution width of %u exceeds the maximum of 1920 supported by QuickSync on Sandy Bridge and Ivy Bridge based processors"), width);
             else if(height > 1200)
-                CrashError(TEXT("Your output resolution height of %u exeeds the maximum of 1200 supported by QuickSync on Sandy Bridge based processors"), height);
+                CrashError(TEXT("Your output resolution height of %u exceeds the maximum of 1200 supported by QuickSync on Sandy Bridge and Ivy Bridge based processors"), height);
         }
 
         bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR")) != 0;
@@ -474,6 +574,8 @@ public:
 
         filled_bitstream_waiter = process_waiter;
         filled_bitstream_waiter.push_back(filled_bitstream.signal_);
+
+        dts_gen.Init(response->bframe_delay, ver, bUseCFR_, response->frame_ticks);
     }
 
     ~QSVEncoder()
@@ -510,6 +612,7 @@ public:
             bs.DataOffset = info.data_offset;
             bs.PicStruct = info.pic_struct;
             bs.FrameType = info.frame_type;
+            bs.DecodeTimeStamp = dts_gen(info.time_stamp, info.decode_time_stamp);
         }
         start = bs.Data + bs.DataOffset;
         end = bs.Data + bs.DataOffset + bs.DataLength;
@@ -552,10 +655,10 @@ public:
         packets.Clear();
         ClearPackets();
 
-        INT64 dts = outputTimestamp;
+        INT64 dts = msFromTimestamp(bs.DecodeTimeStamp);
 
         INT64 in_pts = msFromTimestamp(task.surf.Data.TimeStamp),
-            out_pts = msFromTimestamp(bs.TimeStamp);
+              out_pts = msFromTimestamp(bs.TimeStamp);
 
         if(!bFirstFrameProcessed && nalNum)
         {
@@ -765,8 +868,12 @@ public:
         Log(TEXT("Error: all frames are in use"));
     }
 
-    void QueueEncodeTask(mfxFrameSurface1& pic)
+    void QueueEncodeTask(mfxFrameSurface1 *pic)
     {
+        if (!pic)
+            return;
+
+        profileSegment("QueueEncodeTask");
         encode_task& task = encode_tasks[idle_tasks[0]];
 
         auto lock_queue = lock_mutex(frame_queue);
@@ -784,8 +891,9 @@ public:
             info.request_keyframe = bRequestKeyframe;
             bRequestKeyframe = false;
 
-            info.timestamp = task.surf.Data.TimeStamp = timestampFromMS(pic.Data.TimeStamp);
-            info.frame_index = (uint32_t)pic.Data.MemId-1;
+            info.timestamp = task.surf.Data.TimeStamp = timestampFromMS(pic->Data.TimeStamp);
+            dts_gen.add(info.timestamp);
+            info.frame_index = (uint32_t)pic->Data.MemId-1;
             auto lock_status = lock_mutex(frame_buff_status);
             frame_buff_status[info.frame_index] += 1;
             frame_queue.signal();
@@ -810,6 +918,13 @@ public:
             }
         }
 
+        bool queued = false;
+        if (idle_tasks.Num())
+        {
+            QueueEncodeTask((mfxFrameSurface1*)picInPtr);
+            queued = true;
+        }
+
         profileIn("ProcessEncodedFrame");
         do
         {
@@ -818,11 +933,9 @@ public:
         while(!idle_tasks.Num());
         profileOut;
 
-        if(picInPtr)
-        {
-            profileSegment("QueueEncodeTask");
-            QueueEncodeTask(*(mfxFrameSurface1*)picInPtr);
-        }
+        if(!queued)
+            QueueEncodeTask((mfxFrameSurface1*)picInPtr);
+
         return true;
     }
 
