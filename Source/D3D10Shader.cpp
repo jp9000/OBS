@@ -33,39 +33,38 @@ void D3D10Shader::LoadDefaults()
     }
 }
 
-void D3D10Shader::DestroyCache()
+namespace
 {
-    String strCacheFiles[2];
-    
-    strCacheFiles[0] << OBSGetAppDataPath() << TEXT("\\shaderCache\\shaders");
-    strCacheFiles[1] << OBSGetAppDataPath() << TEXT("\\shaderCache\\plugins\\DShowPlugin\\shaders");
-    
-    for (int i = 0; i < _countof(strCacheFiles); i++)
+    void DeleteFilesRecursively(String path)
     {
-        String searchPath;
         OSFindData ofd;
 
-        searchPath = FormattedString(TEXT("%s\\*.blob"), strCacheFiles[i].Array());
+        HANDLE hFind = OSFindFirstFile(path + "/*", ofd);
+        if (!hFind)
+            return;
 
-        HANDLE hFind = OSFindFirstFile(searchPath, ofd);
-        if(hFind)
+        do
         {
-            int numLogs = 0;
-            String strFirstLog;
-
-            do
+            String fullPath = FormattedString(L"%s/%s", path.Array(), ofd.fileName);
+            if (ofd.bDirectory)
             {
-                if(ofd.bDirectory)
-                    continue;
+                DeleteFilesRecursively(fullPath);
+                continue;
+            }
 
-                String shaderPath = FormattedString(TEXT("%s\\%s"), strCacheFiles[i].Array(), ofd.fileName);
+            OSDeleteFile(fullPath);
+        } while (OSFindNextFile(hFind, ofd));
 
-                OSDeleteFile(shaderPath);
-            } while(OSFindNextFile(hFind, ofd));
-
-            OSFindClose(hFind);      
-        }
+        OSFindClose(hFind);
     }
+}
+
+void D3D10Shader::DestroyCache()
+{    
+    String cachePath;
+    cachePath << OBSGetAppDataPath() << TEXT("/shaderCache");
+
+    DeleteFilesRecursively(cachePath);
 }
 
 bool D3D10Shader::ProcessData(ShaderProcessor &processor, CTSTR lpFileName)
