@@ -55,14 +55,21 @@ void SetupDXGIStuff(IDXGISwapChain *swap)
     IUnknown *deviceUnk, *device;
     if(SUCCEEDED(swap->GetDevice(__uuidof(IUnknown), (void**)&deviceUnk)))
     {
-        if(SUCCEEDED(deviceUnk->QueryInterface(__uuidof(ID3D10Device), (void**)&device)))
+        bool d3d11only = false;
+
+        /* CoD: ghosts hack because apparently on nvidia GPUs it has some d3d10 context open */
+        if (_strcmpi(processName, "iw6sp64_ship.exe") == 0 ||
+            _strcmpi(processName, "iw6mp64_ship.exe") == 0)
+            d3d11only = true;
+
+        if(!d3d11only && SUCCEEDED(deviceUnk->QueryInterface(__uuidof(ID3D10Device), (void**)&device)))
         {
             logOutput << CurrentTimeString() << "DXGI: Found D3D 10" << endl;
             SetupD3D10(swap);
             captureProc = DoD3D10Capture;
             clearProc   = ClearD3D10Data;
         }
-        else if(SUCCEEDED(deviceUnk->QueryInterface(__uuidof(ID3D10Device1), (void**)&device)))
+        else if(!d3d11only && SUCCEEDED(deviceUnk->QueryInterface(__uuidof(ID3D10Device1), (void**)&device)))
         {
             logOutput << CurrentTimeString() << "DXGI: Found D3D 10.1" << endl;
             SetupD3D101(swap);
@@ -78,6 +85,7 @@ void SetupDXGIStuff(IDXGISwapChain *swap)
         }
         else
         {
+            logOutput << CurrentTimeString() << "DXGI: Unknown interface" << endl;
             deviceUnk->Release();
             return;
         }
@@ -154,6 +162,11 @@ IDXGISwapChain* CreateDummySwap()
     //------------------------------------------------------
     // d3d10
 
+    /* CoD: ghosts hack because apparently on nvidia GPUs it has some d3d10 context open */
+    if (_strcmpi(processName, "iw6sp64_ship.exe") == 0 ||
+        _strcmpi(processName, "iw6mp64_ship.exe") == 0)
+        goto d3d11_only;
+
     SHGetFolderPath(NULL, CSIDL_SYSTEM, NULL, SHGFP_TYPE_CURRENT, lpDllPath);
     wcscat_s(lpDllPath, MAX_PATH, TEXT("\\d3d10.dll"));
 
@@ -210,6 +223,8 @@ IDXGISwapChain* CreateDummySwap()
 
     //------------------------------------------------------
     // d3d11 - check this first always if possible
+
+d3d11_only:
 
     SHGetFolderPath(NULL, CSIDL_SYSTEM, NULL, SHGFP_TYPE_CURRENT, lpDllPath);
     wcscat_s(lpDllPath, MAX_PATH, TEXT("\\d3d11.dll"));
