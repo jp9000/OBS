@@ -1108,7 +1108,10 @@ void RTMPPublisher::SocketLoop()
         delayTime = 0;
     }
 
-    SetupSendBacklogEvent ();
+    if (AppConfig->GetInt (TEXT("Publish"), TEXT("DisableSendWindowOptimization"), 0) == 0)
+        SetupSendBacklogEvent ();
+    else
+        Log (TEXT("RTMPPublisher::SocketLoop: Send window optimization disabled by user."));
 
     HANDLE hObjects[3];
 
