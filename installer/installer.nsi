@@ -108,6 +108,9 @@ Section "Open Broadcaster Software" Section1
 
 	; Set Section properties
 	SetOverwrite on
+	
+	; Empty the shader cache in case the user is reinstalling to try and fix corrupt shader issues
+	RMDir /R "$APPDATA\OBS\shaderCache"
 
 	; Set Section Files and Shortcuts
 	SetOutPath "$PROGRAMFILES32\OBS"
