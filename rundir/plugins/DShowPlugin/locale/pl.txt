@@ -43,6 +43,7 @@ DeviceSelection.OutputSound="Przekaż dźwięk tylko dla streamu"
 DeviceSelection.PlayToDesktop="Przekaż dźwięk do pulpitu"
 DeviceSelection.PointFiltering="Użyj point filtering"
 DeviceSelection.PreferredType="Użyj prefer.typu wyjścia"
+DeviceSelection.PreserveSize="Zachowaj wielkość źródła"
 DeviceSelection.Refresh="Odśwież"
 DeviceSelection.Resolution="Rozdzielczość:"
 DeviceSelection.Select="Wybierz"
@@ -58,4 +59,5 @@ DeviceSelection.Video="Obraz"
 
 Plugin.Description="Ta wtyczka pozwala na dodanie obrazu wideo DirectShow (kamery internetowe, karty do przechwytywania obrazu, i tym podobnych) do scen"
 Plugin.Name="Wtyczka do przechwytywania obrazu wideo DirectShow"
+
 

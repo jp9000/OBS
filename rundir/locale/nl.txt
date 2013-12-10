@@ -173,6 +173,7 @@ Settings.Audio.PlaybackDevice="Desktop Audioapparaat:"
 Settings.Audio.PushToTalkDelay="Push-to-talk Vertraging (milliseconden):"
 Settings.Audio.PushToTalkHotkey="Push-to-talk Gebruiken:"
 Settings.Audio.ShowOnlyConnectedDevices="Toon enkel aangesloten apparaten"
+Settings.Audio.UseInputDevices="Gebruik invoerapparaat voor desktopaudio"
 Settings.Audio.UseMicQPC="Mic QPC-timestamps gebruiken"
 
 Settings.Encoding.Audio="Audio Encoding"

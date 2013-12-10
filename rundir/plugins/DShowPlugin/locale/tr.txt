@@ -43,6 +43,7 @@ DeviceSelection.OutputSound="Ses çıkışını sadece yayına ver"
 DeviceSelection.PlayToDesktop="Ses çıkışını masaüstüne ver"
 DeviceSelection.PointFiltering="Nokta filtrelemesi kullan"
 DeviceSelection.PreferredType="Çıkış Biçimi Kullan"
+DeviceSelection.PreserveSize="Kaynak Boyutunu Koru"
 DeviceSelection.Refresh="Yenile"
 DeviceSelection.Resolution="Çözünürlük"
 DeviceSelection.Select="Seç"
@@ -58,4 +59,5 @@ DeviceSelection.Video="Video"
 
 Plugin.Description="Bu eklenti, sahneye Directshow görüntü cihazlarını(webkamera, görütntü yakalam kartları gibi) eklemenizi sağlar"
 Plugin.Name="DirectShow Video Aygıtı Eklentisi"
+
 

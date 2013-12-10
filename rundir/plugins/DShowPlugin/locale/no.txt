@@ -16,3 +16,4 @@ DeviceSelection.ExistsInScene="En kilde bruker denne enheten allerede."
 DeviceSelection.ExistsSomewhere="Denne enheten brukes allerede som en kilde i en eller flere scener."
 
 
+

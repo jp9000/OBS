@@ -43,6 +43,7 @@ DeviceSelection.OutputSound="Output audio enkel naar de stream"
 DeviceSelection.PlayToDesktop="Output audio naar de desktop"
 DeviceSelection.PointFiltering="Point filtering gebruiken"
 DeviceSelection.PreferredType="Outputformaat gebruiken:"
+DeviceSelection.PreserveSize="Behoud brongrootte"
 DeviceSelection.Refresh="Vernieuwen"
 DeviceSelection.Resolution="Resolutie:"
 DeviceSelection.Select="Selecteer"
@@ -58,4 +59,5 @@ DeviceSelection.Video="Video"
 
 Plugin.Description="Met deze plugin kun je DirectShow video-apparaten (webcams, capture cards, etc) aan de scène toevoegen."
 Plugin.Name="DirectShow Video-apparaat Plugin"
+
 

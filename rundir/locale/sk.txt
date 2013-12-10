@@ -1,42 +1,247 @@
+Add="Pridať"
+Preview="Náhľad"
+Order="Poradie"
+Apply="Použiť"
+Browse="Prehľadávať..."
+BuildingMP4Dialog="Vytváram MP4"
+Cancel="Zrušiť"
+ClearHotkey="Vyčistiť"
+Close="Zavrieť"
+Color="Farba"
+Default="Predvolené"
+Defaults="Predvolené"
+DeleteConfirm="Naozaj chcete odstrániť vybraté položky?"
+Desktop="Pracovná plocha"
+Disable="Zakázať"
+EndingDelay="Ukončujem oneskorenie Streamu..."
+EnterName="Zadajte názov"
+Gamma="Gama:"
+GlobalSources="Globálne zdroje..."
+MonitorNum="Monitor $1"
+MoveDown="Posunúť nadol"
+MoveToBottom="Premiestniť naspodok"
+MoveToTop="Premiestniť navrch"
+MoveUp="Posunúť nahor"
+NameExists="\"$1\" už existuje.  Zadajte iný názov"
+None="Žiadna"
+OK="OK"
+Plugins="Pluginy..."
+Reconnecting="Znova sa pripájam..."
+Refresh="Obnoviť"
+Remove="Odstrániť"
+Rename="Premenovať"
+Copy="Kopírovať"
+Scene="Scéna"
+Settings="Nastavenia..."
+
+BuildingMP4Dialog.Progress="Vytváram MP4, čakajte prosím..."
+
+Connection.CouldNotConnect="Nedá sa pripojiť k serveru"
+Connection.Disconnected="Odpojený od servera"
+
+DeleteConfirm.Title="Odstrániť vybraté položky?"
+
+EndingDelay.TimeLeft="Zostávajúci čas: $1"
+
+GlobalSources.DeleteConfirm="Ak odstránite globálnym zdroj, bude odstránený z každej scény, ktorá ho používa.  Naozaj chcete pokračovať?"
+
+Listbox.Add="Pridať $1"
+Listbox.Center="Stred"
+Listbox.CenterHorizontally="Centrovať vodorovne"
+Listbox.MoveTop="Premiestniť navrch"
+Listbox.MoveRight="Presunúť na pravý okraj"
+Listbox.MoveBottom="Premiestniť naspodok"
+Listbox.MoveLeft="Presunúť na ľavý okraj"
+Listbox.Config="Vlastnosti"
+Listbox.Positioning="Pozícia/Veľkosť"
+Listbox.ResetSize="Pôvodná veľkosť"
+Listbox.SetHotkey="Nastaviť klávesovú skratku"
+
+MainMenu.File="&Súbor"
+MainMenu.Help="Pom&oc"
+MainMenu.Profiles="P&rofily"
+MainMenu.Settings="Na&stavenia"
+
+MainMenu.Settings.AlwaysOnTop="Vždy n&avrchu"
+MainMenu.Settings.FullscreenMode="&Celoobrazovkový režim"
+
+MainMenu.File.Exit="&Ukončiť"
+MainMenu.File.Save="&Uložiť"
+
+MainMenu.Help.Contents="&Obsah"
+MainMenu.Help.VisitWebsite="Navštíviť webové stránky"
+MainMenu.Help.CheckForUpdates="Skontrolovať akt&ualizácie"
+
+MainMenu.Settings.OpenConfigFolder="Otvoriť zložku konfigurá&cie"
+MainMenu.Settings.OpenLogFolder="Otvoriť zložku &logov"
+
+MainWindow.DroppedFrames="Vynechané snímky:"
+MainWindow.Exit="Ukončiť"
+MainWindow.Plugins="Pluginy"
+MainWindow.SceneEditor="Úprava scény"
+MainWindow.Scenes="Scény:"
+MainWindow.Sources="Zdroje:"
+MainWindow.StartStream="Spustiť Stream"
+MainWindow.StopStream="Ukončiť Stream"
+MainWindow.StopTest="Zastaviť náhľad"
+MainWindow.TestStream="Náhľad Streamu"
+
+Plugins.Configure="Nastaviť"
+Plugins.Description="Popis:"
+Plugins.Filename="Názov súboru:"
 
 
+RenderView.ViewMode1To1="režim 1:1"
+
+Scene.Hotkey="Hotkey scény"
+Scene.MissingSources="Nepodarilo sa načítať všetky zdroje obrazu kvôli neplatnému nastavenia alebo chýbajúcim pluginom"
+
+Scene.Hotkey.AlreadyInUse="Táto klávesová skratka sa už používa."
+Scene.Hotkey.Hotkey="Klávesová skratka:"
+
+Capture.Start.FileStream.WarningCaption="Upozornenie"
+
+Settings.Advanced="Rozšírené"
+Settings.Audio="Zvuk"
+Settings.General="Všeobecné"
+Settings.Publish="Nastavenie vysielania"
+Settings.SaveChangesPrompt="Chcete uložiť a použiť svoje zmeny?"
+Settings.SaveChangesTitle="Použiť nastavenia?"
+Settings.Video="Video"
+
+Settings.Advanced.AllowOtherHotkeyModifiers="Povoliť iné modifikátory klávesových skratiek"
+Settings.Advanced.BindToIP="Viazať na rozhranie:"
+Settings.Advanced.Network="Sieť"
+Settings.Advanced.ProcessPriority="Priorita procesu"
+Settings.Advanced.SendBufferSize="Veľkosť odosielacej medzipamäte:"
+Settings.Advanced.UnlockHigherFPS="Umožniť vstup 61-120 FPS v nastavení videa"
+Settings.Advanced.UseCBR="Použiť CRB"
+Settings.Advanced.UseCFR="Použiť CFR"
+Settings.Advanced.UseMultithreadedOptimizations="Použiť mnohovláknové optimalizácie"
+Settings.Advanced.UseQSV="Použiť Quick Sync"
+Settings.Advanced.QSVUseVideoEncoderSettings="Použiť vlastné x264 nastavenia pre QSV"
+Settings.Advanced.QSVUseVideoEncoderSettingsToolTip="V súčasnosti podporuje len keyint a bframes."
+Settings.Advanced.VideoEncoderCPUTradeoff="x264 CPU predvoľba:"
+
+Settings.Advanced.Priority.Idle="Nečinný"
+Settings.Advanced.Priority.Normal="Normálna"
+Settings.Advanced.Priority.AboveNormal="Vysoká"
+Settings.Advanced.Priority.High="Vysoká"
+
+Settings.Audio.PushToTalkDelay="Push-to-talk oneskorenie (ms):"
+Settings.Audio.PushToTalkHotkey="Použiť Push-to-talk:"
+Settings.Audio.ShowOnlyConnectedDevices="Zobraziť iba pripojené zariadenia"
 
 
+Settings.Encoding.Audio.Codec="Kodek:"
+Settings.Encoding.Audio.Format="Formát:"
 
+Settings.Encoding.Video.BufferSize="Veľkosť medzipamäte (kbit):"
+Settings.Encoding.Video.CustomBuffer="Použiť vlastnú veľkosť medzipamäte"
+Settings.Encoding.Video.KeyframeInterval="Kľúčová snímka každých (sekúnd, 0 = automaticky):"
 
+Settings.General.Add="Pridať nový"
+Settings.General.ConfirmDelete="Naozaj chcete odstrániť profil \"$1\"?"
+Settings.General.InvalidName="Názov profilu nemôže obsahovať nasledujúce znaky: \r\n\\ /: *? \" < > |"
+Settings.General.Language="Jazyk:"
+Settings.General.Profile="Profil nastavený:"
+Settings.General.Notification="Ikona v oznamovacej oblasti"
+Settings.General.NotificationMinimize="Minimalizovať do oznamovacej oblasti"
+Settings.General.ShowObs="Zobraziť OBS"
+Settings.General.HideObs="Skryť OBS"
 
+Settings.Publish.ChannelName="Názov kanálu:"
+Settings.Publish.Delay="Oneskorenie (sekundy):"
+Settings.Publish.LowLatencyMode="Minimalizovať vplyv siete:"
+Settings.Publish.Mode="Režim:"
+Settings.Publish.Password="Heslo (ak existuje):"
+Settings.Publish.SavePath="Cesta k súboru:"
+Settings.Publish.SaveToFile="Uložiť do súboru:"
+Settings.Publish.Server="Server:"
+Settings.Publish.StartStreamHotkey="Klávesová skratka štartu Streamu:"
+Settings.Publish.StopStreamHotkey="Klávesová skratka zastavenia Streamu:"
+Settings.Publish.Username="Meno používateľa (ak existuje):"
 
+Settings.Publish.Mode.FileOnly="Výstup len do súboru"
+Settings.Publish.Mode.LiveStream="Live Stream"
 
+Settings.Publish.Warning.BadSettings="Upozornenie: Nastavenia OBS nie sú optimalizované na použitie s %s. Nastavte nasledovné: \r\n\r\n"
 
+Settings.Video.Custom="Vlastné:"
+Settings.Video.Device="Video adaptér:"
+Settings.Video.DisableAero="Vypnúť Aero:"
+Settings.Video.Filter="Filter:"
+Settings.Video.FPS="FPS:"
+Settings.Video.Monitor="Monitor:"
+Settings.Video.Resolution="Základné rozlíšenie:"
 
+Settings.Video.Filter.Lanczos="Lanczos (najlepšie detaily, 36 vzoriek)"
 
+Sources.BitmapSource="Obrázok"
+Sources.GameCaptureSource="Zachytávanie hry"
+Sources.GlobalSource="Globálne zdroje"
+Sources.TextSource="Text"
 
+Sources.BitmapSource.Color="Farba:"
+Sources.BitmapSource.Opacity="Priehľadnosť:"
+Sources.BitmapSource.Monitor="Kontrolovať zmeny súboru:"
 
+Sources.GameCaptureSource.Application="Aplikácia:"
+Sources.GameCaptureSource.IgnoreAspect="Ignorovať pomer"
+Sources.GameCaptureSource.SelectApplication="Výber aplikácie"
+Sources.GameCaptureSource.UseHotkey="Použiť klávesovú skratku"
 
+Sources.SoftwareCaptureSource.CompatibilityMode="Režim kompatibility"
+Sources.SoftwareCaptureSource.EntireWindow="Celé okno"
+Sources.SoftwareCaptureSource.InnerWindow="Obsah okna"
+Sources.SoftwareCaptureSource.Monitor="Monitor:"
+Sources.SoftwareCaptureSource.MonitorCapture="Zachytávanie monitora"
+Sources.SoftwareCaptureSource.MonitorCaptureTooltip="Zakážte Aero vo video nastaveniach pre maximalizáciu FPS"
+Sources.SoftwareCaptureSource.MouseCapture="Zachytávať kurzor myši"
+Sources.SoftwareCaptureSource.Position="Pozícia:"
+Sources.SoftwareCaptureSource.RegionCapture="Podoblasť"
+Sources.SoftwareCaptureSource.Select="Vybrať"
+Sources.SoftwareCaptureSource.SelectRegion="Vybrať región"
+Sources.SoftwareCaptureSource.Size="Veľkosť:"
+Sources.SoftwareCaptureSource.Window="Okno:"
+Sources.SoftwareCaptureSource.WindowCapture="Zachytávanie okna"
+Sources.SoftwareCaptureSource.WindowMinimized="Okno je minimalizované"
+Sources.SoftwareCaptureSource.WindowNotFound="Nemôžem nájsť okno"
 
+Sources.TextSource.Align="Zarovnanie:"
+Sources.TextSource.BackgroundColor="Farba pozadia:"
+Sources.TextSource.BackgroundOpacity="Priehľadnosť pozadia:"
+Sources.TextSource.Bold="Tučné"
+Sources.TextSource.Center="Stred"
+Sources.TextSource.EnterText="Zadajte Text"
+Sources.TextSource.FileNotFound="Nepodarilo sa otvoriť súbor \"$1\""
+Sources.TextSource.Font="Písmo:"
+Sources.TextSource.FontNotFound="Písmo \"$1\" nenájdené"
+Sources.TextSource.FontSize="Veľkosť písma:"
+Sources.TextSource.Italic="Kurzíva"
+Sources.TextSource.Left="Vľavo"
+Sources.TextSource.Right="Vprávo"
+Sources.TextSource.ScrollSpeed="Rýchlosť posúvania:"
+Sources.TextSource.Size="Veľkosť:"
+Sources.TextSource.Underline="Podčiarknutie"
+Sources.TextSource.OutlineThickness="Hrúbka:"
+Sources.TextSource.OutlineOpacity="Priehľadnosť:"
+Sources.TextSource.UseTextFromFile="Použiť text zo súboru (UTF-8 alebo kompatibilný)"
 
+Sources.TransitionSource.TimeBetweenBitmaps="Čas medzi snímkami (v sekundách):"
+Sources.TransitionSource.Randomize="Náhodne:"
 
+Stats="Štatistiky"
 
+Updater.RunningWarning="OBS sa reštartuje aby nainštaloval aktualizácie.\r\n\r\nChcete pokračovať?"
+Updater.UpdatesAvailable="K dispozícii sú aktualizácie"
+Updater.NoUpdatesAvailable="Nie sú k dispozícii žiadne aktualizácie"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Plugins.NoiseGate.General="Všeobecné"
+Plugins.NoiseGate.Help="Nápoveda"
+Plugins.NoiseGate.EnablePreview="Zapnúť náhľad"
+Plugins.NoiseGate.DisablePreview="Vypnúť nahľad"
+Plugins.NoiseGate.ResetToDefaults="Obnoviť predvolené"
+Plugins.NoiseGate.ConfirmReset="Naozaj chcete obnoviť predvolené? Aktuálne nastavenia sa prepíšu."
 
 

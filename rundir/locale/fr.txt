@@ -173,6 +173,7 @@ Settings.Audio.PlaybackDevice="Périphérique audio principal:"
 Settings.Audio.PushToTalkDelay="Push-to-talk délai (en millisecondes):"
 Settings.Audio.PushToTalkHotkey="Appuyer pour parler:"
 Settings.Audio.ShowOnlyConnectedDevices="N'afficher que les appareils connectés"
+Settings.Audio.UseInputDevices="Utiliser un périphérique d'entrée pour le son du bureau"
 Settings.Audio.UseMicQPC="Utiliser les codes temporels QPC du micro"
 
 Settings.Encoding.Audio="Encodage audio"

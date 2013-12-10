@@ -1,3 +1,5 @@
+Cancel="Zrušiť"
+OK="OK"
 
 
 

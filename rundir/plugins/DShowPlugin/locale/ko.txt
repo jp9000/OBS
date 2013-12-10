@@ -43,6 +43,7 @@ DeviceSelection.OutputSound="입력된 오디오 신호를 방송에만 송출"
 DeviceSelection.PlayToDesktop="입력된 오디오를 데스크탑으로 송출"
 DeviceSelection.PointFiltering="포인트 필터링 사용"
 DeviceSelection.PreferredType="출력 포멧 사용"
+DeviceSelection.PreserveSize="원본 크기 유지"
 DeviceSelection.Refresh="새로고침"
 DeviceSelection.Resolution="해상도"
 DeviceSelection.Select="지정"
@@ -58,4 +59,5 @@ DeviceSelection.Video="비디오"
 
 Plugin.Description="이 플러그인은 DirectShow 비디오 장치(웹캠, 캡쳐 장비 등)를 장면에 추가할 수 있도록 합니다"
 Plugin.Name="DirectShow 비디오 장치 플러그인"
+
 

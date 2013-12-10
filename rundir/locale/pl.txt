@@ -173,6 +173,7 @@ Settings.Audio.PlaybackDevice="Domyślnie przechwytywane urządzenie:"
 Settings.Audio.PushToTalkDelay="Opóźnienie Naciśnij-I-Mów (millisekundy):"
 Settings.Audio.PushToTalkHotkey="Klawisz Naciśnij-I-Mów:"
 Settings.Audio.ShowOnlyConnectedDevices="Pokaż tylko podłączone urządzenia"
+Settings.Audio.UseInputDevices="Użyj urządzenia wejściowego dla dźwięku pulpitu"
 Settings.Audio.UseMicQPC="Użyj etykiety czasowej QPC dla mikrofonu"
 
 Settings.Encoding.Audio="Kodowanie dźwięku"

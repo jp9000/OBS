@@ -173,6 +173,7 @@ Settings.Audio.PlaybackDevice="Toistolaite:"
 Settings.Audio.PushToTalkDelay="Push-to-talk viive (ms):"
 Settings.Audio.PushToTalkHotkey="Käytä Push-to-talkia:"
 Settings.Audio.ShowOnlyConnectedDevices="Näytä vain kytketyt laitteet"
+Settings.Audio.UseInputDevices="Käytä tulolinja-laitetta toistolaitteena"
 Settings.Audio.UseMicQPC="Käytä Mikrofonin QPC-aikaleimoja"
 
 Settings.Encoding.Audio="Äänen pakkaus"

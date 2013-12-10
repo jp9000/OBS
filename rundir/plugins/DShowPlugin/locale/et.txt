@@ -59,3 +59,4 @@ DeviceSelection.Video="Video"
 Plugin.Description="See plugin võimaldab lisada DirectShow videoseadmeid stseenidele"
 Plugin.Name="DirectShow videoseadme plugin"
 
+

@@ -43,6 +43,7 @@ DeviceSelection.OutputSound="Output kun lyd til stream"
 DeviceSelection.PlayToDesktop="Output lyd til skrivebord"
 DeviceSelection.PointFiltering="Brug punkt filtrering"
 DeviceSelection.PreferredType="Brug Output Format"
+DeviceSelection.PreserveSize="Bevar kilde størrelse"
 DeviceSelection.Refresh="Opdater"
 DeviceSelection.Resolution="Opløsning"
 DeviceSelection.Select="Vælg"
@@ -58,4 +59,5 @@ DeviceSelection.Video="Video"
 
 Plugin.Description="Dette plugin muliggør at du kan tilfæje DirectShow videoenheder (webkameraer, optagekort, osv) to scenen"
 Plugin.Name="DirectShow Videoenhed Plugin"
+
 

@@ -173,6 +173,7 @@ Settings.Audio.PlaybackDevice="Ljudenhet för skrivbordsljud:"
 Settings.Audio.PushToTalkDelay="Push-to-talk-fördröjning (millisekunder):"
 Settings.Audio.PushToTalkHotkey="Använd Push-to-talk:"
 Settings.Audio.ShowOnlyConnectedDevices="Visa endast anslutna enheter"
+Settings.Audio.UseInputDevices="Använd inmatningsenhet för skrivbordsljud"
 Settings.Audio.UseMicQPC="Använd QPC-tidsstämplar för mic"
 
 Settings.Encoding.Audio="Ljudkodning"

@@ -18,3 +18,4 @@ DeviceSelection.Resolution="Резолюция:"
 Plugin.Description="Този плугин ви позволява да добавите DirectShow видеоустройства (уебкамери, кепчър карти и т.н) във сцената"
 Plugin.Name="DirectShow плугин за видео устройства"
 
+

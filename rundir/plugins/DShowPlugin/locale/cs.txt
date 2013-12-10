@@ -57,3 +57,4 @@ DeviceSelection.Video="Video"
 Plugin.Description="Tento modul umožňuje přidat DirectShow video zařízení (webkamery, zachytávací karty, atd.) na scénu"
 Plugin.Name="Modul DirectShow Video zařízení"
 
+

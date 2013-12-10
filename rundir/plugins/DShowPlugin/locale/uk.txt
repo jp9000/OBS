@@ -59,3 +59,4 @@ DeviceSelection.Video="Відео"
 Plugin.Description="Цей плагін дозволяє додавати на сцену пристрої DirectShow (веб-камери, карти захоплювання і т. д.)"
 Plugin.Name="Плагін захоплювання відео-пристроїв DirectShow"
 
+

@@ -173,6 +173,7 @@ Settings.Audio.PlaybackDevice="デスクトップサウンドデバイス：:"
 Settings.Audio.PushToTalkDelay="プッシュツートークの遅延時間(ミリ秒):"
 Settings.Audio.PushToTalkHotkey="プッシュツートークを使う:"
 Settings.Audio.ShowOnlyConnectedDevices="接続されているデバイスのみを表示します"
+Settings.Audio.UseInputDevices="デスクトップのオーディオ入力デバイスを使用します"
 Settings.Audio.UseMicQPC="マイクQPCタイムスタンプを使用"
 
 Settings.Encoding.Audio="サウンド"

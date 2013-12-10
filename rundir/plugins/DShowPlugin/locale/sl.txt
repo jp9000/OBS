@@ -11,3 +11,4 @@ DeviceSelection.Select="Izberi"
 DeviceSelection.Sound="Zvok"
 
 
+
