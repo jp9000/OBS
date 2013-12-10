@@ -59,3 +59,4 @@ DeviceSelection.Video="影像"
 Plugin.Description="這個插件可以讓您將 DirectShow 視訊裝置 (網路攝影機、擷取卡...等) 加入到場景中。"
 Plugin.Name="DirectShow 視訊裝置插件"
 
+

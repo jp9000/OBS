@@ -173,6 +173,7 @@ Settings.Audio.PlaybackDevice="Dispositivo de áudio desktop:"
 Settings.Audio.PushToTalkDelay="Atraso de Premir Para Falar (milissegundos):"
 Settings.Audio.PushToTalkHotkey="Use Premir Para Falar:"
 Settings.Audio.ShowOnlyConnectedDevices="Mostrar apenas dispositivos conectados"
+Settings.Audio.UseInputDevices="Usar dispositivo de entrada para audio do desktop"
 Settings.Audio.UseMicQPC="Usar timestamps Mic QPC"
 
 Settings.Encoding.Audio="Codificação de áudio"

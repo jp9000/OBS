@@ -43,6 +43,7 @@ DeviceSelection.OutputSound="サウンドを配信のみに出力する"
 DeviceSelection.PlayToDesktop="サウンドをスピーカーへ出力する"
 DeviceSelection.PointFiltering="ポイントフィルタリングを使用"
 DeviceSelection.PreferredType="出力フォーマットを使用させる"
+DeviceSelection.PreserveSize="ソースのサイズを保持する"
 DeviceSelection.Refresh="再読み込みする"
 DeviceSelection.Resolution="解像度"
 DeviceSelection.Select="選択"
@@ -58,4 +59,5 @@ DeviceSelection.Video="ビデオ"
 
 Plugin.Description="このプラグインは、DirectShow のビデオデバイス（Webカメラ、キャプチャカードなど）をソースとしてシーンに追加することができます"
 Plugin.Name="DirectShow プラグイン"
+
 

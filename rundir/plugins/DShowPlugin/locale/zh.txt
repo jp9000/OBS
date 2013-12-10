@@ -59,3 +59,4 @@ DeviceSelection.Video="视频"
 Plugin.Description="这个插件可以让你添加DirectShow视频设备(摄像头,视频捕捉卡等)到场景中"
 Plugin.Name="DirectShow视频设备插件"
 
+

@@ -60,3 +60,4 @@ DeviceSelection.Video="Bild"
 Plugin.Description="Denna plugin låter dig lägga till DirectShow-videoenheter (webbkameror, capturekort, etc.) som källa i en scen."
 Plugin.Name="DirectShow videoenhet-plugin"
 
+

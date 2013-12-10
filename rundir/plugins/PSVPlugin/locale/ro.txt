@@ -1,3 +1,9 @@
+Cancel="Revocare"
+OK="OK"
 
+Plugin.Name="Plugin de volum individual pentru fiecare scenă in parte"
+Plugin.Description="Permite urmărirea volumului pentru fiecare scenă in parte."
 
+Config.Caption="Configurare volum pentru fiecare scenă in parte"
+Config.Enable="Activeaza urmărirea volumului pentru fiecare scenă in parte"
 

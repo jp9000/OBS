@@ -43,6 +43,7 @@ DeviceSelection.OutputSound="Audio di uscita solo nello Stream"
 DeviceSelection.PlayToDesktop="Audio di uscita su altoparlante pc"
 DeviceSelection.PointFiltering="Usa filtraggio punto-a-punto"
 DeviceSelection.PreferredType="Usa il formato di output"
+DeviceSelection.PreserveSize="Mantenere la dimensione della sorgente"
 DeviceSelection.Refresh="Aggiorna"
 DeviceSelection.Resolution="Risoluzione"
 DeviceSelection.Select="Seleziona"
@@ -58,4 +59,5 @@ DeviceSelection.Video="Video"
 
 Plugin.Description="Questo plugin consente di aggiungere dispositivi video DirectShow (webcam, schede di acquisizione, etc) alla scena"
 Plugin.Name="Plugin dispositivo video DirectShow"
+
 

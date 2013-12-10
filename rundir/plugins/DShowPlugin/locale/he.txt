@@ -59,3 +59,4 @@ DeviceSelection.Video="וידאו"
 Plugin.Description="('כגון מצלמות אינטרנט, כרטיסי לכידת וידאו וכו) DirectShow תוסף זה מאפשר לך להוסיף לסצינה התקני וידאו מסוג"
 Plugin.Name="DirectShow תוסף התקן וידאו מסוג"
 
+

@@ -28,3 +28,4 @@ DeviceSelection.Video="Βίντεο"
 Plugin.Description="Αυτό το πρόσθετο σας επιτρέπει να προσθέσετε συσκευές βίντεο DirectShow (κάμερες, κάρτες λήψης βίντεο, κτλ) στην υπάρχουσα σκηνή"
 Plugin.Name="Πρόσθετο Λήψης Βίντεο με DirectShow"
 
+

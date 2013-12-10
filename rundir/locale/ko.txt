@@ -173,6 +173,7 @@ Settings.Audio.PlaybackDevice="데스크탑 오디오 장치:"
 Settings.Audio.PushToTalkDelay="누르며 말하기 지연 (밀리세컨드):"
 Settings.Audio.PushToTalkHotkey="누르며 말하기 사용:"
 Settings.Audio.ShowOnlyConnectedDevices="연결된 장치만 표시"
+Settings.Audio.UseInputDevices="데스크탑 오디오 입력 장치를 사용"
 Settings.Audio.UseMicQPC="마이크 QPC 타임스탬프 사용"
 
 Settings.Encoding.Audio="오디오 인코딩"

@@ -173,6 +173,7 @@ Settings.Audio.PlaybackDevice="Dispositivo de audio principal:"
 Settings.Audio.PushToTalkDelay="Retraso para Push-to-talk (milisegundos):"
 Settings.Audio.PushToTalkHotkey="Empregar Push-to-talk:"
 Settings.Audio.ShowOnlyConnectedDevices="Mostrar só os dispositivos conectados"
+Settings.Audio.UseInputDevices="Usar dispositivo de entrada para o audio de escritorio"
 Settings.Audio.UseMicQPC="Empregar timestamps QPC para o micrófono"
 
 Settings.Encoding.Audio="Codificación de audio"

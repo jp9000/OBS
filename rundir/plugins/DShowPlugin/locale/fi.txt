@@ -43,6 +43,7 @@ DeviceSelection.OutputSound="Toista äänet vain striimiin"
 DeviceSelection.PlayToDesktop="Toista äänet toistolaitteesta"
 DeviceSelection.PointFiltering="Käytä pistesuodatusta"
 DeviceSelection.PreferredType="Ulostulo"
+DeviceSelection.PreserveSize="Säilytä lähteen koko"
 DeviceSelection.Refresh="Päivitä"
 DeviceSelection.Resolution="Resoluutio:"
 DeviceSelection.Select="Valitse"
@@ -58,4 +59,5 @@ DeviceSelection.Video="Kuva"
 
 Plugin.Description="Tämä lisäosa sallii sinun lisätä DirectShow videolaitteita (webcam, videokaappari..)."
 Plugin.Name="DirectShow videolaite -lisäosa"
+
 

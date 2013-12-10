@@ -73,12 +73,14 @@ MainMenu.Settings="&Beállítások"
 
 MainMenu.Settings.AlwaysOnTop="& Mindig legfelül"
 MainMenu.Settings.FullscreenMode="& Teljes képernyős előnézet"
+MainMenu.Settings.Projector="&Vetítő"
 
 MainMenu.File.Exit="&Kilépés"
 MainMenu.File.Save="& Mentés"
 
 MainMenu.Help.Contents="&Súgó"
 MainMenu.Help.VisitWebsite="Weboldal meglátogatása"
+MainMenu.Help.CheckForUpdates="Frissítés ellenőrzése"
 
 MainMenu.Settings.OpenConfigFolder="&Beállítási Mappa Megnyitása"
 MainMenu.Settings.OpenLogFolder="&Naplózó Mappa Megnyitása"
@@ -147,6 +149,7 @@ Settings.Advanced.VideoEncoderCPUTradeoff="x264 CPU Beállítás:"
 Settings.Advanced.VideoEncoderCPUTradeoffToolTip="Ennek az értéknek a magasabbra állítása könnyít a proceszzor terhelésén minőségi romlásért cserében. Ugyanakkor az érték csökkentése növeli a processzor terhelését jobb minőség elérésének érdekében.\r\n\r\nAjánlott: Very Fast"
 Settings.Advanced.VideoEncoderSettings="Egyedi x264 Kódoló Beállítás"
 Settings.Advanced.VideoEncoderSettingsTooltip="Ez engedélyezi egyedi x264 kódolási beállítások hozzáadását. A használható format [parameter]=[value] (pl.: \"vbv-maxrate=1000 vbv-bufsize=1000\")."
+Settings.Advanced.X264Profile="x264 kódolási profil:"
 
 Settings.Advanced.Priority.Idle="Tétlen"
 Settings.Advanced.Priority.Normal="Normál"
@@ -163,6 +166,7 @@ Settings.Audio.MuteMicHotkey="Mikrofon némítása gyorsbillentyű:"
 Settings.Audio.PlaybackDevice="Asztali hangeszköz:"
 Settings.Audio.PushToTalkDelay="Push-to-talk késleltetés (milliszekundum):"
 Settings.Audio.PushToTalkHotkey="Push-to-talk használata:"
+Settings.Audio.ShowOnlyConnectedDevices="Csak a csatlakoztatott eszközök mutatása"
 Settings.Audio.UseMicQPC="Mikrofon QPC eltérés időbélyegének használata"
 
 Settings.Encoding.Audio="Hang Kódolás"

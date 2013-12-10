@@ -173,6 +173,7 @@ Settings.Audio.PlaybackDevice="Lydenhet for skrivebordslyd:"
 Settings.Audio.PushToTalkDelay="Forsinkelse Push-to-talk (ms):"
 Settings.Audio.PushToTalkHotkey="Bruk Push-to-talk:"
 Settings.Audio.ShowOnlyConnectedDevices="Vis bare tilkoblede enheter"
+Settings.Audio.UseInputDevices="Bruk inngangsenhet for skrivebordslyd"
 Settings.Audio.UseMicQPC="Bruk QPC-tidsstempler for mikrofon"
 
 Settings.Encoding.Audio="Lydkoding"

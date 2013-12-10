@@ -1,5 +1,26 @@
+Cancel="Zrušiť"
+DeviceSelection="Výber zariadenia"
+OK="OK"
+
+DeviceSelection.GPUDeinterlacing="Použiť GPU"
 
 
+DeviceSelection.Color="Farba:"
+DeviceSelection.Config="Konfigurovať"
+DeviceSelection.CustomResolution="Vlastné rozlíšenie:"
+DeviceSelection.Device="Zariadenie:"
+DeviceSelection.ExistsInScene="Zdroj používajúce tohto zariadenie už existuje."
+DeviceSelection.ExistsSomewhere="Toto zariadenie je momentálne používané ako zdroj v jednej alebo viacerých scénach."
+DeviceSelection.ForceCustomAudio="Použiť vlastné zvukové zariadenie"
+DeviceSelection.FPS="FPS:"
+DeviceSelection.Gamma="Gama:"
+DeviceSelection.InvalidResolution="Neplatné rozlíšenie"
+DeviceSelection.Opacity="Priehľadnosť"
+DeviceSelection.Refresh="Obnoviť"
+DeviceSelection.Resolution="Rozlíšenie"
+DeviceSelection.Select="Vybrať"
+DeviceSelection.Video="Video"
 
+Plugin.Description="Tento plugin vám umožní pridať video zariadenia DirectShow (kamery, capture cards, atď) do scény"
 
 

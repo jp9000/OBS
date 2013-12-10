@@ -43,6 +43,7 @@ DeviceSelection.OutputSound="Send lyd bare til strøm"
 DeviceSelection.PlayToDesktop="Send lyd til skrivebordet"
 DeviceSelection.PointFiltering="Aktiver punktfiltrering"
 DeviceSelection.PreferredType="Utformat"
+DeviceSelection.PreserveSize="Behold Kildestørrelse"
 DeviceSelection.Refresh="Oppdater"
 DeviceSelection.Resolution="Opplsning:"
 DeviceSelection.Select="Velg"
@@ -58,4 +59,5 @@ DeviceSelection.Video="Video"
 
 Plugin.Description="Denne programvareutvidelsen lar deg legge til DirectShow video apparater (webkameraer, opptakskort, osv) til scenen"
 Plugin.Name="DirectShow Videoapparat-programvareutvidelse"
+
 

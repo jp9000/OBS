@@ -40,3 +40,4 @@ DeviceSelection.UseChromaKey="Naudoti Chroma Rakta"
 Plugin.Description="Šis plugin leidžia jums prideti DirectShow vaizdo irenginius (kameros, užfiksuoti korteles ir tt) i scena"
 Plugin.Name="DirectShow vaizdo Irenginio Iskiepis"
 
+
