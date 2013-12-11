@@ -704,6 +704,8 @@ OBS::~OBS()
 
         FreeLibrary(pluginInfo.hModule);
         pluginInfo.strFile.Clear();
+
+        ZeroMemory(&pluginInfo, sizeof(pluginInfo));
     }
 
     if (AppConfig->GetInt(TEXT("General"), TEXT("ShowNotificationAreaIcon"), 0) != 0)
