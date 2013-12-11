@@ -548,8 +548,7 @@ public:
 
     virtual bool DynamicBitrateSupported() const
     {
-        return true;
-        //return (paramData.i_nal_hrd != X264_NAL_HRD_CBR);
+        return (paramData.i_nal_hrd != X264_NAL_HRD_CBR);
     }
 
     virtual bool SetBitRate(DWORD maxBitrate, DWORD bufferSize)
