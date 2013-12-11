@@ -1148,7 +1148,7 @@ void OBS::MainCaptureLoop()
             else
                 curYUVTexture++;
 
-            if (bCongestionControl && bDynamicBitrateSupported && !bTestStream)
+            if (bCongestionControl && bDynamicBitrateSupported && !bTestStream && totalStreamTime > 15000)
             {
                 if (curStrain > 25)
                 {
@@ -1185,6 +1185,9 @@ void OBS::MainCaptureLoop()
                             App->AddStreamInfo (FormattedString(TEXT("Congestion clearing, raising bitrate to %d kbps"), currentBitRate).Array(), StreamInfoPriority_Low);
                         else
                             App->SetStreamInfo(adjustmentStreamId, FormattedString(TEXT("Congestion clearing, raising bitrate to %d kbps"), currentBitRate).Array());*/
+
+                        App->RemoveStreamInfo(adjustmentStreamId);
+                        adjustmentStreamId = 0;
 
                         bUpdateBPS = true;
 
