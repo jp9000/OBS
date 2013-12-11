@@ -1017,6 +1017,10 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 HWND hwndFlip           = GetDlgItem(hwnd, IDC_FLIPIMAGE);
                 HWND hwndFlipHorizontal = GetDlgItem(hwnd, IDC_FLIPIMAGEH);
 
+#ifdef _WIN64
+                ShowWindow(GetDlgItem(hwnd, IDC_64BIT_WARNING), SW_SHOW);
+#endif
+
                 //------------------------------------------
 
                 bool bFlipVertical   = configData->data->GetInt(TEXT("flipImage")) != 0;

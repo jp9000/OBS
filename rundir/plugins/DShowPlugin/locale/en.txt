@@ -19,6 +19,7 @@ DeviceSelection.GPUDeinterlacing="Use GPU"
 
 CrossbarSelection.Open="Open Crossbar"
 
+DeviceSelection.64BitWarning="Some devices do not have 64 bit drivers. If your device is not listed, try the 32 bit OBS."
 DeviceSelection.AudioDevice="Audio Input Device:"
 DeviceSelection.Blend="Blend (1-1000):"
 DeviceSelection.ChromaKey="Chroma Key"
