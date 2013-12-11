@@ -202,7 +202,8 @@ public:
 
         if(bUseCBR)
         {
-            if(bPadCBR) paramData.i_nal_hrd = X264_NAL_HRD_CBR;
+            if(bPadCBR) paramData.rc.b_filler = 1;
+            //if(bPadCBR) paramData.i_nal_hrd = X264_NAL_HRD_CBR;
             paramData.rc.i_rc_method    = X264_RC_ABR;
             paramData.rc.f_rf_constant  = 0.0f;
         }
@@ -547,7 +548,8 @@ public:
 
     virtual bool DynamicBitrateSupported() const
     {
-        return (paramData.i_nal_hrd != X264_NAL_HRD_CBR);
+        return true;
+        //return (paramData.i_nal_hrd != X264_NAL_HRD_CBR);
     }
 
     virtual bool SetBitRate(DWORD maxBitrate, DWORD bufferSize)
