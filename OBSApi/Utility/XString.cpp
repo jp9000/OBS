@@ -704,10 +704,10 @@ String  String::Left(UINT iOffset)
 
 String  String::Mid(UINT iStart, UINT iEnd)
 {
-    if( (iStart > curLength) ||
-        (iEnd > curLength)   )
+    if( (iStart >= curLength) ||
+        (iEnd > curLength || iEnd <= iStart)   )
     {
-        AppWarning(TEXT("Bad call to String::Mid.  iStart or iEnd is bigger than the current length."));
+        AppWarning(TEXT("Bad call to String::Mid.  iStart or iEnd is bigger than the current length (string: %s)."), lpString);
         return String();
     }
 
