@@ -193,7 +193,7 @@ D3D10System::D3D10System()
 
     adapterName.KillSpaces();
 
-    Log(TEXT("Loading up D3D10 on %s..."), adapterName.Array());
+    Log(TEXT("Loading up D3D10 on %s (Adapter %u)..."), adapterName.Array(), adapterID+1);
 
     //D3D10_CREATE_DEVICE_DEBUG
     //D3D11_DRIVER_TYPE_REFERENCE, D3D11_DRIVER_TYPE_HARDWARE
