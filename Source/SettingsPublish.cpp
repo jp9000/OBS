@@ -182,6 +182,7 @@ void SettingsPublish::SetWarningInfo()
     int maxBitRate = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("MaxBitrate"), 1000);
     int keyframeInt = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 0);
     int audioBitRate = AppConfig->GetInt(TEXT("Audio Encoding"), TEXT("Bitrate"), 96);
+    String currentx264Profile = AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"), L"high");
     String currentAudioCodec = AppConfig->GetString(TEXT("Audio Encoding"), TEXT("Codec"), TEXT("AAC"));
 
     //ignore for non-livestreams
@@ -235,6 +236,17 @@ void SettingsPublish::SetWarningInfo()
                         {
                             errors++;
                             strWarnings << FormattedString(Str("Settings.Publish.Warning.Maxbitrate"), max_bitrate);
+                        }
+                    }
+
+                    if (r->HasItem(TEXT("profile")))
+                    {
+                        String expectedProfile = r->GetString(TEXT("profile"));
+
+                        if (!expectedProfile.CompareI(currentx264Profile))
+                        {
+                            errors++;
+                            strWarnings << Str("Settings.Publish.Warning.RecommendMainProfile");
                         }
                     }
 

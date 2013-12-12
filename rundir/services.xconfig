@@ -16,7 +16,8 @@ services : {
       "US West: Los Angeles, CA"             : rtmp://live-lax.justin.tv/app
     }
     recommended : {
-      "keyint"      : 2000
+      "keyint" : 2000
+      "profile" : "main"
       "ratecontrol" : "cbr"
       "max bitrate" : 3500
       "max audio bitrate aac" : 160
