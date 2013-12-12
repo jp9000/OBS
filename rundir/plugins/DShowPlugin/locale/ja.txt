@@ -19,6 +19,7 @@ DeviceSelection.GPUDeinterlacing="GPUを使用"
 
 CrossbarSelection.Open="クロスバーを開く"
 
+DeviceSelection.64BitWarning="一部のデバイスには64ビット版のドライバーがありません。お使いのデバイスが表示されない場合は、32ビット版のOBSをお試し下さい。"
 DeviceSelection.AudioDevice="サウンドデバイス:"
 DeviceSelection.Blend="ブレンド(1-1000):"
 DeviceSelection.ChromaKey="クロマキー"
