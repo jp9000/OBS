@@ -19,6 +19,7 @@ DeviceSelection.GPUDeinterlacing="Käytä GPU:ta"
 
 CrossbarSelection.Open="Avaa Crossbar"
 
+DeviceSelection.64BitWarning="Joissakin laitteissa ei ole 64-bittisiä ajureita. Jos laitteesi ei ole listattuna, kokeile 32-bittistä versiota."
 DeviceSelection.AudioDevice="Äänilaite:"
 DeviceSelection.Blend="Sekoita (1-1000):"
 DeviceSelection.ChromaKey="Läpinäkyvä tausta"

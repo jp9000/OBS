@@ -124,8 +124,7 @@ Settings.General="عام"
 Settings.Info="هذه الاعدادات سيتم تطبيقها عندما تقوم ببدء البث في المرة المقبلة."
 Settings.Publish="اعدادات البث"
 Settings.SaveChangesPrompt="هل تود حفظ و تطبيق التغييرات التي قمت بها ؟"
-Settings.SaveChangesTitle="تطبيق الاعدادت ؟
-"
+Settings.SaveChangesTitle="تطبيق الاعدادت ؟"
 Settings.Video="الفيديو"
 
 Settings.Advanced.AutomaticLatency="الوضع التلقائي للكمون المنخفض :"

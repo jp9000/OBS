@@ -80,8 +80,7 @@ MainMenu.File.Save="&Salva"
 
 MainMenu.Help.Contents="&Conţinutul"
 MainMenu.Help.VisitWebsite="Vizitaţi site-ul"
-MainMenu.Help.CheckForUpdates="	
-Căutați actualizări"
+MainMenu.Help.CheckForUpdates="Căutați actualizări"
 
 MainMenu.Settings.OpenConfigFolder="Deschide folderul de configurare"
 MainMenu.Settings.OpenLogFolder="Deschide folderul de logouri"

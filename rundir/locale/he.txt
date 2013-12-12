@@ -117,8 +117,7 @@ Scene.Hotkey.AlreadyInUse="מקש קיצור זה כבר נמצא בשימוש."
 Scene.Hotkey.Hotkey="מקש קיצור דרך:"
 
 Capture.Start.FileStream.WarningCaption="אזהרה"
-Capture.Start.FileStream.Warning="אין אפשרות ליצור את קובץ פלט הסטרים.
-\n\nבדוק את נתיב הקובץ בהגדרות שידור."
+Capture.Start.FileStream.Warning="אין אפשרות ליצור את קובץ פלט הסטרים.\n\nבדוק את נתיב הקובץ בהגדרות שידור."
 
 Settings.Advanced="מתקדם"
 Settings.Audio="שמע"

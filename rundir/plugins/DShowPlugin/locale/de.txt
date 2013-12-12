@@ -19,6 +19,7 @@ DeviceSelection.GPUDeinterlacing="Benutze GPU"
 
 CrossbarSelection.Open="Öffne Crossbar"
 
+DeviceSelection.64BitWarning="Einige Geräte haben keine 64 Bit Treiber. Wenn Ihr Gerät nicht aufgeführt ist, versuchen Sie die 32 Bit OBS Version."
 DeviceSelection.AudioDevice="Audiowiedergabegerät:"
 DeviceSelection.Blend="Mischung (1-1000):"
 DeviceSelection.ChromaKey="Chroma Key"

@@ -19,6 +19,7 @@ DeviceSelection.GPUDeinterlacing="Utilisation GPU"
 
 CrossbarSelection.Open="Ouvrir Crossbar"
 
+DeviceSelection.64BitWarning="Certains appareils ne disposent pas de pilotes 64 bit. Si votre appareil n'apparaît pas, essayez la version 32 bit d'OBS."
 DeviceSelection.AudioDevice="Périphérique d'entrée audio:"
 DeviceSelection.Blend="Fondu (1-1000):"
 DeviceSelection.ChromaKey="Chroma Key"
