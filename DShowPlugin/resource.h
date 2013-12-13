@@ -58,6 +58,7 @@
 #define IDC_GPUDEINT                    1041
 #define IDC_PRESERVESIZE                1042
 #define IDC_64BIT_WARNING               1043
+#define IDC_USEAUDIORENDER              1044
 #define IDC_GAMMAVAL                    1151
 
 // Next default values for new objects

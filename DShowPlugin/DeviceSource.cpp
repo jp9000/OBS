@@ -244,6 +244,7 @@ bool DeviceSource::LoadFilters()
     // basic initialization vars
 
     bool bForceCustomAudio = data->GetInt(TEXT("forceCustomAudioDevice")) != 0;
+    bUseAudioRender = data->GetInt(TEXT("useAudioRender")) != 0;
 
     bUseCustomResolution = data->GetInt(TEXT("customResolution"));
     strDevice = data->GetString(TEXT("device"));
@@ -613,10 +614,19 @@ bool DeviceSource::LoadFilters()
     }
     else if(soundOutputType == 2)
     {
-        if(FAILED(err = CoCreateInstance(CLSID_DSoundRender, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter, (void**)&audioFilter)))
-        {
-            AppWarning(TEXT("DShowPlugin: failed to create audio renderer, result = %08lX"), err);
-            soundOutputType = 0;
+        if(bUseAudioRender) {
+            if(FAILED(err = CoCreateInstance(CLSID_AudioRender, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter, (void**)&audioFilter)))
+            {
+                AppWarning(TEXT("DShowPlugin: failed to create WaveOut Audio renderer, result = %08lX"), err);
+                soundOutputType = 0;
+            }
+        }
+        else {
+            if(FAILED(err = CoCreateInstance(CLSID_DSoundRender, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter, (void**)&audioFilter)))
+            {
+                AppWarning(TEXT("DShowPlugin: failed to create DirectSound renderer, result = %08lX"), err);
+                soundOutputType = 0;
+            }
         }
 
         IBasicAudio *basicAudio;
@@ -1553,6 +1563,7 @@ void DeviceSource::UpdateSettings()
     UINT newPreferredType       = data->GetInt(TEXT("usePreferredType")) != 0 ? data->GetInt(TEXT("preferredType")) : -1;
     UINT newSoundOutputType     = data->GetInt(TEXT("soundOutputType"));
     bool bNewUseBuffering       = data->GetInt(TEXT("useBuffering")) != 0;
+    bool bNewUseAudioRender     = data->GetInt(TEXT("useAudioRender")) != 0;
     UINT newGamma               = data->GetInt(TEXT("gamma"), 100);
 
     int newDeintType            = data->GetInt(TEXT("deinterlacingType"));
@@ -1570,7 +1581,8 @@ void DeviceSource::UpdateSettings()
     if(strNewAudioDevice == "Disable" && strAudioDevice == "Disable")
         bCheckSoundOutput = false;
 
-    if((newSoundOutputType != soundOutputType && bCheckSoundOutput) || imageCX != newCX || imageCY != newCY ||
+    if((bNewUseAudioRender != bUseAudioRender && bCheckSoundOutput) ||
+       (newSoundOutputType != soundOutputType && bCheckSoundOutput) || imageCX != newCX || imageCY != newCY ||
        frameIntervalDiff >= 10 || newPreferredType != preferredOutputType ||
        !strDevice.CompareI(strNewDevice) || !strAudioDevice.CompareI(strNewAudioDevice) ||
        bNewCustom != bUseCustomResolution || bNewUseBuffering != bUseBuffering ||

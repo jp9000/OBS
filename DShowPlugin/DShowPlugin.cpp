@@ -1197,6 +1197,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 float fVol = configData->data->GetFloat(TEXT("volume"), 1.0f);
                 SetVolumeControlValue(GetDlgItem(hwnd, IDC_VOLUME), fVol);
+                BOOL bUseAudioRender = configData->data->GetInt(TEXT("useAudioRender"));
+                SendMessage(GetDlgItem(hwnd, IDC_USEAUDIORENDER), BM_SETCHECK, bUseAudioRender ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 //------------------------------------------
 
@@ -2052,6 +2054,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         float fVol = GetVolumeControlValue(GetDlgItem(hwnd, IDC_VOLUME));
                         configData->data->SetFloat(TEXT("volume"), fVol);
+                        BOOL bUseAudioRender = SendMessage(GetDlgItem(hwnd, IDC_USEAUDIORENDER), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        configData->data->SetInt(TEXT("useAudioRender"), bUseAudioRender);
 
                         //------------------------------------------
 
@@ -2104,6 +2108,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                             source->SetInt(TEXT("deinterlacingDoublesFramerate"),   configData->data->GetInt(TEXT("deinterlacingDoublesFramerate"), 0));
 
                             source->SetInt(TEXT("preserveSourceSize"),              configData->data->GetInt(TEXT("preserveSourceSize"), 0));
+                            source->SetInt(TEXT("useAudioRender"),                  configData->data->GetInt(TEXT("useAudioRender"), 0));
                         }
                     }
 
