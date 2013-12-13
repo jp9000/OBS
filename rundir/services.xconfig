@@ -7,6 +7,7 @@ services : {
       "EU: Amsterdam, NL"                    : rtmp://live-ams.justin.tv/app
       "EU: Frankfurt, DE"                    : rtmp://live-fra.justin.tv/app
       "EU: London, UK"                       : rtmp://live-lhr.justin.tv/app
+      "EU: Prag, CZ"                         : rtmp://live-prg.justin.tv/app
       "EU: Stockholm, SE"                    : rtmp://live-arn.justin.tv/app
       "US Central: Dallas, TX"               : rtmp://live-dfw.justin.tv/app
       "US East: Ashburn, VA"                 : rtmp://live-iad.justin.tv/app
