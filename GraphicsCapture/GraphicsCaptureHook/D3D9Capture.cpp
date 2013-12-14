@@ -760,7 +760,15 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
                             IDirect3DSurface9 *texture = textures[curCapture];
                             IDirect3DSurface9 *backBuffer = NULL;
 
-                            if (FAILED(hErr = device->GetRenderTarget(0, &backBuffer))) {
+			    static bool isTypingOfTheDead = false;
+			    static bool checkedExceptions = false;
+			    
+			    if (!checkedExceptions) {
+				    if (_strcmpi(processName,"HOTD_NG.exe") == 0)
+					    isTypingOfTheDead = true;
+			    }
+
+                            if (!isTypingOfTheDead && FAILED(hErr = device->GetRenderTarget(0, &backBuffer))) {
                                 RUNEVERYRESET logOutput << CurrentTimeString() << "D3D9DrawStuff: GetRenderTarget failed, result = " << unsigned int(hErr) << endl;
                             }
 
