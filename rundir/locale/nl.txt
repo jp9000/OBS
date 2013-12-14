@@ -333,11 +333,10 @@ Sources.TransitionSource.DisableFading="Fading uitschakelen:"
 Sources.TransitionSource.Randomize="Willekeurig:"
 
 Stats="Statistieken"
-Stats.TotalFramesEncoded="Totaal aantal Frames Encoded:"
-Stats.TotalFramesRendered="Totaal aantal Frames Redered:"
+Stats.TotalFramesRendered="Totaal aantal Frames Gerenderd:"
 Stats.TotalBytesTransferred="Totaal aantal Bytes Verstuurd:"
 Stats.LateFrames="Aantal late Frames:"
-Stats.SkippedFrames="Aantal Frames overgeslagen wegens encoder vertraging:"
+Stats.SkippedFrames="Aantal Frames overgeslagen wegens encodervertraging:"
 
 Updater.DownloadNow="Wil je deze nu downloaden?"
 Updater.NewUpdates="De volgende updates zijn beschikbaar:\r\n\r\n"

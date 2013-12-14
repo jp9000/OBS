@@ -173,6 +173,7 @@ Settings.Audio.PlaybackDevice="Устройство воспроизведени
 Settings.Audio.PushToTalkDelay="Задержка НиГ (мс):"
 Settings.Audio.PushToTalkHotkey="Использовать \"Нажми и Говори\""
 Settings.Audio.ShowOnlyConnectedDevices="Показывать только подключенные устройства"
+Settings.Audio.UseInputDevices="Использовать записывающее устройство для аудио рабочего стола"
 Settings.Audio.UseMicQPC="Улучшенная синхронизация микрофона (QPC метки)"
 
 Settings.Encoding.Audio="Аудио"

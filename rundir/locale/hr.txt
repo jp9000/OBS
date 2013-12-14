@@ -54,13 +54,34 @@ GlobalSources.DeleteConfirm="Ako izbrišete globalni izvor, biti će ukljonjeno 
 Listbox.Add="Dodaj $1"
 Listbox.Center="Centriraj"
 Listbox.CenterHorizontally="Centriraj horizontalno"
+Listbox.Config="Postavke"
+Listbox.FitToScreen="Prikaži preko punog ekrana"
+Listbox.Positioning="Pozicija/veličina"
+Listbox.ResetSize="Resetiraj veličinu"
+Listbox.SetHotkey="Napravi hotkey"
+ListBox.ResetCrop="Resetiraj kropiranje"
 
+MainMenu.File="&datoteka"
+MainMenu.Help="&pomoć"
+MainMenu.Profiles="&Profili"
+MainMenu.Settings="&Postavke"
 
+MainMenu.Settings.AlwaysOnTop="&Uvijek Na Vrhu"
+MainMenu.Settings.FullscreenMode="&Pogled preko punog ekrana"
+MainMenu.Settings.Projector="&Projektor"
 
+MainMenu.File.Exit="&izlaz"
+MainMenu.File.Save="&Spremi"
 
+MainMenu.Help.Contents="&sadržaj"
+MainMenu.Help.VisitWebsite="Posjetite Stranicu"
+MainMenu.Help.CheckForUpdates="Provjeri dostupnost nove verzije"
 
+MainMenu.Settings.OpenConfigFolder="Otvori &Konfiguracija folder"
 
+MainWindow.StopTest="Zaustavi Pregled"
 
+Plugins.Configure="Postavi"
 
 
 

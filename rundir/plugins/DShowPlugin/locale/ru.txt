@@ -19,6 +19,7 @@ DeviceSelection.GPUDeinterlacing="Использовать GPU"
 
 CrossbarSelection.Open="Кроссбар"
 
+DeviceSelection.64BitWarning="Некоторые устройства не имеют 64-битных драйверов. Если вашего устройства нет в списке, то попробуйте 32-битную версию OBS."
 DeviceSelection.AudioDevice="Аудио устройство:"
 DeviceSelection.Blend="Смешивание (1-1000):"
 DeviceSelection.ChromaKey="Хромакей"
@@ -43,6 +44,7 @@ DeviceSelection.OutputSound="Выводить звук только в тран�
 DeviceSelection.PlayToDesktop="Выводить звук везде"
 DeviceSelection.PointFiltering="Точечная фильтрация"
 DeviceSelection.PreferredType="Предпочтительный вывод"
+DeviceSelection.PreserveSize="Сохранить исходный размер"
 DeviceSelection.Refresh="Обновить"
 DeviceSelection.Resolution="Разрешение:"
 DeviceSelection.Select="Выбор"
