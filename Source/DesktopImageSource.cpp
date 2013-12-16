@@ -456,6 +456,11 @@ public:
         Vect2 ulCoord = Vect2(0.0f, 0.0f),
               lrCoord = Vect2(1.0f, 1.0f);
 
+        if(captureType == 1 && !hwndFoundWindow) {
+            // Don't render a giant black rectangle if the window isn't found.
+            return;
+        }
+
         if(bWindows8MonitorCapture)
         {
             LONG monitorWidth  = monitorData.rect.right-monitorData.rect.left;
