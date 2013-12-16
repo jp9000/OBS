@@ -210,6 +210,7 @@ public:
     virtual void ReleaseDC()=0;
 
     virtual LPVOID GetD3DTexture()=0;
+    virtual HANDLE GetSharedHandle()=0;
 };
 
 
@@ -494,6 +495,9 @@ public:
 
     virtual void  SetScissorRect(XRect *pRect=NULL)=0;
 
+    // To prevent breaking the API, put this at the end instead of with the other Texture functions
+    virtual Texture*        CreateSharedTexture(unsigned int width, unsigned int height)=0;
+
 protected:
     //manual coordinate generation
     VBData *vbd;
@@ -553,6 +557,11 @@ inline Texture* CreateRenderTarget(unsigned int width, unsigned int height, GSCo
 
 inline Texture* CreateGDITexture(unsigned int width, unsigned int height)
     {return GS->CreateGDITexture(width, height);}
+
+inline Texture* CreateFromSharedHandle(unsigned int width, unsigned int height, HANDLE handle)
+    {return GS->CreateTextureFromSharedHandle(width, height, handle);}
+inline Texture* CreateSharedTexture(unsigned int width, unsigned int height)
+    {return GS->CreateSharedTexture(width, height);}
 
 
 inline SamplerState* CreateSamplerState(SamplerInfo &info)          {return GS->CreateSamplerState(info);}

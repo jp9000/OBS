@@ -440,6 +440,70 @@ Texture* D3D10Texture::CreateGDITexture(unsigned int width, unsigned int height)
     return newTex;
 }
 
+Texture* D3D10Texture::CreateShared(unsigned int width, unsigned int height)
+{
+    HRESULT err;
+
+    D3D10_TEXTURE2D_DESC td;
+    zero(&td, sizeof(td));
+    td.Width            = width;
+    td.Height           = height;
+    td.MipLevels        = 1;
+    td.ArraySize        = 1;
+    td.Format           = DXGI_FORMAT_B8G8R8A8_UNORM;
+    td.BindFlags        = D3D10_BIND_SHADER_RESOURCE|D3D10_BIND_RENDER_TARGET;
+    td.SampleDesc.Count = 1;
+    td.Usage            = D3D10_USAGE_DEFAULT;
+    td.CPUAccessFlags   = 0;
+    td.MiscFlags		= D3D10_RESOURCE_MISC_SHARED;
+
+    ID3D10Texture2D *texVal;
+    if(FAILED(err = GetD3D()->CreateTexture2D(&td, NULL, &texVal)))
+    {
+        AppWarning(TEXT("D3D10Texture::CreateShared: CreateTexture2D failed, result = 0x%08lX"), err);
+        return NULL;
+    }
+
+    //------------------------------------------
+
+    D3D10_SHADER_RESOURCE_VIEW_DESC resourceDesc;
+    zero(&resourceDesc, sizeof(resourceDesc));
+    resourceDesc.Format              = DXGI_FORMAT_B8G8R8A8_UNORM;
+    resourceDesc.ViewDimension       = D3D10_SRV_DIMENSION_TEXTURE2D;
+    resourceDesc.Texture2D.MipLevels = 1;
+
+    ID3D10ShaderResourceView *resource;
+    if(FAILED(err = GetD3D()->CreateShaderResourceView(texVal, &resourceDesc, &resource)))
+    {
+        SafeRelease(texVal);
+        AppWarning(TEXT("D3D10Texture::CreateShared: CreateShaderResourceView failed, result = 0x%08lX"), err);
+        return NULL;
+    }
+
+    //------------------------------------------
+
+    ID3D10RenderTargetView *view;
+    err = GetD3D()->CreateRenderTargetView(texVal, NULL, &view);
+    if(FAILED(err))
+    {
+        SafeRelease(texVal);
+        SafeRelease(resource);
+        AppWarning(TEXT("D3D10Texture::CreateShared: CreateRenderTargetView failed, result = 0x%08lX"), err);
+        return NULL;
+    }
+
+    //------------------------------------------
+
+    D3D10Texture *newTex = new D3D10Texture;
+    newTex->format = GS_BGRA;
+    newTex->resource = resource;
+    newTex->texture = texVal;
+    newTex->renderTarget = view;
+    newTex->width = width;
+    newTex->height = height;
+
+    return newTex;
+}
 
 D3D10Texture::~D3D10Texture()
 {
@@ -652,4 +716,23 @@ bool D3D10Texture::Map(BYTE *&lpData, UINT &pitch)
 void D3D10Texture::Unmap()
 {
     texture->Unmap(0);
+}
+
+HANDLE D3D10Texture::GetSharedHandle()
+{
+    HRESULT err;
+    HANDLE handle = NULL;
+    IDXGIResource *pDXGIResource;
+    if FAILED(err = texture->QueryInterface(__uuidof(IDXGIResource), (void **)&pDXGIResource))
+    {
+        AppWarning(TEXT("D3D10Texture::GetSharedHandle: QueryInterface failed, result = %08lX"), err);
+        return handle;
+    }
+    
+    if FAILED(err = pDXGIResource->GetSharedHandle(&handle))
+    {
+        AppWarning(TEXT("D3D10Texture::GetSharedHandle: GetSharedHandle failed, result = %08lX"), err);
+    }
+    
+    return handle;
 }
