@@ -293,7 +293,13 @@ retryHookTestV2:
 
     //------------------------------------------------------------------
 
+    String strEncoder = AppConfig->GetString(TEXT("Audio Encoding"), TEXT("Codec"), TEXT("AAC"));
+    BOOL isAAC = strEncoder.CompareI(TEXT("AAC"));
+
     UINT format = AppConfig->GetInt(L"Audio Encoding", L"Format", 1);
+
+    if (!isAAC)
+        format = 0;
 
     switch (format) {
     case 0: sampleRateHz = 44100; break;
@@ -374,13 +380,12 @@ retryHookTestV2:
     //-------------------------------------------------------------
 
     UINT bitRate = (UINT)AppConfig->GetInt(TEXT("Audio Encoding"), TEXT("Bitrate"), 96);
-    String strEncoder = AppConfig->GetString(TEXT("Audio Encoding"), TEXT("Codec"), TEXT("AAC"));
 
     if (bDisableEncoding)
         audioEncoder = CreateNullAudioEncoder();
     else
 #ifdef USE_AAC
-    if(strEncoder.CompareI(TEXT("AAC")))// && OSGetVersion() >= 7)
+    if(isAAC) // && OSGetVersion() >= 7)
         audioEncoder = CreateAACEncoder(bitRate);
     else
 #endif
