@@ -375,6 +375,8 @@ public:
         int keyint = fps*keyframeInterval;
         int bframes = 7;
 
+        bool main_profile = AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"), TEXT("high")) != L"high";
+
         bool bHaveCustomImpl = false;
         impl_parameters custom = { 0 };
 
@@ -457,6 +459,7 @@ public:
         request->max_bitrate = maxBitrate;
         request->buffer_size = bufferSize;
         request->use_cbr = bUseCBR;
+        request->main_profile = main_profile;
         request->full_range = colorDesc.fullRange;
         request->matrix = colorDesc.matrix;
         request->primaries = colorDesc.primaries;
