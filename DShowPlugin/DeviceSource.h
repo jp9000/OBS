@@ -123,6 +123,8 @@ class DeviceSource : public ImageSource
     bool bRequestVolume;
     float fNewVol;
 
+    UINT enteredSceneCount;
+
     //---------------------------------
 
     DeviceColorType colorType;

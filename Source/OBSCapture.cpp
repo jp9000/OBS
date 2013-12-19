@@ -419,6 +419,20 @@ retryHookTestV2:
         }
 
         scene->BeginScene();
+        unsigned int numSources = scene->sceneItems.Num();
+        for(UINT i=0; i<numSources; i++)
+        {
+            XElement *source = scene->sceneItems[i]->GetElement();
+
+            String className = source->GetString(TEXT("class"));
+            if(scene->sceneItems[i]->bRender && className == "GlobalSource") {
+                XElement *globalSourceData = source->GetElement(TEXT("data"));
+                String globalSourceName = globalSourceData->GetString(TEXT("name"));
+                if(App->GetGlobalSource(globalSourceName) != NULL) {
+                    App->GetGlobalSource(globalSourceName)->GlobalSourceEnterScene();
+                }
+            }
+        }
     }
 
     if(scene && scene->HasMissingSources())
