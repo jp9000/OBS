@@ -875,8 +875,10 @@ cleanFinish:
     else
         bReadyToDraw = false;
 
-    if(!renderCX) {renderCX = 32; imageCX = renderCX;}
-    if(!renderCY) {renderCY = 32; imageCY = renderCY;}
+    // Updated check to ensure that the source actually turns red instead of
+    // screwing up the size when SetFormat fails.
+    if(renderCX <= 0 || renderCX >= 8192) renderCX = 32; imageCX = renderCX;
+    if(renderCY <= 0 || renderCY >= 8192) renderCY = 32; imageCY = renderCY;
 
 
     //-----------------------------------------------------

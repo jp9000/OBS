@@ -2035,8 +2035,10 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         configData->data->SetString(TEXT("deviceID"), configData->deviceIDList[deviceID]);
 
                         configData->data->SetInt(TEXT("customResolution"), bCustomResolution);
-                        configData->data->SetFloat(TEXT("scaleFactor_x"), (float)resolution.cx / configData->data->GetFloat(TEXT("resolutionWidth"), 1.0f));
-                        configData->data->SetFloat(TEXT("scaleFactor_y"), (float)resolution.cy / configData->data->GetFloat(TEXT("resolutionHeight"), 1.0f));
+                        if(resolution.cx != 0 && resolution.cy != 0) {
+                            configData->data->SetFloat(TEXT("scaleFactor_x"), (float)resolution.cx / configData->data->GetFloat(TEXT("resolutionWidth"), 1.0f));
+                            configData->data->SetFloat(TEXT("scaleFactor_y"), (float)resolution.cy / configData->data->GetFloat(TEXT("resolutionHeight"), 1.0f));
+                        }
                         configData->data->SetInt(TEXT("resolutionWidth"), resolution.cx);
                         configData->data->SetInt(TEXT("resolutionHeight"), resolution.cy);
                         configData->data->SetInt(TEXT("frameInterval"), UINT(frameInterval));
@@ -2046,7 +2048,6 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         configData->data->SetInt(TEXT("gamma"), (int)SendMessage(GetDlgItem(hwnd, IDC_GAMMA), TBM_GETPOS, 0, 0));
 
                         configData->data->SetInt(TEXT("preserveSourceSize"), bPreserveSourceSize);
-                        configData->data->SetFloat(TEXT("scaleRatio"), (float)resolution.cx / configData->data->GetFloat(TEXT("resolutionWidth"), 1.0f));
                         
                         configData->data->SetInt(TEXT("deinterlacingType"), deinterlacingConfig.type);
                         configData->data->SetInt(TEXT("deinterlacingFieldOrder"), deinterlacingConfig.fieldOrder);
