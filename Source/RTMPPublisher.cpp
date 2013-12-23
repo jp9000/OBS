@@ -192,6 +192,13 @@ RTMPPublisher::~RTMPPublisher()
     //we're in the middle of connecting! wait for that to happen to avoid all manner of race conditions
     if (hConnectionThread)
     {
+        //the connect request could be stalled in a blocking call, kill the socket to ensure it wakes up
+        if (rtmp && rtmp->m_sb.sb_socket != -1)
+        {
+            closesocket(rtmp->m_sb.sb_socket);
+            rtmp->m_sb.sb_socket = -1;
+        }
+
         WaitForSingleObject(hConnectionThread, INFINITE);
         OSCloseThread(hConnectionThread);
     }
