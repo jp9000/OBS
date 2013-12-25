@@ -84,9 +84,10 @@ Function PreReqCheck
 	GetDLLVersion "D3DX10_43.DLL" $R0 $R1
 	GetDLLVersion "D3D10_1.DLL" $R0 $R1
 	GetDLLVersion "DXGI.DLL" $R0 $R1
+	GetDLLVersion "D3DCompiler_43.dll" $R0 $R1
 	IfErrors dxMissing dxOK
 	dxMissing:
-		MessageBox MB_YESNO|MB_ICONEXCLAMATION "Your system is missing a DirectX update that ${APPNAME} requires. Would you like to download it?" IDYES dxtrue IDNO dxfalse
+		MessageBox MB_YESNO|MB_ICONEXCLAMATION "Your system is missing DirectX components that ${APPNAME} requires. Would you like to download them?" IDYES dxtrue IDNO dxfalse
 		dxtrue:
 			ExecShell "open" "http://www.microsoft.com/en-us/download/details.aspx?id=35"
 		dxfalse:
