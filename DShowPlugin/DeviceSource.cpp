@@ -1640,6 +1640,10 @@ void DeviceSource::SetInt(CTSTR lpName, int iVal)
         {
             bFlipHorizontal = iVal != 0;
         }
+        else if(scmpi(lpName, TEXT("usePointFiltering")) == 0)
+        {
+            bUsePointFiltering = iVal != 0;
+        }
         else if(scmpi(lpName, TEXT("keyColor")) == 0)
         {
             keyColor = (DWORD)iVal;

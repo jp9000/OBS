@@ -1486,6 +1486,21 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                     }
                     break;
 
+                case IDC_POINTFILTERING:
+                    if(HIWORD(wParam) == BN_CLICKED)
+                    {
+                        ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
+                        ImageSource *source = API->GetSceneImageSource(configData->lpName);
+                        if(source)
+                        {
+                            HWND hwndPointFiltering = (HWND)lParam;
+                            BOOL bUsePointFiltering = SendMessage(hwndPointFiltering, BM_GETCHECK, 0, 0) == BST_CHECKED;
+
+                            source->SetInt(TEXT("usePointFiltering"), bUsePointFiltering);
+                        }
+                    }
+                    break;
+
                 case IDC_DELAY_EDIT:
                 case IDC_TIMEOFFSET_EDIT:
                 case IDC_OPACITY_EDIT:
