@@ -1,19 +1,32 @@
 Add="Afegir"
 Preview="Vista prèvia"
+Apply="Aplicar"
+Browse="Explorar..."
+BuildingMP4Dialog="Construint MP4"
 Cancel="Cancel·lar"
 ClearHotkey="Esborrar"
+Close="Tancar"
 Color="Color"
 Default="Per defecte"
 Defaults="Valors predeterminats"
+DeleteConfirm="Estàs segur que vols eliminar els fitxers seleccionats?"
+Desktop="Escriptori"
 Disable="Desactivar"
 Gamma="Gamma:"
+MonitorNum="Monitor $1"
 MoveDown="Baixar"
+MoveToBottom="Moure al Final"
+MoveToTop="Moure al Principi"
 MoveUp="Pujar"
 None="Cap"
+OK="OK"
+Plugins="Plugins..."
 Refresh="Actualitzar"
 Remove="Eliminar"
 Rename="Canvia el nom"
 Copy="Copiar"
+Scene="Escena"
+Settings="Configuració..."
 
 
 Connection.Disconnected="Desconnectat pel servidor"
@@ -21,6 +34,7 @@ Connection.Disconnected="Desconnectat pel servidor"
 
 
 
+Listbox.Config="Propietats"
 
 
 

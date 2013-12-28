@@ -333,6 +333,7 @@ Sources.TransitionSource.DisableFading="Fading uitschakelen:"
 Sources.TransitionSource.Randomize="Willekeurig:"
 
 Stats="Statistieken"
+Stats.TotalFramesEncoded="Totaal aantal Frames Encoded:"
 Stats.TotalFramesRendered="Totaal aantal Frames Gerenderd:"
 Stats.TotalBytesTransferred="Totaal aantal Bytes Verstuurd:"
 Stats.LateFrames="Aantal late Frames:"

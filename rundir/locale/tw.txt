@@ -173,6 +173,7 @@ Settings.Audio.PlaybackDevice="播放音訊的裝置："
 Settings.Audio.PushToTalkDelay="隨按即說延遲 (毫秒)："
 Settings.Audio.PushToTalkHotkey="使用隨按即說："
 Settings.Audio.ShowOnlyConnectedDevices="只顯示已經連接的裝置"
+Settings.Audio.UseInputDevices="使用輸入裝置做為桌面音訊"
 Settings.Audio.UseMicQPC="使用麥克風 QPC 時間戳記"
 
 Settings.Encoding.Audio="音訊編碼"

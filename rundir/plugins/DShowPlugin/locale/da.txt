@@ -1,6 +1,6 @@
 Cancel="Annullér"
-ClassName="Video Optageenhed"
-DeviceSelection="Enhedsvalg"
+ClassName="Video Optagelsesenhed"
+DeviceSelection="Valg af enheder"
 OK="OK"
 
 DeinterlacingType.None="Ingen"
@@ -21,7 +21,7 @@ CrossbarSelection.Open="åben Crossbar"
 
 DeviceSelection.64BitWarning="Nogle enheder har ikke 64 bit drivere. Hvis enheden ikke står på listen, kan du prøve 32 bit OBS."
 DeviceSelection.AudioDevice="Lydinputenhed:"
-DeviceSelection.Blend="Bland (1-1000):"
+DeviceSelection.Blend="Blend (1-1000):"
 DeviceSelection.ChromaKey="Chroma Nøgle"
 DeviceSelection.Color="Farve:"
 DeviceSelection.Config="Konfigurer"
@@ -33,7 +33,7 @@ DeviceSelection.ExistsInScene="En kilde, der bruger denne enhed, eksisterer alle
 DeviceSelection.ExistsSomewhere="Denne enhed bliver brugt som kilde i en eller flere scener."
 DeviceSelection.FlipImage="Flip Billede Vertikalt"
 DeviceSelection.FlipImageHorizontal="Flip Billede Horizontalt"
-DeviceSelection.ForceCustomAudio="Brug brugerdefinerede lydenhed"
+DeviceSelection.ForceCustomAudio="Brug brugerdefineret lydenhed"
 DeviceSelection.FPS="FPS:"
 DeviceSelection.Gamma="Gamma:"
 DeviceSelection.GlobalExists="En global kilde, der bruger denne enhed, eksisterer allerede."
@@ -59,7 +59,7 @@ DeviceSelection.UseChromaKey="Brug Chroma Nøgle"
 DeviceSelection.UseDeviceAudio="(Brug lydenhed)"
 DeviceSelection.Video="Video"
 
-Plugin.Description="Dette plugin muliggør at du kan tilfæje DirectShow videoenheder (webkameraer, optagekort, osv) to scenen"
+Plugin.Description="Dette plugin tillader tilføjelse af DirectShow videoenheder (webkameraer, optagelseskort, osv) til scenen"
 Plugin.Name="DirectShow Videoenhed Plugin"
 
 

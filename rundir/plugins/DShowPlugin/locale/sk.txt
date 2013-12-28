@@ -19,6 +19,8 @@ DeviceSelection.Opacity="Priehľadnosť"
 DeviceSelection.Refresh="Obnoviť"
 DeviceSelection.Resolution="Rozlíšenie"
 DeviceSelection.Select="Vybrať"
+DeviceSelection.Sound="Zvuk"
+DeviceSelection.UseDeviceAudio="(Použiť audio zariadenia)"
 DeviceSelection.Video="Video"
 
 Plugin.Description="Tento plugin vám umožní pridať video zariadenia DirectShow (kamery, capture cards, atď) do scény"

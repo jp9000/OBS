@@ -1,5 +1,9 @@
 Cancel="Zrušiť"
 OK="OK"
 
+Plugin.Name="Plugin hlasitosti pre každú scénu"
+Plugin.Description="Povoliť sledovanie hlasitosti pre každú scénu."
 
+Config.Caption="Nastavenie hlasitosti pre každú scénu"
+Config.Enable="Povoliť sledovanie hlasitosti pre každú scénu"
 
