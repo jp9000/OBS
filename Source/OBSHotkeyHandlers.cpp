@@ -66,7 +66,10 @@ void STDCALL OBS::MuteMicHotkey(DWORD hotkey, UPARAM param, bool bDown)
     if(!bDown) return;
 
     if(App->micAudio)
+    {
         App->micVol = ToggleVolumeControlMute(GetDlgItem(hwndMain, ID_MICVOLUME));
+        App->ReportMicVolumeChange(App->micVol, App->micVol < VOLN_MUTELEVEL, true);
+    }
 }
 
 void STDCALL OBS::MuteDesktopHotkey(DWORD hotkey, UPARAM param, bool bDown)
@@ -74,5 +77,5 @@ void STDCALL OBS::MuteDesktopHotkey(DWORD hotkey, UPARAM param, bool bDown)
     if(!bDown) return;
 
     App->desktopVol = ToggleVolumeControlMute(GetDlgItem(hwndMain, ID_DESKTOPVOLUME));
+    App->ReportDesktopVolumeChange(App->desktopVol, App->desktopVol < VOLN_MUTELEVEL, true);
 }
-
