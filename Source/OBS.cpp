@@ -388,6 +388,14 @@ OBS::OBS()
     SetVolumeControlIcons(hwndTemp, GetIcon(hinstMain, IDI_SOUND_DESKTOP), GetIcon(hinstMain, IDI_SOUND_DESKTOP_MUTED));
 
     //-----------------------------------------------------
+    // start/stop recording button
+
+    hwndTemp = CreateWindow(TEXT("BUTTON"), Str("MainWindow.ToggleRecording"),
+        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_PUSHBUTTON|WS_DISABLED|WS_CLIPSIBLINGS,
+        0, 0, 0, 0, hwndMain, (HMENU)ID_TOGGLERECORDING, 0, 0);
+    SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
+
+    //-----------------------------------------------------
     // settings button
 
     hwndTemp = CreateWindow(TEXT("BUTTON"), Str("Settings"),
@@ -983,6 +991,7 @@ void OBS::ProcessPanelVisible(bool fromResizeWindow)
     ShowWindow(GetDlgItem(hwndMain, ID_MICVOLUMEMETER), visible);
     ShowWindow(GetDlgItem(hwndMain, ID_DESKTOPVOLUMEMETER), visible);
     ShowWindow(GetDlgItem(hwndMain, ID_SETTINGS), visible);
+    ShowWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), visible);
     ShowWindow(GetDlgItem(hwndMain, ID_STARTSTOP), visible);
     ShowWindow(GetDlgItem(hwndMain, ID_SCENEEDITOR), visible);
     ShowWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), visible);
@@ -1097,7 +1106,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
 
     xPos = resetXPos;
 
-    SetWindowPos(GetDlgItem(hwndMain, ID_SETTINGS), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
+    SetWindowPos(GetDlgItem(hwndMain, ID_TOGGLERECORDING), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
     xPos += controlWidth;
 
     SetWindowPos(GetDlgItem(hwndMain, ID_STARTSTOP), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
@@ -1109,7 +1118,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
 
     xPos = resetXPos;
 
-    SetWindowPos(GetDlgItem(hwndMain, ID_SCENEEDITOR), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
+    SetWindowPos(GetDlgItem(hwndMain, ID_SETTINGS), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
     xPos += controlWidth;
 
     SetWindowPos(GetDlgItem(hwndMain, ID_TESTSTREAM), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
@@ -1121,7 +1130,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
 
     xPos = resetXPos;
 
-    SetWindowPos(GetDlgItem(hwndMain, ID_GLOBALSOURCES), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
+    SetWindowPos(GetDlgItem(hwndMain, ID_SCENEEDITOR), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
     xPos += controlWidth;
 
     SetWindowPos(GetDlgItem(hwndMain, ID_PLUGINS), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
@@ -1133,8 +1142,11 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
 
     xPos = resetXPos;
 
-    SetWindowPos(GetDlgItem(hwndMain, ID_DASHBOARD), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
+    SetWindowPos(GetDlgItem(hwndMain, ID_GLOBALSOURCES), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
     xPos += controlWidth;
+
+    /*SetWindowPos(GetDlgItem(hwndMain, ID_DASHBOARD), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
+    xPos += controlWidth;*/
 
     UpdateDashboardButton();
 

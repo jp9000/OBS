@@ -2317,6 +2317,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     App->scenesConfig.Save();
                     break;
 
+                case ID_TOGGLERECORDING:
+                    App->ToggleRecording();
+                    break;
+
                 case ID_FILE_EXIT:
                 case ID_EXIT:
                     PostQuitMessage(0);

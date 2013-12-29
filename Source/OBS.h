@@ -339,6 +339,7 @@ struct GlobalSourceInfo
 enum
 {
     ID_SETTINGS=5000,
+    ID_TOGGLERECORDING,
     ID_STARTSTOP,
     ID_EXIT,
     ID_SCENEEDITOR,
@@ -625,7 +626,7 @@ private:
     String  strLanguage;
     bool    bTestStream;
     bool    bUseMultithreadedOptimizations;
-    bool    bRunning;
+    bool    bRunning, bRecording;
     volatile bool bShutdownVideoThread, bShutdownEncodeThread;
     int     renderFrameWidth, renderFrameHeight; // The size of the preview only
     int     renderFrameX, renderFrameY; // The offset of the preview inside the preview control
@@ -880,6 +881,8 @@ private:
 
     void Start();
     void Stop();
+    void StartRecording();
+    void StopRecording();
 
     static void STDCALL StartStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL StopStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
@@ -927,6 +930,7 @@ private:
     void DisableProjector();
 
     void ToggleCapturing();
+    void ToggleRecording();
 
     Scene* CreateScene(CTSTR lpClassName, XElement *data);
     void ConfigureScene(XElement *element);
