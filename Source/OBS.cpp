@@ -1061,7 +1061,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
     parts[3] = clientWidth-100;
     parts[2] = parts[3]-60;
     parts[1] = parts[2]-170;
-    parts[0] = parts[1]-80;
+    parts[0] = parts[1]-130;
     SendMessage(hwndTemp, SB_SETPARTS, 5, (LPARAM)parts);
 
     int resetXPos = xStart+listControlWidth*2;
@@ -1507,7 +1507,21 @@ void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
                     DWORD streamTimeHours = streamTimeMinutesTotal/60;
                     DWORD streamTimeMinutes = streamTimeMinutesTotal%60;
 
+                    int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
+
                     strOutString = FormattedString(TEXT("%u:%02u:%02u"), streamTimeHours, streamTimeMinutes, streamTimeSeconds);
+                    if(App->bRecording && App->bRunning && !App->bTestStream && networkMode == 0) {
+                        strOutString.AppendString(TEXT(" (LIVE + REC)"));
+                    }
+                    else if(!App->bRecording && App->bRunning && !App->bTestStream && networkMode == 0) {
+                        strOutString.AppendString(TEXT(" (LIVE)"));
+                    }
+                    else if(App->bRecording && App->bRunning && !App->bTestStream && networkMode == 1) {
+                        strOutString.AppendString(TEXT(" (REC)"));
+                    }
+                    else if(App->bRunning && App->bTestStream) {
+                        strOutString.AppendString(TEXT(" (Preview)"));
+                    }
                 }
                 break;
             case 2:
