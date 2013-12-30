@@ -387,7 +387,8 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,176,217,10
     CONTROL         "Settings.Advanced.UseQSV",IDC_USEQSV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,187,116,10
     CONTROL         "Settings.Advanced.QSVUseVideoEncoderSettings",IDC_QSVUSEVIDEOENCODERSETTINGS,
-                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,160,187,217,10
+                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,130,187,217,10
+    CONTROL         "Settings.Advanced.UseNVENC",IDC_USENVENC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,270,187,116,10
     GROUPBOX        "Settings.Audio",IDC_STATIC,4,204,413,62
     CONTROL         "Settings.Advanced.SyncToVideoTime",IDC_SYNCTOVIDEOTIME,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,215,390,10

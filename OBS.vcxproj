@@ -257,6 +257,7 @@
     <ClCompile Include="Source\DesktopImageSource.cpp" />
     <ClCompile Include="Source\Encoder_AAC.cpp" />
     <ClCompile Include="Source\Encoder_MP3.cpp" />
+    <ClCompile Include="Source\Encoder_NVENC.cpp" />
     <ClCompile Include="Source\Encoder_QSV.cpp" />
     <ClCompile Include="Source\Encoder_x264.cpp" />
     <ClCompile Include="Source\FLVFileStream.cpp" />

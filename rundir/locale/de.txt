@@ -148,6 +148,7 @@ Settings.Advanced.UseMultithreadedOptimizations="Nutze Multithread Optimierungen
 Settings.Advanced.UseQSV="Benutze Quick Sync"
 Settings.Advanced.QSVUseVideoEncoderSettings="Benutze eigene x264 Encoder Einstellungen für Quick Sync"
 Settings.Advanced.QSVUseVideoEncoderSettingsToolTip="Derzeit wird nur keyint und bframes unterstützt."
+Settings.Advanced.UseNVENC="Benutze Nvidia NVENC"
 Settings.Advanced.SceneBufferTime="Szenen Pufferzeit (Millisekunden):"
 Settings.Advanced.SyncToVideoTime="Synchronisation der Audio- zur Videozeit erzwingen"
 Settings.Advanced.VideoEncoderCPUTradeoff="x264 CPU Voreinstellung:"

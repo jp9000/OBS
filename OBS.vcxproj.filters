@@ -142,6 +142,9 @@
     <ClCompile Include="Source\Encoder_QSV.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Encoder_NVENC.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\D3D10System.h">

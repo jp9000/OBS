@@ -1218,7 +1218,7 @@ void OBS::MainCaptureLoop()
         GetD3D()->Flush();
         profileOut;
         profileOut;
-	profileOut; //frame
+        profileOut; //frame
 
         //------------------------------------
         // frame sync
