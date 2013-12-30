@@ -157,8 +157,14 @@ void OBS::StopRecording()
 {
     if(!bRecording) return;
 
-    delete fileStream;
+    VideoFileStream *tempStream = NULL;
+
+    tempStream = fileStream;
+    // Prevent the encoder thread from trying to write to fileStream while it's closing
     fileStream = NULL;
+
+    delete tempStream;
+    tempStream = NULL;
     bRecording = false;
 
     SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), Str("MainWindow.StartRecording"));

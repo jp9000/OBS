@@ -28,7 +28,7 @@ class FLVFileStream : public VideoFileStream
     String strFile;
 
     UINT64 metaDataPos;
-    DWORD lastTimeStamp;
+    DWORD lastTimeStamp, initialTimeStamp;
 
     bool bSentFirstPacket, bSentSEI;
 
@@ -39,7 +39,7 @@ class FLVFileStream : public VideoFileStream
             App->GetVideoEncoder()->GetSEI(sei);
 
             UINT networkDataSize  = fastHtonl(size+sei.size);
-            UINT networkTimestamp = fastHtonl(timestamp);
+            UINT networkTimestamp = fastHtonl(timestamp-initialTimeStamp);
             UINT streamID = 0;
             fileOut.OutputByte(type);
             fileOut.Serialize(((LPBYTE)(&networkDataSize))+1,  3);
@@ -54,7 +54,7 @@ class FLVFileStream : public VideoFileStream
             bSentSEI = true;
         } else {
             UINT networkDataSize  = fastHtonl(size);
-            UINT networkTimestamp = fastHtonl(timestamp);
+            UINT networkTimestamp = fastHtonl(timestamp-initialTimeStamp);
             UINT streamID = 0;
             fileOut.OutputByte(type);
             fileOut.Serialize(((LPBYTE)(&networkDataSize))+1,  3);
@@ -65,13 +65,14 @@ class FLVFileStream : public VideoFileStream
             fileOut.OutputDword(fastHtonl(size+14));
         }
 
-        lastTimeStamp = timestamp;
+        lastTimeStamp = timestamp-initialTimeStamp;
     }
 
 public:
     bool Init(CTSTR lpFile)
     {
         strFile = lpFile;
+        initialTimeStamp = -1;
 
         if(!fileOut.Open(lpFile, XFILE_CREATEALWAYS, 1024*1024))
             return false;
@@ -135,6 +136,12 @@ public:
 
             AppendFLVPacket(audioHeaders.lpPacket, audioHeaders.size, 8, 0);
             AppendFLVPacket(videoHeaders.lpPacket, videoHeaders.size, 9, 0);
+        }
+
+        if(initialTimeStamp == -1 && data[0] != 0x17)
+            return;
+        else if(initialTimeStamp == -1 && data[0] == 0x17) {
+            initialTimeStamp = timestamp;
         }
 
         AppendFLVPacket(data, size, (type == PacketType_Audio) ? 8 : 9, timestamp);
