@@ -74,7 +74,8 @@ void OBS::StartRecording()
 
     strOutputFile.FindReplace(TEXT("\\"), TEXT("/"));
 
-    videoEncoder->RequestKeyframe();
+    // Don't request a keyframe while everything is starting up for the first time
+    if(!bStartingUp) videoEncoder->RequestKeyframe();
 
     if (bWriteToFile)
     {
@@ -175,6 +176,8 @@ void OBS::Start()
 {
     if(bRunning) return;
 
+    bStartingUp = true;
+
     OSEnterMutex (hStartupShutdownMutex);
 
     scenesConfig.Save();
@@ -204,6 +207,7 @@ retryHookTest:
         if (ret == IDABORT)
         {
             OSLeaveMutex (hStartupShutdownMutex);
+            bStartingUp = false;
             return;
         }
         else if (ret == IDRETRY)
@@ -220,6 +224,7 @@ retryHookTest:
         OSLeaveMutex (hStartupShutdownMutex);
         MessageBox(hwndMain, strPatchesError.Array(), NULL, MB_ICONERROR);
         Log(TEXT("Incompatible patches detected."));
+        bStartingUp = false;
         return;
     }
 
@@ -259,6 +264,7 @@ retryHookTest:
             MessageBox(hwndMain, strError, NULL, MB_ICONERROR);
         else
             DialogBox(hinstMain, MAKEINTRESOURCE(IDD_RECONNECTING), hwndMain, OBS::ReconnectDialogProc);
+        bStartingUp = false;
         return;
     }
 
@@ -328,6 +334,7 @@ retryHookTestV2:
                 delete GS;
 
                 OSLeaveMutex (hStartupShutdownMutex);
+                bStartingUp = false;
                 return;
             }
             else if (ret == IDRETRY)
@@ -564,69 +571,6 @@ retryHookTestV2:
 
     //-------------------------------------------------------------
 
-    bWriteToFile = networkMode == 1 || AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile")) != 0;
-    String strOutputFile = AppConfig->GetString(TEXT("Publish"), TEXT("SavePath"));
-
-    strOutputFile.FindReplace(TEXT("\\"), TEXT("/"));
-
-    if (bWriteToFile)
-    {
-        OSFindData ofd;
-        HANDLE hFind = NULL;
-        bool bUseDateTimeName = true;
-        bool bOverwrite = GlobalConfig->GetInt(L"General", L"OverwriteRecordings", false) != 0;
-
-        if(!bOverwrite && (hFind = OSFindFirstFile(strOutputFile, ofd)))
-        {
-            String strFileExtension = GetPathExtension(strOutputFile);
-            String strFileWithoutExtension = GetPathWithoutExtension(strOutputFile);
-
-            if(strFileExtension.IsValid() && !ofd.bDirectory)
-            {
-                String strNewFilePath;
-                UINT curFile = 0;
-
-                do 
-                {
-                    strNewFilePath.Clear() << strFileWithoutExtension << TEXT(" (") << FormattedString(TEXT("%02u"), ++curFile) << TEXT(").") << strFileExtension;
-                } while(OSFileExists(strNewFilePath));
-
-                strOutputFile = strNewFilePath;
-
-                bUseDateTimeName = false;
-            }
-
-            if(ofd.bDirectory)
-                strOutputFile.AppendChar('/');
-
-            OSFindClose(hFind);
-        }
-
-        if(bUseDateTimeName)
-        {
-            String strFileName = GetPathFileName(strOutputFile);
-
-            if(!strFileName.IsValid() || !IsSafeFilename(strFileName))
-            {
-                SYSTEMTIME st;
-                GetLocalTime(&st);
-
-                String strDirectory = GetPathDirectory(strOutputFile);
-                String file = strOutputFile.Right(strOutputFile.Length() - strDirectory.Length());
-                String extension;
-
-                if (!file.IsEmpty())
-                    extension = GetPathExtension(file.Array());
-
-                if(extension.IsEmpty())
-                    extension = TEXT("mp4");
-                strOutputFile = FormattedString(TEXT("%s/%u-%02u-%02u-%02u%02u-%02u.%s"), strDirectory.Array(), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, extension.Array());
-            }
-        }
-    }
-
-    //-------------------------------------------------------------
-
     bufferingTime = GlobalConfig->GetInt(TEXT("General"), TEXT("SceneBufferingTime"), 700);
     Log(TEXT("Scene buffering time set to %u"), bufferingTime);
 
@@ -668,26 +612,7 @@ retryHookTestV2:
 
     //-------------------------------------------------------------
 
-    if(!bTestStream && bWriteToFile && strOutputFile.IsValid())
-    {
-        String strFileExtension = GetPathExtension(strOutputFile);
-        if(strFileExtension.CompareI(TEXT("flv")))
-            fileStream = CreateFLVFileStream(strOutputFile);
-        else if(strFileExtension.CompareI(TEXT("mp4")))
-            fileStream = CreateMP4FileStream(strOutputFile);
-
-        if(!fileStream)
-        {
-            Log(TEXT("Warning - OBSCapture::Start: Unable to create the file stream. Check the file path in Broadcast Settings."));
-            MessageBox(hwndMain, Str("Capture.Start.FileStream.Warning"), Str("Capture.Start.FileStream.WarningCaption"), MB_OK | MB_ICONWARNING);        
-            bRecording = false;
-        }
-        else {
-            bRecording = true;
-            EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), TRUE);
-            SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), Str("MainWindow.StopRecording"));
-        }
-    }
+    StartRecording();
 
     //-------------------------------------------------------------
 
@@ -724,6 +649,8 @@ retryHookTestV2:
     UpdateNotificationAreaIcon();
 
     OSLeaveMutex (hStartupShutdownMutex);
+
+    bStartingUp = false;
 }
 
 void OBS::Stop()
@@ -787,8 +714,7 @@ void OBS::Stop()
     delete network;
     network = NULL;
     
-    delete fileStream;
-    fileStream = NULL;
+    if(bRecording) StopRecording();
 
     delete micAudio;
     micAudio = NULL;
