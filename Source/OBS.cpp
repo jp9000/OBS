@@ -390,7 +390,7 @@ OBS::OBS()
     //-----------------------------------------------------
     // start/stop recording button
 
-    hwndTemp = CreateWindow(TEXT("BUTTON"), Str("MainWindow.ToggleRecording"),
+    hwndTemp = CreateWindow(TEXT("BUTTON"), Str("MainWindow.StartRecording"),
         WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_PUSHBUTTON|WS_DISABLED|WS_CLIPSIBLINGS,
         0, 0, 0, 0, hwndMain, (HMENU)ID_TOGGLERECORDING, 0, 0);
     SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);

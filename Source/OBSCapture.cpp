@@ -900,7 +900,7 @@ void OBS::Stop()
     UpdateNotificationAreaIcon();
 
     
-    SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), Str("MainWindow.ToggleRecording"));
+    SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), Str("MainWindow.StartRecording"));
     EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), FALSE);
     SetWindowText(GetDlgItem(hwndMain, ID_TESTSTREAM), Str("MainWindow.TestStream"));
     EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), TRUE);
