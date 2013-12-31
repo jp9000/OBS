@@ -144,6 +144,7 @@ void OBS::StartRecording()
         {
             Log(TEXT("Warning - OBSCapture::Start: Unable to create the file stream. Check the file path in Broadcast Settings."));
             MessageBox(hwndMain, Str("Capture.Start.FileStream.Warning"), Str("Capture.Start.FileStream.WarningCaption"), MB_OK | MB_ICONWARNING);        
+            bRecording = false;
         }
         else {
             EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), TRUE);
@@ -679,6 +680,7 @@ retryHookTestV2:
         {
             Log(TEXT("Warning - OBSCapture::Start: Unable to create the file stream. Check the file path in Broadcast Settings."));
             MessageBox(hwndMain, Str("Capture.Start.FileStream.Warning"), Str("Capture.Start.FileStream.WarningCaption"), MB_OK | MB_ICONWARNING);        
+            bRecording = false;
         }
         else {
             bRecording = true;
