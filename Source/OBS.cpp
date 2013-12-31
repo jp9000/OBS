@@ -1510,10 +1510,10 @@ void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
                     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
 
                     strOutString = FormattedString(TEXT("%u:%02u:%02u"), streamTimeHours, streamTimeMinutes, streamTimeSeconds);
-                    if(App->bRecording && App->bRunning && !App->bTestStream && networkMode == 0) {
+                    if(App->bRecording && App->bStreaming && !App->bTestStream && networkMode == 0) {
                         strOutString.AppendString(TEXT(" (LIVE + REC)"));
                     }
-                    else if(!App->bRecording && App->bRunning && !App->bTestStream && networkMode == 0) {
+                    else if(!App->bRecording && App->bStreaming && !App->bTestStream && networkMode == 0) {
                         strOutString.AppendString(TEXT(" (LIVE)"));
                     }
                     else if(App->bRecording && App->bRunning && !App->bTestStream && networkMode == 1) {

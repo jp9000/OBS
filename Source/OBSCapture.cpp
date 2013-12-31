@@ -679,7 +679,7 @@ retryHookTestV2:
 
 void OBS::Stop()
 {
-    if((!bStreaming && !bRecording) && (!bTestStream)) return;
+    if((!bStreaming && !bRecording && !bRunning) && (!bTestStream)) return;
 
     bool bKeepRecording = GlobalConfig->GetInt(TEXT("General"), TEXT("KeepRecordingOnStopStreaming"), 1) != 0;
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
