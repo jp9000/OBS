@@ -626,7 +626,7 @@ private:
     String  strLanguage;
     bool    bTestStream;
     bool    bUseMultithreadedOptimizations;
-    bool    bRunning, bRecording, bStartingUp;
+    bool    bRunning, bRecording, bStartingUp, bStreaming;
     volatile bool bShutdownVideoThread, bShutdownEncodeThread;
     int     renderFrameWidth, renderFrameHeight; // The size of the preview only
     int     renderFrameX, renderFrameY; // The offset of the preview inside the preview control

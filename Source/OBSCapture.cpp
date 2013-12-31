@@ -58,7 +58,7 @@ void OBS::ToggleRecording()
 
 void OBS::ToggleCapturing()
 {
-    if(!bRunning)
+    if(!bRunning || (!bStreaming && bRecording))
         Start();
     else
         Stop();
@@ -170,11 +170,34 @@ void OBS::StopRecording()
     bRecording = false;
 
     SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), Str("MainWindow.StartRecording"));
+
+    if(!bStreaming) Stop();
 }
 
 void OBS::Start()
 {
-    if(bRunning) return;
+    if(bRunning && !bRecording) return;
+
+    bool bKeepRecording = GlobalConfig->GetInt(TEXT("General"), TEXT("KeepRecordingOnStopStreaming"), 1) != 0;
+    int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
+    DWORD delayTime = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("Delay"));
+
+    if(bRecording && bKeepRecording && networkMode == 0 && delayTime == 0) {
+        bFirstConnect = !bReconnecting;
+
+        network = NULL;
+        network = CreateRTMPPublisher();
+
+        Log(TEXT("=====Stream Start: %s==============================================="), CurrentDateTimeString().Array());
+
+        EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), TRUE);
+        SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), Str("MainWindow.StopStream"));
+
+        bSentHeaders = false;
+        bStreaming = true;
+
+        return;
+    }
 
     bStartingUp = true;
 
@@ -238,8 +261,8 @@ retryHookTest:
     else if (!scmp(processPriority, TEXT("High")))
         SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
 
-    int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
-    DWORD delayTime = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("Delay"));
+    networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
+    delayTime = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("Delay"));
 
     String strError;
 
@@ -521,6 +544,7 @@ retryHookTestV2:
     //-------------------------------------------------------------
 
     bRunning = true;
+    bStreaming = true;
 
     if(sceneElement)
     {
@@ -655,7 +679,30 @@ retryHookTestV2:
 
 void OBS::Stop()
 {
-    if(!bRunning) return;
+    if((!bStreaming && !bRecording) && (!bTestStream)) return;
+
+    bool bKeepRecording = GlobalConfig->GetInt(TEXT("General"), TEXT("KeepRecordingOnStopStreaming"), 1) != 0;
+    int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
+
+    if(bRecording && bKeepRecording && networkMode == 0) {
+        NetworkStream *tempStream = NULL;
+        
+        videoEncoder->RequestKeyframe();
+        tempStream = network;
+        network = NULL;
+
+        Log(TEXT("=====Stream End: %s==============================================="), CurrentDateTimeString().Array());
+
+        delete tempStream;
+
+        EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), TRUE);
+        SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), Str("MainWindow.StartStream"));
+
+        bStreaming = false;
+        bSentHeaders = false;
+
+        return;
+    }
 
     OSEnterMutex(hStartupShutdownMutex);
 
