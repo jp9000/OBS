@@ -99,7 +99,6 @@ MainWindow.StopRecording="Stop recording"
 MainWindow.StartStream="Start Streaming"
 MainWindow.StopStream="Stop Streaming"
 MainWindow.StopTest="Stop Preview"
-MainWindow.ToggleRecording="Toggle recording"
 MainWindow.TestStream="Preview Stream"
 
 Plugins.Configure="Configure"
