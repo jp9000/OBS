@@ -871,10 +871,13 @@ public:
                     DataPacket sei;
                     App->GetVideoEncoder()->GetSEI(sei);
 
-                    fileOut.Serialize(sei.lpPacket, sei.size);
-                    totalCopied += sei.size;
+                    if (sei.size > 0)
+                    {
+                        fileOut.Serialize(sei.lpPacket, sei.size);
+                        totalCopied += sei.size;
 
-                    bSentSEI = true;
+                        bSentSEI = true;
+                    }
                 }
 
                 totalCopied += size-5;
