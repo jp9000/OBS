@@ -1386,7 +1386,9 @@ void OBS::SetStatusBarData()
 {
     if (bRunning && OSTryEnterMutex(hStartupShutdownMutex))
     {
-        if (!App->network)
+        bool bKeepRecording = GlobalConfig->GetInt(TEXT("General"), TEXT("KeepRecordingOnStopStreaming"), 1) != 0;
+
+        if (!App->network && !bKeepRecording)
             return;
 
         HWND hwndStatusBar = GetDlgItem(hwndMain, ID_STATUS);
@@ -1405,7 +1407,7 @@ void OBS::SetStatusBarData()
         {
             ReportStreamStatus(bRunning, bTestStream, 
                 (UINT) App->bytesPerSec, App->curStrain, 
-                (UINT)this->totalStreamTime, (UINT)App->network->NumTotalVideoFrames(),
+                (UINT)this->totalStreamTime, (!network) ? 0 : (UINT)App->network->NumTotalVideoFrames(),
                 (UINT)App->curFramesDropped, (UINT) App->captureFPS);
         }
 
@@ -1516,7 +1518,7 @@ void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
                     else if(!App->bRecording && App->bStreaming && !App->bTestStream && networkMode == 0) {
                         strOutString.AppendString(TEXT(" (LIVE)"));
                     }
-                    else if(App->bRecording && App->bRunning && !App->bTestStream && networkMode == 1) {
+                    else if(App->bRecording && !App->bTestStream) {
                         strOutString.AppendString(TEXT(" (REC)"));
                     }
                     else if(App->bRunning && App->bTestStream) {
