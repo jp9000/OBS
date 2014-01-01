@@ -684,7 +684,7 @@ void OBS::Stop()
     bool bKeepRecording = GlobalConfig->GetInt(TEXT("General"), TEXT("KeepRecordingOnStopStreaming"), 1) != 0;
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
 
-    if(bRecording && bKeepRecording && networkMode == 0) {
+    if(!bShuttingDown && bRecording && bKeepRecording && networkMode == 0) {
         NetworkStream *tempStream = NULL;
         
         videoEncoder->RequestKeyframe();

@@ -697,9 +697,9 @@ OBS::OBS()
 
 OBS::~OBS()
 {
+    bShuttingDown = true;
     Stop();
 
-    bShuttingDown = true;
     OSTerminateThread(hHotkeyThread, 250);
 
     for(UINT i=0; i<plugins.Num(); i++)
