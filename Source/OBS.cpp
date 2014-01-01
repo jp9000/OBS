@@ -1415,7 +1415,7 @@ void OBS::SetStatusBarData()
 
 void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
 {
-    if(!App->bRunning)
+    if(!App->bRunning && !App->bStreaming && !App->bRecording)
         return;
 
     HDC hdcTemp = CreateCompatibleDC(dis.hDC);
