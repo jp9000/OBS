@@ -1386,11 +1386,6 @@ void OBS::SetStatusBarData()
 {
     if (bRunning && OSTryEnterMutex(hStartupShutdownMutex))
     {
-        bool bKeepRecording = GlobalConfig->GetInt(TEXT("General"), TEXT("KeepRecordingOnStopStreaming"), 1) != 0;
-
-        if (!App->network && !bKeepRecording)
-            return;
-
         HWND hwndStatusBar = GetDlgItem(hwndMain, ID_STATUS);
 
         SendMessage(hwndStatusBar, WM_SETREDRAW, 0, 0);
@@ -1403,11 +1398,11 @@ void OBS::SetStatusBarData()
         SendMessage(hwndStatusBar, WM_SETREDRAW, 1, 0);
         InvalidateRect(hwndStatusBar, NULL, FALSE);
     
-        if(bRunning)
+        if (bRunning && network)
         {
             ReportStreamStatus(bRunning, bTestStream, 
                 (UINT) App->bytesPerSec, App->curStrain, 
-                (UINT)this->totalStreamTime, (!network) ? 0 : (UINT)App->network->NumTotalVideoFrames(),
+                (UINT)this->totalStreamTime, (UINT)network->NumTotalVideoFrames(),
                 (UINT)App->curFramesDropped, (UINT) App->captureFPS);
         }
 
