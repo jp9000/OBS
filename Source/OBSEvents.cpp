@@ -46,6 +46,16 @@ void OBS::ReportStopStreamTrigger()
     }
 }
 
+void OBS::ReportOBSStatus(bool running, bool streaming, bool recording, bool previewing, bool reconnecting)
+{
+    if (bShuttingDown)
+        return;
+
+    for (UINT i = 0; i < plugins.Num(); i++)
+        if (plugins[i].statusCallback)
+            plugins[i].statusCallback(running, streaming, recording, previewing, reconnecting);
+}
+
 void OBS::ReportStreamStatus(bool streaming, bool previewOnly, 
                                UINT bytesPerSec, double strain, 
                                UINT totalStreamtime, UINT numTotalFrames,

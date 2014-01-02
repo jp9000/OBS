@@ -650,6 +650,7 @@ OBS::OBS()
                         /* get event callbacks for the plugin */
                         pluginInfo->startStreamCallback  = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartStream");
                         pluginInfo->stopStreamCallback   = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopStream");
+                        pluginInfo->statusCallback        = (OBS_STATUS_CALLBACK)GetProcAddress(hPlugin, "OnOBSStatus");
                         pluginInfo->streamStatusCallback  = (OBS_STREAM_STATUS_CALLBACK)GetProcAddress(hPlugin, "OnStreamStatus");
                         pluginInfo->sceneSwitchCallback   = (OBS_SCENE_SWITCH_CALLBACK)GetProcAddress(hPlugin, "OnSceneSwitch");
                         pluginInfo->scenesChangedCallback  = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnScenesChanged");
@@ -1405,6 +1406,8 @@ void OBS::SetStatusBarData()
                 (UINT)this->totalStreamTime, (UINT)network->NumTotalVideoFrames(),
                 (UINT)App->curFramesDropped, (UINT) App->captureFPS);
         }
+
+        ReportOBSStatus(bRunning, bStreaming, bRecording, bTestStream, bReconnecting);
 
         OSLeaveMutex(hStartupShutdownMutex);
     }
