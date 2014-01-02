@@ -50,6 +50,9 @@
 #define GetSockError()	WSAGetLastError()
 #define SetSockError(e)	WSASetLastError(e)
 #define setsockopt(a,b,c,d,e)	(setsockopt)(a,b,c,(const char *)d,(int)e)
+#ifdef EWOULDBLOCK
+#undef EWOULDBLOCK
+#endif
 #define EWOULDBLOCK	WSAETIMEDOUT	/* we don't use nonblocking, but we do use timeouts */
 #define sleep(n)	Sleep(n*1000)
 #define msleep(n)	Sleep(n)

@@ -29,6 +29,7 @@ Copyright (c) 1997.
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "coder.h"
 #include "channels.h"
@@ -119,7 +120,7 @@ static int WriteFAACStr(BitStream *bitStream, char *version, int write)
   int len, padbits, count;
   int bitcnt;
 
-  sprintf(str, "libfaac %s", version);
+  sprintf_s(str, 200, "libfaac %s", version);
 
   len = strlen(str) + 1;
   padbits = (8 - ((bitStream->numBit + 7) % 8)) % 8;

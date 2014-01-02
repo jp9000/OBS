@@ -375,7 +375,7 @@ public:
         int keyint = fps*keyframeInterval;
         int bframes = 7;
 
-        bool main_profile = AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"), TEXT("high")) != L"high";
+        bool main_profile = (AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"), TEXT("high")) != L"high") ? true : false;
 
         bool bHaveCustomImpl = false;
         impl_parameters custom = { 0 };
