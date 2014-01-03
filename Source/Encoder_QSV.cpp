@@ -698,13 +698,14 @@ public:
 
             if(nal.i_type == NAL_SEI)
             {
+                BYTE *end = nal.p_payload + nal.i_payload;
                 BYTE *skip = nal.p_payload;
                 while(*(skip++) != 0x1);
                 int skipBytes = (int)(skip-nal.p_payload);
 
                 int newPayloadSize = (nal.i_payload-skipBytes);
                 BYTE *sei_start = skip+1;
-                while(sei_start < (nal.p_payload+nal.i_payload))
+                while(sei_start < end)
                 {
                     BYTE *sei = sei_start;
                     int sei_type = 0;
@@ -753,6 +754,9 @@ public:
                         packetOut.Serialize(sei_start-1, sei_size+1);
                     }
                     sei_start += sei_size;
+
+                    if (*sei_start == 0x80 && std::find_if_not(sei_start + 1, end, [](uint8_t val) { return val == 0; }) == end) //find rbsp_trailing_bits
+                        break;
                 }
             }
             else if(nal.i_type == NAL_AUD)
