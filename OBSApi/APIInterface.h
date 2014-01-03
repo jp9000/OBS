@@ -174,6 +174,8 @@ public:
     virtual Vect2 GetFrameToWindowScale() const=0;
 
     virtual UINT GetSampleRateHz() const=0;
+
+    virtual void SetAbortApplySettings(bool abort) = 0;
 };
 
 BASE_EXPORT extern APIInterface *API;

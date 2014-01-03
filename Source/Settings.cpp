@@ -143,6 +143,11 @@ void OBS::SetChangedSettings(bool bChanged)
     EnableWindow(GetDlgItem(hwndSettings, IDC_APPLY), (bSettingsChanged = bChanged));
 }
 
+void OBS::SetAbortApplySettings(bool abort)
+{
+    bApplySettingsAborted = abort;
+}
+
 void OBS::CancelSettings()
 {
     if(App->currentSettingsPane != NULL)
@@ -151,8 +156,12 @@ void OBS::CancelSettings()
 
 void OBS::ApplySettings()
 {
+    bApplySettingsAborted = false;
     if(App->currentSettingsPane != NULL)
         App->currentSettingsPane->ApplySettings();
+    if (bApplySettingsAborted)
+        return;
+
     bSettingsChanged = false;
     EnableWindow(GetDlgItem(hwndSettings, IDC_APPLY), FALSE);
 }
@@ -334,6 +343,8 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                 case IDOK:
                     if(App->bSettingsChanged)
                         App->ApplySettings();
+                    if (App->bApplySettingsAborted)
+                        break;
                     EndDialog(hwnd, IDOK);
                     App->hwndSettings = NULL;
                     break;

@@ -414,6 +414,7 @@ class OBSAPIInterface : public APIInterface
     void HandleHotkeys();
 
     virtual void SetChangedSettings(bool isModified) {App->SetChangedSettings(isModified);}
+    virtual void SetAbortApplySettings(bool abort) { App->SetAbortApplySettings(abort); }
 
 public:
     virtual void EnterSceneMutex() {App->EnterSceneMutex();}

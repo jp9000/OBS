@@ -49,6 +49,7 @@ public:
 
 protected:
     void SetChangedSettings(bool isModified);
+    void SetAbortApplySettings(bool abort);
 
 public:
     virtual CTSTR GetCategory() const = 0;

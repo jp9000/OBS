@@ -600,12 +600,13 @@ class OBS
     int                 curSettingsSelection;
     HWND                hwndSettings;
     HWND                hwndCurrentSettings;
-    bool                bSettingsChanged;
+    bool                bSettingsChanged, bApplySettingsAborted;
     List<SettingsPane*> settingsPanes;
     SettingsPane *      currentSettingsPane;
     int                 numberOfBuiltInSettingsPanes;
 
     void   SetChangedSettings(bool bChanged);
+    void   SetAbortApplySettings(bool abort);
     void   CancelSettings();
     void   ApplySettings();
 
