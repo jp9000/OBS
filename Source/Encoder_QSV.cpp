@@ -742,16 +742,18 @@ public:
                         SEIData.Clear();
                         BufferOutputSerializer packetOut(SEIData);
 
-                        packetOut.OutputDword(htonl(sei_size+1));
-                        packetOut.Serialize(sei_start-1, sei_size+1);
+                        packetOut.OutputDword(htonl(sei_size + 2));
+                        packetOut.Serialize(sei_start - 1, sei_size + 1);
+                        packetOut.OutputByte(0x80);
                     } else {
                         if (!newPacket)
                             newPacket = CurrentPackets.CreateNew();
 
                         BufferOutputSerializer packetOut(newPacket->Packet);
 
-                        packetOut.OutputDword(htonl(sei_size+1));
-                        packetOut.Serialize(sei_start-1, sei_size+1);
+                        packetOut.OutputDword(htonl(sei_size + 2));
+                        packetOut.Serialize(sei_start - 1, sei_size + 1);
+                        packetOut.OutputByte(0x80);
                     }
                     sei_start += sei_size;
 
