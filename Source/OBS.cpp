@@ -1107,7 +1107,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
 
     xPos = resetXPos;
 
-    SetWindowPos(GetDlgItem(hwndMain, ID_TOGGLERECORDING), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
+    SetWindowPos(GetDlgItem(hwndMain, ID_SETTINGS), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
     xPos += controlWidth;
 
     SetWindowPos(GetDlgItem(hwndMain, ID_STARTSTOP), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
@@ -1119,22 +1119,10 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
 
     xPos = resetXPos;
 
-    SetWindowPos(GetDlgItem(hwndMain, ID_SETTINGS), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
-    xPos += controlWidth;
-
-    SetWindowPos(GetDlgItem(hwndMain, ID_TESTSTREAM), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
-    xPos += controlWidth;
-
-    yPos += controlHeight+controlPadding;
-
-    //-----------------------------------------------------
-
-    xPos = resetXPos;
-
     SetWindowPos(GetDlgItem(hwndMain, ID_SCENEEDITOR), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
     xPos += controlWidth;
 
-    SetWindowPos(GetDlgItem(hwndMain, ID_PLUGINS), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
+    SetWindowPos(GetDlgItem(hwndMain, ID_TOGGLERECORDING), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
     xPos += controlWidth;
 
     yPos += controlHeight+controlPadding;
@@ -1146,8 +1134,17 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
     SetWindowPos(GetDlgItem(hwndMain, ID_GLOBALSOURCES), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
     xPos += controlWidth;
 
-    /*SetWindowPos(GetDlgItem(hwndMain, ID_DASHBOARD), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
-    xPos += controlWidth;*/
+    SetWindowPos(GetDlgItem(hwndMain, ID_TESTSTREAM), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
+    xPos += controlWidth;
+
+    yPos += controlHeight+controlPadding;
+
+    //-----------------------------------------------------
+
+    xPos = resetXPos;
+
+    SetWindowPos(GetDlgItem(hwndMain, ID_PLUGINS), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
+    xPos += controlWidth;
 
     UpdateDashboardButton();
 
