@@ -650,6 +650,7 @@ OBS::OBS()
                         /* get event callbacks for the plugin */
                         pluginInfo->startStreamCallback  = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartStream");
                         pluginInfo->stopStreamCallback   = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopStream");
+                        pluginInfo->statusCallback        = (OBS_STATUS_CALLBACK)GetProcAddress(hPlugin, "OnOBSStatus");
                         pluginInfo->streamStatusCallback  = (OBS_STREAM_STATUS_CALLBACK)GetProcAddress(hPlugin, "OnStreamStatus");
                         pluginInfo->sceneSwitchCallback   = (OBS_SCENE_SWITCH_CALLBACK)GetProcAddress(hPlugin, "OnSceneSwitch");
                         pluginInfo->scenesChangedCallback  = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnScenesChanged");
@@ -697,9 +698,9 @@ OBS::OBS()
 
 OBS::~OBS()
 {
+    bShuttingDown = true;
     Stop();
 
-    bShuttingDown = true;
     OSTerminateThread(hHotkeyThread, 250);
 
     for(UINT i=0; i<plugins.Num(); i++)
@@ -1106,7 +1107,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
 
     xPos = resetXPos;
 
-    SetWindowPos(GetDlgItem(hwndMain, ID_TOGGLERECORDING), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
+    SetWindowPos(GetDlgItem(hwndMain, ID_SETTINGS), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
     xPos += controlWidth;
 
     SetWindowPos(GetDlgItem(hwndMain, ID_STARTSTOP), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
@@ -1118,22 +1119,10 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
 
     xPos = resetXPos;
 
-    SetWindowPos(GetDlgItem(hwndMain, ID_SETTINGS), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
-    xPos += controlWidth;
-
-    SetWindowPos(GetDlgItem(hwndMain, ID_TESTSTREAM), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
-    xPos += controlWidth;
-
-    yPos += controlHeight+controlPadding;
-
-    //-----------------------------------------------------
-
-    xPos = resetXPos;
-
     SetWindowPos(GetDlgItem(hwndMain, ID_SCENEEDITOR), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
     xPos += controlWidth;
 
-    SetWindowPos(GetDlgItem(hwndMain, ID_PLUGINS), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
+    SetWindowPos(GetDlgItem(hwndMain, ID_TOGGLERECORDING), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
     xPos += controlWidth;
 
     yPos += controlHeight+controlPadding;
@@ -1145,8 +1134,17 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
     SetWindowPos(GetDlgItem(hwndMain, ID_GLOBALSOURCES), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
     xPos += controlWidth;
 
-    /*SetWindowPos(GetDlgItem(hwndMain, ID_DASHBOARD), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
-    xPos += controlWidth;*/
+    SetWindowPos(GetDlgItem(hwndMain, ID_TESTSTREAM), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
+    xPos += controlWidth;
+
+    yPos += controlHeight+controlPadding;
+
+    //-----------------------------------------------------
+
+    xPos = resetXPos;
+
+    SetWindowPos(GetDlgItem(hwndMain, ID_PLUGINS), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
+    xPos += controlWidth;
 
     UpdateDashboardButton();
 
@@ -1386,9 +1384,6 @@ void OBS::SetStatusBarData()
 {
     if (bRunning && OSTryEnterMutex(hStartupShutdownMutex))
     {
-        if (!App->network)
-            return;
-
         HWND hwndStatusBar = GetDlgItem(hwndMain, ID_STATUS);
 
         SendMessage(hwndStatusBar, WM_SETREDRAW, 0, 0);
@@ -1401,13 +1396,15 @@ void OBS::SetStatusBarData()
         SendMessage(hwndStatusBar, WM_SETREDRAW, 1, 0);
         InvalidateRect(hwndStatusBar, NULL, FALSE);
     
-        if(bRunning)
+        if (bRunning && network)
         {
             ReportStreamStatus(bRunning, bTestStream, 
                 (UINT) App->bytesPerSec, App->curStrain, 
-                (UINT)this->totalStreamTime, (UINT)App->network->NumTotalVideoFrames(),
+                (UINT)this->totalStreamTime, (UINT)network->NumTotalVideoFrames(),
                 (UINT)App->curFramesDropped, (UINT) App->captureFPS);
         }
+
+        ReportOBSStatus(bRunning, bStreaming, bRecording, bTestStream, bReconnecting);
 
         OSLeaveMutex(hStartupShutdownMutex);
     }
@@ -1415,7 +1412,7 @@ void OBS::SetStatusBarData()
 
 void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
 {
-    if(!App->bRunning)
+    if(!App->bRunning && !App->bStreaming && !App->bRecording)
         return;
 
     HDC hdcTemp = CreateCompatibleDC(dis.hDC);
@@ -1510,13 +1507,13 @@ void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
                     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
 
                     strOutString = FormattedString(TEXT("%u:%02u:%02u"), streamTimeHours, streamTimeMinutes, streamTimeSeconds);
-                    if(App->bRecording && App->bRunning && !App->bTestStream && networkMode == 0) {
+                    if(App->bRecording && App->bStreaming && !App->bTestStream && networkMode == 0) {
                         strOutString.AppendString(TEXT(" (LIVE + REC)"));
                     }
-                    else if(!App->bRecording && App->bRunning && !App->bTestStream && networkMode == 0) {
+                    else if(!App->bRecording && App->bStreaming && !App->bTestStream && networkMode == 0) {
                         strOutString.AppendString(TEXT(" (LIVE)"));
                     }
-                    else if(App->bRecording && App->bRunning && !App->bTestStream && networkMode == 1) {
+                    else if(App->bRecording && !App->bTestStream) {
                         strOutString.AppendString(TEXT(" (REC)"));
                     }
                     else if(App->bRunning && App->bTestStream) {
