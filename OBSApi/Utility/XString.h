@@ -113,14 +113,14 @@ public:
     String& operator<<(unsigned int unumber);
     String& operator<<(const String &str);
 
-    inline BOOL operator==(const String &str) const {return Compare(str);}
-    inline BOOL operator!=(const String &str) const {return !Compare(str);}
+    inline bool operator==(const String &str) const {return Compare(str);}
+    inline bool operator!=(const String &str) const {return !Compare(str);}
 
-    inline BOOL operator==(CTSTR lpStr) const {return Compare(lpStr);}
-    inline BOOL operator!=(CTSTR lpStr) const {return !Compare(lpStr);}
+    inline bool operator==(CTSTR lpStr) const {return Compare(lpStr);}
+    inline bool operator!=(CTSTR lpStr) const {return !Compare(lpStr);}
 
-    BOOL    Compare(CTSTR str)    const;
-    BOOL    CompareI(CTSTR str)   const;
+    bool    Compare(CTSTR str)    const;
+    bool    CompareI(CTSTR str)   const;
 
     LPSTR   CreateUTF8String();
 

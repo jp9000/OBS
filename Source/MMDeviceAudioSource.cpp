@@ -37,17 +37,20 @@ class MMDeviceAudioSource : public AudioSource
     bool bIsMic;
     bool bFirstFrameReceived;
 
+    bool deviceLost;
+    QWORD reinitTimer;
+
     //UINT32 numFramesRead;
 
     UINT32 numTimesInARowNewDataSeen;
 
+    String deviceId;
     String strDeviceName;
 
     bool bUseVideoTime;
     QWORD lastVideoTime;
     QWORD curVideoTime;
 
-    bool bConvert; //*workaround alarm* shouldn't have to do this in here
     UINT sampleWindowSize;
     List<float> inputBuffer;
     List<float> convertBuffer;
@@ -61,6 +64,16 @@ class MMDeviceAudioSource : public AudioSource
 
     QWORD GetTimestamp(QWORD qpcTimestamp);
 
+    bool Reinitialize();
+
+    void FreeData()
+    {
+        SafeRelease(mmCapture);
+        SafeRelease(mmClient);
+        SafeRelease(mmDevice);
+        SafeRelease(mmClock);
+    }
+
 protected:
     virtual bool GetNextBuffer(void **buffer, UINT *numFrames, QWORD *timestamp);
     virtual void ReleaseBuffer();
@@ -73,12 +86,8 @@ public:
     ~MMDeviceAudioSource()
     {
         StopCapture();
-
-        SafeRelease(mmCapture);
-        SafeRelease(mmClient);
-        SafeRelease(mmDevice);
+        FreeData();
         SafeRelease(mmEnumerator);
-        SafeRelease(mmClock);
     }
 
     virtual void StartCapture();
@@ -99,45 +108,34 @@ AudioSource* CreateAudioSource(bool bMic, CTSTR lpID)
 
 //==============================================================================================================================
 
-bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
+bool MMDeviceAudioSource::Reinitialize()
 {
-    const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
-    const IID IID_IMMDeviceEnumerator    = __uuidof(IMMDeviceEnumerator);
     const IID IID_IAudioClient           = __uuidof(IAudioClient);
     const IID IID_IAudioCaptureClient    = __uuidof(IAudioCaptureClient);
-
     HRESULT err;
-    err = CoCreateInstance(CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void**)&mmEnumerator);
-    if(FAILED(err))
-    {
-        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IMMDeviceEnumerator = %08lX"), (BOOL)bMic, err);
-        return false;
-    }
 
-    bool useInputDevice = bMic || AppConfig->GetInt(L"Audio", L"UseInputDevices", false) != 0;
-
-    bIsMic = bMic;
+    bool useInputDevice = bIsMic || AppConfig->GetInt(L"Audio", L"UseInputDevices", false) != 0;
 
     if (bIsMic) {
         BOOL bMicSyncFixHack = GlobalConfig->GetInt(TEXT("Audio"), TEXT("UseMicSyncFixHack"));
         angerThreshold = bMicSyncFixHack ? 40 : 1000;
     }
 
-    if (scmpi(lpID, TEXT("Default")) == 0)
+    if (scmpi(deviceId, TEXT("Default")) == 0)
         err = mmEnumerator->GetDefaultAudioEndpoint(useInputDevice ? eCapture : eRender, useInputDevice ? eCommunications : eConsole, &mmDevice);
     else
-        err = mmEnumerator->GetDevice(lpID, &mmDevice);
+        err = mmEnumerator->GetDevice(deviceId, &mmDevice);
 
     if(FAILED(err))
     {
-        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IMMDevice = %08lX"), (BOOL)bMic, err);
+        if (!deviceLost) AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IMMDevice = %08lX"), (BOOL)bIsMic, err);
         return false;
     }
 
     err = mmDevice->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&mmClient);
     if(FAILED(err))
     {
-        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IAudioClient = %08lX"), (BOOL)bMic, err);
+        if (!deviceLost) AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IAudioClient = %08lX"), (BOOL)bIsMic, err);
         return false;
     }
 
@@ -159,10 +157,12 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
         store->Release();
     }
 
-    if(bMic)
+    if(bIsMic)
     {
-        Log(TEXT("------------------------------------------"));
-        Log(TEXT("Using auxilary audio input: %s"), GetDeviceName());
+        if (!deviceLost) {
+            Log(TEXT("------------------------------------------"));
+            Log(TEXT("Using auxilary audio input: %s"), GetDeviceName());
+        }
 
         bUseQPC = GlobalConfig->GetInt(TEXT("Audio"), TEXT("UseMicQPC")) != 0;
         if (bUseQPC)
@@ -170,8 +170,10 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
     }
     else
     {
-        Log(TEXT("------------------------------------------"));
-        Log(TEXT("Using desktop audio input: %s"), GetDeviceName());
+        if (!deviceLost) {
+            Log(TEXT("------------------------------------------"));
+            Log(TEXT("Using desktop audio input: %s"), GetDeviceName());
+        }
 
         bUseVideoTime = AppConfig->GetInt(TEXT("Audio"), TEXT("SyncToVideoTime")) != 0;
         SetTimeOffset(GlobalConfig->GetInt(TEXT("Audio"), TEXT("GlobalAudioTimeAdjust")));
@@ -184,7 +186,7 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
     err = mmClient->GetMixFormat(&pwfx);
     if(FAILED(err))
     {
-        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not get mix format from audio client = %08lX"), (BOOL)bMic, err);
+        if (!deviceLost) AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not get mix format from audio client = %08lX"), (BOOL)bIsMic, err);
         return false;
     }
 
@@ -204,13 +206,15 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
 
         if(wfext->SubFormat != KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)
         {
-            AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Unsupported wave format"), (BOOL)bMic);
+            if (!deviceLost) AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Unsupported wave format"), (BOOL)bIsMic);
+            CoTaskMemFree(pwfx);
             return false;
         }
     }
     else if(pwfx->wFormatTag != WAVE_FORMAT_IEEE_FLOAT)
     {
-        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Unsupported wave format"), (BOOL)bMic);
+        if (!deviceLost) AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Unsupported wave format"), (BOOL)bIsMic);
+        CoTaskMemFree(pwfx);
         return false;
     }
 
@@ -226,22 +230,10 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
     err = mmClient->Initialize(AUDCLNT_SHAREMODE_SHARED, flags, ConvertMSTo100NanoSec(5000), 0, pwfx, NULL);
     //err = AUDCLNT_E_UNSUPPORTED_FORMAT;
 
-    if (err == AUDCLNT_E_UNSUPPORTED_FORMAT) { //workaround for razer kraken headset (bad drivers)
-        pwfx->nBlockAlign     = 2*pwfx->nChannels;
-        pwfx->nAvgBytesPerSec = inputSamplesPerSec*pwfx->nBlockAlign;
-        pwfx->wBitsPerSample  = 16;
-
-        wfext->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
-        wfext->Samples.wValidBitsPerSample = 16;
-
-        bConvert = true;
-
-        err = mmClient->Initialize(AUDCLNT_SHAREMODE_SHARED, flags, ConvertMSTo100NanoSec(5000), 0, pwfx, NULL);
-    }
-
     if(FAILED(err))
     {
-        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not initialize audio client, result = %08lX"), (BOOL)bMic, err);
+        if (!deviceLost) AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not initialize audio client, result = %08lX"), (BOOL)bIsMic, err);
+        CoTaskMemFree(pwfx);
         return false;
     }
 
@@ -251,14 +243,16 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
     err = mmClient->GetService(IID_IAudioCaptureClient, (void**)&mmCapture);
     if(FAILED(err))
     {
-        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not get audio capture client, result = %08lX"), (BOOL)bMic, err);
+        if (!deviceLost) AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not get audio capture client, result = %08lX"), (BOOL)bIsMic, err);
+        CoTaskMemFree(pwfx);
         return false;
     }
 
     err = mmClient->GetService(__uuidof(IAudioClock), (void**)&mmClock);
     if(FAILED(err))
     {
-        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not get audio capture clock, result = %08lX"), (BOOL)bMic, err);
+        if (!deviceLost) AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not get audio capture clock, result = %08lX"), (BOOL)bIsMic, err);
+        CoTaskMemFree(pwfx);
         return false;
     }
 
@@ -268,7 +262,27 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
 
     InitAudioData(bFloat, inputChannels, inputSamplesPerSec, inputBitsPerSample, inputBlockSize, inputChannelMask);
 
+    deviceLost = false;
+
     return true;
+}
+
+bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
+{
+    const IID IID_IMMDeviceEnumerator    = __uuidof(IMMDeviceEnumerator);
+    const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
+
+    bIsMic = bMic;
+    deviceId = lpID;
+
+    HRESULT err = CoCreateInstance(CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void**)&mmEnumerator);
+    if(FAILED(err))
+    {
+        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IMMDeviceEnumerator = %08lX"), (BOOL)bIsMic, err);
+        return false;
+    }
+
+    return Reinitialize();
 }
 
 void MMDeviceAudioSource::StartCapture()
@@ -357,6 +371,20 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
     UINT32 numFramesRead;
     DWORD dwFlags = 0;
 
+    if (deviceLost) {
+        QWORD timeVal = GetQPCTimeMS();
+        QWORD timer = (timeVal - reinitTimer);
+        if (timer > 2000) {
+            if (Reinitialize()) {
+                Log(L"Device '%s' reacquired.", strDeviceName.Array());
+                StartCapture();
+            }
+            reinitTimer = timeVal;
+        }
+
+        return false;
+    }
+
     while (true) {
         if (inputBufferSize >= sampleWindowSize*GetChannelCount()) {
             if (bFirstRun) {
@@ -389,6 +417,14 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
         hRes = mmCapture->GetNextPacketSize(&captureSize);
 
         if (FAILED(hRes)) {
+            if (hRes == AUDCLNT_E_DEVICE_INVALIDATED) {
+                FreeData();
+                deviceLost = true;
+                Log(L"Audio device '%s' has been lost, attempting to reinitialize", strDeviceName.Array());
+                reinitTimer = GetQPCTimeMS();
+                return false;
+            }
+
             RUNONCE AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: GetNextPacketSize failed, result = %08lX"), hRes);
             return false;
         }
@@ -406,17 +442,6 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
         }
 
         UINT totalFloatsRead = numFramesRead*GetChannelCount();
-
-        if (bConvert) {
-            if (convertBuffer.Num() < totalFloatsRead)
-                convertBuffer.SetSize(totalFloatsRead);
-
-            short *shortBuffer = (short*)captureBuffer;
-            for (UINT i = 0; i < totalFloatsRead; i++)
-                convertBuffer[i] = float(shortBuffer[i])*(1.0f/32767.0f);
-
-            captureBuffer = (LPBYTE)convertBuffer.Array();
-        }
 
         if (inputBufferSize) {
             double timeAdjust = double(inputBufferSize/GetChannelCount());
@@ -465,102 +490,3 @@ void MMDeviceAudioSource::ReleaseBuffer()
 
     inputBufferSize -= sampleSizeFloats;
 }
-
-/*bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *timestamp)
-{
-    UINT captureSize = 0;
-    HRESULT err = mmCapture->GetNextPacketSize(&captureSize);
-    if(FAILED(err))
-    {
-        RUNONCE AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: GetNextPacketSize failed, result = %08lX"), err);
-        return false;
-    }
-
-    numFramesRead = 0;
-
-    if(captureSize)
-    {
-        LPBYTE captureBuffer;
-        DWORD dwFlags = 0;
-
-        UINT64 devPosition;
-        UINT64 qpcTimestamp;
-        err = mmCapture->GetBuffer(&captureBuffer, &numFramesRead, &dwFlags, &devPosition, &qpcTimestamp);
-        if(FAILED(err))
-        {
-            RUNONCE AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: GetBuffer failed, result = %08lX"), err);
-            return false;
-        }
-
-        qpcTimestamp /= 10000;
-
-        //-----------------------------------------------------------------
-        // timestamp bs
-
-        QWORD newTimestamp = 0;
-
-        if(bIsMic)
-        {
-            newTimestamp = (bUseQPC) ? qpcTimestamp : App->GetAudioTime();
-            newTimestamp += GetTimeOffset();
-        }
-        else
-        {
-            //we're doing all these checks because device timestamps are only reliable "sometimes"
-            if(!bFirstFrameReceived)
-            {
-                QWORD curTime = GetQPCTimeMS();
-
-                newTimestamp = qpcTimestamp;
-
-                curVideoTime = lastVideoTime = App->GetVideoTime();
-
-                if(bUseVideoTime || newTimestamp < (curTime-App->bufferingTime) || newTimestamp > (curTime+2000))
-                {
-                    if(!bUseVideoTime)
-                        Log(TEXT("Bad timestamp detected, syncing audio to video time"));
-                    else
-                        Log(TEXT("Syncing audio to video time"));
-
-                    SetTimeOffset(GetTimeOffset()-int(lastVideoTime-App->GetSceneTimestamp()));
-                    bUseVideoTime = true;
-
-                    newTimestamp = lastVideoTime+GetTimeOffset();
-                }
-
-                bFirstFrameReceived = true;
-            }
-            else
-            {
-                QWORD newVideoTime = App->GetVideoTime();
-
-                if(newVideoTime != lastVideoTime)
-                    curVideoTime = lastVideoTime = newVideoTime;
-                else
-                    curVideoTime += 10;
-
-                newTimestamp = (bUseVideoTime) ? curVideoTime : qpcTimestamp;
-                newTimestamp += GetTimeOffset();
-            }
-
-            App->latestAudioTime = newTimestamp;
-        }
-
-        //-----------------------------------------------------------------
-        //save data
-
-        *numFrames = numFramesRead;
-        *buffer = (void*)captureBuffer;
-        *timestamp = newTimestamp;
-
-        return true;
-    }
-
-    return false;
-}
-
-void MMDeviceAudioSource::ReleaseBuffer()
-{
-    mmCapture->ReleaseBuffer(numFramesRead);
-}
-*/
