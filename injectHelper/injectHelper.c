@@ -217,7 +217,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
 
                     GetCurrentDirectoryW(dirLen, pPath);
                     pPath[dirLen-1] = '\\';
-                    wcsncpy(pPath+dirLen, pDLLName, fileNameLen);
+                    wcsncpy_s(pPath+dirLen, len-dirLen, pDLLName, fileNameLen);
 
                     if(!InjectLibrary(hProcess, pPath, len-1))
                     {

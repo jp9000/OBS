@@ -60,7 +60,7 @@ void OBS::ReportStreamStatus(bool streaming, bool previewOnly,
 
         if (callback)
             (*callback)(streaming, previewOnly, bytesPerSec, 
-                        strain, totalStreamTime, numTotalFrames, 
+                        strain, totalStreamtime, numTotalFrames,
                         numDroppedFrames, fps);
     }
 }

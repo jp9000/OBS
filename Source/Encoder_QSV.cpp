@@ -375,7 +375,7 @@ public:
         int keyint = fps*keyframeInterval;
         int bframes = 7;
 
-        bool main_profile = AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"), TEXT("high")) != L"high";
+        bool main_profile = (AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"), TEXT("high")) != L"high") ? true : false;
 
         bool bHaveCustomImpl = false;
         impl_parameters custom = { 0 };
@@ -698,13 +698,14 @@ public:
 
             if(nal.i_type == NAL_SEI)
             {
+                BYTE *end = nal.p_payload + nal.i_payload;
                 BYTE *skip = nal.p_payload;
                 while(*(skip++) != 0x1);
                 int skipBytes = (int)(skip-nal.p_payload);
 
                 int newPayloadSize = (nal.i_payload-skipBytes);
                 BYTE *sei_start = skip+1;
-                while(sei_start < (nal.p_payload+nal.i_payload))
+                while(sei_start < end)
                 {
                     BYTE *sei = sei_start;
                     int sei_type = 0;
@@ -741,18 +742,23 @@ public:
                         SEIData.Clear();
                         BufferOutputSerializer packetOut(SEIData);
 
-                        packetOut.OutputDword(htonl(sei_size+1));
-                        packetOut.Serialize(sei_start-1, sei_size+1);
+                        packetOut.OutputDword(htonl(sei_size + 2));
+                        packetOut.Serialize(sei_start - 1, sei_size + 1);
+                        packetOut.OutputByte(0x80);
                     } else {
                         if (!newPacket)
                             newPacket = CurrentPackets.CreateNew();
 
                         BufferOutputSerializer packetOut(newPacket->Packet);
 
-                        packetOut.OutputDword(htonl(sei_size+1));
-                        packetOut.Serialize(sei_start-1, sei_size+1);
+                        packetOut.OutputDword(htonl(sei_size + 2));
+                        packetOut.Serialize(sei_start - 1, sei_size + 1);
+                        packetOut.OutputByte(0x80);
                     }
                     sei_start += sei_size;
+
+                    if (*sei_start == 0x80 && std::find_if_not(sei_start + 1, end, [](uint8_t val) { return val == 0; }) == end) //find rbsp_trailing_bits
+                        break;
                 }
             }
             else if(nal.i_type == NAL_AUD)

@@ -20,8 +20,8 @@
 #include "Main.h"
 
 
-typedef bool (__cdecl *PNVENCINITFUNC)(bool log, ConfigFile **appConfig);
-typedef bool (__cdecl *PCHECKNVENCHARDWARESUPPORT)();
+typedef bool (__cdecl *PNVENCINITFUNC)(ConfigFile **appConfig);
+typedef bool (__cdecl *PCHECKNVENCHARDWARESUPPORT)(bool log);
 typedef VideoEncoder* (__cdecl *PCREATENVENCENCODER)(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR);
 
 static HMODULE p_nvencModule = NULL;
@@ -60,7 +60,7 @@ void InitNVENCEncoder(bool log=true)
 		goto error;
 	}
 
-	if(!initFunction(log, &AppConfig))
+	if(!initFunction(&AppConfig))
 		goto error;
 
 	if(log)
@@ -69,6 +69,7 @@ void InitNVENCEncoder(bool log=true)
 	return;
 
 error:
+
 	p_checkNVENCHardwareSupport = NULL;
 	p_createNVENCEncoder = NULL;
 
@@ -89,7 +90,7 @@ bool CheckNVENCHardwareSupport(bool log=true)
 	if(p_checkNVENCHardwareSupport == NULL)
 		return false;
 
-	return p_checkNVENCHardwareSupport();
+	return p_checkNVENCHardwareSupport(log);
 }
 
 VideoEncoder* CreateNVENCEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR)
