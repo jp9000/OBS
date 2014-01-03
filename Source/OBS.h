@@ -631,7 +631,7 @@ private:
     String  strLanguage;
     bool    bTestStream;
     bool    bUseMultithreadedOptimizations;
-    bool    bRunning, bRecording, bStartingUp, bStreaming;
+    bool    bRunning, bRecording, bRecordingOnly, bStartingUp, bStreaming;
     volatile bool bShutdownVideoThread, bShutdownEncodeThread;
     int     renderFrameWidth, renderFrameHeight; // The size of the preview only
     int     renderFrameX, renderFrameY; // The offset of the preview inside the preview control
@@ -961,6 +961,8 @@ private:
 
     static void ClearStatusBar();
     static void DrawStatusBar(DRAWITEMSTRUCT &dis);
+
+    void ConfigureStreamButtons();
 
     void ReloadIniSettings();
 

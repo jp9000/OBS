@@ -53,7 +53,9 @@ void LogSystemStats();
 
 void OBS::ToggleRecording()
 {
-    if(!bRecording)
+    if (bRecordingOnly)
+        ToggleCapturing();
+    else if(!bRecording)
         StartRecording();
     else
         StopRecording();
@@ -655,6 +657,7 @@ retryHookTestV2:
     if(bTestStream)
     {
         EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), FALSE);
+        EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), FALSE);
         SetWindowText(GetDlgItem(hwndMain, ID_TESTSTREAM), Str("MainWindow.StopTest"));
     }
     else
@@ -877,13 +880,22 @@ void OBS::Stop()
     //update notification icon to reflect current status
     UpdateNotificationAreaIcon();
 
-    
+    if (bRecordingOnly)
+    {
+        EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), TRUE);
+        EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), FALSE);
+        EnableWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), TRUE);
+    }
+    else
+    {
+        EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), FALSE);
+        EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), TRUE);
+        EnableWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), TRUE);
+    }
+
     SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), Str("MainWindow.StartRecording"));
-    EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), FALSE);
     SetWindowText(GetDlgItem(hwndMain, ID_TESTSTREAM), Str("MainWindow.TestStream"));
-    EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), TRUE);
     SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), Str("MainWindow.StartStream"));
-    EnableWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), TRUE);
 
 
     bEditMode = false;
@@ -901,6 +913,8 @@ void OBS::Stop()
         SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
 
     bTestStream = false;
+
+    ConfigureStreamButtons();
 
     UpdateRenderViewMessage();
 

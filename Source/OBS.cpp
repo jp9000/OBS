@@ -683,6 +683,8 @@ OBS::OBS()
         OSFindClose(hFind);
     }
 
+    ConfigureStreamButtons();
+
     ResizeWindow(false);
     ShowWindow(hwndMain, SW_SHOW);
 
@@ -1200,6 +1202,23 @@ void OBS::GetProfiles(StringList &profileList)
     }
 }
 
+void OBS::ConfigureStreamButtons()
+{
+    int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
+    bRecordingOnly = (networkMode == 1);
+
+    if (bRecordingOnly)
+    {
+        EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), FALSE);
+        EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), TRUE);
+    }
+    else
+    {
+        EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), TRUE);
+        EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), FALSE);
+    }
+}
+
 void OBS::ReloadIniSettings()
 {
     HWND hwndTemp;
@@ -1307,8 +1326,9 @@ void OBS::ReloadIniSettings()
     if (!minimizeToIcon && !IsWindowVisible(hwndMain))
         ShowWindow(hwndMain, SW_SHOW);
 
+    if (!bRunning)
+        ConfigureStreamButtons();
 }
-
 
 void OBS::UpdateAudioMeters()
 {
