@@ -215,7 +215,7 @@ void SettingsAdvanced::SetDefaults()
     SendMessage(GetDlgItem(hwnd, IDC_USENVENC), BM_SETCHECK, BST_UNCHECKED, 0);
     EnableWindow(GetDlgItem(hwnd, IDC_USEQSV), bHasQSV);
     EnableWindow(GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS), FALSE);
-    EnableWindow(GetDlgItem(hwnd, IDC_USENVENC), bHasQSV);
+    EnableWindow(GetDlgItem(hwnd, IDC_USENVENC), bHasNVENC);
     SendMessage(GetDlgItem(hwnd, IDC_SYNCTOVIDEOTIME), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_USEMICQPC), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_MICSYNCFIX), BM_SETCHECK, BST_UNCHECKED, 0);
