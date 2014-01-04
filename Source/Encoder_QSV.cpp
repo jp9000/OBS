@@ -357,16 +357,6 @@ public:
     QSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitrate, int bufferSize, bool bUseCFR_)
         : fps(fps), bFirstFrameProcessed(false), width(width), height(height), max_bitrate(maxBitrate)
     {
-        if(qsv_get_cpu_platform() <= QSV_CPU_PLATFORM_IVB)
-        {
-            if(width > 1920 && height > 1200)
-                CrashError(TEXT("Your output resolution of %ux%u exceeds the maximum of 1920x1200 supported by QuickSync on Sandy Bridge and Ivy Bridge based processors"), width, height);
-            else if(width > 1920)
-                CrashError(TEXT("Your output resolution width of %u exceeds the maximum of 1920 supported by QuickSync on Sandy Bridge and Ivy Bridge based processors"), width);
-            else if(height > 1200)
-                CrashError(TEXT("Your output resolution height of %u exceeds the maximum of 1200 supported by QuickSync on Sandy Bridge and Ivy Bridge based processors"), height);
-        }
-
         bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR")) != 0;
         bUseCFR = bUseCFR_;
 
@@ -444,7 +434,7 @@ public:
         }
 
         if(!spawn_helper(event_prefix, qsvhelper_process, qsvhelper_thread, process_waiter))
-            CrashError(TEXT("Couldn't launch QSVHelper: %u"), GetLastError());
+            CrashError(TEXT("Couldn't launch QSVHelper: %u"), GetLastError()); //FIXME: convert to localized error
 
         ipc_init_request request((event_prefix + INIT_REQUEST).Array());
 
@@ -478,24 +468,24 @@ public:
         {
             DWORD code = 0;
             if(!GetExitCodeProcess(qsvhelper_process.h, &code))
-                CrashError(TEXT("Failed to initialize QSV session."));
+                CrashError(TEXT("Failed to initialize QSV session.")); //FIXME: convert to localized error
             switch(code)
             {
             case EXIT_INCOMPATIBLE_CONFIGURATION:
-                CrashError(TEXT("QSVHelper.exe has exited because of an incompatible qsvimpl custom parameter (before response)"));
+                CrashError(TEXT("QSVHelper.exe has exited because of an incompatible qsvimpl custom parameter (before response)")); //FIXME: convert to localized error
             case EXIT_NO_VALID_CONFIGURATION:
                 if(OSGetVersion() < 8)
-                    CrashError(TEXT("QSVHelper.exe could not find a valid configuration. Make sure you have a (virtual) display connected to your iGPU"));
+                    CrashError(TEXT("QSVHelper.exe could not find a valid configuration. Make sure you have a (virtual) display connected to your iGPU")); //FIXME: convert to localized error
                 CrashError(TEXT("QSVHelper.exe could not find a valid configuration"));
             default:
-                CrashError(TEXT("QSVHelper.exe has exited with code %i (before response)"), code);
+                CrashError(TEXT("QSVHelper.exe has exited with code %i (before response)"), code); //FIXME: convert to localized error
             }
         }
 
         Log(TEXT("------------------------------------------"));
 
         if(bHaveCustomImpl && !response->using_custom_impl)
-            AppWarning(TEXT("Could not initialize QSV session using custom settings"));
+            AppWarning(TEXT("Could not initialize QSV session using custom settings")); //FIXME: convert to localized error
 
         ver = response->version;
         auto intf_str = qsv_intf_str(response->requested_impl),
@@ -1040,9 +1030,40 @@ public:
     }
 };
 
-VideoEncoder* CreateQSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR)
+VideoEncoder* CreateQSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, String &errors)
 {
-    if(CheckQSVHardwareSupport())
-        return new QSVEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR);
-    return nullptr;
+    if (!CheckQSVHardwareSupport())
+    {
+        errors << Str("Encoder.QSV.NoHardwareSupport");
+        return nullptr;
+    }
+    
+    if (qsv_get_cpu_platform() <= QSV_CPU_PLATFORM_IVB)
+    {
+        auto append_help = [&] { errors << Str("Encoder.QSV.ExceededResolutionHelp"); }; //might need to merge this into the actual error messages if there are problems with translations
+
+        if (width > 1920 && height > 1200)
+        {
+            Log(TEXT("QSV: Output resolution of %ux%u exceeds the maximum of 1920x1200 supported by QuickSync on Sandy Bridge and Ivy Bridge based processors"), width, height);
+            errors << FormattedString(Str("Encoder.QSV.SNBIVBMaximumResolutionWidthHeightExceeded"), width, height);
+            append_help();
+            return nullptr;
+        }
+        else if (width > 1920)
+        {
+            Log(TEXT("QSV: Output resolution width of %u exceeds the maximum of 1920 supported by QuickSync on Sandy Bridge and Ivy Bridge based processors"), width);
+            errors << FormattedString(Str("Encoder.QSV.SNBIVBMaximumResolutionWidthExceeded"), width);
+            append_help();
+            return nullptr;
+        }
+        else if (height > 1200)
+        {
+            Log(TEXT("QSV: Output resolution height of %u exceeds the maximum of 1200 supported by QuickSync on Sandy Bridge and Ivy Bridge based processors"), height);
+            errors << FormattedString(Str("Encoder.QSV.SNBIVBMaximumResolutionHeightExceeded"), height);
+            append_help();
+            return nullptr;
+        }
+    }
+
+    return new QSVEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR);
 }

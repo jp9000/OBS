@@ -21,11 +21,9 @@
 #include <time.h>
 #include <Avrt.h>
 
-bool CheckNVENCHardwareSupport(bool log);
-
 VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR);
-VideoEncoder* CreateQSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR);
-VideoEncoder* CreateNVENCEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR);
+VideoEncoder* CreateQSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, String &errors);
+VideoEncoder* CreateNVENCEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, String &errors);
 AudioEncoder* CreateMP3Encoder(UINT bitRate);
 AudioEncoder* CreateAACEncoder(UINT bitRate);
 
@@ -549,7 +547,6 @@ retryHookTestV2:
     //-------------------------------------------------------------
 
     bRunning = true;
-    bStreaming = true;
 
     if(sceneElement)
     {
@@ -625,17 +622,33 @@ retryHookTestV2:
     colorDesc.matrix    = outputCX >= 1280 || outputCY > 576 ? ColorMatrix_BT709 : ColorMatrix_SMPTE170M;
 
     videoEncoder = nullptr;
+    String videoEncoderErrors;
     if (bDisableEncoding)
         videoEncoder = CreateNullVideoEncoder();
     else if(AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0)
-        videoEncoder = CreateQSVEncoder(fps, outputCX, outputCY, quality, preset, bUsing444, colorDesc, maxBitRate, bufferSize, bUseCFR);
-    else if(CheckNVENCHardwareSupport(true) && AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseNVENC")) != 0)
-        videoEncoder = CreateNVENCEncoder(fps, outputCX, outputCY, quality, preset, bUsing444, colorDesc, maxBitRate, bufferSize, bUseCFR);
-
-    if(!videoEncoder)
+        videoEncoder = CreateQSVEncoder(fps, outputCX, outputCY, quality, preset, bUsing444, colorDesc, maxBitRate, bufferSize, bUseCFR, videoEncoderErrors);
+    else if(AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseNVENC")) != 0)
+        videoEncoder = CreateNVENCEncoder(fps, outputCX, outputCY, quality, preset, bUsing444, colorDesc, maxBitRate, bufferSize, bUseCFR, videoEncoderErrors);
+    else
         videoEncoder = CreateX264Encoder(fps, outputCX, outputCY, quality, preset, bUsing444, colorDesc, maxBitRate, bufferSize, bUseCFR);
 
+    if (!videoEncoder)
+    {
+        bShuttingDown = true;
+        Log(L"Couldn't initialize encoder");
+        Stop();
 
+        if (videoEncoderErrors.IsEmpty())
+            videoEncoderErrors = Str("Encoder.InitFailed");
+        else
+            videoEncoderErrors = String(Str("Encoder.InitFailedWithReason")) + videoEncoderErrors;
+
+        MessageBox(hwndMain, videoEncoderErrors.Array(), nullptr, MB_OK | MB_ICONWARNING); //might want to defer localization until here to automatically
+                                                                                           //output english localization to logfile
+        return;
+    }
+
+    bStreaming = true;
     //-------------------------------------------------------------
 
     // Ensure that the render frame is properly sized

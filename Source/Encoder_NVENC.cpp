@@ -93,8 +93,14 @@ bool CheckNVENCHardwareSupport(bool log=true)
 	return p_checkNVENCHardwareSupport(log);
 }
 
-VideoEncoder* CreateNVENCEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR)
+VideoEncoder* CreateNVENCEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, String &errors)
 {
+	if (!CheckNVENCHardwareSupport(true))
+	{
+		errors << Str("Encoder.NVENC.NoHardwareSupport");
+		return nullptr;
+	}
+
 	InitNVENCEncoder();
 
 	if(p_createNVENCEncoder == NULL)
