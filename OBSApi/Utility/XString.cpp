@@ -383,7 +383,7 @@ String& String::operator<<(const String &str)
 }*/
 
 
-bool String::Compare(CTSTR str) const
+BOOL String::Compare(CTSTR str) const
 {
     if(lpString)
     {
@@ -398,7 +398,7 @@ bool String::Compare(CTSTR str) const
     }
 }
 
-bool String::CompareI(CTSTR str) const
+BOOL String::CompareI(CTSTR str) const
 {
     if(lpString)
     {
