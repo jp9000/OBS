@@ -59,7 +59,6 @@ void SettingsAdvanced::ApplySettings()
 {
     //precheck for QSV enable/disable in case the checkbox is currently enabled while no hardware support is found
 
-    bool bHasQSV = CheckQSVHardwareSupport(false);
     bool bUseQSV = SendMessage(GetDlgItem(hwnd, IDC_USEQSV), BM_GETCHECK, 0, 0) == BST_CHECKED;
     bool bUseQSV_prev = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
     if (!bHasQSV && !bUseQSV && bUseQSV_prev &&
@@ -71,7 +70,6 @@ void SettingsAdvanced::ApplySettings()
 
     //precheck for NVENC enable/disable in case the checkbox is currently enabled while no hardware support is found
 
-    bool bHasNVENC = CheckNVENCHardwareSupport(false);
     bool bUseNVENC = SendMessage(GetDlgItem(hwnd, IDC_USENVENC), BM_GETCHECK, 0, 0) == BST_CHECKED;
     bool bUseNVENC_prev = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseNVENC")) != 0;
     if (!bHasNVENC && !bUseNVENC && bUseNVENC_prev &&
@@ -347,11 +345,11 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 //------------------------------------
 
-                bool bHasQSV = CheckQSVHardwareSupport(false);
+                bHasQSV = CheckQSVHardwareSupport(false);
 
                 bool bUseQSV = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
 
-                bool bHasNVENC = CheckNVENCHardwareSupport(false);
+                bHasNVENC = CheckNVENCHardwareSupport(false);
 
                 bool bUseNVENC = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseNVENC")) != 0;
 
@@ -535,8 +533,6 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 case IDC_USENVENC:
                     if (HIWORD(wParam) == BN_CLICKED)
                     {
-                        bool bHasQSV = CheckQSVHardwareSupport(false);
-                        bool bHasNVENC = CheckNVENCHardwareSupport(false);
                         bool bUseQSV = SendMessage(GetDlgItem(hwnd, IDC_USEQSV), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         bool bUseNVENC = SendMessage(GetDlgItem(hwnd, IDC_USENVENC), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         bool bUseQSV_prev = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;

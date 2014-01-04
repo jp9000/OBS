@@ -210,6 +210,7 @@ public:
 
 class SettingsAdvanced : public SettingsPane
 {
+    bool bHasQSV, bHasNVENC;
     //-----------------------------------------------------------------------
     // Constructor/destructor
 
