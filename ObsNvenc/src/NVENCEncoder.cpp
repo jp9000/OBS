@@ -74,13 +74,11 @@ NVENCEncoder::~NVENCEncoder()
                 pNvEnc->nvEncUnlockInputBuffer(encoder, inputSurfaces[i].inputSurface);
 
 			pNvEnc->nvEncDestroyInputBuffer(encoder, inputSurfaces[i].inputSurface);
-			if (outputSurfaces[i].outputSurface != 0)
-				pNvEnc->nvEncDestroyBitstreamBuffer(encoder, outputSurfaces[i].outputSurface);
+			pNvEnc->nvEncDestroyBitstreamBuffer(encoder, outputSurfaces[i].outputSurface);
 		}
 
-		if (encoder)
-			pNvEnc->nvEncDestroyEncoder(encoder);
-		encoder = 0;
+		pNvEnc->nvEncDestroyEncoder(encoder);
+        cuCtxDestroy(cuContext);
 
 		NvLog(TEXT("Encoder closed"));
 	}
@@ -163,6 +161,7 @@ void NVENCEncoder::init()
 	stEncodeSessionParams.apiVersion = NVENCAPI_VERSION;
 	stEncodeSessionParams.clientKeyPtr = &clientKey;
 
+    cuContext = 0;
 	checkCudaErrors(cuCtxCreate(&cuContext, 0, pNvencDevices[iNvencUseDeviceID]));
 	checkCudaErrors(cuCtxPopCurrent(&cuContextCurr));
 
@@ -309,6 +308,9 @@ error:
 	if (encoder)
 		pNvEnc->nvEncDestroyEncoder(encoder);
 	encoder = 0;
+
+    if (cuContext)
+        cuCtxDestroy(cuContext);
 }
 
 void NVENCEncoder::RequestBuffers(LPVOID buffers)
