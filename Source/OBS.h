@@ -787,7 +787,7 @@ private:
     bool bStartStreamHotkeyDown, bStopStreamHotkeyDown;
 
     static DWORD STDCALL MainAudioThread(LPVOID lpUnused);
-    void QueryAudioBuffers(bool bQueriedDesktopDebugParam);
+    bool QueryAudioBuffers(bool bQueriedDesktopDebugParam);
     bool QueryNewAudio();
     void EncodeAudioSegment(float *buffer, UINT numFrames, QWORD timestamp);
     void MainAudioLoop();

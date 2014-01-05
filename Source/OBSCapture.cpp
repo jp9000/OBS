@@ -1000,15 +1000,17 @@ inline float toDB(float RMS)
     return db;
 }
 
-void OBS::QueryAudioBuffers(bool bQueriedDesktopDebugParam)
+bool OBS::QueryAudioBuffers(bool bQueriedDesktopDebugParam)
 {
+    bool bGotSomeAudio = false;
+
     if (!latestAudioTime) {
         desktopAudio->GetEarliestTimestamp(latestAudioTime); //will always return true
     } else {
         QWORD latestDesktopTimestamp;
         if (desktopAudio->GetLatestTimestamp(latestDesktopTimestamp)) {
             if ((latestAudioTime+10) > latestDesktopTimestamp)
-                return;
+                return false;
         }
         latestAudioTime += 10;
     }
@@ -1017,11 +1019,20 @@ void OBS::QueryAudioBuffers(bool bQueriedDesktopDebugParam)
 
     OSEnterMutex(hAuxAudioMutex);
     for(UINT i=0; i<auxAudioSources.Num(); i++)
-        auxAudioSources[i]->QueryAudio(auxAudioSources[i]->GetVolume());
+    {
+        if (auxAudioSources[i]->QueryAudio(auxAudioSources[i]->GetVolume(), true) != NoAudioAvailable)
+            bGotSomeAudio = true;
+    }
+
     OSLeaveMutex(hAuxAudioMutex);
 
     if(micAudio != NULL)
-        micAudio->QueryAudio(curMicVol);
+    {
+        if (micAudio->QueryAudio(curMicVol, true) != NoAudioAvailable)
+            bGotSomeAudio = true;
+    }
+
+    return bGotSomeAudio;
 }
 
 bool OBS::QueryNewAudio()
@@ -1043,6 +1054,25 @@ bool OBS::QueryNewAudio()
 
         if (bAudioBufferFilled || !bGotAudio)
             break;
+    }
+
+    if (!bAudioBufferFilled)
+    {
+        // No more desktop data, drain auxilary/mic buffers until they're dry to prevent burst data
+        OSEnterMutex(hAuxAudioMutex);
+        for(UINT i=0; i<auxAudioSources.Num(); i++)
+        {
+            while (auxAudioSources[i]->QueryAudio(auxAudioSources[i]->GetVolume(), true) != NoAudioAvailable);
+            auxAudioSources[i]->SortAudio(GetAudioTime());
+        }
+
+        OSLeaveMutex(hAuxAudioMutex);
+
+        if (micAudio)
+        {
+            while (micAudio->QueryAudio(curMicVol, true) != NoAudioAvailable);
+            micAudio->SortAudio(GetAudioTime());
+        }
     }
 
     return bAudioBufferFilled;

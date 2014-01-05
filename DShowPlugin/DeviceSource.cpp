@@ -1242,7 +1242,7 @@ void DeviceSource::ReceiveMediaSample(IMediaSample *sample, bool bAudio)
                 memcpy(data->lpData, pointer, data->dataLength);
 
                 LONGLONG stopTime;
-                sample->GetTime(&data->timestamp, &stopTime);
+                sample->GetTime(&stopTime, &data->timestamp);
             }
 
             //Log(TEXT("timestamp: %lld, bAudio - %s"), data->timestamp, bAudio ? TEXT("true") : TEXT("false"));

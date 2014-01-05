@@ -387,27 +387,8 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
 
     while (true) {
         if (inputBufferSize >= sampleWindowSize*GetChannelCount()) {
-            if (bFirstRun) {
+            if (bFirstRun)
                 lastQPCTimestamp += 10;
-            } else if (bIsMic && !bUseQPC) {
-                captureSize = 0;
-                mmCapture->GetNextPacketSize(&captureSize);
-
-                //throws away worthless mic data that's sampling faster than the desktop buffer.
-                //disgusting fix for stupid worthless mic issues.
-                if (captureSize > 0) {
-                    ++numTimesInARowNewDataSeen;
-
-                    if (numTimesInARowNewDataSeen > angerThreshold) {
-                        if (SUCCEEDED(mmCapture->GetBuffer(&captureBuffer, &numFramesRead, &dwFlags, &devPosition, &qpcTimestamp))) {
-                            mmCapture->ReleaseBuffer(numFramesRead);
-                            numTimesInARowNewDataSeen = 0;
-                        }
-                    }
-                } else {
-                    numTimesInARowNewDataSeen = 0;
-                }
-            }
             firstTimestamp = GetTimestamp(lastQPCTimestamp);
             break;
         }

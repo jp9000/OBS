@@ -109,7 +109,7 @@ public:
     AudioSource();
     virtual ~AudioSource();
 
-    virtual UINT QueryAudio(float curVolume);
+    virtual UINT QueryAudio(float curVolume, bool bCanBurst=false);
     virtual bool GetEarliestTimestamp(QWORD &timestamp);
     virtual bool GetBuffer(float **buffer, QWORD targetTimestamp);
 
@@ -138,5 +138,7 @@ public:
     void RemoveAudioFilter(UINT id);
 
     virtual bool GetLatestTimestamp(QWORD &timestamp);
+
+    void SortAudio(QWORD timestamp);
 };
 

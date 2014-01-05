@@ -196,7 +196,29 @@ void AudioSource::AddAudioSegment(AudioSegment *newSegment, float curVolume)
         audioSegments << newSegment;
 }
 
-UINT AudioSource::QueryAudio(float curVolume)
+//  Used to sort sort audio in case from back->front in case of burst (this shouldn't be
+//necessary but a necessary thing for the current audio system)
+void AudioSource::SortAudio(QWORD timestamp)
+{
+    if (audioSegments.Num() <= 1)
+        return;
+
+    lastUsedTimestamp = lastSentTimestamp = audioSegments.Last()->timestamp = timestamp;
+
+    for (UINT i = audioSegments.Num()-1; i > 0; i--)
+    {
+        AudioSegment *segment = audioSegments[i-1];
+        UINT frames = segment->audioData.Num()/2;
+        double totalTime = double(frames)/double(OBSGetSampleRateHz())*1000.0;
+        QWORD newTime = timestamp - QWORD(totalTime);
+
+        if (newTime < segment->timestamp)
+            segment->timestamp = newTime;
+        timestamp = segment->timestamp;
+    }
+}
+
+UINT AudioSource::QueryAudio(float curVolume, bool bCanBurst)
 {
     LPVOID buffer;
     UINT numAudioFrames;
@@ -606,12 +628,13 @@ UINT AudioSource::QueryAudio(float curVolume)
 
         float *newBuffer = (bResample) ? tempResampleBuffer.Array() : tempBuffer.Array();
 
-        if(lastUsedTimestamp >= lastSentTimestamp+10) {
+        if (bCanBurst || lastUsedTimestamp >= lastSentTimestamp+10)
+        {
             AudioSegment *newSegment = new AudioSegment(newBuffer, numAudioFrames*2, lastUsedTimestamp);
             AddAudioSegment(newSegment, curVolume*sourceVolume);
-
-            lastSentTimestamp = lastUsedTimestamp;
         }
+
+        lastSentTimestamp = lastUsedTimestamp;
 
         //-----------------------------------------------------------------------------
 
@@ -646,16 +669,27 @@ bool AudioSource::GetLatestTimestamp(QWORD &timestamp)
 bool AudioSource::GetBuffer(float **buffer, QWORD targetTimestamp)
 {
     bool bSuccess = false;
+    bool bDeleted = false;
     outputBuffer.Clear();
 
     while(audioSegments.Num())
     {
         if(audioSegments[0]->timestamp < targetTimestamp)
         {
-            Log(TEXT("Audio timestamp for device '%s' was behind target timestamp by %llu!  Had to delete audio segment."),
-                                                              GetDeviceName(), targetTimestamp-audioSegments[0]->timestamp);
+            //OSDebugOut(TEXT("Off by %llu\n"), targetTimestamp-audioSegments[0]->timestamp);
+            Log(TEXT("Audio timestamp for device '%s' was behind target timestamp by %llu"),
+                    GetDeviceName(), targetTimestamp-audioSegments[0]->timestamp);
+
+            /*OSDebugOut(L"targetTimestamp: %llu\n", targetTimestamp);
+            for (UINT i = 0; i < audioSegments.Num(); i++)
+            {
+                OSDebugOut(L"%llu\n", audioSegments[i]->timestamp);
+            }*/
+
             delete audioSegments[0];
             audioSegments.Remove(0);
+
+            bDeleted = true;
         }
         else
             break;
@@ -668,7 +702,7 @@ bool AudioSource::GetBuffer(float **buffer, QWORD targetTimestamp)
         AudioSegment *segment = audioSegments[0];
 
         QWORD difference = (segment->timestamp-targetTimestamp);
-        if(difference <= 10)
+        if(bDeleted || difference <= 11)
         {
             //Log(TEXT("segment.timestamp: %llu, targetTimestamp: %llu"), segment.timestamp, targetTimestamp);
             outputBuffer.TransferFrom(segment->audioData);
