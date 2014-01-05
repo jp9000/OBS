@@ -322,15 +322,8 @@ BOOL   STDCALL OSSetCurrentDirectory(CTSTR lpDirectory)
 
 BOOL   STDCALL OSFileExists(CTSTR lpFile)
 {
-    OSFindData ofd;
-    HANDLE hFind = OSFindFirstFile(lpFile, ofd);
-    if(hFind)
-    {
-        OSFindClose(hFind);
-        return TRUE;
-    }
-
-    return FALSE;
+    DWORD attrib = GetFileAttributes(lpFile);
+    return (attrib != INVALID_FILE_ATTRIBUTES);
 }
 
 QWORD STDCALL OSGetFileModificationTime(String path)
