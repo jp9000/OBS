@@ -55,6 +55,9 @@ bool checkNvEnc()
     if (iNvencDeviceCount != 0)
         return true;
 
+    if (!dyLoadCuda())
+        return false;
+
     checkCudaErrors(cuInit(0));
 
     checkCudaErrors(cuDeviceGetCount(&deviceCount));

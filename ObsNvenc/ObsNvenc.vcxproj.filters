@@ -20,6 +20,9 @@
     <ClCompile Include="src\NVENCEncoder.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="src\cudaDynload.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\nvEncodeAPI.h">
@@ -32,6 +35,9 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="inc\NVENCEncoder.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\cudaDynload.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

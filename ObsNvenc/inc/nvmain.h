@@ -22,7 +22,7 @@
 #pragma warning(disable: 4005)
 
 #include <Main.h>
-#include <cuda.h>
+#include "cudaDynload.h"
 #include "nvEncodeAPI.h"
 
 extern ConfigFile **NvAppConfig;

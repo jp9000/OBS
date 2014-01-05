@@ -86,13 +86,13 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir)\license;$(ProjectDir)\inc;$(SolutionDir)\OBSApi;$(SolutionDir)\Source;$(SolutionDir)\extras;$(CUDA_PATH)\include;$(DXSDK_DIR)Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\license;$(ProjectDir)\inc;$(SolutionDir)\OBSApi;$(SolutionDir)\Source;$(SolutionDir)\extras;$(DXSDK_DIR)Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(CUDA_PATH)\lib\$(Platform);$(SolutionDir)\OBSApi\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>cuda.lib;OBSApi.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\OBSApi\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OBSApi.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(SolutionDir)\rundir\pdb32\$(TargetName).pdb</ProgramDatabaseFile>
       <StripPrivateSymbols>$(SolutionDir)\rundir\pdb32\stripped\$(TargetName).pdb</StripPrivateSymbols>
     </Link>
@@ -105,13 +105,13 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir)\license;$(ProjectDir)\inc;$(SolutionDir)\OBSApi;$(SolutionDir)\Source;$(SolutionDir)\extras;$(CUDA_PATH)\include;$(DXSDK_DIR)Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\license;$(ProjectDir)\inc;$(SolutionDir)\OBSApi;$(SolutionDir)\Source;$(SolutionDir)\extras;$(DXSDK_DIR)Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(CUDA_PATH)\lib\$(Platform);$(SolutionDir)\OBSApi\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>cuda.lib;OBSApi.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\OBSApi\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OBSApi.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(SolutionDir)\rundir\pdb64\$(TargetName).pdb</ProgramDatabaseFile>
       <StripPrivateSymbols>$(SolutionDir)\rundir\pdb64\stripped\$(TargetName).pdb</StripPrivateSymbols>
     </Link>
@@ -126,15 +126,15 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir)\license;$(ProjectDir)\inc;$(SolutionDir)\OBSApi;$(SolutionDir)\Source;$(SolutionDir)\extras;$(CUDA_PATH)\include;$(DXSDK_DIR)Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\license;$(ProjectDir)\inc;$(SolutionDir)\OBSApi;$(SolutionDir)\Source;$(SolutionDir)\extras;$(DXSDK_DIR)Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(CUDA_PATH)\lib\$(Platform);$(SolutionDir)\OBSApi\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>cuda.lib;OBSApi.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\OBSApi\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OBSApi.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(SolutionDir)\rundir\pdb32\$(TargetName).pdb</ProgramDatabaseFile>
       <StripPrivateSymbols>$(SolutionDir)\rundir\pdb32\stripped\$(TargetName).pdb</StripPrivateSymbols>
     </Link>
@@ -149,15 +149,15 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir)\license;$(ProjectDir)\inc;$(SolutionDir)\OBSApi;$(SolutionDir)\Source;$(SolutionDir)\extras;$(CUDA_PATH)\include;$(DXSDK_DIR)Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\license;$(ProjectDir)\inc;$(SolutionDir)\OBSApi;$(SolutionDir)\Source;$(SolutionDir)\extras;$(DXSDK_DIR)Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(CUDA_PATH)\lib\$(Platform);$(SolutionDir)\OBSApi\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>cuda.lib;OBSApi.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\OBSApi\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OBSApi.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(SolutionDir)\rundir\pdb64\$(TargetName).pdb</ProgramDatabaseFile>
       <StripPrivateSymbols>$(SolutionDir)\rundir\pdb64\stripped\$(TargetName).pdb</StripPrivateSymbols>
     </Link>
@@ -166,11 +166,13 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\cudaDynload.cpp" />
     <ClCompile Include="src\NVENCEncoder.cpp" />
     <ClCompile Include="src\nvmain.cpp" />
     <ClCompile Include="src\nvEncodeAPI.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="inc\cudaDynload.h" />
     <ClInclude Include="inc\license.h" />
     <ClInclude Include="inc\NVENCEncoder.h" />
     <ClInclude Include="inc\nvmain.h" />
