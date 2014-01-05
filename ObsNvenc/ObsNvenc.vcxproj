@@ -97,7 +97,7 @@
       <StripPrivateSymbols>$(SolutionDir)\rundir\pdb32\stripped\$(TargetName).pdb</StripPrivateSymbols>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(OutDir)$(TargetFileName) $(SolutionDir)\rundir\$(TargetFileName)</Command>
+      <Command>copy "$(OutDir)$(TargetFileName)" "$(SolutionDir)rundir\$(TargetFileName)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -116,7 +116,7 @@
       <StripPrivateSymbols>$(SolutionDir)\rundir\pdb64\stripped\$(TargetName).pdb</StripPrivateSymbols>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(OutDir)$(TargetFileName) $(SolutionDir)\rundir\$(TargetFileName)</Command>
+      <Command>copy "$(OutDir)$(TargetFileName)" "$(SolutionDir)rundir\$(TargetFileName)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -139,7 +139,7 @@
       <StripPrivateSymbols>$(SolutionDir)\rundir\pdb32\stripped\$(TargetName).pdb</StripPrivateSymbols>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(OutDir)$(TargetFileName) $(SolutionDir)\rundir\$(TargetFileName)</Command>
+      <Command>copy "$(OutDir)$(TargetFileName)" "$(SolutionDir)rundir\$(TargetFileName)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -162,7 +162,7 @@
       <StripPrivateSymbols>$(SolutionDir)\rundir\pdb64\stripped\$(TargetName).pdb</StripPrivateSymbols>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(OutDir)$(TargetFileName) $(SolutionDir)\rundir\$(TargetFileName)</Command>
+      <Command>copy "$(OutDir)$(TargetFileName)" "$(SolutionDir)rundir\$(TargetFileName)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
