@@ -350,7 +350,7 @@ Encoder.InitFailedWithReason="Encoder initialization failed:\r\n"
 
 Encoder.NVENC.NoHardwareSupport="Could not find Nvidia NVENC hardware support!"
 
-Encoder.QSV.NoHardwareSupport="Could not find Quick Sync Hardware support!"
+Encoder.QSV.NoHardwareSupport="Could not find Quick Sync hardware support!"
 Encoder.QSV.ExceededResolutionHelp="Either lower your output resolution in Settings->Video or switch to a different encoder in Settings->Advanced."
 Encoder.QSV.SNBIVBMaximumResolutionWidthHeightExceeded="Your output resolution of %ux%u exceeds the maximum of 1920x1200 supported by Quick Sync on Sandy Bridge and Ivy Bridge based processors!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionWidthExceeded="Your output resolution width of %u exceeds the maximum of 1920 supported by Quick Sync on Sandy Bridge and Ivy Bridge based processors!\r\n"
