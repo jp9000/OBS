@@ -93,6 +93,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(CUDA_PATH)\lib\$(Platform);$(SolutionDir)\OBSApi\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>cuda.lib;OBSApi.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ProgramDatabaseFile>$(SolutionDir)\rundir\pdb32\$(TargetName).pdb</ProgramDatabaseFile>
+      <StripPrivateSymbols>$(SolutionDir)\rundir\pdb32\stripped\$(TargetName).pdb</StripPrivateSymbols>
     </Link>
     <PostBuildEvent>
       <Command>copy $(OutDir)$(TargetFileName) $(SolutionDir)\rundir\$(TargetFileName)</Command>
@@ -110,6 +112,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(CUDA_PATH)\lib\$(Platform);$(SolutionDir)\OBSApi\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>cuda.lib;OBSApi.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ProgramDatabaseFile>$(SolutionDir)\rundir\pdb64\$(TargetName).pdb</ProgramDatabaseFile>
+      <StripPrivateSymbols>$(SolutionDir)\rundir\pdb64\stripped\$(TargetName).pdb</StripPrivateSymbols>
     </Link>
     <PostBuildEvent>
       <Command>copy $(OutDir)$(TargetFileName) $(SolutionDir)\rundir\$(TargetFileName)</Command>
@@ -131,6 +135,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(CUDA_PATH)\lib\$(Platform);$(SolutionDir)\OBSApi\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>cuda.lib;OBSApi.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ProgramDatabaseFile>$(SolutionDir)\rundir\pdb32\$(TargetName).pdb</ProgramDatabaseFile>
+      <StripPrivateSymbols>$(SolutionDir)\rundir\pdb32\stripped\$(TargetName).pdb</StripPrivateSymbols>
     </Link>
     <PostBuildEvent>
       <Command>copy $(OutDir)$(TargetFileName) $(SolutionDir)\rundir\$(TargetFileName)</Command>
@@ -152,6 +158,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(CUDA_PATH)\lib\$(Platform);$(SolutionDir)\OBSApi\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>cuda.lib;OBSApi.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ProgramDatabaseFile>$(SolutionDir)\rundir\pdb64\$(TargetName).pdb</ProgramDatabaseFile>
+      <StripPrivateSymbols>$(SolutionDir)\rundir\pdb64\stripped\$(TargetName).pdb</StripPrivateSymbols>
     </Link>
     <PostBuildEvent>
       <Command>copy $(OutDir)$(TargetFileName) $(SolutionDir)\rundir\$(TargetFileName)</Command>
