@@ -37,12 +37,12 @@ static HMODULE nvEncLib = NULL;
 
 bool _checkCudaErrors(CUresult err, const char *func)
 {
-	if (err != CUDA_SUCCESS)
-	{
-		NvLog(TEXT(">> %S - failed with error code 0x%x"), func, err);
-		return false;
-	}
-	return true;
+    if (err != CUDA_SUCCESS)
+    {
+        NvLog(TEXT(">> %S - failed with error code 0x%x"), func, err);
+        return false;
+    }
+    return true;
 }
 
 bool checkNvEnc()
@@ -101,59 +101,59 @@ error:
 
 bool initNvEnc()
 {
-	if (pNvEnc != 0)
-		return true;
+    if (pNvEnc != 0)
+        return true;
 
     if (!checkNvEnc())
         return false;
 
-	nvEncLib = LoadLibrary(encodeLibName);
+    nvEncLib = LoadLibrary(encodeLibName);
 
-	if(nvEncLib == 0)
-	{
-		NvLog(TEXT("Failed to load %s"), encodeLibName);
-		goto error;
-	}
+    if(nvEncLib == 0)
+    {
+        NvLog(TEXT("Failed to load %s"), encodeLibName);
+        goto error;
+    }
 
-	PNVENCODEAPICREATEINSTANCE nvEncodeAPICreateInstance =
-		(PNVENCODEAPICREATEINSTANCE)GetProcAddress(nvEncLib, "NvEncodeAPICreateInstance");
+    PNVENCODEAPICREATEINSTANCE nvEncodeAPICreateInstance =
+        (PNVENCODEAPICREATEINSTANCE)GetProcAddress(nvEncLib, "NvEncodeAPICreateInstance");
 
-	if(nvEncodeAPICreateInstance == 0)
-	{
-		NvLog(TEXT("Failed to load nvenc entrypoint"));
-		goto error;
-	}
+    if(nvEncodeAPICreateInstance == 0)
+    {
+        NvLog(TEXT("Failed to load nvenc entrypoint"));
+        goto error;
+    }
 
-	pNvEnc = new NV_ENCODE_API_FUNCTION_LIST;
-	assert(pNvEnc);
+    pNvEnc = new NV_ENCODE_API_FUNCTION_LIST;
+    assert(pNvEnc);
 
-	mset(pNvEnc, 0, sizeof(NV_ENCODE_API_FUNCTION_LIST));
-	pNvEnc->version = NV_ENCODE_API_FUNCTION_LIST_VER;
-	NVENCSTATUS status = nvEncodeAPICreateInstance(pNvEnc);
+    mset(pNvEnc, 0, sizeof(NV_ENCODE_API_FUNCTION_LIST));
+    pNvEnc->version = NV_ENCODE_API_FUNCTION_LIST_VER;
+    NVENCSTATUS status = nvEncodeAPICreateInstance(pNvEnc);
 
-	if (status != NV_ENC_SUCCESS)
-	{
-		NvLog(TEXT("Failed to get nvenc instance"));
-		goto error;
-	}
+    if (status != NV_ENC_SUCCESS)
+    {
+        NvLog(TEXT("Failed to get nvenc instance"));
+        goto error;
+    }
 
-	NvLog(TEXT("NVENC internal init finished successfully"));
+    NvLog(TEXT("NVENC internal init finished successfully"));
 
-	return true;
+    return true;
 
 error:
 
-	iNvencDeviceCount = 0;
+    iNvencDeviceCount = 0;
 
-	delete pNvEnc;
-	pNvEnc = 0;
+    delete pNvEnc;
+    pNvEnc = 0;
 
-	FreeLibrary(nvEncLib);
-	nvEncLib = 0;
+    FreeLibrary(nvEncLib);
+    nvEncLib = 0;
 
-	NvLog(TEXT("NVENC internal init failed"));
+    NvLog(TEXT("NVENC internal init failed"));
 
-	return false;
+    return false;
 }
 
 void deinitNvEnc()

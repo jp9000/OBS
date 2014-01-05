@@ -26,37 +26,37 @@ unsigned int encoderRefs = 0;
 
 extern "C" __declspec(dllexport) bool __cdecl InitNVENCEncoder(ConfigFile **appConfig)
 {
-	NvAppConfig = appConfig;
+    NvAppConfig = appConfig;
 
-	return true;
+    return true;
 }
 
 extern "C" __declspec(dllexport) bool __cdecl CheckNVENCHardwareSupport(bool log)
 {
     doLog = log;
 
-	if (!checkNvEnc())
-		return false;
-	
-	return true;
+    if (!checkNvEnc())
+        return false;
+    
+    return true;
 }
 
 extern "C" __declspec(dllexport) VideoEncoder* __cdecl CreateNVENCEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR)
 {
-	if (!initNvEnc())
-		return 0;
+    if (!initNvEnc())
+        return 0;
 
-	NVENCEncoder *res = new NVENCEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR);
+    NVENCEncoder *res = new NVENCEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR);
 
-	if (!res->isAlive())
-	{
-		delete res;
-		return 0;
-	}
+    if (!res->isAlive())
+    {
+        delete res;
+        return 0;
+    }
 
     encoderRefs += 1;
 
-	return res;
+    return res;
 }
 
 void encoderRefDec()
