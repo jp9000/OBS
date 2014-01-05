@@ -105,8 +105,7 @@ private:
 	std::queue<NVENCEncoderOutputSurface*> outputSurfaceQueue;
 	std::queue<NVENCEncoderOutputSurface*> outputSurfaceQueueReady;
 
-	bool makeKeyFrame;
-
+    NV_ENC_INITIALIZE_PARAMS initEncodeParams;
 	NV_ENC_CONFIG encodeConfig;
 
 	List<BYTE> encodeData, headerPacket, seiData;

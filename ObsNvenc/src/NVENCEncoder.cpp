@@ -47,7 +47,6 @@ NVENCEncoder::NVENCEncoder(int fps, int width, int height, int quality, CTSTR pr
 	, bufferSize(bufferSize)
 	, bUseCFR(bUseCFR)
 	, frameShift(0)
-	, makeKeyFrame(false)
 {
 	bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
 	keyint = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 0);
@@ -137,7 +136,6 @@ bool NVENCEncoder::checkPresetSupport(const GUID &preset)
 void NVENCEncoder::init()
 {
 	NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS stEncodeSessionParams = { 0 };
-	NV_ENC_INITIALIZE_PARAMS createEncodeParams = { 0 };
 	NV_ENC_PRESET_CONFIG presetConfig = { 0 };
 	GUID clientKey = NV_CLIENT_KEY;
 	CUcontext cuContextCurr;
@@ -154,11 +152,12 @@ void NVENCEncoder::init()
             NvLog(TEXT("NVENC_KEY environment variable has invalid format"));
     }
 
-	memset(&encodeConfig, 0, sizeof(NV_ENC_CONFIG));
+    mset(&initEncodeParams, 0, sizeof(NV_ENC_INITIALIZE_PARAMS));
+    mset(&encodeConfig, 0, sizeof(NV_ENC_CONFIG));
 
 	encodeConfig.version = NV_ENC_CONFIG_VER;
 	presetConfig.version = NV_ENC_PRESET_CONFIG_VER;
-	createEncodeParams.version = NV_ENC_INITIALIZE_PARAMS_VER;
+    initEncodeParams.version = NV_ENC_INITIALIZE_PARAMS_VER;
 
 	stEncodeSessionParams.version = NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER;
 	stEncodeSessionParams.apiVersion = NVENCAPI_VERSION;
@@ -194,26 +193,29 @@ void NVENCEncoder::init()
 		goto error;
 	}
 
-	createEncodeParams.encodeGUID = NV_ENC_CODEC_H264_GUID;
-	createEncodeParams.encodeHeight = height;
-	createEncodeParams.encodeWidth = width;
-    createEncodeParams.darHeight = height;
-    createEncodeParams.darWidth = width;
-	createEncodeParams.frameRateNum = fps;
-	createEncodeParams.frameRateDen = 1;
+    initEncodeParams.encodeGUID = NV_ENC_CODEC_H264_GUID;
+    initEncodeParams.encodeHeight = height;
+    initEncodeParams.encodeWidth = width;
+    initEncodeParams.darHeight = height;
+    initEncodeParams.darWidth = width;
+    initEncodeParams.frameRateNum = fps;
+    initEncodeParams.frameRateDen = 1;
 
-	createEncodeParams.enableEncodeAsync = 0;
-	createEncodeParams.enablePTD = 1;
+    initEncodeParams.enableEncodeAsync = 0;
+    initEncodeParams.enablePTD = 1;
 
-	createEncodeParams.presetGUID = NV_ENC_PRESET_HQ_GUID;
-	createEncodeParams.encodeConfig = &encodeConfig;
+    initEncodeParams.presetGUID = NV_ENC_PRESET_HQ_GUID;
+    initEncodeParams.encodeConfig = &encodeConfig;
 	memcpy(&encodeConfig, &presetConfig.presetCfg, sizeof(NV_ENC_CONFIG));
 
 	if (keyint != 0)
 		encodeConfig.gopLength = keyint * fps;
 
-	if (maxBitRate != -1)
-		encodeConfig.rcParams.averageBitRate = maxBitRate * 1000;
+    if (maxBitRate != -1)
+    {
+        encodeConfig.rcParams.averageBitRate = maxBitRate * 1000;
+        encodeConfig.rcParams.maxBitRate = maxBitRate * 1000;
+    }
 
 	if (bufferSize != -1)
 		encodeConfig.rcParams.vbvBufferSize = bufferSize * 1000;
@@ -233,7 +235,7 @@ void NVENCEncoder::init()
 	encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.colourPrimaries = colorDesc.primaries;
 	encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.transferCharacteristics = colorDesc.transfer;
 
-	nvStatus = pNvEnc->nvEncInitializeEncoder(encoder, &createEncodeParams);
+    nvStatus = pNvEnc->nvEncInitializeEncoder(encoder, &initEncodeParams);
 
 	if (nvStatus != NV_ENC_SUCCESS)
 	{
@@ -411,14 +413,12 @@ bool NVENCEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketTy
 		picParams.outputBitstream = outputSurfaces[i].outputSurface;
 		picParams.completionEvent = 0;
 		picParams.pictureStruct = NV_ENC_PIC_STRUCT_FRAME; // At least i hope so
-        picParams.encodePicFlags = makeKeyFrame ? NV_ENC_PIC_FLAG_FORCEIDR : 0;
+        picParams.encodePicFlags = 0;
 		picParams.inputTimeStamp = data.TimeStamp;
 		picParams.inputDuration = 0;
 		picParams.codecPicParams.h264PicParams.sliceMode = encodeConfig.encodeCodecConfig.h264Config.sliceMode;
 		picParams.codecPicParams.h264PicParams.sliceModeData = encodeConfig.encodeCodecConfig.h264Config.sliceModeData;
 		memcpy(&picParams.rcParams, &encodeConfig.rcParams, sizeof(NV_ENC_RC_PARAMS));
-
-		makeKeyFrame = false;
 	}
 	else
 	{
@@ -662,21 +662,6 @@ void NVENCEncoder::ProcessOutput(NVENCEncoderOutputSurface *surf, List<DataPacke
 	}
 }
 
-int NVENCEncoder::GetBitRate() const
-{
-	return maxBitRate;
-}
-
-bool NVENCEncoder::DynamicBitrateSupported() const
-{
-	return false; //TODO: It does support it, just not yet implemented
-}
-
-bool NVENCEncoder::SetBitRate(DWORD maxBitrate, DWORD bufferSize)
-{
-	return false;
-}
-
 void NVENCEncoder::GetHeaders(DataPacket &packet)
 {
 	uint32_t outSize = 0;
@@ -749,7 +734,67 @@ void NVENCEncoder::GetSEI(DataPacket &packet)
 
 void NVENCEncoder::RequestKeyframe()
 {
-	makeKeyFrame = true;
+    OSMutexLocker locker(frameMutex);
+
+    NV_ENC_RECONFIGURE_PARAMS params = { 0 };
+    params.version = NV_ENC_RECONFIGURE_PARAMS_VER;
+
+    params.forceIDR = 1;
+    mcpy(&params.reInitEncodeParams, &initEncodeParams, sizeof(NV_ENC_INITIALIZE_PARAMS));
+
+    NVENCSTATUS nvStatus = pNvEnc->nvEncReconfigureEncoder(encoder, &params);
+    if (nvStatus != NV_ENC_SUCCESS)
+    {
+        NvLog(TEXT("Failed requesting a Keyframe"));
+    }
+}
+
+bool NVENCEncoder::SetBitRate(DWORD maxBitrate, DWORD bufferSize)
+{
+    OSMutexLocker locker(frameMutex);
+
+    NV_ENC_RECONFIGURE_PARAMS params = { 0 };
+    params.version = NV_ENC_RECONFIGURE_PARAMS_VER;
+
+    if (maxBitrate > 0)
+    {
+        encodeConfig.rcParams.maxBitRate = maxBitrate * 1000;
+        encodeConfig.rcParams.averageBitRate = maxBitrate * 1000;
+    }
+
+    if (bufferSize > 0)
+    {
+        encodeConfig.rcParams.vbvBufferSize = bufferSize * 1000;
+    }
+
+    params.resetEncoder = 1;
+    params.forceIDR = 1;
+    mcpy(&params.reInitEncodeParams, &initEncodeParams, sizeof(NV_ENC_INITIALIZE_PARAMS));
+
+    NVENCSTATUS nvStatus = pNvEnc->nvEncReconfigureEncoder(encoder, &params);
+    if (nvStatus != NV_ENC_SUCCESS)
+    {
+        NvLog(TEXT("Failed reconfiguring nvenc encoder"));
+        return false;
+    }
+
+    if (maxBitrate > 0)
+        this->maxBitRate = maxBitrate;
+
+    if (bufferSize > 0)
+        this->bufferSize = bufferSize;
+
+    return true;
+}
+
+int NVENCEncoder::GetBitRate() const
+{
+    return maxBitRate;
+}
+
+bool NVENCEncoder::DynamicBitrateSupported() const
+{
+    return true;
 }
 
 String NVENCEncoder::GetInfoString() const
@@ -764,10 +809,10 @@ bool NVENCEncoder::isQSV()
 
 int NVENCEncoder::GetBufferedFrames()
 {
-	return (int)outputSurfaceQueue.size();
+	return (int)(outputSurfaceQueue.size() + outputSurfaceQueueReady.size());
 }
 
 bool NVENCEncoder::HasBufferedFrames()
 {
-	return !outputSurfaceQueue.empty();
+	return !(outputSurfaceQueue.empty() && outputSurfaceQueueReady.empty());
 }
