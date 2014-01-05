@@ -1188,14 +1188,18 @@ void OBS::GetProfiles(StringList &profileList)
 
     profileList.Clear();
 
-    strProfilesWildcard << lpAppDataPath << TEXT("\\profiles\\*.ini");
+    String profileDir(FormattedString(L"%s/profiles/", OBSGetAppDataPath()));
+
+    strProfilesWildcard << profileDir << "*.ini";
 
     if(hFind = OSFindFirstFile(strProfilesWildcard, ofd))
     {
         do
         {
-            if(ofd.bDirectory) continue;
-            profileList << GetPathWithoutExtension(ofd.fileName);
+            String profile(GetPathWithoutExtension(ofd.fileName));
+            String profilePath(FormattedString(L"%s%s.ini", profileDir.Array(), profile.Array()));
+            if(ofd.bDirectory || !OSFileExists(profilePath) || profileList.HasValue(profile)) continue;
+            profileList << profile;
         } while(OSFindNextFile(hFind, ofd));
 
         OSFindClose(hFind);
