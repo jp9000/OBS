@@ -97,11 +97,12 @@ VideoEncoder* CreateNVENCEncoder(int fps, int width, int height, int quality, CT
 {
 	if (!CheckNVENCHardwareSupport(true))
 	{
-		errors << Str("Encoder.NVENC.NoHardwareSupport");
-		return nullptr;
+        if (p_nvencModule)
+            errors << Str("Encoder.NVENC.NoHardwareSupport");
+        else
+            errors << Str("Encoder.NVENC.DllNotFound");
+		return NULL;
 	}
-
-	InitNVENCEncoder();
 
 	if(p_createNVENCEncoder == NULL)
 		return NULL;
