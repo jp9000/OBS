@@ -57,4 +57,10 @@ struct OSMutexLocker
     OSMutexLocker(OSMutexLocker &&other) : h(other.h), enabled(other.enabled) { other.enabled = false; }
 };
 
+template<typename T>
+inline bool dataEqual(const T& a, const T& b)
+{
+    return memcmp(&a, &b, sizeof(T)) == 0;
+}
+
 #endif

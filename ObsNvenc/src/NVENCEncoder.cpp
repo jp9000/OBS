@@ -290,6 +290,10 @@ void NVENCEncoder::init()
         outputSurfaces[surfaceCount].busy = false;
     }
 
+    NvLog(TEXT("------------------------------------------"));
+    NvLog(TEXT("%s"), GetInfoString().Array());
+    NvLog(TEXT("------------------------------------------"));
+
     alive = true;
 
     return;
@@ -801,7 +805,55 @@ bool NVENCEncoder::DynamicBitrateSupported() const
 
 String NVENCEncoder::GetInfoString() const
 {
-    return "NVENC Encoder: TODO";
+    String strInfo;
+
+    String profile = "unknown";
+    if (dataEqual(encodeConfig.profileGUID, NV_ENC_CODEC_PROFILE_AUTOSELECT_GUID))
+        profile = "autoselect";
+    else if (dataEqual(encodeConfig.profileGUID, NV_ENC_H264_PROFILE_BASELINE_GUID))
+        profile = "baseline";
+    else if (dataEqual(encodeConfig.profileGUID, NV_ENC_H264_PROFILE_MAIN_GUID))
+        profile = "main";
+    else if (dataEqual(encodeConfig.profileGUID, NV_ENC_H264_PROFILE_HIGH_GUID))
+        profile = "high";
+    else if (dataEqual(encodeConfig.profileGUID, NV_ENC_H264_PROFILE_STEREO_GUID))
+        profile = "stereo";
+    else if (dataEqual(encodeConfig.profileGUID, NV_ENC_H264_PROFILE_SVC_TEMPORAL_SCALABILTY))
+        profile = "svc temporal";
+
+    String cbr = "no";
+    if (encodeConfig.rcParams.rateControlMode == NV_ENC_PARAMS_RC_CBR
+        || encodeConfig.rcParams.rateControlMode == NV_ENC_PARAMS_RC_CBR2)
+    {
+        cbr = "yes";
+    }
+
+    String cfr = "yes";
+    if (encodeConfig.encodeCodecConfig.h264Config.enableVFR)
+        cfr = "no";
+
+    String level = "unknown";
+    if (encodeConfig.encodeCodecConfig.h264Config.level == 0)
+        level = "autoselect";
+    else if (encodeConfig.encodeCodecConfig.h264Config.level <= 51)
+    {
+        level = IntString(encodeConfig.encodeCodecConfig.h264Config.level / 10);
+        level << ".";
+        level << IntString(encodeConfig.encodeCodecConfig.h264Config.level % 10);
+    }
+
+    strInfo << TEXT("Video Encoding: NVENC") <<
+        TEXT("\r\n    fps: ") << IntString(initEncodeParams.frameRateNum / initEncodeParams.frameRateDen) <<
+        TEXT("\r\n    width: ") << IntString(initEncodeParams.encodeWidth) << TEXT(", height: ") << IntString(initEncodeParams.encodeHeight) <<
+        TEXT("\r\n    profile: ") << profile <<
+        TEXT("\r\n    level: ") << level <<
+        TEXT("\r\n    keyint: ") << IntString(encodeConfig.gopLength) <<
+        TEXT("\r\n    CBR: ") << cbr <<
+        TEXT("\r\n    CFR: ") << cfr <<
+        TEXT("\r\n    max bitrate: ") << IntString(encodeConfig.rcParams.maxBitRate / 1000) <<
+        TEXT("\r\n    buffer size: ") << IntString(encodeConfig.rcParams.vbvBufferSize / 1000);
+
+    return strInfo;
 }
 
 bool NVENCEncoder::isQSV()
