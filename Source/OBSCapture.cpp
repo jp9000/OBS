@@ -643,8 +643,8 @@ retryHookTestV2:
         else
             videoEncoderErrors = String(Str("Encoder.InitFailedWithReason")) + videoEncoderErrors;
 
-        MessageBox(hwndMain, videoEncoderErrors.Array(), nullptr, MB_OK | MB_ICONWARNING); //might want to defer localization until here to automatically
-                                                                                           //output english localization to logfile
+        MessageBox(hwndMain, videoEncoderErrors.Array(), nullptr, MB_OK | MB_ICONERROR); //might want to defer localization until here to automatically
+                                                                                         //output english localization to logfile
         return;
     }
 

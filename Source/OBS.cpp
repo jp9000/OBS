@@ -1188,14 +1188,18 @@ void OBS::GetProfiles(StringList &profileList)
 
     profileList.Clear();
 
-    strProfilesWildcard << lpAppDataPath << TEXT("\\profiles\\*.ini");
+    String profileDir(FormattedString(L"%s/profiles/", OBSGetAppDataPath()));
+
+    strProfilesWildcard << profileDir << "*.ini";
 
     if(hFind = OSFindFirstFile(strProfilesWildcard, ofd))
     {
         do
         {
-            if(ofd.bDirectory) continue;
-            profileList << GetPathWithoutExtension(ofd.fileName);
+            String profile(GetPathWithoutExtension(ofd.fileName));
+            String profilePath(FormattedString(L"%s%s.ini", profileDir.Array(), profile.Array()));
+            if(ofd.bDirectory || !OSFileExists(profilePath) || profileList.HasValue(profile)) continue;
+            profileList << profile;
         } while(OSFindNextFile(hFind, ofd));
 
         OSFindClose(hFind);
@@ -1460,24 +1464,33 @@ void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
 
     if(dis.itemID == 4)
     {
+        HBRUSH hColorBrush;
         DWORD green = 0xFF, red;
 
         statusBarData.bytesPerSec = App->bytesPerSec;
         statusBarData.strain = App->curStrain;
         //statusBarData.strain = rand()%101;
 
-        if(statusBarData.strain > 50.0)
-            green = DWORD(((50.0-(statusBarData.strain-50.0))/50.0)*255.0);
+        //show grey rather than green when not connected
+        if (App->network && App->network->NumTotalVideoFrames() == 0)
+        {
+            hColorBrush = CreateSolidBrush(RGB(100,100,100));
+        }
+        else
+        {
+            if(statusBarData.strain > 50.0)
+                green = DWORD(((50.0-(statusBarData.strain-50.0))/50.0)*255.0);
 
-        double redStrain = statusBarData.strain/50.0;
-        if(redStrain > 1.0)
-            redStrain = 1.0;
+            double redStrain = statusBarData.strain/50.0;
+            if(redStrain > 1.0)
+                redStrain = 1.0;
 
-        red = DWORD(redStrain*255.0);
+            red = DWORD(redStrain*255.0);
 
-        //--------------------------------
+            //--------------------------------
 
-        HBRUSH  hColorBrush = CreateSolidBrush((green<<8)|red);
+            hColorBrush = CreateSolidBrush((green<<8)|red);
+        }
 
         RECT rcBox = {0, 0, 20, 20};
         /*rc.left += dis.rcItem.left;
