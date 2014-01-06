@@ -628,13 +628,13 @@ UINT AudioSource::QueryAudio(float curVolume, bool bCanBurst)
 
         float *newBuffer = (bResample) ? tempResampleBuffer.Array() : tempBuffer.Array();
 
-        if (bCanBurst || lastUsedTimestamp >= lastSentTimestamp+10)
+        bool overshotAudio = (lastUsedTimestamp < lastSentTimestamp+10);
+        if (bCanBurst || !overshotAudio)
         {
             AudioSegment *newSegment = new AudioSegment(newBuffer, numAudioFrames*2, lastUsedTimestamp);
             AddAudioSegment(newSegment, curVolume*sourceVolume);
+            lastSentTimestamp = lastUsedTimestamp;
         }
-
-        lastSentTimestamp = lastUsedTimestamp;
 
         //-----------------------------------------------------------------------------
 

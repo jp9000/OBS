@@ -1058,12 +1058,16 @@ bool OBS::QueryNewAudio()
 
     if (!bAudioBufferFilled)
     {
+        QWORD timestamp;
+
         // No more desktop data, drain auxilary/mic buffers until they're dry to prevent burst data
         OSEnterMutex(hAuxAudioMutex);
         for(UINT i=0; i<auxAudioSources.Num(); i++)
         {
             while (auxAudioSources[i]->QueryAudio(auxAudioSources[i]->GetVolume(), true) != NoAudioAvailable);
-            auxAudioSources[i]->SortAudio(GetAudioTime());
+
+            if (auxAudioSources[i]->GetLatestTimestamp(timestamp))
+                auxAudioSources[i]->SortAudio(timestamp);
         }
 
         OSLeaveMutex(hAuxAudioMutex);
@@ -1071,7 +1075,9 @@ bool OBS::QueryNewAudio()
         if (micAudio)
         {
             while (micAudio->QueryAudio(curMicVol, true) != NoAudioAvailable);
-            micAudio->SortAudio(GetAudioTime());
+
+            if (micAudio->GetLatestTimestamp(timestamp))
+                micAudio->SortAudio(timestamp);
         }
     }
 
