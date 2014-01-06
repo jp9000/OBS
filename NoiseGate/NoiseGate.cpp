@@ -560,6 +560,9 @@ void NoiseGate::SaveSettings()
 
 void NoiseGate::StreamStarted()
 {
+    if (!isEnabled)
+        return;
+
     micSource = OBSGetMicAudioSource();
     if(micSource == NULL)
         return; // No microphone
