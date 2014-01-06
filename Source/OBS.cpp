@@ -700,8 +700,9 @@ OBS::OBS()
 
 OBS::~OBS()
 {
+    Stop(true);
+
     bShuttingDown = true;
-    Stop();
 
     OSTerminateThread(hHotkeyThread, 250);
 

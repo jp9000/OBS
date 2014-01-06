@@ -886,7 +886,7 @@ private:
     void ResetItemCrops();
 
     void Start();
-    void Stop();
+    void Stop(bool overrideKeepRecording=false);
     void StartRecording();
     void StopRecording();
 

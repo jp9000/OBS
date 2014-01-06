@@ -634,9 +634,8 @@ retryHookTestV2:
 
     if (!videoEncoder)
     {
-        bShuttingDown = true;
         Log(L"Couldn't initialize encoder");
-        Stop();
+        Stop(true);
 
         if (videoEncoderErrors.IsEmpty())
             videoEncoderErrors = Str("Encoder.InitFailed");
@@ -698,14 +697,14 @@ retryHookTestV2:
     bStartingUp = false;
 }
 
-void OBS::Stop()
+void OBS::Stop(bool overrideKeepRecording)
 {
     if((!bStreaming && !bRecording && !bRunning) && (!bTestStream)) return;
 
     bool bKeepRecording = GlobalConfig->GetInt(TEXT("General"), TEXT("KeepRecordingOnStopStreaming"), 1) != 0;
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
 
-    if(!bShuttingDown && bRecording && bKeepRecording && networkMode == 0) {
+    if(!overrideKeepRecording && bRecording && bKeepRecording && networkMode == 0) {
         NetworkStream *tempStream = NULL;
         
         videoEncoder->RequestKeyframe();
