@@ -218,7 +218,12 @@ void AudioSource::SortAudio(QWORD timestamp)
     }
 }
 
-UINT AudioSource::QueryAudio(float curVolume, bool bCanBurst)
+UINT AudioSource::QueryAudio(float curVolume)
+{
+    return 0;
+}
+
+UINT AudioSource::QueryAudio2(float curVolume, bool bCanBurst)
 {
     LPVOID buffer;
     UINT numAudioFrames;

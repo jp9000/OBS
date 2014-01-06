@@ -1020,7 +1020,7 @@ bool OBS::QueryAudioBuffers(bool bQueriedDesktopDebugParam)
     OSEnterMutex(hAuxAudioMutex);
     for(UINT i=0; i<auxAudioSources.Num(); i++)
     {
-        if (auxAudioSources[i]->QueryAudio(auxAudioSources[i]->GetVolume(), true) != NoAudioAvailable)
+        if (auxAudioSources[i]->QueryAudio2(auxAudioSources[i]->GetVolume(), true) != NoAudioAvailable)
             bGotSomeAudio = true;
     }
 
@@ -1028,7 +1028,7 @@ bool OBS::QueryAudioBuffers(bool bQueriedDesktopDebugParam)
 
     if(micAudio != NULL)
     {
-        if (micAudio->QueryAudio(curMicVol, true) != NoAudioAvailable)
+        if (micAudio->QueryAudio2(curMicVol, true) != NoAudioAvailable)
             bGotSomeAudio = true;
     }
 
@@ -1042,7 +1042,7 @@ bool OBS::QueryNewAudio()
     while (!bAudioBufferFilled) {
         bool bGotAudio = false;
 
-        if ((desktopAudio->QueryAudio(curDesktopVol)) != NoAudioAvailable) {
+        if ((desktopAudio->QueryAudio2(curDesktopVol)) != NoAudioAvailable) {
             QueryAudioBuffers(true);
             bGotAudio = true;
         }
@@ -1064,7 +1064,7 @@ bool OBS::QueryNewAudio()
         OSEnterMutex(hAuxAudioMutex);
         for(UINT i=0; i<auxAudioSources.Num(); i++)
         {
-            while (auxAudioSources[i]->QueryAudio(auxAudioSources[i]->GetVolume(), true) != NoAudioAvailable);
+            while (auxAudioSources[i]->QueryAudio2(auxAudioSources[i]->GetVolume(), true) != NoAudioAvailable);
 
             if (auxAudioSources[i]->GetLatestTimestamp(timestamp))
                 auxAudioSources[i]->SortAudio(timestamp);
@@ -1074,7 +1074,7 @@ bool OBS::QueryNewAudio()
 
         if (micAudio)
         {
-            while (micAudio->QueryAudio(curMicVol, true) != NoAudioAvailable);
+            while (micAudio->QueryAudio2(curMicVol, true) != NoAudioAvailable);
 
             if (micAudio->GetLatestTimestamp(timestamp))
                 micAudio->SortAudio(timestamp);
