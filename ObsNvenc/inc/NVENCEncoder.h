@@ -112,6 +112,8 @@ private:
 
     List<GUID> encodePresetGUIDs;
 
+    uint8_t *pstart;
+
     HANDLE frameMutex;
 };
 

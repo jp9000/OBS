@@ -47,6 +47,7 @@ NVENCEncoder::NVENCEncoder(int fps, int width, int height, int quality, CTSTR pr
     , bufferSize(bufferSize)
     , bUseCFR(bUseCFR)
     , frameShift(0)
+    , pstart(0)
 {
     bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
     keyint = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 0);
@@ -60,6 +61,8 @@ NVENCEncoder::NVENCEncoder(int fps, int width, int height, int quality, CTSTR pr
     headerPacket.SetSize(128);
     
     frameMutex = OSCreateMutex();
+
+    pstart = new uint8_t[1024 * 1024];
 
     init();
 }
@@ -91,6 +94,8 @@ NVENCEncoder::~NVENCEncoder()
     encoderRefDec();
 
     OSCloseMutex(frameMutex);
+
+    delete[] pstart;
 }
 
 bool NVENCEncoder::populateEncodePresetGUIDs()
@@ -521,7 +526,9 @@ void NVENCEncoder::ProcessOutput(NVENCEncoderOutputSurface *surf, List<DataPacke
         return;
     }
 
-    uint8_t *start = (uint8_t*)lockParams.bitstreamBufferPtr;
+    memcpy(pstart, lockParams.bitstreamBufferPtr, lockParams.bitstreamSizeInBytes);
+
+    uint8_t *start = pstart;
     uint8_t *end = start + lockParams.bitstreamSizeInBytes;
     const static uint8_t start_seq[] = { 0, 0, 1 };
     start = std::search(start, end, start_seq, start_seq + 3);
