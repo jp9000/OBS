@@ -140,6 +140,29 @@ void NVENCEncoder::init()
     NVENCSTATUS nvStatus = NV_ENC_SUCCESS;
     int surfaceCount = 0;
 
+    GUID encoderPreset = NV_ENC_PRESET_HQ_GUID;
+
+    int useCustomPreset = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCustomSettings"));
+    if (useCustomPreset)
+    {
+        String presetString = AppConfig->GetString(TEXT("Video Encoding"), TEXT("CustomSettings"), TEXT("default")).MakeLower();
+
+        if (presetString == TEXT("hp"))
+            encoderPreset = NV_ENC_PRESET_HP_GUID;
+        else if (presetString == TEXT("hq"))
+            encoderPreset = NV_ENC_PRESET_HQ_GUID;
+        else if (presetString == TEXT("bd"))
+            encoderPreset = NV_ENC_PRESET_BD_GUID;
+        else if (presetString == TEXT("ll"))
+            encoderPreset = NV_ENC_PRESET_LOW_LATENCY_DEFAULT_GUID;
+        else if (presetString == TEXT("llhp"))
+            encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HP_GUID;
+        else if (presetString == TEXT("llhq"))
+            encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HQ_GUID;
+        else
+            encoderPreset = NV_ENC_PRESET_DEFAULT_GUID;
+    }
+
     TCHAR envClientKey[128] = { 0 };
     DWORD envRes = GetEnvironmentVariable(TEXT("NVENC_KEY"), envClientKey, 128);
     if (envRes > 0 && envRes <= 128)
@@ -179,13 +202,13 @@ void NVENCEncoder::init()
     if (!populateEncodePresetGUIDs())
         goto error;
 
-    if (!checkPresetSupport(NV_ENC_PRESET_HQ_GUID))
+    if (!checkPresetSupport(encoderPreset))
     {
-        NvLog(TEXT("HQ Preset is not supported!"));
+        NvLog(TEXT("Preset is not supported!"));
         goto error;
     }
 
-    nvStatus = pNvEnc->nvEncGetEncodePresetConfig(encoder, NV_ENC_CODEC_H264_GUID, NV_ENC_PRESET_HQ_GUID, &presetConfig);
+    nvStatus = pNvEnc->nvEncGetEncodePresetConfig(encoder, NV_ENC_CODEC_H264_GUID, encoderPreset, &presetConfig);
     if (nvStatus != NV_ENC_SUCCESS)
     {
         NvLog(TEXT("nvEncGetEncodePresetConfig failed"));
@@ -203,7 +226,7 @@ void NVENCEncoder::init()
     initEncodeParams.enableEncodeAsync = 0;
     initEncodeParams.enablePTD = 1;
 
-    initEncodeParams.presetGUID = NV_ENC_PRESET_HQ_GUID;
+    initEncodeParams.presetGUID = encoderPreset;
     initEncodeParams.encodeConfig = &encodeConfig;
     memcpy(&encodeConfig, &presetConfig.presetCfg, sizeof(NV_ENC_CONFIG));
 
@@ -807,6 +830,22 @@ String NVENCEncoder::GetInfoString() const
 {
     String strInfo;
 
+    String preset = "unknown";
+    if (dataEqual(initEncodeParams.presetGUID, NV_ENC_PRESET_HP_GUID))
+        preset = "hp";
+    else if (dataEqual(initEncodeParams.presetGUID, NV_ENC_PRESET_HQ_GUID))
+        preset = "hq";
+    else if (dataEqual(initEncodeParams.presetGUID, NV_ENC_PRESET_BD_GUID))
+        preset = "bd";
+    else if (dataEqual(initEncodeParams.presetGUID, NV_ENC_PRESET_LOW_LATENCY_DEFAULT_GUID))
+        preset = "ll";
+    else if (dataEqual(initEncodeParams.presetGUID, NV_ENC_PRESET_LOW_LATENCY_HP_GUID))
+        preset = "llhp";
+    else if (dataEqual(initEncodeParams.presetGUID, NV_ENC_PRESET_LOW_LATENCY_HQ_GUID))
+        preset = "llhq";
+    else if (dataEqual(initEncodeParams.presetGUID, NV_ENC_PRESET_DEFAULT_GUID))
+        preset = "default";
+
     String profile = "unknown";
     if (dataEqual(encodeConfig.profileGUID, NV_ENC_CODEC_PROFILE_AUTOSELECT_GUID))
         profile = "autoselect";
@@ -845,6 +884,7 @@ String NVENCEncoder::GetInfoString() const
     strInfo << TEXT("Video Encoding: NVENC") <<
         TEXT("\r\n    fps: ") << IntString(initEncodeParams.frameRateNum / initEncodeParams.frameRateDen) <<
         TEXT("\r\n    width: ") << IntString(initEncodeParams.encodeWidth) << TEXT(", height: ") << IntString(initEncodeParams.encodeHeight) <<
+        TEXT("\r\n    preset: ") << preset <<
         TEXT("\r\n    profile: ") << profile <<
         TEXT("\r\n    level: ") << level <<
         TEXT("\r\n    keyint: ") << IntString(encodeConfig.gopLength) <<
