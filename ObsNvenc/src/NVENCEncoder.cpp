@@ -259,8 +259,11 @@ void NVENCEncoder::init()
     encodeConfig.encodeCodecConfig.h264Config.bdirectMode = encodeConfig.frameIntervalP > 1 ? NV_ENC_H264_BDIRECT_MODE_TEMPORAL : NV_ENC_H264_BDIRECT_MODE_DISABLE;
 
     encodeConfig.encodeCodecConfig.h264Config.idrPeriod = encodeConfig.gopLength;
+    encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.videoSignalTypePresentFlag = 1;
+    encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.colourDescriptionPresentFlag = 1;
     encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.colourMatrix = colorDesc.matrix;
     encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.videoFullRangeFlag = colorDesc.fullRange;
+    encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.videoFormat = 5;
     encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.colourPrimaries = colorDesc.primaries;
     encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.transferCharacteristics = colorDesc.transfer;
 
