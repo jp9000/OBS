@@ -775,7 +775,8 @@ private:
     HANDLE hHotkeyMutex;
     HANDLE hHotkeyThread;
 
-    bool bUsingPushToTalk, bPushToTalkDown, bPushToTalkOn;
+    int pushToTalkDown;
+    bool bUsingPushToTalk, bPushToTalkOn;
     long long pushToTalkDelay, pushToTalkTimeLeft;
 
     UINT pushToTalkHotkeyID;

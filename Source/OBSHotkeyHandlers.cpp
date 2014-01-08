@@ -50,11 +50,17 @@ void STDCALL OBS::StopStreamHotkey(DWORD hotkey, UPARAM param, bool bDown)
 
 void STDCALL OBS::PushToTalkHotkey(DWORD hotkey, UPARAM param, bool bDown)
 {
-    App->bPushToTalkDown = bDown;
     if(bDown)
+    {
+        App->pushToTalkDown++;
         App->bPushToTalkOn = true;
-    else if(App->pushToTalkDelay <= 0)
-        App->bPushToTalkOn = false;
+    }
+    else
+    {
+        App->pushToTalkDown--;
+        if(!App->pushToTalkDown && App->pushToTalkDelay <= 0)
+            App->bPushToTalkOn = false;
+    }
 
     App->pushToTalkTimeLeft = App->pushToTalkDelay*1000000;
     OSDebugOut(TEXT("Actual delay: %d"), App->pushToTalkDelay);

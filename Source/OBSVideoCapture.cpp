@@ -720,7 +720,7 @@ void OBS::MainCaptureLoop()
             }
         }
 
-        if(!bPushToTalkDown && pushToTalkTimeLeft > 0)
+        if(!pushToTalkDown && pushToTalkTimeLeft > 0)
         {
             pushToTalkTimeLeft -= int(frameDelta);
             OSDebugOut(TEXT("time left: %d\r\n"), pushToTalkTimeLeft);
