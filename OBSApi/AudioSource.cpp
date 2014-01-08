@@ -223,7 +223,7 @@ UINT AudioSource::QueryAudio(float curVolume)
     return 0;
 }
 
-UINT AudioSource::QueryAudio2(float curVolume, bool bCanBurst)
+UINT AudioSource::QueryAudio2(float curVolume, bool bCanBurstHack)
 {
     LPVOID buffer;
     UINT numAudioFrames;
@@ -617,7 +617,7 @@ UINT AudioSource::QueryAudio2(float curVolume, bool bCanBurst)
 
         QWORD difVal = GetQWDif(newTimestamp, lastUsedTimestamp);
 
-        if (difVal > 70) {
+        if (difVal > 70 || (bCanBurstHack && newTimestamp < lastUsedTimestamp)) {
             /*QWORD curTimeMS = App->GetVideoTime()-App->GetSceneTimestamp();
             UINT curTimeTotalSec = (UINT)(curTimeMS/1000);
             UINT curTimeTotalMin = curTimeTotalSec/60;
@@ -626,6 +626,8 @@ UINT AudioSource::QueryAudio2(float curVolume, bool bCanBurst)
             UINT curTimeSec = curTimeTotalSec-(curTimeTotalMin*60);
 
             Log(TEXT("A timestamp adjustment was encountered for device %s, approximate stream time is: %u:%u:%u, prev value: %llu, new value: %llu"), GetDeviceName(), curTimeHr, curTimeMin, curTimeSec, lastUsedTimestamp, newTimestamp);*/
+            /*if (difVal > 70)
+                Log(TEXT("A timestamp adjustment was encountered for device %s, diff: %llu"), GetDeviceName(), difVal);*/
             lastUsedTimestamp = newTimestamp;
         }
 
@@ -634,7 +636,7 @@ UINT AudioSource::QueryAudio2(float curVolume, bool bCanBurst)
         float *newBuffer = (bResample) ? tempResampleBuffer.Array() : tempBuffer.Array();
 
         bool overshotAudio = (lastUsedTimestamp < lastSentTimestamp+10);
-        if (bCanBurst || !overshotAudio)
+        if (bCanBurstHack || !overshotAudio)
         {
             AudioSegment *newSegment = new AudioSegment(newBuffer, numAudioFrames*2, lastUsedTimestamp);
             AddAudioSegment(newSegment, curVolume*sourceVolume);
@@ -677,13 +679,27 @@ bool AudioSource::GetBuffer(float **buffer, QWORD targetTimestamp)
     bool bDeleted = false;
     outputBuffer.Clear();
 
+    bool bReportedOnce = false;
+
     while(audioSegments.Num())
     {
         if(audioSegments[0]->timestamp < targetTimestamp)
         {
+            QWORD diff = targetTimestamp-audioSegments[0]->timestamp;
             //OSDebugOut(TEXT("Off by %llu\n"), targetTimestamp-audioSegments[0]->timestamp);
-            Log(TEXT("Audio timestamp for device '%s' was behind target timestamp by %llu"),
-                    GetDeviceName(), targetTimestamp-audioSegments[0]->timestamp);
+            if (!bReportedOnce) {
+                Log(TEXT("Audio timestamp for device '%s' was behind target timestamp by %llu"),
+                        GetDeviceName(), diff);
+
+                bReportedOnce = true;
+            }
+
+            /*if (!bReportedOnce && diff > 150) {
+                for (UINT i = 0; i < audioSegments.Num(); i++)
+                    Log(L"    %llu", audioSegments[i]->timestamp);
+
+                bReportedOnce = true;
+            }*/
 
             /*OSDebugOut(L"targetTimestamp: %llu\n", targetTimestamp);
             for (UINT i = 0; i < audioSegments.Num(); i++)

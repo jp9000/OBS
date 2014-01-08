@@ -141,5 +141,7 @@ public:
 
     void SortAudio(QWORD timestamp);
     UINT QueryAudio2(float curVolume, bool bCanBurst=false);
+
+    CTSTR GetDeviceName2() const {return GetDeviceName();}
 };
 

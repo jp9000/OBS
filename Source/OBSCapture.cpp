@@ -1055,25 +1055,37 @@ bool OBS::QueryNewAudio()
             break;
     }
 
+    /* wait until buffers are completely filled before accounting for burst */
     if (!bAudioBufferFilled)
     {
         QWORD timestamp;
+        int burst = 0;
 
         // No more desktop data, drain auxilary/mic buffers until they're dry to prevent burst data
         OSEnterMutex(hAuxAudioMutex);
         for(UINT i=0; i<auxAudioSources.Num(); i++)
         {
-            while (auxAudioSources[i]->QueryAudio2(auxAudioSources[i]->GetVolume(), true) != NoAudioAvailable);
+            while (auxAudioSources[i]->QueryAudio2(auxAudioSources[i]->GetVolume(), true) != NoAudioAvailable)
+                burst++;
 
             if (auxAudioSources[i]->GetLatestTimestamp(timestamp))
                 auxAudioSources[i]->SortAudio(timestamp);
+
+            /*if (burst > 10)
+                Log(L"Burst happened for %s", auxAudioSources[i]->GetDeviceName2());*/
         }
 
         OSLeaveMutex(hAuxAudioMutex);
 
+        burst = 0;
+
         if (micAudio)
         {
-            while (micAudio->QueryAudio2(curMicVol, true) != NoAudioAvailable);
+            while (micAudio->QueryAudio2(curMicVol, true) != NoAudioAvailable)
+                burst++;
+
+            /*if (burst > 10)
+                Log(L"Burst happened for %s", micAudio->GetDeviceName2());*/
 
             if (micAudio->GetLatestTimestamp(timestamp))
                 micAudio->SortAudio(timestamp);
