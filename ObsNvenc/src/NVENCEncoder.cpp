@@ -164,8 +164,10 @@ void NVENCEncoder::init()
             encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HP_GUID;
         else if (presetString == TEXT("llhq"))
             encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HQ_GUID;
-        else
+        else if (presetString == TEXT("default"))
             encoderPreset = NV_ENC_PRESET_DEFAULT_GUID;
+        else
+            NvLog(TEXT("Unknown encode preset string in x264 custom settings\r\nPlease select one of the following: hp, hq, bd, ll, llhp, llhq, default"));
     }
 
     TCHAR envClientKey[128] = { 0 };
