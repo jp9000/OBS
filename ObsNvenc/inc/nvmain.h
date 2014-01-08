@@ -63,4 +63,7 @@ inline bool dataEqual(const T& a, const T& b)
     return memcmp(&a, &b, sizeof(T)) == 0;
 }
 
+String guidToString(const GUID &guid);
+bool stringToGuid(const String &string, GUID *guid);
+
 #endif

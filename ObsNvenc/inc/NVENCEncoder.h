@@ -78,6 +78,9 @@ private:
     void init();
     void ProcessOutput(NVENCEncoderOutputSurface *surf, List<DataPacket> &packets, List<PacketType> &packetTypes);
 
+    void dumpEncodeConfig();
+    void tryParseEncodeConfig();
+
 private:
     bool alive;
     CUcontext cuContext;

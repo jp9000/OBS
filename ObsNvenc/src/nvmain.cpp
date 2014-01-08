@@ -68,3 +68,22 @@ void encoderRefDec()
     if (encoderRefs == 0)
         deinitNvEnc();
 }
+
+String guidToString(const GUID &guid)
+{
+    LPOLESTR resStr;
+    String res;
+
+    if (StringFromCLSID(guid, &resStr) == S_OK)
+    {
+        res = resStr;
+        CoTaskMemFree(resStr);
+    }
+
+    return res;
+}
+
+bool stringToGuid(const String &string, GUID *guid)
+{
+    return CLSIDFromString(string.Array(), guid) == NOERROR;
+}
