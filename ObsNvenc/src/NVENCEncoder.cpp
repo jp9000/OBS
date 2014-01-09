@@ -147,6 +147,8 @@ void NVENCEncoder::init()
 
     GUID encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HQ_GUID;
 
+    String profileString = AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"), TEXT("high"));
+
     int useCustomPreset = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCustomSettings"));
     if (useCustomPreset)
     {
@@ -265,6 +267,11 @@ void NVENCEncoder::init()
     encodeConfig.encodeCodecConfig.h264Config.enableVFR = bUseCFR ? 0 : 1;
 
     encodeConfig.frameFieldMode = NV_ENC_PARAMS_FRAME_FIELD_MODE_FRAME;
+
+    if (profileString.CompareI(TEXT("main")))
+        encodeConfig.profileGUID = NV_ENC_H264_PROFILE_MAIN_GUID;
+    else if (profileString.CompareI(TEXT("high")))
+        encodeConfig.profileGUID = NV_ENC_H264_PROFILE_HIGH_GUID;
 
     encodeConfig.encodeCodecConfig.h264Config.bdirectMode = encodeConfig.frameIntervalP > 1 ? NV_ENC_H264_BDIRECT_MODE_TEMPORAL : NV_ENC_H264_BDIRECT_MODE_DISABLE;
 
