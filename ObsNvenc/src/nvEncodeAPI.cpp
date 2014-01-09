@@ -23,7 +23,7 @@
 #endif
 
 NV_ENCODE_API_FUNCTION_LIST *pNvEnc = 0;
-unsigned int iNvencDeviceCount = 0;
+int iNvencDeviceCount = 0;
 CUdevice pNvencDevices[16];
 unsigned int iNvencUseDeviceID = 0;
 
@@ -39,7 +39,7 @@ bool _checkCudaErrors(CUresult err, const char *func)
 {
     if (err != CUDA_SUCCESS)
     {
-        NvLog(TEXT(">> %S - failed with error code 0x%x"), func, err);
+        Log(TEXT(">> %S - failed with error code 0x%x"), func, err);
         return false;
     }
     return true;
@@ -52,11 +52,14 @@ bool checkNvEnc()
     char gpu_name[128];
     int SMminor = 0, SMmajor = 0;
 
-    if (iNvencDeviceCount != 0)
+    if (iNvencDeviceCount > 0)
         return true;
 
-    if (!dyLoadCuda())
+    if (iNvencDeviceCount < 0)
         return false;
+
+    if (!dyLoadCuda())
+        goto error;
 
     checkCudaErrors(cuInit(0));
 
@@ -64,11 +67,11 @@ bool checkNvEnc()
 
     if (deviceCount == 0)
     {
-        NvLog(TEXT("No CUDA capable devices found"));
+        Log(TEXT("No CUDA capable devices found"));
         goto error;
     }
 
-    NvLog(TEXT("%d CUDA capable devices found"), deviceCount);
+    Log(TEXT("%d CUDA capable devices found"), deviceCount);
 
     iNvencDeviceCount = 0;
 
@@ -80,7 +83,7 @@ bool checkNvEnc()
 
         bool hasNvenc = ((SMmajor << 4) + SMminor) >= 0x30;
 
-        NvLog(TEXT("[ GPU #%d - < %S > has Compute SM %d.%d, NVENC %S ]"), i, gpu_name, SMmajor, SMminor, hasNvenc ? "Available" : "Not Available");
+        Log(TEXT("[ GPU #%d - < %S > has Compute SM %d.%d, NVENC %S ]"), i, gpu_name, SMmajor, SMminor, hasNvenc ? "Available" : "Not Available");
 
         if (hasNvenc)
         {
@@ -91,13 +94,15 @@ bool checkNvEnc()
 
     if (iNvencDeviceCount == 0)
     {
-        NvLog(TEXT("No NVENC capable devices found"));
+        Log(TEXT("No NVENC capable devices found"));
         goto error;
     }
 
     return true;
 
 error:
+
+    iNvencDeviceCount = -1;
 
     return false;
 }

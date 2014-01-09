@@ -202,6 +202,16 @@ void NVENCEncoder::init()
     if (nvStatus != NV_ENC_SUCCESS)
     {
         encoder = 0;
+
+        MessageBox(NULL,
+            TEXT("OpenEncodeSessionEx failed!\r\n\r\n")
+            TEXT("You most likely don't have a valid license key.\r\n")
+            TEXT("Either put one in the environment variable NVENC_KEY\r\n")
+            TEXT("or download a prebuilt ObsNvenc.dll with a\r\n")
+            TEXT("license key included from the OBS forums."),
+            NULL,
+            MB_OK | MB_ICONERROR);
+
         NvLog(TEXT("nvEncOpenEncodeSessionEx failed - invalid license key?"));
         goto error;
     }
@@ -1078,8 +1088,8 @@ void NVENCEncoder::dumpEncodeConfig()
         target.name = (decltype(target.name))element->GetInt(TEXT(#name))
 
 #define CHECK_GET_INT2(element, target, name) \
-if (element->HasItem(TEXT(#name))) \
-    target = element->GetInt(TEXT(#name))
+    if (element->HasItem(TEXT(#name))) \
+        target = element->GetInt(TEXT(#name))
 
 void NVENCEncoder::tryParseEncodeConfig()
 {

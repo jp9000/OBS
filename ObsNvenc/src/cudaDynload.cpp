@@ -29,13 +29,14 @@ PCUCTXPOPCURRENT cuCtxPopCurrent = NULL;
 PCUCTXDESTROY cuCtxDestroy = NULL;
 
 static HMODULE cudaLib = NULL;
+static bool loadFailed = false;
 
 #define CHECK_LOAD_FUNC(f, s) \
 { \
     f = (decltype(f))GetProcAddress(cudaLib, s); \
     if (f == NULL) \
     { \
-        NvLog(TEXT("Failed loading %S from CUDA library"), s); \
+        Log(TEXT("Failed loading %S from CUDA library"), s); \
         goto error; \
     } \
 }
@@ -45,10 +46,13 @@ bool dyLoadCuda()
     if (cudaLib != NULL)
         return true;
 
+    if (loadFailed)
+        return false;
+
     cudaLib = LoadLibrary(TEXT("nvcuda.dll"));
     if (cudaLib == NULL)
     {
-        NvLog(TEXT("Failed loading CUDA dll"));
+        Log(TEXT("Failed loading CUDA dll"));
         goto error;
     }
 
@@ -61,7 +65,7 @@ bool dyLoadCuda()
     CHECK_LOAD_FUNC(cuCtxPopCurrent, "cuCtxPopCurrent_v2");
     CHECK_LOAD_FUNC(cuCtxDestroy, "cuCtxDestroy");
 
-    NvLog(TEXT("CUDA loaded successfully"));
+    Log(TEXT("CUDA loaded successfully"));
 
     return true;
 
@@ -70,6 +74,8 @@ error:
     if (cudaLib != NULL)
         FreeLibrary(cudaLib);
     cudaLib = NULL;
+
+    loadFailed = true;
 
     return false;
 }

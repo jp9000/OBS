@@ -33,7 +33,7 @@ extern bool doLog;
 typedef NVENCSTATUS(NVENCAPI* PNVENCODEAPICREATEINSTANCE)(NV_ENCODE_API_FUNCTION_LIST *functionList);
 extern NV_ENCODE_API_FUNCTION_LIST *pNvEnc;
 
-extern unsigned int iNvencDeviceCount;
+extern int iNvencDeviceCount;
 extern CUdevice pNvencDevices[16];
 extern unsigned int iNvencUseDeviceID;
 
