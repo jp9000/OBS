@@ -161,6 +161,7 @@ Settings.Advanced.VideoEncoderCPUTradeoffToolTip="Setting this value higher redu
 Settings.Advanced.VideoEncoderSettings="Custom x264 Encoder Settings"
 Settings.Advanced.VideoEncoderSettingsTooltip="This allows you to set custom x264 encoder settings.  In the form of [parameter]=[value] (e.g. \"vbv-maxrate=1000 vbv-bufsize=1000\")."
 Settings.Advanced.X264Profile="x264 Encoding Profile:"
+Settings.Advanced.NVENCPreset="NVENC Preset:"
 
 Settings.Advanced.Priority.Idle="Idle"
 Settings.Advanced.Priority.Normal="Normal"

@@ -157,6 +157,11 @@ void SettingsAdvanced::ApplySettings()
 
     //------------------------------------
 
+    strTemp = GetCBText(GetDlgItem(hwnd, IDC_NVENCPRESET));
+    AppConfig->SetString(TEXT("Video Encoding"), TEXT("NVENCPreset"), strTemp);
+
+    //------------------------------------
+
     BOOL bSyncToVideoTime = SendMessage(GetDlgItem(hwnd, IDC_SYNCTOVIDEOTIME), BM_GETCHECK, 0, 0) == BST_CHECKED;
     AppConfig->SetInt   (TEXT("Audio"), TEXT("SyncToVideoTime"), bSyncToVideoTime);
 
@@ -213,9 +218,11 @@ void SettingsAdvanced::SetDefaults()
     SendMessage(GetDlgItem(hwnd, IDC_USEQSV), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_USENVENC), BM_SETCHECK, BST_UNCHECKED, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_NVENCPRESET), CB_SETCURSEL, 0, 0);
     EnableWindow(GetDlgItem(hwnd, IDC_USEQSV), bHasQSV);
     EnableWindow(GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS), FALSE);
     EnableWindow(GetDlgItem(hwnd, IDC_USENVENC), bHasNVENC);
+    EnableWindow(GetDlgItem(hwnd, IDC_NVENCPRESET), FALSE);
     SendMessage(GetDlgItem(hwnd, IDC_SYNCTOVIDEOTIME), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_USEMICQPC), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_MICSYNCFIX), BM_SETCHECK, BST_UNCHECKED, 0);
@@ -369,6 +376,24 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 EnableWindow(GetDlgItem(hwnd, IDC_USENVENC), (bHasNVENC || bUseNVENC) && !bUseQSV);
                 SendMessage(GetDlgItem(hwnd, IDC_USENVENC), BM_SETCHECK, bUseNVENC ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                hwndTemp = GetDlgItem(hwnd, IDC_NVENCPRESET);
+                EnableWindow(hwndTemp, bHasNVENC && bUseNVENC && !bUseQSV);
+                
+                static const CTSTR nv_preset_names[8] = {
+                    TEXT("High Quality"),
+                    TEXT("High Performance"),
+                    TEXT("Bluray Disk"),
+                    TEXT("Low Latency"),
+                    TEXT("High Performance Low Latency"),
+                    TEXT("High Quality Low Latency"),
+                    TEXT("Default"),
+                    NULL
+                };
+                for (int i = 0; nv_preset_names[i]; i++)
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)nv_preset_names[i]);
+
+                LoadSettingComboString(hwndTemp, TEXT("Video Encoding"), TEXT("NVENCPreset"), nv_preset_names[0]);
 
                 //------------------------------------
 
@@ -524,6 +549,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 case IDC_SENDBUFFERSIZE:
                 case IDC_PRIORITY:
                 case IDC_BINDIP:
+                case IDC_NVENCPRESET:
                     if(HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == CBN_EDITCHANGE)
                     {
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
@@ -542,6 +568,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                         EnableWindow(GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS), (bHasQSV || bUseQSV) && !bUseNVENC);
                         EnableWindow(GetDlgItem(hwnd, IDC_USEQSV), !bUseNVENC && (bHasQSV || bUseQSV_prev));
                         EnableWindow(GetDlgItem(hwnd, IDC_USENVENC), !bUseQSV && (bHasNVENC || bUseNVENC_prev));
+                        EnableWindow(GetDlgItem(hwnd, IDC_NVENCPRESET), !bUseQSV && bUseNVENC);
                     }
                 case IDC_DISABLEPREVIEWENCODING:
                 case IDC_ALLOWOTHERHOTKEYMODIFIERS:

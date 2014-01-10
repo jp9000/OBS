@@ -258,7 +258,7 @@
 #define IDC_PRIORITY                    1132
 #define IDC_USECBR                      1133
 #define IDC_PADCBR                      1134
-#define IDC_COMBO1                      1139
+#define IDC_NVENCPRESET                 1139
 #define IDC_DISABLECTSADJUST            1140
 #define IDC_USECFR                      1141
 #define IDC_PLAYBACKDEVICES             1142
