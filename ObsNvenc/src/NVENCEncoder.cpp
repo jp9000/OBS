@@ -145,7 +145,7 @@ void NVENCEncoder::init()
     NVENCSTATUS nvStatus = NV_ENC_SUCCESS;
     int surfaceCount = 0;
 
-    GUID encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HQ_GUID;
+    GUID encoderPreset = NV_ENC_PRESET_HQ_GUID;
 
     String profileString = AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"), TEXT("high"));
 
