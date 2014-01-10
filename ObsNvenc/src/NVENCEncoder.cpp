@@ -149,28 +149,22 @@ void NVENCEncoder::init()
 
     String profileString = AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"), TEXT("high"));
 
-    int useCustomPreset = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCustomSettings"));
-    if (useCustomPreset)
-    {
-        String presetString = AppConfig->GetString(TEXT("Video Encoding"), TEXT("CustomSettings"), TEXT("default")).MakeLower();
+    String presetString = AppConfig->GetString(TEXT("Video Encoding"), TEXT("NVENCPreset"), TEXT("High Quality"));
 
-        if (presetString == TEXT("hp"))
-            encoderPreset = NV_ENC_PRESET_HP_GUID;
-        else if (presetString == TEXT("hq"))
-            encoderPreset = NV_ENC_PRESET_HQ_GUID;
-        else if (presetString == TEXT("bd"))
-            encoderPreset = NV_ENC_PRESET_BD_GUID;
-        else if (presetString == TEXT("ll"))
-            encoderPreset = NV_ENC_PRESET_LOW_LATENCY_DEFAULT_GUID;
-        else if (presetString == TEXT("llhp"))
-            encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HP_GUID;
-        else if (presetString == TEXT("llhq"))
-            encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HQ_GUID;
-        else if (presetString == TEXT("default"))
-            encoderPreset = NV_ENC_PRESET_DEFAULT_GUID;
-        else
-            NvLog(TEXT("Unknown encode preset string in x264 custom settings\r\nPlease select one of the following: hp, hq, bd, ll, llhp, llhq, default"));
-    }
+    if (presetString == TEXT("High Performance"))
+        encoderPreset = NV_ENC_PRESET_HP_GUID;
+    else if (presetString == TEXT("High Quality"))
+        encoderPreset = NV_ENC_PRESET_HQ_GUID;
+    else if (presetString == TEXT("Bluray Disk"))
+        encoderPreset = NV_ENC_PRESET_BD_GUID;
+    else if (presetString == TEXT("Low Latency"))
+        encoderPreset = NV_ENC_PRESET_LOW_LATENCY_DEFAULT_GUID;
+    else if (presetString == TEXT("High Performance Low Latency"))
+        encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HP_GUID;
+    else if (presetString == TEXT("High Quality Low Latency"))
+        encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HQ_GUID;
+    else if (presetString == TEXT("Default"))
+        encoderPreset = NV_ENC_PRESET_DEFAULT_GUID;
 
     TCHAR envClientKey[128] = { 0 };
     DWORD envRes = GetEnvironmentVariable(TEXT("NVENC_KEY"), envClientKey, 128);
