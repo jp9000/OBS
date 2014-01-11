@@ -632,7 +632,7 @@ private:
     String  strLanguage;
     bool    bTestStream;
     bool    bUseMultithreadedOptimizations;
-    bool    bRunning, bRecording, bRecordingOnly, bStartingUp, bStreaming;
+    bool    bRunning, bRecording, bRecordingOnly, bStartingUp, bStreaming, bKeepRecording;
     volatile bool bShutdownVideoThread, bShutdownEncodeThread;
     int     renderFrameWidth, renderFrameHeight; // The size of the preview only
     int     renderFrameX, renderFrameY; // The offset of the preview inside the preview control
@@ -804,7 +804,7 @@ private:
 
     String  streamReport;
 
-    String  strDashboard;
+    //String  strDashboard;
 
     List<IconInfo> Icons;
     List<FontInfo> Fonts;

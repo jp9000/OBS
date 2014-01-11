@@ -181,7 +181,6 @@ void OBS::Start()
 {
     if(bRunning && !bRecording) return;
 
-    bool bKeepRecording = GlobalConfig->GetInt(TEXT("General"), TEXT("KeepRecordingOnStopStreaming"), 1) != 0;
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
     DWORD delayTime = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("Delay"));
 
@@ -701,7 +700,6 @@ void OBS::Stop(bool overrideKeepRecording)
 {
     if((!bStreaming && !bRecording && !bRunning) && (!bTestStream)) return;
 
-    bool bKeepRecording = GlobalConfig->GetInt(TEXT("General"), TEXT("KeepRecordingOnStopStreaming"), 1) != 0;
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
 
     if(!overrideKeepRecording && bRecording && bKeepRecording && networkMode == 0) {

@@ -2362,9 +2362,9 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     OSCloseThread(OSCreateThread((XTHREAD)CheckUpdateThread, (LPVOID)1));
                     break;
 
-                case ID_DASHBOARD:
+                /*case ID_DASHBOARD:
                     ShellExecute(NULL, TEXT("open"), App->strDashboard, 0, 0, SW_SHOWNORMAL);
-                    break;
+                    break;*/
 
                 case ID_SETTINGS_OPENCONFIGFOLDER:
                     {
