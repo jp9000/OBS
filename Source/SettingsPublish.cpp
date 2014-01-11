@@ -101,6 +101,7 @@ void SettingsPublish::ApplySettings()
     //------------------------------------------
 
     App->bAutoReconnect = SendMessage(GetDlgItem(hwnd, IDC_AUTORECONNECT), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    App->bKeepRecording = SendMessage(GetDlgItem(hwnd, IDC_KEEPRECORDING), BM_GETCHECK, 0, 0) == BST_CHECKED;
 
     BOOL bError = FALSE;
     App->reconnectTimeout = (UINT)SendMessage(GetDlgItem(hwnd, IDC_AUTORECONNECT_TIMEOUT), UDM_GETPOS32, 0, (LPARAM)&bError);
@@ -109,6 +110,8 @@ void SettingsPublish::ApplySettings()
 
     AppConfig->SetInt(TEXT("Publish"), TEXT("AutoReconnect"), App->bAutoReconnect);
     AppConfig->SetInt(TEXT("Publish"), TEXT("AutoReconnectTimeout"), App->reconnectTimeout);
+
+    AppConfig->SetInt(TEXT("Publish"), TEXT("KeepRecording"), App->bKeepRecording);
 
     //------------------------------------------
 
@@ -160,9 +163,11 @@ void SettingsPublish::ApplySettings()
 
     //------------------------------------------
 
+    /*
     App->strDashboard = GetEditText(GetDlgItem(hwnd, IDC_DASHBOARDLINK)).KillSpaces();
     AppConfig->SetString(TEXT("Publish"), TEXT("Dashboard"), App->strDashboard);
     ShowWindow(GetDlgItem(hwndMain, ID_DASHBOARD), App->strDashboard.IsValid() && !curSel ? SW_SHOW : SW_HIDE);
+    */
 }
 
 void SettingsPublish::CancelSettings()
@@ -455,8 +460,8 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     ShowWindow(GetDlgItem(hwnd, IDC_DELAY_STATIC), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_DELAY_EDIT), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_DELAY), SW_HIDE);
-                    ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK), SW_HIDE);
-                    ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK_STATIC), SW_HIDE);
+                    //ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK), SW_HIDE);
+                    //ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK_STATIC), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_SAVETOFILE), SW_HIDE);
 
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH_STATIC), 0, -data->fileControlOffset);
@@ -482,6 +487,9 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 //--------------------------------------------
 
+                BOOL bKeepRecording = AppConfig->GetInt(TEXT("Publish"), TEXT("KeepRecording"));
+                SendMessage(GetDlgItem(hwnd, IDC_KEEPRECORDING), BM_SETCHECK, bKeepRecording ? BST_CHECKED : BST_UNCHECKED, 0);
+
                 BOOL bSaveToFile = AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile"));
                 SendMessage(GetDlgItem(hwnd, IDC_SAVETOFILE), BM_SETCHECK, bSaveToFile ? BST_CHECKED : BST_UNCHECKED, 0);
 
@@ -493,7 +501,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 //--------------------------------------------
 
-                SetWindowText(GetDlgItem(hwnd, IDC_DASHBOARDLINK), App->strDashboard);
+                //SetWindowText(GetDlgItem(hwnd, IDC_DASHBOARDLINK), App->strDashboard);
 
                 //--------------------------------------------
 
@@ -601,8 +609,8 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                             ShowWindow(GetDlgItem(hwnd, IDC_PLAYPATH_STATIC), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_URL_STATIC), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_SERVER_STATIC), swShowControls);
-                            ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK), swShowControls);
-                            ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK_STATIC), swShowControls);
+                            //ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK), swShowControls);
+                            //ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK_STATIC), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_LOWLATENCYMODE), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_AUTORECONNECT_TIMEOUT), swShowControls);
@@ -630,7 +638,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                                 ShowWindow(GetDlgItem(hwnd, IDC_URL), SW_SHOW);
 
                                 SetWindowText(GetDlgItem(hwnd, IDC_URL), NULL);
-                                SetWindowText(GetDlgItem(hwnd, IDC_DASHBOARDLINK), NULL);
+                                //SetWindowText(GetDlgItem(hwnd, IDC_DASHBOARDLINK), NULL);
                             }
                             else
                             {
@@ -709,6 +717,16 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                         }
                         break;
 
+                    case IDC_KEEPRECORDING:
+                        if(HIWORD(wParam) == BN_CLICKED)
+                        {
+                            BOOL bKeepRecording = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
+                            App->bKeepRecording = bKeepRecording != 0;
+
+                            bDataChanged = true;
+                        }
+                        break;
+
                     case IDC_BROWSE:
                         {
                             TCHAR lpFile[512];
@@ -770,7 +788,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                     case IDC_STARTSTREAMHOTKEY:
                     case IDC_STOPSTREAMHOTKEY:
-                    case IDC_DASHBOARDLINK:
+                    //case IDC_DASHBOARDLINK:
                         if(HIWORD(wParam) == EN_CHANGE)
                             SetChangedSettings(true);
                         break;

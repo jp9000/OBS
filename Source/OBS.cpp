@@ -1278,9 +1278,11 @@ void OBS::ReloadIniSettings()
 
     //-------------------------------------------
     // dashboard
+    /*
     strDashboard = AppConfig->GetString(TEXT("Publish"), TEXT("Dashboard"));
     strDashboard.KillSpaces();
     UpdateDashboardButton();
+    */
 
     //-------------------------------------------
     // hotkeys
@@ -1744,12 +1746,15 @@ BOOL OBS::HideNotificationAreaIcon()
 BOOL OBS::UpdateDashboardButton()
 {
     //Are we in live stream mode, and do we have a non-empty dashboard string?
+    /*
     BOOL bStreamOutput = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode")) == 0;
     BOOL bDashboardValid = strDashboard.IsValid();
 
     BOOL bShowDashboardButton = bPanelVisible && bStreamOutput && bDashboardValid;
 
     return ShowWindow(GetDlgItem(hwndMain, ID_DASHBOARD), bShowDashboardButton ? SW_SHOW : SW_HIDE);
+    */
+    return false;
 }
 
 void OBS::ActuallyEnableProjector()

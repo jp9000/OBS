@@ -121,6 +121,7 @@
 #define IDC_SERVER_STATIC               1046
 #define IDC_SERVICE_STATIC              1047
 #define IDC_NAME                        1048
+#define IDC_KEEPRECORDING               1048
 #define IDC_BITMAP                      1049
 #define IDC_BROWSE                      1050
 #define IDC_MICDEVICES                  1052
@@ -220,8 +221,6 @@
 #define IDC_PROGRESS1                   1101
 #define IDC_ALLOWEXTRAHOTKEYMODIFIERS   1101
 #define IDC_ALLOWOTHERHOTKEYMODIFIERS   1101
-#define IDC_DASHBOARDLINK_STATIC        1102
-#define IDC_DASHBOARDLINK               1103
 #define IDC_COLOR                       1104
 #define IDC_OUTLINECOLOR                1105
 #define IDC_COLORKEY                    1105
