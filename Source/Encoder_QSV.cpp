@@ -292,6 +292,7 @@ struct VideoPacket
 class QSVEncoder : public VideoEncoder
 {
     mfxVersion ver;
+    bool bHaveCustomImpl;
 
     safe_handle qsvhelper_process,
                 qsvhelper_thread;
@@ -367,7 +368,7 @@ public:
 
         bool main_profile = (AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"), TEXT("high")) != L"high") ? true : false;
 
-        bool bHaveCustomImpl = false;
+        bHaveCustomImpl = false;
         impl_parameters custom = { 0 };
 
         BOOL bUseCustomParams = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCustomSettings"))
@@ -472,7 +473,10 @@ public:
             switch(code)
             {
             case EXIT_INCOMPATIBLE_CONFIGURATION:
-                CrashError(TEXT("QSVHelper.exe has exited because of an incompatible qsvimpl custom parameter (before response)")); //FIXME: convert to localized error
+                if (bHaveCustomImpl)
+                    CrashError(TEXT("QSVHelper.exe has exited because of an incompatible qsvimpl custom parameter (before response)"));
+                else
+                    CrashError(TEXT("QSVHelper.exe has exited because the encoder was not initialized"));
             case EXIT_NO_VALID_CONFIGURATION:
                 if(OSGetVersion() < 8)
                     CrashError(TEXT("QSVHelper.exe could not find a valid configuration. Make sure you have a (virtual) display connected to your iGPU")); //FIXME: convert to localized error
@@ -911,7 +915,10 @@ public:
             switch(code)
             {
             case EXIT_INCOMPATIBLE_CONFIGURATION:
-                CrashError(TEXT("QSVHelper.exe has exited because of an incompatible qsvimpl custom parameter"));
+                if (bHaveCustomImpl)
+                    CrashError(TEXT("QSVHelper.exe has exited because of an incompatible qsvimpl custom parameter"));
+                else
+                    CrashError(TEXT("QSVHelper.exe has exited because the encoder was not initialized"));
             default:
                 CrashError(TEXT("QSVHelper.exe has exited with code %i"), code);
             }
