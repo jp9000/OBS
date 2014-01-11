@@ -182,6 +182,7 @@ Settings.Audio.PushToTalkHotkey="Use Push-to-talk:"
 Settings.Audio.ShowOnlyConnectedDevices="Show only connected devices"
 Settings.Audio.UseInputDevices="Use Input device for desktop audio"
 Settings.Audio.UseMicQPC="Use Mic QPC timestamps"
+Settings.Audio.ResetMic="Reinitialize"
 
 Settings.Encoding.Audio="Audio Encoding"
 Settings.Encoding.Video="Video Encoding"

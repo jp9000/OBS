@@ -394,6 +394,12 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                         }
                         break;
 
+                    case IDC_RESETMIC:
+                        {
+                            App->ResetMic();
+                            break;
+                        }
+
                     case IDC_CONNECTEDONLY:
                         {
                             bDisplayConnectedOnly = !bDisplayConnectedOnly;

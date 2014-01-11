@@ -517,6 +517,8 @@ enum PreviewDrawType {
     Preview_Projector
 };
 
+void ResetWASAPIAudioDevice(AudioSource *source);
+
 struct FrameProcessInfo;
 
 //todo: this class has become way too big, it's horrible, and I should be ashamed of myself
@@ -1108,6 +1110,8 @@ public:
     BOOL HideNotificationAreaIcon();
 
     BOOL UpdateDashboardButton();
+
+    inline void ResetMic() {if (bRunning && micAudio) ResetWASAPIAudioDevice(micAudio);}
 };
 
 LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo);

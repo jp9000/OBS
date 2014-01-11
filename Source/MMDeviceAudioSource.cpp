@@ -90,6 +90,14 @@ public:
         SafeRelease(mmEnumerator);
     }
 
+    void Reset()
+    {
+        Log(L"User purposely reset the device '%s'.  Did it go out, or were there audio issues that made the user want to do this?", GetDeviceName());
+        deviceLost = true;
+        reinitTimer = GetQPCTimeMS();
+        FreeData();
+    }
+
     virtual void StartCapture();
     virtual void StopCapture();
 };
@@ -293,7 +301,7 @@ void MMDeviceAudioSource::StartCapture()
         UINT64 freq;
         mmClock->GetFrequency(&freq);
 
-        Log(TEXT("MMDeviceAudioSource: Frequency for device '%s' is %llu, samples per sec is %u"), GetDeviceName(), freq, this->GetSamplesPerSec());
+        //Log(TEXT("MMDeviceAudioSource: Frequency for device '%s' is %llu, samples per sec is %u"), GetDeviceName(), freq, this->GetSamplesPerSec());
     }
 }
 
@@ -374,7 +382,7 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
     if (deviceLost) {
         QWORD timeVal = GetQPCTimeMS();
         QWORD timer = (timeVal - reinitTimer);
-        if (timer > 2000) {
+        if (timer > 1000) {
             if (Reinitialize()) {
                 Log(L"Device '%s' reacquired.", strDeviceName.Array());
                 StartCapture();
@@ -470,4 +478,9 @@ void MMDeviceAudioSource::ReleaseBuffer()
         mcpy(inputBuffer.Array(), inputBuffer.Array()+sampleSizeFloats, (inputBufferSize-sampleSizeFloats)*sizeof(float));
 
     inputBufferSize -= sampleSizeFloats;
+}
+
+void ResetWASAPIAudioDevice(AudioSource *source)
+{
+    static_cast<MMDeviceAudioSource*>(source)->Reset();
 }
