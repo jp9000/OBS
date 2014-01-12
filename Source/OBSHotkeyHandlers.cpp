@@ -27,7 +27,7 @@ void STDCALL OBS::StartStreamHotkey(DWORD hotkey, UPARAM param, bool bDown)
 
     if(App->bStartStreamHotkeyDown && !bDown)
         App->bStartStreamHotkeyDown = false;
-    else if(!App->bRunning)
+    else if(!App->bRunning || !App->bStreaming)
     {
         if(App->bStartStreamHotkeyDown = bDown)
             App->Start();
