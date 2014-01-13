@@ -778,6 +778,7 @@ void OBS::Stop(bool overrideKeepRecording)
 
     delete network;
     network = NULL;
+    bStreaming = false;
     
     if(bRecording) StopRecording();
 
