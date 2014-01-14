@@ -144,7 +144,7 @@ void LogVideoCardStats()
     }
 }
 
-static void HandleNvidiaOptimus(IDXGIFactory1 *factory, IDXGIAdapter1 *&adapter, &UINT adapterID)
+static void HandleNvidiaOptimus(IDXGIFactory1 *factory, IDXGIAdapter1 *&adapter, UINT &adapterID)
 {
     if (adapterID != 1)
         return;
