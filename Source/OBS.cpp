@@ -1327,6 +1327,9 @@ void OBS::ReloadIniSettings()
     }
     else
         HideNotificationAreaIcon();
+
+    bKeepRecording = AppConfig->GetInt(TEXT("Publish"), TEXT("KeepRecording")) != 0;
+
     if (!minimizeToIcon && !IsWindowVisible(hwndMain))
         ShowWindow(hwndMain, SW_SHOW);
 

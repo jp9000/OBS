@@ -163,6 +163,8 @@ void SettingsPublish::ApplySettings()
 
     //------------------------------------------
 
+    App->ConfigureStreamButtons();
+
     /*
     App->strDashboard = GetEditText(GetDlgItem(hwnd, IDC_DASHBOARDLINK)).KillSpaces();
     AppConfig->SetString(TEXT("Publish"), TEXT("Dashboard"), App->strDashboard);
@@ -460,6 +462,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     ShowWindow(GetDlgItem(hwnd, IDC_DELAY_STATIC), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_DELAY_EDIT), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_DELAY), SW_HIDE);
+                    ShowWindow(GetDlgItem(hwnd, IDC_KEEPRECORDING), SW_HIDE);
                     //ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK), SW_HIDE);
                     //ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK_STATIC), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_SAVETOFILE), SW_HIDE);
@@ -620,6 +623,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                             ShowWindow(GetDlgItem(hwnd, IDC_DELAY_EDIT), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_DELAY), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_SAVETOFILE), swShowControls);
+                            ShowWindow(GetDlgItem(hwnd, IDC_KEEPRECORDING), swShowControls);
 
                             SetWarningInfo();
 

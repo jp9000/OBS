@@ -190,7 +190,7 @@ void OBS::Start()
         network = NULL;
         network = CreateRTMPPublisher();
 
-        Log(TEXT("=====Stream Start: %s==============================================="), CurrentDateTimeString().Array());
+        Log(TEXT("=====Stream Start (while recording): %s============================="), CurrentDateTimeString().Array());
 
         EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), TRUE);
         SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), Str("MainWindow.StopStream"));
@@ -709,7 +709,7 @@ void OBS::Stop(bool overrideKeepRecording)
         tempStream = network;
         network = NULL;
 
-        Log(TEXT("=====Stream End: %s==============================================="), CurrentDateTimeString().Array());
+        Log(TEXT("=====Stream End (recording continues): %s========================="), CurrentDateTimeString().Array());
 
         delete tempStream;
 
@@ -778,6 +778,7 @@ void OBS::Stop(bool overrideKeepRecording)
 
     delete network;
     network = NULL;
+    bStreaming = false;
     
     if(bRecording) StopRecording();
 
