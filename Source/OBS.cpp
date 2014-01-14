@@ -23,9 +23,6 @@
 
 //primarily main window stuff an initialization/destruction code
 
-//god forsaken laptops
-//extern "C" _declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
-
 typedef bool (*LOADPLUGINPROC)();
 typedef bool (*LOADPLUGINEXPROC)(UINT);
 typedef void (*UNLOADPLUGINPROC)();

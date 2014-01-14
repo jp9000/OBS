@@ -1013,7 +1013,7 @@ void HandleGLSceneUpdate(HDC hDC)
             }
         }
     } else {
-        RUNEVERYRESET logOutput << CurrentTimeString() << "new GL DC found, terminating gl capture" << endl;
+        RUNEVERYRESET logOutput << CurrentTimeString() << "new GL DC found (" << (UINT)hDC << ", was " << (UINT)hdcAcquiredDC << "), terminating gl capture" << endl;
         ClearGLData();
     }
 }

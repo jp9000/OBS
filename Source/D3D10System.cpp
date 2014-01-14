@@ -19,6 +19,7 @@
 
 #include "Main.h"
 
+extern "C" _declspec(dllexport) DWORD NvOptimusEnablement = 0x00000000;
 
 void GetDisplayDevices(DeviceOutputs &deviceList)
 {
@@ -143,6 +144,35 @@ void LogVideoCardStats()
     }
 }
 
+static void HandleNvidiaOptimus(IDXGIFactory1 *factory, IDXGIAdapter1 *&adapter, &UINT adapterID)
+{
+    if (adapterID != 1)
+        return;
+
+    NvOptimusEnablement = 0;
+    DXGI_ADAPTER_DESC adapterDesc;
+    if (SUCCEEDED(adapter->GetDesc(&adapterDesc)))
+    {
+        String name = adapterDesc.Description;
+        name.KillSpaces();
+
+        if (name.IsEmpty())
+            return;
+
+        if (sstri(adapterDesc.Description, L"NVIDIA") != NULL)
+        {
+            if (name[name.Length()-1] == 'M' || name[name.Length()-1] == 'm') {
+                adapter->Release();
+
+                adapterID = 0;
+                NvOptimusEnablement = 1;
+                Log(L"Nvidia optimus detected, second adapter selected, enabling optimus hint and switching to adapter 1");
+                if(FAILED(factory->EnumAdapters1(adapterID, &adapter)))
+                    CrashError(TEXT("Could not get DXGI adapter"));
+            }
+        }
+    }
+}
 
 D3D10System::D3D10System()
 {
@@ -162,6 +192,8 @@ D3D10System::D3D10System()
     IDXGIAdapter1 *adapter;
     if(FAILED(err = factory->EnumAdapters1(adapterID, &adapter)))
         CrashError(TEXT("Could not get DXGI adapter"));
+
+    HandleNvidiaOptimus(factory, adapter, adapterID);
 
     //------------------------------------------------------------------
 
