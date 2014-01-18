@@ -804,11 +804,16 @@ void HandleGLSceneUpdate(HDC hDC)
         int pixFormat = GetPixelFormat(hDC);
         DescribePixelFormat(hDC, pixFormat, sizeof(pfd), &pfd);
 
-        if(pfd.cColorBits == 32 && hwndTarget)
+        if(hwndTarget)
         {
             bTargetAcquired = true;
             hdcAcquiredDC = hDC;
             glcaptureInfo.format = GS_BGR;
+        }
+
+        if (!bTargetAcquired) {
+            RUNEVERYRESET logOutput << CurrentTimeString() << "Failed to acquire target, pfd.cColorBits = " << UINT(pfd.cColorBits) << ", hwndTarget = " << UINT(hwndTarget) << endl;
+            return;
         }
 
         OSInitializeTimer();

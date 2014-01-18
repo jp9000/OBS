@@ -343,7 +343,7 @@ public:
             timeOffset = 0;
         }
 
-        //Log(TEXT("inpts: %005d, dts: %005d, pts: %005d, timestamp: %005d, offset: %005d, newoffset: %005d"), picIn->i_pts, picOut.i_dts, picOut.i_pts, outputTimestamp, timeOffset, picOut.i_pts-picOut.i_dts);
+        OSDebugOut(TEXT("inpts: %005lld, dts: %005lld, pts: %005lld, timestamp: %005d, offset: %005d, newoffset: %005lld\n"), picIn->i_pts, picOut.i_dts, picOut.i_pts, outputTimestamp, timeOffset, picOut.i_pts-picOut.i_dts);
 
         timeOffset = htonl(timeOffset);
 
