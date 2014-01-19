@@ -50,20 +50,33 @@ void MultiplyAudioBuffer(float *buffer, int totalFloats, float mulVal)
         buffer[i] *= mulVal;
 }
 
+/* astoundingly disgusting hack to get more variables into the class without breaking API */
+struct NotAResampler
+{
+    SRC_STATE *resampler;
+    QWORD     jumpRange;
+};
+
+#define MoreVariables static_cast<NotAResampler*>(resampler)
 
 AudioSource::AudioSource()
 {
     sourceVolume = 1.0f;
+    resampler = (void*)new NotAResampler;
+    MoreVariables->jumpRange = 70;
 }
 
 AudioSource::~AudioSource()
 {
     if(bResample)
-        src_delete((SRC_STATE*)resampler);
+        src_delete(MoreVariables->resampler);
 
     for(UINT i=0; i<audioSegments.Num(); i++)
         delete audioSegments[i];
+
+    delete (NotAResampler*)resampler;
 }
+
 
 union TripleToLong
 {
@@ -94,8 +107,8 @@ void AudioSource::InitAudioData(bool bFloat, UINT channels, UINT samplesPerSec, 
         int errVal;
 
         int converterType = SRC_SINC_FASTEST;
-        resampler = src_new(converterType, 2, &errVal);
-        if(!resampler)
+        MoreVariables->resampler = src_new(converterType, 2, &errVal);
+        if(!MoreVariables->resampler)
             CrashError(TEXT("AudioSource::InitAudioData: Could not initiate resampler"));
 
         resampleRatio = double(sampleRateHz) / double(inputSamplesPerSec);
@@ -123,7 +136,7 @@ void AudioSource::InitAudioData(bool bFloat, UINT channels, UINT samplesPerSec, 
 
         data.end_of_input = 0;
 
-        int err = src_process((SRC_STATE*)resampler, &data);
+        int err = src_process(MoreVariables->resampler, &data);
 
         nop();
     }
@@ -200,6 +213,8 @@ void AudioSource::AddAudioSegment(AudioSegment *newSegment, float curVolume)
 //necessary but a necessary thing for the current audio system)
 void AudioSource::SortAudio(QWORD timestamp)
 {
+    QWORD jumpAmount = 0;
+
     if (audioSegments.Num() <= 1)
         return;
 
@@ -213,8 +228,24 @@ void AudioSource::SortAudio(QWORD timestamp)
         QWORD newTime = timestamp - QWORD(totalTime);
 
         if (newTime < segment->timestamp)
+        {
+            QWORD newAmount = (segment->timestamp - newTime);
+            if (newAmount > jumpAmount)
+                jumpAmount = newAmount;
+
             segment->timestamp = newTime;
+        }
+
         timestamp = segment->timestamp;
+    }
+
+    //if (jumpAmount && sstri(GetDeviceName(), L"avermedia") != NULL)
+    //    Log(L"sorted, lastUsedTimestamp is now %llu", lastUsedTimestamp);
+
+    if (jumpAmount > MoreVariables->jumpRange)
+    {
+        //Log(L"ooh, more variables, I mean, device %s, range %llu", GetDeviceName(), jumpAmount);
+        MoreVariables->jumpRange = jumpAmount;
     }
 }
 
@@ -591,7 +622,7 @@ UINT AudioSource::QueryAudio2(float curVolume, bool bCanBurstHack)
 
             data.end_of_input = 0;
 
-            int err = src_process((SRC_STATE*)resampler, &data);
+            int err = src_process(MoreVariables->resampler, &data);
             if(err)
             {
                 RUNONCE AppWarning(TEXT("AudioSource::QueryAudio: Was unable to resample audio for device '%s'"), GetDeviceName());
@@ -617,7 +648,7 @@ UINT AudioSource::QueryAudio2(float curVolume, bool bCanBurstHack)
 
         QWORD difVal = GetQWDif(newTimestamp, lastUsedTimestamp);
 
-        if (difVal > 70 || (bCanBurstHack && newTimestamp < lastUsedTimestamp)) {
+        if (difVal > MoreVariables->jumpRange /*|| (bCanBurstHack && newTimestamp < lastUsedTimestamp)*/) {
             /*QWORD curTimeMS = App->GetVideoTime()-App->GetSceneTimestamp();
             UINT curTimeTotalSec = (UINT)(curTimeMS/1000);
             UINT curTimeTotalMin = curTimeTotalSec/60;
@@ -626,10 +657,14 @@ UINT AudioSource::QueryAudio2(float curVolume, bool bCanBurstHack)
             UINT curTimeSec = curTimeTotalSec-(curTimeTotalMin*60);
 
             Log(TEXT("A timestamp adjustment was encountered for device %s, approximate stream time is: %u:%u:%u, prev value: %llu, new value: %llu"), GetDeviceName(), curTimeHr, curTimeMin, curTimeSec, lastUsedTimestamp, newTimestamp);*/
-            /*if (difVal > 70)
-                Log(TEXT("A timestamp adjustment was encountered for device %s, diff: %llu"), GetDeviceName(), difVal);*/
+            //if (difVal >= 70)
+            //    Log(TEXT("A timestamp adjustment was encountered for device %s, diffVal: %llu, jumpRange: %llu, newTimestamp: %llu, lastUsedTimestamp: %llu"),
+            //    GetDeviceName(), difVal, MoreVariables->jumpRange, newTimestamp, lastUsedTimestamp);
             lastUsedTimestamp = newTimestamp;
         }
+
+        //if (sstri(GetDeviceName(), L"avermedia") != NULL)
+        //    Log(L"newTimestamp: %llu, lastUsedTimestamp: %llu", newTimestamp, lastUsedTimestamp);
 
         //-----------------------------------------------------------------------------
 
