@@ -1112,6 +1112,7 @@ public:
     BOOL UpdateDashboardButton();
 
     inline void ResetMic() {if (bRunning && micAudio) ResetWASAPIAudioDevice(micAudio);}
+    void GetThreadHandles (HANDLE *videoThread, HANDLE *encodeThread);
 };
 
 LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo);

@@ -1840,3 +1840,12 @@ void OBS::DisableProjector()
     if (!bShutdownEncodeThread)
         ShowWindow(hwndProjector, SW_HIDE);
 }
+
+void OBS::GetThreadHandles (HANDLE *videoThread, HANDLE *encodeThread)
+{
+    if (hVideoThread)
+        *videoThread = hVideoThread;
+
+    if (hEncodeThread)
+        *encodeThread = hEncodeThread;
+}

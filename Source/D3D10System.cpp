@@ -232,13 +232,18 @@ D3D10System::D3D10System()
     err = D3D10CreateDeviceAndSwapChain1(adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, createFlags, level, D3D10_1_SDK_VERSION, &swapDesc, &swap, &d3d);
     if(FAILED(err))
     {
+        Log (TEXT("D3D10CreateDeviceAndSwapChain1: Failed on %s: 0x%08x. Trying compatibility mode"), adapterName.Array(), err);
+
         bDisableCompatibilityMode = !bDisableCompatibilityMode;
         level = bDisableCompatibilityMode ? D3D10_FEATURE_LEVEL_10_1 : D3D10_FEATURE_LEVEL_9_3;
         err = D3D10CreateDeviceAndSwapChain1(adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, createFlags, level, D3D10_1_SDK_VERSION, &swapDesc, &swap, &d3d);
     }
 
     if(FAILED(err))
+    {
+        Log (TEXT("D3D10CreateDeviceAndSwapChain1: Failed on %s: 0x%08x"), adapterName.Array(), err);
         CrashError(TEXT("Could not initialize DirectX 10 on %s.  This error can happen for one of the following reasons:\r\n\r\n1.) Your GPU is not supported (DirectX 10 is required - note that many integrated laptop GPUs do not support DX10)\r\n2.) You're running Windows Vista without the \"Platform Update\"\r\n3.) Your video card drivers are out of date\r\n\r\nIf you are using a laptop with NVIDIA Optimus or AMD Switchable Graphics, make sure OBS is set to run on the high performance GPU in your driver settings."), adapterName.Array());
+    }
 
     adapter->Release();
 
