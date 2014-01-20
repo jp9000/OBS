@@ -60,9 +60,9 @@ bool SourceListHasDevice(CTSTR lpDevice, XElement *sourceList)
         if(scmpi(sourceElement->GetString(TEXT("class")), DSHOW_CLASSNAME) == 0)
         {
             XElement *data = sourceElement->GetElement(TEXT("data"));
-            if(scmpi(data->GetString(TEXT("device")), lpDevice) == 0)
+            if(scmpi(data->GetString(TEXT("deviceID")), lpDevice) == 0)
                 return true;
-            if(scmpi(data->GetString(TEXT("audioDevice")), lpDevice) == 0)
+            if(scmpi(data->GetString(TEXT("audioDeviceID")), lpDevice) == 0)
                 return true;
         }
     }
@@ -1152,7 +1152,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 if(strDevice.IsValid() && cx > 0 && cy > 0 && frameInterval > 0) {
                     for(UINT i=0; i < configData->deviceNameList.Num(); i++) {
-                        if(configData->deviceNameList[i].CompareI(strDevice)) {
+                        if(configData->deviceNameList[i].CompareI(strDevice.Array())) {
                             if(configData->deviceIDList[i].CompareI(strDeviceID))
                                 deviceID = i;
                         }
@@ -1210,7 +1210,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 if(strDevice.IsValid() && cx > 0 && cy > 0 && frameInterval > 0) {
                     for(UINT i=0; i < configData->audioNameList.Num(); i++) {
-                        if(configData->audioNameList[i].CompareI(strAudioDevice)) {
+                        if(configData->audioNameList[i].CompareI(strAudioDevice.Array())) {
                             if(configData->audioIDList[i].CompareI(strAudioDeviceID))
                                 audioDeviceID = i;
                         }
@@ -1987,7 +1987,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                             break;
                         }
 
-                        String strDevice = GetCBText(GetDlgItem(hwnd, IDC_DEVICELIST), deviceID);
+                        String strDevice = configData->deviceIDList[deviceID];
                         String strFPS = GetEditText(GetDlgItem(hwnd, IDC_FPS));
                         if(schr(strFPS, '-'))
                         {
