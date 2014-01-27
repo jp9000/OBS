@@ -37,6 +37,7 @@ Copy="Másolás"
 Scene="Jelenet"
 Settings="Beállítások"
 StreamReport="Stream jelentés"
+MessageBoxWarningCaption="Figyelmeztetés"
 
 BuildingMP4Dialog.Progress="MP4 építése, kérlek várj..."
 
@@ -93,6 +94,8 @@ MainWindow.Plugins="Bővítmények"
 MainWindow.SceneEditor="Jelenet Módosítása"
 MainWindow.Scenes="Jelenetek:"
 MainWindow.Sources="Források:"
+MainWindow.StartRecording="Felvétel indítása"
+MainWindow.StopRecording="Felvétel leállítása"
 MainWindow.StartStream="Stream indítása"
 MainWindow.StopStream="Stream leállítása"
 MainWindow.StopTest="Előnézet leállítása"
@@ -142,8 +145,8 @@ Settings.Advanced.UseCBR="CBR Használata"
 Settings.Advanced.UseCFR="CFR használata"
 Settings.Advanced.UseMultithreadedOptimizations="Használj Többszálas Optimalizálást"
 Settings.Advanced.UseQSV="Quick Sync használata"
-Settings.Advanced.QSVUseVideoEncoderSettings="Egyéni x264 beállítások használata  QSV-hez"
 Settings.Advanced.QSVUseVideoEncoderSettingsToolTip="Jelenleg csak keyint és bframes van támogatva."
+Settings.Advanced.UseNVENC="Nvidia NVENC használata"
 Settings.Advanced.SceneBufferTime="Jelenet pufferelési ideje (milliszekundum):"
 Settings.Advanced.VideoEncoderCPUTradeoff="x264 CPU Beállítás:"
 Settings.Advanced.VideoEncoderCPUTradeoffToolTip="Ennek az értéknek a magasabbra állítása könnyít a proceszzor terhelésén minőségi romlásért cserében. Ugyanakkor az érték csökkentése növeli a processzor terhelését jobb minőség elérésének érdekében.\r\n\r\nAjánlott: Very Fast"
@@ -167,6 +170,7 @@ Settings.Audio.PlaybackDevice="Asztali hangeszköz:"
 Settings.Audio.PushToTalkDelay="Push-to-talk késleltetés (milliszekundum):"
 Settings.Audio.PushToTalkHotkey="Push-to-talk használata:"
 Settings.Audio.ShowOnlyConnectedDevices="Csak a csatlakoztatott eszközök mutatása"
+Settings.Audio.UseInputDevices="Beviteli eszköz használata a desktop audio gyanánt"
 Settings.Audio.UseMicQPC="Mikrofon QPC eltérés időbélyegének használata"
 
 Settings.Encoding.Audio="Hang Kódolás"
@@ -186,6 +190,7 @@ Settings.Encoding.Video.QualityTooltip="Ez a beállítás megpróbálja a stream
 
 Settings.General.Add="Új hozzáadása"
 Settings.General.ConfirmDelete="Biztos hogy törölni akarod '$1' profilt?"
+Settings.General.EnableProjectorCursor="Egér engedélyezése projector módban"
 Settings.General.InvalidName="A profil nevek nem használhatják a következő karaktereket:\r\n\\ / : * ? \" < > |"
 Settings.General.Language="Nyelv:"
 Settings.General.Profile="Beállítás Profil:"
@@ -323,6 +328,9 @@ Stats.TotalBytesTransferred="Összes elküldött byte mennyiség:"
 Stats.LateFrames="Késett kép kockák száma:"
 Stats.SkippedFrames="Kihagyott képkockák száma, a kódoló késése miatt:"
 
+
+
+
 Updater.DownloadNow="Szeretnéd most letölteni őket?"
 Updater.NewUpdates="A következő frissítések elérhetőek:\r\n\r\n"
 Updater.RunningWarning="OBs most újra fog indulni a frissítések telepítéséhez.\r\n\r\nBiztos hogy folytatni akarod?"
@@ -342,5 +350,8 @@ Plugins.NoiseGate.ConfirmReset="Biztos vagy benne, hogy vissza állítod az alap
 Plugins.NoiseGate.EnableNoiseGate="Zaj gát engedélyezése:"
 Plugins.NoiseGate.OpenThreshold="Nyitási küszöb"
 Plugins.NoiseGate.CloseThreshold="Zárási küszöb"
+Plugins.NoiseGate.AttackTime="Aktiválási idő (ezredmásodperc):"
+Plugins.NoiseGate.HoldTime="Nyomva tartás ideje (ezredmásodperc):"
+Plugins.NoiseGate.ReleaseTime="Felengedés ideje (ezredmásodperc):"
 
 

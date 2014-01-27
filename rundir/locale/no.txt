@@ -140,10 +140,9 @@ Settings.Advanced.UseCBR="Bruk CBR"
 Settings.Advanced.PadCBR="Aktiver CBR utfylling"
 Settings.Advanced.UseCFR="Bruk CFR"
 Settings.Advanced.UseQSV="Bruk rask synkronisering"
-Settings.Advanced.QSVUseVideoEncoderSettings="Bruk egendefinerte x 264 innstillinger for QSV"
 Settings.Advanced.SceneBufferTime="Scenebufferingstid (millisekunder):"
 Settings.Advanced.VideoEncoderCPUTradeoff="x264 CPU forhåndsinnstilling:"
-Settings.Advanced.VideoEncoderCPUTradeoffToolTip="Høyere verdi reduserer CPU-bruk ved å ofre visse kvalitetsaspekter.  Lavere verdi øker kvaliteten på bekostning av CPU-en.\r\n\r\nAnbefalt: veldig raskt"
+Settings.Advanced.VideoEncoderCPUTradeoffToolTip="En høyere verdi fører til lavere CPU bruk, men fører til dårligere bildekvalitet. En lavere verdi fører til bedre bildekvalitet på bestkostning av høyere CPU bruk.\r\n\r\nAnbefalt: Very Fast"
 Settings.Advanced.VideoEncoderSettings="Egendefinerte x264 Encoder innstillinger"
 
 Settings.Advanced.Priority.Idle="Inaktiv"
@@ -224,6 +223,9 @@ Sources.SoftwareCaptureSource.InvertMouseOnClick="Inverter markøren på klikk"
 Sources.SoftwareCaptureSource.Monitor="Skjerm:"
 Sources.SoftwareCaptureSource.MonitorCapture="Skjermopptak"
 Sources.SoftwareCaptureSource.MonitorCaptureTooltip="Deaktiver aero i videoinnstillingene for å maksimere FPS"
+
+
+
 
 
 

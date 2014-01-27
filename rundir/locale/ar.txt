@@ -36,6 +36,7 @@ Copy="نسخ"
 Scene="مشهد"
 Settings="اعدادات..."
 StreamReport="تقرير البث"
+MessageBoxWarningCaption="تحذير"
 
 BuildingMP4Dialog.Progress="انشاء mp4 , الرجاء الانتظار..."
 
@@ -93,6 +94,8 @@ MainWindow.Plugins="الاضافات"
 MainWindow.SceneEditor="تحرير المشهد"
 MainWindow.Scenes="المشاهد:"
 MainWindow.Sources="المصادر:"
+MainWindow.StartRecording="بدء التسجيل"
+MainWindow.StopRecording="إيقاف التسجيل"
 MainWindow.StartStream="بدء البث"
 MainWindow.StopStream="ايقاف البث"
 MainWindow.StopTest="ايقاف المعاينة"
@@ -131,8 +134,16 @@ Settings.Advanced.AutomaticLatency="الوضع التلقائي للكمون ا�
 Settings.Advanced.AllowOtherHotkeyModifiers="السماح بمعدلات أخرى على مفاتيح الاختصار"
 Settings.Advanced.BindToIP="الربط إلى الواجهة :"
 Settings.Advanced.DisablePreviewEncoding="تعطيل ترميز الفيديو أثناء المعاينة"
+Settings.Advanced.LatencyTuning="معامل ضبط التأخير:"
+Settings.Advanced.Network="الشبكة"
+Settings.Advanced.SendBufferSize="حجم ارسال التخزين المؤقت:"
+Settings.Advanced.UnlockHigherFPS="السماح بدخول 61-120 إطاراً في الثانية في إعدادات الفيديو"
 Settings.Advanced.VideoEncoderSettings="إعدادات مخصصة لترميز x264"
 
+Settings.Advanced.Priority.Idle="خامل"
+Settings.Advanced.Priority.Normal="عادي"
+Settings.Advanced.Priority.AboveNormal="أعلى من المعدل الطبيعي"
+Settings.Advanced.Priority.High="مرتفعة"
 
 Settings.Audio.MuteMicHotkey="زر إختصار لـ كتم/إلغاء كتم الميكروفون:"
 Settings.Audio.PushToTalkHotkey="إستخدام الضغط للتحدث :"
@@ -145,6 +156,8 @@ Settings.Encoding.Audio.Bitrate="معدل النقل:"
 Settings.Encoding.Audio.Codec="الترميز:"
 Settings.Encoding.Audio.Format="الصيغة:"
 
+Settings.Encoding.Video.BufferSize="حجم التخزين المؤقت (كيلوبت):"
+Settings.Encoding.Video.MaxBitRate="الحد الأعلى لتدفق البيانات  (كيلو بت/ثانية):"
 
 Settings.General.Language="اللغة:"
 Settings.General.Restart="تغيير اللغة يتطلب اعادة تشغيل البرنامج.\r\n\r\n.. اظن بما انك تقوم بتغيير اللغة اذن انت لا تستطيع فهم هذه الجملة"
@@ -169,6 +182,9 @@ Sources.TextSource.Center="وسط"
 Sources.TextSource.EnterText="ادخل نص"
 Sources.TextSource.Size="الحجم:"
 Sources.TextSource.Underline="تسطير"
+
+
+
 
 
 

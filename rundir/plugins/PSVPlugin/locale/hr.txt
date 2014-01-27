@@ -1,3 +1,9 @@
+Cancel="Odustani"
+OK="OK"
 
+Plugin.Name="Plugin zvuka po sceni"
+Plugin.Description="Omogući praćenje zvuka po sceni."
 
+Config.Caption="Podešavanje zvuka po sceni"
+Config.Enable="Omogući praćenje zvuka po sceni"
 
