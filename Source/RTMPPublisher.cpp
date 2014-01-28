@@ -193,7 +193,6 @@ RTMPPublisher::~RTMPPublisher()
     if (hConnectionThread)
     {
         //the connect thread could be stalled in a blocking call, kill the socket to ensure it wakes up
-        //FIXME: connection thread uses local RTMP * structure, so this doesn't actually work.
         if (WaitForSingleObject(hConnectionThread, 0) == WAIT_TIMEOUT)
         {
             OSEnterMutex(hRTMPMutex);
