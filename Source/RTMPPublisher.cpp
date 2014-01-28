@@ -86,6 +86,8 @@ RTMPPublisher::RTMPPublisher()
     if(!hDataMutex)
         CrashError(TEXT("RTMPPublisher: Could not create mutex"));
 
+    hRTMPMutex = OSCreateMutex();
+
     //------------------------------------------
 
     bframeDropThreshold = AppConfig->GetInt(TEXT("Publish"), TEXT("BFrameDropThreshold"), 400);
@@ -122,10 +124,8 @@ RTMPPublisher::RTMPPublisher()
     strRTMPErrors.Clear();
 }
 
-bool RTMPPublisher::Init(RTMP *rtmpIn, UINT tcpBufferSize)
+bool RTMPPublisher::Init(UINT tcpBufferSize)
 {
-    rtmp = rtmpIn;
-
     //------------------------------------------
 
     //Log(TEXT("Using Send Buffer Size: %u"), sendBufferSize);
@@ -194,14 +194,16 @@ RTMPPublisher::~RTMPPublisher()
     {
         //the connect thread could be stalled in a blocking call, kill the socket to ensure it wakes up
         //FIXME: connection thread uses local RTMP * structure, so this doesn't actually work.
-        /*if (WaitForSingleObject(hConnectionThread, 0) == WAIT_TIMEOUT)
+        if (WaitForSingleObject(hConnectionThread, 0) == WAIT_TIMEOUT)
         {
+            OSEnterMutex(hRTMPMutex);
             if (rtmp && rtmp->m_sb.sb_socket != -1)
             {
                 closesocket(rtmp->m_sb.sb_socket);
                 rtmp->m_sb.sb_socket = -1;
             }
-        }*/
+            OSLeaveMutex(hRTMPMutex);
+        }
 
         WaitForSingleObject(hConnectionThread, INFINITE);
         OSCloseThread(hConnectionThread);
@@ -802,7 +804,6 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     strPlayPath.KillSpaces();
 
     LPSTR lpAnsiURL = NULL, lpAnsiPlaypath = NULL;
-    RTMP *rtmp = NULL;
 
     //--------------------------------
     // unbelievably disgusting hack for elgato devices
@@ -880,10 +881,15 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
 
     //------------------------------------------------------
 
-    rtmp = RTMP_Alloc();
+    OSEnterMutex(publisher->hRTMPMutex);
+    publisher->rtmp = RTMP_Alloc();
+
+    RTMP *rtmp = publisher->rtmp;
     RTMP_Init(rtmp);
 
     RTMP_LogSetCallback(librtmpErrorCallback);
+
+    OSLeaveMutex(publisher->hRTMPMutex);
 
     //RTMP_LogSetLevel(RTMP_LOGERROR);
 
@@ -991,11 +997,14 @@ end:
 
     if(!bSuccess)
     {
+        OSEnterMutex(publisher->hRTMPMutex);
         if(rtmp)
         {
             RTMP_Close(rtmp);
             RTMP_Free(rtmp);
+            publisher->rtmp = NULL;
         }
+        OSLeaveMutex(publisher->hRTMPMutex);
 
         if(failReason.IsValid())
             App->SetStreamReport(failReason);
@@ -1009,7 +1018,7 @@ end:
     }
     else
     {
-        publisher->Init(rtmp, tcpBufferSize);
+        publisher->Init(tcpBufferSize);
         publisher->bConnected = true;
         publisher->bConnecting = false;
     }
