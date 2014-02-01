@@ -700,6 +700,10 @@ void OBS::Stop(bool overrideKeepRecording)
 {
     if((!bStreaming && !bRecording && !bRunning) && (!bTestStream)) return;
 
+    //ugly hack to prevent hotkeys from being processed while we're stopping otherwise we end up
+    //with callbacks from the ProcessEvents call in DelayedPublisher which causes havoc.
+    OSEnterMutex(hHotkeyMutex);
+
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
 
     if(!overrideKeepRecording && bRecording && bKeepRecording && networkMode == 0) {
@@ -718,6 +722,8 @@ void OBS::Stop(bool overrideKeepRecording)
 
         bStreaming = false;
         bSentHeaders = false;
+
+        OSLeaveMutex(hHotkeyMutex);
 
         return;
     }
@@ -930,6 +936,8 @@ void OBS::Stop(bool overrideKeepRecording)
     UpdateRenderViewMessage();
 
     OSLeaveMutex(hStartupShutdownMutex);
+
+    OSLeaveMutex(hHotkeyMutex);
 }
 
 DWORD STDCALL OBS::MainAudioThread(LPVOID lpUnused)
