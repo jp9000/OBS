@@ -88,7 +88,7 @@ MainMenu.Settings.OpenLogFolder="Abrir Pasta de Logs"
 
 MainWindow.BeginMessage="Não transmitindo Clique \"Começar a transmissão\" ou \"Pré Visualizar a transmissão\" para começar"
 MainWindow.PreviewDisabled="Pré visualização desabilitada"
-MainWindow.Dashboard="Seu Canal"
+MainWindow.Dashboard="Meu Canal"
 MainWindow.DroppedFrames="Frames Perdidos:"
 MainWindow.Exit="Sair"
 MainWindow.Plugins="Plugins"
@@ -110,17 +110,17 @@ Reconnecting.Retrying="Não foi possível conectar, tentando novamente."
 
 RenderView.EnableView="Habilitar Visualização"
 RenderView.DisplayPanel="Habilitar o painel de controle"
-RenderView.ViewModeScaleToFit="Modo de redimensionar para caber"
+RenderView.ViewModeScaleToFit="Redimensionar para caber"
 RenderView.ViewMode1To1="Modo 1:1"
 
-Scene.Hotkey="Hotkey para Cena"
+Scene.Hotkey="Atalhos para cenas"
 Scene.MissingSources="Incapaz de carregar todas as fontes de imagem devido a configurações inválidas ou plugins que faltam."
 
 Scene.Hotkey.AlreadyInUse="Este atalho já está em uso."
 Scene.Hotkey.Hotkey="Tecla de Atalho:"
 
 Capture.Start.FileStream.WarningCaption="Aviso"
-Capture.Start.FileStream.Warning="Não é possível criar o arquivo de saída de transmissão.\n\nVerifique o caminho nas definições de tranmissão."
+Capture.Start.FileStream.Warning="Não é possível criar o arquivo de saída de transmissão.\n\nVerifique o caminho nas definições de transmissão."
 
 Settings.Advanced="Avançado"
 Settings.Audio="Áudio"

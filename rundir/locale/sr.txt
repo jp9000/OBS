@@ -161,6 +161,7 @@ Settings.Advanced.VideoEncoderCPUTradeoffToolTip="Стављање ове вал
 Settings.Advanced.VideoEncoderSettings="Прилагођена х264 енкодер Подешавања"
 Settings.Advanced.VideoEncoderSettingsTooltip="Ово омогућава коришћење прилагођених х264 енкодер подешавања. у следећем облику:(параметар)=(валута) (На Пр. \"vbv-maxrate=1000 vbv-bufsize=1000\")."
 Settings.Advanced.X264Profile="х264 Енкодинг Профил:"
+Settings.Advanced.NVENCPreset="НВЕНЦ Пресет:"
 
 Settings.Advanced.Priority.Idle="Неактиван"
 Settings.Advanced.Priority.Normal="Нормалан"
@@ -172,10 +173,20 @@ Settings.Audio.Device="Микорофон/Помоћни Звучни Уређа
 Settings.Audio.ForceMicMono="Силуј Микрофон/Помоћни(Звучни уређај) на Моно:"
 Settings.Audio.MicBoost="Мик/Пом појачање(више):"
 Settings.Audio.MicTimeOffset="Мик Време офсет-а (у милисекундама):"
+Settings.Audio.MicSyncFix="хацк за микрофонску синхронизацију"
+Settings.Audio.PushToTalkHotkey="користи претисни-да-прицаш:"
+Settings.Audio.ShowOnlyConnectedDevices="прикажи само повезане уређаје"
+Settings.Audio.ResetMic="Поново учитај"
 
+Settings.Encoding.Audio="звучно шифровање"
+Settings.Encoding.Video="Видео шифровање"
 
+Settings.Encoding.Audio.Bitrate="Битрате:"
 Settings.Encoding.Audio.Codec="Кодеци:"
+Settings.Encoding.Audio.Format="Формат:"
 
+Settings.Encoding.Video.MaxBitRate="Максимални Битрате (у килобајтима по секунди):"
+Settings.Encoding.Video.Quality="баланс квалитета:"
 
 Settings.General.Add="Додај нови"
 Settings.General.Language="Језик:"
@@ -184,8 +195,14 @@ Settings.General.ShowObs="Прикажи OBS"
 Settings.General.HideObs="Сакриј OBS"
 
 Settings.Publish.ChannelName="Име канала:"
+Settings.Publish.Delay="Кашњење (у секундама):"
+Settings.Publish.LowLatencyMode="Умањи Утицај на Интернет:"
+Settings.Publish.Mode="Начин:"
 Settings.Publish.Password="Шифра (ако постоји):"
+Settings.Publish.SaveToFile="Сачувај у фајл:"
+Settings.Publish.Server="Сервер:"
 
+Settings.Publish.Mode.LiveStream="уживо стреамовање"
 
 
 Settings.Video.FPS="FPS:"
