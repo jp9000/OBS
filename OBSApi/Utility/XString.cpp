@@ -704,6 +704,9 @@ String  String::Left(UINT iOffset)
 
 String  String::Mid(UINT iStart, UINT iEnd)
 {
+    if (!IsValid())
+        return String();
+
     if( (iStart >= curLength) ||
         (iEnd > curLength || iEnd <= iStart)   )
     {

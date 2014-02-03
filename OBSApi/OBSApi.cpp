@@ -244,7 +244,7 @@ LPBYTE GetCursorData(HICON hIcon, ICONINFO &ii, UINT &width, UINT &height)
 }
 
 extern LARGE_INTEGER clockFreq;
-LONGLONG lastQPCTime;
+volatile LONGLONG lastQPCTime = 0;
 
 QWORD GetQPCTimeNS()
 {
@@ -252,7 +252,11 @@ QWORD GetQPCTimeNS()
     QueryPerformanceCounter(&currentTime);
 
     if (currentTime.QuadPart < lastQPCTime)
+    {
         Log (TEXT("GetQPCTimeNS: WTF, clock went backwards! %I64d < %I64d"), currentTime.QuadPart, lastQPCTime);
+        currentTime.QuadPart = lastQPCTime;
+    }
+
     lastQPCTime = currentTime.QuadPart;
 
     double timeVal = double(currentTime.QuadPart);
@@ -268,7 +272,11 @@ QWORD GetQPCTime100NS()
     QueryPerformanceCounter(&currentTime);
 
     if (currentTime.QuadPart < lastQPCTime)
+    {
         Log (TEXT("GetQPCTime100NS: WTF, clock went backwards! %I64d < %I64d"), currentTime.QuadPart, lastQPCTime);
+        currentTime.QuadPart = lastQPCTime;
+    }
+
     lastQPCTime = currentTime.QuadPart;
 
     double timeVal = double(currentTime.QuadPart);
@@ -284,7 +292,11 @@ QWORD GetQPCTimeMS()
     QueryPerformanceCounter(&currentTime);
 
     if (currentTime.QuadPart < lastQPCTime)
+    {
         Log (TEXT("GetQPCTimeMS: WTF, clock went backwards! %I64d < %I64d"), currentTime.QuadPart, lastQPCTime);
+        currentTime.QuadPart = lastQPCTime;
+    }
+
     lastQPCTime = currentTime.QuadPart;
 
     QWORD timeVal = currentTime.QuadPart;
