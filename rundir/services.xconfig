@@ -86,7 +86,7 @@ services : {
       "EU-West"     : rtmp://live.nbg.hitbox.tv/push
       "US-East"     : rtmp://live.vgn.hitbox.tv/push
       "US-West"     : rtmp://live.lax.hitbox.tv/push
-      "Asia"        : rtmp://live.apac.hitbox.tv/push
+      "Asia"        : rtmp://live.lax.hitbox.tv/push
     }
     recommended : {
       "keyint" : 2000
