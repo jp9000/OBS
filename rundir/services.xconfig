@@ -88,6 +88,10 @@ services : {
       "US-West"     : rtmp://live.lax.hitbox.tv/push
       "Asia"        : rtmp://live.apac.hitbox.tv/push
     }
+    recommended : {
+      "keyint" : 2000
+      "ratecontrol" : "cbr"
+    }
   }
   connectcast.tv : {
     id : 12
