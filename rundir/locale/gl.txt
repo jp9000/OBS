@@ -146,7 +146,6 @@ Settings.Advanced.PadCBRToolTip="Por defecto o CBR está activado.\n\rNon o desa
 Settings.Advanced.UseCFR="Empregar CFR"
 Settings.Advanced.UseMultithreadedOptimizations="Empregar optimizacións multi-fío"
 Settings.Advanced.UseQSV="Empregar Quick Sync"
-Settings.Advanced.QSVUseVideoEncoderSettings="Empregar axustes x264 personalizados para QSV"
 Settings.Advanced.QSVUseVideoEncoderSettingsToolTip="De momento só soporta keyint e bframes."
 Settings.Advanced.SceneBufferTime="Tempo de buffer de escena(milisegundos):"
 Settings.Advanced.SyncToVideoTime="Forzar ó audio do PC a usar timestamps de vídeo para o tempo de audio"
@@ -173,6 +172,7 @@ Settings.Audio.PlaybackDevice="Dispositivo de audio principal:"
 Settings.Audio.PushToTalkDelay="Retraso para Push-to-talk (milisegundos):"
 Settings.Audio.PushToTalkHotkey="Empregar Push-to-talk:"
 Settings.Audio.ShowOnlyConnectedDevices="Mostrar só os dispositivos conectados"
+Settings.Audio.UseInputDevices="Usar dispositivo de entrada para o audio de escritorio"
 Settings.Audio.UseMicQPC="Empregar timestamps QPC para o micrófono"
 
 Settings.Encoding.Audio="Codificación de audio"
@@ -337,6 +337,9 @@ Stats.TotalFramesRendered="Total de fotogramas renderizados:"
 Stats.TotalBytesTransferred="Bytes totales transferidos:"
 Stats.LateFrames="Número de fotogramas fináis:"
 Stats.SkippedFrames="Número de fotogramas omitidos por retraso do codificador:"
+
+
+
 
 Updater.DownloadNow="Queres descargalo ahora?"
 Updater.NewUpdates="As seguintes actualizacións están dispoñibles:\r\n\r\n"

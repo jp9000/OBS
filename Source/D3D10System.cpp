@@ -19,6 +19,7 @@
 
 #include "Main.h"
 
+extern "C" _declspec(dllexport) DWORD NvOptimusEnablement = 0x00000000;
 
 void GetDisplayDevices(DeviceOutputs &deviceList)
 {
@@ -143,6 +144,35 @@ void LogVideoCardStats()
     }
 }
 
+static void HandleNvidiaOptimus(IDXGIFactory1 *factory, IDXGIAdapter1 *&adapter, UINT &adapterID)
+{
+    if (adapterID != 1)
+        return;
+
+    NvOptimusEnablement = 0;
+    DXGI_ADAPTER_DESC adapterDesc;
+    if (SUCCEEDED(adapter->GetDesc(&adapterDesc)))
+    {
+        String name = adapterDesc.Description;
+        name.KillSpaces();
+
+        if (name.IsEmpty())
+            return;
+
+        if (sstri(adapterDesc.Description, L"NVIDIA") != NULL)
+        {
+            if (name[name.Length()-1] == 'M' || name[name.Length()-1] == 'm') {
+                adapter->Release();
+
+                adapterID = 0;
+                NvOptimusEnablement = 1;
+                Log(L"Nvidia optimus detected, second adapter selected, enabling optimus hint and switching to adapter 1");
+                if(FAILED(factory->EnumAdapters1(adapterID, &adapter)))
+                    CrashError(TEXT("Could not get DXGI adapter"));
+            }
+        }
+    }
+}
 
 D3D10System::D3D10System()
 {
@@ -162,6 +192,8 @@ D3D10System::D3D10System()
     IDXGIAdapter1 *adapter;
     if(FAILED(err = factory->EnumAdapters1(adapterID, &adapter)))
         CrashError(TEXT("Could not get DXGI adapter"));
+
+    HandleNvidiaOptimus(factory, adapter, adapterID);
 
     //------------------------------------------------------------------
 
@@ -193,20 +225,25 @@ D3D10System::D3D10System()
 
     adapterName.KillSpaces();
 
-    Log(TEXT("Loading up D3D10 on %s..."), adapterName.Array());
+    Log(TEXT("Loading up D3D10 on %s (Adapter %u)..."), adapterName.Array(), adapterID+1);
 
     //D3D10_CREATE_DEVICE_DEBUG
     //D3D11_DRIVER_TYPE_REFERENCE, D3D11_DRIVER_TYPE_HARDWARE
     err = D3D10CreateDeviceAndSwapChain1(adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, createFlags, level, D3D10_1_SDK_VERSION, &swapDesc, &swap, &d3d);
     if(FAILED(err))
     {
+        Log (TEXT("D3D10CreateDeviceAndSwapChain1: Failed on %s: 0x%08x. Trying compatibility mode"), adapterName.Array(), err);
+
         bDisableCompatibilityMode = !bDisableCompatibilityMode;
         level = bDisableCompatibilityMode ? D3D10_FEATURE_LEVEL_10_1 : D3D10_FEATURE_LEVEL_9_3;
         err = D3D10CreateDeviceAndSwapChain1(adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, createFlags, level, D3D10_1_SDK_VERSION, &swapDesc, &swap, &d3d);
     }
 
     if(FAILED(err))
+    {
+        Log (TEXT("D3D10CreateDeviceAndSwapChain1: Failed on %s: 0x%08x"), adapterName.Array(), err);
         CrashError(TEXT("Could not initialize DirectX 10 on %s.  This error can happen for one of the following reasons:\r\n\r\n1.) Your GPU is not supported (DirectX 10 is required - note that many integrated laptop GPUs do not support DX10)\r\n2.) You're running Windows Vista without the \"Platform Update\"\r\n3.) Your video card drivers are out of date\r\n\r\nIf you are using a laptop with NVIDIA Optimus or AMD Switchable Graphics, make sure OBS is set to run on the high performance GPU in your driver settings."), adapterName.Array());
+    }
 
     adapter->Release();
 
@@ -365,6 +402,11 @@ void D3D10System::Init()
 Texture* D3D10System::CreateTextureFromSharedHandle(unsigned int width, unsigned int height, HANDLE handle)
 {
     return D3D10Texture::CreateFromSharedHandle(width, height, handle);
+}
+
+Texture* D3D10System::CreateSharedTexture(unsigned int width, unsigned int height)
+{
+    return D3D10Texture::CreateShared(width, height);
 }
 
 Texture* D3D10System::CreateTexture(unsigned int width, unsigned int height, GSColorFormat colorFormat, void *lpData, BOOL bBuildMipMaps, BOOL bStatic)

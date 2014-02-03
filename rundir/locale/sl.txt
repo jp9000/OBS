@@ -3,6 +3,7 @@ Preview="Predogled"
 Order="Vrstni red"
 Apply="Uporabi"
 Browse="Prebrskaj..."
+BuildingMP4Dialog="Kreiranje MP4"
 Cancel="Prekliči"
 ClearHotkey="Počisti"
 Close="Zapri"
@@ -25,6 +26,7 @@ MoveToBottom="Premakni na dno"
 MoveToTop="Premakni na vrh"
 MoveUp="Premakni gor"
 NameExists="'$1' že obstaja. Prosim vnesite drugo ime"
+None="Nobeno"
 OK="V redu"
 Plugins="Vtičniki..."
 Reconnecting="Vnovično vzpostavljanje povezave..."
@@ -35,6 +37,7 @@ Copy="Kopiraj"
 Scene="Scene"
 Settings="Nastavitve..."
 StreamReport="Poročilo o Streamu"
+MessageBoxWarningCaption="Opozorilo"
 
 BuildingMP4Dialog.Progress="Izdelovanje MP4, prosimo počakajte..."
 
@@ -71,23 +74,46 @@ MainMenu.Settings="&Nastavitve"
 
 MainMenu.Settings.AlwaysOnTop="&Vedno na Vrhu"
 MainMenu.Settings.FullscreenMode="&Celozaslonski Predogled"
+MainMenu.Settings.Projector="&Projektor"
 
 MainMenu.File.Exit="I&zhod"
 MainMenu.File.Save="&Shrani"
 
+MainMenu.Help.Contents="&Vsebina"
 MainMenu.Help.VisitWebsite="Obišči spletno stran"
 MainMenu.Help.CheckForUpdates="Preveri za &posodobitve"
 
+MainMenu.Settings.OpenConfigFolder="Odpri &Configuration mapo"
+MainMenu.Settings.OpenLogFolder="Odpri &Log mapo"
 
+MainWindow.PreviewDisabled="Predogled onemogočen"
 MainWindow.Dashboard="Nadzorna plošča"
 MainWindow.Exit="Izhod"
+MainWindow.Plugins="Vtičniki"
+MainWindow.SceneEditor="Urejanje Scene"
 MainWindow.Scenes="Prizori:"
+MainWindow.Sources="Viri:"
+MainWindow.StartRecording="Začni snemanje"
+MainWindow.StopRecording="Prenehaj snemati"
+MainWindow.StartStream="Začni oddajati"
+MainWindow.StopStream="Prenehaj oddajati"
+MainWindow.StopTest="Ustavi predogled"
+MainWindow.TestStream="Predogled oddajanja"
 
+Plugins.Configure="Konfiguracija"
 Plugins.Description="Opis:"
+Plugins.Filename="Ime datoteke:"
 
+Reconnecting.Retrying="Povezave ni bilo mogoče vzpostaviti. Vnovičen poskus"
 
+RenderView.EnableView="Omogoči pogled"
+RenderView.DisplayPanel="Omogoči nadzorno ploščo"
+RenderView.ViewModeScaleToFit="Povečaj, da ustreza načinu"
+RenderView.ViewMode1To1="način 1:1"
 
+Scene.MissingSources="Ni bilo naložiti celotne slike zaradi neveljavnih nastavitev ali manjkajočih dodatkov"
 
+Scene.Hotkey.AlreadyInUse="Ta tipka je že v uporabi."
 
 Capture.Start.FileStream.WarningCaption="Opozorilo"
 
@@ -97,9 +123,9 @@ Settings.General="Splošno"
 Settings.Video="Video"
 
 Settings.Advanced.Network="Omrežje"
+Settings.Advanced.UseCFR="Uporabi CFR"
 Settings.Advanced.UseMultithreadedOptimizations="Uporabi Večplastno Optimizacijo"
 Settings.Advanced.UseQSV="Uporabi Hitro Sinhronizacijo"
-Settings.Advanced.QSVUseVideoEncoderSettings="Uporabi lastne x264 nastavitve za QSV"
 Settings.Advanced.QSVUseVideoEncoderSettingsToolTip="Trenutno je podpora samo za keyint in bframes."
 Settings.Advanced.SceneBufferTime="Čas Medpomnenja Scene (milisekunde):"
 Settings.Advanced.SyncToVideoTime="Prisilna uporaba zvoka namizja za uporabo časovnih značk kot osnova za čas zvoka"
@@ -159,12 +185,24 @@ Settings.Publish.ChannelName="Ime Kanala:"
 
 
 
+Settings.Video.DisableAero="Onemogoči Aero:"
+Settings.Video.DisableAeroTooltip="Onemogočanje Aero-a je zelo priporočljivo, če uporabljate monitor za oddajanje videa."
+Settings.Video.Downscale="Pomanjšanje ločljivosti:"
+Settings.Video.DownscaleTooltip="Pomanjšanje lahko izboljša kakovost videa na račun ločljivosti."
+Settings.Video.Filter="Filter:"
 Settings.Video.FPS="FPS:"
+Settings.Video.Monitor="Monitor:"
+Settings.Video.Resolution="Osnovna ločljivost:"
 
+Settings.Video.Filter.Bilinear="Bilinear (najhitrejše)"
+Settings.Video.Filter.Bicubic="Bikubično ostrenje (dober detajl, 16 vzorcev)"
 
+Sources.BitmapSource="Slika"
 Sources.GameCaptureSource="Zajem Igre"
+Sources.GlobalSource="Globalni vir"
 Sources.SoftwareCaptureSource="Zajem Programa"
 Sources.TextSource="Besedilo"
+Sources.TransitionSource="Diaprojekcija slik"
 
 Sources.BitmapSource.Color="Barva:"
 
@@ -198,12 +236,20 @@ Sources.SoftwareCaptureSource.WindowCapture="Zajem Okna"
 
 Sources.TextSource.Align="Poravnaj:"
 Sources.TextSource.Bold="Krepko"
+Sources.TextSource.Center="Sredina"
 Sources.TextSource.EnterText="Vnesite besedilo"
+Sources.TextSource.FileNotFound="Datoteke '$1' ni bilo mogoče odpreti"
 Sources.TextSource.Font="Pisava:"
+Sources.TextSource.FontNotFound="Pisava '$1' ni mogoče najti"
+Sources.TextSource.FontSize="Velikost pisave:"
 Sources.TextSource.Italic="Ležeče"
 Sources.TextSource.Left="Levo"
 Sources.TextSource.Right="Desno"
 Sources.TextSource.Size="Velikost:"
+Sources.TextSource.Underline="Podčrtano"
+
+
+
 
 
 

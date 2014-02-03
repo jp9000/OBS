@@ -65,10 +65,10 @@
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</IntDir>
-    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\</IntDir>
-    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
@@ -111,7 +111,7 @@
       <PrecompiledHeaderFile>Main.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
-      <AdditionalOptions>/ignore:4049 /ignore:4217 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/ignore:4049 /ignore:4217 /ignore:4099 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>Avrt.lib;dwmapi.lib;comctl32.lib;dxgi.lib;dxguid.lib;d3d10_1.lib;d3dx10.lib;ws2_32.lib;Iphlpapi.lib;Winmm.lib;librtmp.lib;libmp3lame-static.lib;libfaac.lib;dsound.lib;obsapi.lib;shell32.lib;gdiplus.lib;mfplat.lib;Mfuuid.lib;Winhttp.lib;libx264.lib;UxTheme.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Version>
       </Version>
@@ -123,6 +123,8 @@
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
       <LargeAddressAware>true</LargeAddressAware>
+      <MinimumRequiredVersion>6.0</MinimumRequiredVersion>
+      <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>copy $(OutDir)$(ProjectName).exe rundir</Command>
@@ -157,6 +159,9 @@
       <StripPrivateSymbols>rundir\pdb64\stripped\$(TargetName).pdb</StripPrivateSymbols>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX64</TargetMachine>
+      <MinimumRequiredVersion>6.0</MinimumRequiredVersion>
+      <AdditionalOptions>/ignore:4049 /ignore:4217 /ignore:4099 %(AdditionalOptions)</AdditionalOptions>
+      <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>copy $(OutDir)$(ProjectName).exe rundir</Command>
@@ -193,6 +198,9 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
       <LargeAddressAware>true</LargeAddressAware>
+      <MinimumRequiredVersion>6.0</MinimumRequiredVersion>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>copy $(OutDir)$(ProjectName).exe rundir</Command>
@@ -230,6 +238,9 @@
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX64</TargetMachine>
+      <MinimumRequiredVersion>6.0</MinimumRequiredVersion>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>copy $(OutDir)$(ProjectName).exe rundir</Command>
@@ -253,6 +264,7 @@
     <ClCompile Include="Source\DesktopImageSource.cpp" />
     <ClCompile Include="Source\Encoder_AAC.cpp" />
     <ClCompile Include="Source\Encoder_MP3.cpp" />
+    <ClCompile Include="Source\Encoder_NVENC.cpp" />
     <ClCompile Include="Source\Encoder_QSV.cpp" />
     <ClCompile Include="Source\Encoder_x264.cpp" />
     <ClCompile Include="Source\FLVFileStream.cpp" />

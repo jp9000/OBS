@@ -98,7 +98,7 @@ struct Encoder
         : use_cbr(init_req->use_cbr), first_frame(true), frame_time_ms(static_cast<unsigned>(1./init_req->fps*1000)), exit_code(0)
         , using_d3d11(false), session(), encoder(session), event_prefix(event_prefix), log_file(log_file)
     {
-        params.Init(init_req->fps, init_req->keyint, init_req->bframes, init_req->width, init_req->height, init_req->max_bitrate, init_req->buffer_size, init_req->use_cbr);
+        params.Init(init_req->fps, init_req->keyint, init_req->bframes, init_req->width, init_req->height, init_req->max_bitrate, init_req->buffer_size, init_req->use_cbr, init_req->main_profile);
         params.SetVideoSignalInfo(init_req->full_range, init_req->primaries, init_req->transfer, init_req->matrix);
     }
 
@@ -167,6 +167,23 @@ struct Encoder
         using namespace std;
         Parameters query = params;
         encoder.GetVideoParam(query);
+
+        switch (query->mfx.CodecProfile)
+        {
+        case MFX_PROFILE_AVC_BASELINE:
+        case MFX_PROFILE_AVC_CONSTRAINED_HIGH:
+        case MFX_PROFILE_AVC_CONSTRAINED_BASELINE:
+            init_res->bframe_delay = 0;
+
+        default:
+            init_res->bframe_delay = 1;
+        }
+
+        init_res->bframe_delay = min(init_res->bframe_delay,
+            min(query->mfx.GopRefDist > 1 ? (query->mfx.GopRefDist - 1) : 0,
+                query->mfx.GopPicSize > 2 ? (query->mfx.GopPicSize - 2) : 0));
+
+        init_res->frame_ticks = (uint64_t)((double)query->mfx.FrameInfo.FrameRateExtD / (double)query->mfx.FrameInfo.FrameRateExtN * 90000.);
 
         unsigned num_bitstreams = max(6, req.NumFrameSuggested + query->AsyncDepth),
                  num_surf = num_bitstreams * (using_d3d11 ? 2 : 1),
@@ -288,6 +305,7 @@ struct Encoder
             info.data_offset = task.bs.DataOffset;
             info.pic_struct = task.bs.PicStruct;
             info.frame_type = task.bs.FrameType;
+            info.decode_time_stamp = task.bs.DecodeTimeStamp;
 
             {
                 auto lock = lock_mutex(filled_bitstream);

@@ -19,6 +19,8 @@
 
 #include "Main.h"
 
+#include <memory>
+
 #include <gdiplus.h>
 
 
@@ -71,9 +73,12 @@ class TextOutputSource : public ImageSource
 
     Vect2       baseSize;
     SIZE        textureSize;
+    bool        bUsePointFiltering;
 
     bool        bMonitoringFileChanges;
     OSFileChangeData *fileChangeMonitor;
+
+    std::unique_ptr<SamplerState> sampler;
 
     bool        bDoUpdate;
 
@@ -96,7 +101,7 @@ class TextOutputSource : public ImageSource
         UINT tmpOpacity = (UINT)((((float)opacity * 0.01f) * ((float)outlineOpacity * 0.01f)) * 100.0f);
         Gdiplus::Pen pen(Gdiplus::Color(GetAlphaVal(tmpOpacity) | (outlineColor&0xFFFFFF)), outlineSize);
         pen.SetLineJoin(Gdiplus::LineJoinRound);
-        
+
         // Widen the outline
         // It seems that Widen has a huge performance impact on DrawPath call, screw it! We're talking about freaking seconds in some extreme cases...
         //outlinePath->Widen(&pen);
@@ -596,6 +601,17 @@ public:
                 }
             }
 
+            if(bUsePointFiltering) {
+                if (!sampler) {
+                    SamplerInfo samplerinfo;
+                    samplerinfo.filter = GS_FILTER_POINT;
+                    std::unique_ptr<SamplerState> new_sampler(CreateSamplerState(samplerinfo));
+                    sampler = std::move(new_sampler);
+                }
+
+                LoadSamplerState(sampler.get(), 0);
+            }
+
             DWORD alpha = DWORD(double(globalOpacity)*2.55);
             DWORD outputColor = (alpha << 24) | 0xFFFFFF;
 
@@ -624,6 +640,9 @@ public:
             }
             else
                 DrawSprite(texture, outputColor, pos.x, pos.y, pos.x+newSize.x, pos.y+newSize.y);
+
+            if (bUsePointFiltering)
+                LoadSamplerState(NULL, 0);
 
             if(bUseExtents && !bWrap)
                 SetScissorRect(NULL);
@@ -656,6 +675,7 @@ public:
         strFile     = data->GetString(TEXT("file"));
         strText     = data->GetString(TEXT("text"));
         mode        = data->GetInt(TEXT("mode"), 0);
+        bUsePointFiltering = data->GetInt(TEXT("pointFiltering"), 0) != 0;
 
         baseSize.x  = data->GetFloat(TEXT("baseSizeCX"), 100);
         baseSize.y  = data->GetFloat(TEXT("baseSizeCY"), 100);
@@ -878,6 +898,9 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                 SendMessage(GetDlgItem(hwnd, IDC_UNDERLINE), BM_SETCHECK, data->GetInt(TEXT("underline"), 0) ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 SendMessage(GetDlgItem(hwnd, IDC_VERTICALSCRIPT), BM_SETCHECK, data->GetInt(TEXT("vertical"), 0) ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                BOOL bUsePointFilter = data->GetInt(TEXT("pointFiltering"), 0) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_POINTFILTERING), BM_SETCHECK, bUsePointFilter ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 //-----------------------------------------
 
@@ -1238,6 +1261,8 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                         BOOL bItalic = SendMessage(GetDlgItem(hwnd, IDC_ITALIC), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         BOOL bVertical = SendMessage(GetDlgItem(hwnd, IDC_VERTICALSCRIPT), BM_GETCHECK, 0, 0) == BST_CHECKED;
 
+                        BOOL pointFiltering = SendMessage(GetDlgItem(hwnd, IDC_POINTFILTERING), BM_GETCHECK, 0, 0) == BST_CHECKED;
+
                         String strFontDisplayName = GetEditText(GetDlgItem(hwnd, IDC_FONT));
                         if(strFont.IsEmpty())
                         {
@@ -1359,6 +1384,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                         data->SetInt(TEXT("wrap"), SendMessage(GetDlgItem(hwnd, IDC_WRAP), BM_GETCHECK, 0, 0) == BST_CHECKED);
                         data->SetInt(TEXT("scrollMode"), SendMessage(GetDlgItem(hwnd, IDC_SCROLLMODE), BM_GETCHECK, 0, 0) == BST_CHECKED);
                         data->SetInt(TEXT("underline"), SendMessage(GetDlgItem(hwnd, IDC_UNDERLINE), BM_GETCHECK, 0, 0) == BST_CHECKED);
+                        data->SetInt(TEXT("pointFiltering"), pointFiltering);
 
                         data->SetInt(TEXT("backgroundColor"), CCGetColor(GetDlgItem(hwnd, IDC_BACKGROUNDCOLOR)));
                         data->SetInt(TEXT("backgroundOpacity"), (UINT)SendMessage(GetDlgItem(hwnd, IDC_BACKGROUNDOPACITY), UDM_GETPOS32, 0, 0));

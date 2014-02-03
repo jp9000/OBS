@@ -129,8 +129,10 @@ void OBS::SendFrame(VideoSegment &curSegment, QWORD firstFrameTime)
 {
     if(!bSentHeaders)
     {
-        network->BeginPublishing();
-        bSentHeaders = true;
+        if(network && curSegment.packets[0].data[0] == 0x17) {
+            network->BeginPublishing();
+            bSentHeaders = true;
+        }
     }
 
     OSEnterMutex(hSoundDataMutex);
@@ -154,7 +156,8 @@ void OBS::SendFrame(VideoSegment &curSegment, QWORD firstFrameTime)
                     {
                         //Log(TEXT("a:%u, %llu"), audioTimestamp, frameInfo.firstFrameTime+audioTimestamp);
 
-                        network->SendPacket(audioData.Array(), audioData.Num(), audioTimestamp, PacketType_Audio);
+                        if(network)
+                            network->SendPacket(audioData.Array(), audioData.Num(), audioTimestamp, PacketType_Audio);
                         if(fileStream)
                             fileStream->AddPacket(audioData.Array(), audioData.Num(), audioTimestamp, PacketType_Audio);
 
@@ -183,7 +186,8 @@ void OBS::SendFrame(VideoSegment &curSegment, QWORD firstFrameTime)
 
         //Log(TEXT("v:%u, %llu"), curSegment.timestamp, frameInfo.firstFrameTime+curSegment.timestamp);
 
-        network->SendPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, packet.type);
+        if(network)
+            network->SendPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, packet.type);
         if(fileStream)
             fileStream->AddPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, packet.type);
     }
@@ -716,7 +720,7 @@ void OBS::MainCaptureLoop()
             }
         }
 
-        if(!bPushToTalkDown && pushToTalkTimeLeft > 0)
+        if(!pushToTalkDown && pushToTalkTimeLeft > 0)
         {
             pushToTalkTimeLeft -= int(frameDelta);
             OSDebugOut(TEXT("time left: %d\r\n"), pushToTalkTimeLeft);
@@ -762,8 +766,12 @@ void OBS::MainCaptureLoop()
 
         //------------------------------------
 
-        QWORD curBytesSent = network->GetCurrentSentBytes();
-        curFramesDropped = network->NumDroppedFrames();
+        QWORD curBytesSent = 0;
+        
+        if(network) {
+            curBytesSent = network->GetCurrentSentBytes();
+            curFramesDropped = network->NumDroppedFrames();
+        }
 
         bpsTime += fSeconds;
         if(bpsTime > 1.0f)
@@ -796,7 +804,7 @@ void OBS::MainCaptureLoop()
 
         fpsCounter++;
 
-        curStrain = network->GetPacketStrain();
+        if(network) curStrain = network->GetPacketStrain();
 
         EnableBlending(TRUE);
         BlendFunction(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA);
@@ -1148,7 +1156,7 @@ void OBS::MainCaptureLoop()
             else
                 curYUVTexture++;
 
-            if (bCongestionControl && bDynamicBitrateSupported && !bTestStream)
+            if (bCongestionControl && bDynamicBitrateSupported && !bTestStream && totalStreamTime > 15000)
             {
                 if (curStrain > 25)
                 {
@@ -1186,6 +1194,9 @@ void OBS::MainCaptureLoop()
                         else
                             App->SetStreamInfo(adjustmentStreamId, FormattedString(TEXT("Congestion clearing, raising bitrate to %d kbps"), currentBitRate).Array());*/
 
+                        App->RemoveStreamInfo(adjustmentStreamId);
+                        adjustmentStreamId = 0;
+
                         bUpdateBPS = true;
 
                         lastAdjustmentTime = renderStartTimeMS;
@@ -1215,7 +1226,7 @@ void OBS::MainCaptureLoop()
         GetD3D()->Flush();
         profileOut;
         profileOut;
-	profileOut; //frame
+        profileOut; //frame
 
         //------------------------------------
         // frame sync

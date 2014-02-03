@@ -86,6 +86,8 @@ RTMPPublisher::RTMPPublisher()
     if(!hDataMutex)
         CrashError(TEXT("RTMPPublisher: Could not create mutex"));
 
+    hRTMPMutex = OSCreateMutex();
+
     //------------------------------------------
 
     bframeDropThreshold = AppConfig->GetInt(TEXT("Publish"), TEXT("BFrameDropThreshold"), 400);
@@ -122,10 +124,8 @@ RTMPPublisher::RTMPPublisher()
     strRTMPErrors.Clear();
 }
 
-bool RTMPPublisher::Init(RTMP *rtmpIn, UINT tcpBufferSize)
+bool RTMPPublisher::Init(UINT tcpBufferSize)
 {
-    rtmp = rtmpIn;
-
     //------------------------------------------
 
     //Log(TEXT("Using Send Buffer Size: %u"), sendBufferSize);
@@ -192,6 +192,18 @@ RTMPPublisher::~RTMPPublisher()
     //we're in the middle of connecting! wait for that to happen to avoid all manner of race conditions
     if (hConnectionThread)
     {
+        //the connect thread could be stalled in a blocking call, kill the socket to ensure it wakes up
+        if (WaitForSingleObject(hConnectionThread, 0) == WAIT_TIMEOUT)
+        {
+            OSEnterMutex(hRTMPMutex);
+            if (rtmp && rtmp->m_sb.sb_socket != -1)
+            {
+                closesocket(rtmp->m_sb.sb_socket);
+                rtmp->m_sb.sb_socket = -1;
+            }
+            OSLeaveMutex(hRTMPMutex);
+        }
+
         WaitForSingleObject(hConnectionThread, INFINITE);
         OSCloseThread(hConnectionThread);
     }
@@ -330,8 +342,8 @@ RTMPPublisher::~RTMPPublisher()
         queuedPackets[i].data.Clear();
     queuedPackets.Clear();
 
-    double dBFrameDropPercentage = double(numBFramesDumped)/NumTotalVideoFrames()*100.0;
-    double dPFrameDropPercentage = double(numPFramesDumped)/NumTotalVideoFrames()*100.0;
+    double dBFrameDropPercentage = double(numBFramesDumped)/max(1, NumTotalVideoFrames())*100.0;
+    double dPFrameDropPercentage = double(numPFramesDumped)/max(1, NumTotalVideoFrames())*100.0;
 
     if (totalSendCount)
         Log(TEXT("Average send payload: %d bytes, average send interval: %d ms"), (DWORD)(totalSendBytes / totalSendCount), totalSendPeriod / totalSendCount);
@@ -791,7 +803,6 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     strPlayPath.KillSpaces();
 
     LPSTR lpAnsiURL = NULL, lpAnsiPlaypath = NULL;
-    RTMP *rtmp = NULL;
 
     //--------------------------------
     // unbelievably disgusting hack for elgato devices
@@ -869,10 +880,15 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
 
     //------------------------------------------------------
 
-    rtmp = RTMP_Alloc();
+    OSEnterMutex(publisher->hRTMPMutex);
+    publisher->rtmp = RTMP_Alloc();
+
+    RTMP *rtmp = publisher->rtmp;
     RTMP_Init(rtmp);
 
     RTMP_LogSetCallback(librtmpErrorCallback);
+
+    OSLeaveMutex(publisher->hRTMPMutex);
 
     //RTMP_LogSetLevel(RTMP_LOGERROR);
 
@@ -980,11 +996,14 @@ end:
 
     if(!bSuccess)
     {
+        OSEnterMutex(publisher->hRTMPMutex);
         if(rtmp)
         {
             RTMP_Close(rtmp);
             RTMP_Free(rtmp);
+            publisher->rtmp = NULL;
         }
+        OSLeaveMutex(publisher->hRTMPMutex);
 
         if(failReason.IsValid())
             App->SetStreamReport(failReason);
@@ -998,7 +1017,7 @@ end:
     }
     else
     {
-        publisher->Init(rtmp, tcpBufferSize);
+        publisher->Init(tcpBufferSize);
         publisher->bConnected = true;
         publisher->bConnecting = false;
     }
@@ -1108,7 +1127,10 @@ void RTMPPublisher::SocketLoop()
         delayTime = 0;
     }
 
-    SetupSendBacklogEvent ();
+    if (AppConfig->GetInt (TEXT("Publish"), TEXT("DisableSendWindowOptimization"), 0) == 0)
+        SetupSendBacklogEvent ();
+    else
+        Log (TEXT("RTMPPublisher::SocketLoop: Send window optimization disabled by user."));
 
     HANDLE hObjects[3];
 

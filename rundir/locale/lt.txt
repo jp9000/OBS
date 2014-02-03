@@ -146,7 +146,6 @@ Settings.Advanced.PadCBRToolTip="Pagal nutylėjimą įjungta.\n\rJei nenumatote 
 Settings.Advanced.UseCFR="Naudoti CFR"
 Settings.Advanced.UseMultithreadedOptimizations="Naudokite daugelio sriegiais Optimizaciju"
 Settings.Advanced.UseQSV="Naudoti Quick Sync"
-Settings.Advanced.QSVUseVideoEncoderSettings="Naudoti pasirinktinius „x264“ nustatymus QSV"
 Settings.Advanced.QSVUseVideoEncoderSettingsToolTip="Šiuo metu palaikoma keyint ir bframes."
 Settings.Advanced.SceneBufferTime="Scenos buferio laikas (milisekundės):"
 Settings.Advanced.VideoEncoderCPUTradeoff="x264 CPU iš anksto:"
@@ -330,6 +329,9 @@ Stats.TotalFramesRendered="Viso surenderinta kadrų:"
 Stats.TotalBytesTransferred="Viso persiųsta baitų:"
 Stats.LateFrames="Vėluojančių kadrų skaičius:"
 Stats.SkippedFrames="Praleistų kadrų skaičius dėl enkoderio atsilikimo:"
+
+
+
 
 Updater.DownloadNow="Norėtumėte atsisiųsti juos dabar?"
 Updater.NewUpdates="Šie atnaujinimai yra prieinami:\r\n\r\n"

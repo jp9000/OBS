@@ -1,5 +1,9 @@
 Cancel="Avbryt"
 OK="OK"
 
+Plugin.Name="Per-scene volum plugin"
+Plugin.Description="Aktiverer per-scene volum sporing."
 
+Config.Caption="Per-scene volum konfigurasjon"
+Config.Enable="Aktiver per-scene volum sporing"
 

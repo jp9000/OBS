@@ -215,9 +215,12 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 hwndTemp = GetDlgItem(hwnd, IDC_AUDIOFORMAT);
                 //SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("48khz mono"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("44.1khz stereo"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("48khz stereo"));
 
-                LoadSettingComboInt(hwndTemp, TEXT("Audio Encoding"), TEXT("Format"), 1, 1);
+                BOOL isAAC = SendMessage(GetDlgItem(hwnd, IDC_AUDIOCODEC), CB_GETCURSEL, 0, 0) == 1;
+                if (isAAC)
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("48khz stereo"));
+
+                LoadSettingComboInt(hwndTemp, TEXT("Audio Encoding"), TEXT("Format"), 1, isAAC ? 1 : 0);
 
                 //--------------------------------------------
 
@@ -233,11 +236,27 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 switch(LOWORD(wParam))
                 {
                     case IDC_QUALITY:
-                    case IDC_AUDIOCODEC:
                     case IDC_AUDIOBITRATE:
                     case IDC_AUDIOFORMAT:
                         if(HIWORD(wParam) == CBN_SELCHANGE)
                             bDataChanged = true;
+                        break;
+
+                    case IDC_AUDIOCODEC:
+                        if(HIWORD(wParam) == CBN_SELCHANGE)
+                        {
+                            HWND hwndTemp = GetDlgItem(hwnd, IDC_AUDIOFORMAT);
+                            SendMessage(hwndTemp, CB_RESETCONTENT, 0, 0);
+                            SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("44.1khz stereo"));
+
+                            BOOL isAAC = SendMessage(GetDlgItem(hwnd, IDC_AUDIOCODEC), CB_GETCURSEL, 0, 0) == 1;
+                            if (isAAC)
+                                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("48khz stereo"));
+
+                            SendMessage(hwndTemp, CB_SETCURSEL, isAAC ? 1 : 0, 0);
+
+                            bDataChanged = true;
+                        }
                         break;
 
                     case IDC_MAXBITRATE:

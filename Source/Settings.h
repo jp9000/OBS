@@ -176,9 +176,9 @@ private:
 
     //-----------------------------------------------------------------------
     // Private members
-    bool bDisplayConnectedOnly;
+    bool bDisplayConnectedOnly, useInputDevices;
 
-    void RefreshDevices();
+    void RefreshDevices(AudioDeviceType desktopDeviceType);
 
 private:
     AudioDeviceStorage * storage;
@@ -210,6 +210,7 @@ public:
 
 class SettingsAdvanced : public SettingsPane
 {
+    bool bHasQSV, bHasNVENC;
     //-----------------------------------------------------------------------
     // Constructor/destructor
 

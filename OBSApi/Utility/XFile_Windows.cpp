@@ -297,7 +297,7 @@ String GetPathDirectory(CTSTR lpPath)
 
     String newPath = lpPath;
 
-    newPath[nDirectoryEnd] = 0;
+    newPath.SetLength(nDirectoryEnd);
     return newPath;
 }
 

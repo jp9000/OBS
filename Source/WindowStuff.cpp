@@ -752,7 +752,6 @@ void OBS::TrackModifyListbox(HWND hwnd, int ret)
                         App->GetGlobalSourceNames(sourceNames);
 
                         CTSTR lpName = sourceNames[ret-ID_LISTBOX_GLOBALSOURCE];
-                        if(App->bRunning) App->GetGlobalSource(lpName)->GlobalSourceEnterScene();
 
                         XElement *data = newSourceElement->CreateElement(TEXT("data"));
                         data->SetString(TEXT("name"), lpName);
@@ -1152,20 +1151,9 @@ void OBS::DeleteItems()
 
                     if(className == "GlobalSource") {
                         String globalSourceName = source->GetElement(TEXT("data"))->GetString(TEXT("name"));
-
-                        for(UINT j=0; j<scene->sceneItems.Num(); j++) {
-                            XElement *compareSource = scene->sceneItems[j]->GetElement()->GetElement(TEXT("data"));
-                            String globalSourceCompareName = compareSource->GetString(TEXT("name"));
-                            SceneItem *compareItem = scene->sceneItems[j];
-                            if(globalSourceName == globalSourceCompareName && item != compareItem) {
-                                globalSourcesRemain = true;
-                            }
-                        }
-
-                        if(!globalSourcesRemain) {
-                            App->GetGlobalSource(globalSourceName)->GlobalSourceLeaveScene();
-                        }
+                        App->GetGlobalSource(globalSourceName)->GlobalSourceLeaveScene();
                     }
+
                     App->scene->RemoveImageSource(item);
                 }
             }
@@ -2329,6 +2317,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     App->scenesConfig.Save();
                     break;
 
+                case ID_TOGGLERECORDING:
+                    App->ToggleRecording();
+                    break;
+
                 case ID_FILE_EXIT:
                 case ID_EXIT:
                     PostQuitMessage(0);
@@ -2370,9 +2362,9 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     OSCloseThread(OSCreateThread((XTHREAD)CheckUpdateThread, (LPVOID)1));
                     break;
 
-                case ID_DASHBOARD:
+                /*case ID_DASHBOARD:
                     ShellExecute(NULL, TEXT("open"), App->strDashboard, 0, 0, SW_SHOWNORMAL);
-                    break;
+                    break;*/
 
                 case ID_SETTINGS_OPENCONFIGFOLDER:
                     {

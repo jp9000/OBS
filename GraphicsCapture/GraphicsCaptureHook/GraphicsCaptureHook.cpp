@@ -20,6 +20,7 @@
 #include "GraphicsCaptureHook.h"
 
 #include <time.h>
+#include <psapi.h>
 
 
 HANDLE hSignalRestart=NULL, hSignalEnd=NULL;
@@ -36,6 +37,7 @@ bool bTargetAcquired = false;
 HANDLE hFileMap = NULL;
 LPBYTE lpSharedMemory = NULL;
 UINT sharedMemoryIDCounter = 0;
+char processName[MAX_PATH];
 
 HANDLE hInfoFileMap = NULL;
 CaptureInfo *infoMem = NULL;
@@ -60,7 +62,7 @@ string CurrentDateTimeString()
     time_t     now = time(0);
     struct tm  tstruct;
     char       buf[80];
-    tstruct = *localtime(&now);
+    localtime_s(&tstruct, &now);
     strftime(buf, sizeof(buf), "%Y-%m-%d, %X: ", &tstruct);
     return string(buf);
 }
@@ -70,7 +72,7 @@ string CurrentTimeString()
     time_t     now = time(0);
     struct tm  tstruct;
     char       buf[80];
-    tstruct = *localtime(&now);
+    localtime_s(&tstruct, &now);
     strftime(buf, sizeof(buf), "%X: ", &tstruct);
     return string(buf);
 }
@@ -424,6 +426,10 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
     hSignalEnd      = GetEvent(strEndEvent.str().c_str());
     hSignalReady    = GetEvent(strReadyEvent.str().c_str());
     hSignalExit     = GetEvent(strExitEvent.str().c_str());
+
+    memset(processName, 0, MAX_PATH);
+    GetModuleBaseNameA(GetCurrentProcess(), NULL, processName, MAX_PATH);
+    logOutput << CurrentTimeString() << "CaptureThread: attached to process " << processName << endl;
 
     DWORD bla;
     HANDLE hWindowThread = CreateThread(NULL, 0, DummyWindowThread, NULL, 0, &bla);

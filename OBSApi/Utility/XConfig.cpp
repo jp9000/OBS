@@ -342,7 +342,8 @@ void  XElement::RemoveItem(CTSTR lpName)
 
 XElement* XElement::GetElement(CTSTR lpName) const
 {
-    assert(lpName);
+    if (!lpName)
+        return NULL;
 
     for(DWORD i=0; i<SubItems.Num(); i++)
     {

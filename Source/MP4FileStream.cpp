@@ -74,7 +74,7 @@ class MP4FileStream : public VideoFileStream
 
     List<UINT>      IFrameIDs;
 
-    DWORD           lastVideoTimestamp;
+    DWORD           lastVideoTimestamp, initialTimeStamp;
 
     bool            bStreamOpened;
     bool            bMP3;
@@ -146,6 +146,8 @@ public:
     bool Init(CTSTR lpFile)
     {
         strFile = lpFile;
+
+        initialTimeStamp = -1;
 
         if(!fileOut.Open(lpFile, XFILE_CREATEALWAYS, 1024*1024))
             return false;
@@ -809,6 +811,12 @@ public:
     {
         UINT64 offset = fileOut.GetPos();
 
+        if(initialTimeStamp == -1 && data[0] != 0x17)
+            return;
+        else if(initialTimeStamp == -1 && data[0] == 0x17) {
+            initialTimeStamp = timestamp;
+        }
+
         if(type == PacketType_Audio)
         {
             UINT copySize;
@@ -827,7 +835,7 @@ public:
             MP4AudioFrameInfo audioFrame;
             audioFrame.fileOffset   = offset;
             audioFrame.size         = copySize;
-            audioFrame.timestamp    = timestamp;
+            audioFrame.timestamp    = timestamp-initialTimeStamp;
 
             GetChunkInfo<MP4AudioFrameInfo>(audioFrame, audioFrames.Num(), audioChunks, audioSampleToChunk,
                                             curAudioChunkOffset, connectedAudioSampleOffset, numAudioSamples);
@@ -863,17 +871,20 @@ public:
                     DataPacket sei;
                     App->GetVideoEncoder()->GetSEI(sei);
 
-                    fileOut.Serialize(sei.lpPacket, sei.size);
-                    totalCopied += sei.size;
+                    if (sei.size > 0)
+                    {
+                        fileOut.Serialize(sei.lpPacket, sei.size);
+                        totalCopied += sei.size;
 
-                    bSentSEI = true;
+                        bSentSEI = true;
+                    }
                 }
 
                 totalCopied += size-5;
                 fileOut.Serialize(data+5, size-5);
             }
 
-            if(!videoFrames.Num() || timestamp != lastVideoTimestamp)
+            if(!videoFrames.Num() || (timestamp-initialTimeStamp) != lastVideoTimestamp)
             {
                 INT timeOffset = 0;
                 mcpy(((BYTE*)&timeOffset)+1, data+2, 3);
@@ -887,7 +898,7 @@ public:
                 MP4VideoFrameInfo frameInfo;
                 frameInfo.fileOffset        = offset;
                 frameInfo.size              = totalCopied;
-                frameInfo.timestamp         = timestamp;
+                frameInfo.timestamp         = timestamp-initialTimeStamp;
                 frameInfo.compositionOffset = timeOffset;
 
                 GetChunkInfo<MP4VideoFrameInfo>(frameInfo, videoFrames.Num(), videoChunks, videoSampleToChunk,
@@ -901,7 +912,7 @@ public:
             else
                 videoFrames.Last().size += totalCopied;
 
-            lastVideoTimestamp = timestamp;
+            lastVideoTimestamp = timestamp-initialTimeStamp;
         }
     }
 };

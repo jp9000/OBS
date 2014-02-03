@@ -146,7 +146,6 @@ Settings.Advanced.PadCBRToolTip="Типово дозволено для CBR.\n\r
 Settings.Advanced.UseCFR="Використовувати CFR (постійну частоту кадрів)"
 Settings.Advanced.UseMultithreadedOptimizations="Використовувати багатопотокову оптимізацію"
 Settings.Advanced.UseQSV="Використовувати швидку синхронізацію"
-Settings.Advanced.QSVUseVideoEncoderSettings="Використовувати власні налаштування x264 для QSV"
 Settings.Advanced.QSVUseVideoEncoderSettingsToolTip="На даний час підтримуються лише keyint та bframes."
 Settings.Advanced.SceneBufferTime="Час буферизації сцени (мс):"
 Settings.Advanced.SyncToVideoTime="Примусово синхронізувати звук системи з часовими мітками відео"
@@ -337,6 +336,9 @@ Stats.TotalFramesRendered="Всього кадрів відтворено:"
 Stats.TotalBytesTransferred="Всього передано байтів:"
 Stats.LateFrames="Кількість запізнених кадрів:"
 Stats.SkippedFrames="Кількість пропущених кадрів через затримку кодувальника:"
+
+
+
 
 Updater.DownloadNow="Бажаєте завантажити їх зараз?"
 Updater.NewUpdates="Наступні оновлення доступні:\r\n\r\n"

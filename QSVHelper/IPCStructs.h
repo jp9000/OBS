@@ -30,7 +30,7 @@ struct init_request
     enum { MODE_QUERY, MODE_ENCODE } mode;
     uint32_t obs_process_id;
     int32_t fps, keyint, bframes, width, height, max_bitrate, buffer_size;
-    bool use_cbr;
+    bool use_cbr, main_profile;
     int32_t full_range, matrix, primaries, transfer;
     bool use_custom_impl;
     mfxVersion custom_version;
@@ -45,6 +45,9 @@ struct init_response
             actual_impl;
 
     bool using_custom_impl;
+
+    uint16_t bframe_delay;
+    uint64_t frame_ticks;
 
     uint16_t bitstream_num,
              frame_num;
@@ -72,6 +75,7 @@ struct queued_frame
 struct bitstream_info
 {
     mfxU64 time_stamp;
+    mfxI64 decode_time_stamp;
     mfxU32 data_offset, data_length;
     mfxU16 pic_struct, frame_type;
 };

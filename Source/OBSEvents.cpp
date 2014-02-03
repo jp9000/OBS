@@ -21,6 +21,9 @@
 
 void OBS::ReportStartStreamTrigger()
 {
+    if (bShuttingDown)
+        return;
+
     for (UINT i=0; i<plugins.Num(); i++)
     {
         OBS_CALLBACK callback = plugins[i].startStreamCallback;
@@ -31,6 +34,9 @@ void OBS::ReportStartStreamTrigger()
 }
 void OBS::ReportStopStreamTrigger()
 {
+    if (bShuttingDown)
+        return;
+
     for (UINT i=0; i<plugins.Num(); i++)
     {
         OBS_CALLBACK callback = plugins[i].stopStreamCallback;
@@ -40,24 +46,40 @@ void OBS::ReportStopStreamTrigger()
     }
 }
 
+void OBS::ReportOBSStatus(bool running, bool streaming, bool recording, bool previewing, bool reconnecting)
+{
+    if (bShuttingDown)
+        return;
+
+    for (UINT i = 0; i < plugins.Num(); i++)
+        if (plugins[i].statusCallback)
+            plugins[i].statusCallback(running, streaming, recording, previewing, reconnecting);
+}
+
 void OBS::ReportStreamStatus(bool streaming, bool previewOnly, 
                                UINT bytesPerSec, double strain, 
                                UINT totalStreamtime, UINT numTotalFrames,
                                UINT numDroppedFrames, UINT fps)
 {
+    if (bShuttingDown)
+            return;
+
     for (UINT i=0; i<plugins.Num(); i++)
     {
         OBS_STREAM_STATUS_CALLBACK callback = plugins[i].streamStatusCallback;
 
         if (callback)
             (*callback)(streaming, previewOnly, bytesPerSec, 
-                        strain, totalStreamTime, numTotalFrames, 
+                        strain, totalStreamtime, numTotalFrames,
                         numDroppedFrames, fps);
     }
 }
 
 void OBS::ReportSwitchScenes(CTSTR scene)
 {
+    if (bShuttingDown)
+            return;
+
     for (UINT i=0; i<plugins.Num(); i++)
     {
         OBS_SCENE_SWITCH_CALLBACK callback = plugins[i].sceneSwitchCallback;
@@ -69,6 +91,9 @@ void OBS::ReportSwitchScenes(CTSTR scene)
 
 void OBS::ReportScenesChanged()
 {
+    if (bShuttingDown)
+            return;
+
     for (UINT i=0; i<plugins.Num(); i++)
     {
         OBS_CALLBACK callback = plugins[i].scenesChangedCallback;
@@ -80,6 +105,9 @@ void OBS::ReportScenesChanged()
 
 void OBS::ReportSourceOrderChanged()
 {
+    if (bShuttingDown)
+            return;
+
     for (UINT i=0; i<plugins.Num(); i++)
     {
         OBS_CALLBACK callback = plugins[i].sourceOrderChangedCallback;
@@ -91,6 +119,9 @@ void OBS::ReportSourceOrderChanged()
 
 void OBS::ReportSourceChanged(CTSTR sourceName, XElement* source)
 {
+    if (bShuttingDown)
+            return;
+
     for (UINT i=0; i<plugins.Num(); i++)
     {
         OBS_SOURCE_CHANGED_CALLBACK callback = plugins[i].sourceChangedCallback;
@@ -102,6 +133,9 @@ void OBS::ReportSourceChanged(CTSTR sourceName, XElement* source)
 
 void OBS::ReportSourcesAddedOrRemoved()
 {
+    if (bShuttingDown)
+            return;
+
     for (UINT i=0; i<plugins.Num(); i++)
     {
         OBS_CALLBACK callback = plugins[i].sourcesAddedOrRemovedCallback;
@@ -113,6 +147,9 @@ void OBS::ReportSourcesAddedOrRemoved()
 
 void OBS::ReportMicVolumeChange(float level, bool muted, bool finalValue)
 {
+    if (bShuttingDown)
+            return;
+
     for (UINT i=0; i<plugins.Num(); i++)
     {
         OBS_VOLUME_CHANGED_CALLBACK callback = plugins[i].micVolumeChangeCallback;
@@ -124,6 +161,9 @@ void OBS::ReportMicVolumeChange(float level, bool muted, bool finalValue)
 
 void OBS::ReportDesktopVolumeChange(float level, bool muted, bool finalValue)
 {
+    if (bShuttingDown)
+            return;
+
     for (UINT i=0; i<plugins.Num(); i++)
     {
         OBS_VOLUME_CHANGED_CALLBACK callback = plugins[i].desktopVolumeChangeCallback;

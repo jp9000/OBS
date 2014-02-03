@@ -7,6 +7,7 @@ services : {
       "EU: Amsterdam, NL"                    : rtmp://live-ams.justin.tv/app
       "EU: Frankfurt, DE"                    : rtmp://live-fra.justin.tv/app
       "EU: London, UK"                       : rtmp://live-lhr.justin.tv/app
+      "EU: Prague, CZ"                       : rtmp://live-prg.justin.tv/app
       "EU: Stockholm, SE"                    : rtmp://live-arn.justin.tv/app
       "US Central: Dallas, TX"               : rtmp://live-dfw.justin.tv/app
       "US East: Ashburn, VA"                 : rtmp://live-iad.justin.tv/app
@@ -16,7 +17,8 @@ services : {
       "US West: Los Angeles, CA"             : rtmp://live-lax.justin.tv/app
     }
     recommended : {
-      "keyint"      : 2000
+      "keyint" : 2000
+      "profile" : "main"
       "ratecontrol" : "cbr"
       "max bitrate" : 3500
       "max audio bitrate aac" : 160
@@ -52,14 +54,6 @@ services : {
       "Primary" :    rtmp://publish.dailymotion.com/publish-dm
     }
   }
-  Hashd.tv : {
-    id : 7
-    servers : {
-      "US Dallas, TX"     : rtmp://ingest-dal1.hashd.tv/live
-      "EU Amsterdam, NL"  : rtmp://ingest-ams1.hashd.tv/live
-      "EU Frankfurt, DE"  : rtmp://ingest-ffm1.hashd.tv/live
-    }
-  }
   CashPlay.tv : {
     id : 8
     servers : {
@@ -89,9 +83,16 @@ services : {
     servers : {
       "Default"     : rtmp://live.hitbox.tv/push
       "EU-East"     : rtmp://live.vie.hitbox.tv/push
+      "EU-West"     : rtmp://live.nbg.hitbox.tv/push
       "US-East"     : rtmp://live.vgn.hitbox.tv/push
       "US-West"     : rtmp://live.lax.hitbox.tv/push
-      "Asia"        : rtmp://live.lax.hitbox.tv/push
+      "Asia"        : rtmp://live.apac.hitbox.tv/push
+    }
+  }
+  connectcast.tv : {
+    id : 12
+    servers : {
+      "Default"     : rtmp://www.connectcast.tv/live
     }
   }
 }

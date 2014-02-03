@@ -22,7 +22,8 @@
 #include <Avrt.h>
 
 VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR);
-VideoEncoder* CreateQSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR);
+VideoEncoder* CreateQSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, String &errors);
+VideoEncoder* CreateNVENCEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, String &errors);
 AudioEncoder* CreateMP3Encoder(UINT bitRate);
 AudioEncoder* CreateAACEncoder(UINT bitRate);
 
@@ -48,17 +49,159 @@ VideoFileStream* CreateFLVFileStream(CTSTR lpFile);
 BOOL bLoggedSystemStats = FALSE;
 void LogSystemStats();
 
+void OBS::ToggleRecording()
+{
+    if (bRecordingOnly)
+        ToggleCapturing();
+    else if(!bRecording)
+        StartRecording();
+    else
+        StopRecording();
+}
+
 void OBS::ToggleCapturing()
 {
-    if(!bRunning)
+    if(!bRunning || (!bStreaming && bRecording))
         Start();
     else
         Stop();
 }
 
+void OBS::StartRecording()
+{
+    if(bRecording) return;
+    int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
+
+    bWriteToFile = networkMode == 1 || AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile")) != 0;
+    String strOutputFile = AppConfig->GetString(TEXT("Publish"), TEXT("SavePath"));
+
+    strOutputFile.FindReplace(TEXT("\\"), TEXT("/"));
+
+    // Don't request a keyframe while everything is starting up for the first time
+    if(!bStartingUp) videoEncoder->RequestKeyframe();
+
+    if (bWriteToFile)
+    {
+        OSFindData ofd;
+        HANDLE hFind = NULL;
+        bool bUseDateTimeName = true;
+        bool bOverwrite = GlobalConfig->GetInt(L"General", L"OverwriteRecordings", false) != 0;
+
+        if(!bOverwrite && (hFind = OSFindFirstFile(strOutputFile, ofd)))
+        {
+            String strFileExtension = GetPathExtension(strOutputFile);
+            String strFileWithoutExtension = GetPathWithoutExtension(strOutputFile);
+
+            if(strFileExtension.IsValid() && !ofd.bDirectory)
+            {
+                String strNewFilePath;
+                UINT curFile = 0;
+
+                do 
+                {
+                    strNewFilePath.Clear() << strFileWithoutExtension << TEXT(" (") << FormattedString(TEXT("%02u"), ++curFile) << TEXT(").") << strFileExtension;
+                } while(OSFileExists(strNewFilePath));
+
+                strOutputFile = strNewFilePath;
+
+                bUseDateTimeName = false;
+            }
+
+            if(ofd.bDirectory)
+                strOutputFile.AppendChar('/');
+
+            OSFindClose(hFind);
+        }
+
+        if(bUseDateTimeName)
+        {
+            String strFileName = GetPathFileName(strOutputFile);
+
+            if(!strFileName.IsValid() || !IsSafeFilename(strFileName))
+            {
+                SYSTEMTIME st;
+                GetLocalTime(&st);
+
+                String strDirectory = GetPathDirectory(strOutputFile);
+                String file = strOutputFile.Right(strOutputFile.Length() - strDirectory.Length());
+                String extension;
+
+                if (!file.IsEmpty())
+                    extension = GetPathExtension(file.Array());
+
+                if(extension.IsEmpty())
+                    extension = TEXT("mp4");
+                strOutputFile = FormattedString(TEXT("%s/%u-%02u-%02u-%02u%02u-%02u.%s"), strDirectory.Array(), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, extension.Array());
+            }
+        }
+    }
+
+    if(!bTestStream && bWriteToFile && strOutputFile.IsValid())
+    {
+        String strFileExtension = GetPathExtension(strOutputFile);
+        if(strFileExtension.CompareI(TEXT("flv")))
+            fileStream = CreateFLVFileStream(strOutputFile);
+        else if(strFileExtension.CompareI(TEXT("mp4")))
+            fileStream = CreateMP4FileStream(strOutputFile);
+
+        if(!fileStream)
+        {
+            Log(TEXT("Warning - OBSCapture::Start: Unable to create the file stream. Check the file path in Broadcast Settings."));
+            MessageBox(hwndMain, Str("Capture.Start.FileStream.Warning"), Str("Capture.Start.FileStream.WarningCaption"), MB_OK | MB_ICONWARNING);        
+            bRecording = false;
+        }
+        else {
+            EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), TRUE);
+            SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), Str("MainWindow.StopRecording"));
+            bRecording = true;
+        }
+    }
+}
+
+void OBS::StopRecording()
+{
+    if(!bRecording) return;
+
+    VideoFileStream *tempStream = NULL;
+
+    tempStream = fileStream;
+    // Prevent the encoder thread from trying to write to fileStream while it's closing
+    fileStream = NULL;
+
+    delete tempStream;
+    tempStream = NULL;
+    bRecording = false;
+
+    SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), Str("MainWindow.StartRecording"));
+
+    if(!bStreaming) Stop();
+}
+
 void OBS::Start()
 {
-    if(bRunning) return;
+    if(bRunning && !bRecording) return;
+
+    int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
+    DWORD delayTime = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("Delay"));
+
+    if(bRecording && bKeepRecording && networkMode == 0 && delayTime == 0) {
+        bFirstConnect = !bReconnecting;
+
+        network = NULL;
+        network = CreateRTMPPublisher();
+
+        Log(TEXT("=====Stream Start (while recording): %s============================="), CurrentDateTimeString().Array());
+
+        EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), TRUE);
+        SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), Str("MainWindow.StopStream"));
+
+        bSentHeaders = false;
+        bStreaming = true;
+
+        return;
+    }
+
+    bStartingUp = true;
 
     OSEnterMutex (hStartupShutdownMutex);
 
@@ -89,6 +232,7 @@ retryHookTest:
         if (ret == IDABORT)
         {
             OSLeaveMutex (hStartupShutdownMutex);
+            bStartingUp = false;
             return;
         }
         else if (ret == IDRETRY)
@@ -105,6 +249,7 @@ retryHookTest:
         OSLeaveMutex (hStartupShutdownMutex);
         MessageBox(hwndMain, strPatchesError.Array(), NULL, MB_ICONERROR);
         Log(TEXT("Incompatible patches detected."));
+        bStartingUp = false;
         return;
     }
 
@@ -118,8 +263,8 @@ retryHookTest:
     else if (!scmp(processPriority, TEXT("High")))
         SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
 
-    int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
-    DWORD delayTime = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("Delay"));
+    networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
+    delayTime = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("Delay"));
 
     String strError;
 
@@ -144,6 +289,7 @@ retryHookTest:
             MessageBox(hwndMain, strError, NULL, MB_ICONERROR);
         else
             DialogBox(hinstMain, MAKEINTRESOURCE(IDD_RECONNECTING), hwndMain, OBS::ReconnectDialogProc);
+        bStartingUp = false;
         return;
     }
 
@@ -213,6 +359,7 @@ retryHookTestV2:
                 delete GS;
 
                 OSLeaveMutex (hStartupShutdownMutex);
+                bStartingUp = false;
                 return;
             }
             else if (ret == IDRETRY)
@@ -293,7 +440,13 @@ retryHookTestV2:
 
     //------------------------------------------------------------------
 
+    String strEncoder = AppConfig->GetString(TEXT("Audio Encoding"), TEXT("Codec"), TEXT("AAC"));
+    BOOL isAAC = strEncoder.CompareI(TEXT("AAC"));
+
     UINT format = AppConfig->GetInt(L"Audio Encoding", L"Format", 1);
+
+    if (!isAAC)
+        format = 0;
 
     switch (format) {
     case 0: sampleRateHz = 44100; break;
@@ -307,7 +460,8 @@ retryHookTestV2:
     //------------------------------------------------------------------
 
     AudioDeviceList playbackDevices;
-    GetAudioDevices(playbackDevices, ADT_PLAYBACK);
+    bool useInputDevices = AppConfig->GetInt(L"Audio", L"UseInputDevices", false) != 0;
+    GetAudioDevices(playbackDevices, useInputDevices ? ADT_RECORDING : ADT_PLAYBACK);
 
     String strPlaybackDevice = AppConfig->GetString(TEXT("Audio"), TEXT("PlaybackDevice"), TEXT("Default"));
     if(strPlaybackDevice.IsEmpty() || !playbackDevices.HasID(strPlaybackDevice))
@@ -326,7 +480,7 @@ retryHookTestV2:
     }
 
     AudioDeviceList audioDevices;
-    GetAudioDevices(audioDevices, ADT_RECORDING);
+    GetAudioDevices(audioDevices, ADT_RECORDING, false, true);
 
     String strDevice = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), NULL);
     if(strDevice.IsEmpty() || !audioDevices.HasID(strDevice))
@@ -373,13 +527,12 @@ retryHookTestV2:
     //-------------------------------------------------------------
 
     UINT bitRate = (UINT)AppConfig->GetInt(TEXT("Audio Encoding"), TEXT("Bitrate"), 96);
-    String strEncoder = AppConfig->GetString(TEXT("Audio Encoding"), TEXT("Codec"), TEXT("AAC"));
 
     if (bDisableEncoding)
         audioEncoder = CreateNullAudioEncoder();
     else
 #ifdef USE_AAC
-    if(strEncoder.CompareI(TEXT("AAC")))// && OSGetVersion() >= 7)
+    if(isAAC) // && OSGetVersion() >= 7)
         audioEncoder = CreateAACEncoder(bitRate);
     else
 #endif
@@ -413,6 +566,20 @@ retryHookTestV2:
         }
 
         scene->BeginScene();
+        unsigned int numSources = scene->sceneItems.Num();
+        for(UINT i=0; i<numSources; i++)
+        {
+            XElement *source = scene->sceneItems[i]->GetElement();
+
+            String className = source->GetString(TEXT("class"));
+            if(scene->sceneItems[i]->bRender && className == "GlobalSource") {
+                XElement *globalSourceData = source->GetElement(TEXT("data"));
+                String globalSourceName = globalSourceData->GetString(TEXT("name"));
+                if(App->GetGlobalSource(globalSourceName) != NULL) {
+                    App->GetGlobalSource(globalSourceName)->GlobalSourceEnterScene();
+                }
+            }
+        }
     }
 
     if(scene && scene->HasMissingSources())
@@ -426,64 +593,6 @@ retryHookTestV2:
     String preset  = AppConfig->GetString(TEXT("Video Encoding"), TEXT("Preset"),     TEXT("veryfast"));
     bUsing444      = false;//AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Use444"),     0) != 0;
     bUseCFR        = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCFR"), 1) != 0;
-
-    //-------------------------------------------------------------
-
-    bWriteToFile = networkMode == 1 || AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile")) != 0;
-    String strOutputFile = AppConfig->GetString(TEXT("Publish"), TEXT("SavePath"));
-
-    strOutputFile.FindReplace(TEXT("\\"), TEXT("/"));
-
-    if (bWriteToFile)
-    {
-        OSFindData ofd;
-        HANDLE hFind = NULL;
-        bool bUseDateTimeName = true;
-        bool bOverwrite = GlobalConfig->GetInt(L"General", L"OverwriteRecordings", false) != 0;
-
-        if(!bOverwrite && (hFind = OSFindFirstFile(strOutputFile, ofd)))
-        {
-            String strFileExtension = GetPathExtension(strOutputFile);
-            String strFileWithoutExtension = GetPathWithoutExtension(strOutputFile);
-
-            if(strFileExtension.IsValid() && !ofd.bDirectory)
-            {
-                String strNewFilePath;
-                UINT curFile = 0;
-
-                do 
-                {
-                    strNewFilePath.Clear() << strFileWithoutExtension << TEXT(" (") << FormattedString(TEXT("%02u"), ++curFile) << TEXT(").") << strFileExtension;
-                } while(OSFileExists(strNewFilePath));
-
-                strOutputFile = strNewFilePath;
-
-                bUseDateTimeName = false;
-            }
-
-            if(ofd.bDirectory)
-                strOutputFile.AppendChar('/');
-
-            OSFindClose(hFind);
-        }
-
-        if(bUseDateTimeName)
-        {
-            String strFileName = GetPathFileName(strOutputFile);
-
-            if(!strFileName.IsValid() || !IsSafeFilename(strFileName))
-            {
-                SYSTEMTIME st;
-                GetLocalTime(&st);
-
-                String strDirectory = GetPathDirectory(strOutputFile),
-                       extension = GetPathExtension(strOutputFile);
-                if(extension.IsEmpty())
-                    extension = TEXT("mp4");
-                strOutputFile = FormattedString(TEXT("%s/%u-%02u-%02u-%02u%02u-%02u.%s"), strDirectory.Array(), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, extension.Array());
-            }
-        }
-    }
 
     //-------------------------------------------------------------
 
@@ -501,7 +610,8 @@ retryHookTestV2:
 
     //-------------------------------------------------------------
 
-    StartBlankSoundPlayback(strPlaybackDevice);
+    if (!useInputDevices)
+        StartBlankSoundPlayback(strPlaybackDevice);
 
     //-------------------------------------------------------------
 
@@ -511,15 +621,32 @@ retryHookTestV2:
     colorDesc.matrix    = outputCX >= 1280 || outputCY > 576 ? ColorMatrix_BT709 : ColorMatrix_SMPTE170M;
 
     videoEncoder = nullptr;
+    String videoEncoderErrors;
     if (bDisableEncoding)
         videoEncoder = CreateNullVideoEncoder();
     else if(AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0)
-        videoEncoder = CreateQSVEncoder(fps, outputCX, outputCY, quality, preset, bUsing444, colorDesc, maxBitRate, bufferSize, bUseCFR);
-
-    if(!videoEncoder)
+        videoEncoder = CreateQSVEncoder(fps, outputCX, outputCY, quality, preset, bUsing444, colorDesc, maxBitRate, bufferSize, bUseCFR, videoEncoderErrors);
+    else if(AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseNVENC")) != 0)
+        videoEncoder = CreateNVENCEncoder(fps, outputCX, outputCY, quality, preset, bUsing444, colorDesc, maxBitRate, bufferSize, bUseCFR, videoEncoderErrors);
+    else
         videoEncoder = CreateX264Encoder(fps, outputCX, outputCY, quality, preset, bUsing444, colorDesc, maxBitRate, bufferSize, bUseCFR);
 
+    if (!videoEncoder)
+    {
+        Log(L"Couldn't initialize encoder");
+        Stop(true);
 
+        if (videoEncoderErrors.IsEmpty())
+            videoEncoderErrors = Str("Encoder.InitFailed");
+        else
+            videoEncoderErrors = String(Str("Encoder.InitFailedWithReason")) + videoEncoderErrors;
+
+        MessageBox(hwndMain, videoEncoderErrors.Array(), nullptr, MB_OK | MB_ICONERROR); //might want to defer localization until here to automatically
+                                                                                         //output english localization to logfile
+        return;
+    }
+
+    bStreaming = true;
     //-------------------------------------------------------------
 
     // Ensure that the render frame is properly sized
@@ -527,20 +654,7 @@ retryHookTestV2:
 
     //-------------------------------------------------------------
 
-    if(!bTestStream && bWriteToFile && strOutputFile.IsValid())
-    {
-        String strFileExtension = GetPathExtension(strOutputFile);
-        if(strFileExtension.CompareI(TEXT("flv")))
-            fileStream = CreateFLVFileStream(strOutputFile);
-        else if(strFileExtension.CompareI(TEXT("mp4")))
-            fileStream = CreateMP4FileStream(strOutputFile);
-
-        if(!fileStream)
-        {
-            Log(TEXT("Warning - OBSCapture::Start: Unable to create the file stream. Check the file path in Broadcast Settings."));
-            MessageBox(hwndMain, Str("Capture.Start.FileStream.Warning"), Str("Capture.Start.FileStream.WarningCaption"), MB_OK | MB_ICONWARNING);        
-        }
-    }
+    StartRecording();
 
     //-------------------------------------------------------------
 
@@ -554,6 +668,7 @@ retryHookTestV2:
     if(bTestStream)
     {
         EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), FALSE);
+        EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), FALSE);
         SetWindowText(GetDlgItem(hwndMain, ID_TESTSTREAM), Str("MainWindow.StopTest"));
     }
     else
@@ -577,11 +692,41 @@ retryHookTestV2:
     UpdateNotificationAreaIcon();
 
     OSLeaveMutex (hStartupShutdownMutex);
+
+    bStartingUp = false;
 }
 
-void OBS::Stop()
+void OBS::Stop(bool overrideKeepRecording)
 {
-    if(!bRunning) return;
+    if((!bStreaming && !bRecording && !bRunning) && (!bTestStream)) return;
+
+    //ugly hack to prevent hotkeys from being processed while we're stopping otherwise we end up
+    //with callbacks from the ProcessEvents call in DelayedPublisher which causes havoc.
+    OSEnterMutex(hHotkeyMutex);
+
+    int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
+
+    if(!overrideKeepRecording && bRecording && bKeepRecording && networkMode == 0) {
+        NetworkStream *tempStream = NULL;
+        
+        videoEncoder->RequestKeyframe();
+        tempStream = network;
+        network = NULL;
+
+        Log(TEXT("=====Stream End (recording continues): %s========================="), CurrentDateTimeString().Array());
+
+        delete tempStream;
+
+        EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), TRUE);
+        SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), Str("MainWindow.StartStream"));
+
+        bStreaming = false;
+        bSentHeaders = false;
+
+        OSLeaveMutex(hHotkeyMutex);
+
+        return;
+    }
 
     OSEnterMutex(hStartupShutdownMutex);
 
@@ -639,9 +784,9 @@ void OBS::Stop()
 
     delete network;
     network = NULL;
+    bStreaming = false;
     
-    delete fileStream;
-    fileStream = NULL;
+    if(bRecording) StopRecording();
 
     delete micAudio;
     micAudio = NULL;
@@ -729,7 +874,7 @@ void OBS::Stop()
     //-------------------------------------------------------------
 
     AudioDeviceList audioDevices;
-    GetAudioDevices(audioDevices, ADT_RECORDING);
+    GetAudioDevices(audioDevices, ADT_RECORDING, false, true);
 
     String strDevice = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), NULL);
     if(strDevice.IsEmpty() || !audioDevices.HasID(strDevice))
@@ -752,11 +897,22 @@ void OBS::Stop()
     //update notification icon to reflect current status
     UpdateNotificationAreaIcon();
 
-    
+    if (bRecordingOnly)
+    {
+        EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), TRUE);
+        EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), FALSE);
+        EnableWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), TRUE);
+    }
+    else
+    {
+        EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), FALSE);
+        EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), TRUE);
+        EnableWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), TRUE);
+    }
+
+    SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), Str("MainWindow.StartRecording"));
     SetWindowText(GetDlgItem(hwndMain, ID_TESTSTREAM), Str("MainWindow.TestStream"));
-    EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), TRUE);
     SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), Str("MainWindow.StartStream"));
-    EnableWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), TRUE);
 
 
     bEditMode = false;
@@ -775,9 +931,13 @@ void OBS::Stop()
 
     bTestStream = false;
 
+    ConfigureStreamButtons();
+
     UpdateRenderViewMessage();
 
     OSLeaveMutex(hStartupShutdownMutex);
+
+    OSLeaveMutex(hHotkeyMutex);
 }
 
 DWORD STDCALL OBS::MainAudioThread(LPVOID lpUnused)
@@ -846,15 +1006,17 @@ inline float toDB(float RMS)
     return db;
 }
 
-void OBS::QueryAudioBuffers(bool bQueriedDesktopDebugParam)
+bool OBS::QueryAudioBuffers(bool bQueriedDesktopDebugParam)
 {
+    bool bGotSomeAudio = false;
+
     if (!latestAudioTime) {
         desktopAudio->GetEarliestTimestamp(latestAudioTime); //will always return true
     } else {
         QWORD latestDesktopTimestamp;
         if (desktopAudio->GetLatestTimestamp(latestDesktopTimestamp)) {
             if ((latestAudioTime+10) > latestDesktopTimestamp)
-                return;
+                return false;
         }
         latestAudioTime += 10;
     }
@@ -863,11 +1025,20 @@ void OBS::QueryAudioBuffers(bool bQueriedDesktopDebugParam)
 
     OSEnterMutex(hAuxAudioMutex);
     for(UINT i=0; i<auxAudioSources.Num(); i++)
-        auxAudioSources[i]->QueryAudio(auxAudioSources[i]->GetVolume());
+    {
+        if (auxAudioSources[i]->QueryAudio2(auxAudioSources[i]->GetVolume(), true) != NoAudioAvailable)
+            bGotSomeAudio = true;
+    }
+
     OSLeaveMutex(hAuxAudioMutex);
 
     if(micAudio != NULL)
-        micAudio->QueryAudio(curMicVol);
+    {
+        if (micAudio->QueryAudio2(curMicVol, true) != NoAudioAvailable)
+            bGotSomeAudio = true;
+    }
+
+    return bGotSomeAudio;
 }
 
 bool OBS::QueryNewAudio()
@@ -877,7 +1048,7 @@ bool OBS::QueryNewAudio()
     while (!bAudioBufferFilled) {
         bool bGotAudio = false;
 
-        if ((desktopAudio->QueryAudio(curDesktopVol)) != NoAudioAvailable) {
+        if ((desktopAudio->QueryAudio2(curDesktopVol)) != NoAudioAvailable) {
             QueryAudioBuffers(true);
             bGotAudio = true;
         }
@@ -889,6 +1060,43 @@ bool OBS::QueryNewAudio()
 
         if (bAudioBufferFilled || !bGotAudio)
             break;
+    }
+
+    /* wait until buffers are completely filled before accounting for burst */
+    if (!bAudioBufferFilled)
+    {
+        QWORD timestamp;
+        int burst = 0;
+
+        // No more desktop data, drain auxilary/mic buffers until they're dry to prevent burst data
+        OSEnterMutex(hAuxAudioMutex);
+        for(UINT i=0; i<auxAudioSources.Num(); i++)
+        {
+            while (auxAudioSources[i]->QueryAudio2(auxAudioSources[i]->GetVolume(), true) != NoAudioAvailable)
+                burst++;
+
+            if (auxAudioSources[i]->GetLatestTimestamp(timestamp))
+                auxAudioSources[i]->SortAudio(timestamp);
+
+            /*if (burst > 10)
+                Log(L"Burst happened for %s", auxAudioSources[i]->GetDeviceName2());*/
+        }
+
+        OSLeaveMutex(hAuxAudioMutex);
+
+        burst = 0;
+
+        if (micAudio)
+        {
+            while (micAudio->QueryAudio2(curMicVol, true) != NoAudioAvailable)
+                burst++;
+
+            /*if (burst > 10)
+                Log(L"Burst happened for %s", micAudio->GetDeviceName2());*/
+
+            if (micAudio->GetLatestTimestamp(timestamp))
+                micAudio->SortAudio(timestamp);
+        }
     }
 
     return bAudioBufferFilled;

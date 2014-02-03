@@ -38,6 +38,11 @@ void SettingsPane::SetChangedSettings(bool isModified)
     API->SetChangedSettings(isModified);
 }
 
+void SettingsPane::SetAbortApplySettings(bool abort)
+{
+    API->SetAbortApplySettings(abort);
+}
+
 INT_PTR CALLBACK SettingsPane::DialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     // Get the pointer to our class instance

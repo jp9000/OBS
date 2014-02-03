@@ -201,6 +201,8 @@ extern HWND hwndOpenGLSetupWindow;
 
 extern CaptureInfo *infoMem;
 
+extern char processName[MAX_PATH];
+
 extern fstream logOutput;
 
 extern wstring  strKeepAlive;

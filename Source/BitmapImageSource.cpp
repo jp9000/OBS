@@ -217,7 +217,7 @@ public:
                 UINT newFrame = curFrame;
 
                 curTime += fSeconds;
-                while(curTime > animationTimes[curFrame])
+                while(curTime > animationTimes[newFrame])
                 {
                     curTime -= animationTimes[newFrame];
                     if(++newFrame == animationTimes.Num())

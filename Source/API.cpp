@@ -260,6 +260,8 @@ bool OBS::SetScene(CTSTR lpScene)
     bChangingSources = true;
     ListView_DeleteAllItems(hwndSources);
 
+    bool bSkipTransition = false;
+
     XElement *sources = sceneElement->GetElement(TEXT("sources"));
     if(sources)
     {
@@ -269,11 +271,27 @@ bool OBS::SetScene(CTSTR lpScene)
         for(UINT i=0; i<numSources; i++)
         {
             XElement *sourceElement = sources->GetElementByID(i);
+            String className = sourceElement->GetString(TEXT("class"));
+
+            if(className == "DeviceCapture") {
+                // There's a capture device in the next scene that isn't a global source,
+                // so let's skip the transition since it won't work anyway.
+                bSkipTransition = true;
+            }
+        }
+
+        for(UINT i=0; i<numSources; i++)
+        {
+            XElement *sourceElement = sources->GetElementByID(i);
             bool render = sourceElement->GetInt(TEXT("render"), 1) > 0;
 
             InsertSourceItem(i, (LPWSTR)sourceElement->GetName(), render);
 
-            if(bRunning && newScene)
+            // Do not add image sources yet in case we're skipping the transition.
+            // This fixes the issue where capture devices sources that used the
+            // same device as one in the previous scene would just go blank
+            // after switching.
+            if(bRunning && newScene && !bSkipTransition)
                 newScene->AddImageSource(sourceElement);
         }
     }
@@ -315,12 +333,33 @@ bool OBS::SetScene(CTSTR lpScene)
         Scene *previousScene = scene;
         scene = newScene;
 
+        if(newScene && bSkipTransition) {
+            // If we're skipping the transition because of a non-global
+            // DirectShow device, delete the scene here and add the
+            // ImageSources at this point instead.
+            delete previousScene;
+
+            if(sources)
+            {
+                UINT numSources = sources->NumElements();
+
+                for(UINT i=0; i<numSources; i++)
+                {
+                    XElement *sourceElement = sources->GetElementByID(i);
+
+                    if(newScene)
+                        newScene->AddImageSource(sourceElement);
+                }
+            }
+        }
+
         scene->BeginScene();
 
         numSources = scene->sceneItems.Num();
         for(UINT i=0; i<numSources; i++)
         {
             XElement *source = scene->sceneItems[i]->GetElement();
+
             String className = source->GetString(TEXT("class"));
             if(scene->sceneItems[i]->bRender && className == "GlobalSource") {
                 XElement *globalSourceData = source->GetElement(TEXT("data"));
@@ -331,7 +370,7 @@ bool OBS::SetScene(CTSTR lpScene)
             }
         }
 
-        if(!bTransitioning)
+        if(!bTransitioning && !bSkipTransition)
         {
             bTransitioning = true;
             transitionAlpha = 0.0f;
@@ -339,7 +378,11 @@ bool OBS::SetScene(CTSTR lpScene)
 
         OSLeaveMutex(hSceneMutex);
 
-        delete previousScene;
+        if(!bSkipTransition) {
+            // Do not delete the previous scene here, since it has already
+            // been deleted.
+            delete previousScene;
+        }
 
         DWORD sceneChangeTime = OSGetTime() - sceneChangeStartTime;
         if (sceneChangeTime >= 500)
@@ -371,6 +414,7 @@ class OBSAPIInterface : public APIInterface
     void HandleHotkeys();
 
     virtual void SetChangedSettings(bool isModified) {App->SetChangedSettings(isModified);}
+    virtual void SetAbortApplySettings(bool abort) { App->SetAbortApplySettings(abort); }
 
 public:
     virtual void EnterSceneMutex() {App->EnterSceneMutex();}

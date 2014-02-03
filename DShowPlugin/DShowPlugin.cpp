@@ -60,9 +60,9 @@ bool SourceListHasDevice(CTSTR lpDevice, XElement *sourceList)
         if(scmpi(sourceElement->GetString(TEXT("class")), DSHOW_CLASSNAME) == 0)
         {
             XElement *data = sourceElement->GetElement(TEXT("data"));
-            if(scmpi(data->GetString(TEXT("device")), lpDevice) == 0)
+            if(scmpi(data->GetString(TEXT("deviceID")), lpDevice) == 0)
                 return true;
-            if(scmpi(data->GetString(TEXT("audioDevice")), lpDevice) == 0)
+            if(scmpi(data->GetString(TEXT("audioDeviceID")), lpDevice) == 0)
                 return true;
         }
     }
@@ -751,6 +751,22 @@ bool FillOutListOfDevices(HWND hwndCombo, GUID matchGUID, StringList *deviceList
     IMoniker *deviceInfo;
     DWORD count;
 
+    bool bUseConfig = true;
+
+    String strConfigPath = OBSGetPluginDataPath() + "\\dshowDevices.xconfig";
+
+    XConfig dshowDevicesConfig;
+    XElement *devices = NULL;
+
+    if(!dshowDevicesConfig.Open(strConfigPath.Array()))
+        bUseConfig = false;
+    
+    if(bUseConfig) {
+        devices = dshowDevicesConfig.GetElement(TEXT("dshowDevices"));
+        if(!devices)
+            devices = dshowDevicesConfig.CreateElement(TEXT("dshowDevices"));
+    }
+
     while(videoDeviceEnum->Next(1, &deviceInfo, &count) == S_OK)
     {
         IPropertyBag *propertyData;
@@ -783,7 +799,23 @@ bool FillOutListOfDevices(HWND hwndCombo, GUID matchGUID, StringList *deviceList
                         strDeviceName << TEXT(" (") << UIntString(count2) << TEXT(")");
 
                     String strDeviceID = (CWSTR)devicePathValue.bstrVal;
-                    if(hwndCombo != NULL) SendMessage(hwndCombo, CB_ADDSTRING, 0, (LPARAM)strDeviceName.Array());
+                    if(bUseConfig) {
+                        XElement *chkDevice = devices->GetElement((CWSTR)devicePathValue.bstrVal);
+                        if(!chkDevice) {
+                            if(strDeviceID.Length() != 0) {
+                                devices->CreateElement((CWSTR)devicePathValue.bstrVal);
+                                chkDevice = devices->GetElement((CWSTR)devicePathValue.bstrVal);
+                                chkDevice->AddString(TEXT("deviceName"), strDeviceName.Array());
+                            }
+                            if(hwndCombo != NULL) SendMessage(hwndCombo, CB_ADDSTRING, 0, (LPARAM)strDeviceName.Array());
+                        }
+                        else {
+                            if(hwndCombo != NULL) SendMessage(hwndCombo, CB_ADDSTRING, 0, (LPARAM)chkDevice->GetString(TEXT("deviceName")));
+                        }
+                    }
+                    else {
+                        if(hwndCombo != NULL) SendMessage(hwndCombo, CB_ADDSTRING, 0, (LPARAM)strDeviceName.Array());
+                    }
                     deviceIDList->Add(strDeviceID);
 
                     SafeRelease(filter);
@@ -797,6 +829,7 @@ bool FillOutListOfDevices(HWND hwndCombo, GUID matchGUID, StringList *deviceList
     }
 
     SafeRelease(videoDeviceEnum);
+    dshowDevicesConfig.Close(true);
 
     return true;
 }
@@ -1017,6 +1050,10 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 HWND hwndFlip           = GetDlgItem(hwnd, IDC_FLIPIMAGE);
                 HWND hwndFlipHorizontal = GetDlgItem(hwnd, IDC_FLIPIMAGEH);
 
+#ifdef _WIN64
+                ShowWindow(GetDlgItem(hwnd, IDC_64BIT_WARNING), SW_SHOW);
+#endif
+
                 //------------------------------------------
 
                 bool bFlipVertical   = configData->data->GetInt(TEXT("flipImage")) != 0;
@@ -1044,8 +1081,10 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 //------------------------------------------
 
-                String strDevice = configData->data->GetString(TEXT("device"));
-                String strAudioDevice = configData->data->GetString(TEXT("audioDevice"));
+                String strDevice = configData->data->GetString(TEXT("deviceName"));
+                String strDeviceID = configData->data->GetString(TEXT("deviceID"));
+                String strAudioDevice = configData->data->GetString(TEXT("audioDeviceName"));
+                String strAudioDeviceID = configData->data->GetString(TEXT("audioDeviceID"));
                 UINT cx  = configData->data->GetInt(TEXT("resolutionWidth"));
                 UINT cy  = configData->data->GetInt(TEXT("resolutionHeight"));
                 UINT64 frameInterval = configData->data->GetInt(TEXT("frameInterval"));
@@ -1110,8 +1149,15 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 FillOutListOfDevices(hwndDeviceList, CLSID_VideoInputDeviceCategory, &configData->deviceNameList, &configData->deviceIDList);
 
                 UINT deviceID = CB_ERR;
-                if(strDevice.IsValid() && cx > 0 && cy > 0 && frameInterval > 0)
-                    deviceID = (UINT)SendMessage(hwndDeviceList, CB_FINDSTRINGEXACT, -1, (LPARAM)strDevice.Array());
+
+                if(strDevice.IsValid() && cx > 0 && cy > 0 && frameInterval > 0) {
+                    for(UINT i=0; i < configData->deviceNameList.Num(); i++) {
+                        if(configData->deviceNameList[i].CompareI(strDevice.Array())) {
+                            if(configData->deviceIDList[i].CompareI(strDeviceID))
+                                deviceID = i;
+                        }
+                    }
+                }
 
                 if(deviceID == CB_ERR)
                 {
@@ -1161,8 +1207,18 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 //------------------------------------------
 
                 UINT audioDeviceID = CB_ERR;
-                if(strAudioDevice.IsValid())
-                    audioDeviceID = (UINT)SendMessage(hwndAudioList, CB_FINDSTRINGEXACT, -1, (LPARAM)strAudioDevice.Array());
+
+                if(strDevice.IsValid() && cx > 0 && cy > 0 && frameInterval > 0) {
+                    for(UINT i=0; i < configData->audioNameList.Num(); i++) {
+                        if(configData->audioNameList[i].CompareI(strAudioDevice.Array())) {
+                            if(configData->audioIDList[i].CompareI(strAudioDeviceID))
+                                audioDeviceID = i;
+                        }
+                    }
+                }
+
+                /*if(strAudioDevice.IsValid())
+                    audioDeviceID = (UINT)SendMessage(hwndAudioList, CB_FINDSTRINGEXACT, -1, (LPARAM)strAudioDevice.Array());*/
 
                 if(audioDeviceID == CB_ERR)
                     SendMessage(hwndAudioList, CB_SETCURSEL, configData->bDeviceHasAudio ? 1 : 0, 0); //yes, I know, but the output is not a bool
@@ -1193,6 +1249,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 float fVol = configData->data->GetFloat(TEXT("volume"), 1.0f);
                 SetVolumeControlValue(GetDlgItem(hwnd, IDC_VOLUME), fVol);
+                BOOL bUseAudioRender = configData->data->GetInt(TEXT("useAudioRender"));
+                SendMessage(GetDlgItem(hwnd, IDC_USEAUDIORENDER), BM_SETCHECK, bUseAudioRender ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 //------------------------------------------
 
@@ -1205,12 +1263,14 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 BOOL  bUseChromaKey         = configData->data->GetInt(TEXT("useChromaKey"), 0);
                 BOOL  bUsePointFiltering    = configData->data->GetInt(TEXT("usePointFiltering"), 0);
+                BOOL  bPreserveSourceSize   = configData->data->GetInt(TEXT("preserveSourceSize"), 0);
                 DWORD keyColor              = configData->data->GetInt(TEXT("keyColor"), 0xFFFFFFFF);
                 UINT  similarity            = configData->data->GetInt(TEXT("keySimilarity"), 0);
                 UINT  blend                 = configData->data->GetInt(TEXT("keyBlend"), 80);
                 UINT  gamma                 = configData->data->GetInt(TEXT("keySpillReduction"), 50);
 
                 SendMessage(GetDlgItem(hwnd, IDC_POINTFILTERING), BM_SETCHECK, bUsePointFiltering ? BST_CHECKED : BST_UNCHECKED, 0);
+                SendMessage(GetDlgItem(hwnd, IDC_PRESERVESIZE), BM_SETCHECK, bPreserveSourceSize ? BST_CHECKED : BST_UNCHECKED, 0);
                 SendMessage(GetDlgItem(hwnd, IDC_USECHROMAKEY), BM_SETCHECK, bUseChromaKey ? BST_CHECKED : BST_UNCHECKED, 0);
                 CCSetColor(GetDlgItem(hwnd, IDC_COLOR), keyColor);
 
@@ -1422,6 +1482,21 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                                 case IDC_FLIPIMAGE:  source->SetInt(TEXT("flipImage"), bFlipImage); break;
                                 case IDC_FLIPIMAGEH: source->SetInt(TEXT("flipImageHorizontal"), bFlipImage); break;
                             }
+                        }
+                    }
+                    break;
+
+                case IDC_POINTFILTERING:
+                    if(HIWORD(wParam) == BN_CLICKED)
+                    {
+                        ConfigDialogData *configData = (ConfigDialogData*)GetWindowLongPtr(hwnd, DWLP_USER);
+                        ImageSource *source = API->GetSceneImageSource(configData->lpName);
+                        if(source)
+                        {
+                            HWND hwndPointFiltering = (HWND)lParam;
+                            BOOL bUsePointFiltering = SendMessage(hwndPointFiltering, BM_GETCHECK, 0, 0) == BST_CHECKED;
+
+                            source->SetInt(TEXT("usePointFiltering"), bUsePointFiltering);
                         }
                     }
                     break;
@@ -1912,7 +1987,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                             break;
                         }
 
-                        String strDevice = GetCBText(GetDlgItem(hwnd, IDC_DEVICELIST), deviceID);
+                        String strDevice = configData->deviceIDList[deviceID];
                         String strFPS = GetEditText(GetDlgItem(hwnd, IDC_FPS));
                         if(schr(strFPS, '-'))
                         {
@@ -1961,6 +2036,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         BOOL bFlipHorizontal = SendMessage(GetDlgItem(hwnd, IDC_FLIPIMAGEH), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         BOOL bCustomResolution = SendMessage(GetDlgItem(hwnd, IDC_CUSTOMRESOLUTION), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         BOOL bUsePointFiltering = SendMessage(GetDlgItem(hwnd, IDC_POINTFILTERING), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        BOOL bPreserveSourceSize = SendMessage(GetDlgItem(hwnd, IDC_PRESERVESIZE), BM_GETCHECK, 0, 0) == BST_CHECKED;
 
                         int deintId = (int)SendMessage(GetDlgItem(hwnd, IDC_DEINTERLACELIST), CB_GETCURSEL, 0, 0);
                         deinterlacingConfig = deinterlacerConfigs[deintId];
@@ -1974,6 +2050,10 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         configData->data->SetString(TEXT("deviceID"), configData->deviceIDList[deviceID]);
 
                         configData->data->SetInt(TEXT("customResolution"), bCustomResolution);
+                        if(resolution.cx != 0 && resolution.cy != 0) {
+                            configData->data->SetFloat(TEXT("scaleFactor_x"), (float)resolution.cx / configData->data->GetFloat(TEXT("resolutionWidth"), 1.0f));
+                            configData->data->SetFloat(TEXT("scaleFactor_y"), (float)resolution.cy / configData->data->GetFloat(TEXT("resolutionHeight"), 1.0f));
+                        }
                         configData->data->SetInt(TEXT("resolutionWidth"), resolution.cx);
                         configData->data->SetInt(TEXT("resolutionHeight"), resolution.cy);
                         configData->data->SetInt(TEXT("frameInterval"), UINT(frameInterval));
@@ -1981,6 +2061,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         configData->data->SetInt(TEXT("flipImageHorizontal"), bFlipHorizontal);
                         configData->data->SetInt(TEXT("usePointFiltering"), bUsePointFiltering);
                         configData->data->SetInt(TEXT("gamma"), (int)SendMessage(GetDlgItem(hwnd, IDC_GAMMA), TBM_GETPOS, 0, 0));
+
+                        configData->data->SetInt(TEXT("preserveSourceSize"), bPreserveSourceSize);
                         
                         configData->data->SetInt(TEXT("deinterlacingType"), deinterlacingConfig.type);
                         configData->data->SetInt(TEXT("deinterlacingFieldOrder"), deinterlacingConfig.fieldOrder);
@@ -2040,6 +2122,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         float fVol = GetVolumeControlValue(GetDlgItem(hwnd, IDC_VOLUME));
                         configData->data->SetFloat(TEXT("volume"), fVol);
+                        BOOL bUseAudioRender = SendMessage(GetDlgItem(hwnd, IDC_USEAUDIORENDER), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        configData->data->SetInt(TEXT("useAudioRender"), bUseAudioRender);
 
                         //------------------------------------------
 
@@ -2090,6 +2174,9 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                             source->SetInt(TEXT("deinterlacingFieldOrder"),         configData->data->GetInt(TEXT("deinterlacingFieldOrder"), 0));
                             source->SetInt(TEXT("deinterlacingProcessor"),          configData->data->GetInt(TEXT("deinterlacingProcessor"), 0));
                             source->SetInt(TEXT("deinterlacingDoublesFramerate"),   configData->data->GetInt(TEXT("deinterlacingDoublesFramerate"), 0));
+
+                            source->SetInt(TEXT("preserveSourceSize"),              configData->data->GetInt(TEXT("preserveSourceSize"), 0));
+                            source->SetInt(TEXT("useAudioRender"),                  configData->data->GetInt(TEXT("useAudioRender"), 0));
                         }
                     }
 
@@ -2121,8 +2208,16 @@ bool STDCALL ConfigureDShowSource(XElement *element, bool bCreating)
 
     if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_CONFIG), API->GetMainWindow(), ConfigureDialogProc, (LPARAM)&configData) == IDOK)
     {
-        element->SetInt(TEXT("cx"), data->GetInt(TEXT("resolutionWidth")));
-        element->SetInt(TEXT("cy"), data->GetInt(TEXT("resolutionHeight")));
+        bool bPreserveSourceSize = data->GetInt(TEXT("preserveSourceSize")) != 0;
+        float scaleFactor_x = 1.0f, scaleFactor_y = 1.0f;
+
+        if(bPreserveSourceSize) {
+            scaleFactor_x = data->GetFloat(TEXT("scaleFactor_x"), 1.0f);
+            scaleFactor_y = data->GetFloat(TEXT("scaleFactor_y"), 1.0f);
+        }
+
+        element->SetFloat(TEXT("cx"), data->GetFloat(TEXT("resolutionWidth")) / scaleFactor_x);
+        element->SetFloat(TEXT("cy"), data->GetFloat(TEXT("resolutionHeight")) / scaleFactor_y);
 
         return true;
     }

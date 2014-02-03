@@ -121,6 +121,7 @@
 #define IDC_SERVER_STATIC               1046
 #define IDC_SERVICE_STATIC              1047
 #define IDC_NAME                        1048
+#define IDC_KEEPRECORDING               1048
 #define IDC_BITMAP                      1049
 #define IDC_BROWSE                      1050
 #define IDC_MICDEVICES                  1052
@@ -216,11 +217,10 @@
 #define IDC_COMPATIBILITYMODE           1100
 #define IDC_USEMULTITHREADEDOPTIMIZATIONS2 1100
 #define IDC_DISABLEPREVIEWENCODING      1100
+#define IDC_USEINPUTDEVICES             1100
 #define IDC_PROGRESS1                   1101
 #define IDC_ALLOWEXTRAHOTKEYMODIFIERS   1101
 #define IDC_ALLOWOTHERHOTKEYMODIFIERS   1101
-#define IDC_DASHBOARDLINK_STATIC        1102
-#define IDC_DASHBOARDLINK               1103
 #define IDC_COLOR                       1104
 #define IDC_OUTLINECOLOR                1105
 #define IDC_COLORKEY                    1105
@@ -257,7 +257,7 @@
 #define IDC_PRIORITY                    1132
 #define IDC_USECBR                      1133
 #define IDC_PADCBR                      1134
-#define IDC_COMBO1                      1139
+#define IDC_NVENCPRESET                 1139
 #define IDC_DISABLECTSADJUST            1140
 #define IDC_USECFR                      1141
 #define IDC_PLAYBACKDEVICES             1142
@@ -283,6 +283,9 @@
 #define IDC_SKIPPEDFRAMES               1166
 #define IDC_BYTESTRANSFERRED            1167
 #define IDC_TOTALFRAMES2                1168
+#define IDC_USENVENC                    1169
+#define IDC_BUTTON1                     1169
+#define IDC_RESETMIC                    1169
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -332,7 +335,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        147
 #define _APS_NEXT_COMMAND_VALUE         40060
-#define _APS_NEXT_CONTROL_VALUE         1168
+#define _APS_NEXT_CONTROL_VALUE         1170
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

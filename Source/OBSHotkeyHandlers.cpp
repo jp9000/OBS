@@ -27,7 +27,7 @@ void STDCALL OBS::StartStreamHotkey(DWORD hotkey, UPARAM param, bool bDown)
 
     if(App->bStartStreamHotkeyDown && !bDown)
         App->bStartStreamHotkeyDown = false;
-    else if(!App->bRunning)
+    else if(!App->bRunning || !App->bStreaming)
     {
         if(App->bStartStreamHotkeyDown = bDown)
             App->Start();
@@ -50,11 +50,17 @@ void STDCALL OBS::StopStreamHotkey(DWORD hotkey, UPARAM param, bool bDown)
 
 void STDCALL OBS::PushToTalkHotkey(DWORD hotkey, UPARAM param, bool bDown)
 {
-    App->bPushToTalkDown = bDown;
     if(bDown)
+    {
+        App->pushToTalkDown++;
         App->bPushToTalkOn = true;
-    else if(App->pushToTalkDelay <= 0)
-        App->bPushToTalkOn = false;
+    }
+    else
+    {
+        App->pushToTalkDown--;
+        if(!App->pushToTalkDown && App->pushToTalkDelay <= 0)
+            App->bPushToTalkOn = false;
+    }
 
     App->pushToTalkTimeLeft = App->pushToTalkDelay*1000000;
     OSDebugOut(TEXT("Actual delay: %d"), App->pushToTalkDelay);
@@ -66,7 +72,10 @@ void STDCALL OBS::MuteMicHotkey(DWORD hotkey, UPARAM param, bool bDown)
     if(!bDown) return;
 
     if(App->micAudio)
+    {
         App->micVol = ToggleVolumeControlMute(GetDlgItem(hwndMain, ID_MICVOLUME));
+        App->ReportMicVolumeChange(App->micVol, App->micVol < VOLN_MUTELEVEL, true);
+    }
 }
 
 void STDCALL OBS::MuteDesktopHotkey(DWORD hotkey, UPARAM param, bool bDown)
@@ -74,5 +83,5 @@ void STDCALL OBS::MuteDesktopHotkey(DWORD hotkey, UPARAM param, bool bDown)
     if(!bDown) return;
 
     App->desktopVol = ToggleVolumeControlMute(GetDlgItem(hwndMain, ID_DESKTOPVOLUME));
+    App->ReportDesktopVolumeChange(App->desktopVol, App->desktopVol < VOLN_MUTELEVEL, true);
 }
-

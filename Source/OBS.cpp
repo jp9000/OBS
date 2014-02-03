@@ -23,9 +23,6 @@
 
 //primarily main window stuff an initialization/destruction code
 
-//god forsaken laptops
-//extern "C" _declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
-
 typedef bool (*LOADPLUGINPROC)();
 typedef bool (*LOADPLUGINEXPROC)(UINT);
 typedef void (*UNLOADPLUGINPROC)();
@@ -388,6 +385,14 @@ OBS::OBS()
     SetVolumeControlIcons(hwndTemp, GetIcon(hinstMain, IDI_SOUND_DESKTOP), GetIcon(hinstMain, IDI_SOUND_DESKTOP_MUTED));
 
     //-----------------------------------------------------
+    // start/stop recording button
+
+    hwndTemp = CreateWindow(TEXT("BUTTON"), Str("MainWindow.StartRecording"),
+        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_PUSHBUTTON|WS_DISABLED|WS_CLIPSIBLINGS,
+        0, 0, 0, 0, hwndMain, (HMENU)ID_TOGGLERECORDING, 0, 0);
+    SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
+
+    //-----------------------------------------------------
     // settings button
 
     hwndTemp = CreateWindow(TEXT("BUTTON"), Str("Settings"),
@@ -642,6 +647,7 @@ OBS::OBS()
                         /* get event callbacks for the plugin */
                         pluginInfo->startStreamCallback  = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartStream");
                         pluginInfo->stopStreamCallback   = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopStream");
+                        pluginInfo->statusCallback        = (OBS_STATUS_CALLBACK)GetProcAddress(hPlugin, "OnOBSStatus");
                         pluginInfo->streamStatusCallback  = (OBS_STREAM_STATUS_CALLBACK)GetProcAddress(hPlugin, "OnStreamStatus");
                         pluginInfo->sceneSwitchCallback   = (OBS_SCENE_SWITCH_CALLBACK)GetProcAddress(hPlugin, "OnSceneSwitch");
                         pluginInfo->scenesChangedCallback  = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnScenesChanged");
@@ -674,6 +680,8 @@ OBS::OBS()
         OSFindClose(hFind);
     }
 
+    ConfigureStreamButtons();
+
     ResizeWindow(false);
     ShowWindow(hwndMain, SW_SHOW);
 
@@ -689,9 +697,10 @@ OBS::OBS()
 
 OBS::~OBS()
 {
-    Stop();
+    Stop(true);
 
     bShuttingDown = true;
+
     OSTerminateThread(hHotkeyThread, 250);
 
     for(UINT i=0; i<plugins.Num(); i++)
@@ -704,6 +713,8 @@ OBS::~OBS()
 
         FreeLibrary(pluginInfo.hModule);
         pluginInfo.strFile.Clear();
+
+        ZeroMemory(&pluginInfo, sizeof(pluginInfo));
     }
 
     if (AppConfig->GetInt(TEXT("General"), TEXT("ShowNotificationAreaIcon"), 0) != 0)
@@ -981,6 +992,7 @@ void OBS::ProcessPanelVisible(bool fromResizeWindow)
     ShowWindow(GetDlgItem(hwndMain, ID_MICVOLUMEMETER), visible);
     ShowWindow(GetDlgItem(hwndMain, ID_DESKTOPVOLUMEMETER), visible);
     ShowWindow(GetDlgItem(hwndMain, ID_SETTINGS), visible);
+    ShowWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), visible);
     ShowWindow(GetDlgItem(hwndMain, ID_STARTSTOP), visible);
     ShowWindow(GetDlgItem(hwndMain, ID_SCENEEDITOR), visible);
     ShowWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), visible);
@@ -1050,7 +1062,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
     parts[3] = clientWidth-100;
     parts[2] = parts[3]-60;
     parts[1] = parts[2]-170;
-    parts[0] = parts[1]-80;
+    parts[0] = parts[1]-130;
     SendMessage(hwndTemp, SB_SETPARTS, 5, (LPARAM)parts);
 
     int resetXPos = xStart+listControlWidth*2;
@@ -1110,7 +1122,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
     SetWindowPos(GetDlgItem(hwndMain, ID_SCENEEDITOR), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
     xPos += controlWidth;
 
-    SetWindowPos(GetDlgItem(hwndMain, ID_TESTSTREAM), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
+    SetWindowPos(GetDlgItem(hwndMain, ID_TOGGLERECORDING), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
     xPos += controlWidth;
 
     yPos += controlHeight+controlPadding;
@@ -1122,7 +1134,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
     SetWindowPos(GetDlgItem(hwndMain, ID_GLOBALSOURCES), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
     xPos += controlWidth;
 
-    SetWindowPos(GetDlgItem(hwndMain, ID_PLUGINS), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
+    SetWindowPos(GetDlgItem(hwndMain, ID_TESTSTREAM), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
     xPos += controlWidth;
 
     yPos += controlHeight+controlPadding;
@@ -1131,7 +1143,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
 
     xPos = resetXPos;
 
-    SetWindowPos(GetDlgItem(hwndMain, ID_DASHBOARD), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
+    SetWindowPos(GetDlgItem(hwndMain, ID_PLUGINS), NULL, xPos, yPos, controlWidth-controlPadding, controlHeight, flags);
     xPos += controlWidth;
 
     UpdateDashboardButton();
@@ -1174,17 +1186,38 @@ void OBS::GetProfiles(StringList &profileList)
 
     profileList.Clear();
 
-    strProfilesWildcard << lpAppDataPath << TEXT("\\profiles\\*.ini");
+    String profileDir(FormattedString(L"%s/profiles/", OBSGetAppDataPath()));
+
+    strProfilesWildcard << profileDir << "*.ini";
 
     if(hFind = OSFindFirstFile(strProfilesWildcard, ofd))
     {
         do
         {
-            if(ofd.bDirectory) continue;
-            profileList << GetPathWithoutExtension(ofd.fileName);
+            String profile(GetPathWithoutExtension(ofd.fileName));
+            String profilePath(FormattedString(L"%s%s.ini", profileDir.Array(), profile.Array()));
+            if(ofd.bDirectory || !OSFileExists(profilePath) || profileList.HasValue(profile)) continue;
+            profileList << profile;
         } while(OSFindNextFile(hFind, ofd));
 
         OSFindClose(hFind);
+    }
+}
+
+void OBS::ConfigureStreamButtons()
+{
+    int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
+    bRecordingOnly = (networkMode == 1);
+
+    if (bRecordingOnly)
+    {
+        EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), FALSE);
+        EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), TRUE);
+    }
+    else
+    {
+        EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), TRUE);
+        EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), FALSE);
     }
 }
 
@@ -1201,7 +1234,7 @@ void OBS::ReloadIniSettings()
     SetVolumeControlValue(hwndTemp, AppConfig->GetFloat(TEXT("Audio"), TEXT("MicVolume"), 1.0f));
 
     AudioDeviceList audioDevices;
-    GetAudioDevices(audioDevices, ADT_RECORDING);
+    GetAudioDevices(audioDevices, ADT_RECORDING, false, true);
 
     String strDevice = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), NULL);
     if(strDevice.IsEmpty() || !audioDevices.HasID(strDevice))
@@ -1242,9 +1275,11 @@ void OBS::ReloadIniSettings()
 
     //-------------------------------------------
     // dashboard
+    /*
     strDashboard = AppConfig->GetString(TEXT("Publish"), TEXT("Dashboard"));
     strDashboard.KillSpaces();
     UpdateDashboardButton();
+    */
 
     //-------------------------------------------
     // hotkeys
@@ -1292,11 +1327,15 @@ void OBS::ReloadIniSettings()
     }
     else
         HideNotificationAreaIcon();
+
+    bKeepRecording = AppConfig->GetInt(TEXT("Publish"), TEXT("KeepRecording")) != 0;
+
     if (!minimizeToIcon && !IsWindowVisible(hwndMain))
         ShowWindow(hwndMain, SW_SHOW);
 
+    if (!bRunning)
+        ConfigureStreamButtons();
 }
-
 
 void OBS::UpdateAudioMeters()
 {
@@ -1372,9 +1411,6 @@ void OBS::SetStatusBarData()
 {
     if (bRunning && OSTryEnterMutex(hStartupShutdownMutex))
     {
-        if (!App->network)
-            return;
-
         HWND hwndStatusBar = GetDlgItem(hwndMain, ID_STATUS);
 
         SendMessage(hwndStatusBar, WM_SETREDRAW, 0, 0);
@@ -1387,13 +1423,15 @@ void OBS::SetStatusBarData()
         SendMessage(hwndStatusBar, WM_SETREDRAW, 1, 0);
         InvalidateRect(hwndStatusBar, NULL, FALSE);
     
-        if(bRunning)
+        if (bRunning && network)
         {
             ReportStreamStatus(bRunning, bTestStream, 
                 (UINT) App->bytesPerSec, App->curStrain, 
-                (UINT)this->totalStreamTime, (UINT)App->network->NumTotalVideoFrames(),
+                (UINT)this->totalStreamTime, (UINT)network->NumTotalVideoFrames(),
                 (UINT)App->curFramesDropped, (UINT) App->captureFPS);
         }
+
+        ReportOBSStatus(bRunning, bStreaming, bRecording, bTestStream, bReconnecting);
 
         OSLeaveMutex(hStartupShutdownMutex);
     }
@@ -1401,7 +1439,7 @@ void OBS::SetStatusBarData()
 
 void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
 {
-    if(!App->bRunning)
+    if(!App->bRunning && !App->bStreaming && !App->bRecording)
         return;
 
     HDC hdcTemp = CreateCompatibleDC(dis.hDC);
@@ -1429,24 +1467,33 @@ void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
 
     if(dis.itemID == 4)
     {
+        HBRUSH hColorBrush;
         DWORD green = 0xFF, red;
 
         statusBarData.bytesPerSec = App->bytesPerSec;
         statusBarData.strain = App->curStrain;
         //statusBarData.strain = rand()%101;
 
-        if(statusBarData.strain > 50.0)
-            green = DWORD(((50.0-(statusBarData.strain-50.0))/50.0)*255.0);
+        //show grey rather than green when not connected
+        if (App->network && App->network->NumTotalVideoFrames() == 0)
+        {
+            hColorBrush = CreateSolidBrush(RGB(100,100,100));
+        }
+        else
+        {
+            if(statusBarData.strain > 50.0)
+                green = DWORD(((50.0-(statusBarData.strain-50.0))/50.0)*255.0);
 
-        double redStrain = statusBarData.strain/50.0;
-        if(redStrain > 1.0)
-            redStrain = 1.0;
+            double redStrain = statusBarData.strain/50.0;
+            if(redStrain > 1.0)
+                redStrain = 1.0;
 
-        red = DWORD(redStrain*255.0);
+            red = DWORD(redStrain*255.0);
 
-        //--------------------------------
+            //--------------------------------
 
-        HBRUSH  hColorBrush = CreateSolidBrush((green<<8)|red);
+            hColorBrush = CreateSolidBrush((green<<8)|red);
+        }
 
         RECT rcBox = {0, 0, 20, 20};
         /*rc.left += dis.rcItem.left;
@@ -1493,7 +1540,21 @@ void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
                     DWORD streamTimeHours = streamTimeMinutesTotal/60;
                     DWORD streamTimeMinutes = streamTimeMinutesTotal%60;
 
+                    int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
+
                     strOutString = FormattedString(TEXT("%u:%02u:%02u"), streamTimeHours, streamTimeMinutes, streamTimeSeconds);
+                    if(App->bRecording && App->bStreaming && !App->bTestStream && networkMode == 0) {
+                        strOutString.AppendString(TEXT(" (LIVE + REC)"));
+                    }
+                    else if(!App->bRecording && App->bStreaming && !App->bTestStream && networkMode == 0) {
+                        strOutString.AppendString(TEXT(" (LIVE)"));
+                    }
+                    else if(App->bRecording && !App->bTestStream) {
+                        strOutString.AppendString(TEXT(" (REC)"));
+                    }
+                    else if(App->bRunning && App->bTestStream) {
+                        strOutString.AppendString(TEXT(" (Preview)"));
+                    }
                 }
                 break;
             case 2:
@@ -1685,12 +1746,15 @@ BOOL OBS::HideNotificationAreaIcon()
 BOOL OBS::UpdateDashboardButton()
 {
     //Are we in live stream mode, and do we have a non-empty dashboard string?
+    /*
     BOOL bStreamOutput = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode")) == 0;
     BOOL bDashboardValid = strDashboard.IsValid();
 
     BOOL bShowDashboardButton = bPanelVisible && bStreamOutput && bDashboardValid;
 
     return ShowWindow(GetDlgItem(hwndMain, ID_DASHBOARD), bShowDashboardButton ? SW_SHOW : SW_HIDE);
+    */
+    return false;
 }
 
 void OBS::ActuallyEnableProjector()
@@ -1775,4 +1839,13 @@ void OBS::DisableProjector()
 
     if (!bShutdownEncodeThread)
         ShowWindow(hwndProjector, SW_HIDE);
+}
+
+void OBS::GetThreadHandles (HANDLE *videoThread, HANDLE *encodeThread)
+{
+    if (hVideoThread)
+        *videoThread = hVideoThread;
+
+    if (hEncodeThread)
+        *encodeThread = hEncodeThread;
 }

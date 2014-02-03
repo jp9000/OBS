@@ -2,7 +2,7 @@
 
 ; Define your application name
 !define APPNAME "Open Broadcaster Software"
-!define APPNAMEANDVERSION "Open Broadcaster Software 0.584b"
+!define APPNAMEANDVERSION "Open Broadcaster Software 0.60b"
 
 ; Additional script dependencies
 !include WinVer.nsh
@@ -84,9 +84,10 @@ Function PreReqCheck
 	GetDLLVersion "D3DX10_43.DLL" $R0 $R1
 	GetDLLVersion "D3D10_1.DLL" $R0 $R1
 	GetDLLVersion "DXGI.DLL" $R0 $R1
+	GetDLLVersion "D3DCompiler_43.dll" $R0 $R1
 	IfErrors dxMissing dxOK
 	dxMissing:
-		MessageBox MB_YESNO|MB_ICONEXCLAMATION "Your system is missing a DirectX update that ${APPNAME} requires. Would you like to download it?" IDYES dxtrue IDNO dxfalse
+		MessageBox MB_YESNO|MB_ICONEXCLAMATION "Your system is missing DirectX components that ${APPNAME} requires. Would you like to download them?" IDYES dxtrue IDNO dxfalse
 		dxtrue:
 			ExecShell "open" "http://www.microsoft.com/en-us/download/details.aspx?id=35"
 		dxfalse:
@@ -108,16 +109,20 @@ Section "Open Broadcaster Software" Section1
 
 	; Set Section properties
 	SetOverwrite on
+	
+	; Empty the shader cache in case the user is reinstalling to try and fix corrupt shader issues
+	RMDir /R "$APPDATA\OBS\shaderCache"
 
 	; Set Section Files and Shortcuts
 	SetOutPath "$PROGRAMFILES32\OBS"
 	File "..\Release\OBS.exe"
-	File "..\x264\libs\32bit\libx264-136.dll"
+	File "..\x264\libs\32bit\libx264-140.dll"
 	File "..\QSVHelper\Release\QSVHelper.exe"
 	File "..\OBSAPI\Release\OBSApi.dll"
 	File "..\rundir\services.xconfig"
 	File "..\OBSHelp\OBSHelp.chm"
 	File "..\rundir\pdb32\stripped\*.pdb"
+	File "..\ObsNvenc\Release\ObsNvenc.dll"
 	File "$%WindowsSDK80Path%Debuggers\x86\dbghelp.dll"
 	SetOutPath "$PROGRAMFILES32\OBS\locale"
 	File "..\rundir\locale\*.txt"
@@ -142,12 +147,13 @@ Section "Open Broadcaster Software" Section1
 	${if} ${RunningX64}
 		SetOutPath "$PROGRAMFILES64\OBS"
 		File "..\x64\Release\OBS.exe"
-		File "..\x264\libs\64bit\libx264-136.dll"
+		File "..\x264\libs\64bit\libx264-140.dll"
 		File "..\QSVHelper\Release\QSVHelper.exe"
 		File "..\OBSAPI\x64\Release\OBSApi.dll"
 		File "..\rundir\services.xconfig"
 		File "..\OBSHelp\OBSHelp.chm"
 		File "..\rundir\pdb64\stripped\*.pdb"
+		File "..\ObsNvenc\x64\Release\ObsNvenc.dll"
 		File "$%WindowsSDK80Path%Debuggers\x64\dbghelp.dll"
 		SetOutPath "$PROGRAMFILES64\OBS\locale"
 		File "..\rundir\locale\*.txt"
@@ -220,12 +226,13 @@ Section Uninstall
 
 	; Clean up Open Broadcaster Software
 	Delete "$PROGRAMFILES32\OBS\OBS.exe"
-	Delete "$PROGRAMFILES32\OBS\libx264-136.dll"
+	Delete "$PROGRAMFILES32\OBS\libx264-140.dll"
 	Delete "$PROGRAMFILES32\OBS\QSVHelper.exe"
 	Delete "$PROGRAMFILES32\OBS\OBSApi.dll"
 	Delete "$PROGRAMFILES32\OBS\services.xconfig"
 	Delete "$PROGRAMFILES32\OBS\*.chm"
 	Delete "$PROGRAMFILES32\OBS\*.pdb"
+	Delete "$PROGRAMFILES32\OBS\ObsNvenc.dll"
 	Delete "$PROGRAMFILES32\OBS\dbghelp.dll"
 	Delete "$PROGRAMFILES32\OBS\locale\*.txt"
 	Delete "$PROGRAMFILES32\OBS\shaders\*.?Shader"
@@ -240,12 +247,13 @@ Section Uninstall
 	Delete "$PROGRAMFILES32\OBS\plugins\GraphicsCapture\*.exe"
 	${if} ${RunningX64}
 		Delete "$PROGRAMFILES64\OBS\OBS.exe"
-		Delete "$PROGRAMFILES64\OBS\libx264-136.dll"
+		Delete "$PROGRAMFILES64\OBS\libx264-140.dll"
 		Delete "$PROGRAMFILES64\OBS\QSVHelper.exe"
 		Delete "$PROGRAMFILES64\OBS\OBSApi.dll"
 		Delete "$PROGRAMFILES64\OBS\services.xconfig"
 		Delete "$PROGRAMFILES64\OBS\*.chm"
 		Delete "$PROGRAMFILES64\OBS\*.pdb"
+		Delete "$PROGRAMFILES64\OBS\ObsNvenc.dll"
 		Delete "$PROGRAMFILES64\OBS\dbghelp.dll"
 		Delete "$PROGRAMFILES64\OBS\locale\*.txt"
 		Delete "$PROGRAMFILES64\OBS\shaders\*.?Shader"

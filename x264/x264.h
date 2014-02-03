@@ -41,7 +41,7 @@
 
 #include "x264_config.h"
 
-#define X264_BUILD 136
+#define X264_BUILD 140
 
 /* Application developers planning to link against a shared library version of
  * libx264 from a Microsoft Visual Studio or similar development environment
@@ -98,12 +98,15 @@ typedef struct
     int i_first_mb; /* If this NAL is a slice, the index of the first MB in the slice. */
     int i_last_mb;  /* If this NAL is a slice, the index of the last MB in the slice. */
 
-    /* Size of payload in bytes. */
+    /* Size of payload (including any padding) in bytes. */
     int     i_payload;
     /* If param->b_annexb is set, Annex-B bytestream with startcode.
      * Otherwise, startcode is replaced with a 4-byte size.
      * This size is the size used in mp4/similar muxing; it is equal to i_payload-4 */
     uint8_t *p_payload;
+
+    /* Size of padding in bytes. */
+    int i_padding;
 } x264_nal_t;
 
 /****************************************************************************
@@ -318,6 +321,7 @@ typedef struct x264_param_t
     int         i_bframe_pyramid;   /* Keep some B-frames as references: 0=off, 1=strict hierarchical, 2=normal */
     int         b_open_gop;
     int         b_bluray_compat;
+    int         b_avcintra_compat;
 
     int         b_deblocking_filter;
     int         i_deblocking_filter_alphac0;    /* [-6, 6] -6 light filter, 6 strong */
@@ -330,7 +334,7 @@ typedef struct x264_param_t
     int         b_constrained_intra;
 
     int         i_cqm_preset;
-    char        *psz_cqm_file;      /* JM format */
+    char        *psz_cqm_file;      /* filename (in UTF-8) of CQM file, JM format */
     uint8_t     cqm_4iy[16];        /* used only if i_cqm_preset == X264_CQM_CUSTOM */
     uint8_t     cqm_4py[16];
     uint8_t     cqm_4ic[16];
@@ -344,9 +348,8 @@ typedef struct x264_param_t
     void        (*pf_log)( void *, int i_level, const char *psz, va_list );
     void        *p_log_private;
     int         i_log_level;
-    int         b_visualize;
     int         b_full_recon;   /* fully reconstruct frames, even when not necessary for encoding.  Implied by psz_dump_yuv */
-    char        *psz_dump_yuv;  /* filename for reconstructed frames */
+    char        *psz_dump_yuv;  /* filename (in UTF-8) for reconstructed frames */
 
     /* Encoder analyser parameters */
     struct
@@ -405,6 +408,10 @@ typedef struct x264_param_t
         float       f_ip_factor;
         float       f_pb_factor;
 
+        /* VBV filler: force CBR VBV and use filler bytes to ensure hard-CBR.
+         * Implied by NAL-HRD CBR. */
+        int         b_filler;
+
         int         i_aq_mode;      /* psy adaptive QP. (X264_AQ_*) */
         float       f_aq_strength;
         int         b_mb_tree;      /* Macroblock-tree ratecontrol. */
@@ -412,9 +419,9 @@ typedef struct x264_param_t
 
         /* 2pass */
         int         b_stat_write;   /* Enable stat writing in psz_stat_out */
-        char        *psz_stat_out;
+        char        *psz_stat_out;  /* output filename (in UTF-8) of the 2pass stats file */
         int         b_stat_read;    /* Read stat from psz_stat_in and use it */
-        char        *psz_stat_in;
+        char        *psz_stat_in;   /* input filename (in UTF-8) of the 2pass stats file */
 
         /* 2pass params (same as ffmpeg ones) */
         float       f_qcompress;    /* 0.0 => cbr, 1.0 => constant qp */
@@ -482,7 +489,7 @@ typedef struct x264_param_t
     int b_opencl;            /* use OpenCL when available */
     int i_opencl_device;     /* specify count of GPU devices to skip, for CLI users */
     void *opencl_device_id;  /* pass explicit cl_device_id as void*, for API users */
-    char *psz_clbin_file;    /* compiled OpenCL kernel cache file */
+    char *psz_clbin_file;    /* filename (in UTF-8) of the compiled OpenCL kernel cache file */
 
     /* Slicing parameters */
     int i_slice_max_size;    /* Max size per slice in bytes; includes estimated NAL overhead. */

@@ -37,6 +37,7 @@ Copy="Копиране"
 Scene="Сцена"
 Settings="Настройки"
 StreamReport="Стрийм рапорт"
+MessageBoxWarningCaption="Внимание"
 
 BuildingMP4Dialog.Progress="Създаване на MP4, моля изчакайте..."
 
@@ -80,6 +81,7 @@ MainMenu.File.Save="&Запис"
 
 MainMenu.Help.Contents="&Съдържание"
 MainMenu.Help.VisitWebsite="Посети Уебсайта"
+MainMenu.Help.CheckForUpdates="Провери за актуализации"
 
 MainMenu.Settings.OpenConfigFolder="Отвори &Конфигурационната Папка"
 MainMenu.Settings.OpenLogFolder="Отвори &Папка с логове"
@@ -93,6 +95,8 @@ MainWindow.Plugins="Плъгини"
 MainWindow.SceneEditor="Редактирай сцена"
 MainWindow.Scenes="Сцени:"
 MainWindow.Sources="Източници:"
+MainWindow.StartRecording="Започни записване"
+MainWindow.StopRecording="Спри записване"
 MainWindow.StartStream="Старт"
 MainWindow.StopStream="Стоп"
 MainWindow.StopTest="Стоп Тест"
@@ -134,15 +138,21 @@ Settings.Advanced.BindToIP="Свързване към интерфейса:"
 Settings.Advanced.DisablePreviewEncoding="Изключване на кодиране при визуализиране"
 Settings.Advanced.GlobalAudioTimeAdjust="Глобално Аудио Времево Компенсиране (в милисекунди):"
 Settings.Advanced.Network="Мрежа"
+Settings.Advanced.PresetWarning="ВНИМАНИЕ! Смяната на предварително зададените х264 настройки може да има сериозни ефекти над качеството на картината и използването на процесора. Не сменяйте тази настройка, освен, ако не знаете как тези настройки работят. Имайте едно на ум когато използвате уроци, който ви казват да променяте тази настройка. Почти никога няма нужда да се сменя тази настройка от стандартно зададената (veryfast). Сигурни ли сте че искате да промените настройките?"
 Settings.Advanced.UseMultithreadedOptimizations="Използване ма многонишкови оптимизации"
 Settings.Advanced.UseQSV="Използване на Quick Sync"
+Settings.Advanced.UseNVENC="Използвай NVIDIA NVENC"
+Settings.Advanced.UseNVENCDisabledAfterApply="Опцията 'Използвай NVIDIA NVENC' ще бъде недостъпна, защото вашият хардуер не я поддържа."
 
 Settings.Advanced.Priority.Normal="Нормален"
 Settings.Advanced.Priority.High="Висок"
 
 Settings.Audio.Device="Микрофон/Aux звуково устройство:"
+Settings.Audio.MuteMicHotkey="Бутон за включване/изключване на звукът:"
 Settings.Audio.PushToTalkDelay="Push-to-talk забавяне (милисекунди):"
 Settings.Audio.PushToTalkHotkey="Използвайте Push-to-talk:"
+Settings.Audio.ShowOnlyConnectedDevices="Покажи само свързани устройства"
+Settings.Audio.ResetMic="Преустановяване"
 
 Settings.Encoding.Audio="Аудио енкодинг"
 Settings.Encoding.Video="Видео енкодинг"
@@ -175,6 +185,7 @@ Settings.Publish.AutoReconnectTimeout="Изчакване за автомати�
 Settings.Publish.ChannelName="Име на канала:"
 Settings.Publish.DashboardLink="Връзка за Табло (ако има):"
 Settings.Publish.Delay="Забавяне (секунди):"
+Settings.Publish.KeepRecording="Продължи записване при спиране на стрийма:"
 Settings.Publish.LowLatencyMode="Намаляване въздействието върху мрежата:"
 Settings.Publish.Mode="Режим:"
 Settings.Publish.Password="Парола (ако има такава):"
@@ -256,6 +267,9 @@ Sources.TransitionSource.Empty="Няма въведени растерни из�
 Sources.TransitionSource.TimeBetweenBitmaps="Време между изображенията (секунди):"
 
 Stats.TotalBytesTransferred="Общо прехвърлени байтове:"
+
+
+
 
 Updater.DownloadNow="Желаете ли да ги изтеглите сега?"
 Updater.NewUpdates="Следните актуализации са достъпни: \r\n\r\n"

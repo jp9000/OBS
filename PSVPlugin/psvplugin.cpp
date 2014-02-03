@@ -220,7 +220,7 @@ bool LoadPlugin()
 
     LoadSettings();
 
-    OnSceneSwitch(OBSGetSceneName());
+    OnSceneSwitch(NULL);
 
     return true;
 }

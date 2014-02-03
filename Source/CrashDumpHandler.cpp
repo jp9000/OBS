@@ -313,6 +313,218 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
         crashDumpLog.FlushFileBuffers();
     }
 
+    //if we manually crashed due to a deadlocked thread, record some extra info
+    if (exceptionInfo->ExceptionRecord->ExceptionCode == EXCEPTION_BREAKPOINT)
+    {
+        HANDLE hVideoThread = NULL, hEncodeThread = NULL;
+        App->GetThreadHandles (&hVideoThread, &hEncodeThread);
+
+        if (hVideoThread)
+        {
+            crashDumpLog.WriteStr(TEXT("\r\nVideo thread stack trace:\r\n"));
+#ifdef _WIN64
+            crashDumpLog.WriteStr(TEXT("Stack            EIP              Arg0             Arg1             Arg2             Arg3             Address\r\n"));
+#else
+            crashDumpLog.WriteStr(TEXT("Stack    EIP      Arg0     Arg1     Arg2     Arg3     Address\r\n"));
+#endif
+            crashDumpLog.FlushFileBuffers();
+
+            context.ContextFlags = CONTEXT_ALL;
+            GetThreadContext (hVideoThread, &context);
+            ZeroMemory (&frame, sizeof(frame));
+#ifdef _WIN64
+            InstructionPtr = context.Rip;
+            frame.AddrPC.Offset = InstructionPtr;
+            frame.AddrFrame.Offset = context.Rbp;
+            frame.AddrStack.Offset = context.Rsp;
+            imageType = IMAGE_FILE_MACHINE_AMD64;
+#else
+            InstructionPtr = context.Eip;
+            frame.AddrPC.Offset = InstructionPtr;
+            frame.AddrFrame.Offset = context.Ebp;
+            frame.AddrStack.Offset = context.Esp;
+            imageType = IMAGE_FILE_MACHINE_I386;
+#endif
+
+            frame.AddrFrame.Mode = AddrModeFlat;
+            frame.AddrPC.Mode = AddrModeFlat;
+            frame.AddrStack.Mode = AddrModeFlat;
+            while (fnStackWalk64 (imageType, hProcess, hVideoThread, &frame, &context, NULL, (PFUNCTION_TABLE_ACCESS_ROUTINE64)fnSymFunctionTableAccess64, (PGET_MODULE_BASE_ROUTINE64)fnSymGetModuleBase64, NULL))
+            {
+                scpy (moduleInfo.moduleName, TEXT("<unknown>"));
+                moduleInfo.faultAddress = frame.AddrPC.Offset;
+                fnEnumerateLoadedModules64 (hProcess, (PENUMLOADED_MODULES_CALLBACK64)EnumerateLoadedModulesProcInfo, (VOID *)&moduleInfo);
+                slwr (moduleInfo.moduleName);
+
+                p = srchr (moduleInfo.moduleName, '\\');
+                if (p)
+                    p++;
+                else
+                    p = moduleInfo.moduleName;
+
+#ifdef _WIN64
+                if (fnSymFromAddr (hProcess, frame.AddrPC.Offset, &fnOffset, symInfo) && !(symInfo->Flags & SYMFLAG_EXPORT))
+                {
+                    crashDumpLog.WriteStr(FormattedString(TEXT("%016I64X %016I64X %016I64X %016I64X %016I64X %016I64X %s!%s+0x%I64x\r\n"),
+                        frame.AddrStack.Offset,
+                        frame.AddrPC.Offset,
+                        frame.Params[0],
+                        frame.Params[1],
+                        frame.Params[2],
+                        frame.Params[3],
+                        p,
+                        symInfo->Name,
+                        fnOffset));
+                }
+                else
+                {
+                    crashDumpLog.WriteStr(FormattedString(TEXT("%016I64X %016I64X %016I64X %016I64X %016I64X %016I64X %s!0x%I64x\r\n"),
+                        frame.AddrStack.Offset,
+                        frame.AddrPC.Offset,
+                        frame.Params[0],
+                        frame.Params[1],
+                        frame.Params[2],
+                        frame.Params[3],
+                        p,
+                        frame.AddrPC.Offset));
+                }
+#else
+                if (fnSymFromAddr (hProcess, frame.AddrPC.Offset, &fnOffset, symInfo) && !(symInfo->Flags & SYMFLAG_EXPORT))
+                {
+                    crashDumpLog.WriteStr(FormattedString(TEXT("%08.8I64X %08.8I64X %08.8X %08.8X %08.8X %08.8X %s!%s+0x%I64x\r\n"),
+                        frame.AddrStack.Offset,
+                        frame.AddrPC.Offset,
+                        (DWORD)frame.Params[0],
+                        (DWORD)frame.Params[1],
+                        (DWORD)frame.Params[2],
+                        (DWORD)frame.Params[3],
+                        p,
+                        symInfo->Name,
+                        fnOffset));
+                }
+                else
+                {
+                    crashDumpLog.WriteStr(FormattedString(TEXT("%08.8I64X %08.8I64X %08.8X %08.8X %08.8X %08.8X %s!0x%I64x\r\n"),
+                        frame.AddrStack.Offset,
+                        frame.AddrPC.Offset,
+                        (DWORD)frame.Params[0],
+                        (DWORD)frame.Params[1],
+                        (DWORD)frame.Params[2],
+                        (DWORD)frame.Params[3],
+                        p,
+                        frame.AddrPC.Offset
+                        ));
+                }
+#endif
+
+                crashDumpLog.FlushFileBuffers();
+            }
+        }
+
+        if (hEncodeThread)
+        {
+            crashDumpLog.WriteStr(TEXT("\r\nEncode thread stack trace:\r\n"));
+#ifdef _WIN64
+            crashDumpLog.WriteStr(TEXT("Stack            EIP              Arg0             Arg1             Arg2             Arg3             Address\r\n"));
+#else
+            crashDumpLog.WriteStr(TEXT("Stack    EIP      Arg0     Arg1     Arg2     Arg3     Address\r\n"));
+#endif
+            crashDumpLog.FlushFileBuffers();
+
+            context.ContextFlags = CONTEXT_ALL;
+            GetThreadContext (hEncodeThread, &context);
+            ZeroMemory (&frame, sizeof(frame));
+#ifdef _WIN64
+            InstructionPtr = context.Rip;
+            frame.AddrPC.Offset = InstructionPtr;
+            frame.AddrFrame.Offset = context.Rbp;
+            frame.AddrStack.Offset = context.Rsp;
+            imageType = IMAGE_FILE_MACHINE_AMD64;
+#else
+            InstructionPtr = context.Eip;
+            frame.AddrPC.Offset = InstructionPtr;
+            frame.AddrFrame.Offset = context.Ebp;
+            frame.AddrStack.Offset = context.Esp;
+            imageType = IMAGE_FILE_MACHINE_I386;
+#endif
+
+            frame.AddrFrame.Mode = AddrModeFlat;
+            frame.AddrPC.Mode = AddrModeFlat;
+            frame.AddrStack.Mode = AddrModeFlat;
+            while (fnStackWalk64 (imageType, hProcess, hEncodeThread, &frame, &context, NULL, (PFUNCTION_TABLE_ACCESS_ROUTINE64)fnSymFunctionTableAccess64, (PGET_MODULE_BASE_ROUTINE64)fnSymGetModuleBase64, NULL))
+            {
+                scpy (moduleInfo.moduleName, TEXT("<unknown>"));
+                moduleInfo.faultAddress = frame.AddrPC.Offset;
+                fnEnumerateLoadedModules64 (hProcess, (PENUMLOADED_MODULES_CALLBACK64)EnumerateLoadedModulesProcInfo, (VOID *)&moduleInfo);
+                slwr (moduleInfo.moduleName);
+
+                p = srchr (moduleInfo.moduleName, '\\');
+                if (p)
+                    p++;
+                else
+                    p = moduleInfo.moduleName;
+
+#ifdef _WIN64
+                if (fnSymFromAddr (hProcess, frame.AddrPC.Offset, &fnOffset, symInfo) && !(symInfo->Flags & SYMFLAG_EXPORT))
+                {
+                    crashDumpLog.WriteStr(FormattedString(TEXT("%016I64X %016I64X %016I64X %016I64X %016I64X %016I64X %s!%s+0x%I64x\r\n"),
+                        frame.AddrStack.Offset,
+                        frame.AddrPC.Offset,
+                        frame.Params[0],
+                        frame.Params[1],
+                        frame.Params[2],
+                        frame.Params[3],
+                        p,
+                        symInfo->Name,
+                        fnOffset));
+                }
+                else
+                {
+                    crashDumpLog.WriteStr(FormattedString(TEXT("%016I64X %016I64X %016I64X %016I64X %016I64X %016I64X %s!0x%I64x\r\n"),
+                        frame.AddrStack.Offset,
+                        frame.AddrPC.Offset,
+                        frame.Params[0],
+                        frame.Params[1],
+                        frame.Params[2],
+                        frame.Params[3],
+                        p,
+                        frame.AddrPC.Offset));
+                }
+#else
+                if (fnSymFromAddr (hProcess, frame.AddrPC.Offset, &fnOffset, symInfo) && !(symInfo->Flags & SYMFLAG_EXPORT))
+                {
+                    crashDumpLog.WriteStr(FormattedString(TEXT("%08.8I64X %08.8I64X %08.8X %08.8X %08.8X %08.8X %s!%s+0x%I64x\r\n"),
+                        frame.AddrStack.Offset,
+                        frame.AddrPC.Offset,
+                        (DWORD)frame.Params[0],
+                        (DWORD)frame.Params[1],
+                        (DWORD)frame.Params[2],
+                        (DWORD)frame.Params[3],
+                        p,
+                        symInfo->Name,
+                        fnOffset));
+                }
+                else
+                {
+                    crashDumpLog.WriteStr(FormattedString(TEXT("%08.8I64X %08.8I64X %08.8X %08.8X %08.8X %08.8X %s!0x%I64x\r\n"),
+                        frame.AddrStack.Offset,
+                        frame.AddrPC.Offset,
+                        (DWORD)frame.Params[0],
+                        (DWORD)frame.Params[1],
+                        (DWORD)frame.Params[2],
+                        (DWORD)frame.Params[3],
+                        p,
+                        frame.AddrPC.Offset
+                        ));
+                }
+#endif
+
+                crashDumpLog.FlushFileBuffers();
+            }
+        }
+
+    }
+
     //generate a minidump if possible
     if (fnMiniDumpWriteDump)
     {

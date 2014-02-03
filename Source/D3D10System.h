@@ -112,6 +112,7 @@ class D3D10Texture : public Texture
     static Texture* CreateFromFile(CTSTR lpFile, BOOL bBuildMipMaps);
     static Texture* CreateRenderTarget(unsigned int width, unsigned int height, GSColorFormat colorFormat, BOOL bGenMipMaps);
     static Texture* CreateGDITexture(unsigned int width, unsigned int height);
+    static Texture* CreateShared(unsigned int width, unsigned int height);
 
 public:
     ~D3D10Texture();
@@ -128,6 +129,7 @@ public:
     virtual void ReleaseDC();
 
     LPVOID GetD3DTexture() {return texture;}
+    virtual HANDLE GetSharedHandle();
 };
 
 //=============================================================================
@@ -233,6 +235,8 @@ protected:
     void UpdateParams();
 
 public:
+    static void DestroyCache();
+
     ~D3D10Shader();
 
     virtual int    NumParams() const;
@@ -460,6 +464,9 @@ public:
 
     virtual void  CopyTexture(Texture *texDest, Texture *texSrc);
     virtual void  DrawSpriteExRotate(Texture *texture, DWORD color, float x, float y, float x2, float y2, float degrees, float u, float v, float u2, float v2, float texDegrees);
+
+    // To prevent breaking the API, put this at the end instead of with the other Texture functions
+    virtual Texture*        CreateSharedTexture(unsigned int width, unsigned int height);
 };
 
 inline ID3D10Device*        GetD3D()        {return static_cast<ID3D10Device*>(GS->GetDevice());}

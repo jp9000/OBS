@@ -79,7 +79,7 @@ enum AudioDeviceType {
     ADT_RECORDING
 };
 
-void GetAudioDevices(AudioDeviceList &deviceList, AudioDeviceType deviceType, bool ConntectedOnly=false);
+void GetAudioDevices(AudioDeviceList &deviceList, AudioDeviceType deviceType, bool ConntectedOnly=false, bool canDisable=false);
 bool GetDefaultMicID(String &strVal);
 bool GetDefaultSpeakerID(String &strVal);
 
@@ -279,6 +279,8 @@ struct ClassInfo
 
 /* Event callback signiture definitions */
 typedef void (*OBS_CALLBACK)();
+typedef void (*OBS_STATUS_CALLBACK)(bool /*running*/, bool /*streaming*/, bool /*recording*/,
+                                    bool /*previewing*/, bool /*reconnecting*/);
 typedef void (*OBS_STREAM_STATUS_CALLBACK)(bool /*streaming*/, bool /*previewOnly*/,
                                            UINT /*bytesPerSec*/, double /*strain*/, 
                                            UINT /*totalStreamtime*/, UINT /*numTotalFrames*/, 
@@ -299,6 +301,9 @@ struct PluginInfo
     
     /* called on stream stopping */
     OBS_CALLBACK stopStreamCallback;
+
+    /* called when status bar is updated, even without network */
+    OBS_STATUS_CALLBACK statusCallback;
 
     /* called when stream stats are updated in stats window */
     OBS_STREAM_STATUS_CALLBACK streamStatusCallback;
@@ -339,6 +344,7 @@ struct GlobalSourceInfo
 enum
 {
     ID_SETTINGS=5000,
+    ID_TOGGLERECORDING,
     ID_STARTSTOP,
     ID_EXIT,
     ID_SCENEEDITOR,
@@ -511,6 +517,8 @@ enum PreviewDrawType {
     Preview_Projector
 };
 
+void ResetWASAPIAudioDevice(AudioSource *source);
+
 struct FrameProcessInfo;
 
 //todo: this class has become way too big, it's horrible, and I should be ashamed of myself
@@ -594,12 +602,13 @@ class OBS
     int                 curSettingsSelection;
     HWND                hwndSettings;
     HWND                hwndCurrentSettings;
-    bool                bSettingsChanged;
+    bool                bSettingsChanged, bApplySettingsAborted;
     List<SettingsPane*> settingsPanes;
     SettingsPane *      currentSettingsPane;
     int                 numberOfBuiltInSettingsPanes;
 
     void   SetChangedSettings(bool bChanged);
+    void   SetAbortApplySettings(bool abort);
     void   CancelSettings();
     void   ApplySettings();
 
@@ -625,7 +634,7 @@ private:
     String  strLanguage;
     bool    bTestStream;
     bool    bUseMultithreadedOptimizations;
-    bool    bRunning;
+    bool    bRunning, bRecording, bRecordingOnly, bStartingUp, bStreaming, bKeepRecording;
     volatile bool bShutdownVideoThread, bShutdownEncodeThread;
     int     renderFrameWidth, renderFrameHeight; // The size of the preview only
     int     renderFrameX, renderFrameY; // The offset of the preview inside the preview control
@@ -768,7 +777,8 @@ private:
     HANDLE hHotkeyMutex;
     HANDLE hHotkeyThread;
 
-    bool bUsingPushToTalk, bPushToTalkDown, bPushToTalkOn;
+    int pushToTalkDown;
+    bool bUsingPushToTalk, bPushToTalkOn;
     long long pushToTalkDelay, pushToTalkTimeLeft;
 
     UINT pushToTalkHotkeyID;
@@ -780,7 +790,7 @@ private:
     bool bStartStreamHotkeyDown, bStopStreamHotkeyDown;
 
     static DWORD STDCALL MainAudioThread(LPVOID lpUnused);
-    void QueryAudioBuffers(bool bQueriedDesktopDebugParam);
+    bool QueryAudioBuffers(bool bQueriedDesktopDebugParam);
     bool QueryNewAudio();
     void EncodeAudioSegment(float *buffer, UINT numFrames, QWORD timestamp);
     void MainAudioLoop();
@@ -796,7 +806,7 @@ private:
 
     String  streamReport;
 
-    String  strDashboard;
+    //String  strDashboard;
 
     List<IconInfo> Icons;
     List<FontInfo> Fonts;
@@ -879,7 +889,9 @@ private:
     void ResetItemCrops();
 
     void Start();
-    void Stop();
+    void Stop(bool overrideKeepRecording=false);
+    void StartRecording();
+    void StopRecording();
 
     static void STDCALL StartStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL StopStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
@@ -927,6 +939,7 @@ private:
     void DisableProjector();
 
     void ToggleCapturing();
+    void ToggleRecording();
 
     Scene* CreateScene(CTSTR lpClassName, XElement *data);
     void ConfigureScene(XElement *element);
@@ -952,6 +965,8 @@ private:
 
     static void ClearStatusBar();
     static void DrawStatusBar(DRAWITEMSTRUCT &dis);
+
+    void ConfigureStreamButtons();
 
     void ReloadIniSettings();
 
@@ -1075,6 +1090,8 @@ public:
     // event reporting functions
     virtual void ReportStartStreamTrigger();
     virtual void ReportStopStreamTrigger();
+    virtual void OBS::ReportOBSStatus(bool running, bool streaming, bool recording,
+                                   bool previewing, bool reconnecting);
     virtual void ReportStreamStatus(bool streaming, bool previewOnly = false, 
                                    UINT bytesPerSec = 0, double strain = 0, 
                                    UINT totalStreamtime = 0, UINT numTotalFrames = 0,
@@ -1093,6 +1110,9 @@ public:
     BOOL HideNotificationAreaIcon();
 
     BOOL UpdateDashboardButton();
+
+    inline void ResetMic() {if (bRunning && micAudio) ResetWASAPIAudioDevice(micAudio);}
+    void GetThreadHandles (HANDLE *videoThread, HANDLE *encodeThread);
 };
 
 LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo);

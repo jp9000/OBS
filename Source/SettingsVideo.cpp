@@ -173,6 +173,10 @@ void SettingsVideo::ApplySettings()
     UINT adapterID = (UINT)SendMessage(GetDlgItem(hwnd, IDC_DEVICE), CB_GETCURSEL, 0, 0);
     if (adapterID == CB_ERR)
         adapterID = 0;
+
+    if (adapterID != GlobalConfig->GetInt(TEXT("Video"), TEXT("Adapter")))
+        D3D10Shader::DestroyCache ();
+
     GlobalConfig->SetInt(TEXT("Video"), TEXT("Adapter"), adapterID);
 
     int curSel = (int)SendMessage(GetDlgItem(hwnd, IDC_MONITOR), CB_GETCURSEL, 0, 0);

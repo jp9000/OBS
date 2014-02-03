@@ -107,6 +107,7 @@ protected:
     HANDLE hBufferEvent;
     HANDLE hBufferSpaceAvailableEvent;
     HANDLE hDataBufferMutex;
+    HANDLE hRTMPMutex;
     HANDLE hConnectionThread;
 
     HANDLE hSendLoopExit;
@@ -160,7 +161,7 @@ protected:
 
 public:
     RTMPPublisher();
-    bool Init(RTMP *rtmpIn, UINT tcpBufferSize);
+    bool Init(UINT tcpBufferSize);
     ~RTMPPublisher();
 
     void SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type);

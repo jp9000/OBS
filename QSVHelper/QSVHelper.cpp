@@ -145,10 +145,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
     init_res->requested_impl = encoder.requested;
     init_res->actual_impl = encoder.actual;
 
+    encoder.InitializeEncoder();
+
     encoder.InitializeBuffers(init_res);
 
-    encoder.InitializeEncoder();
-    
     init_res.signal();
 
     log_file << "Using " << encoder.encode_tasks.size() << " encode tasks and " << encoder.surfaces.size() << " internal frame buffers\n";
