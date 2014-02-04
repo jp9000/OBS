@@ -388,7 +388,7 @@ OBS::OBS()
     // start/stop recording button
 
     hwndTemp = CreateWindow(TEXT("BUTTON"), Str("MainWindow.StartRecording"),
-        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_PUSHBUTTON|WS_DISABLED|WS_CLIPSIBLINGS,
+        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_PUSHBUTTON|WS_CLIPSIBLINGS,
         0, 0, 0, 0, hwndMain, (HMENU)ID_TOGGLERECORDING, 0, 0);
     SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 
@@ -1204,21 +1204,25 @@ void OBS::GetProfiles(StringList &profileList)
     }
 }
 
-void OBS::ConfigureStreamButtons()
+void OBS::RefreshStreamButtons(bool disable)
 {
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
     bRecordingOnly = (networkMode == 1);
+    bool canStream = networkMode == 0 && !bTestStream;
+    bool canRecord = (bRecordingOnly || (AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile")) != 0 && bStreaming)) && !bTestStream;
+    bool canTest = !bRecording && (!bStreaming || bTestStream);
 
-    if (bRecordingOnly)
-    {
-        EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), FALSE);
-        EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), TRUE);
-    }
-    else
-    {
-        EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), TRUE);
-        EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), FALSE);
-    }
+    EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), !disable && canStream);
+    EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), !disable && canRecord);
+    EnableWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), !disable && canTest);
+}
+
+void OBS::ConfigureStreamButtons()
+{
+    RefreshStreamButtons();
+    SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), bStreaming ? Str("MainWindow.StopStream") : Str("MainWindow.StartStream"));
+    SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), bRecording ? Str("MainWindow.StopRecording") : Str("MainWindow.StartRecording"));
+    SetWindowText(GetDlgItem(hwndMain, ID_TESTSTREAM), bTestStream ? Str("MainWindow.StopTest") : Str("MainWindow.TestStream"));
 }
 
 void OBS::ReloadIniSettings()
@@ -1333,8 +1337,7 @@ void OBS::ReloadIniSettings()
     if (!minimizeToIcon && !IsWindowVisible(hwndMain))
         ShowWindow(hwndMain, SW_SHOW);
 
-    if (!bRunning)
-        ConfigureStreamButtons();
+    RefreshStreamButtons();
 }
 
 void OBS::UpdateAudioMeters()

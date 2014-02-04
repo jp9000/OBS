@@ -967,6 +967,7 @@ private:
     static void ClearStatusBar();
     static void DrawStatusBar(DRAWITEMSTRUCT &dis);
 
+    void RefreshStreamButtons(bool disable=false);
     void ConfigureStreamButtons();
 
     void ReloadIniSettings();

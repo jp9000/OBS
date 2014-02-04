@@ -2325,7 +2325,9 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     break;
 
                 case ID_TOGGLERECORDING:
+                    App->RefreshStreamButtons(true);
                     App->ToggleRecording();
+                    App->RefreshStreamButtons();
                     break;
 
                 case ID_FILE_EXIT:
@@ -2461,14 +2463,16 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     break;
 
                 case ID_TESTSTREAM:
+                    App->RefreshStreamButtons(true);
                     App->bTestStream = true;
                     App->ToggleCapturing();
+                    App->RefreshStreamButtons();
                     break;
 
                 case ID_STARTSTOP:
-                    EnableWindow(GetDlgItem(hwnd, ID_STARTSTOP), false);
+                    App->RefreshStreamButtons(true);
                     App->ToggleCapturing();
-                    EnableWindow(GetDlgItem(hwnd, ID_STARTSTOP), true);
+                    App->RefreshStreamButtons();
                     break;
 
                 case ID_MINIMIZERESTORE:

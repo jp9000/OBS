@@ -151,10 +151,9 @@ void OBS::StartRecording()
             bRecording = false;
         }
         else {
-            EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), TRUE);
-            SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), Str("MainWindow.StopRecording"));
             bRecording = true;
         }
+        ConfigureStreamButtons();
     }
 }
 
@@ -192,12 +191,10 @@ void OBS::Start()
 
         Log(TEXT("=====Stream Start (while recording): %s============================="), CurrentDateTimeString().Array());
 
-        EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), TRUE);
-        SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), Str("MainWindow.StopStream"));
-
         bSentHeaders = false;
         bStreaming = true;
 
+        ConfigureStreamButtons();
         return;
     }
 
@@ -671,18 +668,6 @@ retryHookTestV2:
     hEncodeThread = OSCreateThread((XTHREAD)OBS::EncodeThread, NULL);
     hVideoThread = OSCreateThread((XTHREAD)OBS::MainCaptureThread, NULL);
 
-    if(bTestStream)
-    {
-        EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), FALSE);
-        EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), FALSE);
-        SetWindowText(GetDlgItem(hwndMain, ID_TESTSTREAM), Str("MainWindow.StopTest"));
-    }
-    else
-    {
-        EnableWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), FALSE);
-        SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), Str("MainWindow.StopStream"));
-    }
-
     EnableWindow(GetDlgItem(hwndMain, ID_SCENEEDITOR), TRUE);
 
     //-------------------------------------------------------------
@@ -700,6 +685,8 @@ retryHookTestV2:
     OSLeaveMutex (hStartupShutdownMutex);
 
     bStartingUp = false;
+
+    ConfigureStreamButtons();
 }
 
 void OBS::Stop(bool overrideKeepRecording)
@@ -723,11 +710,10 @@ void OBS::Stop(bool overrideKeepRecording)
 
         delete tempStream;
 
-        EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), TRUE);
-        SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), Str("MainWindow.StartStream"));
-
         bStreaming = false;
         bSentHeaders = false;
+
+        ConfigureStreamButtons();
 
         OSLeaveMutex(hHotkeyMutex);
 
@@ -902,24 +888,6 @@ void OBS::Stop(bool overrideKeepRecording)
 
     //update notification icon to reflect current status
     UpdateNotificationAreaIcon();
-
-    if (bRecordingOnly)
-    {
-        EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), TRUE);
-        EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), FALSE);
-        EnableWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), TRUE);
-    }
-    else
-    {
-        EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), FALSE);
-        EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), TRUE);
-        EnableWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), TRUE);
-    }
-
-    SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), Str("MainWindow.StartRecording"));
-    SetWindowText(GetDlgItem(hwndMain, ID_TESTSTREAM), Str("MainWindow.TestStream"));
-    SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), Str("MainWindow.StartStream"));
-
 
     bEditMode = false;
     SendMessage(GetDlgItem(hwndMain, ID_SCENEEDITOR), BM_SETCHECK, BST_UNCHECKED, 0);
