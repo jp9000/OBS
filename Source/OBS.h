@@ -957,6 +957,7 @@ private:
 
     static void AddProfilesToMenu(HMENU menu);
     static void ResetProfileMenu();
+    static void EnableProfileMenu(bool enable);
 
     static String GetApplicationName();
     static void ResetApplicationName();

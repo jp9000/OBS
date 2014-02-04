@@ -203,7 +203,9 @@ void OBS::Start()
 
     bStartingUp = true;
 
-    OSEnterMutex (hStartupShutdownMutex);
+    OSEnterMutex(hStartupShutdownMutex);
+
+    EnableProfileMenu(false);
 
     scenesConfig.Save();
 
@@ -231,6 +233,7 @@ retryHookTest:
         int ret = MessageBox(hwndMain, Str("IncompatibleModules"), NULL, MB_ICONERROR | MB_ABORTRETRYIGNORE);
         if (ret == IDABORT)
         {
+            EnableProfileMenu(true);
             OSLeaveMutex (hStartupShutdownMutex);
             bStartingUp = false;
             return;
@@ -246,6 +249,7 @@ retryHookTest:
     String strPatchesError;
     if (OSIncompatiblePatchesLoaded(strPatchesError))
     {
+        EnableProfileMenu(true);
         OSLeaveMutex (hStartupShutdownMutex);
         MessageBox(hwndMain, strPatchesError.Array(), NULL, MB_ICONERROR);
         Log(TEXT("Incompatible patches detected."));
@@ -283,6 +287,7 @@ retryHookTest:
 
     if(!network)
     {
+        EnableProfileMenu(true);
         OSLeaveMutex (hStartupShutdownMutex);
 
         if(!bReconnecting)
@@ -358,6 +363,7 @@ retryHookTestV2:
                 delete network;
                 delete GS;
 
+                EnableProfileMenu(true);
                 OSLeaveMutex (hStartupShutdownMutex);
                 bStartingUp = false;
                 return;
@@ -934,6 +940,8 @@ void OBS::Stop(bool overrideKeepRecording)
     ConfigureStreamButtons();
 
     UpdateRenderViewMessage();
+
+    EnableProfileMenu(true);
 
     OSLeaveMutex(hStartupShutdownMutex);
 

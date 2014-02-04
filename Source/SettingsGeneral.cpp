@@ -164,11 +164,13 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                         SendMessage(hwndTemp, CB_SETCURSEL, id, 0);
                 }
 
+                EnableWindow(hwndTemp, !App->bRunning);
+
                 EnableWindow(GetDlgItem(hwnd, IDC_ADD),     FALSE);
                 EnableWindow(GetDlgItem(hwnd, IDC_RENAME),  FALSE);
 
-                UINT numItems = (UINT)SendMessage(GetDlgItem(hwnd, IDC_PROFILE), CB_GETCOUNT, 0, 0);
-                EnableWindow(GetDlgItem(hwnd, IDC_REMOVE),  (numItems > 1));
+                UINT numItems = (UINT)SendMessage(hwndTemp, CB_GETCOUNT, 0, 0);
+                EnableWindow(GetDlgItem(hwnd, IDC_REMOVE),  (numItems > 1) && !App->bRunning);
 
                 //----------------------------------------------
 
@@ -207,6 +209,19 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     }
 
                 case IDC_PROFILE:
+                    if (App->bRunning)
+                    {
+                        HWND cb = (HWND)lParam;
+                        String curProfile = GlobalConfig->GetString(TEXT("General"), TEXT("Profile"));
+                        UINT numItems = (UINT)SendMessage(cb, CB_GETCOUNT, 0, 0);
+                        for (UINT i = 0; i < numItems; i++)
+                        {
+                            if (GetCBText(cb, i).Compare(curProfile))
+                                SendMessage(cb, CB_SETCURSEL, i, 0);
+                        }
+                        break;
+                    }
+
                     if(HIWORD(wParam) == CBN_EDITCHANGE)
                     {
                         String strText = GetEditText((HWND)lParam).KillSpaces();
@@ -264,13 +279,15 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                         UINT numItems = (UINT)SendMessage(GetDlgItem(hwnd, IDC_PROFILE), CB_GETCOUNT, 0, 0);
                         EnableWindow(GetDlgItem(hwnd, IDC_REMOVE),  (numItems > 1));
 
-                        if(!App->bRunning)
-                            App->ResizeWindow(false);
+                        App->ResizeWindow(false);
                     }
                     break;
 
                 case IDC_RENAME:
                 case IDC_ADD:
+                    if (App->bRunning)
+                        break;
+
                     if(HIWORD(wParam) == BN_CLICKED)
                     {
                         HWND hwndProfileList = GetDlgItem(hwnd, IDC_PROFILE);
@@ -329,6 +346,9 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     break;
 
                 case IDC_REMOVE:
+                    if (App->bRunning)
+                        break;
+
                     {
                         HWND hwndProfileList = GetDlgItem(hwnd, IDC_PROFILE);
 

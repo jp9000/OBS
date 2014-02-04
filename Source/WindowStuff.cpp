@@ -2279,6 +2279,13 @@ void OBS::ResetProfileMenu()
     AddProfilesToMenu(hmenuProfiles);
 }
 
+void OBS::EnableProfileMenu(bool enable)
+{
+    HMENU hmenuMain = GetMenu(hwndMain);
+    EnableMenuItem(hmenuMain, 2, (enable ? MF_ENABLED : MF_DISABLED)|MF_BYPOSITION);
+    DrawMenuBar(hwndMain);
+}
+
 //----------------------------
 
 String OBS::GetApplicationName()
@@ -2562,6 +2569,9 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                         if (id >= ID_SWITCHPROFILE && 
                             id <= ID_SWITCHPROFILE+500)
                         {
+                            if (App->bRunning)
+                                break;
+
                             MENUITEMINFO mii;
                             zero(&mii, sizeof(mii));
                             mii.cbSize = sizeof(mii);
