@@ -33,7 +33,17 @@ void InitNVENCEncoder(bool log=true)
 	if(p_nvencModule != NULL)
 		return;
 
-	p_nvencModule = LoadLibrary(TEXT("ObsNvenc.dll"));
+#ifdef _WIN64
+	p_nvencModule = LoadLibrary(TEXT("ObsNvenc64.dll"));
+#else
+	p_nvencModule = LoadLibrary(TEXT("ObsNvenc32.dll"));
+#endif
+
+	if (p_nvencModule == NULL && log)
+		Log(TEXT("ObsNvenc{32,64}.dll not present"));
+
+	if (p_nvencModule == NULL)
+		p_nvencModule = LoadLibrary(TEXT("ObsNvenc.dll"));
 
 	if(p_nvencModule == NULL)
 	{
