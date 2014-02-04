@@ -51,10 +51,11 @@ void LogSystemStats();
 
 void OBS::ToggleRecording()
 {
-    if (bRecordingOnly)
-        ToggleCapturing();
-    else if(!bRecording)
+    if (!bRecording)
+    {
+        if (!bRunning && !bStreaming) Start(true);
         StartRecording();
+    }
     else
         StopRecording();
 }
@@ -69,7 +70,7 @@ void OBS::ToggleCapturing()
 
 void OBS::StartRecording()
 {
-    if(bRecording) return;
+    if (bRecording) return;
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
 
     bWriteToFile = networkMode == 1 || AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile")) != 0;
@@ -176,17 +177,24 @@ void OBS::StopRecording()
     if(!bStreaming) Stop();
 }
 
-void OBS::Start()
+void OBS::Start(bool recordingOnly)
 {
     if(bRunning && !bRecording) return;
 
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
     DWORD delayTime = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("Delay"));
 
-    if(bRecording && bKeepRecording && networkMode == 0 && delayTime == 0) {
+    if (bRecording && networkMode != 0) return;
+
+    if(bRecording && networkMode == 0 && delayTime == 0 && !recordingOnly) {
         bFirstConnect = !bReconnecting;
 
-        network = NULL;
+        if (network)
+        {
+            NetworkStream *net = network;
+            network = nullptr;
+            delete net;
+        }
         network = CreateRTMPPublisher();
 
         Log(TEXT("=====Stream Start (while recording): %s============================="), CurrentDateTimeString().Array());
@@ -271,7 +279,7 @@ retryHookTest:
 
     bFirstConnect = !bReconnecting;
 
-    if(bTestStream)
+    if(bTestStream || recordingOnly)
         network = CreateNullNetwork();
     else
     {
@@ -649,7 +657,7 @@ retryHookTestV2:
         return;
     }
 
-    bStreaming = true;
+    bStreaming = !recordingOnly;
     //-------------------------------------------------------------
 
     // Ensure that the render frame is properly sized

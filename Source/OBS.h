@@ -888,7 +888,7 @@ private:
     void ResetItemSizes();
     void ResetItemCrops();
 
-    void Start();
+    void Start(bool recordingOnly=false);
     void Stop(bool overrideKeepRecording=false);
     void StartRecording();
     void StopRecording();

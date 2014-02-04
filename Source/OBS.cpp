@@ -1209,7 +1209,7 @@ void OBS::RefreshStreamButtons(bool disable)
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
     bRecordingOnly = (networkMode == 1);
     bool canStream = networkMode == 0 && !bTestStream;
-    bool canRecord = (bRecordingOnly || (AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile")) != 0 && bStreaming)) && !bTestStream;
+    bool canRecord = (bRecordingOnly || AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile")) != 0) && !bTestStream;
     bool canTest = !bRecording && (!bStreaming || bTestStream);
 
     EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), !disable && canStream);
