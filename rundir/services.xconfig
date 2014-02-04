@@ -84,6 +84,7 @@ services : {
       "Default"     : rtmp://live.hitbox.tv/push
       "EU-East"     : rtmp://live.vie.hitbox.tv/push
       "EU-West"     : rtmp://live.nbg.hitbox.tv/push
+      "EU-North"    : rtmp://live.ams.hitbox.tv/push
       "US-East"     : rtmp://live.vgn.hitbox.tv/push
       "US-West"     : rtmp://live.lax.hitbox.tv/push
       "Asia"        : rtmp://live.lax.hitbox.tv/push
