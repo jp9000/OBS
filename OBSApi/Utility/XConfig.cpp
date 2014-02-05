@@ -745,8 +745,11 @@ String XConfig::ProcessString(TSTR &lpTemp)
     String string = lpStart;
     *lpTemp = backupChar;
 
+    if (string.Length() == 2)
+        return String();
+
     String stringOut = string.Mid(1, string.Length()-1);
-    if(stringOut.IsEmpty())
+    if (stringOut.IsEmpty())
         return String();
 
     TSTR lpStringOut = stringOut;
