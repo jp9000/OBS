@@ -504,6 +504,12 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY_STATIC), 0, -data->fileControlOffset);
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY), 0, -data->fileControlOffset);
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_CLEARHOTKEY_STARTSTREAM), 0, -data->fileControlOffset);
+                    AdjustWindowPos(GetDlgItem(hwnd, IDC_STARTRECORDINGHOTKEY_STATIC), 0, -data->fileControlOffset);
+                    AdjustWindowPos(GetDlgItem(hwnd, IDC_STOPRECORDINGHOTKEY_STATIC), 0, -data->fileControlOffset);
+                    AdjustWindowPos(GetDlgItem(hwnd, IDC_STARTRECORDINGHOTKEY), 0, -data->fileControlOffset);
+                    AdjustWindowPos(GetDlgItem(hwnd, IDC_STOPRECORDINGHOTKEY), 0, -data->fileControlOffset);
+                    AdjustWindowPos(GetDlgItem(hwnd, IDC_CLEARHOTKEY_STARTRECORDING), 0, -data->fileControlOffset);
+                    AdjustWindowPos(GetDlgItem(hwnd, IDC_CLEARHOTKEY_STOPRECORDING), 0, -data->fileControlOffset);
                 }
 
                 //--------------------------------------------
