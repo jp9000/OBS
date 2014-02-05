@@ -232,13 +232,13 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
     //------------------------------------
     // upload
 
-    //profileIn("sending stuff out");
+    profileIn("sending stuff out");
 
     //send headers before the first frame if not yet sent
     if(bSendFrame)
         SendFrame(curSegment, frameInfo.firstFrameTime);
 
-    //profileOut;
+    profileOut;
 
     return bProcessedFrame;
 }
