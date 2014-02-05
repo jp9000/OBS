@@ -55,7 +55,7 @@ void STDCALL OBS::StartRecordingHotkey(DWORD hotkey, UPARAM param, bool bDown)
 
     if (App->bStartRecordingHotkeyDown && !bDown)
         App->bStartRecordingHotkeyDown = false;
-    else if (!App->bRecording)
+    else if (!App->bRecording && App->canRecord)
     {
         if (!(App->bStartRecordingHotkeyDown = bDown))
             return;
