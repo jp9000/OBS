@@ -256,7 +256,7 @@ Settings.Video.Filter.Bicubic="Bicubinen terävöitys (hyvä laatu, 16 näytett�
 Settings.Video.Filter.Lanczos="Lanczos (paras laatu, 36 näytettä)"
 
 Sources.BitmapSource="Kuva"
-Sources.GameCaptureSource="Game Capture"
+Sources.GameCaptureSource="Pelin kaappaus"
 Sources.GlobalSource="Yleinen lähde"
 Sources.SoftwareCaptureSource="Näyttökaappaus"
 Sources.TextSource="Teksti"
