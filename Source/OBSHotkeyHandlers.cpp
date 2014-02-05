@@ -48,6 +48,39 @@ void STDCALL OBS::StopStreamHotkey(DWORD hotkey, UPARAM param, bool bDown)
     }
 }
 
+void STDCALL OBS::StartRecordingHotkey(DWORD hotkey, UPARAM param, bool bDown)
+{
+    if (App->bStopRecordingHotkeyDown)
+        return;
+
+    if (App->bStartRecordingHotkeyDown && !bDown)
+        App->bStartRecordingHotkeyDown = false;
+    else if (!App->bRecording)
+    {
+        if (!(App->bStartRecordingHotkeyDown = bDown))
+            return;
+
+        if (!App->bRunning && !App->bStreaming)
+            App->Start(true);
+
+        App->StartRecording();
+    }
+}
+
+void STDCALL OBS::StopRecordingHotkey(DWORD hotkey, UPARAM param, bool bDown)
+{
+    if (App->bStartStreamHotkeyDown)
+        return;
+
+    if (App->bStopStreamHotkeyDown && !bDown)
+        App->bStopStreamHotkeyDown = false;
+    else if (App->bRunning)
+    {
+        if (App->bStopStreamHotkeyDown = bDown)
+            App->StopRecording();
+    }
+}
+
 void STDCALL OBS::PushToTalkHotkey(DWORD hotkey, UPARAM param, bool bDown)
 {
     if(bDown)

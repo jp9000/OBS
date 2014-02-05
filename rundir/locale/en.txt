@@ -228,6 +228,8 @@ Settings.Publish.Server="Server:"
 Settings.Publish.Service="Streaming Service:"
 Settings.Publish.StartStreamHotkey="Start Stream Hotkey:"
 Settings.Publish.StopStreamHotkey="Stop Stream Hotkey:"
+Settings.Publish.StartRecordingHotkey="Start Recording Hotkey:"
+Settings.Publish.StopRecordingHotkey="Stop Recording Hotkey:"
 Settings.Publish.Username="User Name (if any):"
 
 Settings.Publish.Mode.FileOnly="File Output Only"

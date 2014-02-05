@@ -786,8 +786,11 @@ private:
     UINT muteDesktopHotkeyID;
     UINT startStreamHotkeyID;
     UINT stopStreamHotkeyID;
+    UINT startRecordingHotkeyID;
+    UINT stopRecordingHotkeyID;
 
     bool bStartStreamHotkeyDown, bStopStreamHotkeyDown;
+    bool bStartRecordingHotkeyDown, bStopRecordingHotkeyDown;
 
     static DWORD STDCALL MainAudioThread(LPVOID lpUnused);
     bool QueryAudioBuffers(bool bQueriedDesktopDebugParam);
@@ -895,6 +898,8 @@ private:
 
     static void STDCALL StartStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL StopStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
+    static void STDCALL StartRecordingHotkey(DWORD hotkey, UPARAM param, bool bDown);
+    static void STDCALL StopRecordingHotkey(DWORD hotkey, UPARAM param, bool bDown);
 
     static void STDCALL PushToTalkHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL MuteMicHotkey(DWORD hotkey, UPARAM param, bool bDown);

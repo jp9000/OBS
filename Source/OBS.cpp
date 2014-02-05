@@ -1292,6 +1292,8 @@ void OBS::ReloadIniSettings()
     QuickClearHotkey(muteDesktopHotkeyID);
     QuickClearHotkey(stopStreamHotkeyID);
     QuickClearHotkey(startStreamHotkeyID);
+    QuickClearHotkey(stopRecordingHotkeyID);
+    QuickClearHotkey(startRecordingHotkeyID);
 
     bUsingPushToTalk = AppConfig->GetInt(TEXT("Audio"), TEXT("UsePushToTalk")) != 0;
     DWORD hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey"));
@@ -1312,12 +1314,20 @@ void OBS::ReloadIniSettings()
         muteDesktopHotkeyID = API->CreateHotkey(hotkey, OBS::MuteDesktopHotkey, NULL);
 
     hotkey = AppConfig->GetInt(TEXT("Publish"), TEXT("StopStreamHotkey"));
-    if(hotkey)
+    if (hotkey)
         stopStreamHotkeyID = API->CreateHotkey(hotkey, OBS::StopStreamHotkey, NULL);
 
     hotkey = AppConfig->GetInt(TEXT("Publish"), TEXT("StartStreamHotkey"));
-    if(hotkey)
+    if (hotkey)
         startStreamHotkeyID = API->CreateHotkey(hotkey, OBS::StartStreamHotkey, NULL);
+
+    hotkey = AppConfig->GetInt(TEXT("Publish"), TEXT("StopRecordingHotkey"));
+    if (hotkey)
+        stopRecordingHotkeyID = API->CreateHotkey(hotkey, OBS::StopRecordingHotkey, NULL);
+
+    hotkey = AppConfig->GetInt(TEXT("Publish"), TEXT("StartRecordingHotkey"));
+    if (hotkey)
+        startRecordingHotkeyID = API->CreateHotkey(hotkey, OBS::StartRecordingHotkey, NULL);
 
     //-------------------------------------------
     // Notification Area icon
