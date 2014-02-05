@@ -499,6 +499,8 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 CTSTR lpSavePath = AppConfig->GetStringPtr(TEXT("Publish"), TEXT("SavePath"));
                 SetWindowText(GetDlgItem(hwnd, IDC_SAVEPATH), lpSavePath);
 
+                EnableWindow(GetDlgItem(hwnd, IDC_KEEPRECORDING), bSaveToFile || (mode != 0));
+
                 EnableWindow(GetDlgItem(hwnd, IDC_SAVEPATH), bSaveToFile || (mode != 0));
                 EnableWindow(GetDlgItem(hwnd, IDC_BROWSE),   bSaveToFile || (mode != 0));
 
@@ -578,6 +580,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                             }
 
                             BOOL bSaveToFile = SendMessage(GetDlgItem(hwnd, IDC_SAVETOFILE), BM_GETCHECK, 0, 0) != BST_UNCHECKED;
+                            EnableWindow(GetDlgItem(hwnd, IDC_KEEPRECORDING), bSaveToFile || (mode != 0));
                             EnableWindow(GetDlgItem(hwnd, IDC_SAVEPATH), bSaveToFile || (mode != 0));
                             EnableWindow(GetDlgItem(hwnd, IDC_BROWSE),   bSaveToFile || (mode != 0));
 
@@ -713,6 +716,8 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                         if(HIWORD(wParam) == BN_CLICKED)
                         {
                             BOOL bSaveToFile = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
+
+                            EnableWindow(GetDlgItem(hwnd, IDC_KEEPRECORDING), bSaveToFile);
 
                             EnableWindow(GetDlgItem(hwnd, IDC_SAVEPATH), bSaveToFile);
                             EnableWindow(GetDlgItem(hwnd, IDC_BROWSE),   bSaveToFile);
