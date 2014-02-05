@@ -176,6 +176,11 @@ public:
     virtual UINT GetSampleRateHz() const=0;
 
     virtual void SetAbortApplySettings(bool abort) = 0;
+
+    virtual void StartStopRecording() = 0;
+    virtual bool GetRecording() const = 0;
+
+    virtual bool GetKeepRecording() const = 0;
 };
 
 BASE_EXPORT extern APIInterface *API;
@@ -240,8 +245,12 @@ BASE_EXPORT CTSTR OBSGetAppPath();
 
 BASE_EXPORT void OBSStartStopStream();
 BASE_EXPORT void OBSStartStopPreview();
+BASE_EXPORT void OBSStartStopRecording();
 BASE_EXPORT bool OBSGetStreaming();
 BASE_EXPORT bool OBSGetPreviewOnly();
+BASE_EXPORT bool OBSGetRecording();
+
+BASE_EXPORT bool OBSGetKeepRecording();
 
 BASE_EXPORT void OBSSetSourceOrder(StringList &sourceNames);
 BASE_EXPORT void OBSSetSourceRender(CTSTR lpSource, bool render);

@@ -110,8 +110,12 @@ CTSTR OBSGetAppPath()           {return API->GetAppPath();}
 
 void OBSStartStopStream()       {API->StartStopStream();}
 void OBSStartStopPreview()      {API->StartStopPreview();}
+void OBSStartStopRecording()    {API->StartStopRecording();}
 bool OBSGetStreaming()          {return API->GetStreaming();}
 bool OBSGetPreviewOnly()        {return API->GetPreviewOnly();}
+bool OBSGetRecording()          {return API->GetRecording();}
+
+bool OBSGetKeepRecording()      {return API->GetKeepRecording();}
 
 void OBSSetSourceOrder(StringList &sourceNames)             {API->SetSourceOrder(sourceNames);}
 void OBSSetSourceRender(CTSTR lpSource, bool render)        {API->SetSourceRender(lpSource, render);}

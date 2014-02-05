@@ -430,6 +430,11 @@ public:
         PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_TESTSTREAM, 0), 0);
     }
 
+    virtual void StartStopRecording() override
+    {
+        PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_TOGGLERECORDING, 0), 0);
+    }
+
     virtual bool GetStreaming()
     {
         return App->bRunning;
@@ -438,6 +443,16 @@ public:
     virtual bool GetPreviewOnly()
     {
         return App->bTestStream;
+    }
+
+    virtual bool GetRecording() const override
+    {
+        return App->bRecording;
+    }
+
+    virtual bool GetKeepRecording() const override
+    {
+        return App->bKeepRecording;
     }
     
     virtual void RegisterSceneClass(CTSTR lpClassName, CTSTR lpDisplayName, OBSCREATEPROC createProc, OBSCONFIGPROC configProc)
