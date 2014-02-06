@@ -63,7 +63,7 @@ bool dyLoadCuda()
     CHECK_LOAD_FUNC(cuDeviceComputeCapability, "cuDeviceComputeCapability");
     CHECK_LOAD_FUNC(cuCtxCreate, "cuCtxCreate_v2");
     CHECK_LOAD_FUNC(cuCtxPopCurrent, "cuCtxPopCurrent_v2");
-    CHECK_LOAD_FUNC(cuCtxDestroy, "cuCtxDestroy");
+    CHECK_LOAD_FUNC(cuCtxDestroy, "cuCtxDestroy_v2");
 
     Log(TEXT("CUDA loaded successfully"));
 
