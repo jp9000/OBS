@@ -93,13 +93,13 @@ BOOL CalculateFileHash (TCHAR *path, BYTE *hash)
     return TRUE;
 }
 
-///* required defines for archive based updating:
+/* required defines for archive based updating:
 #define MANIFEST_WITH_ARCHIVES 1
 #define MANIFEST_PATH "/updates/org.catchexception.builds.xconfig"
 #define MANIFEST_URL "https://builds.catchexception.org/update.json"
 #define UPDATER_PATH "/updates/org.catchexception.builds.updater.exe"
 #define UPDATE_CHANNEL "master"
-//*/
+*/
 
 #ifndef MANIFEST_WITH_ARCHIVES
 #define MANIFEST_WITH_ARCHIVES 0
