@@ -145,7 +145,7 @@ BOOL FetchUpdaterModule(String const &url, String const &hash=String())
         if (responseCode != 200 && responseCode != 304)
             return FALSE;
 
-#ifdef MANIFEST_WITH_ARCHIVES
+#if MANIFEST_WITH_ARCHIVES
         if (!CalculateFileHash(updateFilePath, updateFileHash))
             return false;
 
