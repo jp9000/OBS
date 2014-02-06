@@ -93,14 +93,38 @@ BOOL CalculateFileHash (TCHAR *path, BYTE *hash)
     return TRUE;
 }
 
-BOOL FetchUpdaterModule()
+/* required defines for archive based updating:
+#define MANIFEST_WITH_ARCHIVES 1
+#define MANIFEST_PATH "/updates/org.example.foo.xconfig"
+#define MANIFEST_URL "https://foo.example.org/updates.json"
+#define UPDATER_PATH "/updates/org.example.foo.updater.exe"
+#define UPDATE_CHANNEL "master"
+*/
+
+#ifndef MANIFEST_WITH_ARCHIVES
+#define MANIFEST_WITH_ARCHIVES 0
+#endif
+
+#ifndef MANIFEST_PATH
+#define MANIFEST_PATH "\\updates\\packages.xconfig"
+#endif
+
+#ifndef MANIFEST_URL
+#define MANIFEST_URL "https://obsproject.com/update/packages.xconfig"
+#endif
+
+#ifndef UPDATER_PATH
+#define UPDATER_PATH "\\updates\\updater.exe"
+#endif
+
+BOOL FetchUpdaterModule(String const &url, String const &hash=String())
 {
     int responseCode;
     TCHAR updateFilePath[MAX_PATH];
     BYTE updateFileHash[20];
     TCHAR extraHeaders[256];
 
-    tsprintf_s (updateFilePath, _countof(updateFilePath)-1, TEXT("%s\\updates\\updater.exe"), lpAppDataPath);
+    tsprintf_s (updateFilePath, _countof(updateFilePath)-1, TEXT("%s") TEXT(UPDATER_PATH), lpAppDataPath);
 
     if (CalculateFileHash(updateFilePath, updateFileHash))
     {
@@ -108,12 +132,15 @@ BOOL FetchUpdaterModule()
 
         HashToString(updateFileHash, hashString);
 
+        if (hash.Compare(hashString))
+            return true;
+
         tsprintf_s (extraHeaders, _countof(extraHeaders)-1, TEXT("If-None-Match: %s"), hashString);
     }
     else
         extraHeaders[0] = 0;
 
-    if (HTTPGetFile(TEXT("https://obsproject.com/update/updater.exe"), updateFilePath, extraHeaders, &responseCode))
+    if (HTTPGetFile(url, updateFilePath, extraHeaders, &responseCode))
     {
         if (responseCode != 200 && responseCode != 304)
             return FALSE;
@@ -144,8 +171,62 @@ BOOL IsSafePath (CTSTR path)
     return TRUE;
 }
 
-BOOL ParseUpdateManifest (TCHAR *path, BOOL *updatesAvailable, String &description)
+#if MANIFEST_WITH_ARCHIVES
+bool ParseUpdateArchiveManifest(TCHAR *path, BOOL *updatesAvailable, String &description)
 {
+    XConfig manifest;
+
+    if (!manifest.Open(path))
+        return false;
+
+    XElement *root = manifest.GetRootElement();
+
+    XElement *updater = root->GetElement(L"updater");
+    if (!updater)
+        return false;
+
+    String updaterURL = updater->GetString(L"url");
+    if (updaterURL.IsEmpty())
+        return false;
+
+    String updaterHash = updater->GetString(L"sha1");
+
+    XElement *channel = root->GetElement(TEXT(UPDATE_CHANNEL));
+    if (!channel)
+        return false;
+
+    XElement *platform = channel->GetElement(
+#ifdef _WIN64
+        L"win64"
+#else
+        L"win"
+#endif
+        );
+    if (!platform)
+        return false;
+        
+    String version = platform->GetString(TEXT("version"));
+    if (version.Compare(TEXT(OBS_VERSION_SUFFIX)))
+        return true;
+
+    String url = platform->GetString(L"url");
+    if (url.IsEmpty())
+        return false;
+
+    description << "Open Broadcaster Software" << version << L"\n";
+    
+    if (!FetchUpdaterModule(updaterURL, updaterHash))
+        return false;
+    return true;
+}
+#endif
+
+bool ParseUpdateManifest (TCHAR *path, BOOL *updatesAvailable, String &description)
+{
+#if MANIFEST_WITH_ARCHIVES
+    return ParseUpdateArchiveManifest(path, updatesAvailable, description);
+#else
+
     XConfig manifest;
     XElement *root;
 
@@ -262,7 +343,7 @@ BOOL ParseUpdateManifest (TCHAR *path, BOOL *updatesAvailable, String &descripti
 
     if (totalUpdatableFiles)
     {
-        if (!FetchUpdaterModule())
+        if (!FetchUpdaterModule(L"https://obsproject.com/update/updater.exe"))
             return FALSE;
     }
 
@@ -272,6 +353,7 @@ BOOL ParseUpdateManifest (TCHAR *path, BOOL *updatesAvailable, String &descripti
         *updatesAvailable = FALSE;
 
     return TRUE;
+#endif
 }
 
 DWORD WINAPI CheckUpdateThread (VOID *arg)
@@ -284,7 +366,7 @@ DWORD WINAPI CheckUpdateThread (VOID *arg)
 
     BOOL notify = (BOOL)arg;
 
-    tsprintf_s (manifestPath, _countof(manifestPath)-1, TEXT("%s\\updates\\packages.xconfig"), lpAppDataPath);
+    tsprintf_s (manifestPath, _countof(manifestPath)-1, TEXT("%s") TEXT(MANIFEST_PATH), lpAppDataPath);
 
     if (!CryptAcquireContext(&hProvider, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT))
     {
@@ -323,7 +405,7 @@ DWORD WINAPI CheckUpdateThread (VOID *arg)
         scat(extraHeaders, strGUID);
     }
 
-    if (HTTPGetFile(TEXT("https://obsproject.com/update/packages.xconfig"), manifestPath, extraHeaders, &responseCode))
+    if (HTTPGetFile(TEXT(MANIFEST_URL), manifestPath, extraHeaders, &responseCode))
     {
         if (responseCode == 200 || responseCode == 304)
         {
@@ -353,7 +435,7 @@ DWORD WINAPI CheckUpdateThread (VOID *arg)
                         if (p)
                             *p = 0;
 
-                        tsprintf_s (updateFilePath, _countof(updateFilePath)-1, TEXT("%s\\updates\\updater.exe"), lpAppDataPath);
+                        tsprintf_s (updateFilePath, _countof(updateFilePath)-1, TEXT("%s") TEXT(UPDATER_PATH), lpAppDataPath);
 
                         //note, can't use CreateProcess to launch as admin.
                         SHELLEXECUTEINFO execInfo;
@@ -362,16 +444,21 @@ DWORD WINAPI CheckUpdateThread (VOID *arg)
 
                         execInfo.cbSize = sizeof(execInfo);
                         execInfo.lpFile = updateFilePath;
+#ifndef UPDATE_CHANNEL
+#define UPDATE_ARG_SUFFIX L""
+#else
+#define UPDATE_ARG_SUFFIX L" " TEXT(UPDATE_CHANNEL)
+#endif
 #ifndef _WIN64
                         if (bIsPortable)
-                            execInfo.lpParameters = TEXT("Win32 Portable");
+                            execInfo.lpParameters = L"Win32" UPDATE_ARG_SUFFIX L" Portable";
                         else
-                            execInfo.lpParameters = TEXT("Win32");
+                            execInfo.lpParameters = L"Win32" UPDATE_ARG_SUFFIX;
 #else
                         if (bIsPortable)
-                            execInfo.lpParameters = TEXT("Win64 Portable");
+                            execInfo.lpParameters = L"Win64" UPDATE_ARG_SUFFIX L" Portable";
                         else
-                            execInfo.lpParameters = TEXT("Win64");
+                            execInfo.lpParameters = L"Win64" UPDATE_ARG_SUFFIX;
 #endif
                         execInfo.lpDirectory = cwd;
                         execInfo.nShow = SW_SHOWNORMAL;
