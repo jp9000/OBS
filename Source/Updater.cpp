@@ -151,7 +151,7 @@ BOOL FetchUpdaterModule(String const &url, String const &hash=String())
 
         TCHAR hashString[41];
 
-        HashToString(updateFileHash, hash);
+        HashToString(updateFileHash, hashString);
 
         if (!hash.Compare(hashString))
             return false;
