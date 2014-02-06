@@ -144,6 +144,18 @@ BOOL FetchUpdaterModule(String const &url, String const &hash=String())
     {
         if (responseCode != 200 && responseCode != 304)
             return FALSE;
+
+#ifdef MANIFEST_WITH_ARCHIVES
+        if (!CalculateFileHash(updateFilePath, updateFileHash))
+            return false;
+
+        TCHAR hashString[41];
+
+        HashToString(updateFileHash, hash);
+
+        if (!hash.Compare(hashString))
+            return false;
+#endif
     }
 
     return TRUE;
