@@ -1098,7 +1098,7 @@ public:
     // event reporting functions
     virtual void ReportStartStreamTrigger();
     virtual void ReportStopStreamTrigger();
-    virtual void OBS::ReportOBSStatus(bool running, bool streaming, bool recording,
+    virtual void ReportOBSStatus(bool running, bool streaming, bool recording,
                                    bool previewing, bool reconnecting);
     virtual void ReportStreamStatus(bool streaming, bool previewOnly = false, 
                                    UINT bytesPerSec = 0, double strain = 0, 
