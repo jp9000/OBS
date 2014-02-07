@@ -153,6 +153,7 @@ void OBS::StartRecording()
         }
         else {
             bRecording = true;
+            ReportStartRecordingTrigger();
         }
         ConfigureStreamButtons();
     }
@@ -171,6 +172,8 @@ void OBS::StopRecording()
     delete tempStream;
     tempStream = NULL;
     bRecording = false;
+
+    ReportStopRecordingTrigger();
 
     SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), Str("MainWindow.StartRecording"));
 

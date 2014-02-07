@@ -302,6 +302,12 @@ struct PluginInfo
     /* called on stream stopping */
     OBS_CALLBACK stopStreamCallback;
 
+    /* called on stream starting */
+    OBS_CALLBACK startRecordingCallback;
+
+    /* called on stream stopping */
+    OBS_CALLBACK stopRecordingCallback;
+
     /* called when status bar is updated, even without network */
     OBS_STATUS_CALLBACK statusCallback;
 
@@ -1098,6 +1104,8 @@ public:
     // event reporting functions
     virtual void ReportStartStreamTrigger();
     virtual void ReportStopStreamTrigger();
+    virtual void ReportStartRecordingTrigger();
+    virtual void ReportStopRecordingTrigger();
     virtual void ReportOBSStatus(bool running, bool streaming, bool recording,
                                    bool previewing, bool reconnecting);
     virtual void ReportStreamStatus(bool streaming, bool previewOnly = false, 

@@ -46,6 +46,33 @@ void OBS::ReportStopStreamTrigger()
     }
 }
 
+void OBS::ReportStartRecordingTrigger()
+{
+    if (bShuttingDown)
+        return;
+
+    for (UINT i = 0; i<plugins.Num(); i++)
+    {
+        OBS_CALLBACK callback = plugins[i].startRecordingCallback;
+
+        if (callback)
+            (*callback)();
+    }
+}
+void OBS::ReportStopRecordingTrigger()
+{
+    if (bShuttingDown)
+        return;
+
+    for (UINT i = 0; i<plugins.Num(); i++)
+    {
+        OBS_CALLBACK callback = plugins[i].stopRecordingCallback;
+
+        if (callback)
+            (*callback)();
+    }
+}
+
 void OBS::ReportOBSStatus(bool running, bool streaming, bool recording, bool previewing, bool reconnecting)
 {
     if (bShuttingDown)
