@@ -18,15 +18,8 @@
 
 
 #include "Main.h"
-#include "libnsgif.h"
+#include "BitmapImage.h"
 
-
-void *def_bitmap_create(int width, int height)          {return Allocate(width * height * 4);}
-void def_bitmap_set_opaque(void *bitmap, BOOL opaque)   {}
-BOOL def_bitmap_test_opaque(void *bitmap)               {return false;}
-unsigned char *def_bitmap_get_buffer(void *bitmap)      {return (unsigned char*)bitmap;}
-void def_bitmap_destroy(void *bitmap)                   {Free(bitmap);}
-void def_bitmap_modified(void *bitmap)                  {return;}
 
 struct ColorSelectionData
 {
@@ -121,22 +114,11 @@ struct ConfigDesktopSourceInfo
     StringList strClasses;
 };
 
-gif_bitmap_callback_vt bitmap_callbacks =
-{
-    def_bitmap_create,
-    def_bitmap_destroy,
-    def_bitmap_get_buffer,
-    def_bitmap_set_opaque,
-    def_bitmap_test_opaque,
-    def_bitmap_modified
-};
-
 
 class BitmapImageSource : public ImageSource
 {
-    Texture  *texture;
+    BitmapImage bitmapImage;
 
-    Vect2    fullSize;
     XElement *data;
 
     bool     bUseColorKey;
@@ -146,35 +128,14 @@ class BitmapImageSource : public ImageSource
     DWORD opacity;
     DWORD color;
 
-    bool bIsAnimatedGif;
-    gif_animation gif;
-    LPBYTE lpGifData;
-    List<float> animationTimes;
-    BYTE **animationFrameCache;
-    BYTE *animationFrameData;
-    UINT curFrame, curLoop, lastDecodedFrame;
-    float curTime;
-    float updateImageTime;
-
     Shader   *colorKeyShader, *alphaIgnoreShader;
-    OSFileChangeData *changeMonitor;
 
-    void CreateErrorTexture()
-    {
-        LPBYTE textureData = (LPBYTE)Allocate(32*32*4);
-        msetd(textureData, 0xFF0000FF, 32*32*4);
-
-        texture = CreateTexture(32, 32, GS_RGB, textureData, FALSE);
-        fullSize.Set(32.0f, 32.0f);
-
-        Free(textureData);
-    }
 
 public:
     BitmapImageSource(XElement *data)
     {
-        //EnableMemoryTracking(true);
         this->data = data;
+       
         UpdateSettings();
 
         colorKeyShader      = CreatePixelShaderFromFile(TEXT("shaders\\ColorKey_RGB.pShader"));
@@ -185,107 +146,19 @@ public:
 
     ~BitmapImageSource()
     {
-        if(bIsAnimatedGif)
-        {
-            gif_finalise(&gif);
-            Free(animationFrameCache);
-            Free(animationFrameData);
-        }
-
-        if(lpGifData)
-            Free(lpGifData);
-
         delete colorKeyShader;
         delete alphaIgnoreShader;
-
-        if (changeMonitor)
-            OSMonitorFileDestroy(changeMonitor);
-
-        delete texture;
     }
 
     void Tick(float fSeconds)
     {
-        if(bIsAnimatedGif)
-        {
-            UINT totalLoops = (UINT)gif.loop_count;
-            if(totalLoops >= 0xFFFF)
-                totalLoops = 0;
-
-            if(!totalLoops || curLoop < totalLoops)
-            {
-                UINT newFrame = curFrame;
-
-                curTime += fSeconds;
-                while(curTime > animationTimes[newFrame])
-                {
-                    curTime -= animationTimes[newFrame];
-                    if(++newFrame == animationTimes.Num())
-                    {
-                        if(!totalLoops || ++curLoop < totalLoops)
-                            newFrame = 0;
-                        else if (curLoop == totalLoops)
-                        {
-                            newFrame--;
-                            break;
-                        }
-                    }
-                }
-
-                if(newFrame != curFrame)
-                {
-                    UINT lastFrame;
-
-                    if (!animationFrameCache[newFrame])
-                    {
-                        //animation might have looped, if so make sure we decode from frame 0
-                        if (newFrame < lastDecodedFrame)
-                            lastFrame = 0;
-                        else
-                            lastFrame = lastDecodedFrame + 1;
-
-                        //we need to decode any frames we missed for consistency
-                        for (UINT i = lastFrame; i < newFrame; i++)
-                        {
-                            if (gif_decode_frame(&gif, i) != GIF_OK)
-                                return;
-                        }
-
-                        //now decode and display the actual frame we want
-                        int ret = gif_decode_frame(&gif, newFrame);
-                        if (ret == GIF_OK)
-                        {
-                            animationFrameCache[newFrame] = animationFrameData + (newFrame * (gif.width * gif.height * 4));
-                            memcpy(animationFrameCache[newFrame], gif.frame_image, gif.width * gif.height * 4);
-                        }
-
-                        lastDecodedFrame = newFrame;
-                    }
-
-                    if (animationFrameCache[newFrame])
-                        texture->SetImage(animationFrameCache[newFrame], GS_IMAGEFORMAT_RGBA, gif.width*4);
-
-                    curFrame = newFrame;
-                }
-            }
-        }
-
-        if (updateImageTime)
-        {
-            updateImageTime -= fSeconds;
-            if (updateImageTime <= 0.0f)
-            {
-                updateImageTime = 0.0f;
-                UpdateSettings();
-            }
-        }
-
-        if (changeMonitor && OSFileHasChanged(changeMonitor))
-            updateImageTime = 1.0f;
+        bitmapImage.Tick(fSeconds);
     }
 
     void Render(const Vect2 &pos, const Vect2 &size)
     {
+        Texture *texture = bitmapImage.GetTexture();
+
         if(texture)
         {
             if(bUseColorKey)
@@ -316,126 +189,9 @@ public:
 
     void UpdateSettings()
     {
-        if(bIsAnimatedGif)
-        {
-            bIsAnimatedGif = false;
-            gif_finalise(&gif);
-
-            Free(animationFrameCache);
-            animationFrameCache = NULL;
-            Free(animationFrameData);
-            animationFrameData = NULL;
-        }
-
-        if(lpGifData)
-        {
-            Free(lpGifData);
-            lpGifData = NULL;
-        }
-
-        animationTimes.Clear();
-
-        delete texture;
-        texture = NULL;
-
-        CTSTR lpBitmap = data->GetString(TEXT("path"));
-        if(!lpBitmap || !*lpBitmap)
-        {
-            AppWarning(TEXT("BitmapImageSource::UpdateSettings: Empty path"));
-            CreateErrorTexture();
-            return;
-        }
-
-        //------------------------------------
-
-        if(GetPathExtension(lpBitmap).CompareI(TEXT("gif")))
-        {
-            bool bFail = false;
-
-            gif_create(&gif, &bitmap_callbacks);
-
-            XFile gifFile;
-            if(!gifFile.Open(lpBitmap, XFILE_READ, XFILE_OPENEXISTING))
-            {
-                AppWarning(TEXT("BitmapImageSource::UpdateSettings: could not open gif file '%s'"), lpBitmap);
-                CreateErrorTexture();
-                return;
-            }
-
-
-            DWORD fileSize = (DWORD)gifFile.GetFileSize();
-            lpGifData = (LPBYTE)Allocate(fileSize);
-            gifFile.Read(lpGifData, fileSize);
-
-            gif_result result;
-            do
-            {
-                result = gif_initialise(&gif, fileSize, lpGifData);
-                if(result != GIF_OK && result != GIF_WORKING)
-                {
-                    bFail = true;
-                    break;
-                }
-            }while(result != GIF_OK);
-
-            if(gif.frame_count > 1)
-            {
-                if(result == GIF_OK || result == GIF_WORKING)
-                    bIsAnimatedGif = true;
-            }
-
-            if(bIsAnimatedGif)
-            {
-                gif_decode_frame(&gif, 0);
-                texture = CreateTexture(gif.width, gif.height, GS_RGBA, gif.frame_image, FALSE, FALSE);
-
-                animationFrameCache = (BYTE **)Allocate(gif.frame_count * sizeof(BYTE *));
-                memset(animationFrameCache, 0, gif.frame_count * sizeof(BYTE *));
-
-                animationFrameData = (BYTE *)Allocate(gif.frame_count * gif.width * gif.height * 4);
-                memset(animationFrameData, 0, gif.frame_count * gif.width * gif.height * 4);
-
-                for(UINT i=0; i<gif.frame_count; i++)
-                {
-                    float frameTime = float(gif.frames[i].frame_delay)*0.01f;
-                    if (frameTime == 0.0f)
-                        frameTime = 0.1f;
-                    animationTimes << frameTime;
-
-                    if (gif_decode_frame(&gif, i) != GIF_OK)
-                        Log (TEXT("BitmapImageSource: Warning, couldn't decode frame %d of %s"), i, data->GetString(TEXT("path")));
-                }
-
-                gif_decode_frame(&gif, 0);
-
-                fullSize.x = float(gif.width);
-                fullSize.y = float(gif.height);
-
-                curTime = 0.0f;
-                curFrame = 0;
-                lastDecodedFrame = 0;
-            }
-            else
-            {
-                gif_finalise(&gif);
-                Free(lpGifData);
-                lpGifData = NULL;
-            }
-        }
-
-        if(!bIsAnimatedGif)
-        {
-            texture = GS->CreateTextureFromFile(lpBitmap, TRUE);
-            if(!texture)
-            {
-                AppWarning(TEXT("BitmapImageSource::UpdateSettings: could not create texture '%s'"), lpBitmap);
-                CreateErrorTexture();
-                return;
-            }
-
-            fullSize.x = float(texture->Width());
-            fullSize.y = float(texture->Height());
-        }
+        bitmapImage.SetPath(data->GetString(TEXT("path")));
+        bitmapImage.EnableFileMonitor(data->GetInt(TEXT("monitor"), 0) == 1);
+        bitmapImage.Init();
 
         //------------------------------------
 
@@ -443,16 +199,6 @@ public:
         color = data->GetInt(TEXT("color"), 0xFFFFFFFF);
         if(opacity > 100)
             opacity = 100;
-
-        if (changeMonitor)
-        {
-            OSMonitorFileDestroy(changeMonitor);
-            changeMonitor = NULL;
-        }
-
-        int monitor = data->GetInt(TEXT("monitor"), 0);
-        if (monitor)
-            changeMonitor = OSMonitorFileStart(lpBitmap);
 
         bool bNewUseColorKey = data->GetInt(TEXT("useColorKey"), 0) != 0;
         keyColor        = data->GetInt(TEXT("keyColor"), 0xFFFFFFFF);
@@ -462,7 +208,7 @@ public:
         bUseColorKey = bNewUseColorKey;
     }
 
-    Vect2 GetSize() const {return fullSize;}
+    Vect2 GetSize() const {return bitmapImage.GetSize();}
 };
 
 

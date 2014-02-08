@@ -145,6 +145,9 @@
     <ClCompile Include="Source\Encoder_NVENC.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Source\BitmapImage.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\D3D10System.h">
@@ -184,6 +187,9 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="Source\Settings.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\BitmapImage.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>

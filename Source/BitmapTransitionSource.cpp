@@ -20,6 +20,8 @@
 #include "Main.h"
 #include <time.h>
 
+#include "BitmapImage.h"
+
 #define MIN_TRANSITION_TIME 3
 #define MAX_TRANSITION_TIME 600
 
@@ -29,7 +31,7 @@ extern "C" double round(double val);
 
 class BitmapTransitionSource : public ImageSource
 {
-    List<Texture*> textures;
+    List<BitmapImage*> bitmapImages;
 
     Vect2    fullSize;
     double   baseAspect;
@@ -55,17 +57,6 @@ class BitmapTransitionSource : public ImageSource
         return int( ( (double)rand() / (RAND_MAX + 1) ) * limit );
     }
 
-    void CreateErrorTexture()
-    {
-        LPBYTE textureData = (LPBYTE)Allocate(32*32*4);
-        msetd(textureData, 0xFF0000FF, 32*32*4);
-
-        textures << CreateTexture(32, 32, GS_RGB, textureData, FALSE);
-        fullSize.Set(32.0f, 32.0f);
-
-        Free(textureData);
-    }
-
 public:
     BitmapTransitionSource(XElement *data)
     {
@@ -76,13 +67,16 @@ public:
 
     ~BitmapTransitionSource()
     {
-        for(UINT i=0; i<textures.Num(); i++)
-            delete textures[i];
+        for(UINT i=0; i<bitmapImages.Num(); i++)
+            delete bitmapImages[i];
     }
 
     void Tick(float fSeconds)
     {
-        if(bTransitioning && textures.Num() > 1)
+        for(UINT i=0; i<bitmapImages.Num(); i++)
+            bitmapImages[i]->Tick(fSeconds);
+
+        if(bTransitioning && bitmapImages.Num() > 1)
         {
             if(bDisableFading)
                 curFadeValue = fadeTime;
@@ -97,14 +91,14 @@ public:
                 if(bRandomize)
                 {
                     curTexture = nextTexture;
-                    while((nextTexture = lrand(textures.Num())) == curTexture);
+                    while((nextTexture = lrand(bitmapImages.Num())) == curTexture);
                 }
                 else
                 {
-                    if(++curTexture == textures.Num())
+                    if(++curTexture == bitmapImages.Num())
                         curTexture = 0;
                     
-                    nextTexture = (curTexture == textures.Num()-1) ? 0 : curTexture+1;
+                    nextTexture = (curTexture == bitmapImages.Num()-1) ? 0 : curTexture+1;
                 }
             }
         }
@@ -126,7 +120,7 @@ public:
         Vect2 pos = Vect2(0.0f, 0.0f);
         Vect2 size = fullSize;
 
-        Vect2 itemSize = Vect2((float)textures[texID]->Width(), (float)textures[texID]->Height());
+        Vect2 itemSize = bitmapImages[texID]->GetSize();
 
         double sourceAspect = double(itemSize.x)/double(itemSize.y);
         if(!CloseDouble(baseAspect, sourceAspect))
@@ -151,14 +145,14 @@ public:
         Vect2 lr;
         lr = pos + (size/fullSize*startSize);
 
-        DrawSprite(textures[texID], (curAlpha<<24) | 0xFFFFFF, pos.x, pos.y, lr.x, lr.y);
+        DrawSprite(bitmapImages[texID]->GetTexture(), (curAlpha<<24) | 0xFFFFFF, pos.x, pos.y, lr.x, lr.y);
     }
 
     void Render(const Vect2 &pos, const Vect2 &size)
     {
-        if(textures.Num())
+        if(bitmapImages.Num())
         {
-            if(bTransitioning && textures.Num() > 1)
+            if(bTransitioning && bitmapImages.Num() > 1)
             {
                 float curAlpha = MIN(curFadeValue/fadeTime, 1.0f);
                 if(bFadeInOnly)
@@ -175,9 +169,9 @@ public:
 
     void UpdateSettings()
     {
-        for(UINT i=0; i<textures.Num(); i++)
-            delete textures[i];
-        textures.Clear();
+        for(UINT i=0; i<bitmapImages.Num(); i++)
+            delete bitmapImages[i];
+        bitmapImages.Clear();
 
         //------------------------------------
 
@@ -194,26 +188,20 @@ public:
                 continue;
             }
 
-            Texture *texture = GS->CreateTextureFromFile(strBitmap, TRUE);
-            if(!texture)
-            {
-                AppWarning(TEXT("BitmapTransitionSource::UpdateSettings: could not create texture '%s'"), strBitmap.Array());
-                continue;
-            }
+            BitmapImage *bitmapImage = new BitmapImage;
+            bitmapImage->SetPath(strBitmap);
+            bitmapImage->EnableFileMonitor(false);
+            bitmapImage->Init();
 
             if(bFirst)
             {
-                fullSize.x = float(texture->Width());
-                fullSize.y = float(texture->Height());
+                fullSize = bitmapImage->GetSize();
                 baseAspect = double(fullSize.x)/double(fullSize.y);
                 bFirst = false;
             }
 
-            textures << texture;
+            bitmapImages << bitmapImage;
         }
-
-        if(textures.Num() == 0)
-            CreateErrorTexture();
 
         //------------------------------------
 
@@ -237,14 +225,14 @@ public:
         if(bRandomize)
         {
             srand( (unsigned)time( NULL ) );
-            if(textures.Num() > 1)
+            if(bitmapImages.Num() > 1)
             {
-                curTexture = lrand(textures.Num());
-                while((nextTexture = lrand(textures.Num())) == curTexture);
+                curTexture = lrand(bitmapImages.Num());
+                while((nextTexture = lrand(bitmapImages.Num())) == curTexture);
             }
         }
         else
-            nextTexture = (curTexture == textures.Num()-1) ? 0 : curTexture+1;
+            nextTexture = (curTexture == bitmapImages.Num()-1) ? 0 : curTexture+1;
 
         bTransitioning = false;
         curFadeValue = 0.0f;

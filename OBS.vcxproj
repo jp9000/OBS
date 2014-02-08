@@ -62,7 +62,8 @@
     <WindowsSDK80Path Condition="('$(WindowsSDK80Path)'=='')And(!Exists('C:\Program Files (x86)\Windows Kits\8.0\'))">$(WindowsSdkDir)</WindowsSDK80Path>
   </PropertyGroup>
   <PropertyGroup Label="MSBuild Dynamic Preprocessor Definitions">
-    <DynamicDefines> </DynamicDefines>
+    <DynamicDefines>
+    </DynamicDefines>
   </PropertyGroup>
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
@@ -252,6 +253,7 @@
   <ItemGroup>
     <ClCompile Include="Source\API.cpp" />
     <ClCompile Include="Source\BandwidthAnalysis.cpp" />
+    <ClCompile Include="Source\BitmapImage.cpp" />
     <ClCompile Include="Source\BitmapImageSource.cpp" />
     <ClCompile Include="Source\BitmapTransitionSource.cpp" />
     <ClCompile Include="Source\BlankAudioPlayback.cpp" />
@@ -300,6 +302,7 @@
     <ClCompile Include="Source\WindowStuff.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\BitmapImage.h" />
     <ClInclude Include="Source\CodeTokenizer.h" />
     <ClInclude Include="Source\CrashDumpHandler.h" />
     <ClInclude Include="Source\D3D10System.h" />
