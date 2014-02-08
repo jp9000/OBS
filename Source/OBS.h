@@ -296,16 +296,16 @@ struct PluginInfo
 
     /* Event Callbacks */
 
-    /* called on stream starting */
+    /* called on stream starting (as soon as the encoder starts, for any combination of file/rtmp output) */
     OBS_CALLBACK startStreamCallback;
     
-    /* called on stream stopping */
+    /* called on stream stopping (as soon as the encoder stops) */
     OBS_CALLBACK stopStreamCallback;
 
-    /* called on stream starting */
+    /* called when recording (to file) starts */
     OBS_CALLBACK startRecordingCallback;
 
-    /* called on stream stopping */
+    /* called when recording (to file) stops */
     OBS_CALLBACK stopRecordingCallback;
 
     /* called when status bar is updated, even without network */
