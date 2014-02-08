@@ -46,6 +46,33 @@ void OBS::ReportStopStreamTrigger()
     }
 }
 
+void OBS::ReportStartStreamingTrigger()
+{
+    if (bShuttingDown || bTestStream)
+        return;
+
+    for (UINT i = 0; i<plugins.Num(); i++)
+    {
+        OBS_CALLBACK callback = plugins[i].startStreamingCallback;
+
+        if (callback)
+            (*callback)();
+    }
+}
+void OBS::ReportStopStreamingTrigger()
+{
+    if (bShuttingDown || bTestStream)
+        return;
+
+    for (UINT i = 0; i<plugins.Num(); i++)
+    {
+        OBS_CALLBACK callback = plugins[i].stopStreamingCallback;
+
+        if (callback)
+            (*callback)();
+    }
+}
+
 void OBS::ReportStartRecordingTrigger()
 {
     if (bShuttingDown)

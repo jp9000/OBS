@@ -302,6 +302,12 @@ struct PluginInfo
     /* called on stream stopping (as soon as the encoder stops) */
     OBS_CALLBACK stopStreamCallback;
 
+    /* called when streaming (via rtmp) starts */
+    OBS_CALLBACK startStreamingCallback;
+
+    /* called when streaming (via rtmp) stops */
+    OBS_CALLBACK stopStreamingCallback;
+
     /* called when recording (to file) starts */
     OBS_CALLBACK startRecordingCallback;
 
@@ -1104,6 +1110,8 @@ public:
     // event reporting functions
     virtual void ReportStartStreamTrigger();
     virtual void ReportStopStreamTrigger();
+    virtual void ReportStartStreamingTrigger();
+    virtual void ReportStopStreamingTrigger();
     virtual void ReportStartRecordingTrigger();
     virtual void ReportStopRecordingTrigger();
     virtual void ReportOBSStatus(bool running, bool streaming, bool recording,

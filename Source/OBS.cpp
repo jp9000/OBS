@@ -647,6 +647,8 @@ OBS::OBS()
                         /* get event callbacks for the plugin */
                         pluginInfo->startStreamCallback           = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartStream");
                         pluginInfo->stopStreamCallback            = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopStream");
+                        pluginInfo->startStreamingCallback        = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartStreaming");
+                        pluginInfo->stopStreamingCallback         = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopStreaming");
                         pluginInfo->startRecordingCallback        = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartRecording");
                         pluginInfo->stopRecordingCallback         = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopRecording");
                         pluginInfo->statusCallback                = (OBS_STATUS_CALLBACK)GetProcAddress(hPlugin, "OnOBSStatus");

@@ -205,6 +205,7 @@ void OBS::Start(bool recordingOnly)
         bSentHeaders = false;
         bStreaming = true;
 
+        ReportStartStreamingTrigger();
         ConfigureStreamButtons();
         return;
     }
@@ -660,7 +661,7 @@ retryHookTestV2:
         return;
     }
 
-    bStreaming = !recordingOnly;
+    if ((bStreaming = !recordingOnly)) ReportStartStreamingTrigger();
     //-------------------------------------------------------------
 
     // Ensure that the render frame is properly sized
@@ -723,6 +724,8 @@ void OBS::Stop(bool overrideKeepRecording)
 
         bStreaming = false;
         bSentHeaders = false;
+
+        ReportStopStreamingTrigger();
 
         ConfigureStreamButtons();
 
@@ -787,6 +790,7 @@ void OBS::Stop(bool overrideKeepRecording)
 
     delete network;
     network = NULL;
+    if (bStreaming) ReportStopStreamingTrigger();
     bStreaming = false;
     
     if(bRecording) StopRecording();
