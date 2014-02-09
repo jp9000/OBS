@@ -2279,10 +2279,14 @@ void OBS::ResetProfileMenu()
     AddProfilesToMenu(hmenuProfiles);
 }
 
-void OBS::EnableProfileMenu(bool enable)
+//----------------------------
+
+void OBS::DisableMenusWhileStreaming(bool disable)
 {
     HMENU hmenuMain = GetMenu(hwndMain);
-    EnableMenuItem(hmenuMain, 2, (enable ? MF_ENABLED : MF_DISABLED)|MF_BYPOSITION);
+
+    EnableMenuItem(hmenuMain, 2, (!disable ? MF_ENABLED : MF_DISABLED) | MF_BYPOSITION);
+
     DrawMenuBar(hwndMain);
 }
 
