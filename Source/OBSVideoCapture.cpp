@@ -410,9 +410,9 @@ void OBS::EncodeLoop()
         bufferedVideo.Clear();
     }
 
-    Log(TEXT("Total frames encoded: %d, total frames duplicated: %d (%0.2f%%)"), numTotalFrames, numTotalDuplicatedFrames, (double(numTotalDuplicatedFrames)/double(numTotalFrames))*100.0);
+    Log(TEXT("Total frames encoded: %d, total frames duplicated: %d (%0.2f%%)"), numTotalFrames, numTotalDuplicatedFrames, (numTotalFrames > 0) ? (double(numTotalDuplicatedFrames)/double(numTotalFrames))*100.0 : 0.0f);
     if (numFramesSkipped)
-        Log(TEXT("Number of frames skipped due to encoder lag: %d (%0.2f%%)"), numFramesSkipped, (double(numFramesSkipped)/double(numTotalFrames))*100.0);
+        Log(TEXT("Number of frames skipped due to encoder lag: %d (%0.2f%%)"), numFramesSkipped, (numTotalFrames > 0) ? (double(numFramesSkipped)/double(numTotalFrames))*100.0 : 0.0f);
 
     SetEvent(hVideoEvent);
     bShutdownVideoThread = true;
@@ -1298,5 +1298,5 @@ void OBS::MainCaptureLoop()
     Free(h420Threads);
     Free(convertInfo);
 
-    Log(TEXT("Total frames rendered: %d, number of late frames: %d (%0.2f%%) (it's okay for some frames to be late)"), numTotalFrames, numLongFrames, (double(numLongFrames)/double(numTotalFrames))*100.0);
+    Log(TEXT("Total frames rendered: %d, number of late frames: %d (%0.2f%%) (it's okay for some frames to be late)"), numTotalFrames, numLongFrames, (numTotalFrames > 0) ? (double(numLongFrames)/double(numTotalFrames))*100.0 : 0.0f);
 }
