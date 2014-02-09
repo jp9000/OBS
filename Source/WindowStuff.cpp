@@ -2575,7 +2575,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     {
                         UINT id = LOWORD(wParam);
                         if (id >= ID_SWITCHPROFILE && 
-                            id <= ID_SWITCHPROFILE+500)
+                            id <= ID_SWITCHPROFILE_END)
                         {
                             if (App->bRunning)
                                 break;
