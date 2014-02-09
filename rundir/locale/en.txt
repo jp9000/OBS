@@ -368,6 +368,13 @@ Updater.RunningWarning="OBS will be restarted to install the updates.\r\n\r\nAre
 Updater.UpdatesAvailable="Updates are available"
 Updater.NoUpdatesAvailable="No updates are available"
 
+LogUpload.CommunicationError="The upload failed due to a communication error with the server."
+LogUpload.ServiceReturnedError="The server answered with %u.\r\n"
+LogUpload.ServiceExpectedResponse="The expected response was %u."
+LogUpload.ServiceReturnedInvalidResponse="The server returned an invalid response.\r\nPlease try again later."
+LogUpload.EmptyLog="Couldn't upload the log because it is empty."
+LogUpload.CannotOpenFile="Reading the Log File '%s' failed. Make sure no other programs are using the Log File and try again."
+
 Plugins.NoiseGate.PluginName="Microphone Noise Gate"
 Plugins.NoiseGate.PluginDescription="Reduces microphone noise by automatically muting the microphone if you are not talking."
 Plugins.NoiseGate.Thresholds="Thresholds"

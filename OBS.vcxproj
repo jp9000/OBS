@@ -279,6 +279,7 @@
     <ClCompile Include="Source\HTTPClient.cpp" />
     <ClCompile Include="Source\ImageProcessing.cpp" />
     <ClCompile Include="Source\libnsgif.c" />
+    <ClCompile Include="Source\LogUploader.cpp" />
     <ClCompile Include="Source\Main.cpp" />
     <ClCompile Include="Source\MMDeviceAudioSource.cpp" />
     <ClCompile Include="Source\MP4FileStream.cpp" />
@@ -308,6 +309,7 @@
     <ClInclude Include="Source\D3D10System.h" />
     <ClInclude Include="Source\HTTPClient.h" />
     <ClInclude Include="Source\libnsgif.h" />
+    <ClInclude Include="Source\LogUploader.h" />
     <ClInclude Include="Source\Main.h" />
     <ClInclude Include="Source\OBS.h" />
     <ClInclude Include="resource.h" />
