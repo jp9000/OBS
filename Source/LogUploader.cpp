@@ -130,8 +130,8 @@ namespace
 
     void StringEscapeJson(String &str)
     {
-        str.FindReplace(L"\"", L"\\\"");
         str.FindReplace(L"\\", L"\\\\");
+        str.FindReplace(L"\"", L"\\\"");
         str.FindReplace(L"\n", L"\\n");
         str.FindReplace(L"\r", L"\\r");
         str.FindReplace(L"\f", L"\\f");
