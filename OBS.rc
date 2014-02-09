@@ -937,7 +937,6 @@ BEGIN
         MENUITEM "MainMenu.Settings.FullscreenMode", ID_FULLSCREENMODE
         MENUITEM SEPARATOR
         MENUITEM "MainMenu.Settings.OpenConfigFolder", ID_SETTINGS_OPENCONFIGFOLDER
-        MENUITEM "MainMenu.Settings.OpenLogFolder", ID_SETTINGS_OPENLOGFOLDER
     END
     POPUP "MainMenu.Profiles"
     BEGIN
@@ -947,6 +946,9 @@ BEGIN
     BEGIN
         MENUITEM "MainMenu.Help.VisitWebsite",  ID_HELP_VISITWEBSITE
         MENUITEM "MainMenu.Help.Contents",      ID_HELP_CONTENTS
+        MENUITEM SEPARATOR
+        MENUITEM "MainMenu.Settings.OpenLogFolder", ID_SETTINGS_OPENLOGFOLDER
+        MENUITEM SEPARATOR
         MENUITEM "MainMenu.Help.CheckForUpdates", ID_HELP_CHECK_FOR_UPDATES
     END
 END
