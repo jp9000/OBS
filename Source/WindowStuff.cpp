@@ -18,10 +18,13 @@
 
 
 #include "Main.h"
+#include "LogUploader.h"
 #include <shellapi.h>
 #include <uxtheme.h>
 #include <vsstyle.h>
 #include <MMSystem.h>
+
+#include <memory>
 
 
 //hello, you've come into the file I hate the most.
@@ -2286,8 +2289,125 @@ void OBS::DisableMenusWhileStreaming(bool disable)
     HMENU hmenuMain = GetMenu(hwndMain);
 
     EnableMenuItem(hmenuMain, 2, (!disable ? MF_ENABLED : MF_DISABLED) | MF_BYPOSITION);
+    EnableMenuItem(GetSubMenu(hmenuMain, 3), 3, (!disable ? MF_ENABLED : MF_DISABLED) | MF_BYPOSITION);
 
     DrawMenuBar(hwndMain);
+}
+
+//----------------------------
+
+void OBS::ResetLogUploadMenu()
+{
+    HMENU hmenuMain = GetMenu(hwndMain);
+    HMENU hmenuHelp = GetSubMenu(hmenuMain, 3);
+    HMENU hmenuUpload = GetSubMenu(hmenuHelp, 3);
+    while (DeleteMenu(hmenuUpload, 2, MF_BYPOSITION));
+
+    String logfilePattern = FormattedString(L"%s/logs/*.log", OBSGetAppDataPath());
+
+    OSFindData ofd;
+    HANDLE finder;
+    if (!(finder = OSFindFirstFile(logfilePattern, ofd)))
+        return;
+
+    AppendMenu(hmenuUpload, MF_STRING, ID_UPLOAD_LOG, Str("MainMenu.Help.UploadLastLog"));
+
+    AppendMenu(hmenuUpload, MF_SEPARATOR, 0, nullptr);
+
+    StringList logs;
+    do
+    {
+        if (ofd.bDirectory) continue;
+
+        logs << GetPathFileName(ofd.fileName, true);
+    } while (OSFindNextFile(finder, ofd));
+
+    for (unsigned i = 0; i < logs.Num(); i++)
+    {
+        HMENU items = CreateMenu();
+        AppendMenu(items, MF_STRING, ID_UPLOAD_LOG + i, Str("LogUpload.Upload"));
+        AppendMenu(items, MF_STRING, ID_VIEW_LOG + i, Str("LogUpload.View"));
+
+        AppendMenu(hmenuUpload, MF_STRING | MF_POPUP, (UINT_PTR)items, logs[logs.Num()-1-i].Array());
+    }
+}
+
+//----------------------------
+
+String GetLogUploadMenuItem(UINT item)
+{
+    HMENU hmenuMain = GetMenu(hwndMain);
+    HMENU hmenuHelp = GetSubMenu(hmenuMain, 3);
+    HMENU hmenuLog = GetSubMenu(hmenuHelp, 3);
+
+    MENUITEMINFO mii;
+    zero(&mii, sizeof mii);
+    mii.cbSize = sizeof mii;
+    mii.fMask = MIIM_STRING;
+
+    GetMenuItemInfo(hmenuLog, 3 + item, true, &mii);
+
+    String log;
+    log.SetLength(mii.cch++);
+    mii.dwTypeData = log.Array();
+
+    GetMenuItemInfo(hmenuLog, 3 + item, true, &mii);
+
+    return log;
+}
+
+//----------------------------
+
+namespace
+{
+    struct HLOCALDeleter
+    {
+        void operator()(void *h) { LocalFree(h); }
+    };
+
+    struct MemUnlocker
+    {
+        void operator()(void *m) { LocalUnlock(m); }
+    };
+}
+
+void ShowLogUploadResult(String &result, bool success)
+{
+    using namespace std;
+    if (!success) {
+        MessageBox(hwndMain, result.Array(), nullptr, MB_ICONEXCLAMATION);
+        return;
+    }
+
+    bool copied = false;
+    do
+    {
+        if (!OpenClipboard(hwndMain))
+            break;
+
+        if (!EmptyClipboard())
+            break;
+        
+        unique_ptr<void, HLOCALDeleter> h(LocalAlloc(LMEM_MOVEABLE, (result.Length() + 1) * sizeof TCHAR));
+        if (!h)
+            break;
+
+        unique_ptr<void, MemUnlocker> mem(LocalLock(h.get()));
+        if (!mem)
+            break;
+
+        tstr_to_wide(result.Array(), (wchar_t*)mem.get(), result.Length() + 1);
+
+        if (!SetClipboardData(CF_UNICODETEXT, mem.get()))
+            break;
+
+        h.release();
+        copied = true;
+    } while (false);
+    CloseClipboard();
+
+    String message = FormattedString(L"Log uploaded successfully%s.\r\nURL: %s", copied ? L", and URL copied to clipboard" : L"", result.Array());
+    MessageBox(hwndMain, message.Array(), nullptr, 0);
 }
 
 //----------------------------
@@ -2374,6 +2494,16 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 case ID_HELP_CHECK_FOR_UPDATES:
                     OSCloseThread(OSCreateThread((XTHREAD)CheckUpdateThread, (LPVOID)1));
                     break;
+
+                case ID_HELP_UPLOAD_CURRENT_LOG:
+                    if (App->bRunning)
+                        break;
+
+                    {
+                        String result;
+                        ShowLogUploadResult(result, UploadCurrentLog(result));
+                        break;
+                    }
 
                 /*case ID_DASHBOARD:
                     ShellExecute(NULL, TEXT("open"), App->strDashboard, 0, 0, SW_SHOWNORMAL);
@@ -2611,6 +2741,18 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                 ResetProfileMenu();
                                 ResetApplicationName();
                             }
+                        }
+                        else if (id >= ID_UPLOAD_LOG && id <= ID_UPLOAD_LOG_END)
+                        {
+                            String log = GetLogUploadMenuItem(id - ID_UPLOAD_LOG);
+                            String data;
+                            ShowLogUploadResult(data, UploadLog(log, data));
+                        }
+                        else if (id >= ID_VIEW_LOG && id <= ID_VIEW_LOG_END)
+                        {
+                            String log = GetLogUploadMenuItem(id - ID_VIEW_LOG);
+                            String tar = FormattedString(L"%s\\logs\\%s", OBSGetAppDataPath(), log.Array());
+                            ShellExecute(nullptr, nullptr, tar.Array(), 0, 0, SW_SHOWNORMAL);
                         }
                     }
             }

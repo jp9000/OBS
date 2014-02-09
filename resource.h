@@ -334,13 +334,15 @@
 #define IDA_SOURCE_CENTER_HOR           40056
 #define IDA_SOURCE_RESETCROP            40057
 #define ID_HELP_CHECK_FOR_UPDATES       40058
+#define ID_HELP_UPLOAD_CURRENT_LOG      40060
+#define ID_HELP_UPLOAD_LAST_LOG         40061
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        147
-#define _APS_NEXT_COMMAND_VALUE         40060
+#define _APS_NEXT_COMMAND_VALUE         40062
 #define _APS_NEXT_CONTROL_VALUE         1170
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

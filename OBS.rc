@@ -947,6 +947,10 @@ BEGIN
         MENUITEM "MainMenu.Help.VisitWebsite",  ID_HELP_VISITWEBSITE
         MENUITEM "MainMenu.Help.Contents",      ID_HELP_CONTENTS
         MENUITEM SEPARATOR
+        POPUP "MainMenu.Help.UploadLog"
+        BEGIN
+            MENUITEM "MainMenu.Help.UploadCurrentLog", ID_HELP_UPLOAD_CURRENT_LOG
+        END
         MENUITEM "MainMenu.Settings.OpenLogFolder", ID_SETTINGS_OPENLOGFOLDER
         MENUITEM SEPARATOR
         MENUITEM "MainMenu.Help.CheckForUpdates", ID_HELP_CHECK_FOR_UPDATES

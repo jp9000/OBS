@@ -571,6 +571,7 @@ OBS::OBS()
 
     ReloadIniSettings();
     ResetProfileMenu();
+    ResetLogUploadMenu();
 
     //-----------------------------------------------------
 

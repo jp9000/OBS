@@ -377,6 +377,10 @@ enum
 
     ID_SWITCHPROFILE,
     ID_SWITCHPROFILE_END = ID_SWITCHPROFILE+1000,
+    ID_UPLOAD_LOG,
+    ID_UPLOAD_LOG_END = ID_UPLOAD_LOG+1000,
+    ID_VIEW_LOG,
+    ID_VIEW_LOG_END = ID_VIEW_LOG+1000,
 };
 
 enum
@@ -976,6 +980,7 @@ private:
 
     static void AddProfilesToMenu(HMENU menu);
     static void ResetProfileMenu();
+    static void ResetLogUploadMenu();
     static void DisableMenusWhileStreaming(bool disable);
 
     static String GetApplicationName();
