@@ -315,3 +315,18 @@ String CurrentDateTimeString()
     strftime(buf, sizeof(buf), "%Y-%m-%d, %X", &tstruct);
     return buf;
 }
+
+String CurrentLogFilename()
+{
+    return lpLogFileName;
+}
+
+void ReadLog(String &data)
+{
+    if (!LogFile.IsOpen())
+        return;
+
+    QWORD pos = LogFile.GetPos();
+    LogFile.ReadFileToString(data);
+    LogFile.SetPos(pos, XFILE_BEGIN);
+}
