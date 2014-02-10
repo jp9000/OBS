@@ -2867,7 +2867,26 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                         {
                             String log = GetLogUploadMenuItem(id - ID_VIEW_LOG);
                             String tar = FormattedString(L"%s\\logs\\%s", OBSGetAppDataPath(), log.Array());
-                            ShellExecute(nullptr, nullptr, tar.Array(), 0, 0, SW_SHOWNORMAL);
+
+                            HINSTANCE result = ShellExecute(nullptr, L"edit", tar.Array(), 0, 0, SW_SHOWNORMAL);
+                            if (result > (HINSTANCE)32)
+                                break;
+                            
+                            result = ShellExecute(nullptr, nullptr, tar.Array(), 0, 0, SW_SHOWNORMAL);
+                            if (result > (HINSTANCE)32)
+                                break;
+
+                            if (result == (HINSTANCE)SE_ERR_NOASSOC || result == (HINSTANCE)SE_ERR_ASSOCINCOMPLETE)
+                            {
+                                OPENASINFO info;
+                                info.pcszFile = tar.Array();
+                                info.pcszClass = nullptr;
+                                info.oaifInFlags = OAIF_ALLOW_REGISTRATION | OAIF_EXEC;
+                                if (SHOpenWithDialog(nullptr, &info) == S_OK)
+                                    break;
+                            }
+
+                            MessageBox(hwndMain, FormattedString(Str("Sources.TextSource.FileNotFound"), tar.Array()).Array(), nullptr, MB_ICONERROR);
                         }
                     }
             }
