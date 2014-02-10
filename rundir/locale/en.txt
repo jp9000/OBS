@@ -372,6 +372,12 @@ MainMenu.Help.UploadLog="Upload a Log File"
 MainMenu.Help.UploadCurrentLog="Upload current Log File"
 MainMenu.Help.UploadLastLog="Upload last Log File"
 
+LogUpload.SuccessDialog.Caption="Log uploaded"
+LogUpload.SuccessDialog.Text="Log uploaded successfully."
+LogUpload.SuccessDialog.Copy="Copy"
+LogUpload.SuccessDialog.CopySuccess="Copied!"
+LogUpload.SuccessDialog.CopyFailure="Could not copy!"
+
 LogUpload.CommunicationError="The upload failed due to a communication error with the server."
 LogUpload.ServiceReturnedError="The server answered with %u.\r\n"
 LogUpload.ServiceExpectedResponse="The expected response was %u."

@@ -2370,45 +2370,159 @@ namespace
     {
         void operator()(void *m) { GlobalUnlock(m); }
     };
+
+    struct ClipboardHelper
+    {
+        ClipboardHelper(HWND owner) { OpenClipboard(owner); }
+        ~ClipboardHelper() { CloseClipboard(); }
+        bool Insert(String &str)
+        {
+            using namespace std;
+
+            if (!EmptyClipboard()) return false;
+
+            unique_ptr<void, HLOCALDeleter> h(GlobalAlloc(LMEM_MOVEABLE, (str.Length() + 1) * sizeof TCHAR));
+            if (!h) return false;
+
+            unique_ptr<void, MemUnlocker> mem(GlobalLock(h.get()));
+            if (!mem) return false;
+
+            tstr_to_wide(str.Array(), (wchar_t*)mem.get(), str.Length() + 1);
+
+            if (!SetClipboardData(CF_UNICODETEXT, mem.get())) return false;
+
+            h.release();
+            return true;
+        }
+
+        bool Contains(String &str)
+        {
+            using namespace std;
+
+            HANDLE h = GetClipboardData(CF_UNICODETEXT);
+            if (!h) return false;
+
+            unique_ptr<void, MemUnlocker> mem(GlobalLock(h));
+            if (!mem) return false;
+
+            return !!str.Compare((CTSTR)mem.get());
+        }
+    };
+}
+
+INT_PTR CALLBACK LogUploadResultProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message)
+    {
+        case WM_INITDIALOG:
+            {
+                LocalizeWindow(hwnd);
+
+                HWND hwndOwner = GetParent(hwnd);
+                if (!hwndOwner) hwndOwner = GetDesktopWindow();
+                
+                RECT rc, rcDlg, rcOwner;
+
+                GetWindowRect(hwndOwner, &rcOwner);
+                GetWindowRect(hwnd, &rcDlg);
+                CopyRect(&rc, &rcOwner);
+
+                // Offset the owner and dialog box rectangles so that right and bottom 
+                // values represent the width and height, and then offset the owner again 
+                // to discard space taken up by the dialog box. 
+
+                OffsetRect(&rcDlg, -rcDlg.left, -rcDlg.top);
+                OffsetRect(&rc, -rc.left, -rc.top);
+                OffsetRect(&rc, -rcDlg.right, -rcDlg.bottom);
+
+                // The new position is the sum of half the remaining space and the owner's 
+                // original position. 
+
+                SetWindowPos(hwnd,
+                    HWND_TOP,
+                    rcOwner.left + (rc.right / 2),
+                    rcOwner.top + (rc.bottom / 2),
+                    0, 0,          // Ignores size arguments. 
+                    SWP_NOSIZE);
+
+                String &url = *(String*)lParam;
+                
+                SetWindowText(GetDlgItem(hwnd, IDC_URL), url.Array());
+
+                AddClipboardFormatListener(hwnd);
+                
+                SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
+                return TRUE;
+            }
+
+        case WM_CLIPBOARDUPDATE:
+            {
+                LONG_PTR ptr = GetWindowLongPtr(hwnd, DWLP_USER);
+                if (!ptr) break;
+
+                ClipboardHelper clip(hwnd);
+                if (!clip.Contains(*(String*)ptr))
+                    ShowWindow(GetDlgItem(hwnd, IDC_COPIED), SW_HIDE);
+                else
+                {
+                    SetWindowText(GetDlgItem(hwnd, IDC_COPIED), Str("LogUpload.SuccessDialog.CopySuccess"));
+                    ShowWindow(GetDlgItem(hwnd, IDC_COPIED), SW_SHOW);
+                }
+            }
+
+        case WM_COMMAND:
+            if (LOWORD(wParam) == IDC_COPY)
+            {
+                LONG_PTR ptr = GetWindowLongPtr(hwnd, DWLP_USER);
+                if (!ptr) break;
+
+                ClipboardHelper clip(hwnd);
+                if (clip.Insert(*(String*)ptr))
+                    SetWindowText(GetDlgItem(hwnd, IDC_COPIED), Str("LogUpload.SuccessDialog.CopySuccess"));
+                else
+                    SetWindowText(GetDlgItem(hwnd, IDC_COPIED), Str("LogUpload.SuccessDialog.CopyFailure"));
+
+                ShowWindow(GetDlgItem(hwnd, IDC_COPIED), SW_SHOW);
+            }
+            else if (LOWORD(wParam) == IDOK)
+                SendMessage(hwnd, WM_CLOSE, 0, 0);
+            break;
+
+        case WM_CTLCOLORSTATIC:
+            if (GetDlgCtrlID((HWND)lParam) == IDC_COPIED)
+            {
+                LONG_PTR ptr = GetWindowLongPtr(hwnd, DWLP_USER);
+                if (!ptr) break;
+
+                ClipboardHelper clip(hwnd);
+                if (clip.Contains(*(String*)ptr))
+                    SetTextColor((HDC)wParam, RGB(0, 200, 0));
+                else
+                    SetTextColor((HDC)wParam, RGB(200, 0, 0));
+                SetBkColor((HDC)wParam, COLORREF(GetSysColor(COLOR_3DFACE)));
+                return (INT_PTR)GetSysColorBrush(COLOR_3DFACE);
+            }
+            break;
+
+        case WM_CLOSE:
+            EndDialog(hwnd, 0);
+            break;
+
+        case WM_DESTROY:
+            RemoveClipboardFormatListener(hwnd);
+    }
+
+    return FALSE;
 }
 
 void ShowLogUploadResult(String &result, bool success)
 {
-    using namespace std;
     if (!success) {
         MessageBox(hwndMain, result.Array(), nullptr, MB_ICONEXCLAMATION);
         return;
     }
 
-    bool copied = false;
-    do
-    {
-        if (!OpenClipboard(hwndMain))
-            break;
-
-        if (!EmptyClipboard())
-            break;
-        
-        unique_ptr<void, HLOCALDeleter> h(LocalAlloc(LMEM_MOVEABLE, (result.Length() + 1) * sizeof TCHAR));
-        if (!h)
-            break;
-
-        unique_ptr<void, MemUnlocker> mem(GlobalLock(h.get()));
-        if (!mem)
-            break;
-
-        tstr_to_wide(result.Array(), (wchar_t*)mem.get(), result.Length() + 1);
-
-        if (!SetClipboardData(CF_UNICODETEXT, mem.get()))
-            break;
-
-        h.release();
-        copied = true;
-    } while (false);
-    CloseClipboard();
-
-    String message = FormattedString(L"Log uploaded successfully%s.\r\nURL: %s", copied ? L", and URL copied to clipboard" : L"", result.Array());
-    MessageBox(hwndMain, message.Array(), nullptr, 0);
+    DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_LOGUPLOADED), hwndMain, LogUploadResultProc, (LPARAM)&result);
 }
 
 //----------------------------

@@ -37,6 +37,7 @@
 #define IDD_MONITORCAPTURE              144
 #define IDD_CONFIGUREMONITORCAPTURE     144
 #define IDD_STATS                       145
+#define IDD_LOGUPLOADED                 147
 #define IDC_SETTINGSLIST                1006
 #define IDC_SUBDIALOG                   1007
 #define IDC_MODE                        1008
@@ -286,7 +287,9 @@
 #define IDC_USENVENC                    1169
 #define IDC_BUTTON1                     1169
 #define IDC_RESETMIC                    1169
+#define IDC_COPY                        1169
 #define IDC_STARTRECORDINGHOTKEY_STATIC 1170
+#define IDC_COPIED                      1170
 #define IDC_STOPRECORDINGHOTKEY_STATIC  1171
 #define IDC_STARTRECORDINGHOTKEY        1172
 #define IDC_STOPRECORDINGHOTKEY         1173
@@ -341,9 +344,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        147
+#define _APS_NEXT_RESOURCE_VALUE        148
 #define _APS_NEXT_COMMAND_VALUE         40062
-#define _APS_NEXT_CONTROL_VALUE         1170
+#define _APS_NEXT_CONTROL_VALUE         1171
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
