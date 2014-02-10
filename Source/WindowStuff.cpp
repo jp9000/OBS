@@ -2327,34 +2327,36 @@ void OBS::ResetLogUploadMenu()
     }
     else
     {
-        if (!(finder = OSFindFirstFile(logfilePattern, ofd)))
-            return;
-
-        StringList previous;
-        previous.AppendList(App->logFiles);
-
-        App->logFiles.Clear();
-
-        do
+        if (finder = OSFindFirstFile(logfilePattern, ofd))
         {
-            if (ofd.bDirectory) continue;
+            StringList previous;
+            previous.AppendList(App->logFiles);
 
-            String log = GetPathFileName(ofd.fileName, true);
-            if (previous.FindValueIndex(log) == INVALID)
-                continue;
+            App->logFiles.Clear();
 
-            App->logFiles << log;
-        } while (OSFindNextFile(finder, ofd));
+            do
+            {
+                if (ofd.bDirectory) continue;
+
+                String log = GetPathFileName(ofd.fileName, true);
+                if (previous.FindValueIndex(log) == INVALID)
+                    continue;
+
+                App->logFiles << log;
+            } while (OSFindNextFile(finder, ofd));
+        }
+        else
+            App->logFiles.Clear();
     }
-
-    if (!App->logFiles.Num())
-        return;
 
     HMENU hmenuMain = GetMenu(hwndMain);
     HMENU hmenuHelp = GetSubMenu(hmenuMain, 3);
     HMENU hmenuUpload = GetSubMenu(hmenuHelp, 3);
 
-    while (DeleteMenu(hmenuUpload, 2, MF_BYPOSITION));
+    while (DeleteMenu(hmenuUpload, 1, MF_BYPOSITION));
+
+    if (!App->logFiles.Num())
+        return;
 
     AppendMenu(hmenuUpload, MF_STRING, ID_UPLOAD_LOG, Str("MainMenu.Help.UploadLastLog"));
 
