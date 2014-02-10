@@ -88,6 +88,9 @@ struct XRect
 
 struct OSFileChangeData;
 
+struct OSDirectoryMonitorData;
+typedef void (*OSDirectoryMonitorCallback)();
+
 #define WAIT_INFINITE 0xFFFFFFFF
 
 BASE_EXPORT void   STDCALL OSLogSystemStats();
@@ -109,6 +112,9 @@ BASE_EXPORT QWORD  STDCALL OSGetFileModificationTime(String path);
 BASE_EXPORT OSFileChangeData * STDCALL OSMonitorFileStart(String path, bool suppressLogging = false);
 BASE_EXPORT BOOL   STDCALL OSFileHasChanged (OSFileChangeData *data);
 BASE_EXPORT VOID   STDCALL OSMonitorFileDestroy (OSFileChangeData *data);
+
+BASE_EXPORT OSDirectoryMonitorData *OSMonitorDirectoryCallback(String path, OSDirectoryMonitorCallback callback);
+BASE_EXPORT void                    OSMonitorDirectoryCallbackStop(OSDirectoryMonitorData *data);
 
 BASE_EXPORT BOOL   STDCALL OSCreateMainWindow(int x, int y, int cx, int cy);
 BASE_EXPORT void   STDCALL OSDestroyMainWindow();

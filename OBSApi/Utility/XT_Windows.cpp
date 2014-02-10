@@ -28,6 +28,7 @@
 #include <MMSystem.h>
 #include <Psapi.h>
 #include "XT.h"
+#include <memory>
 
 
 
@@ -1069,6 +1070,101 @@ VOID STDCALL OSMonitorFileDestroy (OSFileChangeData *data)
     CloseHandle(data->directoryChange.hEvent);
     CloseHandle(data->hDirectory);
     Free(data);
+}
+
+namespace
+{
+    struct HandleCloser
+    {
+        void operator()(HANDLE h) { if (h && h != INVALID_HANDLE_VALUE) CloseHandle(h); }
+    };
+
+    struct ChangeNotificationCloser
+    {
+        void operator()(HANDLE h) { if (h && h != INVALID_HANDLE_VALUE) FindCloseChangeNotification(h); }
+    };
+}
+
+using namespace std;
+
+struct OSDirectoryMonitorData
+{
+    String directory_path;
+    unique_ptr<void, HandleCloser> directory, change_handle, thread, stop_event;
+    OSDirectoryMonitorCallback cb;
+    ~OSDirectoryMonitorData()
+    {
+        if (!stop_event || !thread)
+            return;
+        SetEvent(stop_event.get());
+        WaitForSingleObject(thread.get(), INFINITE);
+    }
+};
+
+static DWORD WINAPI OSMonitorDirectoryThread(void *arg)
+{
+    OSDirectoryMonitorData &data = *(OSDirectoryMonitorData*)arg;
+    HANDLE handles[] = { data.change_handle.get(), data.stop_event.get() };
+    BYTE buffer[2048];
+    OVERLAPPED ol;
+    zero(&ol, sizeof ol);
+
+    ol.hEvent = data.change_handle.get();
+    
+    for (;;)
+    {
+        DWORD len = 0;
+        if (!ReadDirectoryChangesW(data.directory.get(), buffer, 2048, false, FILE_NOTIFY_CHANGE_FILE_NAME, &len, &ol, nullptr))
+            return 1;
+
+        DWORD result = WaitForMultipleObjects(2, handles, false, INFINITE);
+        if (result == WAIT_OBJECT_0 + 1) return 2;
+
+        len = 0;
+        if (!GetOverlappedResult(data.directory.get(), &ol, &len, false))
+            continue;
+        
+        data.cb();
+    }
+
+    return 0;
+}
+
+OSDirectoryMonitorData *OSMonitorDirectoryCallback(String path, OSDirectoryMonitorCallback callback)
+{
+    if (!callback) return nullptr;
+
+    unique_ptr<OSDirectoryMonitorData> data(new OSDirectoryMonitorData);
+
+    data->cb = callback;
+
+    path.FindReplace(L"\\", L"/");
+
+    data->directory_path = GetPathDirectory(path);
+    data->directory_path << "/";
+
+    data->directory.reset(CreateFile(data->directory_path.Array(), FILE_LIST_DIRECTORY, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED, NULL));
+    if (data->directory.get() == INVALID_HANDLE_VALUE)
+        return nullptr;
+
+    data->stop_event.reset(CreateEvent(nullptr, true, false, nullptr));
+    if (!data->stop_event)
+        return nullptr;
+
+    data->change_handle.reset(CreateEvent(nullptr, false, false, nullptr));
+    if (!data->change_handle)
+        return nullptr;
+
+    data->thread.reset(CreateThread(nullptr, 0, OSMonitorDirectoryThread, data.get(), 0, nullptr));
+    if (!data->thread)
+        return nullptr;
+    
+    return data.release();
+}
+
+void OSMonitorDirectoryCallbackStop(OSDirectoryMonitorData *data)
+{
+    delete data;
 }
 
 #endif
