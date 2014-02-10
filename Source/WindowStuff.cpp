@@ -2367,7 +2367,7 @@ namespace
 
     struct MemUnlocker
     {
-        void operator()(void *m) { LocalUnlock(m); }
+        void operator()(void *m) { GlobalUnlock(m); }
     };
 }
 
@@ -2392,7 +2392,7 @@ void ShowLogUploadResult(String &result, bool success)
         if (!h)
             break;
 
-        unique_ptr<void, MemUnlocker> mem(LocalLock(h.get()));
+        unique_ptr<void, MemUnlocker> mem(GlobalLock(h.get()));
         if (!mem)
             break;
 
