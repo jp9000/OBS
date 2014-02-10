@@ -2298,39 +2298,75 @@ void OBS::DisableMenusWhileStreaming(bool disable)
 
 //----------------------------
 
+void LogUploadMonitorCallback()
+{
+    PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_REFRESH_LOGS, 0), 0);
+}
+
+//----------------------------
+
 void OBS::ResetLogUploadMenu()
 {
-    HMENU hmenuMain = GetMenu(hwndMain);
-    HMENU hmenuHelp = GetSubMenu(hmenuMain, 3);
-    HMENU hmenuUpload = GetSubMenu(hmenuHelp, 3);
-    while (DeleteMenu(hmenuUpload, 2, MF_BYPOSITION));
-
     String logfilePattern = FormattedString(L"%s/logs/*.log", OBSGetAppDataPath());
 
     OSFindData ofd;
     HANDLE finder;
-    if (!(finder = OSFindFirstFile(logfilePattern, ofd)))
+    if (!App->logDirectoryMonitor)
+    {
+        App->logDirectoryMonitor = OSMonitorDirectoryCallback(String(OBSGetAppDataPath()) << L"/logs/", LogUploadMonitorCallback);
+
+        if (!(finder = OSFindFirstFile(logfilePattern, ofd)))
+            return;
+
+        do
+        {
+            if (ofd.bDirectory) continue;
+
+            App->logFiles << GetPathFileName(ofd.fileName, true);
+        } while (OSFindNextFile(finder, ofd));
+    }
+    else
+    {
+        if (!(finder = OSFindFirstFile(logfilePattern, ofd)))
+            return;
+
+        StringList previous;
+        previous.AppendList(App->logFiles);
+
+        App->logFiles.Clear();
+
+        do
+        {
+            if (ofd.bDirectory) continue;
+
+            String log = GetPathFileName(ofd.fileName, true);
+            if (previous.FindValueIndex(log) == INVALID)
+                continue;
+
+            App->logFiles << log;
+        } while (OSFindNextFile(finder, ofd));
+    }
+
+    if (!App->logFiles.Num())
         return;
+
+    HMENU hmenuMain = GetMenu(hwndMain);
+    HMENU hmenuHelp = GetSubMenu(hmenuMain, 3);
+    HMENU hmenuUpload = GetSubMenu(hmenuHelp, 3);
+
+    while (DeleteMenu(hmenuUpload, 2, MF_BYPOSITION));
 
     AppendMenu(hmenuUpload, MF_STRING, ID_UPLOAD_LOG, Str("MainMenu.Help.UploadLastLog"));
 
     AppendMenu(hmenuUpload, MF_SEPARATOR, 0, nullptr);
 
-    StringList logs;
-    do
-    {
-        if (ofd.bDirectory) continue;
-
-        logs << GetPathFileName(ofd.fileName, true);
-    } while (OSFindNextFile(finder, ofd));
-
-    for (unsigned i = 0; i < logs.Num(); i++)
+    for (unsigned i = 0; i < App->logFiles.Num(); i++)
     {
         HMENU items = CreateMenu();
         AppendMenu(items, MF_STRING, ID_UPLOAD_LOG + i, Str("LogUpload.Upload"));
         AppendMenu(items, MF_STRING, ID_VIEW_LOG + i, Str("LogUpload.View"));
 
-        AppendMenu(hmenuUpload, MF_STRING | MF_POPUP, (UINT_PTR)items, logs[logs.Num()-1-i].Array());
+        AppendMenu(hmenuUpload, MF_STRING | MF_POPUP, (UINT_PTR)items, App->logFiles[App->logFiles.Num()-1-i].Array());
     }
 }
 
@@ -2620,6 +2656,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                         ShowLogUploadResult(result, UploadCurrentLog(result));
                         break;
                     }
+
+                case ID_REFRESH_LOGS:
+                    App->ResetLogUploadMenu();
+                    break;
 
                 /*case ID_DASHBOARD:
                     ShellExecute(NULL, TEXT("open"), App->strDashboard, 0, 0, SW_SHOWNORMAL);

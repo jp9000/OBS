@@ -727,6 +727,9 @@ OBS::~OBS()
         App->HideNotificationAreaIcon();
     }
 
+    if (logDirectoryMonitor)
+        OSMonitorDirectoryCallbackStop(logDirectoryMonitor);
+
     //DestroyWindow(hwndMain);
 
     // Remember window state for next launch

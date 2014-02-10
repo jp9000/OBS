@@ -381,6 +381,7 @@ enum
     ID_UPLOAD_LOG_END = ID_UPLOAD_LOG+1000,
     ID_VIEW_LOG,
     ID_VIEW_LOG_END = ID_VIEW_LOG+1000,
+    ID_REFRESH_LOGS
 };
 
 enum
@@ -704,6 +705,9 @@ private:
     WINDOWPLACEMENT fullscreenPrevPlacement;
 
     int     cpuInfo[4];
+
+    OSDirectoryMonitorData *logDirectoryMonitor;
+    StringList logFiles;
 
     //---------------------------------------------------
     // resolution/fps/downscale/etc settings
