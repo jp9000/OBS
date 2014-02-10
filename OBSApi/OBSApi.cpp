@@ -244,7 +244,7 @@ LPBYTE GetCursorData(HICON hIcon, ICONINFO &ii, UINT &width, UINT &height)
 }
 
 extern LARGE_INTEGER clockFreq;
-volatile LONGLONG lastQPCTime = 0;
+__declspec(thread) LONGLONG lastQPCTime = 0;
 
 QWORD GetQPCTimeNS()
 {
