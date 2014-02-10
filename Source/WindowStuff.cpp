@@ -20,6 +20,7 @@
 #include "Main.h"
 #include "LogUploader.h"
 #include <shellapi.h>
+#include <ShlObj.h>
 #include <uxtheme.h>
 #include <vsstyle.h>
 #include <MMSystem.h>
@@ -2886,7 +2887,8 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                     break;
                             }
 
-                            MessageBox(hwndMain, FormattedString(Str("Sources.TextSource.FileNotFound"), tar.Array()).Array(), nullptr, MB_ICONERROR);
+                            String error = Str("Sources.TextSource.FileNotFound");
+                            MessageBox(hwndMain, error.FindReplace(L"$1", tar.Array()).Array(), nullptr, MB_ICONERROR);
                         }
                     }
             }
