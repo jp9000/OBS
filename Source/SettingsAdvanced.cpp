@@ -362,7 +362,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 bool bUseNVENC = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseNVENC")) != 0;
 
-                EnableWindow(GetDlgItem(hwnd, IDC_USEQSV), (bHasQSV || bUseQSV) && !bUseNVENC);
+                EnableWindow(GetDlgItem(hwnd, IDC_USEQSV), bUseQSV || (bHasQSV && !bUseNVENC));
                 SendMessage(GetDlgItem(hwnd, IDC_USEQSV), BM_SETCHECK, bUseQSV ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 bool bQSVUseVideoEncoderSettings = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("QSVUseVideoEncoderSettings")) != 0;
@@ -374,7 +374,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 EnableWindow(GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS), bUseQSV && !bUseNVENC);
 
-                EnableWindow(GetDlgItem(hwnd, IDC_USENVENC), (bHasNVENC || bUseNVENC) && !bUseQSV);
+                EnableWindow(GetDlgItem(hwnd, IDC_USENVENC), bUseNVENC || (bHasNVENC && !bUseQSV));
                 SendMessage(GetDlgItem(hwnd, IDC_USENVENC), BM_SETCHECK, bUseNVENC ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 hwndTemp = GetDlgItem(hwnd, IDC_NVENCPRESET);
