@@ -57,9 +57,18 @@ void SettingsAdvanced::DestroyPane()
 
 void SettingsAdvanced::ApplySettings()
 {
+    bool bUseQSV = SendMessage(GetDlgItem(hwnd, IDC_USEQSV), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    bool bUseNVENC = SendMessage(GetDlgItem(hwnd, IDC_USENVENC), BM_GETCHECK, 0, 0) == BST_CHECKED;
+
+    if (bUseQSV && bUseNVENC)
+    {
+        SetAbortApplySettings(true);
+        MessageBox(hwnd, Str("Settings.Advanced.DisableQSVorNVENC"), nullptr, MB_ICONERROR);
+        return;
+    }
+
     //precheck for QSV enable/disable in case the checkbox is currently enabled while no hardware support is found
 
-    bool bUseQSV = SendMessage(GetDlgItem(hwnd, IDC_USEQSV), BM_GETCHECK, 0, 0) == BST_CHECKED;
     bool bUseQSV_prev = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
     if (!bHasQSV && !bUseQSV && bUseQSV_prev &&
         MessageBox(hwnd, Str("Settings.Advanced.UseQSVDisabledAfterApply"), Str("MessageBoxWarningCaption"), MB_ICONEXCLAMATION | MB_OKCANCEL) != IDOK)
@@ -70,7 +79,6 @@ void SettingsAdvanced::ApplySettings()
 
     //precheck for NVENC enable/disable in case the checkbox is currently enabled while no hardware support is found
 
-    bool bUseNVENC = SendMessage(GetDlgItem(hwnd, IDC_USENVENC), BM_GETCHECK, 0, 0) == BST_CHECKED;
     bool bUseNVENC_prev = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseNVENC")) != 0;
     if (!bHasNVENC && !bUseNVENC && bUseNVENC_prev &&
         MessageBox(hwnd, Str("Settings.Advanced.UseNVENCDisabledAfterApply"), Str("MessageBoxWarningCaption"), MB_ICONEXCLAMATION | MB_OKCANCEL) != IDOK)
@@ -245,6 +253,8 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
             {
                 LocalizeWindow(hwnd);
 
+                bool invalidSettings = false;
+
                 //--------------------------------------------
 
                 HWND hwndToolTip = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL, WS_POPUP|TTS_NOPREFIX|TTS_ALWAYSTIP,
@@ -362,6 +372,9 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 bool bUseNVENC = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseNVENC")) != 0;
 
+                if (bUseQSV && bUseNVENC)
+                    invalidSettings = true;
+
                 EnableWindow(GetDlgItem(hwnd, IDC_USEQSV), bUseQSV || (bHasQSV && !bUseNVENC));
                 SendMessage(GetDlgItem(hwnd, IDC_USEQSV), BM_SETCHECK, bUseQSV ? BST_CHECKED : BST_UNCHECKED, 0);
 
@@ -473,7 +486,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 //need this as some of the dialog item sets above trigger the notifications
                 ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_HIDE);
-                SetChangedSettings(false);
+                SetChangedSettings(invalidSettings);
                 return TRUE;
             }
 
