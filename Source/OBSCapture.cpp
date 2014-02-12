@@ -70,7 +70,7 @@ void OBS::ToggleCapturing()
 
 void OBS::StartRecording()
 {
-    if (bRecording) return;
+    if (!bRunning || bRecording) return;
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
 
     bWriteToFile = networkMode == 1 || AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile")) != 0;
