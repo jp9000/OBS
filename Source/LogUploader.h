@@ -18,5 +18,11 @@
 
 #pragma once
 
-bool UploadCurrentLog(String &result);
-bool UploadLog(String filename, String &result);
+struct LogUploadResult
+{
+    String url;
+    String errors;
+};
+
+bool UploadCurrentLog(LogUploadResult &result);
+bool UploadLog(String filename, LogUploadResult &result);

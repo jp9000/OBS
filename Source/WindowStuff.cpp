@@ -2484,9 +2484,9 @@ INT_PTR CALLBACK LogUploadResultProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                     0, 0,          // Ignores size arguments. 
                     SWP_NOSIZE);
 
-                String &url = *(String*)lParam;
+                LogUploadResult &result = *(LogUploadResult*)lParam;
                 
-                SetWindowText(GetDlgItem(hwnd, IDC_URL), url.Array());
+                SetWindowText(GetDlgItem(hwnd, IDC_URL), result.url.Array());
 
                 AddClipboardFormatListener(hwnd);
                 
@@ -2500,7 +2500,7 @@ INT_PTR CALLBACK LogUploadResultProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 if (!ptr) break;
 
                 ClipboardHelper clip(hwnd);
-                if (!clip.Contains(*(String*)ptr))
+                if (!clip.Contains(((LogUploadResult*)ptr)->url))
                     ShowWindow(GetDlgItem(hwnd, IDC_COPIED), SW_HIDE);
                 else
                 {
@@ -2510,21 +2510,26 @@ INT_PTR CALLBACK LogUploadResultProc(HWND hwnd, UINT message, WPARAM wParam, LPA
             }
 
         case WM_COMMAND:
-            if (LOWORD(wParam) == IDC_COPY)
+            switch (LOWORD(wParam))
             {
-                LONG_PTR ptr = GetWindowLongPtr(hwnd, DWLP_USER);
-                if (!ptr) break;
+            case IDC_COPY:
+                {
+                    LONG_PTR ptr = GetWindowLongPtr(hwnd, DWLP_USER);
+                    if (!ptr) break;
 
-                ClipboardHelper clip(hwnd);
-                if (clip.Insert(*(String*)ptr))
-                    SetWindowText(GetDlgItem(hwnd, IDC_COPIED), Str("LogUpload.SuccessDialog.CopySuccess"));
-                else
-                    SetWindowText(GetDlgItem(hwnd, IDC_COPIED), Str("LogUpload.SuccessDialog.CopyFailure"));
+                    ClipboardHelper clip(hwnd);
+                    if (clip.Insert(((LogUploadResult*)ptr)->url))
+                        SetWindowText(GetDlgItem(hwnd, IDC_COPIED), Str("LogUpload.SuccessDialog.CopySuccess"));
+                    else
+                        SetWindowText(GetDlgItem(hwnd, IDC_COPIED), Str("LogUpload.SuccessDialog.CopyFailure"));
 
-                ShowWindow(GetDlgItem(hwnd, IDC_COPIED), SW_SHOW);
-            }
-            else if (LOWORD(wParam) == IDOK)
+                    ShowWindow(GetDlgItem(hwnd, IDC_COPIED), SW_SHOW);
+                }
+                break;
+            case IDOK:
                 SendMessage(hwnd, WM_CLOSE, 0, 0);
+                break;
+            }
             break;
 
         case WM_CTLCOLORSTATIC:
@@ -2534,7 +2539,7 @@ INT_PTR CALLBACK LogUploadResultProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 if (!ptr) break;
 
                 ClipboardHelper clip(hwnd);
-                if (clip.Contains(*(String*)ptr))
+                if (clip.Contains(((LogUploadResult*)ptr)->url))
                     SetTextColor((HDC)wParam, RGB(0, 200, 0));
                 else
                     SetTextColor((HDC)wParam, RGB(200, 0, 0));
@@ -2554,10 +2559,10 @@ INT_PTR CALLBACK LogUploadResultProc(HWND hwnd, UINT message, WPARAM wParam, LPA
     return FALSE;
 }
 
-void ShowLogUploadResult(String &result, bool success)
+void ShowLogUploadResult(LogUploadResult &result, bool success)
 {
     if (!success) {
-        MessageBox(hwndMain, result.Array(), nullptr, MB_ICONEXCLAMATION);
+        MessageBox(hwndMain, result.errors.Array(), nullptr, MB_ICONEXCLAMATION);
         return;
     }
 
@@ -2654,7 +2659,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                         break;
 
                     {
-                        String result;
+                        LogUploadResult result;
                         ShowLogUploadResult(result, UploadCurrentLog(result));
                         break;
                     }
@@ -2903,8 +2908,8 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                         else if (id >= ID_UPLOAD_LOG && id <= ID_UPLOAD_LOG_END)
                         {
                             String log = GetLogUploadMenuItem(id - ID_UPLOAD_LOG);
-                            String data;
-                            ShowLogUploadResult(data, UploadLog(log, data));
+                            LogUploadResult result;
+                            ShowLogUploadResult(result, UploadLog(log, result));
                         }
                         else if (id >= ID_VIEW_LOG && id <= ID_VIEW_LOG_END)
                         {

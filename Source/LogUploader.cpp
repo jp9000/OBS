@@ -141,7 +141,7 @@ namespace
     }
 }
 
-bool UploadLogGitHub(String filename, String logData, String &result)
+bool UploadLogGitHub(String filename, String logData, LogUploadResult &result)
 {
     StringEscapeJson(filename);
     StringEscapeJson(logData);
@@ -151,17 +151,17 @@ bool UploadLogGitHub(String filename, String logData, String &result)
     int response = 0;
     List<BYTE> body;
     if (!HTTPPostData(String(L"https://api.github.com/gists"), json, response, &body)) {
-        result << Str("LogUpload.CommunicationError");
+        result.errors << Str("LogUpload.CommunicationError");
         return false;
     }
 
     if (response != 201) {
-        result << FormattedString(Str("LogUpload.ServiceReturnedError"), response)
-               << FormattedString(Str("LogUpload.ServiceExpectedResponse"), 201);
+        result.errors << FormattedString(Str("LogUpload.ServiceReturnedError"), response)
+                      << FormattedString(Str("LogUpload.ServiceExpectedResponse"), 201);
         return false;
     }
 
-    auto invalid_response = [&]() -> bool { result << Str("LogUpload.ServiceReturnedInvalidResponse"); return false; };
+    auto invalid_response = [&]() -> bool { result.errors << Str("LogUpload.ServiceReturnedInvalidResponse"); return false; };
 
     if (body.Num() < 1)
         return invalid_response();
@@ -187,7 +187,7 @@ bool UploadLogGitHub(String filename, String logData, String &result)
     if ((end - pos) < 4)
         return invalid_response();
 
-    result = bodyStr.Mid((UINT)(pos - bodyStr.Array()), (UINT)(end - bodyStr.Array()));
+    result.url = bodyStr.Mid((UINT)(pos - bodyStr.Array()), (UINT)(end - bodyStr.Array()));
     return true;
 }
 
@@ -204,12 +204,12 @@ static void AppendGameCaptureLog(String &data)
     data << L"\r\n\r\nLast Game Capture Log:\r\n" << append;
 }
 
-bool UploadCurrentLog(String &result)
+bool UploadCurrentLog(LogUploadResult &result)
 {
     String data;
     ReadLog(data);
     if (data.IsEmpty()) {
-        result << Str("LogUpload.EmptyLog");
+        result.errors << Str("LogUpload.EmptyLog");
         return false;
     }
 
@@ -220,19 +220,19 @@ bool UploadCurrentLog(String &result)
     return UploadLogGitHub(GetPathFileName(filename.FindReplace(L"\\", L"/").Array(), true), data, result);
 }
 
-bool UploadLog(String filename, String &result)
+bool UploadLog(String filename, LogUploadResult &result)
 {
     String path = FormattedString(L"%s\\logs\\%s", OBSGetAppDataPath(), filename.Array());
     XFile f(path.Array(), XFILE_READ, XFILE_OPENEXISTING);
     if (!f.IsOpen()) {
-        result << FormattedString(Str("LogUpload.CannotOpenFile"), path.Array());
+        result.errors << FormattedString(Str("LogUpload.CannotOpenFile"), path.Array());
         return false;
     }
 
     String data;
     f.ReadFileToString(data);
     if (data.IsEmpty()) {
-        result << Str("LogUpload.EmptyLog");
+        result.errors << Str("LogUpload.EmptyLog");
         return false;
     }
 
