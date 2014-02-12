@@ -129,3 +129,28 @@ failure:
 
     return ret;
 }
+
+String CreateHTTPURL(String host, String path, String extra, bool secure)
+{
+    URL_COMPONENTS components = {
+        sizeof URL_COMPONENTS,
+        secure ? L"https" : L"http",
+        secure ? 5 : 4,
+        secure ? INTERNET_SCHEME_HTTPS : INTERNET_SCHEME_HTTP,
+        host.Array(), host.Length(),
+        secure ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT,
+        nullptr, 0,
+        nullptr, 0,
+        path.Array(), path.Length(),
+        extra.Array(), extra.Length()
+    };
+
+    String url;
+    url.SetLength(MAX_PATH);
+    DWORD length = MAX_PATH;
+    if (!WinHttpCreateUrl(&components, ICU_ESCAPE, url.Array(), &length))
+        return String();
+
+    url.SetLength(length);
+    return url;
+}
