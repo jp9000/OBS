@@ -369,7 +369,7 @@ Updater.RunningWarning="OBS will be restarted to install the updates.\r\n\r\nAre
 Updater.UpdatesAvailable="Updates are available"
 Updater.NoUpdatesAvailable="No updates are available"
 
-MainMenu.Help.UploadLog="Upload a Log File"
+MainMenu.Help.LogFiles="Log Files"
 MainMenu.Help.AnalyzeCurrentLog="Analyze current Log File"
 MainMenu.Help.UploadCurrentLog="Upload current Log File"
 MainMenu.Help.AnalyzeLastLog="Analyze last Log File"
