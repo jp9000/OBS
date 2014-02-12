@@ -138,6 +138,46 @@ namespace
         return result;
     }
 
+    bool HTTPFindRedirect(String url, String &location)
+    {
+        HTTPHandle session, connect;
+        bool secure;
+        String path;
+
+        if (!HTTPProlog(url, path, session, connect, secure))
+            return false;
+
+        HTTPHandle request(WinHttpOpenRequest(connect, L"HEAD", path, NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, secure ? WINHTTP_FLAG_SECURE : 0));
+        if (!request)
+            return false;
+
+        // End the request.
+        if (!WinHttpSendRequest(request, nullptr, 0, nullptr, 0, 0, 0))
+            return false;
+
+        int status;
+        if (!HTTPReceiveStatus(request, status))
+            return false;
+
+        location.SetLength(MAX_PATH);
+        DWORD length = MAX_PATH;
+        if (WinHttpQueryHeaders(request, WINHTTP_QUERY_LOCATION, WINHTTP_HEADER_NAME_BY_INDEX, location.Array(), &length, WINHTTP_NO_HEADER_INDEX))
+        {
+            location.SetLength(length);
+            return true;
+        }
+
+        length = MAX_PATH;
+        if (WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM, L"X-Gist-Url", location.Array(), &length, WINHTTP_NO_HEADER_INDEX))
+        {
+            location.SetLength(length);
+            location = FormattedString(L"https://gist.github.com%s", location.Array());
+            return true;
+        }
+
+        return false;
+    }
+
     void StringEscapeJson(String &str)
     {
         str.FindReplace(L"\\", L"\\\\");
