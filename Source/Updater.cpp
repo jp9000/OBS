@@ -378,7 +378,7 @@ DWORD WINAPI CheckUpdateThread (VOID *arg)
     TCHAR extraHeaders[256];
     BYTE manifestHash[20];
     TCHAR manifestPath[MAX_PATH];
-    BOOL updatesAvailable;
+    BOOL updatesAvailable = false;
 
     BOOL notify = (BOOL)arg;
 
