@@ -290,7 +290,7 @@
 #define IDC_COPY                        1169
 #define IDC_STARTRECORDINGHOTKEY_STATIC 1170
 #define IDC_COPIED                      1170
-#define IDC_ANALYZE			1171
+#define IDC_ANALYZE                     1171
 #define IDC_STOPRECORDINGHOTKEY_STATIC  1171
 #define IDC_STARTRECORDINGHOTKEY        1172
 #define IDC_STOPRECORDINGHOTKEY         1173
@@ -340,13 +340,15 @@
 #define ID_HELP_CHECK_FOR_UPDATES       40058
 #define ID_HELP_UPLOAD_CURRENT_LOG      40060
 #define ID_HELP_UPLOAD_LAST_LOG         40061
+#define ID_MAINMENU_MAINMENU40062       40062
+#define ID_HELP_ANALYZE_CURRENT_LOG     40063
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        148
-#define _APS_NEXT_COMMAND_VALUE         40062
+#define _APS_NEXT_COMMAND_VALUE         40064
 #define _APS_NEXT_CONTROL_VALUE         1171
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

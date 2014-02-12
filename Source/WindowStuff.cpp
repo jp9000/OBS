@@ -2353,11 +2353,14 @@ void OBS::ResetLogUploadMenu()
     HMENU hmenuHelp = GetSubMenu(hmenuMain, 3);
     HMENU hmenuUpload = GetSubMenu(hmenuHelp, 3);
 
-    while (DeleteMenu(hmenuUpload, 1, MF_BYPOSITION));
+    while (DeleteMenu(hmenuUpload, 2, MF_BYPOSITION));
 
     if (!App->logFiles.Num())
         return;
 
+    AppendMenu(hmenuUpload, MF_SEPARATOR, 0, nullptr);
+
+    AppendMenu(hmenuUpload, MF_STRING, ID_UPLOAD_ANALYZE_LOG, Str("MainMenu.Help.AnalyzeLastLog"));
     AppendMenu(hmenuUpload, MF_STRING, ID_UPLOAD_LOG, Str("MainMenu.Help.UploadLastLog"));
 
     AppendMenu(hmenuUpload, MF_SEPARATOR, 0, nullptr);
@@ -2386,13 +2389,13 @@ String GetLogUploadMenuItem(UINT item)
     mii.cbSize = sizeof mii;
     mii.fMask = MIIM_STRING;
 
-    GetMenuItemInfo(hmenuLog, 3 + item, true, &mii);
+    GetMenuItemInfo(hmenuLog, 6 + item, true, &mii);
 
     String log;
     log.SetLength(mii.cch++);
     mii.dwTypeData = log.Array();
 
-    GetMenuItemInfo(hmenuLog, 3 + item, true, &mii);
+    GetMenuItemInfo(hmenuLog, 6 + item, true, &mii);
 
     return log;
 }
@@ -2672,12 +2675,14 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     OSCloseThread(OSCreateThread((XTHREAD)CheckUpdateThread, (LPVOID)1));
                     break;
 
+                case ID_HELP_ANALYZE_CURRENT_LOG:
                 case ID_HELP_UPLOAD_CURRENT_LOG:
                     if (App->bRunning)
                         break;
 
                     {
                         LogUploadResult result;
+                        result.openAnalyzerOnSuccess = LOWORD(wParam) == ID_HELP_ANALYZE_CURRENT_LOG;
                         ShowLogUploadResult(result, UploadCurrentLog(result));
                         break;
                     }

@@ -23,6 +23,7 @@ struct LogUploadResult
     String url, analyzerURL;
     String errors;
     bool openAnalyzerOnSuccess;
+    LogUploadResult() : openAnalyzerOnSuccess(false) {}
 };
 
 bool UploadCurrentLog(LogUploadResult &result);
