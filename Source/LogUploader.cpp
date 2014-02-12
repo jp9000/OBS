@@ -178,6 +178,59 @@ namespace
         return false;
     }
 
+    String LogFileAge(String &name)
+    {
+        FILETIME now_ft, log_ft;
+        SYSTEMTIME now_st, log_st;
+
+        zero(&log_st, sizeof log_st);
+
+        if (swscanf_s(name.Array(), L"%u-%02u-%02u-%02u%02u-%02u", &log_st.wYear, &log_st.wMonth, &log_st.wDay, &log_st.wHour, &log_st.wMinute, &log_st.wSecond) != 6)
+            return String();
+
+        GetLocalTime(&now_st);
+        SystemTimeToFileTime(&now_st, &now_ft);
+        SystemTimeToFileTime(&log_st, &log_ft);
+
+        ULARGE_INTEGER now_, log_, diff;
+        now_.LowPart = now_ft.dwLowDateTime;
+        now_.HighPart = now_ft.dwHighDateTime;
+        log_.LowPart = log_ft.dwLowDateTime;
+        log_.HighPart = log_ft.dwHighDateTime;
+
+        if (now_.QuadPart <= log_.QuadPart)
+            return String();
+
+        diff.QuadPart = now_.QuadPart - log_.QuadPart;
+        diff.QuadPart /= 10000000;
+        diff.QuadPart /= 60;
+
+        if (diff.QuadPart < 1)
+            return "less than a minute";
+        
+        unsigned minutes = diff.QuadPart % 60;
+        diff.QuadPart /= 60;
+        unsigned hours = diff.QuadPart % 24;
+        diff.QuadPart /= 24;
+        unsigned days = diff.QuadPart % 7;
+        unsigned weeks = (diff.QuadPart/7) % 52;
+        diff.QuadPart /= 365; //losing accuracy ...
+        unsigned years = (unsigned)diff.QuadPart;
+
+        StringList ages;
+#define N_FORMAT(name, num) if (num > 0) ages << FormattedString(L"%u " name L"%s", num, num == 1 ? L"" : L"s")
+        N_FORMAT(L"year", years);
+        N_FORMAT(L"week", weeks);
+        N_FORMAT(L"day", days);
+        N_FORMAT(L"hour", hours);
+        N_FORMAT(L"minute", minutes);
+#undef N_FORMAT
+        if (ages.Num() == 1)
+            return ages.Last();
+
+        return ages[0] << L" and " << ages[1];
+    }
+
     void StringEscapeJson(String &str)
     {
         str.FindReplace(L"\\", L"\\\\");
@@ -193,10 +246,17 @@ namespace
 
 bool UploadLogGitHub(String filename, String logData, LogUploadResult &result)
 {
+    String description = FormattedString(OBS_VERSION_STRING L" log file uploaded at %s (local time).", CurrentDateTimeString().Array());
+    String age = LogFileAge(filename);
+    if (age.IsValid())
+        description << FormattedString(L" The log file was approximately %s old at the time it was uploaded.", age.Array());
+
+    StringEscapeJson(description);
     StringEscapeJson(filename);
     StringEscapeJson(logData);
-    String json = FormattedString(L"{ \"public\": false, \"description\": \"%s log file uploaded at %s (local time)\", \"files\": { \"%s\": { \"content\": \"%s\" } } }",
-        OBS_VERSION_STRING, CurrentDateTimeString().Array(), filename.Array(), logData.Array());
+
+    String json = FormattedString(L"{ \"public\": false, \"description\": \"%s\", \"files\": { \"%s\": { \"content\": \"%s\" } } }",
+        description.Array(), filename.Array(), logData.Array());
 
     int response = 0;
     List<BYTE> body;
@@ -292,5 +352,5 @@ bool UploadLog(String filename, LogUploadResult &result)
 
     AppendGameCaptureLog(data);
 
-    return UploadLogGitHub(GetPathFileName(filename.FindReplace(L"\\", L"/").Array(), true), data, result);
+    return UploadLogGitHub(filename.Array(), data, result);
 }
