@@ -37,21 +37,16 @@ namespace
 
     struct HTTPHandle : unique_ptr<void, HTTPHandleDeleter>
     {
-        explicit HTTPHandle(HINTERNET h) : unique_ptr(h) {}
+        explicit HTTPHandle(HINTERNET h=nullptr) : unique_ptr(h) {}
         operator HINTERNET() { return get(); }
         bool operator!() { return get() == nullptr; }
     };
 
-    bool HTTPPostData(String url, void *data, size_t length, int &response, List<BYTE> *resultBody, String const &headers=String())
+    bool HTTPProlog(String url, String &path, HTTPHandle &session, HTTPHandle &connect, bool &secure)
     {
         URL_COMPONENTS  urlComponents;
 
-        String hostName, path;
-
-        const TCHAR *acceptTypes[] = {
-            TEXT("*/*"),
-            NULL
-        };
+        String hostName;
 
         hostName.SetLength(256);
         path.SetLength(1024);
@@ -67,27 +62,20 @@ namespace
         urlComponents.dwUrlPathLength = path.Length();
 
         WinHttpCrackUrl(url, 0, 0, &urlComponents);
-
-        bool secure = false;
         if (urlComponents.nPort == INTERNET_DEFAULT_HTTPS_PORT)
             secure = true;
 
-        HTTPHandle session(WinHttpOpen(OBS_VERSION_STRING, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0));
+        session.reset(WinHttpOpen(OBS_VERSION_STRING, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0));
         if (!session)
             return false;
 
-        HTTPHandle connect(WinHttpConnect(session, hostName, secure ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT, 0));
-        if (!connect)
-            return false;
+        connect.reset(WinHttpConnect(session, hostName, secure ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT, 0));
 
-        HTTPHandle request(WinHttpOpenRequest(connect, L"POST", path, NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, secure ? WINHTTP_FLAG_SECURE : 0));
-        if (!request)
-            return false;
+        return !!connect;
+    }
 
-        // End the request.
-        if (!WinHttpSendRequest(request, headers.Array(), headers.IsEmpty() ? 0 : -1, data, (DWORD)length, (DWORD)length, 0))
-            return false;
-
+    bool HTTPReceiveStatus(HTTPHandle &request, int &status)
+    {
         if (!WinHttpReceiveResponse(request, NULL))
             return false;
 
@@ -98,7 +86,29 @@ namespace
         if (!WinHttpQueryHeaders(request, WINHTTP_QUERY_STATUS_CODE, WINHTTP_HEADER_NAME_BY_INDEX, &statusCode, &statusCodeLen, WINHTTP_NO_HEADER_INDEX))
             return false;
 
-        response = wcstoul(statusCode, NULL, 10);
+        status = wcstoul(statusCode, NULL, 10);
+        return true;
+    }
+
+    bool HTTPPostData(String url, void *data, size_t length, int &response, List<BYTE> *resultBody, String const &headers=String())
+    {
+        HTTPHandle session, connect;
+        bool secure;
+        String path;
+
+        if (!HTTPProlog(url, path, session, connect, secure))
+            return false;
+
+        HTTPHandle request(WinHttpOpenRequest(connect, L"POST", path, NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, secure ? WINHTTP_FLAG_SECURE : 0));
+        if (!request)
+            return false;
+
+        // End the request.
+        if (!WinHttpSendRequest(request, headers.Array(), headers.IsEmpty() ? 0 : -1, data, (DWORD)length, (DWORD)length, 0))
+            return false;
+
+        if (!HTTPReceiveStatus(request, response))
+            return false;
 
         if (!resultBody)
             return true;
