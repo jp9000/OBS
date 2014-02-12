@@ -237,7 +237,11 @@ bool UploadLogGitHub(String filename, String logData, LogUploadResult &result)
     if ((end - pos) < 4)
         return invalid_response();
 
-    result.url = result.analyzerURL = bodyStr.Mid((UINT)(pos - bodyStr.Array()), (UINT)(end - bodyStr.Array()));
+    result.url = bodyStr.Mid((UINT)(pos - bodyStr.Array()), (UINT)(end - bodyStr.Array()));
+
+    if (!HTTPFindRedirect(result.url, result.analyzerURL)) //the basic url doesn't work with the analyzer, so query the fully redirected url
+        result.analyzerURL = result.url;
+
     return true;
 }
 
