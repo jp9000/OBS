@@ -385,6 +385,7 @@ LogUpload.ServiceExpectedResponse="The expected response was %u."
 LogUpload.ServiceReturnedInvalidResponse="The server returned an invalid response.\r\nPlease try again later."
 LogUpload.EmptyLog="Couldn't upload the log because it is empty."
 LogUpload.CannotOpenFile="Reading the Log File '%s' failed. Make sure no other programs are using the Log File and try again."
+LogUpload.Analyze="Analyze"
 LogUpload.Upload="Upload"
 LogUpload.View="View"
 

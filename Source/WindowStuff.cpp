@@ -2365,6 +2365,7 @@ void OBS::ResetLogUploadMenu()
     for (unsigned i = 0; i < App->logFiles.Num(); i++)
     {
         HMENU items = CreateMenu();
+        AppendMenu(items, MF_STRING, ID_UPLOAD_ANALYZE_LOG + i, Str("LogUpload.Analyze"));
         AppendMenu(items, MF_STRING, ID_UPLOAD_LOG + i, Str("LogUpload.Upload"));
         AppendMenu(items, MF_STRING, ID_VIEW_LOG + i, Str("LogUpload.View"));
 
@@ -2491,6 +2492,10 @@ INT_PTR CALLBACK LogUploadResultProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 AddClipboardFormatListener(hwnd);
                 
                 SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
+
+                if (result.openAnalyzerOnSuccess)
+                    PostMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_ANALYZE, 0), 0);
+
                 return TRUE;
             }
 
@@ -2529,6 +2534,19 @@ INT_PTR CALLBACK LogUploadResultProc(HWND hwnd, UINT message, WPARAM wParam, LPA
             case IDOK:
                 SendMessage(hwnd, WM_CLOSE, 0, 0);
                 break;
+            case IDC_ANALYZE:
+                {
+                    LONG_PTR ptr = GetWindowLongPtr(hwnd, DWLP_USER);
+                    if (!ptr) break;
+
+                    String url = CreateHTTPURL(L"obsproject.com", L"/analyzer", FormattedString(L"?url=%s", ((LogUploadResult*)ptr)->analyzerURL.Array()));
+                    if (url.IsEmpty())
+                        break;
+
+                    if (!ShellExecute(nullptr, nullptr, url.Array(), nullptr, nullptr, SW_SHOWDEFAULT))
+                        MessageBox(hwnd, Str("LogUploader.FailedToAnalyze"), nullptr, MB_ICONERROR);
+                    break;
+                }
             }
             break;
 
@@ -2909,6 +2927,13 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                         {
                             String log = GetLogUploadMenuItem(id - ID_UPLOAD_LOG);
                             LogUploadResult result;
+                            ShowLogUploadResult(result, UploadLog(log, result));
+                        }
+                        else if (id >= ID_UPLOAD_ANALYZE_LOG && id <= ID_UPLOAD_ANALYZE_LOG_END)
+                        {
+                            String log = GetLogUploadMenuItem(id - ID_UPLOAD_ANALYZE_LOG);
+                            LogUploadResult result;
+                            result.openAnalyzerOnSuccess = true;
                             ShowLogUploadResult(result, UploadLog(log, result));
                         }
                         else if (id >= ID_VIEW_LOG && id <= ID_VIEW_LOG_END)

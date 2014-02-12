@@ -187,7 +187,7 @@ bool UploadLogGitHub(String filename, String logData, LogUploadResult &result)
     if ((end - pos) < 4)
         return invalid_response();
 
-    result.url = bodyStr.Mid((UINT)(pos - bodyStr.Array()), (UINT)(end - bodyStr.Array()));
+    result.url = result.analyzerURL = bodyStr.Mid((UINT)(pos - bodyStr.Array()), (UINT)(end - bodyStr.Array()));
     return true;
 }
 
