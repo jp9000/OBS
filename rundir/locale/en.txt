@@ -171,7 +171,7 @@ Settings.Advanced.Priority.High="High"
 
 Settings.Audio.DesktopBoost="Desktop Boost (multiple):"
 Settings.Audio.Device="Microphone/Auxiliary Audio Device:"
-Settings.Audio.ForceMicMono="Force Microphone/Auxiliary to Mono:"
+Settings.Audio.ForceMicMono="Force Microphone/Auxiliary to Mono"
 Settings.Audio.MicBoost="Mic/Aux Boost (multiple):"
 Settings.Audio.MicTimeOffset="Mic Time Offset (milliseconds):"
 Settings.Audio.MicSyncFix="Mic Sync Fix Hack"
