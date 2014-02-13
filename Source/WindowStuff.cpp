@@ -2594,6 +2594,34 @@ void ShowLogUploadResult(LogUploadResult &result, bool success)
 
 //----------------------------
 
+static void OBSUpdateLog()
+{
+    static unsigned position = 0;
+
+    String content;
+    ReadLogPartial(content, position);
+
+    if (content.IsEmpty()) return;
+
+    int start, end;
+    SendMessage(hwndLog, EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
+
+    SendMessage(hwndLog, EM_SETSEL, INT_MAX, INT_MAX);
+
+    SendMessage(hwndLog, EM_REPLACESEL, 0, (LPARAM)content.Array());
+
+    SendMessage(hwndLog, EM_SETSEL, start, end);
+}
+
+//----------------------------
+
+void OBS::UpdateLog()
+{
+    PostMessage(hwndLogWindow, WM_COMMAND, MAKEWPARAM(ID_LOG_WINDOW, 0), 0);
+}
+
+//----------------------------
+
 String OBS::GetApplicationName()
 {
     String name;
@@ -2654,6 +2682,11 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
                 case ID_FULLSCREENMODE:
                     App->SetFullscreenMode(!App->bFullscreenMode);
+                    break;
+
+                case ID_SHOWLOG:
+                    ShowWindow(hwndLogWindow, SW_SHOW);
+                    SetForegroundWindow(hwndLogWindow);
                     break;
 
                 case ID_HELP_VISITWEBSITE:
@@ -4493,6 +4526,34 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
         return 0;
     }
             
+
+    return DefWindowProc(hwnd, message, wParam, lParam);
+}
+
+LRESULT CALLBACK OBS::LogWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message)
+    {
+    case WM_SIZE:
+        RECT client;
+        GetClientRect(hwnd, &client);
+
+        MoveWindow(hwndLog, client.left, client.top, client.right, client.bottom, true);
+        return TRUE;
+
+    case WM_COMMAND:
+        switch (LOWORD(wParam))
+        {
+        case ID_LOG_WINDOW:
+            OBSUpdateLog();
+            break;
+        }
+        break;
+
+    case WM_CLOSE:
+        ShowWindow(hwnd, SW_HIDE);
+        return 0;
+    }
 
     return DefWindowProc(hwnd, message, wParam, lParam);
 }

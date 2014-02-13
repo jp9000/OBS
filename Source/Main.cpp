@@ -33,6 +33,8 @@
 
 HWND        hwndMain        = NULL;
 HWND        hwndRenderFrame = NULL;
+HWND        hwndLogWindow   = NULL;
+HWND        hwndLog         = NULL;
 HINSTANCE   hinstMain       = NULL;
 ConfigFile  *GlobalConfig   = NULL;
 ConfigFile  *AppConfig      = NULL;

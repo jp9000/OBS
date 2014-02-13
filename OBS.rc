@@ -936,6 +936,8 @@ BEGIN
         MENUITEM "MainMenu.Settings.AlwaysOnTop", ID_ALWAYSONTOP
         MENUITEM "MainMenu.Settings.FullscreenMode", ID_FULLSCREENMODE
         MENUITEM SEPARATOR
+        MENUITEM "MainMenu.Settings.ShowLogWindow", ID_SHOWLOG
+        MENUITEM SEPARATOR
         MENUITEM "MainMenu.Settings.OpenConfigFolder", ID_SETTINGS_OPENCONFIGFOLDER
     END
     POPUP "MainMenu.Profiles"
