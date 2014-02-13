@@ -33,7 +33,7 @@
 
 HWND        hwndMain        = NULL;
 HWND        hwndRenderFrame = NULL;
-HWND        hwndLogDialog   = NULL;
+HWND        hwndLogWindow   = NULL;
 HWND        hwndLog         = NULL;
 HINSTANCE   hinstMain       = NULL;
 ConfigFile  *GlobalConfig   = NULL;
@@ -620,8 +620,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         MSG msg;
         while(GetMessage(&msg, NULL, 0, 0))
         {
-            if ((!IsWindow(hwndLogDialog) || (!TranslateAccelerator(hwndLogDialog, hAccel, &msg) && !IsDialogMessage(hwndLogDialog, &msg))) ||
-                (!TranslateAccelerator(hwndMain, hAccel, &msg) && !IsDialogMessage(hwndMain, &msg)))
+            if(!TranslateAccelerator(hwndMain, hAccel, &msg) && !IsDialogMessage(hwndMain, &msg))
             {
                 TranslateMessage(&msg);
                 DispatchMessage(&msg);

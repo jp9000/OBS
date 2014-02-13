@@ -65,7 +65,7 @@ class OBS;
 
 extern HWND         hwndMain;
 extern HWND         hwndRenderFrame;
-extern HWND         hwndLogDialog;
+extern HWND         hwndLogWindow;
 extern HWND         hwndLog;
 extern HINSTANCE    hinstMain;
 extern ConfigFile   *GlobalConfig;
@@ -103,6 +103,7 @@ extern TCHAR        lpAppDataPath[MAX_PATH];
 #endif
 
 #define OBS_WINDOW_CLASS         TEXT("OBSWindowClass")
+#define OBS_LOGWINDOW_CLASS      TEXT("OBSLogWindowClass")
 #define OBS_RENDERFRAME_CLASS    TEXT("OBSRenderFrame")
 #define OBS_PROJECTORFRAME_CLASS TEXT("OBSProjectorFrame")
 

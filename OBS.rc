@@ -996,13 +996,6 @@ BEGIN
     LTEXT           "LogUpload.SuccessDialog.CopySuccess",IDC_COPIED,7,43,176,8,NOT WS_VISIBLE
 END
 
-IDD_LOG_DIALOG DIALOGEX 0, 0, 457, 365
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
-CAPTION "LogWindow.Title"
-FONT 8, "MS Shell Dlg", 400, 0, 0x1
-BEGIN
-END
-
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -1017,14 +1010,6 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 302
         TOPMARGIN, 7
-    END
-
-    IDD_LOG_DIALOG, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 450
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 358
     END
 END
 #endif    // APSTUDIO_INVOKED

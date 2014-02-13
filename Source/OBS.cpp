@@ -198,6 +198,16 @@ OBS::OBS()
 
     if(!RegisterClass(&wc))
         CrashError(TEXT("Could not register projector frame class"));
+    
+    //-----------------------------------------------------
+    // log window class
+    wc.lpszClassName = OBS_LOGWINDOW_CLASS;
+    wc.lpfnWndProc = (WNDPROC)OBS::LogWindowProc;
+    wc.hIcon = LoadIcon(hinstMain, MAKEINTRESOURCE(IDI_ICON1));
+    wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
+
+    if(!RegisterClass(&wc))
+        CrashError(TEXT("Could not register main window class"));
 
     //-----------------------------------------------------
     // main window class
@@ -302,7 +312,49 @@ OBS::OBS()
     //-----------------------------------------------------
     // log window
 
-    hwndLogDialog = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_LOG_DIALOG), hwndMain, OBS::LogDialogProc);
+    x = (fullscreenX/2)-(600/2);
+    y = (fullscreenY/2)-(500/2);
+
+    int logPosX  = GlobalConfig->GetInt(TEXT("General"), TEXT("LogPosX"), -9999);
+    int logPosY  = GlobalConfig->GetInt(TEXT("General"), TEXT("LogPosY"), -9999);
+    int logSizeX = GlobalConfig->GetInt(TEXT("General"), TEXT("LogSizeX"), 600);
+    int logSizeY = GlobalConfig->GetInt(TEXT("General"), TEXT("LogSizeY"), 500);
+
+    bInsideMonitors = false;
+    for(UINT i=0; i<monitors.Num(); i++)
+    {
+        if( logPosX >= monitors[i].rect.left && logPosX < monitors[i].rect.right  &&
+            logPosY >= monitors[i].rect.top  && logPosY < monitors[i].rect.bottom )
+        {
+            bInsideMonitors = true;
+            break;
+        }
+    }
+
+    if(bInsideMonitors)
+    {
+        x = logPosX;
+        y = logPosY;
+    }
+    else
+    {
+        logSizeX = 600;
+        logSizeY = 500;
+    }
+
+    hwndLogWindow = CreateWindow(OBS_LOGWINDOW_CLASS, L"Log Window", WS_OVERLAPPEDWINDOW, x, y, logSizeX, logSizeY, NULL, NULL, hinstMain, NULL);
+    RECT client;
+    GetClientRect(hwndLogWindow, &client);
+
+    hwndLog = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"",
+        ES_MULTILINE | WS_VISIBLE | WS_CHILD | /*WS_BORDER |*/ WS_TABSTOP | WS_VSCROLL | WS_HSCROLL |/* WS_CLIPSIBLINGS |*/ ES_AUTOHSCROLL | ES_READONLY,
+        client.left, client.top, client.right, client.bottom, hwndLogWindow, (HMENU)ID_LOG_WINDOW, 0, 0);
+    SendMessage(hwndLog, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
+    ShowWindow(hwndLog, SW_SHOW);
+
+    
+
+    ResetLogUpdateCallback(UpdateLog);
 
     //-----------------------------------------------------
     // render frame text
@@ -750,6 +802,12 @@ OBS::~OBS()
             placement.rcNormalPosition.bottom - placement.rcNormalPosition.top -
             GetSystemMetrics(SM_CYSIZEFRAME) * 2 - GetSystemMetrics(SM_CYCAPTION) - GetSystemMetrics(SM_CYMENU));
     GlobalConfig->SetInt(TEXT("General"), TEXT("Maximized"), placement.showCmd == SW_SHOWMAXIMIZED ? 1 : 0);
+
+    GetWindowPlacement(hwndLogWindow, &placement);
+    GlobalConfig->SetInt(TEXT("General"), TEXT("LogPosX"), placement.rcNormalPosition.left);
+    GlobalConfig->SetInt(TEXT("General"), TEXT("LogPosY"), placement.rcNormalPosition.top);
+    GlobalConfig->SetInt(TEXT("General"), TEXT("LogSizeX"), placement.rcNormalPosition.right - placement.rcNormalPosition.left);
+    GlobalConfig->SetInt(TEXT("General"), TEXT("LogSizeY"), placement.rcNormalPosition.bottom - placement.rcNormalPosition.top);
     
     // Save control panel visibility
     GlobalConfig->SetInt(TEXT("General"), TEXT("PanelVisibleWindowed"), bPanelVisibleWindowed ? 1 : 0);

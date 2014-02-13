@@ -2632,7 +2632,7 @@ static void OBSUpdateLog()
 
 void OBS::UpdateLog()
 {
-    PostMessage(hwndLogDialog, WM_COMMAND, MAKEWPARAM(ID_LOG_WINDOW, 0), 0);
+    PostMessage(hwndLogWindow, WM_COMMAND, MAKEWPARAM(ID_LOG_WINDOW, 0), 0);
 }
 
 //----------------------------
@@ -2700,7 +2700,8 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     break;
 
                 case ID_SHOWLOG:
-                    ShowWindow(hwndLogDialog, SW_SHOW);
+                    ShowWindow(hwndLogWindow, SW_SHOW);
+                    SetForegroundWindow(hwndLogWindow);
                     break;
 
                 case ID_HELP_VISITWEBSITE:
@@ -4544,36 +4545,16 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
     return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
-LRESULT CALLBACK OBS::LogDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK OBS::LogWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
-    case WM_INITDIALOG:
-    {
-        RECT client;
-        GetClientRect(hwnd, &client);
-
-        hwndLog = CreateWindowEx(WS_EX_CLIENTEDGE, MSFTEDIT_CLASS, L"",
-            ES_MULTILINE | WS_VISIBLE | WS_CHILD | /*WS_BORDER |*/ WS_TABSTOP | WS_VSCROLL | WS_HSCROLL |/* WS_CLIPSIBLINGS |*/ ES_AUTOHSCROLL | ES_READONLY,
-            client.left, client.top, client.right, client.bottom, hwnd, (HMENU)ID_LOG_WINDOW, 0, 0);
-        SendMessage(hwndLog, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
-        ShowWindow(hwndLog, SW_SHOW);
-
-        ResetLogUpdateCallback(UpdateLog);
-        return TRUE;
-    }
-
-    case WM_ENTERSIZEMOVE:
-    case WM_EXITSIZEMOVE:
-        return 1;
-    case WM_SIZING:
-        return 0;
     case WM_SIZE:
         RECT client;
         GetClientRect(hwnd, &client);
 
         MoveWindow(hwndLog, client.left, client.top, client.right, client.bottom, true);
-        return 0;
+        return TRUE;
 
     case WM_COMMAND:
         switch (LOWORD(wParam))
@@ -4586,13 +4567,10 @@ LRESULT CALLBACK OBS::LogDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPAR
 
     case WM_CLOSE:
         ShowWindow(hwnd, SW_HIDE);
-        return true;
-
-    default:;
-        //return DefWindowProc(hwnd, message, wParam, lParam);
+        return 0;
     }
 
-    return false;
+    return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
 typedef CTSTR (*GETPLUGINNAMEPROC)();

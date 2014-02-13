@@ -38,7 +38,6 @@
 #define IDD_CONFIGUREMONITORCAPTURE     144
 #define IDD_STATS                       145
 #define IDD_LOGUPLOADED                 147
-#define IDD_LOG_DIALOG                  148
 #define IDC_SETTINGSLIST                1006
 #define IDC_SUBDIALOG                   1007
 #define IDC_MODE                        1008
