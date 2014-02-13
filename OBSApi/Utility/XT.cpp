@@ -19,9 +19,48 @@
 
 #include "XT.h"
 
+#include <memory>
 
+namespace
+{
+    struct MutexCloser
+    {
+        void operator()(HANDLE h) { if (!h) return; OSLeaveMutex(h); OSCloseMutex(h); }
+    };
 
+    struct MutexLock
+    {
+        bool locked, unlock;
+        HANDLE h;
+        MutexLock(std::unique_ptr<void, MutexCloser> const &mutex, bool tryLock = false, bool autounlock=true) : locked(false), unlock(autounlock), h(mutex.get())
+        {
+            if (!h) return;
+            if (tryLock && !OSTryEnterMutex(h)) return;
+            if (!tryLock) OSEnterMutex(h);
+            locked = true;
+        }
+        ~MutexLock() { if (locked && unlock) OSLeaveMutex(h); }
+    };
 
+    struct XStringLog
+    {
+        XStringLog() : stopped(false) { Reset(); }
+
+        void Append(String const &string, bool linefeed=true);
+        void Append(CTSTR str, UINT len, bool linefeed=true);
+        void Read(String &str);
+        void Stop();
+        void Clear();
+        void Reset();
+    private:
+        void Process();
+
+        String log;
+        StringList unprocessed, processing;
+        std::unique_ptr<void, MutexCloser> append_mutex, process_mutex, read_mutex;
+        bool stopped;
+    };
+}
 
 ////////////////
 //globals (oh deary me.  if there were a convention convention, I most certainly wouldn't be invited.)
@@ -32,7 +71,9 @@ BOOL                    bBaseLoaded     = FALSE;
 BOOL                    bDebugBreak     = TRUE;
 TCHAR                   lpLogFileName[260] = TEXT("XT.log");
 XFile                   LogFile;
+XStringLog              StringLog;
 StringList              TraceFuncList;
+
 
 BOOL bLogStarted = FALSE;
 
@@ -68,6 +109,9 @@ void STDCALL InitXTLog(CTSTR logFile)
 
 void STDCALL ResetXTAllocator(CTSTR lpAllocator)
 {
+    StringLog.Stop();
+    StringLog.Clear();
+
     delete locale;
     delete MainAllocator;
 
@@ -81,16 +125,22 @@ void STDCALL ResetXTAllocator(CTSTR lpAllocator)
         MainAllocator = new FastAlloc;
 
     locale = new LocaleStringLookup;
+
+    StringLog.Reset();
 }
 
 void STDCALL TerminateXT()
 {
     if(bBaseLoaded)
     {
+        StringLog.Stop();
+
         FreeProfileData();
 
         delete locale;
         locale = NULL;
+
+        StringLog.Clear();
 
         if(MainAllocator)
         {
@@ -199,6 +249,8 @@ void __cdecl LogRaw(const TCHAR *text, UINT len)
     LogFile.WriteAsUTF8(text, len);
     LogFile.WriteAsUTF8(TEXT("\r\n"));
     CloseLogFile();
+
+    StringLog.Append(text, len);
 }
 
 void __cdecl Logva(const TCHAR *format, va_list argptr)
@@ -216,6 +268,8 @@ void __cdecl Logva(const TCHAR *format, va_list argptr)
     LogFile.WriteAsUTF8(strOut, strOut.Length());
     LogFile.WriteAsUTF8(TEXT("\r\n"));
     CloseLogFile();
+
+    StringLog.Append(strOut);
 }
 
 void __cdecl Log(const TCHAR *format, ...)
@@ -238,12 +292,12 @@ void __cdecl AppWarning(const TCHAR *format, ...)
 
     va_start(arglist, format);
 
+    String strOut(L"Warning -- ");
+    strOut << FormattedStringva(format, arglist);
+
     if(bLogStarted)
     {
         OpenLogFile();
-        LogFile.WriteStr(TEXT("Warning -- "));
-
-        String strOut = FormattedStringva(format, arglist);
         LogFile.WriteAsUTF8(strOut, strOut.Length());
         LogFile.WriteAsUTF8(TEXT("\r\n"));
         CloseLogFile();
@@ -266,6 +320,8 @@ void __cdecl AppWarning(const TCHAR *format, ...)
         ProgramBreak();
     }
 #endif
+
+    StringLog.Append(strOut);
 }
 
 
@@ -278,10 +334,10 @@ void __cdecl CrashError(const TCHAR *format, ...)
 
     va_start(arglist, format);
 
-    String strOut = FormattedStringva(format, arglist);
+    String strOut(L"\r\nError: ");
+    strOut << FormattedStringva(format, arglist);
 
     OpenLogFile();
-    LogFile.WriteStr(TEXT("\r\nError: "));
     LogFile.WriteAsUTF8(strOut);
     LogFile.WriteStr(TEXT("\r\n"));
     CloseLogFile();
@@ -323,10 +379,83 @@ String CurrentLogFilename()
 
 void ReadLog(String &data)
 {
-    if (!LogFile.IsOpen())
-        return;
+    StringLog.Read(data);
+}
 
-    QWORD pos = LogFile.GetPos();
-    LogFile.ReadFileToString(data);
-    LogFile.SetPos(pos, XFILE_BEGIN);
+
+void XStringLog::Append(String const &string, bool linefeed)
+{
+    MutexLock a(append_mutex);
+    if (stopped) return;
+
+    unprocessed << string;
+    if (linefeed) unprocessed << L"\r\n";
+}
+
+void XStringLog::Append(CTSTR tstr, UINT len, bool linefeed)
+{
+    if (stopped) return;
+
+    String str;
+    str.AppendString(tstr, len);
+    Append(str, linefeed);
+}
+
+void XStringLog::Read(String &str)
+{
+    Process();
+
+    MutexLock r(read_mutex);
+    str = log;
+}
+
+void XStringLog::Process()
+{
+    MutexLock p(process_mutex, true);
+    if (!p.locked) return;
+    if (stopped) return;
+
+    {
+        MutexLock a(append_mutex);
+
+        processing.TransferFrom(unprocessed);
+    }
+
+    String str;
+    for (unsigned int i = 0; i < processing.Num(); i++)
+        str << processing[i];
+
+    {
+        MutexLock r(read_mutex);
+        log << str;
+    }
+
+    processing.Clear();
+}
+
+void XStringLog::Stop()
+{
+    MutexLock p(process_mutex, false, false); //stop processing
+    MutexLock a(append_mutex);
+
+    stopped = true;
+}
+
+void XStringLog::Clear()
+{
+    unprocessed.Clear();
+    processing.Clear();
+    log.Clear();
+    append_mutex.reset();
+    process_mutex.reset();
+    read_mutex.reset();
+}
+
+void XStringLog::Reset()
+{
+    Clear();
+    stopped = false;
+    append_mutex.reset(OSCreateMutex());
+    process_mutex.reset(OSCreateMutex());
+    read_mutex.reset(OSCreateMutex());
 }
