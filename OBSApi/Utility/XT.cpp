@@ -75,6 +75,7 @@ BOOL                    bDebugBreak     = TRUE;
 TCHAR                   lpLogFileName[260] = TEXT("XT.log");
 XFile                   LogFile;
 XStringLog              StringLog;
+LogUpdateCallback       LogUpdateProc;
 StringList              TraceFuncList;
 
 
@@ -390,6 +391,11 @@ void ReadLogPartial(String &data, unsigned &start, unsigned maxLength)
     StringLog.Read(data, start, maxLength);
 }
 
+void ResetLogUpdateCallback(LogUpdateCallback proc)
+{
+    LogUpdateProc = proc;
+}
+
 void XStringLog::Append(String const &string, bool linefeed)
 {
     MutexLock a(append_mutex);
@@ -397,6 +403,8 @@ void XStringLog::Append(String const &string, bool linefeed)
 
     unprocessed << string;
     if (linefeed) unprocessed << L"\r\n";
+
+    if (LogUpdateProc) LogUpdateProc();
 }
 
 void XStringLog::Append(CTSTR tstr, UINT len, bool linefeed)
