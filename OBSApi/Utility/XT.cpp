@@ -48,7 +48,10 @@ namespace
 
         void Append(String const &string, bool linefeed=true);
         void Append(CTSTR str, UINT len, bool linefeed=true);
+
         void Read(String &str);
+        void Read(String &str, unsigned &start, unsigned length);
+
         void Stop();
         void Clear();
         void Reset();
@@ -382,6 +385,10 @@ void ReadLog(String &data)
     StringLog.Read(data);
 }
 
+void ReadLogPartial(String &data, unsigned &start, unsigned maxLength)
+{
+    StringLog.Read(data, start, maxLength);
+}
 
 void XStringLog::Append(String const &string, bool linefeed)
 {
@@ -407,6 +414,20 @@ void XStringLog::Read(String &str)
 
     MutexLock r(read_mutex);
     str = log;
+}
+
+void XStringLog::Read(String &str, unsigned &start, unsigned length)
+{
+    Process();
+
+    MutexLock r(read_mutex);
+
+    if (log.Length() == 0 && start) start = 0;
+    if (start >= log.Length()) return;
+
+    if ((UINT_MAX - start) < length) length = UINT_MAX - start;
+    str = log.Mid(start, ((start+length) > log.Length()) ? log.Length() : (start+length));
+    start += str.Length();
 }
 
 void XStringLog::Process()

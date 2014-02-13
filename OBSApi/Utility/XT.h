@@ -193,6 +193,7 @@ BASE_EXPORT String CurrentDateTimeString();
 
 BASE_EXPORT String CurrentLogFilename();
 BASE_EXPORT void ReadLog(String &data); // do not call this while other threads use any logging functions
+BASE_EXPORT void ReadLogPartial(String &data, unsigned &start, unsigned maxLength=UINT_MAX);
 
 //-----------------------------------------
 //Base functions
