@@ -991,7 +991,7 @@ BEGIN
     PUSHBUTTON      "LogUpload.Analyze",IDC_ANALYZE,196,39,50,14
     PUSHBUTTON      "OK",IDOK,252,39,50,14
     CTEXT           "LogUpload.SuccessDialog.Text",IDC_STATIC,7,7,295,8
-    LTEXT           "LogUpload.SuccessDialog.CopySuccess",IDC_COPIED,7,43,40,8,NOT WS_VISIBLE
+    LTEXT           "LogUpload.SuccessDialog.CopySuccess",IDC_COPIED,7,43,176,8,NOT WS_VISIBLE
 END
 
 
