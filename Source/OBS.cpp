@@ -347,12 +347,10 @@ OBS::OBS()
     GetClientRect(hwndLogWindow, &client);
 
     hwndLog = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"",
-        ES_MULTILINE | WS_VISIBLE | WS_CHILD | /*WS_BORDER |*/ WS_TABSTOP | WS_VSCROLL | WS_HSCROLL |/* WS_CLIPSIBLINGS |*/ ES_AUTOHSCROLL | ES_READONLY,
+        ES_MULTILINE | WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_VSCROLL | WS_HSCROLL | ES_READONLY | ES_NOHIDESEL,
         client.left, client.top, client.right, client.bottom, hwndLogWindow, (HMENU)ID_LOG_WINDOW, 0, 0);
     SendMessage(hwndLog, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
     ShowWindow(hwndLog, SW_SHOW);
-
-    
 
     ResetLogUpdateCallback(UpdateLog);
 

@@ -2598,34 +2598,20 @@ void ShowLogUploadResult(LogUploadResult &result, bool success)
 static void OBSUpdateLog()
 {
     static unsigned position = 0;
-    static int prevLines = 0;
 
     String content;
     ReadLogPartial(content, position);
 
     if (content.IsEmpty()) return;
 
-    int lines = prevLines;
-    TSTR str = content.Array();
-    for (; str && *str && str[1]; lines++)
-        str = schr(str + 1, '\n');
+    int start, end;
+    SendMessage(hwndLog, EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
 
-    CHARRANGE pr = { 0 };
-    SendMessage(hwndLog, EM_EXGETSEL, 0, (LPARAM)&pr);
-
-    CHARRANGE cr = { -1, -1 };
-    SendMessage(hwndLog, EM_EXSETSEL, 0, (LPARAM)&cr);
+    SendMessage(hwndLog, EM_SETSEL, INT_MAX, INT_MAX);
 
     SendMessage(hwndLog, EM_REPLACESEL, 0, (LPARAM)content.Array());
-        
-    SendMessage(hwndLog, EM_EXSETSEL, 0, (LPARAM)&pr);
 
-    if (prevLines > 40) //TODO: compute lines displayed
-        SendMessage(hwndLog, EM_LINESCROLL, 0, (LPARAM)-prevLines);
-    if (lines > 40)
-        SendMessage(hwndLog, EM_LINESCROLL, 0, (LPARAM)(lines - 40));
-
-    prevLines = lines;
+    SendMessage(hwndLog, EM_SETSEL, start, end);
 }
 
 //----------------------------
