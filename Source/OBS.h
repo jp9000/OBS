@@ -384,6 +384,7 @@ enum
     ID_REFRESH_LOGS,
     ID_UPLOAD_ANALYZE_LOG,
     ID_UPLOAD_ANALYZE_LOG_END = ID_UPLOAD_ANALYZE_LOG+1000,
+    ID_LOG_WINDOW,
 };
 
 enum
@@ -955,6 +956,7 @@ private:
     static LRESULT CALLBACK ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static LRESULT CALLBACK RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static LRESULT CALLBACK ProjectorFrameProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK LogDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     static LRESULT CALLBACK OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
     static INT_PTR CALLBACK SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -988,6 +990,7 @@ private:
     static void ResetProfileMenu();
     static void ResetLogUploadMenu();
     static void DisableMenusWhileStreaming(bool disable);
+    static void UpdateLog();
 
     static String GetApplicationName();
     static void ResetApplicationName();

@@ -24,6 +24,7 @@
 #include <uxtheme.h>
 #include <vsstyle.h>
 #include <MMSystem.h>
+#include <Richedit.h>
 
 #include <memory>
 
@@ -2594,6 +2595,48 @@ void ShowLogUploadResult(LogUploadResult &result, bool success)
 
 //----------------------------
 
+static void OBSUpdateLog()
+{
+    static unsigned position = 0;
+    static int prevLines = 0;
+
+    String content;
+    ReadLogPartial(content, position);
+
+    if (content.IsEmpty()) return;
+
+    int lines = prevLines;
+    TSTR str = content.Array();
+    for (; str && *str && str[1]; lines++)
+        str = schr(str + 1, '\n');
+
+    CHARRANGE pr = { 0 };
+    SendMessage(hwndLog, EM_EXGETSEL, 0, (LPARAM)&pr);
+
+    CHARRANGE cr = { -1, -1 };
+    SendMessage(hwndLog, EM_EXSETSEL, 0, (LPARAM)&cr);
+
+    SendMessage(hwndLog, EM_REPLACESEL, 0, (LPARAM)content.Array());
+        
+    SendMessage(hwndLog, EM_EXSETSEL, 0, (LPARAM)&pr);
+
+    if (prevLines > 40) //TODO: compute lines displayed
+        SendMessage(hwndLog, EM_LINESCROLL, 0, (LPARAM)-prevLines);
+    if (lines > 40)
+        SendMessage(hwndLog, EM_LINESCROLL, 0, (LPARAM)(lines - 40));
+
+    prevLines = lines;
+}
+
+//----------------------------
+
+void OBS::UpdateLog()
+{
+    PostMessage(hwndLogDialog, WM_COMMAND, MAKEWPARAM(ID_LOG_WINDOW, 0), 0);
+}
+
+//----------------------------
+
 String OBS::GetApplicationName()
 {
     String name;
@@ -2654,6 +2697,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
                 case ID_FULLSCREENMODE:
                     App->SetFullscreenMode(!App->bFullscreenMode);
+                    break;
+
+                case ID_SHOWLOG:
+                    ShowWindow(hwndLogDialog, SW_SHOW);
                     break;
 
                 case ID_HELP_VISITWEBSITE:
@@ -4495,6 +4542,57 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
             
 
     return DefWindowProc(hwnd, message, wParam, lParam);
+}
+
+LRESULT CALLBACK OBS::LogDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message)
+    {
+    case WM_INITDIALOG:
+    {
+        RECT client;
+        GetClientRect(hwnd, &client);
+
+        hwndLog = CreateWindowEx(WS_EX_CLIENTEDGE, MSFTEDIT_CLASS, L"",
+            ES_MULTILINE | WS_VISIBLE | WS_CHILD | /*WS_BORDER |*/ WS_TABSTOP | WS_VSCROLL | WS_HSCROLL |/* WS_CLIPSIBLINGS |*/ ES_AUTOHSCROLL | ES_READONLY,
+            client.left, client.top, client.right, client.bottom, hwnd, (HMENU)ID_LOG_WINDOW, 0, 0);
+        SendMessage(hwndLog, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
+        ShowWindow(hwndLog, SW_SHOW);
+
+        ResetLogUpdateCallback(UpdateLog);
+        return TRUE;
+    }
+
+    case WM_ENTERSIZEMOVE:
+    case WM_EXITSIZEMOVE:
+        return 1;
+    case WM_SIZING:
+        return 0;
+    case WM_SIZE:
+        RECT client;
+        GetClientRect(hwnd, &client);
+
+        MoveWindow(hwndLog, client.left, client.top, client.right, client.bottom, true);
+        return 0;
+
+    case WM_COMMAND:
+        switch (LOWORD(wParam))
+        {
+        case ID_LOG_WINDOW:
+            OBSUpdateLog();
+            break;
+        }
+        break;
+
+    case WM_CLOSE:
+        ShowWindow(hwnd, SW_HIDE);
+        return true;
+
+    default:;
+        //return DefWindowProc(hwnd, message, wParam, lParam);
+    }
+
+    return false;
 }
 
 typedef CTSTR (*GETPLUGINNAMEPROC)();

@@ -300,6 +300,11 @@ OBS::OBS()
         NULL, NULL, hinstMain, NULL);
 
     //-----------------------------------------------------
+    // log window
+
+    hwndLogDialog = CreateDialog(hinstMain, MAKEINTRESOURCE(IDD_LOG_DIALOG), hwndMain, OBS::LogDialogProc);
+
+    //-----------------------------------------------------
     // render frame text
 
     hwndRenderMessage = CreateWindow(TEXT("STATIC"), Str("MainWindow.BeginMessage"),

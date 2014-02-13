@@ -85,6 +85,7 @@ MainMenu.Help.CheckForUpdates="Check for &updates"
 
 MainMenu.Settings.OpenConfigFolder="Open &Configuration Folder"
 MainMenu.Settings.OpenLogFolder="Open &Log Folder"
+MainMenu.Settings.ShowLogWindow="Show Log Window"
 
 MainWindow.BeginMessage="Not streaming\n\nClick \"Start Streaming\" or \"Preview Stream\" to begin"
 MainWindow.PreviewDisabled="Preview disabled"

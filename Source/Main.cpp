@@ -33,6 +33,8 @@
 
 HWND        hwndMain        = NULL;
 HWND        hwndRenderFrame = NULL;
+HWND        hwndLogDialog   = NULL;
+HWND        hwndLog         = NULL;
 HINSTANCE   hinstMain       = NULL;
 ConfigFile  *GlobalConfig   = NULL;
 ConfigFile  *AppConfig      = NULL;
@@ -606,7 +608,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         strCaptureHookLog << lpAppDataPath << L"\\pluginData\\captureHookLog.txt";
         
         OSFileChangeData *pGCHLogMF = NULL;
-        pGCHLogMF = OSMonitorFileStart (strCaptureHookLog, true);
+        pGCHLogMF = OSMonitorFileStart(strCaptureHookLog, true);
+
+        HMODULE richtext = LoadLibrary(L"Msftedit.dll");
+        InitCommonControls();
 
         App = new OBS;
 
@@ -615,7 +620,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         MSG msg;
         while(GetMessage(&msg, NULL, 0, 0))
         {
-            if(!TranslateAccelerator(hwndMain, hAccel, &msg) && !IsDialogMessage(hwndMain, &msg))
+            if ((!IsWindow(hwndLogDialog) || (!TranslateAccelerator(hwndLogDialog, hAccel, &msg) && !IsDialogMessage(hwndLogDialog, &msg))) ||
+                (!TranslateAccelerator(hwndMain, hAccel, &msg) && !IsDialogMessage(hwndMain, &msg)))
             {
                 TranslateMessage(&msg);
                 DispatchMessage(&msg);
@@ -623,6 +629,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
 
         delete App;
+
+        FreeLibrary(richtext);
 
         //--------------------------------------------
 

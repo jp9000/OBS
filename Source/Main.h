@@ -65,6 +65,8 @@ class OBS;
 
 extern HWND         hwndMain;
 extern HWND         hwndRenderFrame;
+extern HWND         hwndLogDialog;
+extern HWND         hwndLog;
 extern HINSTANCE    hinstMain;
 extern ConfigFile   *GlobalConfig;
 extern ConfigFile   *AppConfig;
