@@ -893,9 +893,9 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     case IDC_CLEARHOTKEY_STARTRECORDING:
                         if (HIWORD(wParam) == BN_CLICKED)
                         {
-                            if (SendMessage(GetDlgItem(hwnd, IDC_STOPRECORDINGHOTKEY), HKM_GETHOTKEY, 0, 0))
+                            if (SendMessage(GetDlgItem(hwnd, IDC_STARTRECORDINGHOTKEY), HKM_GETHOTKEY, 0, 0))
                             {
-                                SendMessage(GetDlgItem(hwnd, IDC_STOPRECORDINGHOTKEY), HKM_SETHOTKEY, 0, 0);
+                                SendMessage(GetDlgItem(hwnd, IDC_STARTRECORDINGHOTKEY), HKM_SETHOTKEY, 0, 0);
                                 SetChangedSettings(true);
                             }
                         }
