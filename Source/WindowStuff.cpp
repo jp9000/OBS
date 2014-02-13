@@ -2291,7 +2291,9 @@ void OBS::DisableMenusWhileStreaming(bool disable)
     HMENU hmenuHelp = GetSubMenu(hmenuMain, 3);
 
     EnableMenuItem(hmenuMain, 2, (!disable ? MF_ENABLED : MF_DISABLED) | MF_BYPOSITION);
+
     EnableMenuItem(GetSubMenu(hmenuHelp, 3), 0, (!disable ? MF_ENABLED : MF_DISABLED) | MF_BYPOSITION);
+    EnableMenuItem(GetSubMenu(hmenuHelp, 3), 1, (!disable ? MF_ENABLED : MF_DISABLED) | MF_BYPOSITION);
 
     DrawMenuBar(hwndMain);
 }
