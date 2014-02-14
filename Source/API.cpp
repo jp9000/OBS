@@ -607,6 +607,12 @@ public:
     virtual void RemoveSettingsPane(SettingsPane *pane) {App->RemoveSettingsPane(pane);}
 
     virtual UINT GetSampleRateHz() const {return App->GetSampleRateHz();}
+    
+    virtual UINT GetCaptureFPS() const        {return App->captureFPS;}
+    virtual UINT GetTotalFrames() const       {return App->network ? App->network->NumTotalVideoFrames() : 0;}
+    virtual UINT GetFramesDropped() const     {return App->curFramesDropped;}
+    virtual UINT GetTotalStreamTime() const   {return App->totalStreamTime;}
+    virtual UINT GetBytesPerSec() const       {return App->bytesPerSec;}
 };
 
 APIInterface* CreateOBSApiInterface()

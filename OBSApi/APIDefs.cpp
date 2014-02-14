@@ -86,6 +86,9 @@ void OBSGetRenderFrameControlSize(UINT &width, UINT &height)    {API->GetRenderF
 void OBSGetOutputSize(UINT &width, UINT &height)                {API->GetOutputSize(width, height);}
 UINT OBSGetMaxFPS()                                             {return API->GetMaxFPS();}
 bool OBSGetRenderFrameIn1To1Mode()                              {return API->GetRenderFrameIn1To1Mode();}
+UINT OBSGetCaptureFPS()                                         {return API->GetCaptureFPS();}
+UINT OBSGetTotalFrames()                                        {return API->GetTotalFrames();}
+UINT OBSGetFramesDropped()                                      {return API->GetFramesDropped();}
 
 CTSTR OBSGetLanguage()          {return API->GetLanguage();}
 
@@ -98,6 +101,9 @@ UINT OBSAddStreamInfo(CTSTR lpInfo, StreamInfoPriority priority)            {ret
 void OBSSetStreamInfo(UINT infoID, CTSTR lpInfo)                            {API->SetStreamInfo(infoID, lpInfo);}
 void OBSSetStreamInfoPriority(UINT infoID, StreamInfoPriority priority)     {API->SetStreamInfoPriority(infoID, priority);}
 void OBSRemoveStreamInfo(UINT infoID)                                       {API->RemoveStreamInfo(infoID);}
+
+UINT OBSGetTotalStreamTime()    {return API->GetTotalStreamTime();}
+UINT OBSGetBytesPerSec()        {return API->GetBytesPerSec();}
 
 bool OBSUseMultithreadedOptimizations()         {return API->UseMultithreadedOptimizations();}
 
