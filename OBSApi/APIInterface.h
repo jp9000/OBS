@@ -181,6 +181,12 @@ public:
     virtual bool GetRecording() const = 0;
 
     virtual bool GetKeepRecording() const = 0;
+    
+    virtual UINT GetCaptureFPS() const=0;
+    virtual UINT GetTotalFrames() const=0;
+    virtual UINT GetFramesDropped() const=0;
+    virtual UINT GetTotalStreamTime() const=0;
+    virtual UINT GetBytesPerSec() const=0;
 };
 
 BASE_EXPORT extern APIInterface *API;
@@ -221,6 +227,9 @@ BASE_EXPORT void OBSGetRenderFrameControlSize(UINT &width, UINT &height);
 BASE_EXPORT void OBSGetOutputSize(UINT &width, UINT &height);
 BASE_EXPORT UINT OBSGetMaxFPS();
 BASE_EXPORT bool OBSGetIn1To1Mode();
+BASE_EXPORT UINT OBSGetCaptureFPS();
+BASE_EXPORT UINT OBSGetTotalFrames();
+BASE_EXPORT UINT OBSGetFramesDropped();
 
 BASE_EXPORT CTSTR OBSGetLanguage();
 
@@ -233,6 +242,9 @@ BASE_EXPORT UINT OBSAddStreamInfo(CTSTR lpInfo, StreamInfoPriority priority);
 BASE_EXPORT void OBSSetStreamInfo(UINT infoID, CTSTR lpInfo);
 BASE_EXPORT void OBSSetStreamInfoPriority(UINT infoID, StreamInfoPriority priority);
 BASE_EXPORT void OBSRemoveStreamInfo(UINT infoID);
+
+BASE_EXPORT UINT OBSGetTotalStreamTime();
+BASE_EXPORT UINT OBSGetBytesPerSec();
 
 BASE_EXPORT bool OBSUseMultithreadedOptimizations();
 
