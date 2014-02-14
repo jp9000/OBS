@@ -172,13 +172,15 @@ BEGIN
     PUSHBUTTON      "Add",IDC_ADD,147,58,76,14
     PUSHBUTTON      "Rename",IDC_RENAME,224,58,76,14
     PUSHBUTTON      "Remove",IDC_REMOVE,301,58,75,14
-    LTEXT           "Settings.General.Restart",IDC_INFO,7,145,409,48,NOT WS_VISIBLE
+    LTEXT           "Settings.General.Restart",IDC_INFO,7,153,409,48,NOT WS_VISIBLE
     CONTROL         "Settings.General.Notification",IDC_NOTIFICATIONICON,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,85,264,10,WS_EX_RIGHT
     CONTROL         "Settings.General.NotificationMinimize",IDC_MINIZENOTIFICATION,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,96,264,10,WS_EX_RIGHT
     CONTROL         "Settings.General.EnableProjectorCursor",IDC_ENABLEPROJECTORCURSOR,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,117,264,10,WS_EX_RIGHT
+    CONTROL         "Settings.General.OpenLogWindowOnLaunch",IDC_OPENLOGWINDOWONLAUNCH,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,138,264,10,WS_EX_RIGHT
 END
 
 IDD_SETTINGS_AUDIO DIALOGEX 0, 0, 427, 336

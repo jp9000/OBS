@@ -215,6 +215,7 @@ Settings.General.NotificationMinimize="Minimize to Notification Area"
 Settings.General.ShowObs="Show OBS"
 Settings.General.HideObs="Hide OBS"
 Settings.General.Restart="Changing the language will require restarting OBS.\r\n\r\n..Though I suppose if you're changing the language you can't understand this"
+Settings.General.OpenLogWindowOnLaunch="Open Log Window on OBS launch"
 
 Settings.Publish.AutoReconnect="Auto-Reconnect:"
 Settings.Publish.AutoReconnectTimeout="Auto-Reconnect Timeout:"

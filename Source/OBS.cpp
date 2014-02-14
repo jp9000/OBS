@@ -752,6 +752,9 @@ OBS::OBS()
     ListView_SetColumnWidth(hwndSources,0,LVSCW_AUTOSIZE_USEHEADER);
     ListView_SetColumnWidth(hwndSources,1,LVSCW_AUTOSIZE_USEHEADER);
 
+    if (GlobalConfig->GetInt(L"General", L"OpenLogWindowOnLaunch") != 0)
+        PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_SHOWLOG, 0), 0);
+
     if (bStreamOnStart)
         PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_STARTSTOP, 0), NULL);
 }
