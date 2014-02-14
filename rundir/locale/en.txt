@@ -36,6 +36,7 @@ Rename="Rename"
 Copy="Copy"
 Scene="Scene"
 Settings="Settings..."
+LogWindow="Log Window"
 StreamReport="Stream Report"
 MessageBoxWarningCaption="Warning"
 

@@ -342,7 +342,9 @@ OBS::OBS()
         logSizeY = 500;
     }
 
-    hwndLogWindow = CreateWindow(OBS_LOGWINDOW_CLASS, L"Log Window", WS_OVERLAPPEDWINDOW, x, y, logSizeX, logSizeY, NULL, NULL, hinstMain, NULL);
+    hwndLogWindow = CreateWindow(OBS_LOGWINDOW_CLASS, L"LogWindow", WS_OVERLAPPEDWINDOW, x, y, logSizeX, logSizeY, NULL, NULL, hinstMain, NULL);
+    LocalizeWindow(hwndLogWindow);
+
     RECT client;
     GetClientRect(hwndLogWindow, &client);
 
