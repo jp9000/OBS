@@ -231,4 +231,6 @@ public:
     virtual void CancelSettings();
     virtual bool HasDefaults() const;
     virtual void SetDefaults();
+private:
+    void SelectPresetDialog(bool useQSV, bool useNVENC);
 };

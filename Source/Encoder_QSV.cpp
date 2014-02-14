@@ -64,13 +64,13 @@ namespace
     };
     const TCHAR* usageStr[] = {
         TO_STR(MFX_TARGETUSAGE_UNKNOWN),
-        TO_STR(MFX_TARGETUSAGE_BEST_QUALITY),
-        TO_STR(2),
-        TO_STR(3),
-        TO_STR(MFX_TARGETUSAGE_BALANCED),
-        TO_STR(5),
-        TO_STR(6),
-        TO_STR(MFX_TARGETUSAGE_BEST_SPEED)
+        TO_STR(MFX_TARGETUSAGE_1_BEST_QUALITY),
+        TO_STR(MFX_TARGETUSAGE_2),
+        TO_STR(MFX_TARGETUSAGE_3),
+        TO_STR(MFX_TARGETUSAGE_4_BALANCED),
+        TO_STR(MFX_TARGETUSAGE_5),
+        TO_STR(MFX_TARGETUSAGE_6),
+        TO_STR(MFX_TARGETUSAGE_7_BEST_SPEED)
     };
 
     CTSTR qsv_intf_str(const mfxU32 impl)
@@ -366,6 +366,9 @@ public:
         int keyint = fps*keyframeInterval;
         int bframes = 7;
 
+        int qsv_preset = AppConfig->GetInt(L"Video Encoding", L"QSVPreset", 1); // MFX_TARGETUSAGE_BEST_QUALITY
+        if (qsv_preset < MFX_TARGETUSAGE_1 || qsv_preset > MFX_TARGETUSAGE_7) qsv_preset = MFX_TARGETUSAGE_1;
+
         bool main_profile = (AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"), TEXT("high")) != L"high") ? true : false;
 
         bHaveCustomImpl = false;
@@ -442,7 +445,7 @@ public:
         request->mode = request->MODE_ENCODE;
         request->obs_process_id = GetCurrentProcessId();
 
-        request->target_usage = MFX_TARGETUSAGE_BEST_QUALITY;
+        request->target_usage = qsv_preset;
         request->fps = fps;
         request->keyint = keyint;
         request->bframes = bframes;
