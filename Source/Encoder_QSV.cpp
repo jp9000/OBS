@@ -442,6 +442,7 @@ public:
         request->mode = request->MODE_ENCODE;
         request->obs_process_id = GetCurrentProcessId();
 
+        request->target_usage = MFX_TARGETUSAGE_BEST_QUALITY;
         request->fps = fps;
         request->keyint = keyint;
         request->bframes = bframes;

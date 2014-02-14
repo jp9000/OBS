@@ -29,6 +29,7 @@ struct init_request
 {
     enum { MODE_QUERY, MODE_ENCODE } mode;
     uint32_t obs_process_id;
+    uint16_t target_usage;
     int32_t fps, keyint, bframes, width, height, max_bitrate, buffer_size;
     bool use_cbr, main_profile;
     int32_t full_range, matrix, primaries, transfer;

@@ -55,10 +55,10 @@ Parameters::Parameters()
     zero(params);
 }
 
-void Parameters::Init(int fps, int keyframe_interval_frames, int bframes, int width, int height, int max_bitrate, int buffer_size, bool use_cbr, bool main_profile)
+void Parameters::Init(mfxU16 target_usage, int fps, int keyframe_interval_frames, int bframes, int width, int height, int max_bitrate, int buffer_size, bool use_cbr, bool main_profile)
 {
     params.mfx.CodecId = MFX_CODEC_AVC;
-    params.mfx.TargetUsage = MFX_TARGETUSAGE_BEST_QUALITY;
+    params.mfx.TargetUsage = target_usage;
     params.mfx.TargetKbps = max_bitrate;
     params.mfx.MaxKbps = max_bitrate;
     params.mfx.BufferSizeInKB = buffer_size/8;
