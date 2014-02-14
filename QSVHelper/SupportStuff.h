@@ -54,6 +54,18 @@ void InitFrame(mfxFrameData &frame, mfxU8 *Y, mfxU8 *UV, mfxU8 *V, mfxU16 pitch)
 
 std::vector<mfxU8> InitSEIUserData(bool use_cbr, const mfxVideoParam& params, const mfxVersion& ver)
 {
+#define TO_STR(x) #x
+    static const char *usage_str[] = {
+        TO_STR(MFX_TARGETUSAGE_UNKNOWN),
+        TO_STR(MFX_TARGETUSAGE_BEST_QUALITY),
+        TO_STR(MFX_TARGETUSAGE_2),
+        TO_STR(MFX_TARGETUSAGE_3),
+        TO_STR(MFX_TARGETUSAGE_BALANCED),
+        TO_STR(MFX_TARGETUSAGE_5),
+        TO_STR(MFX_TARGETUSAGE_6),
+        TO_STR(MFX_TARGETUSAGE_BEST_SPEED)
+    };
+#undef TO_STR
     using namespace std;
     vector<mfxU8> data;
 
@@ -66,8 +78,9 @@ std::vector<mfxU8> InitSEIUserData(bool use_cbr, const mfxVideoParam& params, co
         << " rate control: " << (use_cbr ? "cbr" : "vbr")
         << "; target bitrate: " << params.mfx.TargetKbps
         << "; max bitrate: " << params.mfx.MaxKbps
-        << "; buffersize: " << params.mfx.BufferSizeInKB*8
-        << "; API level: " << ver.Major << "." << ver.Minor;
+        << "; buffersize: " << params.mfx.BufferSizeInKB * 8
+        << "; API level: " << ver.Major << "." << ver.Minor
+        << "; Target Usage: " << usage_str[params.mfx.TargetUsage];
     string str_(str.str());
 
     data.insert(end(data), begin(str_), end(str_));
