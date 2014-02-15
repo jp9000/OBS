@@ -226,3 +226,15 @@ void OBS::ReportDesktopVolumeChange(float level, bool muted, bool finalValue)
             (*callback)(level, muted, finalValue);
     }
 }
+
+void OBS::ReportLogUpdate(CTSTR logDelta, UINT length)
+{
+    if (bShuttingDown)
+        return;
+
+    for (UINT i = 0; i < plugins.Num(); i++)
+    {
+        if (plugins[i].logUpdateCallback)
+            plugins[i].logUpdateCallback(logDelta, length);
+    }
+}

@@ -718,6 +718,7 @@ OBS::OBS()
                         pluginInfo->sourcesAddedOrRemovedCallback = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnSourcesAddedOrRemoved");
                         pluginInfo->micVolumeChangeCallback       = (OBS_VOLUME_CHANGED_CALLBACK)GetProcAddress(hPlugin, "OnMicVolumeChanged");
                         pluginInfo->desktopVolumeChangeCallback   = (OBS_VOLUME_CHANGED_CALLBACK)GetProcAddress(hPlugin, "OnDesktopVolumeChanged");
+                        pluginInfo->logUpdateCallback             = (OBS_LOG_UPDATE_CALLBACK)GetProcAddress(hPlugin, "OnLogUpdate");
 
                         //GETPLUGINNAMEPROC getName = (GETPLUGINNAMEPROC)GetProcAddress(hPlugin, "GetPluginName");
 

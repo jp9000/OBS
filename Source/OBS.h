@@ -288,6 +288,7 @@ typedef void (*OBS_STREAM_STATUS_CALLBACK)(bool /*streaming*/, bool /*previewOnl
 typedef void (*OBS_SCENE_SWITCH_CALLBACK)(CTSTR);
 typedef void (*OBS_SOURCE_CHANGED_CALLBACK)(CTSTR /*sourceName*/, XElement* /*source*/); 
 typedef void (*OBS_VOLUME_CHANGED_CALLBACK)(float /*level*/, bool /*muted*/, bool /*finalFalue*/);
+typedef void (*OBS_LOG_UPDATE_CALLBACK)(CTSTR /*delta*/, UINT /*length*/);
 
 struct PluginInfo
 {
@@ -338,6 +339,9 @@ struct PluginInfo
     /* called when audio source volumes have changed */
     OBS_VOLUME_CHANGED_CALLBACK micVolumeChangeCallback;
     OBS_VOLUME_CHANGED_CALLBACK desktopVolumeChangeCallback;
+
+    /* called after the log window is updated */
+    OBS_LOG_UPDATE_CALLBACK logUpdateCallback;
 };
 
 //----------------------------
@@ -1142,6 +1146,7 @@ public:
     virtual void ReportSourcesAddedOrRemoved();
     virtual void ReportMicVolumeChange(float level, bool muted, bool finalValue);
     virtual void ReportDesktopVolumeChange(float level, bool muted, bool finalValue);
+    virtual void ReportLogUpdate(CTSTR logDelta, UINT length);
 
     // notification area icon functions
     BOOL ShowNotificationAreaIcon();

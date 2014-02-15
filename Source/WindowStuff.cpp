@@ -2611,6 +2611,8 @@ static void OBSUpdateLog()
     SendMessage(hwndLog, EM_REPLACESEL, 0, (LPARAM)content.Array());
 
     SendMessage(hwndLog, EM_SETSEL, start, end);
+
+    App->ReportLogUpdate(content.Array(), content.Length());
 }
 
 //----------------------------
