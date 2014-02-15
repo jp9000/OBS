@@ -251,11 +251,8 @@ QWORD GetQPCTimeNS()
     LARGE_INTEGER currentTime;
     QueryPerformanceCounter(&currentTime);
 
-    if (currentTime.QuadPart < lastQPCTime)
-    {
+    if (currentTime.QuadPart < lastQPCTime-500)
         Log (TEXT("GetQPCTimeNS: WTF, clock went backwards! %I64d < %I64d"), currentTime.QuadPart, lastQPCTime);
-        currentTime.QuadPart = lastQPCTime;
-    }
 
     lastQPCTime = currentTime.QuadPart;
 
@@ -271,11 +268,8 @@ QWORD GetQPCTime100NS()
     LARGE_INTEGER currentTime;
     QueryPerformanceCounter(&currentTime);
 
-    if (currentTime.QuadPart < lastQPCTime)
-    {
+    if (currentTime.QuadPart < lastQPCTime-500)
         Log (TEXT("GetQPCTime100NS: WTF, clock went backwards! %I64d < %I64d"), currentTime.QuadPart, lastQPCTime);
-        currentTime.QuadPart = lastQPCTime;
-    }
 
     lastQPCTime = currentTime.QuadPart;
 
@@ -291,11 +285,8 @@ QWORD GetQPCTimeMS()
     LARGE_INTEGER currentTime;
     QueryPerformanceCounter(&currentTime);
 
-    if (currentTime.QuadPart < lastQPCTime)
-    {
+    if (currentTime.QuadPart < lastQPCTime-500)
         Log (TEXT("GetQPCTimeMS: WTF, clock went backwards! %I64d < %I64d"), currentTime.QuadPart, lastQPCTime);
-        currentTime.QuadPart = lastQPCTime;
-    }
 
     lastQPCTime = currentTime.QuadPart;
 
