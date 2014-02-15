@@ -179,7 +179,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,96,264,10,WS_EX_RIGHT
     CONTROL         "Settings.General.EnableProjectorCursor",IDC_ENABLEPROJECTORCURSOR,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,117,264,10,WS_EX_RIGHT
-    CONTROL         "Settings.General.OpenLogWindowOnLaunch",IDC_OPENLOGWINDOWONLAUNCH,
+    CONTROL         "Settings.General.ShowLogWindowOnLaunch",IDC_SHOWLOGWINDOWONLAUNCH,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,138,264,10,WS_EX_RIGHT
 END
 

@@ -94,8 +94,8 @@ void SettingsGeneral::ApplySettings()
     App->bEnableProjectorCursor = (SendMessage(GetDlgItem(hwnd, IDC_ENABLEPROJECTORCURSOR), BM_GETCHECK, 0, 0) == BST_CHECKED);
     GlobalConfig->SetInt(L"General", L"EnableProjectorCursor", App->bEnableProjectorCursor);
 
-    bool openLogWindowOnLaunch = SendMessage(GetDlgItem(hwnd, IDC_OPENLOGWINDOWONLAUNCH), BM_GETCHECK, 0, 0) == BST_CHECKED;
-    GlobalConfig->SetInt(L"General", L"OpenLogWindowOnLaunch", openLogWindowOnLaunch);
+    bool showLogWindowOnLaunch = SendMessage(GetDlgItem(hwnd, IDC_SHOWLOGWINDOWONLAUNCH), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    GlobalConfig->SetInt(L"General", L"ShowLogWindowOnLaunch", showLogWindowOnLaunch);
 
     HWND hwndTemp = GetDlgItem(hwnd, IDC_LANGUAGE);
     int curSel = (int)SendMessage(hwndTemp, CB_GETCURSEL, 0, 0);
@@ -191,8 +191,8 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 //----------------------------------------------
 
-                bool openLogWindowOnLaunch = GlobalConfig->GetInt(TEXT("General"), TEXT("OpenLogWindowOnLaunch")) != 0;
-                SendMessage(GetDlgItem(hwnd, IDC_OPENLOGWINDOWONLAUNCH), BM_SETCHECK, openLogWindowOnLaunch ? BST_CHECKED : BST_UNCHECKED, 0);
+                bool showLogWindowOnLaunch = GlobalConfig->GetInt(TEXT("General"), TEXT("ShowLogWindowOnLaunch")) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_SHOWLOGWINDOWONLAUNCH), BM_SETCHECK, showLogWindowOnLaunch ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 //----------------------------------------------
 
@@ -406,7 +406,7 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     break;
 
                 case IDC_ENABLEPROJECTORCURSOR:
-                case IDC_OPENLOGWINDOWONLAUNCH:
+                case IDC_SHOWLOGWINDOWONLAUNCH:
                     SetChangedSettings(true);
                     break;
             }
