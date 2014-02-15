@@ -290,6 +290,73 @@ IBaseFilter* GetDeviceByValue(const IID &enumType, WSTR lpType, CTSTR lpName, WS
     return bestFilter;
 }
 
+bool PinHasMajorType(IPin *pin, const GUID *majorType)
+{
+    HRESULT hRes;
+
+    IAMStreamConfig *config;
+    if(SUCCEEDED(pin->QueryInterface(IID_IAMStreamConfig, (void**)&config)))
+    {
+        int count, size;
+        if(SUCCEEDED(config->GetNumberOfCapabilities(&count, &size)))
+        {
+            BYTE *capsData = (BYTE*)Allocate(size);
+
+            int priority = -1;
+            for(int i=0; i<count; i++)
+            {
+                AM_MEDIA_TYPE *pMT;
+                if(SUCCEEDED(config->GetStreamCaps(i, &pMT, capsData)))
+                {
+                    BOOL bDesiredMediaType = (pMT->majortype == *majorType);
+
+                    FreeMediaType(*pMT);
+                    CoTaskMemFree(pMT);
+
+                    if (bDesiredMediaType) {
+                        Free(capsData);
+                        SafeRelease(config);
+
+                        return true;
+                    }
+                }
+            }
+
+            Free(capsData);
+        }
+
+        SafeRelease(config);
+    }
+    else //GUESS WHAT DEVICE IT IS FOLKS
+    {
+        AM_MEDIA_TYPE *pinMediaType;
+
+        IEnumMediaTypes *mediaTypesEnum;
+        if (FAILED(pin->EnumMediaTypes(&mediaTypesEnum)))
+            return false;
+
+        ULONG curVal = 0;
+        hRes = mediaTypesEnum->Next(1, &pinMediaType, &curVal);
+
+        while (hRes == S_OK)
+        {
+            BOOL bDesiredMediaType = (pinMediaType->majortype == *majorType);
+            DeleteMediaType(pinMediaType);
+
+            if (bDesiredMediaType)
+            {
+                mediaTypesEnum->Release();
+                return true;
+            }
+
+            hRes = mediaTypesEnum->Next(1, &pinMediaType, &curVal);
+        }
+
+        mediaTypesEnum->Release();
+    }
+
+    return false;
+}
 
 IPin* GetOutputPin(IBaseFilter *filter, const GUID *majorType)
 {
@@ -305,30 +372,7 @@ IPin* GetOutputPin(IBaseFilter *filter, const GUID *majorType)
     {
         if(majorType)
         {
-            AM_MEDIA_TYPE *pinMediaType;
-
-            IEnumMediaTypes *mediaTypesEnum;
-            if(FAILED(curPin->EnumMediaTypes(&mediaTypesEnum)))
-            {
-                SafeRelease(curPin);
-                continue;
-            }
-
-            ULONG curVal = 0;
-            HRESULT hRes = mediaTypesEnum->Next(1, &pinMediaType, &curVal);
-
-            mediaTypesEnum->Release();
-
-            if(hRes != S_OK)
-            {
-                SafeRelease(curPin);
-                continue;
-            }
-
-            BOOL bDesiredMediaType = (pinMediaType->majortype == *majorType);
-            DeleteMediaType(pinMediaType);
-
-            if(!bDesiredMediaType)
+            if (!PinHasMajorType(curPin, majorType))
             {
                 SafeRelease(curPin);
                 continue;
