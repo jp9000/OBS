@@ -86,6 +86,30 @@ namespace
         }
     };
 
+    CTSTR qsv_profile_str(const mfxU16 profile)
+    {
+        switch (profile)
+        {
+#define P_STR(x) case x: return TO_STR(x)
+            P_STR(MFX_PROFILE_UNKNOWN);
+            P_STR(MFX_PROFILE_AVC_CONSTRAINT_SET0);
+            P_STR(MFX_PROFILE_AVC_CONSTRAINT_SET1);
+            P_STR(MFX_PROFILE_AVC_CONSTRAINT_SET2);
+            P_STR(MFX_PROFILE_AVC_CONSTRAINT_SET3);
+            P_STR(MFX_PROFILE_AVC_CONSTRAINT_SET4);
+            P_STR(MFX_PROFILE_AVC_CONSTRAINT_SET5);
+            P_STR(MFX_PROFILE_AVC_BASELINE);
+            P_STR(MFX_PROFILE_AVC_MAIN);
+            P_STR(MFX_PROFILE_AVC_EXTENDED);
+            P_STR(MFX_PROFILE_AVC_HIGH);
+            P_STR(MFX_PROFILE_AVC_CONSTRAINED_BASELINE);
+            P_STR(MFX_PROFILE_AVC_CONSTRAINED_HIGH);
+            P_STR(MFX_PROFILE_AVC_PROGRESSIVE_HIGH);
+#undef P_STR
+        }
+        return L"UNKNOWN";
+    }
+
 #define MFX_TIME_FACTOR 90
     template<class T>
     auto timestampFromMS(T t) -> decltype(t*MFX_TIME_FACTOR)
@@ -325,7 +349,7 @@ class QSVEncoder : public VideoEncoder
     uint64_t out_frames;
     DTSGenerator dts_gen;
 
-    mfxU16 target_usage,
+    mfxU16 target_usage, profile,
            max_bitrate;
 
     String event_prefix;
@@ -369,7 +393,9 @@ public:
         int qsv_preset = AppConfig->GetInt(L"Video Encoding", L"QSVPreset", 1); // MFX_TARGETUSAGE_BEST_QUALITY
         if (qsv_preset < MFX_TARGETUSAGE_1 || qsv_preset > MFX_TARGETUSAGE_7) qsv_preset = MFX_TARGETUSAGE_1;
 
-        bool main_profile = (AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"), TEXT("high")) != L"high") ? true : false;
+        profile = MFX_PROFILE_AVC_HIGH;
+        if (AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"), TEXT("high")) != L"high")
+            profile = MFX_PROFILE_AVC_MAIN;
 
         bHaveCustomImpl = false;
         impl_parameters custom = { 0 };
@@ -433,6 +459,20 @@ public:
                         custom.version.Minor = version[1].ToInt();
                         bHaveCustomImpl = true;
                     }
+                    else if (strParamName == "profile")
+                    {
+                        if (strParamVal == L"baseline")
+                            profile = MFX_PROFILE_AVC_BASELINE;
+                        else if (strParamVal == L"main")
+                            profile = MFX_PROFILE_AVC_MAIN;
+                        else if (strParamVal == L"high")
+                            profile = MFX_PROFILE_AVC_HIGH;
+                        else
+                        {
+                            profile = MFX_PROFILE_AVC_HIGH;
+                            Log(L"QSV: Unrecognized profile '%s', profile reset to default", strParamName);
+                        }
+                    }
                 }
             }
         }
@@ -446,6 +486,7 @@ public:
         request->obs_process_id = GetCurrentProcessId();
 
         request->target_usage = qsv_preset;
+        request->profile = profile;
         request->fps = fps;
         request->keyint = keyint;
         request->bframes = bframes;
@@ -454,7 +495,6 @@ public:
         request->max_bitrate = maxBitrate;
         request->buffer_size = bufferSize;
         request->use_cbr = bUseCBR;
-        request->main_profile = main_profile;
         request->full_range = colorDesc.fullRange;
         request->matrix = colorDesc.matrix;
         request->primaries = colorDesc.primaries;
@@ -505,6 +545,7 @@ public:
             implStr[impl], intf_str, implStr[response->actual_impl & (MFX_IMPL_VIA_ANY - 1)], actual_intf_str);
 
         target_usage = response->target_usage;
+        profile = response->profile;
 
         encode_tasks.SetSize(response->bitstream_num);
 
@@ -1006,6 +1047,7 @@ public:
                    TEXT("\r\n    fps: ")          << IntString(fps) <<
                    TEXT("\r\n    width: ")        << IntString(width) << TEXT(", height: ") << IntString(height) <<
                    TEXT("\r\n    target-usage: ") << usageStr[target_usage] <<
+                   TEXT("\r\n    profile: ")      << qsv_profile_str(profile) <<
                    TEXT("\r\n    CBR: ")          << CTSTR((bUseCBR) ? TEXT("yes") : TEXT("no")) <<
                    TEXT("\r\n    CFR: ")          << CTSTR((bUseCFR) ? TEXT("yes") : TEXT("no")) <<
                    TEXT("\r\n    max bitrate: ")  << IntString(max_bitrate);

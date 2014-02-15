@@ -98,8 +98,8 @@ struct Encoder
         : use_cbr(init_req->use_cbr), first_frame(true), frame_time_ms(static_cast<unsigned>(1./init_req->fps*1000)), exit_code(0)
         , using_d3d11(false), session(), encoder(session), event_prefix(event_prefix), log_file(log_file)
     {
-        params.Init(init_req->target_usage, init_req->fps, init_req->keyint, init_req->bframes, init_req->width, init_req->height, init_req->max_bitrate,
-            init_req->buffer_size, init_req->use_cbr, init_req->main_profile);
+        params.Init(init_req->target_usage, init_req->profile, init_req->fps, init_req->keyint, init_req->bframes, init_req->width, init_req->height, init_req->max_bitrate,
+            init_req->buffer_size, init_req->use_cbr);
         params.SetVideoSignalInfo(init_req->full_range, init_req->primaries, init_req->transfer, init_req->matrix);
     }
 
@@ -264,6 +264,7 @@ struct Encoder
         }
 
         init_res->target_usage = params->mfx.TargetUsage;
+        init_res->profile = params->mfx.CodecProfile;
         init_res->bitstream_num = encode_tasks.size();
         init_res->frame_num = frames.size();
 

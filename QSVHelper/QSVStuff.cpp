@@ -55,7 +55,7 @@ Parameters::Parameters()
     zero(params);
 }
 
-void Parameters::Init(mfxU16 target_usage, int fps, int keyframe_interval_frames, int bframes, int width, int height, int max_bitrate, int buffer_size, bool use_cbr, bool main_profile)
+void Parameters::Init(mfxU16 target_usage, mfxU16 profile, int fps, int keyframe_interval_frames, int bframes, int width, int height, int max_bitrate, int buffer_size, bool use_cbr)
 {
     params.mfx.CodecId = MFX_CODEC_AVC;
     params.mfx.TargetUsage = target_usage;
@@ -66,8 +66,7 @@ void Parameters::Init(mfxU16 target_usage, int fps, int keyframe_interval_frames
     params.mfx.GopPicSize = keyframe_interval_frames;
     params.mfx.GopRefDist = bframes+1;
     params.mfx.NumSlice = 1;
-    if (main_profile)
-        params.mfx.CodecProfile = MFX_PROFILE_AVC_MAIN;
+    params.mfx.CodecProfile = profile;
 
     params.mfx.RateControlMethod = use_cbr ? MFX_RATECONTROL_CBR : MFX_RATECONTROL_VBR;
     params.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY;

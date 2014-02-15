@@ -29,9 +29,9 @@ struct init_request
 {
     enum { MODE_QUERY, MODE_ENCODE } mode;
     uint32_t obs_process_id;
-    uint16_t target_usage;
+    uint16_t target_usage, profile;
     int32_t fps, keyint, bframes, width, height, max_bitrate, buffer_size;
-    bool use_cbr, main_profile;
+    bool use_cbr;
     int32_t full_range, matrix, primaries, transfer;
     bool use_custom_impl;
     mfxVersion custom_version;
@@ -40,7 +40,7 @@ struct init_request
 
 struct init_response
 {
-    mfxU16 target_usage;
+    mfxU16 target_usage, profile;
     mfxVersion version;
     mfxIMPL requested_impl,
             actual_impl;
