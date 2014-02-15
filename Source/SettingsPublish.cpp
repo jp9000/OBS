@@ -315,6 +315,19 @@ void SettingsPublish::SetWarningInfo()
                         }
                     }
 
+                    if (r->HasItem(L"supported audio codec"))
+                    {
+                        StringList codecs;
+                        r->GetStringList(L"supported audio codec", codecs);
+                        if (codecs.FindValueIndex(currentAudioCodec) == INVALID)
+                        {
+                            String msg = Str("Settings.Publish.Warning.UnsupportedAudioCodec"); //good thing OBS only supports MP3 (and AAC), otherwise I'd have to come up with a better translation solution
+                            msg.FindReplace(L"$1", codecs[0].Array());
+                            msg.FindReplace(L"$2", currentAudioCodec.Array());
+                            strWarnings << msg;
+                        }
+                    }
+
                     break;
                 }
             }

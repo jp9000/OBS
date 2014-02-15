@@ -246,6 +246,7 @@ Settings.Publish.Warning.Maxbitrate="\tEncoding Settings: Reduce your maximum bi
 Settings.Publish.Warning.RecommendMainProfile="\tAdvanced Settings: Recommended x264 encoding profile is 'main' for this service\r\n\r\n"
 Settings.Publish.Warning.Keyint="\tAdvanced Settings: Set a keyframe interval of %d seconds\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tEncoding Settings: Reduce your audio bitrate to %d\r\n\r\n"
+Settings.Publish.Warning.UnsupportedAudioCodec="\tEncoding Settings: Set audio codec to '$1' instead of '$2'\r\n\r\n"
 
 Settings.Video.Custom="Custom:"
 Settings.Video.Device="Video Adapter:"
