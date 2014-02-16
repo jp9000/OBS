@@ -388,7 +388,7 @@ LogUpload.SuccessDialog.CopyFailure="Konnte nicht kopiert werden!"
 
 LogUpload.CommunicationError="Der Upload ist Aufgrund eines Kommunikationsfehlers mit dem Server fehlgeschlagen."
 LogUpload.ServiceReturnedError="Der Server antwortete mit %u.\r\n"
-LogUpload.ServiceExpectedResponse="Die erwartete Antworr war %u."
+LogUpload.ServiceExpectedResponse="Die erwartete Antwort war %u."
 LogUpload.ServiceReturnedInvalidResponse="Der Server gab eine ungültige Antwort zurück. \r\nVersuche es bitte später erneut."
 LogUpload.EmptyLog="Das Protokoll konnte nicht hochgeladen werden, da es leer ist."
 LogUpload.CannotOpenFile="Lesen des Protokolls '%s' fehlgeschlagen. Stellen Sie sicher, dass keine anderen Programme das Protokoll verwenden und versuchen Sie es erneut."
