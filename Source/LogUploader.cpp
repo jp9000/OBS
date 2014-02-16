@@ -276,6 +276,9 @@ bool UploadLogGitHub(String filename, String logData, LogUploadResult &result)
     if (body.Num() < 1)
         return invalid_response();
 
+    //make sure it's null terminated since we run string ops on it below
+    body.Add (0);
+
     TSTR wideBody = utf8_createTstr((char const*)body.Array());
     String bodyStr(wideBody);
     Free(wideBody);
