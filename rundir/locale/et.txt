@@ -145,7 +145,7 @@ Settings.Advanced.SendBufferSize="Saada buffri suurus:"
 Settings.Advanced.UnlockHigherFPS="Luba 61-120 FPS sisestus video sätetes"
 Settings.Advanced.UseCBR="Kasuta CBR'i"
 Settings.Advanced.PadCBR="Luba CBR ääristus"
-Settings.Advanced.PadCBRToolTip="Vaikimisi sätted on tavalise CBR'i jaoks. \n\rÄra keela seda kui sa ei taha vahetada \n\rbitisagedust striimimise ajal."
+Settings.Advanced.PadCBRToolTip="Vaikimisi sätted on tavalise CBR'i jaoks."
 Settings.Advanced.UseCFR="Kasuta CFR-i"
 Settings.Advanced.UseMultithreadedOptimizations="Kasutage mitmikühenduse optimiseeringud"
 Settings.Advanced.UseQSV="Kasuta kiirsünkronatsiooni"
@@ -170,7 +170,7 @@ Settings.Advanced.Priority.High="Kõrge"
 
 Settings.Audio.DesktopBoost="Töölaua kiirendus(mitmekordne):"
 Settings.Audio.Device="Mikrofoni/teised heliseadmed"
-Settings.Audio.ForceMicMono="Sunni mikrofoni kasutama Mono seadeid:"
+Settings.Audio.ForceMicMono="Sunni mikrofoni kasutama Mono seadeid"
 Settings.Audio.MicBoost="Mic/Aux tõste (mitu):"
 Settings.Audio.MicTimeOffset="Mikrofoni aja nihe (millisekundites):"
 Settings.Audio.MicSyncFix="Mikrofoni sünkroonimise parandus häkk"
@@ -361,6 +361,9 @@ Updater.NewUpdates="Järgmised värskendused on saadaval: \r\n\r\n"
 Updater.RunningWarning="OBS taaskäivitatakse, et installeerida uuendused.\r\n\r\nKas soovid jätkata?"
 Updater.UpdatesAvailable="Värskendused on saadaval"
 Updater.NoUpdatesAvailable="Ühtegi värskendust pole saadaval"
+
+
+
 
 Plugins.NoiseGate.PluginName="Mikrofoni müralävend"
 Plugins.NoiseGate.PluginDescription="Vähendab automaatselt mikrofoni müra väljalülitamisega, juhul kui te ei räägi."

@@ -142,7 +142,7 @@ Settings.Advanced.SendBufferSize="Розмір буфера відправки:"
 Settings.Advanced.UnlockHigherFPS="Дозволити запис 61-120 кадрів в секунду в налаштуваннях відео"
 Settings.Advanced.UseCBR="Використовувати CBR"
 Settings.Advanced.PadCBR="Дозволити CBR padding"
-Settings.Advanced.PadCBRToolTip="Типово дозволено для CBR.\n\rЯкщо не плануєте змінювати бітрейт\n\rпід час трансляції, не відключайте."
+Settings.Advanced.PadCBRToolTip="Типово дозволено для CBR."
 Settings.Advanced.UseCFR="Використовувати CFR (постійну частоту кадрів)"
 Settings.Advanced.UseMultithreadedOptimizations="Використовувати багатопотокову оптимізацію"
 Settings.Advanced.UseQSV="Використовувати швидку синхронізацію"
@@ -162,7 +162,7 @@ Settings.Advanced.Priority.High="Високий"
 
 Settings.Audio.DesktopBoost="Підсилення робочого столу (множник):"
 Settings.Audio.Device="Мікрофон та допоміжні аудіо пристрої:"
-Settings.Audio.ForceMicMono="Примусовий режим моно для мікрофона:"
+Settings.Audio.ForceMicMono="Примусовий режим моно для мікрофона"
 Settings.Audio.MicBoost="Підсилення мікрофона (множник):"
 Settings.Audio.MicTimeOffset="Зсув часу мікрофона (мс):"
 Settings.Audio.MicSyncFix="Виправлення синхронізації мікрофона"
@@ -345,6 +345,9 @@ Updater.NewUpdates="Наступні оновлення доступні:\r\n\r\
 Updater.RunningWarning="OBS буде перезапущено для встановлення оновлень.\r\n\r\nДійсно бажаєте продовжити?"
 Updater.UpdatesAvailable="Доступні оновлення"
 Updater.NoUpdatesAvailable="Оновлень немає"
+
+
+
 
 Plugins.NoiseGate.PluginName="Шумоглушник мікрофона"
 Plugins.NoiseGate.PluginDescription="Знижує рівень шуму мікрофона, автоматично приглушуючи його, коли ви не балакаєте."

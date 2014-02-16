@@ -161,7 +161,7 @@ Settings.Advanced.Priority.High="Magas"
 
 Settings.Audio.DesktopBoost="Asztali hangerő növelése (xszorzóval):"
 Settings.Audio.Device="Mikrofon/Kiegészítő Hang Eszköz:"
-Settings.Audio.ForceMicMono="Mikrofon/Kiegészítő Mono kényszerítése:"
+Settings.Audio.ForceMicMono="Mikrofon/Kiegészítő Mono kényszerítése"
 Settings.Audio.MicBoost="Mik/Kieg erősítő (szorzó):"
 Settings.Audio.MicTimeOffset="Mik idő eltolás (milliszekundum):"
 Settings.Audio.MuteDesktopHotkey="Asztal némítása gyorsbillentyű"
@@ -336,6 +336,9 @@ Updater.NewUpdates="A következő frissítések elérhetőek:\r\n\r\n"
 Updater.RunningWarning="OBs most újra fog indulni a frissítések telepítéséhez.\r\n\r\nBiztos hogy folytatni akarod?"
 Updater.UpdatesAvailable="Frissítések elérhetőek"
 Updater.NoUpdatesAvailable="Nincsenek elérhető frissítések"
+
+
+
 
 Plugins.NoiseGate.PluginName="Mikrofon zaj küszöb"
 Plugins.NoiseGate.PluginDescription="Mikrofon zaj csökkentése, a mikrofon automatikus elnémításával amikor nem beszélünk."

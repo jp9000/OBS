@@ -166,7 +166,7 @@ Settings.Advanced.Priority.High="גבוהה"
 
 Settings.Audio.DesktopBoost="הגברת עוצמת שמע שולחן העבודה (מכפלה):"
 Settings.Audio.Device="התקן שמע מסוג מיקרופון/קלט אחר:"
-Settings.Audio.ForceMicMono="כפה מצב 'מונו' על התקן מיקרופון/קלט:"
+Settings.Audio.ForceMicMono="כפה מצב 'מונו' על התקן מיקרופון/קלט"
 Settings.Audio.MicBoost="(הגברת מיקרופון/קלט (מכפלה:"
 Settings.Audio.MicTimeOffset="(קיזוז מיקרופון (אלפיות השניה:"
 Settings.Audio.MicSyncFix="השתמש בתיקון-עוקף לצורך סנכרון שמע מהמיקרופון"
@@ -353,6 +353,9 @@ Updater.NewUpdates="העדכונים הבאים זמינים:\r\n\r\n"
 Updater.RunningWarning="OBS יאותחל במטרה להתקין את העדכונים.\r\n\r\nהאם אתה בטוח שברצונך להמשיך?"
 Updater.UpdatesAvailable="עדכונים זמינים"
 Updater.NoUpdatesAvailable="אין עדכונים זמינים"
+
+
+
 
 Plugins.NoiseGate.PluginName="תכונת 'שער הרעש' למיקרופון"
 Plugins.NoiseGate.PluginDescription="מפחית את רעשי המיקרופון באופן אוטומטי על-ידי השתקת המיקרופון כשאתה לא מדבר."
