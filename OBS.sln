@@ -27,6 +27,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ObsNvenc", "ObsNvenc\ObsNve
 		{11A35235-DD48-41E2-8F40-825C78024BC0} = {11A35235-DD48-41E2-8F40-825C78024BC0}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QSVHelper", "QSVHelper\QSVHelper.vcxproj", "{F1C7033A-F050-46E3-9080-E129B9CD1010}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -91,6 +93,12 @@ Global
 		{0F2A21A8-8A04-4F51-BFEC-5C5331C218C4}.Release|Win32.Build.0 = Release|Win32
 		{0F2A21A8-8A04-4F51-BFEC-5C5331C218C4}.Release|x64.ActiveCfg = Release|x64
 		{0F2A21A8-8A04-4F51-BFEC-5C5331C218C4}.Release|x64.Build.0 = Release|x64
+		{F1C7033A-F050-46E3-9080-E129B9CD1010}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F1C7033A-F050-46E3-9080-E129B9CD1010}.Debug|Win32.Build.0 = Debug|Win32
+		{F1C7033A-F050-46E3-9080-E129B9CD1010}.Debug|x64.ActiveCfg = Debug|Win32
+		{F1C7033A-F050-46E3-9080-E129B9CD1010}.Release|Win32.ActiveCfg = Release|Win32
+		{F1C7033A-F050-46E3-9080-E129B9CD1010}.Release|Win32.Build.0 = Release|Win32
+		{F1C7033A-F050-46E3-9080-E129B9CD1010}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

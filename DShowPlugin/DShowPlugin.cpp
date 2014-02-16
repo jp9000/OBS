@@ -327,35 +327,28 @@ bool PinHasMajorType(IPin *pin, const GUID *majorType)
 
         SafeRelease(config);
     }
-    else //GUESS WHAT DEVICE IT IS FOLKS
-    {
-        AM_MEDIA_TYPE *pinMediaType;
 
-        IEnumMediaTypes *mediaTypesEnum;
-        if (FAILED(pin->EnumMediaTypes(&mediaTypesEnum)))
-            return false;
+    AM_MEDIA_TYPE *pinMediaType;
 
-        ULONG curVal = 0;
-        hRes = mediaTypesEnum->Next(1, &pinMediaType, &curVal);
+    IEnumMediaTypes *mediaTypesEnum;
+    if(FAILED(pin->EnumMediaTypes(&mediaTypesEnum)))
+        return false;
 
-        while (hRes == S_OK)
-        {
-            BOOL bDesiredMediaType = (pinMediaType->majortype == *majorType);
-            DeleteMediaType(pinMediaType);
+    ULONG curVal = 0;
+    hRes = mediaTypesEnum->Next(1, &pinMediaType, &curVal);
 
-            if (bDesiredMediaType)
-            {
-                mediaTypesEnum->Release();
-                return true;
-            }
+    mediaTypesEnum->Release();
 
-            hRes = mediaTypesEnum->Next(1, &pinMediaType, &curVal);
-        }
+    if(hRes != S_OK)
+        return false;
 
-        mediaTypesEnum->Release();
-    }
+    BOOL bDesiredMediaType = (pinMediaType->majortype == *majorType);
+    DeleteMediaType(pinMediaType);
 
-    return false;
+    if(!bDesiredMediaType)
+        return false;
+
+    return true;
 }
 
 IPin* GetOutputPin(IBaseFilter *filter, const GUID *majorType)
