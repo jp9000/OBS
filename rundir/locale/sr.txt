@@ -145,7 +145,7 @@ Settings.Advanced.SendBufferSize="Величина пуфера за слање:
 Settings.Advanced.UnlockHigherFPS="Дозволи унос 61-120 ФПС-а у видео подешавањима"
 Settings.Advanced.UseCBR="Користи ЦБР"
 Settings.Advanced.PadCBR="Омогући ЦБР постављање"
-Settings.Advanced.PadCBRToolTip="Обично је укључено за нормалан ЦБР.\n\rНе искључавати осим ако мислите да ћете\n\rмењати вас ратио бит-ова у току стриминг-а."
+Settings.Advanced.PadCBRToolTip="Обично је укључено за нормалан ЦБР."
 Settings.Advanced.UseCFR="Користи ЦФР"
 Settings.Advanced.UseMultithreadedOptimizations="Користи Висејезгричну оптимизацију"
 Settings.Advanced.UseQSV="Користи Брзу Синхронизацију"
@@ -170,7 +170,7 @@ Settings.Advanced.Priority.High="Висок"
 
 Settings.Audio.DesktopBoost="Валута Десктоп Појачања (више):"
 Settings.Audio.Device="Микорофон/Помоћни Звучни Уређај:"
-Settings.Audio.ForceMicMono="Силуј Микрофон/Помоћни(Звучни уређај) на Моно:"
+Settings.Audio.ForceMicMono="Силуј Микрофон/Помоћни(Звучни уређај) на Моно"
 Settings.Audio.MicBoost="Мик/Пом појачање(више):"
 Settings.Audio.MicTimeOffset="Мик Време офсет-а (у милисекундама):"
 Settings.Audio.MicSyncFix="хацк за микрофонску синхронизацију"
@@ -236,6 +236,9 @@ Sources.TextSource.OutlineThickness="Танкоћа:"
 
 Updater.DownloadNow="Да ли бисте желели да их преузмете одмах?"
 Updater.UpdatesAvailable="Надоградње су доступне"
+
+
+
 
 
 

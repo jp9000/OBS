@@ -141,7 +141,7 @@ Settings.Advanced.Priority.AboveNormal="Nad Normalnim"
 Settings.Advanced.Priority.High="Visoko"
 
 Settings.Audio.Device="Mikrofon/Pomožne zvočne naprave:"
-Settings.Audio.ForceMicMono="Prisilne Mikrofon/Pomožne zvočne napreve na Mono:"
+Settings.Audio.ForceMicMono="Prisilne Mikrofon/Pomožne zvočne napreve na Mono"
 Settings.Audio.MicBoost="Povečanje Mikrofon/Pomožne zvočne naprave (večkratno):"
 Settings.Audio.MicTimeOffset="Izravnava Času Mikrofona (milisekunde):"
 Settings.Audio.MicSyncFix="Hack Sinhronizacije Mikrofona"
@@ -247,6 +247,9 @@ Sources.TextSource.Left="Levo"
 Sources.TextSource.Right="Desno"
 Sources.TextSource.Size="Velikost:"
 Sources.TextSource.Underline="Podčrtano"
+
+
+
 
 
 

@@ -142,7 +142,7 @@ Settings.Advanced.SendBufferSize="Tamaño do buffer de envío:"
 Settings.Advanced.UnlockHigherFPS="Permitir 61-120 FPS nas opcións de vídeo"
 Settings.Advanced.UseCBR="Empregar CBR"
 Settings.Advanced.PadCBR="Activar recheo de CBR"
-Settings.Advanced.PadCBRToolTip="Por defecto o CBR está activado.\n\rNon o desactives a non ser que teñas que\n\rcambiar o bitrate mentras transmitas."
+Settings.Advanced.PadCBRToolTip="Por defecto o CBR está activado."
 Settings.Advanced.UseCFR="Empregar CFR"
 Settings.Advanced.UseMultithreadedOptimizations="Empregar optimizacións multi-fío"
 Settings.Advanced.UseQSV="Empregar Quick Sync"
@@ -162,7 +162,7 @@ Settings.Advanced.Priority.High="Alto"
 
 Settings.Audio.DesktopBoost="Amplificación do escritorio(múltiple):"
 Settings.Audio.Device="Micrófono/Dispositivo auxiliar de audio:"
-Settings.Audio.ForceMicMono="Forzar sinal a mono:"
+Settings.Audio.ForceMicMono="Forzar sinal a mono"
 Settings.Audio.MicBoost="Amplificación do micrófono/auxiliar (múltiple):"
 Settings.Audio.MicTimeOffset="Compensación de tempo para o micrófono (milisegundos):"
 Settings.Audio.MicSyncFix="Solucionar sincronización do micrófono"
@@ -346,6 +346,9 @@ Updater.NewUpdates="As seguintes actualizacións están dispoñibles:\r\n\r\n"
 Updater.RunningWarning="OBS será reiniciado para instalar as actualizacións.\r\n\r\nQueres continuar?"
 Updater.UpdatesAvailable="Novas actualizacións dispoñibles"
 Updater.NoUpdatesAvailable="Non hay actualizacións dispoñibles"
+
+
+
 
 Plugins.NoiseGate.PluginName="Porta de ruido do micrófono"
 Plugins.NoiseGate.PluginDescription="Reduce ruídos do micrófono ó apagalo cando non se emprega."
