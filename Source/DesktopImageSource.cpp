@@ -547,6 +547,7 @@ public:
                     newCursorPos += pos;
                     newCursorSize *= sizeMultiplier;
 
+                    GS->SetCropping(0.0f, 0.0f, 0.0f, 0.0f);
                     DrawSprite(cursorTexture, 0xFFFFFFFF, newCursorPos.x, newCursorPos.y, newCursorPos.x+newCursorSize.x, newCursorPos.y+newCursorSize.y);
                 }
             }
