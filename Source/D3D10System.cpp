@@ -19,7 +19,7 @@
 
 #include "Main.h"
 
-extern "C" _declspec(dllexport) DWORD NvOptimusEnablement = 0x00000000;
+//extern "C" _declspec(dllexport) DWORD NvOptimusEnablement = 0x00000000;
 
 void GetDisplayDevices(DeviceOutputs &deviceList)
 {
@@ -149,7 +149,7 @@ static void HandleNvidiaOptimus(IDXGIFactory1 *factory, IDXGIAdapter1 *&adapter,
     if (adapterID != 1)
         return;
 
-    NvOptimusEnablement = 0;
+    //NvOptimusEnablement = 0;
     DXGI_ADAPTER_DESC adapterDesc;
     if (SUCCEEDED(adapter->GetDesc(&adapterDesc)))
     {
@@ -165,8 +165,8 @@ static void HandleNvidiaOptimus(IDXGIFactory1 *factory, IDXGIAdapter1 *&adapter,
                 adapter->Release();
 
                 adapterID = 0;
-                NvOptimusEnablement = 1;
-                Log(L"Nvidia optimus detected, second adapter selected, enabling optimus hint and switching to adapter 1");
+                //NvOptimusEnablement = 1;
+                Log(L"Nvidia optimus detected, second adapter selected, ignoring useless second adapter, I guess.");
                 if(FAILED(factory->EnumAdapters1(adapterID, &adapter)))
                     CrashError(TEXT("Could not get DXGI adapter"));
             }
