@@ -215,6 +215,7 @@ Settings.General.NotificationMinimize="Minimer til notifikationsområde"
 Settings.General.ShowObs="Vis OBS"
 Settings.General.HideObs="Skjul OBS"
 Settings.General.Restart="Skift af sprog vil kræve at du genstarter OBS.\r\n\r\n.. Dog gætter jeg på, at hvis du er ved at ændre sproget, så forstår du nok ikke dette."
+Settings.General.ShowLogWindowOnLaunch="Vis Logvinduet på start af OBS"
 
 Settings.Publish.AutoReconnect="Auto-Reconnect:"
 Settings.Publish.AutoReconnectTimeout="Auto-Reconnect Timeout:"
@@ -245,6 +246,7 @@ Settings.Publish.Warning.Maxbitrate="\tIndkodnings Indstillinger: Reducere Din M
 Settings.Publish.Warning.RecommendMainProfile="\tAvanceret indstillinger: Anbefalet x264 indkodningsprofil er 'main' for denne service.\r\n\r\n"
 Settings.Publish.Warning.Keyint="\tAvancerede indstillinger: angive keyframe interval til %d sekunder\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tIndkodnings Indstillinger: Reducere Din Maksimale Bitrate Til %d\r\n\r\n"
+Settings.Publish.Warning.UnsupportedAudioCodec="\tEncoding Indstillinger: Sæt lydkodeks til '$1' i stedet for '$2'\r\n\r\n"
 
 Settings.Video.Custom="Brugerdefineret:"
 Settings.Video.Device="Skærmkort:"

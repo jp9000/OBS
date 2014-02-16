@@ -246,6 +246,7 @@ Settings.Publish.Warning.Maxbitrate="\tSetări Codare: Reduce	ţi bitrate-ul dum
 Settings.Publish.Warning.RecommendMainProfile="\tSetări Avansate: Este recomandat ca profilul codării x264 să fie \"principal\" pentru acest service\r\n\r\n"
 Settings.Publish.Warning.Keyint="\tSetări Avansate: Setaţi un interval al cadrului de %d secunde\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tSetări Codare: Reduce	ţi bitrate-ul dumneavoastră audio la %d\r\n\r\n"
+Settings.Publish.Warning.UnsupportedAudioCodec="\tSetări Codare: Setați codecul audio la \"$1\" în loc de \"$2\" \r\n\r\n"
 
 Settings.Video.Custom="Personalizat:"
 Settings.Video.Device="Adaptor video:"

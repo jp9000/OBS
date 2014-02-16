@@ -246,6 +246,7 @@ Settings.Publish.Warning.Maxbitrate="\t编码设置:码率上限 %d\r\n\r\n"
 Settings.Publish.Warning.RecommendMainProfile="\t高级设置:这个服务推荐的x264编码profile(配置文件)是\"main\"\r\n\r\n"
 Settings.Publish.Warning.Keyint="\t 高级设置:关键帧间隔设置为 %d 秒\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\t编码设置:音频码率上限 %d\r\n\r\n"
+Settings.Publish.Warning.UnsupportedAudioCodec="\t编码设定: 设定音频解码器为 '$1' 来代替 '$2'\r\n\r\n"
 
 Settings.Video.Custom="默认："
 Settings.Video.Device="显卡："

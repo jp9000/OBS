@@ -246,6 +246,7 @@ Settings.Publish.Warning.Maxbitrate="\t編碼：您的最大位元率不得超�
 Settings.Publish.Warning.RecommendMainProfile="\t進階設定：此服務推薦的 x264 編碼設定檔為「main」。\r\n\r\n"
 Settings.Publish.Warning.Keyint="\t進階：將關鍵影格間隔設為 %d 秒\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\t編碼：您的音訊位元率不得超過 %d\r\n\r\n"
+Settings.Publish.Warning.UnsupportedAudioCodec="\t編碼設定: 設定音訊編解碼器為 '$1' 而不是 '$2' \r\n\r\n"
 
 Settings.Video.Custom="自訂："
 Settings.Video.Device="顯示卡："

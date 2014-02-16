@@ -215,6 +215,7 @@ Settings.General.NotificationMinimize="알림 영역으로 최소화"
 Settings.General.ShowObs="OBS 보이기"
 Settings.General.HideObs="OBS 감추기"
 Settings.General.Restart="언어를 변경하면 프로그램을 재시작해야 합니다. Changing the language will require restarting OBS. "
+Settings.General.ShowLogWindowOnLaunch="OBS 시작 시 기록창 표시"
 
 Settings.Publish.AutoReconnect="자동 재접속 시도:"
 Settings.Publish.AutoReconnectTimeout="자동 재접속 시간 초과:"
@@ -245,6 +246,7 @@ Settings.Publish.Warning.Maxbitrate="\t인코딩 설정: 최대 비트레이트 
 Settings.Publish.Warning.RecommendMainProfile="\t고급 설정: 이 서비스를 위해서는 'main' 을 x264 인코딩 프로필로 추천합니다\r\n\r\n"
 Settings.Publish.Warning.Keyint="\t고급 설정: 키 프레임의 간격을 다음 값으로 설정하십시오 %d\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\t인코딩 설정: 오디오 비트레이트를 다음 값으로 내려주십시오 %d\r\n\r\n"
+Settings.Publish.Warning.UnsupportedAudioCodec="\t인코딩 설정: 오디오 코덱을 '$2' 대신 '$1'로 설정\r\n\r\n"
 
 Settings.Video.Custom="사용자 정의:"
 Settings.Video.Device="비디오 어댑터:"

@@ -246,6 +246,7 @@ Settings.Publish.Warning.Maxbitrate="\tНастройки кодирования
 Settings.Publish.Warning.RecommendMainProfile="\tРасширенные настройки: Рекомендованный для этого сервиса профиль кодирования x264: 'main'\r\n\r\n"
 Settings.Publish.Warning.Keyint="\tРасширенные настройки: Установите интервал ключевых кадров на %d сек\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tНастройки кодирования: Уменьшите аудио битрейт до %d\r\n\r\n"
+Settings.Publish.Warning.UnsupportedAudioCodec="\tНастройки кодирования: Установите аудио кодек '$1' вместо '$2'\r\n\r\n"
 
 Settings.Video.Custom="Пользовательское:"
 Settings.Video.Device="Видеокарта:"
@@ -391,7 +392,7 @@ LogUpload.ServiceExpectedResponse="Ожидаемый ответ %u."
 LogUpload.ServiceReturnedInvalidResponse="Сервер не отвечает.\r\n Пожалуйста, попробуйте позже."
 LogUpload.EmptyLog="Невозможно загрузить пустой файл."
 LogUpload.CannotOpenFile="Не удалось открыть файл '%s'. Убедитесь что файл не используется другими программами и повторите попытку."
-LogUpload.Analyze="Анализировать"
+LogUpload.Analyze="Анализ"
 LogUpload.Upload="Загрузить в сеть"
 LogUpload.View="Открыть"
 
