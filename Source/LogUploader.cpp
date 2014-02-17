@@ -131,7 +131,6 @@ namespace
 
     bool HTTPPostData(String url, String data, int &response, List<BYTE> *resultBody=nullptr, String const &headers=String())
     {
-        OutputDebugString(data.Array());
         LPSTR str = data.CreateUTF8String();
         bool result = HTTPPostData(url, str, strlen(str), response, resultBody, headers);
         Free(str);
