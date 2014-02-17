@@ -399,7 +399,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 bool bUseQSV = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
 
-                bHasNVENC = true;// CheckNVENCHardwareSupport(false);
+                bHasNVENC = CheckNVENCHardwareSupport(false);
 
                 bool bUseNVENC = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseNVENC")) != 0;
 
