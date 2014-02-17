@@ -88,7 +88,7 @@ MainMenu.Settings.OpenConfigFolder="&Configuriemap Openen"
 MainMenu.Settings.OpenLogFolder="&Logmap Openen"
 MainMenu.Settings.ShowLogWindow="Toon logvenster"
 
-MainWindow.BeginMessage="Niet aan het streamen\nKlik \"Stream Starten\" of \"Stream Previewen\" om te beginnen"
+MainWindow.BeginMessage="Niet aan het streamen\n\nKlik op \"Stream Starten\", \"Opname Starten\" of \"Stream Previewen\" om te beginnen"
 MainWindow.PreviewDisabled="Preview uitgeschakeld"
 MainWindow.Dashboard="Dashboard"
 MainWindow.DroppedFrames="Gedropte Frames:"

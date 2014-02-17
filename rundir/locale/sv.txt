@@ -88,7 +88,7 @@ MainMenu.Settings.OpenConfigFolder="Öppna mappen för &inställningar"
 MainMenu.Settings.OpenLogFolder="Öppna &logg-mappen."
 MainMenu.Settings.ShowLogWindow="Visa loggfönster"
 
-MainWindow.BeginMessage="Ingen stream aktiv.\n\nKlicka på \"Börja streama\" för att börja streama,\neller \"Förhandsvisa stream\" för att förhandsvisa"
+MainWindow.BeginMessage="Ingen stream aktiv.\n\nKlicka på \"Börja streama\", \"Starta inspelning\", eller \"Förhandsvisa stream\" för att komma igång."
 MainWindow.PreviewDisabled="Förhandsvisning avaktiverad"
 MainWindow.Dashboard="Dashboard"
 MainWindow.DroppedFrames="Tappade bildrutor:"

@@ -88,7 +88,7 @@ MainMenu.Settings.OpenConfigFolder="Otwórz folder &konfiguracyjny"
 MainMenu.Settings.OpenLogFolder="Otwórz folder z &logami programu"
 MainMenu.Settings.ShowLogWindow="Pokaż okno dziennika"
 
-MainWindow.BeginMessage="Streamowanie wstrzymane.\n\nKliknij \"Rozpocznij stream\" albo \"Rozpocznij podgląd\" aby zacząć"
+MainWindow.BeginMessage="Brak streamu\n\nAby rozpocząć, kliknij \"Rozpocznij stream\", \"Rozpocznij nagrywanie\" lub \"Rozpocznij podgląd\""
 MainWindow.PreviewDisabled="Podgląd wyłączony"
 MainWindow.Dashboard="Tablica rozdzielcza(dashboard)"
 MainWindow.DroppedFrames="Zgubione klatki:"

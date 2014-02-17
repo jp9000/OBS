@@ -88,7 +88,7 @@ MainMenu.Settings.OpenConfigFolder="Avaa a&setuskansio"
 MainMenu.Settings.OpenLogFolder="Avaa &lokikansio"
 MainMenu.Settings.ShowLogWindow="Näytä loki-ikkuna"
 
-MainWindow.BeginMessage="Verkkolähetys ei ole päällä\n\nKlikkaa \"Aloita lähetys\" tai \"Aloita esikatselu\""
+MainWindow.BeginMessage="Ei lähetetä\n\nKlikkaa \"Aloita lähetys\", \"Aloita tallennus\", tai \"Aloita esikatselu\" aloittaaksesi"
 MainWindow.PreviewDisabled="Esikatselu ei ole käytössä"
 MainWindow.Dashboard="Hallintasivu"
 MainWindow.DroppedFrames="Pudotettuja frameja:"

@@ -88,7 +88,7 @@ MainMenu.Settings.OpenConfigFolder="Ouvrir le dossier de &Configuration"
 MainMenu.Settings.OpenLogFolder="Ouvrir le dossier &Journal"
 MainMenu.Settings.ShowLogWindow="Afficher la fenêtre du journal (Log)"
 
-MainWindow.BeginMessage="Ne diffuse pas\n\nCliquer sur \"Commencer le Streaming\" ou \"Tester le Streaming\" pour démarrer"
+MainWindow.BeginMessage="Ne diffuse pas\n\nCliquez sur \"Commencer le Streaming\", \"Commencer l'enregistrement\", ou \"Tester le Streaming\" pour démarrer"
 MainWindow.PreviewDisabled="Aperçu désactivé"
 MainWindow.Dashboard="Tableau de bord"
 MainWindow.DroppedFrames="Images perdues:"
@@ -246,6 +246,7 @@ Settings.Publish.Warning.Maxbitrate="\tRéglages d'encodage: Réduire votre déb
 Settings.Publish.Warning.RecommendMainProfile="\tRéglages Avancés : Le profil d'encodage x264 recommandé est 'main' pour ce service\r\n\r\n"
 Settings.Publish.Warning.Keyint="\tRéglages avancés: Définir un intervalle d'image clé de %d secondes\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tRéglages d'encodage: Réduire votre débit audio à %d\r\n\r\n"
+Settings.Publish.Warning.UnsupportedAudioCodec="\tParamètres d'Encodage: Définir le codec audio à '$1' au lieu de '$2'\r\n\r\n"
 
 Settings.Video.Custom="Personnalisée:"
 Settings.Video.Device="Périphérique vidéo:"

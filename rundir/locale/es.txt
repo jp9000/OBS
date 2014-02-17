@@ -88,7 +88,7 @@ MainMenu.Settings.OpenConfigFolder="Abrir carpeta de &Configuración"
 MainMenu.Settings.OpenLogFolder="Abrir carpeta de &Logs"
 MainMenu.Settings.ShowLogWindow="Mostrar ventana de Registro"
 
-MainWindow.BeginMessage="No está transmitiendo\n\nPresione en \"Iniciar transmisión\" o \"Iniciar previsualización\" para comenzar"
+MainWindow.BeginMessage="No se está transmitiendo\n\nPresione \"Iniciar transmisión\", \"Iniciar grabación\", o \"Iniciar previsualización\""
 MainWindow.PreviewDisabled="Previsualización desactivada"
 MainWindow.Dashboard="Panel"
 MainWindow.DroppedFrames="Cuadros perdidos:"

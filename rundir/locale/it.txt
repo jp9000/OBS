@@ -88,7 +88,7 @@ MainMenu.Settings.OpenConfigFolder="Apri la cartella delle &Configurazioni"
 MainMenu.Settings.OpenLogFolder="Apri la cartella dei &Log"
 MainMenu.Settings.ShowLogWindow="Condividi la finestra di registro"
 
-MainWindow.BeginMessage="Stream non attivo\n\nClick su \"Avvia Stream\" o \"Anteprima Stream\" per iniziare"
+MainWindow.BeginMessage="Non in streaming\n\nClicca \"Avvia Streaming\", \"Avvia Registrazione\" o \"Anteprima Streaming\" per iniziare"
 MainWindow.PreviewDisabled="Anteprima disabilitata"
 MainWindow.Dashboard="Dashboard"
 MainWindow.DroppedFrames="Fotogrammi saltati:"

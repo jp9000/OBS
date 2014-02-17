@@ -88,7 +88,7 @@ MainMenu.Settings.OpenConfigFolder="Deschide folderul de configurare"
 MainMenu.Settings.OpenLogFolder="Deschide folderul de logouri"
 MainMenu.Settings.ShowLogWindow="Arată fereastra Jurnal"
 
-MainWindow.BeginMessage="Nu se face stream\n\n Click \"Începe Streaming\" sau \"Previzualizare Stream\" pentru a începe"
+MainWindow.BeginMessage="Nu se face stream\n\nDaţi click pe \"Începe Streaming\", \"Începe Înregistrarea\" sau \"Previzualizare Stream\" pentru a începe"
 MainWindow.PreviewDisabled="Previzualizare dezactivat"
 MainWindow.Dashboard="Bord"
 MainWindow.DroppedFrames="Cadre pierdute:"

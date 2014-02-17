@@ -88,7 +88,7 @@ MainMenu.Settings.OpenConfigFolder="打開設定資料夾(&C)"
 MainMenu.Settings.OpenLogFolder="打開日誌資料夾(&L)"
 MainMenu.Settings.ShowLogWindow="顯示日誌視窗"
 
-MainWindow.BeginMessage="沒有正在進行的串流\n\n請點 \"開始串流\" 或 \"預覽串流\" 來開始"
+MainWindow.BeginMessage="尚未進行串流 \n\n 點選 \"開始串流\"、\"開始錄製\"或\"預覽串流\" 開始"
 MainWindow.PreviewDisabled="停用預覽"
 MainWindow.Dashboard="儀表板"
 MainWindow.DroppedFrames="丟失影格："
