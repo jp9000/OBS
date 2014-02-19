@@ -361,6 +361,7 @@ Encoder.InitFailedWithReason="Encoder initialization failed:\r\n"
 
 Encoder.NVENC.NoHardwareSupport="Your hardware does not seem to support Nvidia NVENC!\r\nYou need a card with Kepler GPU (series 600 or better).\r\nA license key is required to use Nvidia NVENC on GeForce cards."
 Encoder.NVENC.DllNotFound="ObsNvenc.dll not found or could not be loaded."
+Encoder.NVENC.OldDriver="Opening NVENC failed!\r\nYou need at least nvidia driver version 334.89 for NVENC encoding."
 
 Encoder.QSV.NoHardwareSupport="Could not find Quick Sync hardware support!"
 Encoder.QSV.ExceededResolutionHelp="Either lower your output resolution in Settings->Video or switch to a different encoder in Settings->Advanced."

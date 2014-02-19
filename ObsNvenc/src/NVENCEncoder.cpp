@@ -200,15 +200,11 @@ void NVENCEncoder::init()
         encoder = 0;
 
         MessageBox(NULL,
-            TEXT("OpenEncodeSessionEx failed!\r\n\r\n")
-            TEXT("You most likely don't have a valid license key.\r\n")
-            TEXT("Either put one in the environment variable NVENC_KEY\r\n")
-            TEXT("or download a prebuilt ObsNvenc.dll with a\r\n")
-            TEXT("license key included from the OBS forums."),
+            Str("Encoder.NVENC.OldDriver"),
             NULL,
             MB_OK | MB_ICONERROR);
 
-        NvLog(TEXT("nvEncOpenEncodeSessionEx failed - invalid license key?"));
+        NvLog(TEXT("nvEncOpenEncodeSessionEx failed - outdated driver?"));
         goto error;
     }
 
