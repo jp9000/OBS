@@ -888,8 +888,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,6,1,1
- PRODUCTVERSION 0,6,1,1
+ FILEVERSION 0,6,1,2
+ PRODUCTVERSION 0,6,1,2
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -905,12 +905,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "Open Broadcaster Software"
-            VALUE "FileVersion", "0.6.1.1"
+            VALUE "FileVersion", "0.6.1.2"
             VALUE "InternalName", "OBS"
             VALUE "LegalCopyright", "Copyright (C) 2013-2014"
             VALUE "OriginalFilename", "OBS.exe"
             VALUE "ProductName", "Open Broadcaster Software"
-            VALUE "ProductVersion", "0.6.1.1"
+            VALUE "ProductVersion", "0.6.1.2"
         END
     END
     BLOCK "VarFileInfo"
