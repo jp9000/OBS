@@ -88,7 +88,7 @@ MainMenu.Settings.OpenConfigFolder="Åben &Konfigurationsmappe"
 MainMenu.Settings.OpenLogFolder="Åben &Logmappe"
 MainMenu.Settings.ShowLogWindow="Vis Log vinduet"
 
-MainWindow.BeginMessage="Streamer ikke\n\nTryk \"Start streaming\" eller \"Vis Stream\" for at begynde"
+MainWindow.BeginMessage="Streamer ikke\n\nKlik \"Start Streaming\", \"Start Optagelse\", eller \"Forhåndsvis Stream\" for at begynde"
 MainWindow.PreviewDisabled="Visning deaktiveret"
 MainWindow.Dashboard="Instrumentbræt"
 MainWindow.DroppedFrames="Tabte Frames:"

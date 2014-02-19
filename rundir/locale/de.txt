@@ -88,7 +88,7 @@ MainMenu.Settings.OpenConfigFolder="Öffne &Konfigurationsordner"
 MainMenu.Settings.OpenLogFolder="Öffne &Protokollordner"
 MainMenu.Settings.ShowLogWindow="Zeige Protokollfenster"
 
-MainWindow.BeginMessage="Streaming inaktiv\n\nBenutze \"Streaming starten\", \"Aufnahme starten\", oder \"Stream-Vorschau starten\" um zu beginnen"
+MainWindow.BeginMessage="Streaming inaktiv\n\nBenutze \"Streaming starten\", \"Aufnahme starten\" oder \"Stream-Vorschau starten\" um zu beginnen"
 MainWindow.PreviewDisabled="Vorschau deaktiviert"
 MainWindow.Dashboard="Dashboard"
 MainWindow.DroppedFrames="Verworfene Frames:"

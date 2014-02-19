@@ -88,7 +88,7 @@ MainMenu.Settings.OpenConfigFolder="Abrir Pasta de Configuração"
 MainMenu.Settings.OpenLogFolder="Abrir Pasta de Logs"
 MainMenu.Settings.ShowLogWindow="Mostrar janela de Registros"
 
-MainWindow.BeginMessage="Não transmitindo Clique \"Começar a transmissão\" ou \"Pré Visualizar a transmissão\" para começar"
+MainWindow.BeginMessage="Não está transmitindo\n\nClique \"Iniciar Transmissão\", \"Iniciar Gravação\" ou \"Pré-visualizar Transmissão\" para começar"
 MainWindow.PreviewDisabled="Pré visualização desabilitada"
 MainWindow.Dashboard="Meu Canal"
 MainWindow.DroppedFrames="Frames Perdidos:"

@@ -88,7 +88,7 @@ MainMenu.Settings.OpenConfigFolder="설정 폴더 위치 열기(&C)"
 MainMenu.Settings.OpenLogFolder="기록 폴더 위치 열기(&L)"
 MainMenu.Settings.ShowLogWindow="기록 창 표시"
 
-MainWindow.BeginMessage="설정 내 각 항목의 체크 박스나 입력란에 마우스를 올리면 간략한 설명이 제공됩니다.\n\n 현재 방송 중이 아닙니다.\"방송 시작\" 혹은 \"미리보기\"를 눌러 시작할 수 있습니다."
+MainWindow.BeginMessage="방송중이 아님\n\n\"방송 시작\", \"녹화시작\", 혹은 \"미리보기\"를 선택하여 주세요"
 MainWindow.PreviewDisabled="미리보기 비활성화"
 MainWindow.Dashboard="대시 보드"
 MainWindow.DroppedFrames="입출력이 누락된 프레임:"
