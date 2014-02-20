@@ -922,7 +922,7 @@ private:
 
     void Start(bool recordingOnly=false);
     void Stop(bool overrideKeepRecording=false);
-    void StartRecording();
+    bool StartRecording();
     void StopRecording();
 
     static void STDCALL StartStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
