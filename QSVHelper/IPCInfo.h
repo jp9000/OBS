@@ -63,6 +63,7 @@ typedef IPCSignal                                   ipc_stop;
 
 
 #define EXIT_INIT_IPC_FAILED 1
+#define EXIT_NO_INTEL_GRAPHICS 2
 #define EXIT_INIT_QUERY_FAILED 3
 #define EXIT_IPC_OBS_HANDLE_FAILED 4
 #define EXIT_ENCODER_INIT_FAILED 6

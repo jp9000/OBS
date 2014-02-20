@@ -49,6 +49,30 @@ namespace {
     };
 
     std::wofstream log_file;
+
+    bool HasIntelGraphics()
+    {
+        REFIID iidVal = __uuidof(IDXGIFactory1);
+
+        ComPtr<IDXGIFactory1> factory;
+        if (!SUCCEEDED(CreateDXGIFactory1(iidVal, (void**)factory.Assign())))
+            return false;
+
+        UINT i = 0;
+        ComPtr<IDXGIAdapter1> adapter;
+
+        while (factory->EnumAdapters1(i++, adapter.Assign()) == S_OK)
+        {
+            DXGI_ADAPTER_DESC adapterDesc;
+            if (!SUCCEEDED(adapter->GetDesc(&adapterDesc)))
+                continue;
+
+            if (adapterDesc.VendorId == 0x8086)
+                return true;
+        }
+
+        return false;
+    }
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nShowCmd)
@@ -76,6 +100,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
 
     if(!init_req.is_signalled(INFINITE))
         return EXIT_INIT_IPC_FAILED;
+
+    if (!HasIntelGraphics())
+        return EXIT_NO_INTEL_GRAPHICS;
 
     if(init_req->mode == init_req->MODE_QUERY)
     {
