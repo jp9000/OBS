@@ -1269,6 +1269,9 @@ void OBS::MoveSourcesUp()
         iPos = ListView_GetNextItem(hwndSources, iPos, LVNI_SELECTED);
     }
 
+    if (!selectedSceneItems.Num() && !selectedIDs.Num())
+        return;
+
     XElement *sourcesElement = NULL;
     List<XElement*> selectedElements;
     if(numItems)
@@ -1338,6 +1341,9 @@ void OBS::MoveSourcesDown()
             focusedItem = iPos;
         iPos = ListView_GetNextItem(hwndSources, iPos, LVNI_SELECTED);
     }
+
+    if (!selectedSceneItems.Num() && !selectedIDs.Num())
+        return;
 
     XElement *sourcesElement = NULL;
     List<XElement*> selectedElements;
@@ -1409,6 +1415,9 @@ void OBS::MoveSourcesToTop()
             focusedItem = iPos;
         iPos = ListView_GetNextItem(hwndSources, iPos, LVNI_SELECTED);
     }
+
+    if (!selectedSceneItems.Num() && !selectedIDs.Num())
+        return;
 
     XElement *sourcesElement = NULL;
     List<XElement*> selectedElements;
@@ -1483,6 +1492,9 @@ void OBS::MoveSourcesToBottom()
             focusedItem = iPos;
         iPos = ListView_GetNextItem(hwndSources, iPos, LVNI_SELECTED);
     }
+
+    if (!selectedSceneItems.Num() && !selectedIDs.Num())
+        return;
 
     XElement *sourcesElement = NULL;
     List<XElement*> selectedElements;
