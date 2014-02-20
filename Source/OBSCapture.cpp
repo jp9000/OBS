@@ -164,6 +164,8 @@ bool OBS::StartRecording()
 
 void OBS::StopRecording()
 {
+    if (!bStreaming && bRunning) Stop(true);
+
     if(!bRecording) return;
 
     VideoFileStream *tempStream = NULL;
@@ -179,8 +181,6 @@ void OBS::StopRecording()
     ReportStopRecordingTrigger();
 
     SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), Str("MainWindow.StartRecording"));
-
-    if(!bStreaming) Stop();
 }
 
 void OBS::Start(bool recordingOnly)
