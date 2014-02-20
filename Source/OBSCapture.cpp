@@ -661,7 +661,7 @@ retryHookTestV2:
         return;
     }
 
-    if ((bStreaming = !recordingOnly)) ReportStartStreamingTrigger();
+    if ((bStreaming = !recordingOnly && networkMode == 0)) ReportStartStreamingTrigger();
     //-------------------------------------------------------------
 
     // Ensure that the render frame is properly sized
