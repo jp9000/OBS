@@ -126,7 +126,7 @@ struct Encoder
             case MFX_IMPL_HARDWARE2: device = 1; break;
             case MFX_IMPL_HARDWARE3: device = 2; break;
             case MFX_IMPL_HARDWARE4: device = 3; break;
-            default: exit_code = 1000; return MFX_ERR_DEVICE_FAILED;
+            default: exit_code = EXIT_D3D11_UNKNOWN_DEVICE; return MFX_ERR_DEVICE_FAILED;
             }
 
             d3d11_alloc.Close();

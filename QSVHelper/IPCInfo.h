@@ -61,5 +61,12 @@ typedef IPCSignalledType<spspps_size>               ipc_spspps_size;
 typedef IPCSignal                                   ipc_stop;
 
 
-#define EXIT_INCOMPATIBLE_CONFIGURATION 10
+
+#define EXIT_INIT_IPC_FAILED 1
+#define EXIT_INIT_QUERY_FAILED 3
+#define EXIT_IPC_OBS_HANDLE_FAILED 4
+#define EXIT_ENCODER_INIT_FAILED 6
 #define EXIT_NO_VALID_CONFIGURATION 5
+#define EXIT_INCOMPATIBLE_CONFIGURATION 10
+#define EXIT_D3D11_UNKNOWN_DEVICE 11
+#define EXIT_LOG_FILE_OPEN_FAILED 100
