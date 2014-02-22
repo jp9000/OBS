@@ -302,6 +302,13 @@ bool CheckQSVHardwareSupport(bool log=true)
         return true;
     }
 
+    static bool warning_logged = false;
+    if (code == EXIT_NO_INTEL_GRAPHICS && (!warning_logged || log))
+    {
+        Log(L"No Intel graphics adapter visible in QSVHelper.exe, Optimus problem?");
+        warning_logged = true;
+    }
+
     if(log)
         Log(TEXT("Failed to initialize QSV hardware session"));
     return false;

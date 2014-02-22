@@ -54,7 +54,7 @@ void OBS::ToggleRecording()
     if (!bRecording)
     {
         if (!bRunning && !bStreaming) Start(true);
-        StartRecording();
+        else StartRecording();
     }
     else
         StopRecording();
@@ -68,9 +68,9 @@ void OBS::ToggleCapturing()
         Stop();
 }
 
-void OBS::StartRecording()
+bool OBS::StartRecording()
 {
-    if (!bRunning || bRecording) return;
+    if (!bRunning || bRecording) return true;
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
 
     bWriteToFile = networkMode == 1 || AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile")) != 0;
@@ -137,6 +137,7 @@ void OBS::StartRecording()
         }
     }
 
+    bool success = true;
     if(!bTestStream && bWriteToFile && strOutputFile.IsValid())
     {
         String strFileExtension = GetPathExtension(strOutputFile);
@@ -150,6 +151,7 @@ void OBS::StartRecording()
             Log(TEXT("Warning - OBSCapture::Start: Unable to create the file stream. Check the file path in Broadcast Settings."));
             MessageBox(hwndMain, Str("Capture.Start.FileStream.Warning"), Str("Capture.Start.FileStream.WarningCaption"), MB_OK | MB_ICONWARNING);        
             bRecording = false;
+            success = false;
         }
         else {
             bRecording = true;
@@ -157,10 +159,13 @@ void OBS::StartRecording()
         }
         ConfigureStreamButtons();
     }
+    return success;
 }
 
 void OBS::StopRecording()
 {
+    if (!bStreaming && bRunning) Stop(true);
+
     if(!bRecording) return;
 
     VideoFileStream *tempStream = NULL;
@@ -176,8 +181,6 @@ void OBS::StopRecording()
     ReportStopRecordingTrigger();
 
     SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), Str("MainWindow.StartRecording"));
-
-    if(!bStreaming) Stop();
 }
 
 void OBS::Start(bool recordingOnly)
@@ -661,7 +664,7 @@ retryHookTestV2:
         return;
     }
 
-    if ((bStreaming = !recordingOnly)) ReportStartStreamingTrigger();
+    if ((bStreaming = !recordingOnly && networkMode == 0)) ReportStartStreamingTrigger();
     //-------------------------------------------------------------
 
     // Ensure that the render frame is properly sized
@@ -669,7 +672,11 @@ retryHookTestV2:
 
     //-------------------------------------------------------------
 
-    StartRecording();
+    if (!StartRecording() && !bStreaming)
+    {
+        Stop(true);
+        return;
+    }
 
     //-------------------------------------------------------------
 

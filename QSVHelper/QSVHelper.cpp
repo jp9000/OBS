@@ -49,6 +49,30 @@ namespace {
     };
 
     std::wofstream log_file;
+
+    bool HasIntelGraphics()
+    {
+        REFIID iidVal = __uuidof(IDXGIFactory1);
+
+        ComPtr<IDXGIFactory1> factory;
+        if (!SUCCEEDED(CreateDXGIFactory1(iidVal, (void**)factory.Assign())))
+            return false;
+
+        UINT i = 0;
+        ComPtr<IDXGIAdapter1> adapter;
+
+        while (factory->EnumAdapters1(i++, adapter.Assign()) == S_OK)
+        {
+            DXGI_ADAPTER_DESC adapterDesc;
+            if (!SUCCEEDED(adapter->GetDesc(&adapterDesc)))
+                continue;
+
+            if (adapterDesc.VendorId == 0x8086)
+                return true;
+        }
+
+        return false;
+    }
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nShowCmd)
@@ -70,12 +94,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
 
     log_file.open(log_path, ios::out | ios::trunc);
     if(!log_file.is_open())
-        return 200;
+        return EXIT_LOG_FILE_OPEN_FAILED;
 
     ipc_init_request init_req(event_prefix + INIT_REQUEST);
 
     if(!init_req.is_signalled(INFINITE))
-        return 1;
+        return EXIT_INIT_IPC_FAILED;
+
+    if (!HasIntelGraphics())
+        return EXIT_NO_INTEL_GRAPHICS;
 
     if(init_req->mode == init_req->MODE_QUERY)
     {
@@ -87,12 +114,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
             if(result == MFX_ERR_NONE)
                 return 0;
         }
-        return 3;
+        return EXIT_INIT_QUERY_FAILED;
     }
 
     safe_handle obs_handle(OpenProcess(SYNCHRONIZE, false, init_req->obs_process_id));
     if(!obs_handle)
-        return 2;
+        return EXIT_IPC_OBS_HANDLE_FAILED;
 
     ipc_init_response init_res(event_prefix + INIT_RESPONSE);
     zero(*&init_res);
@@ -139,7 +166,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
     }
 
     if(!encoder)
-        return 6;
+        return EXIT_ENCODER_INIT_FAILED;
 
     init_res->version = encoder.version;
     init_res->requested_impl = encoder.requested;
