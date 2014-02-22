@@ -13,6 +13,7 @@ installer/64bit
 ipch/
 rundir/crowdin
 
+*.swp
 *.dat
 *.clbin
 *.log

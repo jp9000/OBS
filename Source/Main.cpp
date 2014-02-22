@@ -607,9 +607,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         String strCaptureHookLog;
         strCaptureHookLog << lpAppDataPath << L"\\pluginData\\captureHookLog.txt";
         
-        OSFileChangeData *pGCHLogMF = NULL;
-        pGCHLogMF = OSMonitorFileStart (strCaptureHookLog, true);
-
         App = new OBS;
 
         HACCEL hAccel = LoadAccelerators(hinstMain, MAKEINTRESOURCE(IDR_ACCELERATOR1));
@@ -645,27 +642,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         TerminateSockets();
 
-        bool skipGCHLog = false;
+        XFile captureHookLog;
 
-        if(pGCHLogMF)
+        if (captureHookLog.Open(strCaptureHookLog, XFILE_READ|XFILE_SHARED, XFILE_OPENEXISTING))
         {
-            if(!OSFileHasChanged(pGCHLogMF))
-                skipGCHLog = true;
-
-            OSMonitorFileDestroy(pGCHLogMF);
-        }
-
-        if(!skipGCHLog)
-        {
-            XFile captureHookLog;
-
-            if (captureHookLog.Open(strCaptureHookLog, XFILE_READ|XFILE_SHARED, XFILE_OPENEXISTING))
-            {
-                String strContents;
-                captureHookLog.ReadFileToString(strContents);
-                LogRaw(L"\r\n\r\nLast game capture log:");
-                LogRaw(strContents.Array(), strContents.Length());
-            }
+            String strContents;
+            captureHookLog.ReadFileToString(strContents);
+            LogRaw(L"\r\n\r\nLast game capture log:");
+            LogRaw(strContents.Array(), strContents.Length());
         }
     }
 
