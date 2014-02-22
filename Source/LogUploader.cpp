@@ -311,7 +311,7 @@ bool UploadLogGitHub(String filename, String logData, LogUploadResult &result)
 static void AppendGameCaptureLog(String &data)
 {
     String path = FormattedString(L"%s\\captureHookLog.txt", OBSGetPluginDataPath().Array());
-    XFile f(path.Array(), XFILE_READ, XFILE_OPENEXISTING);
+    XFile f(path.Array(), XFILE_READ | XFILE_SHARED, XFILE_OPENEXISTING);
     if (!f.IsOpen())
         return;
 
