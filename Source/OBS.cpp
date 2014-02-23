@@ -1423,6 +1423,22 @@ void OBS::ReloadIniSettings()
         ShowWindow(hwndMain, SW_SHOW);
 
     RefreshStreamButtons();
+
+    //--------------------------------------------
+    // Update old config, transition old encoder selection
+    int qsv = AppConfig->GetInt(L"Video Encoding", L"UseQSV", -1);
+    int nvenc = AppConfig->GetInt(L"Video Encoding", L"UseNVENC", -1);
+    if (qsv != -1 || nvenc != -1)
+    {
+        AppConfig->SetString(L"Video Encoding", L"Encoder", (qsv > 0) ? L"QSV" : (nvenc > 0) ? L"NVENC" : L"x264");
+        AppConfig->Remove(L"Video Encoding", L"UseQSV");
+        AppConfig->Remove(L"Video Encoding", L"UseNVENC");
+
+        int custom = AppConfig->GetInt(L"Video Encoding", L"UseCustomSettings", -1);
+        int customQSV = AppConfig->GetInt(L"Video Encoding", L"QSVUseVideoEncoderSettings", -1);
+        if (custom > 0 && customQSV > 0)
+            AppConfig->SetString(L"Video Encoding", L"CustomQSVSettings", AppConfig->GetString(L"Video Encoding", L"CustomSettings"));
+    }
 }
 
 void OBS::UpdateAudioMeters()

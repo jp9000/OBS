@@ -640,11 +640,12 @@ retryHookTestV2:
 
     videoEncoder = nullptr;
     String videoEncoderErrors;
+    String vencoder = AppConfig->GetString(L"Video Encoding", L"Encoder");
     if (bDisableEncoding)
         videoEncoder = CreateNullVideoEncoder();
-    else if(AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0)
+    else if(vencoder == L"QSV")
         videoEncoder = CreateQSVEncoder(fps, outputCX, outputCY, quality, preset, bUsing444, colorDesc, maxBitRate, bufferSize, bUseCFR, videoEncoderErrors);
-    else if(AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseNVENC")) != 0)
+    else if(vencoder == L"NVENC")
         videoEncoder = CreateNVENCEncoder(fps, outputCX, outputCY, quality, preset, bUsing444, colorDesc, maxBitRate, bufferSize, bUseCFR, videoEncoderErrors);
     else
         videoEncoder = CreateX264Encoder(fps, outputCX, outputCY, quality, preset, bUsing444, colorDesc, maxBitRate, bufferSize, bUseCFR);

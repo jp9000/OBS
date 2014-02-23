@@ -19,6 +19,9 @@
 
 #include "Settings.h"
 
+bool CheckQSVHardwareSupport(bool log);
+bool CheckNVENCHardwareSupport(bool log);
+
 //============================================================================
 // SettingsEncoding class
 
@@ -51,6 +54,34 @@ void SettingsEncoding::DestroyPane()
 
 void SettingsEncoding::ApplySettings()
 {
+    bool useQSV   = SendMessage(GetDlgItem(hwnd, IDC_ENCODERQSV), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    bool useNVENC = SendMessage(GetDlgItem(hwnd, IDC_ENCODERNVENC), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    bool usex264 = !useQSV && !useNVENC;
+
+    String vcodec = AppConfig->GetString(L"Video Encoding", L"Encoder");
+
+    bool useQSV_prev   = !!(vcodec == L"QSV");
+    bool useNVENC_prev = !!(vcodec == L"NVENC");
+
+    if (!hasQSV && !useQSV && useQSV_prev &&
+        MessageBox(hwnd, Str("Settings.Encoding.Video.EncoderQSVDisabledAfterApply"), Str("MessageBoxWarningCaption"), MB_ICONEXCLAMATION | MB_OKCANCEL) != IDOK)
+    {
+        SetAbortApplySettings(true);
+        return;
+    }
+
+    if (!hasNVENC && !useNVENC && useNVENC_prev &&
+        MessageBox(hwnd, Str("Settings.Encoding.Video.EncoderNVENCDisabledAfterApply"), Str("MessageBoxWarningCaption"), MB_ICONEXCLAMATION | MB_OKCANCEL) != IDOK)
+    {
+        SetAbortApplySettings(true);
+        return;
+    }
+
+    EnableWindow(GetDlgItem(hwnd, IDC_ENCODERQSV), hasQSV || useQSV);
+    EnableWindow(GetDlgItem(hwnd, IDC_ENCODERNVENC), hasNVENC || useNVENC);
+
+    AppConfig->SetString(L"Video Encoding", L"Encoder", useQSV ? L"QSV" : useNVENC ? L"NVENC" : L"x264");
+
     int quality = (int)SendMessage(GetDlgItem(hwnd, IDC_QUALITY), CB_GETCURSEL, 0, 0);
     if(quality != CB_ERR)
         AppConfig->SetInt(TEXT("Video Encoding"), TEXT("Quality"), quality);
@@ -113,6 +144,24 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 //--------------------------------------------
 
+                hasQSV = CheckQSVHardwareSupport(false);
+                hasNVENC = CheckNVENCHardwareSupport(false);
+
+                String vcodec = AppConfig->GetString(L"Video Encoding", L"Encoder");
+
+                bool useQSV   = !!(vcodec == L"QSV");
+                bool useNVENC = !!(vcodec == L"NVENC");
+                bool usex264  = !useQSV && !useNVENC;
+
+                SendMessage(GetDlgItem(hwnd, IDC_ENCODERX264),  BM_SETCHECK, usex264,  0);
+                SendMessage(GetDlgItem(hwnd, IDC_ENCODERQSV),   BM_SETCHECK, useQSV,   0);
+                SendMessage(GetDlgItem(hwnd, IDC_ENCODERNVENC), BM_SETCHECK, useNVENC, 0);
+
+                EnableWindow(GetDlgItem(hwnd, IDC_ENCODERQSV), hasQSV || useQSV);
+                EnableWindow(GetDlgItem(hwnd, IDC_ENCODERNVENC), hasNVENC || useNVENC);
+
+                //--------------------------------------------
+
                 HWND hwndToolTip = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL, WS_POPUP|TTS_NOPREFIX|TTS_ALWAYSTIP,
                                                   CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
                                                   hwnd, NULL, hinstMain, NULL);
@@ -144,8 +193,8 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 bool bPadCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 1) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_USECBR), BM_SETCHECK, bUseCBR ? BST_CHECKED : BST_UNCHECKED, 0);
                 SendMessage(GetDlgItem(hwnd, IDC_PADCBR), BM_SETCHECK, bPadCBR ? BST_CHECKED : BST_UNCHECKED, 0);
-                EnableWindow(GetDlgItem(hwnd, IDC_QUALITY), !bUseCBR);
-                EnableWindow(GetDlgItem(hwnd, IDC_PADCBR), bUseCBR);
+                EnableWindow(GetDlgItem(hwnd, IDC_QUALITY), !bUseCBR && usex264);
+                EnableWindow(GetDlgItem(hwnd, IDC_PADCBR), bUseCBR && usex264);
 
                 ti.lpszText = (LPWSTR)Str("Settings.Advanced.PadCBRToolTip");
                 ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_PADCBR);
@@ -233,6 +282,12 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
             {
                 bool bDataChanged = false;
 
+                bool useQSV = SendMessage(GetDlgItem(hwnd, IDC_ENCODERQSV), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                bool useNVENC = SendMessage(GetDlgItem(hwnd, IDC_ENCODERNVENC), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                bool usex264 = !useQSV && !useNVENC;
+
+                bool useCBR = SendMessage(GetDlgItem(hwnd, IDC_USECBR), BM_GETCHECK, 0, 0) == BST_CHECKED;
+
                 switch(LOWORD(wParam))
                 {
                     case IDC_QUALITY:
@@ -278,6 +333,16 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                             bDataChanged = true;
                         break;
 
+                    case IDC_ENCODERX264:
+                    case IDC_ENCODERQSV:
+                    case IDC_ENCODERNVENC:
+                        if (HIWORD(wParam) == BN_CLICKED)
+                            bDataChanged = true;
+
+                        EnableWindow(GetDlgItem(hwnd, IDC_QUALITY), !useCBR && usex264);
+                        EnableWindow(GetDlgItem(hwnd, IDC_PADCBR), useCBR && usex264);
+                        break;
+
                     case IDC_CUSTOMBUFFER:
                     case IDC_USECBR:
                     case IDC_PADCBR:
@@ -292,8 +357,8 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                             }
                             else if(LOWORD(wParam) == IDC_USECBR)
                             {
-                                EnableWindow(GetDlgItem(hwnd, IDC_QUALITY), !bChecked);
-                                EnableWindow(GetDlgItem(hwnd, IDC_PADCBR), bChecked);
+                                EnableWindow(GetDlgItem(hwnd, IDC_QUALITY), !bChecked && usex264);
+                                EnableWindow(GetDlgItem(hwnd, IDC_PADCBR), bChecked && usex264);
                             }
 
                             bDataChanged = true;

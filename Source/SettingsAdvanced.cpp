@@ -57,57 +57,49 @@ void SettingsAdvanced::DestroyPane()
 
 void SettingsAdvanced::SelectPresetDialog(bool useQSV, bool useNVENC)
 {
-    HWND hwndTemp = GetDlgItem(hwnd, IDC_NVENCPRESET);
-    ShowWindow(hwndTemp, ((bHasNVENC && !useQSV) || useNVENC) ? SW_SHOW : SW_HIDE);
-    EnableWindow(hwndTemp, bHasNVENC || useNVENC);
+    bool usex264 = !useQSV && !useNVENC;
+
+    HWND hwndTemp = GetDlgItem(hwnd, IDC_PRESET);
+    ShowWindow(hwndTemp, usex264 ? SW_SHOW : SW_HIDE);
+    EnableWindow(hwndTemp, true);
+
+    hwndTemp = GetDlgItem(hwnd, IDC_X264PRESET_LABEL);
+    ShowWindow(hwndTemp, usex264 ? SW_SHOW : SW_HIDE);
+    EnableWindow(hwndTemp, true);
+
+    hwndTemp = GetDlgItem(hwnd, IDC_USEVIDEOENCODERSETTINGS);
+    ShowWindow(hwndTemp, !useQSV ? SW_SHOW : SW_HIDE);
+    EnableWindow(hwndTemp, usex264);
+
+    hwndTemp = GetDlgItem(hwnd, IDC_VIDEOENCODERSETTINGS);
+    ShowWindow(hwndTemp, !useQSV ? SW_SHOW : SW_HIDE);
+
+    hwndTemp = GetDlgItem(hwnd, IDC_NVENCPRESET);
+    ShowWindow(hwndTemp, useNVENC ? SW_SHOW : SW_HIDE);
+    EnableWindow(hwndTemp, true);
 
     hwndTemp = GetDlgItem(hwnd, IDC_NVENCPRESET_LABEL);
-    ShowWindow(hwndTemp, ((bHasNVENC && !useQSV) || useNVENC) ? SW_SHOW : SW_HIDE);
-    EnableWindow(hwndTemp, bHasNVENC || useNVENC);
+    ShowWindow(hwndTemp, useNVENC ? SW_SHOW : SW_HIDE);
+    EnableWindow(hwndTemp, true);
 
     hwndTemp = GetDlgItem(hwnd, IDC_QSVPRESET);
-    ShowWindow(hwndTemp, ((bHasQSV && !bHasNVENC) || (useQSV && !useNVENC)) ? SW_SHOW : SW_HIDE);
-    EnableWindow(hwndTemp, bHasQSV || useQSV);
+    ShowWindow(hwndTemp, useQSV ? SW_SHOW : SW_HIDE);
+    EnableWindow(hwndTemp, true);
 
     hwndTemp = GetDlgItem(hwnd, IDC_QSVPRESET_LABEL);
-    ShowWindow(hwndTemp, ((bHasQSV && !bHasNVENC) || (useQSV && !useNVENC)) ? SW_SHOW : SW_HIDE);
-    EnableWindow(hwndTemp, bHasQSV || useQSV);
+    ShowWindow(hwndTemp, useQSV ? SW_SHOW : SW_HIDE);
+    EnableWindow(hwndTemp, true);
+
+    hwndTemp = GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS);
+    ShowWindow(hwndTemp, useQSV ? SW_SHOW : SW_HIDE);
+    EnableWindow(hwndTemp, true);
+
+    hwndTemp = GetDlgItem(hwnd, IDC_QSVVIDEOENCODERSETTINGS);
+    ShowWindow(hwndTemp, useQSV ? SW_SHOW : SW_HIDE);
 }
 
 void SettingsAdvanced::ApplySettings()
 {
-    bool bUseQSV = SendMessage(GetDlgItem(hwnd, IDC_USEQSV), BM_GETCHECK, 0, 0) == BST_CHECKED;
-    bool bUseNVENC = SendMessage(GetDlgItem(hwnd, IDC_USENVENC), BM_GETCHECK, 0, 0) == BST_CHECKED;
-
-    if (bUseQSV && bUseNVENC)
-    {
-        SetAbortApplySettings(true);
-        MessageBox(hwnd, Str("Settings.Advanced.DisableQSVorNVENC"), nullptr, MB_ICONERROR);
-        return;
-    }
-
-    //precheck for QSV enable/disable in case the checkbox is currently enabled while no hardware support is found
-
-    bool bUseQSV_prev = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
-    if (!bHasQSV && !bUseQSV && bUseQSV_prev &&
-        MessageBox(hwnd, Str("Settings.Advanced.UseQSVDisabledAfterApply"), Str("MessageBoxWarningCaption"), MB_ICONEXCLAMATION | MB_OKCANCEL) != IDOK)
-    {
-        SetAbortApplySettings(true);
-        return;
-    }
-
-    //precheck for NVENC enable/disable in case the checkbox is currently enabled while no hardware support is found
-
-    bool bUseNVENC_prev = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseNVENC")) != 0;
-    if (!bHasNVENC && !bUseNVENC && bUseNVENC_prev &&
-        MessageBox(hwnd, Str("Settings.Advanced.UseNVENCDisabledAfterApply"), Str("MessageBoxWarningCaption"), MB_ICONEXCLAMATION | MB_OKCANCEL) != IDOK)
-    {
-        SetAbortApplySettings(true);
-        return;
-    }
-
-    SelectPresetDialog(bUseQSV, bUseNVENC);
-
     //--------------------------------------------------
 
     String strTemp = GetCBText(GetDlgItem(hwnd, IDC_PRESET));
@@ -164,7 +156,11 @@ void SettingsAdvanced::ApplySettings()
     String strCustomX264Settings = GetEditText(GetDlgItem(hwnd, IDC_VIDEOENCODERSETTINGS));
 
     AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("UseCustomSettings"), bUseCustomX264Settings);
-    AppConfig->SetString(TEXT("Video Encoding"), TEXT("CustomSettings"),    strCustomX264Settings);
+    AppConfig->SetString(TEXT("Video Encoding"), TEXT("CustomSettings"), strCustomX264Settings);
+
+    //--------------------------------------------------
+
+    AppConfig->SetString(L"Video Encoding", L"CustomQSVSettings", GetEditText(GetDlgItem(hwnd, IDC_QSVVIDEOENCODERSETTINGS)));
 
     //--------------------------------------------------
 
@@ -172,8 +168,6 @@ void SettingsAdvanced::ApplySettings()
     AppConfig->SetInt   (TEXT("Video"), TEXT("UnlockFPS"), bUnlockFPS);
 
     //------------------------------------
-    EnableWindow(GetDlgItem(hwnd, IDC_USEQSV), (bHasQSV || bUseQSV) && !bUseNVENC);
-    AppConfig->SetInt(TEXT("Video Encoding"), TEXT("UseQSV"), bUseQSV);
 
     BOOL bQSVUseVideoEncoderSettings = SendMessage(GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS), BM_GETCHECK, 0, 0) == BST_CHECKED;
     AppConfig->SetInt(TEXT("Video Encoding"), TEXT("QSVUseVideoEncoderSettings"), bQSVUseVideoEncoderSettings);
@@ -186,12 +180,6 @@ void SettingsAdvanced::ApplySettings()
         qsvPreset = (int)SendMessage(GetDlgItem(hwnd, IDC_QSVPRESET), CB_GETITEMDATA, qsvPreset, 0);
         AppConfig->SetInt(TEXT("Video Encoding"), TEXT("QSVPreset"), qsvPreset);
     }
-
-    //------------------------------------
-
-    EnableWindow(GetDlgItem(hwnd, IDC_USENVENC), (bHasNVENC || bUseNVENC) && !bUseQSV);
-    AppConfig->SetInt(TEXT("Video Encoding"), TEXT("UseNVENC"), bUseNVENC && !bUseQSV);
-    SendMessage(GetDlgItem(hwnd, IDC_USENVENC), BM_SETCHECK, (bUseNVENC && !bUseQSV) ? BST_CHECKED : BST_UNCHECKED, 0);
 
     //------------------------------------
 
@@ -243,6 +231,12 @@ bool SettingsAdvanced::HasDefaults() const
 
 void SettingsAdvanced::SetDefaults()
 {
+
+    String vencoder = AppConfig->GetString(L"Video Encoding", L"Encoder");
+    bool useQSV = !!(vencoder == L"QSV");
+    bool useNVENC = !!(vencoder == L"NVENC");
+    SelectPresetDialog(useQSV, useNVENC);
+
     SendMessage(GetDlgItem(hwnd, IDC_SCENEBUFFERTIME), UDM_SETPOS32, 0, 700);
     SendMessage(GetDlgItem(hwnd, IDC_USEMULTITHREADEDOPTIMIZATIONS), BM_SETCHECK, BST_CHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_PRIORITY), CB_SETCURSEL, 2, 0);
@@ -253,15 +247,10 @@ void SettingsAdvanced::SetDefaults()
     SendMessage(GetDlgItem(hwnd, IDC_USEVIDEOENCODERSETTINGS), BM_SETCHECK, BST_UNCHECKED, 0);
     EnableWindow(GetDlgItem(hwnd, IDC_VIDEOENCODERSETTINGS), FALSE);
     SendMessage(GetDlgItem(hwnd, IDC_UNLOCKHIGHFPS), BM_SETCHECK, BST_UNCHECKED, 0);
-    SendMessage(GetDlgItem(hwnd, IDC_USEQSV), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS), BM_SETCHECK, BST_UNCHECKED, 0);
-    SendMessage(GetDlgItem(hwnd, IDC_USENVENC), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_NVENCPRESET), CB_SETCURSEL, 0, 0);
     SendMessage(GetDlgItem(hwnd, IDC_QSVPRESET), CB_SETCURSEL, 0, 0);
-    EnableWindow(GetDlgItem(hwnd, IDC_USEQSV), bHasQSV);
-    EnableWindow(GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS), FALSE);
-    EnableWindow(GetDlgItem(hwnd, IDC_USENVENC), bHasNVENC);
-    SelectPresetDialog(false, false);
+    EnableWindow(GetDlgItem(hwnd, IDC_QSVVIDEOENCODERSETTINGS), FALSE);
     SendMessage(GetDlgItem(hwnd, IDC_SYNCTOVIDEOTIME), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_USEMICQPC), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_MICSYNCFIX), BM_SETCHECK, BST_UNCHECKED, 0);
@@ -395,33 +384,26 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 //------------------------------------
 
-                bHasQSV = CheckQSVHardwareSupport(false);
+                String vencoder = AppConfig->GetString(L"Video Encoding", L"Encoder");
 
-                bool bUseQSV = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
+                bool bUseQSV = !!(vencoder == L"QSV");
 
-                bHasNVENC = CheckNVENCHardwareSupport(false);
+                bool bUseNVENC = !!(vencoder == L"NVENC");
 
-                bool bUseNVENC = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseNVENC")) != 0;
-
-                if (bUseQSV && bUseNVENC)
-                    invalidSettings = true;
-
-                EnableWindow(GetDlgItem(hwnd, IDC_USEQSV), bUseQSV || (bHasQSV && !bUseNVENC));
-                SendMessage(GetDlgItem(hwnd, IDC_USEQSV), BM_SETCHECK, bUseQSV ? BST_CHECKED : BST_UNCHECKED, 0);
+                SelectPresetDialog(bUseQSV, bUseNVENC);
 
                 bool bQSVUseVideoEncoderSettings = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("QSVUseVideoEncoderSettings")) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS), BM_SETCHECK, bQSVUseVideoEncoderSettings ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                String qsvSettings = AppConfig->GetString(TEXT("Video Encoding"), TEXT("CustomQSVSettings"));
+                SetWindowText(GetDlgItem(hwnd, IDC_QSVVIDEOENCODERSETTINGS), qsvSettings);
+                EnableWindow(GetDlgItem(hwnd, IDC_QSVVIDEOENCODERSETTINGS), bQSVUseVideoEncoderSettings);
                 
                 ti.lpszText = (LPWSTR)Str("Settings.Advanced.QSVUseVideoEncoderSettingsTooltip");
                 ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS);
                 SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
-
-                EnableWindow(GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS), bUseQSV);
-
-                EnableWindow(GetDlgItem(hwnd, IDC_USENVENC), bUseNVENC || (bHasNVENC && !bUseQSV));
-                SendMessage(GetDlgItem(hwnd, IDC_USENVENC), BM_SETCHECK, bUseNVENC ? BST_CHECKED : BST_UNCHECKED, 0);
-
-                SelectPresetDialog(bUseQSV, bUseNVENC);
+                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_QSVVIDEOENCODERSETTINGS);
+                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
                 
                 hwndTemp = GetDlgItem(hwnd, IDC_NVENCPRESET);
                 static const CTSTR nv_preset_names[8] = {
@@ -557,6 +539,17 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                     }
                     break;
 
+                case IDC_QSVUSEVIDEOENCODERSETTINGS:
+                    if (HIWORD(wParam) == BN_CLICKED)
+                    {
+                        bool useSettings = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        EnableWindow(GetDlgItem(hwnd, IDC_QSVVIDEOENCODERSETTINGS), useSettings);
+
+                        ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
+                        SetChangedSettings(true);
+                    }
+                    break;
+
                 case IDC_KEYFRAMEINTERVAL_EDIT:
                 case IDC_SCENEBUFFERTIME_EDIT:
                 case IDC_AUDIOTIMEADJUST_EDIT:
@@ -624,19 +617,6 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                     }
                     break;
 
-                case IDC_USEQSV:
-                case IDC_USENVENC:
-                    if (HIWORD(wParam) == BN_CLICKED)
-                    {
-                        bool bUseQSV = SendMessage(GetDlgItem(hwnd, IDC_USEQSV), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                        bool bUseNVENC = SendMessage(GetDlgItem(hwnd, IDC_USENVENC), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                        bool bUseQSV_prev = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
-                        bool bUseNVENC_prev = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseNVENC")) != 0;
-                        EnableWindow(GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS), (bHasQSV || bUseQSV) && !bUseNVENC);
-                        EnableWindow(GetDlgItem(hwnd, IDC_USEQSV), !bUseNVENC && (bHasQSV || bUseQSV_prev));
-                        EnableWindow(GetDlgItem(hwnd, IDC_USENVENC), !bUseQSV && (bHasNVENC || bUseNVENC_prev));
-                        SelectPresetDialog(bUseQSV, bUseNVENC);
-                    }
                 case IDC_DISABLEPREVIEWENCODING:
                 case IDC_ALLOWOTHERHOTKEYMODIFIERS:
                 case IDC_MICSYNCFIX:
@@ -646,7 +626,6 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 case IDC_USEMULTITHREADEDOPTIMIZATIONS:
                 case IDC_UNLOCKHIGHFPS:
                 case IDC_LATENCYMETHOD:
-                case IDC_QSVUSEVIDEOENCODERSETTINGS:
                     if(HIWORD(wParam) == BN_CLICKED)
                     {
                         ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);

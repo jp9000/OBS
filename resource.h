@@ -69,6 +69,7 @@
 #define IDC_MONITOR                     1019
 #define IDC_BASETHRESHOLD_EDIT          1020
 #define IDC_KEYFRAMEINTERVAL_EDIT       1020
+#define IDC_VIDEOCODEC                  1020
 #define IDC_BASETHRESHOLD               1021
 #define IDC_BLEND_EDIT                  1022
 #define IDC_BLEND                       1023
@@ -178,6 +179,7 @@
 #define IDC_SAVEPATH                    1081
 #define IDC_SCROLLSPEED_EDIT            1081
 #define IDC_PTTDELAY                    1081
+#define IDC_QSVVIDEOENCODERSETTINGS     1081
 #define IDC_SAVEPATH_STATIC             1082
 #define IDC_EXTENTWIDTH                 1082
 #define IDC_MICBOOST_EDIT2              1082
@@ -300,6 +302,10 @@
 #define IDC_CLEARHOTKEY_STARTRECORDING  1174
 #define IDC_SHOWLOGWINDOWONLAUNCH       1174
 #define IDC_CLEARHOTKEY_STOPRECORDING   1175
+#define IDC_ENCODERX264                 1175
+#define IDC_ENCODERQSV                  1176
+#define IDC_X264PRESET_LABEL            1176
+#define IDC_ENCODERNVENC                1177
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -355,7 +361,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        149
 #define _APS_NEXT_COMMAND_VALUE         40068
-#define _APS_NEXT_CONTROL_VALUE         1175
+#define _APS_NEXT_CONTROL_VALUE         1177
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

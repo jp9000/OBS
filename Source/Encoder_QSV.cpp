@@ -407,12 +407,11 @@ public:
         bHaveCustomImpl = false;
         impl_parameters custom = { 0 };
 
-        BOOL bUseCustomParams = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCustomSettings"))
-                             && AppConfig->GetInt(TEXT("Video Encoding"), TEXT("QSVUseVideoEncoderSettings"));
-        if(bUseCustomParams)
+        bool useCustomParams = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("QSVUseVideoEncoderSettings")) != 0;
+        if(useCustomParams)
         {
             StringList paramList;
-            String strCustomParams = AppConfig->GetString(TEXT("Video Encoding"), TEXT("CustomSettings"));
+            String strCustomParams = AppConfig->GetString(TEXT("Video Encoding"), TEXT("CustomQSVSettings"));
             strCustomParams.KillSpaces();
 
             if(strCustomParams.IsValid())
