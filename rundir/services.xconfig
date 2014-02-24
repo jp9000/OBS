@@ -99,7 +99,7 @@ services : {
   connectcast.tv : {
     id : 12
     servers : {
-      "Default"     : rtmp://www.connectcast.tv/live
+      "Default"     : rtmp://stream.connectcast.tv/live
     }
   }
 }
