@@ -204,6 +204,7 @@ Settings.Encoding.Video.Quality="Quality Balance:"
 Settings.Encoding.Video.QualityTooltip="This setting will attempt to target a certain quality depending on your bitrate and buffer size.  Setting this to a high value with a low bitrate it will sacrifice the quality of high motion scenes in favor of non-moving scenes, causing inconsistent quality."
 Settings.Encoding.Video.EncoderQSVDisabledAfterApply="The 'Quick Sync' Encoder option will be disabled because your hardware does not seem to support Quick Sync."
 Settings.Encoding.Video.EncoderNVENCDisabledAfterApply="The 'Nvidia NVENC' Encoder option will be disabled because your hardware does not seem to support Nvidia NVENC."
+Settings.Encoding.Video.QSVConfigWarning="To enable the Quick Sync Encoder option make sure your CPU supports Quick Sync and the Intel graphics adapter is enabled in the BIOS. If you are using a laptop check the sticky thread 'Laptop? Black screen when capturing? Read here first.' in the Questions and Help forum."
 
 Settings.General.Add="Add New"
 Settings.General.ConfirmDelete="Are you sure you wish to remove the profile '$1'?"

@@ -174,7 +174,19 @@ namespace
 
     qsv_cpu_platform qsv_get_cpu_platform()
     {
+		using std::string;
+
         int cpuInfo[4];
+		__cpuid(cpuInfo, 0);
+
+		string vendor;
+		vendor += string((char*)&cpuInfo[1], 4);
+		vendor += string((char*)&cpuInfo[3], 4);
+		vendor += string((char*)&cpuInfo[2], 4);
+
+		if (vendor != "GenuineIntel")
+			return QSV_CPU_PLATFORM_UNKNOWN;
+
         __cpuid(cpuInfo, 1);
         BYTE model = ((cpuInfo[0] >> 4) & 0xF) + ((cpuInfo[0] >> 12) & 0xF0);
         BYTE family = ((cpuInfo[0] >> 8) & 0xF) + ((cpuInfo[0] >> 20) & 0xFF);
@@ -276,7 +288,7 @@ namespace
     };
 }
 
-bool CheckQSVHardwareSupport(bool log=true)
+bool CheckQSVHardwareSupport(bool log=true, bool *configurationWarning = nullptr)
 {
     safe_handle helper_process, helper_thread;
     IPCWaiter waiter;
@@ -308,6 +320,9 @@ bool CheckQSVHardwareSupport(bool log=true)
         Log(L"No Intel graphics adapter visible in QSVHelper.exe, Optimus problem?");
         warning_logged = true;
     }
+
+	if (configurationWarning)
+		*configurationWarning = code == EXIT_NO_INTEL_GRAPHICS && qsv_get_cpu_platform() != QSV_CPU_PLATFORM_UNKNOWN;
 
     if(log)
         Log(TEXT("Failed to initialize QSV hardware session"));

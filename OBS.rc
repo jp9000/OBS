@@ -133,7 +133,7 @@ BEGIN
     COMBOBOX        IDC_AUDIOBITRATE,354,99,61,62,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Settings.Encoding.Audio.Format",IDC_STATIC,10,117,138,8
     COMBOBOX        IDC_AUDIOFORMAT,152,115,264,62,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Settings.Info",IDC_INFO,4,138,417,37,NOT WS_VISIBLE
+    LTEXT           "Settings.Info",IDC_INFO,4,288,417,37,NOT WS_VISIBLE
     RTEXT           "Settings.Encoding.Video.Encoder",IDC_STATIC,10,16,138,8
     CONTROL         "Settings.Encoding.Video.Encoderx264",IDC_ENCODERX264,
                     "Button",BS_AUTORADIOBUTTON,152,16,87,10
@@ -141,6 +141,7 @@ BEGIN
                     "Button",BS_AUTORADIOBUTTON,240,16,87,10
     CONTROL         "Settings.Encoding.Video.EncoderNVENC",IDC_ENCODERNVENC,
                     "Button",BS_AUTORADIOBUTTON,328,16,87,10
+    LTEXT           "Settings.Encoding.Video.QSVConfigWarning",IDC_QSV_CONFIG_WARNING,4,141,417,37
 END
 
 IDD_SETTINGS_VIDEO DIALOGEX 0, 0, 427, 336

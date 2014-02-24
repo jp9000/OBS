@@ -19,7 +19,7 @@
 
 #include "Settings.h"
 
-bool CheckQSVHardwareSupport(bool log);
+bool CheckQSVHardwareSupport(bool log, bool *configurationWarning=nullptr);
 bool CheckNVENCHardwareSupport(bool log);
 
 //============================================================================
@@ -144,7 +144,9 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 //--------------------------------------------
 
-                hasQSV = CheckQSVHardwareSupport(false);
+				bool showQSVConfigurationWarning = false;
+
+                hasQSV = CheckQSVHardwareSupport(false, &showQSVConfigurationWarning);
                 hasNVENC = CheckNVENCHardwareSupport(false);
 
                 String vcodec = AppConfig->GetString(L"Video Encoding", L"Encoder");
@@ -159,6 +161,8 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 EnableWindow(GetDlgItem(hwnd, IDC_ENCODERQSV), hasQSV || useQSV);
                 EnableWindow(GetDlgItem(hwnd, IDC_ENCODERNVENC), hasNVENC || useNVENC);
+
+				ShowWindow(GetDlgItem(hwnd, IDC_QSV_CONFIG_WARNING), showQSVConfigurationWarning ? SW_SHOW : SW_HIDE);
 
                 //--------------------------------------------
 
