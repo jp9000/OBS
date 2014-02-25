@@ -2273,11 +2273,15 @@ void OBS::AddProfilesToMenu(HMENU menu)
 {
     StringList profileList;
     GetProfiles(profileList);
+
+	bool rtl = LocaleIsRTL();
     for(UINT i=0; i<profileList.Num(); i++)
     {
         String &strProfile = profileList[i];
 
         UINT flags = MF_STRING;
+		if (rtl)
+			flags |= MFT_RIGHTORDER | MFT_RIGHTJUSTIFY;
         if(strProfile.CompareI(GetCurrentProfile()))
             flags |= MF_CHECKED;
 

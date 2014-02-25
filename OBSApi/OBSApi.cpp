@@ -116,8 +116,8 @@ void LocalizeMenu(HMENU hMenu, LocaleStringLookup *lookup)
         mii.fMask = MIIM_STRING|MIIM_FTYPE;
         mii.dwTypeData = strName.Array();
 
-        if (bRTL)
-            mii.fType |= MFT_RIGHTORDER;
+		if (bRTL)
+			mii.fType |= MFT_RIGHTORDER | MFT_RIGHTJUSTIFY;
 
         SetMenuItemInfo(hMenu, i, TRUE, &mii);
 
@@ -128,9 +128,8 @@ void LocalizeMenu(HMENU hMenu, LocaleStringLookup *lookup)
 
 int OBSMessageBox(HWND hwnd, LPCTSTR lpText, LPCTSTR lpCaption, UINT flags)
 {
-    bool bRTL = scmpi(Str("RightToLeft"), L"true") == 0;
-    if (bRTL)
-        flags |= MB_RTLREADING;
+	if (LocaleIsRTL())
+        flags |= MB_RTLREADING | MB_RIGHT;
 
     return MessageBox(hwnd, lpText, lpCaption, flags);
 }
