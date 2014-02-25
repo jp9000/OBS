@@ -1,3 +1,4 @@
+
 Add="Hozzáad"
 Preview="Előnézet"
 Order="Sorrend"
@@ -144,15 +145,11 @@ Settings.Advanced.UnlockHigherFPS="61-120 FPS közötti érték engedélyezése 
 Settings.Advanced.UseCBR="CBR Használata"
 Settings.Advanced.UseCFR="CFR használata"
 Settings.Advanced.UseMultithreadedOptimizations="Használj Többszálas Optimalizálást"
-Settings.Advanced.UseQSV="Quick Sync használata"
-Settings.Advanced.QSVUseVideoEncoderSettingsToolTip="Jelenleg csak keyint és bframes van támogatva."
-Settings.Advanced.UseNVENC="Nvidia NVENC használata"
 Settings.Advanced.SceneBufferTime="Jelenet pufferelési ideje (milliszekundum):"
 Settings.Advanced.VideoEncoderCPUTradeoff="x264 CPU Beállítás:"
 Settings.Advanced.VideoEncoderCPUTradeoffToolTip="Ennek az értéknek a magasabbra állítása könnyít a proceszzor terhelésén minőségi romlásért cserében. Ugyanakkor az érték csökkentése növeli a processzor terhelését jobb minőség elérésének érdekében.\r\n\r\nAjánlott: Very Fast"
 Settings.Advanced.VideoEncoderSettings="Egyedi x264 Kódoló Beállítás"
 Settings.Advanced.VideoEncoderSettingsTooltip="Ez engedélyezi egyedi x264 kódolási beállítások hozzáadását. A használható format [parameter]=[value] (pl.: \"vbv-maxrate=1000 vbv-bufsize=1000\")."
-Settings.Advanced.X264Profile="x264 kódolási profil:"
 
 Settings.Advanced.Priority.Idle="Tétlen"
 Settings.Advanced.Priority.Normal="Normál"
