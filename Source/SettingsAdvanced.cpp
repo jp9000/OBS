@@ -22,9 +22,6 @@
 #include <Winsock2.h>
 #include <iphlpapi.h>
 
-bool CheckQSVHardwareSupport(bool log);
-bool CheckNVENCHardwareSupport(bool log);
-
 //============================================================================
 // SettingsAdvanced class
 
