@@ -1643,7 +1643,7 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                             if(windowID >= info->strClasses.Num())
                             {
-                                MessageBox(hwnd, Str("Sources.SoftwareCaptureSource.WindowNotFound"), NULL, 0);
+                                OBSMessageBox(hwnd, Str("Sources.SoftwareCaptureSource.WindowNotFound"), NULL, 0);
                                 break;
                             }
 
@@ -1663,12 +1663,12 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                             if(!regionWindowData.hwndCaptureWindow)
                             {
-                                MessageBox(hwnd, Str("Sources.SoftwareCaptureSource.WindowNotFound"), NULL, 0);
+                                OBSMessageBox(hwnd, Str("Sources.SoftwareCaptureSource.WindowNotFound"), NULL, 0);
                                 break;
                             }
                             else if(IsIconic(regionWindowData.hwndCaptureWindow))
                             {
-                                MessageBox(hwnd, Str("Sources.SoftwareCaptureSource.WindowMinimized"), NULL, 0);
+                                OBSMessageBox(hwnd, Str("Sources.SoftwareCaptureSource.WindowMinimized"), NULL, 0);
                                 break;
                             }
 
@@ -1988,7 +1988,7 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                             DwmIsCompositionEnabled(&bComposition);
                             
                             if (bComposition)
-                                MessageBox (hwnd, Str("Sources.SoftwareCaptureSource.WarningAero"), TEXT("Warning"), MB_ICONEXCLAMATION);
+                                OBSMessageBox (hwnd, Str("Sources.SoftwareCaptureSource.WarningAero"), TEXT("Warning"), MB_ICONEXCLAMATION);
                         }
                     }
 

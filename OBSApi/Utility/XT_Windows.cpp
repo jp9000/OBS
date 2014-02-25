@@ -52,6 +52,8 @@ BOOL        bWindows8 = 0;
 
 HWND        hwndMainAppWindow = NULL;
 
+extern int OBSMessageBox(HWND hwnd, LPCTSTR lpText, LPCTSTR lpCaption, UINT flags);
+
 struct OSFileChangeData
 {
     HANDLE hDirectory;
@@ -175,7 +177,7 @@ void __cdecl OSMessageBoxva(const TCHAR *format, va_list argptr)
     TCHAR blah[4096];
     vtsprintf_s(blah, 4095, format, argptr);
 
-    MessageBox(hwndMainAppWindow, blah, NULL, MB_ICONWARNING);
+    OBSMessageBox(hwndMainAppWindow, blah, NULL, MB_ICONWARNING);
 }
 
 void __cdecl OSMessageBox(const TCHAR *format, ...)
@@ -942,13 +944,13 @@ VOID STDCALL OSCheckForBuggyDLLs ()
     if (moduleList.HasValue(TEXT("sendori.dll")))
     {
         Log(TEXT("BUGGY DLL DETECTED: sendori.dll"));
-        MessageBox (hwndMainAppWindow, TEXT("Your system appears to be infected with the Sendori malware, which can crash OBS and cause other problems. Please run a malware scan."), TEXT("Warning"), MB_ICONEXCLAMATION);
+        OBSMessageBox (hwndMainAppWindow, TEXT("Your system appears to be infected with the Sendori malware, which can crash OBS and cause other problems. Please run a malware scan."), TEXT("Warning"), MB_ICONEXCLAMATION);
     }
 
     if (moduleList.HasValue(TEXT("qproxy.dll")))
     {
         Log(TEXT("BUGGY DLL DETECTED: qproxy.dll"));
-        MessageBox (hwndMainAppWindow, TEXT("Your system has an unknown LSP module installed which can cause OBS crashes / lag and other problems. Please remove qproxy.dll using a tool such as autoruns, or reset your TCP/IP settings (search KB299357 for more information)."), TEXT("Warning"), MB_ICONEXCLAMATION);
+        OBSMessageBox (hwndMainAppWindow, TEXT("Your system has an unknown LSP module installed which can cause OBS crashes / lag and other problems. Please remove qproxy.dll using a tool such as autoruns, or reset your TCP/IP settings (search KB299357 for more information)."), TEXT("Warning"), MB_ICONEXCLAMATION);
     }
 
     //FIXME: add a version check for bigfoot networks LSP (bfllr.dll), crashes OBS on old versions.

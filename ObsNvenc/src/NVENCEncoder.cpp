@@ -199,7 +199,7 @@ void NVENCEncoder::init()
     {
         encoder = 0;
 
-        MessageBox(NULL,
+        OBSMessageBox(NULL,
             Str("Encoder.NVENC.OldDriver"),
             NULL,
             MB_OK | MB_ICONERROR);

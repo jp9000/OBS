@@ -270,7 +270,7 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                         if(!AppConfig->Open(strProfilePath))
                         {
-                            MessageBox(hwnd, TEXT("Error - unable to open ini file"), NULL, 0);
+                            OBSMessageBox(hwnd, TEXT("Error - unable to open ini file"), NULL, 0);
                             break;
                         }
 
@@ -315,7 +315,7 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                         strProfilePath << lpAppDataPath << TEXT("\\profiles\\") << strProfile << TEXT(".ini");
 
                         if((!bRenaming || !strProfilePath.CompareI(strCurProfilePath)) && OSFileExists(strProfilePath))
-                            MessageBox(hwnd, Str("Settings.General.ProfileExists"), NULL, 0);
+                            OBSMessageBox(hwnd, Str("Settings.General.ProfileExists"), NULL, 0);
                         else
                         {
                             if(bRenaming)
@@ -333,7 +333,7 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                             {
                                 if(!AppConfig->SaveAs(strProfilePath))
                                 {
-                                    MessageBox(hwnd, TEXT("Error - unable to create new profile, could not create file"), NULL, 0);
+                                    OBSMessageBox(hwnd, TEXT("Error - unable to create new profile, could not create file"), NULL, 0);
                                     break;
                                 }
                             }
@@ -366,7 +366,7 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                         String strConfirm = Str("Settings.General.ConfirmDelete");
                         strConfirm.FindReplace(TEXT("$1"), strCurProfile);
-                        if(MessageBox(hwnd, strConfirm, Str("DeleteConfirm.Title"), MB_YESNO) == IDYES)
+                        if(OBSMessageBox(hwnd, strConfirm, Str("DeleteConfirm.Title"), MB_YESNO) == IDYES)
                         {
                             UINT id = (UINT)SendMessage(hwndProfileList, CB_FINDSTRINGEXACT, -1, (LPARAM)strCurProfile.Array());
                             if(id != CB_ERR)

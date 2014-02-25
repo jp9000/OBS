@@ -1275,7 +1275,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                         {
                             String strError = Str("Sources.TextSource.FontNotFound");
                             strError.FindReplace(TEXT("$1"), strFontDisplayName);
-                            MessageBox(hwnd, strError, NULL, 0);
+                            OBSMessageBox(hwnd, strError, NULL, 0);
                             break;
                         }
 
@@ -1297,7 +1297,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                                     String strError = Str("Sources.TextSource.FileNotFound");
                                     strError.FindReplace(TEXT("$1"), strFile);
 
-                                    MessageBox(hwnd, strError, NULL, 0);
+                                    OBSMessageBox(hwnd, strError, NULL, 0);
                                     break;
                                 }
 
@@ -1323,7 +1323,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                             {
                                 String strError = Str("Sources.TextSource.FontNotFound");
                                 strError.FindReplace(TEXT("$1"), strFontDisplayName);
-                                MessageBox(hwnd, strError, NULL, 0);
+                                OBSMessageBox(hwnd, strError, NULL, 0);
                                 DeleteDC(hDC);
                                 break;
                             }

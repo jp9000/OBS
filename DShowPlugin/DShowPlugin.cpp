@@ -2020,7 +2020,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         SIZE resolution;
                         if(!GetResolution(GetDlgItem(hwnd, IDC_RESOLUTION), resolution, FALSE))
                         {
-                            MessageBox(hwnd, PluginStr("DeviceSelection.InvalidResolution"), NULL, 0);
+                            OBSMessageBox(hwnd, PluginStr("DeviceSelection.InvalidResolution"), NULL, 0);
                             break;
                         }
 
@@ -2044,7 +2044,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         if(strFPS == TEXT("0") || fpsVal == 0.0)
                         {
-                            MessageBox(hwnd, PluginStr("DeviceSelection.UnsupportedResolution"), NULL, 0);
+                            OBSMessageBox(hwnd, PluginStr("DeviceSelection.UnsupportedResolution"), NULL, 0);
                             break;
                         }
 
@@ -2054,13 +2054,13 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                             if(CurrentDeviceExists(strDevice, configData->bGlobalSource, bFoundGlobal))
                             {
                                 if(bFoundGlobal)
-                                    MessageBox(hwnd, PluginStr("DeviceSelection.GlobalExists"), NULL, 0);
+                                    OBSMessageBox(hwnd, PluginStr("DeviceSelection.GlobalExists"), NULL, 0);
                                 else
                                 {
                                     if(configData->bGlobalSource)
-                                        MessageBox(hwnd, PluginStr("DeviceSelection.ExistsSomewhere"), NULL, 0);
+                                        OBSMessageBox(hwnd, PluginStr("DeviceSelection.ExistsSomewhere"), NULL, 0);
                                     else
-                                        MessageBox(hwnd, PluginStr("DeviceSelection.ExistsInScene"), NULL, 0);
+                                        OBSMessageBox(hwnd, PluginStr("DeviceSelection.ExistsInScene"), NULL, 0);
                                 }
 
                                 break;

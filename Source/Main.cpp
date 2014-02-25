@@ -404,7 +404,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 {
     if (!HasSSE2Support())
     {
-        MessageBox (NULL, TEXT("OBS requires an SSE2-compatible CPU."), TEXT("Unsupported CPU"), MB_ICONERROR);
+        OBSMessageBox (NULL, TEXT("OBS requires an SSE2-compatible CPU."), TEXT("Unsupported CPU"), MB_ICONERROR);
         return 1;
     }
 

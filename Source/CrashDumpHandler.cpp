@@ -572,7 +572,7 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
 
     fnSymCleanup (hProcess);
 
-    if (MessageBox(hwndMain, TEXT("Woops! OBS has crashed. Would you like to view a crash report?"), NULL, MB_ICONERROR | MB_YESNO) == IDYES)
+    if (OBSMessageBox(hwndMain, TEXT("Woops! OBS has crashed. Would you like to view a crash report?"), NULL, MB_ICONERROR | MB_YESNO) == IDYES)
         ShellExecute(NULL, NULL, logPath, NULL, searchPath, SW_SHOWDEFAULT);
 
     FreeLibrary (hDbgHelp);

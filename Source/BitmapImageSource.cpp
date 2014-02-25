@@ -443,7 +443,7 @@ INT_PTR CALLBACK ConfigureBitmapProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         String strBitmap = GetEditText(GetDlgItem(hwnd, IDC_BITMAP));
                         if(strBitmap.IsEmpty())
                         {
-                            MessageBox(hwnd, Str("Sources.BitmapSource.Empty"), NULL, 0);
+                            OBSMessageBox(hwnd, Str("Sources.BitmapSource.Empty"), NULL, 0);
                             break;
                         }
 

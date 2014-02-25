@@ -149,7 +149,7 @@ bool OBS::StartRecording()
         if(!fileStream)
         {
             Log(TEXT("Warning - OBSCapture::Start: Unable to create the file stream. Check the file path in Broadcast Settings."));
-            MessageBox(hwndMain, Str("Capture.Start.FileStream.Warning"), Str("Capture.Start.FileStream.WarningCaption"), MB_OK | MB_ICONWARNING);        
+            OBSMessageBox(hwndMain, Str("Capture.Start.FileStream.Warning"), Str("Capture.Start.FileStream.WarningCaption"), MB_OK | MB_ICONWARNING);        
             bRecording = false;
             success = false;
         }
@@ -242,7 +242,7 @@ retryHookTest:
     if (OSIncompatibleModulesLoaded())
     {
         Log(TEXT("Incompatible modules (pre-D3D) detected."));
-        int ret = MessageBox(hwndMain, Str("IncompatibleModules"), NULL, MB_ICONERROR | MB_ABORTRETRYIGNORE);
+        int ret = OBSMessageBox(hwndMain, Str("IncompatibleModules"), NULL, MB_ICONERROR | MB_ABORTRETRYIGNORE);
         if (ret == IDABORT)
         {
             DisableMenusWhileStreaming(false);
@@ -263,7 +263,7 @@ retryHookTest:
     {
         DisableMenusWhileStreaming(true);
         OSLeaveMutex (hStartupShutdownMutex);
-        MessageBox(hwndMain, strPatchesError.Array(), NULL, MB_ICONERROR);
+        OBSMessageBox(hwndMain, strPatchesError.Array(), NULL, MB_ICONERROR);
         Log(TEXT("Incompatible patches detected."));
         bStartingUp = false;
         return;
@@ -303,7 +303,7 @@ retryHookTest:
         OSLeaveMutex (hStartupShutdownMutex);
 
         if(!bReconnecting)
-            MessageBox(hwndMain, strError, NULL, MB_ICONERROR);
+            OBSMessageBox(hwndMain, strError, NULL, MB_ICONERROR);
         else
             DialogBox(hinstMain, MAKEINTRESOURCE(IDD_RECONNECTING), hwndMain, OBS::ReconnectDialogProc);
         bStartingUp = false;
@@ -368,7 +368,7 @@ retryHookTestV2:
         if (OSIncompatibleModulesLoaded())
         {
             Log(TEXT("Incompatible modules (post-D3D) detected."));
-            int ret = MessageBox(hwndMain, Str("IncompatibleModules"), NULL, MB_ICONERROR | MB_ABORTRETRYIGNORE);
+            int ret = OBSMessageBox(hwndMain, Str("IncompatibleModules"), NULL, MB_ICONERROR | MB_ABORTRETRYIGNORE);
             if (ret == IDABORT)
             {
                 //FIXME: really need a better way to abort startup than this...
@@ -525,7 +525,7 @@ retryHookTestV2:
             micAudio = CreateAudioSource(true, strDevice);
 
             if(!micAudio)
-                MessageBox(hwndMain, Str("MicrophoneFailure"), NULL, 0);
+                OBSMessageBox(hwndMain, Str("MicrophoneFailure"), NULL, 0);
             else
                 micAudio->SetTimeOffset(AppConfig->GetInt(TEXT("Audio"), TEXT("MicTimeOffset"), 0));
 
@@ -601,7 +601,7 @@ retryHookTestV2:
     }
 
     if(scene && scene->HasMissingSources())
-        MessageBox(hwndMain, Str("Scene.MissingSources"), NULL, 0);
+        OBSMessageBox(hwndMain, Str("Scene.MissingSources"), NULL, 0);
 
     //-------------------------------------------------------------
 
@@ -660,7 +660,7 @@ retryHookTestV2:
         else
             videoEncoderErrors = String(Str("Encoder.InitFailedWithReason")) + videoEncoderErrors;
 
-        MessageBox(hwndMain, videoEncoderErrors.Array(), nullptr, MB_OK | MB_ICONERROR); //might want to defer localization until here to automatically
+        OBSMessageBox(hwndMain, videoEncoderErrors.Array(), nullptr, MB_OK | MB_ICONERROR); //might want to defer localization until here to automatically
                                                                                          //output english localization to logfile
         return;
     }

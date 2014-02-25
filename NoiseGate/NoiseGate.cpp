@@ -211,7 +211,7 @@ bool NoiseGateSettings::HasDefaults() const
 
 void NoiseGateSettings::SetDefaults()
 {
-    if(MessageBox(hwnd, Str("Plugins.NoiseGate.ConfirmReset"), Str("Plugins.NoiseGate.ResetToDefaults"), MB_YESNO) == IDYES)
+    if(OBSMessageBox(hwnd, Str("Plugins.NoiseGate.ConfirmReset"), Str("Plugins.NoiseGate.ResetToDefaults"), MB_YESNO) == IDYES)
     {
         parent->LoadDefaults();
         RefreshConfig();

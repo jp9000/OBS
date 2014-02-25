@@ -126,6 +126,15 @@ void LocalizeMenu(HMENU hMenu, LocaleStringLookup *lookup)
     }
 }
 
+int OBSMessageBox(HWND hwnd, LPCTSTR lpText, LPCTSTR lpCaption, UINT flags)
+{
+    bool bRTL = scmpi(locale->LookupString(L"RightToLeft"), L"true") == 0;
+    if (bRTL)
+        flags |= MB_RTLREADING;
+
+    return MessageBox(hwnd, lpText, lpCaption, flags);
+}
+
 String GetLBText(HWND hwndList, UINT id)
 {
     UINT curSel = (id != LB_ERR) ? id : (UINT)SendMessage(hwndList, LB_GETCURSEL, 0, 0);

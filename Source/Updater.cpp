@@ -435,11 +435,11 @@ DWORD WINAPI CheckUpdateThread (VOID *arg)
                 {
                     updateInfo << TEXT("\r\n") << Str("Updater.DownloadNow");
 
-                    if (MessageBox (NULL, updateInfo.Array(), Str("Updater.UpdatesAvailable"), MB_ICONQUESTION|MB_YESNO) == IDYES)
+                    if (OBSMessageBox (NULL, updateInfo.Array(), Str("Updater.UpdatesAvailable"), MB_ICONQUESTION|MB_YESNO) == IDYES)
                     {
                         if (App->IsRunning())
                         {
-                            if (MessageBox (NULL, Str("Updater.RunningWarning"), NULL, MB_ICONEXCLAMATION|MB_YESNO) == IDNO)
+                            if (OBSMessageBox (NULL, Str("Updater.RunningWarning"), NULL, MB_ICONEXCLAMATION|MB_YESNO) == IDNO)
                                 goto abortUpdate;
                         }
 
@@ -498,7 +498,7 @@ DWORD WINAPI CheckUpdateThread (VOID *arg)
     }
 
     if (notify && !updatesAvailable)
-        MessageBox (hwndMain, Str("Updater.NoUpdatesAvailable"), NULL, MB_ICONINFORMATION);
+        OBSMessageBox (hwndMain, Str("Updater.NoUpdatesAvailable"), NULL, MB_ICONINFORMATION);
 
 abortUpdate:
 

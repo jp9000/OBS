@@ -436,7 +436,7 @@ INT_PTR CALLBACK ConfigureBitmapTransitionProc(HWND hwnd, UINT message, WPARAM w
                         UINT numBitmaps = (UINT)SendMessage(hwndBitmaps, LB_GETCOUNT, 0, 0);
                         if(!numBitmaps)
                         {
-                            MessageBox(hwnd, Str("Sources.TransitionSource.Empty"), NULL, 0);
+                            OBSMessageBox(hwnd, Str("Sources.TransitionSource.Empty"), NULL, 0);
                             break;
                         }
 

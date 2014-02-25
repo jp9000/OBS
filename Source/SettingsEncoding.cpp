@@ -64,14 +64,14 @@ void SettingsEncoding::ApplySettings()
     bool useNVENC_prev = !!(vcodec == L"NVENC");
 
     if (!hasQSV && !useQSV && useQSV_prev &&
-        MessageBox(hwnd, Str("Settings.Encoding.Video.EncoderQSVDisabledAfterApply"), Str("MessageBoxWarningCaption"), MB_ICONEXCLAMATION | MB_OKCANCEL) != IDOK)
+        OBSMessageBox(hwnd, Str("Settings.Encoding.Video.EncoderQSVDisabledAfterApply"), Str("MessageBoxWarningCaption"), MB_ICONEXCLAMATION | MB_OKCANCEL) != IDOK)
     {
         SetAbortApplySettings(true);
         return;
     }
 
     if (!hasNVENC && !useNVENC && useNVENC_prev &&
-        MessageBox(hwnd, Str("Settings.Encoding.Video.EncoderNVENCDisabledAfterApply"), Str("MessageBoxWarningCaption"), MB_ICONEXCLAMATION | MB_OKCANCEL) != IDOK)
+        OBSMessageBox(hwnd, Str("Settings.Encoding.Video.EncoderNVENCDisabledAfterApply"), Str("MessageBoxWarningCaption"), MB_ICONEXCLAMATION | MB_OKCANCEL) != IDOK)
     {
         SetAbortApplySettings(true);
         return;

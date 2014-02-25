@@ -130,7 +130,7 @@ class MP4FileStream : public VideoFileStream
                 switch(LOWORD(wParam))
                 {
                     case IDCANCEL:
-                        if(MessageBox(hwnd, Str("MP4ProgressDialog.ConfirmStop"), Str("MP4ProgressDialog.ConfirmStopTitle"), MB_YESNO) == IDYES)
+                        if(OBSMessageBox(hwnd, Str("MP4ProgressDialog.ConfirmStop"), Str("MP4ProgressDialog.ConfirmStopTitle"), MB_YESNO) == IDYES)
                         {
                             MP4FileStream *fileStream = (MP4FileStream*)GetWindowLongPtr(hwnd, DWLP_USER);
                             fileStream->bCancelMP4Build = true;

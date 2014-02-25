@@ -98,7 +98,7 @@ INT_PTR CALLBACK OBS::EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM 
                         str.SetLength((UINT)SendMessage(GetDlgItem(hwnd, IDC_NAME), WM_GETTEXTLENGTH, 0, 0));
                         if(!str.Length())
                         {
-                            MessageBox(hwnd, Str("EnterName"), NULL, 0);
+                            OBSMessageBox(hwnd, Str("EnterName"), NULL, 0);
                             break;
                         }
 
@@ -117,7 +117,7 @@ INT_PTR CALLBACK OBS::EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM 
                             {
                                 String strExists = Str("NameExists");
                                 strExists.FindReplace(TEXT("$1"), str);
-                                MessageBox(hwnd, strExists, NULL, 0);
+                                OBSMessageBox(hwnd, strExists, NULL, 0);
                                 break;
                             }
                         }
@@ -178,7 +178,7 @@ INT_PTR CALLBACK OBS::SceneHotkeyDialogProc(HWND hwnd, UINT message, WPARAM wPar
                                 XElement *sceneElement = scenes->GetElementByID(i);
                                 if(sceneElement->GetInt(TEXT("hotkey")) == hotkey)
                                 {
-                                    MessageBox(hwnd, Str("Scene.Hotkey.AlreadyInUse"), NULL, 0);
+                                    OBSMessageBox(hwnd, Str("Scene.Hotkey.AlreadyInUse"), NULL, 0);
                                     return 0;
                                 }
                             }
@@ -220,7 +220,7 @@ INT_PTR CALLBACK OBS::EnterSceneNameDialogProc(HWND hwnd, UINT message, WPARAM w
                         str.SetLength((UINT)SendMessage(GetDlgItem(hwnd, IDC_NAME), WM_GETTEXTLENGTH, 0, 0));
                         if(!str.Length())
                         {
-                            MessageBox(hwnd, Str("EnterName"), NULL, 0);
+                            OBSMessageBox(hwnd, Str("EnterName"), NULL, 0);
                             break;
                         }
 
@@ -234,7 +234,7 @@ INT_PTR CALLBACK OBS::EnterSceneNameDialogProc(HWND hwnd, UINT message, WPARAM w
                         {
                             String strExists = Str("NameExists");
                             strExists.FindReplace(TEXT("$1"), str);
-                            MessageBox(hwnd, strExists, NULL, 0);
+                            OBSMessageBox(hwnd, strExists, NULL, 0);
                             break;
                         }
 
@@ -434,7 +434,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 case ID_LISTBOX_REMOVE:
                     App->EnableSceneSwitching(false);
 
-                    if(MessageBox(hwndMain, Str("DeleteConfirm"), Str("DeleteConfirm.Title"), MB_YESNO) == IDYES)
+                    if(OBSMessageBox(hwndMain, Str("DeleteConfirm"), Str("DeleteConfirm.Title"), MB_YESNO) == IDYES)
                     {
                         DWORD hotkey = item->GetInt(TEXT("hotkey"));
                         if(hotkey)
@@ -1139,7 +1139,7 @@ void OBS::DeleteItems()
 
     if(selectedIDs.Num())
     {
-        if(MessageBox(hwndMain, Str("DeleteConfirm"), Str("DeleteConfirm.Title"), MB_YESNO) == IDYES)
+        if(OBSMessageBox(hwndMain, Str("DeleteConfirm"), Str("DeleteConfirm.Title"), MB_YESNO) == IDYES)
         {
             if(selectedSceneItems.Num())
             {
@@ -1765,7 +1765,7 @@ INT_PTR CALLBACK OBS::EnterGlobalSourceNameDialogProc(HWND hwnd, UINT message, W
                         str.SetLength((UINT)SendMessage(GetDlgItem(hwnd, IDC_NAME), WM_GETTEXTLENGTH, 0, 0));
                         if(!str.Length())
                         {
-                            MessageBox(hwnd, Str("EnterName"), NULL, 0);
+                            OBSMessageBox(hwnd, Str("EnterName"), NULL, 0);
                             break;
                         }
 
@@ -1781,7 +1781,7 @@ INT_PTR CALLBACK OBS::EnterGlobalSourceNameDialogProc(HWND hwnd, UINT message, W
                             {
                                 String strExists = Str("NameExists");
                                 strExists.FindReplace(TEXT("$1"), str);
-                                MessageBox(hwnd, strExists, NULL, 0);
+                                OBSMessageBox(hwnd, strExists, NULL, 0);
                                 break;
                             }
                         }
@@ -1888,7 +1888,7 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                         if(!globals)
                             break;
 
-                        if(MessageBox(hwnd, Str("GlobalSources.DeleteConfirm"), Str("DeleteConfirm.Title"), MB_YESNO) == IDNO)
+                        if(OBSMessageBox(hwnd, Str("GlobalSources.DeleteConfirm"), Str("DeleteConfirm.Title"), MB_YESNO) == IDNO)
                             break;
 
                         App->EnterSceneMutex();
@@ -2561,7 +2561,7 @@ INT_PTR CALLBACK LogUploadResultProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         break;
 
                     if (!ShellExecute(nullptr, nullptr, url.Array(), nullptr, nullptr, SW_SHOWDEFAULT))
-                        MessageBox(hwnd, Str("LogUploader.FailedToAnalyze"), nullptr, MB_ICONERROR);
+                        OBSMessageBox(hwnd, Str("LogUploader.FailedToAnalyze"), nullptr, MB_ICONERROR);
                     break;
                 }
             }
@@ -2597,7 +2597,7 @@ INT_PTR CALLBACK LogUploadResultProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 void ShowLogUploadResult(LogUploadResult &result, bool success)
 {
     if (!success) {
-        MessageBox(hwndMain, result.errors.Array(), nullptr, MB_ICONEXCLAMATION);
+        OBSMessageBox(hwndMain, result.errors.Array(), nullptr, MB_ICONEXCLAMATION);
         return;
     }
 
@@ -2967,7 +2967,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
                                 if(!AppConfig->Open(strProfilePath))
                                 {
-                                    MessageBox(hwnd, TEXT("Error - unable to open ini file"), NULL, 0);
+                                    OBSMessageBox(hwnd, TEXT("Error - unable to open ini file"), NULL, 0);
                                     break;
                                 }
 
@@ -3014,7 +3014,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                             }
 
                             String error = Str("Sources.TextSource.FileNotFound");
-                            MessageBox(hwndMain, error.FindReplace(L"$1", tar.Array()).Array(), nullptr, MB_ICONERROR);
+                            OBSMessageBox(hwndMain, error.FindReplace(L"$1", tar.Array()).Array(), nullptr, MB_ICONERROR);
                         }
                     }
             }
@@ -3301,11 +3301,11 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
             {
                 if(App->streamReport.IsValid())
                 {
-                    MessageBox(hwndMain, App->streamReport.Array(), Str("StreamReport"), MB_ICONEXCLAMATION);
+                    OBSMessageBox(hwndMain, App->streamReport.Array(), Str("StreamReport"), MB_ICONEXCLAMATION);
                     App->streamReport.Clear();
                 }
                 else
-                    MessageBox(hwnd, Str("Connection.Disconnected"), NULL, MB_ICONEXCLAMATION);
+                    OBSMessageBox(hwnd, Str("Connection.Disconnected"), NULL, MB_ICONEXCLAMATION);
             }
             else if(wParam == 0)
             {
