@@ -1,3 +1,5 @@
+RightToLeft="false"
+
 Add="Add"
 Preview="Preview"
 Order="Order"
