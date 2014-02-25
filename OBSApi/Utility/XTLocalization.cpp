@@ -569,6 +569,11 @@ LocaleNativeName* STDCALL GetLocaleNativeName(CTSTR lpCode)
     return NULL;
 }
 
+bool LocaleIsRTL(LocaleStringLookup *l)
+{
+	return scmpi(l->LookupString(L"RightToLeft"), L"true") == 0;
+}
+
 #endif
 
 

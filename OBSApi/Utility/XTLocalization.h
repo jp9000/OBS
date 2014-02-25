@@ -114,4 +114,6 @@ struct LocaleNativeName
 };
 
 BASE_EXPORT LocaleNativeName* STDCALL GetLocaleNativeName(CTSTR lpCode);
+
+BASE_EXPORT bool LocaleIsRTL(LocaleStringLookup *l = locale);
 #endif

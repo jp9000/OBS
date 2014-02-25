@@ -284,7 +284,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 ti.uFlags = TTF_SUBCLASS|TTF_IDISHWND;
                 ti.hwnd = hwnd;
 
-                if (scmpi(Str("RightToLeft"), L"true") == 0)
+                if (LocaleIsRTL())
                     ti.uFlags |= TTF_RTLREADING;
 
                 SendMessage(hwndToolTip, TTM_SETMAXTIPWIDTH, 0, 500);
