@@ -797,21 +797,23 @@ OBS::~OBS()
     WINDOWPLACEMENT placement;
     placement.length = sizeof(placement);
     GetWindowPlacement(hwndMain, &placement);
-    GlobalConfig->SetInt(TEXT("General"), TEXT("PosX"), placement.rcNormalPosition.left);
-    GlobalConfig->SetInt(TEXT("General"), TEXT("PosY"), placement.rcNormalPosition.top);
+	RECT rect = { 0 };
+	GetWindowRect(hwndMain, &rect);
+    GlobalConfig->SetInt(TEXT("General"), TEXT("PosX"), rect.left);
+    GlobalConfig->SetInt(TEXT("General"), TEXT("PosY"), rect.top);
     GlobalConfig->SetInt(TEXT("General"), TEXT("Width"),
-            placement.rcNormalPosition.right - placement.rcNormalPosition.left -
+            rect.right - rect.left -
             GetSystemMetrics(SM_CXSIZEFRAME) * 2);
     GlobalConfig->SetInt(TEXT("General"), TEXT("Height"),
-            placement.rcNormalPosition.bottom - placement.rcNormalPosition.top -
+            rect.bottom - rect.top -
             GetSystemMetrics(SM_CYSIZEFRAME) * 2 - GetSystemMetrics(SM_CYCAPTION) - GetSystemMetrics(SM_CYMENU));
     GlobalConfig->SetInt(TEXT("General"), TEXT("Maximized"), placement.showCmd == SW_SHOWMAXIMIZED ? 1 : 0);
 
-    GetWindowPlacement(hwndLogWindow, &placement);
-    GlobalConfig->SetInt(TEXT("General"), TEXT("LogPosX"), placement.rcNormalPosition.left);
-    GlobalConfig->SetInt(TEXT("General"), TEXT("LogPosY"), placement.rcNormalPosition.top);
-    GlobalConfig->SetInt(TEXT("General"), TEXT("LogSizeX"), placement.rcNormalPosition.right - placement.rcNormalPosition.left);
-    GlobalConfig->SetInt(TEXT("General"), TEXT("LogSizeY"), placement.rcNormalPosition.bottom - placement.rcNormalPosition.top);
+	GetWindowRect(hwndLogWindow, &rect);
+    GlobalConfig->SetInt(TEXT("General"), TEXT("LogPosX"), rect.left);
+    GlobalConfig->SetInt(TEXT("General"), TEXT("LogPosY"), rect.top);
+    GlobalConfig->SetInt(TEXT("General"), TEXT("LogSizeX"), rect.right - rect.left);
+    GlobalConfig->SetInt(TEXT("General"), TEXT("LogSizeY"), rect.bottom - rect.top);
     
     // Save control panel visibility
     GlobalConfig->SetInt(TEXT("General"), TEXT("PanelVisibleWindowed"), bPanelVisibleWindowed ? 1 : 0);
