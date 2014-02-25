@@ -25,11 +25,30 @@ APIInterface *API = NULL;
 
 void ApplyRTL(HWND hwnd, bool bRTL)
 {
-    if (bRTL) {
-        LONG_PTR styles = GetWindowLongPtr(hwnd, GWL_EXSTYLE);
-        styles |= WS_EX_RTLREADING;
-        SetWindowLongPtr(hwnd, GWL_EXSTYLE, styles);
-    }
+	if (!bRTL)
+		return;
+	
+	TCHAR controlClassName[128];
+	GetClassName(hwnd, controlClassName, 128);
+	if (scmpi(controlClassName, L"Static") == 0)
+	{
+		LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
+		bool invert = (style & SS_RIGHT) != 0;
+		if (invert)
+			style ^= SS_RIGHT;
+		else
+			style |= SS_RIGHT;
+		SetWindowLongPtr(hwnd, GWL_STYLE, style);
+	}
+
+	LONG_PTR styles = GetWindowLongPtr(hwnd, GWL_EXSTYLE);
+	bool invert = (styles & WS_EX_RIGHT) != 0;
+	if (invert)
+		styles ^= WS_EX_RIGHT;
+	else
+		styles |= WS_EX_RIGHT;
+	styles |= WS_EX_RTLREADING;
+	SetWindowLongPtr(hwnd, GWL_EXSTYLE, styles);
 }
 
 void LocalizeWindow(HWND hwnd, LocaleStringLookup *lookup)
@@ -50,6 +69,9 @@ void LocalizeWindow(HWND hwnd, LocaleStringLookup *lookup)
 
     //-------------------------------
 
+	RECT rect = { 0 };
+	GetClientRect(hwnd, &rect);
+
     HWND hwndChild = GetWindow(hwnd, GW_CHILD);
     while(hwndChild)
     {
@@ -58,6 +80,17 @@ void LocalizeWindow(HWND hwnd, LocaleStringLookup *lookup)
         GetWindowText(hwndChild, strText, textLen+1);
 
         ApplyRTL(hwndChild, bRTL);
+
+		if (bRTL)
+		{
+			RECT crect = { 0 };
+			GetWindowRect(hwndChild, &crect);
+
+			POINT topright = { crect.right, crect.top };
+			ScreenToClient(hwnd, &topright);
+
+			SetWindowPos(hwndChild, nullptr, rect.right - topright.x, topright.y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+		}
 
         if(strText.IsValid())
         {
