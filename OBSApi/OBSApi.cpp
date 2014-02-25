@@ -23,14 +23,27 @@
 APIInterface *API = NULL;
 
 
+void ApplyRTL(HWND hwnd, bool bRTL)
+{
+    if (bRTL) {
+        LONG_PTR styles = GetWindowLongPtr(hwnd, GWL_EXSTYLE);
+        styles |= WS_EX_RTLREADING;
+        SetWindowLongPtr(hwnd, GWL_EXSTYLE, styles);
+    }
+}
+
 void LocalizeWindow(HWND hwnd, LocaleStringLookup *lookup)
 {
     if(!lookup) lookup = locale;
+
+    bool bRTL = scmpi(locale->LookupString(L"RightToLeft"), L"true") == 0;
 
     int textLen = (int)SendMessage(hwnd, WM_GETTEXTLENGTH, 0, 0);
     String strText;
     strText.SetLength(textLen);
     GetWindowText(hwnd, strText, textLen+1);
+
+    ApplyRTL(hwnd, bRTL);
 
     if(strText.IsValid() && lookup->HasLookup(strText))
         SetWindowText(hwnd, lookup->LookupString(strText));
@@ -43,6 +56,8 @@ void LocalizeWindow(HWND hwnd, LocaleStringLookup *lookup)
         int textLen = (int)SendMessage(hwndChild, WM_GETTEXTLENGTH, 0, 0);
         strText.SetLength(textLen);
         GetWindowText(hwndChild, strText, textLen+1);
+
+        ApplyRTL(hwndChild, bRTL);
 
         if(strText.IsValid())
         {
@@ -66,6 +81,8 @@ void LocalizeMenu(HMENU hMenu, LocaleStringLookup *lookup)
     int itemCount = GetMenuItemCount(hMenu);
     if(itemCount == -1)
         return;
+
+    bool bRTL = scmpi(locale->LookupString(L"RightToLeft"), L"true") == 0;
 
     for(int i=0; i<itemCount; i++)
     {
@@ -96,8 +113,12 @@ void LocalizeMenu(HMENU hMenu, LocaleStringLookup *lookup)
         else
             strName = lookup->LookupString(strLookup);
 
-        mii.fMask = MIIM_STRING;
+        mii.fMask = MIIM_STRING|MIIM_FTYPE;
         mii.dwTypeData = strName.Array();
+
+        if (bRTL)
+            mii.fType |= MFT_RIGHTORDER;
+
         SetMenuItemInfo(hMenu, i, TRUE, &mii);
 
         if(hSubMenu)
