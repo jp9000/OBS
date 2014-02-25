@@ -36,7 +36,7 @@ void LocalizeWindow(HWND hwnd, LocaleStringLookup *lookup)
 {
     if(!lookup) lookup = locale;
 
-    bool bRTL = scmpi(locale->LookupString(L"RightToLeft"), L"true") == 0;
+    bool bRTL = scmpi(Str("RightToLeft"), L"true") == 0;
 
     int textLen = (int)SendMessage(hwnd, WM_GETTEXTLENGTH, 0, 0);
     String strText;
@@ -82,7 +82,7 @@ void LocalizeMenu(HMENU hMenu, LocaleStringLookup *lookup)
     if(itemCount == -1)
         return;
 
-    bool bRTL = scmpi(locale->LookupString(L"RightToLeft"), L"true") == 0;
+    bool bRTL = scmpi(Str("RightToLeft"), L"true") == 0;
 
     for(int i=0; i<itemCount; i++)
     {
@@ -128,7 +128,7 @@ void LocalizeMenu(HMENU hMenu, LocaleStringLookup *lookup)
 
 int OBSMessageBox(HWND hwnd, LPCTSTR lpText, LPCTSTR lpCaption, UINT flags)
 {
-    bool bRTL = scmpi(locale->LookupString(L"RightToLeft"), L"true") == 0;
+    bool bRTL = scmpi(Str("RightToLeft"), L"true") == 0;
     if (bRTL)
         flags |= MB_RTLREADING;
 

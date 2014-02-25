@@ -1297,6 +1297,9 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 ti.uFlags = TTF_SUBCLASS|TTF_IDISHWND;
                 ti.hwnd = hwnd;
 
+                if (scmpi(Str("RightToLeft"), L"true") == 0)
+                    ti.uFlags |= TTF_RTLREADING;
+
                 SendMessage(hwndToolTip, TTM_SETMAXTIPWIDTH, 0, 500);
                 SendMessage(hwndToolTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 8000);
 
