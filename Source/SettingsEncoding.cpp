@@ -42,7 +42,7 @@ CTSTR SettingsEncoding::GetCategory() const
 
 HWND SettingsEncoding::CreatePane(HWND parentHwnd)
 {
-	hwnd = OBSCreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_ENCODING), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
+    hwnd = OBSCreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_ENCODING), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
     return hwnd;
 }
 
@@ -144,7 +144,7 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 //--------------------------------------------
 
-				bool showQSVConfigurationWarning = false;
+                bool showQSVConfigurationWarning = false;
 
                 hasQSV = CheckQSVHardwareSupport(false, &showQSVConfigurationWarning);
                 hasNVENC = CheckNVENCHardwareSupport(false);
@@ -162,7 +162,7 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 EnableWindow(GetDlgItem(hwnd, IDC_ENCODERQSV), hasQSV || useQSV);
                 EnableWindow(GetDlgItem(hwnd, IDC_ENCODERNVENC), hasNVENC || useNVENC);
 
-				ShowWindow(GetDlgItem(hwnd, IDC_QSV_CONFIG_WARNING), showQSVConfigurationWarning ? SW_SHOW : SW_HIDE);
+                ShowWindow(GetDlgItem(hwnd, IDC_QSV_CONFIG_WARNING), showQSVConfigurationWarning ? SW_SHOW : SW_HIDE);
 
                 //--------------------------------------------
 

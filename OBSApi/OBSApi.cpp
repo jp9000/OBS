@@ -25,22 +25,22 @@ APIInterface *API = NULL;
 
 void ApplyRTL(HWND hwnd, bool bRTL)
 {
-	if (!bRTL)
-		return;
-	
-	TCHAR controlClassName[128];
-	GetClassName(hwnd, controlClassName, 128);
-	if (scmpi(controlClassName, L"Static") == 0)
-	{
-		LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
-		style ^= SS_RIGHT;
-		SetWindowLongPtr(hwnd, GWL_STYLE, style);
-	}
+    if (!bRTL)
+        return;
 
-	LONG_PTR styles = GetWindowLongPtr(hwnd, GWL_EXSTYLE);
-	styles ^= WS_EX_RIGHT;
-	styles |= WS_EX_RTLREADING;
-	SetWindowLongPtr(hwnd, GWL_EXSTYLE, styles);
+    TCHAR controlClassName[128];
+    GetClassName(hwnd, controlClassName, 128);
+    if (scmpi(controlClassName, L"Static") == 0)
+    {
+        LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
+        style ^= SS_RIGHT;
+        SetWindowLongPtr(hwnd, GWL_STYLE, style);
+    }
+
+    LONG_PTR styles = GetWindowLongPtr(hwnd, GWL_EXSTYLE);
+    styles ^= WS_EX_RIGHT;
+    styles |= WS_EX_RTLREADING;
+    SetWindowLongPtr(hwnd, GWL_EXSTYLE, styles);
 }
 
 void LocalizeWindow(HWND hwnd, LocaleStringLookup *lookup)
@@ -135,7 +135,7 @@ void LocalizeMenu(HMENU hMenu, LocaleStringLookup *lookup)
 
 int OBSMessageBox(HWND hwnd, LPCTSTR lpText, LPCTSTR lpCaption, UINT flags)
 {
-	if (LocaleIsRTL())
+    if (LocaleIsRTL())
         flags |= MB_RTLREADING | MB_RIGHT;
 
     return MessageBox(hwnd, lpText, lpCaption, flags);
@@ -143,28 +143,28 @@ int OBSMessageBox(HWND hwnd, LPCTSTR lpText, LPCTSTR lpCaption, UINT flags)
 
 INT_PTR OBSDialogBox(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
 {
-	if (!LocaleIsRTL())
-		return DialogBoxParam(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
+    if (!LocaleIsRTL())
+        return DialogBoxParam(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 
-	HRSRC dlg = FindResource(hInstance, lpTemplateName, RT_DIALOG);
-	HGLOBAL rsc = LoadResource(hInstance, dlg);
-	List<BYTE> tmpl;
-	tmpl.InsertArray(0, (BYTE const*)LockResource(rsc), SizeofResource(hInstance, dlg));
-	*(DWORD*)&tmpl[sizeof WORD * 2 + sizeof DWORD] |= WS_EX_LAYOUTRTL;
-	return DialogBoxIndirectParam(hInstance, (LPCDLGTEMPLATE)&tmpl[0], hWndParent, lpDialogFunc, dwInitParam);
+    HRSRC dlg = FindResource(hInstance, lpTemplateName, RT_DIALOG);
+    HGLOBAL rsc = LoadResource(hInstance, dlg);
+    List<BYTE> tmpl;
+    tmpl.InsertArray(0, (BYTE const*)LockResource(rsc), SizeofResource(hInstance, dlg));
+    *(DWORD*)&tmpl[sizeof WORD * 2 + sizeof DWORD] |= WS_EX_LAYOUTRTL;
+    return DialogBoxIndirectParam(hInstance, (LPCDLGTEMPLATE)&tmpl[0], hWndParent, lpDialogFunc, dwInitParam);
 }
 
 HWND OBSCreateDialog(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
 {
-	if (!LocaleIsRTL())
-		return CreateDialogParam(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
+    if (!LocaleIsRTL())
+        return CreateDialogParam(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 
-	HRSRC dlg = FindResource(hInstance, lpTemplateName, RT_DIALOG);
-	HGLOBAL rsc = LoadResource(hInstance, dlg);
-	List<BYTE> tmpl;
-	tmpl.InsertArray(0, (BYTE const*)LockResource(rsc), SizeofResource(hInstance, dlg));
-	*(DWORD*)&tmpl[sizeof WORD * 2 + sizeof DWORD] |= WS_EX_LAYOUTRTL;
-	return CreateDialogIndirectParam(hInstance, (LPCDLGTEMPLATE)&tmpl[0], hWndParent, lpDialogFunc, dwInitParam);
+    HRSRC dlg = FindResource(hInstance, lpTemplateName, RT_DIALOG);
+    HGLOBAL rsc = LoadResource(hInstance, dlg);
+    List<BYTE> tmpl;
+    tmpl.InsertArray(0, (BYTE const*)LockResource(rsc), SizeofResource(hInstance, dlg));
+    *(DWORD*)&tmpl[sizeof WORD * 2 + sizeof DWORD] |= WS_EX_LAYOUTRTL;
+    return CreateDialogIndirectParam(hInstance, (LPCDLGTEMPLATE)&tmpl[0], hWndParent, lpDialogFunc, dwInitParam);
 }
 
 String GetLBText(HWND hwndList, UINT id)

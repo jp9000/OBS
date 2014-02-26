@@ -2661,8 +2661,8 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
             switch(LOWORD(wParam))
             {
                 case ID_SETTINGS_SETTINGS:
-				case ID_SETTINGS:
-					OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS), hwnd, (DLGPROC)OBS::SettingsDialogProc);
+                case ID_SETTINGS:
+                    OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS), hwnd, (DLGPROC)OBS::SettingsDialogProc);
                     break;
 
                 case ID_GLOBALSOURCES:

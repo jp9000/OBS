@@ -797,8 +797,8 @@ OBS::~OBS()
     WINDOWPLACEMENT placement;
     placement.length = sizeof(placement);
     GetWindowPlacement(hwndMain, &placement);
-	RECT rect = { 0 };
-	GetWindowRect(hwndMain, &rect);
+    RECT rect = { 0 };
+    GetWindowRect(hwndMain, &rect);
     GlobalConfig->SetInt(TEXT("General"), TEXT("PosX"), rect.left);
     GlobalConfig->SetInt(TEXT("General"), TEXT("PosY"), rect.top);
     GlobalConfig->SetInt(TEXT("General"), TEXT("Width"),

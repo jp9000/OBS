@@ -55,7 +55,7 @@ CTSTR SettingsPublish::GetCategory() const
 
 HWND SettingsPublish::CreatePane(HWND parentHwnd)
 {
-	hwnd = OBSCreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_PUBLISH), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
+    hwnd = OBSCreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_PUBLISH), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
     return hwnd;
 }
 

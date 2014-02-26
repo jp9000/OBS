@@ -39,7 +39,7 @@ CTSTR SettingsAudio::GetCategory() const
 
 HWND SettingsAudio::CreatePane(HWND parentHwnd)
 {
-	hwnd = OBSCreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_AUDIO), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
+    hwnd = OBSCreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_AUDIO), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
     return hwnd;
 }
 
@@ -210,8 +210,8 @@ bool SettingsAudio::HasDefaults() const
 
 void SettingsAudio::RefreshDevices(AudioDeviceType desktopDeviceType)
 {
-	storage.playbackDevices.FreeData();
-	storage.recordingDevices.FreeData();
+    storage.playbackDevices.FreeData();
+    storage.recordingDevices.FreeData();
 
     HWND hwndTemp = GetDlgItem(hwnd, IDC_MICDEVICES);
     HWND hwndPlayback = GetDlgItem(hwnd, IDC_PLAYBACKDEVICES);
@@ -255,17 +255,17 @@ void SettingsAudio::RefreshDevices(AudioDeviceType desktopDeviceType)
     if(iPlaybackDevice == storage.playbackDevices.devices.Num())
     {
         AppConfig->SetString(TEXT("Audio"), TEXT("PlaybackDevice"), storage.playbackDevices.devices[0].strID);
-		SendMessage(hwndPlayback, CB_SETCURSEL, 0, 0);
+        SendMessage(hwndPlayback, CB_SETCURSEL, 0, 0);
 
-		SetChangedSettings(true);
+        SetChangedSettings(true);
     }
 
     if(iDevice == storage.recordingDevices.devices.Num())
     {
         AppConfig->SetString(TEXT("Audio"), TEXT("Device"), storage.recordingDevices.devices[0].strID);
-		SendMessage(hwndTemp, CB_SETCURSEL, 0, 0);
+        SendMessage(hwndTemp, CB_SETCURSEL, 0, 0);
 
-		SetChangedSettings(true);
+        SetChangedSettings(true);
     }
 }
 
@@ -275,9 +275,9 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
     {
         case WM_INITDIALOG:
             {
-				LocalizeWindow(hwnd);
+                LocalizeWindow(hwnd);
 
-				SetChangedSettings(false);
+                SetChangedSettings(false);
 
                 //--------------------------------------------
 
