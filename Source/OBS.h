@@ -587,6 +587,7 @@ class OBS
     List<AudioSource*> auxAudioSources;
 
     UINT sampleRateHz;
+	UINT audioChannel;
 
     AudioEncoder *audioEncoder;
 
@@ -1032,6 +1033,7 @@ public:
     }
 
     inline UINT GetSampleRateHz() const {return sampleRateHz;}
+	inline UINT GetAudioChannel() const {return audioChannel;}
 
     inline QWORD GetAudioTime() const {return latestAudioTime;}
     inline QWORD GetVideoTime() const {return latestVideoTime;}
