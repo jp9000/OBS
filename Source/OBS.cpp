@@ -282,7 +282,7 @@ OBS::OBS()
 
     bFullscreenMode = false;
 
-    hwndMain = CreateWindowEx(WS_EX_CONTROLPARENT|WS_EX_WINDOWEDGE, OBS_WINDOW_CLASS, GetApplicationName(),
+    hwndMain = CreateWindowEx(WS_EX_CONTROLPARENT|WS_EX_WINDOWEDGE|(LocaleIsRTL() ? WS_EX_LAYOUTRTL : 0), OBS_WINDOW_CLASS, GetApplicationName(),
         WS_OVERLAPPED | WS_THICKFRAME | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN,
         x, y, cx, cy, NULL, NULL, hinstMain, NULL);
     if(!hwndMain)
@@ -342,7 +342,7 @@ OBS::OBS()
         logSizeY = 500;
     }
 
-    hwndLogWindow = CreateWindow(OBS_LOGWINDOW_CLASS, L"LogWindow", WS_OVERLAPPEDWINDOW, x, y, logSizeX, logSizeY, NULL, NULL, hinstMain, NULL);
+    hwndLogWindow = CreateWindowEx(LocaleIsRTL() ? WS_EX_LAYOUTRTL : 0, OBS_LOGWINDOW_CLASS, L"LogWindow", WS_OVERLAPPEDWINDOW, x, y, logSizeX, logSizeY, NULL, NULL, hinstMain, NULL);
     LocalizeWindow(hwndLogWindow);
 
     RECT client;
