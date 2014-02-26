@@ -24,13 +24,11 @@
 
 SettingsAudio::SettingsAudio()
     : SettingsPane()
-    , storage(NULL)
 {
 }
 
 SettingsAudio::~SettingsAudio()
 {
-    delete storage;
 }
 
 CTSTR SettingsAudio::GetCategory() const
@@ -60,10 +58,8 @@ void SettingsAudio::ApplySettings()
         strPlaybackDevice = TEXT("Default");
     }
     else {
-        strPlaybackDevice = storage->playbackDevices->devices[iPlaybackDevice].strID;
+        strPlaybackDevice = storage.playbackDevices.devices[iPlaybackDevice].strID;
     }
-
-    AppConfig->SetInt(L"Audio", L"UseInputDevices", useInputDevices);
 
     AppConfig->SetString(TEXT("Audio"), TEXT("PlaybackDevice"), strPlaybackDevice);
 
@@ -74,7 +70,7 @@ void SettingsAudio::ApplySettings()
     if(iDevice == CB_ERR)
         strDevice = TEXT("Disable");
     else
-        strDevice = storage->recordingDevices->devices[iDevice].strID;
+        strDevice = storage.recordingDevices.devices[iDevice].strID;
 
 
     AppConfig->SetString(TEXT("Audio"), TEXT("Device"), strDevice);
@@ -214,11 +210,8 @@ bool SettingsAudio::HasDefaults() const
 
 void SettingsAudio::RefreshDevices(AudioDeviceType desktopDeviceType)
 {
-    if (storage) {
-        delete storage->recordingDevices;
-        delete storage->playbackDevices;
-    }
-    delete storage;
+	storage.playbackDevices.FreeData();
+	storage.recordingDevices.FreeData();
 
     HWND hwndTemp = GetDlgItem(hwnd, IDC_MICDEVICES);
     HWND hwndPlayback = GetDlgItem(hwnd, IDC_PLAYBACKDEVICES);
@@ -226,27 +219,23 @@ void SettingsAudio::RefreshDevices(AudioDeviceType desktopDeviceType)
     SendMessage(hwndTemp, CB_RESETCONTENT, 0, 0);
     SendMessage(hwndPlayback, CB_RESETCONTENT, 0, 0);
 
-    storage = new AudioDeviceStorage;
+    GetAudioDevices(storage.playbackDevices, desktopDeviceType, bDisplayConnectedOnly, false);
 
-    storage->playbackDevices = new AudioDeviceList;
-    GetAudioDevices((*storage->playbackDevices), desktopDeviceType, bDisplayConnectedOnly, false);
+    GetAudioDevices(storage.recordingDevices, ADT_RECORDING, bDisplayConnectedOnly, true);
 
-    storage->recordingDevices = new AudioDeviceList;
-    GetAudioDevices((*storage->recordingDevices), ADT_RECORDING, bDisplayConnectedOnly, true);
+    for(UINT i=0; i<storage.playbackDevices.devices.Num(); i++)
+        SendMessage(hwndPlayback, CB_ADDSTRING, 0, (LPARAM)storage.playbackDevices.devices[i].strName.Array());
 
-    for(UINT i=0; i<storage->playbackDevices->devices.Num(); i++)
-        SendMessage(hwndPlayback, CB_ADDSTRING, 0, (LPARAM)storage->playbackDevices->devices[i].strName.Array());
+    for(UINT i=0; i<storage.recordingDevices.devices.Num(); i++)
+        SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)storage.recordingDevices.devices[i].strName.Array());
 
-    for(UINT i=0; i<storage->recordingDevices->devices.Num(); i++)
-        SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)storage->recordingDevices->devices[i].strName.Array());
-
-    String strPlaybackID = AppConfig->GetString(TEXT("Audio"), TEXT("PlaybackDevice"), storage->playbackDevices->devices[0].strID);
-    String strDeviceID = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), storage->recordingDevices->devices[0].strID);
+    String strPlaybackID = AppConfig->GetString(TEXT("Audio"), TEXT("PlaybackDevice"), storage.playbackDevices.devices[0].strID);
+    String strDeviceID = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), storage.recordingDevices.devices[0].strID);
 
     UINT iPlaybackDevice;
-    for(iPlaybackDevice=0; iPlaybackDevice<storage->playbackDevices->devices.Num(); iPlaybackDevice++)
+    for(iPlaybackDevice=0; iPlaybackDevice<storage.playbackDevices.devices.Num(); iPlaybackDevice++)
     {
-        if(storage->playbackDevices->devices[iPlaybackDevice].strID == strPlaybackID)
+        if(storage.playbackDevices.devices[iPlaybackDevice].strID == strPlaybackID)
         {
             SendMessage(hwndPlayback, CB_SETCURSEL, iPlaybackDevice, 0);
             break;
@@ -254,25 +243,29 @@ void SettingsAudio::RefreshDevices(AudioDeviceType desktopDeviceType)
     }
 
     UINT iDevice;
-    for(iDevice=0; iDevice<storage->recordingDevices->devices.Num(); iDevice++)
+    for(iDevice=0; iDevice<storage.recordingDevices.devices.Num(); iDevice++)
     {
-        if(storage->recordingDevices->devices[iDevice].strID == strDeviceID)
+        if(storage.recordingDevices.devices[iDevice].strID == strDeviceID)
         {
             SendMessage(hwndTemp, CB_SETCURSEL, iDevice, 0);
             break;
         }
     }
 
-    if(iPlaybackDevice == storage->playbackDevices->devices.Num())
+    if(iPlaybackDevice == storage.playbackDevices.devices.Num())
     {
-        AppConfig->SetString(TEXT("Audio"), TEXT("PlaybackDevice"), storage->playbackDevices->devices[0].strID);
-        SendMessage(hwndPlayback, CB_SETCURSEL, 0, 0);
+        AppConfig->SetString(TEXT("Audio"), TEXT("PlaybackDevice"), storage.playbackDevices.devices[0].strID);
+		SendMessage(hwndPlayback, CB_SETCURSEL, 0, 0);
+
+		SetChangedSettings(true);
     }
 
-    if(iDevice == storage->recordingDevices->devices.Num())
+    if(iDevice == storage.recordingDevices.devices.Num())
     {
-        AppConfig->SetString(TEXT("Audio"), TEXT("Device"), storage->recordingDevices->devices[0].strID);
-        SendMessage(hwndTemp, CB_SETCURSEL, 0, 0);
+        AppConfig->SetString(TEXT("Audio"), TEXT("Device"), storage.recordingDevices.devices[0].strID);
+		SendMessage(hwndTemp, CB_SETCURSEL, 0, 0);
+
+		SetChangedSettings(true);
     }
 }
 
@@ -282,7 +275,9 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
     {
         case WM_INITDIALOG:
             {
-                LocalizeWindow(hwnd);
+				LocalizeWindow(hwnd);
+
+				SetChangedSettings(false);
 
                 //--------------------------------------------
 
@@ -290,7 +285,6 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 SendMessage(GetDlgItem(hwnd, IDC_CONNECTEDONLY), BM_SETCHECK, bDisplayConnectedOnly ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 useInputDevices = AppConfig->GetInt(L"Audio", L"UseInputDevices", false) != 0;
-                SendMessage(GetDlgItem(hwnd, IDC_USEINPUTDEVICES), BM_SETCHECK, useInputDevices ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 RefreshDevices(useInputDevices ? ADT_RECORDING : ADT_PLAYBACK);
 
@@ -363,16 +357,11 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 //--------------------------------------------
 
-                SetChangedSettings(false);
                 return TRUE;
             }
 
         case WM_DESTROY:
             {
-                delete storage->recordingDevices;
-                delete storage->playbackDevices;
-                delete storage;
-                storage = NULL;
             }
 
         case WM_COMMAND:
@@ -405,14 +394,6 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                             bDisplayConnectedOnly = !bDisplayConnectedOnly;
                             GlobalConfig->SetInt(L"Audio", L"DisplayConntectedOnly", bDisplayConnectedOnly);
 
-                            RefreshDevices(useInputDevices ? ADT_RECORDING : ADT_PLAYBACK);
-                            SetChangedSettings(true);
-                            break;
-                        }
-
-                    case IDC_USEINPUTDEVICES:
-                        {
-                            useInputDevices = !useInputDevices;
                             RefreshDevices(useInputDevices ? ADT_RECORDING : ADT_PLAYBACK);
                             SetChangedSettings(true);
                             break;

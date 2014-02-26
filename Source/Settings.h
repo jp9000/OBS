@@ -171,8 +171,8 @@ private:
     // This should be converted to class members
     struct AudioDeviceStorage
     {
-        AudioDeviceList *playbackDevices;
-        AudioDeviceList *recordingDevices;
+        AudioDeviceList playbackDevices;
+        AudioDeviceList recordingDevices;
     };
 
     //-----------------------------------------------------------------------
@@ -182,7 +182,7 @@ private:
     void RefreshDevices(AudioDeviceType desktopDeviceType);
 
 private:
-    AudioDeviceStorage * storage;
+    AudioDeviceStorage storage;
 
     //-----------------------------------------------------------------------
     // Constructor/destructor

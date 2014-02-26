@@ -183,6 +183,11 @@ void SettingsAdvanced::ApplySettings()
     strTemp = GetCBText(GetDlgItem(hwnd, IDC_NVENCPRESET));
     AppConfig->SetString(TEXT("Video Encoding"), TEXT("NVENCPreset"), strTemp);
 
+	//------------------------------------
+
+	bool useInputDevices = SendMessage(GetDlgItem(hwnd, IDC_USEINPUTDEVICES), BM_GETCHECK, 0, 0) == BST_CHECKED;
+	AppConfig->SetInt(L"Audio", L"UseInputDevices", useInputDevices);
+
     //------------------------------------
 
     BOOL bSyncToVideoTime = SendMessage(GetDlgItem(hwnd, IDC_SYNCTOVIDEOTIME), BM_GETCHECK, 0, 0) == BST_CHECKED;
@@ -441,7 +446,12 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 }
                 int qsvPreset = AppConfig->GetInt(L"Video Encoding", L"QSVPreset", 1);
                 if (qsvPreset < 1 || qsvPreset > 7) qsvPreset = 1;
-                    SendMessage(hwndTemp, CB_SETCURSEL, qsvPreset - 1, 0);
+				SendMessage(hwndTemp, CB_SETCURSEL, qsvPreset - 1, 0);
+
+				//------------------------------------
+
+				bool useInputDevices = AppConfig->GetInt(L"Audio", L"UseInputDevices", false) != 0;
+				SendMessage(GetDlgItem(hwnd, IDC_USEINPUTDEVICES), BM_SETCHECK, useInputDevices ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 //------------------------------------
 
@@ -617,6 +627,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                     }
                     break;
 
+				case IDC_USEINPUTDEVICES:
                 case IDC_DISABLEPREVIEWENCODING:
                 case IDC_ALLOWOTHERHOTKEYMODIFIERS:
                 case IDC_MICSYNCFIX:
