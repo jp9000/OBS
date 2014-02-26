@@ -33,20 +33,12 @@ void ApplyRTL(HWND hwnd, bool bRTL)
 	if (scmpi(controlClassName, L"Static") == 0)
 	{
 		LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
-		bool invert = (style & SS_RIGHT) != 0;
-		if (invert)
-			style ^= SS_RIGHT;
-		else
-			style |= SS_RIGHT;
+		style ^= SS_RIGHT;
 		SetWindowLongPtr(hwnd, GWL_STYLE, style);
 	}
 
 	LONG_PTR styles = GetWindowLongPtr(hwnd, GWL_EXSTYLE);
-	bool invert = (styles & WS_EX_RIGHT) != 0;
-	if (invert)
-		styles ^= WS_EX_RIGHT;
-	else
-		styles |= WS_EX_RIGHT;
+	styles ^= WS_EX_RIGHT;
 	styles |= WS_EX_RTLREADING;
 	SetWindowLongPtr(hwnd, GWL_EXSTYLE, styles);
 }
