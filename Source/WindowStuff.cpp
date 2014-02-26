@@ -403,7 +403,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                         String strName = Str("Scene");
                         GetNewSceneName(strName);
 
-                        if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSceneNameDialogProc, (LPARAM)&strName) == IDOK)
+                        if(OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSceneNameDialogProc, (LPARAM)&strName) == IDOK)
                         {
                             UINT classID = ret-ID_LISTBOX_ADD;
                             ClassInfo &ci = App->sceneClasses[classID];
@@ -461,7 +461,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                         App->EnableSceneSwitching(false);
 
                         String strName = item->GetName();
-                        if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSceneNameDialogProc, (LPARAM)&strName) == IDOK)
+                        if(OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSceneNameDialogProc, (LPARAM)&strName) == IDOK)
                         {
                             SendMessage(hwnd, LB_DELETESTRING, curSel, 0);
                             SendMessage(hwnd, LB_INSERTSTRING, curSel, (LPARAM)strName.Array());
@@ -481,7 +481,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                         String strName = Str("Scene");
                         GetNewSceneName(strName);
 
-                        if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSceneNameDialogProc, (LPARAM)&strName) == IDOK)
+                        if(OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSceneNameDialogProc, (LPARAM)&strName) == IDOK)
                         {
                             UINT classID = 0;   // ID_LISTBOX_ADD - ID_LISTBOX_ADD
                             ClassInfo &ci = App->sceneClasses[classID];
@@ -533,7 +533,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                         hotkeyInfo.hotkey = prevHotkey;
                         hotkeyInfo.scene = item;
 
-                        if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_SCENEHOTKEY), hwndMain, OBS::SceneHotkeyDialogProc, (LPARAM)&hotkeyInfo) == IDOK)
+                        if(OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_SCENEHOTKEY), hwndMain, OBS::SceneHotkeyDialogProc, (LPARAM)&hotkeyInfo) == IDOK)
                         {
                             if(hotkeyInfo.hotkey)
                                 hotkeyInfo.hotkeyID = API->CreateHotkey(hotkeyInfo.hotkey, SceneHotkey, 0);
@@ -739,7 +739,7 @@ void OBS::TrackModifyListbox(HWND hwnd, int ret)
 
                 GetNewSourceName(strName);
 
-                if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSourceNameDialogProc, (LPARAM)&strName) == IDOK)
+                if(OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSourceNameDialogProc, (LPARAM)&strName) == IDOK)
                 {
                     XElement *curSceneElement = App->sceneElement;
                     XElement *sources = curSceneElement->GetElement(TEXT("sources"));
@@ -828,7 +828,7 @@ void OBS::TrackModifyListbox(HWND hwnd, int ret)
 
                 String strName = selectedElement->GetName();
                 TSTR oldStrName = sdup(strName.Array());
-                if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSourceNameDialogProc, (LPARAM)&strName) == IDOK)
+                if(OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSourceNameDialogProc, (LPARAM)&strName) == IDOK)
                 {
                     int curSel = (int)SendMessage(hwndSources, LB_GETCURSEL, 0, 0);
                     ListView_SetItemText(hwndSources, curSel, 0, strName.Array());
@@ -1849,7 +1849,7 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                             break;
 
                         String strName;
-                        if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwnd, OBS::EnterGlobalSourceNameDialogProc, (LPARAM)&strName) == IDOK)
+                        if(OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwnd, OBS::EnterGlobalSourceNameDialogProc, (LPARAM)&strName) == IDOK)
                         {
                             ClassInfo &ci = App->imageSourceClasses[classID-1];
 
@@ -2006,7 +2006,7 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                         XElement *element = globals->GetElementByID(id);
 
                         String strName = element->GetName();
-                        if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterGlobalSourceNameDialogProc, (LPARAM)&strName) == IDOK)
+                        if(OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterGlobalSourceNameDialogProc, (LPARAM)&strName) == IDOK)
                         {
                             SendMessage(hwndSources, LB_DELETESTRING, id, 0);
                             SendMessage(hwndSources, LB_INSERTSTRING, id, (LPARAM)strName.Array());
@@ -2274,14 +2274,11 @@ void OBS::AddProfilesToMenu(HMENU menu)
     StringList profileList;
     GetProfiles(profileList);
 
-	bool rtl = LocaleIsRTL();
     for(UINT i=0; i<profileList.Num(); i++)
     {
         String &strProfile = profileList[i];
 
         UINT flags = MF_STRING;
-		if (rtl)
-			flags |= MFT_RIGHTORDER | MFT_RIGHTJUSTIFY;
         if(strProfile.CompareI(GetCurrentProfile()))
             flags |= MF_CHECKED;
 
@@ -2605,7 +2602,7 @@ void ShowLogUploadResult(LogUploadResult &result, bool success)
         return;
     }
 
-    DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_LOGUPLOADED), hwndMain, LogUploadResultProc, (LPARAM)&result);
+    OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_LOGUPLOADED), hwndMain, LogUploadResultProc, (LPARAM)&result);
 }
 
 //----------------------------
@@ -2664,12 +2661,12 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
             switch(LOWORD(wParam))
             {
                 case ID_SETTINGS_SETTINGS:
-                case ID_SETTINGS:
-                    DialogBox(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS), hwnd, (DLGPROC)OBS::SettingsDialogProc);
+				case ID_SETTINGS:
+					OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS), hwnd, (DLGPROC)OBS::SettingsDialogProc);
                     break;
 
                 case ID_GLOBALSOURCES:
-                    DialogBox(hinstMain, MAKEINTRESOURCE(IDD_GLOBAL_SOURCES), hwnd, (DLGPROC)OBS::GlobalSourcesProc);
+                    OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_GLOBAL_SOURCES), hwnd, (DLGPROC)OBS::GlobalSourcesProc);
                     break;
 
                 case ID_FILE_SAVE2:
@@ -2764,7 +2761,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     break;
 
                 case ID_PLUGINS:
-                    DialogBox(hinstMain, MAKEINTRESOURCE(IDD_PLUGINS), hwnd, (DLGPROC)OBS::PluginsDialogProc);
+                    OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_PLUGINS), hwnd, (DLGPROC)OBS::PluginsDialogProc);
                     break;
 
                 case ID_MICVOLUME:
@@ -3317,7 +3314,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 //status bar would be nice, but that only renders when we're streaming.
                 PlaySound((LPCTSTR)SND_ALIAS_SYSTEMASTERISK, NULL, SND_ALIAS_ID | SND_ASYNC);
                 App->bReconnecting = false;
-                DialogBox(hinstMain, MAKEINTRESOURCE(IDD_RECONNECTING), hwnd, OBS::ReconnectDialogProc);
+                OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_RECONNECTING), hwnd, OBS::ReconnectDialogProc);
             }
 
             break;

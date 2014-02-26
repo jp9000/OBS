@@ -108,7 +108,7 @@ public:
             EnableWindow (hwndMain, FALSE);
 
             bStreamEnding = true;
-            HWND hwndProgressDialog = CreateDialogParam(hinstMain, MAKEINTRESOURCE(IDD_ENDINGDELAY), hwndMain, (DLGPROC)EndDelayProc, (LPARAM)this);
+            HWND hwndProgressDialog = OBSCreateDialog(hinstMain, MAKEINTRESOURCE(IDD_ENDINGDELAY), hwndMain, (DLGPROC)EndDelayProc, (LPARAM)this);
             ProcessEvents();
 
             ShowWindow(hwndProgressDialog, TRUE);

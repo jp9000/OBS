@@ -1434,7 +1434,7 @@ bool STDCALL ConfigureTextSource(XElement *element, bool bCreating)
     configInfo.lpName = element->GetName();
     configInfo.data = data;
 
-    if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_CONFIGURETEXTSOURCE), hwndMain, ConfigureTextProc, (LPARAM)&configInfo) == IDOK)
+    if(OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_CONFIGURETEXTSOURCE), hwndMain, ConfigureTextProc, (LPARAM)&configInfo) == IDOK)
     {
         element->SetFloat(TEXT("cx"), configInfo.cx);
         element->SetFloat(TEXT("cy"), configInfo.cy);

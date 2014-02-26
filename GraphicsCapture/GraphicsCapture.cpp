@@ -385,7 +385,7 @@ bool STDCALL ConfigureGraphicsCaptureSource(XElement *element, bool bCreating)
     configData->data = data;
     configData->lpName = element->GetName();
 
-    if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_CONFIG), API->GetMainWindow(), ConfigureDialogProc, (LPARAM)configData) == IDOK)
+    if(DialogBox(hinstMain, MAKEINTRESOURCE(IDD_CONFIG), API->GetMainWindow(), ConfigureDialogProc, (LPARAM)configData) == IDOK)
     {
         UINT width, height;
         API->GetBaseSize(width, height);

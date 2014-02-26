@@ -305,7 +305,7 @@ retryHookTest:
         if(!bReconnecting)
             OBSMessageBox(hwndMain, strError, NULL, MB_ICONERROR);
         else
-            DialogBox(hinstMain, MAKEINTRESOURCE(IDD_RECONNECTING), hwndMain, OBS::ReconnectDialogProc);
+            OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_RECONNECTING), hwndMain, OBS::ReconnectDialogProc);
         bStartingUp = false;
         return;
     }

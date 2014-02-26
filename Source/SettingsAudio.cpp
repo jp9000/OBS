@@ -41,7 +41,7 @@ CTSTR SettingsAudio::GetCategory() const
 
 HWND SettingsAudio::CreatePane(HWND parentHwnd)
 {
-    hwnd = CreateDialogParam(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_AUDIO), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
+	hwnd = OBSCreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_AUDIO), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
     return hwnd;
 }
 

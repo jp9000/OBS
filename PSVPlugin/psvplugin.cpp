@@ -198,7 +198,7 @@ void OnSceneSwitch(CTSTR scene)
 
 void ConfigPlugin(HWND hWnd)
 {
-    DialogBox(hInstance, MAKEINTRESOURCE(IDD_CONFIGPSV), hWnd, ConfigDlgProc);
+    OBSDialogBox(hInstance, MAKEINTRESOURCE(IDD_CONFIGPSV), hWnd, ConfigDlgProc);
 }
 
 bool LoadPlugin()

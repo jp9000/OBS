@@ -67,7 +67,7 @@ CTSTR SettingsGeneral::GetCategory() const
 
 HWND SettingsGeneral::CreatePane(HWND parentHwnd)
 {
-    hwnd = CreateDialogParam(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_GENERAL), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
+	hwnd = OBSCreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_GENERAL), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
     return hwnd;
 }
 

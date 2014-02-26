@@ -76,7 +76,7 @@ CTSTR SettingsVideo::GetCategory() const
 
 HWND SettingsVideo::CreatePane(HWND parentHwnd)
 {
-    hwnd = CreateDialogParam(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_VIDEO), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
+	hwnd = OBSCreateDialog(hinstMain, MAKEINTRESOURCE(IDD_SETTINGS_VIDEO), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
     return hwnd;
 }
 

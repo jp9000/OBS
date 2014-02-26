@@ -148,7 +148,7 @@ CTSTR NoiseGateSettings::GetCategory() const
 
 HWND NoiseGateSettings::CreatePane(HWND parentHwnd)
 {
-    hwnd = CreateDialogParam(NoiseGate::hinstDLL, MAKEINTRESOURCE(IDD_CONFIGURENOISEGATE), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
+    hwnd = OBSCreateDialog(NoiseGate::hinstDLL, MAKEINTRESOURCE(IDD_CONFIGURENOISEGATE), parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
     return hwnd;
 }
 

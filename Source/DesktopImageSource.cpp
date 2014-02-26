@@ -2053,7 +2053,7 @@ static bool STDCALL ConfigureDesktopSource2(XElement *element, bool bInitialize,
     info.lpName = element->GetName();
     info.dialogID = dialogID;
 
-    if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(dialogID), hwndMain, ConfigDesktopSourceProc, (LPARAM)&info) == IDOK)
+    if(OBSDialogBox(hinstMain, MAKEINTRESOURCE(dialogID), hwndMain, ConfigDesktopSourceProc, (LPARAM)&info) == IDOK)
     {
         element->SetInt(TEXT("cx"), data->GetInt(TEXT("captureCX")));
         element->SetInt(TEXT("cy"), data->GetInt(TEXT("captureCY")));

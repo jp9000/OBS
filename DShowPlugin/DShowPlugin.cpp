@@ -2243,7 +2243,7 @@ bool STDCALL ConfigureDShowSource(XElement *element, bool bCreating)
     configData.bGlobalSource = (scmpi(element->GetParent()->GetName(), TEXT("global sources")) == 0);
     configData.bCreating = bCreating;
 
-    if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_CONFIG), API->GetMainWindow(), ConfigureDialogProc, (LPARAM)&configData) == IDOK)
+    if(OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_CONFIG), API->GetMainWindow(), ConfigureDialogProc, (LPARAM)&configData) == IDOK)
     {
         bool bPreserveSourceSize = data->GetInt(TEXT("preserveSourceSize")) != 0;
         float scaleFactor_x = 1.0f, scaleFactor_y = 1.0f;

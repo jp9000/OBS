@@ -172,7 +172,7 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
     {
         case WM_INITDIALOG:
             {
-                App->hwndSettings = hwnd;
+				App->hwndSettings = hwnd;
 
                 LocalizeWindow(hwnd);
 
@@ -187,7 +187,7 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
 
                 RECT subDialogRect;
                 GetWindowRect(GetDlgItem(hwnd, IDC_SUBDIALOG), &subDialogRect);
-                ScreenToClient(hwnd, (LPPOINT)&subDialogRect.left);
+                MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&subDialogRect.left, 2);
 
                 SendMessage(GetDlgItem(hwnd, IDC_SETTINGSLIST), LB_SETCURSEL, 0, 0);
 
@@ -200,7 +200,7 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                     App->currentSettingsPane = App->settingsPanes[0];
 
                 if(App->currentSettingsPane != NULL)
-                    App->hwndCurrentSettings = App->currentSettingsPane->CreatePane(hwnd);
+					App->hwndCurrentSettings = App->currentSettingsPane->CreatePane(hwnd);
 
                 if(App->hwndCurrentSettings != NULL)
                 {
@@ -317,8 +317,8 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                         App->hwndCurrentSettings = NULL;
 
                         RECT subDialogRect;
-                        GetWindowRect(GetDlgItem(hwnd, IDC_SUBDIALOG), &subDialogRect);
-                        ScreenToClient(hwnd, (LPPOINT)&subDialogRect.left);
+						GetWindowRect(GetDlgItem(hwnd, IDC_SUBDIALOG), &subDialogRect);
+						MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&subDialogRect.left, 2);
 
                         if(sel >= 0 && sel < (int)App->settingsPanes.Num())
                             App->currentSettingsPane = App->settingsPanes[sel];

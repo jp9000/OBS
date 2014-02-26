@@ -503,7 +503,7 @@ bool STDCALL ConfigureBitmapSource(XElement *element, bool bCreating)
     ConfigBitmapInfo configInfo;
     configInfo.data = data;
 
-    if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_CONFIGUREBITMAPSOURCE), hwndMain, ConfigureBitmapProc, (LPARAM)&configInfo) == IDOK)
+    if(OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_CONFIGUREBITMAPSOURCE), hwndMain, ConfigureBitmapProc, (LPARAM)&configInfo) == IDOK)
     {
         CTSTR lpBitmap = data->GetString(TEXT("path"));
 

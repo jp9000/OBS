@@ -498,7 +498,7 @@ bool STDCALL ConfigureBitmapTransitionSource(XElement *element, bool bCreating)
     ConfigBitmapInfo configInfo;
     configInfo.data = data;
 
-    if (DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_CONFIGURETRANSITIONSOURCE), hwndMain, ConfigureBitmapTransitionProc, (LPARAM)&configInfo) == IDOK)
+    if (OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_CONFIGURETRANSITIONSOURCE), hwndMain, ConfigureBitmapTransitionProc, (LPARAM)&configInfo) == IDOK)
     {
         element->SetInt(TEXT("cx"), configInfo.cx);
         element->SetInt(TEXT("cy"), configInfo.cy);
