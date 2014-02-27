@@ -2082,7 +2082,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         deinterlacingConfig.fieldOrder = tff ? FIELD_ORDER_TFF : (bff ? FIELD_ORDER_BFF : FIELD_ORDER_NONE);
                         deinterlacingConfig.processor = SendMessage(GetDlgItem(hwnd, IDC_GPUDEINT), BM_GETCHECK, 0, 0) == BST_CHECKED ? DEINTERLACING_PROCESSOR_GPU : DEINTERLACING_PROCESSOR_CPU;
 
-                        configData->data->SetString(TEXT("device"), strDevice);
+                        configData->data->SetString(TEXT("device"), GetCBText(GetDlgItem(hwnd, IDC_DEVICELIST), deviceID));
                         configData->data->SetString(TEXT("deviceName"), configData->deviceNameList[deviceID]);
                         configData->data->SetString(TEXT("deviceID"), configData->deviceIDList[deviceID]);
 
