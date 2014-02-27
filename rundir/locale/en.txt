@@ -262,6 +262,8 @@ Settings.Video.Filter="Filter:"
 Settings.Video.FPS="FPS:"
 Settings.Video.Monitor="Monitor:"
 Settings.Video.Resolution="Base Resolution:"
+Settings.Video.AspectRatio="Aspect Ratio:"
+Settings.Video.AspectRatioFormat="$1:$2"
 
 Settings.Video.Filter.Bilinear="Bilinear (fastest)"
 Settings.Video.Filter.Bicubic="Bicubic sharper (good detail, 16 samples)"

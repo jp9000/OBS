@@ -86,6 +86,37 @@ void SettingsVideo::DestroyPane()
     hwnd = NULL;
 }
 
+static int gcd(int a, int b)
+{
+    if (!a) return b;
+    if (!b) return a;
+
+    int c = a;
+    a = max(a, b);
+    b = min(c, b);
+
+    int remainder;
+    do
+    {
+        remainder = a % b;
+        a = b;
+        b = remainder;
+    } while (remainder);
+
+    return a;
+}
+
+static void RefreshAspect(HWND hwnd, int cx, int cy)
+{
+    int divisor = gcd(cx, cy);
+
+    String aspect = Str("Settings.Video.AspectRatioFormat");
+    aspect.FindReplace(L"$1", UIntString(cx / divisor));
+    aspect.FindReplace(L"$2", UIntString(cy / divisor));
+
+    SetWindowText(GetDlgItem(hwnd, IDC_ASPECT), aspect.Array());
+}
+
 void SettingsVideo::RefreshDownscales(HWND hwnd, int cx, int cy)
 {
     int lastID = (int)SendMessage(hwnd, CB_GETCURSEL, 0, 0);
@@ -331,6 +362,8 @@ INT_PTR SettingsVideo::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     else if(cy > 4096)  cy = 4096;
                 }
 
+                RefreshAspect(hwnd, cx, cy);
+
 
                 hwndTemp = GetDlgItem(hwnd, IDC_SIZEX);
                 editProc = (FARPROC)GetWindowLongPtr(hwndTemp, GWLP_WNDPROC);
@@ -428,6 +461,8 @@ INT_PTR SettingsVideo::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                                 SetWindowText(GetDlgItem(hwnd, IDC_SIZEX), IntString(cx).Array());
                                 SetWindowText(GetDlgItem(hwnd, IDC_SIZEY), IntString(cy).Array());
+
+                                RefreshAspect(hwnd, cx, cy);
                             }
                             break;
                         }
@@ -458,6 +493,8 @@ INT_PTR SettingsVideo::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                                 SetWindowText(GetDlgItem(hwnd, IDC_SIZEX), IntString(cx).Array());
                                 SetWindowText(GetDlgItem(hwnd, IDC_SIZEY), IntString(cy).Array());
+
+                                RefreshAspect(hwnd, cx, cy);
                             }
                             break;
                         }
@@ -478,6 +515,8 @@ INT_PTR SettingsVideo::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                             else if(cy > 4096)  cy = 4096;
 
                             RefreshDownscales(GetDlgItem(hwnd, IDC_DOWNSCALE), cx, cy);
+
+                            RefreshAspect(hwnd, cx, cy);
 
                             bDataChanged = true;
                             break;

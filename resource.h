@@ -84,6 +84,7 @@
 #define IDC_SIZEX                       1033
 #define IDC_SIZEY                       1034
 #define IDC_GAMMA                       1035
+#define IDC_ASPECT                      1035
 #define IDC_USECUSTOM                   1036
 #define IDC_POINTFILTERING              1036
 #define IDC_USEMONITOR                  1037
