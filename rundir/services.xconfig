@@ -23,6 +23,7 @@ services : {
       "max bitrate" : 3500
       "max audio bitrate aac" : 160
       "max audio bitrate mp3" : 128
+      "video aspect ratio" : "16:9"
     }
   }
   "Vaughn Live / iNSTAGIB.tv" : {

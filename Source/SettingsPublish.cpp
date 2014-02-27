@@ -219,6 +219,7 @@ void SettingsPublish::SetWarningInfo()
     int audioBitRate = AppConfig->GetInt(TEXT("Audio Encoding"), TEXT("Bitrate"), 96);
     String currentx264Profile = AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"), L"high");
     String currentAudioCodec = AppConfig->GetString(TEXT("Audio Encoding"), TEXT("Codec"), TEXT("AAC"));
+    float currentAspect = AppConfig->GetInt(L"Video", L"BaseWidth") / (float)max(1, AppConfig->GetInt(L"Video", L"BaseHeight"));
 
     //ignore for non-livestreams
     if (data->mode != 0)
@@ -312,6 +313,28 @@ void SettingsPublish::SetWarningInfo()
                         {
                             errors++;
                             strWarnings << FormattedString(Str("Settings.Publish.Warning.Keyint"), keyint / 1000);
+                        }
+                    }
+
+                    if (r->HasItem(L"video aspect ratio"))
+                    {
+                        String aspectRatio = r->GetString(L"video aspect ratio");
+                        StringList numbers;
+                        aspectRatio.GetTokenList(numbers, ':');
+                        if (numbers.Num() == 2)
+                        {
+                            float aspect = numbers[0].ToInt() / max(1.f, numbers[1].ToFloat());
+                            if (!CloseFloat(aspect, currentAspect))
+                            {
+                                String aspectLocalized = Str("Settings.Video.AspectRatioFormat");
+                                aspectLocalized.FindReplace(L"$1", UIntString(numbers[0].ToInt()));
+                                aspectLocalized.FindReplace(L"$2", UIntString(numbers[1].ToInt()));
+
+                                String msg = Str("Settings.Publish.Warning.VideoAspectRatio");
+                                msg.FindReplace(L"$1", aspectLocalized);
+                                strWarnings << msg;
+                                errors += 1;
+                            }
                         }
                     }
 
