@@ -251,7 +251,7 @@ Settings.Publish.Warning.RecommendMainProfile="\tAdvanced Settings: Recommended 
 Settings.Publish.Warning.Keyint="\tAdvanced Settings: Set a keyframe interval of %d seconds\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tEncoding Settings: Reduce your audio bitrate to %d\r\n\r\n"
 Settings.Publish.Warning.UnsupportedAudioCodec="\tEncoding Settings: Set audio codec to '$1' instead of '$2'\r\n\r\n"
-Settings.Publish.Warning.VideoAspectRatio="\tVideo Settings: Set base resolution to an aspect ratio of $1 to avoid black borders in the default player\n\n'
+Settings.Publish.Warning.VideoAspectRatio="\tVideo Settings: Set base resolution to an aspect ratio of $1 to avoid black borders in the default player\n\n"
 
 Settings.Video.Custom="Custom:"
 Settings.Video.Device="Video Adapter:"
