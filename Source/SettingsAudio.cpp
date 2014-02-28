@@ -277,16 +277,12 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
             {
                 LocalizeWindow(hwnd);
 
-                SetChangedSettings(false);
-
                 //--------------------------------------------
 
                 bDisplayConnectedOnly = GlobalConfig->GetInt(L"Audio", L"DisplayConntectedOnly", true) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_CONNECTEDONLY), BM_SETCHECK, bDisplayConnectedOnly ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 useInputDevices = AppConfig->GetInt(L"Audio", L"UseInputDevices", false) != 0;
-
-                RefreshDevices(useInputDevices ? ADT_RECORDING : ADT_PLAYBACK);
 
                 //--------------------------------------------
 
@@ -356,6 +352,10 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 SendMessage(GetDlgItem(hwnd, IDC_MICTIMEOFFSET), UDM_SETPOS32, 0, micTimeOffset);
 
                 //--------------------------------------------
+
+                SetChangedSettings(false);
+
+                RefreshDevices(useInputDevices ? ADT_RECORDING : ADT_PLAYBACK);
 
                 return TRUE;
             }
