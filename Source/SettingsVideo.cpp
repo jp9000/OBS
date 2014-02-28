@@ -288,6 +288,18 @@ INT_PTR SettingsVideo::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
             {
                 LocalizeWindow(hwnd);
 
+                if (LocaleIsRTL())
+                {
+                    RECT xRect, yRect;
+                    GetWindowRect(GetDlgItem(hwnd, IDC_SIZEX), &xRect);
+                    MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&xRect.left, 2);
+                    GetWindowRect(GetDlgItem(hwnd, IDC_SIZEY), &yRect);
+                    MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&yRect.left, 2);
+
+                    SetWindowPos(GetDlgItem(hwnd, IDC_SIZEX), nullptr, yRect.left, yRect.top, 0, 0, SWP_NOSIZE);
+                    SetWindowPos(GetDlgItem(hwnd, IDC_SIZEY), nullptr, xRect.left, xRect.top, 0, 0, SWP_NOSIZE);
+                }
+
                 //--------------------------------------------
 
                 HWND hwndToolTip = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL, WS_POPUP|TTS_NOPREFIX|TTS_ALWAYSTIP,
