@@ -251,6 +251,7 @@ Settings.Publish.Warning.RecommendMainProfile="\tAvanceret indstillinger: Anbefa
 Settings.Publish.Warning.Keyint="\tAvancerede indstillinger: angive keyframe interval til %d sekunder\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tIndkodnings Indstillinger: Reducere Din Maksimale Bitrate Til %d\r\n\r\n"
 Settings.Publish.Warning.UnsupportedAudioCodec="\tEncoding Indstillinger: Sæt lydkodeks til '$1' i stedet for '$2'\r\n\r\n"
+Settings.Publish.Warning.VideoAspectRatio="\tVideo indstillinger: Indstil grund opløsning til et skærmformat på $1 for at undgå sorte kanter i standard playeren\n\n"
 
 Settings.Video.Custom="Brugerdefineret:"
 Settings.Video.Device="Skærmkort:"
@@ -262,6 +263,8 @@ Settings.Video.Filter="Filter:"
 Settings.Video.FPS="FPS:"
 Settings.Video.Monitor="Skærm:"
 Settings.Video.Resolution="Basis Opløsning:"
+Settings.Video.AspectRatio="Skærmforhold:"
+Settings.Video.AspectRatioFormat="$1:$2"
 
 Settings.Video.Filter.Bilinear="Bilinear (hurtigste)"
 Settings.Video.Filter.Bicubic="Bicubic sharper (god detalje, 16 prøver)"

@@ -251,6 +251,7 @@ Settings.Publish.Warning.RecommendMainProfile="\tGeavanceerde instellingen: Het 
 Settings.Publish.Warning.Keyint="\tGeavanceerde instellingen: Stel de tijd tussen keyframes in op %d seconden\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tEncoding instellingen: Reduceer je audio bitrate tot %d\r\n\r\n"
 Settings.Publish.Warning.UnsupportedAudioCodec="\tEncoding instellingen: Stel je audio codec in op '$1' in plaats van '$2'\r\n\r\n"
+Settings.Publish.Warning.VideoAspectRatio="\tVideoinstellingen: Stel de basisresolutie in op een aspect ratio van $1 om zwarte randen in de standaardspeler te vermeiden\n\n"
 
 Settings.Video.Custom="Aangepast:"
 Settings.Video.Device="Videoadapter:"
@@ -262,6 +263,8 @@ Settings.Video.Filter="Filter:"
 Settings.Video.FPS="FPS:"
 Settings.Video.Monitor="Monitor:"
 Settings.Video.Resolution="Basisresolutie:"
+Settings.Video.AspectRatio="Aspect Ratio:"
+Settings.Video.AspectRatioFormat="$1:$2"
 
 Settings.Video.Filter.Bilinear="Bilineair (snelste)"
 Settings.Video.Filter.Bicubic="Bicubic scherper (goed detail, 16 samples)"

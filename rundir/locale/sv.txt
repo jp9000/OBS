@@ -251,6 +251,7 @@ Settings.Publish.Warning.RecommendMainProfile="\tAvancerade inställningar: Den 
 Settings.Publish.Warning.Keyint="\tAvancerade inställningar: Ange ett %d sekunders keyframe-intervall.\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tKodningsinställningar: Sänk din ljud-bithastighet till %d\r\n\r\n"
 Settings.Publish.Warning.UnsupportedAudioCodec="\tKodningsinställningar: Byt ljudcodec från '$1' till '$2'.\r\n\r\n"
+Settings.Publish.Warning.VideoAspectRatio="\tVideo-inställningar: Ange en grundupplösning med bildförhållande $1 för att undvika svarta kanter i videospelaren.\n\n"
 
 Settings.Video.Custom="Anpassad:"
 Settings.Video.Device="Grafikkort:"
@@ -262,6 +263,8 @@ Settings.Video.Filter="Filter:"
 Settings.Video.FPS="FPS:"
 Settings.Video.Monitor="Bildskärm:"
 Settings.Video.Resolution="Grundupplösning:"
+Settings.Video.AspectRatio="Bildförhållande:"
+Settings.Video.AspectRatioFormat="$1:$2"
 
 Settings.Video.Filter.Bilinear="Bilinjär (snabbast)"
 Settings.Video.Filter.Bicubic="Bikubisk, skarpare (skarpa detaljer, 16 samplingar)"

@@ -251,6 +251,7 @@ Settings.Publish.Warning.RecommendMainProfile="\tConfiguración avanzada: El per
 Settings.Publish.Warning.Keyint="\tAvanzado: Establezca un Intervalo de cuadros clave de %d segundos\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tConfiguración de codificación: Reduzca su Bitrate de audio a %d\r\n\r\n"
 Settings.Publish.Warning.UnsupportedAudioCodec="\tConfiguración de encoding: Codec de audio '$ 1' en lugar de '$2' \r\n\r\n"
+Settings.Publish.Warning.VideoAspectRatio="\tConfiguración de video: Establezca la resolución base en una relación de aspecto de $1 para evitar bordes negros al reproducir\n\n"
 
 Settings.Video.Custom="Personalizado:"
 Settings.Video.Device="Adaptador de Video:"
@@ -262,6 +263,8 @@ Settings.Video.Filter="Filtro:"
 Settings.Video.FPS="FPS:"
 Settings.Video.Monitor="Monitor:"
 Settings.Video.Resolution="Resolución Base:"
+Settings.Video.AspectRatio="Relación de aspecto:"
+Settings.Video.AspectRatioFormat="$1: $2"
 
 Settings.Video.Filter.Bilinear="Bilinear (rápido)"
 Settings.Video.Filter.Bicubic="Bicubic sharper (buen detalle, 16 muestras)"

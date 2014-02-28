@@ -205,6 +205,7 @@ Settings.Encoding.Video.Quality="Kokybes balansas:"
 Settings.Encoding.Video.QualityTooltip="Šie nustatymai bus bandyti nukreipti tam tikra kokybe, priklausomai nuo jusu bitrate ir buferio dydis. Nustacius tai kaip mažas bitrate dideles vertes aukštos judesio scenu kokybe bus paaukoti už ne judanciu scenu, todel nenuosekli kokybe."
 Settings.Encoding.Video.EncoderQSVDisabledAfterApply="Kadangi procesorius nepalaiko „Quick Sync“, enkoderis nebus įjungtas."
 Settings.Encoding.Video.EncoderNVENCDisabledAfterApply="Kadangi aparatūra nepalaiko „Nvidia NVENC“, enkoderis nebus įjungtas."
+Settings.Encoding.Video.QSVConfigWarning="Norėdami įjungti „Quick Sync“ enkoderį, įsitikinkite, kad jūsų procesorius jį palaiko ir kad BIOS nustatymuose įjungtas „Intel Graphics“. Jei naudojatės nešiojamuoju kompiuteriu, forumo „Questions and Help“ skiltyje peržiūrėkite temą „Laptop? Black screen when capturing? Read here first.“."
 
 Settings.General.Add="Prideti nauja"
 Settings.General.ConfirmDelete="Ar jus tikrai norite pašalinti profilį '$1'?"

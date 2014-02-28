@@ -1,3 +1,4 @@
+RightToLeft="false"
 
 Add="Pridať"
 Preview="Náhľad"

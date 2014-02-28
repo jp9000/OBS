@@ -1,3 +1,4 @@
+RightToLeft="false"
 
 Add="추가"
 Preview="미리보기"
@@ -250,6 +251,7 @@ Settings.Publish.Warning.RecommendMainProfile="\t고급 설정: 이 서비스를
 Settings.Publish.Warning.Keyint="\t고급 설정: 키 프레임의 간격을 다음 값으로 설정하십시오 %d\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\t인코딩 설정: 오디오 비트레이트를 다음 값으로 내려주십시오 %d\r\n\r\n"
 Settings.Publish.Warning.UnsupportedAudioCodec="\t인코딩 설정: 오디오 코덱을 '$2' 대신 '$1'로 설정\r\n\r\n"
+Settings.Publish.Warning.VideoAspectRatio="\t비디오 설정: 기본 플레이어에서 검은 여백이 생기는 것을 피하려면 기본 해상도를 화면 비율 $1로 설정하세요\n\n"
 
 Settings.Video.Custom="사용자 정의:"
 Settings.Video.Device="비디오 어댑터:"
@@ -261,6 +263,8 @@ Settings.Video.Filter="필터:"
 Settings.Video.FPS="초당 프레임수(FPS):"
 Settings.Video.Monitor="모니터 지정:"
 Settings.Video.Resolution="기본 해상도:"
+Settings.Video.AspectRatio="화면 비율:"
+Settings.Video.AspectRatioFormat="$1:$2"
 
 Settings.Video.Filter.Bilinear="Bilinear (가장 빠름)"
 Settings.Video.Filter.Bicubic="Bicubic sharper (좋은 디테일, 16 샘플)"

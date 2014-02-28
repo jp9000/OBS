@@ -251,6 +251,7 @@ Settings.Publish.Warning.RecommendMainProfile="\tUstawienia zaawansowane: Zaleca
 Settings.Publish.Warning.Keyint="\tUstawienia zaawansowane: ustaw interwał klatki kluczowej na %d sekundy\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tUstawienia kodowania: Zmniejsz swoją przepływność dźwięku do %d\r\n\r\n"
 Settings.Publish.Warning.UnsupportedAudioCodec="\tUstawienia enkodera: Zmień kodek audio z '$2' na '$1'\r\n\r\n"
+Settings.Publish.Warning.VideoAspectRatio="\tUstawienia obrazu: Aby uniknąć czarnych pasków dookoła obrazu w domyślnym odtwarzaczu, bazowa rozdzielczość powinna mieć współczynnik proporcji $1\n\n"
 
 Settings.Video.Custom="Ustawienia własne:"
 Settings.Video.Device="Karta graficzna:"
@@ -262,6 +263,8 @@ Settings.Video.Filter="Interpolacja:"
 Settings.Video.FPS="FPS (klatki na sekundę):"
 Settings.Video.Monitor="Monitor:"
 Settings.Video.Resolution="Rozdzielczość bazowa:"
+Settings.Video.AspectRatio="Współczynnik proporcji:"
+Settings.Video.AspectRatioFormat="$1:$2"
 
 Settings.Video.Filter.Bilinear="Dwuliniowa (najszybsza)"
 Settings.Video.Filter.Bicubic="Bicubic ostrzejszy (dobre detale, 16 próbek)"

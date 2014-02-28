@@ -251,6 +251,7 @@ Settings.Publish.Warning.RecommendMainProfile="\tGelişmiş Ayarlar: Tavsiye edi
 Settings.Publish.Warning.Keyint="\tGelişmiş Ayarlar:%d nin anahtar kare aralık süresini ayarla \r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tKodlama Ayarları: Ses bit hızını %d'e indirge\r\n\r\n"
 Settings.Publish.Warning.UnsupportedAudioCodec="\tKodlama Ayarları: Ses kodek ayarını '$2' yerine '$1' olarak ayarlayın.\r\n\r\n"
+Settings.Publish.Warning.VideoAspectRatio="\tVideo Ayarları: Varsayılan oynatıcıdaki siyah kenarlardan kurtulmak için temel çözünürlüğün en-boy oranını $1'e ayarlayın\n\n"
 
 Settings.Video.Custom="Özel:"
 Settings.Video.Device="Ekran Kartı:"
@@ -262,6 +263,8 @@ Settings.Video.Filter="Filtre:"
 Settings.Video.FPS="FPS:"
 Settings.Video.Monitor="Ekran:"
 Settings.Video.Resolution="Temel Çözünürlük:"
+Settings.Video.AspectRatio="En Boy Oranı:"
+Settings.Video.AspectRatioFormat="$1:$2"
 
 Settings.Video.Filter.Bilinear="Bilinear (en hızlı)"
 Settings.Video.Filter.Bicubic="Bicubic sharper (iyi detay, 16 örnekleme)"
