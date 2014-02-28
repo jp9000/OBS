@@ -342,7 +342,7 @@ OBS::OBS()
         logSizeY = 500;
     }
 
-    hwndLogWindow = CreateWindowEx(LocaleIsRTL() ? WS_EX_LAYOUTRTL : 0, OBS_LOGWINDOW_CLASS, L"LogWindow", WS_OVERLAPPEDWINDOW, x, y, logSizeX, logSizeY, NULL, NULL, hinstMain, NULL);
+    hwndLogWindow = CreateWindowEx(LocaleIsRTL() ? WS_EX_LAYOUTRTL | WS_EX_NOINHERITLAYOUT : 0, OBS_LOGWINDOW_CLASS, L"LogWindow", WS_OVERLAPPEDWINDOW, x, y, logSizeX, logSizeY, NULL, NULL, hinstMain, NULL);
     LocalizeWindow(hwndLogWindow);
 
     RECT client;
