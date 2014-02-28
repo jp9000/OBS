@@ -251,6 +251,7 @@ Settings.Publish.Warning.RecommendMainProfile="\t詳細設定： このサービ
 Settings.Publish.Warning.Keyint="\t詳細設定: キーフレーム間隔を %d 秒に設定してください\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tエンコード設定: 音声ビットレートを %d 以下に設定して下さい\r\n\r\n"
 Settings.Publish.Warning.UnsupportedAudioCodec="\tエンコード設定: オーディオコーデックは'$2'ではなく'$1'を設定してください\r\n\r\n"
+Settings.Publish.Warning.VideoAspectRatio="\tビデオの設定: 既定のプレーヤーで黒い境界線を避けるために $1 のアスペクト比を基本解像度に設定\n\n"
 
 Settings.Video.Custom="配信映像:"
 Settings.Video.Device="アダプタ:"
@@ -262,6 +263,8 @@ Settings.Video.Filter="フィルタ:"
 Settings.Video.FPS="FPS:"
 Settings.Video.Monitor="画面:"
 Settings.Video.Resolution="解像度:"
+Settings.Video.AspectRatio="アスペクト比:"
+Settings.Video.AspectRatioFormat="$1: $2"
 
 Settings.Video.Filter.Bilinear="バイリニア (最高速)"
 Settings.Video.Filter.Bicubic="バイキュビック (4x4画素)"

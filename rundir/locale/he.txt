@@ -264,7 +264,7 @@ Settings.Video.FPS="פריימים לשנייה"
 Settings.Video.Monitor="צג"
 Settings.Video.Resolution="רזולוציית בסיס"
 Settings.Video.AspectRatio="יחס צפיה"
-Settings.Video.AspectRatioFormat="$2:$1"
+Settings.Video.AspectRatioFormat="$1:$2"
 
 Settings.Video.Filter.Bilinear="Bilinear (מהיר ביותר)"
 Settings.Video.Filter.Bicubic="Bicubic (פירוט טוב, 16 דגימות)"
