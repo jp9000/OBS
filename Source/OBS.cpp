@@ -1365,6 +1365,7 @@ void OBS::ReloadIniSettings()
     //-------------------------------------------
     // hotkeys
     QuickClearHotkey(pushToTalkHotkeyID);
+    QuickClearHotkey(pushToTalkHotkey2ID);
     QuickClearHotkey(muteMicHotkeyID);
     QuickClearHotkey(muteDesktopHotkeyID);
     QuickClearHotkey(stopStreamHotkeyID);
@@ -1380,7 +1381,7 @@ void OBS::ReloadIniSettings()
     if(bUsingPushToTalk && hotkey)
         pushToTalkHotkeyID = API->CreateHotkey(hotkey, OBS::PushToTalkHotkey, NULL);
     if(bUsingPushToTalk && hotkey2)
-        pushToTalkHotkeyID = API->CreateHotkey(hotkey2, OBS::PushToTalkHotkey, NULL);
+        pushToTalkHotkey2ID = API->CreateHotkey(hotkey2, OBS::PushToTalkHotkey, NULL);
 
     hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("MuteMicHotkey"));
     if(hotkey)

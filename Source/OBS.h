@@ -810,7 +810,7 @@ private:
     bool bUsingPushToTalk, bPushToTalkOn;
     long long pushToTalkDelay, pushToTalkTimeLeft;
 
-    UINT pushToTalkHotkeyID;
+    UINT pushToTalkHotkeyID, pushToTalkHotkey2ID;
     UINT muteMicHotkeyID;
     UINT muteDesktopHotkeyID;
     UINT startStreamHotkeyID;

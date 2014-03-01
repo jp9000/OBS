@@ -98,16 +98,21 @@ void SettingsAudio::ApplySettings()
     AppConfig->SetInt(TEXT("Audio"), TEXT("PushToTalkHotkey2"), hotkey2);
     AppConfig->SetInt(TEXT("Audio"), TEXT("PushToTalkDelay"), (int)App->pushToTalkDelay);
 
-    if(App->pushToTalkHotkeyID)
+    if (App->pushToTalkHotkeyID)
     {
         API->DeleteHotkey(App->pushToTalkHotkeyID);
         App->pushToTalkHotkeyID = 0;
+    }
+    if (App->pushToTalkHotkey2ID)
+    {
+        API->DeleteHotkey(App->pushToTalkHotkey2ID);
+        App->pushToTalkHotkey2ID = 0;
     }
 
     if(App->bUsingPushToTalk && hotkey)
         App->pushToTalkHotkeyID = API->CreateHotkey(hotkey, OBS::PushToTalkHotkey, NULL);
     if(App->bUsingPushToTalk && hotkey2)
-        App->pushToTalkHotkeyID = API->CreateHotkey(hotkey2, OBS::PushToTalkHotkey, NULL);
+        App->pushToTalkHotkey2ID = API->CreateHotkey(hotkey2, OBS::PushToTalkHotkey, NULL);
 
     //------------------------------------
 
