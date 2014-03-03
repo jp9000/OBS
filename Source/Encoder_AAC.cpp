@@ -46,7 +46,7 @@ public:
     {
         curBitRate = bitRate;
 
-        faac = faacEncOpen(App->GetSampleRateHz(), 2, &numReadSamples, &outputSize);
+        faac = faacEncOpen(App->GetSampleRateHz(), App->NumAudioChannels(), &numReadSamples, &outputSize);
 
         //Log(TEXT("numReadSamples: %d"), numReadSamples);
         aacBuffer.SetSize(outputSize+2);
@@ -54,7 +54,7 @@ public:
         aacBuffer[1] = 0x1;
 
         faacEncConfigurationPtr config = faacEncGetCurrentConfiguration(faac);
-        config->bitRate = (bitRate*1000)/2;
+        config->bitRate = (bitRate*1000)/App->NumAudioChannels();
         config->quantqual = 100;
         config->inputFormat = FAAC_INPUT_FLOAT;
         config->mpegVersion = MPEG4;
