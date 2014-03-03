@@ -252,31 +252,53 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 //--------------------------------------------
 
-                hwndTemp = GetDlgItem(hwnd, IDC_AUDIOBITRATE);
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("48"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("64"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("80"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("96"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("112"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("128"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("160"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("192"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("256"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("320"));
+                hwndTemp = GetDlgItem(hwnd, IDC_AUDIOFORMAT);
 
-                LoadSettingComboString(hwndTemp, TEXT("Audio Encoding"), TEXT("Bitrate"), TEXT("96"));
+                BOOL isAAC = SendMessage(GetDlgItem(hwnd, IDC_AUDIOCODEC), CB_GETCURSEL, 0, 0) == 1;
+
+                if (isAAC)
+                {
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("48kHz mono"));
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("48kHz stereo"));
+                } else {
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("44.1kHz mono"));
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("44.1kHz stereo"));
+                }
+
+                //LoadSettingComboInt(hwndTemp, TEXT("Audio Encoding"), TEXT("Format"), 1, isAAC ? 1 : 0);
+                LoadSettingComboInt(hwndTemp, TEXT("Audio Encoding"), TEXT("Format"), 1, 1);
 
                 //--------------------------------------------
 
-                hwndTemp = GetDlgItem(hwnd, IDC_AUDIOFORMAT);
-                //SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("48khz mono"));
-                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("44.1khz stereo"));
+                hwndTemp = GetDlgItem(hwnd, IDC_AUDIOBITRATE);
 
-                BOOL isAAC = SendMessage(GetDlgItem(hwnd, IDC_AUDIOCODEC), CB_GETCURSEL, 0, 0) == 1;
-                if (isAAC)
-                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("48khz stereo"));
+                BOOL isSTEREO = SendMessage(GetDlgItem(hwnd, IDC_AUDIOFORMAT), CB_GETCURSEL, 0, 0) == 1;
 
-                LoadSettingComboInt(hwndTemp, TEXT("Audio Encoding"), TEXT("Format"), 1, isAAC ? 1 : 0);
+                if (isSTEREO)
+                {
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("48"));
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("64"));
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("80"));
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("96"));//default
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("112"));
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("128"));
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("160"));
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("192"));
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("256"));
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("320"));
+                }else{
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("32"));
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("40"));
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("48"));//default
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("56"));
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("64"));
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("80"));
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("96"));
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("128"));
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("160"));
+                }
+
+                LoadSettingComboString(hwndTemp, TEXT("Audio Encoding"), TEXT("Bitrate"), isSTEREO ? TEXT("96") : TEXT("48"));
 
                 //--------------------------------------------
 
@@ -299,23 +321,100 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 {
                     case IDC_QUALITY:
                     case IDC_AUDIOBITRATE:
+                        if(HIWORD(wParam) == CBN_SELCHANGE)
+                        {
+                            bDataChanged = true;
+                        }
+                        break;
+
                     case IDC_AUDIOFORMAT:
                         if(HIWORD(wParam) == CBN_SELCHANGE)
+                        {
+                            HWND hwndAudioBitrate = GetDlgItem(hwnd, IDC_AUDIOBITRATE);
+                            SendMessage(hwndAudioBitrate, CB_RESETCONTENT, 0, 0);
+
+                            BOOL isSTEREO = SendMessage(GetDlgItem(hwnd, IDC_AUDIOFORMAT), CB_GETCURSEL, 0, 0) == 1;
+
+                            if (isSTEREO)
+                            {
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("48"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("64"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("80"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("96"));//default
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("112"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("128"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("160"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("192"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("256"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("320"));
+                            }else{
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("32"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("40"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("48"));//default
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("56"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("64"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("80"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("96"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("128"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("160"));
+                            }
+
+                            SendMessage(hwndAudioBitrate, CB_SETCURSEL, isSTEREO ? 3 : 2, 0);
+
                             bDataChanged = true;
+                        }
                         break;
 
                     case IDC_AUDIOCODEC:
                         if(HIWORD(wParam) == CBN_SELCHANGE)
                         {
-                            HWND hwndTemp = GetDlgItem(hwnd, IDC_AUDIOFORMAT);
-                            SendMessage(hwndTemp, CB_RESETCONTENT, 0, 0);
-                            SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("44.1khz stereo"));
+                            HWND hwndFormat = GetDlgItem(hwnd, IDC_AUDIOFORMAT);
+                            SendMessage(hwndFormat, CB_RESETCONTENT, 0, 0);
 
                             BOOL isAAC = SendMessage(GetDlgItem(hwnd, IDC_AUDIOCODEC), CB_GETCURSEL, 0, 0) == 1;
-                            if (isAAC)
-                                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("48khz stereo"));
 
-                            SendMessage(hwndTemp, CB_SETCURSEL, isAAC ? 1 : 0, 0);
+                            if (isAAC){
+                                SendMessage(hwndFormat, CB_ADDSTRING, 0, (LPARAM)TEXT("48kHz mono"));
+                                SendMessage(hwndFormat, CB_ADDSTRING, 0, (LPARAM)TEXT("48kHz stereo"));
+                            }else{
+                                SendMessage(hwndFormat, CB_ADDSTRING, 0, (LPARAM)TEXT("44.1kHz mono"));
+                                SendMessage(hwndFormat, CB_ADDSTRING, 0, (LPARAM)TEXT("44.1kHz stereo"));
+                            }
+
+                            SendMessage(hwndFormat, CB_SETCURSEL, 1, 0);
+
+                            //--------------------------------------------
+
+                            HWND hwndAudioBitrate = GetDlgItem(hwnd, IDC_AUDIOBITRATE);
+                            SendMessage(hwndAudioBitrate, CB_RESETCONTENT, 0, 0);
+
+                            BOOL isSTEREO = SendMessage(GetDlgItem(hwnd, IDC_AUDIOFORMAT), CB_GETCURSEL, 0, 0) == 1;
+
+                            if (isSTEREO)
+                            {
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("48"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("64"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("80"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("96"));//default
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("112"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("128"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("160"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("192"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("256"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("320"));
+                            }else{
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("32"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("40"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("48"));//default
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("56"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("64"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("80"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("96"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("128"));
+                                SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("160"));
+                            }
+
+                            SendMessage(hwndAudioBitrate, CB_SETCURSEL, isSTEREO ? 3 : 2, 0);
 
                             bDataChanged = true;
                         }

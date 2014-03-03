@@ -461,19 +461,27 @@ retryHookTestV2:
     String strEncoder = AppConfig->GetString(TEXT("Audio Encoding"), TEXT("Codec"), TEXT("AAC"));
     BOOL isAAC = strEncoder.CompareI(TEXT("AAC"));
 
-    UINT format = AppConfig->GetInt(L"Audio Encoding", L"Format", 1);
-
-    if (!isAAC)
-        format = 0;
-
-    switch (format) {
+    switch (isAAC) {
     case 0: sampleRateHz = 44100; break;
     default:
     case 1: sampleRateHz = 48000; break;
     }
 
     Log(L"------------------------------------------");
-    Log(L"Audio Format: %uhz", sampleRateHz);
+    Log(L"Audio Format: %u Hz", sampleRateHz);
+
+    //------------------------------------------------------------------
+
+    BOOL isSTEREO = AppConfig->GetInt(L"Audio Encoding", L"Format", 1);
+
+    switch (isSTEREO) {
+    case 0: audioChannel = 1; break;
+    default:
+    case 1: audioChannel = 2; break;
+    }
+
+    Log(L"------------------------------------------");
+    Log(L"Audio Channel: %u Ch", audioChannel);
 
     //------------------------------------------------------------------
 
