@@ -187,7 +187,7 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
 
                 RECT subDialogRect;
                 GetWindowRect(GetDlgItem(hwnd, IDC_SUBDIALOG), &subDialogRect);
-                MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&subDialogRect.left, 2);
+                MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&subDialogRect, 2);
 
                 SendMessage(GetDlgItem(hwnd, IDC_SETTINGSLIST), LB_SETCURSEL, 0, 0);
 
@@ -204,7 +204,11 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
 
                 if(App->hwndCurrentSettings != NULL)
                 {
-                    SetWindowPos(App->hwndCurrentSettings, NULL, subDialogRect.left, subDialogRect.top, 0, 0, SWP_NOSIZE);
+                    SetWindowPos(App->hwndCurrentSettings, NULL,
+                        subDialogRect.left, subDialogRect.top,
+                        subDialogRect.right - subDialogRect.left,
+                        subDialogRect.bottom - subDialogRect.top,
+                        SWP_NOZORDER);
                     ShowWindow(App->hwndCurrentSettings, SW_SHOW);
                     ShowWindow(GetDlgItem(hwnd, IDC_DEFAULTS), App->currentSettingsPane->HasDefaults());
                 }
@@ -318,7 +322,7 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
 
                         RECT subDialogRect;
                         GetWindowRect(GetDlgItem(hwnd, IDC_SUBDIALOG), &subDialogRect);
-                        MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&subDialogRect.left, 2);
+                        MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&subDialogRect, 2);
 
                         if(sel >= 0 && sel < (int)App->settingsPanes.Num())
                             App->currentSettingsPane = App->settingsPanes[sel];
@@ -326,7 +330,11 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                             App->hwndCurrentSettings = App->currentSettingsPane->CreatePane(hwnd);
                         if(App->hwndCurrentSettings)
                         {
-                            SetWindowPos(App->hwndCurrentSettings, NULL, subDialogRect.left, subDialogRect.top, 0, 0, SWP_NOSIZE);
+                            SetWindowPos(App->hwndCurrentSettings, NULL,
+                                subDialogRect.left, subDialogRect.top,
+                                subDialogRect.right - subDialogRect.left,
+                                subDialogRect.bottom - subDialogRect.top,
+                                SWP_NOZORDER);
                             ShowWindow(App->hwndCurrentSettings, SW_SHOW);
 
                             ShowWindow(GetDlgItem(hwnd, IDC_DEFAULTS), App->currentSettingsPane->HasDefaults());
