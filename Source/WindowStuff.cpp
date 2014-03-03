@@ -1,4 +1,4 @@
-/********************************************************************************
+﻿/********************************************************************************
  Copyright (C) 2012 Hugh Bailey <obs.jim@gmail.com>
 
  This program is free software; you can redistribute it and/or modify
@@ -2640,7 +2640,12 @@ void OBS::UpdateLog()
 String OBS::GetApplicationName()
 {
     String name;
-    name << App->GetCurrentProfile() << TEXT(" - ") << OBS_VERSION_STRING;
+    name << App->GetCurrentProfile() << L" - " OBS_VERSION_STRING
+#ifdef _WIN64
+    L" - 64bit (　^ω^)";
+#else
+    L" - 32bit (´・ω・｀)";
+#endif
     return name;
 }
 
