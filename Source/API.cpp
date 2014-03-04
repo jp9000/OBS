@@ -20,6 +20,8 @@
 #include "Main.h"
 
 #include <XInput.h>
+#define XINPUT_GAMEPAD_LEFT_TRIGGER    0x0400
+#define XINPUT_GAMEPAD_RIGHT_TRIGGER   0x0800
 
 
 void OBS::RegisterSceneClass(CTSTR lpClassName, CTSTR lpDisplayName, OBSCREATEPROC createProc, OBSCONFIGPROC configProc, bool bDeprecated)
@@ -768,6 +770,12 @@ void OBSAPIInterface::HandleHotkeys()
 
             if(XInputGetState(xinputNum, &state) == ERROR_SUCCESS)
             {
+                if(state.Gamepad.bLeftTrigger >= 85)
+                    state.Gamepad.wButtons |= XINPUT_GAMEPAD_LEFT_TRIGGER;
+
+                if(state.Gamepad.bRightTrigger >= 85)
+                    state.Gamepad.wButtons |= XINPUT_GAMEPAD_RIGHT_TRIGGER;
+
                 if((state.Gamepad.wButtons & xinputButton) != 0 && !info.bHotkeyDown)
                 {
                     PostMessage(hwndMain, OBS_CALLHOTKEY, TRUE, info.hotkeyID);
