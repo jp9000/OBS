@@ -105,6 +105,12 @@ notRunning:
 	
 FunctionEnd
 
+Function filesInUse
+	MessageBox MB_OK|MB_ICONEXCLAMATION "Some files were not able to be installed. If this is the first time you are installing OBS, please disable any anti-virus or other security software and try again. If you are re-installing or updating OBS, close any applications that may be have been hooked, or reboot and try again."  /SD IDOK
+FunctionEnd
+
+Var outputErrors
+
 Section "Open Broadcaster Software" Section1
 
 	; Set Section properties
@@ -140,10 +146,17 @@ Section "Open Broadcaster Software" Section1
 	SetOutPath "$PROGRAMFILES32\OBS\plugins\DShowPlugin\shaders\"
 	File "..\rundir\plugins\DShowPlugin\shaders\*.?Shader"
 	SetOutPath "$PROGRAMFILES32\OBS\plugins\GraphicsCapture\"
+	
+	ClearErrors
+	
 	File "..\GraphicsCapture\GraphicsCaptureHook\Release\GraphicsCaptureHook.dll"
 	File "..\GraphicsCapture\GraphicsCaptureHook\x64\Release\GraphicsCaptureHook64.dll"
 	File "..\injectHelper\Release\injectHelper.exe"
 	File "..\injectHelper\x64\Release\injectHelper64.exe"
+	
+	IfErrors 0 +2
+		StrCpy $outputErrors "yes"
+	
 	${if} ${RunningX64}
 		SetOutPath "$PROGRAMFILES64\OBS"
 		File "..\x64\Release\OBS.exe"
@@ -171,10 +184,17 @@ Section "Open Broadcaster Software" Section1
 		SetOutPath "$PROGRAMFILES64\OBS\plugins\DShowPlugin\shaders\"
 		File "..\rundir\plugins\DShowPlugin\shaders\*.?Shader"
 		SetOutPath "$PROGRAMFILES64\OBS\plugins\GraphicsCapture\"
+		
+		ClearErrors
+		
 		File "..\GraphicsCapture\GraphicsCaptureHook\Release\GraphicsCaptureHook.dll"
 		File "..\GraphicsCapture\GraphicsCaptureHook\x64\Release\GraphicsCaptureHook64.dll"
 		File "..\injectHelper\Release\injectHelper.exe"
 		File "..\injectHelper\x64\Release\injectHelper64.exe"
+		
+		IfErrors 0 +2
+			StrCpy $outputErrors "yes"
+
 	${endif}
 
 	WriteUninstaller "$PROGRAMFILES32\OBS\uninstall.exe"
@@ -191,6 +211,9 @@ Section "Open Broadcaster Software" Section1
 	${endif}
 
 	SetOutPath "$PROGRAMFILES32\OBS"
+	
+	StrCmp $outputErrors "yes" 0 +2
+		Call filesInUse
 SectionEnd
 
 Section -FinishSection
