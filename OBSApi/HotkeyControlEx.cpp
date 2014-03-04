@@ -19,12 +19,15 @@
 
 #include "OBSAPI.h"
 
+#include <Xinput.h>
+#define IDT_XINPUT_HOTKEY_TIMER 1337
 
 //basically trying to do the same as the windows default hotkey control, but with mouse button support.
 
 struct HotkeyControlExData
 {
     DWORD hotkeyVK, modifiers;
+    DWORD xinputNum, xinputButton;
 
     bool  bHasFocus;
     long  cx,cy;
@@ -59,6 +62,8 @@ LRESULT CALLBACK HotkeyExProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
                 control->hotkeyVK = 0;
                 control->modifiers = 0;
+                control->xinputNum = 0;
+                control->xinputButton = 0;
 
                 control->cx = pCreateData->cx;
                 control->cy = pCreateData->cy;
@@ -91,6 +96,7 @@ LRESULT CALLBACK HotkeyExProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 int y = GetSystemMetrics(SM_CYEDGE);
                 SetCaretPos(x-1, y);
                 ShowCaret(hwnd);
+                SetTimer(hwnd, IDT_XINPUT_HOTKEY_TIMER, 100, NULL);
                 break;
             }
 
@@ -101,6 +107,7 @@ LRESULT CALLBACK HotkeyExProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 DestroyCaret();
 
                 InvalidateRect(hwnd, NULL, TRUE);
+                KillTimer(hwnd, IDT_XINPUT_HOTKEY_TIMER);
                 break;
             }
 
@@ -110,8 +117,20 @@ LRESULT CALLBACK HotkeyExProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
         case HKM_SETHOTKEY:
             {
                 control = GetHotkeyControlExData(hwnd);
-                control->hotkeyVK  = LOBYTE(wParam);
-                control->modifiers = HIBYTE(wParam);
+                if(HIWORD(wParam))
+                {
+                    control->hotkeyVK = 0;
+                    control->modifiers = 0;
+                    control->xinputButton = HIWORD(wParam);
+                    control->xinputNum = LOWORD(wParam);
+                }
+                else
+                {
+                    control->hotkeyVK = LOBYTE(wParam);
+                    control->modifiers = HIBYTE(wParam);
+                    control->xinputButton = 0;
+                    control->xinputNum = 0;
+                }
                 InvalidateRect(hwnd, NULL, TRUE);
                 break;
             }
@@ -119,7 +138,10 @@ LRESULT CALLBACK HotkeyExProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
         case HKM_GETHOTKEY:
             {
                 control = GetHotkeyControlExData(hwnd);
-                return MAKEWORD(control->hotkeyVK, control->modifiers);
+                if(control->xinputButton)
+                    return MAKELONG(control->xinputNum, control->xinputButton);
+                else
+                    return MAKEWORD(control->hotkeyVK, control->modifiers);
             }
 
         case WM_SYSKEYDOWN:
@@ -139,6 +161,8 @@ LRESULT CALLBACK HotkeyExProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     {
                         control->hotkeyVK = 0;
                         control->modifiers = 0;
+                        control->xinputButton = 0;
+                        control->xinputNum = 0;
 
                         InvalidateRect(hwnd, NULL, TRUE);
                         PostMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(GetDlgCtrlID(hwnd), EN_CHANGE), (LPARAM)hwnd);
@@ -167,6 +191,8 @@ LRESULT CALLBACK HotkeyExProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 {
                     control->hotkeyVK  = hotkeyVK;
                     control->modifiers = modifiers;
+                    control->xinputButton = 0;
+                    control->xinputNum = 0;
 
                     InvalidateRect(hwnd, NULL, TRUE);
                     PostMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(GetDlgCtrlID(hwnd), EN_CHANGE), (LPARAM)hwnd);
@@ -214,10 +240,44 @@ LRESULT CALLBACK HotkeyExProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 {
                     control->hotkeyVK = hotkeyVK;
                     control->modifiers = modifiers;
+                    control->xinputButton = 0;
+                    control->xinputNum = 0;
 
                     InvalidateRect(hwnd, NULL, TRUE);
                     PostMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(GetDlgCtrlID(hwnd), EN_CHANGE), (LPARAM)hwnd);
                 }
+                break;
+            }
+
+        case WM_TIMER:
+            {
+                control = GetHotkeyControlExData(hwnd);
+
+                for(int i = 0; i < 4; ++i)
+                {
+                    XINPUT_STATE state = { 0 };
+
+                    if(XInputGetState(i, &state) != ERROR_SUCCESS)
+                        continue;
+
+                    if(state.Gamepad.wButtons == 0)
+                        continue;
+
+                    // Continue if more than exactly one button is pressed
+                    if(state.Gamepad.wButtons & (state.Gamepad.wButtons - 1))
+                        continue;
+
+                    control->hotkeyVK = 0;
+                    control->modifiers = 0;
+                    control->xinputButton = state.Gamepad.wButtons;
+                    control->xinputNum = i;
+
+                    InvalidateRect(hwnd, NULL, TRUE);
+                    PostMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(GetDlgCtrlID(hwnd), EN_CHANGE), (LPARAM)hwnd);
+
+                    break;
+                }
+
                 break;
             }
 
@@ -294,7 +354,59 @@ void HotkeyControlExData::DrawHotkeyControlEx(HWND hwnd, HDC hDC)
     TCHAR lpName[128];
     String strText;
 
-    if(hotkeyVK || modifiers)
+    if(xinputButton)
+    {
+        strText << FormattedString(TEXT("XPad%d "), xinputNum);
+
+        switch(xinputButton)
+        {
+            case XINPUT_GAMEPAD_DPAD_UP:
+            strText << "Up";
+            break;
+            case XINPUT_GAMEPAD_DPAD_DOWN:
+            strText << "Down";
+            break;
+            case XINPUT_GAMEPAD_DPAD_LEFT:
+            strText << "Left";
+            break;
+            case XINPUT_GAMEPAD_DPAD_RIGHT:
+            strText << "Right";
+            break;
+            case XINPUT_GAMEPAD_START:
+            strText << "Start";
+            break;
+            case XINPUT_GAMEPAD_BACK:
+            strText << "Back";
+            break;
+            case XINPUT_GAMEPAD_LEFT_THUMB:
+            strText << "LThumb";
+            break;
+            case XINPUT_GAMEPAD_RIGHT_THUMB:
+            strText << "RThumb";
+            break;
+            case XINPUT_GAMEPAD_LEFT_SHOULDER:
+            strText << "LTrig";
+            break;
+            case XINPUT_GAMEPAD_RIGHT_SHOULDER:
+            strText << "RTrig";
+            break;
+            case XINPUT_GAMEPAD_A:
+            strText << "A";
+            break;
+            case XINPUT_GAMEPAD_B:
+            strText << "B";
+            break;
+            case XINPUT_GAMEPAD_X:
+            strText << "X";
+            break;
+            case XINPUT_GAMEPAD_Y:
+            strText << "Y";
+            break;
+            default:
+            strText << "Unknown";
+        }
+    }
+    else if(hotkeyVK || modifiers)
     {
         bool bAdd = false;
         if(modifiers & HOTKEYF_CONTROL)

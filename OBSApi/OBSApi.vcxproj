@@ -87,10 +87,10 @@
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(WindowsSDK80Path)Lib\win8\um\x86;$(DXSDK_DIR)Lib\x86;$(LibraryPath)</LibraryPath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(WindowsSDK80Path)Lib\win8\um\x86;$(DXSDK_DIR)Lib\x86;$(LibraryPath)</LibraryPath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(WindowsSDK80Path)Lib\win8\um\x64;$(DXSDK_DIR)Lib\x64;$(LibraryPath)</LibraryPath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(WindowsSDK80Path)Lib\win8\um\x64;$(DXSDK_DIR)Lib\x64;$(LibraryPath)</LibraryPath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(WindowsSDK80Path)Lib\win8\um\x86;$(WindowsSDK80Path)Lib\winv6.3\um\x86;$(DXSDK_DIR)Lib\x86;$(LibraryPath)</LibraryPath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(WindowsSDK80Path)Lib\win8\um\x86;$(WindowsSDK80Path)Lib\winv6.3\um\x86;$(DXSDK_DIR)Lib\x86;$(LibraryPath)</LibraryPath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(WindowsSDK80Path)Lib\win8\um\x64;$(WindowsSDK80Path)Lib\winv6.3\um\x64;$(DXSDK_DIR)Lib\x64;$(LibraryPath)</LibraryPath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(WindowsSDK80Path)Lib\win8\um\x64;$(WindowsSDK80Path)Lib\winv6.3\um\x64;$(DXSDK_DIR)Lib\x64;$(LibraryPath)</LibraryPath>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(WindowsSDK80Path)Include\um;$(WindowsSDK80Path)Include\shared;$(DXSDK_DIR)Include;$(IncludePath)</IncludePath>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(WindowsSDK80Path)Include\um;$(WindowsSDK80Path)Include\shared;$(DXSDK_DIR)Include;$(IncludePath)</IncludePath>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(WindowsSDK80Path)Include\um;$(WindowsSDK80Path)Include\shared;$(DXSDK_DIR)Include;$(IncludePath)</IncludePath>
@@ -111,7 +111,7 @@
       <PrecompiledHeaderFile>XT.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>winmm.lib;psapi.lib;libsamplerate.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>winmm.lib;psapi.lib;libsamplerate.lib;Xinput9_1_0.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>../libsamplerate/debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>..\rundir\pdb32\$(TargetName).pdb</ProgramDatabaseFile>
@@ -149,7 +149,7 @@
       <StripPrivateSymbols>..\rundir\pdb64\stripped\$(TargetName).pdb</StripPrivateSymbols>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX64</TargetMachine>
-      <AdditionalDependencies>winmm.lib;psapi.lib;libsamplerate.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>winmm.lib;psapi.lib;libsamplerate.lib;Xinput9_1_0.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy $(OutDir)$(ProjectName).dll ..\rundir</Command>
@@ -171,7 +171,7 @@
       <PrecompiledHeaderFile>XT.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>winmm.lib;psapi.lib;libsamplerate.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>winmm.lib;psapi.lib;libsamplerate.lib;Xinput9_1_0.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>../libsamplerate/release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>..\rundir\pdb32\$(TargetName).pdb</ProgramDatabaseFile>
@@ -205,7 +205,7 @@
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>winmm.lib;psapi.lib;libsamplerate.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>winmm.lib;psapi.lib;libsamplerate.lib;Xinput9_1_0.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>../libsamplerate/x64/release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>..\rundir\pdb64\$(TargetName).pdb</ProgramDatabaseFile>
