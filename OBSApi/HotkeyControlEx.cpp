@@ -20,6 +20,8 @@
 #include "OBSAPI.h"
 
 #include <Xinput.h>
+#define XINPUT_GAMEPAD_LEFT_TRIGGER    0x0400
+#define XINPUT_GAMEPAD_RIGHT_TRIGGER   0x0800
 #define IDT_XINPUT_HOTKEY_TIMER 1337
 
 //basically trying to do the same as the windows default hotkey control, but with mouse button support.
@@ -260,6 +262,12 @@ LRESULT CALLBACK HotkeyExProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     if(XInputGetState(i, &state) != ERROR_SUCCESS)
                         continue;
 
+                    if(state.Gamepad.bLeftTrigger >= 85)
+                        state.Gamepad.wButtons |= XINPUT_GAMEPAD_LEFT_TRIGGER;
+
+                    if(state.Gamepad.bRightTrigger >= 85)
+                        state.Gamepad.wButtons |= XINPUT_GAMEPAD_RIGHT_TRIGGER;
+
                     if(state.Gamepad.wButtons == 0)
                         continue;
 
@@ -385,10 +393,16 @@ void HotkeyControlExData::DrawHotkeyControlEx(HWND hwnd, HDC hDC)
             strText << "RThumb";
             break;
             case XINPUT_GAMEPAD_LEFT_SHOULDER:
-            strText << "LTrig";
+            strText << "LButton";
             break;
             case XINPUT_GAMEPAD_RIGHT_SHOULDER:
-            strText << "RTrig";
+            strText << "RButton";
+            break;
+            case XINPUT_GAMEPAD_LEFT_TRIGGER:
+            strText << "LTrigger";
+            break;
+            case XINPUT_GAMEPAD_RIGHT_TRIGGER:
+            strText << "RTrigger";
             break;
             case XINPUT_GAMEPAD_A:
             strText << "A";
