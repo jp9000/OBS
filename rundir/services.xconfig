@@ -96,6 +96,7 @@ services : {
       "keyint" : 2000
       "ratecontrol" : "cbr"
       "supported audio codec" : "AAC"
+      "video aspect ratio" : "16:9"
     }
   }
   connectcast.tv : {
