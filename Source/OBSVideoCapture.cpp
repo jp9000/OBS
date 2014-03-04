@@ -253,7 +253,15 @@ bool STDCALL SleepToNS(QWORD qwNSTime)
 
     unsigned int milliseconds = (unsigned int)((qwNSTime - t)/1000000);
     if (milliseconds > 1) //also accounts for windows 8 sleep problem
+    {
+        //trap suspicious sleeps that should never happen
+        if (milliseconds > 10000)
+        {
+            Log(TEXT("Tried to sleep for %u seconds, that can't be right! Triggering breakpoint."), milliseconds);
+            DebugBreak();
+        }
         OSSleep(milliseconds);
+    }
 
     for (;;)
     {
