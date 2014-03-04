@@ -19,6 +19,8 @@
 
 #include "Main.h"
 
+#include <XInput.h>
+
 
 void OBS::RegisterSceneClass(CTSTR lpClassName, CTSTR lpDisplayName, OBSCREATEPROC createProc, OBSCONFIGPROC configProc, bool bDeprecated)
 {
@@ -755,53 +757,74 @@ void OBSAPIInterface::HandleHotkeys()
 
         DWORD hotkeyVK          = LOBYTE(info.hotkey);
         DWORD hotkeyModifiers   = HIBYTE(info.hotkey);
+        DWORD xinputNum         = LOWORD(info.hotkey);
+        DWORD xinputButton      = HIWORD(info.hotkey);
 
         hotkeyModifiers &= ~(HOTKEYF_EXT);
 
-        bool bModifiersMatch = false;
-        if (GlobalConfig->GetInt(TEXT("General"), TEXT("AllowOtherHotkeyModifiers"), true))
-            bModifiersMatch = ((hotkeyModifiers & modifiers) == hotkeyModifiers); //allows other modifiers to be pressed
-        else 
-            bModifiersMatch = (hotkeyModifiers == modifiers);
-
-        if(hotkeyModifiers && !hotkeyVK) //modifier-only hotkey
+        if(xinputButton)
         {
-            if((hotkeyModifiers & modifiers) == hotkeyModifiers)
+            XINPUT_STATE state = { 0 };
+
+            if(XInputGetState(xinputNum, &state) == ERROR_SUCCESS)
             {
-                if(!info.bHotkeyDown)
+                if((state.Gamepad.wButtons & xinputButton) != 0 && !info.bHotkeyDown)
                 {
                     PostMessage(hwndMain, OBS_CALLHOTKEY, TRUE, info.hotkeyID);
                     info.bDownSent = true;
                     info.bHotkeyDown = true;
                 }
-
-                continue;
             }
+
+            info.bModifiersDown = 0;
         }
         else
         {
-            if(bModifiersMatch)
-            {
-                short keyState   = GetAsyncKeyState(hotkeyVK);
-                bool bDown       = (keyState & 0x8000) != 0;
-                bool bWasPressed = (keyState & 0x1) != 0;
+            bool bModifiersMatch = false;
+            if(GlobalConfig->GetInt(TEXT("General"), TEXT("AllowOtherHotkeyModifiers"), true))
+                bModifiersMatch = ((hotkeyModifiers & modifiers) == hotkeyModifiers); //allows other modifiers to be pressed
+            else
+                bModifiersMatch = (hotkeyModifiers == modifiers);
 
-                if(bDown || bWasPressed)
+            if(hotkeyModifiers && !hotkeyVK) //modifier-only hotkey
+            {
+                if((hotkeyModifiers & modifiers) == hotkeyModifiers)
                 {
-                    if(!info.bHotkeyDown && info.bModifiersDown) //only triggers the hotkey if the actual main key was pressed second
+                    if(!info.bHotkeyDown)
                     {
                         PostMessage(hwndMain, OBS_CALLHOTKEY, TRUE, info.hotkeyID);
                         info.bDownSent = true;
+                        info.bHotkeyDown = true;
                     }
 
-                    info.bHotkeyDown = true;
-                    if(bDown)
-                        continue;
+                    continue;
                 }
             }
-        }
+            else
+            {
+                if(bModifiersMatch)
+                {
+                    short keyState = GetAsyncKeyState(hotkeyVK);
+                    bool bDown = (keyState & 0x8000) != 0;
+                    bool bWasPressed = (keyState & 0x1) != 0;
 
-        info.bModifiersDown = bModifiersMatch;
+                    if(bDown || bWasPressed)
+                    {
+                        if(!info.bHotkeyDown && info.bModifiersDown) //only triggers the hotkey if the actual main key was pressed second
+                        {
+                            PostMessage(hwndMain, OBS_CALLHOTKEY, TRUE, info.hotkeyID);
+                            info.bDownSent = true;
+                        }
+
+                        info.bHotkeyDown = true;
+                        if(bDown)
+                            continue;
+                    }
+                }
+            }
+
+            info.bModifiersDown = bModifiersMatch;
+        }
 
         if(info.bHotkeyDown) //key up
         {
