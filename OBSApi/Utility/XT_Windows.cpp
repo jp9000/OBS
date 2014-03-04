@@ -1012,13 +1012,42 @@ BOOL STDCALL OSFileHasChanged (OSFileChangeData *data)
 {
     BOOL hasModified = FALSE;
 
+    if (!data->hDirectory)
+    {
+        //we lost our directory handle for some reason, try to re-acquire it
+        data->hDirectory = CreateFile(data->strDirectory, FILE_LIST_DIRECTORY, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OVERLAPPED, NULL);
+        if(data->hDirectory != INVALID_HANDLE_VALUE)
+        {
+            DWORD test;
+            zero(&data->directoryChange, sizeof(data->directoryChange));
+        
+            data->directoryChange.hEvent = CreateEvent (NULL, TRUE, FALSE, NULL);
+
+            if(ReadDirectoryChangesW(data->hDirectory, data->changeBuffer, 2048, FALSE, FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE, &test, &data->directoryChange, NULL))
+            {
+            }
+            else
+            {
+                int i = GetLastError ();
+                CloseHandle(data->directoryChange.hEvent);
+                CloseHandle(data->hDirectory);
+
+                data->directoryChange.hEvent = NULL;
+                data->hDirectory = NULL;
+
+                return false;
+            }
+        }
+    }
+
     if(HasOverlappedIoCompleted(&data->directoryChange))
     {
         FILE_NOTIFY_INFORMATION *notify = (FILE_NOTIFY_INFORMATION*)data->changeBuffer;
 
+        //change triggered, process the notifications
         for (;;)
         {
-            if (notify->Action != FILE_ACTION_RENAMED_OLD_NAME && notify->Action != FILE_ACTION_REMOVED)
+            if (notify->Action == FILE_ACTION_ADDED || notify->Action == FILE_ACTION_MODIFIED || notify->Action == FILE_ACTION_RENAMED_NEW_NAME)
             {
                 String strFileName;
                 strFileName.SetLength(notify->FileNameLength);
@@ -1041,21 +1070,23 @@ BOOL STDCALL OSFileHasChanged (OSFileChangeData *data)
             notify = (FILE_NOTIFY_INFORMATION*)((BYTE *)notify + notify->NextEntryOffset);
         }
 
-        CloseHandle (data->directoryChange.hEvent);
-
-        DWORD test;
-        zero(&data->directoryChange, sizeof(data->directoryChange));
+        //prepare for next read
+        ResetEvent (data->directoryChange.hEvent);
         zero(data->changeBuffer, sizeof(data->changeBuffer));
 
-        data->directoryChange.hEvent = CreateEvent (NULL, TRUE, FALSE, NULL);
-
+        DWORD test;
         if(ReadDirectoryChangesW(data->hDirectory, data->changeBuffer, 2048, FALSE, FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE, &test, &data->directoryChange, NULL))
         {
         }
         else
         {
+            int i = GetLastError ();
             CloseHandle(data->directoryChange.hEvent);
             CloseHandle(data->hDirectory);
+
+            data->directoryChange.hEvent = NULL;
+            data->hDirectory = NULL;
+
             return hasModified;
         }
     }
