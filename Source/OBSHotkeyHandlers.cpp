@@ -69,14 +69,14 @@ void STDCALL OBS::StartRecordingHotkey(DWORD hotkey, UPARAM param, bool bDown)
 
 void STDCALL OBS::StopRecordingHotkey(DWORD hotkey, UPARAM param, bool bDown)
 {
-    if (App->bStartStreamHotkeyDown)
+    if (App->bStartRecordingHotkeyDown)
         return;
 
-    if (App->bStopStreamHotkeyDown && !bDown)
-        App->bStopStreamHotkeyDown = false;
+    if (App->bStopRecordingHotkeyDown && !bDown)
+        App->bStopRecordingHotkeyDown = false;
     else if (App->bRunning)
     {
-        if (App->bStopStreamHotkeyDown = bDown)
+        if (App->bStopRecordingHotkeyDown = bDown)
             App->StopRecording();
     }
 }
