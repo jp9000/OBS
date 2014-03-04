@@ -2640,11 +2640,11 @@ void OBS::UpdateLog()
 String OBS::GetApplicationName()
 {
     String name;
-    name << App->GetCurrentProfile() << L" - " OBS_VERSION_STRING
+    name << App->GetCurrentProfile() << L" - " OBS_VERSION_STRING L" - "
 #ifdef _WIN64
-    L" - 64bit (　^ω^)";
+    L"64bit";
 #else
-    L" - 32bit (´・ω・｀)";
+    L"32bit";
 #endif
     return name;
 }
