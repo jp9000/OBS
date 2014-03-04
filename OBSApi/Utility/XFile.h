@@ -67,9 +67,12 @@ public:
         DWORD dwFileSize = (DWORD)GetFileSize();
         LPSTR lpFileDataUTF8 = (LPSTR)Allocate(dwFileSize+1);
         lpFileDataUTF8[dwFileSize] = 0;
-        Read(lpFileDataUTF8, dwFileSize);
+        
+        if (Read(lpFileDataUTF8, dwFileSize) != dwFileSize)
+            strIn = String(TEXT(""));
+        else
+            strIn = String(lpFileDataUTF8);
 
-        strIn = String(lpFileDataUTF8);
         Free(lpFileDataUTF8);
     }
 
