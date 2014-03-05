@@ -381,6 +381,7 @@ Updater.NewUpdates="The following updates are available:\r\n\r\n"
 Updater.RunningWarning="OBS will be restarted to install the updates.\r\n\r\nAre you sure you want to continue?"
 Updater.UpdatesAvailable="Updates are available"
 Updater.NoUpdatesAvailable="No updates are available"
+Updater.Win81TLSSNIBug="Due to a bug in Windows 8.1 the secure update check failed. Do you want to retry the update check via an insecure connection?"
 
 MainMenu.Help.LogFiles="Log Files"
 MainMenu.Help.AnalyzeCurrentLog="Analyze current Log File"

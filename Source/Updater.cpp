@@ -99,7 +99,7 @@ BOOL CalculateFileHash (TCHAR *path, BYTE *hash)
 #define MANIFEST_URL "https://builds.catchexception.org/update.json"
 #define UPDATER_PATH "/updates/org.catchexception.builds.updater.exe"
 #define UPDATE_CHANNEL "master"
-*/
+//*/
 
 #ifndef MANIFEST_WITH_ARCHIVES
 #define MANIFEST_WITH_ARCHIVES 0
@@ -372,6 +372,11 @@ bool ParseUpdateManifest (TCHAR *path, BOOL *updatesAvailable, String &descripti
 #endif
 }
 
+bool Win81TLSSNIBugHandler()
+{
+    return OSGetVersion() == 8 && OBSMessageBox(hwndMain, Str("Updater.Win81TLSSNIBug"), nullptr, MB_YESNOCANCEL | MB_DEFBUTTON2) == IDYES;
+}
+
 DWORD WINAPI CheckUpdateThread (VOID *arg)
 {
     int responseCode;
@@ -421,7 +426,11 @@ DWORD WINAPI CheckUpdateThread (VOID *arg)
         scat(extraHeaders, strGUID);
     }
 
+#if MANIFEST_WITH_ARCHIVES
+    if (HTTPGetFile(TEXT(MANIFEST_URL), manifestPath, extraHeaders, &responseCode, Win81TLSSNIBugHandler))
+#else
     if (HTTPGetFile(TEXT(MANIFEST_URL), manifestPath, extraHeaders, &responseCode))
+#endif
     {
         if (responseCode == 200 || responseCode == 304)
         {

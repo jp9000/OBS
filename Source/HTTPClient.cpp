@@ -20,7 +20,21 @@
 #include "Main.h"
 #include <winhttp.h>
 
-BOOL HTTPGetFile (CTSTR url, CTSTR outputPath, CTSTR extraHeaders, int *responseCode)
+__declspec(thread) bool invalidCN = false;
+
+static void CALLBACK WinHTTPStatusCallback(HINTERNET hInternet, DWORD_PTR dwContext, DWORD dwInternetStatus, LPVOID lpvStatusInformation, DWORD dwStatusInformationLength)
+{
+    if (dwStatusInformationLength != 4)
+        return;
+
+    if ((*(DWORD*)lpvStatusInformation) & ~(WINHTTP_CALLBACK_STATUS_FLAG_CERT_CN_INVALID | WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CA))
+        return;
+
+    if ((*(DWORD*)lpvStatusInformation) & WINHTTP_CALLBACK_STATUS_FLAG_CERT_CN_INVALID)
+        invalidCN = true;
+}
+
+BOOL HTTPGetFile(CTSTR url, CTSTR outputPath, CTSTR extraHeaders, int *responseCode, HTTPGetFileWin81TLSSNIBugHandler h)
 {
     HINTERNET hSession = NULL;
     HINTERNET hConnect = NULL;
@@ -54,9 +68,13 @@ BOOL HTTPGetFile (CTSTR url, CTSTR outputPath, CTSTR extraHeaders, int *response
     if (urlComponents.nPort == 443)
         secure = TRUE;
 
+retry:
     hSession = WinHttpOpen(OBS_VERSION_STRING, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
     if (!hSession)
         goto failure;
+
+    if (secure)
+        WinHttpSetStatusCallback(hSession, WinHTTPStatusCallback, WINHTTP_CALLBACK_FLAG_SECURE_FAILURE, NULL);
 
     hConnect = WinHttpConnect(hSession, hostName, secure ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT, 0);
     if (!hConnect)
@@ -68,11 +86,20 @@ BOOL HTTPGetFile (CTSTR url, CTSTR outputPath, CTSTR extraHeaders, int *response
 
     BOOL bResults = WinHttpSendRequest(hRequest, extraHeaders, extraHeaders ? -1 : 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0);
 
-    // End the request.
-    if (bResults)
-        bResults = WinHttpReceiveResponse(hRequest, NULL);
-    else
+    if (!bResults)
+    {
+        DWORD err = GetLastError();
+        if (err == ERROR_WINHTTP_SECURE_FAILURE && invalidCN && h && h())
+        {
+            secure = 0;
+            WinHttpSetStatusCallback(hSession, nullptr, WINHTTP_CALLBACK_FLAG_SECURE_FAILURE, NULL);
+            goto retry;
+        }
         goto failure;
+    }
+
+    // End the request.
+    bResults = WinHttpReceiveResponse(hRequest, NULL);
 
     TCHAR statusCode[8];
     DWORD statusCodeLen;
@@ -121,7 +148,10 @@ BOOL HTTPGetFile (CTSTR url, CTSTR outputPath, CTSTR extraHeaders, int *response
 
 failure:
     if (hSession)
+    {
+        WinHttpSetStatusCallback(hSession, nullptr, WINHTTP_CALLBACK_FLAG_SECURE_FAILURE, NULL);
         WinHttpCloseHandle(hSession);
+    }
     if (hConnect)
         WinHttpCloseHandle(hConnect);
     if (hRequest)

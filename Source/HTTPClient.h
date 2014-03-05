@@ -19,6 +19,8 @@
 
 #pragma once
 
-BOOL HTTPGetFile (CTSTR url, CTSTR outputPath, CTSTR extraHeaders, int *responseCode);
+typedef bool(HTTPGetFileWin81TLSSNIBugHandler)();
+
+BOOL HTTPGetFile(CTSTR url, CTSTR outputPath, CTSTR extraHeaders, int *responseCode, HTTPGetFileWin81TLSSNIBugHandler h = nullptr);
 
 String CreateHTTPURL(String host, String path, String extra=String(), bool secure=false);
