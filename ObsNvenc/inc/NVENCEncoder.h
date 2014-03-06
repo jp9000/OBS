@@ -115,6 +115,7 @@ private:
 
     List<GUID> encodePresetGUIDs;
 
+    uint32_t outBufferSize;
     uint8_t *pstart;
 
     HANDLE frameMutex;

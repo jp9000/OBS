@@ -62,7 +62,18 @@ NVENCEncoder::NVENCEncoder(int fps, int width, int height, int quality, CTSTR pr
     
     frameMutex = OSCreateMutex();
 
-    pstart = new uint8_t[1024 * 1024];
+    if(maxBitRate > 0)
+    {
+        outBufferSize = (maxBitRate * 1000 / 8) * (keyint > 0 ? keyint : 2) * 2;
+    }
+    else
+    {
+        // Just allocate 10MB buffers as fallback
+        // should hopefully be enough for every format.
+        outBufferSize = 10 * 1024 * 1024;
+    }
+
+    pstart = new uint8_t[outBufferSize];
 
     init();
 }
@@ -313,7 +324,7 @@ void NVENCEncoder::init()
 
         NV_ENC_CREATE_BITSTREAM_BUFFER allocOut = { 0 };
         allocOut.version = NV_ENC_CREATE_BITSTREAM_BUFFER_VER;
-        allocOut.size = 1024 * 1024;
+        allocOut.size = outBufferSize;
         allocOut.memoryHeap = NV_ENC_MEMORY_HEAP_SYSMEM_CACHED;
 
         nvStatus = pNvEnc->nvEncCreateBitstreamBuffer(encoder, &allocOut);
@@ -539,6 +550,15 @@ void NVENCEncoder::ProcessOutput(NVENCEncoderOutputSurface *surf, List<DataPacke
     {
         NvLog(TEXT("Failed locking bitstream"));
         return;
+    }
+
+    if (lockParams.bitstreamSizeInBytes > outBufferSize)
+    {
+        NvLog(TEXT("WARNING: Actual output size is bigger than output buffer size!"));
+
+        outBufferSize = lockParams.bitstreamSizeInBytes;
+        delete[] pstart;
+        pstart = new uint8_t[outBufferSize];
     }
 
     memcpy(pstart, lockParams.bitstreamBufferPtr, lockParams.bitstreamSizeInBytes);
