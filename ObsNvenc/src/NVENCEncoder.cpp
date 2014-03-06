@@ -102,7 +102,8 @@ NVENCEncoder::~NVENCEncoder()
     delete[] inputSurfaces;
     delete[] outputSurfaces;
 
-    encoderRefDec();
+    if (alive)
+        encoderRefDec();
 
     OSCloseMutex(frameMutex);
 
