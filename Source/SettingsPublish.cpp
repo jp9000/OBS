@@ -275,14 +275,17 @@ void SettingsPublish::SetWarningInfo()
                         }
                     }
 
-                    if (r->HasItem(TEXT("profile")))
+                    if (r->HasItem(L"supported audio codec"))
                     {
-                        String expectedProfile = r->GetString(TEXT("profile"));
-
-                        if (!expectedProfile.CompareI(currentx264Profile))
+                        StringList codecs;
+                        r->GetStringList(L"supported audio codec", codecs);
+                        if (codecs.FindValueIndex(currentAudioCodec) == INVALID)
                         {
-                            errors++;
-                            strWarnings << Str("Settings.Publish.Warning.RecommendMainProfile");
+                            String msg = Str("Settings.Publish.Warning.UnsupportedAudioCodec"); //good thing OBS only supports MP3 (and AAC), otherwise I'd have to come up with a better translation solution
+                            msg.FindReplace(L"$1", codecs[0].Array());
+                            msg.FindReplace(L"$2", currentAudioCodec.Array());
+                            errors += 1;
+                            strWarnings << msg;
                         }
                     }
 
@@ -295,7 +298,7 @@ void SettingsPublish::SetWarningInfo()
                             strWarnings << FormattedString(Str("Settings.Publish.Warning.MaxAudiobitrate"), maxaudioaac);
                         }
                     }
-                    
+
                     if (r->HasItem(TEXT("max audio bitrate mp3")) && (!scmp(currentAudioCodec, TEXT("MP3"))))
                     {
                         int maxaudiomp3 = r->GetInt(TEXT("max audio bitrate mp3"));
@@ -303,16 +306,6 @@ void SettingsPublish::SetWarningInfo()
                         {
                             errors++;
                             strWarnings << FormattedString(Str("Settings.Publish.Warning.MaxAudiobitrate"), maxaudiomp3);
-                        }
-                    }
-
-                    if (r->HasItem(TEXT("keyint")))
-                    {
-                        int keyint = r->GetInt(TEXT("keyint"));
-                        if (!keyframeInt || keyframeInt * 1000 > keyint)
-                        {
-                            errors++;
-                            strWarnings << FormattedString(Str("Settings.Publish.Warning.Keyint"), keyint / 1000);
                         }
                     }
 
@@ -338,17 +331,24 @@ void SettingsPublish::SetWarningInfo()
                         }
                     }
 
-                    if (r->HasItem(L"supported audio codec"))
+                    if (r->HasItem(TEXT("profile")))
                     {
-                        StringList codecs;
-                        r->GetStringList(L"supported audio codec", codecs);
-                        if (codecs.FindValueIndex(currentAudioCodec) == INVALID)
+                        String expectedProfile = r->GetString(TEXT("profile"));
+
+                        if (!expectedProfile.CompareI(currentx264Profile))
                         {
-                            String msg = Str("Settings.Publish.Warning.UnsupportedAudioCodec"); //good thing OBS only supports MP3 (and AAC), otherwise I'd have to come up with a better translation solution
-                            msg.FindReplace(L"$1", codecs[0].Array());
-                            msg.FindReplace(L"$2", currentAudioCodec.Array());
-                            errors += 1;
-                            strWarnings << msg;
+                            errors++;
+                            strWarnings << Str("Settings.Publish.Warning.RecommendMainProfile");
+                        }
+                    }
+
+                    if (r->HasItem(TEXT("keyint")))
+                    {
+                        int keyint = r->GetInt(TEXT("keyint"));
+                        if (!keyframeInt || keyframeInt * 1000 > keyint)
+                        {
+                            errors++;
+                            strWarnings << FormattedString(Str("Settings.Publish.Warning.Keyint"), keyint / 1000);
                         }
                     }
 
