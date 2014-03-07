@@ -271,7 +271,17 @@ void NVENCEncoder::init()
         encodeConfig.rcParams.vbvBufferSize = bufferSize * 1000;
 
     if (bUseCBR)
+    {
         encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
+    }
+    else
+    {
+        encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_VBR_MINQP;
+        encodeConfig.rcParams.enableMinQP = 1;
+        encodeConfig.rcParams.minQP.qpInterB = 32 - quality;
+        encodeConfig.rcParams.minQP.qpInterP = 32 - quality;
+        encodeConfig.rcParams.minQP.qpIntra = 32 - quality;
+    }
 
     encodeConfig.encodeCodecConfig.h264Config.enableVFR = bUseCFR ? 0 : 1;
 
@@ -941,7 +951,13 @@ String NVENCEncoder::GetInfoString() const
         TEXT("\r\n    CBR: ") << cbr <<
         TEXT("\r\n    CFR: ") << cfr <<
         TEXT("\r\n    max bitrate: ") << IntString(encodeConfig.rcParams.maxBitRate / 1000) <<
+        TEXT("\r\n    avg bitrate: ") << IntString(encodeConfig.rcParams.averageBitRate / 1000) <<
         TEXT("\r\n    buffer size: ") << IntString(encodeConfig.rcParams.vbvBufferSize / 1000);
+
+    if (!bUseCBR)
+    {
+        strInfo << TEXT("\r\n    quality: ") << IntString(quality);
+    }
 
     return strInfo;
 }
