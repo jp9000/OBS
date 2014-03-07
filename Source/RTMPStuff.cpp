@@ -267,8 +267,13 @@ char* OBS::EncMetaData(char *enc, char *pend, bool bFLVFile)
     enc = AMF_EncodeNamedNumber(enc, pend, &av_audiodatarate,   double(audioBitRate)); //ex. 128kb\s
     enc = AMF_EncodeNamedNumber(enc, pend, &av_audiosamplerate, double(App->GetSampleRateHz()));
     enc = AMF_EncodeNamedNumber(enc, pend, &av_audiosamplesize, 16.0);
-    enc = AMF_EncodeNamedNumber(enc, pend, &av_audiochannels,   2.0);
-    enc = AMF_EncodeNamedBoolean(enc, pend, &av_stereo,         true);
+    enc = AMF_EncodeNamedNumber(enc, pend, &av_audiochannels,   double(App->NumAudioChannels()));
+    //enc = AMF_EncodeNamedBoolean(enc, pend, &av_stereo,         true);
+
+    if (App->NumAudioChannels() > 2 || App->NumAudioChannels() <1)
+        CrashError(TEXT("bad audio channnel configuration"));
+    enc = AMF_EncodeNamedBoolean(enc, pend, &av_stereo,     App->NumAudioChannels()==2);
+
     enc = AMF_EncodeNamedString(enc, pend, &av_encoder,         &av_OBSVersion);
     *enc++ = 0;
     *enc++ = 0;

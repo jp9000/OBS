@@ -473,7 +473,20 @@ retryHookTestV2:
     }
 
     Log(L"------------------------------------------");
-    Log(L"Audio Format: %uhz", sampleRateHz);
+    Log(L"Audio Format: %u Hz", sampleRateHz);
+
+    //------------------------------------------------------------------
+
+    BOOL isSTEREO = AppConfig->GetInt(L"Audio Encoding", L"isSTEREO", 1);
+
+    switch (isSTEREO) {
+    case 0: audioChannels = 1; break;
+    default:
+    case 1: audioChannels = 2; break;
+    }
+
+    Log(L"------------------------------------------");
+    Log(L"Audio Channels: %u Ch", audioChannels);
 
     //------------------------------------------------------------------
 

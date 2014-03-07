@@ -191,6 +191,7 @@ Settings.Encoding.Video="Video Encoding"
 Settings.Encoding.Audio.Bitrate="Bitrate:"
 Settings.Encoding.Audio.Codec="Codec:"
 Settings.Encoding.Audio.Format="Format:"
+Settings.Encoding.Audio.Channel="Channel:"
 
 Settings.Encoding.Video.Encoder="Encoder:"
 Settings.Encoding.Video.Encoderx264="x264"

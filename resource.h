@@ -70,6 +70,7 @@
 #define IDC_BASETHRESHOLD_EDIT          1020
 #define IDC_KEYFRAMEINTERVAL_EDIT       1020
 #define IDC_VIDEOCODEC                  1020
+#define IDC_AUDIOCHANNEL                1021
 #define IDC_BASETHRESHOLD               1021
 #define IDC_BLEND_EDIT                  1022
 #define IDC_BLEND                       1023
