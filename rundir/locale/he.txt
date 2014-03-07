@@ -191,6 +191,7 @@ Settings.Encoding.Video="קידוד וידאו"
 Settings.Encoding.Audio.Bitrate="קצב ביטים (kbit/שניה)"
 Settings.Encoding.Audio.Codec="קודק"
 Settings.Encoding.Audio.Format="תבנית"
+Settings.Encoding.Audio.Channel="ערוצים"
 
 Settings.Encoding.Video.Encoder=":מקודד"
 Settings.Encoding.Video.Encoderx264="x264"
@@ -371,7 +372,7 @@ Encoder.NVENC.DllNotFound="ObsNvenc.dll לא נמצא או שלא ניתן הי�
 Encoder.NVENC.OldDriver="פתיחת NVENC נכשלה!\r\nלצורך קידוד בשיטת NVENC, עליך לעשות שימוש במנהל התקן של NVIDIA בגרסה 334.89 לפחות."
 
 Encoder.QSV.NoHardwareSupport="לא אותרה תמיכה חומרתית ב Quick Sync!"
-Encoder.QSV.ExceededResolutionHelp=".או שתוריד את רזולוציית הפלט שהגדרת תחת הגדרות->וידאו או שתעבור למקודד מסוג אחר תחת הגדרות->מתקדם"
+Encoder.QSV.ExceededResolutionHelp="עליך להנמיך את רזולוציית הפלט ב'הגדרות'->'וידאו', או שתחליף את סוג המקודד ב'הגדרות'->'קידוד'."
 Encoder.QSV.SNBIVBMaximumResolutionWidthHeightExceeded="רזולוציית הפלט שהגדרת בסך %ux%u חורגת מהמקסימום של 1920x1200, אשר נתמך על ידי Quick Sync במעבדים מדור Sandy Bridge ו Ivy Bridge.\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionWidthExceeded="רזולוציית הפלט האופקית שהגדרת בסך %u חורגת מהמקסימום של 1920, אשר נתמך על ידי Quick Sync במעבדים מדור Sandy Bridge ו Ivy Bridge.\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionHeightExceeded="רזולוציית הפלט האנכית שהגדרת בסך %u חורגת מהמקסימום של 1200, אשר נתמך על ידי Quick Sync במעבדים מדור Sandy Bridge ו Ivy Bridge.\r\n"

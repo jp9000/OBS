@@ -109,6 +109,7 @@ Reconnecting.Retrying="لم يتمكن من اعادة الاتصال. يحاو�
 
 RenderView.EnableView="تمكين المشاهدة"
 RenderView.DisplayPanel="تمكين لوحة التحكم"
+RenderView.ViewModeScaleToFit="تغيير الابعاد لوضع الاحتواء"
 RenderView.ViewMode1To1="وضع 1:1"
 
 Scene.Hotkey="مفتاح إختصار المشهد "
@@ -134,10 +135,21 @@ Settings.Advanced.AutomaticLatency="الوضع التلقائي للكمون ا�
 Settings.Advanced.AllowOtherHotkeyModifiers="السماح بمعدلات أخرى على مفاتيح الاختصار"
 Settings.Advanced.BindToIP="الربط إلى الواجهة :"
 Settings.Advanced.DisablePreviewEncoding="تعطيل ترميز الفيديو أثناء المعاينة"
+Settings.Advanced.GlobalAudioTimeAdjust="ازاحة زمنية للصوت العام  (ميللي ثانية):"
 Settings.Advanced.LatencyTuning="معامل ضبط التأخير:"
 Settings.Advanced.Network="الشبكة"
+Settings.Advanced.ProcessPriority="معالجة اولوية الفئة"
 Settings.Advanced.SendBufferSize="حجم ارسال التخزين المؤقت:"
 Settings.Advanced.UnlockHigherFPS="السماح بدخول 61-120 إطاراً في الثانية في إعدادات الفيديو"
+Settings.Advanced.UseCBR="استخدام معدل ترميز ثابت"
+Settings.Advanced.PadCBR="تمكين حشو معدل الترميز الثابت"
+Settings.Advanced.PadCBRToolTip="القيمة الافتراضية هي لمعدل الترميز الثابت العادي."
+Settings.Advanced.UseCFR="استخدم معدل فريمات ثابت"
+Settings.Advanced.UseMultithreadedOptimizations="تحسين الاداء باستخدام الترابط المتعدد"
+Settings.Advanced.QSVUseVideoEncoderSettings="تخصيص التزامن السريع لاعدادات الترميز"
+Settings.Advanced.SceneBufferTime="زمن تخزين المحلي للمشهد  (ميللي ثانية):"
+Settings.Advanced.SyncToVideoTime="اجبار صوت سطح المكتب على استخدام توقيت الفيديو كقاعدة لتوقيت الصوت"
+Settings.Advanced.VideoEncoderCPUTradeoff="الاعدادات المسبقة لوحدة المعالجة المركزية للـ x264:"
 Settings.Advanced.VideoEncoderSettings="إعدادات مخصصة لترميز x264"
 
 Settings.Advanced.Priority.Idle="خامل"

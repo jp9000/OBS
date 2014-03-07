@@ -191,6 +191,7 @@ Settings.Encoding.Video="Codificação de Vídeo"
 Settings.Encoding.Audio.Bitrate="Bitrate:"
 Settings.Encoding.Audio.Codec="Codec:"
 Settings.Encoding.Audio.Format="Formato:"
+Settings.Encoding.Audio.Channel="Canal:"
 
 Settings.Encoding.Video.Encoder="Codificação:"
 Settings.Encoding.Video.Encoderx264="x264"
@@ -371,7 +372,7 @@ Encoder.NVENC.DllNotFound="ObsNvenc.dll não encontrado ou não pôde ser carreg
 Encoder.NVENC.OldDriver="Erro ao abrir NVENC!\r\nSeu driver nvidia deve ser pelo menos versão 334.89 para decodificação NVENC."
 
 Encoder.QSV.NoHardwareSupport="Não foi possível encontrar hardware para suportar o Quick Sync!"
-Encoder.QSV.ExceededResolutionHelp="Diminua a resolução de saída nas configurações-> vídeo ou escolha um codificador diferente nas configurações-> avançado."
+Encoder.QSV.ExceededResolutionHelp="Diminua a resolução de saída em Configurações->Vídeo ou escolha um codificador diferente em Configurações->Codificação."
 Encoder.QSV.SNBIVBMaximumResolutionWidthHeightExceeded="Sua resolução de saída de %ux%u excede o máximo de 1920x1200 suportado pelo Quick Sync nos processadores baseados em Sandy Bridge e Ivy Bridge! \r\n"
 Encoder.QSV.SNBIVBMaximumResolutionWidthExceeded="Sua resolução de largura de saída de %u excede o máximo de 1920 suportado pelo Quick Sync nos processadores baseados em Sandy Bridge e Ivy Bridge! \r\n"
 Encoder.QSV.SNBIVBMaximumResolutionHeightExceeded="Sua resolução de altura de saída de %u excede o máximo de 1200 suportado pelo Quick Sync nos processadores baseados em Sandy Bridge e Ivy Bridge! \r\n"

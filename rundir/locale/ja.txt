@@ -191,6 +191,7 @@ Settings.Encoding.Video="ビデオ"
 Settings.Encoding.Audio.Bitrate="ビットレート:"
 Settings.Encoding.Audio.Codec="コーデック:"
 Settings.Encoding.Audio.Format="フォーマット:"
+Settings.Encoding.Audio.Channel="チャンネル:"
 
 Settings.Encoding.Video.Encoder="エンコーダー:"
 Settings.Encoding.Video.Encoderx264="x264"
@@ -371,7 +372,7 @@ Encoder.NVENC.DllNotFound="ObsNvenc.dll が見つからないかまたはロー�
 Encoder.NVENC.OldDriver="NVENC の開始に失敗しました。\r\nNVENC でエンコードするためには、334.89以降のバージョンの nvidia ドライバーが必要です。"
 
 Encoder.QSV.NoHardwareSupport="Quick Sync ハードウェアのサポートを見つけられませんでした!"
-Encoder.QSV.ExceededResolutionHelp="設定->ビデオで、出力解像度を下げるか、または、設定->詳細設定で、別のエンコーダーに切り替えてください。"
+Encoder.QSV.ExceededResolutionHelp="設定->ビデオで、出力解像度を下げるか、または、設定->エンコードで、別のエンコーダーに切り替えてください。"
 Encoder.QSV.SNBIVBMaximumResolutionWidthHeightExceeded="%ux%u の出力解像度の設定が、Sandy Bridge と Ivy Bridge のプロセッサで利用可能な Quick Sync でサポートされている最大解像度の1920x1200を超えています!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionWidthExceeded="%u の出力解像度の横幅の設定が、Sandy Bridge と Ivy Bridge のプロセッサで利用可能な Quick Sync でサポートされている最大値の1920を超えています!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionHeightExceeded="%u の出力解像度の高さの設定が、Sandy Bridge と Ivy Bridge のプロセッサで利用可能な Quick Sync でサポートされている最大値の1200を超えています!\r\n"

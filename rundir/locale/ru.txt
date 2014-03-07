@@ -258,6 +258,8 @@ Settings.Video.Filter="Фильтр:"
 Settings.Video.FPS="Кадров в секунду (FPS):"
 Settings.Video.Monitor="Монитор:"
 Settings.Video.Resolution="Базовое разрешение:"
+Settings.Video.AspectRatio="Соотношение сторон:"
+Settings.Video.AspectRatioFormat="$1:$2"
 
 Settings.Video.Filter.Bilinear="Билинейный (быстрый)"
 Settings.Video.Filter.Bicubic="Бикубический резкий (хорошая детализация, 16 сэмплов)"
@@ -364,7 +366,6 @@ Encoder.NVENC.DllNotFound="ObsNvenc.dll не найден или не может
 Encoder.NVENC.OldDriver="Не удалось инициализировать NVENC!\r\nДля кодирования через NVENC требуются драйвера nvidia не ниже версии 334.89."
 
 Encoder.QSV.NoHardwareSupport="Не удалось обнаружить аппаратную поддержку Quick Sync!"
-Encoder.QSV.ExceededResolutionHelp="Уменьшите выходное разрешение в Настройки->Видео или выберите другой кодировщик в Настройки->Дополнительно."
 Encoder.QSV.SNBIVBMaximumResolutionWidthHeightExceeded="Выходное разрешение %ux%u превышает 1920x1200, максимально поддерживаемое QuickSync на процессорах Sandy Bridge и Ivy Bridge!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionWidthExceeded="Выходное разрешение %u превышает по ширине 1920, максимально поддерживаемое QuickSync на процессорах Sandy Bridge и Ivy Bridge!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionHeightExceeded="Выходное разрешение %u превышает по высоте 1200, максимально поддерживаемое QuickSync на процессорах Sandy Bridge и Ivy Bridge!\r\n"

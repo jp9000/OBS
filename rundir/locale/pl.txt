@@ -191,6 +191,7 @@ Settings.Encoding.Video="Kodowanie obrazu"
 Settings.Encoding.Audio.Bitrate="Przepływność (bitrate):"
 Settings.Encoding.Audio.Codec="Kodek:"
 Settings.Encoding.Audio.Format="Format:"
+Settings.Encoding.Audio.Channel="Kanał:"
 
 Settings.Encoding.Video.Encoder="Enkoder:"
 Settings.Encoding.Video.Encoderx264="x264"
@@ -371,7 +372,7 @@ Encoder.NVENC.DllNotFound="Brak pliku ObsNvenc.dll lub nie można go załadować
 Encoder.NVENC.OldDriver="Uruchomienie NVENC nie powiodło się!\r\nKorzystanie z kodowania NVENC wymaga sterownika Nvidia co najmniej w wersji 334.89."
 
 Encoder.QSV.NoHardwareSupport="Nie znaleziono sprzętowego wsparcia obsługi Quick Sync!"
-Encoder.QSV.ExceededResolutionHelp="Zmniejsz rozdzielczość wynikową w Ustawienia->Obraz lub wybierz inny enkoder w Ustawienia->Zaawansowane."
+Encoder.QSV.ExceededResolutionHelp="Zmniejsz rozdzielczość wynikową w Ustawienia->Obraz lub wybierz inny enkoder w Ustawienia->Kodowanie."
 Encoder.QSV.SNBIVBMaximumResolutionWidthHeightExceeded="Wyjściowa rozdzielczość obrazu %ux%u przekracza maksymalną wartość 1920x1200 obsługiwaną przez Quick Sync na procesorach Sandy Bridge i Ivy Bridge!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionWidthExceeded="Szerokość wyjściowej rozdzielczości obrazu %u przekracza maksymalną wartość 1920 obsługiwaną przez Quick Sync na procesorach Sandy Bridge i Ivy Bridge!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionHeightExceeded="Wysokość wyjściowej rozdzielczości obrazu %u przekracza maksymalną wartość 1200 obsługiwaną przez Quick Sync na procesorach Sandy Bridge i Ivy Bridge!\r\n"

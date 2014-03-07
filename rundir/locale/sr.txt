@@ -1,3 +1,4 @@
+RightToLeft="false"
 
 Add="Додај"
 Preview="Прегледај"
@@ -156,6 +157,7 @@ Settings.Advanced.VideoEncoderCPUTradeoff="х264 Процесорска Поде
 Settings.Advanced.VideoEncoderCPUTradeoffToolTip="Стављање ове валуте на већу опцију смањиће коришћење процесора тако што ће смањити квалитет слике. Са друге стране, подешавање ове валуте на мању опцију побољшаће квалитет слике са ценом од веће потрошње процесора.\r\n\r\nПрепоручена валута: Врло Брзо"
 Settings.Advanced.VideoEncoderSettings="Прилагођена х264 енкодер Подешавања"
 Settings.Advanced.VideoEncoderSettingsTooltip="Ово омогућава коришћење прилагођених х264 енкодер подешавања. у следећем облику:(параметар)=(валута) (На Пр. \"vbv-maxrate=1000 vbv-bufsize=1000\")."
+Settings.Advanced.X264Profile="профил кодирања:"
 Settings.Advanced.NVENCPreset="НВЕНЦ Пресет:"
 
 Settings.Advanced.Priority.Idle="Неактиван"
@@ -169,8 +171,11 @@ Settings.Audio.ForceMicMono="Силуј Микрофон/Помоћни(Звуч
 Settings.Audio.MicBoost="Мик/Пом појачање(више):"
 Settings.Audio.MicTimeOffset="Мик Време офсет-а (у милисекундама):"
 Settings.Audio.MicSyncFix="хацк за микрофонску синхронизацију"
+Settings.Audio.PushToTalkDelay="Кашњење Притисни-да-би причао функције (у милисекундама):"
 Settings.Audio.PushToTalkHotkey="користи претисни-да-прицаш:"
 Settings.Audio.ShowOnlyConnectedDevices="прикажи само повезане уређаје"
+Settings.Audio.UseInputDevices="Користи улазни уређај за десктоп звук"
+Settings.Audio.UseMicQPC="Користи QPC временске разлике за микрофон"
 Settings.Audio.ResetMic="Поново учитај"
 
 Settings.Encoding.Audio="звучно шифровање"
@@ -180,6 +185,10 @@ Settings.Encoding.Audio.Bitrate="Битрате:"
 Settings.Encoding.Audio.Codec="Кодеци:"
 Settings.Encoding.Audio.Format="Формат:"
 
+Settings.Encoding.Video.Encoder="Кодер:"
+Settings.Encoding.Video.Encoderx264="x264"
+Settings.Encoding.Video.EncoderQSV="Quick Sync"
+Settings.Encoding.Video.EncoderNVENC="Nvidia NVENC"
 Settings.Encoding.Video.BufferSize="Величина Пуфера (у килобајтима):"
 Settings.Encoding.Video.MaxBitRate="Максимални Битрате (у килобајтима по секунди):"
 Settings.Encoding.Video.Quality="баланс квалитета:"
@@ -191,19 +200,26 @@ Settings.General.ShowObs="Прикажи OBS"
 Settings.General.HideObs="Сакриј OBS"
 Settings.General.Restart="због промењавање језика ОБС мораће бити рестартован..\r\n\r\n..Али предпостављам ако мењас језик да немозес да разумес ово"
 
+Settings.Publish.AutoReconnect="Аутоматско-поновно повезивање:"
 Settings.Publish.ChannelName="Име канала:"
 Settings.Publish.Delay="Кашњење (у секундама):"
 Settings.Publish.LowLatencyMode="Умањи Утицај на Интернет:"
 Settings.Publish.Mode="Начин:"
 Settings.Publish.Password="Шифра (ако постоји):"
+Settings.Publish.SavePath="Путања дадотеке:"
 Settings.Publish.SaveToFile="Сачувај у фајл:"
 Settings.Publish.Server="Сервер:"
 
+Settings.Publish.Mode.FileOnly="само локални излазак"
 Settings.Publish.Mode.LiveStream="уживо стреамовање"
 
 
+Settings.Video.Custom="Прилагођено:"
+Settings.Video.Downscale="Смањивање резолуције(која се шаље на сервер-е):"
+Settings.Video.Filter="Филтер:"
 Settings.Video.FPS="FPS:"
 Settings.Video.Monitor="Екран:"
+Settings.Video.Resolution="Основна Резолуција:"
 
 
 Sources.BitmapSource="Слика"
@@ -221,20 +237,32 @@ Sources.SoftwareCaptureSource.Window="Прозор:"
 Sources.TextSource.Align="Сложи:"
 Sources.TextSource.EnterText="Унесите текст"
 Sources.TextSource.FileNotFound="Не могу отворити фајл '$1'"
+Sources.TextSource.Italic="Курзив"
 Sources.TextSource.Left="Лево"
 Sources.TextSource.Right="Десно"
+Sources.TextSource.ScrollSpeed="Брзина Скролловања:"
 Sources.TextSource.Size="Величина:"
+Sources.TextSource.Underline="Подвуци"
 Sources.TextSource.OutlineThickness="Танкоћа:"
+Sources.TextSource.VerticalScript="Вертикално"
 
+Sources.TransitionSource.Randomize="Насумично:"
 
+Stats="Статистика"
 
 
 
 
 Updater.DownloadNow="Да ли бисте желели да их преузмете одмах?"
 Updater.UpdatesAvailable="Надоградње су доступне"
+Updater.NoUpdatesAvailable="Нема нових верзија"
 
+MainMenu.Help.LogFiles="Лог фајлови"
+MainMenu.Help.AnalyzeCurrentLog="Анализирај тренутни лог фајл"
 
+LogUpload.SuccessDialog.Copy="Копирај"
+LogUpload.SuccessDialog.CopySuccess="Копирано!"
+LogUpload.SuccessDialog.CopyFailure="Није било могуће копирати!"
 
 LogUpload.CannotOpenFile="читање лога '%s' није успело. Проверите да ли неки други програм користи лог фајл и покушајте поново."
 LogUpload.Analyze="Анализирај"

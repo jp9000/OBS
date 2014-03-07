@@ -357,7 +357,6 @@ Encoder.NVENC.DllNotFound="ObsNvenc.dll kunne ikke bli funnet eller lastes."
 Encoder.NVENC.OldDriver="Åpningen av NVENC var ikke vellykket. Du trenger nVidia driver versjon 334.89 eller nyere for NVENC enkoding."
 
 Encoder.QSV.NoHardwareSupport="Finner ikke maskinvare med Quick Sync støtte!"
-Encoder.QSV.ExceededResolutionHelp="Senk utgangsoppløsningen i Instillinger->Video eller bytt til en annen koder i Instillinger->Avansert."
 Encoder.QSV.SNBIVBMaximumResolutionWidthHeightExceeded="Utgangsoppløsningen av %ux%u overskrider maks oppløsningen på 1920x1200 som er støttet av Quick Sync på Sandy Bridge og Ivy Bridge baserte prosessorer!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionWidthExceeded="Utgangsoppløsningen av bredde %u overskrider maks bredden på 1920 som er støttet av Quick Sync på Sandy Bridge og Ivy Bridge baserte prosessorer!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionHeightExceeded="Utgangsoppløsningen av høyde %u overskrider maks høyden på 1200 som er støttet av Quick Sync på Sandy Bridge og Ivy Bridge baserte prosessorer!\r\n"

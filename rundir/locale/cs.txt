@@ -343,7 +343,6 @@ Encoder.NVENC.NoHardwareSupport="Vypadáto, že Váš hardware nepodporuje Nvidi
 Encoder.NVENC.DllNotFound="ObsNvenc.dll nebyl nalezen nebo nelze načíst."
 
 Encoder.QSV.NoHardwareSupport="Nelze nalézt hardwarovou podporu Quick Syncu!"
-Encoder.QSV.ExceededResolutionHelp="Buď snižte výstupní rozlišení v Nastavení->Obraz nebo změňte enkodér v Nastavení->Pokročilé."
 Encoder.QSV.SNBIVBMaximumResolutionWidthHeightExceeded="Výstupní rozlišení - %ux%u - převyšuje maximální podporované rozlišení Quick Syncem - 1920x1200 - u procesorů založených na Sandy a Ivy Bridge!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionWidthExceeded="Šířka výstupního rozlišení - %u px - převyšuje maximální podporovanou šířku Quick Syncem - 1920px - u procesorů postavených na Sandy a Ivy Bridge!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionHeightExceeded="Výška výstupního rozlišení - %u px - převyšuje maximální podporovanou výšku Quick Syncem - 1200 px - u procesorů postavených na Sandy a Ivy Bridge!\r\n"

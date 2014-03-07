@@ -371,7 +371,6 @@ Encoder.NVENC.DllNotFound="ObsNvenc.dll faili ei leitud või ei saanud seda laad
 Encoder.NVENC.OldDriver="NVENC avamine nurjus! \r\nSul on vaja vähemalt nvidia draiveri versiooni 334.89 NVENC kodeerimiseks."
 
 Encoder.QSV.NoHardwareSupport="Quick Sync Riistvara tuge ei leitud!"
-Encoder.QSV.ExceededResolutionHelp="Kas vähendad oma väljundi resolutsiooni Seaded-> Video või vaheta end teisele enkooderile Seeaded-> täpsemalt."
 Encoder.QSV.SNBIVBMaximumResolutionWidthHeightExceeded="Teie väljundi resolutsioon %ux%u ületab maksimaalse 1920x1200 resolutsiooni mida toetab Quick Sync - Sandy Bridge ja Ivy Bridge tehnoloogial põhinevad protsessorid! \r\n"
 Encoder.QSV.SNBIVBMaximumResolutionWidthExceeded="Teie väljundi resolutsiooni laius %u ületab 1200, mis on maksimaalne arv Quick Sync'i jaoks Sandy Bridge ja Ivy Bridge protsessoritel!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionHeightExceeded="Teie väljundi resolutsiooni kõrgus %u ületab 1200, mis on maksimaalne arv Quick Sync'i jaoks Sandy Bridge ja Ivy Bridge protsessoritel!\r\n"

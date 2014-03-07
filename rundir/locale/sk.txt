@@ -334,7 +334,6 @@ Encoder.NVENC.DllNotFound="ObsNvenc.dll nebol nájdený alebo sa ho nepodarilo n
 Encoder.NVENC.OldDriver="Inicializácia NVENC zlyhala!\r\nPotrebujete nvidia ovládače minimálne verzie 334.89 pre NVENC encoding."
 
 Encoder.QSV.NoHardwareSupport="Nepodarilo sa nájsť hardvérovú podporu Quick Sync!"
-Encoder.QSV.ExceededResolutionHelp="Znížte výstupné rozlíšenie v Nastavenia->Video alebo zmente enkodér v Nastavenia->Rozšírené."
 Encoder.QSV.SNBIVBMaximumResolutionWidthHeightExceeded="Vaše výstupné rozlíšenie %ux%u presahuje maximálne rozlíšenie 1920x1200 podporované Quick Sync na procesoroch založených na Sandy Bridge a Ivy Bridge architektúre!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionWidthExceeded="Vaše výstupné rozlíšenie šírky %u presahuje maximálne rozlíšenie 1920 podporované Quick Sync na procesoroch založených na Sandy Bridge a Ivy Bridge architektúre!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionHeightExceeded="Vaše výstupné rozlíšenie výšky %u presahuje maximálne rozlíšenie 1200 podporované Quick Sync na procesoroch založených na Sandy Bridge a Ivy Bridge architektúre!\r\n"

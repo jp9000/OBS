@@ -251,6 +251,7 @@ Settings.Publish.Warning.RecommendMainProfile="\tImpostazioni avanzate: il profi
 Settings.Publish.Warning.Keyint="\tImpostazioni -> Avanzate: Impostare un intervallo per KeyFrame di %d secondi\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tImpostazioni -> Codifica: Ridurre il BitRate audio massimo a %d\r\n\r\n"
 Settings.Publish.Warning.UnsupportedAudioCodec="\tImpostazioni di encoding: Imposta il codec audio a '$1' invece che '$2'\r\n\r\n"
+Settings.Publish.Warning.VideoAspectRatio="\tImpostazioni Video: Imposta la risoluzione base verso una proporzione di $1 per evitare bordi neri nel player di default\n\n"
 
 Settings.Video.Custom="Personalizzata:"
 Settings.Video.Device="Adattatore video:"
@@ -262,6 +263,8 @@ Settings.Video.Filter="Filtro:"
 Settings.Video.FPS="FPS (Fotogrammi al secondo):"
 Settings.Video.Monitor="Schermo:"
 Settings.Video.Resolution="Risoluzione base:"
+Settings.Video.AspectRatio="Proporzioni:"
+Settings.Video.AspectRatioFormat="$1:$2"
 
 Settings.Video.Filter.Bilinear="Bilineare (più veloce)"
 Settings.Video.Filter.Bicubic="Bicubica nitida (dettagli buoni, 16 campioni)"

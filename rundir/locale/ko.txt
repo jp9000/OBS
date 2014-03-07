@@ -191,6 +191,7 @@ Settings.Encoding.Video="비디오 인코딩"
 Settings.Encoding.Audio.Bitrate="품질(비트레이트):"
 Settings.Encoding.Audio.Codec="사용 코덱:"
 Settings.Encoding.Audio.Format="기본 형식:"
+Settings.Encoding.Audio.Channel="채널:"
 
 Settings.Encoding.Video.Encoder="인코더:"
 Settings.Encoding.Video.Encoderx264="x264"
@@ -371,7 +372,7 @@ Encoder.NVENC.DllNotFound="ObsNvenc.dll 파일을 찾을 수 없거나 읽을 �
 Encoder.NVENC.OldDriver="NVENC 시작 실패!\r\nNVENC 인코딩을 하기 위해서는 드라이버의 버전이 334.89 혹은 그 이상이어야 합니다."
 
 Encoder.QSV.NoHardwareSupport="Quick Sync 을 지원하는 하드웨어를 찾지 못했습니다!"
-Encoder.QSV.ExceededResolutionHelp="'설정->비디오'에서 출력 해상도를 낮추거나 '설정->고급'에서 다른 인코더를 선택하십시오."
+Encoder.QSV.ExceededResolutionHelp="'설정->비디오'에서 출력 해상도를 낮추거나 '설정->인코딩'에서 다른 인코더를 선택하세요."
 Encoder.QSV.SNBIVBMaximumResolutionWidthHeightExceeded="%ux%u 출력 해상도는 샌디 브리지 및 아이비 브리지 기반 프로세서의 Quick Sync가 최대한 지원할 수 있는 해상도인 1920x1200 을 초과하였습니다.\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionWidthExceeded="출력하고 있는 해상도의 너비 %u 가 샌디 브리지 및 아이비 브리지 기반 프로세서의 Quick Sync가 최대한 지원할 수 있는 해상도의 너비인 1920을 초과하였습니다!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionHeightExceeded="출력하고 있는 해상도의 높이 %u 가 샌디 브리지 및 아이비 브리지 기반 프로세서의 Quick Sync가 최대한 지원할 수 있는 해상도의 높이인 1200을 초과하였습니다!\r\n"

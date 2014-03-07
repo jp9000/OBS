@@ -191,6 +191,7 @@ Settings.Encoding.Video="Kuvan pakkaus"
 Settings.Encoding.Audio.Bitrate="Bitrate:"
 Settings.Encoding.Audio.Codec="Codec:"
 Settings.Encoding.Audio.Format="Muoto:"
+Settings.Encoding.Audio.Channel="Kanava:"
 
 Settings.Encoding.Video.Encoder="Enkooderi:"
 Settings.Encoding.Video.Encoderx264="x264"
@@ -251,6 +252,7 @@ Settings.Publish.Warning.RecommendMainProfile="\tLisäasetukset: Suositeltu x264
 Settings.Publish.Warning.Keyint="\tLisäasetukset: Aseta keyframe-väli %d sekuntiin\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tEnkoodaus-asetukset: Laske äänen bitrate-asetusta arvoon %d\r\n\r\n"
 Settings.Publish.Warning.UnsupportedAudioCodec="\tEnkoodaus-asetukset: Aseta äänen Codec  '$1':stä '$2':seen\r\n\r\n"
+Settings.Publish.Warning.VideoAspectRatio="\tKuva: Aseta resoluutio kuvasuhteeseen $1 välttääksesi mustia reunoja striimikuvassa\n\n"
 
 Settings.Video.Custom="Valinnainen:"
 Settings.Video.Device="Näytönohjain:"
@@ -262,6 +264,7 @@ Settings.Video.Filter="Suodatin:"
 Settings.Video.FPS="FPS:"
 Settings.Video.Monitor="Näyttö:"
 Settings.Video.Resolution="Resoluutio:"
+Settings.Video.AspectRatio="Kuvasuhde:"
 Settings.Video.AspectRatioFormat="$1:$2"
 
 Settings.Video.Filter.Bilinear="Bilineaarinen (nopein)"
@@ -369,7 +372,7 @@ Encoder.NVENC.DllNotFound="Tiedostoa ObsNvenc.dll ei löytynyt tai sitä ei voit
 Encoder.NVENC.OldDriver="NVENC:n avaaminen epäonnistui!\r\nTarvitset vähintään nVidian ajuriversion 334.89 käyttääksesi NVENC-enkoodausta."
 
 Encoder.QSV.NoHardwareSupport="Quick Sync -ominaisuudelle sopivaa laitteistoa ei löytynyt!"
-Encoder.QSV.ExceededResolutionHelp="Alenna lähtöresoluutiota (Asetukset -> Kuva) tai käytä toista enkooderia (Asetukset -> Lisäasetukset)."
+Encoder.QSV.ExceededResolutionHelp="Alenna resoluutiota (Asetukset -> Kuva) tai käytä toista enkooderia (Asetukset -> Enkoodaus)."
 Encoder.QSV.SNBIVBMaximumResolutionWidthHeightExceeded="Käyttämäsi ulostuloresoluutio %ux%u on korkeampi kuin Quick Syncin tukema 1920x1200 Sandy Bridge ja Ivy Bridge -prosessoreilla!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionWidthExceeded="Käyttämäsi ulostuloresoluution leveys %u on korkeampi kuin Quick Syncin tukema 1920 Sandy Bridge ja Ivy Bridge -prosessoreilla!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionHeightExceeded="Käyttämäsi ulostuloresoluution korkeus %u on korkeampi kuin Quick Syncin tukema 1200 Sandy Bridge ja Ivy Bridge -prosessoreilla!\r\n"

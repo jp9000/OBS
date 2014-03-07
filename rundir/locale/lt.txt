@@ -257,6 +257,8 @@ Settings.Video.Filter="Filtravimas:"
 Settings.Video.FPS="Kadrai per sekundę:"
 Settings.Video.Monitor="Monitoriaus:"
 Settings.Video.Resolution="Bazinė raiška:"
+Settings.Video.AspectRatio="Kadro formatas (kraštinių santykis):"
+Settings.Video.AspectRatioFormat="$1:$2"
 
 Settings.Video.Filter.Bilinear="Bilinear (greičiausias)"
 Settings.Video.Filter.Bicubic="Bicubic aštrinimas (geros detalės, 16 mėginių)"

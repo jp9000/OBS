@@ -191,6 +191,7 @@ Settings.Encoding.Video="Video Encoding"
 Settings.Encoding.Audio.Bitrate="Bitrate:"
 Settings.Encoding.Audio.Codec="Codec:"
 Settings.Encoding.Audio.Format="Format:"
+Settings.Encoding.Audio.Channel="Kanal:"
 
 Settings.Encoding.Video.Encoder="Encoder:"
 Settings.Encoding.Video.Encoderx264="x264"
@@ -371,7 +372,7 @@ Encoder.NVENC.DllNotFound="ObsNvenc.dll blev ikke fundet eller kunne ikke indlæ
 Encoder.NVENC.OldDriver="Åbning af NVENC mislykkedes! \r\n Du skal have mindst Nvidia driver version 334.89 til kodning med NVENC."
 
 Encoder.QSV.NoHardwareSupport="Kunne ikke finde Quick Sync hardware support!"
-Encoder.QSV.ExceededResolutionHelp="Enten sænker dit outputopløsning i Indstillinger-> Video eller skift til en anden encoder i Indstillinger-> Avanceret."
+Encoder.QSV.ExceededResolutionHelp="Enten sænk din outputopløsning i indstillinger -> video eller skift til en anden encoder i indstillinger -> encoding."
 Encoder.QSV.SNBIVBMaximumResolutionWidthHeightExceeded="Din outputopløsning af %ux%u overskrider maksimumgrænsen på 1920 x 1200 som understøttes af Quick Sync på Sandy Bridge og Ivy Bridge baserede processorer!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionWidthExceeded="Din outputopløsning bredde af %u overskrider maksimumgrænsen på 1920 som understøttes af Quick Sync på Sandy Bridge og Ivy Bridge baserede processorer!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionHeightExceeded="Din outputopløsning højde af %u overskrider maksimumgrænsen på 1200 som understøttes af Quick Sync på Sandy Bridge og Ivy Bridge baserede processorer!\r\n"

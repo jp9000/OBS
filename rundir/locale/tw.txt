@@ -364,7 +364,6 @@ Encoder.NVENC.DllNotFound="ObsNvenc.dll 沒有找到或無法讀取。"
 Encoder.NVENC.OldDriver="開啟 NVENC 失敗！\r\n你至少需要 nvidia 驅動程式版本 334.89 來 NVENC 編碼。"
 
 Encoder.QSV.NoHardwareSupport="找不到快速同步硬體支援！"
-Encoder.QSV.ExceededResolutionHelp="降低您的輸出解析度（設定-> 影像）或切換到一個不同的編碼器（設定-> 進階）。"
 Encoder.QSV.SNBIVBMaximumResolutionWidthHeightExceeded="你的输出解析度大小 %ux%u 超過了快速同步支持的最大解析度 1920x1200 （基於Sandy Bridge 和 Ivy Bridge 的處理器）!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionWidthExceeded="你的输出解析度寬度 %u 超過了快速同步支持的最大解析度 1920 （基於Sandy Bridge 和 Ivy Bridge 的處理器）!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionHeightExceeded="你的输出解析度高度 %u 超過了快速同步支持的最大解析度 1200 （基於Sandy Bridge 和 Ivy Bridge 的處理器）!\r\n"

@@ -371,7 +371,7 @@ Encoder.NVENC.DllNotFound="ObcNvenc.dll kunde antingen inte hittas eller laddas.
 Encoder.NVENC.OldDriver="Kunde inte öppna NVENC!\r\nDu behöver som lägst version 334.89 av NVIDIAs drivrutiner för att använda NVENC-kodning."
 
 Encoder.QSV.NoHardwareSupport="Inget hårdvarustöd för Quick Sync hittades."
-Encoder.QSV.ExceededResolutionHelp="Minska antingen din utmatningsupplösning i Inställningar->Video eller byt till en annan videokodare i Inställningar->Avancerat."
+Encoder.QSV.ExceededResolutionHelp="Minska antingen din utmatningsupplösning i Inställningar->Video eller byt till en annan videokodare i Inställningar->Kodning."
 Encoder.QSV.SNBIVBMaximumResolutionWidthHeightExceeded="Din utmatningsupplösning %u x %u överskrider 1920x1200, vilket är den högsta upplösning som stöds av Quick Sync på Sandy Bridge- och Ivy Bridge-processorer.\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionWidthExceeded="Din utmatningsupplösningsbredd %u överskrider 1920, vilket är det högsta värdet som stöds av Quick Sync på Sandy Bridge- och Ivy Bridge-processorer.\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionHeightExceeded="Din utmatningsupplösningshöjd %u överskrider 1200, vilket är det högsta värdet som stöds av Quick Sync på Sandy Bridge- och Ivy Bridge-processorer.\r\n"

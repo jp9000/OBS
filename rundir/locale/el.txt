@@ -350,7 +350,6 @@ Encoder.NVENC.NoHardwareSupport="Το υλικό σας δεν φαίνεται 
 Encoder.NVENC.DllNotFound="Το αρχείο ObsNvenc.dll δεν βρέθηκε ή δε μπόρεσε να φορτωθεί."
 
 Encoder.QSV.NoHardwareSupport="Αποτυχία εύρεσης υποστήριξης υλικού Quick Sync!"
-Encoder.QSV.ExceededResolutionHelp="Είτε χαμηλώστε την ανάλυση εξόδου σας στις ρυθμίσεις-> βίντεο ή επιλέξτε ένα διαφορετικό κωδικοποιητή στις Ρυθμίσεις-> Για προχωρημένους."
 Encoder.QSV.SNBIVBMaximumResolutionWidthHeightExceeded="Η ανάλυση εξόδου %ux%u υπερβαίνει το μέγιστο του 1920x1200 που υποστηρίζεται από το QuickSync στους επεξεργαστές Sandy Bridge και Ivy Bridge! \r\n"
 Encoder.QSV.SNBIVBMaximumResolutionWidthExceeded="Η ανάλυση εξόδου με πλάτος %u υπερβαίνει το μέγιστο του 1920 που υποστηρίζεται από το QuickSync στους επεξεργαστές Sandy Bridge και Ivy Bridge!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionHeightExceeded="Η ανάλυση εξόδου με ύψος %u υπερβαίνει το μέγιστο του 1200 που υποστηρίζεται από το QuickSync στους επεξεργαστές Sandy Bridge και Ivy Bridge!\r\n"
