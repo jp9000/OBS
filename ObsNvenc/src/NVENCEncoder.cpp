@@ -175,8 +175,15 @@ void NVENCEncoder::init()
         encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HP_GUID;
     else if (presetString == TEXT("High Quality Low Latency"))
         encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HQ_GUID;
-    else if (presetString == TEXT("Default"))
+    else if (presetString == TEXT("NVDefault"))
         encoderPreset = NV_ENC_PRESET_DEFAULT_GUID;
+    else if (presetString == TEXT("Default"))
+    {
+        if (height >= 1080 && fps > 30)
+            encoderPreset = NV_ENC_PRESET_HQ_GUID;
+        else
+            encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HQ_GUID;
+    }
 
     TCHAR envClientKey[128] = { 0 };
     DWORD envRes = GetEnvironmentVariable(TEXT("NVENC_KEY"), envClientKey, 128);
