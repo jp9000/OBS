@@ -638,6 +638,8 @@ class OBS
     void   SetAbortApplySettings(bool abort);
     void   CancelSettings();
     void   ApplySettings();
+    void   SetCanOptimizeSettings(bool canOptimize);
+    void   OptimizeSettings();
 
     // Settings panes
 public:

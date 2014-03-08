@@ -419,6 +419,7 @@ class OBSAPIInterface : public APIInterface
 
     virtual void SetChangedSettings(bool isModified) {App->SetChangedSettings(isModified);}
     virtual void SetAbortApplySettings(bool abort) { App->SetAbortApplySettings(abort); }
+    virtual void SetCanOptimizeSettings(bool canOptimize) override { App->SetCanOptimizeSettings(canOptimize); }
 
 public:
     virtual void EnterSceneMutex() {App->EnterSceneMutex();}

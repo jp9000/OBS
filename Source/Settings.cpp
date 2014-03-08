@@ -166,6 +166,20 @@ void OBS::ApplySettings()
     EnableWindow(GetDlgItem(hwndSettings, IDC_APPLY), FALSE);
 }
 
+void OBS::SetCanOptimizeSettings(bool canOptimize)
+{
+    if (hwndSettings == NULL)
+        return;
+    ShowWindow(GetDlgItem(hwndSettings, IDC_OPTIMIZE), canOptimize);
+}
+
+void OBS::OptimizeSettings()
+{
+    if (!App->currentSettingsPane)
+        return;
+    App->currentSettingsPane->OptimizeSettings();
+}
+
 INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch(message)
@@ -211,12 +225,13 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                         SWP_NOZORDER);
                     ShowWindow(App->hwndCurrentSettings, SW_SHOW);
                     ShowWindow(GetDlgItem(hwnd, IDC_DEFAULTS), App->currentSettingsPane->HasDefaults());
+                    ShowWindow(GetDlgItem(hwnd, IDC_OPTIMIZE), false);
                 }
 
                 return TRUE;
             }
 
-        case WM_DRAWITEM: 
+        case WM_DRAWITEM:
             PDRAWITEMSTRUCT pdis;
             pdis = (PDRAWITEMSTRUCT) lParam;
 
@@ -319,6 +334,7 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                             App->currentSettingsPane->DestroyPane();
                         App->currentSettingsPane = NULL;
                         App->hwndCurrentSettings = NULL;
+                        ShowWindow(GetDlgItem(hwnd, IDC_OPTIMIZE), false);
 
                         RECT subDialogRect;
                         GetWindowRect(GetDlgItem(hwnd, IDC_SUBDIALOG), &subDialogRect);
@@ -367,6 +383,10 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                 case IDC_APPLY:
                     if(App->bSettingsChanged)
                         App->ApplySettings();
+                    break;
+
+                case IDC_OPTIMIZE:
+                    App->OptimizeSettings();
                     break;
             }
             break;

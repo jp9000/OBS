@@ -5,6 +5,7 @@
 #define IDC_DEFAULTS                    3
 #define IDOK2                           3
 #define IDC_APPLY                       4
+#define IDC_OPTIMIZE                    5
 #define IDD_SETTINGS                    101
 #define IDI_ICON1                       109
 #define IDI_SOUND_MIC                   110

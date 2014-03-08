@@ -187,6 +187,8 @@ public:
     virtual UINT GetFramesDropped() const=0;
     virtual UINT GetTotalStreamTime() const=0;
     virtual UINT GetBytesPerSec() const=0;
+
+    virtual void SetCanOptimizeSettings(bool canOptimize) = 0;
 };
 
 BASE_EXPORT extern APIInterface *API;

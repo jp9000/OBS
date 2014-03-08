@@ -50,6 +50,7 @@ public:
 protected:
     void SetChangedSettings(bool isModified);
     void SetAbortApplySettings(bool abort);
+    void SetCanOptimizeSettings(bool canOptimize);
 
 public:
     virtual CTSTR GetCategory() const = 0;
@@ -60,4 +61,5 @@ public:
     virtual void CancelSettings() = 0;
     virtual bool HasDefaults() const;
     virtual void SetDefaults();
+    virtual void OptimizeSettings();
 };

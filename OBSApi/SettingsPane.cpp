@@ -43,6 +43,17 @@ void SettingsPane::SetAbortApplySettings(bool abort)
     API->SetAbortApplySettings(abort);
 }
 
+void SettingsPane::SetCanOptimizeSettings(bool canOptimize)
+{
+    if (HasDefaults() && canOptimize)
+        AppWarning(L"Defaults button hidden by optimize button in %s", GetCategory());
+    API->SetCanOptimizeSettings(canOptimize);
+}
+
+void SettingsPane::OptimizeSettings()
+{
+}
+
 INT_PTR CALLBACK SettingsPane::DialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     // Get the pointer to our class instance
