@@ -207,13 +207,16 @@ void InvertPre47Scenes()
     }
 }
 
-void SetupIni()
+void SetupIni(CTSTR profile)
 {
     //first, find out which profile we're using
 
-    String strProfile = GlobalConfig->GetString(TEXT("General"), TEXT("Profile"));
+    String strProfile = profile ? profile : GlobalConfig->GetString(TEXT("General"), TEXT("Profile"));
     DWORD lastVersion = GlobalConfig->GetInt(TEXT("General"), TEXT("LastAppVersion"));
     String strIni;
+
+    if (profile)
+        GlobalConfig->SetString(TEXT("General"), TEXT("Profile"), profile);
 
     //--------------------------------------------
     // 0.47a fix (invert sources in all scenes)
@@ -291,7 +294,7 @@ void SetupIni()
 
     AppConfig->SetInt   (TEXT("Audio Encoding"), TEXT("Format"),        1);
     AppConfig->SetString(TEXT("Audio Encoding"), TEXT("Bitrate"),       TEXT("128"));
-    AppConfig->SetInt   (TEXT("Audio Encoding"), TEXT("isSTEREO"),      1);
+    AppConfig->SetInt   (TEXT("Audio Encoding"), TEXT("isStereo"),      1);
 
     AppConfig->SetInt   (TEXT("Publish"),        TEXT("Service"),       0);
     AppConfig->SetInt   (TEXT("Publish"),        TEXT("Mode"),          0);
@@ -413,6 +416,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     int numArgs;
     LPWSTR *args = CommandLineToArgvW(GetCommandLineW(), &numArgs);
+    LPWSTR profile = NULL;
 
     bool bDisableMutex = false;
 
@@ -424,9 +428,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             bIsPortable = true;
         else if (scmpi(args[i], TEXT("-start")) == 0)
             bStreamOnStart = true;
+        else if (scmpi(args[i], L"-profile") == 0)
+        {
+            if (++i < numArgs)
+                profile = args[i];
+        }
     }
-
-    LocalFree(args);
 
     //------------------------------------------------------------
     //make sure only one instance of the application can be open at a time
@@ -552,7 +559,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         //--------------------------------------------
 
         AppConfig = new ConfigFile;
-        SetupIni();
+        SetupIni(profile);
 
         //--------------------------------------------
 
@@ -679,6 +686,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     //------------------------------------------------------------
 
     CloseHandle(hOBSMutex);
+
+    LocalFree(args);
 
     return 0;
 }

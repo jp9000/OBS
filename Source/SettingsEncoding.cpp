@@ -116,7 +116,7 @@ void SettingsEncoding::ApplySettings()
 
     int curSelCh = (int)SendMessage(GetDlgItem(hwnd, IDC_AUDIOCHANNEL), CB_GETCURSEL, 0, 0);
     if(curSelCh != CB_ERR)
-        AppConfig->SetInt(TEXT("Audio Encoding"), TEXT("isSTEREO"), curSelCh);
+        AppConfig->SetInt(TEXT("Audio Encoding"), TEXT("isStereo"), curSelCh);
 
     bool bUseCBR = SendMessage(GetDlgItem(hwnd, IDC_USECBR), BM_GETCHECK, 0, 0) == BST_CHECKED;
     AppConfig->SetInt(TEXT("Video Encoding"), TEXT("UseCBR"), bUseCBR);
@@ -277,15 +277,15 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("mono"));
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("stereo"));
 
-                LoadSettingComboInt(hwndTemp, TEXT("Audio Encoding"), TEXT("isSTEREO"), 1, 1);
+                LoadSettingComboInt(hwndTemp, TEXT("Audio Encoding"), TEXT("isStereo"), 1, 1);
 
                 //--------------------------------------------
 
                 hwndTemp = GetDlgItem(hwnd, IDC_AUDIOBITRATE);
 
-                BOOL isSTEREO = SendMessage(GetDlgItem(hwnd, IDC_AUDIOCHANNEL), CB_GETCURSEL, 0, 0) == 1;
+                BOOL isStereo = SendMessage(GetDlgItem(hwnd, IDC_AUDIOCHANNEL), CB_GETCURSEL, 0, 0) == 1;
 
-                if (isSTEREO)
+                if (isStereo)
                 {
                     SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("48"));
                     SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("64"));
@@ -309,7 +309,7 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                     SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("160"));
                 }
 
-                LoadSettingComboString(hwndTemp, TEXT("Audio Encoding"), TEXT("Bitrate"), isSTEREO ? TEXT("96") : TEXT("48"));
+                LoadSettingComboString(hwndTemp, TEXT("Audio Encoding"), TEXT("Bitrate"), isStereo ? TEXT("96") : TEXT("48"));
 
                 //--------------------------------------------
 
@@ -351,9 +351,9 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                             HWND hwndAudioBitrate = GetDlgItem(hwnd, IDC_AUDIOBITRATE);
                             SendMessage(hwndAudioBitrate, CB_RESETCONTENT, 0, 0);
 
-                            BOOL isSTEREO = SendMessage(GetDlgItem(hwnd, IDC_AUDIOCHANNEL), CB_GETCURSEL, 0, 0) == 1;
+                            BOOL isStereo = SendMessage(GetDlgItem(hwnd, IDC_AUDIOCHANNEL), CB_GETCURSEL, 0, 0) == 1;
 
-                            if (isSTEREO)
+                            if (isStereo)
                             {
                                 SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("48"));
                                 SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("64"));
@@ -377,7 +377,7 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                                 SendMessage(hwndAudioBitrate, CB_ADDSTRING, 0, (LPARAM)TEXT("160"));
                             }
 
-                            SendMessage(hwndAudioBitrate, CB_SETCURSEL, isSTEREO ? 3 : 2, 0);
+                            SendMessage(hwndAudioBitrate, CB_SETCURSEL, isStereo ? 3 : 2, 0);
 
                             bDataChanged = true;
                         }

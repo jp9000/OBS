@@ -477,9 +477,9 @@ retryHookTestV2:
 
     //------------------------------------------------------------------
 
-    BOOL isSTEREO = AppConfig->GetInt(L"Audio Encoding", L"isSTEREO", 1);
+    BOOL isStereo = AppConfig->GetInt(L"Audio Encoding", L"isStereo", 1);
 
-    switch (isSTEREO) {
+    switch (isStereo) {
     case 0: audioChannels = 1; break;
     default:
     case 1: audioChannels = 2; break;

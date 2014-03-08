@@ -588,7 +588,7 @@ class OBS
 
     UINT sampleRateHz;
     UINT audioChannels;
-    BOOL isSTEREO;
+    BOOL isStereo;
 
     AudioEncoder *audioEncoder;
 
