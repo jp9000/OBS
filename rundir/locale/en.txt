@@ -255,6 +255,14 @@ Settings.Publish.Warning.MaxAudiobitrate="\tEncoding Settings: Reduce your audio
 Settings.Publish.Warning.UnsupportedAudioCodec="\tEncoding Settings: Set audio codec to '$1' instead of '$2'\r\n\r\n"
 Settings.Publish.Warning.VideoAspectRatio="\tVideo Settings: Set base resolution to an aspect ratio of $1 to avoid black borders in the default player\n\n"
 
+Settings.Publish.Optimize.Optimizations="The following changes will be made to your settings:\n"
+Settings.Publish.Optimize.UseCBR="- CBR will be enabled\n"
+Settings.Publish.Optimize.Maxbitrate="- Video bitrate will be set to %u\n"
+Settings.Publish.Optimize.UnsupportedAudioCodec="- Audio codec will be set to '%s'\n"
+Settings.Publish.Optimize.MaxAudiobitrate="- Audio bitrate will be set to %u\n"
+Settings.Publish.Optimize.RecommendMainProfile="- x264 encoding profile will be set to '%s'\n"
+Settings.Publish.Optimize.Keyint="- Keyframe interval will be set to %d seconds"
+
 Settings.Video.Custom="Custom:"
 Settings.Video.Device="Video Adapter:"
 Settings.Video.DisableAero="Disable Aero:"

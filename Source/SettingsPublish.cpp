@@ -19,6 +19,10 @@
 
 #include "Settings.h"
 
+#pragma warning(disable: 4530)
+#include <vector>
+#include <functional>
+
 //============================================================================
 // Helpers
 
@@ -228,7 +232,8 @@ void SettingsPublish::SetWarningInfo()
         return;
     }
 
-    int errors = 0;
+    bool hasErrors = false;
+    bool canOptimize = false;
     String strWarnings;
 
     XConfig serverData;
@@ -260,7 +265,8 @@ void SettingsPublish::SetWarningInfo()
                         CTSTR rc = r->GetString(TEXT("ratecontrol"));
                         if (!scmp (rc, TEXT("cbr")) && !bUseCBR)
                         {
-                            errors++;
+                            hasErrors = true;
+                            canOptimize = true;
                             strWarnings << Str("Settings.Publish.Warning.UseCBR");
                         }
                     }
@@ -270,7 +276,8 @@ void SettingsPublish::SetWarningInfo()
                         int max_bitrate = r->GetInt(TEXT("max bitrate"));
                         if (maxBitRate > max_bitrate)
                         {
-                            errors++;
+                            hasErrors = true;
+                            canOptimize = true;
                             strWarnings << FormattedString(Str("Settings.Publish.Warning.Maxbitrate"), max_bitrate);
                         }
                     }
@@ -284,7 +291,8 @@ void SettingsPublish::SetWarningInfo()
                             String msg = Str("Settings.Publish.Warning.UnsupportedAudioCodec"); //good thing OBS only supports MP3 (and AAC), otherwise I'd have to come up with a better translation solution
                             msg.FindReplace(L"$1", codecs[0].Array());
                             msg.FindReplace(L"$2", currentAudioCodec.Array());
-                            errors += 1;
+                            hasErrors = true;
+                            canOptimize = true;
                             strWarnings << msg;
                         }
                     }
@@ -294,7 +302,8 @@ void SettingsPublish::SetWarningInfo()
                         int maxaudioaac = r->GetInt(TEXT("max audio bitrate aac"));
                         if (audioBitRate > maxaudioaac)
                         {
-                            errors++;
+                            hasErrors = true;
+                            canOptimize = true;
                             strWarnings << FormattedString(Str("Settings.Publish.Warning.MaxAudiobitrate"), maxaudioaac);
                         }
                     }
@@ -304,7 +313,8 @@ void SettingsPublish::SetWarningInfo()
                         int maxaudiomp3 = r->GetInt(TEXT("max audio bitrate mp3"));
                         if (audioBitRate > maxaudiomp3)
                         {
-                            errors++;
+                            hasErrors = true;
+                            canOptimize = true;
                             strWarnings << FormattedString(Str("Settings.Publish.Warning.MaxAudiobitrate"), maxaudiomp3);
                         }
                     }
@@ -326,7 +336,7 @@ void SettingsPublish::SetWarningInfo()
                                 String msg = Str("Settings.Publish.Warning.VideoAspectRatio");
                                 msg.FindReplace(L"$1", aspectLocalized);
                                 strWarnings << msg;
-                                errors += 1;
+                                hasErrors = true;
                             }
                         }
                     }
@@ -337,7 +347,8 @@ void SettingsPublish::SetWarningInfo()
 
                         if (!expectedProfile.CompareI(currentx264Profile))
                         {
-                            errors++;
+                            hasErrors = true;
+                            canOptimize = true;
                             strWarnings << Str("Settings.Publish.Warning.RecommendMainProfile");
                         }
                     }
@@ -347,7 +358,8 @@ void SettingsPublish::SetWarningInfo()
                         int keyint = r->GetInt(TEXT("keyint"));
                         if (!keyframeInt || keyframeInt * 1000 > keyint)
                         {
-                            errors++;
+                            hasErrors = true;
+                            canOptimize = true;
                             strWarnings << FormattedString(Str("Settings.Publish.Warning.Keyint"), keyint / 1000);
                         }
                     }
@@ -358,11 +370,161 @@ void SettingsPublish::SetWarningInfo()
         }
     }
 
-    if (errors)
+    if (hasErrors)
         SetDlgItemText(hwnd, IDC_WARNINGS, strWarnings.Array());
     else
         SetDlgItemText(hwnd, IDC_WARNINGS, TEXT(""));
+    SetCanOptimizeSettings(canOptimize);
+}
 
+namespace
+{
+    template <class F>
+    struct OnScopeExit
+    {
+        F fun;
+        bool active;
+        OnScopeExit(F fun) : fun(std::move(fun)), active(true) {}
+        ~OnScopeExit() { if(active) fun(); }
+
+        OnScopeExit(OnScopeExit &&o) : fun(std::move(o.fun)), active(o.active) { o.active = false; }
+
+    private:
+        OnScopeExit(OnScopeExit const &);
+        OnScopeExit &operator=(OnScopeExit const &);
+    };
+
+    template <class F>
+    OnScopeExit<F> onScopeExit(F &&fun) { return OnScopeExit<F>(std::move(fun)); }
+}
+
+void SettingsPublish::OptimizeSettings()
+{
+    using namespace std;
+
+    auto refresh_on_exit = onScopeExit([&] { SetWarningInfo(); });
+    XConfig serverData;
+    if (!serverData.Open(L"services.xconfig"))
+        return;
+
+    XElement *services = serverData.GetElement(L"services");
+    if (!services)
+        return;
+
+    UINT numServices = services->NumElements();
+
+    int serviceID = (int)SendMessage(GetDlgItem(hwnd, IDC_SERVICE), CB_GETITEMDATA, SendMessage(GetDlgItem(hwnd, IDC_SERVICE), CB_GETCURSEL, 0, 0), 0);
+    XElement *r = nullptr;
+    for (UINT i = 0; i < numServices; i++)
+    {
+        XElement *service = services->GetElementByID(i);
+        if (service->GetInt(L"id") != serviceID)
+            continue;
+
+        //check to see if the service we're using has recommendations
+        if (!service->HasItem(L"recommended"))
+            return;
+
+        r = service->GetElement(L"recommended");
+        break;
+    }
+
+    if (!r)
+        return;
+
+    typedef vector<function<void()>> optimizers_t;
+    optimizers_t optimizers;
+
+    String changes = Str("Settings.Publish.Optimize.Optimizations");
+
+    String currentAudioCodec = AppConfig->GetString(L"Audio Encoding", L"Codec", L"AAC");
+    int audioBitrate = AppConfig->GetInt(L"Audio Encoding", L"Bitrate", 96);
+
+    if (r->HasItem(L"ratecontrol"))
+    {
+        bool useCBR = AppConfig->GetInt(L"Video Encoding", L"UseCBR", 1) != 0;
+        CTSTR rc = r->GetString(L"ratecontrol");
+        if (!scmp(rc, L"cbr") && !useCBR)
+        {
+            optimizers.push_back([] { AppConfig->SetInt(L"Video Encoding", L"UseCBR", 1); });
+            changes << Str("Settings.Publish.Optimize.UseCBR");
+        }
+    }
+
+    if (r->HasItem(L"max bitrate"))
+    {
+        int maxBitrate = AppConfig->GetInt(L"Video Encoding", L"MaxBitrate", 1000);
+        int max_bitrate = r->GetInt(L"max bitrate");
+        if (maxBitrate > max_bitrate)
+        {
+            optimizers.push_back([max_bitrate] { AppConfig->SetInt(L"Video Encoding", L"MaxBitrate", max_bitrate); });
+            changes << FormattedString(Str("Settings.Publish.Optimize.Maxbitrate"), max_bitrate);
+        }
+    }
+
+    if (r->HasItem(L"supported audio codec"))
+    {
+        StringList codecs;
+        r->GetStringList(L"supported audio codec", codecs);
+        if (codecs.FindValueIndex(currentAudioCodec) == INVALID)
+        {
+            String codec = codecs[0];
+            optimizers.push_back([codec]
+            {
+                AppConfig->SetString(L"Audio Encoding", L"Codec", codec.Array());
+                AppConfig->SetInt(L"Audio Encoding", L"Format", codec.CompareI(L"AAC") ? 1 : 0); //set to 44.1 kHz in case of MP3, see SettingsEncoding.cpp
+            });
+            changes << FormattedString(Str("Settings.Publish.Optimize.UnsupportedAudioCodec"), codec.Array());
+        }
+    }
+
+    if (r->HasItem(L"max audio bitrate aac") && (!scmp(currentAudioCodec, L"AAC")))
+    {
+        int maxaudioaac = r->GetInt(L"max audio bitrate aac");
+        if (audioBitrate > maxaudioaac)
+        {
+            optimizers.push_back([maxaudioaac] { AppConfig->SetInt(L"Audio Encoding", L"Bitrate", maxaudioaac); });
+            changes << FormattedString(Str("Settings.Publish.Optimize.MaxAudiobitrate"), maxaudioaac);
+        }
+    }
+
+    if (r->HasItem(L"max audio bitrate mp3") && (!scmp(currentAudioCodec, L"MP3")))
+    {
+        int maxaudiomp3 = r->GetInt(L"max audio bitrate mp3");
+        if (audioBitrate > maxaudiomp3)
+        {
+            optimizers.push_back([maxaudiomp3] { AppConfig->SetInt(L"Audio Encoding", L"Bitrate", maxaudiomp3); });
+            changes << FormattedString(Str("Settings.Publish.Optimize.MaxAudiobitrate"), maxaudiomp3);
+        }
+    }
+
+    if (r->HasItem(L"profile"))
+    {
+        String currentx264Profile = AppConfig->GetString(L"Video Encoding", L"X264Profile", L"high");
+        String expectedProfile = r->GetString(L"profile");
+        if (!expectedProfile.CompareI(currentx264Profile))
+        {
+            optimizers.push_back([expectedProfile] { AppConfig->SetString(L"Video Encoding", L"X264Profile", expectedProfile); });
+            changes << FormattedString(Str("Settings.Publish.Optimize.RecommendMainProfile"), expectedProfile.Array());
+        }
+    }
+
+    if (r->HasItem(L"keyint"))
+    {
+        int keyframeInt = AppConfig->GetInt(L"Video Encoding", L"KeyframeInterval", 0);
+        int keyint = r->GetInt(L"keyint");
+        if (!keyframeInt || keyframeInt * 1000 > keyint)
+        {
+            optimizers.push_back([keyint] { AppConfig->SetInt(L"Video Encoding", L"KeyframeInterval", keyint / 1000); });
+            changes << FormattedString(Str("Settings.Publish.Optimize.Keyint"), keyint / 1000);
+        }
+    }
+
+    if (OBSMessageBox(hwnd, changes.Array(), nullptr, MB_OKCANCEL) != IDOK)
+        return;
+
+    for (optimizers_t::iterator i = begin(optimizers); i != end(optimizers); i++)
+        (*i)();
 }
 
 INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
