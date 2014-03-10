@@ -3057,11 +3057,13 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                     sources = App->sceneElement->GetElement(TEXT("sources"));
                                     
                                     if(sources)
+                                    {
                                         sourcesElement = sources->GetElementByID(itemId);
 
-                                    if(sourcesElement)
-                                        if(scmpi(sourcesElement->GetString(TEXT("class")), TEXT("GlobalSource")) == 0)
-                                            isGlobalSource = true;
+                                        if(sourcesElement)
+                                            if(scmpi(sourcesElement->GetString(TEXT("class")), TEXT("GlobalSource")) == 0)
+                                                isGlobalSource = true;
+                                    }
 
                                     ListView_GetItemRect(nmh.hwndFrom,itemId, &itemRect, LVIR_BOUNDS);
                                     ListView_GetItemRect(nmh.hwndFrom,itemId, &textRect, LVIR_LABEL);

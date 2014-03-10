@@ -491,7 +491,7 @@ public:
                         else
                         {
                             profile = MFX_PROFILE_AVC_HIGH;
-                            Log(L"QSV: Unrecognized profile '%s', profile reset to default", strParamName);
+                            Log(L"QSV: Unrecognized profile '%s', profile reset to default", strParamName.Array());
                         }
                     }
                 }
