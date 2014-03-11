@@ -325,6 +325,32 @@ public:
     }
 };
 
+class BASE_EXPORT FutureShader
+{
+    Shader **futureShader, *shader;
+    HANDLE shaderReadyEvent;
+    bool isReady;
+    friend DWORD STDCALL CreatePixelShaderThread(void *arg);
+
+public:
+    FutureShader(Shader *shader=nullptr) : shader(shader), isReady(true) {}
+    FutureShader(HANDLE event_, Shader **shader) : futureShader(shader), shader(nullptr), shaderReadyEvent(event_), isReady(false) {}
+
+    inline Shader *Shader()
+    {
+        if (!isReady)
+        {
+            if (WaitForSingleObject(shaderReadyEvent, 0) != WAIT_OBJECT_0)
+                return shader;
+
+            isReady = true;
+            shader = *futureShader;
+        }
+        return shader;
+    }
+};
+
+struct FutureShaderContainer;
 
 /*=========================================================
     Output Duplication class
@@ -383,7 +409,7 @@ public:
     //----------------------------------------------------
     //Initialization/Destruction
     GraphicsSystem();
-    virtual ~GraphicsSystem() {}
+    virtual ~GraphicsSystem();
 
     virtual LPVOID GetDevice()=0;
 
@@ -434,6 +460,7 @@ public:
     virtual Shader*         CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)=0;
     Shader*                 CreateVertexShaderFromFile(CTSTR lpFileName);
     Shader*                 CreatePixelShaderFromFile(CTSTR lpFileName);
+    FutureShader            CreatePixelShaderFromFileAsync(CTSTR fileName);
 
 
     //----------------------------------------------------
@@ -513,6 +540,8 @@ protected:
     List<Matrix> MatrixStack;
     int curMatrix;
 
+    FutureShaderContainer *futureShaders;
+
     virtual void ResetViewMatrix()=0;
 
 public:
@@ -570,6 +599,7 @@ inline Shader* CreateVertexShader(CTSTR lpShader, CTSTR lpFileName) {return GS->
 inline Shader* CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)  {return GS->CreatePixelShader(lpShader, lpFileName);}
 inline Shader* CreateVertexShaderFromFile(CTSTR lpFileName)         {return GS->CreateVertexShaderFromFile(lpFileName);}
 inline Shader* CreatePixelShaderFromFile(CTSTR lpFileName)          {return GS->CreatePixelShaderFromFile(lpFileName);}
+inline FutureShader CreatePixelShaderFromFileAsync(CTSTR fileName)  {return GS->CreatePixelShaderFromFileAsync(fileName);}
 
 
 inline VertexBuffer* CreateVertexBuffer(VBData *vbData, BOOL bStatic=1)     {return GS->CreateVertexBuffer(vbData, bStatic);}

@@ -19,16 +19,71 @@
 
 #include "OBSApi.h"
 
+#pragma warning(disable: 4530)
+
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+
+using namespace std;
 
 #define MANUAL_BUFFER_SIZE 64
 
 GraphicsSystem *GS = NULL;
 
+namespace
+{
+    struct HandleCloser
+    {
+        void operator()(HANDLE h) { if (!h) return; CloseHandle(h); }
+    };
+
+    struct MutexCloser
+    {
+        void operator()(HANDLE h) { if (!h) return; OSLeaveMutex(h); OSCloseMutex(h); }
+    };
+
+    struct MutexLock
+    {
+        bool locked, unlock;
+        HANDLE h;
+        MutexLock(unique_ptr<void, MutexCloser> const &mutex, bool tryLock = false, bool autounlock = true) : locked(false), unlock(autounlock), h(mutex.get())
+        {
+            if (!h) return;
+            if (tryLock && !OSTryEnterMutex(h)) return;
+            if (!tryLock) OSEnterMutex(h);
+            locked = true;
+        }
+        ~MutexLock() { if (locked && unlock) OSLeaveMutex(h); }
+    };
+}
+
+struct FutureShaderContainer
+{
+    struct FutureShaderContext
+    {
+        Shader *sharedShader;
+        unique_ptr<Shader> shader;
+        unique_ptr<void, HandleCloser> readyEvent;
+        unique_ptr<void, HandleCloser> thread;
+        wstring fileName;
+    };
+    map<wstring, unique_ptr<FutureShaderContext>> contexts;
+    unique_ptr<void, MutexCloser> lock;
+    FutureShaderContainer() : lock(OSCreateMutex()) {}
+};
 
 GraphicsSystem::GraphicsSystem()
 :   curMatrix(0)
 {
     MatrixStack << Matrix().SetIdentity();
+    futureShaders = new FutureShaderContainer;
+}
+
+GraphicsSystem::~GraphicsSystem()
+{
+    delete futureShaders;
 }
 
 void GraphicsSystem::Init()
@@ -59,6 +114,51 @@ Shader* GraphicsSystem::CreatePixelShaderFromFile(CTSTR lpFileName)
     ShaderFile.ReadFileToString(strShader);
 
     return CreatePixelShader(strShader, lpFileName);
+}
+
+DWORD STDCALL CreatePixelShaderThread(void *arg)
+{
+    FutureShaderContainer::FutureShaderContext &c = *(FutureShaderContainer::FutureShaderContext*)arg;
+
+    QWORD start = GetQPCTime100NS();
+
+    c.shader.reset(GS->CreatePixelShaderFromFile(c.fileName.c_str()));
+
+    c.sharedShader = c.shader.get();
+
+    SetEvent(c.readyEvent.get());
+
+    Log(L"Compilation for %s took %llu", c.fileName.c_str(), (GetQPCTime100NS() - start) / 10000);
+
+    return 0;
+}
+
+FutureShader GraphicsSystem::CreatePixelShaderFromFileAsync(CTSTR fileName)
+{
+    wstring const fn = fileName;
+    auto &cs = futureShaders->contexts;
+
+    MutexLock m(futureShaders->lock);
+
+    bool initialized = cs.find(fn) != end(cs);
+    if (!initialized)
+        cs[fn].reset(new FutureShaderContainer::FutureShaderContext);
+    auto &c = *cs[fn];
+
+    if (!initialized)
+    {
+        c.readyEvent.reset(CreateEvent(nullptr, true, false, nullptr));
+        c.fileName = fn;
+        c.thread.reset(OSCreateThread(CreatePixelShaderThread, &c));
+    }
+
+    if (c.thread && WaitForSingleObject(c.readyEvent.get(), 0) == WAIT_OBJECT_0)
+        c.thread.reset();
+    
+    if (c.thread)
+        return FutureShader(c.readyEvent.get(), &c.sharedShader);
+    
+    return FutureShader(c.shader.get());
 }
 
 
