@@ -235,8 +235,6 @@ protected:
     void UpdateParams();
 
 public:
-    static void DestroyCache();
-
     ~D3D10Shader();
 
     virtual int    NumParams() const;
