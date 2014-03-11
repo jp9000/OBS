@@ -24,7 +24,6 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <vector>
 
 using namespace std;
 
@@ -120,15 +119,11 @@ DWORD STDCALL CreatePixelShaderThread(void *arg)
 {
     FutureShaderContainer::FutureShaderContext &c = *(FutureShaderContainer::FutureShaderContext*)arg;
 
-    QWORD start = GetQPCTime100NS();
-
     c.shader.reset(GS->CreatePixelShaderFromFile(c.fileName.c_str()));
 
     c.sharedShader = c.shader.get();
 
     SetEvent(c.readyEvent.get());
-
-    Log(L"Compilation for %s took %llu", c.fileName.c_str(), (GetQPCTime100NS() - start) / 10000);
 
     return 0;
 }
