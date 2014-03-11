@@ -146,9 +146,11 @@ class DeviceSource : public ImageSource
         bool                        curField, bNewFrame;
         bool                        doublesFramerate;
         bool                        needsPreviousFrame;
+        bool                        isReady;
         std::unique_ptr<Texture>    texture;
         UINT                        imageCX, imageCY;
-        std::unique_ptr<Shader>     vertexShader, pixelShader;
+        std::unique_ptr<Shader>     vertexShader;
+        FutureShader                pixelShader;
     } deinterlacer;
 
     bool            bFirstFrame;

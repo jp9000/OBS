@@ -218,6 +218,8 @@ bool DeviceSource::LoadFilters()
     HRESULT err;
     String strShader;
 
+    deinterlacer.isReady = true;
+
     if(graph == NULL) {
         err = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, (REFIID)IID_IFilterGraph, (void**)&graph);
         if(FAILED(err))
@@ -780,7 +782,8 @@ bool DeviceSource::LoadFilters()
     if(deinterlacer.type != DEINTERLACING_NONE && deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
     {
         deinterlacer.vertexShader.reset(CreateVertexShaderFromFile(TEXT("shaders/DrawTexture.vShader")));
-        deinterlacer.pixelShader.reset(CreatePixelShaderFromFile(ChooseDeinterlacingShader()));
+        deinterlacer.pixelShader = CreatePixelShaderFromFileAsync(ChooseDeinterlacingShader());
+        deinterlacer.isReady = false;
     }
 
     int numThreads = MAX(OSGetTotalCores()-2, 1);
@@ -1425,10 +1428,11 @@ void DeviceSource::Preprocess()
 
         lastSample->Release();
 
-        if(bReadyToDraw &&
+        if (bReadyToDraw &&
             deinterlacer.type != DEINTERLACING_NONE &&
             deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU &&
-            deinterlacer.texture.get())
+            deinterlacer.texture.get() &&
+            deinterlacer.pixelShader.Shader())
         {
             SetRenderTarget(deinterlacer.texture.get());
 
@@ -1436,11 +1440,11 @@ void DeviceSource::Preprocess()
             LoadVertexShader(deinterlacer.vertexShader.get());
             
             Shader *oldShader = GetCurrentPixelShader();
-            LoadPixelShader(deinterlacer.pixelShader.get());
+            LoadPixelShader(deinterlacer.pixelShader.Shader());
 
-            HANDLE hField = deinterlacer.pixelShader->GetParameterByName(TEXT("field_order"));
+            HANDLE hField = deinterlacer.pixelShader.Shader()->GetParameterByName(TEXT("field_order"));
             if(hField)
-                deinterlacer.pixelShader->SetBool(hField, deinterlacer.fieldOrder == FIELD_ORDER_BFF);
+                deinterlacer.pixelShader.Shader()->SetBool(hField, deinterlacer.fieldOrder == FIELD_ORDER_BFF);
             
             Ortho(0.0f, float(deinterlacer.imageCX), float(deinterlacer.imageCY), 0.0f, -100.0f, 100.0f);
             SetViewport(0.0f, 0.0f, float(deinterlacer.imageCX), float(deinterlacer.imageCY));
@@ -1455,13 +1459,14 @@ void DeviceSource::Preprocess()
 
             LoadPixelShader(oldShader);
             LoadVertexShader(oldVertShader);
+            deinterlacer.isReady = true;
         }
     }
 }
 
 void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
 {
-    if(texture && bReadyToDraw)
+    if(texture && bReadyToDraw && deinterlacer.isReady)
     {
         Shader *oldShader = GetCurrentPixelShader();
         SamplerState *sampler = NULL;
