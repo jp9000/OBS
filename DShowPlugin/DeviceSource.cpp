@@ -754,6 +754,7 @@ bool DeviceSource::LoadFilters()
         linePitch = lineSize * 2;
         renderCY /= 2;
         break;
+
     case DEINTERLACING_RETRO:
         deinterlacer.imageCY = renderCY/2;
         if(deinterlacer.processor != DEINTERLACING_PROCESSOR_GPU)
@@ -763,6 +764,8 @@ bool DeviceSource::LoadFilters()
             renderCY /= 2;
             renderCX *= 2;
         }
+        break;
+
     case DEINTERLACING__DEBUG:
         deinterlacer.imageCX *= 2;
         deinterlacer.imageCY *= 2;
