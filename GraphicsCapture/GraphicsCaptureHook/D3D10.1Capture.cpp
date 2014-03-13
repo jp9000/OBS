@@ -289,5 +289,5 @@ void DoD3D101Capture(IDXGISwapChain *swap)
         }
     }
 
-    device->Release();
+    SafeRelease(device);
 }

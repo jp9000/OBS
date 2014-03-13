@@ -1052,7 +1052,12 @@ static IAMCrossbar *GetFilterCrossbar(IBaseFilter *filter)
     if (FAILED(graph->AddFilter(filter, L"Capture device")))
         goto crossbar_exit;
 
-    capture->FindInterface(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video, filter, IID_IAMStreamConfig, (void**)&configVideo);
+    if (FAILED(capture->FindInterface(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video, filter, IID_IAMStreamConfig, (void**)&configVideo)))
+    {
+        graph->RemoveFilter(filter);
+        goto crossbar_exit;
+    }
+
     capture->FindInterface(NULL, NULL, filter, IID_IAMCrossbar, (void**)&crossbar);
 
     graph->RemoveFilter(filter);
