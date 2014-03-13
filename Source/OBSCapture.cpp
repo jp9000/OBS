@@ -1176,7 +1176,7 @@ void OBS::MainAudioLoop()
 
         curMicVol *= micBoost;
 
-        bool bDesktopMuted = (curDesktopVol < EPSILON);
+        bool bDesktopMuted = (curDesktopVol < VOLN_MUTELEVEL);
         bool bMicEnabled   = (micAudio != NULL);
 
         while (QueryNewAudio()) {
