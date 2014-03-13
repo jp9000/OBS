@@ -1239,7 +1239,7 @@ void OBS::MainCaptureLoop()
         //------------------------------------
         // frame sync
 
-        QWORD renderStopTime = GetQPCTimeNS();
+        //QWORD renderStopTime = GetQPCTimeNS();
 
         if(bWasLaggedFrame = (frameDelta > frameLengthNS))
         {
