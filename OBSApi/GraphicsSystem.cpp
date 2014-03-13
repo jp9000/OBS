@@ -68,7 +68,7 @@ struct FutureShaderContainer
         unique_ptr<void, HandleCloser> thread;
         wstring fileName;
     };
-    map<wstring, unique_ptr<FutureShaderContext>> contexts;
+    map<wstring, FutureShaderContext> contexts;
     unique_ptr<void, MutexCloser> lock;
     FutureShaderContainer() : lock(OSCreateMutex()) {}
 };
@@ -136,9 +136,8 @@ FutureShader GraphicsSystem::CreatePixelShaderFromFileAsync(CTSTR fileName)
     MutexLock m(futureShaders->lock);
 
     bool initialized = cs.find(fn) != end(cs);
-    if (!initialized)
-        cs[fn].reset(new FutureShaderContainer::FutureShaderContext);
-    auto &c = *cs[fn];
+
+    auto &c = cs[fn];
 
     if (!initialized)
     {

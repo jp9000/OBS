@@ -523,8 +523,8 @@ void SettingsPublish::OptimizeSettings()
     if (OBSMessageBox(hwnd, changes.Array(), nullptr, MB_OKCANCEL) != IDOK)
         return;
 
-    for (optimizers_t::iterator i = begin(optimizers); i != end(optimizers); i++)
-        (*i)();
+    for (optimizers_t::const_reference i : optimizers)
+        i();
 }
 
 INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)

@@ -145,12 +145,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
     if(!init_res->using_custom_impl || !encoder)
     {
         init_res->using_custom_impl = false;
-        decltype(begin(valid_impl)) best = nullptr;
-        for(auto impl = begin(valid_impl); impl != std::end(valid_impl); impl++)
+        decltype(&valid_impl[0]) best = nullptr;
+        for(auto &impl : valid_impl)
         {
-            auto result = encoder.InitializeMFX(*impl);
+            auto result = encoder.InitializeMFX(impl);
             if(result == MFX_WRN_PARTIAL_ACCELERATION && !best)
-                best = impl;
+                best = &impl;
             if(result == MFX_ERR_NONE)
                 break;
         }
