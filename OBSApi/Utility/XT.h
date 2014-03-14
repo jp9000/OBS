@@ -158,6 +158,8 @@ BASE_EXPORT BOOL   STDCALL OSTryEnterMutex(HANDLE hMutex);
 BASE_EXPORT void   STDCALL OSLeaveMutex(HANDLE hMutex);
 BASE_EXPORT void   STDCALL OSCloseMutex(HANDLE hMutex);
 
+BASE_EXPORT void           OSCloseEvent(HANDLE event);
+
 BASE_EXPORT void   STDCALL OSSetMainAppWindow(HANDLE window);
 
 BASE_EXPORT DWORD  STDCALL OSGetTime();

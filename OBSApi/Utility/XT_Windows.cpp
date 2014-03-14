@@ -748,6 +748,11 @@ BOOL   STDCALL OSTerminateThread(HANDLE hThread, DWORD waitMS)
     return 1;
 }
 
+void OSCloseEvent(HANDLE event)
+{
+    CloseHandle(event);
+}
+
 BOOL   STDCALL OSGetLoadedModuleList(HANDLE hProcess, StringList &ModuleList)
 {
     HMODULE hMods[1024];
