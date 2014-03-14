@@ -113,7 +113,7 @@ public:
 		for (UINT i = 0; i < numInputSamples; i++)
 		{
 			UINT pos = i * 2;
-			inputBuffer[inputBufferPos + i] = (input[pos] + input[pos + 1]) / 2.0f;
+			inputBuffer[inputBufferPos + i] = (input[pos] + input[pos + 1]) * 0.5f;
 		}
 	}
 
