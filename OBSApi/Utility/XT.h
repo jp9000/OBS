@@ -311,3 +311,5 @@ BASE_EXPORT extern BOOL bDebugBreak;
 #include "Profiler.h"
 #include "XTLocalization.h"
 #include "XConfig.h"
+
+#include "RAIIHelpers.h"

@@ -156,6 +156,9 @@
     <ClInclude Include="resource.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="Utility\RAIIHelpers.h">
+      <Filter>Utility\Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
