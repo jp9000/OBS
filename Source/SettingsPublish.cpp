@@ -398,8 +398,6 @@ namespace
 
 void SettingsPublish::OptimizeSettings()
 {
-    using namespace std;
-
     auto refresh_on_exit = onScopeExit([&] { SetWarningInfo(); });
     XConfig serverData;
     if (!serverData.Open(L"services.xconfig"))
@@ -430,7 +428,7 @@ void SettingsPublish::OptimizeSettings()
     if (!r)
         return;
 
-    typedef vector<function<void()>> optimizers_t;
+    using optimizers_t = std::vector<std::function<void()>>;
     optimizers_t optimizers;
 
     String changes = Str("Settings.Publish.Optimize.Optimizations");

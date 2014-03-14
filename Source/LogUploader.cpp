@@ -26,8 +26,6 @@
 
 #include <memory>
 
-using namespace std;
-
 namespace
 {
     struct HTTPHandleDeleter
@@ -35,7 +33,7 @@ namespace
         void operator()(HINTERNET h) { WinHttpCloseHandle(h); }
     };
 
-    struct HTTPHandle : unique_ptr<void, HTTPHandleDeleter>
+    struct HTTPHandle : std::unique_ptr<void, HTTPHandleDeleter>
     {
         explicit HTTPHandle(HINTERNET h=nullptr) : unique_ptr(h) {}
         operator HINTERNET() { return get(); }
