@@ -98,13 +98,12 @@ private:
     {
         UINT mode;
         LONG fileControlOffset;
-    };
+    } data;
 
     //-----------------------------------------------------------------------
     // Private members
 
 private:
-    PublishDialogData * data;
     void SetWarningInfo();
 
     //-----------------------------------------------------------------------
