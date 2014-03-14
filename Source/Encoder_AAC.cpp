@@ -103,19 +103,19 @@ public:
 
         UINT lastSampleSize = inputBuffer.Num();
         UINT numInputSamples = numInputFrames*App->NumAudioChannels();
-	if (App->NumAudioChannels() == 2)
-            inputBuffer.AppendArray(input, numInputSamples);
-	else
-	{
-		UINT inputBufferPos = inputBuffer.Num();
-		inputBuffer.SetSize(inputBufferPos + numInputSamples);
+        if (App->NumAudioChannels() == 2)
+                inputBuffer.AppendArray(input, numInputSamples);
+        else
+        {
+            UINT inputBufferPos = inputBuffer.Num();
+            inputBuffer.SetSize(inputBufferPos + numInputSamples);
 
-		for (UINT i = 0; i < numInputSamples; i++)
-		{
-			UINT pos = i * 2;
-			inputBuffer[inputBufferPos + i] = (input[pos] + input[pos + 1]) * 0.5f;
-		}
-	}
+            for (UINT i = 0; i < numInputSamples; i++)
+            {
+                UINT pos = i * 2;
+                inputBuffer[inputBufferPos + i] = (input[pos] + input[pos + 1]) * 0.5f;
+            }
+        }
 
         int ret = 0;
 
