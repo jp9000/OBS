@@ -42,6 +42,7 @@ Settings="Settings..."
 LogWindow="Log Window"
 StreamReport="Stream Report"
 MessageBoxWarningCaption="Warning"
+NoSourcesFound="You haven't added any sources! Are you sure you want to stream a black screen?"
 
 BuildingMP4Dialog.Progress="Building MP4, please wait..."
 

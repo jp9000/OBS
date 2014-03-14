@@ -261,12 +261,46 @@ retryHookTest:
     String strPatchesError;
     if (OSIncompatiblePatchesLoaded(strPatchesError))
     {
-        DisableMenusWhileStreaming(true);
+        DisableMenusWhileStreaming(false);
         OSLeaveMutex (hStartupShutdownMutex);
         OBSMessageBox(hwndMain, strPatchesError.Array(), NULL, MB_ICONERROR);
         Log(TEXT("Incompatible patches detected."));
         bStartingUp = false;
         return;
+    }
+
+    //check the user isn't trying to stream or record with no sources which is typically
+    //a configuration error
+    if (!bTestStream)
+    {
+        bool foundSource = false;
+        XElement *scenes = App->scenesConfig.GetElement(TEXT("scenes"));
+        if (scenes)
+        {
+            UINT numScenes = scenes->NumElements();
+
+            for (UINT i = 0; i<numScenes; i++)
+            {
+                XElement *sceneElement = scenes->GetElementByID(i);
+                XElement *sources = sceneElement->GetElement(TEXT("sources"));
+                if (sources && sources->NumElements())
+                {
+                    foundSource = true;
+                    break;
+                }
+            }
+        }
+
+        if (!foundSource)
+        {
+            if (OBSMessageBox(hwndMain, Str("NoSourcesFound"), NULL, MB_ICONWARNING|MB_YESNO) == IDNO)
+            {
+                DisableMenusWhileStreaming(false);
+                OSLeaveMutex(hStartupShutdownMutex);
+                bStartingUp = false;
+                return;
+            }
+        }
     }
 
     //-------------------------------------------------------------
