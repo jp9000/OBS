@@ -67,7 +67,7 @@ struct BlankAudioPlayback
 
         err = mmClient->Initialize(AUDCLNT_SHAREMODE_SHARED, 0, ConvertMSTo100NanoSec(1000), 0, pwfx, NULL);
         if(FAILED(err))
-            CrashError(TEXT("Could not initialize audio client"));
+            CrashError(TEXT("Could not initialize audio client, error = %08lX"), err);
 
         err = mmClient->GetService(IID_IAudioRenderClient, (void**)&mmRender);
         if(FAILED(err))

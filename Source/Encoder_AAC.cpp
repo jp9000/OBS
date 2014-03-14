@@ -102,8 +102,20 @@ public:
         QWORD curTimestamp = timestamp;
 
         UINT lastSampleSize = inputBuffer.Num();
-        UINT numInputSamples = numInputFrames*2;
-        inputBuffer.AppendArray(input, numInputSamples);
+        UINT numInputSamples = numInputFrames*App->NumAudioChannels();
+	if (App->NumAudioChannels() == 2)
+            inputBuffer.AppendArray(input, numInputSamples);
+	else
+	{
+		UINT inputBufferPos = inputBuffer.Num();
+		inputBuffer.SetSize(inputBufferPos + numInputSamples);
+
+		for (UINT i = 0; i < numInputSamples; i++)
+		{
+			UINT pos = i * 2;
+			inputBuffer[inputBufferPos + i] = (input[pos] + input[pos + 1]) / 2.0f;
+		}
+	}
 
         int ret = 0;
 
@@ -155,7 +167,7 @@ public:
             inputBuffer.RemoveRange(0, numReadSamples);
 
             bufferedTimestamps << curEncodeTimestamp;
-            curEncodeTimestamp = curTimestamp + (((numReadSamples-lastSampleSize)/2)*1000/App->GetSampleRateHz());
+            curEncodeTimestamp = curTimestamp + (((numReadSamples-lastSampleSize)/App->NumAudioChannels())*1000/App->GetSampleRateHz());
         }
 
         return ret > 0;
