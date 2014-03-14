@@ -21,42 +21,18 @@
 
 #pragma warning(disable: 4530)
 
-#include <map>
-#include <memory>
-#include <string>
-
-using namespace std;
-
 #define MANUAL_BUFFER_SIZE 64
 
 GraphicsSystem *GS = NULL;
-
-
-struct FutureShaderContainer
-{
-    struct FutureShaderContext
-    {
-        Shader *sharedShader;
-        unique_ptr<Shader> shader;
-        unique_ptr<void, EventDeleter> readyEvent;
-        unique_ptr<void, ThreadDeleter> thread;
-        wstring fileName;
-    };
-    map<wstring, FutureShaderContext> contexts;
-    unique_ptr<void, MutexDeleter> lock;
-    FutureShaderContainer() : lock(OSCreateMutex()) {}
-};
 
 GraphicsSystem::GraphicsSystem()
 :   curMatrix(0)
 {
     MatrixStack << Matrix().SetIdentity();
-    futureShaders = new FutureShaderContainer;
 }
 
 GraphicsSystem::~GraphicsSystem()
 {
-    delete futureShaders;
 }
 
 void GraphicsSystem::Init()
@@ -89,35 +65,33 @@ Shader* GraphicsSystem::CreatePixelShaderFromFile(CTSTR lpFileName)
     return CreatePixelShader(strShader, lpFileName);
 }
 
-DWORD STDCALL CreatePixelShaderThread(void *arg)
-{
-    FutureShaderContainer::FutureShaderContext &c = *(FutureShaderContainer::FutureShaderContext*)arg;
-
-    c.shader.reset(GS->CreatePixelShaderFromFile(c.fileName.c_str()));
-
-    c.sharedShader = c.shader.get();
-
-    SetEvent(c.readyEvent.get());
-
-    return 0;
-}
-
 FutureShader GraphicsSystem::CreatePixelShaderFromFileAsync(CTSTR fileName)
 {
-    wstring const fn = fileName;
-    auto &cs = futureShaders->contexts;
+    using namespace std;
+    using Context = FutureShaderContainer::FutureShaderContext;
 
-    ScopedLock m(futureShaders->lock);
+    wstring const fn = fileName;
+    auto &cs = futureShaders.contexts;
+
+    ScopedLock m(futureShaders.lock);
 
     bool initialized = cs.find(fn) != end(cs);
 
-    auto &c = cs[fn];
+    Context &c = cs[fn];
 
     if (!initialized)
     {
         c.readyEvent.reset(CreateEvent(nullptr, true, false, nullptr));
         c.fileName = fn;
-        c.thread.reset(OSCreateThread(CreatePixelShaderThread, &c));
+        c.thread.reset(OSCreateThread(static_cast<XTHREAD>([](void *arg) -> DWORD
+        {
+            Context &c = *(Context*)arg;
+            c.shader.reset(GS->CreatePixelShaderFromFile(c.fileName.c_str()));
+            c.sharedShader = c.shader.get();
+
+            SetEvent(c.readyEvent.get());
+            return 0;
+        }), &c));
     }
 
     if (c.thread && WaitForSingleObject(c.readyEvent.get(), 0) == WAIT_OBJECT_0)

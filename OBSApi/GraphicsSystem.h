@@ -19,6 +19,11 @@
 
 #pragma  once
 
+#pragma warning(disable: 4530)
+
+#include <map>
+#include <memory>
+#include <string>
 
 /*=========================================================
     Enums
@@ -350,8 +355,6 @@ public:
     }
 };
 
-struct FutureShaderContainer;
-
 /*=========================================================
     Output Duplication class
 ==========================================================*/
@@ -540,7 +543,20 @@ protected:
     List<Matrix> MatrixStack;
     int curMatrix;
 
-    FutureShaderContainer *futureShaders;
+    struct FutureShaderContainer
+    {
+        struct FutureShaderContext
+        {
+            Shader *sharedShader = nullptr;
+            std::unique_ptr<Shader> shader;
+            std::unique_ptr<void, EventDeleter> readyEvent;
+            std::unique_ptr<void, ThreadDeleter> thread;
+            std::wstring fileName;
+        };
+        std::map<std::wstring, FutureShaderContext> contexts;
+        std::unique_ptr<void, MutexDeleter> lock;
+        FutureShaderContainer() : lock(OSCreateMutex()) {}
+    } futureShaders;
 
     virtual void ResetViewMatrix()=0;
 
