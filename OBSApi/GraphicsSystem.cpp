@@ -31,32 +31,6 @@ using namespace std;
 
 GraphicsSystem *GS = NULL;
 
-namespace
-{
-    struct HandleCloser
-    {
-        void operator()(HANDLE h) { if (!h) return; CloseHandle(h); }
-    };
-
-    struct MutexCloser
-    {
-        void operator()(HANDLE h) { if (!h) return; OSLeaveMutex(h); OSCloseMutex(h); }
-    };
-
-    struct MutexLock
-    {
-        bool locked, unlock;
-        HANDLE h;
-        MutexLock(unique_ptr<void, MutexCloser> const &mutex, bool tryLock = false, bool autounlock = true) : locked(false), unlock(autounlock), h(mutex.get())
-        {
-            if (!h) return;
-            if (tryLock && !OSTryEnterMutex(h)) return;
-            if (!tryLock) OSEnterMutex(h);
-            locked = true;
-        }
-        ~MutexLock() { if (locked && unlock) OSLeaveMutex(h); }
-    };
-}
 
 struct FutureShaderContainer
 {
@@ -64,12 +38,12 @@ struct FutureShaderContainer
     {
         Shader *sharedShader;
         unique_ptr<Shader> shader;
-        unique_ptr<void, HandleCloser> readyEvent;
-        unique_ptr<void, HandleCloser> thread;
+        unique_ptr<void, EventDeleter> readyEvent;
+        unique_ptr<void, ThreadDeleter> thread;
         wstring fileName;
     };
     map<wstring, FutureShaderContext> contexts;
-    unique_ptr<void, MutexCloser> lock;
+    unique_ptr<void, MutexDeleter> lock;
     FutureShaderContainer() : lock(OSCreateMutex()) {}
 };
 
@@ -133,7 +107,7 @@ FutureShader GraphicsSystem::CreatePixelShaderFromFileAsync(CTSTR fileName)
     wstring const fn = fileName;
     auto &cs = futureShaders->contexts;
 
-    MutexLock m(futureShaders->lock);
+    ScopedLock m(futureShaders->lock);
 
     bool initialized = cs.find(fn) != end(cs);
 

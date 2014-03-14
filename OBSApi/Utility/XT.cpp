@@ -23,25 +23,6 @@
 
 namespace
 {
-    struct MutexCloser
-    {
-        void operator()(HANDLE h) { if (!h) return; OSLeaveMutex(h); OSCloseMutex(h); }
-    };
-
-    struct MutexLock
-    {
-        bool locked, unlock;
-        HANDLE h;
-        MutexLock(std::unique_ptr<void, MutexCloser> const &mutex, bool tryLock = false, bool autounlock=true) : locked(false), unlock(autounlock), h(mutex.get())
-        {
-            if (!h) return;
-            if (tryLock && !OSTryEnterMutex(h)) return;
-            if (!tryLock) OSEnterMutex(h);
-            locked = true;
-        }
-        ~MutexLock() { if (locked && unlock) OSLeaveMutex(h); }
-    };
-
     struct XStringLog
     {
         XStringLog() : stopped(false) { Reset(); }
@@ -60,7 +41,7 @@ namespace
 
         String log;
         StringList unprocessed, processing;
-        std::unique_ptr<void, MutexCloser> append_mutex, process_mutex, read_mutex;
+        std::unique_ptr<void, MutexDeleter> append_mutex, process_mutex, read_mutex;
         bool stopped;
     };
 }
@@ -398,7 +379,7 @@ void ResetLogUpdateCallback(LogUpdateCallback proc)
 
 void XStringLog::Append(String const &string, bool linefeed)
 {
-    MutexLock a(append_mutex);
+    ScopedLock a(append_mutex);
     if (stopped) return;
 
     unprocessed << string;
@@ -420,7 +401,7 @@ void XStringLog::Read(String &str)
 {
     Process();
 
-    MutexLock r(read_mutex);
+    ScopedLock r(read_mutex);
     str = log;
 }
 
@@ -428,7 +409,7 @@ void XStringLog::Read(String &str, unsigned &start, unsigned length)
 {
     Process();
 
-    MutexLock r(read_mutex);
+    ScopedLock r(read_mutex);
 
     if (log.Length() == 0 && start) start = 0;
     if (start >= log.Length()) return;
@@ -440,12 +421,12 @@ void XStringLog::Read(String &str, unsigned &start, unsigned length)
 
 void XStringLog::Process()
 {
-    MutexLock p(process_mutex, true);
+    ScopedLock p(process_mutex, true);
     if (!p.locked) return;
     if (stopped) return;
 
     {
-        MutexLock a(append_mutex);
+        ScopedLock a(append_mutex);
 
         processing.TransferFrom(unprocessed);
     }
@@ -455,7 +436,7 @@ void XStringLog::Process()
         str << processing[i];
 
     {
-        MutexLock r(read_mutex);
+        ScopedLock r(read_mutex);
         log << str;
     }
 
@@ -464,8 +445,8 @@ void XStringLog::Process()
 
 void XStringLog::Stop()
 {
-    MutexLock p(process_mutex, false, false); //stop processing
-    MutexLock a(append_mutex);
+    ScopedLock p(process_mutex, false, false); //stop processing
+    ScopedLock a(append_mutex);
 
     stopped = true;
 }
