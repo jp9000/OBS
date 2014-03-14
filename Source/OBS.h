@@ -998,7 +998,6 @@ private:
     static void ResetProfileMenu();
     static void ResetLogUploadMenu();
     static void DisableMenusWhileStreaming(bool disable);
-    static void UpdateLog();
 
     static String GetApplicationName();
     static void ResetApplicationName();

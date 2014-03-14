@@ -354,7 +354,7 @@ OBS::OBS()
     SendMessage(hwndLog, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
     ShowWindow(hwndLog, SW_SHOW);
 
-    ResetLogUpdateCallback(UpdateLog);
+    ResetLogUpdateCallback([] { PostMessage(hwndLogWindow, WM_COMMAND, MAKEWPARAM(ID_LOG_WINDOW, 0), 0); });
 
     //-----------------------------------------------------
     // render frame text

@@ -2630,13 +2630,6 @@ static void OBSUpdateLog()
 
 //----------------------------
 
-void OBS::UpdateLog()
-{
-    PostMessage(hwndLogWindow, WM_COMMAND, MAKEWPARAM(ID_LOG_WINDOW, 0), 0);
-}
-
-//----------------------------
-
 String OBS::GetApplicationName()
 {
     String name;
