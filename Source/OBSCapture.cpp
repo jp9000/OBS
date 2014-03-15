@@ -531,7 +531,7 @@ retryHookTestV2:
     String strPlaybackDevice = AppConfig->GetString(TEXT("Audio"), TEXT("PlaybackDevice"), TEXT("Default"));
     if(strPlaybackDevice.IsEmpty() || !playbackDevices.HasID(strPlaybackDevice))
     {
-        AppConfig->SetString(TEXT("Audio"), TEXT("PlaybackDevice"), TEXT("Default"));
+        //AppConfig->SetString(TEXT("Audio"), TEXT("PlaybackDevice"), TEXT("Default"));
         strPlaybackDevice = TEXT("Default");
     }
 
@@ -544,13 +544,16 @@ retryHookTestV2:
         CrashError(TEXT("Cannot initialize desktop audio sound, more info in the log file."));
     }
 
+    if (useInputDevices)
+        Log(L"Use Input Devices enabled, not recording standard desktop audio");
+
     AudioDeviceList audioDevices;
     GetAudioDevices(audioDevices, ADT_RECORDING, false, true);
 
     String strDevice = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), NULL);
     if(strDevice.IsEmpty() || !audioDevices.HasID(strDevice))
     {
-        AppConfig->SetString(TEXT("Audio"), TEXT("Device"), TEXT("Disable"));
+        //AppConfig->SetString(TEXT("Audio"), TEXT("Device"), TEXT("Disable"));
         strDevice = TEXT("Disable");
     }
 
