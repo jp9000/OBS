@@ -718,7 +718,7 @@ private:
     int     cpuInfo[4];
 
     OSDirectoryMonitorData *logDirectoryMonitor;
-    StringList logFiles;
+    std::map<std::wstring, bool> logFiles;
 
     //---------------------------------------------------
     // resolution/fps/downscale/etc settings

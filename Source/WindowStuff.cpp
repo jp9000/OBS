@@ -26,6 +26,7 @@
 #include <MMSystem.h>
 
 #include <memory>
+#include <vector>
 
 
 //hello, you've come into the file I hate the most.
@@ -2324,6 +2325,8 @@ void OBS::ResetLogUploadMenu()
 {
     String logfilePattern = FormattedString(L"%s/logs/*.log", OBSGetAppDataPath());
 
+    std::vector<decltype(App->logFiles.cbegin())> validLogs;
+
     OSFindData ofd;
     HANDLE finder;
     if (!App->logDirectoryMonitor)
@@ -2337,31 +2340,46 @@ void OBS::ResetLogUploadMenu()
         {
             if (ofd.bDirectory) continue;
 
-            App->logFiles << GetPathFileName(ofd.fileName, true);
+            String filename = GetPathFileName(ofd.fileName, true);
+            auto iter = App->logFiles.emplace(filename.Array(), false).first;
+
+            XFile f(String(OBSGetAppDataPath()) << L"/logs/" << filename, XFILE_READ | XFILE_SHARED, XFILE_OPENEXISTING);
+            if (!f.IsOpen())
+                continue;
+
+            String contents;
+            f.ReadFileToString(contents);
+            if (!sstr(contents.Array(), L"Open Broadcaster Software"))
+                continue;
+
+            iter->second = true;
+            validLogs.push_back(iter);
         } while (OSFindNextFile(finder, ofd));
     }
     else
     {
         if (finder = OSFindFirstFile(logfilePattern, ofd))
         {
-            StringList previous;
-            previous.AppendList(App->logFiles);
+            auto previous = std::move(App->logFiles);
 
-            App->logFiles.Clear();
+            App->logFiles.clear();
 
             do
             {
                 if (ofd.bDirectory) continue;
 
-                String log = GetPathFileName(ofd.fileName, true);
-                if (previous.FindValueIndex(log) == INVALID)
+                std::wstring log = GetPathFileName(ofd.fileName, true);
+                if (previous.find(log) == previous.end())
                     continue;
 
-                App->logFiles << log;
+                if (!(App->logFiles[log] = previous[log]))
+                    continue;
+
+                validLogs.push_back(App->logFiles.find(log));
             } while (OSFindNextFile(finder, ofd));
         }
         else
-            App->logFiles.Clear();
+            App->logFiles.clear();
     }
 
     HMENU hmenuMain = GetMenu(hwndMain);
@@ -2370,7 +2388,7 @@ void OBS::ResetLogUploadMenu()
 
     while (DeleteMenu(hmenuUpload, 2, MF_BYPOSITION));
 
-    if (!App->logFiles.Num())
+    if (validLogs.empty())
         return;
 
     AppendMenu(hmenuUpload, MF_SEPARATOR, 0, nullptr);
@@ -2380,14 +2398,15 @@ void OBS::ResetLogUploadMenu()
 
     AppendMenu(hmenuUpload, MF_SEPARATOR, 0, nullptr);
 
-    for (unsigned i = 0; i < App->logFiles.Num(); i++)
+    unsigned i = 0;
+    for (auto iter = validLogs.rbegin(); iter != validLogs.rend(); i++, iter++)
     {
         HMENU items = CreateMenu();
         AppendMenu(items, MF_STRING, ID_UPLOAD_ANALYZE_LOG + i, Str("LogUpload.Analyze"));
         AppendMenu(items, MF_STRING, ID_UPLOAD_LOG + i, Str("LogUpload.Upload"));
         AppendMenu(items, MF_STRING, ID_VIEW_LOG + i, Str("LogUpload.View"));
 
-        AppendMenu(hmenuUpload, MF_STRING | MF_POPUP, (UINT_PTR)items, App->logFiles[App->logFiles.Num()-1-i].Array());
+        AppendMenu(hmenuUpload, MF_STRING | MF_POPUP, (UINT_PTR)items, (*iter)->first.c_str());
     }
 }
 

@@ -964,8 +964,8 @@ BEGIN
         MENUITEM SEPARATOR
         POPUP "MainMenu.Help.LogFiles"
         BEGIN
-            MENUITEM "MainMenu.Help.AnalyzeCurrentLog", ID_HELP_ANALYZE_CURRENT_LOG
-            MENUITEM "MainMenu.Help.UploadCurrentLog", ID_HELP_UPLOAD_CURRENT_LOG
+            MENUITEM "MainMenu.Help.AnalyzeCurrentLog", ID_HELP_ANALYZE_CURRENT_LOG, INACTIVE
+            MENUITEM "MainMenu.Help.UploadCurrentLog", ID_HELP_UPLOAD_CURRENT_LOG, INACTIVE
         END
         MENUITEM "MainMenu.Settings.OpenLogFolder", ID_SETTINGS_OPENLOGFOLDER
         MENUITEM SEPARATOR
