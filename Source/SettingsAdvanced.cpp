@@ -245,7 +245,7 @@ void SettingsAdvanced::SetDefaults()
     SendMessage(GetDlgItem(hwnd, IDC_PRESET), CB_SETCURSEL, 2, 0);
     SendMessage(GetDlgItem(hwnd, IDC_X264PROFILE), CB_SETCURSEL, 1, 0);
     SendMessage(GetDlgItem(hwnd, IDC_KEYFRAMEINTERVAL), UDM_SETPOS32, 0, 0);
-    SendMessage(GetDlgItem(hwnd, IDC_USECFR), BM_SETCHECK, BST_UNCHECKED, 1);
+    SendMessage(GetDlgItem(hwnd, IDC_USECFR), BM_SETCHECK, BST_CHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_USEVIDEOENCODERSETTINGS), BM_SETCHECK, BST_UNCHECKED, 0);
     EnableWindow(GetDlgItem(hwnd, IDC_VIDEOENCODERSETTINGS), FALSE);
     SendMessage(GetDlgItem(hwnd, IDC_UNLOCKHIGHFPS), BM_SETCHECK, BST_UNCHECKED, 0);
