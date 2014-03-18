@@ -352,6 +352,7 @@ OBS::OBS()
         ES_MULTILINE | WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_VSCROLL | WS_HSCROLL | ES_READONLY | ES_NOHIDESEL,
         client.left, client.top, client.right, client.bottom, hwndLogWindow, (HMENU)ID_LOG_WINDOW, 0, 0);
     SendMessage(hwndLog, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
+    SendMessage(hwndLog, EM_SETLIMITTEXT, 0, 0);
     ShowWindow(hwndLog, SW_SHOW);
 
     ResetLogUpdateCallback([] { PostMessage(hwndLogWindow, WM_COMMAND, MAKEWPARAM(ID_LOG_WINDOW, 0), 0); });
