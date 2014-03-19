@@ -252,7 +252,7 @@ VBData* D3D10VertexBuffer::GetData()
 {
     if(!bDynamic)
     {
-        AppWarning(TEXT("D3D10VertexBuffer::FlushBuffers: Cannot get vertex data of a non-dynamic vertex buffer"));
+        AppWarning(TEXT("D3D10VertexBuffer::GetData: Cannot get vertex data of a non-dynamic vertex buffer"));
         return NULL;
     }
 

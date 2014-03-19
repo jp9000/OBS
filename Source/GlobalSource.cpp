@@ -34,15 +34,15 @@ public:
         UpdateSettings();
     }
 
-    virtual void GlobalSourceLeaveScene() {globalSource->GlobalSourceLeaveScene();}
-    virtual void GlobalSourceEnterScene() {globalSource->GlobalSourceEnterScene();}
+    virtual void GlobalSourceLeaveScene() {if (globalSource) globalSource->GlobalSourceLeaveScene();}
+    virtual void GlobalSourceEnterScene() {if (globalSource) globalSource->GlobalSourceEnterScene();}
 
     //called elsewhere automatically by the app
     //void Preprocess() {globalSource->Preprocess();}
     //void Tick(float fSeconds) {globalSource->Tick(fSeconds);}
 
-    void Render(const Vect2 &pos, const Vect2 &size) {globalSource->Render(pos, size);}
-    Vect2 GetSize() const {return globalSource->GetSize();}
+    void Render(const Vect2 &pos, const Vect2 &size) {if (globalSource) globalSource->Render(pos, size);}
+    Vect2 GetSize() const {return globalSource ? globalSource->GetSize() : Vect2(0.0f, 0.0f);}
 
     void UpdateSettings()
     {
@@ -52,23 +52,23 @@ public:
 
     //-------------------------------------------------------------
 
-    virtual void SetFloat(CTSTR lpName, float fValue)           {globalSource->SetFloat(lpName, fValue);}
-    virtual void SetInt(CTSTR lpName, int iValue)               {globalSource->SetInt(lpName, iValue);}
-    virtual void SetString(CTSTR lpName, CTSTR lpVal)           {globalSource->SetString(lpName, lpVal);}
-    virtual void SetVector(CTSTR lpName, const Vect &value)     {globalSource->SetVector(lpName, value);}
-    virtual void SetVector2(CTSTR lpName, const Vect2 &value)   {globalSource->SetVector2(lpName, value);}
-    virtual void SetVector4(CTSTR lpName, const Vect4 &value)   {globalSource->SetVector4(lpName, value);}
-    virtual void SetMatrix(CTSTR lpName, const Matrix &mat)     {globalSource->SetMatrix(lpName, mat);}
+    virtual void SetFloat(CTSTR lpName, float fValue)         {if (globalSource) globalSource->SetFloat  (lpName, fValue);}
+    virtual void SetInt(CTSTR lpName, int iValue)             {if (globalSource) globalSource->SetInt    (lpName, iValue);}
+    virtual void SetString(CTSTR lpName, CTSTR lpVal)         {if (globalSource) globalSource->SetString (lpName, lpVal);}
+    virtual void SetVector(CTSTR lpName, const Vect &value)   {if (globalSource) globalSource->SetVector (lpName, value);}
+    virtual void SetVector2(CTSTR lpName, const Vect2 &value) {if (globalSource) globalSource->SetVector2(lpName, value);}
+    virtual void SetVector4(CTSTR lpName, const Vect4 &value) {if (globalSource) globalSource->SetVector4(lpName, value);}
+    virtual void SetMatrix(CTSTR lpName, const Matrix &mat)   {if (globalSource) globalSource->SetMatrix (lpName, mat);}
 
     //-------------------------------------------------------------
 
-    virtual bool GetFloat(CTSTR lpName, float &fValue)   const {return globalSource->GetFloat(lpName, fValue);}
-    virtual bool GetInt(CTSTR lpName, int &iValue)       const {return globalSource->GetInt(lpName, iValue);}
-    virtual bool GetString(CTSTR lpName, String &strVal) const {return globalSource->GetString(lpName, strVal);}
-    virtual bool GetVector(CTSTR lpName, Vect &value)    const {return globalSource->GetVector(lpName, value);}
-    virtual bool GetVector2(CTSTR lpName, Vect2 &value)  const {return globalSource->GetVector2(lpName, value);}
-    virtual bool GetVector4(CTSTR lpName, Vect4 &value)  const {return globalSource->GetVector4(lpName, value);}
-    virtual bool GetMatrix(CTSTR lpName, Matrix &mat)    const {return globalSource->GetMatrix(lpName, mat);}
+    virtual bool GetFloat(CTSTR lpName, float &fValue)   const {return globalSource ? globalSource->GetFloat  (lpName, fValue) : false;}
+    virtual bool GetInt(CTSTR lpName, int &iValue)       const {return globalSource ? globalSource->GetInt    (lpName, iValue) : false;}
+    virtual bool GetString(CTSTR lpName, String &strVal) const {return globalSource ? globalSource->GetString (lpName, strVal) : false;}
+    virtual bool GetVector(CTSTR lpName, Vect &value)    const {return globalSource ? globalSource->GetVector (lpName, value)  : false;}
+    virtual bool GetVector2(CTSTR lpName, Vect2 &value)  const {return globalSource ? globalSource->GetVector2(lpName, value)  : false;}
+    virtual bool GetVector4(CTSTR lpName, Vect4 &value)  const {return globalSource ? globalSource->GetVector4(lpName, value)  : false;}
+    virtual bool GetMatrix(CTSTR lpName, Matrix &mat)    const {return globalSource ? globalSource->GetMatrix (lpName, mat)    : false;}
 };
 
 
