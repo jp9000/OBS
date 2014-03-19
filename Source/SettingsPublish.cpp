@@ -379,30 +379,9 @@ void SettingsPublish::SetWarningInfo()
     SetCanOptimizeSettings(canOptimize);
 }
 
-namespace
-{
-    template <class F>
-    struct OnScopeExit
-    {
-        F fun;
-        bool active;
-        OnScopeExit(F fun) : fun(std::move(fun)), active(true) {}
-        ~OnScopeExit() { if(active) fun(); }
-
-        OnScopeExit(OnScopeExit &&o) : fun(std::move(o.fun)), active(o.active) { o.active = false; }
-
-    private:
-        OnScopeExit(OnScopeExit const &);
-        OnScopeExit &operator=(OnScopeExit const &);
-    };
-
-    template <class F>
-    OnScopeExit<F> onScopeExit(F &&fun) { return OnScopeExit<F>(std::move(fun)); }
-}
-
 void SettingsPublish::OptimizeSettings()
 {
-    auto refresh_on_exit = onScopeExit([&] { SetWarningInfo(); });
+    auto refresh_on_exit = GuardScope([&] { SetWarningInfo(); });
     XConfig serverData;
     if (!serverData.Open(L"services.xconfig"))
         return;

@@ -53,3 +53,25 @@ struct ScopedLock
     }
     ~ScopedLock() { if (locked && unlock) OSLeaveMutex(h); }
 };
+
+template <class Fun>
+struct ScopeGuard
+{
+    ScopeGuard(Fun fun) : fun(std::move(fun)), active(true) {}
+    ~ScopeGuard() { if (active) fun(); }
+
+    void dismiss() { active = false; }
+
+    ScopeGuard(ScopeGuard &&o) : fun(std::move(o.fun)), active(o.active) { o.dismiss(); }
+
+private:
+    ScopeGuard() = delete;
+    ScopeGuard(ScopeGuard const &) = delete;
+    ScopeGuard &operator=(ScopeGuard const &) = delete;
+
+    Fun fun;
+    bool active;
+};
+
+template <class Fun>
+ScopeGuard<Fun> GuardScope(Fun &&fun) { return ScopeGuard<Fun>(std::move(fun)); }
