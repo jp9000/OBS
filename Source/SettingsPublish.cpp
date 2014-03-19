@@ -369,7 +369,11 @@ void SettingsPublish::SetWarningInfo()
     }
 
     if (hasErrors)
+    {
+        if (canOptimize)
+            strWarnings << Str("Settings.Publish.Warning.CanOptimize");
         SetDlgItemText(hwnd, IDC_WARNINGS, strWarnings.Array());
+    }
     else
         SetDlgItemText(hwnd, IDC_WARNINGS, TEXT(""));
     SetCanOptimizeSettings(canOptimize);
@@ -516,7 +520,7 @@ void SettingsPublish::OptimizeSettings()
         }
     }
 
-    if (OBSMessageBox(hwnd, changes.Array(), nullptr, MB_OKCANCEL) != IDOK)
+    if (OBSMessageBox(hwnd, changes.Array(), Str("Optimize"), MB_OKCANCEL | MB_ICONINFORMATION) != IDOK)
         return;
 
     for (optimizers_t::const_reference i : optimizers)
