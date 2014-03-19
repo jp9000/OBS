@@ -822,8 +822,9 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
         goto end;
     }
 
+    // A service ID implies the settings have come from the xconfig file.
     if(serviceID != 0)
-    {
+    {	
         XConfig serverData;
         if(!serverData.Open(TEXT("services.xconfig")))
         {
@@ -845,6 +846,7 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
             XElement *curService = services->GetElementByID(i);
             if(curService->GetInt(TEXT("id")) == serviceID)
             {
+                // Found the service in the xconfig file.
                 service = curService;
                 break;
             }
@@ -856,6 +858,7 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
             goto end;
         }
 
+        // Each service can have many ingestion servers. Look up a server for a particular service.
         XElement *servers = service->GetElement(TEXT("servers"));
         if(!servers)
         {
@@ -863,15 +866,54 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
             goto end;
         }
 
+        // Got the server node now so can look up the ingestion URL.
         XDataItem *item = servers->GetDataItem(strURL);
         if(!item)
             item = servers->GetDataItemByID(0);
 
         strURL = item->GetData();
 
+        if (strURL.Left(4).MakeLower() == "http")
+        {
+            // Query the web API for stream details
+            String web_url = strURL + strPlayPath;
+
+            int responseCode;
+            TCHAR extraHeaders[256];
+
+            extraHeaders[0] = 0;
+
+            String response = HTTPGetString(web_url, extraHeaders, &responseCode);
+
+            if (responseCode != 200 && responseCode != 304)
+            {
+                failReason = TEXT("Webserver failed to respond with valid stream details.");
+                goto end;
+            }
+
+            XConfig apiData;
+
+            //response = "{\"data\":{\"stream_url\":\"rtmp:\/\/live38.us-va.zencoder.io:1935\/live\",\"stream_name\":\"317e17747a6cc66d359d272c4b003d8b\",\"broadcaster_key\":null}}";
+            if(!apiData.ParseString(response))
+            {
+                failReason = TEXT("Could not understand response from webserver.");
+                goto end;
+            }
+
+            // We could have read an error string back from the server.
+            // So we could fail here at the minute !!!!
+
+            XElement *p_data = apiData.GetElement(TEXT("data"));
+            strURL = p_data->GetDataItem(TEXT("stream_url"))->GetData();
+            strPlayPath = p_data->GetDataItem(TEXT("stream_name"))->GetData();
+
+            Log(TEXT("Web API returned URL: %s"), strURL.Array());
+            Log(TEXT("                path: %s"), strPlayPath.Array());
+        }
+
         Log(TEXT("Using RTMP service: %s"), service->GetName());
-        Log(TEXT("  Server selection: %s"), strURL.Array());
-    }
+        Log(TEXT("  Server selection: %s"), strPlayPath.Array());
+    } // end of if
 
     //------------------------------------------------------
     // now back to the elgato directory if it needs the directory changed still to function *sigh*
@@ -901,6 +943,8 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
         goto end;
     }
 
+    // A user name and password can be kept in the .ini file
+    // If there's some credentials there then they'll be used in the RTMP channel
     char *rtmpUser = AppConfig->GetString(TEXT("Publish"), TEXT("Username")).CreateUTF8String();
     char *rtmpPass = AppConfig->GetString(TEXT("Publish"), TEXT("Password")).CreateUTF8String();
 
@@ -930,9 +974,16 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     UINT tcpBufferSize = AppConfig->GetInt(TEXT("Publish"), TEXT("TCPBufferSize"), 64*1024);
 
     if(tcpBufferSize < 8192)
+    {
         tcpBufferSize = 8192;
-    else if(tcpBufferSize > 1024*1024)
-        tcpBufferSize = 1024*1024;
+    }
+    else 
+    {
+        if(tcpBufferSize > 1024*1024)
+        {
+           tcpBufferSize = 1024*1024;
+        }
+    }
 
     rtmp->m_outChunkSize = 4096;//RTMP_DEFAULT_CHUNKSIZE;//
     rtmp->m_bSendChunkSizeInfo = TRUE;

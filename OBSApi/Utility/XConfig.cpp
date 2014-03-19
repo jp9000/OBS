@@ -749,7 +749,7 @@ String XConfig::ProcessString(TSTR &lpTemp)
         return String();
 
     String stringOut = string.Mid(1, string.Length()-1);
-    if (stringOut.IsEmpty())
+    if(stringOut.IsEmpty())
         return String();
 
     TSTR lpStringOut = stringOut;
@@ -798,7 +798,12 @@ bool  XConfig::ReadFileData(XElement *curElement, int level, TSTR &lpTemp)
             String strName;
 
             if(*lpTemp == '"')
+            {
                 strName = ProcessString(lpTemp);
+
+                // Previous character should have been a " by definition 
+                assert(strName[strName.Length()-1] != '\"');
+            }
             else
             {
                 TSTR lpDataStart = lpTemp;
@@ -844,16 +849,31 @@ bool  XConfig::ReadFileData(XElement *curElement, int level, TSTR &lpTemp)
                 String data;
 
                 if(*lpTemp == '"')
+                {
                     data = ProcessString(lpTemp);
+
+                    // Back one if we've hit a brace. 
+                    // This should back us onto a " by definition.
+                    if(lpTemp[0] == '}')
+                    {
+                        --lpTemp;
+                    }
+                }
                 else
                 {
                     TSTR lpDataStart = lpTemp;
 
-                    lpTemp = schr(lpTemp, '\n');
+                    TCHAR separators[] = {'\n', '}'};
+
+                    lpTemp = schr_n(lpTemp, separators, 2);
+
                     if(!lpTemp)
                         return false;
 
-                    if(lpTemp[-1] == '\r') --lpTemp;
+                    if (lpTemp[-1] == '\r')
+                    {
+                        --lpTemp;
+                    }
 
                     if(lpTemp != lpDataStart)
                     {
@@ -864,11 +884,23 @@ bool  XConfig::ReadFileData(XElement *curElement, int level, TSTR &lpTemp)
 
                         data.KillSpaces();
                     }
+
+                    if (lpTemp[0] == '}')
+                    {
+                        --lpTemp;
+                    }
                 }
 
-                lpTemp = schr(lpTemp, '\n');
+                TCHAR separators[] = {'\n', ',', '}'};
+
+                lpTemp = schr_n(lpTemp, separators, 3);
                 if(!lpTemp && curElement != RootElement)
                     return false;
+
+                if ((lpTemp[-1] == ',') || (lpTemp[0] == '}'))
+                {
+                    --lpTemp;
+                }
 
                 curElement->SubItems << new XDataItem(strName, data);
             }
@@ -980,6 +1012,25 @@ void  XConfig::WriteFileData(XFile &file, int indent, XElement *curElement)
     }
 }
 
+bool  XConfig::ParseString(const String& config)
+{
+    String safe_copy = config;
+    TSTR lpTemp = safe_copy;
+
+    RootElement = new XElement(this, NULL, TEXT("Root"));
+
+    if(!ReadFileData(RootElement, 0, lpTemp))
+    {
+        for(DWORD i=0; i<RootElement->SubItems.Num(); i++)
+            delete RootElement->SubItems[i];
+
+        CrashError(TEXT("Error parsing X string '%s'"), config.Array());
+
+        Close(false);
+    }
+
+    return true;
+}
 
 bool  XConfig::Open(CTSTR lpFile)
 {

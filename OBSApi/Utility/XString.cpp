@@ -1574,6 +1574,31 @@ TCHAR *STDCALL schr(const TCHAR *strSrc, const TCHAR chr)
     return (TCHAR*)strSrc;
 }
 
+int IsCharNotInList(const TCHAR chr, const TCHAR list[], int count)
+{
+    int i = 0;
+
+    while (i<count && chr != list[i])
+    {
+        i++;
+    }
+
+    return i == count;
+}
+
+TCHAR *STDCALL schr_n(const TCHAR *strSrc, const TCHAR chr[], unsigned int count)
+{
+    if(!strSrc) return NULL;
+
+    while(IsCharNotInList(*strSrc, chr, count))
+    {
+        if(*strSrc++ == 0)
+            return NULL;
+    }
+
+    return (TCHAR*)strSrc;
+}
+
 TCHAR *STDCALL sstr(const TCHAR *strSrc, const TCHAR *strSearch)
 {
     if(!strSearch || !strSrc) return NULL;

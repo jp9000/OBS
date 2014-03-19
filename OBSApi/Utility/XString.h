@@ -34,6 +34,7 @@ BASE_EXPORT int    STDCALL   scmp_n(const TCHAR *str1, const TCHAR *str2, unsign
 BASE_EXPORT int    STDCALL   scmpi_n(const TCHAR *str1, const TCHAR *str2, unsigned int num);
 BASE_EXPORT TCHAR* STDCALL   srchr(const TCHAR *strSrc, TCHAR chr);
 BASE_EXPORT TCHAR* STDCALL   schr(const TCHAR *strSrc, TCHAR chr);
+BASE_EXPORT TCHAR* STDCALL   schr_n(const TCHAR *strSrc, const TCHAR chr[], unsigned int num);
 BASE_EXPORT TCHAR* STDCALL   sstr(const TCHAR *strSrc, const TCHAR *strSearch);
 BASE_EXPORT TCHAR* STDCALL   srchri(const TCHAR *strSrc, TCHAR chr);
 BASE_EXPORT TCHAR* STDCALL   schri(const TCHAR *strSrc, TCHAR chr);
