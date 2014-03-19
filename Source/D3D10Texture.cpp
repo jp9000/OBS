@@ -703,7 +703,7 @@ bool D3D10Texture::Map(BYTE *&lpData, UINT &pitch)
 
     if(FAILED(err = texture->Map(0, D3D10_MAP_WRITE_DISCARD, 0, &map)))
     {
-        AppWarning(TEXT("D3D10Texture::SetImage: map failed, result = %08lX"), err);
+        AppWarning(TEXT("D3D10Texture::Map: map failed, result = %08lX"), err);
         return false;
     }
 
