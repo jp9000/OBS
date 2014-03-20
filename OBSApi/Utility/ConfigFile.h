@@ -23,8 +23,6 @@
     Config
 ===========================================================*/
 
-enum {INT_VALUE, STRING_VALUE};
-
 struct ConfigKey
 {
     TSTR name;
