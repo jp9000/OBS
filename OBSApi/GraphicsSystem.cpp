@@ -65,7 +65,10 @@ Shader* GraphicsSystem::CreatePixelShaderFromFile(CTSTR lpFileName)
     return CreatePixelShader(strShader, lpFileName);
 }
 
-FutureShader GraphicsSystem::CreatePixelShaderFromFileAsync(CTSTR fileName)
+template class BASE_EXPORT FutureShader<CreateVertexShaderFromBlob>;
+template class BASE_EXPORT FutureShader<CreatePixelShaderFromBlob>;
+
+FuturePixelShader GraphicsSystem::CreatePixelShaderFromFileAsync(CTSTR fileName)
 {
     using namespace std;
     using Context = FutureShaderContainer::FutureShaderContext;
@@ -86,8 +89,17 @@ FutureShader GraphicsSystem::CreatePixelShaderFromFileAsync(CTSTR fileName)
         c.thread.reset(OSCreateThread(static_cast<XTHREAD>([](void *arg) -> DWORD
         {
             Context &c = *(Context*)arg;
-            c.shader.reset(GS->CreatePixelShaderFromFile(c.fileName.c_str()));
-            c.sharedShader = c.shader.get();
+            XFile ShaderFile;
+
+            if (!ShaderFile.Open(c.fileName.c_str(), XFILE_READ | XFILE_SHARED, XFILE_OPENEXISTING))
+                return 1;
+
+            String strShader;
+            ShaderFile.ReadFileToString(strShader);
+
+            c.fileData = strShader.Array();
+
+            GS->CreatePixelShaderBlob(c.shaderData, strShader.Array(), c.fileName.c_str());
 
             SetEvent(c.readyEvent.get());
             return 0;
@@ -96,11 +108,8 @@ FutureShader GraphicsSystem::CreatePixelShaderFromFileAsync(CTSTR fileName)
 
     if (c.thread && WaitForSingleObject(c.readyEvent.get(), 0) == WAIT_OBJECT_0)
         c.thread.reset();
-    
-    if (c.thread)
-        return FutureShader(c.readyEvent.get(), &c.sharedShader);
-    
-    return FutureShader(c.shader.get());
+
+    return FuturePixelShader(c.readyEvent.get(), c.shaderData, c.fileData, c.fileName);
 }
 
 
