@@ -24,6 +24,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 /*=========================================================
     Enums
@@ -330,6 +331,8 @@ public:
     }
 };
 
+using ShaderBlob = std::vector<char>;
+
 class BASE_EXPORT FutureShader
 {
     Shader **futureShader, *shader;
@@ -563,6 +566,12 @@ protected:
 public:
     virtual void CopyTexture(Texture *texDest, Texture *texSrc)=0;
     virtual void DrawSpriteExRotate(Texture *texture, DWORD color, float x, float y, float x2, float y2, float degrees, float u, float v, float u2, float v2, float texDegrees)=0;
+
+    virtual Shader *CreateVertexShaderFromBlob(ShaderBlob const &blob, CTSTR lpShader, CTSTR lpFileName) = 0;
+    virtual Shader *CreatePixelShaderFromBlob(ShaderBlob const &blob, CTSTR lpShader, CTSTR lpFileName) = 0;
+private:
+    virtual void CreateVertexShaderBlob(ShaderBlob &blob, CTSTR lpShader, CTSTR lpFileName) = 0;
+    virtual void CreatePixelShaderBlob(ShaderBlob &blob, CTSTR lpShader, CTSTR lpFileName) = 0;
 };
 
 
@@ -611,6 +620,8 @@ inline Texture* CreateSharedTexture(unsigned int width, unsigned int height)
 
 inline SamplerState* CreateSamplerState(SamplerInfo &info)          {return GS->CreateSamplerState(info);}
 
+inline Shader* CreateVertexShaderFromBlob(ShaderBlob const& blob, CTSTR lpShader, CTSTR lpFileName) {return GS->CreateVertexShaderFromBlob(blob, lpShader, lpFileName);}
+inline Shader* CreatePixelShaderFromBlob(ShaderBlob const& blob, CTSTR lpShader, CTSTR lpFileName)  {return GS->CreatePixelShaderFromBlob(blob, lpShader, lpFileName);}
 inline Shader* CreateVertexShader(CTSTR lpShader, CTSTR lpFileName) {return GS->CreateVertexShader(lpShader, lpFileName);}
 inline Shader* CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)  {return GS->CreatePixelShader(lpShader, lpFileName);}
 inline Shader* CreateVertexShaderFromFile(CTSTR lpFileName)         {return GS->CreateVertexShaderFromFile(lpFileName);}
