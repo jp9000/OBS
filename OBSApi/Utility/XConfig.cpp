@@ -1012,6 +1012,8 @@ void  XConfig::WriteFileData(XFile &file, int indent, XElement *curElement)
     }
 }
 
+// Basically the same as Open (and in fact Open could/should call ParseString to do its thing)
+// But ParseString allows chunks of JSON type strings to be parse into the XConfig structure.
 bool  XConfig::ParseString(const String& config)
 {
     String safe_copy = config;

@@ -1574,23 +1574,26 @@ TCHAR *STDCALL schr(const TCHAR *strSrc, const TCHAR chr)
     return (TCHAR*)strSrc;
 }
 
-int IsCharNotInList(const TCHAR chr, const TCHAR list[], int count)
+// Checks if the given character is in the list
+static int IsCharInList(const TCHAR chr, const TCHAR chrList[], int chrListCount)
 {
     int i = 0;
 
-    while (i<count && chr != list[i])
+    while (i<chrListCount && chr != chrList[i])
     {
         i++;
     }
 
-    return i == count;
+    return i != chrListCount;
 }
 
-TCHAR *STDCALL schr_n(const TCHAR *strSrc, const TCHAR chr[], unsigned int count)
+// A version of schr which can check against a list.
+TCHAR *STDCALL schr_n(const TCHAR *strSrc, const TCHAR chrList[], unsigned int chrListCount)
 {
     if(!strSrc) return NULL;
 
-    while(IsCharNotInList(*strSrc, chr, count))
+    // Set along until we hit something in our list
+    while (!IsCharInList(*strSrc, chrList, chrListCount))
     {
         if(*strSrc++ == 0)
             return NULL;

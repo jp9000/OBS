@@ -794,6 +794,7 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
 
     String failReason;
     String strBindIP;
+    RTMP *rtmp = NULL;
 
     int    serviceID    = AppConfig->GetInt   (TEXT("Publish"), TEXT("Service"));
     String strURL       = AppConfig->GetString(TEXT("Publish"), TEXT("URL"));
@@ -873,6 +874,8 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
 
         strURL = item->GetData();
 
+        // Stream urls start with RTMP. If there's an HTTP then assume this is a web API call
+        // to get the proper data.
         if (strURL.Left(4).MakeLower() == "http")
         {
             // Query the web API for stream details
@@ -893,7 +896,9 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
 
             XConfig apiData;
 
-            //response = "{\"data\":{\"stream_url\":\"rtmp:\/\/live38.us-va.zencoder.io:1935\/live\",\"stream_name\":\"317e17747a6cc66d359d272c4b003d8b\",\"broadcaster_key\":null}}";
+            // Expecting a response from the web API to look like this:
+            // {"data":{"stream_url":"rtmp://some_url", "stream_name": "some-name"}}"
+            // A nice bit of JSON which is basically the same as the structure for XConfig.
             if(!apiData.ParseString(response))
             {
                 failReason = TEXT("Could not understand response from webserver.");
@@ -901,11 +906,35 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
             }
 
             // We could have read an error string back from the server.
-            // So we could fail here at the minute !!!!
+            // So we need to trap any missing bits of data.
 
             XElement *p_data = apiData.GetElement(TEXT("data"));
-            strURL = p_data->GetDataItem(TEXT("stream_url"))->GetData();
-            strPlayPath = p_data->GetDataItem(TEXT("stream_name"))->GetData();
+
+            if (p_data == NULL)
+            {
+                failReason = TEXT("No valid data returned from web server.");
+                goto end;
+            }
+
+            XDataItem *p_stream_url_data = p_data->GetDataItem(TEXT("stream_url"));
+
+            if (p_stream_url_data == NULL)
+            {
+                failReason = TEXT("No valid broadcast stream URL returned from web server.");
+                goto end;
+            }
+
+            strURL = p_stream_url_data->GetData();
+
+            XDataItem *p_stream_name_data = p_data->GetDataItem(TEXT("stream_name"));
+
+            if (p_stream_name_data == NULL)
+            {
+                failReason = TEXT("No valid stream name/path returned from web server.");
+                goto end;
+            }
+
+            strPlayPath = p_stream_name_data->GetData();
 
             Log(TEXT("Web API returned URL: %s"), strURL.Array());
             Log(TEXT("                path: %s"), strPlayPath.Array());
@@ -925,7 +954,7 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     OSEnterMutex(publisher->hRTMPMutex);
     publisher->rtmp = RTMP_Alloc();
 
-    RTMP *rtmp = publisher->rtmp;
+    rtmp = publisher->rtmp;
     RTMP_Init(rtmp);
 
     RTMP_LogSetCallback(librtmpErrorCallback);
@@ -1048,7 +1077,7 @@ end:
     if(!bSuccess)
     {
         OSEnterMutex(publisher->hRTMPMutex);
-        if(rtmp)
+        if(rtmp != NULL)
         {
             RTMP_Close(rtmp);
             RTMP_Free(rtmp);
