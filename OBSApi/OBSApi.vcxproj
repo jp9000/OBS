@@ -262,6 +262,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SettingsPane.h" />
+    <ClInclude Include="Utility\ComPtr.hpp" />
     <ClInclude Include="Utility\RAIIHelpers.h" />
     <ClInclude Include="VolumeControl.h" />
     <ClInclude Include="VolumeMeter.h" />

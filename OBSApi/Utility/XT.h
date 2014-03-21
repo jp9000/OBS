@@ -313,3 +313,4 @@ BASE_EXPORT extern BOOL bDebugBreak;
 #include "XConfig.h"
 
 #include "RAIIHelpers.h"
+#include "ComPtr.hpp"
