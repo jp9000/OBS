@@ -1,0 +1,18 @@
+---
+title: Global sources
+layout: default
+---
+<h4>Global Sources</h4>
+<p>Global sources are sources that are independent of scenes, and persist until the stream ends.
+They start up when first used, and are destroyed only when a stream ends.  A regular source on the other hand is created when the scene is created, and destroyed when the scene changes.
+That is not something you want to have happen with say web cameras and capture cards, as loading and unloading devices takes times, so this is especially useful
+and recommended for video devices.  Bitmaps and such on the other hand do not need to be global sources as loading and unloading is near instant.</p>
+<img src="{{ site.baseurl }}/assets/globalsources.png" alt="Global Sources"></img>
+<p class="red_marker"><b>Note:</b> When you modify the properties of a global source using the sources list box in the main window, it will affect all scenes it is added to.</p>
+<h4>Using global sources</h4>
+<img src="{{ site.baseurl }}/assets/globalsources1.png" alt="Add Global Source"></img>
+<p>First, create a new global source by clicking Add in the global sources window.</p>
+<img src="{{ site.baseurl }}/assets/globalsources2.png" alt="Global Source listed"></img>
+<p>Setup all necessary settings and click ok to add it to the list of Gloabl Sources.</p>
+<img src="{{ site.baseurl }}/assets/globalsources3.png" alt="Add Global Source to Scene"></img>
+<p>To then use your global source in a scene, simply right click the sources list box, select Add Global Source, then choose the global source you wish to add to the scene.</p>
