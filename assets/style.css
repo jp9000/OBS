@@ -1,0 +1,25 @@
+html {
+    overflow-y: scroll;
+}
+img {
+	display: block;
+	margin: 0 auto !important;
+}
+.settings {
+	display: block;
+	margin: 0 auto !important;
+	border: 1px solid gray;
+}
+.red_marker {
+	color: #F00;
+}
+.own_grid {
+	width:234px;
+	display:inline-block;
+	vertical-align:top;
+}
+.own_grid2 {
+	width:48%;
+	display:inline-block;
+	vertical-align:top;
+}

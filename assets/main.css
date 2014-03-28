@@ -1,0 +1,783 @@
+/* Style reset */
+/* http://meyerweb.com/eric/tools/css/reset/ 
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+	display: block;
+}
+body {
+	line-height: 1;
+}
+ol, ul {
+	list-style: none;
+}
+blockquote, q {
+	quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+	content: '';
+	content: none;
+}
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+/* End of style reset */
+
+/*
+  960 Grid System ~ Text CSS.
+  Learn more ~ http://960.gs/
+
+  Licensed under GPL and MIT.
+*/
+
+/* `Basic HTML
+----------------------------------------------------------------------------------------------------*/
+
+body {
+  font: 13px/1.5 'Helvetica Neue', Arial, 'Liberation Sans', FreeSans, sans-serif;
+}
+
+pre,
+code {
+  font-family: 'DejaVu Sans Mono', Menlo, Consolas, monospace;
+}
+
+hr {
+  border: 0 #ccc solid;
+  border-top-width: 1px;
+  clear: both;
+  height: 0;
+}
+
+/* `Headings
+----------------------------------------------------------------------------------------------------*/
+
+h1 {
+  font-size: 25px;
+}
+
+h2 {
+  font-size: 23px;
+}
+
+h3 {
+  font-size: 21px;
+}
+
+h4 {
+  font-size: 19px;
+}
+
+h5 {
+  font-size: 17px;
+}
+
+h6 {
+  font-size: 19px;
+}
+
+/* `Spacing
+----------------------------------------------------------------------------------------------------*/
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+li {
+  margin-left: 30px;
+}
+
+p,
+dl,
+hr,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+ol,
+ul,
+pre,
+table,
+address,
+fieldset,
+figure {
+  margin-bottom: 20px;
+}
+
+/* End 960 Grid System Text Styles */
+
+/* General */
+
+html {
+	height: 100%;
+}
+
+body {
+	background: #f0f0f0 url('http://jack0r.github.io/OBS-help/assets/white_carbon2.png');
+	color: #444444;
+	height: 100%;
+}
+
+b {
+	font-weight: bold;
+}
+
+em {
+	font-style: italic;
+}
+
+a {
+	color: #bf2020;
+}
+
+a:hover {
+	color: #fc3c3c;
+}
+
+#Wrapper {
+	min-height: 100%;
+	height: auto !important;
+	height: 100%;
+	margin: 0 auto -60px;
+
+}
+
+.btn a {
+	display: block;
+	background: #444444;
+	text-align: center;
+	padding: 2px 0px;
+	color: white;
+	font-size: 17px;
+	font-weight: bold;
+	text-decoration: none;
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+
+	-webkit-transition: all .15s ease-in-out;
+	-moz-transition: all .15s ease-in-out;
+	-o-transition: all .15s ease-in-out;
+	transition: all .15s ease-in-out;
+}
+
+.btn.green a {
+	background: #007220;
+}
+
+.btn.green a:hover {
+	background: #20BF4D;
+}
+
+.btn a:hover {
+	background: #BF2020;
+	
+	-webkit-transition: all .25s ease-in-out;
+	-moz-transition: all .25s ease-in-out;
+	-o-transition: all .25s ease-in-out;
+	transition: all .25s ease-in-out;
+}
+
+.btn.fake {
+	position: absolute;
+	margin-left: 0px;
+}
+
+.btn.fake a {
+	background: #BF2020;
+	
+	opacity: 0;
+}
+
+.btn.fake a:active {
+	background: #8f0d0d;
+	
+	opacity: 1;
+}
+
+.btn.fake a:hover {
+	opacity: 1;
+}
+
+/* End General */
+
+/* Header */
+
+#HeaderContainer {
+	margin-bottom: 20px;
+	width: 100%;
+	background: #f5f5f5;
+	background-image: linear-gradient(bottom, rgb(239,239,239) 0%, rgb(255,255,255) 100%);
+	background-image: -o-linear-gradient(bottom, rgb(239,239,239) 0%, rgb(255,255,255) 100%);
+	background-image: -moz-linear-gradient(bottom, rgb(239,239,239) 0%, rgb(255,255,255) 100%);
+	background-image: -webkit-linear-gradient(bottom, rgb(239,239,239) 0%, rgb(255,255,255) 100%);
+	background-image: -ms-linear-gradient(bottom, rgb(239,239,239) 0%, rgb(255,255,255) 100%);
+	background-image: -webkit-gradient(
+		linear,
+		left bottom,
+		left top,
+		color-stop(0, rgb(239,239,239)),
+		color-stop(1, rgb(255,255,255))
+	);
+	height: 100px;
+	position: relative;
+	font-family: 'Source Sans Pro', sans-serif;
+	-webkit-box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.35);
+	-moz-box-shadow:    0px 3px 3px rgba(0, 0, 0, 0.35);
+	box-shadow:         0px 3px 3px rgba(0, 0, 0, 0.35);
+	z-index: 1;
+}
+
+#Header {
+	position: relative;
+	height: 95px;
+	padding-top: 5px;
+}
+
+#Header h1 {
+	color: #000;
+	font-weight: bold;
+	margin-bottom: 0px;
+}
+
+#Header .logo {
+	margin: 0px 10px 0px 5px;
+	width: 80px;
+	height: 80px;
+	float: left;
+}
+
+.header_text {
+	float: left;
+	margin-top: 12px;
+	width: 340px;
+	height: 50px;
+	text-align: center;
+}
+
+#SocialButtons {
+	position: absolute;
+	bottom: 10px;
+	right: 0px;
+}
+
+#SocialButtons a {
+	color: white;
+	font-size: 16px;
+	text-decoration: none;
+}
+
+#TwitterButton, #LivechatButton, #FacebookButton, #DonateButton {
+	display: inline-block;
+	position: relative;
+}
+
+#TwitterButton a, #LivechatButton a, #FacebookButton a, #DonateButton a {
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+	padding: 1px 5px;
+	display: block;
+	text-align: center;
+	bottom: 20px;
+	right: 0px;
+}
+
+#FacebookButton a { background: #3b5998; }
+#FacebookButton a:hover { background: #5f7dbc; }
+
+#TwitterButton a { background: #00ACEE; }
+#TwitterButton a:hover { background: #3CC1F4; }
+
+#LivechatButton a { background: #BF2020; }
+#LivechatButton a:hover { background: #dd1818; }
+
+#DonateButton a { background: #00a800; }
+#DonateButton a:hover { background: #00e000; }
+
+span.tooltip {
+	top: 34px;
+	left: -18px;
+	position: absolute;
+	width: 60px;
+	height: 18px;
+	line-height: 18px;
+	padding: 1px 3px;
+	font-size: 12px;
+	text-align: center;
+	color: rgb(255, 255, 255);
+	background: rgba(0, 0, 0, .75);
+	border: 0px none rgb(0, 0, 0);
+	border-radius: 5px;
+	text-shadow: rgba(0, 0, 0, 0.0980392) 1px 1px 1px;
+	box-shadow: rgba(0, 0, 0, 0.0980392) 1px 1px 2px 0px;
+	opacity: 0;
+}
+
+span.tooltip:after {
+	content: "";
+	position: absolute;
+	width: 0;
+	height: 0;
+	border-width: 7px;
+	border-style: solid;
+	border-color: transparent transparent rgba(0, 0, 0, .75) transparent;
+	top: -14px;
+	left: 26px;
+}
+
+#FacebookButton a:hover + span, #TwitterButton a:hover + span, #LivechatButton a:hover + span, #DonateButton a:hover + span {	opacity: 1; }
+
+#Notice {
+	opacity: 1;
+	text-shadow: 1px 1px 1px #a22;
+	background: #ff8787;
+	background: -moz-linear-gradient(top, #ff8787 0%, #ed5a5a 45%, #e54949 100%);
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ff8787), color-stop(45%,#ed5a5a), color-stop(100%,#e54949));
+	background: -webkit-linear-gradient(top, #ff8787 0%,#ed5a5a 45%,#e54949 100%);
+	background: -o-linear-gradient(top, #ff8787 0%,#ed5a5a 45%,#e54949 100%);
+	background: -ms-linear-gradient(top, #ff8787 0%,#ed5a5a 45%,#e54949 100%);
+	background: linear-gradient(to bottom, #ff8787 0%,#ed5a5a 45%,#e54949 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ff8787', endColorstr='#e54949',GradientType=0 );
+	position: relative;
+	height: 35px;
+	text-align: center;
+	font-weight: bold;
+	color: white;
+	font-size: 18px;
+	padding-top: 5px;
+	cursor: pointer;
+	z-index: 5;
+	width: 100%;
+}
+
+#Notice .close {
+	top: 8px;
+	right: 8px;
+	position: absolute;
+	padding: 2px 7px;
+	display: inline-block;
+	text-align: center;
+	background: #cc9999;
+	color: white;
+	font-weight: bold;
+	font-size: 12px;
+}
+
+/* End Header */
+
+/* Navigation */
+
+#Navigation {
+	margin-top: 18px;
+	float: right;
+	font-family: 'Source Sans Pro', sans-serif;
+	font-size: 20px;
+	list-style:none;
+}
+
+#Navigation a {
+	display: block;
+	color: #444444;
+	text-decoration:none;
+}
+
+#Navigation a:hover {
+	color: #bf2020;
+}
+
+#Navigation li{
+    float: left;
+    margin-right: 14px;
+    position: relative;
+}
+
+#Navigation li.last { margin-right: 0px; }
+
+#Navigation ul {
+	background: #ffffff;
+	border: 1px solid #dddddd;
+	text-align: center;
+	list-style: none;
+    position: absolute;
+	left: -9999px;
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+}
+
+#Navigation ul li{
+	margin-right: 0px;
+    padding-top: 1px;
+    float: none;
+	margin-left: 0px;
+	width: 128px;
+}
+
+#Navigation ul a{
+    white-space: nowrap;
+}
+#Navigation li:hover ul{ 
+    left: -73px; 
+}
+#Navigation li:hover a{
+    background: none;
+}
+#Navigation li:hover ul a{ 
+    text-decoration: none;
+	width: 100%;
+}
+#Navigation li:hover ul li a:hover{ 
+    color: #bf2020;
+}
+
+/* End Navigation */
+
+/* Content */
+
+.info h4 {
+	border: 1px solid #d9d7d9;
+	border-bottom: 2px solid #BF2020;
+	background: #f5f5f5;
+	background-image: linear-gradient(bottom, rgb(239,239,239) 0%, rgb(255,255,255) 100%);
+	background-image: -o-linear-gradient(bottom, rgb(239,239,239) 0%, rgb(255,255,255) 100%);
+	background-image: -moz-linear-gradient(bottom, rgb(239,239,239) 0%, rgb(255,255,255) 100%);
+	background-image: -webkit-linear-gradient(bottom, rgb(239,239,239) 0%, rgb(255,255,255) 100%);
+	background-image: -ms-linear-gradient(bottom, rgb(239,239,239) 0%, rgb(255,255,255) 100%);
+
+	background-image: -webkit-gradient(
+		linear,
+		left bottom,
+		left top,
+		color-stop(0, rgb(239,239,239)),
+		color-stop(1, rgb(255,255,255))
+	);
+	padding: 1px 5px;
+	color: #444444;
+	font-family: 'Source Sans Pro', sans-serif;
+	text-align: center;
+	margin-bottom: 10px;
+	-webkit-box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.25);
+	-moz-box-shadow:    0px 1px 2px rgba(0, 0, 0, 0.25);
+	box-shadow:         0px 1px 2px rgba(0, 0, 0, 0.25);
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+}
+
+#Latest {
+	width: 948px;
+	margin: 0px 0px 20px;
+	border: 1px dotted #AAA;
+	background: white;
+	padding: 10px;
+}
+
+#Latest h1 {
+	float: left;
+	line-height: 22px;
+	margin-bottom: 10px;
+}
+
+#Latest h6 {
+	margin-bottom: 10px;
+}
+
+#Latest .patchnotesHeader {
+	height: 26px;
+}
+
+#Latest .patchnotesHeader h1 {
+	margin-bottom: 0px;
+}
+
+#Latest .patchnotesHeader a {
+	width: 140px;
+	float: right;
+	font-size: 14px;
+	text-align: center;
+	margin-top: 0px;
+	background: #444;
+	padding: 2px 8px;
+	display: block;
+	text-decoration: none;
+	color: white;
+	cursor: pointer;
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+}
+
+#Latest .patchnotesHeader a:hover {
+	background: #777;
+}
+
+#Latest .patchnotes {
+	float: left;
+	overflow: hidden;
+	
+	-webkit-transition: all .25s ease-in-out;
+	-moz-transition: all .25s ease-in-out;
+	-o-transition: all .25s ease-in-out;
+	transition: all .25s ease-in-out;
+}
+
+#Latest .patchnotes  h1 {
+	float: none;
+	margin-bottom: 10px;
+}
+
+.download {
+	margin-bottom: 5px;
+}
+
+.download a {
+	font-size: 24px;
+	padding: 5px 0px;
+}
+
+.faq {
+	margin-bottom: 10px;
+}
+
+.faq h3 {
+	margin-bottom: 0px;
+	font-weight: bold;
+}
+
+.btn.active a {
+	background: #BF2020;
+	background-image: linear-gradient(bottom, rgb(180,29,29) 0%, rgb(198,36,36) 100%);
+	background-image: -o-linear-gradient(bottom, rgb(180,29,29) 0%, rgb(198,36,36) 100%);
+	background-image: -moz-linear-gradient(bottom, rgb(180,29,29) 0%, rgb(198,36,36) 100%);
+	background-image: -webkit-linear-gradient(bottom, rgb(180,29,29) 0%, rgb(198,36,36) 100%);
+	background-image: -ms-linear-gradient(bottom, rgb(180,29,29) 0%, rgb(198,36,36) 100%);
+
+	background-image: -webkit-gradient(
+		linear,
+		left bottom,
+		left top,
+		color-stop(0, rgb(180,29,29)),
+		color-stop(1, rgb(198,36,36))
+	);
+	
+	-webkit-transition: all .25s ease-in-out;
+	-moz-transition: all .25s ease-in-out;
+	-o-transition: all .25s ease-in-out;
+	transition: all .25s ease-in-out;
+}
+
+#DLOptions {
+	margin-bottom: 5px;
+}
+
+h2 {
+	margin-bottom: 0px;
+}
+
+.mentor { float: right; }
+
+/* Index banner */
+
+#Banner {
+	margin-top: -20px;
+	width: 100%;
+	height: 300px;
+	background: #2e2e2e;
+	overflow: hidden;
+	position: relative;
+	margin-bottom: 20px;
+}
+
+.banner_content {
+	width: 940px;
+	margin: 0px auto;
+	height: 300px;
+	font-family: 'Source Sans Pro', sans-serif;
+	color: white;
+	position: relative;
+}
+
+.banner_content h1 {
+	font-weight: bold;
+	font-size: 26px;
+	text-shadow: 0px 2px 2px rgba(0, 0, 0, 0.5);
+	margin-bottom: -10px;
+}
+
+.banner_content h2 {
+	font-size: 16px;
+	text-shadow: 0px 2px 2px rgba(0, 0, 0, 0.5);
+}
+
+.dl_box {
+	width: 253px;
+	height: 85px;
+	background: url('/images/bg-b-50.png');
+	position: absolute;
+	bottom: 10px;
+	right: 10px;
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+}
+
+.dl_box a.button {
+	width: 243px;
+	height: 51px;
+	display: block;
+	margin: 10px auto 0px;
+	text-align: center;
+	color: white;
+	font-size: 30px;
+	font-weight: bold;
+	font-family: 'Source Sans Pro', sans-serif;
+	text-decoration: none;
+	background: url('/images/download-btn.png');
+	background-position: 0px 0px;
+}
+
+.dl_box a.button:hover { background-position: 0px -51px; }
+
+.dl_box a { 
+	display: block;
+	margin: 0px auto;
+	width: 94px;
+	color: white;
+	font-size: 14px;
+	font-family: 'Source Sans Pro', sans-serif;
+	text-align: center;
+	text-shadow: 0px 2px 2px rgba(0, 0, 0, 0.5);
+}
+
+.scroll_banner {
+	display: block;
+	height: 300px;
+	width: 5784px;
+	position: absolute; 
+	top: 0px; 
+	left: 0px;
+}
+
+#banner1 {
+	height: 300px;
+	width: 2892px;
+	position: absolute;
+	display: block;
+	top: 0px;
+	left: 0px;
+	background: url('/images/Banner.jpg');
+}
+#banner2 {
+	height: 300px;
+	width: 2892px;
+	position: absolute;
+	display: block;
+	top: 0px;
+	left: 2892px;
+	background: url('/images/Banner.jpg');
+}
+
+/* End Index banner styles */
+
+/* April Fools */
+
+#purchase select { width: 130px }
+#purchase label { width: 150px; display: inline-block; }
+
+/* End hilarity styles */
+
+/* Begin serious styles */
+
+.cispa {
+	position: absolute;
+	display: block;
+	height: 30px;
+	width: 100%;
+	background: black;
+	top: 0px;
+}
+
+.cispa a {
+	font-size: 18px;
+	width: 100%;
+	color: white;
+	text-align: center;
+	display: block;
+}
+
+/* End serious styles */
+
+/* End Content */
+
+/* Footer */
+
+#Footer {
+	width: 100%;
+	background: #444444;
+	color: #888888;
+	text-shadow: 1px 1px 1px #1c1c1c;
+}
+
+#Footer a {
+	color: #888888;
+}
+
+#Footer a:hover {
+	color: #bbbbbb;
+}
+
+.footerText {
+	position: absolute;
+	text-align: center;
+	width: 100%;
+	bottom: 10px;
+	right: 0px;
+}
+
+.footer {
+	position: relative;
+	height: 60px;
+}
+
+#FooterPush, #Footer {
+	height: 60px;
+}
+
+#Footer p {
+	margin-bottom: 0px;
+}
+
+/* End Footer */
