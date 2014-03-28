@@ -681,7 +681,7 @@ bool XElement::Import(CTSTR lpFile)
     importFile.ReadFileToString(strFileData);
 
     TSTR lpFileData = strFileData;
-    file->ReadFileData(this, 0, lpFileData);
+    file->ReadFileData2(this, 0, lpFileData, false);
 
     return true;
 }
@@ -774,8 +774,30 @@ String XConfig::ProcessString(TSTR &lpTemp)
     return stringOut;
 }
 
-
 bool  XConfig::ReadFileData(XElement *curElement, int level, TSTR &lpTemp)
+{
+    return false;
+}
+
+static inline bool GetNextLine(TSTR &lpTemp, bool isJSON)
+{
+    while (*lpTemp)
+    {
+        if (isJSON)
+        {
+            if (*lpTemp == ',' || *lpTemp == '}')
+                return true;
+        }
+        else if (*lpTemp == '\n')
+            return true;
+
+        lpTemp++;
+    }
+
+    return false;
+}
+
+bool  XConfig::ReadFileData2(XElement *curElement, int level, TSTR &lpTemp, bool isJSON)
 {
     while(*lpTemp)
     {
@@ -785,7 +807,7 @@ bool  XConfig::ReadFileData(XElement *curElement, int level, TSTR &lpTemp)
         if(*lpTemp == '{') //unnamed object, usually only happens at the start of the file, ignore
         {
             ++lpTemp;
-            if(!ReadFileData(curElement, level+1, lpTemp))
+            if(!ReadFileData2(curElement, level+1, lpTemp, true))
                 return false;
         }
         else if(*lpTemp != ' '   &&
@@ -836,7 +858,7 @@ bool  XConfig::ReadFileData(XElement *curElement, int level, TSTR &lpTemp)
                 ++lpTemp;
 
                 XElement *newElement = curElement->CreateElement(strName);
-                if(!ReadFileData(newElement, level+1, lpTemp))
+                if (!ReadFileData2(newElement, level + 1, lpTemp, isJSON))
                     return false;
             }
             else //item
@@ -849,8 +871,7 @@ bool  XConfig::ReadFileData(XElement *curElement, int level, TSTR &lpTemp)
                 {
                     TSTR lpDataStart = lpTemp;
 
-                    lpTemp = schr(lpTemp, '\n');
-                    if(!lpTemp)
+                    if (!GetNextLine(lpTemp, isJSON))
                         return false;
 
                     if(lpTemp[-1] == '\r') --lpTemp;
@@ -866,8 +887,7 @@ bool  XConfig::ReadFileData(XElement *curElement, int level, TSTR &lpTemp)
                     }
                 }
 
-                lpTemp = schr(lpTemp, '\n');
-                if(!lpTemp && curElement != RootElement)
+                if (!GetNextLine(lpTemp, isJSON) && curElement != RootElement)
                     return false;
 
                 curElement->SubItems << new XDataItem(strName, data);
@@ -1039,7 +1059,7 @@ bool  XConfig::Open(CTSTR lpFile)
 
     TSTR lpTemp = lpFileData;
 
-    if(!ReadFileData(RootElement, 0, lpTemp))
+    if(!ReadFileData2(RootElement, 0, lpTemp, false))
     {
         for(DWORD i=0; i<RootElement->SubItems.Num(); i++)
             delete RootElement->SubItems[i];
