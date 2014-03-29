@@ -254,6 +254,7 @@ Settings.Publish.Warning.MaxAudiobitrate="\tPostavke kodiranja: Smanjite protok 
 Settings.Publish.Warning.UnsupportedAudioCodec="\tPostavke kodiranja: Postavi audio codec '$1' umjesto '$2'\r\n\r\n"
 Settings.Publish.Warning.VideoAspectRatio="\tVideo postavke: Postavite glavnu rezoluciju na omjer od $1 da bi izbjegli crnilo u kutevima\n\n"
 
+
 Settings.Video.Custom="Prilagođeno:"
 Settings.Video.Device="Video adapter:"
 Settings.Video.DisableAero="Onemogući Aero:"

@@ -227,6 +227,7 @@ Settings.Publish.Warning.RecommendMainProfile="\tAxustes avanzados: O perfil de 
 Settings.Publish.Warning.Keyint="\tAvanzado: Establece un intervalo de fotogramas clave de %d segundos\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tAxustes de codificación: Reduce o bitrate de audio a %d\r\n\r\n"
 
+
 Settings.Video.Custom="Personalizado:"
 Settings.Video.Device="Adaptador de vídeo:"
 Settings.Video.DisableAero="Deshabilitar Aero ó inicio:"

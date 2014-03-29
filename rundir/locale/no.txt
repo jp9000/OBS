@@ -218,6 +218,7 @@ Settings.Publish.Mode.LiveStream="Livestrøm"
 
 Settings.Publish.Warning.BadSettings="Advarsel: OBS innstillingene er ikke optimalisert for bruk med %s. Angi følgende: \r\n\r\n"
 
+
 Settings.Video.Custom="Egendefinert:"
 Settings.Video.Device="Skjermkort:"
 Settings.Video.DisableAero="Deaktivere Aero:"

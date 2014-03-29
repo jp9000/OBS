@@ -235,6 +235,7 @@ Settings.Publish.Warning.RecommendMainProfile="\tΡυθμίσεις για πρ�
 Settings.Publish.Warning.Keyint="\tΣύνθετες Ρυθμίσεις: Ορίστε ρυθμό καρέ-κλειδιού σε %d δευτερόλεπτα\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tΡυθμίσεις Κωδικοποίησης: Μειώστε το bitrate του ήχου σε %d\r\n\r\n"
 
+
 Settings.Video.Custom="Προσαρμοσμένο:"
 Settings.Video.Device="Προσαρμογέας Βίντεο:"
 Settings.Video.DisableAero="Απενεργοποίηση Aero κατά την εκκίνηση:"
