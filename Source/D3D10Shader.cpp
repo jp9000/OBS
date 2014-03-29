@@ -79,28 +79,17 @@ bool D3D10Shader::ProcessData(ShaderProcessor &processor, CTSTR lpFileName)
     return true;
 }
 
-Shader* D3D10VertexShader::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
+void D3D10VertexShader::CreateVertexShaderBlob(ShaderBlob &blob, CTSTR lpShader, CTSTR lpFileName)
 {
-    String errorString;
-
-    ShaderProcessor shaderProcessor;
-    if(!shaderProcessor.ProcessShader(lpShader, lpFileName))
-        AppWarning(TEXT("Unable to process vertex shader '%s'"), lpFileName); //don't exit, leave it to the actual shader compiler to tell the errors
-
-    //-----------------------------------------------
-
     D3D10System *d3d10Sys = static_cast<D3D10System*>(GS);
     LPCSTR lpVSType = d3d10Sys->bDisableCompatibilityMode ? "vs_4_0" : "vs_4_0_level_9_3";
 
-    LPVOID shaderData;
-    SIZE_T shaderDataSize;
-
-    ID3D10Blob *errorMessages = NULL, *shaderBlob = NULL;
+    ComPtr<ID3D10Blob> errorMessages, shaderBlob;
 
     LPSTR lpAnsiShader = tstr_createUTF8(lpShader);
     LPSTR lpAnsiFileName = tstr_createUTF8(lpFileName);
 
-    HRESULT err = D3DX10CompileFromMemory(lpAnsiShader, strlen(lpAnsiShader), lpAnsiFileName, NULL, NULL, "main", lpVSType, D3D10_SHADER_OPTIMIZATION_LEVEL3, 0, NULL, &shaderBlob, &errorMessages, NULL);
+    HRESULT err = D3DX10CompileFromMemory(lpAnsiShader, strlen(lpAnsiShader), lpAnsiFileName, NULL, NULL, "main", lpVSType, D3D10_SHADER_OPTIMIZATION_LEVEL3, 0, NULL, shaderBlob.Assign(), errorMessages.Assign(), NULL);
 
     Free(lpAnsiFileName);
     Free(lpAnsiShader);
@@ -114,83 +103,81 @@ Shader* D3D10VertexShader::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
                 LPSTR lpErrors = (LPSTR)errorMessages->GetBufferPointer();
                 Log(TEXT("Error compiling vertex shader '%s':\r\n\r\n%S\r\n"), lpFileName, lpErrors);
             }
-
-            errorMessages->Release();
         }
 
         CrashError(TEXT("Compilation of vertex shader '%s' failed, result = %08lX"), lpFileName, err);
-        return NULL;
+        return;
     }
 
-    shaderData = shaderBlob->GetBufferPointer();
-    shaderDataSize = shaderBlob->GetBufferSize();
+    blob.assign((char*)shaderBlob->GetBufferPointer(), (char*)shaderBlob->GetBufferPointer() + shaderBlob->GetBufferSize());
+}
+
+Shader* D3D10VertexShader::CreateVertexShaderFromBlob(ShaderBlob const &blob, CTSTR lpShader, CTSTR lpFileName)
+{
+    ShaderProcessor shaderProcessor;
+    if (!shaderProcessor.ProcessShader(lpShader, lpFileName))
+        AppWarning(TEXT("Unable to process vertex shader '%s'"), lpFileName); //don't exit, leave it to the actual shader compiler to tell the errors
 
     //-----------------------------------------------
 
-    ID3D10VertexShader *vShader;
+    if (!blob.size())
+        return nullptr;
+
+    ComPtr<ID3D10VertexShader> vShader;
     ID3D10InputLayout *vShaderLayout;
 
-    err = GetD3D()->CreateVertexShader(shaderData, shaderDataSize, &vShader);
-    if(FAILED(err))
+    HRESULT err = GetD3D()->CreateVertexShader(&blob.front(), blob.size(), vShader.Assign());
+    if (FAILED(err))
     {
         CrashError(TEXT("Unable to create vertex shader '%s', result = %08lX"), lpFileName, err);
-        SafeRelease(shaderBlob);
         return NULL;
     }
 
-    err = GetD3D()->CreateInputLayout(shaderProcessor.generatedLayout.Array(), shaderProcessor.generatedLayout.Num(), shaderData, shaderDataSize, &vShaderLayout);
-    if(FAILED(err))
+    err = GetD3D()->CreateInputLayout(shaderProcessor.generatedLayout.Array(), shaderProcessor.generatedLayout.Num(), &blob.front(), blob.size(), &vShaderLayout);
+    if (FAILED(err))
     {
         CrashError(TEXT("Unable to create vertex layout for vertex shader '%s', result = %08lX"), lpFileName, err);
-        SafeRelease(shaderBlob);
-        SafeRelease(vShader);
         return NULL;
     }
-
-    SafeRelease(shaderBlob);
 
     //-----------------------------------------------
 
     D3D10VertexShader *shader = new D3D10VertexShader;
-    shader->vertexShader    = vShader;
-    shader->inputLayout     = vShaderLayout;
-    if(!shader->ProcessData(shaderProcessor, lpFileName))
+    shader->vertexShader = vShader.Detach();
+    shader->inputLayout = vShaderLayout;
+    if (!shader->ProcessData(shaderProcessor, lpFileName))
     {
         delete shader;
         return NULL;
     }
 
-    shader->bHasNormals     = shaderProcessor.bHasNormals;
-    shader->bHasColors      = shaderProcessor.bHasColors;
-    shader->bHasTangents    = shaderProcessor.bHasTangents;
-    shader->nTextureCoords  = shaderProcessor.numTextureCoords;
-    shader->hViewProj       = shader->GetParameterByName(TEXT("ViewProj"));
+    shader->bHasNormals = shaderProcessor.bHasNormals;
+    shader->bHasColors = shaderProcessor.bHasColors;
+    shader->bHasTangents = shaderProcessor.bHasTangents;
+    shader->nTextureCoords = shaderProcessor.numTextureCoords;
+    shader->hViewProj = shader->GetParameterByName(TEXT("ViewProj"));
 
     return shader;
 }
 
-Shader* D3D10PixelShader::CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)
+Shader* D3D10VertexShader::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
 {
-    String errorString;
+    ShaderBlob blob;
+    CreateVertexShaderBlob(blob, lpShader, lpFileName);
+    return CreateVertexShaderFromBlob(blob, lpShader, lpFileName);
+}
 
-    ShaderProcessor shaderProcessor;
-    if(!shaderProcessor.ProcessShader(lpShader, lpFileName))
-        AppWarning(TEXT("Unable to process pixel shader '%s'"), lpFileName); //don't exit, leave it to the actual shader compiler to tell the errors
-
-    //-----------------------------------------------
-
+void D3D10PixelShader::CreatePixelShaderBlob(ShaderBlob &blob, CTSTR lpShader, CTSTR lpFileName)
+{
     D3D10System *d3d10Sys = static_cast<D3D10System*>(GS);
     LPCSTR lpPSType = d3d10Sys->bDisableCompatibilityMode ? "ps_4_0" : "ps_4_0_level_9_3";
 
-    LPVOID shaderData;
-    SIZE_T shaderDataSize;
+    ComPtr<ID3D10Blob> errorMessages, shaderBlob;
 
-    ID3D10Blob *errorMessages = NULL, *shaderBlob = NULL;
-    
     LPSTR lpAnsiShader = tstr_createUTF8(lpShader);
     LPSTR lpAnsiFileName = tstr_createUTF8(lpFileName);
 
-    HRESULT err = D3DX10CompileFromMemory(lpAnsiShader, strlen(lpAnsiShader), lpAnsiFileName, NULL, NULL, "main", lpPSType, D3D10_SHADER_OPTIMIZATION_LEVEL3, 0, NULL, &shaderBlob, &errorMessages, NULL);
+    HRESULT err = D3DX10CompileFromMemory(lpAnsiShader, strlen(lpAnsiShader), lpAnsiFileName, NULL, NULL, "main", lpPSType, D3D10_SHADER_OPTIMIZATION_LEVEL3, 0, NULL, shaderBlob.Assign(), errorMessages.Assign(), NULL);
 
     Free(lpAnsiFileName);
     Free(lpAnsiShader);
@@ -204,44 +191,55 @@ Shader* D3D10PixelShader::CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)
                 LPSTR lpErrors = (LPSTR)errorMessages->GetBufferPointer();
                 Log(TEXT("Error compiling pixel shader '%s':\r\n\r\n%S\r\n"), lpFileName, lpErrors);
             }
-
-            errorMessages->Release();
         }
 
         CrashError(TEXT("Compilation of pixel shader '%s' failed, result = %08lX"), lpFileName, err);
-        return NULL;
+        return;
     }
 
-    shaderData = shaderBlob->GetBufferPointer();
-    shaderDataSize = shaderBlob->GetBufferSize();
+    blob.assign((char*)shaderBlob->GetBufferPointer(), (char*)shaderBlob->GetBufferPointer() + shaderBlob->GetBufferSize());
+}
+
+Shader *D3D10PixelShader::CreatePixelShaderFromBlob(ShaderBlob const &blob, CTSTR lpShader, CTSTR lpFileName)
+{
+    ShaderProcessor shaderProcessor;
+    if (!shaderProcessor.ProcessShader(lpShader, lpFileName))
+        AppWarning(TEXT("Unable to process pixel shader '%s'"), lpFileName); //don't exit, leave it to the actual shader compiler to tell the errors
 
     //-----------------------------------------------
 
+    if (!blob.size())
+        return nullptr;
+
     ID3D10PixelShader *pShader;
 
-    err = GetD3D()->CreatePixelShader(shaderData, shaderDataSize, &pShader);
-    if(FAILED(err))
+    HRESULT err = GetD3D()->CreatePixelShader(&blob.front(), blob.size(), &pShader);
+    if (FAILED(err))
     {
         CrashError(TEXT("Unable to create pixel shader '%s', result = %08lX"), lpFileName, err);
-        SafeRelease(shaderBlob);
         return NULL;
     }
-
-    SafeRelease(shaderBlob);
 
     //-----------------------------------------------
 
     D3D10PixelShader *shader = new D3D10PixelShader;
     shader->pixelShader = pShader;
-    if(!shader->ProcessData(shaderProcessor, lpFileName))
+    if (!shader->ProcessData(shaderProcessor, lpFileName))
     {
         delete shader;
         return NULL;
     }
 
     return shader;
+
 }
 
+Shader* D3D10PixelShader::CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)
+{
+    ShaderBlob blob;
+    CreatePixelShaderBlob(blob, lpShader, lpFileName);
+    return CreatePixelShaderFromBlob(blob, lpShader, lpFileName);
+}
 
 D3D10Shader::~D3D10Shader()
 {

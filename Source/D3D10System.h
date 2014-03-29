@@ -282,7 +282,9 @@ class D3D10VertexShader : public D3D10Shader
         return count;
     }
 
+    static Shader* CreateVertexShaderFromBlob(std::vector<char> const &blob, CTSTR lpShader, CTSTR lpFileName);
     static Shader* CreateVertexShader(CTSTR lpShader, CTSTR lpFileName);
+    static void CreateVertexShaderBlob(std::vector<char> &blob, CTSTR lpShader, CTSTR lpFileName);
 
 public:
     ~D3D10VertexShader();
@@ -298,7 +300,9 @@ class D3D10PixelShader : public D3D10Shader
 
     ID3D10PixelShader *pixelShader;
 
+    static Shader* CreatePixelShaderFromBlob(ShaderBlob const &blob, CTSTR lpShader, CTSTR lpFileName);
     static Shader* CreatePixelShader(CTSTR lpShader, CTSTR lpFileName);
+    static void CreatePixelShaderBlob(ShaderBlob &blob, CTSTR lpShader, CTSTR lpFileName);
 
 public:
     ~D3D10PixelShader();
@@ -387,6 +391,9 @@ class D3D10System : public GraphicsSystem
     virtual void ResizeView();
     virtual void UnloadAllData();
 
+    virtual void CreateVertexShaderBlob(std::vector<char> &blob, CTSTR lpShader, CTSTR lpFileName) override;
+    virtual void CreatePixelShaderBlob(std::vector<char> &blob, CTSTR lpShader, CTSTR lpFileName) override;
+
 public:
     D3D10System();
     ~D3D10System();
@@ -414,6 +421,8 @@ public:
 
     ////////////////////////////
     //Shader Functions
+    virtual Shader*         CreateVertexShaderFromBlob(ShaderBlob const &blob, CTSTR lpShader, CTSTR lpFileName) override;
+    virtual Shader*         CreatePixelShaderFromBlob(ShaderBlob const &blob, CTSTR lpShader, CTSTR lpFileName) override;
     virtual Shader*         CreateVertexShader(CTSTR lpShader, CTSTR lpFileName);
     virtual Shader*         CreatePixelShader(CTSTR lpShader, CTSTR lpFileName);
 

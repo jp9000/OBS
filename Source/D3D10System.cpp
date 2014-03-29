@@ -504,6 +504,16 @@ OutputDuplicator *D3D10System::CreateOutputDuplicator(UINT outputID)
 
 ////////////////////////////
 //Shader Functions
+Shader* D3D10System::CreateVertexShaderFromBlob(ShaderBlob const &blob, CTSTR lpShader, CTSTR lpFileName)
+{
+    return D3D10VertexShader::CreateVertexShaderFromBlob(blob, lpShader, lpFileName);
+}
+
+Shader* D3D10System::CreatePixelShaderFromBlob(ShaderBlob const &blob, CTSTR lpShader, CTSTR lpFileName)
+{
+    return D3D10PixelShader::CreatePixelShaderFromBlob(blob, lpShader, lpFileName);
+}
+
 Shader* D3D10System::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
 {
     return D3D10VertexShader::CreateVertexShader(lpShader, lpFileName);
@@ -512,6 +522,16 @@ Shader* D3D10System::CreateVertexShader(CTSTR lpShader, CTSTR lpFileName)
 Shader* D3D10System::CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)
 {
     return D3D10PixelShader::CreatePixelShader(lpShader, lpFileName);
+}
+
+void D3D10System::CreateVertexShaderBlob(ShaderBlob &blob, CTSTR lpShader, CTSTR lpFileName)
+{
+    D3D10VertexShader::CreateVertexShaderBlob(blob, lpShader, lpFileName);
+}
+
+void D3D10System::CreatePixelShaderBlob(ShaderBlob &blob, CTSTR lpShader, CTSTR lpFileName)
+{
+    D3D10PixelShader::CreatePixelShaderBlob(blob, lpShader, lpFileName);
 }
 
 

@@ -219,6 +219,8 @@ class BASE_EXPORT XConfig
     static String ConvertToTextString(String &string);
     static String ProcessString(TSTR &lpTemp);
 
+    bool ReadFileData2(XElement *curElement, int level, TSTR &lpFileData, bool isJSON);
+
 public:
     inline XConfig() : RootElement(NULL) {}
     inline XConfig(TSTR lpFile) : RootElement(NULL) {Open(lpFile);}

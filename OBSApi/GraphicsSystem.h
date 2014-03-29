@@ -24,6 +24,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 /*=========================================================
     Enums
@@ -330,30 +331,69 @@ public:
     }
 };
 
+using ShaderBlob = std::vector<char>;
+
+template <Shader *CreateShader(ShaderBlob const&, CTSTR lpShader, CTSTR lpFileName)>
 class BASE_EXPORT FutureShader
 {
-    Shader **futureShader, *shader;
+    ShaderBlob const *shaderData = nullptr;
+    std::wstring const *fileData = nullptr;
+    std::wstring fileName;
+    std::unique_ptr<Shader> shader;
     HANDLE shaderReadyEvent;
-    bool isReady;
-    friend DWORD STDCALL CreatePixelShaderThread(void *arg);
+    bool isReady = false;
 
+    FutureShader(FutureShader const&) = delete;
+    FutureShader &operator=(FutureShader const&) = delete;
+
+    FutureShader(HANDLE event_, ShaderBlob const &data, std::wstring const &fileData, std::wstring fileName) : shaderData(&data), fileData(&fileData), fileName(fileName), shaderReadyEvent(event_) {}
 public:
-    FutureShader(Shader *shader=nullptr) : shader(shader), isReady(true) {}
-    FutureShader(HANDLE event_, Shader **shader) : futureShader(shader), shader(nullptr), shaderReadyEvent(event_), isReady(false) {}
+    FutureShader() {}
+    FutureShader(FutureShader &&other)
+        : shaderData(other.shaderData), fileData(other.fileData), fileName(std::move(other.fileName)), shader(std::move(other.shader)), shaderReadyEvent(other.shaderReadyEvent),
+          isReady(other.isReady)
+    {
+        other.shaderData = nullptr;
+        other.isReady = false;
+    }
+
+    FutureShader &operator=(FutureShader &&other)
+    {
+        shaderData = other.shaderData;
+        other.shaderData = nullptr;
+        fileData = other.fileData;
+        fileName = other.fileName;
+        shader = std::move(other.shader);
+        shaderReadyEvent = other.shaderReadyEvent;
+        isReady = other.isReady;
+        return *this;
+    }
 
     inline Shader *Shader()
     {
+        if (!shaderData)
+            return nullptr;
+
         if (!isReady)
         {
             if (WaitForSingleObject(shaderReadyEvent, 0) != WAIT_OBJECT_0)
-                return shader;
+                return shader.get();
+
+            shader.reset(CreateShader(*shaderData, fileData->c_str(), fileName.c_str()));
 
             isReady = true;
-            shader = *futureShader;
         }
-        return shader;
+        return shader.get();
     }
+
+    friend class GraphicsSystem;
 };
+
+inline Shader* CreateVertexShaderFromBlob(ShaderBlob const& blob, CTSTR lpShader, CTSTR lpFileName);
+inline Shader* CreatePixelShaderFromBlob(ShaderBlob const& blob, CTSTR lpShader, CTSTR lpFileName);
+
+using FutureVertexShader = FutureShader<CreateVertexShaderFromBlob>;
+using FuturePixelShader = FutureShader<CreatePixelShaderFromBlob>;
 
 /*=========================================================
     Output Duplication class
@@ -463,7 +503,7 @@ public:
     virtual Shader*         CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)=0;
     Shader*                 CreateVertexShaderFromFile(CTSTR lpFileName);
     Shader*                 CreatePixelShaderFromFile(CTSTR lpFileName);
-    FutureShader            CreatePixelShaderFromFileAsync(CTSTR fileName);
+    FuturePixelShader       CreatePixelShaderFromFileAsync(CTSTR fileName);
 
 
     //----------------------------------------------------
@@ -547,11 +587,10 @@ protected:
     {
         struct FutureShaderContext
         {
-            Shader *sharedShader = nullptr;
-            std::unique_ptr<Shader> shader;
+            ShaderBlob shaderData;
             std::unique_ptr<void, EventDeleter> readyEvent;
             std::unique_ptr<void, ThreadDeleter> thread;
-            std::wstring fileName;
+            std::wstring fileData, fileName;
         };
         std::map<std::wstring, FutureShaderContext> contexts;
         std::unique_ptr<void, MutexDeleter> lock;
@@ -563,6 +602,12 @@ protected:
 public:
     virtual void CopyTexture(Texture *texDest, Texture *texSrc)=0;
     virtual void DrawSpriteExRotate(Texture *texture, DWORD color, float x, float y, float x2, float y2, float degrees, float u, float v, float u2, float v2, float texDegrees)=0;
+
+    virtual Shader *CreateVertexShaderFromBlob(ShaderBlob const &blob, CTSTR lpShader, CTSTR lpFileName) = 0;
+    virtual Shader *CreatePixelShaderFromBlob(ShaderBlob const &blob, CTSTR lpShader, CTSTR lpFileName) = 0;
+private:
+    virtual void CreateVertexShaderBlob(ShaderBlob &blob, CTSTR lpShader, CTSTR lpFileName) = 0;
+    virtual void CreatePixelShaderBlob(ShaderBlob &blob, CTSTR lpShader, CTSTR lpFileName) = 0;
 };
 
 
@@ -611,11 +656,13 @@ inline Texture* CreateSharedTexture(unsigned int width, unsigned int height)
 
 inline SamplerState* CreateSamplerState(SamplerInfo &info)          {return GS->CreateSamplerState(info);}
 
+inline Shader* CreateVertexShaderFromBlob(ShaderBlob const& blob, CTSTR lpShader, CTSTR lpFileName) {return GS->CreateVertexShaderFromBlob(blob, lpShader, lpFileName);}
+inline Shader* CreatePixelShaderFromBlob(ShaderBlob const& blob, CTSTR lpShader, CTSTR lpFileName)  {return GS->CreatePixelShaderFromBlob(blob, lpShader, lpFileName);}
 inline Shader* CreateVertexShader(CTSTR lpShader, CTSTR lpFileName) {return GS->CreateVertexShader(lpShader, lpFileName);}
 inline Shader* CreatePixelShader(CTSTR lpShader, CTSTR lpFileName)  {return GS->CreatePixelShader(lpShader, lpFileName);}
 inline Shader* CreateVertexShaderFromFile(CTSTR lpFileName)         {return GS->CreateVertexShaderFromFile(lpFileName);}
 inline Shader* CreatePixelShaderFromFile(CTSTR lpFileName)          {return GS->CreatePixelShaderFromFile(lpFileName);}
-inline FutureShader CreatePixelShaderFromFileAsync(CTSTR fileName)  {return GS->CreatePixelShaderFromFileAsync(fileName);}
+inline FuturePixelShader CreatePixelShaderFromFileAsync(CTSTR fileName) {return GS->CreatePixelShaderFromFileAsync(fileName);}
 
 
 inline VertexBuffer* CreateVertexBuffer(VBData *vbData, BOOL bStatic=1)     {return GS->CreateVertexBuffer(vbData, bStatic);}

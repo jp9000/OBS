@@ -681,7 +681,7 @@ bool XElement::Import(CTSTR lpFile)
     importFile.ReadFileToString(strFileData);
 
     TSTR lpFileData = strFileData;
-    file->ReadFileData(this, 0, lpFileData);
+    file->ReadFileData2(this, 0, lpFileData, false);
 
     return true;
 }
@@ -749,7 +749,7 @@ String XConfig::ProcessString(TSTR &lpTemp)
         return String();
 
     String stringOut = string.Mid(1, string.Length()-1);
-    if(stringOut.IsEmpty())
+    if (stringOut.IsEmpty())
         return String();
 
     TSTR lpStringOut = stringOut;
@@ -774,8 +774,30 @@ String XConfig::ProcessString(TSTR &lpTemp)
     return stringOut;
 }
 
-
 bool  XConfig::ReadFileData(XElement *curElement, int level, TSTR &lpTemp)
+{
+    return false;
+}
+
+static inline bool GetNextLine(TSTR &lpTemp, bool isJSON)
+{
+    while (*lpTemp)
+    {
+        if (isJSON)
+        {
+            if (*lpTemp == ',' || *lpTemp == '}')
+                return true;
+        }
+        else if (*lpTemp == '\n')
+            return true;
+
+        lpTemp++;
+    }
+
+    return false;
+}
+
+bool  XConfig::ReadFileData2(XElement *curElement, int level, TSTR &lpTemp, bool isJSON)
 {
     while(*lpTemp)
     {
@@ -785,7 +807,7 @@ bool  XConfig::ReadFileData(XElement *curElement, int level, TSTR &lpTemp)
         if(*lpTemp == '{') //unnamed object, usually only happens at the start of the file, ignore
         {
             ++lpTemp;
-            if(!ReadFileData(curElement, level+1, lpTemp))
+            if(!ReadFileData2(curElement, level+1, lpTemp, true))
                 return false;
         }
         else if(*lpTemp != ' '   &&
@@ -798,12 +820,7 @@ bool  XConfig::ReadFileData(XElement *curElement, int level, TSTR &lpTemp)
             String strName;
 
             if(*lpTemp == '"')
-            {
                 strName = ProcessString(lpTemp);
-
-                // Previous character should have been a " by definition 
-                assert(strName[strName.Length()-1] != '\"');
-            }
             else
             {
                 TSTR lpDataStart = lpTemp;
@@ -841,7 +858,7 @@ bool  XConfig::ReadFileData(XElement *curElement, int level, TSTR &lpTemp)
                 ++lpTemp;
 
                 XElement *newElement = curElement->CreateElement(strName);
-                if(!ReadFileData(newElement, level+1, lpTemp))
+                if (!ReadFileData2(newElement, level + 1, lpTemp, isJSON))
                     return false;
             }
             else //item
@@ -849,31 +866,15 @@ bool  XConfig::ReadFileData(XElement *curElement, int level, TSTR &lpTemp)
                 String data;
 
                 if(*lpTemp == '"')
-                {
                     data = ProcessString(lpTemp);
-
-                    // Back one if we've hit a brace. 
-                    // This should back us onto a " by definition.
-                    if(lpTemp[0] == '}')
-                    {
-                        --lpTemp;
-                    }
-                }
                 else
                 {
                     TSTR lpDataStart = lpTemp;
 
-                    TCHAR separators[] = {'\n', '}'};
-
-                    lpTemp = schr_n(lpTemp, separators, 2);
-
-                    if(!lpTemp)
+                    if (!GetNextLine(lpTemp, isJSON))
                         return false;
 
-                    if (lpTemp[-1] == '\r')
-                    {
-                        --lpTemp;
-                    }
+                    if(lpTemp[-1] == '\r') --lpTemp;
 
                     if(lpTemp != lpDataStart)
                     {
@@ -884,23 +885,10 @@ bool  XConfig::ReadFileData(XElement *curElement, int level, TSTR &lpTemp)
 
                         data.KillSpaces();
                     }
-
-                    if (lpTemp[0] == '}')
-                    {
-                        --lpTemp;
-                    }
                 }
 
-                TCHAR separators[] = {'\n', ',', '}'};
-
-                lpTemp = schr_n(lpTemp, separators, 3);
-                if(!lpTemp && curElement != RootElement)
+                if (!GetNextLine(lpTemp, isJSON) && curElement != RootElement)
                     return false;
-
-                if ((lpTemp[-1] == ',') || (lpTemp[0] == '}'))
-                {
-                    --lpTemp;
-                }
 
                 curElement->SubItems << new XDataItem(strName, data);
             }
@@ -1012,27 +1000,6 @@ void  XConfig::WriteFileData(XFile &file, int indent, XElement *curElement)
     }
 }
 
-// Basically the same as Open (and in fact Open could/should call ParseString to do its thing)
-// But ParseString allows chunks of JSON type strings to be parse into the XConfig structure.
-bool  XConfig::ParseString(const String& config)
-{
-    String safe_copy = config;
-    TSTR lpTemp = safe_copy;
-
-    RootElement = new XElement(this, NULL, TEXT("Root"));
-
-    if(!ReadFileData(RootElement, 0, lpTemp))
-    {
-        for(DWORD i=0; i<RootElement->SubItems.Num(); i++)
-            delete RootElement->SubItems[i];
-
-        CrashError(TEXT("Error parsing X string '%s'"), config.Array());
-
-        Close(false);
-    }
-
-    return true;
-}
 
 bool  XConfig::Open(CTSTR lpFile)
 {
@@ -1092,7 +1059,7 @@ bool  XConfig::Open(CTSTR lpFile)
 
     TSTR lpTemp = lpFileData;
 
-    if(!ReadFileData(RootElement, 0, lpTemp))
+    if(!ReadFileData2(RootElement, 0, lpTemp, false))
     {
         for(DWORD i=0; i<RootElement->SubItems.Num(); i++)
             delete RootElement->SubItems[i];

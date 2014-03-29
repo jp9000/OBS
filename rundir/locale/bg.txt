@@ -208,6 +208,7 @@ Settings.Publish.Username="Потребителско име (ако има та
 Settings.Publish.Mode.LiveStream="Излъчване на живо"
 
 
+
 Settings.Video.Custom="Къстъм:"
 Settings.Video.Device="Видео адаптер:"
 Settings.Video.DisableAero="Изключи Аеро при старт:"

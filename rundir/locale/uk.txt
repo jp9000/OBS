@@ -226,6 +226,7 @@ Settings.Publish.Warning.RecommendMainProfile="\tРозширені налашт
 Settings.Publish.Warning.Keyint="\tРозширені налаштування: встановити інтервал між ключовими кадрами в %d секунд\r\n\r\n"
 Settings.Publish.Warning.MaxAudiobitrate="\tНалаштування кодування: зменшіть бітрейт аудіо до %d\r\n\r\n"
 
+
 Settings.Video.Custom="Власна:"
 Settings.Video.Device="Відеокарта:"
 Settings.Video.DisableAero="Відключити аеро при старті:"

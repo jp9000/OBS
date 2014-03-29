@@ -1,5 +1,9 @@
 Cancel="Atšaukti"
 OK="Gerai"
 
+Plugin.Name="Scenų garsumo individualizavimo papildinys"
+Plugin.Description="Leidžia nustatyti scenoms skirtingus garsumo lygius."
 
+Config.Caption="Scenų garsumo individualizavimo konfigūracija"
+Config.Enable="Įjungti scenų garsumo individualizavimą"
 

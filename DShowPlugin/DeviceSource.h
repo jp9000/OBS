@@ -150,7 +150,7 @@ class DeviceSource : public ImageSource
         std::unique_ptr<Texture>    texture;
         UINT                        imageCX, imageCY;
         std::unique_ptr<Shader>     vertexShader;
-        FutureShader                pixelShader;
+        FuturePixelShader           pixelShader;
     } deinterlacer;
 
     bool            bFirstFrame;

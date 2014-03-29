@@ -253,6 +253,7 @@ Settings.Publish.Warning.MaxAudiobitrate="\tImpostazioni -> Codifica: Ridurre il
 Settings.Publish.Warning.UnsupportedAudioCodec="\tImpostazioni di encoding: Imposta il codec audio a '$1' invece che '$2'\r\n\r\n"
 Settings.Publish.Warning.VideoAspectRatio="\tImpostazioni Video: Imposta la risoluzione base verso una proporzione di $1 per evitare bordi neri nel player di default\n\n"
 
+
 Settings.Video.Custom="Personalizzata:"
 Settings.Video.Device="Adattatore video:"
 Settings.Video.DisableAero="Disattiva Aero:"
