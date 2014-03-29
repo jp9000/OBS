@@ -221,6 +221,7 @@ Settings.Publish.Mode.LiveStream="Live Stream"
 Settings.Publish.Warning.BadSettings="Cảnh báo: Thiết đặt OBS không được tối ưu hóa để sử dụng với %s. Xin vui lòng thiết lập sau đây: \r\n\r\n"
 Settings.Publish.Warning.UseCBR="\tEncoding cài đặt: sử CBR\r\n\r\n"
 
+
 Settings.Video.Custom="Tùy chỉnh:"
 Settings.Video.Device="Video Adapter:"
 Settings.Video.DisableAero="Vô hiệu hóa Aero:"

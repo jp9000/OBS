@@ -1,3 +1,4 @@
+RightToLeft="false"
 
 Add="Afegir"
 Preview="Vista prèvia"
@@ -29,6 +30,7 @@ MoveUp="Pujar"
 NameExists="'$1' ja existeix. Per favor, escriu un nom diferent"
 None="Cap"
 OK="OK"
+Optimize="Optimitzar"
 Plugins="Plugins..."
 Reconnecting="Reconnectant..."
 Refresh="Actualitzar"
@@ -190,6 +192,7 @@ Settings.Encoding.Video="Codificació de vídeo"
 Settings.Encoding.Audio.Bitrate="Bitrate:"
 Settings.Encoding.Audio.Codec="Còdec:"
 Settings.Encoding.Audio.Format="Format:"
+Settings.Encoding.Audio.Channel="Canal:"
 
 Settings.Encoding.Video.Encoder="Codificador:"
 Settings.Encoding.Video.Encoderx264="x264"
@@ -202,12 +205,25 @@ Settings.Encoding.Video.KeyframeInterval="Interval de fotograma clau (en segons,
 Settings.Encoding.Video.MaxBitRate="Bitrate màxim (kb/s):"
 Settings.Encoding.Video.MaxBitRateTooltip="Aquesta opció estableix el bitrate màxim que s'utilitzarà en la codificació de vídeo.  Tingueu en compte que encara que la taxa de bits mitjana serà d'aquest valor, la codificació es basa en la mida de la memòria intermèdia.  En condicions habituals, caldrà que aquest valor estigui per sota de la velocitat de pujada de la vostra connexió.\r\n\r\nPots utilitzar algun lloc web de mesura de la velocitat, com el speedtest.net, per determinar el bitrate de pujada màxim de què disposes."
 Settings.Encoding.Video.Quality="Equilibri de qualitat:"
+Settings.Encoding.Video.QualityTooltip="Aquesta configuració intentarà seleccionar una certa qualitat depenen del teu bitrate i la mida de la teva memòria. Si selecciones un valor alt tenint un baix bitrate, sacrificaràs la qualitat d'escenes amb molta moció a favor d'escenes amb poc moviment, provocant diferències de qualitat."
+Settings.Encoding.Video.EncoderQSVDisabledAfterApply="L'opció de codificador de 'Quick Sync' será inhabilitada, ja que el vostre maquinari no sembla ser compatible amb Quick Sync."
+Settings.Encoding.Video.EncoderNVENCDisabledAfterApply="L'opció del codificador 'Nvidia NVENC' será inhabilitada perquè el vostre maquinari no sembla ser compatible amb Nvidia NVENC."
+Settings.Encoding.Video.QSVConfigWarning="Per activar l' opció del codificador Quick Sync, assegurat que el teu ordinador es compatible amb Quick Sync i que disposes d'una targeta gràfica Intel activada a la BIOS. Si estás utilitzant un portàtil, consulta el post  'Laptop? Black screen when capturing? Read here first.' Que es troba al forùm Questions and Help (informació en anglès)."
 
 Settings.General.Add="Afegeix nou"
 Settings.General.ConfirmDelete="Estas segur de voler suprimir el perfil \"$1\"?"
+Settings.General.EnableProjectorCursor="Activar el cursor del ratolí sobre el projector"
 Settings.General.InvalidName="Els noms del perfil no poden utilitzarse els següents caràcters: \r\n\\ / : * ? \" < > |"
+Settings.General.Language="Idioma:"
+Settings.General.Profile="Configuració del Perfil:"
+Settings.General.Notification="Icona de l'àrea de notificació"
+Settings.General.NotificationMinimize="Minimitzar a l'àrea de notificació"
+Settings.General.Restart="Canviar l'idioma necesitarà reiniciar OBS.\r\n\r\n...Encara que suposo que si estàs canviant l'idioma no podràs entendre això"
 
+Settings.Publish.AutoReconnect="Reconnexió automàtica:"
+Settings.Publish.AutoReconnectTimeout="Temps de espera per a la reconnexió automàtica:"
 Settings.Publish.ChannelName="Nom del canal:"
+Settings.Publish.Delay="Retard (segons):"
 
 
 
@@ -218,14 +234,83 @@ Settings.Publish.ChannelName="Nom del canal:"
 
 
 
+Sources.TextSource.BackgroundColor="Color de fons:"
+Sources.TextSource.BackgroundOpacity="Opacitat del fons:"
+Sources.TextSource.Bold="Negreta"
+Sources.TextSource.Center="Centre"
+Sources.TextSource.EnterText="Introduïu Text"
+Sources.TextSource.FileNotFound="No s'ha pogut obrir l'arxiu \"$1\""
+Sources.TextSource.Font="Tipus de lletra:"
+Sources.TextSource.FontNotFound="No s'ha trobat el tipus de lletra '$1'"
+Sources.TextSource.FontSize="Mida de la font:"
+Sources.TextSource.Italic="Cursiva"
+Sources.TextSource.Left="Esquerra"
+Sources.TextSource.Right="Dreta"
+Sources.TextSource.ScrollSpeed="Velocitat de desplaçament:"
+Sources.TextSource.Size="Mida:"
+Sources.TextSource.Underline="Subratllat"
+Sources.TextSource.UseCustomExtents="Utilitzar text personalitzat"
+Sources.TextSource.UseOutline="Utilitzar contorn"
+Sources.TextSource.OutlineThickness="Gruix:"
+Sources.TextSource.OutlineOpacity="Opacitat:"
+Sources.TextSource.UseTextExtents="Utilitzar text personalitzat"
+Sources.TextSource.UseTextFromFile="Utilitzar text provinent de fitxer (UTF-8 o compatible)"
+Sources.TextSource.VerticalScript="Vertical"
+Sources.TextSource.Wrap="Embolicar"
+Sources.TextSource.Scroll="Mode de desplaçament"
+
+Sources.TransitionSource.Bitmaps="Mapes de bits:"
+Sources.TransitionSource.Empty="No hi heu introduït  mapes de bits per mostrar."
+Sources.TransitionSource.TimeBetweenBitmaps="Temps entre imatges (segons):"
+Sources.TransitionSource.DisableFading="Deshabilitar esvaïment:"
+Sources.TransitionSource.Randomize="Aleatoritzar:"
+
+Stats="Estadístiques"
+Stats.TotalFramesEncoded="Frames totals codificats:"
+Stats.TotalBytesTransferred="Bytes totals transferits:"
+
+Encoder.InitFailed="Ha fallat la inicialització del codificador!"
+Encoder.InitFailedWithReason="Ha fallat la inicialització del codificador!\r\n"
 
 
 
+Updater.NoUpdatesAvailable="No hi ha actualitzacions disponibles"
 
+MainMenu.Help.LogFiles="Fitxers de registre"
+MainMenu.Help.AnalyzeCurrentLog="Analitzar l'arxiu de registre actual"
+MainMenu.Help.UploadCurrentLog="Penjar l'arxiu de registre actual"
+MainMenu.Help.AnalyzeLastLog="Analitzar l'últim arxiu de registre"
+MainMenu.Help.UploadLastLog="Penjar l'últim arxiu de registre"
 
+LogUpload.SuccessDialog.Caption="Registre penjat"
+LogUpload.SuccessDialog.Text="Registre penjat correctament."
+LogUpload.SuccessDialog.Copy="Copiar"
+LogUpload.SuccessDialog.CopySuccess="Copiat!"
+LogUpload.SuccessDialog.CopyFailure="No s'ha pogut copiar!"
 
+LogUpload.CommunicationError="Ha fallat la pujada per un error de comunicació amb el servidor."
+LogUpload.ServiceReturnedError="El servidor ha respost amb %u.\r\n"
+LogUpload.ServiceExpectedResponse="La resposta esperada era %u."
+LogUpload.ServiceReturnedInvalidResponse="El servidor ha tornat un resposta invalida.\r\nIntentiu més tard."
+LogUpload.EmptyLog="No s'ha pogut pujar el registre perquè és buit."
+LogUpload.CannotOpenFile="El fitxer de registre de lectura \"%s\" ha fallat. Assegureu-vos de que cap altre programa està utilitzant el fitxer de registre i torneu-ho a intentar."
+LogUpload.Analyze="Analitzar"
+LogUpload.Upload="Pujar"
+LogUpload.View="Mostra"
 
-
-
+Plugins.NoiseGate.PluginName="Porta de soroll del micròfon"
+Plugins.NoiseGate.PluginDescription="Redueix el soroll del micròfon posant-lo en silenci automàticament si vostè no està parlant."
+Plugins.NoiseGate.Thresholds="Llindars"
+Plugins.NoiseGate.General="General"
+Plugins.NoiseGate.Help="Ajuda"
+Plugins.NoiseGate.ConfigureTitle="Configurar la porta de soroll del micròfon"
+Plugins.NoiseGate.EnablePreview="Habilita la visualització prèvia"
+Plugins.NoiseGate.DisablePreview="Deshabilita la visualització prèvia"
+Plugins.NoiseGate.ResetToDefaults="Restaurar per defecte"
+Plugins.NoiseGate.OpenThreshold="Obrir\nllindar"
+Plugins.NoiseGate.CloseThreshold="Tancar\nllindar"
+Plugins.NoiseGate.AttackTime="Temps d'atac (mil·lisegons):"
+Plugins.NoiseGate.HoldTime="Temps d'aguantar (mil·lisegons):"
+Plugins.NoiseGate.ReleaseTime="Temps d'alliberament (mil·lisegons):"
 
 

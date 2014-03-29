@@ -183,6 +183,7 @@ Settings.Publish.AutoReconnect="اعادة الاتصال تلقائياً:"
 
 
 
+
 Sources.SoftwareCaptureSource.Monitor="الشاشة:"
 Sources.SoftwareCaptureSource.MonitorCapture="تصوير الشاشة"
 Sources.SoftwareCaptureSource.MouseCapture="إظهار مؤشر الماوس"
