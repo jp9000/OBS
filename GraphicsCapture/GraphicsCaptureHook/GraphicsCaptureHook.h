@@ -38,6 +38,11 @@
 #include <fstream>
 using namespace std;
 
+#define OLDHOOKS 0
+
+#if (!OLDHOOKS)
+#include "../../minhook/include/minhook.h"
+#endif
 
 //arghh I hate defines like this
 #define RUNONCE static bool bRunOnce = false; if(!bRunOnce && (bRunOnce = true)) 
@@ -63,7 +68,15 @@ class HookData
     bool b64bitJump;
 
 public:
+#if OLDHOOKS
     inline HookData() : bHooked(false), func(NULL), hookFunc(NULL), b64bitJump(false) {}
+#else
+    inline HookData() : bHooked(false), func(NULL), hookFunc(NULL), b64bitJump(false), origFunc(NULL)
+    {
+        MH_Initialize();
+    }
+    FARPROC origFunc;
+#endif
 
     inline bool Hook(FARPROC funcIn, FARPROC hookFuncIn)
     {
@@ -104,6 +117,8 @@ public:
         UPARAM targetAddr = UPARAM(hookFunc);
         UPARAM offset = targetAddr - (startAddr+5);
 
+
+#if OLDHOOKS
         DWORD oldProtect;
 
 #ifdef _WIN64
@@ -129,6 +144,12 @@ public:
             *(DWORD*)(addrData+1) = DWORD(offset);
             //VirtualProtect((LPVOID)func, 5, oldProtect, &oldProtect);
         }
+#else
+		// redirect function at startAddr to targetAddr
+
+        MH_CreateHook(func, hookFunc, (void**)&origFunc);
+        MH_EnableHook(func);
+#endif
 
         bHooked = true;
     }
@@ -138,11 +159,16 @@ public:
         if(!bHooked || !func)
             return;
 
+#if OLDHOOKS
         UINT count = b64bitJump ? 14 : 5;
         DWORD oldProtect;
         VirtualProtect((LPVOID)func, count, PAGE_EXECUTE_READWRITE, &oldProtect);
         memcpy((void*)func, data, count);
         //VirtualProtect((LPVOID)func, count, oldProtect, &oldProtect);
+#else
+        MH_DisableHook(func);
+        MH_RemoveHook(func);
+#endif
 
         bHooked = false;
     }
