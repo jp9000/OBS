@@ -920,6 +920,7 @@ typedef HRESULT(STDMETHODCALLTYPE *D3D9EndScenePROC)(IDirect3DDevice9 *device);
 HRESULT STDMETHODCALLTYPE D3D9EndScene(IDirect3DDevice9 *device)
 {
     EnterCriticalSection(&d3d9EndMutex);
+
 #if OLDHOOKS
     d3d9EndScene.Unhook();
 #endif
