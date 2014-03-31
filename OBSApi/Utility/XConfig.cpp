@@ -1078,6 +1078,26 @@ bool  XConfig::Open(CTSTR lpFile)
     return true;
 }
 
+bool  XConfig::ParseString(const String& config)
+{
+    String safe_copy = config;
+    TSTR lpTemp = safe_copy;
+
+    RootElement = new XElement(this, NULL, TEXT("Root"));
+
+    if (!ReadFileData2(RootElement, 0, lpTemp, true))
+    {
+        for (DWORD i = 0; i<RootElement->SubItems.Num(); i++)
+            delete RootElement->SubItems[i];
+
+        CrashError(TEXT("Error parsing X string '%s'"), config.Array());
+
+        Close(false);
+    }
+
+    return true;
+}
+
 void  XConfig::Close(bool bSave)
 {
     if(bSave)
