@@ -915,11 +915,15 @@ ULONG STDMETHODCALLTYPE D3D9Release(IDirect3DDevice9 *device)
     return (*(RELEASEPROC)oldD3D9Release)(device);
 }
 
+typedef HRESULT(STDMETHODCALLTYPE *D3D9EndScenePROC)(IDirect3DDevice9 *device);
+
 HRESULT STDMETHODCALLTYPE D3D9EndScene(IDirect3DDevice9 *device)
 {
     EnterCriticalSection(&d3d9EndMutex);
 
+#if OLDHOOKS
     d3d9EndScene.Unhook();
+#endif
 
     RUNEVERYRESET logOutput << CurrentTimeString() << "D3D9EndScene called" << endl;
 
@@ -942,8 +946,12 @@ HRESULT STDMETHODCALLTYPE D3D9EndScene(IDirect3DDevice9 *device)
         }
     }
 
+#if OLDHOOKS
     HRESULT hRes = device->EndScene();
     d3d9EndScene.Rehook();
+#else
+    HRESULT hRes = ((D3D9EndScenePROC)d3d9EndScene.origFunc)(device);
+#endif
 
     LeaveCriticalSection(&d3d9EndMutex);
 
@@ -952,7 +960,9 @@ HRESULT STDMETHODCALLTYPE D3D9EndScene(IDirect3DDevice9 *device)
 
 HRESULT STDMETHODCALLTYPE D3D9Present(IDirect3DDevice9 *device, CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion)
 {
+#if OLDHOOKS
     d3d9Present.Unhook();
+#endif
 
     RUNEVERYRESET logOutput << CurrentTimeString() << "D3D9Present called" << endl;
 
@@ -961,17 +971,25 @@ HRESULT STDMETHODCALLTYPE D3D9Present(IDirect3DDevice9 *device, CONST RECT* pSou
 
     presentRecurse++;
 
+#if OLDHOOKS
     HRESULT hRes = device->Present(pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
+#else
+    HRESULT hRes = ((PRESENTPROC)d3d9Present.origFunc)(device, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
+#endif
 
     presentRecurse--;
+#if OLDHOOKS
     d3d9Present.Rehook();
+#endif
 
     return hRes;
 }
 
 HRESULT STDMETHODCALLTYPE D3D9PresentEx(IDirect3DDevice9Ex *device, CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion, DWORD dwFlags)
 {
+#if OLDHOOKS
     d3d9PresentEx.Unhook();
+#endif
 
     RUNEVERYRESET logOutput << CurrentTimeString() << "D3D9PresentEx called" << endl;
 
@@ -980,17 +998,25 @@ HRESULT STDMETHODCALLTYPE D3D9PresentEx(IDirect3DDevice9Ex *device, CONST RECT* 
 
     presentRecurse++;
 
+#if OLDHOOKS
     HRESULT hRes = device->PresentEx(pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
+#else
+    HRESULT hRes = ((PRESENTEXPROC)d3d9PresentEx.origFunc)(device, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
+#endif
 
     presentRecurse--;
+#if OLDHOOKS
     d3d9PresentEx.Rehook();
+#endif
 
     return hRes;
 }
 
 HRESULT STDMETHODCALLTYPE D3D9SwapPresent(IDirect3DSwapChain9 *swap, CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion, DWORD dwFlags)
 {
+#if OLDHOOKS
     d3d9SwapPresent.Unhook();
+#endif
 
     RUNEVERYRESET logOutput << CurrentTimeString() << "D3D9SwapPresent called" << endl;
 
@@ -999,23 +1025,37 @@ HRESULT STDMETHODCALLTYPE D3D9SwapPresent(IDirect3DSwapChain9 *swap, CONST RECT*
 
     presentRecurse++;
 
+#if OLDHOOKS
     HRESULT hRes = swap->Present(pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
+#else
+    HRESULT hRes = ((SWAPPRESENTPROC)d3d9SwapPresent.origFunc)(swap, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
+#endif
 
     presentRecurse--;
+#if OLDHOOKS
     d3d9SwapPresent.Rehook();
+#endif
 
     return hRes;
 }
 
+typedef HRESULT(STDMETHODCALLTYPE *D3D9ResetPROC)(IDirect3DDevice9 *device, D3DPRESENT_PARAMETERS *params);
+
 HRESULT STDMETHODCALLTYPE D3D9Reset(IDirect3DDevice9 *device, D3DPRESENT_PARAMETERS *params)
 {
+#if OLDHOOKS
     d3d9Reset.Unhook();
+#endif
 
     RUNEVERYRESET logOutput << CurrentTimeString() << "D3D9Reset called" << endl;
 
     ClearD3D9Data();
 
+#if OLDHOOKS
     HRESULT hRes = device->Reset(params);
+#else
+    HRESULT hRes = ((D3D9ResetPROC)d3d9Reset.origFunc)(device, params);
+#endif
 
     if(lpCurrentDevice == NULL && !bTargetAcquired)
     {
@@ -1026,21 +1066,31 @@ HRESULT STDMETHODCALLTYPE D3D9Reset(IDirect3DDevice9 *device, D3DPRESENT_PARAMET
     if(lpCurrentDevice == device)
         SetupD3D9(device);
 
+#if OLDHOOKS
     d3d9Reset.Rehook();
+#endif
 
     return hRes;
 }
 
+typedef HRESULT(STDMETHODCALLTYPE *D3D9ResetExPROC)(IDirect3DDevice9Ex *device, D3DPRESENT_PARAMETERS *params, D3DDISPLAYMODEEX *fullscreenData);
+
 HRESULT STDMETHODCALLTYPE D3D9ResetEx(IDirect3DDevice9Ex *device, D3DPRESENT_PARAMETERS *params, D3DDISPLAYMODEEX *fullscreenData)
 {
+#if OLDHOOKS
     d3d9ResetEx.Unhook();
     d3d9Reset.Unhook();
+#endif
 
     RUNEVERYRESET logOutput << CurrentTimeString() << "D3D9ResetEx called" << endl;
 
     ClearD3D9Data();
 
+#if OLDHOOKS
     HRESULT hRes = device->ResetEx(params, fullscreenData);
+#else
+    HRESULT hRes = ((D3D9ResetExPROC)d3d9ResetEx.origFunc)(device, params, fullscreenData);
+#endif
 
     if(lpCurrentDevice == NULL && !bTargetAcquired)
     {
@@ -1052,8 +1102,10 @@ HRESULT STDMETHODCALLTYPE D3D9ResetEx(IDirect3DDevice9Ex *device, D3DPRESENT_PAR
     if(lpCurrentDevice == device)
         SetupD3D9(device);
 
+#if OLDHOOKS
     d3d9Reset.Rehook();
     d3d9ResetEx.Rehook();
+#endif
 
     return hRes;
 }
@@ -1209,7 +1261,9 @@ bool InitD3D9Capture()
 void CheckD3D9Capture()
 {
     EnterCriticalSection(&d3d9EndMutex);
+#if OLDHOOKS
     d3d9EndScene.Rehook(true);
+#endif
     LeaveCriticalSection(&d3d9EndMutex);
 }
 

@@ -1039,9 +1039,13 @@ static BOOL WINAPI SwapBuffersHook(HDC hDC)
 
     HandleGLSceneUpdate(hDC);
 
+#if OLDHOOKS
     glHookSwapBuffers.Unhook();
     BOOL bResult = SwapBuffers(hDC);
     glHookSwapBuffers.Rehook(); 
+#else
+    BOOL bResult = ((WGLSWAPBUFFERSPROC)glHookSwapBuffers.origFunc)(hDC);
+#endif
 
     //LeaveCriticalSection(&glMutex);
 
@@ -1056,9 +1060,13 @@ static BOOL WINAPI wglSwapLayerBuffersHook(HDC hDC, UINT fuPlanes)
 
     HandleGLSceneUpdate(hDC);
 
+#if OLDHOOKS
     glHookSwapLayerBuffers.Unhook();
     BOOL bResult = jimglSwapLayerBuffers(hDC, fuPlanes);
     glHookSwapLayerBuffers.Rehook();
+#else
+    BOOL bResult = ((WGLSWAPLAYERBUFFERSPROC)glHookSwapLayerBuffers.origFunc)(hDC, fuPlanes);
+#endif
 
     //LeaveCriticalSection(&glMutex);
 
@@ -1073,9 +1081,13 @@ static BOOL WINAPI wglSwapBuffersHook(HDC hDC)
 
     HandleGLSceneUpdate(hDC);
 
+#if OLDHOOKS
     glHookwglSwapBuffers.Unhook();
     BOOL bResult = jimglSwapBuffers(hDC);
     glHookwglSwapBuffers.Rehook();
+#else
+    BOOL bResult = ((WGLSWAPBUFFERSPROC)glHookwglSwapBuffers.origFunc)(hDC);
+#endif
 
     //LeaveCriticalSection(&glMutex);
 
@@ -1098,9 +1110,13 @@ static BOOL WINAPI wglDeleteContextHook(HGLRC hRC)
         jimglMakeCurrent(hLastHDC, hLastHGLRC);
     }
 
+#if OLDHOOKS
     glHookDeleteContext.Unhook();
     BOOL bResult = jimglDeleteContext(hRC);
     glHookDeleteContext.Rehook();
+#else
+    BOOL bResult = ((WGLDELETECONTEXTPROC)glHookDeleteContext.origFunc)(hRC);
+#endif
 
     //LeaveCriticalSection(&glMutex);
 

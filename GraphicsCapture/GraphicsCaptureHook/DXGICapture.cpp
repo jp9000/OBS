@@ -100,6 +100,8 @@ void SetupDXGIStuff(IDXGISwapChain *swap)
     bTargetAcquired = true;
 }
 
+typedef HRESULT(STDMETHODCALLTYPE *DXGISwapResizeBuffersHookPROC)(IDXGISwapChain *swap, UINT bufferCount, UINT width, UINT height, DXGI_FORMAT giFormat, UINT flags);
+
 HRESULT STDMETHODCALLTYPE DXGISwapResizeBuffersHook(IDXGISwapChain *swap, UINT bufferCount, UINT width, UINT height, DXGI_FORMAT giFormat, UINT flags)
 {
     if(clearProc)
@@ -111,12 +113,18 @@ HRESULT STDMETHODCALLTYPE DXGISwapResizeBuffersHook(IDXGISwapChain *swap, UINT b
     lpCurrentDevice = NULL;
     bTargetAcquired = false;
 
+#if OLDHOOKS
     giswapResizeBuffers.Unhook();
     HRESULT hRes = swap->ResizeBuffers(bufferCount, width, height, giFormat, flags);
     giswapResizeBuffers.Rehook();
+#else
+    HRESULT hRes = ((DXGISwapResizeBuffersHookPROC)giswapResizeBuffers.origFunc)(swap, bufferCount, width, height, giFormat, flags);
+#endif
 
     return hRes;
 }
+
+typedef HRESULT(STDMETHODCALLTYPE *DXGISwapPresentHookPROC)(IDXGISwapChain *swap, UINT syncInterval, UINT flags);
 
 HRESULT STDMETHODCALLTYPE DXGISwapPresentHook(IDXGISwapChain *swap, UINT syncInterval, UINT flags)
 {
@@ -126,9 +134,13 @@ HRESULT STDMETHODCALLTYPE DXGISwapPresentHook(IDXGISwapChain *swap, UINT syncInt
     if(lpCurrentSwap == swap && captureProc)
         (*captureProc)(swap);
 
+#if OLDHOOKS
     giswapPresent.Unhook();
     HRESULT hRes = swap->Present(syncInterval, flags);
     giswapPresent.Rehook();
+#else
+    HRESULT hRes = ((DXGISwapPresentHookPROC)giswapPresent.origFunc)(swap, syncInterval, flags);
+#endif
 
     return hRes;
 }
