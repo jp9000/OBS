@@ -825,7 +825,7 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
 
     // A service ID implies the settings have come from the xconfig file.
     if(serviceID != 0)
-    {	
+    {
         XConfig serverData;
         if(!serverData.Open(TEXT("services.xconfig")))
         {
@@ -942,7 +942,7 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
 
         Log(TEXT("Using RTMP service: %s"), service->GetName());
         Log(TEXT("  Server selection: %s"), strPlayPath.Array());
-    } // end of if
+    }
 
     //------------------------------------------------------
     // now back to the elgato directory if it needs the directory changed still to function *sigh*
@@ -1003,16 +1003,9 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     UINT tcpBufferSize = AppConfig->GetInt(TEXT("Publish"), TEXT("TCPBufferSize"), 64*1024);
 
     if(tcpBufferSize < 8192)
-    {
         tcpBufferSize = 8192;
-    }
-    else 
-    {
-        if(tcpBufferSize > 1024*1024)
-        {
-           tcpBufferSize = 1024*1024;
-        }
-    }
+    else if(tcpBufferSize > 1024*1024)
+        tcpBufferSize = 1024*1024;
 
     rtmp->m_outChunkSize = 4096;//RTMP_DEFAULT_CHUNKSIZE;//
     rtmp->m_bSendChunkSizeInfo = TRUE;
@@ -1077,7 +1070,7 @@ end:
     if(!bSuccess)
     {
         OSEnterMutex(publisher->hRTMPMutex);
-        if(rtmp != NULL)
+        if(rtmp)
         {
             RTMP_Close(rtmp);
             RTMP_Free(rtmp);
