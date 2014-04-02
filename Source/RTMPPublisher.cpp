@@ -937,11 +937,10 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
             strPlayPath = p_stream_name_data->GetData();
 
             Log(TEXT("Web API returned URL: %s"), strURL.Array());
-            Log(TEXT("                path: %s"), strPlayPath.Array());
         }
 
         Log(TEXT("Using RTMP service: %s"), service->GetName());
-        Log(TEXT("  Server selection: %s"), strPlayPath.Array());
+        Log(TEXT("  Server selection: %s"), strURL.Array());
     }
 
     //------------------------------------------------------
