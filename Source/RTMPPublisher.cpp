@@ -874,9 +874,9 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
 
         strURL = item->GetData();
 
-        // Stream urls start with RTMP. If there's an HTTP then assume this is a web API call
+        // Stream urls start with RTMP. If there's an HTTP(S) then assume this is a web API call
         // to get the proper data.
-        if (strURL.Left(4).MakeLower() == "http")
+        if ((strURL.Left(5).MakeLower() == "https") || (strURL.Left(4).MakeLower() == "http"))
         {
             // Query the web API for stream details
             String web_url = strURL + strPlayPath;
