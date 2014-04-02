@@ -897,7 +897,7 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
             XConfig apiData;
 
             // Expecting a response from the web API to look like this:
-            // {"data":{"stream_url":"rtmp://some_url", "stream_name": "some-name"}}"
+            // {"data":{"stream_url":"rtmp://some_url", "stream_name": "some-name"}}
             // A nice bit of JSON which is basically the same as the structure for XConfig.
             if(!apiData.ParseString(response))
             {

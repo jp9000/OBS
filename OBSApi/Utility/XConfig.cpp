@@ -799,34 +799,34 @@ static inline bool GetNextLine(TSTR &lpTemp, bool isJSON)
 
 bool  XConfig::ReadFileData2(XElement *curElement, int level, TSTR &lpTemp, bool isJSON)
 {
-    while(*lpTemp)
+    while (*lpTemp)
     {
-        if(*lpTemp == '}')
+        if (*lpTemp == '}')
             return level != 0;
 
-        if(*lpTemp == '{') //unnamed object, usually only happens at the start of the file, ignore
+        if (*lpTemp == '{') //unnamed object, usually only happens at the start of the file, ignore
         {
             ++lpTemp;
-            if(!ReadFileData2(curElement, level+1, lpTemp, true))
+            if (!ReadFileData2(curElement, level + 1, lpTemp, true))
                 return false;
         }
-        else if(*lpTemp != ' '   &&
-                *lpTemp != L'　' &&
-                *lpTemp != '\t'  &&
-                *lpTemp != '\r'  &&
-                *lpTemp != '\n'  &&
-                *lpTemp != ',')
+        else if (*lpTemp != ' '   &&
+            *lpTemp != L'　' &&
+            *lpTemp != '\t'  &&
+            *lpTemp != '\r'  &&
+            *lpTemp != '\n'  &&
+            *lpTemp != ',')
         {
             String strName;
 
-            if(*lpTemp == '"')
+            if (*lpTemp == '"')
                 strName = ProcessString(lpTemp);
             else
             {
                 TSTR lpDataStart = lpTemp;
 
                 lpTemp = schr(lpTemp, ':');
-                if(!lpTemp)
+                if (!lpTemp)
                     return false;
 
                 *lpTemp = 0;
@@ -839,21 +839,21 @@ bool  XConfig::ReadFileData2(XElement *curElement, int level, TSTR &lpTemp, bool
             //---------------------------
 
             lpTemp = schr(lpTemp, ':');
-            if(!lpTemp)
+            if (!lpTemp)
                 return false;
 
             ++lpTemp;
 
-            while( *lpTemp == ' '   ||
-                   *lpTemp == L'　' ||
-                   *lpTemp == '\t'  )
+            while (*lpTemp == ' ' ||
+                *lpTemp == L'　' ||
+                *lpTemp == '\t')
             {
                 ++lpTemp;
             }
 
             //---------------------------
 
-            if(*lpTemp == '{') //element
+            if (*lpTemp == '{') //element
             {
                 ++lpTemp;
 
@@ -865,7 +865,7 @@ bool  XConfig::ReadFileData2(XElement *curElement, int level, TSTR &lpTemp, bool
             {
                 String data;
 
-                if(*lpTemp == '"')
+                if (*lpTemp == '"')
                     data = ProcessString(lpTemp);
                 else
                 {
@@ -874,9 +874,9 @@ bool  XConfig::ReadFileData2(XElement *curElement, int level, TSTR &lpTemp, bool
                     if (!GetNextLine(lpTemp, isJSON))
                         return false;
 
-                    if(lpTemp[-1] == '\r') --lpTemp;
+                    if (lpTemp[-1] == '\r') --lpTemp;
 
-                    if(lpTemp != lpDataStart)
+                    if (lpTemp != lpDataStart)
                     {
                         TCHAR oldChar = *lpTemp;
                         *lpTemp = 0;
@@ -894,7 +894,13 @@ bool  XConfig::ReadFileData2(XElement *curElement, int level, TSTR &lpTemp, bool
             }
         }
 
-        ++lpTemp;
+        // A ++lpTemp above can step off the end of the string causing
+        // the condition on while to go a bit crazy.
+        // Making sure we preserve the end of string.
+        if (*lpTemp != 0)
+        {
+            ++lpTemp;
+        }
     }
 
     return (curElement == RootElement);
