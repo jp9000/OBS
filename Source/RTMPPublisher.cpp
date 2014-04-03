@@ -792,6 +792,8 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     bool bSuccess = false;
     bool bCanRetry = false;
 
+    RTMP *rtmp = nullptr;
+
     String failReason;
     String strBindIP;
 
@@ -883,7 +885,7 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     OSEnterMutex(publisher->hRTMPMutex);
     publisher->rtmp = RTMP_Alloc();
 
-    RTMP *rtmp = publisher->rtmp;
+    rtmp = publisher->rtmp;
     RTMP_Init(rtmp);
 
     RTMP_LogSetCallback(librtmpErrorCallback);
