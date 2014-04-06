@@ -3064,7 +3064,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
                                     bool isGlobalSource = false;
 
-                                    XElement *sources, *sourcesElement;
+                                    XElement *sources, *sourcesElement = NULL;
                                     
                                     sources = App->sceneElement->GetElement(TEXT("sources"));
                                     

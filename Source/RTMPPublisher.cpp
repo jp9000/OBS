@@ -788,7 +788,6 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     //------------------------------------------------------
     // set up URL
 
-    bool bRetry = false;
     bool bSuccess = false;
     bool bCanRetry = false;
 
@@ -1586,9 +1585,6 @@ void RTMPPublisher::RequestKeyframe(int waitTime)
 
 int RTMPPublisher::BufferedSend(RTMPSockBuf *sb, const char *buf, int len, RTMPPublisher *network)
 {
-    bool bComplete = false;
-    int fullLen = len;
-
     //NOTE: This function is called from the SendLoop thread, be careful of race conditions.
 
 retrySend:
