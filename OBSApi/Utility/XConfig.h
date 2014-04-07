@@ -228,6 +228,7 @@ public:
     inline ~XConfig() {Close();}
 
     bool    Open(CTSTR lpFile);
+    bool    ParseString(const String& config);
     void    Close(bool bSave=false);
     void    Save();
 
