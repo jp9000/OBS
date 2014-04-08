@@ -649,12 +649,6 @@ finishGPUHook:
 
     ClearGLData();
 
-    if (hD3D10_1)
-        FreeLibrary(hD3D10_1);
-
-    if (hDXGI)
-        FreeLibrary(hDXGI);
-
     return false;
 }
 

@@ -473,11 +473,6 @@ finishGPUHook:
     }
     else
         ClearD3D9Data();
-
-    if (hD3D10_1)
-        FreeLibrary(hD3D10_1);
-    if (hDXGI)
-        FreeLibrary(hDXGI);
 }
 
 DWORD CopyD3D9CPUTextureThread(LPVOID lpUseless);
