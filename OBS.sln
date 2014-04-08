@@ -1,6 +1,8 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OBS", "OBS.vcxproj", "{221C92F4-3416-43F1-8E4E-78657AFD0111}"
 	ProjectSection(ProjectDependencies) = postProject
 		{11A35235-DD48-41E2-8F40-825C78024BC0} = {11A35235-DD48-41E2-8F40-825C78024BC0}
@@ -28,6 +30,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ObsNvenc", "ObsNvenc\ObsNve
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QSVHelper", "QSVHelper\QSVHelper.vcxproj", "{F1C7033A-F050-46E3-9080-E129B9CD1010}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "injectHelper", "injectHelper\injectHelper.vcxproj", "{E03BF070-E830-46BB-8442-5771F7E5F301}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -96,9 +100,18 @@ Global
 		{F1C7033A-F050-46E3-9080-E129B9CD1010}.Debug|Win32.ActiveCfg = Debug|Win32
 		{F1C7033A-F050-46E3-9080-E129B9CD1010}.Debug|Win32.Build.0 = Debug|Win32
 		{F1C7033A-F050-46E3-9080-E129B9CD1010}.Debug|x64.ActiveCfg = Debug|Win32
+		{F1C7033A-F050-46E3-9080-E129B9CD1010}.Debug|x64.Build.0 = Debug|Win32
 		{F1C7033A-F050-46E3-9080-E129B9CD1010}.Release|Win32.ActiveCfg = Release|Win32
 		{F1C7033A-F050-46E3-9080-E129B9CD1010}.Release|Win32.Build.0 = Release|Win32
 		{F1C7033A-F050-46E3-9080-E129B9CD1010}.Release|x64.ActiveCfg = Release|Win32
+		{E03BF070-E830-46BB-8442-5771F7E5F301}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E03BF070-E830-46BB-8442-5771F7E5F301}.Debug|Win32.Build.0 = Debug|Win32
+		{E03BF070-E830-46BB-8442-5771F7E5F301}.Debug|x64.ActiveCfg = Debug|x64
+		{E03BF070-E830-46BB-8442-5771F7E5F301}.Debug|x64.Build.0 = Debug|x64
+		{E03BF070-E830-46BB-8442-5771F7E5F301}.Release|Win32.ActiveCfg = Release|Win32
+		{E03BF070-E830-46BB-8442-5771F7E5F301}.Release|Win32.Build.0 = Release|Win32
+		{E03BF070-E830-46BB-8442-5771F7E5F301}.Release|x64.ActiveCfg = Release|x64
+		{E03BF070-E830-46BB-8442-5771F7E5F301}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
