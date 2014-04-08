@@ -311,10 +311,8 @@ void __cdecl AppWarning(const TCHAR *format, ...)
 
 
 //note to self:  do try not to rely on this too much.
-void __cdecl CrashError(const TCHAR *format, ...)   
+__declspec(noreturn) void __cdecl CrashError(const TCHAR *format, ...)
 {
-    if(!format) return;
-
     va_list arglist;
 
     va_start(arglist, format);

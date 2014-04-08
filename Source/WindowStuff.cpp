@@ -515,7 +515,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 case ID_LISTBOX_CONFIG:
                     App->EnableSceneSwitching(false);
 
-                    if(curClassInfo->configProc(item, false))
+                    if(curClassInfo && curClassInfo->configProc(item, false))
                     {
                         if(App->bRunning)
                             App->scene->UpdateSettings();
@@ -2206,6 +2206,7 @@ INT_PTR CALLBACK OBS::ReconnectDialogProc(HWND hwnd, UINT message, WPARAM wParam
                     App->bReconnecting = false;
                     EndDialog(hwnd, IDCANCEL);
                     delete ri;
+                    return TRUE;
                 }
 
                 String strText;
@@ -2440,7 +2441,7 @@ namespace
 {
     struct HLOCALDeleter
     {
-        void operator()(void *h) { LocalFree(h); }
+        void operator()(void *h) { GlobalFree(h); }
     };
 
     struct MemUnlocker

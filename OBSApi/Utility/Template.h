@@ -444,7 +444,7 @@ public:
 
     inline T& Last() const
     {
-        assert(num);
+        assert(num > 0);
 
         return array[num-1];
     }

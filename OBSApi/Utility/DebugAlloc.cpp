@@ -216,7 +216,7 @@ void DebugAlloc::_Free(LPVOID lpData)
         {
             if(AllocationList[i].Address == lpData)
             {
-                if(!--numAllocations) {FastAlloc::_Free(AllocationList); AllocationList=NULL; return;}
+                if (!--numAllocations) { FastAlloc::_Free(AllocationList); AllocationList = NULL; OSLeaveMutex(hDebugMutex); return; }
 
                 if(freeCount++ == 40)
                 {

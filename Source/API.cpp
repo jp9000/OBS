@@ -678,8 +678,11 @@ void OBS::CallHotkey(DWORD hotkeyID, bool bDown)
         HotkeyInfo &hi = apiInterface->hotkeys[i];
         if(hi.hotkeyID == hotkeyID)
         {
-            if(!hi.hotkeyProc)
+            if (!hi.hotkeyProc)
+            {
+                OSLeaveMutex(hHotkeyMutex);
                 return;
+            }
 
             hotkeyProc  = hi.hotkeyProc;
             param       = hi.param;

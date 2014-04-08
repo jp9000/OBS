@@ -150,6 +150,7 @@ static bool GetCaptureInfo(CaptureInfo &ci, DWORD processID)
     if(!infoIn)
     {
         AppWarning(TEXT("GetCaptureInfo: Could not map view of file"));
+        CloseHandle(hFileMap);
         return false;
     }
 

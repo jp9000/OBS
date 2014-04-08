@@ -70,6 +70,7 @@ BOOL LoadSeDebugPrivilege()
     if (!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Val))
     {
         err = GetLastError();
+        CloseHandle(hToken);
         return FALSE;
     }
 
@@ -80,6 +81,7 @@ BOOL LoadSeDebugPrivilege()
     if (!AdjustTokenPrivileges(hToken, FALSE, &tp, sizeof (tp), NULL, NULL))
     {
         err = GetLastError();
+        CloseHandle(hToken);
         return FALSE;
     }
 

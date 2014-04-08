@@ -1810,7 +1810,7 @@ BOOL OBS::SetNotificationAreaIcon(DWORD dwMessage, int idIcon, const String &too
         niData.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
         niData.uCallbackMessage = OBS_NOTIFICATIONAREA;
         niData.hIcon = LoadIcon(hinstMain, MAKEINTRESOURCE(idIcon));
-        lstrcpy(niData.szTip, tooltip);
+        scpy_n (niData.szTip, tooltip, _countof(niData.szTip)-1);
     }
 
     result = Shell_NotifyIcon(dwMessage, &niData);
