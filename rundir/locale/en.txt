@@ -302,7 +302,7 @@ Sources.GameCaptureSource.RequiresAdmin="These applications require administrato
 Sources.GameCaptureSource.SelectApplication="Select Application"
 Sources.GameCaptureSource.StretchToScreen="Stretch image to screen"
 Sources.GameCaptureSource.UseHotkey="Use Hotkey"
-Sources.GameCaptureSource.UseSafeHook="Anti-cheat compatibility (NOTE: Run OBS as admin)"
+Sources.GameCaptureSource.UseSafeHook="Anti-cheat compatibility"
 
 Sources.SoftwareCaptureSource.Blend="Blend (1-100):"
 Sources.SoftwareCaptureSource.CaptureLayered="Capture Layered Windows"

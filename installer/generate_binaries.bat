@@ -41,7 +41,7 @@ copy ..\rundir\plugins\psvplugin\locale\*.txt .\32bit\plugins\psvplugin\locale\
 copy ..\graphicscapture\release\graphicscapture.dll .\32bit\plugins
 copy ..\graphicscapture\graphicscapturehook\release\graphicscapturehook.dll .\32bit\plugins\graphicscapture
 copy ..\graphicscapture\graphicscapturehook\x64\release\graphicscapturehook64.dll .\32bit\plugins\graphicscapture
-copy ..\injectHelper\release\injectHelper.exe .\64bit\plugins\graphicscapture
+copy ..\injectHelper\release\injectHelper.exe .\32bit\plugins\graphicscapture
 copy ..\injectHelper\x64\release\injectHelper64.exe .\32bit\plugins\graphicscapture
 copy ..\x264\libs\32bit\libx264-140.dll .\32bit
 copy ..\QSVHelper\Release\QSVHelper.exe .\32bit
@@ -65,7 +65,7 @@ copy ..\graphicscapture\x64\release\graphicscapture.dll .\64bit\plugins
 copy ..\graphicscapture\graphicscapturehook\release\graphicscapturehook.dll .\64bit\plugins\graphicscapture
 copy ..\graphicscapture\graphicscapturehook\x64\release\graphicscapturehook64.dll .\64bit\plugins\graphicscapture
 copy ..\injectHelper\release\injectHelper.exe .\64bit\plugins\graphicscapture
-copy ..\injectHelper\x64\release\injectHelper64.exe .\32bit\plugins\graphicscapture
+copy ..\injectHelper\x64\release\injectHelper64.exe .\64bit\plugins\graphicscapture
 copy ..\x264\libs\64bit\libx264-140.dll .\64bit
 copy ..\QSVHelper\Release\QSVHelper.exe .\64bit
 copy ..\ObsNvenc\x64\Release\ObsNvenc.dll .\64bit
@@ -113,12 +113,14 @@ copy ..\rundir\plugins\dshowplugin\shaders\*.?Shader .\upload\DirectShowPlugin\6
 copy ..\graphicscapture\release\graphicscapture.dll .\upload\GraphicsCapturePlugin\32bit\
 copy ..\graphicscapture\graphicscapturehook\release\graphicscapturehook.dll .\upload\GraphicsCapturePlugin\32bit\GraphicsCapture\
 copy ..\graphicscapture\graphicscapturehook\x64\release\graphicscapturehook64.dll .\upload\GraphicsCapturePlugin\32bit\GraphicsCapture\
+copy ..\injectHelper\release\injectHelper.exe .\upload\GraphicsCapturePlugin\32bit\GraphicsCapture\
 copy ..\injectHelper\x64\release\injectHelper64.exe .\upload\GraphicsCapturePlugin\32bit\GraphicsCapture\
 
 copy ..\graphicscapture\x64\release\graphicscapture.dll .\upload\GraphicsCapturePlugin\64bit\
 copy ..\graphicscapture\graphicscapturehook\release\graphicscapturehook.dll .\upload\GraphicsCapturePlugin\64bit\GraphicsCapture\
 copy ..\graphicscapture\graphicscapturehook\x64\release\graphicscapturehook64.dll .\upload\GraphicsCapturePlugin\64bit\GraphicsCapture\
 copy ..\injectHelper\release\injectHelper.exe .\upload\GraphicsCapturePlugin\64bit\GraphicsCapture\
+copy ..\injectHelper\x64\release\injectHelper64.exe .\upload\GraphicsCapturePlugin\64bit\GraphicsCapture\
 
 copy ..\NoiseGate\release\noisegate.dll .\upload\NoiseGatePlugin\32bit\
 copy ..\NoiseGate\x64\release\noisegate.dll .\upload\NoiseGatePlugin\64bit\
