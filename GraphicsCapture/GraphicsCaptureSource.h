@@ -31,10 +31,16 @@ class GraphicsCaptureSource : public ImageSource
     DWORD hotkey, hotkeyID;
     String strWindowClass;
 
+    wchar_t lastProcessName[MAX_PATH];
+
+    bool useSafeHook;
+    HANDLE injectHelperProcess;
+
     HWND hwndTarget, hwndCapture, hwndNextTarget;
     bool bCapturing, bErrorAcquiring, bFlip, bStretch, bIgnoreAspect, bCaptureMouse;
     UINT captureWaitCount;
     DWORD targetProcessID;
+    DWORD targetThreadID;
     UINT warningID;
 
     int gamma;

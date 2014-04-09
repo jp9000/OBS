@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <windows.h>
 #include <shellapi.h>
+#include <stdbool.h>
 
 #ifdef _WIN64
 typedef unsigned __int64 UPARAM;
@@ -63,11 +64,43 @@ BOOL LoadSeDebugPrivilege()
     return TRUE;
 }
 
-typedef HANDLE (WINAPI *CRTPROC)(HANDLE, LPSECURITY_ATTRIBUTES, SIZE_T, LPTHREAD_START_ROUTINE, LPVOID, DWORD, LPDWORD);
-typedef BOOL   (WINAPI *WPMPROC)(HANDLE, LPVOID, LPCVOID, SIZE_T, SIZE_T*);
-typedef LPVOID (WINAPI *VAEPROC)(HANDLE, LPVOID, SIZE_T, DWORD, DWORD);
-typedef BOOL   (WINAPI *VFEPROC)(HANDLE, LPVOID, SIZE_T, DWORD);
-typedef HANDLE (WINAPI *OPPROC) (DWORD, BOOL, DWORD);
+BOOL WINAPI InjectLibrarySafe(DWORD threadID, const wchar_t *pDLL, DWORD dwLen)
+{
+    HMODULE hLib = LoadLibraryW(pDLL);
+    LPVOID proc;
+    HHOOK hook;
+
+    if (!hLib)
+        return FALSE;
+
+#ifdef _WIN64
+    proc = GetProcAddress(hLib, "DummyDebugProc");
+#else
+    proc = GetProcAddress(hLib, "_DummyDebugProc@12");
+#endif
+    if (!proc)
+        return FALSE;
+
+    /* this is terrible. */
+    hook = SetWindowsHookExW(WH_GETMESSAGE, (HOOKPROC)proc, hLib, threadID);
+    if (!hook)
+        return FALSE;
+
+    for (int i = 0; i < 20; i++)
+        PostThreadMessage(threadID, WM_USER + 432, 0, (LPARAM)hook);
+    Sleep(1000);
+    for (int i = 0; i < 20; i++)
+        PostThreadMessage(threadID, WM_USER + 432, 0, (LPARAM)hook);
+    Sleep(1000);
+
+    return TRUE;
+}
+
+typedef HANDLE(WINAPI *CRTPROC)(HANDLE, LPSECURITY_ATTRIBUTES, SIZE_T, LPTHREAD_START_ROUTINE, LPVOID, DWORD, LPDWORD);
+typedef BOOL(WINAPI *WPMPROC)(HANDLE, LPVOID, LPCVOID, SIZE_T, SIZE_T*);
+typedef LPVOID(WINAPI *VAEPROC)(HANDLE, LPVOID, SIZE_T, DWORD, DWORD);
+typedef BOOL(WINAPI *VFEPROC)(HANDLE, LPVOID, SIZE_T, DWORD);
+typedef HANDLE(WINAPI *OPPROC) (DWORD, BOOL, DWORD);
 
 BOOL WINAPI InjectLibrary(HANDLE hProcess, const wchar_t *pDLL, DWORD dwLen)
 {
@@ -91,16 +124,16 @@ BOOL WINAPI InjectLibrary(HANDLE hProcess, const wchar_t *pDLL, DWORD dwLen)
 
     if (!hProcess) return 0;
 
-    dwSize = (dwLen+1) * sizeof(wchar_t);
+    dwSize = (dwLen + 1) * sizeof(wchar_t);
 
     /*--------------------------------------------------------*/
 
-    
+
     memcpy(pWPMStr, "RvnrdPqmni|}Dmfegm", 19); //WriteProcessMemory with each character obfuscated
     memcpy(pCRTStr, "FvbgueQg`c{k]`yotp", 19); //CreateRemoteThread with each character obfuscated
     memcpy(pVAEStr, "WiqvpekGeddiHt", 15);     //VirtualAllocEx with each character obfuscated
     memcpy(pVFEStr, "Wiqvpek@{mnOu", 14);      //VirtualFreeEx with each character obfuscated
-    memcpy(pLLStr,  "MobfImethzr", 12);        //LoadLibrary with each character obfuscated
+    memcpy(pLLStr, "MobfImethzr", 12);        //LoadLibrary with each character obfuscated
 
 #ifdef UNICODE
     pLLStr[11] = 'W';
@@ -110,23 +143,23 @@ BOOL WINAPI InjectLibrary(HANDLE hProcess, const wchar_t *pDLL, DWORD dwLen)
     pLLStr[12] = 0;
 
     obfSize += 6;
-    for (i=0; i<obfSize; i++) pWPMStr[i] ^= i^5;
-    for (i=0; i<obfSize; i++) pCRTStr[i] ^= i^5;
+    for (i = 0; i<obfSize; i++) pWPMStr[i] ^= i ^ 5;
+    for (i = 0; i<obfSize; i++) pCRTStr[i] ^= i ^ 5;
 
     obfSize -= 4;
-    for (i=0; i<obfSize; i++) pVAEStr[i] ^= i^1;
+    for (i = 0; i<obfSize; i++) pVAEStr[i] ^= i ^ 1;
 
     obfSize -= 1;
-    for (i=0; i<obfSize; i++) pVFEStr[i] ^= i^1;
+    for (i = 0; i<obfSize; i++) pVFEStr[i] ^= i ^ 1;
 
     obfSize -= 2;
-    for (i=0; i<obfSize; i++) pLLStr[i]  ^= i^1;
+    for (i = 0; i<obfSize; i++) pLLStr[i] ^= i ^ 1;
 
     hK32 = GetModuleHandle(TEXT("KERNEL32"));
     pWriteProcessMemory = (WPMPROC)GetProcAddress(hK32, pWPMStr);
     pCreateRemoteThread = (CRTPROC)GetProcAddress(hK32, pCRTStr);
-    pVirtualAllocEx     = (VAEPROC)GetProcAddress(hK32, pVAEStr);
-    pVirtualFreeEx      = (VFEPROC)GetProcAddress(hK32, pVFEStr);
+    pVirtualAllocEx = (VAEPROC)GetProcAddress(hK32, pVAEStr);
+    pVirtualFreeEx = (VFEPROC)GetProcAddress(hK32, pVFEStr);
 
     /*--------------------------------------------------------*/
 
@@ -140,7 +173,7 @@ BOOL WINAPI InjectLibrary(HANDLE hProcess, const wchar_t *pDLL, DWORD dwLen)
     if (!procAddress) goto end;
 
     hThread = (*pCreateRemoteThread)(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)procAddress,
-                                 pStr, 0, &dwTemp);
+        pStr, 0, &dwTemp);
     if (!hThread) goto end;
 
     if (WaitForSingleObject(hThread, 200) == WAIT_OBJECT_0)
@@ -172,8 +205,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
 {
     LPWSTR pCommandLineW = GetCommandLineW();
     int retVal = 0;
-    DWORD procID = 0;
+    DWORD id = 0;
     int numArgs = 0;
+    bool safe = false;
 
 #ifdef _WIN64
     const wchar_t pDLLName[] = L"GraphicsCaptureHook64.dll";
@@ -187,26 +221,64 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
 
     LoadSeDebugPrivilege();
 
-    if (numArgs > 1)
+    if (numArgs > 2)
     {
-        procID = wcstoul(pCommandLineArgs[1], NULL, 10);
-        if (procID != 0)
+        safe = *pCommandLineArgs[2] == '1';
+        id = wcstoul(pCommandLineArgs[1], NULL, 10);
+        if (id != 0)
         {
-            OPPROC pOpenProcess;
-            HANDLE hProcess;
-            char pOPStr[12];
-            int i;
+            if (!safe)
+            {
+                OPPROC pOpenProcess;
+                HANDLE hProcess;
+                char pOPStr[12];
+                int i;
 
-            memcpy(pOPStr, "NpflUvhel{x", 12); //OpenProcess obfuscated
-            for (i=0; i<11; i++) pOPStr[i] ^= i^1;
+                memcpy(pOPStr, "NpflUvhel{x", 12); //OpenProcess obfuscated
+                for (i = 0; i<11; i++) pOPStr[i] ^= i ^ 1;
 
-            pOpenProcess = (OPPROC)GetProcAddress(GetModuleHandle(TEXT("KERNEL32")), pOPStr);
+                pOpenProcess = (OPPROC)GetProcAddress(GetModuleHandle(TEXT("KERNEL32")), pOPStr);
 
-            hProcess = (*pOpenProcess)(PROCESS_ALL_ACCESS, FALSE, procID);
-            if (hProcess)
+                hProcess = (*pOpenProcess)(PROCESS_ALL_ACCESS, FALSE, id);
+                if (hProcess)
+                {
+                    UINT dirLen = GetCurrentDirectory(0, 0); /* includes null terminator */
+                    const UINT fileNameLen = (sizeof(pDLLName) / sizeof(wchar_t)) - 1;
+                    UINT len = dirLen + fileNameLen + 1; /* 1 for '/' */
+                    wchar_t *pPath;
+
+                    /* -------------------------- */
+
+                    if (dirLen)
+                    {
+                        pPath = (wchar_t*)malloc(len * sizeof(wchar_t));
+                        memset(pPath, 0, len * sizeof(wchar_t));
+
+                        GetCurrentDirectoryW(dirLen, pPath);
+                        pPath[dirLen - 1] = '\\';
+                        wcsncpy_s(pPath + dirLen, len - dirLen, pDLLName, fileNameLen);
+
+                        if (!InjectLibrary(hProcess, pPath, len - 1))
+                        {
+                            retVal = GetLastError();
+                            if (!retVal)
+                                retVal = -5;
+                        }
+
+                        free(pPath);
+                    }
+                    else
+                        retVal = -4;
+
+                    CloseHandle(hProcess);
+                }
+                else
+                    retVal = -3;
+            }
+            else
             {
                 UINT dirLen = GetCurrentDirectory(0, 0); /* includes null terminator */
-                const UINT fileNameLen = (sizeof(pDLLName) / sizeof(wchar_t))-1;
+                const UINT fileNameLen = (sizeof(pDLLName) / sizeof(wchar_t)) - 1;
                 UINT len = dirLen + fileNameLen + 1; /* 1 for '/' */
                 wchar_t *pPath;
 
@@ -218,25 +290,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
                     memset(pPath, 0, len * sizeof(wchar_t));
 
                     GetCurrentDirectoryW(dirLen, pPath);
-                    pPath[dirLen-1] = '\\';
-                    wcsncpy_s(pPath+dirLen, len-dirLen, pDLLName, fileNameLen);
+                    pPath[dirLen - 1] = '\\';
+                    wcsncpy_s(pPath + dirLen, len - dirLen, pDLLName, fileNameLen);
 
-                    if(!InjectLibrary(hProcess, pPath, len-1))
+                    if (!InjectLibrarySafe(id, pPath, len - 1))
                     {
                         retVal = GetLastError();
-                        if(!retVal)
-                            retVal = -5;
+                        if (!retVal)
+                            retVal = -7;
                     }
 
                     free(pPath);
                 }
                 else
-                    retVal = -4;
-
-                CloseHandle(hProcess);
+                    retVal = -6;
             }
-            else
-                retVal = -3;
         }
         else
             retVal = -2;

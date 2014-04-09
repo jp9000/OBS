@@ -20,106 +20,13 @@
 #include "GraphicsCapture.h"
 
 
-typedef HANDLE (WINAPI *CRTPROC)(HANDLE, LPSECURITY_ATTRIBUTES, SIZE_T, LPTHREAD_START_ROUTINE, LPVOID, DWORD, LPDWORD);
-typedef BOOL   (WINAPI *WPMPROC)(HANDLE, LPVOID, LPCVOID, SIZE_T, SIZE_T*);
-typedef LPVOID (WINAPI *VAEPROC)(HANDLE, LPVOID, SIZE_T, DWORD, DWORD);
-typedef BOOL   (WINAPI *VFEPROC)(HANDLE, LPVOID, SIZE_T, DWORD);
 typedef HANDLE (WINAPI *OPPROC) (DWORD, BOOL, DWORD);
-
-
-BOOL WINAPI InjectLibrary(HANDLE hProcess, CTSTR lpDLL)
-{
-    UPARAM procAddress;
-    DWORD dwTemp,dwSize;
-    LPVOID lpStr = NULL;
-    BOOL bWorks,bRet=0;
-    HANDLE hThread = NULL;
-    SIZE_T writtenSize;
-
-    if(!hProcess) return 0;
-
-    dwSize = ssize((TCHAR*)lpDLL);
-
-    //--------------------------------------------------------
-
-    int obfSize = 12;
-
-    char pWPMStr[19], pCRTStr[19], pVAEStr[15], pVFEStr[14], pLLStr[13];
-    mcpy(pWPMStr, "RvnrdPqmni|}Dmfegm", 19); //WriteProcessMemory with each character obfuscated
-    mcpy(pCRTStr, "FvbgueQg`c{k]`yotp", 19); //CreateRemoteThread with each character obfuscated
-    mcpy(pVAEStr, "WiqvpekGeddiHt", 15);     //VirtualAllocEx with each character obfuscated
-    mcpy(pVFEStr, "Wiqvpek@{mnOu", 14);      //VirtualFreeEx with each character obfuscated
-    mcpy(pLLStr,  "MobfImethzr", 12);        //LoadLibrary with each character obfuscated
-
-#ifdef UNICODE
-    pLLStr[11] = 'W';
-#else
-    pLLStr[11] = 'A';
-#endif
-    pLLStr[12] = 0;
-
-    obfSize += 6;
-    for (int i=0; i<obfSize; i++) pWPMStr[i] ^= i^5;
-    for (int i=0; i<obfSize; i++) pCRTStr[i] ^= i^5;
-
-    obfSize -= 4;
-    for (int i=0; i<obfSize; i++) pVAEStr[i] ^= i^1;
-
-    obfSize -= 1;
-    for (int i=0; i<obfSize; i++) pVFEStr[i] ^= i^1;
-
-    obfSize -= 2;
-    for (int i=0; i<obfSize; i++) pLLStr[i]  ^= i^1;
-
-    HMODULE hK32 = GetModuleHandle(TEXT("KERNEL32"));
-    WPMPROC pWriteProcessMemory = (WPMPROC)GetProcAddress(hK32, pWPMStr);
-    CRTPROC pCreateRemoteThread = (CRTPROC)GetProcAddress(hK32, pCRTStr);
-    VAEPROC pVirtualAllocEx     = (VAEPROC)GetProcAddress(hK32, pVAEStr);
-    VFEPROC pVirtualFreeEx      = (VFEPROC)GetProcAddress(hK32, pVFEStr);
-
-    //--------------------------------------------------------
-
-    lpStr = (LPVOID)(*pVirtualAllocEx)(hProcess, NULL, dwSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-    if(!lpStr) goto end;
-
-    bWorks = (*pWriteProcessMemory)(hProcess, lpStr, (LPVOID)lpDLL, dwSize, &writtenSize);
-    if(!bWorks) goto end;
-
-    procAddress = (UPARAM)GetProcAddress(hK32, pLLStr);
-    if(!procAddress) goto end;
-
-    hThread = (*pCreateRemoteThread)(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)procAddress, lpStr, 0, &dwTemp);
-    if(!hThread) goto end;
-
-    if(WaitForSingleObject(hThread, 2000) == WAIT_OBJECT_0)
-    {
-        DWORD dw;
-        GetExitCodeThread(hThread, &dw);
-        bRet = dw != 0;
-
-        SetLastError(0);
-    }
-
-end:
-    DWORD lastError;
-    if(!bRet)
-        lastError = GetLastError();
-
-    if(hThread)
-        CloseHandle(hThread);
-    if(lpStr)
-        (*pVirtualFreeEx)(hProcess, lpStr, 0, MEM_RELEASE);
-
-    if(!bRet)
-        SetLastError(lastError);
-
-    return bRet;
-}
 
 bool GraphicsCaptureSource::Init(XElement *data)
 {
     this->data = data;
     capture = NULL;
+    injectHelperProcess = NULL;
 
     Log(TEXT("Using graphics capture"));
     return true;
@@ -127,7 +34,10 @@ bool GraphicsCaptureSource::Init(XElement *data)
 
 GraphicsCaptureSource::~GraphicsCaptureSource()
 {
-    if(warningID)
+    if (injectHelperProcess)
+        CloseHandle(injectHelperProcess);
+
+    if (warningID)
     {
         API->RemoveStreamInfo(warningID);
         warningID = 0;
@@ -289,6 +199,13 @@ void GraphicsCaptureSource::BeginScene()
     bIgnoreAspect = data->GetInt(TEXT("ignoreAspect")) != 0;
     bCaptureMouse = data->GetInt(TEXT("captureMouse"), 1) != 0;
 
+    bool safeHookVal = data->GetInt(TEXT("safeHook")) != 0;
+
+    if (safeHookVal != useSafeHook && safeHookVal)
+        Log(L"Using anti-cheat hooking for game capture");
+
+    useSafeHook = safeHookVal;
+
     bUseHotkey = data->GetInt(TEXT("useHotkey"), 0) != 0;
     hotkey = data->GetInt(TEXT("hotkey"), VK_F12);
 
@@ -319,8 +236,8 @@ void GraphicsCaptureSource::AttemptCapture()
 
     if (hwndTarget)
     {
-        GetWindowThreadProcessId(hwndTarget, &targetProcessID);
-        if(!targetProcessID)
+        targetThreadID = GetWindowThreadProcessId(hwndTarget, &targetProcessID);
+        if (!targetThreadID || !targetProcessID)
         {
             AppWarning(TEXT("GraphicsCaptureSource::BeginScene: GetWindowThreadProcessId failed, GetLastError = %u"), GetLastError());
             bErrorAcquiring = true;
@@ -337,6 +254,9 @@ void GraphicsCaptureSource::AttemptCapture()
         return;
     }
 
+    if (injectHelperProcess && WaitForSingleObject(injectHelperProcess, 0) == WAIT_TIMEOUT)
+        return;
+
     if(warningID)
     {
         API->RemoveStreamInfo(warningID);
@@ -352,9 +272,25 @@ void GraphicsCaptureSource::AttemptCapture()
 
     OPPROC pOpenProcess = (OPPROC)GetProcAddress(GetModuleHandle(TEXT("KERNEL32")), pOPStr);
 
-    HANDLE hProcess = (*pOpenProcess)(PROCESS_ALL_ACCESS, FALSE, targetProcessID);
+    HANDLE hProcess = (*pOpenProcess)(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, targetProcessID);
     if(hProcess)
     {
+        DWORD dwSize = MAX_PATH;
+        wchar_t processName[MAX_PATH];
+        memset(processName, 0, sizeof(processName));
+
+        QueryFullProcessImageName(hProcess, 0, processName, &dwSize);
+
+        if (dwSize != 0 && scmpi(processName, lastProcessName) != 0)
+        {
+            if (processName[0])
+            {
+                wchar_t *fileName = srchr(processName, '\\');
+                Log(L"Trying to hook process: %s", (fileName ? fileName+1 : processName));
+            }
+            scpy_n(lastProcessName, processName, MAX_PATH-1);
+        }
+
         //-------------------------------------------
         // load keepalive event
 
@@ -373,102 +309,69 @@ void GraphicsCaptureSource::AttemptCapture()
         }
         else
         {
-            BOOL bSameBit = TRUE;
+            BOOL b32bit = TRUE;
 
             if(Is64BitWindows())
+                IsWow64Process(hProcess, &b32bit);
+
+            String strDLLPath;
+            DWORD dwDirSize = GetCurrentDirectory(0, NULL);
+            strDLLPath.SetLength(dwDirSize);
+            GetCurrentDirectory(dwDirSize, strDLLPath);
+
+            strDLLPath << TEXT("\\plugins\\GraphicsCapture");
+
+            String strHelper = strDLLPath;
+            strHelper << ((b32bit) ? TEXT("\\injectHelper.exe") : TEXT("\\injectHelper64.exe"));
+
+            String strCommandLine;
+            strCommandLine << TEXT("\"") << strHelper << TEXT("\" ");
+            if (useSafeHook)
+                strCommandLine << UIntString(targetThreadID) << " 1";
+            else
+                strCommandLine << UIntString(targetProcessID) << " 0";
+
+            //---------------------------------------
+
+            PROCESS_INFORMATION pi;
+            STARTUPINFO si;
+
+            zero(&pi, sizeof(pi));
+            zero(&si, sizeof(si));
+            si.cb = sizeof(si);
+
+            if(CreateProcess(strHelper, strCommandLine, NULL, NULL, FALSE, 0, NULL, strDLLPath, &si, &pi))
             {
-                BOOL bCurrentProcessWow64, bTargetProcessWow64;
-                IsWow64Process(GetCurrentProcess(), &bCurrentProcessWow64);
-                IsWow64Process(hProcess, &bTargetProcessWow64);
+                int exitCode = 0;
 
-                bSameBit = (bCurrentProcessWow64 == bTargetProcessWow64);
-            }
+                CloseHandle(pi.hThread);
 
-            if(bSameBit)
-            {
-                String strDLL;
-                DWORD dwDirSize = GetCurrentDirectory(0, NULL);
-                strDLL.SetLength(dwDirSize);
-                GetCurrentDirectory(dwDirSize, strDLL);
+                if (!useSafeHook)
+                {
+                    WaitForSingleObject(pi.hProcess, INFINITE);
+                    GetExitCodeProcess(pi.hProcess, (DWORD*)&exitCode);
+                    CloseHandle(pi.hProcess);
+                }
+                else
+                {
+                    injectHelperProcess = pi.hProcess;
+                }
 
-                strDLL << TEXT("\\plugins\\GraphicsCapture\\GraphicsCaptureHook");
-
-                BOOL b32bit = TRUE;
-                if(Is64BitWindows())
-                    IsWow64Process(hProcess, &b32bit);
-
-                if(!b32bit)
-                    strDLL << TEXT("64");
-
-                strDLL << TEXT(".dll");
-
-                if(InjectLibrary(hProcess, strDLL))
+                if(exitCode == 0)
                 {
                     captureWaitCount = 0;
                     bCapturing = true;
                 }
                 else
                 {
-                    AppWarning(TEXT("GraphicsCaptureSource::BeginScene: Failed to inject library, GetLastError = %u"), GetLastError());
-
-                    CloseHandle(hProcess);
-                    hProcess = NULL;
+                    AppWarning(TEXT("GraphicsCaptureSource::BeginScene: Failed to inject library, error code = %d"), exitCode);
                     bErrorAcquiring = true;
                 }
             }
             else
             {
-                String strDLLPath;
-                DWORD dwDirSize = GetCurrentDirectory(0, NULL);
-                strDLLPath.SetLength(dwDirSize);
-                GetCurrentDirectory(dwDirSize, strDLLPath);
-
-                strDLLPath << TEXT("\\plugins\\GraphicsCapture");
-
-                BOOL b32bit = TRUE;
-                if(Is64BitWindows())
-                    IsWow64Process(hProcess, &b32bit);
-
-                String strHelper = strDLLPath;
-                strHelper << ((b32bit) ? TEXT("\\injectHelper.exe") : TEXT("\\injectHelper64.exe"));
-
-                String strCommandLine;
-                strCommandLine << TEXT("\"") << strHelper << TEXT("\" ") << UIntString(targetProcessID);
-
-                //---------------------------------------
-
-                PROCESS_INFORMATION pi;
-                STARTUPINFO si;
-
-                zero(&pi, sizeof(pi));
-                zero(&si, sizeof(si));
-                si.cb = sizeof(si);
-
-                if(CreateProcess(strHelper, strCommandLine, NULL, NULL, FALSE, 0, NULL, strDLLPath, &si, &pi))
-                {
-                    int exitCode = 0;
-
-                    WaitForSingleObject(pi.hProcess, INFINITE);
-                    GetExitCodeProcess(pi.hProcess, (DWORD*)&exitCode);
-                    CloseHandle(pi.hThread);
-                    CloseHandle(pi.hProcess);
-
-                    if(exitCode == 0)
-                    {
-                        captureWaitCount = 0;
-                        bCapturing = true;
-                    }
-                    else
-                    {
-                        AppWarning(TEXT("GraphicsCaptureSource::BeginScene: Failed to inject library, error code = %d"), exitCode);
-                        bErrorAcquiring = true;
-                    }
-                }
-                else
-                {
-                    AppWarning(TEXT("GraphicsCaptureSource::BeginScene: Could not create inject helper, GetLastError = %u"), GetLastError());
-                    bErrorAcquiring = true;
-                }
+                AppWarning(TEXT("GraphicsCaptureSource::BeginScene: Could not create inject helper, GetLastError = %u"), GetLastError());
+                bErrorAcquiring = true;
             }
         }
 
@@ -531,7 +434,22 @@ void GraphicsCaptureSource::Tick(float fSeconds)
     if(bCapturing && !hSignalReady && targetProcessID)
         hSignalReady = GetEvent(String() << CAPTURE_READY_EVENT << UINT(targetProcessID));
 
+    if (injectHelperProcess && WaitForSingleObject(injectHelperProcess, 0) == WAIT_OBJECT_0)
+    {
+        DWORD exitCode;
+        GetExitCodeProcess(injectHelperProcess, (DWORD*)&exitCode);
+        CloseHandle(injectHelperProcess);
+        injectHelperProcess = nullptr;
+
+        if (exitCode != 0)
+        {
+            AppWarning(TEXT("safe inject Helper: Failed, error code = %d"), exitCode);
+            bErrorAcquiring = true;
+        }
+    }
+
     if (hSignalReady) {
+
         DWORD val = WaitForSingleObject(hSignalReady, 0);
         if (val == WAIT_OBJECT_0)
             NewCapture();
@@ -697,8 +615,10 @@ void GraphicsCaptureSource::Render(const Vect2 &pos, const Vect2 &size)
                     texStretch *= totalSize;
                 else
                 {
-                    float multiplyVal = (texSize.y * (totalSize.x / texSize.x) > totalSize.y) ? totalSize.y / texSize.y : multiplyVal = totalSize.x / texSize.x;
-                        
+                    float xAspect = totalSize.x / texSize.x;
+                    float yAspect = totalSize.y / texSize.y;
+                    float multiplyVal = ((texSize.y * xAspect) > totalSize.y) ? yAspect : xAspect;
+
                     texStretch *= texSize*multiplyVal;
                     texPos = center-(texStretch*0.5f);
                 }

@@ -577,7 +577,11 @@ retryHookTestV2:
             if(!micAudio)
                 OBSMessageBox(hwndMain, Str("MicrophoneFailure"), NULL, 0);
             else
-                micAudio->SetTimeOffset(AppConfig->GetInt(TEXT("Audio"), TEXT("MicTimeOffset"), 0));
+            {
+                int offset = AppConfig->GetInt(TEXT("Audio"), TEXT("MicTimeOffset"), 0);
+                Log(L"Mic time offset: %d", offset);
+                micAudio->SetTimeOffset(offset);
+            }
 
             EnableWindow(GetDlgItem(hwndMain, ID_MICVOLUME), micAudio != NULL);
         }

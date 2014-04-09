@@ -210,6 +210,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 SendMessage(GetDlgItem(hwnd, IDC_IGNOREASPECT),       BM_SETCHECK, data->GetInt(TEXT("ignoreAspect")) ? BST_CHECKED : BST_UNCHECKED, 0);
                 SendMessage(GetDlgItem(hwnd, IDC_CAPTUREMOUSE),       BM_SETCHECK, bCaptureMouse                      ? BST_CHECKED : BST_UNCHECKED, 0);
                 SendMessage(GetDlgItem(hwnd, IDC_INVERTMOUSEONCLICK), BM_SETCHECK, data->GetInt(TEXT("invertMouse"))  ? BST_CHECKED : BST_UNCHECKED, 0);
+                SendMessage(GetDlgItem(hwnd, IDC_USESAFEHOOK),        BM_SETCHECK, data->GetInt(TEXT("safeHook"))     ? BST_CHECKED : BST_UNCHECKED, 0);
                 EnableWindow(GetDlgItem(hwnd, IDC_INVERTMOUSEONCLICK), bCaptureMouse);
                 EnableWindow(GetDlgItem(hwnd, IDC_IGNOREASPECT), bStretchImage);
 
@@ -333,12 +334,13 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         data->SetString(TEXT("window"),      strWindow);
                         data->SetString(TEXT("windowClass"), info->windowData[windowID].strClass);
 
-                        data->SetInt(TEXT("stretchImage"), SendMessage(GetDlgItem(hwnd, IDC_STRETCHTOSCREEN), BM_GETCHECK, 0, 0) == BST_CHECKED);
-                        data->SetInt(TEXT("ignoreAspect"), SendMessage(GetDlgItem(hwnd, IDC_IGNOREASPECT), BM_GETCHECK, 0, 0) == BST_CHECKED);
-                        data->SetInt(TEXT("captureMouse"), SendMessage(GetDlgItem(hwnd, IDC_CAPTUREMOUSE), BM_GETCHECK, 0, 0) == BST_CHECKED);
+                        data->SetInt(TEXT("stretchImage"), SendMessage(GetDlgItem(hwnd, IDC_STRETCHTOSCREEN),    BM_GETCHECK, 0, 0) == BST_CHECKED);
+                        data->SetInt(TEXT("ignoreAspect"), SendMessage(GetDlgItem(hwnd, IDC_IGNOREASPECT),       BM_GETCHECK, 0, 0) == BST_CHECKED);
+                        data->SetInt(TEXT("captureMouse"), SendMessage(GetDlgItem(hwnd, IDC_CAPTUREMOUSE),       BM_GETCHECK, 0, 0) == BST_CHECKED);
                         data->SetInt(TEXT("invertMouse"),  SendMessage(GetDlgItem(hwnd, IDC_INVERTMOUSEONCLICK), BM_GETCHECK, 0, 0) == BST_CHECKED);
+                        data->SetInt(TEXT("safeHook"),     SendMessage(GetDlgItem(hwnd, IDC_USESAFEHOOK),        BM_GETCHECK, 0, 0) == BST_CHECKED);
 
-                        data->SetInt(TEXT("useHotkey"),    SendMessage(GetDlgItem(hwnd, IDC_USEHOTKEY), BM_GETCHECK, 0, 0) == BST_CHECKED);
+                        data->SetInt(TEXT("useHotkey"),    SendMessage(GetDlgItem(hwnd, IDC_USEHOTKEY),          BM_GETCHECK, 0, 0) == BST_CHECKED);
                         data->SetInt(TEXT("hotkey"),       (DWORD)SendMessage(GetDlgItem(hwnd, IDC_HOTKEY), HKM_GETHOTKEY, 0, 0));
 
                         data->SetInt(TEXT("gamma"),        (int)SendMessage(GetDlgItem(hwnd, IDC_GAMMA), TBM_GETPOS, 0, 0));

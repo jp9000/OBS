@@ -389,9 +389,9 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
     bool bSuccess = false;
 
     //wait for dll initialization to finish before executing any initialization code
-    if(hDllMainThread)
+    if (hDllMainThread)
     {
-        WaitForSingleObject(hDllMainThread, INFINITE);
+        WaitForSingleObject(hDllMainThread, 150);
         CloseHandle(hDllMainThread);
     }
 
@@ -498,8 +498,13 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpBlah)
 {
     if(dwReason == DLL_PROCESS_ATTACH)
     {
+        wchar_t name[4096];
+
         HANDLE hThread = NULL;
         hinstMain = hinstDLL;
+
+        GetModuleFileNameW(hinstDLL, name, 4096);
+        LoadLibrary(name);
 
         HANDLE hDllMainThread = OpenThread(THREAD_ALL_ACCESS, NULL, GetCurrentThreadId());
 
@@ -557,4 +562,19 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpBlah)
     }
 
     return TRUE;
+}
+
+static bool hooking = true;
+
+extern "C" __declspec(dllexport) LRESULT CALLBACK DummyDebugProc(int code, WPARAM wParam, LPARAM lParam)
+{
+    MSG *msg = (MSG*)lParam;
+
+    if (hooking && msg->message == (WM_USER + 432))
+    {
+        UnhookWindowsHookEx((HHOOK)msg->lParam);
+        hooking = false;
+    }
+
+    return CallNextHookEx(0, code, wParam, lParam);
 }

@@ -468,7 +468,7 @@ bool DeviceSource::LoadFilters()
         else
             strTest << FormattedString(TEXT(", fourCC: %08lX\r\n"), bmiHeader->biCompression);
 
-        if(!bDeviceHasAudio) strTest << FormattedString(TEXT("    audio device: %s,\r\n    audio device id %s,\r\n"), strAudioDevice.Array(), strAudioID.Array());
+        if(!bDeviceHasAudio) strTest << FormattedString(TEXT("    audio device: %s,\r\n    audio device id %s,\r\n    audio time offset %d,\r\n"), strAudioDevice.Array(), strAudioID.Array(), soundTimeOffset);
 
         Log(TEXT("------------------------------------------"));
         Log(strTest.Array());

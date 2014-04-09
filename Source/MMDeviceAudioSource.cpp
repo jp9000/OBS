@@ -184,7 +184,10 @@ bool MMDeviceAudioSource::Reinitialize()
         }
 
         bUseVideoTime = AppConfig->GetInt(TEXT("Audio"), TEXT("SyncToVideoTime")) != 0;
-        SetTimeOffset(GlobalConfig->GetInt(TEXT("Audio"), TEXT("GlobalAudioTimeAdjust")));
+
+        int globalAdjust = GlobalConfig->GetInt(TEXT("Audio"), TEXT("GlobalAudioTimeAdjust"));
+        Log(L"Global Audio time adjust: %d", globalAdjust);
+        SetTimeOffset(globalAdjust);
     }
 
     //-----------------------------------------------------------------

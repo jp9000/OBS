@@ -50,7 +50,7 @@ END
 // Dialog
 //
 
-IDD_CONFIG DIALOGEX 0, 0, 542, 272
+IDD_CONFIG DIALOGEX 0, 0, 543, 282
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Sources.GameCaptureSource"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -65,19 +65,21 @@ BEGIN
     RTEXT           "Listbox.SetHotkey",IDC_STATIC,7,55,95,8
     CONTROL         "ÉJÉXÉ^ÉÄ1",IDC_HOTKEY,"OBSHotkeyControlEx",WS_TABSTOP,106,52,84,14
     CONTROL         "Sources.GameCaptureSource.StretchToScreen",IDC_STRETCHTOSCREEN,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,106,73,308,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,106,70,308,10
     CONTROL         "Sources.GameCaptureSource.IgnoreAspect",IDC_IGNOREASPECT,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,106,85,308,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,106,82,308,10
     CONTROL         "Sources.SoftwareCaptureSource.MouseCapture",IDC_CAPTUREMOUSE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,106,97,313,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,106,94,313,10
     CONTROL         "Sources.SoftwareCaptureSource.InvertMouseOnClick",IDC_INVERTMOUSEONCLICK,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,106,109,318,10
-    RTEXT           "Gamma",IDC_STATIC,7,130,111,8
-    CONTROL         "",IDC_GAMMA,"msctls_trackbar32",TBS_BOTH | WS_TABSTOP,122,122,227,26
-    LTEXT           ".numbers!",IDC_GAMMAVAL,354,130,66,8
-    EDITTEXT        IDC_INFO,7,155,403,110,ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY | WS_VSCROLL | WS_HSCROLL
-    DEFPUSHBUTTON   "OK",IDOK,431,251,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,485,251,50,14
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,106,106,318,10
+    RTEXT           "Gamma",IDC_STATIC,7,142,111,8
+    CONTROL         "",IDC_GAMMA,"msctls_trackbar32",TBS_BOTH | WS_TABSTOP,122,134,227,26
+    LTEXT           ".numbers!",IDC_GAMMAVAL,354,142,66,8
+    EDITTEXT        IDC_INFO,7,165,403,110,ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY | WS_VSCROLL | WS_HSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,431,261,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,486,261,50,14
+    CONTROL         "Sources.GameCaptureSource.UseSafeHook",IDC_USESAFEHOOK,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,106,118,318,10
 END
 
 
@@ -92,9 +94,9 @@ BEGIN
     IDD_CONFIG, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 535
+        RIGHTMARGIN, 536
         TOPMARGIN, 7
-        BOTTOMMARGIN, 265
+        BOTTOMMARGIN, 275
     END
 END
 #endif    // APSTUDIO_INVOKED
