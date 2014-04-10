@@ -223,7 +223,7 @@ void NVENCEncoder::init()
             NULL,
             MB_OK | MB_ICONERROR);
 
-        NvLog(TEXT("nvEncOpenEncodeSessionEx failed - outdated driver?"));
+        NvLog(TEXT("nvEncOpenEncodeSessionEx failed with 0x%x - outdated driver?"), nvStatus);
         goto error;
     }
 
@@ -239,7 +239,7 @@ void NVENCEncoder::init()
     nvStatus = pNvEnc->nvEncGetEncodePresetConfig(encoder, NV_ENC_CODEC_H264_GUID, encoderPreset, &presetConfig);
     if (nvStatus != NV_ENC_SUCCESS)
     {
-        NvLog(TEXT("nvEncGetEncodePresetConfig failed"));
+        NvLog(TEXT("nvEncGetEncodePresetConfig failed with 0x%x"), nvStatus);
         goto error;
     }
 
@@ -310,7 +310,7 @@ void NVENCEncoder::init()
 
     if (nvStatus != NV_ENC_SUCCESS)
     {
-        NvLog(TEXT("nvEncInitializeEncoder failed"));
+        NvLog(TEXT("nvEncInitializeEncoder failed with 0x%x"), nvStatus);
         goto error;
     }
 
@@ -329,7 +329,7 @@ void NVENCEncoder::init()
 
         if (nvStatus != NV_ENC_SUCCESS)
         {
-            NvLog(TEXT("nvEncCreateInputBuffer #%d failed"), surfaceCount);
+            NvLog(TEXT("nvEncCreateInputBuffer #%d failed with 0x%x"), surfaceCount, nvStatus);
             goto error;
         }
 
@@ -349,7 +349,7 @@ void NVENCEncoder::init()
 
         if (nvStatus != NV_ENC_SUCCESS)
         {
-            NvLog(TEXT("Failed allocating bitstream #%d buffer"), surfaceCount);
+            NvLog(TEXT("Failed allocating bitstream #%d buffer with 0x%x"), surfaceCount, nvStatus);
 
             outputSurfaces[surfaceCount].outputSurface = 0;
             surfaceCount += 1;
@@ -415,7 +415,7 @@ void NVENCEncoder::RequestBuffers(LPVOID buffers)
 
         if (nvStatus != NV_ENC_SUCCESS)
         {
-            NvLog(TEXT("nvEncLockInputBuffer failed for surface #%d"), i);
+            NvLog(TEXT("nvEncLockInputBuffer failed for surface #%d with 0x%x"), i, nvStatus);
 
             return;
         }
@@ -459,7 +459,7 @@ bool NVENCEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketTy
             nvStatus = pNvEnc->nvEncUnlockInputBuffer(encoder, surf->inputSurface);
             if (nvStatus != NV_ENC_SUCCESS)
             {
-                NvLog(TEXT("Unlocking surface failed"));
+                NvLog(TEXT("Unlocking surface failed with 0x%x"), nvStatus);
                 return false;
             }
         }
@@ -566,7 +566,7 @@ void NVENCEncoder::ProcessOutput(NVENCEncoderOutputSurface *surf, List<DataPacke
     NVENCSTATUS nvStatus = pNvEnc->nvEncLockBitstream(encoder, &lockParams);
     if (nvStatus != NV_ENC_SUCCESS)
     {
-        NvLog(TEXT("Failed locking bitstream"));
+        NvLog(TEXT("Failed locking bitstream with 0x%x"), nvStatus);
         return;
     }
 
@@ -746,7 +746,7 @@ void NVENCEncoder::ProcessOutput(NVENCEncoderOutputSurface *surf, List<DataPacke
     nvStatus = pNvEnc->nvEncUnlockBitstream(encoder, surf->outputSurface);
     if (nvStatus != NV_ENC_SUCCESS)
     {
-        NvLog(TEXT("Failed unlocking bitstream"));
+        NvLog(TEXT("Failed unlocking bitstream with 0x%x"), nvStatus);
         return;
     }
 }
@@ -834,7 +834,7 @@ void NVENCEncoder::RequestKeyframe()
     NVENCSTATUS nvStatus = pNvEnc->nvEncReconfigureEncoder(encoder, &params);
     if (nvStatus != NV_ENC_SUCCESS)
     {
-        NvLog(TEXT("Failed requesting a Keyframe"));
+        NvLog(TEXT("Failed requesting a Keyframe with 0x%x"), nvStatus);
     }
 }
 
@@ -863,7 +863,7 @@ bool NVENCEncoder::SetBitRate(DWORD maxBitrate, DWORD bufferSize)
     NVENCSTATUS nvStatus = pNvEnc->nvEncReconfigureEncoder(encoder, &params);
     if (nvStatus != NV_ENC_SUCCESS)
     {
-        NvLog(TEXT("Failed reconfiguring nvenc encoder"));
+        NvLog(TEXT("Failed reconfiguring nvenc encoder with 0x%x"), nvStatus);
         return false;
     }
 
