@@ -116,7 +116,7 @@
       <PrecompiledHeaderFile>GraphicsCapture.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>OBSApi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OBSApi.lib;dwmapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>../OBSApi/Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>..\rundir\pdb32\$(TargetName).pdb</ProgramDatabaseFile>
@@ -147,7 +147,7 @@
       <PrecompiledHeaderFile>GraphicsCapture.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>OBSApi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OBSApi.lib;dwmapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>../OBSApi/x64/Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>..\rundir\pdb64\$(TargetName).pdb</ProgramDatabaseFile>
