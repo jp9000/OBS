@@ -18,6 +18,7 @@
 
 
 #include "GraphicsCapture.h"
+#include <dwmapi.h>
 
 
 extern "C" __declspec(dllexport) bool LoadPlugin();
@@ -171,6 +172,26 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
             }
         }
     } while (hwndCurrent = GetNextWindow(hwndCurrent, GW_HWNDNEXT));
+
+    if(OSGetVersion() < 8)
+    {
+        BOOL isCompositionEnabled = FALSE;
+        
+        DwmIsCompositionEnabled(&isCompositionEnabled);
+        
+        if(isCompositionEnabled)
+        {
+            String strText;
+            strText << TEXT("[DWM]: ") << Str("Sources.SoftwareCaptureSource.MonitorCapture");
+
+            int id = (int)SendMessage(hwndCombobox, CB_ADDSTRING, 0, (LPARAM)strText.Array());
+            SendMessage(hwndCombobox, CB_SETITEMDATA, id, (LPARAM)NULL);
+
+            WindowInfo &info = *configData.windowData.CreateNew();
+            info.strClass = TEXT("Dwm");
+            info.bRequiresAdmin = false; //todo: add later
+        }
+    }
 }
 
 int SetSliderText(HWND hwndParent, int controlSlider, int controlText)

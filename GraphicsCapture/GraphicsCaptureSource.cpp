@@ -195,6 +195,8 @@ void GraphicsCaptureSource::BeginScene()
     if(strWindowClass.IsEmpty())
         return;
 
+    bUseDWMCapture = (scmpi(strWindowClass, TEXT("Dwm")) == 0) ? true : false;
+
     bStretch = data->GetInt(TEXT("stretchImage")) != 0;
     bIgnoreAspect = data->GetInt(TEXT("ignoreAspect")) != 0;
     bCaptureMouse = data->GetInt(TEXT("captureMouse"), 1) != 0;
@@ -492,7 +494,7 @@ void GraphicsCaptureSource::Tick(float fSeconds)
     }
     else
     {
-        if(!IsWindow(hwndCapture)) {
+        if(!IsWindow(hwndCapture) && !bUseDWMCapture) {
             Log(TEXT("Capture window 0x%08lX invalid or changing, terminating capture"), DWORD(hwndCapture));
             EndCapture();
         } else if (bUseHotkey && hwndNextTarget && hwndNextTarget != hwndTarget) {
@@ -538,17 +540,19 @@ void GraphicsCaptureSource::Render(const Vect2 &pos, const Vect2 &size)
         // capture mouse
 
         bMouseCaptured = false;
+
         if(bCaptureMouse)
         {
             CURSORINFO ci;
             zero(&ci, sizeof(ci));
             ci.cbSize = sizeof(ci);
 
-            if(GetCursorInfo(&ci) && hwndCapture)
+            if(GetCursorInfo(&ci) && (hwndCapture || bUseDWMCapture))
             {
                 mcpy(&cursorPos, &ci.ptScreenPos, sizeof(cursorPos));
 
-                ScreenToClient(hwndCapture, &cursorPos);
+                if(!bUseDWMCapture)
+                    ScreenToClient(hwndCapture, &cursorPos);
 
                 if(ci.flags & CURSOR_SHOWING)
                 {
@@ -652,11 +656,12 @@ void GraphicsCaptureSource::Render(const Vect2 &pos, const Vect2 &size)
             if (!foregroundCheckCount)
             {
                 //only check for foreground window every 10 frames since this involves two syscalls
-                GetWindowThreadProcessId(GetForegroundWindow(), &foregroundPID);
+                if(!bUseDWMCapture)
+                    GetWindowThreadProcessId(GetForegroundWindow(), &foregroundPID);
                 foregroundCheckCount = 10;
             }
 
-            if(bMouseCaptured && cursorTexture && foregroundPID == targetProcessID)
+            if(bMouseCaptured && cursorTexture && ((foregroundPID == targetProcessID) || bUseDWMCapture))
             {
                 Vect2 newCursorPos  = Vect2(float(cursorPos.x-xHotspot), float(cursorPos.y-xHotspot));
                 Vect2 newCursorSize = Vect2(float(cursorTexture->Width()), float(cursorTexture->Height()));

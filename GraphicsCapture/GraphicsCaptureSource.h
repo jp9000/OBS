@@ -31,6 +31,8 @@ class GraphicsCaptureSource : public ImageSource
     DWORD hotkey, hotkeyID;
     String strWindowClass;
 
+    bool bUseDWMCapture;
+
     wchar_t lastProcessName[MAX_PATH];
 
     bool useSafeHook;
