@@ -185,11 +185,6 @@ void SettingsAdvanced::ApplySettings()
 
     //------------------------------------
 
-    bool useInputDevices = SendMessage(GetDlgItem(hwnd, IDC_USEINPUTDEVICES), BM_GETCHECK, 0, 0) == BST_CHECKED;
-    AppConfig->SetInt(L"Audio", L"UseInputDevices", useInputDevices);
-
-    //------------------------------------
-
     BOOL bSyncToVideoTime = SendMessage(GetDlgItem(hwnd, IDC_SYNCTOVIDEOTIME), BM_GETCHECK, 0, 0) == BST_CHECKED;
     AppConfig->SetInt   (TEXT("Audio"), TEXT("SyncToVideoTime"), bSyncToVideoTime);
 
@@ -260,7 +255,6 @@ void SettingsAdvanced::SetDefaults()
     SendMessage(GetDlgItem(hwnd, IDC_LATENCYTUNE), UDM_SETPOS32, 0, 20);
     SendMessage(GetDlgItem(hwnd, IDC_LATENCYMETHOD), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_BINDIP), CB_SETCURSEL, 0, 0);
-    SendMessage(GetDlgItem(hwnd, IDC_USEINPUTDEVICES), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_DISABLEPREVIEWENCODING), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_ALLOWOTHERHOTKEYMODIFIERS), BM_SETCHECK, BST_CHECKED, 0);
 
@@ -452,11 +446,6 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 //------------------------------------
 
-                bool useInputDevices = AppConfig->GetInt(L"Audio", L"UseInputDevices", false) != 0;
-                SendMessage(GetDlgItem(hwnd, IDC_USEINPUTDEVICES), BM_SETCHECK, useInputDevices ? BST_CHECKED : BST_UNCHECKED, 0);
-
-                //------------------------------------
-
                 bool bSyncToVideoTime = AppConfig->GetInt(TEXT("Audio"), TEXT("SyncToVideoTime")) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_SYNCTOVIDEOTIME), BM_SETCHECK, bSyncToVideoTime ? BST_CHECKED : BST_UNCHECKED, 0);
 
@@ -629,7 +618,6 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                     }
                     break;
 
-                case IDC_USEINPUTDEVICES:
                 case IDC_DISABLEPREVIEWENCODING:
                 case IDC_ALLOWOTHERHOTKEYMODIFIERS:
                 case IDC_MICSYNCFIX:

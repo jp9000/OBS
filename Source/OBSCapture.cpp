@@ -525,7 +525,7 @@ retryHookTestV2:
     //------------------------------------------------------------------
 
     AudioDeviceList playbackDevices;
-    bool useInputDevices = AppConfig->GetInt(L"Audio", L"UseInputDevices", false) != 0;
+    bool useInputDevices = AppConfig->GetInt(L"Audio", L"InputDevicesForDesktopSound", false) != 0;
     GetAudioDevices(playbackDevices, useInputDevices ? ADT_RECORDING : ADT_PLAYBACK);
 
     String strPlaybackDevice = AppConfig->GetString(TEXT("Audio"), TEXT("PlaybackDevice"), TEXT("Default"));

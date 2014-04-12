@@ -122,7 +122,7 @@ bool MMDeviceAudioSource::Reinitialize()
     const IID IID_IAudioCaptureClient    = __uuidof(IAudioCaptureClient);
     HRESULT err;
 
-    bool useInputDevice = bIsMic || AppConfig->GetInt(L"Audio", L"UseInputDevices", false) != 0;
+    bool useInputDevice = bIsMic || AppConfig->GetInt(L"Audio", L"InputDevicesForDesktopSound", false) != 0;
 
     if (bIsMic) {
         BOOL bMicSyncFixHack = GlobalConfig->GetInt(TEXT("Audio"), TEXT("UseMicSyncFixHack"));
