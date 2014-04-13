@@ -2844,8 +2844,9 @@ PublisherAuth(RTMP *r, AVal *description)
         {
             char *par, *val = NULL, *orig_ptr;
             AVal user, salt, opaque, challenge, *aptr = NULL;
-            opaque.av_len = 0;
-            challenge.av_len = 0;
+
+            opaque.av_len = challenge.av_len = salt.av_len = 0;
+            opaque.av_val = challenge.av_val = salt.av_val = NULL;
 
             ptr = orig_ptr = strdup(token_in);
             while (ptr)
@@ -3032,6 +3033,9 @@ PublisherAuth(RTMP *r, AVal *description)
             char nchex[9];
             /* cnonce = hexenc(4 random bytes) (initialized on first connection) */
             char cnonce[9];
+
+            nonce.av_len = user.av_len = 0;
+            nonce.av_val = user.av_val = NULL;
 
             ptr = orig_ptr = strdup(token_in);
             /* Extract parameters (we need user and nonce) */
