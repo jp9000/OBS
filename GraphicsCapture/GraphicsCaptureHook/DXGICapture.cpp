@@ -131,7 +131,7 @@ HRESULT STDMETHODCALLTYPE DXGISwapPresentHook(IDXGISwapChain *swap, UINT syncInt
     if(lpCurrentSwap == NULL && !bTargetAcquired)
         SetupDXGIStuff(swap);
 
-    if(lpCurrentSwap == swap && captureProc)
+    if ((flags & DXGI_PRESENT_TEST) == 0 && lpCurrentSwap == swap && captureProc)
         (*captureProc)(swap);
 
 #if OLDHOOKS
