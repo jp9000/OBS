@@ -474,7 +474,6 @@ retryHookTestV2:
     td.Height           = outputCY;
     td.Format           = DXGI_FORMAT_B8G8R8A8_UNORM;
     td.MipLevels        = 1;
-    td.ArraySize        = 1;
     td.SampleDesc.Count = 1;
     td.ArraySize        = 1;
     td.Usage            = D3D10_USAGE_STAGING;
