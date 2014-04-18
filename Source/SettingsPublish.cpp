@@ -636,9 +636,9 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 int retryTime = AppConfig->GetInt(TEXT("Publish"), TEXT("AutoReconnectTimeout"), 10);
                 if(retryTime > 60)      retryTime = 60;
-                else if(retryTime < 5)  retryTime = 5;
+                else if(retryTime < 0)  retryTime = 0;
 
-                SendMessage(hwndTemp, UDM_SETRANGE32, 5, 60);
+                SendMessage(hwndTemp, UDM_SETRANGE32, 0, 60);
                 SendMessage(hwndTemp, UDM_SETPOS32, 0, retryTime);
 
                 if(mode != 0) ShowWindow(hwndTemp, SW_HIDE);
