@@ -410,6 +410,7 @@ void GraphicsCaptureSource::EndScene()
 
     delete cursorTexture;
     cursorTexture = NULL;
+    hCurrentCursor = NULL;
 
     if (hotkeyID)
     {
