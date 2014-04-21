@@ -2227,7 +2227,7 @@ INT_PTR CALLBACK OBS::ReconnectDialogProc(HWND hwnd, UINT message, WPARAM wParam
                 if(wParam != 1)
                     break;
 
-                if(!--ri->secondsLeft)
+                if(!ri->secondsLeft)
                 {
                     SendMessage(hwndMain, OBS_RECONNECT, 0, 0);
                     EndDialog(hwnd, IDOK);
@@ -2235,6 +2235,9 @@ INT_PTR CALLBACK OBS::ReconnectDialogProc(HWND hwnd, UINT message, WPARAM wParam
                 else
                 {
                     String strText;
+
+                    ri->secondsLeft--;
+
                     if(App->bReconnecting)
                         strText << Str("Reconnecting.Retrying") << UIntString(ri->secondsLeft);
                     else
@@ -3339,8 +3342,17 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 //FIXME: show some kind of non-modal notice to the user explaining why they got disconnected
                 //status bar would be nice, but that only renders when we're streaming.
                 PlaySound((LPCTSTR)SND_ALIAS_SYSTEMASTERISK, NULL, SND_ALIAS_ID | SND_ASYNC);
-                App->bReconnecting = false;
-                OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_RECONNECTING), hwnd, OBS::ReconnectDialogProc);
+
+                if (!App->reconnectTimeout)
+                {
+                    //fire immediately
+                    PostMessage(hwndMain, OBS_RECONNECT, 0, 0);
+                }
+                else
+                {
+                    App->bReconnecting = false;
+                    OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_RECONNECTING), hwnd, OBS::ReconnectDialogProc);
+                }
             }
 
             break;

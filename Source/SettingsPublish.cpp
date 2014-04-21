@@ -108,7 +108,7 @@ void SettingsPublish::ApplySettings()
     BOOL bError = FALSE;
     App->reconnectTimeout = (UINT)SendMessage(GetDlgItem(hwnd, IDC_AUTORECONNECT_TIMEOUT), UDM_GETPOS32, 0, (LPARAM)&bError);
     if(bError)
-        App->reconnectTimeout = 5;
+        App->reconnectTimeout = 10;
 
     AppConfig->SetInt(TEXT("Publish"), TEXT("AutoReconnect"), App->bAutoReconnect);
     AppConfig->SetInt(TEXT("Publish"), TEXT("AutoReconnectTimeout"), App->reconnectTimeout);

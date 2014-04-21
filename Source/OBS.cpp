@@ -635,8 +635,8 @@ OBS::OBS()
 
     bAutoReconnect = AppConfig->GetInt(TEXT("Publish"), TEXT("AutoReconnect"), 1) != 0;
     reconnectTimeout = AppConfig->GetInt(TEXT("Publish"), TEXT("AutoReconnectTimeout"), 10);
-    if(reconnectTimeout < 5)
-        reconnectTimeout = 5;
+    if(reconnectTimeout < 0)
+        reconnectTimeout = 0;
 
     hHotkeyThread = OSCreateThread((XTHREAD)HotkeyThread, NULL);
 
