@@ -75,7 +75,7 @@ BOOL CALLBACK MonitorInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprc
 
 const int controlPadding = 3;
 
-const int totalControlAreaWidth  = minClientWidth;
+const int totalControlAreaWidth  = minClientWidth - 10;
 const int miscAreaWidth = 290;
 const int totalControlAreaHeight = 171;//170;//
 const int listAreaWidth = totalControlAreaWidth-miscAreaWidth;
