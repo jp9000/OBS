@@ -135,7 +135,6 @@ Settings.Advanced.AutomaticLatency="الوضع التلقائي للكمون ا�
 Settings.Advanced.AllowOtherHotkeyModifiers="السماح بمعدلات أخرى على مفاتيح الاختصار"
 Settings.Advanced.BindToIP="الربط إلى الواجهة :"
 Settings.Advanced.DisablePreviewEncoding="تعطيل ترميز الفيديو أثناء المعاينة"
-Settings.Advanced.GlobalAudioTimeAdjust="ازاحة زمنية للصوت العام  (ميللي ثانية):"
 Settings.Advanced.LatencyTuning="معامل ضبط التأخير:"
 Settings.Advanced.Network="الشبكة"
 Settings.Advanced.ProcessPriority="معالجة اولوية الفئة"

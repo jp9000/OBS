@@ -1,5 +1,9 @@
 Cancel="Prekliči"
 OK="V redu"
 
+Plugin.Name="Žvočni Vtičnik za Scene"
+Plugin.Description="Omogoči sledenje zvoka na sceni."
 
+Config.Caption="Konfiguracija Zvoka na sceni"
+Config.Enable="Omogoči sledenje zvoka na sceni"
 

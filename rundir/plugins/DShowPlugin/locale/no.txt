@@ -1,19 +1,38 @@
 Cancel="Avbryt"
+DeviceSelection="Valg av enhet"
 OK="OK"
 
 DeinterlacingType.None="Ingen"
+DeinterlacingType.Blend="Blend"
+DeinterlacingType.Blend2x="Blend2x"
 DeinterlacingType.Linear="Lineær"
 DeinterlacingType.Linear2x="Lineær2x"
 DeinterlacingType.Yadif="Yadif"
 DeinterlacingType.Yadif2x="Yadif2x"
 DeinterlacingType.Debug="Feilsøking"
+DeviceSelection.TopFieldFirst="Toppfeltet først"
+DeviceSelection.BottomFieldFirst="Bunnfeltet først"
 DeviceSelection.GPUDeinterlacing="Bruk GPU"
 
 
+DeviceSelection.64BitWarning="Noen enheter har ikke 64 bit-drivere. Hvis du ikke finner enheten din, prøv 32 bit OBS."
+DeviceSelection.Color="Farge:"
+DeviceSelection.Config="Konfigurer"
+DeviceSelection.CustomResolution="Egendefinert oppløsning:"
 DeviceSelection.Device="Enhet:"
 DeviceSelection.Deinterlacing="Deinterlacing:"
 DeviceSelection.ExistsInScene="En kilde bruker denne enheten allerede."
 DeviceSelection.ExistsSomewhere="Denne enheten brukes allerede som en kilde i en eller flere scener."
+DeviceSelection.FPS="FPS:"
+DeviceSelection.Gamma="Gamma:"
+DeviceSelection.InvalidResolution="Ugyldig oppløsning"
+DeviceSelection.NoSound="Ingen lyd"
+DeviceSelection.Opacity="Opasitet"
+DeviceSelection.Resolution="Oppløsning"
+DeviceSelection.Select="Velg"
+DeviceSelection.Similarity="Likhet (1-1000):"
+DeviceSelection.Sound="Lyd"
+DeviceSelection.Video="Video"
 
 
 
