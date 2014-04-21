@@ -137,19 +137,37 @@ bool RTMPPublisher::Init(UINT tcpBufferSize)
     //------------------------------------------
 
     int curTCPBufSize, curTCPBufSizeSize = sizeof(curTCPBufSize);
-    getsockopt (rtmp->m_sb.sb_socket, SOL_SOCKET, SO_SNDBUF, (char *)&curTCPBufSize, &curTCPBufSizeSize);
-
-    Log(TEXT("SO_SNDBUF was at %u"), curTCPBufSize);
-
-    if(curTCPBufSize < int(tcpBufferSize))
+    
+    if (!getsockopt(rtmp->m_sb.sb_socket, SOL_SOCKET, SO_SNDBUF, (char *)&curTCPBufSize, &curTCPBufSizeSize))
     {
-        setsockopt (rtmp->m_sb.sb_socket, SOL_SOCKET, SO_SNDBUF, (const char *)&tcpBufferSize, sizeof(tcpBufferSize));
-        getsockopt (rtmp->m_sb.sb_socket, SOL_SOCKET, SO_SNDBUF, (char *)&curTCPBufSize, &curTCPBufSizeSize);
-        if(curTCPBufSize != tcpBufferSize)
-            Log(TEXT("Could not set SO_SNDBUF to %u, value is now %u"), tcpBufferSize, curTCPBufSize);
-    }
+        Log(TEXT("SO_SNDBUF was at %u"), curTCPBufSize);
 
-    Log(TEXT("SO_SNDBUF is now %u"), tcpBufferSize);
+        if (curTCPBufSize < int(tcpBufferSize))
+        {
+            if (!setsockopt(rtmp->m_sb.sb_socket, SOL_SOCKET, SO_SNDBUF, (const char *)&tcpBufferSize, sizeof(tcpBufferSize)))
+            {
+                if (!getsockopt(rtmp->m_sb.sb_socket, SOL_SOCKET, SO_SNDBUF, (char *)&curTCPBufSize, &curTCPBufSizeSize))
+                {
+                    if (curTCPBufSize != tcpBufferSize)
+                        Log(TEXT("Could not raise SO_SNDBUF to %u, value is now %d"), tcpBufferSize, curTCPBufSize);
+
+                    Log(TEXT("SO_SNDBUF is now %d"), curTCPBufSize);
+                }
+                else
+                {
+                    Log(TEXT("getsockopt: Failed to query SO_SNDBUF, error %d"), WSAGetLastError());
+                }
+            }
+            else
+            {
+                Log(TEXT("setsockopt: Failed to raise SO_SNDBUF to %u, error %d"), tcpBufferSize, WSAGetLastError());
+            }
+        }
+    }
+    else
+    {
+        Log(TEXT("getsockopt: Failed to query SO_SNDBUF, error %d"), WSAGetLastError());
+    }
 
     //------------------------------------------
 
