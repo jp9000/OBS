@@ -235,7 +235,10 @@ public:
         paramData.pf_log                = get_x264_log;
         paramData.i_log_level           = X264_LOG_WARNING;
 
-        for(UINT i=0; i<paramList.Num(); i++)
+        if (scmpi(curProfile, L"main") == 0)
+            paramData.i_level_idc = 41; // to ensure compatibility with portable devices
+
+        for (UINT i = 0; i<paramList.Num(); i++)
         {
             String &strParam = paramList[i];
             if(!schr(strParam, '='))
