@@ -1103,7 +1103,10 @@ void RTMPPublisher::FatalSocketShutdown()
     //anything buffered is invalid now
     curDataBufferLen = 0;
 
-    App->PostStopMessage();
+    if (AppConfig->GetInt(TEXT("Publish"), TEXT("ExperimentalReconnectMode")) == 1 && AppConfig->GetInt(TEXT("Publish"), TEXT("Delay")) == 0)
+        App->NetworkFailed();
+    else
+        App->PostStopMessage();
 }
 
 void RTMPPublisher::SocketLoop()
@@ -1251,15 +1254,20 @@ void RTMPPublisher::SocketLoop()
             if (!idealsendbacklogquery(rtmp->m_sb.sb_socket, &idealSendBacklog))
             {
                 int curTCPBufSize, curTCPBufSizeSize = sizeof(curTCPBufSize);
-                getsockopt (rtmp->m_sb.sb_socket, SOL_SOCKET, SO_SNDBUF, (char *)&curTCPBufSize, &curTCPBufSizeSize);
-
-                if (curTCPBufSize < (int)idealSendBacklog)
+                if (!getsockopt(rtmp->m_sb.sb_socket, SOL_SOCKET, SO_SNDBUF, (char *)&curTCPBufSize, &curTCPBufSizeSize))
                 {
-                    int bufferSize = (int)idealSendBacklog;
-                    setsockopt(rtmp->m_sb.sb_socket, SOL_SOCKET, SO_SNDBUF, (const char *)&bufferSize, sizeof(bufferSize));
-                    Log(TEXT("RTMPPublisher::SocketLoop: Increasing send buffer to ISB %d (buffer: %d / %d)"), idealSendBacklog, curDataBufferLen, dataBufferSize);
+                    if (curTCPBufSize < (int)idealSendBacklog)
+                    {
+                        int bufferSize = (int)idealSendBacklog;
+                        setsockopt(rtmp->m_sb.sb_socket, SOL_SOCKET, SO_SNDBUF, (const char *)&bufferSize, sizeof(bufferSize));
+                        Log(TEXT("RTMPPublisher::SocketLoop: Increasing send buffer to ISB %d (buffer: %d / %d)"), idealSendBacklog, curDataBufferLen, dataBufferSize);
+                    }
                 }
+                else
+                    Log(TEXT("RTMPPublisher::SocketLoop: Got hSendBacklogEvent but getsockopt() returned %d"), WSAGetLastError());
             }
+            else
+                Log(TEXT("RTMPPublisher::SocketLoop: Got hSendBacklogEvent but WSAIoctl() returned %d"), WSAGetLastError());
 
             SetupSendBacklogEvent ();
             continue;

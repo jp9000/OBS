@@ -401,6 +401,7 @@ enum
     OBS_SETSOURCERENDER,
     OBS_UPDATESTATUSBAR,
     OBS_NOTIFICATIONAREA,
+    OBS_NETWORK_FAILED,
 };
 
 //----------------------------
@@ -1012,6 +1013,8 @@ private:
 
     void ReloadIniSettings();
 
+    void RestartNetwork();
+
 public:
     OBS();
     virtual ~OBS();
@@ -1043,6 +1046,7 @@ public:
     char* EncMetaData(char *enc, char *pend, bool bFLVFile=false);
 
     inline void PostStopMessage() {if(hwndMain) PostMessage(hwndMain, OBS_REQUESTSTOP, 0, 0);}
+    inline void NetworkFailed() { if (hwndMain) PostMessage(hwndMain, OBS_NETWORK_FAILED, 0, 0); }
 
     void GetBaseSize(UINT &width, UINT &height) const;
 
