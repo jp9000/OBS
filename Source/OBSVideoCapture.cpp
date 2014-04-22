@@ -776,9 +776,16 @@ void OBS::MainCaptureLoop()
 
         QWORD curBytesSent = 0;
         
-        if(network) {
+        if (network) {
             curBytesSent = network->GetCurrentSentBytes();
             curFramesDropped = network->NumDroppedFrames();
+        } else if (numSecondsWaited) {
+            //reset stats if the network disappears
+            bytesPerSec = 0;
+            bpsTime = 0;
+            numSecondsWaited = 0;
+            curBytesSent = 0;
+            zero(lastBytesSent, sizeof(lastBytesSent));
         }
 
         bpsTime += fSeconds;

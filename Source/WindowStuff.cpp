@@ -2229,7 +2229,10 @@ INT_PTR CALLBACK OBS::ReconnectDialogProc(HWND hwnd, UINT message, WPARAM wParam
 
                 if(!ri->secondsLeft)
                 {
-                    SendMessage(hwndMain, OBS_RECONNECT, 0, 0);
+                    if (AppConfig->GetInt(TEXT("Publish"), TEXT("ExperimentalReconnectMode")) == 1 && AppConfig->GetInt(TEXT("Publish"), TEXT("Delay")) == 0)
+                        App->RestartNetwork();
+                    else
+                        SendMessage(hwndMain, OBS_RECONNECT, 0, 0);
                     EndDialog(hwnd, IDOK);
                 }
                 else
@@ -2252,12 +2255,16 @@ INT_PTR CALLBACK OBS::ReconnectDialogProc(HWND hwnd, UINT message, WPARAM wParam
             if(LOWORD(wParam) == IDCANCEL)
             {
                 App->bReconnecting = false;
+                if (AppConfig->GetInt(TEXT("Publish"), TEXT("ExperimentalReconnectMode")) == 1 && AppConfig->GetInt(TEXT("Publish"), TEXT("Delay")) == 0)
+                    App->Stop();
                 EndDialog(hwnd, IDCANCEL);
             }
             break;
 
         case WM_CLOSE:
             App->bReconnecting = false;
+            if (AppConfig->GetInt(TEXT("Publish"), TEXT("ExperimentalReconnectMode")) == 1 && AppConfig->GetInt(TEXT("Publish"), TEXT("Delay")) == 0)
+                App->Stop();
             EndDialog(hwnd, IDCANCEL);
             break;
 
@@ -3355,6 +3362,37 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 }
             }
 
+            break;
+
+        case OBS_NETWORK_FAILED:
+            {
+                if ((App->bFirstConnect && App->totalStreamTime < 30000) || !App->bAutoReconnect)
+                {
+                    //no reconnect, or the connection died very early in the stream
+                    App->Stop();
+                    if (App->streamReport.IsValid())
+                    {
+                        OBSMessageBox(hwndMain, App->streamReport.Array(), Str("StreamReport"), MB_ICONEXCLAMATION);
+                        App->streamReport.Clear();
+                    }
+                    else
+                        OBSMessageBox(hwnd, Str("Connection.Disconnected"), NULL, MB_ICONEXCLAMATION);
+                }
+                else
+                {
+                    PlaySound((LPCTSTR)SND_ALIAS_SYSTEMASTERISK, NULL, SND_ALIAS_ID | SND_ASYNC);
+
+                    if (!App->reconnectTimeout)
+                    {
+                        //fire immediately
+                        App->RestartNetwork();
+                    }
+                    else
+                    {
+                        OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_RECONNECTING), hwnd, OBS::ReconnectDialogProc);
+                    }
+                }
+            }
             break;
 
         case OBS_CALLHOTKEY:

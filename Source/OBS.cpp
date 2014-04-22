@@ -1957,3 +1957,24 @@ void OBS::GetThreadHandles (HANDLE *videoThread, HANDLE *encodeThread)
     if (hEncodeThread)
         *encodeThread = hEncodeThread;
 }
+
+NetworkStream* CreateRTMPPublisher();
+NetworkStream* CreateDelayedPublisher(DWORD delayTime);
+NetworkStream* CreateNullNetwork();
+
+void OBS::RestartNetwork()
+{
+    NetworkStream *tmp;
+    OSEnterMutex(App->hStartupShutdownMutex);
+
+    //delete the old one
+    tmp = App->network;
+    App->network = nullptr;
+    delete tmp;
+
+    //start up a new one
+    App->bSentHeaders = false;
+    App->network = CreateRTMPPublisher();
+
+    OSLeaveMutex(App->hStartupShutdownMutex);
+}

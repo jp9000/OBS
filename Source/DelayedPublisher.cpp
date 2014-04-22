@@ -102,7 +102,7 @@ public:
 
     ~DelayedPublisher()
     {
-        if(!bStopping)
+        if(!bStopping && RTMP_IsConnected(rtmp))
         {
             App->EnableSceneSwitching(FALSE);
             EnableWindow (hwndMain, FALSE);
