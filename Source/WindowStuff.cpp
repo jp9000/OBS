@@ -3365,32 +3365,30 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
             break;
 
         case OBS_NETWORK_FAILED:
+            if ((App->bFirstConnect && App->totalStreamTime < 30000) || !App->bAutoReconnect)
             {
-                if ((App->bFirstConnect && App->totalStreamTime < 30000) || !App->bAutoReconnect)
+                //no reconnect, or the connection died very early in the stream
+                App->Stop();
+                if (App->streamReport.IsValid())
                 {
-                    //no reconnect, or the connection died very early in the stream
-                    App->Stop();
-                    if (App->streamReport.IsValid())
-                    {
-                        OBSMessageBox(hwndMain, App->streamReport.Array(), Str("StreamReport"), MB_ICONEXCLAMATION);
-                        App->streamReport.Clear();
-                    }
-                    else
-                        OBSMessageBox(hwnd, Str("Connection.Disconnected"), NULL, MB_ICONEXCLAMATION);
+                    OBSMessageBox(hwndMain, App->streamReport.Array(), Str("StreamReport"), MB_ICONEXCLAMATION);
+                    App->streamReport.Clear();
+                }
+                else
+                    OBSMessageBox(hwnd, Str("Connection.Disconnected"), NULL, MB_ICONEXCLAMATION);
+            }
+            else
+            {
+                PlaySound((LPCTSTR)SND_ALIAS_SYSTEMASTERISK, NULL, SND_ALIAS_ID | SND_ASYNC);
+
+                if (!App->reconnectTimeout)
+                {
+                    //fire immediately
+                    App->RestartNetwork();
                 }
                 else
                 {
-                    PlaySound((LPCTSTR)SND_ALIAS_SYSTEMASTERISK, NULL, SND_ALIAS_ID | SND_ASYNC);
-
-                    if (!App->reconnectTimeout)
-                    {
-                        //fire immediately
-                        App->RestartNetwork();
-                    }
-                    else
-                    {
-                        OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_RECONNECTING), hwnd, OBS::ReconnectDialogProc);
-                    }
+                    OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_RECONNECTING), hwnd, OBS::ReconnectDialogProc);
                 }
             }
             break;
