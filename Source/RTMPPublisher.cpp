@@ -1103,10 +1103,13 @@ void RTMPPublisher::FatalSocketShutdown()
     //anything buffered is invalid now
     curDataBufferLen = 0;
 
-    if (AppConfig->GetInt(TEXT("Publish"), TEXT("ExperimentalReconnectMode")) == 1 && AppConfig->GetInt(TEXT("Publish"), TEXT("Delay")) == 0)
-        App->NetworkFailed();
-    else
-        App->PostStopMessage();
+    if (!bStopping)
+    {
+        if (AppConfig->GetInt(TEXT("Publish"), TEXT("ExperimentalReconnectMode")) == 1 && AppConfig->GetInt(TEXT("Publish"), TEXT("Delay")) == 0)
+            App->NetworkFailed();
+        else
+            App->PostStopMessage();
+    }
 }
 
 void RTMPPublisher::SocketLoop()
