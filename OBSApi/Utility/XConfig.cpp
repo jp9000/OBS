@@ -890,6 +890,9 @@ bool  XConfig::ReadFileData2(XElement *curElement, int level, TSTR &lpTemp, bool
                 if (!GetNextLine(lpTemp, isJSON) && curElement != RootElement)
                     return false;
 
+                if (*lpTemp == '}')
+                    lpTemp--;
+
                 curElement->SubItems << new XDataItem(strName, data);
             }
         }

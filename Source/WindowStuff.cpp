@@ -2347,6 +2347,8 @@ void OBS::ResetLogUploadMenu()
         if (!(finder = OSFindFirstFile(logfilePattern, ofd)))
             return;
 
+        char *contents = (char*)Allocate(1024 * 8);
+
         do
         {
             if (ofd.bDirectory) continue;
@@ -2358,14 +2360,19 @@ void OBS::ResetLogUploadMenu()
             if (!f.IsOpen())
                 continue;
 
-            String contents;
-            f.ReadFileToString(contents);
-            if (!sstr(contents.Array(), L"Open Broadcaster Software"))
+            DWORD nRead = f.Read(contents, 1024*8 - 1);
+            contents[nRead] = 0;
+
+            bool validLog = (strstr(contents, "Open Broadcaster Software") != nullptr);
+
+            if (!validLog)
                 continue;
 
             iter->second = true;
             validLogs.push_back(iter);
         } while (OSFindNextFile(finder, ofd));
+
+        Free(contents);
     }
     else
     {

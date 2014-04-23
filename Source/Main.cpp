@@ -665,8 +665,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             OSMonitorFileDestroy(pGCHLogMF);
         }
 
-	//FIXME: File monitoring needs fixing.  Half the time game capture logs are not
-	//getting attached even when users clearly used it.
+        //FIXME: File monitoring needs fixing.  Half the time game capture logs are not
+        //getting attached even when users clearly used it.
         if(true) //!skipGCHLog)
         {
             XFile captureHookLog;
