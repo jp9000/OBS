@@ -897,7 +897,13 @@ bool  XConfig::ReadFileData2(XElement *curElement, int level, TSTR &lpTemp, bool
             }
         }
 
-        ++lpTemp;
+        // A ++lpTemp above can step off the end of the string causing
+        // the condition on while to go a bit crazy.
+        // Making sure we preserve the end of string.
+        if (*lpTemp != 0)
+        {
+            ++lpTemp;
+        }
     }
 
     return (curElement == RootElement);
@@ -1003,6 +1009,27 @@ void  XConfig::WriteFileData(XFile &file, int indent, XElement *curElement)
     }
 }
 
+// Basically the same as Open (and in fact Open could/should call ParseString to do its thing)
+// But ParseString allows chunks of JSON type strings to be parse into the XConfig structure.
+bool  XConfig::ParseString(const String& config)
+{
+    String safe_copy = config;
+    TSTR lpTemp = safe_copy;
+
+    RootElement = new XElement(this, NULL, TEXT("Root"));
+
+    if(!ReadFileData2(RootElement, 0, lpTemp, true))
+    {
+        for(DWORD i=0; i<RootElement->SubItems.Num(); i++)
+            delete RootElement->SubItems[i];
+
+        CrashError(TEXT("Error parsing X string '%s'"), config.Array());
+
+        Close(false);
+    }
+
+    return true;
+}
 
 bool  XConfig::Open(CTSTR lpFile)
 {
