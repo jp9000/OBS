@@ -180,11 +180,15 @@ BASE_EXPORT BOOL   STDCALL OSIncompatibleModulesLoaded();
 BASE_EXPORT BOOL   STDCALL OSIncompatiblePatchesLoaded(String &errors);
 BASE_EXPORT void   STDCALL OSCheckForBuggyDLLs ();
 
+BASE_EXPORT void           OSRaiseException(DWORD code);
+
 BASE_EXPORT void __cdecl   LogRaw(const TCHAR *text, UINT len=0);
 BASE_EXPORT void __cdecl   Logva(const TCHAR *format, va_list argptr);
 BASE_EXPORT void __cdecl   Log(const TCHAR *format, ...);
 
 BASE_EXPORT __declspec(noreturn) void __cdecl   CrashError(const TCHAR *format, ...);
+BASE_EXPORT __declspec(noreturn) void __cdecl   DumpError(const TCHAR *format, ...);
+
 BASE_EXPORT void __cdecl   AppWarning(const TCHAR *format, ...);
 
 BASE_EXPORT void   STDCALL TraceCrash(const TCHAR *trackName);

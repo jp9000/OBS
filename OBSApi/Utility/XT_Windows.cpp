@@ -748,6 +748,11 @@ BOOL   STDCALL OSTerminateThread(HANDLE hThread, DWORD waitMS)
     return 1;
 }
 
+void OSRaiseException(DWORD code)
+{
+    RaiseException(code, EXCEPTION_NONCONTINUABLE, 0, NULL);
+}
+
 void OSCloseEvent(HANDLE event)
 {
     CloseHandle(event);

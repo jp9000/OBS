@@ -371,42 +371,42 @@ public:
     inline T& GetElement(unsigned int index)
     {
         assert(index < num);
-        if(index >= num) {CrashError(TEXT("Out of range!  List<%S>::operator[](%d)"), typeid(T).name(), index); return array[0];}
+        if (index >= num) { DumpError(TEXT("Out of range!  List<%S>::operator[](%d)"), typeid(T).name(), index); return array[0]; }
         return array[index];
     }
 
     inline T& operator[](unsigned int index)
     {
         assert(index < num);
-        if(index >= num) {CrashError(TEXT("Out of range!  List<%S>::operator[](%d)"), typeid(T).name(), index); return array[0];}
+        if(index >= num) {DumpError(TEXT("Out of range!  List<%S>::operator[](%d)"), typeid(T).name(), index); return array[0];}
         return array[index];
     }
 
     inline T& operator[](unsigned int index) const
     {
         assert(index < num);
-        if(index >= num) {CrashError(TEXT("Out of range!  List<%S>::operator[](%d)"), typeid(T).name(), index); return array[0];}
+        if (index >= num) { DumpError(TEXT("Out of range!  List<%S>::operator[](%d)"), typeid(T).name(), index); return array[0]; }
         return array[index];
     }
 
     inline T* operator+(unsigned int index)
     {
         assert(index < num);
-        if(index >= num) {CrashError(TEXT("Out of range!  List<%S>::operator[](%d)"), typeid(T).name(), index); return NULL;}
+        if (index >= num) { DumpError(TEXT("Out of range!  List<%S>::operator[](%d)"), typeid(T).name(), index); return NULL; }
         return array+index;
     }
 
     inline T* operator+(unsigned int index) const
     {
         assert(index < num);
-        if(index >= num) {CrashError(TEXT("Out of range!  List<%S>::operator[](%d)"), typeid(T).name(), index); return NULL;}
+        if (index >= num) { DumpError(TEXT("Out of range!  List<%S>::operator[](%d)"), typeid(T).name(), index); return NULL; }
         return array+index;
     }
 
     inline T* operator-(unsigned int index)
     {
         assert(index < num);
-        if(index >= num) {CrashError(TEXT("Out of range!  List<%S>::operator[](%d)"), typeid(T).name(), index); return NULL;}
+        if (index >= num) { DumpError(TEXT("Out of range!  List<%S>::operator[](%d)"), typeid(T).name(), index); return NULL; }
         return array-index;
     }
 
@@ -555,7 +555,7 @@ public:
 
     inline BOOL operator[](unsigned int index) const
     {
-        if(index >= bitSize) CrashError(TEXT("Out of range!  BitList::operator[](%d)"), index);
+        if (index >= bitSize) DumpError(TEXT("Out of range!  BitList::operator[](%d)"), index);
 
         int UINTOffset = (index/32);
         int bitOffset = (index%32);
@@ -567,7 +567,7 @@ public:
     {
         if(index >= bitSize)
         {
-            CrashError(TEXT("Out of range!  BitList::Set(%d)"), index);
+            DumpError(TEXT("Out of range!  BitList::Set(%d)"), index);
             return;
         }
 
@@ -581,7 +581,7 @@ public:
     {
         if(index >= bitSize)
         {
-            CrashError(TEXT("Out of range!  BitList::Clear(%d)"), index);
+            DumpError(TEXT("Out of range!  BitList::Clear(%d)"), index);
             return;
         }
 
@@ -593,7 +593,7 @@ public:
 
     inline BOOL Get(unsigned int index)
     {
-        if(index >= bitSize) CrashError(TEXT("Out of range!  BitList::Get(%d)"), index);
+        if (index >= bitSize) DumpError(TEXT("Out of range!  BitList::Get(%d)"), index);
 
         int UINTOffset = (index/32);
         int bitOffset = (index%32);
@@ -668,7 +668,7 @@ public:
         return TRUE;
     }
 
-    inline void Insert(unsigned int index, const T& val) {CrashError(TEXT("Illegal Insert into SafeList"));}
+    inline void Insert(unsigned int index, const T& val) { DumpError(TEXT("Illegal Insert into SafeList")); }
 
     inline void Remove(unsigned int index)
     {
@@ -941,19 +941,19 @@ public:
 
     inline T& GetElement(unsigned int index)
     {
-        if(index >= storedNum) CrashError(TEXT("Out of range!  CircularList::GetElement(%d)"), index);
+        if (index >= storedNum) DumpError(TEXT("Out of range!  CircularList::GetElement(%d)"), index);
         return array[GetRealIndex(index)];
     }
 
     inline T& operator[](unsigned int index)
     {
-        if(index >= storedNum) CrashError(TEXT("Out of range!  CircularList::operator[](%d)"), index);
+        if (index >= storedNum) DumpError(TEXT("Out of range!  CircularList::operator[](%d)"), index);
         return array[GetRealIndex(index)];
     }
 
     inline T& operator[](unsigned int index) const
     {
-        if(index >= storedNum) CrashError(TEXT("Out of range!  CircularList::operator[](%d)"), index);
+        if (index >= storedNum) DumpError(TEXT("Out of range!  CircularList::operator[](%d)"), index);
         return array[GetRealIndex(index)];
     }
 

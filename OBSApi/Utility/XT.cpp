@@ -335,6 +335,25 @@ __declspec(noreturn) void __cdecl CrashError(const TCHAR *format, ...)
     CriticalExit();
 }
 
+__declspec(noreturn) void __cdecl DumpError(const TCHAR *format, ...)
+{
+    va_list arglist;
+
+    va_start(arglist, format);
+
+    String strOut(L"\r\nError: ");
+    strOut << FormattedStringva(format, arglist);
+
+    OpenLogFile();
+    LogFile.WriteAsUTF8(strOut);
+    LogFile.WriteStr(TEXT("\r\n"));
+    CloseLogFile();
+
+    OSMessageBoxva(format, arglist);
+
+    OSRaiseException(0xDEAD0B5);
+}
+
 String CurrentTimeString()
 {
     time_t     now = time(0);
