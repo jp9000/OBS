@@ -287,6 +287,8 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 bDisplayConnectedOnly = GlobalConfig->GetInt(L"Audio", L"DisplayConntectedOnly", true) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_CONNECTEDONLY), BM_SETCHECK, bDisplayConnectedOnly ? BST_CHECKED : BST_UNCHECKED, 0);
 
+                useInputDevices = AppConfig->GetInt(L"Audio", L"InputDevicesForDesktopSound", false) != 0;
+
                 //--------------------------------------------
 
                 BOOL bPushToTalk = AppConfig->GetInt(TEXT("Audio"), TEXT("UsePushToTalk"));
