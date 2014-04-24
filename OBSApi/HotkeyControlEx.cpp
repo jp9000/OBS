@@ -206,12 +206,12 @@ LRESULT CALLBACK HotkeyExProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
             {
                 control = GetHotkeyControlExData(hwnd);
                 if(!control->bHasFocus)
-                {
                     SetFocus(hwnd);
-                    break;
-                }
+                break;;
             }
         case WM_RBUTTONDOWN:
+            break;
+
         case WM_MBUTTONDOWN:
         case WM_XBUTTONDOWN:
             {
