@@ -414,6 +414,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         return 1;
     }
 
+#if defined _M_X64 && _MSC_VER == 1800
+    //workaround AVX2 bug in VS2013, http://connect.microsoft.com/VisualStudio/feedback/details/811093
+    _set_FMA3_enable(0);
+#endif
+
     LoadSeDebugPrivilege();
 
     int numArgs;
