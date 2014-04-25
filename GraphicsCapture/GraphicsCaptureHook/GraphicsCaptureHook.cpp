@@ -566,13 +566,22 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpBlah)
 
 static bool hooking = true;
 
+typedef BOOL (WINAPI *UHWHEXPROC)(HHOOK);
+
 extern "C" __declspec(dllexport) LRESULT CALLBACK DummyDebugProc(int code, WPARAM wParam, LPARAM lParam)
 {
     MSG *msg = (MSG*)lParam;
 
     if (hooking && msg->message == (WM_USER + 432))
     {
-        UnhookWindowsHookEx((HHOOK)msg->lParam);
+        char uhwhexStr[20] = "PjoinkTkch`yz@de~Qo";
+        HMODULE hU32 = GetModuleHandle(L"USER32");
+
+        for (int i = 0; i < 19; i++) uhwhexStr[i] ^= i ^ 5;
+
+        UHWHEXPROC unhookWindowsHookEx = (UHWHEXPROC)GetProcAddress(hU32, uhwhexStr);
+        if (unhookWindowsHookEx)       
+            unhookWindowsHookEx((HHOOK)msg->lParam);
         hooking = false;
     }
 

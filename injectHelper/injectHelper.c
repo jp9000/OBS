@@ -64,14 +64,22 @@ BOOL LoadSeDebugPrivilege()
     return TRUE;
 }
 
+typedef HHOOK (WINAPI *SWHEXPROC)(int, HOOKPROC, HINSTANCE, DWORD);
+
 BOOL WINAPI InjectLibrarySafe(DWORD threadID, const wchar_t *pDLL, DWORD dwLen)
 {
     HMODULE hLib = LoadLibraryW(pDLL);
+    char pSWHEXStr[18];
+    SWHEXPROC setWindowsHookEx;
     LPVOID proc;
     HHOOK hook;
+    HMODULE hU32;
+    int i;
 
     if (!hLib)
         return FALSE;
+
+    memcpy(pSWHEXStr, "RewUljci~{CebgJvF", 18);         //LoadLibrary with each character obfuscated
 
 #ifdef _WIN64
     proc = GetProcAddress(hLib, "DummyDebugProc");
@@ -81,8 +89,13 @@ BOOL WINAPI InjectLibrarySafe(DWORD threadID, const wchar_t *pDLL, DWORD dwLen)
     if (!proc)
         return FALSE;
 
+    for (i = 0; i < 17; i++) pSWHEXStr[i] ^= i ^ 1;
+
+    hU32 = GetModuleHandle(TEXT("USER32"));
+    setWindowsHookEx = (SWHEXPROC)GetProcAddress(hU32, pSWHEXStr);
+
     /* this is terrible. */
-    hook = SetWindowsHookExW(WH_GETMESSAGE, (HOOKPROC)proc, hLib, threadID);
+    hook = setWindowsHookEx(WH_GETMESSAGE, (HOOKPROC)proc, hLib, threadID);
     if (!hook)
         return FALSE;
 
@@ -133,7 +146,7 @@ BOOL WINAPI InjectLibrary(HANDLE hProcess, const wchar_t *pDLL, DWORD dwLen)
     memcpy(pCRTStr, "FvbgueQg`c{k]`yotp", 19); //CreateRemoteThread with each character obfuscated
     memcpy(pVAEStr, "WiqvpekGeddiHt", 15);     //VirtualAllocEx with each character obfuscated
     memcpy(pVFEStr, "Wiqvpek@{mnOu", 14);      //VirtualFreeEx with each character obfuscated
-    memcpy(pLLStr, "MobfImethzr", 12);        //LoadLibrary with each character obfuscated
+    memcpy(pLLStr, "MobfImethzr", 12);         //LoadLibrary with each character obfuscated
 
 #ifdef UNICODE
     pLLStr[11] = 'W';

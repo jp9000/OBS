@@ -38,7 +38,7 @@
 #include <fstream>
 using namespace std;
 
-#define OLDHOOKS 0
+#define OLDHOOKS 1
 
 #if (!OLDHOOKS)
 #include "../../minhook/include/minhook.h"
