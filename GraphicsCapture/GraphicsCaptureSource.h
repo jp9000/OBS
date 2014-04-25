@@ -68,6 +68,7 @@ class GraphicsCaptureSource : public ImageSource
     void EndCapture();
 
     void AttemptCapture();
+    BOOL CheckFileIntegrity(LPCTSTR path);
 
     static void STDCALL CaptureHotkey(DWORD hotkey, GraphicsCaptureSource *capture, bool bDown);
 

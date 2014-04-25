@@ -321,6 +321,35 @@ void GraphicsCaptureSource::BeginScene()
     AttemptCapture();
 }
 
+BOOL GraphicsCaptureSource::CheckFileIntegrity(LPCTSTR strDLL)
+{
+    HANDLE hFileTest = CreateFile(strDLL, GENERIC_READ | GENERIC_EXECUTE, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+    if (hFileTest == INVALID_HANDLE_VALUE)
+    {
+        String strWarning;
+
+        DWORD err = GetLastError();
+        if (err == ERROR_FILE_NOT_FOUND)
+            strWarning = TEXT("Important game capture files have been deleted. This is likely due to anti-virus software. Please make sure the OBS folder is excluded or ignored from any anti-virus / security software and re-install OBS.");
+        else if (err == ERROR_ACCESS_DENIED)
+            strWarning = TEXT("Important game capture files can not be loaded. This is likely due to anti-virus or security software. Please make sure the OBS folder is excluded / ignored from any anti-virus / security software.");
+        else
+            strWarning = FormattedString(TEXT("Important game capture files can not be loaded (error %d). This is likely due to anti-virus or security software. Please make sure the OBS folder is excluded / ignored from any anti-virus / security software."), err);
+
+        Log(TEXT("GraphicsCaptureSource::CheckFileIntegrity: Error %d while accessing %s"), err, strDLL);
+
+        //not sure if we should be using messagebox here, but probably better than "help why do i have black screen"
+        OBSMessageBox(API->GetMainWindow(), strWarning.Array(), NULL, MB_ICONERROR | MB_OK);
+
+        return FALSE;
+    }
+    else
+    {
+        CloseHandle(hFileTest);
+        return TRUE;
+    }
+}
+
 void GraphicsCaptureSource::AttemptCapture()
 {
     //Log(TEXT("attempting to capture.."));
@@ -338,7 +367,7 @@ void GraphicsCaptureSource::AttemptCapture()
         targetThreadID = GetWindowThreadProcessId(hwndTarget, &targetProcessID);
         if (!targetThreadID || !targetProcessID)
         {
-            AppWarning(TEXT("GraphicsCaptureSource::BeginScene: GetWindowThreadProcessId failed, GetLastError = %u"), GetLastError());
+            AppWarning(TEXT("GraphicsCaptureSource::AttemptCapture: GetWindowThreadProcessId failed, GetLastError = %u"), GetLastError());
             bErrorAcquiring = true;
             return;
         }
@@ -425,99 +454,107 @@ void GraphicsCaptureSource::AttemptCapture()
             if(Is64BitWindows())
                 IsWow64Process(hProcess, &b32bit);
 
-            if (bSameBit && !useSafeHook)
+            //verify the hook DLL is accessible
+            String strDLL;
+            DWORD dwDirSize = GetCurrentDirectory(0, NULL);
+            strDLL.SetLength(dwDirSize);
+            GetCurrentDirectory(dwDirSize, strDLL);
+
+            strDLL << TEXT("\\plugins\\GraphicsCapture\\GraphicsCaptureHook");
+
+            if (!b32bit)
+                strDLL << TEXT("64");
+
+            strDLL << TEXT(".dll");
+
+            if (!CheckFileIntegrity(strDLL.Array()))
             {
-                String strDLL;
-                DWORD dwDirSize = GetCurrentDirectory(0, NULL);
-                strDLL.SetLength(dwDirSize);
-                GetCurrentDirectory(dwDirSize, strDLL);
-
-                strDLL << TEXT("\\plugins\\GraphicsCapture\\GraphicsCaptureHook");
-
-                BOOL b32bit = TRUE;
-                if (Is64BitWindows())
-                    IsWow64Process(hProcess, &b32bit);
-
-                if (!b32bit)
-                    strDLL << TEXT("64");
-
-                strDLL << TEXT(".dll");
-
-                if (InjectLibrary(hProcess, strDLL))
-                {
-                    captureWaitCount = 0;
-                    bCapturing = true;
-                }
-                else
-                {
-                    AppWarning(TEXT("GraphicsCaptureSource::BeginScene: Failed to inject library, GetLastError = %u"), GetLastError());
-
-                    CloseHandle(hProcess);
-                    hProcess = NULL;
-                    bErrorAcquiring = true;
-                }
+                bErrorAcquiring = true;
             }
             else
             {
 
-                String strDLLPath;
-                DWORD dwDirSize = GetCurrentDirectory(0, NULL);
-                strDLLPath.SetLength(dwDirSize);
-                GetCurrentDirectory(dwDirSize, strDLLPath);
-
-                strDLLPath << TEXT("\\plugins\\GraphicsCapture");
-
-                String strHelper = strDLLPath;
-                strHelper << ((b32bit) ? TEXT("\\injectHelper.exe") : TEXT("\\injectHelper64.exe"));
-
-                String strCommandLine;
-                strCommandLine << TEXT("\"") << strHelper << TEXT("\" ");
-                if (useSafeHook)
-                    strCommandLine << UIntString(targetThreadID) << " 1";
-                else
-                    strCommandLine << UIntString(targetProcessID) << " 0";
-
-                //---------------------------------------
-
-                PROCESS_INFORMATION pi;
-                STARTUPINFO si;
-
-                zero(&pi, sizeof(pi));
-                zero(&si, sizeof(si));
-                si.cb = sizeof(si);
-
-                if (CreateProcess(strHelper, strCommandLine, NULL, NULL, FALSE, 0, NULL, strDLLPath, &si, &pi))
+                if (bSameBit && !useSafeHook)
                 {
-                    int exitCode = 0;
-
-                    CloseHandle(pi.hThread);
-
-                    if (!useSafeHook)
-                    {
-                        WaitForSingleObject(pi.hProcess, INFINITE);
-                        GetExitCodeProcess(pi.hProcess, (DWORD*)&exitCode);
-                        CloseHandle(pi.hProcess);
-                    }
-                    else
-                    {
-                        injectHelperProcess = pi.hProcess;
-                    }
-
-                    if (exitCode == 0)
+                    if (InjectLibrary(hProcess, strDLL))
                     {
                         captureWaitCount = 0;
                         bCapturing = true;
                     }
                     else
                     {
-                        AppWarning(TEXT("GraphicsCaptureSource::BeginScene: Failed to inject library, error code = %d"), exitCode);
+                        AppWarning(TEXT("GraphicsCaptureSource::AttemptCapture: Failed to inject library, GetLastError = %u"), GetLastError());
                         bErrorAcquiring = true;
                     }
                 }
                 else
                 {
-                    AppWarning(TEXT("GraphicsCaptureSource::BeginScene: Could not create inject helper, GetLastError = %u"), GetLastError());
-                    bErrorAcquiring = true;
+                    String strDLLPath;
+                    DWORD dwDirSize = GetCurrentDirectory(0, NULL);
+                    strDLLPath.SetLength(dwDirSize);
+                    GetCurrentDirectory(dwDirSize, strDLLPath);
+
+                    strDLLPath << TEXT("\\plugins\\GraphicsCapture");
+
+                    String strHelper = strDLLPath;
+                    strHelper << ((b32bit) ? TEXT("\\injectHelper.exe") : TEXT("\\injectHelper64.exe"));
+
+                    if (!CheckFileIntegrity(strHelper.Array()))
+                    {
+                        bErrorAcquiring = true;
+                    }
+                    else
+                    {
+                        String strCommandLine;
+                        strCommandLine << TEXT("\"") << strHelper << TEXT("\" ");
+                        if (useSafeHook)
+                            strCommandLine << UIntString(targetThreadID) << " 1";
+                        else
+                            strCommandLine << UIntString(targetProcessID) << " 0";
+
+                        //---------------------------------------
+
+                        PROCESS_INFORMATION pi;
+                        STARTUPINFO si;
+
+                        zero(&pi, sizeof(pi));
+                        zero(&si, sizeof(si));
+                        si.cb = sizeof(si);
+
+                        if (CreateProcess(strHelper, strCommandLine, NULL, NULL, FALSE, 0, NULL, strDLLPath, &si, &pi))
+                        {
+                            int exitCode = 0;
+
+                            CloseHandle(pi.hThread);
+
+                            if (!useSafeHook)
+                            {
+                                WaitForSingleObject(pi.hProcess, INFINITE);
+                                GetExitCodeProcess(pi.hProcess, (DWORD*)&exitCode);
+                                CloseHandle(pi.hProcess);
+                            }
+                            else
+                            {
+                                injectHelperProcess = pi.hProcess;
+                            }
+
+                            if (exitCode == 0)
+                            {
+                                captureWaitCount = 0;
+                                bCapturing = true;
+                            }
+                            else
+                            {
+                                AppWarning(TEXT("GraphicsCaptureSource::AttemptCapture: Failed to inject library, error code = %d"), exitCode);
+                                bErrorAcquiring = true;
+                            }
+                        }
+                        else
+                        {
+                            AppWarning(TEXT("GraphicsCaptureSource::AttemptCapture: Could not create inject helper, GetLastError = %u"), GetLastError());
+                            bErrorAcquiring = true;
+                        }
+                    }
                 }
             }
         }
@@ -533,7 +570,7 @@ void GraphicsCaptureSource::AttemptCapture()
     }
     else
     {
-        AppWarning(TEXT("GraphicsCaptureSource::BeginScene: OpenProcess failed, GetLastError = %u"), GetLastError());
+        AppWarning(TEXT("GraphicsCaptureSource::AttemptCapture: OpenProcess failed, GetLastError = %u"), GetLastError());
         bErrorAcquiring = true;
     }
 }
