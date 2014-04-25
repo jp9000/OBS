@@ -289,7 +289,7 @@ void GraphicsCaptureSource::BeginScene()
     if(strWindowClass.IsEmpty())
         return;
 
-    bUseDWMCapture = (scmpi(strWindowClass, TEXT("Dwm")) == 0) ? true : false;
+    bUseDWMCapture = (scmpi(strWindowClass, TEXT("Dwm")) == 0);
 
     bStretch = data->GetInt(TEXT("stretchImage")) != 0;
     bIgnoreAspect = data->GetInt(TEXT("ignoreAspect")) != 0;
@@ -305,8 +305,11 @@ void GraphicsCaptureSource::BeginScene()
     bUseHotkey = data->GetInt(TEXT("useHotkey"), 0) != 0;
     hotkey = data->GetInt(TEXT("hotkey"), VK_F12);
 
-    if (bUseHotkey)
+    if(bUseHotkey)
+    {
         hotkeyID = OBSCreateHotkey(hotkey, (OBSHOTKEYPROC)GraphicsCaptureSource::CaptureHotkey, (UPARAM)this);
+        bUseDWMCapture = false;
+    }
 
     gamma = data->GetInt(TEXT("gamma"), 100);
 
