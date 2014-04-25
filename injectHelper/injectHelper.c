@@ -79,7 +79,7 @@ BOOL WINAPI InjectLibrarySafe(DWORD threadID, const wchar_t *pDLL, DWORD dwLen)
     if (!hLib)
         return FALSE;
 
-    memcpy(pSWHEXStr, "RewUljci~{CebgJvF", 18);         //LoadLibrary with each character obfuscated
+    memcpy(pSWHEXStr, "RewUljci~{CebgJvF", 18);         //SetWindowsHookEx with each character obfuscated
 
 #ifdef _WIN64
     proc = GetProcAddress(hLib, "DummyDebugProc");
