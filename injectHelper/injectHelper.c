@@ -21,6 +21,7 @@
 #include <windows.h>
 #include <shellapi.h>
 #include <stdbool.h>
+#include <math.h>
 
 #ifdef _WIN64
 typedef unsigned __int64 UPARAM;
@@ -226,6 +227,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
     const wchar_t pDLLName[] = L"GraphicsCaptureHook64.dll";
 #else
     const wchar_t pDLLName[] = L"GraphicsCaptureHook.dll";
+#endif
+
+#if defined _M_X64 && _MSC_VER == 1800
+    //workaround AVX2 bug in VS2013, http://connect.microsoft.com/VisualStudio/feedback/details/811093
+    _set_FMA3_enable(0);
 #endif
 
     /* -------------------------- */

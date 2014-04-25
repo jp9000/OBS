@@ -244,8 +244,14 @@ CTSTR GetPluginDescription()
 
 BOOL CALLBACK DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    if(fdwReason == DLL_PROCESS_ATTACH)
+    if (fdwReason == DLL_PROCESS_ATTACH)
+    {
+#if defined _M_X64 && _MSC_VER == 1800
+        //workaround AVX2 bug in VS2013, http://connect.microsoft.com/VisualStudio/feedback/details/811093
+        _set_FMA3_enable(0);
+#endif
         hInstance = hinstDLL;
+    }
     
     return TRUE;
 }

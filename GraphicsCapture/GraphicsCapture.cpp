@@ -476,8 +476,14 @@ CTSTR GetPluginDescription()
 
 BOOL CALLBACK DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpBla)
 {
-    if(dwReason == DLL_PROCESS_ATTACH)
+    if (dwReason == DLL_PROCESS_ATTACH)
+    {
+#if defined _M_X64 && _MSC_VER == 1800
+        //workaround AVX2 bug in VS2013, http://connect.microsoft.com/VisualStudio/feedback/details/811093
+        _set_FMA3_enable(0);
+#endif
         hinstMain = hInst;
+    }
 
     return TRUE;
 }

@@ -503,6 +503,11 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpBlah)
         HANDLE hThread = NULL;
         hinstMain = hinstDLL;
 
+#if defined _M_X64 && _MSC_VER == 1800
+        //workaround AVX2 bug in VS2013, http://connect.microsoft.com/VisualStudio/feedback/details/811093
+        _set_FMA3_enable(0);
+#endif
+
         GetModuleFileNameW(hinstDLL, name, 4096);
         LoadLibrary(name);
 
