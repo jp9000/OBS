@@ -574,8 +574,10 @@ extern "C" __declspec(dllexport) LRESULT CALLBACK DummyDebugProc(int code, WPARA
 
     if (hooking && msg->message == (WM_USER + 432))
     {
-        char uhwhexStr[20] = "PjoinkTkch`yz@de~Qo";
+        char uhwhexStr[20];
         HMODULE hU32 = GetModuleHandle(L"USER32");
+
+        memcpy(uhwhexStr, "PjoinkTkch`yz@de~Qo", 20);
 
         for (int i = 0; i < 19; i++) uhwhexStr[i] ^= i ^ 5;
 
