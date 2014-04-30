@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="32px"
+   height="32px"
+   id="svg3837"
+   version="1.1"
+   inkscape:version="0.48.4 r9939"
+   sodipodi:docname="mic2-muted.svg"
+   inkscape:export-filename="F:\OBS\mic2-muted.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
+  <title
+     id="title2998">Microphone Muted</title>
+  <defs
+     id="defs3839">
+    <filter
+       id="filter4392"
+       style="color-interpolation-filters:sRGB;"
+       inkscape:label="Drop Shadow">
+      <feFlood
+         id="feFlood4394"
+         flood-opacity="1"
+         flood-color="rgb(192,192,192)"
+         result="flood" />
+      <feComposite
+         id="feComposite4396"
+         in2="SourceGraphic"
+         in="flood"
+         operator="in"
+         result="composite1" />
+      <feGaussianBlur
+         id="feGaussianBlur4398"
+         in="composite"
+         stdDeviation="0.5"
+         result="blur" />
+      <feOffset
+         id="feOffset4400"
+         dx="0"
+         dy="0"
+         result="offset" />
+      <feComposite
+         id="feComposite4402"
+         in2="offset"
+         in="SourceGraphic"
+         operator="over"
+         result="composite2" />
+    </filter>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="31.672167"
+     inkscape:cx="3.2437532"
+     inkscape:cy="16.111944"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     inkscape:grid-bbox="true"
+     inkscape:document-units="px"
+     inkscape:snap-grids="true"
+     inkscape:window-width="1920"
+     inkscape:window-height="1028"
+     inkscape:window-x="-4"
+     inkscape:window-y="-4"
+     inkscape:window-maximized="1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid3845" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata3842">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Microphone Muted</dc:title>
+        <dc:date>04/30/2014</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>HomeWorld</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:rights>
+          <cc:Agent>
+            <dc:title>obsproject</dc:title>
+          </cc:Agent>
+        </dc:rights>
+        <dc:publisher>
+          <cc:Agent>
+            <dc:title>obsproject.com</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <cc:license
+           rdf:resource="http://www.gnu.org/licenses/gpl-2.0.html" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1"
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer">
+    <path
+       style="fill:#c0c0c0;fill-opacity:1;fill-rule:nonzero;stroke:#999999;filter:url(#filter4392);stroke-opacity:1;stroke-linejoin:round;stroke-width:0.25000000000000000;stroke-miterlimit:4;stroke-dasharray:none"
+       d="M 21 6 C 20.234876 6 19.523349 6.2692812 18.875 6.6875 L 25.3125 13.125 C 25.730719 12.476651 26 11.765124 26 11 L 26 10.9375 C 25.962154 8.2033257 23.734436 6 21 6 z M 17.40625 8.03125 C 16.618653 9.0638128 16.124067 10.356586 16.03125 11.59375 L 20.40625 15.96875 C 21.643414 15.875933 22.936187 15.381347 23.96875 14.59375 L 17.40625 8.03125 z M 15.625 12.625 C 13.852773 15.111915 6 24 6 24 L 7 25 L 8 26 C 8 26 16.888085 18.147227 19.375 16.375 L 15.625 12.625 z "
+       id="path4358" />
+  </g>
+</svg>

@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="32"
+   height="32"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.4 r9939"
+   sodipodi:docname="speaker.svg"
+   inkscape:export-filename="F:\OBS\speaker.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
+  <title
+     id="title3025">Speaker</title>
+  <defs
+     id="defs4">
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect3780"
+       is_visible="true" />
+    <inkscape:path-effect
+       is_visible="true"
+       id="path-effect3776"
+       effect="spiro" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect3772"
+       is_visible="true" />
+    <filter
+       id="filter3781"
+       style="color-interpolation-filters:sRGB;"
+       inkscape:label="Drop Shadow">
+      <feFlood
+         id="feFlood3783"
+         flood-opacity="1"
+         flood-color="rgb(191,32,32)"
+         result="flood" />
+      <feComposite
+         id="feComposite3785"
+         in2="SourceGraphic"
+         in="flood"
+         operator="in"
+         result="composite1" />
+      <feGaussianBlur
+         id="feGaussianBlur3787"
+         in="composite"
+         stdDeviation="1"
+         result="blur" />
+      <feOffset
+         id="feOffset3789"
+         dx="0"
+         dy="0"
+         result="offset" />
+      <feComposite
+         id="feComposite3791"
+         in2="offset"
+         in="SourceGraphic"
+         operator="over"
+         result="composite2" />
+    </filter>
+    <filter
+       id="filter3788"
+       style="color-interpolation-filters:sRGB;"
+       inkscape:label="Drop Shadow">
+      <feFlood
+         id="feFlood3790"
+         flood-opacity="0.90000000000000002"
+         flood-color="rgb(191,32,32)"
+         result="flood" />
+      <feComposite
+         id="feComposite3792"
+         in2="SourceGraphic"
+         in="flood"
+         operator="in"
+         result="composite1" />
+      <feGaussianBlur
+         id="feGaussianBlur3794"
+         in="composite"
+         stdDeviation="0.5"
+         result="blur" />
+      <feOffset
+         id="feOffset3796"
+         dx="0"
+         dy="0"
+         result="offset" />
+      <feComposite
+         id="feComposite3798"
+         in2="offset"
+         in="SourceGraphic"
+         operator="over"
+         result="composite2" />
+    </filter>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="32"
+     inkscape:cx="0.721928"
+     inkscape:cy="14.344358"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     borderlayer="false"
+     showborder="true"
+     inkscape:showpageshadow="false"
+     showguides="true"
+     inkscape:window-width="1920"
+     inkscape:window-height="1028"
+     inkscape:window-x="-4"
+     inkscape:window-y="-4"
+     inkscape:window-maximized="1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid2985"
+       empspacing="8"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true"
+       dotted="false" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Speaker</dc:title>
+        <cc:license
+           rdf:resource="http://www.gnu.org/licenses/gpl-2.0.html" />
+        <dc:date>04/30/2014</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>HomeWorld</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:rights>
+          <cc:Agent>
+            <dc:title>obsproject</dc:title>
+          </cc:Agent>
+        </dc:rights>
+        <dc:publisher>
+          <cc:Agent>
+            <dc:title>obsproject.com</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-1020.3622)">
+    <path
+       style="fill:#bf2020;fill-opacity:1;stroke:#666666;filter:url(#filter3788);stroke-opacity:1;stroke-width:0.25000000000000000;stroke-miterlimit:4;stroke-dasharray:none"
+       d="m 6,11 0,10 5,0 7,5 1,0 0,-20 -1,0 -7,5 z"
+       id="path2987"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccccccc"
+       transform="translate(0,1020.3622)" />
+    <g
+       id="g3782"
+       style="stroke:#bf2020;stroke-opacity:1;filter:url(#filter3788);fill:none;fill-opacity:1;stroke-width:1.5;stroke-miterlimit:4;stroke-dasharray:none">
+      <path
+         transform="translate(0,1020.3622)"
+         style="fill:none;stroke:#bf2020;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;fill-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+         d="m 21,11 c 0.657985,1.579164 1,3.289238 1,5 0,1.710762 -0.342015,3.420836 -1,5"
+         id="path3770" />
+      <path
+         style="fill:none;stroke:#bf2020;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;fill-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+         d="m 24,1029.3622 c 1.298732,2.0872 2,4.5417 2,7 0,2.4583 -0.701268,4.9128 -2,7"
+         id="path3774" />
+    </g>
+  </g>
+</svg>
