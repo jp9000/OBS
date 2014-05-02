@@ -30,10 +30,14 @@ extern "C"
 ConfigFile **VCEAppConfig = 0;
 unsigned int encoderRefs = 0;
 
-extern "C" __declspec(dllexport) bool __cdecl InitVCEEncoder(ConfigFile **appConfig)
+extern "C" __declspec(dllexport) bool __cdecl InitVCEEncoder(ConfigFile **appConfig, VideoEncoder *enc)
 {
     VCEAppConfig = appConfig;
-
+    if (enc)
+    {
+        if (!((VCEEncoder*)enc)->init())
+            return false;
+    }
     return true;
 }
 
@@ -151,6 +155,7 @@ bool VCEEncoder::init()
         return false;
     }
 
+    mIsReady = true;
     return true;
 }
 
@@ -169,6 +174,7 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset
     , mFirstFrame(true)
     , frameShift(0)
     , mHdrPacket(NULL)
+    , mIsReady(false)
 {
     frameMutex = OSCreateMutex();
 
@@ -189,13 +195,6 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset
     //TODO "* 3" -> "* 3/2" maybe because max output size, that could probably ever be and most likely never will,
     // is uncompressed NV12.
     mOutSize = ((width + 15) & ~15) * ((height + 31) & ~31) * 3 + 4096;
-
-    //mOutput.size = mOutSize;
-    //mOutput.buffer = new uint8_t[mOutput.size];
-
-    //TODO nicely refuse to work :P
-    bool initOK = init();
-    assert(initOK);
 }
 
 //TODO
@@ -235,6 +234,9 @@ VCEEncoder::~VCEEncoder()
 //TODO
 bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp)
 {
+    if (!mIsReady)
+        return false;
+
     cl_int err;
     bool ret = true;
     //cl_event inMapEvt;
@@ -561,7 +563,7 @@ void VCEEncoder::ProcessOutput(OVE_OUTPUT_DESCRIPTION *surf, List<DataPacket> &p
 //TODO
 void VCEEncoder::RequestBuffers(LPVOID buffers)
 {
-    if (!buffers)
+    if (!buffers || !mIsReady)
         return;
 
     OSMutexLocker locker(frameMutex);

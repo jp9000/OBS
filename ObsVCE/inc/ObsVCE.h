@@ -23,7 +23,19 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 #define VCELog(...) Log(__VA_ARGS__)
 #define AppConfig (*VCEAppConfig)
 
-#include "OVEncode.h"
+//Use LoadLibrary etc. instead of linking
+#define OVE_DYN
+
+#include <OpenVideo\OVEncode.h>
+#include "OVEncodeDyn.h"
+
+#ifndef OVE_DYN
+#ifdef _WIN64
+#pragma comment( lib, "OpenVideo64.lib" )
+#else
+#pragma comment( lib, "OpenVideo.lib" )
+#endif
+#endif
 
 using namespace std;
 #define OBSVCE_API __declspec(dllexport) __cdecl
@@ -145,8 +157,8 @@ public:
     int GetBufferedFrames() { if (HasBufferedFrames()) return -1; return 0; }
     bool HasBufferedFrames() { return false; }
 
-private:
     bool init();
+private:
 
     bool encodeCreate(uint32_t deviceId);
     bool encodeOpen(uint32_t deviceId);
@@ -164,6 +176,7 @@ private:
     map<string, int32_t>    mConfigTable;
     List<BYTE> encodeData, headerPacket, seiData;
 
+    bool       mIsReady; // init() was called successfully
     int        frameShift;
     void       *inputBuffer;
     char       *mHdrPacket;

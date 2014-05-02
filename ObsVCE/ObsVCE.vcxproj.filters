@@ -47,10 +47,10 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inc\OVEncode.h">
+    <ClInclude Include="inc\OVEncodeTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inc\OVEncodeTypes.h">
+    <ClInclude Include="inc\OVEncodeDyn.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

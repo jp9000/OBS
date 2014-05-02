@@ -20,13 +20,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 
 #include "Main.h"
 
-typedef bool(__cdecl *PVCEINITFUNC)(ConfigFile **appConfig);
+typedef bool(__cdecl *PVCEINITFUNC)(ConfigFile **appConfig, VideoEncoder*);
 typedef bool(__cdecl *PCHECKVCEHARDWARESUPPORT)(bool log);
 typedef VideoEncoder* (__cdecl *PCREATEVCEENCODER)(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR);
 
 static HMODULE p_vceModule = NULL;
 static PCHECKVCEHARDWARESUPPORT p_checkVCEHardwareSupport = NULL;
 static PCREATEVCEENCODER p_createVCEEncoder = NULL;
+static PVCEINITFUNC initFunction = NULL;
 
 void InitVCEEncoder(bool log = true)
 {
@@ -57,7 +58,7 @@ void InitVCEEncoder(bool log = true)
     p_createVCEEncoder = (PCREATEVCEENCODER)
         GetProcAddress(p_vceModule, "CreateVCEEncoder");
 
-    PVCEINITFUNC initFunction = (PVCEINITFUNC)
+    initFunction = (PVCEINITFUNC)
         GetProcAddress(p_vceModule, "InitVCEEncoder");
 
     if (p_checkVCEHardwareSupport == NULL || p_createVCEEncoder == NULL || initFunction == NULL)
@@ -67,7 +68,7 @@ void InitVCEEncoder(bool log = true)
         goto error;
     }
 
-    if (!initFunction(&AppConfig))
+    if (!initFunction(&AppConfig, NULL))
         goto error;
 
     if (log)
@@ -117,15 +118,19 @@ VideoEncoder* CreateVCEEncoder(int fps, int width, int height, int quality, CTST
         return NULL;
     }
 
-    //TODO Maybe can do, as long as width*height <= 1920*1088?
+    //TODO Maybe can do more, as long as width*height <= 1920*1088?
     if ((uint32_t)width > 1920 || (uint32_t)height > 1088)
     {
         errors << Str("Encoder.VCE.UnsupportedResolution");
         return NULL;
     }
 
-    if (p_createVCEEncoder == NULL)
+    if (p_createVCEEncoder == NULL || initFunction == NULL)
         return NULL;
 
-    return p_createVCEEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR);
+    VideoEncoder *encoder = p_createVCEEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR);
+    if (!initFunction(&AppConfig, encoder))
+        return NULL;
+
+    return encoder;
 }
