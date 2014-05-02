@@ -1,37 +1,33 @@
 #include "stdafx.h"
 #include "ObsVCE.h"
 
-t_OVEncodeGetDeviceInfo p_OVEncodeGetDeviceInfo = NULL;
-t_OVEncodeGetDeviceCap p_OVEncodeGetDeviceCap = NULL;
-t_OVCreateOVEHandleFromOPHandle p_OVCreateOVEHandleFromOPHandle = NULL;
-t_OVReleaseOVEHandle p_OVReleaseOVEHandle = NULL;
-t_OVEncodeAcquireObject p_OVEncodeAcquireObject = NULL;
-t_OVEncodeReleaseObject p_OVEncodeReleaseObject = NULL;
-t_OVCreateOVEEventFromOPEventHandle p_OVCreateOVEEventFromOPEventHandle = NULL;
-t_OVEncodeReleaseOVEEventHandle p_OVEncodeReleaseOVEEventHandle = NULL;
-t_OVEncodeCreateSession p_OVEncodeCreateSession = NULL;
-t_OVEncodeDestroySession p_OVEncodeDestroySession = NULL;
-t_OVEncodeGetPictureControlConfig p_OVEncodeGetPictureControlConfig = NULL;
-t_OVEncodeGetRateControlConfig p_OVEncodeGetRateControlConfig = NULL;
-t_OVEncodeGetMotionEstimationConfig p_OVEncodeGetMotionEstimationConfig = NULL;
-t_OVEncodeGetRDOControlConfig p_OVEncodeGetRDOControlConfig = NULL;
-t_OVEncodeSendConfig p_OVEncodeSendConfig = NULL;
-t_OVEncodeTask p_OVEncodeTask = NULL;
-t_OVEncodeQueryTaskDescription p_OVEncodeQueryTaskDescription = NULL;
-t_OVEncodeReleaseTask p_OVEncodeReleaseTask = NULL;
-
 #ifdef OVE_DYN
+t_OVEncodeGetDeviceInfo OVEncodeGetDeviceInfo = NULL;
+t_OVEncodeGetDeviceCap OVEncodeGetDeviceCap = NULL;
+t_OVCreateOVEHandleFromOPHandle OVCreateOVEHandleFromOPHandle = NULL;
+t_OVReleaseOVEHandle OVReleaseOVEHandle = NULL;
+t_OVEncodeAcquireObject OVEncodeAcquireObject = NULL;
+t_OVEncodeReleaseObject OVEncodeReleaseObject = NULL;
+t_OVCreateOVEEventFromOPEventHandle OVCreateOVEEventFromOPEventHandle = NULL;
+t_OVEncodeReleaseOVEEventHandle OVEncodeReleaseOVEEventHandle = NULL;
+t_OVEncodeCreateSession OVEncodeCreateSession = NULL;
+t_OVEncodeDestroySession OVEncodeDestroySession = NULL;
+t_OVEncodeGetPictureControlConfig OVEncodeGetPictureControlConfig = NULL;
+t_OVEncodeGetRateControlConfig OVEncodeGetRateControlConfig = NULL;
+t_OVEncodeGetMotionEstimationConfig OVEncodeGetMotionEstimationConfig = NULL;
+t_OVEncodeGetRDOControlConfig OVEncodeGetRDOControlConfig = NULL;
+t_OVEncodeSendConfig OVEncodeSendConfig = NULL;
+t_OVEncodeTask OVEncodeTask = NULL;
+t_OVEncodeQueryTaskDescription OVEncodeQueryTaskDescription = NULL;
+t_OVEncodeReleaseTask OVEncodeReleaseTask = NULL;
+
 #define LOADPROC(x) \
-do { if ((p_##x = (t_##x)GetProcAddress(hMod, #x)) == NULL){\
+do { if ((##x = (t_##x)GetProcAddress(hMod, #x)) == NULL){\
     VCELog(TEXT("GetProcAddress: cannot find ") TEXT(#x)); \
     goto error;}\
 } while (0)
 #else
-#define LOADPROC(x) \
-do {if ((p_##x = &x) == NULL){\
-    VCELog(TEXT("LOADPROC: cannot find ") TEXT(#x)); \
-    goto error;}\
-} while (0)
+#define LOADPROC(x)
 #endif
 
 static HMODULE hMod = NULL;
@@ -47,7 +43,8 @@ void deinitOVE()
 
 bool initOVE()
 {
-    if (hMod && p_OVEncodeCreateSession)
+#ifdef OVE_DYN
+    if (hMod && OVEncodeCreateSession)
         return true;
 
 #ifdef _WIN64
@@ -82,6 +79,9 @@ bool initOVE()
 error:
     deinitOVE();
     return false;
+#else
+    return true;
+#endif
 }
 
 #undef LOADPROC

@@ -250,7 +250,7 @@ bool setEncodeConfig(ove_session session, OvConfigCtrl *pConfig)
     configBuffers[2].configType = OVE_CONFIG_TYPE_MOTION_ESTIMATION;
     configBuffers[3].config.pRDO = &(pConfig->rdoControl);
     configBuffers[3].configType = OVE_CONFIG_TYPE_RDO;
-    res = p_OVEncodeSendConfig(session, numOfConfigBuffers, configBuffers);
+    res = OVEncodeSendConfig(session, numOfConfigBuffers, configBuffers);
     if (!res)
     {
         VCELog(TEXT("OVEncodeSendConfig returned error"));
@@ -271,14 +271,14 @@ bool setEncodeConfig(ove_session session, OvConfigCtrl *pConfig)
     /**************************************************************************/
     memset(&pictureControlConfig, 0, sizeof(OVE_CONFIG_PICTURE_CONTROL));
     pictureControlConfig.size = sizeof(OVE_CONFIG_PICTURE_CONTROL);
-    res = p_OVEncodeGetPictureControlConfig(session, &pictureControlConfig);
+    res = OVEncodeGetPictureControlConfig(session, &pictureControlConfig);
 
     /**************************************************************************/
     /* get the rate control configuration                                     */
     /**************************************************************************/
     memset(&rateControlConfig, 0, sizeof(OVE_CONFIG_RATE_CONTROL));
     rateControlConfig.size = sizeof(OVE_CONFIG_RATE_CONTROL);
-    res = p_OVEncodeGetRateControlConfig(session, &rateControlConfig);
+    res = OVEncodeGetRateControlConfig(session, &rateControlConfig);
     if (res)
     {
         VCELog(TEXT("Active bitrate: %d"), rateControlConfig.encRateControlTargetBitRate);
@@ -291,16 +291,16 @@ bool setEncodeConfig(ove_session session, OvConfigCtrl *pConfig)
     /**************************************************************************/
     /* get the MotionEstimation configuration                                 */
     /**************************************************************************/
-    memset(&meControlConfig, 0, sizeof(OVE_CONFIG_MOTION_ESTIMATION));
+    /*memset(&meControlConfig, 0, sizeof(OVE_CONFIG_MOTION_ESTIMATION));
     meControlConfig.size = sizeof(OVE_CONFIG_MOTION_ESTIMATION);
-    res = p_OVEncodeGetMotionEstimationConfig(session, &meControlConfig);
+    res = p_OVEncodeGetMotionEstimationConfig(session, &meControlConfig);*/
 
     /**************************************************************************/
     /* get the RDO configuration                                              */
     /**************************************************************************/
-    memset(&rdoControlConfig, 0, sizeof(OVE_CONFIG_RDO));
+    /*memset(&rdoControlConfig, 0, sizeof(OVE_CONFIG_RDO));
     rdoControlConfig.size = sizeof(OVE_CONFIG_RDO);
-    res = p_OVEncodeGetRDOControlConfig(session, &rdoControlConfig);
+    res = p_OVEncodeGetRDOControlConfig(session, &rdoControlConfig);*/
 
     return(res);
 }

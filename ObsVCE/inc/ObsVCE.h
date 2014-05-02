@@ -26,10 +26,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 //Use LoadLibrary etc. instead of linking
 #define OVE_DYN
 
-#include <OpenVideo\OVEncode.h>
+#ifdef OVE_DYN
 #include "OVEncodeDyn.h"
-
-#ifndef OVE_DYN
+#else
+bool initOVE();
+void deinitOVE();
+#include <OpenVideo\OVEncode.h>
 #ifdef _WIN64
 #pragma comment( lib, "OpenVideo64.lib" )
 #else

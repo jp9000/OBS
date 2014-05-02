@@ -56,7 +56,7 @@ extern "C" __declspec(dllexport) bool __cdecl CheckVCEHardwareSupport(bool log)
 
     //Might be enough to just check if OVEncodeGetDeviceInfo returns anything.
     uint32_t numDevices = 0;
-    if (!p_OVEncodeGetDeviceInfo(&numDevices, NULL)
+    if (!OVEncodeGetDeviceInfo(&numDevices, NULL)
             && numDevices == 0)
         return false;
 
@@ -290,7 +290,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     }
 
     //Enqueue encoding task
-    res = p_OVEncodeTask(mEncodeHandle.session,
+    res = OVEncodeTask(mEncodeHandle.session,
         numEncodeTaskInputBuffers,
         encodeTaskInputBufferList,
         &pictureParameter,
@@ -321,7 +321,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
 
     do
     {
-        res = p_OVEncodeQueryTaskDescription(mEncodeHandle.session,
+        res = OVEncodeQueryTaskDescription(mEncodeHandle.session,
             numTaskDescriptionsRequested,
             &numTaskDescriptionsReturned,
             pTaskDescriptionList);
@@ -371,7 +371,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
                 memcpy(mHdrPacket, pTaskDescriptionList[i].bitstream_data, mHdrSize);
             }
 
-            res = p_OVEncodeReleaseTask(mEncodeHandle.session, pTaskDescriptionList[i].taskID);
+            res = OVEncodeReleaseTask(mEncodeHandle.session, pTaskDescriptionList[i].taskID);
         }
     }
 

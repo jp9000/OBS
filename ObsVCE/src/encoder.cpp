@@ -70,7 +70,7 @@ bool VCEEncoder::encodeOpen(uint32_t deviceId)
     /**************************************************************************/
     /* Create an OVE Session                                                  */
     /**************************************************************************/
-    mEncodeHandle.session = p_OVEncodeCreateSession(mOveContext,  /**<Platform context */
+    mEncodeHandle.session = OVEncodeCreateSession(mOveContext,  /**<Platform context */
         deviceId,               /**< device id */
         mConfigCtrl.encodeMode,    /**< encode mode */
         mConfigCtrl.profileLevel,  /**< encode profile */
@@ -185,7 +185,7 @@ bool VCEEncoder::encodeClose()
     }
 
     if (mEncodeHandle.session)
-        oveErr = p_OVEncodeDestroySession(mEncodeHandle.session);
+        oveErr = OVEncodeDestroySession(mEncodeHandle.session);
     if (!oveErr)
     {
         VCELog(TEXT("Error releasing OVE Session"));

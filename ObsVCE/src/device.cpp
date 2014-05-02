@@ -47,7 +47,7 @@ bool getDeviceCap(OPContextHandle oveContext, uint32_t oveDeviceID,
         encodeCaps->caps.encode_cap_full->supported_profile_level[j].level = 0;
     }
 
-    status = p_OVEncodeGetDeviceCap(oveContext,
+    status = OVEncodeGetDeviceCap(oveContext,
         oveDeviceID,
         encodeCaps->encode_cap_size,
         &numCaps,
@@ -59,7 +59,7 @@ bool getDeviceInfo(ovencode_device_info **deviceInfo,
     uint32_t *numDevices)
 {
     bool status;
-    status = p_OVEncodeGetDeviceInfo(numDevices, 0);
+    status = OVEncodeGetDeviceInfo(numDevices, 0);
     if (!status)
     {
         VCELog(TEXT("OVEncodeGetDeviceInfo failed!\n"));
@@ -77,7 +77,7 @@ bool getDeviceInfo(ovencode_device_info **deviceInfo,
     // Be sure to free after use!
     *deviceInfo = new ovencode_device_info[*numDevices];
     memset(*deviceInfo, 0, sizeof(ovencode_device_info)* (*numDevices));
-    status = p_OVEncodeGetDeviceInfo(numDevices, *deviceInfo);
+    status = OVEncodeGetDeviceInfo(numDevices, *deviceInfo);
     if (!status)
     {
         VCELog(TEXT("OVEncodeGetDeviceInfo failed!\n"));

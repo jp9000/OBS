@@ -19,7 +19,7 @@
 typedef OVresult(OPENVIDEOAPI *t_OVEncodeGetDeviceInfo) (
     unsigned int            *num_device,
     ovencode_device_info    *device_info);
-extern t_OVEncodeGetDeviceInfo p_OVEncodeGetDeviceInfo;
+extern t_OVEncodeGetDeviceInfo OVEncodeGetDeviceInfo;
 
 /*
     * This function is used by application to query the encoder capability that includes
@@ -31,7 +31,7 @@ typedef OVresult (OPENVIDEOAPI *t_OVEncodeGetDeviceCap) (
     unsigned int                encode_cap_list_size,
     unsigned int                *num_encode_cap,
     OVE_ENCODE_CAPS             *encode_cap_list);
-extern t_OVEncodeGetDeviceCap p_OVEncodeGetDeviceCap;
+extern t_OVEncodeGetDeviceCap OVEncodeGetDeviceCap;
 
 /*
     * This function is used by the application to create the encode handle from the 
@@ -41,14 +41,14 @@ extern t_OVEncodeGetDeviceCap p_OVEncodeGetDeviceCap;
     */
 typedef ove_handle (OPENVIDEOAPI *t_OVCreateOVEHandleFromOPHandle) (
     OPMemHandle                 platform_memhandle);
-extern t_OVCreateOVEHandleFromOPHandle p_OVCreateOVEHandleFromOPHandle;
+extern t_OVCreateOVEHandleFromOPHandle OVCreateOVEHandleFromOPHandle;
 
 /* 
     * This function is used by the application to release the encode handle. 
     * After release, the handle is invalid and should not be used for encode picture. 
     */
 typedef OVresult (OPENVIDEOAPI *t_OVReleaseOVEHandle)(ove_handle encode_handle);
-extern t_OVReleaseOVEHandle p_OVReleaseOVEHandle;
+extern t_OVReleaseOVEHandle OVReleaseOVEHandle;
 
 /* 
     * This function is used by the application to acquire the memory objects that 
@@ -63,7 +63,7 @@ typedef OVresult (OPENVIDEOAPI *t_OVEncodeAcquireObject) (
     unsigned int                num_event_in_wait_list,
     OPEventHandle              *event_wait_list,
     OPEventHandle              *event);
-extern t_OVEncodeAcquireObject p_OVEncodeAcquireObject;
+extern t_OVEncodeAcquireObject OVEncodeAcquireObject;
 
 /*
     * This function is used by the application to release the memory objects that
@@ -77,11 +77,11 @@ typedef OVresult (OPENVIDEOAPI *t_OVEncodeReleaseObject) (
     unsigned int                 num_event_in_wait_list,
     OPEventHandle               *event_wait_list,
     OPEventHandle               *event);
-extern t_OVEncodeReleaseObject p_OVEncodeReleaseObject;
+extern t_OVEncodeReleaseObject OVEncodeReleaseObject;
 
 typedef ove_event (OPENVIDEOAPI *t_OVCreateOVEEventFromOPEventHandle) (
     OPEventHandle               platform_eventhandle);
-extern t_OVCreateOVEEventFromOPEventHandle p_OVCreateOVEEventFromOPEventHandle;
+extern t_OVCreateOVEEventFromOPEventHandle OVCreateOVEEventFromOPEventHandle;
 
 /* 
     * This function is used by the application to release the encode event handle. 
@@ -89,7 +89,7 @@ extern t_OVCreateOVEEventFromOPEventHandle p_OVCreateOVEEventFromOPEventHandle;
     */
 typedef OVresult (OPENVIDEOAPI *t_OVEncodeReleaseOVEEventHandle) (
     ove_event                   ove_ev);
-extern t_OVEncodeReleaseOVEEventHandle p_OVEncodeReleaseOVEEventHandle;
+extern t_OVEncodeReleaseOVEEventHandle OVEncodeReleaseOVEEventHandle;
 
 
 /*
@@ -109,7 +109,7 @@ typedef ove_session (OPENVIDEOAPI *t_OVEncodeCreateSession) (
     unsigned int                encode_width,
     unsigned int                encode_height,
     OVE_ENCODE_TASK_PRIORITY    encode_task_priority);
-extern t_OVEncodeCreateSession p_OVEncodeCreateSession;
+extern t_OVEncodeCreateSession OVEncodeCreateSession;
 
 /*
     * This function is used by the application to destroy the encode session. Destroying a
@@ -118,37 +118,37 @@ extern t_OVEncodeCreateSession p_OVEncodeCreateSession;
     */
 typedef OVresult (OPENVIDEOAPI *t_OVEncodeDestroySession) (
     ove_session                 session);
-extern t_OVEncodeDestroySession p_OVEncodeDestroySession;
+extern t_OVEncodeDestroySession OVEncodeDestroySession;
 
 // Retrieve one configuration data structure
 typedef OVresult (OPENVIDEOAPI *t_OVEncodeGetPictureControlConfig) (
     ove_session                 session,
     OVE_CONFIG_PICTURE_CONTROL *pPictureControlConfig);
-extern t_OVEncodeGetPictureControlConfig p_OVEncodeGetPictureControlConfig;
+extern t_OVEncodeGetPictureControlConfig OVEncodeGetPictureControlConfig;
 
 // Get current rate control configuration
 typedef OVresult (OPENVIDEOAPI *t_OVEncodeGetRateControlConfig) (
     ove_session                 session,
     OVE_CONFIG_RATE_CONTROL	   *pRateControlConfig);
-extern t_OVEncodeGetRateControlConfig p_OVEncodeGetRateControlConfig;
+extern t_OVEncodeGetRateControlConfig OVEncodeGetRateControlConfig;
 
 // Get current motion estimation configuration
 typedef OVresult (OPENVIDEOAPI *t_OVEncodeGetMotionEstimationConfig) (
     ove_session                 session,
     OVE_CONFIG_MOTION_ESTIMATION *pMotionEstimationConfig);
-extern t_OVEncodeGetMotionEstimationConfig p_OVEncodeGetMotionEstimationConfig;
+extern t_OVEncodeGetMotionEstimationConfig OVEncodeGetMotionEstimationConfig;
 
 // Get current RDO configuration
 typedef OVresult (OPENVIDEOAPI *t_OVEncodeGetRDOControlConfig) (
     ove_session             session,
     OVE_CONFIG_RDO          *pRDOConfig);
-extern t_OVEncodeGetRDOControlConfig p_OVEncodeGetRDOControlConfig;
+extern t_OVEncodeGetRDOControlConfig OVEncodeGetRDOControlConfig;
 
 typedef OVresult (OPENVIDEOAPI *t_OVEncodeSendConfig) (
     ove_session             session,
     unsigned int            num_of_config_buffers,
     OVE_CONFIG              *pConfigBuffers);
-extern t_OVEncodeSendConfig p_OVEncodeSendConfig;
+extern t_OVEncodeSendConfig OVEncodeSendConfig;
 
 // Fully encode a single picture
 typedef OVresult (OPENVIDEOAPI *t_OVEncodeTask) (
@@ -160,7 +160,7 @@ typedef OVresult (OPENVIDEOAPI *t_OVEncodeTask) (
     unsigned int            num_event_in_wait_list,
     ove_event               *event_wait_list,
     ove_event               *event);
-extern t_OVEncodeTask p_OVEncodeTask;
+extern t_OVEncodeTask OVEncodeTask;
 
 // Query outputs
 typedef OVresult (OPENVIDEOAPI *t_OVEncodeQueryTaskDescription) (
@@ -168,13 +168,13 @@ typedef OVresult (OPENVIDEOAPI *t_OVEncodeQueryTaskDescription) (
     unsigned int            num_of_task_description_request,
     unsigned int            *num_of_task_description_return,
     OVE_OUTPUT_DESCRIPTION  *task_description_list);
-extern t_OVEncodeQueryTaskDescription p_OVEncodeQueryTaskDescription;
+extern t_OVEncodeQueryTaskDescription OVEncodeQueryTaskDescription;
 
 // Reclaim the resource of the output ring up to the specified task.
 typedef OVresult (OPENVIDEOAPI *t_OVEncodeReleaseTask) (
     ove_session             session,
     unsigned int            taskID);
-extern t_OVEncodeReleaseTask p_OVEncodeReleaseTask;
+extern t_OVEncodeReleaseTask OVEncodeReleaseTask;
 
 
 void deinitOVE();
