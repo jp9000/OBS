@@ -130,7 +130,10 @@ VideoEncoder* CreateVCEEncoder(int fps, int width, int height, int quality, CTST
 
     VideoEncoder *encoder = p_createVCEEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR);
     if (!initFunction(&AppConfig, encoder))
+    {
+        delete encoder;
         return NULL;
+    }
 
     return encoder;
 }
