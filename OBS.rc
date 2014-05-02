@@ -139,11 +139,13 @@ BEGIN
     LTEXT           "Settings.Info",IDC_INFO,4,288,417,37,NOT WS_VISIBLE
     RTEXT           "Settings.Encoding.Video.Encoder",IDC_STATIC,10,16,138,8
     CONTROL         "Settings.Encoding.Video.Encoderx264",IDC_ENCODERX264,
-                    "Button",BS_AUTORADIOBUTTON,152,16,87,10
+                    "Button",BS_AUTORADIOBUTTON,152,16,58,10
     CONTROL         "Settings.Encoding.Video.EncoderQSV",IDC_ENCODERQSV,
-                    "Button",BS_AUTORADIOBUTTON,240,16,87,10
+                    "Button",BS_AUTORADIOBUTTON,213,16,87,10
     CONTROL         "Settings.Encoding.Video.EncoderNVENC",IDC_ENCODERNVENC,
-                    "Button",BS_AUTORADIOBUTTON,328,16,87,10
+                    "Button",BS_AUTORADIOBUTTON,285,16,87,10
+    CONTROL         "Settings.Encoding.Video.EncoderVCE", IDC_ENCODERVCE,
+                    "Button", BS_AUTORADIOBUTTON, 359, 16, 56, 10
     LTEXT           "Settings.Encoding.Video.QSVConfigWarning",IDC_QSV_CONFIG_WARNING,4,141,417,37
 END
 

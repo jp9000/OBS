@@ -62,7 +62,7 @@ public:
 
 class SettingsEncoding : public SettingsPane
 {
-    bool hasQSV, hasNVENC;
+    bool hasQSV, hasNVENC, hasVCE;
     //-----------------------------------------------------------------------
     // Constructor/destructor
 
