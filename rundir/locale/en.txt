@@ -111,6 +111,7 @@ MainWindow.TestStream="Preview Stream"
 Plugins.Configure="Configure"
 Plugins.Description="Description:"
 Plugins.Filename="File name:"
+Plugins.InvalidVersion="Plugin '%s' is designed for the %d bit version of OBS and could not be loaded. Please check that the correct version of the plugin is installed."
 
 Reconnecting.Retrying="Could not reconnect.  Retrying"
 
