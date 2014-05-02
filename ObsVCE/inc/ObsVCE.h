@@ -36,7 +36,7 @@ using namespace std;
 
 enum RateControlMode
 {
-    RCM_CFR = 0, //fixed qp
+    RCM_FQP = 0, //fixed qp
     RCM_CBR = 3,
     RCM_VBR = 4
 };

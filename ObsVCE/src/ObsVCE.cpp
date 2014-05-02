@@ -109,8 +109,8 @@ bool VCEEncoder::init()
 
     if (mUseCBR)
         mConfigCtrl.rateControl.encRateControlMethod = RCM_CBR;
-    else if (mUseCFR)
-        mConfigCtrl.rateControl.encRateControlMethod = RCM_CFR;
+    else if (mUseCFR) //Not really
+        mConfigCtrl.rateControl.encRateControlMethod = RCM_FQP;
     else
         mConfigCtrl.rateControl.encRateControlMethod = RCM_VBR;
 
