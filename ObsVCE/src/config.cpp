@@ -279,6 +279,14 @@ bool setEncodeConfig(ove_session session, OvConfigCtrl *pConfig)
     memset(&rateControlConfig, 0, sizeof(OVE_CONFIG_RATE_CONTROL));
     rateControlConfig.size = sizeof(OVE_CONFIG_RATE_CONTROL);
     res = p_OVEncodeGetRateControlConfig(session, &rateControlConfig);
+    if (res)
+    {
+        VCELog(TEXT("Active bitrate: %d"), rateControlConfig.encRateControlTargetBitRate);
+    }
+    else 
+    {
+        VCELog(TEXT("OVEncodeGetRateControlConfig failed."));
+    }
 
     /**************************************************************************/
     /* get the MotionEstimation configuration                                 */
