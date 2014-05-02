@@ -194,7 +194,8 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset
     //mOutput.buffer = new uint8_t[mOutput.size];
 
     //TODO nicely refuse to work :P
-    assert(init());
+    bool initOK = init();
+    assert(initOK);
 }
 
 //TODO
@@ -258,6 +259,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     if (!picIn)
         return true;
 
+    profileIn("VCE encode")
     mfxFrameSurface1 *inputSurface = (mfxFrameSurface1*)picIn;
     mfxFrameData &data = inputSurface->Data;
     assert(data.MemId);
@@ -376,6 +378,7 @@ fail:
         clReleaseEvent((cl_event)eventRunVideoProgram);
 
     mFirstFrame = false;
+    profileOut
     return ret;
 }
 
