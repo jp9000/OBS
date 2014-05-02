@@ -99,8 +99,8 @@ bool VCEEncoder::init()
     mConfigCtrl.rateControl.encRateControlFrameRateDenominator = 1;
     mConfigCtrl.width = mWidth;
     mConfigCtrl.height = mHeight;
-    mConfigCtrl.rateControl.encRateControlTargetBitRate = mMaxBitrate;
-    mConfigCtrl.rateControl.encVBVBufferSize = mBufferSize;
+    mConfigCtrl.rateControl.encRateControlTargetBitRate = mMaxBitrate * 1000;
+    mConfigCtrl.rateControl.encVBVBufferSize = mBufferSize * 1000;
     //TODO Can force IDR?
     mConfigCtrl.rateControl.encGOPSize = mKeyint * mFps;
     mConfigCtrl.rateControl.encQP_I =
