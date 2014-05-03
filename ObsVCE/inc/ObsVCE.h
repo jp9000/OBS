@@ -19,6 +19,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 #pragma once
 #include "Main.h"
 
+//TODO Some optimal count
+#define MAX_INPUT_SURFACE      8
+
 #define VCELog(...) Log(__VA_ARGS__)
 #define AppConfig (*VCEAppConfig)
 
@@ -81,9 +84,6 @@ typedef struct _OVConfigCtrl
     OVE_CONFIG_MOTION_ESTIMATION    meControl;    /**< Motion Estimation settings          */
     OVE_CONFIG_RDO                  rdoControl;   /**< Rate distorsion optimization control*/
 } OvConfigCtrl;//, far * pConfig;
-
-//Matching to NUM_OUT_BUFFERS in OBSVideoCapture.cpp
-#define MAX_INPUT_SURFACE      3
 
 typedef struct OVDeviceHandle
 {
@@ -187,8 +187,8 @@ private:
     int32_t    mHeight;
     int32_t    mAlignedSurfaceWidth;
     int32_t    mAlignedSurfaceHeight; //Not used much
-    uint32_t   mHostPtrSize;
-    uint32_t   mOutSize;
+    uint32_t   mInputBufSize;
+    uint32_t   mFrames;
     //
     CTSTR    mPreset;
     bool     mUse444; //Max VCE 2.0 can do is 422 probably
