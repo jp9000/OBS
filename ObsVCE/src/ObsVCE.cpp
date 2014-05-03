@@ -219,11 +219,6 @@ VCEEncoder::~VCEEncoder()
         mDeviceHandle.deviceInfo = NULL;
     }
 
-    if (mOutput.buffer)
-    {
-        delete[] mOutput.buffer;
-    }
-
     free(mHdrPacket);
     mHdrPacket = NULL;
 
@@ -334,22 +329,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
 
     } while (pTaskDescriptionList->status == OVE_TASK_STATUS_NONE);
 
-    //Output size
-    int compressed_size = 0;
-    /*for (uint32_t i = 0; i<numTaskDescriptionsReturned; i++)
-    {
-        if (pTaskDescriptionList[i].status == OVE_TASK_STATUS_COMPLETE)
-            compressed_size += pTaskDescriptionList[i].size_of_bitstream_data;
-    }
-
-    if (mOutput.size < compressed_size)
-    {
-        delete[] mOutput.buffer;
-        mOutput.buffer = new uint8_t[compressed_size];
-        mOutput.size = compressed_size;
-    }
-
-    uint8_t *outBuffer = mOutput.buffer;*/
+    mEncodeHandle.inputSurfaces[(unsigned int)data.MemId - 1].locked = false;
 
     //Copy data out from VCE
     for (uint32_t i = 0; i<numTaskDescriptionsReturned; i++)
@@ -357,11 +337,6 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         if ((pTaskDescriptionList[i].status == OVE_TASK_STATUS_COMPLETE)
             && pTaskDescriptionList[i].size_of_bitstream_data > 0)
         {
-            compressed_size += pTaskDescriptionList[i].size_of_bitstream_data;
-
-            //memcpy(outBuffer, (uint8_t*)pTaskDescriptionList[i].bitstream_data, pTaskDescriptionList[i].size_of_bitstream_data);
-            //outBuffer += pTaskDescriptionList[i].size_of_bitstream_data;
-
             ProcessOutput(&pTaskDescriptionList[i], packets, packetTypes, timestamp);
             if (mFirstFrame)
             {
@@ -563,6 +538,9 @@ void VCEEncoder::ProcessOutput(OVE_OUTPUT_DESCRIPTION *surf, List<DataPacket> &p
 //TODO
 void VCEEncoder::RequestBuffers(LPVOID buffers)
 {
+    cl_event inMapEvt;
+    cl_int   status = CL_SUCCESS;
+
     if (!buffers || !mIsReady)
         return;
 
@@ -570,17 +548,15 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
 
     mfxFrameData *buff = (mfxFrameData*)buffers;
 
-    if (buff->MemId && mEncodeHandle.inputSurfaces[(unsigned int)buff->MemId - 1].isMapped)
-        return;
-    cl_event inMapEvt;
-    cl_int   status = CL_SUCCESS;
+    //TODO Safe to reuse? Probably means a dropped frame
+    //if (buff->MemId && mEncodeHandle.inputSurfaces[(unsigned int)buff->MemId - 1].isMapped)
+    //    return;
 
     for (int i = 0; i < MAX_INPUT_SURFACE; ++i)
     {
-        if (mEncodeHandle.inputSurfaces[i].isMapped)
+        if (mEncodeHandle.inputSurfaces[i].isMapped || mEncodeHandle.inputSurfaces[i].locked)
             continue;
 
-        //TODO if is mapped already? Code flow error?
         mEncodeHandle.inputSurfaces[i].mapPtr = clEnqueueMapBuffer(mEncodeHandle.clCmdQueue[0],
             (cl_mem)mEncodeHandle.inputSurfaces[i].surface,
             CL_TRUE,
@@ -609,6 +585,7 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
 
         buff->MemId = mfxMemId(i + 1);
         mEncodeHandle.inputSurfaces[i].isMapped = true;
+        mEncodeHandle.inputSurfaces[i].locked = true;
 
         return;
     }

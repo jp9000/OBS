@@ -17,7 +17,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 ********************************************************************************/
 
 #pragma once
-#include <CL\cl.h>
 #include "Main.h"
 
 #define VCELog(...) Log(__VA_ARGS__)
@@ -83,8 +82,7 @@ typedef struct _OVConfigCtrl
     OVE_CONFIG_RDO                  rdoControl;   /**< Rate distorsion optimization control*/
 } OvConfigCtrl;//, far * pConfig;
 
-//TODO Probably uses the first buffer most of the time, but please the Convert444toNV12
-//Also, match to NUM_OUT_BUFFERS in OBSVideoCapture.cpp
+//Matching to NUM_OUT_BUFFERS in OBSVideoCapture.cpp
 #define MAX_INPUT_SURFACE      3
 
 typedef struct OVDeviceHandle
@@ -98,6 +96,7 @@ typedef struct OPSurface
 {
     OPMemHandle surface;
     bool isMapped;
+    bool locked;
     void *mapPtr;
 } OPSurface;
 
@@ -108,12 +107,6 @@ typedef struct OVEncodeHandle
     OPSurface            inputSurfaces[MAX_INPUT_SURFACE]; /**< input buffer  */
     cl_command_queue     clCmdQueue[2];    /**< command queue  */
 }OVEncodeHandle;
-
-typedef struct OVOutput
-{
-    uint8_t *buffer;
-    size_t size;
-} OVOutput;
 
 void unmapBuffer(OVEncodeHandle *encodeHandle, int surf);
 //config.cpp
@@ -165,14 +158,13 @@ private:
     bool encodeCreate(uint32_t deviceId);
     bool encodeOpen(uint32_t deviceId);
     bool encodeClose();
-    void ProcessOutput(/*OVOutput*/ OVE_OUTPUT_DESCRIPTION *surf, List<DataPacket> &packets, List<PacketType> &packetTypes, uint64_t timestamp);
+    void ProcessOutput(OVE_OUTPUT_DESCRIPTION *surf, List<DataPacket> &packets, List<PacketType> &packetTypes, uint64_t timestamp);
 
-    HANDLE frameMutex; //maybe
+    HANDLE frameMutex;
 
     OVDeviceHandle      mDeviceHandle;
     OPContextHandle     mOveContext;
     OVEncodeHandle      mEncodeHandle;
-    OVOutput            mOutput;
 
     OvConfigCtrl            mConfigCtrl;
     map<string, int32_t>    mConfigTable;

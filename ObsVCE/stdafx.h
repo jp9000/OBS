@@ -7,6 +7,7 @@
 //#include <windows.h>
 #include <string>
 #include <map>
+#include <CL\cl.h>
 //Ah, pulls D3D10 incs
 #include <Main.h>
 
