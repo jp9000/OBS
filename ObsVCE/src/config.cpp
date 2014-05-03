@@ -41,6 +41,7 @@ void quickSet(map<string, int32_t> &configTable, int qs)
     }
 }
 
+//TODO Merge with encodeSetParam? Nice for use with config files but kinda useless here.
 void prepareConfigMap(map<string, int32_t> &configTable, bool quickset)
 {
     //map<string, int32_t> configTable = (map<string, int32_t>)*pConfigTable;
@@ -53,8 +54,8 @@ void prepareConfigMap(map<string, int32_t> &configTable, bool quickset)
     configTable["loopFilterDisable"] = 0;
     configTable["encLFBetaOffset"] = 0;
     configTable["encLFAlphaC0Offset"] = 0;
-    configTable["encIDRPeriod"] = 0;
-    configTable["encIPicPeriod"] = 0;
+    configTable["encIDRPeriod"] = 0; //IDR every n frames (nice for streaming)
+    configTable["encIPicPeriod"] = 0; //I every n frames (sucks for streaming?)
     configTable["encHeaderInsertionSpacing"] = 0;
     configTable["encCropLeftOffset"] = 0;
     configTable["encCropRightOffset"] = 0;
@@ -282,6 +283,7 @@ bool setEncodeConfig(ove_session session, OvConfigCtrl *pConfig)
     if (res)
     {
         VCELog(TEXT("Active bitrate: %d"), rateControlConfig.encRateControlTargetBitRate);
+        VCELog(TEXT("Active peak bitrate: %d"), rateControlConfig.encRateControlPeakBitRate);
     }
     else 
     {

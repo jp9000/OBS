@@ -106,6 +106,7 @@ bool VCEEncoder::init()
     mConfigCtrl.rateControl.encRateControlTargetBitRate = mMaxBitrate * 1000;
     mConfigCtrl.rateControl.encRateControlPeakBitRate = mMaxBitrate * 1000;
     mConfigCtrl.rateControl.encVBVBufferSize = mBufferSize * 1000;
+    //mConfigCtrl.pictControl.encIDRPeriod = 300;
 
     int QP = 23;
     //QP = 51 - (mQuality * 9) / 2;
@@ -182,7 +183,6 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset
     , mHdrPacket(NULL)
     , mIsReady(false)
     , mReqKeyframe(false)
-    , mFrames(0)
 {
     frameMutex = OSCreateMutex();
 
@@ -288,10 +288,8 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     pictureParameter.forceIMBPeriod = 0;
     pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_NONE;
 
-    //mFrames++;
-    if (mReqKeyframe || mFirstFrame || mFrames > 300)
+    if (mReqKeyframe || mFirstFrame)
     {
-        mFrames = 0;
         mReqKeyframe = false;
         pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_IDR;
     }

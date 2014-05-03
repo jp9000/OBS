@@ -188,7 +188,6 @@ private:
     int32_t    mAlignedSurfaceWidth;
     int32_t    mAlignedSurfaceHeight; //Not used much
     uint32_t   mInputBufSize;
-    uint32_t   mFrames;
     //
     CTSTR    mPreset;
     bool     mUse444; //Max VCE 2.0 can do is 422 probably
