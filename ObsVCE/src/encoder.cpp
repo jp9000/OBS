@@ -62,7 +62,7 @@ bool VCEEncoder::encodeCreate(uint32_t deviceId)
 
 bool VCEEncoder::encodeOpen(uint32_t deviceId)
 {
-    assert(mHostPtrSize);
+    assert(mInputBufSize);
     cl_device_id clDeviceID = reinterpret_cast<cl_device_id>(deviceId);
     OVresult res = 0;
     cl_int err;
@@ -117,8 +117,8 @@ bool VCEEncoder::encodeOpen(uint32_t deviceId)
     for (int32_t i = 0; i<MAX_INPUT_SURFACE; i++)
     {
         mEncodeHandle.inputSurfaces[i].surface = clCreateBuffer((cl_context)mOveContext,
-            CL_MEM_READ_WRITE,
-            mHostPtrSize,
+            CL_MEM_READ_ONLY,
+            mInputBufSize,
             NULL,
             &err);
         if (err != CL_SUCCESS)

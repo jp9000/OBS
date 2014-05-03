@@ -104,12 +104,20 @@ bool VCEEncoder::init()
     mConfigCtrl.width = mWidth;
     mConfigCtrl.height = mHeight;
     mConfigCtrl.rateControl.encRateControlTargetBitRate = mMaxBitrate * 1000;
+    mConfigCtrl.rateControl.encRateControlPeakBitRate = mMaxBitrate * 1000;
     mConfigCtrl.rateControl.encVBVBufferSize = mBufferSize * 1000;
+
+    int QP = 23;
+    //QP = 51 - (mQuality * 9) / 2;
+    QP = 40 - (mQuality * 5) / 2; // 40 .. 15
+    //QP = (10 - mQuality) * 5; // 0..50
+    VCELog(TEXT("Quality: %d => QP %d"), mQuality, QP);
+
     //TODO Can force IDR?
     mConfigCtrl.rateControl.encGOPSize = mKeyint * mFps;
     mConfigCtrl.rateControl.encQP_I =
         mConfigCtrl.rateControl.encQP_P =
-        mConfigCtrl.rateControl.encQP_B = (10 - mQuality) * 5; // 0..50
+        mConfigCtrl.rateControl.encQP_B = QP;
 
     if (mUseCBR)
         mConfigCtrl.rateControl.encRateControlMethod = RCM_CBR;
@@ -118,9 +126,7 @@ bool VCEEncoder::init()
     else
         mConfigCtrl.rateControl.encRateControlMethod = RCM_VBR;
 
-#ifdef _DEBUG
     VCELog(TEXT("Rate control method: %d"), mConfigCtrl.rateControl.encRateControlMethod);
-#endif
 
     int numMBs = ((mWidth + 15) / 16) * ((mHeight + 15) / 16);
     mConfigCtrl.pictControl.encNumMBsPerSlice = numMBs;
@@ -175,6 +181,8 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset
     , frameShift(0)
     , mHdrPacket(NULL)
     , mIsReady(false)
+    , mReqKeyframe(false)
+    , mFrames(0)
 {
     frameMutex = OSCreateMutex();
 
@@ -190,11 +198,7 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset
         (height + 15) & ~15;
 
     // NV12 is 3/2
-    mHostPtrSize = mAlignedSurfaceHeight * mAlignedSurfaceWidth * 3 / 2;
-    // As seen in x264vfw
-    //TODO "* 3" -> "* 3/2" maybe because max output size, that could probably ever be and most likely never will,
-    // is uncompressed NV12.
-    mOutSize = ((width + 15) & ~15) * ((height + 31) & ~31) * 3 + 4096;
+    mInputBufSize = mAlignedSurfaceHeight * mAlignedSurfaceWidth * 3 / 2;
 }
 
 //TODO
@@ -261,12 +265,18 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     mfxFrameData &data = inputSurface->Data;
     assert(data.MemId);
 
+    unsigned int idx = (unsigned int)data.MemId - 1;
+
+#ifdef _DEBUG
+    VCELog(TEXT("Encoding buffer: %d"), idx);
+#endif
+
     encodeTaskInputBufferList[0].bufferType = OVE_BUFFER_TYPE_PICTURE;
     encodeTaskInputBufferList[0].buffer.pPicture = (OVE_SURFACE_HANDLE)
-        mEncodeHandle.inputSurfaces[(unsigned int)data.MemId - 1].surface;
+        mEncodeHandle.inputSurfaces[idx].surface;
 
     // Encoder can't seem to use mapped buffer, all green :(
-    unmapBuffer(&mEncodeHandle, (unsigned int)data.MemId - 1);
+    unmapBuffer(&mEncodeHandle, idx);
 
     memset(&pictureParameter, 0, sizeof(OVE_ENCODE_PARAMETERS_H264));
     pictureParameter.size = sizeof(OVE_ENCODE_PARAMETERS_H264);
@@ -278,8 +288,10 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     pictureParameter.forceIMBPeriod = 0;
     pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_NONE;
 
-    if (mReqKeyframe)
+    //mFrames++;
+    if (mReqKeyframe || mFirstFrame || mFrames > 300)
     {
+        mFrames = 0;
         mReqKeyframe = false;
         pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_IDR;
     }
@@ -300,6 +312,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         goto fail;
     }
 
+    profileIn("Wait for task(s)")
     //wait for encoder
     err = clWaitForEvents(1, (cl_event *)&(eventRunVideoProgram));
     if (err != CL_SUCCESS)
@@ -313,7 +326,6 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     numTaskDescriptionsReturned = 0;
     memset(pTaskDescriptionList, 0, sizeof(OVE_OUTPUT_DESCRIPTION)*numTaskDescriptionsRequested);
     pTaskDescriptionList[0].size = sizeof(OVE_OUTPUT_DESCRIPTION);
-
     do
     {
         res = OVEncodeQueryTaskDescription(mEncodeHandle.session,
@@ -328,9 +340,11 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         }
 
     } while (pTaskDescriptionList->status == OVE_TASK_STATUS_NONE);
+    profileOut
 
-    mEncodeHandle.inputSurfaces[(unsigned int)data.MemId - 1].locked = false;
+    mEncodeHandle.inputSurfaces[idx].locked = false;
 
+    profileIn("Get bitstream")
     //Copy data out from VCE
     for (uint32_t i = 0; i<numTaskDescriptionsReturned; i++)
     {
@@ -349,6 +363,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
             res = OVEncodeReleaseTask(mEncodeHandle.session, pTaskDescriptionList[i].taskID);
         }
     }
+    profileOut
 
 fail:
     if (eventRunVideoProgram)
@@ -362,12 +377,6 @@ fail:
 void VCEEncoder::ProcessOutput(OVE_OUTPUT_DESCRIPTION *surf, List<DataPacket> &packets, List<PacketType> &packetTypes, uint64_t timestamp)
 {
     encodeData.Clear();
-
-    if (surf->size_of_bitstream_data > mOutSize)
-    {
-        VCELog(TEXT("WARNING: Actual output size is bigger than output buffer size!"));
-        mOutSize = surf->size_of_bitstream_data;
-    }
 
     uint8_t *pstart = (uint8_t*) surf->bitstream_data;
 
@@ -515,6 +524,7 @@ void VCEEncoder::ProcessOutput(OVE_OUTPUT_DESCRIPTION *surf, List<DataPacket> &p
             packetOut.OutputDword(htonl(newPayloadSize));
             packetOut.Serialize(nal.p_payload + skipBytes, newPayloadSize);
 
+            // P is _HIGH, I is _HIGHEST
             switch (nal.i_ref_idc)
             {
             case NAL_PRIORITY_DISPOSABLE:   bestType = MAX(bestType, PacketType_VideoDisposable);  break;
@@ -554,7 +564,9 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
 
     for (int i = 0; i < MAX_INPUT_SURFACE; ++i)
     {
-        if (mEncodeHandle.inputSurfaces[i].isMapped || mEncodeHandle.inputSurfaces[i].locked)
+        if (mEncodeHandle.inputSurfaces[i].isMapped || 
+            mEncodeHandle.inputSurfaces[i].locked ||
+            !mEncodeHandle.inputSurfaces[i].surface) //Out of memory?
             continue;
 
         mEncodeHandle.inputSurfaces[i].mapPtr = clEnqueueMapBuffer(mEncodeHandle.clCmdQueue[0],
@@ -562,7 +574,7 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
             CL_TRUE,
             CL_MAP_WRITE,
             0,
-            mHostPtrSize,
+            mInputBufSize,
             0,
             NULL,
             &inMapEvt,
@@ -699,5 +711,6 @@ void VCEEncoder::GetHeaders(DataPacket &packet)
 void VCEEncoder::RequestKeyframe()
 { 
     OSMutexLocker locker(frameMutex);
-    mReqKeyframe = true; 
+    mReqKeyframe = true;
+    VCELog(TEXT("Keyframe requested"));
 }
