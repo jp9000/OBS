@@ -92,15 +92,12 @@ bool VCEEncoder::encodeOpen(uint32_t deviceId)
     if (!res)
         return false;
 
-    /**************************************************************************/
-    /* Create a command queue                                                 */
-    /**************************************************************************/
-
     cl_command_queue_properties prop = 0;
     //(Currently) not using any CL kernels, so nothing to profile.
     //if (mConfigTable["ProfileKernels"] == 1)
     //    prop |= CL_QUEUE_PROFILING_ENABLE;
 
+    //TODO Remove second unused queue or do something fancy with it
     mEncodeHandle.clCmdQueue[0] = clCreateCommandQueue((cl_context)mOveContext,
         clDeviceID, prop, &err);
     if (err != CL_SUCCESS)
@@ -117,8 +114,6 @@ bool VCEEncoder::encodeOpen(uint32_t deviceId)
         return false;
     }
 
-    //cl_int mode[] = {CL_MEM_READ_ONLY, CL_MEM_WRITE_ONLY};
-    //cl_int mode[] = { CL_MEM_WRITE_ONLY };
     for (int32_t i = 0; i<MAX_INPUT_SURFACE; i++)
     {
         mEncodeHandle.inputSurfaces[i].surface = clCreateBuffer((cl_context)mOveContext,
