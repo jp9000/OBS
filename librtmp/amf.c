@@ -864,7 +864,7 @@ AMFProp_Dump(AMFObjectProperty *prop)
 void
 AMFProp_Reset(AMFObjectProperty *prop)
 {
-    if (prop->p_type == AMF_OBJECT)
+    if (prop->p_type == AMF_OBJECT || prop->p_type == AMF_ECMA_ARRAY || prop->p_type == AMF_STRICT_ARRAY)
         AMF_Reset(&prop->p_vu.p_object);
     else
     {

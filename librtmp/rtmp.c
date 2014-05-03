@@ -2795,6 +2795,17 @@ static void hexenc(unsigned char *inbuf, int len, char *dst)
     *ptr = '\0';
 }
 
+static char *AValChr(AVal *av, char c)
+{
+    int i;
+    for (i = 0; i < av->av_len; i++)
+    {
+        if (av->av_val[i] == c)
+            return &av->av_val[i];
+    }
+    return NULL;
+}
+
 static int
 PublisherAuth(RTMP *r, AVal *description)
 {
@@ -3092,7 +3103,7 @@ PublisherAuth(RTMP *r, AVal *description)
             /* hash2 = hexenc(md5(method + ":/" + app + "/" + appInstance)) */
             /* Extract appname + appinstance without query parameters */
             apptmp = r->Link.app;
-            ptr = strchr(apptmp.av_val, '?');
+            ptr = AValChr(&apptmp, '?');
             if (ptr)
                 apptmp.av_len = ptr - apptmp.av_val;
 
@@ -3100,6 +3111,8 @@ PublisherAuth(RTMP *r, AVal *description)
             MD5_Update(&md5ctx, (void *)method, sizeof(method)-1);
             MD5_Update(&md5ctx, ":/", 2);
             MD5_Update(&md5ctx, apptmp.av_val, apptmp.av_len);
+            if (!AValChr(&apptmp, '/'))
+                MD5_Update(&md5ctx, "/_definst_", sizeof("/_definst_") - 1);
             MD5_Final(md5sum_val, &md5ctx);
             RTMP_Log(RTMP_LOGDEBUG, "%s, md5(%s:/%.*s) =>", __FUNCTION__,
                      method, apptmp.av_len, apptmp.av_val);
@@ -3891,6 +3904,7 @@ RTMP_ReadPacket(RTMP *r, RTMPPacket *packet)
     char *header = (char *)hbuf;
     int nSize, hSize, nToRead, nChunk;
     int didAlloc = FALSE;
+    int extendedTimestamp;
 
     RTMP_Log(RTMP_LOGDEBUG2, "%s: fd=%d", __FUNCTION__, r->m_sb.sb_socket);
 
@@ -3995,7 +4009,10 @@ RTMP_ReadPacket(RTMP *r, RTMPPacket *packet)
                     packet->m_nInfoField2 = DecodeInt32LE(header + 7);
             }
         }
-        if (packet->m_nTimeStamp == 0xffffff)
+
+        extendedTimestamp = (packet->m_nTimeStamp == 0xffffff);
+
+        if (extendedTimestamp)
         {
             if (ReadN(r, header + nSize, 4) != 4)
             {
@@ -4050,6 +4067,8 @@ RTMP_ReadPacket(RTMP *r, RTMPPacket *packet)
     if (!r->m_vecChannelsIn[packet->m_nChannel])
         r->m_vecChannelsIn[packet->m_nChannel] = malloc(sizeof(RTMPPacket));
     memcpy(r->m_vecChannelsIn[packet->m_nChannel], packet, sizeof(RTMPPacket));
+    if (extendedTimestamp)
+        r->m_vecChannelsIn[packet->m_nChannel]->m_nTimeStamp = 0xffffff;
 
     if (RTMPPacket_IsReady(packet))
     {
@@ -5350,6 +5369,7 @@ fail:
             memcpy(mybuf, flvHeader, sizeof(flvHeader));
             r->m_read.buf += sizeof(flvHeader);
             r->m_read.buflen -= sizeof(flvHeader);
+            cnt += sizeof(flvHeader);
 
             while (r->m_read.timestamp == 0)
             {
@@ -5367,6 +5387,7 @@ fail:
                 {
                     mybuf = realloc(mybuf, cnt + nRead);
                     memcpy(mybuf+cnt, r->m_read.buf, nRead);
+                    free(r->m_read.buf);
                     r->m_read.buf = mybuf+cnt+nRead;
                     break;
                 }
