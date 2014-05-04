@@ -54,7 +54,8 @@ enum RateControlMode
 {
     RCM_FQP = 0, //fixed qp
     RCM_CBR = 3,
-    RCM_VBR = 4
+    RCM_VBR = 4,
+    //RCM_SOMETHING = 5 //VCE 2.0 accepts it, seems like vbr
 };
 
 //from nvenc
@@ -96,7 +97,7 @@ typedef struct OPSurface
 {
     OPMemHandle surface;
     bool isMapped;
-    bool locked;
+    LONG locked;
     void *mapPtr;
 } OPSurface;
 
@@ -108,7 +109,9 @@ typedef struct OVEncodeHandle
     cl_command_queue     clCmdQueue[2];    /**< command queue  */
 }OVEncodeHandle;
 
+void mapBuffer(OVEncodeHandle *encodeHandle, int i, uint32_t size);
 void unmapBuffer(OVEncodeHandle *encodeHandle, int surf);
+
 //config.cpp
 void quickSet(map<string, int32_t> &configTable, int qs);
 void prepareConfigMap(map<string, int32_t> &configTable, bool quickset);

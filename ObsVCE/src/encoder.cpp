@@ -1,6 +1,49 @@
 #include "stdafx.h"
 #include "ObsVCE.h"
 
+void mapBuffer(OVEncodeHandle *encodeHandle, int i, uint32_t size)
+{
+    cl_event inMapEvt = 0;
+    cl_int   status = CL_SUCCESS;
+
+    encodeHandle->inputSurfaces[i].mapPtr = clEnqueueMapBuffer(encodeHandle->clCmdQueue[0],
+        (cl_mem)encodeHandle->inputSurfaces[i].surface,
+        CL_TRUE,
+        CL_MAP_WRITE,
+        0,
+        size,
+        0,
+        NULL,
+        &inMapEvt,
+        &status);
+
+    if (status != CL_SUCCESS)
+    {
+        VCELog(TEXT("Failed to map input buffer: %d"), status);
+    }
+
+    status = clFlush(encodeHandle->clCmdQueue[0]);
+    waitForEvent(inMapEvt);
+    status = clReleaseEvent(inMapEvt);
+    encodeHandle->inputSurfaces[i].isMapped = true;
+}
+
+void unmapBuffer(OVEncodeHandle *encodeHandle, int surf)
+{
+    cl_event unmapEvent;
+    cl_int status = clEnqueueUnmapMemObject(encodeHandle->clCmdQueue[0],
+        (cl_mem)encodeHandle->inputSurfaces[surf].surface,
+        encodeHandle->inputSurfaces[surf].mapPtr,
+        0,
+        NULL,
+        &unmapEvent);
+    status = clFlush(encodeHandle->clCmdQueue[0]);
+    waitForEvent(unmapEvent);
+    status = clReleaseEvent(unmapEvent);
+    encodeHandle->inputSurfaces[surf].isMapped = false;
+    encodeHandle->inputSurfaces[surf].mapPtr = NULL;
+}
+
 bool VCEEncoder::encodeCreate(uint32_t deviceId)
 {
     bool status;
@@ -128,22 +171,6 @@ bool VCEEncoder::encodeOpen(uint32_t deviceId)
         }
     }
     return true;
-}
-
-void unmapBuffer(OVEncodeHandle *encodeHandle, int surf)
-{
-    cl_event unmapEvent;
-    cl_int status = clEnqueueUnmapMemObject(encodeHandle->clCmdQueue[0],
-        (cl_mem)encodeHandle->inputSurfaces[surf].surface,
-        encodeHandle->inputSurfaces[surf].mapPtr,
-        0,
-        NULL,
-        &unmapEvent);
-    status = clFlush(encodeHandle->clCmdQueue[0]);
-    waitForEvent(unmapEvent);
-    status = clReleaseEvent(unmapEvent);
-    encodeHandle->inputSurfaces[surf].isMapped = false;
-    encodeHandle->inputSurfaces[surf].mapPtr = NULL;
 }
 
 bool VCEEncoder::encodeClose()

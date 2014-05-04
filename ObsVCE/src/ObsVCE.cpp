@@ -16,6 +16,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 ********************************************************************************/
 
+//http://www.slideshare.net/DevCentralAMD/mm-4094-khaledmammou
+
 #include "stdafx.h"
 #include "ObsVCE.h"
 #include <../libmfx/include/msdk/include/mfxstructures.h>
@@ -104,9 +106,17 @@ bool VCEEncoder::init()
     mConfigCtrl.width = mWidth;
     mConfigCtrl.height = mHeight;
     mConfigCtrl.rateControl.encRateControlTargetBitRate = mMaxBitrate * 1000;
+    // Driver resets to bitrate?
     mConfigCtrl.rateControl.encRateControlPeakBitRate = mMaxBitrate * 1000;
+    // Always 10Mbps :S
     mConfigCtrl.rateControl.encVBVBufferSize = mBufferSize * 1000;
-    //mConfigCtrl.pictControl.encIDRPeriod = 300;
+
+    //TODO IDR nice for seeking in local files. Intra-refresh better for streaming?
+    mConfigCtrl.pictControl.encIDRPeriod = mKeyint * mFps;
+    //mConfigCtrl.pictControl.encForceIntraRefresh = mKeyint * mFps;
+    //TODO Usually 0 to let VCE manage it.
+    mConfigCtrl.rateControl.encGOPSize = mKeyint * mFps;
+    mConfigCtrl.priority = OVE_ENCODE_TASK_PRIORITY_LEVEL2;
 
     int QP = 23;
     //QP = 51 - (mQuality * 9) / 2;
@@ -114,8 +124,6 @@ bool VCEEncoder::init()
     //QP = (10 - mQuality) * 5; // 0..50
     VCELog(TEXT("Quality: %d => QP %d"), mQuality, QP);
 
-    //TODO Can force IDR?
-    mConfigCtrl.rateControl.encGOPSize = mKeyint * mFps;
     mConfigCtrl.rateControl.encQP_I =
         mConfigCtrl.rateControl.encQP_P =
         mConfigCtrl.rateControl.encQP_B = QP;
@@ -141,7 +149,7 @@ bool VCEEncoder::init()
     status = getDevice(&mDeviceHandle);
     if (status == false)
     {
-        VCELog(TEXT("Failed to initializing encoder."));
+        VCELog(TEXT("Failed to query CL platform/devices."));
         return false;
     }
 
@@ -269,7 +277,11 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
 
 #ifdef _DEBUG
     VCELog(TEXT("Encoding buffer: %d"), idx);
+    VCELog(TEXT("Mapped handle: %p"), mEncodeHandle.inputSurfaces[idx].mapPtr);
 #endif
+
+    //mEncodeHandle.inputSurfaces[idx].locked = true;
+    _InterlockedCompareExchange(&(mEncodeHandle.inputSurfaces[idx].locked), 1, 0);
 
     encodeTaskInputBufferList[0].bufferType = OVE_BUFFER_TYPE_PICTURE;
     encodeTaskInputBufferList[0].buffer.pPicture = (OVE_SURFACE_HANDLE)
@@ -340,7 +352,12 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     } while (pTaskDescriptionList->status == OVE_TASK_STATUS_NONE);
     profileOut
 
-    mEncodeHandle.inputSurfaces[idx].locked = false;
+    profileIn("Remap buffer")
+    mapBuffer(&mEncodeHandle, idx, mInputBufSize);
+    profileOut
+
+    //mEncodeHandle.inputSurfaces[idx].locked = false;
+    _InterlockedCompareExchange(&(mEncodeHandle.inputSurfaces[idx].locked), 0, 1);
 
     profileIn("Get bitstream")
     //Copy data out from VCE
@@ -546,19 +563,25 @@ void VCEEncoder::ProcessOutput(OVE_OUTPUT_DESCRIPTION *surf, List<DataPacket> &p
 //TODO
 void VCEEncoder::RequestBuffers(LPVOID buffers)
 {
-    cl_event inMapEvt;
+    cl_event inMapEvt = 0;
     cl_int   status = CL_SUCCESS;
 
     if (!buffers || !mIsReady)
         return;
 
-    OSMutexLocker locker(frameMutex);
-
     mfxFrameData *buff = (mfxFrameData*)buffers;
 
-    //TODO Safe to reuse? Probably means a dropped frame
-    //if (buff->MemId && mEncodeHandle.inputSurfaces[(unsigned int)buff->MemId - 1].isMapped)
-    //    return;
+#ifdef _DEBUG
+    VCELog(TEXT("RequestBuffers: %d"), (unsigned int)buff->MemId - 1);
+#endif
+
+    //TODO Threaded NV12 conversion asks same buffer (thread count) times?
+    if (buff->MemId && mEncodeHandle.inputSurfaces[(unsigned int)buff->MemId - 1].isMapped &&
+        !mEncodeHandle.inputSurfaces[(unsigned int)buff->MemId - 1].locked)
+        return;
+
+    //Trying atomic inputSurface.locked instead
+    //OSMutexLocker locker(frameMutex);
 
     for (int i = 0; i < MAX_INPUT_SURFACE; ++i)
     {
@@ -567,35 +590,18 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
             !mEncodeHandle.inputSurfaces[i].surface) //Out of memory?
             continue;
 
-        mEncodeHandle.inputSurfaces[i].mapPtr = clEnqueueMapBuffer(mEncodeHandle.clCmdQueue[0],
-            (cl_mem)mEncodeHandle.inputSurfaces[i].surface,
-            CL_TRUE,
-            CL_MAP_WRITE,
-            0,
-            mInputBufSize,
-            0,
-            NULL,
-            &inMapEvt,
-            &status);
+        mapBuffer(&mEncodeHandle, i, mInputBufSize);
 
-        if (status != CL_SUCCESS)
-        {
-            VCELog(TEXT("Failed to map input buffer: %d"), status);
+        if (!mEncodeHandle.inputSurfaces[i].mapPtr)
             continue;
-        }
-
-        status = clFlush(mEncodeHandle.clCmdQueue[0]);
-        waitForEvent(inMapEvt);
-        status = clReleaseEvent(inMapEvt);
 
         buff->Pitch = mAlignedSurfaceWidth;
         buff->Y = (mfxU8*)mEncodeHandle.inputSurfaces[i].mapPtr;
-        //TODO mAlignedSurfaceHeight?
         buff->UV = buff->Y + (mHeight * buff->Pitch);
 
         buff->MemId = mfxMemId(i + 1);
-        mEncodeHandle.inputSurfaces[i].isMapped = true;
-        mEncodeHandle.inputSurfaces[i].locked = true;
+        //mEncodeHandle.inputSurfaces[i].locked = 0; //false
+        _InterlockedCompareExchange(&(mEncodeHandle.inputSurfaces[i].locked), 0, 1);
 
         return;
     }
@@ -710,5 +716,7 @@ void VCEEncoder::RequestKeyframe()
 { 
     OSMutexLocker locker(frameMutex);
     mReqKeyframe = true;
+#ifdef _DEBUG
     VCELog(TEXT("Keyframe requested"));
+#endif
 }

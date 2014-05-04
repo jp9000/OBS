@@ -84,7 +84,7 @@ void prepareConfigMap(map<string, int32_t> &configTable, bool quickset)
     configTable["disable16x16Frame1"] = 0;
     configTable["disableSATD"] = 0;
     configTable["enableAMD"] = 0;
-    configTable["encDisableSubMode"] = 0;
+    configTable["encDisableSubMode"] = 254;
     configTable["encIMESkipX"] = 0;
     configTable["encIMESkipY"] = 0;
     configTable["encEnImeOverwDisSubm"] = 0;
@@ -101,7 +101,7 @@ void prepareConfigMap(map<string, int32_t> &configTable, bool quickset)
     configTable["useFmeInterpolUV"] = 0;
     configTable["enc16x16CostAdj"] = 0;
     configTable["encSkipCostAdj"] = 0;
-    configTable["encForce16x16skip"] = 0;
+    configTable["encForce16x16skip"] = 1;
 
     if (quickset) return;
 
@@ -284,6 +284,9 @@ bool setEncodeConfig(ove_session session, OvConfigCtrl *pConfig)
     {
         VCELog(TEXT("Active bitrate: %d"), rateControlConfig.encRateControlTargetBitRate);
         VCELog(TEXT("Active peak bitrate: %d"), rateControlConfig.encRateControlPeakBitRate);
+        VCELog(TEXT("Active control method: %d"), rateControlConfig.encRateControlMethod);
+        VCELog(TEXT("Active VBV buffer: %d"), rateControlConfig.encVBVBufferSize);
+        VCELog(TEXT("Active I/P QP: %d/%d"), rateControlConfig.encQP_I, rateControlConfig.encQP_P);
     }
     else 
     {
