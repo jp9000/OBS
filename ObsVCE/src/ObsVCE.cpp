@@ -94,6 +94,7 @@ bool VCEEncoder::init()
     bool status = false;
     if (!initOVE())
         return false;
+    bool bPadCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 1) != 0;
 
     prepareConfigMap(mConfigTable, false);
     quickSet(mConfigTable, 0);//Default to speed
@@ -117,6 +118,8 @@ bool VCEEncoder::init()
     //TODO Usually 0 to let VCE manage it.
     mConfigCtrl.rateControl.encGOPSize = mKeyint * mFps;
     mConfigCtrl.priority = OVE_ENCODE_TASK_PRIORITY_LEVEL2;
+    if (bPadCBR) //TODO Serves same purpose?
+        mConfigCtrl.rateControl.encRCOptions = 0x1;
 
     int QP = 23;
     //QP = 51 - (mQuality * 9) / 2;
@@ -137,8 +140,11 @@ bool VCEEncoder::init()
 
     VCELog(TEXT("Rate control method: %d"), mConfigCtrl.rateControl.encRateControlMethod);
 
-    int numMBs = ((mWidth + 15) / 16) * ((mHeight + 15) / 16);
+    int numH = ((mHeight + 15) / 16);
+    int numMBs = ((mWidth + 15) / 16) * numH;
     mConfigCtrl.pictControl.encNumMBsPerSlice = numMBs;
+    //WTF, why half the pixels
+    mConfigCtrl.pictControl.encCropBottomOffset = (numH * 16 - mHeight) >> 1;
 
     if (mDeviceHandle.deviceInfo)
     {

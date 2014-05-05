@@ -18,6 +18,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 
 #pragma once
 #include "Main.h"
+using std::map;
+using std::string;
 
 //TODO Some optimal count
 #define MAX_INPUT_SURFACE      8
@@ -41,7 +43,6 @@ void deinitOVE();
 #endif
 #endif
 
-using namespace std;
 #define OBSVCE_API __declspec(dllexport) __cdecl
 
 #define htons(n) (((((uint16_t)(n) & 0xFF)) << 8) | (((uint16_t)(n) & 0xFF00) >> 8))
