@@ -59,8 +59,8 @@ void Parameters::Init(mfxU16 target_usage, mfxU16 profile, int fps, int keyframe
 {
     params.mfx.CodecId = MFX_CODEC_AVC;
     params.mfx.TargetUsage = target_usage;
-    params.mfx.TargetKbps = max_bitrate;
-    params.mfx.MaxKbps = max_bitrate;
+    params.mfx.TargetKbps = saturate<mfxU16>(max_bitrate);
+    params.mfx.MaxKbps = saturate<mfxU16>(max_bitrate);
     params.mfx.BufferSizeInKB = buffer_size/8;
     params.mfx.GopOptFlag = MFX_GOP_CLOSED;
     params.mfx.GopPicSize = keyframe_interval_frames;

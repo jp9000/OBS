@@ -32,3 +32,13 @@ static inline void zero(T& t, size_t size=sizeof(T))
 #ifdef max
 #undef max
 #endif
+
+template <class T, class U>
+static inline T saturate(U val)
+{
+    if (val > std::numeric_limits<T>::max())
+        return std::numeric_limits<T>::max();
+    if (val < std::numeric_limits<T>::min())
+        return std::numeric_limits<T>::min();
+    return val;
+}
