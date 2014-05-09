@@ -258,6 +258,8 @@ void NVENCEncoder::init()
     initEncodeParams.encodeConfig = &encodeConfig;
     memcpy(&encodeConfig, &presetConfig.presetCfg, sizeof(NV_ENC_CONFIG));
 
+    encodeConfig.version = NV_ENC_CONFIG_VER;
+
     if (keyint != 0)
         encodeConfig.gopLength = keyint * fps;
 
