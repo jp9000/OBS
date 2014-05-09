@@ -45,9 +45,10 @@ services : {
   GoodGame.ru : {
     id : 5
     servers : {
-      "Moscow M9"        : rtmp://stream.goodgame.ru:1940/live
-      "Moscow M10"       : rtmp://stream2.goodgame.ru:1940/live
-      "Saint-Petersburg" : rtmp://spb1.goodgame.ru:1940/live 
+      "Моscow М9    : rtmp://bal.goodgame.ru:1940/live
+      "Moscow М10-1 : rtmp://stream.goodgame.ru:1940/live
+      "Моscow М10-2 : rtmp://stream3.goodgame.ru:1940/live
+      "Моscow М10-3 : rtmp://stream4.goodgame.ru:1940/live
     }
   }
   DailyMotion : {
