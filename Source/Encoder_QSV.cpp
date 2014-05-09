@@ -34,6 +34,7 @@
 
 #include "../QSVHelper/IPCInfo.h"
 #include "../QSVHelper/WindowsStuff.h"
+#include "../QSVHelper/Utilities.h"
 
 extern "C"
 {
@@ -123,13 +124,6 @@ namespace
         return t/MFX_TIME_FACTOR;
     }
 #undef MFX_TIME_FACTOR
-
-    template <class T>
-    void zero(T& t, size_t size=sizeof(T))
-    {
-        memset(&t, 0, size);
-    }
-
 
     bool spawn_helper(String &event_prefix, safe_handle &qsvhelper_process, safe_handle &qsvhelper_thread, IPCWaiter &process_waiter)
     {

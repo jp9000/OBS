@@ -18,8 +18,17 @@
 
 #pragma once
 
+#include <limits>
+
 template <class T>
-void zero(T& t, size_t size=sizeof(T))
+static inline void zero(T& t, size_t size=sizeof(T))
 {
     memset(&t, 0, size);
 }
+
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
