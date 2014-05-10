@@ -6,7 +6,6 @@ void waitForEvent(cl_event inMapEvt)
     cl_int eventStatus = CL_QUEUED;
     cl_int status;
 
-    //TODO Might be RDP but sometimes gives -31 error (CL_INVALID_DEVICE_TYPE?)
     while (eventStatus > CL_COMPLETE)
     {
         status = clGetEventInfo(

@@ -552,7 +552,8 @@ void OBS::MainCaptureLoop()
     int curOutBuffer = 0;
 
     bool bUsingQSV = videoEncoder->isQSV();//GlobalConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
-    bUsing444 = false;
+    bUsing444 = false || (AppConfig->GetString(L"Video Encoding", L"Encoder") == L"VCE") &&
+        (AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCL"), 0) == 1);
 
     EncoderPicture lastPic;
     EncoderPicture outPics[NUM_OUT_BUFFERS];
@@ -573,7 +574,7 @@ void OBS::MainCaptureLoop()
         }
     }
 
-    if(bUsing444)
+    if (bUsing444 && !bUsingQSV)
     {
         for(int i=0; i<NUM_OUT_BUFFERS; i++)
         {
@@ -1112,6 +1113,22 @@ void OBS::MainCaptureLoop()
                         }
 
                         profileOut;
+                    }
+                    //VCE: doing NV12 conversion in CL
+                    else
+                    {
+                        if (bUsingQSV)
+                        {
+                            mfxFrameData& data = picOut.mfxOut->Data;
+                            videoEncoder->RequestBuffers(&data);
+                            LPBYTE SY = (LPBYTE)map.pData;
+                            LPBYTE DY = (LPBYTE)data.Y;
+                            for (UINT y = 0; y < outputCY; y++, SY += map.RowPitch, DY += data.Pitch)
+                            {
+                                memcpy(DY, SY, outputCX * 4);
+                            }
+                        }
+                        prevTexture->Unmap(0);
                     }
 
                     if(bEncode)

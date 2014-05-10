@@ -170,6 +170,7 @@ Settings.Advanced.Priority.Idle="Idle"
 Settings.Advanced.Priority.Normal="Normal"
 Settings.Advanced.Priority.AboveNormal="Above Normal"
 Settings.Advanced.Priority.High="High"
+Settings.Advanced.CLConversion="Use OpenCL for NV12 conversion"
 
 Settings.Audio.DesktopBoost="Desktop Boost (multiple):"
 Settings.Audio.Device="Microphone/Auxiliary Audio Device:"

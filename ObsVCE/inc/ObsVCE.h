@@ -22,13 +22,13 @@ using std::map;
 using std::string;
 
 //TODO Some optimal count
-#define MAX_INPUT_SURFACE      8
+#define MAX_INPUT_SURFACE      3
 
 #define VCELog(...) Log(__VA_ARGS__)
 #define AppConfig (*VCEAppConfig)
 
 //Use LoadLibrary etc. instead of linking
-#define OVE_DYN
+//#define OVE_DYN
 
 #ifdef OVE_DYN
 #include "OVEncodeDyn.h"
@@ -174,6 +174,12 @@ private:
     map<string, int32_t>    mConfigTable;
     List<BYTE> encodeData, headerPacket, seiData;
 
+    void        *mOutPtr;
+    uint32_t    mOutPtrSize;
+    uint64_t     mLastTS;
+    cl_mem     mOutput;
+    cl_kernel  mKernel[2];
+    cl_program mProgram;
     bool       mIsReady; // init() was called successfully
     int        frameShift;
     void       *inputBuffer;
@@ -192,6 +198,7 @@ private:
     int32_t    mAlignedSurfaceWidth;
     int32_t    mAlignedSurfaceHeight; //Not used much
     uint32_t   mInputBufSize;
+    uint32_t   mOutputBufSize;
     //
     CTSTR    mPreset;
     bool     mUse444; //Max VCE 2.0 can do is 422 probably

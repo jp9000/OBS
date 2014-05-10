@@ -8,6 +8,8 @@
 #include <string>
 #include <map>
 #include <CL\cl.h>
+#include <CL\cl_ext.h>
+
 //Ah, pulls D3D10 incs
 #include <Main.h>
 

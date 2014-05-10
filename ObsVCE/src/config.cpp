@@ -110,10 +110,10 @@ void prepareConfigMap(map<string, int32_t> &configTable, bool quickset)
     /**************************************************************************/
     //configTable["pictureHeight"] = 144;
     //configTable["pictureWidth"] = 176;
-    configTable["EncodeMode"] = 1;
+    configTable["EncodeMode"] = OVE_AVC_FULL;
     configTable["level"] = 42;
-    configTable["profile"] = 100; // 66 -base, 77 - main, 100 - high
-    configTable["pictureFormat"] = 1; // 1 - NV12
+    configTable["profile"] = 77; // 66 -base, 77 - main, 100 - high
+    configTable["pictureFormat"] = OVE_PICTURE_FORMAT_NV12;
     configTable["requestedPriority"] = 1;
 
     /**************************************************************************/
@@ -286,7 +286,8 @@ bool setEncodeConfig(ove_session session, OvConfigCtrl *pConfig)
         VCELog(TEXT("Active peak bitrate: %d"), rateControlConfig.encRateControlPeakBitRate);
         VCELog(TEXT("Active control method: %d"), rateControlConfig.encRateControlMethod);
         VCELog(TEXT("Active VBV buffer: %d"), rateControlConfig.encVBVBufferSize);
-        VCELog(TEXT("Active I/P QP: %d/%d"), rateControlConfig.encQP_I, rateControlConfig.encQP_P);
+        VCELog(TEXT("Active QP for I/P/B: %d/%d/%d"), rateControlConfig.encQP_I, 
+            rateControlConfig.encQP_P, rateControlConfig.encQP_B);
     }
     else 
     {

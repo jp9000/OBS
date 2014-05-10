@@ -1,6 +1,40 @@
 #include "stdafx.h"
 #include "ObsVCE.h"
 
+static char* source =
+// global threads: width, height
+"__kernel void Y444toNV12_Y(__global uchar4 *input, __global uchar *output, int alignedWidth)"
+"{"
+"int2 id = (int2)(get_global_id(0), get_global_id(1));"
+"int width = get_global_size(0);"
+"int offset = id.x + width * id.y;"
+"output[id.x + id.y * alignedWidth] = input[offset].y;"
+"}"
+
+// global threads: width/2, height/2
+"__kernel void Y444toNV12_UV(__global uchar4 *input, __global uchar *output, int alignedWidth)"
+"{"
+"int2 id = (int2)(get_global_id(0), get_global_id(1));"
+"int width = get_global_size(0) * 2;"
+"int height = get_global_size(1);"
+
+"int src = id.x * 2 + width * id.y * 2;"
+"int dst = id.x * 2 + alignedWidth * id.y + alignedWidth * height * 2;"
+
+//Sample on Y
+"float2 IN0 = convert_float2(input[src + 0].xz);"
+"float2 IN1 = convert_float2(input[src + 1].xz);"
+//Sample on Y + 1
+"float2 IN2 = convert_float2(input[src + 0 + width].xz);"
+"float2 IN3 = convert_float2(input[src + 1 + width].xz);"
+
+"uchar2 OUT = convert_uchar2_sat_rte((IN0 + IN1 + IN2 + IN3) / 4);"
+"output[dst]     = OUT.x;"
+"output[dst + 1] = OUT.y;"
+"}"
+;
+
+
 void mapBuffer(OVEncodeHandle *encodeHandle, int i, uint32_t size)
 {
     cl_event inMapEvt = 0;
@@ -8,12 +42,13 @@ void mapBuffer(OVEncodeHandle *encodeHandle, int i, uint32_t size)
 
     encodeHandle->inputSurfaces[i].mapPtr = clEnqueueMapBuffer(encodeHandle->clCmdQueue[0],
         (cl_mem)encodeHandle->inputSurfaces[i].surface,
-        CL_TRUE,
+        CL_FALSE,
         CL_MAP_WRITE,
         0,
         size,
         0,
         NULL,
+        //NULL, 
         &inMapEvt,
         &status);
 
@@ -22,7 +57,8 @@ void mapBuffer(OVEncodeHandle *encodeHandle, int i, uint32_t size)
         VCELog(TEXT("Failed to map input buffer: %d"), status);
     }
 
-    status = clFlush(encodeHandle->clCmdQueue[0]);
+    //clEnqueueBarrier(encodeHandle->clCmdQueue[0]);
+    clFlush(encodeHandle->clCmdQueue[0]);
     waitForEvent(inMapEvt);
     status = clReleaseEvent(inMapEvt);
     encodeHandle->inputSurfaces[i].isMapped = true;
@@ -36,8 +72,11 @@ void unmapBuffer(OVEncodeHandle *encodeHandle, int surf)
         encodeHandle->inputSurfaces[surf].mapPtr,
         0,
         NULL,
+        //NULL);
         &unmapEvent);
-    status = clFlush(encodeHandle->clCmdQueue[0]);
+    /// clEnqueueBarrier causes green frames at start
+    //clEnqueueBarrier(encodeHandle->clCmdQueue[0]);
+    //clFlush(encodeHandle->clCmdQueue[0]);
     waitForEvent(unmapEvent);
     status = clReleaseEvent(unmapEvent);
     encodeHandle->inputSurfaces[surf].isMapped = false;
@@ -100,6 +139,52 @@ bool VCEEncoder::encodeCreate(uint32_t deviceId)
     //    VCELog(TEXT("*\tProf: %d Level: %d"), encodeCaps.caps.encode_cap_full->supported_profile_level[i].profile, encodeCaps.caps.encode_cap_full->supported_profile_level[i].level);
     //VCELog(TEXT("**************\r\n"));
 
+    if (mUse444)
+    {
+        size_t sourceSize[] = { strlen(source) };
+        cl_int clstatus = 0;
+        mProgram = clCreateProgramWithSource((cl_context)mOveContext,
+            1,
+            (const char**)&source,
+            sourceSize,
+            &clstatus);
+        //free(source);
+
+        if (clstatus != CL_SUCCESS)
+        {
+            VCELog(TEXT("clCreateProgramWithSource failed."));
+            return false;
+        }
+
+        std::string flagsStr("");// ("-save-temps ");
+        flagsStr.append("-cl-single-precision-constant -cl-mad-enable -cl-fast-relaxed-math -cl-unsafe-math-optimizations ");
+
+        /* create a cl program executable for all the devices specified */
+        clstatus = clBuildProgram(mProgram,
+            1,
+            &clDeviceID,
+            flagsStr.c_str(),
+            NULL,
+            NULL);
+        if (clstatus != CL_SUCCESS)
+        {
+            VCELog(TEXT("clBuildProgram() failed."));
+        }
+
+        mKernel[0] = clCreateKernel(mProgram, "Y444toNV12_Y", &clstatus);
+        if (clstatus != CL_SUCCESS)
+        {
+            VCELog(TEXT("clCreateKernel failed!"));
+            return false;
+        }
+
+        mKernel[1] = clCreateKernel(mProgram, "Y444toNV12_UV", &clstatus);
+        if (clstatus != CL_SUCCESS)
+        {
+            VCELog(TEXT("clCreateKernel(UV) failed!"));
+            return false;
+        }
+    }
     return true;
 }
 
@@ -149,24 +234,42 @@ bool VCEEncoder::encodeOpen(uint32_t deviceId)
         return false;
     }
 
-    mEncodeHandle.clCmdQueue[1] = clCreateCommandQueue((cl_context)mOveContext,
-        clDeviceID, prop, &err);
-    if (err != CL_SUCCESS)
-    {
-        VCELog(TEXT("Create command queue #1 failed! Error : %d"), err);
-        return false;
-    }
+    mEncodeHandle.clCmdQueue[1] = NULL;
 
     for (int32_t i = 0; i<MAX_INPUT_SURFACE; i++)
     {
         mEncodeHandle.inputSurfaces[i].surface = clCreateBuffer((cl_context)mOveContext,
-            CL_MEM_READ_ONLY,
+            CL_MEM_READ_ONLY | CL_MEM_USE_PERSISTENT_MEM_AMD,
             mInputBufSize,
             NULL,
             &err);
         if (err != CL_SUCCESS)
         {
             VCELog(TEXT("clCreateBuffer returned error %d"), err);
+            return false;
+        }
+    }
+
+    if (mUse444)
+    {
+        mOutput = clCreateBuffer((cl_context)mOveContext,
+            CL_MEM_WRITE_ONLY | CL_MEM_USE_PERSISTENT_MEM_AMD, //Maybe even WRITE_ONLY
+            mOutputBufSize,
+            NULL,
+            &err);
+        if (err != CL_SUCCESS)
+        {
+            VCELog(TEXT("clCreateBuffer returned error %d"), err);
+            return false;
+        }
+
+        err = clSetKernelArg(mKernel[0], 1, sizeof(cl_mem), &mOutput);
+        err |= clSetKernelArg(mKernel[1], 1, sizeof(cl_mem), &mOutput);
+        err |= clSetKernelArg(mKernel[0], 2, sizeof(int32_t), &mAlignedSurfaceWidth);
+        err |= clSetKernelArg(mKernel[1], 2, sizeof(int32_t), &mAlignedSurfaceWidth);
+        if (err != CL_SUCCESS)
+        {
+            VCELog(TEXT("clSetKernelArg returned error %d"), err);
             return false;
         }
     }
@@ -195,6 +298,10 @@ bool VCEEncoder::encodeClose()
         }
     }
 
+    if (mKernel[0]) clReleaseKernel(mKernel[0]);
+    if (mKernel[1]) clReleaseKernel(mKernel[1]);
+    if (mProgram) clReleaseProgram(mProgram);
+
     //TODO number of CL command queues
     for (int i = 0; i<2; i++) {
         if (mEncodeHandle.clCmdQueue[i])
@@ -206,12 +313,10 @@ bool VCEEncoder::encodeClose()
         }
     }
 
-    if (mEncodeHandle.session)
-        oveErr = OVEncodeDestroySession(mEncodeHandle.session);
-    if (!oveErr)
-    {
+    if (mEncodeHandle.session && 
+            !OVEncodeDestroySession(mEncodeHandle.session))
         VCELog(TEXT("Error releasing OVE Session"));
-    }
+
     mEncodeHandle.session = NULL;
     return true;
 }

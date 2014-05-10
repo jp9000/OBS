@@ -263,6 +263,7 @@
 #define IDC_PRIORITY                    1132
 #define IDC_USECBR                      1133
 #define IDC_PADCBR                      1134
+#define IDC_CLCONV                      1135
 #define IDC_NVENCPRESET                 1139
 #define IDC_DISABLECTSADJUST            1140
 #define IDC_USECFR                      1141

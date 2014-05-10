@@ -108,23 +108,23 @@ bool VCEEncoder::init()
     mConfigCtrl.height = mHeight;
     mConfigCtrl.rateControl.encRateControlTargetBitRate = mMaxBitrate * 1000;
     // Driver resets to bitrate?
-    mConfigCtrl.rateControl.encRateControlPeakBitRate = mMaxBitrate * 1000;
-    // Always 10Mbps :S
-    mConfigCtrl.rateControl.encVBVBufferSize = mBufferSize * 1000;
+    mConfigCtrl.rateControl.encRateControlPeakBitRate = mMaxBitrate *1000;
+    // Driver seems to override this
+    mConfigCtrl.rateControl.encVBVBufferSize = mBufferSize *1000;
+    mConfigCtrl.profileLevel.profile = 256;
 
     //TODO IDR nice for seeking in local files. Intra-refresh better for streaming?
     mConfigCtrl.pictControl.encIDRPeriod = mKeyint * mFps;
     //mConfigCtrl.pictControl.encForceIntraRefresh = mKeyint * mFps;
     //TODO Usually 0 to let VCE manage it.
-    mConfigCtrl.rateControl.encGOPSize = mKeyint * mFps;
-    mConfigCtrl.priority = OVE_ENCODE_TASK_PRIORITY_LEVEL2;
-    if (bPadCBR) //TODO Serves same purpose?
+    mConfigCtrl.rateControl.encGOPSize = 0;// mKeyint * mFps;
+    mConfigCtrl.priority = OVE_ENCODE_TASK_PRIORITY_LEVEL1;
+    if (bPadCBR) //TODO Serves same purpose? Drops too much still
         mConfigCtrl.rateControl.encRCOptions = 0x1;
 
     int QP = 23;
-    //QP = 51 - (mQuality * 9) / 2;
-    QP = 40 - (mQuality * 5) / 2; // 40 .. 15
-    //QP = (10 - mQuality) * 5; // 0..50
+    //QP = 40 - (mQuality * 5) / 2; // 40 .. 15
+    QP = 22 + (10 - mQuality); //Matching x264 CRF
     VCELog(TEXT("Quality: %d => QP %d"), mQuality, QP);
 
     mConfigCtrl.rateControl.encQP_I =
@@ -197,8 +197,16 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset
     , mHdrPacket(NULL)
     , mIsReady(false)
     , mReqKeyframe(false)
+    , mOveContext(NULL)
+    , mOutput(NULL)
+    , mProgram(NULL)
+    , mLastTS(0)
+    , mOutPtr(NULL)
 {
     frameMutex = OSCreateMutex();
+
+    mKernel[0] = NULL;
+    mKernel[1] = NULL;
 
     mUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
     mKeyint = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 0);
@@ -212,7 +220,17 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset
         (height + 15) & ~15;
 
     // NV12 is 3/2
-    mInputBufSize = mAlignedSurfaceHeight * mAlignedSurfaceWidth * 3 / 2;
+    if (!mUse444)
+        mInputBufSize = mAlignedSurfaceHeight * mAlignedSurfaceWidth * 3 / 2;
+    else
+    {
+        VCELog(TEXT("Using YUV444"));
+        mInputBufSize = mHeight * mAlignedSurfaceWidth * 4;
+        mOutputBufSize = mAlignedSurfaceHeight * mAlignedSurfaceWidth * 3 / 2;
+    }
+
+    mOutPtrSize = 5 * 1024 * 1024;
+    mOutPtr = malloc(mOutPtrSize);
 }
 
 //TODO
@@ -239,6 +257,9 @@ VCEEncoder::~VCEEncoder()
 
     free(mHdrPacket);
     mHdrPacket = NULL;
+
+    free(mOutPtr);
+    mOutPtr = NULL;
 
     encoderRefDec();
     OSCloseMutex(frameMutex);
@@ -282,19 +303,22 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     unsigned int idx = (unsigned int)data.MemId - 1;
 
 #ifdef _DEBUG
-    VCELog(TEXT("Encoding buffer: %d"), idx);
+    VCELog(TEXT("Encoding buffer: %d ts:%d"), idx, data.TimeStamp - mLastTS);
     VCELog(TEXT("Mapped handle: %p"), mEncodeHandle.inputSurfaces[idx].mapPtr);
 #endif
+    mLastTS = (uint64_t)data.TimeStamp;
 
     //mEncodeHandle.inputSurfaces[idx].locked = true;
     _InterlockedCompareExchange(&(mEncodeHandle.inputSurfaces[idx].locked), 1, 0);
 
     encodeTaskInputBufferList[0].bufferType = OVE_BUFFER_TYPE_PICTURE;
     encodeTaskInputBufferList[0].buffer.pPicture = (OVE_SURFACE_HANDLE)
-        mEncodeHandle.inputSurfaces[idx].surface;
+        mUse444 ? mOutput : mEncodeHandle.inputSurfaces[idx].surface;
 
     // Encoder can't seem to use mapped buffer, all green :(
+    profileIn("Unmap buffer")
     unmapBuffer(&mEncodeHandle, idx);
+    profileOut
 
     memset(&pictureParameter, 0, sizeof(OVE_ENCODE_PARAMETERS_H264));
     pictureParameter.size = sizeof(OVE_ENCODE_PARAMETERS_H264);
@@ -303,15 +327,54 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     pictureParameter.insertSPS = (OVE_BOOL)mFirstFrame;
     pictureParameter.pictureStructure = OVE_PICTURE_STRUCTURE_H264_FRAME;
     pictureParameter.forceRefreshMap = (OVE_BOOL)true;
-    pictureParameter.forceIMBPeriod = 0;
-    pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_NONE;
+    //pictureParameter.forceIMBPeriod = 0;
+    //pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_NONE;
 
     if (mReqKeyframe || mFirstFrame)
     {
         mReqKeyframe = false;
         pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_IDR;
     }
+    
+    if (mUse444)
+    {
+        profileIn("YUV444 conversion")
+        size_t globalThreads[2] = {mWidth , mHeight};
+        
+        status = clSetKernelArg(mKernel[0], 0, sizeof(cl_mem), (cl_mem)&mEncodeHandle.inputSurfaces[idx].surface);
+        status |= clSetKernelArg(mKernel[1], 0, sizeof(cl_mem), (cl_mem)&mEncodeHandle.inputSurfaces[idx].surface);
+        if (status != CL_SUCCESS)
+        {
+            VCELog(TEXT("clSetKernelArg failed with %d"), status);
+            return false;
+        }
 
+        status = clEnqueueNDRangeKernel(mEncodeHandle.clCmdQueue[0],
+            mKernel[0], 2, 0, globalThreads, NULL, 0, 0, NULL);
+        if (status != CL_SUCCESS)
+        {
+            VCELog(TEXT("clEnqueueNDRangeKernel failed with %d"), status);
+            return false;
+        }
+
+        globalThreads[0] = mWidth / 2;
+        globalThreads[1] = mHeight / 2;
+
+        status = clEnqueueNDRangeKernel(mEncodeHandle.clCmdQueue[0],
+            mKernel[1], 2, 0, globalThreads, NULL, 0, 0, NULL);
+        if (status != CL_SUCCESS)
+        {
+            VCELog(TEXT("clEnqueueNDRangeKernel failed with %d"), status);
+            return false;
+        }
+
+        //clEnqueueBarrier(mEncodeHandle.clCmdQueue[0]);
+        //clFlush(mEncodeHandle.clCmdQueue[0]);
+        clFinish(mEncodeHandle.clCmdQueue[0]);
+        profileOut
+    }
+
+    profileIn("Queue encode task")
     //Enqueue encoding task
     res = OVEncodeTask(mEncodeHandle.session,
         numEncodeTaskInputBuffers,
@@ -327,6 +390,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         ret = false;
         goto fail;
     }
+    profileOut
 
     profileIn("Wait for task(s)")
     //wait for encoder
@@ -337,7 +401,9 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         ret = false;
         goto fail;
     }
+    profileOut
 
+    profileIn("Query task(s)")
     //Retrieve h264 bitstream
     numTaskDescriptionsReturned = 0;
     memset(pTaskDescriptionList, 0, sizeof(OVE_OUTPUT_DESCRIPTION)*numTaskDescriptionsRequested);
@@ -358,10 +424,6 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     } while (pTaskDescriptionList->status == OVE_TASK_STATUS_NONE);
     profileOut
 
-    profileIn("Remap buffer")
-    mapBuffer(&mEncodeHandle, idx, mInputBufSize);
-    profileOut
-
     //mEncodeHandle.inputSurfaces[idx].locked = false;
     _InterlockedCompareExchange(&(mEncodeHandle.inputSurfaces[idx].locked), 0, 1);
 
@@ -372,7 +434,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         if ((pTaskDescriptionList[i].status == OVE_TASK_STATUS_COMPLETE)
             && pTaskDescriptionList[i].size_of_bitstream_data > 0)
         {
-            ProcessOutput(&pTaskDescriptionList[i], packets, packetTypes, timestamp);
+            ProcessOutput(&pTaskDescriptionList[i], packets, packetTypes, data.TimeStamp);
             if (mFirstFrame)
             {
                 free(mHdrPacket);
@@ -384,6 +446,10 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
             res = OVEncodeReleaseTask(mEncodeHandle.session, pTaskDescriptionList[i].taskID);
         }
     }
+    profileOut
+
+    profileIn("Remap buffer")
+    mapBuffer(&mEncodeHandle, idx, mInputBufSize);
     profileOut
 
 fail:
@@ -399,7 +465,16 @@ void VCEEncoder::ProcessOutput(OVE_OUTPUT_DESCRIPTION *surf, List<DataPacket> &p
 {
     encodeData.Clear();
 
-    uint8_t *pstart = (uint8_t*) surf->bitstream_data;
+    if (surf->size_of_bitstream_data > mOutPtrSize)
+    {
+        VCELog(TEXT("Bitstream size larger than %d, reallocating."), mOutPtrSize);
+        mOutPtrSize = surf->size_of_bitstream_data;
+        free(mOutPtr);
+        mOutPtr = malloc(mOutPtrSize);
+    }
+
+    memcpy(mOutPtr, surf->bitstream_data, surf->size_of_bitstream_data);
+    uint8_t *pstart = (uint8_t*)mOutPtr;// surf->bitstream_data;
 
     uint8_t *start = pstart;
     uint8_t *end = start + surf->size_of_bitstream_data;
@@ -428,7 +503,7 @@ void VCEEncoder::ProcessOutput(OVE_OUTPUT_DESCRIPTION *surf, List<DataPacket> &p
 
     //FIXME
     int32_t timeOffset = 0;// int(out_pts - dts);
-    //timeOffset += frameShift;
+    timeOffset += frameShift;
 
     if (nalNum && timeOffset < 0)
     {
@@ -441,7 +516,7 @@ void VCEEncoder::ProcessOutput(OVE_OUTPUT_DESCRIPTION *surf, List<DataPacket> &p
 
     PacketType bestType = PacketType_VideoDisposable;
     bool bFoundFrame = false;
-
+    profileIn("Parse bitstream")
     for (unsigned int i = 0; i < nalNum; i++)
     {
         x264_nal_t &nal = nalOut[i];
@@ -564,6 +639,7 @@ void VCEEncoder::ProcessOutput(OVE_OUTPUT_DESCRIPTION *surf, List<DataPacket> &p
 
     packetTypes << bestType;
     packets << packet;
+    profileOut
 }
 
 //TODO
@@ -582,8 +658,9 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
 #endif
 
     //TODO Threaded NV12 conversion asks same buffer (thread count) times?
-    if (buff->MemId && mEncodeHandle.inputSurfaces[(unsigned int)buff->MemId - 1].isMapped &&
-        !mEncodeHandle.inputSurfaces[(unsigned int)buff->MemId - 1].locked)
+    if (buff->MemId && mEncodeHandle.inputSurfaces[(unsigned int)buff->MemId - 1].isMapped
+        && !mEncodeHandle.inputSurfaces[(unsigned int)buff->MemId - 1].locked
+        )
         return;
 
     //Trying atomic inputSurface.locked instead
@@ -601,13 +678,17 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
         if (!mEncodeHandle.inputSurfaces[i].mapPtr)
             continue;
 
-        buff->Pitch = mAlignedSurfaceWidth;
+        buff->Pitch = mUse444 ? ((mWidth*4 + (256 - 1)) & ~(256 - 1)) : mAlignedSurfaceWidth;
         buff->Y = (mfxU8*)mEncodeHandle.inputSurfaces[i].mapPtr;
         buff->UV = buff->Y + (mHeight * buff->Pitch);
 
         buff->MemId = mfxMemId(i + 1);
         //mEncodeHandle.inputSurfaces[i].locked = 0; //false
         _InterlockedCompareExchange(&(mEncodeHandle.inputSurfaces[i].locked), 0, 1);
+
+#ifdef _DEBUG
+        VCELog(TEXT("Send buffer %d"), i + 1);
+#endif
 
         return;
     }
@@ -657,6 +738,11 @@ void VCEEncoder::GetHeaders(DataPacket &packet)
     if (!mHdrPacket)
     {
         VCELog(TEXT("No header packet yet."));
+        //Garbage, but atleast it doesn't crash.
+        headerPacket.Clear();
+        headerPacket.SetSize(128);
+        packet.size = headerPacket.Num();
+        packet.lpPacket = headerPacket.Array();
         return;
     }
 

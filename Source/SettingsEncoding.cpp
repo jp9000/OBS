@@ -90,6 +90,7 @@ void SettingsEncoding::ApplySettings()
     EnableWindow(GetDlgItem(hwnd, IDC_ENCODERQSV), hasQSV || useQSV);
     EnableWindow(GetDlgItem(hwnd, IDC_ENCODERNVENC), hasNVENC || useNVENC);
     EnableWindow(GetDlgItem(hwnd, IDC_ENCODERVCE), hasVCE || useVCE);
+    EnableWindow(GetDlgItem(hwnd, IDC_CLCONV), hasVCE && useVCE);
 
     AppConfig->SetString(L"Video Encoding", L"Encoder", useQSV ? L"QSV" : useNVENC ? L"NVENC" : useVCE ? L"VCE" : L"x264");
 
@@ -137,6 +138,9 @@ void SettingsEncoding::ApplySettings()
 
     bool bCustomBuffer = SendMessage(GetDlgItem(hwnd, IDC_CUSTOMBUFFER), BM_GETCHECK, 0, 0) == BST_CHECKED;
     AppConfig->SetInt(TEXT("Video Encoding"), TEXT("UseBufferSize"), bCustomBuffer);
+
+    bool bUseCL = SendMessage(GetDlgItem(hwnd, IDC_CLCONV), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    AppConfig->SetInt(TEXT("Video Encoding"), TEXT("UseCL"), bUseCL);
 }
 
 void SettingsEncoding::CancelSettings()
@@ -217,10 +221,13 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 bool bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
                 bool bPadCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 1) != 0;
+                bool bUseCL = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCL"), 1) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_USECBR), BM_SETCHECK, bUseCBR ? BST_CHECKED : BST_UNCHECKED, 0);
                 SendMessage(GetDlgItem(hwnd, IDC_PADCBR), BM_SETCHECK, bPadCBR ? BST_CHECKED : BST_UNCHECKED, 0);
+                SendMessage(GetDlgItem(hwnd, IDC_CLCONV), BM_SETCHECK, bUseCL ? BST_CHECKED : BST_UNCHECKED, 0);
                 EnableWindow(GetDlgItem(hwnd, IDC_QUALITY), !bUseCBR && (usex264 || useNVENC || useVCE));
-                EnableWindow(GetDlgItem(hwnd, IDC_PADCBR), bUseCBR && usex264);
+                EnableWindow(GetDlgItem(hwnd, IDC_PADCBR), bUseCBR && (usex264 || useVCE));
+                EnableWindow(GetDlgItem(hwnd, IDC_CLCONV), useVCE);
 
                 ti.lpszText = (LPWSTR)Str("Settings.Advanced.PadCBRToolTip");
                 ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_PADCBR);
@@ -447,12 +454,14 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                             bDataChanged = true;
 
                         EnableWindow(GetDlgItem(hwnd, IDC_QUALITY), !useCBR && (usex264 || useNVENC || useVCE));
-                        EnableWindow(GetDlgItem(hwnd, IDC_PADCBR), useCBR && usex264);
+                        EnableWindow(GetDlgItem(hwnd, IDC_PADCBR), useCBR && (usex264 || useVCE));
+                        EnableWindow(GetDlgItem(hwnd, IDC_CLCONV), useVCE);
                         break;
 
                     case IDC_CUSTOMBUFFER:
                     case IDC_USECBR:
                     case IDC_PADCBR:
+                    case IDC_CLCONV:
                         if (HIWORD(wParam) == BN_CLICKED)
                         {
                             bool bChecked = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
@@ -465,7 +474,7 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                             else if(LOWORD(wParam) == IDC_USECBR)
                             {
                                 EnableWindow(GetDlgItem(hwnd, IDC_QUALITY), !bChecked && (usex264 || useNVENC || useVCE));
-                                EnableWindow(GetDlgItem(hwnd, IDC_PADCBR), bChecked && usex264);
+                                EnableWindow(GetDlgItem(hwnd, IDC_PADCBR), bChecked && (usex264 || useVCE));
                             }
 
                             bDataChanged = true;
