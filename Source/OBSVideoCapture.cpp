@@ -1123,9 +1123,10 @@ void OBS::MainCaptureLoop()
                             videoEncoder->RequestBuffers(&data);
                             LPBYTE SY = (LPBYTE)map.pData;
                             LPBYTE DY = (LPBYTE)data.Y;
+                            int32_t pitch = outputCX * 4;
                             for (UINT y = 0; y < outputCY; y++, SY += map.RowPitch, DY += data.Pitch)
                             {
-                                memcpy(DY, SY, outputCX * 4);
+                                memcpy(DY, SY, pitch);
                             }
                         }
                         prevTexture->Unmap(0);

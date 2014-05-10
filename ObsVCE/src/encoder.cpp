@@ -7,7 +7,7 @@ static char* source =
 "{"
 "int2 id = (int2)(get_global_id(0), get_global_id(1));"
 "int width = get_global_size(0);"
-"int offset = id.x + width * id.y;"
+"int offset = id.x + alignedWidth * id.y;"
 "output[id.x + id.y * alignedWidth] = input[offset].y;"
 "}"
 
@@ -15,18 +15,17 @@ static char* source =
 "__kernel void Y444toNV12_UV(__global uchar4 *input, __global uchar *output, int alignedWidth)"
 "{"
 "int2 id = (int2)(get_global_id(0), get_global_id(1));"
-"int width = get_global_size(0) * 2;"
 "int height = get_global_size(1);"
 
-"int src = id.x * 2 + width * id.y * 2;"
+"int src = id.x * 2 + alignedWidth * id.y * 2;"
 "int dst = id.x * 2 + alignedWidth * id.y + alignedWidth * height * 2;"
 
 //Sample on Y
 "float2 IN0 = convert_float2(input[src + 0].xz);"
 "float2 IN1 = convert_float2(input[src + 1].xz);"
 //Sample on Y + 1
-"float2 IN2 = convert_float2(input[src + 0 + width].xz);"
-"float2 IN3 = convert_float2(input[src + 1 + width].xz);"
+"float2 IN2 = convert_float2(input[src + 0 + alignedWidth].xz);"
+"float2 IN3 = convert_float2(input[src + 1 + alignedWidth].xz);"
 
 "uchar2 OUT = convert_uchar2_sat_rte((IN0 + IN1 + IN2 + IN3) / 4);"
 "output[dst]     = OUT.x;"

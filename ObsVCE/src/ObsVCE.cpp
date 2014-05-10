@@ -92,7 +92,7 @@ void encoderRefDec()
 bool VCEEncoder::init()
 {
     bool status = false;
-    if (!initOVE())
+    if (!initOVE() || !mOutPtr)
         return false;
     bool bPadCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 1) != 0;
 
@@ -678,7 +678,7 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
         if (!mEncodeHandle.inputSurfaces[i].mapPtr)
             continue;
 
-        buff->Pitch = mUse444 ? ((mWidth*4 + (256 - 1)) & ~(256 - 1)) : mAlignedSurfaceWidth;
+        buff->Pitch = mUse444 ? mAlignedSurfaceWidth*4 : mAlignedSurfaceWidth;
         buff->Y = (mfxU8*)mEncodeHandle.inputSurfaces[i].mapPtr;
         buff->UV = buff->Y + (mHeight * buff->Pitch);
 
