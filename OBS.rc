@@ -147,7 +147,7 @@ BEGIN
     CONTROL         "Settings.Encoding.Video.EncoderVCE",IDC_ENCODERVCE,
                     "Button",BS_AUTORADIOBUTTON,359,16,56,10
     LTEXT           "Settings.Encoding.Video.QSVConfigWarning",IDC_QSV_CONFIG_WARNING,4,141,417,37
-    CONTROL         "Settings.Advanced.CLConversion",IDC_CLCONV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,179,150,10,WS_EX_RIGHT
+    CONTROL         "Settings.Advanced.CLConversion",IDC_CLCONV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,179,150,10
 END
 
 IDD_SETTINGS_VIDEO DIALOGEX 0, 0, 427, 336
