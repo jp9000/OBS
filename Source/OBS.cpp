@@ -736,7 +736,19 @@ OBS::OBS()
                 }
                 else
                 {
-                    Log(TEXT("Failed to load plugin %s, %d"), strLocation.Array(), GetLastError());
+                    DWORD err = GetLastError();
+                    Log(TEXT("Failed to load plugin %s, %d"), strLocation.Array(), err);
+#ifndef _DEBUG
+                    if (err == 193)
+                    {
+#ifdef _M_X64
+                        String message = FormattedString(Str("Plugins.InvalidVersion"), ofd.fileName, 32);
+#else
+                        String message = FormattedString(Str("Plugins.InvalidVersion"), ofd.fileName, 64);
+#endif
+                        OBSMessageBox(hwndMain, message.Array(), NULL, MB_ICONEXCLAMATION);
+                    }
+#endif
                 }
             }
         } while (OSFindNextFile(hFind, ofd));

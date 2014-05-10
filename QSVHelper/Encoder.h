@@ -181,8 +181,8 @@ struct Encoder
         }
 
         init_res->bframe_delay = min(init_res->bframe_delay,
-            min(query->mfx.GopRefDist > 1 ? (query->mfx.GopRefDist - 1) : 0,
-                query->mfx.GopPicSize > 2 ? (query->mfx.GopPicSize - 2) : 0));
+            min<uint16_t>(query->mfx.GopRefDist > 1 ? (query->mfx.GopRefDist - 1) : 0u,
+                          query->mfx.GopPicSize > 2 ? (query->mfx.GopPicSize - 2) : 0u));
 
         init_res->frame_ticks = (uint64_t)((double)query->mfx.FrameInfo.FrameRateExtD / (double)query->mfx.FrameInfo.FrameRateExtN * 90000.);
 
