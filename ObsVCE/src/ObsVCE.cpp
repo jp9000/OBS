@@ -100,10 +100,10 @@ bool VCEEncoder::init()
 
     // Choose quality settings
     int size = MAX(mWidth, mHeight);
-    if (size >= 640)
+    if (size <= 640)
         //Quality
         quickSet(mConfigTable, 2);
-    else if (size >= 1280)
+    else if (size <= 1280)
         // FPS <= 30: Quality else Balanced
         quickSet(mConfigTable, mFps < 31 ? 2 : 1);
     else
