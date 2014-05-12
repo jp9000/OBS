@@ -1710,6 +1710,30 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                         break;
                     }
 
+                case IDC_SETSTREAMSIZE:
+                    if (MessageBoxW(hwnd, Str("Sources.SoftwareCaptureSource.ResizeWarning"), Str("Sources.SoftwareCaptureSource.ResizeWarningTitle"), MB_YESNO | MB_ICONWARNING) == IDYES)
+                    {
+                        UINT sizeX = (UINT)GetEditText(GetDlgItem(hwnd, IDC_SIZEX)).ToInt();
+                        UINT sizeY = (UINT)GetEditText(GetDlgItem(hwnd, IDC_SIZEY)).ToInt();
+
+                        if(sizeX < 128)
+                            sizeX = 128;
+                        else if(sizeX > 4096)
+                            sizeX = 4096;
+
+                        if(sizeY < 128)
+                            sizeY = 128;
+                        else if(sizeY > 4096)
+                            sizeY = 4096;
+
+                        AppConfig->SetInt(TEXT("Video"), TEXT("BaseWidth"), sizeX);
+                        AppConfig->SetInt(TEXT("Video"), TEXT("BaseHeight"), sizeY);
+
+                        if(!App->IsRunning())
+                            App->ResizeWindow(false);
+                    }
+                    break;
+
                 case IDC_MONITOR:
                     {
                         UINT id = (UINT)SendMessage(GetDlgItem(hwnd, IDC_MONITOR), CB_GETCURSEL, 0, 0);
