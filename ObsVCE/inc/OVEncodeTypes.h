@@ -44,8 +44,7 @@ typedef enum
 
 
 typedef struct _ovencode_device_info{
-   unsigned int    device_id;
-    //cl_device_id     device_id;
+    unsigned int    device_id;
     unsigned int     encode_cap_list_size;
 } ovencode_device_info;
 

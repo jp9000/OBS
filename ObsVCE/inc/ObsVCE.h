@@ -27,8 +27,8 @@ using std::string;
 #define VCELog(...) Log(__VA_ARGS__)
 #define AppConfig (*VCEAppConfig)
 
-//Use LoadLibrary etc. instead of linking
-//#define OVE_DYN
+//Use LoadLibrary etc. instead of linking.
+#define OVE_DYN
 
 #ifdef OVE_DYN
 #include "OVEncodeDyn.h"

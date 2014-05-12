@@ -97,11 +97,26 @@ bool VCEEncoder::init()
     bool bPadCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 1) != 0;
 
     prepareConfigMap(mConfigTable, false);
-    quickSet(mConfigTable, 0);//Default to speed
+
+    // Choose quality settings
+    int size = MAX(mWidth, mHeight);
+    if (size >= 640)
+        //Quality
+        quickSet(mConfigTable, 2);
+    else if (size >= 1280)
+        // FPS <= 30: Quality else Balanced
+        quickSet(mConfigTable, mFps < 31 ? 2 : 1);
+    else
+        // FPS <= 30: Balanced else Speed
+        quickSet(mConfigTable, mFps < 31 ? 1 : 0);
 
     memset(&mConfigCtrl, 0, sizeof (OvConfigCtrl));
     encodeSetParam(&mConfigCtrl, &mConfigTable);
 
+    //Ups the bitrate :(
+    /*int fps = mFps - mFps % 30;
+    if (fps <= 0)
+        fps = 30;*/
     mConfigCtrl.rateControl.encRateControlFrameRateNumerator = mFps;
     mConfigCtrl.rateControl.encRateControlFrameRateDenominator = 1;
     mConfigCtrl.width = mWidth;
@@ -111,7 +126,6 @@ bool VCEEncoder::init()
     mConfigCtrl.rateControl.encRateControlPeakBitRate = mMaxBitrate *1000;
     // Driver seems to override this
     mConfigCtrl.rateControl.encVBVBufferSize = mBufferSize *1000;
-    mConfigCtrl.profileLevel.profile = 256;
 
     //TODO IDR nice for seeking in local files. Intra-refresh better for streaming?
     mConfigCtrl.pictControl.encIDRPeriod = mKeyint * mFps;
