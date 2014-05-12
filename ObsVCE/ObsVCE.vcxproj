@@ -158,6 +158,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)\OBSApi\$(Configuration)\;$(AMDAPPSDKROOT)lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>OBSApi.lib;ws2_32.lib;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <StripPrivateSymbols>$(SolutionDir)\rundir\pdb32\stripped\$(TargetName).pdb</StripPrivateSymbols>
+      <ProgramDatabaseFile>$(SolutionDir)\rundir\pdb32\$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(OutDir)$(TargetFileName)" "$(SolutionDir)rundir\$(TargetFileName)"</Command>

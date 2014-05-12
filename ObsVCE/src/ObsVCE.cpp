@@ -128,8 +128,8 @@ bool VCEEncoder::init()
     mConfigCtrl.rateControl.encVBVBufferSize = mBufferSize *1000;
 
     //TODO IDR nice for seeking in local files. Intra-refresh better for streaming?
-    mConfigCtrl.pictControl.encIDRPeriod = mKeyint * mFps;
-    //mConfigCtrl.pictControl.encForceIntraRefresh = mKeyint * mFps;
+    mConfigCtrl.pictControl.encIDRPeriod = mKeyint * mFps * 2;
+    mConfigCtrl.pictControl.encForceIntraRefresh = mKeyint * mFps;
     //TODO Usually 0 to let VCE manage it.
     mConfigCtrl.rateControl.encGOPSize = 0;// mKeyint * mFps;
     mConfigCtrl.priority = OVE_ENCODE_TASK_PRIORITY_LEVEL1;
