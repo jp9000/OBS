@@ -101,6 +101,12 @@ bool VCEEncoder::encodeCreate(uint32_t deviceId)
         return false;
     }
 
+#ifdef _WIN64
+    // May ${DEITY} have mercy on us all.
+    intptr_t ptr = intptr_t((intptr_t*)&clDeviceID);
+    clDeviceID = (cl_device_id)((intptr_t)clDeviceID | (ptr & 0xFFFFFFFF00000000));
+#endif
+
     mOveContext = clCreateContext(properties, 1, &clDeviceID, 0, 0, &err);
     if (mOveContext == (cl_context)0)
     {
@@ -194,30 +200,11 @@ bool VCEEncoder::encodeOpen(uint32_t deviceId)
     OVresult res = 0;
     cl_int err;
 
-    /**************************************************************************/
-    /* Create an OVE Session                                                  */
-    /**************************************************************************/
-    mEncodeHandle.session = OVEncodeCreateSession(mOveContext,  /**<Platform context */
-        deviceId,               /**< device id */
-        mConfigCtrl.encodeMode,    /**< encode mode */
-        mConfigCtrl.profileLevel,  /**< encode profile */
-        mConfigCtrl.pictFormat,    /**< encode format */
-        mConfigCtrl.width,         /**< width */
-        mConfigCtrl.height,        /**< height */
-        mConfigCtrl.priority);     /**< encode task priority, ie. FOR POSSIBLY LOW LATENCY OVE_ENCODE_TASK_PRIORITY_LEVEL2 */
-
-    if (mEncodeHandle.session == NULL)
-    {
-        VCELog(TEXT("OVEncodeCreateSession failed. Maybe too many encode sessions (or crashes, restart your computer then)."));
-        return false;
-    }
-
-    /**************************************************************************/
-    /* Configure the encoding engine.                                         */
-    /**************************************************************************/
-    res = setEncodeConfig(mEncodeHandle.session, &mConfigCtrl);
-    if (!res)
-        return false;
+#ifdef _WIN64
+    // May ${DEITY} have mercy on us all.
+    intptr_t ptr = intptr_t((intptr_t*)&clDeviceID);
+    clDeviceID = (cl_device_id)((intptr_t)clDeviceID | (ptr & 0xFFFFFFFF00000000));
+#endif
 
     cl_command_queue_properties prop = 0;
     //(Currently) not using any CL kernels, so nothing to profile.
@@ -252,7 +239,7 @@ bool VCEEncoder::encodeOpen(uint32_t deviceId)
     if (mUse444)
     {
         mOutput = clCreateBuffer((cl_context)mOveContext,
-            CL_MEM_WRITE_ONLY | CL_MEM_USE_PERSISTENT_MEM_AMD, //Maybe even WRITE_ONLY
+            CL_MEM_WRITE_ONLY | CL_MEM_USE_PERSISTENT_MEM_AMD,
             mOutputBufSize,
             NULL,
             &err);
@@ -272,6 +259,30 @@ bool VCEEncoder::encodeOpen(uint32_t deviceId)
             return false;
         }
     }
+
+    /**************************************************************************/
+    /* Create an OVE Session                                                  */
+    /**************************************************************************/
+    mEncodeHandle.session = OVEncodeCreateSession(mOveContext,  /**<Platform context */
+        deviceId,               /**< device id */
+        mConfigCtrl.encodeMode,    /**< encode mode */
+        mConfigCtrl.profileLevel,  /**< encode profile */
+        mConfigCtrl.pictFormat,    /**< encode format */
+        mConfigCtrl.width,         /**< width */
+        mConfigCtrl.height,        /**< height */
+        mConfigCtrl.priority);     /**< encode task priority, ie. FOR POSSIBLY LOW LATENCY OVE_ENCODE_TASK_PRIORITY_LEVEL2 */
+
+    if (mEncodeHandle.session == NULL)
+    {
+        VCELog(TEXT("OVEncodeCreateSession failed. Maybe too many encode sessions (or crashes, restart your computer then)."));
+        return false;
+    }
+
+    /**************************************************************************/
+    /* Configure the encoding engine.                                         */
+    /**************************************************************************/
+    if(!setEncodeConfig(mEncodeHandle.session, &mConfigCtrl))
+        return false;
     return true;
 }
 
@@ -281,7 +292,6 @@ bool VCEEncoder::encodeClose()
     cl_int err = CL_SUCCESS;
     OPSurface *inputSurfaces = mEncodeHandle.inputSurfaces;
 
-    //TODO unmap buffers if mapped
     for (int32_t i = 0; i<MAX_INPUT_SURFACE; i++)
     {
         err = CL_SUCCESS;
@@ -301,7 +311,6 @@ bool VCEEncoder::encodeClose()
     if (mKernel[1]) clReleaseKernel(mKernel[1]);
     if (mProgram) clReleaseProgram(mProgram);
 
-    //TODO number of CL command queues
     for (int i = 0; i<2; i++) {
         if (mEncodeHandle.clCmdQueue[i])
             err = clReleaseCommandQueue(mEncodeHandle.clCmdQueue[i]);
