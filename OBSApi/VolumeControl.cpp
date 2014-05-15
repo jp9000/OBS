@@ -427,3 +427,21 @@ void InitVolumeControl(HINSTANCE hInst)
     if(!RegisterClass(&wnd))
         CrashError(TEXT("Could not register volume control class"));
 }
+
+void SetVolumeControlMutedVal(HWND hwnd, float val)
+{
+    VolumeControlData *control = GetVolumeControlData(hwnd);
+    if(!control)
+        return;
+
+    control->lastUnmutedVol = val;
+}
+
+float GetVolumeControlMutedVal(HWND hwnd)
+{
+    VolumeControlData *control = GetVolumeControlData(hwnd);
+    if(!control)
+        return 0.0f;
+
+    return control->lastUnmutedVol;
+}

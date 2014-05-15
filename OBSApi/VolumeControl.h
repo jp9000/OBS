@@ -26,6 +26,8 @@ BASE_EXPORT void SetVolumeControlIcons(HWND hwnd, HICON hiconPlay, HICON hiconMu
 BASE_EXPORT float ToggleVolumeControlMute(HWND hwnd);
 BASE_EXPORT float SetVolumeControlValue(HWND hwnd, float fValue);
 BASE_EXPORT float GetVolumeControlValue(HWND hwnd);
+BASE_EXPORT void SetVolumeControlMutedVal(HWND hwnd, float val);
+BASE_EXPORT float GetVolumeControlMutedVal(HWND hwnd);
 
 
 #define VOLN_ADJUSTING  0x300
