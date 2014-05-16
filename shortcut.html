@@ -1,0 +1,19 @@
+---
+title: Shortcut options
+layout: default
+---
+<h4>Shortcut options</h4>
+<p>Editing the "Target"-line of your OBS shortcut, allows you to use different options, for example automatically start broadcasting, or loading OBS with a specific profile.</p>
+<p> <img src="assets/shortcut.png"></p>
+</img>The following commands can be used:
+<ul>
+  <li>-multi : start multiple instances of OBS (combine with -profile and or -portable)</li>
+  <li>-portable : run OBS in a portable mode that saves all settings to the main OBS folder, instead of your %appdata% folder</li>
+  <li>-start : run OBS and automatically start streaming (and recording if that is activated)</li>
+  <li>-profile &quot;profile name&quot; : start OBS with mentioned profile</li>
+</ul>
+<p>An example Target-line could look like this:</p>
+<ul>
+  <li>&quot;C:\Program Files(x86)\OBS\OBS.exe&quot; -multi -portable -profile &quot;QuickSync 30fps&quot; -start</li>
+</ul>
+<p>This would start the 32bit version of OBS, allowing more instances to be started, portable mode, loading the profile &quot;QuickSync 30fps&quot; and also automatically start streaming/recording, depending on your profile settings.</p>
