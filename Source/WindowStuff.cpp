@@ -2814,7 +2814,11 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                 App->micVol = 0.0f;
 
                             if(finalValue)
+                            {
                                 AppConfig->SetFloat(TEXT("Audio"), TEXT("MicVolume"), App->micVol);
+                                if (App->micVol < EPSILON)
+                                    AppConfig->SetFloat(TEXT("Audio"), TEXT("MicMutedVolume"), GetVolumeControlMutedVal((HWND)lParam));
+                            }
                         }
                     }
                     break;
@@ -2834,9 +2838,11 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                 App->desktopVol = 0.0f;
 
                             if(finalValue)
+                            {
                                 AppConfig->SetFloat(TEXT("Audio"), TEXT("DesktopVolume"), App->desktopVol);
-
-                            
+                                if (App->desktopVol < EPSILON)
+                                    AppConfig->SetFloat(TEXT("Audio"), TEXT("DesktopMutedVolume"), GetVolumeControlMutedVal((HWND)lParam));
+                            }
                         }
                     }
                     break;

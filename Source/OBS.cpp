@@ -1326,6 +1326,7 @@ void OBS::ReloadIniSettings()
     if(!AppConfig->HasKey(TEXT("Audio"), TEXT("MicVolume")))
         AppConfig->SetFloat(TEXT("Audio"), TEXT("MicVolume"), 1.0f);
     SetVolumeControlValue(hwndTemp, AppConfig->GetFloat(TEXT("Audio"), TEXT("MicVolume"), 1.0f));
+    SetVolumeControlMutedVal(hwndTemp, AppConfig->GetFloat(TEXT("Audio"), TEXT("MicMutedVolume"), 1.0f));
 
     AudioDeviceList audioDevices;
     GetAudioDevices(audioDevices, ADT_RECORDING, false, true);
@@ -1348,6 +1349,7 @@ void OBS::ReloadIniSettings()
     if(!AppConfig->HasKey(TEXT("Audio"), TEXT("DesktopVolume")))
         AppConfig->SetFloat(TEXT("Audio"), TEXT("DesktopVolume"), 1.0f);
     SetVolumeControlValue(hwndTemp, AppConfig->GetFloat(TEXT("Audio"), TEXT("DesktopVolume"), 0.0f));
+    SetVolumeControlMutedVal(hwndTemp, AppConfig->GetFloat(TEXT("Audio"), TEXT("DesktopMutedVolume"), 1.0f));
 
     //-------------------------------------------
     // desktop boost
