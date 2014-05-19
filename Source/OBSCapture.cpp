@@ -660,7 +660,9 @@ retryHookTestV2:
     //-------------------------------------------------------------
 
     int maxBitRate = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("MaxBitrate"), 1000);
-    int bufferSize = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("BufferSize"), 1000);
+    int bufferSize = maxBitRate;
+    if (AppConfig->GetInt(L"Video Encoding", L"UseBufferSize", 0) != 0)
+        bufferSize = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("BufferSize"), 1000);
     int quality    = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Quality"),    8);
     String preset  = AppConfig->GetString(TEXT("Video Encoding"), TEXT("Preset"),     TEXT("veryfast"));
     bUsing444      = false;//AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Use444"),     0) != 0;

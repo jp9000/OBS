@@ -226,13 +226,7 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 //--------------------------------------------
 
-                bool bHasUseBufferSizeValue = AppConfig->HasKey(TEXT("Video Encoding"), TEXT("UseBufferSize")) != 0;
-
-                bool bUseBufferSize;
-                if(!bHasUseBufferSizeValue)
-                    bUseBufferSize = buffersize != bitrate;
-                else
-                    bUseBufferSize = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseBufferSize"), 0) != 0;
+                bool bUseBufferSize = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseBufferSize"), 0) != 0;
 
                 SendMessage(GetDlgItem(hwnd, IDC_CUSTOMBUFFER), BM_SETCHECK, bUseBufferSize ? BST_CHECKED : BST_UNCHECKED, 0);
                 EnableWindow(GetDlgItem(hwnd, IDC_BUFFERSIZE), bUseBufferSize);
@@ -440,11 +434,7 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                         {
                             bool bChecked = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
                             if(LOWORD(wParam) == IDC_CUSTOMBUFFER)
-                            {
                                 EnableWindow(GetDlgItem(hwnd, IDC_BUFFERSIZE), bChecked);
-                                if(!bChecked)
-                                    SetWindowText(GetDlgItem(hwnd, IDC_BUFFERSIZE), GetEditText(GetDlgItem(hwnd, IDC_MAXBITRATE)));
-                            }
                             else if(LOWORD(wParam) == IDC_USECBR)
                             {
                                 EnableWindow(GetDlgItem(hwnd, IDC_QUALITY), !bChecked && (usex264 || useNVENC));
