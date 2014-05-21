@@ -27,7 +27,7 @@ HANDLE hSignalRestart=NULL, hSignalEnd=NULL;
 HANDLE hSignalReady=NULL, hSignalExit=NULL;
 
 HINSTANCE hinstMain = NULL;
-HWND hwndSender = NULL, hwndOBS = NULL, hwndD3DDummyWindow = NULL, hwndOpenGLSetupWindow = NULL;
+HWND hwndSender = NULL, hwndOBS = NULL, hwndD3DDummyWindow = NULL;
 HANDLE textureMutexes[2] = {NULL, NULL};
 int  resetCount = 1;
 bool bStopRequested = false;
@@ -247,7 +247,7 @@ bool bDirectDrawHooked = false;
 
 inline bool AttemptToHookSomething()
 {
-    if (!hwndSender || !hwndD3DDummyWindow || !hwndOpenGLSetupWindow)
+    if (!hwndSender || !hwndD3DDummyWindow)
         return false;
 
     bool bFoundSomethingToHook = false;
@@ -326,22 +326,6 @@ static DWORD WINAPI DummyWindowThread(LPVOID lpBla)
     wc.style = CS_OWNDC;
     wc.hInstance = hinstMain;
     wc.lpfnWndProc = (WNDPROC)DefWindowProc;
-
-    wc.lpszClassName = TEXT("OBSOGLHookClass");
-    if (RegisterClass(&wc)) {
-        hwndOpenGLSetupWindow = CreateDummyWindow(
-            TEXT("OBSOGLHookClass"),
-            TEXT("OBS OpenGL Context Window")
-            );
-
-        if (!hwndOpenGLSetupWindow) {
-            logOutput << CurrentDateTimeString() << "could not create gl dummy window" << endl;
-            return 0;
-        }
-    } else {
-        logOutput << CurrentDateTimeString() << "could not create gl dummy window class" << endl;
-        return 0;
-    }
 
     wc.lpszClassName = TEXT("OBSDummyD3D9WndClassForTheGPUHook");
     if (RegisterClass(&wc)) {
