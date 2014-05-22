@@ -98,69 +98,99 @@ bool VCEEncoder::init()
     if (!initOVE() || !mOutPtr)
         return false;
     bool bPadCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 1) != 0;
+    int numH = ((mHeight + 15) / 16);
 
     prepareConfigMap(mConfigTable, false);
 
     // Choose quality settings
-    int size = MAX(mWidth, mHeight);
-    if (size <= 640)
-        //Quality
-        quickSet(mConfigTable, 2);
-    else if (size <= 1280)
-        // FPS <= 30: Quality else Balanced
-        quickSet(mConfigTable, mFps < 31 ? 2 : 1);
-    else
-        // FPS <= 30: Balanced else Speed
-        quickSet(mConfigTable, mFps < 31 ? 1 : 0);
+
+    if (!mUseCBR)
+    {
+        int size = MAX(mWidth, mHeight);
+        if (size <= 640)
+            //Quality
+            quickSet(mConfigTable, 2);
+        else if (size <= 1280)
+            // FPS <= 30: Quality else Balanced
+            quickSet(mConfigTable, mFps < 31 ? 2 : 1);
+        else
+            // FPS <= 30: Balanced else Speed
+            quickSet(mConfigTable, mFps < 31 ? 1 : 0);
+    }
 
     memset(&mConfigCtrl, 0, sizeof (OvConfigCtrl));
     encodeSetParam(&mConfigCtrl, &mConfigTable);
 
-    //Ups the bitrate :(
-    /*int fps = mFps - mFps % 30;
-    if (fps <= 0)
-        fps = 30;*/
     mConfigCtrl.rateControl.encRateControlFrameRateNumerator = mFps;
     mConfigCtrl.rateControl.encRateControlFrameRateDenominator = 1;
     mConfigCtrl.width = mWidth;
     mConfigCtrl.height = mHeight;
-    mConfigCtrl.rateControl.encRateControlTargetBitRate = mMaxBitrate * 1000;
-    // Driver resets to bitrate?
-    mConfigCtrl.rateControl.encRateControlPeakBitRate = mMaxBitrate *1000;
-    // Driver seems to override this
-    mConfigCtrl.rateControl.encVBVBufferSize = mBufferSize *1000;
-    //mConfigCtrl.profileLevel.profile = 256; //MediaSDK constrained profile
-
-    //TODO IDR nice for seeking in local files. Intra-refresh better for streaming?
-    mConfigCtrl.pictControl.encIDRPeriod = 0;// mKeyint * mFps * 2;
-    mConfigCtrl.pictControl.encForceIntraRefresh = mKeyint * mFps;
-    //TODO Usually 0 to let VCE manage it.
-    mConfigCtrl.rateControl.encGOPSize = 0;// mKeyint * mFps;
-    mConfigCtrl.priority = OVE_ENCODE_TASK_PRIORITY_LEVEL1;
-    if (bPadCBR) //TODO Serves same purpose? Drops too much still
-        mConfigCtrl.rateControl.encRCOptions = 0x1;
-
-    int QP = 23;
-    //QP = 40 - (mQuality * 5) / 2; // 40 .. 15
-    QP = 22 + (10 - mQuality); //Matching x264 CRF
-    VCELog(TEXT("Quality: %d => QP %d"), mQuality, QP);
-
-    mConfigCtrl.rateControl.encQP_I =
-        mConfigCtrl.rateControl.encQP_P =
-        mConfigCtrl.rateControl.encQP_B = QP;
 
     if (mUseCBR)
-        mConfigCtrl.rateControl.encRateControlMethod = RCM_CBR;
-    else if (mUseCFR) //Not really
-        mConfigCtrl.rateControl.encRateControlMethod = RCM_FQP;
+    {
+        int bitRateWindow = 50;
+        mManKeyInt = mFps * (mKeyint == 0 ? 2 : mKeyint); //Also GOP size
+        mManKeyInt -= mManKeyInt % 6;
+
+        //Probably forces 1 ref frame only
+        mConfigCtrl.priority = OVE_ENCODE_TASK_PRIORITY_LEVEL2;
+
+        mConfigCtrl.profileLevel.profile = 77; // 66 - Baseline, 77 - Main, 100 - High
+        mConfigCtrl.profileLevel.level = 50; // 40 - Level 4.0, 51 - Level 5.1
+        
+        mConfigCtrl.rateControl.encRateControlMethod = RCM_CBR; // 0 - None, 3 - CBR, 4 - VBR
+        mConfigCtrl.rateControl.encRateControlTargetBitRate = mMaxBitrate * (1000 - bitRateWindow);
+        mConfigCtrl.rateControl.encRateControlPeakBitRate = mMaxBitrate * (1000 + bitRateWindow);
+        mConfigCtrl.rateControl.encGOPSize = mManKeyInt;
+        mConfigCtrl.rateControl.encQP_I = 0;
+        mConfigCtrl.rateControl.encQP_P = 0;
+        mConfigCtrl.rateControl.encQP_B = 0;
+        mConfigCtrl.rateControl.encRCOptions = bPadCBR ? 3 : 0;
+
+        mConfigCtrl.pictControl.encHeaderInsertionSpacing = 1;
+        //Seem like never or only every 30 frames, so set manually with forced pic type
+        mConfigCtrl.pictControl.encIDRPeriod = 0;// mManKeyInt;
+        mConfigCtrl.pictControl.encIPicPeriod = 6;
+        mConfigCtrl.pictControl.encNumMBsPerSlice = 0;
+    }
     else
-        mConfigCtrl.rateControl.encRateControlMethod = RCM_VBR;
+    {
+        mConfigCtrl.rateControl.encRateControlTargetBitRate = mMaxBitrate * 1000;
+        // Driver resets to bitrate?
+        mConfigCtrl.rateControl.encRateControlPeakBitRate = mMaxBitrate * 1000;
+        // Driver seems to override this
+        mConfigCtrl.rateControl.encVBVBufferSize = mBufferSize * 1000;
+
+        //TODO IDR nice for seeking in local files. Intra-refresh better for streaming?
+        mManKeyInt = mKeyint * mFps;
+        mConfigCtrl.pictControl.encIDRPeriod = 0;
+        mConfigCtrl.pictControl.encForceIntraRefresh = mManKeyInt;
+        //TODO Usually 0 to let VCE manage it.
+        mConfigCtrl.rateControl.encGOPSize = 0;// mKeyint * mFps;
+        mConfigCtrl.priority = OVE_ENCODE_TASK_PRIORITY_LEVEL1;
+        if (bPadCBR) //TODO Serves same purpose? Drops too much still
+            mConfigCtrl.rateControl.encRCOptions = 0x3;
+
+        int QP = 23;
+        QP = 40 - (mQuality * 5) / 2; // 40 .. 15
+        //QP = 22 + (10 - mQuality); //Matching x264 CRF
+        VCELog(TEXT("Quality: %d => QP %d"), mQuality, QP);
+
+        mConfigCtrl.rateControl.encQP_I = mConfigCtrl.rateControl.encQP_P = QP;
+        mConfigCtrl.rateControl.encQP_B = QP;
+
+        if (mUseCBR)
+            mConfigCtrl.rateControl.encRateControlMethod = RCM_CBR;
+        else if (mUseCFR) //Not really
+            mConfigCtrl.rateControl.encRateControlMethod = RCM_FQP;
+        else
+            mConfigCtrl.rateControl.encRateControlMethod = RCM_VBR;
+
+        int numMBs = ((mWidth + 15) / 16) * numH;
+        mConfigCtrl.pictControl.encNumMBsPerSlice = numMBs;
+    }
 
     VCELog(TEXT("Rate control method: %d"), mConfigCtrl.rateControl.encRateControlMethod);
-
-    int numH = ((mHeight + 15) / 16);
-    int numMBs = ((mWidth + 15) / 16) * numH;
-    mConfigCtrl.pictControl.encNumMBsPerSlice = numMBs;
     //WTF, why half the pixels
     mConfigCtrl.pictControl.encCropBottomOffset = (numH * 16 - mHeight) >> 1;
 
@@ -324,8 +354,8 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     unsigned int idx = (unsigned int)data.MemId - 1;
 
 #ifdef _DEBUG
-    VCELog(TEXT("Encoding buffer: %d ts:%d %d"), idx, timestamp, data.TimeStamp);
-    VCELog(TEXT("Mapped handle: %p"), mEncodeHandle.inputSurfaces[idx].mapPtr);
+    VCELog(TEXT("Encoding buffer: %d ts:%d %lld"), idx, timestamp, data.TimeStamp);
+    //VCELog(TEXT("Mapped handle: %p"), mEncodeHandle.inputSurfaces[idx].mapPtr);
 #endif
     mLastTS = (uint64_t)data.TimeStamp;
 
@@ -351,7 +381,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     //pictureParameter.forceIMBPeriod = 0;
     //pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_NONE;
 
-    if (mReqKeyframe || mFirstFrame || mKeyNum >= mKeyint * mFps)
+    if (mReqKeyframe || mFirstFrame || mKeyNum >= mManKeyInt)
     {
         mReqKeyframe = false;
         pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_IDR;

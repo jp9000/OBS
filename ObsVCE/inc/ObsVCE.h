@@ -174,10 +174,11 @@ private:
     map<string, int32_t>    mConfigTable;
     List<BYTE> encodeData, headerPacket, seiData;
 
-    void        *mOutPtr;
-    uint32_t    mOutPtrSize;
+    void       *mOutPtr;
+    uint32_t   mOutPtrSize;
     int32_t    mKeyNum; //Frames since last keyframe
-    uint64_t     mLastTS;
+    int32_t    mManKeyInt; //Manual IDR interval
+    uint64_t   mLastTS;
     QWORD      mStartTime; //Workaround for lack of pts from OVE
     cl_mem     mOutput;
     cl_kernel  mKernel[2];
