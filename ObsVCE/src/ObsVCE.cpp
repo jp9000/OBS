@@ -129,8 +129,8 @@ bool VCEEncoder::init()
     if (mUseCBR)
     {
         int bitRateWindow = 50;
-        mManKeyInt = mFps * (mKeyint == 0 ? 2 : mKeyint); //Also GOP size
-        mManKeyInt -= mManKeyInt % 6;
+        int gopSize = mFps * (mKeyint == 0 ? 2 : mKeyint);
+        gopSize -= gopSize % 6;
 
         //Probably forces 1 ref frame only
         mConfigCtrl.priority = OVE_ENCODE_TASK_PRIORITY_LEVEL2;
@@ -141,15 +141,14 @@ bool VCEEncoder::init()
         mConfigCtrl.rateControl.encRateControlMethod = RCM_CBR; // 0 - None, 3 - CBR, 4 - VBR
         mConfigCtrl.rateControl.encRateControlTargetBitRate = mMaxBitrate * (1000 - bitRateWindow);
         mConfigCtrl.rateControl.encRateControlPeakBitRate = mMaxBitrate * (1000 + bitRateWindow);
-        mConfigCtrl.rateControl.encGOPSize = mManKeyInt;
+        mConfigCtrl.rateControl.encGOPSize = gopSize;
         mConfigCtrl.rateControl.encQP_I = 0;
         mConfigCtrl.rateControl.encQP_P = 0;
         mConfigCtrl.rateControl.encQP_B = 0;
         mConfigCtrl.rateControl.encRCOptions = bPadCBR ? 3 : 0;
 
         mConfigCtrl.pictControl.encHeaderInsertionSpacing = 1;
-        //Seem like never or only every 30 frames, so set manually with forced pic type
-        mConfigCtrl.pictControl.encIDRPeriod = 0;// mManKeyInt;
+        mConfigCtrl.pictControl.encIDRPeriod = gopSize;
         mConfigCtrl.pictControl.encIPicPeriod = 6;
         mConfigCtrl.pictControl.encNumMBsPerSlice = 0;
     }
@@ -381,7 +380,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     //pictureParameter.forceIMBPeriod = 0;
     //pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_NONE;
 
-    if (mReqKeyframe || mFirstFrame || mKeyNum >= mManKeyInt)
+    if (mReqKeyframe || mFirstFrame || (!mUseCBR && mKeyNum >= mManKeyInt))
     {
         mReqKeyframe = false;
         pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_IDR;
