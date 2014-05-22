@@ -99,16 +99,20 @@ bool VCEEncoder::init()
     prepareConfigMap(mConfigTable, false);
 
     // Choose quality settings
-    int size = MAX(mWidth, mHeight);
-    if (size <= 640)
-        //Quality
-        quickSet(mConfigTable, 2);
-    else if (size <= 1280)
-        // FPS <= 30: Quality else Balanced
-        quickSet(mConfigTable, mFps < 31 ? 2 : 1);
-    else
-        // FPS <= 30: Balanced else Speed
-        quickSet(mConfigTable, mFps < 31 ? 1 : 0);
+
+	if (!mUseCBR)
+	{
+		int size = MAX(mWidth, mHeight);
+		if (size <= 640)
+			//Quality
+			quickSet(mConfigTable, 2);
+		else if (size <= 1280)
+			// FPS <= 30: Quality else Balanced
+			quickSet(mConfigTable, mFps < 31 ? 2 : 1);
+		else
+			// FPS <= 30: Balanced else Speed
+			quickSet(mConfigTable, mFps < 31 ? 1 : 0);
+	}
 
     memset(&mConfigCtrl, 0, sizeof (OvConfigCtrl));
     encodeSetParam(&mConfigCtrl, &mConfigTable);
@@ -117,48 +121,82 @@ bool VCEEncoder::init()
     /*int fps = mFps - mFps % 30;
     if (fps <= 0)
         fps = 30;*/
-    mConfigCtrl.rateControl.encRateControlFrameRateNumerator = mFps;
-    mConfigCtrl.rateControl.encRateControlFrameRateDenominator = 1;
-    mConfigCtrl.width = mWidth;
-    mConfigCtrl.height = mHeight;
-    mConfigCtrl.rateControl.encRateControlTargetBitRate = mMaxBitrate * 1000;
-    // Driver resets to bitrate?
-    mConfigCtrl.rateControl.encRateControlPeakBitRate = mMaxBitrate *1000;
-    // Driver seems to override this
-    mConfigCtrl.rateControl.encVBVBufferSize = mBufferSize *1000;
 
-    //TODO IDR nice for seeking in local files. Intra-refresh better for streaming?
-    mConfigCtrl.pictControl.encIDRPeriod = mKeyint * mFps * 2;
-    mConfigCtrl.pictControl.encForceIntraRefresh = mKeyint * mFps;
-    //TODO Usually 0 to let VCE manage it.
-    mConfigCtrl.rateControl.encGOPSize = 0;// mKeyint * mFps;
-    mConfigCtrl.priority = OVE_ENCODE_TASK_PRIORITY_LEVEL1;
-    if (bPadCBR) //TODO Serves same purpose? Drops too much still
-        mConfigCtrl.rateControl.encRCOptions = 0x1;
+	if (mUseCBR)
+	{
+		int bitRateWindow = 50;
+		int gopSize = mFps * (mKeyint == 0 ? 2 : mKeyint);
+		gopSize -= gopSize % 6;
 
-    int QP = 23;
-    //QP = 40 - (mQuality * 5) / 2; // 40 .. 15
-    QP = 22 + (10 - mQuality); //Matching x264 CRF
-    VCELog(TEXT("Quality: %d => QP %d"), mQuality, QP);
+		mConfigCtrl.height = mHeight;
+		mConfigCtrl.width = mWidth;
 
-    mConfigCtrl.rateControl.encQP_I =
-        mConfigCtrl.rateControl.encQP_P =
-        mConfigCtrl.rateControl.encQP_B = QP;
+		mConfigCtrl.encodeMode = OVE_AVC_FULL;
+		mConfigCtrl.priority = OVE_ENCODE_TASK_PRIORITY_LEVEL2;
 
-    if (mUseCBR)
-        mConfigCtrl.rateControl.encRateControlMethod = RCM_CBR;
-    else if (mUseCFR) //Not really
-        mConfigCtrl.rateControl.encRateControlMethod = RCM_FQP;
-    else
-        mConfigCtrl.rateControl.encRateControlMethod = RCM_VBR;
+		mConfigCtrl.profileLevel.profile = 77; // 66 - Baseline, 77 - Main, 100 - High
+		mConfigCtrl.profileLevel.level = 50; // 40 - Level 4.0, 51 - Level 5.1
+		
+		mConfigCtrl.rateControl.encRateControlMethod = 3; // 0 - None, 3 - CBR, 4 - VBR
+		mConfigCtrl.rateControl.encRateControlTargetBitRate = mMaxBitrate * (1000 - bitRateWindow);
+		mConfigCtrl.rateControl.encRateControlPeakBitRate = mMaxBitrate * (1000 + bitRateWindow);
+		mConfigCtrl.rateControl.encRateControlFrameRateNumerator = mFps;
+		mConfigCtrl.rateControl.encRateControlFrameRateDenominator = 1;
+		mConfigCtrl.rateControl.encGOPSize = gopSize;
+		mConfigCtrl.rateControl.encQP_I = 0;
+		mConfigCtrl.rateControl.encQP_P = 0;
+		mConfigCtrl.rateControl.encQP_B = 0;
+		mConfigCtrl.rateControl.encRCOptions = bPadCBR ? 3 : 0;
 
-    VCELog(TEXT("Rate control method: %d"), mConfigCtrl.rateControl.encRateControlMethod);
+		mConfigCtrl.pictControl.encHeaderInsertionSpacing = 1;
+		mConfigCtrl.pictControl.encIDRPeriod = gopSize;
+		mConfigCtrl.pictControl.encIPicPeriod = 6;
+		mConfigCtrl.pictControl.encNumMBsPerSlice = 0;
+	}
+	else
+	{
+		mConfigCtrl.rateControl.encRateControlFrameRateNumerator = mFps;
+		mConfigCtrl.rateControl.encRateControlFrameRateDenominator = 1;
+		mConfigCtrl.width = mWidth;
+		mConfigCtrl.height = mHeight;
+		mConfigCtrl.rateControl.encRateControlTargetBitRate = mMaxBitrate * 1000;
+		// Driver resets to bitrate?
+		mConfigCtrl.rateControl.encRateControlPeakBitRate = mMaxBitrate * 1000;
+		// Driver seems to override this
+		mConfigCtrl.rateControl.encVBVBufferSize = mBufferSize * 1000;
 
-    int numH = ((mHeight + 15) / 16);
-    int numMBs = ((mWidth + 15) / 16) * numH;
-    mConfigCtrl.pictControl.encNumMBsPerSlice = numMBs;
-    //WTF, why half the pixels
-    mConfigCtrl.pictControl.encCropBottomOffset = (numH * 16 - mHeight) >> 1;
+		//TODO IDR nice for seeking in local files. Intra-refresh better for streaming?
+		mConfigCtrl.pictControl.encIDRPeriod = mKeyint * mFps * 2;
+		mConfigCtrl.pictControl.encForceIntraRefresh = mKeyint * mFps;
+		//TODO Usually 0 to let VCE manage it.
+		mConfigCtrl.rateControl.encGOPSize = 0;// mKeyint * mFps;
+		mConfigCtrl.priority = OVE_ENCODE_TASK_PRIORITY_LEVEL1;
+		if (bPadCBR) //TODO Serves same purpose? Drops too much still
+			mConfigCtrl.rateControl.encRCOptions = 0x1;
+
+		int QP = 23;
+		//QP = 40 - (mQuality * 5) / 2; // 40 .. 15
+		QP = 22 + (10 - mQuality); //Matching x264 CRF
+		VCELog(TEXT("Quality: %d => QP %d"), mQuality, QP);
+
+		mConfigCtrl.rateControl.encQP_I = mConfigCtrl.rateControl.encQP_P = QP;
+		mConfigCtrl.rateControl.encQP_B = QP;
+
+		if (mUseCBR)
+			mConfigCtrl.rateControl.encRateControlMethod = RCM_CBR;
+		else if (mUseCFR) //Not really
+			mConfigCtrl.rateControl.encRateControlMethod = RCM_FQP;
+		else
+			mConfigCtrl.rateControl.encRateControlMethod = RCM_VBR;
+
+		VCELog(TEXT("Rate control method: %d"), mConfigCtrl.rateControl.encRateControlMethod);
+
+		int numH = ((mHeight + 15) / 16);
+		int numMBs = ((mWidth + 15) / 16) * numH;
+		mConfigCtrl.pictControl.encNumMBsPerSlice = numMBs;
+		//WTF, why half the pixels
+		mConfigCtrl.pictControl.encCropBottomOffset = (numH * 16 - mHeight) >> 1;
+	}
 
     if (mDeviceHandle.deviceInfo)
     {
