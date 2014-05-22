@@ -44,10 +44,12 @@ Shader* GraphicsSystem::CreateVertexShaderFromFile(CTSTR lpFileName)
     XFile ShaderFile;
 
     if(!ShaderFile.Open(lpFileName, XFILE_READ|XFILE_SHARED, XFILE_OPENEXISTING))
-        return NULL;
+        CrashError(TEXT("CreateVertexShaderFromFile: Couldn't open %s: %d"), lpFileName, GetLastError());
 
     String strShader;
     ShaderFile.ReadFileToString(strShader);
+    if (strShader.IsEmpty())
+        CrashError(TEXT("CreateVertexShaderFromFile: Couldn't read %s: %d"), lpFileName, GetLastError());
 
     return CreateVertexShader(strShader, lpFileName);
 }
@@ -56,11 +58,13 @@ Shader* GraphicsSystem::CreatePixelShaderFromFile(CTSTR lpFileName)
 {
     XFile ShaderFile;
 
-    if(!ShaderFile.Open(lpFileName, XFILE_READ|XFILE_SHARED, XFILE_OPENEXISTING))
-        return NULL;
+    if (!ShaderFile.Open(lpFileName, XFILE_READ | XFILE_SHARED, XFILE_OPENEXISTING))
+        CrashError(TEXT("CreatePixelShaderFromFile: Couldn't open %s: %d"), lpFileName, GetLastError());
 
     String strShader;
     ShaderFile.ReadFileToString(strShader);
+    if (strShader.IsEmpty())
+        CrashError(TEXT("CreatePixelShaderFromFile: Couldn't read %s: %d"), lpFileName, GetLastError());
 
     return CreatePixelShader(strShader, lpFileName);
 }
