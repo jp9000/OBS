@@ -176,7 +176,9 @@ private:
 
     void        *mOutPtr;
     uint32_t    mOutPtrSize;
+    int32_t    mKeyNum; //Frames since last keyframe
     uint64_t     mLastTS;
+    QWORD      mStartTime; //Workaround for lack of pts from OVE
     cl_mem     mOutput;
     cl_kernel  mKernel[2];
     cl_program mProgram;
@@ -199,6 +201,7 @@ private:
     int32_t    mAlignedSurfaceHeight; //Not used much
     uint32_t   mInputBufSize;
     uint32_t   mOutputBufSize;
+    uint32_t   mStatsOutSize;
     //
     CTSTR    mPreset;
     bool     mUse444; //Max VCE 2.0 can do is 422 probably

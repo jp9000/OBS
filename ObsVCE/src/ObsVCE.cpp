@@ -91,6 +91,9 @@ void encoderRefDec()
 
 bool VCEEncoder::init()
 {
+    if (mIsReady)
+        return true;
+
     bool status = false;
     if (!initOVE() || !mOutPtr)
         return false;
@@ -126,9 +129,10 @@ bool VCEEncoder::init()
     mConfigCtrl.rateControl.encRateControlPeakBitRate = mMaxBitrate *1000;
     // Driver seems to override this
     mConfigCtrl.rateControl.encVBVBufferSize = mBufferSize *1000;
+    //mConfigCtrl.profileLevel.profile = 256; //MediaSDK constrained profile
 
     //TODO IDR nice for seeking in local files. Intra-refresh better for streaming?
-    mConfigCtrl.pictControl.encIDRPeriod = mKeyint * mFps * 2;
+    mConfigCtrl.pictControl.encIDRPeriod = 0;// mKeyint * mFps * 2;
     mConfigCtrl.pictControl.encForceIntraRefresh = mKeyint * mFps;
     //TODO Usually 0 to let VCE manage it.
     mConfigCtrl.rateControl.encGOPSize = 0;// mKeyint * mFps;
@@ -194,7 +198,6 @@ bool VCEEncoder::init()
     return true;
 }
 
-//TODO
 VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR)
     : mFps(fps)
     , mWidth(width)
@@ -216,6 +219,9 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset
     , mProgram(NULL)
     , mLastTS(0)
     , mOutPtr(NULL)
+    , mStatsOutSize(0)
+    , mStartTime(0)
+    , mKeyNum(0)
 {
     frameMutex = OSCreateMutex();
 
@@ -243,11 +249,10 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset
         mOutputBufSize = mAlignedSurfaceHeight * mAlignedSurfaceWidth * 3 / 2;
     }
 
-    mOutPtrSize = 5 * 1024 * 1024;
+    mOutPtrSize = 1 * 1024 * 1024;
     mOutPtr = malloc(mOutPtrSize);
 }
 
-//TODO
 VCEEncoder::~VCEEncoder()
 {
     encodeClose();
@@ -279,7 +284,6 @@ VCEEncoder::~VCEEncoder()
     OSCloseMutex(frameMutex);
 }
 
-//TODO
 bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp)
 {
     if (!mIsReady)
@@ -309,6 +313,9 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     if (!picIn)
         return true;
 
+    if (mStartTime == 0)
+        mStartTime = GetQPCTimeMS();
+
     profileIn("VCE encode")
     mfxFrameSurface1 *inputSurface = (mfxFrameSurface1*)picIn;
     mfxFrameData &data = inputSurface->Data;
@@ -317,7 +324,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     unsigned int idx = (unsigned int)data.MemId - 1;
 
 #ifdef _DEBUG
-    VCELog(TEXT("Encoding buffer: %d ts:%d"), idx, data.TimeStamp - mLastTS);
+    VCELog(TEXT("Encoding buffer: %d ts:%d %d"), idx, timestamp, data.TimeStamp);
     VCELog(TEXT("Mapped handle: %p"), mEncodeHandle.inputSurfaces[idx].mapPtr);
 #endif
     mLastTS = (uint64_t)data.TimeStamp;
@@ -344,11 +351,13 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     //pictureParameter.forceIMBPeriod = 0;
     //pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_NONE;
 
-    if (mReqKeyframe || mFirstFrame)
+    if (mReqKeyframe || mFirstFrame || mKeyNum >= mKeyint * mFps)
     {
         mReqKeyframe = false;
         pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_IDR;
+        mKeyNum = 0;
     }
+    mKeyNum++;
     
     if (mUse444)
     {
@@ -456,7 +465,13 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
                 mHdrPacket = (char*)malloc(mHdrSize);
                 memcpy(mHdrPacket, pTaskDescriptionList[i].bitstream_data, mHdrSize);
             }
-
+#ifdef _DEBUG
+            if (mStatsOutSize < pTaskDescriptionList[i].size_of_bitstream_data)
+            {
+                mStatsOutSize = pTaskDescriptionList[i].size_of_bitstream_data;
+                VCELog(TEXT("New max bitstream size: %d"), mStatsOutSize);
+            }
+#endif
             res = OVEncodeReleaseTask(mEncodeHandle.session, pTaskDescriptionList[i].taskID);
         }
     }
@@ -479,18 +494,24 @@ void VCEEncoder::ProcessOutput(OVE_OUTPUT_DESCRIPTION *surf, List<DataPacket> &p
 {
     encodeData.Clear();
 
-    if (surf->size_of_bitstream_data > mOutPtrSize)
+    //Just in case
+    if (!mOutPtr || surf->size_of_bitstream_data > mOutPtrSize)
     {
         VCELog(TEXT("Bitstream size larger than %d, reallocating."), mOutPtrSize);
         mOutPtrSize = surf->size_of_bitstream_data;
-        free(mOutPtr);
-        mOutPtr = malloc(mOutPtrSize);
+        mOutPtr = realloc(mOutPtr, mOutPtrSize);
+        if (!mOutPtr)
+        {
+            VCELog(TEXT("Could not realloc output buffer: %d bytes"), mOutPtrSize);
+            mOutPtrSize = 0;
+            mReqKeyframe = true;
+            return;
+        }
     }
 
     memcpy(mOutPtr, surf->bitstream_data, surf->size_of_bitstream_data);
-    uint8_t *pstart = (uint8_t*)mOutPtr;// surf->bitstream_data;
 
-    uint8_t *start = pstart;
+    uint8_t *start = (uint8_t*)mOutPtr;
     uint8_t *end = start + surf->size_of_bitstream_data;
     const static uint8_t start_seq[] = { 0, 0, 1 };
     start = std::search(start, end, start_seq, start_seq + 3);
@@ -512,10 +533,10 @@ void VCEEncoder::ProcessOutput(OVE_OUTPUT_DESCRIPTION *surf, List<DataPacket> &p
     }
     size_t nalNum = nalOut.Num();
 
-    uint64_t dts = timestamp;// surf->timestamp;
-    //uint64_t out_pts = lockParams.outputTimeStamp;
+    //uint64_t dts = timestamp;
+    //uint64_t out_pts = timestamp;
 
-    //FIXME
+    //FIXME VCE outputs I/P frames thus pts and dts can be the same? timeOffset needed with B-frames?
     int32_t timeOffset = 0;// int(out_pts - dts);
     timeOffset += frameShift;
 
@@ -656,7 +677,6 @@ void VCEEncoder::ProcessOutput(OVE_OUTPUT_DESCRIPTION *surf, List<DataPacket> &p
     profileOut
 }
 
-//TODO
 void VCEEncoder::RequestBuffers(LPVOID buffers)
 {
     cl_event inMapEvt = 0;
@@ -708,19 +728,18 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
     }
 }
 
-//TODO
+//TODO GetBitRate
 int  VCEEncoder::GetBitRate() const
 {
     return mMaxBitrate;
 }
 
-//TODO
+//TODO DynamicBitrateSupported
 bool VCEEncoder::DynamicBitrateSupported() const
 {
     return true;
 }
 
-//TODO
 bool VCEEncoder::SetBitRate(DWORD maxBitrate, DWORD bufferSize)
 {
     OSMutexLocker locker(frameMutex);
@@ -729,7 +748,7 @@ bool VCEEncoder::SetBitRate(DWORD maxBitrate, DWORD bufferSize)
     {
         mMaxBitrate = maxBitrate;
         mConfigCtrl.rateControl.encRateControlTargetBitRate = maxBitrate * 1000;
-        //TODO
+        //TODO set encVBVBufferSize if zero?
         //if (bufferSize == 0)
         //    mConfigCtrl.rateControl.encVBVBufferSize = maxBitrate * 1000 / 2;
     }
