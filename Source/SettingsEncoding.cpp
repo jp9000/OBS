@@ -21,7 +21,7 @@
 
 bool CheckQSVHardwareSupport(bool log, bool *configurationWarning=nullptr);
 bool CheckNVENCHardwareSupport(bool log);
-bool CheckVCEHardwareSupport(bool log);
+bool CheckVCEHardwareSupport(bool log, bool useMFT);
 
 //============================================================================
 // SettingsEncoding class
@@ -141,6 +141,9 @@ void SettingsEncoding::ApplySettings()
 
     bool bUseCL = SendMessage(GetDlgItem(hwnd, IDC_CLCONV), BM_GETCHECK, 0, 0) == BST_CHECKED;
     AppConfig->SetInt(TEXT("Video Encoding"), TEXT("UseCL"), bUseCL);
+
+    bool bUseMFT = SendMessage(GetDlgItem(hwnd, IDC_VCEMFT), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    AppConfig->SetInt(TEXT("Video Encoding"), TEXT("MFT"), bUseMFT);
 }
 
 void SettingsEncoding::CancelSettings()
@@ -164,10 +167,11 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 //--------------------------------------------
 
                 bool showQSVConfigurationWarning = false;
+                int bUseMFT = AppConfig->GetInt(L"Video Encoding", L"MFT", 0);
 
                 hasQSV = CheckQSVHardwareSupport(false, &showQSVConfigurationWarning);
                 hasNVENC = CheckNVENCHardwareSupport(false);
-                hasVCE = CheckVCEHardwareSupport(false);
+                hasVCE = CheckVCEHardwareSupport(false, !!bUseMFT);
 
                 String vcodec = AppConfig->GetString(L"Video Encoding", L"Encoder");
 
@@ -225,6 +229,7 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 SendMessage(GetDlgItem(hwnd, IDC_USECBR), BM_SETCHECK, bUseCBR ? BST_CHECKED : BST_UNCHECKED, 0);
                 SendMessage(GetDlgItem(hwnd, IDC_PADCBR), BM_SETCHECK, bPadCBR ? BST_CHECKED : BST_UNCHECKED, 0);
                 SendMessage(GetDlgItem(hwnd, IDC_CLCONV), BM_SETCHECK, bUseCL ? BST_CHECKED : BST_UNCHECKED, 0);
+                SendMessage(GetDlgItem(hwnd, IDC_VCEMFT), BM_SETCHECK, bUseMFT ? BST_CHECKED : BST_UNCHECKED, 0);
                 EnableWindow(GetDlgItem(hwnd, IDC_QUALITY), !bUseCBR && (usex264 || useNVENC || useVCE));
                 EnableWindow(GetDlgItem(hwnd, IDC_PADCBR), bUseCBR && (usex264 || useVCE));
                 EnableWindow(GetDlgItem(hwnd, IDC_CLCONV), useVCE);
@@ -462,6 +467,7 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                     case IDC_USECBR:
                     case IDC_PADCBR:
                     case IDC_CLCONV:
+                    case IDC_VCEMFT:
                         if (HIWORD(wParam) == BN_CLICKED)
                         {
                             bool bChecked = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;

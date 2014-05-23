@@ -393,6 +393,7 @@ Encoder.VCE.NoHardwareSupport="Your hardware does not seem to support AMD VCE!\r
 Encoder.VCE.DllNotFound="ObsVCE.dll not found or could not be loaded."
 Encoder.VCE.YUV444IsUnsupported="YUV444 colorspace is not supported by VCE."
 Encoder.VCE.UnsupportedResolution="Unsupported resolution. Maximum is 1920 by 1080."
+Encoder.VCE.UseMFT="Use VCE MFT filter instead (media foundation)"
 
 Encoder.QSV.NoHardwareSupport="Could not find Quick Sync hardware support!"
 Encoder.QSV.ExceededResolutionHelp="Either lower your output resolution in Settings->Video or switch to a different encoder in Settings->Encoding."

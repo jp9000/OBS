@@ -17,7 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 ********************************************************************************/
 
-
+//XXX MFT probably becomes the one and only
 #include "Main.h"
 
 typedef bool(__cdecl *PVCEINITFUNC)(ConfigFile **appConfig, VideoEncoder*);
@@ -29,29 +29,35 @@ static PCHECKVCEHARDWARESUPPORT p_checkVCEHardwareSupport = NULL;
 static PCREATEVCEENCODER p_createVCEEncoder = NULL;
 static PVCEINITFUNC initFunction = NULL;
 
-void InitVCEEncoder(bool log = true)
+void InitVCEEncoder(bool log = true, bool useMFT = false)
 {
     if (p_vceModule != NULL)
-        return;
+        FreeLibrary(p_vceModule);
+
+    p_vceModule = NULL;
+    p_checkVCEHardwareSupport = NULL;
+    p_createVCEEncoder = NULL;
+    initFunction = NULL;
 
 #ifdef _WIN64
-    p_vceModule = LoadLibrary(TEXT("ObsVCE64.dll"));
+    p_vceModule = LoadLibrary(useMFT ? TEXT("ObsVCEMFT64.dll") : TEXT("ObsVCE64.dll"));
 #else
-    p_vceModule = LoadLibrary(TEXT("ObsVCE32.dll"));
+    p_vceModule = LoadLibrary(useMFT ? TEXT("ObsVCEMFT32.dll") : TEXT("ObsVCE32.dll"));
 #endif
 
+    TCHAR *modName = useMFT ? TEXT("ObsVCEMFT.dll") : TEXT("ObsVCE.dll");
     if (p_vceModule == NULL)
-        p_vceModule = LoadLibrary(TEXT("ObsVCE.dll"));
+        p_vceModule = LoadLibrary(modName);
 
     if (p_vceModule == NULL)
     {
         if (log)
-            Log(TEXT("Failed loading ObsVCE.dll"));
+            Log(TEXT("Failed loading %s"), modName);
         goto error;
     }
 
     if (log)
-        Log(TEXT("Successfully loaded ObsVCE.dll"));
+        Log(TEXT("Successfully loaded %s"), modName);
 
     p_checkVCEHardwareSupport = (PCHECKVCEHARDWARESUPPORT)
         GetProcAddress(p_vceModule, "CheckVCEHardwareSupport");
@@ -91,9 +97,11 @@ error:
         Log(TEXT("ObsVCE initialization failed"));
 }
 
-bool CheckVCEHardwareSupport(bool log = true)
+bool CheckVCEHardwareSupport(bool log = true, bool useMFT = false)
 {
-    InitVCEEncoder(log);
+    if(useMFT)
+        Log(TEXT("VCE encoding with MFT."));
+    InitVCEEncoder(log, useMFT);
 
     if (p_checkVCEHardwareSupport == NULL)
         return false;
@@ -101,9 +109,9 @@ bool CheckVCEHardwareSupport(bool log = true)
     return p_checkVCEHardwareSupport(log);
 }
 
-VideoEncoder* CreateVCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, String &errors)
+VideoEncoder* CreateVCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, String &errors, bool useMFT)
 {
-    if (!CheckVCEHardwareSupport(true))
+    if (!CheckVCEHardwareSupport(true, useMFT))
     {
         if (p_vceModule)
             errors << Str("Encoder.VCE.NoHardwareSupport");
