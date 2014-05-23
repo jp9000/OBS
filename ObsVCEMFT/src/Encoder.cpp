@@ -74,11 +74,7 @@ HRESULT VCEEncoder::Stop()
 
     HRESULT hr = mEncTrans->ProcessMessage(MFT_MESSAGE_NOTIFY_END_OF_STREAM, 0);
     hr = mEncTrans->ProcessMessage(MFT_MESSAGE_NOTIFY_END_STREAMING, 0);
-    //hr = mEncTrans->ProcessMessage(MFT_MESSAGE_COMMAND_DRAIN, 0);
-    //TODO _DRAIN the pipe
-    /*while (ProcessOutput(blah) != MF_E_TRANSFORM_NEED_MORE_INPUT)
-    {
-    }*/
+    hr = mEncTrans->ProcessMessage(MFT_MESSAGE_COMMAND_DRAIN, 0);
     return hr;
 }
 
@@ -108,20 +104,27 @@ HRESULT VCEEncoder::Init()
     memset(&mPConfigCtrl, 0, sizeof(mPConfigCtrl));
 
     int bitRateWindow = 50;
+    int gopSize = mFps * (mKeyint == 0 ? 2 : mKeyint);
+    gopSize -= gopSize % 6;
+
     mPConfigCtrl.commonParams.useInterop = 0;
     mPConfigCtrl.commonParams.useSWCodec = 0;
     mPConfigCtrl.height = mHeight;
     mPConfigCtrl.width = mWidth;
     mPConfigCtrl.vidParams.commonQuality = mQuality * 10;
     mPConfigCtrl.vidParams.enableCabac = 1;
-    mPConfigCtrl.vidParams.bufSize = mBufferSize * 1000;
+
+    // http://msdn.microsoft.com/en-us/library/windows/desktop/dd317651%28v=vs.85%29.aspx
+    // For H.264 video and Windows Media Video, the property defines 
+    // the hypothetical reference decoder(HRD) size.The size of the buffer is in bytes.
+    mPConfigCtrl.vidParams.bufSize = mBufferSize * 1000 / 8;
     mPConfigCtrl.vidParams.meanBitrate = mMaxBitrate * (1000 - bitRateWindow);
     mPConfigCtrl.vidParams.maxBitrate = mMaxBitrate * (1000 + bitRateWindow);
-    mPConfigCtrl.vidParams.idrPeriod = (mKeyint > 0 ? mKeyint : 2) * mFps;
-    mPConfigCtrl.vidParams.gopSize = mFps;
+    mPConfigCtrl.vidParams.idrPeriod = (mKeyint > 0 ? mKeyint : 2) * mFps; //gopSize;//
+    mPConfigCtrl.vidParams.gopSize = 0;// gopSize;
     mPConfigCtrl.vidParams.qualityVsSpeed = 50;
     mPConfigCtrl.vidParams.compressionStandard = eAVEncH264VProfile_High;
-    mPConfigCtrl.vidParams.numBFrames = 3;
+    mPConfigCtrl.vidParams.numBFrames = 0;
     mPConfigCtrl.vidParams.lowLatencyMode = 0;
 
     if (mUseCBR)
@@ -161,6 +164,21 @@ HRESULT VCEEncoder::Init()
         mPVideoType, &mEncTrans, deviceManagerPtr,
         &mPConfigCtrl.vidParams, mPConfigCtrl.commonParams.useSWCodec);
     LOGIFFAILED(mLogFile, hr, "Failed to create encoder transform");
+
+    hr = mBuilder->setEncoderValue(&CODECAPI_AVEncCommonMeanBitRate,
+        (uint32)mPConfigCtrl.vidParams.meanBitrate, mEncTrans);
+    if (hr != S_OK)
+    {
+        VCELog(TEXT("Failed to set CODECAPI_AVEncCommonMeanBitRate"));
+    }
+
+    //random
+    hr = mBuilder->setEncoderValue(&CODECAPI_AVEncVideoMaxNumRefFrame,
+        (uint32)3, mEncTrans);
+    if (hr != S_OK)
+    {
+        VCELog(TEXT("Failed to set CODECAPI_AVEncVideoMaxNumRefFrame"));
+    }
 
     //Usually should check for stream IDs. Assuming static stream count with VCE.
     //{
@@ -276,10 +294,10 @@ HRESULT VCEEncoder::ProcessInput()
     MFCreateSample(&pSample);
 
     InputBuffer *inBuf = mInputQueue.front();
-    mInputQueue.pop();
+    //mInputQueue.pop();
 
-    if (inBuf->pBufferPtr)
-        inBuf->pBuffer->Unlock();
+    //if (inBuf->pBufferPtr)
+    inBuf->pBuffer->Unlock();
 
     hr = pSample->AddBuffer(inBuf->pBuffer);
 
@@ -288,8 +306,14 @@ HRESULT VCEEncoder::ProcessInput()
     pSample->SetSampleTime(inBuf->timestamp * MS_TO_100NS);
 
     hr = mEncTrans->ProcessInput(0, pSample, 0);
-    inBuf->locked = false;
     inBuf->pBuffer->Lock(&(inBuf->pBufferPtr), &len, &outLen);
+
+    if (SUCCEEDED(hr)) //Or try again
+    {
+        mInputQueue.pop();
+        inBuf->locked = false;
+    }
+
     LOGIFFAILED(stderr, hr, "ProcessInput failed.");
     profileOut
     return hr;
@@ -306,25 +330,29 @@ HRESULT VCEEncoder::ProcessOutput(OutputBuffer *outBuffer)
     MFT_OUTPUT_DATA_BUFFER out[1];
     DWORD status = 0, len, currLen, maxLen;
 
-    MFT_OUTPUT_STREAM_INFO si;
+    MFT_OUTPUT_STREAM_INFO si = { 0 };
 
     profileIn("ProcessOutput")
     mEncTrans->GetOutputStreamInfo(0, &si);
 
     //TODO Handle other cases too, maybe
-    if (
-        !(HASFLAG(si.dwFlags, MFT_OUTPUT_STREAM_WHOLE_SAMPLES)
-        && HASFLAG(si.dwFlags, MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER)
-        && HASFLAG(si.dwFlags, MFT_OUTPUT_STREAM_PROVIDES_SAMPLES))
-        )
+    if (!HASFLAG(si.dwFlags, 
+            MFT_OUTPUT_STREAM_WHOLE_SAMPLES |
+            MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER |
+            MFT_OUTPUT_STREAM_PROVIDES_SAMPLES))
     {
         return E_UNEXPECTED;
     }
 
+    //E_UNEXPECTED if no METransformHaveOutput event
     hr = mEncTrans->ProcessOutput(0, 1, out, &status);
     if (outBuffer && hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
         return hr;
-    LOGIFFAILED(stderr, hr, "ProcessOutput failed.");
+    //LOGIFFAILED(stderr, hr, "ProcessOutput failed.");
+
+    //Even if GetOutputStatus gives OK, ProcessOutput may fail with E_UNEXPECTED
+    if (FAILED(hr))
+        return hr;
 
     if (HASFLAG(out[0].dwStatus, MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE))
     {
@@ -337,16 +365,12 @@ HRESULT VCEEncoder::ProcessOutput(OutputBuffer *outBuffer)
     
     out[0].pSample->ConvertToContiguousBuffer(&pBuffer);
     hr = pBuffer->Lock(&ppBuffer, &maxLen, &currLen);
-    if (SUCCEEDED(hr))
+    if (SUCCEEDED(hr) && outBuffer)
     {
-        //FIXME Do something
-        if (outBuffer)
-        {
-            outBuffer->timestamp = dur / MS_TO_100NS;
-            outBuffer->size = currLen;
-            outBuffer->pBuffer = malloc(currLen);
-            memcpy(outBuffer->pBuffer, ppBuffer, currLen);
-        }
+        outBuffer->timestamp = dur / MS_TO_100NS;
+        outBuffer->size = currLen;
+        outBuffer->pBuffer = malloc(currLen);
+        memcpy(outBuffer->pBuffer, ppBuffer, currLen);
     }
     hr = pBuffer->Unlock();
 
@@ -356,23 +380,59 @@ HRESULT VCEEncoder::ProcessOutput(OutputBuffer *outBuffer)
     return hr;
 }
 
+void VCEEncoder::DrainOutput(List<DataPacket> &packets, List<PacketType> &packetTypes)
+{
+    HRESULT hr = S_OK;
+    OutputBuffer buffer = { 0 };
+    DWORD status = 0;
+
+    while (true)
+    {
+        hr = mEncTrans->GetOutputStatus(&status);
+        if (hr == E_NOTIMPL || status != MFT_OUTPUT_STATUS_SAMPLE_READY)
+            break;
+
+        hr = ProcessOutput(&buffer);
+        if (hr != S_OK)
+        {
+            free(buffer.pBuffer);
+            break;
+        }
+        //TODO Check if buffer actually has SPS/PPS
+        if (mHdrPacket == NULL)
+        {
+            mHdrSize = buffer.size;
+            mHdrPacket = new uint8_t[mHdrSize];
+            memcpy(mHdrPacket, buffer.pBuffer, mHdrSize);
+        }
+        ProcessBitstream(buffer, packets, packetTypes);
+        free(buffer.pBuffer);
+        buffer.pBuffer = NULL;
+    }
+}
+
+//OBS doesn't use return value, instead checks packets count
 bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp)
 {
     HRESULT hr = S_OK;
+
     CComCritSecLock<CComMultiThreadModel::AutoCriticalSection> \
         lock(mStateLock, true);
 
     packets.Clear();
     packetTypes.Clear();
 
+
+    profileIn("Encode")
+
     if (!picIn)
     {
-        Stop(); //TODO right?
-        //FIXME Drain the pipes!
+        Stop();
+        DrainOutput(packets, packetTypes);
+        VCELog(TEXT("Drained %d frame(s)"), packets.Num());
         return true;
     }
 
-    profileIn("Encode")
     mfxFrameSurface1 *inputSurface = (mfxFrameSurface1*)picIn;
     mfxFrameData &data = inputSurface->Data;
     assert(data.MemId);
@@ -381,8 +441,6 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
 
     //well, need a pointer to vector element :P
     InputBuffer *inBuffer = &(mInputBuffers[idx]);
-    if (inBuffer->pBufferPtr)
-        inBuffer->pBuffer->Unlock();
     inBuffer->locked = true;
     inBuffer->timestamp = timestamp;
     mInputQueue.push(inBuffer);
@@ -392,23 +450,10 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         assert(0);
     }*/
 
-    OutputBuffer buffer = { 0 };
     hr = ProcessInput();
-    hr = ProcessOutput(&buffer);
-    if (SUCCEEDED(hr))
-    {
-        ProcessBitstream(buffer, packets, packetTypes);
-        if (mHdrPacket == NULL)
-        {
-            mHdrSize = buffer.size;// MIN(buffer.size, 128);
-            mHdrPacket = new uint8_t[mHdrSize];
-            memcpy(mHdrPacket, buffer.pBuffer, mHdrSize);
-        }
-        //OSDebugOut(TEXT("Out buf: 0x%08x"), ((int*)buffer.pBuffer)[0]);
-        //OSDebugOut(TEXT(" 0x%08x\n"), ((int*)buffer.pBuffer)[1]);
-        free(buffer.pBuffer);
-        return true;
-    }
+    if (FAILED(hr))
+        return false;
+    DrainOutput(packets, packetTypes);
     profileOut
     return false;
 }
@@ -718,7 +763,32 @@ void VCEEncoder::GetSEI(DataPacket &packet)
 //TODO SetBitRate
 bool VCEEncoder::SetBitRate(DWORD maxBitrate, DWORD bufferSize)
 {
-    return false;
+    HRESULT hr = S_OK;
+    bool ok = true;
+    if (maxBitrate > 0)
+    {
+        mPConfigCtrl.vidParams.meanBitrate = maxBitrate * 1000;
+        hr = mBuilder->setEncoderValue(&CODECAPI_AVEncCommonMeanBitRate,
+            (uint32)mPConfigCtrl.vidParams.meanBitrate, mEncTrans);
+        if (hr != S_OK)
+        {
+            ok = false;
+            VCELog(TEXT("Failed to set CODECAPI_AVEncCommonMeanBitRate"));
+        }
+    }
+
+    if (bufferSize > 0)
+    {
+        mPConfigCtrl.vidParams.bufSize = bufferSize * 1000 / 8;
+        hr = mBuilder->setEncoderValue(&CODECAPI_AVEncCommonBufferSize,
+            (uint32)mPConfigCtrl.vidParams.bufSize, mEncTrans);
+        if (hr != S_OK)
+        {
+            ok = false;
+            VCELog(TEXT("Failed to set CODECAPI_AVEncCommonBufferSize"));
+        }
+    }
+    return ok;
 }
 
 //TODO GetBitRate

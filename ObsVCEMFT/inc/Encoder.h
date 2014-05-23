@@ -118,6 +118,7 @@ private:
     HRESULT ProcessEvent(MediaEventType mediaEventType);
     HRESULT OutputFormatChange();
     void ProcessBitstream(OutputBuffer, List<DataPacket> &packets, List<PacketType> &packetTypes);
+    void DrainOutput(List<DataPacket> &packets, List<PacketType> &packetTypes);
 
     msdk_CMftBuilder *mBuilder;
     CComPtr<IMFMediaType> mPVideoType;

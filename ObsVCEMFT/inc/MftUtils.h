@@ -1602,26 +1602,12 @@ public:
                 LOG(mLogFile, "Failed to set CODECAPI_AVEncCommonMaxBitRate @ %s %d \n", __FILE__, __LINE__);
             }
 
-            hr = setEncoderValue(&CODECAPI_AVEncCommonMeanBitRate,
-                (uint32)vidEncParams->meanBitrate, encoderTransform);
-            if (hr != S_OK)
-            {
-                LOG(mLogFile, "Failed to set CODECAPI_AVEncCommonMeanBitRate @ %s %d \n", __FILE__, __LINE__);
-            }
-
             hr = setEncoderValue(&CODECAPI_AVEncCommonBufferSize,
                 (uint32)vidEncParams->bufSize, encoderTransform);
             if (hr != S_OK)
             {
                 LOG(mLogFile, "Failed to set CODECAPI_AVEncCommonBufferSize @ %s %d \n", __FILE__, __LINE__);
             }
-
-            /*hr = setEncoderValue(&CODECAPI_AVEncVideoMaxNumRefFrame,
-                (uint32)3, encoderTransform);
-            if (hr != S_OK)
-            {
-                LOG(mLogFile, "Failed to set CODECAPI_AVEncVideoMaxNumRefFrame @ %s %d \n", __FILE__, __LINE__);
-            }*/
         }
 
         hr = encoderTransform->SetOutputType(0, encodedVideoType, 0);
