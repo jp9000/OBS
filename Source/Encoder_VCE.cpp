@@ -32,12 +32,7 @@ static PVCEINITFUNC initFunction = NULL;
 void InitVCEEncoder(bool log = true, bool useMFT = false)
 {
     if (p_vceModule != NULL)
-        FreeLibrary(p_vceModule);
-
-    p_vceModule = NULL;
-    p_checkVCEHardwareSupport = NULL;
-    p_createVCEEncoder = NULL;
-    initFunction = NULL;
+        return;
 
 #ifdef _WIN64
     p_vceModule = LoadLibrary(useMFT ? TEXT("ObsVCEMFT64.dll") : TEXT("ObsVCE64.dll"));
