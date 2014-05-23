@@ -208,4 +208,7 @@ private:
     bool     mUse444; //Max VCE 2.0 can do is 422 probably
     ColorDescription mColorDesc;
     bool     mFirstFrame;
+    List<DataPacket> mFirstFramePacket;
+    List<PacketType> mFirstFrameType;
+
 };

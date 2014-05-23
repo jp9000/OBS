@@ -261,6 +261,8 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset
     mKeyint = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 0);
 
     headerPacket.SetSize(128);
+    mFirstFramePacket.Clear();
+    mFirstFrameType.Clear();
     memset(&mDeviceHandle, 0, sizeof(mDeviceHandle));
     memset(&mEncodeHandle, 0, sizeof(mEncodeHandle));
 
@@ -308,6 +310,9 @@ VCEEncoder::~VCEEncoder()
 
     free(mOutPtr);
     mOutPtr = NULL;
+
+    mFirstFramePacket.Clear();
+    mFirstFrameType.Clear();
 
     encoderRefDec();
     OSCloseMutex(frameMutex);
@@ -486,14 +491,26 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         if ((pTaskDescriptionList[i].status == OVE_TASK_STATUS_COMPLETE)
             && pTaskDescriptionList[i].size_of_bitstream_data > 0)
         {
-            ProcessOutput(&pTaskDescriptionList[i], packets, packetTypes, data.TimeStamp);
             if (mFirstFrame)
             {
+                ProcessOutput(&pTaskDescriptionList[i], mFirstFramePacket, mFirstFrameType, data.TimeStamp);
                 free(mHdrPacket);
                 mHdrSize = MIN(pTaskDescriptionList[i].size_of_bitstream_data, 128);
                 mHdrPacket = (char*)malloc(mHdrSize);
                 memcpy(mHdrPacket, pTaskDescriptionList[i].bitstream_data, mHdrSize);
             }
+            else
+            {
+                if (mFirstFramePacket.Num())
+                {
+                    packets.AppendList(mFirstFramePacket);
+                    packetTypes.AppendList(mFirstFrameType);
+                    mFirstFramePacket.Clear();
+                    mFirstFrameType.Clear();
+                }
+                ProcessOutput(&pTaskDescriptionList[i], packets, packetTypes, data.TimeStamp);
+            }
+
 #ifdef _DEBUG
             if (mStatsOutSize < pTaskDescriptionList[i].size_of_bitstream_data)
             {
