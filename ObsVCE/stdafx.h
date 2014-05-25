@@ -10,7 +10,7 @@
 //#include <windows.h>
 #include <string>
 #include <map>
-#include <CL\cl.h>
-#include <CL\cl_ext.h>
+#include "CL\cl.h"
+#include "CL\cl_ext.h"
 #include <Main.h>
 #include <algorithm>
