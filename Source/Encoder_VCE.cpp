@@ -115,11 +115,11 @@ VideoEncoder* CreateVCEEncoder(int fps, int width, int height, int quality, CTST
         return NULL;
     }
 
-    /*if (bUse444)
+    if (bUse444 && useMFT)
     {
         errors << Str("Encoder.VCE.YUV444IsUnsupported");
         return NULL;
-    }*/
+    }
 
     //TODO Maybe can do more, as long as width*height <= 1920*1088?
     if ((uint32_t)width > 1920 || (uint32_t)height > 1088)

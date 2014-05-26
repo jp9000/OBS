@@ -473,7 +473,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
             pTaskDescriptionList);
         if (!res)
         {
-            VCELog(TEXT("OVEncodeQueryTaskDescription returned error %fd"), err);
+            VCELog(TEXT("OVEncodeQueryTaskDescription returned error %d"), err);
             ret = false;
             goto fail;
         }
