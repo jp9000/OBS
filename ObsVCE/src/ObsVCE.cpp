@@ -140,7 +140,7 @@ bool VCEEncoder::init()
         
         mConfigCtrl.rateControl.encRateControlMethod = RCM_CBR; // 0 - None, 3 - CBR, 4 - VBR
         mConfigCtrl.rateControl.encRateControlTargetBitRate = mMaxBitrate * (1000 - bitRateWindow);
-        mConfigCtrl.rateControl.encRateControlPeakBitRate = mMaxBitrate * (1000 + bitRateWindow);
+		mConfigCtrl.rateControl.encRateControlPeakBitRate = mMaxBitrate * (1000 + bitRateWindow);
         mConfigCtrl.rateControl.encGOPSize = gopSize;
         mConfigCtrl.rateControl.encQP_I = 0;
         mConfigCtrl.rateControl.encQP_P = 0;
@@ -149,8 +149,16 @@ bool VCEEncoder::init()
 
         mConfigCtrl.pictControl.encHeaderInsertionSpacing = 1;
         mConfigCtrl.pictControl.encIDRPeriod = gopSize;
-        mConfigCtrl.pictControl.encIPicPeriod = 6;
         mConfigCtrl.pictControl.encNumMBsPerSlice = 0;
+
+		mConfigCtrl.meControl.encSearchRangeX = 16;
+		mConfigCtrl.meControl.encSearchRangeY = 16;
+		mConfigCtrl.meControl.encDisableSubMode = 120;
+		mConfigCtrl.meControl.encEnImeOverwDisSubm = 1;
+		mConfigCtrl.meControl.encImeOverwDisSubmNo = 1;
+		mConfigCtrl.meControl.enableAMD = 1;
+		mConfigCtrl.meControl.encIME2SearchRangeX = 4;
+		mConfigCtrl.meControl.encIME2SearchRangeY = 4;
     }
     else
     {
