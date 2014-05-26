@@ -82,9 +82,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(AMDMEDIASDKROOT)inc;$(ATLINC)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(AMDMEDIASDKROOT)lib\amf\$(PlatformTarget)\$(Configuration)\;$(AMDMEDIASDKROOT)lib\videoQualityMFT\windowsClassicDesktop\$(PlatformTarget)\$(Configuration)\;$(ATLLIB32);</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(AMDMEDIASDKROOT)inc;$(ATLINC)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(AMDMEDIASDKROOT)lib\amf\$(PlatformTarget)\$(Configuration)\;$(AMDMEDIASDKROOT)lib\videoQualityMFT\windowsClassicDesktop\$(PlatformTarget)\$(Configuration)\;$(ATLLIB64);</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
