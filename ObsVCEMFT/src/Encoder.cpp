@@ -10,8 +10,8 @@ extern "C"
 }
 
 VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, const TCHAR* preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR)
-: mBuilder(NULL)
-, mPVideoType(NULL)
+: mBuilder(nullptr)
+, mPVideoType(nullptr)
 , mLogFile(stderr) //TODO remove
 , mAlive(false)
 , mRefCount(1)
@@ -26,7 +26,7 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, const TCHAR*
 , mUse444(bUse444)
 , mUseCFR(bUseCFR)
 , mFirstFrame(true)
-, mHdrPacket(NULL)
+, mHdrPacket(nullptr)
 , mHdrSize(0)
 {
     mInBuffSize = mWidth * mHeight * 3 / 2;
@@ -36,35 +36,36 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, const TCHAR*
 
 VCEEncoder::~VCEEncoder()
 {
-    if (mBuilder)
-        delete mBuilder;
+    delete mBuilder;
+    mBuilder = nullptr;
 
-    //FIXME _ASSERTE(_pFirstBlock == pHead); ... wat
-    if (mHdrPacket)
      delete [] mHdrPacket;
-    mHdrPacket = NULL;
+     mHdrPacket = nullptr;
 
     //For some reason wants explicit Release()
     mEncTrans.Release();
     mEventGen.Release();
 
-    while (!mInputQueue.empty())
-        mInputQueue.pop();
+    //while (!mInputQueue.empty())
+    //    mInputQueue.pop();
+    mInputQueue = {};
 
     for (int i = 0; i < MAX_INPUT_SURFACE; i++)
     {
         if (mInputBuffers[i].pBufferPtr)
         {
-            mInputBuffers[i].pBufferPtr = NULL;
+            //delete [] mInputBuffers[i].pBufferPtr;
+            mInputBuffers[i].pBufferPtr = nullptr;
             mInputBuffers[i].pBuffer->Unlock();
             mInputBuffers[i].pBuffer.Release();
         }
     }
 
-    if (mComDealloc)
-        delete mComDealloc;
-    if (mMFDealloc)
-        delete mMFDealloc;
+    /*delete mComDealloc;
+    mComDealloc = nullptr;*/
+
+    delete mMFDealloc;
+    mMFDealloc = nullptr;
 }
 
 HRESULT VCEEncoder::Stop()
@@ -114,14 +115,12 @@ HRESULT VCEEncoder::Init()
     mPConfigCtrl.vidParams.commonQuality = mQuality * 10;
     mPConfigCtrl.vidParams.enableCabac = 1;
 
-    // http://msdn.microsoft.com/en-us/library/windows/desktop/dd317651%28v=vs.85%29.aspx
-    // For H.264 video and Windows Media Video, the property defines 
-    // the hypothetical reference decoder(HRD) size.The size of the buffer is in bytes.
-    mPConfigCtrl.vidParams.bufSize = mBufferSize * 1000 / 8;
+    // http://msdn.microsoft.com/en-us/library/windows/desktop/dd317651%28v=vs.85%29.aspx ??
+    mPConfigCtrl.vidParams.bufSize = mBufferSize * 1000;
     mPConfigCtrl.vidParams.meanBitrate = mMaxBitrate * (1000 - bitRateWindow);
     mPConfigCtrl.vidParams.maxBitrate = mMaxBitrate * (1000 + bitRateWindow);
     mPConfigCtrl.vidParams.idrPeriod = (mKeyint > 0 ? mKeyint : 2) * mFps; //gopSize;//
-    mPConfigCtrl.vidParams.gopSize = 0;// gopSize;
+    mPConfigCtrl.vidParams.gopSize = gopSize;
     mPConfigCtrl.vidParams.qualityVsSpeed = 50;
     mPConfigCtrl.vidParams.compressionStandard = eAVEncH264VProfile_High;
     mPConfigCtrl.vidParams.numBFrames = 0;
@@ -142,6 +141,9 @@ HRESULT VCEEncoder::Init()
     CComPtr<IMFMediaType> h264VideoType;
     hr = createH264VideoType(&h264VideoType, mPVideoType);
     RETURNIFFAILED(hr);
+
+    //h264VideoType->SetUINT32(MF_MT_MAX_KEYFRAME_SPACING, gopSize);
+    h264VideoType->SetUINT32(MF_MT_YUV_MATRIX, MFVideoTransferMatrix_BT709);
 
     ULONG_PTR deviceManagerPtr;
     if (useDx11)
@@ -165,12 +167,13 @@ HRESULT VCEEncoder::Init()
         &mPConfigCtrl.vidParams, mPConfigCtrl.commonParams.useSWCodec);
     LOGIFFAILED(mLogFile, hr, "Failed to create encoder transform");
 
-    hr = mBuilder->setEncoderValue(&CODECAPI_AVEncCommonMeanBitRate,
+    //MF_MT_AVG_BITRATE
+    /*hr = mBuilder->setEncoderValue(&CODECAPI_AVEncCommonMeanBitRate,
         (uint32)mPConfigCtrl.vidParams.meanBitrate, mEncTrans);
     if (hr != S_OK)
     {
         VCELog(TEXT("Failed to set CODECAPI_AVEncCommonMeanBitRate"));
-    }
+    }*/
 
     //random
     hr = mBuilder->setEncoderValue(&CODECAPI_AVEncVideoMaxNumRefFrame,
@@ -194,12 +197,13 @@ HRESULT VCEEncoder::Init()
     //}
 
     hr = mEncTrans->QueryInterface(IID_PPV_ARGS(&mEventGen));
-    LOGIFFAILED(stderr, hr, "QueryInterface for MediaEventGenerator failed.");
+    LOGIFFAILED(mLogFile, hr, "QueryInterface for MediaEventGenerator failed.");
     //Start async. event processing
     /*hr = mEventGen->BeginGetEvent(this, nullptr);
-    LOGIFFAILED(stderr, hr, "BeginGetEvent failed.");*/
+    LOGIFFAILED(mLogFile, hr, "BeginGetEvent failed.");*/
 
     /// Get it rolling
+    hr = mEncTrans->ProcessMessage(MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, 0);
     hr = mEncTrans->ProcessMessage(MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0);
     //hr = mEventGen->QueueEvent(MEStreamSinkRequestSample, GUID_NULL, S_OK, NULL);
 
@@ -221,7 +225,7 @@ HRESULT VCEEncoder::Init()
 //            pEvent->GetType(&type);
 //            pEvent.Release(); //Probably
 //            hr = ProcessEvent(type);
-//            LOGIFFAILED(stderr, hr, "ProcessEvent failed.");
+//            LOGIFFAILED(mLogFile, hr, "ProcessEvent failed.");
 //        }
 //    }
 //}
@@ -264,7 +268,7 @@ HRESULT VCEEncoder::ProcessEvent(MediaEventType mediaEventType)
 
     case METransformHaveOutput:
         std::cout << "METransformHaveOutput" << std::endl;
-        hr = ProcessOutput(NULL);
+        //hr = ProcessOutput(NULL);
         break;
 
     case METransformDrainComplete:
@@ -283,7 +287,8 @@ HRESULT VCEEncoder::ProcessInput()
     HRESULT hr;
     UINT64 dur = 0;
     CComPtr<IMFSample> pSample;
-    BYTE *ppBuffer = NULL;
+    //CComPtr<IMFMediaBuffer> pBuffer;
+    BYTE *pbBuffer = nullptr;
 
     DWORD outLen = 0, len = 0;
 
@@ -291,43 +296,61 @@ HRESULT VCEEncoder::ProcessInput()
         return MF_E_TRANSFORM_NEED_MORE_INPUT;
 
     profileIn("ProcessInput")
-    MFCreateSample(&pSample);
+    int inBufCount = mInputQueue.size();
 
-    InputBuffer *inBuf = mInputQueue.front();
-    //mInputQueue.pop();
-
-    //if (inBuf->pBufferPtr)
-    inBuf->pBuffer->Unlock();
-
-    hr = pSample->AddBuffer(inBuf->pBuffer);
-
-    MFFrameRateToAverageTimePerFrame(mFps, 1, &dur);
-    pSample->SetSampleDuration((LONGLONG)dur);
-    pSample->SetSampleTime(inBuf->timestamp * MS_TO_100NS);
-
-    hr = mEncTrans->ProcessInput(0, pSample, 0);
-    inBuf->pBuffer->Lock(&(inBuf->pBufferPtr), &len, &outLen);
-
-    if (SUCCEEDED(hr)) //Or try again
+    while (!mInputQueue.empty())
     {
-        mInputQueue.pop();
-        inBuf->locked = false;
-    }
+        InputBuffer *inBuf = mInputQueue.front();
+        //mInputQueue.pop();
 
-    LOGIFFAILED(stderr, hr, "ProcessInput failed.");
+        hr = MFCreateSample(&pSample);
+        LOGIFFAILED(mLogFile, hr, "ProcessInput: MFCreateSample failed.");
+        /*hr = MFCreateMemoryBuffer(inBuf->size, &pBuffer);
+        LOGIFFAILED(mLogFile, hr, "MFCreateMemoryBuffer failed.");*/
+
+        /*pBuffer->Lock(&pbBuffer, &outLen, &len);
+        memcpy(pbBuffer, inBuf->pBufferPtr, inBuf->size);
+        pBuffer->Unlock();*/
+        //if (inBuf->pBufferPtr)
+        inBuf->pBuffer->Unlock();
+
+        hr = pSample->AddBuffer(inBuf->pBuffer);
+        LOGIFFAILED(mLogFile, hr, "ProcessInput: failed to add buffer to sample");
+
+        MFFrameRateToAverageTimePerFrame(mFps, 1, &dur);
+        pSample->SetSampleDuration((LONGLONG)dur);
+        pSample->SetSampleTime(inBuf->timestamp * MS_TO_100NS);
+
+        hr = mEncTrans->ProcessInput(0, pSample, 0);
+        inBuf->pBuffer->Lock(&(inBuf->pBufferPtr), &len, &outLen);
+
+        //pBuffer.Release();
+        pSample.Release();
+
+        if (SUCCEEDED(hr)) //Or try again
+        {
+            mInputQueue.pop();
+            inBuf->locked = false;
+        }
+
+        LOGIFFAILED(mLogFile, hr, "ProcessInput failed.");
+    }
+#if _DEBUG
+    VCELog(TEXT("Processed %d buffer(s), %d in queue"), inBufCount, mInputQueue.size());
+#endif
     profileOut
     return hr;
 }
 
-HRESULT VCEEncoder::ProcessOutput(OutputBuffer *outBuffer)
+HRESULT VCEEncoder::ProcessOutput(List<DataPacket> &packets, List<PacketType> &packetTypes)
 {
     HRESULT hr;
     UINT64 dur = 0;
-    CComPtr<IMFSample> pSample;
+    //CComPtr<IMFSample> pSample;
     CComPtr<IMFMediaBuffer> pBuffer;
     BYTE *ppBuffer = NULL;
 
-    MFT_OUTPUT_DATA_BUFFER out[1];
+    MFT_OUTPUT_DATA_BUFFER out[1] = { 0 };
     DWORD status = 0, len, currLen, maxLen;
 
     MFT_OUTPUT_STREAM_INFO si = { 0 };
@@ -346,9 +369,9 @@ HRESULT VCEEncoder::ProcessOutput(OutputBuffer *outBuffer)
 
     //E_UNEXPECTED if no METransformHaveOutput event
     hr = mEncTrans->ProcessOutput(0, 1, out, &status);
-    if (outBuffer && hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
+    if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
         return hr;
-    //LOGIFFAILED(stderr, hr, "ProcessOutput failed.");
+    //LOGIFFAILED(mLogFile, hr, "ProcessOutput failed.");
 
     //Even if GetOutputStatus gives OK, ProcessOutput may fail with E_UNEXPECTED
     if (FAILED(hr))
@@ -360,19 +383,40 @@ HRESULT VCEEncoder::ProcessOutput(OutputBuffer *outBuffer)
         //return S_OK; //If async then return S_OK?
     }
 
+    if (out[0].pEvents)
+    {
+        out[0].pEvents->Release();
+        out[0].pEvents = nullptr;
+    }
+
     out[0].pSample->GetTotalLength(&len);
     out[0].pSample->GetSampleTime((LONGLONG*)&dur);
     
     out[0].pSample->ConvertToContiguousBuffer(&pBuffer);
     hr = pBuffer->Lock(&ppBuffer, &maxLen, &currLen);
-    if (SUCCEEDED(hr) && outBuffer)
+    if (SUCCEEDED(hr))
     {
-        outBuffer->timestamp = dur / MS_TO_100NS;
+        //mOutputQueue.push(out[0].pSample);
+
+        /*outBuffer->timestamp = dur / MS_TO_100NS;
         outBuffer->size = currLen;
         outBuffer->pBuffer = malloc(currLen);
-        memcpy(outBuffer->pBuffer, ppBuffer, currLen);
+        memcpy(outBuffer->pBuffer, ppBuffer, currLen);*/
+        if (nullptr == mHdrPacket)
+        {
+            mHdrSize = maxLen;
+            mHdrPacket = new uint8_t[mHdrSize];
+            memcpy(mHdrPacket, ppBuffer, mHdrSize);
+        }
+
+        OutputBuffer buf;
+        buf.pBuffer = ppBuffer;
+        buf.size = maxLen;
+        buf.timestamp = dur / MS_TO_100NS;
+        ProcessBitstream(buf, packets, packetTypes);
     }
     hr = pBuffer->Unlock();
+    pBuffer.Release();
 
     out[0].pSample->Release();
     profileOut
@@ -383,32 +427,26 @@ HRESULT VCEEncoder::ProcessOutput(OutputBuffer *outBuffer)
 void VCEEncoder::DrainOutput(List<DataPacket> &packets, List<PacketType> &packetTypes)
 {
     HRESULT hr = S_OK;
-    OutputBuffer buffer = { 0 };
+    //OutputBuffer buffer = { 0 };
     DWORD status = 0;
 
     while (true)
     {
         hr = mEncTrans->GetOutputStatus(&status);
-        if (hr == E_NOTIMPL || status != MFT_OUTPUT_STATUS_SAMPLE_READY)
+        if ((hr != S_OK && hr != E_NOTIMPL) || status != MFT_OUTPUT_STATUS_SAMPLE_READY)
             break;
 
-        hr = ProcessOutput(&buffer);
+        hr = ProcessOutput(packets, packetTypes);
         if (hr != S_OK)
         {
-            free(buffer.pBuffer);
+            //free(buffer.pBuffer);
             break;
         }
-        //TODO Check if buffer actually has SPS/PPS
-        if (mHdrPacket == NULL)
-        {
-            mHdrSize = buffer.size;
-            mHdrPacket = new uint8_t[mHdrSize];
-            memcpy(mHdrPacket, buffer.pBuffer, mHdrSize);
-        }
-        ProcessBitstream(buffer, packets, packetTypes);
-        free(buffer.pBuffer);
-        buffer.pBuffer = NULL;
     }
+
+#if _DEBUG
+    VCELog(TEXT("Got %d output frames"), packets.Num());
+#endif
 }
 
 //OBS doesn't use return value, instead checks packets count
@@ -421,7 +459,6 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
 
     packets.Clear();
     packetTypes.Clear();
-
 
     profileIn("Encode")
 
@@ -439,7 +476,6 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
 
     unsigned int idx = (unsigned int)data.MemId - 1;
 
-    //well, need a pointer to vector element :P
     InputBuffer *inBuffer = &(mInputBuffers[idx]);
     inBuffer->locked = true;
     inBuffer->timestamp = timestamp;
@@ -451,8 +487,6 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     }*/
 
     hr = ProcessInput();
-    if (FAILED(hr))
-        return false;
     DrainOutput(packets, packetTypes);
     profileOut
     return false;
@@ -626,6 +660,7 @@ void VCEEncoder::ProcessBitstream(OutputBuffer buff, List<DataPacket> &packets, 
 
     packetTypes << bestType;
     packets << packet;
+    nalOut.Clear();
     profileOut
 }
 
@@ -654,10 +689,13 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
         hr = MFCreateMemoryBuffer(mInBuffSize, &(buffer.pBuffer));
         if (SUCCEEDED(hr))
         {
+            //buffer.pBufferPtr = new uint8_t[mInBuffSize];
+            //buffer.size = mInBuffSize;
             buffer.pBuffer->Lock(&(buffer.pBufferPtr), &maxLen, &curLen);
             if (maxLen < mInBuffSize) //Possible?
             {
                 VCELog(TEXT("Buffer max length smaller than asked: %d"), maxLen);
+                buffer.pBufferPtr = nullptr;
                 buffer.pBuffer->Unlock();
                 buffer.pBuffer.Release();
             }
@@ -667,7 +705,9 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
                 buff->Y = (mfxU8*)buffer.pBufferPtr;
                 buff->UV = buff->Y + (mHeight * buff->Pitch);
                 buff->MemId = mfxMemId(i + 1);
-
+#if _DEBUG
+                VCELog(TEXT("Giving buffer id %d"), i+1);
+#endif
                 mInputBuffers[i] = buffer;
                 mInputBuffers[i].locked = false;
                 return;
@@ -684,39 +724,49 @@ void VCEEncoder::GetHeaders(DataPacket &packet)
     if (!mHdrPacket)
     {
         VCELog(TEXT("No header packet yet."));
-        //Garbage, but atleast OBS doesn't crash.
-        headerPacket.Clear();
+        //Garbage, but atleast OBS doesn't crash (in release).
+        /*headerPacket.Clear();
         headerPacket.SetSize(128);
         packet.size = headerPacket.Num();
         packet.lpPacket = headerPacket.Array();
-        return;
+        return;*/
     }
 
+    x264_nal_t nalSPS = { 0 }, nalPPS = { 0 };
     uint8_t *start = mHdrPacket;
     uint8_t *end = start + mHdrSize;
     const static uint8_t start_seq[] = { 0, 0, 1 };
-    start = std::search(start, end, start_seq, start_seq + 3);
 
-    x264_nal_t nalSPS, nalPPS;
-
-    //May have NAL_AUD, NAL_SPS, NAL_PPS, NAL_SLICE_IDR
-    while (start != end)
+    if (start)
     {
-        decltype(start) next = std::search(start + 1, end, start_seq, start_seq + 3);
+        start = std::search(start, end, start_seq, start_seq + 3);
 
-        x264_nal_t nal;
+        //May have NAL_AUD, NAL_SPS, NAL_PPS, NAL_SLICE_IDR
+        while (start != end)
+        {
+            decltype(start) next = std::search(start + 1, end, start_seq, start_seq + 3);
 
-        nal.i_ref_idc = (start[3] >> 5) & 3;
-        nal.i_type = start[3] & 0x1f;
+            x264_nal_t nal;
 
-        nal.p_payload = start;
-        nal.i_payload = int(next - start);
-        start = next;
+            nal.i_ref_idc = (start[3] >> 5) & 3;
+            nal.i_type = start[3] & 0x1f;
 
-        if (nal.i_type == NAL_PPS)
-            nalPPS = nal;
-        else if (nal.i_type == NAL_SPS)
-            nalSPS = nal;
+            nal.p_payload = start;
+            nal.i_payload = int(next - start);
+            start = next;
+
+            if (nal.i_type == NAL_PPS)
+                nalPPS = nal;
+            else if (nal.i_type == NAL_SPS)
+                nalSPS = nal;
+        }
+    }
+    else
+    {
+        nalSPS.i_type = NAL_SPS;
+        nalPPS.i_type = NAL_PPS;
+        nalSPS.i_payload = 3;
+        nalPPS.i_payload = 3;
     }
 
     headerPacket.Clear();
@@ -729,15 +779,18 @@ void VCEEncoder::GetHeaders(DataPacket &packet)
     headerOut.OutputByte(0);
     headerOut.OutputByte(0);
     headerOut.OutputByte(1);
-    headerOut.Serialize(nalSPS.p_payload + 4, 3);
+    if (nalSPS.p_payload)
+        headerOut.Serialize(nalSPS.p_payload + 4, 3);
     headerOut.OutputByte(0xff);
     headerOut.OutputByte(0xe1);
     headerOut.OutputWord(fastHtons(nalSPS.i_payload - 3));
-    headerOut.Serialize(nalSPS.p_payload + 3, nalSPS.i_payload - 3);
+    if (nalSPS.p_payload)
+        headerOut.Serialize(nalSPS.p_payload + 3, nalSPS.i_payload - 3);
 
     headerOut.OutputByte(1);
     headerOut.OutputWord(fastHtons(nalPPS.i_payload - 3));
-    headerOut.Serialize(nalPPS.p_payload + 3, nalPPS.i_payload - 3);
+    if(nalPPS.p_payload)
+        headerOut.Serialize(nalPPS.p_payload + 3, nalPPS.i_payload - 3);
 
     packet.size = headerPacket.Num();
     packet.lpPacket = headerPacket.Array();
@@ -779,7 +832,7 @@ bool VCEEncoder::SetBitRate(DWORD maxBitrate, DWORD bufferSize)
 
     if (bufferSize > 0)
     {
-        mPConfigCtrl.vidParams.bufSize = bufferSize * 1000 / 8;
+        mPConfigCtrl.vidParams.bufSize = bufferSize * 1000;
         hr = mBuilder->setEncoderValue(&CODECAPI_AVEncCommonBufferSize,
             (uint32)mPConfigCtrl.vidParams.bufSize, mEncTrans);
         if (hr != S_OK)
@@ -844,7 +897,6 @@ HRESULT VCEEncoder::createVideoMediaType(BYTE* pUserData, DWORD dwUserData, DWOR
     //    return E_INVALIDARG;
 
     mVideoFormat.biBitCount = 12;
-    mVideoFormat.biBitCount = 0;
     mVideoFormat.biClrUsed = 0;
     mVideoFormat.biCompression = MAKEFOURCC('N', 'V', '1', '2');
     mVideoFormat.biHeight = dwHeight;

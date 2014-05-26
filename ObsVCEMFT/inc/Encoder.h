@@ -3,7 +3,7 @@
 
 //TODO Some optimal count
 #define MAX_INPUT_SURFACE      8
-//Sample timestamp is in in 100-nanosecond units
+//Sample timestamp is in 100-nanosecond units
 #define SEC_TO_100NS     10000000
 #define MS_TO_100NS      10000
 
@@ -39,11 +39,11 @@ typedef struct InputBuffer
 {
     CComPtr<IMFMediaBuffer> pBuffer;
     uint8_t *pBufferPtr;
+    //size_t size;
     bool locked;
     DWORD timestamp;
 } InputBuffer;
 
-//TODO Preallocate maybe
 typedef struct OutputBuffer
 {
     void *pBuffer;
@@ -114,10 +114,12 @@ private:
     //Create output media type
     HRESULT createH264VideoType(IMFMediaType** encodedVideoType, IMFMediaType* sourceVideoType);
     HRESULT ProcessInput();
-    HRESULT ProcessOutput(OutputBuffer *outBuffer);
+    HRESULT ProcessOutput(List<DataPacket> &packets, List<PacketType> &packetTypes);
     HRESULT ProcessEvent(MediaEventType mediaEventType);
     HRESULT OutputFormatChange();
     void ProcessBitstream(OutputBuffer, List<DataPacket> &packets, List<PacketType> &packetTypes);
+
+    //Just loop and call ProcessOutput if any samples
     void DrainOutput(List<DataPacket> &packets, List<PacketType> &packetTypes);
 
     msdk_CMftBuilder *mBuilder;

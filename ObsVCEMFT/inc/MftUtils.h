@@ -307,7 +307,7 @@ public:
         var.vt = VT_BOOL;
         var.boolVal = VARIANT_TRUE;
 
-        propertyStore->SetValue(MFPKEY_ASFMEDIASINK_AUTOADJUST_BITRATE, var);
+        hr = propertyStore->SetValue(MFPKEY_ASFMEDIASINK_AUTOADJUST_BITRATE, var);
         RETURNIFFAILED(hr);
 
         hr = MFCreateASFMediaSinkActivate(sinkFileName, asfContentInfo,
@@ -519,7 +519,7 @@ public:
     *  @return HRESULT : S_OK if successful; otherwise returns micorsoft error codes.
     *****************************************************************************
     */
-    HRESULT createTransform(CLSID clsid, IMFTransform** transform,
+    HRESULT createTransform(const CLSID &clsid, IMFTransform** transform,
         ULONG_PTR deviceManagerPtr)
     {
         HRESULT hr;
@@ -1327,7 +1327,7 @@ public:
                             if (wcscmp(hwurl, L"AMDh264Encoder") == 0) // If we are using AMD HW H264 Encoder
                             {
                                 printf("Selected AMD HW Encoder to encode the stream\n");
-                                LOG(mLogFile, "Selected AMD HW Encoder to encode the stream\n");
+                                LOG(mLogFile, "Selected AMD HW Encoder to encode the stream");
                                 hr = ppActivate[i]->ActivateObject(IID_PPV_ARGS(ppEncoder));
                                 foundEncoder = true;
                                 break;
@@ -1344,7 +1344,7 @@ public:
                 if (hr != S_OK)
                 {
                     printf("Encoder could not be found\n");
-                    LOG(mLogFile, "Encoder could not be found\n");
+                    LOG(mLogFile, "Encoder could not be found");
                     for (i = 0; i < registeredEncoderNumber; i++)
                     {
                         ppActivate[i]->Release();
@@ -1356,12 +1356,12 @@ public:
                 if (useHwCodec)
                 {
                     printf("Selected Non-AMD HW Encoder to encode the stream\n");
-                    LOG(mLogFile, "Selected Non-AMD HW Encoder to encode the stream\n");
+                    LOG(mLogFile, "Selected Non-AMD HW Encoder to encode the stream");
                 }
                 else
                 {
                     printf("Selected SW Encoder to encode the stream\n");
-                    LOG(mLogFile, "Selected SW Encoder to encode the stream\n");
+                    LOG(mLogFile, "Selected SW Encoder to encode the stream");
                 }
                 foundEncoder = true;
             }
@@ -2166,19 +2166,11 @@ public:
             LOG(mLogFile, "IMFTransform has no CLSID.");
             return hr;
         }
-        else if (FAILED(hr))
-        {
-            LOGIFFAILED(mLogFile, hr, "IMFAttributes::GetGUID(MFT_TRANSFORM_CLSID_Attribute) failed. ");
-            return hr;
-        }
+        LOGIFFAILED(mLogFile, hr, "IMFAttributes::GetGUID(MFT_TRANSFORM_CLSID_Attribute) failed. ");
 
         LPWSTR szGuid = NULL;
         hr = StringFromIID(guidMFT, &szGuid);
-        if (FAILED(hr))
-        {
-            LOGIFFAILED(mLogFile, hr, "StringFromIID failed.");
-            return hr;
-        }
+        LOGIFFAILED(mLogFile, hr, "StringFromIID failed.");
 
         /**********************************************************************
         * get the friendly name string from the IMFAttributes of the         *
@@ -2197,11 +2189,7 @@ public:
             LOG(mLogFile, "IMFTransform has no friendly name.");
             return hr;
         }
-        else if (FAILED(hr))
-        {
-            LOGIFFAILED(mLogFile, hr, "IMFAttributes::GetAllocatedString(MFT_FRIENDLY_NAME_Attribute) failed.");
-            return hr;
-        }
+        LOGIFFAILED(mLogFile, hr, "IMFAttributes::GetAllocatedString(MFT_FRIENDLY_NAME_Attribute) failed.");
 
         wprintf(L"MFT Friendly Name: %s\nMFT CLSID: %s\n---------------------\n", szFriendlyName, szGuid);
         if (mLogFile != NULL)
