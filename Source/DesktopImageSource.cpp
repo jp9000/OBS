@@ -828,6 +828,13 @@ struct ConfigDesktopSourceInfo
     XElement *data;
     int dialogID;
     StringList strClasses;
+    int prevCX, prevCY;
+    bool sizeSet;
+
+    inline ConfigDesktopSourceInfo()
+    {
+        zero(this, sizeof(*this));
+    }
 };
 
 void SetDesktopCaptureType(HWND hwnd, UINT type)
@@ -1308,6 +1315,9 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 ConfigDesktopSourceInfo *info = (ConfigDesktopSourceInfo*)lParam;
                 XElement *data = info->data;
 
+                info->prevCX = AppConfig->GetInt(TEXT("Video"), TEXT("BaseWidth"));
+                info->prevCY = AppConfig->GetInt(TEXT("Video"), TEXT("BaseHeight"));
+
                 if (info->dialogID == IDD_CONFIGUREMONITORCAPTURE || info->dialogID == IDD_CONFIGUREDESKTOPSOURCE) {
                     hwndTemp = GetDlgItem(hwnd, IDC_MONITOR);
                     for(UINT i=0; i<App->NumMonitors(); i++)
@@ -1713,6 +1723,8 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
                 case IDC_SETSTREAMSIZE:
                     if (MessageBoxW(hwnd, Str("Sources.SoftwareCaptureSource.ResizeWarning"), Str("Sources.SoftwareCaptureSource.ResizeWarningTitle"), MB_YESNO | MB_ICONWARNING) == IDYES)
                     {
+                        ConfigDesktopSourceInfo *info = (ConfigDesktopSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
+
                         UINT sizeX = (UINT)GetEditText(GetDlgItem(hwnd, IDC_SIZEX)).ToInt();
                         UINT sizeY = (UINT)GetEditText(GetDlgItem(hwnd, IDC_SIZEY)).ToInt();
 
@@ -1731,6 +1743,8 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                         if(!App->IsRunning())
                             App->ResizeWindow(false);
+
+                        info->sizeSet = true;
                     }
                     break;
 
@@ -2059,6 +2073,14 @@ static bool STDCALL ConfigureDesktopSource2(XElement *element, bool bInitialize,
         element->SetInt(TEXT("cx"), data->GetInt(TEXT("captureCX")));
         element->SetInt(TEXT("cy"), data->GetInt(TEXT("captureCY")));
         return true;
+    } else {
+        if (info.sizeSet) {
+            AppConfig->SetInt(TEXT("Video"), TEXT("BaseWidth"), info.prevCX);
+            AppConfig->SetInt(TEXT("Video"), TEXT("BaseHeight"), info.prevCY);
+
+            if(!App->IsRunning())
+                App->ResizeWindow(false);
+        }
     }
 
     return false;

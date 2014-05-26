@@ -87,24 +87,6 @@ bool OBS::BufferVideoData(const List<DataPacket> &inputPackets, const List<Packe
         segmentIn.packets[i].type =  inputTypes[i];
     }
 
-    /*bool foundAudio = false;
-
-    // wait until there is audio before sending off data -- don't rely on buffering time
-    OSEnterMutex(hSoundDataMutex);
-    if (pendingAudioFrames.Num())
-    {
-        for (UINT i = 0; i < pendingAudioFrames.Num(); i++)
-        {
-            if (pendingAudioFrames[i].timestamp >= bufferedVideo[0].timestamp)
-            {
-                foundAudio = true;
-                break;
-            }
-        }
-    }
-    OSLeaveMutex(hSoundDataMutex);
-
-    if (foundAudio)*/
     if ((bufferedVideo.Last().timestamp - bufferedVideo[0].timestamp) >= UINT(App->bufferingTime))
     {
         segmentOut.packets.TransferFrom(bufferedVideo[0].packets);
