@@ -302,7 +302,6 @@ Sources.GameCaptureSource.RequiresAdmin="Для захвата этого при
 Sources.GameCaptureSource.SelectApplication="Выбранное приложение"
 Sources.GameCaptureSource.StretchToScreen="Растянуть изображение во весь экран"
 Sources.GameCaptureSource.UseHotkey="Захват по горячей клавише"
-Sources.GameCaptureSource.UseSafeHook="Совместимость с античитами"
 
 Sources.SoftwareCaptureSource.Blend="Смешивание (1-100):"
 Sources.SoftwareCaptureSource.CaptureLayered="Захватывать многослойные окна"

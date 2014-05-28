@@ -252,6 +252,7 @@ Settings.Publish.Warning.UnsupportedAudioCodec="\t編碼設定: 設定音訊編�
 
 Settings.Publish.Optimize.UseCBR="- 將啟用 CBR\n"
 Settings.Publish.Optimize.Maxbitrate="-影像位元速率將被設定為 %u\n"
+Settings.Publish.Optimize.UnsupportedAudioCodec="- 音訊編解碼器將被設定為 「 %s」\n"
 Settings.Publish.Optimize.MaxAudiobitrate="-音訊位元速率將被設定為 %u\n"
 Settings.Publish.Optimize.RecommendMainProfile="- x264 編碼設定檔將被設定為 ' %s'\n"
 Settings.Publish.Optimize.Keyint="- 關鍵幀間隔將被設定為 %d 秒"
