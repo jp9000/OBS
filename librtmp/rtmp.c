@@ -1273,9 +1273,18 @@ RTMP_Connect1(RTMP *r, RTMPPacket *cp)
 int
 RTMP_Connect(RTMP *r, RTMPPacket *cp)
 {
+    HOSTENT *h;
     struct sockaddr_in service;
     if (!r->Link.hostname.av_len)
         return FALSE;
+
+    //COMODO security software sandbox blocks all DNS by returning "host not found"
+    h = gethostbyname("localhost");
+    if (!h && GetLastError() == WSAHOST_NOT_FOUND)
+    {
+        RTMP_Log(RTMP_LOGERROR, "RTMP_Connect: Connection test failed. This error is likely caused by Comodo Internet Security running OBS in sandbox mode. Please add OBS to the Comodo automatic sandbox exclusion list, restart OBS and try again (11001).");
+        return FALSE;
+    }
 
     memset(&service, 0, sizeof(struct sockaddr_in));
     service.sin_family = AF_INET;
