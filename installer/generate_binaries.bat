@@ -43,7 +43,7 @@ copy ..\graphicscapture\graphicscapturehook\release\graphicscapturehook.dll .\32
 copy ..\graphicscapture\graphicscapturehook\x64\release\graphicscapturehook64.dll .\32bit\plugins\graphicscapture
 copy ..\injectHelper\release\injectHelper.exe .\32bit\plugins\graphicscapture
 copy ..\injectHelper\x64\release\injectHelper64.exe .\32bit\plugins\graphicscapture
-copy ..\x264\libs\32bit\libx264-140.dll .\32bit
+copy ..\x264\libs\32bit\libx264-142.dll .\32bit
 copy ..\QSVHelper\Release\QSVHelper.exe .\32bit
 copy ..\ObsNvenc\Release\ObsNvenc.dll .\32bit
 copy "%WindowsSDK80Path%Debuggers\x86\dbghelp.dll" .\32bit
@@ -66,7 +66,7 @@ copy ..\graphicscapture\graphicscapturehook\release\graphicscapturehook.dll .\64
 copy ..\graphicscapture\graphicscapturehook\x64\release\graphicscapturehook64.dll .\64bit\plugins\graphicscapture
 copy ..\injectHelper\release\injectHelper.exe .\64bit\plugins\graphicscapture
 copy ..\injectHelper\x64\release\injectHelper64.exe .\64bit\plugins\graphicscapture
-copy ..\x264\libs\64bit\libx264-140.dll .\64bit
+copy ..\x264\libs\64bit\libx264-142.dll .\64bit
 copy ..\QSVHelper\Release\QSVHelper.exe .\64bit
 copy ..\ObsNvenc\x64\Release\ObsNvenc.dll .\64bit
 copy "%WindowsSDK80Path%Debuggers\x64\dbghelp.dll" .\64bit
@@ -135,7 +135,7 @@ copy ..\release\obs.exe .\upload\OBS\32bit\
 copy ..\obsapi\release\obsapi.dll .\upload\OBS\32bit\
 copy ..\OBSHelp\OBSHelp.chm .\upload\OBS\32bit\
 copy ..\rundir\pdb32\stripped\*.pdb .\upload\OBS\32bit\
-copy ..\x264\libs\32bit\libx264-140.dll .\upload\OBS\32bit
+copy ..\x264\libs\32bit\libx264-142.dll .\upload\OBS\32bit
 copy ..\QSVHelper\Release\QSVHelper.exe .\upload\OBS\32bit
 copy ..\ObsNvenc\Release\ObsNvenc.dll .\upload\OBS\32bit
 copy "%WindowsSDK80Path%Debuggers\x86\dbghelp.dll" .\upload\OBS\32bit
@@ -144,7 +144,7 @@ copy ..\x64\release\obs.exe .\upload\OBS\64bit\
 copy ..\obsapi\x64\release\obsapi.dll .\upload\OBS\64bit\
 copy ..\OBSHelp\OBSHelp.chm .\upload\OBS\64bit\
 copy ..\rundir\pdb64\stripped\*.pdb .\upload\OBS\64bit\
-copy ..\x264\libs\64bit\libx264-140.dll .\upload\OBS\64bit
+copy ..\x264\libs\64bit\libx264-142.dll .\upload\OBS\64bit
 copy ..\QSVHelper\Release\QSVHelper.exe .\upload\OBS\64bit
 copy ..\ObsNvenc\x64\Release\ObsNvenc.dll .\upload\OBS\64bit
 copy "%WindowsSDK80Path%Debuggers\x64\dbghelp.dll" .\upload\OBS\64bit

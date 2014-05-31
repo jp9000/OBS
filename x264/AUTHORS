@@ -43,12 +43,12 @@ D: Altivec optimizations
 S: Brittany, France
 
 N: Henrik Gramner
-E: hengar-6 AT student DOT ltu DOT se
-D: 4:2:2 chroma subsampling, x86 asm
+E: henrik AT gramner DOT com
+D: 4:2:2 chroma subsampling, x86 asm, Windows improvements, bugfixes
 S: Sweden
 
-N: Jason Garrett-Glaser
-E: darkshikari AT gmail DOT com
+N: Fiona Glaser
+E: fiona AT x264 DOT com
 D: x86 asm, 1pass VBV, adaptive quantization, inline asm
 D: various speed optimizations, bugfixes
 S: USA

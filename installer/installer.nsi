@@ -122,7 +122,7 @@ Section "Open Broadcaster Software" Section1
 	; Set Section Files and Shortcuts
 	SetOutPath "$PROGRAMFILES32\OBS"
 	File "..\Release\OBS.exe"
-	File "..\x264\libs\32bit\libx264-140.dll"
+	File "..\x264\libs\32bit\libx264-142.dll"
 	File "..\QSVHelper\Release\QSVHelper.exe"
 	File "..\OBSAPI\Release\OBSApi.dll"
 	File "..\rundir\services.xconfig"
@@ -160,7 +160,7 @@ Section "Open Broadcaster Software" Section1
 	${if} ${RunningX64}
 		SetOutPath "$PROGRAMFILES64\OBS"
 		File "..\x64\Release\OBS.exe"
-		File "..\x264\libs\64bit\libx264-140.dll"
+		File "..\x264\libs\64bit\libx264-142.dll"
 		File "..\QSVHelper\Release\QSVHelper.exe"
 		File "..\OBSAPI\x64\Release\OBSApi.dll"
 		File "..\rundir\services.xconfig"
@@ -249,7 +249,7 @@ Section Uninstall
 
 	; Clean up Open Broadcaster Software
 	Delete "$PROGRAMFILES32\OBS\OBS.exe"
-	Delete "$PROGRAMFILES32\OBS\libx264-140.dll"
+	Delete "$PROGRAMFILES32\OBS\libx264-142.dll"
 	Delete "$PROGRAMFILES32\OBS\QSVHelper.exe"
 	Delete "$PROGRAMFILES32\OBS\OBSApi.dll"
 	Delete "$PROGRAMFILES32\OBS\services.xconfig"
@@ -270,7 +270,7 @@ Section Uninstall
 	Delete "$PROGRAMFILES32\OBS\plugins\GraphicsCapture\*.exe"
 	${if} ${RunningX64}
 		Delete "$PROGRAMFILES64\OBS\OBS.exe"
-		Delete "$PROGRAMFILES64\OBS\libx264-140.dll"
+		Delete "$PROGRAMFILES64\OBS\libx264-142.dll"
 		Delete "$PROGRAMFILES64\OBS\QSVHelper.exe"
 		Delete "$PROGRAMFILES64\OBS\OBSApi.dll"
 		Delete "$PROGRAMFILES64\OBS\services.xconfig"
