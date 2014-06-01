@@ -28,11 +28,16 @@ static HMODULE p_vceModule = NULL;
 static PCHECKVCEHARDWARESUPPORT p_checkVCEHardwareSupport = NULL;
 static PCREATEVCEENCODER p_createVCEEncoder = NULL;
 static PVCEINITFUNC initFunction = NULL;
+static bool bUsingMFT = false;
 
 void InitVCEEncoder(bool log = true, bool useMFT = false)
 {
     if (p_vceModule != NULL)
+    {
+        if (useMFT != bUsingMFT)
+            OBSMessageBox(NULL, TEXT("To change between OpenVideo and Media Foundation codec,\r\nplease restart OBS."), TEXT("Warning"), 0);
         return;
+    }
 
 #ifdef _WIN64
     p_vceModule = LoadLibrary(useMFT ? TEXT("ObsVCEMFT64.dll") : TEXT("ObsVCE64.dll"));
@@ -74,7 +79,7 @@ void InitVCEEncoder(bool log = true, bool useMFT = false)
 
     if (log)
         Log(TEXT("ObsVCE initialized successfully"));
-
+    bUsingMFT = useMFT;
     return;
 
 error:
@@ -115,7 +120,7 @@ VideoEncoder* CreateVCEEncoder(int fps, int width, int height, int quality, CTST
         return NULL;
     }
 
-    if (bUse444 && useMFT)
+    if (bUse444 && bUsingMFT)
     {
         errors << Str("Encoder.VCE.YUV444IsUnsupported");
         return NULL;
@@ -130,6 +135,12 @@ VideoEncoder* CreateVCEEncoder(int fps, int width, int height, int quality, CTST
 
     if (p_createVCEEncoder == NULL || initFunction == NULL)
         return NULL;
+
+    if (useMFT != bUsingMFT)
+    {
+        OBSMessageBox(GetForegroundWindow(), TEXT("To change between OpenVideo and Media Foundation codec,\r\nplease restart OBS."), TEXT("Warning"), 0);
+        return NULL;
+    }
 
     VideoEncoder *encoder = p_createVCEEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR);
     if (!initFunction(&AppConfig, encoder))

@@ -1542,16 +1542,16 @@ public:
                 (uint32)vidEncParams->gopSize, encoderTransform);
             if (hr != S_OK)
             {
-                LOG(mLogFile, "Failed to set CODECAPI_AVEncMPVGOPSize @ %s %d \n", __FILE__, __LINE__);
+                LOG(mLogFile, "Failed to set CODECAPI_AVEncMPVGOPSize @ %s %d \n", TEXT(__FILE__), __LINE__);
             }
 
             hr = checkRange(0, 1, (uint32)vidEncParams->lowLatencyMode);
-            LOGIFFAILED(mLogFile, hr, "Out of range :encLowLatencyMode @ %s %d \n", __FILE__, __LINE__);
+            LOGIFFAILED(mLogFile, hr, "Out of range :encLowLatencyMode @ %s %d \n", TEXT(__FILE__), __LINE__);
             hr = setEncoderValue(&CODECAPI_AVEncCommonLowLatency,
                 (BOOL)vidEncParams->lowLatencyMode, encoderTransform);
             if (hr != S_OK)
             {
-                LOG(mLogFile, "Failed to set CODECAPI_AVEncCommonLowLatency @ %s %d \n", __FILE__, __LINE__);
+                LOG(mLogFile, "Failed to set CODECAPI_AVEncCommonLowLatency @ %s %d \n", TEXT(__FILE__), __LINE__);
             }
             /**********************************************************************
             * eAVEncCommonRateControlMode_LowDelayVBR,                            *
@@ -1559,71 +1559,71 @@ public:
             * eAVEncCommonRateControlMode_GlobalLowDelayVBR are not supported     *
             **********************************************************************/
             hr = checkRange(0, 3, (uint32)vidEncParams->rateControlMethod);
-            LOGIFFAILED(mLogFile, hr, "un-supported encRateControlMethod @ %s %d \n", __FILE__, __LINE__);
+            LOGIFFAILED(mLogFile, hr, "un-supported encRateControlMethod @ %s %d \n", TEXT(__FILE__), __LINE__);
             hr = setEncoderValue(&CODECAPI_AVEncCommonRateControlMode,
                 (uint32)vidEncParams->rateControlMethod, encoderTransform);
             if (hr != S_OK)
             {
-                LOG(mLogFile, "Failed to set CODECAPI_AVEncCommonRateControlMode @ %s %d \n", __FILE__, __LINE__);
+                LOG(mLogFile, "Failed to set CODECAPI_AVEncCommonRateControlMode @ %s %d \n", TEXT(__FILE__), __LINE__);
             }
             hr = checkRange(0, 100, (uint32)vidEncParams->commonQuality);
-            LOGIFFAILED(mLogFile, hr, "un-supported encCommonQuality parameter @ %s %d \n", __FILE__, __LINE__);
+            LOGIFFAILED(mLogFile, hr, "un-supported encCommonQuality parameter @ %s %d \n", TEXT(__FILE__), __LINE__);
             hr = setEncoderValue(&CODECAPI_AVEncCommonQuality,
                 (uint32)vidEncParams->commonQuality, encoderTransform);
             if (hr != S_OK)
             {
-                LOG(mLogFile, "Failed to set CODECAPI_AVEncCommonQuality @ %s %d \n", __FILE__, __LINE__);
+                LOG(mLogFile, "Failed to set CODECAPI_AVEncCommonQuality @ %s %d \n", TEXT(__FILE__), __LINE__);
             }
             /**********************************************************************
             * Not supported presently. Supports only CABAC                        *
             **********************************************************************/
             hr = checkRange(0, 1, (uint32)vidEncParams->enableCabac);
-            LOGIFFAILED(mLogFile, hr, "un-supported enableCabac @ %s %d \n", __FILE__, __LINE__);
+            LOGIFFAILED(mLogFile, hr, "un-supported enableCabac @ %s %d \n", TEXT(__FILE__), __LINE__);
             hr = setEncoderValue(&CODECAPI_AVEncH264CABACEnable,
                 (BOOL)vidEncParams->enableCabac, encoderTransform);
             if (hr != S_OK)
             {
-                LOG(mLogFile, "un-supported Cabac enable flag @ %s %d \n", __FILE__, __LINE__);
+                LOG(mLogFile, "un-supported Cabac enable flag @ %s %d \n", TEXT(__FILE__), __LINE__);
             }
 
             hr = checkRange(0, 100, (uint32)vidEncParams->qualityVsSpeed);
-            LOGIFFAILED(mLogFile, hr, "un-supported encQualityVsSpeed parameter @ %s %d \n", __FILE__, __LINE__);
+            LOGIFFAILED(mLogFile, hr, "un-supported encQualityVsSpeed parameter @ %s %d \n", TEXT(__FILE__), __LINE__);
             hr = setEncoderValue(&CODECAPI_AVEncCommonQualityVsSpeed,
                 (uint32)vidEncParams->qualityVsSpeed, encoderTransform);
             if (hr != S_OK)
             {
-                LOG(mLogFile, "Failed to set CODECAPI_AVEncCommonQualityVsSpeed @ %s %d \n", __FILE__, __LINE__);
+                LOG(mLogFile, "Failed to set CODECAPI_AVEncCommonQualityVsSpeed @ %s %d \n", TEXT(__FILE__), __LINE__);
             }
 
             hr = setEncoderValue(&CODECAPI_AVEncCommonMaxBitRate,
                 (uint32)vidEncParams->maxBitrate, encoderTransform);
             if (hr != S_OK)
             {
-                LOG(mLogFile, "Failed to set CODECAPI_AVEncCommonMaxBitRate @ %s %d \n", __FILE__, __LINE__);
+                LOG(mLogFile, "Failed to set CODECAPI_AVEncCommonMaxBitRate @ %s %d \n", TEXT(__FILE__), __LINE__);
             }
 
             hr = setEncoderValue(&CODECAPI_AVEncCommonBufferSize,
                 (uint32)vidEncParams->bufSize, encoderTransform);
             if (hr != S_OK)
             {
-                LOG(mLogFile, "Failed to set CODECAPI_AVEncCommonBufferSize @ %s %d \n", __FILE__, __LINE__);
+                LOG(mLogFile, "Failed to set CODECAPI_AVEncCommonBufferSize @ %s %d \n", TEXT(__FILE__), __LINE__);
             }
         }
 
         hr = encoderTransform->SetOutputType(0, encodedVideoType, 0);
-        LOGIFFAILED(mLogFile, hr, "Failed to set output type to encoder @ %s %d \n", __FILE__, __LINE__);
+        LOGIFFAILED(mLogFile, hr, "Failed to set output type to encoder @ %s %d \n", TEXT(__FILE__), __LINE__);
 
-        CComPtr<IMFMediaType> inputMediaType;
+        /*CComPtr<IMFMediaType> inputMediaType;
         hr = createVideoTypeFromSource(sourceVideoType, MFVideoFormat_NV12,
             TRUE, TRUE, &inputMediaType);
-        LOGIFFAILED(mLogFile, hr, "Failed to create media type @ %s %d \n", __FILE__, __LINE__);
+        LOGIFFAILED(mLogFile, hr, "Failed to create media type @ %s %d \n", TEXT(__FILE__), __LINE__);*/
 
-        hr = encoderTransform->SetInputType(0, inputMediaType, 0);
-        LOGIFFAILED(mLogFile, hr, "Failed to set input type for the encoder @ %s %d \n", __FILE__, __LINE__);
+        hr = encoderTransform->SetInputType(0, sourceVideoType, 0);
+        LOGIFFAILED(mLogFile, hr, "Failed to set input type for the encoder @ %s %d \n", TEXT(__FILE__), __LINE__);
 
         UINT32 h264Profile;
         hr = encodedVideoType->GetUINT32(MF_MT_MPEG2_PROFILE, &h264Profile);
-        LOGIFFAILED(mLogFile, hr, "Failed to set encoder profile @ %s %d \n", __FILE__, __LINE__);
+        LOGIFFAILED(mLogFile, hr, "Failed to set encoder profile @ %s %d \n", TEXT(__FILE__), __LINE__);
 
         /**********************************************************************
         * Set SVC temporal layer encoding                                     *
@@ -1634,7 +1634,7 @@ public:
 
             CComPtr<ICodecAPI> codecApi;
             hr = encoderTransform->QueryInterface(&codecApi);
-            LOGIFFAILED(mLogFile, hr, "Failed to query ICodecAPI interface @ %s %d \n", __FILE__, __LINE__);
+            LOGIFFAILED(mLogFile, hr, "Failed to query ICodecAPI interface @ %s %d \n", TEXT(__FILE__), __LINE__);
 
             VARIANT temporalLayerCount = { 0 };
             temporalLayerCount.vt = VT_UI4;
@@ -1642,16 +1642,16 @@ public:
 
             hr = codecApi->SetValue(&CODECAPI_AVEncVideoTemporalLayerCount,
                 &temporalLayerCount);
-            LOG(mLogFile, "Failed to set CODECAPI_AVEncVideoTemporalLayerCount @ %s %d \n", __FILE__, __LINE__);
+            LOG(mLogFile, "Failed to set CODECAPI_AVEncVideoTemporalLayerCount @ %s %d \n", TEXT(__FILE__), __LINE__);
         }
 
         //Not using topology
         /*CComPtr<IMFTopologyNode> node;
         hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &node);
-        LOGIFFAILED(mLogFile, hr, "Failed to create node @ %s %d \n", __FILE__, __LINE__);
+        LOGIFFAILED(mLogFile, hr, "Failed to create node @ %s %d \n", TEXT(__FILE__), __LINE__);
 
         hr = node->SetObject(encoderTransform);
-        LOGIFFAILED(mLogFile, hr, "Failed to add encoder node  @ %s %d \n", __FILE__, __LINE__);
+        LOGIFFAILED(mLogFile, hr, "Failed to add encoder node  @ %s %d \n", TEXT(__FILE__), __LINE__);
 
         *encoderNode = node.Detach();*/
         *encoderNode = encoderTransform.Detach();

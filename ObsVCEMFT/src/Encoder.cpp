@@ -28,6 +28,7 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, const TCHAR*
 , mFirstFrame(true)
 , mHdrPacket(nullptr)
 , mHdrSize(0)
+, frameShift(0)
 {
     mInBuffSize = mWidth * mHeight * 3 / 2;
     mBuilder = new msdk_CMftBuilder();
@@ -42,7 +43,7 @@ VCEEncoder::~VCEEncoder()
      delete [] mHdrPacket;
      mHdrPacket = nullptr;
 
-    //For some reason wants explicit Release()
+    //Wants explicit Release() because Detach()
     mEncTrans.Release();
     mEventGen.Release();
 
@@ -59,6 +60,13 @@ VCEEncoder::~VCEEncoder()
             mInputBuffers[i].pBuffer->Unlock();
             mInputBuffers[i].pBuffer.Release();
         }
+    }
+
+    if (!mOutputQueue.empty())
+    {
+        OutputList *out = mOutputQueue.front();
+        mOutputQueue.pop();
+        out->pBuffer.Clear();
     }
 
     /*delete mComDealloc;
@@ -85,6 +93,7 @@ HRESULT VCEEncoder::Init()
     if (mAlive)
         return S_OK;
 
+    //OBS has initialized
     //hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     //if (S_OK != hr && S_FALSE != hr /* already inited */)
     //{
@@ -101,7 +110,6 @@ HRESULT VCEEncoder::Init()
     }
     mMFDealloc = new FunctionDeallocator< HRESULT(__stdcall*)(void) >(MFShutdown);
 
-    //Just in case
     memset(&mPConfigCtrl, 0, sizeof(mPConfigCtrl));
 
     int bitRateWindow = 50;
@@ -115,14 +123,14 @@ HRESULT VCEEncoder::Init()
     mPConfigCtrl.vidParams.commonQuality = mQuality * 10;
     mPConfigCtrl.vidParams.enableCabac = 1;
 
-    // http://msdn.microsoft.com/en-us/library/windows/desktop/dd317651%28v=vs.85%29.aspx ??
+    // http://msdn.microsoft.com/en-us/library/windows/desktop/dd317651%28v=vs.85%29.aspx bits or bytes??
     mPConfigCtrl.vidParams.bufSize = mBufferSize * 1000;
     mPConfigCtrl.vidParams.meanBitrate = mMaxBitrate * (1000 - bitRateWindow);
     mPConfigCtrl.vidParams.maxBitrate = mMaxBitrate * (1000 + bitRateWindow);
-    mPConfigCtrl.vidParams.idrPeriod = (mKeyint > 0 ? mKeyint : 2) * mFps; //gopSize;//
-    mPConfigCtrl.vidParams.gopSize = gopSize;
+    mPConfigCtrl.vidParams.idrPeriod =  (mKeyint > 0 ? mKeyint : 2) * mFps;
+    mPConfigCtrl.vidParams.gopSize = mUseCBR ? gopSize : 20;
     mPConfigCtrl.vidParams.qualityVsSpeed = 50;
-    mPConfigCtrl.vidParams.compressionStandard = eAVEncH264VProfile_High;
+    mPConfigCtrl.vidParams.compressionStandard = eAVEncH264VProfile_ConstrainedBase;
     mPConfigCtrl.vidParams.numBFrames = 0;
     mPConfigCtrl.vidParams.lowLatencyMode = 0;
 
@@ -168,36 +176,45 @@ HRESULT VCEEncoder::Init()
     LOGIFFAILED(mLogFile, hr, "Failed to create encoder transform");
 
     //MF_MT_AVG_BITRATE
-    /*hr = mBuilder->setEncoderValue(&CODECAPI_AVEncCommonMeanBitRate,
+    hr = mBuilder->setEncoderValue(&CODECAPI_AVEncCommonMeanBitRate,
         (uint32)mPConfigCtrl.vidParams.meanBitrate, mEncTrans);
     if (hr != S_OK)
     {
         VCELog(TEXT("Failed to set CODECAPI_AVEncCommonMeanBitRate"));
-    }*/
+    }
+
+    if (mUseCBR)
+    {
+        hr = mBuilder->setEncoderValue(&CODECAPI_AVEncCommonMinBitRate,
+            (uint32)mPConfigCtrl.vidParams.meanBitrate, mEncTrans);
+        if (hr != S_OK)
+        {
+            VCELog(TEXT("Failed to set CODECAPI_AVEncCommonMinBitRate"));
+        }
+    }
 
     //random
-    hr = mBuilder->setEncoderValue(&CODECAPI_AVEncVideoMaxNumRefFrame,
+    /*hr = mBuilder->setEncoderValue(&CODECAPI_AVEncVideoMaxNumRefFrame,
         (uint32)3, mEncTrans);
     if (hr != S_OK)
     {
         VCELog(TEXT("Failed to set CODECAPI_AVEncVideoMaxNumRefFrame"));
-    }
+    }*/
 
     //Usually should check for stream IDs. Assuming static stream count with VCE.
-    //{
-    //    DWORD inCnt, outCnt;
-    //    mEncTrans->GetStreamCount(&inCnt, &outCnt);
-    //    std::cout << "in:" << inCnt << " out:" << outCnt << std::endl;
+    //DWORD inCnt, outCnt;
+    //mEncTrans->GetStreamCount(&inCnt, &outCnt);
+    //std::cout << "in:" << inCnt << " out:" << outCnt << std::endl;
 
-    //    if (hr == E_NOTIMPL) //most likely; static stream count with IDs from 0 to n-1
-    //    {
-    //        hr = mEncTrans->GetStreamIDs(1, &inCnt, 1, &outCnt);
-    //        std::cout << " in stream:" << inCnt << " out stream:" << outCnt << std::endl;
-    //    }
+    //if (hr == E_NOTIMPL) //most likely; static stream count with IDs from 0 to n-1
+    //{
+    //    hr = mEncTrans->GetStreamIDs(1, &inCnt, 1, &outCnt);
+    //    std::cout << " in stream:" << inCnt << " out stream:" << outCnt << std::endl;
     //}
 
     hr = mEncTrans->QueryInterface(IID_PPV_ARGS(&mEventGen));
     LOGIFFAILED(mLogFile, hr, "QueryInterface for MediaEventGenerator failed.");
+
     //Start async. event processing
     /*hr = mEventGen->BeginGetEvent(this, nullptr);
     LOGIFFAILED(mLogFile, hr, "BeginGetEvent failed.");*/
@@ -287,8 +304,6 @@ HRESULT VCEEncoder::ProcessInput()
     HRESULT hr;
     UINT64 dur = 0;
     CComPtr<IMFSample> pSample;
-    //CComPtr<IMFMediaBuffer> pBuffer;
-    BYTE *pbBuffer = nullptr;
 
     DWORD outLen = 0, len = 0;
 
@@ -296,7 +311,10 @@ HRESULT VCEEncoder::ProcessInput()
         return MF_E_TRANSFORM_NEED_MORE_INPUT;
 
     profileIn("ProcessInput")
+
+#if _DEBUG
     int inBufCount = mInputQueue.size();
+#endif
 
     while (!mInputQueue.empty())
     {
@@ -305,12 +323,7 @@ HRESULT VCEEncoder::ProcessInput()
 
         hr = MFCreateSample(&pSample);
         LOGIFFAILED(mLogFile, hr, "ProcessInput: MFCreateSample failed.");
-        /*hr = MFCreateMemoryBuffer(inBuf->size, &pBuffer);
-        LOGIFFAILED(mLogFile, hr, "MFCreateMemoryBuffer failed.");*/
 
-        /*pBuffer->Lock(&pbBuffer, &outLen, &len);
-        memcpy(pbBuffer, inBuf->pBufferPtr, inBuf->size);
-        pBuffer->Unlock();*/
         //if (inBuf->pBufferPtr)
         inBuf->pBuffer->Unlock();
 
@@ -327,7 +340,7 @@ HRESULT VCEEncoder::ProcessInput()
         //pBuffer.Release();
         pSample.Release();
 
-        if (SUCCEEDED(hr)) //Or try again
+        if (SUCCEEDED(hr)) //Otherwise try again, but OBS reuses this buffer probably :(
         {
             mInputQueue.pop();
             inBuf->locked = false;
@@ -342,16 +355,15 @@ HRESULT VCEEncoder::ProcessInput()
     return hr;
 }
 
-HRESULT VCEEncoder::ProcessOutput(List<DataPacket> &packets, List<PacketType> &packetTypes)
+HRESULT VCEEncoder::ProcessOutput(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp)
 {
     HRESULT hr;
     UINT64 dur = 0;
-    //CComPtr<IMFSample> pSample;
     CComPtr<IMFMediaBuffer> pBuffer;
     BYTE *ppBuffer = NULL;
 
     MFT_OUTPUT_DATA_BUFFER out[1] = { 0 };
-    DWORD status = 0, len, currLen, maxLen;
+    DWORD status = 0, currLen, maxLen;
 
     MFT_OUTPUT_STREAM_INFO si = { 0 };
 
@@ -362,7 +374,7 @@ HRESULT VCEEncoder::ProcessOutput(List<DataPacket> &packets, List<PacketType> &p
     if (!HASFLAG(si.dwFlags, 
             MFT_OUTPUT_STREAM_WHOLE_SAMPLES |
             MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER |
-            MFT_OUTPUT_STREAM_PROVIDES_SAMPLES))
+            MFT_OUTPUT_STREAM_PROVIDES_SAMPLES)) //Otherwise need to allocate own IMFSample
     {
         return E_UNEXPECTED;
     }
@@ -389,19 +401,12 @@ HRESULT VCEEncoder::ProcessOutput(List<DataPacket> &packets, List<PacketType> &p
         out[0].pEvents = nullptr;
     }
 
-    out[0].pSample->GetTotalLength(&len);
     out[0].pSample->GetSampleTime((LONGLONG*)&dur);
     
     out[0].pSample->ConvertToContiguousBuffer(&pBuffer);
     hr = pBuffer->Lock(&ppBuffer, &maxLen, &currLen);
     if (SUCCEEDED(hr))
     {
-        //mOutputQueue.push(out[0].pSample);
-
-        /*outBuffer->timestamp = dur / MS_TO_100NS;
-        outBuffer->size = currLen;
-        outBuffer->pBuffer = malloc(currLen);
-        memcpy(outBuffer->pBuffer, ppBuffer, currLen);*/
         if (nullptr == mHdrPacket)
         {
             mHdrSize = maxLen;
@@ -413,7 +418,7 @@ HRESULT VCEEncoder::ProcessOutput(List<DataPacket> &packets, List<PacketType> &p
         buf.pBuffer = ppBuffer;
         buf.size = maxLen;
         buf.timestamp = dur / MS_TO_100NS;
-        ProcessBitstream(buf, packets, packetTypes);
+        ProcessBitstream(buf, packets, packetTypes, timestamp);
     }
     hr = pBuffer->Unlock();
     pBuffer.Release();
@@ -424,25 +429,23 @@ HRESULT VCEEncoder::ProcessOutput(List<DataPacket> &packets, List<PacketType> &p
     return hr;
 }
 
-void VCEEncoder::DrainOutput(List<DataPacket> &packets, List<PacketType> &packetTypes)
+void VCEEncoder::DrainOutput(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp)
 {
     HRESULT hr = S_OK;
-    //OutputBuffer buffer = { 0 };
     DWORD status = 0;
 
+    profileIn("Drain")
     while (true)
     {
         hr = mEncTrans->GetOutputStatus(&status);
         if ((hr != S_OK && hr != E_NOTIMPL) || status != MFT_OUTPUT_STATUS_SAMPLE_READY)
             break;
 
-        hr = ProcessOutput(packets, packetTypes);
+        hr = ProcessOutput(packets, packetTypes, timestamp);
         if (hr != S_OK)
-        {
-            //free(buffer.pBuffer);
             break;
-        }
     }
+    profileOut
 
 #if _DEBUG
     VCELog(TEXT("Got %d output frames"), packets.Num());
@@ -462,10 +465,19 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
 
     profileIn("Encode")
 
+    //Remove OutputLists from previous Encode() call.
+    //OBS::BufferVideoData() should have copied anything it wanted by now.
+    if (!mOutputQueue.empty())
+    {
+        OutputList *out = mOutputQueue.front();
+        mOutputQueue.pop();
+        out->pBuffer.Clear();
+    }
+
     if (!picIn)
     {
         Stop();
-        DrainOutput(packets, packetTypes);
+        DrainOutput(packets, packetTypes, timestamp);
         VCELog(TEXT("Drained %d frame(s)"), packets.Num());
         return true;
     }
@@ -481,21 +493,17 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     inBuffer->timestamp = timestamp;
     mInputQueue.push(inBuffer);
 
-    /*if (!mOutputQueue.empty())
-    {
-        assert(0);
-    }*/
-
     hr = ProcessInput();
-    DrainOutput(packets, packetTypes);
+    DrainOutput(packets, packetTypes, timestamp);
     profileOut
     return false;
 }
 
-void VCEEncoder::ProcessBitstream(OutputBuffer buff, List<DataPacket> &packets, List<PacketType> &packetTypes)
+void VCEEncoder::ProcessBitstream(OutputBuffer buff, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp)
 {
     profileIn("ProcessBitstream")
-    encodeData.Clear();
+
+    OutputList *bufferedOut = new OutputList;
 
     uint8_t *start = (uint8_t *)buff.pBuffer;
     uint8_t *end = start + buff.size;
@@ -518,21 +526,33 @@ void VCEEncoder::ProcessBitstream(OutputBuffer buff, List<DataPacket> &packets, 
         start = next;
     }
     size_t nalNum = nalOut.Num();
+    /*Frame shifts: 0 17 429417 429400
+    Frame shifts: 0 17 429434 429417
+    Frame shifts: 0 16 429450 429434
+    Frame shifts: 0 17 429467 429450
+    Frame shifts: 0 17 429484 429467
+    Frame shifts: 0 16 429500 429484
+    Frame shifts: 0 429497 429500 3
+    Frame shifts: 0 429514 429517 3
+    Frame shifts: 0 429514 429534 20
+    Frame shifts: 0 429513 429550 37
+    */
+    uint64_t dts = buff.timestamp;
+    uint64_t out_pts = timestamp;
 
-    //uint64_t dts = timestamp;
-    //uint64_t out_pts = timestamp;
-
-    //FIXME VCE outputs I/P frames thus pts and dts can be the same? timeOffset needed with B-frames?
+    //FIXME
     int32_t timeOffset = 0;// int(out_pts - dts);
     //timeOffset += frameShift;
 
-    /*if (nalNum && timeOffset < 0)
+    if (nalNum && timeOffset < 0)
     {
         frameShift -= timeOffset;
         timeOffset = 0;
-    }*/
+    }
 
-    //timeOffset = htonl(timeOffset);
+    OSDebugOut(TEXT("Frame shifts: %d %d %d %lld\n"), frameShift, timeOffset, timestamp, buff.timestamp);
+
+    timeOffset = htonl(timeOffset);
     BYTE *timeOffsetAddr = ((BYTE*)&timeOffset) + 1;
 
     PacketType bestType = PacketType_VideoDisposable;
@@ -595,7 +615,7 @@ void VCEEncoder::ProcessBitstream(OutputBuffer buff, List<DataPacket> &packets, 
                 }
                 else
                 {
-                    BufferOutputSerializer packetOut(encodeData);
+                    BufferOutputSerializer packetOut(bufferedOut->pBuffer);
 
                     packetOut.OutputDword(htonl(sei_size + 2));
                     packetOut.Serialize(sei_start - 1, sei_size + 1);
@@ -615,7 +635,7 @@ void VCEEncoder::ProcessBitstream(OutputBuffer buff, List<DataPacket> &packets, 
 
             int newPayloadSize = (nal.i_payload - skipBytes);
 
-            BufferOutputSerializer packetOut(encodeData);
+            BufferOutputSerializer packetOut(bufferedOut->pBuffer);
 
             packetOut.OutputDword(htonl(newPayloadSize));
             packetOut.Serialize(nal.p_payload + skipBytes, newPayloadSize);
@@ -628,15 +648,15 @@ void VCEEncoder::ProcessBitstream(OutputBuffer buff, List<DataPacket> &packets, 
 
             if (!bFoundFrame)
             {
-                encodeData.Insert(0, (nal.i_type == NAL_SLICE_IDR) ? 0x17 : 0x27);
-                encodeData.Insert(1, 1);
-                encodeData.InsertArray(2, timeOffsetAddr, 3);
+                bufferedOut->pBuffer.Insert(0, (nal.i_type == NAL_SLICE_IDR) ? 0x17 : 0x27);
+                bufferedOut->pBuffer.Insert(1, 1);
+                bufferedOut->pBuffer.InsertArray(2, timeOffsetAddr, 3);
 
                 bFoundFrame = true;
             }
 
             int newPayloadSize = (nal.i_payload - skipBytes);
-            BufferOutputSerializer packetOut(encodeData);
+            BufferOutputSerializer packetOut(bufferedOut->pBuffer);
 
             packetOut.OutputDword(htonl(newPayloadSize));
             packetOut.Serialize(nal.p_payload + skipBytes, newPayloadSize);
@@ -655,12 +675,15 @@ void VCEEncoder::ProcessBitstream(OutputBuffer buff, List<DataPacket> &packets, 
     }
 
     DataPacket packet;
-    packet.lpPacket = encodeData.Array();
-    packet.size = encodeData.Num();
+    packet.lpPacket = bufferedOut->pBuffer.Array();
+    packet.size = bufferedOut->pBuffer.Num();
+    bufferedOut->timestamp = buff.timestamp;
+    mOutputQueue.push(bufferedOut);
 
     packetTypes << bestType;
     packets << packet;
     nalOut.Clear();
+
     profileOut
 }
 
@@ -920,7 +943,7 @@ HRESULT VCEEncoder::createVideoMediaType(BYTE* pUserData, DWORD dwUserData, DWOR
         0,                            // video flags
         mFps,                         // FPS numerator
         1,                            // FPS denominator
-        0,                            // max bitrate, set to 0 if unknown
+        mMaxBitrate*1000,                  // max bitrate, set to 0 if unknown
         &pType);                      // result - out
     RETURNIFFAILED(hr);
 

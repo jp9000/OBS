@@ -51,6 +51,12 @@ typedef struct OutputBuffer
     uint64_t timestamp;
 } OutputBuffer;
 
+typedef struct OutputList
+{
+    List<BYTE> pBuffer;
+    uint64_t timestamp;
+} OutputList;
+
 class VCEEncoder : public VideoEncoder, public IMFAsyncCallback
 {
 public:
@@ -114,13 +120,13 @@ private:
     //Create output media type
     HRESULT createH264VideoType(IMFMediaType** encodedVideoType, IMFMediaType* sourceVideoType);
     HRESULT ProcessInput();
-    HRESULT ProcessOutput(List<DataPacket> &packets, List<PacketType> &packetTypes);
+    HRESULT ProcessOutput(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp);
     HRESULT ProcessEvent(MediaEventType mediaEventType);
     HRESULT OutputFormatChange();
-    void ProcessBitstream(OutputBuffer, List<DataPacket> &packets, List<PacketType> &packetTypes);
+    void ProcessBitstream(OutputBuffer, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp);
 
     //Just loop and call ProcessOutput if any samples
-    void DrainOutput(List<DataPacket> &packets, List<PacketType> &packetTypes);
+    void DrainOutput(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp);
 
     msdk_CMftBuilder *mBuilder;
     CComPtr<IMFMediaType> mPVideoType;
@@ -137,12 +143,11 @@ private:
     bool mAlive;
     ULONG mRefCount;
 
-    //TODO CComPtr it up?
-    std::queue<CComPtr<IMFSample> > mOutputQueue;
-    std::queue<InputBuffer*>        mInputQueue;
-    InputBuffer                     mInputBuffers[MAX_INPUT_SURFACE];
+    std::queue<OutputList*>  mOutputQueue;
+    std::queue<InputBuffer*> mInputQueue;
+    InputBuffer              mInputBuffers[MAX_INPUT_SURFACE];
 
-    List<BYTE> encodeData, headerPacket, seiData;
+    List<BYTE> headerPacket, seiData;
     uint8_t    *mHdrPacket;
     size_t     mHdrSize;
     uint32_t   mInBuffSize;
@@ -158,7 +163,8 @@ private:
     int32_t    mHeight;
 
     const TCHAR*    mPreset;
-    bool     mUse444; //Max VCE 2.0 can do is 422 probably
+    bool     mUse444; //How..
     ColorDescription mColorDesc;
     bool     mFirstFrame;
+    int32_t  frameShift;
 };
