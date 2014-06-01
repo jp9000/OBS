@@ -67,6 +67,7 @@ VCEEncoder::~VCEEncoder()
         OutputList *out = mOutputQueue.front();
         mOutputQueue.pop();
         out->pBuffer.Clear();
+        delete out;
     }
 
     /*delete mComDealloc;
@@ -472,6 +473,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         OutputList *out = mOutputQueue.front();
         mOutputQueue.pop();
         out->pBuffer.Clear();
+        delete out;
     }
 
     if (!picIn)
