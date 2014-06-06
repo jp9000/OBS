@@ -53,6 +53,30 @@ void PackPlanar(LPBYTE convertBuffer, LPBYTE lpPlanar, UINT renderCX, UINT rende
     }
 }
 
+/* used for blackmagic 10bit rgb */
+void DeviceSource::ConvertBEToLE(LPBYTE convertBuffer, LPBYTE lpBE, UINT pitch)
+{
+    DWORD size = lineSize;
+    DWORD dwDWSize = size>>2;
+
+    for (UINT y = 0; y < renderCY; y++)
+    {
+        LPDWORD output = (LPDWORD)(convertBuffer+(y*pitch));
+        LPDWORD inputDW = (LPDWORD)(lpBE+(y*linePitch)+lineShift);
+        LPDWORD inputDWEnd = inputDW+dwDWSize;
+
+        while (inputDW < inputDWEnd)
+        {
+                register DWORD dw = *inputDW;
+
+                *output = (dw >> 24) | ((dw >> 16) & 0xFF00) | ((dw << 16) & 0xFF0000) | ((dw << 24) & 0xFF000000);
+
+                output++;
+                inputDW++;
+        }
+    }
+}
+
 void DeviceSource::Convert422To444(LPBYTE convertBuffer, LPBYTE lp422, UINT pitch, bool bLeadingY)
 {
     DWORD size = lineSize;

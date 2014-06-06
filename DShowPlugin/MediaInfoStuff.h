@@ -60,7 +60,9 @@ enum VideoOutputType
     VideoOutputType_dvsd,
     VideoOutputType_dvhd,
 
-    VideoOutputType_MJPG
+    VideoOutputType_MJPG,
+
+    VideoOutputType_BGR10B,
 };
 
 static const CTSTR EnumToName[] =
@@ -89,6 +91,8 @@ static const CTSTR EnumToName[] =
     TEXT("dvhd"),
 
     TEXT("MJPG"),
+
+    TEXT("r210"),
 };
 
 struct MediaOutputInfo

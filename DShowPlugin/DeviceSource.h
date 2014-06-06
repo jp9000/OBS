@@ -26,6 +26,7 @@ void PackPlanar(LPBYTE convertBuffer, LPBYTE lpPlanar, UINT renderCX, UINT rende
 enum DeviceColorType
 {
     DeviceOutputType_RGB,
+    DeviceOutputType_BGR10B,
 
     //planar 4:2:0
     DeviceOutputType_I420,
@@ -201,6 +202,7 @@ class DeviceSource : public ImageSource
     String ChooseDeinterlacingShader();
 
     void Convert422To444(LPBYTE convertBuffer, LPBYTE lp422, UINT pitch, bool bLeadingY);
+    void ConvertBEToLE(LPBYTE convertBuffer, LPBYTE lpBE, UINT pitch);
 
     void FlushSamples()
     {

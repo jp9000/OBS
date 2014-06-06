@@ -94,6 +94,9 @@ VideoOutputType GetVideoOutputTypeFromFourCC(DWORD fourCC)
     else if(fourCC == 'GPJM')
         type = VideoOutputType_MJPG;
 
+    else if (fourCC = '012r')
+        type = VideoOutputType_BGR10B;
+
     return type;
 }
 
@@ -182,7 +185,8 @@ const int inputPriority[] =
     10,
     10,
 
-    9
+    9,
+    1
 };
 
 bool GetVideoOutputTypes(const List<MediaOutputInfo> &outputList, UINT width, UINT height, UINT64 frameInterval, List<VideoOutputType> &types)

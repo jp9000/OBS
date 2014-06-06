@@ -126,6 +126,8 @@ String DeviceSource::ChooseShader()
         strShader << TEXT("UYVToRGB.pShader");
     else if(colorType == DeviceOutputType_HDYC)
         strShader << TEXT("HDYCToRGB.pShader");
+    else if(colorType == DeviceOutputType_BGR10B)
+        strShader << TEXT("BGR10BitToRGB.pShader");
     else
         strShader << TEXT("RGB.pShader");
 
@@ -455,7 +457,7 @@ bool DeviceSource::LoadFilters()
             bestOutput->bUsingFourCC ? TEXT("true") : TEXT("false"),
             bestOutput->minCX, bestOutput->minCY, bestOutput->maxCX, bestOutput->maxCY,
             bestOutput->minFrameInterval, bestOutput->maxFrameInterval,
-	    bUseBuffering ? L"true" : L"false", bufferTime);
+            bUseBuffering ? L"true" : L"false", bufferTime);
 
         BITMAPINFOHEADER *bmiHeader = GetVideoBMIHeader(bestOutput->mediaType);
 
@@ -492,6 +494,8 @@ bool DeviceSource::LoadFilters()
         colorType = DeviceOutputType_UYVY;
     else if(bestOutput->videoType == VideoOutputType_HDYC)
         colorType = DeviceOutputType_HDYC;
+    else if(bestOutput->videoType == VideoOutputType_BGR10B)
+        colorType = DeviceOutputType_BGR10B;
     else
     {
         colorType = DeviceOutputType_RGB;
@@ -725,6 +729,7 @@ bool DeviceSource::LoadFilters()
 
     switch(colorType) {
     case DeviceOutputType_RGB:
+    case DeviceOutputType_BGR10B:
         lineSize = renderCX * 4;
         break;
     case DeviceOutputType_I420:
@@ -897,8 +902,13 @@ cleanFinish:
         texture = CreateTexture(renderCX, renderCY, GS_BGR, textureData, FALSE, FALSE);
         if(bSucceeded && deinterlacer.needsPreviousFrame)
             previousTexture = CreateTexture(renderCX, renderCY, GS_BGR, textureData, FALSE, FALSE);
-        if(bSucceeded && deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
-            deinterlacer.texture.reset(CreateRenderTarget(deinterlacer.imageCX, deinterlacer.imageCY, GS_BGRA, FALSE));
+    }
+    else if(colorType == DeviceOutputType_BGR10B)
+    {
+        msetd(textureData, 0xC0003FF, renderCX*renderCY*4);
+        texture = CreateTexture(renderCX, renderCY, GS_R10G10B10A2, textureData, FALSE, FALSE);
+        if(bSucceeded && deinterlacer.needsPreviousFrame)
+            previousTexture = CreateTexture(renderCX, renderCY, GS_R10G10B10A2, textureData, FALSE, FALSE);
     }
     else //if we're working with planar YUV, we can just use regular RGB textures instead
     {
@@ -906,9 +916,10 @@ cleanFinish:
         texture = CreateTexture(renderCX, renderCY, GS_RGB, textureData, FALSE, FALSE);
         if(bSucceeded && deinterlacer.needsPreviousFrame)
             previousTexture = CreateTexture(renderCX, renderCY, GS_RGB, textureData, FALSE, FALSE);
-        if(bSucceeded && deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
-            deinterlacer.texture.reset(CreateRenderTarget(deinterlacer.imageCX, deinterlacer.imageCY, GS_BGRA, FALSE));
     }
+
+    if(bSucceeded && deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
+        deinterlacer.texture.reset(CreateRenderTarget(deinterlacer.imageCX, deinterlacer.imageCY, GS_BGRA, FALSE));
 
     if(bSucceeded && bUseThreadedConversion)
     {
@@ -1350,6 +1361,21 @@ void DeviceSource::Preprocess()
             if(texture)
             {
                 texture->SetImage(lastSample->lpData, GS_IMAGEFORMAT_BGRX, linePitch);
+                bReadyToDraw = true;
+            }
+        }
+        else if(colorType == DeviceOutputType_BGR10B)
+        {
+            if(texture)
+            {
+                LPBYTE lpData;
+                UINT pitch;
+
+                if(texture->Map(lpData, pitch))
+                {
+                    ConvertBEToLE(lpData, lastSample->lpData, pitch);
+                    texture->Unmap();
+                }
                 bReadyToDraw = true;
             }
         }
