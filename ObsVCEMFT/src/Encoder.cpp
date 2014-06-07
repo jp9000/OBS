@@ -2,6 +2,8 @@
 #include "Encoder.h"
 #include <../libmfx/include/msdk/include/mfxstructures.h>
 
+extern ConfigFile **VCEAppConfig;
+
 extern "C"
 {
 #define _STDINT_H
@@ -34,6 +36,9 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, const TCHAR*
     mInBuffSize = mWidth * mHeight * 3 / 2;
     mBuilder = new msdk_CMftBuilder();
     memset(mInputBuffers, 0, sizeof(mInputBuffers));
+
+    mUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
+    mKeyint = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 0);
 }
 
 VCEEncoder::~VCEEncoder()
