@@ -59,7 +59,7 @@ extern "C" __declspec(dllexport) bool __cdecl CheckVCEHardwareSupport(bool log)
     //Might be enough to just check if OVEncodeGetDeviceInfo returns anything.
     uint32_t numDevices = 0;
     if (!OVEncodeGetDeviceInfo(&numDevices, NULL)
-            && numDevices == 0)
+            || numDevices == 0)
         return false;
 
     VCELog(TEXT("Seems to have support for AMD VCE."));
