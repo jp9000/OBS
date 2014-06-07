@@ -29,6 +29,7 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, const TCHAR*
 , mHdrPacket(nullptr)
 , mHdrSize(0)
 , frameShift(0)
+, mIDevMgr(nullptr)
 {
     mInBuffSize = mWidth * mHeight * 3 / 2;
     mBuilder = new msdk_CMftBuilder();
@@ -55,20 +56,22 @@ VCEEncoder::~VCEEncoder()
     {
         if (mInputBuffers[i].pBufferPtr)
         {
-            //delete [] mInputBuffers[i].pBufferPtr;
             mInputBuffers[i].pBufferPtr = nullptr;
             mInputBuffers[i].pBuffer->Unlock();
             mInputBuffers[i].pBuffer.Release();
         }
     }
 
-    if (!mOutputQueue.empty())
+    while (!mOutputQueue.empty())
     {
         OutputList *out = mOutputQueue.front();
         mOutputQueue.pop();
         out->pBuffer.Clear();
         delete out;
     }
+
+    if (mIDevMgr)
+        mIDevMgr->Release();
 
     /*delete mComDealloc;
     mComDealloc = nullptr;*/
@@ -152,7 +155,7 @@ HRESULT VCEEncoder::Init()
     RETURNIFFAILED(hr);
 
     //h264VideoType->SetUINT32(MF_MT_MAX_KEYFRAME_SPACING, gopSize);
-    h264VideoType->SetUINT32(MF_MT_YUV_MATRIX, MFVideoTransferMatrix_BT709);
+    //h264VideoType->SetUINT32(MF_MT_YUV_MATRIX, MFVideoTransferMatrix_BT709);
 
     ULONG_PTR deviceManagerPtr;
     if (useDx11)
@@ -169,6 +172,8 @@ HRESULT VCEEncoder::Init()
             &deviceManagerPtr);
         LOGIFFAILED(mLogFile, hr, "Failed create Dx9 device");
     }
+
+    mIDevMgr = reinterpret_cast<IUnknown*>(deviceManagerPtr);
 
     // Create H264 encoder transform
     hr = mBuilder->createVideoEncoderNode(h264VideoType,
@@ -195,12 +200,12 @@ HRESULT VCEEncoder::Init()
     }
 
     //random
-    /*hr = mBuilder->setEncoderValue(&CODECAPI_AVEncVideoMaxNumRefFrame,
+    hr = mBuilder->setEncoderValue(&CODECAPI_AVEncVideoMaxNumRefFrame,
         (uint32)3, mEncTrans);
     if (hr != S_OK)
     {
         VCELog(TEXT("Failed to set CODECAPI_AVEncVideoMaxNumRefFrame"));
-    }*/
+    }
 
     //Usually should check for stream IDs. Assuming static stream count with VCE.
     //DWORD inCnt, outCnt;
@@ -320,12 +325,10 @@ HRESULT VCEEncoder::ProcessInput()
     while (!mInputQueue.empty())
     {
         InputBuffer *inBuf = mInputQueue.front();
-        //mInputQueue.pop();
 
         hr = MFCreateSample(&pSample);
         LOGIFFAILED(mLogFile, hr, "ProcessInput: MFCreateSample failed.");
 
-        //if (inBuf->pBufferPtr)
         inBuf->pBuffer->Unlock();
 
         hr = pSample->AddBuffer(inBuf->pBuffer);
@@ -333,12 +336,11 @@ HRESULT VCEEncoder::ProcessInput()
 
         MFFrameRateToAverageTimePerFrame(mFps, 1, &dur);
         pSample->SetSampleDuration((LONGLONG)dur);
-        pSample->SetSampleTime(inBuf->timestamp * MS_TO_100NS);
+        pSample->SetSampleTime(LONGLONG(inBuf->timestamp)/* * MS_TO_100NS*/);
 
         hr = mEncTrans->ProcessInput(0, pSample, 0);
         inBuf->pBuffer->Lock(&(inBuf->pBufferPtr), &len, &outLen);
 
-        //pBuffer.Release();
         pSample.Release();
 
         if (SUCCEEDED(hr)) //Otherwise try again, but OBS reuses this buffer probably :(
@@ -418,7 +420,7 @@ HRESULT VCEEncoder::ProcessOutput(List<DataPacket> &packets, List<PacketType> &p
         OutputBuffer buf;
         buf.pBuffer = ppBuffer;
         buf.size = maxLen;
-        buf.timestamp = dur / MS_TO_100NS;
+        buf.timestamp = dur /* / MS_TO_100NS*/;
         ProcessBitstream(buf, packets, packetTypes, timestamp);
     }
     hr = pBuffer->Unlock();
@@ -436,11 +438,12 @@ void VCEEncoder::DrainOutput(List<DataPacket> &packets, List<PacketType> &packet
     DWORD status = 0;
 
     profileIn("Drain")
-    while (true)
+    //FIXME Only send 1 frame and suddenly output is not corrupted anymore :S
+    while (packets.Num() == 0)
     {
-        hr = mEncTrans->GetOutputStatus(&status);
+        /*hr = mEncTrans->GetOutputStatus(&status);
         if ((hr != S_OK && hr != E_NOTIMPL) || status != MFT_OUTPUT_STATUS_SAMPLE_READY)
-            break;
+            break;*/
 
         hr = ProcessOutput(packets, packetTypes, timestamp);
         if (hr != S_OK)
@@ -468,7 +471,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
 
     //Remove OutputLists from previous Encode() call.
     //OBS::BufferVideoData() should have copied anything it wanted by now.
-    if (!mOutputQueue.empty())
+    while (!mOutputQueue.empty())
     {
         OutputList *out = mOutputQueue.front();
         mOutputQueue.pop();
@@ -501,7 +504,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     return false;
 }
 
-void VCEEncoder::ProcessBitstream(OutputBuffer buff, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp)
+void VCEEncoder::ProcessBitstream(OutputBuffer &buff, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp)
 {
     profileIn("ProcessBitstream")
 
@@ -528,23 +531,13 @@ void VCEEncoder::ProcessBitstream(OutputBuffer buff, List<DataPacket> &packets, 
         start = next;
     }
     size_t nalNum = nalOut.Num();
-    /*Frame shifts: 0 17 429417 429400
-    Frame shifts: 0 17 429434 429417
-    Frame shifts: 0 16 429450 429434
-    Frame shifts: 0 17 429467 429450
-    Frame shifts: 0 17 429484 429467
-    Frame shifts: 0 16 429500 429484
-    Frame shifts: 0 429497 429500 3
-    Frame shifts: 0 429514 429517 3
-    Frame shifts: 0 429514 429534 20
-    Frame shifts: 0 429513 429550 37
-    */
+
+    //FIXME
     uint64_t dts = buff.timestamp;
     uint64_t out_pts = timestamp;
 
-    //FIXME
     int32_t timeOffset = 0;// int(out_pts - dts);
-    //timeOffset += frameShift;
+    timeOffset += frameShift;
 
     if (nalNum && timeOffset < 0)
     {
@@ -714,8 +707,6 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
         hr = MFCreateMemoryBuffer(mInBuffSize, &(buffer.pBuffer));
         if (SUCCEEDED(hr))
         {
-            //buffer.pBufferPtr = new uint8_t[mInBuffSize];
-            //buffer.size = mInBuffSize;
             buffer.pBuffer->Lock(&(buffer.pBufferPtr), &maxLen, &curLen);
             if (maxLen < mInBuffSize) //Possible?
             {
@@ -883,9 +874,6 @@ bool VCEEncoder::DynamicBitrateSupported() const
 
 HRESULT VCEEncoder::GetParameters(DWORD *pdwFlags, DWORD *pdwQueue)
 {
-    /*
-    *pdwQueue = MFASYNC_CALLBACK_QUEUE_STANDARD;
-    *pdwFlags = MFASYNC_BLOCKING_CALLBACK;*/
     return E_NOTIMPL;
 }
 
@@ -945,7 +933,7 @@ HRESULT VCEEncoder::createVideoMediaType(BYTE* pUserData, DWORD dwUserData, DWOR
         0,                            // video flags
         mFps,                         // FPS numerator
         1,                            // FPS denominator
-        mMaxBitrate*1000,                  // max bitrate, set to 0 if unknown
+        0,                            // max bitrate, set to 0 if unknown
         &pType);                      // result - out
     RETURNIFFAILED(hr);
 

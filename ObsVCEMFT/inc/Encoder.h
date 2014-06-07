@@ -38,7 +38,7 @@ typedef struct ConfigCtrl
 typedef struct InputBuffer
 {
     CComPtr<IMFMediaBuffer> pBuffer;
-    uint8_t *pBufferPtr;
+    LPBYTE pBufferPtr;
     //size_t size;
     bool locked;
     DWORD timestamp;
@@ -123,7 +123,7 @@ private:
     HRESULT ProcessOutput(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp);
     HRESULT ProcessEvent(MediaEventType mediaEventType);
     HRESULT OutputFormatChange();
-    void ProcessBitstream(OutputBuffer, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp);
+    void ProcessBitstream(OutputBuffer&, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp);
 
     //Just loop and call ProcessOutput if any samples
     void DrainOutput(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp);
@@ -132,6 +132,7 @@ private:
     CComPtr<IMFMediaType> mPVideoType;
     CComPtr<IMFTransform> mEncTrans;
     CComPtr<IMFMediaEventGenerator> mEventGen;
+    IUnknown *mIDevMgr;
 
     FunctionDeallocator< void(__stdcall*)(void) > *mComDealloc;
     FunctionDeallocator< HRESULT(__stdcall*)(void) > *mMFDealloc;
