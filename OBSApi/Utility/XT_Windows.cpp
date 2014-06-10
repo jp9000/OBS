@@ -25,6 +25,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define ISOLATION_AWARE_ENABLED 1
 #include <windows.h>
+#include <ShlObj.h>
 #include <MMSystem.h>
 #include <Psapi.h>
 #include "XT.h"
@@ -1211,6 +1212,17 @@ OSDirectoryMonitorData *OSMonitorDirectoryCallback(String path, OSDirectoryMonit
 void OSMonitorDirectoryCallbackStop(OSDirectoryMonitorData *data)
 {
     delete data;
+}
+
+String STDCALL OSGetDefaultVideoSavePath(CTSTR append)
+{
+    PWSTR path;
+    if (FAILED(SHGetKnownFolderPath(FOLDERID_Videos, 0, nullptr, &path)))
+        return String();
+
+    String result(path);
+    CoTaskMemFree(path);
+    return result + append;
 }
 
 #endif
