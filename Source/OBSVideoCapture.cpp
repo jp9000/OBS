@@ -75,7 +75,7 @@ DWORD STDCALL Convert444Thread(Convert444Data *data)
     return 0;
 }
 
-bool OBS::BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, VideoSegment &segmentOut)
+bool OBS::BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, QWORD firstFrameTime, VideoSegment &segmentOut)
 {
     VideoSegment &segmentIn = *bufferedVideo.CreateNew();
     segmentIn.timestamp = timestamp;
@@ -234,7 +234,7 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
     //buffer video data before sending out
     if(bProcessedFrame)
     {
-        bSendFrame = BufferVideoData(videoPackets, videoPacketTypes, bufferedTimes[0], curSegment);
+        bSendFrame = BufferVideoData(videoPackets, videoPacketTypes, bufferedTimes[0], frameInfo.firstFrameTime, curSegment);
         bufferedTimes.Remove(0);
     }
     else

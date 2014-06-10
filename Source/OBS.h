@@ -779,7 +779,7 @@ private:
 
     static DWORD STDCALL EncodeThread(LPVOID lpUnused);
     static DWORD STDCALL MainCaptureThread(LPVOID lpUnused);
-    bool BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, VideoSegment &segmentOut);
+    bool BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, QWORD firstFrameTime, VideoSegment &segmentOut);
     void SendFrame(VideoSegment &curSegment, QWORD firstFrameTime);
     bool ProcessFrame(FrameProcessInfo &frameInfo);
     void EncodeLoop();  
