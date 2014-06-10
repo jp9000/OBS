@@ -716,7 +716,8 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 BOOL bSaveToFile = AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile"));
                 SendMessage(GetDlgItem(hwnd, IDC_SAVETOFILE), BM_SETCHECK, bSaveToFile ? BST_CHECKED : BST_UNCHECKED, 0);
 
-                CTSTR lpSavePath = AppConfig->GetStringPtr(TEXT("Publish"), TEXT("SavePath"));
+                String path = OSGetDefaultVideoSavePath(L"\\.flv");
+                CTSTR lpSavePath = AppConfig->GetStringPtr(TEXT("Publish"), TEXT("SavePath"), path.IsValid() ? path.Array() : nullptr);
                 SetWindowText(GetDlgItem(hwnd, IDC_SAVEPATH), lpSavePath);
 
                 EnableWindow(GetDlgItem(hwnd, IDC_KEEPRECORDING), bSaveToFile || (mode != 0));
@@ -981,7 +982,9 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                             ofn.lpstrFileTitle = NULL;
                             ofn.nMaxFileTitle = 0;
                             ofn.nFilterIndex = 1;
-                            ofn.lpstrInitialDir = AppConfig->GetStringPtr(TEXT("Publish"), TEXT("LastSaveDir"));
+
+                            String path = OSGetDefaultVideoSavePath();
+                            ofn.lpstrInitialDir = AppConfig->GetStringPtr(TEXT("Publish"), TEXT("LastSaveDir"), path.IsValid() ? path.Array() : nullptr);
 
                             ofn.Flags = OFN_PATHMUSTEXIST;
 

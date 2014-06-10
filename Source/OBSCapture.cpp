@@ -74,7 +74,9 @@ bool OBS::StartRecording()
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
 
     bWriteToFile = networkMode == 1 || AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile")) != 0;
-    String strOutputFile = AppConfig->GetString(TEXT("Publish"), TEXT("SavePath"));
+
+    String path = OSGetDefaultVideoSavePath(L"\\.flv");
+    String strOutputFile = AppConfig->GetString(TEXT("Publish"), TEXT("SavePath"), path.IsValid() ? path.Array() : nullptr);
 
     strOutputFile.FindReplace(TEXT("\\"), TEXT("/"));
 
