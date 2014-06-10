@@ -87,7 +87,18 @@ bool OBS::BufferVideoData(const List<DataPacket> &inputPackets, const List<Packe
         segmentIn.packets[i].type =  inputTypes[i];
     }
 
-    if((bufferedVideo.Last().timestamp-bufferedVideo[0].timestamp) >= UINT(App->bufferingTime))
+    bool dataReady = false;
+
+    for (UINT i = 0; i < pendingAudioFrames.Num(); i++)
+    {
+        if (firstFrameTime < pendingAudioFrames[i].timestamp && pendingAudioFrames[i].timestamp - firstFrameTime >= bufferedVideo[0].timestamp)
+        {
+            dataReady = true;
+            break;
+        }
+    }
+
+    if (dataReady)
     {
         segmentOut.packets.TransferFrom(bufferedVideo[0].packets);
         segmentOut.timestamp = bufferedVideo[0].timestamp;
