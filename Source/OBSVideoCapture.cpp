@@ -89,6 +89,7 @@ bool OBS::BufferVideoData(const List<DataPacket> &inputPackets, const List<Packe
 
     bool dataReady = false;
 
+    OSEnterMutex(hSoundDataMutex);
     for (UINT i = 0; i < pendingAudioFrames.Num(); i++)
     {
         if (firstFrameTime < pendingAudioFrames[i].timestamp && pendingAudioFrames[i].timestamp - firstFrameTime >= bufferedVideo[0].timestamp)
@@ -97,6 +98,7 @@ bool OBS::BufferVideoData(const List<DataPacket> &inputPackets, const List<Packe
             break;
         }
     }
+    OSLeaveMutex(hSoundDataMutex);
 
     if (dataReady)
     {
