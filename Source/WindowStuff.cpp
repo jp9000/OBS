@@ -2723,8 +2723,16 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     {
                         String path = OSGetDefaultVideoSavePath();
                         path = GetPathDirectory(GetPathWithoutExtension(AppConfig->GetString(TEXT("Publish"), TEXT("SavePath"), path.IsValid() ? path.Array() : nullptr))).FindReplace(L"/", L"\\");
+                        String lastFile = App->lastOutputFile.FindReplace(L"/", L"\\");
 
-                        ShellExecute(NULL, L"open", path, 0, 0, SW_SHOWNORMAL);
+                        LPITEMIDLIST item = nullptr;
+                        if (lastFile.IsValid() && path == lastFile.Left(path.Length()) && (item = ILCreateFromPath(lastFile)))
+                        {
+                            SHOpenFolderAndSelectItems(item, 0, nullptr, 0);
+                            ILFree(item);
+                        }
+                        else
+                            ShellExecute(NULL, L"open", path, 0, 0, SW_SHOWNORMAL);
 
                         break;
                     }

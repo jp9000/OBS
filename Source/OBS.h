@@ -843,6 +843,8 @@ private:
 
     String  streamReport;
 
+    String  lastOutputFile;
+
     //String  strDashboard;
 
     List<IconInfo> Icons;

@@ -158,6 +158,7 @@ bool OBS::StartRecording()
         else {
             bRecording = true;
             ReportStartRecordingTrigger();
+            lastOutputFile = strOutputFile;
         }
         ConfigureStreamButtons();
     }
