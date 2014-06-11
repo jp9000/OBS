@@ -1305,6 +1305,9 @@ void OBS::RefreshStreamButtons(bool disable)
     EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), !disable && canStream);
     EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), !disable && canRecord);
     EnableWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), !disable && canTest);
+
+    HMENU fileMenu = GetSubMenu(GetMenu(hwndMain), 0);
+    EnableMenuItem(fileMenu, 2, (canRecord ? MF_ENABLED : MF_DISABLED) | MF_BYPOSITION);
 }
 
 void OBS::ConfigureStreamButtons()

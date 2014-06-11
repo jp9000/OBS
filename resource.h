@@ -357,13 +357,14 @@
 #define ID_HELP_ANALYZE_CURRENT_LOG     40063
 #define ID_SETTINGS_SHOWCONSOLE         40066
 #define ID_SHOWLOG                      40067
+#define ID_RECORDINGSFOLDER              40068
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        149
-#define _APS_NEXT_COMMAND_VALUE         40068
+#define _APS_NEXT_COMMAND_VALUE         40069
 #define _APS_NEXT_CONTROL_VALUE         1177
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

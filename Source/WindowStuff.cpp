@@ -2719,6 +2719,16 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     PostQuitMessage(0);
                     break;
 
+                case ID_RECORDINGSFOLDER:
+                    {
+                        String path = OSGetDefaultVideoSavePath();
+                        path = GetPathDirectory(GetPathWithoutExtension(AppConfig->GetString(TEXT("Publish"), TEXT("SavePath"), path.IsValid() ? path.Array() : nullptr))).FindReplace(L"/", L"\\");
+
+                        ShellExecute(NULL, L"open", path, 0, 0, SW_SHOWNORMAL);
+
+                        break;
+                    }
+
                 case ID_ALWAYSONTOP:
                     {
                         HMENU hmenuBar = GetMenu(hwnd); 

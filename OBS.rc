@@ -941,6 +941,8 @@ BEGIN
     BEGIN
         MENUITEM "MainMenu.File.Save",          ID_FILE_SAVE2
         MENUITEM SEPARATOR
+        MENUITEM "MainMenu.File.OpenRecordingsFolder", ID_RECORDINGSFOLDER
+        MENUITEM SEPARATOR
         MENUITEM "MainMenu.File.Exit",          ID_FILE_EXIT
     END
     POPUP "MainMenu.Settings"
