@@ -200,6 +200,7 @@ void NVENCEncoder::init()
 
     encodeConfig.version = NV_ENC_CONFIG_VER;
     presetConfig.version = NV_ENC_PRESET_CONFIG_VER;
+    presetConfig.presetCfg.version = NV_ENC_CONFIG_VER;
     initEncodeParams.version = NV_ENC_INITIALIZE_PARAMS_VER;
 
     stEncodeSessionParams.version = NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER;
