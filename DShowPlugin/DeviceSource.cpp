@@ -870,6 +870,8 @@ cleanFinish:
             audioOut = NULL;
         }
 
+        soundOutputType = 0;
+
         if(lpImageBuffer)
         {
             Free(lpImageBuffer);
