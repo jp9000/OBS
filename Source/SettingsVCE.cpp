@@ -96,6 +96,12 @@ void SettingsVCE::ApplySettings()
     bBool = SendMessage(GetDlgItem(hwnd, IDC_VCE_SATD), BM_GETCHECK, 0, 0) == BST_CHECKED;
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("DisSATD"), bBool);
 
+    bBool = SendMessage(GetDlgItem(hwnd, IDC_VCE_IME_OVERW), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    AppConfig->SetInt(TEXT("VCE Settings"), TEXT("IMEOverwite"), bBool);
+
+    bBool = SendMessage(GetDlgItem(hwnd, IDC_VCE_LOWLATENCY), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    AppConfig->SetInt(TEXT("VCE Settings"), TEXT("LowLatency"), bBool);
+
     iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_GOP)).ToInt();
     iInt = checkRange(iInt, 0, 0xFFFF, 0);
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("GOPSize"), iInt);
@@ -132,9 +138,6 @@ void SettingsVCE::ApplySettings()
     iInt = checkRange(iInt, 0, 255, 0);
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("PPred"), iInt);
 
-    iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_IME_OVERW)).ToInt();
-    AppConfig->SetInt(TEXT("VCE Settings"), TEXT("IMEOverwite"), iInt);
-
     iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_IME_SUBM)).ToInt();
     iInt = checkRange(iInt, 0, 4, 0);
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("IMEDisSubmNo"), iInt);
@@ -145,6 +148,14 @@ void SettingsVCE::ApplySettings()
 
     iInt = SendMessage(GetDlgItem(hwnd, IDC_VCE_LSM), CB_GETCURSEL, 0, 0);
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("LSMVert"), iInt);
+
+    iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_QVSS)).ToInt();
+    iInt = checkRange(iInt, 0, 100, 50);
+    AppConfig->SetInt(TEXT("VCE Settings"), TEXT("QualityVsSpeed"), iInt);
+
+    iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_REFS)).ToInt();
+    iInt = checkRange(iInt, 1, 16, 3);
+    AppConfig->SetInt(TEXT("VCE Settings"), TEXT("NumRefs"), iInt);
 
 }
 
@@ -163,6 +174,7 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
     {
         case WM_INITDIALOG:
         {
+            HWND hwndTemp;
             LocalizeWindow(hwnd);
 
             //--------------------------------------------
@@ -214,6 +226,15 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
             SendMessage(GetDlgItem(hwnd, IDC_VCE_LSM), CB_ADDSTRING, 0, (LPARAM)TEXT("13x7 macroblocks"));
             LoadSettingComboInt(GetDlgItem(hwnd, IDC_VCE_LSM), TEXT("VCE Settings"), TEXT("LSMVert"), 0, 2);
 
+            hwndTemp = GetDlgItem(hwnd, IDC_VCE_QVSS);
+            for (int i = 0; i <= 10; i++)
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)IntString(i*10).Array());
+            LoadSettingEditString(GetDlgItem(hwnd, IDC_VCE_QVSS), TEXT("VCE Settings"), TEXT("QualityVsSpeed"), TEXT("50"));
+
+            ti.lpszText = (LPWSTR)Str("Settings.Encoding.VCE.QVsSTooltip");
+            ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_QVSS);
+            SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+
             LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_SRNG0), TEXT("VCE Settings"), TEXT("SearchX"), 16);
             LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_SRNG1), TEXT("VCE Settings"), TEXT("SearchY"), 16);
 
@@ -241,6 +262,8 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
             ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_PPRED);
             SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
+            LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_REFS), TEXT("VCE Settings"), TEXT("NumRefs"), 3);
+
             iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("MEHalf"), 1);
             SendMessage(GetDlgItem(hwnd, IDC_VCE_ME_HALF), BM_SETCHECK, iInt, 0);
 
@@ -264,6 +287,9 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
             iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("DisSATD"), 0);
             SendMessage(GetDlgItem(hwnd, IDC_VCE_SATD), BM_SETCHECK, iInt, 0);
+
+            iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("LowLatency"), 0);
+            SendMessage(GetDlgItem(hwnd, IDC_VCE_LOWLATENCY), BM_SETCHECK, iInt, 0);
 
             iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("IMEOverwite"), iInt);
             SendMessage(GetDlgItem(hwnd, IDC_VCE_IME_OVERW), BM_SETCHECK, iInt, 0);
@@ -302,6 +328,7 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
             case IDC_VCE_ZPC:
             case IDC_VCE_CONSTINTRAPRED:
             case IDC_VCE_SATD:
+            case IDC_VCE_LOWLATENCY:
                 if (HIWORD(wParam) == BN_CLICKED)
                 {
                     bDataChanged = true;
@@ -320,8 +347,11 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
             case IDC_VCE_IME_SUBM:
             case IDC_VCE_DISABLE_SUBM:
             case IDC_VCE_LSM:
+            case IDC_VCE_QVSS:
+            case IDC_VCE_REFS:
                 if (HIWORD(wParam) == EN_CHANGE || 
-                    HIWORD(wParam) == CBN_SELCHANGE)
+                    HIWORD(wParam) == CBN_SELCHANGE ||
+                    HIWORD(wParam) == CBN_EDITCHANGE)
                 {
                     bDataChanged = true;
                 }

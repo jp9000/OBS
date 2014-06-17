@@ -143,9 +143,9 @@
 #define IDC_VCE_IME_DEC                 1050
 #define IDC_VCE_CONSTINTRAPRED          1051
 #define IDC_MICDEVICES                  1052
-#define IDC_VCE_CONSTINTRAPRED2         1052
 #define IDC_VCE_SATD                    1052
 #define IDC_SOURCES                     1053
+#define IDC_VCE_LOWLATENCY              1053
 #define IDC_ADD                         1054
 #define IDC_REMOVE                      1055
 #define IDC_PLUGINS                     1055
@@ -226,6 +226,7 @@
 #define IDC_VCE_GOP                     1088
 #define IDC_CLEARMUTEMIC                1089
 #define IDC_SENDBUFFERSIZE              1089
+#define IDC_VCE_REFS                    1089
 #define IDC_CLEARMUTEDESKTOP            1090
 #define IDC_LIST1                       1090
 #define IDC_BITMAPS                     1090
@@ -338,6 +339,7 @@
 #define IDC_ENCODERNVENC                1177
 #define IDC_VCE_LSM                     1177
 #define IDC_ENCODERVCE                  1178
+#define IDC_VCE_QVSS                    1178
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -393,7 +395,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        150
 #define _APS_NEXT_COMMAND_VALUE         40068
-#define _APS_NEXT_CONTROL_VALUE         1178
+#define _APS_NEXT_CONTROL_VALUE         1180
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

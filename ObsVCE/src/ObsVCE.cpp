@@ -233,7 +233,7 @@ bool VCEEncoder::init()
         APPCFG(mConfigCtrl.rdoControl.encDisableTbePredIFrame, "IPred");
         APPCFG(mConfigCtrl.rdoControl.encDisableTbePredPFrame, "PPred");
         APPCFG(mConfigCtrl.rdoControl.encForce16x16skip, "Force16x16Skip");
-        APPCFG(mConfigCtrl.rdoControl.encSkipCostAdj, "SkipCostAdj"); //Not in cfg diag
+        APPCFG(mConfigCtrl.rdoControl.encSkipCostAdj, "SkipCostAdj"); //Not in cfg dialog
 
         APPCFG(mConfigCtrl.pictControl.cabacEnable, "CABAC");
         APPCFG(mConfigCtrl.pictControl.encIDRPeriod, "IDRPeriod");

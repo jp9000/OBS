@@ -129,10 +129,18 @@ HRESULT VCEEncoder::Init()
 
     memset(&mPConfigCtrl, 0, sizeof(mPConfigCtrl));
 
+    int iNumRefs = 3;
     int bitRateWindow = 50;
     int gopSize = mFps * (mKeyint == 0 ? 2 : mKeyint);
     gopSize -= gopSize % 6;
-    VCELog(TEXT("GOP size: %d"), gopSize);
+
+    String x264prof = AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"));
+    eAVEncH264VProfile profile = eAVEncH264VProfile_Main;
+    if (x264prof.Compare(TEXT("high")))
+        profile = eAVEncH264VProfile_High;
+    //Not in advanced setting but for completeness sake
+    else if (x264prof.Compare(TEXT("base")))
+        profile = eAVEncH264VProfile_Base;
 
     mPConfigCtrl.commonParams.useInterop = 0;
     mPConfigCtrl.commonParams.useSWCodec = 0;
@@ -145,12 +153,12 @@ HRESULT VCEEncoder::Init()
     mPConfigCtrl.vidParams.bufSize = mBufferSize * 1000;
     mPConfigCtrl.vidParams.meanBitrate = mMaxBitrate * (1000 - bitRateWindow);
     mPConfigCtrl.vidParams.maxBitrate = mMaxBitrate * (1000 + bitRateWindow);
-    mPConfigCtrl.vidParams.idrPeriod = gopSize;// (mKeyint > 0 ? mKeyint : 2) * mFps;
+    mPConfigCtrl.vidParams.idrPeriod = (mKeyint > 0 ? mKeyint : 2) * mFps;
     mPConfigCtrl.vidParams.gopSize = mUseCBR ? gopSize : 20;
     mPConfigCtrl.vidParams.qualityVsSpeed = 50;
-    mPConfigCtrl.vidParams.compressionStandard = eAVEncH264VProfile_Base;
+    mPConfigCtrl.vidParams.compressionStandard = profile;
     mPConfigCtrl.vidParams.numBFrames = 0;
-    mPConfigCtrl.vidParams.lowLatencyMode = 0;
+    mPConfigCtrl.vidParams.lowLatencyMode = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("LowLatency"), 0);
 
     if (mUseCBR)
         mPConfigCtrl.vidParams.rateControlMethod = eAVEncCommonRateControlMode_CBR;
@@ -158,6 +166,18 @@ HRESULT VCEEncoder::Init()
         mPConfigCtrl.vidParams.rateControlMethod = eAVEncCommonRateControlMode_Quality;
     else
         mPConfigCtrl.vidParams.rateControlMethod = eAVEncCommonRateControlMode_PeakConstrainedVBR;
+
+    //Apply user's custom settings that are set when creating encoder transform
+    if (AppConfig->GetInt(TEXT("VCE Settings"), TEXT("UseCustom"), 0))
+    {
+#define APPCFG(x,y) x = AppConfig->GetInt(TEXT("VCE Settings"), TEXT(y), x)
+        APPCFG(mPConfigCtrl.vidParams.gopSize, "GOPSize");
+        APPCFG(mPConfigCtrl.vidParams.idrPeriod, "IDRPeriod");
+        APPCFG(mPConfigCtrl.vidParams.qualityVsSpeed, "QualityVsSpeed");
+        APPCFG(mPConfigCtrl.vidParams.enableCabac, "CABAC");
+        iNumRefs = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("NumRefs"), 3);
+#undef APPCFG
+    }
 
     bool useDx11 = mBuilder->isDxgiSupported();
 
@@ -213,9 +233,8 @@ HRESULT VCEEncoder::Init()
         }
     }
 
-    //random
     hr = mBuilder->setEncoderValue(&CODECAPI_AVEncVideoMaxNumRefFrame,
-        (uint32)3, mEncTrans);
+        (uint32)iNumRefs, mEncTrans);
     if (hr != S_OK)
     {
         VCELog(TEXT("Failed to set CODECAPI_AVEncVideoMaxNumRefFrame"));
@@ -232,11 +251,11 @@ HRESULT VCEEncoder::Init()
     //    std::cout << " in stream:" << inCnt << " out stream:" << outCnt << std::endl;
     //}
 
-    hr = mEncTrans->QueryInterface(IID_PPV_ARGS(&mEventGen));
+    /*hr = mEncTrans->QueryInterface(IID_PPV_ARGS(&mEventGen));
     LOGIFFAILED(mLogFile, hr, "QueryInterface for MediaEventGenerator failed.");
 
     //Start async. event processing
-    /*hr = mEventGen->BeginGetEvent(this, nullptr);
+    hr = mEventGen->BeginGetEvent(this, nullptr);
     LOGIFFAILED(mLogFile, hr, "BeginGetEvent failed.");*/
 
     /// Get it rolling
