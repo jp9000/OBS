@@ -103,7 +103,6 @@ bool VCEEncoder::init()
     prepareConfigMap(mConfigTable, false);
 
     // Choose quality settings
-
     if (!mUseCBR)
     {
         int size = MAX(mWidth, mHeight);
@@ -126,6 +125,16 @@ bool VCEEncoder::init()
     mConfigCtrl.width = mWidth;
     mConfigCtrl.height = mHeight;
 
+    String x264prof = AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"));
+    int profile = 77;
+    if (x264prof.Compare(TEXT("high")))
+        profile = 100;
+    //Not in advanced setting but for completeness sake
+    else if (x264prof.Compare(TEXT("base")))
+        profile = 66;
+
+    mConfigCtrl.profileLevel.profile = profile; // 66 - Baseline, 77 - Main, 100 - High
+
     if (mUseCBR)
     {
         int bitRateWindow = 50;
@@ -135,7 +144,6 @@ bool VCEEncoder::init()
         //Probably forces 1 ref frame only
         mConfigCtrl.priority = OVE_ENCODE_TASK_PRIORITY_LEVEL2;
 
-        mConfigCtrl.profileLevel.profile = 77; // 66 - Baseline, 77 - Main, 100 - High
         mConfigCtrl.profileLevel.level = 50; // 40 - Level 4.0, 51 - Level 5.1
         
         mConfigCtrl.rateControl.encRateControlMethod = RCM_CBR; // 0 - None, 3 - CBR, 4 - VBR
@@ -200,6 +208,42 @@ bool VCEEncoder::init()
     VCELog(TEXT("Rate control method: %d"), mConfigCtrl.rateControl.encRateControlMethod);
     //WTF, why half the pixels
     mConfigCtrl.pictControl.encCropBottomOffset = (numH * 16 - mHeight) >> 1;
+
+    //Apply user's custom setting
+    if (AppConfig->GetInt(TEXT("VCE Settings"), TEXT("UseCustom"), 0))
+    {
+#define APPCFG(x,y) x = AppConfig->GetInt(TEXT("VCE Settings"), TEXT(y), x)
+
+        APPCFG(mConfigCtrl.meControl.disableFavorPMVPoint, "DisFavorPMV");
+        APPCFG(mConfigCtrl.meControl.enableAMD, "AMD");
+        APPCFG(mConfigCtrl.meControl.disableSATD, "DisSATD");
+        APPCFG(mConfigCtrl.meControl.encDisableSubMode, "RDODisSub");
+        APPCFG(mConfigCtrl.meControl.encEnImeOverwDisSubm, "IMEOverwite");
+        APPCFG(mConfigCtrl.meControl.encImeOverwDisSubmNo, "IMEDisSubmNo");
+        APPCFG(mConfigCtrl.meControl.encIME2SearchRangeX, "IME2SearchX");
+        APPCFG(mConfigCtrl.meControl.encIME2SearchRangeY, "IME2SearchY");
+        APPCFG(mConfigCtrl.meControl.encSearchRangeX, "SearchX");
+        APPCFG(mConfigCtrl.meControl.encSearchRangeY, "SearchY");
+        APPCFG(mConfigCtrl.meControl.forceZeroPointCenter, "ForceZPC");
+        APPCFG(mConfigCtrl.meControl.imeDecimationSearch, "IMEDecimation");
+        APPCFG(mConfigCtrl.meControl.lsmVert, "LSMVert");
+        APPCFG(mConfigCtrl.meControl.motionEstHalfPixel, "MEHalf");
+        APPCFG(mConfigCtrl.meControl.motionEstQuarterPixel, "MEQuarter");
+
+        APPCFG(mConfigCtrl.rdoControl.encDisableTbePredIFrame, "IPred");
+        APPCFG(mConfigCtrl.rdoControl.encDisableTbePredPFrame, "PPred");
+        APPCFG(mConfigCtrl.rdoControl.encForce16x16skip, "Force16x16Skip");
+        APPCFG(mConfigCtrl.rdoControl.encSkipCostAdj, "SkipCostAdj"); //Not in cfg diag
+
+        APPCFG(mConfigCtrl.pictControl.cabacEnable, "CABAC");
+        APPCFG(mConfigCtrl.pictControl.encIDRPeriod, "IDRPeriod");
+        APPCFG(mConfigCtrl.pictControl.encIPicPeriod, "IPicPeriod");
+        APPCFG(mConfigCtrl.pictControl.useConstrainedIntraPred, "ConstIntraPred");
+
+        APPCFG(mConfigCtrl.rateControl.encGOPSize, "GOPSize");
+
+#undef APPCFG
+    }
 
     if (mDeviceHandle.deviceInfo)
     {

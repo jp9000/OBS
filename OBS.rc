@@ -659,6 +659,55 @@ BEGIN
     LTEXT           ".*sets jim on fire*",IDC_TOTALFRAMES2,196,22,189,8
 END
 
+IDD_SETTINGS_VCE DIALOGEX 0, 0, 428, 332
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_SYSMENU
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "Settings.Encoding.VCE",IDC_STATIC,0,0,426,324
+    LTEXT           "Settings.Encoding.VCE.IDRPeriod",IDC_STATIC,39,20,66,8
+    LTEXT           "Settings.Encoding.VCE.IPicPeriod",IDC_STATIC,39,33,66,8
+    EDITTEXT        IDC_VCE_IDR,6,18,30,12,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_VCE_IPIC,6,30,30,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Settings.Encoding.VCE.CABAC",IDC_VCE_CABAC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,90,54,8
+    GROUPBOX        "Settings.Encoding.VCE.Pred",IDC_STATIC,282,48,102,30
+    LTEXT           "Settings.Info",IDC_INFO,12,306,300,12
+    EDITTEXT        IDC_VCE_SRNG0,138,30,36,12,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_VCE_SRNG1,186,30,36,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Settings.Encoding.VCE.MEHalf",IDC_VCE_ME_HALF,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,102,54,8
+    CONTROL         "Settings.Encoding.VCE.MEQuarter",IDC_VCE_ME_QUARTER,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,60,102,60,8
+    CONTROL         "Settings.Encoding.VCE.AMD",IDC_VCE_AMD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,60,90,60,8
+    EDITTEXT        IDC_VCE_IPRED,296,60,32,12,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_VCE_PPRED,344,60,32,12,ES_AUTOHSCROLL | ES_NUMBER
+    GROUPBOX        "Settings.Encoding.VCE.SearchRangeXY",IDC_STATIC,126,18,108,30
+    LTEXT           "I:",IDC_STATIC,287,61,8,8
+    LTEXT           "P:",IDC_STATIC,335,61,8,8
+    LTEXT           "Settings.Encoding.VCE.PredBits1",IDC_STATIC,6,138,168,126
+    LTEXT           "Settings.Encoding.VCE.PredBits2",IDC_STATIC,180,138,216,126
+    CONTROL         "Settings.Encoding.VCE.UseCustom",IDC_VCE_USE_CUSTOM,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,78,0,84,8
+    CONTROL         "",IDC_VCE_IME_OVERW,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,60,12,8
+    EDITTEXT        IDC_VCE_IME_SUBM,144,60,36,12,ES_AUTOHSCROLL | ES_NUMBER
+    GROUPBOX        "Settings.Encoding.VCE.IMEOverw",IDC_STATIC,126,48,78,30
+    EDITTEXT        IDC_VCE_DISABLE_SUBM,216,60,36,12,ES_AUTOHSCROLL | ES_NUMBER
+    GROUPBOX        "Settings.Encoding.VCE.DisableSubMode",IDC_STATIC,210,48,66,30
+    EDITTEXT        IDC_VCE_SRNG_IMEX,252,30,36,12,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_VCE_SRNG_IMEY,300,30,36,12,ES_AUTOHSCROLL | ES_NUMBER
+    GROUPBOX        "Settings.Encoding.VCE.IME2SearchXY",IDC_STATIC,240,18,108,30
+    LTEXT           "Settings.Encoding.VCE.GOPSize",IDC_STATIC,39,44,66,8
+    EDITTEXT        IDC_VCE_GOP,6,42,30,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Settings.Encoding.VCE.Force16x16Skip",IDC_VCE_FORCE16SKIP,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,120,90,84,8
+    CONTROL         "Settings.Encoding.VCE.FavorPMVPoint",IDC_VCE_PMV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,120,102,84,8
+    CONTROL         "Settings.Encoding.VCE.ForceZPC",IDC_VCE_ZPC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,210,90,90,8
+    LTEXT           "Settings.Encoding.VCE.LSMVert",IDC_STATIC,6,60,66,8
+    COMBOBOX        IDC_VCE_LSM,6,72,66,30,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Settings.Encoding.VCE.IMEDec",IDC_VCE_IME_DEC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,210,102,90,8
+    CONTROL         "Settings.Encoding.VCE.ConstIntraPred",IDC_VCE_CONSTINTRAPRED,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,306,90,90,8
+    CONTROL         "Settings.Encoding.VCE.DisSATD",IDC_VCE_SATD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,306,102,90,8
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -835,6 +884,14 @@ BEGIN
         RIGHTMARGIN, 385
         TOPMARGIN, 7
         BOTTOMMARGIN, 125
+    END
+
+    IDD_SETTINGS_VCE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 421
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 325
     END
 END
 #endif    // APSTUDIO_INVOKED

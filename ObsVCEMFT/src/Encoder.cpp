@@ -4,6 +4,14 @@
 
 extern ConfigFile **VCEAppConfig;
 
+#ifndef htonl
+#define htons(n) (((((uint16_t)(n) & 0xFF)) << 8) | (((uint16_t)(n) & 0xFF00) >> 8))
+#define htonl(n) (((((uint32_t)(n) & 0xFF)) << 24) | \
+    ((((uint32_t)(n)& 0xFF00)) << 8) | \
+    ((((uint32_t)(n)& 0xFF0000)) >> 8) | \
+    ((((uint32_t)(n)& 0xFF000000)) >> 24))
+#endif
+
 extern "C"
 {
 #define _STDINT_H
@@ -124,6 +132,7 @@ HRESULT VCEEncoder::Init()
     int bitRateWindow = 50;
     int gopSize = mFps * (mKeyint == 0 ? 2 : mKeyint);
     gopSize -= gopSize % 6;
+    VCELog(TEXT("GOP size: %d"), gopSize);
 
     mPConfigCtrl.commonParams.useInterop = 0;
     mPConfigCtrl.commonParams.useSWCodec = 0;
@@ -136,10 +145,10 @@ HRESULT VCEEncoder::Init()
     mPConfigCtrl.vidParams.bufSize = mBufferSize * 1000;
     mPConfigCtrl.vidParams.meanBitrate = mMaxBitrate * (1000 - bitRateWindow);
     mPConfigCtrl.vidParams.maxBitrate = mMaxBitrate * (1000 + bitRateWindow);
-    mPConfigCtrl.vidParams.idrPeriod =  (mKeyint > 0 ? mKeyint : 2) * mFps;
+    mPConfigCtrl.vidParams.idrPeriod = gopSize;// (mKeyint > 0 ? mKeyint : 2) * mFps;
     mPConfigCtrl.vidParams.gopSize = mUseCBR ? gopSize : 20;
     mPConfigCtrl.vidParams.qualityVsSpeed = 50;
-    mPConfigCtrl.vidParams.compressionStandard = eAVEncH264VProfile_ConstrainedBase;
+    mPConfigCtrl.vidParams.compressionStandard = eAVEncH264VProfile_Base;
     mPConfigCtrl.vidParams.numBFrames = 0;
     mPConfigCtrl.vidParams.lowLatencyMode = 0;
 
@@ -354,7 +363,13 @@ HRESULT VCEEncoder::ProcessInput()
             inBuf->locked = false;
         }
 
-        LOGIFFAILED(mLogFile, hr, "ProcessInput failed.");
+        if (MF_E_NOTACCEPTING == hr)
+        {
+            VCELog(TEXT("ProcessInput: MF_E_NOTACCEPTING ts: %d"), inBuf->timestamp);
+            return hr;
+        }
+        else
+            LOGIFFAILED(mLogFile, hr, "ProcessInput failed.");
     }
 #if _DEBUG
     VCELog(TEXT("Processed %d buffer(s), %d in queue"), inBufCount, mInputQueue.size());

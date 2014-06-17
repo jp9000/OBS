@@ -235,3 +235,30 @@ public:
 private:
     void SelectPresetDialog(bool useQSV, bool useNVENC);
 };
+
+//============================================================================
+// SettingsEncoding class
+
+class SettingsVCE : public SettingsPane
+{
+    bool hasVCE;
+    //-----------------------------------------------------------------------
+    // Constructor/destructor
+
+public:
+    SettingsVCE();
+    virtual ~SettingsVCE();
+
+    //-----------------------------------------------------------------------
+    // Methods
+
+public:
+    // Interface
+    virtual CTSTR GetCategory() const;
+    virtual HWND CreatePane(HWND parentHwnd);
+    virtual void DestroyPane();
+    virtual INT_PTR ProcMessage(UINT message, WPARAM wParam, LPARAM lParam);
+    virtual void ApplySettings();
+    virtual void CancelSettings();
+    virtual bool HasDefaults() const;
+};

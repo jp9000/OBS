@@ -2,6 +2,9 @@
 #include "ObsVCE.h"
 
 using namespace std;
+#define CHECKCONFIG(x,y) \
+if (x != y)\
+    VCELog(TEXT("%s is not set: %d"), TEXT(#x), x);
 
 void quickSet(map<string, int32_t> &configTable, int qs)
 {
@@ -273,6 +276,13 @@ bool setEncodeConfig(ove_session session, OvConfigCtrl *pConfig)
     memset(&pictureControlConfig, 0, sizeof(OVE_CONFIG_PICTURE_CONTROL));
     pictureControlConfig.size = sizeof(OVE_CONFIG_PICTURE_CONTROL);
     res = OVEncodeGetPictureControlConfig(session, &pictureControlConfig);
+    CHECKCONFIG(pictureControlConfig.cabacEnable, pConfig->pictControl.cabacEnable);
+    CHECKCONFIG(pictureControlConfig.encForceIntraRefresh, pConfig->pictControl.encForceIntraRefresh);
+    CHECKCONFIG(pictureControlConfig.encForceIMBPeriod, pConfig->pictControl.encForceIMBPeriod);
+    CHECKCONFIG(pictureControlConfig.encIPicPeriod, pConfig->pictControl.encIPicPeriod);
+    CHECKCONFIG(pictureControlConfig.encIDRPeriod, pConfig->pictControl.encIDRPeriod);
+    CHECKCONFIG(pictureControlConfig.useConstrainedIntraPred, pConfig->pictControl.useConstrainedIntraPred);
+
 
     /**************************************************************************/
     /* get the rate control configuration                                     */
@@ -297,16 +307,31 @@ bool setEncodeConfig(ove_session session, OvConfigCtrl *pConfig)
     /**************************************************************************/
     /* get the MotionEstimation configuration                                 */
     /**************************************************************************/
-    /*memset(&meControlConfig, 0, sizeof(OVE_CONFIG_MOTION_ESTIMATION));
+    memset(&meControlConfig, 0, sizeof(OVE_CONFIG_MOTION_ESTIMATION));
     meControlConfig.size = sizeof(OVE_CONFIG_MOTION_ESTIMATION);
-    res = p_OVEncodeGetMotionEstimationConfig(session, &meControlConfig);*/
+    res = OVEncodeGetMotionEstimationConfig(session, &meControlConfig);
+    CHECKCONFIG(meControlConfig.encDisableSubMode, pConfig->meControl.encDisableSubMode);
+    CHECKCONFIG(meControlConfig.enableAMD, pConfig->meControl.enableAMD);
+    CHECKCONFIG(meControlConfig.encSearchRangeX, pConfig->meControl.encSearchRangeX);
+    CHECKCONFIG(meControlConfig.encSearchRangeY, pConfig->meControl.encSearchRangeY);
+    CHECKCONFIG(meControlConfig.disableFavorPMVPoint, pConfig->meControl.disableFavorPMVPoint);
+    CHECKCONFIG(meControlConfig.motionEstHalfPixel, pConfig->meControl.motionEstHalfPixel);
+    CHECKCONFIG(meControlConfig.motionEstQuarterPixel, pConfig->meControl.motionEstQuarterPixel);
+
 
     /**************************************************************************/
     /* get the RDO configuration                                              */
     /**************************************************************************/
-    /*memset(&rdoControlConfig, 0, sizeof(OVE_CONFIG_RDO));
+    memset(&rdoControlConfig, 0, sizeof(OVE_CONFIG_RDO));
     rdoControlConfig.size = sizeof(OVE_CONFIG_RDO);
-    res = p_OVEncodeGetRDOControlConfig(session, &rdoControlConfig);*/
+    res = OVEncodeGetRDOControlConfig(session, &rdoControlConfig);
+    CHECKCONFIG(rdoControlConfig.enc16x16CostAdj, pConfig->rdoControl.enc16x16CostAdj);
+    CHECKCONFIG(rdoControlConfig.encDisableTbePredIFrame, pConfig->rdoControl.encDisableTbePredIFrame);
+    CHECKCONFIG(rdoControlConfig.encDisableTbePredPFrame, pConfig->rdoControl.encDisableTbePredPFrame);
+    CHECKCONFIG(rdoControlConfig.encForce16x16skip, pConfig->rdoControl.encForce16x16skip);
+    CHECKCONFIG(rdoControlConfig.encSkipCostAdj, pConfig->rdoControl.encSkipCostAdj);
+    CHECKCONFIG(rdoControlConfig.useFmeInterpolUV, pConfig->rdoControl.useFmeInterpolUV);
+    CHECKCONFIG(rdoControlConfig.useFmeInterpolY, pConfig->rdoControl.useFmeInterpolY);
 
     return(res);
 }
