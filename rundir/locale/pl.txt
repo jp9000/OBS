@@ -82,6 +82,7 @@ MainMenu.Settings.FullscreenMode="&Podgląd pełnoekranowy"
 MainMenu.Settings.Projector="&Projektor"
 
 MainMenu.File.Exit="W&yjdź"
+MainMenu.File.OpenRecordingsFolder="Otwórz folder z nag&raniami"
 MainMenu.File.Save="Zapisz"
 
 MainMenu.Help.Contents="&Dokumentacja"

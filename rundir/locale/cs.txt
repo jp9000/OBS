@@ -82,6 +82,7 @@ MainMenu.Settings.FullscreenMode="&Celoobrazovkový režim náhledu"
 MainMenu.Settings.Projector="&Projektor"
 
 MainMenu.File.Exit="U&končit"
+MainMenu.File.OpenRecordingsFolder="Otevřít složku &nahrávek"
 MainMenu.File.Save="&Uložit"
 
 MainMenu.Help.Contents="&Obsah"
@@ -111,6 +112,7 @@ MainWindow.TestStream="Náhled vysílání"
 Plugins.Configure="Konfigurovat"
 Plugins.Description="Popis:"
 Plugins.Filename="Název souboru:"
+Plugins.InvalidVersion="Plugin '%s' je vytvořen pro %d bitovou verzi OBS a nelze jej načíst. Prosím, zkontrolujte zda je tato verze pluginu pro tuto verzi OBS."
 
 Reconnecting.Retrying="Nelze se připojit.  Opakuji"
 

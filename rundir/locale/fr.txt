@@ -82,6 +82,7 @@ MainMenu.Settings.FullscreenMode="Aperçu &Plein-écran"
 MainMenu.Settings.Projector="&Projecteur"
 
 MainMenu.File.Exit="&Quitter"
+MainMenu.File.OpenRecordingsFolder="Ouvrir le &Dossier des Enregistrements"
 MainMenu.File.Save="&Sauvegarder"
 
 MainMenu.Help.Contents="&À propos"

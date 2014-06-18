@@ -82,6 +82,7 @@ MainMenu.Settings.FullscreenMode="&מצב תצוגה מקדימה לסטרים �
 MainMenu.Settings.Projector="מקרן&"
 
 MainMenu.File.Exit="&צא"
+MainMenu.File.OpenRecordingsFolder="פתח &תיקיית הקלטות"
 MainMenu.File.Save="&שמור"
 
 MainMenu.Help.Contents="&תוכן עניינים"

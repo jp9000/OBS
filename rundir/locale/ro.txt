@@ -82,6 +82,7 @@ MainMenu.Settings.FullscreenMode="Modul de previzualizare pe tot ecranul (&F)"
 MainMenu.Settings.Projector="&Proiector"
 
 MainMenu.File.Exit="Ieșire (&X)"
+MainMenu.File.OpenRecordingsFolder="Deschide Folderul cu &Înregistrări"
 MainMenu.File.Save="&Salva"
 
 MainMenu.Help.Contents="&Conţinutul"

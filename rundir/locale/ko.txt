@@ -82,6 +82,7 @@ MainMenu.Settings.FullscreenMode="전체화면 미리보기 모드(&F)"
 MainMenu.Settings.Projector="프로젝터(&P)"
 
 MainMenu.File.Exit="끝내기(&X)"
+MainMenu.File.OpenRecordingsFolder="녹화 폴더 열기(&R)"
 MainMenu.File.Save="저장(&S)"
 
 MainMenu.Help.Contents="도움말 및 지원(&C)"

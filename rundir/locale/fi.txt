@@ -82,6 +82,7 @@ MainMenu.Settings.FullscreenMode="&Kokoruudun esikatselutila"
 MainMenu.Settings.Projector="&Projektori"
 
 MainMenu.File.Exit="&Sulje"
+MainMenu.File.OpenRecordingsFolder="Avaa &tallennuskansio"
 MainMenu.File.Save="&Tallenna"
 
 MainMenu.Help.Contents="&Sisältö"

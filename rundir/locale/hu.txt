@@ -82,6 +82,7 @@ MainMenu.Settings.FullscreenMode="& Teljes képernyős előnézet"
 MainMenu.Settings.Projector="&Vetítő"
 
 MainMenu.File.Exit="&Kilépés"
+MainMenu.File.OpenRecordingsFolder="Felvételek Mappájának Megnyitása"
 MainMenu.File.Save="&Mentés"
 
 MainMenu.Help.Contents="&Súgó"

@@ -82,13 +82,14 @@ MainMenu.Settings.FullscreenMode="&Volledig-schermmodus"
 MainMenu.Settings.Projector="& Projector"
 
 MainMenu.File.Exit="&Afsluiten"
+MainMenu.File.OpenRecordingsFolder="&Opnamemap Openen"
 MainMenu.File.Save="Op&slaan"
 
 MainMenu.Help.Contents="&Inhoudsopgave"
 MainMenu.Help.VisitWebsite="Website Bezoeken"
 MainMenu.Help.CheckForUpdates="Controleren op &updates"
 
-MainMenu.Settings.OpenConfigFolder="&Configuriemap Openen"
+MainMenu.Settings.OpenConfigFolder="&Configuratiemap Openen"
 MainMenu.Settings.OpenLogFolder="&Logmap Openen"
 MainMenu.Settings.ShowLogWindow="Toon logvenster"
 

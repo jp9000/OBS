@@ -82,6 +82,7 @@ MainMenu.Settings.FullscreenMode="&Preview pantalla completa"
 MainMenu.Settings.Projector="&Proyector"
 
 MainMenu.File.Exit="&Salir"
+MainMenu.File.OpenRecordingsFolder="Abrir la carpeta de grabaciones"
 MainMenu.File.Save="&Guardar"
 
 MainMenu.Help.Contents="S&umario"
