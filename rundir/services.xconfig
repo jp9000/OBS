@@ -109,4 +109,10 @@ services : {
       "Default"     : rtmp://stream.connectcast.tv/live
     }
   }
+  Azubu.tv : {
+    id : 13
+    servers : {
+      "API" : https://api.azubu.tv/stream/broadcaster-key/
+    }
+  }
 }
