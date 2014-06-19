@@ -25,6 +25,7 @@ mkdir pdbs
 mkdir pdbs\32bit
 mkdir pdbs\64bit
 
+copy ..\COPYING .\32bit\LICENSE
 copy ..\release\obs.exe .\32bit\
 copy ..\obsapi\release\obsapi.dll .\32bit\
 copy ..\OBSHelp\OBSHelp.chm .\32bit\
@@ -48,6 +49,7 @@ copy ..\QSVHelper\Release\QSVHelper.exe .\32bit
 copy ..\ObsNvenc\Release\ObsNvenc.dll .\32bit
 copy "%WindowsSDK80Path%Debuggers\x86\dbghelp.dll" .\32bit
 
+copy ..\COPYING .\64bit\LICENSE
 copy ..\x64\release\obs.exe .\64bit\
 copy ..\obsapi\x64\release\obsapi.dll .\64bit\
 copy ..\OBSHelp\OBSHelp.chm .\64bit\
@@ -73,6 +75,8 @@ copy "%WindowsSDK80Path%Debuggers\x64\dbghelp.dll" .\64bit
 
 copy ..\rundir\pdb32\*.pdb .\pdbs\32bit
 copy ..\rundir\pdb64\*.pdb .\pdbs\64bit
+
+pause
 
 mkdir upload
 mkdir upload\DirectShowPlugin
@@ -102,56 +106,55 @@ mkdir upload\OBS\locale
 mkdir upload\OBS\services
 mkdir upload\OBS\shaders
 
-copy ..\dshowplugin\release\dshowplugin.dll .\upload\DirectShowPlugin\32bit\
-copy ..\rundir\plugins\dshowplugin\locale\*.txt .\upload\DirectShowPlugin\32bit\DShowPlugin\locale\
-copy ..\rundir\plugins\dshowplugin\shaders\*.?Shader .\upload\DirectShowPlugin\32bit\DShowPlugin\shaders\
+copy 32bit\plugins\dshowplugin.dll .\upload\DirectShowPlugin\32bit\
+copy 32bit\plugins\dshowplugin\locale\*.txt .\upload\DirectShowPlugin\32bit\DShowPlugin\locale\
+copy 32bit\plugins\dshowplugin\shaders\*.?Shader .\upload\DirectShowPlugin\32bit\DShowPlugin\shaders\
 
-copy ..\dshowplugin\x64\release\dshowplugin.dll .\upload\DirectShowPlugin\64bit\
-copy ..\rundir\plugins\dshowplugin\locale\*.txt .\upload\DirectShowPlugin\64bit\DShowPlugin\locale\
-copy ..\rundir\plugins\dshowplugin\shaders\*.?Shader .\upload\DirectShowPlugin\64bit\DShowPlugin\shaders\
+copy 64bit\plugins\dshowplugin.dll .\upload\DirectShowPlugin\64bit\
+copy 64bit\plugins\dshowplugin\locale\*.txt .\upload\DirectShowPlugin\64bit\DShowPlugin\locale\
+copy 64bit\plugins\dshowplugin\shaders\*.?Shader .\upload\DirectShowPlugin\64bit\DShowPlugin\shaders\
 
-copy ..\graphicscapture\release\graphicscapture.dll .\upload\GraphicsCapturePlugin\32bit\
-copy ..\graphicscapture\graphicscapturehook\release\graphicscapturehook.dll .\upload\GraphicsCapturePlugin\32bit\GraphicsCapture\
-copy ..\graphicscapture\graphicscapturehook\x64\release\graphicscapturehook64.dll .\upload\GraphicsCapturePlugin\32bit\GraphicsCapture\
-copy ..\injectHelper\release\injectHelper.exe .\upload\GraphicsCapturePlugin\32bit\GraphicsCapture\
-copy ..\injectHelper\x64\release\injectHelper64.exe .\upload\GraphicsCapturePlugin\32bit\GraphicsCapture\
+copy 32bit\plugins\graphicscapture.dll .\upload\GraphicsCapturePlugin\32bit\
+copy 32bit\plugins\graphicscapture\graphicscapturehook.dll .\upload\GraphicsCapturePlugin\32bit\GraphicsCapture\
+copy 32bit\plugins\graphicscapture\graphicscapturehook64.dll .\upload\GraphicsCapturePlugin\32bit\GraphicsCapture\
+copy 32bit\plugins\graphicscapture\injectHelper.exe .\upload\GraphicsCapturePlugin\32bit\GraphicsCapture\
+copy 32bit\plugins\graphicscapture\injectHelper64.exe .\upload\GraphicsCapturePlugin\32bit\GraphicsCapture\
 
-copy ..\graphicscapture\x64\release\graphicscapture.dll .\upload\GraphicsCapturePlugin\64bit\
-copy ..\graphicscapture\graphicscapturehook\release\graphicscapturehook.dll .\upload\GraphicsCapturePlugin\64bit\GraphicsCapture\
-copy ..\graphicscapture\graphicscapturehook\x64\release\graphicscapturehook64.dll .\upload\GraphicsCapturePlugin\64bit\GraphicsCapture\
-copy ..\injectHelper\release\injectHelper.exe .\upload\GraphicsCapturePlugin\64bit\GraphicsCapture\
-copy ..\injectHelper\x64\release\injectHelper64.exe .\upload\GraphicsCapturePlugin\64bit\GraphicsCapture\
+copy 64bit\plugins\graphicscapture.dll .\upload\GraphicsCapturePlugin\64bit\
+copy 64bit\plugins\graphicscapture\graphicscapturehook.dll .\upload\GraphicsCapturePlugin\64bit\GraphicsCapture\
+copy 64bit\plugins\graphicscapture\graphicscapturehook64.dll .\upload\GraphicsCapturePlugin\64bit\GraphicsCapture\
+copy 64bit\plugins\graphicscapture\injectHelper.exe .\upload\GraphicsCapturePlugin\64bit\GraphicsCapture\
+copy 64bit\plugins\graphicscapture\injectHelper64.exe .\upload\GraphicsCapturePlugin\64bit\GraphicsCapture\
 
-copy ..\NoiseGate\release\noisegate.dll .\upload\NoiseGatePlugin\32bit\
-copy ..\NoiseGate\x64\release\noisegate.dll .\upload\NoiseGatePlugin\64bit\
+copy 32bit\plugins\noisegate.dll .\upload\NoiseGatePlugin\32bit\
+copy 64bit\plugins\noisegate.dll .\upload\NoiseGatePlugin\64bit\
 
-copy ..\psvplugin\release\psvplugin.dll .\upload\PSVPlugin\32bit\
-copy ..\rundir\plugins\psvplugin\locale\*.txt .\upload\PSVPlugin\32bit\PSVPlugin\locale\
+copy 32bit\plugins\psvplugin.dll .\upload\PSVPlugin\32bit\
+copy 32bit\plugins\psvplugin\locale\*.txt .\upload\PSVPlugin\32bit\PSVPlugin\locale\
 
-copy ..\psvplugin\x64\release\psvplugin.dll .\upload\PSVPlugin\64bit\
-copy ..\rundir\plugins\psvplugin\locale\*.txt .\upload\PSVPlugin\64bit\PSVPlugin\locale\
+copy 64bit\plugins\psvplugin.dll .\upload\PSVPlugin\64bit\
+copy 64bit\plugins\psvplugin\locale\*.txt .\upload\PSVPlugin\64bit\PSVPlugin\locale\
 
-copy ..\release\obs.exe .\upload\OBS\32bit\
-copy ..\obsapi\release\obsapi.dll .\upload\OBS\32bit\
-copy ..\OBSHelp\OBSHelp.chm .\upload\OBS\32bit\
-copy ..\rundir\pdb32\stripped\*.pdb .\upload\OBS\32bit\
-copy ..\x264\libs\32bit\libx264-142.dll .\upload\OBS\32bit
-copy ..\QSVHelper\Release\QSVHelper.exe .\upload\OBS\32bit
-copy ..\ObsNvenc\Release\ObsNvenc.dll .\upload\OBS\32bit
+copy 32bit\obs.exe .\upload\OBS\32bit\
+copy 32bit\obsapi.dll .\upload\OBS\32bit\
+copy 32bit\OBSHelp.chm .\upload\OBS\32bit\
+copy 32bit\*.pdb .\upload\OBS\32bit\
+copy 32bit\libx264-142.dll .\upload\OBS\32bit
+copy 32bit\QSVHelper.exe .\upload\OBS\32bit
+copy 32bit\ObsNvenc.dll .\upload\OBS\32bit
 copy "%WindowsSDK80Path%Debuggers\x86\dbghelp.dll" .\upload\OBS\32bit
 
-copy ..\x64\release\obs.exe .\upload\OBS\64bit\
-copy ..\obsapi\x64\release\obsapi.dll .\upload\OBS\64bit\
-copy ..\OBSHelp\OBSHelp.chm .\upload\OBS\64bit\
-copy ..\rundir\pdb64\stripped\*.pdb .\upload\OBS\64bit\
-copy ..\x264\libs\64bit\libx264-142.dll .\upload\OBS\64bit
-copy ..\QSVHelper\Release\QSVHelper.exe .\upload\OBS\64bit
-copy ..\ObsNvenc\x64\Release\ObsNvenc.dll .\upload\OBS\64bit
+copy 64bit\obs.exe .\upload\OBS\64bit\
+copy 64bit\obsapi.dll .\upload\OBS\64bit\
+copy 64bit\OBSHelp.chm .\upload\OBS\64bit\
+copy 64bit\*.pdb .\upload\OBS\64bit\
+copy 64bit\libx264-142.dll .\upload\OBS\64bit
+copy 64bit\QSVHelper.exe .\upload\OBS\64bit
+copy 64bit\ObsNvenc.dll .\upload\OBS\64bit
 copy "%WindowsSDK80Path%Debuggers\x64\dbghelp.dll" .\upload\OBS\64bit
 
-copy ..\rundir\locale\*.txt .\upload\OBS\locale\
+copy 32bit\locale\*.txt .\upload\OBS\locale\
 
-copy ..\rundir\services.xconfig .\upload\OBS\services\
+copy 32bit\services.xconfig .\upload\OBS\services\
 
-copy ..\rundir\shaders\*.?Shader .\upload\OBS\shaders\
-
+copy 32bit\shaders\*.?Shader .\upload\OBS\shaders\
