@@ -137,14 +137,17 @@
 #define IDC_PLUGINS                     1055
 #define IDC_MOVEUP                      1056
 #define IDC_REPLACE                     1056
+#define IDC_ADD2                        1056
 #define IDC_MOVEDOWN                    1057
 #define IDC_DESCRIPTION                 1057
 #define IDC_MOVEUPWARD                  1057
+#define IDC_REMOVE2                     1057
 #define IDC_MOVETOTOP                   1058
 #define IDC_MOVEDOWNWARD                1058
 #define IDC_MOVETOBOTTOM                1059
 #define IDC_RENAME                      1060
 #define IDC_MONITORCAPTURE              1061
+#define IDC_RENAME2                     1061
 #define IDC_REGIONCAPTURE               1062
 #define IDC_CONFIG                      1063
 #define IDC_POSX                        1063
@@ -309,6 +312,7 @@
 #define IDC_ENCODERQSV                  1176
 #define IDC_X264PRESET_LABEL            1176
 #define IDC_ENCODERNVENC                1177
+#define IDC_SCENECOLLECTION             1178
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -365,7 +369,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        149
 #define _APS_NEXT_COMMAND_VALUE         40069
-#define _APS_NEXT_CONTROL_VALUE         1177
+#define _APS_NEXT_CONTROL_VALUE         1178
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
