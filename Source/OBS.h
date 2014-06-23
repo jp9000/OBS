@@ -774,7 +774,7 @@ private:
     int  keyframeWait;
 
     QWORD firstFrameTimestamp;
-    EncoderPicture *curFramePic;
+    EncoderPicture * volatile curFramePic;
     HANDLE hVideoEvent;
 
     static DWORD STDCALL EncodeThread(LPVOID lpUnused);

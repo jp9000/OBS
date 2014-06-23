@@ -1131,7 +1131,7 @@ void OBS::MainCaptureLoop()
                     {
                         //encodeThreadProfiler.reset(::new ProfilerNode(TEXT("EncodeThread"), true));
                         //encodeThreadProfiler->MonitorThread(hEncodeThread);
-                        curFramePic = &picOut;
+                        InterlockedExchangePointer((volatile PVOID*)&curFramePic, &picOut);
                     }
 
                     curOutBuffer = nextOutBuffer;
