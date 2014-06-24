@@ -87,11 +87,11 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
             DWORD exStyles = (DWORD)GetWindowLongPtr(hwndCurrent, GWL_EXSTYLE);
             DWORD styles = (DWORD)GetWindowLongPtr(hwndCurrent, GWL_STYLE);
 
+            if (strWindowName.IsValid() && sstri(strWindowName, L"battlefield") != nullptr)
+                exStyles &= ~WS_EX_TOOLWINDOW;
+
             if((exStyles & WS_EX_TOOLWINDOW) == 0 && (styles & WS_CHILD) == 0 /*&& hwndParent == NULL*/)
             {
-
-                //-------
-
                 DWORD processID;
                 GetWindowThreadProcessId(hwndCurrent, &processID);
                 if(processID == GetCurrentProcessId())
