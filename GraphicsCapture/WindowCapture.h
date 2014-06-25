@@ -24,6 +24,7 @@ class WindowCapture : public GraphicsCaptureMethod
 {
     Texture *sharedTexture;
     HWND hwndTarget;
+    HDC hdcTarget;
 
     UINT cx, cy;
 

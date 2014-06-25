@@ -22,6 +22,7 @@
 
 void WindowCapture::Destroy()
 {
+    ReleaseDC(hwndTarget, hdcTarget);
     delete sharedTexture;
     sharedTexture = NULL;
 }
@@ -38,12 +39,13 @@ bool WindowCapture::Init(CaptureInfo &info)
 
     sharedTexture = CreateGDITexture(info.cx, info.cy);
 
+    hdcTarget = GetDC(hwndTarget);
+
     return true;
 }
 
 Texture* WindowCapture::LockTexture()
 {
-    HDC hdcTarget = GetDC(hwndTarget);
     if (!hdcTarget) return NULL;
 
     bool bSuccess = false;
@@ -55,8 +57,6 @@ Texture* WindowCapture::LockTexture()
 
         bSuccess = true;
     }
-
-    ReleaseDC(hwndTarget, hdcTarget);
 
     return bSuccess ? sharedTexture : NULL;
 }
