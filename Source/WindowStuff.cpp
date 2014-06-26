@@ -854,7 +854,7 @@ void OBS::TrackModifyListbox(HWND hwnd, int ret)
 
                 if(App->scene)
                     App->scene->GetSelectedItems(selectedSceneItems);
-		
+
                 ImageSource *source = NULL;
                 Vect2 multiple;
 
@@ -2298,6 +2298,30 @@ void OBS::AddProfilesToMenu(HMENU menu)
     }
 }
 
+void OBS::AddSceneCollectionToMenu(HMENU menu)
+{
+    StringList sceneCollectionList;
+    GetSceneCollection(sceneCollectionList);
+
+    for (UINT i = 0; i < sceneCollectionList.Num(); i++)
+    {
+        String &strSceneCollection = sceneCollectionList[i];
+
+        UINT flags = MF_STRING;
+        if (strSceneCollection.CompareI(GetCurrentSceneCollection()))
+            flags |= MF_CHECKED;
+
+        AppendMenu(menu, flags, ID_SWITCHSCENECOLLECTION+i, strSceneCollection.Array());
+    }
+}
+
+void OBS::ResetSceneCollectionMenu()
+{
+    HMENU hmenuMain = GetMenu(hwndMain);
+    HMENU hmenuSceneCollection = GetSubMenu(hmenuMain, 3);
+    while (DeleteMenu(hmenuSceneCollection, 0, MF_BYPOSITION));
+    AddSceneCollectionToMenu(hmenuSceneCollection);
+}
 //----------------------------
 
 void OBS::ResetProfileMenu()
@@ -2670,7 +2694,7 @@ static void OBSUpdateLog()
 String OBS::GetApplicationName()
 {
     String name;
-    name << App->GetCurrentProfile() << L" - " OBS_VERSION_STRING L" - "
+    name << "Profile: " << App->GetCurrentProfile() << " - " << "SceneCollection: " << App->GetCurrentSceneCollection() << L" - " OBS_VERSION_STRING L" - "
 #ifdef _WIN64
     L"64bit";
 #else
@@ -3035,6 +3059,44 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                 App->ReloadIniSettings();
                                 ResetProfileMenu();
                                 ResetApplicationName();
+                            }
+                        }
+                        else if (id >= ID_SWITCHSCENECOLLECTION &&
+                            id <= ID_SWITCHSCENECOLLECTION_END)
+                        {
+                            MENUITEMINFO mii;
+                            zero(&mii, sizeof(mii));
+                            mii.cbSize = sizeof(mii);
+                            mii.fMask = MIIM_STRING;
+
+                            HMENU hmenuMain = GetMenu(hwndMain);
+                            HMENU hmenuSceneCollection = GetSubMenu(hmenuMain, 3);
+                            GetMenuItemInfo(hmenuSceneCollection, id, FALSE, &mii);
+
+                            String strSceneCollection;
+                            strSceneCollection.SetLength(mii.cch++);
+                            mii.dwTypeData = strSceneCollection.Array();
+
+                            GetMenuItemInfo(hmenuSceneCollection, id, FALSE, &mii);
+
+                            if (!strSceneCollection.CompareI(GetCurrentSceneCollection()))
+                            {
+                                App->scenesConfig.Save();
+                                String strSceneCollectionPath;
+                                strSceneCollectionPath << lpAppDataPath << TEXT("\\sceneCollection\\") << strSceneCollection << TEXT(".xconfig");
+                                
+                                if (!App->scenesConfig.Open(strSceneCollectionPath))
+                                {
+                                    OBSMessageBox(hwnd, TEXT("Error - unable to open xconfig file"), NULL, 0);
+                                    break;
+                                }
+
+                                GlobalConfig->SetString(TEXT("General"), TEXT("SceneCollection"), strSceneCollection);
+                                App->scenesConfig.Close();
+                                App->ReloadSceneCollection();
+                                ResetSceneCollectionMenu();
+                                ResetApplicationName();
+                                App->UpdateNotificationAreaIcon();
                             }
                         }
                         else if (id >= ID_UPLOAD_LOG && id <= ID_UPLOAD_LOG_END)
