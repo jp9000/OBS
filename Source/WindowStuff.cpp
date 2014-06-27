@@ -1156,7 +1156,8 @@ void OBS::DeleteItems()
 
                     if(className == "GlobalSource") {
                         String globalSourceName = source->GetElement(TEXT("data"))->GetString(TEXT("name"));
-                        App->GetGlobalSource(globalSourceName)->GlobalSourceLeaveScene();
+                        if (App->GetGlobalSource(globalSourceName) != NULL)
+                            App->GetGlobalSource(globalSourceName)->GlobalSourceLeaveScene();
                     }
 
                     App->scene->RemoveImageSource(item);
