@@ -2341,6 +2341,7 @@ void OBS::DisableMenusWhileStreaming(bool disable)
     HMENU hmenuHelp = GetSubMenu(hmenuMain, 3);
 
     EnableMenuItem(hmenuMain, 2, (!disable ? MF_ENABLED : MF_DISABLED) | MF_BYPOSITION);
+    EnableMenuItem(hmenuMain, 3, (!disable ? MF_ENABLED : MF_DISABLED) | MF_BYPOSITION);
 
     EnableMenuItem(GetSubMenu(hmenuHelp, 3), 0, (!disable ? MF_ENABLED : MF_DISABLED) | MF_BYPOSITION);
     EnableMenuItem(GetSubMenu(hmenuHelp, 3), 1, (!disable ? MF_ENABLED : MF_DISABLED) | MF_BYPOSITION);
@@ -3065,6 +3066,9 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                         else if (id >= ID_SWITCHSCENECOLLECTION &&
                             id <= ID_SWITCHSCENECOLLECTION_END)
                         {
+                            if (App->bRunning)
+                                break;
+
                             MENUITEMINFO mii;
                             zero(&mii, sizeof(mii));
                             mii.cbSize = sizeof(mii);

@@ -576,7 +576,7 @@ OBS::OBS()
     if(numScenes)
     {
         String strScene = AppConfig->GetString(TEXT("General"), TEXT("CurrentScene"));
-        int id = (int)SendMessage(hwndTemp, LB_FINDSTRINGEXACT, -1, 0);
+        int id = (int)SendMessage(hwndTemp, LB_FINDSTRINGEXACT, -1, (LPARAM)strScene.Array());
         if(id == LB_ERR)
             id = 0;
 
@@ -1358,7 +1358,9 @@ void OBS::ReloadSceneCollection()
     if (!scenes)
         scenes = scenesConfig.CreateElement(TEXT("scenes"));
 
-    SendMessage(hwndTemp, LB_RESETCONTENT, 0, (LPARAM)scenes->GetName());
+    SendMessage(hwndTemp, LB_RESETCONTENT, 0, 0);
+
+    App->sceneElement = NULL;
     
     UINT numScenes = scenes->NumElements();
     if (!numScenes)
@@ -1379,7 +1381,7 @@ void OBS::ReloadSceneCollection()
     if (numScenes)
     {
         String strScene = AppConfig->GetString(TEXT("General"), TEXT("CurrentScene"));
-        int id = (int)SendMessage(hwndTemp, LB_FINDSTRINGEXACT, -1, 0);
+        int id = (int)SendMessage(hwndTemp, LB_FINDSTRINGEXACT, -1, (LPARAM)strScene.Array());
         if (id == LB_ERR)
             id = 0;
 
