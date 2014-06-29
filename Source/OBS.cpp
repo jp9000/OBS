@@ -762,6 +762,8 @@ OBS::OBS()
     ResizeWindow(false);
     ShowWindow(hwndMain, SW_SHOW);
 
+    renderFrameIn1To1Mode = !!GlobalConfig->GetInt(L"General", L"1to1Preview", false);
+
     // make sure sources listview column widths are as expected after obs window is shown
 
     ListView_SetColumnWidth(hwndSources,0,LVSCW_AUTOSIZE_USEHEADER);
@@ -828,6 +830,8 @@ OBS::~OBS()
     GlobalConfig->SetInt(TEXT("General"), TEXT("LogPosY"), rect.top);
     GlobalConfig->SetInt(TEXT("General"), TEXT("LogSizeX"), rect.right - rect.left);
     GlobalConfig->SetInt(TEXT("General"), TEXT("LogSizeY"), rect.bottom - rect.top);
+
+    GlobalConfig->SetInt(L"General", L"1to1Preview", renderFrameIn1To1Mode);
     
     // Save control panel visibility
     GlobalConfig->SetInt(TEXT("General"), TEXT("PanelVisibleWindowed"), bPanelVisibleWindowed ? 1 : 0);
