@@ -75,7 +75,7 @@ DWORD STDCALL Convert444Thread(Convert444Data *data)
     return 0;
 }
 
-bool OBS::BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, VideoSegment &segmentOut)
+bool OBS::BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, QWORD firstFrameTime, VideoSegment &segmentOut)
 {
     VideoSegment &segmentIn = *bufferedVideo.CreateNew();
     segmentIn.timestamp = timestamp;
@@ -87,7 +87,20 @@ bool OBS::BufferVideoData(const List<DataPacket> &inputPackets, const List<Packe
         segmentIn.packets[i].type =  inputTypes[i];
     }
 
-    if ((bufferedVideo.Last().timestamp - bufferedVideo[0].timestamp) >= UINT(App->bufferingTime))
+    bool dataReady = false;
+
+    OSEnterMutex(hSoundDataMutex);
+    for (UINT i = 0; i < pendingAudioFrames.Num(); i++)
+    {
+        if (firstFrameTime < pendingAudioFrames[i].timestamp && pendingAudioFrames[i].timestamp - firstFrameTime >= bufferedVideo[0].timestamp)
+        {
+            dataReady = true;
+            break;
+        }
+    }
+    OSLeaveMutex(hSoundDataMutex);
+
+    if (dataReady)
     {
         segmentOut.packets.TransferFrom(bufferedVideo[0].packets);
         segmentOut.timestamp = bufferedVideo[0].timestamp;
@@ -221,7 +234,7 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
     //buffer video data before sending out
     if(bProcessedFrame)
     {
-        bSendFrame = BufferVideoData(videoPackets, videoPacketTypes, bufferedTimes[0], curSegment);
+        bSendFrame = BufferVideoData(videoPackets, videoPacketTypes, bufferedTimes[0], frameInfo.firstFrameTime, curSegment);
         bufferedTimes.Remove(0);
     }
     else
@@ -1136,7 +1149,7 @@ void OBS::MainCaptureLoop()
                     {
                         //encodeThreadProfiler.reset(::new ProfilerNode(TEXT("EncodeThread"), true));
                         //encodeThreadProfiler->MonitorThread(hEncodeThread);
-                        curFramePic = &picOut;
+                        InterlockedExchangePointer((volatile PVOID*)&curFramePic, &picOut);
                     }
 
                     curOutBuffer = nextOutBuffer;

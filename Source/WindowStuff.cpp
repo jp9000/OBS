@@ -854,7 +854,7 @@ void OBS::TrackModifyListbox(HWND hwnd, int ret)
 
                 if(App->scene)
                     App->scene->GetSelectedItems(selectedSceneItems);
-		
+
                 ImageSource *source = NULL;
                 Vect2 multiple;
 
@@ -1156,7 +1156,8 @@ void OBS::DeleteItems()
 
                     if(className == "GlobalSource") {
                         String globalSourceName = source->GetElement(TEXT("data"))->GetString(TEXT("name"));
-                        App->GetGlobalSource(globalSourceName)->GlobalSourceLeaveScene();
+                        if (App->GetGlobalSource(globalSourceName) != NULL)
+                            App->GetGlobalSource(globalSourceName)->GlobalSourceLeaveScene();
                     }
 
                     App->scene->RemoveImageSource(item);
@@ -2298,6 +2299,30 @@ void OBS::AddProfilesToMenu(HMENU menu)
     }
 }
 
+void OBS::AddSceneCollectionToMenu(HMENU menu)
+{
+    StringList sceneCollectionList;
+    GetSceneCollection(sceneCollectionList);
+
+    for (UINT i = 0; i < sceneCollectionList.Num(); i++)
+    {
+        String &strSceneCollection = sceneCollectionList[i];
+
+        UINT flags = MF_STRING;
+        if (strSceneCollection.CompareI(GetCurrentSceneCollection()))
+            flags |= MF_CHECKED;
+
+        AppendMenu(menu, flags, ID_SWITCHSCENECOLLECTION+i, strSceneCollection.Array());
+    }
+}
+
+void OBS::ResetSceneCollectionMenu()
+{
+    HMENU hmenuMain = GetMenu(hwndMain);
+    HMENU hmenuSceneCollection = GetSubMenu(hmenuMain, 3);
+    while (DeleteMenu(hmenuSceneCollection, 0, MF_BYPOSITION));
+    AddSceneCollectionToMenu(hmenuSceneCollection);
+}
 //----------------------------
 
 void OBS::ResetProfileMenu()
@@ -2316,6 +2341,7 @@ void OBS::DisableMenusWhileStreaming(bool disable)
     HMENU hmenuHelp = GetSubMenu(hmenuMain, 3);
 
     EnableMenuItem(hmenuMain, 2, (!disable ? MF_ENABLED : MF_DISABLED) | MF_BYPOSITION);
+    EnableMenuItem(hmenuMain, 3, (!disable ? MF_ENABLED : MF_DISABLED) | MF_BYPOSITION);
 
     EnableMenuItem(GetSubMenu(hmenuHelp, 3), 0, (!disable ? MF_ENABLED : MF_DISABLED) | MF_BYPOSITION);
     EnableMenuItem(GetSubMenu(hmenuHelp, 3), 1, (!disable ? MF_ENABLED : MF_DISABLED) | MF_BYPOSITION);
@@ -2670,7 +2696,7 @@ static void OBSUpdateLog()
 String OBS::GetApplicationName()
 {
     String name;
-    name << App->GetCurrentProfile() << L" - " OBS_VERSION_STRING L" - "
+    name << "Profile: " << App->GetCurrentProfile() << " - " << "SceneCollection: " << App->GetCurrentSceneCollection() << L" - " OBS_VERSION_STRING L" - "
 #ifdef _WIN64
     L"64bit";
 #else
@@ -2718,6 +2744,24 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 case ID_EXIT:
                     PostQuitMessage(0);
                     break;
+
+                case ID_RECORDINGSFOLDER:
+                    {
+                        String path = OSGetDefaultVideoSavePath();
+                        path = GetPathDirectory(GetPathWithoutExtension(AppConfig->GetString(TEXT("Publish"), TEXT("SavePath"), path.IsValid() ? path.Array() : nullptr))).FindReplace(L"/", L"\\");
+                        String lastFile = App->lastOutputFile.FindReplace(L"/", L"\\");
+
+                        LPITEMIDLIST item = nullptr;
+                        if (lastFile.IsValid() && path == lastFile.Left(path.Length()) && (item = ILCreateFromPath(lastFile)))
+                        {
+                            SHOpenFolderAndSelectItems(item, 0, nullptr, 0);
+                            ILFree(item);
+                        }
+                        else
+                            ShellExecute(NULL, L"open", path, 0, 0, SW_SHOWNORMAL);
+
+                        break;
+                    }
 
                 case ID_ALWAYSONTOP:
                     {
@@ -3017,6 +3061,47 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                 App->ReloadIniSettings();
                                 ResetProfileMenu();
                                 ResetApplicationName();
+                            }
+                        }
+                        else if (id >= ID_SWITCHSCENECOLLECTION &&
+                            id <= ID_SWITCHSCENECOLLECTION_END)
+                        {
+                            if (App->bRunning)
+                                break;
+
+                            MENUITEMINFO mii;
+                            zero(&mii, sizeof(mii));
+                            mii.cbSize = sizeof(mii);
+                            mii.fMask = MIIM_STRING;
+
+                            HMENU hmenuMain = GetMenu(hwndMain);
+                            HMENU hmenuSceneCollection = GetSubMenu(hmenuMain, 3);
+                            GetMenuItemInfo(hmenuSceneCollection, id, FALSE, &mii);
+
+                            String strSceneCollection;
+                            strSceneCollection.SetLength(mii.cch++);
+                            mii.dwTypeData = strSceneCollection.Array();
+
+                            GetMenuItemInfo(hmenuSceneCollection, id, FALSE, &mii);
+
+                            if (!strSceneCollection.CompareI(GetCurrentSceneCollection()))
+                            {
+                                App->scenesConfig.Save();
+                                String strSceneCollectionPath;
+                                strSceneCollectionPath << lpAppDataPath << TEXT("\\sceneCollection\\") << strSceneCollection << TEXT(".xconfig");
+                                
+                                if (!App->scenesConfig.Open(strSceneCollectionPath))
+                                {
+                                    OBSMessageBox(hwnd, TEXT("Error - unable to open xconfig file"), NULL, 0);
+                                    break;
+                                }
+
+                                GlobalConfig->SetString(TEXT("General"), TEXT("SceneCollection"), strSceneCollection);
+                                App->scenesConfig.Close();
+                                App->ReloadSceneCollection();
+                                ResetSceneCollectionMenu();
+                                ResetApplicationName();
+                                App->UpdateNotificationAreaIcon();
                             }
                         }
                         else if (id >= ID_UPLOAD_LOG && id <= ID_UPLOAD_LOG_END)

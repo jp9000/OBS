@@ -151,14 +151,17 @@
 #define IDC_PLUGINS                     1055
 #define IDC_MOVEUP                      1056
 #define IDC_REPLACE                     1056
+#define IDC_ADD2                        1056
 #define IDC_MOVEDOWN                    1057
 #define IDC_DESCRIPTION                 1057
 #define IDC_MOVEUPWARD                  1057
+#define IDC_REMOVE2                     1057
 #define IDC_MOVETOTOP                   1058
 #define IDC_MOVEDOWNWARD                1058
 #define IDC_MOVETOBOTTOM                1059
 #define IDC_RENAME                      1060
 #define IDC_MONITORCAPTURE              1061
+#define IDC_RENAME2                     1061
 #define IDC_REGIONCAPTURE               1062
 #define IDC_CONFIG                      1063
 #define IDC_POSX                        1063
@@ -337,6 +340,7 @@
 #define IDC_ENCODERQSV                  1176
 #define IDC_X264PRESET_LABEL            1176
 #define IDC_ENCODERNVENC                1177
+#define IDC_SCENECOLLECTION             1178
 #define IDC_VCE_LSM                     1177
 #define IDC_ENCODERVCE                  1178
 #define IDC_VCE_QVSS                    1178
@@ -388,13 +392,14 @@
 #define ID_HELP_ANALYZE_CURRENT_LOG     40063
 #define ID_SETTINGS_SHOWCONSOLE         40066
 #define ID_SHOWLOG                      40067
+#define ID_RECORDINGSFOLDER              40068
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        150
-#define _APS_NEXT_COMMAND_VALUE         40068
+#define _APS_NEXT_COMMAND_VALUE         40069
 #define _APS_NEXT_CONTROL_VALUE         1180
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

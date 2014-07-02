@@ -185,7 +185,7 @@ void LogSystemStats()
 void InvertPre47Scenes()
 {
     String strScenesPath;
-    strScenesPath << lpAppDataPath << TEXT("\\scenes.xconfig");
+    strScenesPath << lpAppDataPath << TEXT("\\sceneCollection\\scenes.xconfig");
 
     XConfig scenesConfig;
     if(scenesConfig.Open(strScenesPath))
@@ -206,6 +206,57 @@ void InvertPre47Scenes()
         }
 
         scenesConfig.Close(true);
+    }
+}
+
+void SetupSceneCollection(CTSTR scenecollection)
+{
+    String oldSceneCollectionPath;
+    String newSceneCollectionPath;
+    oldSceneCollectionPath << lpAppDataPath << TEXT("\\scenes.xconfig");
+    newSceneCollectionPath << lpAppDataPath << TEXT("\\sceneCollection\\scenes.xconfig");
+
+    if (OSFileExists(oldSceneCollectionPath))
+    {
+        OSDeleteFile(newSceneCollectionPath);
+        MoveFile(oldSceneCollectionPath, newSceneCollectionPath);
+    }
+
+    String strSceneCollection = scenecollection ? scenecollection : GlobalConfig->GetString(TEXT("General"), TEXT("SceneCollection"));
+    String strXconfig;
+
+    if (scenecollection)
+        GlobalConfig->SetString(TEXT("General"), TEXT("SceneCollection"), scenecollection);
+
+    bool bFoundSceneCollection = false;
+
+    if (strSceneCollection.IsValid())
+    {
+        strXconfig << lpAppDataPath << TEXT("\\sceneCollection\\") << strSceneCollection << TEXT(".xconfig");
+        bFoundSceneCollection = OSFileExists(strXconfig) != 0;
+    }
+
+    if (!bFoundSceneCollection)
+    {
+        OSFindData ofd;
+
+        strXconfig.Clear() << lpAppDataPath << TEXT("\\sceneCollection\\*.xconfig");
+        HANDLE hFind = OSFindFirstFile(strXconfig, ofd);
+        if (hFind)
+        {
+           do
+           {
+              if (ofd.bDirectory) continue;
+
+                strSceneCollection = GetPathWithoutExtension(ofd.fileName);
+                GlobalConfig->SetString(TEXT("General"), TEXT("SceneCollection"), strSceneCollection);
+                bFoundSceneCollection = true;
+                break;
+
+          } while (OSFindNextFile(hFind, ofd));
+
+            OSFindClose(hFind);
+        }
     }
 }
 
@@ -424,6 +475,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     int numArgs;
     LPWSTR *args = CommandLineToArgvW(GetCommandLineW(), &numArgs);
     LPWSTR profile = NULL;
+    LPWSTR sceneCollection = NULL;
 
     bool bDisableMutex = false;
 
@@ -439,6 +491,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         {
             if (++i < numArgs)
                 profile = args[i];
+        }
+        else if (scmpi(args[i], L"-scenecollection") == 0)
+        {
+            if (++i < numArgs)
+                sceneCollection = args[i];
         }
     }
 
@@ -516,6 +573,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             if(!OSFileExists(strProfilesPath) && !OSCreateDirectory(strProfilesPath))
                 CrashError(TEXT("Couldn't create directory '%s'"), strProfilesPath.Array());
 
+            String strSceneCollectionPath = strAppDataPath + TEXT("\\sceneCollection");
+            if (!OSFileExists(strSceneCollectionPath) && !OSCreateDirectory(strSceneCollectionPath))
+                CrashError(TEXT("Couldn't create directory '%s'"), strSceneCollectionPath.Array());
+
             String strLogsPath = strAppDataPath + TEXT("\\logs");
             if(!OSFileExists(strLogsPath) && !OSCreateDirectory(strLogsPath))
                 CrashError(TEXT("Couldn't create directory '%s'"), strLogsPath.Array());
@@ -567,6 +628,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         AppConfig = new ConfigFile;
         SetupIni(profile);
+        SetupSceneCollection(sceneCollection);
 
         //--------------------------------------------
 

@@ -82,6 +82,7 @@ MainMenu.Settings.FullscreenMode="&Podgląd pełnoekranowy"
 MainMenu.Settings.Projector="&Projektor"
 
 MainMenu.File.Exit="W&yjdź"
+MainMenu.File.OpenRecordingsFolder="Otwórz folder z nag&raniami"
 MainMenu.File.Save="Zapisz"
 
 MainMenu.Help.Contents="&Dokumentacja"
@@ -111,6 +112,7 @@ MainWindow.TestStream="Rozpocznij podgląd"
 Plugins.Configure="Konfiguruj"
 Plugins.Description="Opis:"
 Plugins.Filename="Nazwa pliku:"
+Plugins.InvalidVersion="Wtyczka '%s' przeznaczona jest dla %d-bitowej wersji OBS i nie może być załadowana. Proszę sprawdzić, czy zainstalowano poprawną wersję wtyczki."
 
 Reconnecting.Retrying="Nie udało się ponownie połączyć.  Ponawiam próbę"
 
@@ -302,7 +304,7 @@ Sources.GameCaptureSource.RequiresAdmin="Te aplikacje potrzebują uprawnień adm
 Sources.GameCaptureSource.SelectApplication="Wybierz program"
 Sources.GameCaptureSource.StretchToScreen="Dopasuj obraz do ekranu"
 Sources.GameCaptureSource.UseHotkey="Użyj skrótu"
-Sources.GameCaptureSource.UseSafeHook="Zgodność z systemami anti-cheat"
+Sources.GameCaptureSource.UseSafeHook="Podpięcie aplikacji w trybie zgodności z programami anti-cheat (używać tylko wtedy, gdy jest to konieczne)"
 
 Sources.SoftwareCaptureSource.Blend="Mieszanie (1-100):"
 Sources.SoftwareCaptureSource.CaptureLayered="Przechwytywanie okien warstwowych"
@@ -320,6 +322,8 @@ Sources.SoftwareCaptureSource.PointFiltering="Użyj filtrowania punktu"
 Sources.SoftwareCaptureSource.Position="Pozycja:"
 Sources.SoftwareCaptureSource.RegionCapture="Region"
 Sources.SoftwareCaptureSource.RegionWindowText="Naciśnij Enter, Esc, lub kliknij poza tym prostokątem aby zatwierdzić region"
+Sources.SoftwareCaptureSource.ResizeWarning="Bazowa rozdzielczość obrazu zostanie ustawiona na rozdzielczość tego źródła.\nCzy na pewno chcesz to zrobić?"
+Sources.SoftwareCaptureSource.ResizeWarningTitle="Potwierdź zmianę bazowej rozdzielczości"
 Sources.SoftwareCaptureSource.Select="Wybierz"
 Sources.SoftwareCaptureSource.SelectRegion="Wybierz region"
 Sources.SoftwareCaptureSource.SelectRegionTooltip="Podczas wybierania regionu możesz go przesuwać używając myszy lub zmienić jego rozmiar poprzez chwytanie krawędzi i narożników"

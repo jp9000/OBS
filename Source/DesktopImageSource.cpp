@@ -770,16 +770,19 @@ void RefreshWindowList(HWND hwndCombobox, StringList &classList)
             RECT clientRect;
             GetClientRect(hwndCurrent, &clientRect);
 
+            String strWindowName;
+            strWindowName.SetLength(GetWindowTextLength(hwndCurrent));
+            GetWindowText(hwndCurrent, strWindowName, strWindowName.Length()+1);
+
             DWORD exStyles = (DWORD)GetWindowLongPtr(hwndCurrent, GWL_EXSTYLE);
             DWORD styles = (DWORD)GetWindowLongPtr(hwndCurrent, GWL_STYLE);
+
+            if (strWindowName.IsValid() && sstri(strWindowName, L"battlefield") != nullptr)
+                exStyles &= ~WS_EX_TOOLWINDOW;
 
             if( (exStyles & WS_EX_TOOLWINDOW) == 0 && (styles & WS_CHILD) == 0 &&
                 clientRect.bottom != 0 && clientRect.right != 0 /*&& hwndParent == NULL*/)
             {
-                String strWindowName;
-                strWindowName.SetLength(GetWindowTextLength(hwndCurrent));
-                GetWindowText(hwndCurrent, strWindowName, strWindowName.Length()+1);
-
                 //-------
 
                 DWORD processID;

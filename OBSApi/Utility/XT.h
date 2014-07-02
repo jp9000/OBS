@@ -116,6 +116,8 @@ BASE_EXPORT VOID   STDCALL OSMonitorFileDestroy (OSFileChangeData *data);
 BASE_EXPORT OSDirectoryMonitorData *OSMonitorDirectoryCallback(String path, OSDirectoryMonitorCallback callback);
 BASE_EXPORT void                    OSMonitorDirectoryCallbackStop(OSDirectoryMonitorData *data);
 
+BASE_EXPORT String STDCALL OSGetDefaultVideoSavePath(CTSTR append=nullptr);
+
 BASE_EXPORT BOOL   STDCALL OSCreateMainWindow(int x, int y, int cx, int cy);
 BASE_EXPORT void   STDCALL OSDestroyMainWindow();
 BASE_EXPORT void   STDCALL OSSetWindowSize(int cx, int cy);

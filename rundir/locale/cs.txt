@@ -82,6 +82,7 @@ MainMenu.Settings.FullscreenMode="&Celoobrazovkový režim náhledu"
 MainMenu.Settings.Projector="&Projektor"
 
 MainMenu.File.Exit="U&končit"
+MainMenu.File.OpenRecordingsFolder="Otevřít složku &nahrávek"
 MainMenu.File.Save="&Uložit"
 
 MainMenu.Help.Contents="&Obsah"
@@ -111,6 +112,7 @@ MainWindow.TestStream="Náhled vysílání"
 Plugins.Configure="Konfigurovat"
 Plugins.Description="Popis:"
 Plugins.Filename="Název souboru:"
+Plugins.InvalidVersion="Plugin '%s' je vytvořen pro %d bitovou verzi OBS a nelze jej načíst. Prosím, zkontrolujte zda je tato verze pluginu pro tuto verzi OBS."
 
 Reconnecting.Retrying="Nelze se připojit.  Opakuji"
 
@@ -300,7 +302,6 @@ Sources.GameCaptureSource.RequiresAdmin="Ke snímání těchto aplikací jsou po
 Sources.GameCaptureSource.SelectApplication="Výběr aplikace"
 Sources.GameCaptureSource.StretchToScreen="Roztáhnout obrázek na obrazovku"
 Sources.GameCaptureSource.UseHotkey="Použít klávesovou zkratku"
-Sources.GameCaptureSource.UseSafeHook="Kompaktibilita s Anti-cheatem"
 
 Sources.SoftwareCaptureSource.Blend="Prolínání (1-100):"
 Sources.SoftwareCaptureSource.CaptureLayered="Snímat okna nad vybraným"
@@ -318,6 +319,7 @@ Sources.SoftwareCaptureSource.PointFiltering="Použít point filtering"
 Sources.SoftwareCaptureSource.Position="Umístění:"
 Sources.SoftwareCaptureSource.RegionCapture="Podoblast"
 Sources.SoftwareCaptureSource.RegionWindowText="Stiskněte klávesu Enter, Esc nebo klikněte mimo tento obdélník po dokončení."
+Sources.SoftwareCaptureSource.ResizeWarningTitle="Potvrzení změny základního rozlišení"
 Sources.SoftwareCaptureSource.Select="Výběr"
 Sources.SoftwareCaptureSource.SelectRegion="Výběr oblasti"
 Sources.SoftwareCaptureSource.SelectRegionTooltip="Při výběru oblasti, posuňte podržením a posunutím nebo změňte velikost podržením rohů."

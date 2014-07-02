@@ -82,6 +82,7 @@ MainMenu.Settings.FullscreenMode="&מצב תצוגה מקדימה לסטרים �
 MainMenu.Settings.Projector="מקרן&"
 
 MainMenu.File.Exit="&צא"
+MainMenu.File.OpenRecordingsFolder="פתח &תיקיית הקלטות"
 MainMenu.File.Save="&שמור"
 
 MainMenu.Help.Contents="&תוכן עניינים"
@@ -92,7 +93,7 @@ MainMenu.Settings.OpenConfigFolder="פתח &תיקיית הגדרות"
 MainMenu.Settings.OpenLogFolder="פתח &תיקיית קובצי יומן"
 MainMenu.Settings.ShowLogWindow="הצג חלון יומן"
 
-MainWindow.BeginMessage="לא משדר\n\nבכדי להתחיל: לחץ על \"התחל סטרים\", \"התחל בהקלטה\", או \"תצוגה מקדימה לסטרים\" בכדי"
+MainWindow.BeginMessage="לא משדר\n\nבכדי להתחיל: לחץ על \"התחל סטרים\", \"התחל בהקלטה\", או \"תצוגה מקדימה לסטרים\""
 MainWindow.PreviewDisabled="תצוגה מקדימה מבוטלת"
 MainWindow.Dashboard="לוח בקרה"
 MainWindow.DroppedFrames="פריימים שהושמטו:"
@@ -111,6 +112,7 @@ MainWindow.TestStream="תצוגה מקדימה לסטרים"
 Plugins.Configure="הגדר"
 Plugins.Description="תיאור:"
 Plugins.Filename="שם קובץ:"
+Plugins.InvalidVersion="לא ניתן לטעון את הפלאגין '%s', מכיוון שהוא מיועד לגרסת %d ביט של OBS. בדוק כי ברשותך הגרסה הנכונה לפלאגין."
 
 Reconnecting.Retrying="לא ניתן להתחבר מחדש. מנסה שוב"
 
@@ -195,7 +197,7 @@ Settings.Encoding.Audio.Codec="קודק"
 Settings.Encoding.Audio.Format="תבנית"
 Settings.Encoding.Audio.Channel="ערוצים"
 
-Settings.Encoding.Video.Encoder=":מקודד"
+Settings.Encoding.Video.Encoder="מקודד:"
 Settings.Encoding.Video.Encoderx264="x264"
 Settings.Encoding.Video.EncoderQSV="Quick Sync"
 Settings.Encoding.Video.EncoderNVENC="Nvidia NVENC"
@@ -302,7 +304,7 @@ Sources.GameCaptureSource.RequiresAdmin="אפליקציות אלו דורשות 
 Sources.GameCaptureSource.SelectApplication="בחר ביישום"
 Sources.GameCaptureSource.StretchToScreen="מתח את התמונה למסך"
 Sources.GameCaptureSource.UseHotkey="השתמש במקש קיצור"
-Sources.GameCaptureSource.UseSafeHook="מצב תאימות לשירותים נגד צ'יטים"
+Sources.GameCaptureSource.UseSafeHook="מצב תאימות לישומי אנטי צ'יט (בצע שימוש רק אם הכרחי)"
 
 Sources.SoftwareCaptureSource.Blend="מיזוג (1-100)"
 Sources.SoftwareCaptureSource.CaptureLayered="לכד חלונות אשר חופפים אחד מעל השני"
@@ -320,6 +322,8 @@ Sources.SoftwareCaptureSource.PointFiltering="השתמש בסינון נקודת
 Sources.SoftwareCaptureSource.Position="מיקום"
 Sources.SoftwareCaptureSource.RegionCapture="תת-אזור"
 Sources.SoftwareCaptureSource.RegionWindowText="לחץ Enter, או Esc או הקלק עם העכבר מחוץ לשטח של מלבן זה בכדי לסיים."
+Sources.SoftwareCaptureSource.ResizeWarning="אתה הולך לשנות את רזולוציית הבסיס של הסטרים לזו של המקור!\nהאם אתה בטוח שברצונך לעשות זאת?"
+Sources.SoftwareCaptureSource.ResizeWarningTitle="אשר שינוי רזולוציית בסיס"
 Sources.SoftwareCaptureSource.Select="בחר"
 Sources.SoftwareCaptureSource.SelectRegion="בחר אזור"
 Sources.SoftwareCaptureSource.SelectRegionTooltip="בזמן בחירת אזור, הזז באמצעות לחיצה וגרירה או שנה את גודלו של המלבן באמצעות לחיצה על הגבולות."

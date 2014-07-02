@@ -1,11 +1,11 @@
 /*****************************************************************************
  * x264.h: x264 public header
  *****************************************************************************
- * Copyright (C) 2003-2013 x264 project
+ * Copyright (C) 2003-2014 x264 project
  *
  * Authors: Laurent Aimar <fenrir@via.ecp.fr>
  *          Loren Merritt <lorenm@u.washington.edu>
- *          Jason Garrett-Glaser <darkshikari@gmail.com>
+ *          Fiona Glaser <fiona@x264.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@
 
 #include "x264_config.h"
 
-#define X264_BUILD 140
+#define X264_BUILD 142
 
 /* Application developers planning to link against a shared library version of
  * libx264 from a Microsoft Visual Studio or similar development environment
@@ -215,12 +215,13 @@ static const char * const x264_nal_hrd_names[] = { "none", "vbr", "cbr", 0 };
 #define X264_CSP_I422           0x0004  /* yuv 4:2:2 planar */
 #define X264_CSP_YV16           0x0005  /* yvu 4:2:2 planar */
 #define X264_CSP_NV16           0x0006  /* yuv 4:2:2, with one y plane and one packed u+v */
-#define X264_CSP_I444           0x0007  /* yuv 4:4:4 planar */
-#define X264_CSP_YV24           0x0008  /* yvu 4:4:4 planar */
-#define X264_CSP_BGR            0x0009  /* packed bgr 24bits   */
-#define X264_CSP_BGRA           0x000a  /* packed bgr 32bits   */
-#define X264_CSP_RGB            0x000b  /* packed rgb 24bits   */
-#define X264_CSP_MAX            0x000c  /* end of list */
+#define X264_CSP_V210           0x0007  /* 10-bit yuv 4:2:2 packed in 32 */
+#define X264_CSP_I444           0x0008  /* yuv 4:4:4 planar */
+#define X264_CSP_YV24           0x0009  /* yvu 4:4:4 planar */
+#define X264_CSP_BGR            0x000a  /* packed bgr 24bits   */
+#define X264_CSP_BGRA           0x000b  /* packed bgr 32bits   */
+#define X264_CSP_RGB            0x000c  /* packed rgb 24bits   */
+#define X264_CSP_MAX            0x000d  /* end of list */
 #define X264_CSP_VFLIP          0x1000  /* the csp is vertically flipped */
 #define X264_CSP_HIGH_DEPTH     0x2000  /* the csp has a depth of 16 bits per pixel component */
 
@@ -321,7 +322,7 @@ typedef struct x264_param_t
     int         i_bframe_pyramid;   /* Keep some B-frames as references: 0=off, 1=strict hierarchical, 2=normal */
     int         b_open_gop;
     int         b_bluray_compat;
-    int         b_avcintra_compat;
+    int         i_avcintra_class;
 
     int         b_deblocking_filter;
     int         i_deblocking_filter_alphac0;    /* [-6, 6] -6 light filter, 6 strong */
@@ -883,13 +884,15 @@ void    x264_encoder_parameters( x264_t *, x264_param_t * );
 /* x264_encoder_headers:
  *      return the SPS and PPS that will be used for the whole stream.
  *      *pi_nal is the number of NAL units outputted in pp_nal.
+ *      returns the number of bytes in the returned NALs.
  *      returns negative on error.
  *      the payloads of all output NALs are guaranteed to be sequential in memory. */
 int     x264_encoder_headers( x264_t *, x264_nal_t **pp_nal, int *pi_nal );
 /* x264_encoder_encode:
  *      encode one picture.
  *      *pi_nal is the number of NAL units outputted in pp_nal.
- *      returns negative on error, zero if no NAL units returned.
+ *      returns the number of bytes in the returned NALs.
+ *      returns negative on error and zero if no NAL units returned.
  *      the payloads of all output NALs are guaranteed to be sequential in memory. */
 int     x264_encoder_encode( x264_t *, x264_nal_t **pp_nal, int *pi_nal, x264_picture_t *pic_in, x264_picture_t *pic_out );
 /* x264_encoder_close:

@@ -82,6 +82,7 @@ MainMenu.Settings.FullscreenMode="&Полноэкранный режим про�
 MainMenu.Settings.Projector="&Проектор"
 
 MainMenu.File.Exit="&Выход"
+MainMenu.File.OpenRecordingsFolder="Открыть &папку с записью"
 MainMenu.File.Save="&Сохранить"
 
 MainMenu.Help.Contents="&Руководство"
@@ -111,6 +112,7 @@ MainWindow.TestStream="Предпросмотр"
 Plugins.Configure="Конфигурация"
 Plugins.Description="Описание:"
 Plugins.Filename="Имя файла:"
+Plugins.InvalidVersion="Плагин '%s'  был создан для %d битной версии OBS и не может быть загружен. Пожалуйста проверьте правильность версии плагина."
 
 Reconnecting.Retrying="Не удается подключиться. Повтор"
 
@@ -302,7 +304,7 @@ Sources.GameCaptureSource.RequiresAdmin="Для захвата этого при
 Sources.GameCaptureSource.SelectApplication="Выбранное приложение"
 Sources.GameCaptureSource.StretchToScreen="Растянуть изображение во весь экран"
 Sources.GameCaptureSource.UseHotkey="Захват по горячей клавише"
-Sources.GameCaptureSource.UseSafeHook="Совместимость с античитами"
+Sources.GameCaptureSource.UseSafeHook="Совместимость захвата с античитами (включайте только при необходимости)"
 
 Sources.SoftwareCaptureSource.Blend="Смешивание (1-100):"
 Sources.SoftwareCaptureSource.CaptureLayered="Захватывать многослойные окна"
@@ -320,6 +322,8 @@ Sources.SoftwareCaptureSource.PointFiltering="Точечная фильтрац�
 Sources.SoftwareCaptureSource.Position="Позиция:"
 Sources.SoftwareCaptureSource.RegionCapture="Конкретная область"
 Sources.SoftwareCaptureSource.RegionWindowText="Нажмите клавишу Enter, Esc или щелкните за пределами этого прямоугольника для завершения."
+Sources.SoftwareCaptureSource.ResizeWarning="Это изменит разрешение базового потока к размеру этого источника!\nВы уверены, что хотите это сделать?"
+Sources.SoftwareCaptureSource.ResizeWarningTitle="Подтверждение изменения базового разрешения экрана"
 Sources.SoftwareCaptureSource.Select="Выбрать"
 Sources.SoftwareCaptureSource.SelectRegion="Выбрать область"
 Sources.SoftwareCaptureSource.SelectRegionTooltip="При выборе области захвата изменение размера прямоугольника производится путем захвата за край."

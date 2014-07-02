@@ -389,6 +389,8 @@ enum
     ID_UPLOAD_ANALYZE_LOG,
     ID_UPLOAD_ANALYZE_LOG_END = ID_UPLOAD_ANALYZE_LOG+1000,
     ID_LOG_WINDOW,
+    ID_SWITCHSCENECOLLECTION,
+    ID_SWITCHSCENECOLLECTION_END = ID_SWITCHSCENECOLLECTION+1000,
 };
 
 enum
@@ -774,12 +776,12 @@ private:
     int  keyframeWait;
 
     QWORD firstFrameTimestamp;
-    EncoderPicture *curFramePic;
+    EncoderPicture * volatile curFramePic;
     HANDLE hVideoEvent;
 
     static DWORD STDCALL EncodeThread(LPVOID lpUnused);
     static DWORD STDCALL MainCaptureThread(LPVOID lpUnused);
-    bool BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, VideoSegment &segmentOut);
+    bool BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, QWORD firstFrameTime, VideoSegment &segmentOut);
     void SendFrame(VideoSegment &curSegment, QWORD firstFrameTime);
     bool ProcessFrame(FrameProcessInfo &frameInfo);
     void EncodeLoop();  
@@ -842,6 +844,8 @@ private:
     // random bla-haa
 
     String  streamReport;
+
+    String  lastOutputFile;
 
     //String  strDashboard;
 
@@ -1000,6 +1004,10 @@ private:
     static void ResetLogUploadMenu();
     static void DisableMenusWhileStreaming(bool disable);
 
+    static void ResetSceneCollectionMenu();
+    static void AddSceneCollectionToMenu(HMENU menu);
+    void ReloadSceneCollection();
+
     static String GetApplicationName();
     static void ResetApplicationName();
 
@@ -1105,6 +1113,10 @@ public:
     inline static CTSTR GetCurrentProfile() {return GlobalConfig->GetStringPtr(TEXT("General"), TEXT("Profile"));}
     static void GetProfiles(StringList &profileList);
 
+//---------------------------------------------------------------------------
+
+    inline static CTSTR GetCurrentSceneCollection() { return GlobalConfig->GetStringPtr(TEXT("General"), TEXT("SceneCollection")); }
+    static void GetSceneCollection(StringList &sceneCollectionList);
     //---------------------------------------------------------------------------
 
     UINT NumPlugins() const {return plugins.Num();}

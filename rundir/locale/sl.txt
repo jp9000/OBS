@@ -111,6 +111,7 @@ MainWindow.TestStream="Predogled oddajanja"
 Plugins.Configure="Konfiguracija"
 Plugins.Description="Opis:"
 Plugins.Filename="Ime datoteke:"
+Plugins.InvalidVersion="Vtičnik '%s' je namenjen %d bitni verziji OBSja in ga ni bilo mogoče naložiti. Prosimo preverite ali ste namestili pravilno verzijo vtičnika."
 
 Reconnecting.Retrying="Povezave ni bilo mogoče vzpostaviti. Vnovičen poskus"
 
@@ -302,7 +303,7 @@ Sources.GameCaptureSource.RequiresAdmin="Te aplikacije zahtevajo Administratorsk
 Sources.GameCaptureSource.SelectApplication="Izberite program"
 Sources.GameCaptureSource.StretchToScreen="Raztegni sliko na zaslon"
 Sources.GameCaptureSource.UseHotkey="Uporabi bližnjico"
-Sources.GameCaptureSource.UseSafeHook="Združljivost z Anti-Cheat-om"
+Sources.GameCaptureSource.UseSafeHook="Anti-cheat združljivost (Uporabi le če, je to potrebno)"
 
 Sources.SoftwareCaptureSource.Blend="Zmešaj (1-100):"
 Sources.SoftwareCaptureSource.CaptureLayered="Zajem Plasti Oken"

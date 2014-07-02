@@ -82,6 +82,7 @@ MainMenu.Settings.FullscreenMode="전체화면 미리보기 모드(&F)"
 MainMenu.Settings.Projector="프로젝터(&P)"
 
 MainMenu.File.Exit="끝내기(&X)"
+MainMenu.File.OpenRecordingsFolder="녹화 폴더 열기(&R)"
 MainMenu.File.Save="저장(&S)"
 
 MainMenu.Help.Contents="도움말 및 지원(&C)"
@@ -111,6 +112,7 @@ MainWindow.TestStream="미리보기"
 Plugins.Configure="설정"
 Plugins.Description="설명:"
 Plugins.Filename="파일 이름:"
+Plugins.InvalidVersion="플러그인 '%s'는 %d비트 OBS를 위해서 제작되어 읽어들일 수 없습니다. 플러그인의 버전을 확인하십시오. "
 
 Reconnecting.Retrying="재접속을 실패하였습니다.  재시도 중"
 
@@ -302,7 +304,7 @@ Sources.GameCaptureSource.RequiresAdmin="해당 어플리케이션을 캡쳐하�
 Sources.GameCaptureSource.SelectApplication="어플리케이션 지정"
 Sources.GameCaptureSource.StretchToScreen="표현할 이미지를 늘리십시오"
 Sources.GameCaptureSource.UseHotkey="단축키 사용"
-Sources.GameCaptureSource.UseSafeHook="안티-치트 호환"
+Sources.GameCaptureSource.UseSafeHook="안티-치트 호환 캡쳐 (반드시 필요 시에만 사용)"
 
 Sources.SoftwareCaptureSource.Blend="혼합 (1-100):"
 Sources.SoftwareCaptureSource.CaptureLayered="레이어 처리된 윈도우 캡쳐"
@@ -320,6 +322,8 @@ Sources.SoftwareCaptureSource.PointFiltering="포인트 필터링 사용"
 Sources.SoftwareCaptureSource.Position="위치:"
 Sources.SoftwareCaptureSource.RegionCapture="영역 캡쳐"
 Sources.SoftwareCaptureSource.RegionWindowText="영역 지정이 끝나면 Enter 혹은 Esc 키를 누르거나 사각형 밖을 클릭하십시오."
+Sources.SoftwareCaptureSource.ResizeWarning="기본 방송 해상도가 해당 소스의 크기로 변경됩니다!/적용하시겠습니까?"
+Sources.SoftwareCaptureSource.ResizeWarningTitle="기본 해상도 변경 확인"
 Sources.SoftwareCaptureSource.Select="지정"
 Sources.SoftwareCaptureSource.SelectRegion="영역 지정"
 Sources.SoftwareCaptureSource.SelectRegionTooltip="영역 지정 시 사각형을 클릭하여 끌면 이동 시킬 수 있습니다. 모서리를 클릭하면 크기를 조절할 수 있습니다."

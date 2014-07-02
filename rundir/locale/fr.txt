@@ -82,6 +82,7 @@ MainMenu.Settings.FullscreenMode="Aperçu &Plein-écran"
 MainMenu.Settings.Projector="&Projecteur"
 
 MainMenu.File.Exit="&Quitter"
+MainMenu.File.OpenRecordingsFolder="Ouvrir le &Dossier des Enregistrements"
 MainMenu.File.Save="&Sauvegarder"
 
 MainMenu.Help.Contents="&À propos"
@@ -111,6 +112,7 @@ MainWindow.TestStream="Tester le Streaming"
 Plugins.Configure="Configurer"
 Plugins.Description="Description:"
 Plugins.Filename="Nom du fichier:"
+Plugins.InvalidVersion="Le plugin '%s' est destiné à la version %d bits d'OBS et ne peut être chargé. Merci de vérifier que la bonne version du plugin est installée."
 
 Reconnecting.Retrying="N'a pas pu se connecter, reconnexion..."
 
@@ -302,7 +304,7 @@ Sources.GameCaptureSource.RequiresAdmin="Cette application requiert l'accès en 
 Sources.GameCaptureSource.SelectApplication="Sélectionner l'application"
 Sources.GameCaptureSource.StretchToScreen="Étirer l'image à l'écran"
 Sources.GameCaptureSource.UseHotkey="Utiliser un raccourci clavier"
-Sources.GameCaptureSource.UseSafeHook="Compatibilité avec les systèmes Anti-Triche"
+Sources.GameCaptureSource.UseSafeHook="Suspension de la compatibilité anti-triche (à utiliser uniquement si nécessaire)"
 
 Sources.SoftwareCaptureSource.Blend="Fondu (1-100):"
 Sources.SoftwareCaptureSource.CaptureLayered="Capturer des fenêtres superposées"
@@ -320,6 +322,8 @@ Sources.SoftwareCaptureSource.PointFiltering="Utiliser le filtrage par point"
 Sources.SoftwareCaptureSource.Position="Position:"
 Sources.SoftwareCaptureSource.RegionCapture="Capturer une Région"
 Sources.SoftwareCaptureSource.RegionWindowText="Appuyer sur Enter, Esc, ou cliquer à l'extérieur de ce rectangle quand vous avez terminé."
+Sources.SoftwareCaptureSource.ResizeWarning="Cela va modifier la résolution du stream de base en la taille de la source!\nÊtes-vous sûr de vouloir faire ça?"
+Sources.SoftwareCaptureSource.ResizeWarningTitle="Confirmer le Changement de Résolution de Base"
 Sources.SoftwareCaptureSource.Select="Sélection"
 Sources.SoftwareCaptureSource.SelectRegion="Sélectionner une Région"
 Sources.SoftwareCaptureSource.SelectRegionTooltip="Lorsque vous sélectionnez une région, vous pouvez cliquer et déplacer, ou redimmensionner le rectangle en cliquant sur les bordures."

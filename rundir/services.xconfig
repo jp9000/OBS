@@ -92,7 +92,9 @@ services : {
       "US-East"       : rtmp://live.vgn.hitbox.tv/push
       "US-West"       : rtmp://live.lax.hitbox.tv/push
       "South America" : rtmp://live.gru.hitbox.tv/push
-      "Asia"          : rtmp://live.lax.hitbox.tv/push
+      "South Korea"   : rtmp://live.icn.hitbox.tv/push
+      "United Kingdom": rtmp://live.lhr.hitbox.tv/push
+      "South America" : rtmp://live.gru.hitbox.tv/push
     }
     recommended : {
       "keyint" : 2000
@@ -105,6 +107,12 @@ services : {
     id : 12
     servers : {
       "Default"     : rtmp://stream.connectcast.tv/live
+    }
+  }
+  Azubu.tv : {
+    id : 13
+    servers : {
+      "API" : https://api.azubu.tv/stream/broadcaster-key/
     }
   }
 }

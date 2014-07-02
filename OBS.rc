@@ -183,21 +183,26 @@ EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     RTEXT           "Settings.General.Profile",IDC_STATIC,7,44,138,8
-    COMBOBOX        IDC_PROFILE,147,41,229,126,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_PROFILE,146,41,226,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Settings.General.Language",IDC_STATIC,7,25,138,8
-    COMBOBOX        IDC_LANGUAGE,147,23,229,126,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Add",IDC_ADD,147,58,76,14
+    COMBOBOX        IDC_LANGUAGE,146,22,226,126,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Add",IDC_ADD,146,58,76,14
     PUSHBUTTON      "Rename",IDC_RENAME,224,58,76,14
-    PUSHBUTTON      "Remove",IDC_REMOVE,301,58,75,14
-    LTEXT           "Settings.General.Restart",IDC_INFO,7,153,409,48,NOT WS_VISIBLE
+    PUSHBUTTON      "Remove",IDC_REMOVE,302,58,70,14
+    LTEXT           "Settings.General.Restart",IDC_INFO,7,202,409,48,NOT WS_VISIBLE
     CONTROL         "Settings.General.Notification",IDC_NOTIFICATIONICON,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,85,264,10,WS_EX_RIGHT
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,122,264,10,WS_EX_RIGHT
     CONTROL         "Settings.General.NotificationMinimize",IDC_MINIZENOTIFICATION,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,96,264,10,WS_EX_RIGHT
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,133,264,10,WS_EX_RIGHT
     CONTROL         "Settings.General.EnableProjectorCursor",IDC_ENABLEPROJECTORCURSOR,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,117,264,10,WS_EX_RIGHT
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,154,264,10,WS_EX_RIGHT
     CONTROL         "Settings.General.ShowLogWindowOnLaunch",IDC_SHOWLOGWINDOWONLAUNCH,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,138,264,10,WS_EX_RIGHT
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,175,264,10,WS_EX_RIGHT
+    RTEXT           "Settings.General.SceneCollection", IDC_STATIC, 4, 85, 139, 8
+    COMBOBOX        IDC_SCENECOLLECTION,146,82,226,126,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Add",IDC_ADD2,146,98,76,14
+    PUSHBUTTON      "Rename",IDC_RENAME2,223,98,76,14
+    PUSHBUTTON      "Remove",IDC_REMOVE2,301,98,71,14
 END
 
 IDD_SETTINGS_AUDIO DIALOGEX 0, 0, 427, 336
@@ -1010,6 +1015,8 @@ BEGIN
     BEGIN
         MENUITEM "MainMenu.File.Save",          ID_FILE_SAVE2
         MENUITEM SEPARATOR
+        MENUITEM "MainMenu.File.OpenRecordingsFolder", ID_RECORDINGSFOLDER
+        MENUITEM SEPARATOR
         MENUITEM "MainMenu.File.Exit",          ID_FILE_EXIT
     END
     POPUP "MainMenu.Settings"
@@ -1024,6 +1031,10 @@ BEGIN
         MENUITEM "MainMenu.Settings.OpenConfigFolder", ID_SETTINGS_OPENCONFIGFOLDER
     END
     POPUP "MainMenu.Profiles"
+    BEGIN
+        MENUITEM "nothing here",                ID_MAINMENU_NOTHINGHERE
+    END
+    POPUP "MainMenu.SceneCollection"
     BEGIN
         MENUITEM "nothing here",                ID_MAINMENU_NOTHINGHERE
     END

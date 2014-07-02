@@ -546,7 +546,7 @@ OBS::OBS()
     hwndTemp = GetDlgItem(hwndMain, ID_SCENES);
 
     String strScenesConfig;
-    strScenesConfig << lpAppDataPath << TEXT("\\scenes.xconfig");
+    strScenesConfig << lpAppDataPath << TEXT("\\sceneCollection\\") << GetCurrentSceneCollection() << TEXT(".xconfig");
 
     if(!scenesConfig.Open(strScenesConfig))
         CrashError(TEXT("Could not open '%s'"), strScenesConfig.Array());
@@ -576,7 +576,7 @@ OBS::OBS()
     if(numScenes)
     {
         String strScene = AppConfig->GetString(TEXT("General"), TEXT("CurrentScene"));
-        int id = (int)SendMessage(hwndTemp, LB_FINDSTRINGEXACT, -1, 0);
+        int id = (int)SendMessage(hwndTemp, LB_FINDSTRINGEXACT, -1, (LPARAM)strScene.Array());
         if(id == LB_ERR)
             id = 0;
 
@@ -629,6 +629,7 @@ OBS::OBS()
 
     ReloadIniSettings();
     ResetProfileMenu();
+    ResetSceneCollectionMenu();
     ResetLogUploadMenu();
 
     //-----------------------------------------------------
@@ -761,6 +762,8 @@ OBS::OBS()
     ResizeWindow(false);
     ShowWindow(hwndMain, SW_SHOW);
 
+    renderFrameIn1To1Mode = !!GlobalConfig->GetInt(L"General", L"1to1Preview", false);
+
     // make sure sources listview column widths are as expected after obs window is shown
 
     ListView_SetColumnWidth(hwndSources,0,LVSCW_AUTOSIZE_USEHEADER);
@@ -827,6 +830,8 @@ OBS::~OBS()
     GlobalConfig->SetInt(TEXT("General"), TEXT("LogPosY"), rect.top);
     GlobalConfig->SetInt(TEXT("General"), TEXT("LogSizeX"), rect.right - rect.left);
     GlobalConfig->SetInt(TEXT("General"), TEXT("LogSizeY"), rect.bottom - rect.top);
+
+    GlobalConfig->SetInt(L"General", L"1to1Preview", renderFrameIn1To1Mode);
     
     // Save control panel visibility
     GlobalConfig->SetInt(TEXT("General"), TEXT("PanelVisibleWindowed"), bPanelVisibleWindowed ? 1 : 0);
@@ -1294,6 +1299,29 @@ void OBS::GetProfiles(StringList &profileList)
     }
 }
 
+void OBS::GetSceneCollection(StringList &sceneCollectionList)
+{
+    String strSceneCollectionWildcard;
+    OSFindData ofd;
+    HANDLE hFind;
+
+    sceneCollectionList.Clear();
+
+    String sceneCollectionDir(FormattedString(L"%s/sceneCollection/", OBSGetAppDataPath()));
+    strSceneCollectionWildcard << sceneCollectionDir << "*.xconfig";
+    if (hFind = OSFindFirstFile(strSceneCollectionWildcard, ofd))
+    {
+        do
+        {
+            String sceneCollection(GetPathWithoutExtension(ofd.fileName));
+            String sceneCollectionPath(FormattedString(L"%s%s.xconfig", sceneCollectionDir.Array(), sceneCollection.Array()));
+            if (ofd.bDirectory || !OSFileExists(sceneCollectionPath) || sceneCollectionList.HasValue(sceneCollection)) continue;
+            sceneCollectionList << sceneCollection;
+        } while (OSFindNextFile(hFind, ofd));
+        OSFindClose(hFind);
+    }
+}
+
 void OBS::RefreshStreamButtons(bool disable)
 {
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
@@ -1305,6 +1333,9 @@ void OBS::RefreshStreamButtons(bool disable)
     EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), !disable && canStream);
     EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), !disable && canRecord);
     EnableWindow(GetDlgItem(hwndMain, ID_TESTSTREAM), !disable && canTest);
+
+    HMENU fileMenu = GetSubMenu(GetMenu(hwndMain), 0);
+    EnableMenuItem(fileMenu, 2, (canRecord ? MF_ENABLED : MF_DISABLED) | MF_BYPOSITION);
 }
 
 void OBS::ConfigureStreamButtons()
@@ -1313,6 +1344,72 @@ void OBS::ConfigureStreamButtons()
     SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), bStreaming ? Str("MainWindow.StopStream") : Str("MainWindow.StartStream"));
     SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), bRecording ? Str("MainWindow.StopRecording") : Str("MainWindow.StartRecording"));
     SetWindowText(GetDlgItem(hwndMain, ID_TESTSTREAM), bTestStream ? Str("MainWindow.StopTest") : Str("MainWindow.TestStream"));
+}
+
+void OBS::ReloadSceneCollection()
+{
+    HWND hwndTemp;
+    hwndTemp = GetDlgItem(hwndMain, ID_SCENES);
+
+    String strScenesConfig;
+    strScenesConfig << lpAppDataPath << TEXT("\\sceneCollection\\") << GetCurrentSceneCollection() << TEXT(".xconfig");
+
+    if (!scenesConfig.Open(strScenesConfig))
+        CrashError(TEXT("Could not open '%s'"), strScenesConfig.Array());
+
+    XElement *scenes = scenesConfig.GetElement(TEXT("scenes"));
+
+    if (!scenes)
+        scenes = scenesConfig.CreateElement(TEXT("scenes"));
+
+    SendMessage(hwndTemp, LB_RESETCONTENT, 0, 0);
+
+    App->sceneElement = NULL;
+    
+    UINT numScenes = scenes->NumElements();
+    if (!numScenes)
+    {
+        XElement *scene = scenes->CreateElement(Str("Scene"));
+        scene->SetString(TEXT("class"), TEXT("Scene"));
+        numScenes++;
+    }
+
+    for (UINT i = 0; i<numScenes; i++)
+    {
+        XElement *scene = scenes->GetElementByID(i);
+        SendMessage(hwndTemp, LB_ADDSTRING, 0, (LPARAM)scene->GetName());
+    }
+    //-----------------------------------------------------
+    // populate sources
+
+    if (numScenes)
+    {
+        String strScene = AppConfig->GetString(TEXT("General"), TEXT("CurrentScene"));
+        int id = (int)SendMessage(hwndTemp, LB_FINDSTRINGEXACT, -1, (LPARAM)strScene.Array());
+        if (id == LB_ERR)
+            id = 0;
+
+        SendMessage(hwndTemp, LB_SETCURSEL, (WPARAM)id, 0);
+        SendMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_SCENES, LBN_SELCHANGE), (LPARAM)GetDlgItem(hwndMain, ID_SCENES));
+    }
+
+    //-----------------------------------------------------
+
+    for (UINT i = 0; i<numScenes; i++)
+    {
+        XElement *scene = scenes->GetElementByID(i);
+        DWORD hotkey = scene->GetInt(TEXT("hotkey"));
+        if (hotkey)
+        {
+            SceneHotkeyInfo hotkeyInfo;
+            hotkeyInfo.hotkey = hotkey;
+            hotkeyInfo.scene = scene;
+            hotkeyInfo.hotkeyID = API->CreateHotkey(hotkey, SceneHotkey, 0);
+
+            if (hotkeyInfo.hotkeyID)
+                sceneHotkeys << hotkeyInfo;
+        }
+    }
 }
 
 void OBS::ReloadIniSettings()

@@ -82,6 +82,7 @@ MainMenu.Settings.FullscreenMode="全画面プレビュー"
 MainMenu.Settings.Projector="プロジェクター"
 
 MainMenu.File.Exit="終了(&X)"
+MainMenu.File.OpenRecordingsFolder="録画フォルダを開く(&R)"
 MainMenu.File.Save="保存(&S)"
 
 MainMenu.Help.Contents="目次(&C)"
@@ -111,6 +112,7 @@ MainWindow.TestStream="配信プレビュー"
 Plugins.Configure="構成"
 Plugins.Description="説明:"
 Plugins.Filename="ファイル名:"
+Plugins.InvalidVersion="プラグイン '%s' は %d bit 版のOBS用であり、ロードできませんでした。正しいバージョンのプラグインがインストールされていることを確認してください。"
 
 Reconnecting.Retrying="再接続できませんでした。再度試します。"
 
@@ -302,7 +304,7 @@ Sources.GameCaptureSource.RequiresAdmin="次のプログラムをキャプチャ
 Sources.GameCaptureSource.SelectApplication="アプリを選択"
 Sources.GameCaptureSource.StretchToScreen="映像を拡大縮小させる"
 Sources.GameCaptureSource.UseHotkey="ホットキーを使用"
-Sources.GameCaptureSource.UseSafeHook="アンチチート互換性"
+Sources.GameCaptureSource.UseSafeHook="アンチチート互換性フック (必要な場合にのみ使用)"
 
 Sources.SoftwareCaptureSource.Blend="ブレンド (1-100):"
 Sources.SoftwareCaptureSource.CaptureLayered="レイヤードウィンドウをキャプチャする"
@@ -320,6 +322,8 @@ Sources.SoftwareCaptureSource.PointFiltering="ポイントフィルタリング�
 Sources.SoftwareCaptureSource.Position="位置:"
 Sources.SoftwareCaptureSource.RegionCapture="特定領域"
 Sources.SoftwareCaptureSource.RegionWindowText="完了するには、EnterかEscを押し、 または他のウィンドウをクリックしてください。"
+Sources.SoftwareCaptureSource.ResizeWarning="このソースの基本配信解像度のサイズが変更されます！\nこの操作を本当に実行しますか？"
+Sources.SoftwareCaptureSource.ResizeWarningTitle="基本解像度の変更を確認してください。"
 Sources.SoftwareCaptureSource.Select="選択"
 Sources.SoftwareCaptureSource.SelectRegion="領域を選択する"
 Sources.SoftwareCaptureSource.SelectRegionTooltip="領域ウィンドウには中央にクリックすれば動かせます。枠をクリックすればサイズを調整できます。"

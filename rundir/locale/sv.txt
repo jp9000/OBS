@@ -82,6 +82,7 @@ MainMenu.Settings.FullscreenMode="&Fullskärmsförhandsvisning"
 MainMenu.Settings.Projector="&Projektorskärm"
 
 MainMenu.File.Exit="&Avsluta"
+MainMenu.File.OpenRecordingsFolder="Öppna &inspelningar-mappen"
 MainMenu.File.Save="&Spara"
 
 MainMenu.Help.Contents="&Innehåll"
@@ -111,6 +112,7 @@ MainWindow.TestStream="Förhandsvisa stream"
 Plugins.Configure="Konfigurera"
 Plugins.Description="Beskrivning:"
 Plugins.Filename="Filnamn:"
+Plugins.InvalidVersion="Plugin \"%s\" är ämnad att användas med %d-bitversionen av OBS och kunde inte laddas. Försäkra dig om att rätt version av pluginen är installerad."
 
 Reconnecting.Retrying="Anslutning misslyckades. Försöker igen."
 
@@ -302,7 +304,7 @@ Sources.GameCaptureSource.RequiresAdmin="Dessa program kräver att du startar OB
 Sources.GameCaptureSource.SelectApplication="Välj program"
 Sources.GameCaptureSource.StretchToScreen="Anpassa bildstorlek till källstorlek"
 Sources.GameCaptureSource.UseHotkey="Använd snabbtangent"
-Sources.GameCaptureSource.UseSafeHook="Anti-cheat-kompatibilitet"
+Sources.GameCaptureSource.UseSafeHook="Anti-cheat-kompatibilitetshooking (använd endast om nödvändigt)"
 
 Sources.SoftwareCaptureSource.Blend="Blandning (1-100):"
 Sources.SoftwareCaptureSource.CaptureLayered="Visa layered-fönster"
@@ -320,6 +322,8 @@ Sources.SoftwareCaptureSource.PointFiltering="Använd punkt-bildfilter"
 Sources.SoftwareCaptureSource.Position="Position:"
 Sources.SoftwareCaptureSource.RegionCapture="Delregion"
 Sources.SoftwareCaptureSource.RegionWindowText="Tryck på Enter, Esc eller klicka utanför denna rektangel när du är klar."
+Sources.SoftwareCaptureSource.ResizeWarning="Detta kommer att ändra streamens grundupplösning till källans storlek!\nÄr du säker på att du vill göra det?"
+Sources.SoftwareCaptureSource.ResizeWarningTitle="Bekräfta ändring av grundupplösning"
 Sources.SoftwareCaptureSource.Select="Välj"
 Sources.SoftwareCaptureSource.SelectRegion="Välj region"
 Sources.SoftwareCaptureSource.SelectRegionTooltip="Du kan flytta regionen genom att klicka och dra eller ändra regionens storlek genom att klicka och dra i kanterna."

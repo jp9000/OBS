@@ -44,7 +44,7 @@ copy ..\graphicscapture\graphicscapturehook\release\graphicscapturehook.dll .\32
 copy ..\graphicscapture\graphicscapturehook\x64\release\graphicscapturehook64.dll .\32bit\plugins\graphicscapture
 copy ..\injectHelper\release\injectHelper.exe .\32bit\plugins\graphicscapture
 copy ..\injectHelper\x64\release\injectHelper64.exe .\32bit\plugins\graphicscapture
-copy ..\x264\libs\32bit\libx264-140.dll .\32bit
+copy ..\x264\libs\32bit\libx264-142.dll .\32bit
 copy ..\QSVHelper\Release\QSVHelper.exe .\32bit
 copy ..\ObsNvenc\Release\ObsNvenc.dll .\32bit
 copy "%WindowsSDK80Path%Debuggers\x86\dbghelp.dll" .\32bit
@@ -72,7 +72,7 @@ copy ..\graphicscapture\graphicscapturehook\release\graphicscapturehook.dll .\64
 copy ..\graphicscapture\graphicscapturehook\x64\release\graphicscapturehook64.dll .\64bit\plugins\graphicscapture
 copy ..\injectHelper\release\injectHelper.exe .\64bit\plugins\graphicscapture
 copy ..\injectHelper\x64\release\injectHelper64.exe .\64bit\plugins\graphicscapture
-copy ..\x264\libs\64bit\libx264-140.dll .\64bit
+copy ..\x264\libs\64bit\libx264-142.dll .\64bit
 copy ..\QSVHelper\Release\QSVHelper.exe .\64bit
 copy ..\ObsNvenc\x64\Release\ObsNvenc.dll .\64bit
 copy "%WindowsSDK80Path%Debuggers\x64\dbghelp.dll" .\64bit
