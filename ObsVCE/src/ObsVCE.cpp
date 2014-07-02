@@ -206,6 +206,7 @@ bool VCEEncoder::init()
     }
 
     VCELog(TEXT("Rate control method: %d"), mConfigCtrl.rateControl.encRateControlMethod);
+    VCELog(TEXT("Frame rate: %d"), mConfigCtrl.rateControl.encRateControlFrameRateNumerator);
     //WTF, why half the pixels
     mConfigCtrl.pictControl.encCropBottomOffset = (numH * 16 - mHeight) >> 1;
 
@@ -553,11 +554,12 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
             }
             else
             {
-                if (mFirstFramePacket.Num())
+                //TODO Corrupts bitstream?
+                if (mFirstFrameType.Num())
                 {
                     packets.AppendList(mFirstFramePacket);
                     packetTypes.AppendList(mFirstFrameType);
-                    mFirstFramePacket.Clear();
+                    //mFirstFramePacket.Clear();//Don't free memory before BufferVideoData gets to it
                     mFirstFrameType.Clear();
                 }
                 ProcessOutput(&pTaskDescriptionList[i], packets, packetTypes, data.TimeStamp);

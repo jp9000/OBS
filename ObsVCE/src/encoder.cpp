@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "ObsVCE.h"
 
-static char* source =
+static const char *source =
 // global threads: width, height
 "__kernel void Y444toNV12_Y(__global uchar4 *input, __global uchar *output, int alignedWidth)"
 "{"
@@ -225,7 +225,7 @@ bool VCEEncoder::encodeOpen(uint32_t deviceId)
     for (int32_t i = 0; i<MAX_INPUT_SURFACE; i++)
     {
         mEncodeHandle.inputSurfaces[i].surface = clCreateBuffer((cl_context)mOveContext,
-            CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, //CL_MEM_USE_PERSISTENT_MEM_AMD,
+            CL_MEM_READ_ONLY | CL_MEM_USE_PERSISTENT_MEM_AMD, //CL_MEM_ALLOC_HOST_PTR,
             mInputBufSize,
             NULL,
             &err);
