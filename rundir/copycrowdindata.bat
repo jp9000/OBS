@@ -24,11 +24,11 @@ for /D /r %%d in (crowdin\*) do (
 	) else (
 		set localename=!longlocale:~-2!
 	) ) ) ) ) ) ) ) )
-	for /f %%f in ("crowdin\!longlocale!\Main\!shortlocale!.ini") do set size=%%~zf
+	for /f %%f in ("crowdin\!longlocale!\OBS\Main\!shortlocale!.ini") do set size=%%~zf
 	if !size! gtr 0 (
 		echo Found locale !longlocale!, copying to !localename!
-		copy crowdin\!longlocale!\Main\!shortlocale!.ini locale\!localename!.txt
-		copy crowdin\!longlocale!\plugins\DShowPlugin\!shortlocale!.ini plugins\DShowPlugin\locale\!localename!.txt
-		copy crowdin\!longlocale!\plugins\PSVPlugin\!shortlocale!.ini plugins\PSVPlugin\locale\!localename!.txt
+		copy crowdin\!longlocale!\OBS\Main\!shortlocale!.ini locale\!localename!.txt
+		copy crowdin\!longlocale!\OBS\plugins\DShowPlugin\!shortlocale!.ini plugins\DShowPlugin\locale\!localename!.txt
+		copy crowdin\!longlocale!\OBS\plugins\PSVPlugin\!shortlocale!.ini plugins\PSVPlugin\locale\!localename!.txt
 	)
 )
