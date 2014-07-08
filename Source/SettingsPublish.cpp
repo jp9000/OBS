@@ -69,6 +69,22 @@ void SettingsPublish::DestroyPane()
 
 void SettingsPublish::ApplySettings()
 {
+    String strSavePath = GetEditText(GetDlgItem(hwnd, IDC_SAVEPATH));
+    String defaultPath = OSGetDefaultVideoSavePath(L"\\.flv");
+    if (!strSavePath.IsValid() && defaultPath.IsValid())
+    {
+        String text = Str("Settings.Publish.InvalidSavePath");
+        text.FindReplace(L"$1", defaultPath);
+        if (OBSMessageBox(nullptr, text, Str("Settings.Publish.InvalidSavePathCaption"), MB_ICONEXCLAMATION | MB_OKCANCEL) != IDOK)
+        {
+            SetAbortApplySettings(true);
+            return;
+        }
+        SetWindowText(GetDlgItem(hwnd, IDC_SAVEPATH), defaultPath.Array());
+    }
+
+    //------------------------------------------
+
     int curSel = (int)SendMessage(GetDlgItem(hwnd, IDC_MODE), CB_GETCURSEL, 0, 0);
     if(curSel != CB_ERR)
         AppConfig->SetInt(TEXT("Publish"), TEXT("Mode"), curSel);
@@ -126,11 +142,7 @@ void SettingsPublish::ApplySettings()
 
     //------------------------------------------
 
-    String strSavePath = GetEditText(GetDlgItem(hwnd, IDC_SAVEPATH));
     BOOL bSaveToFile = SendMessage(GetDlgItem(hwnd, IDC_SAVETOFILE), BM_GETCHECK, 0, 0) != BST_UNCHECKED;
-
-    if(!strSavePath.IsValid())
-        bSaveToFile = FALSE;
 
     AppConfig->SetInt   (TEXT("Publish"), TEXT("SaveToFile"), bSaveToFile);
     AppConfig->SetString(TEXT("Publish"), TEXT("SavePath"),   strSavePath);

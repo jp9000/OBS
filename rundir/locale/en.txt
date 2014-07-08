@@ -247,6 +247,8 @@ Settings.Publish.StopStreamHotkey="Stop Stream Hotkey:"
 Settings.Publish.StartRecordingHotkey="Start Recording Hotkey:"
 Settings.Publish.StopRecordingHotkey="Stop Recording Hotkey:"
 Settings.Publish.Username="User Name (if any):"
+Settings.Publish.InvalidSavePath="The File Path is invalid, the default Path '$1' will be used instead"
+Settings.Publish.InvalidSavePathCaption="Invalid File Path"
 
 Settings.Publish.Mode.FileOnly="File Output Only"
 Settings.Publish.Mode.LiveStream="Live Stream"
