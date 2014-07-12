@@ -402,8 +402,8 @@ void VolumeControlData::DrawVolumeControl(HDC hDC)
 
     BitBlt(hDC, 0, 0, cx, cy, hdcTemp, 0, 0, SRCCOPY);
 
-    DeleteObject(hdcTemp);
     DeleteObject(hbmpTemp);
+    DeleteObject(hdcTemp);
 
     DeleteObject(hGray);
     DeleteObject(hRed);

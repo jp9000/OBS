@@ -240,8 +240,8 @@ void VolumeMeterData::DrawVolumeMeter(HDC hDC)
 
     BitBlt(hDC, 0, 0, cx, cy, hdcTemp, 0, 0, SRCCOPY);
 
-    DeleteObject(hdcTemp);
     DeleteObject(hbmpTemp);
+    DeleteObject(hdcTemp);
 }
 
 void InitVolumeMeter(HINSTANCE hInst)
