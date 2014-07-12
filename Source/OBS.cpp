@@ -783,7 +783,7 @@ OBS::~OBS()
 
     bShuttingDown = true;
 
-    OSTerminateThread(hHotkeyThread, 250);
+    OSTerminateThread(hHotkeyThread, 2500);
 
     for(UINT i=0; i<plugins.Num(); i++)
     {
@@ -1327,7 +1327,7 @@ void OBS::RefreshStreamButtons(bool disable)
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
     bRecordingOnly = (networkMode == 1);
     bool canStream = networkMode == 0 && !bTestStream;
-    canRecord = (bRecordingOnly || AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile")) != 0) && !bTestStream;
+    canRecord = !bTestStream;
     bool canTest = !bRecording && (!bStreaming || bTestStream);
 
     EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), !disable && canStream);

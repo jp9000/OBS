@@ -98,12 +98,14 @@ void SettingsEncoding::ApplySettings()
     if(quality != CB_ERR)
         AppConfig->SetInt(TEXT("Video Encoding"), TEXT("Quality"), quality);
 
+    static const int minBitRate = 64;
+
     UINT bitrate = GetEditText(GetDlgItem(hwnd, IDC_MAXBITRATE)).ToInt();
-    if(bitrate < 100) bitrate = 100;
+    if (bitrate < minBitRate) bitrate = minBitRate;
     AppConfig->SetInt(TEXT("Video Encoding"), TEXT("MaxBitrate"), bitrate);
 
     UINT bufSize = GetEditText(GetDlgItem(hwnd, IDC_BUFFERSIZE)).ToInt();
-    //if(bufSize < 100) bufSize = bitrate;  //R1CH: Allow users to enter 0 buffer size to disable VBV, its protected by checkbox anyway
+    //if(bufSize < minBitRate) bufSize = bitrate;  //R1CH: Allow users to enter 0 buffer size to disable VBV, its protected by checkbox anyway
     AppConfig->SetInt(TEXT("Video Encoding"), TEXT("BufferSize"), bufSize);
 
     if(App->GetVideoEncoder() != NULL) {

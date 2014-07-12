@@ -191,11 +191,13 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                         SendMessage(hwndTemp, CB_SETCURSEL, id, 0);
                 }
 
+                EnableWindow(hwndTemp, !App->bRunning);
+
                 EnableWindow(GetDlgItem(hwnd, IDC_ADD2), FALSE);
                 EnableWindow(GetDlgItem(hwnd, IDC_RENAME2), FALSE);
 
                 UINT numItems2 = (UINT)SendMessage(hwndTemp, CB_GETCOUNT, 0, 0);
-                EnableWindow(GetDlgItem(hwnd, IDC_REMOVE2), (numItems2 > 1));
+                EnableWindow(GetDlgItem(hwnd, IDC_REMOVE2), (numItems2 > 1) && !App->bRunning);
 
                 //----------------------------------------------
 
@@ -313,6 +315,19 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     }
                     break;
                 case IDC_SCENECOLLECTION:
+                    if (App->bRunning)
+                    {
+                        HWND cb = (HWND)lParam;
+                        String curSceneCollection = GlobalConfig->GetString(TEXT("General"), TEXT("SceneCollection"));
+                        UINT numItems = (UINT)SendMessage(cb, CB_GETCOUNT, 0, 0);
+                        for (UINT i = 0; i < numItems; i++)
+                        {
+                            if (GetCBText(cb, i).Compare(curSceneCollection))
+                                SendMessage(cb, CB_SETCURSEL, i, 0);
+                        }
+                        break;
+                    }
+
                     if (HIWORD(wParam) == CBN_EDITCHANGE)
                     {
                         String strText = GetEditText((HWND)lParam).KillSpaces();
@@ -472,6 +487,8 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     }
                 case IDC_RENAME2:
                 case IDC_ADD2:
+                    if (App->bRunning)
+                        break;
                     if (HIWORD(wParam) == BN_CLICKED)
                     {
                         App->scenesConfig.Save();
@@ -533,6 +550,8 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     break;
 
                 case IDC_REMOVE2:
+                    if (App->bRunning)
+                        break;
                     {
                         HWND hwndSceneCollectionList = GetDlgItem(hwnd, IDC_SCENECOLLECTION);
 

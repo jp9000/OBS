@@ -69,6 +69,22 @@ void SettingsPublish::DestroyPane()
 
 void SettingsPublish::ApplySettings()
 {
+    String strSavePath = GetEditText(GetDlgItem(hwnd, IDC_SAVEPATH));
+    String defaultPath = OSGetDefaultVideoSavePath(L"\\.flv");
+    if (!strSavePath.IsValid() && defaultPath.IsValid())
+    {
+        String text = Str("Settings.Publish.InvalidSavePath");
+        text.FindReplace(L"$1", defaultPath);
+        if (OBSMessageBox(nullptr, text, Str("Settings.Publish.InvalidSavePathCaption"), MB_ICONEXCLAMATION | MB_OKCANCEL) != IDOK)
+        {
+            SetAbortApplySettings(true);
+            return;
+        }
+        SetWindowText(GetDlgItem(hwnd, IDC_SAVEPATH), defaultPath.Array());
+    }
+
+    //------------------------------------------
+
     int curSel = (int)SendMessage(GetDlgItem(hwnd, IDC_MODE), CB_GETCURSEL, 0, 0);
     if(curSel != CB_ERR)
         AppConfig->SetInt(TEXT("Publish"), TEXT("Mode"), curSel);
@@ -126,11 +142,7 @@ void SettingsPublish::ApplySettings()
 
     //------------------------------------------
 
-    String strSavePath = GetEditText(GetDlgItem(hwnd, IDC_SAVEPATH));
     BOOL bSaveToFile = SendMessage(GetDlgItem(hwnd, IDC_SAVETOFILE), BM_GETCHECK, 0, 0) != BST_UNCHECKED;
-
-    if(!strSavePath.IsValid())
-        bSaveToFile = FALSE;
 
     AppConfig->SetInt   (TEXT("Publish"), TEXT("SaveToFile"), bSaveToFile);
     AppConfig->SetString(TEXT("Publish"), TEXT("SavePath"),   strSavePath);
@@ -720,10 +732,10 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 CTSTR lpSavePath = AppConfig->GetStringPtr(TEXT("Publish"), TEXT("SavePath"), path.IsValid() ? path.Array() : nullptr);
                 SetWindowText(GetDlgItem(hwnd, IDC_SAVEPATH), lpSavePath);
 
-                EnableWindow(GetDlgItem(hwnd, IDC_KEEPRECORDING), bSaveToFile || (mode != 0));
+                EnableWindow(GetDlgItem(hwnd, IDC_KEEPRECORDING), true);
 
-                EnableWindow(GetDlgItem(hwnd, IDC_SAVEPATH), bSaveToFile || (mode != 0));
-                EnableWindow(GetDlgItem(hwnd, IDC_BROWSE),   bSaveToFile || (mode != 0));
+                EnableWindow(GetDlgItem(hwnd, IDC_SAVEPATH), true);
+                EnableWindow(GetDlgItem(hwnd, IDC_BROWSE),   true);
 
                 //--------------------------------------------
 
@@ -797,11 +809,6 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                                 ShowWindow(GetDlgItem(hwnd, IDC_SERVERLIST), swShowControls);
                                 ShowWindow(GetDlgItem(hwnd, IDC_URL), SW_HIDE);
                             }
-
-                            BOOL bSaveToFile = SendMessage(GetDlgItem(hwnd, IDC_SAVETOFILE), BM_GETCHECK, 0, 0) != BST_UNCHECKED;
-                            EnableWindow(GetDlgItem(hwnd, IDC_KEEPRECORDING), bSaveToFile || (mode != 0));
-                            EnableWindow(GetDlgItem(hwnd, IDC_SAVEPATH), bSaveToFile || (mode != 0));
-                            EnableWindow(GetDlgItem(hwnd, IDC_BROWSE),   bSaveToFile || (mode != 0));
 
                             if(mode == 0 && data.mode == 1)
                             {
@@ -944,20 +951,6 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                             bDataChanged = true;
                         break;
 
-                    case IDC_SAVETOFILE:
-                        if(HIWORD(wParam) == BN_CLICKED)
-                        {
-                            BOOL bSaveToFile = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
-
-                            EnableWindow(GetDlgItem(hwnd, IDC_KEEPRECORDING), bSaveToFile);
-
-                            EnableWindow(GetDlgItem(hwnd, IDC_SAVEPATH), bSaveToFile);
-                            EnableWindow(GetDlgItem(hwnd, IDC_BROWSE),   bSaveToFile);
-
-                            bDataChanged = true;
-                        }
-                        break;
-
                     case IDC_KEEPRECORDING:
                         if(HIWORD(wParam) == BN_CLICKED)
                         {
@@ -1025,6 +1018,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                         }
 
                     case IDC_LOWLATENCYMODE:
+                    case IDC_SAVETOFILE:
                         if(HIWORD(wParam) == BN_CLICKED)
                             bDataChanged = true;
                         break;

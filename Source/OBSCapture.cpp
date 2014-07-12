@@ -55,7 +55,7 @@ void OBS::ToggleRecording()
     if (!bRecording)
     {
         if (!bRunning && !bStreaming) Start(true);
-        else StartRecording();
+        else StartRecording(true);
     }
     else
         StopRecording();
@@ -69,12 +69,13 @@ void OBS::ToggleCapturing()
         Stop();
 }
 
-bool OBS::StartRecording()
+bool OBS::StartRecording(bool force)
 {
     if (!bRunning || bRecording) return true;
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
+    bool saveToFile = AppConfig->GetInt(L"Publish", L"SaveToFile") != 0;
 
-    bWriteToFile = networkMode == 1 || AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile")) != 0;
+    bWriteToFile = force || networkMode == 1 || saveToFile;
 
     String path = OSGetDefaultVideoSavePath(L"\\.flv");
     String strOutputFile = AppConfig->GetString(TEXT("Publish"), TEXT("SavePath"), path.IsValid() ? path.Array() : nullptr);
@@ -738,7 +739,7 @@ retryHookTestV2:
 
     //-------------------------------------------------------------
 
-    if (!StartRecording() && !bStreaming)
+    if (!StartRecording(recordingOnly) && !bStreaming)
     {
         Stop(true);
         return;

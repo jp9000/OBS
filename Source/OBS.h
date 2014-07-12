@@ -931,7 +931,7 @@ private:
 
     void Start(bool recordingOnly=false);
     void Stop(bool overrideKeepRecording=false);
-    bool StartRecording();
+    bool StartRecording(bool force=false);
     void StopRecording();
 
     static void STDCALL StartStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
