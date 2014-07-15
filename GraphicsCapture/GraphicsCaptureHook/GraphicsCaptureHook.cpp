@@ -50,10 +50,12 @@ DWORD startTick;
 wstring strKeepAlive;
 LONGLONG keepAliveTime = 0;
 
+CRITICAL_SECTION d3d8EndMutex;
 CRITICAL_SECTION d3d9EndMutex;
 CRITICAL_SECTION glMutex;
 CRITICAL_SECTION ddrawMutex;
 
+void CheckD3D8Capture();
 void CheckD3D9Capture();
 void CheckGLCapture();
 void CheckDDrawCapture();
@@ -242,6 +244,7 @@ void DestroySharedMemory()
 }
 
 
+bool bD3D8Hooked = false;
 bool bD3D9Hooked = false;
 bool bDXGIHooked = false;
 bool bGLHooked = false;
@@ -284,6 +287,16 @@ inline bool AttemptToHookSomething()
         logOutput << CurrentTimeString() << "DirectDraw Present" << endl;
         bFoundSomethingToHook = true;
         bDirectDrawHooked = true;
+    }
+
+    if (!bD3D8Hooked && InitD3D8Capture())
+    {
+        logOutput << CurrentTimeString() << "D3D8 Present" << endl;
+        bFoundSomethingToHook = true;
+        bD3D8Hooked = true;
+    }
+    else {
+        CheckD3D8Capture();
     }
 
     return bFoundSomethingToHook;
@@ -396,6 +409,7 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
 
     logOutput << CurrentDateTimeString() << "we're booting up: " << endl;
 
+    InitializeCriticalSection(&d3d8EndMutex);
     InitializeCriticalSection(&d3d9EndMutex);
     InitializeCriticalSection(&glMutex);
     InitializeCriticalSection(&ddrawMutex);
