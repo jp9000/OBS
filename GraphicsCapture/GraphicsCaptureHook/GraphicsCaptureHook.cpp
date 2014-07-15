@@ -52,9 +52,11 @@ LONGLONG keepAliveTime = 0;
 
 CRITICAL_SECTION d3d9EndMutex;
 CRITICAL_SECTION glMutex;
+CRITICAL_SECTION ddrawMutex;
 
 void CheckD3D9Capture();
 void CheckGLCapture();
+void CheckDDrawCapture();
 
 
 string CurrentDateTimeString()
@@ -276,13 +278,13 @@ inline bool AttemptToHookSomething()
     } else {
         CheckGLCapture();
     }
-    /*
+
     if(!bDirectDrawHooked && InitDDrawCapture())
     {
-        OutputDebugString(TEXT("DirectDraw Present\r\n"));
+        logOutput << CurrentTimeString() << "DirectDraw Present" << endl;
         bFoundSomethingToHook = true;
-        bDirectDrawfHooked = true;
-    }*/
+        bDirectDrawHooked = true;
+    }
 
     return bFoundSomethingToHook;
 }
@@ -396,6 +398,7 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
 
     InitializeCriticalSection(&d3d9EndMutex);
     InitializeCriticalSection(&glMutex);
+    InitializeCriticalSection(&ddrawMutex);
 
     DWORD procID = GetCurrentProcessId();
 
