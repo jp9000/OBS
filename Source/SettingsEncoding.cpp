@@ -410,13 +410,21 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                                 SetWindowText(GetDlgItem(hwnd, IDC_BUFFERSIZE), strText);
                             }
 
-                            bDataChanged = true;
+                            if (App->GetVideoEncoder() && App->GetVideoEncoder()->DynamicBitrateSupported())
+                                SetChangedSettings(true);
+                            else
+                                bDataChanged = true;
                         }
                         break;
 
                     case IDC_BUFFERSIZE:
-                        if(HIWORD(wParam) == EN_CHANGE)
-                            bDataChanged = true;
+                        if (HIWORD(wParam) == EN_CHANGE)
+                        {
+                            if (App->GetVideoEncoder() && App->GetVideoEncoder()->DynamicBitrateSupported())
+                                SetChangedSettings(true);
+                            else
+                                bDataChanged = true;
+                        }
                         break;
 
                     case IDC_ENCODERX264:
@@ -450,7 +458,8 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 if(bDataChanged)
                 {
-                    ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
+                    if (App->GetVideoEncoder())
+                        ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
                     SetChangedSettings(true);
                 }
                 break;

@@ -1091,7 +1091,8 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 if(bDataChanged)
                 {
-                    ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
+                    if (App->GetVideoEncoder())
+                        ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
                     SetChangedSettings(true);
                 }
                 break;
