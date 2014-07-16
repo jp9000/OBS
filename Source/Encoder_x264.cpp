@@ -33,7 +33,7 @@ extern "C"
 void get_x264_log(void *param, int i_level, const char *psz, va_list argptr)
 {
     String chi;
-    
+
     chi << TEXT("x264: ") << String(psz);
     chi.FindReplace(TEXT("%s"), TEXT("%S"));
 
@@ -41,6 +41,19 @@ void get_x264_log(void *param, int i_level, const char *psz, va_list argptr)
 
     chi.FindReplace(TEXT("\r"), TEXT(""));
     chi.FindReplace(TEXT("\n"), TEXT(""));
+
+    if (chi == TEXT("x264: OpenCL: fatal error, aborting encode") || chi == TEXT("x264: OpenCL: Invalid value."))
+    {
+        if (App->IsRunning())
+        {
+            // FIXME: currently due to the way OBS handles the stream report, if reconnect is enabled and this error happens
+            // outside of the 30 second "no reconnect" window, no error dialog is shown to the user. usually x264 opencl errors
+            // will happen immediately though.
+            Log(TEXT("Aborting stream due to x264 opencl error"));
+            App->SetStreamReport(TEXT("x264 OpenCL Error\r\n\r\nx264 encountered an error attempting to use OpenCL. This may be due to unsupported hardware or outdated drivers.\r\n\r\nIt is recommended that you remove opencl=true from your x264 advanced settings."));
+            PostMessage(hwndMain, OBS_REQUESTSTOP, 1, 0);
+        }
+    }
 
     Logva(chi.Array(), argptr);
 }
