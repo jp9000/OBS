@@ -556,11 +556,24 @@ public:
 
     virtual bool SetBitRate(DWORD maxBitrate, DWORD bufferSize)
     {
+        DWORD old_bitrate = paramData.rc.i_vbv_max_bitrate;
+        DWORD old_buffer  = paramData.rc.i_vbv_buffer_size;
+
         SetBitRateParams(maxBitrate, bufferSize);
 
         int retVal = x264_encoder_reconfig(x264, &paramData);
-        if(retVal < 0)
+        if (retVal < 0)
             Log(TEXT("Could not set new encoder bitrate, error value %u"), retVal);
+        else
+        {
+            String changes;
+            if (old_bitrate != maxBitrate)
+                changes << FormattedString(L"bitrate %d->%d", old_bitrate, maxBitrate);
+            if (old_buffer != bufferSize)
+                changes << FormattedString(L"%sbuffer size %d->%d", changes.Length() ? L", " : L"", old_buffer, bufferSize);
+            if (changes)
+                Log(L"x264: %s", changes.Array());
+        }
 
         return retVal == 0;
     }
