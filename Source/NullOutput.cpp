@@ -28,7 +28,7 @@ public:
     virtual int  GetBitRate() const {return 0;}
     virtual String GetInfoString() const {return String();}
 
-    virtual bool DynamicBitrateSupported() const {return false;}
+    virtual bool DynamicBitrateSupported() const {return true;}
     virtual bool SetBitRate(DWORD maxBitrate, DWORD bufferSize) {return false;}
 };
 

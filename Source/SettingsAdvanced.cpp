@@ -535,7 +535,8 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                         BOOL bUseVideoEncoderSettings = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
                         EnableWindow(GetDlgItem(hwnd, IDC_VIDEOENCODERSETTINGS), bUseVideoEncoderSettings);
 
-                        ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
+                        if (App->GetVideoEncoder())
+                            ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
                         SetChangedSettings(true);
                     }
                     break;
@@ -546,7 +547,8 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                         bool useSettings = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
                         EnableWindow(GetDlgItem(hwnd, IDC_QSVVIDEOENCODERSETTINGS), useSettings);
 
-                        ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
+                        if (App->GetVideoEncoder())
+                            ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
                         SetChangedSettings(true);
                     }
                     break;
@@ -558,7 +560,8 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 case IDC_LATENCYTUNE:
                     if(HIWORD(wParam) == EN_CHANGE)
                     {
-                        ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
+                        if (App->GetVideoEncoder())
+                            ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
                         SetChangedSettings(true);
                     }
                     break;
@@ -580,7 +583,8 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                         BOOL bUseSendBuffer = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
                         EnableWindow(GetDlgItem(hwnd, IDC_SENDBUFFERSIZE), bUseSendBuffer);
 
-                        ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
+                        if (App->GetVideoEncoder())
+                            ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
                         SetChangedSettings(true);
                     }
                     break;
@@ -601,7 +605,8 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                         }
 
                         SetChangedSettings(true);
-                        ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
+                        if (App->GetVideoEncoder())
+                            ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
                     }
                     break;
 
@@ -613,7 +618,8 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 case IDC_QSVPRESET:
                     if(HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == CBN_EDITCHANGE)
                     {
-                        ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
+                        if (App->GetVideoEncoder())
+                            ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
                         SetChangedSettings(true);
                     }
                     break;
@@ -629,7 +635,8 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 case IDC_LATENCYMETHOD:
                     if(HIWORD(wParam) == BN_CLICKED)
                     {
-                        ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
+                        if (App->GetVideoEncoder())
+                            ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
                         SetChangedSettings(true);
                     }
                     break;
