@@ -240,54 +240,14 @@ HRESULT VCEEncoder::Init()
         VCELog(TEXT("Failed to set CODECAPI_AVEncVideoMaxNumRefFrame"));
     }
 
-    //Usually should check for stream IDs. Assuming static stream count with VCE.
-    //DWORD inCnt, outCnt;
-    //mEncTrans->GetStreamCount(&inCnt, &outCnt);
-    //std::cout << "in:" << inCnt << " out:" << outCnt << std::endl;
-
-    //if (hr == E_NOTIMPL) //most likely; static stream count with IDs from 0 to n-1
-    //{
-    //    hr = mEncTrans->GetStreamIDs(1, &inCnt, 1, &outCnt);
-    //    std::cout << " in stream:" << inCnt << " out stream:" << outCnt << std::endl;
-    //}
-
-    /*hr = mEncTrans->QueryInterface(IID_PPV_ARGS(&mEventGen));
-    LOGIFFAILED(mLogFile, hr, "QueryInterface for MediaEventGenerator failed.");
-
-    //Start async. event processing
-    hr = mEventGen->BeginGetEvent(this, nullptr);
-    LOGIFFAILED(mLogFile, hr, "BeginGetEvent failed.");*/
-
     /// Get it rolling
     hr = mEncTrans->ProcessMessage(MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, 0);
     hr = mEncTrans->ProcessMessage(MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0);
-    //hr = mEventGen->QueueEvent(MEStreamSinkRequestSample, GUID_NULL, S_OK, NULL);
 
     mAlive = true;
     return hr;
 }
 
-//void VCEncoder::EventLoop()
-//{
-//    HRESULT hr = S_OK;
-//    CComPtr<IMFMediaEvent> pEvent;
-//    MediaEventType type;
-//
-//    while (!mShutdown)
-//    {
-//        hr = mEventGen->GetEvent(0, &pEvent);
-//        if (SUCCEEDED(hr))
-//        {
-//            pEvent->GetType(&type);
-//            pEvent.Release(); //Probably
-//            hr = ProcessEvent(type);
-//            LOGIFFAILED(mLogFile, hr, "ProcessEvent failed.");
-//        }
-//    }
-//}
-
-//TODO Probably unnecessary or just set output to precreated h264 mediatype again
-//Stream format got changed
 HRESULT VCEEncoder::OutputFormatChange()
 {
     //Either like MSDN says..
@@ -310,32 +270,6 @@ HRESULT VCEEncoder::OutputFormatChange()
     HRESULT hr = createH264VideoType(&h264VideoType, mPVideoType);
     RETURNIFFAILED(hr);
     return mEncTrans->SetOutputType(0, h264VideoType, 0);
-}
-
-HRESULT VCEEncoder::ProcessEvent(MediaEventType mediaEventType)
-{
-    HRESULT hr = S_OK;
-    switch (mediaEventType)
-    {
-    case METransformNeedInput:
-        std::cout << "METransformNeedInput" << std::endl;
-        hr = ProcessInput();
-        break;
-
-    case METransformHaveOutput:
-        std::cout << "METransformHaveOutput" << std::endl;
-        //hr = ProcessOutput(NULL);
-        break;
-
-    case METransformDrainComplete:
-        std::cout << "METransformDrainComplete" << std::endl;
-        break;
-
-    default:
-        std::cout << "Event: " << mediaEventType << std::endl;
-        break;
-    }
-    return hr;
 }
 
 HRESULT VCEEncoder::ProcessInput()
@@ -779,12 +713,6 @@ void VCEEncoder::GetHeaders(DataPacket &packet)
     if (!mHdrPacket)
     {
         VCELog(TEXT("No header packet yet."));
-        //Garbage, but atleast OBS doesn't crash (in release).
-        /*headerPacket.Clear();
-        headerPacket.SetSize(128);
-        packet.size = headerPacket.Num();
-        packet.lpPacket = headerPacket.Array();
-        return;*/
     }
 
     x264_nal_t nalSPS = { 0 }, nalPPS = { 0 };
@@ -909,35 +837,6 @@ int  VCEEncoder::GetBitRate() const
 bool VCEEncoder::DynamicBitrateSupported() const
 {
     return true;
-}
-
-HRESULT VCEEncoder::GetParameters(DWORD *pdwFlags, DWORD *pdwQueue)
-{
-    return E_NOTIMPL;
-}
-
-HRESULT VCEEncoder::Invoke(IMFAsyncResult *pAsyncResult)
-{
-    HRESULT hr;
-
-    CComCritSecLock<CComMultiThreadModel::AutoCriticalSection> \
-        lock(mStateLock, true);
-
-    CComPtr<IMFAsyncResult> asyncResult = pAsyncResult;
-    CComPtr<IMFMediaEvent> event;
-    MediaEventType mediaEventType;
-
-    //Maybe get mEventGen from IMFAsyncResult::GetState
-    hr = mEventGen->EndGetEvent(asyncResult, &event);
-    hr = event->GetType(&mediaEventType);
-
-    RETURNIFFAILED(hr);
-
-    hr = ProcessEvent(mediaEventType);
-
-    hr = mEventGen->BeginGetEvent(this, nullptr);
-
-    return hr;
 }
 
 HRESULT VCEEncoder::createVideoMediaType(BYTE* pUserData, DWORD dwUserData, DWORD dwWidth, DWORD dwHeight)

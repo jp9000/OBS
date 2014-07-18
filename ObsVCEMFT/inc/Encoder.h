@@ -57,7 +57,7 @@ typedef struct OutputList
     uint64_t timestamp;
 } OutputList;
 
-class VCEEncoder : public VideoEncoder, public IMFAsyncCallback
+class VCEEncoder : public VideoEncoder
 {
 public:
     VCEEncoder(int fps, int width, int height, int quality, const TCHAR* preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR);
@@ -79,41 +79,6 @@ public:
     int GetBufferedFrames() { return mOutputQueue.size(); }
     bool HasBufferedFrames() { return mOutputQueue.size() > 0; }
 
-    HRESULT STDMETHODCALLTYPE GetParameters(DWORD *pdwFlags, DWORD *pdwQueue);
-    HRESULT STDMETHODCALLTYPE Invoke(IMFAsyncResult *pAsyncResult);
-
-    virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppv)
-    {
-        if (riid == IID_IMFAsyncCallback)
-        {
-            *ppv = static_cast<IMFAsyncCallback*>(this);
-            AddRef();
-            return S_OK;
-        }
-        if (riid == IID_IUnknown)
-        {
-            *ppv = static_cast<IUnknown*>(this);
-            AddRef();
-            return S_OK;
-        }
-        return E_NOINTERFACE;
-    }
-
-    ULONG STDMETHODCALLTYPE AddRef()
-    {
-        return InterlockedIncrement(&mRefCount);
-    }
-
-    ULONG STDMETHODCALLTYPE Release()
-    {
-        unsigned long refCount = InterlockedDecrement(&mRefCount);
-        if (0 == refCount)
-        {
-            delete this;
-        }
-        return refCount;
-    };
-
 private:
     //Create input media type
     HRESULT createVideoMediaType(BYTE* pUserData, DWORD dwUserData, DWORD dwWidth, DWORD dwHeight);
@@ -121,7 +86,6 @@ private:
     HRESULT createH264VideoType(IMFMediaType** encodedVideoType, IMFMediaType* sourceVideoType);
     HRESULT ProcessInput();
     HRESULT ProcessOutput(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp);
-    HRESULT ProcessEvent(MediaEventType mediaEventType);
     HRESULT OutputFormatChange();
     void ProcessBitstream(OutputBuffer&, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp);
 
