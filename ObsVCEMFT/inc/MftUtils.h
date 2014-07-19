@@ -616,6 +616,24 @@ public:
         }
         return hr;
     }
+
+    HRESULT getEncoderValue(const GUID* guid, UINT32 *value, CComPtr<IMFTransform> encoderTransform)
+    {
+        HRESULT hr = E_FAIL;
+        if (encoderTransform != nullptr && value != nullptr)
+        {
+            CComPtr<ICodecAPI> codecAPI;
+            codecAPI = encoderTransform;
+            hr = codecAPI->IsSupported(guid);
+            RETURNIFFAILED(hr);
+            VARIANT var;
+            var.vt = VT_UI4;
+            var.uintVal = 0;
+            hr = codecAPI->GetValue(guid, &var);
+            *value = var.uintVal;
+        }
+        return hr;
+    }
     /**
     *****************************************************************************
     *  @fn     setEncoderValue

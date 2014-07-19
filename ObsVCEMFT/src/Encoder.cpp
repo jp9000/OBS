@@ -59,7 +59,6 @@ VCEEncoder::~VCEEncoder()
 
     //Wants explicit Release() because Detach()
     mEncTrans.Release();
-    mEventGen.Release();
 
     //while (!mInputQueue.empty())
     //    mInputQueue.pop();
@@ -151,8 +150,8 @@ HRESULT VCEEncoder::Init()
 
     // http://msdn.microsoft.com/en-us/library/windows/desktop/dd317651%28v=vs.85%29.aspx bits or bytes??
     mPConfigCtrl.vidParams.bufSize = mBufferSize * 1000;
-    mPConfigCtrl.vidParams.meanBitrate = mMaxBitrate * (1000 - bitRateWindow);
-    mPConfigCtrl.vidParams.maxBitrate = mMaxBitrate * (1000 + bitRateWindow);
+    mPConfigCtrl.vidParams.meanBitrate = mMaxBitrate * 1000;// (1000 + bitRateWindow);
+    mPConfigCtrl.vidParams.maxBitrate = mMaxBitrate * (1000 - bitRateWindow);
     mPConfigCtrl.vidParams.idrPeriod = (mKeyint > 0 ? mKeyint : 2) * mFps;
     mPConfigCtrl.vidParams.gopSize = mUseCBR ? gopSize : 20;
     mPConfigCtrl.vidParams.qualityVsSpeed = 50;
@@ -240,6 +239,10 @@ HRESULT VCEEncoder::Init()
         VCELog(TEXT("Failed to set CODECAPI_AVEncVideoMaxNumRefFrame"));
     }
 
+    hr = MFCreateSample(&mSample);
+    LOGIFFAILED(mLogFile, hr, "MFCreateSample failed.");
+    MFFrameRateToAverageTimePerFrame(mFps, 1, &mFrameDur);
+
     /// Get it rolling
     hr = mEncTrans->ProcessMessage(MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, 0);
     hr = mEncTrans->ProcessMessage(MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0);
@@ -289,28 +292,24 @@ HRESULT VCEEncoder::ProcessInput()
     int inBufCount = mInputQueue.size();
 #endif
 
-    while (!mInputQueue.empty())
+    //while (!mInputQueue.empty()) //loops from Encode() instead
     {
         InputBuffer *inBuf = mInputQueue.front();
 
-        hr = MFCreateSample(&pSample);
-        LOGIFFAILED(mLogFile, hr, "ProcessInput: MFCreateSample failed.");
-
         inBuf->pBuffer->Unlock();
 
-        hr = pSample->AddBuffer(inBuf->pBuffer);
+        hr = mSample->AddBuffer(inBuf->pBuffer);
         LOGIFFAILED(mLogFile, hr, "ProcessInput: failed to add buffer to sample");
 
-        MFFrameRateToAverageTimePerFrame(mFps, 1, &dur);
-        pSample->SetSampleDuration((LONGLONG)dur);
-        pSample->SetSampleTime(LONGLONG(inBuf->timestamp)/* * MS_TO_100NS*/);
+        mSample->SetSampleDuration((LONGLONG)mFrameDur);
+        mSample->SetSampleTime(LONGLONG(inBuf->timestamp)/* * MS_TO_100NS*/);
 
-        hr = mEncTrans->ProcessInput(0, pSample, 0);
+        hr = mEncTrans->ProcessInput(0, mSample, 0);
         inBuf->pBuffer->Lock(&(inBuf->pBufferPtr), &len, &outLen);
 
-        pSample.Release();
+        mSample->RemoveAllBuffers();
 
-        if (SUCCEEDED(hr)) //Otherwise try again, but OBS reuses this buffer probably :(
+        if (SUCCEEDED(hr))
         {
             mInputQueue.pop();
             inBuf->locked = false;
@@ -318,14 +317,18 @@ HRESULT VCEEncoder::ProcessInput()
 
         if (MF_E_NOTACCEPTING == hr)
         {
-            VCELog(TEXT("ProcessInput: MF_E_NOTACCEPTING ts: %d"), inBuf->timestamp);
+            VCELog(
+                TEXT("ProcessInput: MF_E_NOTACCEPTING ts: %d.")
+                //TEXT(" If this is logged too often, probably lower your encode quality settings.")
+                , inBuf->timestamp);
+            OSDebugOut(TEXT("ProcessInput: MF_E_NOTACCEPTING ts: %d.\n"), inBuf->timestamp);
             return hr;
         }
         else
             LOGIFFAILED(mLogFile, hr, "ProcessInput failed.");
     }
 #if _DEBUG
-    VCELog(TEXT("Processed %d buffer(s), %d in queue"), inBufCount, mInputQueue.size());
+    //OSDebugOut(TEXT("Processed %d buffer(s), %d in queue\n"), inBufCount, mInputQueue.size());
 #endif
     profileOut
     return hr;
@@ -335,7 +338,7 @@ HRESULT VCEEncoder::ProcessOutput(List<DataPacket> &packets, List<PacketType> &p
 {
     HRESULT hr;
     UINT64 dur = 0;
-    CComPtr<IMFMediaBuffer> pBuffer;
+    CComPtr<IMFMediaBuffer> pBuffer(NULL);
     BYTE *ppBuffer = NULL;
 
     MFT_OUTPUT_DATA_BUFFER out[1] = { 0 };
@@ -359,7 +362,6 @@ HRESULT VCEEncoder::ProcessOutput(List<DataPacket> &packets, List<PacketType> &p
     hr = mEncTrans->ProcessOutput(0, 1, out, &status);
     if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
         return hr;
-    //LOGIFFAILED(mLogFile, hr, "ProcessOutput failed.");
 
     //Even if GetOutputStatus gives OK, ProcessOutput may fail with E_UNEXPECTED
     if (FAILED(hr))
@@ -411,8 +413,7 @@ void VCEEncoder::DrainOutput(List<DataPacket> &packets, List<PacketType> &packet
     DWORD status = 0;
 
     profileIn("Drain")
-    //FIXME Only send 1 frame and suddenly output is not corrupted anymore :S
-    while (packets.Num() == 0)
+    while (true)//packets.Num() == 0)
     {
         /*hr = mEncTrans->GetOutputStatus(&status);
         if ((hr != S_OK && hr != E_NOTIMPL) || status != MFT_OUTPUT_STATUS_SAMPLE_READY)
@@ -448,15 +449,14 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     {
         OutputList *out = mOutputQueue.front();
         mOutputQueue.pop();
-        out->pBuffer.Clear();
-        delete out;
+        delete out; //Should call Clear() too
     }
 
     if (!picIn)
     {
         Stop();
         DrainOutput(packets, packetTypes, timestamp);
-        VCELog(TEXT("Drained %d frame(s)"), packets.Num());
+        OSDebugOut(TEXT("Drained %d frame(s)\n"), packets.Num());
         return true;
     }
 
@@ -471,8 +471,11 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     inBuffer->timestamp = timestamp;
     mInputQueue.push(inBuffer);
 
-    hr = ProcessInput();
-    DrainOutput(packets, packetTypes, timestamp);
+    while (!mInputQueue.empty())
+    {
+        hr = ProcessInput();
+        DrainOutput(packets, packetTypes, timestamp);
+    }
     profileOut
     return false;
 }
@@ -518,7 +521,7 @@ void VCEEncoder::ProcessBitstream(OutputBuffer &buff, List<DataPacket> &packets,
         timeOffset = 0;
     }
 
-    OSDebugOut(TEXT("Frame shifts: %d %d %d %lld\n"), frameShift, timeOffset, timestamp, buff.timestamp);
+    //OSDebugOut(TEXT("Frame shifts: %d %d %d %lld\n"), frameShift, timeOffset, timestamp, buff.timestamp);
 
     timeOffset = htonl(timeOffset);
     BYTE *timeOffsetAddr = ((BYTE*)&timeOffset) + 1;
@@ -673,38 +676,55 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
 
     for (int i = 0; i < MAX_INPUT_SURFACE; i++)
     {
-        if (mInputBuffers[i].locked || mInputBuffers[i].pBufferPtr)
+        InputBuffer& inBuf = mInputBuffers[i];
+        if (inBuf.locked)
             continue;
 
-        InputBuffer buffer;
-        hr = MFCreateMemoryBuffer(mInBuffSize, &(buffer.pBuffer));
+        if (!inBuf.pBufferPtr)
+        {
+            hr = MFCreateMemoryBuffer(mInBuffSize, &(inBuf.pBuffer));
+            if (FAILED(hr))
+            {
+                VCELog(TEXT("MFCreateMemoryBuffer failed."));
+                //FIXME now crash....
+                buff->Y = nullptr;
+                buff->Pitch = 0;
+                buff->MemId = 0;
+                return;
+            }
+        }
+        else
+            inBuf.pBuffer->Unlock();
+
+        hr = inBuf.pBuffer->Lock(&(inBuf.pBufferPtr), &maxLen, &curLen);
         if (SUCCEEDED(hr))
         {
-            buffer.pBuffer->Lock(&(buffer.pBufferPtr), &maxLen, &curLen);
             if (maxLen < mInBuffSize) //Possible?
             {
                 VCELog(TEXT("Buffer max length smaller than asked: %d"), maxLen);
-                buffer.pBufferPtr = nullptr;
-                buffer.pBuffer->Unlock();
-                buffer.pBuffer.Release();
+                inBuf.pBufferPtr = nullptr;
+                inBuf.pBuffer->Unlock();
+                inBuf.pBuffer.Release();
+                inBuf.locked = false;
+                continue; //Try next
             }
             else
             {
                 buff->Pitch = mWidth;
-                buff->Y = (mfxU8*)buffer.pBufferPtr;
+                buff->Y = (mfxU8*)inBuf.pBufferPtr;
                 buff->UV = buff->Y + (mHeight * buff->Pitch);
                 buff->MemId = mfxMemId(i + 1);
 #if _DEBUG
-                VCELog(TEXT("Giving buffer id %d"), i+1);
+                OSDebugOut(TEXT("Giving buffer id %d\n"), i + 1);
 #endif
-                mInputBuffers[i] = buffer;
-                mInputBuffers[i].locked = false;
+                inBuf.locked = false;
                 return;
             }
         }
     }
 
     VCELog(TEXT("Max number of input buffers reached."));
+    OSDebugOut(TEXT("Max number of input buffers reached.\n"));
 }
 
 void VCEEncoder::GetHeaders(DataPacket &packet)

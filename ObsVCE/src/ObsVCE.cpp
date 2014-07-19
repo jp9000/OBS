@@ -770,7 +770,7 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
     mfxFrameData *buff = (mfxFrameData*)buffers;
 
 #ifdef _DEBUG
-    VCELog(TEXT("RequestBuffers: %d"), (unsigned int)buff->MemId - 1);
+    //OSDebugOut(TEXT("RequestBuffers: %d\n"), (unsigned int)buff->MemId - 1);
 #endif
 
     //TODO Threaded NV12 conversion asks same buffer (thread count) times?
@@ -803,7 +803,7 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
         _InterlockedCompareExchange(&(mEncodeHandle.inputSurfaces[i].locked), 0, 1);
 
 #ifdef _DEBUG
-        VCELog(TEXT("Send buffer %d"), i + 1);
+        OSDebugOut(TEXT("Send buffer %d\n"), i + 1);
 #endif
 
         return;
@@ -822,6 +822,7 @@ bool VCEEncoder::DynamicBitrateSupported() const
     return true;
 }
 
+//TODO SetBitRate
 bool VCEEncoder::SetBitRate(DWORD maxBitrate, DWORD bufferSize)
 {
     OSMutexLocker locker(frameMutex);

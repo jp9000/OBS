@@ -95,7 +95,7 @@ private:
     msdk_CMftBuilder *mBuilder;
     CComPtr<IMFMediaType> mPVideoType;
     CComPtr<IMFTransform> mEncTrans;
-    CComPtr<IMFMediaEventGenerator> mEventGen;
+    CComPtr<IMFSample> mSample;
     IUnknown *mIDevMgr;
 
     FunctionDeallocator< void(__stdcall*)(void) > *mComDealloc;
@@ -126,6 +126,7 @@ private:
     int32_t    mFps;
     int32_t    mWidth;
     int32_t    mHeight;
+    UINT64     mFrameDur;
 
     const TCHAR*    mPreset;
     bool     mUse444; //How..
