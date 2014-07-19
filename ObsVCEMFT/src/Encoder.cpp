@@ -32,6 +32,7 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, const TCHAR*
 , mPreset(preset)
 , mColorDesc(colorDesc)
 , mMaxBitrate(maxBitRate)
+, mNewBitrate(maxBitRate)
 , mBufferSize(bufferSize)
 , mUse444(bUse444)
 , mUseCFR(bUseCFR)
@@ -40,6 +41,10 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, const TCHAR*
 , mHdrSize(0)
 , frameShift(0)
 , mIDevMgr(nullptr)
+, mCurrBucketSize(0)
+, mMaxBucketSize(0)
+, mDesiredPacketSize(0)
+, mCurrFrame(0)
 {
     mInBuffSize = mWidth * mHeight * 3 / 2;
     mBuilder = new msdk_CMftBuilder();
@@ -47,6 +52,12 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, const TCHAR*
 
     mUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
     mKeyint = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 0);
+    bool bUsePad = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 0) != 0;
+    if (bUsePad)
+    {
+        mMaxBucketSize = mMaxBitrate * (1000 / 8);
+        mDesiredPacketSize = mMaxBucketSize / mFps;
+    }
 }
 
 VCEEncoder::~VCEEncoder()
@@ -645,6 +656,53 @@ void VCEEncoder::ProcessBitstream(OutputBuffer &buff, List<DataPacket> &packets,
             continue;
     }
 
+    //Add filler
+    if (mUseCBR && mDesiredPacketSize > 0)
+    {
+        if (mCurrFrame == 0)
+        {
+            if (mMaxBitrate != mNewBitrate)
+            {
+                mMaxBitrate = mNewBitrate;
+                mMaxBucketSize = mMaxBitrate * 1000 / 8;
+                mDesiredPacketSize = mMaxBucketSize / mFps;
+            }
+
+            //Random, trying to get OBS bitrate meter stay at mMaxBitrate
+            if (mCurrBucketSize < -mMaxBucketSize)
+                mCurrBucketSize = 0;
+
+            mCurrBucketSize = mMaxBucketSize -
+                (mCurrBucketSize < 0 ? -mCurrBucketSize : mCurrBucketSize);
+        }
+
+        if (mDesiredPacketSize > bufferedOut->pBuffer.Num() + 5
+            && mCurrBucketSize > 0)
+        {
+
+            uint32_t fillerSize = mDesiredPacketSize - bufferedOut->pBuffer.Num() - 5;
+            BufferOutputSerializer packetOut(bufferedOut->pBuffer);
+
+            packetOut.OutputDword(htonl(fillerSize));
+            packetOut.OutputByte(NAL_FILLER);//Disposable i_ref_idc
+
+            uint32_t currSize = bufferedOut->pBuffer.Num();
+            bufferedOut->pBuffer.SetSize(currSize + fillerSize);
+            BYTE *ptr = bufferedOut->pBuffer.Array() + currSize;
+            memset(ptr, 0xFF, fillerSize);
+
+            mCurrBucketSize -= mDesiredPacketSize;
+        }
+        else
+        {
+            mCurrBucketSize -= bufferedOut->pBuffer.Num();
+        }
+
+        mCurrFrame++;
+        if (mCurrFrame >= mFps)
+            mCurrFrame = 0;
+    }
+
     DataPacket packet;
     packet.lpPacket = bufferedOut->pBuffer.Array();
     packet.size = bufferedOut->pBuffer.Num();
@@ -830,6 +888,14 @@ bool VCEEncoder::SetBitRate(DWORD maxBitrate, DWORD bufferSize)
         {
             ok = false;
             VCELog(TEXT("Failed to set CODECAPI_AVEncCommonMeanBitRate"));
+        }
+
+        uint32_t val = mNewBitrate;
+        hr = mBuilder->getEncoderValue(&CODECAPI_AVEncCommonMeanBitRate,
+            &val, mEncTrans);
+        if (SUCCEEDED(hr))
+        {
+            mNewBitrate = int32_t(val) / 1000;
         }
     }
 

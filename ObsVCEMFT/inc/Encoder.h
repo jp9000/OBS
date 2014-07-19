@@ -133,4 +133,11 @@ private:
     ColorDescription mColorDesc;
     bool     mFirstFrame;
     int32_t  frameShift;
+
+    int32_t mCurrBucketSize;
+    int32_t mMaxBucketSize;
+    uint32_t mDesiredPacketSize;
+    int32_t mCurrFrame;
+    int32_t mNewBitrate;
+
 };

@@ -304,6 +304,10 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset
     , mStatsOutSize(0)
     , mStartTime(0)
     , mKeyNum(0)
+    , mCurrBucketSize(0)
+    , mMaxBucketSize(0)
+    , mDesiredPacketSize(0)
+    , mCurrFrame(0)
 {
     frameMutex = OSCreateMutex();
 
@@ -333,6 +337,13 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset
 
     mOutPtrSize = 1 * 1024 * 1024;
     mOutPtr = malloc(mOutPtrSize);
+
+    bool bUsePad = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 0) != 0;
+    if (bUsePad)
+    {
+        mMaxBucketSize = mMaxBitrate * (1000 / 8);
+        mDesiredPacketSize = mMaxBucketSize / mFps;
+    }
 }
 
 VCEEncoder::~VCEEncoder()
@@ -748,6 +759,45 @@ void VCEEncoder::ProcessOutput(OVE_OUTPUT_DESCRIPTION *surf, List<DataPacket> &p
         }
         else
             continue;
+    }
+
+    //Add filler
+    if (mUseCBR && mDesiredPacketSize > 0)
+    {
+        if (mCurrFrame == 0)
+        {
+            //Random, trying to get OBS bitrate meter stay at mMaxBitrate
+            if (mCurrBucketSize < -mMaxBucketSize)
+                mCurrBucketSize = 0;
+            mCurrBucketSize = mMaxBucketSize -
+                (mCurrBucketSize < 0 ? -mCurrBucketSize : mCurrBucketSize);
+        }
+
+        if (mDesiredPacketSize > encodeData.Num() + 5
+            && mCurrBucketSize > 0)
+        {
+
+            uint32_t fillerSize = mDesiredPacketSize - encodeData.Num() - 5;
+            BufferOutputSerializer packetOut(encodeData);
+
+            packetOut.OutputDword(htonl(fillerSize));
+            packetOut.OutputByte(NAL_FILLER);//Disposable i_ref_idc
+
+            uint32_t currSize = encodeData.Num();
+            encodeData.SetSize(currSize + fillerSize);
+            BYTE *ptr = encodeData.Array() + currSize;
+            memset(ptr, 0xFF, fillerSize);
+
+            mCurrBucketSize -= mDesiredPacketSize;
+        }
+        else
+        {
+            mCurrBucketSize -= encodeData.Num();
+        }
+
+        mCurrFrame++;
+        if (mCurrFrame >= mFps)
+            mCurrFrame = 0;
     }
 
     DataPacket packet;
