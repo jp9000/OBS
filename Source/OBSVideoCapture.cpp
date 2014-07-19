@@ -234,8 +234,25 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
     //buffer video data before sending out
     if(bProcessedFrame)
     {
-        bSendFrame = BufferVideoData(videoPackets, videoPacketTypes, bufferedTimes[0], frameInfo.firstFrameTime, curSegment);
-        bufferedTimes.Remove(0);
+        decltype(videoPackets) onePacket;
+        decltype(videoPacketTypes) onePacketType;
+
+        while (videoPackets.Num())
+        {
+            onePacket.Add(videoPackets[0]);
+            onePacketType.Add(videoPacketTypes[0]);
+
+            //bSendFrame = BufferVideoData(videoPackets, videoPacketTypes, bufferedTimes[0], frameInfo.firstFrameTime, curSegment);
+            bSendFrame = BufferVideoData(onePacket, onePacketType, bufferedTimes[0], frameInfo.firstFrameTime, curSegment);
+            bufferedTimes.Remove(0);
+
+            videoPackets.Remove(0);
+            videoPacketTypes.Remove(0);
+            onePacket.Clear();
+            onePacketType.Clear();
+            if (bSendFrame)
+                SendFrame(curSegment, frameInfo.firstFrameTime);
+        }
     }
     else
         nop();
@@ -245,13 +262,13 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
     //------------------------------------
     // upload
 
-    profileIn("sending stuff out");
+    //profileIn("sending stuff out");
 
-    //send headers before the first frame if not yet sent
-    if(bSendFrame)
-        SendFrame(curSegment, frameInfo.firstFrameTime);
+    ////send headers before the first frame if not yet sent
+    //if(bSendFrame)
+    //    SendFrame(curSegment, frameInfo.firstFrameTime);
 
-    profileOut;
+    //profileOut;
 
     return bProcessedFrame;
 }
