@@ -688,8 +688,8 @@ retryHookTestV2:
 
     //-------------------------------------------------------------
 
-    if (!useInputDevices)
-        StartBlankSoundPlayback(strPlaybackDevice);
+    //if (!useInputDevices)
+    //    StartBlankSoundPlayback(strPlaybackDevice);
 
     //-------------------------------------------------------------
 

@@ -24,6 +24,8 @@
 #include <propsys.h>
 #include <Functiondiscoverykeys_devpkey.h>
 
+void StartBlankSoundPlayback(CTSTR lpDevice);
+void StopBlankSoundPlayback();
 
 class MMDeviceAudioSource : public AudioSource
 {
@@ -243,7 +245,13 @@ bool MMDeviceAudioSource::Reinitialize()
 
     if(FAILED(err))
     {
-        if (!deviceLost) AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not initialize audio client, result = %08lX"), (BOOL)bIsMic, err);
+        if (!deviceLost)
+        {
+            //ugly hack to show razer kraken users some kind of meaningful message rather than a cryptic hresult
+            if (err == 0x88890008 && sstr(GetDeviceName(), TEXT("Razer Kraken")))
+                OBSMessageBox(hwndMain, FormattedString(TEXT("Unable to initialize device %s\r\n\r\nThe Kraken Launcher is incompatible with OBS. Please disable it (run msconfig and disable it from startup) or use the 64 bit version of OBS to work around this issue."), GetDeviceName()).Array(), NULL, MB_ICONEXCLAMATION);
+            AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not initialize audio client, result = %08lX"), (BOOL)bIsMic, err);
+        }
         CoTaskMemFree(pwfx);
         return false;
     }
@@ -268,6 +276,12 @@ bool MMDeviceAudioSource::Reinitialize()
     }
 
     CoTaskMemFree(pwfx);
+
+    if (!useInputDevice && !bIsMic)
+    {
+        StopBlankSoundPlayback();
+        StartBlankSoundPlayback(deviceId);
+    }
 
     //-----------------------------------------------------------------
 
