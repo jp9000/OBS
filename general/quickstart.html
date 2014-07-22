@@ -1,0 +1,70 @@
+---
+title: Quickstart Guide - Open Broadcaster Software - Help Files
+layout: default
+---
+<p>For the person with no time to read the entire overview, here's a quick start guide!</p>
+<p>Prefer video tutorials? <a href="http://www.youtube.com/watch?v=y-L5zhhVuSc">I've made one that covers the same stuff as this guide</a>.</p>
+<p>If you're new to streaming and aren't entirely sure what you're doing, you should check out the <a href="{{ site.baseurl }}/general/overview.html">Overview Guide</a>. If you have any further questions after reading this, you should check out the <a href="{{ site.baseurl }}/general/faq.html">FAQ</a> first.</p>
+<h4>Scenes and Sources </h4>
+<p>First you'll want to start off by right clicking in the white box under <strong>Scenes:</strong> and adding a scene.</p>
+<p>Next, you'll right click in the <strong>Sources:</strong> box and add what you want to capture, whether it's a specific window, a capture card or game.</p>
+<p>If you're using a webcam/capture card and multiple scenes that use it, it is recommended you make it a Global Source, by clicking the button on the right to open the Global Sources list and adding it to there. Then add it to your Scenes by right clicking the Source menu and doing Add Global Source.</p>
+<p>After getting your scenes and sources ready, it's time to configure your settings.</p>
+<h4>Encoding</h4>
+<p><strong>Max Bitrate</strong>
+<ul><li>Perform a <a href="http://speedtest.net/">Speedtest</a> to find your upload speed. Set your Max Bitrate to a little bit underneath that.If you have a 1.50mbps upload, Max Bitrate is good around 1000 - 1100.</ul></p>
+<strong>Custom Buffer Size</strong><br />
+<ul><li>Leave this disabled.</ul></p>
+<strong>Use CBR</strong><br />
+<ul><li>Default is on. Don't change this unless you have a good reason to do so.</ul></p>
+<strong>Codec</strong><br />
+<ul><li>AAC is fine for most people.</ul></p>
+<strong>Audio Bitrate</strong><br />
+<ul><li>Default is 128. Increase if you have a good network connection, decrease if you have a poor one.</ul></p>
+<h4>Broadcast Settings</h4>
+<p>Twitch.tv</p>
+<ul>
+  <li>Get your stream key from <a href="http://twitch.tv/broadcast/dashboard/streamkey">http://twitch.tv/broadcast/dashboard/streamkey</a> and enter it into the Stream Key box.</li>
+  <li>Configure your reconnect time and delay if necessary.</li>
+</ul>
+<p>Livestream</p>
+<ul>
+  <li>Select Custom as the Streaming Service</li>
+  <li>For FMS URL, enter the following:<br />
+  rtmp://publish.livestream.com/mogulus/<strong><em>YourChannelName</em></strong>/username=<strong><em>YourUsername</em></strong><br />
+/password=<strong><em>YourPassword</em></strong>/isAutoLive=true</li>
+  <li>For Stream Key, just enter livestream</li>
+  <li>Configure your reconnect time and delay if necessary.</li>
+  <li><strong>Note</strong>: Livestream requires you to use under 500kbps with anything that isn't their Procaster. Make sure Max Bitrate + Audio Bitrate is less than 500</li>
+</ul>
+<p>Ustream</p>
+<ul>
+  <li>Select Custom as the Streaming Service</li>
+  <li>1. Login and go to <a href="http://www.ustream.tv/dashboard">http://www.ustream.tv/dashboard</a><br />
+2. Under the <strong>Channel</strong> section, click More... and then select <strong>Remote</strong><br />
+3. Your FMS URL and Stream Key will be on this page, just enter them into OBS</li>
+  <li>Configure your reconnect time and delay if necessary.</li>
+</ul>
+<p>Custom</p>
+<ul>
+  <li>Enter your FMS URL into the box for it. You can try <a href="http://obsproject.com/forum/search.php">searching</a> for the service you're trying to use if you need help setting them up.    </li>
+  <li>Enter your Play Path/Stream Key into the box.    </li>
+  <li>Configure your reconnect time and delay if necessary.</li>
+</ul>
+<h4>Video</h4>
+<strong>Base Resolution</strong>
+<ul><li>Should be fine at your native resolution.</ul>
+<strong>Resolution Downscale</strong>
+<ul><li>The actual resolution that gets encoded and streamed. Use this to set the resolution of your stream.</ul>
+<strong>FPS</strong>
+<ul><li>Default at 30. Increase if you have a good computer and network connection, decrease if you have a poor computer and/or network connection. Minimum you should use is 15.</ul>
+<h4>Audio</h4>
+<p><strong>Microphone</strong>
+<ul><li>Select your microphone if you're using one. Set up push-to-talk or mute/unmute hotkeys if you need them.</ul></p>
+<strong>Mic/Aux Boost</strong><br />
+<ul><li>If you have a particularly quiet mic, you can boost the volume of it. This will often make any white noise, such as your computer fan, more apparent.</ul>
+<h4>Advanced
+</h4>
+<p><strong>x264 CPU Preset</strong>
+<ul><li>It's generally recommended to leave this at veryfast, as it gives the best balance of quality and speed.  If you have a bit slower processor and it's using a lot of CPU, you can try superfast or ultrafast, however it will decrease quality. Some people with high speed CPUs like to set this to faster to try to increase quality, but it doesn't really give much all that much benefit.</ul></p>
+Do not touch anything else in Advanced unless you absolutely know what you're doing.
