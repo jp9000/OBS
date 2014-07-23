@@ -42,6 +42,9 @@
     <ClCompile Include="D3D9LogStuff.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="D3D8Capture.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DXGIStuff.h">
@@ -54,6 +57,15 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="d3d8.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="d3d8caps.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="d3d8types.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
