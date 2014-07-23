@@ -42,6 +42,8 @@ const int NUM_BUFFERS = 3;
 
 HookData d3d8EndScene;
 HookData d3d8Present;
+HookData d3d8Release;
+HookData d3d8Reset;
 CaptureInfo d3d8CaptureInfo;
 
 IDirect3DSurface8* targetBuffers[NUM_BUFFERS] = ZERO_ARRAY;
@@ -50,6 +52,7 @@ bool targetLocked[NUM_BUFFERS] = ZERO_ARRAY;
 void* pixelData = NULL;
 D3DFORMAT pixelFormat = D3DFMT_UNKNOWN;
 DWORD sourcePitch = 0;
+LPDIRECT3DDEVICE8 lpCurrentDevice = NULL;
 
 DWORD CopyD3D8CPUTextureThread(LPVOID lpUseless);
 
@@ -58,6 +61,43 @@ void SetupD3D8(IDirect3DDevice8* device);
 void CaptureD3D8(IDirect3DDevice8* device);
 bool CreateCPUCapture(IDirect3DDevice8* device);
 void ClearD3D8Data();
+
+ULONG STDMETHODCALLTYPE D3D8Release(IDirect3DDevice8* device)
+{
+    d3d8Release.Unhook();
+    ULONG refCount = device->Release();
+    if (refCount == 0)
+    {
+        logOutput << CurrentTimeString() << "Device released" << endl;
+        ClearD3D8Data();
+    }
+    d3d8Release.Rehook();
+
+    return refCount;
+}
+
+HRESULT STDMETHODCALLTYPE D3D8Reset(IDirect3DDevice8* device, D3DPRESENT_PARAMETERS* pPresentationParameters)
+{
+    RUNEVERYRESET logOutput << CurrentTimeString() << "D3D8Reset called" << endl;
+
+    ClearD3D8Data();
+
+    d3d8Reset.Unhook();
+    HRESULT hr = device->Reset(pPresentationParameters);
+
+    if (lpCurrentDevice == NULL && !bTargetAcquired)
+    {
+        lpCurrentDevice = device;
+        bTargetAcquired = true;
+    }
+
+    if (lpCurrentDevice == device)
+        SetupD3D8(device);
+
+    d3d8Reset.Rehook();
+
+    return hr;
+}
 
 HRESULT STDMETHODCALLTYPE D3D8Present(IDirect3DDevice8* device, CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion)
 {
@@ -355,6 +395,8 @@ void SetupD3D8(IDirect3DDevice8* device)
         return;
     }
 
+    lpCurrentDevice = device;
+
     pixelFormat = desc.Format;
 
     d3d8CaptureInfo.cx = desc.Width;
@@ -363,6 +405,10 @@ void SetupD3D8(IDirect3DDevice8* device)
     d3d8CaptureInfo.format = GS_BGRA;
     d3d8CaptureInfo.pitch = 4 * d3d8CaptureInfo.cx;
 
+    //d3d8Release.Hook(GetVTable(device, (8 / 4)), (FARPROC)D3D8Release);
+    //d3d8Release.Rehook();
+    d3d8Reset.Hook(GetVTable(device, (56 / 4)), (FARPROC)D3D8Reset);
+    d3d8Reset.Rehook();
     d3d8Present.Hook(GetVTable(device, (60 / 4)), (FARPROC)D3D8Present);
     d3d8Present.Rehook();
 
@@ -642,6 +688,7 @@ void ClearD3D8Data()
     resetCount++;
     pixelData = NULL;
     lastTime = 0L;
+    lpCurrentDevice = NULL;
 
     bTargetAcquired = false;
 
