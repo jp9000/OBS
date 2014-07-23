@@ -2696,11 +2696,15 @@ static void OBSUpdateLog()
 String OBS::GetApplicationName()
 {
     String name;
-    name << "Profile: " << App->GetCurrentProfile() << " - " << "SceneCollection: " << App->GetCurrentSceneCollection() << L" - " OBS_VERSION_STRING L" - "
+
+    // we hide the bit version on 32 bit to avoid confusing users who have a 64
+    // bit pc unncessarily asking for the 64 bit version under the assumption
+    // that the 32 bit version doesn't work or something.
+    name << "Profile: " << App->GetCurrentProfile() << " - " << "SceneCollection: " << App->GetCurrentSceneCollection() << L" - " OBS_VERSION_STRING
 #ifdef _WIN64
-    L"64bit";
+    L" - 64bit";
 #else
-    L"32bit";
+    L"";
 #endif
     return name;
 }
