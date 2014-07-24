@@ -1,4 +1,4 @@
-﻿services : {
+services : {
   Twitch / Justin.tv : {
     id : 1
     servers : {
