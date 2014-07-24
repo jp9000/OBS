@@ -112,7 +112,7 @@ services : {
   Azubu.tv : {
     id : 13
     servers : {
-      "API" : https://api.azubu.tv/stream/broadcaster-key/
+      "API" : https://web-api.azubu.tv/stream/broadcaster-key/
     }
   }
 }
