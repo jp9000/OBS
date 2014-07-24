@@ -63,6 +63,7 @@ public:
         lame_set_out_samplerate(lgf, App->GetSampleRateHz());
         lame_set_num_channels(lgf, App->NumAudioChannels());
         lame_set_disable_reservoir(lgf, TRUE); //bit reservoir has to be disabled for seamless streaming
+        lame_set_quality(lgf, 2);
         lame_set_VBR(lgf, vbr_off);
         lame_set_brate(lgf, bitRate);
         lame_init_params(lgf);
