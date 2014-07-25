@@ -545,8 +545,13 @@ OBS::OBS()
 
     hwndTemp = GetDlgItem(hwndMain, ID_SCENES);
 
+    CTSTR collection = GetCurrentSceneCollection();
+
     String strScenesConfig;
-    strScenesConfig << lpAppDataPath << TEXT("\\sceneCollection\\") << GetCurrentSceneCollection() << TEXT(".xconfig");
+    strScenesConfig = FormattedString(L"%s/%s.xconfig", lpAppDataPath, collection);
+
+    if (!OSFileExists(strScenesConfig))
+        strScenesConfig = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, collection);
 
     if(!scenesConfig.Open(strScenesConfig))
         CrashError(TEXT("Could not open '%s'"), strScenesConfig.Array());
@@ -1307,6 +1312,10 @@ void OBS::GetSceneCollection(StringList &sceneCollectionList)
 
     sceneCollectionList.Clear();
 
+    String scenesPath = FormattedString(L"%s\\scenes.xconfig", lpAppDataPath);
+    if (OSFileExists(scenesPath))
+        sceneCollectionList << L"scenes";
+
     String sceneCollectionDir(FormattedString(L"%s/sceneCollection/", OBSGetAppDataPath()));
     strSceneCollectionWildcard << sceneCollectionDir << "*.xconfig";
     if (hFind = OSFindFirstFile(strSceneCollectionWildcard, ofd))
@@ -1351,8 +1360,11 @@ void OBS::ReloadSceneCollection()
     HWND hwndTemp;
     hwndTemp = GetDlgItem(hwndMain, ID_SCENES);
 
-    String strScenesConfig;
-    strScenesConfig << lpAppDataPath << TEXT("\\sceneCollection\\") << GetCurrentSceneCollection() << TEXT(".xconfig");
+    CTSTR collection = GetCurrentSceneCollection();
+    String strScenesConfig = FormattedString(L"%s/%s.xconfig", lpAppDataPath, collection);
+
+    if (!OSFileExists(strScenesConfig))
+        strScenesConfig = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, collection);
 
     if (!scenesConfig.Open(strScenesConfig))
         CrashError(TEXT("Could not open '%s'"), strScenesConfig.Array());

@@ -197,7 +197,7 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 EnableWindow(GetDlgItem(hwnd, IDC_RENAME2), FALSE);
 
                 UINT numItems2 = (UINT)SendMessage(hwndTemp, CB_GETCOUNT, 0, 0);
-                EnableWindow(GetDlgItem(hwnd, IDC_REMOVE2), (numItems2 > 1) && !App->bRunning);
+                EnableWindow(GetDlgItem(hwnd, IDC_REMOVE2), (numItems2 > 1) && !App->bRunning && strCurSceneCollection != L"scenes");
 
                 //----------------------------------------------
 
@@ -342,7 +342,7 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                                 UINT id = (UINT)SendMessage((HWND)lParam, CB_FINDSTRINGEXACT, -1, (LPARAM)strText.Array());
                                 EnableWindow(GetDlgItem(hwnd, IDC_ADD2), (id == CB_ERR));
-                                EnableWindow(GetDlgItem(hwnd, IDC_RENAME2), (id == CB_ERR) || strCurSceneCollection.CompareI(strText));
+                                EnableWindow(GetDlgItem(hwnd, IDC_RENAME2), strCurSceneCollection != L"scenes" && ((id == CB_ERR) || strCurSceneCollection.CompareI(strText)));
 
                                 ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_HIDE);
                                 break;
@@ -366,7 +366,10 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                         String strSceneCollection = GetCBText((HWND)lParam);
                         String strSceneCollectionPath;
-                        strSceneCollectionPath << lpAppDataPath << TEXT("\\sceneCollection\\") << strSceneCollection << TEXT(".xconfig");
+                        strSceneCollectionPath = FormattedString(L"%s/%s.xconfig", lpAppDataPath, strSceneCollection.Array());
+
+                        if (!OSFileExists(strSceneCollectionPath))
+                            strSceneCollectionPath = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, strSceneCollection.Array());
 
                         if (!App->scenesConfig.Open(strSceneCollectionPath))
                         {
@@ -383,7 +386,7 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                         App->UpdateNotificationAreaIcon();
 
                         UINT numItems = (UINT)SendMessage(GetDlgItem(hwnd, IDC_SCENECOLLECTION), CB_GETCOUNT, 0, 0);
-                        EnableWindow(GetDlgItem(hwnd, IDC_REMOVE2), (numItems > 1));
+                        EnableWindow(GetDlgItem(hwnd, IDC_REMOVE2), (numItems > 1) && strSceneCollection != L"scenes");
 
                         App->ResizeWindow(false);
                     }
@@ -503,7 +506,10 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                         String strCurSceneCollection = GlobalConfig->GetString(TEXT("General"), TEXT("SceneCollection"));
                         String strCurSceneCollectionPath;
-                        strCurSceneCollectionPath << lpAppDataPath << TEXT("\\sceneCollection\\") << strCurSceneCollection << TEXT(".xconfig");
+                        strCurSceneCollectionPath = FormattedString(L"%s/%s.xconfig", lpAppDataPath, strCurSceneCollection.Array());
+
+                        if (!OSFileExists(strCurSceneCollectionPath))
+                            strCurSceneCollectionPath = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, strCurSceneCollection.Array());
 
                         String strSceneCollectionPath;
                         strSceneCollectionPath << lpAppDataPath << TEXT("\\sceneCollection\\") << strSceneCollection << TEXT(".xconfig");
@@ -538,7 +544,7 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                             GlobalConfig->SetString(TEXT("General"), TEXT("SceneCollection"), strSceneCollection);
 
                             UINT numItems2 = (UINT)SendMessage(hwndSceneCollectionList, CB_GETCOUNT, 0, 0);
-                            EnableWindow(GetDlgItem(hwnd, IDC_REMOVE2), (numItems2 > 1));
+                            EnableWindow(GetDlgItem(hwnd, IDC_REMOVE2), (numItems2 > 1) && strSceneCollection != L"scenes");
                             EnableWindow(GetDlgItem(hwnd, IDC_RENAME2), FALSE);
                             EnableWindow(GetDlgItem(hwnd, IDC_ADD2), FALSE);
                             App->scenesConfig.Close(true);

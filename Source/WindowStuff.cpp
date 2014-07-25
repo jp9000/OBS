@@ -3091,8 +3091,12 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                             if (!strSceneCollection.CompareI(GetCurrentSceneCollection()))
                             {
                                 App->scenesConfig.Save();
+                                CTSTR collection = GetCurrentSceneCollection();
                                 String strSceneCollectionPath;
-                                strSceneCollectionPath << lpAppDataPath << TEXT("\\sceneCollection\\") << strSceneCollection << TEXT(".xconfig");
+                                strSceneCollectionPath = FormattedString(L"%s/%s.xconfig", lpAppDataPath, collection);
+
+                                if (!OSFileExists(strSceneCollectionPath))
+                                    strSceneCollectionPath = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, collection);
                                 
                                 if (!App->scenesConfig.Open(strSceneCollectionPath))
                                 {
