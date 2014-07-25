@@ -242,6 +242,11 @@ void __cdecl Logva(const TCHAR *format, va_list argptr)
 {
     if(!format) return;
 
+#ifdef _DEBUG
+    OSDebugOutva(format, argptr);
+    OSDebugOut(L"\n");
+#endif
+
     String strCurTime = CurrentTimeString();
     strCurTime << TEXT(": ");
     String strOut = strCurTime;
