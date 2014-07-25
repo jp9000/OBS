@@ -422,6 +422,10 @@ void __cdecl OSDebugOutva(const TCHAR *format, va_list argptr)
     /*TCHAR blah[4096];
     vtsprintf_s(blah, 4095, format, argptr);*/
 
+#ifndef _DEBUG
+    return;
+#endif
+
     String strDebug = FormattedStringva(format, argptr);
 
     OutputDebugString(strDebug);
