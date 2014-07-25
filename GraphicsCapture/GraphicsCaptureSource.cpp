@@ -350,17 +350,26 @@ BOOL GraphicsCaptureSource::CheckFileIntegrity(LPCTSTR strDLL)
     }
 }
 
+HWND FindVisibleWindow(CTSTR lpClass, CTSTR lpTitle)
+{
+    HWND hwndNext = NULL;
+    HWND hwnd = NULL;
+
+    do
+    {
+        hwnd = FindWindowEx(NULL, hwndNext, lpClass, lpTitle);
+        if (hwnd && IsWindowVisible(hwnd))
+            break;
+
+        hwndNext = hwnd;
+    } while (hwnd != nullptr);
+
+    return hwnd;
+}
+
 void GraphicsCaptureSource::AttemptCapture()
 {
-    //Log(TEXT("attempting to capture.."));
-
-    if (!bUseHotkey)
-        hwndTarget = FindWindow(strWindowClass, NULL);
-    else
-    {
-        hwndTarget = hwndNextTarget;
-        hwndNextTarget = NULL;
-    }
+    hwndTarget = FindVisibleWindow(strWindowClass, NULL);
 
     if (hwndTarget)
     {
@@ -671,6 +680,16 @@ void GraphicsCaptureSource::Tick(float fSeconds)
         if ((!bUseHotkey && captureCheckInterval >= 3.0f) ||
             (bUseHotkey && hwndNextTarget != NULL))
         {
+            if (bUseHotkey && hwndNextTarget)
+            {
+                strWindowClass.SetLength(255);
+                RealGetWindowClassW(hwndNextTarget, strWindowClass.Array(), 255);
+                strWindowClass.SetLength(slen(strWindowClass));
+                hwndNextTarget = NULL;
+
+                data->SetString(L"windowClass", strWindowClass);
+            }
+
             AttemptCapture();
             captureCheckInterval = 0.0f;
         }
