@@ -2700,7 +2700,7 @@ String OBS::GetApplicationName()
     // we hide the bit version on 32 bit to avoid confusing users who have a 64
     // bit pc unncessarily asking for the 64 bit version under the assumption
     // that the 32 bit version doesn't work or something.
-    name << "Profile: " << App->GetCurrentProfile() << " - " << "SceneCollection: " << App->GetCurrentSceneCollection() << L" - " OBS_VERSION_STRING
+    name << "Profile: " << App->GetCurrentProfile() /*<< " - " << "SceneCollection: " << App->GetCurrentSceneCollection()*/ << L" - " OBS_VERSION_STRING
 #ifdef _WIN64
     L" - 64bit";
 #else
@@ -3067,7 +3067,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                 ResetApplicationName();
                             }
                         }
-                        else if (id >= ID_SWITCHSCENECOLLECTION &&
+                        /*else if (id >= ID_SWITCHSCENECOLLECTION &&
                             id <= ID_SWITCHSCENECOLLECTION_END)
                         {
                             if (App->bRunning)
@@ -3111,7 +3111,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                 ResetApplicationName();
                                 App->UpdateNotificationAreaIcon();
                             }
-                        }
+                        }*/
                         else if (id >= ID_UPLOAD_LOG && id <= ID_UPLOAD_LOG_END)
                         {
                             String log = GetLogUploadMenuItem(id - ID_UPLOAD_LOG);

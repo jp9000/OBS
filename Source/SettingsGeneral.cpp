@@ -177,7 +177,7 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 //----------------------------------------------
 
-                String strCurSceneCollection = GlobalConfig->GetString(TEXT("General"), TEXT("SceneCollection"));
+                /*String strCurSceneCollection = GlobalConfig->GetString(TEXT("General"), TEXT("SceneCollection"));
 
                 hwndTemp = GetDlgItem(hwnd, IDC_SCENECOLLECTION);
 
@@ -197,7 +197,7 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 EnableWindow(GetDlgItem(hwnd, IDC_RENAME2), FALSE);
 
                 UINT numItems2 = (UINT)SendMessage(hwndTemp, CB_GETCOUNT, 0, 0);
-                EnableWindow(GetDlgItem(hwnd, IDC_REMOVE2), (numItems2 > 1) && !App->bRunning && strCurSceneCollection != L"scenes");
+                EnableWindow(GetDlgItem(hwnd, IDC_REMOVE2), (numItems2 > 1) && !App->bRunning && strCurSceneCollection != L"scenes");*/
 
                 //----------------------------------------------
 
@@ -314,7 +314,7 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                         App->ResizeWindow(false);
                     }
                     break;
-                case IDC_SCENECOLLECTION:
+                /*case IDC_SCENECOLLECTION:
                     if (App->bRunning)
                     {
                         HWND cb = (HWND)lParam;
@@ -390,7 +390,7 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                         App->ResizeWindow(false);
                     }
-                    break;
+                    break;*/
                 case IDC_RENAME:
                 case IDC_ADD:
                     if (App->bRunning)
@@ -488,7 +488,7 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                         break;
                     }
-                case IDC_RENAME2:
+                /*case IDC_RENAME2:
                 case IDC_ADD2:
                     if (App->bRunning)
                         break;
@@ -589,7 +589,7 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                         }
 
                         break;
-                    }
+                    }*/
                 case IDC_NOTIFICATIONICON:
                     if (SendMessage(GetDlgItem(hwnd, IDC_NOTIFICATIONICON), BM_GETCHECK, 0, 0) == BST_UNCHECKED)
                     {

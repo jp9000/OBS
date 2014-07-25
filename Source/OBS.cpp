@@ -545,13 +545,15 @@ OBS::OBS()
 
     hwndTemp = GetDlgItem(hwndMain, ID_SCENES);
 
-    CTSTR collection = GetCurrentSceneCollection();
+    //CTSTR collection = GetCurrentSceneCollection();
 
     String strScenesConfig;
-    strScenesConfig = FormattedString(L"%s/%s.xconfig", lpAppDataPath, collection);
+    /*strScenesConfig = FormattedString(L"%s/%s.xconfig", lpAppDataPath, collection);
 
     if (!OSFileExists(strScenesConfig))
-        strScenesConfig = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, collection);
+        strScenesConfig = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, collection);*/
+
+    strScenesConfig << lpAppDataPath << TEXT("\\scenes.xconfig");
 
     if(!scenesConfig.Open(strScenesConfig))
         CrashError(TEXT("Could not open '%s'"), strScenesConfig.Array());
@@ -634,7 +636,7 @@ OBS::OBS()
 
     ReloadIniSettings();
     ResetProfileMenu();
-    ResetSceneCollectionMenu();
+    //ResetSceneCollectionMenu();
     ResetLogUploadMenu();
 
     //-----------------------------------------------------
