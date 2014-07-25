@@ -352,8 +352,8 @@ BOOL GraphicsCaptureSource::CheckFileIntegrity(LPCTSTR strDLL)
 
 HWND FindVisibleWindow(CTSTR lpClass, CTSTR lpTitle)
 {
-    HWND hwndNext = NULL;
-    HWND hwnd = NULL;
+    HWND hwndNext = nullptr;
+    HWND hwnd = nullptr;
 
     do
     {
@@ -370,7 +370,8 @@ HWND FindVisibleWindow(CTSTR lpClass, CTSTR lpTitle)
 void GraphicsCaptureSource::AttemptCapture()
 {
     OSDebugOut(TEXT("attempting to capture..\n"));
-    hwndTarget = FindVisibleWindow(strWindowClass, NULL);
+
+    hwndTarget = strWindowClass.IsValid() ? FindVisibleWindow(strWindowClass, NULL) : nullptr;
 
     OSDebugOut(L"Window: %s: ", strWindowClass.Array());
     if (hwndTarget)
