@@ -369,10 +369,13 @@ HWND FindVisibleWindow(CTSTR lpClass, CTSTR lpTitle)
 
 void GraphicsCaptureSource::AttemptCapture()
 {
+    OSDebugOut(TEXT("attempting to capture..\n"));
     hwndTarget = FindVisibleWindow(strWindowClass, NULL);
 
+    OSDebugOut(L"Window: %s: ", strWindowClass.Array());
     if (hwndTarget)
     {
+        OSDebugOut(L"Valid window\n");
         targetThreadID = GetWindowThreadProcessId(hwndTarget, &targetProcessID);
         if (!targetThreadID || !targetProcessID)
         {
@@ -383,6 +386,7 @@ void GraphicsCaptureSource::AttemptCapture()
     }
     else
     {
+        OSDebugOut(L"Bad window\n");
         if (!bUseHotkey && !warningID)
             warningID = API->AddStreamInfo(Str("Sources.SoftwareCaptureSource.WindowNotFound"), StreamInfoPriority_High);
 
@@ -442,6 +446,8 @@ void GraphicsCaptureSource::AttemptCapture()
         hSignalRestart = OpenEvent(EVENT_ALL_ACCESS, FALSE, String() << RESTART_CAPTURE_EVENT << UINT(targetProcessID));
         if(hSignalRestart)
         {
+            OSDebugOut(L"Setting signal for process ID %u\n", targetProcessID);
+
             SetEvent(hSignalRestart);
             bCapturing = true;
             captureWaitCount = 0;
@@ -478,6 +484,7 @@ void GraphicsCaptureSource::AttemptCapture()
 
             if (!CheckFileIntegrity(strDLL.Array()))
             {
+                OSDebugOut(L"Error acquiring\n");
                 bErrorAcquiring = true;
             }
             else
@@ -488,6 +495,7 @@ void GraphicsCaptureSource::AttemptCapture()
                     if (InjectLibrary(hProcess, strDLL))
                     {
                         captureWaitCount = 0;
+                        OSDebugOut(L"Inject successful\n");
                         bCapturing = true;
                     }
                     else
@@ -647,24 +655,23 @@ void GraphicsCaptureSource::Tick(float fSeconds)
         DWORD val = WaitForSingleObject(hSignalReady, 0);
         if (val == WAIT_OBJECT_0)
             NewCapture();
-        /*else if (val != WAIT_TIMEOUT)
-            Log(TEXT("what the heck?  val is 0x%08lX"), val);*/
+        else if (val != WAIT_TIMEOUT)
+            OSDebugOut(TEXT("what the heck?  val is 0x%08lX\n"), val);
     }
 
-    /*    static int floong = 0;
+    static int floong = 0;
 
-        if (floong++ == 30) {
-            Log(TEXT("valid, bCapturing = %s"), bCapturing ? TEXT("true") : TEXT("false"));
+    if (hSignalReady) {
+        if (floong++ == 60) {
+            OSDebugOut(TEXT("valid, bCapturing = %s\n"), bCapturing ? TEXT("true") : TEXT("false"));
             floong = 0;
         }
     } else {
-        static int floong = 0;
-
-        if (floong++ == 30) {
-            Log(TEXT("not valid, bCapturing = %s"), bCapturing ? TEXT("true") : TEXT("false"));
+        if (floong++ == 60) {
+            OSDebugOut(TEXT("not valid, bCapturing = %s\n"), bCapturing ? TEXT("true") : TEXT("false"));
             floong = 0;
         }
-    }*/
+    }
 
     if(bCapturing && !capture)
     {
