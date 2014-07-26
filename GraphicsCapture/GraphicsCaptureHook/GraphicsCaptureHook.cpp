@@ -33,6 +33,8 @@ int  resetCount = 1;
 bool bStopRequested = false;
 bool bCapturing = true;
 bool bTargetAcquired = false;
+bool bCaptureThreadStop = false;
+HANDLE hCaptureThread = NULL;
 
 HANDLE hFileMap = NULL;
 LPBYTE lpSharedMemory = NULL;
@@ -473,9 +475,9 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
 
             logOutput << CurrentTimeString() << "(half life scientist) everything..  seems to be in order" << endl;
 
-            while (1) {
-                AttemptToHookSomething();
-                Sleep(4000);
+            for (size_t n = 0; !bCaptureThreadStop; ++n) {
+                if (n % 100 == 0) AttemptToHookSomething();
+                Sleep(40);
             }
 
             CloseHandle(textureMutexes[1]);
@@ -519,8 +521,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpBlah)
             CloseHandle(hDllMainThread);
             return FALSE;
         }
-
-        CloseHandle(hThread);
+        hCaptureThread = hThread;
+        //CloseHandle(hThread);
     }
     else if(dwReason == DLL_PROCESS_DETACH)
     {
@@ -529,6 +531,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpBlah)
         FreeD3D10Capture();
         FreeD3D101Capture();
         FreeD3D11Capture();*/
+
+        bCaptureThreadStop = true;
+        WaitForSingleObject(hCaptureThread, 300);
 
         if(hSignalRestart)
             CloseHandle(hSignalRestart);
