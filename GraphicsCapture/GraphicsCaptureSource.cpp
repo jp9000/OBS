@@ -318,7 +318,8 @@ void GraphicsCaptureSource::BeginScene()
 
     drawShader = CreatePixelShaderFromFile(TEXT("shaders\\DrawTexture_ColorAdjust.pShader"));
 
-    AttemptCapture();
+    if (!bUseHotkey)
+        AttemptCapture();
 }
 
 BOOL GraphicsCaptureSource::CheckFileIntegrity(LPCTSTR strDLL)
@@ -372,7 +373,13 @@ void GraphicsCaptureSource::AttemptCapture()
     OSDebugOut(TEXT("attempting to capture..\n"));
 
     hwndTarget = strWindowClass.IsValid() ? FindVisibleWindow(strWindowClass, NULL) : nullptr;
+    
+    // use foregroundwindow as fallback (should be NULL if not using hotkey capture)
+    if (!hwndTarget)
+        hwndTarget = hwndNextTarget;
 
+    hwndNextTarget = nullptr;
+    
     OSDebugOut(L"Window: %s: ", strWindowClass.Array());
     if (hwndTarget)
     {
@@ -693,7 +700,6 @@ void GraphicsCaptureSource::Tick(float fSeconds)
                 strWindowClass.SetLength(255);
                 RealGetWindowClassW(hwndNextTarget, strWindowClass.Array(), 255);
                 strWindowClass.SetLength(slen(strWindowClass));
-                hwndNextTarget = NULL;
 
                 data->SetString(L"windowClass", strWindowClass);
             }
