@@ -468,7 +468,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     int numArgs;
     LPWSTR *args = CommandLineToArgvW(GetCommandLineW(), &numArgs);
     LPWSTR profile = NULL;
-    //LPWSTR sceneCollection = NULL;
+    LPWSTR sceneCollection = NULL;
 
     bool bDisableMutex = false;
 
@@ -485,11 +485,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             if (++i < numArgs)
                 profile = args[i];
         }
-        /*else if (scmpi(args[i], L"-scenecollection") == 0)
+        else if (scmpi(args[i], L"-scenecollection") == 0)
         {
             if (++i < numArgs)
                 sceneCollection = args[i];
-        }*/
+        }
     }
 
     //------------------------------------------------------------
@@ -566,9 +566,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             if(!OSFileExists(strProfilesPath) && !OSCreateDirectory(strProfilesPath))
                 CrashError(TEXT("Couldn't create directory '%s'"), strProfilesPath.Array());
 
-            /*String strSceneCollectionPath = strAppDataPath + TEXT("\\sceneCollection");
+            String strSceneCollectionPath = strAppDataPath + TEXT("\\sceneCollection");
             if (!OSFileExists(strSceneCollectionPath) && !OSCreateDirectory(strSceneCollectionPath))
-                CrashError(TEXT("Couldn't create directory '%s'"), strSceneCollectionPath.Array());*/
+                CrashError(TEXT("Couldn't create directory '%s'"), strSceneCollectionPath.Array());
 
             String strLogsPath = strAppDataPath + TEXT("\\logs");
             if(!OSFileExists(strLogsPath) && !OSCreateDirectory(strLogsPath))
@@ -617,7 +617,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         AppConfig = new ConfigFile;
         SetupIni(profile);
-        //SetupSceneCollection(sceneCollection);
+        SetupSceneCollection(sceneCollection);
 
         //--------------------------------------------
 
