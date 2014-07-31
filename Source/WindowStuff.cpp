@@ -74,6 +74,61 @@ enum
     ID_PROJECTOR=6000,
 };
 
+INT_PTR CALLBACK OBS::EnterSceneCollectionDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message)
+    {
+        case WM_INITDIALOG:
+            {
+                SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
+                LocalizeWindow(hwnd);
+
+                String &strOut = *(String*)GetWindowLongPtr(hwnd, DWLP_USER);
+                SetWindowText(GetDlgItem(hwnd, IDC_NAME), strOut);
+
+                return true;
+            }
+
+        case WM_COMMAND:
+            switch (LOWORD(wParam))
+            {
+                case IDOK:
+                    {
+                        String str;
+                        str.SetLength((UINT)SendMessage(GetDlgItem(hwnd, IDC_NAME), WM_GETTEXTLENGTH, 0, 0));
+                        if (!str.Length())
+                        {
+                            OBSMessageBox(hwnd, Str("EnterName"), NULL, 0);
+                            break;
+                        }
+
+                        SendMessage(GetDlgItem(hwnd, IDC_NAME), WM_GETTEXT, str.Length()+1, (LPARAM)str.Array());
+
+                        String &strOut = *(String*)GetWindowLongPtr(hwnd, DWLP_USER);
+
+                        String strSceneCollectionPath;
+                        strSceneCollectionPath << lpAppDataPath << TEXT("\\sceneCollection\\") << str << TEXT(".xconfig");
+
+                        if (OSFileExists(strSceneCollectionPath))
+                        {
+                            String strExists = Str("NameExists");
+                            strExists.FindReplace(TEXT("$1"), str);
+                            OBSMessageBox(hwnd, strExists, NULL, 0);
+                            break;
+                        }
+
+                        strOut = str;
+                    }
+
+                case IDCANCEL:
+                    EndDialog(hwnd, LOWORD(wParam));
+                    break;
+            }
+    }
+
+    return false;
+}
+
 INT_PTR CALLBACK OBS::EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch(message)
@@ -2316,20 +2371,217 @@ void OBS::AddSceneCollectionToMenu(HMENU menu)
     }
 }
 
+//----------------------------
+
+void OBS::AddSceneCollection(SceneCollectionAction action)
+{
+    if (App->bRunning)
+        return;
+
+    String strCurSceneCollection = GlobalConfig->GetString(TEXT("General"), TEXT("SceneCollection"));
+
+    String strSceneCollection;
+    if (action == SceneCollectionAction::Rename)
+        strSceneCollection = strCurSceneCollection;
+
+    if (OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSceneCollectionDialogProc, (LPARAM)&strSceneCollection) != IDOK)
+        return;
+
+    App->scenesConfig.Save();
+
+    String strCurSceneCollectionPath;
+    strCurSceneCollectionPath = FormattedString(L"%s/%s.xconfig", lpAppDataPath, strCurSceneCollection.Array());
+
+    if (!OSFileExists(strCurSceneCollectionPath))
+        strCurSceneCollectionPath = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, strCurSceneCollection.Array());
+
+    String strSceneCollectionPath;
+    strSceneCollectionPath << lpAppDataPath << TEXT("\\sceneCollection\\") << strSceneCollection << TEXT(".xconfig");
+
+    if ((action != SceneCollectionAction::Rename || !strSceneCollectionPath.CompareI(strCurSceneCollectionPath)) && OSFileExists(strSceneCollectionPath))
+        OBSMessageBox(hwndMain, Str("Settings.General.ScenesExists"), NULL, 0);
+    else
+    {
+        bool success = true;
+        App->scenesConfig.Close(true);
+
+        if (action == SceneCollectionAction::Rename)
+        {
+            if (!MoveFile(strCurSceneCollectionPath, strSceneCollectionPath))
+                success = false;
+        }
+        else if (action == SceneCollectionAction::Clone)
+        {
+            if (!CopyFileW(strCurSceneCollectionPath, strSceneCollectionPath, TRUE))
+                success = false;
+        }
+        else
+        {
+            if (!App->scenesConfig.Open(strSceneCollectionPath))
+            {
+                OBSMessageBox(hwndMain, TEXT("Error - unable to create new Scene Collection, could not create file"), NULL, 0);
+                success = false;
+            }
+        }
+
+        if (!success)
+        {
+            App->scenesConfig.Open(strCurSceneCollectionPath);
+            return;
+        }
+
+        GlobalConfig->SetString(TEXT("General"), TEXT("SceneCollection"), strSceneCollection);
+
+        App->ReloadSceneCollection();
+        App->ResetSceneCollectionMenu();
+        App->ResetApplicationName();
+    }
+}
+
+void OBS::RemoveSceneCollection()
+{
+    if (App->bRunning)
+        return;
+
+    String strCurSceneCollection = GlobalConfig->GetString(TEXT("General"), TEXT("SceneCollection"));
+    String strCurSceneCollectionFile = strCurSceneCollection + L".xconfig";
+    String strCurSceneCollectionDir;
+    strCurSceneCollectionDir << lpAppDataPath << TEXT("\\sceneCollection\\");
+
+    OSFindData ofd;
+    HANDLE hFind = OSFindFirstFile(strCurSceneCollectionDir + L"*.xconfig", ofd);
+
+    if (!hFind)
+    {
+        Log(L"Find failed for scene collections");
+        return;
+    }
+
+    String nextFile;
+
+    do
+    {
+        if (scmpi(ofd.fileName, strCurSceneCollectionFile) != 0)
+        {
+            nextFile = ofd.fileName;
+            break;
+        }
+    } while (OSFindNextFile(hFind, ofd));
+    OSFindClose(hFind);
+
+    if (nextFile.IsEmpty())
+        return;
+
+    String strConfirm = Str("Settings.General.ConfirmDelete");
+    strConfirm.FindReplace(TEXT("$1"), strCurSceneCollection);
+    if (OBSMessageBox(hwndMain, strConfirm, Str("DeleteConfirm.Title"), MB_YESNO) == IDYES)
+    {
+        String strCurSceneCollectionPath;
+        strCurSceneCollectionPath << strCurSceneCollectionDir << strCurSceneCollection << TEXT(".xconfig");
+        OSDeleteFile(strCurSceneCollectionPath);
+        App->scenesConfig.Close();
+
+        GlobalConfig->SetString(L"General", L"SceneCollection", GetPathWithoutExtension(nextFile));
+
+        App->ReloadSceneCollection();
+        App->ResetSceneCollectionMenu();
+    }
+}
+
+void OBS::ImportSceneCollection()
+{
+    if (OBSMessageBox(hwndMain, Str("ImportCollectionReplaceWarning.Text"), Str("ImportCollectionReplaceWarning.Title"), MB_YESNO) == IDNO)
+        return;
+
+    TCHAR lpFile[MAX_PATH+1];
+    zero(lpFile, sizeof(lpFile));
+
+    OPENFILENAME ofn;
+    zero(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.lpstrFile = lpFile;
+    ofn.hwndOwner = hwndMain;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrFilter = TEXT("Scene Files (*.xconfig)\0*.xconfig\0");
+    ofn.nFilterIndex = 1;
+    ofn.lpstrInitialDir = GlobalConfig->GetString(L"General", L"LastImportExportPath");
+
+    TCHAR curDirectory[MAX_PATH+1];
+    GetCurrentDirectory(MAX_PATH, curDirectory);
+
+    BOOL bOpenFile = GetOpenFileName(&ofn);
+    SetCurrentDirectory(curDirectory);
+
+    if (!bOpenFile)
+        return;
+
+    if (GetPathExtension(lpFile).IsEmpty())
+        scat(lpFile, L".xconfig");
+
+    GlobalConfig->SetString(L"General", L"LastImportExportPath", GetPathDirectory(lpFile));
+
+    String strCurSceneCollection = GlobalConfig->GetString(TEXT("General"), TEXT("SceneCollection"));
+    String strCurSceneCollectionFile;
+    strCurSceneCollectionFile << lpAppDataPath << TEXT("\\sceneCollection\\") << strCurSceneCollection << L".xconfig";
+
+    scenesConfig.Close();
+    CopyFile(lpFile, strCurSceneCollectionFile, false);
+    App->ReloadSceneCollection();
+}
+
+void OBS::ExportSceneCollection()
+{
+    TCHAR lpFile[MAX_PATH+1];
+    zero(lpFile, sizeof(lpFile));
+
+    OPENFILENAME ofn;
+    zero(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.lpstrFile = lpFile;
+    ofn.hwndOwner = hwndMain;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrFilter = TEXT("Scene Files (*.xconfig)\0*.xconfig\0");
+    ofn.nFilterIndex = 1;
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+    ofn.lpstrInitialDir = GlobalConfig->GetString(L"General", L"LastImportExportPath");
+
+    TCHAR curDirectory[MAX_PATH+1];
+    GetCurrentDirectory(MAX_PATH, curDirectory);
+
+    BOOL bSaveFile = GetSaveFileName(&ofn);
+    SetCurrentDirectory(curDirectory);
+
+    if (!bSaveFile)
+        return;
+
+    if (GetPathExtension(lpFile).IsEmpty())
+        scat(lpFile, L".xconfig");
+
+    GlobalConfig->SetString(L"General", L"LastImportExportPath", GetPathDirectory(lpFile));
+
+    String strCurSceneCollection = GlobalConfig->GetString(TEXT("General"), TEXT("SceneCollection"));
+    String strCurSceneCollectionFile;
+    strCurSceneCollectionFile << lpAppDataPath << TEXT("\\sceneCollection\\") << strCurSceneCollection << L".xconfig";
+
+    scenesConfig.Save();
+    CopyFile(strCurSceneCollectionFile, lpFile, FALSE);
+}
+
+//----------------------------
+
 void OBS::ResetSceneCollectionMenu()
 {
     HMENU hmenuMain = GetMenu(hwndMain);
     HMENU hmenuSceneCollection = GetSubMenu(hmenuMain, 3);
-    while (DeleteMenu(hmenuSceneCollection, 0, MF_BYPOSITION));
+    while (DeleteMenu(hmenuSceneCollection, 8, MF_BYPOSITION));
     AddSceneCollectionToMenu(hmenuSceneCollection);
 }
-//----------------------------
 
 void OBS::ResetProfileMenu()
 {
     HMENU hmenuMain = GetMenu(hwndMain);
     HMENU hmenuProfiles = GetSubMenu(hmenuMain, 2);
-    while(DeleteMenu(hmenuProfiles, 0, MF_BYPOSITION));
+    while (DeleteMenu(hmenuProfiles, 0, MF_BYPOSITION));
     AddProfilesToMenu(hmenuProfiles);
 }
 
@@ -2700,7 +2952,7 @@ String OBS::GetApplicationName()
     // we hide the bit version on 32 bit to avoid confusing users who have a 64
     // bit pc unncessarily asking for the 64 bit version under the assumption
     // that the 32 bit version doesn't work or something.
-    name << "Profile: " << App->GetCurrentProfile() /*<< " - " << "SceneCollection: " << App->GetCurrentSceneCollection()*/ << L" - " OBS_VERSION_STRING
+    name << "Profile: " << App->GetCurrentProfile() << " - " << "Scenes: " << App->GetCurrentSceneCollection() << L" - " OBS_VERSION_STRING
 #ifdef _WIN64
     L" - 64bit";
 #else
@@ -2921,6 +3173,25 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     }
                     break;
 
+                case ID_SCENECOLLECTION_NEW:
+                    App->AddSceneCollection(SceneCollectionAction::Add);
+                    break;
+                case ID_SCENECOLLECTION_CLONE:
+                    App->AddSceneCollection(SceneCollectionAction::Clone);
+                    break;
+                case ID_SCENECOLLECTION_RENAME:
+                    App->AddSceneCollection(SceneCollectionAction::Rename);
+                    break;
+                case ID_SCENECOLLECTION_REMOVE:
+                    App->RemoveSceneCollection();
+                    break;
+                case ID_SCENECOLLECTION_IMPORT:
+                    App->ImportSceneCollection();
+                    break;
+                case ID_SCENECOLLECTION_EXPORT:
+                    App->ExportSceneCollection();
+                    break;
+
                 case ID_TESTSTREAM:
                     App->RefreshStreamButtons(true);
                     App->bTestStream = true;
@@ -3067,7 +3338,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                 ResetApplicationName();
                             }
                         }
-                        /*else if (id >= ID_SWITCHSCENECOLLECTION &&
+                        else if (id >= ID_SWITCHSCENECOLLECTION &&
                             id <= ID_SWITCHSCENECOLLECTION_END)
                         {
                             if (App->bRunning)
@@ -3111,7 +3382,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                 ResetApplicationName();
                                 App->UpdateNotificationAreaIcon();
                             }
-                        }*/
+                        }
                         else if (id >= ID_UPLOAD_LOG && id <= ID_UPLOAD_LOG_END)
                         {
                             String log = GetLogUploadMenuItem(id - ID_UPLOAD_LOG);

@@ -44,6 +44,12 @@ StreamReport="Stream Report"
 MessageBoxWarningCaption="Warning"
 NoSourcesFound="You haven't added any sources! Are you sure you want to stream a black screen?"
 
+ImportCollectionReplaceWarning.Title="Import Scene Collection"
+ImportCollectionReplaceWarning.Text="The current scene data will be lost.  Are you sure you want to import?"
+
+DeleteCollection="Remove scene collection"
+DeleteCollection.Text="Are you sure you want to remove the current scene collection?"
+
 BuildingMP4Dialog.Progress="Building MP4, please wait..."
 
 Connection.CouldNotConnect="Could not connect to server"
@@ -73,6 +79,13 @@ Listbox.SetHotkey="Set Hotkey"
 ListBox.ResetCrop="Reset Cropping"
 
 MainMenu.SceneCollection="&Scene Collection"
+MainMenu.SceneCollection.New="&New"
+MainMenu.SceneCollection.Duplicate="&Duplicate"
+MainMenu.SceneCollection.Rename="&Rename"
+MainMenu.SceneCollection.Remove="Re&move"
+MainMenu.SceneCollection.Import="&Import"
+MainMenu.SceneCollection.Export="&Export"
+
 MainMenu.File="&File"
 MainMenu.Help="&Help"
 MainMenu.Profiles="&Profiles"
