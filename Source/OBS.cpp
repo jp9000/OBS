@@ -871,6 +871,7 @@ OBS::~OBS()
     // Save preview enabled/disabled state
     GlobalConfig->SetInt(TEXT("General"), TEXT("PreviewEnabled"), bRenderViewEnabled ? 1 : 0);
 
+    scenesConfig.SaveTo(String() << lpAppDataPath << "\\scenes.xconfig");
     scenesConfig.Close(true);
 
     for(UINT i=0; i<Icons.Num(); i++)

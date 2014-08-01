@@ -223,6 +223,7 @@ void OBS::Start(bool recordingOnly)
 
     DisableMenusWhileStreaming(true);
 
+    scenesConfig.SaveTo(String() << lpAppDataPath << "\\scenes.xconfig");
     scenesConfig.Save();
 
     //-------------------------------------------------------------

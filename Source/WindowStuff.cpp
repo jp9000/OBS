@@ -2387,6 +2387,7 @@ void OBS::AddSceneCollection(SceneCollectionAction action)
     if (OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterSceneCollectionDialogProc, (LPARAM)&strSceneCollection) != IDOK)
         return;
 
+    App->scenesConfig.SaveTo(String() << lpAppDataPath << "\\scenes.xconfig");
     App->scenesConfig.Save();
 
     String strCurSceneCollectionPath;
@@ -2560,8 +2561,7 @@ void OBS::ExportSceneCollection()
     String strCurSceneCollectionFile;
     strCurSceneCollectionFile << lpAppDataPath << TEXT("\\sceneCollection\\") << strCurSceneCollection << L".xconfig";
 
-    scenesConfig.Save();
-    CopyFile(strCurSceneCollectionFile, lpFile, FALSE);
+    scenesConfig.SaveTo(strCurSceneCollectionFile);
 }
 
 //----------------------------
@@ -2984,6 +2984,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     break;
 
                 case ID_FILE_SAVE2:
+                    App->scenesConfig.SaveTo(String() << lpAppDataPath << "\\scenes.xconfig");
                     App->scenesConfig.Save();
                     break;
 
@@ -3375,6 +3376,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                 ResetSceneCollectionMenu();
                                 ResetApplicationName();
                                 App->UpdateNotificationAreaIcon();
+                                App->scenesConfig.SaveTo(String() << lpAppDataPath << "\\scenes.xconfig");
                             }
                         }
                         else if (id >= ID_UPLOAD_LOG && id <= ID_UPLOAD_LOG_END)
