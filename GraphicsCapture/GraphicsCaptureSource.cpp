@@ -372,7 +372,10 @@ void GraphicsCaptureSource::AttemptCapture()
 {
     OSDebugOut(TEXT("attempting to capture..\n"));
 
-    hwndTarget = strWindowClass.IsValid() ? FindVisibleWindow(strWindowClass, NULL) : nullptr;
+    if (scmpi(strWindowClass, L"dwm") == 0)
+        hwndTarget = FindWindow(strWindowClass, NULL);
+    else
+        hwndTarget = strWindowClass.IsValid() ? FindVisibleWindow(strWindowClass, NULL) : nullptr;
     
     // use foregroundwindow as fallback (should be NULL if not using hotkey capture)
     if (!hwndTarget)
