@@ -811,7 +811,7 @@ void OBS::Stop(bool overrideKeepRecording)
 
     if(hEncodeThread)
     {
-        OSTerminateThread(hEncodeThread, 30000);
+        OSTerminateThread(hEncodeThread, 30001);
         hEncodeThread = NULL;
     }
 
@@ -820,7 +820,7 @@ void OBS::Stop(bool overrideKeepRecording)
 
     if(hVideoThread)
     {
-        OSTerminateThread(hVideoThread, 30000);
+        OSTerminateThread(hVideoThread, 30002);
         hVideoThread = NULL;
     }
 
@@ -966,6 +966,8 @@ void OBS::Stop(bool overrideKeepRecording)
 
     ClearStreamInfo();
 
+    audioWarningId = 0;
+
     DumpProfileData();
     FreeProfileData();
     Log(TEXT("=====Stream End: %s================================================="), CurrentDateTimeString().Array());
@@ -1108,12 +1110,29 @@ bool OBS::QueryNewAudio()
     while (!bAudioBufferFilled) {
         bool bGotAudio = false;
 
-        if ((desktopAudio->QueryAudio2(curDesktopVol)) != NoAudioAvailable) {
-            QueryAudioBuffers(true);
-            bGotAudio = true;
-        }
+        //don't let the audio get backed up too far, as this breaks things
+        if (desktopAudio->GetBufferedTime() > App->bufferingTime * 1.5)
+        {
+            if (!audioWarningId)
+                audioWarningId = App->AddStreamInfo(TEXT("Audio is processing too slow. Free up CPU, reduce the number of audio sources or avoid resampling."), StreamInfoPriority_Critical);
 
-        bAudioBufferFilled = desktopAudio->GetBufferedTime() >= App->bufferingTime;
+            bAudioBufferFilled = true;
+        }
+        else
+        {
+            if (audioWarningId && desktopAudio->GetBufferedTime() <= App->bufferingTime)
+            {
+                App->RemoveStreamInfo(audioWarningId);
+                audioWarningId = 0;
+            }
+
+            if ((desktopAudio->QueryAudio2(curDesktopVol)) != NoAudioAvailable) {
+                QueryAudioBuffers(true);
+                bGotAudio = true;
+            }
+
+            bAudioBufferFilled = desktopAudio->GetBufferedTime() >= App->bufferingTime;
+        }
 
         if (!bGotAudio && bAudioBufferFilled)
             QueryAudioBuffers(false);
@@ -1206,8 +1225,7 @@ void OBS::MainAudioLoop()
     // the audio loop of doom
 
     while (true) {
-        OSSleep(5); //screw it, just run it every 5ms
-
+        
         if (!bRunning)
             break;
 
@@ -1227,7 +1245,7 @@ void OBS::MainAudioLoop()
         bool bDesktopMuted = (curDesktopVol < VOLN_MUTELEVEL);
         bool bMicEnabled   = (micAudio != NULL);
 
-        while (QueryNewAudio()) {
+        if (QueryNewAudio()) {
             QWORD timestamp = bufferedAudioTimes[0];
             bufferedAudioTimes.Remove(0);
 
@@ -1355,6 +1373,10 @@ void OBS::MainAudioLoop()
                 MixAudio(mixBuffer.Array(), micBuffer, audioSampleSize*2, bForceMicMono);
 
             EncodeAudioSegment(mixBuffer.Array(), audioSampleSize, timestamp);
+        }
+        else
+        {
+            OSSleep(5); //screw it, just run it every 5ms
         }
 
         //-----------------------------------------------

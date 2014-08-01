@@ -769,6 +769,8 @@ private:
 
     DWORD lastAudioTimestamp;
 
+    UINT audioWarningId;
+
     QWORD firstSceneTimestamp;
     QWORD latestVideoTime;
     QWORD latestVideoTimeNS;
