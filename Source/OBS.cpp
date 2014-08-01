@@ -20,6 +20,7 @@
 #include "Main.h"
 #include <intrin.h>
 
+void SetupSceneCollection(CTSTR scenecollection);
 
 //primarily main window stuff an initialization/destruction code
 
@@ -545,13 +546,38 @@ OBS::OBS()
 
     hwndTemp = GetDlgItem(hwndMain, ID_SCENES);
 
-    CTSTR collection = GetCurrentSceneCollection();
+    String collection = GetCurrentSceneCollection();
+
+    if (!OSFileExists(String() << lpAppDataPath << L"\\sceneCollection\\" << collection << L".xconfig"))
+        collection.Clear();
+
+    if (collection.IsEmpty())
+    {
+        OSFindData ofd;
+        HANDLE hFind = OSFindFirstFile(String() << lpAppDataPath << L"\\sceneCollection\\*.xconfig", ofd);
+        if (hFind)
+        {
+            do
+            {
+                if (!ofd.bDirectory)
+                {
+                    collection = GetPathWithoutExtension(ofd.fileName);
+                    break;
+                }
+            } while (OSFindNextFile(hFind, ofd));
+            OSFindClose(hFind);
+        }
+
+        if (collection.IsEmpty())
+        {
+            CopyFile(String() << lpAppDataPath << L"\\scenes.xconfig", String() << lpAppDataPath << L"\\sceneCollection\\scenes.xconfig", true);
+            collection = L"scenes";
+            GlobalConfig->SetString(L"General", L"SceneCollection", collection);
+        }
+    }
 
     String strScenesConfig;
-    strScenesConfig = FormattedString(L"%s/%s.xconfig", lpAppDataPath, collection);
-
-    if (!OSFileExists(strScenesConfig))
-        strScenesConfig = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, collection);
+    strScenesConfig = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, collection);
 
     if(!scenesConfig.Open(strScenesConfig))
         CrashError(TEXT("Could not open '%s'"), strScenesConfig.Array());
@@ -1361,10 +1387,7 @@ void OBS::ReloadSceneCollection()
     hwndTemp = GetDlgItem(hwndMain, ID_SCENES);
 
     CTSTR collection = GetCurrentSceneCollection();
-    String strScenesConfig = FormattedString(L"%s/%s.xconfig", lpAppDataPath, collection);
-
-    if (!OSFileExists(strScenesConfig))
-        strScenesConfig = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, collection);
+    String strScenesConfig = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, collection);
 
     if (!scenesConfig.Open(strScenesConfig))
         CrashError(TEXT("Could not open '%s'"), strScenesConfig.Array());

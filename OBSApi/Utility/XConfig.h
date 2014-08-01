@@ -231,6 +231,7 @@ public:
     bool    ParseString(const String& config);
     void    Close(bool bSave=false);
     void    Save();
+    void    SaveTo(CTSTR lpPath);
 
     inline bool IsOpen() const {return RootElement != NULL;}
 

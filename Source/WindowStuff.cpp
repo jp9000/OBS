@@ -2390,10 +2390,7 @@ void OBS::AddSceneCollection(SceneCollectionAction action)
     App->scenesConfig.Save();
 
     String strCurSceneCollectionPath;
-    strCurSceneCollectionPath = FormattedString(L"%s/%s.xconfig", lpAppDataPath, strCurSceneCollection.Array());
-
-    if (!OSFileExists(strCurSceneCollectionPath))
-        strCurSceneCollectionPath = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, strCurSceneCollection.Array());
+    strCurSceneCollectionPath = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, strCurSceneCollection.Array());
 
     String strSceneCollectionPath;
     strSceneCollectionPath << lpAppDataPath << TEXT("\\sceneCollection\\") << strSceneCollection << TEXT(".xconfig");
@@ -3364,10 +3361,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                 App->scenesConfig.Save();
                                 CTSTR collection = GetCurrentSceneCollection();
                                 String strSceneCollectionPath;
-                                strSceneCollectionPath = FormattedString(L"%s/%s.xconfig", lpAppDataPath, collection);
-
-                                if (!OSFileExists(strSceneCollectionPath))
-                                    strSceneCollectionPath = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, collection);
+                                strSceneCollectionPath = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, collection);
                                 
                                 if (!App->scenesConfig.Open(strSceneCollectionPath))
                                 {

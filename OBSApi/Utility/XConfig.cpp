@@ -1124,10 +1124,17 @@ void  XConfig::Save()
     if(RootElement)
     {
         XFile file;
-        file.Open(strFileName, XFILE_WRITE, XFILE_CREATEALWAYS);
+        if (file.Open(strFileName, XFILE_WRITE, XFILE_CREATEALWAYS))
+            WriteFileData(file, 0, RootElement);
+    }
+}
 
-        WriteFileData(file, 0, RootElement);
-
-        file.Close();
+void  XConfig::SaveTo(CTSTR lpPath)
+{
+    if (RootElement)
+    {
+        XFile file;
+        if (file.Open(lpPath, XFILE_WRITE, XFILE_CREATEALWAYS))
+            WriteFileData(file, 0, RootElement);
     }
 }

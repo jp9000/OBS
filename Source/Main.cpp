@@ -215,10 +215,6 @@ String FindSceneCollection(String scenecollection)
     if (OSFileExists(result))
         return result;
 
-    result = FormattedString(L"%s\\%s.xconfig", lpAppDataPath, scenecollection.Array());
-    if (OSFileExists(result))
-        return result;
-
     return String();
 }
 
@@ -238,17 +234,23 @@ void SetupSceneCollection(CTSTR scenecollection)
         HANDLE hFind = OSFindFirstFile(strXconfig, ofd);
         if (hFind)
         {
-           do
-           {
-              if (ofd.bDirectory) continue;
+            do
+            {
+                if (ofd.bDirectory) continue;
 
                 strSceneCollection = GetPathWithoutExtension(ofd.fileName);
                 GlobalConfig->SetString(TEXT("General"), TEXT("SceneCollection"), strSceneCollection);
                 break;
 
-          } while (OSFindNextFile(hFind, ofd));
-
+            } while (OSFindNextFile(hFind, ofd));
             OSFindClose(hFind);
+        }
+
+        if (strSceneCollection.IsEmpty())
+        {
+            CopyFile(String() << lpAppDataPath << L"\\scenes.xconfig", String() << lpAppDataPath << L"\\sceneCollection\\scenes.xconfig", true);
+            strSceneCollection = L"scenes";
+            GlobalConfig->SetString(L"General", L"SceneCollection", strSceneCollection);
         }
     }
 }
