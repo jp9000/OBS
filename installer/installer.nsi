@@ -34,7 +34,8 @@ RequestExecutionLevel admin
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
 
-!insertmacro MUI_UNPAGE_CONFIRM
+;!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_COMPONENTS
 !insertmacro MUI_UNPAGE_INSTFILES
 
 ; Set languages (first is default language)
@@ -117,7 +118,8 @@ Section "Open Broadcaster Software" Section1
 	SetOverwrite on
 	
 	; Empty the shader cache in case the user is reinstalling to try and fix corrupt shader issues
-	RMDir /R "$APPDATA\OBS\shaderCache"
+	; We no longer use shader cache
+	;RMDir /R "$APPDATA\OBS\shaderCache"
 
 	; Set Section Files and Shortcuts
 	SetOutPath "$PROGRAMFILES32\OBS"
@@ -232,7 +234,9 @@ SectionEnd
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ;Uninstall section
-Section Uninstall
+Section "un.OBS Program Files"
+	
+	SectionIn RO
 
 	;Remove from registry...
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
@@ -320,5 +324,23 @@ Section Uninstall
 	${endif}
 	RMDir "$PROGRAMFILES32\OBS"
 SectionEnd
+
+Section /o "un.3rd Party Plugins" Section2
+	RMDir /r "$PROGRAMFILES32\OBS\plugins"
+	
+	${if} ${RunningX64}
+		RMDir /r "$PROGRAMFILES64\OBS\plugins"
+	${endif}
+SectionEnd
+
+Section /o "un.User Settings" Section3
+	RMDir /R "$APPDATA\OBS"
+SectionEnd
+
+!insertmacro MUI_UNFUNCTION_DESCRIPTION_BEGIN
+	!insertmacro MUI_DESCRIPTION_TEXT ${Section1} "Remove the OBS program files."
+	!insertmacro MUI_DESCRIPTION_TEXT ${Section2} "Removes any 3rd party plugins that may be installed."
+	!insertmacro MUI_DESCRIPTION_TEXT ${Section3} "Removes all settings, scenes and sources, profiles, log files and other application data."
+!insertmacro MUI_UNFUNCTION_DESCRIPTION_END
 
 ; eof
