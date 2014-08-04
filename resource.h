@@ -41,6 +41,7 @@
 #define IDD_LOGUPLOADED                 147
 #define IDD_SETTINGS_HOTKEYS            149
 #define IDD_SETTINGS_QSV                150
+#define IDD_GLOBAL_SOURCES_IMPORT       151
 #define IDC_SETTINGSLIST                1006
 #define IDC_SUBDIALOG                   1007
 #define IDC_MODE                        1008
@@ -354,6 +355,7 @@
 #define IDC_USECUSTOMPARAMS             1207
 #define IDC_USEGLOBALBITRATE            1208
 #define IDC_USEGLOBALBUFFERSIZE         1209
+#define IDC_IMPORT                      1210
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -420,9 +422,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        151
+#define _APS_NEXT_RESOURCE_VALUE        152
 #define _APS_NEXT_COMMAND_VALUE         40081
-#define _APS_NEXT_CONTROL_VALUE         1208
+#define _APS_NEXT_CONTROL_VALUE         1209
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

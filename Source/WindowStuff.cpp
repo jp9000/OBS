@@ -2110,6 +2110,59 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                         break;
                     }
 
+                case IDC_IMPORT:
+                    {
+                        TCHAR lpFile[MAX_PATH + 1];
+                        zero(lpFile, sizeof(lpFile));
+
+                        OPENFILENAME ofn;
+                        zero(&ofn, sizeof(ofn));
+                        ofn.lStructSize = sizeof(ofn);
+                        ofn.lpstrFile = lpFile;
+                        ofn.hwndOwner = hwndMain;
+                        ofn.nMaxFile = MAX_PATH;
+                        ofn.lpstrFilter = TEXT("Scene Files (*.xconfig)\0*.xconfig\0");
+                        ofn.nFilterIndex = 1;
+                        ofn.lpstrInitialDir = GlobalConfig->GetString(L"General", L"LastImportExportPath");
+
+                        TCHAR curDirectory[MAX_PATH + 1];
+                        GetCurrentDirectory(MAX_PATH, curDirectory);
+
+                        BOOL bOpenFile = GetOpenFileName(&ofn);
+                        SetCurrentDirectory(curDirectory);
+
+                        if(!bOpenFile)
+                            break;
+
+                        if(GetPathExtension(lpFile).IsEmpty())
+                            scat(lpFile, L".xconfig");
+
+                        String strSelectedSceneCollectionGlobalSourcesConfig;
+                        strSelectedSceneCollectionGlobalSourcesConfig = lpFile;
+
+                        if(!App->globalSourcesImportConfig.Open(strSelectedSceneCollectionGlobalSourcesConfig))
+                            CrashError(TEXT("Could not open '%s"), strSelectedSceneCollectionGlobalSourcesConfig.Array());
+
+                        if(OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_GLOBAL_SOURCES_IMPORT), hwnd, OBS::GlobalSourcesImportProc) == IDOK)
+                        {
+                            HWND hwndSources = GetDlgItem(hwnd, IDC_SOURCES);
+                            SendMessage(hwndSources, LB_RESETCONTENT, 0, 0);
+                            XElement *globals = App->scenesConfig.GetElement(TEXT("global sources"));
+                            if(globals)
+                            {
+                                UINT numGlobals = globals->NumElements();
+
+                                for(UINT i = 0; i < numGlobals; i++)
+                                {
+                                    XElement *globalSource = globals->GetElementByID(i);
+                                    SendMessage(hwndSources, LB_ADDSTRING, 0, (LPARAM)globalSource->GetName());
+                                }
+                            }
+                            App->globalSourcesImportConfig.Close();
+                        }
+                        break;
+                    }
+
                 case IDC_CONFIG:
                     {
                         UINT id = (UINT)SendMessage(GetDlgItem(hwnd, IDC_SOURCES), LB_GETCURSEL, 0, 0);
@@ -2229,15 +2282,91 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                     }*/
 
                 case IDOK:
-                    EndDialog(hwnd, IDOK);
+                    {
+                        App->scenesConfig.Save();
+                        EndDialog(hwnd, IDOK);
+                    }
             }
             break;
 
         case WM_CLOSE:
-            EndDialog(hwnd, IDOK);
+            {
+                App->scenesConfig.Save();
+                EndDialog(hwnd, IDOK);
+            }
     }
 
     return FALSE;
+}
+
+INT_PTR CALLBACK OBS::GlobalSourcesImportProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch(message)
+    {
+        case WM_INITDIALOG:
+            {
+                LocalizeWindow(hwnd);
+
+                HWND hwndSources = GetDlgItem(hwnd, IDC_SOURCES);
+                XElement *globals = App->globalSourcesImportConfig.GetElement(TEXT("global sources"));
+                if(globals)
+                {
+                    UINT numGlobals = globals->NumElements();
+
+                    for(UINT i=0; i<numGlobals; i++)
+                    {
+                        XElement *globalSource = globals->GetElementByID(i);
+                        SendMessage(hwndSources, LB_ADDSTRING, 0, (LPARAM)globalSource->GetName());
+                    }
+                }
+
+                return TRUE;
+        }
+        case WM_COMMAND:
+            switch(LOWORD(wParam))
+            {
+                case IDOK:
+                    {
+                        HWND  hSources = GetDlgItem(hwnd, IDC_SOURCES); 
+                        int  selectedItemsArray[8192];
+
+                        UINT  selectedItems = (UINT)SendMessage(hSources, LB_GETSELITEMS, 512, (LPARAM) selectedItemsArray);
+                        if( selectedItems == LB_ERR)
+                            break;
+
+                        for(UINT i = 0; i <  selectedItems; i++)
+                        {
+                            XElement *selectedGlobals = App->globalSourcesImportConfig.GetElement(TEXT("global sources"));
+
+                            XElement *selectedGlobalSources = selectedGlobals->GetElementByID(selectedItemsArray[i]);
+                            XElement *currentSceneGlobalSources = App->scenesConfig.GetElement(TEXT("global sources"));
+
+                            if(!currentSceneGlobalSources)
+                                currentSceneGlobalSources = App->scenesConfig.CreateElement(TEXT("global sources"));
+
+                            if(currentSceneGlobalSources)
+                            {
+                                XElement *foundGlobalSource = currentSceneGlobalSources->GetElement(selectedGlobalSources->GetName());
+                                if(foundGlobalSource != NULL && selectedGlobalSources->GetName() != foundGlobalSource->GetName())
+                                {
+                                    String strExists = Str("ImportGlobalSourceNameExists");
+                                    strExists.FindReplace(TEXT("$1"), selectedGlobalSources->GetName());
+                                    OBSMessageBox(hwnd, strExists, NULL, 0);
+                                    break;
+                                }
+                            }
+
+                            XElement *newSourceElement = currentSceneGlobalSources->CopyElement(selectedGlobalSources, selectedGlobalSources->GetName());
+                            newSourceElement->SetString(TEXT("class"), selectedGlobalSources->GetString(TEXT("class")));
+                        }
+                    }
+
+                case IDCANCEL:
+                    EndDialog(hwnd, LOWORD(wParam));
+                    break;
+            }
+    }
+    return 0;
 }
 
 //----------------------------
