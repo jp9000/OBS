@@ -476,7 +476,7 @@ public:
     }
 
     virtual XElement* GetSceneListElement()         {return App->scenesConfig.GetElement(TEXT("scenes"));}
-    virtual XElement* GetGlobalSourceListElement()  {return App->scenesConfig.GetElement(TEXT("global sources"));}
+    virtual XElement* GetGlobalSourceListElement()  {return App->globalSourcesConfig.GetElement(TEXT("global sources"));}
 
     virtual void SetSourceOrder(StringList &sourceNames)
     {

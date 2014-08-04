@@ -91,7 +91,7 @@ bool STDCALL OBS::ConfigGlobalSource(XElement *element, bool bCreating)
     XElement *data = element->GetElement(TEXT("data"));
     CTSTR lpGlobalSourceName = data->GetString(TEXT("name"));
 
-    XElement *globalSources = App->scenesConfig.GetElement(TEXT("global sources"));
+    XElement *globalSources = App->globalSourcesConfig.GetElement(TEXT("global sources"));
     if(!globalSources) //shouldn't happen
         return false;
 
@@ -134,7 +134,7 @@ bool STDCALL OBS::ConfigGlobalSource(XElement *element, bool bCreating)
 
 ImageSource* OBS::AddGlobalSourceToScene(CTSTR lpName)
 {
-    XElement *globals = scenesConfig.GetElement(TEXT("global sources"));
+    XElement *globals = globalSourcesConfig.GetElement(TEXT("global sources"));
     if(globals)
     {
         XElement *globalSourceElement = globals->GetElement(lpName);
@@ -171,7 +171,7 @@ void OBS::GetGlobalSourceNames(List<CTSTR> &globalSourceNames)
 {
     globalSourceNames.Clear();
 
-    XElement *globals = scenesConfig.GetElement(TEXT("global sources"));
+    XElement *globals = globalSourcesConfig.GetElement(TEXT("global sources"));
     if(globals)
     {
         UINT numSources = globals->NumElements();
@@ -185,7 +185,7 @@ void OBS::GetGlobalSourceNames(List<CTSTR> &globalSourceNames)
 
 XElement* OBS::GetGlobalSourceElement(CTSTR lpName)
 {
-    XElement *globals = scenesConfig.GetElement(TEXT("global sources"));
+    XElement *globals = globalSourcesConfig.GetElement(TEXT("global sources"));
     if(globals)
         return globals->GetElement(lpName);
 

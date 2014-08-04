@@ -612,6 +612,7 @@ class OBS
     UINT                    encoderSkipThreshold;
 
     XConfig                 scenesConfig;
+    XConfig                 globalSourcesConfig;
     List<SceneHotkeyInfo>   sceneHotkeys;
     XElement                *sceneElement;
 
@@ -1020,6 +1021,7 @@ private:
     static void ResetSceneCollectionMenu();
     static void AddSceneCollectionToMenu(HMENU menu);
     void ReloadSceneCollection();
+    void RemoveDeletedGlobalSourcesFromScenes();
 
     static String GetApplicationName();
     static void ResetApplicationName();

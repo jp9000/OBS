@@ -1830,7 +1830,7 @@ INT_PTR CALLBACK OBS::EnterGlobalSourceNameDialogProc(HWND hwnd, UINT message, W
 
                         String &strOut = *(String*)GetWindowLongPtr(hwnd, DWLP_USER);
 
-                        XElement *globals = App->scenesConfig.GetElement(TEXT("global sources"));
+                        XElement *globals = App->globalSourcesConfig.GetElement(TEXT("global sources"));
                         if(globals)
                         {
                             XElement *foundSource = globals->GetElement(str);
@@ -1863,7 +1863,7 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                 LocalizeWindow(hwnd);
 
                 HWND hwndSources = GetDlgItem(hwnd, IDC_SOURCES);
-                XElement *globals = App->scenesConfig.GetElement(TEXT("global sources"));
+                XElement *globals = App->globalSourcesConfig.GetElement(TEXT("global sources"));
                 if(globals)
                 {
                     UINT numGlobals = globals->NumElements();
@@ -1910,9 +1910,9 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                         {
                             ClassInfo &ci = App->imageSourceClasses[classID-1];
 
-                            XElement *globals = App->scenesConfig.GetElement(TEXT("global sources"));
+                            XElement *globals = App->globalSourcesConfig.GetElement(TEXT("global sources"));
                             if(!globals)
-                                globals = App->scenesConfig.CreateElement(TEXT("global sources"));
+                                globals = App->globalSourcesConfig.CreateElement(TEXT("global sources"));
 
                             XElement *newSourceElement = globals->CreateElement(strName);
                             newSourceElement->SetString(TEXT("class"), ci.strClass);
@@ -1941,7 +1941,7 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                         if(id == LB_ERR)
                             break;
 
-                        XElement *globals = App->scenesConfig.GetElement(TEXT("global sources"));
+                        XElement *globals = App->globalSourcesConfig.GetElement(TEXT("global sources"));
                         if(!globals)
                             break;
 
@@ -2056,7 +2056,7 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                         if(id == LB_ERR)
                             break;
 
-                        XElement *globals = App->scenesConfig.GetElement(TEXT("global sources"));
+                        XElement *globals = App->globalSourcesConfig.GetElement(TEXT("global sources"));
                         if(!globals)
                             break;
 
@@ -2113,7 +2113,7 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                         if(id == LB_ERR)
                             break;
 
-                        XElement *globals = App->scenesConfig.GetElement(TEXT("global sources"));
+                        XElement *globals = App->globalSourcesConfig.GetElement(TEXT("global sources"));
                         if(!globals)
                             break;
 

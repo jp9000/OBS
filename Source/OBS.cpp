@@ -542,6 +542,14 @@ OBS::OBS()
     }
 
     //-----------------------------------------------------
+    // global sources
+    
+    String strGlobalSourcesConfig;
+    strGlobalSourcesConfig = FormattedString(L"%s\\sceneCollection\\scenes.xconfig", lpAppDataPath);
+    if (!globalSourcesConfig.Open(strGlobalSourcesConfig))
+        CrashError(TEXT("Could not open '%s"), strGlobalSourcesConfig.Array());
+
+    //-----------------------------------------------------
     // populate scenes
 
     hwndTemp = GetDlgItem(hwndMain, ID_SCENES);
@@ -616,6 +624,8 @@ OBS::OBS()
     }
 
     //-----------------------------------------------------
+
+    App->RemoveDeletedGlobalSourcesFromScenes();
 
     hHotkeyMutex = OSCreateMutex();
     hInfoMutex = OSCreateMutex();
@@ -873,6 +883,7 @@ OBS::~OBS()
 
     scenesConfig.SaveTo(String() << lpAppDataPath << "\\scenes.xconfig");
     scenesConfig.Close(true);
+    globalSourcesConfig.Close(true);
 
     for(UINT i=0; i<Icons.Num(); i++)
         DeleteObject(Icons[i].hIcon);
@@ -1382,6 +1393,60 @@ void OBS::ConfigureStreamButtons()
     SetWindowText(GetDlgItem(hwndMain, ID_TESTSTREAM), bTestStream ? Str("MainWindow.StopTest") : Str("MainWindow.TestStream"));
 }
 
+void OBS::RemoveDeletedGlobalSourcesFromScenes()
+{
+    HWND hwndTemp2;
+    hwndTemp2 = GetDlgItem(hwndMain, ID_SOURCES);
+
+    XElement *scenes = scenesConfig.GetElement(TEXT("scenes"));
+    UINT numScenes = scenes->NumElements();
+    
+    App->EnterSceneMutex();
+
+    for (UINT i = 0; i < numScenes; i++)
+    {
+        XElement *scene = scenes->GetElementByID(i);
+        XElement *sources = scene->GetElement(TEXT("sources"));
+        
+        if (sources)
+        {
+            UINT numSources = sources->NumElements();
+
+            for (int j = int(numSources - 1); j >= 0; j--)
+            {
+                XElement *sourceElement = sources->GetElementByID(j);
+                String className = sourceElement->GetString(TEXT("class"));
+
+                if (className == "GlobalSource")
+                {
+                    XElement *data = sourceElement->GetElement(TEXT("data"));
+
+                    if (data)
+                    {
+                        CTSTR lpName = data->GetString(TEXT("name"));
+                        XElement *globalSourceName = App->GetGlobalSourceElement(lpName);
+                        if (!globalSourceName)
+                        {
+                            LVFINDINFO findInfo;
+                            findInfo.flags = LVFI_STRING;
+                            findInfo.psz = (LPCWSTR)sourceElement->GetName();
+                            int listID = ListView_FindItem(hwndTemp2, -1, &findInfo);
+                            if (listID != -1)
+                            {
+                                App->bChangingSources = true;
+                                ListView_DeleteItem(hwndTemp2, listID);
+                                App->bChangingSources = false;
+                            }
+                            sources->RemoveElement(sourceElement);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    App->LeaveSceneMutex();
+}
+
 void OBS::ReloadSceneCollection()
 {
     HWND hwndTemp;
@@ -1430,6 +1495,10 @@ void OBS::ReloadSceneCollection()
     }
 
     //-----------------------------------------------------
+    
+    App->RemoveDeletedGlobalSourcesFromScenes();
+    
+    //------------------------------------------------------
 
     for (UINT i = 0; i<numScenes; i++)
     {
