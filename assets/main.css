@@ -1,4 +1,4 @@
-/* Style reset */
+i /* Style reset */
 /* http://meyerweb.com/eric/tools/css/reset/ 
    v2.0 | 20110126
    License: none (public domain)
@@ -75,6 +75,8 @@ hr {
   height: 0;
 }
 
+.clear { clear: both; }
+
 /* `Headings
 ----------------------------------------------------------------------------------------------------*/
 
@@ -99,7 +101,7 @@ h5 {
 }
 
 h6 {
-  font-size: 19px;
+  font-size: 15px;
 }
 
 /* `Spacing
@@ -145,7 +147,7 @@ html {
 }
 
 body {
-	background: #f0f0f0 url('http://jack0r.github.io/OBS-help/assets/white_carbon2.png');
+	background: #f0f0f0 url('images/white_carbon2.png');
 	color: #444444;
 	height: 100%;
 }
@@ -244,6 +246,7 @@ a:hover {
 	background-image: -moz-linear-gradient(bottom, rgb(239,239,239) 0%, rgb(255,255,255) 100%);
 	background-image: -webkit-linear-gradient(bottom, rgb(239,239,239) 0%, rgb(255,255,255) 100%);
 	background-image: -ms-linear-gradient(bottom, rgb(239,239,239) 0%, rgb(255,255,255) 100%);
+
 	background-image: -webkit-gradient(
 		linear,
 		left bottom,
@@ -465,6 +468,43 @@ span.tooltip:after {
 
 /* End Navigation */
 
+/* Admin */
+
+.login_tab {
+	position: absolute;
+	top: 0px;
+	right: 20px;
+	z-index: 2;
+}
+
+.login_tab p {
+	font-weight: bold;
+	float: left;
+	font-size: 10px;
+	color: #ccc;
+}
+
+.login_tab a {
+	display: block;
+	float: left;
+	margin-left: 10px;
+	background: #444;
+	width: 70px;
+	color: white;
+	padding: 3px 6px;
+	font-size: 12px;
+	text-decoration: underline;
+	font-family: sans-serif;
+	-webkit-border-bottom-right-radius: 2px;
+	-webkit-border-bottom-left-radius: 2px;
+	-moz-border-radius-bottomright: 2px;
+	-moz-border-radius-bottomleft: 2px;
+	border-bottom-right-radius: 2px;
+	border-bottom-left-radius: 2px;
+}
+
+/* End Admin */
+
 /* Content */
 
 .info h4 {
@@ -559,6 +599,12 @@ span.tooltip:after {
 	margin-bottom: 10px;
 }
 
+input[type=checkbox]:checked ~ .download a {
+	pointer-events: auto;
+    cursor: pointer;
+	opacity: 1;
+}
+
 .download {
 	margin-bottom: 5px;
 }
@@ -566,6 +612,20 @@ span.tooltip:after {
 .download a {
 	font-size: 24px;
 	padding: 5px 0px;
+	pointer-events: none;
+    cursor: default;
+	opacity: .2;
+	transition: opacity .2s linear;
+}
+
+.download .source a {
+	pointer-events: auto;
+    cursor: pointer;
+	opacity: 1;
+}
+
+#agree {
+	margin-bottom: 12px;
 }
 
 .faq {
@@ -642,34 +702,92 @@ h2 {
 	text-shadow: 0px 2px 2px rgba(0, 0, 0, 0.5);
 }
 
-.dl_box {
-	width: 253px;
-	height: 85px;
-	background: url('/images/bg-b-50.png');
+.obs1_info {
 	position: absolute;
-	bottom: 10px;
-	right: 10px;
+	left: 80px;
+	top: 50px;
+	width: 299px;
+	display: block;
+	padding: 2px 0px;
+	margin: 0px auto;
+	text-align: center;
+}
+
+.obs2_info {
+	/*display: none !important;*/
+
+	position: absolute;
+	right: 80px;
+	top: 50px;
+	width: 299px;
+	display: block;
+	padding: 2px 0px;
+	margin: 0px auto;
+	text-align: center;
+}
+
+.vistanote {
+	display: block;
+	color: white;
+	font-size: 10px;
+	font-style: italic;
+	font-family: 'Source Sans Pro', sans-serif;
+	text-align: center;
+	text-shadow: 0px 2px 2px rgba(0, 0, 0, 0.5);
+	position: relative;
+	margin-bottom: 10px;
+	opacity: .6;
+}
+
+.dl_box {
+	background: rgba(0,0,0,0.5);
 	-webkit-border-radius: 4px;
 	-moz-border-radius: 4px;
 	border-radius: 4px;
+	text-align: center;
+	padding: 24px 8px;
+}
+
+.obs2_info .dl_box {
+	padding: 4px 0px;
 }
 
 .dl_box a.button {
-	width: 243px;
-	height: 51px;
+	width: 283px;
 	display: block;
-	margin: 10px auto 0px;
+	padding: 2px 0px;
+	margin: 0px auto;
 	text-align: center;
 	color: white;
 	font-size: 30px;
 	font-weight: bold;
 	font-family: 'Source Sans Pro', sans-serif;
 	text-decoration: none;
-	background: url('/images/download-btn.png');
-	background-position: 0px 0px;
+	box-sizing: border-box;
+	border: 2px solid #01972b;
+	background: #32c75b; /* Old browsers */
+	background: -moz-linear-gradient(top,  #32c75b 0%, #01972b 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#32c75b), color-stop(100%,#01972b)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  #32c75b 0%,#01972b 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #32c75b 0%,#01972b 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #32c75b 0%,#01972b 100%); /* IE10+ */
+	background: linear-gradient(to bottom,  #32c75b 0%,#01972b 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#32c75b', endColorstr='#01972b',GradientType=0 ); /* IE6-9 */
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
 }
 
-.dl_box a.button:hover { background-position: 0px -51px; }
+.dl_box a.button:hover {
+	background: #01972b; /* Old browsers */
+	background: -moz-linear-gradient(top,  #01972b 0%, #45cc6b 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#01972b), color-stop(100%,#45cc6b)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  #01972b 0%,#45cc6b 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #01972b 0%,#45cc6b 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #01972b 0%,#45cc6b 100%); /* IE10+ */
+	background: linear-gradient(to bottom,  #01972b 0%,#45cc6b 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#01972b', endColorstr='#45cc6b',GradientType=0 ); /* IE6-9 */
+}
 
 .dl_box a { 
 	display: block;
@@ -680,6 +798,40 @@ h2 {
 	font-family: 'Source Sans Pro', sans-serif;
 	text-align: center;
 	text-shadow: 0px 2px 2px rgba(0, 0, 0, 0.5);
+	position: relative;
+}
+
+.dl_box a.button.small {
+	width: 283px;
+	margin: 4px auto;
+	font-size: 20px;
+	padding: 0px;
+}
+
+/*
+.dl_box a.button.small:first-child { margin-left: 0px; }
+.dl_box a.button.small:last-child { margin-right: 0px; }
+*/
+
+.dl_box a.button.disabled {
+	background: grey;
+	cursor: default;
+	border-color: #444;
+}
+
+.dl_box a.button.small.disabled:hover:after {
+content: "Coming Soon";
+position: absolute;
+left: -2px;
+width: 100%;
+background: rgba(0,0,0,0.75);
+font-size: 16px;
+text-align: center;
+padding: 6px 2px 8px;
+top: -2px;
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
 }
 
 .scroll_banner {
@@ -716,6 +868,59 @@ h2 {
 
 #purchase select { width: 130px }
 #purchase label { width: 150px; display: inline-block; }
+
+/* 2014 */
+
+.btn.twitch a {
+	background: #6441a5;
+}
+
+.btn.twitch a:hover {
+	background: #8f62e3;
+}
+
+.btn.razer a {
+	background: #000000;
+	color: white;
+	border: 1px solid #00ff00;
+}
+
+.btn.razer a:hover {
+	background: #00ff00;
+}
+
+.btn.eg a {
+	background: rgb(49,97,175); /* Old browsers */
+	background: -moz-linear-gradient(top,  rgba(49,97,175,1) 0%, rgba(26,48,91,1) 99%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(49,97,175,1)), color-stop(99%,rgba(26,48,91,1))); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  rgba(49,97,175,1) 0%,rgba(26,48,91,1) 99%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  rgba(49,97,175,1) 0%,rgba(26,48,91,1) 99%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  rgba(49,97,175,1) 0%,rgba(26,48,91,1) 99%); /* IE10+ */
+	background: linear-gradient(to bottom,  rgba(49,97,175,1) 0%,rgba(26,48,91,1) 99%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#3161af', endColorstr='#1a305b',GradientType=0 ); /* IE6-9 */
+
+	color: white;
+}
+
+.btn.eg a:hover {
+	background: rgb(58,112,198); /* Old browsers */
+	background: -moz-linear-gradient(top,  rgba(58,112,198,1) 0%, rgba(58,112,198,1) 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(58,112,198,1)), color-stop(100%,rgba(58,112,198,1))); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  rgba(58,112,198,1) 0%,rgba(58,112,198,1) 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  rgba(58,112,198,1) 0%,rgba(58,112,198,1) 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  rgba(58,112,198,1) 0%,rgba(58,112,198,1) 100%); /* IE10+ */
+	background: linear-gradient(to bottom,  rgba(58,112,198,1) 0%,rgba(58,112,198,1) 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#3a70c6', endColorstr='#3a70c6',GradientType=0 ); /* IE6-9 */
+;
+}
+
+.btn.mlg a {
+	background: #015594;
+}
+
+.btn.mlg a:hover {
+	background: #901926;
+}
 
 /* End hilarity styles */
 
@@ -781,3 +986,48 @@ h2 {
 }
 
 /* End Footer */
+
+/* -------------------- */
+/* -------------------- */
+/* -------------------- */
+
+/* Begin icon font */
+
+@font-face {
+	font-family: 'icomoon';
+	src:url('font/icomoon.eot');
+	src:url('font/icomoon.eot?#iefix') format('embedded-opentype'),
+		url('font/icomoon.svg#icomoon') format('svg'),
+		url('font/icomoon.woff') format('woff'),
+		url('font/icomoon.ttf') format('truetype');
+	font-weight: normal;
+	font-style: normal;
+}
+
+/* Use the following CSS code if you want to have a class per icon */
+[class^="icon-"]:before, [class*=" icon-"]:before {
+	font-family: 'icomoon';
+	font-style: normal;
+	speak: none;
+	font-weight: normal;
+	line-height: 1;
+	-webkit-font-smoothing: antialiased;
+}
+.icon-facebook:before {
+	content: "\e000";
+}
+.icon-twitter:before {
+	content: "\e001";
+}
+.icon-comment:before {
+	content: "\e002";
+}
+.icon-list:before {
+	content: "\e003";
+}
+.icon-dropdown:before {
+	content: "\e004";
+}
+.icon-coin:before {
+	content: "\e005";
+}

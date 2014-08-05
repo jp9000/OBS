@@ -5,12 +5,11 @@
 	<meta name="robots" content="index, follow" />
 	<meta name="description" content="Open Broadcaster Software is free and open source software for recording and live streaming. Both 32 and 64 bit versions are available and it's absolutely free!" />
 	<title>{{ page.title }}</title>
-
 	<link rel="icon" type="image/png" href="http://obsproject.com/images/favicon.png" />
 	<link href="//fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,700" rel="stylesheet" type="text/css" />
-	<link rel='stylesheet' media='all' href='https://obsproject.com/assets/960.css'  type='text/css' />
+	<link rel='stylesheet' media='all' href='{{ site.baseurl }}/assets/960.css'  type='text/css' />
 	<link rel="stylesheet" media="screen" href="{{ site.baseurl }}/assets/style.css"  type="text/css" />
-	<link rel="stylesheet" media="screen" href="https://obsproject.com/assets/main.css"  type="text/css" />
+	<link rel="stylesheet" media="screen" href="{{ site.baseurl }}/assets/main.css"  type="text/css" />
 </head>
 	<body>
 		<div id="Wrapper">
@@ -18,7 +17,7 @@
 				<div class="container_12">
 					<div class="grid_12" id="Header">
 						<div>
-							<a href="https://obsproject.com/"><img class="logo" src="http://obsproject.com/images/OBSLogo80.png" style="border:0px !important;" alt="OBS Logo" /></a>
+							<a href="{{ site.baseurl }}"><img class="logo" src="http://obsproject.com/images/OBSLogo80.png" style="border:0px !important;" alt="OBS Logo" /></a>
 							<div class="header_text">
 								<h1>Open Broadcaster Software</h1>
 								<p>Free, open source software for live streaming and recording</p>
@@ -26,14 +25,14 @@
 						</div>
 						
 				<div id="SocialButtons">
-				
+
 					<div id="FacebookButton">
 						<a href="https://www.facebook.com/OpenBroadcasterSoftware" target="_blank" rel="0">
 										<i class="icon-facebook"></i>
 						</a>
 						<span class="tooltip">Facebook</span>
 					</div>
-				
+
 					<div id="TwitterButton">
 						<a href="https://twitter.com/OBSProject" target="_blank" rel="0">
 										<i class="icon-twitter"></i>
@@ -46,37 +45,31 @@
 										<i class="icon-comment">Live Chat</i>
 						</a>
 					</div>
-					
-					
 				</div>
 				
 				<ul id="Navigation">
-				
+
 					<li>
 						<a href="https://obsproject.com/index">Home</a>
 					</li>
-					
+
 					<li>
 						<a href="https://obsproject.com/download">Download</a>
 					</li>
-					
+
 					<li>
 						<a href="https://obsproject.com/forum/">Forum</a>
 					</li>
-					
+
 					<li class="last">
-						<a href="#">Help <i class="icon-dropdown"></i></a>
+						<a href="{{ site.baseurl }}">Help <i class="icon-dropdown"></i></a>
 						<ul>
-						
-							<li><a href="{{ site.baseurl }}">Help Index</a></li>
 							<li><a href="https://obsproject.com/estimator">Estimator</a></li>
 							<li><a href="https://obsproject.com/analyzer">Log Analyzer</a></li>
 							<li><a href="https://obsproject.com/contact">Contact</a></li>
-						
 						</ul>
-						
 					</li>
-								
+
 				</ul>
 					</div>
 				</div>
