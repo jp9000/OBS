@@ -795,6 +795,10 @@ OBS::OBS()
 
     renderFrameIn1To1Mode = !!GlobalConfig->GetInt(L"General", L"1to1Preview", false);
 
+    App->bAlwaysOnTop = !!GlobalConfig->GetInt(L"General", L"AlwaysOnTop");
+    CheckMenuItem(GetMenu(hwndMain), ID_ALWAYSONTOP, (App->bAlwaysOnTop) ? MF_CHECKED : MF_UNCHECKED);
+    SetWindowPos(hwndMain, (App->bAlwaysOnTop) ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+
     // make sure sources listview column widths are as expected after obs window is shown
 
     ListView_SetColumnWidth(hwndSources,0,LVSCW_AUTOSIZE_USEHEADER);
@@ -863,6 +867,7 @@ OBS::~OBS()
     GlobalConfig->SetInt(TEXT("General"), TEXT("LogSizeY"), rect.bottom - rect.top);
 
     GlobalConfig->SetInt(L"General", L"1to1Preview", renderFrameIn1To1Mode);
+    GlobalConfig->SetInt(L"General", L"AlwaysOnTop", App->bAlwaysOnTop);
     
     // Save control panel visibility
     GlobalConfig->SetInt(TEXT("General"), TEXT("PanelVisibleWindowed"), bPanelVisibleWindowed ? 1 : 0);
