@@ -132,8 +132,9 @@ void OBS::AddBuiltInSettingsPanes()
     AddSettingsPane(new SettingsPublish());
     AddSettingsPane(new SettingsVideo());
     AddSettingsPane(new SettingsAudio());
+    AddSettingsPane(new SettingsHotkeys());
     AddSettingsPane(new SettingsAdvanced());
-    numberOfBuiltInSettingsPanes = 6;
+    numberOfBuiltInSettingsPanes = 7;
 }
 
 void OBS::SetChangedSettings(bool bChanged)

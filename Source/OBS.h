@@ -665,6 +665,7 @@ private:
     friend class SettingsVideo;
     friend class SettingsAudio;
     friend class SettingsAdvanced;
+    friend class SettingsHotkeys;
 
     //---------------------------------------------------
     // mainly manly main window stuff

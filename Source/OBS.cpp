@@ -1520,9 +1520,9 @@ void OBS::ReloadIniSettings()
     QuickClearHotkey(stopRecordingHotkeyID);
     QuickClearHotkey(startRecordingHotkeyID);
 
-    bUsingPushToTalk = AppConfig->GetInt(TEXT("Audio"), TEXT("UsePushToTalk")) != 0;
     DWORD hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey"));
     DWORD hotkey2 = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey2"));
+    bUsingPushToTalk = hotkey || hotkey2;
     pushToTalkDelay = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkDelay"), 200);
 
     if(bUsingPushToTalk && hotkey)
