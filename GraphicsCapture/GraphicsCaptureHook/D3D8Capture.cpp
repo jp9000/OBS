@@ -589,13 +589,15 @@ bool CreateCPUCapture(IDirect3DDevice8* device)
 
     // start copy thread
     bKillThread = false;
-    if (hCopyThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)CopyD3D8CPUTextureThread, NULL, 0, NULL))
+    if (hCopyThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)CopyD3D8CPUTextureThread, NULL, CREATE_SUSPENDED, NULL))
     {
         if (!(hCopyEvent = CreateEvent(NULL, FALSE, FALSE, NULL)))
         {
             RUNEVERYRESET logOutput << CurrentTimeString() + "CreateCPUCapture: CreateEvent failed, GetLastError = " << GetLastError() << endl;
             return false;
         }
+
+        ResumeThread(hCopyThread);
     }
     else
     {
