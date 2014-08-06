@@ -284,6 +284,7 @@
     <ClCompile Include="Source\Hacks.cpp" />
     <ClCompile Include="Source\HTTPClient.cpp" />
     <ClCompile Include="Source\ImageProcessing.cpp" />
+    <ClCompile Include="Source\ReplayBuffer.cpp" />
     <ClCompile Include="Source\libnsgif.c" />
     <ClCompile Include="Source\LogUploader.cpp" />
     <ClCompile Include="Source\Main.cpp" />
