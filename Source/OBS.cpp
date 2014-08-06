@@ -1339,10 +1339,6 @@ void OBS::GetSceneCollection(StringList &sceneCollectionList)
 
     sceneCollectionList.Clear();
 
-    String scenesPath = FormattedString(L"%s\\scenes.xconfig", lpAppDataPath);
-    if (OSFileExists(scenesPath))
-        sceneCollectionList << L"scenes";
-
     String sceneCollectionDir(FormattedString(L"%s/sceneCollection/", OBSGetAppDataPath()));
     strSceneCollectionWildcard << sceneCollectionDir << "*.xconfig";
     if (hFind = OSFindFirstFile(strSceneCollectionWildcard, ofd))
