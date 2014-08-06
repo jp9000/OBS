@@ -210,6 +210,26 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
             info.bRequiresAdmin = false; //todo: add later
         }
     }
+
+    // preserve the last used settings in case the target isn't open any more, prevents
+    // Properties -> OK selecting a new random target.
+
+    String oldWindow = configData.data->GetString(TEXT("window"));
+    String oldClass = configData.data->GetString(TEXT("windowClass"));
+    String oldExe = configData.data->GetString(TEXT("executable"));
+
+    UINT windowID = (UINT)SendMessage(hwndCombobox, CB_FINDSTRINGEXACT, -1, (LPARAM)oldWindow.Array());
+
+    if (windowID == CB_ERR && oldWindow.IsValid() && oldClass.IsValid())
+    {
+        int id = (int)SendMessage(hwndCombobox, CB_ADDSTRING, 0, (LPARAM)oldWindow.Array());
+        SendMessage(hwndCombobox, CB_SETITEMDATA, id, (LPARAM)NULL);
+
+        WindowInfo &info = *configData.windowData.CreateNew();
+        info.strClass = oldClass;
+        info.strExecutable = oldExe;
+        info.bRequiresAdmin = false; //todo: add later
+    }
 }
 
 int SetSliderText(HWND hwndParent, int controlSlider, int controlText)
