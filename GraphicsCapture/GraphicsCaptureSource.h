@@ -30,6 +30,7 @@ class GraphicsCaptureSource : public ImageSource
     bool bUseHotkey;
     DWORD hotkey, hotkeyID;
     String strWindowClass;
+    String strExecutable;
 
     bool bUseDWMCapture;
 
@@ -39,6 +40,7 @@ class GraphicsCaptureSource : public ImageSource
     HANDLE injectHelperProcess;
 
     HWND hwndTarget, hwndCapture, hwndNextTarget;
+    HANDLE hTargetProcess;
     bool bCapturing, bErrorAcquiring, bFlip, bStretch, bIgnoreAspect, bCaptureMouse;
     UINT captureWaitCount;
     DWORD targetProcessID;

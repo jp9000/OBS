@@ -258,6 +258,12 @@ void GraphicsCaptureSource::EndCapture()
     if(hSignalExit)
         CloseHandle(hSignalExit);
 
+    if (hTargetProcess)
+    {
+        CloseHandle(hTargetProcess);
+        hTargetProcess = NULL;
+    }
+
     hSignalRestart = hSignalEnd = hSignalReady = hSignalExit = hOBSIsAlive = NULL;
 
     bErrorAcquiring = false;
@@ -286,8 +292,12 @@ void GraphicsCaptureSource::BeginScene()
         return;
 
     strWindowClass = data->GetString(TEXT("windowClass"));
-    if(strWindowClass.IsEmpty())
+    strExecutable = data->GetString(TEXT("executable"));
+    if (strWindowClass.IsEmpty() && strExecutable.IsEmpty())
+    {
+        Log(TEXT("GraphicsCaptureSource::BeginScene: No class or executable specified, what's happening?!"));
         return;
+    }
 
     bUseDWMCapture = (scmpi(strWindowClass, TEXT("Dwm")) == 0);
 
@@ -368,14 +378,100 @@ HWND FindVisibleWindow(CTSTR lpClass, CTSTR lpTitle)
     return hwnd;
 }
 
+struct FindWindowData
+{
+    String classname;
+    String exename;
+    HWND hwnd;
+    OPPROC pOpenProcess;
+};
+
+// This function is responsible for finding the window the user wanted to capture.
+// Possible improvements:
+//  * Allow matching on window title and possibly other criteria (foreground, visible, etc)
+//  * Allow user to specify which things to match on as a bitmask to match tricky programs
+
+BOOL CALLBACK GraphicsCaptureFindWindow(HWND hwnd, LPARAM lParam)
+{
+    TCHAR windowClass[256];
+    TCHAR windowExecutable[MAX_PATH];
+
+    windowClass[_countof(windowClass)-1] = windowExecutable[MAX_PATH-1] = 0;
+
+    FindWindowData *fwd = (FindWindowData *)lParam;
+
+    if (!IsWindowVisible(hwnd))
+        return TRUE;
+
+    if (GetClassName(hwnd, windowClass, _countof(windowClass) - 1) && !scmp(windowClass, fwd->classname))
+    {
+        //handle old sources which lack an exe name
+        if (fwd->exename.IsEmpty())
+            return TRUE;
+
+        DWORD processID;
+        GetWindowThreadProcessId(hwnd, &processID);
+
+        HANDLE hProc = fwd->pOpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID);
+        if (hProc)
+        {
+            DWORD wLen = _countof(windowExecutable) - 1;
+            if (QueryFullProcessImageName(hProc, 0, windowExecutable, &wLen))
+            {
+                TCHAR *p;
+                p = wcsrchr(windowExecutable, '\\');
+                if (p)
+                    p++;
+                else
+                    p = windowExecutable;
+
+                slwr(p);
+
+                if (!scmp(p, fwd->exename))
+                {
+                    CloseHandle(hProc);
+                    fwd->hwnd = hwnd;
+                    return FALSE;
+                }
+            }
+            else
+            {
+                RUNONCE Log(TEXT("OpenProcess worked but QueryFullProcessImageName returned %d for pid %d?"), GetLastError(), processID);
+            }
+
+            CloseHandle(hProc);
+        }
+    }
+
+    return TRUE;
+}
+
 void GraphicsCaptureSource::AttemptCapture()
 {
     OSDebugOut(TEXT("attempting to capture..\n"));
 
     if (scmpi(strWindowClass, L"dwm") == 0)
+    {
         hwndTarget = FindWindow(strWindowClass, NULL);
+    }
     else
-        hwndTarget = strWindowClass.IsValid() ? FindVisibleWindow(strWindowClass, NULL) : nullptr;
+    {
+        FindWindowData fwd;
+
+        //FIXME: duplicated code, but we need OpenProcess here
+        char pOPStr[12];
+        mcpy(pOPStr, "NpflUvhel{x", 12); //OpenProcess obfuscated
+        for (int i = 0; i<11; i++) pOPStr[i] ^= i ^ 1;
+
+        fwd.pOpenProcess = (OPPROC)GetProcAddress(GetModuleHandle(TEXT("KERNEL32")), pOPStr);
+        fwd.classname = strWindowClass;
+        fwd.exename = strExecutable;
+        fwd.hwnd = nullptr;
+
+        EnumWindows(GraphicsCaptureFindWindow, (LPARAM)&fwd);
+
+        hwndTarget = fwd.hwnd;
+    }
     
     // use foregroundwindow as fallback (should be NULL if not using hotkey capture)
     if (!hwndTarget)
@@ -399,7 +495,10 @@ void GraphicsCaptureSource::AttemptCapture()
     {
         OSDebugOut(L"Bad window\n");
         if (!bUseHotkey && !warningID)
+        {
+            //Log(TEXT("GraphicsCaptureSource::AttemptCapture: Window '%s' [%s] not found."), strWindowClass.Array(), strExecutable.Array());
             warningID = API->AddStreamInfo(Str("Sources.SoftwareCaptureSource.WindowNotFound"), StreamInfoPriority_High);
+        }
 
         bCapturing = false;
 
@@ -587,8 +686,16 @@ void GraphicsCaptureSource::AttemptCapture()
             }
         }
 
+        //save a copy of the process handle which we injected into, this lets us check for process exit in Tick()
+        if (!hTargetProcess)
+        {
+            if (!DuplicateHandle(GetCurrentProcess(), hProcess, GetCurrentProcess(), &hTargetProcess, 0, FALSE, DUPLICATE_SAME_ACCESS))
+            {
+                Log(TEXT("Warning: Couldn't DuplicateHandle, %d"), GetLastError());
+            }
+        }
+
         CloseHandle(hProcess);
-        hProcess = NULL;
 
         if (!bCapturing)
         {
@@ -715,6 +822,9 @@ void GraphicsCaptureSource::Tick(float fSeconds)
     {
         if(!IsWindow(hwndCapture) && !bUseDWMCapture) {
             Log(TEXT("Capture window 0x%08lX invalid or changing, terminating capture"), DWORD(hwndCapture));
+            EndCapture();
+        } else if (hTargetProcess && WaitForSingleObject(hTargetProcess, 0) == WAIT_OBJECT_0) {
+            Log(TEXT("Capture process %s exited, terminating capture"), strExecutable.Array());
             EndCapture();
         } else if (bUseHotkey && hwndNextTarget && hwndNextTarget != hwndTarget) {
             Log(TEXT("Capture hotkey triggered for new window, terminating capture"));

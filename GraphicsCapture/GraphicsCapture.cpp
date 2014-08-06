@@ -36,6 +36,7 @@ HANDLE textureMutexes[2] = {NULL, NULL};
 struct WindowInfo
 {
     String strClass;
+    String strExecutable;
     BOOL bRequiresAdmin;
 };
 
@@ -51,7 +52,10 @@ struct ConfigDialogData
     inline void ClearData()
     {
         for(UINT i=0; i<windowData.Num(); i++)
+        {
             windowData[i].strClass.Clear();
+            windowData[i].strExecutable.Clear();
+        }
         windowData.Clear();
         adminWindows.Clear();
     }
@@ -59,7 +63,10 @@ struct ConfigDialogData
     inline ~ConfigDialogData()
     {
         for(UINT i=0; i<windowData.Num(); i++)
+        {
             windowData[i].strClass.Clear();
+            windowData[i].strExecutable.Clear();
+        }
     }
 };
 
@@ -166,9 +173,19 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
                 GetClassName(hwndCurrent, strClassName.Array(), 255);
                 strClassName.SetLength(slen(strClassName));
 
+                TCHAR *baseExeName;
+                baseExeName = wcsrchr(fileName, '\\');
+                if (!baseExeName)
+                    baseExeName = fileName;
+                else
+                    baseExeName++;
+
                 WindowInfo &info    = *configData.windowData.CreateNew();
                 info.strClass       = strClassName;
+                info.strExecutable  = baseExeName;
                 info.bRequiresAdmin = false; //todo: add later
+
+                info.strExecutable.MakeLower();
             }
         }
     } while (hwndCurrent = GetNextWindow(hwndCurrent, GW_HWNDNEXT));
@@ -189,6 +206,7 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
 
             WindowInfo &info = *configData.windowData.CreateNew();
             info.strClass = TEXT("Dwm");
+            info.strExecutable = TEXT("dwm.exe");
             info.bRequiresAdmin = false; //todo: add later
         }
     }
@@ -354,6 +372,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         String strWindow = GetCBText(GetDlgItem(hwnd, IDC_APPLIST), windowID);
                         data->SetString(TEXT("window"),      strWindow);
                         data->SetString(TEXT("windowClass"), info->windowData[windowID].strClass);
+                        data->SetString(TEXT("executable"), info->windowData[windowID].strExecutable);
 
                         data->SetInt(TEXT("stretchImage"), SendMessage(GetDlgItem(hwnd, IDC_STRETCHTOSCREEN),    BM_GETCHECK, 0, 0) == BST_CHECKED);
                         data->SetInt(TEXT("ignoreAspect"), SendMessage(GetDlgItem(hwnd, IDC_IGNOREASPECT),       BM_GETCHECK, 0, 0) == BST_CHECKED);
