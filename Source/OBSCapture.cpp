@@ -68,6 +68,80 @@ void OBS::ToggleCapturing()
         Stop();
 }
 
+String GetOutputFilename()
+{
+    String path = OSGetDefaultVideoSavePath(L"\\.flv");
+    String strOutputFile = AppConfig->GetString(TEXT("Publish"), TEXT("SavePath"), path.IsValid() ? path.Array() : nullptr);
+    strOutputFile.FindReplace(TEXT("\\"), TEXT("/"));
+
+    OSFindData ofd;
+    HANDLE hFind = NULL;
+    bool bUseDateTimeName = true;
+    bool bOverwrite = GlobalConfig->GetInt(L"General", L"OverwriteRecordings", false) != 0;
+
+    if (!bOverwrite && (hFind = OSFindFirstFile(strOutputFile, ofd)))
+    {
+        String strFileExtension = GetPathExtension(strOutputFile);
+        String strFileWithoutExtension = GetPathWithoutExtension(strOutputFile);
+
+        if (strFileExtension.IsValid() && !ofd.bDirectory)
+        {
+            String strNewFilePath;
+            UINT curFile = 0;
+
+            do
+            {
+                strNewFilePath.Clear() << strFileWithoutExtension << TEXT(" (") << FormattedString(TEXT("%02u"), ++curFile) << TEXT(").") << strFileExtension;
+            } while (OSFileExists(strNewFilePath));
+
+            strOutputFile = strNewFilePath;
+
+            bUseDateTimeName = false;
+        }
+
+        if (ofd.bDirectory)
+            strOutputFile.AppendChar('/');
+
+        OSFindClose(hFind);
+    }
+
+    if (bUseDateTimeName)
+    {
+        String strFileName = GetPathFileName(strOutputFile);
+
+        if (!strFileName.IsValid() || !IsSafeFilename(strFileName))
+        {
+            SYSTEMTIME st;
+            GetLocalTime(&st);
+
+            String strDirectory = GetPathDirectory(strOutputFile);
+            String file = strOutputFile.Right(strOutputFile.Length() - strDirectory.Length());
+            String extension;
+
+            if (!file.IsEmpty())
+                extension = GetPathExtension(file.Array());
+
+            if (extension.IsEmpty())
+                extension = TEXT("mp4");
+            strOutputFile = FormattedString(TEXT("%s/%u-%02u-%02u-%02u%02u-%02u.%s"), strDirectory.Array(), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, extension.Array());
+        }
+    }
+
+    return strOutputFile;
+}
+
+VideoFileStream *CreateFileStream(String strOutputFile)
+{
+    String strFileExtension = GetPathExtension(strOutputFile);
+
+    if (strFileExtension.CompareI(TEXT("flv")))
+        return CreateFLVFileStream(strOutputFile);
+    else if (strFileExtension.CompareI(TEXT("mp4")))
+        return CreateMP4FileStream(strOutputFile);
+
+    return nullptr;
+}
+
 bool OBS::StartRecording(bool force)
 {
     if (!bRunning || bRecording) return true;
@@ -76,78 +150,16 @@ bool OBS::StartRecording(bool force)
 
     bWriteToFile = force || networkMode == 1 || saveToFile;
 
-    String path = OSGetDefaultVideoSavePath(L"\\.flv");
-    String strOutputFile = AppConfig->GetString(TEXT("Publish"), TEXT("SavePath"), path.IsValid() ? path.Array() : nullptr);
-
-    strOutputFile.FindReplace(TEXT("\\"), TEXT("/"));
-
     // Don't request a keyframe while everything is starting up for the first time
     if(!bStartingUp) videoEncoder->RequestKeyframe();
 
+    String strOutputFile;
     if (bWriteToFile)
-    {
-        OSFindData ofd;
-        HANDLE hFind = NULL;
-        bool bUseDateTimeName = true;
-        bool bOverwrite = GlobalConfig->GetInt(L"General", L"OverwriteRecordings", false) != 0;
-
-        if(!bOverwrite && (hFind = OSFindFirstFile(strOutputFile, ofd)))
-        {
-            String strFileExtension = GetPathExtension(strOutputFile);
-            String strFileWithoutExtension = GetPathWithoutExtension(strOutputFile);
-
-            if(strFileExtension.IsValid() && !ofd.bDirectory)
-            {
-                String strNewFilePath;
-                UINT curFile = 0;
-
-                do 
-                {
-                    strNewFilePath.Clear() << strFileWithoutExtension << TEXT(" (") << FormattedString(TEXT("%02u"), ++curFile) << TEXT(").") << strFileExtension;
-                } while(OSFileExists(strNewFilePath));
-
-                strOutputFile = strNewFilePath;
-
-                bUseDateTimeName = false;
-            }
-
-            if(ofd.bDirectory)
-                strOutputFile.AppendChar('/');
-
-            OSFindClose(hFind);
-        }
-
-        if(bUseDateTimeName)
-        {
-            String strFileName = GetPathFileName(strOutputFile);
-
-            if(!strFileName.IsValid() || !IsSafeFilename(strFileName))
-            {
-                SYSTEMTIME st;
-                GetLocalTime(&st);
-
-                String strDirectory = GetPathDirectory(strOutputFile);
-                String file = strOutputFile.Right(strOutputFile.Length() - strDirectory.Length());
-                String extension;
-
-                if (!file.IsEmpty())
-                    extension = GetPathExtension(file.Array());
-
-                if(extension.IsEmpty())
-                    extension = TEXT("mp4");
-                strOutputFile = FormattedString(TEXT("%s/%u-%02u-%02u-%02u%02u-%02u.%s"), strDirectory.Array(), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, extension.Array());
-            }
-        }
-    }
-
+        strOutputFile = GetOutputFilename();
     bool success = true;
     if(!bTestStream && bWriteToFile && strOutputFile.IsValid())
     {
-        String strFileExtension = GetPathExtension(strOutputFile);
-        if(strFileExtension.CompareI(TEXT("flv")))
-            fileStream = CreateFLVFileStream(strOutputFile);
-        else if(strFileExtension.CompareI(TEXT("mp4")))
-            fileStream = CreateMP4FileStream(strOutputFile);
+        fileStream = CreateFileStream(strOutputFile);
 
         if(!fileStream)
         {
