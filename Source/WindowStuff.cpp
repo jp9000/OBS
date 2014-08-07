@@ -1952,7 +1952,7 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
 
                         XElement *element = globals->GetElementByID(id);
 
-                        if(App->bRunning)
+                        if(App->bRunning && App->scene && App->scene->sceneItems.Num())
                         {
                             for(int i=int(App->scene->sceneItems.Num()-1); i>=0; i--)
                             {
@@ -1995,30 +1995,33 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                                 {
                                     UINT numSources = sources->NumElements();
 
-                                    for(int j=int(numSources-1); j>=0; j--)
+                                    if (numSources)
                                     {
-                                        XElement *source = sources->GetElementByID(j);
-
-                                        if(scmpi(source->GetString(TEXT("class")), TEXT("GlobalSource")) == 0)
+                                        for(int j=int(numSources-1); j>=0; j--)
                                         {
-                                            XElement *data = source->GetElement(TEXT("data"));
-                                            if(data)
-                                            {
-                                                CTSTR lpName = data->GetString(TEXT("name"));
-                                                if(scmpi(lpName, element->GetName()) == 0)
-                                                {
-                                                    LVFINDINFO findInfo;
-                                                    findInfo.flags = LVFI_STRING;
-                                                    findInfo.psz = (LPCWSTR) source->GetName();
+                                            XElement *source = sources->GetElementByID(j);
 
-                                                    int listID = ListView_FindItem(hwndSceneSources, -1, &findInfo);
-                                                    if(listID != -1)
+                                            if(scmpi(source->GetString(TEXT("class")), TEXT("GlobalSource")) == 0)
+                                            {
+                                                XElement *data = source->GetElement(TEXT("data"));
+                                                if(data)
+                                                {
+                                                    CTSTR lpName = data->GetString(TEXT("name"));
+                                                    if(scmpi(lpName, element->GetName()) == 0)
                                                     {
-                                                        App->bChangingSources = true;
-                                                        ListView_DeleteItem(hwndSceneSources, listID);
-                                                        App->bChangingSources = false;
+                                                        LVFINDINFO findInfo;
+                                                        findInfo.flags = LVFI_STRING;
+                                                        findInfo.psz = (LPCWSTR) source->GetName();
+
+                                                        int listID = ListView_FindItem(hwndSceneSources, -1, &findInfo);
+                                                        if(listID != -1)
+                                                        {
+                                                            App->bChangingSources = true;
+                                                            ListView_DeleteItem(hwndSceneSources, listID);
+                                                            App->bChangingSources = false;
+                                                        }
+                                                        sources->RemoveElement(source);
                                                     }
-                                                    sources->RemoveElement(source);
                                                 }
                                             }
                                         }
