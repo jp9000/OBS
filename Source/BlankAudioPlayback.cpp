@@ -45,7 +45,7 @@ struct BlankAudioPlayback
         HRESULT err;
         err = CoCreateInstance(CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void**)&mmEnumerator);
         if(FAILED(err))
-            CrashError(TEXT("Could not create IMMDeviceEnumerator"));
+            CrashError(TEXT("Could not create IMMDeviceEnumerator: 0x%08lx"), err);
 
         if (scmpi(lpDevice, TEXT("Default")) == 0)
             err = mmEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &mmDevice);
