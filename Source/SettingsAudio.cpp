@@ -238,9 +238,9 @@ void SettingsAudio::RefreshDevices(AudioDeviceType desktopDeviceType)
     String strDeviceID;
 
     if (storage.playbackDevices.devices.Num())
-        AppConfig->GetString(TEXT("Audio"), TEXT("PlaybackDevice"), storage.playbackDevices.devices[0].strID);
+        strPlaybackID = AppConfig->GetString(TEXT("Audio"), TEXT("PlaybackDevice"), storage.playbackDevices.devices[0].strID);
     else
-        AppConfig->GetString(TEXT("Audio"), TEXT("PlaybackDevice"));
+        strPlaybackID = AppConfig->GetString(TEXT("Audio"), TEXT("PlaybackDevice"));
 
     if (storage.recordingDevices.devices.Num())
         strDeviceID = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), storage.recordingDevices.devices[0].strID);
