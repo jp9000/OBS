@@ -201,7 +201,9 @@
 #define IDC_BACKGROUNDOPACITY_EDIT      1085
 #define IDC_MICBOOST2                   1085
 #define IDC_DESKTOPBOOST                1085
+#define IDC_REPLAYBUFFERLENGTH_EDIT     1085
 #define IDC_USESYNCFIX                  1086
+#define IDC_REPLAYBUFFERLENGTH          1086
 #define IDC_CLEARPUSHTOTALK             1088
 #define IDC_CLEARMUTEMIC                1089
 #define IDC_SENDBUFFERSIZE              1089
@@ -259,6 +261,7 @@
 #define IDC_DELAY_STATIC                1126
 #define IDC_ITALIC                      1127
 #define IDC_TIMELEFT                    1127
+#define IDC_REPLAYBUFFERLENGTH_STATIC   1127
 #define IDC_UNLOCKHIGHFPS               1128
 #define IDC_CANCEL                      1130
 #define IDC_UNLOCKHIGHFPS2              1130
@@ -312,8 +315,16 @@
 #define IDC_ENCODERX264                 1175
 #define IDC_ENCODERQSV                  1176
 #define IDC_X264PRESET_LABEL            1176
+#define IDC_SAVEREPLAYBUFFERHOTKEY_STATIC 1176
 #define IDC_ENCODERNVENC                1177
+#define IDC_SAVEREPLAYBUFFERHOTKEY      1177
 #define IDC_SCENECOLLECTION             1178
+#define IDC_CLEARHOTKEY_SAVEREPLAYBUFFER 1178
+#define IDC_FILEOUTPUTMODE              1178
+#define IDC_FILEOUTPUTNORMAL            1179
+#define IDC_FILEOUTPUTREPLAYBUFFER      1180
+#define IDC_REPLAYBUFFERMEMORY_STATIC   1181
+#define IDC_REPLAYBUFFERMEMORY          1182
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -382,7 +393,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        150
 #define _APS_NEXT_COMMAND_VALUE         40081
-#define _APS_NEXT_CONTROL_VALUE         1178
+#define _APS_NEXT_CONTROL_VALUE         1183
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

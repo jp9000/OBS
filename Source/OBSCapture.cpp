@@ -43,6 +43,7 @@ NetworkStream* CreateNullNetwork();
 
 VideoFileStream* CreateMP4FileStream(CTSTR lpFile);
 VideoFileStream* CreateFLVFileStream(CTSTR lpFile);
+std::pair<ReplayBuffer*, VideoFileStream*> CreateReplayBuffer(int seconds);
 //VideoFileStream* CreateAVIFileStream(CTSTR lpFile);
 
 
@@ -156,10 +157,28 @@ bool OBS::StartRecording(bool force)
     String strOutputFile;
     if (bWriteToFile)
         strOutputFile = GetOutputFilename();
+
+    bool useReplayBuffer = !!AppConfig->GetInt(L"Publish", L"UseReplayBuffer");
     bool success = true;
-    if(!bTestStream && bWriteToFile && strOutputFile.IsValid())
+    if(!bTestStream && bWriteToFile && (strOutputFile.IsValid() || useReplayBuffer))
     {
-        fileStream = CreateFileStream(strOutputFile);
+        if (useReplayBuffer)
+        {
+            int length = AppConfig->GetInt(L"Publish", L"ReplayBufferLength", 1);
+            std::tie(replayBuffer, fileStream) = CreateReplayBuffer(length);
+            if (replayBuffer)
+                Log(L"Using ReplayBuffer with a length of %d seconds", length);
+            else
+            {
+                Log(L"Invalid ReplayBuffer length set: %d", length);
+                OBSMessageBox(hwndMain, Str("Capture.Start.FileStream.SaveReplayBufferWarning"), Str("Capture.Start.FileStream.WarningCaption"), MB_OK | MB_ICONWARNING);
+                ConfigureStreamButtons();
+                return false;
+            }
+            bRecordingReplayBuffer = true;
+        }
+        else
+            fileStream = CreateFileStream(strOutputFile);
 
         if(!fileStream)
         {
@@ -167,6 +186,7 @@ bool OBS::StartRecording(bool force)
             OBSMessageBox(hwndMain, Str("Capture.Start.FileStream.Warning"), Str("Capture.Start.FileStream.WarningCaption"), MB_OK | MB_ICONWARNING);        
             bRecording = false;
             success = false;
+            bRecordingReplayBuffer = false;
         }
         else {
             bRecording = true;
@@ -193,6 +213,9 @@ void OBS::StopRecording()
     delete tempStream;
     tempStream = NULL;
     bRecording = false;
+    bRecordingReplayBuffer = false;
+
+    replayBuffer = nullptr;
 
     ReportStopRecordingTrigger();
 

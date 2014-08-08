@@ -556,6 +556,8 @@ enum class SceneCollectionAction {
     Clone
 };
 
+struct ReplayBuffer;
+
 //todo: this class has become way too big, it's horrible, and I should be ashamed of myself
 class OBS
 {
@@ -569,6 +571,7 @@ class OBS
     friend class GlobalSource;
     friend class TextOutputSource;
     friend class MMDeviceAudioSource;
+    friend struct ReplayBuffer;
 
     //---------------------------------------------------
     // graphics stuff
@@ -674,7 +677,7 @@ private:
     String  strLanguage;
     bool    bTestStream;
     bool    bUseMultithreadedOptimizations;
-    bool    bRunning, bRecording, bRecordingOnly, bStartingUp, bStreaming, bKeepRecording;
+    bool    bRunning, bRecording, bRecordingReplayBuffer, bRecordingOnly, bStartingUp, bStreaming, bKeepRecording;
     bool    canRecord;
     volatile bool bShutdownVideoThread, bShutdownEncodeThread;
     int     renderFrameWidth, renderFrameHeight; // The size of the preview only
@@ -782,6 +785,8 @@ private:
     bool bWriteToFile;
     VideoFileStream *fileStream;
 
+    ReplayBuffer *replayBuffer;
+
     bool bRequestKeyframe;
     int  keyframeWait;
 
@@ -834,9 +839,11 @@ private:
     UINT stopStreamHotkeyID;
     UINT startRecordingHotkeyID;
     UINT stopRecordingHotkeyID;
+    UINT saveReplayBufferHotkeyID;
 
     bool bStartStreamHotkeyDown, bStopStreamHotkeyDown;
     bool bStartRecordingHotkeyDown, bStopRecordingHotkeyDown;
+    bool bSaveReplayBufferHotkeyDown;
 
     static DWORD STDCALL MainAudioThread(LPVOID lpUnused);
     bool QueryAudioBuffers(bool bQueriedDesktopDebugParam);
@@ -948,6 +955,7 @@ private:
     static void STDCALL StopStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL StartRecordingHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL StopRecordingHotkey(DWORD hotkey, UPARAM param, bool bDown);
+    static void STDCALL SaveReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown);
 
     static void STDCALL PushToTalkHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL MuteMicHotkey(DWORD hotkey, UPARAM param, bool bDown);

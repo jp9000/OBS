@@ -158,6 +158,20 @@ void SettingsHotkeys::ApplySettings()
 
     if (startRecordingHotkey)
         App->startRecordingHotkeyID = API->CreateHotkey(startRecordingHotkey, OBS::StartRecordingHotkey, NULL);
+
+    //------------------------------------------
+
+    DWORD saveReplayBufferHotkey = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_SAVEREPLAYBUFFERHOTKEY), HKM_GETHOTKEY, 0, 0);
+    AppConfig->SetInt(L"Publish", L"SaveReplayBufferHotkey", saveReplayBufferHotkey);
+
+    if (App->saveReplayBufferHotkeyID)
+    {
+        API->DeleteHotkey(App->saveReplayBufferHotkeyID);
+        App->saveReplayBufferHotkeyID = 0;
+    }
+
+    if (saveReplayBufferHotkey)
+        App->saveReplayBufferHotkeyID = API->CreateHotkey(saveReplayBufferHotkey, OBS::SaveReplayBufferHotkey, 0);
 }
 
 void SettingsHotkeys::CancelSettings()
@@ -216,6 +230,11 @@ INT_PTR SettingsHotkeys::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
         //--------------------------------------------
 
+        DWORD saveReplayBufferHotkey = AppConfig->GetInt(L"Publish", L"SaveReplayBufferHotkey");
+        SendMessage(GetDlgItem(hwnd, IDC_SAVEREPLAYBUFFERHOTKEY), HKM_SETHOTKEY, saveReplayBufferHotkey, 0);
+
+        //--------------------------------------------
+
         //need this as some of the dialog item sets above trigger the notifications
         SetChangedSettings(false);
         return TRUE;
@@ -232,6 +251,7 @@ INT_PTR SettingsHotkeys::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
         case IDC_STOPSTREAMHOTKEY:
         case IDC_STARTRECORDINGHOTKEY:
         case IDC_STOPRECORDINGHOTKEY:
+        case IDC_SAVEREPLAYBUFFERHOTKEY:
             if (HIWORD(wParam) == EN_CHANGE)
                 SetChangedSettings(true);
             break;
@@ -300,6 +320,17 @@ INT_PTR SettingsHotkeys::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 if (SendMessage(GetDlgItem(hwnd, IDC_STOPRECORDINGHOTKEY), HKM_GETHOTKEY, 0, 0))
                 {
                     SendMessage(GetDlgItem(hwnd, IDC_STOPRECORDINGHOTKEY), HKM_SETHOTKEY, 0, 0);
+                    SetChangedSettings(true);
+                }
+            }
+            break;
+
+        case IDC_CLEARHOTKEY_SAVEREPLAYBUFFER:
+            if (HIWORD(wParam) == BN_CLICKED)
+            {
+                if (SendMessage(GetDlgItem(hwnd, IDC_SAVEREPLAYBUFFERHOTKEY), HKM_GETHOTKEY, 0, 0))
+                {
+                    SendMessage(GetDlgItem(hwnd, IDC_SAVEREPLAYBUFFERHOTKEY), HKM_SETHOTKEY, 0, 0);
                     SetChangedSettings(true);
                 }
             }
