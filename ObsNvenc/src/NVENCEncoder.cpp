@@ -436,7 +436,7 @@ void NVENCEncoder::RequestBuffers(LPVOID buffers)
     NvLog(TEXT("No unlocked frame found"));
 }
 
-bool NVENCEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp)
+bool NVENCEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, DWORD &out_pts)
 {
     NVENCSTATUS nvStatus;
     int i = -1;
@@ -541,7 +541,7 @@ bool NVENCEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketTy
         NVENCEncoderOutputSurface *qSurf = outputSurfaceQueueReady.front();
         outputSurfaceQueueReady.pop();
 
-        ProcessOutput(qSurf, packets, packetTypes);
+        ProcessOutput(qSurf, packets, packetTypes, out_pts);
 
         qSurf->busy = false;
 
@@ -552,7 +552,7 @@ bool NVENCEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketTy
     return true;
 }
 
-void NVENCEncoder::ProcessOutput(NVENCEncoderOutputSurface *surf, List<DataPacket> &packets, List<PacketType> &packetTypes)
+void NVENCEncoder::ProcessOutput(NVENCEncoderOutputSurface *surf, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD &out_pts)
 {
     List<uint32_t> sliceOffsets;
     sliceOffsets.SetSize(encodeConfig.encodeCodecConfig.h264Config.sliceModeData);
@@ -607,7 +607,7 @@ void NVENCEncoder::ProcessOutput(NVENCEncoderOutputSurface *surf, List<DataPacke
     size_t nalNum = nalOut.Num();
 
     uint64_t dts = surf->timestamp;
-    uint64_t out_pts = lockParams.outputTimeStamp;
+    out_pts = (DWORD)lockParams.outputTimeStamp;
 
     int32_t timeOffset = int(out_pts - dts);
     timeOffset += frameShift;

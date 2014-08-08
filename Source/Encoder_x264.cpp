@@ -315,7 +315,7 @@ public:
         x264_encoder_close(x264);
     }
 
-    bool Encode(LPVOID picInPtr, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp)
+    bool Encode(LPVOID picInPtr, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, DWORD &out_pts)
     {
         x264_picture_t *picIn = (x264_picture_t*)picInPtr;
 
@@ -352,6 +352,8 @@ public:
         //if frame duplication is being used, the shift will be insignificant, so just don't bother adjusting audio
         timeOffset = int(picOut.i_pts-picOut.i_dts);
         timeOffset += frameShift;
+
+        out_pts = (DWORD)picOut.i_pts;
 
         if(nalNum && timeOffset < 0)
         {

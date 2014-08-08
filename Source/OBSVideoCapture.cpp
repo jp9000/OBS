@@ -75,10 +75,11 @@ DWORD STDCALL Convert444Thread(Convert444Data *data)
     return 0;
 }
 
-bool OBS::BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, QWORD firstFrameTime, VideoSegment &segmentOut)
+bool OBS::BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, DWORD out_pts, QWORD firstFrameTime, VideoSegment &segmentOut)
 {
     VideoSegment &segmentIn = *bufferedVideo.CreateNew();
     segmentIn.timestamp = timestamp;
+    segmentIn.pts = out_pts;
 
     segmentIn.packets.SetSize(inputPackets.Num());
     for(UINT i=0; i<inputPackets.Num(); i++)
@@ -104,6 +105,7 @@ bool OBS::BufferVideoData(const List<DataPacket> &inputPackets, const List<Packe
     {
         segmentOut.packets.TransferFrom(bufferedVideo[0].packets);
         segmentOut.timestamp = bufferedVideo[0].timestamp;
+        segmentOut.pts = bufferedVideo[0].pts;
         bufferedVideo.Remove(0);
 
         return true;
@@ -227,14 +229,15 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
     else
         picIn = frameInfo.pic->picOut ? (LPVOID)frameInfo.pic->picOut : (LPVOID)frameInfo.pic->mfxOut;
 
-    videoEncoder->Encode(picIn, videoPackets, videoPacketTypes, bufferedTimes[0]);
+    DWORD out_pts = 0;
+    videoEncoder->Encode(picIn, videoPackets, videoPacketTypes, bufferedTimes[0], out_pts);
 
     bProcessedFrame = (videoPackets.Num() != 0);
 
     //buffer video data before sending out
     if(bProcessedFrame)
     {
-        bSendFrame = BufferVideoData(videoPackets, videoPacketTypes, bufferedTimes[0], frameInfo.firstFrameTime, curSegment);
+        bSendFrame = BufferVideoData(videoPackets, videoPacketTypes, bufferedTimes[0], out_pts, frameInfo.firstFrameTime, curSegment);
         bufferedTimes.Remove(0);
     }
     else

@@ -50,7 +50,7 @@ public:
     NVENCEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR);
     ~NVENCEncoder();
 
-    bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp);
+    bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, DWORD &out_pts) override;
     void RequestBuffers(LPVOID buffers);
 
     int  GetBitRate() const;
@@ -76,7 +76,7 @@ private:
     bool checkPresetSupport(const GUID &preset);
 
     void init();
-    void ProcessOutput(NVENCEncoderOutputSurface *surf, List<DataPacket> &packets, List<PacketType> &packetTypes);
+    void ProcessOutput(NVENCEncoderOutputSurface *surf, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD &out_pts);
 
     void dumpEncodeConfig();
     void tryParseEncodeConfig();

@@ -648,7 +648,7 @@ public:
 #define SEI_USER_DATA_UNREGISTERED 0x5
 #endif
 
-    void ProcessEncodedFrame(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, mfxU32 wait=0)
+    void ProcessEncodedFrame(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, DWORD &out_pts, mfxU32 wait=0)
     {
         if(!filled_bitstream_waiter.wait_for(2, wait))
             return;
@@ -717,8 +717,8 @@ public:
 
         INT64 dts = msFromTimestamp(bs.DecodeTimeStamp);
 
-        INT64 in_pts = msFromTimestamp(task.surf.Data.TimeStamp),
-              out_pts = msFromTimestamp(bs.TimeStamp);
+        INT64 in_pts = msFromTimestamp(task.surf.Data.TimeStamp);
+        out_pts = (DWORD)msFromTimestamp(bs.TimeStamp);
 
         if(!bFirstFrameProcessed && nalNum)
         {
@@ -968,7 +968,7 @@ public:
         CrashError(TEXT("QSV encoder is too slow"));
     }
 
-    bool Encode(LPVOID picInPtr, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp)
+    bool Encode(LPVOID picInPtr, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, DWORD &out_pts) override
     {
         if(!process_waiter.wait_timeout())
         {
@@ -997,7 +997,7 @@ public:
         profileIn("ProcessEncodedFrame");
         do
         {
-            ProcessEncodedFrame(packets, packetTypes, outputTimestamp, idle_tasks.Num() ? 0 : INFINITE);
+            ProcessEncodedFrame(packets, packetTypes, outputTimestamp, out_pts, idle_tasks.Num() ? 0 : INFINITE);
         }
         while(!idle_tasks.Num());
         profileOut;

@@ -161,7 +161,7 @@ class VideoEncoder
     friend class OBS;
 
 protected:
-    virtual bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp)=0;
+    virtual bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, DWORD &out_pts)=0;
 
     virtual void RequestBuffers(LPVOID buffers) {}
 
@@ -526,8 +526,9 @@ struct VideoSegment
 {
     List<VideoPacketData> packets;
     DWORD timestamp;
+    DWORD pts;
 
-    inline VideoSegment() : timestamp(0) {}
+    inline VideoSegment() : timestamp(0), pts(0) {}
     inline ~VideoSegment() {Clear();}
     inline void Clear()
     {
@@ -790,7 +791,7 @@ private:
 
     static DWORD STDCALL EncodeThread(LPVOID lpUnused);
     static DWORD STDCALL MainCaptureThread(LPVOID lpUnused);
-    bool BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, QWORD firstFrameTime, VideoSegment &segmentOut);
+    bool BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, DWORD out_pts, QWORD firstFrameTime, VideoSegment &segmentOut);
     void SendFrame(VideoSegment &curSegment, QWORD firstFrameTime);
     bool ProcessFrame(FrameProcessInfo &frameInfo);
     void EncodeLoop();  
