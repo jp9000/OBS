@@ -236,13 +236,13 @@
     <ClCompile Include="OBSApi.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SettingsPane.cpp" />
+    <ClCompile Include="Utility\utf8-windows.cpp" />
     <ClCompile Include="VolumeControl.cpp" />
     <ClCompile Include="VolumeMeter.cpp" />
     <ClCompile Include="Utility\ConfigFile.cpp" />
     <ClCompile Include="Utility\DebugAlloc.cpp" />
     <ClCompile Include="Utility\FastAlloc.cpp" />
     <ClCompile Include="Utility\Profiler.cpp" />
-    <ClCompile Include="Utility\utf8.cpp" />
     <ClCompile Include="Utility\XConfig.cpp" />
     <ClCompile Include="Utility\XFile_Windows.cpp" />
     <ClCompile Include="Utility\XMath.cpp" />
