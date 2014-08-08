@@ -130,7 +130,7 @@ class VideoFileStream
 {
 public:
     virtual ~VideoFileStream() {}
-    virtual void AddPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)=0;
+    virtual void AddPacket(BYTE *data, UINT size, DWORD timestamp, DWORD pts, PacketType type)=0;
 };
 
 //-------------------------------------------------------------------
