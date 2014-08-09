@@ -103,6 +103,7 @@ BASE_EXPORT int    STDCALL OSProcessEvent();
 
 BASE_EXPORT BOOL   STDCALL OSDeleteFile(CTSTR lpFile);
 BASE_EXPORT BOOL   STDCALL OSCopyFile(CTSTR lpFileDest, CTSTR lpFileSrc);
+BASE_EXPORT BOOL   STDCALL OSRenameFile(CTSTR oldPath, CTSTR newPath);
 BASE_EXPORT BOOL   STDCALL OSCreateDirectory(CTSTR lpDirectory);
 BASE_EXPORT BOOL   STDCALL OSSetCurrentDirectory(CTSTR lpDirectory);
 BASE_EXPORT BOOL   STDCALL OSFileExists(CTSTR lpFile);

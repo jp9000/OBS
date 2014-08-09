@@ -909,7 +909,7 @@ bool  XConfig::ReadFileData2(XElement *curElement, int level, TSTR &lpTemp, bool
     return (curElement == RootElement);
 }
 
-void  XConfig::WriteFileItem(XFile &file, int indent, XBaseItem *baseItem)
+bool  XConfig::WriteFileItem(XFile &file, int indent, XBaseItem *baseItem)
 {
     int j;
 
@@ -956,7 +956,8 @@ void  XConfig::WriteFileItem(XFile &file, int indent, XBaseItem *baseItem)
 
         strItem << TEXT("\r\n");
 
-        file.WriteAsUTF8(strItem);
+        if (!file.WriteAsUTF8(strItem))
+            return false;
     }
     else if(baseItem->IsElement())
     {
@@ -984,29 +985,37 @@ void  XConfig::WriteFileItem(XFile &file, int indent, XBaseItem *baseItem)
 
         strElement << TEXT(" : {\r\n");
 
-        file.WriteAsUTF8(strElement);
+        if (!file.WriteAsUTF8(strElement))
+            return false;
 
         strElement.Clear();
 
-        WriteFileData(file, indent+1, element);
+        if (!WriteFileData(file, indent + 1, element))
+            return false;
 
         for(j=0; j<indent; j++)
             strElement << TEXT("  ");
         strElement << TEXT("}\r\n");
 
-        file.WriteAsUTF8(strElement);
+        if (!file.WriteAsUTF8(strElement))
+            return false;
     }
+
+    return true;
 }
 
-void  XConfig::WriteFileData(XFile &file, int indent, XElement *curElement)
+bool  XConfig::WriteFileData(XFile &file, int indent, XElement *curElement)
 {
     DWORD i;
 
     for(i=0; i<curElement->SubItems.Num(); i++)
     {
         XBaseItem *baseItem = curElement->SubItems[i];
-        WriteFileItem(file, indent, baseItem);
+        if (!WriteFileItem(file, indent, baseItem))
+            return false;
     }
+
+    return true;
 }
 
 // Basically the same as Open (and in fact Open could/should call ParseString to do its thing)
@@ -1123,9 +1132,22 @@ void  XConfig::Save()
 {
     if(RootElement)
     {
+        String tmpPath = strFileName;
+        tmpPath.AppendString(TEXT(".tmp"));
+
         XFile file;
         if (file.Open(strFileName, XFILE_WRITE, XFILE_CREATEALWAYS))
-            WriteFileData(file, 0, RootElement);
+        {
+            if (WriteFileData(file, 0, RootElement))
+            {
+                file.Close();
+                OSRenameFile(tmpPath, strFileName);
+            }
+            else
+            {
+                Log(TEXT("XConfig::Save: WriteFileData failed while writing %s."), strFileName.Array());
+            }
+        }
     }
 }
 
@@ -1133,8 +1155,21 @@ void  XConfig::SaveTo(CTSTR lpPath)
 {
     if (RootElement)
     {
+        String tmpPath = lpPath;
+        tmpPath.AppendString(TEXT(".tmp"));
+
         XFile file;
-        if (file.Open(lpPath, XFILE_WRITE, XFILE_CREATEALWAYS))
-            WriteFileData(file, 0, RootElement);
+        if (file.Open(tmpPath, XFILE_WRITE, XFILE_CREATEALWAYS))
+        {
+            if (WriteFileData(file, 0, RootElement))
+            {
+                file.Close();
+                OSRenameFile(tmpPath, lpPath);
+            }
+            else
+            {
+                Log(TEXT("XConfig::SaveTo: WriteFileData failed while writing %s."), lpPath);
+            }
+        }
     }
 }

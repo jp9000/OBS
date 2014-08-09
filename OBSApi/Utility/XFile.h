@@ -52,9 +52,9 @@ public:
     BOOL IsOpen();
     DWORD Read(LPVOID lpBuffer, DWORD dwBytes);
     DWORD Write(const void *lpBuffer, DWORD dwBytes);
-    DWORD WriteStr(LPCSTR lpBuffer);
-    DWORD WriteStr(CWSTR lpBuffer);
-    DWORD WriteAsUTF8(CTSTR lpBuffer, DWORD dwElements=0);
+    BOOL WriteStr(LPCSTR lpBuffer);
+    BOOL WriteStr(CWSTR lpBuffer);
+    BOOL WriteAsUTF8(CTSTR lpBuffer, DWORD dwElements = 0);
 
     void FlushFileBuffers();
 

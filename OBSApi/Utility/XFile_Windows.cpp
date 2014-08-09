@@ -106,7 +106,7 @@ DWORD XFile::Write(const void *lpBuffer, DWORD dwBytes)
     return dwRet;
 }
 
-DWORD XFile::WriteStr(CWSTR lpBuffer)
+BOOL XFile::WriteStr(CWSTR lpBuffer)
 {
     assert(lpBuffer);
 
@@ -116,7 +116,7 @@ DWORD XFile::WriteStr(CWSTR lpBuffer)
 
     char lpDest[4096];
     DWORD dwBytes = (DWORD)wchar_to_utf8(lpBuffer, dwElements, lpDest, 4095, 0);
-    DWORD retVal = Write(lpDest, dwBytes);
+    DWORD retVal = (Write(lpDest, dwBytes) == dwBytes);
 
     return retVal;
 }
@@ -126,23 +126,25 @@ void XFile::FlushFileBuffers()
     ::FlushFileBuffers(hFile);
 }
 
-DWORD XFile::WriteStr(LPCSTR lpBuffer)
+BOOL XFile::WriteStr(LPCSTR lpBuffer)
 {
     assert(lpBuffer);
 
-    if(!hFile) return XFILE_ERROR;
+    if (!hFile) return false;
 
     DWORD dwElements = (DWORD)strlen(lpBuffer);
 
-    return Write(lpBuffer, dwElements);
+    return (Write(lpBuffer, dwElements) == dwElements);
 }
 
-DWORD XFile::WriteAsUTF8(CTSTR lpBuffer, DWORD dwElements)
+BOOL XFile::WriteAsUTF8(CTSTR lpBuffer, DWORD dwElements)
 {
-    if(!lpBuffer)
-        return 0;
+    DWORD retVal = 0;
 
-    if(!hFile) return XFILE_ERROR;
+    if(!lpBuffer)
+        return false;
+
+    if (!hFile) return false;
 
     if(!dwElements)
         dwElements = slen(lpBuffer);
@@ -150,11 +152,15 @@ DWORD XFile::WriteAsUTF8(CTSTR lpBuffer, DWORD dwElements)
 #ifdef UNICODE
     DWORD dwBytes = (DWORD)wchar_to_utf8_len(lpBuffer, dwElements, 0);
     LPSTR lpDest = (LPSTR)Allocate(dwBytes+1);
-    wchar_to_utf8(lpBuffer, dwElements, lpDest, dwBytes, 0);
-    DWORD retVal = Write(lpDest, dwBytes);
+
+    if (wchar_to_utf8(lpBuffer, dwElements, lpDest, dwBytes, 0))
+        retVal = (Write(lpDest, dwBytes) == dwBytes);
+    else
+        Log(TEXT("XFile::WriteAsUTF8: wchar_to_utf8 failed: %d"), GetLastError());
+
     Free(lpDest);
 #else
-    DWORD retVal = Write(lpBuffer, dwElements);
+    DWORD retVal = (Write(lpBuffer, dwElements) == dwBytes);
 #endif
 
     return retVal;
