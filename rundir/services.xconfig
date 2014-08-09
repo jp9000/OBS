@@ -90,6 +90,7 @@ services : {
       "EU-West"       : rtmp://live.fra.hitbox.tv/push
       "EU-North"      : rtmp://live.ams.hitbox.tv/push
       "US-East"       : rtmp://live.vgn.hitbox.tv/push
+      "US-Central"    : rtmp://live.den.hitbox.tv/push
       "US-West"       : rtmp://live.lax.hitbox.tv/push
       "South America" : rtmp://live.gru.hitbox.tv/push
       "South Korea"   : rtmp://live.icn.hitbox.tv/push
