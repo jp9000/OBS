@@ -1231,7 +1231,7 @@ void OBS::MainAudioLoop()
 
         //-----------------------------------------------
 
-        float *desktopBuffer, *micBuffer;
+        float *desktopBuffer = nullptr, *micBuffer = nullptr;
 
         curDesktopVol = desktopVol * desktopBoost;
 
