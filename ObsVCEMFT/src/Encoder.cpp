@@ -233,7 +233,8 @@ HRESULT VCEEncoder::Init()
         VCELog(TEXT("Failed to set CODECAPI_AVEncCommonMeanBitRate"));
     }
 
-    if (mUseCBR)
+    //Fails
+    /*if (mUseCBR)
     {
         hr = mBuilder->setEncoderValue(&CODECAPI_AVEncCommonMinBitRate,
             (uint32)mPConfigCtrl.vidParams.meanBitrate, mEncTrans);
@@ -241,7 +242,7 @@ HRESULT VCEEncoder::Init()
         {
             VCELog(TEXT("Failed to set CODECAPI_AVEncCommonMinBitRate"));
         }
-    }
+    }*/
 
     hr = mBuilder->setEncoderValue(&CODECAPI_AVEncVideoMaxNumRefFrame,
         (uint32)iNumRefs, mEncTrans);
@@ -290,7 +291,6 @@ HRESULT VCEEncoder::ProcessInput()
 {
     HRESULT hr;
     UINT64 dur = 0;
-    CComPtr<IMFSample> pSample;
 
     DWORD outLen = 0, len = 0;
 
@@ -300,7 +300,7 @@ HRESULT VCEEncoder::ProcessInput()
     profileIn("ProcessInput")
 
 #if _DEBUG
-    int inBufCount = mInputQueue.size();
+    size_t inBufCount = mInputQueue.size();
 #endif
 
     //while (!mInputQueue.empty()) //loops from Encode() instead
@@ -328,10 +328,10 @@ HRESULT VCEEncoder::ProcessInput()
 
         if (MF_E_NOTACCEPTING == hr)
         {
-            VCELog(
-                TEXT("ProcessInput: MF_E_NOTACCEPTING ts: %d.")
-                //TEXT(" If this is logged too often, probably lower your encode quality settings.")
-                , inBuf->timestamp);
+            //VCELog(
+            //    TEXT("ProcessInput: MF_E_NOTACCEPTING ts: %d.")
+            //    //TEXT(" If this is logged too often, probably lower your encode quality settings.")
+            //    , inBuf->timestamp);
             OSDebugOut(TEXT("ProcessInput: MF_E_NOTACCEPTING ts: %d.\n"), inBuf->timestamp);
             return hr;
         }
@@ -381,7 +381,6 @@ HRESULT VCEEncoder::ProcessOutput(List<DataPacket> &packets, List<PacketType> &p
     if (HASFLAG(out[0].dwStatus, MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE))
     {
         return OutputFormatChange();
-        //return S_OK; //If async then return S_OK?
     }
 
     if (out[0].pEvents)
@@ -437,7 +436,7 @@ void VCEEncoder::DrainOutput(List<DataPacket> &packets, List<PacketType> &packet
     profileOut
 
 #if _DEBUG
-    VCELog(TEXT("Got %d output frames"), packets.Num());
+    OSDebugOut(TEXT("Got %d output frames\n"), packets.Num());
 #endif
 }
 
@@ -480,13 +479,39 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     InputBuffer *inBuffer = &(mInputBuffers[idx]);
     inBuffer->locked = true;
     inBuffer->timestamp = timestamp;
+
     mInputQueue.push(inBuffer);
 
-    while (!mInputQueue.empty())
+    int64_t sTime = GetQPCTime100NS();
+    bool processAll = mInputQueue.size() > 3;
+
+    //OSDebugOut(TEXT("IN queue %d\n"), mInputQueue.size());
+
+    if (mReqKeyframe)
+    {
+        //MSDN says it is reset for next frame automatically
+        hr = mBuilder->setEncoderValue(&CODECAPI_AVEncVideoForceKeyFrame,
+            (uint32_t)1, mEncTrans);
+        if (FAILED(hr))
+        {
+            VCELog(TEXT("Manual keyframe was requested, but failed to set encoder property. hr: %08X, ts: %d"), hr, timestamp);
+        }
+        mReqKeyframe = false;
+    }
+
+    do
     {
         hr = ProcessInput();
         DrainOutput(packets, packetTypes, timestamp);
-    }
+        int64_t diff = GetQPCTime100NS() - sTime;
+        if (diff > (int64_t)mFrameDur)
+        {
+            OSDebugOut(TEXT("Frame encode dur %lld\n"), diff);
+            //Trying to invoke 'encoder too slow' message from OBS and failing :(
+            OSSleep100NS(mFrameDur + mFrameDur/4);
+            sTime = GetQPCTime100NS();
+        }
+    } while (processAll && !mInputQueue.empty());
     profileOut
     return false;
 }
@@ -750,6 +775,7 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
                 buff->MemId = 0;
                 return;
             }
+            inBuf.pBuffer->SetCurrentLength(mInBuffSize);
         }
         else
             inBuf.pBuffer->Unlock();
@@ -787,7 +813,6 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
 
 void VCEEncoder::GetHeaders(DataPacket &packet)
 {
-    uint32_t outSize = mHdrSize;
     if (!mHdrPacket)
     {
         VCELog(TEXT("No header packet yet."));
@@ -863,7 +888,7 @@ void VCEEncoder::RequestKeyframe()
         lock(mStateLock, true);
     mReqKeyframe = true;
 #ifdef _DEBUG
-    VCELog(TEXT("Keyframe requested"));
+    OSDebugOut(TEXT("Keyframe requested\n"));
 #endif
 }
 

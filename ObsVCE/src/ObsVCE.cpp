@@ -97,7 +97,7 @@ bool VCEEncoder::init()
     bool status = false;
     if (!initOVE() || !mOutPtr)
         return false;
-    bool bPadCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 1) != 0;
+    bool bPadCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 0) != 0;
     int numH = ((mHeight + 15) / 16);
 
     prepareConfigMap(mConfigTable, false);
@@ -140,6 +140,8 @@ bool VCEEncoder::init()
         int bitRateWindow = 50;
         int gopSize = mFps * (mKeyint == 0 ? 2 : mKeyint);
         gopSize -= gopSize % 6;
+        mManKeyInt = gopSize;
+        OSDebugOut(TEXT("gopSize: %d\n"), gopSize);
 
         //Probably forces 1 ref frame only
         mConfigCtrl.priority = OVE_ENCODE_TASK_PRIORITY_LEVEL2;
@@ -156,7 +158,7 @@ bool VCEEncoder::init()
         mConfigCtrl.rateControl.encRCOptions = bPadCBR ? 3 : 0;
 
         mConfigCtrl.pictControl.encHeaderInsertionSpacing = 1;
-        mConfigCtrl.pictControl.encIDRPeriod = gopSize;
+        mConfigCtrl.pictControl.encIDRPeriod = 0;// gopSize;
         mConfigCtrl.pictControl.encNumMBsPerSlice = 0;
 
 		mConfigCtrl.meControl.encSearchRangeX = 16;
@@ -179,9 +181,9 @@ bool VCEEncoder::init()
         //TODO IDR nice for seeking in local files. Intra-refresh better for streaming?
         mManKeyInt = mKeyint * mFps;
         mConfigCtrl.pictControl.encIDRPeriod = 0;
-        mConfigCtrl.pictControl.encForceIntraRefresh = mManKeyInt;
+        mConfigCtrl.pictControl.encForceIntraRefresh = 0;// mManKeyInt;
         //TODO Usually 0 to let VCE manage it.
-        mConfigCtrl.rateControl.encGOPSize = 0;// mKeyint * mFps;
+        mConfigCtrl.rateControl.encGOPSize = mKeyint * mFps;
         mConfigCtrl.priority = OVE_ENCODE_TASK_PRIORITY_LEVEL1;
         if (bPadCBR) //TODO Serves same purpose? Drops too much still
             mConfigCtrl.rateControl.encRCOptions = 0x3;
@@ -219,7 +221,7 @@ bool VCEEncoder::init()
         APPCFG(mConfigCtrl.meControl.enableAMD, "AMD");
         APPCFG(mConfigCtrl.meControl.disableSATD, "DisSATD");
         APPCFG(mConfigCtrl.meControl.encDisableSubMode, "RDODisSub");
-        APPCFG(mConfigCtrl.meControl.encEnImeOverwDisSubm, "IMEOverwite");
+        APPCFG(mConfigCtrl.meControl.encEnImeOverwDisSubm, "IMEOverwrite");
         APPCFG(mConfigCtrl.meControl.encImeOverwDisSubmNo, "IMEDisSubmNo");
         APPCFG(mConfigCtrl.meControl.encIME2SearchRangeX, "IME2SearchX");
         APPCFG(mConfigCtrl.meControl.encIME2SearchRangeY, "IME2SearchY");
@@ -265,8 +267,33 @@ bool VCEEncoder::init()
         return false;
     }
 
-    //TODO Hardcoded to first device
-    uint32_t device = mDeviceHandle.deviceInfo[0].device_id;
+    uint32_t devIdx = (uint32_t)AppConfig->GetInt(TEXT("VCE Settings"), TEXT("DevIndex"), 0);
+    if (devIdx >= mDeviceHandle.numDevices)
+        devIdx = 0;
+    uint32_t device = mDeviceHandle.deviceInfo[devIdx].device_id;
+
+    //VCELog(TEXT("If it crashes now, add \"LogUsedDev=0\" under \"VCE Settings\" to ini."));
+    bool logName = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("LogUsedDev"), 1) != 0;
+    if (logName)
+    {
+        cl_device_id clDeviceID = reinterpret_cast<cl_device_id>(device);
+
+#ifdef _WIN64
+        // May ${DEITY} have mercy on us all.
+        VCELog(TEXT("If it crashes now, use 32bit version."));
+        intptr_t ptr = intptr_t((intptr_t*)&clDeviceID);
+        clDeviceID = (cl_device_id)((intptr_t)clDeviceID | (ptr & 0xFFFFFFFF00000000));
+#endif
+
+        // print device name
+        size_t valueSize;
+        clGetDeviceInfo(clDeviceID, CL_DEVICE_NAME, 0, NULL, &valueSize);
+        char* value = (char*)malloc(valueSize);
+        clGetDeviceInfo(clDeviceID, CL_DEVICE_NAME, valueSize, value, NULL);
+        //TODO non-unicode string formatting
+        VCELog(TEXT("Using device %d (%S)"), devIdx, value);
+        free(value);
+    }
 
     status = encodeCreate(device) && encodeOpen(device);
     if (!status)
@@ -417,8 +444,8 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     unsigned int idx = (unsigned int)data.MemId - 1;
 
 #ifdef _DEBUG
-    VCELog(TEXT("Encoding buffer: %d ts:%d %lld"), idx, timestamp, data.TimeStamp);
-    //VCELog(TEXT("Mapped handle: %p"), mEncodeHandle.inputSurfaces[idx].mapPtr);
+    OSDebugOut(TEXT("Encoding buffer: %d ts:%d %lld\n"), idx, timestamp, data.TimeStamp);
+    //OSDebugOut(TEXT("Mapped handle: %p\n"), mEncodeHandle.inputSurfaces[idx].mapPtr);
 #endif
     mLastTS = (uint64_t)data.TimeStamp;
 
@@ -444,7 +471,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     //pictureParameter.forceIMBPeriod = 0;
     //pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_NONE;
 
-    if (mReqKeyframe || mFirstFrame || (!mUseCBR && mKeyNum >= mManKeyInt))
+    if (mReqKeyframe || mFirstFrame || (/*!mUseCBR &&*/ mKeyNum >= mManKeyInt))
     {
         mReqKeyframe = false;
         pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_IDR;
@@ -461,7 +488,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         status |= clSetKernelArg(mKernel[1], 0, sizeof(cl_mem), (cl_mem)&mEncodeHandle.inputSurfaces[idx].surface);
         if (status != CL_SUCCESS)
         {
-            VCELog(TEXT("clSetKernelArg failed with %d"), status);
+            VCELog(TEXT("clSetKernelArg failed with 0x%08x"), status);
             return false;
         }
 
@@ -469,7 +496,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
             mKernel[0], 2, 0, globalThreads, NULL, 0, 0, NULL);
         if (status != CL_SUCCESS)
         {
-            VCELog(TEXT("clEnqueueNDRangeKernel failed with %d"), status);
+            VCELog(TEXT("clEnqueueNDRangeKernel failed with 0x%08x"), status);
             return false;
         }
 
@@ -480,7 +507,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
             mKernel[1], 2, 0, globalThreads, NULL, 0, 0, NULL);
         if (status != CL_SUCCESS)
         {
-            VCELog(TEXT("clEnqueueNDRangeKernel failed with %d"), status);
+            VCELog(TEXT("clEnqueueNDRangeKernel failed with 0x%08x"), status);
             return false;
         }
 
@@ -502,7 +529,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         &eventRunVideoProgram);
     if (!res)
     {
-        VCELog(TEXT("OVEncodeTask returned error %fd"), res);
+        VCELog(TEXT("OVEncodeTask returned error %d"), res);
         ret = false;
         goto fail;
     }
@@ -513,7 +540,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     err = clWaitForEvents(1, (cl_event *)&(eventRunVideoProgram));
     if (err != CL_SUCCESS)
     {
-        VCELog(TEXT("clWaitForEvents returned error %d"), err);
+        VCELog(TEXT("clWaitForEvents returned error 0x%08x"), err);
         ret = false;
         goto fail;
     }
@@ -562,7 +589,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
             if (mStatsOutSize < pTaskDescriptionList[i].size_of_bitstream_data)
             {
                 mStatsOutSize = pTaskDescriptionList[i].size_of_bitstream_data;
-                VCELog(TEXT("New max bitstream size: %d"), mStatsOutSize);
+                OSDebugOut(TEXT("New max bitstream size: %d\n"), mStatsOutSize);
             }
 #endif
             res = OVEncodeReleaseTask(mEncodeHandle.session, pTaskDescriptionList[i].taskID);
