@@ -241,7 +241,9 @@ namespace
 
             if (init_pts.Num() || frames_out == 0)
                 init_pts << ts;
-            dts << ts;
+            
+            if (!dts.Num() || dts.FindValueIndex(ts) == INVALID)
+                dts << ts;
         }
 
         int64_t operator()(uint64_t bs_pts, int64_t bs_dts)
@@ -337,6 +339,8 @@ class QSVEncoder : public VideoEncoder
     safe_handle qsvhelper_process,
                 qsvhelper_thread;
     ipc_stop stop;
+
+    ipc_encoder_flushed encoder_flushed;
 
     ipc_bitstream_buff bs_buff;
     ipc_bitstream_info bs_info;
@@ -631,6 +635,10 @@ public:
         stop = ipc_stop((event_prefix + STOP_REQUEST).Array());
         if(!stop)
             CrashError(TEXT("Failed to initialize QSV stop signal (%u)"), GetLastError());
+
+        encoder_flushed = ipc_encoder_flushed((event_prefix + ENCODER_FLUSHED).Array());
+        if (!encoder_flushed)
+            CrashError(L"Failed to initialize QSV encoder flushed signal (%u)", GetLastError());
 
         filled_bitstream_waiter = process_waiter;
         filled_bitstream_waiter.push_back(filled_bitstream.signal_);
@@ -934,11 +942,8 @@ public:
         Log(TEXT("Error: all frames are in use"));
     }
 
-    void QueueEncodeTask(mfxFrameSurface1 *pic)
+    void QueueEncodeTask(mfxFrameSurface1 *pic, DWORD in_pts)
     {
-        if (!pic)
-            return;
-
         profileSegment("QueueEncodeTask");
         encode_task& task = encode_tasks[idle_tasks[0]];
 
@@ -957,11 +962,19 @@ public:
             info.request_keyframe = bRequestKeyframe;
             bRequestKeyframe = false;
 
-            info.timestamp = task.surf.Data.TimeStamp = timestampFromMS(pic->Data.TimeStamp);
-            dts_gen.add(info.timestamp);
-            info.frame_index = (uint32_t)pic->Data.MemId-1;
-            auto lock_status = lock_mutex(frame_buff_status);
-            frame_buff_status[info.frame_index] += 1;
+            if (!pic)
+            {
+                info.flush = true;
+                dts_gen.add(timestampFromMS(in_pts));
+            }
+            else
+            {
+                info.timestamp = task.surf.Data.TimeStamp = timestampFromMS(pic->Data.TimeStamp);
+                dts_gen.add(info.timestamp);
+                info.frame_index = (uint32_t)pic->Data.MemId - 1;
+                auto lock_status = lock_mutex(frame_buff_status);
+                frame_buff_status[info.frame_index] += 1;
+            }
             frame_queue.signal();
             return;
         }
@@ -990,7 +1003,7 @@ public:
         bool queued = false;
         if (idle_tasks.Num())
         {
-            QueueEncodeTask((mfxFrameSurface1*)picInPtr);
+            QueueEncodeTask((mfxFrameSurface1*)picInPtr, outputTimestamp);
             queued = true;
         }
 
@@ -1003,7 +1016,7 @@ public:
         profileOut;
 
         if(!queued)
-            QueueEncodeTask((mfxFrameSurface1*)picInPtr);
+            QueueEncodeTask((mfxFrameSurface1*)picInPtr, outputTimestamp);
 
         return true;
     }
@@ -1097,7 +1110,7 @@ public:
 
     virtual bool HasBufferedFrames()
     {
-        return false;
+        return !encoder_flushed.is_signalled();
     }
 };
 

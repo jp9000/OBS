@@ -60,6 +60,9 @@ typedef IPCSignalledType<spspps_size>               ipc_spspps_size;
 #define STOP_REQUEST                                L"stop"
 typedef IPCSignal<true>                             ipc_stop;
 
+#define ENCODER_FLUSHED                             L"encoder_flushed"
+typedef IPCSignal<true>                             ipc_encoder_flushed;
+
 
 
 #define EXIT_INIT_IPC_FAILED 1

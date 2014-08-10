@@ -69,6 +69,7 @@ struct queued_frame
 {
     bool is_new;
     bool request_keyframe;
+    bool flush;
     mfxU64 timestamp;
     uint32_t frame_index;
 };
