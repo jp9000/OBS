@@ -238,7 +238,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
     init_res->requested_impl = encoder.requested;
     init_res->actual_impl = encoder.actual;
 
-    encoder.InitializeEncoder();
+    if (encoder.InitializeEncoder() < MFX_ERR_NONE)
+        return EXIT_ENCODER_INIT_FAILED;
 
     encoder.InitializeBuffers(init_res);
 
