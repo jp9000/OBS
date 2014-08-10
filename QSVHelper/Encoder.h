@@ -453,7 +453,7 @@ struct Encoder
         }
     }
 
-    int EncodeLoop(IPCSignal &stop, safe_handle &obs_handle)
+    int EncodeLoop(ipc_stop &stop, safe_handle &obs_handle)
     {
         IPCWaiter waiter;
         waiter.push_back(stop.signal_);

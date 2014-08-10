@@ -336,7 +336,7 @@ class QSVEncoder : public VideoEncoder
 
     safe_handle qsvhelper_process,
                 qsvhelper_thread;
-    IPCSignal stop;
+    ipc_stop stop;
 
     ipc_bitstream_buff bs_buff;
     ipc_bitstream_info bs_info;
