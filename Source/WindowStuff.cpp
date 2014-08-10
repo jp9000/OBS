@@ -72,6 +72,7 @@ enum
 
     ID_LISTBOX_GLOBALSOURCE=5000,
     ID_PROJECTOR=6000,
+    ID_LISTBOX_COPYTO=7000,
 };
 
 INT_PTR CALLBACK OBS::EnterSceneCollectionDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -452,7 +453,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
             switch(ret)
             {
                 default:
-                    if(ret >= ID_LISTBOX_ADD)
+                    if(ret >= ID_LISTBOX_ADD && ret < ID_LISTBOX_COPYTO)
                     {
                         App->EnableSceneSwitching(false);
 
@@ -484,6 +485,154 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                         }
 
                         App->EnableSceneSwitching(true);
+                    }
+
+                    if(ret >= ID_LISTBOX_COPYTO)
+                    {
+                        App->EnableSceneSwitching(false);
+
+                        StringList sceneCollectionList;
+                        App->GetSceneCollection(sceneCollectionList);
+
+                        for(UINT i = 0; i < sceneCollectionList.Num(); i++)
+                        {
+                            if(sceneCollectionList[i] == App->GetCurrentSceneCollection())
+                            {
+                                sceneCollectionList.Remove(i);
+                            }
+                        }
+
+                        UINT classID = ret - ID_LISTBOX_COPYTO;
+
+                        String strScenesCopyToConfig;
+                        strScenesCopyToConfig = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, sceneCollectionList[classID]);
+
+                        if(!App->scenesCopyToConfig.Open(strScenesCopyToConfig))
+                            CrashError(TEXT("Could not open '%s"), strScenesCopyToConfig.Array());
+
+                        XElement *currentSceneCollection = App->scenesConfig.GetElement(TEXT("scenes"));
+
+                        XElement *selectedScene = currentSceneCollection->GetElementByID(curSel);
+                        XElement *copyToSceneCollection = App->scenesCopyToConfig.GetElement(TEXT("scenes"));
+
+                        if(!copyToSceneCollection)
+                            copyToSceneCollection = App->scenesCopyToConfig.CreateElement(TEXT("scenes"));
+
+                        if(copyToSceneCollection)
+                        {
+                            XElement *foundGlobalSource = copyToSceneCollection->GetElement(selectedScene->GetName());
+                            if(foundGlobalSource != NULL && selectedScene->GetName() != foundGlobalSource->GetName())
+                            {
+                                App->scenesCopyToConfig.Close();
+                                App->EnableSceneSwitching(true);
+                                String strExists = Str("CopyTo.SceneNameExists");
+                                strExists.FindReplace(TEXT("$1"), selectedScene->GetName());
+                                OBSMessageBox(hwnd, strExists, NULL, 0);
+                                break;
+                            }
+                        }
+
+                        XElement *newSceneElement = copyToSceneCollection->CopyElement(selectedScene, selectedScene->GetName());
+                        newSceneElement->SetString(TEXT("class"), selectedScene->GetString(TEXT("class")));
+
+                        bool globalSourceRefCheck = false;
+
+                        XElement *newSceneSourcesGsRefCheck = newSceneElement->GetElement(TEXT("sources"));
+
+                        if(newSceneSourcesGsRefCheck)
+                        {
+                            UINT numSources = newSceneSourcesGsRefCheck->NumElements();
+
+                            for(int i = int(numSources - 1); i >= 0; i--)
+                            {
+                                XElement *sourceElement = newSceneSourcesGsRefCheck->GetElementByID(i);
+                                String sourceClassName = sourceElement->GetString(TEXT("class"));
+
+                                if(sourceClassName == "GlobalSource")
+                                {
+                                 globalSourceRefCheck = true;
+                                }
+                            }
+                        }
+
+                        if(globalSourceRefCheck)
+                        {
+                            if(OBSMessageBox(hwndMain, Str("CopyTo.CopyGlobalSourcesReferences"), Str("CopyTo.CopyGlobalSourcesReferences.Title"), MB_YESNO) == IDYES)
+                            {
+                                XElement *newSceneSources = newSceneElement->GetElement(TEXT("sources"));
+
+                                if(newSceneSources)
+                                {
+                                    UINT numSources = newSceneSources->NumElements();
+
+                                    for(int i = int(numSources - 1); i >= 0; i--)
+                                    {
+                                        XElement *sourceElement = newSceneSources->GetElementByID(i);
+                                        String sourceClassName = sourceElement->GetString(TEXT("class"));
+
+                                        if(sourceClassName == "GlobalSource")
+                                        {
+                                            XElement *data = sourceElement->GetElement(TEXT("data"));
+                                            if(data)
+                                            {
+                                                CTSTR lpName = data->GetString(TEXT("name"));
+                                                XElement *globalSourceName = App->GetGlobalSourceElement(lpName);
+                                                if(globalSourceName)
+                                                {
+                                                    XElement *importGlobalSources = App->scenesCopyToConfig.GetElement(TEXT("global sources"));
+
+                                                    if(!importGlobalSources)
+                                                       importGlobalSources = App->scenesCopyToConfig.CreateElement(TEXT("global sources"));
+
+                                                    if(importGlobalSources)
+                                                    {
+                                                        XElement *foundGlobalSource = importGlobalSources->GetElement(globalSourceName->GetName());
+                                                        if(foundGlobalSource != NULL && globalSourceName->GetName() != foundGlobalSource->GetName())
+                                                        {
+                                                            String strGsExists = Str("CopyTo.GlobalSourcesExists");
+                                                            strGsExists.FindReplace(TEXT("$1"), globalSourceName->GetName());
+                                                            OBSMessageBox(hwnd, strGsExists, NULL, 0);
+                                                        }
+                                                        else
+                                                        {
+                                                            XElement *newGlobalSources = importGlobalSources->CopyElement(globalSourceName, globalSourceName->GetName());
+                                                            newGlobalSources->SetString(TEXT("class"), globalSourceName->GetString(TEXT("class")));
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                XElement *newSceneSources = newSceneElement->GetElement(TEXT("sources"));
+
+                                if(newSceneSources)
+                                {
+                                    UINT numSources = newSceneSources->NumElements();
+
+                                    for(int i = int(numSources - 1); i >= 0; i--)
+                                    {
+                                        XElement *sourceElement = newSceneSources->GetElementByID(i);
+                                        String sourceClassName = sourceElement->GetString(TEXT("class"));
+
+                                        if(sourceClassName == "GlobalSource")
+                                        {
+                                            newSceneSources->RemoveElement(sourceElement);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        String strCopied = Str("CopyTo.Success.Text");
+                        strCopied.FindReplace(TEXT("$1"), selectedScene->GetName());
+                        OBSMessageBox(hwnd, strCopied, Str("CopyTo.Success.Title"), 0);
+
+                        App->EnableSceneSwitching(true);
+                        App->scenesCopyToConfig.Close(true);
                     }
                     break;
 
@@ -1054,6 +1203,7 @@ void OBS::AppendModifyListbox(HWND hwnd, HMENU hMenu, int id, int numItems, bool
         String strRemove               = Str("Remove");
         String strRename               = Str("Rename");
         String strCopy                 = Str("Copy");
+        String strCopyTo               = Str("CopyTo");
         String strMoveUp               = Str("MoveUp");
         String strMoveDown             = Str("MoveDown");
         String strMoveTop              = Str("MoveToTop");
@@ -1135,7 +1285,25 @@ void OBS::AppendModifyListbox(HWND hwnd, HMENU hMenu, int id, int numItems, bool
 
         if(id == ID_SCENES && numSelected)
         {
+            HMENU hMenuCopyTo = CreatePopupMenu();
+            StringList sceneCollectionList;
+            GetSceneCollection(sceneCollectionList);
+
+            for(UINT k = 0; k < sceneCollectionList.Num(); k++)
+            {
+                if(sceneCollectionList[k] == App->GetCurrentSceneCollection())
+                {
+                    sceneCollectionList.Remove(k);
+                }
+            }
+
+            for(UINT i = 0; i < sceneCollectionList.Num(); i++)
+            {
+                AppendMenu(hMenuCopyTo, MF_STRING, ID_LISTBOX_COPYTO + i, sceneCollectionList[i]);
+            }
+
             AppendMenu(hMenu, MF_STRING, ID_LISTBOX_COPY,           strCopy);
+            AppendMenu(hMenu, MF_STRING|MF_POPUP,(UINT_PTR)hMenuCopyTo,          strCopyTo);
             AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
             AppendMenu(hMenu, MF_STRING, ID_LISTBOX_HOTKEY, Str("Listbox.SetHotkey"));
         }

@@ -50,6 +50,14 @@ ImportGlobalSources="Import Global Sources"
 ImportCollectionReplaceWarning.Title="Import Scene Collection"
 ImportCollectionReplaceWarning.Text="The current scene data will be lost.  Are you sure you want to import?"
 
+CopyTo="Copy To"
+CopyTo.SceneNameExists="The scene '$1' already exists in the selected scene collection."
+CopyTo.GlobalSourcesExists="The global source '$1' already exists in the selected scene collection."
+CopyTo.Success.Text="The scene '$1' has been successfully copied to the selected scene collection."
+CopyTo.Success.Title="Success"
+CopyTo.CopyGlobalSourcesReferences="Do you want to also copy the global sources the references point to? If you choose No the references will be removed from the copied scene."
+CopyTo.CopyGlobalSourcesReferences.Title="Copy the Global Sources?"
+
 DeleteCollection="Remove scene collection"
 DeleteCollection.Text="Are you sure you want to remove the current scene collection?"
 
