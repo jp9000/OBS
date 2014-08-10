@@ -58,7 +58,7 @@ typedef IPCArray<mfxU8>                             ipc_pps_buff;
 typedef IPCSignalledType<spspps_size>               ipc_spspps_size;
 
 #define STOP_REQUEST                                L"stop"
-typedef IPCSignal                                   ipc_stop;
+typedef IPCSignal<true>                             ipc_stop;
 
 
 

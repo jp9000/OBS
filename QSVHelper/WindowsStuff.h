@@ -83,18 +83,20 @@ private:
     }
 };
 
+template <bool manual>
 struct IPCSignal
 {
     safe_handle signal_;
 
     bool is_signalled(DWORD timeout=0) { return WaitForSingleObject(signal_, timeout) == WAIT_OBJECT_0; }
     void signal() { SetEvent(signal_); }
+    void reset() { ResetEvent(signal_); }
 
     bool operator!() const { return !signal_; }
     
     IPCSignal &operator=(IPCSignal &&other) { signal_ = std::move(other.signal_); return *this; }
 
-    IPCSignal(std::wstring name) { signal_.reset(CreateEvent(nullptr, false, false, name.c_str())); }
+    IPCSignal(std::wstring name) { signal_.reset(CreateEvent(nullptr, manual, false, name.c_str())); }
     IPCSignal() {}
 };
 
@@ -161,7 +163,7 @@ struct IPCType
 };
 
 template <class T>
-struct IPCSignalledType : IPCType<T>, IPCSignal
+struct IPCSignalledType : IPCType<T>, IPCSignal<false>
 {
     bool operator!() const { return !memory || !signal_; }
 
@@ -198,7 +200,7 @@ struct IPCArray
 };
 
 template <class T>
-struct IPCSignalledArray : IPCArray<T>, IPCSignal
+struct IPCSignalledArray : IPCArray<T>, IPCSignal<false>
 {
     bool operator!() const { return !memory || !signal_; }
 
