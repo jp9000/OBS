@@ -55,6 +55,25 @@ Parameters::Parameters()
     zero(params);
 }
 
+Parameters::Parameters(const Parameters& o) : Parameters()
+{
+    *this = o;
+}
+
+Parameters &Parameters::operator =(const Parameters& o)
+{
+    params = o.params;
+    cospspps = o.cospspps;
+    vsi = o.vsi;
+
+    if (o.FindExt(o.cospspps))
+        AddExt(cospspps);
+    if (o.FindExt(o.vsi))
+        AddExt(vsi);
+
+    return *this;
+}
+
 void Parameters::Init(mfxU16 target_usage, mfxU16 profile, int fps, int keyframe_interval_frames, int bframes, int width, int height, int max_bitrate, int buffer_size, bool use_cbr)
 {
     params.mfx.CodecId = MFX_CODEC_AVC;
@@ -124,7 +143,7 @@ void Parameters::SetVideoSignalInfo(int full_range, int primaries, int transfer,
 
 void Parameters::UpdateExt()
 {
-    params.ExtParam = &ext_buffers.front();
+    params.ExtParam = const_cast<mfxExtBuffer**>(&ext_buffers.front());
     params.NumExtParam = ext_buffers.size();
 }
 
