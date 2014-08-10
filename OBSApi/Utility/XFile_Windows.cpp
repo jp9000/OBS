@@ -146,6 +146,9 @@ BOOL XFile::WriteAsUTF8(CTSTR lpBuffer, DWORD dwElements)
 
     if (!hFile) return false;
 
+    if (!lpBuffer[0])
+        return true;
+
     if(!dwElements)
         dwElements = slen(lpBuffer);
 
