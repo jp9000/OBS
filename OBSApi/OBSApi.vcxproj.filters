@@ -43,9 +43,6 @@
     <ClCompile Include="Utility\Profiler.cpp">
       <Filter>Utility\Source</Filter>
     </ClCompile>
-    <ClCompile Include="Utility\utf8.cpp">
-      <Filter>Utility\Source</Filter>
-    </ClCompile>
     <ClCompile Include="Utility\XConfig.cpp">
       <Filter>Utility\Source</Filter>
     </ClCompile>
@@ -66,6 +63,9 @@
     </ClCompile>
     <ClCompile Include="SettingsPane.cpp">
       <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Utility\utf8-windows.cpp">
+      <Filter>Utility\Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

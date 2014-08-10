@@ -189,20 +189,15 @@ BEGIN
     PUSHBUTTON      "Add",IDC_ADD,146,58,76,14
     PUSHBUTTON      "Rename",IDC_RENAME,224,58,76,14
     PUSHBUTTON      "Remove",IDC_REMOVE,302,58,70,14
-    LTEXT           "Settings.General.Restart",IDC_INFO,7,202,409,48,NOT WS_VISIBLE
+    LTEXT           "Settings.General.Restart",IDC_INFO,7,160,409,48,NOT WS_VISIBLE
     CONTROL         "Settings.General.Notification",IDC_NOTIFICATIONICON,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,122,264,10,WS_EX_RIGHT
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,80,264,10,WS_EX_RIGHT
     CONTROL         "Settings.General.NotificationMinimize",IDC_MINIZENOTIFICATION,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,133,264,10,WS_EX_RIGHT
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,91,264,10,WS_EX_RIGHT
     CONTROL         "Settings.General.EnableProjectorCursor",IDC_ENABLEPROJECTORCURSOR,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,154,264,10,WS_EX_RIGHT
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,112,264,10,WS_EX_RIGHT
     CONTROL         "Settings.General.ShowLogWindowOnLaunch",IDC_SHOWLOGWINDOWONLAUNCH,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,175,264,10,WS_EX_RIGHT
-    RTEXT           "Settings.General.SceneCollection", IDC_STATIC, 4, 85, 139, 8
-    COMBOBOX        IDC_SCENECOLLECTION,146,82,226,126,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Add",IDC_ADD2,146,98,76,14
-    PUSHBUTTON      "Rename",IDC_RENAME2,223,98,76,14
-    PUSHBUTTON      "Remove",IDC_REMOVE2,301,98,71,14
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,133,264,10,WS_EX_RIGHT
 END
 
 IDD_SETTINGS_AUDIO DIALOGEX 0, 0, 427, 336
@@ -1036,6 +1031,14 @@ BEGIN
     END
     POPUP "MainMenu.SceneCollection"
     BEGIN
+        MENUITEM "MainMenu.SceneCollection.New", ID_SCENECOLLECTION_NEW
+        MENUITEM "MainMenu.SceneCollection.Duplicate", ID_SCENECOLLECTION_CLONE
+        MENUITEM "MainMenu.SceneCollection.Rename", ID_SCENECOLLECTION_RENAME
+        MENUITEM "MainMenu.SceneCollection.Remove", ID_SCENECOLLECTION_REMOVE
+        MENUITEM SEPARATOR
+        MENUITEM "MainMenu.SceneCollection.Import", ID_SCENECOLLECTION_IMPORT
+        MENUITEM "MainMenu.SceneCollection.Export", ID_SCENECOLLECTION_EXPORT
+        MENUITEM SEPARATOR
         MENUITEM "nothing here",                ID_MAINMENU_NOTHINGHERE
     END
     POPUP "MainMenu.Help"

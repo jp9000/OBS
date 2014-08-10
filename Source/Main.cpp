@@ -185,7 +185,7 @@ void LogSystemStats()
 void InvertPre47Scenes()
 {
     String strScenesPath;
-    strScenesPath << lpAppDataPath << TEXT("\\sceneCollection\\scenes.xconfig");
+    strScenesPath << lpAppDataPath << TEXT("\\scenes.xconfig");
 
     XConfig scenesConfig;
     if(scenesConfig.Open(strScenesPath))
@@ -209,34 +209,24 @@ void InvertPre47Scenes()
     }
 }
 
+String FindSceneCollection(String scenecollection)
+{
+    String result = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, scenecollection.Array());
+    if (OSFileExists(result))
+        return result;
+
+    return String();
+}
+
 void SetupSceneCollection(CTSTR scenecollection)
 {
-    String oldSceneCollectionPath;
-    String newSceneCollectionPath;
-    oldSceneCollectionPath << lpAppDataPath << TEXT("\\scenes.xconfig");
-    newSceneCollectionPath << lpAppDataPath << TEXT("\\sceneCollection\\scenes.xconfig");
-
-    if (OSFileExists(oldSceneCollectionPath))
-    {
-        OSDeleteFile(newSceneCollectionPath);
-        MoveFile(oldSceneCollectionPath, newSceneCollectionPath);
-    }
-
     String strSceneCollection = scenecollection ? scenecollection : GlobalConfig->GetString(TEXT("General"), TEXT("SceneCollection"));
     String strXconfig;
 
     if (scenecollection)
         GlobalConfig->SetString(TEXT("General"), TEXT("SceneCollection"), scenecollection);
 
-    bool bFoundSceneCollection = false;
-
-    if (strSceneCollection.IsValid())
-    {
-        strXconfig << lpAppDataPath << TEXT("\\sceneCollection\\") << strSceneCollection << TEXT(".xconfig");
-        bFoundSceneCollection = OSFileExists(strXconfig) != 0;
-    }
-
-    if (!bFoundSceneCollection)
+    if (!strSceneCollection.IsValid() || FindSceneCollection(strSceneCollection).IsEmpty())
     {
         OSFindData ofd;
 
@@ -244,18 +234,23 @@ void SetupSceneCollection(CTSTR scenecollection)
         HANDLE hFind = OSFindFirstFile(strXconfig, ofd);
         if (hFind)
         {
-           do
-           {
-              if (ofd.bDirectory) continue;
+            do
+            {
+                if (ofd.bDirectory) continue;
 
                 strSceneCollection = GetPathWithoutExtension(ofd.fileName);
                 GlobalConfig->SetString(TEXT("General"), TEXT("SceneCollection"), strSceneCollection);
-                bFoundSceneCollection = true;
                 break;
 
-          } while (OSFindNextFile(hFind, ofd));
-
+            } while (OSFindNextFile(hFind, ofd));
             OSFindClose(hFind);
+        }
+
+        if (strSceneCollection.IsEmpty())
+        {
+            CopyFile(String() << lpAppDataPath << L"\\scenes.xconfig", String() << lpAppDataPath << L"\\sceneCollection\\scenes.xconfig", true);
+            strSceneCollection = L"scenes";
+            GlobalConfig->SetString(L"General", L"SceneCollection", strSceneCollection);
         }
     }
 }

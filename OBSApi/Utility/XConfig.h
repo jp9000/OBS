@@ -213,8 +213,8 @@ class BASE_EXPORT XConfig
     String strFileName;
 
     bool ReadFileData(XElement *curElement, int level, TSTR &lpFileData);
-    void WriteFileData(XFile &file, int indent, XElement *curElement);
-    void WriteFileItem(XFile &file, int indent, XBaseItem *curItem);
+    bool WriteFileData(XFile &file, int indent, XElement *curElement);
+    bool WriteFileItem(XFile &file, int indent, XBaseItem *curItem);
 
     static String ConvertToTextString(String &string);
     static String ProcessString(TSTR &lpTemp);
@@ -231,6 +231,7 @@ public:
     bool    ParseString(const String& config);
     void    Close(bool bSave=false);
     void    Save();
+    void    SaveTo(CTSTR lpPath);
 
     inline bool IsOpen() const {return RootElement != NULL;}
 

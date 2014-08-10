@@ -392,14 +392,26 @@
 #define ID_HELP_ANALYZE_CURRENT_LOG     40063
 #define ID_SETTINGS_SHOWCONSOLE         40066
 #define ID_SHOWLOG                      40067
-#define ID_RECORDINGSFOLDER              40068
+#define ID_RECORDINGSFOLDER             40068
+#define ID_MAINMENU_NEW                 40069
+#define ID_MAINMENU_CLONE               40070
+#define ID_MAINMENU_REMOVE              40071
+#define ID_SCENECOLLECTION_REMOVE       40072
+#define ID_SCENECOLLECTION_CLONE        40073
+#define ID_SCENECOLLECTION_NEW          40074
+#define ID_MAINMENU_RENAME              40075
+#define ID_SCENECOLLECTION_RENAME       40076
+#define ID_MAINMENU_MAINMENU40077       40077
+#define ID_MAINMENU_MAINMENU40078       40078
+#define ID_SCENECOLLECTION_IMPORT       40079
+#define ID_SCENECOLLECTION_EXPORT       40080
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        150
-#define _APS_NEXT_COMMAND_VALUE         40069
+#define _APS_NEXT_COMMAND_VALUE         40081
 #define _APS_NEXT_CONTROL_VALUE         1180
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

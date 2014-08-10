@@ -249,6 +249,7 @@ UINT InitializeSharedMemoryCPUCapture(UINT textureSize, DWORD *totalSize, Memory
 UINT InitializeSharedMemoryGPUCapture(SharedTexData **texData);
 void DestroySharedMemory();
 
+bool InitD3D8Capture();
 bool InitD3D9Capture();
 bool InitDXGICapture();
 bool InitGLCapture();

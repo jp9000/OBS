@@ -234,8 +234,18 @@ void SettingsAudio::RefreshDevices(AudioDeviceType desktopDeviceType)
     for(UINT i=0; i<storage.recordingDevices.devices.Num(); i++)
         SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)storage.recordingDevices.devices[i].strName.Array());
 
-    String strPlaybackID = AppConfig->GetString(TEXT("Audio"), TEXT("PlaybackDevice"), storage.playbackDevices.devices[0].strID);
-    String strDeviceID = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), storage.recordingDevices.devices[0].strID);
+    String strPlaybackID;
+    String strDeviceID;
+
+    if (storage.playbackDevices.devices.Num())
+        strPlaybackID = AppConfig->GetString(TEXT("Audio"), TEXT("PlaybackDevice"), storage.playbackDevices.devices[0].strID);
+    else
+        strPlaybackID = AppConfig->GetString(TEXT("Audio"), TEXT("PlaybackDevice"));
+
+    if (storage.recordingDevices.devices.Num())
+        strDeviceID = AppConfig->GetString(TEXT("Audio"), TEXT("Device"), storage.recordingDevices.devices[0].strID);
+    else
+        strDeviceID = AppConfig->GetString(TEXT("Audio"), TEXT("Device"));
 
     UINT iPlaybackDevice;
     for(iPlaybackDevice=0; iPlaybackDevice<storage.playbackDevices.devices.Num(); iPlaybackDevice++)
@@ -257,7 +267,7 @@ void SettingsAudio::RefreshDevices(AudioDeviceType desktopDeviceType)
         }
     }
 
-    if(iPlaybackDevice == storage.playbackDevices.devices.Num())
+    if (iPlaybackDevice && iPlaybackDevice == storage.playbackDevices.devices.Num())
     {
         AppConfig->SetString(TEXT("Audio"), TEXT("PlaybackDevice"), storage.playbackDevices.devices[0].strID);
         SendMessage(hwndPlayback, CB_SETCURSEL, 0, 0);
@@ -265,7 +275,7 @@ void SettingsAudio::RefreshDevices(AudioDeviceType desktopDeviceType)
         SetChangedSettings(true);
     }
 
-    if(iDevice == storage.recordingDevices.devices.Num())
+    if (iDevice && iDevice == storage.recordingDevices.devices.Num())
     {
         AppConfig->SetString(TEXT("Audio"), TEXT("Device"), storage.recordingDevices.devices[0].strID);
         SendMessage(hwndTemp, CB_SETCURSEL, 0, 0);

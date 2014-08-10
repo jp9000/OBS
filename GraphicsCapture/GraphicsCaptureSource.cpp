@@ -258,6 +258,12 @@ void GraphicsCaptureSource::EndCapture()
     if(hSignalExit)
         CloseHandle(hSignalExit);
 
+    if (hTargetProcess)
+    {
+        CloseHandle(hTargetProcess);
+        hTargetProcess = NULL;
+    }
+
     hSignalRestart = hSignalEnd = hSignalReady = hSignalExit = hOBSIsAlive = NULL;
 
     bErrorAcquiring = false;
@@ -286,8 +292,12 @@ void GraphicsCaptureSource::BeginScene()
         return;
 
     strWindowClass = data->GetString(TEXT("windowClass"));
-    if(strWindowClass.IsEmpty())
+    strExecutable = data->GetString(TEXT("executable"));
+    if (strWindowClass.IsEmpty() && strExecutable.IsEmpty())
+    {
+        Log(TEXT("GraphicsCaptureSource::BeginScene: No class or executable specified, what's happening?!"));
         return;
+    }
 
     bUseDWMCapture = (scmpi(strWindowClass, TEXT("Dwm")) == 0);
 
@@ -318,7 +328,8 @@ void GraphicsCaptureSource::BeginScene()
 
     drawShader = CreatePixelShaderFromFile(TEXT("shaders\\DrawTexture_ColorAdjust.pShader"));
 
-    AttemptCapture();
+    if (!bUseHotkey)
+        AttemptCapture();
 }
 
 BOOL GraphicsCaptureSource::CheckFileIntegrity(LPCTSTR strDLL)
@@ -350,20 +361,128 @@ BOOL GraphicsCaptureSource::CheckFileIntegrity(LPCTSTR strDLL)
     }
 }
 
-void GraphicsCaptureSource::AttemptCapture()
+HWND FindVisibleWindow(CTSTR lpClass, CTSTR lpTitle)
 {
-    //Log(TEXT("attempting to capture.."));
+    HWND hwndNext = nullptr;
+    HWND hwnd = nullptr;
 
-    if (!bUseHotkey)
-        hwndTarget = FindWindow(strWindowClass, NULL);
-    else
+    do
     {
-        hwndTarget = hwndNextTarget;
-        hwndNextTarget = NULL;
+        hwnd = FindWindowEx(NULL, hwndNext, lpClass, lpTitle);
+        if (hwnd && IsWindowVisible(hwnd))
+            break;
+
+        hwndNext = hwnd;
+    } while (hwnd != nullptr);
+
+    return hwnd;
+}
+
+struct FindWindowData
+{
+    String classname;
+    String exename;
+    HWND hwnd;
+    OPPROC pOpenProcess;
+};
+
+// This function is responsible for finding the window the user wanted to capture.
+// Possible improvements:
+//  * Allow matching on window title and possibly other criteria (foreground, visible, etc)
+//  * Allow user to specify which things to match on as a bitmask to match tricky programs
+
+BOOL CALLBACK GraphicsCaptureFindWindow(HWND hwnd, LPARAM lParam)
+{
+    TCHAR windowClass[256];
+    TCHAR windowExecutable[MAX_PATH];
+
+    windowClass[_countof(windowClass)-1] = windowExecutable[MAX_PATH-1] = 0;
+
+    FindWindowData *fwd = (FindWindowData *)lParam;
+
+    if (!IsWindowVisible(hwnd))
+        return TRUE;
+
+    if (GetClassName(hwnd, windowClass, _countof(windowClass) - 1) && !scmp(windowClass, fwd->classname))
+    {
+        //handle old sources which lack an exe name
+        if (fwd->exename.IsEmpty())
+            return TRUE;
+
+        DWORD processID;
+        GetWindowThreadProcessId(hwnd, &processID);
+
+        HANDLE hProc = fwd->pOpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID);
+        if (hProc)
+        {
+            DWORD wLen = _countof(windowExecutable) - 1;
+            if (QueryFullProcessImageName(hProc, 0, windowExecutable, &wLen))
+            {
+                TCHAR *p;
+                p = wcsrchr(windowExecutable, '\\');
+                if (p)
+                    p++;
+                else
+                    p = windowExecutable;
+
+                slwr(p);
+
+                if (!scmp(p, fwd->exename))
+                {
+                    CloseHandle(hProc);
+                    fwd->hwnd = hwnd;
+                    return FALSE;
+                }
+            }
+            else
+            {
+                RUNONCE Log(TEXT("OpenProcess worked but QueryFullProcessImageName returned %d for pid %d?"), GetLastError(), processID);
+            }
+
+            CloseHandle(hProc);
+        }
     }
 
+    return TRUE;
+}
+
+void GraphicsCaptureSource::AttemptCapture()
+{
+    OSDebugOut(TEXT("attempting to capture..\n"));
+
+    if (scmpi(strWindowClass, L"dwm") == 0)
+    {
+        hwndTarget = FindWindow(strWindowClass, NULL);
+    }
+    else
+    {
+        FindWindowData fwd;
+
+        //FIXME: duplicated code, but we need OpenProcess here
+        char pOPStr[12];
+        mcpy(pOPStr, "NpflUvhel{x", 12); //OpenProcess obfuscated
+        for (int i = 0; i<11; i++) pOPStr[i] ^= i ^ 1;
+
+        fwd.pOpenProcess = (OPPROC)GetProcAddress(GetModuleHandle(TEXT("KERNEL32")), pOPStr);
+        fwd.classname = strWindowClass;
+        fwd.exename = strExecutable;
+        fwd.hwnd = nullptr;
+
+        EnumWindows(GraphicsCaptureFindWindow, (LPARAM)&fwd);
+
+        hwndTarget = fwd.hwnd;
+    }
+    
+    // use foregroundwindow as fallback (should be NULL if not using hotkey capture)
+    if (!hwndTarget)
+        hwndTarget = hwndNextTarget;
+
+    hwndNextTarget = nullptr;
+    
+    OSDebugOut(L"Window: %s: ", strWindowClass.Array());
     if (hwndTarget)
     {
+        OSDebugOut(L"Valid window\n");
         targetThreadID = GetWindowThreadProcessId(hwndTarget, &targetProcessID);
         if (!targetThreadID || !targetProcessID)
         {
@@ -374,8 +493,12 @@ void GraphicsCaptureSource::AttemptCapture()
     }
     else
     {
+        OSDebugOut(L"Bad window\n");
         if (!bUseHotkey && !warningID)
+        {
+            //Log(TEXT("GraphicsCaptureSource::AttemptCapture: Window '%s' [%s] not found."), strWindowClass.Array(), strExecutable.Array());
             warningID = API->AddStreamInfo(Str("Sources.SoftwareCaptureSource.WindowNotFound"), StreamInfoPriority_High);
+        }
 
         bCapturing = false;
 
@@ -433,6 +556,8 @@ void GraphicsCaptureSource::AttemptCapture()
         hSignalRestart = OpenEvent(EVENT_ALL_ACCESS, FALSE, String() << RESTART_CAPTURE_EVENT << UINT(targetProcessID));
         if(hSignalRestart)
         {
+            OSDebugOut(L"Setting signal for process ID %u\n", targetProcessID);
+
             SetEvent(hSignalRestart);
             bCapturing = true;
             captureWaitCount = 0;
@@ -469,6 +594,7 @@ void GraphicsCaptureSource::AttemptCapture()
 
             if (!CheckFileIntegrity(strDLL.Array()))
             {
+                OSDebugOut(L"Error acquiring\n");
                 bErrorAcquiring = true;
             }
             else
@@ -479,6 +605,7 @@ void GraphicsCaptureSource::AttemptCapture()
                     if (InjectLibrary(hProcess, strDLL))
                     {
                         captureWaitCount = 0;
+                        OSDebugOut(L"Inject successful\n");
                         bCapturing = true;
                     }
                     else
@@ -559,8 +686,16 @@ void GraphicsCaptureSource::AttemptCapture()
             }
         }
 
+        //save a copy of the process handle which we injected into, this lets us check for process exit in Tick()
+        if (!hTargetProcess)
+        {
+            if (!DuplicateHandle(GetCurrentProcess(), hProcess, GetCurrentProcess(), &hTargetProcess, 0, FALSE, DUPLICATE_SAME_ACCESS))
+            {
+                Log(TEXT("Warning: Couldn't DuplicateHandle, %d"), GetLastError());
+            }
+        }
+
         CloseHandle(hProcess);
-        hProcess = NULL;
 
         if (!bCapturing)
         {
@@ -638,24 +773,23 @@ void GraphicsCaptureSource::Tick(float fSeconds)
         DWORD val = WaitForSingleObject(hSignalReady, 0);
         if (val == WAIT_OBJECT_0)
             NewCapture();
-        /*else if (val != WAIT_TIMEOUT)
-            Log(TEXT("what the heck?  val is 0x%08lX"), val);*/
+        else if (val != WAIT_TIMEOUT)
+            OSDebugOut(TEXT("what the heck?  val is 0x%08lX\n"), val);
     }
 
-    /*    static int floong = 0;
+    static int floong = 0;
 
-        if (floong++ == 30) {
-            Log(TEXT("valid, bCapturing = %s"), bCapturing ? TEXT("true") : TEXT("false"));
+    if (hSignalReady) {
+        if (floong++ == 60) {
+            OSDebugOut(TEXT("valid, bCapturing = %s\n"), bCapturing ? TEXT("true") : TEXT("false"));
             floong = 0;
         }
     } else {
-        static int floong = 0;
-
-        if (floong++ == 30) {
-            Log(TEXT("not valid, bCapturing = %s"), bCapturing ? TEXT("true") : TEXT("false"));
+        if (floong++ == 60) {
+            OSDebugOut(TEXT("not valid, bCapturing = %s\n"), bCapturing ? TEXT("true") : TEXT("false"));
             floong = 0;
         }
-    }*/
+    }
 
     if(bCapturing && !capture)
     {
@@ -671,6 +805,15 @@ void GraphicsCaptureSource::Tick(float fSeconds)
         if ((!bUseHotkey && captureCheckInterval >= 3.0f) ||
             (bUseHotkey && hwndNextTarget != NULL))
         {
+            if (bUseHotkey && hwndNextTarget)
+            {
+                strWindowClass.SetLength(255);
+                RealGetWindowClassW(hwndNextTarget, strWindowClass.Array(), 255);
+                strWindowClass.SetLength(slen(strWindowClass));
+
+                data->SetString(L"windowClass", strWindowClass);
+            }
+
             AttemptCapture();
             captureCheckInterval = 0.0f;
         }
@@ -679,6 +822,9 @@ void GraphicsCaptureSource::Tick(float fSeconds)
     {
         if(!IsWindow(hwndCapture) && !bUseDWMCapture) {
             Log(TEXT("Capture window 0x%08lX invalid or changing, terminating capture"), DWORD(hwndCapture));
+            EndCapture();
+        } else if (hTargetProcess && WaitForSingleObject(hTargetProcess, 0) == WAIT_OBJECT_0) {
+            Log(TEXT("Capture process %s exited, terminating capture"), strExecutable.Array());
             EndCapture();
         } else if (bUseHotkey && hwndNextTarget && hwndNextTarget != hwndTarget) {
             Log(TEXT("Capture hotkey triggered for new window, terminating capture"));

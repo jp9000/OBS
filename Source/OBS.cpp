@@ -20,6 +20,7 @@
 #include "Main.h"
 #include <intrin.h>
 
+void SetupSceneCollection(CTSTR scenecollection);
 
 //primarily main window stuff an initialization/destruction code
 
@@ -545,8 +546,38 @@ OBS::OBS()
 
     hwndTemp = GetDlgItem(hwndMain, ID_SCENES);
 
+    String collection = GetCurrentSceneCollection();
+
+    if (!OSFileExists(String() << lpAppDataPath << L"\\sceneCollection\\" << collection << L".xconfig"))
+        collection.Clear();
+
+    if (collection.IsEmpty())
+    {
+        OSFindData ofd;
+        HANDLE hFind = OSFindFirstFile(String() << lpAppDataPath << L"\\sceneCollection\\*.xconfig", ofd);
+        if (hFind)
+        {
+            do
+            {
+                if (!ofd.bDirectory)
+                {
+                    collection = GetPathWithoutExtension(ofd.fileName);
+                    break;
+                }
+            } while (OSFindNextFile(hFind, ofd));
+            OSFindClose(hFind);
+        }
+
+        if (collection.IsEmpty())
+        {
+            CopyFile(String() << lpAppDataPath << L"\\scenes.xconfig", String() << lpAppDataPath << L"\\sceneCollection\\scenes.xconfig", true);
+            collection = L"scenes";
+            GlobalConfig->SetString(L"General", L"SceneCollection", collection);
+        }
+    }
+
     String strScenesConfig;
-    strScenesConfig << lpAppDataPath << TEXT("\\sceneCollection\\") << GetCurrentSceneCollection() << TEXT(".xconfig");
+    strScenesConfig = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, collection.Array());
 
     if(!scenesConfig.Open(strScenesConfig))
         CrashError(TEXT("Could not open '%s'"), strScenesConfig.Array());
@@ -636,8 +667,6 @@ OBS::OBS()
 
     bAutoReconnect = AppConfig->GetInt(TEXT("Publish"), TEXT("AutoReconnect"), 1) != 0;
     reconnectTimeout = AppConfig->GetInt(TEXT("Publish"), TEXT("AutoReconnectTimeout"), 10);
-    if(reconnectTimeout < 0)
-        reconnectTimeout = 0;
 
     hHotkeyThread = OSCreateThread((XTHREAD)HotkeyThread, NULL);
 
@@ -764,6 +793,10 @@ OBS::OBS()
 
     renderFrameIn1To1Mode = !!GlobalConfig->GetInt(L"General", L"1to1Preview", false);
 
+    App->bAlwaysOnTop = !!GlobalConfig->GetInt(L"General", L"AlwaysOnTop");
+    CheckMenuItem(GetMenu(hwndMain), ID_ALWAYSONTOP, (App->bAlwaysOnTop) ? MF_CHECKED : MF_UNCHECKED);
+    SetWindowPos(hwndMain, (App->bAlwaysOnTop) ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+
     // make sure sources listview column widths are as expected after obs window is shown
 
     ListView_SetColumnWidth(hwndSources,0,LVSCW_AUTOSIZE_USEHEADER);
@@ -832,6 +865,7 @@ OBS::~OBS()
     GlobalConfig->SetInt(TEXT("General"), TEXT("LogSizeY"), rect.bottom - rect.top);
 
     GlobalConfig->SetInt(L"General", L"1to1Preview", renderFrameIn1To1Mode);
+    GlobalConfig->SetInt(L"General", L"AlwaysOnTop", App->bAlwaysOnTop);
     
     // Save control panel visibility
     GlobalConfig->SetInt(TEXT("General"), TEXT("PanelVisibleWindowed"), bPanelVisibleWindowed ? 1 : 0);
@@ -840,6 +874,7 @@ OBS::~OBS()
     // Save preview enabled/disabled state
     GlobalConfig->SetInt(TEXT("General"), TEXT("PreviewEnabled"), bRenderViewEnabled ? 1 : 0);
 
+    scenesConfig.SaveTo(String() << lpAppDataPath << "\\scenes.xconfig");
     scenesConfig.Close(true);
 
     for(UINT i=0; i<Icons.Num(); i++)
@@ -1351,8 +1386,8 @@ void OBS::ReloadSceneCollection()
     HWND hwndTemp;
     hwndTemp = GetDlgItem(hwndMain, ID_SCENES);
 
-    String strScenesConfig;
-    strScenesConfig << lpAppDataPath << TEXT("\\sceneCollection\\") << GetCurrentSceneCollection() << TEXT(".xconfig");
+    CTSTR collection = GetCurrentSceneCollection();
+    String strScenesConfig = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, collection);
 
     if (!scenesConfig.Open(strScenesConfig))
         CrashError(TEXT("Could not open '%s'"), strScenesConfig.Array());

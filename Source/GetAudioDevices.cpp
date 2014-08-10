@@ -35,7 +35,7 @@ void GetAudioDevices(AudioDeviceList &deviceList, AudioDeviceType deviceType, bo
     err = CoCreateInstance(CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void**)&mmEnumerator);
     if(FAILED(err))
     {
-        AppWarning(TEXT("GetAudioDevices: Could not create IMMDeviceEnumerator"));
+        AppWarning(TEXT("GetAudioDevices: Could not create IMMDeviceEnumerator: 0x%08lx"), err);
         return;
     }
 

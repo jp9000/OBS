@@ -242,6 +242,7 @@
     <ClCompile Include="D3D10.1Capture.cpp" />
     <ClCompile Include="D3D10Capture.cpp" />
     <ClCompile Include="D3D11Capture.cpp" />
+    <ClCompile Include="D3D8Capture.cpp" />
     <ClCompile Include="D3D9Capture.cpp" />
     <ClCompile Include="D3D9LogStuff.cpp" />
     <ClCompile Include="DDrawCapture.cpp" />
@@ -250,6 +251,9 @@
     <ClCompile Include="OpenGLCapture.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="d3d8.h" />
+    <ClInclude Include="d3d8caps.h" />
+    <ClInclude Include="d3d8types.h" />
     <ClInclude Include="DXGIStuff.h" />
     <ClInclude Include="..\GlobalCaptureStuff.h" />
     <ClInclude Include="GraphicsCaptureHook.h" />

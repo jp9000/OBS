@@ -33,6 +33,8 @@ int  resetCount = 1;
 bool bStopRequested = false;
 bool bCapturing = true;
 bool bTargetAcquired = false;
+bool bCaptureThreadStop = false;
+HANDLE hCaptureThread = NULL;
 
 HANDLE hFileMap = NULL;
 LPBYTE lpSharedMemory = NULL;
@@ -50,11 +52,15 @@ DWORD startTick;
 wstring strKeepAlive;
 LONGLONG keepAliveTime = 0;
 
+CRITICAL_SECTION d3d8EndMutex;
 CRITICAL_SECTION d3d9EndMutex;
 CRITICAL_SECTION glMutex;
+CRITICAL_SECTION ddrawMutex;
 
+void CheckD3D8Capture();
 void CheckD3D9Capture();
 void CheckGLCapture();
+void CheckDDrawCapture();
 
 
 string CurrentDateTimeString()
@@ -240,6 +246,7 @@ void DestroySharedMemory()
 }
 
 
+bool bD3D8Hooked = false;
 bool bD3D9Hooked = false;
 bool bDXGIHooked = false;
 bool bGLHooked = false;
@@ -276,13 +283,23 @@ inline bool AttemptToHookSomething()
     } else {
         CheckGLCapture();
     }
-    /*
+
     if(!bDirectDrawHooked && InitDDrawCapture())
     {
-        OutputDebugString(TEXT("DirectDraw Present\r\n"));
+        logOutput << CurrentTimeString() << "DirectDraw Present" << endl;
         bFoundSomethingToHook = true;
-        bDirectDrawfHooked = true;
-    }*/
+        bDirectDrawHooked = true;
+    }
+
+    if (!bD3D8Hooked && InitD3D8Capture())
+    {
+        logOutput << CurrentTimeString() << "D3D8 Present" << endl;
+        bFoundSomethingToHook = true;
+        bD3D8Hooked = true;
+    }
+    else {
+        CheckD3D8Capture();
+    }
 
     return bFoundSomethingToHook;
 }
@@ -394,8 +411,10 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
 
     logOutput << CurrentDateTimeString() << "we're booting up: " << endl;
 
+    InitializeCriticalSection(&d3d8EndMutex);
     InitializeCriticalSection(&d3d9EndMutex);
     InitializeCriticalSection(&glMutex);
+    InitializeCriticalSection(&ddrawMutex);
 
     DWORD procID = GetCurrentProcessId();
 
@@ -456,9 +475,9 @@ DWORD WINAPI CaptureThread(HANDLE hDllMainThread)
 
             logOutput << CurrentTimeString() << "(half life scientist) everything..  seems to be in order" << endl;
 
-            while (1) {
-                AttemptToHookSomething();
-                Sleep(4000);
+            for (size_t n = 0; !bCaptureThreadStop; ++n) {
+                if (n % 100 == 0) AttemptToHookSomething();
+                Sleep(40);
             }
 
             CloseHandle(textureMutexes[1]);
@@ -502,8 +521,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpBlah)
             CloseHandle(hDllMainThread);
             return FALSE;
         }
-
-        CloseHandle(hThread);
+        hCaptureThread = hThread;
+        //CloseHandle(hThread);
     }
     else if(dwReason == DLL_PROCESS_DETACH)
     {
@@ -512,6 +531,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpBlah)
         FreeD3D10Capture();
         FreeD3D101Capture();
         FreeD3D11Capture();*/
+
+        bCaptureThreadStop = true;
+        WaitForSingleObject(hCaptureThread, 300);
 
         if(hSignalRestart)
             CloseHandle(hSignalRestart);

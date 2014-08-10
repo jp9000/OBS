@@ -24,6 +24,8 @@
 #include <propsys.h>
 #include <Functiondiscoverykeys_devpkey.h>
 
+void StartBlankSoundPlayback(CTSTR lpDevice);
+void StopBlankSoundPlayback();
 
 class MMDeviceAudioSource : public AudioSource
 {
@@ -39,6 +41,7 @@ class MMDeviceAudioSource : public AudioSource
 
     bool deviceLost;
     QWORD reinitTimer;
+    //QWORD fakeAudioTimer;
 
     //UINT32 numFramesRead;
 
@@ -95,6 +98,7 @@ public:
         Log(L"User purposely reset the device '%s'.  Did it go out, or were there audio issues that made the user want to do this?", GetDeviceName());
         deviceLost = true;
         reinitTimer = GetQPCTimeMS();
+        //fakeAudioTimer = GetQPCTimeMS();
         FreeData();
     }
 
@@ -111,6 +115,62 @@ AudioSource* CreateAudioSource(bool bMic, CTSTR lpID)
     {
         delete source;
         return NULL;
+    }
+}
+
+const static TCHAR *IAudioHRESULTToString(HRESULT hr)
+{
+    __declspec(thread) static TCHAR hResultCode[16];
+
+    switch (hr)
+    {
+    case AUDCLNT_E_SERVICE_NOT_RUNNING:
+        return TEXT("AUDCLNT_E_SERVICE_NOT_RUNNING");
+    case AUDCLNT_E_ALREADY_INITIALIZED:
+        return TEXT("AUDCLNT_E_ALREADY_INITIALIZED");
+    case AUDCLNT_E_WRONG_ENDPOINT_TYPE:
+        return TEXT("AUDCLNT_E_WRONG_ENDPOINT_TYPE");
+    case AUDCLNT_E_BUFFER_SIZE_NOT_ALIGNED:
+        return TEXT("AUDCLNT_E_BUFFER_SIZE_NOT_ALIGNED");
+    case AUDCLNT_E_BUFFER_SIZE_ERROR:
+        return TEXT("AUDCLNT_E_BUFFER_SIZE_ERROR");
+    case AUDCLNT_E_CPUUSAGE_EXCEEDED:
+        return TEXT("AUDCLNT_E_CPUUSAGE_EXCEEDED");
+    case AUDCLNT_E_DEVICE_INVALIDATED:
+        return TEXT("AUDCLNT_E_DEVICE_INVALIDATED");
+    case AUDCLNT_E_DEVICE_IN_USE:
+        return TEXT("AUDCLNT_E_DEVICE_IN_USE");
+    case AUDCLNT_E_ENDPOINT_CREATE_FAILED:
+        return TEXT("AUDCLNT_E_ENDPOINT_CREATE_FAILED");
+    case AUDCLNT_E_INVALID_DEVICE_PERIOD:
+        return TEXT("AUDCLNT_E_INVALID_DEVICE_PERIOD");
+    case AUDCLNT_E_UNSUPPORTED_FORMAT:
+        return TEXT("AUDCLNT_E_UNSUPPORTED_FORMAT");
+    case AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED:
+        return TEXT("AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED");
+    case AUDCLNT_E_BUFDURATION_PERIOD_NOT_EQUAL:
+        return TEXT("AUDCLNT_E_BUFDURATION_PERIOD_NOT_EQUAL");
+    case AUDCLNT_E_NOT_INITIALIZED:
+        return TEXT("AUDCLNT_E_NOT_INITIALIZED");
+    case AUDCLNT_E_NOT_STOPPED:
+        return TEXT("AUDCLNT_E_NOT_STOPPED");
+    case AUDCLNT_E_EVENTHANDLE_NOT_SET:
+        return TEXT("AUDCLNT_E_EVENTHANDLE_NOT_SET");
+    case AUDCLNT_E_BUFFER_OPERATION_PENDING:
+        return TEXT("AUDCLNT_E_BUFFER_OPERATION_PENDING");
+
+    case E_POINTER:
+        return TEXT("E_POINTER");
+    case E_INVALIDARG:
+        return TEXT("E_INVALIDARG");
+    case E_OUTOFMEMORY:
+        return TEXT("E_OUTOFMEMORY");
+    case E_NOINTERFACE:
+        return TEXT("E_NOINTERFACE");
+
+    default:
+        tsprintf_s(hResultCode, sizeof(hResultCode), TEXT("%08lX"), hr);
+        return hResultCode;
     }
 }
 
@@ -136,14 +196,14 @@ bool MMDeviceAudioSource::Reinitialize()
 
     if(FAILED(err))
     {
-        if (!deviceLost) AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IMMDevice = %08lX"), (BOOL)bIsMic, err);
+        if (!deviceLost) AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IMMDevice = %s"), (BOOL)bIsMic, IAudioHRESULTToString(err));
         return false;
     }
 
     err = mmDevice->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&mmClient);
     if(FAILED(err))
     {
-        if (!deviceLost) AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IAudioClient = %08lX"), (BOOL)bIsMic, err);
+        if (!deviceLost) AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IAudioClient = %s"), (BOOL)bIsMic, IAudioHRESULTToString(err));
         return false;
     }
 
@@ -197,7 +257,7 @@ bool MMDeviceAudioSource::Reinitialize()
     err = mmClient->GetMixFormat(&pwfx);
     if(FAILED(err))
     {
-        if (!deviceLost) AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not get mix format from audio client = %08lX"), (BOOL)bIsMic, err);
+        if (!deviceLost) AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not get mix format from audio client = %s"), (BOOL)bIsMic, IAudioHRESULTToString(err));
         return false;
     }
 
@@ -243,7 +303,13 @@ bool MMDeviceAudioSource::Reinitialize()
 
     if(FAILED(err))
     {
-        if (!deviceLost) AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not initialize audio client, result = %08lX"), (BOOL)bIsMic, err);
+        if (!deviceLost)
+        {
+            //ugly hack to show razer kraken users some kind of meaningful message rather than a cryptic hresult
+            if (err == 0x88890008 && sstr(GetDeviceName(), TEXT("Razer Kraken")))
+                OBSMessageBox(hwndMain, FormattedString(TEXT("Unable to initialize device %s\r\n\r\nThe Kraken Launcher is incompatible with OBS. Please disable it (run msconfig and disable it from startup) or use the 64 bit version of OBS to work around this issue."), GetDeviceName()).Array(), NULL, MB_ICONEXCLAMATION);
+            AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not initialize audio client, result = %s"), (BOOL)bIsMic, IAudioHRESULTToString(err));
+        }
         CoTaskMemFree(pwfx);
         return false;
     }
@@ -254,7 +320,7 @@ bool MMDeviceAudioSource::Reinitialize()
     err = mmClient->GetService(IID_IAudioCaptureClient, (void**)&mmCapture);
     if(FAILED(err))
     {
-        if (!deviceLost) AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not get audio capture client, result = %08lX"), (BOOL)bIsMic, err);
+        if (!deviceLost) AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not get audio capture client, result = %s"), (BOOL)bIsMic, IAudioHRESULTToString(err));
         CoTaskMemFree(pwfx);
         return false;
     }
@@ -262,12 +328,18 @@ bool MMDeviceAudioSource::Reinitialize()
     err = mmClient->GetService(__uuidof(IAudioClock), (void**)&mmClock);
     if(FAILED(err))
     {
-        if (!deviceLost) AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not get audio capture clock, result = %08lX"), (BOOL)bIsMic, err);
+        if (!deviceLost) AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not get audio capture clock, result = %s"), (BOOL)bIsMic, IAudioHRESULTToString(err));
         CoTaskMemFree(pwfx);
         return false;
     }
 
     CoTaskMemFree(pwfx);
+
+    if (!useInputDevice && !bIsMic)
+    {
+        StopBlankSoundPlayback();
+        StartBlankSoundPlayback(deviceId);
+    }
 
     //-----------------------------------------------------------------
 
@@ -289,7 +361,7 @@ bool MMDeviceAudioSource::Initialize(bool bMic, CTSTR lpID)
     HRESULT err = CoCreateInstance(CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void**)&mmEnumerator);
     if(FAILED(err))
     {
-        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IMMDeviceEnumerator = %08lX"), (BOOL)bIsMic, err);
+        AppWarning(TEXT("MMDeviceAudioSource::Initialize(%d): Could not create IMMDeviceEnumerator = %s"), (BOOL)bIsMic, IAudioHRESULTToString(err));
         return false;
     }
 
@@ -393,6 +465,32 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
             reinitTimer = timeVal;
         }
 
+        /*
+        //the desktop device disappeared, this is bad! fake it by feeding blank samples back
+        //or everything stops working :(
+
+        //FIXME: reduce the rate at which fake audio is delivered or we overwhelm the resampler.
+        //how to determine how often we should do this? and does it affect sync if we supply too
+        //too little / too much audio?
+        if (!bIsMic && (timeVal - fakeAudioTimer) >= 10)
+        {
+            UINT newInputBufferSize = inputBufferSize + sampleWindowSize*GetChannelCount();
+            if (newInputBufferSize > inputBuffer.Num())
+                inputBuffer.SetSize(newInputBufferSize);
+
+            mset(inputBuffer.Array() + inputBufferSize, 0, sampleWindowSize*GetChannelCount()*sizeof(float));
+            inputBufferSize = newInputBufferSize;
+
+            *timestamp = GetQPCTimeMS();
+            *numFrames = sampleWindowSize;
+            *buffer = (void*)inputBuffer.Array();
+
+            fakeAudioTimer = timeVal;
+
+            return true;
+        }
+        */
+
         return false;
     }
 
@@ -414,10 +512,11 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
                 deviceLost = true;
                 Log(L"Audio device '%s' has been lost, attempting to reinitialize", strDeviceName.Array());
                 reinitTimer = GetQPCTimeMS();
+                //fakeAudioTimer = GetQPCTimeMS();
                 return false;
             }
 
-            RUNONCE AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: GetNextPacketSize failed, result = %08lX"), hRes);
+            RUNONCE AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: GetNextPacketSize failed, result = %s"), IAudioHRESULTToString(hRes));
             return false;
         }
 
@@ -429,7 +528,7 @@ bool MMDeviceAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *t
         hRes = mmCapture->GetBuffer(&captureBuffer, &numFramesRead, &dwFlags, &devPosition, &qpcTimestamp);
 
         if (FAILED(hRes)) {
-            RUNONCE AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: GetBuffer failed, result = %08lX"), hRes);
+            RUNONCE AppWarning(TEXT("MMDeviceAudioSource::GetBuffer: GetBuffer failed, result = %s"), IAudioHRESULTToString(hRes));
             return false;
         }
 

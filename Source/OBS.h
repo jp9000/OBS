@@ -549,6 +549,12 @@ void ResetWASAPIAudioDevice(AudioSource *source);
 
 struct FrameProcessInfo;
 
+enum class SceneCollectionAction {
+    Add,
+    Rename,
+    Clone
+};
+
 //todo: this class has become way too big, it's horrible, and I should be ashamed of myself
 class OBS
 {
@@ -762,6 +768,8 @@ private:
     bool bRecievedFirstAudioFrame, bSentHeaders, bFirstAudioPacket;
 
     DWORD lastAudioTimestamp;
+
+    UINT audioWarningId;
 
     QWORD firstSceneTimestamp;
     QWORD latestVideoTime;
@@ -1004,6 +1012,11 @@ private:
     static void ResetLogUploadMenu();
     static void DisableMenusWhileStreaming(bool disable);
 
+    static INT_PTR CALLBACK EnterSceneCollectionDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+    void AddSceneCollection(SceneCollectionAction action);
+    void RemoveSceneCollection();
+    void ImportSceneCollection();
+    void ExportSceneCollection();
     static void ResetSceneCollectionMenu();
     static void AddSceneCollectionToMenu(HMENU menu);
     void ReloadSceneCollection();

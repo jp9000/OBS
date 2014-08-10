@@ -316,6 +316,11 @@ BOOL   STDCALL OSCopyFile(CTSTR lpFileDest, CTSTR lpFileSrc)
     return CopyFile(lpFileSrc, lpFileDest, TRUE);
 }
 
+BOOL   STDCALL OSRenameFile(CTSTR oldPath, CTSTR newPath)
+{
+    return MoveFileEx(oldPath, newPath, MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED);
+}
+
 BOOL   STDCALL OSCreateDirectory(CTSTR lpDirectory)
 {
     return CreateDirectory(lpDirectory, NULL);
@@ -421,6 +426,10 @@ void __cdecl OSDebugOutva(const TCHAR *format, va_list argptr)
 {
     /*TCHAR blah[4096];
     vtsprintf_s(blah, 4095, format, argptr);*/
+
+#ifndef _DEBUG
+    return;
+#endif
 
     String strDebug = FormattedStringva(format, argptr);
 

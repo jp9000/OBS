@@ -412,15 +412,15 @@ void OBS::EncodeLoop()
 
             ProcessFrame(frameInfo);
 
-            if (bShutdownEncodeThread)
-                bufferedFrames = videoEncoder->HasBufferedFrames();
-
             lastPic = frameInfo.pic;
 
             profileOut;
 
             numTotalFrames++;
         }
+
+        if (bShutdownEncodeThread)
+            bufferedFrames = videoEncoder->HasBufferedFrames();
     }
 
     //flush all video frames in the "scene buffering time" buffer
@@ -428,16 +428,19 @@ void OBS::EncodeLoop()
     {
         QWORD startTime = GetQPCTimeMS();
         DWORD baseTimestamp = bufferedVideo[0].timestamp;
+        DWORD lastTimestamp = bufferedVideo.Last().timestamp;
 
         for(UINT i=0; i<bufferedVideo.Num(); i++)
         {
             //we measure our own time rather than sleep between frames due to potential sleep drift
             QWORD curTime;
-            do
+
+            curTime = GetQPCTimeMS();
+            while (curTime - startTime < bufferedVideo[i].timestamp - baseTimestamp)
             {
-                curTime = GetQPCTimeMS();
                 OSSleep (1);
-            } while (curTime - startTime < bufferedVideo[i].timestamp - baseTimestamp);
+                curTime = GetQPCTimeMS();
+            }
 
             SendFrame(bufferedVideo[i], firstFrameTimestamp);
             bufferedVideo[i].Clear();
