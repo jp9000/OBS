@@ -34,18 +34,71 @@
 #include "WindowsStuff.h"
 
 namespace {
+
+    enum qsv_cpu_platform
+    {
+        QSV_CPU_PLATFORM_UNKNOWN,
+        QSV_CPU_PLATFORM_SNB = 1 << 0,
+        QSV_CPU_PLATFORM_IVB = 1 << 1,
+        QSV_CPU_PLATFORM_HSW = 1 << 2,
+    };
+
+    qsv_cpu_platform qsv_get_cpu_platform()
+    {
+        using std::string;
+
+        int cpuInfo[4];
+        __cpuid(cpuInfo, 0);
+
+        string vendor;
+        vendor += string((char*)&cpuInfo[1], 4);
+        vendor += string((char*)&cpuInfo[3], 4);
+        vendor += string((char*)&cpuInfo[2], 4);
+
+        if (vendor != "GenuineIntel")
+            return QSV_CPU_PLATFORM_UNKNOWN;
+
+        __cpuid(cpuInfo, 1);
+        BYTE model = ((cpuInfo[0] >> 4) & 0xF) + ((cpuInfo[0] >> 12) & 0xF0);
+        BYTE family = ((cpuInfo[0] >> 8) & 0xF) + ((cpuInfo[0] >> 20) & 0xFF);
+
+        // See Intel 64 and IA-32 Architectures Software Developer's Manual, Vol 3C Table 35-1
+        if (family != 6)
+            return QSV_CPU_PLATFORM_UNKNOWN;
+
+        switch (model)
+        {
+        case 0x2a:
+        case 0x2d:
+            return QSV_CPU_PLATFORM_SNB;
+
+        case 0x3a:
+        case 0x3e:
+            return QSV_CPU_PLATFORM_IVB;
+
+        case 0x3c:
+        case 0x45:
+        case 0x46:
+            return QSV_CPU_PLATFORM_HSW;
+        }
+
+        return QSV_CPU_PLATFORM_UNKNOWN;
+    }
+
     const struct impl_parameters
     {
         mfxIMPL type,
                 intf;
         mfxVersion version;
+        int platforms;
     } valid_impl[] = {
-        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D11, {6, 1} },
-        { MFX_IMPL_HARDWARE,        MFX_IMPL_VIA_D3D11, {6, 1} },
-        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {6, 1} }, //Ivy Bridge+ with non-functional D3D11 support?
-        { MFX_IMPL_HARDWARE,        MFX_IMPL_VIA_D3D9,  {6, 1} },
-        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {4, 1} }, //Sandy Bridge
-        { MFX_IMPL_HARDWARE,        MFX_IMPL_VIA_D3D9,  {4, 1} },
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D11, {8, 1},  QSV_CPU_PLATFORM_IVB | QSV_CPU_PLATFORM_HSW },
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {8, 1},  QSV_CPU_PLATFORM_IVB | QSV_CPU_PLATFORM_HSW }, //Ivy Bridge+ with non-functional D3D11 support?
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D11, {7, 1},  QSV_CPU_PLATFORM_IVB | QSV_CPU_PLATFORM_HSW },
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {7, 1},  QSV_CPU_PLATFORM_IVB | QSV_CPU_PLATFORM_HSW }, //Ivy Bridge+ with non-functional D3D11 support?
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D11, {6, 1},  QSV_CPU_PLATFORM_IVB | QSV_CPU_PLATFORM_HSW },
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {6, 1},  QSV_CPU_PLATFORM_IVB | QSV_CPU_PLATFORM_HSW }, //Ivy Bridge+ with non-functional D3D11 support?
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {4, 1},  QSV_CPU_PLATFORM_IVB | QSV_CPU_PLATFORM_HSW | QSV_CPU_PLATFORM_SNB }, //Sandy Bridge
     };
 
     std::wofstream log_file;
@@ -112,8 +165,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
     if(init_req->mode == init_req->MODE_QUERY)
     {
         MFXVideoSession session;
+        int platform = qsv_get_cpu_platform();
         for(auto impl = begin(valid_impl); impl != std::end(valid_impl); impl++)
         {
+            if (platform != QSV_CPU_PLATFORM_UNKNOWN && !(impl->platforms & platform))
+                continue;
+
             auto ver = impl->version;
             auto result = session.Init(impl->intf | impl->type, &ver);
             if(result == MFX_ERR_NONE)
@@ -151,8 +208,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
     {
         init_res->using_custom_impl = false;
         decltype(&valid_impl[0]) best = nullptr;
+        int platform = qsv_get_cpu_platform();
         for(auto &impl : valid_impl)
         {
+            if (platform != QSV_CPU_PLATFORM_UNKNOWN  && !(impl.platforms & platform))
+                continue;
+
             auto result = encoder.InitializeMFX(impl);
             if(result == MFX_WRN_PARTIAL_ACCELERATION && !best)
                 best = &impl;
