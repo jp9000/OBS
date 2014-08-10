@@ -183,13 +183,25 @@ void ConfigFile::Close()
 BOOL ConfigFile::SaveAs(CTSTR lpPath)
 {
     XFile newFile;
-    if(!newFile.Open(lpPath, XFILE_WRITE, XFILE_CREATEALWAYS))
-        return FALSE;
+    
+    String tmpPath = lpPath;
+    tmpPath.AppendString(TEXT(".tmp"));
 
-    strFileName = lpPath;
-    newFile.Write("\xEF\xBB\xBF", 3);
-    newFile.WriteAsUTF8(lpFileData);
-    return TRUE;
+    if (newFile.Open(tmpPath, XFILE_WRITE, XFILE_CREATEALWAYS))
+    {
+        if (newFile.Write("\xEF\xBB\xBF", 3) != 3)
+            return FALSE;
+        if (!newFile.WriteAsUTF8(lpFileData))
+            return FALSE;
+
+        newFile.Close();
+        OSRenameFile(tmpPath, lpPath);
+
+        strFileName = lpPath;
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
 void ConfigFile::SetFilePath(CTSTR lpPath)
@@ -818,13 +830,30 @@ void  ConfigFile::SetKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
             if((scmpi_n(lpTemp, lpKey, dwKeyNameSize) == 0) && (lpTemp[dwKeyNameSize] == '='))
             {
                 lpTemp = &lpTemp[dwKeyNameSize+1];
+
+                if ((*lpTemp == '\r' && *newvalue == '\0') || !scmpi_n(lpTemp, newvalue, slen(newvalue)))
+                    return;
+
                 TSTR lpNextLine = schr(lpTemp, '\r');
-                XFile file(strFileName, XFILE_WRITE, XFILE_CREATEALWAYS);
-                file.Write("\xEF\xBB\xBF", 3);
-                file.WriteAsUTF8(&lpFileData[2], DWORD(lpTemp-lpFileData-2));
-                file.WriteAsUTF8(newvalue, slen(newvalue));
-                file.WriteAsUTF8(lpNextLine, slen(lpNextLine)-2);
-                file.Close();
+
+                String tmpFileName = strFileName;
+                tmpFileName += TEXT(".tmp");
+
+                XFile file;
+                if (file.Open(tmpFileName, XFILE_WRITE, XFILE_CREATEALWAYS))
+                {
+                    if (file.Write("\xEF\xBB\xBF", 3) != 3)
+                        return;
+                    if (!file.WriteAsUTF8(&lpFileData[2], DWORD(lpTemp - lpFileData - 2)))
+                        return;
+                    if (!file.WriteAsUTF8(newvalue, slen(newvalue)))
+                        return;
+                    if (!file.WriteAsUTF8(lpNextLine, slen(lpNextLine) - 2))
+                        return;
+
+                    file.Close();
+                    OSRenameFile(tmpFileName, strFileName);
+                }
 
                 if(LoadFile(XFILE_OPENEXISTING))
                     LoadData();
