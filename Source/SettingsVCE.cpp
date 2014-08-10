@@ -97,7 +97,7 @@ void SettingsVCE::ApplySettings()
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("DisSATD"), bBool);
 
     bBool = SendMessage(GetDlgItem(hwnd, IDC_VCE_IME_OVERW), BM_GETCHECK, 0, 0) == BST_CHECKED;
-    AppConfig->SetInt(TEXT("VCE Settings"), TEXT("IMEOverwite"), bBool);
+    AppConfig->SetInt(TEXT("VCE Settings"), TEXT("IMEOverwrite"), bBool);
 
     bBool = SendMessage(GetDlgItem(hwnd, IDC_VCE_LOWLATENCY), BM_GETCHECK, 0, 0) == BST_CHECKED;
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("LowLatency"), bBool);
@@ -156,6 +156,10 @@ void SettingsVCE::ApplySettings()
     iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_REFS)).ToInt();
     iInt = checkRange(iInt, 1, 16, 3);
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("NumRefs"), iInt);
+
+    iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_DEVIDX)).ToInt();
+    iInt = checkRange(iInt, 0, 255, 0);
+    AppConfig->SetInt(TEXT("VCE Settings"), TEXT("DevIndex"), iInt);
 
 }
 
@@ -263,6 +267,10 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
             SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
             LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_REFS), TEXT("VCE Settings"), TEXT("NumRefs"), 3);
+            LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_DEVIDX), TEXT("VCE Settings"), TEXT("DevIndex"), 0);
+            int devIdx = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("DevIndex"), 0);
+            SendMessage(GetDlgItem(hwnd, IDC_VCE_DEVSPIN), UDM_SETRANGE32, 0, 255);
+            SendMessage(GetDlgItem(hwnd, IDC_VCE_DEVSPIN), UDM_SETPOS32, 0, devIdx);
 
             iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("MEHalf"), 1);
             SendMessage(GetDlgItem(hwnd, IDC_VCE_ME_HALF), BM_SETCHECK, iInt, 0);
@@ -291,7 +299,7 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
             iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("LowLatency"), 0);
             SendMessage(GetDlgItem(hwnd, IDC_VCE_LOWLATENCY), BM_SETCHECK, iInt, 0);
 
-            iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("IMEOverwite"), iInt);
+            iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("IMEOverwrite"), iInt);
             SendMessage(GetDlgItem(hwnd, IDC_VCE_IME_OVERW), BM_SETCHECK, iInt, 0);
 
             LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_IME_SUBM), TEXT("VCE Settings"), TEXT("IMEDisSubmNo"), 0);
@@ -364,6 +372,29 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 SetChangedSettings(true);
             }
             break;
+        }
+        case WM_NOTIFY:
+        {
+            bool bDataChanged = false;
+            UINT nCode;
+            nCode = ((LPNMHDR)lParam)->code;
+            switch (nCode)
+            {
+            case UDN_DELTAPOS:
+                LPNMUPDOWN lpnmud;
+                lpnmud = (LPNMUPDOWN)lParam;
+                if (lpnmud->iPos + lpnmud->iDelta < 0)
+                    break;
+                SendMessage(GetDlgItem(hwnd, IDC_VCE_DEVIDX), WM_SETTEXT, 0, 
+                    (LPARAM)IntString(lpnmud->iPos + lpnmud->iDelta).Array());
+                bDataChanged = true;
+                break;
+            }
+            if (bDataChanged)
+            {
+                ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
+                SetChangedSettings(true);
+            }
         }
     }
     return FALSE;

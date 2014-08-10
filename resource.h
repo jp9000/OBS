@@ -233,6 +233,7 @@
 #define IDC_CLEARMUTEDESKTOP            1090
 #define IDC_LIST1                       1090
 #define IDC_BITMAPS                     1090
+#define IDC_VCE_DEVIDX                  1090
 #define IDC_STOPSTREAMHOTKEY            1093
 #define IDC_CLEARHOTKEY                 1094
 #define IDC_STOPSTREAMHOTKEY_STATIC     1095
@@ -340,10 +341,11 @@
 #define IDC_ENCODERQSV                  1176
 #define IDC_X264PRESET_LABEL            1176
 #define IDC_ENCODERNVENC                1177
-#define IDC_SCENECOLLECTION             1178
 #define IDC_VCE_LSM                     1177
+#define IDC_SCENECOLLECTION             1178
 #define IDC_ENCODERVCE                  1178
 #define IDC_VCE_QVSS                    1178
+#define IDC_VCE_DEVSPIN                 1182
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -412,7 +414,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        150
 #define _APS_NEXT_COMMAND_VALUE         40081
-#define _APS_NEXT_CONTROL_VALUE         1180
+#define _APS_NEXT_CONTROL_VALUE         1183
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

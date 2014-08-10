@@ -267,6 +267,7 @@ Settings.Encoding.VCE.Pred="Disable Frame Prediction"
 Settings.Encoding.VCE.PredTooltip="Decimal value of 'disabled' bits. Use calculator in programmer/binary mode\nand see below for what bit disables what."
 Settings.Encoding.VCE.PredBits1="0: 4x4 prediction modes only\n1: Disable 4x4 Vertical Prediction\n2: Disable 4x4 Horizontal Prediction\n3: Disable 4x4 Diag Down Left Prediction\n4: Disable 4x4 Diag Down Right Prediction\n5: Disable 4x4 Vertical Right Prediction\n6: Disable 4x4 Horizontal Down Prediction\n7: Disable 4x4 Vertical Left Prediction\n8: Disable 4x4 Horizontal Up Prediction\n9: unused"
 Settings.Encoding.VCE.PredBits2="10: 16x16 Prediction Modes Only\n11: Disable Vertical Prediction Mode\n12: Disable Horizontal Prediction Mode\n13: Disable Plane Prediction Mode Disable\n14: unused\n15: unused\n16: Disable 4x4 Chroma Vertical Prediction\n17: Disable 4x4 Chroma Horizontal Prediction\n18: Disable 4x4 Chroma Plane Prediction"
+Settings.Encoding.VCE.DevIdx="Device index"
 
 Settings.General.Add="Add New"
 Settings.General.ConfirmDelete="Are you sure you wish to remove the profile '$1'?"
