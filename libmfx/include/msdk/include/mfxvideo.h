@@ -1,6 +1,6 @@
 /* ****************************************************************************** *\
 
-Copyright (C) 2007-2013 Intel Corporation.  All rights reserved.
+Copyright (C) 2007-2014 Intel Corporation.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,19 +29,11 @@ File Name: mfxvideo.h
 \* ****************************************************************************** */
 #ifndef __MFXVIDEO_H__
 #define __MFXVIDEO_H__
-#include "mfxstructures.h"
+#include "mfxsession.h"
+#include "mfxvstructures.h"
 
-/* This is the external include file for the Intel(R) Media Software Development Kit product */
 #define MFX_VERSION_MAJOR 1
-#define MFX_VERSION_MINOR 7
-
-#ifdef _WIN32
-    #define MFX_CDECL __cdecl
-    #define MFX_STDCALL __stdcall
-#else
-    #define MFX_CDECL
-    #define MFX_STDCALL
-#endif /* _WIN32 */
+#define MFX_VERSION_MINOR 9
 
 #ifdef __cplusplus
 extern "C"
@@ -69,27 +61,11 @@ typedef struct {
     mfxStatus  (MFX_CDECL  *Free)     (mfxHDL pthis, mfxFrameAllocResponse *response);
 } mfxFrameAllocator;
 
-/* Global Functions */
-typedef struct _mfxSession *mfxSession;
-mfxStatus MFX_CDECL MFXInit(mfxIMPL impl, mfxVersion *ver, mfxSession *session);
-mfxStatus MFX_CDECL MFXClose(mfxSession session);
-
-mfxStatus MFX_CDECL MFXQueryIMPL(mfxSession session, mfxIMPL *impl);
-mfxStatus MFX_CDECL MFXQueryVersion(mfxSession session, mfxVersion *version);
-
-mfxStatus MFX_CDECL MFXJoinSession(mfxSession session, mfxSession child);
-mfxStatus MFX_CDECL MFXDisjoinSession(mfxSession session);
-mfxStatus MFX_CDECL MFXCloneSession(mfxSession session, mfxSession *clone);
-mfxStatus MFX_CDECL MFXSetPriority(mfxSession session, mfxPriority priority);
-mfxStatus MFX_CDECL MFXGetPriority(mfxSession session, mfxPriority *priority);
-
 /* VideoCORE */
 mfxStatus MFX_CDECL MFXVideoCORE_SetBufferAllocator(mfxSession session, mfxBufferAllocator *allocator);
 mfxStatus MFX_CDECL MFXVideoCORE_SetFrameAllocator(mfxSession session, mfxFrameAllocator *allocator);
 mfxStatus MFX_CDECL MFXVideoCORE_SetHandle(mfxSession session, mfxHandleType type, mfxHDL hdl);
 mfxStatus MFX_CDECL MFXVideoCORE_GetHandle(mfxSession session, mfxHandleType type, mfxHDL *hdl);
-
-typedef struct _mfxSyncPoint *mfxSyncPoint;
 mfxStatus MFX_CDECL MFXVideoCORE_SyncOperation(mfxSession session, mfxSyncPoint syncp, mfxU32 wait);
 
 /* VideoENCODE */

@@ -33,7 +33,13 @@
     <ClCompile Include="src\mfx_load_dll.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\mfx_load_plugin.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="src\mfx_win_reg_key.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mfx_plugin_hive.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
@@ -42,6 +48,9 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\mfx_dispatcher.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mfx_dispatcher_defs.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\mfx_dispatcher_log.h">
@@ -59,7 +68,19 @@
     <ClInclude Include="include\mfx_load_dll.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\mfx_load_plugin.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mfx_plugin_hive.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mfx_vector.h">
+      <Filter>include</Filter>
+    </ClInclude>
     <ClInclude Include="include\mfx_win_reg_key.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mfxaudio_exposed_functions_list.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

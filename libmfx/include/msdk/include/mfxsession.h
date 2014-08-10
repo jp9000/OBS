@@ -1,6 +1,6 @@
-/* ****************************************************************************** *\
+/*******************************************************************************
 
-Copyright (C) 2012-2014 Intel Corporation.  All rights reserved.
+Copyright (C) 2013 Intel Corporation.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -24,36 +24,35 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-File Name: mfx_load_dll.h
+File Name: mfxsession.h
 
-\* ****************************************************************************** */
+*******************************************************************************/
+#ifndef __MFXSESSION_H__
+#define __MFXSESSION_H__
+#include "mfxcommon.h"
 
-#if !defined(__MFX_LOAD_DLL_H)
-#define __MFX_LOAD_DLL_H
-
-#include "mfx_dispatcher.h"
-
-namespace MFX
+#ifdef __cplusplus
+extern "C"
 {
+#endif /* __cplusplus */
 
+/* Global Functions */
+typedef struct _mfxSession *mfxSession;
+mfxStatus MFX_CDECL MFXInit(mfxIMPL impl, mfxVersion *ver, mfxSession *session);
+mfxStatus MFX_CDECL MFXClose(mfxSession session);
 
-    //
-    // declare DLL loading routines
-    //
+mfxStatus MFX_CDECL MFXQueryIMPL(mfxSession session, mfxIMPL *impl);
+mfxStatus MFX_CDECL MFXQueryVersion(mfxSession session, mfxVersion *version);
 
-    mfxStatus mfx_get_rt_dll_name(msdk_disp_char *pPath, size_t pathSize);
-    mfxStatus mfx_get_default_dll_name(msdk_disp_char *pPath, size_t pathSize, eMfxImplType implType);
-    mfxStatus mfx_get_default_plugin_name(msdk_disp_char *pPath, size_t pathSize, eMfxImplType implType);
+mfxStatus MFX_CDECL MFXJoinSession(mfxSession session, mfxSession child);
+mfxStatus MFX_CDECL MFXDisjoinSession(mfxSession session);
+mfxStatus MFX_CDECL MFXCloneSession(mfxSession session, mfxSession *clone);
+mfxStatus MFX_CDECL MFXSetPriority(mfxSession session, mfxPriority priority);
+mfxStatus MFX_CDECL MFXGetPriority(mfxSession session, mfxPriority *priority);
 
-    mfxStatus mfx_get_default_audio_dll_name(msdk_disp_char *pPath, size_t pathSize, eMfxImplType implType);
-    
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
-    mfxModuleHandle mfx_dll_load(const msdk_disp_char *file_name);
-    //increments reference counter
-    mfxModuleHandle mfx_get_dll_handle(const msdk_disp_char *file_name);
-    mfxFunctionPointer mfx_dll_get_addr(mfxModuleHandle handle, const char *func_name);
-    bool mfx_dll_free(mfxModuleHandle handle);
+#endif
 
-} // namespace MFX
-
-#endif  // __MFX_LOAD_DLL_H

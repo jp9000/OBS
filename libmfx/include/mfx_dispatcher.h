@@ -1,6 +1,6 @@
 /* ****************************************************************************** *\
 
-Copyright (C) 2012 Intel Corporation.  All rights reserved.
+Copyright (C) 2012-2014 Intel Corporation.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -32,18 +32,11 @@ File Name: mfx_dispatcher.h
 #define __MFX_DISPATCHER_H
 
 #include <mfxvideo.h>
+#include <mfxaudio.h>
 #include <mfxplugin.h>
 #include <stddef.h>
-
-
-typedef wchar_t  msdk_disp_char;
-
-#if !defined (MFX_DISPATCHER_EXPOSED_PREFIX)
-    #define DISPATCHER_EXPOSED_PREFIX(fnc) fnc 
-#else
-    #define DISPATCHER_EXPOSED_PREFIX(fnc) _##fnc 
-#endif
-
+#include "mfx_dispatcher_defs.h"
+#include "mfx_load_plugin.h"
 
 enum
 {
@@ -65,18 +58,28 @@ enum eFunc
 {
     eMFXInit,
     eMFXClose,
+    eMFXQueryIMPL,
+    eMFXQueryVersion,
     eMFXJoinSession,
+    eMFXDisjoinSession,
     eMFXCloneSession,
-
+    eMFXSetPriority,
+    eMFXGetPriority,
 #include "mfx_exposed_functions_list.h"
-
-    eFuncTotal
+    eVideoFuncTotal
 };
 
-// declare max buffer length for DLL path
+enum eAudioFunc
+{
+    eFakeAudioEnum = eMFXGetPriority,
+#include "mfxaudio_exposed_functions_list.h"
+    eAudioFuncTotal
+};
+
+// declare max buffer length for regsitry key name
 enum
 {
-    MFX_MAX_VALUE_NAME          = 128
+    MFX_MAX_REGISTRY_KEY_NAME = 256
 };
 
 // declare the maximum DLL path
@@ -101,11 +104,6 @@ enum
     MFX_DISPATCHER_VERSION_MAJOR = 1,
     MFX_DISPATCHER_VERSION_MINOR = 2
 };
-
-// declare library module's handle
-typedef void * mfxModuleHandle;
-
-typedef void (MFX_CDECL * mfxFunctionPointer)(void);
 
 // declare a dispatcher's handle
 struct MFX_DISP_HANDLE
@@ -138,15 +136,26 @@ struct MFX_DISP_HANDLE
     mfxVersion dispVersion;
     // A real handle passed to a called function
     mfxSession session;
-    // required API version of session initialized
-    const
-    mfxVersion apiVersion;
+    // Required API version of session initialized
+    const mfxVersion apiVersion;
+    // Actual library API version
+    mfxVersion actualApiVersion;
+    // Status of loaded dll
+    mfxStatus loadStatus;
+    // Resgistry subkey name for windows version
+    msdk_disp_char subkeyName[MFX_MAX_REGISTRY_KEY_NAME];
+    // Storage ID for windows version
+    int storageID;
 
     // Library's module handle
     mfxModuleHandle hModule;
 
+    MFX::MFXPluginStorage pluginHive;
+    MFX::MFXPluginFactory pluginFactory;
+
     // function call table
-    mfxFunctionPointer callTable[eFuncTotal];
+    mfxFunctionPointer callTable[eVideoFuncTotal];
+    mfxFunctionPointer callAudioTable[eAudioFuncTotal];
 
 private:
     // Declare assignment operator and copy constructor to prevent occasional assignment
@@ -163,6 +172,20 @@ bool operator == (const mfxVersion &one, const mfxVersion &two)
 
 } // bool operator == (const mfxVersion &one, const mfxVersion &two)
 
+inline
+bool operator < (const mfxVersion &one, const mfxVersion &two)
+{
+    return (one.Major == two.Major) && (one.Minor < two.Minor);
+
+} // bool operator < (const mfxVersion &one, const mfxVersion &two)
+
+inline
+bool operator <= (const mfxVersion &one, const mfxVersion &two)
+{
+    return (one == two) || (one < two);
+} // bool operator <= (const mfxVersion &one, const mfxVersion &two)
+
+
 //
 // declare a table with functions descriptions
 //
@@ -174,12 +197,11 @@ struct FUNCTION_DESCRIPTION
     const char *pName;
     // API version when function appeared first time
     mfxVersion apiVersion;
-    // Minimal API version, which works without this function
-    mfxVersion apiPrevVersion;
-
 } FUNCTION_DESCRIPTION;
 
 extern const
-FUNCTION_DESCRIPTION APIFunc[eFuncTotal];
+FUNCTION_DESCRIPTION APIFunc[eVideoFuncTotal];
 
+extern const
+FUNCTION_DESCRIPTION APIAudioFunc[eAudioFuncTotal];
 #endif // __MFX_DISPATCHER_H

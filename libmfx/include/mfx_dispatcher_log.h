@@ -1,6 +1,6 @@
 /* ****************************************************************************** *\
 
-Copyright (C) 2012-2013 Intel Corporation.  All rights reserved.
+Copyright (C) 2012-2014 Intel Corporation.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -50,6 +50,34 @@ enum
 #define DL_SINK_PRINTF       1
 #define DL_SINK_IMsgHandler  2
 
+#define MFXFOURCCTYPE() "%c%c%c%c"
+#define ZERO_OR_SPACE(value) ((0==(value)) ? '0' : (value))
+#define MFXU32TOFOURCC(mfxu32)\
+    ZERO_OR_SPACE((char)(mfxu32 & 0xFF)), \
+    ZERO_OR_SPACE((char)((mfxu32 >> 8) & 0xFF)),\
+    ZERO_OR_SPACE((char)((mfxu32 >> 16) & 0xFF)),\
+    ZERO_OR_SPACE((char)((mfxu32 >> 24) & 0xFF))
+
+#define MFXGUIDTYPE() "%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X"
+
+#define MFXGUIDTOHEX(guid)\
+    (guid)->Data[0],\
+    (guid)->Data[1],\
+    (guid)->Data[2],\
+    (guid)->Data[3],\
+    (guid)->Data[4],\
+    (guid)->Data[5],\
+    (guid)->Data[6],\
+    (guid)->Data[7],\
+    (guid)->Data[8],\
+    (guid)->Data[9],\
+    (guid)->Data[10],\
+    (guid)->Data[11],\
+    (guid)->Data[12],\
+    (guid)->Data[13],\
+    (guid)->Data[14],\
+    (guid)->Data[15]
+
 #if defined(MFX_DISPATCHER_LOG)
 
 //---------------------------setup section------------------------
@@ -84,7 +112,7 @@ class IMsgHandler
 {
 public:
     virtual ~IMsgHandler(){}
-    virtual void Write(int level, int opcode, char * msg, va_list argptr) = 0;
+    virtual void Write(int level, int opcode, const char * msg, va_list argptr) = 0;
 };
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -177,7 +205,7 @@ public:
     void   DetachSink(int nsink, IMsgHandler *pHandler);
     void   ExchangeSink(int nsink, IMsgHandler *pOld, IMsgHandler *pNew);
     void   DetachAllSinks();
-    void   Write(int level, int opcode, char * msg, va_list argptr);
+    void   Write(int level, int opcode, const char * msg, va_list argptr);
     
 protected:
     DispatchLog();
@@ -193,14 +221,14 @@ struct  DispatcherLogBracketsHelper
         ,m_opcode(opcode)
     {
     }
-    void Write(char * str, ...);
+    void Write(const char * str, ...);
 } ;
 
 //auto log on ctor dtor
 struct DispatchLogBlockHelper
 {
     int  m_level;
-    void Write(char * str, ...);
+    void Write(const char * str, ...);
     DispatchLogBlockHelper (int level)
         : m_level(level)
     {
@@ -226,14 +254,16 @@ protected:
     ETWHandlerFactory(){}
 };
 #endif
+#endif // #if defined(_WIN32) || defined(_WIN64)
 
+#if defined(DISPATCHER_LOG_REGISTER_FILE_WRITER)
 class FileSink 
     : public DSSingleTone<FileSink>
     , public IMsgHandler
 {
     friend class DSSingleTone<FileSink>;
 public:
-    virtual void Write(int level, int opcode, char * msg, va_list argptr);
+    virtual void Write(int level, int opcode, const char * msg, va_list argptr);
     ~FileSink()
     {
         if (NULL != m_hdl)
@@ -243,11 +273,15 @@ private:
     FILE * m_hdl;
     FileSink(const std::string & log_file)
     {
+#if defined(_WIN32) || defined(_WIN64)
         fopen_s(&m_hdl, log_file.c_str(), "a");
+#else
+        m_hdl = fopen(log_file.c_str(), "a");
+#endif
     }
     
 };
-#endif // #if defined(_WIN32) || defined(_WIN64)
+#endif
 
 //-----utility functions
 //since they are not called outside of macro we can define them here

@@ -174,16 +174,23 @@
     <ClCompile Include="src\mfx_function_table.cpp" />
     <ClCompile Include="src\mfx_library_iterator.cpp" />
     <ClCompile Include="src\mfx_load_dll.cpp" />
+    <ClCompile Include="src\mfx_load_plugin.cpp" />
+    <ClCompile Include="src\mfx_plugin_hive.cpp" />
     <ClCompile Include="src\mfx_win_reg_key.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\mfxaudio_exposed_functions_list.h" />
     <ClInclude Include="include\mfx_critical_section.h" />
     <ClInclude Include="include\mfx_dispatcher.h" />
+    <ClInclude Include="include\mfx_dispatcher_defs.h" />
     <ClInclude Include="include\mfx_dispatcher_log.h" />
     <ClInclude Include="include\mfx_dxva2_device.h" />
     <ClInclude Include="include\mfx_exposed_functions_list.h" />
     <ClInclude Include="include\mfx_library_iterator.h" />
     <ClInclude Include="include\mfx_load_dll.h" />
+    <ClInclude Include="include\mfx_load_plugin.h" />
+    <ClInclude Include="include\mfx_plugin_hive.h" />
+    <ClInclude Include="include\mfx_vector.h" />
     <ClInclude Include="include\mfx_win_reg_key.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -1,6 +1,6 @@
 /* ****************************************************************************** *\
 
-Copyright (C) 2012 Intel Corporation.  All rights reserved.
+Copyright (C) 2012-2014 Intel Corporation.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -32,6 +32,8 @@ File Name: mfx_win_reg_key.cpp
 
 #include "mfx_win_reg_key.h"
 #include "mfx_dispatcher_log.h"
+
+#define TRACE_WINREG_ERROR(str, ...) DISPATCHER_LOG_ERROR((("[WINREG]: "str), __VA_ARGS__))
 
 namespace MFX
 {
@@ -75,6 +77,10 @@ bool WinRegKey::Open(HKEY hRootKey, const wchar_t *pSubKey, REGSAM samDesired)
     if (ERROR_SUCCESS != lRes)
     {
         DISPATCHER_LOG_OPERATION(SetLastError(lRes));
+        TRACE_WINREG_ERROR("Opening key \"%s\\%S\" : RegOpenKeyExW()==0x%x\n"
+            , (HKEY_LOCAL_MACHINE == hRootKey) ? ("HKEY_LOCAL_MACHINE") 
+            : (HKEY_CURRENT_USER == hRootKey)  ? ("HKEY_CURRENT_USER") 
+            : "UNSUPPORTED_KEY", pSubKey, GetLastError());
         return false;
     }
 
@@ -94,6 +100,22 @@ bool WinRegKey::Open(WinRegKey &rootKey, const wchar_t *pSubKey, REGSAM samDesir
 
 } // bool WinRegKey::Open(WinRegKey &rootKey, const wchar_t *pSubKey, REGSAM samDesired)
 
+bool WinRegKey::QueryValueSize(const wchar_t *pValueName, DWORD type, LPDWORD pcbData) {
+    DWORD keyType = type;
+    LONG lRes;
+
+    // query the value
+    lRes = RegQueryValueExW(m_hKey, pValueName, NULL, &keyType, 0, pcbData);
+    if (ERROR_SUCCESS != lRes)
+    {
+        DISPATCHER_LOG_OPERATION(SetLastError(lRes));
+        TRACE_WINREG_ERROR("Querying \"%S\" : RegQueryValueExA()==0x%x\n", pValueName, GetLastError());
+        return false;
+    }
+
+    return true;
+}
+
 bool WinRegKey::Query(const wchar_t *pValueName, DWORD type, LPBYTE pData, LPDWORD pcbData)
 {
     DWORD keyType = type;
@@ -105,22 +127,50 @@ bool WinRegKey::Query(const wchar_t *pValueName, DWORD type, LPBYTE pData, LPDWO
     if (ERROR_SUCCESS != lRes)
     {
         DISPATCHER_LOG_OPERATION(SetLastError(lRes));
+        TRACE_WINREG_ERROR("Querying \"%S\" : RegQueryValueExA()==0x%x\n", pValueName, GetLastError());
         return false;
     }
 
     // check the type
     if (keyType != type)
     {
+        TRACE_WINREG_ERROR("Querying \"%S\" : expectedType=%d, returned=%d\n", pValueName, type, keyType);
         return false;
     }
 
     // terminate the string only if pointers not NULL
-    if (REG_SZ == type && NULL != pData && NULL != pcbData)
+    if ((REG_SZ == type || REG_EXPAND_SZ == type) && NULL != pData && NULL != pcbData)
     {
         wchar_t *pString = (wchar_t *) pData;
-        size_t lastIndex = (dstSize <= *pcbData) ? (dstSize - 1) : (*pcbData);
+        size_t NullEndingSizeBytes = sizeof(wchar_t); // size of string termination null character
+        if (dstSize < NullEndingSizeBytes)
+        {
+            TRACE_WINREG_ERROR("Querying \"%S\" : buffer is too small for null-terminated string", pValueName);
+            return false;
+        }
+        size_t maxStringLengthBytes = dstSize - NullEndingSizeBytes;
+        size_t maxStringIndex = dstSize / sizeof(wchar_t) - 1;
+
+        size_t lastIndex = (maxStringLengthBytes < *pcbData) ? (maxStringIndex) : (*pcbData) / sizeof(wchar_t);
 
         pString[lastIndex] = (wchar_t) 0;
+    }
+    else if(REG_MULTI_SZ == type && NULL != pData && NULL != pcbData)
+    {
+        wchar_t *pString = (wchar_t *) pData;
+        size_t NullEndingSizeBytes = sizeof(wchar_t)*2; // size of string termination null characters
+        if (dstSize < NullEndingSizeBytes)
+        {
+            TRACE_WINREG_ERROR("Querying \"%S\" : buffer is too small for multi-line null-terminated string", pValueName);
+            return false;
+        }
+        size_t maxStringLengthBytes = dstSize - NullEndingSizeBytes;
+        size_t maxStringIndex = dstSize / sizeof(wchar_t) - 1;
+
+        size_t lastIndex = (maxStringLengthBytes < *pcbData) ? (maxStringIndex) : (*pcbData) / sizeof(wchar_t) + 1;
+
+        // last 2 bytes should be 0 in case of REG_MULTI_SZ
+        pString[lastIndex] = pString[lastIndex - 1] = (wchar_t) 0;
     }
 
     return true;
@@ -152,12 +202,26 @@ bool WinRegKey::EnumKey(DWORD index, wchar_t *pValueName, LPDWORD pcchValueName)
     if (ERROR_SUCCESS != lRes)
     {
         DISPATCHER_LOG_OPERATION(SetLastError(lRes));
+        TRACE_WINREG_ERROR("EnumKey with index=%d: RegEnumKeyExW()==0x%x\n", index, GetLastError());
         return false;
     }
 
     return true;
 
 } // bool WinRegKey::EnumKey(DWORD index, wchar_t *pValueName, LPDWORD pcchValueName)
+
+bool WinRegKey::QueryInfo(LPDWORD lpcSubkeys)
+{
+    LONG lRes;
+
+    lRes = RegQueryInfoKeyW(m_hKey, NULL, 0, 0, lpcSubkeys, 0, 0, 0, 0, 0, 0, 0);
+    if (ERROR_SUCCESS != lRes) {
+        TRACE_WINREG_ERROR("RegQueryInfoKeyW()==0x%x\n", lRes);
+        return false;
+    }
+    return true;
+
+} //bool QueryInfo(LPDWORD lpcSubkeys);
 
 } // namespace MFX
 

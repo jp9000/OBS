@@ -1,6 +1,6 @@
 /* ****************************************************************************** *\
 
-Copyright (C) 2012-2014 Intel Corporation.  All rights reserved.
+Copyright (C) 2013-2014 Intel Corporation.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -24,36 +24,60 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-File Name: mfx_load_dll.h
+File Name: mfx_dispatcher_defs.h
 
 \* ****************************************************************************** */
 
-#if !defined(__MFX_LOAD_DLL_H)
-#define __MFX_LOAD_DLL_H
+#pragma once
+#include "mfxdefs.h"
 
-#include "mfx_dispatcher.h"
+#if defined(MFX_DISPATCHER_LOG)
+#include <string>
+#include <string.h>
+#endif
 
-namespace MFX
+#if defined(_WIN32) || defined(_WIN64)
+typedef wchar_t  msdk_disp_char;
+#define MSDK2WIDE(x) x
+
+#if _MSC_VER >= 1400
+    #define msdk_disp_char_cpy_s(to, to_size, from) wcscpy_s(to,to_size, from)
+#else
+    #define msdk_disp_char_cpy_s(to, to_size, from) wcscpy(to, from)
+#endif
+
+#else
+typedef char msdk_disp_char;
+#define msdk_disp_char_cpy_s(to, to_size, from) strcpy(to, from)
+
+#if defined(MFX_DISPATCHER_LOG)
+#define MSDK2WIDE(x) getWideString(x).c_str()
+
+inline std::wstring getWideString(const char * string)
 {
+    size_t len = strlen(string);
+    return std::wstring(string, string + len);
+}
+#else
+    #define MSDK2WIDE(x) x  
+#endif
+
+#endif
+
+#ifdef __GNUC__
+#define  sscanf_s  sscanf
+#define  swscanf_s swscanf
+#endif
 
 
-    //
-    // declare DLL loading routines
-    //
+// declare library module's handle
+typedef void * mfxModuleHandle;
 
-    mfxStatus mfx_get_rt_dll_name(msdk_disp_char *pPath, size_t pathSize);
-    mfxStatus mfx_get_default_dll_name(msdk_disp_char *pPath, size_t pathSize, eMfxImplType implType);
-    mfxStatus mfx_get_default_plugin_name(msdk_disp_char *pPath, size_t pathSize, eMfxImplType implType);
+typedef void (MFX_CDECL * mfxFunctionPointer)(void);
 
-    mfxStatus mfx_get_default_audio_dll_name(msdk_disp_char *pPath, size_t pathSize, eMfxImplType implType);
-    
 
-    mfxModuleHandle mfx_dll_load(const msdk_disp_char *file_name);
-    //increments reference counter
-    mfxModuleHandle mfx_get_dll_handle(const msdk_disp_char *file_name);
-    mfxFunctionPointer mfx_dll_get_addr(mfxModuleHandle handle, const char *func_name);
-    bool mfx_dll_free(mfxModuleHandle handle);
-
-} // namespace MFX
-
-#endif  // __MFX_LOAD_DLL_H
+#if !defined (MFX_DISPATCHER_EXPOSED_PREFIX)
+#define DISPATCHER_EXPOSED_PREFIX(fnc) fnc 
+#else
+#define DISPATCHER_EXPOSED_PREFIX(fnc) _##fnc 
+#endif
