@@ -70,7 +70,7 @@ void InitVCEEncoder(bool log = true, bool useMFT = false)
     if (p_checkVCEHardwareSupport == NULL || p_createVCEEncoder == NULL || initFunction == NULL)
     {
         if (log)
-            Log(TEXT("Failed loading all symbols from ObsVCE.dll"));
+            Log(TEXT("Failed loading all symbols from %s"), modName);
         goto error;
     }
 
@@ -78,7 +78,7 @@ void InitVCEEncoder(bool log = true, bool useMFT = false)
         goto error;
 
     if (log)
-        Log(TEXT("ObsVCE initialized successfully"));
+        Log(TEXT("%s initialized successfully"), modName);
     bUsingMFT = useMFT;
     return;
 
@@ -94,7 +94,7 @@ error:
     }
 
     if (log)
-        Log(TEXT("ObsVCE initialization failed"));
+        Log(TEXT("%s initialization failed"), modName);
 }
 
 bool CheckVCEHardwareSupport(bool log = true, bool useMFT = false)

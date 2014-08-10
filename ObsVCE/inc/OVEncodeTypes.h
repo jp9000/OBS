@@ -301,7 +301,6 @@ typedef enum _OVE_PICTURE_TYPE_H264
     OVE_PICTURE_TYPE_H264_IDR                   = 2,
     OVE_PICTURE_TYPE_H264_I                     = 3,
     OVE_PICTURE_TYPE_H264_P                     = 4
-    //Guess work, OVE_PICTURE_TYPE_H264_B = 5
 } OVE_PICTURE_TYPE_H264;
 
 

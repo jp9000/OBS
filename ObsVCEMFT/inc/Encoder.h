@@ -76,7 +76,7 @@ public:
     void RequestKeyframe();
     String GetInfoString() const { return String(); }
     bool isQSV() { return true; }
-    int GetBufferedFrames() { return mOutputQueue.size(); }
+    int GetBufferedFrames() { return (int)mOutputQueue.size(); }
     bool HasBufferedFrames() { return mOutputQueue.size() > 0; }
 
 private:

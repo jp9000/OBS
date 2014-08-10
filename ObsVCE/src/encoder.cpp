@@ -103,6 +103,7 @@ bool VCEEncoder::encodeCreate(uint32_t deviceId)
 
 #ifdef _WIN64
     // May ${DEITY} have mercy on us all.
+    VCELog(TEXT("If it crashes now, use 32bit version."));
     intptr_t ptr = intptr_t((intptr_t*)&clDeviceID);
     clDeviceID = (cl_device_id)((intptr_t)clDeviceID | (ptr & 0xFFFFFFFF00000000));
 #endif
@@ -202,6 +203,7 @@ bool VCEEncoder::encodeOpen(uint32_t deviceId)
 
 #ifdef _WIN64
     // May ${DEITY} have mercy on us all.
+    VCELog(TEXT("If it crashes now, use 32bit version."));
     intptr_t ptr = intptr_t((intptr_t*)&clDeviceID);
     clDeviceID = (cl_device_id)((intptr_t)clDeviceID | (ptr & 0xFFFFFFFF00000000));
 #endif
