@@ -39,10 +39,10 @@ These are the actual things that are showed on the stream. You can add images, s
 <h4>Settings Walkthrough </h4>
 <p>Now to go through configuring all the settings of OBS.</p>
 <p><strong>General</strong></p>
-<img class="settings" src="{{ site.baseurl }}/assets/generalsettings.png" alt="General Settings"/>
+<img class="gray_border" src="{{ site.baseurl }}/assets/generalsettings.png" alt="General Settings"/>
 <p>Aside from changing the language, you can set up numerous profiles for your settings with their own names. For example, you could have a profile for streaming to Twitch, one for Own3d, and one for doing just local recordings. It's up to you. To make a new one, just type in a name and click Add. It will use the settings of the previously selected profile as its default. The rename process is the same, except for clicking Rename instead of Add after typing a new name.</p>
 <p><strong>Encoding</strong></p>
-<img class="settings" src="{{ site.baseurl }}/assets/encodingsettings.png" alt="Encoding Settings"></img>
+<img class="gray_border" src="{{ site.baseurl }}/assets/encodingsettings.png" alt="Encoding Settings"></img>
 <p>Probably the most confusing part of setting up OBS, this is where you control what your stream quality is on the watcher's end. You'll need to do a <a href="http://speedtest.net/">Speedtest</a> if you don't know what kind of upload speeds you have, as it's a necessary piece of information.</p>
 <p>The settings here are going to differ for every single person, which is what makes it complicated to write a guide for. <strong>Quality</strong> is usually good around 8, setting it higher if you have a good upload speed and lower with a worse one.</p>
 <p><strong>Max Bitrate</strong> is entirely dependent on your upload speed. If Speedtest shows you an upload speed of 1.50mbps, that's 1500kb/s. You don't want to use all the upload you have, so a good value here for <strong>Max Bitrate</strong> would be about 1000 or 1100. <strong>Buffer Size</strong> should in most cases be the same as your <strong>Max Bitrate</strong>.</p>
@@ -50,20 +50,20 @@ These are the actual things that are showed on the stream. You can add images, s
 <p>An important thing to note when setting your bitrates here is that whatever you upload at, your viewers will need at least that in order to view your stream. This means that if you have your Max Bitrate set to 5000kbps, a person will require their download speeds to be at least that to watch. As well, most stream services will not accept bitrates over a certain value and will just disconnect you if you try.</p>
 <p>Check out the <a href="http://obsproject.com/estimator">settings estimator</a> for a recommendation of what to use.</p>
 <p><strong>Broadcast Settings</strong></p>
-<img class="settings" src="{{ site.baseurl }}/assets/broadcastsettings.png" alt="Broadcast Settings"></img>
+<img class="gray_border" src="{{ site.baseurl }}/assets/broadcastsettings.png" alt="Broadcast Settings"></img>
 <p>Here is where you configure where you'll stream to. <strong>Mode</strong> lets you set if you want to stream to an online service, or only record locally. If you are live streaming, <strong>Streaming Service</strong> lets you set which website to stream to. There are preconfigured setups for a number of services and an option for Custom, for streaming to services like UStream or Livestream.</p>
 <p>If streaming to a preconfigured service, you'll be able to select which server to use from the drop down box. Then you'll need to enter your Stream Key. Your Stream Key is like a special password that lets you stream to that service without actually providing your username or password.</p>
 <p>Next you can set up auto reconnect time, a stream delay in seconds and whether or not you want to also save a local recording of your stream by checking off <strong>Save to file</strong>. If you are recording locally, you'll need to enter a full filepath, including the filename and file extension (Either .mp4 or .flv). Each time you record, it will save a new file, it will not overwrite the filename you entered.</p>
 <p>Finally, you can set up hotkeys to start your stream and stop it. If you set both keys to the same thing, you will be able to use it as a toggle.</p>
 <p><strong>Video</strong></p>
-<img class="settings" src="{{ site.baseurl }}/assets/videosettings.png" alt="Video Settings"></img>
+<img class="gray_border" src="{{ site.baseurl }}/assets/videosettings.png" alt="Video Settings"></img>
 <p>Your <strong>Base Resolution</strong> is the size of your stream for the purposes of settings up your scenes and sources. The final size that actually gets encoded and streamed is whatever you set through the <strong>Resolution Downscale</strong> option. For quality purposes, it is always best to have a normal base resolution and then downscale it. FPS is what OBS will try to maintain for your stream.</p>
 <p>Similar to Encoding, these options depend a lot on what type of computer you have and how good your connection is. 30 FPS is a good value to keep unless you have a good computer and upload speed. A good rule to follow is to keep your FPS a factor of 60. If your computer is not the best, you can set this down to 20 or even 15, though you will usually get better results from just keeping your FPS at 30 and downscaling more.</p>
 <p><strong>Audio</strong></p>
-<img class="settings" src="{{ site.baseurl }}/assets/audiosettings.png" alt="Audio Settings"/>
+<img class="gray_border" src="{{ site.baseurl }}/assets/audiosettings.png" alt="Audio Settings"/>
 <p>This section lets you choose which device to use as your microphone or secondary audio device. You can choose to set a Push-to-talk key, or set up hotkeys for muting/unmuting the mic and for muting/unmuting your speaker audio. For those who require it, you can also force your microphone to be mono. If you have a particularly quiet mic, you can boost the volume of it.</p>
 <p><strong>Advanced</strong></p>
-<img class="settings" src="{{ site.baseurl }}/assets/advancedsettings.png" alt="Advanced Settings"/>
+<img class="gray_border" src="{{ site.baseurl }}/assets/advancedsettings.png" alt="Advanced Settings"/>
 <p>These are advanced settings that should generally go untouched. The exception being you really know what you're doing, or are trying to fix a problem you're having and someone you're sure knows what <strong><em>they're</em></strong> doing has told you what to change. If your computer is particularly on the low end, you can try increasing the <strong>x264 CPU Preset</strong> to superfast. Otherwise, it's recommended you don't touch anything here.</p>
 <hr>
 <p>That's it! Assuming you have everything set up correctly, you should now be ready to get going. When you're streaming, OBS will show some information at the bottom of the window including your stream uptime, the total number of frames dropped, the current FPS and your current bitrate with a visual indicator. You should aim for the visual indicator to always be green, if you're seeing yellow or worse, red, it means your <strong>Max Bitrate</strong> and <strong>Buffer Size</strong> in Encoding are too high. Try lowering them each by 100 or 200 until you can get the indicator box to stay green.</p>

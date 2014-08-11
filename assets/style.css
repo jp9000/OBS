@@ -1,11 +1,11 @@
 html {
-    overflow-y: scroll;
+	overflow-y: scroll;
 }
 img {
 	display: block;
 	margin: 0 auto !important;
 }
-.settings {
+.gray_border {
 	display: block;
 	margin: 0 auto !important;
 	border: 1px solid gray;
