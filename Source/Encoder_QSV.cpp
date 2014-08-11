@@ -339,6 +339,7 @@ class QSVEncoder : public VideoEncoder
     safe_handle qsvhelper_process,
                 qsvhelper_thread;
     ipc_stop stop;
+    bool helper_killed = false;
 
     ipc_encoder_flushed encoder_flushed;
 
@@ -650,6 +651,9 @@ public:
     {
         stop.signal();
         ClearPackets();
+
+        if (process_waiter.wait_timeout(5000))
+            TerminateProcess(qsvhelper_process, (UINT)-2);
     }
 
 #ifndef SEI_USER_DATA_UNREGISTERED
@@ -658,8 +662,16 @@ public:
 
     void ProcessEncodedFrame(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, DWORD &out_pts, mfxU32 wait=0)
     {
-        if(!filled_bitstream_waiter.wait_for(2, wait))
+        if (!filled_bitstream_waiter.wait_for(2, wait))
+        {
+            if (wait <= 0)
+                return;
+
+            TerminateProcess(qsvhelper_process, (UINT)-1);
+            AppWarning(L"Terminating QSVHelper.exe after timeout");
+            helper_killed = true;
             return;
+        }
 
         uint32_t index = 0;
         {
@@ -988,6 +1000,8 @@ public:
             int code = 0;
             if(!GetExitCodeProcess(process_waiter.list[0], (LPDWORD)&code))
                 CrashError(TEXT("QSVHelper.exe exited!"));
+            if (helper_killed)
+                CrashError(L"QSVHelper.exe was killed, encode failed");
             switch(code)
             {
             case EXIT_INCOMPATIBLE_CONFIGURATION:
@@ -1010,7 +1024,7 @@ public:
         profileIn("ProcessEncodedFrame");
         do
         {
-            ProcessEncodedFrame(packets, packetTypes, outputTimestamp, out_pts, idle_tasks.Num() ? 0 : INFINITE);
+            ProcessEncodedFrame(packets, packetTypes, outputTimestamp, out_pts, idle_tasks.Num() ? 0 : 1000);
         }
         while(!idle_tasks.Num());
         profileOut;
@@ -1110,7 +1124,7 @@ public:
 
     virtual bool HasBufferedFrames()
     {
-        return !encoder_flushed.is_signalled();
+        return !helper_killed && !encoder_flushed.is_signalled();
     }
 };
 
