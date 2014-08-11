@@ -21,6 +21,7 @@
 #include <mfxvideo++.h>
 
 #include <algorithm>
+#include <iostream>
 #include <vector>
 
 #include "Utilities.h"
@@ -59,6 +60,8 @@ public:
     Parameters();
     Parameters(const Parameters&);
     Parameters &operator =(const Parameters&);
+
+    void Dump(std::wostream&);
 protected:
     void UpdateExt();
     template <class T>

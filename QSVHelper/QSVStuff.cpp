@@ -197,3 +197,102 @@ void EncodeCtrl::AddSEIData(sei_type type, vector<mfxU8> data)
     ctrl.Payload = &payload_list.front();
     ctrl.NumPayload = payload_list.size();
 }
+
+void Parameters::Dump(std::wostream &log_file)
+{
+    auto &mfx = params.mfx;
+    
+#define OUT(name) log_file << "  mfx." #name " = " << mfx.name << '\n'
+    OUT(BRCParamMultiplier);
+    OUT(CodecId);
+    OUT(CodecProfile);
+    OUT(CodecLevel);
+    OUT(NumThread);
+    OUT(TargetUsage);
+    OUT(GopPicSize);
+    OUT(GopRefDist);
+    OUT(GopOptFlag);
+    OUT(IdrInterval);
+    OUT(RateControlMethod);
+    OUT(InitialDelayInKB);
+    OUT(BufferSizeInKB);
+    OUT(TargetKbps);
+    OUT(MaxKbps);
+    OUT(NumSlice);
+    OUT(NumRefFrame);
+    OUT(EncodedOrder);
+#undef OUT
+
+    for (auto i : ext_buffers)
+    {
+#define OUT(name) log_file << "   " #name " = " << name << '\n'
+        switch (i->BufferId)
+        {
+        case MFX_EXTBUFF_VIDEO_SIGNAL_INFO:
+            OUT(vsi.VideoFormat);
+            OUT(vsi.VideoFullRange);
+            OUT(vsi.ColourDescriptionPresent);
+            OUT(vsi.ColourPrimaries);
+            OUT(vsi.TransferCharacteristics);
+            OUT(vsi.MatrixCoefficients);
+            break;
+
+        case MFX_EXTBUFF_CODING_OPTION:
+            OUT(co.RateDistortionOpt);
+            OUT(co.MECostType);
+            OUT(co.MESearchType);
+            OUT(co.MVSearchWindow.x);
+            OUT(co.MVSearchWindow.y);
+            OUT(co.EndOfSequence);
+            OUT(co.FramePicture);
+            OUT(co.CAVLC);
+            OUT(co.RecoveryPointSEI);
+            OUT(co.ViewOutput);
+            OUT(co.NalHrdConformance);
+            OUT(co.SingleSeiNalUnit);
+            OUT(co.VuiVclHrdParameters);
+            OUT(co.RefPicListReordering);
+            OUT(co.ResetRefList);
+            OUT(co.RefPicMarkRep);
+            OUT(co.FieldOutput);
+            OUT(co.IntraPredBlockSize);
+            OUT(co.InterPredBlockSize);
+            OUT(co.MVPrecision);
+            OUT(co.MaxDecFrameBuffering);
+            OUT(co.AUDelimiter);
+            OUT(co.EndOfStream);
+            OUT(co.PicTimingSEI);
+            OUT(co.VuiNalHrdParameters);
+            break;
+
+        case MFX_EXTBUFF_CODING_OPTION2:
+            OUT(co2.IntRefType);
+            OUT(co2.IntRefCycleSize);
+            OUT(co2.IntRefQPDelta);
+            OUT(co2.MaxFrameSize);
+            OUT(co2.MaxSliceSize);
+            OUT(co2.BitrateLimit);
+            OUT(co2.MBBRC);
+            OUT(co2.ExtBRC);
+            OUT(co2.LookAheadDepth);
+            OUT(co2.Trellis);
+            OUT(co2.RepeatPPS);
+            OUT(co2.BRefType);
+            OUT(co2.AdaptiveI);
+            OUT(co2.AdaptiveB);
+            OUT(co2.LookAheadDS);
+            OUT(co2.NumMbPerSlice);
+            OUT(co2.SkipFrame);
+            OUT(co2.MinQPI);
+            OUT(co2.MaxQPI);
+            OUT(co2.MinQPP);
+            OUT(co2.MaxQPP);
+            OUT(co2.MinQPB);
+            OUT(co2.MaxQPB);
+            OUT(co2.FixedFrameRate);
+            OUT(co2.DisableDeblockingIdc);
+            break;
+        }
+    }
+    log_file << '\n';
+}
