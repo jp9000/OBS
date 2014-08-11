@@ -40,6 +40,8 @@ private:
 public:
     mfxExtCodingOptionSPSPPS cospspps;
     mfxExtVideoSignalInfo vsi;
+    mfxExtCodingOption co;
+    mfxExtCodingOption2 co2;
 
 
     operator mfxVideoParam() { return params; }
@@ -51,6 +53,8 @@ public:
     void Init(mfxU16 preset, mfxU16 profile, int fps, int keyframe_interval_frames, int bframes, int width, int height, int max_bitrate, int buffer_size, bool use_cbr);
     void SetCodingOptionSPSPPS(mfxU8 *sps_buff, mfxU16 sps_size, mfxU8 *pps_buff, mfxU16 pps_size);
     void SetVideoSignalInfo(int full_range, int primaries, int transfer, int matrix);
+    void AddCodingOption();
+    void AddCodingOption2();
     
     Parameters();
     Parameters(const Parameters&);

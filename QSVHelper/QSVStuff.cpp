@@ -65,11 +65,17 @@ Parameters &Parameters::operator =(const Parameters& o)
     params = o.params;
     cospspps = o.cospspps;
     vsi = o.vsi;
+    co = o.co;
+    co2 = o.co2;
 
     if (o.FindExt(o.cospspps))
         AddExt(cospspps);
     if (o.FindExt(o.vsi))
         AddExt(vsi);
+    if (o.FindExt(o.co))
+        AddExt(co);
+    if (o.FindExt(o.co2))
+        AddExt(co2);
 
     return *this;
 }
@@ -128,6 +134,18 @@ void Parameters::SetVideoSignalInfo(int full_range, int primaries, int transfer,
     vsi.TransferCharacteristics = transfer;
     vsi.MatrixCoefficients = matrix;
     vsi.VideoFormat = 5; //unspecified
+}
+
+void Parameters::AddCodingOption()
+{
+    if (!FindExt(co))
+        InitAddExt(co, MFX_EXTBUFF_CODING_OPTION);
+}
+
+void Parameters::AddCodingOption2()
+{
+    if (!FindExt(co2))
+        InitAddExt(co2, MFX_EXTBUFF_CODING_OPTION2);
 }
 
 void Parameters::UpdateExt()
