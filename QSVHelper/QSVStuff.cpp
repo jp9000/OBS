@@ -109,13 +109,8 @@ void Parameters::Init(mfxU16 target_usage, mfxU16 profile, int fps, int keyframe
 void Parameters::SetCodingOptionSPSPPS(mfxU8 *sps_buff, mfxU16 sps_size, mfxU8 *pps_buff, mfxU16 pps_size)
 {
     if(!FindExt(cospspps))
-    {
-        zero(cospspps);
-        cospspps.Header.BufferId = MFX_EXTBUFF_CODING_OPTION_SPSPPS;
-        cospspps.Header.BufferSz = sizeof(cospspps);
+        InitAddExt(cospspps, MFX_EXTBUFF_CODING_OPTION_SPSPPS);
 
-        AddExt(cospspps);
-    }
     cospspps.SPSBuffer = sps_buff;
     cospspps.SPSBufSize = sps_size;
     cospspps.PPSBuffer = pps_buff;
@@ -124,14 +119,8 @@ void Parameters::SetCodingOptionSPSPPS(mfxU8 *sps_buff, mfxU16 sps_size, mfxU8 *
 
 void Parameters::SetVideoSignalInfo(int full_range, int primaries, int transfer, int matrix)
 {
-    if(!FindExt(vsi))
-    {
-        zero(vsi);
-        vsi.Header.BufferId = MFX_EXTBUFF_VIDEO_SIGNAL_INFO;
-        vsi.Header.BufferSz = sizeof(vsi);
-
-        AddExt(vsi);
-    }
+    if (!FindExt(vsi))
+        InitAddExt(vsi, MFX_EXTBUFF_VIDEO_SIGNAL_INFO);
 
     vsi.ColourDescriptionPresent = 1;
     vsi.VideoFullRange = full_range;

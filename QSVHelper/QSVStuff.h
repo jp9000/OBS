@@ -61,6 +61,8 @@ protected:
     bool FindExt(const T& t) const { return std::find(std::begin(ext_buffers), std::end(ext_buffers), reinterpret_cast<const mfxExtBuffer*>(&t)) != std::end(ext_buffers); }
     template <class T>
     void AddExt(T& t) { ext_buffers.emplace_back(reinterpret_cast<mfxExtBuffer*>(&t)); UpdateExt(); }
+    template <class T>
+    void InitAddExt(T& t, decltype(mfxExtBuffer::BufferId) id) { zero(t); t.Header.BufferId = id; t.Header.BufferSz = sizeof(T); AddExt(t); }
 };
 
 
