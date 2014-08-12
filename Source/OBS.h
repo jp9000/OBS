@@ -646,6 +646,7 @@ class OBS
     List<SettingsPane*> settingsPanes;
     SettingsPane *      currentSettingsPane;
     int                 numberOfBuiltInSettingsPanes;
+    int                 numberOfEncoderSettingsPanes;
 
     void   SetChangedSettings(bool bChanged);
     void   SetAbortApplySettings(bool abort);
@@ -658,9 +659,12 @@ class OBS
 public:
     void   AddSettingsPane(SettingsPane *pane);
     void   RemoveSettingsPane(SettingsPane *pane);
+    void   AddEncoderSettingsPane(SettingsPane *pane);
+    void   RemoveEncoderSettingsPane(SettingsPane *pane);
 
 private:
     void   AddBuiltInSettingsPanes();
+    void   AddEncoderSettingsPanes();
 
     friend class SettingsPane;
     friend class SettingsGeneral;

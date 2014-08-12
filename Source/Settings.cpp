@@ -153,6 +153,10 @@ void OBS::AddBuiltInSettingsPanes()
     saturate(numberOfBuiltInSettingsPanes, std::distance(std::begin(panes), std::end(panes)));
 }
 
+void OBS::AddEncoderSettingsPanes()
+{
+}
+
 void OBS::SetChangedSettings(bool bChanged)
 {
     if(hwndSettings == NULL)
@@ -291,19 +295,19 @@ INT_PTR CALLBACK OBS::SettingsDialogProc(HWND hwnd, UINT message, WPARAM wParam,
                         SetBkMode(pdis->hDC, bkMode);
                         SetTextColor(pdis->hDC, oldTextColor);
 
-                        if(App->settingsPanes.Num() > (UINT)App->numberOfBuiltInSettingsPanes)
+                        UINT builtinAndEncoderPanes = App->numberOfBuiltInSettingsPanes + App->numberOfEncoderSettingsPanes;
+
+                        if ((App->settingsPanes.Num() > (UINT)App->numberOfBuiltInSettingsPanes && pdis->itemID == App->numberOfBuiltInSettingsPanes)
+                            || (App->settingsPanes.Num() > (UINT)builtinAndEncoderPanes && pdis->itemID == builtinAndEncoderPanes))
                         {
-                            if(pdis->itemID == App->numberOfBuiltInSettingsPanes)
-                            {
-                                HGDIOBJ origPen;
-                                origPen = SelectObject(pdis->hDC, GetStockObject(DC_PEN));
-                                SetDCPenColor(pdis->hDC, GetSysColor(COLOR_BTNSHADOW));
+                            HGDIOBJ origPen;
+                            origPen = SelectObject(pdis->hDC, GetStockObject(DC_PEN));
+                            SetDCPenColor(pdis->hDC, GetSysColor(COLOR_BTNSHADOW));
 
-                                MoveToEx(pdis->hDC, pdis->rcItem.left, pdis->rcItem.top, NULL);
-                                LineTo(pdis->hDC, pdis->rcItem.right, pdis->rcItem.top);
+                            MoveToEx(pdis->hDC, pdis->rcItem.left, pdis->rcItem.top, NULL);
+                            LineTo(pdis->hDC, pdis->rcItem.right, pdis->rcItem.top);
 
-                                SelectObject(pdis->hDC, origPen);
-                            }
+                            SelectObject(pdis->hDC, origPen);
                         }
 
                         break;

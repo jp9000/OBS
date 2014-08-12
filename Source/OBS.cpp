@@ -655,6 +655,7 @@ OBS::OBS()
 
     currentSettingsPane = NULL;
     AddBuiltInSettingsPanes();
+    AddEncoderSettingsPanes();
 
     //-----------------------------------------------------
 
