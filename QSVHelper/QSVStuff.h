@@ -51,7 +51,8 @@ public:
     mfxVideoParam* operator->() { return &params; }
     const mfxVideoParam* operator->() const { return &params; }
 
-    void Init(mfxU16 preset, mfxU16 profile, int fps, int keyframe_interval_frames, int bframes, int width, int height, int max_bitrate, int buffer_size, bool use_cbr);
+    void Init(mfxU16 preset, mfxU16 profile, int fps, int keyframe_interval_frames, int bframes, int width, int height, int max_bitrate,
+        int buffer_size, bool use_cbr, bool use_custom_params, mfxInfoMFX custom_params, decltype(mfxExtCodingOption2::LookAheadDepth) la_depth);
     void SetCodingOptionSPSPPS(mfxU8 *sps_buff, mfxU16 sps_size, mfxU8 *pps_buff, mfxU16 pps_size);
     void SetVideoSignalInfo(int full_range, int primaries, int transfer, int matrix);
     void AddCodingOption();

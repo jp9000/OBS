@@ -102,7 +102,7 @@ struct Encoder
         , using_d3d11(false), session(), encoder(session), event_prefix(event_prefix), encoder_flushed(event_prefix + ENCODER_FLUSHED), flushed(false), log_file(log_file)
     {
         params.Init(init_req->target_usage, init_req->profile, init_req->fps, init_req->keyint, init_req->bframes, init_req->width, init_req->height, init_req->max_bitrate,
-            init_req->buffer_size, init_req->use_cbr);
+            init_req->buffer_size, init_req->use_cbr, init_req->use_custom_parameters, init_req->custom_parameters, init_req->la_depth);
         params.SetVideoSignalInfo(init_req->full_range, init_req->primaries, init_req->transfer, init_req->matrix);
     }
 
@@ -171,6 +171,8 @@ struct Encoder
         using namespace std;
         Parameters query = params;
         encoder.GetVideoParam(query);
+
+        init_res->rate_control = query->mfx.RateControlMethod;
 
         switch (query->mfx.CodecProfile)
         {

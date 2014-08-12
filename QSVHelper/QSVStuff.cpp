@@ -80,20 +80,48 @@ Parameters &Parameters::operator =(const Parameters& o)
     return *this;
 }
 
-void Parameters::Init(mfxU16 target_usage, mfxU16 profile, int fps, int keyframe_interval_frames, int bframes, int width, int height, int max_bitrate, int buffer_size, bool use_cbr)
+void Parameters::Init(mfxU16 target_usage, mfxU16 profile, int fps, int keyframe_interval_frames, int bframes, int width, int height, int max_bitrate,
+    int buffer_size, bool use_cbr, bool use_custom_params, mfxInfoMFX custom_params, decltype(mfxExtCodingOption2::LookAheadDepth) la_depth)
 {
     params.mfx.CodecId = MFX_CODEC_AVC;
     params.mfx.TargetUsage = target_usage;
-    params.mfx.TargetKbps = saturate<mfxU16>(max_bitrate);
-    params.mfx.MaxKbps = saturate<mfxU16>(max_bitrate);
-    params.mfx.BufferSizeInKB = buffer_size/8;
     params.mfx.GopOptFlag = MFX_GOP_CLOSED;
     params.mfx.GopPicSize = keyframe_interval_frames;
     params.mfx.GopRefDist = bframes+1;
     params.mfx.NumSlice = 1;
     params.mfx.CodecProfile = profile;
 
-    params.mfx.RateControlMethod = use_cbr ? MFX_RATECONTROL_CBR : MFX_RATECONTROL_VBR;
+    params.mfx.TargetKbps = use_custom_params ? custom_params.TargetKbps : saturate<mfxU16>(max_bitrate);
+    params.mfx.BufferSizeInKB = use_custom_params ? custom_params.BufferSizeInKB : buffer_size / 8;
+
+    params.mfx.RateControlMethod = use_cbr ? MFX_RATECONTROL_CBR : use_custom_params ? custom_params.RateControlMethod : MFX_RATECONTROL_VBR;
+    switch (params.mfx.RateControlMethod)
+    {
+    case MFX_RATECONTROL_VBR:
+    case MFX_RATECONTROL_VCM:
+        params.mfx.MaxKbps = use_custom_params ? custom_params.MaxKbps : 0;
+        break;
+
+    case MFX_RATECONTROL_AVBR:
+        params.mfx.Accuracy = custom_params.Accuracy;
+        params.mfx.Convergence = custom_params.Convergence;
+        break;
+
+    case MFX_RATECONTROL_CQP:
+        params.mfx.QPI = custom_params.QPI;
+        params.mfx.QPP = custom_params.QPP;
+        params.mfx.QPB = custom_params.QPB;
+        break;
+
+    case MFX_RATECONTROL_ICQ:
+    case MFX_RATECONTROL_LA_ICQ:
+        params.mfx.ICQQuality = custom_params.ICQQuality;
+    case MFX_RATECONTROL_LA:
+        AddCodingOption2();
+        co2.LookAheadDepth = la_depth;
+        break;
+    }
+
     params.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY;
 
     auto& fi = params.mfx.FrameInfo;

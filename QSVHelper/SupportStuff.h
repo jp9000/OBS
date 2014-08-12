@@ -52,7 +52,7 @@ void InitFrame(mfxFrameData &frame, mfxU8 *Y, mfxU8 *UV, mfxU8 *V, mfxU16 pitch)
     frame.Pitch = pitch;
 }
 
-std::vector<mfxU8> InitSEIUserData(bool use_cbr, const mfxVideoParam& params, const mfxVersion& ver)
+std::vector<mfxU8> InitSEIUserData(bool use_cbr, const Parameters& params, const mfxVersion& ver)
 {
 #define TO_STR(x) #x
     static const char *usage_str[] = {
@@ -66,6 +66,24 @@ std::vector<mfxU8> InitSEIUserData(bool use_cbr, const mfxVideoParam& params, co
         TO_STR(MFX_TARGETUSAGE_BEST_SPEED)
     };
 #undef TO_STR
+
+#define RATE_CONTROL(x) {MFX_RATECONTROL_##x, #x}
+    struct
+    {
+        decltype(mfxInfoMFX::RateControlMethod) method;
+        const char* name;
+    } rate_control_str[] = {
+        RATE_CONTROL(CBR),
+        RATE_CONTROL(VBR),
+        RATE_CONTROL(CQP),
+        RATE_CONTROL(AVBR),
+        RATE_CONTROL(LA),
+        RATE_CONTROL(ICQ),
+        RATE_CONTROL(VCM),
+        RATE_CONTROL(LA_ICQ),
+    };
+#undef RATE_CONTROL
+
     using namespace std;
     vector<mfxU8> data;
 
@@ -73,14 +91,59 @@ std::vector<mfxU8> InitSEIUserData(bool use_cbr, const mfxVideoParam& params, co
                            0x90, 0x24, 0x00, 0x50, 0xc2, 0x49, 0x00, 0x48 }; //6d1a26a0-bddc-11e2-9024-0050c2490048
     data.insert(end(data), begin(UUID), end(UUID));
 
+    auto method = params->mfx.RateControlMethod;
+
+    const char *name = "UKNOWN";
+    for (const auto &names : rate_control_str)
+    {
+        if (names.method != method)
+            continue;
+
+        name = names.name;
+        break;
+    }
+
     ostringstream str;
     str << "QSV hardware encoder options:"
-        << " rate control: " << (use_cbr ? "cbr" : "vbr")
-        << "; target bitrate: " << params.mfx.TargetKbps
-        << "; max bitrate: " << params.mfx.MaxKbps
-        << "; buffersize: " << params.mfx.BufferSizeInKB * 8
-        << "; API level: " << ver.Major << "." << ver.Minor
-        << "; Target Usage: " << usage_str[params.mfx.TargetUsage];
+        << " rate control: "        << name;
+    switch (method)
+    {
+    case MFX_RATECONTROL_CBR:
+    case MFX_RATECONTROL_VBR:
+    case MFX_RATECONTROL_VCM:
+        str << "; target bitrate: "  << params->mfx.TargetKbps;
+        if (method != MFX_RATECONTROL_CBR)
+            str << "; max bitrate: " << params->mfx.MaxKbps;
+        str << "; buffersize: "      << params->mfx.BufferSizeInKB * 8;
+        break;
+
+    case MFX_RATECONTROL_AVBR:
+        str << "; target bitrate: "  << params->mfx.TargetKbps
+            << "; accuracy: "        << params->mfx.Accuracy
+            << "; convergence: "     << params->mfx.Convergence;
+        break;
+
+    case MFX_RATECONTROL_CQP:
+        str << "; QPI: "             << params->mfx.QPI
+            << "; QPP: "             << params->mfx.QPP
+            << "; QPB: "             << params->mfx.QPB;
+        break;
+
+    case MFX_RATECONTROL_LA:
+        str << "; target bitrate: "  << params->mfx.TargetKbps
+            << "; look ahead: "      << params.co2.LookAheadDepth;
+        break;
+
+    case MFX_RATECONTROL_ICQ:
+    case MFX_RATECONTROL_LA_ICQ:
+        str << "; ICQQuality: "      << params->mfx.ICQQuality;
+        if (method == MFX_RATECONTROL_LA_ICQ)
+            str << "; look ahead: "  << params.co2.LookAheadDepth;
+        break;
+    }
+    str << "; API level: "           << ver.Major << "." << ver.Minor
+        << "; Target Usage: "        << usage_str[params->mfx.TargetUsage];
+
     string str_(str.str());
 
     data.insert(end(data), begin(str_), end(str_));
