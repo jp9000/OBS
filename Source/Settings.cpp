@@ -16,7 +16,7 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 ********************************************************************************/
 
-
+#define NOMINMAX
 #include "Main.h"
 #include "Settings.h"
 
@@ -125,16 +125,32 @@ void OBS::RemoveSettingsPane(SettingsPane *pane)
     settingsPanes.RemoveItem(pane);
 }
 
+template <class T, class U>
+static inline void saturate(T &t, U val)
+{
+    if (val > std::numeric_limits<T>::max())
+        t = std::numeric_limits<T>::max();
+    else if (val < std::numeric_limits<T>::min())
+        t = std::numeric_limits<T>::min();
+    else
+        t = static_cast<T>(val);
+}
+
 void OBS::AddBuiltInSettingsPanes()
 {
-    AddSettingsPane(new SettingsGeneral());
-    AddSettingsPane(new SettingsEncoding());
-    AddSettingsPane(new SettingsPublish());
-    AddSettingsPane(new SettingsVideo());
-    AddSettingsPane(new SettingsAudio());
-    AddSettingsPane(new SettingsHotkeys());
-    AddSettingsPane(new SettingsAdvanced());
-    numberOfBuiltInSettingsPanes = 7;
+    SettingsPane *panes[] = {
+        new SettingsGeneral(),
+        new SettingsEncoding(),
+        new SettingsPublish(),
+        new SettingsVideo(),
+        new SettingsAudio(),
+        new SettingsHotkeys(),
+        new SettingsAdvanced(),
+    };
+
+    for (auto pane : panes)
+        AddSettingsPane(pane);
+    saturate(numberOfBuiltInSettingsPanes, std::distance(std::begin(panes), std::end(panes)));
 }
 
 void OBS::SetChangedSettings(bool bChanged)
