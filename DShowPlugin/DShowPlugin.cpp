@@ -1250,7 +1250,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 UINT audioDeviceID = CB_ERR;
 
-                if(strDevice.IsValid() && cx > 0 && cy > 0 && frameInterval > 0) {
+                if(strAudioDevice.IsValid() && cx > 0 && cy > 0 && frameInterval > 0) {
                     for(UINT i=0; i < configData->audioNameList.Num(); i++) {
                         if(configData->audioNameList[i].CompareI(strAudioDevice.Array())) {
                             if(configData->audioIDList[i].CompareI(strAudioDeviceID))
