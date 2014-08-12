@@ -1193,7 +1193,7 @@ public:
                    TEXT("\r\n    width: ")        << IntString(width) << TEXT(", height: ") << IntString(height) <<
                    TEXT("\r\n    target-usage: ") << usageStr[target_usage] <<
                    TEXT("\r\n    profile: ")      << qsv_profile_str(profile) <<
-                   TEXT("\r\n    CBR: ")          << CTSTR((bUseCBR) ? TEXT("yes") : TEXT("no")) <<
+                   TEXT("\r\n    CBR: ")          << CTSTR((rate_control == MFX_RATECONTROL_CBR) ? TEXT("yes") : TEXT("no")) <<
                    TEXT("\r\n    CFR: ")          << CTSTR((bUseCFR) ? TEXT("yes") : TEXT("no")) <<
                    TEXT("\r\n    max bitrate: ")  << IntString(max_bitrate) <<
                    TEXT("\r\n    buffer size: ")  << IntString(encode_tasks[0].bs.MaxLength * 8 / 1000) <<
