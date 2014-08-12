@@ -40,6 +40,7 @@
 #define IDD_STATS                       145
 #define IDD_LOGUPLOADED                 147
 #define IDD_SETTINGS_HOTKEYS            149
+#define IDD_SETTINGS_QSV                150
 #define IDC_SETTINGSLIST                1006
 #define IDC_SUBDIALOG                   1007
 #define IDC_MODE                        1008
@@ -270,6 +271,7 @@
 #define IDC_PRIORITY                    1132
 #define IDC_USECBR                      1133
 #define IDC_PADCBR                      1134
+#define IDC_QSVLA                       1135
 #define IDC_NVENCPRESET                 1139
 #define IDC_DISABLECTSADJUST            1140
 #define IDC_USECFR                      1141
@@ -325,6 +327,33 @@
 #define IDC_FILEOUTPUTREPLAYBUFFER      1180
 #define IDC_REPLAYBUFFERMEMORY_STATIC   1181
 #define IDC_REPLAYBUFFERMEMORY          1182
+#define IDC_QSVCBR                      1183
+#define IDC_QSVVBR                      1184
+#define IDC_QSVAVBR                     1185
+#define IDC_TARGETKBPS                  1186
+#define IDC_QSVCQP                      1187
+#define IDC_QSVICQ                      1188
+#define IDC_QSVLAICQ                    1189
+#define IDC_QSVVCM                      1190
+#define IDC_QSVMAXKBPS                  1191
+#define IDC_MAXKBPS                     1191
+#define IDC_ACCURACY_EDIT               1193
+#define IDC_ACCURACY                    1194
+#define IDC_CONVERGENCE_EDIT            1195
+#define IDC_CONVERGENCE                 1196
+#define IDC_QPI_EDIT                    1197
+#define IDC_QPI                         1198
+#define IDC_QPP_EDIT                    1199
+#define IDC_QPP                         1200
+#define IDC_QPB_EDIT                    1201
+#define IDC_QPB                         1202
+#define IDC_LADEPTH_EDIT                1203
+#define IDC_LADEPTH                     1204
+#define IDC_ICQQUALITY_EDIT             1205
+#define IDC_ICQQUALITY                  1206
+#define IDC_USECUSTOMPARAMS             1207
+#define IDC_USEGLOBALBITRATE            1208
+#define IDC_USEGLOBALBUFFERSIZE         1209
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -391,9 +420,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        150
+#define _APS_NEXT_RESOURCE_VALUE        151
 #define _APS_NEXT_COMMAND_VALUE         40081
-#define _APS_NEXT_CONTROL_VALUE         1183
+#define _APS_NEXT_CONTROL_VALUE         1208
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

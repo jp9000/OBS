@@ -305,6 +305,7 @@
     <ClCompile Include="Source\SettingsGeneral.cpp" />
     <ClCompile Include="Source\SettingsHotkeys.cpp" />
     <ClCompile Include="Source\SettingsPublish.cpp" />
+    <ClCompile Include="Source\SettingsQSV.cpp" />
     <ClCompile Include="Source\SettingsVideo.cpp" />
     <ClCompile Include="Source\TextOutputSource.cpp" />
     <ClCompile Include="Source\Updater.cpp" />

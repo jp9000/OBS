@@ -157,6 +157,9 @@
     <ClCompile Include="Source\ReplayBuffer.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Source\SettingsQSV.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\D3D10System.h">

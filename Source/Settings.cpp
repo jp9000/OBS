@@ -155,6 +155,13 @@ void OBS::AddBuiltInSettingsPanes()
 
 void OBS::AddEncoderSettingsPanes()
 {
+    SettingsPane *panes[] = {
+        new SettingsQSV(),
+    };
+
+    for (auto pane : panes)
+        AddSettingsPane(pane);
+    saturate(numberOfEncoderSettingsPanes, std::distance(std::begin(panes), std::end(panes)));
 }
 
 void OBS::SetChangedSettings(bool bChanged)
