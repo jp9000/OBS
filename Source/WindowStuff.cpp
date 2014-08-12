@@ -2590,7 +2590,7 @@ void OBS::ResetProfileMenu()
 void OBS::DisableMenusWhileStreaming(bool disable)
 {
     HMENU hmenuMain = GetMenu(hwndMain);
-    HMENU hmenuHelp = GetSubMenu(hmenuMain, 3);
+    HMENU hmenuHelp = GetSubMenu(hmenuMain, 4);
 
     EnableMenuItem(hmenuMain, 2, (!disable ? MF_ENABLED : MF_DISABLED) | MF_BYPOSITION);
     EnableMenuItem(hmenuMain, 3, (!disable ? MF_ENABLED : MF_DISABLED) | MF_BYPOSITION);
@@ -2679,7 +2679,7 @@ void OBS::ResetLogUploadMenu()
     }
 
     HMENU hmenuMain = GetMenu(hwndMain);
-    HMENU hmenuHelp = GetSubMenu(hmenuMain, 3);
+    HMENU hmenuHelp = GetSubMenu(hmenuMain, 4);
     HMENU hmenuUpload = GetSubMenu(hmenuHelp, 3);
 
     while (DeleteMenu(hmenuUpload, 2, MF_BYPOSITION));
@@ -2711,7 +2711,7 @@ void OBS::ResetLogUploadMenu()
 String GetLogUploadMenuItem(UINT item)
 {
     HMENU hmenuMain = GetMenu(hwndMain);
-    HMENU hmenuHelp = GetSubMenu(hmenuMain, 3);
+    HMENU hmenuHelp = GetSubMenu(hmenuMain, 4);
     HMENU hmenuLog = GetSubMenu(hmenuHelp, 3);
 
     MENUITEMINFO mii;
