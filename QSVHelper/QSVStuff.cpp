@@ -94,7 +94,7 @@ void Parameters::Init(mfxU16 target_usage, mfxU16 profile, int fps, int keyframe
     params.mfx.TargetKbps = use_custom_params ? custom_params.TargetKbps : saturate<mfxU16>(max_bitrate);
     params.mfx.BufferSizeInKB = use_custom_params ? custom_params.BufferSizeInKB : buffer_size / 8;
 
-    params.mfx.RateControlMethod = use_cbr ? MFX_RATECONTROL_CBR : use_custom_params ? custom_params.RateControlMethod : MFX_RATECONTROL_VBR;
+    params.mfx.RateControlMethod = use_custom_params ? custom_params.RateControlMethod : use_cbr ? MFX_RATECONTROL_CBR : MFX_RATECONTROL_VBR;
     switch (params.mfx.RateControlMethod)
     {
     case MFX_RATECONTROL_VBR:
