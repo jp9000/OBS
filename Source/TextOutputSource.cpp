@@ -20,9 +20,12 @@
 #include "Main.h"
 
 #include <memory>
+#include <deque>
+#include "Utility\RAIIHelpers.h"
 
 #include <gdiplus.h>
 
+#include "HTTPClient.h"
 
 #define ClampVal(val, minVal, maxVal) \
     if(val < minVal) val = minVal; \
@@ -34,6 +37,12 @@ inline DWORD GetAlphaVal(UINT opacityLevel)
     return ((opacityLevel*255/100)&0xFF) << 24;
 }
 
+enum TextSourceMode
+{
+    TextMode_File,
+    TextMode_Text,
+    TextMode_Web
+};
 
 class TextOutputSource : public ImageSource
 {
@@ -46,7 +55,14 @@ class TextOutputSource : public ImageSource
 
     int         mode;
     String      strText;
-    String      strFile;
+    String      strFile;    
+    
+    String      strWebAddress;
+    int         webRequestDelay;
+    float       currentWebRequestTime;
+    std::deque<AsyncWebRequestResult> webResults;
+    HANDLE      webResultsMutex;
+    HANDLE      webThread;
 
     String      strFont;
     int         size;
@@ -143,6 +159,35 @@ class TextOutputSource : public ImageSource
         return hFont;
     }
 
+    static void CALLBACK WebCallback(const AsyncWebRequestResult& result, PVOID pContext)
+    {
+        TextOutputSource *source = reinterpret_cast<TextOutputSource*>(pContext);
+        
+        ScopedLock g(source->webResultsMutex);
+        source->webResults.emplace_back(result);
+    }
+
+    void RequestTextFromWeb()
+    {
+        if (!strWebAddress.IsValid())
+        {
+            Log(TEXT("Web Text Source: invalid address: Empty"));
+            return;
+        }
+
+        if (strWebAddress.Length() > 7)
+        {
+            assert(webThread == nullptr);
+            
+            webThread = HTTPGetStringAsync(strWebAddress, WebCallback, this);
+        }
+
+        else
+        {
+            Log(TEXT("Web Text Source: invalid address: %s"), strWebAddress);
+        }
+    }
+
     void UpdateCurrentText()
     {
         if(bMonitoringFileChanges)
@@ -153,13 +198,13 @@ class TextOutputSource : public ImageSource
             bMonitoringFileChanges = false;
         }
 
-        if(mode == 0)
+        if (mode == TextMode_Text)
             strCurrentText = strText;
 
-        else if(mode == 1 && strFile.IsValid())
+        else if (mode == TextMode_File && strFile.IsValid())
         {
             XFile textFile;
-            if(textFile.Open(strFile, XFILE_READ | XFILE_SHARED, XFILE_OPENEXISTING))
+            if (textFile.Open(strFile, XFILE_READ | XFILE_SHARED, XFILE_OPENEXISTING))
             {
                 textFile.ReadFileToString(strCurrentText);
             }
@@ -172,6 +217,12 @@ class TextOutputSource : public ImageSource
             if (fileChangeMonitor = OSMonitorFileStart (strFile))
                 bMonitoringFileChanges = true;
         }
+
+        else if (mode == TextMode_Web)
+        {
+            // We can't update this here...
+        }
+
         else
             strCurrentText = TEXT("");
     }
@@ -499,6 +550,13 @@ public:
         this->data = data;
         UpdateSettings();
 
+        // Scene items are re-created every time its visibility is toggled.
+        // This delay prevents users from creating a lot of requests if they are toggling fast.
+        currentWebRequestTime = webRequestDelay - 1.0f;
+
+        webThread = nullptr;
+        webResultsMutex = OSCreateMutex();
+
         SamplerInfo si;
         zero(&si, sizeof(si));
         si.addressU = GS_ADDRESS_REPEAT;
@@ -509,6 +567,22 @@ public:
         globalOpacity = 100;
 
         Log(TEXT("Using text output"));
+    }
+
+    virtual void EndScene() override
+    {
+        if (webThread)
+        {
+            // If the user hides or deletes this scene item right after a web request has been sent,
+            // the request still has to complete its procedure as the callback function can not be detached
+            // or run independently, or without this object for that matter.
+            // The problem with this is that it causes the whole stream to pause for this period.
+            DWORD val;
+            OSWaitForThread(webThread, &val);
+
+            OSCloseThread(webThread);
+            webThread = nullptr;
+        }
     }
 
     ~TextOutputSource()
@@ -525,6 +599,8 @@ public:
         {
             OSMonitorFileDestroy(fileChangeMonitor);
         }
+
+        OSCloseMutex(webResultsMutex);
     }
 
     void Preprocess()
@@ -533,6 +609,42 @@ public:
         {
             if (OSFileHasChanged(fileChangeMonitor))
                 bUpdateTexture = true;
+        }
+
+        if(mode == TextMode_Web)
+        {
+            if(currentWebRequestTime > webRequestDelay)
+            {
+                currentWebRequestTime = 0.0f;
+                RequestTextFromWeb();
+            }
+
+            if(webResults.size() > 0)
+            {
+                assert(webThread != nullptr);
+
+                if (webThread)
+                {
+                    OSCloseThread(webThread);
+                    webThread = nullptr;
+                }
+
+                const auto& req = webResults.front();
+
+                if(req.nCode == 200)
+                {
+                    strCurrentText = req.strResult;
+                    bUpdateTexture = true;
+                }
+
+                else
+                {
+                    Log(TEXT("Web Text Source: Request response code not 200: %i"), req.nCode);
+                }
+
+                ScopedLock g(webResultsMutex);
+                webResults.clear();
+            }
         }
 
         if(bUpdateTexture)
@@ -551,6 +663,11 @@ public:
                 scrollValue -= 1.0f;
             while(scrollValue < -1.0f)
                 scrollValue += 1.0f;
+        }
+
+        if(mode == TextMode_Web)
+        {
+            currentWebRequestTime += fSeconds;
         }
 
         if(showExtentTime > 0.0f)
@@ -672,9 +789,12 @@ public:
         extentWidth = data->GetInt(TEXT("extentWidth"), 0);
         extentHeight= data->GetInt(TEXT("extentHeight"), 0);
         align       = data->GetInt(TEXT("align"), 0);
+        mode        = data->GetInt(TEXT("mode"), 0);
         strFile     = data->GetString(TEXT("file"));
         strText     = data->GetString(TEXT("text"));
-        mode        = data->GetInt(TEXT("mode"), 0);
+        strWebAddress  = data->GetString(TEXT("webAddr"));
+        webRequestDelay = data->GetInt(TEXT("webReqDelay"), 20);
+        
         bUsePointFiltering = data->GetInt(TEXT("pointFiltering"), 0) != 0;
 
         baseSize.x  = data->GetFloat(TEXT("baseSizeCX"), 100);
@@ -699,6 +819,8 @@ public:
             strText = lpVal;
         else if(scmpi(lpName, TEXT("file")) == 0)
             strFile = lpVal;
+        else if(scmpi(lpName, TEXT("webAddr")) == 0)
+            strWebAddress = lpVal;
 
         bUpdateTexture = true;
     }
@@ -755,6 +877,9 @@ public:
             backgroundColor = iValue;
         else if(scmpi(lpName, TEXT("backgroundOpacity")) == 0)
             backgroundOpacity = iValue;
+        
+        else if (scmpi(lpName, TEXT("webReqDelay")) == 0)
+            webRequestDelay = iValue;
 
         bUpdateTexture = true;
     }
@@ -928,6 +1053,9 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                 SendMessage(GetDlgItem(hwnd, IDC_OUTLINEOPACITY), UDM_SETRANGE32, 0, 100);
                 SendMessage(GetDlgItem(hwnd, IDC_OUTLINEOPACITY), UDM_SETPOS32, 0, data->GetInt(TEXT("outlineOpacity"), 100));
 
+                SendMessage(GetDlgItem(hwnd, IDC_WEBREQUESTDELAY), UDM_SETRANGE32, 1, 99999999);
+                SendMessage(GetDlgItem(hwnd, IDC_WEBREQUESTDELAY), UDM_SETPOS32, 0, data->GetInt(TEXT("webReqDelay"), 20));
+
                 //-----------------------------------------
 
                 bChecked = data->GetInt(TEXT("useTextExtents"), 0) != 0;
@@ -967,16 +1095,45 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
                 //-----------------------------------------
 
-                BOOL bUseFile = data->GetInt(TEXT("mode"), 0) == 1;
-                SendMessage(GetDlgItem(hwnd, IDC_USEFILE), BM_SETCHECK, bUseFile ? BST_CHECKED : BST_UNCHECKED, 0);
-                SendMessage(GetDlgItem(hwnd, IDC_USETEXT), BM_SETCHECK, bUseFile ? BST_UNCHECKED : BST_CHECKED, 0);
+                int mode = data->GetInt(TEXT("mode"), 0);
 
-                SetWindowText(GetDlgItem(hwnd, IDC_TEXT), data->GetString(TEXT("text")));
-                SetWindowText(GetDlgItem(hwnd, IDC_FILE), data->GetString(TEXT("file")));
+                EnableWindow(GetDlgItem(hwnd, IDC_FILE), FALSE);
+                EnableWindow(GetDlgItem(hwnd, IDC_BROWSE), FALSE);
+                EnableWindow(GetDlgItem(hwnd, IDC_TEXT), FALSE);
+                EnableWindow(GetDlgItem(hwnd, IDC_WEBADDR), FALSE);
+                EnableWindow(GetDlgItem(hwnd, IDC_WEBREQUESTDELAY), FALSE);
+                EnableWindow(GetDlgItem(hwnd, IDC_WEBREQUESTDELAY_EDIT), FALSE);
 
-                EnableWindow(GetDlgItem(hwnd, IDC_TEXT), !bUseFile);
-                EnableWindow(GetDlgItem(hwnd, IDC_FILE), bUseFile);
-                EnableWindow(GetDlgItem(hwnd, IDC_BROWSE), bUseFile);
+                switch (mode)
+                {
+                    case TextMode_File:
+                    {
+                        SendMessage(GetDlgItem(hwnd, IDC_USEFILE), BM_SETCHECK, BST_CHECKED, 0);
+                        SetWindowText(GetDlgItem(hwnd, IDC_FILE), data->GetString(TEXT("file")));
+                        EnableWindow(GetDlgItem(hwnd, IDC_FILE), TRUE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_BROWSE), TRUE);
+                        break;
+                    }
+
+                    case TextMode_Text:
+                    {
+                        SendMessage(GetDlgItem(hwnd, IDC_USETEXT), BM_SETCHECK, BST_CHECKED, 0);
+                        SetWindowText(GetDlgItem(hwnd, IDC_TEXT), data->GetString(TEXT("text")));
+                        EnableWindow(GetDlgItem(hwnd, IDC_TEXT), TRUE);
+                        break;
+                    }
+                    
+                    case TextMode_Web:
+                    {
+                        SendMessage(GetDlgItem(hwnd, IDC_USEWEB), BM_SETCHECK, BST_CHECKED, 0);
+                        SetWindowText(GetDlgItem(hwnd, IDC_WEBADDR), data->GetString(TEXT("webAddr")));
+                        
+                        EnableWindow(GetDlgItem(hwnd, IDC_WEBADDR), TRUE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_WEBREQUESTDELAY), TRUE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_WEBREQUESTDELAY_EDIT), TRUE);
+                        break;
+                    }
+                }                
 
                 bInitializedDialog = true;
 
@@ -1156,6 +1313,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
                 case IDC_FILE:
                 case IDC_TEXT:
+                case IDC_WEBADDR:
                     if(HIWORD(wParam) == EN_CHANGE && bInitializedDialog)
                     {
                         String strText = GetEditText((HWND)lParam);
@@ -1169,6 +1327,7 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                             {
                                 case IDC_FILE: source->SetString(TEXT("file"), strText); break;
                                 case IDC_TEXT: source->SetString(TEXT("text"), strText); break;
+                                case IDC_WEBADDR: source->SetString(TEXT("webAddr"), strText); break;
                             }
                         }
                     }
@@ -1177,29 +1336,53 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                 case IDC_USEFILE:
                     if(HIWORD(wParam) == BN_CLICKED && bInitializedDialog)
                     {
-                        EnableWindow(GetDlgItem(hwnd, IDC_TEXT), FALSE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_WEBADDR), FALSE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_WEBREQUESTDELAY), FALSE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_WEBREQUESTDELAY_EDIT), FALSE);
                         EnableWindow(GetDlgItem(hwnd, IDC_FILE), TRUE);
                         EnableWindow(GetDlgItem(hwnd, IDC_BROWSE), TRUE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_TEXT), FALSE);
 
                         ConfigTextSourceInfo *configInfo = (ConfigTextSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
                         ImageSource *source = API->GetSceneImageSource(configInfo->lpName);
                         if(source)
-                            source->SetInt(TEXT("mode"), 1);
+                            source->SetInt(TEXT("mode"), TextMode_File);
                     }
                     break;
 
                 case IDC_USETEXT:
                     if(HIWORD(wParam) == BN_CLICKED && bInitializedDialog)
                     {
-                        EnableWindow(GetDlgItem(hwnd, IDC_TEXT), TRUE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_WEBADDR), FALSE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_WEBREQUESTDELAY), FALSE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_WEBREQUESTDELAY_EDIT), FALSE);
                         EnableWindow(GetDlgItem(hwnd, IDC_FILE), FALSE);
                         EnableWindow(GetDlgItem(hwnd, IDC_BROWSE), FALSE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_TEXT), TRUE);
 
                         ConfigTextSourceInfo *configInfo = (ConfigTextSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
                         if(!configInfo) break;
                         ImageSource *source = API->GetSceneImageSource(configInfo->lpName);
                         if(source)
-                            source->SetInt(TEXT("mode"), 0);
+                            source->SetInt(TEXT("mode"), TextMode_Text);
+                    }
+                    break;
+
+                case IDC_USEWEB:
+                    if (HIWORD(wParam) == BN_CLICKED && bInitializedDialog)
+                    {
+                        EnableWindow(GetDlgItem(hwnd, IDC_WEBADDR), TRUE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_WEBREQUESTDELAY), TRUE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_WEBREQUESTDELAY_EDIT), TRUE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_FILE), FALSE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_BROWSE), FALSE);
+                        EnableWindow(GetDlgItem(hwnd, IDC_TEXT), FALSE);
+
+                        ConfigTextSourceInfo *configInfo = (ConfigTextSourceInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
+                        if (!configInfo) break;
+                        ImageSource *source = API->GetSceneImageSource(configInfo->lpName);
+                        if (source)
+                            source->SetInt(TEXT("mode"), TextMode_Web);
                     }
                     break;
 
@@ -1246,10 +1429,26 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                         BOOL bUseOutline = SendMessage(GetDlgItem(hwnd, IDC_USEOUTLINE), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         float outlineSize = (float)SendMessage(GetDlgItem(hwnd, IDC_OUTLINETHICKNESS), UDM_GETPOS32, 0, 0);
 
-                        int mode = SendMessage(GetDlgItem(hwnd, IDC_USEFILE), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        int webRequestDelay = SendMessage(GetDlgItem(hwnd, IDC_WEBREQUESTDELAY), UDM_GETPOS32, 0, 0);
+
+                        int mode;
+
+                        if (SendMessage(GetDlgItem(hwnd, IDC_USETEXT), BM_GETCHECK, 0, 0) == BST_CHECKED)
+                        {
+                            mode = TextMode_Text;
+                        }                        
+                        else if (SendMessage(GetDlgItem(hwnd, IDC_USEFILE), BM_GETCHECK, 0, 0) == BST_CHECKED)
+                        {
+                            mode = TextMode_File;
+                        }
+                        else if (SendMessage(GetDlgItem(hwnd, IDC_USEWEB), BM_GETCHECK, 0, 0) == BST_CHECKED)
+                        {
+                            mode = TextMode_Web;
+                        }
 
                         String strText = GetEditText(GetDlgItem(hwnd, IDC_TEXT));
                         String strFile = GetEditText(GetDlgItem(hwnd, IDC_FILE));
+                        String strWebAddr = GetEditText(GetDlgItem(hwnd, IDC_WEBADDR));
 
                         UINT extentWidth  = (UINT)SendMessage(GetDlgItem(hwnd, IDC_EXTENTWIDTH),  UDM_GETPOS32, 0, 0);
                         UINT extentHeight = (UINT)SendMessage(GetDlgItem(hwnd, IDC_EXTENTHEIGHT), UDM_GETPOS32, 0, 0);
@@ -1279,6 +1478,39 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                             break;
                         }
 
+                        if(mode == TextMode_Web)
+                        {
+                            if(strWebAddr.IsValid())
+                            {
+                                if(strWebAddr.Length() < 7)
+                                {
+                                    String strError = Str("Sources.TextSource.WebAddressInvalid");
+                                    strError.FindReplace(TEXT("$1"), strWebAddr);
+
+                                    OBSMessageBox(hwnd, strError, NULL, 0);
+                                    SetFocus(GetDlgItem(hwnd, IDC_WEBADDR));
+                                    break;
+                                }
+
+                                if(strWebAddr.Left(4).MakeLower() != "http")
+                                {
+                                    String strError = Str("Sources.TextSource.WebAddressInvalid");
+                                    strError.FindReplace(TEXT("$1"), strWebAddr);
+
+                                    OBSMessageBox(hwnd, strError, NULL, 0);
+                                    SetFocus(GetDlgItem(hwnd, IDC_WEBADDR));
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                String strError = Str("Sources.TextSource.WebAddressEmpty");
+                                OBSMessageBox(hwnd, strError, NULL, 0);
+                                SetFocus(GetDlgItem(hwnd, IDC_WEBADDR));
+                                break;
+                            }
+                        }
+
                         if(bUseTextExtents)
                         {
                             configInfo->cx = float(extentWidth);
@@ -1287,9 +1519,9 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                         else
                         {
                             String strOutputText;
-                            if(mode == 0)
+                            if(mode == TextMode_Text)
                                 strOutputText = strText;
-                            else if(mode == 1)
+                            else if(mode == TextMode_File)
                             {
                                 XFile textFile;
                                 if(strFile.IsEmpty() || !textFile.Open(strFile, XFILE_READ | XFILE_SHARED, XFILE_OPENEXISTING))
@@ -1302,6 +1534,14 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                                 }
 
                                 textFile.ReadFileToString(strOutputText);
+                            }
+
+                            else if(mode == TextMode_Web)
+                            {
+                                // TODO:
+                                // Set correct bounding box dimensions when text has been changed?
+                                // For now, this is the base dimensions even when the text has changed.
+                                strOutputText = TEXT("WEB TEXT");
                             }
 
                             LOGFONT lf;
@@ -1400,6 +1640,8 @@ INT_PTR CALLBACK ConfigureTextProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
                         data->SetInt(TEXT("align"), (int)SendMessage(GetDlgItem(hwnd, IDC_ALIGN), CB_GETCURSEL, 0, 0));
                         data->SetString(TEXT("file"), strFile);
                         data->SetString(TEXT("text"), strText);
+                        data->SetString(TEXT("webAddr"), strWebAddr);
+                        data->SetInt(TEXT("webReqDelay"), webRequestDelay);
                         data->SetInt(TEXT("mode"), mode);
                     }
 
