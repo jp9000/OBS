@@ -940,8 +940,6 @@ BEGIN
         MENUITEM "MainMenu.Settings.AlwaysOnTop", ID_ALWAYSONTOP
         MENUITEM "MainMenu.Settings.FullscreenMode", ID_FULLSCREENMODE
         MENUITEM SEPARATOR
-        MENUITEM "MainMenu.Settings.ShowLogWindow", ID_SHOWLOG
-        MENUITEM SEPARATOR
         MENUITEM "MainMenu.Settings.OpenConfigFolder", ID_SETTINGS_OPENCONFIGFOLDER
     END
     POPUP "MainMenu.Profiles"
@@ -965,6 +963,7 @@ BEGIN
         MENUITEM "MainMenu.Help.VisitWebsite",  ID_HELP_VISITWEBSITE
         MENUITEM "MainMenu.Help.Contents",      ID_HELP_CONTENTS
         MENUITEM SEPARATOR
+        MENUITEM "MainMenu.Settings.ShowLogWindow", ID_SHOWLOG
         POPUP "MainMenu.Help.LogFiles"
         BEGIN
             MENUITEM "MainMenu.Help.AnalyzeCurrentLog", ID_HELP_ANALYZE_CURRENT_LOG, INACTIVE
