@@ -99,7 +99,7 @@ MainMenu.File.Exit="E&xit"
 MainMenu.File.OpenRecordingsFolder="Open &Recordings Folder"
 MainMenu.File.Save="&Save"
 
-MainMenu.Help.Contents="&Contents"
+MainMenu.Help.OpenHelp="Open Help Page"
 MainMenu.Help.VisitWebsite="Visit Website"
 MainMenu.Help.CheckForUpdates="Check for &updates"
 
@@ -178,7 +178,7 @@ Settings.QSV.ICQQuality="ICQQuality:"
 Settings.Hotkeys.Audio="Audio"
 Settings.Hotkeys.Publish="Broadcast"
 
-Settings.Advanced.AutomaticLatency="Automatic low latency mode:"
+Settings.Advanced.AutomaticLatency="Automatic low latency mode"
 Settings.Advanced.AllowOtherHotkeyModifiers="Allow other modifiers on hotkeys"
 Settings.Advanced.BindToIP="Bind To Interface:"
 Settings.Advanced.DisablePreviewEncoding="Disable encoding while previewing"
