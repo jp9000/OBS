@@ -99,7 +99,7 @@ MainMenu.File.Exit="E&xit"
 MainMenu.File.OpenRecordingsFolder="Open &Recordings Folder"
 MainMenu.File.Save="&Save"
 
-MainMenu.Help.Contents="&Contents"
+MainMenu.Help.OpenHelp="Open Help Page"
 MainMenu.Help.VisitWebsite="Visit Website"
 MainMenu.Help.CheckForUpdates="Check for &updates"
 

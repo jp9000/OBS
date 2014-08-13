@@ -85,7 +85,7 @@ MainMenu.File.Exit="&Beenden"
 MainMenu.File.OpenRecordingsFolder="Öffne &Aufnahmenordner"
 MainMenu.File.Save="&Speichern"
 
-MainMenu.Help.Contents="&Inhalt"
+MainMenu.Help.OpenHelp="Hilfe öffnen"
 MainMenu.Help.VisitWebsite="Webseite besuchen"
 MainMenu.Help.CheckForUpdates="Nach &Updates suchen"
 
