@@ -98,7 +98,7 @@ Function PreReqCheck
 	
 	;XINPUT Check (not present on server OSes)
 	GetDLLVersion "xinput9_1_0.dll" $R0 $R1
-	IfErrors xinputMissing dxOK
+	IfErrors xinputMissing xinputOK
 	xinputMissing:
 		MessageBox MB_YESNO|MB_ICONEXCLAMATION "Your system is missing XINPUT components (xinput_9_1_0.dll). This may happen if you are running on a Windows Server OS. Would you like to download the required files from a 3rd party website?" IDYES xinputtrue IDNO xinputfalse
 		xinputtrue:
