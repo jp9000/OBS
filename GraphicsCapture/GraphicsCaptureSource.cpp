@@ -799,9 +799,10 @@ void GraphicsCaptureSource::Tick(float fSeconds)
         }
     }
 
+    captureCheckInterval += fSeconds;
+
     if(!bCapturing && !bErrorAcquiring)
     {
-        captureCheckInterval += fSeconds;
         if ((!bUseHotkey && captureCheckInterval >= 3.0f) ||
             (bUseHotkey && hwndNextTarget != NULL))
         {
@@ -829,6 +830,14 @@ void GraphicsCaptureSource::Tick(float fSeconds)
         } else if (bUseHotkey && hwndNextTarget && hwndNextTarget != hwndTarget) {
             Log(TEXT("Capture hotkey triggered for new window, terminating capture"));
             EndCapture();
+        } else if (captureCheckInterval >= 5.0f) {
+            //expensive check, only run it every 5 seconds
+            DWORD processID;
+            if (GetWindowThreadProcessId(hwndCapture, &processID) && processID != targetProcessID) {
+                Log(TEXT("Capture window 0x%08lX changed owner to process %d (trying to capture %d), terminating capture"), DWORD(hwndCapture), processID, targetProcessID);
+                EndCapture();
+            }
+            captureCheckInterval = 0.0f;
         } else {
             hwndNextTarget = NULL;
         }
