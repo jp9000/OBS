@@ -314,6 +314,42 @@ bool STDCALL SleepTo100NS(QWORD qw100NSTime)
 #define LOGLONGFRAMESDEFAULT 0
 #endif
 
+UINT OBS::FlushBufferedVideo()
+{
+    UINT framesFlushed = 0;
+
+    if (bufferedVideo.Num())
+    {
+        QWORD startTime = GetQPCTimeMS();
+        DWORD baseTimestamp = bufferedVideo[0].timestamp;
+        DWORD lastTimestamp = bufferedVideo.Last().timestamp;
+
+        Log(TEXT("FlushBufferedVideo: Flushing %d packets over %d ms"), bufferedVideo.Num(), (lastTimestamp - baseTimestamp));
+
+        for (UINT i = 0; i<bufferedVideo.Num(); i++)
+        {
+            //we measure our own time rather than sleep between frames due to potential sleep drift
+            QWORD curTime;
+
+            curTime = GetQPCTimeMS();
+            while (curTime - startTime < bufferedVideo[i].timestamp - baseTimestamp)
+            {
+                OSSleep(1);
+                curTime = GetQPCTimeMS();
+            }
+
+            SendFrame(bufferedVideo[i], firstFrameTimestamp);
+            bufferedVideo[i].Clear();
+
+            framesFlushed++;
+        }
+
+        bufferedVideo.Clear();
+    }
+
+    return framesFlushed;
+}
+
 void OBS::EncodeLoop()
 {
     QWORD streamTimeStart = GetQPCTimeNS();
@@ -409,33 +445,12 @@ void OBS::EncodeLoop()
             bufferedFrames = videoEncoder->HasBufferedFrames();
     }
 
+    //if (bTestStream)
+    //    bufferedVideo.Clear();
+
     //flush all video frames in the "scene buffering time" buffer
-    if (firstFrameTimestamp && bufferedVideo.Num())
-    {
-        QWORD startTime = GetQPCTimeMS();
-        DWORD baseTimestamp = bufferedVideo[0].timestamp;
-        DWORD lastTimestamp = bufferedVideo.Last().timestamp;
-
-        for(UINT i=0; i<bufferedVideo.Num(); i++)
-        {
-            //we measure our own time rather than sleep between frames due to potential sleep drift
-            QWORD curTime;
-
-            curTime = GetQPCTimeMS();
-            while (curTime - startTime < bufferedVideo[i].timestamp - baseTimestamp)
-            {
-                OSSleep (1);
-                curTime = GetQPCTimeMS();
-            }
-
-            SendFrame(bufferedVideo[i], firstFrameTimestamp);
-            bufferedVideo[i].Clear();
-
-            numTotalFrames++;
-        }
-
-        bufferedVideo.Clear();
-    }
+    if (firstFrameTimestamp)
+        numTotalFrames += FlushBufferedVideo();
 
     Log(TEXT("Total frames encoded: %d, total frames duplicated: %d (%0.2f%%)"), numTotalFrames, numTotalDuplicatedFrames, (numTotalFrames > 0) ? (double(numTotalDuplicatedFrames)/double(numTotalFrames))*100.0 : 0.0f);
     if (numFramesSkipped)

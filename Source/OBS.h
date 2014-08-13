@@ -803,6 +803,7 @@ private:
     bool BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, DWORD out_pts, QWORD firstFrameTime, VideoSegment &segmentOut);
     void SendFrame(VideoSegment &curSegment, QWORD firstFrameTime);
     bool ProcessFrame(FrameProcessInfo &frameInfo);
+    UINT FlushBufferedVideo();
     void EncodeLoop();  
     void MainCaptureLoop();
 
