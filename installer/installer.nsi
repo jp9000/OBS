@@ -96,6 +96,18 @@ Function PreReqCheck
 	dxOK:
 	ClearErrors
 	
+	;XINPUT Check (not present on server OSes)
+	GetDLLVersion "xinput9_1_0.dll" $R0 $R1
+	IfErrors xinputMissing dxOK
+	xinputMissing:
+		MessageBox MB_YESNO|MB_ICONEXCLAMATION "Your system is missing XINPUT components (xinput_9_1_0.dll). This may happen if you are running on a Windows Server OS. Would you like to download the required files from a 3rd party website?" IDYES xinputtrue IDNO xinputfalse
+		xinputtrue:
+			ExecShell "open" "http://www.win2012workstation.com/xinput-and-xaudio-dlls/"
+		xinputfalse:
+		Quit
+	xinputOK:
+	ClearErrors	
+	
 	; Check previous instance
 	System::Call 'kernel32::OpenMutexW(i 0x100000, b 0, w "OBSMutex") i .R0'
 	IntCmp $R0 0 notRunning
