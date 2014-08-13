@@ -788,6 +788,10 @@ BOOL   STDCALL OSGetLoadedModuleList(HANDLE hProcess, StringList &ModuleList)
                     *p = 0;
                     p++;
                 }
+                else
+                {
+                    p = szFileName;
+                }
 
                 slwr (p);
                 ModuleList << p;
