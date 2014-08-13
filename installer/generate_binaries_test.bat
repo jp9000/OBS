@@ -23,7 +23,6 @@ mkdir 64bit\plugins\PSVPlugin\locale
 
 copy ..\release\obs.exe .\32bit\
 copy ..\obsapi\release\obsapi.dll .\32bit\
-copy ..\OBSHelp\OBSHelp.chm .\32bit\
 copy ..\rundir\services.xconfig .\32bit\
 copy ..\rundir\pdb32\OBS.pdb .\32bit\
 copy ..\rundir\pdb32\OBSApi.pdb .\32bit\
@@ -51,7 +50,6 @@ copy "%WindowsSDK80Path%Debuggers\x86\dbghelp.dll" .\32bit
 
 copy ..\x64\release\obs.exe .\64bit\
 copy ..\obsapi\x64\release\obsapi.dll .\64bit\
-copy ..\OBSHelp\OBSHelp.chm .\64bit\
 copy ..\rundir\services.xconfig .\64bit\
 copy ..\rundir\pdb64\OBS.pdb .\64bit\
 copy ..\rundir\pdb64\OBSApi.pdb .\64bit\
