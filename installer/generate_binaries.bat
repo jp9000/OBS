@@ -28,7 +28,6 @@ mkdir pdbs\64bit
 copy ..\COPYING .\32bit\LICENSE
 copy ..\release\obs.exe .\32bit\
 copy ..\obsapi\release\obsapi.dll .\32bit\
-copy ..\OBSHelp\OBSHelp.chm .\32bit\
 copy ..\rundir\services.xconfig .\32bit\
 copy ..\rundir\pdb32\stripped\*.pdb .\32bit\
 copy ..\rundir\locale\*.txt .\32bit\locale\
@@ -52,7 +51,6 @@ copy "%WindowsSDK80Path%Debuggers\x86\dbghelp.dll" .\32bit
 copy ..\COPYING .\64bit\LICENSE
 copy ..\x64\release\obs.exe .\64bit\
 copy ..\obsapi\x64\release\obsapi.dll .\64bit\
-copy ..\OBSHelp\OBSHelp.chm .\64bit\
 copy ..\rundir\services.xconfig .\64bit\
 copy ..\rundir\pdb64\stripped\*.pdb .\64bit\
 copy ..\rundir\locale\*.txt .\64bit\locale\
@@ -137,7 +135,6 @@ copy 64bit\plugins\psvplugin\locale\*.txt .\upload\PSVPlugin\64bit\PSVPlugin\loc
 
 copy 32bit\obs.exe .\upload\OBS\32bit\
 copy 32bit\obsapi.dll .\upload\OBS\32bit\
-copy 32bit\OBSHelp.chm .\upload\OBS\32bit\
 copy 32bit\*.pdb .\upload\OBS\32bit\
 copy 32bit\libx264-142.dll .\upload\OBS\32bit
 copy 32bit\QSVHelper.exe .\upload\OBS\32bit
@@ -146,7 +143,6 @@ copy "%WindowsSDK80Path%Debuggers\x86\dbghelp.dll" .\upload\OBS\32bit
 
 copy 64bit\obs.exe .\upload\OBS\64bit\
 copy 64bit\obsapi.dll .\upload\OBS\64bit\
-copy 64bit\OBSHelp.chm .\upload\OBS\64bit\
 copy 64bit\*.pdb .\upload\OBS\64bit\
 copy 64bit\libx264-142.dll .\upload\OBS\64bit
 copy 64bit\QSVHelper.exe .\upload\OBS\64bit

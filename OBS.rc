@@ -961,7 +961,7 @@ BEGIN
     POPUP "MainMenu.Help"
     BEGIN
         MENUITEM "MainMenu.Help.VisitWebsite",  ID_HELP_VISITWEBSITE
-        MENUITEM "MainMenu.Help.Contents",      ID_HELP_CONTENTS
+        MENUITEM "MainMenu.Help.OpenHelp",      ID_HELP_OPENHELP
         MENUITEM SEPARATOR
         MENUITEM "MainMenu.Settings.ShowLogWindow", ID_SHOWLOG
         POPUP "MainMenu.Help.LogFiles"

@@ -371,7 +371,7 @@
 #define ID_MAINMENU_MAINMENU40034       40034
 #define ID_SETTINGS_OPENCONFIGFOLDER    40035
 #define ID_SETTINGS_OPENLOGFOLDER       40036
-#define ID_HELP_CONTENTS                40037
+#define ID_HELP_OPENHELP                40037
 #define ID_HELP_ABOUT                   40038
 #define ID_FILE_EXIT                    40039
 #define ID_SETTINGS_SETTINGS            40041

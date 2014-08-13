@@ -3073,17 +3073,8 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     ShellExecute(NULL, TEXT("open"), TEXT("http://www.obsproject.com"), 0, 0, SW_SHOWNORMAL);
                     break;
 
-                case ID_HELP_CONTENTS:
-                    {
-                        String strHelpPath;
-                        UINT dirSize = GetCurrentDirectory(0, 0);
-                        strHelpPath.SetLength(dirSize);
-                        GetCurrentDirectory(dirSize, strHelpPath.Array());
-
-                        strHelpPath << TEXT("\\OBSHelp.chm");
-
-                        ShellExecute(NULL, TEXT("open"), strHelpPath, 0, 0, SW_SHOWNORMAL);
-                    }
+                case ID_HELP_OPENHELP:
+                    ShellExecute(NULL, TEXT("open"), TEXT("http://jp9000.github.io/OBS/"), 0, 0, SW_SHOWNORMAL);
                     break;
 
                 case ID_HELP_CHECK_FOR_UPDATES:
