@@ -205,6 +205,7 @@
 #define IDC_REPLAYBUFFERLENGTH_EDIT     1085
 #define IDC_USESYNCFIX                  1086
 #define IDC_REPLAYBUFFERLENGTH          1086
+#define IDC_WEBREQUESTDELAY_EDIT        1086
 #define IDC_CLEARPUSHTOTALK             1088
 #define IDC_CLEARMUTEMIC                1089
 #define IDC_SENDBUFFERSIZE              1089
@@ -245,6 +246,8 @@
 #define IDC_FILE                        1108
 #define IDC_BACKGROUNDCOLOR             1109
 #define IDC_FONT                        1112
+#define IDC_USEWEB                      1113
+#define IDC_WEBADDR                     1114
 #define IDC_TEXTSIZE_EDIT               1115
 #define IDC_SELECTFONT                  1116
 #define IDC_TEXTOPACITY                 1118
@@ -258,6 +261,7 @@
 #define IDC_UNDERLINE                   1123
 #define IDC_ALIGN                       1124
 #define IDC_SELECT                      1125
+#define IDC_WEBREQUESTDELAY             1125
 #define IDC_BOLD                        1126
 #define IDC_DELAY_STATIC                1126
 #define IDC_ITALIC                      1127

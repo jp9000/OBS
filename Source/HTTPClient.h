@@ -23,4 +23,14 @@ BOOL HTTPGetFile (CTSTR url, CTSTR outputPath, CTSTR extraHeaders, int *response
 
 String HTTPGetString (CTSTR url, CTSTR extraHeaders, int *responseCode);
 
+struct AsyncWebRequestResult
+{
+    String strResult;
+    int nCode;
+};
+
+typedef VOID(WINAPI* WEBCALLBACK)(const AsyncWebRequestResult&, PVOID);
+
+HANDLE HTTPGetStringAsync(CTSTR url, WEBCALLBACK pfnCallback, PVOID pContext);
+
 String CreateHTTPURL(String host, String path, String extra=String(), bool secure=false);

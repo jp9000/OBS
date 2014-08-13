@@ -259,3 +259,35 @@ String CreateHTTPURL(String host, String path, String extra, bool secure)
     url.SetLength(length);
     return url;
 }
+
+struct GetStringAsyncData
+{
+    String strURL;
+
+    WEBCALLBACK pfnCallback;
+    PVOID pContext;
+};
+
+static DWORD WINAPI HTTPGetStringAsyncThread(PVOID arg)
+{
+    auto data = std::unique_ptr<GetStringAsyncData>(reinterpret_cast<GetStringAsyncData*>(arg));
+
+    int response = -1;
+    AsyncWebRequestResult result;
+    result.strResult = HTTPGetString(data->strURL, nullptr, &response);
+    result.nCode = response;
+
+    data->pfnCallback(result, data->pContext);
+
+    return 0;
+}
+
+HANDLE HTTPGetStringAsync(CTSTR url, WEBCALLBACK pfnCallback, PVOID pContext)
+{
+    auto data = new GetStringAsyncData;
+    data->strURL = url;
+    data->pfnCallback = pfnCallback;
+    data->pContext = pContext;
+
+    return OSCreateThread((XTHREAD)HTTPGetStringAsyncThread, data);
+}
