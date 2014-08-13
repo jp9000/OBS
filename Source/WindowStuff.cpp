@@ -2560,11 +2560,7 @@ void OBS::ExportSceneCollection()
 
     GlobalConfig->SetString(L"General", L"LastImportExportPath", GetPathDirectory(lpFile));
 
-    String strCurSceneCollection = GlobalConfig->GetString(TEXT("General"), TEXT("SceneCollection"));
-    String strCurSceneCollectionFile;
-    strCurSceneCollectionFile << lpAppDataPath << TEXT("\\sceneCollection\\") << strCurSceneCollection << L".xconfig";
-
-    scenesConfig.SaveTo(strCurSceneCollectionFile);
+    scenesConfig.SaveTo(lpFile);
 }
 
 //----------------------------
