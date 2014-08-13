@@ -140,7 +140,7 @@ Settings.SaveChangesPrompt="Möchten Sie ihre Einstellungen speichern und anwend
 Settings.SaveChangesTitle="Einstellungen speichern?"
 Settings.Video="Video"
 
-Settings.Advanced.AutomaticLatency="Automatischer niedrig Latenz Modus:"
+Settings.Advanced.AutomaticLatency="Automatischer niedrig Latenz Modus"
 Settings.Advanced.AllowOtherHotkeyModifiers="Erlaube weitere Modifizierungstasten bei Hotkeys"
 Settings.Advanced.BindToIP="Netzwerkinterface:"
 Settings.Advanced.DisablePreviewEncoding="Deaktiviere Kodierung während der Vorschau"
