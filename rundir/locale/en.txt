@@ -294,7 +294,7 @@ Settings.Publish.FileOutputMode.ReplayBufferTooltip="Save buffered video to a ne
 
 Settings.Publish.ReplayBufferMemory="Estimated Replay Buffer memory usage (MB):"
 Settings.Publish.ReplayBufferLength="Replay Buffer length (seconds):"
-Settings.Publish.ReplayBufferTooltip="When File Output Mode is set to Save Interval, OBS will buffer at least this many seconds and write them to a file when the Save Interval Hotkey is pressed."
+Settings.Publish.ReplayBufferTooltip="When File Output Mode is set to Replay Buffer, OBS will buffer at least this many seconds and write them to a file when the Save Replay Buffer Hotkey is pressed."
 Settings.Publish.SaveReplayBufferHotkey="Save Replay Buffer Hotkey:"
 
 Settings.Publish.Mode.FileOnly="File Output Only"
