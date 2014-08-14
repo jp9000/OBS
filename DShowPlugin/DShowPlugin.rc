@@ -169,10 +169,9 @@ BEGIN
     CONTROL         "",IDC_SPILLREDUCTION,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,171,263,11,14
     CONTROL         "DeviceSelection.UseAudioRender",IDC_USEAUDIORENDER,
                     "Button",BS_AUTOCHECKBOX | BS_LEFT | WS_TABSTOP,233,218,119,10
-                    RTEXT           "DeviceSelection.Gamma",IDC_STATIC,234,233,95,8
+    RTEXT           "DeviceSelection.Gamma",IDC_STATIC,234,233,95,8
     CONTROL         "",IDC_GAMMA,"msctls_trackbar32",TBS_BOTH | WS_TABSTOP,229,242,191,26
     LTEXT           ".numbers!",IDC_GAMMAVAL,335,233,54,8
-
     LTEXT           "DeviceSelection.64BitWarning",IDC_64BIT_WARNING,7,287,300,16,NOT WS_VISIBLE
     DEFPUSHBUTTON   "OK",IDOK,314,289,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,372,289,50,14
