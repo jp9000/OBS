@@ -146,9 +146,10 @@ BEGIN
                     "Button",BS_AUTORADIOBUTTON,285,16,87,10
     CONTROL         "Settings.Encoding.Video.EncoderVCE",IDC_ENCODERVCE,
                     "Button",BS_AUTORADIOBUTTON,359,16,56,10
-    LTEXT           "Settings.Encoding.Video.QSVConfigWarning",IDC_QSV_CONFIG_WARNING,7,165,417,37
-    CONTROL         "Settings.Advanced.CLConversion",IDC_CLCONV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,138,198,10
-    CONTROL         "Encoder.VCE.UseMFT",IDC_VCEMFT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,150,198,10
+    LTEXT           "Settings.Encoding.Video.QSVConfigWarning",IDC_QSV_CONFIG_WARNING,6,186,417,37
+    CONTROL         "Settings.Advanced.CLConversion",IDC_CLCONV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,150,198,10
+    CONTROL         "Encoder.VCE.UseMFT",IDC_VCEMFT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,162,198,10
+    GROUPBOX        "Settings.Advanced.VCE.Optional",IDC_STATIC,4,138,228,42
 END
 
 IDD_SETTINGS_VIDEO DIALOGEX 0, 0, 427, 336
