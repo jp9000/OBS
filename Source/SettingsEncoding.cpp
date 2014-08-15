@@ -144,7 +144,7 @@ void SettingsEncoding::ApplySettings()
     bool bUseCL = SendMessage(GetDlgItem(hwnd, IDC_CLCONV), BM_GETCHECK, 0, 0) == BST_CHECKED;
     AppConfig->SetInt(TEXT("Video Encoding"), TEXT("UseCL"), bUseCL);
 
-    bool bUseMFT = SendMessage(GetDlgItem(hwnd, IDC_VCEMFT), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    bool bUseMFT = SendMessage(GetDlgItem(hwnd, IDC_VCEMFT), BM_GETCHECK, 0, 0) == BST_CHECKED && !bUseCL;
     AppConfig->SetInt(TEXT("Video Encoding"), TEXT("MFT"), bUseMFT);
 }
 
@@ -231,7 +231,7 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 SendMessage(GetDlgItem(hwnd, IDC_USECBR), BM_SETCHECK, bUseCBR ? BST_CHECKED : BST_UNCHECKED, 0);
                 SendMessage(GetDlgItem(hwnd, IDC_PADCBR), BM_SETCHECK, bPadCBR ? BST_CHECKED : BST_UNCHECKED, 0);
                 SendMessage(GetDlgItem(hwnd, IDC_CLCONV), BM_SETCHECK, bUseCL ? BST_CHECKED : BST_UNCHECKED, 0);
-                SendMessage(GetDlgItem(hwnd, IDC_VCEMFT), BM_SETCHECK, bUseMFT ? BST_CHECKED : BST_UNCHECKED, 0);
+                SendMessage(GetDlgItem(hwnd, IDC_VCEMFT), BM_SETCHECK, bUseMFT && !bUseCL ? BST_CHECKED : BST_UNCHECKED, 0);
                 EnableWindow(GetDlgItem(hwnd, IDC_QUALITY), !bUseCBR && (usex264 || useNVENC || useVCE));
                 EnableWindow(GetDlgItem(hwnd, IDC_PADCBR), bUseCBR && (usex264 || useVCE));
                 EnableWindow(GetDlgItem(hwnd, IDC_CLCONV), useVCE);
@@ -482,6 +482,9 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                                 EnableWindow(GetDlgItem(hwnd, IDC_QUALITY), !bChecked && (usex264 || useNVENC || useVCE));
                                 EnableWindow(GetDlgItem(hwnd, IDC_PADCBR), bChecked && (usex264 || useVCE));
                             }
+
+                            if (bChecked && (LOWORD(wParam) == IDC_VCEMFT || LOWORD(wParam) == IDC_CLCONV))
+                                SendMessage(GetDlgItem(hwnd, LOWORD(wParam) == IDC_CLCONV ? IDC_VCEMFT : IDC_CLCONV), BM_SETCHECK, 0, 0);
 
                             bDataChanged = true;
                         }
