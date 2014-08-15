@@ -137,6 +137,9 @@
     <PostBuildEvent>
       <Command>copy $(OutDir)$(ProjectName).exe rundir</Command>
     </PostBuildEvent>
+    <Manifest>
+      <AdditionalManifestFiles>OBS.manifest</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Midl>
