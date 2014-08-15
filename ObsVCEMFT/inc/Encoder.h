@@ -65,7 +65,7 @@ public:
 
     HRESULT Init();
     HRESULT Stop();
-    bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp);
+    bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, DWORD &out_pts);
     void RequestBuffers(LPVOID buffers);
     int  GetBitRate() const;
     //HW MFT must support dynamic stream changes, so yes?
@@ -85,17 +85,16 @@ private:
     //Create output media type
     HRESULT createH264VideoType(IMFMediaType** encodedVideoType, IMFMediaType* sourceVideoType);
     HRESULT ProcessInput();
-    HRESULT ProcessOutput(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp);
+    HRESULT ProcessOutput(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, DWORD &out_pts);
     HRESULT OutputFormatChange();
     void ProcessBitstream(OutputBuffer&, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp);
 
     //Just loop and call ProcessOutput if any samples
-    void DrainOutput(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp);
+    void DrainOutput(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, DWORD &out_pts);
 
     msdk_CMftBuilder *mBuilder;
     CComPtr<IMFMediaType> mPVideoType;
     CComPtr<IMFTransform> mEncTrans;
-    CComPtr<IMFSample> mSample;
     IUnknown *mIDevMgr;
 
     FunctionDeallocator< void(__stdcall*)(void) > *mComDealloc;

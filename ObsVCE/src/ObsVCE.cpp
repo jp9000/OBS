@@ -404,7 +404,7 @@ VCEEncoder::~VCEEncoder()
     OSCloseMutex(frameMutex);
 }
 
-bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp)
+bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, DWORD &out_pts)
 {
     if (!mIsReady)
         return false;
@@ -448,6 +448,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     //OSDebugOut(TEXT("Mapped handle: %p\n"), mEncodeHandle.inputSurfaces[idx].mapPtr);
 #endif
     mLastTS = (uint64_t)data.TimeStamp;
+    out_pts = timestamp;
 
     //mEncodeHandle.inputSurfaces[idx].locked = true;
     _InterlockedCompareExchange(&(mEncodeHandle.inputSurfaces[idx].locked), 1, 0);

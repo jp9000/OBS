@@ -45,6 +45,7 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, const TCHAR*
 , mMaxBucketSize(0)
 , mDesiredPacketSize(0)
 , mCurrFrame(0)
+//, mCanReuseSample(false)
 {
     mInBuffSize = mWidth * mHeight * 3 / 2;
     mBuilder = new msdk_CMftBuilder();
@@ -251,8 +252,6 @@ HRESULT VCEEncoder::Init()
         VCELog(TEXT("Failed to set CODECAPI_AVEncVideoMaxNumRefFrame"));
     }
 
-    hr = MFCreateSample(&mSample);
-    LOGIFFAILED(mLogFile, hr, "MFCreateSample failed.");
     MFFrameRateToAverageTimePerFrame(mFps, 1, &mFrameDur);
 
     /// Get it rolling
@@ -291,6 +290,8 @@ HRESULT VCEEncoder::ProcessInput()
 {
     HRESULT hr;
     UINT64 dur = 0;
+    //MSDN: Usually MFT holds onto IMFSample, so it can't be reused anyway.
+    CComPtr<IMFSample> sample;
 
     DWORD outLen = 0, len = 0;
 
@@ -298,6 +299,9 @@ HRESULT VCEEncoder::ProcessInput()
         return MF_E_TRANSFORM_NEED_MORE_INPUT;
 
     profileIn("ProcessInput")
+
+    hr = MFCreateSample(&sample);
+    LOGIFFAILED(mLogFile, hr, "MFCreateSample failed.");
 
 #if _DEBUG
     size_t inBufCount = mInputQueue.size();
@@ -309,16 +313,16 @@ HRESULT VCEEncoder::ProcessInput()
 
         inBuf->pBuffer->Unlock();
 
-        hr = mSample->AddBuffer(inBuf->pBuffer);
+        hr = sample->AddBuffer(inBuf->pBuffer);
         LOGIFFAILED(mLogFile, hr, "ProcessInput: failed to add buffer to sample");
 
-        mSample->SetSampleDuration((LONGLONG)mFrameDur);
-        mSample->SetSampleTime(LONGLONG(inBuf->timestamp)/* * MS_TO_100NS*/);
+        sample->SetSampleDuration((LONGLONG)mFrameDur);
+        sample->SetSampleTime(LONGLONG(inBuf->timestamp) * MS_TO_100NS);
 
-        hr = mEncTrans->ProcessInput(0, mSample, 0);
+        hr = mEncTrans->ProcessInput(0, sample, 0);
         inBuf->pBuffer->Lock(&(inBuf->pBufferPtr), &len, &outLen);
 
-        mSample->RemoveAllBuffers();
+        sample->RemoveAllBuffers();
 
         if (SUCCEEDED(hr))
         {
@@ -338,6 +342,9 @@ HRESULT VCEEncoder::ProcessInput()
         else
             LOGIFFAILED(mLogFile, hr, "ProcessInput failed.");
     }
+
+    sample.Release();
+
 #if _DEBUG
     //OSDebugOut(TEXT("Processed %d buffer(s), %d in queue\n"), inBufCount, mInputQueue.size());
 #endif
@@ -345,7 +352,7 @@ HRESULT VCEEncoder::ProcessInput()
     return hr;
 }
 
-HRESULT VCEEncoder::ProcessOutput(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp)
+HRESULT VCEEncoder::ProcessOutput(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, DWORD &out_pts)
 {
     HRESULT hr;
     UINT64 dur = 0;
@@ -405,7 +412,8 @@ HRESULT VCEEncoder::ProcessOutput(List<DataPacket> &packets, List<PacketType> &p
         OutputBuffer buf;
         buf.pBuffer = ppBuffer;
         buf.size = maxLen;
-        buf.timestamp = dur /* / MS_TO_100NS*/;
+        buf.timestamp = dur / MS_TO_100NS;
+        out_pts = buf.timestamp;
         ProcessBitstream(buf, packets, packetTypes, timestamp);
     }
     hr = pBuffer->Unlock();
@@ -417,7 +425,7 @@ HRESULT VCEEncoder::ProcessOutput(List<DataPacket> &packets, List<PacketType> &p
     return hr;
 }
 
-void VCEEncoder::DrainOutput(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp)
+void VCEEncoder::DrainOutput(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, DWORD &out_pts)
 {
     HRESULT hr = S_OK;
     DWORD status = 0;
@@ -429,7 +437,7 @@ void VCEEncoder::DrainOutput(List<DataPacket> &packets, List<PacketType> &packet
         if ((hr != S_OK && hr != E_NOTIMPL) || status != MFT_OUTPUT_STATUS_SAMPLE_READY)
             break;*/
 
-        hr = ProcessOutput(packets, packetTypes, timestamp);
+        hr = ProcessOutput(packets, packetTypes, timestamp, out_pts);
         if (hr != S_OK)
             break;
     }
@@ -441,7 +449,7 @@ void VCEEncoder::DrainOutput(List<DataPacket> &packets, List<PacketType> &packet
 }
 
 //OBS doesn't use return value, instead checks packets count
-bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp)
+bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, DWORD &out_pts)
 {
     HRESULT hr = S_OK;
 
@@ -459,14 +467,16 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     {
         OutputList *out = mOutputQueue.front();
         mOutputQueue.pop();
-        delete out; //Should call Clear() too
+        delete out; //dtor should call Clear()
     }
 
     if (!picIn)
     {
         Stop();
-        DrainOutput(packets, packetTypes, timestamp);
-        OSDebugOut(TEXT("Drained %d frame(s)\n"), packets.Num());
+        //FIXME can't do multiple out_pts
+        ProcessOutput(packets, packetTypes, timestamp, out_pts);
+        //DrainOutput(packets, packetTypes, timestamp);
+        //OSDebugOut(TEXT("Drained %d frame(s)\n"), packets.Num());
         return true;
     }
 
@@ -482,7 +492,6 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
 
     mInputQueue.push(inBuffer);
 
-    int64_t sTime = GetQPCTime100NS();
     bool processAll = mInputQueue.size() > 3;
 
     //OSDebugOut(TEXT("IN queue %d\n"), mInputQueue.size());
@@ -502,15 +511,17 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     do
     {
         hr = ProcessInput();
-        DrainOutput(packets, packetTypes, timestamp);
-        int64_t diff = GetQPCTime100NS() - sTime;
-        if (diff > (int64_t)mFrameDur)
+
+        profileIn("Output")
+        while (packets.Num() == 0)
         {
-            OSDebugOut(TEXT("Frame encode dur %lld\n"), diff);
-            //Trying to invoke 'encoder too slow' message from OBS and failing :(
-            OSSleep100NS(mFrameDur + mFrameDur/4);
-            sTime = GetQPCTime100NS();
+            OSSleep100NS(10);
+            hr = ProcessOutput(packets, packetTypes, timestamp, out_pts);
+            if (hr != S_OK)
+                break;
         }
+        profileOut
+
     } while (processAll && !mInputQueue.empty());
     profileOut
     return false;

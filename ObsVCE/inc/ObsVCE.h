@@ -132,7 +132,7 @@ bool getDeviceCap(OPContextHandle oveContext, uint32_t oveDeviceID,
 class VCEEncoder : public VideoEncoder
 {
 protected:
-    bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp);
+    bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, DWORD &out_pts);
 
     void RequestBuffers(LPVOID buffers);
 
