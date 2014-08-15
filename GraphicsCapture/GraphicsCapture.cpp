@@ -38,6 +38,7 @@ struct WindowInfo
     String strClass;
     String strExecutable;
     BOOL bRequiresAdmin;
+    BOOL bFoundHookableModule;
 };
 
 struct ConfigDialogData
@@ -99,6 +100,7 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
 
             if((exStyles & WS_EX_TOOLWINDOW) == 0 && (styles & WS_CHILD) == 0 /*&& hwndParent == NULL*/)
             {
+                BOOL bFoundModule = true;
                 DWORD processID;
                 GetWindowThreadProcessId(hwndCurrent, &processID);
                 if(processID == GetCurrentProcessId())
@@ -120,29 +122,35 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
                     QueryFullProcessImageName(hProcess, 0, fileName, &dwSize);
 
                     StringList moduleList;
-                    OSGetLoadedModuleList(hProcess, moduleList);
-
-                    CloseHandle(hProcess);
-
-                    //note: this doesn't actually work cross-bit
-                    /*BOOL bFoundModule = FALSE;
-                    for(UINT i=0; i<moduleList.Num(); i++)
+                    if (OSGetLoadedModuleList(hProcess, moduleList) && moduleList.Num())
                     {
-                        CTSTR moduleName = moduleList[i];
-
-                        if (!scmp(moduleName, TEXT("d3d9.dll")) ||
-                            !scmp(moduleName, TEXT("d3d10.dll")) ||
-                            !scmp(moduleName, TEXT("d3d10_1.dll")) ||
-                            !scmp(moduleName, TEXT("d3d11.dll")) ||
-                            !scmp(moduleName, TEXT("opengl32.dll")))
+                        //note: this doesn't actually work cross-bit, but we may as well make as much use of
+                        //the data we can get.
+                        bFoundModule = false;
+                        for(UINT i=0; i<moduleList.Num(); i++)
                         {
-                            bFoundModule = true;
-                            break;
+                            CTSTR moduleName = moduleList[i];
+
+                            if (!scmp(moduleName, TEXT("d3d9.dll")) ||
+                                !scmp(moduleName, TEXT("d3d10.dll")) ||
+                                !scmp(moduleName, TEXT("d3d10_1.dll")) ||
+                                !scmp(moduleName, TEXT("d3d11.dll")) ||
+                                !scmp(moduleName, TEXT("dxgi.dll")) ||
+                                !scmp(moduleName, TEXT("opengl32.dll")))
+                            {
+                                bFoundModule = true;
+                                break;
+                            }
+                        }
+
+                        if (!bFoundModule)
+                        {
+                            CloseHandle(hProcess);
+                            continue;
                         }
                     }
 
-                    if (!bFoundModule)
-                        continue;*/
+                    CloseHandle(hProcess);
                 }
                 else
                 {
@@ -184,6 +192,7 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
                 info.strClass       = strClassName;
                 info.strExecutable  = baseExeName;
                 info.bRequiresAdmin = false; //todo: add later
+                info.bFoundHookableModule = bFoundModule;
 
                 info.strExecutable.MakeLower();
             }
@@ -208,6 +217,7 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
             info.strClass = TEXT("Dwm");
             info.strExecutable = TEXT("dwm.exe");
             info.bRequiresAdmin = false; //todo: add later
+            info.bFoundHookableModule = true;
         }
     }
 
@@ -229,6 +239,7 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
         info.strClass = oldClass;
         info.strExecutable = oldExe;
         info.bRequiresAdmin = false; //todo: add later
+        info.bFoundHookableModule = true;
     }
 }
 

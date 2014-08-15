@@ -1,6 +1,6 @@
 /* ****************************************************************************** *\
 
-Copyright (C) 2012 Intel Corporation.  All rights reserved.
+Copyright (C) 2012-2014 Intel Corporation.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -36,19 +36,40 @@ File Name: mfx_function_table.cpp
 
 #undef FUNCTION
 #define FUNCTION(return_value, func_name, formal_param_list, actual_param_list) \
-    {#func_name, API_VERSION, API_VERSION_PREV},
+    {#func_name, API_VERSION},
 
 const
-FUNCTION_DESCRIPTION APIFunc[eFuncTotal] =
+FUNCTION_DESCRIPTION APIFunc[eVideoFuncTotal] =
 {
-    {"MFXInit", {0, 1}, {0, 0}},
-    {"MFXClose", {0, 1}, {0, 0}},
+    {"MFXInit", {{0, 1}}},
+    {"MFXClose", {{0, 1}}},
+    {"MFXQueryIMPL", {{0, 1}}},
+    {"MFXQueryVersion", {{0, 1}}},
 
-    {"MFXJoinSession", {2, 1}, {0, 1}},
-    {"MFXCloneSession", {2, 1}, {0, 1}},
+    {"MFXJoinSession", {{1, 1}}},
+    {"MFXDisjoinSession", {{1, 1}}},
+    {"MFXCloneSession", {{1, 1}}},
+    {"MFXSetPriority", {{1, 1}}},
+    {"MFXGetPriority", {{1, 1}}},
 
 #include "mfx_exposed_functions_list.h"
+};
 
+const
+FUNCTION_DESCRIPTION APIAudioFunc[eAudioFuncTotal] =
+{
+    {"MFXInit", {{8, 1}}},
+    {"MFXClose", {{8, 1}}},
+    {"MFXQueryIMPL", {{8, 1}}},
+    {"MFXQueryVersion", {{8, 1}}},
+
+    {"MFXJoinSession", {{8, 1}}},
+    {"MFXDisjoinSession", {{8, 1}}},
+    {"MFXCloneSession", {{8, 1}}},
+    {"MFXSetPriority", {{8, 1}}},
+    {"MFXGetPriority", {{8, 1}}},
+
+#include "mfxaudio_exposed_functions_list.h"
 };
 
 // static section of the file

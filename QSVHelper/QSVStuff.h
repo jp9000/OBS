@@ -21,6 +21,7 @@
 #include <mfxvideo++.h>
 
 #include <algorithm>
+#include <iostream>
 #include <vector>
 
 #include "Utilities.h"
@@ -35,29 +36,41 @@ struct Parameters
 {
 private:
     mfxVideoParam params;
-    std::vector<mfxExtBuffer*> ext_buffers;
+    std::vector<const mfxExtBuffer*> ext_buffers;
 
 public:
     mfxExtCodingOptionSPSPPS cospspps;
     mfxExtVideoSignalInfo vsi;
+    mfxExtCodingOption co;
+    mfxExtCodingOption2 co2;
 
 
     operator mfxVideoParam() { return params; }
     operator mfxVideoParam*() { return &params; }
     mfxVideoParam* operator&() { return &params; }
     mfxVideoParam* operator->() { return &params; }
+    const mfxVideoParam* operator->() const { return &params; }
 
-    void Init(mfxU16 preset, mfxU16 profile, int fps, int keyframe_interval_frames, int bframes, int width, int height, int max_bitrate, int buffer_size, bool use_cbr);
+    void Init(mfxU16 preset, mfxU16 profile, int fps, int keyframe_interval_frames, int bframes, int width, int height, int max_bitrate,
+        int buffer_size, bool use_cbr, bool use_custom_params, mfxInfoMFX custom_params, decltype(mfxExtCodingOption2::LookAheadDepth) la_depth);
     void SetCodingOptionSPSPPS(mfxU8 *sps_buff, mfxU16 sps_size, mfxU8 *pps_buff, mfxU16 pps_size);
     void SetVideoSignalInfo(int full_range, int primaries, int transfer, int matrix);
+    void AddCodingOption();
+    void AddCodingOption2();
     
     Parameters();
+    Parameters(const Parameters&);
+    Parameters &operator =(const Parameters&);
+
+    void Dump(std::wostream&);
 protected:
     void UpdateExt();
     template <class T>
-    bool FindExt(T& t) { return std::find(std::begin(ext_buffers), std::end(ext_buffers), reinterpret_cast<mfxExtBuffer*>(&t)) != std::end(ext_buffers); }
+    bool FindExt(const T& t) const { return std::find(std::begin(ext_buffers), std::end(ext_buffers), reinterpret_cast<const mfxExtBuffer*>(&t)) != std::end(ext_buffers); }
     template <class T>
     void AddExt(T& t) { ext_buffers.emplace_back(reinterpret_cast<mfxExtBuffer*>(&t)); UpdateExt(); }
+    template <class T>
+    void InitAddExt(T& t, decltype(mfxExtBuffer::BufferId) id) { zero(t); t.Header.BufferId = id; t.Header.BufferSz = sizeof(T); AddExt(t); }
 };
 
 

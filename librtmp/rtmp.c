@@ -2865,8 +2865,8 @@ PublisherAuth(RTMP *r, AVal *description)
             char *par, *val = NULL, *orig_ptr;
             AVal user, salt, opaque, challenge, *aptr = NULL;
 
-            opaque.av_len = challenge.av_len = salt.av_len = 0;
-            opaque.av_val = challenge.av_val = salt.av_val = NULL;
+            opaque.av_len = challenge.av_len = salt.av_len = user.av_len = 0;
+            opaque.av_val = challenge.av_val = salt.av_val = user.av_val = NULL;
 
             ptr = orig_ptr = strdup(token_in);
             while (ptr)
@@ -3913,7 +3913,7 @@ RTMP_ReadPacket(RTMP *r, RTMPPacket *packet)
     char *header = (char *)hbuf;
     int nSize, hSize, nToRead, nChunk;
     int didAlloc = FALSE;
-    int extendedTimestamp;
+    int extendedTimestamp = 0;
 
     RTMP_Log(RTMP_LOGDEBUG2, "%s: fd=%d", __FUNCTION__, r->m_sb.sb_socket);
 

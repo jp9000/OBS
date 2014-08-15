@@ -55,20 +55,73 @@ Parameters::Parameters()
     zero(params);
 }
 
-void Parameters::Init(mfxU16 target_usage, mfxU16 profile, int fps, int keyframe_interval_frames, int bframes, int width, int height, int max_bitrate, int buffer_size, bool use_cbr)
+Parameters::Parameters(const Parameters& o) : Parameters()
+{
+    *this = o;
+}
+
+Parameters &Parameters::operator =(const Parameters& o)
+{
+    params = o.params;
+    cospspps = o.cospspps;
+    vsi = o.vsi;
+    co = o.co;
+    co2 = o.co2;
+
+    if (o.FindExt(o.cospspps))
+        AddExt(cospspps);
+    if (o.FindExt(o.vsi))
+        AddExt(vsi);
+    if (o.FindExt(o.co))
+        AddExt(co);
+    if (o.FindExt(o.co2))
+        AddExt(co2);
+
+    return *this;
+}
+
+void Parameters::Init(mfxU16 target_usage, mfxU16 profile, int fps, int keyframe_interval_frames, int bframes, int width, int height, int max_bitrate,
+    int buffer_size, bool use_cbr, bool use_custom_params, mfxInfoMFX custom_params, decltype(mfxExtCodingOption2::LookAheadDepth) la_depth)
 {
     params.mfx.CodecId = MFX_CODEC_AVC;
     params.mfx.TargetUsage = target_usage;
-    params.mfx.TargetKbps = saturate<mfxU16>(max_bitrate);
-    params.mfx.MaxKbps = saturate<mfxU16>(max_bitrate);
-    params.mfx.BufferSizeInKB = buffer_size/8;
     params.mfx.GopOptFlag = MFX_GOP_CLOSED;
     params.mfx.GopPicSize = keyframe_interval_frames;
     params.mfx.GopRefDist = bframes+1;
     params.mfx.NumSlice = 1;
     params.mfx.CodecProfile = profile;
 
-    params.mfx.RateControlMethod = use_cbr ? MFX_RATECONTROL_CBR : MFX_RATECONTROL_VBR;
+    params.mfx.TargetKbps = use_custom_params ? custom_params.TargetKbps : saturate<mfxU16>(max_bitrate);
+    params.mfx.BufferSizeInKB = use_custom_params ? custom_params.BufferSizeInKB : buffer_size / 8;
+
+    params.mfx.RateControlMethod = use_custom_params ? custom_params.RateControlMethod : use_cbr ? MFX_RATECONTROL_CBR : MFX_RATECONTROL_VBR;
+    switch (params.mfx.RateControlMethod)
+    {
+    case MFX_RATECONTROL_VBR:
+    case MFX_RATECONTROL_VCM:
+        params.mfx.MaxKbps = use_custom_params ? custom_params.MaxKbps : 0;
+        break;
+
+    case MFX_RATECONTROL_AVBR:
+        params.mfx.Accuracy = custom_params.Accuracy;
+        params.mfx.Convergence = custom_params.Convergence;
+        break;
+
+    case MFX_RATECONTROL_CQP:
+        params.mfx.QPI = custom_params.QPI;
+        params.mfx.QPP = custom_params.QPP;
+        params.mfx.QPB = custom_params.QPB;
+        break;
+
+    case MFX_RATECONTROL_ICQ:
+    case MFX_RATECONTROL_LA_ICQ:
+        params.mfx.ICQQuality = custom_params.ICQQuality;
+    case MFX_RATECONTROL_LA:
+        AddCodingOption2();
+        co2.LookAheadDepth = la_depth;
+        break;
+    }
+
     params.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY;
 
     auto& fi = params.mfx.FrameInfo;
@@ -90,13 +143,8 @@ void Parameters::Init(mfxU16 target_usage, mfxU16 profile, int fps, int keyframe
 void Parameters::SetCodingOptionSPSPPS(mfxU8 *sps_buff, mfxU16 sps_size, mfxU8 *pps_buff, mfxU16 pps_size)
 {
     if(!FindExt(cospspps))
-    {
-        zero(cospspps);
-        cospspps.Header.BufferId = MFX_EXTBUFF_CODING_OPTION_SPSPPS;
-        cospspps.Header.BufferSz = sizeof(cospspps);
+        InitAddExt(cospspps, MFX_EXTBUFF_CODING_OPTION_SPSPPS);
 
-        AddExt(cospspps);
-    }
     cospspps.SPSBuffer = sps_buff;
     cospspps.SPSBufSize = sps_size;
     cospspps.PPSBuffer = pps_buff;
@@ -105,14 +153,8 @@ void Parameters::SetCodingOptionSPSPPS(mfxU8 *sps_buff, mfxU16 sps_size, mfxU8 *
 
 void Parameters::SetVideoSignalInfo(int full_range, int primaries, int transfer, int matrix)
 {
-    if(!FindExt(vsi))
-    {
-        zero(vsi);
-        vsi.Header.BufferId = MFX_EXTBUFF_VIDEO_SIGNAL_INFO;
-        vsi.Header.BufferSz = sizeof(vsi);
-
-        AddExt(vsi);
-    }
+    if (!FindExt(vsi))
+        InitAddExt(vsi, MFX_EXTBUFF_VIDEO_SIGNAL_INFO);
 
     vsi.ColourDescriptionPresent = 1;
     vsi.VideoFullRange = full_range;
@@ -122,9 +164,21 @@ void Parameters::SetVideoSignalInfo(int full_range, int primaries, int transfer,
     vsi.VideoFormat = 5; //unspecified
 }
 
+void Parameters::AddCodingOption()
+{
+    if (!FindExt(co))
+        InitAddExt(co, MFX_EXTBUFF_CODING_OPTION);
+}
+
+void Parameters::AddCodingOption2()
+{
+    if (!FindExt(co2))
+        InitAddExt(co2, MFX_EXTBUFF_CODING_OPTION2);
+}
+
 void Parameters::UpdateExt()
 {
-    params.ExtParam = &ext_buffers.front();
+    params.ExtParam = const_cast<mfxExtBuffer**>(&ext_buffers.front());
     params.NumExtParam = ext_buffers.size();
 }
 
@@ -170,4 +224,103 @@ void EncodeCtrl::AddSEIData(sei_type type, vector<mfxU8> data)
 
     ctrl.Payload = &payload_list.front();
     ctrl.NumPayload = payload_list.size();
+}
+
+void Parameters::Dump(std::wostream &log_file)
+{
+    auto &mfx = params.mfx;
+    
+#define OUT(name) log_file << "  mfx." #name " = " << mfx.name << '\n'
+    OUT(BRCParamMultiplier);
+    OUT(CodecId);
+    OUT(CodecProfile);
+    OUT(CodecLevel);
+    OUT(NumThread);
+    OUT(TargetUsage);
+    OUT(GopPicSize);
+    OUT(GopRefDist);
+    OUT(GopOptFlag);
+    OUT(IdrInterval);
+    OUT(RateControlMethod);
+    OUT(InitialDelayInKB);
+    OUT(BufferSizeInKB);
+    OUT(TargetKbps);
+    OUT(MaxKbps);
+    OUT(NumSlice);
+    OUT(NumRefFrame);
+    OUT(EncodedOrder);
+#undef OUT
+
+    for (auto i : ext_buffers)
+    {
+#define OUT(name) log_file << "   " #name " = " << name << '\n'
+        switch (i->BufferId)
+        {
+        case MFX_EXTBUFF_VIDEO_SIGNAL_INFO:
+            OUT(vsi.VideoFormat);
+            OUT(vsi.VideoFullRange);
+            OUT(vsi.ColourDescriptionPresent);
+            OUT(vsi.ColourPrimaries);
+            OUT(vsi.TransferCharacteristics);
+            OUT(vsi.MatrixCoefficients);
+            break;
+
+        case MFX_EXTBUFF_CODING_OPTION:
+            OUT(co.RateDistortionOpt);
+            OUT(co.MECostType);
+            OUT(co.MESearchType);
+            OUT(co.MVSearchWindow.x);
+            OUT(co.MVSearchWindow.y);
+            OUT(co.EndOfSequence);
+            OUT(co.FramePicture);
+            OUT(co.CAVLC);
+            OUT(co.RecoveryPointSEI);
+            OUT(co.ViewOutput);
+            OUT(co.NalHrdConformance);
+            OUT(co.SingleSeiNalUnit);
+            OUT(co.VuiVclHrdParameters);
+            OUT(co.RefPicListReordering);
+            OUT(co.ResetRefList);
+            OUT(co.RefPicMarkRep);
+            OUT(co.FieldOutput);
+            OUT(co.IntraPredBlockSize);
+            OUT(co.InterPredBlockSize);
+            OUT(co.MVPrecision);
+            OUT(co.MaxDecFrameBuffering);
+            OUT(co.AUDelimiter);
+            OUT(co.EndOfStream);
+            OUT(co.PicTimingSEI);
+            OUT(co.VuiNalHrdParameters);
+            break;
+
+        case MFX_EXTBUFF_CODING_OPTION2:
+            OUT(co2.IntRefType);
+            OUT(co2.IntRefCycleSize);
+            OUT(co2.IntRefQPDelta);
+            OUT(co2.MaxFrameSize);
+            OUT(co2.MaxSliceSize);
+            OUT(co2.BitrateLimit);
+            OUT(co2.MBBRC);
+            OUT(co2.ExtBRC);
+            OUT(co2.LookAheadDepth);
+            OUT(co2.Trellis);
+            OUT(co2.RepeatPPS);
+            OUT(co2.BRefType);
+            OUT(co2.AdaptiveI);
+            OUT(co2.AdaptiveB);
+            OUT(co2.LookAheadDS);
+            OUT(co2.NumMbPerSlice);
+            OUT(co2.SkipFrame);
+            OUT(co2.MinQPI);
+            OUT(co2.MaxQPI);
+            OUT(co2.MinQPP);
+            OUT(co2.MaxQPP);
+            OUT(co2.MinQPB);
+            OUT(co2.MaxQPB);
+            OUT(co2.FixedFrameRate);
+            OUT(co2.DisableDeblockingIdc);
+            break;
+        }
+    }
+    log_file << '\n';
 }

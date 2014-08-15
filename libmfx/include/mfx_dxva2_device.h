@@ -31,10 +31,20 @@ File Name: mfx_dxva2_device.h
 #if !defined(__MFX_DXVA2_DEVICE_H)
 #define __MFX_DXVA2_DEVICE_H
 
+#if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
+#endif // #if defined(_WIN32) || defined(_WIN64)
 
 #include <mfxdefs.h>
 
+#ifdef DXVA2DEVICE_LOG
+#include <stdio.h>
+#define DXVA2DEVICE_TRACE(expr) printf expr;
+#define DXVA2DEVICE_TRACE_OPERATION(expr) expr;
+#else
+#define DXVA2DEVICE_TRACE(expr)
+#define DXVA2DEVICE_TRACE_OPERATION(expr) 
+#endif
 
 namespace MFX
 {
@@ -48,7 +58,7 @@ public:
     virtual
     ~DXDevice(void) = 0;
 
-    // Initialize device using DXGI 1.1 interface
+    // Initialize device using DXGI 1.1 or VAAPI interface
     virtual
     bool Init(const mfxU32 adapterNum) = 0;
 
@@ -73,8 +83,10 @@ protected:
     // Free DLL module
     void UnloadDLLModule(void);
 
+#if defined(_WIN32) || defined(_WIN64)
     // Handle to the DLL library
     HMODULE m_hModule;
+#endif // #if defined(_WIN32) || defined(_WIN64)
 
     // Number of adapters available
     mfxU32 m_numAdapters;
@@ -94,6 +106,7 @@ private:
     void operator=(const DXDevice &);
 };
 
+#if defined(_WIN32) || defined(_WIN64)
 class D3D9Device : public DXDevice
 {
 public:
@@ -145,6 +158,7 @@ protected:
     void *m_pDXGIAdapter1;
 
 };
+#endif // #if defined(_WIN32) || defined(_WIN64)
 
 class DXVA2Device
 {

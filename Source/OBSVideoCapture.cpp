@@ -75,10 +75,11 @@ DWORD STDCALL Convert444Thread(Convert444Data *data)
     return 0;
 }
 
-bool OBS::BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, QWORD firstFrameTime, VideoSegment &segmentOut)
+bool OBS::BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, DWORD out_pts, QWORD firstFrameTime, VideoSegment &segmentOut)
 {
     VideoSegment &segmentIn = *bufferedVideo.CreateNew();
     segmentIn.timestamp = timestamp;
+    segmentIn.pts = out_pts;
 
     segmentIn.packets.SetSize(inputPackets.Num());
     for(UINT i=0; i<inputPackets.Num(); i++)
@@ -104,6 +105,7 @@ bool OBS::BufferVideoData(const List<DataPacket> &inputPackets, const List<Packe
     {
         segmentOut.packets.TransferFrom(bufferedVideo[0].packets);
         segmentOut.timestamp = bufferedVideo[0].timestamp;
+        segmentOut.pts = bufferedVideo[0].pts;
         bufferedVideo.Remove(0);
 
         return true;
@@ -172,7 +174,7 @@ void OBS::SendFrame(VideoSegment &curSegment, QWORD firstFrameTime)
                         if(network)
                             network->SendPacket(audioData.Array(), audioData.Num(), audioTimestamp, PacketType_Audio);
                         if(fileStream)
-                            fileStream->AddPacket(audioData.Array(), audioData.Num(), audioTimestamp, PacketType_Audio);
+                            fileStream->AddPacket(audioData.Array(), audioData.Num(), audioTimestamp, audioTimestamp, PacketType_Audio);
 
                         audioData.Clear();
 
@@ -202,7 +204,7 @@ void OBS::SendFrame(VideoSegment &curSegment, QWORD firstFrameTime)
         if(network)
             network->SendPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, packet.type);
         if(fileStream)
-            fileStream->AddPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, packet.type);
+            fileStream->AddPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, curSegment.pts, packet.type);
     }
 }
 
@@ -227,32 +229,16 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
     else
         picIn = frameInfo.pic->picOut ? (LPVOID)frameInfo.pic->picOut : (LPVOID)frameInfo.pic->mfxOut;
 
-    videoEncoder->Encode(picIn, videoPackets, videoPacketTypes, bufferedTimes[0]);
+    DWORD out_pts = 0;
+    videoEncoder->Encode(picIn, videoPackets, videoPacketTypes, bufferedTimes[0], out_pts);
 
     bProcessedFrame = (videoPackets.Num() != 0);
 
     //buffer video data before sending out
     if(bProcessedFrame)
     {
-        decltype(videoPackets) onePacket;
-        decltype(videoPacketTypes) onePacketType;
-
-        while (videoPackets.Num())
-        {
-            onePacket.Add(videoPackets[0]);
-            onePacketType.Add(videoPacketTypes[0]);
-
-            //bSendFrame = BufferVideoData(videoPackets, videoPacketTypes, bufferedTimes[0], frameInfo.firstFrameTime, curSegment);
-            bSendFrame = BufferVideoData(onePacket, onePacketType, bufferedTimes[0], frameInfo.firstFrameTime, curSegment);
+        bSendFrame = BufferVideoData(videoPackets, videoPacketTypes, bufferedTimes[0], out_pts, frameInfo.firstFrameTime, curSegment);
             bufferedTimes.Remove(0);
-
-            videoPackets.Remove(0);
-            videoPacketTypes.Remove(0);
-            onePacket.Clear();
-            onePacketType.Clear();
-            if (bSendFrame)
-                SendFrame(curSegment, frameInfo.firstFrameTime);
-        }
     }
     else
         nop();
@@ -262,13 +248,13 @@ bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
     //------------------------------------
     // upload
 
-    //profileIn("sending stuff out");
+    profileIn("sending stuff out");
 
-    ////send headers before the first frame if not yet sent
-    //if(bSendFrame)
-    //    SendFrame(curSegment, frameInfo.firstFrameTime);
+    //send headers before the first frame if not yet sent
+    if(bSendFrame)
+        SendFrame(curSegment, frameInfo.firstFrameTime);
 
-    //profileOut;
+    profileOut;
 
     return bProcessedFrame;
 }
@@ -327,6 +313,42 @@ bool STDCALL SleepTo100NS(QWORD qw100NSTime)
 #else
 #define LOGLONGFRAMESDEFAULT 0
 #endif
+
+UINT OBS::FlushBufferedVideo()
+{
+    UINT framesFlushed = 0;
+
+    if (bufferedVideo.Num())
+    {
+        QWORD startTime = GetQPCTimeMS();
+        DWORD baseTimestamp = bufferedVideo[0].timestamp;
+        DWORD lastTimestamp = bufferedVideo.Last().timestamp;
+
+        Log(TEXT("FlushBufferedVideo: Flushing %d packets over %d ms"), bufferedVideo.Num(), (lastTimestamp - baseTimestamp));
+
+        for (UINT i = 0; i<bufferedVideo.Num(); i++)
+        {
+            //we measure our own time rather than sleep between frames due to potential sleep drift
+            QWORD curTime;
+
+            curTime = GetQPCTimeMS();
+            while (curTime - startTime < bufferedVideo[i].timestamp - baseTimestamp)
+            {
+                OSSleep(1);
+                curTime = GetQPCTimeMS();
+            }
+
+            SendFrame(bufferedVideo[i], firstFrameTimestamp);
+            bufferedVideo[i].Clear();
+
+            framesFlushed++;
+        }
+
+        bufferedVideo.Clear();
+    }
+
+    return framesFlushed;
+}
 
 void OBS::EncodeLoop()
 {
@@ -423,33 +445,12 @@ void OBS::EncodeLoop()
             bufferedFrames = videoEncoder->HasBufferedFrames();
     }
 
+    //if (bTestStream)
+    //    bufferedVideo.Clear();
+
     //flush all video frames in the "scene buffering time" buffer
-    if (firstFrameTimestamp && bufferedVideo.Num())
-    {
-        QWORD startTime = GetQPCTimeMS();
-        DWORD baseTimestamp = bufferedVideo[0].timestamp;
-        DWORD lastTimestamp = bufferedVideo.Last().timestamp;
-
-        for(UINT i=0; i<bufferedVideo.Num(); i++)
-        {
-            //we measure our own time rather than sleep between frames due to potential sleep drift
-            QWORD curTime;
-
-            curTime = GetQPCTimeMS();
-            while (curTime - startTime < bufferedVideo[i].timestamp - baseTimestamp)
-            {
-                OSSleep (1);
-                curTime = GetQPCTimeMS();
-            }
-
-            SendFrame(bufferedVideo[i], firstFrameTimestamp);
-            bufferedVideo[i].Clear();
-
-            numTotalFrames++;
-        }
-
-        bufferedVideo.Clear();
-    }
+    if (firstFrameTimestamp)
+        numTotalFrames += FlushBufferedVideo();
 
     Log(TEXT("Total frames encoded: %d, total frames duplicated: %d (%0.2f%%)"), numTotalFrames, numTotalDuplicatedFrames, (numTotalFrames > 0) ? (double(numTotalDuplicatedFrames)/double(numTotalFrames))*100.0 : 0.0f);
     if (numFramesSkipped)

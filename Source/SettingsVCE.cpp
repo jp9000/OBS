@@ -211,7 +211,7 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
             iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("AMD"), 0);
             SendMessage(GetDlgItem(hwnd, IDC_VCE_AMD), BM_SETCHECK, iInt, 0);
 
-            ti.lpszText = (LPWSTR)Str("Settings.Encoding.VCE.AMDTooltip");
+            ti.lpszText = (LPWSTR)Str("Settings.VCE.AMDTooltip");
             ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_AMD);
             SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
@@ -219,7 +219,9 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
             LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_IDR), TEXT("VCE Settings"), TEXT("IDRPeriod"), 0);
             LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_IPIC), TEXT("VCE Settings"), TEXT("IPicPeriod"), 0);
 
-            ti.lpszText = (LPWSTR)Str("Settings.Encoding.VCE.PeriodTooltip");
+            ti.lpszText = (LPWSTR)Str("Settings.VCE.PeriodTooltip");
+            ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_GOP);
+            SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
             ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_IDR);
             SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
             ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_IPIC);
@@ -235,14 +237,14 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)IntString(i*10).Array());
             LoadSettingEditString(GetDlgItem(hwnd, IDC_VCE_QVSS), TEXT("VCE Settings"), TEXT("QualityVsSpeed"), TEXT("50"));
 
-            ti.lpszText = (LPWSTR)Str("Settings.Encoding.VCE.QVsSTooltip");
+            ti.lpszText = (LPWSTR)Str("Settings.VCE.QVsSTooltip");
             ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_QVSS);
             SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
             LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_SRNG0), TEXT("VCE Settings"), TEXT("SearchX"), 16);
             LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_SRNG1), TEXT("VCE Settings"), TEXT("SearchY"), 16);
 
-            ti.lpszText = (LPWSTR)Str("Settings.Encoding.VCE.SearchXYTooltip");
+            ti.lpszText = (LPWSTR)Str("Settings.VCE.SearchXYTooltip");
             ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_SRNG0);
             SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
             ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_SRNG1);
@@ -251,7 +253,7 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
             LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_SRNG_IMEX), TEXT("VCE Settings"), TEXT("IME2SearchX"), 4);
             LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_SRNG_IMEY), TEXT("VCE Settings"), TEXT("IME2SearchY"), 4);
 
-            ti.lpszText = (LPWSTR)Str("Settings.Encoding.VCE.IME2SearchXYTooltip");
+            ti.lpszText = (LPWSTR)Str("Settings.VCE.IME2SearchXYTooltip");
             ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_SRNG_IMEX);
             SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
             ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_SRNG_IMEY);
@@ -260,7 +262,7 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
             LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_IPRED), TEXT("VCE Settings"), TEXT("IPred"), 0);
             LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_PPRED), TEXT("VCE Settings"), TEXT("PPred"), 0);
 
-            ti.lpszText = (LPWSTR)Str("Settings.Encoding.VCE.PredTooltip");
+            ti.lpszText = (LPWSTR)Str("Settings.VCE.PredTooltip");
             ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_IPRED);
             SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
             ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_PPRED);
@@ -303,12 +305,12 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
             SendMessage(GetDlgItem(hwnd, IDC_VCE_IME_OVERW), BM_SETCHECK, iInt, 0);
 
             LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_IME_SUBM), TEXT("VCE Settings"), TEXT("IMEDisSubmNo"), 0);
-            ti.lpszText = (LPWSTR)Str("Settings.Encoding.VCE.IMEOverwTooltip");
+            ti.lpszText = (LPWSTR)Str("Settings.VCE.IMEOverwTooltip");
             ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_IME_SUBM);
             SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
             LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_DISABLE_SUBM), TEXT("VCE Settings"), TEXT("RDODisSub"), 120);
-            ti.lpszText = (LPWSTR)Str("Settings.Encoding.VCE.DisableSubModeTooltip");
+            ti.lpszText = (LPWSTR)Str("Settings.VCE.DisableSubModeTooltip");
             ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_DISABLE_SUBM);
             SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 

@@ -149,59 +149,15 @@ void SettingsPublish::ApplySettings()
 
     //------------------------------------------
 
-    DWORD stopStreamHotkey = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_STOPSTREAMHOTKEY), HKM_GETHOTKEY, 0, 0);
-    AppConfig->SetInt(TEXT("Publish"), TEXT("StopStreamHotkey"), stopStreamHotkey);
+    bool useReplayBuffer = SendMessage(GetDlgItem(hwnd, IDC_FILEOUTPUTREPLAYBUFFER), BM_GETCHECK, 0, 0) != BST_UNCHECKED;
+    AppConfig->SetInt(L"Publish", L"UseReplayBuffer", useReplayBuffer);
 
-    if(App->stopStreamHotkeyID)
-    {
-        API->DeleteHotkey(App->stopStreamHotkeyID);
-        App->stopStreamHotkeyID = 0;
-    }
+    bError = FALSE;
+    int replayBufferLength = (int)SendMessage(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH), UDM_GETPOS32, 0, (LPARAM)&bError);
+    if (bError)
+        replayBufferLength = 1;
 
-    if(stopStreamHotkey)
-        App->stopStreamHotkeyID = API->CreateHotkey(stopStreamHotkey, OBS::StopStreamHotkey, NULL);
-
-    //------------------------------------------
-
-    DWORD startStreamHotkey = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY), HKM_GETHOTKEY, 0, 0);
-    AppConfig->SetInt(TEXT("Publish"), TEXT("StartStreamHotkey"), startStreamHotkey);
-
-    if(App->startStreamHotkeyID)
-    {
-        API->DeleteHotkey(App->startStreamHotkeyID);
-        App->startStreamHotkeyID = 0;
-    }
-
-    if(startStreamHotkey)
-        App->startStreamHotkeyID = API->CreateHotkey(startStreamHotkey, OBS::StartStreamHotkey, NULL);
-
-    //------------------------------------------
-
-    DWORD stopRecordingHotkey = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_STOPRECORDINGHOTKEY), HKM_GETHOTKEY, 0, 0);
-    AppConfig->SetInt(TEXT("Publish"), TEXT("StopRecordingHotkey"), stopRecordingHotkey);
-
-    if (App->stopRecordingHotkeyID)
-    {
-        API->DeleteHotkey(App->stopRecordingHotkeyID);
-        App->stopRecordingHotkeyID = 0;
-    }
-
-    if (stopRecordingHotkey)
-        App->stopRecordingHotkeyID = API->CreateHotkey(stopRecordingHotkey, OBS::StopRecordingHotkey, NULL);
-
-    //------------------------------------------
-
-    DWORD startRecordingHotkey = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_STARTRECORDINGHOTKEY), HKM_GETHOTKEY, 0, 0);
-    AppConfig->SetInt(TEXT("Publish"), TEXT("StartRecordingHotkey"), startRecordingHotkey);
-
-    if (App->startRecordingHotkeyID)
-    {
-        API->DeleteHotkey(App->startRecordingHotkeyID);
-        App->startRecordingHotkeyID = 0;
-    }
-
-    if (startRecordingHotkey)
-        App->startRecordingHotkeyID = API->CreateHotkey(startRecordingHotkey, OBS::StartRecordingHotkey, NULL);
+    AppConfig->SetInt(L"Publish", L"ReplayBufferLength", replayBufferLength);
 
     //------------------------------------------
 
@@ -391,9 +347,32 @@ void SettingsPublish::SetWarningInfo()
     SetCanOptimizeSettings(canOptimize);
 }
 
+static void UpdateMemoryUsage(HWND hwnd)
+{
+    int maxBitRate = AppConfig->GetInt(L"Video Encoding", L"MaxBitrate", 1000);
+    int keyframeInt = AppConfig->GetInt(L"Video Encoding", L"KeyframeInterval", 0);
+    int audioBitRate = AppConfig->GetInt(L"Audio Encoding", L"Bitrate", 96);
+
+    if (keyframeInt <= 0)
+        keyframeInt = 5; // x264 and QSV seem to use a bit over 4 seconds of keyframe interval by default
+
+    BOOL error;
+    int saveInterval = (int)SendMessage(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH), UDM_GETPOS32, 0, (LPARAM)&error);
+    if (error)
+        saveInterval = 1;
+
+    long long max_kbits = (maxBitRate + audioBitRate) * (keyframeInt * 2 + saveInterval);
+
+    MEMORYSTATUS ms;
+    GlobalMemoryStatus(&ms);
+
+    String memory = FormattedString(L"%d / %d", (int)ceil(max_kbits * 1000. / 1024. / 1024. / 8.), ms.dwTotalPhys / 1024 / 1024);
+    SetWindowText(GetDlgItem(hwnd, IDC_REPLAYBUFFERMEMORY), memory.Array());
+}
+
 void SettingsPublish::OptimizeSettings()
 {
-    auto refresh_on_exit = GuardScope([&] { SetWarningInfo(); });
+    auto refresh_on_exit = GuardScope([&] { SetWarningInfo(); UpdateMemoryUsage(hwnd); });
     XConfig serverData;
     if (!serverData.Open(L"services.xconfig"))
         return;
@@ -686,39 +665,15 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH_STATIC), 0, -data.fileControlOffset);
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH), 0, -data.fileControlOffset);
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_BROWSE), 0, -data.fileControlOffset);
-                    AdjustWindowPos(GetDlgItem(hwnd, IDC_STOPSTREAMHOTKEY_STATIC), 0, -data.fileControlOffset);
-                    AdjustWindowPos(GetDlgItem(hwnd, IDC_STOPSTREAMHOTKEY), 0, -data.fileControlOffset);
-                    AdjustWindowPos(GetDlgItem(hwnd, IDC_CLEARHOTKEY), 0, -data.fileControlOffset);
-                    AdjustWindowPos(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY_STATIC), 0, -data.fileControlOffset);
-                    AdjustWindowPos(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY), 0, -data.fileControlOffset);
-                    AdjustWindowPos(GetDlgItem(hwnd, IDC_CLEARHOTKEY_STARTSTREAM), 0, -data.fileControlOffset);
-                    AdjustWindowPos(GetDlgItem(hwnd, IDC_STARTRECORDINGHOTKEY_STATIC), 0, -data.fileControlOffset);
-                    AdjustWindowPos(GetDlgItem(hwnd, IDC_STOPRECORDINGHOTKEY_STATIC), 0, -data.fileControlOffset);
-                    AdjustWindowPos(GetDlgItem(hwnd, IDC_STARTRECORDINGHOTKEY), 0, -data.fileControlOffset);
-                    AdjustWindowPos(GetDlgItem(hwnd, IDC_STOPRECORDINGHOTKEY), 0, -data.fileControlOffset);
-                    AdjustWindowPos(GetDlgItem(hwnd, IDC_CLEARHOTKEY_STARTRECORDING), 0, -data.fileControlOffset);
-                    AdjustWindowPos(GetDlgItem(hwnd, IDC_CLEARHOTKEY_STOPRECORDING), 0, -data.fileControlOffset);
+                    AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTMODE), 0, -data.fileControlOffset);
+                    AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTNORMAL), 0, -data.fileControlOffset);
+                    AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTREPLAYBUFFER), 0, -data.fileControlOffset);
+                    AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH), 0, -data.fileControlOffset);
+                    AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_EDIT), 0, -data.fileControlOffset);
+                    AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_STATIC), 0, -data.fileControlOffset);
+                    AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERMEMORY_STATIC), 0, -data.fileControlOffset);
+                    AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERMEMORY), 0, -data.fileControlOffset);
                 }
-
-                //--------------------------------------------
-
-                DWORD startHotkey = AppConfig->GetInt(TEXT("Publish"), TEXT("StartStreamHotkey"));
-                SendMessage(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY), HKM_SETHOTKEY, startHotkey, 0);
-
-                //--------------------------------------------
-
-                DWORD stopHotkey = AppConfig->GetInt(TEXT("Publish"), TEXT("StopStreamHotkey"));
-                SendMessage(GetDlgItem(hwnd, IDC_STOPSTREAMHOTKEY), HKM_SETHOTKEY, stopHotkey, 0);
-
-                //--------------------------------------------
-
-                startHotkey = AppConfig->GetInt(TEXT("Publish"), TEXT("StartRecordingHotkey"));
-                SendMessage(GetDlgItem(hwnd, IDC_STARTRECORDINGHOTKEY), HKM_SETHOTKEY, startHotkey, 0);
-
-                //--------------------------------------------
-
-                stopHotkey = AppConfig->GetInt(TEXT("Publish"), TEXT("StopRecordingHotkey"));
-                SendMessage(GetDlgItem(hwnd, IDC_STOPRECORDINGHOTKEY), HKM_SETHOTKEY, stopHotkey, 0);
 
                 //--------------------------------------------
 
@@ -743,7 +698,68 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 //--------------------------------------------
 
+                HWND hwndToolTip = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL, WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP,
+                    CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+                    hwnd, NULL, hinstMain, NULL);
+
+                TOOLINFO ti;
+                zero(&ti, sizeof(ti));
+                ti.cbSize = sizeof(ti);
+                ti.uFlags = TTF_SUBCLASS | TTF_IDISHWND;
+                ti.hwnd = hwnd;
+
+                if (LocaleIsRTL())
+                    ti.uFlags |= TTF_RTLREADING;
+
+                SendMessage(hwndToolTip, TTM_SETMAXTIPWIDTH, 0, 500);
+                SendMessage(hwndToolTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 8000);
+
+                //--------------------------------------------
+
+                bool useReplayBuffer = !!AppConfig->GetInt(L"Publish", L"UseReplayBuffer");
+
+                SendMessage(GetDlgItem(hwnd, IDC_FILEOUTPUTNORMAL), BM_SETCHECK, !useReplayBuffer, 0);
+                SendMessage(GetDlgItem(hwnd, IDC_FILEOUTPUTREPLAYBUFFER), BM_SETCHECK, useReplayBuffer, 0);
+
+                ti.lpszText = (LPWSTR)Str("Settings.Publish.FileOutputMode.ReplayBufferTooltip");
+                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_FILEOUTPUTREPLAYBUFFER);
+                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+
+                //--------------------------------------------
+
+                bool settingChanged = false;
+
+                hwndTemp = GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH);
+
+                int replayBufferLength = AppConfig->GetInt(L"Publish", L"ReplayBufferLength", 1);
+                if (replayBufferLength < 1)
+                {
+                    replayBufferLength = 1;
+                    settingChanged = true;
+                }
+                else if (replayBufferLength > (30 * 60))
+                {
+                    replayBufferLength = 30 * 60;
+                    settingChanged = true;
+                }
+
+                SendMessage(hwndTemp, UDM_SETRANGE32, 1, 30 * 60); //upper limit of 30 minutes
+                SendMessage(hwndTemp, UDM_SETPOS32, 0, replayBufferLength);
+
+                ti.lpszText = (LPWSTR)Str("Settings.Publish.ReplayBufferTooltip");
+                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_EDIT);
+                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+
+                //--------------------------------------------
+
+                UpdateMemoryUsage(hwnd);
+
+                //--------------------------------------------
+
                 SetWarningInfo();
+
+                if (settingChanged)
+                    return TRUE;
 
                 ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_HIDE);
                 SetChangedSettings(false);
@@ -759,6 +775,24 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                         SetTextColor((HDC)wParam, RGB(255, 0, 0));
                         SetBkColor((HDC)wParam, COLORREF(GetSysColor(COLOR_3DFACE)));
                         return (INT_PTR)GetSysColorBrush(COLOR_BTNFACE);
+
+                    case IDC_REPLAYBUFFERMEMORY:
+                    {
+                        bool highUsage = false;
+
+                        String mem = GetEditText(GetDlgItem(hwnd, IDC_REPLAYBUFFERMEMORY));
+                        TSTR pos = std::find(mem.Array(), mem.Array() + mem.Length(), '/');
+                        if (pos != (mem.Array() + mem.Length()))
+                        {
+                            int used = mem.Left((UINT)(pos - mem.Array() - 1)).ToInt();
+                            int avail = mem.Right((UINT)(mem.Array() + mem.Length() - pos - 2)).ToInt();
+                            highUsage = used > (avail / 2);
+                        }
+
+                        SetTextColor((HDC)wParam, highUsage ? RGB(255, 0, 0) : COLORREF(GetSysColor(COLOR_WINDOWTEXT)));
+                        SetBkColor((HDC)wParam, COLORREF(GetSysColor(COLOR_3DFACE)));
+                        return (INT_PTR)GetSysColorBrush(COLOR_BTNFACE);
+                    }
                 }
             }
             break;
@@ -815,37 +849,28 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH_STATIC), 0, data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH), 0, data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_BROWSE), 0, data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_STOPSTREAMHOTKEY_STATIC), 0, data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_STOPSTREAMHOTKEY), 0, data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_CLEARHOTKEY), 0, data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY_STATIC), 0, data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY), 0, data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_CLEARHOTKEY_STARTSTREAM), 0, data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_STARTRECORDINGHOTKEY_STATIC), 0, data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_STOPRECORDINGHOTKEY_STATIC), 0, data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_STARTRECORDINGHOTKEY), 0, data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_STOPRECORDINGHOTKEY), 0, data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_CLEARHOTKEY_STARTRECORDING), 0, data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_CLEARHOTKEY_STOPRECORDING), 0, data.fileControlOffset);
-
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTMODE), 0, data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTNORMAL), 0, data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTREPLAYBUFFER), 0, data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH), 0, data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_EDIT), 0, data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_STATIC), 0, data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERMEMORY_STATIC), 0, data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERMEMORY), 0, data.fileControlOffset);
                             }
                             else if(mode == 1 && data.mode == 0)
                             {
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH_STATIC), 0, -data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH), 0, -data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_BROWSE), 0, -data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_STOPSTREAMHOTKEY_STATIC), 0, -data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_STOPSTREAMHOTKEY), 0, -data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_CLEARHOTKEY), 0, -data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY_STATIC), 0, -data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY), 0, -data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_CLEARHOTKEY_STARTSTREAM), 0, -data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_STARTRECORDINGHOTKEY_STATIC), 0, -data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_STOPRECORDINGHOTKEY_STATIC), 0, -data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_STARTRECORDINGHOTKEY), 0, -data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_STOPRECORDINGHOTKEY), 0, -data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_CLEARHOTKEY_STARTRECORDING), 0, -data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_CLEARHOTKEY_STOPRECORDING), 0, -data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTMODE), 0, -data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTNORMAL), 0, -data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTREPLAYBUFFER), 0, -data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH), 0, -data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_EDIT), 0, -data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_STATIC), 0, -data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERMEMORY_STATIC), 0, -data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERMEMORY), 0, -data.fileControlOffset);
                             }
 
                             data.mode = mode;
@@ -951,6 +976,14 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                             bDataChanged = true;
                         break;
 
+                    case IDC_REPLAYBUFFERLENGTH_EDIT:
+                        if (HIWORD(wParam) == EN_CHANGE)
+                        {
+                            bDataChanged = true;
+                            UpdateMemoryUsage(hwnd);
+                        }
+                        break;
+
                     case IDC_KEEPRECORDING:
                         if(HIWORD(wParam) == BN_CLICKED)
                         {
@@ -1019,17 +1052,10 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                     case IDC_LOWLATENCYMODE:
                     case IDC_SAVETOFILE:
+                    case IDC_FILEOUTPUTNORMAL:
+                    case IDC_FILEOUTPUTREPLAYBUFFER:
                         if(HIWORD(wParam) == BN_CLICKED)
                             bDataChanged = true;
-                        break;
-
-                    case IDC_STARTSTREAMHOTKEY:
-                    case IDC_STOPSTREAMHOTKEY:
-                    //case IDC_DASHBOARDLINK:
-                    case IDC_STARTRECORDINGHOTKEY:
-                    case IDC_STOPRECORDINGHOTKEY:
-                        if(HIWORD(wParam) == EN_CHANGE)
-                            SetChangedSettings(true);
                         break;
 
                     case IDC_PLAYPATH:
@@ -1037,50 +1063,6 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     case IDC_SAVEPATH:
                         if(HIWORD(wParam) == EN_CHANGE)
                             bDataChanged = true;
-                        break;
-
-                    case IDC_CLEARHOTKEY_STARTSTREAM:
-                        if(HIWORD(wParam) == BN_CLICKED)
-                        {
-                            if(SendMessage(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY), HKM_GETHOTKEY, 0, 0))
-                            {
-                                SendMessage(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY), HKM_SETHOTKEY, 0, 0);
-                                SetChangedSettings(true);
-                            }
-                        }
-                        break;
-
-                    case IDC_CLEARHOTKEY:
-                        if(HIWORD(wParam) == BN_CLICKED)
-                        {
-                            if(SendMessage(GetDlgItem(hwnd, IDC_STOPSTREAMHOTKEY), HKM_GETHOTKEY, 0, 0))
-                            {
-                                SendMessage(GetDlgItem(hwnd, IDC_STOPSTREAMHOTKEY), HKM_SETHOTKEY, 0, 0);
-                                SetChangedSettings(true);
-                            }
-                        }
-                        break;
-
-                    case IDC_CLEARHOTKEY_STARTRECORDING:
-                        if (HIWORD(wParam) == BN_CLICKED)
-                        {
-                            if (SendMessage(GetDlgItem(hwnd, IDC_STARTRECORDINGHOTKEY), HKM_GETHOTKEY, 0, 0))
-                            {
-                                SendMessage(GetDlgItem(hwnd, IDC_STARTRECORDINGHOTKEY), HKM_SETHOTKEY, 0, 0);
-                                SetChangedSettings(true);
-                            }
-                        }
-                        break;
-
-                    case IDC_CLEARHOTKEY_STOPRECORDING:
-                        if (HIWORD(wParam) == BN_CLICKED)
-                        {
-                            if (SendMessage(GetDlgItem(hwnd, IDC_STOPRECORDINGHOTKEY), HKM_GETHOTKEY, 0, 0))
-                            {
-                                SendMessage(GetDlgItem(hwnd, IDC_STOPRECORDINGHOTKEY), HKM_SETHOTKEY, 0, 0);
-                                SetChangedSettings(true);
-                            }
-                        }
                         break;
 
                     case IDC_SERVERLIST:

@@ -655,6 +655,7 @@ OBS::OBS()
 
     currentSettingsPane = NULL;
     AddBuiltInSettingsPanes();
+    AddEncoderSettingsPanes();
 
     //-----------------------------------------------------
 
@@ -1377,7 +1378,10 @@ void OBS::ConfigureStreamButtons()
 {
     RefreshStreamButtons();
     SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), bStreaming ? Str("MainWindow.StopStream") : Str("MainWindow.StartStream"));
-    SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), bRecording ? Str("MainWindow.StopRecording") : Str("MainWindow.StartRecording"));
+    if (bRecordingReplayBuffer || AppConfig->GetInt(L"Publish", L"UseReplayBuffer"))
+        SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), bRecording ? Str("MainWindow.StopReplayBuffer") : Str("MainWindow.StartReplayBuffer"));
+    else
+        SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), bRecording ? Str("MainWindow.StopRecording") : Str("MainWindow.StartRecording"));
     SetWindowText(GetDlgItem(hwndMain, ID_TESTSTREAM), bTestStream ? Str("MainWindow.StopTest") : Str("MainWindow.TestStream"));
 }
 
@@ -1519,10 +1523,11 @@ void OBS::ReloadIniSettings()
     QuickClearHotkey(startStreamHotkeyID);
     QuickClearHotkey(stopRecordingHotkeyID);
     QuickClearHotkey(startRecordingHotkeyID);
+    QuickClearHotkey(saveReplayBufferHotkeyID);
 
-    bUsingPushToTalk = AppConfig->GetInt(TEXT("Audio"), TEXT("UsePushToTalk")) != 0;
     DWORD hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey"));
     DWORD hotkey2 = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey2"));
+    bUsingPushToTalk = hotkey || hotkey2;
     pushToTalkDelay = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkDelay"), 200);
 
     if(bUsingPushToTalk && hotkey)
@@ -1553,6 +1558,10 @@ void OBS::ReloadIniSettings()
     hotkey = AppConfig->GetInt(TEXT("Publish"), TEXT("StartRecordingHotkey"));
     if (hotkey)
         startRecordingHotkeyID = API->CreateHotkey(hotkey, OBS::StartRecordingHotkey, NULL);
+
+    hotkey = AppConfig->GetInt(L"Publish", L"SaveReplayBufferHotkey");
+    if (hotkey)
+        saveReplayBufferHotkeyID = API->CreateHotkey(hotkey, OBS::SaveReplayBufferHotkey, NULL);
 
     //-------------------------------------------
     // Notification Area icon

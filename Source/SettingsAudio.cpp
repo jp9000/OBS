@@ -83,64 +83,12 @@ void SettingsAudio::ApplySettings()
 
     //------------------------------------
 
-    App->bUsingPushToTalk = SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALK), BM_GETCHECK, 0, 0) == BST_CHECKED;
-    DWORD hotkey = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY), HKM_GETHOTKEY, 0, 0);
-    DWORD hotkey2 = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY2), HKM_GETHOTKEY, 0, 0);
-
     App->pushToTalkDelay = (int)SendMessage(GetDlgItem(hwnd, IDC_PTTDELAY), UDM_GETPOS32, 0, 0);
     if(App->pushToTalkDelay < 0)
         App->pushToTalkDelay = 0;
     else if(App->pushToTalkDelay > 2000)
         App->pushToTalkDelay = 2000;
-
-    AppConfig->SetInt(TEXT("Audio"), TEXT("UsePushToTalk"), App->bUsingPushToTalk);
-    AppConfig->SetInt(TEXT("Audio"), TEXT("PushToTalkHotkey"), hotkey);
-    AppConfig->SetInt(TEXT("Audio"), TEXT("PushToTalkHotkey2"), hotkey2);
     AppConfig->SetInt(TEXT("Audio"), TEXT("PushToTalkDelay"), (int)App->pushToTalkDelay);
-
-    if (App->pushToTalkHotkeyID)
-    {
-        API->DeleteHotkey(App->pushToTalkHotkeyID);
-        App->pushToTalkHotkeyID = 0;
-    }
-    if (App->pushToTalkHotkey2ID)
-    {
-        API->DeleteHotkey(App->pushToTalkHotkey2ID);
-        App->pushToTalkHotkey2ID = 0;
-    }
-
-    if(App->bUsingPushToTalk && hotkey)
-        App->pushToTalkHotkeyID = API->CreateHotkey(hotkey, OBS::PushToTalkHotkey, NULL);
-    if(App->bUsingPushToTalk && hotkey2)
-        App->pushToTalkHotkey2ID = API->CreateHotkey(hotkey2, OBS::PushToTalkHotkey, NULL);
-
-    //------------------------------------
-
-    hotkey = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_MUTEMICHOTKEY), HKM_GETHOTKEY, 0, 0);
-    AppConfig->SetInt(TEXT("Audio"), TEXT("MuteMicHotkey"), hotkey);
-
-    if(App->muteMicHotkeyID)
-    {
-        API->DeleteHotkey(App->muteMicHotkeyID);
-        App->muteDesktopHotkeyID = 0;
-    }
-
-    if(hotkey)
-        App->muteMicHotkeyID = API->CreateHotkey(hotkey, OBS::MuteMicHotkey, NULL);
-
-    //------------------------------------
-
-    hotkey = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_MUTEDESKTOPHOTKEY), HKM_GETHOTKEY, 0, 0);
-    AppConfig->SetInt(TEXT("Audio"), TEXT("MuteDesktopHotkey"), hotkey);
-
-    if(App->muteDesktopHotkeyID)
-    {
-        API->DeleteHotkey(App->muteDesktopHotkeyID);
-        App->muteDesktopHotkeyID = 0;
-    }
-
-    if(hotkey)
-        App->muteDesktopHotkeyID = API->CreateHotkey(hotkey, OBS::MuteDesktopHotkey, NULL);
 
     //------------------------------------
 
@@ -301,32 +249,9 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 //--------------------------------------------
 
-                BOOL bPushToTalk = AppConfig->GetInt(TEXT("Audio"), TEXT("UsePushToTalk"));
-                SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALK), BM_SETCHECK, bPushToTalk ? BST_CHECKED : BST_UNCHECKED, 0);
-                EnableWindow(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY), bPushToTalk);
-                EnableWindow(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY2), bPushToTalk);
-                EnableWindow(GetDlgItem(hwnd, IDC_CLEARPUSHTOTALK), bPushToTalk);
-                EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY_EDIT), bPushToTalk);
-                EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY), bPushToTalk);
-
-                DWORD hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey"));
-                SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY), HKM_SETHOTKEY, hotkey, 0);
-                DWORD hotkey2 = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey2"));
-                SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY2), HKM_SETHOTKEY, hotkey2, 0);
-
                 int pttDelay = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkDelay"), 200);
                 SendMessage(GetDlgItem(hwnd, IDC_PTTDELAY), UDM_SETRANGE32, 0, 2000);
                 SendMessage(GetDlgItem(hwnd, IDC_PTTDELAY), UDM_SETPOS32, 0, pttDelay);
-
-                //--------------------------------------------
-
-                hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("MuteMicHotkey"));
-                SendMessage(GetDlgItem(hwnd, IDC_MUTEMICHOTKEY), HKM_SETHOTKEY, hotkey, 0);
-
-                //--------------------------------------------
-
-                hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("MuteDesktopHotkey"));
-                SendMessage(GetDlgItem(hwnd, IDC_MUTEDESKTOPHOTKEY), HKM_SETHOTKEY, hotkey, 0);
 
                 //--------------------------------------------
 
@@ -385,19 +310,6 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 switch(LOWORD(wParam))
                 {
-                    case IDC_PUSHTOTALK:
-                        if(HIWORD(wParam) == BN_CLICKED)
-                        {
-                            BOOL bUsePushToTalk = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
-                            EnableWindow(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY), bUsePushToTalk);
-                            EnableWindow(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY2), bUsePushToTalk);
-                            EnableWindow(GetDlgItem(hwnd, IDC_CLEARPUSHTOTALK), bUsePushToTalk);
-                            EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY_EDIT), bUsePushToTalk);
-                            EnableWindow(GetDlgItem(hwnd, IDC_PTTDELAY), bUsePushToTalk);
-                            SetChangedSettings(true);
-                        }
-                        break;
-
                     case IDC_RESETMIC:
                         {
                             App->ResetMic();
@@ -417,38 +329,9 @@ INT_PTR SettingsAudio::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     case IDC_MICTIMEOFFSET_EDIT:
                     case IDC_DESKTOPBOOST_EDIT:
                     case IDC_MICBOOST_EDIT:
-                    case IDC_PUSHTOTALKHOTKEY:
-                    case IDC_PUSHTOTALKHOTKEY2:
-                    case IDC_MUTEMICHOTKEY:
-                    case IDC_MUTEDESKTOPHOTKEY:
                     case IDC_PTTDELAY_EDIT:
                         if(HIWORD(wParam) == EN_CHANGE)
                             SetChangedSettings(true);
-                        break;
-
-                    case IDC_CLEARPUSHTOTALK:
-                        if(HIWORD(wParam) == BN_CLICKED)
-                        {
-                            SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY), HKM_SETHOTKEY, 0, 0);
-                            SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY2), HKM_SETHOTKEY, 0, 0);
-                            SetChangedSettings(true);
-                        }
-                        break;
-
-                    case IDC_CLEARMUTEMIC:
-                        if(HIWORD(wParam) == BN_CLICKED)
-                        {
-                            SendMessage(GetDlgItem(hwnd, IDC_MUTEMICHOTKEY), HKM_SETHOTKEY, 0, 0);
-                            SetChangedSettings(true);
-                        }
-                        break;
-
-                    case IDC_CLEARMUTEDESKTOP:
-                        if(HIWORD(wParam) == BN_CLICKED)
-                        {
-                            SendMessage(GetDlgItem(hwnd, IDC_MUTEDESKTOPHOTKEY), HKM_SETHOTKEY, 0, 0);
-                            SetChangedSettings(true);
-                        }
                         break;
 
                     case IDC_FORCEMONO:

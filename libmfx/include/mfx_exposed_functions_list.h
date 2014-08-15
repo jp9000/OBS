@@ -1,6 +1,6 @@
 /* ****************************************************************************** *\
 
-Copyright (C) 2012 Intel Corporation.  All rights reserved.
+Copyright (C) 2012-2014 Intel Corporation.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -36,17 +36,17 @@ File Name: mfx_exposed_functions_list.h
 // Please, do no try to fix it.
 //
 
+
+
+// Use define API_VERSION to set the API of functions listed further
+// When new functions are added new section with functions declarations must be started with updated define
+
 //
 // API version 1.0 functions
 //
 
-// Minor value should precedes the major value
-#define API_VERSION {0, 1}
-#define API_VERSION_PREV {0, 0}
-
-// Library Common
-FUNCTION(mfxStatus, MFXQueryIMPL, (mfxSession session, mfxIMPL *impl), (session, impl))
-FUNCTION(mfxStatus, MFXQueryVersion, (mfxSession session, mfxVersion *version), (session, version))
+// API version where a function is added. Minor value should precedes the major value
+#define API_VERSION {{0, 1}}
 
 // CORE interface functions
 FUNCTION(mfxStatus, MFXVideoCORE_SetBufferAllocator, (mfxSession session, mfxBufferAllocator *allocator), (session, allocator))
@@ -93,25 +93,15 @@ FUNCTION(mfxStatus, MFXVideoVPP_GetVPPStat, (mfxSession session, mfxVPPStat *sta
 FUNCTION(mfxStatus, MFXVideoVPP_RunFrameVPPAsync, (mfxSession session, mfxFrameSurface1 *in, mfxFrameSurface1 *out, mfxExtVppAuxData *aux, mfxSyncPoint *syncp), (session, in, out, aux, syncp))
 
 #undef API_VERSION
-#undef API_VERSION_PREV
 
 //
 // API version 1.1 functions
 //
 
-// Use the defines to set the current API version, until new functions are added.
-// When new functions are added, API_VERSION must be fixed with the previous
-// VERSION values and new section with functions declarations must be started.
-#define API_VERSION {MFX_VERSION_MINOR, MFX_VERSION_MAJOR}
-#define API_VERSION_PREV {0, 1}
-
-FUNCTION(mfxStatus, MFXDisjoinSession, (mfxSession session), (session))
-FUNCTION(mfxStatus, MFXSetPriority, (mfxSession session, mfxPriority priority), (session, priority))
-FUNCTION(mfxStatus, MFXGetPriority, (mfxSession session, mfxPriority *priority), (session, priority))
+#define API_VERSION {{1, 1}}
 
 FUNCTION(mfxStatus, MFXVideoUSER_Register, (mfxSession session, mfxU32 type, const mfxPlugin *par), (session, type, par))
 FUNCTION(mfxStatus, MFXVideoUSER_Unregister, (mfxSession session, mfxU32 type), (session, type))
 FUNCTION(mfxStatus, MFXVideoUSER_ProcessFrameAsync, (mfxSession session, const mfxHDL *in, mfxU32 in_num, const mfxHDL *out, mfxU32 out_num, mfxSyncPoint *syncp), (session, in, in_num, out, out_num, syncp))
 
 #undef API_VERSION
-#undef API_VERSION_PREV

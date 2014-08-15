@@ -2560,11 +2560,7 @@ void OBS::ExportSceneCollection()
 
     GlobalConfig->SetString(L"General", L"LastImportExportPath", GetPathDirectory(lpFile));
 
-    String strCurSceneCollection = GlobalConfig->GetString(TEXT("General"), TEXT("SceneCollection"));
-    String strCurSceneCollectionFile;
-    strCurSceneCollectionFile << lpAppDataPath << TEXT("\\sceneCollection\\") << strCurSceneCollection << L".xconfig";
-
-    scenesConfig.SaveTo(strCurSceneCollectionFile);
+    scenesConfig.SaveTo(lpFile);
 }
 
 //----------------------------
@@ -2590,13 +2586,12 @@ void OBS::ResetProfileMenu()
 void OBS::DisableMenusWhileStreaming(bool disable)
 {
     HMENU hmenuMain = GetMenu(hwndMain);
-    HMENU hmenuHelp = GetSubMenu(hmenuMain, 3);
 
     EnableMenuItem(hmenuMain, 2, (!disable ? MF_ENABLED : MF_DISABLED) | MF_BYPOSITION);
     EnableMenuItem(hmenuMain, 3, (!disable ? MF_ENABLED : MF_DISABLED) | MF_BYPOSITION);
 
-    EnableMenuItem(GetSubMenu(hmenuHelp, 3), 0, (!disable ? MF_ENABLED : MF_DISABLED) | MF_BYPOSITION);
-    EnableMenuItem(GetSubMenu(hmenuHelp, 3), 1, (!disable ? MF_ENABLED : MF_DISABLED) | MF_BYPOSITION);
+    EnableMenuItem(hmenuMain, ID_HELP_UPLOAD_CURRENT_LOG, (!disable ? MF_ENABLED : MF_DISABLED));
+    EnableMenuItem(hmenuMain, ID_HELP_ANALYZE_CURRENT_LOG, (!disable ? MF_ENABLED : MF_DISABLED));
 
     DrawMenuBar(hwndMain);
 }
@@ -2609,6 +2604,51 @@ void LogUploadMonitorCallback()
 }
 
 //----------------------------
+
+static HMENU FindParent(HMENU root, UINT id, String *name=nullptr)
+{
+    MENUITEMINFO info;
+    zero(&info, sizeof(info));
+    info.cbSize = sizeof(info);
+    info.fMask = MIIM_SUBMENU | (name ? MIIM_STRING : 0);
+
+    MENUITEMINFO verifier;
+    zero(&verifier, sizeof(verifier));
+    verifier.cbSize = sizeof(verifier);
+
+    bool found = false;
+
+    int count = GetMenuItemCount(root);
+    for (int i = 0; i < count; i++)
+    {
+        info.cch = 0;
+        if (!GetMenuItemInfo(root, i, true, &info))
+            continue;
+
+        if (!info.hSubMenu)
+            continue;
+
+        HMENU submenu = info.hSubMenu;
+        if (!GetMenuItemInfo(submenu, id, false, &verifier))
+            continue;
+
+        if (name)
+        {
+            name->SetLength(info.cch++);
+            info.dwTypeData = name->Array();
+            GetMenuItemInfo(root, i, true, &info);
+            info.dwTypeData = nullptr;
+        }
+
+        found = true;
+
+        root = submenu;
+        i = 0;
+        count = GetMenuItemCount(root);
+    }
+
+    return found ? root : nullptr;
+}
 
 void OBS::ResetLogUploadMenu()
 {
@@ -2679,8 +2719,9 @@ void OBS::ResetLogUploadMenu()
     }
 
     HMENU hmenuMain = GetMenu(hwndMain);
-    HMENU hmenuHelp = GetSubMenu(hmenuMain, 3);
-    HMENU hmenuUpload = GetSubMenu(hmenuHelp, 3);
+    HMENU hmenuUpload = FindParent(hmenuMain, ID_HELP_UPLOAD_CURRENT_LOG);
+    if (!hmenuUpload)
+        return;
 
     while (DeleteMenu(hmenuUpload, 2, MF_BYPOSITION));
 
@@ -2711,21 +2752,9 @@ void OBS::ResetLogUploadMenu()
 String GetLogUploadMenuItem(UINT item)
 {
     HMENU hmenuMain = GetMenu(hwndMain);
-    HMENU hmenuHelp = GetSubMenu(hmenuMain, 3);
-    HMENU hmenuLog = GetSubMenu(hmenuHelp, 3);
-
-    MENUITEMINFO mii;
-    zero(&mii, sizeof mii);
-    mii.cbSize = sizeof mii;
-    mii.fMask = MIIM_STRING;
-
-    GetMenuItemInfo(hmenuLog, 6 + item, true, &mii);
 
     String log;
-    log.SetLength(mii.cch++);
-    mii.dwTypeData = log.Array();
-
-    GetMenuItemInfo(hmenuLog, 6 + item, true, &mii);
+    FindParent(hmenuMain, item, &log);
 
     return log;
 }
@@ -3044,17 +3073,8 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     ShellExecute(NULL, TEXT("open"), TEXT("http://www.obsproject.com"), 0, 0, SW_SHOWNORMAL);
                     break;
 
-                case ID_HELP_CONTENTS:
-                    {
-                        String strHelpPath;
-                        UINT dirSize = GetCurrentDirectory(0, 0);
-                        strHelpPath.SetLength(dirSize);
-                        GetCurrentDirectory(dirSize, strHelpPath.Array());
-
-                        strHelpPath << TEXT("\\OBSHelp.chm");
-
-                        ShellExecute(NULL, TEXT("open"), strHelpPath, 0, 0, SW_SHOWNORMAL);
-                    }
+                case ID_HELP_OPENHELP:
+                    ShellExecute(NULL, TEXT("open"), TEXT("http://jp9000.github.io/OBS/"), 0, 0, SW_SHOWNORMAL);
                     break;
 
                 case ID_HELP_CHECK_FOR_UPDATES:
@@ -3384,20 +3404,29 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                         }
                         else if (id >= ID_UPLOAD_LOG && id <= ID_UPLOAD_LOG_END)
                         {
-                            String log = GetLogUploadMenuItem(id - ID_UPLOAD_LOG);
+                            String log = GetLogUploadMenuItem(id);
+                            if (log.IsEmpty())
+                                break;
+
                             LogUploadResult result;
                             ShowLogUploadResult(result, UploadLog(log, result));
                         }
                         else if (id >= ID_UPLOAD_ANALYZE_LOG && id <= ID_UPLOAD_ANALYZE_LOG_END)
                         {
-                            String log = GetLogUploadMenuItem(id - ID_UPLOAD_ANALYZE_LOG);
+                            String log = GetLogUploadMenuItem(id);
+                            if (log.IsEmpty())
+                                break;
+
                             LogUploadResult result;
                             result.openAnalyzerOnSuccess = true;
                             ShowLogUploadResult(result, UploadLog(log, result));
                         }
                         else if (id >= ID_VIEW_LOG && id <= ID_VIEW_LOG_END)
                         {
-                            String log = GetLogUploadMenuItem(id - ID_VIEW_LOG);
+                            String log = GetLogUploadMenuItem(id);
+                            if (log.IsEmpty())
+                                break;
+
                             String tar = FormattedString(L"%s\\logs\\%s", OBSGetAppDataPath(), log.Array());
 
                             HINSTANCE result = ShellExecute(nullptr, L"edit", tar.Array(), 0, 0, SW_SHOWNORMAL);

@@ -788,6 +788,10 @@ BOOL   STDCALL OSGetLoadedModuleList(HANDLE hProcess, StringList &ModuleList)
                     *p = 0;
                     p++;
                 }
+                else
+                {
+                    p = szFileName;
+                }
 
                 slwr (p);
                 ModuleList << p;
@@ -942,6 +946,7 @@ BOOL   STDCALL OSIncompatibleModulesLoaded()
             !scmp(moduleName, TEXT("action_x86.dll")) ||        //Action!
             !scmp(moduleName, TEXT("action_x64.dll")))          //Action!
         {
+            Log(TEXT("Incompatible module detected: %s"), moduleName);
             return 1;
         }
         else if (!scmp(moduleName, TEXT("atkdx11disp.dll")))     //ASUS GamerOSD

@@ -169,7 +169,7 @@ const static TCHAR *IAudioHRESULTToString(HRESULT hr)
         return TEXT("E_NOINTERFACE");
 
     default:
-        tsprintf_s(hResultCode, sizeof(hResultCode), TEXT("%08lX"), hr);
+        tsprintf_s(hResultCode, _countof(hResultCode), TEXT("%08lX"), hr);
         return hResultCode;
     }
 }

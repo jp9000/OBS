@@ -130,7 +130,7 @@ class VideoFileStream
 {
 public:
     virtual ~VideoFileStream() {}
-    virtual void AddPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)=0;
+    virtual void AddPacket(BYTE *data, UINT size, DWORD timestamp, DWORD pts, PacketType type)=0;
 };
 
 //-------------------------------------------------------------------
@@ -161,7 +161,7 @@ class VideoEncoder
     friend class OBS;
 
 protected:
-    virtual bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp)=0;
+    virtual bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, DWORD &out_pts)=0;
 
     virtual void RequestBuffers(LPVOID buffers) {}
 
@@ -526,8 +526,9 @@ struct VideoSegment
 {
     List<VideoPacketData> packets;
     DWORD timestamp;
+    DWORD pts;
 
-    inline VideoSegment() : timestamp(0) {}
+    inline VideoSegment() : timestamp(0), pts(0) {}
     inline ~VideoSegment() {Clear();}
     inline void Clear()
     {
@@ -555,6 +556,8 @@ enum class SceneCollectionAction {
     Clone
 };
 
+struct ReplayBuffer;
+
 //todo: this class has become way too big, it's horrible, and I should be ashamed of myself
 class OBS
 {
@@ -568,6 +571,7 @@ class OBS
     friend class GlobalSource;
     friend class TextOutputSource;
     friend class MMDeviceAudioSource;
+    friend struct ReplayBuffer;
 
     //---------------------------------------------------
     // graphics stuff
@@ -642,6 +646,7 @@ class OBS
     List<SettingsPane*> settingsPanes;
     SettingsPane *      currentSettingsPane;
     int                 numberOfBuiltInSettingsPanes;
+    int                 numberOfEncoderSettingsPanes;
 
     void   SetChangedSettings(bool bChanged);
     void   SetAbortApplySettings(bool abort);
@@ -654,9 +659,12 @@ class OBS
 public:
     void   AddSettingsPane(SettingsPane *pane);
     void   RemoveSettingsPane(SettingsPane *pane);
+    void   AddEncoderSettingsPane(SettingsPane *pane);
+    void   RemoveEncoderSettingsPane(SettingsPane *pane);
 
 private:
     void   AddBuiltInSettingsPanes();
+    void   AddEncoderSettingsPanes();
 
     friend class SettingsPane;
     friend class SettingsGeneral;
@@ -665,6 +673,7 @@ private:
     friend class SettingsVideo;
     friend class SettingsAudio;
     friend class SettingsAdvanced;
+    friend class SettingsHotkeys;
 
     //---------------------------------------------------
     // mainly manly main window stuff
@@ -672,7 +681,7 @@ private:
     String  strLanguage;
     bool    bTestStream;
     bool    bUseMultithreadedOptimizations;
-    bool    bRunning, bRecording, bRecordingOnly, bStartingUp, bStreaming, bKeepRecording;
+    bool    bRunning, bRecording, bRecordingReplayBuffer, bRecordingOnly, bStartingUp, bStreaming, bKeepRecording;
     bool    canRecord;
     volatile bool bShutdownVideoThread, bShutdownEncodeThread;
     int     renderFrameWidth, renderFrameHeight; // The size of the preview only
@@ -780,6 +789,8 @@ private:
     bool bWriteToFile;
     VideoFileStream *fileStream;
 
+    ReplayBuffer *replayBuffer;
+
     bool bRequestKeyframe;
     int  keyframeWait;
 
@@ -789,9 +800,10 @@ private:
 
     static DWORD STDCALL EncodeThread(LPVOID lpUnused);
     static DWORD STDCALL MainCaptureThread(LPVOID lpUnused);
-    bool BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, QWORD firstFrameTime, VideoSegment &segmentOut);
+    bool BufferVideoData(const List<DataPacket> &inputPackets, const List<PacketType> &inputTypes, DWORD timestamp, DWORD out_pts, QWORD firstFrameTime, VideoSegment &segmentOut);
     void SendFrame(VideoSegment &curSegment, QWORD firstFrameTime);
     bool ProcessFrame(FrameProcessInfo &frameInfo);
+    UINT FlushBufferedVideo();
     void EncodeLoop();  
     void MainCaptureLoop();
 
@@ -832,9 +844,11 @@ private:
     UINT stopStreamHotkeyID;
     UINT startRecordingHotkeyID;
     UINT stopRecordingHotkeyID;
+    UINT saveReplayBufferHotkeyID;
 
     bool bStartStreamHotkeyDown, bStopStreamHotkeyDown;
     bool bStartRecordingHotkeyDown, bStopRecordingHotkeyDown;
+    bool bSaveReplayBufferHotkeyDown;
 
     static DWORD STDCALL MainAudioThread(LPVOID lpUnused);
     bool QueryAudioBuffers(bool bQueriedDesktopDebugParam);
@@ -946,6 +960,7 @@ private:
     static void STDCALL StopStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL StartRecordingHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL StopRecordingHotkey(DWORD hotkey, UPARAM param, bool bDown);
+    static void STDCALL SaveReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown);
 
     static void STDCALL PushToTalkHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL MuteMicHotkey(DWORD hotkey, UPARAM param, bool bDown);

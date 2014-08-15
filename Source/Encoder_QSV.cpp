@@ -74,6 +74,24 @@ namespace
         TO_STR(MFX_TARGETUSAGE_7_BEST_SPEED)
     };
 
+#define RATE_CONTROL(x, cq) {MFX_RATECONTROL_##x, #x, cq}
+    struct
+    {
+        decltype(mfxInfoMFX::RateControlMethod) method;
+        const char* name;
+        bool cq;
+    } rate_control_str[] = {
+        RATE_CONTROL(CBR,    false),
+        RATE_CONTROL(VBR,    false),
+        RATE_CONTROL(CQP,    true),
+        RATE_CONTROL(AVBR,   false),
+        RATE_CONTROL(LA,     false),
+        RATE_CONTROL(ICQ,    true),
+        RATE_CONTROL(VCM,    false),
+        RATE_CONTROL(LA_ICQ, true),
+    };
+#undef RATE_CONTROL
+
     CTSTR qsv_intf_str(const mfxU32 impl)
     {
         switch(impl & (-MFX_IMPL_VIA_ANY))
@@ -241,7 +259,9 @@ namespace
 
             if (init_pts.Num() || frames_out == 0)
                 init_pts << ts;
-            dts << ts;
+            
+            if (!dts.Num() || dts.FindValueIndex(ts) == INVALID)
+                dts << ts;
         }
 
         int64_t operator()(uint64_t bs_pts, int64_t bs_dts)
@@ -323,6 +343,26 @@ bool CheckQSVHardwareSupport(bool log=true, bool *configurationWarning = nullptr
     return false;
 }
 
+bool QSVMethodAvailable(decltype(mfxInfoMFX::RateControlMethod) method)
+{
+    static qsv_cpu_platform plat = qsv_get_cpu_platform();
+    switch (method)
+    {
+    case MFX_RATECONTROL_CBR:
+    case MFX_RATECONTROL_VBR:
+    case MFX_RATECONTROL_AVBR:
+    case MFX_RATECONTROL_CQP:
+        return plat != QSV_CPU_PLATFORM_UNKNOWN;
+
+    case MFX_RATECONTROL_VCM:
+    case MFX_RATECONTROL_LA:
+    case MFX_RATECONTROL_ICQ:
+    case MFX_RATECONTROL_LA_ICQ:
+        return plat >= QSV_CPU_PLATFORM_HSW;
+    }
+    return false;
+}
+
 struct VideoPacket
 {
     List<BYTE> Packet;
@@ -336,7 +376,10 @@ class QSVEncoder : public VideoEncoder
 
     safe_handle qsvhelper_process,
                 qsvhelper_thread;
-    IPCSignal stop;
+    ipc_stop stop;
+    bool helper_killed = false;
+
+    ipc_encoder_flushed encoder_flushed;
 
     ipc_bitstream_buff bs_buff;
     ipc_bitstream_info bs_info;
@@ -367,6 +410,7 @@ class QSVEncoder : public VideoEncoder
 
     mfxU16 target_usage, profile,
            max_bitrate;
+    decltype(mfxInfoMFX::RateControlMethod) rate_control;
 
     String event_prefix;
 
@@ -500,6 +544,51 @@ public:
 
         ipc_init_request request((event_prefix + INIT_REQUEST).Array());
 
+        if (AppConfig->GetInt(L"QSV (Advanced)", L"UseCustomParams"))
+        {
+            Log(L"QSV: Using custom parameters");
+            request->use_custom_parameters = true;
+            auto &mfx = request->custom_parameters;
+            mfx.RateControlMethod = AppConfig->GetInt(L"QSV (Advanced)", L"RateControlMethod", MFX_RATECONTROL_VBR);
+            if (!valid_method(mfx.RateControlMethod))
+                mfx.RateControlMethod = MFX_RATECONTROL_VBR;
+
+            auto load_int = [&](CTSTR name, int def) { return AppConfig->GetInt(L"QSV (Advanced)", name, def); };
+
+            bool use_global_bitrate = !!load_int(L"UseGlobalBitrate", true);
+            bool use_global_buffer = !!load_int(L"UseGlobalBufferSize", true);
+
+            mfx.TargetKbps = use_global_bitrate ? maxBitrate : load_int(L"TargetKbps", 1000);
+            mfx.BufferSizeInKB = use_global_buffer ? (bufferSize / 8) : load_int(L"BufferSizeInKB", 0);
+            
+            switch (mfx.RateControlMethod)
+            {
+            case MFX_RATECONTROL_VBR:
+            case MFX_RATECONTROL_VCM:
+                mfx.MaxKbps = load_int(L"MaxKbps", 0);
+                break;
+
+            case MFX_RATECONTROL_AVBR:
+                mfx.Accuracy = clamp(load_int(L"Accuracy", 1000), 0, 1000);
+                mfx.Convergence = load_int(L"Convergence", 1);
+                break;
+
+            case MFX_RATECONTROL_CQP:
+                mfx.QPI = clamp(load_int(L"QPI", 23), 1, 51);
+                mfx.QPP = clamp(load_int(L"QPP", 23), 1, 51);
+                mfx.QPB = clamp(load_int(L"QPB", 23), 1, 51);
+                break;
+
+            case MFX_RATECONTROL_ICQ:
+            case MFX_RATECONTROL_LA_ICQ:
+                mfx.ICQQuality = clamp(load_int(L"ICQQuality", 23), 1, 51);
+            case MFX_RATECONTROL_LA:
+                request->la_depth = load_int(L"LADepth", 40);
+                if (request->la_depth != 0)
+                    request->la_depth = clamp(request->la_depth, 10, 100);
+            }
+        }
+
         request->mode = request->MODE_ENCODE;
         request->obs_process_id = GetCurrentProcessId();
 
@@ -544,6 +633,11 @@ public:
                     CrashError(TEXT("QSVHelper.exe could not find a valid configuration. Make sure you have a (virtual) display connected to your iGPU")); //FIXME: convert to localized error
                 CrashError(TEXT("QSVHelper.exe could not find a valid configuration"));
             default:
+                if (code == EXIT_ENCODER_INIT_FAILED && request->use_custom_parameters)
+                {
+                    Log(L"Encoder initialization failed with code %i while using custom parameters", code);
+                    throw Str("Encoder.QSV.InitCustomParamsFailed");
+                }
                 CrashError(TEXT("QSVHelper.exe has exited with code %i (before response)"), code); //FIXME: convert to localized error
             }
         }
@@ -564,6 +658,7 @@ public:
 
         target_usage = response->target_usage;
         profile = response->profile;
+        rate_control = response->rate_control;
 
         encode_tasks.SetSize(response->bitstream_num);
 
@@ -632,6 +727,10 @@ public:
         if(!stop)
             CrashError(TEXT("Failed to initialize QSV stop signal (%u)"), GetLastError());
 
+        encoder_flushed = ipc_encoder_flushed((event_prefix + ENCODER_FLUSHED).Array());
+        if (!encoder_flushed)
+            CrashError(L"Failed to initialize QSV encoder flushed signal (%u)", GetLastError());
+
         filled_bitstream_waiter = process_waiter;
         filled_bitstream_waiter.push_back(filled_bitstream.signal_);
 
@@ -642,16 +741,27 @@ public:
     {
         stop.signal();
         ClearPackets();
+
+        if (process_waiter.wait_timeout(5000))
+            TerminateProcess(qsvhelper_process, (UINT)-2);
     }
 
 #ifndef SEI_USER_DATA_UNREGISTERED
 #define SEI_USER_DATA_UNREGISTERED 0x5
 #endif
 
-    void ProcessEncodedFrame(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, mfxU32 wait=0)
+    void ProcessEncodedFrame(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, DWORD &out_pts, mfxU32 wait=0)
     {
-        if(!filled_bitstream_waiter.wait_for(2, wait))
+        if (!filled_bitstream_waiter.wait_for(2, wait))
+        {
+            if (wait <= 0)
+                return;
+
+            TerminateProcess(qsvhelper_process, (UINT)-1);
+            AppWarning(L"Terminating QSVHelper.exe after timeout");
+            helper_killed = true;
             return;
+        }
 
         uint32_t index = 0;
         {
@@ -717,8 +827,8 @@ public:
 
         INT64 dts = msFromTimestamp(bs.DecodeTimeStamp);
 
-        INT64 in_pts = msFromTimestamp(task.surf.Data.TimeStamp),
-              out_pts = msFromTimestamp(bs.TimeStamp);
+        INT64 in_pts = msFromTimestamp(task.surf.Data.TimeStamp);
+        out_pts = (DWORD)msFromTimestamp(bs.TimeStamp);
 
         if(!bFirstFrameProcessed && nalNum)
         {
@@ -934,11 +1044,8 @@ public:
         Log(TEXT("Error: all frames are in use"));
     }
 
-    void QueueEncodeTask(mfxFrameSurface1 *pic)
+    void QueueEncodeTask(mfxFrameSurface1 *pic, DWORD in_pts)
     {
-        if (!pic)
-            return;
-
         profileSegment("QueueEncodeTask");
         encode_task& task = encode_tasks[idle_tasks[0]];
 
@@ -957,24 +1064,34 @@ public:
             info.request_keyframe = bRequestKeyframe;
             bRequestKeyframe = false;
 
-            info.timestamp = task.surf.Data.TimeStamp = timestampFromMS(pic->Data.TimeStamp);
-            dts_gen.add(info.timestamp);
-            info.frame_index = (uint32_t)pic->Data.MemId-1;
-            auto lock_status = lock_mutex(frame_buff_status);
-            frame_buff_status[info.frame_index] += 1;
+            if (!pic)
+            {
+                info.flush = true;
+                dts_gen.add(timestampFromMS(in_pts));
+            }
+            else
+            {
+                info.timestamp = task.surf.Data.TimeStamp = timestampFromMS(pic->Data.TimeStamp);
+                dts_gen.add(info.timestamp);
+                info.frame_index = (uint32_t)pic->Data.MemId - 1;
+                auto lock_status = lock_mutex(frame_buff_status);
+                frame_buff_status[info.frame_index] += 1;
+            }
             frame_queue.signal();
             return;
         }
         CrashError(TEXT("QSV encoder is too slow"));
     }
 
-    bool Encode(LPVOID picInPtr, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp)
+    bool Encode(LPVOID picInPtr, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, DWORD &out_pts) override
     {
         if(!process_waiter.wait_timeout())
         {
             int code = 0;
             if(!GetExitCodeProcess(process_waiter.list[0], (LPDWORD)&code))
                 CrashError(TEXT("QSVHelper.exe exited!"));
+            if (helper_killed)
+                CrashError(L"QSVHelper.exe was killed, encode failed");
             switch(code)
             {
             case EXIT_INCOMPATIBLE_CONFIGURATION:
@@ -990,20 +1107,20 @@ public:
         bool queued = false;
         if (idle_tasks.Num())
         {
-            QueueEncodeTask((mfxFrameSurface1*)picInPtr);
+            QueueEncodeTask((mfxFrameSurface1*)picInPtr, outputTimestamp);
             queued = true;
         }
 
         profileIn("ProcessEncodedFrame");
         do
         {
-            ProcessEncodedFrame(packets, packetTypes, outputTimestamp, idle_tasks.Num() ? 0 : INFINITE);
+            ProcessEncodedFrame(packets, packetTypes, outputTimestamp, out_pts, idle_tasks.Num() ? 0 : 1000);
         }
         while(!idle_tasks.Num());
         profileOut;
 
         if(!queued)
-            QueueEncodeTask((mfxFrameSurface1*)picInPtr);
+            QueueEncodeTask((mfxFrameSurface1*)picInPtr, outputTimestamp);
 
         return true;
     }
@@ -1061,19 +1178,26 @@ public:
     {
         String strInfo;
 
+        const char* name = "UNKNOWN";
+        for (auto &names : rate_control_str)
+        {
+            if (names.method != rate_control)
+                continue;
+
+            name = names.name;
+            break;
+        }
+
         strInfo << TEXT("Video Encoding: QSV")    <<
                    TEXT("\r\n    fps: ")          << IntString(fps) <<
                    TEXT("\r\n    width: ")        << IntString(width) << TEXT(", height: ") << IntString(height) <<
                    TEXT("\r\n    target-usage: ") << usageStr[target_usage] <<
                    TEXT("\r\n    profile: ")      << qsv_profile_str(profile) <<
-                   TEXT("\r\n    CBR: ")          << CTSTR((bUseCBR) ? TEXT("yes") : TEXT("no")) <<
+                   TEXT("\r\n    CBR: ")          << CTSTR((rate_control == MFX_RATECONTROL_CBR) ? TEXT("yes") : TEXT("no")) <<
                    TEXT("\r\n    CFR: ")          << CTSTR((bUseCFR) ? TEXT("yes") : TEXT("no")) <<
-                   TEXT("\r\n    max bitrate: ")  << IntString(max_bitrate);
-
-        if(!bUseCBR)
-        {
-            strInfo << TEXT("\r\n    buffer size: ") << IntString(encode_tasks[0].bs.MaxLength*8/1000);
-        }
+                   TEXT("\r\n    max bitrate: ")  << IntString(max_bitrate) <<
+                   TEXT("\r\n    buffer size: ")  << IntString(encode_tasks[0].bs.MaxLength * 8 / 1000) <<
+                   TEXT("\r\n    rate control: ") << name;
 
         return strInfo;
     }
@@ -1097,7 +1221,7 @@ public:
 
     virtual bool HasBufferedFrames()
     {
-        return false;
+        return !helper_killed && !encoder_flushed.is_signalled();
     }
 };
 
@@ -1136,5 +1260,17 @@ VideoEncoder* CreateQSVEncoder(int fps, int width, int height, int quality, CTST
         }
     }
 
-    return new QSVEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR);
+    try
+    {
+        return new QSVEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR);
+    }
+    catch (CTSTR str)
+    {
+        errors << str;
+        return nullptr;
+    }
+    catch (...)
+    {
+        CrashError(L"Caught unhandled exception");
+    }
 }

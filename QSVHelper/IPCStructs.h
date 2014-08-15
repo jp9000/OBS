@@ -31,7 +31,9 @@ struct init_request
     uint32_t obs_process_id;
     uint16_t target_usage, profile;
     int32_t fps, keyint, bframes, width, height, max_bitrate, buffer_size;
-    bool use_cbr;
+    bool use_cbr, use_custom_parameters;
+    mfxInfoMFX custom_parameters;
+    decltype(mfxExtCodingOption2::LookAheadDepth) la_depth;
     int32_t full_range, matrix, primaries, transfer;
     bool use_custom_impl;
     mfxVersion custom_version;
@@ -44,6 +46,7 @@ struct init_response
     mfxVersion version;
     mfxIMPL requested_impl,
             actual_impl;
+    decltype(mfxInfoMFX::RateControlMethod) rate_control;
 
     bool using_custom_impl;
 
@@ -69,6 +72,7 @@ struct queued_frame
 {
     bool is_new;
     bool request_keyframe;
+    bool flush;
     mfxU64 timestamp;
     uint32_t frame_index;
 };

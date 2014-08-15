@@ -81,6 +81,19 @@ void STDCALL OBS::StopRecordingHotkey(DWORD hotkey, UPARAM param, bool bDown)
     }
 }
 
+void SaveReplayBuffer(ReplayBuffer *out, DWORD timestamp);
+
+void STDCALL OBS::SaveReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown)
+{
+    if (App->bSaveReplayBufferHotkeyDown && !bDown)
+        App->bSaveReplayBufferHotkeyDown = false;
+    else if (App->bRunning)
+    {
+        if (App->bSaveReplayBufferHotkeyDown = bDown)
+            SaveReplayBuffer(App->replayBuffer, (DWORD)(App->GetVideoTime() - App->firstFrameTimestamp));
+    }
+}
+
 void STDCALL OBS::PushToTalkHotkey(DWORD hotkey, UPARAM param, bool bDown)
 {
     if(bDown)

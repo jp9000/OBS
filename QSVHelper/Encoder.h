@@ -63,6 +63,9 @@ struct Encoder
 
     std::wstring event_prefix;
 
+    ipc_encoder_flushed encoder_flushed;
+    bool flushed;
+
     ipc_bitstream_buff bitstream;
     ipc_filled_bitstream filled_bitstream;
     ipc_bitstream_info bs_info;
@@ -96,10 +99,10 @@ struct Encoder
 
     Encoder(IPCSignalledType<init_request> &init_req, std::wstring event_prefix, std::wofstream &log_file)
         : use_cbr(init_req->use_cbr), first_frame(true), frame_time_ms(static_cast<unsigned>(1./init_req->fps*1000)), exit_code(0)
-        , using_d3d11(false), session(), encoder(session), event_prefix(event_prefix), log_file(log_file)
+        , using_d3d11(false), session(), encoder(session), event_prefix(event_prefix), encoder_flushed(event_prefix + ENCODER_FLUSHED), flushed(false), log_file(log_file)
     {
         params.Init(init_req->target_usage, init_req->profile, init_req->fps, init_req->keyint, init_req->bframes, init_req->width, init_req->height, init_req->max_bitrate,
-            init_req->buffer_size, init_req->use_cbr);
+            init_req->buffer_size, init_req->use_cbr, init_req->use_custom_parameters, init_req->custom_parameters, init_req->la_depth);
         params.SetVideoSignalInfo(init_req->full_range, init_req->primaries, init_req->transfer, init_req->matrix);
     }
 
@@ -168,6 +171,8 @@ struct Encoder
         using namespace std;
         Parameters query = params;
         encoder.GetVideoParam(query);
+
+        init_res->rate_control = query->mfx.RateControlMethod;
 
         switch (query->mfx.CodecProfile)
         {
@@ -301,6 +306,9 @@ struct Encoder
             if(result == MFX_WRN_IN_EXECUTION)
                 return;
 
+            if (flushed)
+                return;
+
             bitstream_info &info = bs_info[encoded_tasks.front()];
             info.time_stamp = task.bs.TimeStamp;
             info.data_length = task.bs.DataLength;
@@ -317,10 +325,14 @@ struct Encoder
             }
             filled_bitstream.signal();
 
-            msdk_locked_tasks.emplace_back(std::make_pair(task.surf, task.frame_index));
-            task.surf = nullptr;
             idle_tasks.emplace(encoded_tasks.front());
             encoded_tasks.pop();
+
+            if (!task.surf)
+                return;
+
+            msdk_locked_tasks.emplace_back(std::make_pair(task.surf, task.frame_index));
+            task.surf = nullptr;
         }
     }
 
@@ -391,6 +403,21 @@ struct Encoder
             task.bs.DataLength = 0;
             task.bs.DataOffset = 0;
 
+            if(oldest->request_keyframe)
+                task.ctrl = &keyframe_ctrl;
+            else
+                task.ctrl = nullptr;
+
+            if(first_frame)
+                task.ctrl = &sei_ctrl;
+            first_frame = false;
+
+            if (oldest->flush)
+            {
+                task.surf = nullptr;
+                return;
+            }
+
             task.surf = idle_surfaces.front();
             idle_surfaces.pop();
 
@@ -415,15 +442,6 @@ struct Encoder
             }
             task.surf->Data.TimeStamp = oldest->timestamp;
             task.frame_index = oldest->frame_index;
-
-            if(oldest->request_keyframe)
-                task.ctrl = &keyframe_ctrl;
-            else
-                task.ctrl = nullptr;
-
-            if(first_frame)
-                task.ctrl = &sei_ctrl;
-            first_frame = false;
         }
     }
 
@@ -435,6 +453,15 @@ struct Encoder
             for(;;)
             {
                 auto sts = encoder.EncodeFrameAsync(task.ctrl, task.surf, &task.bs, &task.sp);
+
+                if (sts == MFX_ERR_MORE_DATA && !task.surf)
+                {
+                    encoder_flushed.signal();
+                    flushed = true;
+                    idle_tasks.push(queued_tasks.front());
+                    queued_tasks.pop();
+                    return;
+                }
 
                 if(sts == MFX_ERR_NONE || (MFX_ERR_NONE < sts && task.sp))
                     break;
@@ -453,7 +480,7 @@ struct Encoder
         }
     }
 
-    int EncodeLoop(IPCSignal &stop, safe_handle &obs_handle)
+    int EncodeLoop(ipc_stop &stop, safe_handle &obs_handle)
     {
         IPCWaiter waiter;
         waiter.push_back(stop.signal_);

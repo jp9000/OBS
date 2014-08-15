@@ -480,13 +480,14 @@ inline HRESULT STDMETHODCALLTYPE UnlockSurface(LPDIRECTDRAWSURFACE7 surface, LPR
         ddrawSurfaceUnlock.Rehook();
 
         ReleaseMutex(mutex);
-
+        CloseHandle(mutex);
         return hr;
     }
     else
     {
         logOutput << CurrentTimeString() << "error while waiting for unlock-mutex to get signaled" << endl;
         logOutput << CurrentTimeString() << "GetLastError: " << GetLastError() << endl;
+        CloseHandle(mutex);
         return DDERR_GENERIC;
     }
 }

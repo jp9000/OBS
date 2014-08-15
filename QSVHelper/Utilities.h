@@ -42,3 +42,39 @@ static inline T saturate(U val)
         return std::numeric_limits<T>::min();
     return val;
 }
+
+template <class T, class U>
+static inline void saturate(T &t, U val)
+{
+    if (val > std::numeric_limits<T>::max())
+        t = std::numeric_limits<T>::max();
+    else if (val < std::numeric_limits<T>::min())
+        t = std::numeric_limits<T>::min();
+    else
+        t = static_cast<T>(val);
+}
+
+template <typename T, typename U, typename V>
+static inline T clamp(T t, U u, V v)
+{
+    if (t < u)
+        return u;
+    return t > v ? v : t;
+}
+
+static bool valid_method(decltype(mfxInfoMFX::RateControlMethod) method)
+{
+    switch (method)
+    {
+    case MFX_RATECONTROL_CBR:
+    case MFX_RATECONTROL_VBR:
+    case MFX_RATECONTROL_CQP:
+    case MFX_RATECONTROL_AVBR:
+    case MFX_RATECONTROL_LA:
+    case MFX_RATECONTROL_ICQ:
+    case MFX_RATECONTROL_VCM:
+    case MFX_RATECONTROL_LA_ICQ:
+        return true;
+    }
+    return false;
+}
