@@ -36,7 +36,7 @@ struct ReplayBuffer : VideoFileStream
     using packet_t = tuple<PacketType, DWORD, DWORD, vector<BYTE>>;
     using packet_list_t = list<shared_ptr<packet_t>>;
     using packet_vec_t = vector<shared_ptr<packet_t>>;
-    using thread_param_t = tuple<DWORD, packet_vec_t>;
+    using thread_param_t = tuple<DWORD, shared_ptr<void>, packet_vec_t>;
     packet_list_t packets;
     deque<pair<DWORD, packet_list_t::iterator>> keyframes;
 
@@ -49,7 +49,11 @@ struct ReplayBuffer : VideoFileStream
     ~ReplayBuffer()
     {
         if (save_times.size())
-            threads.emplace_back(OSCreateThread(SaveReplayBufferThread, new thread_param_t(save_times.back(), {begin(packets), end(packets)})));
+            StartSaveThread(save_times.back());
+
+        for (auto &thread : threads)
+            if (WaitForSingleObject(thread.second.get(), seconds * 100) != WAIT_OBJECT_0)
+                OSTerminateThread(thread.first.release(), 0);
     }
     
     virtual void AddPacket(BYTE *data, UINT size, DWORD timestamp, DWORD pts, PacketType type) override
@@ -73,7 +77,16 @@ struct ReplayBuffer : VideoFileStream
         }
     }
 
-    vector<unique_ptr<void, ThreadDeleter<>>> threads;
+    vector<pair<unique_ptr<void, ThreadCloser>, shared_ptr<void>>> threads;
+    void StartSaveThread(DWORD save_time)
+    {
+        shared_ptr<void> init_done;
+        init_done.reset(CreateEvent(nullptr, true, false, nullptr), OSCloseEvent);
+        threads.emplace_back(
+            unique_ptr<void, ThreadCloser>(OSCreateThread(SaveReplayBufferThread, new thread_param_t(save_time, init_done, { begin(packets), end(packets) }))),
+            init_done);
+    }
+
     void HandleSaveTimes(DWORD timestamp)
     {
         DWORD save_time = 0;
@@ -97,7 +110,7 @@ struct ReplayBuffer : VideoFileStream
             save_times.erase(begin(save_times), iter);
         }
 
-        threads.emplace_back(OSCreateThread(SaveReplayBufferThread, new thread_param_t(save_time, {begin(packets), end(packets)})));
+        StartSaveThread(save_time);
     }
 
     void SaveReplayBuffer(DWORD timestamp)
@@ -124,7 +137,7 @@ static DWORD STDCALL SaveReplayBufferThread(void *arg)
         return 1;
     }
 
-    auto &packets = get<1>(*param);
+    auto &packets = get<2>(*param);
     DWORD target_ts = get<0>(*param);
 
     DWORD stop_ts = -1;
@@ -140,6 +153,16 @@ static DWORD STDCALL SaveReplayBufferThread(void *arg)
         stop_ts = ts;
     }
 
+    bool signalled = false;
+    auto signal = [&]()
+    {
+        if (signalled)
+            return;
+
+        SetEvent(get<1>(*param).get());
+        signalled = true;
+    };
+
     for (auto packet : packets)
     {
         if (get<2>(*packet) == stop_ts)
@@ -147,7 +170,11 @@ static DWORD STDCALL SaveReplayBufferThread(void *arg)
 
         auto &buf = get<3>(*packet);
         out->AddPacket(&buf.front(), (UINT)buf.size(), get<1>(*packet), get<2>(*packet), get<0>(*packet));
+
+        if (buf.front() == 0x17);
+            signal();
     }
+    signal();
 
     ReplayBuffer::SetLastFilename(name);
 
