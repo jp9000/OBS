@@ -173,7 +173,7 @@ void SettingsQSV::RateControlMethodChanged()
     auto checked = [&](int id) { return SendMessage(GetDlgItem(hwnd, id), BM_GETCHECK, 0, 0) == BST_CHECKED; };
     auto enable  = [&](int id, bool enable) { EnableWindow(GetDlgItem(hwnd, id), enable); };
 
-    bool enabled = checked(IDC_USECUSTOMPARAMS);
+    bool enabled = checked(IDC_USECUSTOMPARAMS) && AppConfig->GetString(L"Video Encoding", L"Encoder") == L"QSV";
 
     //--------------------------------------------
 
@@ -218,6 +218,9 @@ INT_PTR SettingsQSV::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
         bool enabled = !!AppConfig->GetInt(L"QSV (Advanced)", L"UseCustomParams");
         check(IDC_USECUSTOMPARAMS, enabled);
+
+        enabled = enabled && AppConfig->GetString(L"Video Encoding", L"Encoder") == L"QSV";
+        EnableWindow(GetDlgItem(hwnd, IDC_USECUSTOMPARAMS), enabled);
 
         //--------------------------------------------
 
