@@ -1581,7 +1581,7 @@ void OBS::ReloadIniSettings()
     if (!minimizeToIcon && !IsWindowVisible(hwndMain))
         ShowWindow(hwndMain, SW_SHOW);
 
-    RefreshStreamButtons();
+    ConfigureStreamButtons();
 
     //--------------------------------------------
     // Update old config, transition old encoder selection
