@@ -73,7 +73,7 @@ struct ReplayBuffer : VideoFileStream
         }
     }
 
-    vector<unique_ptr<void, ThreadDeleter>> threads;
+    vector<unique_ptr<void, ThreadDeleter<>>> threads;
     void HandleSaveTimes(DWORD timestamp)
     {
         DWORD save_time = 0;
