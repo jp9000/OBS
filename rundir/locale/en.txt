@@ -159,7 +159,7 @@ Settings.Video="Video"
 Settings.Hotkeys="Hotkeys"
 Settings.QSV="Quick Sync Encoder"
 
-Settings.QSV.UseCustomParams="Use custom parameters"
+Settings.QSV.UseCustomParams="Use custom parameters for the Quick Sync encoder"
 Settings.QSV.RateControlMethod="Rate Control Method"
 Settings.QSV.BitrateParameters="Parameters"
 Settings.QSV.TargetKbps="TargetKbps:"
