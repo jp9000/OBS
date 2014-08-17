@@ -171,7 +171,7 @@ static DWORD STDCALL SaveReplayBufferThread(void *arg)
         auto &buf = get<3>(*packet);
         out->AddPacket(&buf.front(), (UINT)buf.size(), get<1>(*packet), get<2>(*packet), get<0>(*packet));
 
-        if (buf.front() == 0x17);
+        if (buf.front() == 0x17)
             signal();
     }
     signal();
