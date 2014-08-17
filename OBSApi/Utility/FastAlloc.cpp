@@ -245,6 +245,7 @@ void * __restrict FastAlloc::_Allocate(size_t dwSize)
         }
         pool = &poollist[(PtrTo32(lpMemory)>>16)&0xFF];
 
+        assert(pool->blocksUsed == 0)
         pool->blocksUsed = 1;
         pool->bytesTotal = dwSize;
         pool->lpMem = lpMemory;
