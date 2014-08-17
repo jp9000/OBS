@@ -35,7 +35,7 @@ struct ReplayBuffer : VideoFileStream
 {
     using packet_t = tuple<PacketType, DWORD, DWORD, vector<BYTE>>;
     using packet_list_t = list<shared_ptr<packet_t>>;
-    using packet_vec_t = vector<shared_ptr<packet_t>>;
+    using packet_vec_t = deque<shared_ptr<packet_t>>;
     using thread_param_t = tuple<DWORD, shared_ptr<void>, packet_vec_t>;
     packet_list_t packets;
     deque<pair<DWORD, packet_list_t::iterator>> keyframes;
@@ -163,16 +163,19 @@ static DWORD STDCALL SaveReplayBufferThread(void *arg)
         signalled = true;
     };
 
-    for (auto packet : packets)
+    while (packets.size())
     {
+        auto &packet = packets.front();
         if (get<2>(*packet) == stop_ts)
             break;
 
         auto &buf = get<3>(*packet);
-        out->AddPacket(&buf.front(), (UINT)buf.size(), get<1>(*packet), get<2>(*packet), get<0>(*packet));
+        out->AddPacket(buf.data(), (UINT)buf.size(), get<1>(*packet), get<2>(*packet), get<0>(*packet));
 
         if (buf.front() == 0x17)
             signal();
+
+        packets.pop_front();
     }
     signal();
 
