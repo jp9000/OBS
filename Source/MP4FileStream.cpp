@@ -175,6 +175,8 @@ public:
 
         audioFrameSize = App->GetAudioEncoder()->GetFrameSize();
 
+        CopyMetadata();
+
         bStreamOpened = true;
 
         return true;
@@ -291,7 +293,6 @@ public:
     DataPacket sei;
     void CopyMetadata()
     {
-        audioFrameSize = App->GetAudioEncoder()->GetFrameSize();
         frameTime = App->GetFrameTime();
         sampleRateHz = App->GetSampleRateHz();
         App->GetOutputSize(width, height);
@@ -818,16 +819,9 @@ public:
         //DestroyWindow(hwndProgressDialog);
     }
 
-    bool have_metadata = false;
     virtual void AddPacket(BYTE *data, UINT size, DWORD timestamp, DWORD /*pts*/, PacketType type) override
     {
         UINT64 offset = fileOut.GetPos();
-
-        if (!have_metadata)
-        {
-            CopyMetadata();
-            have_metadata = true;
-        }
 
         if(initialTimeStamp == -1 && data[0] != 0x17)
             return;
