@@ -824,14 +824,14 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     LPSTR lpAnsiURL = NULL, lpAnsiPlaypath = NULL;
 
     //--------------------------------
-    // unbelievably disgusting hack for elgato devices
+    // unbelievably disgusting hack for elgato devices (should no longer be necessary)
 
-    String strOldDirectory;
+    /*String strOldDirectory;
     UINT dirSize = GetCurrentDirectory(0, 0);
     strOldDirectory.SetLength(dirSize);
     GetCurrentDirectory(dirSize, strOldDirectory.Array());
 
-    OSSetCurrentDirectory(API->GetAppPath());
+    OSSetCurrentDirectory(API->GetAppPath());*/
 
     //--------------------------------
 
@@ -845,7 +845,7 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     if(serviceID != 0)
     {
         XConfig serverData;
-        if(!serverData.Open(TEXT("services.xconfig")))
+        if (!serverData.Open(FormattedString(L"%s\\services.xconfig", API->GetAppPath())))
         {
             failReason = TEXT("Could not open services.xconfig");
             goto end;
@@ -964,7 +964,7 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     //------------------------------------------------------
     // now back to the elgato directory if it needs the directory changed still to function *sigh*
 
-    OSSetCurrentDirectory(strOldDirectory);
+    //OSSetCurrentDirectory(strOldDirectory);
 
     //------------------------------------------------------
 

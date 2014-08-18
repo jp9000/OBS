@@ -203,7 +203,7 @@ void SettingsPublish::SetWarningInfo()
     String strWarnings;
 
     XConfig serverData;
-    if(serverData.Open(TEXT("services.xconfig")))
+    if (serverData.Open(FormattedString(L"%s\\services.xconfig", API->GetAppPath())))
     {
         XElement *services = serverData.GetElement(TEXT("services"));
         if(services)
@@ -374,7 +374,7 @@ void SettingsPublish::OptimizeSettings()
 {
     auto refresh_on_exit = GuardScope([&] { SetWarningInfo(); UpdateMemoryUsage(hwnd); });
     XConfig serverData;
-    if (!serverData.Open(L"services.xconfig"))
+    if (!serverData.Open(FormattedString(L"%s\\services.xconfig", API->GetAppPath())))
         return;
 
     XElement *services = serverData.GetElement(L"services");
@@ -531,7 +531,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 UINT numServices = 0;
 
                 XConfig serverData;
-                if(serverData.Open(TEXT("services.xconfig")))
+                if (serverData.Open(FormattedString(L"%s\\services.xconfig", API->GetAppPath())))
                 {
                     XElement *services = serverData.GetElement(TEXT("services"));
                     if(services)
@@ -920,7 +920,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                                 SendMessage(hwndTemp, CB_RESETCONTENT, 0, 0);
 
                                 XConfig serverData;
-                                if(serverData.Open(TEXT("services.xconfig")))
+                                if (serverData.Open(FormattedString(L"%s\\services.xconfig", API->GetAppPath())))
                                 {
                                     XElement *services = serverData.GetElement(TEXT("services"));
                                     if(services)
