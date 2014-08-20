@@ -1806,18 +1806,16 @@ void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
                     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
 
                     strOutString = FormattedString(TEXT("%u:%02u:%02u"), streamTimeHours, streamTimeMinutes, streamTimeSeconds);
-                    if(App->bRecording && App->bStreaming && !App->bTestStream && networkMode == 0) {
-                        strOutString.AppendString(TEXT(" (LIVE + REC)"));
-                    }
-                    else if(!App->bRecording && App->bStreaming && !App->bTestStream && networkMode == 0) {
-                        strOutString.AppendString(TEXT(" (LIVE)"));
-                    }
-                    else if(App->bRecording && !App->bTestStream) {
-                        strOutString.AppendString(TEXT(" (REC)"));
-                    }
-                    else if(App->bRunning && App->bTestStream) {
-                        strOutString.AppendString(TEXT(" (Preview)"));
-                    }
+
+                    StringList mods;
+                    if (App->bStreaming && !App->bTestStream)
+                        mods << L"LIVE";
+                    if (App->bRecording)
+                        mods << L"REC";
+                    if (App->bTestStream)
+                        mods << L"Preview";
+
+                    strOutString << FormattedString(L" (%s)", mods.Join(L" + ").Array());
                 }
                 break;
             case 2:
