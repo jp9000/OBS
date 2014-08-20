@@ -674,27 +674,6 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 //--------------------------------------------
 
-                BOOL bKeepRecording = AppConfig->GetInt(TEXT("Publish"), TEXT("KeepRecording"));
-                SendMessage(GetDlgItem(hwnd, IDC_KEEPRECORDING), BM_SETCHECK, bKeepRecording ? BST_CHECKED : BST_UNCHECKED, 0);
-
-                BOOL bSaveToFile = AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile"));
-                SendMessage(GetDlgItem(hwnd, IDC_SAVETOFILE), BM_SETCHECK, bSaveToFile ? BST_CHECKED : BST_UNCHECKED, 0);
-
-                String path = OSGetDefaultVideoSavePath(L"\\.flv");
-                CTSTR lpSavePath = AppConfig->GetStringPtr(TEXT("Publish"), TEXT("SavePath"), path.IsValid() ? path.Array() : nullptr);
-                SetWindowText(GetDlgItem(hwnd, IDC_SAVEPATH), lpSavePath);
-
-                EnableWindow(GetDlgItem(hwnd, IDC_KEEPRECORDING), true);
-
-                EnableWindow(GetDlgItem(hwnd, IDC_SAVEPATH), true);
-                EnableWindow(GetDlgItem(hwnd, IDC_BROWSE),   true);
-
-                //--------------------------------------------
-
-                //SetWindowText(GetDlgItem(hwnd, IDC_DASHBOARDLINK), App->strDashboard);
-
-                //--------------------------------------------
-
                 HWND hwndToolTip = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL, WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP,
                     CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
                     hwnd, NULL, hinstMain, NULL);
@@ -709,7 +688,32 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     ti.uFlags |= TTF_RTLREADING;
 
                 SendMessage(hwndToolTip, TTM_SETMAXTIPWIDTH, 0, 500);
-                SendMessage(hwndToolTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 8000);
+                SendMessage(hwndToolTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 20000);
+
+                //--------------------------------------------
+
+                BOOL bKeepRecording = AppConfig->GetInt(TEXT("Publish"), TEXT("KeepRecording"));
+                SendMessage(GetDlgItem(hwnd, IDC_KEEPRECORDING), BM_SETCHECK, bKeepRecording ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                BOOL bSaveToFile = AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile"));
+                SendMessage(GetDlgItem(hwnd, IDC_SAVETOFILE), BM_SETCHECK, bSaveToFile ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                String path = OSGetDefaultVideoSavePath(L"\\.flv");
+                CTSTR lpSavePath = AppConfig->GetStringPtr(TEXT("Publish"), TEXT("SavePath"), path.IsValid() ? path.Array() : nullptr);
+                SetWindowText(GetDlgItem(hwnd, IDC_SAVEPATH), lpSavePath);
+
+                ti.lpszText = (LPWSTR)Str("Settings.Publish.SavePathTooltip");
+                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_SAVEPATH);
+                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+
+                EnableWindow(GetDlgItem(hwnd, IDC_KEEPRECORDING), true);
+
+                EnableWindow(GetDlgItem(hwnd, IDC_SAVEPATH), true);
+                EnableWindow(GetDlgItem(hwnd, IDC_BROWSE),   true);
+
+                //--------------------------------------------
+
+                //SetWindowText(GetDlgItem(hwnd, IDC_DASHBOARDLINK), App->strDashboard);
 
                 //--------------------------------------------
 

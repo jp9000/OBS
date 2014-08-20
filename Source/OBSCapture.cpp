@@ -130,6 +130,26 @@ String GetOutputFilename()
     bool bUseDateTimeName = true;
     bool bOverwrite = GlobalConfig->GetInt(L"General", L"OverwriteRecordings", false) != 0;
 
+    {
+        SYSTEMTIME st;
+        GetLocalTime(&st);
+        strOutputFile.FindReplace(L"$Y", UIntString(st.wYear).Array());
+        strOutputFile.FindReplace(L"$M", UIntString(st.wMonth).Array());
+        strOutputFile.FindReplace(L"$0M", FormattedString(L"%02u", st.wMonth).Array());
+        strOutputFile.FindReplace(L"$D", UIntString(st.wDay).Array());
+        strOutputFile.FindReplace(L"$0D", FormattedString(L"%02u", st.wDay).Array());
+        strOutputFile.FindReplace(L"$h", UIntString(st.wHour).Array());
+        strOutputFile.FindReplace(L"$0h", FormattedString(L"%02u", st.wHour).Array());
+        strOutputFile.FindReplace(L"$m", UIntString(st.wMinute).Array());
+        strOutputFile.FindReplace(L"$0m", FormattedString(L"%02u", st.wMinute).Array());
+        strOutputFile.FindReplace(L"$s", UIntString(st.wSecond).Array());
+        strOutputFile.FindReplace(L"$0s", FormattedString(L"%02u", st.wSecond).Array());
+
+        strOutputFile.FindReplace(L"$T", FormattedString(L"%u-%02u-%02u-%02u%02u-%02u", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond).Array());
+    }
+
+    CreatePath(GetPathDirectory(strOutputFile));
+
     if (!bOverwrite && (hFind = OSFindFirstFile(strOutputFile, ofd)))
     {
         String strFileExtension = GetPathExtension(strOutputFile);
