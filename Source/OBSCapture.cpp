@@ -119,10 +119,10 @@ void OBS::StopReplayBuffer()
     ConfigureStreamButtons();
 }
 
-String GetOutputFilename()
+String GetOutputFilename(bool replayBuffer=false)
 {
-    String path = OSGetDefaultVideoSavePath(L"\\.flv");
-    String strOutputFile = AppConfig->GetString(TEXT("Publish"), TEXT("SavePath"), path.IsValid() ? path.Array() : nullptr);
+    String path = OSGetDefaultVideoSavePath(replayBuffer ? L"\\Replay-$T.flv" : L"\\.flv");
+    String strOutputFile = AppConfig->GetString(TEXT("Publish"), replayBuffer ? L"ReplayBufferSavePath" : L"SavePath", path.IsValid() ? path.Array() : nullptr);
     strOutputFile.FindReplace(TEXT("\\"), TEXT("/"));
 
     OSFindData ofd;

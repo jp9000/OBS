@@ -132,6 +132,7 @@
 #define IDC_KEEPRECORDING               1048
 #define IDC_BITMAP                      1049
 #define IDC_BROWSE                      1050
+#define IDC_REPLAYBUFFERBROWSE          1051
 #define IDC_MICDEVICES                  1052
 #define IDC_SOURCES                     1053
 #define IDC_ADD                         1054
@@ -205,7 +206,9 @@
 #define IDC_REPLAYBUFFERLENGTH_EDIT     1085
 #define IDC_USESYNCFIX                  1086
 #define IDC_REPLAYBUFFERLENGTH          1086
+#define IDC_REPLAYBUFFERSAVEPATH_STATIC 1087
 #define IDC_CLEARPUSHTOTALK             1088
+#define IDC_REPLAYBUFFERSAVEPATH        1088
 #define IDC_CLEARMUTEMIC                1089
 #define IDC_SENDBUFFERSIZE              1089
 #define IDC_CLEARMUTEDESKTOP            1090

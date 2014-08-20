@@ -88,6 +88,22 @@ void SettingsPublish::ApplySettings()
 
     //------------------------------------------
 
+    String replaySavePath = GetEditText(GetDlgItem(hwnd, IDC_REPLAYBUFFERSAVEPATH));
+    defaultPath = OSGetDefaultVideoSavePath(L"\\Replay-$T.flv");
+    if (!replaySavePath.IsValid() && defaultPath.IsValid())
+    {
+        String text = Str("Settings.Publish.InvalidReplayBufferSavePath");
+        text.FindReplace(L"$1", defaultPath);
+        if (OBSMessageBox(nullptr, text, Str("Settings.Publish.InvalidSavePathCaption"), MB_ICONEXCLAMATION | MB_OKCANCEL) != IDOK)
+        {
+            SetAbortApplySettings(true);
+            return;
+        }
+        SetWindowText(GetDlgItem(hwnd, IDC_REPLAYBUFFERSAVEPATH), defaultPath.Array());
+    }
+
+    //------------------------------------------
+
     int curSel = (int)SendMessage(GetDlgItem(hwnd, IDC_MODE), CB_GETCURSEL, 0, 0);
     if(curSel != CB_ERR)
         AppConfig->SetInt(TEXT("Publish"), TEXT("Mode"), curSel);
@@ -158,6 +174,7 @@ void SettingsPublish::ApplySettings()
         replayBufferLength = 1;
 
     AppConfig->SetInt(L"Publish", L"ReplayBufferLength", replayBufferLength);
+    AppConfig->SetString(L"Publish", L"ReplayBufferSavePath", replaySavePath);
 
     //------------------------------------------
 
@@ -670,6 +687,9 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_STATIC), 0, -data.fileControlOffset);
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERMEMORY_STATIC), 0, -data.fileControlOffset);
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERMEMORY), 0, -data.fileControlOffset);
+                    AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERSAVEPATH_STATIC), 0, -data.fileControlOffset);
+                    AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERSAVEPATH), 0, -data.fileControlOffset);
+                    AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERBROWSE), 0, -data.fileControlOffset);
                 }
 
                 //--------------------------------------------
@@ -738,6 +758,14 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 ti.lpszText = (LPWSTR)Str("Settings.Publish.ReplayBufferTooltip");
                 ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_EDIT);
+                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+
+                path = OSGetDefaultVideoSavePath(L"\\Replay-$T.flv");
+                lpSavePath = AppConfig->GetStringPtr(L"Publish", L"ReplayBufferSavePath", path.IsValid() ? path.Array() : nullptr);
+                SetWindowText(GetDlgItem(hwnd, IDC_REPLAYBUFFERSAVEPATH), lpSavePath);
+
+                ti.lpszText = (LPWSTR)Str("Settings.Publish.SavePathTooltip");
+                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_REPLAYBUFFERSAVEPATH);
                 SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
                 //--------------------------------------------
@@ -844,6 +872,9 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_STATIC), 0, data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERMEMORY_STATIC), 0, data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERMEMORY), 0, data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERSAVEPATH_STATIC), 0, data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERSAVEPATH), 0, data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERBROWSE), 0, data.fileControlOffset);
                             }
                             else if(mode == 1 && data.mode == 0)
                             {
@@ -855,6 +886,9 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_STATIC), 0, -data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERMEMORY_STATIC), 0, -data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERMEMORY), 0, -data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERSAVEPATH_STATIC), 0, -data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERSAVEPATH), 0, -data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERBROWSE), 0, -data.fileControlOffset);
                             }
 
                             data.mode = mode;
@@ -979,7 +1013,9 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                         break;
 
                     case IDC_BROWSE:
+                    case IDC_REPLAYBUFFERBROWSE:
                         {
+                            bool replayBuffer = LOWORD(wParam) == IDC_REPLAYBUFFERBROWSE;
                             TCHAR lpFile[512];
                             OPENFILENAME ofn;
                             zero(&ofn, sizeof(ofn));
@@ -994,7 +1030,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                             ofn.nFilterIndex = 1;
 
                             String path = OSGetDefaultVideoSavePath();
-                            ofn.lpstrInitialDir = AppConfig->GetStringPtr(TEXT("Publish"), TEXT("LastSaveDir"), path.IsValid() ? path.Array() : nullptr);
+                            ofn.lpstrInitialDir = AppConfig->GetStringPtr(TEXT("Publish"), replayBuffer ? L"LastReplayBufferSaveDir" : TEXT("LastSaveDir"), path.IsValid() ? path.Array() : nullptr);
 
                             ofn.Flags = OFN_PATHMUSTEXIST;
 
@@ -1024,10 +1060,10 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                                 }
 
                                 String strFilePath = GetPathDirectory(strFile).FindReplace(TEXT("/"), TEXT("\\")) << TEXT("\\");
-                                AppConfig->SetString(TEXT("Publish"), TEXT("LastSaveDir"), strFilePath);
+                                AppConfig->SetString(TEXT("Publish"), replayBuffer ? L"LastReplayBufferSaveDir" : TEXT("LastSaveDir"), strFilePath);
 
                                 strFile.FindReplace(TEXT("/"), TEXT("\\"));
-                                SetWindowText(GetDlgItem(hwnd, IDC_SAVEPATH), strFile);
+                                SetWindowText(GetDlgItem(hwnd, replayBuffer ? IDC_REPLAYBUFFERSAVEPATH : IDC_SAVEPATH), strFile);
                                 bDataChanged = true;
                             }
 
@@ -1043,6 +1079,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     case IDC_PLAYPATH:
                     case IDC_URL:
                     case IDC_SAVEPATH:
+                    case IDC_REPLAYBUFFERSAVEPATH:
                         if(HIWORD(wParam) == EN_CHANGE)
                             bDataChanged = true;
                         break;

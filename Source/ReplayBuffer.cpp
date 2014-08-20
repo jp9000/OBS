@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 
 using namespace std;
 
-String GetOutputFilename();
+String GetOutputFilename(bool replayBuffer = false);
 VideoFileStream *CreateFileStream(String strOutputFile);
 
 static DWORD STDCALL SaveReplayBufferThread(void *arg);
@@ -129,7 +129,7 @@ static DWORD STDCALL SaveReplayBufferThread(void *arg)
 {
     unique_ptr<ReplayBuffer::thread_param_t> param((ReplayBuffer::thread_param_t*)arg);
 
-    String name = GetOutputFilename();
+    String name = GetOutputFilename(true);
     unique_ptr<VideoFileStream> out(CreateFileStream(name));
     if (!out)
     {
