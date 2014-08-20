@@ -127,6 +127,8 @@ MainWindow.StopStream="Stop Streaming"
 MainWindow.StopTest="Stop Preview"
 MainWindow.TestStream="Preview Stream"
 
+ReplayBuffer.RecordingAlreadyActive="Could not create recording from replay buffer, recording already active"
+
 Plugins.Configure="Configure"
 Plugins.Description="Description:"
 Plugins.Filename="File name:"
@@ -297,6 +299,7 @@ Settings.Publish.InvalidReplayBufferSavePath="The Replay Buffer File Path is inv
 Settings.Publish.ReplayBufferMemory="Estimated Replay Buffer memory usage (MB):"
 Settings.Publish.ReplayBufferLength="Replay Buffer length (seconds):"
 Settings.Publish.SaveReplayBufferHotkey="Save Replay Buffer Hotkey:"
+Settings.Publish.RecordFromReplayBufferHotkey="Record from Replay Buffer Hotkey:"
 
 Settings.Publish.Mode.FileOnly="File Output Only"
 Settings.Publish.Mode.LiveStream="Live Stream"

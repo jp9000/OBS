@@ -848,11 +848,13 @@ private:
     UINT startReplayBufferHotkeyID;
     UINT stopReplayBufferHotkeyID;
     UINT saveReplayBufferHotkeyID;
+    UINT recordFromReplayBufferHotkeyID;
 
     bool bStartStreamHotkeyDown, bStopStreamHotkeyDown;
     bool bStartRecordingHotkeyDown, bStopRecordingHotkeyDown;
     bool bStartReplayBufferHotkeyDown, bStopReplayBufferHotkeyDown;
     bool bSaveReplayBufferHotkeyDown;
+    bool bRecordFromReplayBufferHotkeyDown;
 
     static DWORD STDCALL MainAudioThread(LPVOID lpUnused);
     bool QueryAudioBuffers(bool bQueriedDesktopDebugParam);
@@ -969,6 +971,7 @@ private:
     static void STDCALL StartReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL StopReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL SaveReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown);
+    static void STDCALL RecordFromReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown);
 
     static void STDCALL PushToTalkHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL MuteMicHotkey(DWORD hotkey, UPARAM param, bool bDown);

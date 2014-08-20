@@ -1524,6 +1524,7 @@ void OBS::ReloadIniSettings()
     QuickClearHotkey(stopReplayBufferHotkeyID);
     QuickClearHotkey(startReplayBufferHotkeyID);
     QuickClearHotkey(saveReplayBufferHotkeyID);
+    QuickClearHotkey(recordFromReplayBufferHotkeyID);
 
     DWORD hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey"));
     DWORD hotkey2 = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey2"));
@@ -1570,6 +1571,10 @@ void OBS::ReloadIniSettings()
     hotkey = AppConfig->GetInt(L"Publish", L"SaveReplayBufferHotkey");
     if (hotkey)
         saveReplayBufferHotkeyID = API->CreateHotkey(hotkey, OBS::SaveReplayBufferHotkey, NULL);
+
+    hotkey = AppConfig->GetInt(L"Publish", L"RecordFromReplayBufferHotkey");
+    if (hotkey)
+        recordFromReplayBufferHotkeyID = API->CreateHotkey(hotkey, OBS::RecordFromReplayBufferHotkey, NULL);
 
     //-------------------------------------------
     // Notification Area icon

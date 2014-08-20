@@ -339,8 +339,11 @@
 #define IDC_QSVVBR                      1184
 #define IDC_CLEARHOTKEY_STOPREPLAYBUFFER 1184
 #define IDC_QSVAVBR                     1185
+#define IDC_RECORDFROMREPLAYBUFFERHOTKEY_STATIC 1185
 #define IDC_TARGETKBPS                  1186
+#define IDC_RECORDFROMREPLAYBUFFERHOTKEY 1186
 #define IDC_QSVCQP                      1187
+#define IDC_CLEARHOTKEY_RECORDFROMREPLAYBUFFER 1187
 #define IDC_QSVICQ                      1188
 #define IDC_QSVLAICQ                    1189
 #define IDC_QSVVCM                      1190

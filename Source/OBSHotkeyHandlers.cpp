@@ -124,6 +124,19 @@ void STDCALL OBS::SaveReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown)
     }
 }
 
+void StartRecordingFromReplayBuffer(ReplayBuffer *rb);
+
+void STDCALL OBS::RecordFromReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown)
+{
+    if (App->bRecordFromReplayBufferHotkeyDown && !bDown)
+        App->bRecordFromReplayBufferHotkeyDown = false;
+    else if (App->bRunning)
+    {
+        if (App->bRecordFromReplayBufferHotkeyDown = bDown)
+            StartRecordingFromReplayBuffer(App->replayBuffer);
+    }
+}
+
 void STDCALL OBS::PushToTalkHotkey(DWORD hotkey, UPARAM param, bool bDown)
 {
     if(bDown)
