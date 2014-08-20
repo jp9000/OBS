@@ -184,12 +184,12 @@ static DWORD STDCALL SaveReplayBufferThread(void *arg)
     return 0;
 }
 
-pair<ReplayBuffer*, VideoFileStream*> CreateReplayBuffer(int seconds)
+pair<ReplayBuffer*, unique_ptr<VideoFileStream>> CreateReplayBuffer(int seconds)
 {
     if (seconds <= 0) return {nullptr, nullptr};
 
-    ReplayBuffer *out = new ReplayBuffer(seconds);
-    return {out, out};
+    auto out = make_unique<ReplayBuffer>(seconds);
+    return {out.get(), move(out)};
 }
 
 void SaveReplayBuffer(ReplayBuffer *out, DWORD timestamp)

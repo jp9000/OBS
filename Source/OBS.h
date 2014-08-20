@@ -789,6 +789,7 @@ private:
     bool bWriteToFile;
     VideoFileStream *fileStream;
 
+    std::unique_ptr<VideoFileStream> replayBufferStream;
     ReplayBuffer *replayBuffer;
 
     bool bRequestKeyframe;
@@ -844,10 +845,13 @@ private:
     UINT stopStreamHotkeyID;
     UINT startRecordingHotkeyID;
     UINT stopRecordingHotkeyID;
+    UINT startReplayBufferHotkeyID;
+    UINT stopReplayBufferHotkeyID;
     UINT saveReplayBufferHotkeyID;
 
     bool bStartStreamHotkeyDown, bStopStreamHotkeyDown;
     bool bStartRecordingHotkeyDown, bStopRecordingHotkeyDown;
+    bool bStartReplayBufferHotkeyDown, bStopReplayBufferHotkeyDown;
     bool bSaveReplayBufferHotkeyDown;
 
     static DWORD STDCALL MainAudioThread(LPVOID lpUnused);
@@ -951,15 +955,19 @@ private:
     void ResetItemSizes();
     void ResetItemCrops();
 
-    void Start(bool recordingOnly=false);
+    void Start(bool recordingOnly=false, bool replayBufferOnly=false);
     void Stop(bool overrideKeepRecording=false);
     bool StartRecording(bool force=false);
     void StopRecording();
+    void StartReplayBuffer();
+    void StopReplayBuffer();
 
     static void STDCALL StartStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL StopStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL StartRecordingHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL StopRecordingHotkey(DWORD hotkey, UPARAM param, bool bDown);
+    static void STDCALL StartReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown);
+    static void STDCALL StopReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL SaveReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown);
 
     static void STDCALL PushToTalkHotkey(DWORD hotkey, UPARAM param, bool bDown);
@@ -1007,6 +1015,7 @@ private:
 
     void ToggleCapturing();
     void ToggleRecording();
+    void ToggleReplayBuffer();
 
     Scene* CreateScene(CTSTR lpClassName, XElement *data);
     void ConfigureScene(XElement *element);

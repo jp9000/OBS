@@ -175,6 +175,8 @@ void OBS::SendFrame(VideoSegment &curSegment, QWORD firstFrameTime)
                             network->SendPacket(audioData.Array(), audioData.Num(), audioTimestamp, PacketType_Audio);
                         if(fileStream)
                             fileStream->AddPacket(audioData.Array(), audioData.Num(), audioTimestamp, audioTimestamp, PacketType_Audio);
+                        if (replayBufferStream)
+                            replayBufferStream->AddPacket(audioData.Array(), audioData.Num(), audioTimestamp, audioTimestamp, PacketType_Audio);
 
                         audioData.Clear();
 
@@ -205,6 +207,8 @@ void OBS::SendFrame(VideoSegment &curSegment, QWORD firstFrameTime)
             network->SendPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, packet.type);
         if(fileStream)
             fileStream->AddPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, curSegment.pts, packet.type);
+        if (replayBufferStream)
+            replayBufferStream->AddPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, curSegment.pts, packet.type);
     }
 }
 

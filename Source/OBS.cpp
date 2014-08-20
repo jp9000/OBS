@@ -447,7 +447,7 @@ OBS::OBS()
     // start/stop recording button
 
     hwndTemp = CreateWindow(TEXT("BUTTON"), Str("MainWindow.StartRecording"),
-        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_PUSHBUTTON|WS_CLIPSIBLINGS,
+        WS_CHILDWINDOW|WS_VISIBLE|WS_TABSTOP|BS_TEXT|BS_SPLITBUTTON|WS_CLIPSIBLINGS,
         0, 0, 0, 0, hwndMain, (HMENU)ID_TOGGLERECORDING, 0, 0);
     SendMessage(hwndTemp, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 
@@ -814,6 +814,7 @@ OBS::OBS()
 OBS::~OBS()
 {
     Stop(true);
+    StopReplayBuffer();
 
     bShuttingDown = true;
 
@@ -1193,7 +1194,7 @@ void OBS::ResizeWindow(bool bRedrawRenderFrame)
     parts[3] = clientWidth-100;
     parts[2] = parts[3]-60;
     parts[1] = parts[2]-170;
-    parts[0] = parts[1]-130;
+    parts[0] = parts[1]-170;
     SendMessage(hwndTemp, SB_SETPARTS, 5, (LPARAM)parts);
 
     int resetXPos = xStart+listControlWidth*2;
@@ -1364,7 +1365,7 @@ void OBS::RefreshStreamButtons(bool disable)
     bRecordingOnly = (networkMode == 1);
     bool canStream = networkMode == 0 && !bTestStream;
     canRecord = !bTestStream;
-    bool canTest = !bRecording && (!bStreaming || bTestStream);
+    bool canTest = !bRecordingReplayBuffer && !bRecording && (!bStreaming || bTestStream);
 
     EnableWindow(GetDlgItem(hwndMain, ID_STARTSTOP), !disable && canStream);
     EnableWindow(GetDlgItem(hwndMain, ID_TOGGLERECORDING), !disable && canRecord);
@@ -1378,10 +1379,7 @@ void OBS::ConfigureStreamButtons()
 {
     RefreshStreamButtons();
     SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), bStreaming ? Str("MainWindow.StopStream") : Str("MainWindow.StartStream"));
-    if (bRecordingReplayBuffer || AppConfig->GetInt(L"Publish", L"UseReplayBuffer"))
-        SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), bRecording ? Str("MainWindow.StopReplayBuffer") : Str("MainWindow.StartReplayBuffer"));
-    else
-        SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), bRecording ? Str("MainWindow.StopRecording") : Str("MainWindow.StartRecording"));
+    SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), bRecording ? Str("MainWindow.StopRecording") : Str("MainWindow.StartRecording"));
     SetWindowText(GetDlgItem(hwndMain, ID_TESTSTREAM), bTestStream ? Str("MainWindow.StopTest") : Str("MainWindow.TestStream"));
 }
 
@@ -1523,6 +1521,8 @@ void OBS::ReloadIniSettings()
     QuickClearHotkey(startStreamHotkeyID);
     QuickClearHotkey(stopRecordingHotkeyID);
     QuickClearHotkey(startRecordingHotkeyID);
+    QuickClearHotkey(stopReplayBufferHotkeyID);
+    QuickClearHotkey(startReplayBufferHotkeyID);
     QuickClearHotkey(saveReplayBufferHotkeyID);
 
     DWORD hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey"));
@@ -1558,6 +1558,14 @@ void OBS::ReloadIniSettings()
     hotkey = AppConfig->GetInt(TEXT("Publish"), TEXT("StartRecordingHotkey"));
     if (hotkey)
         startRecordingHotkeyID = API->CreateHotkey(hotkey, OBS::StartRecordingHotkey, NULL);
+
+    hotkey = AppConfig->GetInt(L"Publish", L"StopReplayBufferHotkey");
+    if (hotkey)
+        stopReplayBufferHotkeyID = API->CreateHotkey(hotkey, OBS::StopReplayBufferHotkey, NULL);
+
+    hotkey = AppConfig->GetInt(L"Publish", L"StartReplayBufferHotkey");
+    if (hotkey)
+        startReplayBufferHotkeyID = API->CreateHotkey(hotkey, OBS::StartReplayBufferHotkey, NULL);
 
     hotkey = AppConfig->GetInt(L"Publish", L"SaveReplayBufferHotkey");
     if (hotkey)
@@ -1812,6 +1820,8 @@ void OBS::DrawStatusBar(DRAWITEMSTRUCT &dis)
                         mods << L"LIVE";
                     if (App->bRecording)
                         mods << L"REC";
+                    if (App->bRecordingReplayBuffer)
+                        mods << L"BUF";
                     if (App->bTestStream)
                         mods << L"Preview";
 

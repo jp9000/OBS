@@ -152,9 +152,6 @@ void SettingsPublish::ApplySettings()
 
     //------------------------------------------
 
-    bool useReplayBuffer = SendMessage(GetDlgItem(hwnd, IDC_FILEOUTPUTREPLAYBUFFER), BM_GETCHECK, 0, 0) != BST_UNCHECKED;
-    AppConfig->SetInt(L"Publish", L"UseReplayBuffer", useReplayBuffer);
-
     bError = FALSE;
     int replayBufferLength = (int)SendMessage(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH), UDM_GETPOS32, 0, (LPARAM)&bError);
     if (bError)
@@ -668,9 +665,6 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH_STATIC), 0, -data.fileControlOffset);
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH), 0, -data.fileControlOffset);
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_BROWSE), 0, -data.fileControlOffset);
-                    AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTMODE), 0, -data.fileControlOffset);
-                    AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTNORMAL), 0, -data.fileControlOffset);
-                    AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTREPLAYBUFFER), 0, -data.fileControlOffset);
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH), 0, -data.fileControlOffset);
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_EDIT), 0, -data.fileControlOffset);
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_STATIC), 0, -data.fileControlOffset);
@@ -716,17 +710,6 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 SendMessage(hwndToolTip, TTM_SETMAXTIPWIDTH, 0, 500);
                 SendMessage(hwndToolTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 8000);
-
-                //--------------------------------------------
-
-                bool useReplayBuffer = !!AppConfig->GetInt(L"Publish", L"UseReplayBuffer");
-
-                SendMessage(GetDlgItem(hwnd, IDC_FILEOUTPUTNORMAL), BM_SETCHECK, !useReplayBuffer, 0);
-                SendMessage(GetDlgItem(hwnd, IDC_FILEOUTPUTREPLAYBUFFER), BM_SETCHECK, useReplayBuffer, 0);
-
-                ti.lpszText = (LPWSTR)Str("Settings.Publish.FileOutputMode.ReplayBufferTooltip");
-                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_FILEOUTPUTREPLAYBUFFER);
-                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
                 //--------------------------------------------
 
@@ -852,9 +835,6 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH_STATIC), 0, data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH), 0, data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_BROWSE), 0, data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTMODE), 0, data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTNORMAL), 0, data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTREPLAYBUFFER), 0, data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH), 0, data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_EDIT), 0, data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_STATIC), 0, data.fileControlOffset);
@@ -866,9 +846,6 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH_STATIC), 0, -data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH), 0, -data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_BROWSE), 0, -data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTMODE), 0, -data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTNORMAL), 0, -data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTREPLAYBUFFER), 0, -data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH), 0, -data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_EDIT), 0, -data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_STATIC), 0, -data.fileControlOffset);
@@ -1055,8 +1032,6 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                     case IDC_LOWLATENCYMODE:
                     case IDC_SAVETOFILE:
-                    case IDC_FILEOUTPUTNORMAL:
-                    case IDC_FILEOUTPUTREPLAYBUFFER:
                         if(HIWORD(wParam) == BN_CLICKED)
                             bDataChanged = true;
                         break;

@@ -63,7 +63,7 @@ void STDCALL OBS::StartRecordingHotkey(DWORD hotkey, UPARAM param, bool bDown)
         if (!App->bRunning && !App->bStreaming)
             App->Start(true);
 
-        App->StartRecording();
+        App->StartRecording(true);
     }
 }
 
@@ -78,6 +78,36 @@ void STDCALL OBS::StopRecordingHotkey(DWORD hotkey, UPARAM param, bool bDown)
     {
         if (App->bStopRecordingHotkeyDown = bDown)
             App->StopRecording();
+    }
+}
+
+void STDCALL OBS::StartReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown)
+{
+    if (App->bStopReplayBufferHotkeyDown)
+        return;
+
+    if (App->bStartReplayBufferHotkeyDown && !bDown)
+        App->bStartReplayBufferHotkeyDown = false;
+    else if (!App->bRecordingReplayBuffer && App->canRecord)
+    {
+        if (!(App->bStartReplayBufferHotkeyDown = bDown))
+            return;
+
+        App->StartReplayBuffer();
+    }
+}
+
+void STDCALL OBS::StopReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown)
+{
+    if (App->bStartReplayBufferHotkeyDown)
+        return;
+
+    if (App->bStopReplayBufferHotkeyDown && !bDown)
+        App->bStopReplayBufferHotkeyDown = false;
+    else if (App->bRunning)
+    {
+        if (App->bStopReplayBufferHotkeyDown = bDown)
+            App->StopReplayBuffer();
     }
 }
 

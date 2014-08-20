@@ -43,7 +43,7 @@ NetworkStream* CreateNullNetwork();
 
 VideoFileStream* CreateMP4FileStream(CTSTR lpFile);
 VideoFileStream* CreateFLVFileStream(CTSTR lpFile);
-std::pair<ReplayBuffer*, VideoFileStream*> CreateReplayBuffer(int seconds);
+std::pair<ReplayBuffer*, std::unique_ptr<VideoFileStream>> CreateReplayBuffer(int seconds);
 //VideoFileStream* CreateAVIFileStream(CTSTR lpFile);
 
 
@@ -63,10 +63,60 @@ void OBS::ToggleRecording()
 
 void OBS::ToggleCapturing()
 {
-    if(!bRunning || (!bStreaming && bRecording))
+    if(!bRunning || (!bStreaming && (bRecording || bRecordingReplayBuffer)))
         Start();
     else
         Stop();
+}
+
+void OBS::ToggleReplayBuffer()
+{
+    if (!bRecordingReplayBuffer)
+        StartReplayBuffer();
+    else
+        StopReplayBuffer();
+}
+
+void OBS::StartReplayBuffer()
+{
+    if (bTestStream || bRecordingReplayBuffer) return;
+
+    int length = AppConfig->GetInt(L"Publish", L"ReplayBufferLength", 1);
+    std::tie(replayBuffer, replayBufferStream) = CreateReplayBuffer(length);
+    if (!replayBuffer)
+    {
+        Log(L"Invalid ReplayBuffer length set: %d", length);
+        OBSMessageBox(hwndMain, Str("Capture.Start.FileStream.SaveReplayBufferWarning"), Str("Capture.Start.FileStream.WarningCaption"), MB_OK | MB_ICONWARNING);
+        ConfigureStreamButtons();
+        return;
+    }
+
+    if (!bRunning)
+        Start(false, true);
+    else
+        videoEncoder->RequestKeyframe();
+    if (!bRunning)
+        return StopReplayBuffer();
+
+    Log(L"Using ReplayBuffer with a length of %d seconds", length);
+
+    bRecordingReplayBuffer = true;
+
+    ConfigureStreamButtons();
+}
+
+void OBS::StopReplayBuffer()
+{
+    if (!replayBufferStream) return;
+    bRecordingReplayBuffer = false;
+
+    if (!bStreaming && !bRecording && bRunning) Stop(true);
+
+    auto stream = move(replayBufferStream);
+
+    replayBuffer = nullptr;
+
+    ConfigureStreamButtons();
 }
 
 String GetOutputFilename()
@@ -158,27 +208,10 @@ bool OBS::StartRecording(bool force)
     if (bWriteToFile)
         strOutputFile = GetOutputFilename();
 
-    bool useReplayBuffer = !!AppConfig->GetInt(L"Publish", L"UseReplayBuffer");
     bool success = true;
-    if(!bTestStream && bWriteToFile && (strOutputFile.IsValid() || useReplayBuffer))
+    if(!bTestStream && bWriteToFile && strOutputFile.IsValid())
     {
-        if (useReplayBuffer)
-        {
-            int length = AppConfig->GetInt(L"Publish", L"ReplayBufferLength", 1);
-            std::tie(replayBuffer, fileStream) = CreateReplayBuffer(length);
-            if (replayBuffer)
-                Log(L"Using ReplayBuffer with a length of %d seconds", length);
-            else
-            {
-                Log(L"Invalid ReplayBuffer length set: %d", length);
-                OBSMessageBox(hwndMain, Str("Capture.Start.FileStream.SaveReplayBufferWarning"), Str("Capture.Start.FileStream.WarningCaption"), MB_OK | MB_ICONWARNING);
-                ConfigureStreamButtons();
-                return false;
-            }
-            bRecordingReplayBuffer = true;
-        }
-        else
-            fileStream = CreateFileStream(strOutputFile);
+        fileStream = CreateFileStream(strOutputFile);
 
         if(!fileStream)
         {
@@ -200,7 +233,7 @@ bool OBS::StartRecording(bool force)
 
 void OBS::StopRecording()
 {
-    if (!bStreaming && bRunning) Stop(true);
+    if (!bStreaming && !bRecordingReplayBuffer && bRunning && bRecording) Stop(true);
 
     if(!bRecording) return;
 
@@ -213,25 +246,22 @@ void OBS::StopRecording()
     delete tempStream;
     tempStream = NULL;
     bRecording = false;
-    bRecordingReplayBuffer = false;
-
-    replayBuffer = nullptr;
 
     ReportStopRecordingTrigger();
 
-    SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), Str("MainWindow.StartRecording"));
+    ConfigureStreamButtons();
 }
 
-void OBS::Start(bool recordingOnly)
+void OBS::Start(bool recordingOnly, bool replayBufferOnly)
 {
-    if(bRunning && !bRecording) return;
+    if(bRunning && !bRecording && !bRecordingReplayBuffer) return;
 
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
     DWORD delayTime = (DWORD)AppConfig->GetInt(TEXT("Publish"), TEXT("Delay"));
 
     if (bRecording && networkMode != 0) return;
 
-    if(bRecording && networkMode == 0 && delayTime == 0 && !recordingOnly) {
+    if((bRecording || bRecordingReplayBuffer) && networkMode == 0 && delayTime == 0 && !recordingOnly && !replayBufferOnly) {
         bFirstConnect = !bReconnecting;
 
         if (network)
@@ -360,7 +390,7 @@ retryHookTest:
 
     bFirstConnect = !bReconnecting;
 
-    if(bTestStream || recordingOnly)
+    if(bTestStream || recordingOnly || replayBufferOnly)
         network = CreateNullNetwork();
     else
     {
@@ -761,7 +791,7 @@ retryHookTestV2:
         return;
     }
 
-    if ((bStreaming = !recordingOnly && networkMode == 0)) ReportStartStreamingTrigger();
+    if ((bStreaming = (!recordingOnly && !replayBufferOnly) && networkMode == 0)) ReportStartStreamingTrigger();
     //-------------------------------------------------------------
 
     // Ensure that the render frame is properly sized
@@ -769,7 +799,7 @@ retryHookTestV2:
 
     //-------------------------------------------------------------
 
-    if (!StartRecording(recordingOnly) && !bStreaming)
+    if ((!replayBufferOnly && !StartRecording(recordingOnly)) && !bStreaming)
     {
         Stop(true);
         return;
@@ -807,7 +837,7 @@ retryHookTestV2:
 
 void OBS::Stop(bool overrideKeepRecording)
 {
-    if((!bStreaming && !bRecording && !bRunning) && (!bTestStream)) return;
+    if((!bStreaming && !bRecording && !bRunning && !bRecordingReplayBuffer) && (!bTestStream)) return;
 
     //ugly hack to prevent hotkeys from being processed while we're stopping otherwise we end up
     //with callbacks from the ProcessEvents call in DelayedPublisher which causes havoc.
@@ -815,7 +845,7 @@ void OBS::Stop(bool overrideKeepRecording)
 
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
 
-    if(!overrideKeepRecording && bRecording && bKeepRecording && networkMode == 0) {
+    if(((!overrideKeepRecording && bRecording && bKeepRecording) || bRecordingReplayBuffer) && networkMode == 0) {
         NetworkStream *tempStream = NULL;
         
         videoEncoder->RequestKeyframe();
@@ -834,6 +864,9 @@ void OBS::Stop(bool overrideKeepRecording)
         ConfigureStreamButtons();
 
         OSLeaveMutex(hHotkeyMutex);
+
+        if (bRecordingReplayBuffer && (bRecording && (overrideKeepRecording || !bKeepRecording)))
+            StopRecording();
 
         return;
     }

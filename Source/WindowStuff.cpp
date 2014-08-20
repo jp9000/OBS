@@ -3652,6 +3652,39 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                             }
                         }
                         break;
+
+                        case ID_TOGGLERECORDING:
+                            if (nmh.code == BCN_DROPDOWN)
+                            {
+                                LPNMBCDROPDOWN drop = (LPNMBCDROPDOWN)lParam;
+
+                                HMENU menu = CreatePopupMenu();
+                                AppendMenu(menu, MF_STRING, 1, App->bRecordingReplayBuffer ? Str("MainWindow.StopReplayBuffer") : Str("MainWindow.StartReplayBuffer"));
+                                AppendMenu(menu, MF_STRING | (App->bRecording == !App->bRecordingReplayBuffer ? MF_DISABLED : 0), 2,
+                                    App->bRecording ? Str("MainWindow.StopRecordingAndReplayBuffer") : Str("MainWindow.StartRecordingAndReplayBuffer"));
+
+                                POINT p;
+                                p.x = drop->rcButton.right;
+                                p.y = drop->rcButton.bottom;
+                                ClientToScreen(GetDlgItem(hwndMain, ID_TOGGLERECORDING), &p);
+
+                                switch (TrackPopupMenu(menu, TPM_RETURNCMD | TPM_RIGHTALIGN, p.x, p.y, 0, GetDlgItem(hwndMain, ID_TOGGLERECORDING), nullptr))
+                                {
+                                case 1:
+                                    App->RefreshStreamButtons(true);
+                                    App->ToggleReplayBuffer();
+                                    App->RefreshStreamButtons();
+                                    break;
+                                case 2:
+                                    App->RefreshStreamButtons(true);
+                                    App->ToggleRecording();
+                                    App->ToggleReplayBuffer();
+                                    App->RefreshStreamButtons();
+                                    break;
+                                case 0:
+                                    break;
+                                }
+                            }
                 }
             }
             break;
