@@ -1032,6 +1032,7 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     strBindIP = AppConfig->GetString(TEXT("Publish"), TEXT("BindToIP"), TEXT("Default"));
     if (scmp(strBindIP, TEXT("Default")))
     {
+        Log(TEXT("  Binding to non-default IP %s"), strBindIP.Array());
         rtmp->m_bindIP.addr.sin_family = AF_INET;
         rtmp->m_bindIP.addrLen = sizeof(rtmp->m_bindIP.addr);
         if (WSAStringToAddress(strBindIP.Array(), AF_INET, NULL, (LPSOCKADDR)&rtmp->m_bindIP.addr, &rtmp->m_bindIP.addrLen) == SOCKET_ERROR)
