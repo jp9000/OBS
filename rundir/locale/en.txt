@@ -128,6 +128,7 @@ MainWindow.StopTest="Stop Preview"
 MainWindow.TestStream="Preview Stream"
 
 ReplayBuffer.RecordingAlreadyActive="Could not create recording from replay buffer, recording already active"
+ReplayBuffer.RecordingHelper.BufferStatus="Replay Buffer Recording: $1 buffered packets remaining"
 
 Plugins.Configure="Configure"
 Plugins.Description="Description:"

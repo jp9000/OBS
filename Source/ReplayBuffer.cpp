@@ -218,10 +218,20 @@ struct RecordingHelper : VideoFileStream
     unique_ptr<void, MutexDeleter> packets_mutex;
 
     unique_ptr<VideoFileStream> file_stream;
-    unique_ptr<void, ThreadDeleter<>> save_thread;
+    unique_ptr<void, EventDeleter> video_packet_written_event;
+    unique_ptr<void, ThreadDeleter<1000>> save_thread;
 
-    RecordingHelper(packet_vec_t packets) : buffered_packets(packets), packets_mutex(OSCreateMutex())
+    QWORD next_status_time = 0;
+    UINT status_id = -1;
+
+    RecordingHelper(packet_vec_t packets) : buffered_packets(packets), packets_mutex(OSCreateMutex()), video_packet_written_event(CreateEvent(nullptr, false, false, nullptr))
     {}
+
+    ~RecordingHelper()
+    {
+        if (status_id != -1)
+            App->RemoveStreamInfo(status_id);
+    }
 
     bool StartRecording()
     {
@@ -259,6 +269,8 @@ struct RecordingHelper : VideoFileStream
 
             auto &buf = get<3>(*packet);
             file_stream->AddPacket(buf, get<1>(*packet), get<2>(*packet), get<0>(*packet));
+            if (get<2>(*packet) != PacketType_Audio)
+                SetEvent(video_packet_written_event.get());
         }
     }
 
@@ -271,24 +283,63 @@ struct RecordingHelper : VideoFileStream
     {
         if (save_thread)
         {
-            if (WaitForSingleObject(save_thread.get(), 0) == WAIT_OBJECT_0)
+            if (type != PacketType_Audio)
             {
-                if (!buffered_packets.empty())
-                    Log(L"RecordingHelper thread exited while %d buffered packets remain", buffered_packets.size());
+                const HANDLE wait_objects[] = { save_thread.get(), video_packet_written_event.get() };
+                auto wait = [&]() { return WaitForMultipleObjects(2, wait_objects, false, 500); };
 
-                buffered_packets.clear();
-                buffered_packets.shrink_to_fit();
-
-                file_stream->AddPacket(data, timestamp, pts, type);
-
-                decltype(save_thread) null_thread;
-                swap(null_thread, save_thread);
-                return;
+                if (wait() == WAIT_OBJECT_0 + 1)
+                    while (wait() == WAIT_TIMEOUT);
             }
 
-            ScopedLock l(packets_mutex);
-            buffered_packets.emplace_back(make_shared<const packet_t>(type, timestamp, pts, data));
+            size_t buffer_size = 0;
+            {
+                ScopedLock l(packets_mutex);
+                if (WaitForSingleObject(save_thread.get(), 0) == WAIT_OBJECT_0)
+                {
+                    if (!buffered_packets.empty())
+                        AppWarning(L"RecordingHelper thread exited while %d buffered packets remain", buffered_packets.size());
+
+                    buffered_packets.clear();
+                    buffered_packets.shrink_to_fit();
+
+                    file_stream->AddPacket(data, timestamp, pts, type);
+
+                    if (status_id)
+                    {
+                        App->RemoveStreamInfo(status_id);
+                        status_id = -1;
+                    }
+
+                    decltype(save_thread) null_thread;
+                    swap(null_thread, save_thread);
+                    return;
+                }
+                else
+                {
+                    buffered_packets.emplace_back(make_shared<const packet_t>(type, timestamp, pts, data));
+                    buffer_size = buffered_packets.size();
+                }
+            }
+
+            if (next_status_time < GetQPCTimeMS())
+            {
+                using ::locale;
+                String status = Str("ReplayBuffer.RecordingHelper.BufferStatus");
+                status.FindReplace(L"$1", UIntString((UINT)buffer_size));
+                if (status_id == -1)
+                    status_id = App->AddStreamInfo(status, StreamInfoPriority_Medium);
+                else
+                    App->SetStreamInfo(status_id, status);
+                next_status_time = GetQPCTimeMS() + 1000;
+            }
             return;
+        }
+
+        if (status_id != -1)
+        {
+            App->RemoveStreamInfo(status_id);
+            status_id = -1;
         }
 
         file_stream->AddPacket(data, timestamp, pts, type);
