@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 #define NOMINMAX
 #include "Main.h"
 
+#include <algorithm>
 #include <deque>
 #include <list>
 #include <memory>
@@ -219,18 +220,23 @@ struct RecordingHelper : VideoFileStream
 
     unique_ptr<VideoFileStream> file_stream;
     unique_ptr<void, EventDeleter> video_packet_written_event;
+    unique_ptr<void, EventDeleter> stop_event;
     unique_ptr<void, ThreadDeleter<1000>> save_thread;
 
     QWORD next_status_time = 0;
     UINT status_id = -1;
 
-    RecordingHelper(packet_vec_t packets) : buffered_packets(packets), packets_mutex(OSCreateMutex()), video_packet_written_event(CreateEvent(nullptr, false, false, nullptr))
+    RecordingHelper(packet_vec_t packets) : buffered_packets(packets), packets_mutex(OSCreateMutex()),
+        video_packet_written_event(CreateEvent(nullptr, false, false, nullptr)), stop_event(CreateEvent(nullptr, true, false, nullptr))
     {}
 
     ~RecordingHelper()
     {
         if (status_id != -1)
             App->RemoveStreamInfo(status_id);
+
+        if (WaitForSingleObject(save_thread.get(), min((DWORD)buffered_packets.size()*5, (DWORD)10000)) != WAIT_OBJECT_0)
+            SetEvent(stop_event.get());
     }
 
     bool StartRecording()
@@ -255,6 +261,12 @@ struct RecordingHelper : VideoFileStream
         shared_ptr<const packet_t> packet;
         for (;;)
         {
+            if (WaitForSingleObject(stop_event.get(), 0) == WAIT_OBJECT_0)
+            {
+                Log(L"RecordingHelper::SaveThread: stopping save thread with %u packets remaining", buffered_packets.size());
+                return;
+            }
+
             {
                 ScopedLock l(packets_mutex);
                 if (buffered_packets.empty())
