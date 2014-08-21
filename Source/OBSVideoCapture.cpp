@@ -173,10 +173,15 @@ void OBS::SendFrame(VideoSegment &curSegment, QWORD firstFrameTime)
 
                         if(network)
                             network->SendPacket(audioData.Array(), audioData.Num(), audioTimestamp, PacketType_Audio);
-                        if(fileStream)
-                            fileStream->AddPacket(audioData.Array(), audioData.Num(), audioTimestamp, audioTimestamp, PacketType_Audio);
-                        if (replayBufferStream)
-                            replayBufferStream->AddPacket(audioData.Array(), audioData.Num(), audioTimestamp, audioTimestamp, PacketType_Audio);
+
+                        if (fileStream || replayBufferStream)
+                        {
+                            auto shared_data = std::make_shared<const std::vector<BYTE>>(audioData.Array(), audioData.Array() + audioData.Num());
+                            if (fileStream)
+                                fileStream->AddPacket(shared_data, audioTimestamp, audioTimestamp, PacketType_Audio);
+                            if (replayBufferStream)
+                                replayBufferStream->AddPacket(shared_data, audioTimestamp, audioTimestamp, PacketType_Audio);
+                        }
 
                         audioData.Clear();
 
@@ -205,10 +210,15 @@ void OBS::SendFrame(VideoSegment &curSegment, QWORD firstFrameTime)
 
         if(network)
             network->SendPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, packet.type);
-        if(fileStream)
-            fileStream->AddPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, curSegment.pts, packet.type);
-        if (replayBufferStream)
-            replayBufferStream->AddPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, curSegment.pts, packet.type);
+
+        if (fileStream || replayBufferStream)
+        {
+            auto shared_data = std::make_shared<const std::vector<BYTE>>(packet.data.Array(), packet.data.Array() + packet.data.Num());
+            if (fileStream)
+                fileStream->AddPacket(shared_data, curSegment.timestamp, curSegment.pts, packet.type);
+            if (replayBufferStream)
+                replayBufferStream->AddPacket(shared_data, curSegment.timestamp, curSegment.pts, packet.type);
+        }
     }
 }
 

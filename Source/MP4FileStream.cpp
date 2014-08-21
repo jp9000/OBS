@@ -819,7 +819,7 @@ public:
         //DestroyWindow(hwndProgressDialog);
     }
 
-    virtual void AddPacket(BYTE *data, UINT size, DWORD timestamp, DWORD /*pts*/, PacketType type) override
+    virtual void AddPacket(const BYTE *data, UINT size, DWORD timestamp, DWORD /*pts*/, PacketType type) override
     {
         UINT64 offset = fileOut.GetPos();
 
@@ -863,7 +863,7 @@ public:
 
             if(data[0] == 0x17 && data[1] == 0) //if SPS/PPS
             {
-                LPBYTE lpData = data+11;
+                const BYTE *lpData = data+11;
 
                 UINT spsSize = fastHtons(*(WORD*)lpData);
                 fileOut.OutputWord(0);

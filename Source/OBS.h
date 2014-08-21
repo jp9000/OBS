@@ -130,7 +130,11 @@ class VideoFileStream
 {
 public:
     virtual ~VideoFileStream() {}
-    virtual void AddPacket(BYTE *data, UINT size, DWORD timestamp, DWORD pts, PacketType type)=0;
+    virtual void AddPacket(const BYTE *data, UINT size, DWORD timestamp, DWORD pts, PacketType type)=0;
+    virtual void AddPacket(std::shared_ptr<const std::vector<BYTE>> data, DWORD timestamp, DWORD pts, PacketType type)
+    {
+        AddPacket(data->data(), static_cast<UINT>(data->size()), timestamp, pts, type);
+    }
 };
 
 //-------------------------------------------------------------------

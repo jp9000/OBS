@@ -16,7 +16,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 ********************************************************************************/
 
-
+#define NOMINMAX
 #include "Main.h"
 
 #include <deque>
@@ -31,7 +31,7 @@ VideoFileStream *CreateFileStream(String strOutputFile);
 
 namespace
 {
-    using packet_t = tuple<PacketType, DWORD, DWORD, vector<BYTE>>;
+    using packet_t = tuple<PacketType, DWORD, DWORD, shared_ptr<const vector<BYTE>>>;
     using packet_list_t = list<shared_ptr<const packet_t>>;
     using packet_vec_t = deque<shared_ptr<const packet_t>>;
 }
@@ -67,9 +67,14 @@ struct ReplayBuffer : VideoFileStream
                 OSTerminateThread(thread.first.release(), 0);
     }
     
-    virtual void AddPacket(BYTE *data, UINT size, DWORD timestamp, DWORD pts, PacketType type) override
+    virtual void AddPacket(const BYTE *data, UINT size, DWORD timestamp, DWORD pts, PacketType type) override
     {
-        packets.emplace_back(make_shared<packet_t>(type, timestamp, pts, vector<BYTE>(data, data + size)));
+        AddPacket(make_shared<const vector<BYTE>>(data, data + size), timestamp, pts, type);
+    }
+
+    virtual void AddPacket(shared_ptr<const vector<BYTE>> data, DWORD timestamp, DWORD pts, PacketType type) override
+    {
+        packets.emplace_back(make_shared<const packet_t>(type, timestamp, pts, data));
 
         if (start_recording)
         {
@@ -77,7 +82,7 @@ struct ReplayBuffer : VideoFileStream
             CreateRecordingHelper(App->fileStream, packets);
         }
 
-        if (data[0] != 0x17)
+        if ((*data)[0] != 0x17)
             return;
 
         HandleSaveTimes(pts);
@@ -193,9 +198,9 @@ static DWORD STDCALL SaveReplayBufferThread(void *arg)
             break;
 
         auto &buf = get<3>(*packet);
-        out->AddPacket(const_cast<BYTE*>(buf.data()), (UINT)buf.size(), get<1>(*packet), get<2>(*packet), get<0>(*packet));
+        out->AddPacket(buf, get<1>(*packet), get<2>(*packet), get<0>(*packet));
 
-        if (buf.front() == 0x17)
+        if (buf->front() == 0x17)
             signal();
 
         packets.pop_front();
@@ -253,11 +258,16 @@ struct RecordingHelper : VideoFileStream
             }
 
             auto &buf = get<3>(*packet);
-            file_stream->AddPacket(const_cast<BYTE*>(buf.data()), (UINT)buf.size(), get<1>(*packet), get<2>(*packet), get<0>(*packet));
+            file_stream->AddPacket(buf, get<1>(*packet), get<2>(*packet), get<0>(*packet));
         }
     }
 
-    void AddPacket(BYTE *data, UINT size, DWORD timestamp, DWORD pts, PacketType type) override
+    virtual void AddPacket(const BYTE *data, UINT size, DWORD timestamp, DWORD pts, PacketType type) override
+    {
+        AddPacket(make_shared<const vector<BYTE>>(data, data + size), timestamp, pts, type);
+    }
+
+    void AddPacket(shared_ptr<const vector<BYTE>> data, DWORD timestamp, DWORD pts, PacketType type) override
     {
         if (save_thread)
         {
@@ -269,7 +279,7 @@ struct RecordingHelper : VideoFileStream
                 buffered_packets.clear();
                 buffered_packets.shrink_to_fit();
 
-                file_stream->AddPacket(data, size, timestamp, pts, type);
+                file_stream->AddPacket(data, timestamp, pts, type);
 
                 decltype(save_thread) null_thread;
                 swap(null_thread, save_thread);
@@ -277,11 +287,11 @@ struct RecordingHelper : VideoFileStream
             }
 
             ScopedLock l(packets_mutex);
-            buffered_packets.emplace_back(make_shared<packet_t>(type, timestamp, pts, vector<BYTE>(data, data + size)));
+            buffered_packets.emplace_back(make_shared<const packet_t>(type, timestamp, pts, data));
             return;
         }
 
-        file_stream->AddPacket(data, size, timestamp, pts, type);
+        file_stream->AddPacket(data, timestamp, pts, type);
     }
 };
 
