@@ -167,18 +167,34 @@ ImageSource* OBS::AddGlobalSourceToScene(CTSTR lpName)
     return NULL;
 }
 
-void OBS::GetGlobalSourceNames(List<CTSTR> &globalSourceNames)
+void OBS::GetGlobalSourceNames(List<CTSTR> &globalSourceNames, bool mainSceneGlobalSourceNames)
 {
     globalSourceNames.Clear();
 
-    XElement *globals = scenesConfig.GetElement(TEXT("global sources"));
-    if(globals)
+    if(!mainSceneGlobalSourceNames)
     {
-        UINT numSources = globals->NumElements();
-        for(UINT i=0; i<numSources; i++)
+        XElement *globals = scenesConfig.GetElement(TEXT("global sources"));
+        if(globals)
         {
-            XElement *sourceElement = globals->GetElementByID(i);
-            globalSourceNames << sourceElement->GetName();
+            UINT numSources = globals->NumElements();
+            for(UINT i=0; i<numSources; i++)
+            {
+                XElement *sourceElement = globals->GetElementByID(i);
+                globalSourceNames << sourceElement->GetName();
+            }
+        }
+    }
+    else
+    {
+        XElement *globals = globalSourcesImportConfig.GetElement(TEXT("global sources"));
+        if(globals)
+        {
+            UINT numSources = globals->NumElements();
+            for(UINT i=0; i<numSources; i++)
+            {
+                XElement *sourceElement = globals->GetElementByID(i);
+                globalSourceNames << sourceElement->GetName();
+            }
         }
     }
 }

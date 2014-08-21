@@ -44,6 +44,9 @@ StreamReport="Stream Report"
 MessageBoxWarningCaption="Warning"
 NoSourcesFound="You haven't added any sources! Are you sure you want to stream a black screen?"
 
+ImportGlobalSourceNameExists="The global source '$1' already exists in the current scene collection."
+ImportGlobalSources="Import Global Sources"
+
 ImportCollectionReplaceWarning.Title="Import Scene Collection"
 ImportCollectionReplaceWarning.Text="The current scene data will be lost.  Are you sure you want to import?"
 
@@ -77,6 +80,7 @@ Listbox.Positioning="Position/Size"
 Listbox.ResetSize="Reset Size"
 Listbox.SetHotkey="Set Hotkey"
 ListBox.ResetCrop="Reset Cropping"
+Listbox.ImportButton="Import"
 
 MainMenu.SceneCollection="&Scene Collection"
 MainMenu.SceneCollection.New="&New"

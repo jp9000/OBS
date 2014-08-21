@@ -620,6 +620,7 @@ class OBS
     UINT                    encoderSkipThreshold;
 
     XConfig                 scenesConfig;
+    XConfig                 globalSourcesImportConfig;
     List<SceneHotkeyInfo>   sceneHotkeys;
     XElement                *sceneElement;
 
@@ -1030,10 +1031,11 @@ private:
 
     static INT_PTR CALLBACK PluginsDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-    void GetGlobalSourceNames(List<CTSTR> &globalSourceNames);
+    void GetGlobalSourceNames(List<CTSTR> &globalSourceNames,bool mainSceneGlobalSourceNames = false);
     XElement* GetGlobalSourceElement(CTSTR lpName);
 
     static INT_PTR CALLBACK GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static INT_PTR CALLBACK GlobalSourcesImportProc(HWND hwnd,UINT message, WPARAM wParam, LPARAM lParam);
     static bool STDCALL ConfigGlobalSource(XElement *element, bool bCreating);
 
     void CallHotkey(DWORD hotkeyID, bool bDown);
