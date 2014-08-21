@@ -32,6 +32,9 @@ void AdjustWindowPos(HWND hwnd, LONG xOffset, LONG yOffset)
 
     HWND hwndParent = GetParent(hwnd);
     GetWindowRect(hwnd, &rc);
+    if (LocaleIsRTL())
+        rc.left = rc.right;
+
     ScreenToClient(hwndParent, (LPPOINT)&rc);
 
     SetWindowPos(hwnd, NULL, rc.left+xOffset, rc.top+yOffset, 0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOOWNERZORDER);
