@@ -8,7 +8,7 @@ void waitForEvent(cl_event inMapEvt)
 
     while (eventStatus > CL_COMPLETE)
     {
-        status = clGetEventInfo(
+        status = f_clGetEventInfo(
             inMapEvt,
             CL_EVENT_COMMAND_EXECUTION_STATUS,
             sizeof(cl_int),
@@ -119,7 +119,7 @@ bool getDevice(OVDeviceHandle *deviceHandle)
 bool getPlatform(cl_platform_id &platform)
 {
     cl_uint numPlatforms;
-    cl_int err = clGetPlatformIDs(0, NULL, &numPlatforms);
+    cl_int err = f_clGetPlatformIDs(0, NULL, &numPlatforms);
     if (CL_SUCCESS != err)
     {
         VCELog(TEXT("clGetPlatformIDs() failed %d\n"), err);
@@ -131,7 +131,7 @@ bool getPlatform(cl_platform_id &platform)
     if (0 < numPlatforms)
     {
         cl_platform_id* platforms = new cl_platform_id[numPlatforms];
-        err = clGetPlatformIDs(numPlatforms, platforms, NULL);
+        err = f_clGetPlatformIDs(numPlatforms, platforms, NULL);
         if (CL_SUCCESS != err)
         {
             VCELog(TEXT("clGetPlatformIDs() failed %d\n"), err);
@@ -142,7 +142,7 @@ bool getPlatform(cl_platform_id &platform)
         for (uint32_t i = 0; i < numPlatforms; ++i)
         {
             char pbuf[100];
-            err = clGetPlatformInfo(platforms[i],
+            err = f_clGetPlatformInfo(platforms[i],
                 CL_PLATFORM_VENDOR,
                 sizeof(pbuf),
                 pbuf,
@@ -176,7 +176,7 @@ bool gpuCheck(cl_platform_id platform, cl_device_type* dType)
         0
     };
 
-    cl_context context = clCreateContextFromType(cps,
+    cl_context context = f_clCreateContextFromType(cps,
         (*dType),
         NULL,
         NULL,
@@ -188,6 +188,6 @@ bool gpuCheck(cl_platform_id platform, cl_device_type* dType)
         *dType = CL_DEVICE_TYPE_CPU;
         return false;
     }
-    clReleaseContext(context);
+    f_clReleaseContext(context);
     return true;
 }

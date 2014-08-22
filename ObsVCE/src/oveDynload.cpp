@@ -1,36 +1,67 @@
 #include "stdafx.h"
 #include "ObsVCE.h"
 
-#ifdef OVE_DYN
-t_OVEncodeGetDeviceInfo OVEncodeGetDeviceInfo = NULL;
-t_OVEncodeGetDeviceCap OVEncodeGetDeviceCap = NULL;
-t_OVCreateOVEHandleFromOPHandle OVCreateOVEHandleFromOPHandle = NULL;
-t_OVReleaseOVEHandle OVReleaseOVEHandle = NULL;
-t_OVEncodeAcquireObject OVEncodeAcquireObject = NULL;
-t_OVEncodeReleaseObject OVEncodeReleaseObject = NULL;
-t_OVCreateOVEEventFromOPEventHandle OVCreateOVEEventFromOPEventHandle = NULL;
-t_OVEncodeReleaseOVEEventHandle OVEncodeReleaseOVEEventHandle = NULL;
-t_OVEncodeCreateSession OVEncodeCreateSession = NULL;
-t_OVEncodeDestroySession OVEncodeDestroySession = NULL;
-t_OVEncodeGetPictureControlConfig OVEncodeGetPictureControlConfig = NULL;
-t_OVEncodeGetRateControlConfig OVEncodeGetRateControlConfig = NULL;
-t_OVEncodeGetMotionEstimationConfig OVEncodeGetMotionEstimationConfig = NULL;
-t_OVEncodeGetRDOControlConfig OVEncodeGetRDOControlConfig = NULL;
-t_OVEncodeSendConfig OVEncodeSendConfig = NULL;
-t_OVEncodeTask OVEncodeTask = NULL;
-t_OVEncodeQueryTaskDescription OVEncodeQueryTaskDescription = NULL;
-t_OVEncodeReleaseTask OVEncodeReleaseTask = NULL;
+static HMODULE hMod = NULL, hModCL = NULL;
+#define FUNDEF(x) f_##x x = nullptr
+#define FUNDEFDECL(x) decltype(&x) f_##x = nullptr
 
 #define LOADPROC(x) \
-do { if ((##x = (t_##x)GetProcAddress(hMod, #x)) == NULL){\
+do {\
+if ((##x = (f_##x)GetProcAddress(hMod, #x)) == NULL){\
     VCELog(TEXT("GetProcAddress: cannot find ") TEXT(#x)); \
-    goto error;}\
+    goto error; }\
 } while (0)
-#else
-#define LOADPROC(x)
-#endif
 
-static HMODULE hMod = NULL;
+#define LOADPROC2(x) \
+do {\
+if ((f_##x = (decltype(&##x))GetProcAddress(hModCL, #x)) == NULL){\
+    VCELog(TEXT("GetProcAddress: cannot find ") TEXT(#x)); \
+    goto error; }\
+} while (0)
+
+FUNDEF(OVEncodeGetDeviceInfo);
+FUNDEF(OVEncodeGetDeviceCap);
+FUNDEF(OVCreateOVEHandleFromOPHandle);
+FUNDEF(OVReleaseOVEHandle);
+FUNDEF(OVEncodeAcquireObject);
+FUNDEF(OVEncodeReleaseObject);
+FUNDEF(OVCreateOVEEventFromOPEventHandle);
+FUNDEF(OVEncodeReleaseOVEEventHandle);
+FUNDEF(OVEncodeCreateSession);
+FUNDEF(OVEncodeDestroySession);
+FUNDEF(OVEncodeGetPictureControlConfig);
+FUNDEF(OVEncodeGetRateControlConfig);
+FUNDEF(OVEncodeGetMotionEstimationConfig);
+FUNDEF(OVEncodeGetRDOControlConfig);
+FUNDEF(OVEncodeSendConfig);
+FUNDEF(OVEncodeTask);
+FUNDEF(OVEncodeQueryTaskDescription);
+FUNDEF(OVEncodeReleaseTask);
+
+FUNDEFDECL(clGetPlatformIDs);
+FUNDEFDECL(clGetPlatformInfo);
+FUNDEFDECL(clCreateContext);
+FUNDEFDECL(clReleaseContext);
+FUNDEFDECL(clCreateContextFromType);
+FUNDEFDECL(clCreateCommandQueue);
+FUNDEFDECL(clReleaseCommandQueue);
+FUNDEFDECL(clGetEventInfo);
+FUNDEFDECL(clCreateBuffer);
+FUNDEFDECL(clCreateKernel);
+FUNDEFDECL(clReleaseMemObject);
+FUNDEFDECL(clReleaseKernel);
+FUNDEFDECL(clReleaseProgram);
+FUNDEFDECL(clEnqueueMapBuffer);
+FUNDEFDECL(clEnqueueNDRangeKernel);
+FUNDEFDECL(clEnqueueUnmapMemObject);
+FUNDEFDECL(clReleaseEvent);
+FUNDEFDECL(clCreateProgramWithSource);
+FUNDEFDECL(clBuildProgram);
+FUNDEFDECL(clSetKernelArg);
+FUNDEFDECL(clGetDeviceInfo);
+FUNDEFDECL(clFlush);
+FUNDEFDECL(clFinish);
+FUNDEFDECL(clWaitForEvents);
 
 void deinitOVE()
 {
@@ -39,12 +70,17 @@ void deinitOVE()
         FreeLibrary(hMod);
         hMod = NULL;
     }
+
+    if (hModCL)
+    {
+        FreeLibrary(hModCL);
+        hModCL = NULL;
+    }
 }
 
 bool initOVE()
 {
-#ifdef OVE_DYN
-    if (hMod && OVEncodeCreateSession)
+    if (hMod && hModCL && OVEncodeReleaseTask)
         return true;
 
 #ifdef _WIN64
@@ -52,9 +88,13 @@ bool initOVE()
 #else
     hMod = LoadLibrary(TEXT("OpenVideo.dll"));
 #endif
+    hModCL = LoadLibrary(TEXT("OpenCL.dll"));
 
-    if (!hMod)
+    if (!hMod || !hModCL)
+    {
+        deinitOVE();
         return false;
+    }
 
     LOADPROC(OVEncodeGetDeviceInfo);
     LOADPROC(OVEncodeGetDeviceCap);
@@ -74,14 +114,34 @@ bool initOVE()
     LOADPROC(OVEncodeTask);
     LOADPROC(OVEncodeQueryTaskDescription);
     LOADPROC(OVEncodeReleaseTask);
+
+    LOADPROC2(clGetPlatformIDs);
+    LOADPROC2(clGetPlatformInfo);
+    LOADPROC2(clCreateContext);
+    LOADPROC2(clReleaseContext);
+    LOADPROC2(clCreateContextFromType);
+    LOADPROC2(clCreateCommandQueue);
+    LOADPROC2(clReleaseCommandQueue);
+    LOADPROC2(clGetEventInfo);
+    LOADPROC2(clCreateBuffer);
+    LOADPROC2(clCreateKernel);
+    LOADPROC2(clReleaseMemObject);
+    LOADPROC2(clReleaseKernel);
+    LOADPROC2(clReleaseProgram);
+    LOADPROC2(clEnqueueMapBuffer);
+    LOADPROC2(clEnqueueNDRangeKernel);
+    LOADPROC2(clEnqueueUnmapMemObject);
+    LOADPROC2(clReleaseEvent);
+    LOADPROC2(clCreateProgramWithSource);
+    LOADPROC2(clBuildProgram);
+    LOADPROC2(clSetKernelArg);
+    LOADPROC2(clGetDeviceInfo);
+    LOADPROC2(clFlush);
+    LOADPROC2(clFinish);
+    LOADPROC2(clWaitForEvents);
     return true;
 
 error:
     deinitOVE();
     return false;
-#else
-    return true;
-#endif
 }
-
-#undef LOADPROC

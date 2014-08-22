@@ -43,6 +43,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 #include <Windows.h>
 #include <initguid.h>
+#include <cstdint>
 
 #include <mfidl.h>
 #include <wmcontainer.h>
@@ -56,7 +57,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <atlcomcli.h>
 #include <d3d11.h>
-#include <amf\AmfMft.h>
+//#include <amf\AmfMft.h>
 
 #include <Windows.h>
 #include <mfapi.h>
@@ -66,7 +67,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #include <d3d9types.h>
 #include <dxva2api.h>
 #include "PrintLog.h"
-#include "VqMft.h"
+//#include "VqMft.h"
 
 /* GetVersionEx deprecated on VS2013*/
 //#pragma warning(disable: 4996)
@@ -81,6 +82,28 @@ THE POSSIBILITY OF SUCH DAMAGE.
     L" at line " << std::dec << __LINE__ << std::endl; \
     OutputDebugString(stream.str().c_str()); \
 }
+
+typedef struct _AMF_MFT_VIDEOENCODERPARAMS
+{
+	DWORD compressionStandard; // Compression standard (VEP_COMPRESSIONSTANDARD_XXX)
+	DWORD gopSize; // Max number of frames in a GOP (0=auto)
+	DWORD numBFrames; // Max number of consecutive B-frames
+	DWORD maxBitrate; // Peak (maximum) bitrate of encoded video (only used for VBR)
+	DWORD meanBitrate; // Bitrate of encoded video (bits per second)
+	DWORD bufSize; // VBR buffer size
+	DWORD rateControlMethod; // Rate control Method
+	DWORD lowLatencyMode; // low latency mode (uses only 1 reference frame )
+	DWORD qualityVsSpeed; // 0 - low quality faster encoding 100 - Higher quality, slower encoding
+	DWORD commonQuality; // This parameter is used only when is encRateControlMethod  set to eAVEncCommonRateControlMode_Quality. in this mode encoder selects the bit rate to match the quality settings
+	DWORD enableCabac; // 0 disable CABAC 1 Enable
+	DWORD idrPeriod; // IDR interval 
+} AMF_MFT_VIDEOENCODERPARAMS;
+
+typedef struct _AMF_MFT_COMMONPARAMS
+{
+	DWORD useInterop; //UseInterop
+	DWORD useSWCodec; //UseSWCodec
+} AMF_MFT_COMMONPARAMS;
 
 /**
 *   @brief MF_LOW_LATENCY exists only on Windows 8+. So it is borrowed to be able run samples on Windows 7.
@@ -332,7 +355,7 @@ public:
     HRESULT createVideoType(IMFMediaType** ppType, const GUID& videoSybtype,
         BOOL fixedSize, BOOL samplesIndependent,
         const MFRatio* frameRate, const MFRatio* pixelAspectRatio,
-        UINT32 width, UINT32 height,
+        uint32_t width, uint32_t height,
         MFVideoInterlaceMode interlaceMode)
     {
         if (ppType == NULL)
@@ -389,7 +412,7 @@ public:
             ******************************************************************/
             if (SUCCEEDED(hr))
             {
-                hr = type->SetUINT32(MF_MT_DEFAULT_STRIDE, UINT32(stride));
+                hr = type->SetUINT32(MF_MT_DEFAULT_STRIDE, uint32_t(stride));
                 RETURNIFFAILED(hr);
 
                 UINT sampleSize = 0;
@@ -426,24 +449,24 @@ public:
     {
         HRESULT hr;
 
-        UINT32 frameWidth;
-        UINT32 frameHeight;
+        uint32_t frameWidth;
+        uint32_t frameHeight;
         hr = MFGetAttributeRatio(sourceVideoType, MF_MT_FRAME_SIZE,
             &frameWidth, &frameHeight);
         RETURNIFFAILED(hr);
 
-        UINT32 interlaceMode;
+        uint32_t interlaceMode;
         hr = sourceVideoType->GetUINT32(MF_MT_INTERLACE_MODE, &interlaceMode);
         RETURNIFFAILED(hr);
 
-        UINT32 aspectRatioNumerator;
-        UINT32 aspectRatioDenominator;
+        uint32_t aspectRatioNumerator;
+        uint32_t aspectRatioDenominator;
         hr = MFGetAttributeRatio(sourceVideoType, MF_MT_PIXEL_ASPECT_RATIO,
             &aspectRatioNumerator, &aspectRatioDenominator);
         RETURNIFFAILED(hr);
 
-        UINT32 frameRateNumerator;
-        UINT32 frameRateDenominator;
+        uint32_t frameRateNumerator;
+        uint32_t frameRateDenominator;
         hr = MFGetAttributeRatio(sourceVideoType, MF_MT_FRAME_RATE,
             &frameRateNumerator, &frameRateDenominator);
         RETURNIFFAILED(hr);
@@ -474,14 +497,14 @@ public:
         IMFTransform **ppEncoder)
     {
         HRESULT hr;
-        UINT32 i;
+        uint32_t i;
 
         MFT_REGISTER_TYPE_INFO inputRegisterTypeInfo = { MFMediaType_Video,
             inputVideoSubtype };
         MFT_REGISTER_TYPE_INFO outputRegisterTypeInfo = { MFMediaType_Video,
             MFVideoFormat_H264 };
 
-        UINT32 flags = MFT_ENUM_FLAG_SORTANDFILTER;
+        uint32_t flags = MFT_ENUM_FLAG_SORTANDFILTER;
 
         if (useHwCodec)
         {
@@ -494,7 +517,7 @@ public:
         }
 
         IMFActivate **ppActivate = NULL;
-        UINT32 registeredEncoderNumber = 0;
+        uint32_t registeredEncoderNumber = 0;
 
         hr = MFTEnumEx(MFT_CATEGORY_VIDEO_ENCODER,
             flags,
@@ -600,7 +623,7 @@ public:
     *  @return HRESULT : S_OK if successful; otherwise returns microsoft error codes.
     *****************************************************************************
     */
-    HRESULT setEncoderValue(const GUID* guid, UINT32 value, CComPtr<IMFTransform> encoderTransform)
+    HRESULT setEncoderValue(const GUID* guid, uint32_t value, CComPtr<IMFTransform> encoderTransform)
     {
         HRESULT hr = E_FAIL;
         if (encoderTransform != nullptr)
@@ -617,7 +640,7 @@ public:
         return hr;
     }
 
-    HRESULT getEncoderValue(const GUID* guid, UINT32 *value, CComPtr<IMFTransform> encoderTransform)
+    HRESULT getEncoderValue(const GUID* guid, uint32_t *value, CComPtr<IMFTransform> encoderTransform)
     {
         HRESULT hr = E_FAIL;
         if (encoderTransform != nullptr && value != nullptr)
@@ -679,7 +702,7 @@ public:
         }
         return hr;
     }
-    HRESULT checkRange(uint32 min, uint32 max, uint32 param)
+    HRESULT checkRange(uint32_t min, uint32_t max, uint32_t param)
     {
         bool result;
         result = param >= min ? ((param <= max) ? true : false) : false;
@@ -754,7 +777,7 @@ public:
             hr = encoderTransform->GetAttributes(&encoderAttributes);
             RETURNIFFAILED(hr);
 
-            UINT32 transformAsync;
+            uint32_t transformAsync;
             hr = encoderAttributes->GetUINT32(MF_TRANSFORM_ASYNC, &transformAsync);
             if (SUCCEEDED(hr) && TRUE == transformAsync)
             {
@@ -769,7 +792,7 @@ public:
                 const CLSID & d3dAwareAttribute = (S_OK == deviceManagerUnknown->QueryInterface(BORROWED_IID_IMFDXGIDeviceManager, (void**)(&dxgiDeviceManager)))
                     ? BORROWED_MF_SA_D3D11_AWARE : MF_SA_D3D_AWARE;
 
-                UINT32 d3dAware;
+                uint32_t d3dAware;
                 hr = encoderAttributes->GetUINT32(d3dAwareAttribute, &d3dAware);
                 if (SUCCEEDED(hr) && d3dAware != 0)
                 {
@@ -780,13 +803,13 @@ public:
 
             //Set Encoder Properties
             hr = setEncoderValue(&CODECAPI_AVEncMPVGOPSize,
-                (uint32)vidEncParams->gopSize, encoderTransform);
+                (uint32_t)vidEncParams->gopSize, encoderTransform);
             if (hr != S_OK)
             {
                 LOG(mLogFile, "Failed to set CODECAPI_AVEncMPVGOPSize @ %s %d \n", TEXT(__FILE__), __LINE__);
             }
 
-            hr = checkRange(0, 1, (uint32)vidEncParams->lowLatencyMode);
+            hr = checkRange(0, 1, (uint32_t)vidEncParams->lowLatencyMode);
             LOGIFFAILED(mLogFile, hr, "Out of range :encLowLatencyMode @ %s %d \n", TEXT(__FILE__), __LINE__);
             hr = setEncoderValue(&CODECAPI_AVEncCommonLowLatency,
                 (BOOL)vidEncParams->lowLatencyMode, encoderTransform);
@@ -799,18 +822,18 @@ public:
             * eAVEncCommonRateControlMode_GlobalVBR and                           *
             * eAVEncCommonRateControlMode_GlobalLowDelayVBR are not supported     *
             **********************************************************************/
-            hr = checkRange(0, 3, (uint32)vidEncParams->rateControlMethod);
+            hr = checkRange(0, 3, (uint32_t)vidEncParams->rateControlMethod);
             LOGIFFAILED(mLogFile, hr, "un-supported encRateControlMethod @ %s %d \n", TEXT(__FILE__), __LINE__);
             hr = setEncoderValue(&CODECAPI_AVEncCommonRateControlMode,
-                (uint32)vidEncParams->rateControlMethod, encoderTransform);
+                (uint32_t)vidEncParams->rateControlMethod, encoderTransform);
             if (hr != S_OK)
             {
                 LOG(mLogFile, "Failed to set CODECAPI_AVEncCommonRateControlMode @ %s %d \n", TEXT(__FILE__), __LINE__);
             }
-            hr = checkRange(0, 100, (uint32)vidEncParams->commonQuality);
+            hr = checkRange(0, 100, (uint32_t)vidEncParams->commonQuality);
             LOGIFFAILED(mLogFile, hr, "un-supported encCommonQuality parameter @ %s %d \n", TEXT(__FILE__), __LINE__);
             hr = setEncoderValue(&CODECAPI_AVEncCommonQuality,
-                (uint32)vidEncParams->commonQuality, encoderTransform);
+                (uint32_t)vidEncParams->commonQuality, encoderTransform);
             if (hr != S_OK)
             {
                 LOG(mLogFile, "Failed to set CODECAPI_AVEncCommonQuality @ %s %d \n", TEXT(__FILE__), __LINE__);
@@ -818,7 +841,7 @@ public:
             /**********************************************************************
             * Not supported presently. Supports only CABAC                        *
             **********************************************************************/
-            hr = checkRange(0, 1, (uint32)vidEncParams->enableCabac);
+            hr = checkRange(0, 1, (uint32_t)vidEncParams->enableCabac);
             LOGIFFAILED(mLogFile, hr, "un-supported enableCabac @ %s %d \n", TEXT(__FILE__), __LINE__);
             hr = setEncoderValue(&CODECAPI_AVEncH264CABACEnable,
                 (BOOL)vidEncParams->enableCabac, encoderTransform);
@@ -827,24 +850,24 @@ public:
                 LOG(mLogFile, "un-supported Cabac enable flag @ %s %d \n", TEXT(__FILE__), __LINE__);
             }
 
-            hr = checkRange(0, 100, (uint32)vidEncParams->qualityVsSpeed);
+            hr = checkRange(0, 100, (uint32_t)vidEncParams->qualityVsSpeed);
             LOGIFFAILED(mLogFile, hr, "un-supported encQualityVsSpeed parameter @ %s %d \n", TEXT(__FILE__), __LINE__);
             hr = setEncoderValue(&CODECAPI_AVEncCommonQualityVsSpeed,
-                (uint32)vidEncParams->qualityVsSpeed, encoderTransform);
+                (uint32_t)vidEncParams->qualityVsSpeed, encoderTransform);
             if (hr != S_OK)
             {
                 LOG(mLogFile, "Failed to set CODECAPI_AVEncCommonQualityVsSpeed @ %s %d \n", TEXT(__FILE__), __LINE__);
             }
 
             hr = setEncoderValue(&CODECAPI_AVEncCommonMaxBitRate,
-                (uint32)vidEncParams->maxBitrate, encoderTransform);
+                (uint32_t)vidEncParams->maxBitrate, encoderTransform);
             if (hr != S_OK)
             {
                 LOG(mLogFile, "Failed to set CODECAPI_AVEncCommonMaxBitRate @ %s %d \n", TEXT(__FILE__), __LINE__);
             }
 
             hr = setEncoderValue(&CODECAPI_AVEncCommonBufferSize,
-                (uint32)vidEncParams->bufSize, encoderTransform);
+                (uint32_t)vidEncParams->bufSize, encoderTransform);
             if (hr != S_OK)
             {
                 LOG(mLogFile, "Failed to set CODECAPI_AVEncCommonBufferSize @ %s %d \n", TEXT(__FILE__), __LINE__);
@@ -862,7 +885,7 @@ public:
         hr = encoderTransform->SetInputType(0, sourceVideoType, 0);
         LOGIFFAILED(mLogFile, hr, "Failed to set input type for the encoder @ %s %d \n", TEXT(__FILE__), __LINE__);
 
-        UINT32 h264Profile;
+        uint32_t h264Profile;
         hr = encodedVideoType->GetUINT32(MF_MT_MPEG2_PROFILE, &h264Profile);
         LOGIFFAILED(mLogFile, hr, "Failed to set encoder profile @ %s %d \n", TEXT(__FILE__), __LINE__);
 
@@ -912,7 +935,7 @@ public:
     *  @return HRESULT : S_OK if successful; otherwise returns microsoft error codes.
     *****************************************************************************
     */
-    HRESULT getNV12ImageSize(UINT32 width, UINT32 height, DWORD* pcbImage)
+    HRESULT getNV12ImageSize(uint32_t width, uint32_t height, DWORD* pcbImage)
     {
         if ((height / 2 > MAXDWORD - height) || ((height + height / 2)
                         > MAXDWORD / width))
@@ -927,7 +950,7 @@ public:
         return S_OK;
     }
 
-    HRESULT getRGBImageSize(UINT32 width, UINT32 height, DWORD* pcbImage)
+    HRESULT getRGBImageSize(uint32_t width, uint32_t height, DWORD* pcbImage)
     {
         if ((height * 4) > (MAXDWORD / width))
         {

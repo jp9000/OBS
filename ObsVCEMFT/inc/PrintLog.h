@@ -35,7 +35,8 @@ THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <iostream>
 #include <cstdarg>
-#include "Typedef.h"
+//#include "Typedef.h"
+#include <cstdint>
 #include <windows.h>
 #include <lmerr.h>
 #include <tchar.h>
@@ -111,7 +112,7 @@ inline void dumpLog(FILE *fp, char* format, ...)
     if (fp != NULL)
     {
         va_start(arguments, format);
-        uint32 len = _vscprintf(format, arguments) + 1;
+        uint32_t len = _vscprintf(format, arguments) + 1;
         buffer = (char*)malloc(len * sizeof(char));
         vsprintf_s(buffer, len, format, arguments);
         fputs(buffer, fp);

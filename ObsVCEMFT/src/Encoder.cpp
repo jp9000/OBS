@@ -126,7 +126,7 @@ HRESULT VCEEncoder::Init()
     //if (S_OK != hr && S_FALSE != hr /* already inited */)
     //{
     //    VCELog(TEXT("Com initialization failed with %d"), hr);
-    //    return (ERR_COM_INITILIZATION_FAILED | ERR_INITILIZATION_FAILED);
+    //    return (0x10000 | 0x0001);
     //}
     //mComDealloc = new FunctionDeallocator< void(__stdcall*)(void) >(CoUninitialize);
 
@@ -134,16 +134,26 @@ HRESULT VCEEncoder::Init()
     if (S_OK != hr)
     {
         VCELog(TEXT("MFStartup failed."));
-        return (ERR_MFT_INITILIZATION_FAILED | ERR_INITILIZATION_FAILED);
+		return (0x20000 | 0x0001);
     }
     mMFDealloc = new FunctionDeallocator< HRESULT(__stdcall*)(void) >(MFShutdown);
 
     memset(&mPConfigCtrl, 0, sizeof(mPConfigCtrl));
 
-    int iNumRefs = 3;
+    int iNumRefs = 3, QvsS = 0;
     int bitRateWindow = 50;
     int gopSize = mFps * (mKeyint == 0 ? 2 : mKeyint);
     gopSize -= gopSize % 6;
+
+    int picSize = mWidth * mHeight * mFps;
+    if (picSize <= 1280 * 720 * 60)
+        QvsS = 100;
+    else if (picSize <= 1920 * 1080 * 30)
+        QvsS = 50;
+    else
+        QvsS = 0;
+
+    OSDebugOut(TEXT("QvsS: %d\n"), QvsS);
 
     String x264prof = AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"));
     eAVEncH264VProfile profile = eAVEncH264VProfile_Main;
@@ -165,8 +175,8 @@ HRESULT VCEEncoder::Init()
     mPConfigCtrl.vidParams.meanBitrate = mMaxBitrate * 1000;// (1000 + bitRateWindow);
     mPConfigCtrl.vidParams.maxBitrate = mMaxBitrate * (1000 - bitRateWindow);
     mPConfigCtrl.vidParams.idrPeriod = (mKeyint > 0 ? mKeyint : 2) * mFps;
-    mPConfigCtrl.vidParams.gopSize = mUseCBR ? gopSize : 20;
-    mPConfigCtrl.vidParams.qualityVsSpeed = 50;
+    mPConfigCtrl.vidParams.gopSize = gopSize;
+    mPConfigCtrl.vidParams.qualityVsSpeed = QvsS;
     mPConfigCtrl.vidParams.compressionStandard = profile;
     mPConfigCtrl.vidParams.numBFrames = 0;
     mPConfigCtrl.vidParams.lowLatencyMode = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("LowLatency"), 0);
@@ -228,7 +238,7 @@ HRESULT VCEEncoder::Init()
 
     //MF_MT_AVG_BITRATE
     hr = mBuilder->setEncoderValue(&CODECAPI_AVEncCommonMeanBitRate,
-        (uint32)mPConfigCtrl.vidParams.meanBitrate, mEncTrans);
+        (uint32_t)mPConfigCtrl.vidParams.meanBitrate, mEncTrans);
     if (hr != S_OK)
     {
         VCELog(TEXT("Failed to set CODECAPI_AVEncCommonMeanBitRate"));
@@ -238,7 +248,7 @@ HRESULT VCEEncoder::Init()
     /*if (mUseCBR)
     {
         hr = mBuilder->setEncoderValue(&CODECAPI_AVEncCommonMinBitRate,
-            (uint32)mPConfigCtrl.vidParams.meanBitrate, mEncTrans);
+            (uint32_t)mPConfigCtrl.vidParams.meanBitrate, mEncTrans);
         if (hr != S_OK)
         {
             VCELog(TEXT("Failed to set CODECAPI_AVEncCommonMinBitRate"));
@@ -246,7 +256,7 @@ HRESULT VCEEncoder::Init()
     }*/
 
     hr = mBuilder->setEncoderValue(&CODECAPI_AVEncVideoMaxNumRefFrame,
-        (uint32)iNumRefs, mEncTrans);
+        (uint32_t)iNumRefs, mEncTrans);
     if (hr != S_OK)
     {
         VCELog(TEXT("Failed to set CODECAPI_AVEncVideoMaxNumRefFrame"));
@@ -286,68 +296,49 @@ HRESULT VCEEncoder::OutputFormatChange()
     return mEncTrans->SetOutputType(0, h264VideoType, 0);
 }
 
-HRESULT VCEEncoder::ProcessInput()
+HRESULT VCEEncoder::CreateSample(InputBuffer &inBuf, IMFSample **sample)
 {
     HRESULT hr;
     UINT64 dur = 0;
     //MSDN: Usually MFT holds onto IMFSample, so it can't be reused anyway.
-    CComPtr<IMFSample> sample;
+    //CComPtr<IMFSample> sample;
 
-    DWORD outLen = 0, len = 0;
+    DWORD maxLen = 0, currLen = 0;
 
-    if (mInputQueue.empty())
-        return MF_E_TRANSFORM_NEED_MORE_INPUT;
+    profileIn("CreateSample")
 
-    profileIn("ProcessInput")
-
-    hr = MFCreateSample(&sample);
+    hr = MFCreateSample(sample);
     LOGIFFAILED(mLogFile, hr, "MFCreateSample failed.");
 
-#if _DEBUG
-    size_t inBufCount = mInputQueue.size();
-#endif
+    inBuf.pBuffer->Unlock();
+    hr = (*sample)->AddBuffer(inBuf.pBuffer);
+    inBuf.locked = false;
+    inBuf.pBuffer->Lock(&(inBuf.pBufferPtr), &currLen, &maxLen);
 
-    //while (!mInputQueue.empty()) //loops from Encode() instead
+    LOGIFFAILED(mLogFile, hr, "ProcessInput: failed to add buffer to sample");
+
+    (*sample)->SetSampleDuration((LONGLONG)mFrameDur);
+    (*sample)->SetSampleTime(LONGLONG(inBuf.timestamp) * MS_TO_100NS);
+    profileOut
+    return hr;
+}
+
+HRESULT VCEEncoder::ProcessInput(IMFSample *sample)
+{
+    HRESULT hr = S_OK;
+    profileIn("ProcessInput")
+    hr = mEncTrans->ProcessInput(0, sample, 0);
+
+    if (MF_E_NOTACCEPTING == hr)
     {
-        InputBuffer *inBuf = mInputQueue.front();
-
-        inBuf->pBuffer->Unlock();
-
-        hr = sample->AddBuffer(inBuf->pBuffer);
-        LOGIFFAILED(mLogFile, hr, "ProcessInput: failed to add buffer to sample");
-
-        sample->SetSampleDuration((LONGLONG)mFrameDur);
-        sample->SetSampleTime(LONGLONG(inBuf->timestamp) * MS_TO_100NS);
-
-        hr = mEncTrans->ProcessInput(0, sample, 0);
-        inBuf->pBuffer->Lock(&(inBuf->pBufferPtr), &len, &outLen);
-
-        sample->RemoveAllBuffers();
-
-        if (SUCCEEDED(hr))
-        {
-            mInputQueue.pop();
-            inBuf->locked = false;
-        }
-
-        if (MF_E_NOTACCEPTING == hr)
-        {
-            //VCELog(
-            //    TEXT("ProcessInput: MF_E_NOTACCEPTING ts: %d.")
-            //    //TEXT(" If this is logged too often, probably lower your encode quality settings.")
-            //    , inBuf->timestamp);
-            OSDebugOut(TEXT("ProcessInput: MF_E_NOTACCEPTING ts: %d.\n"), inBuf->timestamp);
-            return hr;
-        }
-        else
-            LOGIFFAILED(mLogFile, hr, "ProcessInput failed.");
+        //VCELog(
+        //    TEXT("ProcessInput: MF_E_NOTACCEPTING.")
+        //    //TEXT(" If this is logged too often, probably lower your encode quality settings."));
+        OSDebugOut(TEXT("ProcessInput: MF_E_NOTACCEPTING.\n"));
+        return hr;
     }
-
-    sample.Release();
-
-#if _DEBUG
-    //OSDebugOut(TEXT("Processed %d buffer(s), %d in queue\n"), inBufCount, mInputQueue.size());
-#endif
+    else
+        LOGIFFAILED(mLogFile, hr, "ProcessInput failed.");
     profileOut
     return hr;
 }
@@ -373,7 +364,7 @@ HRESULT VCEEncoder::ProcessOutput(List<DataPacket> &packets, List<PacketType> &p
             MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER |
             MFT_OUTPUT_STREAM_PROVIDES_SAMPLES)) //Otherwise need to allocate own IMFSample
     {
-        return E_UNEXPECTED;
+        return S_FALSE;
     }
 
     //E_UNEXPECTED if no METransformHaveOutput event
@@ -385,7 +376,7 @@ HRESULT VCEEncoder::ProcessOutput(List<DataPacket> &packets, List<PacketType> &p
     if (FAILED(hr))
         return hr;
 
-    if (HASFLAG(out[0].dwStatus, MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE))
+    if (out[0].dwStatus & MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE)
     {
         return OutputFormatChange();
     }
@@ -476,7 +467,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         //FIXME can't do multiple out_pts
         ProcessOutput(packets, packetTypes, timestamp, out_pts);
         //DrainOutput(packets, packetTypes, timestamp);
-        //OSDebugOut(TEXT("Drained %d frame(s)\n"), packets.Num());
+        OSDebugOut(TEXT("Drained %d frame(s)\n"), packets.Num());
         return true;
     }
 
@@ -486,13 +477,12 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
 
     unsigned int idx = (unsigned int)data.MemId - 1;
 
-    InputBuffer *inBuffer = &(mInputBuffers[idx]);
-    inBuffer->locked = true;
-    inBuffer->timestamp = timestamp;
+    InputBuffer &inBuffer = mInputBuffers[idx];
+    inBuffer.locked = true;
+    inBuffer.timestamp = timestamp;
 
-    mInputQueue.push(inBuffer);
-
-    bool processAll = mInputQueue.size() > 3;
+    CComPtr<IMFSample> sample;
+    hr = CreateSample(inBuffer, &sample);
 
     //OSDebugOut(TEXT("IN queue %d\n"), mInputQueue.size());
 
@@ -508,21 +498,47 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         mReqKeyframe = false;
     }
 
-    do
+    HRESULT hrIn = S_OK;
+    hr = S_OK;
+    while (true)
     {
-        hr = ProcessInput();
-
+        hrIn = ProcessInput(sample);
         profileIn("Output")
-        while (packets.Num() == 0)
+        OSSleep(1000/(mFps + 10));
+        while (/*packets.Num() == 0 &&*/ SUCCEEDED(hrIn))
         {
-            OSSleep100NS(10);
+
+            // Useless, MFT_OUTPUT_STATUS_SAMPLE_READY and ProcessOutput still returns E_UNEXPECTED, wtf
+            //DWORD flags = 0;
+            //if (SUCCEEDED(mEncTrans->GetOutputStatus(&flags)) && !flags)
+            //    continue;
+
             hr = ProcessOutput(packets, packetTypes, timestamp, out_pts);
-            if (hr != S_OK)
+            if (hr != E_UNEXPECTED)
+                OSDebugOut(TEXT("ProcessOutput %d ts %d hr %08X out_pts %d\n"), packets.Num(), timestamp, hr, out_pts);
+
+            if (hr != E_UNEXPECTED && FAILED(hr))
                 break;
+
+            if (packets.Num())
+                break;
+
+            OSSleep100NS(mFrameDur / 100);
         }
         profileOut
 
-    } while (processAll && !mInputQueue.empty());
+        if (SUCCEEDED(hrIn) || FAILED(hr) ||
+            (hrIn != MF_E_NOTACCEPTING && FAILED(hrIn)))
+            break;
+    }
+
+    while (hrIn == MF_E_NOTACCEPTING && packets.Num())
+    {
+        hrIn = ProcessInput(sample);
+    }
+    sample.Release();
+
+    OSDebugOut(TEXT("Encode: hr %08X ts %d out pkts %d frame dropped: %d\n"), hrIn, timestamp, packets.Num(), hrIn == MF_E_NOTACCEPTING);
     profileOut
     return false;
 }
@@ -919,7 +935,7 @@ bool VCEEncoder::SetBitRate(DWORD maxBitrate, DWORD bufferSize)
     {
         mPConfigCtrl.vidParams.meanBitrate = maxBitrate * 1000;
         hr = mBuilder->setEncoderValue(&CODECAPI_AVEncCommonMeanBitRate,
-            (uint32)mPConfigCtrl.vidParams.meanBitrate, mEncTrans);
+            (uint32_t)mPConfigCtrl.vidParams.meanBitrate, mEncTrans);
         if (hr != S_OK)
         {
             ok = false;
@@ -939,7 +955,7 @@ bool VCEEncoder::SetBitRate(DWORD maxBitrate, DWORD bufferSize)
     {
         mPConfigCtrl.vidParams.bufSize = bufferSize * 1000;
         hr = mBuilder->setEncoderValue(&CODECAPI_AVEncCommonBufferSize,
-            (uint32)mPConfigCtrl.vidParams.bufSize, mEncTrans);
+            (uint32_t)mPConfigCtrl.vidParams.bufSize, mEncTrans);
         if (hr != S_OK)
         {
             ok = false;
@@ -1026,7 +1042,7 @@ HRESULT VCEEncoder::createVideoMediaType(BYTE* pUserData, DWORD dwUserData, DWOR
 HRESULT VCEEncoder::createH264VideoType(
     IMFMediaType** encodedVideoType, IMFMediaType* sourceVideoType)
 {
-    uint32 srcWidth, srcHeight;
+    uint32_t srcWidth, srcHeight;
     if (nullptr == encodedVideoType)
     {
         return E_POINTER;

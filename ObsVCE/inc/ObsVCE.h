@@ -27,21 +27,7 @@ using std::string;
 #define VCELog(...) Log(__VA_ARGS__)
 #define AppConfig (*VCEAppConfig)
 
-//Use LoadLibrary etc. instead of linking.
-#define OVE_DYN
-
-#ifdef OVE_DYN
 #include "OVEncodeDyn.h"
-#else
-bool initOVE();
-void deinitOVE();
-#include <OpenVideo\OVEncode.h>
-#ifdef _WIN64
-#pragma comment( lib, "OpenVideo64.lib" )
-#else
-#pragma comment( lib, "OpenVideo.lib" )
-#endif
-#endif
 
 #define OBSVCE_API __declspec(dllexport) __cdecl
 

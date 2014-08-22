@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\CL">
+      <UniqueIdentifier>{0e97168f-ff0d-43b8-a26b-09eff4b58d4f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dllmain.cpp">
@@ -52,6 +55,15 @@
     </ClInclude>
     <ClInclude Include="inc\OVEncodeDyn.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\CL\cl.h">
+      <Filter>Header Files\CL</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\CL\cl_platform.h">
+      <Filter>Header Files\CL</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\CL\opencl.h">
+      <Filter>Header Files\CL</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

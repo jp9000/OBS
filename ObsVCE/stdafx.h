@@ -10,7 +10,7 @@
 //#include <windows.h>
 #include <string>
 #include <map>
-#include "CL\cl.h"
-#include "CL\cl_ext.h"
 #include <Main.h>
 #include <algorithm>
+#include "CL\cl.h"
+#define CL_MEM_USE_PERSISTENT_MEM_AMD       (1 << 6)        // Alloc from GPU's CPU visible heap

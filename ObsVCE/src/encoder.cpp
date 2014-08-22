@@ -39,7 +39,7 @@ void mapBuffer(OVEncodeHandle *encodeHandle, int i, uint32_t size)
     cl_event inMapEvt = 0;
     cl_int   status = CL_SUCCESS;
 
-    encodeHandle->inputSurfaces[i].mapPtr = clEnqueueMapBuffer(encodeHandle->clCmdQueue[0],
+    encodeHandle->inputSurfaces[i].mapPtr = f_clEnqueueMapBuffer(encodeHandle->clCmdQueue[0],
         (cl_mem)encodeHandle->inputSurfaces[i].surface,
         CL_FALSE,
         CL_MAP_WRITE,
@@ -57,27 +57,25 @@ void mapBuffer(OVEncodeHandle *encodeHandle, int i, uint32_t size)
     }
 
     //clEnqueueBarrier(encodeHandle->clCmdQueue[0]);
-    clFlush(encodeHandle->clCmdQueue[0]);
+    f_clFlush(encodeHandle->clCmdQueue[0]);
     waitForEvent(inMapEvt);
-    status = clReleaseEvent(inMapEvt);
+    status = f_clReleaseEvent(inMapEvt);
     encodeHandle->inputSurfaces[i].isMapped = true;
 }
 
 void unmapBuffer(OVEncodeHandle *encodeHandle, int surf)
 {
     cl_event unmapEvent;
-    cl_int status = clEnqueueUnmapMemObject(encodeHandle->clCmdQueue[0],
+    cl_int status = f_clEnqueueUnmapMemObject(encodeHandle->clCmdQueue[0],
         (cl_mem)encodeHandle->inputSurfaces[surf].surface,
         encodeHandle->inputSurfaces[surf].mapPtr,
         0,
         NULL,
         //NULL);
         &unmapEvent);
-    /// clEnqueueBarrier causes green frames at start
-    //clEnqueueBarrier(encodeHandle->clCmdQueue[0]);
-    //clFlush(encodeHandle->clCmdQueue[0]);
+
     waitForEvent(unmapEvent);
-    status = clReleaseEvent(unmapEvent);
+    status = f_clReleaseEvent(unmapEvent);
     encodeHandle->inputSurfaces[surf].isMapped = false;
     encodeHandle->inputSurfaces[surf].mapPtr = NULL;
 }
@@ -108,7 +106,7 @@ bool VCEEncoder::encodeCreate(uint32_t deviceId)
     clDeviceID = (cl_device_id)((intptr_t)clDeviceID | (ptr & 0xFFFFFFFF00000000));
 #endif
 
-    mOveContext = clCreateContext(properties, 1, &clDeviceID, 0, 0, &err);
+    mOveContext = f_clCreateContext(properties, 1, &clDeviceID, 0, 0, &err);
     if (mOveContext == (cl_context)0)
     {
         VCELog(TEXT("Cannot create cl_context."));
@@ -149,7 +147,7 @@ bool VCEEncoder::encodeCreate(uint32_t deviceId)
     {
         size_t sourceSize[] = { strlen(source) };
         cl_int clstatus = 0;
-        mProgram = clCreateProgramWithSource((cl_context)mOveContext,
+        mProgram = f_clCreateProgramWithSource((cl_context)mOveContext,
             1,
             (const char**)&source,
             sourceSize,
@@ -166,7 +164,7 @@ bool VCEEncoder::encodeCreate(uint32_t deviceId)
         flagsStr.append("-cl-single-precision-constant -cl-mad-enable -cl-fast-relaxed-math -cl-unsafe-math-optimizations ");
 
         /* create a cl program executable for all the devices specified */
-        clstatus = clBuildProgram(mProgram,
+        clstatus = f_clBuildProgram(mProgram,
             1,
             &clDeviceID,
             flagsStr.c_str(),
@@ -177,14 +175,14 @@ bool VCEEncoder::encodeCreate(uint32_t deviceId)
             VCELog(TEXT("clBuildProgram() failed."));
         }
 
-        mKernel[0] = clCreateKernel(mProgram, "Y444toNV12_Y", &clstatus);
+        mKernel[0] = f_clCreateKernel(mProgram, "Y444toNV12_Y", &clstatus);
         if (clstatus != CL_SUCCESS)
         {
             VCELog(TEXT("clCreateKernel failed!"));
             return false;
         }
 
-        mKernel[1] = clCreateKernel(mProgram, "Y444toNV12_UV", &clstatus);
+        mKernel[1] = f_clCreateKernel(mProgram, "Y444toNV12_UV", &clstatus);
         if (clstatus != CL_SUCCESS)
         {
             VCELog(TEXT("clCreateKernel(UV) failed!"));
@@ -214,7 +212,7 @@ bool VCEEncoder::encodeOpen(uint32_t deviceId)
     //    prop |= CL_QUEUE_PROFILING_ENABLE;
 
     //TODO Remove second unused queue or do something fancy with it
-    mEncodeHandle.clCmdQueue[0] = clCreateCommandQueue((cl_context)mOveContext,
+    mEncodeHandle.clCmdQueue[0] = f_clCreateCommandQueue((cl_context)mOveContext,
         clDeviceID, prop, &err);
     if (err != CL_SUCCESS)
     {
@@ -226,7 +224,7 @@ bool VCEEncoder::encodeOpen(uint32_t deviceId)
 
     for (int32_t i = 0; i<MAX_INPUT_SURFACE; i++)
     {
-        mEncodeHandle.inputSurfaces[i].surface = clCreateBuffer((cl_context)mOveContext,
+        mEncodeHandle.inputSurfaces[i].surface = f_clCreateBuffer((cl_context)mOveContext,
             CL_MEM_READ_ONLY | CL_MEM_USE_PERSISTENT_MEM_AMD, //CL_MEM_ALLOC_HOST_PTR,
             mInputBufSize,
             NULL,
@@ -240,7 +238,7 @@ bool VCEEncoder::encodeOpen(uint32_t deviceId)
 
     if (mUse444)
     {
-        mOutput = clCreateBuffer((cl_context)mOveContext,
+        mOutput = f_clCreateBuffer((cl_context)mOveContext,
             CL_MEM_WRITE_ONLY | CL_MEM_USE_PERSISTENT_MEM_AMD,
             mOutputBufSize,
             NULL,
@@ -251,10 +249,10 @@ bool VCEEncoder::encodeOpen(uint32_t deviceId)
             return false;
         }
 
-        err = clSetKernelArg(mKernel[0], 1, sizeof(cl_mem), &mOutput);
-        err |= clSetKernelArg(mKernel[1], 1, sizeof(cl_mem), &mOutput);
-        err |= clSetKernelArg(mKernel[0], 2, sizeof(int32_t), &mAlignedSurfaceWidth);
-        err |= clSetKernelArg(mKernel[1], 2, sizeof(int32_t), &mAlignedSurfaceWidth);
+        err = f_clSetKernelArg(mKernel[0], 1, sizeof(cl_mem), &mOutput);
+        err |= f_clSetKernelArg(mKernel[1], 1, sizeof(cl_mem), &mOutput);
+        err |= f_clSetKernelArg(mKernel[0], 2, sizeof(int32_t), &mAlignedSurfaceWidth);
+        err |= f_clSetKernelArg(mKernel[1], 2, sizeof(int32_t), &mAlignedSurfaceWidth);
         if (err != CL_SUCCESS)
         {
             VCELog(TEXT("clSetKernelArg returned error %d"), err);
@@ -301,7 +299,7 @@ bool VCEEncoder::encodeClose()
             unmapBuffer(&mEncodeHandle, i);
 
         if (inputSurfaces[i].surface)
-            err = clReleaseMemObject((cl_mem)inputSurfaces[i].surface);
+            err = f_clReleaseMemObject((cl_mem)inputSurfaces[i].surface);
         inputSurfaces[i].surface = NULL;
         if (err != CL_SUCCESS)
         {
@@ -309,13 +307,13 @@ bool VCEEncoder::encodeClose()
         }
     }
 
-    if (mKernel[0]) clReleaseKernel(mKernel[0]);
-    if (mKernel[1]) clReleaseKernel(mKernel[1]);
-    if (mProgram) clReleaseProgram(mProgram);
+    if (mKernel[0]) f_clReleaseKernel(mKernel[0]);
+    if (mKernel[1]) f_clReleaseKernel(mKernel[1]);
+    if (mProgram) f_clReleaseProgram(mProgram);
 
     for (int i = 0; i<2; i++) {
         if (mEncodeHandle.clCmdQueue[i])
-            err = clReleaseCommandQueue(mEncodeHandle.clCmdQueue[i]);
+            err = f_clReleaseCommandQueue(mEncodeHandle.clCmdQueue[i]);
         mEncodeHandle.clCmdQueue[i] = NULL;
         if (err != CL_SUCCESS)
         {

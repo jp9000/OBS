@@ -84,7 +84,8 @@ private:
     HRESULT createVideoMediaType(BYTE* pUserData, DWORD dwUserData, DWORD dwWidth, DWORD dwHeight);
     //Create output media type
     HRESULT createH264VideoType(IMFMediaType** encodedVideoType, IMFMediaType* sourceVideoType);
-    HRESULT ProcessInput();
+    HRESULT CreateSample(InputBuffer &inBuf, IMFSample **sample);
+    HRESULT ProcessInput(IMFSample *sample);
     HRESULT ProcessOutput(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, DWORD &out_pts);
     HRESULT OutputFormatChange();
     void ProcessBitstream(OutputBuffer&, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp);

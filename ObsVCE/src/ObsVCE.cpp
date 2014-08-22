@@ -287,9 +287,9 @@ bool VCEEncoder::init()
 
         // print device name
         size_t valueSize;
-        clGetDeviceInfo(clDeviceID, CL_DEVICE_NAME, 0, NULL, &valueSize);
+        f_clGetDeviceInfo(clDeviceID, CL_DEVICE_NAME, 0, NULL, &valueSize);
         char* value = (char*)malloc(valueSize);
-        clGetDeviceInfo(clDeviceID, CL_DEVICE_NAME, valueSize, value, NULL);
+        f_clGetDeviceInfo(clDeviceID, CL_DEVICE_NAME, valueSize, value, NULL);
         //TODO non-unicode string formatting
         VCELog(TEXT("Using device %d (%S)"), devIdx, value);
         free(value);
@@ -380,7 +380,7 @@ VCEEncoder::~VCEEncoder()
     cl_int err;
     if ((cl_context)mOveContext)
     {
-        err = clReleaseContext((cl_context)mOveContext);
+        err = f_clReleaseContext((cl_context)mOveContext);
         if (err != CL_SUCCESS)
         {
             VCELog(TEXT("Error releasing cl context"));
@@ -485,15 +485,15 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         profileIn("YUV444 conversion")
         size_t globalThreads[2] = {mWidth , mHeight};
         
-        status = clSetKernelArg(mKernel[0], 0, sizeof(cl_mem), (cl_mem)&mEncodeHandle.inputSurfaces[idx].surface);
-        status |= clSetKernelArg(mKernel[1], 0, sizeof(cl_mem), (cl_mem)&mEncodeHandle.inputSurfaces[idx].surface);
+        status = f_clSetKernelArg(mKernel[0], 0, sizeof(cl_mem), (cl_mem)&mEncodeHandle.inputSurfaces[idx].surface);
+        status |= f_clSetKernelArg(mKernel[1], 0, sizeof(cl_mem), (cl_mem)&mEncodeHandle.inputSurfaces[idx].surface);
         if (status != CL_SUCCESS)
         {
             VCELog(TEXT("clSetKernelArg failed with 0x%08x"), status);
             return false;
         }
 
-        status = clEnqueueNDRangeKernel(mEncodeHandle.clCmdQueue[0],
+        status = f_clEnqueueNDRangeKernel(mEncodeHandle.clCmdQueue[0],
             mKernel[0], 2, 0, globalThreads, NULL, 0, 0, NULL);
         if (status != CL_SUCCESS)
         {
@@ -504,7 +504,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         globalThreads[0] = mWidth / 2;
         globalThreads[1] = mHeight / 2;
 
-        status = clEnqueueNDRangeKernel(mEncodeHandle.clCmdQueue[0],
+        status = f_clEnqueueNDRangeKernel(mEncodeHandle.clCmdQueue[0],
             mKernel[1], 2, 0, globalThreads, NULL, 0, 0, NULL);
         if (status != CL_SUCCESS)
         {
@@ -512,9 +512,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
             return false;
         }
 
-        //clEnqueueBarrier(mEncodeHandle.clCmdQueue[0]);
-        //clFlush(mEncodeHandle.clCmdQueue[0]);
-        clFinish(mEncodeHandle.clCmdQueue[0]);
+        f_clFinish(mEncodeHandle.clCmdQueue[0]);
         profileOut
     }
 
@@ -538,7 +536,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
 
     profileIn("Wait for task(s)")
     //wait for encoder
-    err = clWaitForEvents(1, (cl_event *)&(eventRunVideoProgram));
+    err = f_clWaitForEvents(1, (cl_event *)&(eventRunVideoProgram));
     if (err != CL_SUCCESS)
     {
         VCELog(TEXT("clWaitForEvents returned error 0x%08x"), err);
@@ -547,7 +545,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     }
     profileOut
 
-    profileIn("Query task(s)")
+    //profileIn("Query task(s)")
     //Retrieve h264 bitstream
     numTaskDescriptionsReturned = 0;
     memset(pTaskDescriptionList, 0, sizeof(OVE_OUTPUT_DESCRIPTION)*numTaskDescriptionsRequested);
@@ -566,7 +564,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         }
 
     } while (pTaskDescriptionList->status == OVE_TASK_STATUS_NONE);
-    profileOut
+    //profileOut
 
     //mEncodeHandle.inputSurfaces[idx].locked = false;
     _InterlockedCompareExchange(&(mEncodeHandle.inputSurfaces[idx].locked), 0, 1);
@@ -598,13 +596,13 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     }
     profileOut
 
-    profileIn("Remap buffer")
+    //profileIn("Remap buffer")
     mapBuffer(&mEncodeHandle, idx, mInputBufSize);
-    profileOut
+    //profileOut
 
 fail:
     if (eventRunVideoProgram)
-        clReleaseEvent((cl_event)eventRunVideoProgram);
+        f_clReleaseEvent((cl_event)eventRunVideoProgram);
 
     mFirstFrame = false;
     profileOut
