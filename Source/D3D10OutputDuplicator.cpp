@@ -124,7 +124,7 @@ DuplicatorInfo D3D10OutputDuplicator::AcquireNextFrame(UINT timeout)
 
     //------------------------------------------
 
-    if(copyTex && texVal)
+    if(copyTex)
     {
         D3D10Texture *d3dCopyTex = (D3D10Texture*)copyTex;
         GetD3D()->CopyResource(d3dCopyTex->texture, texVal);

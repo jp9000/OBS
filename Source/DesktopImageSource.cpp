@@ -378,7 +378,7 @@ public:
                 FillRect(hDC, &rc, (HBRUSH)GetStockObject(BLACK_BRUSH));
 
                 if(!warningID)
-                    warningID = App->AddStreamInfo(Str("Sources.SoftwareCaptureSource.WindowNotFound"), bWindowNotFound ? StreamInfoPriority_High : StreamInfoPriority_Medium);
+                    warningID = App->AddStreamInfo(Str("Sources.SoftwareCaptureSource.WindowNotFound"), StreamInfoPriority_High);
             }
             else
             {
