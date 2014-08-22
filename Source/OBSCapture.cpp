@@ -81,6 +81,9 @@ void OBS::StartReplayBuffer()
 {
     if (bTestStream || bRecordingReplayBuffer) return;
 
+    if (!saveReplayBufferHotkeyID && !recordFromReplayBufferHotkeyID)
+        OBSMessageBox(hwndMain, Str("Capture.Start.ReplayBuffer.NoHotkey"), nullptr, MB_OK | MB_ICONWARNING);
+
     int length = AppConfig->GetInt(L"Publish", L"ReplayBufferLength", 1);
     std::tie(replayBuffer, replayBufferStream) = CreateReplayBuffer(length);
     if (!replayBuffer)

@@ -155,6 +155,7 @@ Scene.Hotkey.Hotkey="Hotkey:"
 Capture.Start.FileStream.WarningCaption="Warning"
 Capture.Start.FileStream.Warning="Unable to create the file output stream.\n\nCheck the file path in Broadcast Settings."
 Capture.Start.FileStream.ReplayBufferWarning="Unable to create Replay Buffer.\n\nCheck the Replay Buffer length in Broadcast Settings."
+Capture.Start.ReplayBuffer.NoHotkey="You haven't set a Save Replay Buffer Hotkey nor a Record from Replay Buffer Hotkey, the Replay Buffer won't save anything unless either of these hotkeys is pressed.\n\nCheck the Hotkey Settings to set a Save Replay Buffer Hotkey or a Record from Replay Buffer Hotkey."
 
 Settings.Advanced="Advanced"
 Settings.Audio="Audio"
