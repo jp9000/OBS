@@ -219,8 +219,9 @@ INT_PTR SettingsQSV::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
         bool enabled = !!AppConfig->GetInt(L"QSV (Advanced)", L"UseCustomParams");
         check(IDC_USECUSTOMPARAMS, enabled);
 
-        enabled = enabled && AppConfig->GetString(L"Video Encoding", L"Encoder") == L"QSV";
-        EnableWindow(GetDlgItem(hwnd, IDC_USECUSTOMPARAMS), enabled);
+        bool qsv_selected = !!(AppConfig->GetString(L"Video Encoding", L"Encoder") == L"QSV");
+        EnableWindow(GetDlgItem(hwnd, IDC_USECUSTOMPARAMS), qsv_selected);
+        enabled = enabled && qsv_selected;
 
         //--------------------------------------------
 
