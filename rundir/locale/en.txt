@@ -303,6 +303,7 @@ Settings.Publish.InvalidReplayBufferSavePath="The Replay Buffer File Path is inv
 
 Settings.Publish.ReplayBufferMemory="Estimated Replay Buffer memory usage (MB):"
 Settings.Publish.ReplayBufferLength="Replay Buffer length (seconds):"
+Settings.Publish.ReplayBufferTooltip="OBS will buffer at least this many seconds and write them to a file when the Save Replay Buffer Hotkey is pressed, or continue recording to the same file after writing the buffered seconds when the Record from Replay Buffer Hotkey is pressed."
 Settings.Publish.SaveReplayBufferHotkey="Save Replay Buffer Hotkey:"
 Settings.Publish.RecordFromReplayBufferHotkey="Record from Replay Buffer Hotkey:"
 
