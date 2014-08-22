@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 
 bool CheckVCEHardwareSupport(bool log, bool useMFT);
 
-int checkRange(int val, int min, int max, int def)
+static int checkRange(int val, int min, int max, int def)
 {
     if (val >= min && val <= max)
         return val;
@@ -30,6 +30,36 @@ int checkRange(int val, int min, int max, int def)
 
 //============================================================================
 // SettingsVCE class
+
+static void ToggleControls(HWND hwnd, BOOL enabled)
+{
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_CABAC), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_AMD), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_ME_HALF), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_ME_QUARTER), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_FORCE16SKIP), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_PMV), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_ZPC), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_IME_DEC), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_CONSTINTRAPRED), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_SATD), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_IME_OVERW), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_LOWLATENCY), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_GOP), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_IDR), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_IPIC), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_SRNG0), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_SRNG1), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_SRNG_IMEX), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_SRNG_IMEY), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_IPRED), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_PPRED), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_IME_SUBM), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_DISABLE_SUBM), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_LSM), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_QVSS), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_REFS), enabled);
+}
 
 SettingsVCE::SettingsVCE()
 : SettingsPane()
@@ -204,6 +234,7 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
             iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("UseCustom"), 0);
             SendMessage(GetDlgItem(hwnd, IDC_VCE_USE_CUSTOM), BM_SETCHECK, iInt, 0);
+            ToggleControls(hwnd, iInt);
 
             iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("CABAC"), 0);
             SendMessage(GetDlgItem(hwnd, IDC_VCE_CABAC), BM_SETCHECK, iInt, 0);
@@ -342,6 +373,8 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 if (HIWORD(wParam) == BN_CLICKED)
                 {
                     bDataChanged = true;
+                    if (LOWORD(wParam) == IDC_VCE_USE_CUSTOM)
+                        ToggleControls(hwnd, SendMessage(GetDlgItem(hwnd, IDC_VCE_USE_CUSTOM), BM_GETCHECK, 0, 0));
                 }
                 break;
 
