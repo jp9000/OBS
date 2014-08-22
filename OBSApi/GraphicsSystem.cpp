@@ -43,7 +43,14 @@ Shader* GraphicsSystem::CreateVertexShaderFromFile(CTSTR lpFileName)
 {
     XFile ShaderFile;
 
-    if(!ShaderFile.Open(lpFileName, XFILE_READ|XFILE_SHARED, XFILE_OPENEXISTING))
+    String fullPathFilename;
+
+    if ((lpFileName[0] != '.' && lpFileName[0] != '/' && lpFileName[0] != '\\') && !(lpFileName[0] && lpFileName[1] == ':'))
+        fullPathFilename << API->GetAppPath() << L"\\" << lpFileName;
+    else
+        fullPathFilename << lpFileName;
+    
+    if (!ShaderFile.Open(fullPathFilename, XFILE_READ | XFILE_SHARED, XFILE_OPENEXISTING))
         CrashError(TEXT("CreateVertexShaderFromFile: Couldn't open %s: %d"), lpFileName, GetLastError());
 
     String strShader;
@@ -58,7 +65,14 @@ Shader* GraphicsSystem::CreatePixelShaderFromFile(CTSTR lpFileName)
 {
     XFile ShaderFile;
 
-    if (!ShaderFile.Open(lpFileName, XFILE_READ | XFILE_SHARED, XFILE_OPENEXISTING))
+    String fullPathFilename;
+
+    if ((lpFileName[0] != '.' && lpFileName[0] != '/' && lpFileName[0] != '\\') && !(lpFileName[0] && lpFileName[1] == ':'))
+        fullPathFilename << API->GetAppPath() << L"\\" << lpFileName;
+    else
+        fullPathFilename << lpFileName;
+
+    if (!ShaderFile.Open(fullPathFilename, XFILE_READ | XFILE_SHARED, XFILE_OPENEXISTING))
         CrashError(TEXT("CreatePixelShaderFromFile: Couldn't open %s: %d"), lpFileName, GetLastError());
 
     String strShader;
@@ -77,7 +91,14 @@ FuturePixelShader GraphicsSystem::CreatePixelShaderFromFileAsync(CTSTR fileName)
     using namespace std;
     using Context = FutureShaderContainer::FutureShaderContext;
 
-    wstring const fn = fileName;
+    String fullPathFilename;
+
+    if ((fileName[0] != '.' && fileName[0] != '/' && fileName[0] != '\\') && !(fileName[0] && fileName[1] == ':'))
+        fullPathFilename << API->GetAppPath() << L"\\" << fileName;
+    else
+        fullPathFilename << fileName;
+
+    wstring const fn = fullPathFilename.Array();
     auto &cs = futureShaders.contexts;
 
     ScopedLock m(futureShaders.lock);

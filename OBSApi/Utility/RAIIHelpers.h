@@ -33,9 +33,16 @@ struct MutexDeleter
     void operator()(HANDLE h) const { if (!h) return; OSCloseMutex(h); }
 };
 
-struct ThreadDeleter
+struct ThreadCloser
 {
     void operator()(HANDLE h) const { if (!h) return; OSCloseThread(h); }
+};
+
+template <int ... args>
+struct ThreadDeleter
+{
+    static_assert(sizeof...(args) == 0 || sizeof...(args) == 1, "ThreadDeleter takes 0 or 1 template parameter to specify the timeout to OSTerminateThread");
+    void operator()(HANDLE h) const { if (!h) return; OSTerminateThread(h, args ...); }
 };
 
 struct ScopedLock

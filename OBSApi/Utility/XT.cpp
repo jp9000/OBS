@@ -107,7 +107,11 @@ void STDCALL ResetXTAllocator(CTSTR lpAllocator)
     else if (scmpi(lpAllocator, TEXT("SeriousMemoryDebuggingAlloc")) == 0)
         MainAllocator = new SeriousMemoryDebuggingAlloc;
     else
+#if defined(_M_X64) || defined(__amd64__)
+        MainAllocator = new DefaultAlloc;
+#else
         MainAllocator = new FastAlloc;
+#endif
 
     locale = new LocaleStringLookup;
 

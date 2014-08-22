@@ -175,6 +175,8 @@ public:
 
         audioFrameSize = App->GetAudioEncoder()->GetFrameSize();
 
+        CopyMetadata();
+
         bStreamOpened = true;
 
         return true;
@@ -282,6 +284,33 @@ public:
             audioDecodeTimes.Last().count++;
     }
 
+    UINT frameTime = 0;
+    UINT sampleRateHz = 0;
+    UINT width = 0, height = 0;
+    DataPacket videoHeaders;
+    List<BYTE> AACHeader;
+    UINT maxBitRate = 0;
+    DataPacket sei;
+    void CopyMetadata()
+    {
+        frameTime = App->GetFrameTime();
+        sampleRateHz = App->GetSampleRateHz();
+        App->GetOutputSize(width, height);
+        App->GetVideoHeaders(videoHeaders);
+
+        //-------------------------------------------
+        // get AAC headers if using AAC
+        if (!bMP3)
+        {
+            DataPacket data;
+            App->GetAudioHeaders(data);
+            AACHeader.CopyArray(data.lpPacket + 2, data.size - 2);
+        }
+        maxBitRate = fastHtonl(App->GetAudioEncoder()->GetBitRate() * 1000);
+
+        App->GetVideoEncoder()->GetSEI(sei);
+    }
+
     ~MP4FileStream()
     {
         if(!bStreamOpened)
@@ -301,13 +330,9 @@ public:
         //set a reasonable initial buffer size
         endBuffer.SetSize((videoFrames.Num() + audioFrames.Num()) * 20 + 131072);
 
-        UINT64 audioFrameSize = App->GetAudioEncoder()->GetFrameSize();
-
         DWORD macTime = fastHtonl(DWORD(GetMacTime()));
-        UINT videoDuration = fastHtonl(lastVideoTimestamp + App->GetFrameTime());
-        UINT audioDuration = fastHtonl(lastVideoTimestamp + DWORD(double(audioFrameSize)*1000.0/double(App->GetSampleRateHz())));
-        UINT width, height;
-        App->GetOutputSize(width, height);
+        UINT videoDuration = fastHtonl(lastVideoTimestamp + frameTime);
+        UINT audioDuration = fastHtonl(lastVideoTimestamp + DWORD(double(audioFrameSize)*1000.0/sampleRateHz));
 
         LPCSTR lpVideoTrack = "Video Media Handler";
         LPCSTR lpAudioTrack = "Sound Media Handler";
@@ -316,8 +341,6 @@ public:
 
         //-------------------------------------------
         // get video headers
-        DataPacket videoHeaders;
-        App->GetVideoHeaders(videoHeaders);
         List<BYTE> SPS, PPS;
 
         LPBYTE lpHeaderData = videoHeaders.lpPacket+11;
@@ -325,16 +348,6 @@ public:
 
         lpHeaderData += SPS.Num()+3;
         PPS.CopyArray(lpHeaderData+2, fastHtons(*(WORD*)lpHeaderData));
-
-        //-------------------------------------------
-        // get AAC headers if using AAC
-        List<BYTE> AACHeader;
-        if(!bMP3)
-        {
-            DataPacket data;
-            App->GetAudioHeaders(data);
-            AACHeader.CopyArray(data.lpPacket+2, data.size-2);
-        }
 
         //-------------------------------------------
 
@@ -353,7 +366,6 @@ public:
 
         //-------------------------------------------
         // sound descriptor thingy.  this part made me die a little inside admittedly.
-        UINT maxBitRate = fastHtonl(App->GetAudioEncoder()->GetBitRate()*1000);
 
         List<BYTE> esDecoderDescriptor;
         BufferOutputSerializer esDecoderOut(esDecoderDescriptor);
@@ -455,7 +467,7 @@ public:
                 output.OutputDword(0); //version and flags (none)
                 output.OutputDword(macTime); //creation time
                 output.OutputDword(macTime); //modified time
-                output.OutputDword(DWORD_BE(App->GetSampleRateHz())); //time scale
+                output.OutputDword(DWORD_BE(sampleRateHz)); //time scale
                 output.OutputDword(audioUnitDuration);
                 output.OutputDword(bMP3 ? DWORD_BE(0x55c40000) : DWORD_BE(0x15c70000));
               PopBox(output); //mdhd
@@ -497,7 +509,7 @@ public:
                       output.OutputWord(WORD_BE(16)); //sample size
                       output.OutputWord(0); //quicktime audio compression id
                       output.OutputWord(0); //quicktime audio packet size
-                      output.OutputDword(DWORD_BE(App->GetSampleRateHz()<<16)); //sample rate (fixed point)
+                      output.OutputDword(DWORD_BE(sampleRateHz<<16)); //sample rate (fixed point)
                       PushBox(output, DWORD_BE('esds'));
                         output.OutputDword(0); //version and flags (none)
                         output.OutputByte(3); //ES descriptor type
@@ -807,7 +819,7 @@ public:
         //DestroyWindow(hwndProgressDialog);
     }
 
-    virtual void AddPacket(BYTE *data, UINT size, DWORD timestamp, DWORD /*pts*/, PacketType type) override
+    virtual void AddPacket(const BYTE *data, UINT size, DWORD timestamp, DWORD /*pts*/, PacketType type) override
     {
         UINT64 offset = fileOut.GetPos();
 
@@ -851,7 +863,7 @@ public:
 
             if(data[0] == 0x17 && data[1] == 0) //if SPS/PPS
             {
-                LPBYTE lpData = data+11;
+                const BYTE *lpData = data+11;
 
                 UINT spsSize = fastHtons(*(WORD*)lpData);
                 fileOut.OutputWord(0);
@@ -868,9 +880,6 @@ public:
             else
             {
                 if (!bSentSEI) {
-                    DataPacket sei;
-                    App->GetVideoEncoder()->GetSEI(sei);
-
                     if (sei.size > 0)
                     {
                         fileOut.Serialize(sei.lpPacket, sei.size);

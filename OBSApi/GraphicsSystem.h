@@ -589,7 +589,7 @@ protected:
         {
             ShaderBlob shaderData;
             std::unique_ptr<void, EventDeleter> readyEvent;
-            std::unique_ptr<void, ThreadDeleter> thread;
+            std::unique_ptr<void, ThreadDeleter<>> thread;
             std::wstring fileData, fileName;
         };
         std::map<std::wstring, FutureShaderContext> contexts;

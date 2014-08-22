@@ -32,6 +32,9 @@ void AdjustWindowPos(HWND hwnd, LONG xOffset, LONG yOffset)
 
     HWND hwndParent = GetParent(hwnd);
     GetWindowRect(hwnd, &rc);
+    if (LocaleIsRTL())
+        rc.left = rc.right;
+
     ScreenToClient(hwndParent, (LPPOINT)&rc);
 
     SetWindowPos(hwnd, NULL, rc.left+xOffset, rc.top+yOffset, 0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOOWNERZORDER);
@@ -81,6 +84,22 @@ void SettingsPublish::ApplySettings()
             return;
         }
         SetWindowText(GetDlgItem(hwnd, IDC_SAVEPATH), defaultPath.Array());
+    }
+
+    //------------------------------------------
+
+    String replaySavePath = GetEditText(GetDlgItem(hwnd, IDC_REPLAYBUFFERSAVEPATH));
+    defaultPath = OSGetDefaultVideoSavePath(L"\\Replay-$T.flv");
+    if (!replaySavePath.IsValid() && defaultPath.IsValid())
+    {
+        String text = Str("Settings.Publish.InvalidReplayBufferSavePath");
+        text.FindReplace(L"$1", defaultPath);
+        if (OBSMessageBox(nullptr, text, Str("Settings.Publish.InvalidSavePathCaption"), MB_ICONEXCLAMATION | MB_OKCANCEL) != IDOK)
+        {
+            SetAbortApplySettings(true);
+            return;
+        }
+        SetWindowText(GetDlgItem(hwnd, IDC_REPLAYBUFFERSAVEPATH), defaultPath.Array());
     }
 
     //------------------------------------------
@@ -149,15 +168,13 @@ void SettingsPublish::ApplySettings()
 
     //------------------------------------------
 
-    bool useReplayBuffer = SendMessage(GetDlgItem(hwnd, IDC_FILEOUTPUTREPLAYBUFFER), BM_GETCHECK, 0, 0) != BST_UNCHECKED;
-    AppConfig->SetInt(L"Publish", L"UseReplayBuffer", useReplayBuffer);
-
     bError = FALSE;
     int replayBufferLength = (int)SendMessage(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH), UDM_GETPOS32, 0, (LPARAM)&bError);
     if (bError)
-        replayBufferLength = 1;
+        SendMessage(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH), UDM_SETPOS32, 0, replayBufferLength);
 
     AppConfig->SetInt(L"Publish", L"ReplayBufferLength", replayBufferLength);
+    AppConfig->SetString(L"Publish", L"ReplayBufferSavePath", replaySavePath);
 
     //------------------------------------------
 
@@ -203,7 +220,7 @@ void SettingsPublish::SetWarningInfo()
     String strWarnings;
 
     XConfig serverData;
-    if(serverData.Open(TEXT("services.xconfig")))
+    if (serverData.Open(FormattedString(L"%s\\services.xconfig", API->GetAppPath())))
     {
         XElement *services = serverData.GetElement(TEXT("services"));
         if(services)
@@ -357,11 +374,11 @@ static void UpdateMemoryUsage(HWND hwnd)
         keyframeInt = 5; // x264 and QSV seem to use a bit over 4 seconds of keyframe interval by default
 
     BOOL error;
-    int saveInterval = (int)SendMessage(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH), UDM_GETPOS32, 0, (LPARAM)&error);
+    int replayBufferLength = (int)SendMessage(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH), UDM_GETPOS32, 0, (LPARAM)&error);
     if (error)
-        saveInterval = 1;
+        SendMessage(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH), UDM_SETPOS32, 0, replayBufferLength);
 
-    long long max_kbits = (maxBitRate + audioBitRate) * (keyframeInt * 2 + saveInterval);
+    long long max_kbits = (maxBitRate + audioBitRate) * (keyframeInt * 2 + replayBufferLength);
 
     MEMORYSTATUS ms;
     GlobalMemoryStatus(&ms);
@@ -374,7 +391,7 @@ void SettingsPublish::OptimizeSettings()
 {
     auto refresh_on_exit = GuardScope([&] { SetWarningInfo(); UpdateMemoryUsage(hwnd); });
     XConfig serverData;
-    if (!serverData.Open(L"services.xconfig"))
+    if (!serverData.Open(FormattedString(L"%s\\services.xconfig", API->GetAppPath())))
         return;
 
     XElement *services = serverData.GetElement(L"services");
@@ -531,7 +548,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 UINT numServices = 0;
 
                 XConfig serverData;
-                if(serverData.Open(TEXT("services.xconfig")))
+                if (serverData.Open(FormattedString(L"%s\\services.xconfig", API->GetAppPath())))
                 {
                     XElement *services = serverData.GetElement(TEXT("services"));
                     if(services)
@@ -665,36 +682,15 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH_STATIC), 0, -data.fileControlOffset);
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH), 0, -data.fileControlOffset);
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_BROWSE), 0, -data.fileControlOffset);
-                    AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTMODE), 0, -data.fileControlOffset);
-                    AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTNORMAL), 0, -data.fileControlOffset);
-                    AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTREPLAYBUFFER), 0, -data.fileControlOffset);
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH), 0, -data.fileControlOffset);
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_EDIT), 0, -data.fileControlOffset);
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_STATIC), 0, -data.fileControlOffset);
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERMEMORY_STATIC), 0, -data.fileControlOffset);
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERMEMORY), 0, -data.fileControlOffset);
+                    AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERSAVEPATH_STATIC), 0, -data.fileControlOffset);
+                    AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERSAVEPATH), 0, -data.fileControlOffset);
+                    AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERBROWSE), 0, -data.fileControlOffset);
                 }
-
-                //--------------------------------------------
-
-                BOOL bKeepRecording = AppConfig->GetInt(TEXT("Publish"), TEXT("KeepRecording"));
-                SendMessage(GetDlgItem(hwnd, IDC_KEEPRECORDING), BM_SETCHECK, bKeepRecording ? BST_CHECKED : BST_UNCHECKED, 0);
-
-                BOOL bSaveToFile = AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile"));
-                SendMessage(GetDlgItem(hwnd, IDC_SAVETOFILE), BM_SETCHECK, bSaveToFile ? BST_CHECKED : BST_UNCHECKED, 0);
-
-                String path = OSGetDefaultVideoSavePath(L"\\.flv");
-                CTSTR lpSavePath = AppConfig->GetStringPtr(TEXT("Publish"), TEXT("SavePath"), path.IsValid() ? path.Array() : nullptr);
-                SetWindowText(GetDlgItem(hwnd, IDC_SAVEPATH), lpSavePath);
-
-                EnableWindow(GetDlgItem(hwnd, IDC_KEEPRECORDING), true);
-
-                EnableWindow(GetDlgItem(hwnd, IDC_SAVEPATH), true);
-                EnableWindow(GetDlgItem(hwnd, IDC_BROWSE),   true);
-
-                //--------------------------------------------
-
-                //SetWindowText(GetDlgItem(hwnd, IDC_DASHBOARDLINK), App->strDashboard);
 
                 //--------------------------------------------
 
@@ -712,18 +708,32 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     ti.uFlags |= TTF_RTLREADING;
 
                 SendMessage(hwndToolTip, TTM_SETMAXTIPWIDTH, 0, 500);
-                SendMessage(hwndToolTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 8000);
+                SendMessage(hwndToolTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 20000);
 
                 //--------------------------------------------
 
-                bool useReplayBuffer = !!AppConfig->GetInt(L"Publish", L"UseReplayBuffer");
+                BOOL bKeepRecording = AppConfig->GetInt(TEXT("Publish"), TEXT("KeepRecording"));
+                SendMessage(GetDlgItem(hwnd, IDC_KEEPRECORDING), BM_SETCHECK, bKeepRecording ? BST_CHECKED : BST_UNCHECKED, 0);
 
-                SendMessage(GetDlgItem(hwnd, IDC_FILEOUTPUTNORMAL), BM_SETCHECK, !useReplayBuffer, 0);
-                SendMessage(GetDlgItem(hwnd, IDC_FILEOUTPUTREPLAYBUFFER), BM_SETCHECK, useReplayBuffer, 0);
+                BOOL bSaveToFile = AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile"));
+                SendMessage(GetDlgItem(hwnd, IDC_SAVETOFILE), BM_SETCHECK, bSaveToFile ? BST_CHECKED : BST_UNCHECKED, 0);
 
-                ti.lpszText = (LPWSTR)Str("Settings.Publish.FileOutputMode.ReplayBufferTooltip");
-                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_FILEOUTPUTREPLAYBUFFER);
+                String path = OSGetDefaultVideoSavePath(L"\\.flv");
+                CTSTR lpSavePath = AppConfig->GetStringPtr(TEXT("Publish"), TEXT("SavePath"), path.IsValid() ? path.Array() : nullptr);
+                SetWindowText(GetDlgItem(hwnd, IDC_SAVEPATH), lpSavePath);
+
+                ti.lpszText = (LPWSTR)Str("Settings.Publish.SavePathTooltip");
+                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_SAVEPATH);
                 SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+
+                EnableWindow(GetDlgItem(hwnd, IDC_KEEPRECORDING), true);
+
+                EnableWindow(GetDlgItem(hwnd, IDC_SAVEPATH), true);
+                EnableWindow(GetDlgItem(hwnd, IDC_BROWSE),   true);
+
+                //--------------------------------------------
+
+                //SetWindowText(GetDlgItem(hwnd, IDC_DASHBOARDLINK), App->strDashboard);
 
                 //--------------------------------------------
 
@@ -748,6 +758,14 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 ti.lpszText = (LPWSTR)Str("Settings.Publish.ReplayBufferTooltip");
                 ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_EDIT);
+                SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+
+                path = OSGetDefaultVideoSavePath(L"\\Replay-$T.flv");
+                lpSavePath = AppConfig->GetStringPtr(L"Publish", L"ReplayBufferSavePath", path.IsValid() ? path.Array() : nullptr);
+                SetWindowText(GetDlgItem(hwnd, IDC_REPLAYBUFFERSAVEPATH), lpSavePath);
+
+                ti.lpszText = (LPWSTR)Str("Settings.Publish.SavePathTooltip");
+                ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_REPLAYBUFFERSAVEPATH);
                 SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
                 //--------------------------------------------
@@ -849,28 +867,28 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH_STATIC), 0, data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH), 0, data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_BROWSE), 0, data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTMODE), 0, data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTNORMAL), 0, data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTREPLAYBUFFER), 0, data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH), 0, data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_EDIT), 0, data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_STATIC), 0, data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERMEMORY_STATIC), 0, data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERMEMORY), 0, data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERSAVEPATH_STATIC), 0, data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERSAVEPATH), 0, data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERBROWSE), 0, data.fileControlOffset);
                             }
                             else if(mode == 1 && data.mode == 0)
                             {
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH_STATIC), 0, -data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH), 0, -data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_BROWSE), 0, -data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTMODE), 0, -data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTNORMAL), 0, -data.fileControlOffset);
-                                AdjustWindowPos(GetDlgItem(hwnd, IDC_FILEOUTPUTREPLAYBUFFER), 0, -data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH), 0, -data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_EDIT), 0, -data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH_STATIC), 0, -data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERMEMORY_STATIC), 0, -data.fileControlOffset);
                                 AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERMEMORY), 0, -data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERSAVEPATH_STATIC), 0, -data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERSAVEPATH), 0, -data.fileControlOffset);
+                                AdjustWindowPos(GetDlgItem(hwnd, IDC_REPLAYBUFFERBROWSE), 0, -data.fileControlOffset);
                             }
 
                             data.mode = mode;
@@ -920,7 +938,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                                 SendMessage(hwndTemp, CB_RESETCONTENT, 0, 0);
 
                                 XConfig serverData;
-                                if(serverData.Open(TEXT("services.xconfig")))
+                                if (serverData.Open(FormattedString(L"%s\\services.xconfig", API->GetAppPath())))
                                 {
                                     XElement *services = serverData.GetElement(TEXT("services"));
                                     if(services)
@@ -995,7 +1013,9 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                         break;
 
                     case IDC_BROWSE:
+                    case IDC_REPLAYBUFFERBROWSE:
                         {
+                            bool replayBuffer = LOWORD(wParam) == IDC_REPLAYBUFFERBROWSE;
                             TCHAR lpFile[512];
                             OPENFILENAME ofn;
                             zero(&ofn, sizeof(ofn));
@@ -1010,7 +1030,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                             ofn.nFilterIndex = 1;
 
                             String path = OSGetDefaultVideoSavePath();
-                            ofn.lpstrInitialDir = AppConfig->GetStringPtr(TEXT("Publish"), TEXT("LastSaveDir"), path.IsValid() ? path.Array() : nullptr);
+                            ofn.lpstrInitialDir = AppConfig->GetStringPtr(TEXT("Publish"), replayBuffer ? L"LastReplayBufferSaveDir" : TEXT("LastSaveDir"), path.IsValid() ? path.Array() : nullptr);
 
                             ofn.Flags = OFN_PATHMUSTEXIST;
 
@@ -1040,10 +1060,10 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                                 }
 
                                 String strFilePath = GetPathDirectory(strFile).FindReplace(TEXT("/"), TEXT("\\")) << TEXT("\\");
-                                AppConfig->SetString(TEXT("Publish"), TEXT("LastSaveDir"), strFilePath);
+                                AppConfig->SetString(TEXT("Publish"), replayBuffer ? L"LastReplayBufferSaveDir" : TEXT("LastSaveDir"), strFilePath);
 
                                 strFile.FindReplace(TEXT("/"), TEXT("\\"));
-                                SetWindowText(GetDlgItem(hwnd, IDC_SAVEPATH), strFile);
+                                SetWindowText(GetDlgItem(hwnd, replayBuffer ? IDC_REPLAYBUFFERSAVEPATH : IDC_SAVEPATH), strFile);
                                 bDataChanged = true;
                             }
 
@@ -1052,8 +1072,6 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                     case IDC_LOWLATENCYMODE:
                     case IDC_SAVETOFILE:
-                    case IDC_FILEOUTPUTNORMAL:
-                    case IDC_FILEOUTPUTREPLAYBUFFER:
                         if(HIWORD(wParam) == BN_CLICKED)
                             bDataChanged = true;
                         break;
@@ -1061,6 +1079,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     case IDC_PLAYPATH:
                     case IDC_URL:
                     case IDC_SAVEPATH:
+                    case IDC_REPLAYBUFFERSAVEPATH:
                         if(HIWORD(wParam) == EN_CHANGE)
                             bDataChanged = true;
                         break;

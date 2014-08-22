@@ -41,7 +41,8 @@
 #define IDD_LOGUPLOADED                 147
 #define IDD_SETTINGS_HOTKEYS            149
 #define IDD_SETTINGS_QSV                150
-#define IDD_SETTINGS_VCE                151
+#define IDD_GLOBAL_SOURCES_IMPORT       151
+#define IDD_SETTINGS_VCE                152
 #define IDC_SETTINGSLIST                1006
 #define IDC_SUBDIALOG                   1007
 #define IDC_MODE                        1008
@@ -144,6 +145,7 @@
 #define IDC_BROWSE                      1050
 #define IDC_VCE_IME_DEC                 1050
 #define IDC_VCE_CONSTINTRAPRED          1051
+#define IDC_REPLAYBUFFERBROWSE          1051
 #define IDC_MICDEVICES                  1052
 #define IDC_VCE_SATD                    1052
 #define IDC_SOURCES                     1053
@@ -229,7 +231,9 @@
 #define IDC_REPLAYBUFFERLENGTH          1086
 #define IDC_VCE_SRNG_IMEX               1086
 #define IDC_VCE_SRNG_IMEY               1087
+#define IDC_REPLAYBUFFERSAVEPATH_STATIC 1087
 #define IDC_CLEARPUSHTOTALK             1088
+#define IDC_REPLAYBUFFERSAVEPATH        1088
 #define IDC_VCE_GOP                     1088
 #define IDC_CLEARMUTEMIC                1089
 #define IDC_SENDBUFFERSIZE              1089
@@ -356,15 +360,24 @@
 #define IDC_CLEARHOTKEY_SAVEREPLAYBUFFER 1178
 #define IDC_FILEOUTPUTMODE              1178
 #define IDC_FILEOUTPUTNORMAL            1179
+#define IDC_STARTREPLAYBUFFERHOTKEY_STATIC 1179
 #define IDC_FILEOUTPUTREPLAYBUFFER      1180
+#define IDC_STARTREPLAYBUFFERHOTKEY     1180
 #define IDC_REPLAYBUFFERMEMORY_STATIC   1181
+#define IDC_CLEARHOTKEY_STARTREPLAYBUFFER 1181
 #define IDC_REPLAYBUFFERMEMORY          1182
+#define IDC_STOPREPLAYBUFFERHOTKEY_STATIC 1182
 #define IDC_VCE_DEVSPIN                 1182
 #define IDC_QSVCBR                      1183
+#define IDC_STOPREPLAYBUFFERHOTKEY      1183
 #define IDC_QSVVBR                      1184
+#define IDC_CLEARHOTKEY_STOPREPLAYBUFFER 1184
 #define IDC_QSVAVBR                     1185
+#define IDC_RECORDFROMREPLAYBUFFERHOTKEY_STATIC 1185
 #define IDC_TARGETKBPS                  1186
+#define IDC_RECORDFROMREPLAYBUFFERHOTKEY 1186
 #define IDC_QSVCQP                      1187
+#define IDC_CLEARHOTKEY_RECORDFROMREPLAYBUFFER 1187
 #define IDC_QSVICQ                      1188
 #define IDC_QSVLAICQ                    1189
 #define IDC_QSVVCM                      1190
@@ -387,6 +400,7 @@
 #define IDC_USECUSTOMPARAMS             1207
 #define IDC_USEGLOBALBITRATE            1208
 #define IDC_USEGLOBALBUFFERSIZE         1209
+#define IDC_IMPORT                      1210
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -455,7 +469,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        152
 #define _APS_NEXT_COMMAND_VALUE         40081
-#define _APS_NEXT_CONTROL_VALUE         1208
+#define _APS_NEXT_CONTROL_VALUE         1209
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

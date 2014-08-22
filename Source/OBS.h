@@ -130,7 +130,11 @@ class VideoFileStream
 {
 public:
     virtual ~VideoFileStream() {}
-    virtual void AddPacket(BYTE *data, UINT size, DWORD timestamp, DWORD pts, PacketType type)=0;
+    virtual void AddPacket(const BYTE *data, UINT size, DWORD timestamp, DWORD pts, PacketType type)=0;
+    virtual void AddPacket(std::shared_ptr<const std::vector<BYTE>> data, DWORD timestamp, DWORD pts, PacketType type)
+    {
+        AddPacket(data->data(), static_cast<UINT>(data->size()), timestamp, pts, type);
+    }
 };
 
 //-------------------------------------------------------------------
@@ -616,6 +620,7 @@ class OBS
     UINT                    encoderSkipThreshold;
 
     XConfig                 scenesConfig;
+    XConfig                 globalSourcesImportConfig;
     List<SceneHotkeyInfo>   sceneHotkeys;
     XElement                *sceneElement;
 
@@ -789,6 +794,7 @@ private:
     bool bWriteToFile;
     VideoFileStream *fileStream;
 
+    std::unique_ptr<VideoFileStream> replayBufferStream;
     ReplayBuffer *replayBuffer;
 
     bool bRequestKeyframe;
@@ -844,11 +850,16 @@ private:
     UINT stopStreamHotkeyID;
     UINT startRecordingHotkeyID;
     UINT stopRecordingHotkeyID;
+    UINT startReplayBufferHotkeyID;
+    UINT stopReplayBufferHotkeyID;
     UINT saveReplayBufferHotkeyID;
+    UINT recordFromReplayBufferHotkeyID;
 
     bool bStartStreamHotkeyDown, bStopStreamHotkeyDown;
     bool bStartRecordingHotkeyDown, bStopRecordingHotkeyDown;
+    bool bStartReplayBufferHotkeyDown, bStopReplayBufferHotkeyDown;
     bool bSaveReplayBufferHotkeyDown;
+    bool bRecordFromReplayBufferHotkeyDown;
 
     static DWORD STDCALL MainAudioThread(LPVOID lpUnused);
     bool QueryAudioBuffers(bool bQueriedDesktopDebugParam);
@@ -951,16 +962,21 @@ private:
     void ResetItemSizes();
     void ResetItemCrops();
 
-    void Start(bool recordingOnly=false);
+    void Start(bool recordingOnly=false, bool replayBufferOnly=false);
     void Stop(bool overrideKeepRecording=false);
     bool StartRecording(bool force=false);
     void StopRecording();
+    void StartReplayBuffer();
+    void StopReplayBuffer();
 
     static void STDCALL StartStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL StopStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL StartRecordingHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL StopRecordingHotkey(DWORD hotkey, UPARAM param, bool bDown);
+    static void STDCALL StartReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown);
+    static void STDCALL StopReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL SaveReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown);
+    static void STDCALL RecordFromReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown);
 
     static void STDCALL PushToTalkHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL MuteMicHotkey(DWORD hotkey, UPARAM param, bool bDown);
@@ -1007,6 +1023,7 @@ private:
 
     void ToggleCapturing();
     void ToggleRecording();
+    void ToggleReplayBuffer();
 
     Scene* CreateScene(CTSTR lpClassName, XElement *data);
     void ConfigureScene(XElement *element);
@@ -1014,10 +1031,11 @@ private:
 
     static INT_PTR CALLBACK PluginsDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-    void GetGlobalSourceNames(List<CTSTR> &globalSourceNames);
+    void GetGlobalSourceNames(List<CTSTR> &globalSourceNames,bool mainSceneGlobalSourceNames = false);
     XElement* GetGlobalSourceElement(CTSTR lpName);
 
     static INT_PTR CALLBACK GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static INT_PTR CALLBACK GlobalSourcesImportProc(HWND hwnd,UINT message, WPARAM wParam, LPARAM lParam);
     static bool STDCALL ConfigGlobalSource(XElement *element, bool bCreating);
 
     void CallHotkey(DWORD hotkeyID, bool bDown);

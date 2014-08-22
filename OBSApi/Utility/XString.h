@@ -540,6 +540,21 @@ public:
         return INVALID;
     }
 
+    inline String Join(String separator)
+    {
+        if (!num)
+            return {};
+
+        if (num == 1)
+            return array[0];
+
+        String result = array[0];
+        for (unsigned i = 1; i < num; i++)
+            result << separator << array[i];
+
+        return result;
+    }
+
     inline friend Serializer& operator<<(Serializer &s, StringList &list)
     {
         if(s.IsLoading())

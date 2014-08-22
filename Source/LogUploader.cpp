@@ -62,6 +62,8 @@ namespace
         WinHttpCrackUrl(url, 0, 0, &urlComponents);
         if (urlComponents.nPort == INTERNET_DEFAULT_HTTPS_PORT)
             secure = true;
+        else
+            secure = false;
 
         session.reset(WinHttpOpen(OBS_VERSION_STRING, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0));
         if (!session)
@@ -238,6 +240,21 @@ namespace
         str.FindReplace(L"\b", L"\\b");
         str.FindReplace(L"\t", L"\\t");
         str.FindReplace(L"/", L"\\/");
+
+        // github api chokes when we submit unescaped %, so encode it and 
+        // any other lower and higher characters just to be safe
+        String newStr;
+        int len = slen(str);
+
+        for (int i = 0; i < len; i++)
+        {
+            if (str[i] < ' ' || str[i] > 255 || str[i] == '%')
+                newStr << FormattedString(L"\\u%04X", (int)str[i]);
+            else
+                newStr << str[i];
+        }
+
+        str = newStr;
     }
 }
 

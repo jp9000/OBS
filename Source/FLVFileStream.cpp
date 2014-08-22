@@ -32,7 +32,7 @@ class FLVFileStream : public VideoFileStream
 
     bool bSentFirstPacket, bSentSEI;
 
-    void AppendFLVPacket(LPBYTE lpData, UINT size, BYTE type, DWORD timestamp)
+    void AppendFLVPacket(const BYTE *lpData, UINT size, BYTE type, DWORD timestamp)
     {
         if (!bSentSEI && type == 9 && lpData[0] == 0x17 && lpData[1] == 0x1) { //send SEI with first keyframe packet
             DataPacket sei;
@@ -124,7 +124,7 @@ public:
         }
     }
 
-    virtual void AddPacket(BYTE *data, UINT size, DWORD timestamp, DWORD /*pts*/, PacketType type) override
+    virtual void AddPacket(const BYTE *data, UINT size, DWORD timestamp, DWORD /*pts*/, PacketType type) override
     {
         if(!bSentFirstPacket)
         {

@@ -63,7 +63,7 @@ void STDCALL OBS::StartRecordingHotkey(DWORD hotkey, UPARAM param, bool bDown)
         if (!App->bRunning && !App->bStreaming)
             App->Start(true);
 
-        App->StartRecording();
+        App->StartRecording(true);
     }
 }
 
@@ -81,6 +81,36 @@ void STDCALL OBS::StopRecordingHotkey(DWORD hotkey, UPARAM param, bool bDown)
     }
 }
 
+void STDCALL OBS::StartReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown)
+{
+    if (App->bStopReplayBufferHotkeyDown)
+        return;
+
+    if (App->bStartReplayBufferHotkeyDown && !bDown)
+        App->bStartReplayBufferHotkeyDown = false;
+    else if (!App->bRecordingReplayBuffer && App->canRecord)
+    {
+        if (!(App->bStartReplayBufferHotkeyDown = bDown))
+            return;
+
+        App->StartReplayBuffer();
+    }
+}
+
+void STDCALL OBS::StopReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown)
+{
+    if (App->bStartReplayBufferHotkeyDown)
+        return;
+
+    if (App->bStopReplayBufferHotkeyDown && !bDown)
+        App->bStopReplayBufferHotkeyDown = false;
+    else if (App->bRunning)
+    {
+        if (App->bStopReplayBufferHotkeyDown = bDown)
+            App->StopReplayBuffer();
+    }
+}
+
 void SaveReplayBuffer(ReplayBuffer *out, DWORD timestamp);
 
 void STDCALL OBS::SaveReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown)
@@ -91,6 +121,19 @@ void STDCALL OBS::SaveReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown)
     {
         if (App->bSaveReplayBufferHotkeyDown = bDown)
             SaveReplayBuffer(App->replayBuffer, (DWORD)(App->GetVideoTime() - App->firstFrameTimestamp));
+    }
+}
+
+void StartRecordingFromReplayBuffer(ReplayBuffer *rb);
+
+void STDCALL OBS::RecordFromReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown)
+{
+    if (App->bRecordFromReplayBufferHotkeyDown && !bDown)
+        App->bRecordFromReplayBufferHotkeyDown = false;
+    else if (App->bRunning)
+    {
+        if (App->bRecordFromReplayBufferHotkeyDown = bDown)
+            StartRecordingFromReplayBuffer(App->replayBuffer);
     }
 }
 
