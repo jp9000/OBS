@@ -171,7 +171,7 @@ void SettingsPublish::ApplySettings()
     bError = FALSE;
     int replayBufferLength = (int)SendMessage(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH), UDM_GETPOS32, 0, (LPARAM)&bError);
     if (bError)
-        replayBufferLength = 1;
+        SendMessage(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH), UDM_SETPOS32, 0, replayBufferLength);
 
     AppConfig->SetInt(L"Publish", L"ReplayBufferLength", replayBufferLength);
     AppConfig->SetString(L"Publish", L"ReplayBufferSavePath", replaySavePath);
@@ -374,11 +374,11 @@ static void UpdateMemoryUsage(HWND hwnd)
         keyframeInt = 5; // x264 and QSV seem to use a bit over 4 seconds of keyframe interval by default
 
     BOOL error;
-    int saveInterval = (int)SendMessage(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH), UDM_GETPOS32, 0, (LPARAM)&error);
+    int replayBufferLength = (int)SendMessage(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH), UDM_GETPOS32, 0, (LPARAM)&error);
     if (error)
-        saveInterval = 1;
+        SendMessage(GetDlgItem(hwnd, IDC_REPLAYBUFFERLENGTH), UDM_SETPOS32, 0, replayBufferLength);
 
-    long long max_kbits = (maxBitRate + audioBitRate) * (keyframeInt * 2 + saveInterval);
+    long long max_kbits = (maxBitRate + audioBitRate) * (keyframeInt * 2 + replayBufferLength);
 
     MEMORYSTATUS ms;
     GlobalMemoryStatus(&ms);
