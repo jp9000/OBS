@@ -459,7 +459,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
 
     // Encoder can't seem to use mapped buffer, all green :(
     profileIn("Unmap buffer")
-    unmapBuffer(&mEncodeHandle, idx);
+    unmapBuffer(mEncodeHandle, idx);
     profileOut
 
     memset(&pictureParameter, 0, sizeof(OVE_ENCODE_PARAMETERS_H264));
@@ -566,6 +566,10 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     } while (pTaskDescriptionList->status == OVE_TASK_STATUS_NONE);
     //profileOut
 
+	//profileIn("Remap buffer")
+	mapBuffer(mEncodeHandle, idx, mInputBufSize);
+	//profileOut
+
     //mEncodeHandle.inputSurfaces[idx].locked = false;
     _InterlockedCompareExchange(&(mEncodeHandle.inputSurfaces[idx].locked), 0, 1);
 
@@ -595,10 +599,6 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         }
     }
     profileOut
-
-    //profileIn("Remap buffer")
-    mapBuffer(&mEncodeHandle, idx, mInputBufSize);
-    //profileOut
 
 fail:
     if (eventRunVideoProgram)
@@ -865,7 +865,7 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
             !mEncodeHandle.inputSurfaces[i].surface) //Out of memory?
             continue;
 
-        mapBuffer(&mEncodeHandle, i, mInputBufSize);
+        mapBuffer(mEncodeHandle, i, mInputBufSize);
 
         if (!mEncodeHandle.inputSurfaces[i].mapPtr)
             continue;
@@ -895,7 +895,7 @@ int  VCEEncoder::GetBitRate() const
 //TODO DynamicBitrateSupported
 bool VCEEncoder::DynamicBitrateSupported() const
 {
-    return true;
+    return false;
 }
 
 //TODO SetBitRate
@@ -926,18 +926,24 @@ bool VCEEncoder::SetBitRate(DWORD maxBitrate, DWORD bufferSize)
 
 void VCEEncoder::GetHeaders(DataPacket &packet)
 {
-    uint32_t outSize = mHdrSize;
     if (!mHdrPacket)
     {
-        VCELog(TEXT("No header packet yet."));
-        //Garbage, but atleast it doesn't crash.
-        headerPacket.Clear();
-        headerPacket.SetSize(128);
-        packet.size = headerPacket.Num();
-        packet.lpPacket = headerPacket.Array();
-        return;
+        VCELog(TEXT("No header packet yet. Generating..."));
+        // Seems like an only way to get SPS/PPS from OVE
+        List<DataPacket> vidPackets;
+        List<PacketType> packetTypes;
+        mfxFrameSurface1 tmp;
+        DWORD out_pts;
+
+        ZeroMemory(&tmp, sizeof(mfxFrameSurface1));
+        RequestBuffers(&(tmp.Data));
+        Encode(&tmp, vidPackets, packetTypes, 0, out_pts);
+        // Clean up like nothing happened
+        unmapBuffer(mEncodeHandle, (int)tmp.Data.MemId - 1);
+        mReqKeyframe = true;
     }
 
+    uint32_t outSize = mHdrSize;
     char *sps = mHdrPacket;
     unsigned int i_sps = 4, i_pps;
 

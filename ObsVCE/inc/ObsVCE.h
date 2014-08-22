@@ -96,8 +96,8 @@ typedef struct OVEncodeHandle
     cl_command_queue     clCmdQueue[2];    /**< command queue  */
 }OVEncodeHandle;
 
-void mapBuffer(OVEncodeHandle *encodeHandle, int i, uint32_t size);
-void unmapBuffer(OVEncodeHandle *encodeHandle, int surf);
+void mapBuffer(OVEncodeHandle &encodeHandle, int i, uint32_t size);
+void unmapBuffer(OVEncodeHandle &encodeHandle, int surf);
 
 //config.cpp
 void quickSet(map<string, int32_t> &configTable, int qs);

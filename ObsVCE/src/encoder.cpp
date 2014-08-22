@@ -34,13 +34,13 @@ static const char *source =
 ;
 
 
-void mapBuffer(OVEncodeHandle *encodeHandle, int i, uint32_t size)
+void mapBuffer(OVEncodeHandle &encodeHandle, int i, uint32_t size)
 {
     cl_event inMapEvt = 0;
     cl_int   status = CL_SUCCESS;
 
-    encodeHandle->inputSurfaces[i].mapPtr = f_clEnqueueMapBuffer(encodeHandle->clCmdQueue[0],
-        (cl_mem)encodeHandle->inputSurfaces[i].surface,
+    encodeHandle.inputSurfaces[i].mapPtr = f_clEnqueueMapBuffer(encodeHandle.clCmdQueue[0],
+        (cl_mem)encodeHandle.inputSurfaces[i].surface,
         CL_FALSE,
         CL_MAP_WRITE,
         0,
@@ -57,18 +57,18 @@ void mapBuffer(OVEncodeHandle *encodeHandle, int i, uint32_t size)
     }
 
     //clEnqueueBarrier(encodeHandle->clCmdQueue[0]);
-    f_clFlush(encodeHandle->clCmdQueue[0]);
+    f_clFlush(encodeHandle.clCmdQueue[0]);
     waitForEvent(inMapEvt);
     status = f_clReleaseEvent(inMapEvt);
-    encodeHandle->inputSurfaces[i].isMapped = true;
+    encodeHandle.inputSurfaces[i].isMapped = true;
 }
 
-void unmapBuffer(OVEncodeHandle *encodeHandle, int surf)
+void unmapBuffer(OVEncodeHandle &encodeHandle, int surf)
 {
     cl_event unmapEvent;
-    cl_int status = f_clEnqueueUnmapMemObject(encodeHandle->clCmdQueue[0],
-        (cl_mem)encodeHandle->inputSurfaces[surf].surface,
-        encodeHandle->inputSurfaces[surf].mapPtr,
+    cl_int status = f_clEnqueueUnmapMemObject(encodeHandle.clCmdQueue[0],
+        (cl_mem)encodeHandle.inputSurfaces[surf].surface,
+        encodeHandle.inputSurfaces[surf].mapPtr,
         0,
         NULL,
         //NULL);
@@ -76,8 +76,8 @@ void unmapBuffer(OVEncodeHandle *encodeHandle, int surf)
 
     waitForEvent(unmapEvent);
     status = f_clReleaseEvent(unmapEvent);
-    encodeHandle->inputSurfaces[surf].isMapped = false;
-    encodeHandle->inputSurfaces[surf].mapPtr = NULL;
+    encodeHandle.inputSurfaces[surf].isMapped = false;
+    encodeHandle.inputSurfaces[surf].mapPtr = NULL;
 }
 
 bool VCEEncoder::encodeCreate(uint32_t deviceId)
@@ -296,7 +296,7 @@ bool VCEEncoder::encodeClose()
     {
         err = CL_SUCCESS;
         if (inputSurfaces[i].isMapped)
-            unmapBuffer(&mEncodeHandle, i);
+            unmapBuffer(mEncodeHandle, i);
 
         if (inputSurfaces[i].surface)
             err = f_clReleaseMemObject((cl_mem)inputSurfaces[i].surface);

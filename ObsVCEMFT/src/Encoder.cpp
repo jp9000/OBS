@@ -842,7 +842,21 @@ void VCEEncoder::GetHeaders(DataPacket &packet)
 {
     if (!mHdrPacket)
     {
-        VCELog(TEXT("No header packet yet."));
+        VCELog(TEXT("No header packet yet. Generating..."));
+        List<DataPacket> vidPackets;
+        List<PacketType> packetTypes;
+        mfxFrameSurface1 tmp;
+        DWORD out_pts;
+
+        ZeroMemory(&tmp, sizeof(mfxFrameSurface1));
+        RequestBuffers(&(tmp.Data));
+        Encode(&tmp, vidPackets, packetTypes, 0, out_pts);
+
+        // Clean up like nothing happened
+        mInputBuffers[(int)tmp.Data.MemId - 1].pBuffer->Unlock();
+        mInputBuffers[(int)tmp.Data.MemId - 1].pBuffer.Release();
+        mInputBuffers[(int)tmp.Data.MemId - 1].pBufferPtr = nullptr;
+        mReqKeyframe = true;
     }
 
     x264_nal_t nalSPS = { 0 }, nalPPS = { 0 };
@@ -854,7 +868,7 @@ void VCEEncoder::GetHeaders(DataPacket &packet)
     {
         start = std::search(start, end, start_seq, start_seq + 3);
 
-        //May have NAL_AUD, NAL_SPS, NAL_PPS, NAL_SLICE_IDR
+        //Usually has NAL_AUD, NAL_SPS, NAL_PPS, NAL_SLICE_IDR
         while (start != end)
         {
             decltype(start) next = std::search(start + 1, end, start_seq, start_seq + 3);
