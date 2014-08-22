@@ -83,7 +83,7 @@ void SettingsHotkeys::ApplySettings()
     if (App->muteMicHotkeyID)
     {
         API->DeleteHotkey(App->muteMicHotkeyID);
-        App->muteDesktopHotkeyID = 0;
+        App->muteMicHotkeyID = 0;
     }
 
     if (hotkey)
@@ -212,7 +212,7 @@ void SettingsHotkeys::ApplySettings()
         App->recordFromReplayBufferHotkeyID = 0;
     }
 
-    if (saveReplayBufferHotkey)
+    if (recordFromReplayBufferHotkey)
         App->recordFromReplayBufferHotkeyID = API->CreateHotkey(recordFromReplayBufferHotkey, OBS::RecordFromReplayBufferHotkey, 0);
 }
 
