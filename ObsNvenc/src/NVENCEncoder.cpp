@@ -159,7 +159,7 @@ void NVENCEncoder::init()
 
     GUID encoderPreset = NV_ENC_PRESET_HQ_GUID;
     bool dontTouchConfig = false;
-    bool isLowLatency = false;
+    bool is2PassRC = false;
 
     String profileString = AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"), TEXT("high"));
 
@@ -177,20 +177,32 @@ void NVENCEncoder::init()
     {
         encoderPreset = NV_ENC_PRESET_BD_GUID;
     }
+    else if (presetString == TEXT("Low Latency (2pass)"))
+    {
+        encoderPreset = NV_ENC_PRESET_LOW_LATENCY_DEFAULT_GUID;
+        is2PassRC = true;
+    }
+    else if (presetString == TEXT("High Performance Low Latency (2pass)"))
+    {
+        encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HP_GUID;
+        is2PassRC = true;
+    }
+    else if (presetString == TEXT("High Quality Low Latency (2pass)"))
+    {
+        encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HQ_GUID;
+        is2PassRC = true;
+    }
     else if (presetString == TEXT("Low Latency"))
     {
         encoderPreset = NV_ENC_PRESET_LOW_LATENCY_DEFAULT_GUID;
-        isLowLatency = true;
     }
     else if (presetString == TEXT("High Performance Low Latency"))
     {
         encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HP_GUID;
-        isLowLatency = true;
     }
     else if (presetString == TEXT("High Quality Low Latency"))
     {
         encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HQ_GUID;
-        isLowLatency = true;
     }
     else if (presetString == TEXT("Lossless"))
     {
@@ -206,22 +218,35 @@ void NVENCEncoder::init()
     {
         encoderPreset = NV_ENC_PRESET_DEFAULT_GUID;
     }
-    else if (presetString == TEXT("Default"))
+    else
     {
-        if(height > 1080 || (height == 1080 && fps > 30))
+        if (height > 1080 || (height == 1080 && fps > 30))
+        {
             encoderPreset = NV_ENC_PRESET_HQ_GUID;
-        else
+        }
+        if (height > 720 || (height == 720 && fps > 30))
+        {
             encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HQ_GUID;
+        }
+        else
+        {
+            encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HQ_GUID;
+            is2PassRC = true;
+        }
     }
 
     TCHAR envClientKey[128] = {0};
     DWORD envRes = GetEnvironmentVariable(TEXT("NVENC_KEY"), envClientKey, 128);
     if (envRes > 0 && envRes <= 128)
     {
-        if(stringToGuid(envClientKey, &clientKey))
+        if (stringToGuid(envClientKey, &clientKey))
+        {
             NvLog(TEXT("Got NVENC key from environment"));
+        }
         else
+        {
             NvLog(TEXT("NVENC_KEY environment variable has invalid format"));
+        }
     }
 
     mset(&initEncodeParams, 0, sizeof(NV_ENC_INITIALIZE_PARAMS));
@@ -307,7 +332,7 @@ void NVENCEncoder::init()
 
         if (bUseCBR)
         {
-            if (isLowLatency)
+            if (is2PassRC)
                 encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_2_PASS_QUALITY;
             else
                 encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
@@ -965,11 +990,14 @@ String NVENCEncoder::GetInfoString() const
         profile = "constrained high";
 
     String cbr = "no";
-    if (encodeConfig.rcParams.rateControlMode == NV_ENC_PARAMS_RC_CBR
-        || encodeConfig.rcParams.rateControlMode == NV_ENC_PARAMS_RC_2_PASS_QUALITY
-        || encodeConfig.rcParams.rateControlMode == NV_ENC_PARAMS_RC_2_PASS_FRAMESIZE_CAP)
+    if (encodeConfig.rcParams.rateControlMode == NV_ENC_PARAMS_RC_CBR)
     {
         cbr = "yes";
+    }
+    else if (encodeConfig.rcParams.rateControlMode == NV_ENC_PARAMS_RC_2_PASS_QUALITY
+          || encodeConfig.rcParams.rateControlMode == NV_ENC_PARAMS_RC_2_PASS_FRAMESIZE_CAP)
+    {
+        cbr = "yes (2pass)";
     }
 
     String cfr = "yes";
