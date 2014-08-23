@@ -180,7 +180,7 @@ struct Encoder
         case MFX_PROFILE_AVC_CONSTRAINED_HIGH:
         case MFX_PROFILE_AVC_CONSTRAINED_BASELINE:
             init_res->bframe_delay = 0;
-
+            break;
         default:
             init_res->bframe_delay = 1;
         }

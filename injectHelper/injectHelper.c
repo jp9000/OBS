@@ -88,7 +88,10 @@ BOOL WINAPI InjectLibrarySafe(DWORD threadID, const wchar_t *pDLL, DWORD dwLen)
     proc = GetProcAddress(hLib, "_DummyDebugProc@12");
 #endif
     if (!proc)
+    {
+        FreeLibrary(hLib);
         return FALSE;
+    }
 
     for (i = 0; i < 17; i++) pSWHEXStr[i] ^= i ^ 1;
 
@@ -107,6 +110,7 @@ BOOL WINAPI InjectLibrarySafe(DWORD threadID, const wchar_t *pDLL, DWORD dwLen)
         PostThreadMessage(threadID, WM_USER + 432, 0, (LPARAM)hook);
     Sleep(1000);
 
+    FreeLibrary(hLib);
     return TRUE;
 }
 

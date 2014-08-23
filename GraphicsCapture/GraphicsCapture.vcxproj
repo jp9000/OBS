@@ -174,7 +174,7 @@
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <ExceptionHandling>false</ExceptionHandling>
       <PrecompiledHeaderFile>GraphicsCapture.h</PrecompiledHeaderFile>
-      <AdditionalOptions>/d2Zi+ %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zo %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>OBSApi.lib;dwmapi.lib;%(AdditionalDependencies)</AdditionalDependencies>

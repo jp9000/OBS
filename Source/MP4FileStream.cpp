@@ -509,7 +509,7 @@ public:
                       output.OutputWord(WORD_BE(16)); //sample size
                       output.OutputWord(0); //quicktime audio compression id
                       output.OutputWord(0); //quicktime audio packet size
-                      output.OutputDword(DWORD_BE(sampleRateHz<<16)); //sample rate (fixed point)
+                      output.OutputDword(DWORD_BE((sampleRateHz<<16))); //sample rate (fixed point)
                       PushBox(output, DWORD_BE('esds'));
                         output.OutputDword(0); //version and flags (none)
                         output.OutputByte(3); //ES descriptor type
