@@ -406,7 +406,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
                 
                 hwndTemp = GetDlgItem(hwnd, IDC_NVENCPRESET);
-                static const CTSTR nv_preset_names[9] = {
+                static const CTSTR nv_preset_names[11] = {
                     TEXT("Default"),
                     TEXT("High Quality"),
                     TEXT("High Performance"),
@@ -414,6 +414,8 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                     TEXT("Low Latency"),
                     TEXT("High Performance Low Latency"),
                     TEXT("High Quality Low Latency"),
+                    TEXT("Lossless"),
+                    TEXT("High Performance Lossless"),
                     TEXT("NVDefault"),
                     NULL
                 };

@@ -150,46 +150,75 @@ bool NVENCEncoder::checkPresetSupport(const GUID &preset)
 
 void NVENCEncoder::init()
 {
-    NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS stEncodeSessionParams = { 0 };
-    NV_ENC_PRESET_CONFIG presetConfig = { 0 };
+    NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS stEncodeSessionParams = {0};
+    NV_ENC_PRESET_CONFIG presetConfig = {0};
     GUID clientKey = NV_CLIENT_KEY;
     CUcontext cuContextCurr;
     NVENCSTATUS nvStatus = NV_ENC_SUCCESS;
     int surfaceCount = 0;
 
     GUID encoderPreset = NV_ENC_PRESET_HQ_GUID;
+    bool dontTouchConfig = false;
+    bool isLowLatency = false;
 
     String profileString = AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"), TEXT("high"));
 
     String presetString = AppConfig->GetString(TEXT("Video Encoding"), TEXT("NVENCPreset"), TEXT("High Quality"));
 
     if (presetString == TEXT("High Performance"))
+    {
         encoderPreset = NV_ENC_PRESET_HP_GUID;
+    }
     else if (presetString == TEXT("High Quality"))
+    {
         encoderPreset = NV_ENC_PRESET_HQ_GUID;
+    }
     else if (presetString == TEXT("Bluray Disk"))
+    {
         encoderPreset = NV_ENC_PRESET_BD_GUID;
+    }
     else if (presetString == TEXT("Low Latency"))
+    {
         encoderPreset = NV_ENC_PRESET_LOW_LATENCY_DEFAULT_GUID;
+        isLowLatency = true;
+    }
     else if (presetString == TEXT("High Performance Low Latency"))
+    {
         encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HP_GUID;
+        isLowLatency = true;
+    }
     else if (presetString == TEXT("High Quality Low Latency"))
+    {
         encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HQ_GUID;
+        isLowLatency = true;
+    }
+    else if (presetString == TEXT("Lossless"))
+    {
+        encoderPreset = NV_ENC_PRESET_LOSSLESS_DEFAULT_GUID;
+        dontTouchConfig = true;
+    }
+    else if (presetString == TEXT("High Performance Lossless"))
+    {
+        encoderPreset = NV_ENC_PRESET_LOSSLESS_HP_GUID;
+        dontTouchConfig = true;
+    }
     else if (presetString == TEXT("NVDefault"))
+    {
         encoderPreset = NV_ENC_PRESET_DEFAULT_GUID;
+    }
     else if (presetString == TEXT("Default"))
     {
-        if (height >= 1080 && fps > 30)
+        if(height > 1080 || (height == 1080 && fps > 30))
             encoderPreset = NV_ENC_PRESET_HQ_GUID;
         else
             encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HQ_GUID;
     }
 
-    TCHAR envClientKey[128] = { 0 };
+    TCHAR envClientKey[128] = {0};
     DWORD envRes = GetEnvironmentVariable(TEXT("NVENC_KEY"), envClientKey, 128);
     if (envRes > 0 && envRes <= 128)
     {
-        if (stringToGuid(envClientKey, &clientKey))
+        if(stringToGuid(envClientKey, &clientKey))
             NvLog(TEXT("Got NVENC key from environment"));
         else
             NvLog(TEXT("NVENC_KEY environment variable has invalid format"));
@@ -220,9 +249,9 @@ void NVENCEncoder::init()
         encoder = 0;
 
         OBSMessageBox(NULL,
-            Str("Encoder.NVENC.OldDriver"),
-            NULL,
-            MB_OK | MB_ICONERROR);
+                      Str("Encoder.NVENC.OldDriver"),
+                      NULL,
+                      MB_OK | MB_ICONERROR);
 
         NvLog(TEXT("nvEncOpenEncodeSessionEx failed with 0x%x - outdated driver?"), nvStatus);
         goto error;
@@ -256,58 +285,62 @@ void NVENCEncoder::init()
     initEncodeParams.enablePTD = 1;
 
     initEncodeParams.presetGUID = encoderPreset;
+
     initEncodeParams.encodeConfig = &encodeConfig;
     memcpy(&encodeConfig, &presetConfig.presetCfg, sizeof(NV_ENC_CONFIG));
 
     encodeConfig.version = NV_ENC_CONFIG_VER;
 
-    if (keyint != 0)
-        encodeConfig.gopLength = keyint * fps;
-
-    if (maxBitRate != -1)
+    if (!dontTouchConfig)
     {
-        encodeConfig.rcParams.averageBitRate = maxBitRate * 1000;
-        encodeConfig.rcParams.maxBitRate = maxBitRate * 1000;
+        if (keyint != 0)
+            encodeConfig.gopLength = keyint * fps;
+
+        if (maxBitRate != -1)
+        {
+            encodeConfig.rcParams.averageBitRate = maxBitRate * 1000;
+            encodeConfig.rcParams.maxBitRate = maxBitRate * 1000;
+        }
+
+        if (bufferSize != -1)
+            encodeConfig.rcParams.vbvBufferSize = bufferSize * 1000;
+
+        if (bUseCBR)
+        {
+            if (isLowLatency)
+                encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_2_PASS_QUALITY;
+            else
+                encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
+        }
+        else
+        {
+            encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_VBR_MINQP;
+            encodeConfig.rcParams.enableMinQP = 1;
+            encodeConfig.rcParams.minQP.qpInterB = 32 - quality;
+            encodeConfig.rcParams.minQP.qpInterP = 32 - quality;
+            encodeConfig.rcParams.minQP.qpIntra = 32 - quality;
+        }
+
+        encodeConfig.encodeCodecConfig.h264Config.enableVFR = bUseCFR ? 0 : 1;
+
+        encodeConfig.frameFieldMode = NV_ENC_PARAMS_FRAME_FIELD_MODE_FRAME;
+
+        if(profileString.CompareI(TEXT("main")))
+            encodeConfig.profileGUID = NV_ENC_H264_PROFILE_MAIN_GUID;
+        else if(profileString.CompareI(TEXT("high")))
+            encodeConfig.profileGUID = NV_ENC_H264_PROFILE_HIGH_GUID;
+
+        encodeConfig.encodeCodecConfig.h264Config.bdirectMode = encodeConfig.frameIntervalP > 1 ? NV_ENC_H264_BDIRECT_MODE_TEMPORAL : NV_ENC_H264_BDIRECT_MODE_DISABLE;
+
+        encodeConfig.encodeCodecConfig.h264Config.idrPeriod = encodeConfig.gopLength;
+        encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.videoSignalTypePresentFlag = 1;
+        encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.colourDescriptionPresentFlag = 1;
+        encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.colourMatrix = colorDesc.matrix;
+        encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.videoFullRangeFlag = colorDesc.fullRange;
+        encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.videoFormat = 5;
+        encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.colourPrimaries = colorDesc.primaries;
+        encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.transferCharacteristics = colorDesc.transfer;
     }
-
-    if (bufferSize != -1)
-        encodeConfig.rcParams.vbvBufferSize = bufferSize * 1000;
-
-    if (bUseCBR)
-    {
-        encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
-    }
-    else
-    {
-        encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_VBR_MINQP;
-        encodeConfig.rcParams.enableMinQP = 1;
-        encodeConfig.rcParams.minQP.qpInterB = 32 - quality;
-        encodeConfig.rcParams.minQP.qpInterP = 32 - quality;
-        encodeConfig.rcParams.minQP.qpIntra = 32 - quality;
-    }
-
-    encodeConfig.encodeCodecConfig.h264Config.enableVFR = bUseCFR ? 0 : 1;
-
-    encodeConfig.frameFieldMode = NV_ENC_PARAMS_FRAME_FIELD_MODE_FRAME;
-
-    if (profileString.CompareI(TEXT("main")))
-        encodeConfig.profileGUID = NV_ENC_H264_PROFILE_MAIN_GUID;
-    else if (profileString.CompareI(TEXT("high")))
-        encodeConfig.profileGUID = NV_ENC_H264_PROFILE_HIGH_GUID;
-
-    encodeConfig.encodeCodecConfig.h264Config.bdirectMode = encodeConfig.frameIntervalP > 1 ? NV_ENC_H264_BDIRECT_MODE_TEMPORAL : NV_ENC_H264_BDIRECT_MODE_DISABLE;
-
-    encodeConfig.encodeCodecConfig.h264Config.idrPeriod = encodeConfig.gopLength;
-    encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.videoSignalTypePresentFlag = 1;
-    encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.colourDescriptionPresentFlag = 1;
-    encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.colourMatrix = colorDesc.matrix;
-    encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.videoFullRangeFlag = colorDesc.fullRange;
-    encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.videoFormat = 5;
-    encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.colourPrimaries = colorDesc.primaries;
-    encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.transferCharacteristics = colorDesc.transfer;
-
-    tryParseEncodeConfig();
-    dumpEncodeConfig();
 
     nvStatus = pNvEnc->nvEncInitializeEncoder(encoder, &initEncodeParams);
 
@@ -906,6 +939,10 @@ String NVENCEncoder::GetInfoString() const
         preset = "llhp";
     else if (dataEqual(initEncodeParams.presetGUID, NV_ENC_PRESET_LOW_LATENCY_HQ_GUID))
         preset = "llhq";
+    else if (dataEqual(initEncodeParams.presetGUID, NV_ENC_PRESET_LOSSLESS_DEFAULT_GUID))
+        preset = "lossless";
+    else if (dataEqual(initEncodeParams.presetGUID, NV_ENC_PRESET_LOSSLESS_HP_GUID))
+        preset = "losslesshp";
     else if (dataEqual(initEncodeParams.presetGUID, NV_ENC_PRESET_DEFAULT_GUID))
         preset = "default";
 
@@ -918,14 +955,19 @@ String NVENCEncoder::GetInfoString() const
         profile = "main";
     else if (dataEqual(encodeConfig.profileGUID, NV_ENC_H264_PROFILE_HIGH_GUID))
         profile = "high";
+    else if (dataEqual(encodeConfig.profileGUID, NV_ENC_H264_PROFILE_HIGH_444_GUID))
+        profile = "high444";
     else if (dataEqual(encodeConfig.profileGUID, NV_ENC_H264_PROFILE_STEREO_GUID))
         profile = "stereo";
     else if (dataEqual(encodeConfig.profileGUID, NV_ENC_H264_PROFILE_SVC_TEMPORAL_SCALABILTY))
         profile = "svc temporal";
+    else if (dataEqual(encodeConfig.profileGUID, NV_ENC_H264_PROFILE_CONSTRAINED_HIGH_GUID))
+        profile = "constrained high";
 
     String cbr = "no";
     if (encodeConfig.rcParams.rateControlMode == NV_ENC_PARAMS_RC_CBR
-        || encodeConfig.rcParams.rateControlMode == NV_ENC_PARAMS_RC_CBR2)
+        || encodeConfig.rcParams.rateControlMode == NV_ENC_PARAMS_RC_2_PASS_QUALITY
+        || encodeConfig.rcParams.rateControlMode == NV_ENC_PARAMS_RC_2_PASS_FRAMESIZE_CAP)
     {
         cbr = "yes";
     }
@@ -936,7 +978,9 @@ String NVENCEncoder::GetInfoString() const
 
     String level = "unknown";
     if (encodeConfig.encodeCodecConfig.h264Config.level == 0)
+    {
         level = "autoselect";
+    }
     else if (encodeConfig.encodeCodecConfig.h264Config.level <= 51)
     {
         level = IntString(encodeConfig.encodeCodecConfig.h264Config.level / 10);
@@ -978,331 +1022,4 @@ int NVENCEncoder::GetBufferedFrames()
 bool NVENCEncoder::HasBufferedFrames()
 {
     return !(outputSurfaceQueue.empty() && outputSurfaceQueueReady.empty());
-}
-
-void NVENCEncoder::dumpEncodeConfig()
-{
-    String dumpFilePath = API->GetAppDataPath();
-    dumpFilePath << TEXT("\\last_nvenc_config.xconfig");
-
-    XConfig dumpConfig(dumpFilePath.Array());
-
-    if (!dumpConfig.IsOpen())
-    {
-        NvLog(TEXT("Failed opening %s"), dumpFilePath.Array());
-        return;
-    }
-
-    dumpConfig.GetRootElement()->RemoveElement(TEXT("initEncodeParams"));
-
-    XElement *iepElement = dumpConfig.GetRootElement()->CreateElement(TEXT("initEncodeParams"));
-    iepElement->AddString(TEXT("encodeGUID"), guidToString(initEncodeParams.encodeGUID));
-    iepElement->AddString(TEXT("presetGUID"), guidToString(initEncodeParams.presetGUID));
-    iepElement->AddInt(TEXT("encodeWidth"), initEncodeParams.encodeWidth);
-    iepElement->AddInt(TEXT("encodeHeight"), initEncodeParams.encodeHeight);
-    iepElement->AddInt(TEXT("darWidth"), initEncodeParams.darWidth);
-    iepElement->AddInt(TEXT("darHeight"), initEncodeParams.darHeight);
-    iepElement->AddInt(TEXT("frameRateNum"), initEncodeParams.frameRateNum);
-    iepElement->AddInt(TEXT("frameRateDen"), initEncodeParams.frameRateDen);
-    iepElement->AddInt(TEXT("enableEncodeAsync"), initEncodeParams.enableEncodeAsync);
-    iepElement->AddInt(TEXT("enablePTD"), initEncodeParams.enablePTD);
-    iepElement->AddInt(TEXT("reportSliceOffsets"), initEncodeParams.reportSliceOffsets);
-    iepElement->AddInt(TEXT("enableSubFrameWrite"), initEncodeParams.enableSubFrameWrite);
-    iepElement->AddInt(TEXT("enableExternalMEHints"), initEncodeParams.enableExternalMEHints);
-    iepElement->AddInt(TEXT("maxEncodeWidth"), initEncodeParams.maxEncodeWidth);
-    iepElement->AddInt(TEXT("maxEncodeHeight"), initEncodeParams.maxEncodeHeight);
-
-    XElement *mehint1Element = iepElement->CreateElement(TEXT("maxMEHintCountsPerBlock1"));
-    mehint1Element->AddInt(TEXT("numCandsPerBlk16x16"), initEncodeParams.maxMEHintCountsPerBlock[0].numCandsPerBlk16x16);
-    mehint1Element->AddInt(TEXT("numCandsPerBlk16x8"), initEncodeParams.maxMEHintCountsPerBlock[0].numCandsPerBlk16x8);
-    mehint1Element->AddInt(TEXT("numCandsPerBlk8x16"), initEncodeParams.maxMEHintCountsPerBlock[0].numCandsPerBlk8x16);
-    mehint1Element->AddInt(TEXT("numCandsPerBlk8x8"), initEncodeParams.maxMEHintCountsPerBlock[0].numCandsPerBlk8x8);
-
-    XElement *mehint2Element = iepElement->CreateElement(TEXT("maxMEHintCountsPerBlock2"));
-    mehint2Element->AddInt(TEXT("numCandsPerBlk16x16"), initEncodeParams.maxMEHintCountsPerBlock[1].numCandsPerBlk16x16);
-    mehint2Element->AddInt(TEXT("numCandsPerBlk16x8"), initEncodeParams.maxMEHintCountsPerBlock[1].numCandsPerBlk16x8);
-    mehint2Element->AddInt(TEXT("numCandsPerBlk8x16"), initEncodeParams.maxMEHintCountsPerBlock[1].numCandsPerBlk8x16);
-    mehint2Element->AddInt(TEXT("numCandsPerBlk8x8"), initEncodeParams.maxMEHintCountsPerBlock[1].numCandsPerBlk8x8);
-
-    XElement *ecElement = iepElement->CreateElement(TEXT("encodeConfig"));
-    ecElement->AddString(TEXT("profileGUID"), guidToString(encodeConfig.profileGUID));
-    ecElement->AddInt(TEXT("gopLength"), encodeConfig.gopLength);
-    ecElement->AddInt(TEXT("frameIntervalP"), encodeConfig.frameIntervalP);
-    ecElement->AddInt(TEXT("monoChromeEncoding"), encodeConfig.monoChromeEncoding);
-    ecElement->AddInt(TEXT("frameFieldMode"), encodeConfig.frameFieldMode);
-    ecElement->AddInt(TEXT("mvPrecision"), encodeConfig.mvPrecision);
-    
-    XElement *rcElement = ecElement->CreateElement(TEXT("rcParams"));
-    rcElement->AddInt(TEXT("rateControlMode"), encodeConfig.rcParams.rateControlMode);
-    rcElement->AddInt(TEXT("constQP_interB"), encodeConfig.rcParams.constQP.qpInterB);
-    rcElement->AddInt(TEXT("constQP_interP"), encodeConfig.rcParams.constQP.qpInterP);
-    rcElement->AddInt(TEXT("constQP_intra"), encodeConfig.rcParams.constQP.qpIntra);
-    rcElement->AddInt(TEXT("averageBitRate"), encodeConfig.rcParams.averageBitRate);
-    rcElement->AddInt(TEXT("maxBitRate"), encodeConfig.rcParams.maxBitRate);
-    rcElement->AddInt(TEXT("vbvBufferSize"), encodeConfig.rcParams.vbvBufferSize);
-    rcElement->AddInt(TEXT("vbvInitialDelay"), encodeConfig.rcParams.vbvInitialDelay);
-    rcElement->AddInt(TEXT("enableMinQP"), encodeConfig.rcParams.enableMinQP);
-    rcElement->AddInt(TEXT("enableMaxQP"), encodeConfig.rcParams.enableMaxQP);
-    rcElement->AddInt(TEXT("enableInitialRCQP"), encodeConfig.rcParams.enableInitialRCQP);
-    rcElement->AddInt(TEXT("minQP_interB"), encodeConfig.rcParams.minQP.qpInterB);
-    rcElement->AddInt(TEXT("minQP_interP"), encodeConfig.rcParams.minQP.qpInterP);
-    rcElement->AddInt(TEXT("minQP_intra"), encodeConfig.rcParams.minQP.qpIntra);
-    rcElement->AddInt(TEXT("maxQP_interB"), encodeConfig.rcParams.maxQP.qpInterB);
-    rcElement->AddInt(TEXT("maxQP_interP"), encodeConfig.rcParams.maxQP.qpInterP);
-    rcElement->AddInt(TEXT("maxQP_intra"), encodeConfig.rcParams.maxQP.qpIntra);
-    rcElement->AddInt(TEXT("initialRCQP_interB"), encodeConfig.rcParams.initialRCQP.qpInterB);
-    rcElement->AddInt(TEXT("initialRCQP_interP"), encodeConfig.rcParams.initialRCQP.qpInterP);
-    rcElement->AddInt(TEXT("initialRCQP_intra"), encodeConfig.rcParams.initialRCQP.qpIntra);
-    rcElement->AddInt(TEXT("temporallayerIdxMask"), encodeConfig.rcParams.temporallayerIdxMask);
-    rcElement->AddInt(TEXT("rateControlMode"), encodeConfig.rcParams.rateControlMode);
-    rcElement->AddInt(TEXT("temporalLayerQP_0"), encodeConfig.rcParams.temporalLayerQP[0]);
-    rcElement->AddInt(TEXT("temporalLayerQP_1"), encodeConfig.rcParams.temporalLayerQP[1]);
-    rcElement->AddInt(TEXT("temporalLayerQP_2"), encodeConfig.rcParams.temporalLayerQP[2]);
-    rcElement->AddInt(TEXT("temporalLayerQP_3"), encodeConfig.rcParams.temporalLayerQP[3]);
-    rcElement->AddInt(TEXT("temporalLayerQP_4"), encodeConfig.rcParams.temporalLayerQP[4]);
-    rcElement->AddInt(TEXT("temporalLayerQP_5"), encodeConfig.rcParams.temporalLayerQP[5]);
-    rcElement->AddInt(TEXT("temporalLayerQP_6"), encodeConfig.rcParams.temporalLayerQP[6]);
-    rcElement->AddInt(TEXT("temporalLayerQP_7"), encodeConfig.rcParams.temporalLayerQP[7]);
-
-    XElement *h264Element = ecElement->CreateElement(TEXT("encodeCodecConfig"));
-    h264Element->AddInt(TEXT("enableTemporalSVC"), encodeConfig.encodeCodecConfig.h264Config.enableTemporalSVC);
-    h264Element->AddInt(TEXT("enableStereoMVC"), encodeConfig.encodeCodecConfig.h264Config.enableStereoMVC);
-    h264Element->AddInt(TEXT("hierarchicalPFrames"), encodeConfig.encodeCodecConfig.h264Config.hierarchicalPFrames);
-    h264Element->AddInt(TEXT("hierarchicalBFrames"), encodeConfig.encodeCodecConfig.h264Config.hierarchicalBFrames);
-    h264Element->AddInt(TEXT("outputBufferingPeriodSEI"), encodeConfig.encodeCodecConfig.h264Config.outputBufferingPeriodSEI);
-    h264Element->AddInt(TEXT("outputPictureTimingSEI"), encodeConfig.encodeCodecConfig.h264Config.outputPictureTimingSEI);
-    h264Element->AddInt(TEXT("outputAUD"), encodeConfig.encodeCodecConfig.h264Config.outputAUD);
-    h264Element->AddInt(TEXT("disableSPSPPS"), encodeConfig.encodeCodecConfig.h264Config.disableSPSPPS);
-    h264Element->AddInt(TEXT("outputFramePackingSEI"), encodeConfig.encodeCodecConfig.h264Config.outputFramePackingSEI);
-    h264Element->AddInt(TEXT("outputRecoveryPointSEI"), encodeConfig.encodeCodecConfig.h264Config.outputRecoveryPointSEI);
-    h264Element->AddInt(TEXT("enableIntraRefresh"), encodeConfig.encodeCodecConfig.h264Config.enableIntraRefresh);
-    h264Element->AddInt(TEXT("enableConstrainedEncoding"), encodeConfig.encodeCodecConfig.h264Config.enableConstrainedEncoding);
-    h264Element->AddInt(TEXT("repeatSPSPPS"), encodeConfig.encodeCodecConfig.h264Config.repeatSPSPPS);
-    h264Element->AddInt(TEXT("enableVFR"), encodeConfig.encodeCodecConfig.h264Config.enableVFR);
-    h264Element->AddInt(TEXT("enableLTR"), encodeConfig.encodeCodecConfig.h264Config.enableLTR);
-    h264Element->AddInt(TEXT("reservedBitFields"), encodeConfig.encodeCodecConfig.h264Config.reservedBitFields);
-    h264Element->AddInt(TEXT("level"), encodeConfig.encodeCodecConfig.h264Config.level);
-    h264Element->AddInt(TEXT("idrPeriod"), encodeConfig.encodeCodecConfig.h264Config.idrPeriod);
-    h264Element->AddInt(TEXT("separateColourPlaneFlag"), encodeConfig.encodeCodecConfig.h264Config.separateColourPlaneFlag);
-    h264Element->AddInt(TEXT("disableDeblockingFilterIDC"), encodeConfig.encodeCodecConfig.h264Config.disableDeblockingFilterIDC);
-    h264Element->AddInt(TEXT("numTemporalLayers"), encodeConfig.encodeCodecConfig.h264Config.numTemporalLayers);
-    h264Element->AddInt(TEXT("spsId"), encodeConfig.encodeCodecConfig.h264Config.spsId);
-    h264Element->AddInt(TEXT("ppsId"), encodeConfig.encodeCodecConfig.h264Config.ppsId);
-    h264Element->AddInt(TEXT("adaptiveTransformMode"), encodeConfig.encodeCodecConfig.h264Config.adaptiveTransformMode);
-    h264Element->AddInt(TEXT("fmoMode"), encodeConfig.encodeCodecConfig.h264Config.fmoMode);
-    h264Element->AddInt(TEXT("bdirectMode"), encodeConfig.encodeCodecConfig.h264Config.bdirectMode);
-    h264Element->AddInt(TEXT("entropyCodingMode"), encodeConfig.encodeCodecConfig.h264Config.entropyCodingMode);
-    h264Element->AddInt(TEXT("stereoMode"), encodeConfig.encodeCodecConfig.h264Config.stereoMode);
-    h264Element->AddInt(TEXT("intraRefreshPeriod"), encodeConfig.encodeCodecConfig.h264Config.intraRefreshPeriod);
-    h264Element->AddInt(TEXT("intraRefreshCnt"), encodeConfig.encodeCodecConfig.h264Config.intraRefreshCnt);
-    h264Element->AddInt(TEXT("maxNumRefFrames"), encodeConfig.encodeCodecConfig.h264Config.maxNumRefFrames);
-    h264Element->AddInt(TEXT("sliceMode"), encodeConfig.encodeCodecConfig.h264Config.sliceMode);
-    h264Element->AddInt(TEXT("sliceModeData"), encodeConfig.encodeCodecConfig.h264Config.sliceModeData);
-    h264Element->AddInt(TEXT("ltrNumFrames"), encodeConfig.encodeCodecConfig.h264Config.ltrNumFrames);
-    h264Element->AddInt(TEXT("ltrTrustMode"), encodeConfig.encodeCodecConfig.h264Config.ltrTrustMode);
-
-    XElement *extElem = h264Element->CreateElement(TEXT("h264Extension"));
-
-    XElement *svcElement = extElem->CreateElement(TEXT("svcTemporalConfig"));
-    svcElement->AddInt(TEXT("numTemporalLayers"), encodeConfig.encodeCodecConfig.h264Config.h264Extension.svcTemporalConfig.numTemporalLayers);
-    svcElement->AddInt(TEXT("basePriorityID"), encodeConfig.encodeCodecConfig.h264Config.h264Extension.svcTemporalConfig.basePriorityID);
-
-    XElement *mvcElement = extElem->CreateElement(TEXT("mvcConfig"));
-
-    XElement *vuiElement = h264Element->CreateElement(TEXT("h264VUIParameters"));
-    vuiElement->AddInt(TEXT("overscanInfoPresentFlag"), encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.overscanInfoPresentFlag);
-    vuiElement->AddInt(TEXT("overscanInfo"), encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.overscanInfo);
-    vuiElement->AddInt(TEXT("videoSignalTypePresentFlag"), encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.videoSignalTypePresentFlag);
-    vuiElement->AddInt(TEXT("videoFormat"), encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.videoFormat);
-    vuiElement->AddInt(TEXT("videoFullRangeFlag"), encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.videoFullRangeFlag);
-    vuiElement->AddInt(TEXT("colourDescriptionPresentFlag"), encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.colourDescriptionPresentFlag);
-    vuiElement->AddInt(TEXT("colourPrimaries"), encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.colourPrimaries);
-    vuiElement->AddInt(TEXT("transferCharacteristics"), encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.transferCharacteristics);
-    vuiElement->AddInt(TEXT("colourMatrix"), encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.colourMatrix);
-    vuiElement->AddInt(TEXT("chromaSampleLocationFlag"), encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.chromaSampleLocationFlag);
-    vuiElement->AddInt(TEXT("chromaSampleLocationTop"), encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.chromaSampleLocationTop);
-    vuiElement->AddInt(TEXT("chromaSampleLocationBot"), encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.chromaSampleLocationBot);
-    vuiElement->AddInt(TEXT("bitstreamRestrictionFlag"), encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.bitstreamRestrictionFlag);
-
-    dumpConfig.Close(true);
-}
-
-#define CHECK_GET_INT(element, target, name) \
-    if (element->HasItem(TEXT(#name))) \
-        target.name = (decltype(target.name))element->GetInt(TEXT(#name))
-
-#define CHECK_GET_INT2(element, target, name) \
-    if (element->HasItem(TEXT(#name))) \
-        target = element->GetInt(TEXT(#name))
-
-void NVENCEncoder::tryParseEncodeConfig()
-{
-    String dumpFilePath = API->GetAppDataPath();
-    dumpFilePath << TEXT("\\nvenc_config.xconfig");
-
-    XConfig dumpConfig(dumpFilePath.Array());
-
-    if (!dumpConfig.IsOpen())
-    {
-        NvLog(TEXT("Failed opening %s"), dumpFilePath.Array());
-        return;
-    }
-
-    XElement *iepElement = dumpConfig.GetElement(TEXT("initEncodeParams"));
-    if (!iepElement)
-        return;
-
-    if (iepElement->HasItem(TEXT("encodeGUID")))
-        stringToGuid(iepElement->GetString(TEXT("encodeGUID")), &initEncodeParams.encodeGUID);
-    if (iepElement->HasItem(TEXT("presetGUID")))
-        stringToGuid(iepElement->GetString(TEXT("presetGUID")), &initEncodeParams.presetGUID);
-
-    CHECK_GET_INT(iepElement, initEncodeParams, encodeWidth);
-    CHECK_GET_INT(iepElement, initEncodeParams, encodeHeight);
-    CHECK_GET_INT(iepElement, initEncodeParams, darWidth);
-    CHECK_GET_INT(iepElement, initEncodeParams, darHeight);
-    CHECK_GET_INT(iepElement, initEncodeParams, frameRateNum);
-    CHECK_GET_INT(iepElement, initEncodeParams, frameRateDen);
-    //CHECK_GET_INT(iepElement, initEncodeParams, enableEncodeAsync); // Overriding this would horribly break everything
-    //CHECK_GET_INT(iepElement, initEncodeParams, enablePTD); // Same as above
-    CHECK_GET_INT(iepElement, initEncodeParams, reportSliceOffsets);
-    CHECK_GET_INT(iepElement, initEncodeParams, enableSubFrameWrite);
-    CHECK_GET_INT(iepElement, initEncodeParams, enableExternalMEHints);
-    CHECK_GET_INT(iepElement, initEncodeParams, maxEncodeWidth);
-    CHECK_GET_INT(iepElement, initEncodeParams, maxEncodeHeight);
-    
-    XElement *mehint1Element = iepElement->GetElement(TEXT("maxMEHintCountsPerBlock1"));
-    if (mehint1Element)
-    {
-        CHECK_GET_INT(mehint1Element, initEncodeParams.maxMEHintCountsPerBlock[0], numCandsPerBlk16x16);
-        CHECK_GET_INT(mehint1Element, initEncodeParams.maxMEHintCountsPerBlock[0], numCandsPerBlk16x8);
-        CHECK_GET_INT(mehint1Element, initEncodeParams.maxMEHintCountsPerBlock[0], numCandsPerBlk8x16);
-        CHECK_GET_INT(mehint1Element, initEncodeParams.maxMEHintCountsPerBlock[0], numCandsPerBlk8x8);
-    }
-
-    XElement *mehint2Element = iepElement->GetElement(TEXT("maxMEHintCountsPerBlock2"));
-    if (mehint2Element)
-    {
-        CHECK_GET_INT(mehint2Element, initEncodeParams.maxMEHintCountsPerBlock[1], numCandsPerBlk16x16);
-        CHECK_GET_INT(mehint2Element, initEncodeParams.maxMEHintCountsPerBlock[1], numCandsPerBlk16x8);
-        CHECK_GET_INT(mehint2Element, initEncodeParams.maxMEHintCountsPerBlock[1], numCandsPerBlk8x16);
-        CHECK_GET_INT(mehint2Element, initEncodeParams.maxMEHintCountsPerBlock[1], numCandsPerBlk8x8);
-    }
-
-    XElement *ecElement = iepElement->GetElement(TEXT("encodeConfig"));
-    if (!ecElement)
-        return;
-
-    if (ecElement->HasItem(TEXT("profileGUID")))
-        stringToGuid(ecElement->GetString(TEXT("profileGUID")), &encodeConfig.profileGUID);
-
-    CHECK_GET_INT(ecElement, encodeConfig, gopLength);
-    CHECK_GET_INT(ecElement, encodeConfig, frameIntervalP);
-    CHECK_GET_INT(ecElement, encodeConfig, monoChromeEncoding);
-    CHECK_GET_INT(ecElement, encodeConfig, frameFieldMode);
-    CHECK_GET_INT(ecElement, encodeConfig, mvPrecision);
-
-    XElement *rcElement = ecElement->GetElement(TEXT("rcParams"));
-    if (rcElement)
-    {
-        CHECK_GET_INT(rcElement, encodeConfig.rcParams, rateControlMode);
-        CHECK_GET_INT2(rcElement, encodeConfig.rcParams.constQP.qpInterB, constQP_interB);
-        CHECK_GET_INT2(rcElement, encodeConfig.rcParams.constQP.qpInterP, constQP_interP);
-        CHECK_GET_INT2(rcElement, encodeConfig.rcParams.constQP.qpIntra, constQP_intra);
-        CHECK_GET_INT(rcElement, encodeConfig.rcParams, averageBitRate);
-        CHECK_GET_INT(rcElement, encodeConfig.rcParams, maxBitRate);
-        CHECK_GET_INT(rcElement, encodeConfig.rcParams, vbvBufferSize);
-        CHECK_GET_INT(rcElement, encodeConfig.rcParams, vbvInitialDelay);
-        CHECK_GET_INT(rcElement, encodeConfig.rcParams, enableMinQP);
-        CHECK_GET_INT(rcElement, encodeConfig.rcParams, enableMaxQP);
-        CHECK_GET_INT(rcElement, encodeConfig.rcParams, enableInitialRCQP);
-        CHECK_GET_INT2(rcElement, encodeConfig.rcParams.minQP.qpInterB, minQP_interB);
-        CHECK_GET_INT2(rcElement, encodeConfig.rcParams.minQP.qpInterP, minQP_interP);
-        CHECK_GET_INT2(rcElement, encodeConfig.rcParams.minQP.qpIntra, minQP_intra);
-        CHECK_GET_INT2(rcElement, encodeConfig.rcParams.maxQP.qpInterB, maxQP_interB);
-        CHECK_GET_INT2(rcElement, encodeConfig.rcParams.maxQP.qpInterP, maxQP_interP);
-        CHECK_GET_INT2(rcElement, encodeConfig.rcParams.maxQP.qpIntra, maxQP_intra);
-        CHECK_GET_INT2(rcElement, encodeConfig.rcParams.initialRCQP.qpInterB, initialRCQP_interB);
-        CHECK_GET_INT2(rcElement, encodeConfig.rcParams.initialRCQP.qpInterP, initialRCQP_interP);
-        CHECK_GET_INT2(rcElement, encodeConfig.rcParams.initialRCQP.qpIntra, initialRCQP_intra);
-        CHECK_GET_INT(rcElement, encodeConfig.rcParams, temporallayerIdxMask);
-        CHECK_GET_INT(rcElement, encodeConfig.rcParams, rateControlMode);
-        CHECK_GET_INT2(rcElement, encodeConfig.rcParams.temporalLayerQP[0], temporalLayerQP_0);
-        CHECK_GET_INT2(rcElement, encodeConfig.rcParams.temporalLayerQP[1], temporalLayerQP_1);
-        CHECK_GET_INT2(rcElement, encodeConfig.rcParams.temporalLayerQP[2], temporalLayerQP_2);
-        CHECK_GET_INT2(rcElement, encodeConfig.rcParams.temporalLayerQP[3], temporalLayerQP_3);
-        CHECK_GET_INT2(rcElement, encodeConfig.rcParams.temporalLayerQP[4], temporalLayerQP_4);
-        CHECK_GET_INT2(rcElement, encodeConfig.rcParams.temporalLayerQP[5], temporalLayerQP_5);
-        CHECK_GET_INT2(rcElement, encodeConfig.rcParams.temporalLayerQP[6], temporalLayerQP_6);
-        CHECK_GET_INT2(rcElement, encodeConfig.rcParams.temporalLayerQP[7], temporalLayerQP_7);
-    }
-
-    XElement *h264Element = ecElement->GetElement(TEXT("encodeCodecConfig"));
-    if (!h264Element)
-        return;
-
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, enableTemporalSVC);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, enableStereoMVC);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, hierarchicalPFrames);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, hierarchicalBFrames);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, outputBufferingPeriodSEI);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, outputPictureTimingSEI);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, outputAUD);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, disableSPSPPS);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, outputFramePackingSEI);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, outputRecoveryPointSEI);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, enableIntraRefresh);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, enableConstrainedEncoding);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, repeatSPSPPS);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, enableVFR);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, enableLTR);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, reservedBitFields);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, level);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, idrPeriod);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, separateColourPlaneFlag);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, disableDeblockingFilterIDC);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, numTemporalLayers);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, spsId);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, ppsId);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, adaptiveTransformMode);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, fmoMode);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, bdirectMode);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, entropyCodingMode);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, stereoMode);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, intraRefreshPeriod);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, intraRefreshCnt);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, maxNumRefFrames);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, sliceMode);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, sliceModeData);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, ltrNumFrames);
-    CHECK_GET_INT(h264Element, encodeConfig.encodeCodecConfig.h264Config, ltrTrustMode);
-
-    XElement *vuiElement = h264Element->GetElement(TEXT("h264VUIParameters"));
-    if (vuiElement)
-    {
-        CHECK_GET_INT(vuiElement, encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters, overscanInfoPresentFlag);
-        CHECK_GET_INT(vuiElement, encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters, overscanInfo);
-        CHECK_GET_INT(vuiElement, encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters, videoSignalTypePresentFlag);
-        CHECK_GET_INT(vuiElement, encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters, videoFormat);
-        CHECK_GET_INT(vuiElement, encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters, videoFullRangeFlag);
-        CHECK_GET_INT(vuiElement, encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters, colourDescriptionPresentFlag);
-        CHECK_GET_INT(vuiElement, encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters, colourPrimaries);
-        CHECK_GET_INT(vuiElement, encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters, transferCharacteristics);
-        CHECK_GET_INT(vuiElement, encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters, colourMatrix);
-        CHECK_GET_INT(vuiElement, encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters, chromaSampleLocationFlag);
-        CHECK_GET_INT(vuiElement, encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters, chromaSampleLocationTop);
-        CHECK_GET_INT(vuiElement, encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters, chromaSampleLocationBot);
-        CHECK_GET_INT(vuiElement, encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters, bitstreamRestrictionFlag);
-    }
-
-    XElement *extElem = h264Element->GetElement(TEXT("h264Extension"));
-    if (!extElem)
-        return;
-
-    XElement *svcElement = extElem->GetElement(TEXT("svcTemporalConfig"));
-    if (!svcElement)
-        return;
-
-    CHECK_GET_INT(svcElement, encodeConfig.encodeCodecConfig.h264Config.h264Extension.svcTemporalConfig, numTemporalLayers);
-    CHECK_GET_INT(svcElement, encodeConfig.encodeCodecConfig.h264Config.h264Extension.svcTemporalConfig, basePriorityID);
 }
