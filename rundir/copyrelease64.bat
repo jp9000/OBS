@@ -10,3 +10,4 @@ copy ..\psvplugin\x64\release\psvplugin.dll .\plugins
 copy ..\x264\libs\64bit\libx264-142.dll .\
 copy ..\injectHelper\Release\injectHelper.exe .\plugins\graphicscapture
 copy ..\injectHelper\x64\Release\injectHelper64.exe .\plugins\graphicscapture
+copy ..\ObsNvenc\x64\Release\ObsNvenc.dll .\

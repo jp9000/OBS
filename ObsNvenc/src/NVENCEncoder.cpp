@@ -218,6 +218,17 @@ void NVENCEncoder::init()
     {
         encoderPreset = NV_ENC_PRESET_DEFAULT_GUID;
     }
+    else if (presetString == TEXT("Streaming"))
+    {
+        encoderPreset = NV_ENC_PRESET_STREAMING;
+        clientKey = NV_ENC_KEY_STREAMING;
+    }
+    else if (presetString == TEXT("Streaming (2pass)"))
+    {
+        encoderPreset = NV_ENC_PRESET_STREAMING;
+        is2PassRC = true;
+        clientKey = NV_ENC_KEY_STREAMING;
+    }
     else
     {
         if (height > 1080 || (height == 1080 && fps > 30))
@@ -328,14 +339,31 @@ void NVENCEncoder::init()
         }
 
         if (bufferSize != -1)
+        {
             encodeConfig.rcParams.vbvBufferSize = bufferSize * 1000;
+            encodeConfig.rcParams.vbvInitialDelay = bufferSize * 1000;
+        }
 
         if (bUseCBR)
         {
             if (is2PassRC)
+            {
                 encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_2_PASS_QUALITY;
+            }
             else
+            {
                 encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
+            }
+
+            encodeConfig.rcParams.enableMaxQP = 1;
+            encodeConfig.rcParams.maxQP.qpInterP = 42;
+            encodeConfig.rcParams.maxQP.qpInterB = 42;
+            encodeConfig.rcParams.maxQP.qpIntra = 27;
+
+            encodeConfig.frameIntervalP = 1;
+
+            encodeConfig.encodeCodecConfig.h264Config.adaptiveTransformMode = NV_ENC_H264_ADAPTIVE_TRANSFORM_ENABLE;
+            encodeConfig.encodeCodecConfig.h264Config.fmoMode = NV_ENC_H264_FMO_DISABLE;
         }
         else
         {
@@ -344,7 +372,11 @@ void NVENCEncoder::init()
             encodeConfig.rcParams.minQP.qpInterB = 32 - quality;
             encodeConfig.rcParams.minQP.qpInterP = 32 - quality;
             encodeConfig.rcParams.minQP.qpIntra = 32 - quality;
+
+            encodeConfig.frameIntervalP = 3;
         }
+
+        encodeConfig.encodeCodecConfig.h264Config.disableSPSPPS = 1;
 
         encodeConfig.encodeCodecConfig.h264Config.enableVFR = bUseCFR ? 0 : 1;
 
@@ -355,9 +387,10 @@ void NVENCEncoder::init()
         else if(profileString.CompareI(TEXT("high")))
             encodeConfig.profileGUID = NV_ENC_H264_PROFILE_HIGH_GUID;
 
+        encodeConfig.encodeCodecConfig.h264Config.disableSPSPPS = 1;
         encodeConfig.encodeCodecConfig.h264Config.bdirectMode = encodeConfig.frameIntervalP > 1 ? NV_ENC_H264_BDIRECT_MODE_TEMPORAL : NV_ENC_H264_BDIRECT_MODE_DISABLE;
-
         encodeConfig.encodeCodecConfig.h264Config.idrPeriod = encodeConfig.gopLength;
+
         encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.videoSignalTypePresentFlag = 1;
         encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.colourDescriptionPresentFlag = 1;
         encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.colourMatrix = colorDesc.matrix;

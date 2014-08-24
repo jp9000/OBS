@@ -66,4 +66,12 @@ inline bool dataEqual(const T& a, const T& b)
 String guidToString(const GUID &guid);
 bool stringToGuid(const String &string, GUID *guid);
 
+// {7ADD423D-D035-4F6F-AEA5-50885658643C}
+static const GUID NV_ENC_PRESET_STREAMING =
+{0x7ADD423D, 0xD035, 0x4F6F, {0xAE, 0xA5, 0x50, 0x88, 0x56, 0x58, 0x64, 0x3C}};
+
+// {C2DC0940-76C5-481B-A97E-B1582DDC7079}
+static const GUID NV_ENC_KEY_STREAMING =
+{0xC2DC0940, 0x76C5, 0x481B, {0xA9, 0x7E, 0xB1, 0x58, 0x2D, 0xDC, 0x70, 0x79}};
+
 #endif
