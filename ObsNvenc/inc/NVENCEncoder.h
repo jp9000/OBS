@@ -116,6 +116,8 @@ private:
     uint8_t *pstart;
 
     HANDLE frameMutex;
+
+    bool dontTouchConfig;
 };
 
 #endif

@@ -48,6 +48,7 @@ NVENCEncoder::NVENCEncoder(int fps, int width, int height, int quality, CTSTR pr
     , bUseCFR(bUseCFR)
     , frameShift(0)
     , pstart(0)
+    , dontTouchConfig(false)
 {
     bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
     keyint = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 0);
@@ -158,7 +159,7 @@ void NVENCEncoder::init()
     int surfaceCount = 0;
 
     GUID encoderPreset = NV_ENC_PRESET_HQ_GUID;
-    bool dontTouchConfig = false;
+    dontTouchConfig = false;
     bool is2PassRC = false;
 
     String profileString = AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"), TEXT("high"));
@@ -584,7 +585,7 @@ bool NVENCEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketTy
         picParams.inputHeight = height;
         picParams.outputBitstream = outputSurfaces[i].outputSurface;
         picParams.completionEvent = 0;
-        picParams.pictureStruct = NV_ENC_PIC_STRUCT_FRAME; // At least i hope so
+        picParams.pictureStruct = NV_ENC_PIC_STRUCT_FRAME;
         picParams.encodePicFlags = 0;
         picParams.inputTimeStamp = data.TimeStamp;
         picParams.inputDuration = 0;
@@ -934,6 +935,9 @@ void NVENCEncoder::RequestKeyframe()
 
 bool NVENCEncoder::SetBitRate(DWORD maxBitrate, DWORD bufferSize)
 {
+    if (dontTouchConfig)
+        return false;
+
     OSMutexLocker locker(frameMutex);
 
     NV_ENC_RECONFIGURE_PARAMS params = { 0 };
@@ -948,6 +952,7 @@ bool NVENCEncoder::SetBitRate(DWORD maxBitrate, DWORD bufferSize)
     if (bufferSize > 0)
     {
         encodeConfig.rcParams.vbvBufferSize = bufferSize * 1000;
+        encodeConfig.rcParams.vbvInitialDelay = bufferSize * 1000;
     }
 
     params.resetEncoder = 1;
@@ -977,7 +982,7 @@ int NVENCEncoder::GetBitRate() const
 
 bool NVENCEncoder::DynamicBitrateSupported() const
 {
-    return true;
+    return !dontTouchConfig;
 }
 
 String NVENCEncoder::GetInfoString() const
@@ -1003,6 +1008,8 @@ String NVENCEncoder::GetInfoString() const
         preset = "losslesshp";
     else if (dataEqual(initEncodeParams.presetGUID, NV_ENC_PRESET_DEFAULT_GUID))
         preset = "default";
+    else if (dataEqual(initEncodeParams.presetGUID, NV_ENC_PRESET_STREAMING))
+        preset = "streaming";
 
     String profile = "unknown";
     if (dataEqual(encodeConfig.profileGUID, NV_ENC_CODEC_PROFILE_AUTOSELECT_GUID))
