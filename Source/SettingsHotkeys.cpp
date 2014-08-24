@@ -50,170 +50,69 @@ void SettingsHotkeys::DestroyPane()
 
 void SettingsHotkeys::ApplySettings()
 {
+    auto update_hotkey = [&](decltype(App->pushToTalkHotkeyID) &hotkey, int dlg_id, CTSTR section, CTSTR key, OBSHOTKEYPROC proc)
+    {
+        if (hotkey)
+        {
+            API->DeleteHotkey(hotkey);
+            hotkey = 0;
+        }
+
+        DWORD new_hotkey = (DWORD)SendMessage(GetDlgItem(hwnd, dlg_id), HKM_GETHOTKEY, 0, 0);
+        if (new_hotkey)
+            hotkey = API->CreateHotkey(new_hotkey, proc, NULL);
+
+        AppConfig->SetInt(section, key, new_hotkey);
+        
+        return new_hotkey;
+    };
+
     //------------------------------------
 
-    DWORD hotkey = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY), HKM_GETHOTKEY, 0, 0);
-    DWORD hotkey2 = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY2), HKM_GETHOTKEY, 0, 0);
+    DWORD hotkey = update_hotkey(App->pushToTalkHotkeyID, IDC_PUSHTOTALKHOTKEY, L"Audio", L"PushToTalkHotkey", OBS::PushToTalkHotkey);
+    DWORD hotkey2 = update_hotkey(App->pushToTalkHotkey2ID, IDC_PUSHTOTALKHOTKEY, L"Audio", L"PushToTalkHotkey2", OBS::PushToTalkHotkey);
     App->bUsingPushToTalk = hotkey || hotkey2;
 
-    AppConfig->SetInt(TEXT("Audio"), TEXT("PushToTalkHotkey"), hotkey);
-    AppConfig->SetInt(TEXT("Audio"), TEXT("PushToTalkHotkey2"), hotkey2);
+    //------------------------------------
 
-    if (App->pushToTalkHotkeyID)
-    {
-        API->DeleteHotkey(App->pushToTalkHotkeyID);
-        App->pushToTalkHotkeyID = 0;
-    }
-    if (App->pushToTalkHotkey2ID)
-    {
-        API->DeleteHotkey(App->pushToTalkHotkey2ID);
-        App->pushToTalkHotkey2ID = 0;
-    }
-
-    if (App->bUsingPushToTalk && hotkey)
-        App->pushToTalkHotkeyID = API->CreateHotkey(hotkey, OBS::PushToTalkHotkey, NULL);
-    if (App->bUsingPushToTalk && hotkey2)
-        App->pushToTalkHotkey2ID = API->CreateHotkey(hotkey2, OBS::PushToTalkHotkey, NULL);
+    update_hotkey(App->muteMicHotkeyID, IDC_MUTEMICHOTKEY, L"Audio", L"MuteMicHotkey", OBS::MuteMicHotkey);
 
     //------------------------------------
 
-    hotkey = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_MUTEMICHOTKEY), HKM_GETHOTKEY, 0, 0);
-    AppConfig->SetInt(TEXT("Audio"), TEXT("MuteMicHotkey"), hotkey);
-
-    if (App->muteMicHotkeyID)
-    {
-        API->DeleteHotkey(App->muteMicHotkeyID);
-        App->muteMicHotkeyID = 0;
-    }
-
-    if (hotkey)
-        App->muteMicHotkeyID = API->CreateHotkey(hotkey, OBS::MuteMicHotkey, NULL);
-
-    //------------------------------------
-
-    hotkey = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_MUTEDESKTOPHOTKEY), HKM_GETHOTKEY, 0, 0);
-    AppConfig->SetInt(TEXT("Audio"), TEXT("MuteDesktopHotkey"), hotkey);
-
-    if (App->muteDesktopHotkeyID)
-    {
-        API->DeleteHotkey(App->muteDesktopHotkeyID);
-        App->muteDesktopHotkeyID = 0;
-    }
-
-    if (hotkey)
-        App->muteDesktopHotkeyID = API->CreateHotkey(hotkey, OBS::MuteDesktopHotkey, NULL);
+    update_hotkey(App->muteDesktopHotkeyID, IDC_MUTEDESKTOPHOTKEY, L"Audio", L"MuteDesktopHotkey", OBS::MuteDesktopHotkey);
 
     //------------------------------------------
 
-    DWORD stopStreamHotkey = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_STOPSTREAMHOTKEY), HKM_GETHOTKEY, 0, 0);
-    AppConfig->SetInt(TEXT("Publish"), TEXT("StopStreamHotkey"), stopStreamHotkey);
-
-    if (App->stopStreamHotkeyID)
-    {
-        API->DeleteHotkey(App->stopStreamHotkeyID);
-        App->stopStreamHotkeyID = 0;
-    }
-
-    if (stopStreamHotkey)
-        App->stopStreamHotkeyID = API->CreateHotkey(stopStreamHotkey, OBS::StopStreamHotkey, NULL);
+    update_hotkey(App->stopStreamHotkeyID, IDC_STOPSTREAMHOTKEY, L"Publish", L"StopStreamHotkey", OBS::StopStreamHotkey);
 
     //------------------------------------------
 
-    DWORD startStreamHotkey = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_STARTSTREAMHOTKEY), HKM_GETHOTKEY, 0, 0);
-    AppConfig->SetInt(TEXT("Publish"), TEXT("StartStreamHotkey"), startStreamHotkey);
-
-    if (App->startStreamHotkeyID)
-    {
-        API->DeleteHotkey(App->startStreamHotkeyID);
-        App->startStreamHotkeyID = 0;
-    }
-
-    if (startStreamHotkey)
-        App->startStreamHotkeyID = API->CreateHotkey(startStreamHotkey, OBS::StartStreamHotkey, NULL);
+    update_hotkey(App->startStreamHotkeyID, IDC_STARTSTREAMHOTKEY, L"Publish", L"StartStreamHotkey", OBS::StartStreamHotkey);
 
     //------------------------------------------
 
-    DWORD stopRecordingHotkey = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_STOPRECORDINGHOTKEY), HKM_GETHOTKEY, 0, 0);
-    AppConfig->SetInt(TEXT("Publish"), TEXT("StopRecordingHotkey"), stopRecordingHotkey);
-
-    if (App->stopRecordingHotkeyID)
-    {
-        API->DeleteHotkey(App->stopRecordingHotkeyID);
-        App->stopRecordingHotkeyID = 0;
-    }
-
-    if (stopRecordingHotkey)
-        App->stopRecordingHotkeyID = API->CreateHotkey(stopRecordingHotkey, OBS::StopRecordingHotkey, NULL);
+    update_hotkey(App->stopRecordingHotkeyID, IDC_STOPRECORDINGHOTKEY, L"Publish", L"StopRecordingHotkey", OBS::StopRecordingHotkey);
 
     //------------------------------------------
 
-    DWORD startRecordingHotkey = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_STARTRECORDINGHOTKEY), HKM_GETHOTKEY, 0, 0);
-    AppConfig->SetInt(TEXT("Publish"), TEXT("StartRecordingHotkey"), startRecordingHotkey);
-
-    if (App->startRecordingHotkeyID)
-    {
-        API->DeleteHotkey(App->startRecordingHotkeyID);
-        App->startRecordingHotkeyID = 0;
-    }
-
-    if (startRecordingHotkey)
-        App->startRecordingHotkeyID = API->CreateHotkey(startRecordingHotkey, OBS::StartRecordingHotkey, NULL);
+    update_hotkey(App->startRecordingHotkeyID, IDC_STARTRECORDINGHOTKEY, L"Publish", L"StartRecordingHotkey", OBS::StartRecordingHotkey);
 
     //------------------------------------------
 
-    DWORD stopReplayBufferHotkey = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_STOPREPLAYBUFFERHOTKEY), HKM_GETHOTKEY, 0, 0);
-    AppConfig->SetInt(TEXT("Publish"), TEXT("StopReplayBufferHotkey"), stopReplayBufferHotkey);
-
-    if (App->stopReplayBufferHotkeyID)
-    {
-        API->DeleteHotkey(App->stopReplayBufferHotkeyID);
-        App->stopReplayBufferHotkeyID = 0;
-    }
-
-    if (stopReplayBufferHotkey)
-        App->stopReplayBufferHotkeyID = API->CreateHotkey(stopReplayBufferHotkey, OBS::StopReplayBufferHotkey, NULL);
+    update_hotkey(App->stopReplayBufferHotkeyID, IDC_STOPREPLAYBUFFERHOTKEY, L"Publish", L"StopReplayBufferHotkey", OBS::StopReplayBufferHotkey);
 
     //------------------------------------------
 
-    DWORD startReplayBufferHotkey = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_STARTREPLAYBUFFERHOTKEY), HKM_GETHOTKEY, 0, 0);
-    AppConfig->SetInt(TEXT("Publish"), TEXT("StartReplayBufferHotkey"), startReplayBufferHotkey);
-
-    if (App->startReplayBufferHotkeyID)
-    {
-        API->DeleteHotkey(App->startReplayBufferHotkeyID);
-        App->startReplayBufferHotkeyID = 0;
-    }
-
-    if (startReplayBufferHotkey)
-        App->startReplayBufferHotkeyID = API->CreateHotkey(startReplayBufferHotkey, OBS::StartReplayBufferHotkey, NULL);
+    update_hotkey(App->startReplayBufferHotkeyID, IDC_STARTREPLAYBUFFERHOTKEY, L"Publish", L"StartReplayBufferHotkey", OBS::StartReplayBufferHotkey);
 
     //------------------------------------------
 
-    DWORD saveReplayBufferHotkey = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_SAVEREPLAYBUFFERHOTKEY), HKM_GETHOTKEY, 0, 0);
-    AppConfig->SetInt(L"Publish", L"SaveReplayBufferHotkey", saveReplayBufferHotkey);
-
-    if (App->saveReplayBufferHotkeyID)
-    {
-        API->DeleteHotkey(App->saveReplayBufferHotkeyID);
-        App->saveReplayBufferHotkeyID = 0;
-    }
-
-    if (saveReplayBufferHotkey)
-        App->saveReplayBufferHotkeyID = API->CreateHotkey(saveReplayBufferHotkey, OBS::SaveReplayBufferHotkey, 0);
+    update_hotkey(App->saveReplayBufferHotkeyID, IDC_SAVEREPLAYBUFFERHOTKEY, L"Publish", L"SaveReplayBufferHotkey", OBS::SaveReplayBufferHotkey);
 
     //------------------------------------------
 
-    DWORD recordFromReplayBufferHotkey = (DWORD)SendMessage(GetDlgItem(hwnd, IDC_RECORDFROMREPLAYBUFFERHOTKEY), HKM_GETHOTKEY, 0, 0);
-    AppConfig->SetInt(L"Publish", L"RecordFromReplayBufferHotkey", recordFromReplayBufferHotkey);
+    update_hotkey(App->recordFromReplayBufferHotkeyID, IDC_RECORDFROMREPLAYBUFFERHOTKEY, L"Publish", L"RecordFromReplayBufferHotkey", OBS::RecordFromReplayBufferHotkey);
 
-    if (App->recordFromReplayBufferHotkeyID)
-    {
-        API->DeleteHotkey(App->recordFromReplayBufferHotkeyID);
-        App->recordFromReplayBufferHotkeyID = 0;
-    }
-
-    if (recordFromReplayBufferHotkey)
-        App->recordFromReplayBufferHotkeyID = API->CreateHotkey(recordFromReplayBufferHotkey, OBS::RecordFromReplayBufferHotkey, 0);
 }
 
 void SettingsHotkeys::CancelSettings()
