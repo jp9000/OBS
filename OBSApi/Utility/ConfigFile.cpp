@@ -195,7 +195,8 @@ BOOL ConfigFile::SaveAs(CTSTR lpPath)
             return FALSE;
 
         newFile.Close();
-        OSRenameFile(tmpPath, lpPath);
+        if (!OSRenameFile(tmpPath, lpPath))
+            Log(TEXT("ConfigFile::SaveAs: Unable to move new config file %s to %s"), tmpPath.Array(), lpPath);
 
         strFileName = lpPath;
         return TRUE;
@@ -852,7 +853,8 @@ void  ConfigFile::SetKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
                         return;
 
                     file.Close();
-                    OSRenameFile(tmpFileName, strFileName);
+                    if (!OSRenameFile(tmpFileName, strFileName))
+                        Log(TEXT("ConfigFile::SetKey: Unable to move new config file %s to %s"), tmpFileName.Array(), strFileName.Array());
                 }
 
                 if(LoadFile(XFILE_OPENEXISTING))
