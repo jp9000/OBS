@@ -602,6 +602,12 @@ enum class SceneCollectionAction {
     Clone
 };
 
+enum class ProfileAction {
+    Add,
+    Rename,
+    Clone
+};
+
 struct ReplayBuffer;
 void SaveReplayBuffer(ReplayBuffer *out, DWORD timestamp);
 
@@ -1100,6 +1106,11 @@ private:
     void CallHotkey(DWORD hotkeyID, bool bDown);
 
     static void AddProfilesToMenu(HMENU menu);
+    static INT_PTR CALLBACK EnterProfileDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+    void AddProfile(ProfileAction action);
+    void RemoveProfile();
+    void ImportProfile();
+    void ExportProfile();
     static void ResetProfileMenu();
     static void ResetLogUploadMenu();
     static void DisableMenusWhileStreaming(bool disable);

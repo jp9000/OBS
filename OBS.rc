@@ -180,18 +180,15 @@ BEGIN
     COMBOBOX        IDC_LANGUAGE,146,22,226,126,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Settings.General.Profile",IDC_STATIC,7,44,138,8
     COMBOBOX        IDC_PROFILE,146,41,226,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Add",IDC_ADD,146,58,76,14
-    PUSHBUTTON      "Rename",IDC_RENAME,224,58,76,14
-    PUSHBUTTON      "Remove",IDC_REMOVE,302,58,70,14
     LTEXT           "Settings.General.Restart",IDC_INFO,7,160,409,48,NOT WS_VISIBLE
     CONTROL         "Settings.General.Notification",IDC_NOTIFICATIONICON,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,80,264,10,WS_EX_RIGHT
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,60,264,10,WS_EX_RIGHT
     CONTROL         "Settings.General.NotificationMinimize",IDC_MINIZENOTIFICATION,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,91,264,10,WS_EX_RIGHT
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,71,264,10,WS_EX_RIGHT
     CONTROL         "Settings.General.EnableProjectorCursor",IDC_ENABLEPROJECTORCURSOR,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,112,264,10,WS_EX_RIGHT
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,92,264,10,WS_EX_RIGHT
     CONTROL         "Settings.General.ShowLogWindowOnLaunch",IDC_SHOWLOGWINDOWONLAUNCH,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,133,264,10,WS_EX_RIGHT
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,113,264,10,WS_EX_RIGHT
 END
 
 IDD_SETTINGS_AUDIO DIALOGEX 0, 0, 427, 336
@@ -956,6 +953,14 @@ BEGIN
     END
     POPUP "MainMenu.Profiles"
     BEGIN
+        MENUITEM "MainMenu.Profiles.New", ID_PROFILE_NEW
+        MENUITEM "MainMenu.Profiles.Duplicate", ID_PROFILE_CLONE
+        MENUITEM "MainMenu.Profiles.Rename", ID_PROFILE_RENAME
+        MENUITEM "MainMenu.Profiles.Remove", ID_PROFILE_REMOVE
+        MENUITEM SEPARATOR
+        MENUITEM "MainMenu.Profiles.Import", ID_PROFILE_IMPORT
+        MENUITEM "MainMenu.Profiles.Export", ID_PROFILE_EXPORT
+        MENUITEM SEPARATOR
         MENUITEM "nothing here",                ID_MAINMENU_NOTHINGHERE
     END
     POPUP "MainMenu.SceneCollection"

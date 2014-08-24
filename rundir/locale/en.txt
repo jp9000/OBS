@@ -59,6 +59,9 @@ CopyTo.Success.Title="Success"
 CopyTo.CopyGlobalSourcesReferences="Do you want to also copy the global sources the references point to? If you choose No the references will be removed from the copied scene."
 CopyTo.CopyGlobalSourcesReferences.Title="Copy the Global Sources?"
 
+ImportProfileReplaceWarning.Title="Import Profile"
+ImportProfileReplaceWarning.Text="The current profile data will be lost.  Are you sure you want to import?"
+
 DeleteCollection="Remove scene collection"
 DeleteCollection.Text="Are you sure you want to remove the current scene collection?"
 
@@ -103,6 +106,14 @@ MainMenu.File="&File"
 MainMenu.Help="&Help"
 MainMenu.Profiles="&Profiles"
 MainMenu.Settings="&Settings"
+
+MainMenu.Profiles.New="&New"
+MainMenu.Profiles.Duplicate="&Duplicate"
+MainMenu.Profiles.Rename="&Rename"
+MainMenu.Profiles.Remove="Re&move"
+MainMenu.Profiles.Import="&Import"
+MainMenu.Profiles.Export="&Export"
+MainMenu.Profiles.ProfileExists="A profile with the same name already exists."
 
 MainMenu.Settings.AlwaysOnTop="&Always On Top"
 MainMenu.Settings.FullscreenMode="&Fullscreen Preview Mode"

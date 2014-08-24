@@ -169,12 +169,6 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                 EnableWindow(hwndTemp, !App->bRunning);
 
-                EnableWindow(GetDlgItem(hwnd, IDC_ADD),     FALSE);
-                EnableWindow(GetDlgItem(hwnd, IDC_RENAME),  FALSE);
-
-                UINT numItems = (UINT)SendMessage(hwndTemp, CB_GETCOUNT, 0, 0);
-                EnableWindow(GetDlgItem(hwnd, IDC_REMOVE),  (numItems > 1) && !App->bRunning);
-
                 //----------------------------------------------
 
                 bool bShowNotificationAreaIcon = AppConfig->GetInt(TEXT("General"), TEXT("ShowNotificationAreaIcon"), 0) != 0;
@@ -229,41 +223,9 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                         }
                         break;
                     }
-
-                    if(HIWORD(wParam) == CBN_EDITCHANGE)
+ 
+                    if(HIWORD(wParam) == CBN_SELCHANGE)
                     {
-                        String strText = GetEditText((HWND)lParam).KillSpaces();
-
-                        EnableWindow(GetDlgItem(hwnd, IDC_REMOVE),  FALSE);
-
-                        if(strText.IsValid())
-                        {
-                            if(IsValidFileName(strText))
-                            {
-                                String strCurProfile = GlobalConfig->GetString(TEXT("General"), TEXT("Profile"));
-
-                                UINT id = (UINT)SendMessage((HWND)lParam, CB_FINDSTRINGEXACT, -1, (LPARAM)strText.Array());
-                                EnableWindow(GetDlgItem(hwnd, IDC_ADD),     (id == CB_ERR));
-                                EnableWindow(GetDlgItem(hwnd, IDC_RENAME),  (id == CB_ERR) || strCurProfile.CompareI(strText));
-
-                                ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_HIDE);
-                                break;
-                            }
-
-                            SetWindowText(GetDlgItem(hwnd, IDC_INFO), Str("Settings.General.InvalidName"));
-                            ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
-                        }
-                        else
-                            ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_HIDE);
-
-                        EnableWindow(GetDlgItem(hwnd, IDC_ADD),     FALSE);
-                        EnableWindow(GetDlgItem(hwnd, IDC_RENAME),  FALSE);
-                    }
-                    else if(HIWORD(wParam) == CBN_SELCHANGE)
-                    {
-                        EnableWindow(GetDlgItem(hwnd, IDC_ADD),     FALSE);
-                        EnableWindow(GetDlgItem(hwnd, IDC_RENAME),  FALSE);
-
                         String strProfile = GetCBText((HWND)lParam);
                         String strProfilePath;
                         strProfilePath << lpAppDataPath << TEXT("\\profiles\\") << strProfile << TEXT(".ini");
@@ -284,109 +246,10 @@ INT_PTR SettingsGeneral::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                         App->ResetApplicationName();
                         App->UpdateNotificationAreaIcon();
 
-                        UINT numItems = (UINT)SendMessage(GetDlgItem(hwnd, IDC_PROFILE), CB_GETCOUNT, 0, 0);
-                        EnableWindow(GetDlgItem(hwnd, IDC_REMOVE),  (numItems > 1));
-
                         App->ResizeWindow(false);
                     }
                     break;
-                case IDC_RENAME:
-                case IDC_ADD:
-                    if (App->bRunning)
-                        break;
 
-                    if(HIWORD(wParam) == BN_CLICKED)
-                    {
-                        HWND hwndProfileList = GetDlgItem(hwnd, IDC_PROFILE);
-                        String strProfile = GetEditText(hwndProfileList).KillSpaces();
-                        SetWindowText(hwndProfileList, strProfile);
-
-                        if(strProfile.IsEmpty())
-                            break;
-
-                        bool bRenaming = (LOWORD(wParam) == IDC_RENAME);
-
-                        String strCurProfile = GlobalConfig->GetString(TEXT("General"), TEXT("Profile"));
-                        String strCurProfilePath;
-                        strCurProfilePath << lpAppDataPath << TEXT("\\profiles\\") << strCurProfile << TEXT(".ini");
-
-                        String strProfilePath;
-                        strProfilePath << lpAppDataPath << TEXT("\\profiles\\") << strProfile << TEXT(".ini");
-
-                        if((!bRenaming || !strProfilePath.CompareI(strCurProfilePath)) && OSFileExists(strProfilePath))
-                            OBSMessageBox(hwnd, Str("Settings.General.ProfileExists"), NULL, 0);
-                        else
-                        {
-                            if(bRenaming)
-                            {
-                                if(!MoveFile(strCurProfilePath, strProfilePath))
-                                    break;
-
-                                AppConfig->SetFilePath(strProfilePath);
-
-                                UINT curID = (UINT)SendMessage(hwndProfileList, CB_FINDSTRINGEXACT, -1, (LPARAM)strCurProfile.Array());
-                                if(curID != CB_ERR)
-                                    SendMessage(hwndProfileList, CB_DELETESTRING, curID, 0);
-                            }
-                            else
-                            {
-                                if(!AppConfig->SaveAs(strProfilePath))
-                                {
-                                    OBSMessageBox(hwnd, TEXT("Error - unable to create new profile, could not create file"), NULL, 0);
-                                    break;
-                                }
-                            }
-
-                            UINT id = (UINT)SendMessage(hwndProfileList, CB_ADDSTRING, 0, (LPARAM)strProfile.Array());
-                            SendMessage(hwndProfileList, CB_SETCURSEL, id, 0);
-                            GlobalConfig->SetString(TEXT("General"), TEXT("Profile"), strProfile);
-
-                            UINT numItems = (UINT)SendMessage(hwndProfileList, CB_GETCOUNT, 0, 0);
-                            EnableWindow(GetDlgItem(hwnd, IDC_REMOVE),  (numItems > 1));
-                            EnableWindow(GetDlgItem(hwnd, IDC_RENAME),  FALSE);
-                            EnableWindow(GetDlgItem(hwnd, IDC_ADD),     FALSE);
-
-                            App->ResetProfileMenu();
-                            App->ResetApplicationName();
-                        }
-                    }
-                    break;
-
-                case IDC_REMOVE:
-                    if (App->bRunning)
-                        break;
-
-                    {
-                        HWND hwndProfileList = GetDlgItem(hwnd, IDC_PROFILE);
-
-                        String strCurProfile = GlobalConfig->GetString(TEXT("General"), TEXT("Profile"));
-
-                        UINT numItems = (UINT)SendMessage(hwndProfileList, CB_GETCOUNT, 0, 0);
-
-                        String strConfirm = Str("Settings.General.ConfirmDelete");
-                        strConfirm.FindReplace(TEXT("$1"), strCurProfile);
-                        if(OBSMessageBox(hwnd, strConfirm, Str("DeleteConfirm.Title"), MB_YESNO) == IDYES)
-                        {
-                            UINT id = (UINT)SendMessage(hwndProfileList, CB_FINDSTRINGEXACT, -1, (LPARAM)strCurProfile.Array());
-                            if(id != CB_ERR)
-                            {
-                                SendMessage(hwndProfileList, CB_DELETESTRING, id, 0);
-                                if(id == numItems-1)
-                                    id--;
-
-                                SendMessage(hwndProfileList, CB_SETCURSEL, id, 0);
-                                DialogProc(hwnd, WM_COMMAND, MAKEWPARAM(IDC_PROFILE, CBN_SELCHANGE), (LPARAM)hwndProfileList);
-
-                                String strCurProfilePath;
-                                strCurProfilePath << lpAppDataPath << TEXT("\\profiles\\") << strCurProfile << TEXT(".ini");
-                                OSDeleteFile(strCurProfilePath);
-
-                                App->ResetProfileMenu();
-                            }
-                        }
-
-                        break;
-                    }
                 case IDC_NOTIFICATIONICON:
                     if (SendMessage(GetDlgItem(hwnd, IDC_NOTIFICATIONICON), BM_GETCHECK, 0, 0) == BST_UNCHECKED)
                     {
