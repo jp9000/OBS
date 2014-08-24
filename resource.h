@@ -433,13 +433,19 @@
 #define ID_SCENECOLLECTION_IMPORT       40079
 #define ID_SCENECOLLECTION_EXPORT       40080
 #define ID_SAVEDREPLAYBUFFERS           40081
+#define ID_PROFILE_NEW                  40082
+#define ID_PROFILE_RENAME               40083
+#define ID_PROFILE_CLONE                40084
+#define ID_PROFILE_REMOVE               40085
+#define ID_PROFILE_IMPORT               40086
+#define ID_PROFILE_EXPORT               40087
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        152
-#define _APS_NEXT_COMMAND_VALUE         40082
+#define _APS_NEXT_COMMAND_VALUE         40088
 #define _APS_NEXT_CONTROL_VALUE         1209
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

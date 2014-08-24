@@ -130,6 +130,61 @@ INT_PTR CALLBACK OBS::EnterSceneCollectionDialogProc(HWND hwnd, UINT message, WP
     return false;
 }
 
+INT_PTR CALLBACK OBS::EnterProfileDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message)
+    {
+        case WM_INITDIALOG:
+            {
+                SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
+                LocalizeWindow(hwnd);
+
+                String &strOut = *(String*)GetWindowLongPtr(hwnd, DWLP_USER);
+                SetWindowText(GetDlgItem(hwnd, IDC_NAME), strOut);
+
+                return true;
+            }
+
+        case WM_COMMAND:
+            switch (LOWORD(wParam))
+            {
+                case IDOK:
+                    {
+                        String str;
+                        str.SetLength((UINT)SendMessage(GetDlgItem(hwnd, IDC_NAME), WM_GETTEXTLENGTH, 0, 0));
+                        if (!str.Length())
+                        {
+                            OBSMessageBox(hwnd, Str("EnterName"), NULL, 0);
+                            break;
+                        }
+
+                        SendMessage(GetDlgItem(hwnd, IDC_NAME), WM_GETTEXT, str.Length()+1, (LPARAM)str.Array());
+
+                        String &strOut = *(String*)GetWindowLongPtr(hwnd, DWLP_USER);
+
+                        String strProfilePath;
+                        strProfilePath << lpAppDataPath << TEXT("\\profiles\\") << str << TEXT(".ini");
+
+                        if (OSFileExists(strProfilePath))
+                        {
+                            String strExists = Str("NameExists");
+                            strExists.FindReplace(TEXT("$1"), str);
+                            OBSMessageBox(hwnd, strExists, NULL, 0);
+                            break;
+                        }
+
+                        strOut = str;
+                    }
+
+                case IDCANCEL:
+                    EndDialog(hwnd, LOWORD(wParam));
+                    break;
+            }
+    }
+
+    return false;
+}
+
 INT_PTR CALLBACK OBS::EnterSourceNameDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch(message)
@@ -2865,6 +2920,204 @@ void OBS::ExportSceneCollection()
 
 //----------------------------
 
+void OBS::AddProfile(ProfileAction action)
+{
+    if (App->bRunning)
+        return;
+
+    String strCurProfile = GlobalConfig->GetString(TEXT("General"), TEXT("Profile"));
+
+    String strProfile;
+    if (action == ProfileAction::Rename)
+        strProfile = strCurProfile;
+
+    if (OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_ENTERNAME), hwndMain, OBS::EnterProfileDialogProc, (LPARAM)&strProfile) != IDOK)
+        return;
+
+    String strCurProfilePath;
+    strCurProfilePath = FormattedString(L"%s\\profiles\\%s.ini", lpAppDataPath, strCurProfile.Array());
+
+    String strProfilePath;
+    strProfilePath << lpAppDataPath << TEXT("\\profiles\\") << strProfile << TEXT(".ini");
+
+    if ((action != ProfileAction::Rename || !strProfilePath.CompareI(strCurProfilePath)) && OSFileExists(strProfilePath))
+        OBSMessageBox(hwndMain, Str("MainMenu.Profiles.ProfileExists"), NULL, 0);
+    else
+    {
+        bool success = true;
+
+        if (action == ProfileAction::Rename)
+        {
+            if (!MoveFile(strCurProfilePath, strProfilePath))
+                success = false;
+            AppConfig->SetFilePath(strProfilePath);
+        }
+        else if (action == ProfileAction::Clone)
+        {
+            if (!CopyFileW(strCurProfilePath, strProfilePath, TRUE))
+                success = false;
+        }
+        else
+        {
+            if(!AppConfig->Create(strProfilePath))
+            {
+                OBSMessageBox(hwndMain, TEXT("Error - unable to create new profile, could not create file"), NULL, 0);
+                return;
+            }
+        }
+
+        if (!success)
+        {
+            AppConfig->Open(strCurProfilePath);
+            return;
+        }
+
+        GlobalConfig->SetString(TEXT("General"), TEXT("Profile"), strProfile);
+
+        App->ReloadIniSettings();
+        App->ResetProfileMenu();
+        App->ResetApplicationName();
+    }
+}
+
+void OBS::RemoveProfile()
+{
+    if (App->bRunning)
+        return;
+
+    String strCurProfile = GlobalConfig->GetString(TEXT("General"), TEXT("Profile"));
+
+    String strCurProfileFile = strCurProfile + L".ini";
+    String strCurProfileDir;
+    strCurProfileDir << lpAppDataPath << TEXT("\\profiles\\");
+
+    OSFindData ofd;
+    HANDLE hFind = OSFindFirstFile(strCurProfileDir + L"*.ini", ofd);
+
+    if (!hFind)
+    {
+        Log(L"Find failed for profile");
+        return;
+    }
+
+    String nextFile;
+
+    do
+    {
+        if (scmpi(ofd.fileName, strCurProfileFile) != 0)
+        {
+            nextFile = ofd.fileName;
+            break;
+        }
+    } while (OSFindNextFile(hFind, ofd));
+    OSFindClose(hFind);
+
+    if (nextFile.IsEmpty())
+        return;
+
+    String strConfirm = Str("Settings.General.ConfirmDelete");
+    strConfirm.FindReplace(TEXT("$1"), strCurProfile);
+    if (OBSMessageBox(hwndMain, strConfirm, Str("DeleteConfirm.Title"), MB_YESNO) == IDYES)
+    {
+        String strCurProfilePath;
+        strCurProfilePath << strCurProfileDir << strCurProfile << TEXT(".ini");
+        OSDeleteFile(strCurProfilePath);
+
+        GlobalConfig->SetString(L"General", L"Profile", GetPathWithoutExtension(nextFile));
+
+        App->ReloadIniSettings();
+        App->ResetApplicationName();
+        App->ResetProfileMenu();
+    }
+}
+
+void OBS::ImportProfile()
+{
+    if (OBSMessageBox(hwndMain, Str("ImportProfileReplaceWarning.Text"), Str("ImportProfileReplaceWarning.Title"), MB_YESNO) == IDNO)
+        return;
+
+    TCHAR lpFile[MAX_PATH+1];
+    zero(lpFile, sizeof(lpFile));
+
+    OPENFILENAME ofn;
+    zero(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.lpstrFile = lpFile;
+    ofn.hwndOwner = hwndMain;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrFilter = TEXT("Profile Files (*.ini)\0*.ini\0");
+    ofn.nFilterIndex = 1;
+    ofn.lpstrInitialDir = GlobalConfig->GetString(L"General", L"LastImportExportPath");
+
+    TCHAR curDirectory[MAX_PATH+1];
+    GetCurrentDirectory(MAX_PATH, curDirectory);
+
+    BOOL bOpenFile = GetOpenFileName(&ofn);
+    SetCurrentDirectory(curDirectory);
+
+    if (!bOpenFile)
+        return;
+
+    if (GetPathExtension(lpFile).IsEmpty())
+        scat(lpFile, L".ini");
+
+    GlobalConfig->SetString(L"General", L"LastImportExportPath", GetPathDirectory(lpFile));
+
+    String strCurProfile = GlobalConfig->GetString(TEXT("General"), TEXT("Profile"));
+    String strCurProfileFile;
+    strCurProfileFile << lpAppDataPath << TEXT("\\profiles\\") << strCurProfile << L".ini";
+
+    CopyFile(lpFile, strCurProfileFile, false);
+
+    if(!AppConfig->Open(strCurProfileFile))
+    {
+        OBSMessageBox(hwndMain, TEXT("Error - unable to open ini file"), NULL, 0);
+        return;
+    }
+
+    App->ReloadIniSettings();
+}
+
+void OBS::ExportProfile()
+{
+    TCHAR lpFile[MAX_PATH+1];
+    zero(lpFile, sizeof(lpFile));
+
+    OPENFILENAME ofn;
+    zero(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.lpstrFile = lpFile;
+    ofn.hwndOwner = hwndMain;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrFilter = TEXT("Profile Files (*.ini)\0*.ini\0");
+    ofn.nFilterIndex = 1;
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+    ofn.lpstrInitialDir = GlobalConfig->GetString(L"General", L"LastImportExportPath");
+
+    TCHAR curDirectory[MAX_PATH+1];
+    GetCurrentDirectory(MAX_PATH, curDirectory);
+
+    BOOL bSaveFile = GetSaveFileName(&ofn);
+    SetCurrentDirectory(curDirectory);
+
+    if (!bSaveFile)
+        return;
+
+    if (GetPathExtension(lpFile).IsEmpty())
+        scat(lpFile, L".ini");
+
+    String strCurProfile = GlobalConfig->GetString(TEXT("General"), TEXT("Profile"));
+    String strCurProfileFile;
+    strCurProfileFile << lpAppDataPath << TEXT("\\profiles\\") << strCurProfile << L".ini";
+
+    GlobalConfig->SetString(L"General", L"LastImportExportPath", GetPathDirectory(lpFile));
+
+    CopyFile(strCurProfileFile, lpFile,  false);
+}
+
+
+//----------------------------
+
 void OBS::ResetSceneCollectionMenu()
 {
     HMENU hmenuMain = GetMenu(hwndMain);
@@ -2877,7 +3130,7 @@ void OBS::ResetProfileMenu()
 {
     HMENU hmenuMain = GetMenu(hwndMain);
     HMENU hmenuProfiles = GetSubMenu(hmenuMain, 2);
-    while (DeleteMenu(hmenuProfiles, 0, MF_BYPOSITION));
+    while (DeleteMenu(hmenuProfiles, 8, MF_BYPOSITION));
     AddProfilesToMenu(hmenuProfiles);
 }
 
@@ -3530,6 +3783,25 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     break;
                 case ID_SCENECOLLECTION_EXPORT:
                     App->ExportSceneCollection();
+                    break;
+
+                case ID_PROFILE_NEW:
+                    App->AddProfile(ProfileAction::Add);
+                    break;
+                case ID_PROFILE_CLONE:
+                    App->AddProfile(ProfileAction::Clone);
+                    break;
+                case ID_PROFILE_RENAME:
+                    App->AddProfile(ProfileAction::Rename);
+                    break;
+                case ID_PROFILE_REMOVE:
+                    App->RemoveProfile();
+                    break;
+                case ID_PROFILE_IMPORT:
+                    App->ImportProfile();
+                    break;
+                case ID_PROFILE_EXPORT:
+                    App->ExportProfile();
                     break;
 
                 case ID_TESTSTREAM:
