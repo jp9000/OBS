@@ -70,6 +70,16 @@ BOOL ConfigFile::LoadFile(DWORD dwOpenMode)
 
     dwLength = (DWORD)file.GetFileSize();
 
+    if (dwLength >= 3) // remove BOM if present
+    {
+        char buff[3];
+        file.Read(&buff, 3);
+        if (memcmp(buff, "\xEF\xBB\xBF", 3))
+            file.SetPos(0, XFILE_BEGIN);
+        else
+            dwLength -= 3;
+    }
+
     LPSTR lpTempFileData = (LPSTR)Allocate(dwLength+5);
     file.Read(&lpTempFileData[2], dwLength);
     lpTempFileData[0] = lpTempFileData[dwLength+2] = 13;

@@ -65,6 +65,17 @@ public:
 
         SetPos(0, XFILE_BEGIN);
         DWORD dwFileSize = (DWORD)GetFileSize();
+
+        if (dwFileSize >= 3) // remove BOM if present
+        {
+            char buff[3];
+            Read(&buff, 3);
+            if (memcmp(buff, "\xEF\xBB\xBF", 3))
+                SetPos(0, XFILE_BEGIN);
+            else
+                dwFileSize -= 3;
+        }
+
         LPSTR lpFileDataUTF8 = (LPSTR)Allocate(dwFileSize+1);
         lpFileDataUTF8[dwFileSize] = 0;
         
