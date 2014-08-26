@@ -136,6 +136,7 @@ void RefreshWindowList(HWND hwndCombobox, ConfigDialogData &configData)
                                 !scmp(moduleName, TEXT("d3d10_1.dll")) ||
                                 !scmp(moduleName, TEXT("d3d11.dll")) ||
                                 !scmp(moduleName, TEXT("dxgi.dll")) ||
+                                !scmp(moduleName, TEXT("d3d8.dll")) ||
                                 !scmp(moduleName, TEXT("opengl32.dll")))
                             {
                                 bFoundModule = true;
