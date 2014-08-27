@@ -842,10 +842,11 @@ void  ConfigFile::SetKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
             {
                 lpTemp = &lpTemp[dwKeyNameSize+1];
 
-                if ((*lpTemp == '\r' && *newvalue == '\0') || !scmpi_n(lpTemp, newvalue, slen(newvalue)))
-                    return;
-
                 TSTR lpNextLine = schr(lpTemp, '\r');
+                int newlen = slen(newvalue);
+
+                if ((*lpTemp == '\r' && *newvalue == '\0') || (lpNextLine - lpTemp == newlen && !scmpi_n(lpTemp, newvalue, newlen)))
+                    return;
 
                 String tmpFileName = strFileName;
                 tmpFileName += TEXT(".tmp");
