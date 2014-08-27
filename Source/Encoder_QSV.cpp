@@ -300,6 +300,20 @@ namespace
             return result;
         }
     };
+
+    template <typename... Ts>
+    static void ThrowQSVInitError(CTSTR message, CTSTR localized_message, Ts... ts)
+    {
+        AppWarning(message, ts...);
+        throw localized_message;
+    }
+
+    void StopHelper(ipc_stop &stop, IPCWaiter &waiter, safe_handle &h)
+    {
+        stop.signal();
+        if (waiter.wait_timeout(500))
+            TerminateProcess(h, (UINT)-2);
+    }
 }
 
 bool CheckQSVHardwareSupport(bool log=true, bool *configurationWarning = nullptr)
@@ -540,7 +554,7 @@ public:
         }
 
         if(!spawn_helper(event_prefix, qsvhelper_process, qsvhelper_thread, process_waiter))
-            CrashError(TEXT("Couldn't launch QSVHelper: %u"), GetLastError()); //FIXME: convert to localized error
+            ThrowQSVInitError(L"Couldn't launch QSVHelper.exe: %u!", Str("Encoder.QSV.HelperLaunchFailed"), GetLastError());
 
         ipc_init_request request((event_prefix + INIT_REQUEST).Array());
 
@@ -620,25 +634,20 @@ public:
         {
             DWORD code = 0;
             if(!GetExitCodeProcess(qsvhelper_process.h, &code))
-                CrashError(TEXT("Failed to initialize QSV session.")); //FIXME: convert to localized error
+                ThrowQSVInitError(L"Failed to get exit code while initializing QSVHelper.exe", Str("Encoder.QSV.HelperEarlyExit"));
             switch(code)
             {
             case EXIT_INCOMPATIBLE_CONFIGURATION:
                 if (bHaveCustomImpl)
-                    CrashError(TEXT("QSVHelper.exe has exited because of an incompatible qsvimpl custom parameter (before response)"));
+                    ThrowQSVInitError(L"QSVHelper.exe has exited because of an incompatible qsvimpl custom parameter (before response)", Str("Encoder.QSV.IncompatibleImpl"));
                 else
-                    CrashError(TEXT("QSVHelper.exe has exited because the encoder was not initialized"));
+                    ThrowQSVInitError(L"QSVHelper.exe has exited because the encoder was not initialized", Str("Encoder.QSV.NoValidConfig"));
             case EXIT_NO_VALID_CONFIGURATION:
-                if(OSGetVersion() < 8)
-                    CrashError(TEXT("QSVHelper.exe could not find a valid configuration. Make sure you have a (virtual) display connected to your iGPU")); //FIXME: convert to localized error
-                CrashError(TEXT("QSVHelper.exe could not find a valid configuration"));
+                ThrowQSVInitError(L"QSVHelper.exe could not find a valid configuration", Str("Encoder.QSV.NoValidConfig"));
             default:
                 if (code == EXIT_ENCODER_INIT_FAILED && request->use_custom_parameters)
-                {
-                    Log(L"Encoder initialization failed with code %i while using custom parameters", code);
-                    throw Str("Encoder.QSV.InitCustomParamsFailed");
-                }
-                CrashError(TEXT("QSVHelper.exe has exited with code %i (before response)"), code); //FIXME: convert to localized error
+                    ThrowQSVInitError(L"Encoder initialization failed with code %i while using custom parameters", Str("Encoder.QSV.InitCustomParamsFailed"), code);
+                ThrowQSVInitError(L"QSVHelper.exe has exited with code %i (before response)", Str("Encoder.QSV.HelperEarlyExit"), code);
             }
         }
 
@@ -662,10 +671,16 @@ public:
 
         encode_tasks.SetSize(response->bitstream_num);
 
-        bs_buff = ipc_bitstream_buff((event_prefix + BITSTREAM_BUFF).Array(), response->bitstream_size*response->bitstream_num);
+        auto ipc_fail = [&](CTSTR name)
+        {
+            AppWarning(L"Failed to initialize QSV IPC '%s' (full name: '%s') (%u)", name, (event_prefix + name).Array(), GetLastError());
+            StopHelper(stop, process_waiter, qsvhelper_process);
+            throw Str("Encoder.QSV.IPCInit");
+        };
 
+        bs_buff = ipc_bitstream_buff((event_prefix + BITSTREAM_BUFF).Array(), response->bitstream_size*response->bitstream_num);
         if(!bs_buff)
-            CrashError(TEXT("Failed to initialize QSV bitstream buffer (%u)"), GetLastError());
+            ipc_fail(BITSTREAM_BUFF);
 
         mfxU8 *bs_start = (mfxU8*)(((size_t)&bs_buff + 31)/32*32);
         for(unsigned i = 0; i < encode_tasks.Num(); i++)
@@ -683,9 +698,8 @@ public:
         frames.SetSize(response->frame_num);
 
         frame_buff = ipc_frame_buff((event_prefix + FRAME_BUFF).Array(), response->frame_size*response->frame_num);
-
         if(!frame_buff)
-            CrashError(TEXT("Failed to initialize QSV frame buffer (%u)"), GetLastError());
+            ipc_fail(FRAME_BUFF);
 
         mfxU8 *frame_start = (mfxU8*)(((size_t)&frame_buff + 15)/16*16);
         for(unsigned i = 0; i < frames.Num(); i++)
@@ -709,27 +723,27 @@ public:
 
         frame_queue = ipc_frame_queue((event_prefix + FRAME_QUEUE).Array(), frames.Num());
         if(!frame_queue)
-            CrashError(TEXT("Failed to initialize frame queue (%u)"), GetLastError());
+            ipc_fail(FRAME_QUEUE);
 
         frame_buff_status = ipc_frame_buff_status((event_prefix + FRAME_BUFF_STATUS).Array(), frames.Num());
         if(!frame_buff_status)
-            CrashError(TEXT("Failed to initialize QSV frame buffer status (%u)"), GetLastError());
+            ipc_fail(FRAME_BUFF_STATUS);
 
         bs_info = ipc_bitstream_info((event_prefix + BITSTREAM_INFO).Array(), response->bitstream_num);
         if(!bs_info)
-            CrashError(TEXT("Failed to initialize QSV bitstream info (%u)"), GetLastError());
+            ipc_fail(BITSTREAM_INFO);
 
         filled_bitstream = ipc_filled_bitstream((event_prefix + FILLED_BITSTREAM).Array());
         if(!filled_bitstream)
-            CrashError(TEXT("Failed to initialize bitstream signal (%u)"), GetLastError());
+            ipc_fail(FILLED_BITSTREAM);
 
         stop = ipc_stop((event_prefix + STOP_REQUEST).Array());
         if(!stop)
-            CrashError(TEXT("Failed to initialize QSV stop signal (%u)"), GetLastError());
+            ipc_fail(STOP_REQUEST);
 
         encoder_flushed = ipc_encoder_flushed((event_prefix + ENCODER_FLUSHED).Array());
         if (!encoder_flushed)
-            CrashError(L"Failed to initialize QSV encoder flushed signal (%u)", GetLastError());
+            ipc_fail(ENCODER_FLUSHED);
 
         filled_bitstream_waiter = process_waiter;
         filled_bitstream_waiter.push_back(filled_bitstream.signal_);
@@ -739,11 +753,9 @@ public:
 
     ~QSVEncoder()
     {
-        stop.signal();
         ClearPackets();
 
-        if (process_waiter.wait_timeout(5000))
-            TerminateProcess(qsvhelper_process, (UINT)-2);
+        StopHelper(stop, process_waiter, qsvhelper_process);
     }
 
 #ifndef SEI_USER_DATA_UNREGISTERED
