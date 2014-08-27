@@ -845,7 +845,7 @@ void  ConfigFile::SetKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
                 TSTR lpNextLine = schr(lpTemp, '\r');
                 int newlen = slen(newvalue);
 
-                if ((*lpTemp == '\r' && *newvalue == '\0') || (lpNextLine - lpTemp == newlen && !scmpi_n(lpTemp, newvalue, newlen)))
+                if ((*lpTemp == '\r' && *newvalue == '\0') || (lpNextLine - lpTemp == newlen && !scmp_n(lpTemp, newvalue, newlen)))
                     return;
 
                 String tmpFileName = strFileName;
