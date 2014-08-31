@@ -226,13 +226,19 @@ RTMPPublisher::~RTMPPublisher()
         OSCloseThread(hConnectionThread);
     }
 
+    DWORD startTime = OSGetTime();
+
     //send all remaining buffered packets, this may block since it respects timestamps
     FlushBufferedPackets ();
+
+    Log(TEXT("~RTMPPublisher: Packet flush completed in %d ms"), OSGetTime() - startTime);
 
     //OSDebugOut (TEXT("%d queued after flush\n"), queuedPackets.Num());
 
     if(hSendThread)
     {
+        startTime = OSGetTime();
+
         //this marks the thread to exit after current work is done
         SetEvent(hSendLoopExit);
 
@@ -252,6 +258,8 @@ RTMPPublisher::~RTMPPublisher()
         }
 
         OSTerminateThread(hSendThread, 10000);
+
+        Log(TEXT("~RTMPPublisher: Send thread terminated in %d ms"), OSGetTime() - startTime);
     }
 
     if(hSendSempahore)
@@ -261,6 +269,8 @@ RTMPPublisher::~RTMPPublisher()
 
     if (hSocketThread)
     {
+        startTime = OSGetTime();
+
         //mark the socket loop to shut down after the buffer is empty
         SetEvent(hSocketLoopExit);
 
@@ -269,6 +279,8 @@ RTMPPublisher::~RTMPPublisher()
 
         //wait 60 sec for it to exit
         OSTerminateThread(hSocketThread, 60000);
+
+        Log(TEXT("~RTMPPublisher: Socket thread terminated in %d ms"), OSGetTime() - startTime);
     }
 
     //OSDebugOut (TEXT("*** ~RTMPPublisher hSocketThread terminated (%d queued, %d buffered, %d data)\n"), queuedPackets.Num(), bufferedPackets.Num(), curDataBufferLen);
@@ -277,6 +289,8 @@ RTMPPublisher::~RTMPPublisher()
     {
         if (RTMP_IsConnected(rtmp))
         {
+            startTime = OSGetTime();
+
             //at this point nothing should be in the buffer, flush out what remains to the net and make it blocking
             FlushDataBuffer();
 
@@ -303,6 +317,8 @@ RTMPPublisher::~RTMPPublisher()
                     break;
                 }
             }
+
+            Log(TEXT("~RTMPPublisher: Final socket shutdown completed in %d ms"), OSGetTime() - startTime);
 
             //OSDebugOut(TEXT("Graceful shutdown complete.\n"));
         }
