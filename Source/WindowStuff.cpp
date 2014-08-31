@@ -2134,7 +2134,7 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                                         {
                                             LVFINDINFO findInfo;
                                             findInfo.flags = LVFI_STRING;
-                                            findInfo.psz = (LPCWSTR) element->GetName();
+                                            findInfo.psz = (LPCWSTR) item->GetName();
 
                                             int listID = ListView_FindItem(hwndSceneSources, -1, &findInfo);
                                             if(listID != -1)
