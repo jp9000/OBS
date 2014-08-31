@@ -1136,12 +1136,13 @@ void  XConfig::Save()
         tmpPath.AppendString(TEXT(".tmp"));
 
         XFile file;
-        if (file.Open(strFileName, XFILE_WRITE, XFILE_CREATEALWAYS))
+        if (file.Open(tmpPath, XFILE_WRITE, XFILE_CREATEALWAYS))
         {
             if (WriteFileData(file, 0, RootElement))
             {
                 file.Close();
-                OSRenameFile(tmpPath, strFileName);
+                if (!OSRenameFile(tmpPath, strFileName))
+                    Log(TEXT("XConfig::Save: Unable to move new config file %s to %s"), tmpPath.Array(), strFileName.Array());
             }
             else
             {
@@ -1164,7 +1165,8 @@ void  XConfig::SaveTo(CTSTR lpPath)
             if (WriteFileData(file, 0, RootElement))
             {
                 file.Close();
-                OSRenameFile(tmpPath, lpPath);
+                if (!OSRenameFile(tmpPath, lpPath))
+                    Log(TEXT("XConfig::SaveTo: Unable to move new config file %s to %s"), tmpPath.Array(), lpPath);
             }
             else
             {

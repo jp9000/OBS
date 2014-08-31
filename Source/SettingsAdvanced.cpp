@@ -406,14 +406,21 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
                 
                 hwndTemp = GetDlgItem(hwnd, IDC_NVENCPRESET);
-                static const CTSTR nv_preset_names[9] = {
-                    TEXT("Default"),
+                static const CTSTR nv_preset_names[16] = {
+                    TEXT("Automatic"),
+                    TEXT("Streaming"),
+                    TEXT("Streaming (2pass)"),
                     TEXT("High Quality"),
                     TEXT("High Performance"),
                     TEXT("Bluray Disk"),
                     TEXT("Low Latency"),
                     TEXT("High Performance Low Latency"),
                     TEXT("High Quality Low Latency"),
+                    TEXT("Low Latency (2pass)"),
+                    TEXT("High Performance Low Latency (2pass)"),
+                    TEXT("High Quality Low Latency (2pass)"),
+                    TEXT("Lossless"),
+                    TEXT("High Performance Lossless"),
                     TEXT("NVDefault"),
                     NULL
                 };

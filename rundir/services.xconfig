@@ -85,17 +85,16 @@ services : {
     id : 11
     servers : {
       "Default"       : rtmp://live.hitbox.tv/push
-      "EU-East"       : rtmp://live.vie.hitbox.tv/push
-      "EU-Central"    : rtmp://live.nbg.hitbox.tv/push
       "EU-West"       : rtmp://live.fra.hitbox.tv/push
-      "EU-North"      : rtmp://live.ams.hitbox.tv/push
+      "EU-East"       : rtmp://live.vie.hitbox.tv/push
+      "EU-North"      : rtmp://live.lhr.hitbox.tv/push
+      "EU-Central"    : rtmp://live.nbg.hitbox.tv/push
       "US-East"       : rtmp://live.vgn.hitbox.tv/push
       "US-Central"    : rtmp://live.den.hitbox.tv/push
       "US-West"       : rtmp://live.lax.hitbox.tv/push
-      "South America" : rtmp://live.gru.hitbox.tv/push
       "South Korea"   : rtmp://live.icn.hitbox.tv/push
-      "United Kingdom": rtmp://live.lhr.hitbox.tv/push
       "South America" : rtmp://live.gru.hitbox.tv/push
+      "Oceania"       : rtmp://live.syd.hitbox.tv/push
     }
     recommended : {
       "keyint" : 2000

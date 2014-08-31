@@ -621,6 +621,7 @@ class OBS
 
     XConfig                 scenesConfig;
     XConfig                 globalSourcesImportConfig;
+    XConfig                 scenesCopyToConfig;
     List<SceneHotkeyInfo>   sceneHotkeys;
     XElement                *sceneElement;
 

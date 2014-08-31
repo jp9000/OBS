@@ -70,6 +70,16 @@ BOOL ConfigFile::LoadFile(DWORD dwOpenMode)
 
     dwLength = (DWORD)file.GetFileSize();
 
+    if (dwLength >= 3) // remove BOM if present
+    {
+        char buff[3];
+        file.Read(&buff, 3);
+        if (memcmp(buff, "\xEF\xBB\xBF", 3))
+            file.SetPos(0, XFILE_BEGIN);
+        else
+            dwLength -= 3;
+    }
+
     LPSTR lpTempFileData = (LPSTR)Allocate(dwLength+5);
     file.Read(&lpTempFileData[2], dwLength);
     lpTempFileData[0] = lpTempFileData[dwLength+2] = 13;
@@ -195,7 +205,8 @@ BOOL ConfigFile::SaveAs(CTSTR lpPath)
             return FALSE;
 
         newFile.Close();
-        OSRenameFile(tmpPath, lpPath);
+        if (!OSRenameFile(tmpPath, lpPath))
+            Log(TEXT("ConfigFile::SaveAs: Unable to move new config file %s to %s"), tmpPath.Array(), lpPath);
 
         strFileName = lpPath;
         return TRUE;
@@ -831,10 +842,11 @@ void  ConfigFile::SetKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
             {
                 lpTemp = &lpTemp[dwKeyNameSize+1];
 
-                if ((*lpTemp == '\r' && *newvalue == '\0') || !scmpi_n(lpTemp, newvalue, slen(newvalue)))
-                    return;
-
                 TSTR lpNextLine = schr(lpTemp, '\r');
+                int newlen = slen(newvalue);
+
+                if ((*lpTemp == '\r' && *newvalue == '\0') || (lpNextLine - lpTemp == newlen && !scmp_n(lpTemp, newvalue, newlen)))
+                    return;
 
                 String tmpFileName = strFileName;
                 tmpFileName += TEXT(".tmp");
@@ -852,7 +864,8 @@ void  ConfigFile::SetKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
                         return;
 
                     file.Close();
-                    OSRenameFile(tmpFileName, strFileName);
+                    if (!OSRenameFile(tmpFileName, strFileName))
+                        Log(TEXT("ConfigFile::SetKey: Unable to move new config file %s to %s"), tmpFileName.Array(), strFileName.Array());
                 }
 
                 if(LoadFile(XFILE_OPENEXISTING))

@@ -50,6 +50,14 @@ ImportGlobalSources="Import Global Sources"
 ImportCollectionReplaceWarning.Title="Import Scene Collection"
 ImportCollectionReplaceWarning.Text="The current scene data will be lost.  Are you sure you want to import?"
 
+CopyTo="Copy To"
+CopyTo.SceneNameExists="The scene '$1' already exists in the selected scene collection."
+CopyTo.GlobalSourcesExists="The global source '$1' already exists in the selected scene collection."
+CopyTo.Success.Text="The scene '$1' has been successfully copied to the selected scene collection."
+CopyTo.Success.Title="Success"
+CopyTo.CopyGlobalSourcesReferences="Do you want to also copy the global sources the references point to? If you choose No the references will be removed from the copied scene."
+CopyTo.CopyGlobalSourcesReferences.Title="Copy the Global Sources?"
+
 DeleteCollection="Remove scene collection"
 DeleteCollection.Text="Are you sure you want to remove the current scene collection?"
 
@@ -504,6 +512,11 @@ Encoder.QSV.SNBIVBMaximumResolutionWidthHeightExceeded="Your output resolution o
 Encoder.QSV.SNBIVBMaximumResolutionWidthExceeded="Your output resolution width of %u exceeds the maximum of 1920 supported by Quick Sync on Sandy Bridge and Ivy Bridge based processors!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionHeightExceeded="Your output resolution height of %u exceeds the maximum of 1200 supported by Quick Sync on Sandy Bridge and Ivy Bridge based processors!\r\n"
 Encoder.QSV.InitCustomParamsFailed="Encoder initialization failed while custom parameters where active. Try enabling CBR or VBR in the Quick Sync Encoder settings."
+Encoder.QSV.HelperLaunchFailed="QSVHelper.exe couldn't be launched!"
+Encoder.QSV.HelperEarlyExit="QSVHelper.exe exited."
+Encoder.QSV.IncompatibleImpl="QSVHelper.exe has exited because of an invalid 'qsvimpl' encoder setting; try removing the 'qsvimpl' parameter from your Custom Quick Sync Encoder Settings"
+Encoder.QSV.NoValidConfig="Quick Sync couldn't find a valid configuration; try connecting a (virtual) monitor to your Intel GPU"
+Encoder.QSV.IPCInit="An error occured when initializing Quick Sync IPC" 
 
 Updater.DownloadNow="Would you like to download them now?"
 Updater.NewUpdates="The following updates are available:\r\n\r\n"
