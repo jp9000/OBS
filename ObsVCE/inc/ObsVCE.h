@@ -131,7 +131,7 @@ public:
     bool SetBitRate(DWORD maxBitrate, DWORD bufferSize);
 
     void GetHeaders(DataPacket &packet);
-    void GetSEI(DataPacket &packet) { packet.size = 0; packet.lpPacket = NULL; }
+    void GetSEI(DataPacket &packet) { packet.size = 0; packet.lpPacket = (LPBYTE)1; }
 
     void RequestKeyframe();
 
@@ -145,6 +145,9 @@ public:
     bool init();
 private:
 
+	// Warm up OpenCL buffers etc.
+    void Warmup();
+	bool YUV444Convert(int bufferidx);
     bool encodeCreate(uint32_t deviceId);
     bool encodeOpen(uint32_t deviceId);
     bool encodeClose();

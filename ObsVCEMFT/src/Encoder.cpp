@@ -54,7 +54,8 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, const TCHAR*
     mUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
     mKeyint = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 0);
     bool bUsePad = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 0) != 0;
-    if (bUsePad)
+    //bool bAddFiller = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("AddFiller"), 1) != 0;
+    if (bUsePad /* && bAddFiller*/)
     {
         mMaxBucketSize = mMaxBitrate * (1000 / 8);
         mDesiredPacketSize = mMaxBucketSize / mFps;
@@ -262,11 +263,29 @@ HRESULT VCEEncoder::Init()
         VCELog(TEXT("Failed to set CODECAPI_AVEncVideoMaxNumRefFrame"));
     }
 
+	MFT_OUTPUT_STREAM_INFO si = { 0 };
+
+	mEncTrans->GetOutputStreamInfo(0, &si);
+
+	//TODO Handle other cases too, maybe
+	if (!HASFLAG(si.dwFlags,
+		MFT_OUTPUT_STREAM_WHOLE_SAMPLES |
+		MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER |
+		MFT_OUTPUT_STREAM_PROVIDES_SAMPLES)) //Otherwise need to allocate own IMFSample
+	{
+		return S_FALSE;
+	}
+
     MFFrameRateToAverageTimePerFrame(mFps, 1, &mFrameDur);
 
     /// Get it rolling
     hr = mEncTrans->ProcessMessage(MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, 0);
+	if (FAILED(hr))
+		VCELog(TEXT("Notify begin of stream failed."));
+
     hr = mEncTrans->ProcessMessage(MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0);
+	if (FAILED(hr))
+		VCELog(TEXT("Start of stream failed. Could be that VCE MFT does not like some settings."));
 
     mAlive = true;
     return hr;
@@ -353,22 +372,17 @@ HRESULT VCEEncoder::ProcessOutput(List<DataPacket> &packets, List<PacketType> &p
     MFT_OUTPUT_DATA_BUFFER out[1] = { 0 };
     DWORD status = 0, currLen, maxLen;
 
-    MFT_OUTPUT_STREAM_INFO si = { 0 };
-
+    
     profileIn("ProcessOutput")
-    mEncTrans->GetOutputStreamInfo(0, &si);
-
-    //TODO Handle other cases too, maybe
-    if (!HASFLAG(si.dwFlags, 
-            MFT_OUTPUT_STREAM_WHOLE_SAMPLES |
-            MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER |
-            MFT_OUTPUT_STREAM_PROVIDES_SAMPLES)) //Otherwise need to allocate own IMFSample
-    {
-        return S_FALSE;
-    }
-
     //E_UNEXPECTED if no METransformHaveOutput event
     hr = mEncTrans->ProcessOutput(0, 1, out, &status);
+
+	if (out[0].pEvents)
+	{
+		out[0].pEvents->Release();
+		out[0].pEvents = nullptr;
+	}
+
     if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
         return hr;
 
@@ -379,12 +393,6 @@ HRESULT VCEEncoder::ProcessOutput(List<DataPacket> &packets, List<PacketType> &p
     if (out[0].dwStatus & MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE)
     {
         return OutputFormatChange();
-    }
-
-    if (out[0].pEvents)
-    {
-        out[0].pEvents->Release();
-        out[0].pEvents = nullptr;
     }
 
     out[0].pSample->GetSampleTime((LONGLONG*)&dur);
@@ -500,11 +508,14 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
 
     HRESULT hrIn = S_OK;
     hr = S_OK;
-    while (true)
+
+	while (!packets.Num())
     {
         hrIn = ProcessInput(sample);
+		QWORD start = GetQPCTime100NS();
         profileIn("Output")
-        OSSleep(1000/(mFps + 10));
+        //OSSleep(1000/(mFps + 10));
+		Sleep(5);
         while (/*packets.Num() == 0 &&*/ SUCCEEDED(hrIn))
         {
 
@@ -523,22 +534,22 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
             if (packets.Num())
                 break;
 
-            OSSleep100NS(mFrameDur / 100);
+			OSSleep100NS(16666);//OSSleepXXX high cpu usage???
+			//Sleep(1);
+
         }
         profileOut
+		start = GetQPCTime100NS() - start;
+		OSDebugOut(TEXT("Jacked it in while loop for %lld\n"), start);
 
         if (SUCCEEDED(hrIn) || FAILED(hr) ||
             (hrIn != MF_E_NOTACCEPTING && FAILED(hrIn)))
             break;
     }
 
-    while (hrIn == MF_E_NOTACCEPTING && packets.Num())
-    {
-        hrIn = ProcessInput(sample);
-    }
     sample.Release();
 
-    OSDebugOut(TEXT("Encode: hr %08X ts %d out pkts %d frame dropped: %d\n"), hrIn, timestamp, packets.Num(), hrIn == MF_E_NOTACCEPTING);
+    OSDebugOut(TEXT("Encode: hr %08X ts %d out pkts %d frame dropped: %d\n\n"), hrIn, timestamp, packets.Num(), hrIn == MF_E_NOTACCEPTING);
     profileOut
     return false;
 }
@@ -591,6 +602,27 @@ void VCEEncoder::ProcessBitstream(OutputBuffer &buff, List<DataPacket> &packets,
 
     PacketType bestType = PacketType_VideoDisposable;
     bool bFoundFrame = false;
+
+	for (unsigned int i = 0; i < nalNum; i++)
+	{
+		x264_nal_t &nal = nalOut[i];
+		if (nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE)
+		{
+			BYTE *skip = nal.p_payload;
+			while (*(skip++) != 0x1);
+			int skipBytes = (int)(skip - nal.p_payload);
+
+			if (!bFoundFrame)
+			{
+				bufferedOut->pBuffer.Insert(0, (nal.i_type == NAL_SLICE_IDR) ? 0x17 : 0x27);
+				bufferedOut->pBuffer.Insert(1, 1);
+				bufferedOut->pBuffer.InsertArray(2, timeOffsetAddr, 3);
+
+				bFoundFrame = true;
+			}
+			break;
+		}
+	}
 
     for (unsigned int i = 0; i < nalNum; i++)
     {
@@ -742,6 +774,7 @@ void VCEEncoder::ProcessBitstream(OutputBuffer &buff, List<DataPacket> &packets,
             bufferedOut->pBuffer.SetSize(currSize + fillerSize);
             BYTE *ptr = bufferedOut->pBuffer.Array() + currSize;
             memset(ptr, 0xFF, fillerSize);
+			*(ptr + fillerSize) = 0x80;
 
             mCurrBucketSize -= mDesiredPacketSize;
         }
@@ -787,7 +820,7 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
     for (int i = 0; i < MAX_INPUT_SURFACE; i++)
     {
         InputBuffer& inBuf = mInputBuffers[i];
-        if (inBuf.locked)
+        if (inBuf.locked || inBuf.pBuffer)
             continue;
 
         if (!inBuf.pBufferPtr)
@@ -937,7 +970,7 @@ void VCEEncoder::RequestKeyframe()
 void VCEEncoder::GetSEI(DataPacket &packet)
 {
     packet.size = 0;
-    packet.lpPacket = NULL;
+    packet.lpPacket = (LPBYTE)1;
 }
 
 //TODO SetBitRate

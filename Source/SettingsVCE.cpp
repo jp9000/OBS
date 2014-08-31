@@ -59,6 +59,57 @@ static void ToggleControls(HWND hwnd, BOOL enabled)
     EnableWindow(GetDlgItem(hwnd, IDC_VCE_LSM), enabled);
     EnableWindow(GetDlgItem(hwnd, IDC_VCE_QVSS), enabled);
     EnableWindow(GetDlgItem(hwnd, IDC_VCE_REFS), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_S), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_B), enabled);
+    EnableWindow(GetDlgItem(hwnd, IDC_VCE_Q), enabled);
+}
+
+//Some settings as defined in sample configs from SDK
+static void QuickSet(HWND hwnd, int qs)
+{
+#define SETTEXT(dlg, x) SendMessage(GetDlgItem(hwnd, dlg), WM_SETTEXT, 0, (LPARAM)IntString(x).Array())
+
+    SendMessage(GetDlgItem(hwnd, IDC_VCE_IME_OVERW), BM_SETCHECK, 0, 0);
+    SETTEXT(IDC_VCE_IME_SUBM, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_VCE_ZPC), BM_SETCHECK, 0, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_VCE_AMD), BM_SETCHECK, 0, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_VCE_FORCE16SKIP), BM_SETCHECK, 0, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_VCE_CABAC), BM_SETCHECK, 1, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_VCE_PMV), BM_SETCHECK, 1, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_VCE_SATD), BM_SETCHECK, 0, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_VCE_LSM), CB_SETCURSEL, (WPARAM)0, 0);
+
+    switch (qs)
+    {
+    case 0: //speed
+        SETTEXT(IDC_VCE_SRNG0, 16);
+        SETTEXT(IDC_VCE_SRNG1, 16);
+        SETTEXT(IDC_VCE_DISABLE_SUBM, 254);
+        SendMessage(GetDlgItem(hwnd, IDC_VCE_FORCE16SKIP), BM_SETCHECK, 1, 0);
+        SETTEXT(IDC_VCE_QVSS, 0);
+        break;
+    case 1: //balanced
+        //balanced.cfg has it on 16 though
+        SETTEXT(IDC_VCE_SRNG0, 24);
+        SETTEXT(IDC_VCE_SRNG1, 24);
+        SETTEXT(IDC_VCE_DISABLE_SUBM, 120);
+        SendMessage(GetDlgItem(hwnd, IDC_VCE_IME_OVERW), BM_SETCHECK, 1, 0);
+        SETTEXT(IDC_VCE_IME_SUBM, 1);
+        SETTEXT(IDC_VCE_QVSS, 50);
+        break;
+    case 2: //quality
+        SendMessage(GetDlgItem(hwnd, IDC_VCE_ZPC), BM_SETCHECK, 1, 0);
+        SETTEXT(IDC_VCE_SRNG0, 36);
+        SETTEXT(IDC_VCE_SRNG1, 36);
+        SendMessage(GetDlgItem(hwnd, IDC_VCE_AMD), BM_SETCHECK, 1, 0);
+        SETTEXT(IDC_VCE_DISABLE_SUBM, 0);
+        SETTEXT(IDC_VCE_QVSS, 100);
+        break;
+    default:
+        break;
+    }
+
+#undef SETTEXT
 }
 
 SettingsVCE::SettingsVCE()
@@ -112,7 +163,7 @@ void SettingsVCE::ApplySettings()
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("Force16x16Skip"), bBool);
 
     bBool = SendMessage(GetDlgItem(hwnd, IDC_VCE_PMV), BM_GETCHECK, 0, 0) == BST_CHECKED;
-    AppConfig->SetInt(TEXT("VCE Settings"), TEXT("DisFavorPMV"), bBool);
+    AppConfig->SetInt(TEXT("VCE Settings"), TEXT("FavorPMV"), bBool);
 
     bBool = SendMessage(GetDlgItem(hwnd, IDC_VCE_ZPC), BM_GETCHECK, 0, 0) == BST_CHECKED;
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("ForceZPC"), bBool);
@@ -133,11 +184,11 @@ void SettingsVCE::ApplySettings()
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("LowLatency"), bBool);
 
     iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_GOP)).ToInt();
-    iInt = checkRange(iInt, 0, 0xFFFF, 0);
+    iInt = checkRange(iInt, 0, 0xFFFF, 30);
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("GOPSize"), iInt);
 
     iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_IDR)).ToInt();
-    iInt = checkRange(iInt, 0, 0xFFFF, 0);
+    iInt = checkRange(iInt, 0, 0xFFFF, 60);
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("IDRPeriod"), iInt);
 
     iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_IPIC)).ToInt();
@@ -246,8 +297,8 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
             ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_AMD);
             SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
-            LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_GOP), TEXT("VCE Settings"), TEXT("GOPSize"), 30);
-            LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_IDR), TEXT("VCE Settings"), TEXT("IDRPeriod"), 0);
+            LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_GOP), TEXT("VCE Settings"), TEXT("GOPSize"), 120);
+            LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_IDR), TEXT("VCE Settings"), TEXT("IDRPeriod"), 120);
             LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_IPIC), TEXT("VCE Settings"), TEXT("IPicPeriod"), 0);
 
             ti.lpszText = (LPWSTR)Str("Settings.VCE.PeriodTooltip");
@@ -314,7 +365,7 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
             iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("Force16x16Skip"), 0);
             SendMessage(GetDlgItem(hwnd, IDC_VCE_FORCE16SKIP), BM_SETCHECK, iInt, 0);
 
-            iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("DisFavorPMV"), 0);
+            iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("FavorPMV"), 1);
             SendMessage(GetDlgItem(hwnd, IDC_VCE_PMV), BM_SETCHECK, iInt, 0);
 
             iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("ForceZPC"), 0);
@@ -354,6 +405,25 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
         case WM_COMMAND:
         {
             bool bDataChanged = false;
+
+            if (HIWORD(wParam) == BN_CLICKED)
+            {
+                switch (LOWORD(wParam))
+                {
+                case IDC_VCE_S:
+                    QuickSet(hwnd, 0);
+                    bDataChanged = true;
+                    break;
+                case IDC_VCE_B:
+                    QuickSet(hwnd, 1);
+                    bDataChanged = true;
+                    break;
+                case IDC_VCE_Q:
+                    QuickSet(hwnd, 2);
+                    bDataChanged = true;
+                    break;
+                }
+            }
 
             switch (LOWORD(wParam))
             {

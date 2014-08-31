@@ -335,11 +335,14 @@
 #define IDC_BUTTON1                     1169
 #define IDC_RESETMIC                    1169
 #define IDC_COPY                        1169
+#define IDC_VCE_S                       1169
 #define IDC_STARTRECORDINGHOTKEY_STATIC 1170
 #define IDC_COPIED                      1170
+#define IDC_VCE_B                       1170
 #define IDC_ANALYZE                     1171
 #define IDC_NVENCPRESET_LABEL           1171
 #define IDC_STOPRECORDINGHOTKEY_STATIC  1171
+#define IDC_VCE_Q                       1171
 #define IDC_STARTRECORDINGHOTKEY        1172
 #define IDC_QSVPRESET_LABEL             1172
 #define IDC_QSVPRESET                   1173

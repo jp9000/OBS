@@ -103,19 +103,13 @@ bool VCEEncoder::init()
     prepareConfigMap(mConfigTable, false);
 
     // Choose quality settings
-    if (!mUseCBR)
-    {
-        int size = MAX(mWidth, mHeight);
-        if (size <= 640)
-            //Quality
-            quickSet(mConfigTable, 2);
-        else if (size <= 1280)
-            // FPS <= 30: Quality else Balanced
-            quickSet(mConfigTable, mFps < 31 ? 2 : 1);
-        else
-            // FPS <= 30: Balanced else Speed
-            quickSet(mConfigTable, mFps < 31 ? 1 : 0);
-    }
+    int size = mWidth * mHeight * mFps;
+    if (size <= 1280 * 720 * 60)
+        quickSet(mConfigTable, 2);
+    else if (size <= 1920 * 1080 * 30)
+        quickSet(mConfigTable, 1);
+    else
+        quickSet(mConfigTable, 0);
 
     memset(&mConfigCtrl, 0, sizeof (OvConfigCtrl));
     encodeSetParam(&mConfigCtrl, &mConfigTable);
@@ -135,6 +129,9 @@ bool VCEEncoder::init()
 
     mConfigCtrl.profileLevel.profile = profile; // 66 - Baseline, 77 - Main, 100 - High
 
+    //Probably forces 1 ref frame only
+    mConfigCtrl.priority = OVE_ENCODE_TASK_PRIORITY_LEVEL2;
+
     if (mUseCBR)
     {
         int bitRateWindow = 50;
@@ -143,32 +140,29 @@ bool VCEEncoder::init()
         mManKeyInt = gopSize;
         OSDebugOut(TEXT("gopSize: %d\n"), gopSize);
 
-        //Probably forces 1 ref frame only
-        mConfigCtrl.priority = OVE_ENCODE_TASK_PRIORITY_LEVEL2;
-
         mConfigCtrl.profileLevel.level = 50; // 40 - Level 4.0, 51 - Level 5.1
         
         mConfigCtrl.rateControl.encRateControlMethod = RCM_CBR; // 0 - None, 3 - CBR, 4 - VBR
         mConfigCtrl.rateControl.encRateControlTargetBitRate = mMaxBitrate * (1000 - bitRateWindow);
-		mConfigCtrl.rateControl.encRateControlPeakBitRate = mMaxBitrate * (1000 + bitRateWindow);
+        mConfigCtrl.rateControl.encRateControlPeakBitRate = mMaxBitrate * (1000 + bitRateWindow);
         mConfigCtrl.rateControl.encGOPSize = gopSize;
         mConfigCtrl.rateControl.encQP_I = 0;
         mConfigCtrl.rateControl.encQP_P = 0;
         mConfigCtrl.rateControl.encQP_B = 0;
         mConfigCtrl.rateControl.encRCOptions = bPadCBR ? 3 : 0;
 
-        mConfigCtrl.pictControl.encHeaderInsertionSpacing = 1;
+        mConfigCtrl.pictControl.encHeaderInsertionSpacing = mManKeyInt;
         mConfigCtrl.pictControl.encIDRPeriod = 0;// gopSize;
         mConfigCtrl.pictControl.encNumMBsPerSlice = 0;
 
-		mConfigCtrl.meControl.encSearchRangeX = 16;
-		mConfigCtrl.meControl.encSearchRangeY = 16;
-		mConfigCtrl.meControl.encDisableSubMode = 120;
-		mConfigCtrl.meControl.encEnImeOverwDisSubm = 1;
-		mConfigCtrl.meControl.encImeOverwDisSubmNo = 1;
-		mConfigCtrl.meControl.enableAMD = 1;
-		mConfigCtrl.meControl.encIME2SearchRangeX = 4;
-		mConfigCtrl.meControl.encIME2SearchRangeY = 4;
+        /*mConfigCtrl.meControl.encSearchRangeX = 16;
+        mConfigCtrl.meControl.encSearchRangeY = 16;
+        mConfigCtrl.meControl.encDisableSubMode = 120;
+        mConfigCtrl.meControl.encEnImeOverwDisSubm = 1;
+        mConfigCtrl.meControl.encImeOverwDisSubmNo = 1;
+        mConfigCtrl.meControl.enableAMD = 1;*/
+        mConfigCtrl.meControl.encIME2SearchRangeX = 4;
+        mConfigCtrl.meControl.encIME2SearchRangeY = 4;
     }
     else
     {
@@ -216,8 +210,9 @@ bool VCEEncoder::init()
     if (AppConfig->GetInt(TEXT("VCE Settings"), TEXT("UseCustom"), 0))
     {
 #define APPCFG(x,y) x = AppConfig->GetInt(TEXT("VCE Settings"), TEXT(y), x)
-
-        APPCFG(mConfigCtrl.meControl.disableFavorPMVPoint, "DisFavorPMV");
+        int iOpposite = !mConfigCtrl.meControl.disableFavorPMVPoint;
+        APPCFG(iOpposite, "FavorPMV");
+        mConfigCtrl.meControl.disableFavorPMVPoint = !iOpposite;
         APPCFG(mConfigCtrl.meControl.enableAMD, "AMD");
         APPCFG(mConfigCtrl.meControl.disableSATD, "DisSATD");
         APPCFG(mConfigCtrl.meControl.encDisableSubMode, "RDODisSub");
@@ -304,6 +299,7 @@ bool VCEEncoder::init()
     }
 
     mIsReady = true;
+    Warmup();
     return true;
 }
 
@@ -366,7 +362,8 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset
     mOutPtr = malloc(mOutPtrSize);
 
     bool bUsePad = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 0) != 0;
-    if (bUsePad)
+    //bool bAddFiller = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("AddFiller"), 1) != 0;
+    if (bUsePad /* && bAddFiller*/)
     {
         mMaxBucketSize = mMaxBitrate * (1000 / 8);
         mDesiredPacketSize = mMaxBucketSize / mFps;
@@ -404,11 +401,107 @@ VCEEncoder::~VCEEncoder()
     OSCloseMutex(frameMutex);
 }
 
+void VCEEncoder::Warmup()
+{
+//#define WARMUP_ENCODE2
+    mfxFrameSurface1 tmp;
+#ifdef WARMUP_ENCODE2
+    List<DataPacket> vidPackets;
+    List<PacketType> packetTypes;
+    DWORD out_pts;
+#endif
+
+#ifdef WARMUP_ENCODE2
+    /// Try aligning to header insertion interval
+    /// so SPS/PPS/IDR NALs are together
+    int frames = mManKeyInt / MAX_INPUT_SURFACE;
+#else
+    int frames = 2;
+#endif
+
+    for (int j = 0; j < frames; j++)
+    {
+        for (int i = 0; i < MAX_INPUT_SURFACE; i++)
+        {
+            ZeroMemory(&tmp, sizeof(mfxFrameSurface1));
+            RequestBuffers(&(tmp.Data));
+
+#ifdef WARMUP_ENCODE2
+            /// Hmm, still first Encode call with 1080p
+            /// frame is still over 20ms.
+            Encode(&tmp, vidPackets, packetTypes, 0, out_pts);
+#else
+            /// Only do a conversion
+            if (mUse444)
+                YUV444Convert(i);
+#endif
+        }
+
+        // Clean up like nothing happened
+        for (int i = 0; i < MAX_INPUT_SURFACE; i++)
+        {
+            unmapBuffer(mEncodeHandle, i);
+        }
+    }
+
+#ifdef WARMUP_ENCODE2
+    for (int i = 0; i < mManKeyInt % MAX_INPUT_SURFACE; i++)
+    {
+        ZeroMemory(&tmp, sizeof(mfxFrameSurface1));
+        RequestBuffers(&(tmp.Data));
+        Encode(&tmp, vidPackets, packetTypes, 0, out_pts);
+        unmapBuffer(mEncodeHandle, i);
+    }
+#endif
+
+    mReqKeyframe = true;
+    mFirstFrame = true;
+}
+
+bool VCEEncoder::YUV444Convert(int idx)
+{
+    cl_int status = CL_SUCCESS;
+
+    profileIn("YUV444 conversion")
+    size_t globalThreads[2] = { mWidth, mHeight };
+
+    status = f_clSetKernelArg(mKernel[0], 0, sizeof(cl_mem), (cl_mem)&mEncodeHandle.inputSurfaces[idx].surface);
+    status |= f_clSetKernelArg(mKernel[1], 0, sizeof(cl_mem), (cl_mem)&mEncodeHandle.inputSurfaces[idx].surface);
+    if (status != CL_SUCCESS)
+    {
+        VCELog(TEXT("clSetKernelArg failed with 0x%08x"), status);
+        return false;
+    }
+
+    status = f_clEnqueueNDRangeKernel(mEncodeHandle.clCmdQueue[0],
+        mKernel[0], 2, 0, globalThreads, NULL, 0, 0, NULL);
+    if (status != CL_SUCCESS)
+    {
+        VCELog(TEXT("clEnqueueNDRangeKernel failed with 0x%08x"), status);
+        return false;
+    }
+
+    globalThreads[0] = mWidth / 2;
+    globalThreads[1] = mHeight / 2;
+
+    status = f_clEnqueueNDRangeKernel(mEncodeHandle.clCmdQueue[0],
+        mKernel[1], 2, 0, globalThreads, NULL, 0, 0, NULL);
+    if (status != CL_SUCCESS)
+    {
+        VCELog(TEXT("clEnqueueNDRangeKernel failed with 0x%08x"), status);
+        return false;
+    }
+
+    f_clFinish(mEncodeHandle.clCmdQueue[0]);
+    profileOut
+    return true;
+}
+
 bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, DWORD &out_pts)
 {
     if (!mIsReady)
         return false;
-
+    QWORD start = GetQPCTime100NS();
     cl_int err;
     bool ret = true;
     //cl_event inMapEvt;
@@ -429,12 +522,8 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     packets.Clear();
     packetTypes.Clear();
 
-    //TODO EOS
     if (!picIn)
         return true;
-
-    if (mStartTime == 0)
-        mStartTime = GetQPCTimeMS();
 
     profileIn("VCE encode")
     mfxFrameSurface1 *inputSurface = (mfxFrameSurface1*)picIn;
@@ -444,8 +533,9 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     unsigned int idx = (unsigned int)data.MemId - 1;
 
 #ifdef _DEBUG
-    OSDebugOut(TEXT("Encoding buffer: %d ts:%d %lld\n"), idx, timestamp, data.TimeStamp);
-    //OSDebugOut(TEXT("Mapped handle: %p\n"), mEncodeHandle.inputSurfaces[idx].mapPtr);
+    if (mStartTime == 0)
+        mStartTime = GetQPCTimeMS();
+    //OSDebugOut(TEXT("Encoding buffer: %d ts:%d %lld\n"), idx, timestamp, data.TimeStamp);
 #endif
     mLastTS = (uint64_t)data.TimeStamp;
     out_pts = timestamp;
@@ -458,9 +548,9 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         mUse444 ? mOutput : mEncodeHandle.inputSurfaces[idx].surface;
 
     // Encoder can't seem to use mapped buffer, all green :(
-    profileIn("Unmap buffer")
+    //profileIn("Unmap buffer")
     unmapBuffer(mEncodeHandle, idx);
-    profileOut
+    //profileOut
 
     memset(&pictureParameter, 0, sizeof(OVE_ENCODE_PARAMETERS_H264));
     pictureParameter.size = sizeof(OVE_ENCODE_PARAMETERS_H264);
@@ -472,9 +562,14 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     //pictureParameter.forceIMBPeriod = 0;
     //pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_NONE;
 
-    if (mReqKeyframe || mFirstFrame || (/*!mUseCBR &&*/ mKeyNum >= mManKeyInt))
+    if (mReqKeyframe || mFirstFrame)
     {
         mReqKeyframe = false;
+        pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_IDR;
+    }
+
+    if (/*!mUseCBR &&*/ mKeyNum >= mManKeyInt)
+    {
         pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_IDR;
         mKeyNum = 0;
     }
@@ -482,9 +577,9 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     
     if (mUse444)
     {
-        profileIn("YUV444 conversion")
-        size_t globalThreads[2] = {mWidth , mHeight};
-        
+        //profileIn("YUV444 conversion")
+        size_t globalThreads[2] = { mWidth, mHeight };
+
         status = f_clSetKernelArg(mKernel[0], 0, sizeof(cl_mem), (cl_mem)&mEncodeHandle.inputSurfaces[idx].surface);
         status |= f_clSetKernelArg(mKernel[1], 0, sizeof(cl_mem), (cl_mem)&mEncodeHandle.inputSurfaces[idx].surface);
         if (status != CL_SUCCESS)
@@ -513,10 +608,10 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         }
 
         f_clFinish(mEncodeHandle.clCmdQueue[0]);
-        profileOut
+        //profileOut
     }
 
-    profileIn("Queue encode task")
+    //profileIn("Queue encode task")
     //Enqueue encoding task
     res = OVEncodeTask(mEncodeHandle.session,
         numEncodeTaskInputBuffers,
@@ -532,7 +627,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         ret = false;
         goto fail;
     }
-    profileOut
+    //profileOut
 
     profileIn("Wait for task(s)")
     //wait for encoder
@@ -545,7 +640,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     }
     profileOut
 
-    //profileIn("Query task(s)")
+    profileIn("Query task(s) completion")
     //Retrieve h264 bitstream
     numTaskDescriptionsReturned = 0;
     memset(pTaskDescriptionList, 0, sizeof(OVE_OUTPUT_DESCRIPTION)*numTaskDescriptionsRequested);
@@ -564,11 +659,11 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         }
 
     } while (pTaskDescriptionList->status == OVE_TASK_STATUS_NONE);
-    //profileOut
+    profileOut
 
-	//profileIn("Remap buffer")
-	mapBuffer(mEncodeHandle, idx, mInputBufSize);
-	//profileOut
+    //profileIn("Remap buffer")
+    mapBuffer(mEncodeHandle, idx, mInputBufSize);
+    //profileOut
 
     //mEncodeHandle.inputSurfaces[idx].locked = false;
     _InterlockedCompareExchange(&(mEncodeHandle.inputSurfaces[idx].locked), 0, 1);
@@ -581,10 +676,9 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
             && pTaskDescriptionList[i].size_of_bitstream_data > 0)
         {
             ProcessOutput(&pTaskDescriptionList[i], packets, packetTypes, data.TimeStamp);
-            if (mFirstFrame)
+           if (!mHdrPacket)
             {
-                free(mHdrPacket);
-                mHdrSize = MIN(pTaskDescriptionList[i].size_of_bitstream_data, 128);
+                mHdrSize = pTaskDescriptionList[i].size_of_bitstream_data;
                 mHdrPacket = (char*)malloc(mHdrSize);
                 memcpy(mHdrPacket, pTaskDescriptionList[i].bitstream_data, mHdrSize);
             }
@@ -606,11 +700,19 @@ fail:
 
     mFirstFrame = false;
     profileOut
+
+#ifdef _DEBUG
+    start = GetQPCTime100NS() - start;
+    OSDebugOut(TEXT("In Encode for %lld\n"), start);
+#endif
+
     return ret;
 }
 
 void VCEEncoder::ProcessOutput(OVE_OUTPUT_DESCRIPTION *surf, List<DataPacket> &packets, List<PacketType> &packetTypes, uint64_t timestamp)
 {
+    PacketType bestType = PacketType_VideoDisposable;
+    bool bFoundFrame = false;
     encodeData.Clear();
 
     //Just in case
@@ -649,6 +751,17 @@ void VCEEncoder::ProcessOutput(OVE_OUTPUT_DESCRIPTION *surf, List<DataPacket> &p
         nal.i_payload = int(next - start);
         nalOut << nal;
         start = next;
+        //OSDebugOut(TEXT("%d NAL type: %d\n"), nalOut.Num(), nal.i_type);
+
+        if (!bFoundFrame && (nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE))
+        {
+            BYTE *skip = nal.p_payload;
+            while (*(skip++) != 0x1);
+            int skipBytes = (int)(skip - nal.p_payload);
+            encodeData.Insert(0, (nal.i_type == NAL_SLICE_IDR) ? 0x17 : 0x27);
+            encodeData.Insert(1, 1);
+            bFoundFrame = true;
+        }
     }
     size_t nalNum = nalOut.Num();
 
@@ -668,9 +781,11 @@ void VCEEncoder::ProcessOutput(OVE_OUTPUT_DESCRIPTION *surf, List<DataPacket> &p
     //timeOffset = htonl(timeOffset);
     BYTE *timeOffsetAddr = ((BYTE*)&timeOffset) + 1;
 
-    PacketType bestType = PacketType_VideoDisposable;
-    bool bFoundFrame = false;
+    if (bFoundFrame)
+        encodeData.InsertArray(2, timeOffsetAddr, 3);
+
     profileIn("Parse bitstream")
+
     for (unsigned int i = 0; i < nalNum; i++)
     {
         x264_nal_t &nal = nalOut[i];
@@ -813,6 +928,7 @@ void VCEEncoder::ProcessOutput(OVE_OUTPUT_DESCRIPTION *surf, List<DataPacket> &p
             encodeData.SetSize(currSize + fillerSize);
             BYTE *ptr = encodeData.Array() + currSize;
             memset(ptr, 0xFF, fillerSize);
+            *(ptr + fillerSize) = 0x80;
 
             mCurrBucketSize -= mDesiredPacketSize;
         }
@@ -918,7 +1034,7 @@ bool VCEEncoder::SetBitRate(DWORD maxBitrate, DWORD bufferSize)
         mConfigCtrl.rateControl.encVBVBufferSize = bufferSize * 1000;
     }
 
-    //TODO Supported?
+    //TODO Doesn't look like it takes effect
     setEncodeConfig(mEncodeHandle.session, &mConfigCtrl);
 
     return true;
@@ -934,6 +1050,7 @@ void VCEEncoder::GetHeaders(DataPacket &packet)
         List<PacketType> packetTypes;
         mfxFrameSurface1 tmp;
         DWORD out_pts;
+        mFirstFrame = true;
 
         ZeroMemory(&tmp, sizeof(mfxFrameSurface1));
         RequestBuffers(&(tmp.Data));
@@ -941,6 +1058,7 @@ void VCEEncoder::GetHeaders(DataPacket &packet)
         // Clean up like nothing happened
         unmapBuffer(mEncodeHandle, (int)tmp.Data.MemId - 1);
         mReqKeyframe = true;
+        mFirstFrame = true;
     }
 
     uint32_t outSize = mHdrSize;

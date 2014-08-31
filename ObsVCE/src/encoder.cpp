@@ -33,7 +33,6 @@ static const char *source =
 "}"
 ;
 
-
 void mapBuffer(OVEncodeHandle &encodeHandle, int i, uint32_t size)
 {
     cl_event inMapEvt = 0;
