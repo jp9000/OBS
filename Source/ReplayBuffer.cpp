@@ -151,6 +151,8 @@ struct ReplayBuffer : VideoFileStream
     {
         App->bRecording = recording;
         App->ConfigureStreamButtons();
+        if (recording)
+            App->ReportStartRecordingTrigger();
     }
 };
 
