@@ -218,6 +218,7 @@ static DWORD STDCALL SaveReplayBufferThread(void *arg)
     }
     signal();
 
+    out.reset();
     ReplayBuffer::SaveComplete(name, highest_timestamp > lowest_timestamp ? (highest_timestamp - lowest_timestamp) : 0);
 
     return 0;
