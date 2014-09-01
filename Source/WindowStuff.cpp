@@ -3323,6 +3323,12 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     App->RefreshStreamButtons();
                     break;
 
+                case ID_TOGGLERECORDINGREPLAYBUFFER:
+                    App->RefreshStreamButtons(true);
+                    App->ToggleReplayBuffer();
+                    App->RefreshStreamButtons();
+                    break;
+
                 case ID_FILE_EXIT:
                 case ID_EXIT:
                     PostQuitMessage(0);

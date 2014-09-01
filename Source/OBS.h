@@ -283,6 +283,7 @@ struct ClassInfo
 
 /* Event callback signiture definitions */
 typedef void (*OBS_CALLBACK)();
+typedef void (*OBS_REPLAY_BUFFER_SAVED_CALLBACK)(CTSTR filename, UINT recordingLengthMS);
 typedef void (*OBS_STATUS_CALLBACK)(bool /*running*/, bool /*streaming*/, bool /*recording*/,
                                     bool /*previewing*/, bool /*reconnecting*/);
 typedef void (*OBS_STREAM_STATUS_CALLBACK)(bool /*streaming*/, bool /*previewOnly*/,
@@ -318,6 +319,15 @@ struct PluginInfo
 
     /* called when recording (to file) stops */
     OBS_CALLBACK stopRecordingCallback;
+
+    /* called when recording (to replay buffer) starts */
+    OBS_CALLBACK startRecordingReplayBufferCallback;
+
+    /* called when recording (to replay buffer) stops */
+    OBS_CALLBACK stopRecordingReplayBufferCallback;
+
+    /* called when replay buffer has been written to a file */
+    OBS_REPLAY_BUFFER_SAVED_CALLBACK replayBufferSavedCallback;
 
     /* called when status bar is updated, even without network */
     OBS_STATUS_CALLBACK statusCallback;
@@ -364,6 +374,7 @@ struct GlobalSourceInfo
 enum
 {
     ID_SETTINGS=5000,
+    ID_TOGGLERECORDINGREPLAYBUFFER,
     ID_TOGGLERECORDING,
     ID_STARTSTOP,
     ID_EXIT,
@@ -561,6 +572,7 @@ enum class SceneCollectionAction {
 };
 
 struct ReplayBuffer;
+void SaveReplayBuffer(ReplayBuffer *out, DWORD timestamp);
 
 //todo: this class has become way too big, it's horrible, and I should be ashamed of myself
 class OBS
@@ -1200,6 +1212,9 @@ public:
     virtual void ReportStopStreamingTrigger();
     virtual void ReportStartRecordingTrigger();
     virtual void ReportStopRecordingTrigger();
+    virtual void ReportStartRecordingReplayBufferTrigger();
+    virtual void ReportStopRecordingReplayBufferTrigger();
+    virtual void ReportReplayBufferSavedTrigger(String filename, UINT recordingLengthMS);
     virtual void ReportOBSStatus(bool running, bool streaming, bool recording,
                                    bool previewing, bool reconnecting);
     virtual void ReportStreamStatus(bool streaming, bool previewOnly = false, 

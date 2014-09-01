@@ -123,6 +123,10 @@ bool OBSGetRecording()          {return API->GetRecording();}
 
 bool OBSGetKeepRecording()      {return API->GetKeepRecording();}
 
+void OBSStartStopRecordingReplayBuffer() {API->StartStopRecordingReplayBuffer();}
+bool OBSGetRecordingReplayBuffer()       {return API->GetRecordingReplayBuffer();}
+void OBSSaveReplayBuffer()               {API->SaveReplayBuffer();}
+
 void OBSSetSourceOrder(StringList &sourceNames)             {API->SetSourceOrder(sourceNames);}
 void OBSSetSourceRender(CTSTR lpSource, bool render)        {API->SetSourceRender(lpSource, render);}
 
@@ -151,6 +155,6 @@ void OBSGetCurMicVolumeStats(float *rms, float *max, float *peak)       {API->Ge
 void OBSAddSettingsPane(SettingsPane *pane)     {API->AddSettingsPane(pane);}
 void OBSRemoveSettingsPane(SettingsPane *pane)  {API->RemoveSettingsPane(pane);}
 
-UINT OBSGetAPIVersion()                         {return 0x0102;}
+UINT OBSGetAPIVersion()                         {return 0x0103;}
 
 UINT OBSGetSampleRateHz()                       {return API->GetSampleRateHz();}

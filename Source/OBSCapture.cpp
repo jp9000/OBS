@@ -104,6 +104,7 @@ void OBS::StartReplayBuffer()
     Log(L"Using ReplayBuffer with a length of %d seconds", length);
 
     bRecordingReplayBuffer = true;
+    ReportStartRecordingReplayBufferTrigger();
 
     ConfigureStreamButtons();
 }
@@ -111,7 +112,9 @@ void OBS::StartReplayBuffer()
 void OBS::StopReplayBuffer()
 {
     if (!replayBufferStream) return;
+
     bRecordingReplayBuffer = false;
+    ReportStopRecordingReplayBufferTrigger();
 
     if (!bStreaming && !bRecording && bRunning) Stop(true);
 

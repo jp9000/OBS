@@ -189,6 +189,10 @@ public:
     virtual UINT GetBytesPerSec() const=0;
 
     virtual void SetCanOptimizeSettings(bool canOptimize) = 0;
+
+    virtual void StartStopRecordingReplayBuffer() = 0;
+    virtual bool GetRecordingReplayBuffer() const=0;
+    virtual void SaveReplayBuffer() = 0;
 };
 
 BASE_EXPORT extern APIInterface *API;
@@ -265,6 +269,10 @@ BASE_EXPORT bool OBSGetPreviewOnly();
 BASE_EXPORT bool OBSGetRecording();
 
 BASE_EXPORT bool OBSGetKeepRecording();
+
+BASE_EXPORT void OBSStartStopRecordingReplayBuffer();
+BASE_EXPORT bool OBSGetRecordingReplayBuffer();
+BASE_EXPORT void OBSSaveReplayBuffer();
 
 BASE_EXPORT void OBSSetSourceOrder(StringList &sourceNames);
 BASE_EXPORT void OBSSetSourceRender(CTSTR lpSource, bool render);
