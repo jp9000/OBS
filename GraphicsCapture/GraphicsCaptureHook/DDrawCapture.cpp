@@ -1229,7 +1229,7 @@ bool InitDDrawCapture()
         {
             if (!isWin7min)
             {
-                RUNEVERYRESET logOutput << CurrentTimeString() << "Windows Vista not supported yet" << endl;
+                RUNEVERYRESET logOutput << CurrentTimeString() << "DirectDraw capture: Windows Vista not supported yet" << endl;
             }
             else if (isWin7min && !isWin8min)
             {
@@ -1255,11 +1255,11 @@ bool InitDDrawCapture()
                 palSetEntriesOffset = surfCreateOffset + 0x4CF4C;
                 versionSupported = false;	// some crash bugs remaining
 
-                RUNEVERYRESET logOutput << CurrentTimeString() << "Windows 8 not supported yet" << endl;
+                RUNEVERYRESET logOutput << CurrentTimeString() << "DirectDraw capture: Windows 8 not supported yet" << endl;
             }
             else
             {
-                RUNEVERYRESET logOutput << CurrentTimeString() << "Unknown OS version" << endl;
+                RUNEVERYRESET logOutput << CurrentTimeString() << "DirectDraw capture: Unknown OS version" << endl;
             }
         }
         else
