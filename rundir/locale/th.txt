@@ -4,6 +4,7 @@ Preview="แสดงตัวอย่าง"
 Order="ลำดับ"
 Apply="นำไปใช้"
 Browse="เปิดหา..."
+BuildingMP4Dialog="กำลังสร้าง MP4"
 Cancel="ยกเลิก"
 ClearHotkey="ล้าง"
 Close="ปิด"
@@ -13,8 +14,8 @@ Defaults="ค่าเริ่มต้น"
 DeleteConfirm="คุณแน่ใจว่าต้องการลบรายการที่เลือกหรือไม่"
 Desktop="เดสก์ท็อป"
 Disable="ปิดการใช้งาน"
-EncoderLag="คำเตือน: ใช้เวลานานในการเข้ารหัส, ข้ามเฟรม"
 EnterName="กรุณาใส่ชื่อ"
+Gamma="แกมมา:"
 MonitorNum="หน้าจอ $1"
 MoveDown="เลื่อนลง"
 MoveToBottom="เลื่อนไปล่างสุด"
@@ -30,7 +31,13 @@ Rename="เปลี่ยนชื่อ"
 Copy="คัดลอก"
 Scene="ฉาก"
 Settings="การตั้งค่า..."
+MessageBoxWarningCaption="คำเตือน"
 
+
+
+
+
+BuildingMP4Dialog.Progress="กำลังสร้าง MP4, กรุณารอสักครู่..."
 
 Connection.CouldNotConnect="ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์"
 Connection.Disconnected="ตัดการเชื่อมต่อเซิร์ฟเวอร์"
@@ -41,6 +48,122 @@ EndingDelay.TimeLeft="เวลาที่เหลือ: $1"
 
 Listbox.Add="เพิ่ม $1"
 Listbox.Center="ศูนย์กลาง"
+Listbox.MoveTop="เลื่อนไปบนสุด"
+Listbox.MoveBottom="เลื่อนไปล่างสุด"
+Listbox.Config="คุณสมบัติ"
+Listbox.FitToScreen="พอดีกับหน้าจอ"
+Listbox.Positioning="ตำแหน่ง/ขนาด"
+Listbox.ResetSize="ตั้งขนาดใหม่"
+
+
+MainMenu.File="& ไฟล์"
+MainMenu.Help="&ช่วยเหลือ"
+MainMenu.Profiles="&โปรไฟล์"
+MainMenu.Settings="&ตั้งค่า"
+
+MainMenu.Settings.FullscreenMode="&โหมดแสดงตัวอย่างแบบเต็มหน้าจอ"
+
+MainMenu.File.Exit="อ&อก"
+MainMenu.File.Save="&บันทึก"
+
+MainMenu.Help.VisitWebsite="เยี่ยมชมเว็บไซต์"
+MainMenu.Help.CheckForUpdates="ตรวจสอบการอัพเดท"
+
+
+MainWindow.Dashboard="แดชบอร์ด"
+MainWindow.Exit="ออก"
+MainWindow.Plugins="ส่วนขยาย"
+MainWindow.SceneEditor="แก้ไขฉาก"
+MainWindow.Scenes="ฉาก:"
+MainWindow.StartRecording="เริ่มต้นบันทึก"
+MainWindow.StopRecording="หยุดการบันทึก"
+MainWindow.StartStream="เริ่มสตรีมมิ่ง"
+MainWindow.StopStream="หยุดสตรีมมิ่ง"
+MainWindow.StopTest="หยุดแสดงตัวอย่าง"
+MainWindow.TestStream="แสดงตัวอย่างสตรีมมิ่ง"
+
+
+Plugins.Configure="ตั้งค่าคอนฟิก"
+Plugins.Description="คำอธิบาย:"
+Plugins.Filename="ชื่อไฟล์:"
+
+
+RenderView.ViewMode1To1="โหมด 1:1"
+
+
+
+Capture.Start.FileStream.WarningCaption="คำเตือน"
+
+Settings.Advanced="ขั้นสูง"
+Settings.Audio="เสียง"
+Settings.Encoding="การเข้ารหัส"
+Settings.General="ทั่วไป"
+Settings.Publish="ตั้งค่าการออกอากาศ"
+Settings.Video="วิดีโอ"
+
+
+
+Settings.Advanced.UseCBR="ใช้ CBR"
+Settings.Advanced.UseCFR="ใช้ CFR"
+
+
+
+Settings.Encoding.Audio="การเข้ารหัสเสียง"
+Settings.Encoding.Video="การเข้ารหัสวิดีโอ"
+
+Settings.Encoding.Audio.Bitrate="บิตเรท:"
+Settings.Encoding.Audio.Format="รูปแบบ:"
+
+Settings.Encoding.Video.Encoderx264="x264"
+Settings.Encoding.Video.EncoderQSV="Quick Sync"
+Settings.Encoding.Video.EncoderNVENC="Nvidia NVENC"
+
+Settings.General.Add="เพิ่มใหม่"
+Settings.General.Language="ภาษา:"
+Settings.General.ShowObs="แสดง OBS"
+Settings.General.HideObs="ซ่อน OBS"
+
+Settings.Publish.Mode="โหมด:"
+Settings.Publish.Password="รหัสผ่าน (ถ้ามี):"
+Settings.Publish.Server="เซิร์ฟเวอร์:"
+Settings.Publish.Username="ชื่อผู้ใช้ (ถ้ามี):"
+
+
+
+
+
+Settings.Video.Custom="กำหนดเอง:"
+Settings.Video.DisableAero="ปิดใช้งาน Aero:"
+Settings.Video.FPS="FPS:"
+Settings.Video.AspectRatio="อัตรา:"
+Settings.Video.AspectRatioFormat="$1:$2"
+
+Settings.Video.Filter.Bilinear="Bilinear (เร็วที่สุด)"
+
+Sources.BitmapSource="รูปภาพ"
+Sources.GameCaptureSource="จับภาพเกม"
+Sources.SoftwareCaptureSource="จับภาพซอฟต์แวร์"
+Sources.TextSource="ข้อความ"
+
+Sources.BitmapSource.Color="สี:"
+
+Sources.GameCaptureSource.SelectApplication="เลือกแอปพลิเคชัน"
+
+Sources.SoftwareCaptureSource.Position="ตำแหน่ง:"
+Sources.SoftwareCaptureSource.Size="ขนาด:"
+
+Sources.TextSource.Bold="ตัวหนา"
+Sources.TextSource.Center="ศูนย์กลาง"
+Sources.TextSource.EnterText="ป้อนข้อความ"
+Sources.TextSource.Font="แบบอักษร:"
+Sources.TextSource.FontSize="ขนาดตัวอักษร:"
+Sources.TextSource.Italic="ตัวเอียง"
+Sources.TextSource.Left="ซ้าย"
+Sources.TextSource.Right="ขวา"
+Sources.TextSource.ScrollSpeed="ความเร็วในการเลื่อน:"
+Sources.TextSource.Size="ขนาด:"
+Sources.TextSource.Underline="ขีดเส้นใต้"
+Sources.TextSource.Scroll="โหมดเลื่อน"
 
 
 
@@ -51,36 +174,6 @@ Listbox.Center="ศูนย์กลาง"
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Plugins.NoiseGate.General="ทั่วไป"
 
 

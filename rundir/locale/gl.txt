@@ -14,7 +14,6 @@ Defaults="Predeterminado"
 DeleteConfirm="Estás seguro que queres eliminar os elementos seleccionados?"
 Desktop="Escritorio"
 Disable="Desactivar"
-EncoderLag="COIDADO: Tarda moito en codificar, omitindo fotogramas!"
 EndingDelay="Finalizando transmisión atrasada..."
 EnterName="Escribe un nome"
 Gamma="Gama:"
@@ -38,6 +37,10 @@ Copy="Copiar"
 Scene="Escena"
 Settings="Configuración..."
 StreamReport="Informe da transmisión"
+
+
+
+
 
 BuildingMP4Dialog.Progress="Creando MP4, agarda..."
 
@@ -67,6 +70,7 @@ Listbox.ResetSize="Tamaño por defecto"
 Listbox.SetHotkey="Definir tecla rápida"
 ListBox.ResetCrop="Recorte por defecto"
 
+
 MainMenu.File="&Arquivo"
 MainMenu.Help="&Axuda"
 MainMenu.Profiles="&Perfís"
@@ -79,7 +83,6 @@ MainMenu.Settings.Projector="&Proxector"
 MainMenu.File.Exit="&Saír"
 MainMenu.File.Save="&Gardar"
 
-MainMenu.Help.Contents="&Contido"
 MainMenu.Help.VisitWebsite="Visitar páxina web"
 MainMenu.Help.CheckForUpdates="Buscar &actualizacións"
 
@@ -98,6 +101,7 @@ MainWindow.StartStream="Iniciar stream"
 MainWindow.StopStream="Parar stream"
 MainWindow.StopTest="Parar previsualización"
 MainWindow.TestStream="Previsualizar stream"
+
 
 Plugins.Configure="Configurar"
 Plugins.Description="Descrición:"
@@ -129,7 +133,8 @@ Settings.SaveChangesPrompt="Queres gardar e aplicar os cambios?"
 Settings.SaveChangesTitle="Gardar axustes?"
 Settings.Video="Vídeo"
 
-Settings.Advanced.AutomaticLatency="Modo de baixa latencia automática:"
+
+
 Settings.Advanced.AllowOtherHotkeyModifiers="Permitir outros modificadores nas teclas rápidas"
 Settings.Advanced.BindToIP="Empregar só esta interface:"
 Settings.Advanced.DisablePreviewEncoding="Desactivar codificación mentras se previsualiza"
@@ -165,7 +170,6 @@ Settings.Audio.MuteDesktopHotkey="Tecla rápida para activar/desactivar a son pr
 Settings.Audio.MuteMicHotkey="Tecla rápida para activar/apagar o micrófono:"
 Settings.Audio.PlaybackDevice="Dispositivo de audio principal:"
 Settings.Audio.PushToTalkDelay="Retraso para Push-to-talk (milisegundos):"
-Settings.Audio.PushToTalkHotkey="Empregar Push-to-talk:"
 Settings.Audio.ShowOnlyConnectedDevices="Mostrar só os dispositivos conectados"
 Settings.Audio.UseInputDevices="Usar dispositivo de entrada para o audio de escritorio"
 Settings.Audio.UseMicQPC="Empregar timestamps QPC para o micrófono"
@@ -189,7 +193,6 @@ Settings.Encoding.Video.QualityTooltip="Este valor intentará chegar a unha dete
 Settings.General.Add="Engadir novo"
 Settings.General.ConfirmDelete="Seguro que queres eliminar o perfil '$1'?"
 Settings.General.EnableProjectorCursor="Habilitar o punteiro sobre o proxector"
-Settings.General.InvalidName="Os nomes de perfil non poden ter os seguintes caracteres:\r\n\\ / : * ? \" < > |"
 Settings.General.Language="Idioma:"
 Settings.General.Profile="Perfil de configuración:"
 Settings.General.Notification="Icona na barra de notificacións"
@@ -208,12 +211,12 @@ Settings.Publish.Mode="Modo:"
 Settings.Publish.Password="Contrasinal (se é necesario):"
 Settings.Publish.Playpath="Stream key:"
 Settings.Publish.SavePath="Ruta do arquivo:"
-Settings.Publish.SaveToFile="Gardar nun arquivo:"
 Settings.Publish.Server="Servidor:"
 Settings.Publish.Service="Servicio de streaming:"
 Settings.Publish.StartStreamHotkey="Tecla rápida para iniciar transmisión:"
 Settings.Publish.StopStreamHotkey="Tecla rápida para deter a transmisión:"
 Settings.Publish.Username="Usuario (se é necesario):"
+
 
 Settings.Publish.Mode.FileOnly="Só grabar nun arquivo"
 Settings.Publish.Mode.LiveStream="Transmisión en vivo"

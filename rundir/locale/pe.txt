@@ -20,6 +20,12 @@ MoveToTop="Move it topside"
 
 
 
+
+
+
+
+
+
 Capture.Start.FileStream.WarningCaption="Warnin'"
 
 
@@ -29,7 +35,10 @@ Capture.Start.FileStream.WarningCaption="Warnin'"
 
 
 
+
+
 Settings.General.Language="Lingo:"
+
 
 
 

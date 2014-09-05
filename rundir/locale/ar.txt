@@ -14,7 +14,6 @@ Defaults="الإفت"
 DeleteConfirm="هل أنت متأكد من أنك تريد حذف العناصر المحددة؟"
 Desktop="سطح المكتب"
 Disable="تعطيل"
-EncoderLag="تحذير:يتطلب وقت طويل للترميز , جاري تخطي بعض الفريمات!"
 EndingDelay="جاري انهاء البث المتأخر..."
 EnterName="الرجاء ادخال اسم"
 Gamma="الجاما:"
@@ -38,6 +37,10 @@ Scene="مشهد"
 Settings="اعدادات..."
 StreamReport="تقرير البث"
 MessageBoxWarningCaption="تحذير"
+
+
+
+
 
 BuildingMP4Dialog.Progress="انشاء mp4 , الرجاء الانتظار..."
 
@@ -67,6 +70,7 @@ Listbox.ResetSize="اعادة الحجم"
 Listbox.SetHotkey="وضع مفتاح اختصار"
 ListBox.ResetCrop="اعادة القص"
 
+
 MainMenu.File="&ملف"
 MainMenu.Help="م&ساعدة"
 MainMenu.Profiles="ال&بروفايل"
@@ -79,7 +83,6 @@ MainMenu.Settings.Projector="العا&رض"
 MainMenu.File.Exit="&خروج"
 MainMenu.File.Save="&حفظ"
 
-MainMenu.Help.Contents="&المحتويات"
 MainMenu.Help.VisitWebsite="زيارة الموقع الالكتروني"
 MainMenu.Help.CheckForUpdates="&فحص التحديثات"
 
@@ -100,6 +103,7 @@ MainWindow.StartStream="بدء البث"
 MainWindow.StopStream="ايقاف البث"
 MainWindow.StopTest="ايقاف المعاينة"
 MainWindow.TestStream="معاينة البث"
+
 
 Plugins.Configure="اعداد"
 Plugins.Description="التفاصيل:"
@@ -131,7 +135,8 @@ Settings.SaveChangesPrompt="هل تود حفظ و تطبيق التغييرات 
 Settings.SaveChangesTitle="تطبيق الاعدادت ؟"
 Settings.Video="الفيديو"
 
-Settings.Advanced.AutomaticLatency="الوضع التلقائي للكمون المنخفض :"
+
+
 Settings.Advanced.AllowOtherHotkeyModifiers="السماح بمعدلات أخرى على مفاتيح الاختصار"
 Settings.Advanced.BindToIP="الربط إلى الواجهة :"
 Settings.Advanced.DisablePreviewEncoding="تعطيل ترميز الفيديو أثناء المعاينة"
@@ -157,7 +162,6 @@ Settings.Advanced.Priority.AboveNormal="أعلى من المعدل الطبيع�
 Settings.Advanced.Priority.High="مرتفعة"
 
 Settings.Audio.MuteMicHotkey="زر إختصار لـ كتم/إلغاء كتم الميكروفون:"
-Settings.Audio.PushToTalkHotkey="إستخدام الضغط للتحدث :"
 Settings.Audio.ShowOnlyConnectedDevices="إظهار الأجهزة المتصلة فقط"
 
 Settings.Encoding.Audio="ترميز الصوت"
@@ -174,6 +178,7 @@ Settings.General.Language="اللغة:"
 Settings.General.Restart="تغيير اللغة يتطلب اعادة تشغيل البرنامج.\r\n\r\n.. اظن بما انك تقوم بتغيير اللغة اذن انت لا تستطيع فهم هذه الجملة"
 
 Settings.Publish.AutoReconnect="اعادة الاتصال تلقائياً:"
+
 
 
 

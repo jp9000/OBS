@@ -15,7 +15,6 @@ Defaults="Pradiniai nustatymai"
 DeleteConfirm="Ar tikrai norite ištrinti pasirinktus elementus?"
 Desktop="Darbalaukis"
 Disable="Išjungti"
-EncoderLag="Įspėjimas: kodavimas trunka per ilgai, kadrai praleidžiami!"
 EndingDelay="Baigiama pavėlinta transliacija..."
 EnterName="Įveskite pavadinimą"
 Gamma="Gama:"
@@ -42,6 +41,10 @@ Settings="Nustatymai..."
 LogWindow="Žurnalo langas"
 StreamReport="Transliacijos ataskaita"
 MessageBoxWarningCaption="Įspėjimas"
+
+
+
+
 
 BuildingMP4Dialog.Progress="Kuriamas MP4, prašome palaukti..."
 
@@ -71,6 +74,7 @@ Listbox.ResetSize="Atstatyti dydį"
 Listbox.SetHotkey="Nustatyti spartųjį klavišą"
 ListBox.ResetCrop="Anuliuoti apkarpymą"
 
+
 MainMenu.File="&Failas"
 MainMenu.Help="&Pagalba"
 MainMenu.Profiles="&Profiliai"
@@ -83,7 +87,6 @@ MainMenu.Settings.Projector="&Projektorius"
 MainMenu.File.Exit="Išeiti (&X)"
 MainMenu.File.Save="&Išsaugoti"
 
-MainMenu.Help.Contents="&Turinys"
 MainMenu.Help.VisitWebsite="Eiti į svetainę"
 MainMenu.Help.CheckForUpdates="Patikrint ar yra n&aujinimų"
 
@@ -106,6 +109,7 @@ MainWindow.StartStream="Pradėti transliaciją"
 MainWindow.StopStream="Nutraukti transliaciją"
 MainWindow.StopTest="Nutraukti peržiūrą"
 MainWindow.TestStream="Atlikti bandomąją transliaciją"
+
 
 Plugins.Configure="Konfigūruoti"
 Plugins.Description="Aprašymas:"
@@ -137,7 +141,8 @@ Settings.SaveChangesPrompt="Ar norėtumėte išsaugoti ir taikyti savo pakeitimu
 Settings.SaveChangesTitle="Taikyti nustatymus?"
 Settings.Video="Vaizdas"
 
-Settings.Advanced.AutomaticLatency="Automatinis mažo vėlinimo režimas:"
+
+
 Settings.Advanced.AllowOtherHotkeyModifiers="Leisti naudoti daugiau modifikatorių/spartinančių klavišų kombinacijų"
 Settings.Advanced.BindToIP="Ryšį palaikyti per:"
 Settings.Advanced.DisablePreviewEncoding="Neatlikinėti kodavimo peržiūros metu"
@@ -178,7 +183,6 @@ Settings.Audio.MuteDesktopHotkey="Darbalaukio užtildymo spartusis klavišas:"
 Settings.Audio.MuteMicHotkey="Mikrofono užtildymo spartusis klavišas:"
 Settings.Audio.PlaybackDevice="Darbalaukio garso įrenginys:"
 Settings.Audio.PushToTalkDelay="Mikrofono įjungimo vėlinimas (ms):"
-Settings.Audio.PushToTalkHotkey="Mikrofoną transliuoti tik laikant klavišą:"
 Settings.Audio.ShowOnlyConnectedDevices="Rodyti tik prijungtus prietaisus"
 Settings.Audio.UseInputDevices="Naudoti įvesties įrenginį darbalaukio garsui gauti"
 Settings.Audio.UseMicQPC="Naudoti mikrofono QPC laiko žymas"
@@ -211,7 +215,6 @@ Settings.Encoding.Video.QSVConfigWarning="Norėdami įjungti „Quick Sync“ en
 Settings.General.Add="Pridėti naują"
 Settings.General.ConfirmDelete="Ar jus tikrai norite pašalinti profilį '$1'?"
 Settings.General.EnableProjectorCursor="Rodyti žymeklį per projektorių"
-Settings.General.InvalidName="Profilių pavadinimuose negali būti naudojami šie simboliai:\r\n\\ / : * ? \" < > |"
 Settings.General.Language="Kalba:"
 Settings.General.Profile="Nustatymų profilis:"
 Settings.General.Notification="Pranešimų srities piktograma"
@@ -232,7 +235,6 @@ Settings.Publish.Mode="Režimas:"
 Settings.Publish.Password="Slaptažodis (jei toks yra):"
 Settings.Publish.Playpath="Transliavimo kelias/raktas (jei yra):"
 Settings.Publish.SavePath="Failo adresas:"
-Settings.Publish.SaveToFile="Įrašyti į failą:"
 Settings.Publish.Server="Serveris:"
 Settings.Publish.Service="Transliavimo paslaugos tiekėjas:"
 Settings.Publish.StartStreamHotkey="Spartusis klavišas transliavimui pradėti:"
@@ -240,6 +242,7 @@ Settings.Publish.StopStreamHotkey="Spartusis klavišas transliavimui nutraukti:"
 Settings.Publish.StartRecordingHotkey="Spartusis klavišas įrašymui pradėti:"
 Settings.Publish.StopRecordingHotkey="Spartusis klavišas įrašymui nutraukti:"
 Settings.Publish.Username="Vartotojo vardas (jei yra):"
+
 
 Settings.Publish.Mode.FileOnly="Tik rašyti į failą"
 Settings.Publish.Mode.LiveStream="Tiesioginis transliavimas"

@@ -1,0 +1,9 @@
+Cancel="Ezeztatu"
+OK="Ongi"
+
+Plugin.Name="Agerraldikako Bolumen Aztarnaketa Plugina"
+Plugin.Description="Gaitu agerraldikako bolumen aztarnaketa."
+
+Config.Caption="Agerraldikako Bolumen Itxurapena"
+Config.Enable="Gaitu Agerraldikako Bolumen Aztarnaketa"
+
