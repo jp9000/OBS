@@ -1084,8 +1084,11 @@ static BOOL WINAPI SwapBuffersHook(HDC hDC)
     HandleGLSceneUpdate(hDC);
 
 #if OLDHOOKS
+    BOOL (WINAPI *func)(HDC hDC);
+    *(FARPROC*)&func = glHookSwapBuffers.GetFunc();
+
     glHookSwapBuffers.Unhook();
-    BOOL bResult = SwapBuffers(hDC);
+    BOOL bResult = func(hDC);
     if (GLUsable)
         glHookSwapBuffers.Rehook();
 #else
@@ -1106,8 +1109,11 @@ static BOOL WINAPI wglSwapLayerBuffersHook(HDC hDC, UINT fuPlanes)
     HandleGLSceneUpdate(hDC);
 
 #if OLDHOOKS
+    BOOL (WINAPI *func)(HDC hDC, UINT fuPlanes);
+    *(FARPROC*)&func = glHookSwapLayerBuffers.GetFunc();
+
     glHookSwapLayerBuffers.Unhook();
-    BOOL bResult = jimglSwapLayerBuffers(hDC, fuPlanes);
+    BOOL bResult = func(hDC, fuPlanes);
     if (GLUsable)
         glHookSwapLayerBuffers.Rehook();
 #else
@@ -1128,8 +1134,11 @@ static BOOL WINAPI wglSwapBuffersHook(HDC hDC)
     HandleGLSceneUpdate(hDC);
 
 #if OLDHOOKS
+    BOOL (WINAPI *func)(HDC hDC);
+    *(FARPROC*)&func = glHookwglSwapBuffers.GetFunc();
+
     glHookwglSwapBuffers.Unhook();
-    BOOL bResult = jimglSwapBuffers(hDC);
+    BOOL bResult = func(hDC);
     if (GLUsable)
         glHookwglSwapBuffers.Rehook();
 #else
@@ -1158,8 +1167,11 @@ static BOOL WINAPI wglDeleteContextHook(HGLRC hRC)
     }
 
 #if OLDHOOKS
+    BOOL (WINAPI *func)(HGLRC hRC);
+    *(FARPROC*)&func = glHookDeleteContext.GetFunc();
+
     glHookDeleteContext.Unhook();
-    BOOL bResult = jimglDeleteContext(hRC);
+    BOOL bResult = func(hRC);
     if (GLUsable)
         glHookDeleteContext.Rehook();
 #else
@@ -1227,10 +1239,10 @@ bool InitGLCapture()
 
         if(jimglSwapLayerBuffers && jimglSwapBuffers && jimglDeleteContext)
         {
-            glHookSwapBuffers.Hook((FARPROC)SwapBuffers, (FARPROC)SwapBuffersHook);
-            glHookSwapLayerBuffers.Hook((FARPROC)jimglSwapLayerBuffers, (FARPROC)wglSwapLayerBuffersHook);
-            glHookwglSwapBuffers.Hook((FARPROC)jimglSwapBuffers, (FARPROC)wglSwapBuffersHook);
-            glHookDeleteContext.Hook((FARPROC)jimglDeleteContext, (FARPROC)wglDeleteContextHook);
+            glHookSwapBuffers.Hook((FARPROC)SwapBuffers, (FARPROC)SwapBuffersHook, "OpenGL SwapBuffers");
+            glHookSwapLayerBuffers.Hook((FARPROC)jimglSwapLayerBuffers, (FARPROC)wglSwapLayerBuffersHook, "OpenGL SwapLayerBuffers");
+            glHookwglSwapBuffers.Hook((FARPROC)jimglSwapBuffers, (FARPROC)wglSwapBuffersHook, "OpenGL wglSwapBuffers");
+            glHookDeleteContext.Hook((FARPROC)jimglDeleteContext, (FARPROC)wglDeleteContextHook, "OpenGL glDeleteContext");
             bSuccess = true;
         }
 

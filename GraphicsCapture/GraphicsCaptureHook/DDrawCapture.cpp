@@ -239,8 +239,11 @@ public:
             return;
 
         HRESULT err;
+        HRESULT (STDMETHODCALLTYPE *func)(LPDIRECTDRAWPALETTE, DWORD, DWORD, DWORD, LPPALETTEENTRY);
+        *(FARPROC*)&func = ddrawPaletteSetEntries.GetFunc();
+
         ddrawPaletteSetEntries.Unhook();
-        if (FAILED(err = primary_surface_palette_ref->SetEntries(0, 0, numEntries, entries)))
+        if (FAILED(err = func(primary_surface_palette_ref, 0, 0, numEntries, entries)))
         {
             logOutput << CurrentTimeString() << "ReloadPrimarySurfacePaletteEntries(): could not set entires" << endl;
             printDDrawError(err);
@@ -333,12 +336,15 @@ void CleanUpDDraw()
         hCopyEvent = NULL;
     }
 
+    ULONG (STDMETHODCALLTYPE *func)(LPDIRECTDRAWSURFACE7);
+    *(FARPROC*)&func = ddrawSurfaceRelease.GetFunc();
+
     ddrawSurfaceRelease.Unhook();
     for (int i = 0; i < NUM_BUFFERS; i++)
     {
         if (ddCaptures[i])
         {
-            ddCaptures[i]->Release();
+            func(ddCaptures[i]);
             ddCaptures[i] = NULL;
         }
     }
@@ -455,11 +461,14 @@ inline HRESULT STDMETHODCALLTYPE UnlockSurface(LPDIRECTDRAWSURFACE7 surface, LPR
 {
     //logOutput << CurrentTimeString() << "Called UnlockSurface" << endl;
 
+    HRESULT (STDMETHODCALLTYPE *func)(LPDIRECTDRAWSURFACE7 surface, LPRECT data);
+    *(FARPROC*)&func = ddrawSurfaceUnlock.GetFunc();
+
     // standard handler
     if (!bTargetAcquired)
     {
         ddrawSurfaceUnlock.Unhook();
-        HRESULT hr = surface->Unlock(data);
+        HRESULT hr = func(surface, data);
         ddrawSurfaceUnlock.Rehook();
         return hr;
     }
@@ -476,7 +485,7 @@ inline HRESULT STDMETHODCALLTYPE UnlockSurface(LPDIRECTDRAWSURFACE7 surface, LPR
     if (ret == WAIT_OBJECT_0)
     {
         ddrawSurfaceUnlock.Unhook();
-        HRESULT hr = surface->Unlock(data);
+        HRESULT hr = func(surface, data);
         ddrawSurfaceUnlock.Rehook();
 
         ReleaseMutex(mutex);
@@ -624,7 +633,11 @@ void CaptureDDraw()
 
                         HRESULT hr;
                         ddrawSurfaceBlt.Unhook();
-                        hr = ddCaptures[curCapture]->Blt(NULL, g_frontSurface, NULL, DDBLT_ASYNC, NULL);
+
+                        HRESULT (STDMETHODCALLTYPE *func)(LPDIRECTDRAWSURFACE7, LPRECT,LPDIRECTDRAWSURFACE7, LPRECT,DWORD, LPDDBLTFX);
+                        *(FARPROC*)&func = ddrawSurfaceBlt.GetFunc();
+                        hr = func(ddCaptures[curCapture], NULL, g_frontSurface, NULL, DDBLT_ASYNC, NULL);
+
                         ddrawSurfaceBlt.Rehook();
                         if (SUCCEEDED(hr))
                         {
@@ -864,9 +877,13 @@ bool SetupDDraw()
         HRESULT err;
 
         ddrawSurfaceCreate.Unhook();
+
+        HRESULT (STDMETHODCALLTYPE *func)(LPDIRECTDRAW7, LPDDSURFACEDESC2, LPDIRECTDRAWSURFACE7 FAR *, IUnknown FAR *);
+        *(FARPROC*)&func = ddrawSurfaceCreate.GetFunc();
+
         for (int i = 0; i < NUM_BUFFERS && bSuccess; i++)
         {
-            if (FAILED(err = g_ddInterface->CreateSurface(&captureDesc, &ddCaptures[i], NULL)))
+            if (FAILED(err = func(g_ddInterface, &captureDesc, &ddCaptures[i], NULL)))
             {
                 logOutput << CurrentTimeString() << "SetupDDraw: Could not create offscreen capture" << endl;
                 printDDrawError(err, "SetupDDraw");
@@ -936,8 +953,11 @@ bool getFrontSurface(LPDIRECTDRAWSURFACE7 lpDDSurface)
                     logOutput << CurrentTimeString() << "Query of DirectDraw interface failed" << endl;
                 }
             }
+            ULONG (STDMETHODCALLTYPE *func)(LPDIRECTDRAWSURFACE7);
+            *(FARPROC*)&func = ddrawSurfaceRelease.GetFunc();
+
             ddrawSurfaceRelease.Unhook();
-            dummy->Release();
+            func(dummy);
             ddrawSurfaceRelease.Rehook();
         }
     }
@@ -1000,8 +1020,11 @@ HRESULT STDMETHODCALLTYPE SetPalette(LPDIRECTDRAWSURFACE7 surface, LPDIRECTDRAWP
 {
     //logOutput << CurrentTimeString() << "Hooked SetPalette()" << endl;
 
+    HRESULT (STDMETHODCALLTYPE *func)(LPDIRECTDRAWSURFACE7 surface, LPDIRECTDRAWPALETTE lpDDPalette);
+    *(FARPROC*)&func = ddrawSurfaceSetPalette.GetFunc();
+
     ddrawSurfaceSetPalette.Unhook();
-    HRESULT hr = surface->SetPalette(lpDDPalette);
+    HRESULT hr = func(surface, lpDDPalette);
     ddrawSurfaceSetPalette.Rehook();
 
     if (getFrontSurface(surface))
@@ -1018,8 +1041,11 @@ HRESULT STDMETHODCALLTYPE PaletteSetEntries(LPDIRECTDRAWPALETTE palette, DWORD d
 {
     //logOutput << CurrentTimeString() << "Hooked SetEntries()" << endl;
 
+    HRESULT (STDMETHODCALLTYPE *func)(LPDIRECTDRAWPALETTE palette, DWORD dwFlags, DWORD dwStartingEntry, DWORD dwCount, LPPALETTEENTRY lpEntries);
+    *(FARPROC*)&func = ddrawPaletteSetEntries.GetFunc();
+
     ddrawPaletteSetEntries.Unhook();
-    HRESULT hr = palette->SetEntries(dwFlags, dwStartingEntry, dwCount, lpEntries);
+    HRESULT hr = func(palette, dwFlags, dwStartingEntry, dwCount, lpEntries);
     ddrawPaletteSetEntries.Rehook();
 
     // update buffer palette
@@ -1050,8 +1076,11 @@ HRESULT STDMETHODCALLTYPE CreateSurface(IDirectDraw7* ddInterface, LPDDSURFACEDE
         }
     }
 
+    HRESULT (STDMETHODCALLTYPE *func)(IDirectDraw7* ddInterface, LPDDSURFACEDESC2 lpDDSurfaceDesc, LPDIRECTDRAWSURFACE7 *lplpDDSurface, IUnknown *pUnkOuter);
+    *(FARPROC*)&func = ddrawSurfaceCreate.GetFunc();
+
     ddrawSurfaceCreate.Unhook();
-    HRESULT hRes = ddInterface->CreateSurface(lpDDSurfaceDesc, lplpDDSurface, pUnkOuter);
+    HRESULT hRes = func(ddInterface, lpDDSurfaceDesc, lplpDDSurface, pUnkOuter);
     ddrawSurfaceCreate.Rehook();
 
     if (hRes == DD_OK)
@@ -1072,6 +1101,9 @@ ULONG STDMETHODCALLTYPE Release(LPDIRECTDRAWSURFACE7 surface)
 {
     //logOutput << CurrentTimeString() << "Hooked Release()" << endl;
 
+    ULONG (STDMETHODCALLTYPE *func)(LPDIRECTDRAWSURFACE7 surface);
+    *(FARPROC*)&func = ddrawSurfaceRelease.GetFunc();
+
     ddrawSurfaceRelease.Unhook();
     /*
     if(surface == g_frontSurface)
@@ -1090,7 +1122,7 @@ ULONG STDMETHODCALLTYPE Release(LPDIRECTDRAWSURFACE7 surface)
     }
     */
 
-    ULONG refCount = surface->Release();
+    ULONG refCount = func(surface);
     ddrawSurfaceRelease.Rehook();
 
     if (surface == g_frontSurface)
@@ -1109,8 +1141,11 @@ HRESULT STDMETHODCALLTYPE Restore(LPDIRECTDRAWSURFACE7 surface)
 {
     //logOutput << CurrentTimeString() << "Hooked Restore()" << endl;
 
+    HRESULT (STDMETHODCALLTYPE *func)(LPDIRECTDRAWSURFACE7 surface);
+    *(FARPROC*)&func = ddrawSurfaceRestore.GetFunc();
+
     ddrawSurfaceRestore.Unhook();
-    HRESULT hr = surface->Restore();
+    HRESULT hr = func(surface);
 
     if (bHasTextures)
     {
@@ -1150,10 +1185,13 @@ HRESULT STDMETHODCALLTYPE Flip(LPDIRECTDRAWSURFACE7 surface, LPDIRECTDRAWSURFACE
 
     HRESULT hr;
 
+    HRESULT (STDMETHODCALLTYPE *func)(LPDIRECTDRAWSURFACE7 surface, LPDIRECTDRAWSURFACE7 lpDDSurface, DWORD flags);
+    *(FARPROC*)&func = ddrawSurfaceFlip.GetFunc();
+
     EnterCriticalSection(&ddrawMutex);
 
     ddrawSurfaceFlip.Unhook();
-    hr = surface->Flip(lpDDSurface, flags);
+    hr = func(surface, lpDDSurface, flags);
     ddrawSurfaceFlip.Rehook();
 
     g_bUseFlipMethod = true;
@@ -1172,10 +1210,13 @@ HRESULT STDMETHODCALLTYPE Blt(LPDIRECTDRAWSURFACE7 surface, LPRECT lpDestRect, L
 {
     //logOutput << CurrentTimeString() << "Hooked Blt()" << endl;
 
+    HRESULT (STDMETHODCALLTYPE *func)(LPDIRECTDRAWSURFACE7 surface, LPRECT lpDestRect, LPDIRECTDRAWSURFACE7 lpDDSrcSurface, LPRECT lpSrcRect, DWORD dwFlags, LPDDBLTFX lpDDBltFx);
+    *(FARPROC*)&func = ddrawSurfaceBlt.GetFunc();
+
     EnterCriticalSection(&ddrawMutex);
 
     ddrawSurfaceBlt.Unhook();
-    HRESULT hr = surface->Blt(lpDestRect, lpDDSrcSurface, lpSrcRect, dwFlags, lpDDBltFx);
+    HRESULT hr = func(surface, lpDestRect, lpDDSrcSurface, lpSrcRect, dwFlags, lpDDBltFx);
     ddrawSurfaceBlt.Rehook();
 
     if (SUCCEEDED(hr))
@@ -1269,14 +1310,14 @@ bool InitDDrawCapture()
 
         if (versionSupported)
         {
-            ddrawSurfaceCreate.Hook((FARPROC)(libBaseAddr + surfCreateOffset), (FARPROC)CreateSurface);
-            ddrawSurfaceRestore.Hook((FARPROC)(libBaseAddr + surfRestoreOffset), (FARPROC)Restore);
-            ddrawSurfaceRelease.Hook((FARPROC)(libBaseAddr + surfReleaseOffset), (FARPROC)Release);
-            ddrawSurfaceUnlock.Hook((FARPROC)(libBaseAddr + surfUnlockOffset), (FARPROC)Unlock);
-            ddrawSurfaceBlt.Hook((FARPROC)(libBaseAddr + surfBltOffset), (FARPROC)Blt);
-            ddrawSurfaceFlip.Hook((FARPROC)(libBaseAddr + surfFlipOffset), (FARPROC)Flip);
-            ddrawSurfaceSetPalette.Hook((FARPROC)(libBaseAddr + surfSetPaletteOffset), (FARPROC)SetPalette);
-            ddrawPaletteSetEntries.Hook((FARPROC)(libBaseAddr + palSetEntriesOffset), (FARPROC)PaletteSetEntries);
+            ddrawSurfaceCreate.Hook((FARPROC)(libBaseAddr + surfCreateOffset), (FARPROC)CreateSurface, "DDrawSurface Create");
+            ddrawSurfaceRestore.Hook((FARPROC)(libBaseAddr + surfRestoreOffset), (FARPROC)Restore, "DDrawSurface Restore");
+            ddrawSurfaceRelease.Hook((FARPROC)(libBaseAddr + surfReleaseOffset), (FARPROC)Release, "DDrawSurface Release");
+            ddrawSurfaceUnlock.Hook((FARPROC)(libBaseAddr + surfUnlockOffset), (FARPROC)Unlock, "DDrawSurface Unlock");
+            ddrawSurfaceBlt.Hook((FARPROC)(libBaseAddr + surfBltOffset), (FARPROC)Blt, "DDrawSurface Blt");
+            ddrawSurfaceFlip.Hook((FARPROC)(libBaseAddr + surfFlipOffset), (FARPROC)Flip, "DDrawSurface Flip");
+            ddrawSurfaceSetPalette.Hook((FARPROC)(libBaseAddr + surfSetPaletteOffset), (FARPROC)SetPalette, "DDrawSurface SetPalette");
+            ddrawPaletteSetEntries.Hook((FARPROC)(libBaseAddr + palSetEntriesOffset), (FARPROC)PaletteSetEntries, "DDrawPalette SetEntries");
 
             ddrawSurfaceUnlock.Rehook();
             ddrawSurfaceFlip.Rehook();

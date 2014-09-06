@@ -64,8 +64,12 @@ void ClearD3D8Data();
 
 ULONG STDMETHODCALLTYPE D3D8Release(IDirect3DDevice8* device)
 {
+    ULONG (STDMETHODCALLTYPE *func)(IDirect3DDevice8* device);
+    *(FARPROC*)&func = d3d8Release.GetFunc();
+
     d3d8Release.Unhook();
-    ULONG refCount = device->Release();
+    ULONG refCount = func(device);
+
     if (refCount == 0)
     {
         logOutput << CurrentTimeString() << "Device released" << endl;
@@ -82,8 +86,11 @@ HRESULT STDMETHODCALLTYPE D3D8Reset(IDirect3DDevice8* device, D3DPRESENT_PARAMET
 
     ClearD3D8Data();
 
+    HRESULT (STDMETHODCALLTYPE *func)(IDirect3DDevice8* device, D3DPRESENT_PARAMETERS* pPresentationParameters);
+    *(FARPROC*)&func = d3d8Reset.GetFunc();
+
     d3d8Reset.Unhook();
-    HRESULT hr = device->Reset(pPresentationParameters);
+    HRESULT hr = func(device, pPresentationParameters);
 
     if (lpCurrentDevice == NULL && !bTargetAcquired)
     {
@@ -104,8 +111,12 @@ HRESULT STDMETHODCALLTYPE D3D8Present(IDirect3DDevice8* device, CONST RECT* pSou
     RUNEVERYRESET logOutput << CurrentTimeString() << "D3D8Present called" << endl;
 
     CaptureD3D8(device);
+
+    HRESULT (STDMETHODCALLTYPE *func)(IDirect3DDevice8* device, CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion);
+    *(FARPROC*)&func = d3d8Present.GetFunc();
+
     d3d8Present.Unhook();
-    HRESULT hr = device->Present(pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
+    HRESULT hr = func(device, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
     d3d8Present.Rehook();
 
     /*
@@ -142,8 +153,11 @@ HRESULT STDMETHODCALLTYPE D3D8EndScene(IDirect3DDevice8* device)
         bTargetAcquired = true;
     }
 
+    HRESULT (STDMETHODCALLTYPE *func)(IDirect3DDevice8* device);
+    *(FARPROC*)&func = d3d8EndScene.GetFunc();
+
     d3d8EndScene.Unhook();
-    HRESULT hr = device->EndScene();
+    HRESULT hr = func(device);
     d3d8EndScene.Rehook();
 
     LeaveCriticalSection(&d3d8EndMutex);
@@ -407,9 +421,9 @@ void SetupD3D8(IDirect3DDevice8* device)
 
     //d3d8Release.Hook(GetVTable(device, (8 / 4)), (FARPROC)D3D8Release);
     //d3d8Release.Rehook();
-    d3d8Reset.Hook(GetVTable(device, (56 / 4)), (FARPROC)D3D8Reset);
+    d3d8Reset.Hook(GetVTable(device, (56 / 4)), (FARPROC)D3D8Reset, "D3D8 Reset");
     d3d8Reset.Rehook();
-    d3d8Present.Hook(GetVTable(device, (60 / 4)), (FARPROC)D3D8Present);
+    d3d8Present.Hook(GetVTable(device, (60 / 4)), (FARPROC)D3D8Present, "D3D8 Present");
     d3d8Present.Rehook();
 
     OSInitializeTimer();
@@ -756,7 +770,7 @@ bool InitD3D8Capture()
         if (versionSupported)
         {
             //d3d8Present.Hook((FARPROC)(libBaseAddr + devicePresentOffset), (FARPROC)D3D8Present);
-            d3d8EndScene.Hook((FARPROC)(libBaseAddr + deviceEndSceneOffset), (FARPROC)D3D8EndScene);
+            d3d8EndScene.Hook((FARPROC)(libBaseAddr + deviceEndSceneOffset), (FARPROC)D3D8EndScene, "D3D8 EndScene");
 
             //d3d8Present.Rehook();
             d3d8EndScene.Rehook();

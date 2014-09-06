@@ -114,8 +114,11 @@ HRESULT STDMETHODCALLTYPE DXGISwapResizeBuffersHook(IDXGISwapChain *swap, UINT b
     bTargetAcquired = false;
 
 #if OLDHOOKS
+    HRESULT (STDMETHODCALLTYPE *func)(IDXGISwapChain *swap, UINT bufferCount, UINT width, UINT height, DXGI_FORMAT giFormat, UINT flags);
+    *(FARPROC*)&func = giswapResizeBuffers.GetFunc();
+
     giswapResizeBuffers.Unhook();
-    HRESULT hRes = swap->ResizeBuffers(bufferCount, width, height, giFormat, flags);
+    HRESULT hRes = func(swap, bufferCount, width, height, giFormat, flags);
     giswapResizeBuffers.Rehook();
 #else
     HRESULT hRes = ((DXGISwapResizeBuffersHookPROC)giswapResizeBuffers.origFunc)(swap, bufferCount, width, height, giFormat, flags);
@@ -135,8 +138,11 @@ HRESULT STDMETHODCALLTYPE DXGISwapPresentHook(IDXGISwapChain *swap, UINT syncInt
         (*captureProc)(swap);
 
 #if OLDHOOKS
+    HRESULT (STDMETHODCALLTYPE *func)(IDXGISwapChain *swap, UINT syncInterval, UINT flags);
+    *(FARPROC*)&func = giswapPresent.GetFunc();
+
     giswapPresent.Unhook();
-    HRESULT hRes = swap->Present(syncInterval, flags);
+    HRESULT hRes = func(swap, syncInterval, flags);
     giswapPresent.Rehook();
 #else
     HRESULT hRes = ((DXGISwapPresentHookPROC)giswapPresent.origFunc)(swap, syncInterval, flags);
@@ -288,8 +294,8 @@ bool InitDXGICapture()
         bSuccess = true;
 
         UPARAM *vtable = *(UPARAM**)swap;
-        giswapPresent.Hook((FARPROC)*(vtable+(32/4)), (FARPROC)DXGISwapPresentHook);
-        giswapResizeBuffers.Hook((FARPROC)*(vtable+(52/4)), (FARPROC)DXGISwapResizeBuffersHook);
+        giswapPresent.Hook((FARPROC)*(vtable+(32/4)), (FARPROC)DXGISwapPresentHook, "DXGISwap Present");
+        giswapResizeBuffers.Hook((FARPROC)*(vtable+(52/4)), (FARPROC)DXGISwapResizeBuffersHook, "DXGISwap Resize");
 
         SafeRelease(swap);
 

@@ -930,6 +930,9 @@ HRESULT STDMETHODCALLTYPE D3D9EndScene(IDirect3DDevice9 *device)
     EnterCriticalSection(&d3d9EndMutex);
 
 #if OLDHOOKS
+    HRESULT (STDMETHODCALLTYPE *func)(IDirect3DDevice9 *);
+    *(FARPROC*)&func = d3d9EndScene.GetFunc();
+
     d3d9EndScene.Unhook();
 #endif
 
@@ -955,7 +958,7 @@ HRESULT STDMETHODCALLTYPE D3D9EndScene(IDirect3DDevice9 *device)
     }
 
 #if OLDHOOKS
-    HRESULT hRes = device->EndScene();
+    HRESULT hRes = func(device);
     d3d9EndScene.Rehook();
 #else
     HRESULT hRes = ((D3D9EndScenePROC)d3d9EndScene.origFunc)(device);
@@ -969,6 +972,9 @@ HRESULT STDMETHODCALLTYPE D3D9EndScene(IDirect3DDevice9 *device)
 HRESULT STDMETHODCALLTYPE D3D9Present(IDirect3DDevice9 *device, CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion)
 {
 #if OLDHOOKS
+    HRESULT (STDMETHODCALLTYPE *func)(IDirect3DDevice9 *device, CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion);
+    *(FARPROC*)&func = d3d9Present.GetFunc();
+
     d3d9Present.Unhook();
 #endif
 
@@ -980,7 +986,7 @@ HRESULT STDMETHODCALLTYPE D3D9Present(IDirect3DDevice9 *device, CONST RECT* pSou
     presentRecurse++;
 
 #if OLDHOOKS
-    HRESULT hRes = device->Present(pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
+    HRESULT hRes = func(device, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
 #else
     HRESULT hRes = ((PRESENTPROC)d3d9Present.origFunc)(device, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
 #endif
@@ -996,6 +1002,9 @@ HRESULT STDMETHODCALLTYPE D3D9Present(IDirect3DDevice9 *device, CONST RECT* pSou
 HRESULT STDMETHODCALLTYPE D3D9PresentEx(IDirect3DDevice9Ex *device, CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion, DWORD dwFlags)
 {
 #if OLDHOOKS
+    HRESULT (STDMETHODCALLTYPE *func)(IDirect3DDevice9Ex *device, CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion, DWORD dwFlags);
+    *(FARPROC*)&func = d3d9PresentEx.GetFunc();
+
     d3d9PresentEx.Unhook();
 #endif
 
@@ -1007,7 +1016,7 @@ HRESULT STDMETHODCALLTYPE D3D9PresentEx(IDirect3DDevice9Ex *device, CONST RECT* 
     presentRecurse++;
 
 #if OLDHOOKS
-    HRESULT hRes = device->PresentEx(pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
+    HRESULT hRes = func(device, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
 #else
     HRESULT hRes = ((PRESENTEXPROC)d3d9PresentEx.origFunc)(device, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
 #endif
@@ -1023,6 +1032,9 @@ HRESULT STDMETHODCALLTYPE D3D9PresentEx(IDirect3DDevice9Ex *device, CONST RECT* 
 HRESULT STDMETHODCALLTYPE D3D9SwapPresent(IDirect3DSwapChain9 *swap, CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion, DWORD dwFlags)
 {
 #if OLDHOOKS
+    HRESULT (STDMETHODCALLTYPE *func)(IDirect3DSwapChain9 *swap, CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion, DWORD dwFlags);
+    *(FARPROC*)&func = d3d9SwapPresent.GetFunc();
+
     d3d9SwapPresent.Unhook();
 #endif
 
@@ -1034,7 +1046,7 @@ HRESULT STDMETHODCALLTYPE D3D9SwapPresent(IDirect3DSwapChain9 *swap, CONST RECT*
     presentRecurse++;
 
 #if OLDHOOKS
-    HRESULT hRes = swap->Present(pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
+    HRESULT hRes = func(swap, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
 #else
     HRESULT hRes = ((SWAPPRESENTPROC)d3d9SwapPresent.origFunc)(swap, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
 #endif
@@ -1052,6 +1064,9 @@ typedef HRESULT(STDMETHODCALLTYPE *D3D9ResetPROC)(IDirect3DDevice9 *device, D3DP
 HRESULT STDMETHODCALLTYPE D3D9Reset(IDirect3DDevice9 *device, D3DPRESENT_PARAMETERS *params)
 {
 #if OLDHOOKS
+    HRESULT (STDMETHODCALLTYPE *func)(IDirect3DDevice9 *device, D3DPRESENT_PARAMETERS *params);
+    *(FARPROC*)&func = d3d9Reset.GetFunc();
+
     d3d9Reset.Unhook();
 #endif
 
@@ -1060,7 +1075,7 @@ HRESULT STDMETHODCALLTYPE D3D9Reset(IDirect3DDevice9 *device, D3DPRESENT_PARAMET
     ClearD3D9Data();
 
 #if OLDHOOKS
-    HRESULT hRes = device->Reset(params);
+    HRESULT hRes = func(device, params);
 #else
     HRESULT hRes = ((D3D9ResetPROC)d3d9Reset.origFunc)(device, params);
 #endif
@@ -1086,6 +1101,9 @@ typedef HRESULT(STDMETHODCALLTYPE *D3D9ResetExPROC)(IDirect3DDevice9Ex *device, 
 HRESULT STDMETHODCALLTYPE D3D9ResetEx(IDirect3DDevice9Ex *device, D3DPRESENT_PARAMETERS *params, D3DDISPLAYMODEEX *fullscreenData)
 {
 #if OLDHOOKS
+    HRESULT (STDMETHODCALLTYPE *func)(IDirect3DDevice9Ex *device, D3DPRESENT_PARAMETERS *params, D3DDISPLAYMODEEX *fullscreenData);
+    *(FARPROC*)&func = d3d9ResetEx.GetFunc();
+
     d3d9ResetEx.Unhook();
     d3d9Reset.Unhook();
 #endif
@@ -1095,7 +1113,7 @@ HRESULT STDMETHODCALLTYPE D3D9ResetEx(IDirect3DDevice9Ex *device, D3DPRESENT_PAR
     ClearD3D9Data();
 
 #if OLDHOOKS
-    HRESULT hRes = device->ResetEx(params, fullscreenData);
+    HRESULT hRes = func(device, params, fullscreenData);
 #else
     HRESULT hRes = ((D3D9ResetExPROC)d3d9ResetEx.origFunc)(device, params, fullscreenData);
 #endif
@@ -1165,18 +1183,18 @@ void SetupD3D9(IDirect3DDevice9 *device)
             SetVTable(device, (8/4), newD3D9Release);
         }*/
 
-        d3d9Present.Hook(GetVTable(device, (68/4)), (FARPROC)D3D9Present);
+        d3d9Present.Hook(GetVTable(device, (68/4)), (FARPROC)D3D9Present, "D3D9 Present");
 
         if(bD3D9Ex)
         {
             FARPROC curPresentEx = GetVTable(device, (484/4));
-            d3d9PresentEx.Hook(curPresentEx, (FARPROC)D3D9PresentEx);
-            d3d9ResetEx.Hook(GetVTable(device, (528/4)), (FARPROC)D3D9ResetEx);
+            d3d9PresentEx.Hook(curPresentEx, (FARPROC)D3D9PresentEx, "D3D9Ex PresentEx");
+            d3d9ResetEx.Hook(GetVTable(device, (528/4)), (FARPROC)D3D9ResetEx, "D3D9Ex ResetEx");
         }
 
-        d3d9Reset.Hook(GetVTable(device, (64/4)), (FARPROC)D3D9Reset);
+        d3d9Reset.Hook(GetVTable(device, (64/4)), (FARPROC)D3D9Reset, "D3D9 Reset");
 
-        d3d9SwapPresent.Hook(GetVTable(swapChain, (12/4)), (FARPROC)D3D9SwapPresent);
+        d3d9SwapPresent.Hook(GetVTable(swapChain, (12/4)), (FARPROC)D3D9SwapPresent, "D3D9Swap Present");
         d3d9Present.Rehook();
         d3d9SwapPresent.Rehook();
         d3d9Reset.Rehook();
@@ -1235,7 +1253,7 @@ bool InitD3D9Capture()
 
                     UPARAM *vtable = *(UPARAM**)deviceEx;
 
-                    d3d9EndScene.Hook((FARPROC)*(vtable+(168/4)), (FARPROC)D3D9EndScene);
+                    d3d9EndScene.Hook((FARPROC)*(vtable+(168/4)), (FARPROC)D3D9EndScene, "D3D9 EndScene");
                     /*d3d9ResetEx.Hook((FARPROC)*(vtable+(528/4)), (FARPROC)D3D9ResetEx);
                     d3d9Reset.Hook((FARPROC)*(vtable+(64/4)), (FARPROC)D3D9Reset);*/
 

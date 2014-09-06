@@ -31,7 +31,11 @@
 #include <xmmintrin.h>
 #include <emmintrin.h>
 
+//#include <Psapi.h>
+
 #include <objbase.h>
+
+#include <cstdio>
 
 #include <string>
 #include <sstream>
@@ -59,13 +63,28 @@ typedef unsigned __int64 UPARAM;
 typedef unsigned long UPARAM;
 #endif
 
+extern fstream logOutput;
+
+enum class ChainType
+{
+    None,
+    Forward,
+    Reverse
+};
+
 class HookData
 {
-    BYTE data[14];
+    BYTE unhookedData[14];
+    BYTE hookedData[14];
     FARPROC func;
     FARPROC hookFunc;
+    FARPROC chainFunc = nullptr;
     bool bHooked;
     bool b64bitJump;
+    bool bFirst = true;
+    bool bChainHook = false;
+    ChainType chainType = ChainType::None;
+    LPCSTR name;
 
 public:
 #if OLDHOOKS
@@ -78,7 +97,9 @@ public:
     FARPROC origFunc;
 #endif
 
-    inline bool Hook(FARPROC funcIn, FARPROC hookFuncIn)
+    FARPROC GetFunc() const {return bChainHook ? chainFunc : func;};
+
+    inline bool Hook(FARPROC funcIn, FARPROC hookFuncIn, LPCSTR lpName)
     {
         if(bHooked)
         {
@@ -97,12 +118,13 @@ public:
 
         func = funcIn;
         hookFunc = hookFuncIn;
+        name = lpName;
 
         DWORD oldProtect;
-        if(!VirtualProtect((LPVOID)func, 14, PAGE_EXECUTE_READWRITE, &oldProtect))
+        if(!VirtualProtect((LPVOID)((LPBYTE)func-5), 19, PAGE_EXECUTE_READWRITE, &oldProtect))
             return false;
 
-        memcpy(data, (const void*)func, 14);
+        memcpy(unhookedData, (const void*)func, 14);
         //VirtualProtect((LPVOID)func, 14, oldProtect, &oldProtect);
 
         return true;
@@ -110,13 +132,21 @@ public:
 
     inline void Rehook(bool bForce=false)
     {
-        if((!bForce && bHooked) || !func)
+        if((!bForce && bHooked) || !func || (!bForce && bChainHook))
             return;
 
         UPARAM startAddr = UPARAM(func);
         UPARAM targetAddr = UPARAM(hookFunc);
         UPARAM offset = targetAddr - (startAddr+5);
 
+        /* safely replaces original bytes (in case a forward chain hook was added on top of our non-chain hook) */
+        if (!bFirst && !bForce && !bChainHook)
+        {
+            UINT count = b64bitJump ? 14 : 5;
+            memcpy((void*)func, hookedData, count);
+            bHooked = true;
+            return;
+        }
 
 #if OLDHOOKS
         DWORD oldProtect;
@@ -133,16 +163,86 @@ public:
             *((LPDWORD)(addrData)) = 0;
             *((unsigned __int64*)(addrData+4)) = targetAddr;
             //VirtualProtect((LPVOID)func, 14, oldProtect, &oldProtect);
+
+            bHooked = true;
         }
         else
 #endif
         {
-            VirtualProtect((LPVOID)func, 5, PAGE_EXECUTE_READWRITE, &oldProtect);
+            VirtualProtect((LPVOID)((LPBYTE)func-5), 10, PAGE_EXECUTE_READWRITE, &oldProtect);
 
-            LPBYTE addrData = (LPBYTE)func;
-            *addrData = 0xE9;
-            *(DWORD*)(addrData+1) = DWORD(offset);
-            //VirtualProtect((LPVOID)func, 5, oldProtect, &oldProtect);
+            if (bForce || bFirst)
+            {
+                int bNOPCount = 0;
+
+                LPBYTE p = ((LPBYTE)func-5);
+                for (size_t i = 0; i < 5; i++)
+                    if (p[i] == 0x90)
+                        bNOPCount++;
+
+#ifndef _WIN64
+                FARPROC chainJmp = (FARPROC)((LPBYTE)hookFunc - (size_t)func);
+
+                if (bNOPCount == 5 && p[5] == 0x8B && p[6] == 0xFF)
+                {
+                    logOutput << "reverse chain hook on " << name << endl;
+
+                    bChainHook = true;
+                    chainFunc  = (FARPROC)((LPBYTE)func+2);
+                    chainType  = ChainType::Reverse;
+
+                    p[0] = 0xE9;
+                    *((FARPROC*)(&p[1])) = chainJmp;
+                    *((unsigned short*)func) = 0xF9EB;
+                }
+                else if (p[0] == 0xE9 && p[5] == 0xEB && p[6] == 0xF9)
+                {
+                    if (!bChainHook)
+                    {
+                        FARPROC newChainJmp = *(FARPROC*)(&p[1]);
+
+                        bChainHook = true;
+                        chainFunc  = (FARPROC)((LPBYTE)func + (size_t)newChainJmp);
+                        chainType  = ChainType::Reverse;
+                        *((FARPROC*)(&p[1])) = chainJmp;
+
+                        logOutput << "reverse chain hook on: " << name << ", last hook: " << std::hex << (unsigned long)(chainFunc) << endl;
+                    }
+                }
+                else if (p[5] == 0xE9)
+                {
+                    if (!bChainHook)
+                    {
+                        FARPROC newChainJmp = *(FARPROC*)&p[6];
+
+                        bChainHook = true;
+                        chainFunc  = (FARPROC)((LPBYTE)func + 5 + (size_t)newChainJmp);
+                        chainType  = ChainType::Forward;
+                        *((UPARAM*)(&p[6])) = offset;
+
+                        logOutput << "forward chain hook on: " << name << ", last hook: " << std::hex << (unsigned long)(chainFunc) << endl;
+                    }
+                }
+                else if (bChainHook)
+                {
+                    bChainHook = false;
+                    chainType = ChainType::None;
+                }
+#endif
+
+                bFirst = false;
+            }
+
+            if (!bChainHook)
+            {
+                logOutput << "non-chain hook on " << name << endl;
+                LPBYTE addrData = (LPBYTE)func;
+                *addrData = 0xE9;
+                *(DWORD*)(addrData+1) = DWORD(offset);
+                //VirtualProtect((LPVOID)func, 5, oldProtect, &oldProtect);
+            }
+
+            bHooked = true;
         }
 #else
 		// redirect function at startAddr to targetAddr
@@ -150,27 +250,26 @@ public:
         MH_CreateHook(func, hookFunc, (void**)&origFunc);
         MH_EnableHook(func);
 #endif
-
-        bHooked = true;
     }
 
     inline void Unhook()
     {
-        if(!bHooked || !func)
+        if(!bHooked || bChainHook || !func)
             return;
 
 #if OLDHOOKS
         UINT count = b64bitJump ? 14 : 5;
         DWORD oldProtect;
         VirtualProtect((LPVOID)func, count, PAGE_EXECUTE_READWRITE, &oldProtect);
-        memcpy((void*)func, data, count);
+        memcpy(hookedData, (const void*)func, count);
+        memcpy((void*)func, unhookedData, count);
         //VirtualProtect((LPVOID)func, count, oldProtect, &oldProtect);
+
+        bHooked = false;
 #else
         MH_DisableHook(func);
         MH_RemoveHook(func);
 #endif
-
-        bHooked = false;
     }
 };
 
@@ -227,8 +326,6 @@ extern HWND hwndD3DDummyWindow;
 extern CaptureInfo *infoMem;
 
 extern char processName[MAX_PATH];
-
-extern fstream logOutput;
 
 extern wstring  strKeepAlive;
 extern LONGLONG keepAliveTime;
