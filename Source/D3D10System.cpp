@@ -917,6 +917,10 @@ void D3D10System::DrawSpriteExRotate(Texture *texture, DWORD color, float x, flo
     x2 -= curCropping[2] * invMult.x;
     y2 -= curCropping[3] * invMult.y;
 
+    // cropped out completely (eg mouse cursor texture)
+    if (x2 - x < 0 || y2 - y < 0)
+        return;
+
     //------------------------------
     // crop texture coordinate values
 
