@@ -337,7 +337,7 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTI
 CAPTION "ImportGlobalSources"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LISTBOX         IDC_SOURCES,7,7,117,153,LBS_EXTENDEDSEL | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    LISTBOX         IDC_SOURCES,7,7,117,153,LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
     DEFPUSHBUTTON   "OK",IDOK,17,164,50,14
     PUSHBUTTON      "CANCEL",IDCANCEL,69,164,50,14
 END
@@ -895,8 +895,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,6,2,2
- PRODUCTVERSION 0,6,2,2
+ FILEVERSION 0,6,3,0
+ PRODUCTVERSION 0,6,3,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -912,12 +912,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "Open Broadcaster Software"
-            VALUE "FileVersion", "0.6.2.2"
+            VALUE "FileVersion", "0.6.3.0"
             VALUE "InternalName", "OBS"
             VALUE "LegalCopyright", "Copyright (C) 2013-2014"
             VALUE "OriginalFilename", "OBS.exe"
             VALUE "ProductName", "Open Broadcaster Software"
-            VALUE "ProductVersion", "0.6.2.2"
+            VALUE "ProductVersion", "0.6.3.0"
         END
     END
     BLOCK "VarFileInfo"
