@@ -505,7 +505,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                         UINT classID = ret - ID_LISTBOX_COPYTO;
 
                         String strScenesCopyToConfig;
-                        strScenesCopyToConfig = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, sceneCollectionList[classID]);
+                        strScenesCopyToConfig = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, sceneCollectionList[classID].Array());
 
                         if(!App->scenesCopyToConfig.Open(strScenesCopyToConfig))
                             CrashError(TEXT("Could not open '%s"), strScenesCopyToConfig.Array());
