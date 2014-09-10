@@ -111,8 +111,6 @@ void STDCALL OBS::StopReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown)
     }
 }
 
-void SaveReplayBuffer(ReplayBuffer *out, DWORD timestamp);
-
 void STDCALL OBS::SaveReplayBufferHotkey(DWORD hotkey, UPARAM param, bool bDown)
 {
     if (App->bSaveReplayBufferHotkeyDown && !bDown)

@@ -1,6 +1,25 @@
+Cancel="ยกเลิก"
+ClassName="อุปกรณ์จับภาพวิดีโอ"
+DeviceSelection="เลือกอุปกรณ์"
+OK="ตกลง"
+
+DeinterlacingType.None="ไม่มี"
+DeinterlacingType.Blend="Blend"
+DeinterlacingType.Blend2x="Blend2x"
+DeinterlacingType.Linear="Linear"
+DeinterlacingType.Linear2x="Linear2x"
+DeinterlacingType.Yadif="Yadif"
+DeinterlacingType.Yadif2x="Yadif2x"
+DeviceSelection.GPUDeinterlacing="ใช้ GPU"
 
 
-
+DeviceSelection.Blend="Blend (1-1000):"
+DeviceSelection.Config="ตั้งค่าคอนฟิก"
+DeviceSelection.FPS="FPS:"
+DeviceSelection.Refresh="รีเฟรช"
+DeviceSelection.Resolution="ความละเอียด"
+DeviceSelection.Select="เลือก"
+DeviceSelection.Sound="เสียง"
 
 
 

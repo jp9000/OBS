@@ -505,7 +505,7 @@ LRESULT CALLBACK OBS::ListboxHook(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                         UINT classID = ret - ID_LISTBOX_COPYTO;
 
                         String strScenesCopyToConfig;
-                        strScenesCopyToConfig = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, sceneCollectionList[classID]);
+                        strScenesCopyToConfig = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, sceneCollectionList[classID].Array());
 
                         if(!App->scenesCopyToConfig.Open(strScenesCopyToConfig))
                             CrashError(TEXT("Could not open '%s"), strScenesCopyToConfig.Array());
@@ -2134,7 +2134,7 @@ INT_PTR CALLBACK OBS::GlobalSourcesProc(HWND hwnd, UINT message, WPARAM wParam, 
                                         {
                                             LVFINDINFO findInfo;
                                             findInfo.flags = LVFI_STRING;
-                                            findInfo.psz = (LPCWSTR) element->GetName();
+                                            findInfo.psz = (LPCWSTR) item->GetName();
 
                                             int listID = ListView_FindItem(hwndSceneSources, -1, &findInfo);
                                             if(listID != -1)
@@ -3320,6 +3320,12 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 case ID_TOGGLERECORDING:
                     App->RefreshStreamButtons(true);
                     App->ToggleRecording();
+                    App->RefreshStreamButtons();
+                    break;
+
+                case ID_TOGGLERECORDINGREPLAYBUFFER:
+                    App->RefreshStreamButtons(true);
+                    App->ToggleReplayBuffer();
                     App->RefreshStreamButtons();
                     break;
 

@@ -15,7 +15,6 @@ Defaults="Valors predeterminats"
 DeleteConfirm="Estàs segur que vols eliminar els fitxers seleccionats?"
 Desktop="Escriptori"
 Disable="Desactivar"
-EncoderLag="ADVERTÈNCIA: El sistema està trigant massa a codificar, s'estan ometent fotogrames!"
 EndingDelay="S'està finalitzant l'stream retardat..."
 EnterName="Per favor, escriu un nom"
 Gamma="Gamma:"
@@ -42,6 +41,10 @@ Settings="Configuració..."
 LogWindow="Finestra de registre"
 StreamReport="Informe de l'stream"
 MessageBoxWarningCaption="Avís"
+
+
+
+
 
 BuildingMP4Dialog.Progress="Creant el fitxer MP4, espera si-us-plau..."
 
@@ -71,6 +74,7 @@ Listbox.ResetSize="Recupera la mida per defecte"
 Listbox.SetHotkey="Estableix tecla d'accés directe"
 ListBox.ResetCrop="Reinicialitza el cropat"
 
+
 MainMenu.File="&Fitxer"
 MainMenu.Help="&Ajuda"
 MainMenu.Profiles="&Perfils"
@@ -83,7 +87,6 @@ MainMenu.Settings.Projector="&Projector"
 MainMenu.File.Exit="&Surt"
 MainMenu.File.Save="&Desa"
 
-MainMenu.Help.Contents="&Continguts"
 MainMenu.Help.VisitWebsite="Visita el lloc web"
 MainMenu.Help.CheckForUpdates="Cerca actualitzacions"
 
@@ -106,6 +109,7 @@ MainWindow.StartStream="Inicia l'stream"
 MainWindow.StopStream="Atura l'stream"
 MainWindow.StopTest="Atura la visualització prèvia"
 MainWindow.TestStream="Visualització prèvia de l'stream"
+
 
 Plugins.Configure="Configura"
 Plugins.Description="Descripció:"
@@ -137,7 +141,8 @@ Settings.SaveChangesPrompt="Voleu desar i aplicar els canvis?"
 Settings.SaveChangesTitle="Vols aplicar la configuració?"
 Settings.Video="Vídeo"
 
-Settings.Advanced.AutomaticLatency="Mode de latència baixa automàtic:"
+
+
 Settings.Advanced.AllowOtherHotkeyModifiers="Permetre altres modificadors a les dreceres de teclat"
 Settings.Advanced.BindToIP="Unir a la interfície:"
 Settings.Advanced.DisablePreviewEncoding="No codifiquis durant la visualització prèvia"
@@ -178,7 +183,6 @@ Settings.Audio.MuteDesktopHotkey="Tecla abreviada per silenciar / reactivar l'es
 Settings.Audio.MuteMicHotkey="Tecla abreviada per silenciar / reactivar el micròfon:"
 Settings.Audio.PlaybackDevice="Dispositiu d'àudio d'escriptori:"
 Settings.Audio.PushToTalkDelay="Retard de prem-per-parlar (mil·lisegons):"
-Settings.Audio.PushToTalkHotkey="Utilitza Prem-per-parlar:"
 Settings.Audio.ShowOnlyConnectedDevices="Mostra només els dispositius connectats"
 Settings.Audio.UseInputDevices="Utilitza el dispositiu d'entrada com a àudio d'escriptori"
 Settings.Audio.UseMicQPC="Utilitza codis de temps QPC del micròfon"
@@ -211,7 +215,6 @@ Settings.Encoding.Video.QSVConfigWarning="Per activar l' opció del codificador 
 Settings.General.Add="Afegeix nou"
 Settings.General.ConfirmDelete="Estas segur de voler suprimir el perfil \"$1\"?"
 Settings.General.EnableProjectorCursor="Activar el cursor del ratolí sobre el projector"
-Settings.General.InvalidName="Els noms del perfil no poden utilitzarse els següents caràcters: \r\n\\ / : * ? \" < > |"
 Settings.General.Language="Idioma:"
 Settings.General.Profile="Configuració del Perfil:"
 Settings.General.Notification="Icona de l'àrea de notificació"
@@ -222,6 +225,7 @@ Settings.Publish.AutoReconnect="Reconnexió automàtica:"
 Settings.Publish.AutoReconnectTimeout="Temps de espera per a la reconnexió automàtica:"
 Settings.Publish.ChannelName="Nom del canal:"
 Settings.Publish.Delay="Retard (segons):"
+
 
 
 

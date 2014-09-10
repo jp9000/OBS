@@ -142,15 +142,18 @@ struct ReplayBuffer : VideoFileStream
         save_times.emplace_back(timestamp);
     }
 
-    static void SetLastFilename(String name)
+    static void SaveComplete(String name, DWORD recordingLengthMS)
     {
         App->lastOutputFile = name;
+        App->ReportReplayBufferSavedTrigger(name, recordingLengthMS);
     }
 
     static void SetRecording(bool recording)
     {
         App->bRecording = recording;
         App->ConfigureStreamButtons();
+        if (recording)
+            App->ReportStartRecordingTrigger();
     }
 };
 
@@ -192,14 +195,21 @@ static DWORD STDCALL SaveReplayBufferThread(void *arg)
         signalled = true;
     };
 
+    DWORD lowest_timestamp = MAXDWORD;
+    DWORD highest_timestamp = 0;
+
     while (packets.size())
     {
         auto &packet = packets.front();
         if (get<2>(*packet) == stop_ts)
             break;
 
+        auto timestamp = get<1>(*packet);
+        lowest_timestamp = min(timestamp, lowest_timestamp);
+        highest_timestamp = max(timestamp, highest_timestamp);
+
         auto &buf = get<3>(*packet);
-        out->AddPacket(buf, get<1>(*packet), get<2>(*packet), get<0>(*packet));
+        out->AddPacket(buf, timestamp, get<2>(*packet), get<0>(*packet));
 
         if (buf->front() == 0x17)
             signal();
@@ -208,7 +218,8 @@ static DWORD STDCALL SaveReplayBufferThread(void *arg)
     }
     signal();
 
-    ReplayBuffer::SetLastFilename(name);
+    out.reset();
+    ReplayBuffer::SaveComplete(name, highest_timestamp > lowest_timestamp ? (highest_timestamp - lowest_timestamp) : 0);
 
     return 0;
 }

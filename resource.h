@@ -242,6 +242,7 @@
 #define IDC_LIST1                       1090
 #define IDC_BITMAPS                     1090
 #define IDC_VCE_DEVIDX                  1090
+#define IDC_CLEARPUSHTOTALK2            1091
 #define IDC_VCE_BFRAMES                 1091
 #define IDC_STOPSTREAMHOTKEY            1093
 #define IDC_CLEARHOTKEY                 1094

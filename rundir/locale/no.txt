@@ -15,7 +15,6 @@ Defaults="Standarder"
 DeleteConfirm="Er du sikker på at du vil slette valgte elementer?"
 Desktop="Skrivebord"
 Disable="Deaktiver"
-EncoderLag="Advarsel: Tar for lang tid å kode, hopper over rammer!"
 EndingDelay="Avslutter forsinket strøm..."
 EnterName="Vennligst skriv inn et navn"
 Gamma="Gamma:"
@@ -43,6 +42,10 @@ LogWindow="Loggvindu"
 StreamReport="Strømrapport"
 MessageBoxWarningCaption="Advarsel"
 NoSourcesFound="Du har ikke lagt til noen kilder! Er du sikker du vil direkteavspille en svart skjerm?"
+
+
+
+
 
 BuildingMP4Dialog.Progress="Oppretter MP4, vennligst vent ..."
 
@@ -72,6 +75,7 @@ Listbox.ResetSize="Tilbakestill størrelse"
 Listbox.SetHotkey="Angi hurtigtast"
 ListBox.ResetCrop="Tilbakestille beskjæring"
 
+
 MainMenu.File="&Fil"
 MainMenu.Help="&Hjelp"
 MainMenu.Profiles="&Profiler"
@@ -84,7 +88,6 @@ MainMenu.Settings.Projector="&Projektor"
 MainMenu.File.Exit="&Avslutt"
 MainMenu.File.Save="&Lagre"
 
-MainMenu.Help.Contents="&Innhold"
 MainMenu.Help.VisitWebsite="Besøk hjemmeside"
 MainMenu.Help.CheckForUpdates="Se etter &oppdateringer"
 
@@ -107,6 +110,7 @@ MainWindow.StartStream="Starte strømmen"
 MainWindow.StopStream="Stoppe strømmen"
 MainWindow.StopTest="Stop Forhåndsvisning"
 MainWindow.TestStream="Forhåndsvis Strøm"
+
 
 Plugins.Configure="Konfigurer"
 Plugins.Description="Forklaring:"
@@ -139,7 +143,8 @@ Settings.SaveChangesPrompt="Ønsker du å lagre og bruke endringene?"
 Settings.SaveChangesTitle="Lagre innstillingene?"
 Settings.Video="Video"
 
-Settings.Advanced.AutomaticLatency="Automatisk lav latency-modus:"
+
+
 Settings.Advanced.AllowOtherHotkeyModifiers="Tillate andre modifikatorer på hurtigtaster"
 Settings.Advanced.BindToIP="Bind til grensesnittet:"
 Settings.Advanced.DisablePreviewEncoding="Deaktivere koding under Forhåndsvisning"
@@ -176,7 +181,6 @@ Settings.Audio.MuteDesktopHotkey="Demp/fjern demping Skrivebord hurtigtast:"
 Settings.Audio.MuteMicHotkey="Demp/fjern demping mikrofon hurtigtast:"
 Settings.Audio.PlaybackDevice="Skrivebordslydenhet:"
 Settings.Audio.PushToTalkDelay="Trykk-og-snakk forsinkelse (millisekunder):"
-Settings.Audio.PushToTalkHotkey="Bruk Trykk-og-snakk:"
 Settings.Audio.ShowOnlyConnectedDevices="Vis bare tilkoblede enheter"
 Settings.Audio.ResetMic="Initialiser på nytt"
 
@@ -203,7 +207,6 @@ Settings.Encoding.Video.EncoderNVENCDisabledAfterApply="\"Nvidia NVENC\"-kodings
 Settings.General.Add="Legg til Ny"
 Settings.General.ConfirmDelete="Er du sikker på at du vil fjerne profilen '$1'?"
 Settings.General.EnableProjectorCursor="Aktiver markøren over projektoren"
-Settings.General.InvalidName="Profilnavn kan ikke bruke følgende tegn: \r\n\\ /: *? \" < > |"
 Settings.General.Language="Språk:"
 Settings.General.Profile="Innstilling profil:"
 Settings.General.Notification="Systemstatusfeltikon"
@@ -222,7 +225,6 @@ Settings.Publish.LowLatencyMode="Minimere påkjenning på nettverk:"
 Settings.Publish.Mode="Modus:"
 Settings.Publish.Password="Passord (hvis noen):"
 Settings.Publish.SavePath="Bane:"
-Settings.Publish.SaveToFile="Lagre til fil:"
 Settings.Publish.Server="Server:"
 Settings.Publish.Service="Strømnings tjeneste:"
 Settings.Publish.StartStreamHotkey="Start Strømming hurtigtast:"
@@ -230,6 +232,7 @@ Settings.Publish.StopStreamHotkey="Stopp Strømming hurtigtast:"
 Settings.Publish.StartRecordingHotkey="Start Opptak Hurtigtast:"
 Settings.Publish.StopRecordingHotkey="Stopp Opptak Hurtigtast:"
 Settings.Publish.Username="Brukernavn (om det kreves):"
+
 
 Settings.Publish.Mode.FileOnly="Kun lagring til fil"
 Settings.Publish.Mode.LiveStream="Livestrøm"

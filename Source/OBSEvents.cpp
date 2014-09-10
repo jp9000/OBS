@@ -100,6 +100,46 @@ void OBS::ReportStopRecordingTrigger()
     }
 }
 
+void OBS::ReportStartRecordingReplayBufferTrigger()
+{
+    if (bShuttingDown)
+        return;
+
+    for (UINT i = 0; i<plugins.Num(); i++)
+    {
+        OBS_CALLBACK callback = plugins[i].startRecordingReplayBufferCallback;
+
+        if (callback)
+            (*callback)();
+    }
+}
+void OBS::ReportStopRecordingReplayBufferTrigger()
+{
+    if (bShuttingDown)
+        return;
+
+    for (UINT i = 0; i<plugins.Num(); i++)
+    {
+        OBS_CALLBACK callback = plugins[i].stopRecordingReplayBufferCallback;
+
+        if (callback)
+            (*callback)();
+    }
+}
+void OBS::ReportReplayBufferSavedTrigger(String filename, UINT recordingLengthMS)
+{
+    if (bShuttingDown)
+        return;
+
+    for (UINT i = 0; i<plugins.Num(); i++)
+    {
+        OBS_REPLAY_BUFFER_SAVED_CALLBACK callback = plugins[i].replayBufferSavedCallback;
+
+        if (callback)
+            (*callback)(filename, recordingLengthMS);
+    }
+}
+
 void OBS::ReportOBSStatus(bool running, bool streaming, bool recording, bool previewing, bool reconnecting)
 {
     if (bShuttingDown)

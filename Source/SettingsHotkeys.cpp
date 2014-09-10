@@ -50,7 +50,7 @@ void SettingsHotkeys::DestroyPane()
 
 void SettingsHotkeys::ApplySettings()
 {
-    auto update_hotkey = [&](decltype(App->pushToTalkHotkeyID) &hotkey, int dlg_id, CTSTR section, CTSTR key, OBSHOTKEYPROC proc)
+    auto update_hotkey = [&](decltype(App->pushToTalkHotkeyID) &hotkey, int dlg_id, CTSTR section, CTSTR key, OBSHOTKEYPROC proc, bool enabled)
     {
         if (hotkey)
         {
@@ -59,7 +59,7 @@ void SettingsHotkeys::ApplySettings()
         }
 
         DWORD new_hotkey = (DWORD)SendMessage(GetDlgItem(hwnd, dlg_id), HKM_GETHOTKEY, 0, 0);
-        if (new_hotkey)
+        if (enabled && new_hotkey)
             hotkey = API->CreateHotkey(new_hotkey, proc, NULL);
 
         AppConfig->SetInt(section, key, new_hotkey);
@@ -69,49 +69,53 @@ void SettingsHotkeys::ApplySettings()
 
     //------------------------------------
 
-    DWORD hotkey = update_hotkey(App->pushToTalkHotkeyID, IDC_PUSHTOTALKHOTKEY, L"Audio", L"PushToTalkHotkey", OBS::PushToTalkHotkey);
-    DWORD hotkey2 = update_hotkey(App->pushToTalkHotkey2ID, IDC_PUSHTOTALKHOTKEY, L"Audio", L"PushToTalkHotkey2", OBS::PushToTalkHotkey);
-    App->bUsingPushToTalk = hotkey || hotkey2;
+    App->bUsingPushToTalk = SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALK), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    AppConfig->SetInt(L"Audio", L"UsePushToTalk", App->bUsingPushToTalk);
 
     //------------------------------------
 
-    update_hotkey(App->muteMicHotkeyID, IDC_MUTEMICHOTKEY, L"Audio", L"MuteMicHotkey", OBS::MuteMicHotkey);
+    update_hotkey(App->pushToTalkHotkeyID, IDC_PUSHTOTALKHOTKEY, L"Audio", L"PushToTalkHotkey", OBS::PushToTalkHotkey, App->bUsingPushToTalk);
+    update_hotkey(App->pushToTalkHotkey2ID, IDC_PUSHTOTALKHOTKEY, L"Audio", L"PushToTalkHotkey2", OBS::PushToTalkHotkey, App->bUsingPushToTalk);
 
     //------------------------------------
 
-    update_hotkey(App->muteDesktopHotkeyID, IDC_MUTEDESKTOPHOTKEY, L"Audio", L"MuteDesktopHotkey", OBS::MuteDesktopHotkey);
+    update_hotkey(App->muteMicHotkeyID, IDC_MUTEMICHOTKEY, L"Audio", L"MuteMicHotkey", OBS::MuteMicHotkey, true);
+
+    //------------------------------------
+
+    update_hotkey(App->muteDesktopHotkeyID, IDC_MUTEDESKTOPHOTKEY, L"Audio", L"MuteDesktopHotkey", OBS::MuteDesktopHotkey, true);
 
     //------------------------------------------
 
-    update_hotkey(App->stopStreamHotkeyID, IDC_STOPSTREAMHOTKEY, L"Publish", L"StopStreamHotkey", OBS::StopStreamHotkey);
+    update_hotkey(App->stopStreamHotkeyID, IDC_STOPSTREAMHOTKEY, L"Publish", L"StopStreamHotkey", OBS::StopStreamHotkey, true);
 
     //------------------------------------------
 
-    update_hotkey(App->startStreamHotkeyID, IDC_STARTSTREAMHOTKEY, L"Publish", L"StartStreamHotkey", OBS::StartStreamHotkey);
+    update_hotkey(App->startStreamHotkeyID, IDC_STARTSTREAMHOTKEY, L"Publish", L"StartStreamHotkey", OBS::StartStreamHotkey, true);
 
     //------------------------------------------
 
-    update_hotkey(App->stopRecordingHotkeyID, IDC_STOPRECORDINGHOTKEY, L"Publish", L"StopRecordingHotkey", OBS::StopRecordingHotkey);
+    update_hotkey(App->stopRecordingHotkeyID, IDC_STOPRECORDINGHOTKEY, L"Publish", L"StopRecordingHotkey", OBS::StopRecordingHotkey, true);
 
     //------------------------------------------
 
-    update_hotkey(App->startRecordingHotkeyID, IDC_STARTRECORDINGHOTKEY, L"Publish", L"StartRecordingHotkey", OBS::StartRecordingHotkey);
+    update_hotkey(App->startRecordingHotkeyID, IDC_STARTRECORDINGHOTKEY, L"Publish", L"StartRecordingHotkey", OBS::StartRecordingHotkey, true);
 
     //------------------------------------------
 
-    update_hotkey(App->stopReplayBufferHotkeyID, IDC_STOPREPLAYBUFFERHOTKEY, L"Publish", L"StopReplayBufferHotkey", OBS::StopReplayBufferHotkey);
+    update_hotkey(App->stopReplayBufferHotkeyID, IDC_STOPREPLAYBUFFERHOTKEY, L"Publish", L"StopReplayBufferHotkey", OBS::StopReplayBufferHotkey, true);
 
     //------------------------------------------
 
-    update_hotkey(App->startReplayBufferHotkeyID, IDC_STARTREPLAYBUFFERHOTKEY, L"Publish", L"StartReplayBufferHotkey", OBS::StartReplayBufferHotkey);
+    update_hotkey(App->startReplayBufferHotkeyID, IDC_STARTREPLAYBUFFERHOTKEY, L"Publish", L"StartReplayBufferHotkey", OBS::StartReplayBufferHotkey, true);
 
     //------------------------------------------
 
-    update_hotkey(App->saveReplayBufferHotkeyID, IDC_SAVEREPLAYBUFFERHOTKEY, L"Publish", L"SaveReplayBufferHotkey", OBS::SaveReplayBufferHotkey);
+    update_hotkey(App->saveReplayBufferHotkeyID, IDC_SAVEREPLAYBUFFERHOTKEY, L"Publish", L"SaveReplayBufferHotkey", OBS::SaveReplayBufferHotkey, true);
 
     //------------------------------------------
 
-    update_hotkey(App->recordFromReplayBufferHotkeyID, IDC_RECORDFROMREPLAYBUFFERHOTKEY, L"Publish", L"RecordFromReplayBufferHotkey", OBS::RecordFromReplayBufferHotkey);
+    update_hotkey(App->recordFromReplayBufferHotkeyID, IDC_RECORDFROMREPLAYBUFFERHOTKEY, L"Publish", L"RecordFromReplayBufferHotkey", OBS::RecordFromReplayBufferHotkey, true);
 
 }
 
@@ -131,6 +135,11 @@ INT_PTR SettingsHotkeys::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
     case WM_INITDIALOG:
     {
         LocalizeWindow(hwnd);
+
+        //--------------------------------------------
+        
+        bool pushToTalk = !!AppConfig->GetInt(L"Audio", L"UsePushToTalk");
+        SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALK), BM_SETCHECK, pushToTalk ? BST_CHECKED : BST_UNCHECKED, 0);
 
         //--------------------------------------------
 
@@ -199,6 +208,11 @@ INT_PTR SettingsHotkeys::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
     case WM_COMMAND:
         switch (LOWORD(wParam))
         {
+        case IDC_PUSHTOTALK:
+            if (HIWORD(wParam) == BN_CLICKED)
+                SetChangedSettings(true);
+            break;
+
         case IDC_PUSHTOTALKHOTKEY:
         case IDC_PUSHTOTALKHOTKEY2:
         case IDC_MUTEMICHOTKEY:
@@ -219,6 +233,13 @@ INT_PTR SettingsHotkeys::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
             if (HIWORD(wParam) == BN_CLICKED)
             {
                 SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY), HKM_SETHOTKEY, 0, 0);
+                SetChangedSettings(true);
+            }
+            break;
+
+        case IDC_CLEARPUSHTOTALK2:
+            if (HIWORD(wParam) == BN_CLICKED)
+            {
                 SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY2), HKM_SETHOTKEY, 0, 0);
                 SetChangedSettings(true);
             }

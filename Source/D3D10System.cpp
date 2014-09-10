@@ -912,10 +912,20 @@ void D3D10System::DrawSpriteExRotate(Texture *texture, DWORD color, float x, flo
         curCropping[2] = tempFloat;
     }
 
+    bool bFlipX = (x2 - x) < 0.0f;
+    bool bFlipY = (y2 - y) < 0.0f;
+
     x  += curCropping[0] * invMult.x;
     y  += curCropping[1] * invMult.y;
     x2 -= curCropping[2] * invMult.x;
     y2 -= curCropping[3] * invMult.y;
+
+    bool cropXUnder = bFlipX ? ((x - x2) < 0.0f) : ((x2 - x) < 0.0f);
+    bool cropYUnder = bFlipY ? ((y - y2) < 0.0f) : ((y2 - y) < 0.0f);
+
+    // cropped out completely (eg mouse cursor texture)
+    if (cropXUnder || cropYUnder)
+        return;
 
     //------------------------------
     // crop texture coordinate values

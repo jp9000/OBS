@@ -15,7 +15,6 @@ Defaults="По подразбиране"
 DeleteConfirm="Сигурен ли сте че искате да изтриете избраните предмети?"
 Desktop="Работен плот"
 Disable="Деактивирай"
-EncoderLag="Внимание: Енкодирането отнема твърде много време. Прескачане на кадри!"
 EndingDelay="Приключване на забавеният поток..."
 EnterName="Моля въведете име"
 Gamma="гама:"
@@ -41,6 +40,10 @@ Settings="Настройки"
 LogWindow="Прозорец с регистър"
 StreamReport="Стрийм рапорт"
 MessageBoxWarningCaption="Внимание"
+
+
+
+
 
 BuildingMP4Dialog.Progress="Създаване на MP4, моля изчакайте..."
 
@@ -70,6 +73,7 @@ Listbox.ResetSize="Смени размера по подразбиране"
 Listbox.SetHotkey="Избери Клавишната Комбинация"
 ListBox.ResetCrop="Преустановяване на Изрязването"
 
+
 MainMenu.File="&Файл"
 MainMenu.Help="&Помощ"
 MainMenu.Profiles="&Профили"
@@ -82,7 +86,6 @@ MainMenu.Settings.Projector="&Проектор"
 MainMenu.File.Exit="И&зход"
 MainMenu.File.Save="&Запис"
 
-MainMenu.Help.Contents="&Съдържание"
 MainMenu.Help.VisitWebsite="Посети Уебсайта"
 MainMenu.Help.CheckForUpdates="Провери за актуализации"
 
@@ -105,6 +108,7 @@ MainWindow.StartStream="Старт"
 MainWindow.StopStream="Стоп"
 MainWindow.StopTest="Стоп Тест"
 MainWindow.TestStream="Тест стрийм"
+
 
 Plugins.Configure="Конфигурирай"
 Plugins.Description="Описание:"
@@ -136,7 +140,8 @@ Settings.SaveChangesPrompt="Запазване на настройките и п
 Settings.SaveChangesTitle="Прилагане на настройките?"
 Settings.Video="Видео"
 
-Settings.Advanced.AutomaticLatency="Автоматичен режим за ниска латентност:"
+
+
 Settings.Advanced.AllowOtherHotkeyModifiers="Позволи други модификатори на клавишите"
 Settings.Advanced.BindToIP="Свързване към интерфейса:"
 Settings.Advanced.DisablePreviewEncoding="Изключване на кодиране при визуализиране"
@@ -156,7 +161,6 @@ Settings.Advanced.Priority.High="Висок"
 Settings.Audio.Device="Микрофон/Aux звуково устройство:"
 Settings.Audio.MuteMicHotkey="Бутон за включване/изключване на звукът:"
 Settings.Audio.PushToTalkDelay="Push-to-talk забавяне (милисекунди):"
-Settings.Audio.PushToTalkHotkey="Използвайте Push-to-talk:"
 Settings.Audio.ShowOnlyConnectedDevices="Покажи само свързани устройства"
 Settings.Audio.ResetMic="Преустановяване"
 
@@ -177,7 +181,6 @@ Settings.Encoding.Video.Quality="Качество:"
 Settings.General.Add="Добави нов"
 Settings.General.ConfirmDelete="Наистина ли искате да премахнете този профил \"$1\"?"
 Settings.General.EnableProjectorCursor="Разреши курсора над проектора"
-Settings.General.InvalidName="Профил имената не позволяват използването на следните знаци: \r\n\\ /: *? \" < > |"
 Settings.General.Language="Език:"
 Settings.General.Profile="Настройка на профил:"
 Settings.General.Notification="Икона за зоната за уведомителни съобщения"
@@ -197,12 +200,12 @@ Settings.Publish.Mode="Режим:"
 Settings.Publish.Password="Парола (ако има такава):"
 Settings.Publish.Playpath="Стрийм ключ (ако има такъв):"
 Settings.Publish.SavePath="Път до файла:"
-Settings.Publish.SaveToFile="Записване на файл:"
 Settings.Publish.Server="Сървър:"
 Settings.Publish.Service="Стрийминг услуга:"
 Settings.Publish.StartStreamHotkey="Стартирай стрийм - клавиш:"
 Settings.Publish.StopStreamHotkey="Спри стрийм - клавиш:"
 Settings.Publish.Username="Потребителско име (ако има такова):"
+
 
 Settings.Publish.Mode.LiveStream="Излъчване на живо"
 

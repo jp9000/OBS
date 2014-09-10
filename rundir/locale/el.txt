@@ -14,7 +14,6 @@ Defaults="Προεπιλογές"
 DeleteConfirm="Είστε σίγουροι ότι θέλετε να διαγράψετε τα επιλεγμένα αντικείμενα;"
 Desktop="Επιφάνεια Εργασίας"
 Disable="Απενεργοποίηση"
-EncoderLag="ΠΡΟΣΟΧΗ: Η κωδικοποιήση λαμβάνει πολύ χρόνο, παρακαμπτώ \"frames\"!"
 EndingDelay="Τερματισμός Καθυστέρησης Ροής..."
 EnterName="Παρακαλούμε εισάγετε το όνομά σας"
 Gamma="Φωτισμός:"
@@ -39,6 +38,10 @@ Scene="Σκηνή"
 Settings="Ρυθμίσεις..."
 StreamReport="Αναφορά του \"Stream\""
 MessageBoxWarningCaption="Προσοχή"
+
+
+
+
 
 BuildingMP4Dialog.Progress="Δόμηση του MP4, παρακαλώ περιμένετε..."
 
@@ -68,6 +71,7 @@ Listbox.ResetSize="Επαναφορά μεγέθους"
 Listbox.SetHotkey="Ορισμός  Πλήκτρου συντόμευσης"
 ListBox.ResetCrop="Επαναφορά περικοπής"
 
+
 MainMenu.File="&Αρχείο"
 MainMenu.Help="&Βοήθεια"
 MainMenu.Profiles="&Προφίλ"
@@ -80,7 +84,6 @@ MainMenu.Settings.Projector="&Προβολέας"
 MainMenu.File.Exit="Έ&ξοδος"
 MainMenu.File.Save="&Αποθήκευση"
 
-MainMenu.Help.Contents="&Περιεχόμενα"
 MainMenu.Help.VisitWebsite="Μετάβαση στην Ιστοσελίδα"
 MainMenu.Help.CheckForUpdates="Έλεγχος για ενημερώσεις"
 
@@ -101,6 +104,7 @@ MainWindow.StartStream="Εκκίνηση Ροής"
 MainWindow.StopStream="Παύση Ροής"
 MainWindow.StopTest="Παύση Δοκιμής Ροής"
 MainWindow.TestStream="Δοκιμή Ροής"
+
 
 Plugins.Configure="Ρυθμίσεις"
 Plugins.Description="Περιγραφή:"
@@ -132,7 +136,8 @@ Settings.SaveChangesPrompt="Θα θέλατε να σώσετε και να εφ
 Settings.SaveChangesTitle="Εφαρμογή ρυθμίσεων;"
 Settings.Video="Βίντεο"
 
-Settings.Advanced.AutomaticLatency="Αυτόματη λειτουργία χαμηλού λανθάνων χρόνου"
+
+
 Settings.Advanced.AllowOtherHotkeyModifiers="Χρήση άλλων πλήκτρων συντομεύσεων"
 Settings.Advanced.BindToIP="Συνδέονται Με Περιβάλλον:"
 Settings.Advanced.DisablePreviewEncoding="Απενεργοποίηση κωδικοποίησης κατά τη προεπισκόπηση"
@@ -169,7 +174,6 @@ Settings.Audio.MuteDesktopHotkey="Σίγαση/Διακοπή Επιφάνεια
 Settings.Audio.MuteMicHotkey="Σίγαση/Διακοπή Μικροφώνου Hotkey:"
 Settings.Audio.PlaybackDevice="Επιφάνειας εργασίας Συσκευή Ήχου:"
 Settings.Audio.PushToTalkDelay="Push-to-talk Καθυστέρηση (msec):"
-Settings.Audio.PushToTalkHotkey="Χρήση Push-to-talk:"
 Settings.Audio.ShowOnlyConnectedDevices="Εμφάνιση συνδεδεμένων συσκευών"
 Settings.Audio.UseInputDevices="Χρήση συσκευής εισόδου για ήχο desktop"
 Settings.Audio.UseMicQPC="Χρήση Μικροφώνου QPC χρονικές σημάνσεις"
@@ -194,7 +198,6 @@ Settings.Encoding.Video.QualityTooltip="Αυτή η ρύθμιση θα επιχ
 Settings.General.Add="Προσθήκη Νέου"
 Settings.General.ConfirmDelete="Είστε σίγουροι ότι θέλετε να καταργήσετε το προφίλ '$1'?"
 Settings.General.EnableProjectorCursor="Ενεργοποίηση δρομέα στη προβολή"
-Settings.General.InvalidName="Προφίλ ονομάτων δεν μπορούν να χρησιμοποιήσουν τους παρακάτω χαρακτήρες:\r\n\\ / : * ? \" < > |"
 Settings.General.Language="Γλώσσα:"
 Settings.General.Profile="Προφίλ Ρυθμίσεων:"
 Settings.General.Notification="Εικονίδιο Περιοχής Ειδοποιήσεων"
@@ -214,7 +217,6 @@ Settings.Publish.Mode="Τρόπος:"
 Settings.Publish.Password="Κωδικός (αν υπάρχει):"
 Settings.Publish.Playpath="Διαδρομή/Κλειδί Ροής (αν υπάρχει):"
 Settings.Publish.SavePath="Διαδρομή Αρχείου:"
-Settings.Publish.SaveToFile="Αποθήκευση στο αρχείο:"
 Settings.Publish.Server="Διακομιστής:"
 Settings.Publish.Service="Υπηρεσίες Ροής:"
 Settings.Publish.StartStreamHotkey="Εκκίνηση Ροής Πλήκτρο συντόμευσης:"
@@ -222,6 +224,7 @@ Settings.Publish.StopStreamHotkey="Παύση Ροής Πλήκτρο συντό
 Settings.Publish.StartRecordingHotkey="Πλήκτρο Έναρξης Εγγραφής:"
 Settings.Publish.StopRecordingHotkey="Πλήκτρο Διακοπής Εγγραφής:"
 Settings.Publish.Username="Όνομα Χρήστη (αν υπάρχει):"
+
 
 Settings.Publish.Mode.FileOnly="Αρχείο Εξόδου Μόνο"
 Settings.Publish.Mode.LiveStream="Απευθείας Ροή"

@@ -440,6 +440,16 @@ public:
         PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_TOGGLERECORDING, 0), 0);
     }
 
+    virtual void StartStopRecordingReplayBuffer() override
+    {
+        PostMessage(hwndMain, WM_COMMAND, MAKEWPARAM(ID_TOGGLERECORDINGREPLAYBUFFER, 0), 0);
+    }
+
+    virtual void SaveReplayBuffer() override
+    {
+        ::SaveReplayBuffer(App->replayBuffer, (DWORD)(App->GetVideoTime() - App->firstFrameTimestamp));
+    }
+
     virtual bool GetStreaming()
     {
         return App->bRunning;
@@ -453,6 +463,11 @@ public:
     virtual bool GetRecording() const override
     {
         return App->bRecording;
+    }
+
+    virtual bool GetRecordingReplayBuffer() const override
+    {
+        return App->bRecordingReplayBuffer;
     }
 
     virtual bool GetKeepRecording() const override

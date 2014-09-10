@@ -15,7 +15,7 @@ Defaults="Standardinnstillinger"
 DeleteConfirm="Er du sikker på at du vil slette de valgte elementene?"
 Desktop="Skrivebord"
 Disable="Deaktiver"
-EncoderLag="Advarsel: Tar for lang tid å kode, hopper over billder!"
+EncoderLag="ADVARSEL: Høy prosessorbruk ved koding! Vurder å forandre innstillingene."
 EndingDelay="Avslutter Forsinket Strøm..."
 EnterName="Oppgi et navn"
 Gamma="Gamma:"
@@ -43,6 +43,10 @@ LogWindow="Logg-vinduet"
 StreamReport="Strøm Raport"
 MessageBoxWarningCaption="Advarsel"
 NoSourcesFound="Du har ikke lagt til noen kilder! Er du sikker du vil strømme en svart skjerm?"
+
+
+
+
 
 BuildingMP4Dialog.Progress="Oppretter MP4-fil. Vent litt ..."
 
@@ -72,6 +76,8 @@ Listbox.ResetSize="Tilbakestill størrelse"
 Listbox.SetHotkey="Angi hurtigtast"
 ListBox.ResetCrop="Tilbakestill beskjæring"
 
+MainMenu.SceneCollection="&Scenesamling"
+
 MainMenu.File="&Fil"
 MainMenu.Help="&Hjelp"
 MainMenu.Profiles="&Profiler"
@@ -85,7 +91,6 @@ MainMenu.File.Exit="&Avslutt"
 MainMenu.File.OpenRecordingsFolder="Åpne &Opptaksmappe"
 MainMenu.File.Save="&Lagre"
 
-MainMenu.Help.Contents="&Innhold"
 MainMenu.Help.VisitWebsite="Besøk Hjemmeside"
 MainMenu.Help.CheckForUpdates="Sjekk for &oppdateringer"
 
@@ -108,6 +113,7 @@ MainWindow.StartStream="Start strømmingen"
 MainWindow.StopStream="Avslutt strømmingen"
 MainWindow.StopTest="Stopp Forhåndsvisning"
 MainWindow.TestStream="Forhåndsvis stream"
+
 
 Plugins.Configure="Konfigurer"
 Plugins.Description="Beskrivelse:"
@@ -140,7 +146,8 @@ Settings.SaveChangesPrompt="Vil du lagre de nye innstillingene?"
 Settings.SaveChangesTitle="Bruk innstillinger?"
 Settings.Video="Video"
 
-Settings.Advanced.AutomaticLatency="Modus for lav responstid:"
+
+
 Settings.Advanced.AllowOtherHotkeyModifiers="Tillate andre modifikatorer på hurtigtaster"
 Settings.Advanced.BindToIP="Bind til grensesnitt:"
 Settings.Advanced.DisablePreviewEncoding="Deaktivér koding under forhåndsvisning"
@@ -183,7 +190,6 @@ Settings.Audio.MuteDesktopHotkey="Hurtigtast skrivebordslyd av/på:"
 Settings.Audio.MuteMicHotkey="Hurtigtast mikrofon av/på:"
 Settings.Audio.PlaybackDevice="Lydenhet for skrivebordslyd:"
 Settings.Audio.PushToTalkDelay="Forsinkelse Push-to-talk (ms):"
-Settings.Audio.PushToTalkHotkey="Bruk Push-to-talk:"
 Settings.Audio.ShowOnlyConnectedDevices="Vis bare tilkoblede enheter"
 Settings.Audio.UseInputDevices="Bruk inngangsenhet for skrivebordslyd"
 Settings.Audio.UseMicQPC="Bruk QPC-tidsstempler for mikrofon"
@@ -216,9 +222,10 @@ Settings.Encoding.Video.QSVConfigWarning="For å aktivere alternativet Quick Syn
 Settings.General.Add="Legg til"
 Settings.General.ConfirmDelete="Er du sikker på at du vil fjerne profilen '$1'?"
 Settings.General.EnableProjectorCursor="Vis musepekeren over projektorbildet"
-Settings.General.InvalidName="Profilnavn kan ikke inneholde følgende tegn:\r\n\\ / : * ? \" < > |"
+Settings.General.InvalidName="Samlingen av profiler/scenenavn kan ikke bruke de følgene symbolene: \r\n\\ / : * ? \" < > |"
 Settings.General.Language="Språk:"
 Settings.General.Profile="Innstillingsprofil:"
+Settings.General.SceneCollection="Scenesamling:"
 Settings.General.Notification="Ikon på oppgavelinjen"
 Settings.General.NotificationMinimize="Minimaliser til oppgavelinjen"
 Settings.General.ShowObs="Vise OBS"
@@ -237,7 +244,7 @@ Settings.Publish.Mode="Modus:"
 Settings.Publish.Password="Eventuelt passord:"
 Settings.Publish.Playpath="Kjør bane/Stream-nøkkel (valgfritt):"
 Settings.Publish.SavePath="Fildestinasjon:"
-Settings.Publish.SaveToFile="Lagre som fil:"
+Settings.Publish.SaveToFile="Automatisk lagre strøm til fil:"
 Settings.Publish.Server="Server:"
 Settings.Publish.Service="Streaming-tjeneste:"
 Settings.Publish.StartStreamHotkey="Hurtigtast start strømming:"
@@ -245,6 +252,9 @@ Settings.Publish.StopStreamHotkey="Hurtigtast for å stoppe streaming:"
 Settings.Publish.StartRecordingHotkey="\"Start opptak\" hurtigtast:"
 Settings.Publish.StopRecordingHotkey="\"Stopp opptak\" hurtigtast:"
 Settings.Publish.Username="Brukernavn (valgfritt):"
+Settings.Publish.InvalidSavePath="Denne filbanen er ugyldig, Standardbanen '$1' vil bli brukt i stedet"
+Settings.Publish.InvalidSavePathCaption="Filbanen er ugyldig"
+
 
 Settings.Publish.Mode.FileOnly="Kun lagre som fil"
 Settings.Publish.Mode.LiveStream="Direkte stream"

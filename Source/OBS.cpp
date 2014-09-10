@@ -735,22 +735,25 @@ OBS::OBS()
                         pluginInfo->strFile = ofd.fileName;
 
                         /* get event callbacks for the plugin */
-                        pluginInfo->startStreamCallback           = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartStream");
-                        pluginInfo->stopStreamCallback            = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopStream");
-                        pluginInfo->startStreamingCallback        = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartStreaming");
-                        pluginInfo->stopStreamingCallback         = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopStreaming");
-                        pluginInfo->startRecordingCallback        = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartRecording");
-                        pluginInfo->stopRecordingCallback         = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopRecording");
-                        pluginInfo->statusCallback                = (OBS_STATUS_CALLBACK)GetProcAddress(hPlugin, "OnOBSStatus");
-                        pluginInfo->streamStatusCallback          = (OBS_STREAM_STATUS_CALLBACK)GetProcAddress(hPlugin, "OnStreamStatus");
-                        pluginInfo->sceneSwitchCallback           = (OBS_SCENE_SWITCH_CALLBACK)GetProcAddress(hPlugin, "OnSceneSwitch");
-                        pluginInfo->scenesChangedCallback         = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnScenesChanged");
-                        pluginInfo->sourceOrderChangedCallback    = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnSourceOrderChanged");
-                        pluginInfo->sourceChangedCallback         = (OBS_SOURCE_CHANGED_CALLBACK)GetProcAddress(hPlugin, "OnSourceChanged");
-                        pluginInfo->sourcesAddedOrRemovedCallback = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnSourcesAddedOrRemoved");
-                        pluginInfo->micVolumeChangeCallback       = (OBS_VOLUME_CHANGED_CALLBACK)GetProcAddress(hPlugin, "OnMicVolumeChanged");
-                        pluginInfo->desktopVolumeChangeCallback   = (OBS_VOLUME_CHANGED_CALLBACK)GetProcAddress(hPlugin, "OnDesktopVolumeChanged");
-                        pluginInfo->logUpdateCallback             = (OBS_LOG_UPDATE_CALLBACK)GetProcAddress(hPlugin, "OnLogUpdate");
+                        pluginInfo->startStreamCallback                = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartStream");
+                        pluginInfo->stopStreamCallback                 = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopStream");
+                        pluginInfo->startStreamingCallback             = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartStreaming");
+                        pluginInfo->stopStreamingCallback              = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopStreaming");
+                        pluginInfo->startRecordingCallback             = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartRecording");
+                        pluginInfo->stopRecordingCallback              = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopRecording");
+                        pluginInfo->statusCallback                     = (OBS_STATUS_CALLBACK)GetProcAddress(hPlugin, "OnOBSStatus");
+                        pluginInfo->streamStatusCallback               = (OBS_STREAM_STATUS_CALLBACK)GetProcAddress(hPlugin, "OnStreamStatus");
+                        pluginInfo->sceneSwitchCallback                = (OBS_SCENE_SWITCH_CALLBACK)GetProcAddress(hPlugin, "OnSceneSwitch");
+                        pluginInfo->scenesChangedCallback              = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnScenesChanged");
+                        pluginInfo->sourceOrderChangedCallback         = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnSourceOrderChanged");
+                        pluginInfo->sourceChangedCallback              = (OBS_SOURCE_CHANGED_CALLBACK)GetProcAddress(hPlugin, "OnSourceChanged");
+                        pluginInfo->sourcesAddedOrRemovedCallback      = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnSourcesAddedOrRemoved");
+                        pluginInfo->micVolumeChangeCallback            = (OBS_VOLUME_CHANGED_CALLBACK)GetProcAddress(hPlugin, "OnMicVolumeChanged");
+                        pluginInfo->desktopVolumeChangeCallback        = (OBS_VOLUME_CHANGED_CALLBACK)GetProcAddress(hPlugin, "OnDesktopVolumeChanged");
+                        pluginInfo->logUpdateCallback                  = (OBS_LOG_UPDATE_CALLBACK)GetProcAddress(hPlugin, "OnLogUpdate");
+                        pluginInfo->startRecordingReplayBufferCallback = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartRecordingReplayBuffer");
+                        pluginInfo->stopRecordingReplayBufferCallback  = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopRecordingReplayBuffer");
+                        pluginInfo->replayBufferSavedCallback          = (OBS_REPLAY_BUFFER_SAVED_CALLBACK)GetProcAddress(hPlugin, "OnReplayBufferSaved");
 
                         //GETPLUGINNAMEPROC getName = (GETPLUGINNAMEPROC)GetProcAddress(hPlugin, "GetPluginName");
 
@@ -1526,9 +1529,9 @@ void OBS::ReloadIniSettings()
     QuickClearHotkey(saveReplayBufferHotkeyID);
     QuickClearHotkey(recordFromReplayBufferHotkeyID);
 
+    bUsingPushToTalk = !!AppConfig->GetInt(L"Audio", L"UsePushToTalk") != 0;
     DWORD hotkey = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey"));
     DWORD hotkey2 = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkHotkey2"));
-    bUsingPushToTalk = hotkey || hotkey2;
     pushToTalkDelay = AppConfig->GetInt(TEXT("Audio"), TEXT("PushToTalkDelay"), 200);
 
     if(bUsingPushToTalk && hotkey)
