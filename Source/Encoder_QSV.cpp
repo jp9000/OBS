@@ -1097,7 +1097,7 @@ public:
 
     bool Encode(LPVOID picInPtr, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, DWORD &out_pts) override
     {
-        if(!process_waiter.wait_timeout())
+        if(helper_killed || !process_waiter.wait_timeout())
         {
             int code = 0;
             if(!GetExitCodeProcess(process_waiter.list[0], (LPDWORD)&code))
@@ -1128,10 +1128,10 @@ public:
         {
             ProcessEncodedFrame(packets, packetTypes, outputTimestamp, out_pts, idle_tasks.Num() ? 0 : 1000);
         }
-        while(!idle_tasks.Num());
+        while(!helper_killed && !idle_tasks.Num());
         profileOut;
 
-        if(!queued)
+        if(!helper_killed && !queued)
             QueueEncodeTask((mfxFrameSurface1*)picInPtr, outputTimestamp);
 
         return true;
