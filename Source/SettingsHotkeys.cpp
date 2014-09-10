@@ -233,6 +233,13 @@ INT_PTR SettingsHotkeys::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
             if (HIWORD(wParam) == BN_CLICKED)
             {
                 SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY), HKM_SETHOTKEY, 0, 0);
+                SetChangedSettings(true);
+            }
+            break;
+
+        case IDC_CLEARPUSHTOTALK2:
+            if (HIWORD(wParam) == BN_CLICKED)
+            {
                 SendMessage(GetDlgItem(hwnd, IDC_PUSHTOTALKHOTKEY2), HKM_SETHOTKEY, 0, 0);
                 SetChangedSettings(true);
             }
