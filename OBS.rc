@@ -380,7 +380,7 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     GROUPBOX        "Settings.General",IDC_STATIC,4,2,413,79
     CONTROL         "Settings.Advanced.UseMultithreadedOptimizations",IDC_USEMULTITHREADEDOPTIMIZATIONS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,15,300,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,15,300,10
     RTEXT           "Settings.Advanced.ProcessPriority",IDC_STATIC,7,30,160,8
     COMBOBOX        IDC_PRIORITY,170,27,150,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Settings.Advanced.SceneBufferTime",IDC_STATIC,7,45,160,8
