@@ -588,6 +588,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             if(!OSFileExists(strUpdatePath) && !OSCreateDirectory(strUpdatePath))
                 CrashError(TEXT("Couldn't create directory '%s'"), strUpdatePath.Array());
 
+            String servicesPath = strAppDataPath + L"\\services";
+            if (!OSFileExists(servicesPath) && !OSCreateDirectory(servicesPath))
+                CrashError(TEXT("Couldn't create directory '%s'"), servicesPath.Array());
+
             LoadGlobalIni();
 
             String strAllocator = GlobalConfig->GetString(TEXT("General"), TEXT("Allocator"));

@@ -830,7 +830,6 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     String failReason;
     String strBindIP;
 
-    int    serviceID    = AppConfig->GetInt   (TEXT("Publish"), TEXT("Service"));
     String strURL       = AppConfig->GetString(TEXT("Publish"), TEXT("URL"));
     String strPlayPath  = AppConfig->GetString(TEXT("Publish"), TEXT("PlayPath"));
 
@@ -851,6 +850,10 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
 
     //--------------------------------
 
+    ServiceIdentifier sid = GetCurrentService();
+
+    //--------------------------------
+
     if(!strURL.IsValid())
     {
         failReason = TEXT("No server specified to connect to");
@@ -858,38 +861,15 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     }
 
     // A service ID implies the settings have come from the xconfig file.
-    if(serviceID != 0)
+    if(sid.id != 0 || sid.file.IsValid())
     {
-        XConfig serverData;
-        if (!serverData.Open(FormattedString(L"%s\\services.xconfig", API->GetAppPath())))
-        {
-            failReason = TEXT("Could not open services.xconfig");
-            goto end;
-        }
-
-        XElement *services = serverData.GetElement(TEXT("services"));
-        if(!services)
-        {
-            failReason = TEXT("Could not find any services in services.xconfig");
-            goto end;
-        }
-
-        XElement *service = NULL;
-        DWORD numServices = services->NumElements();
-        for(UINT i=0; i<numServices; i++)
-        {
-            XElement *curService = services->GetElementByID(i);
-            if(curService->GetInt(TEXT("id")) == serviceID)
-            {
-                // Found the service in the xconfig file.
-                service = curService;
-                break;
-            }
-        }
+        auto serviceData = LoadService(&failReason);
+        auto service = serviceData.second;
 
         if(!service)
         {
-            failReason = TEXT("Could not find the service specified in services.xconfig");
+            if (failReason.IsEmpty())
+                failReason = TEXT("Could not find the service specified in services.xconfig");
             goto end;
         }
 

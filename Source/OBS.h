@@ -16,6 +16,7 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 ********************************************************************************/
 
+#include <functional>
 
 #pragma once
 
@@ -518,6 +519,24 @@ struct StreamInfo
 
     inline void FreeData() {strInfo.Clear();}
 };
+
+//----------------------------
+
+struct ServiceIdentifier
+{
+    int id;
+    String file;
+
+    ServiceIdentifier(int id, String file) : id(id), file(file) {}
+    bool operator==(const ServiceIdentifier &sid) { return id == sid.id && file == sid.file; }
+    bool operator!=(const ServiceIdentifier &sid) { return !(*this == sid); }
+};
+
+std::vector<ServiceIdentifier> LoadServiceIdentifiers();
+void EnumerateServices(std::function<bool(ServiceIdentifier, XElement*)>);
+std::pair<std::unique_ptr<XConfig>, XElement*> LoadService(const ServiceIdentifier&, String *failReason=nullptr);
+std::pair<std::unique_ptr<XConfig>, XElement*> LoadService(String *failReason=nullptr);
+ServiceIdentifier GetCurrentService();
 
 //----------------------------
 
