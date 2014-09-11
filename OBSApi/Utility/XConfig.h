@@ -237,6 +237,7 @@ public:
 
     inline XElement *GetRootElement() {return RootElement;}
     inline XElement *GetElement(CTSTR lpName) {return RootElement->GetElement(lpName);}
+    inline XElement *GetElementByID(DWORD elementID) {return RootElement->GetElementByID(elementID);}
     inline XElement *CreateElement(CTSTR lpName) {return RootElement->CreateElement(lpName);}
 };
 
