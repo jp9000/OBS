@@ -135,6 +135,7 @@
 #define IDC_BROWSE                      1050
 #define IDC_REPLAYBUFFERBROWSE          1051
 #define IDC_MICDEVICES                  1052
+#define IDC_BROWSEUSERSERVICES          1052
 #define IDC_SOURCES                     1053
 #define IDC_ADD                         1054
 #define IDC_REMOVE                      1055

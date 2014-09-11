@@ -657,6 +657,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     //ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK), SW_HIDE);
                     //ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK_STATIC), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_SAVETOFILE), SW_HIDE);
+                    ShowWindow(GetDlgItem(hwnd, IDC_BROWSEUSERSERVICES), SW_HIDE);
 
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH_STATIC), 0, -data.fileControlOffset);
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH), 0, -data.fileControlOffset);
@@ -828,6 +829,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                             ShowWindow(GetDlgItem(hwnd, IDC_SERVICE), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_PLAYPATH), swShowControls);
+                            ShowWindow(GetDlgItem(hwnd, IDC_BROWSEUSERSERVICES), swShowControls);
 
                             int serviceID = (int)SendMessage(GetDlgItem(hwnd, IDC_SERVICE), CB_GETCURSEL, 0, 0);
                             if(serviceID == 0)
@@ -1044,6 +1046,10 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                             break;
                         }
+
+                    case IDC_BROWSEUSERSERVICES:
+                        ShellExecute(NULL, L"open", FormattedString(L"%s/services", API->GetAppDataPath()), 0, 0, SW_SHOWNORMAL);
+                        break;
 
                     case IDC_LOWLATENCYMODE:
                     case IDC_SAVETOFILE:
