@@ -107,6 +107,7 @@ BASE_EXPORT BOOL   STDCALL OSRenameFile(CTSTR oldPath, CTSTR newPath);
 BASE_EXPORT BOOL   STDCALL OSCreateDirectory(CTSTR lpDirectory);
 BASE_EXPORT BOOL   STDCALL OSSetCurrentDirectory(CTSTR lpDirectory);
 BASE_EXPORT BOOL   STDCALL OSFileExists(CTSTR lpFile);
+BASE_EXPORT bool   STDCALL OSFileIsDirectory(CTSTR file);
 
 BASE_EXPORT QWORD  STDCALL OSGetFileModificationTime(String path);
 

@@ -337,6 +337,11 @@ BOOL   STDCALL OSFileExists(CTSTR lpFile)
     return (attrib != INVALID_FILE_ATTRIBUTES);
 }
 
+bool   STDCALL OSFileIsDirectory(CTSTR file)
+{
+    return GetFileAttributes(file) == FILE_ATTRIBUTE_DIRECTORY;
+}
+
 QWORD STDCALL OSGetFileModificationTime(String path)
 {
     HANDLE hFile;
