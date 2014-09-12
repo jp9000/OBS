@@ -145,6 +145,27 @@ String ExpandRecordingFilename(String filename)
     return filename;
 }
 
+String GetExpandedRecordingDirectoryBase(String path)
+{
+    String expanded = path;
+    do
+    {
+        expanded = ExpandRecordingFilename(path);
+
+        if (expanded == path)
+            break;
+
+        if (OSFileIsDirectory(expanded))
+            break;
+
+        path = GetPathDirectory(path);
+    } while (expanded != path);
+
+    CreatePath(expanded);
+
+    return expanded;
+}
+
 String GetOutputFilename(bool replayBuffer=false)
 {
     String path = OSGetDefaultVideoSavePath(replayBuffer ? L"\\Replay-$T.flv" : L"\\.flv");

@@ -139,6 +139,7 @@ public:
 };
 
 String ExpandRecordingFilename(String);
+String GetExpandedRecordingDirectoryBase(String);
 
 //-------------------------------------------------------------------
 
