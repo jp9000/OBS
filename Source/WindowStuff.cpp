@@ -3339,7 +3339,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     {
                         String path = OSGetDefaultVideoSavePath();
                         path = AppConfig->GetString(L"Publish", LOWORD(wParam) == ID_SAVEDREPLAYBUFFERS ? L"ReplayBufferSavePath" : L"SavePath", path.Array());
-                        path = GetExpandedRecordingDirectoryBase(GetPathWithoutExtension(path)).FindReplace(L"/", L"\\");
+                        path = GetExpandedRecordingDirectoryBase(path).FindReplace(L"/", L"\\");
                         String lastFile = App->lastOutputFile.FindReplace(L"/", L"\\");
 
                         LPITEMIDLIST item = nullptr;

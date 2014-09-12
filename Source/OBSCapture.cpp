@@ -147,6 +147,9 @@ String ExpandRecordingFilename(String filename)
 
 String GetExpandedRecordingDirectoryBase(String path)
 {
+    if (GetPathExtension(path))
+        path = GetPathDirectory(path);
+
     String expanded = path;
     do
     {
