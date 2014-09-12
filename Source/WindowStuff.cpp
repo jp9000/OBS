@@ -3335,9 +3335,11 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     break;
 
                 case ID_RECORDINGSFOLDER:
+                case ID_SAVEDREPLAYBUFFERS:
                     {
                         String path = OSGetDefaultVideoSavePath();
-                        path = GetExpandedRecordingDirectoryBase(GetPathWithoutExtension(AppConfig->GetString(TEXT("Publish"), TEXT("SavePath"), path.Array()))).FindReplace(L"/", L"\\");
+                        path = AppConfig->GetString(L"Publish", LOWORD(wParam) == ID_SAVEDREPLAYBUFFERS ? L"ReplayBufferSavePath" : L"SavePath", path.Array());
+                        path = GetExpandedRecordingDirectoryBase(GetPathWithoutExtension(path)).FindReplace(L"/", L"\\");
                         String lastFile = App->lastOutputFile.FindReplace(L"/", L"\\");
 
                         LPITEMIDLIST item = nullptr;

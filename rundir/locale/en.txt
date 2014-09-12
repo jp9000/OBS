@@ -109,6 +109,7 @@ MainMenu.Settings.Projector="&Projector"
 
 MainMenu.File.Exit="E&xit"
 MainMenu.File.OpenRecordingsFolder="Open &Recordings Folder"
+MainMenu.File.ShowSavedReplayBuffers="Show Saved Replay &Buffers"
 MainMenu.File.Save="&Save"
 
 MainMenu.Help.OpenHelp="Open Help Page"
