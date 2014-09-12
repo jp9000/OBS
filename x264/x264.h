@@ -152,10 +152,11 @@ typedef struct
 /* PowerPC */
 #define X264_CPU_ALTIVEC         0x0000001
 
-/* ARM */
+/* ARM and AArch64 */
 #define X264_CPU_ARMV6           0x0000001
 #define X264_CPU_NEON            0x0000002  /* ARM NEON */
 #define X264_CPU_FAST_NEON_MRC   0x0000004  /* Transfer from NEON to ARM register is fast (Cortex-A9) */
+#define X264_CPU_ARMV8           0x0000008
 
 /* Analyse flags */
 #define X264_ANALYSE_I4x4       0x0001  /* Analyse i4x4 */
