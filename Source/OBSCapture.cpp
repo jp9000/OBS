@@ -125,6 +125,26 @@ void OBS::StopReplayBuffer()
     ConfigureStreamButtons();
 }
 
+String ExpandRecordingFilename(String filename)
+{
+    SYSTEMTIME st;
+    GetLocalTime(&st);
+    filename.FindReplace(L"$Y", UIntString(st.wYear).Array());
+    filename.FindReplace(L"$M", UIntString(st.wMonth).Array());
+    filename.FindReplace(L"$0M", FormattedString(L"%02u", st.wMonth).Array());
+    filename.FindReplace(L"$D", UIntString(st.wDay).Array());
+    filename.FindReplace(L"$0D", FormattedString(L"%02u", st.wDay).Array());
+    filename.FindReplace(L"$h", UIntString(st.wHour).Array());
+    filename.FindReplace(L"$0h", FormattedString(L"%02u", st.wHour).Array());
+    filename.FindReplace(L"$m", UIntString(st.wMinute).Array());
+    filename.FindReplace(L"$0m", FormattedString(L"%02u", st.wMinute).Array());
+    filename.FindReplace(L"$s", UIntString(st.wSecond).Array());
+    filename.FindReplace(L"$0s", FormattedString(L"%02u", st.wSecond).Array());
+
+    filename.FindReplace(L"$T", FormattedString(L"%u-%02u-%02u-%02u%02u-%02u", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond).Array());
+    return filename;
+}
+
 String GetOutputFilename(bool replayBuffer=false)
 {
     String path = OSGetDefaultVideoSavePath(replayBuffer ? L"\\Replay-$T.flv" : L"\\.flv");
@@ -135,24 +155,8 @@ String GetOutputFilename(bool replayBuffer=false)
     HANDLE hFind = NULL;
     bool bUseDateTimeName = true;
     bool bOverwrite = GlobalConfig->GetInt(L"General", L"OverwriteRecordings", false) != 0;
-
-    {
-        SYSTEMTIME st;
-        GetLocalTime(&st);
-        strOutputFile.FindReplace(L"$Y", UIntString(st.wYear).Array());
-        strOutputFile.FindReplace(L"$M", UIntString(st.wMonth).Array());
-        strOutputFile.FindReplace(L"$0M", FormattedString(L"%02u", st.wMonth).Array());
-        strOutputFile.FindReplace(L"$D", UIntString(st.wDay).Array());
-        strOutputFile.FindReplace(L"$0D", FormattedString(L"%02u", st.wDay).Array());
-        strOutputFile.FindReplace(L"$h", UIntString(st.wHour).Array());
-        strOutputFile.FindReplace(L"$0h", FormattedString(L"%02u", st.wHour).Array());
-        strOutputFile.FindReplace(L"$m", UIntString(st.wMinute).Array());
-        strOutputFile.FindReplace(L"$0m", FormattedString(L"%02u", st.wMinute).Array());
-        strOutputFile.FindReplace(L"$s", UIntString(st.wSecond).Array());
-        strOutputFile.FindReplace(L"$0s", FormattedString(L"%02u", st.wSecond).Array());
-
-        strOutputFile.FindReplace(L"$T", FormattedString(L"%u-%02u-%02u-%02u%02u-%02u", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond).Array());
-    }
+    
+    ExpandRecordingFilename(strOutputFile);
 
     CreatePath(GetPathDirectory(strOutputFile));
 

@@ -138,6 +138,8 @@ public:
     }
 };
 
+String ExpandRecordingFilename(String);
+
 //-------------------------------------------------------------------
 
 class AudioEncoder
