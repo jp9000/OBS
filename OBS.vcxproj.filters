@@ -160,6 +160,9 @@
     <ClCompile Include="Source\SettingsQSV.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Service.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Encoder_VCE.cpp">
       <Filter>Source</Filter>
     </ClCompile>

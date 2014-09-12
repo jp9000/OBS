@@ -21,7 +21,10 @@
 
 #pragma warning(disable: 4530)
 #include <vector>
+#include <unordered_map>
+#include <string>
 #include <functional>
+#include <algorithm>
 
 //============================================================================
 // Helpers
@@ -109,10 +112,11 @@ void SettingsPublish::ApplySettings()
         AppConfig->SetInt(TEXT("Publish"), TEXT("Mode"), curSel);
 
     int serviceID = (int)SendMessage(GetDlgItem(hwnd, IDC_SERVICE), CB_GETCURSEL, 0, 0);
-    if(serviceID != CB_ERR)
+    if(serviceID != CB_ERR && serviceID >= 0 && serviceID < (int)services.size())
     {
-        serviceID = (int)SendMessage(GetDlgItem(hwnd, IDC_SERVICE), CB_GETITEMDATA, serviceID, 0);
-        AppConfig->SetInt(TEXT("Publish"), TEXT("Service"), serviceID);
+        auto sid = services[serviceID];
+        AppConfig->SetInt(TEXT("Publish"), TEXT("Service"), sid.id);
+        AppConfig->SetString(L"Publish", L"ServiceFile", sid.file);
     }
 
     String strTemp = GetEditText(GetDlgItem(hwnd, IDC_PLAYPATH));
@@ -198,7 +202,7 @@ bool SettingsPublish::HasDefaults() const
 
 void SettingsPublish::SetWarningInfo()
 {
-    int serviceID = (int)SendMessage(GetDlgItem(hwnd, IDC_SERVICE), CB_GETITEMDATA, SendMessage(GetDlgItem(hwnd, IDC_SERVICE), CB_GETCURSEL, 0, 0), 0);
+    int serviceID = (int)SendMessage(GetDlgItem(hwnd, IDC_SERVICE), CB_GETCURSEL, 0, 0);
 
     bool bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
     int maxBitRate = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("MaxBitrate"), 1000);
@@ -219,135 +223,127 @@ void SettingsPublish::SetWarningInfo()
     bool canOptimize = false;
     String strWarnings;
 
-    XConfig serverData;
-    if (serverData.Open(FormattedString(L"%s\\services.xconfig", API->GetAppPath())))
+    if (serviceID >= 0 && serviceID < (int)services.size())
     {
-        XElement *services = serverData.GetElement(TEXT("services"));
-        if(services)
+        auto serviceData = LoadService(services[serviceID]);
+        auto service = serviceData.second;
+        if (service)
         {
-            UINT numServices = services->NumElements();
-
-            for(UINT i=0; i<numServices; i++)
+            if (service->GetInt(TEXT("id")) == serviceID)
             {
-                XElement *service = services->GetElementByID(i);
-                if (service->GetInt(TEXT("id")) == serviceID)
+                strWarnings = FormattedString(Str("Settings.Publish.Warning.BadSettings"), service->GetName());
+
+                //check to see if the service we're using has recommendations
+                if (!service->HasItem(TEXT("recommended")))
                 {
-                    strWarnings = FormattedString(Str("Settings.Publish.Warning.BadSettings"), service->GetName());
+                    SetDlgItemText(hwnd, IDC_WARNINGS, TEXT(""));
+                    return;
+                }
 
-                    //check to see if the service we're using has recommendations
-                    if (!service->HasItem(TEXT("recommended")))
+                XElement *r = service->GetElement(TEXT("recommended"));
+
+                if (r->HasItem(TEXT("ratecontrol")))
+                {
+                    CTSTR rc = r->GetString(TEXT("ratecontrol"));
+                    if (!scmp(rc, TEXT("cbr")) && !bUseCBR)
                     {
-                        SetDlgItemText(hwnd, IDC_WARNINGS, TEXT(""));
-                        return;
+                        hasErrors = true;
+                        canOptimize = true;
+                        strWarnings << Str("Settings.Publish.Warning.UseCBR");
                     }
+                }
 
-                    XElement *r = service->GetElement(TEXT("recommended"));
-
-                    if (r->HasItem(TEXT("ratecontrol")))
+                if (r->HasItem(TEXT("max bitrate")))
+                {
+                    int max_bitrate = r->GetInt(TEXT("max bitrate"));
+                    if (maxBitRate > max_bitrate)
                     {
-                        CTSTR rc = r->GetString(TEXT("ratecontrol"));
-                        if (!scmp (rc, TEXT("cbr")) && !bUseCBR)
-                        {
-                            hasErrors = true;
-                            canOptimize = true;
-                            strWarnings << Str("Settings.Publish.Warning.UseCBR");
-                        }
+                        hasErrors = true;
+                        canOptimize = true;
+                        strWarnings << FormattedString(Str("Settings.Publish.Warning.Maxbitrate"), max_bitrate);
                     }
+                }
 
-                    if (r->HasItem(TEXT("max bitrate")))
+                if (r->HasItem(L"supported audio codec"))
+                {
+                    StringList codecs;
+                    r->GetStringList(L"supported audio codec", codecs);
+                    if (codecs.FindValueIndex(currentAudioCodec) == INVALID)
                     {
-                        int max_bitrate = r->GetInt(TEXT("max bitrate"));
-                        if (maxBitRate > max_bitrate)
-                        {
-                            hasErrors = true;
-                            canOptimize = true;
-                            strWarnings << FormattedString(Str("Settings.Publish.Warning.Maxbitrate"), max_bitrate);
-                        }
+                        String msg = Str("Settings.Publish.Warning.UnsupportedAudioCodec"); //good thing OBS only supports MP3 (and AAC), otherwise I'd have to come up with a better translation solution
+                        msg.FindReplace(L"$1", codecs[0].Array());
+                        msg.FindReplace(L"$2", currentAudioCodec.Array());
+                        hasErrors = true;
+                        canOptimize = true;
+                        strWarnings << msg;
                     }
+                }
 
-                    if (r->HasItem(L"supported audio codec"))
+                if (r->HasItem(TEXT("max audio bitrate aac")) && (!scmp(currentAudioCodec, TEXT("AAC"))))
+                {
+                    int maxaudioaac = r->GetInt(TEXT("max audio bitrate aac"));
+                    if (audioBitRate > maxaudioaac)
                     {
-                        StringList codecs;
-                        r->GetStringList(L"supported audio codec", codecs);
-                        if (codecs.FindValueIndex(currentAudioCodec) == INVALID)
+                        hasErrors = true;
+                        canOptimize = true;
+                        strWarnings << FormattedString(Str("Settings.Publish.Warning.MaxAudiobitrate"), maxaudioaac);
+                    }
+                }
+
+                if (r->HasItem(TEXT("max audio bitrate mp3")) && (!scmp(currentAudioCodec, TEXT("MP3"))))
+                {
+                    int maxaudiomp3 = r->GetInt(TEXT("max audio bitrate mp3"));
+                    if (audioBitRate > maxaudiomp3)
+                    {
+                        hasErrors = true;
+                        canOptimize = true;
+                        strWarnings << FormattedString(Str("Settings.Publish.Warning.MaxAudiobitrate"), maxaudiomp3);
+                    }
+                }
+
+                if (r->HasItem(L"video aspect ratio"))
+                {
+                    String aspectRatio = r->GetString(L"video aspect ratio");
+                    StringList numbers;
+                    aspectRatio.GetTokenList(numbers, ':');
+                    if (numbers.Num() == 2)
+                    {
+                        float aspect = numbers[0].ToInt() / max(1.f, numbers[1].ToFloat());
+                        if (!CloseFloat(aspect, currentAspect))
                         {
-                            String msg = Str("Settings.Publish.Warning.UnsupportedAudioCodec"); //good thing OBS only supports MP3 (and AAC), otherwise I'd have to come up with a better translation solution
-                            msg.FindReplace(L"$1", codecs[0].Array());
-                            msg.FindReplace(L"$2", currentAudioCodec.Array());
-                            hasErrors = true;
-                            canOptimize = true;
+                            String aspectLocalized = Str("Settings.Video.AspectRatioFormat");
+                            aspectLocalized.FindReplace(L"$1", UIntString(numbers[0].ToInt()));
+                            aspectLocalized.FindReplace(L"$2", UIntString(numbers[1].ToInt()));
+
+                            String msg = Str("Settings.Publish.Warning.VideoAspectRatio");
+                            msg.FindReplace(L"$1", aspectLocalized);
                             strWarnings << msg;
-                        }
-                    }
-
-                    if (r->HasItem(TEXT("max audio bitrate aac")) && (!scmp(currentAudioCodec, TEXT("AAC"))))
-                    {
-                        int maxaudioaac = r->GetInt(TEXT("max audio bitrate aac"));
-                        if (audioBitRate > maxaudioaac)
-                        {
                             hasErrors = true;
-                            canOptimize = true;
-                            strWarnings << FormattedString(Str("Settings.Publish.Warning.MaxAudiobitrate"), maxaudioaac);
                         }
                     }
+                }
 
-                    if (r->HasItem(TEXT("max audio bitrate mp3")) && (!scmp(currentAudioCodec, TEXT("MP3"))))
+                if (r->HasItem(TEXT("profile")))
+                {
+                    String expectedProfile = r->GetString(TEXT("profile"));
+
+                    if (!expectedProfile.CompareI(currentx264Profile))
                     {
-                        int maxaudiomp3 = r->GetInt(TEXT("max audio bitrate mp3"));
-                        if (audioBitRate > maxaudiomp3)
-                        {
-                            hasErrors = true;
-                            canOptimize = true;
-                            strWarnings << FormattedString(Str("Settings.Publish.Warning.MaxAudiobitrate"), maxaudiomp3);
-                        }
+                        hasErrors = true;
+                        canOptimize = true;
+                        strWarnings << Str("Settings.Publish.Warning.RecommendMainProfile");
                     }
+                }
 
-                    if (r->HasItem(L"video aspect ratio"))
+                if (r->HasItem(TEXT("keyint")))
+                {
+                    int keyint = r->GetInt(TEXT("keyint"));
+                    if (!keyframeInt || keyframeInt * 1000 > keyint)
                     {
-                        String aspectRatio = r->GetString(L"video aspect ratio");
-                        StringList numbers;
-                        aspectRatio.GetTokenList(numbers, ':');
-                        if (numbers.Num() == 2)
-                        {
-                            float aspect = numbers[0].ToInt() / max(1.f, numbers[1].ToFloat());
-                            if (!CloseFloat(aspect, currentAspect))
-                            {
-                                String aspectLocalized = Str("Settings.Video.AspectRatioFormat");
-                                aspectLocalized.FindReplace(L"$1", UIntString(numbers[0].ToInt()));
-                                aspectLocalized.FindReplace(L"$2", UIntString(numbers[1].ToInt()));
-
-                                String msg = Str("Settings.Publish.Warning.VideoAspectRatio");
-                                msg.FindReplace(L"$1", aspectLocalized);
-                                strWarnings << msg;
-                                hasErrors = true;
-                            }
-                        }
+                        hasErrors = true;
+                        canOptimize = true;
+                        strWarnings << FormattedString(Str("Settings.Publish.Warning.Keyint"), keyint / 1000);
                     }
-
-                    if (r->HasItem(TEXT("profile")))
-                    {
-                        String expectedProfile = r->GetString(TEXT("profile"));
-
-                        if (!expectedProfile.CompareI(currentx264Profile))
-                        {
-                            hasErrors = true;
-                            canOptimize = true;
-                            strWarnings << Str("Settings.Publish.Warning.RecommendMainProfile");
-                        }
-                    }
-
-                    if (r->HasItem(TEXT("keyint")))
-                    {
-                        int keyint = r->GetInt(TEXT("keyint"));
-                        if (!keyframeInt || keyframeInt * 1000 > keyint)
-                        {
-                            hasErrors = true;
-                            canOptimize = true;
-                            strWarnings << FormattedString(Str("Settings.Publish.Warning.Keyint"), keyint / 1000);
-                        }
-                    }
-
-                    break;
                 }
             }
         }
@@ -390,32 +386,21 @@ static void UpdateMemoryUsage(HWND hwnd)
 void SettingsPublish::OptimizeSettings()
 {
     auto refresh_on_exit = GuardScope([&] { SetWarningInfo(); UpdateMemoryUsage(hwnd); });
-    XConfig serverData;
-    if (!serverData.Open(FormattedString(L"%s\\services.xconfig", API->GetAppPath())))
+
+    int serviceID = (int)SendMessage(GetDlgItem(hwnd, IDC_SERVICE), CB_GETCURSEL, 0, 0);
+    if (serviceID < 0 || serviceID >= (int)services.size())
         return;
 
-    XElement *services = serverData.GetElement(L"services");
-    if (!services)
+    auto serviceData = LoadService(services[serviceID]);
+    auto service = serviceData.second;
+    if (!service)
+        return;
+    
+    //check to see if the service we're using has recommendations
+    if (!service->HasItem(L"recommended"))
         return;
 
-    UINT numServices = services->NumElements();
-
-    int serviceID = (int)SendMessage(GetDlgItem(hwnd, IDC_SERVICE), CB_GETITEMDATA, SendMessage(GetDlgItem(hwnd, IDC_SERVICE), CB_GETCURSEL, 0, 0), 0);
-    XElement *r = nullptr;
-    for (UINT i = 0; i < numServices; i++)
-    {
-        XElement *service = services->GetElementByID(i);
-        if (service->GetInt(L"id") != serviceID)
-            continue;
-
-        //check to see if the service we're using has recommendations
-        if (!service->HasItem(L"recommended"))
-            return;
-
-        r = service->GetElement(L"recommended");
-        break;
-    }
-
+    XElement *r = service->GetElement(L"recommended");
     if (!r)
         return;
 
@@ -544,27 +529,53 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 hwndTemp = GetDlgItem(hwnd, IDC_SERVICE);
                 int itemId = (int)SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("Custom"));
                 SendMessage(hwndTemp, CB_SETITEMDATA, itemId, 0);
+                services.emplace_back(0, String());
 
-                UINT numServices = 0;
-
-                XConfig serverData;
-                if (serverData.Open(FormattedString(L"%s\\services.xconfig", API->GetAppPath())))
+                ServiceIdentifier current = GetCurrentService();
+                std::unordered_map<std::wstring, int> duplicates;
+                
+                EnumerateServices([&](ServiceIdentifier sid, XElement *service)
                 {
-                    XElement *services = serverData.GetElement(TEXT("services"));
-                    if(services)
+                    services.emplace_back(sid);
+                    auto pos = duplicates.find(service->GetName());
+                    int id;
+                    if (pos != end(duplicates))
                     {
-                        numServices = services->NumElements();
-
-                        for(UINT i=0; i<numServices; i++)
+                        const ServiceIdentifier &first = services[pos->second];
+                        if (first.file.IsValid())
                         {
-                            XElement *service = services->GetElementByID(i);
-                            itemId = (int)SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)service->GetName());
-                            SendMessage(hwndTemp, CB_SETITEMDATA, itemId, service->GetInt(TEXT("id")));
+                            SendMessage(hwndTemp, CB_DELETESTRING, pos->second, 0);
+                            SendMessage(hwndTemp, CB_INSERTSTRING, pos->second, (LPARAM)FormattedString(L"%s [%s]", service->GetName(), services[pos->second].file.Array()).Array());
                         }
+                        id = (int)SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)(sid.file.IsValid() ? FormattedString(L"%s [%s]", service->GetName(), sid.file.Array()).Array() : service->GetName()));
                     }
-                }
+                    else
+                    {
+                        id = (int)SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)service->GetName());
+                        duplicates[service->GetName()] = id;
+                    }
 
-                int serviceID = AppConfig->GetInt(TEXT("Publish"), TEXT("Service"), 0);
+                    [&]()
+                    {
+                        if (sid != current)
+                            return;
+                        
+                        SendDlgItemMessage(hwnd, IDC_SERVICE, CB_SETCURSEL, id, 0);
+
+                        XElement *servers = service->GetElement(L"servers");
+                        if (!servers)
+                            return;
+
+                        UINT numServers = servers->NumDataItems();
+                        for (UINT i = 0; i < numServers; i++)
+                        {
+                            XDataItem *server = servers->GetDataItemByID(i);
+                            SendMessage(GetDlgItem(hwnd, IDC_SERVERLIST), CB_ADDSTRING, 0, (LPARAM)server->GetName());
+                        }
+
+                    }();
+                    return true;
+                });
 
                 if(mode != 0) ShowWindow(hwndTemp, SW_HIDE);
 
@@ -574,7 +585,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 LoadSettingEditString(hwndTemp, TEXT("Publish"), TEXT("PlayPath"), NULL);
                 if(mode != 0) ShowWindow(hwndTemp, SW_HIDE);
 
-                if(serviceID == 0) //custom
+                if(current.file.IsEmpty() && current.id == 0) //custom
                 {
                     ShowWindow(GetDlgItem(hwnd, IDC_SERVERLIST), SW_HIDE);
                     hwndTemp = GetDlgItem(hwnd, IDC_URL);
@@ -585,38 +596,6 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 {
                     ShowWindow(GetDlgItem(hwnd, IDC_URL), SW_HIDE);
                     hwndTemp = GetDlgItem(hwnd, IDC_SERVERLIST);
-
-                    XElement *services = serverData.GetElement(TEXT("services"));
-                    if(services)
-                    {
-                        XElement *service = NULL;
-                        numServices = services->NumElements();
-                        for(UINT i=0; i<numServices; i++)
-                        {
-                            XElement *curService = services->GetElementByID(i);
-                            if(curService->GetInt(TEXT("id")) == serviceID)
-                            {
-                                SendDlgItemMessage(hwnd, IDC_SERVICE, CB_SETCURSEL, i+1, 0);
-                                service = curService;
-                                break;
-                            }
-                        }
-
-                        if(service)
-                        {
-                            XElement *servers = service->GetElement(TEXT("servers"));
-                            if(servers)
-                            {
-                                UINT numServers = servers->NumDataItems();
-                                for(UINT i=0; i<numServers; i++)
-                                {
-                                    XDataItem *server = servers->GetDataItemByID(i);
-                                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)server->GetName());
-                                }
-                            }
-                        }
-                    }
-
                     LoadSettingComboString(hwndTemp, TEXT("Publish"), TEXT("URL"), NULL);
                 }
 
@@ -678,6 +657,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     //ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK), SW_HIDE);
                     //ShowWindow(GetDlgItem(hwnd, IDC_DASHBOARDLINK_STATIC), SW_HIDE);
                     ShowWindow(GetDlgItem(hwnd, IDC_SAVETOFILE), SW_HIDE);
+                    ShowWindow(GetDlgItem(hwnd, IDC_BROWSEUSERSERVICES), SW_HIDE);
 
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH_STATIC), 0, -data.fileControlOffset);
                     AdjustWindowPos(GetDlgItem(hwnd, IDC_SAVEPATH), 0, -data.fileControlOffset);
@@ -849,6 +829,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                             ShowWindow(GetDlgItem(hwnd, IDC_SERVICE), swShowControls);
                             ShowWindow(GetDlgItem(hwnd, IDC_PLAYPATH), swShowControls);
+                            ShowWindow(GetDlgItem(hwnd, IDC_BROWSEUSERSERVICES), swShowControls);
 
                             int serviceID = (int)SendMessage(GetDlgItem(hwnd, IDC_SERVICE), CB_GETCURSEL, 0, 0);
                             if(serviceID == 0)
@@ -937,24 +918,20 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                                 ShowWindow(hwndTemp, SW_SHOW);
                                 SendMessage(hwndTemp, CB_RESETCONTENT, 0, 0);
 
-                                XConfig serverData;
-                                if (serverData.Open(FormattedString(L"%s\\services.xconfig", API->GetAppPath())))
+                                if (serviceID >= 0 && serviceID < (int)services.size())
                                 {
-                                    XElement *services = serverData.GetElement(TEXT("services"));
-                                    if(services)
+                                    auto serviceData = LoadService(services[serviceID]);
+                                    auto service = serviceData.second;
+                                    if (service)
                                     {
-                                        XElement *service = services->GetElementByID(serviceID-1);
-                                        if(service)
+                                        XElement *servers = service->GetElement(TEXT("servers"));
+                                        if (servers)
                                         {
-                                            XElement *servers = service->GetElement(TEXT("servers"));
-                                            if(servers)
+                                            UINT numServers = servers->NumDataItems();
+                                            for (UINT i = 0; i < numServers; i++)
                                             {
-                                                UINT numServers = servers->NumDataItems();
-                                                for(UINT i=0; i<numServers; i++)
-                                                {
-                                                    XDataItem *server = servers->GetDataItemByID(i);
-                                                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)server->GetName());
-                                                }
+                                                XDataItem *server = servers->GetDataItemByID(i);
+                                                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)server->GetName());
                                             }
                                         }
                                     }
@@ -1069,6 +1046,10 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
                             break;
                         }
+
+                    case IDC_BROWSEUSERSERVICES:
+                        ShellExecute(NULL, L"open", FormattedString(L"%s/services", API->GetAppDataPath()), 0, 0, SW_SHOWNORMAL);
+                        break;
 
                     case IDC_LOWLATENCYMODE:
                     case IDC_SAVETOFILE:

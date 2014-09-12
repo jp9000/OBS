@@ -75,7 +75,7 @@ void SettingsHotkeys::ApplySettings()
     //------------------------------------
 
     update_hotkey(App->pushToTalkHotkeyID, IDC_PUSHTOTALKHOTKEY, L"Audio", L"PushToTalkHotkey", OBS::PushToTalkHotkey, App->bUsingPushToTalk);
-    update_hotkey(App->pushToTalkHotkey2ID, IDC_PUSHTOTALKHOTKEY, L"Audio", L"PushToTalkHotkey2", OBS::PushToTalkHotkey, App->bUsingPushToTalk);
+    update_hotkey(App->pushToTalkHotkey2ID, IDC_PUSHTOTALKHOTKEY2, L"Audio", L"PushToTalkHotkey2", OBS::PushToTalkHotkey, App->bUsingPushToTalk);
 
     //------------------------------------
 

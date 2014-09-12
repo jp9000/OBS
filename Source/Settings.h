@@ -102,6 +102,7 @@ private:
 
     //-----------------------------------------------------------------------
     // Private members
+    std::vector<ServiceIdentifier> services;
 
 private:
     void SetWarningInfo();

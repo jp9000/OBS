@@ -33,6 +33,14 @@ D: Altivec asm
 D: BeOS and MacOS X ports.
 S: France
 
+N: Fiona Glaser
+E: fiona AT x264 DOT com
+D: Maintainer
+D: All areas of encoder analysis and algorithms
+D: Motion estimation, rate control, macroblock & frame decisions, RDO, etc
+D: x86 asm
+S: USA
+
 N: Gabriel Bouvigne
 E: bouvigne AT mp3-tech DOT org
 D: 2pass VBV
@@ -47,31 +55,25 @@ E: henrik AT gramner DOT com
 D: 4:2:2 chroma subsampling, x86 asm, Windows improvements, bugfixes
 S: Sweden
 
-N: Fiona Glaser
-E: fiona AT x264 DOT com
-D: x86 asm, 1pass VBV, adaptive quantization, inline asm
-D: various speed optimizations, bugfixes
-S: USA
-
 N: Laurent Aimar
-E: fenrir AT via.ecp DOT fr
+E: fenrir AT videolan DOT org
 C: fenrir
 D: Intial import, former maintainer
 D: x86 asm (mmx/mmx2)
 S: France
 
 N: Loren Merritt
-E: lorenm AT u.washington DOT edu
+E: pengvado AT akuvian DOT org
 C: pengvado
-D: maintainer
+D: Maintainer
 D: All areas of encoder analysis and algorithms
-D: Motion estimation, rate control, macroblock & frame decisions, RDO, etc.
+D: Motion estimation, rate control, macroblock & frame decisions, RDO, etc
 D: Multithreading
-D: x86 and x86_64 asm (mmx/mmx2/sse2)
+D: x86 asm
 S: USA
 
 N: Mans Rullgard
-E: mru AT inprovide DOT com
+E: mru AT mansr DOT com
 C: mru
 D: Rate control
 S: Southampton, UK
@@ -90,10 +92,6 @@ C: chenm001
 D: Win32/VC 6.0 port
 D: gcc asm to nasm conversion
 S: China
-
-N: Phil Jensen
-E: philj AT csufresno DOT edu
-D: SPARC asm
 
 N: Radek Czyz
 E: radoslaw AT syskin DOT cjb DOT net
