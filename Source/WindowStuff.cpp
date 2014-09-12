@@ -3337,11 +3337,11 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 case ID_RECORDINGSFOLDER:
                     {
                         String path = OSGetDefaultVideoSavePath();
-                        path = GetPathDirectory(GetPathWithoutExtension(AppConfig->GetString(TEXT("Publish"), TEXT("SavePath"), path.IsValid() ? path.Array() : nullptr))).FindReplace(L"/", L"\\");
+                        path = GetExpandedRecordingDirectoryBase(GetPathWithoutExtension(AppConfig->GetString(TEXT("Publish"), TEXT("SavePath"), path.Array()))).FindReplace(L"/", L"\\");
                         String lastFile = App->lastOutputFile.FindReplace(L"/", L"\\");
 
                         LPITEMIDLIST item = nullptr;
-                        if (lastFile.IsValid() && path == lastFile.Left(path.Length()) && (item = ILCreateFromPath(lastFile)))
+                        if (lastFile.IsValid() && path == lastFile.Left(path.Length()) && OSFileExists(lastFile) && (item = ILCreateFromPath(lastFile)))
                         {
                             SHOpenFolderAndSelectItems(item, 0, nullptr, 0);
                             ILFree(item);
