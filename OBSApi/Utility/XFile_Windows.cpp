@@ -294,7 +294,7 @@ String GetPathDirectory(CTSTR lpPath)
         CTSTR lpDirectoryEnd = srchr(lpPath, '/');
 
         if(!lpDirectoryEnd)
-            lpDirectoryEnd = srchr(lpPath, '/');
+            lpDirectoryEnd = srchr(lpPath, '\\');
 
         if(lpDirectoryEnd)
             nDirectoryEnd = (int)((((UPARAM)lpDirectoryEnd)-((UPARAM)lpPath))/sizeof(TCHAR));
