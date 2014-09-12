@@ -36,12 +36,6 @@ services : {
       "EU: Frankfurt, Germany" : rtmp://live-de.vaughnsoft.net:443/live
     }
   }
-  iNSTAGIB.tv : {
-    id : 4
-    servers : {
-      "US Chicago (Primary)"  : rtmp://live.instagib.tv:443/live
-    }
-  }
   GoodGame.ru : {
     id : 5
     servers : {
@@ -55,13 +49,6 @@ services : {
     id : 6
     servers : {
       "Primary" :    rtmp://publish.dailymotion.com/publish-dm
-    }
-  }
-  CashPlay.tv : {
-    id : 8
-    servers : {
-      "Primary, UK" : rtmp://live.cashplay.tv/live
-      "Low Priority, DE" : rtmp://de.live.cashplay.tv/live
     }
   }
   Youtube : {
@@ -78,23 +65,24 @@ services : {
     id : 10
     servers : {
       "RU Origin"     : rtmp://st.cybergame.tv:1953/live
-      "RU Premium"  : rtmp://premium.cybergame.tv:1953/premium
     }
   }
   hitbox.tv : {
     id : 11
     servers : {
-      "Default"       : rtmp://live.hitbox.tv/push
-      "EU-West"       : rtmp://live.fra.hitbox.tv/push
-      "EU-East"       : rtmp://live.vie.hitbox.tv/push
-      "EU-North"      : rtmp://live.lhr.hitbox.tv/push
-      "EU-Central"    : rtmp://live.nbg.hitbox.tv/push
-      "US-East"       : rtmp://live.vgn.hitbox.tv/push
-      "US-Central"    : rtmp://live.den.hitbox.tv/push
-      "US-West"       : rtmp://live.lax.hitbox.tv/push
-      "South Korea"   : rtmp://live.icn.hitbox.tv/push
-      "South America" : rtmp://live.gru.hitbox.tv/push
-      "Oceania"       : rtmp://live.syd.hitbox.tv/push
+      "Default"                 : rtmp://live.hitbox.tv/push
+      "Asia: Hong Kong"         : rtmp://live.hkg.hitbox.tv/push
+      "Asia: South Korea"       : rtmp://live.icn.hitbox.tv/push
+      "EU: Austria"             : rtmp://live.vie.hitbox.tv/push
+      "EU: Germany 1"           : rtmp://live.fra.hitbox.tv/push
+      "EU: Germany 2"           : rtmp://live.nbg.hitbox.tv/push
+      "EU: Russia"              : rtmp://live.dme.hitbox.tv/push
+      "EU: UK"                  : rtmp://live.lhr.hitbox.tv/push
+      "Oceania: Australia"      : rtmp://live.syd.hitbox.tv/push
+      "South America: Brazil"   : rtmp://live.gru.hitbox.tv/push
+      "US Central: Colorado"    : rtmp://live.den.hitbox.tv/push
+      "US East: Virginia"       : rtmp://live.vgn.hitbox.tv/push
+      "US West: California"     : rtmp://live.lax.hitbox.tv/push
     }
     recommended : {
       "keyint" : 2000
