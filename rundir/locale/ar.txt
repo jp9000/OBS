@@ -89,7 +89,6 @@ MainMenu.Help.CheckForUpdates="&فحص التحديثات"
 MainMenu.Settings.OpenConfigFolder="فتح مجلد الا&عدادات"
 MainMenu.Settings.OpenLogFolder="ف&تح مجلد العمليات"
 
-MainWindow.PreviewDisabled="تم تعطيل المعاينة"
 MainWindow.Dashboard="لوحة المعلومات"
 MainWindow.DroppedFrames="الفريمات ( الاطارات) التي تم اسقاطها:"
 MainWindow.Exit="خروج"
@@ -161,7 +160,6 @@ Settings.Advanced.Priority.Normal="عادي"
 Settings.Advanced.Priority.AboveNormal="أعلى من المعدل الطبيعي"
 Settings.Advanced.Priority.High="مرتفعة"
 
-Settings.Audio.MuteMicHotkey="زر إختصار لـ كتم/إلغاء كتم الميكروفون:"
 Settings.Audio.ShowOnlyConnectedDevices="إظهار الأجهزة المتصلة فقط"
 
 Settings.Encoding.Audio="ترميز الصوت"

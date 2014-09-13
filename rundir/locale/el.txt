@@ -90,7 +90,6 @@ MainMenu.Help.CheckForUpdates="Έλεγχος για ενημερώσεις"
 MainMenu.Settings.OpenConfigFolder="Άνοιγμα &Φακέλου Παραμέτρων"
 MainMenu.Settings.OpenLogFolder="Άνοιγμα &Φακέλου Καταγραφής"
 
-MainWindow.PreviewDisabled="Απενεργοποιημένη δοκιμή"
 MainWindow.Dashboard="Πίνακας εργαλείων"
 MainWindow.DroppedFrames="Καρέ που απορρίφθηκαν:"
 MainWindow.Exit="Έξοδος"
@@ -170,8 +169,6 @@ Settings.Audio.Device="Μικρόφωνο/Βοηθητικές Συσκευές 
 Settings.Audio.ForceMicMono="Μικροφώνου/Βοηθητική σε Μονοφωνικό"
 Settings.Audio.MicBoost="Μικροφώνου/Βοηθητική είσοδος Ενίσχυση (πολλαπλά):"
 Settings.Audio.MicSyncFix="Πρόχειρη Διόρθωση Συγχρονισμού Μικροφώνου"
-Settings.Audio.MuteDesktopHotkey="Σίγαση/Διακοπή Επιφάνειας εργασίας Hotkey:"
-Settings.Audio.MuteMicHotkey="Σίγαση/Διακοπή Μικροφώνου Hotkey:"
 Settings.Audio.PlaybackDevice="Επιφάνειας εργασίας Συσκευή Ήχου:"
 Settings.Audio.PushToTalkDelay="Push-to-talk Καθυστέρηση (msec):"
 Settings.Audio.ShowOnlyConnectedDevices="Εμφάνιση συνδεδεμένων συσκευών"
@@ -219,10 +216,6 @@ Settings.Publish.Playpath="Διαδρομή/Κλειδί Ροής (αν υπάρ
 Settings.Publish.SavePath="Διαδρομή Αρχείου:"
 Settings.Publish.Server="Διακομιστής:"
 Settings.Publish.Service="Υπηρεσίες Ροής:"
-Settings.Publish.StartStreamHotkey="Εκκίνηση Ροής Πλήκτρο συντόμευσης:"
-Settings.Publish.StopStreamHotkey="Παύση Ροής Πλήκτρο συντόμευσης:"
-Settings.Publish.StartRecordingHotkey="Πλήκτρο Έναρξης Εγγραφής:"
-Settings.Publish.StopRecordingHotkey="Πλήκτρο Διακοπής Εγγραφής:"
 Settings.Publish.Username="Όνομα Χρήστη (αν υπάρχει):"
 
 

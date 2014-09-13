@@ -97,7 +97,6 @@ MainMenu.Settings.OpenLogFolder="Отвори &Извештајни фолдер
 MainMenu.Settings.ShowLogWindow="Прикажи прозор са логовима"
 
 MainWindow.BeginMessage="Тренутно не стимујете\n\n Притисните \"Започни Стримовање\" или \"Прикажи Стрим\" да почнете"
-MainWindow.PreviewDisabled="Преглед онемогућен"
 MainWindow.Dashboard="Командна табла"
 MainWindow.DroppedFrames="Испуштени фрејмови:"
 MainWindow.Exit="Излаз"
