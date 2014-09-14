@@ -4,86 +4,52 @@ layout: default
 ---
 <h4>Development</h4>
 <ul>
-  <li>Communication and Downloads 
-    <ul>
-      <li><a href="https://obsproject.com/forum/list/general-development.21/" target="new">Development Forum</a></li>
-      <li><a href="http://webchat.quakenet.org/?channels=obsproject" target="new">Live Chat Support</a>    </li>
-      <li><a href="https://github.com/jp9000/OBS" target="new">GitHub</a></li>
-    </ul>
-  </li>
+  <li>Communication and Downloads</li>
+  <ul>
+    <li><a href="https://obsproject.com/forum/list/general-development.21/" target="new">Development Forum</a></li>
+    <li><a href="http://webchat.quakenet.org/?channels=obsproject" target="new">Live Chat Support</a></li>
+    <li><a href="https://github.com/jp9000/OBS" target="new">GitHub</a></li>
+  </ul>
 </ul>
-<h4>OBS Compilation Infos
-  </td>
-</h4>
-<p>You will need a working Windows 8 SDK and DirectX SDK, files for VS 2013 are included.
-  </td>
+<h4>OBS Compilation Infos</h4>
+<p>You will need a working Windows 8 SDK and DirectX SDK, files for VS 2013 are included.</p>
 <ul>
   <li><a href="http://msdn.microsoft.com/en-us/windows/desktop/hh852363.aspx" target="new">Windows 8 Software Development Kit</a></li>
-  <li><a href="http://www.microsoft.com/en-us/download/details.aspx?id=6812" target="new">DirectX Software Development Kit</a>
-    </td>
-  </li>
+  <li><a href="http://www.microsoft.com/en-us/download/details.aspx?id=6812" target="new">DirectX Software Development Kit</a></li>
 </ul>
-<h4>Excerpt from INSTALL file</td>
-</h4>
+<h4>Excerpt from INSTALL file</h4>
+<pre>---------------------------------------------
+Compiling
+---------------------------------------------</pre>
+<p>Required (and included) libraries:</p>
+    <ul>
+      <li>
+        libmp3lame - MP3 encoder - obs/lame</li>
+      <li>libfaac - AAC encoder - obs/libfaac</li>
+      <li>librtmp - RTMP protocol - obs/librtmp</li>
+      <li>libsamplerate - audio resampler - obs/libsamplerate</li>
+      <li>libx264 - x264 encoder - obs/x264</li>
+    </ul>
+<p>To compile OBS and all its sub-libraries, you can use OBS-All.sln and compile everything all at once, or you can compile everything individually yourself. x264 and libmp3lame are pre-compiled for convenience.</p>
+<pre>---------------------------------------------
+Windows SDK
+---------------------------------------------</pre>
+<p>It requires the latest windows SDK, as it uses features from Windows Vista, Windows 7 and 8. The Windows 8 SDK should also come with the latest DirectX includes and libraries.</p>
 <p>---------------------------------------------<br />
-        Compiling<br />
+Compiling LAME (if desired)<br />
 ---------------------------------------------</p>
-    <p>Required (and included) libraries:<br />
-      libmp3lame - MP3 encoder - obs/lame<br />
-      libfaac - AAC encoder - obs/libfaac<br />
-      librtmp - RTMP protocol - obs/librtmp<br />
-      libsamplerate - audio resampler - obs/libsamplerate<br />
-      libx264 - x264 encoder - obs/x264</p>
-<p>To compile OBS and all its sub-libraries, you can use OBS-All.sln<br />
-      and compile everything all at once, or you can compile everything<br />
-      individually yourself. x264 and libmp3lame are pre-compiled for<br />
-  convenience.</p>
-<p>---------------------------------------------<br />
-      Windows SDK<br />
-      ---------------------------------------------<br />
-      It requires the latest windows SDK, as it uses features from<br />
-      windows vista, windows 7 and 8. The windows 8 SDK should also come<br />
-  with the latest DirectX includes and libraries</p>
-    <p>---------------------------------------------<br />
-      Compiling LAME (if desired)<br />
-      ---------------------------------------------</p>
-    <p>I compile lame through the VC makefile.</p>
+<p>I compile lame through the VC makefile.</p>
 <p>Command line: nmake -f Makefile.MSVC CPU=P3</p>
-    <p>Get nasm if you want to compile with assembly, otherwise use ASM=NO<br />
-      command line option. Use MSVCVER=Win64 to compile 64bit. View<br />
-      lame/makefile.msvc for more info.
-    <p>---------------------------------------------<br />
-      Compiling x264 (if desired)<br />
-    ---------------------------------------------</p>
-    <p>x264 is slightly more troublesome, primarily because it's written in<br />
-      C99, yasm, and compile configuration is totally dependent on bash<br />
-      scripts. Usually it's recommended to cross-compile on linux, but I just<br />
-      used msys and mingw for windows. There's a guide on how to get x264<br />
-compiled on windows at http://doom10.org/index.php?topic=26.0</p>
-    <p>Make sure to use the --enable-win32thread configuration option,<br />
-      though I suppose you could make it use posix threads with a bit of work,<br />
-      but it's fairly pointless and you'd probably have to add some more stuff<br />
-      to the Hacks.cpp file.</p>
-<p>If compiling static (which I don't do anymore), please make sure to<br />
-      include the static libgcc.a that your mingw provides. Depending on your<br />
-      mingw version you may need to add/remove stuff from Hacks.cpp to get it<br />
-      properly working. It sucks, I know, but I'm not the one who decided to<br />
-      make x264 uncompilable on microsoft's C compiler.</p>
-    <p>---------------------------------------------<br />
-      Other notes<br />
-    ---------------------------------------------</p>
-    <p>You may have noted that every single library I use is statically linked.<br />
-      Even the CRT is static on all projects. Personally, I despise having any<br />
-      outside DLL dependencies. Having to install the damn visual studio<br />
-      runtimes every single time you install an application is the most annoying<br />
-      thing on earth. Sure, I understand why they're used, and I know that there<br />
-      are often vulnerabilities that need to be patched, but I personally go<br />
-      around it by centralizing all such stuff in the utility library (see the<br />
-      Utility files in OBSApi). Generally when I get an application I like it<br />
-      to work right from the start with as little setup as possible. It's a<br />
-personal preference.</p>
-    <p>If you need to allocate, use the Allocate and Free functions. new and<br />
-      delete is automatically wrapped to these as well.</p>
-    <p>At some point in time I will get around to some proper documentation of<br />
-      the utility library, but in the mean time, look around in the utility files<br />
-      of OBSApi if you wish.</p>
+<p>Get nasm if you want to compile with assembly, otherwise use ASM=NO command line option. Use MSVCVER=Win64 to compile 64bit. View lame/makefile.msvc for more info.</p>
+<pre>---------------------------------------------
+Compiling x264 (if desired)
+---------------------------------------------</pre>
+<p>x264 is slightly more troublesome, primarily because it's written in C99, yasm, and compile configuration is totally dependent on bash scripts. Usually it's recommended to cross-compile on linux, but I just used msys and mingw for windows. There's a guide on how to get x264 compiled on windows at http://doom10.org/index.php?topic=26.0</p>
+<p>Make sure to use the --enable-win32thread configuration option, though I suppose you could make it use posix threads with a bit of work, but it's fairly pointless and you'd probably have to add some more stuff to the Hacks.cpp file.</p>
+<p>If compiling static (which I don't do anymore), please make sure to include the static libgcc.a that your mingw provides. Depending on your mingw version you may need to add/remove stuff from Hacks.cpp to get it properly working. It sucks, I know, but I'm not the one who decided to make x264 uncompilable on microsoft's C compiler.</p>
+<pre>---------------------------------------------
+Other notes
+---------------------------------------------</pre>
+<p>You may have noted that every single library I use is statically linked. Even the CRT is static on all projects. Personally, I despise having any outside DLL dependencies. Having to install the damn visual studio runtimes every single time you install an application is the most annoying thing on earth. Sure, I understand why they're used, and I know that there are often vulnerabilities that need to be patched, but I personally go around it by centralizing all such stuff in the utility library (see the Utility files in OBSApi). Generally when I get an application I like it to work right from the start with as little setup as possible. It's a personal preference.</p>
+<p>If you need to allocate, use the Allocate and Free functions. new and delete is automatically wrapped to these as well.</p>
+<p>At some point in time I will get around to some proper documentation of the utility library, but in the mean time, look around in the utility files of OBSApi if you wish.</p>

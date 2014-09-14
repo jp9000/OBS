@@ -13,7 +13,7 @@ layout: default
 <h3>Process Priority Class</h3>
 <p>Sets the process priority for OBS.  As encoding can consume a lot of CPU, setting this to say "above normal" can sometimes be useful to ensure capturing and encoding is done in a more timely fashion.</p>
 <ul>
-	<li>Recommended: Normal or Above Normal</li>
+  <li>Recommended: Normal or Above Normal</li>
 </ul>
 <h3>Scene Buffering Time</h3>
 <p>Sets the amount of milliseconds the scene is buffered before being sent to the encoder. Only change this value if you know what you are doing. Lowering the value can lead to audio and synchronisation problems.</p>
@@ -53,17 +53,16 @@ layout: default
   <li>Recommended: Off</li>
 </ul>
 <h3>Force desktop audio to use video timestamps as a base for audio time</h3>
-<p> This will construct desktop audio timestamps from the video timestamps rather than obtain timestamps directly from windows itself.  This is only for the desktop audio, this is not for mic/auxilary/webcam/device sync.</p>
+<p> This will construct desktop audio timestamps from the video timestamps rather than obtain timestamps directly from windows itself.  This is only for the desktop audio, this is not for mic/auxiliary/webcam/device sync.</p>
 <ul>
   <li>Recommended: Off, unless you are having desktop audio sync issues (this should actually never happen anymore, if this happens email Jim immidiately)</li>
 </ul>
 <h3>Use Mic QPC timestamps</h3>
 <p>When activated this option tries to use the Microphone QPC timestamps to synchronize your audio and video. </p>
 <h3>Bind To Interface</h3>
-<p>  If you have multiple network interfaces, select the one which you wish OBS to use.</p>
+<p>If you have multiple network interfaces, select the one which you wish OBS to use.</p>
 <ul>
   <li>Recommended: Default</li>
 </ul>
-<h3>Latency Tuning Factor<br />
-  Automatic Low Latency Mode</h3>
-<p>  These are advanced options used to fine tune the &quot;Minimize network impact&quot; option. The effect varies depending on the network conditions. Higher value increases spacing between packets. This is a very last-resort option for precise fine tuning of packet intervals</p>
+<h3>Latency Tuning Factor / Automatic Low Latency Mode</h3>
+<p>These are advanced options used to fine tune the &quot;Minimize network impact&quot; option. The effect varies depending on the network conditions. Higher value increases spacing between packets. This is a very last-resort option for precise fine tuning of packet intervals</p>

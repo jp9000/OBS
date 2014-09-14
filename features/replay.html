@@ -1,0 +1,14 @@
+---
+title: Replay Buffer - Open Broadcaster Software - Help Files
+layout: default
+---
+<h4>Replay Buffer</h4>
+<p>This option allows you to save the last X seconds of Video and Audio to your disk on the press of a button. You first have to configure the amount of seconds that should be kept in the buffer, that is in the Broadcast Settings of OBS. For example the last 30, 60 or 120 seconds:</p>
+<center><img  class="gray_border" src="{{ site.baseurl }}/assets/replay_buffer_length.png"></img></center>
+<p>Then configure the "Save Replay Buffer" hotkey so you can tell OBS to save the buffer to your disk, that is in the Hotkey settings of OBS:</p>
+<center><img  class="gray_border" src="{{ site.baseurl }}/assets/replay_buffer_hotkey.png"></img></center>
+<p>Now in the OBS interface you can use the small black arrow, right of "Start Recording", to get a little dropdown menu that lets you start the "Replay Buffer" or you can also setup a hotkey to start and stop it. As you can see, you can of course also still record a normal video file at the same time:</p>
+<center><img class="gray_border" src="{{ site.baseurl }}/assets/replay_buffer.png"></img></center>
+<p>As soon as you start the buffer, OBS will start the recording but it wont save anything to your disk, until you press the "Save Replay Buffer" hotkey. When something worth saving has happened, you press the hotkey and OBS will save the last X seconds to disk. X is of course the amount of seconds you selected earlier. This would for example allow you to save the last 3 headshots you made, or that awesome block you landed, or that great heal that saved your mate, to disk, without having to edit an hour long video later.</p>
+<p>A word of advice though. I would probably recommend to do a normal recording at the same time. So if something happens that took longer than your selected "Replay Buffer length", you can still cut it out later. Also please do not select ridiculous long buffer values. The estimator can only roughly show you the estimated RAM usage of your current settings, and if you run out of ram, OBS has to write the buffer to disk which is of course only suboptimal. At the same time dont worry too much, 5 minutes or even a bit more should be no problem for most people and under most settings.</p>
+<p>And you can of course test if its a problem at all.</p>

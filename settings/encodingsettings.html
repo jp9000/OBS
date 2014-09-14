@@ -8,8 +8,7 @@ layout: default
 <p>When configuring encoding, make sure to test your available bandwidth first, typically using a site like <a href="http://www.speedtest.net/" target="new">http://www.speedtest.net/</a>. For all other settings, there is an <a href="http://www.obsproject.com/estimator" target="new">official OBS settings estimator</a>.</p>
 <h4>Video Encoding</h4>
 <h3>Encoder (x264/Quick Sync/Nvidia NVENC)</h3>
-<p>OBS supports more than just the standard CPU encoding using x264. If available on your system you can switch between the x264 encoder, the Intel Quick Sync encoder and the Nvidia encoder included in newer gen graphic cards by nvidia.<br />
-  Each of the encoders has different abilities with x264 being probably the most stable one. For online streaming this is the recommended encoder.
+<p>OBS supports more than just the standard CPU encoding using x264. If available on your system you can switch between the x264 encoder, the Intel Quick Sync encoder and the Nvidia encoder included in newer gen graphic cards by nvidia. Each of the encoders has different abilities with x264 being probably the most stable one. For online streaming this is the recommended encoder.
 </p>
 <h3>Use CBR</h3>
 <p>This will set x264 to use constant bitrate rather than variable bitrate. The "quality balance" setting will have no effect as the quality will be determined entirely by your bitrate, and x264 will try to ensure your stream goes out at exactly at bitrate specified. This results in a less spiky (bandwidth wise) stream, but will also cause both you and your viewers to consume more total bandwidth as scenes with no motion at all will still use the specified bitrate.</p>
