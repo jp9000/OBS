@@ -374,7 +374,7 @@ bool DeviceSource::LoadFilters()
         goto cleanFinish;
     }
 
-    renderCX = renderCY = 0;
+    renderCX = renderCY = newCX = newCY = 0;
     frameInterval = 0;
 
     if(bUseCustomResolution)
@@ -417,8 +417,8 @@ bool DeviceSource::LoadFilters()
             }
         }
 
-        renderCX = size.cx;
-        renderCY = size.cy;
+        renderCX = newCX = size.cx;
+        renderCY = newCY = size.cy;
     }
 
     if(!renderCX || !renderCY || !frameInterval)
@@ -723,97 +723,6 @@ bool DeviceSource::LoadFilters()
         audioOut->SetVolume(volume);
     }
 
-    switch(colorType) {
-    case DeviceOutputType_RGB:
-        lineSize = renderCX * 4;
-        break;
-    case DeviceOutputType_I420:
-    case DeviceOutputType_YV12:
-        lineSize = renderCX; //per plane
-        break;
-    case DeviceOutputType_YVYU:
-    case DeviceOutputType_YUY2:
-    case DeviceOutputType_UYVY:
-    case DeviceOutputType_HDYC:
-        lineSize = (renderCX * 2);
-        break;
-    }
-
-    linePitch = lineSize;
-    lineShift = 0;
-    imageCX = renderCX;
-    imageCY = renderCY;
-
-    deinterlacer.imageCX = renderCX;
-    deinterlacer.imageCY = renderCY;
-
-    if(deinterlacer.doublesFramerate)
-        deinterlacer.imageCX *= 2;
-
-    switch(deinterlacer.type) {
-    case DEINTERLACING_DISCARD:
-        deinterlacer.imageCY = renderCY/2;
-        linePitch = lineSize * 2;
-        renderCY /= 2;
-        break;
-
-    case DEINTERLACING_RETRO:
-        deinterlacer.imageCY = renderCY/2;
-        if(deinterlacer.processor != DEINTERLACING_PROCESSOR_GPU)
-        {
-            lineSize *= 2;
-            linePitch = lineSize;
-            renderCY /= 2;
-            renderCX *= 2;
-        }
-        break;
-
-    case DEINTERLACING__DEBUG:
-        deinterlacer.imageCX *= 2;
-        deinterlacer.imageCY *= 2;
-    case DEINTERLACING_BLEND2x:
-    //case DEINTERLACING_MEAN2x:
-    case DEINTERLACING_YADIF:
-    case DEINTERLACING_YADIF2x:
-        deinterlacer.needsPreviousFrame = true;
-        break;
-    }
-
-    if(deinterlacer.type != DEINTERLACING_NONE && deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
-    {
-        deinterlacer.vertexShader.reset(CreateVertexShaderFromFile(TEXT("shaders/DrawTexture.vShader")));
-        deinterlacer.pixelShader = CreatePixelShaderFromFileAsync(ChooseDeinterlacingShader());
-        deinterlacer.isReady = false;
-    }
-
-    int numThreads = MAX(OSGetTotalCores()-2, 1);
-    for(int i=0; i<numThreads; i++)
-    {
-        convertData[i].width  = lineSize;
-        convertData[i].height = renderCY;
-        convertData[i].sample = NULL;
-        convertData[i].hSignalConvert  = CreateEvent(NULL, FALSE, FALSE, NULL);
-        convertData[i].hSignalComplete = CreateEvent(NULL, FALSE, FALSE, NULL);
-        convertData[i].linePitch = linePitch;
-        convertData[i].lineShift = lineShift;
-
-        if(i == 0)
-            convertData[i].startY = 0;
-        else
-            convertData[i].startY = convertData[i-1].endY;
-
-        if(i == (numThreads-1))
-            convertData[i].endY = renderCY;
-        else
-            convertData[i].endY = ((renderCY/numThreads)*(i+1)) & 0xFFFFFFFE;
-    }
-
-    if(colorType == DeviceOutputType_YV12 || colorType == DeviceOutputType_I420)
-    {
-        for(int i=0; i<numThreads; i++)
-            hConvertThreads[i] = OSCreateThread((XTHREAD)PackPlanarThread, convertData+i);
-    }
-
     bSucceeded = true;
 
 cleanFinish:
@@ -885,50 +794,11 @@ cleanFinish:
 
     // Updated check to ensure that the source actually turns red instead of
     // screwing up the size when SetFormat fails.
-    if (renderCX <= 0 || renderCX >= 8192) { renderCX = 32; imageCX = renderCX; }
-    if (renderCY <= 0 || renderCY >= 8192) { renderCY = 32; imageCY = renderCY; }
+    if (renderCX <= 0 || renderCX >= 8192) { newCX = renderCX = 32; imageCX = renderCX; }
+    if (renderCY <= 0 || renderCY >= 8192) { newCY = renderCY = 32; imageCY = renderCY; }
 
+    ChangeSize(bSucceeded, true);
 
-    //-----------------------------------------------------
-    // create the texture regardless, will just show up as red to indicate failure
-    BYTE *textureData = (BYTE*)Allocate(renderCX*renderCY*4);
-
-    if(colorType == DeviceOutputType_RGB) //you may be confused, but when directshow outputs RGB, it's actually outputting BGR
-    {
-        msetd(textureData, 0xFFFF0000, renderCX*renderCY*4);
-        texture = CreateTexture(renderCX, renderCY, GS_BGR, textureData, FALSE, FALSE);
-        if(bSucceeded && deinterlacer.needsPreviousFrame)
-            previousTexture = CreateTexture(renderCX, renderCY, GS_BGR, textureData, FALSE, FALSE);
-        if(bSucceeded && deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
-            deinterlacer.texture.reset(CreateRenderTarget(deinterlacer.imageCX, deinterlacer.imageCY, GS_BGRA, FALSE));
-    }
-    else //if we're working with planar YUV, we can just use regular RGB textures instead
-    {
-        msetd(textureData, 0xFF0000FF, renderCX*renderCY*4);
-        texture = CreateTexture(renderCX, renderCY, GS_RGB, textureData, FALSE, FALSE);
-        if(bSucceeded && deinterlacer.needsPreviousFrame)
-            previousTexture = CreateTexture(renderCX, renderCY, GS_RGB, textureData, FALSE, FALSE);
-        if(bSucceeded && deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
-            deinterlacer.texture.reset(CreateRenderTarget(deinterlacer.imageCX, deinterlacer.imageCY, GS_BGRA, FALSE));
-    }
-
-    if(bSucceeded && bUseThreadedConversion)
-    {
-        if(colorType == DeviceOutputType_I420 || colorType == DeviceOutputType_YV12)
-        {
-            LPBYTE lpData;
-            if(texture->Map(lpData, texturePitch))
-                texture->Unmap();
-            else
-                texturePitch = renderCX*4;
-
-            lpImageBuffer = (LPBYTE)Allocate(texturePitch*renderCY);
-        }
-    }
-
-    Free(textureData);
-
-    bFiltersLoaded = bSucceeded;
     return bSucceeded;
 }
 
@@ -955,32 +825,7 @@ void DeviceSource::UnloadFilters()
         previousTexture = NULL;
     }
 
-    int numThreads = MAX(OSGetTotalCores()-2, 1);
-    for(int i=0; i<numThreads; i++)
-    {
-        if(hConvertThreads[i])
-        {
-            convertData[i].bKillThread = true;
-            SetEvent(convertData[i].hSignalConvert);
-
-            OSTerminateThread(hConvertThreads[i], 10000);
-            hConvertThreads[i] = NULL;
-        }
-
-        convertData[i].bKillThread = false;
-
-        if(convertData[i].hSignalConvert)
-        {
-            CloseHandle(convertData[i].hSignalConvert);
-            convertData[i].hSignalConvert = NULL;
-        }
-
-        if(convertData[i].hSignalComplete)
-        {
-            CloseHandle(convertData[i].hSignalComplete);
-            convertData[i].hSignalComplete = NULL;
-        }
-    }
+    KillThreads();
 
     if(bFiltersLoaded)
     {
@@ -1225,6 +1070,190 @@ UINT DeviceSource::GetSampleInsertIndex(LONGLONG timestamp)
     return index;
 }
 
+void DeviceSource::KillThreads()
+{
+    int numThreads = MAX(OSGetTotalCores()-2, 1);
+    for(int i=0; i<numThreads; i++)
+    {
+        if(hConvertThreads[i])
+        {
+            convertData[i].bKillThread = true;
+            SetEvent(convertData[i].hSignalConvert);
+
+            OSTerminateThread(hConvertThreads[i], 10000);
+            hConvertThreads[i] = NULL;
+        }
+
+        convertData[i].bKillThread = false;
+
+        if(convertData[i].hSignalConvert)
+        {
+            CloseHandle(convertData[i].hSignalConvert);
+            convertData[i].hSignalConvert = NULL;
+        }
+
+        if(convertData[i].hSignalComplete)
+        {
+            CloseHandle(convertData[i].hSignalComplete);
+            convertData[i].hSignalComplete = NULL;
+        }
+    }
+}
+
+void DeviceSource::ChangeSize(bool bSucceeded, bool bForce)
+{
+    if (!bForce && renderCX == newCX && renderCY == newCY)
+        return;
+
+    renderCX = newCX;
+    renderCY = newCY;
+
+    switch(colorType) {
+    case DeviceOutputType_RGB:
+        lineSize = renderCX * 4;
+        break;
+    case DeviceOutputType_I420:
+    case DeviceOutputType_YV12:
+        lineSize = renderCX; //per plane
+        break;
+    case DeviceOutputType_YVYU:
+    case DeviceOutputType_YUY2:
+    case DeviceOutputType_UYVY:
+    case DeviceOutputType_HDYC:
+        lineSize = (renderCX * 2);
+        break;
+    }
+
+    linePitch = lineSize;
+    lineShift = 0;
+    imageCX = renderCX;
+    imageCY = renderCY;
+
+    deinterlacer.imageCX = renderCX;
+    deinterlacer.imageCY = renderCY;
+
+    if(deinterlacer.doublesFramerate)
+        deinterlacer.imageCX *= 2;
+
+    switch(deinterlacer.type) {
+    case DEINTERLACING_DISCARD:
+        deinterlacer.imageCY = renderCY/2;
+        linePitch = lineSize * 2;
+        renderCY /= 2;
+        break;
+
+    case DEINTERLACING_RETRO:
+        deinterlacer.imageCY = renderCY/2;
+        if(deinterlacer.processor != DEINTERLACING_PROCESSOR_GPU)
+        {
+            lineSize *= 2;
+            linePitch = lineSize;
+            renderCY /= 2;
+            renderCX *= 2;
+        }
+        break;
+
+    case DEINTERLACING__DEBUG:
+        deinterlacer.imageCX *= 2;
+        deinterlacer.imageCY *= 2;
+    case DEINTERLACING_BLEND2x:
+    //case DEINTERLACING_MEAN2x:
+    case DEINTERLACING_YADIF:
+    case DEINTERLACING_YADIF2x:
+        deinterlacer.needsPreviousFrame = true;
+        break;
+    }
+
+    if(deinterlacer.type != DEINTERLACING_NONE && deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
+    {
+        deinterlacer.vertexShader.reset(CreateVertexShaderFromFile(TEXT("shaders/DrawTexture.vShader")));
+        deinterlacer.pixelShader = CreatePixelShaderFromFileAsync(ChooseDeinterlacingShader());
+        deinterlacer.isReady = false;
+    }
+
+    KillThreads();
+
+    int numThreads = MAX(OSGetTotalCores()-2, 1);
+    for(int i=0; i<numThreads; i++)
+    {
+        convertData[i].width  = lineSize;
+        convertData[i].height = renderCY;
+        convertData[i].sample = NULL;
+        convertData[i].hSignalConvert  = CreateEvent(NULL, FALSE, FALSE, NULL);
+        convertData[i].hSignalComplete = CreateEvent(NULL, FALSE, FALSE, NULL);
+        convertData[i].linePitch = linePitch;
+        convertData[i].lineShift = lineShift;
+
+        if(i == 0)
+            convertData[i].startY = 0;
+        else
+            convertData[i].startY = convertData[i-1].endY;
+
+        if(i == (numThreads-1))
+            convertData[i].endY = renderCY;
+        else
+            convertData[i].endY = ((renderCY/numThreads)*(i+1)) & 0xFFFFFFFE;
+    }
+
+    if(colorType == DeviceOutputType_YV12 || colorType == DeviceOutputType_I420)
+    {
+        for(int i=0; i<numThreads; i++)
+            hConvertThreads[i] = OSCreateThread((XTHREAD)PackPlanarThread, convertData+i);
+    }
+
+    if(texture)
+    {
+        delete texture;
+        texture = NULL;
+    }
+    if(previousTexture)
+    {
+        delete previousTexture;
+        previousTexture = NULL;
+    }
+
+    //-----------------------------------------------------
+    // create the texture regardless, will just show up as red to indicate failure
+    BYTE *textureData = (BYTE*)Allocate(renderCX*renderCY*4);
+
+    if(colorType == DeviceOutputType_RGB) //you may be confused, but when directshow outputs RGB, it's actually outputting BGR
+    {
+        msetd(textureData, 0xFFFF0000, renderCX*renderCY*4);
+        texture = CreateTexture(renderCX, renderCY, GS_BGR, textureData, FALSE, FALSE);
+        if(bSucceeded && deinterlacer.needsPreviousFrame)
+            previousTexture = CreateTexture(renderCX, renderCY, GS_BGR, textureData, FALSE, FALSE);
+        if(bSucceeded && deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
+            deinterlacer.texture.reset(CreateRenderTarget(deinterlacer.imageCX, deinterlacer.imageCY, GS_BGRA, FALSE));
+    }
+    else //if we're working with planar YUV, we can just use regular RGB textures instead
+    {
+        msetd(textureData, 0xFF0000FF, renderCX*renderCY*4);
+        texture = CreateTexture(renderCX, renderCY, GS_RGB, textureData, FALSE, FALSE);
+        if(bSucceeded && deinterlacer.needsPreviousFrame)
+            previousTexture = CreateTexture(renderCX, renderCY, GS_RGB, textureData, FALSE, FALSE);
+        if(bSucceeded && deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
+            deinterlacer.texture.reset(CreateRenderTarget(deinterlacer.imageCX, deinterlacer.imageCY, GS_BGRA, FALSE));
+    }
+
+    if(bSucceeded && bUseThreadedConversion)
+    {
+        if(colorType == DeviceOutputType_I420 || colorType == DeviceOutputType_YV12)
+        {
+            LPBYTE lpData;
+            if(texture->Map(lpData, texturePitch))
+                texture->Unmap();
+            else
+                texturePitch = renderCX*4;
+
+            lpImageBuffer = (LPBYTE)Allocate(texturePitch*renderCY);
+        }
+    }
+
+    Free(textureData);
+
+    bFiltersLoaded = bSucceeded;
+}
+
 void DeviceSource::ReceiveMediaSample(IMediaSample *sample, bool bAudio)
 {
     if (!sample)
@@ -1238,12 +1267,23 @@ void DeviceSource::ReceiveMediaSample(IMediaSample *sample, bool bAudio)
 
         if (SUCCEEDED(sample->GetPointer(&pointer))) {
             SampleData *data = NULL;
+            AM_MEDIA_TYPE *mt = nullptr;
+
+            if (sample->GetMediaType(&mt) == S_OK)
+            {
+                BITMAPINFOHEADER *bih = GetVideoBMIHeader(mt);
+                newCX = bih->biWidth;
+                newCY = bih->biHeight;
+                DeleteMediaType(mt);
+            }
 
             if (bUseBuffering || !bAudio) {
                 data = new SampleData;
                 data->bAudio = bAudio;
                 data->dataLength = sample->GetActualDataLength();
                 data->lpData = (LPBYTE)Allocate(data->dataLength);//pointer; //
+                data->cx = newCX;
+                data->cy = newCY;
                 /*data->sample = sample;
                 sample->AddRef();*/
 
@@ -1351,6 +1391,8 @@ void DeviceSource::Preprocess()
         {
             if(texture)
             {
+                ChangeSize();
+
                 texture->SetImage(lastSample->lpData, GS_IMAGEFORMAT_BGRX, linePitch);
                 bReadyToDraw = true;
             }
@@ -1373,6 +1415,8 @@ void DeviceSource::Preprocess()
                 else
                     bFirstFrame = false;
 
+                ChangeSize();
+
                 for(int i=0; i<numThreads; i++)
                     lastSample->AddRef();
 
@@ -1392,6 +1436,8 @@ void DeviceSource::Preprocess()
                 LPBYTE lpData;
                 UINT pitch;
 
+                ChangeSize();
+
                 if(texture->Map(lpData, pitch))
                 {
                     PackPlanar(lpData, lastSample->lpData, renderCX, renderCY, pitch, 0, renderCY, linePitch, lineShift);
@@ -1406,6 +1452,8 @@ void DeviceSource::Preprocess()
             LPBYTE lpData;
             UINT pitch;
 
+            ChangeSize();
+
             if(texture->Map(lpData, pitch))
             {
                 Convert422To444(lpData, lastSample->lpData, pitch, true);
@@ -1418,6 +1466,8 @@ void DeviceSource::Preprocess()
         {
             LPBYTE lpData;
             UINT pitch;
+
+            ChangeSize();
 
             if(texture->Map(lpData, pitch))
             {

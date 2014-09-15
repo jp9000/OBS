@@ -43,6 +43,8 @@ struct SampleData {
     LPBYTE lpData;
     long dataLength;
 
+    int cx, cy;
+
     bool bAudio;
     LONGLONG timestamp;
     volatile long refs;
@@ -134,6 +136,7 @@ class DeviceSource : public ImageSource
     bool            bFlipVertical, bFlipHorizontal, bDeviceHasAudio, bUsePointFiltering, bUseAudioRender;
     UINT64          frameInterval;
     UINT            renderCX, renderCY;
+    UINT            newCX, newCY;
     UINT            imageCX, imageCY;
     UINT            linePitch, lineShift, lineSize;
     BOOL            bUseCustomResolution;
@@ -196,6 +199,9 @@ class DeviceSource : public ImageSource
     int             keySpillReduction;
 
     //---------------------------------
+
+    void ChangeSize(bool bSucceeded = true, bool bForce = false);
+    void KillThreads();
 
     String ChooseShader();
     String ChooseDeinterlacingShader();

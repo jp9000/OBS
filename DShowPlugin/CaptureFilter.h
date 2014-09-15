@@ -88,6 +88,7 @@ class CaptureFilter : public IBaseFilter
     FILTER_STATE state;
     IFilterGraph *graph;
     CapturePin *pin;
+    IAMFilterMiscFlags *flags;
 
 public:
     CaptureFilter(DeviceSource *source, const GUID &expectedMajorType, const GUID &expectedMediaType);
