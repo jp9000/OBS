@@ -19,6 +19,13 @@
 
 #include "DShowPlugin.h"
 
+#undef DEFINE_GUID
+#define DEFINE_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
+        EXTERN_C const GUID DECLSPEC_SELECTANY name \
+                = { l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } }
+
+#include "IVideoCaptureFilter.h"
+
 DWORD STDCALL PackPlanarThread(ConvertData *data);
 
 #define NEAR_SILENT  3000
@@ -260,6 +267,8 @@ bool DeviceSource::LoadFilters()
     bFlipHorizontal = data->GetInt(TEXT("flipImageHorizontal")) != 0;
     bUsePointFiltering = data->GetInt(TEXT("usePointFiltering")) != 0;
 
+    bool elgato = sstri(strDeviceName, L"elgato") != nullptr;
+
     opacity = data->GetInt(TEXT("opacity"), 100);
 
     float volume = data->GetFloat(TEXT("volume"), 1.0f);
@@ -377,10 +386,13 @@ bool DeviceSource::LoadFilters()
     renderCX = renderCY = newCX = newCY = 0;
     frameInterval = 0;
 
+    UINT elgatoCX = 1280;
+    UINT elgatoCY = 720;
+
     if(bUseCustomResolution)
     {
-        renderCX = data->GetInt(TEXT("resolutionWidth"));
-        renderCY = data->GetInt(TEXT("resolutionHeight"));
+        renderCX = newCX = data->GetInt(TEXT("resolutionWidth"));
+        renderCY = newCY = data->GetInt(TEXT("resolutionHeight"));
         frameInterval = data->GetInt(TEXT("frameInterval"));
     }
     else
@@ -419,6 +431,16 @@ bool DeviceSource::LoadFilters()
 
         renderCX = newCX = size.cx;
         renderCY = newCY = size.cy;
+    }
+
+    /* elgato always starts off at 720p and changes after. */
+    if (elgato)
+    {
+        elgatoCX = renderCX;
+        elgatoCY = renderCY;
+
+        renderCX = newCX = 1280;
+        renderCY = newCY = 720;
     }
 
     if(!renderCX || !renderCY || !frameInterval)
@@ -666,6 +688,33 @@ bool DeviceSource::LoadFilters()
     }
 
     bAddedDevice = true;
+
+    //------------------------------------------------
+    // change elgato resolution
+    if (elgato && bUseCustomResolution)
+    {
+        IElgatoVideoCaptureFilter3 *elgatoFilter = nullptr;
+        VIDEO_CAPTURE_FILTER_SETTINGS settings;
+
+        if (SUCCEEDED(deviceFilter->QueryInterface(IID_IElgatoVideoCaptureFilter3, (void**)&elgatoFilter)))
+        {
+            if (SUCCEEDED(elgatoFilter->GetSettings(&settings)))
+            {
+                if (elgatoCY == 1080)
+                    settings.profile = VIDEO_CAPTURE_FILTER_VID_ENC_PROFILE_1080;
+                else if (elgatoCY == 480)
+                    settings.profile = VIDEO_CAPTURE_FILTER_VID_ENC_PROFILE_480;
+                else if (elgatoCY == 360)
+                    settings.profile = VIDEO_CAPTURE_FILTER_VID_ENC_PROFILE_360;
+                else
+                    settings.profile = VIDEO_CAPTURE_FILTER_VID_ENC_PROFILE_720;
+
+                elgatoFilter->SetSettings(&settings);
+            }
+
+            elgatoFilter->Release();
+        }
+    }
 
     //------------------------------------------------
     // connect all pins and set up the whole capture thing
