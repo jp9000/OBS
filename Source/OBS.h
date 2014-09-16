@@ -850,6 +850,7 @@ private:
 
     std::unique_ptr<VideoFileStream> replayBufferStream;
     ReplayBuffer *replayBuffer;
+    StopInfo replayBufferStop;
 
     bool bRequestKeyframe;
     int  keyframeWait;
@@ -1017,11 +1018,11 @@ private:
     void ResetItemCrops();
 
     void Start(bool recordingOnly=false, bool replayBufferOnly=false);
-    void Stop(bool overrideKeepRecording=false);
+    void Stop(bool overrideKeepRecording=false, bool stopReplayBuffer=false);
     bool StartRecording(bool force=false);
     void StopRecording();
     void StartReplayBuffer();
-    void StopReplayBuffer();
+    void StopReplayBuffer(bool immediate=false);
 
     static void STDCALL StartStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL StopStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);

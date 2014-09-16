@@ -816,8 +816,7 @@ OBS::OBS()
 
 OBS::~OBS()
 {
-    Stop(true);
-    StopReplayBuffer();
+    Stop(true, true);
 
     bShuttingDown = true;
 

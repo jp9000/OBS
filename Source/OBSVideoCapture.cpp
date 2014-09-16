@@ -217,7 +217,10 @@ void OBS::SendFrame(VideoSegment &curSegment, QWORD firstFrameTime)
             if (fileStream)
                 fileStream->AddPacket(shared_data, curSegment.timestamp, curSegment.pts, packet.type);
             if (replayBufferStream)
-                replayBufferStream->AddPacket(shared_data, curSegment.timestamp, curSegment.pts, packet.type);
+            {
+                if (!HandleStreamStopInfo(replayBufferStop, packet.type, curSegment))
+                    replayBufferStream->AddPacket(shared_data, curSegment.timestamp, curSegment.pts, packet.type);
+            }
         }
     }
 }

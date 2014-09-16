@@ -109,20 +109,32 @@ void OBS::StartReplayBuffer()
     ConfigureStreamButtons();
 }
 
-void OBS::StopReplayBuffer()
+void OBS::StopReplayBuffer(bool immediate)
 {
     if (!replayBufferStream) return;
 
-    bRecordingReplayBuffer = false;
-    ReportStopRecordingReplayBufferTrigger();
+    if (!immediate && replayBufferStop.func) return;
 
-    if (!bStreaming && !bRecording && bRunning) Stop(true);
+    auto shutdown = [this]()
+    {
+        bRecordingReplayBuffer = false;
+        ReportStopRecordingReplayBufferTrigger();
 
-    auto stream = move(replayBufferStream);
+        if (!bStreaming && !bRecording && bRunning) PostStopMessage(true);
 
-    replayBuffer = nullptr;
+        auto stream = move(replayBufferStream);
 
-    ConfigureStreamButtons();
+        replayBuffer = nullptr;
+
+        ConfigureStreamButtons();
+    };
+
+    if (immediate)
+        return shutdown();
+
+    replayBufferStop.func = shutdown;
+
+    replayBufferStop.time = (DWORD)(GetVideoTime() - firstFrameTimestamp);
 }
 
 String ExpandRecordingFilename(String filename)
@@ -876,7 +888,7 @@ retryHookTestV2:
     ConfigureStreamButtons();
 }
 
-void OBS::Stop(bool overrideKeepRecording)
+void OBS::Stop(bool overrideKeepRecording, bool stopReplayBuffer)
 {
     if((!bStreaming && !bRecording && !bRunning && !bRecordingReplayBuffer) && (!bTestStream)) return;
 
@@ -886,7 +898,7 @@ void OBS::Stop(bool overrideKeepRecording)
 
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
 
-    if(((!overrideKeepRecording && bRecording && bKeepRecording) || bRecordingReplayBuffer) && networkMode == 0) {
+    if((!overrideKeepRecording && ((bRecording && bKeepRecording) || (!stopReplayBuffer && bRecordingReplayBuffer))) && networkMode == 0) {
         videoEncoder->RequestKeyframe();
 
         Log(TEXT("=====Stream End (recording continues): %s========================="), CurrentDateTimeString().Array());
@@ -967,6 +979,7 @@ void OBS::Stop(bool overrideKeepRecording)
     bStreaming = false;
     
     if(bRecording) StopRecording();
+    if (bRecordingReplayBuffer) StopReplayBuffer(true);
 
     delete micAudio;
     micAudio = NULL;
