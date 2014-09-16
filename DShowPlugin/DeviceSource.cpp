@@ -719,14 +719,26 @@ bool DeviceSource::LoadFilters()
     //------------------------------------------------
     // connect all pins and set up the whole capture thing
 
-    //THANK THE NINE DIVINES I FINALLY GOT IT WORKING
-    bool bConnected = SUCCEEDED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video, deviceFilter, NULL, captureFilter));
-    if(!bConnected)
+    bool bConnected = false;
+    if (elgato)
     {
-        if(FAILED(err = graph->Connect(devicePin, captureFilter->GetCapturePin())))
+        bConnected = SUCCEEDED(err = graph->ConnectDirect(devicePin, captureFilter->GetCapturePin(), nullptr));
+        if (!bConnected)
         {
             AppWarning(TEXT("DShowPlugin: Failed to connect the video device pin to the video capture pin, result = %08lX"), err);
             goto cleanFinish;
+        }
+    }
+    else
+    {
+        bConnected = SUCCEEDED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video, deviceFilter, NULL, captureFilter));
+        if(!bConnected)
+        {
+            if(FAILED(err = graph->Connect(devicePin, captureFilter->GetCapturePin())))
+            {
+                AppWarning(TEXT("DShowPlugin: Failed to connect the video device pin to the video capture pin, result = %08lX"), err);
+                goto cleanFinish;
+            }
         }
     }
 
