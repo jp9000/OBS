@@ -744,10 +744,24 @@ bool DeviceSource::LoadFilters()
 
     if(soundOutputType != 0)
     {
-        if(!bDeviceHasAudio)
-            bConnected = SUCCEEDED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, audioDeviceFilter, NULL, audioFilter));
+        if (elgato && bDeviceHasAudio)
+        {
+            bConnected = false;
+
+            IPin *audioPin = GetOutputPin(deviceFilter, &MEDIATYPE_Audio);
+            if (audioPin)
+            {
+                bConnected = SUCCEEDED(err = graph->ConnectDirect(audioPin, audioFilter->GetCapturePin(), nullptr));
+                audioPin->Release();
+            }
+        }
         else
-            bConnected = SUCCEEDED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, deviceFilter, NULL, audioFilter));
+        {
+            if(!bDeviceHasAudio)
+                bConnected = SUCCEEDED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, audioDeviceFilter, NULL, audioFilter));
+            else
+                bConnected = SUCCEEDED(err = capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio, deviceFilter, NULL, audioFilter));
+        }
 
         if(!bConnected)
         {
