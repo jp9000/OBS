@@ -17,6 +17,7 @@
 ********************************************************************************/
 
 #include <functional>
+#include <list>
 
 #pragma once
 
@@ -83,6 +84,13 @@ enum AudioDeviceType {
 void GetAudioDevices(AudioDeviceList &deviceList, AudioDeviceType deviceType, bool ConntectedOnly=false, bool canDisable=false);
 bool GetDefaultMicID(String &strVal);
 bool GetDefaultSpeakerID(String &strVal);
+
+//-------------------------------------------------------------------
+
+struct ClosableStream
+{
+    virtual ~ClosableStream() {}
+};
 
 //-------------------------------------------------------------------
 
@@ -1263,6 +1271,18 @@ public:
 
     inline void ResetMic() {if (bRunning && micAudio) ResetWASAPIAudioDevice(micAudio);}
     void GetThreadHandles (HANDLE *videoThread, HANDLE *encodeThread);
+
+    struct PendingStreams
+    {
+        using thread_t = std::unique_ptr<void, ThreadDeleter<>>;
+        std::list<thread_t> streams;
+        std::unique_ptr<void, MutexDeleter> mutex;
+        PendingStreams() : mutex(OSCreateMutex()) {}
+    } pendingStreams;
+
+    void AddPendingStream(ClosableStream *stream, std::function<void()> finishedCallback = {});
+    void AddPendingStreamThread(HANDLE thread);
+    void ClosePendingStreams();
 };
 
 LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo);

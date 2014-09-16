@@ -1509,5 +1509,61 @@ void OBS::RequestKeyframe(int waitTime)
     keyframeWait = waitTime;
 }
 
+void OBS::AddPendingStream(ClosableStream *stream, std::function<void()> finishedCallback)
+{
+    using namespace std;
+    struct args_t
+    {
+        using stream_t = remove_pointer_t<decltype(stream)>;
+        unique_ptr<stream_t> stream;
+        decltype(finishedCallback) finishedCallback;
+        args_t(stream_t *stream, decltype(finishedCallback) finishedCallback) : stream(stream), finishedCallback(move(finishedCallback)) {}
+    };
 
+    auto args = make_unique<args_t>(stream, move(finishedCallback));
 
+    ScopedLock l(pendingStreams.mutex);
+    pendingStreams.streams.emplace_back(OSCreateThread([](void *arg) -> DWORD
+    {
+        unique_ptr<args_t> args(static_cast<args_t*>(arg));
+        args->stream.reset();
+        if (args->finishedCallback)
+            args->finishedCallback();
+        return 0;
+    }, args.release()));
+}
+
+void OBS::AddPendingStreamThread(HANDLE thread)
+{
+    ScopedLock l(pendingStreams.mutex);
+    pendingStreams.streams.emplace_back(thread);
+}
+
+void OBS::ClosePendingStreams()
+{
+    ScopedLock l(pendingStreams.mutex);
+    if (pendingStreams.streams.empty())
+        return;
+
+    using namespace std;
+    vector<HANDLE> handles;
+    for (auto &pendingStream : pendingStreams.streams)
+        handles.push_back(pendingStream.get());
+
+    if (WaitForMultipleObjects(handles.size(), handles.data(), true, 5) != WAIT_OBJECT_0)
+    {
+        using ::locale;
+        int res = IDNO;
+        do
+        {
+            auto res = OBSMessageBox(hwndMain, Str("StreamClosePending"), nullptr, MB_YESNO | MB_ICONEXCLAMATION);
+
+            if (res != IDYES)
+                return;
+
+            if (WaitForMultipleObjects(handles.size(), handles.data(), true, 15 * 1000) == WAIT_OBJECT_0)
+                return;
+
+        } while (res == IDYES);
+    }
+}

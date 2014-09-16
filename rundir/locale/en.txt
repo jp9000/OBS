@@ -43,6 +43,7 @@ LogWindow="Log Window"
 StreamReport="Stream Report"
 MessageBoxWarningCaption="Warning"
 NoSourcesFound="You haven't added any sources! Are you sure you want to stream a black screen?"
+StreamClosePending="Stream or file output unfinished, closing OBS may cause the stream to end prematurely or the file to be corrupted. Do you want to wait another 15 seconds for the output to finish?"
 
 ImportGlobalSourceNameExists="The global source '$1' already exists in the current scene collection."
 ImportGlobalSources="Import Global Sources"

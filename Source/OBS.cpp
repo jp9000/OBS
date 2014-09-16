@@ -823,6 +823,8 @@ OBS::~OBS()
 
     OSTerminateThread(hHotkeyThread, 2500);
 
+    ClosePendingStreams();
+
     for(UINT i=0; i<plugins.Num(); i++)
     {
         PluginInfo &pluginInfo = plugins[i];
