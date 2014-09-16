@@ -111,7 +111,7 @@ enum PacketType
     PacketType_Audio
 };
 
-class NetworkStream
+class NetworkStream : public ClosableStream
 {
 public:
     virtual ~NetworkStream() {}
@@ -135,7 +135,7 @@ struct TimedPacket
 
 //-------------------------------------------------------------------
 
-class VideoFileStream
+class VideoFileStream : public ClosableStream
 {
 public:
     virtual ~VideoFileStream() {}
