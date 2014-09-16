@@ -265,7 +265,7 @@ bool OBS::StartRecording(bool force)
     bool success = true;
     if(!bTestStream && bWriteToFile && strOutputFile.IsValid())
     {
-        fileStream = CreateFileStream(strOutputFile);
+        fileStream.reset(CreateFileStream(strOutputFile));
 
         if(!fileStream)
         {
@@ -290,15 +290,9 @@ void OBS::StopRecording()
 
     if(!bRecording) return;
 
-    VideoFileStream *tempStream = NULL;
-
-    tempStream = fileStream;
     // Prevent the encoder thread from trying to write to fileStream while it's closing
-    fileStream = NULL;
 
-    delete tempStream;
-    tempStream = NULL;
-    bRecording = false;
+    auto stream = move(fileStream);
 
     ReportStopRecordingTrigger();
 
@@ -317,13 +311,7 @@ void OBS::Start(bool recordingOnly, bool replayBufferOnly)
     if((bRecording || bRecordingReplayBuffer) && networkMode == 0 && delayTime == 0 && !recordingOnly && !replayBufferOnly) {
         bFirstConnect = !bReconnecting;
 
-        if (network)
-        {
-            NetworkStream *net = network;
-            network = nullptr;
-            delete net;
-        }
-        network = CreateRTMPPublisher();
+        network.reset(CreateRTMPPublisher());
 
         Log(TEXT("=====Stream Start (while recording): %s============================="), CurrentDateTimeString().Array());
 
@@ -444,13 +432,13 @@ retryHookTest:
     bFirstConnect = !bReconnecting;
 
     if(bTestStream || recordingOnly || replayBufferOnly)
-        network = CreateNullNetwork();
+        network.reset(CreateNullNetwork());
     else
     {
         switch(networkMode)
         {
-        case 0: network = (delayTime > 0) ? CreateDelayedPublisher(delayTime) : CreateRTMPPublisher(); break;
-        case 1: network = CreateNullNetwork(); break;
+        case 0: network.reset((delayTime > 0) ? CreateDelayedPublisher(delayTime) : CreateRTMPPublisher()); break;
+        case 1: network.reset(CreateNullNetwork()); break;
         }
     }
 
@@ -529,7 +517,7 @@ retryHookTestV2:
             if (ret == IDABORT)
             {
                 //FIXME: really need a better way to abort startup than this...
-                delete network;
+                network.reset();
                 delete GS;
 
                 DisableMenusWhileStreaming(false);
@@ -899,15 +887,11 @@ void OBS::Stop(bool overrideKeepRecording)
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
 
     if(((!overrideKeepRecording && bRecording && bKeepRecording) || bRecordingReplayBuffer) && networkMode == 0) {
-        NetworkStream *tempStream = NULL;
-        
         videoEncoder->RequestKeyframe();
-        tempStream = network;
-        network = NULL;
 
         Log(TEXT("=====Stream End (recording continues): %s========================="), CurrentDateTimeString().Array());
+        network.reset();
 
-        delete tempStream;
 
         bStreaming = false;
         bSentHeaders = false;
@@ -978,8 +962,7 @@ void OBS::Stop(bool overrideKeepRecording)
 
     //-------------------------------------------------------------
 
-    delete network;
-    network = NULL;
+    network.reset();
     if (bStreaming) ReportStopStreamingTrigger();
     bStreaming = false;
     

@@ -629,7 +629,7 @@ class OBS
 
     //---------------------------------------------------
 
-    NetworkStream *network;
+    std::unique_ptr<NetworkStream> network;
 
     //---------------------------------------------------
     // audio sources/encoder
@@ -828,7 +828,7 @@ private:
     bool bUseCFR;
 
     bool bWriteToFile;
-    VideoFileStream *fileStream;
+    std::unique_ptr<VideoFileStream> fileStream;
 
     std::unique_ptr<VideoFileStream> replayBufferStream;
     ReplayBuffer *replayBuffer;

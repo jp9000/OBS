@@ -2146,17 +2146,14 @@ NetworkStream* CreateNullNetwork();
 
 void OBS::RestartNetwork()
 {
-    NetworkStream *tmp;
     OSEnterMutex(App->hStartupShutdownMutex);
 
     //delete the old one
-    tmp = App->network;
-    App->network = nullptr;
-    delete tmp;
+    App->network.reset();
 
     //start up a new one
     App->bSentHeaders = false;
-    App->network = CreateRTMPPublisher();
+    App->network.reset(CreateRTMPPublisher());
 
     OSLeaveMutex(App->hStartupShutdownMutex);
 }
