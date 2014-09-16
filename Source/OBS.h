@@ -637,6 +637,16 @@ class OBS
 
     //---------------------------------------------------
 
+    struct StopInfo
+    {
+        DWORD time = (DWORD)-1;
+        bool timeSeen = false;
+        std::function<void()> func;
+    };
+    bool HandleStreamStopInfo(StopInfo &, PacketType, const VideoSegment&);
+
+    //---------------------------------------------------
+
     std::unique_ptr<NetworkStream> network;
 
     //---------------------------------------------------

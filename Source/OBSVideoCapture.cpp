@@ -222,6 +222,25 @@ void OBS::SendFrame(VideoSegment &curSegment, QWORD firstFrameTime)
     }
 }
 
+bool OBS::HandleStreamStopInfo(OBS::StopInfo &info, PacketType type, const VideoSegment& segment)
+{
+    if (type == PacketType_Audio || !info.func)
+        return false;
+
+    if (segment.pts < info.time)
+        return false;
+
+    if (!info.timeSeen)
+    {
+        info.timeSeen = true;
+        return false;
+    }
+
+    info.func();
+    info = {};
+    return true;
+}
+
 bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)
 {
     List<DataPacket> videoPackets;
