@@ -185,10 +185,6 @@ bool RTMPPublisher::Init(UINT tcpBufferSize)
 
     hDataBufferMutex = OSCreateMutex();
 
-    dataBufferSize = (App->GetVideoEncoder()->GetBitRate() + App->GetAudioEncoder()->GetBitRate()) / 8 * 1024;
-    if (dataBufferSize < 131072)
-        dataBufferSize = 131072;
-
     dataBuffer = (BYTE *)Allocate(dataBufferSize);
 
     hSocketThread = OSCreateThread((XTHREAD)RTMPPublisher::SocketThread, this);
@@ -200,6 +196,31 @@ bool RTMPPublisher::Init(UINT tcpBufferSize)
     packetWaitType = 0;
 
     return true;
+}
+
+void RTMPPublisher::InitEncoderData()
+{
+    if (encoderDataInitialized)
+        return;
+
+    encoderDataInitialized = true;
+
+    dataBufferSize = (App->GetVideoEncoder()->GetBitRate() + App->GetAudioEncoder()->GetBitRate()) / 8 * 1024;
+    if (dataBufferSize < 131072)
+        dataBufferSize = 131072;
+
+    metaDataPacketBuffer.resize(2048);
+
+    char *enc = metaDataPacketBuffer.data() + RTMP_MAX_HEADER_SIZE;
+    char *pend = metaDataPacketBuffer.data() + metaDataPacketBuffer.size();
+    enc = AMF_EncodeString(enc, pend, &av_setDataFrame);
+    enc = AMF_EncodeString(enc, pend, &av_onMetaData);
+    enc = App->EncMetaData(enc, pend);
+    metaDataPacketBuffer.resize(enc - metaDataPacketBuffer.data());
+
+    App->GetAudioHeaders(audioHeaders);
+
+    App->GetVideoHeaders(videoHeaders);
 }
 
 RTMPPublisher::~RTMPPublisher()
@@ -522,6 +543,8 @@ void RTMPPublisher::ProcessPackets()
 
 void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)
 {
+    InitEncoderData();
+
     if(!bConnected && !bConnecting && !bStopping)
     {
         hConnectionThread = OSCreateThread((XTHREAD)CreateConnectionThread, this);
@@ -703,22 +726,15 @@ void RTMPPublisher::BeginPublishingInternal()
 {
     RTMPPacket packet;
 
-    char pbuf[2048], *pend = pbuf+sizeof(pbuf);
-
     packet.m_nChannel = 0x03;     // control channel (invoke)
     packet.m_headerType = RTMP_PACKET_SIZE_LARGE;
     packet.m_packetType = RTMP_PACKET_TYPE_INFO;
     packet.m_nTimeStamp = 0;
     packet.m_nInfoField2 = rtmp->m_stream_id;
     packet.m_hasAbsTimestamp = TRUE;
-    packet.m_body = pbuf + RTMP_MAX_HEADER_SIZE;
+    packet.m_body = metaDataPacketBuffer.data() + RTMP_MAX_HEADER_SIZE;
 
-    char *enc = packet.m_body;
-    enc = AMF_EncodeString(enc, pend, &av_setDataFrame);
-    enc = AMF_EncodeString(enc, pend, &av_onMetaData);
-    enc = App->EncMetaData(enc, pend);
-
-    packet.m_nBodySize = enc - packet.m_body;
+    packet.m_nBodySize = metaDataPacketBuffer.size() - RTMP_MAX_HEADER_SIZE;
     if(!RTMP_SendPacket(rtmp, &packet, FALSE))
     {
         App->PostStopMessage();
@@ -728,20 +744,17 @@ void RTMPPublisher::BeginPublishingInternal()
     //----------------------------------------------
 
     List<BYTE> packetPadding;
-    DataPacket mediaHeaders;
 
     //----------------------------------------------
 
     packet.m_nChannel = 0x05; // source channel
     packet.m_packetType = RTMP_PACKET_TYPE_AUDIO;
 
-    App->GetAudioHeaders(mediaHeaders);
-
     packetPadding.SetSize(RTMP_MAX_HEADER_SIZE);
-    packetPadding.AppendArray(mediaHeaders.lpPacket, mediaHeaders.size);
+    packetPadding.AppendArray(audioHeaders.lpPacket, audioHeaders.size);
 
     packet.m_body = (char*)packetPadding.Array()+RTMP_MAX_HEADER_SIZE;
-    packet.m_nBodySize = mediaHeaders.size;
+    packet.m_nBodySize = audioHeaders.size;
     if(!RTMP_SendPacket(rtmp, &packet, FALSE))
     {
         App->PostStopMessage();
@@ -754,13 +767,12 @@ void RTMPPublisher::BeginPublishingInternal()
     packet.m_headerType = RTMP_PACKET_SIZE_LARGE;
     packet.m_packetType = RTMP_PACKET_TYPE_VIDEO;
 
-    App->GetVideoHeaders(mediaHeaders);
 
     packetPadding.SetSize(RTMP_MAX_HEADER_SIZE);
-    packetPadding.AppendArray(mediaHeaders.lpPacket, mediaHeaders.size);
+    packetPadding.AppendArray(videoHeaders.lpPacket, videoHeaders.size);
 
     packet.m_body = (char*)packetPadding.Array()+RTMP_MAX_HEADER_SIZE;
-    packet.m_nBodySize = mediaHeaders.size;
+    packet.m_nBodySize = videoHeaders.size;
     if(!RTMP_SendPacket(rtmp, &packet, FALSE))
     {
         App->PostStopMessage();
