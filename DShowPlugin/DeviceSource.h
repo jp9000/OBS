@@ -115,7 +115,7 @@ class DeviceSource : public ImageSource
     IBaseFilter             *deviceFilter;
     IBaseFilter             *audioDeviceFilter;
     CaptureFilter           *captureFilter;
-    IBaseFilter             *audioFilter;
+    CaptureFilter           *audioFilter;
 
     //---------------------------------
 
