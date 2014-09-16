@@ -337,9 +337,11 @@ void OBS::Start(bool recordingOnly, bool replayBufferOnly)
 
     if (bRecording && networkMode != 0) return;
 
-    if((bRecording || bRecordingReplayBuffer) && networkMode == 0 && delayTime == 0 && !recordingOnly && !replayBufferOnly) {
-        bFirstConnect = !bReconnecting;
+    if (!bRunning && !bStreamFlushed && !recordingOnly && !replayBufferOnly) return;
 
+    if((bRecording || bRecordingReplayBuffer) && networkMode == 0 && delayTime == 0 && !recordingOnly && !replayBufferOnly && bStreamFlushed) {
+        bFirstConnect = !bReconnecting;
+        
         network.reset(CreateRTMPPublisher());
 
         Log(TEXT("=====Stream Start (while recording): %s============================="), CurrentDateTimeString().Array());
@@ -460,7 +462,7 @@ retryHookTest:
 
     bFirstConnect = !bReconnecting;
 
-    if(bTestStream || recordingOnly || replayBufferOnly)
+    if(bTestStream || recordingOnly || replayBufferOnly || !bStreamFlushed)
         network.reset(CreateNullNetwork());
     else
     {
@@ -918,16 +920,36 @@ void OBS::Stop(bool overrideKeepRecording, bool stopReplayBuffer)
     if((!overrideKeepRecording && ((bRecording && bKeepRecording) || (!stopReplayBuffer && bRecordingReplayBuffer))) && networkMode == 0) {
         videoEncoder->RequestKeyframe();
 
-        Log(TEXT("=====Stream End (recording continues): %s========================="), CurrentDateTimeString().Array());
-        network.reset();
+        if (!networkStop.func && network)
+        {
+            networkStop.func = [this]()
+            {
+                videoEncoder->RequestKeyframe();
 
+                auto stream = move(network);
 
-        bStreaming = false;
-        bSentHeaders = false;
+                Log(TEXT("=====Stream End (recording continues): %s========================="), CurrentDateTimeString().Array());
 
-        ReportStopStreamingTrigger();
+                bStreamFlushed = false;
 
-        ConfigureStreamButtons();
+                ConfigureStreamButtons();
+
+                AddPendingStream(stream.release(), [this]()
+                {
+                    bStreaming = false;
+                    bSentHeaders = false;
+
+                    ReportStopStreamingTrigger();
+
+                    bStreamFlushed = true;
+
+                    ConfigureStreamButtons();
+
+                    if (!bStreaming && !bRecordingReplayBuffer && bRunning && !bRecording) PostStopMessage(true);
+                });
+            };
+            networkStop.time = (DWORD)(GetVideoTime() - firstFrameTimestamp);
+        }
 
         OSLeaveMutex(hHotkeyMutex);
 
@@ -991,9 +1013,24 @@ void OBS::Stop(bool overrideKeepRecording, bool stopReplayBuffer)
 
     //-------------------------------------------------------------
 
-    network.reset();
-    if (bStreaming) ReportStopStreamingTrigger();
-    bStreaming = false;
+    if (bStreaming)
+    {
+        bStreamFlushed = false;
+        AddPendingStream(network.release(), [this]()
+        {
+            ReportStopStreamingTrigger();
+            bStreaming = false;
+            bStreamFlushed = true;
+            bTestStream = false;
+            ConfigureStreamButtons();
+        });
+    }
+    else
+    {
+        network.reset();
+        bStreaming = false;
+        bTestStream = false;
+    }
     
     if (bRecording) StopRecording(true);
     if (bRecordingReplayBuffer) StopReplayBuffer(true);
@@ -1122,8 +1159,6 @@ void OBS::Stop(bool overrideKeepRecording, bool stopReplayBuffer)
     String processPriority = AppConfig->GetString(TEXT("General"), TEXT("Priority"), TEXT("Normal"));
     if (scmp(processPriority, TEXT("Normal")))
         SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
-
-    bTestStream = false;
 
     ConfigureStreamButtons();
 

@@ -648,6 +648,7 @@ class OBS
     //---------------------------------------------------
 
     std::unique_ptr<NetworkStream> network;
+    StopInfo networkStop;
 
     //---------------------------------------------------
     // audio sources/encoder
@@ -740,7 +741,7 @@ private:
     String  strLanguage;
     bool    bTestStream;
     bool    bUseMultithreadedOptimizations;
-    bool    bRunning, bRecording, bRecordingReplayBuffer, bRecordingOnly, bStartingUp, bStreaming, bKeepRecording;
+    bool    bRunning, bRecording, bRecordingReplayBuffer, bRecordingOnly, bStartingUp, bStreaming, bStreamFlushed = true, bKeepRecording;
     bool    canRecord;
     volatile bool bShutdownVideoThread, bShutdownEncodeThread;
     int     renderFrameWidth, renderFrameHeight; // The size of the preview only

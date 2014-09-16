@@ -1368,7 +1368,7 @@ void OBS::RefreshStreamButtons(bool disable)
     if (bShuttingDown) return;
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
     bRecordingOnly = (networkMode == 1);
-    bool canStream = networkMode == 0 && !bTestStream;
+    bool canStream = networkMode == 0 && !bTestStream && bStreamFlushed;
     canRecord = !bTestStream;
     bool canTest = !bRecordingReplayBuffer && !bRecording && (!bStreaming || bTestStream);
 

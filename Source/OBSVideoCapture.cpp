@@ -208,8 +208,11 @@ void OBS::SendFrame(VideoSegment &curSegment, QWORD firstFrameTime)
 
         //Log(TEXT("v:%u, %llu"), curSegment.timestamp, frameInfo.firstFrameTime+curSegment.timestamp);
 
-        if(network)
-            network->SendPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, packet.type);
+        if (network)
+        {
+            if (!HandleStreamStopInfo(networkStop, packet.type, curSegment))
+                network->SendPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, packet.type);
+        }
 
         if (fileStream || replayBufferStream)
         {
