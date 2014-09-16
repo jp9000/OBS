@@ -301,6 +301,12 @@ STDMETHODIMP CaptureFilter::QueryInterface(REFIID riid, void **ppv)
         *ppv = (IBaseFilter*)this;
         return NOERROR;
     }
+    else if (riid == IID_IAMFilterMiscFlags)
+    {
+        flags->AddRef();
+        *ppv = flags;
+        return NOERROR;
+    }
     else
     {
         *ppv = NULL;
