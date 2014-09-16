@@ -215,7 +215,10 @@ void OBS::SendFrame(VideoSegment &curSegment, QWORD firstFrameTime)
         {
             auto shared_data = std::make_shared<const std::vector<BYTE>>(packet.data.Array(), packet.data.Array() + packet.data.Num());
             if (fileStream)
-                fileStream->AddPacket(shared_data, curSegment.timestamp, curSegment.pts, packet.type);
+            {
+                if (!HandleStreamStopInfo(fileStreamStop, packet.type, curSegment))
+                    fileStream->AddPacket(shared_data, curSegment.timestamp, curSegment.pts, packet.type);
+            }
             if (replayBufferStream)
             {
                 if (!HandleStreamStopInfo(replayBufferStop, packet.type, curSegment))

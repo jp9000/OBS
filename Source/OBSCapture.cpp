@@ -296,7 +296,7 @@ bool OBS::StartRecording(bool force)
     return success;
 }
 
-void OBS::StopRecording()
+void OBS::StopRecording(bool immediate)
 {
     if (!bStreaming && !bRecordingReplayBuffer && bRunning && bRecording) Stop(true);
 
@@ -304,11 +304,28 @@ void OBS::StopRecording()
 
     // Prevent the encoder thread from trying to write to fileStream while it's closing
 
-    auto stream = move(fileStream);
+    if (!immediate && fileStreamStop.func)
+        return;
 
-    ReportStopRecordingTrigger();
+    auto shutdown = [this]()
+    {
+        AddPendingStream(fileStream.release());
 
-    ConfigureStreamButtons();
+        bRecording = false;
+
+        ReportStopRecordingTrigger();
+
+        ConfigureStreamButtons();
+
+        if (!bStreaming && !bRecordingReplayBuffer && bRunning && !bRecording) PostStopMessage(true);
+    };
+
+    if (immediate)
+        return shutdown();
+
+    fileStreamStop.func = shutdown;
+
+    fileStreamStop.time = (DWORD)(GetVideoTime() - firstFrameTimestamp);
 }
 
 void OBS::Start(bool recordingOnly, bool replayBufferOnly)
@@ -978,7 +995,7 @@ void OBS::Stop(bool overrideKeepRecording, bool stopReplayBuffer)
     if (bStreaming) ReportStopStreamingTrigger();
     bStreaming = false;
     
-    if(bRecording) StopRecording();
+    if (bRecording) StopRecording(true);
     if (bRecordingReplayBuffer) StopReplayBuffer(true);
 
     delete micAudio;

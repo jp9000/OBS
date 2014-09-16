@@ -847,6 +847,7 @@ private:
 
     bool bWriteToFile;
     std::unique_ptr<VideoFileStream> fileStream;
+    StopInfo fileStreamStop;
 
     std::unique_ptr<VideoFileStream> replayBufferStream;
     ReplayBuffer *replayBuffer;
@@ -1020,7 +1021,7 @@ private:
     void Start(bool recordingOnly=false, bool replayBufferOnly=false);
     void Stop(bool overrideKeepRecording=false, bool stopReplayBuffer=false);
     bool StartRecording(bool force=false);
-    void StopRecording();
+    void StopRecording(bool immediate=false);
     void StartReplayBuffer();
     void StopReplayBuffer(bool immediate=false);
 
