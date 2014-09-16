@@ -183,6 +183,20 @@ void OBS::ReportSwitchScenes(CTSTR scene)
     }
 }
 
+void OBS::ReportSwitchSceneCollections(CTSTR collection)
+{
+    if (bShuttingDown)
+        return;
+
+    for (UINT i = 0; i<plugins.Num(); i++)
+    {
+        OBS_SCENE_SWITCH_CALLBACK callback = plugins[i].sceneCollectionSwitchCallback;
+
+        if (callback)
+            (*callback)(collection);
+    }
+}
+
 void OBS::ReportScenesChanged()
 {
     if (bShuttingDown)
@@ -191,6 +205,20 @@ void OBS::ReportScenesChanged()
     for (UINT i=0; i<plugins.Num(); i++)
     {
         OBS_CALLBACK callback = plugins[i].scenesChangedCallback;
+
+        if (callback)
+            (*callback)();
+    }
+}
+
+void OBS::ReportSceneCollectionsChanged()
+{
+    if (bShuttingDown)
+        return;
+
+    for (UINT i = 0; i<plugins.Num(); i++)
+    {
+        OBS_CALLBACK callback = plugins[i].sceneCollectionsChangedCallback;
 
         if (callback)
             (*callback)();

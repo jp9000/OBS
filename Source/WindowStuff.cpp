@@ -2733,6 +2733,7 @@ void OBS::AddSceneCollection(SceneCollectionAction action)
         App->ReloadSceneCollection();
         App->ResetSceneCollectionMenu();
         App->ResetApplicationName();
+        App->ReportSceneCollectionsChanged();
     }
 }
 
@@ -2783,6 +2784,7 @@ void OBS::RemoveSceneCollection()
 
         App->ReloadSceneCollection();
         App->ResetSceneCollectionMenu();
+        App->ReportSceneCollectionsChanged();
     }
 }
 
@@ -2825,6 +2827,7 @@ void OBS::ImportSceneCollection()
     scenesConfig.Close();
     CopyFile(lpFile, strCurSceneCollectionFile, false);
     App->ReloadSceneCollection();
+    App->ReportSceneCollectionsChanged();
 }
 
 void OBS::ExportSceneCollection()
@@ -3698,24 +3701,11 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
                             if (!strSceneCollection.CompareI(GetCurrentSceneCollection()))
                             {
-                                App->scenesConfig.Save();
-                                CTSTR collection = GetCurrentSceneCollection();
-                                String strSceneCollectionPath;
-                                strSceneCollectionPath = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, collection);
-                                
-                                if (!App->scenesConfig.Open(strSceneCollectionPath))
+                                if (!App->SetSceneCollection(strSceneCollection))
                                 {
                                     OBSMessageBox(hwnd, TEXT("Error - unable to open xconfig file"), NULL, 0);
                                     break;
                                 }
-
-                                GlobalConfig->SetString(TEXT("General"), TEXT("SceneCollection"), strSceneCollection);
-                                App->scenesConfig.Close();
-                                App->ReloadSceneCollection();
-                                ResetSceneCollectionMenu();
-                                ResetApplicationName();
-                                App->UpdateNotificationAreaIcon();
-                                App->scenesConfig.SaveTo(String() << lpAppDataPath << "\\scenes.xconfig");
                             }
                         }
                         else if (id >= ID_UPLOAD_LOG && id <= ID_UPLOAD_LOG_END)
