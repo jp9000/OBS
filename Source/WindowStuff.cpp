@@ -3705,6 +3705,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                 ResetApplicationName();
                                 App->UpdateNotificationAreaIcon();
                                 App->scenesConfig.SaveTo(String() << lpAppDataPath << "\\scenes.xconfig");
+                                App->ReportSwitchSceneCollections(strSceneCollection);
                             }
                         }
                         else if (id >= ID_UPLOAD_LOG && id <= ID_UPLOAD_LOG_END)

@@ -399,6 +399,29 @@ bool OBS::SetScene(CTSTR lpScene)
     return true;
 }
 
+void OBS::SetSceneCollection(CTSTR lpCollection) {
+    App->scenesConfig.Save();
+    CTSTR collection = GetCurrentSceneCollection();
+    String strSceneCollectionPath;
+    strSceneCollectionPath = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, collection);
+
+    if (!App->scenesConfig.Open(strSceneCollectionPath))
+    {
+        return;
+    }
+
+    GlobalConfig->SetString(TEXT("General"), TEXT("SceneCollection"), lpCollection);
+    App->scenesConfig.Close();
+    App->ReloadSceneCollection();
+    ResetSceneCollectionMenu();
+    ResetApplicationName();
+    App->UpdateNotificationAreaIcon();
+    App->scenesConfig.SaveTo(String() << lpAppDataPath << "\\scenes.xconfig");
+
+    if (API != NULL)
+        ReportSwitchSceneCollections(lpCollection);
+}
+
 struct HotkeyInfo
 {
     DWORD hotkeyID;
@@ -527,6 +550,20 @@ public:
 
     virtual CTSTR GetSceneName() const          {return App->GetSceneElement()->GetName();}
     virtual XElement* GetSceneElement()         {return App->GetSceneElement();}
+
+    virtual void SetSceneCollection(CTSTR lpCollection, CTSTR lpScene)
+    {
+        assert(lpCollection && *lpCollection);
+
+        if (!lpCollection || !*lpCollection)
+            return;
+
+        App->SetSceneCollection(lpCollection);
+        if (lpScene != NULL)
+            SetScene(lpScene, true);
+    }
+    virtual CTSTR GetSceneCollectionName() const { return App->GetCurrentSceneCollection(); }
+    virtual void GetSceneCollectionNames(StringList &list) const { return App->GetSceneCollection(list); }
 
     virtual UINT CreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARAM param);
     virtual void DeleteHotkey(UINT hotkeyID);

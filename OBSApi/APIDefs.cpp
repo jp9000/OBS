@@ -64,6 +64,14 @@ Scene* OBSGetScene()            {return API->GetScene();}
 CTSTR OBSGetSceneName()         {return API->GetSceneName();}
 XElement* OBSGetSceneElement()  {return API->GetSceneElement();}
 
+void OBSSetSceneCollection(CTSTR lpCollection, CTSTR lpScene)
+{
+    API->SetSceneCollection(lpCollection, lpScene);
+}
+
+CTSTR OBSGetSceneCollectionName()                   { return API->GetSceneCollectionName(); }
+void OBSGetSceneCollectionNames(StringList &list)   { API->GetSceneCollectionNames(list); }
+
 //low-order word is VK, high-order word is modifier.  equivalent to the value given by hotkey controls
 UINT OBSCreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARAM param)
 {
