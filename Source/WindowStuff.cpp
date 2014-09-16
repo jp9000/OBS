@@ -4182,6 +4182,10 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
             App->SetStatusBarData();
             break;
 
+        case OBS_CONFIGURE_STREAM_BUTTONS:
+            App->ConfigureStreamButtons();
+            break;
+
         case OBS_NOTIFICATIONAREA:
             // the point is to only perform the show/hide (minimize) or the menu creation if no modal dialogs are opened
             // if a modal dialog is topmost, then simply focus it

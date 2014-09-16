@@ -423,6 +423,7 @@ enum
     OBS_UPDATESTATUSBAR,
     OBS_NOTIFICATIONAREA,
     OBS_NETWORK_FAILED,
+    OBS_CONFIGURE_STREAM_BUTTONS,
 };
 
 //----------------------------
@@ -1099,6 +1100,7 @@ private:
 
     void RefreshStreamButtons(bool disable=false);
     void ConfigureStreamButtons();
+    void PostConfigureStreamButtons();
 
     void ReloadIniSettings();
 

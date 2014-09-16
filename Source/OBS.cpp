@@ -1382,10 +1382,19 @@ void OBS::RefreshStreamButtons(bool disable)
 void OBS::ConfigureStreamButtons()
 {
     if (bShuttingDown) return;
+
+    if (GetWindowThreadProcessId(hwndMain, nullptr) != GetCurrentThreadId())
+        return PostConfigureStreamButtons();
+
     RefreshStreamButtons();
     SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), bStreaming ? Str("MainWindow.StopStream") : Str("MainWindow.StartStream"));
     SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), bRecording ? Str("MainWindow.StopRecording") : Str("MainWindow.StartRecording"));
     SetWindowText(GetDlgItem(hwndMain, ID_TESTSTREAM), bTestStream ? Str("MainWindow.StopTest") : Str("MainWindow.TestStream"));
+}
+
+void OBS::PostConfigureStreamButtons()
+{
+    if (hwndMain) PostMessage(hwndMain, OBS_CONFIGURE_STREAM_BUTTONS, 0, 0);
 }
 
 void OBS::ReloadSceneCollection()
