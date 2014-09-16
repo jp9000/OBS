@@ -1692,7 +1692,9 @@ void DeviceSource::UpdateSettings()
     if(strNewAudioDevice == "Disable" && strAudioDevice == "Disable")
         bCheckSoundOutput = false;
 
-    if((bNewUseAudioRender != bUseAudioRender && bCheckSoundOutput) ||
+    bool eglato = sstri(strNewDevice.Array(), L"elgato") != nullptr;
+
+    if(eglato || (bNewUseAudioRender != bUseAudioRender && bCheckSoundOutput) ||
        (newSoundOutputType != soundOutputType && bCheckSoundOutput) || imageCX != newCX || imageCY != newCY ||
        frameIntervalDiff >= 10 || newPreferredType != preferredOutputType ||
        !strDevice.CompareI(strNewDevice) || !strAudioDevice.CompareI(strNewAudioDevice) ||
