@@ -1364,6 +1364,7 @@ void OBS::GetSceneCollection(StringList &sceneCollectionList)
 
 void OBS::RefreshStreamButtons(bool disable)
 {
+    if (bShuttingDown) return;
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
     bRecordingOnly = (networkMode == 1);
     bool canStream = networkMode == 0 && !bTestStream;
@@ -1380,6 +1381,7 @@ void OBS::RefreshStreamButtons(bool disable)
 
 void OBS::ConfigureStreamButtons()
 {
+    if (bShuttingDown) return;
     RefreshStreamButtons();
     SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), bStreaming ? Str("MainWindow.StopStream") : Str("MainWindow.StartStream"));
     SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), bRecording ? Str("MainWindow.StopRecording") : Str("MainWindow.StartRecording"));
