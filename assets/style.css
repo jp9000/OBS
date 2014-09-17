@@ -1,3 +1,10 @@
+*,
+*:before,
+*:after {
+    -webkit-box-sizing: border-box;
+       -moz-box-sizing: border-box;
+            box-sizing: border-box;
+}
 html {
 	overflow-y: scroll;
 }
@@ -19,7 +26,20 @@ img {
 	vertical-align:top;
 }
 .own_grid2 {
-	width:48%;
+	width:49%;
 	display:inline-block;
 	vertical-align:top;
+	text-align: left;
+}
+.own_grid2b {
+	width: 49%;
+	display: inline-block;
+	vertical-align: middle;
+	text-align: left;
+}
+.own_grid3 {
+	width:99%;
+	display:inline-block;
+	vertical-align:top;
+	text-align: left;
 }

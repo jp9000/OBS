@@ -1,219 +1,173 @@
 ---
 title: Frequently asked Questions - Open Broadcaster Software - Help Files
-layout: default
+layout: faq
 ---
 <h4>Frequently asked Questions</h4>
-<ul>
-  <li><a href="#1">Is OBS completely free?</a></li>
-  <li><a href="#36">Will this ever work on Windows XP? What about Mac and Linux?</a></li>
-  <li><a href="#39">What settings should I use?</a> / <a href="#14">I need starting values to setup my first Stream</a></li>
-  <li><a href="#29">What are scenes and sources?</a><a href="#2"></a></li>
-  <li><a href="#27">I do not know how much upload speed I have</a></li>
-  <li><a href="#3">I cannot find the 64bit Version of OBS, where can I get it?</a></li>
-  <li><a href="#23">How to install OBS plugins </a></li>
-  <li><a href="#4">Can I analyze my stream or recorded Videos on Twitch.tv?</a></li>
-  <li><a href="#5">I have black bars on my stream or recording, how can I get rid of them?</a></li>
-  <li><a href="#6">I want to use a recording device such as a Line In or Mic as my primary Audio Input (for example to select two Microphones)</a></li>
-  <li><a href="#7">My webcam picture is not great, can I improve it?</a><a href="#8"></a></li>
-  <li><a href="#9">I got a DNS error in OBS</a></li>
-  <li><a href="#10">Having issues with high CPU usage, or getting a warning about "Taking too long to encode, skipping frames"? </a></li>
-  <li><a href="#11">I want to test my CPU / memory for stability (OBS crashes sometimes or your system is overclocked)</a></li>
-  <li><a href="#12">OBS tells me I am missing DirectX but the installer does not work?</a></li>
-  <li><a href="#13">I got an error "Could not initialize DirectX 10 on [your GPU]"</a><a href="#14"></a></li>
-  <li><a href="#37">I get D3DX10_43.dll missing error, or a 80004005 error</a></li>
-  <li><a href="#15">My audio device only works in one application at a time not in both (OBS and Skype for example)</a></li>
-  <li><a href="#16">I have a lot of dropped frames or random disconnects</a></li>
-  <li><a href="#17">I have a Razer Kraken Headset</a></li>
-  <li><a href="#18">I have a Laptop and black screen in OBS</a></li>
-  <li><a href="#19">I want to post a log file but do not know how</a></li>
-  <li><a href="#20">I want to stream League of Legends, whats the best way to do it?</a></li>
-  <li><a href="#21">My Monitor capture runs very slow, but why?</a></li>
-  <li><a href="#22">My window capture shows all windows, not only the one I want to capture</a><a href="#23"></a></li>
-  <li><a href="#24">The start recording button is grayed out, or I want to do a local recording</a></li>
-  <li><a href="#25">The quick sync selection is grayed out but I definitely have all necessary features in my system</a></li>
-  <li><a href="#26">I recorded everything in mp4/flv but I want flv/mp4</a><a href="#27"></a></li>
-  <li><a href="#28">I cannot reach the upload speed I should have, how can I check my Internet connection?</a><a href="#29"></a></li>
-  <li><a href="#30">My CPU speed is decreasing after some time and I have slowdowns?</a></li>
-  <li><a href="#31">I am on Windows Vista and need the platform update</a></li>
-  <li><a href="#32">My recorded video is either black or has no sound, what can I do?</a></li>
-  <li><a href="#33">I have a black screen and can't see my stream</a></li>
-  <li><a href="#34">Why can't I move any sources that I added?</a></li>
-  <li><a href="#35">One of my actual sources is black and not showing up</a><a href="#36"></a></li>
-  <li><a href="#2">Can I use 4K resolutions?</a><a href="#37"></a></li>
-  <li><a href="#8">Which capture card should I get for streaming or recording? And do I need one?</a></li>
-  <li><a href="#38">Why is my capture card showing up as a red box on my stream</a></li>
-  <li><a href="#40">I'm having a problem that isn't here, what should I do?</a></li>
-</ul>
-<hr>
-<p><a id="1"></a>Is OBS completely free?</p>
-<ul>
-  <li>OBS is completely, 100% free. You don't have to pay for it at all. It is a great, high quality program that excels at streaming and recording. It is completely virus and malware free.</li>
-</ul>
-<p><a id="2"></a>Can I use 4K resolutions?</p>
-<ul>
-  <li>4k is supported fine but you need to use the "high" encoding profile in settings -&gt; advanced, it will require up to 4 times as much processing power as encoding 1080p</li>
-</ul>
-<p><a id="3"></a>I cannot find the 64bit Version of OBS, where can I get it?</p>
-<ul>
-  <li>You already have the 64bit version if you used the installer. It can be found in your Start Menu under Programs -&gt; Open Broadcaster Software -&gt; Open Broadcaster Software (64 bit). If you still can't find it, it is usually in C:\Program Files\OBS. Be aware that the 64 bit version is not compatible with certain video devices and plugins, there is rarely a reason to use it.</li>
-</ul>
-<p><a id="4"></a>Can I analyze my stream or recorded Videos on Twitch.tv?</p>
-<ul>
-  <li>Yes thanks to R1ch, we have two very useful Stream and VOD analyzer available:</li>
-  <li><strong>Live stream analyzer:</strong> <a target="_blank" href="http://r-1.ch/analyzer/">http://r-1.ch/analyzer/</a> | <strong>VOD analyzer:</strong> <a target="_blank" href="http://r-1.ch/analyze-twitch-vod.php">http://r-1.ch/analyze-twitch-vod.php</a></li>
-</ul>
-<p><a id="5"></a>I have black bars on my stream or recording, how can I get rid of them?</p>
-<ul>
-  <li>You either did not fit your source to the full size of your stream or your choose the wrong aspect ratio/resolution, check this tutorial: <a target="_blank" href="http://obsproject.com/forum/resources/how-to-select-the-correct-resolution-aspect-ratio.13/">http://obsproject.com/forum/resources/how-to-select-the-correct-resolution-aspect-ratio.13/</a></li>
-</ul>
-<p><a id="6"></a>I want to use a recording device such as a Line In or Mic as my primary Audio Input (for example to select two Microphones), how can I do that?</p>
-<ul>
-  <li>(v0.62+) If you need to use a recording device such as a Line In or Mic as your primary OBS device, close OBS and find your profile .ini file in %appdata%\obs\profiles. Under <strong>[Audio]</strong> add <strong>InputDevicesForDesktopSound=1</strong></li>
-</ul>
-<p><a id="7"></a>My webcam picture is not great, can I improve it?</p>
-<ul>
-  <li>Getting the most out of your webcam <a target="_blank" href="https://obsproject.com/forum/threads/getting-the-most-out-of-your-webcam.1036/">https://obsproject.com/forum/threads/getting-the-most-out-of-your-webcam.1036/</a></li>
-</ul>
-<p><a id="8"></a>Which capture card should I get for streaming or recording? And do I need one? (avoid USB 2.0 capture devices if at all possible) </p>
-<ul>
-  <li><a target="_blank" href="http://www.helping-squad.com/which-capture-card-should-i-get-for-streaming-or-recording/">http://www.helping-squad.com/which-capture-card-should-i-get-for-streaming-or-recording/</a></li>
-</ul>
-<p><a id="9"></a>I got a DNS error in OBS</p>
-<ul>
-  <li>If you use Comodo (Anti Virus or similar) and get a DNS error with the latest version of OBS, add an exclusion for the OBS folder and disable auto-sandbox. Disabling Comodo won't help. If you need help to add an exlusion look here: <a target="_blank" href="http://imgur.com/a/CvLQl">http://imgur.com/a/CvLQl</a></li>
-</ul>
-<p><a id="10"></a>Having issues with high CPU usage, or getting a warning about "Taking too long to encode, skipping frames"? </p>
-<ul>
-  <li>Read <a target="_blank" href="https://obsproject.com/forum/threads/high-cpu-usage-taking-too-long-to-encode-read-this-first.11641/">https://obsproject.com/forum/threads/high-cpu-usage-taking-too-long-to-encode-read-this-first.11641/</a></li>
-</ul>
-<p><a id="11"></a>I want to test my CPU / memory for stability (OBS crashes sometimes or your system is overclocked)</p>
-<ul>
-  <li>How to test your CPU / memory with LinX <a target="_blank" href="http://obsproject.com/forum/viewtopic.php?f=18&t=5361">http://obsproject.com/forum/viewtopic.php?f=18&amp;t=5361</a></li>
-</ul>
-<p><a id="12"></a>OBS tells me I am missing DirectX but the installer does not work?</p>
-<ul>
-  <li>Try the DirectX End-User Runtimes (June 2010) <a target="_blank" href="http://www.microsoft.com/en-us/download/details.aspx?id=8109">http://www.microsoft.com/en-us/download/details.aspx?id=8109</a></li>
-</ul>
-<p><a id="13"></a>I got an error "Could not initialize DirectX 10 on [your GPU]"</p>
-<ul>
-  <li>Your graphics card does not have sufficient support for DirectX 10. It does not matter if you have newer versions of DirectX software installed; your hardware does not support the necessary features, and no you cannot do anything about it apart from upgrading it.</li>
-</ul>
-<p><a id="14"></a>I need starting values to setup my first Stream</p>
-<ul>
-  <li>Use the estimator to get good starting values for your settings in OBS: <a target="_blank" href="http://obsproject.com/estimator">http://obsproject.com/estimator</a></li>
-</ul>
-<p><a id="15"></a>My audio device only works in one application at a time not in both (OBS and Skype for example)</p>
-<ul>
-  <li>To disable exclusive mode, right click the speaker icon in the system tray, select "Recording Devices" then choose your microphone and press "Properties". Go to the "Advanced" tab and uncheck both checkboxes.</li>
-</ul>
-<p><a id="16"></a>I have a lot of dropped frames or random disconnects</p>
-<ul>
-  <li>Read this: <a target="_blank" href="https://obsproject.com/forum/viewtopic.php?f=5&t=8870">https://obsproject.com/forum/viewtopic.php?f=5&amp;t=8870</a></li>
-</ul>
-<p><a id="17"></a>I have a Razer Kraken Headset</p>
-<ul>
-  <li>Problems getting the Razer Kraken working? Just use 64bit OBS (gets installed automatically, look in your start menu). Or if you're on a 32bit system, disable the Kraken Launcher in msconfig and reboot to get it working with OBS.</li>
-</ul>
-<p><a id="18"></a>I have a Laptop and black screen in OBS</p>
-<ul>
-  <li>Read here first if so: <a target="_blank" href="https://obsproject.com/forum/threads/laptop-black-screen-when-capturing-read-here-first.5965/">https://obsproject.com/forum/threads/laptop-black-screen-when-capturing-read-here-first.5965/</a></li>
-</ul>
-<p><a id="19"></a>I want to post a log file but do not know how</p>
-<ul>
-  <li>In OBS select <strong>Help &gt; Log Files &gt; Upload last Log File</strong>. Copy the URL and paste it here. See picture for steps: <a target="_blank" href="http://i.imgur.com/1tOZwtC.png">http://i.imgur.com/1tOZwtC.png</a></li>
-</ul>
-<p><a id="20"></a>I want to stream League of Legends, whats the best way to do it?</p>
-<ul>
-  <li>The best way to stream LoL is to set up 2 scenes. First, keep Aero enabled. Then, in the first scene, have a Window Capture of the LoL client, and in the second scene, have a Game Capture of the actual LoL game (or Window capture if the game is in Windowed or Borderless mode). Then use the Simple Scene Switcher to automatically swap between them: <a target="_blank" href="https://obsproject.com/forum/viewtopic.php?f=11&t=1785">https://obsproject.com/forum/viewtopic.php?f=11&amp;t=1785</a> <br>
-  Avoid Monitor capture altogether.</li>
-</ul>
-<p><a id="21"></a>My Monitor capture runs very slow, but why?</p>
-<ul>
-  <li>Do <strong>NOT</strong> use Monitor Capture on Windows Vista/7. Instead, try adding a Game Capture source and selecting "[DWM] Monitor Capture" from the list of capture targets. Aero must be <strong>ENABLED</strong> and only the primary screen will be captured.</li>
-</ul>
-<p><a id="22"></a>My window capture shows all windows, not only the one I want to capture</p>
-<ul>
-  <li>Enable your windows aero theme (taskbar and window transparency): <a target="_blank" href="http://en.kioskea.net/faq/30281-how-to-rapidly-enable-or-disable-aero-under-windows-7">http://en.kioskea.net/faq/30281-how-to-rapidly-enable-or-disable-aero-under-windows-7</a></li>
-</ul>
-<p><a id="23"></a>How to install OBS plugins </p>
-<ul>
-  <li><a target="_blank" href="https://obsproject.com/forum/threads/how-to-install-obs-plugins.4912/">https://obsproject.com/forum/threads/how-to-install-obs-plugins.4912/</a></li>
-  <li>List of plugins <a target="_blank" href="https://obsproject.com/forum/resources/categories/plugins.3/">https://obsproject.com/forum/resources/categories/plugins.3/</a></li>
-</ul>
-<p><a id="24"></a>The start recording button is grayed out, or I want to do a local recording</p>
-<ul>
-  <li>Go to &quot;Settings&quot; &gt; &quot;Broadcast Settings&quot; and check "Save to file", click &quot;Browse&quot; and navigate to the desired location, enter a file name, or enter <strong>%</strong> to have the files named automatically, and click &quot;Save&quot;. If you do not stream, set Mode to "File Output Only" and follow this guide: <a target="_blank" href="https://obsproject.com/forum/resources/how-to-make-high-quality-local-recordings.16/">https://obsproject.com/forum/resources/how-to-make-high-quality-local-recordings.16/</a></li>
-</ul>
-<p><a id="25"></a>The quick sync selection is grayed out but I definitely have all necessary features in my system</p>
-<ul>
-  <li>If the Quick Sync option in OBS is grayed out, follow this tutorial: <a href="https://obsproject.com/forum/resources/how-to-use-quicksync.82/">https://obsproject.com/forum/resources/how-to-use-quicksync.82/</a></li>
-  <li> Note that Quick Sync will slightly reduce your video quality compared to x264.</li>
-</ul>
-<p><a id="26"></a>I recorded everything in mp4/flv but I want flv/mp4</p>
-<ul>
-  <li>How to convert flv to mp4 or vice versa without quality loss: <a target="_blank" href="https://obsproject.com/forum/resources/how-to-convert-flvs-to-mp4-fast-without-re-encoding.78/">https://obsproject.com/forum/resources/how-to-convert-flvs-to-mp4-fast-without-re-encoding.78/</a></li>
-</ul>
-<p><a id="27"></a>I do not know how much upload speed I have</p>
-<ul>
-  <li>Test your connection speed with <a target="_blank" href="http://www.speedtest.net/">http://www.speedtest.net/</a> (Flash) or <a target="_blank" href="http://speedof.me/">http://speedof.me/</a> (HTML5) or <a target="_blank" href="http://www.measurementlab.net/tools/shaperprobe">http://www.measurementlab.net/tools/shaperprobe</a> (EXE)</li>
-</ul>
-<p><a id="28"></a>I cannot reach the upload speed I should have, how can I check my Internet connection?</p>
-<ul>
-  <li>Some ISPs and large networks (e.g. at a university) may throttle your connection if you are using too much upload bandwidth. You can check your connection for network traffic shapers using ShaperProbe: <a target="_blank" href="http://www.measurementlab.net/tools/shaperprobe">http://www.measurementlab.net/tools/shaperprobe</a></li>
-</ul>
-<p><a id="29"></a>What are scenes and sources?</p>
-<ul>
-  <li>A scene &quot;holds&quot; the list and order of the sources you add to it. Sources are for example Images, a Webcam input, Window or Monitor capture, anything you would want to add to your recording. So you can set up different Scenes that will hold different sources. For example a &quot;welcome&quot; scene with a picture and some text. A &quot;game&quot; scene that shows the game you want to stream and your webcam and an &quot;end&quot; scene that will show a &quot;thanks for watching&quot; message or whatever you want. The amount of scenes is not limited in OBS and the amount of sources per scene aint limited either.</li>
-  <li>If you are familiar with tools like Photoshop, a scene is similar to the Canvas or a Page in a Photoshop file while the sources are the different layers.</li>
-</ul>
-<p><a id="30"></a>My CPU speed is decreasing after some time and I have slowdowns?</p>
-<ul>
-  <li>Random downclocking? <strong>Intel</strong> users: Disable SpeedStep. <strong>AMD desktop</strong> users: Disable Cool 'n' Quiet. <strong>AMD laptop</strong> users: Disable PowerNow!</li>
-</ul>
-<p><a id="31"></a>I am on Windows Vista and need the platform update</p>
-<ul>
-  <li>How to install the Vista Platform Update: <a target="_blank" href="http://windows.microsoft.com/en-US/windows-live/essentials-install-windows-platform-update-ui">http://windows.microsoft.com/en-US/windows-live/essentials-install-windows-platform-update-ui</a></li>
-</ul>
-<p><a id="32"></a>My recorded video is either black or has no sound, what can I do?</p>
-<ul>
-  <li>If you're playing back a video created with OBS but there's no audio, and you're using Windows Media Player or QuickTime Player, you're missing codecs required to play back the audio properly. Use VLC instead: <a target="_blank" href="http://www.videolan.org/vlc/index.html">http://www.videolan.org/vlc/index.html</a></li>
-</ul>
-<p><a id="33"></a>I have a black screen and can't see my stream</p>
-<ul>
-  <li>Firstly, make sure you have created a scene and added a source to actually be seen. After that, you'll need to turn on 'Preview Stream' or be streaming in order to see your stream</li>
-</ul>
+<section id="faq-list">
+<h3>Is OBS completely free?</h3>
+<div class="answer">
+  <p>OBS is completely, 100% free. You don't have to pay for it at all. It is a great, high quality program that excels at streaming and recording. It is completely virus and malware free.</p>
+</div>
+<h3>Will this ever work on Windows XP? What about Mac and Linux?</h3>
+<div class="answer">
+  <p>Windows XP unfortunately lacks DirectX 10 features and the audio subsystem present in Vista and up that OBS makes use of, and as such, will never be supported. OBS is currently being rewritten as multi-platform under the name OBS Studio. It will be available for Windows, Mac and Linux when it is done.</p>
+</div>
+<h3>What settings should I use?</h3>
+<div class="answer">
+  <p>Check out our <a href="https://obsproject.com/estimator">settings estimator</a> for general recommendations based on your setup</p>
+</div>
+<h3>What are scenes and sources?</h3>
+<div class="answer">
+  <p>A scene &quot;holds&quot; the list and order of the sources you add to it. Sources are for example images, a webcam input, window or monitor capture, anything you would want to add to your recording. So you can set up different Scenes that will hold different sources. For example a &quot;welcome&quot; scene with a picture and some text. A &quot;game&quot; scene that shows the game you want to stream and your webcam and an &quot;end&quot; scene that will show a &quot;thanks for watching&quot; message or whatever you want. The amount of scenes is not limited in OBS and the amount of sources per scene aint limited either.</p>
+  <p>If you are familiar with tools like Photoshop, a scene is similar to the Canvas or a Page in a Photoshop file while the sources are the different layers.</p>
+</div>
+<h3>I do not know how much upload speed I have</h3>
+<div class="answer">
+  <p>Test your connection speed with <a target="_blank" href="http://www.speedtest.net/">http://www.speedtest.net/</a> (Flash) or <a target="_blank" href="http://speedof.me/">http://speedof.me/</a> (HTML5) or <a target="_blank" href="http://www.measurementlab.net/tools/shaperprobe">http://www.measurementlab.net/tools/shaperprobe</a> (EXE)</p>
+</div>
+<h3>I cannot find the 64bit Version of OBS, where can I get it?</h3>
+<div class="answer">
+  <p>You already have the 64bit version if you used the installer. It can be found in your Start Menu under Programs -&gt; Open Broadcaster Software -&gt; Open Broadcaster Software (64 bit). If you still can't find it, it is usually in C:\Program Files\OBS. Be aware that the 64 bit version is not compatible with certain video devices and plugins, there is rarely a reason to use it.</p>
+</div>
+<h3>How to install OBS plugins </h3>
+<div class="answer">
+  <p><a target="_blank" href="https://obsproject.com/forum/threads/how-to-install-obs-plugins.4912/">https://obsproject.com/forum/threads/how-to-install-obs-plugins.4912/</a></p>
+  <p>List of plugins <a target="_blank" href="https://obsproject.com/forum/resources/categories/plugins.3/">https://obsproject.com/forum/resources/categories/plugins.3/</a></p>
+</div>
+<h3>I need starting values to setup my first Stream</h3>
+<div class="answer">
+  <p>Use the estimator to get good starting values for your settings in OBS: <a target="_blank" href="http://obsproject.com/estimator">http://obsproject.com/estimator</a></p>
+</div>
+<h3>Can I analyze my stream or recorded Videos on Twitch.tv?</h3>
+<div class="answer">
+  <p>Yes thanks to R1ch, we have two very useful Stream and VOD analyzer available:</p>
+  <p><strong>Live stream analyzer:</strong> <a target="_blank" href="http://r-1.ch/analyzer/">http://r-1.ch/analyzer/</a> | <strong>VOD analyzer:</strong> <a target="_blank" href="http://r-1.ch/analyze-twitch-vod.php">http://r-1.ch/analyze-twitch-vod.php</a></p>
+</div>
+<h3>I have black bars on my stream or recording, how can I get rid of them?</h3>
+<div class="answer">
+  <p>You either did not fit your source to the full size of your stream or your choose the wrong aspect ratio/resolution, check this tutorial: <a target="_blank" href="http://obsproject.com/forum/resources/how-to-select-the-correct-resolution-aspect-ratio.13/">http://obsproject.com/forum/resources/how-to-select-the-correct-resolution-aspect-ratio.13/</a></p>
+</div>
+<h3>I want to use a recording device such as a Line In or Mic as my primary Audio Input (for example to select two Microphones), how can I do that?</h3>
+<div class="answer">
+  <p>(v0.62+) If you need to use a recording device such as a Line In or Mic as your primary OBS device, close OBS and find your profile .ini file in %appdata%\obs\profiles. Under <strong>[Audio]</strong> add <strong>InputDevicesForDesktopSound=1</strong></p>
+</div>
+<h3>My webcam picture is not great, can I improve it?</h3>
+<div class="answer">
+  <p>Getting the most out of your webcam <a target="_blank" href="https://obsproject.com/forum/threads/getting-the-most-out-of-your-webcam.1036/">https://obsproject.com/forum/threads/getting-the-most-out-of-your-webcam.1036/</a></p>
+</div>
+<h3>I got a DNS error in OBS</h3>
+<div class="answer">
+  <p>If you use Comodo (Anti Virus or similar) and get a DNS error with the latest version of OBS, add an exclusion for the OBS folder and disable auto-sandbox. Disabling Comodo won't help. If you need help to add an exlusion look here: <a target="_blank" href="http://imgur.com/a/CvLQl">http://imgur.com/a/CvLQl</a></p>
+</div>
+<h3>Having issues with high CPU usage, or getting a warning about "Taking too long to encode, skipping frames"?</h3>
+<div class="answer">
+  <p>Read <a target="_blank" href="https://obsproject.com/forum/threads/high-cpu-usage-taking-too-long-to-encode-read-this-first.11641/">https://obsproject.com/forum/threads/high-cpu-usage-taking-too-long-to-encode-read-this-first.11641/</a></p>
+</div>
+<h3>I want to test my CPU / memory for stability (OBS crashes sometimes or your system is overclocked)</h3>
+<div class="answer">
+  <p>How to test your CPU / memory with LinX <a target="_blank" href="http://obsproject.com/forum/viewtopic.php?f=18&t=5361">http://obsproject.com/forum/viewtopic.php?f=18&amp;t=5361</a></p>
+</div>
+<h3>OBS tells me I am missing DirectX but the installer does not work?</h3>
+<div class="answer">
+  <p>Try the DirectX End-User Runtimes (June 2010) <a target="_blank" href="http://www.microsoft.com/en-us/download/details.aspx?id=8109">http://www.microsoft.com/en-us/download/details.aspx?id=8109</a></p>
+</div>
+<h3>I got an error "Could not initialize DirectX 10 on [your GPU]"</h3>
+<div class="answer">
+  <p>Your graphics card does not have sufficient support for DirectX 10. It does not matter if you have newer versions of DirectX software installed; your hardware does not support the necessary features, and no you cannot do anything about it apart from upgrading it.</p>
+</div>
+<h3>I get D3DX10_43.dll missing error, or a 80004005 error</h3>
+<div class="answer">
+  <p>Make sure you have <a href="http://www.microsoft.com/en-us/download/details.aspx?id=35">the latest version of DirectX</a> and that your video card drivers are up to date.</p>
+</div>
+<h3>My audio device only works in one application at a time not in both (OBS and Skype for example)
+<div class="answer">
+  <p>To disable exclusive mode, right click the speaker icon in the system tray, select "Recording Devices" then choose your microphone and press "Properties". Go to the "Advanced" tab and uncheck both checkboxes.</p>
+</div>
+<h3>I have a lot of dropped frames or random disconnects</h3>
+<div class="answer">
+  <p>Read this: <a target="_blank" href="https://obsproject.com/forum/viewtopic.php?f=5&t=8870">https://obsproject.com/forum/viewtopic.php?f=5&amp;t=8870</a></p>
+</div>
+<h3>I have a Razer Kraken Headset</h3>
+<div class="answer">
+  <p>Problems getting the Razer Kraken working? Just use 64bit OBS (gets installed automatically, look in your start menu). Or if you're on a 32bit system, disable the Kraken Launcher in msconfig and reboot to get it working with OBS.</p>
+</div>
+<h3>I have a Laptop and black screen in OBS</h3>
+<div class="answer">
+  <p>Read here first if so: <a target="_blank" href="https://obsproject.com/forum/threads/laptop-black-screen-when-capturing-read-here-first.5965/">https://obsproject.com/forum/threads/laptop-black-screen-when-capturing-read-here-first.5965/</a></p>
+</div>
+<h3>I want to post a log file but do not know how</h3>
+<div class="answer">
+  <p>In OBS select <strong>Help &gt; Log Files &gt; Upload last Log File</strong>. Copy the URL and paste it here. See picture for steps: <a target="_blank" href="http://i.imgur.com/1tOZwtC.png">http://i.imgur.com/1tOZwtC.png</a></p>
+</div>
+<h3>I want to stream League of Legends, whats the best way to do it?</h3>
+<div class="answer">
+  <p>The best way to stream LoL is to set up 2 scenes. First, keep Aero enabled. Then, in the first scene, have a Window Capture of the LoL client, and in the second scene, have a Game Capture of the actual LoL game (or Window capture if the game is in windowed or borderless mode). Then use the Simple Scene Switcher to automatically swap between them: <a target="_blank" href="https://obsproject.com/forum/viewtopic.php?f=11&t=1785">https://obsproject.com/forum/viewtopic.php?f=11&amp;t=1785</a> Avoid Monitor capture altogether.</p>
+</div>
+<h3>My Monitor capture runs very slow, but why?</h3>
+<div class="answer">
+  <p>Do <strong>NOT</strong> use Monitor Capture on Windows Vista/7. Instead, try adding a Game Capture source and selecting "[DWM] Monitor Capture" from the list of capture targets. Aero must be <strong>ENABLED</strong> and only the primary screen will be captured.</p>
+</div>
+<h3>My window capture shows all windows, not only the one I want to capture</h3>
+<div class="answer">
+  <p>Enable your windows aero theme (taskbar and window transparency): <a target="_blank" href="http://en.kioskea.net/faq/30281-how-to-rapidly-enable-or-disable-aero-under-windows-7">http://en.kioskea.net/faq/30281-how-to-rapidly-enable-or-disable-aero-under-windows-7</a></p>
+</div>
+<h3>The start recording button is grayed out, or I want to do a local recording</h3>
+<div class="answer">
+  <p>Go to &quot;Settings&quot; &gt; &quot;Broadcast Settings&quot; and check "Save to file", click &quot;Browse&quot; and navigate to the desired location, enter a file name, or enter <strong>%</strong> to have the files named automatically, and click &quot;Save&quot;. If you do not stream, set Mode to "File Output Only" and follow this guide: <a target="_blank" href="https://obsproject.com/forum/resources/how-to-make-high-quality-local-recordings.16/">https://obsproject.com/forum/resources/how-to-make-high-quality-local-recordings.16/</a></p>
+</div>
+<h3>The quick sync selection is grayed out but I definitely have all necessary features in my system</h3>
+<div class="answer">
+  <p>If the Quick Sync option in OBS is grayed out, follow this tutorial: <a href="https://obsproject.com/forum/resources/how-to-use-quicksync.82/">https://obsproject.com/forum/resources/how-to-use-quicksync.82/</a></p>
+  <p> Note that Quick Sync will slightly reduce your video quality compared to x264.</p>
+</div>
+<h3>I recorded everything in mp4/flv but I want flv/mp4</h3>
+<div class="answer">
+  <p>How to convert flv to mp4 or vice versa without quality loss: <a target="_blank" href="https://obsproject.com/forum/resources/how-to-convert-flvs-to-mp4-fast-without-re-encoding.78/">https://obsproject.com/forum/resources/how-to-convert-flvs-to-mp4-fast-without-re-encoding.78/</a></p>
+</div>
 
-<p><a id="34"></a>Why can't I move any sources that I added?</p>
-<ul>
-  <li>You need to be previewing your stream, or actually streaming and click 'Edit Scene' to move things around. You can also hold Ctrl while moving a source to prevent it from snapping to the screen edges, Shift while resizing to ignore the aspect ratio, and Alt while dragging the edge of a source to crop.</li>
-</ul>
+<h3>I cannot reach the upload speed I should have, how can I check my Internet connection?</h3>
+<div class="answer">
+  <p>Some ISPs and large networks (e.g. at a university) may throttle your connection if you are using too much upload bandwidth. You can check your connection for network traffic shapers using ShaperProbe: <a target="_blank" href="http://www.measurementlab.net/tools/shaperprobe">http://www.measurementlab.net/tools/shaperprobe</a></p>
+</div>
 
-<p><a id="35"></a>One of my actual sources is black and not showing up</p>
-<ul>
-  <li>Are you trying to stream a fullscreen game? You'll need to hook into it using the 'Game Capture' source in OBS. As well, OpenGL games like Minecraft have issues with Window Capture and you'll need to use Monitor Capture to show them. If desktop capture is showing up as black, it indicates that you either need to update windows or update DirectX.</li>
-</ul>
-
-<p><a id="36"></a>Will this ever work on Windows XP? What about Mac and Linux?</p>
-<ul>
-  <li>Windows XP unfortunately lacks DirectX 10 features and the audio subsystem present in Vista and up that OBS makes use of, and as such, will never be supported. OBS is currently being rewritten as multiplatform under the name OBS Studio. It will be available for Windows, Mac and Linux when it is done.</li>
-</ul>
-
-<p><a id="37"></a>I get D3DX10_43.dll missing error, or a 80004005 error</p>
-<ul>
-  <li>Make sure you have <a href="http://www.microsoft.com/en-us/download/details.aspx?id=35">the latest version of DirectX</a> and that your video card drivers are up to date.</li>
-</ul>
-
-<p><a id="38"></a>Why is my capture card showing up as a red box on my stream</p>
-<ul>
-  <li>Your capture device may still be unsupported -- please visit the Problems and Bugs forum and <a href="https://obsproject.com/forum/viewtopic.php?f=6&amp;t=59">read the thread regarding red output from devices</a>.</li>
-</ul>
-
-<p><a id="39"></a>What settings should I use?</p>
-<ul>
-  <li>Check out our <a href="https://obsproject.com/estimator">settings estimator</a> for general recommendations based on your setup</li>
-</ul>
-
-<p><a id="40"></a>I'm having a problem that isn't here, what should I do?</p>
-<ul>
-  <li>First, you can try out our <a href="https://obsproject.com/analyzer">automated log analyzer</a> here. If that doesn't solve your issue, sign up on <a href="https://obsproject.com/forum/">our forums</a> and post in the appropriate forum with your log uploaded somewhere or attached, and someone will try and help you out!</li>
-</ul>
+<h3>My CPU speed is decreasing after some time and I have slowdowns?</h3>
+<div class="answer">
+  <p>Random downclocking? <strong>Intel</strong> users: Disable SpeedStep. <strong>AMD desktop</strong> users: Disable Cool 'n' Quiet. <strong>AMD laptop</strong> users: Disable PowerNow!</p>
+</div>
+<h3>I am on Windows Vista and need the platform update</h3>
+<div class="answer">
+  <p>How to install the Vista Platform Update: <a target="_blank" href="http://windows.microsoft.com/en-US/windows-live/essentials-install-windows-platform-update-ui">http://windows.microsoft.com/en-US/windows-live/essentials-install-windows-platform-update-ui</a></p>
+</div>
+<h3>My recorded video is either black or has no sound, what can I do?</h3>
+<div class="answer">
+  <p>If you're playing back a video created with OBS but there's no audio, and you're using Windows Media Player or QuickTime Player, you're missing codecs required to play back the audio properly. Use VLC instead: <a target="_blank" href="http://www.videolan.org/vlc/index.html">http://www.videolan.org/vlc/index.html</a></p>
+</div>
+<h3>I have a black screen and can't see my stream</h3>
+<div class="answer">
+  <p>Firstly, make sure you have created a scene and added a source to actually be seen. After that, you'll need to turn on 'Preview Stream' or be streaming in order to see your stream</p>
+</div>
+<h3>Why can't I move any sources that I added?</h3>
+<div class="answer">
+  <p>You need to be previewing your stream, or actually streaming and click 'Edit Scene' to move things around. You can also hold Ctrl while moving a source to prevent it from snapping to the screen edges, Shift while resizing to ignore the aspect ratio, and Alt while dragging the edge of a source to crop.</p>
+</div>
+<h3>One of my actual sources is black and not showing up</h3>
+<div class="answer">
+  <p>Are you trying to stream a fullscreen game? You'll need to hook into it using the 'Game Capture' source in OBS. As well, OpenGL games like Minecraft have issues with Window Capture and you'll need to use Monitor Capture to show them. If desktop capture is showing up as black, it indicates that you either need to update windows or update DirectX.</p>
+</div>
+<h3>Can I use 4K resolutions?</h3>
+<div class="answer">
+  <p>4k is supported fine but you need to use the "high" encoding profile in settings -&gt; advanced, it will require up to 4 times as much processing power as encoding 1080p</p>
+</div>
+<h3>Which capture card should I get for streaming or recording? And do I need one? (avoid USB 2.0 capture devices if at all possible) </h3>
+<div class="answer">
+  <p><a target="_blank" href="http://www.helping-squad.com/which-capture-card-should-i-get-for-streaming-or-recording/">http://www.helping-squad.com/which-capture-card-should-i-get-for-streaming-or-recording/</a></p>
+</div>
+<h3>Why is my capture card showing up as a red box on my stream</h3>
+<div class="answer">
+  <p>Your capture device may still be unsupported -- please visit the Problems and Bugs forum and <a href="https://obsproject.com/forum/viewtopic.php?f=6&amp;t=59">read the thread regarding red output from devices</a>.</p>
+</div>
+<h3>I'm having a problem that isn't here, what should I do?</h3>
+<div class="answer">
+  <p>First, you can try out our <a href="https://obsproject.com/analyzer">automated log analyzer</a> here. If that doesn't solve your issue, sign up on <a href="https://obsproject.com/forum/">our forums</a> and post in the appropriate forum with your log uploaded somewhere or attached, and someone will try and help you out!</p>
+</div>
+</section>

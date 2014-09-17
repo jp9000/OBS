@@ -8,9 +8,21 @@
 	<link rel="icon" type="image/png" href="http://obsproject.com/images/favicon.png" />
 	<link href="//fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,700" rel="stylesheet" type="text/css" />
 	<link rel='stylesheet' media='all' href='{{ site.baseurl }}/assets/960.css'  type='text/css' />
+	<link rel="stylesheet" media="screen" href="{{ site.baseurl }}/assets/faq.css"  type="text/css" />
 	<link rel="stylesheet" media="screen" href="{{ site.baseurl }}/assets/style.css"  type="text/css" />
 	<link rel="stylesheet" media="screen" href="{{ site.baseurl }}/assets/main.css"  type="text/css" />
-</head>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	<script>
+		$(document).ready(function() {
+			$('#faq-list h3').click(function() {
+				
+				$(this).next('.answer').slideToggle(500);
+				$(this).toggleClass('close');
+				
+			});
+		}); // end ready
+	</script>
+	</head>
 	<body>
 		<div id="Wrapper">
 			<div id="HeaderContainer">

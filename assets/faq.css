@@ -1,0 +1,16 @@
+.answer {
+	display:none;
+}
+h3 {
+	line-height:24px !important;
+	font-size:18px !important;
+	font-weight:700 !important;
+	padding-left:24px !important;
+	cursor:pointer !important;
+	background-image:url('open.png') !important;
+	background-position:left !important;
+	background-repeat:no-repeat !important;
+}
+h3.close {
+	background-image:url('close.png') !important;
+}

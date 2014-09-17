@@ -8,7 +8,7 @@ layout: default
 <h4>Encoding</h4>
 <h3>Video Encoding</h3>
 <h5>Quality Balance</h5>
-<p>When using variable bitrate, this controls the CRF (constant rate factor) parameter in x264 (10 is CRF 22, 0 is CRF 32).  This is only used with variable bitrate, and determines how the video encoder should spend bits for quality.  This value is not used and disabled if using CBR (constant bitrate).  Generally the value you should set this to depends on your bitrate, resolution, and FPS.  If you have a high bitrate relative to your resolution/FPS, you can safely set this higher, but if you have a lower bitrate relative to your resolution/FPS, higher values will cause pixellation in higher motion scenes, so the value needs to be lowered.  If you get undesirable pixellation on higher motion, it generally means you should turn down this value until it stops, or increase your bitrate.</p>
+<p>When using variable bitrate, this controls the CRF (constant rate factor) parameter in x264 (10 is CRF 22, 0 is CRF 32).  This is only used with variable bitrate, and determines how the video encoder should spend bits for quality.  This value is not used and disabled if using CBR (constant bitrate).  Generally the value you should set this to depends on your bitrate, resolution, and FPS.  If you have a high bitrate relative to your resolution/FPS, you can safely set this higher, but if you have a lower bitrate relative to your resolution/FPS, higher values will cause pixelation in higher motion scenes, so the value needs to be lowered.  If you get undesirable pixelation on higher motion, it generally means you should turn down this value until it stops, or increase your bitrate.</p>
 <ul>
   <li>Recommended: Varies depending on resolution/fps relative to the bitrate.  5 is usually the "safest" value for most situations.</li>
 </ul>
@@ -18,7 +18,7 @@ layout: default
   <li>Recommended: 70%-80% of your upload speed or 3500kbps (whichever is lower)</li>
 </ul>
 <h5>Buffer Size</h5>
-<p>This ties in closely with the bitrate. x264 will encode everything into a fixed size buffer of this size. If there is a sudden scene change and high motion, it can fill up this buffer at a rate faster than the average max bitrate. Eg if you have a bitrate of 3000 and a buffer of 6000, x264 could decide that if a scene is complex enough, to use 5000 of the 6000 buffer at once. This makes your actual network bitrate quite spiky, which can lead to latency issues if queuing occurs on your modem or router. Raising this makes the stream bitrate more spiky but improves quality, reducing this makes the bitrate more tightly controlled and closer to the max bitrate setting. Don't set this too high as the client-side decode buffer will also need to be this big, and you have no control over that.</p>
+<p>This ties in closely with the bitrate. x264 will encode everything into a fixed size buffer of this size. If there is a sudden scene change and high motion, it can fill up this buffer at a rate faster than the average max bitrate. E.g. if you have a bitrate of 3000 and a buffer of 6000, x264 could decide that if a scene is complex enough, to use 5000 of the 6000 buffer at once. This makes your actual network bitrate quite spiky, which can lead to latency issues if queuing occurs on your modem or router. Raising this makes the stream bitrate more spiky but improves quality, reducing this makes the bitrate more tightly controlled and closer to the max bitrate setting. Don't set this too high as the client-side decode buffer will also need to be this big, and you have no control over that.</p>
 <ul>
   <li>Recommended: Same as bitrate</li>
 </ul>
@@ -45,7 +45,7 @@ layout: default
 <p>If you experience high ping / latency issues when you are streaming, try enabling this option to reduce how often OBS outputs data to the network. This comes at the risk of increased frame drops if the connection to the streaming server is poor.</p>
 <h4>Video</h4>
 <h5>Base Resolution</h5>
-<p>This is the main resolution of your scene. This should generally by the same as your monitor resolution, so you can select a monitor to make it match. If you want to stream at a lower resolution, the Resolution Downscale option will provide the best quality. If you really want to stream at a certain resolution, eg 1280x720, you can type it in directly under "Custom". Please keep in mind that if your desktop is 16:10, you should enter a 16:10 custom resolution too (eg 1152x720), or your sources will not scale correctly and you will have black bars on your stream.</p>
+<p>This is the main resolution of your scene. This should generally by the same as your monitor resolution, so you can select a monitor to make it match. If you want to stream at a lower resolution, the Resolution Downscale option will provide the best quality. If you really want to stream at a certain resolution, e.g. 1280x720, you can type it in directly under "Custom". Please keep in mind that if your desktop is 16:10, you should enter a 16:10 custom resolution too (e.g. 1152x720), or your sources will not scale correctly and you will have black bars on your stream.</p>
 <ul>
   <li>Recommended: Match your monitor resolution.</li>
 </ul>
@@ -56,7 +56,7 @@ layout: default
   <li>Recommended: Depends on your CPU and upload speed.</li>
 </ul>
 <h5>FPS</h5>
-<p>How many frames per second to target. If you have a high end system, 60 fps looks very fluid and is preferred for fast action games like FPS / fighting games. A higher frame rate is directly tied to an increase in CPU requirements, eg 60 fps will require twice as much CPU power as 30 fps. However, 60 fps may not require twice the bitrate, since the improvement in fluidity from 30 fps to 60 fps means there is less time for the eye to notice a quality loss. If you find you have a great CPU but low upload, increasing FPS is one of the best ways to improve quality.</p>
+<p>How many frames per second to target. If you have a high end system, 60 fps looks very fluid and is preferred for fast action games like FPS / fighting games. A higher frame rate is directly tied to an increase in CPU requirements, e.g. 60 fps will require twice as much CPU power as 30 fps. However, 60 fps may not require twice the bitrate, since the improvement in fluidity from 30 fps to 60 fps means there is less time for the eye to notice a quality loss. If you find you have a great CPU but low upload, increasing FPS is one of the best ways to improve quality.</p>
 <ul>
   <li>Recommended: 30 fps for most configurations, 60 fps if you have the CPU to support it and appropriate bandwidth to accommodate.</li>
 </ul>
