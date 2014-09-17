@@ -753,7 +753,7 @@ bool DeviceSource::LoadFilters()
             {
                 IPin* audioRendererPin = NULL;
 
-#if 1           // FMB NOTE: Connect with first (= the only) pin of audio renderer
+                // FMB NOTE: Connect with first (= the only) pin of audio renderer
                 IEnumPins* pIEnum = NULL;
                 if (SUCCEEDED(err = audioFilter->EnumPins(&pIEnum)))
                 {
@@ -761,9 +761,7 @@ bool DeviceSource::LoadFilters()
                     pIEnum->Next(1, &audioRendererPin, NULL);
                     SafeRelease(pIEnum);
                 }
-#else
-                audioFilter->FindPin(L"Audio Input pin (rendered)", &audioRendererPin);
-#endif
+
                 if (audioRendererPin)
                 {
                     bConnected = SUCCEEDED(err = graph->ConnectDirect(audioPin, audioRendererPin, nullptr));
