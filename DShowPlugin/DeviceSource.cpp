@@ -751,7 +751,24 @@ bool DeviceSource::LoadFilters()
             IPin *audioPin = GetOutputPin(deviceFilter, &MEDIATYPE_Audio);
             if (audioPin)
             {
-                bConnected = SUCCEEDED(err = graph->ConnectDirect(audioPin, audioFilter->GetCapturePin(), nullptr));
+                IPin* audioRendererPin = NULL;
+
+#if 1           // FMB NOTE: Connect with first (= the only) pin of audio renderer
+                IEnumPins* pIEnum = NULL;
+                if (SUCCEEDED(err = audioFilter->EnumPins(&pIEnum)))
+                {
+                    IPin* pIPin = NULL;
+                    pIEnum->Next(1, &audioRendererPin, NULL);
+                    SafeRelease(pIEnum);
+                }
+#else
+                audioFilter->FindPin(L"Audio Input pin (rendered)", &audioRendererPin);
+#endif
+                if (audioRendererPin)
+                {
+                    bConnected = SUCCEEDED(err = graph->ConnectDirect(audioPin, audioRendererPin, nullptr));
+                    audioRendererPin->Release();
+                }
                 audioPin->Release();
             }
         }
