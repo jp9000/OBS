@@ -152,8 +152,6 @@ STDMETHODIMP CapturePin::QueryDirection(PIN_DIRECTION *pPinDir)    {*pPinDir = P
 STDMETHODIMP CapturePin::QueryId(LPWSTR *lpId)                     {*lpId = L"Capture Pin"; return S_OK;}
 STDMETHODIMP CapturePin::QueryAccept(const AM_MEDIA_TYPE *pmt)
 {
-    if(filter->state != State_Stopped)
-        return S_FALSE;
     if(pmt->majortype != expectedMajorType)
         return S_FALSE;
     if(!IsValidMediaType(pmt))
@@ -179,10 +177,14 @@ STDMETHODIMP CapturePin::EnumMediaTypes(IEnumMediaTypes **ppEnum)
 
 STDMETHODIMP CapturePin::QueryInternalConnections(IPin **apPin, ULONG *nPin)   {return E_NOTIMPL;}
 STDMETHODIMP CapturePin::EndOfStream()                                         {return S_OK;}
-STDMETHODIMP CapturePin::BeginFlush()                                          {return S_OK;}
-STDMETHODIMP CapturePin::EndFlush()
+STDMETHODIMP CapturePin::BeginFlush()
 {
     source->FlushSamples();
+    return S_OK;
+}
+
+STDMETHODIMP CapturePin::EndFlush()
+{
     return S_OK;
 }
 
@@ -224,12 +226,10 @@ bool CapturePin::IsValidMediaType(const AM_MEDIA_TYPE *pmt) const
 
         if(expectedMajorType == MEDIATYPE_Video)
         {
-            VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pmt->pbFormat);
-            if( pVih->bmiHeader.biHeight == 0 ||
-                pVih->bmiHeader.biWidth  == 0)
-            {
+            BITMAPINFOHEADER *bih = GetVideoBMIHeader(pmt);
+
+            if( bih->biHeight == 0 || bih->biWidth == 0)
                 return false;
-            }
         }
     }
 
@@ -239,15 +239,39 @@ bool CapturePin::IsValidMediaType(const AM_MEDIA_TYPE *pmt) const
 
 //========================================================================================================
 
+class CaptureFlags : public IAMFilterMiscFlags {
+    long refCount = 1;
+public:
+    inline CaptureFlags() {}
+    STDMETHODIMP_(ULONG) AddRef() {return ++refCount;}
+    STDMETHODIMP_(ULONG) Release() {if (!--refCount) {delete this; return 0;} return refCount;}
+    STDMETHODIMP         QueryInterface(REFIID riid, void **ppv)
+    {
+        if (riid == IID_IUnknown)
+        {
+            AddRef();
+            *ppv = (void*)this;
+            return NOERROR;
+        }
+
+        *ppv = nullptr;
+        return E_NOINTERFACE;
+    }
+
+    STDMETHODIMP_(ULONG) GetMiscFlags() {return AM_FILTER_MISC_FLAGS_IS_RENDERER;}
+};
+
 CaptureFilter::CaptureFilter(DeviceSource *source, const GUID &expectedMajorType, const GUID &expectedMediaType)
 : state(State_Stopped), refCount(1)
 {
     pin = new CapturePin(this, source, expectedMajorType, expectedMediaType);
+    flags = new CaptureFlags();
 }
 
 CaptureFilter::~CaptureFilter()
 {
     pin->Release();
+    flags->Release();
 }
 
 // IUnknown methods
@@ -259,22 +283,28 @@ STDMETHODIMP CaptureFilter::QueryInterface(REFIID riid, void **ppv)
         *ppv = (IUnknown*)this;
         return NOERROR;
     }
-    if(riid == IID_IPersist)
+    else if(riid == IID_IPersist)
     {
         AddRef();
         *ppv = (IPersist*)this;
         return NOERROR;
     }
-    if(riid == IID_IMediaFilter)
+    else if(riid == IID_IMediaFilter)
     {
         AddRef();
         *ppv = (IMediaFilter*)this;
         return NOERROR;
     }
-    if(riid == IID_IBaseFilter)
+    else if(riid == IID_IBaseFilter)
     {
         AddRef();
         *ppv = (IBaseFilter*)this;
+        return NOERROR;
+    }
+    else if (riid == IID_IAMFilterMiscFlags)
+    {
+        flags->AddRef();
+        *ppv = flags;
         return NOERROR;
     }
     else

@@ -43,6 +43,7 @@ NoSourcesFound="Nepridali ste žiadne zdroje! Chcete streamovať čiernu plochu?
 
 
 
+CopyTo="Kopírovať do"
 
 
 BuildingMP4Dialog.Progress="Vytváram MP4, čakajte prosím..."
@@ -72,6 +73,7 @@ Listbox.Positioning="Pozícia/Veľkosť"
 Listbox.ResetSize="Pôvodná veľkosť"
 Listbox.SetHotkey="Nastaviť klávesovú skratku"
 ListBox.ResetCrop="Obnoviť orezanie"
+Listbox.ImportButton="Importovať"
 
 MainMenu.SceneCollection="Kolekcia &scény"
 MainMenu.SceneCollection.New="&Nová"
@@ -103,7 +105,6 @@ MainMenu.Settings.OpenLogFolder="Otvoriť zložku &logov"
 MainMenu.Settings.ShowLogWindow="Ukáž okno Logu"
 
 MainWindow.BeginMessage="Nestreamujete\n\nKliknite na \"Spustiť stream\", \"Spustiť nahrávanie\", alebo \"Náhľkad streamu\" najprv"
-MainWindow.PreviewDisabled="Náhľad vypnutý"
 MainWindow.Dashboard="Dashboard"
 MainWindow.DroppedFrames="Vynechané snímky:"
 MainWindow.Exit="Ukončiť"
@@ -244,10 +245,6 @@ Settings.Publish.Playpath="Cesta/Stream kľúč (ak existuje):"
 Settings.Publish.SavePath="Cesta k súboru:"
 Settings.Publish.Server="Server:"
 Settings.Publish.Service="Služba:"
-Settings.Publish.StartStreamHotkey="Klávesová skratka štartu Streamu:"
-Settings.Publish.StopStreamHotkey="Klávesová skratka zastavenia Streamu:"
-Settings.Publish.StartRecordingHotkey="Klávesová skratka spustenia nahrávania:"
-Settings.Publish.StopRecordingHotkey="Klávesová skratka zastavenia nahrávania:"
 Settings.Publish.Username="Meno používateľa (ak existuje):"
 Settings.Publish.InvalidSavePathCaption="Neplatná cesta k súboru"
 

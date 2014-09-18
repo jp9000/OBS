@@ -339,7 +339,7 @@ BOOL   STDCALL OSFileExists(CTSTR lpFile)
 
 bool   STDCALL OSFileIsDirectory(CTSTR file)
 {
-    return GetFileAttributes(file) == FILE_ATTRIBUTE_DIRECTORY;
+    return (FILE_ATTRIBUTE_DIRECTORY == (GetFileAttributes(file) & FILE_ATTRIBUTE_DIRECTORY));
 }
 
 QWORD STDCALL OSGetFileModificationTime(String path)

@@ -415,6 +415,25 @@ IPin* GetOutputPin(IBaseFilter *filter, const GUID *majorType)
     return foundPin;
 }
 
+static void AddElgatoRes(AM_MEDIA_TYPE *pMT, int cx, int cy, VideoOutputType type, List<MediaOutputInfo> &outputInfoList)
+{
+    MediaOutputInfo *outputInfo = outputInfoList.CreateNew();
+    BITMAPINFOHEADER *bmiHeader = GetVideoBMIHeader(pMT);
+
+    outputInfo->minCX = outputInfo->maxCX = cx;
+    outputInfo->minCY = outputInfo->maxCY = cy;
+    outputInfo->minFrameInterval = outputInfo->maxFrameInterval = 10010000000LL/60000LL;
+
+    outputInfo->xGranularity = outputInfo->yGranularity = 1;
+
+    outputInfo->mediaType = (AM_MEDIA_TYPE*)CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
+    memset(outputInfo->mediaType, 0, sizeof(AM_MEDIA_TYPE));
+    CopyMediaType(outputInfo->mediaType, pMT);
+
+    outputInfo->videoType = type;
+    outputInfo->bUsingFourCC = false;
+}
+
 void AddOutput(AM_MEDIA_TYPE *pMT, BYTE *capsData, bool bAllowV2, List<MediaOutputInfo> &outputInfoList)
 {
     VideoOutputType type = GetVideoOutputType(*pMT);
@@ -434,6 +453,16 @@ void AddOutput(AM_MEDIA_TYPE *pMT, BYTE *capsData, bool bAllowV2, List<MediaOutp
 
         if(type != VideoOutputType_None)
         {
+            if (!pVSCC && bAllowV2)
+            {
+                AddElgatoRes(pMT, 480,  360,  type, outputInfoList);
+                AddElgatoRes(pMT, 640,  480,  type, outputInfoList);
+                AddElgatoRes(pMT, 1280, 720,  type, outputInfoList);
+                AddElgatoRes(pMT, 1920, 1080, type, outputInfoList);
+                DeleteMediaType(pMT);
+                return;
+            }
+
             MediaOutputInfo *outputInfo = outputInfoList.CreateNew();
 
             if(pVSCC)

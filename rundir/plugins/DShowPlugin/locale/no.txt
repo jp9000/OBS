@@ -1,4 +1,5 @@
 Cancel="Avbryt"
+ClassName="Videoopptaksenhet"
 DeviceSelection="Valg av enhet"
 OK="OK"
 
@@ -39,6 +40,7 @@ DeviceSelection.Resolution="Oppløsning"
 DeviceSelection.Select="Velg"
 DeviceSelection.Similarity="Likhet (1-1000):"
 DeviceSelection.Sound="Lyd"
+DeviceSelection.UseChromaKey="Bruk Chroma key"
 DeviceSelection.UseDeviceAudio="(Bruk enhetens innebygde lyd)"
 DeviceSelection.Video="Video"
 

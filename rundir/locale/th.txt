@@ -1,3 +1,4 @@
+RightToLeft="false"
 
 Add="เพิ่ม"
 Preview="แสดงตัวอย่าง"
@@ -35,6 +36,7 @@ MessageBoxWarningCaption="คำเตือน"
 
 
 
+CopyTo="คัดลอกไป"
 
 
 BuildingMP4Dialog.Progress="กำลังสร้าง MP4, กรุณารอสักครู่..."
@@ -54,6 +56,7 @@ Listbox.Config="คุณสมบัติ"
 Listbox.FitToScreen="พอดีกับหน้าจอ"
 Listbox.Positioning="ตำแหน่ง/ขนาด"
 Listbox.ResetSize="ตั้งขนาดใหม่"
+Listbox.ImportButton="นําเข้า"
 
 
 MainMenu.File="& ไฟล์"

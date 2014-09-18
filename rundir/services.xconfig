@@ -30,10 +30,13 @@ services : {
   "Vaughn Live / iNSTAGIB.tv" : {
     id : 3
     servers : {
-      "US: Primary"            : rtmp://live.vaughnsoft.net:443/live
-      "US: Virginia, USA"      : rtmp://live-iad.vaughnsoft.net:443/live
-      "US: Chicago, IL"        : rtmp://live-ord.vaughnsoft.net:443/live
-      "EU: Frankfurt, Germany" : rtmp://live-de.vaughnsoft.net:443/live
+      "US: Primary"           : rtmp://live.vaughnsoft.net:443/live
+      "US: Chicago, IL"       : rtmp://live-ord.vaughnsoft.net:443/live
+      "US: New York, NY"      : rtmp://live-nyc.vaughnsoft.net:443/live
+      "US: New York 2, NY"    : rtmp://live-nyc2.vaughnsoft.net:443/live
+      "US: Ashburn, VA"       : rtmp://live-iad.vaughnsoft.net:443/live
+      "EU: Amsterdam, NL"     : rtmp://live-nl.vaughnsoft.net:443/live
+      "EU: Frankfurt, DE"     : rtmp://live-de.vaughnsoft.net:443/live
     }
   }
   GoodGame.ru : {
@@ -64,7 +67,9 @@ services : {
   CyberGame.TV : {
     id : 10
     servers : {
-      "RU Origin"     : rtmp://st.cybergame.tv:1953/live
+      "RU Origin"  : rtmp://st.cybergame.tv:1953/live
+      "RU Premium" : rtmp://premium.cybergame.tv:1953/premium
+      "EU Premium" : rtmp://vod5.cybergame.tv:1953/live/
     }
   }
   hitbox.tv : {

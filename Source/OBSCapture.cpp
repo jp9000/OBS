@@ -181,7 +181,7 @@ String GetOutputFilename(bool replayBuffer=false)
     bool bUseDateTimeName = true;
     bool bOverwrite = GlobalConfig->GetInt(L"General", L"OverwriteRecordings", false) != 0;
     
-    ExpandRecordingFilename(strOutputFile);
+    strOutputFile = ExpandRecordingFilename(strOutputFile);
 
     CreatePath(GetPathDirectory(strOutputFile));
 
