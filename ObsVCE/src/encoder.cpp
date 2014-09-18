@@ -81,9 +81,11 @@ void unmapBuffer(OVEncodeHandle &encodeHandle, int surf)
 
 bool VCEEncoder::encodeCreate(uint32_t deviceId)
 {
+    assert(mInputBufSize);
     bool status;
     cl_int err;
     mOveContext = NULL;
+    OVresult res = 0;
 
     intptr_t properties[] =
     {
@@ -100,29 +102,16 @@ bool VCEEncoder::encodeCreate(uint32_t deviceId)
 
 #ifdef _WIN64
     // May ${DEITY} have mercy on us all.
-    VCELog(TEXT("If it crashes now, use 32bit version."));
     intptr_t ptr = intptr_t((intptr_t*)&clDeviceID);
     clDeviceID = (cl_device_id)((intptr_t)clDeviceID | (ptr & 0xFFFFFFFF00000000));
 #endif
 
     mOveContext = f_clCreateContext(properties, 1, &clDeviceID, 0, 0, &err);
-    if (mOveContext == (cl_context)0)
+    if (mOveContext == (cl_context)0 || (err != CL_SUCCESS))
     {
-        VCELog(TEXT("Cannot create cl_context."));
+        VCELog(TEXT("Cannot create CL context."));
         return false;
     }
-
-    if (err != CL_SUCCESS) //Well, mOveContext is probably NULL anyway
-    {
-        VCELog(TEXT("Error in clCreateContext %d"), err);
-        return false;
-    }
-    
-    /**************************************************************************/
-    /* Read the device capabilities...                                        */
-    /* Device capabilities should be used to validate against the             */
-    /* configuration set by the user for the codec                            */
-    /**************************************************************************/
 
     OVE_ENCODE_CAPS encodeCaps;
     OVE_ENCODE_CAPS_H264 encode_cap_full;
@@ -135,23 +124,28 @@ bool VCEEncoder::encodeCreate(uint32_t deviceId)
         return false;
     }
 
-    //TODO Log it? Check Log formatting
-    //VCELog(TEXT("**** CAPS ****\r\n* Bitrate Max: %d Min: %d"), encodeCaps.caps.encode_cap_full->max_bit_rate, encodeCaps.caps.encode_cap_full->min_bit_rate);
-    //VCELog(TEXT("* Picture size Max: %d Min: %d (Macroblocks (width/16) * (height/16))\r\n* Profiles:"), encodeCaps.caps.encode_cap_full->max_picture_size_in_MB, encodeCaps.caps.encode_cap_full->min_picture_size_in_MB);
-    //for (int i = 0; i< 20/*encodeCaps.caps.encode_cap_full->num_Profile_level*/; i++)
-    //    VCELog(TEXT("*\tProf: %d Level: %d"), encodeCaps.caps.encode_cap_full->supported_profile_level[i].profile, encodeCaps.caps.encode_cap_full->supported_profile_level[i].level);
-    //VCELog(TEXT("**************\r\n"));
+    VCELog(TEXT("**** CAPS ****\r\n* Bitrate Max: %d Min: %d"),
+        encodeCaps.caps.encode_cap_full->max_bit_rate, 
+        encodeCaps.caps.encode_cap_full->min_bit_rate);
+
+    VCELog(TEXT("* Picture size Max: %d Min: %d (Macroblocks (width/16) * (height/16))\r\n* Profiles:"),
+        encodeCaps.caps.encode_cap_full->max_picture_size_in_MB, 
+        encodeCaps.caps.encode_cap_full->min_picture_size_in_MB);
+
+    for (int i = 0; i< 20/*encodeCaps.caps.encode_cap_full->num_Profile_level*/; i++)
+        VCELog(TEXT("*    Prof: %d Level: %d"),
+            encodeCaps.caps.encode_cap_full->supported_profile_level[i].profile,
+            encodeCaps.caps.encode_cap_full->supported_profile_level[i].level);
 
     if (mUse444)
     {
-        size_t sourceSize[] = { strlen(source) };
+        size_t sourceSize = strlen(source);
         cl_int clstatus = 0;
         mProgram = f_clCreateProgramWithSource((cl_context)mOveContext,
             1,
             (const char**)&source,
-            sourceSize,
+            &sourceSize,
             &clstatus);
-        //free(source);
 
         if (clstatus != CL_SUCCESS)
         {
@@ -159,10 +153,9 @@ bool VCEEncoder::encodeCreate(uint32_t deviceId)
             return false;
         }
 
-        std::string flagsStr("");// ("-save-temps ");
-        flagsStr.append("-cl-single-precision-constant -cl-mad-enable -cl-fast-relaxed-math -cl-unsafe-math-optimizations ");
+        std::string flagsStr("-cl-single-precision-constant -cl-mad-enable -cl-fast-relaxed-math -cl-unsafe-math-optimizations");
+        //flagsStr.append(" -save-temps");
 
-        /* create a cl program executable for all the devices specified */
         clstatus = f_clBuildProgram(mProgram,
             1,
             &clDeviceID,
@@ -171,13 +164,14 @@ bool VCEEncoder::encodeCreate(uint32_t deviceId)
             NULL);
         if (clstatus != CL_SUCCESS)
         {
-            VCELog(TEXT("clBuildProgram() failed."));
+            VCELog(TEXT("clBuildProgram failed."));
+            return false;
         }
 
         mKernel[0] = f_clCreateKernel(mProgram, "Y444toNV12_Y", &clstatus);
         if (clstatus != CL_SUCCESS)
         {
-            VCELog(TEXT("clCreateKernel failed!"));
+            VCELog(TEXT("clCreateKernel(Y) failed!"));
             return false;
         }
 
@@ -188,34 +182,16 @@ bool VCEEncoder::encodeCreate(uint32_t deviceId)
             return false;
         }
     }
-    return true;
-}
-
-bool VCEEncoder::encodeOpen(uint32_t deviceId)
-{
-    assert(mInputBufSize);
-    cl_device_id clDeviceID = reinterpret_cast<cl_device_id>(deviceId);
-    OVresult res = 0;
-    cl_int err;
-
-#ifdef _WIN64
-    // May ${DEITY} have mercy on us all.
-    VCELog(TEXT("If it crashes now, use 32bit version."));
-    intptr_t ptr = intptr_t((intptr_t*)&clDeviceID);
-    clDeviceID = (cl_device_id)((intptr_t)clDeviceID | (ptr & 0xFFFFFFFF00000000));
-#endif
 
     cl_command_queue_properties prop = 0;
-    //(Currently) not using any CL kernels, so nothing to profile.
     //if (mConfigTable["ProfileKernels"] == 1)
     //    prop |= CL_QUEUE_PROFILING_ENABLE;
 
-    //TODO Remove second unused queue or do something fancy with it
     mEncodeHandle.clCmdQueue[0] = f_clCreateCommandQueue((cl_context)mOveContext,
         clDeviceID, prop, &err);
     if (err != CL_SUCCESS)
     {
-        VCELog(TEXT("Create command queue #0 failed! Error : %d"), err);
+        VCELog(TEXT("Failed to create command queue #0! Error : %d"), err);
         return false;
     }
 
@@ -248,6 +224,7 @@ bool VCEEncoder::encodeOpen(uint32_t deviceId)
             return false;
         }
 
+        //invalid cl_mem may cause crashes in amdocl.dll etc.
         err = f_clSetKernelArg(mKernel[0], 1, sizeof(cl_mem), &mOutput);
         err |= f_clSetKernelArg(mKernel[1], 1, sizeof(cl_mem), &mOutput);
         err |= f_clSetKernelArg(mKernel[0], 2, sizeof(int32_t), &mAlignedSurfaceWidth);
@@ -259,17 +236,14 @@ bool VCEEncoder::encodeOpen(uint32_t deviceId)
         }
     }
 
-    /**************************************************************************/
-    /* Create an OVE Session                                                  */
-    /**************************************************************************/
-    mEncodeHandle.session = OVEncodeCreateSession(mOveContext,  /**<Platform context */
-        deviceId,               /**< device id */
-        mConfigCtrl.encodeMode,    /**< encode mode */
-        mConfigCtrl.profileLevel,  /**< encode profile */
-        mConfigCtrl.pictFormat,    /**< encode format */
-        mConfigCtrl.width,         /**< width */
-        mConfigCtrl.height,        /**< height */
-        mConfigCtrl.priority);     /**< encode task priority, ie. FOR POSSIBLY LOW LATENCY OVE_ENCODE_TASK_PRIORITY_LEVEL2 */
+    mEncodeHandle.session = OVEncodeCreateSession(mOveContext,
+        deviceId,
+        mConfigCtrl.encodeMode,
+        mConfigCtrl.profileLevel,
+        mConfigCtrl.pictFormat,
+        mConfigCtrl.width,
+        mConfigCtrl.height,
+        mConfigCtrl.priority);
 
     if (mEncodeHandle.session == NULL)
     {
@@ -277,9 +251,6 @@ bool VCEEncoder::encodeOpen(uint32_t deviceId)
         return false;
     }
 
-    /**************************************************************************/
-    /* Configure the encoding engine.                                         */
-    /**************************************************************************/
     if(!setEncodeConfig(mEncodeHandle.session, &mConfigCtrl))
         return false;
     return true;

@@ -106,6 +106,7 @@ void encodeSetParam(OvConfigCtrl *pConfig, map<string, int32_t>* pConfigTable);
 bool setEncodeConfig(ove_session session, OvConfigCtrl *pConfig);
 
 //device.cpp
+int GetTopologyId(cl_device_id devId);
 void waitForEvent(cl_event inMapEvt);
 bool gpuCheck(cl_platform_id platform, cl_device_type* dType);
 bool getPlatform(cl_platform_id &platform);
@@ -149,7 +150,6 @@ private:
     void Warmup();
 	bool YUV444Convert(int bufferidx);
     bool encodeCreate(uint32_t deviceId);
-    bool encodeOpen(uint32_t deviceId);
     bool encodeClose();
     void ProcessOutput(OVE_OUTPUT_DESCRIPTION *surf, List<DataPacket> &packets, List<PacketType> &packetTypes, uint64_t timestamp);
 

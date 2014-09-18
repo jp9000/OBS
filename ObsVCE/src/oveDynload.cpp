@@ -12,12 +12,16 @@ if ((##x = (f_##x)GetProcAddress(hMod, #x)) == NULL){\
     goto error; }\
 } while (0)
 
-#define LOADPROC2(x) \
+//#ifndef LINK_TO_CL
+#define LOADPROCDECL(x) \
 do {\
 if ((f_##x = (decltype(&##x))GetProcAddress(hModCL, #x)) == NULL){\
     VCELog(TEXT("GetProcAddress: cannot find ") TEXT(#x)); \
     goto error; }\
 } while (0)
+//#else
+//#define LOADPROCDECL(x) f_##x = ##x
+//#endif
 
 FUNDEF(OVEncodeGetDeviceInfo);
 FUNDEF(OVEncodeGetDeviceCap);
@@ -115,30 +119,30 @@ bool initOVE()
     LOADPROC(OVEncodeQueryTaskDescription);
     LOADPROC(OVEncodeReleaseTask);
 
-    LOADPROC2(clGetPlatformIDs);
-    LOADPROC2(clGetPlatformInfo);
-    LOADPROC2(clCreateContext);
-    LOADPROC2(clReleaseContext);
-    LOADPROC2(clCreateContextFromType);
-    LOADPROC2(clCreateCommandQueue);
-    LOADPROC2(clReleaseCommandQueue);
-    LOADPROC2(clGetEventInfo);
-    LOADPROC2(clCreateBuffer);
-    LOADPROC2(clCreateKernel);
-    LOADPROC2(clReleaseMemObject);
-    LOADPROC2(clReleaseKernel);
-    LOADPROC2(clReleaseProgram);
-    LOADPROC2(clEnqueueMapBuffer);
-    LOADPROC2(clEnqueueNDRangeKernel);
-    LOADPROC2(clEnqueueUnmapMemObject);
-    LOADPROC2(clReleaseEvent);
-    LOADPROC2(clCreateProgramWithSource);
-    LOADPROC2(clBuildProgram);
-    LOADPROC2(clSetKernelArg);
-    LOADPROC2(clGetDeviceInfo);
-    LOADPROC2(clFlush);
-    LOADPROC2(clFinish);
-    LOADPROC2(clWaitForEvents);
+    LOADPROCDECL(clGetPlatformIDs);
+    LOADPROCDECL(clGetPlatformInfo);
+    LOADPROCDECL(clCreateContext);
+    LOADPROCDECL(clReleaseContext);
+    LOADPROCDECL(clCreateContextFromType);
+    LOADPROCDECL(clCreateCommandQueue);
+    LOADPROCDECL(clReleaseCommandQueue);
+    LOADPROCDECL(clGetEventInfo);
+    LOADPROCDECL(clCreateBuffer);
+    LOADPROCDECL(clCreateKernel);
+    LOADPROCDECL(clReleaseMemObject);
+    LOADPROCDECL(clReleaseKernel);
+    LOADPROCDECL(clReleaseProgram);
+    LOADPROCDECL(clEnqueueMapBuffer);
+    LOADPROCDECL(clEnqueueNDRangeKernel);
+    LOADPROCDECL(clEnqueueUnmapMemObject);
+    LOADPROCDECL(clReleaseEvent);
+    LOADPROCDECL(clCreateProgramWithSource);
+    LOADPROCDECL(clBuildProgram);
+    LOADPROCDECL(clSetKernelArg);
+    LOADPROCDECL(clGetDeviceInfo);
+    LOADPROCDECL(clFlush);
+    LOADPROCDECL(clFinish);
+    LOADPROCDECL(clWaitForEvents);
     return true;
 
 error:

@@ -45,6 +45,9 @@ extern "C" __declspec(dllexport) bool __cdecl InitVCEEncoder(ConfigFile **appCon
 
 extern "C" __declspec(dllexport) bool __cdecl CheckVCEHardwareSupport(bool log)
 {
+#ifdef _WIN64
+    VCELog(TEXT("If ObsVCE crashes while trying to use OpenCL functions, try 32bit version."));
+#endif
     cl_platform_id platform = 0;
     cl_device_id device = 0;
 
@@ -67,7 +70,7 @@ extern "C" __declspec(dllexport) bool __cdecl CheckVCEHardwareSupport(bool log)
 }
 
 //Keeping it like x264/qsv/nvenc (for now atleast)
-extern "C" __declspec(dllexport) VideoEncoder* __cdecl CreateVCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR)
+extern "C" __declspec(dllexport) VideoEncoder* __cdecl CreateVCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, void *d3d10)
 {
     if (!initOVE())
         return 0;
@@ -143,7 +146,7 @@ bool VCEEncoder::init()
         mConfigCtrl.profileLevel.level = 50; // 40 - Level 4.0, 51 - Level 5.1
         
         mConfigCtrl.rateControl.encRateControlMethod = RCM_CBR; // 0 - None, 3 - CBR, 4 - VBR
-        mConfigCtrl.rateControl.encRateControlTargetBitRate = mMaxBitrate * (1000 - bitRateWindow);
+		mConfigCtrl.rateControl.encRateControlTargetBitRate = mMaxBitrate * 1000; // (1000 - bitRateWindow);
         mConfigCtrl.rateControl.encRateControlPeakBitRate = mMaxBitrate * (1000 + bitRateWindow);
         mConfigCtrl.rateControl.encGOPSize = gopSize;
         mConfigCtrl.rateControl.encQP_I = 0;
@@ -263,19 +266,50 @@ bool VCEEncoder::init()
     }
 
     uint32_t devIdx = (uint32_t)AppConfig->GetInt(TEXT("VCE Settings"), TEXT("DevIndex"), 0);
+    int devTopoId = (int)AppConfig->GetHex(TEXT("VCE Settings"), TEXT("DevTopoId"), -1);
+    bool devNameLogged = false;
+
     if (devIdx >= mDeviceHandle.numDevices)
         devIdx = 0;
     uint32_t device = mDeviceHandle.deviceInfo[devIdx].device_id;
+	for (int i = 0; i < mDeviceHandle.numDevices; i++)
+	{
+		cl_device_id clDeviceID = 
+			reinterpret_cast<cl_device_id>(mDeviceHandle.deviceInfo[i].device_id);
 
-    //VCELog(TEXT("If it crashes now, add \"LogUsedDev=0\" under \"VCE Settings\" to ini."));
-    bool logName = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("LogUsedDev"), 1) != 0;
-    if (logName)
+#ifdef _WIN64
+		intptr_t ptr = intptr_t((intptr_t*)&clDeviceID);
+		clDeviceID = (cl_device_id)((intptr_t)clDeviceID | (ptr & 0xFFFFFFFF00000000));
+#endif
+
+		int id = GetTopologyId(clDeviceID);
+		if (id > -1)
+		{
+			VCELog(TEXT("Device %d Topology : PCI[B#%d, D#%d, F#%d] : TopoID: 0x%06X"),
+				i, (id >> 16) & 0xFF, (id >> 8) & 0xFF, (id & 0xFF), id);
+
+			if (devTopoId == id)
+			{
+				device = mDeviceHandle.deviceInfo[i].device_id;
+				// print device name
+				size_t valueSize;
+				f_clGetDeviceInfo(clDeviceID, CL_DEVICE_NAME, 0, NULL, &valueSize);
+				char* value = new char[valueSize];
+				f_clGetDeviceInfo(clDeviceID, CL_DEVICE_NAME, valueSize, value, NULL);
+				//TODO non-unicode string formatting
+				VCELog(TEXT("Topology id match, using device %d (%S)"), i, value);
+				delete[] value;
+				devNameLogged = true;
+			}
+		}
+	}
+
+    if (!devNameLogged)
     {
         cl_device_id clDeviceID = reinterpret_cast<cl_device_id>(device);
 
 #ifdef _WIN64
         // May ${DEITY} have mercy on us all.
-        VCELog(TEXT("If it crashes now, use 32bit version."));
         intptr_t ptr = intptr_t((intptr_t*)&clDeviceID);
         clDeviceID = (cl_device_id)((intptr_t)clDeviceID | (ptr & 0xFFFFFFFF00000000));
 #endif
@@ -290,8 +324,7 @@ bool VCEEncoder::init()
         free(value);
     }
 
-    status = encodeCreate(device) && encodeOpen(device);
-    if (!status)
+    if (!encodeCreate(device))
     {
         //Cleanup
         encodeClose();
@@ -638,9 +671,9 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         ret = false;
         goto fail;
     }
-    profileOut
+    //profileOut
 
-    profileIn("Query task(s) completion")
+    //profileIn("Query task(s) completion")
     //Retrieve h264 bitstream
     numTaskDescriptionsReturned = 0;
     memset(pTaskDescriptionList, 0, sizeof(OVE_OUTPUT_DESCRIPTION)*numTaskDescriptionsRequested);

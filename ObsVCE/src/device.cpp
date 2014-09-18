@@ -1,6 +1,31 @@
 #include "stdafx.h"
 #include "ObsVCE.h"
 
+#define TOPOID(a,b,c) ((((int)a<<16) | ((int)b<<8) | ((int)c)) & 0xFFFFFF)
+
+//Try to differentiate between devices by physical location
+int GetTopologyId(cl_device_id devId)
+{
+	cl_device_topology_amd topology;
+	cl_int status = f_clGetDeviceInfo(devId, CL_DEVICE_TOPOLOGY_AMD,
+		sizeof(cl_device_topology_amd), &topology, NULL);
+
+	if (status != CL_SUCCESS) {
+		VCELog(TEXT("Failed to get device topology."));
+		return -1;
+	}
+
+	if (topology.raw.type == CL_DEVICE_TOPOLOGY_TYPE_PCIE_AMD) {
+		/*VCELog(TEXT("INFO: Topology : PCI[B#%d, D#%d, F#%d]"),
+			(int)topology.pcie.bus,
+			(int)topology.pcie.device,
+			(int)topology.pcie.function);*/
+		return TOPOID(topology.pcie.bus, topology.pcie.device, topology.pcie.function);
+	}
+
+	return -1;
+}
+
 void waitForEvent(cl_event inMapEvt)
 {
     cl_int eventStatus = CL_QUEUED;
