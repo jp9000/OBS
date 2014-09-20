@@ -280,6 +280,7 @@ typedef struct _cl_buffer_region {
 #define CL_DEVICE_PRINTF_BUFFER_SIZE                0x1049
 #define CL_DEVICE_IMAGE_PITCH_ALIGNMENT             0x104A
 #define CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT      0x104B
+/* 0x104C reserved for CL_DEVICE_SVM_CAPABILITIES */
 
 /* cl_device_fp_config - bitfield */
 #define CL_FP_DENORM                                (1 << 0)
@@ -548,6 +549,7 @@ typedef struct _cl_buffer_region {
 #define CL_COMMAND_MIGRATE_MEM_OBJECTS              0x1206
 #define CL_COMMAND_FILL_BUFFER                      0x1207
 #define CL_COMMAND_FILL_IMAGE                       0x1208
+/* 0x1209-0x120F reserved for SVM commands */
 
 /* command execution status */
 #define CL_COMPLETE                                 0x0
