@@ -135,13 +135,13 @@ HRESULT VCEEncoder::Init()
     if (S_OK != hr)
     {
         VCELog(TEXT("MFStartup failed."));
-		return (0x20000 | 0x0001);
+        return (0x20000 | 0x0001);
     }
     mMFDealloc = new FunctionDeallocator< HRESULT(__stdcall*)(void) >(MFShutdown);
 
     memset(&mPConfigCtrl, 0, sizeof(mPConfigCtrl));
 
-    int iNumRefs = 3, QvsS = 0;
+    uint32_t iNumRefs = 3, QvsS = 0;
     int bitRateWindow = 50;
     int gopSize = mFps * (mKeyint == 0 ? 2 : mKeyint);
     gopSize -= gopSize % 6;
@@ -173,8 +173,8 @@ HRESULT VCEEncoder::Init()
 
     // http://msdn.microsoft.com/en-us/library/windows/desktop/dd317651%28v=vs.85%29.aspx bits or bytes??
     mPConfigCtrl.vidParams.bufSize = mBufferSize * 1000;
-    mPConfigCtrl.vidParams.meanBitrate = mMaxBitrate * 1000;// (1000 + bitRateWindow);
-    mPConfigCtrl.vidParams.maxBitrate = mMaxBitrate * (1000 - bitRateWindow);
+    mPConfigCtrl.vidParams.meanBitrate = mMaxBitrate * 1000;// (1000 - bitRateWindow);
+    mPConfigCtrl.vidParams.maxBitrate = mMaxBitrate * (1000 + bitRateWindow);
     mPConfigCtrl.vidParams.idrPeriod = (mKeyint > 0 ? mKeyint : 2) * mFps;
     mPConfigCtrl.vidParams.gopSize = gopSize;
     mPConfigCtrl.vidParams.qualityVsSpeed = QvsS;
@@ -197,6 +197,7 @@ HRESULT VCEEncoder::Init()
         APPCFG(mPConfigCtrl.vidParams.idrPeriod, "IDRPeriod");
         APPCFG(mPConfigCtrl.vidParams.qualityVsSpeed, "QualityVsSpeed");
         APPCFG(mPConfigCtrl.vidParams.enableCabac, "CABAC");
+        APPCFG(mPConfigCtrl.vidParams.numBFrames, "BFrames");
         iNumRefs = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("NumRefs"), 3);
 #undef APPCFG
     }
@@ -245,47 +246,36 @@ HRESULT VCEEncoder::Init()
         VCELog(TEXT("Failed to set CODECAPI_AVEncCommonMeanBitRate"));
     }
 
-    //Fails
-    /*if (mUseCBR)
-    {
-        hr = mBuilder->setEncoderValue(&CODECAPI_AVEncCommonMinBitRate,
-            (uint32_t)mPConfigCtrl.vidParams.meanBitrate, mEncTrans);
-        if (hr != S_OK)
-        {
-            VCELog(TEXT("Failed to set CODECAPI_AVEncCommonMinBitRate"));
-        }
-    }*/
-
     hr = mBuilder->setEncoderValue(&CODECAPI_AVEncVideoMaxNumRefFrame,
-        (uint32_t)iNumRefs, mEncTrans);
+        iNumRefs, mEncTrans);
     if (hr != S_OK)
     {
         VCELog(TEXT("Failed to set CODECAPI_AVEncVideoMaxNumRefFrame"));
     }
 
-	MFT_OUTPUT_STREAM_INFO si = { 0 };
+    MFT_OUTPUT_STREAM_INFO si = { 0 };
 
-	mEncTrans->GetOutputStreamInfo(0, &si);
+    mEncTrans->GetOutputStreamInfo(0, &si);
 
-	//TODO Handle other cases too, maybe
-	if (!HASFLAG(si.dwFlags,
-		MFT_OUTPUT_STREAM_WHOLE_SAMPLES |
-		MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER |
-		MFT_OUTPUT_STREAM_PROVIDES_SAMPLES)) //Otherwise need to allocate own IMFSample
-	{
-		return S_FALSE;
-	}
+    //TODO Handle other cases too, maybe
+    if (!HASFLAG(si.dwFlags,
+        MFT_OUTPUT_STREAM_WHOLE_SAMPLES |
+        MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER |
+        MFT_OUTPUT_STREAM_PROVIDES_SAMPLES)) //Otherwise need to allocate own IMFSample
+    {
+        return S_FALSE;
+    }
 
     MFFrameRateToAverageTimePerFrame(mFps, 1, &mFrameDur);
 
     /// Get it rolling
     hr = mEncTrans->ProcessMessage(MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, 0);
-	if (FAILED(hr))
-		VCELog(TEXT("Notify begin of stream failed."));
+    if (FAILED(hr))
+        VCELog(TEXT("Notify begin of stream failed."));
 
     hr = mEncTrans->ProcessMessage(MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0);
-	if (FAILED(hr))
-		VCELog(TEXT("Start of stream failed. Could be that VCE MFT does not like some settings."));
+    if (FAILED(hr))
+        VCELog(TEXT("Start of stream failed. Could be that VCE MFT does not like some settings."));
 
     mAlive = true;
     return hr;
@@ -377,11 +367,11 @@ HRESULT VCEEncoder::ProcessOutput(List<DataPacket> &packets, List<PacketType> &p
     //E_UNEXPECTED if no METransformHaveOutput event
     hr = mEncTrans->ProcessOutput(0, 1, out, &status);
 
-	if (out[0].pEvents)
-	{
-		out[0].pEvents->Release();
-		out[0].pEvents = nullptr;
-	}
+    if (out[0].pEvents)
+    {
+        out[0].pEvents->Release();
+        out[0].pEvents = nullptr;
+    }
 
     if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
         return hr;
@@ -509,38 +499,40 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     HRESULT hrIn = S_OK;
     hr = S_OK;
 
-	while (!packets.Num())
+    while (true)
     {
         hrIn = ProcessInput(sample);
-		QWORD start = GetQPCTime100NS();
+
+        if (packets.Num())
+            break;
+
+        QWORD start = GetQPCTime100NS();
+
         profileIn("Output")
         //OSSleep(1000/(mFps + 10));
-		Sleep(5);
-        while (/*packets.Num() == 0 &&*/ SUCCEEDED(hrIn))
+        Sleep(5);
+        while (/*packets.Num() == 0 &&*/ hrIn == MF_E_NOTACCEPTING || SUCCEEDED(hrIn))
         {
-
-            // Useless, MFT_OUTPUT_STATUS_SAMPLE_READY and ProcessOutput still returns E_UNEXPECTED, wtf
-            //DWORD flags = 0;
-            //if (SUCCEEDED(mEncTrans->GetOutputStatus(&flags)) && !flags)
-            //    continue;
-
+            //GetOutputStatus is pretty useless.
             hr = ProcessOutput(packets, packetTypes, timestamp, out_pts);
             if (hr != E_UNEXPECTED)
                 OSDebugOut(TEXT("ProcessOutput %d ts %d hr %08X out_pts %d\n"), packets.Num(), timestamp, hr, out_pts);
 
-            if (hr != E_UNEXPECTED && FAILED(hr))
+            if ((timestamp == 0 && hr != E_UNEXPECTED && FAILED(hr)))
+                break;
+            else if (timestamp > 0 && FAILED(hr))
                 break;
 
             if (packets.Num())
                 break;
 
-			OSSleep100NS(16666);//OSSleepXXX high cpu usage???
-			//Sleep(1);
+            OSSleep100NS(16666);//OSSleepXXX high cpu usage???
+            //Sleep(1);
 
         }
         profileOut
-		start = GetQPCTime100NS() - start;
-		OSDebugOut(TEXT("Jacked it in while loop for %lld\n"), start);
+        start = GetQPCTime100NS() - start;
+        OSDebugOut(TEXT("In while loop for %lld\n"), start);
 
         if (SUCCEEDED(hrIn) || FAILED(hr) ||
             (hrIn != MF_E_NOTACCEPTING && FAILED(hrIn)))
@@ -603,26 +595,26 @@ void VCEEncoder::ProcessBitstream(OutputBuffer &buff, List<DataPacket> &packets,
     PacketType bestType = PacketType_VideoDisposable;
     bool bFoundFrame = false;
 
-	for (unsigned int i = 0; i < nalNum; i++)
-	{
-		x264_nal_t &nal = nalOut[i];
-		if (nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE)
-		{
-			BYTE *skip = nal.p_payload;
-			while (*(skip++) != 0x1);
-			int skipBytes = (int)(skip - nal.p_payload);
+    for (unsigned int i = 0; i < nalNum; i++)
+    {
+        x264_nal_t &nal = nalOut[i];
+        if (nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE)
+        {
+            BYTE *skip = nal.p_payload;
+            while (*(skip++) != 0x1);
+            int skipBytes = (int)(skip - nal.p_payload);
 
-			if (!bFoundFrame)
-			{
-				bufferedOut->pBuffer.Insert(0, (nal.i_type == NAL_SLICE_IDR) ? 0x17 : 0x27);
-				bufferedOut->pBuffer.Insert(1, 1);
-				bufferedOut->pBuffer.InsertArray(2, timeOffsetAddr, 3);
+            if (!bFoundFrame)
+            {
+                bufferedOut->pBuffer.Insert(0, (nal.i_type == NAL_SLICE_IDR) ? 0x17 : 0x27);
+                bufferedOut->pBuffer.Insert(1, 1);
+                bufferedOut->pBuffer.InsertArray(2, timeOffsetAddr, 3);
 
-				bFoundFrame = true;
-			}
-			break;
-		}
-	}
+                bFoundFrame = true;
+            }
+            break;
+        }
+    }
 
     for (unsigned int i = 0; i < nalNum; i++)
     {
@@ -774,7 +766,7 @@ void VCEEncoder::ProcessBitstream(OutputBuffer &buff, List<DataPacket> &packets,
             bufferedOut->pBuffer.SetSize(currSize + fillerSize);
             BYTE *ptr = bufferedOut->pBuffer.Array() + currSize;
             memset(ptr, 0xFF, fillerSize);
-			*(ptr + fillerSize) = 0x80;
+            *(ptr + fillerSize) = 0x80;
 
             mCurrBucketSize -= mDesiredPacketSize;
         }
@@ -891,6 +883,8 @@ void VCEEncoder::GetHeaders(DataPacket &packet)
         mInputBuffers[(int)tmp.Data.MemId - 1].pBufferPtr = nullptr;
         mReqKeyframe = true;
     }
+
+    assert(mHdrPacket);
 
     x264_nal_t nalSPS = { 0 }, nalPPS = { 0 };
     uint8_t *start = mHdrPacket;

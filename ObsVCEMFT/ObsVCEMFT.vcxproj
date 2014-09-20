@@ -186,6 +186,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(USERPROFILE)\AMD Media SDK\1.0\lib\amf\x86_64\Release;$(SolutionDir)\OBSApi\$(Platform)\$(Configuration);$(AMDAPPSDKROOT)lib\x86_64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>wmcodecdspuuid.lib;mfuuid.lib;mf.lib;mfplat.lib;d3d11.lib;Dxva2.lib;D3d9.lib;Strmiids.lib;Propsys.lib;OBSApi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <StripPrivateSymbols>$(SolutionDir)\rundir\pdb64\stripped\$(TargetName).pdb</StripPrivateSymbols>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(OutDir)$(TargetFileName)" "$(SolutionDir)rundir\$(TargetFileName)"</Command>

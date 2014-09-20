@@ -68,7 +68,6 @@ public:
     bool Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, DWORD &out_pts);
     void RequestBuffers(LPVOID buffers);
     int  GetBitRate() const;
-    //HW MFT must support dynamic stream changes, so yes?
     bool DynamicBitrateSupported() const;
     bool SetBitRate(DWORD maxBitrate, DWORD bufferSize);
     void GetHeaders(DataPacket &packet);

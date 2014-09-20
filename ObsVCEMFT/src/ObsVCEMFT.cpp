@@ -38,7 +38,7 @@ EXPORT_C_(bool) CheckVCEHardwareSupport(bool log)
     return true;
 }
 
-EXPORT_C_(VideoEncoder*) CreateVCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR)
+EXPORT_C_(VideoEncoder*) CreateVCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, void *d3d10)
 {
 
     VCEEncoder *enc = new VCEEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR);

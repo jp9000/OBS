@@ -640,6 +640,23 @@ public:
         return hr;
     }
 
+	HRESULT setEncoderValue(const GUID* guid, uint64_t value, CComPtr<IMFTransform> encoderTransform)
+	{
+		HRESULT hr = E_FAIL;
+		if (encoderTransform != nullptr)
+		{
+			CComPtr<ICodecAPI> codecAPI;
+			codecAPI = encoderTransform;
+			hr = codecAPI->IsSupported(guid);
+			RETURNIFFAILED(hr);
+			VARIANT var;
+			var.vt = VT_UI8;
+			var.ullVal = value;
+			hr = codecAPI->SetValue(guid, &var);
+		}
+		return hr;
+	}
+
     HRESULT getEncoderValue(const GUID* guid, uint32_t *value, CComPtr<IMFTransform> encoderTransform)
     {
         HRESULT hr = E_FAIL;
@@ -908,6 +925,16 @@ public:
                 &temporalLayerCount);
             LOG(mLogFile, "Failed to set CODECAPI_AVEncVideoTemporalLayerCount @ %s %d \n", TEXT(__FILE__), __LINE__);
         }
+
+		/**********************************************************************
+		* Inserting B frames                                                  *
+		**********************************************************************/
+		hr = setEncoderValue(&CODECAPI_AVEncMPVDefaultBPictureCount,
+			(uint32_t)vidEncParams->numBFrames, encoderTransform);
+		if (hr != S_OK)
+		{
+			LOG(mLogFile, "Failed to set CODECAPI_AVEncMPVDefaultBPictureCount @ %s %d \n", __FILE__, __LINE__);
+		}
 
         //Not using topology
         /*CComPtr<IMFTopologyNode> node;
