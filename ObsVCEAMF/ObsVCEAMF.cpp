@@ -291,7 +291,7 @@ bool VCEEncoder::Init()
 	res = AMFCreateContext(&mContext);
 	RETURNIFFAILED(res, TEXT("AMFCreateContext failed. %d"), res);
 
-	int engine = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("AMFEngine"), 0);
+	int engine = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("AMFEngine"), 0);
 	if (engine > 2) engine = 0;
 
 	if (engine == 2 || mIsWin8OrGreater)
