@@ -1,0 +1,129 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\CL">
+      <UniqueIdentifier>{934b61d8-a38f-4eac-8e8f-ea49ee33c58d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\amfhelpers">
+      <UniqueIdentifier>{47807dd6-9771-4dcf-bacb-41e12626fec9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\amfhelpers">
+      <UniqueIdentifier>{db55bf40-a22a-48bb-bb36-aca636b69b26}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ObsVCEAMF.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OBS-min.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CL\cl.h">
+      <Filter>Header Files\CL</Filter>
+    </ClInclude>
+    <ClInclude Include="CL\cl.hpp">
+      <Filter>Header Files\CL</Filter>
+    </ClInclude>
+    <ClInclude Include="CL\cl_d3d10.h">
+      <Filter>Header Files\CL</Filter>
+    </ClInclude>
+    <ClInclude Include="CL\cl_d3d11.h">
+      <Filter>Header Files\CL</Filter>
+    </ClInclude>
+    <ClInclude Include="CL\cl_dx9_media_sharing.h">
+      <Filter>Header Files\CL</Filter>
+    </ClInclude>
+    <ClInclude Include="CL\cl_ext.h">
+      <Filter>Header Files\CL</Filter>
+    </ClInclude>
+    <ClInclude Include="CL\cl_gl.h">
+      <Filter>Header Files\CL</Filter>
+    </ClInclude>
+    <ClInclude Include="CL\cl_gl_ext.h">
+      <Filter>Header Files\CL</Filter>
+    </ClInclude>
+    <ClInclude Include="CL\cl_platform.h">
+      <Filter>Header Files\CL</Filter>
+    </ClInclude>
+    <ClInclude Include="CL\opencl.h">
+      <Filter>Header Files\CL</Filter>
+    </ClInclude>
+    <ClInclude Include="VCECL.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VersionHelpers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="amfhelpers\inc\AMFPlatform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="amfhelpers\inc\CmdLogger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="amfhelpers\inc\DeviceDX11.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="amfhelpers\inc\DeviceDX9.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="amfhelpers\inc\DeviceOpenCL.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="amfhelpers\inc\DeviceOpenGL.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="amfhelpers\inc\PlatformWindows.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="amfhelpers\inc\Thread.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ObsVCEAMF.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VCECL.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="amfhelpers\src\DeviceDX11.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="amfhelpers\src\DeviceDX9.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="amfhelpers\src\DeviceOpenCL.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="amfhelpers\src\DeviceOpenGL.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

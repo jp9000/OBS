@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.21005.1
+VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OBS", "OBS.vcxproj", "{221C92F4-3416-43F1-8E4E-78657AFD0111}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -67,6 +67,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ObsVCE", "ObsVCE\ObsVCE.vcx
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ObsVCEMFT", "ObsVCEMFT\ObsVCEMFT.vcxproj", "{29588C0E-1C10-4CC7-A056-2E491595AA04}"
+	ProjectSection(ProjectDependencies) = postProject
+		{11A35235-DD48-41E2-8F40-825C78024BC0} = {11A35235-DD48-41E2-8F40-825C78024BC0}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ObsVCEAMF", "ObsVCEAMF\ObsVCEAMF.vcxproj", "{BB9A0071-412E-4B72-8A5F-F09F4F19425B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{11A35235-DD48-41E2-8F40-825C78024BC0} = {11A35235-DD48-41E2-8F40-825C78024BC0}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -212,6 +220,14 @@ Global
 		{29588C0E-1C10-4CC7-A056-2E491595AA04}.Release|Win32.Build.0 = Release|Win32
 		{29588C0E-1C10-4CC7-A056-2E491595AA04}.Release|x64.ActiveCfg = Release|x64
 		{29588C0E-1C10-4CC7-A056-2E491595AA04}.Release|x64.Build.0 = Release|x64
+		{BB9A0071-412E-4B72-8A5F-F09F4F19425B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BB9A0071-412E-4B72-8A5F-F09F4F19425B}.Debug|Win32.Build.0 = Debug|Win32
+		{BB9A0071-412E-4B72-8A5F-F09F4F19425B}.Debug|x64.ActiveCfg = Debug|x64
+		{BB9A0071-412E-4B72-8A5F-F09F4F19425B}.Debug|x64.Build.0 = Debug|x64
+		{BB9A0071-412E-4B72-8A5F-F09F4F19425B}.Release|Win32.ActiveCfg = Release|Win32
+		{BB9A0071-412E-4B72-8A5F-F09F4F19425B}.Release|Win32.Build.0 = Release|Win32
+		{BB9A0071-412E-4B72-8A5F-F09F4F19425B}.Release|x64.ActiveCfg = Release|x64
+		{BB9A0071-412E-4B72-8A5F-F09F4F19425B}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
