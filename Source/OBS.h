@@ -163,6 +163,12 @@ public:
 };
 
 //-------------------------------------------------------------------
+//WIP
+enum VideoEncoder_Features
+{
+    VideoEncoder_Unknown           = 0x00000000,
+    VideoEncoder_D3D10Interop      = 0x00000001
+};
 
 class VideoEncoder
 {
@@ -191,6 +197,10 @@ public:
 
     virtual int GetBufferedFrames() { if(HasBufferedFrames()) return -1; return 0; }
     virtual bool HasBufferedFrames() { return false; }
+
+    //WIP ugly names
+    virtual VideoEncoder_Features GetFeatures() { return VideoEncoder_Unknown; }
+    virtual void ConvertD3D10(ID3D10Texture2D *d3dtex, void *data, void **state) { }
 };
 
 //-------------------------------------------------------------------

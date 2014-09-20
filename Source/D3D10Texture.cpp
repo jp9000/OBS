@@ -381,6 +381,7 @@ Texture* D3D10Texture::CreateRenderTarget(unsigned int width, unsigned int heigh
     newTex->renderTarget = view;
     newTex->width = width;
     newTex->height = height;
+    newTex->convState = nullptr;
 
     return newTex;
 }

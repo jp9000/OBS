@@ -106,6 +106,7 @@ class D3D10Texture : public Texture
     IDXGISurface1 *surface;
     bool bGDICompatible;
     bool bDynamic;
+    void *convState;
 
     static Texture* CreateFromSharedHandle(unsigned int width, unsigned int height, HANDLE handle);
     static Texture* CreateTexture(unsigned int width, unsigned int height, GSColorFormat colorFormat, void *lpData, BOOL bGenMipMaps, BOOL bStatic);

@@ -600,8 +600,11 @@ void OBS::MainCaptureLoop()
     int curOutBuffer = 0;
 
     bool bUsingQSV = videoEncoder->isQSV();//GlobalConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
-    bUsing444 = false || (AppConfig->GetString(L"Video Encoding", L"Encoder") == L"VCE") &&
-        (AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCL"), 0) == 1);
+    bool bUsingVCE = (AppConfig->GetString(L"Video Encoding", L"Encoder") == L"VCE") == TRUE;
+    bool bUsingVCEMFT = (AppConfig->GetInt(TEXT("Video Encoding"), TEXT("MFT"), 0) != 0);
+    bool bUsingCL = (AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCL"), 0) == 1);
+    bool bUsingInterop = !!(videoEncoder->GetFeatures() & VideoEncoder_D3D10Interop);
+    bUsing444 = false || (bUsingVCE && bUsingCL) || (bUsingVCE && bUsingVCEMFT);
 
     EncoderPicture lastPic;
     EncoderPicture outPics[NUM_OUT_BUFFERS];
@@ -1087,6 +1090,10 @@ void OBS::MainCaptureLoop()
             UINT prevCopyTexture = (curCopyTexture == 0) ? NUM_RENDER_BUFFERS-1 : curCopyTexture-1;
 
             ID3D10Texture2D *copyTexture = copyTextures[curCopyTexture];
+            D3D10Texture *d3dYUV = static_cast<D3D10Texture*>(yuvRenderTextures[curYUVTexture]);
+
+            if (!bUsingInterop)
+            {
             profileIn("CopyResource");
 
             if(!bFirstEncode && bUseThreaded420)
@@ -1095,9 +1102,9 @@ void OBS::MainCaptureLoop()
                 copyTexture->Unmap(0);
             }
 
-            D3D10Texture *d3dYUV = static_cast<D3D10Texture*>(yuvRenderTextures[curYUVTexture]);
             GetD3D()->CopyResource(copyTexture, d3dYUV->texture);
             profileOut;
+            }
 
             ID3D10Texture2D *prevTexture = copyTextures[prevCopyTexture];
 
@@ -1107,7 +1114,27 @@ void OBS::MainCaptureLoop()
             {
                 HRESULT result;
                 D3D10_MAPPED_TEXTURE2D map;
-                if(SUCCEEDED(result = prevTexture->Map(0, D3D10_MAP_READ, 0, &map)))
+                if (bUsingInterop)
+                {
+                    int prevOutBuffer = (curOutBuffer == 0) ? NUM_OUT_BUFFERS - 1 : curOutBuffer - 1;
+                    int nextOutBuffer = (curOutBuffer == NUM_OUT_BUFFERS - 1) ? 0 : curOutBuffer + 1;
+
+                    EncoderPicture &prevPicOut = outPics[prevOutBuffer];
+                    EncoderPicture &picOut = outPics[curOutBuffer];
+                    EncoderPicture &nextPicOut = outPics[nextOutBuffer];
+                    mfxFrameData* data = &picOut.mfxOut->Data;
+                    profileIn("Conversion");
+                    videoEncoder->ConvertD3D10(d3dYUV->texture, data, &d3dYUV->convState);
+                    profileOut
+
+                    if (bEncode)
+                    {
+                        InterlockedExchangePointer((volatile PVOID*)&curFramePic, &picOut);
+                    }
+
+                    curOutBuffer = nextOutBuffer;
+                }
+                else if(SUCCEEDED(result = prevTexture->Map(0, D3D10_MAP_READ, 0, &map)))
                 {
                     int prevOutBuffer = (curOutBuffer == 0) ? NUM_OUT_BUFFERS-1 : curOutBuffer-1;
                     int nextOutBuffer = (curOutBuffer == NUM_OUT_BUFFERS-1) ? 0 : curOutBuffer+1;
