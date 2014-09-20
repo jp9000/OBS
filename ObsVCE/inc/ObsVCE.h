@@ -124,7 +124,7 @@ protected:
     void RequestBuffers(LPVOID buffers);
 
 public:
-    VCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR);
+    VCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, ID3D10Device *d3d10);
     ~VCEEncoder();
 
     int  GetBitRate() const;
@@ -142,22 +142,34 @@ public:
 
     int GetBufferedFrames() { if (HasBufferedFrames()) return -1; return 0; }
     bool HasBufferedFrames() { return false; }
+	VideoEncoder_Features GetFeatures()
+	{
+		if (mCanInterop)
+			return VideoEncoder_D3D10Interop;
+		return VideoEncoder_Unknown; 
+	}
+	void ConvertD3D10(ID3D10Texture2D *d3dtex, void *data, void **state);
 
     bool init();
 private:
 
 	// Warm up OpenCL buffers etc.
     void Warmup();
-	bool YUV444Convert(int bufferidx);
+	bool ConvertYUV444(int bufferidx);
     bool encodeCreate(uint32_t deviceId);
     bool encodeClose();
     void ProcessOutput(OVE_OUTPUT_DESCRIPTION *surf, List<DataPacket> &packets, List<PacketType> &packetTypes, uint64_t timestamp);
+    bool RunKernels(cl_mem inBuf, cl_mem yuvBuf, size_t width, size_t height);
+    cl_mem CreateTexture2D(ID3D10Texture2D *tex);
+    cl_int AcquireD3D10(cl_mem tex);
+    cl_int ReleaseD3D10(cl_mem tex);
 
     HANDLE frameMutex;
 
     OVDeviceHandle      mDeviceHandle;
     OPContextHandle     mOveContext;
     OVEncodeHandle      mEncodeHandle;
+    ID3D10Device*       mD3D10Device;
 
     OvConfigCtrl            mConfigCtrl;
     map<string, int32_t>    mConfigTable;
@@ -202,4 +214,10 @@ private:
     int32_t mMaxBucketSize;
     uint32_t mDesiredPacketSize;
     int32_t mCurrFrame;
+
+	std::vector<cl_mem> mCLMemObjs;
+	bool mCanInterop;
+	clCreateFromD3D10Texture2DKHR_fn   clCreateFromD3D10Texture2DKHR;
+	clEnqueueAcquireD3D10ObjectsKHR_fn clEnqueueAcquireD3D10ObjectsKHR;
+	clEnqueueReleaseD3D10ObjectsKHR_fn clEnqueueReleaseD3D10ObjectsKHR;
 };

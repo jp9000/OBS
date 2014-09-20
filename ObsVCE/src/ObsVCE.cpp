@@ -70,12 +70,12 @@ extern "C" __declspec(dllexport) bool __cdecl CheckVCEHardwareSupport(bool log)
 }
 
 //Keeping it like x264/qsv/nvenc (for now atleast)
-extern "C" __declspec(dllexport) VideoEncoder* __cdecl CreateVCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, void *d3d10)
+extern "C" __declspec(dllexport) VideoEncoder* __cdecl CreateVCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, ID3D10Device *d3d10)
 {
     if (!initOVE())
         return 0;
 
-    VCEEncoder *enc = new VCEEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR);
+    VCEEncoder *enc = new VCEEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR, d3d10);
 
     encoderRefs += 1; //Lock?
 
@@ -100,6 +100,8 @@ bool VCEEncoder::init()
     bool status = false;
     if (!initOVE() || !mOutPtr)
         return false;
+
+    VCELog(TEXT("Build date ") TEXT(__DATE__) TEXT(" ") TEXT(__TIME__));
     bool bPadCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 0) != 0;
     int numH = ((mHeight + 15) / 16);
 
@@ -146,7 +148,7 @@ bool VCEEncoder::init()
         mConfigCtrl.profileLevel.level = 50; // 40 - Level 4.0, 51 - Level 5.1
         
         mConfigCtrl.rateControl.encRateControlMethod = RCM_CBR; // 0 - None, 3 - CBR, 4 - VBR
-		mConfigCtrl.rateControl.encRateControlTargetBitRate = mMaxBitrate * 1000; // (1000 - bitRateWindow);
+        mConfigCtrl.rateControl.encRateControlTargetBitRate = mMaxBitrate * 1000; // (1000 - bitRateWindow);
         mConfigCtrl.rateControl.encRateControlPeakBitRate = mMaxBitrate * (1000 + bitRateWindow);
         mConfigCtrl.rateControl.encGOPSize = gopSize;
         mConfigCtrl.rateControl.encQP_I = 0;
@@ -155,7 +157,7 @@ bool VCEEncoder::init()
         mConfigCtrl.rateControl.encRCOptions = bPadCBR ? 3 : 0;
 
         mConfigCtrl.pictControl.encHeaderInsertionSpacing = mManKeyInt;
-        mConfigCtrl.pictControl.encIDRPeriod = 0;// gopSize;
+		mConfigCtrl.pictControl.encIDRPeriod = mManKeyInt;// gopSize;
         mConfigCtrl.pictControl.encNumMBsPerSlice = 0;
 
         /*mConfigCtrl.meControl.encSearchRangeX = 16;
@@ -177,7 +179,7 @@ bool VCEEncoder::init()
 
         //TODO IDR nice for seeking in local files. Intra-refresh better for streaming?
         mManKeyInt = mKeyint * mFps;
-        mConfigCtrl.pictControl.encIDRPeriod = 0;
+		mConfigCtrl.pictControl.encIDRPeriod = mManKeyInt;
         mConfigCtrl.pictControl.encForceIntraRefresh = 0;// mManKeyInt;
         //TODO Usually 0 to let VCE manage it.
         mConfigCtrl.rateControl.encGOPSize = mKeyint * mFps;
@@ -246,11 +248,8 @@ bool VCEEncoder::init()
 #undef APPCFG
     }
 
-    if (mDeviceHandle.deviceInfo)
-    {
-        delete[] mDeviceHandle.deviceInfo;
-        mDeviceHandle.deviceInfo = NULL;
-    }
+    delete[] mDeviceHandle.deviceInfo;
+    mDeviceHandle.deviceInfo = NULL;
 
     status = getDevice(&mDeviceHandle);
     if (status == false)
@@ -272,37 +271,37 @@ bool VCEEncoder::init()
     if (devIdx >= mDeviceHandle.numDevices)
         devIdx = 0;
     uint32_t device = mDeviceHandle.deviceInfo[devIdx].device_id;
-	for (int i = 0; i < mDeviceHandle.numDevices; i++)
-	{
-		cl_device_id clDeviceID = 
-			reinterpret_cast<cl_device_id>(mDeviceHandle.deviceInfo[i].device_id);
+    for (int i = 0; i < mDeviceHandle.numDevices; i++)
+    {
+        cl_device_id clDeviceID = 
+            reinterpret_cast<cl_device_id>(mDeviceHandle.deviceInfo[i].device_id);
 
 #ifdef _WIN64
-		intptr_t ptr = intptr_t((intptr_t*)&clDeviceID);
-		clDeviceID = (cl_device_id)((intptr_t)clDeviceID | (ptr & 0xFFFFFFFF00000000));
+        intptr_t ptr = intptr_t((intptr_t*)&clDeviceID);
+        clDeviceID = (cl_device_id)((intptr_t)clDeviceID | (ptr & 0xFFFFFFFF00000000));
 #endif
 
-		int id = GetTopologyId(clDeviceID);
-		if (id > -1)
-		{
-			VCELog(TEXT("Device %d Topology : PCI[B#%d, D#%d, F#%d] : TopoID: 0x%06X"),
-				i, (id >> 16) & 0xFF, (id >> 8) & 0xFF, (id & 0xFF), id);
+        int id = GetTopologyId(clDeviceID);
+        if (id > -1)
+        {
+            VCELog(TEXT("Device %d Topology : PCI[B#%d, D#%d, F#%d] : TopoID: 0x%06X"),
+                i, (id >> 16) & 0xFF, (id >> 8) & 0xFF, (id & 0xFF), id);
 
-			if (devTopoId == id)
-			{
-				device = mDeviceHandle.deviceInfo[i].device_id;
-				// print device name
-				size_t valueSize;
-				f_clGetDeviceInfo(clDeviceID, CL_DEVICE_NAME, 0, NULL, &valueSize);
-				char* value = new char[valueSize];
-				f_clGetDeviceInfo(clDeviceID, CL_DEVICE_NAME, valueSize, value, NULL);
-				//TODO non-unicode string formatting
-				VCELog(TEXT("Topology id match, using device %d (%S)"), i, value);
-				delete[] value;
-				devNameLogged = true;
-			}
-		}
-	}
+            if (devTopoId == id)
+            {
+                device = mDeviceHandle.deviceInfo[i].device_id;
+                // print device name
+                size_t valueSize;
+                f_clGetDeviceInfo(clDeviceID, CL_DEVICE_NAME, 0, NULL, &valueSize);
+                char* value = new char[valueSize];
+                f_clGetDeviceInfo(clDeviceID, CL_DEVICE_NAME, valueSize, value, NULL);
+                //TODO non-unicode string formatting
+                VCELog(TEXT("Topology id match, using device %d (%S)"), i, value);
+                delete[] value;
+                devNameLogged = true;
+            }
+        }
+    }
 
     if (!devNameLogged)
     {
@@ -332,11 +331,14 @@ bool VCEEncoder::init()
     }
 
     mIsReady = true;
-    Warmup();
+    if (mCanInterop)
+        mUse444 = false;
+    else
+        Warmup();
     return true;
 }
 
-VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR)
+VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, ID3D10Device *d3d10)
     : mFps(fps)
     , mWidth(width)
     , mHeight(height)
@@ -364,6 +366,8 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset
     , mMaxBucketSize(0)
     , mDesiredPacketSize(0)
     , mCurrFrame(0)
+    , mD3D10Device(d3d10)
+    , mCanInterop(false)
 {
     frameMutex = OSCreateMutex();
 
@@ -372,6 +376,9 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset
 
     mUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
     mKeyint = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 0);
+    bool bInterop = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("NoInterop"), 0) != 0;
+    if (bInterop)
+        mD3D10Device = nullptr;
 
     headerPacket.SetSize(128);
     memset(&mDeviceHandle, 0, sizeof(mDeviceHandle));
@@ -386,7 +393,7 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset
         mInputBufSize = mAlignedSurfaceHeight * mAlignedSurfaceWidth * 3 / 2;
     else
     {
-        VCELog(TEXT("Using YUV444"));
+        //VCELog(TEXT("Using YUV444"));
         mInputBufSize = mHeight * mAlignedSurfaceWidth * 4;
         mOutputBufSize = mAlignedSurfaceHeight * mAlignedSurfaceWidth * 3 / 2;
     }
@@ -401,6 +408,8 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset
         mMaxBucketSize = mMaxBitrate * (1000 / 8);
         mDesiredPacketSize = mMaxBucketSize / mFps;
     }
+
+    if (mD3D10Device) mD3D10Device->AddRef();
 }
 
 VCEEncoder::~VCEEncoder()
@@ -418,11 +427,8 @@ VCEEncoder::~VCEEncoder()
     }
     mOveContext = NULL;
 
-    if (mDeviceHandle.deviceInfo)
-    {
-        delete[] mDeviceHandle.deviceInfo;
-        mDeviceHandle.deviceInfo = NULL;
-    }
+    delete[] mDeviceHandle.deviceInfo;
+    mDeviceHandle.deviceInfo = NULL;
 
     free(mHdrPacket);
     mHdrPacket = NULL;
@@ -432,6 +438,9 @@ VCEEncoder::~VCEEncoder()
 
     encoderRefDec();
     OSCloseMutex(frameMutex);
+
+    if (mD3D10Device)
+        mD3D10Device->Release();
 }
 
 void VCEEncoder::Warmup()
@@ -466,7 +475,7 @@ void VCEEncoder::Warmup()
 #else
             /// Only do a conversion
             if (mUse444)
-                YUV444Convert(i);
+                ConvertYUV444(i);
 #endif
         }
 
@@ -491,43 +500,38 @@ void VCEEncoder::Warmup()
     mFirstFrame = true;
 }
 
-bool VCEEncoder::YUV444Convert(int idx)
+void VCEEncoder::ConvertD3D10(ID3D10Texture2D *d3dtex, void *data, void **state)
 {
-    cl_int status = CL_SUCCESS;
+    assert(data);
+    assert(state);
+    mfxFrameData *mfx = static_cast<mfxFrameData*>(data);
+    int idx = (int)(mfx->MemId);
+    assert(idx);
+    OPSurface &inBuf = mEncodeHandle.inputSurfaces[idx - 1];
 
-    profileIn("YUV444 conversion")
-    size_t globalThreads[2] = { mWidth, mHeight };
-
-    status = f_clSetKernelArg(mKernel[0], 0, sizeof(cl_mem), (cl_mem)&mEncodeHandle.inputSurfaces[idx].surface);
-    status |= f_clSetKernelArg(mKernel[1], 0, sizeof(cl_mem), (cl_mem)&mEncodeHandle.inputSurfaces[idx].surface);
-    if (status != CL_SUCCESS)
+    cl_mem clD3D = static_cast<cl_mem>(*state);
+    if (!clD3D)
     {
-        VCELog(TEXT("clSetKernelArg failed with 0x%08x"), status);
-        return false;
+        clD3D = CreateTexture2D(d3dtex);
+        *state = clD3D;
+        assert(clD3D);
+        mCLMemObjs.push_back(clD3D);
     }
 
-    status = f_clEnqueueNDRangeKernel(mEncodeHandle.clCmdQueue[0],
-        mKernel[0], 2, 0, globalThreads, NULL, 0, 0, NULL);
-    if (status != CL_SUCCESS)
-    {
-        VCELog(TEXT("clEnqueueNDRangeKernel failed with 0x%08x"), status);
-        return false;
-    }
-
-    globalThreads[0] = mWidth / 2;
-    globalThreads[1] = mHeight / 2;
-
-    status = f_clEnqueueNDRangeKernel(mEncodeHandle.clCmdQueue[0],
-        mKernel[1], 2, 0, globalThreads, NULL, 0, 0, NULL);
-    if (status != CL_SUCCESS)
-    {
-        VCELog(TEXT("clEnqueueNDRangeKernel failed with 0x%08x"), status);
-        return false;
-    }
-
+    AcquireD3D10(clD3D);
+    RunKernels(clD3D, (cl_mem)inBuf.surface, mWidth, mHeight);
+    ReleaseD3D10(clD3D);
     f_clFinish(mEncodeHandle.clCmdQueue[0]);
+}
+
+bool VCEEncoder::ConvertYUV444(int idx)
+{
+    bool ret = false;
+    profileIn("YUV444 conversion")
+    ret = RunKernels((cl_mem)mEncodeHandle.inputSurfaces[idx].surface,
+                    mOutput, mWidth, mHeight);
     profileOut
-    return true;
+    return ret;
 }
 
 bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, DWORD &out_pts)
@@ -580,9 +584,8 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     encodeTaskInputBufferList[0].buffer.pPicture = (OVE_SURFACE_HANDLE)
         mUse444 ? mOutput : mEncodeHandle.inputSurfaces[idx].surface;
 
-    // Encoder can't seem to use mapped buffer, all green :(
     //profileIn("Unmap buffer")
-    unmapBuffer(mEncodeHandle, idx);
+    if(!mCanInterop) unmapBuffer(mEncodeHandle, idx);
     //profileOut
 
     memset(&pictureParameter, 0, sizeof(OVE_ENCODE_PARAMETERS_H264));
@@ -601,47 +604,16 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_IDR;
     }
 
-    if (/*!mUseCBR &&*/ mKeyNum >= mManKeyInt)
-    {
-        pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_IDR;
-        mKeyNum = 0;
-    }
-    mKeyNum++;
-    
+    //if (/*!mUseCBR &&*/ mKeyNum > mManKeyInt)
+    //{
+    //    pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_IDR;
+    //    mKeyNum = 0;
+    //}
+    //mKeyNum++;
+
     if (mUse444)
     {
-        //profileIn("YUV444 conversion")
-        size_t globalThreads[2] = { mWidth, mHeight };
-
-        status = f_clSetKernelArg(mKernel[0], 0, sizeof(cl_mem), (cl_mem)&mEncodeHandle.inputSurfaces[idx].surface);
-        status |= f_clSetKernelArg(mKernel[1], 0, sizeof(cl_mem), (cl_mem)&mEncodeHandle.inputSurfaces[idx].surface);
-        if (status != CL_SUCCESS)
-        {
-            VCELog(TEXT("clSetKernelArg failed with 0x%08x"), status);
-            return false;
-        }
-
-        status = f_clEnqueueNDRangeKernel(mEncodeHandle.clCmdQueue[0],
-            mKernel[0], 2, 0, globalThreads, NULL, 0, 0, NULL);
-        if (status != CL_SUCCESS)
-        {
-            VCELog(TEXT("clEnqueueNDRangeKernel failed with 0x%08x"), status);
-            return false;
-        }
-
-        globalThreads[0] = mWidth / 2;
-        globalThreads[1] = mHeight / 2;
-
-        status = f_clEnqueueNDRangeKernel(mEncodeHandle.clCmdQueue[0],
-            mKernel[1], 2, 0, globalThreads, NULL, 0, 0, NULL);
-        if (status != CL_SUCCESS)
-        {
-            VCELog(TEXT("clEnqueueNDRangeKernel failed with 0x%08x"), status);
-            return false;
-        }
-
-        f_clFinish(mEncodeHandle.clCmdQueue[0]);
-        //profileOut
+        ConvertYUV444(idx);
     }
 
     //profileIn("Queue encode task")
@@ -695,7 +667,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
     profileOut
 
     //profileIn("Remap buffer")
-    mapBuffer(mEncodeHandle, idx, mInputBufSize);
+    if (!mCanInterop) mapBuffer(mEncodeHandle, idx, mInputBufSize);
     //profileOut
 
     //mEncodeHandle.inputSurfaces[idx].locked = false;
@@ -1009,23 +981,33 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
 
     for (int i = 0; i < MAX_INPUT_SURFACE; ++i)
     {
-        if (mEncodeHandle.inputSurfaces[i].isMapped || 
-            mEncodeHandle.inputSurfaces[i].locked ||
-            !mEncodeHandle.inputSurfaces[i].surface) //Out of memory?
+        OPSurface &inBuf = mEncodeHandle.inputSurfaces[i];
+        if (inBuf.isMapped || inBuf.locked ||
+            !inBuf.surface) //Out of memory?
             continue;
 
-        mapBuffer(mEncodeHandle, i, mInputBufSize);
+        if (!mCanInterop)
+        {
+            mapBuffer(mEncodeHandle, i, mInputBufSize);
 
-        if (!mEncodeHandle.inputSurfaces[i].mapPtr)
-            continue;
+            if (!inBuf.mapPtr)
+                continue;
 
-        buff->Pitch = mUse444 ? mAlignedSurfaceWidth*4 : mAlignedSurfaceWidth;
-        buff->Y = (mfxU8*)mEncodeHandle.inputSurfaces[i].mapPtr;
-        buff->UV = buff->Y + (mHeight * buff->Pitch);
+            buff->Pitch = mUse444 ? mAlignedSurfaceWidth * 4 : mAlignedSurfaceWidth;
+            buff->Y = (mfxU8*)inBuf.mapPtr;
+            buff->UV = buff->Y + (mHeight * buff->Pitch);
+        }
+        else
+        {
+            buff->Pitch = mAlignedSurfaceWidth;
+            buff->Y = (mfxU8*)inBuf.surface;
+            buff->UV = nullptr;
+            inBuf.isMapped = true;
+        }
 
         buff->MemId = mfxMemId(i + 1);
-        //mEncodeHandle.inputSurfaces[i].locked = 0; //false
-        _InterlockedCompareExchange(&(mEncodeHandle.inputSurfaces[i].locked), 0, 1);
+        //inBuf.locked = 0; //false
+        _InterlockedCompareExchange(&(inBuf.locked), 0, 1);
 
 #ifdef _DEBUG
         OSDebugOut(TEXT("Send buffer %d\n"), i + 1);

@@ -56,13 +56,16 @@
     <ClInclude Include="inc\OVEncodeDyn.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inc\CL\cl.h">
+    <ClInclude Include="..\CL\cl_d3d10.h">
       <Filter>Header Files\CL</Filter>
     </ClInclude>
-    <ClInclude Include="inc\CL\cl_platform.h">
+    <ClInclude Include="..\CL\cl_ext.h">
       <Filter>Header Files\CL</Filter>
     </ClInclude>
-    <ClInclude Include="inc\CL\opencl.h">
+    <ClInclude Include="..\CL\cl_platform.h">
+      <Filter>Header Files\CL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CL\cl.h">
       <Filter>Header Files\CL</Filter>
     </ClInclude>
   </ItemGroup>

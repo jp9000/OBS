@@ -202,6 +202,7 @@ FUNDEF(clGetDeviceInfo);
 FUNDEF(clFlush);
 FUNDEF(clFinish);
 FUNDEF(clWaitForEvents);
+FUNDEF(clGetExtensionFunctionAddressForPlatform);
 #undef FUNDEF
 
 void deinitOVE();

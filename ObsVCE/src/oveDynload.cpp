@@ -66,6 +66,7 @@ FUNDEFDECL(clGetDeviceInfo);
 FUNDEFDECL(clFlush);
 FUNDEFDECL(clFinish);
 FUNDEFDECL(clWaitForEvents);
+FUNDEFDECL(clGetExtensionFunctionAddressForPlatform);
 
 void deinitOVE()
 {
@@ -143,6 +144,7 @@ bool initOVE()
     LOADPROCDECL(clFlush);
     LOADPROCDECL(clFinish);
     LOADPROCDECL(clWaitForEvents);
+    LOADPROCDECL(clGetExtensionFunctionAddressForPlatform);
     return true;
 
 error:
