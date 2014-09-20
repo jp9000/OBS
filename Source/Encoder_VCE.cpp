@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 
 typedef bool(__cdecl *PVCEINITFUNC)(ConfigFile **appConfig, VideoEncoder*);
 typedef bool(__cdecl *PCHECKVCEHARDWARESUPPORT)(bool log);
-typedef VideoEncoder* (__cdecl *PCREATEVCEENCODER)(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR);
+typedef VideoEncoder* (__cdecl *PCREATEVCEENCODER)(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, ID3D10Device *d3d);
 
 static HMODULE p_vceModule = NULL;
 static PCHECKVCEHARDWARESUPPORT p_checkVCEHardwareSupport = NULL;
@@ -45,7 +45,7 @@ void InitVCEEncoder(bool log = true, bool useMFT = false)
     p_vceModule = LoadLibrary(useMFT ? TEXT("ObsVCEMFT32.dll") : TEXT("ObsVCE32.dll"));
 #endif
 
-    TCHAR *modName = useMFT ? TEXT("ObsVCEMFT.dll") : TEXT("ObsVCE.dll");
+	TCHAR *modName = useMFT ? TEXT("ObsVCEAMF.dll") /*TEXT("ObsVCEMFT.dll")*/ : TEXT("ObsVCE.dll");
     if (p_vceModule == NULL)
         p_vceModule = LoadLibrary(modName);
 
@@ -142,7 +142,7 @@ VideoEncoder* CreateVCEEncoder(int fps, int width, int height, int quality, CTST
         return NULL;
     }
 
-    VideoEncoder *encoder = p_createVCEEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR);
+    VideoEncoder *encoder = p_createVCEEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR, GetD3D());
     if (!initFunction(&AppConfig, encoder))
     {
         delete encoder;
