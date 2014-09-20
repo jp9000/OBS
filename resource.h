@@ -152,6 +152,7 @@
 #define IDC_SOURCES                     1053
 #define IDC_VCE_LOWLATENCY              1053
 #define IDC_ADD                         1054
+#define IDC_VCE_INTEROP                 1054
 #define IDC_REMOVE                      1055
 #define IDC_PLUGINS                     1055
 #define IDC_MOVEUP                      1056
@@ -245,6 +246,7 @@
 #define IDC_VCE_DEVIDX                  1090
 #define IDC_CLEARPUSHTOTALK2            1091
 #define IDC_VCE_BFRAMES                 1091
+#define IDC_VCE_DEVTOPOID               1092
 #define IDC_STOPSTREAMHOTKEY            1093
 #define IDC_CLEARHOTKEY                 1094
 #define IDC_STOPSTREAMHOTKEY_STATIC     1095
@@ -367,8 +369,10 @@
 #define IDC_FILEOUTPUTMODE              1178
 #define IDC_FILEOUTPUTNORMAL            1179
 #define IDC_STARTREPLAYBUFFERHOTKEY_STATIC 1179
+#define IDC_VCE_AMF_PRESET              1179
 #define IDC_FILEOUTPUTREPLAYBUFFER      1180
 #define IDC_STARTREPLAYBUFFERHOTKEY     1180
+#define IDC_VCE_AMF_ENGINE              1180
 #define IDC_REPLAYBUFFERMEMORY_STATIC   1181
 #define IDC_CLEARHOTKEY_STARTREPLAYBUFFER 1181
 #define IDC_REPLAYBUFFERMEMORY          1182
