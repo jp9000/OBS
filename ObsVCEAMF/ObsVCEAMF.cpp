@@ -188,9 +188,14 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, const TCHAR*
 {
 	mFrameMutex = OSCreateMutex();
 	mIsWin8OrGreater = false;//Force DX9 //IsWindows8OrGreater();
-	mInBuffSize = mWidth * mHeight * 3 / 2;
 	mUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
 	mKeyint = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 0);
+
+	//OpenCL wants aligned surfaces
+	mAlignedSurfaceWidth = ((mWidth + (256 - 1)) & ~(256 - 1));
+	mAlignedSurfaceHeight = (mHeight + 31) & ~31;
+
+	mInBuffSize = mAlignedSurfaceWidth * mAlignedSurfaceHeight * 3 / 2;
 
 	memset(mInputBuffers, 0, sizeof(mInputBuffers));
 }
@@ -279,9 +284,6 @@ bool VCEEncoder::Init()
 	cl_int status = CL_SUCCESS;
 	VCELog(TEXT("Build date ") TEXT(__DATE__) TEXT(" ") TEXT(__TIME__));
 
-	//OpenCL wants aligned surfaces
-	size_t mAlignedSurfaceWidth = ((mWidth + (256 - 1)) & ~(256 - 1));
-
 	bool userCfg = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("UseCustom"), 0) != 0;
 	int adapterId = AppConfig->GetInt(TEXT("Video"), TEXT("Adapter"), 0);
 	amf_increase_timer_precision();
@@ -291,10 +293,10 @@ bool VCEEncoder::Init()
 	res = AMFCreateContext(&mContext);
 	RETURNIFFAILED(res, TEXT("AMFCreateContext failed. %d"), res);
 
-	int engine = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("AMFEngine"), 0);
+	int engine = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("AMFEngine"), 2);
 	if (engine > 2) engine = 0;
 
-	if (engine == 2 || mIsWin8OrGreater)
+	if (engine == 2 /*|| mIsWin8OrGreater*/)
 	{
 		res = mDX11Device.Init(adapterId, false);
 		RETURNIFFAILED(res, TEXT("D3D11 device init failed. %d\n"), res);
@@ -330,7 +332,7 @@ bool VCEEncoder::Init()
 		inBuf.yuv_surfaces[0] = clCreateImage2D(mCLContext,
 			//TODO tweak these
 			CL_MEM_WRITE_ONLY, //CL_MEM_WRITE_ONLY | CL_MEM_USE_PERSISTENT_MEM_AMD,
-			&imgf, mAlignedSurfaceWidth, mHeight, 0, nullptr, &status);
+			&imgf, mAlignedSurfaceWidth, mAlignedSurfaceHeight, 0, nullptr, &status);
 		if (status != CL_SUCCESS)
 		{
 			VCELog(TEXT("Failed to create Y CL image"));
@@ -341,7 +343,7 @@ bool VCEEncoder::Init()
 		imgf.image_channel_data_type = CL_UNSIGNED_INT8;
 
 		inBuf.uv_width = mAlignedSurfaceWidth / 2;
-		inBuf.uv_height = mHeight % 2 ? (mHeight + 1) / 2 : mHeight / 2;
+		inBuf.uv_height = mAlignedSurfaceHeight % 2 ? (mAlignedSurfaceHeight + 1) / 2 : mAlignedSurfaceHeight / 2;
 		OSDebugOut(TEXT("UV size: %dx%d\n"), inBuf.uv_width, inBuf.uv_height);
 
 		mInputBuffers[i].yuv_surfaces[1] = clCreateImage2D(mCLContext,
@@ -355,6 +357,11 @@ bool VCEEncoder::Init()
 		}
 	}
 
+	/*************************************************
+	*
+	* Create AMF context, encoder and set properties.
+	*
+	**************************************************/
 	res = AMFCreateComponent(mContext, AMFVideoEncoderVCE_AVC, &mEncoder);
 	RETURNIFFAILED(res, TEXT("AMFCreateComponent(encoder) failed. %d"), res);
 
@@ -376,12 +383,13 @@ bool VCEEncoder::Init()
 	/*res = mEncoder->SetProperty(L"QualityEnhancementMode", 0);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, L"QualityEnhancementMode");*/
 
-	AMF_VIDEO_ENCODER_QUALITY_PRESET_ENUM quality = AMF_VIDEO_ENCODER_QUALITY_PRESET_SPEED;
-	/*int picSize = mWidth * mHeight * mFps;
+	int quality = AMF_VIDEO_ENCODER_QUALITY_PRESET_SPEED;
+	int picSize = mWidth * mHeight * mFps;
 	if (picSize <= 1280 * 720 * 30)
 		quality = AMF_VIDEO_ENCODER_QUALITY_PRESET_QUALITY;
 	else if (picSize <= 1920 * 1080 * 30)
-		quality = AMF_VIDEO_ENCODER_QUALITY_PRESET_BALANCED;*/
+		quality = AMF_VIDEO_ENCODER_QUALITY_PRESET_BALANCED;
+	USERCFG(quality, "AMFPreset");
 
 	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_QUALITY_PRESET, quality);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_QUALITY_PRESET);

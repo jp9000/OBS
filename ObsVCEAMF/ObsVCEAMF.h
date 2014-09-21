@@ -167,6 +167,8 @@ private:
 	int32_t    mFps;
 	int32_t    mWidth;
 	int32_t    mHeight;
+	size_t     mAlignedSurfaceWidth;
+	size_t     mAlignedSurfaceHeight;
 
 	List<BYTE> headerPacket, seiData;
 	const TCHAR*    mPreset;
