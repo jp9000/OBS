@@ -211,6 +211,20 @@ void OBS::ReportScenesChanged()
     }
 }
 
+void OBS::ReportSceneCollectionsChanged()
+{
+    if (bShuttingDown)
+        return;
+
+    for (UINT i = 0; i<plugins.Num(); i++)
+    {
+        OBS_CALLBACK callback = plugins[i].sceneCollectionsChangedCallback;
+
+        if (callback)
+            (*callback)();
+    }
+}
+
 void OBS::ReportSourceOrderChanged()
 {
     if (bShuttingDown)

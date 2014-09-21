@@ -348,6 +348,9 @@ struct PluginInfo
     /* called when a scene is renamed, added, removed, or moved */
     OBS_CALLBACK scenesChangedCallback;
 
+    /* called when a scene collection is renamed, added, removed, or moved */
+    OBS_CALLBACK sceneCollectionsChangedCallback;
+
     /* called when the source order is changed */
     OBS_CALLBACK sourceOrderChangedCallback;
     
@@ -1216,7 +1219,7 @@ public:
     virtual bool SetScene(CTSTR lpScene);
     virtual void InsertSourceItem(UINT index, LPWSTR name, bool checked);
 
-    virtual void SetSceneCollection(CTSTR lpCollection);
+    virtual bool SetSceneCollection(CTSTR lpCollection);
 
     //---------------------------------------------------------------------------
     // volume stuff
@@ -1251,6 +1254,7 @@ public:
     virtual void ReportSwitchScenes(CTSTR scene);
     virtual void ReportSwitchSceneCollections(CTSTR collection);
     virtual void ReportScenesChanged();
+    virtual void ReportSceneCollectionsChanged();
     virtual void ReportSourceOrderChanged();
     virtual void ReportSourceChanged(CTSTR sourceName, XElement* source);
     virtual void ReportSourcesAddedOrRemoved();

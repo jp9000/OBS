@@ -399,7 +399,7 @@ bool OBS::SetScene(CTSTR lpScene)
     return true;
 }
 
-void OBS::SetSceneCollection(CTSTR lpCollection) {
+bool OBS::SetSceneCollection(CTSTR lpCollection) {
     App->scenesConfig.Save();
     CTSTR collection = GetCurrentSceneCollection();
     String strSceneCollectionPath;
@@ -407,7 +407,7 @@ void OBS::SetSceneCollection(CTSTR lpCollection) {
 
     if (!App->scenesConfig.Open(strSceneCollectionPath))
     {
-        return;
+        return false;
     }
 
     GlobalConfig->SetString(TEXT("General"), TEXT("SceneCollection"), lpCollection);
@@ -417,9 +417,12 @@ void OBS::SetSceneCollection(CTSTR lpCollection) {
     ResetApplicationName();
     App->UpdateNotificationAreaIcon();
     App->scenesConfig.SaveTo(String() << lpAppDataPath << "\\scenes.xconfig");
+    App->ReportSwitchSceneCollections(lpCollection);
 
     if (API != NULL)
         ReportSwitchSceneCollections(lpCollection);
+
+    return true;
 }
 
 struct HotkeyInfo
@@ -551,16 +554,20 @@ public:
     virtual CTSTR GetSceneName() const          {return App->GetSceneElement()->GetName();}
     virtual XElement* GetSceneElement()         {return App->GetSceneElement();}
 
-    virtual void SetSceneCollection(CTSTR lpCollection, CTSTR lpScene)
+    virtual bool SetSceneCollection(CTSTR lpCollection, CTSTR lpScene)
     {
         assert(lpCollection && *lpCollection);
 
         if (!lpCollection || !*lpCollection)
-            return;
+            return false;
 
-        App->SetSceneCollection(lpCollection);
+        bool success = App->SetSceneCollection(lpCollection);
         if (lpScene != NULL)
+        {
             SetScene(lpScene, true);
+        }
+
+        return success;
     }
     virtual CTSTR GetSceneCollectionName() const { return App->GetCurrentSceneCollection(); }
     virtual void GetSceneCollectionNames(StringList &list) const { return App->GetSceneCollection(list); }

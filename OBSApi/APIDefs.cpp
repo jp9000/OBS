@@ -64,9 +64,9 @@ Scene* OBSGetScene()            {return API->GetScene();}
 CTSTR OBSGetSceneName()         {return API->GetSceneName();}
 XElement* OBSGetSceneElement()  {return API->GetSceneElement();}
 
-void OBSSetSceneCollection(CTSTR lpCollection, CTSTR lpScene)
+bool OBSSetSceneCollection(CTSTR lpCollection, CTSTR lpScene)
 {
-    API->SetSceneCollection(lpCollection, lpScene);
+    return API->SetSceneCollection(lpCollection, lpScene);
 }
 
 CTSTR OBSGetSceneCollectionName()                   { return API->GetSceneCollectionName(); }

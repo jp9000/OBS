@@ -68,7 +68,7 @@ public:
     virtual CTSTR GetSceneName() const=0;
     virtual XElement* GetSceneElement()=0;
 
-    virtual void SetSceneCollection(CTSTR lpCollection, CTSTR lpScene)=0;
+    virtual bool SetSceneCollection(CTSTR lpCollection, CTSTR lpScene)=0;
     virtual CTSTR GetSceneCollectionName() const = 0;
     virtual void GetSceneCollectionNames(StringList &list) const = 0;
 
@@ -222,7 +222,7 @@ BASE_EXPORT Scene* OBSGetScene();
 BASE_EXPORT CTSTR OBSGetSceneName();
 BASE_EXPORT XElement* OBSGetSceneElement();
 
-BASE_EXPORT void OBSSetSceneCollection(CTSTR lpCollection, CTSTR lpScene);
+BASE_EXPORT bool OBSSetSceneCollection(CTSTR lpCollection, CTSTR lpScene);
 BASE_EXPORT CTSTR OBSGetSceneCollectionName();
 BASE_EXPORT void OBSGetSceneCollectionNames(StringList &list);
 
