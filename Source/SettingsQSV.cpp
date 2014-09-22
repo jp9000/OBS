@@ -201,6 +201,8 @@ void SettingsQSV::RateControlMethodChanged()
 
 INT_PTR SettingsQSV::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 {
+    static bool updating_accuracy = false;
+
     switch (message)
     {
     case WM_INITDIALOG:
@@ -310,10 +312,20 @@ INT_PTR SettingsQSV::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
             }
             break;
 
+        case IDC_ACCURACY_EDIT:
+            if (HIWORD(wParam) == EN_CHANGE && !updating_accuracy)
+            {
+                updating_accuracy = true;
+                int prev = int(GetEditText(GetDlgItem(hwnd, IDC_ACCURACY_EDIT)).ToFloat() * 10);
+                int val = clamp(int(GetEditText(GetDlgItem(hwnd, IDC_ACCURACY_EDIT)).ToFloat() * 10), 0, 1000);
+                SendMessage(GetDlgItem(hwnd, IDC_ACCURACY), UDM_SETPOS32, 0, val);
+                if (val != prev)
+                   SetWindowText(GetDlgItem(hwnd, IDC_ACCURACY_EDIT), FloatString(val / 10.).Array());
+                updating_accuracy = false;
+            }
         case IDC_TARGETKBPS:
         case IDC_MAXKBPS:
         case IDC_CUSTOMBUFFER:
-        case IDC_ACCURACY_EDIT:
         case IDC_CONVERGENCE_EDIT:
         case IDC_LADEPTH_EDIT:
         case IDC_QPI_EDIT:
@@ -344,7 +356,9 @@ INT_PTR SettingsQSV::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 if (newpos < 0 || newpos > 1000)
                     return TRUE;
 
+                updating_accuracy = true;
                 SetWindowText(GetDlgItem(hwnd, IDC_ACCURACY_EDIT), FloatString(newpos/10.).Array());
+                updating_accuracy = false;
                 break;
             }
         }
