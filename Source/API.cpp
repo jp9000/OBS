@@ -417,7 +417,6 @@ bool OBS::SetSceneCollection(CTSTR lpCollection) {
     ResetApplicationName();
     App->UpdateNotificationAreaIcon();
     App->scenesConfig.SaveTo(String() << lpAppDataPath << "\\scenes.xconfig");
-    App->ReportSwitchSceneCollections(lpCollection);
 
     if (API != NULL)
         ReportSwitchSceneCollections(lpCollection);
