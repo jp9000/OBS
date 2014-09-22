@@ -195,8 +195,8 @@ void SettingsQSV::RateControlMethodChanged()
     for (auto id : parameter_control_ids)
         EnableWindow(GetDlgItem(hwnd, id), enabled && find(begin(mapping->enabled_ids), end(mapping->enabled_ids), id) != end(mapping->enabled_ids));
 
-    enable(IDC_TARGETKBPS, !checked(IDC_USEGLOBALBITRATE));
-    enable(IDC_BUFFERSIZE, !checked(IDC_USEGLOBALBUFFERSIZE));
+    enable(IDC_TARGETKBPS, IsWindowEnabled(GetDlgItem(hwnd, IDC_USEGLOBALBITRATE)) && !checked(IDC_USEGLOBALBITRATE));
+    enable(IDC_BUFFERSIZE, IsWindowEnabled(GetDlgItem(hwnd, IDC_USEGLOBALBUFFERSIZE)) && !checked(IDC_USEGLOBALBUFFERSIZE));
 }
 
 INT_PTR SettingsQSV::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
