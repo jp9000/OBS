@@ -273,7 +273,6 @@ bool OBS::StartRecording(bool force)
             OBSMessageBox(hwndMain, Str("Capture.Start.FileStream.Warning"), Str("Capture.Start.FileStream.WarningCaption"), MB_OK | MB_ICONWARNING);        
             bRecording = false;
             success = false;
-            bRecordingReplayBuffer = false;
         }
         else {
             bRecording = true;
