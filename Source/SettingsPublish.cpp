@@ -97,7 +97,7 @@ void SettingsPublish::ApplySettings()
     {
         String text = Str("Settings.Publish.InvalidReplayBufferSavePath");
         text.FindReplace(L"$1", defaultPath);
-        if (OBSMessageBox(nullptr, text, Str("Settings.Publish.InvalidSavePathCaption"), MB_ICONEXCLAMATION | MB_OKCANCEL) != IDOK)
+        if (OBSMessageBox(nullptr, text, Str("Settings.Publish.InvalidReplayBufferSavePathCaption"), MB_ICONEXCLAMATION | MB_OKCANCEL) != IDOK)
         {
             SetAbortApplySettings(true);
             return;
