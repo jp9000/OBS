@@ -3337,9 +3337,20 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 case ID_RECORDINGSFOLDER:
                 case ID_SAVEDREPLAYBUFFERS:
                     {
+                        bool replayBuffer = LOWORD(wParam) == ID_SAVEDREPLAYBUFFERS;
                         String path = OSGetDefaultVideoSavePath();
-                        path = AppConfig->GetString(L"Publish", LOWORD(wParam) == ID_SAVEDREPLAYBUFFERS ? L"ReplayBufferSavePath" : L"SavePath", path.Array());
-                        path = GetExpandedRecordingDirectoryBase(path).FindReplace(L"/", L"\\");
+                        path = AppConfig->GetString(L"Publish", replayBuffer ? L"ReplayBufferSavePath" : L"SavePath", path.Array());
+                        path = GetExpandedRecordingDirectoryBase(path);
+
+                        if (!OSFileExists(path))
+                        {
+                            String message = replayBuffer ? Str("MainMenu.File.ShowSavedReplayBuffers.DoesNotExist") : Str("MainMenu.File.OpenRecordingsFolder.DoesNotExist");
+                            message.FindReplace(L"$1", path);
+                            OBSMessageBox(hwnd, message, Str("MainMenu.File.DirectoryDoesNotExistCaption"), MB_ICONWARNING | MB_OK);
+                            break;
+                        }
+
+                        path.FindReplace(L"/", L"\\");
                         String lastFile = App->lastOutputFile.FindReplace(L"/", L"\\");
 
                         LPITEMIDLIST item = nullptr;
