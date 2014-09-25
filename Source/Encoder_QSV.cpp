@@ -145,6 +145,8 @@ namespace
 
     bool spawn_helper(String &event_prefix, safe_handle &qsvhelper_process, safe_handle &qsvhelper_thread, IPCWaiter &process_waiter)
     {
+        if (OSGetVersion() < 7) return false;
+
         String helper_path;
         auto dir_size = GetCurrentDirectory(0, NULL);
         helper_path.SetLength(dir_size);
@@ -553,8 +555,12 @@ public:
             }
         }
 
-        if(!spawn_helper(event_prefix, qsvhelper_process, qsvhelper_thread, process_waiter))
+        if (!spawn_helper(event_prefix, qsvhelper_process, qsvhelper_thread, process_waiter))
+        {
+            if (OSGetVersion() < 7)
+                ThrowQSVInitError(L"QSV is no longer supported on Vista", Str("Encoder.QSV.HelperLaunchFailedVista"));
             ThrowQSVInitError(L"Couldn't launch QSVHelper.exe: %u!", Str("Encoder.QSV.HelperLaunchFailed"), GetLastError());
+        }
 
         ipc_init_request request((event_prefix + INIT_REQUEST).Array());
 
