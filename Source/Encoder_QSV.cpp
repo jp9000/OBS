@@ -359,6 +359,19 @@ bool CheckQSVHardwareSupport(bool log=true, bool *configurationWarning = nullptr
     return false;
 }
 
+bool IsKnownQSVCPUPlatform()
+{
+    static qsv_cpu_platform plat = qsv_get_cpu_platform();
+    switch (plat)
+    {
+    case QSV_CPU_PLATFORM_SNB:
+    case QSV_CPU_PLATFORM_IVB:
+    case QSV_CPU_PLATFORM_HSW:
+        return true;
+    }
+    return false;
+}
+
 bool QSVMethodAvailable(decltype(mfxInfoMFX::RateControlMethod) method)
 {
     static qsv_cpu_platform plat = qsv_get_cpu_platform();

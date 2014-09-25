@@ -276,6 +276,7 @@ Settings.Encoding.Video.QualityTooltip="This setting will attempt to target a ce
 Settings.Encoding.Video.EncoderQSVDisabledAfterApply="The 'Quick Sync' Encoder option will be disabled because your hardware does not seem to support Quick Sync."
 Settings.Encoding.Video.EncoderNVENCDisabledAfterApply="The 'Nvidia NVENC' Encoder option will be disabled because your hardware does not seem to support Nvidia NVENC."
 Settings.Encoding.Video.QSVConfigWarning="To enable the Quick Sync Encoder option make sure your CPU supports Quick Sync and the Intel graphics adapter is enabled in the BIOS. If you are using a laptop check the sticky thread 'Laptop? Black screen when capturing? Read here first.' in the Questions and Help forum."
+Settings.Encoding.Video.QSVWinVerWarning="Quick Sync requires Windows 7 or later."
 
 Settings.General.Add="Add New"
 Settings.General.ConfirmDelete="Are you sure you wish to remove the profile '$1'?"
