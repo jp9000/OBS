@@ -1,6 +1,14 @@
 #include "stdafx.h"
 #include <../libmfx/include/msdk/include/mfxstructures.h>
 
+#ifndef AMF_CORE_STATIC
+#if _WIN64
+#pragma comment(lib, "amf-core-windesktop64")
+#else
+#pragma comment(lib, "amf-core-windesktop32")
+#endif
+#endif
+
 #define USE_DX11 1
 /// Use D3D10 interop with OpenCL
 //#define NO_CL_INTEROP 1
@@ -54,6 +62,13 @@ extern "C" __declspec(dllexport) bool __cdecl CheckVCEHardwareSupport(bool log)
 	gpuCheck(platform, &type);
 	if (type != CL_DEVICE_TYPE_GPU)
 		return false;
+
+#ifdef AMF_CORE_STATIC
+	if (!BindAMF())
+		return false;
+
+	UnbindAMF();
+#endif
 
 	if (!loggedSupport)
 	{
@@ -185,11 +200,21 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, const TCHAR*
 	, mClDevice(nullptr)
 	, mCurrFrame(0)
 	, mD3D10device(d3d10device)
+	, mCanInterop(true)
 {
 	mFrameMutex = OSCreateMutex();
 	mIsWin8OrGreater = false;//Force DX9 //IsWindows8OrGreater();
 	mUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
 	mKeyint = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 0);
+
+	/*
+	if (AppConfig->GetInt(TEXT("Video Encoding"), TEXT("NoInterop"), 0) != 0)
+	{
+		mD3D10device.Release();
+		mD3D10device = nullptr;
+		mCanInterop = false;
+	}
+	*/
 
 	//OpenCL wants aligned surfaces
 	mAlignedSurfaceWidth = ((mWidth + (256 - 1)) & ~(256 - 1));
@@ -228,7 +253,11 @@ VCEEncoder::~VCEEncoder()
 	mOCLDevice.Terminate();
 	mDX11Device.Terminate();
 	mDX9Device.Terminate();
+	mD3D10device.Release();
 	OSCloseMutex(mFrameMutex);
+#ifdef AMF_CORE_STATIC
+	UnbindAMF();
+#endif
 }
 
 void VCEEncoder::ClearInputBuffer(int i)
@@ -280,6 +309,14 @@ void VCEEncoder::ClearInputBuffer(int i)
 
 bool VCEEncoder::Init()
 {
+#ifdef AMF_CORE_STATIC
+	if (!BindAMF())
+		return false;
+
+	//FIXME this crashes in (inlined) AMFVariant ctor
+	amf::AMFVariant v(567);
+#endif
+
 	AMF_RESULT res = AMF_OK;
 	cl_int status = CL_SUCCESS;
 	VCELog(TEXT("Build date ") TEXT(__DATE__) TEXT(" ") TEXT(__TIME__));
@@ -290,11 +327,12 @@ bool VCEEncoder::Init()
 
 #define USERCFG(x,y) if(userCfg) x = AppConfig->GetInt(TEXT("VCE Settings"), TEXT(y), x)
 
-	res = AMFCreateContext(&mContext);
+	res = pAMFCreateContext(&mContext);
 	RETURNIFFAILED(res, TEXT("AMFCreateContext failed. %d"), res);
 
+	// Select engine. DX11 looks be best for D3D10 -> OpenCL -> AMF interop.
 	int engine = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("AMFEngine"), 2);
-	if (engine > 2) engine = 0;
+	if (engine < 0 || engine > 2) engine = 0;
 
 	if (engine == 2 /*|| mIsWin8OrGreater*/)
 	{
@@ -321,6 +359,7 @@ bool VCEEncoder::Init()
 	res = mContext->InitOpenCL(mOCLDevice.GetCommandQueue());
 	RETURNIFFAILED(res, TEXT("AMF context init with OpenCL failed. %d\n"), res);
 
+	//-----------------------
 	for (int i = 0; i < MAX_INPUT_BUFFERS; i++)
 	{
 		InputBuffer &inBuf = mInputBuffers[i];
@@ -328,7 +367,7 @@ bool VCEEncoder::Init()
 		imgf.image_channel_order = CL_R;
 		imgf.image_channel_data_type = CL_UNSIGNED_INT8;
 
-		//Maybe use clCreateImage, but that is in OCL 1.2 spec.
+		//Maybe use clCreateImage
 		inBuf.yuv_surfaces[0] = clCreateImage2D(mCLContext,
 			//TODO tweak these
 			CL_MEM_WRITE_ONLY, //CL_MEM_WRITE_ONLY | CL_MEM_USE_PERSISTENT_MEM_AMD,
@@ -359,10 +398,10 @@ bool VCEEncoder::Init()
 
 	/*************************************************
 	*
-	* Create AMF context, encoder and set properties.
+	* Create AMF encoder and set properties.
 	*
 	**************************************************/
-	res = AMFCreateComponent(mContext, AMFVideoEncoderVCE_AVC, &mEncoder);
+	res = pAMFCreateComponent(mContext, AMFVideoEncoderVCE_AVC, &mEncoder);
 	RETURNIFFAILED(res, TEXT("AMFCreateComponent(encoder) failed. %d"), res);
 
 	// USAGE is a "preset" property so set before anything else
@@ -370,19 +409,23 @@ bool VCEEncoder::Init()
 	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_USAGE, usage);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_USAGE);
 
+	//-----------------------
 	String x264prof = AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"));
 	AMF_VIDEO_ENCODER_PROFILE_ENUM profile = AMF_VIDEO_ENCODER_PROFILE_MAIN;
+
 	if (x264prof.Compare(TEXT("high")))
 		profile = AMF_VIDEO_ENCODER_PROFILE_HIGH;
 	//Not in advanced setting but for completeness sake
 	else if (x264prof.Compare(TEXT("base")))
 		profile = AMF_VIDEO_ENCODER_PROFILE_BASELINE;
 
+	//-----------------------
 	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_PROFILE, (amf_int64)profile);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_PROFILE);
 	/*res = mEncoder->SetProperty(L"QualityEnhancementMode", 0);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, L"QualityEnhancementMode");*/
 
+	//-----------------------
 	int quality = AMF_VIDEO_ENCODER_QUALITY_PRESET_SPEED;
 	int picSize = mWidth * mHeight * mFps;
 	if (picSize <= 1280 * 720 * 30)
@@ -398,6 +441,7 @@ bool VCEEncoder::Init()
 	//mEncoder->SetProperty(L"EngineType", mIsWin8OrGreater ? 0 : 1 /*1 - DX9*/);
 	//LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, L"EngineType");
 
+	//-----------------------
 	res = mEncoder->Init(amf::AMF_SURFACE_NV12, mWidth, mHeight);
 	RETURNIFFAILED(res, TEXT("Encoder init failed. %d"), res);
 
@@ -442,6 +486,7 @@ bool VCEEncoder::Init()
 		VCELog(TEXT("    Peak constrained VBR (%d)"), rcm);
 	}
 
+	//-----------------------
 	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD, rcm);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD);
 
@@ -455,7 +500,7 @@ bool VCEEncoder::Init()
 	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_VBV_BUFFER_SIZE, mBufferSize * 1000);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_VBV_BUFFER_SIZE);
 
-	AMFRate fps = AMFConstructRate(mFps, 1);
+	AMFRate fps = { mFps, 1 };
 	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_FRAMERATE, fps);
 	RETURNIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_FRAMERATE);
 

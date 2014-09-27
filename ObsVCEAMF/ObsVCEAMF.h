@@ -3,10 +3,17 @@
 #include <bcrypt.h>
 #include "OBS-min.h"
 #include <amf\components\VideoEncoderVCE.h>
+#ifdef AMF_CORE_STATIC
+#include "DynAMF.h"
+#else
+extern decltype(&AMFCreateContext) pAMFCreateContext;
+extern decltype(&AMFCreateComponent) pAMFCreateComponent;
+#endif
 #include "amfhelpers\inc\DeviceDX9.h"
 #include "amfhelpers\inc\DeviceDX11.h"
 #include "amfhelpers\inc\DeviceOpenCL.h"
 #include "Types.h"
+
 #define VCELog(...) Log(__VA_ARGS__)
 #define AppConfig (*VCEAppConfig)
 
@@ -152,6 +159,7 @@ private:
 	bool mAlive;
 	bool mEOF;
 	bool mIsWin8OrGreater;
+	bool mCanInterop;
 	uint8_t    *mHdrPacket;
 	size_t     mHdrSize;
 	uint32_t   mInBuffSize;

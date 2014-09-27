@@ -76,27 +76,27 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="amfhelpers\inc\AMFPlatform.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\amfhelpers</Filter>
     </ClInclude>
     <ClInclude Include="amfhelpers\inc\CmdLogger.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="amfhelpers\inc\DeviceDX11.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\amfhelpers</Filter>
     </ClInclude>
     <ClInclude Include="amfhelpers\inc\DeviceDX9.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\amfhelpers</Filter>
+    </ClInclude>
+    <ClInclude Include="amfhelpers\inc\DeviceDX11.h">
+      <Filter>Header Files\amfhelpers</Filter>
     </ClInclude>
     <ClInclude Include="amfhelpers\inc\DeviceOpenCL.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="amfhelpers\inc\DeviceOpenGL.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\amfhelpers</Filter>
     </ClInclude>
     <ClInclude Include="amfhelpers\inc\PlatformWindows.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\amfhelpers</Filter>
     </ClInclude>
     <ClInclude Include="amfhelpers\inc\Thread.h">
+      <Filter>Header Files\amfhelpers</Filter>
+    </ClInclude>
+    <ClInclude Include="DynAMF.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -113,16 +113,16 @@
     <ClCompile Include="VCECL.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="amfhelpers\src\DeviceOpenCL.cpp">
+      <Filter>Source Files\amfhelpers</Filter>
+    </ClCompile>
     <ClCompile Include="amfhelpers\src\DeviceDX11.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\amfhelpers</Filter>
     </ClCompile>
     <ClCompile Include="amfhelpers\src\DeviceDX9.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\amfhelpers</Filter>
     </ClCompile>
-    <ClCompile Include="amfhelpers\src\DeviceOpenCL.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="amfhelpers\src\DeviceOpenGL.cpp">
+    <ClCompile Include="DynAMF.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
