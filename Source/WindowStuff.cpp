@@ -4095,7 +4095,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     OBSMessageBox(hwndMain, App->streamReport.Array(), Str("StreamReport"), MB_ICONEXCLAMATION);
                     App->streamReport.Clear();
                 }
-                else
+                else if (wParam != 1)
                     OBSMessageBox(hwnd, Str("Connection.Disconnected"), NULL, MB_ICONEXCLAMATION);
             }
             else if(wParam == 0)
