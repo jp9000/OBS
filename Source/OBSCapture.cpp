@@ -110,20 +110,32 @@ void OBS::StartReplayBuffer()
     ConfigureStreamButtons();
 }
 
-void OBS::StopReplayBuffer()
+void OBS::StopReplayBuffer(bool immediate)
 {
     if (!replayBufferStream) return;
 
-    bRecordingReplayBuffer = false;
-    ReportStopRecordingReplayBufferTrigger();
+    if (!immediate && replayBufferStop.func) return;
 
-    if (!bStreaming && !bRecording && bRunning) Stop(true);
+    auto shutdown = [this]()
+    {
+        bRecordingReplayBuffer = false;
+        ReportStopRecordingReplayBufferTrigger();
 
-    auto stream = move(replayBufferStream);
+        if (!bStreaming && !bRecording && bRunning) PostStopMessage(true);
 
-    replayBuffer = nullptr;
+        auto stream = move(replayBufferStream);
 
-    ConfigureStreamButtons();
+        replayBuffer = nullptr;
+
+        ConfigureStreamButtons();
+    };
+
+    if (immediate)
+        return shutdown();
+
+    replayBufferStop.func = shutdown;
+
+    replayBufferStop.time = (DWORD)(GetVideoTime() - firstFrameTimestamp);
 }
 
 String ExpandRecordingFilename(String filename)
@@ -266,7 +278,7 @@ bool OBS::StartRecording(bool force)
     bool success = true;
     if(!bTestStream && bWriteToFile && strOutputFile.IsValid())
     {
-        fileStream = CreateFileStream(strOutputFile);
+        fileStream.reset(CreateFileStream(strOutputFile));
 
         if(!fileStream)
         {
@@ -274,7 +286,6 @@ bool OBS::StartRecording(bool force)
             OBSMessageBox(hwndMain, Str("Capture.Start.FileStream.Warning"), Str("Capture.Start.FileStream.WarningCaption"), MB_OK | MB_ICONWARNING);        
             bRecording = false;
             success = false;
-            bRecordingReplayBuffer = false;
         }
         else {
             bRecording = true;
@@ -286,25 +297,36 @@ bool OBS::StartRecording(bool force)
     return success;
 }
 
-void OBS::StopRecording()
+void OBS::StopRecording(bool immediate)
 {
     if (!bStreaming && !bRecordingReplayBuffer && bRunning && bRecording) Stop(true);
 
     if(!bRecording) return;
 
-    VideoFileStream *tempStream = NULL;
-
-    tempStream = fileStream;
     // Prevent the encoder thread from trying to write to fileStream while it's closing
-    fileStream = NULL;
 
-    delete tempStream;
-    tempStream = NULL;
-    bRecording = false;
+    if (!immediate && fileStreamStop.func)
+        return;
 
-    ReportStopRecordingTrigger();
+    auto shutdown = [this]()
+    {
+        AddPendingStream(fileStream.release());
 
-    ConfigureStreamButtons();
+        bRecording = false;
+
+        ReportStopRecordingTrigger();
+
+        ConfigureStreamButtons();
+
+        if (!bStreaming && !bRecordingReplayBuffer && bRunning && !bRecording) PostStopMessage(true);
+    };
+
+    if (immediate)
+        return shutdown();
+
+    fileStreamStop.func = shutdown;
+
+    fileStreamStop.time = (DWORD)(GetVideoTime() - firstFrameTimestamp);
 }
 
 void OBS::Start(bool recordingOnly, bool replayBufferOnly)
@@ -316,16 +338,12 @@ void OBS::Start(bool recordingOnly, bool replayBufferOnly)
 
     if (bRecording && networkMode != 0) return;
 
-    if((bRecording || bRecordingReplayBuffer) && networkMode == 0 && delayTime == 0 && !recordingOnly && !replayBufferOnly) {
-        bFirstConnect = !bReconnecting;
+    if (!bRunning && !bStreamFlushed && !recordingOnly && !replayBufferOnly) return;
 
-        if (network)
-        {
-            NetworkStream *net = network;
-            network = nullptr;
-            delete net;
-        }
-        network = CreateRTMPPublisher();
+    if((bRecording || bRecordingReplayBuffer) && networkMode == 0 && delayTime == 0 && !recordingOnly && !replayBufferOnly && bStreamFlushed) {
+        bFirstConnect = !bReconnecting;
+        
+        network.reset(CreateRTMPPublisher());
 
         Log(TEXT("=====Stream Start (while recording): %s============================="), CurrentDateTimeString().Array());
 
@@ -445,14 +463,14 @@ retryHookTest:
 
     bFirstConnect = !bReconnecting;
 
-    if(bTestStream || recordingOnly || replayBufferOnly)
-        network = CreateNullNetwork();
+    if(bTestStream || recordingOnly || replayBufferOnly || !bStreamFlushed)
+        network.reset(CreateNullNetwork());
     else
     {
         switch(networkMode)
         {
-        case 0: network = (delayTime > 0) ? CreateDelayedPublisher(delayTime) : CreateRTMPPublisher(); break;
-        case 1: network = CreateNullNetwork(); break;
+        case 0: network.reset((delayTime > 0) ? CreateDelayedPublisher(delayTime) : CreateRTMPPublisher()); break;
+        case 1: network.reset(CreateNullNetwork()); break;
         }
     }
 
@@ -531,7 +549,7 @@ retryHookTestV2:
             if (ret == IDABORT)
             {
                 //FIXME: really need a better way to abort startup than this...
-                delete network;
+                network.reset();
                 delete GS;
 
                 DisableMenusWhileStreaming(false);
@@ -895,7 +913,7 @@ retryHookTestV2:
     ConfigureStreamButtons();
 }
 
-void OBS::Stop(bool overrideKeepRecording)
+void OBS::Stop(bool overrideKeepRecording, bool stopReplayBuffer)
 {
     if((!bStreaming && !bRecording && !bRunning && !bRecordingReplayBuffer) && (!bTestStream)) return;
 
@@ -905,23 +923,39 @@ void OBS::Stop(bool overrideKeepRecording)
 
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
 
-    if(((!overrideKeepRecording && bRecording && bKeepRecording) || bRecordingReplayBuffer) && networkMode == 0) {
-        NetworkStream *tempStream = NULL;
-        
+    if((!overrideKeepRecording && ((bRecording && bKeepRecording) || (!stopReplayBuffer && bRecordingReplayBuffer))) && networkMode == 0) {
         videoEncoder->RequestKeyframe();
-        tempStream = network;
-        network = NULL;
 
-        Log(TEXT("=====Stream End (recording continues): %s========================="), CurrentDateTimeString().Array());
+        if (!networkStop.func && network)
+        {
+            networkStop.func = [this]()
+            {
+                videoEncoder->RequestKeyframe();
 
-        delete tempStream;
+                auto stream = move(network);
 
-        bStreaming = false;
-        bSentHeaders = false;
+                Log(TEXT("=====Stream End (recording continues): %s========================="), CurrentDateTimeString().Array());
 
-        ReportStopStreamingTrigger();
+                bStreamFlushed = false;
 
-        ConfigureStreamButtons();
+                ConfigureStreamButtons();
+
+                AddPendingStream(stream.release(), [this]()
+                {
+                    bStreaming = false;
+                    bSentHeaders = false;
+
+                    ReportStopStreamingTrigger();
+
+                    bStreamFlushed = true;
+
+                    ConfigureStreamButtons();
+
+                    if (!bStreaming && !bRecordingReplayBuffer && bRunning && !bRecording) PostStopMessage(true);
+                });
+            };
+            networkStop.time = (DWORD)(GetVideoTime() - firstFrameTimestamp);
+        }
 
         OSLeaveMutex(hHotkeyMutex);
 
@@ -985,12 +1019,27 @@ void OBS::Stop(bool overrideKeepRecording)
 
     //-------------------------------------------------------------
 
-    delete network;
-    network = NULL;
-    if (bStreaming) ReportStopStreamingTrigger();
-    bStreaming = false;
+    if (bStreaming)
+    {
+        bStreamFlushed = false;
+        AddPendingStream(network.release(), [this]()
+        {
+            ReportStopStreamingTrigger();
+            bStreaming = false;
+            bStreamFlushed = true;
+            bTestStream = false;
+            ConfigureStreamButtons();
+        });
+    }
+    else
+    {
+        network.reset();
+        bStreaming = false;
+        bTestStream = false;
+    }
     
-    if(bRecording) StopRecording();
+    if (bRecording) StopRecording(true);
+    if (bRecordingReplayBuffer) StopReplayBuffer(true);
 
     delete micAudio;
     micAudio = NULL;
@@ -1116,8 +1165,6 @@ void OBS::Stop(bool overrideKeepRecording)
     String processPriority = AppConfig->GetString(TEXT("General"), TEXT("Priority"), TEXT("Normal"));
     if (scmp(processPriority, TEXT("Normal")))
         SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
-
-    bTestStream = false;
 
     ConfigureStreamButtons();
 
@@ -1533,5 +1580,61 @@ void OBS::RequestKeyframe(int waitTime)
     keyframeWait = waitTime;
 }
 
+void OBS::AddPendingStream(ClosableStream *stream, std::function<void()> finishedCallback)
+{
+    using namespace std;
+    struct args_t
+    {
+        using stream_t = remove_pointer_t<decltype(stream)>;
+        unique_ptr<stream_t> stream;
+        decltype(finishedCallback) finishedCallback;
+        args_t(stream_t *stream, decltype(finishedCallback) finishedCallback) : stream(stream), finishedCallback(move(finishedCallback)) {}
+    };
 
+    auto args = make_unique<args_t>(stream, move(finishedCallback));
 
+    ScopedLock l(pendingStreams.mutex);
+    pendingStreams.streams.emplace_back(OSCreateThread([](void *arg) -> DWORD
+    {
+        unique_ptr<args_t> args(static_cast<args_t*>(arg));
+        args->stream.reset();
+        if (args->finishedCallback)
+            args->finishedCallback();
+        return 0;
+    }, args.release()));
+}
+
+void OBS::AddPendingStreamThread(HANDLE thread)
+{
+    ScopedLock l(pendingStreams.mutex);
+    pendingStreams.streams.emplace_back(thread);
+}
+
+void OBS::ClosePendingStreams()
+{
+    ScopedLock l(pendingStreams.mutex);
+    if (pendingStreams.streams.empty())
+        return;
+
+    using namespace std;
+    vector<HANDLE> handles;
+    for (auto &pendingStream : pendingStreams.streams)
+        handles.push_back(pendingStream.get());
+
+    if (WaitForMultipleObjects(handles.size(), handles.data(), true, 5) != WAIT_OBJECT_0)
+    {
+        using ::locale;
+        int res = IDNO;
+        do
+        {
+            auto res = OBSMessageBox(hwndMain, Str("StreamClosePending"), nullptr, MB_YESNO | MB_ICONEXCLAMATION);
+
+            if (res != IDYES)
+                return;
+
+            if (WaitForMultipleObjects(handles.size(), handles.data(), true, 15 * 1000) == WAIT_OBJECT_0)
+                return;
+
+        } while (res == IDYES);
+    }
+}

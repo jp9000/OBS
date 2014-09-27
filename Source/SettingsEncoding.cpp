@@ -19,6 +19,7 @@
 
 #include "Settings.h"
 
+bool IsKnownQSVCPUPlatform();
 bool CheckQSVHardwareSupport(bool log, bool *configurationWarning=nullptr);
 bool CheckNVENCHardwareSupport(bool log);
 bool CheckVCEHardwareSupport(bool log, bool useMFT);
@@ -191,7 +192,9 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 EnableWindow(GetDlgItem(hwnd, IDC_ENCODERNVENC), hasNVENC || useNVENC);
                 EnableWindow(GetDlgItem(hwnd, IDC_ENCODERVCE), hasVCE || useVCE);
 
-                ShowWindow(GetDlgItem(hwnd, IDC_QSV_CONFIG_WARNING), showQSVConfigurationWarning ? SW_SHOW : SW_HIDE);
+                bool QSVOnUnsupportedWinVer = OSGetVersion() < 7 && IsKnownQSVCPUPlatform() && !hasQSV;
+                ShowWindow(GetDlgItem(hwnd, IDC_QSV_WINVER_WARNING), QSVOnUnsupportedWinVer ? SW_SHOW : SW_HIDE);
+                ShowWindow(GetDlgItem(hwnd, IDC_QSV_CONFIG_WARNING), !QSVOnUnsupportedWinVer && showQSVConfigurationWarning ? SW_SHOW : SW_HIDE);
 
                 //--------------------------------------------
 

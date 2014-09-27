@@ -86,6 +86,11 @@ protected:
     void InitializeBuffer();
     void SendPacketForReal(BYTE *data, UINT size, DWORD timestamp, PacketType type);
 
+    bool encoderDataInitialized = false;
+    std::vector<char> metaDataPacketBuffer;
+    DataPacket audioHeaders, videoHeaders;
+    void InitEncoderData();
+
     //-----------------------------------------------
     // frame drop stuff
 

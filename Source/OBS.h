@@ -17,6 +17,7 @@
 ********************************************************************************/
 
 #include <functional>
+#include <list>
 
 #pragma once
 
@@ -86,6 +87,13 @@ bool GetDefaultSpeakerID(String &strVal);
 
 //-------------------------------------------------------------------
 
+struct ClosableStream
+{
+    virtual ~ClosableStream() {}
+};
+
+//-------------------------------------------------------------------
+
 struct DataPacket
 {
     LPBYTE lpPacket;
@@ -103,7 +111,7 @@ enum PacketType
     PacketType_Audio
 };
 
-class NetworkStream
+class NetworkStream : public ClosableStream
 {
 public:
     virtual ~NetworkStream() {}
@@ -127,7 +135,7 @@ struct TimedPacket
 
 //-------------------------------------------------------------------
 
-class VideoFileStream
+class VideoFileStream : public ClosableStream
 {
 public:
     virtual ~VideoFileStream() {}
@@ -433,6 +441,7 @@ enum
     OBS_UPDATESTATUSBAR,
     OBS_NOTIFICATIONAREA,
     OBS_NETWORK_FAILED,
+    OBS_CONFIGURE_STREAM_BUTTONS,
 };
 
 //----------------------------
@@ -638,7 +647,18 @@ class OBS
 
     //---------------------------------------------------
 
-    NetworkStream *network;
+    struct StopInfo
+    {
+        DWORD time = (DWORD)-1;
+        bool timeSeen = false;
+        std::function<void()> func;
+    };
+    bool HandleStreamStopInfo(StopInfo &, PacketType, const VideoSegment&);
+
+    //---------------------------------------------------
+
+    std::unique_ptr<NetworkStream> network;
+    StopInfo networkStop;
 
     //---------------------------------------------------
     // audio sources/encoder
@@ -731,7 +751,7 @@ private:
     String  strLanguage;
     bool    bTestStream;
     bool    bUseMultithreadedOptimizations;
-    bool    bRunning, bRecording, bRecordingReplayBuffer, bRecordingOnly, bStartingUp, bStreaming, bKeepRecording;
+    bool    bRunning, bRecording, bRecordingReplayBuffer, bRecordingOnly, bStartingUp, bStreaming, bStreamFlushed = true, bKeepRecording;
     bool    canRecord;
     volatile bool bShutdownVideoThread, bShutdownEncodeThread;
     int     renderFrameWidth, renderFrameHeight; // The size of the preview only
@@ -837,10 +857,12 @@ private:
     bool bUseCFR;
 
     bool bWriteToFile;
-    VideoFileStream *fileStream;
+    std::unique_ptr<VideoFileStream> fileStream;
+    StopInfo fileStreamStop;
 
     std::unique_ptr<VideoFileStream> replayBufferStream;
     ReplayBuffer *replayBuffer;
+    StopInfo replayBufferStop;
 
     bool bRequestKeyframe;
     int  keyframeWait;
@@ -1008,11 +1030,11 @@ private:
     void ResetItemCrops();
 
     void Start(bool recordingOnly=false, bool replayBufferOnly=false);
-    void Stop(bool overrideKeepRecording=false);
+    void Stop(bool overrideKeepRecording=false, bool stopReplayBuffer=false);
     bool StartRecording(bool force=false);
-    void StopRecording();
+    void StopRecording(bool immediate=false);
     void StartReplayBuffer();
-    void StopReplayBuffer();
+    void StopReplayBuffer(bool immediate=false);
 
     static void STDCALL StartStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
     static void STDCALL StopStreamHotkey(DWORD hotkey, UPARAM param, bool bDown);
@@ -1109,6 +1131,7 @@ private:
 
     void RefreshStreamButtons(bool disable=false);
     void ConfigureStreamButtons();
+    void PostConfigureStreamButtons();
 
     void ReloadIniSettings();
 
@@ -1144,7 +1167,7 @@ public:
 
     char* EncMetaData(char *enc, char *pend, bool bFLVFile=false);
 
-    inline void PostStopMessage() {if(hwndMain) PostMessage(hwndMain, OBS_REQUESTSTOP, 0, 0);}
+    inline void PostStopMessage(bool forceStop=false) {if(hwndMain) PostMessage(hwndMain, OBS_REQUESTSTOP, forceStop ? 1 : 0, 0);}
     inline void NetworkFailed() { if (hwndMain) PostMessage(hwndMain, OBS_NETWORK_FAILED, 0, 0); }
 
     void GetBaseSize(UINT &width, UINT &height) const;
@@ -1271,6 +1294,18 @@ public:
 
     inline void ResetMic() {if (bRunning && micAudio) ResetWASAPIAudioDevice(micAudio);}
     void GetThreadHandles (HANDLE *videoThread, HANDLE *encodeThread);
+
+    struct PendingStreams
+    {
+        using thread_t = std::unique_ptr<void, ThreadDeleter<>>;
+        std::list<thread_t> streams;
+        std::unique_ptr<void, MutexDeleter> mutex;
+        PendingStreams() : mutex(OSCreateMutex()) {}
+    } pendingStreams;
+
+    void AddPendingStream(ClosableStream *stream, std::function<void()> finishedCallback = {});
+    void AddPendingStreamThread(HANDLE thread);
+    void ClosePendingStreams();
 };
 
 LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo);

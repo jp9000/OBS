@@ -816,12 +816,13 @@ OBS::OBS()
 
 OBS::~OBS()
 {
-    Stop(true);
-    StopReplayBuffer();
+    Stop(true, true);
 
     bShuttingDown = true;
 
     OSTerminateThread(hHotkeyThread, 2500);
+
+    ClosePendingStreams();
 
     for(UINT i=0; i<plugins.Num(); i++)
     {
@@ -1364,9 +1365,10 @@ void OBS::GetSceneCollection(StringList &sceneCollectionList)
 
 void OBS::RefreshStreamButtons(bool disable)
 {
+    if (bShuttingDown) return;
     int networkMode = AppConfig->GetInt(TEXT("Publish"), TEXT("Mode"), 2);
     bRecordingOnly = (networkMode == 1);
-    bool canStream = networkMode == 0 && !bTestStream;
+    bool canStream = networkMode == 0 && !bTestStream && bStreamFlushed;
     canRecord = !bTestStream;
     bool canTest = !bRecordingReplayBuffer && !bRecording && (!bStreaming || bTestStream);
 
@@ -1380,10 +1382,20 @@ void OBS::RefreshStreamButtons(bool disable)
 
 void OBS::ConfigureStreamButtons()
 {
+    if (bShuttingDown) return;
+
+    if (GetWindowThreadProcessId(hwndMain, nullptr) != GetCurrentThreadId())
+        return PostConfigureStreamButtons();
+
     RefreshStreamButtons();
     SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), bStreaming ? Str("MainWindow.StopStream") : Str("MainWindow.StartStream"));
     SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), bRecording ? Str("MainWindow.StopRecording") : Str("MainWindow.StartRecording"));
     SetWindowText(GetDlgItem(hwndMain, ID_TESTSTREAM), bTestStream ? Str("MainWindow.StopTest") : Str("MainWindow.TestStream"));
+}
+
+void OBS::PostConfigureStreamButtons()
+{
+    if (hwndMain) PostMessage(hwndMain, OBS_CONFIGURE_STREAM_BUTTONS, 0, 0);
 }
 
 void OBS::ReloadSceneCollection()
@@ -2135,17 +2147,14 @@ NetworkStream* CreateNullNetwork();
 
 void OBS::RestartNetwork()
 {
-    NetworkStream *tmp;
     OSEnterMutex(App->hStartupShutdownMutex);
 
     //delete the old one
-    tmp = App->network;
-    App->network = nullptr;
-    delete tmp;
+    App->network.reset();
 
     //start up a new one
     App->bSentHeaders = false;
-    App->network = CreateRTMPPublisher();
+    App->network.reset(CreateRTMPPublisher());
 
     OSLeaveMutex(App->hStartupShutdownMutex);
 }

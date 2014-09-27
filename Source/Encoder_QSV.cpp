@@ -145,6 +145,8 @@ namespace
 
     bool spawn_helper(String &event_prefix, safe_handle &qsvhelper_process, safe_handle &qsvhelper_thread, IPCWaiter &process_waiter)
     {
+        if (OSGetVersion() < 7) return false;
+
         String helper_path;
         auto dir_size = GetCurrentDirectory(0, NULL);
         helper_path.SetLength(dir_size);
@@ -357,6 +359,19 @@ bool CheckQSVHardwareSupport(bool log=true, bool *configurationWarning = nullptr
     return false;
 }
 
+bool IsKnownQSVCPUPlatform()
+{
+    static qsv_cpu_platform plat = qsv_get_cpu_platform();
+    switch (plat)
+    {
+    case QSV_CPU_PLATFORM_SNB:
+    case QSV_CPU_PLATFORM_IVB:
+    case QSV_CPU_PLATFORM_HSW:
+        return true;
+    }
+    return false;
+}
+
 bool QSVMethodAvailable(decltype(mfxInfoMFX::RateControlMethod) method)
 {
     static qsv_cpu_platform plat = qsv_get_cpu_platform();
@@ -553,8 +568,12 @@ public:
             }
         }
 
-        if(!spawn_helper(event_prefix, qsvhelper_process, qsvhelper_thread, process_waiter))
+        if (!spawn_helper(event_prefix, qsvhelper_process, qsvhelper_thread, process_waiter))
+        {
+            if (OSGetVersion() < 7)
+                ThrowQSVInitError(L"QSV is no longer supported on Vista", Str("Encoder.QSV.HelperLaunchFailedVista"));
             ThrowQSVInitError(L"Couldn't launch QSVHelper.exe: %u!", Str("Encoder.QSV.HelperLaunchFailed"), GetLastError());
+        }
 
         ipc_init_request request((event_prefix + INIT_REQUEST).Array());
 

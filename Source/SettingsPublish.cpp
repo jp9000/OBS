@@ -75,8 +75,20 @@ void SettingsPublish::DestroyPane()
 
 void SettingsPublish::ApplySettings()
 {
+    auto check_expanded_dir = [&](String path, String err, String errCaption)
+    {
+        String expanded = GetExpandedRecordingDirectoryBase(path);
+        if (OSFileExists(expanded))
+            return true;
+
+        return OBSMessageBox(hwnd, err.FindReplace(L"$1", expanded), errCaption, MB_ICONWARNING | MB_YESNO | MB_DEFBUTTON2 ) != IDNO;
+    };
+
+    //------------------------------------------
+
     String strSavePath = GetEditText(GetDlgItem(hwnd, IDC_SAVEPATH));
     String defaultPath = OSGetDefaultVideoSavePath(L"\\.flv");
+    String actualPath = strSavePath;
     if (!strSavePath.IsValid() && defaultPath.IsValid())
     {
         String text = Str("Settings.Publish.InvalidSavePath");
@@ -87,23 +99,32 @@ void SettingsPublish::ApplySettings()
             return;
         }
         SetWindowText(GetDlgItem(hwnd, IDC_SAVEPATH), defaultPath.Array());
+        actualPath = defaultPath;
     }
+
+    if (!check_expanded_dir(actualPath, Str("Settings.Publish.SavePathDoesNotExist"), Str("Settings.Publish.SavePathDoesNotExistCaption")))
+        return SetAbortApplySettings(true);
 
     //------------------------------------------
 
     String replaySavePath = GetEditText(GetDlgItem(hwnd, IDC_REPLAYBUFFERSAVEPATH));
     defaultPath = OSGetDefaultVideoSavePath(L"\\Replay-$T.flv");
+    actualPath = replaySavePath;
     if (!replaySavePath.IsValid() && defaultPath.IsValid())
     {
         String text = Str("Settings.Publish.InvalidReplayBufferSavePath");
         text.FindReplace(L"$1", defaultPath);
-        if (OBSMessageBox(nullptr, text, Str("Settings.Publish.InvalidSavePathCaption"), MB_ICONEXCLAMATION | MB_OKCANCEL) != IDOK)
+        if (OBSMessageBox(nullptr, text, Str("Settings.Publish.InvalidReplayBufferSavePathCaption"), MB_ICONEXCLAMATION | MB_OKCANCEL) != IDOK)
         {
             SetAbortApplySettings(true);
             return;
         }
         SetWindowText(GetDlgItem(hwnd, IDC_REPLAYBUFFERSAVEPATH), defaultPath.Array());
+        actualPath = defaultPath;
     }
+
+    if (!check_expanded_dir(actualPath, Str("Settings.Publish.ReplayBufferSavePathDoesNotExist"), Str("Settings.Publish.ReplayBufferSavePathDoesNotExistCaption")))
+        return SetAbortApplySettings(true);
 
     //------------------------------------------
 

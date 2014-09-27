@@ -208,18 +208,46 @@ void OBS::SendFrame(VideoSegment &curSegment, QWORD firstFrameTime)
 
         //Log(TEXT("v:%u, %llu"), curSegment.timestamp, frameInfo.firstFrameTime+curSegment.timestamp);
 
-        if(network)
-            network->SendPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, packet.type);
+        if (network)
+        {
+            if (!HandleStreamStopInfo(networkStop, packet.type, curSegment))
+                network->SendPacket(packet.data.Array(), packet.data.Num(), curSegment.timestamp, packet.type);
+        }
 
         if (fileStream || replayBufferStream)
         {
             auto shared_data = std::make_shared<const std::vector<BYTE>>(packet.data.Array(), packet.data.Array() + packet.data.Num());
             if (fileStream)
-                fileStream->AddPacket(shared_data, curSegment.timestamp, curSegment.pts, packet.type);
+            {
+                if (!HandleStreamStopInfo(fileStreamStop, packet.type, curSegment))
+                    fileStream->AddPacket(shared_data, curSegment.timestamp, curSegment.pts, packet.type);
+            }
             if (replayBufferStream)
-                replayBufferStream->AddPacket(shared_data, curSegment.timestamp, curSegment.pts, packet.type);
+            {
+                if (!HandleStreamStopInfo(replayBufferStop, packet.type, curSegment))
+                    replayBufferStream->AddPacket(shared_data, curSegment.timestamp, curSegment.pts, packet.type);
+            }
         }
     }
+}
+
+bool OBS::HandleStreamStopInfo(OBS::StopInfo &info, PacketType type, const VideoSegment& segment)
+{
+    if (type == PacketType_Audio || !info.func)
+        return false;
+
+    if (segment.pts < info.time)
+        return false;
+
+    if (!info.timeSeen)
+    {
+        info.timeSeen = true;
+        return false;
+    }
+
+    info.func();
+    info = {};
+    return true;
 }
 
 bool OBS::ProcessFrame(FrameProcessInfo &frameInfo)

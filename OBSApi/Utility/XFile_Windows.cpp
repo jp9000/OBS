@@ -379,8 +379,13 @@ BOOL CreatePath(CTSTR lpPath)
     if(OSCreateDirectory(lpPath))
         return true;
     else
-        if(!CreatePath(GetPathDirectory(lpPath)))
+    {
+        String parent = GetPathDirectory(lpPath);
+        if (parent == lpPath)
             return false;
+        if (!CreatePath(parent))
+            return false;
+    }
     return OSCreateDirectory(lpPath);
 }
 

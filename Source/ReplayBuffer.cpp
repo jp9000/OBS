@@ -37,7 +37,7 @@ namespace
     using packet_vec_t = deque<shared_ptr<const packet_t>>;
 }
 
-void CreateRecordingHelper(VideoFileStream *&stream, packet_list_t &packets);
+void CreateRecordingHelper(unique_ptr<VideoFileStream> &stream, packet_list_t &packets);
 
 static DWORD STDCALL SaveReplayBufferThread(void *arg);
 
@@ -66,6 +66,8 @@ struct ReplayBuffer : VideoFileStream
         for (auto &thread : threads)
             if (WaitForSingleObject(thread.second.get(), seconds * 100) != WAIT_OBJECT_0)
                 OSTerminateThread(thread.first.release(), 0);
+            else
+                App->AddPendingStreamThread(thread.first.release());
     }
     
     virtual void AddPacket(const BYTE *data, UINT size, DWORD timestamp, DWORD pts, PacketType type) override
@@ -369,7 +371,7 @@ struct RecordingHelper : VideoFileStream
     }
 };
 
-void CreateRecordingHelper(VideoFileStream *&stream, packet_list_t &packets)
+void CreateRecordingHelper(unique_ptr<VideoFileStream> &stream, packet_list_t &packets)
 {
     if (stream)
     {
@@ -382,7 +384,7 @@ void CreateRecordingHelper(VideoFileStream *&stream, packet_list_t &packets)
 
     auto helper = make_unique<RecordingHelper>(packet_vec_t{begin(packets), end(packets)});
     if (helper->StartRecording())
-        stream = helper.release();
+        stream.reset(helper.release());
 }
 
 pair<ReplayBuffer*, unique_ptr<VideoFileStream>> CreateReplayBuffer(int seconds)
