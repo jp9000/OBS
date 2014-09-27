@@ -107,6 +107,8 @@ PROCDECL(AMFVariantFreeWString);
 void UnbindAMF()
 {
 	InterlockedDecrement(&refCount);
+	if(refCount < 0)
+		refCount = 0;
 	if (refCount == 0 && hMod)
 	{
 #ifdef _DEBUG
