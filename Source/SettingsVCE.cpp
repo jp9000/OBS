@@ -35,6 +35,11 @@ static void ToggleControls(HWND hwnd, BOOL enabled)
 {
     const std::vector<decltype(IDC_VCE_Q)> ids =
     {
+        /* MFT settings */
+        //IDC_VCE_LOWLATENCY,
+        //IDC_VCE_QVSS,
+        //IDC_VCE_REFS,
+        //IDC_VCE_BFRAMES,
         IDC_VCE_CABAC,
         IDC_VCE_AMD,
         IDC_VCE_ME_HALF,
@@ -46,7 +51,6 @@ static void ToggleControls(HWND hwnd, BOOL enabled)
         IDC_VCE_CONSTINTRAPRED,
         IDC_VCE_SATD,
         IDC_VCE_IME_OVERW,
-        IDC_VCE_LOWLATENCY,
         IDC_VCE_GOP,
         IDC_VCE_IDR,
         IDC_VCE_IPIC,
@@ -59,12 +63,9 @@ static void ToggleControls(HWND hwnd, BOOL enabled)
         IDC_VCE_IME_SUBM,
         IDC_VCE_DISABLE_SUBM,
         IDC_VCE_LSM,
-        IDC_VCE_QVSS,
-        IDC_VCE_REFS,
         IDC_VCE_S,
         IDC_VCE_B,
         IDC_VCE_Q,
-        IDC_VCE_BFRAMES,
         IDC_VCE_AMF_PRESET,
         //IDC_VCE_AMF_ENGINE
     };
