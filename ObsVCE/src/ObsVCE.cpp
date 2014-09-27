@@ -376,8 +376,7 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset
 
     mUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
     mKeyint = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 0);
-    bool bInterop = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("NoInterop"), 0) != 0;
-    if (bInterop)
+    if(AppConfig->GetInt(TEXT("VCE Settings"), TEXT("NoInterop"), 0) != 0)
         mD3D10Device = nullptr;
 
     headerPacket.SetSize(128);

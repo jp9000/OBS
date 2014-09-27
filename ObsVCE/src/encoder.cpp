@@ -176,6 +176,8 @@ bool VCEEncoder::encodeCreate(uint32_t deviceId)
 
         if (!mCanInterop)
             VCELog(TEXT("NOT USING D3D10 INTEROP"));
+        else
+            VCELog(TEXT("Using D3D10 interop"));
     }
 
     props.push_back(0);

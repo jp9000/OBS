@@ -190,6 +190,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)\OBSApi\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>OBSApi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <StripPrivateSymbols>$(SolutionDir)\rundir\pdb64\stripped\$(TargetName).pdb</StripPrivateSymbols>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(OutDir)$(TargetFileName)" "$(SolutionDir)rundir\$(TargetFileName)"</Command>
