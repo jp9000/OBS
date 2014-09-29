@@ -1753,24 +1753,26 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                 case IDC_MONITOR:
                     {
-                        UINT id = (UINT)SendMessage(GetDlgItem(hwnd, IDC_MONITOR), CB_GETCURSEL, 0, 0);
-                        const MonitorInfo &monitor = App->GetMonitor(id);
+                        if (!lParam) {
+                            UINT id = (UINT) SendMessage(GetDlgItem(hwnd, IDC_MONITOR), CB_GETCURSEL, 0, 0);
+                            const MonitorInfo &monitor = App->GetMonitor(id);
 
-                        UINT x, y, cx, cy;
-                        x  = monitor.rect.left;
-                        y  = monitor.rect.top;
-                        cx = monitor.rect.right-monitor.rect.left;
-                        cy = monitor.rect.bottom-monitor.rect.top;
+                            UINT x, y, cx, cy;
+                            x = monitor.rect.left;
+                            y = monitor.rect.top;
+                            cx = monitor.rect.right - monitor.rect.left;
+                            cy = monitor.rect.bottom - monitor.rect.top;
 
-                        if(cx < 16)
-                            cx = 16;
-                        if(cy < 16)
-                            cy = 16;
+                            if (cx < 16)
+                                cx = 16;
+                            if (cy < 16)
+                                cy = 16;
 
-                        SetWindowText(GetDlgItem(hwnd, IDC_POSX),  IntString(x).Array());
-                        SetWindowText(GetDlgItem(hwnd, IDC_POSY),  IntString(y).Array());
-                        SetWindowText(GetDlgItem(hwnd, IDC_SIZEX), IntString(cx).Array());
-                        SetWindowText(GetDlgItem(hwnd, IDC_SIZEY), IntString(cy).Array());
+                            SetWindowText(GetDlgItem(hwnd, IDC_POSX), IntString(x).Array());
+                            SetWindowText(GetDlgItem(hwnd, IDC_POSY), IntString(y).Array());
+                            SetWindowText(GetDlgItem(hwnd, IDC_SIZEX), IntString(cx).Array());
+                            SetWindowText(GetDlgItem(hwnd, IDC_SIZEY), IntString(cy).Array());
+                        }
                         break;
                     }
 
