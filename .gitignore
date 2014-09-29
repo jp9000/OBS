@@ -7,6 +7,8 @@ Release_MD/
 Release/
 Debug/
 x64/
+installer/prev
+installer/test
 installer/32bit
 installer/upload
 installer/64bit
@@ -34,6 +36,7 @@ rundir/crowdin
 *.res
 *.manifest
 *.dep
+*.rar
 *.zip
 *.lnk
 *.chm
