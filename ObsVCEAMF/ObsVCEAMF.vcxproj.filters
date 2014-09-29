@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Header Files\CL">
-      <UniqueIdentifier>{934b61d8-a38f-4eac-8e8f-ea49ee33c58d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\amfhelpers">
       <UniqueIdentifier>{47807dd6-9771-4dcf-bacb-41e12626fec9}</UniqueIdentifier>
     </Filter>
@@ -35,36 +32,6 @@
     </ClInclude>
     <ClInclude Include="OBS-min.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CL\cl.h">
-      <Filter>Header Files\CL</Filter>
-    </ClInclude>
-    <ClInclude Include="CL\cl.hpp">
-      <Filter>Header Files\CL</Filter>
-    </ClInclude>
-    <ClInclude Include="CL\cl_d3d10.h">
-      <Filter>Header Files\CL</Filter>
-    </ClInclude>
-    <ClInclude Include="CL\cl_d3d11.h">
-      <Filter>Header Files\CL</Filter>
-    </ClInclude>
-    <ClInclude Include="CL\cl_dx9_media_sharing.h">
-      <Filter>Header Files\CL</Filter>
-    </ClInclude>
-    <ClInclude Include="CL\cl_ext.h">
-      <Filter>Header Files\CL</Filter>
-    </ClInclude>
-    <ClInclude Include="CL\cl_gl.h">
-      <Filter>Header Files\CL</Filter>
-    </ClInclude>
-    <ClInclude Include="CL\cl_gl_ext.h">
-      <Filter>Header Files\CL</Filter>
-    </ClInclude>
-    <ClInclude Include="CL\cl_platform.h">
-      <Filter>Header Files\CL</Filter>
-    </ClInclude>
-    <ClInclude Include="CL\opencl.h">
-      <Filter>Header Files\CL</Filter>
     </ClInclude>
     <ClInclude Include="VCECL.h">
       <Filter>Header Files</Filter>

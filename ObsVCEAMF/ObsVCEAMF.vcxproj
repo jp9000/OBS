@@ -90,7 +90,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\OBSApi\$(Platform)\$(Configuration);$(AMDAPPSDKROOT)\lib\x86;$(USERPROFILE)\AMD Media SDK\1.1 Beta\lib\amf\x86\$(Configuration)\vs12;$(AMDAPPSDKROOT)\lib\x86;$(SolutionDir)\OBSApi\$(Platform)\$(Configuration);C:\Program Files (x86)\Visual Leak Detector\lib\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\OBSApi\$(Configuration);$(AMDAPPSDKROOT)\lib\x86;$(SolutionDir)\..\AMD Media SDK\1.1 Beta\lib\amf\x86\$(Configuration)\vs12;$(USERPROFILE)\AMD Media SDK\1.1 Beta\lib\amf\x86\$(Configuration)\vs12;C:\Program Files (x86)\Visual Leak Detector\lib\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>OBSApi.lib;amf-core-windesktop$(PlatformArchitecture).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(SolutionDir)\rundir\pdb32\$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
@@ -110,7 +110,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(USERPROFILE)\AMD Media SDK\1.1 Beta\lib\amf\x86_64\$(Configuration)\vs12;$(AMDAPPSDKROOT)\lib\x86_64;$(SolutionDir)\OBSApi\$(Platform)\$(Configuration);C:\Program Files (x86)\Visual Leak Detector\lib\Win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\AMD Media SDK\1.1 Beta\lib\amf\x86_64\$(Configuration)\vs12;$(USERPROFILE)\AMD Media SDK\1.1 Beta\lib\amf\x86_64\$(Configuration)\vs12;$(AMDAPPSDKROOT)\lib\x86_64;$(SolutionDir)\OBSApi\$(Platform)\$(Configuration);C:\Program Files (x86)\Visual Leak Detector\lib\Win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>OBSApi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(SolutionDir)\rundir\pdb64\$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
@@ -134,7 +134,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)\OBSApi\$(Configuration)\;$(AMDAPPSDKROOT)\lib\x86;$(USERPROFILE)\AMD Media SDK\1.1 Beta\lib\amf\x86\$(Configuration)\vs12;$(AMDAPPSDKROOT)\lib\x86;C:\Program Files (x86)\Visual Leak Detector\lib\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\OBSApi\$(Configuration);$(AMDAPPSDKROOT)\lib\x86;$(SolutionDir)\..\AMD Media SDK\1.1 Beta\lib\amf\x86\$(Configuration)\vs12;$(USERPROFILE)\AMD Media SDK\1.1 Beta\lib\amf\x86\$(Configuration)\vs12;C:\Program Files (x86)\Visual Leak Detector\lib\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>OBSApi.lib;amf-core-windesktop$(PlatformArchitecture).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <StripPrivateSymbols>$(SolutionDir)\rundir\pdb32\stripped\$(TargetName).pdb</StripPrivateSymbols>
     </Link>
@@ -158,7 +158,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(USERPROFILE)\AMD Media SDK\1.1 Beta\lib\amf\x86_64\$(Configuration)\vs12;$(AMDAPPSDKROOT)\lib\x86_64;$(SolutionDir)\OBSApi\$(Platform)\$(Configuration);C:\Program Files (x86)\Visual Leak Detector\lib\Win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\AMD Media SDK\1.1 Beta\lib\amf\x86_64\$(Configuration)\vs12;$(USERPROFILE)\AMD Media SDK\1.1 Beta\lib\amf\x86_64\$(Configuration)\vs12;$(AMDAPPSDKROOT)\lib\x86_64;$(SolutionDir)\OBSApi\$(Platform)\$(Configuration);C:\Program Files (x86)\Visual Leak Detector\lib\Win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>OBSApi.lib;amf-core-windesktop$(PlatformArchitecture).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <StripPrivateSymbols>$(SolutionDir)\rundir\pdb64\stripped\$(TargetName).pdb</StripPrivateSymbols>
     </Link>
@@ -167,16 +167,6 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CL\cl.h" />
-    <ClInclude Include="CL\cl.hpp" />
-    <ClInclude Include="CL\cl_d3d10.h" />
-    <ClInclude Include="CL\cl_d3d11.h" />
-    <ClInclude Include="CL\cl_dx9_media_sharing.h" />
-    <ClInclude Include="CL\cl_ext.h" />
-    <ClInclude Include="CL\cl_gl.h" />
-    <ClInclude Include="CL\cl_gl_ext.h" />
-    <ClInclude Include="CL\cl_platform.h" />
-    <ClInclude Include="CL\opencl.h" />
     <ClInclude Include="amfhelpers\inc\AMFPlatform.h" />
     <ClInclude Include="amfhelpers\inc\CmdLogger.h" />
     <ClInclude Include="amfhelpers\inc\DeviceDX11.h" />
