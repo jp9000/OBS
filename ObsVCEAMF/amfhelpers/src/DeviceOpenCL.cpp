@@ -6,12 +6,13 @@
 #include <CL/cl_dx9_media_sharing.h>
 //#include <CL/cl_gl.h>
 #pragma comment(lib, "opencl.lib")
+#define USE_CL_BINARY
 
 #define INITPFN(x) \
 	x = static_cast<x ## _fn>(clGetExtensionFunctionAddressForPlatform(platformID, #x));\
 	if(!x) { Log(TEXT("Cannot resolve ") TEXT(#x) TEXT(" function")); return AMF_FAIL;}
 
-// Input format is probably CL_BGRA, CL_UNORM_INT8
+// Input format is probably CL_BGRA, CL_UNORM_INT8 which means only read_imagef works.
 static const char *source =
 //"#pragma OPENCL EXTENSION cl_khr_d3d10_sharing  : enable\n"
 "__constant sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP_TO_EDGE | CLK_FILTER_NEAREST;\n"
@@ -29,7 +30,7 @@ static const char *source =
 "int2 id = (int2)(get_global_id(0), get_global_id(1));"
 "int2 idx2 = id * 2;"
 
-"float2 IN00 = read_imagef(input, sampler, idx2 + (int2)(0, 0)).xz;"
+"float2 IN00 = read_imagef(input, sampler, idx2               ).xz;"
 "float2 IN10 = read_imagef(input, sampler, idx2 + (int2)(1, 0)).xz;"
 "float2 IN01 = read_imagef(input, sampler, idx2 + (int2)(0, 1)).xz;"
 "float2 IN11 = read_imagef(input, sampler, idx2 + (int2)(1, 1)).xz;"
@@ -60,18 +61,19 @@ AMF_RESULT DeviceOpenCL::Init(IDirect3DDevice9* pD3DDevice9, ID3D10Device *pD3DD
 	cl_int status = 0;
 	cl_platform_id platformID = 0;
 	cl_device_id interoppedDeviceID = 0;
+	char *exts;
+	size_t extSize;
+
 	// get AMD platform:
 	res = FindPlatformID(platformID);
 	CHECK_AMF_ERROR_RETURN(res, L"FindPlatformID() failed");
 
-	char *exts;
-	size_t extSize;
 	status = clGetPlatformInfo(platformID, CL_PLATFORM_EXTENSIONS, 0, nullptr, &extSize);
 	if (!status)
 	{
 		exts = new char[extSize];
 		status = clGetPlatformInfo(platformID, CL_PLATFORM_EXTENSIONS, extSize, exts, nullptr);
-		Log(L"CL Extensions: %S", exts);
+		Log(L"CL Platform Extensions: %S", exts);
 		delete[] exts;
 	}
 
@@ -115,6 +117,15 @@ AMF_RESULT DeviceOpenCL::Init(IDirect3DDevice9* pD3DDevice9, ID3D10Device *pD3DD
 		m_hDeviceIDs.push_back(deviceDX10);
 		cps.push_back(CL_CONTEXT_D3D10_DEVICE_KHR);
 		cps.push_back((cl_context_properties)pD3DDevice10);
+
+		status = clGetDeviceInfo(deviceDX10, CL_DEVICE_EXTENSIONS, 0, nullptr, &extSize);
+		if (!status)
+		{
+			exts = new char[extSize];
+			status = clGetDeviceInfo(deviceDX10, CL_DEVICE_EXTENSIONS, extSize, exts, nullptr);
+			Log(L"CL Device Extensions: %S", exts);
+			delete[] exts;
+		}
 
 	}
 	if(pD3DDevice9 != NULL)
@@ -222,7 +233,7 @@ AMF_RESULT DeviceOpenCL::Terminate()
 		{
 			clReleaseDevice(*it);
 		}
-		m_hDeviceIDs.clear();;
+		m_hDeviceIDs.clear();
 	}
 	if(m_hContext != 0)
 	{
@@ -343,12 +354,62 @@ bool DeviceOpenCL::BuildKernels()
 		return false;
 
 	size_t size = strlen(source);
-	cl_int status = 0;
-	m_program = clCreateProgramWithSource(m_hContext, 1, (const char**)&source, &size, &status);
+	cl_int status = 0, err = 0;
+	bool usingBinary = false;
+
+	//But kernels are pretty simple so maybe not much speed up
+#pragma region Load program binary
+#ifdef USE_CL_BINARY
+	std::hash<std::string> hash_fn;
+	size_t hash = hash_fn(std::string(source));
+	String binPath = OBSGetAppDataPath();
+
+	size_t devsize;
+	status = clGetDeviceInfo(m_hDeviceIDs[0], CL_DEVICE_NAME, 0, nullptr, &devsize);
+	if (!status)
+	{
+		char* devname = new char[devsize];
+		status = clGetDeviceInfo(m_hDeviceIDs[0], CL_DEVICE_NAME, devsize, devname, nullptr);
+		binPath += FormattedString(TEXT("\\%S_%08X.bin"), devname, hash);
+		delete[] devname;
+		if (OSFileExists(binPath))
+			usingBinary = true;
+	}
+	else
+		binPath.Clear();
+
+	// Try loading CL program binary
+	m_program = nullptr;
+	if (usingBinary && binPath.IsValid())
+	{
+		size_t prgsize;
+		std::vector<unsigned char> prg;
+		FILE *hf = nullptr;
+		errno_t err = _wfopen_s(&hf, binPath.Array(), L"rb");
+		if (!err)
+		{
+			fseek(hf, 0, SEEK_END);
+			prgsize = ftell(hf);
+			fseek(hf, 0, SEEK_SET);
+			prg.resize(prgsize);
+			if (fread(&prg[0], 1, prg.size(), hf) == prgsize)
+			{
+				auto ptr = (const unsigned char*)&prg[0];
+				m_program = clCreateProgramWithBinary(m_hContext, 1, &m_hDeviceIDs[0],
+					&prgsize, &ptr, &status, &err);
+			}
+			fclose(hf);
+		}
+	}
+#endif
+#pragma endregion
+
+	if (!m_program)
+		m_program = clCreateProgramWithSource(m_hContext, 1, (const char**)&source, &size, &status);
 
 	std::string flagsStr("");// ("-save-temps ");
 	flagsStr.append("-cl-single-precision-constant -cl-mad-enable "
-					"-cl-fast-relaxed-math -cl-unsafe-math-optimizations ");
+		"-cl-fast-relaxed-math -cl-unsafe-math-optimizations ");
 
 	/* create a cl program executable for all the devices specified */
 	status = clBuildProgram(m_program, 1, &m_hDeviceIDs[0], flagsStr.c_str(), NULL, NULL);
@@ -367,6 +428,28 @@ bool DeviceOpenCL::BuildKernels()
 		}
 		return false;
 	}
+
+#pragma region Save program binary
+	// Save binary
+#ifdef USE_CL_BINARY
+	if (!usingBinary && binPath.IsValid())
+	{
+		size_t prgsize = 0;
+		clGetProgramInfo(m_program, CL_PROGRAM_BINARY_SIZES, sizeof(size_t), &prgsize, nullptr);
+
+		uint8_t *prg = new uint8_t[prgsize];
+		clGetProgramInfo(m_program, CL_PROGRAM_BINARIES, sizeof(uint8_t*), &prg, nullptr);
+
+		FILE *hf = nullptr;
+		errno_t err = _wfopen_s(&hf, binPath.Array(), L"wb");
+		if (!err)
+		{
+			fwrite(prg, 1, prgsize, hf);
+			fclose(hf);
+		}
+	}
+#endif
+#pragma endregion
 
 	m_kernel_y = clCreateKernel(m_program, "Y444toNV12_Y", &status);
 	if (status != CL_SUCCESS)
