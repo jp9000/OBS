@@ -87,6 +87,7 @@ MainMenu.Settings.Projector="&Projektorius"
 MainMenu.File.Exit="Išeiti (&X)"
 MainMenu.File.Save="&Išsaugoti"
 
+
 MainMenu.Help.VisitWebsite="Eiti į svetainę"
 MainMenu.Help.CheckForUpdates="Patikrint ar yra n&aujinimų"
 

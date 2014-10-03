@@ -94,6 +94,7 @@ MainMenu.File.Exit="&Esci"
 MainMenu.File.OpenRecordingsFolder="Apri &Cartella delle registrazion"
 MainMenu.File.Save="&Salva"
 
+
 MainMenu.Help.VisitWebsite="Visita il sito"
 MainMenu.Help.CheckForUpdates="Verifica &aggiornamenti"
 

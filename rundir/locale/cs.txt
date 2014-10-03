@@ -107,6 +107,7 @@ MainMenu.File.Exit="U&končit"
 MainMenu.File.OpenRecordingsFolder="Otevřít složku &nahrávek"
 MainMenu.File.Save="&Uložit"
 
+
 MainMenu.Help.OpenHelp="Otevřít stránku s nápovědou"
 MainMenu.Help.VisitWebsite="Navštivte stránky"
 MainMenu.Help.CheckForUpdates="Zkontrolovat &aktualizace"

@@ -101,6 +101,7 @@ MainMenu.File.Exit="&izlaz"
 MainMenu.File.OpenRecordingsFolder="Otvori &Recordings folder"
 MainMenu.File.Save="&Spremi"
 
+
 MainMenu.Help.OpenHelp="Otvori stranicu za Pomoć"
 MainMenu.Help.VisitWebsite="Posjetite Stranicu"
 MainMenu.Help.CheckForUpdates="Provjeri dostupnost nove verzije"

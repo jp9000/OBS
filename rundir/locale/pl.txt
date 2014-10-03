@@ -112,6 +112,7 @@ MainMenu.File.OpenRecordingsFolder="Otwórz folder z nag&raniami"
 MainMenu.File.ShowSavedReplayBuffers="Pokaż nagrane &Buforowane Powtórki"
 MainMenu.File.Save="Zapisz"
 
+
 MainMenu.Help.OpenHelp="Otwórz stronę pomocy"
 MainMenu.Help.VisitWebsite="Odwiedź naszą stronę"
 MainMenu.Help.CheckForUpdates="Sprawdź dostępne akt&ualizacje"

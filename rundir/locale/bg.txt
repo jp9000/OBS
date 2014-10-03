@@ -86,6 +86,7 @@ MainMenu.Settings.Projector="&Проектор"
 MainMenu.File.Exit="И&зход"
 MainMenu.File.Save="&Запис"
 
+
 MainMenu.Help.VisitWebsite="Посети Уебсайта"
 MainMenu.Help.CheckForUpdates="Провери за актуализации"
 

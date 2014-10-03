@@ -112,6 +112,7 @@ MainMenu.File.OpenRecordingsFolder="Abrir Pasta das G&ravações"
 MainMenu.File.ShowSavedReplayBuffers="Mostrar replays e buffers salvos"
 MainMenu.File.Save="&Salvar"
 
+
 MainMenu.Help.OpenHelp="Abrir a página de ajuda"
 MainMenu.Help.VisitWebsite="Visite o Website"
 MainMenu.Help.CheckForUpdates="Verificar se há novas at&ualizações"

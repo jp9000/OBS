@@ -89,6 +89,7 @@ MainMenu.Settings.Projector="&Projetor"
 MainMenu.File.Exit="Sair"
 MainMenu.File.Save="&Guardar"
 
+
 MainMenu.Help.VisitWebsite="Visitar o website"
 MainMenu.Help.CheckForUpdates="Verificar existência de &atualizações"
 

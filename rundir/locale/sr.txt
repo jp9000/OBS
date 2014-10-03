@@ -89,6 +89,7 @@ MainMenu.File.Exit="Излаз (&X)"
 MainMenu.File.OpenRecordingsFolder="Отворите записни фолдер"
 MainMenu.File.Save="&Сними"
 
+
 MainMenu.Help.VisitWebsite="Посети Сајт"
 MainMenu.Help.CheckForUpdates="Провери да ли има доступних &апдејтова"
 

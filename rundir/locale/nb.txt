@@ -112,6 +112,7 @@ MainMenu.File.OpenRecordingsFolder="Åpne &Opptaksmappe"
 MainMenu.File.ShowSavedReplayBuffers="Vis lagrede replay og buffere"
 MainMenu.File.Save="&Lagre"
 
+
 MainMenu.Help.OpenHelp="Åpne Hjelp-siden"
 MainMenu.Help.VisitWebsite="Besøk Hjemmeside"
 MainMenu.Help.CheckForUpdates="Sjekk for &oppdateringer"
