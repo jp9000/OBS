@@ -263,6 +263,9 @@
     <None Include="ui\test2\recording.ico">
       <Filter>Resources</Filter>
     </None>
+    <None Include="rundir\shaders\SceneTransition.pShader">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">

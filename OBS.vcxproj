@@ -334,6 +334,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="cursor1.cur" />
+    <None Include="rundir\shaders\SceneTransition.pShader" />
     <None Include="ui\mic2-muted.ico" />
     <None Include="ui\mic2.ico" />
     <None Include="ui\speaker-muted.ico" />
