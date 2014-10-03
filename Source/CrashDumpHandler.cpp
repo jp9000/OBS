@@ -317,7 +317,8 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
     if (exceptionInfo->ExceptionRecord->ExceptionCode == EXCEPTION_BREAKPOINT)
     {
         HANDLE hVideoThread = NULL, hEncodeThread = NULL;
-        App->GetThreadHandles (&hVideoThread, &hEncodeThread);
+        if (App)
+            App->GetThreadHandles (&hVideoThread, &hEncodeThread);
 
         if (hVideoThread)
         {
