@@ -156,6 +156,8 @@ public:
 
     void SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)
     {
+        InitEncoderData();
+
         ProcessDelayedPackets(timestamp);
 
         NetworkPacket *newPacket = delayedPackets.CreateNew();
