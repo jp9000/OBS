@@ -19,6 +19,12 @@
 
 #include "DShowPlugin.h"
 
+struct ResSize
+{
+    UINT cx;
+    UINT cy;
+};
+
 #undef DEFINE_GUID
 #define DEFINE_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
         EXTERN_C const GUID DECLSPEC_SELECTANY name \
@@ -691,8 +697,26 @@ bool DeviceSource::LoadFilters()
 
     //------------------------------------------------
     // change elgato resolution
-    if (elgato && bUseCustomResolution)
+    if (elgato)
     {
+        /* choose closest matching elgato resolution */
+        if (!bUseCustomResolution)
+        {
+            UINT baseCX, baseCY;
+            UINT closest = 0xFFFFFFFF;
+            API->GetBaseSize(baseCX, baseCY);
+
+            const ResSize resolutions[] = {{480, 360}, {640, 480}, {1280, 720}, {1920, 1080}};
+            for (const ResSize &res : resolutions) {
+                UINT val = (UINT)labs((long)res.cy - (long)baseCY);
+                if (val < closest) {
+                    elgatoCX = res.cx;
+                    elgatoCY = res.cy;
+                    closest = val;
+                }
+            }
+        }
+
         IElgatoVideoCaptureFilter3 *elgatoFilter = nullptr;
         VIDEO_CAPTURE_FILTER_SETTINGS settings;
 
