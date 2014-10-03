@@ -45,6 +45,12 @@ struct ThreadDeleter
     void operator()(HANDLE h) const { if (!h) return; OSTerminateThread(h, args ...); }
 };
 
+template <DWORD exitCode=0>
+struct ThreadTerminator
+{
+    void operator()(HANDLE h) const { if (!h) return; Log(L"Terminating 0x%x", GetThreadId(h)); TerminateThread(h, exitCode); }
+};
+
 struct ScopedLock
 {
     bool locked, unlock;
