@@ -246,6 +246,7 @@ bool setEncodeConfig(ove_session session, OvConfigCtrl *pConfig)
     /**************************************************************************/
     /* send configuration values for this session                             */
     /**************************************************************************/
+	//!!! OVEncodeSendConfig replaces (some) values in pConfig with actually used ones.
     configBuffers[0].config.pPictureControl = &(pConfig->pictControl);
     configBuffers[0].configType = OVE_CONFIG_TYPE_PICTURE_CONTROL;
     configBuffers[1].config.pRateControl = &(pConfig->rateControl);

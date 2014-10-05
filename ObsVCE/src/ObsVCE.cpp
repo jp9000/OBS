@@ -156,8 +156,9 @@ bool VCEEncoder::init()
         mConfigCtrl.rateControl.encQP_B = 0;
         mConfigCtrl.rateControl.encRCOptions = bPadCBR ? 3 : 0;
 
+		//TODO SPS/PPS are not copied
         mConfigCtrl.pictControl.encHeaderInsertionSpacing = mManKeyInt;
-		mConfigCtrl.pictControl.encIDRPeriod = mManKeyInt;// gopSize;
+		mConfigCtrl.pictControl.encIDRPeriod = 0;// IDR every 30 frames, engage manual override
         mConfigCtrl.pictControl.encNumMBsPerSlice = 0;
 
         /*mConfigCtrl.meControl.encSearchRangeX = 16;
@@ -178,9 +179,9 @@ bool VCEEncoder::init()
         mConfigCtrl.rateControl.encVBVBufferSize = mBufferSize * 1000;
 
         //TODO IDR nice for seeking in local files. Intra-refresh better for streaming?
-        mManKeyInt = mKeyint * mFps;
-		mConfigCtrl.pictControl.encIDRPeriod = mManKeyInt;
-        mConfigCtrl.pictControl.encForceIntraRefresh = 0;// mManKeyInt;
+		mManKeyInt = (mKeyint == 0 ? 2 : mKeyint) * mFps;
+		mConfigCtrl.pictControl.encIDRPeriod = 0;
+        mConfigCtrl.pictControl.encForceIntraRefresh = 0;
         //TODO Usually 0 to let VCE manage it.
         mConfigCtrl.rateControl.encGOPSize = mKeyint * mFps;
         mConfigCtrl.priority = OVE_ENCODE_TASK_PRIORITY_LEVEL1;
@@ -203,7 +204,7 @@ bool VCEEncoder::init()
             mConfigCtrl.rateControl.encRateControlMethod = RCM_VBR;
 
         int numMBs = ((mWidth + 15) / 16) * numH;
-        mConfigCtrl.pictControl.encNumMBsPerSlice = numMBs;
+		mConfigCtrl.pictControl.encNumMBsPerSlice = 0;// numMBs;
     }
 
     VCELog(TEXT("Rate control method: %d"), mConfigCtrl.rateControl.encRateControlMethod);
@@ -239,7 +240,8 @@ bool VCEEncoder::init()
         APPCFG(mConfigCtrl.rdoControl.encSkipCostAdj, "SkipCostAdj"); //Not in cfg dialog
 
         APPCFG(mConfigCtrl.pictControl.cabacEnable, "CABAC");
-        APPCFG(mConfigCtrl.pictControl.encIDRPeriod, "IDRPeriod");
+		//APPCFG(mConfigCtrl.pictControl.encIDRPeriod, "IDRPeriod");
+		APPCFG(mManKeyInt, "IDRPeriod");
         APPCFG(mConfigCtrl.pictControl.encIPicPeriod, "IPicPeriod");
         APPCFG(mConfigCtrl.pictControl.useConstrainedIntraPred, "ConstIntraPred");
 
@@ -603,12 +605,12 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
         pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_IDR;
     }
 
-    //if (/*!mUseCBR &&*/ mKeyNum > mManKeyInt)
-    //{
-    //    pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_IDR;
-    //    mKeyNum = 0;
-    //}
-    //mKeyNum++;
+    if (/*!mUseCBR &&*/ mKeyNum >= mManKeyInt)
+    {
+        pictureParameter.forcePicType = OVE_PICTURE_TYPE_H264_IDR;
+        mKeyNum = 0;
+    }
+    mKeyNum++;
 
     if (mUse444)
     {
@@ -1139,6 +1141,6 @@ void VCEEncoder::RequestKeyframe()
     OSMutexLocker locker(frameMutex);
     mReqKeyframe = true;
 #ifdef _DEBUG
-    VCELog(TEXT("Keyframe requested"));
+    OSDebugOut(TEXT("Keyframe requested\n"));
 #endif
 }
