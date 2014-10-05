@@ -110,6 +110,7 @@ MainMenu.File.Exit="I&zhod"
 MainMenu.File.OpenRecordingsFolder="Odpri &Snemalno Mapo"
 MainMenu.File.Save="&Shrani"
 
+
 MainMenu.Help.OpenHelp="Odpri Stran Pomoči"
 MainMenu.Help.VisitWebsite="Obišči spletno stran"
 MainMenu.Help.CheckForUpdates="Preveri za &posodobitve"

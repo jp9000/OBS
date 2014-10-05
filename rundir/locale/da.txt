@@ -102,6 +102,7 @@ MainMenu.File.Exit="&Afslut"
 MainMenu.File.OpenRecordingsFolder="Åben &optagelses mappe"
 MainMenu.File.Save="&Gem"
 
+
 MainMenu.Help.VisitWebsite="Besøg Hjemmeside"
 MainMenu.Help.CheckForUpdates="Tjek for &opdateringer"
 

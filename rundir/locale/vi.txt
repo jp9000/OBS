@@ -101,6 +101,7 @@ MainMenu.File.Exit="&Thoát"
 MainMenu.File.OpenRecordingsFolder="Mở & thư mục bản ghi âm"
 MainMenu.File.Save="&Lưu"
 
+
 MainMenu.Help.OpenHelp="Mở trang Trợ giúp"
 MainMenu.Help.VisitWebsite="Ghé thăm Website"
 MainMenu.Help.CheckForUpdates="Kiểm tra &Phiên bản mới"

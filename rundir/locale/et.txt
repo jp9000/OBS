@@ -89,6 +89,7 @@ MainMenu.Settings.Projector="&Projektor"
 MainMenu.File.Exit="E& välju"
 MainMenu.File.Save="& Salvestada"
 
+
 MainMenu.Help.VisitWebsite="Külasta Kodulehte"
 MainMenu.Help.CheckForUpdates="Kontrolli uuendusi"
 

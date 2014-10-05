@@ -83,6 +83,7 @@ MainMenu.Settings.Projector="العا&رض"
 MainMenu.File.Exit="&خروج"
 MainMenu.File.Save="&حفظ"
 
+
 MainMenu.Help.VisitWebsite="زيارة الموقع الالكتروني"
 MainMenu.Help.CheckForUpdates="&فحص التحديثات"
 

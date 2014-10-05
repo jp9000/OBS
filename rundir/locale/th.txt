@@ -69,6 +69,7 @@ MainMenu.Settings.FullscreenMode="&โหมดแสดงตัวอย่า
 MainMenu.File.Exit="อ&อก"
 MainMenu.File.Save="&บันทึก"
 
+
 MainMenu.Help.VisitWebsite="เยี่ยมชมเว็บไซต์"
 MainMenu.Help.CheckForUpdates="ตรวจสอบการอัพเดท"
 

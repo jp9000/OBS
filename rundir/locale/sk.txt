@@ -96,6 +96,7 @@ MainMenu.File.Exit="&Ukončiť"
 MainMenu.File.OpenRecordingsFolder="Otvoriť zložku nah&rávok"
 MainMenu.File.Save="&Uložiť"
 
+
 MainMenu.Help.OpenHelp="Otvoriť stránku s nápovedou"
 MainMenu.Help.VisitWebsite="Navštíviť webové stránky"
 MainMenu.Help.CheckForUpdates="Skontrolovať akt&ualizácie"

@@ -90,6 +90,7 @@ MainMenu.File.Exit="Ç&ıkış"
 MainMenu.File.OpenRecordingsFolder="Kaydedinler Klasö&rünü Aç"
 MainMenu.File.Save="&Kaydet"
 
+
 MainMenu.Help.VisitWebsite="Siteyi Ziyaret Et"
 MainMenu.Help.CheckForUpdates="Güncellemeleri denetle (&U)"
 

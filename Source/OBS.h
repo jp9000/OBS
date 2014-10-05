@@ -1297,7 +1297,7 @@ public:
 
     struct PendingStreams
     {
-        using thread_t = std::unique_ptr<void, ThreadDeleter<>>;
+        using thread_t = std::unique_ptr<void, ThreadTerminator<>>;
         std::list<thread_t> streams;
         std::unique_ptr<void, MutexDeleter> mutex;
         PendingStreams() : mutex(OSCreateMutex()) {}

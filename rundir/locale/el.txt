@@ -84,6 +84,7 @@ MainMenu.Settings.Projector="&Προβολέας"
 MainMenu.File.Exit="Έ&ξοδος"
 MainMenu.File.Save="&Αποθήκευση"
 
+
 MainMenu.Help.VisitWebsite="Μετάβαση στην Ιστοσελίδα"
 MainMenu.Help.CheckForUpdates="Έλεγχος για ενημερώσεις"
 
