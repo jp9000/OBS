@@ -279,11 +279,16 @@ bool VCEEncoder::encodeCreate(uint32_t deviceId)
 
     if (mCanInterop)
         mInputBufSize = mAlignedSurfaceHeight * mAlignedSurfaceWidth * 3 / 2;
-
+	/*
+	Somewhat confusing part how buffers are used currently:
+	1.) Interopped: D3D10 -> image2d_t from tex -> convert to NV12 with CL (inputSurfaces) -> VCE
+	2.) No interop, no CL conv: D3D10 -> ConvertY444ToNV12 to mapped 'inputSurfaces' -> VCE
+	3.) CL conv: D3D10 -> memcpy texture to mapped 'inputSurfaces' -> convert to NV12 with CL (mOutput) -> VCE
+	*/
     for (int32_t i = 0; i<MAX_INPUT_SURFACE; i++)
     {
         mEncodeHandle.inputSurfaces[i].surface = f_clCreateBuffer((cl_context)mOveContext,
-            CL_MEM_READ_WRITE ,//| CL_MEM_USE_PERSISTENT_MEM_AMD, //CL_MEM_ALLOC_HOST_PTR,
+            CL_MEM_READ_WRITE ,//| CL_MEM_USE_PERSISTENT_MEM_AMD,
             mInputBufSize,
             NULL,
             &err);
@@ -298,7 +303,7 @@ bool VCEEncoder::encodeCreate(uint32_t deviceId)
     if (mUse444 && !mCanInterop)
     {
         mOutput = f_clCreateBuffer((cl_context)mOveContext,
-            CL_MEM_WRITE_ONLY | CL_MEM_USE_PERSISTENT_MEM_AMD,
+            CL_MEM_WRITE_ONLY /*| CL_MEM_USE_PERSISTENT_MEM_AMD*/,
             mOutputBufSize,
             NULL,
             &err);
@@ -366,6 +371,8 @@ bool VCEEncoder::encodeClose()
     if (mKernel[0]) f_clReleaseKernel(mKernel[0]);
     if (mKernel[1]) f_clReleaseKernel(mKernel[1]);
     if (mProgram) f_clReleaseProgram(mProgram);
+    memset(mKernel, 0, sizeof(mKernel));
+    mProgram = nullptr;
 
     for (int i = 0; i<2; i++) {
         if (mEncodeHandle.clCmdQueue[i])
