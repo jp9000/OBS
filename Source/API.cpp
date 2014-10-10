@@ -762,6 +762,7 @@ void OBSAPIInterface::HandleHotkeys()
 {
     List<DWORD> hitKeys;
 
+    bool allow_other_hotkey_modifiers = !!GlobalConfig->GetInt(TEXT("General"), TEXT("AllowOtherHotkeyModifiers"), true);
     DWORD modifiers = 0;
     if(GetAsyncKeyState(VK_MENU) & 0x8000)
         modifiers |= HOTKEYF_ALT;
@@ -808,7 +809,7 @@ void OBSAPIInterface::HandleHotkeys()
         else
         {
             bool bModifiersMatch = false;
-            if(GlobalConfig->GetInt(TEXT("General"), TEXT("AllowOtherHotkeyModifiers"), true))
+            if(allow_other_hotkey_modifiers)
                 bModifiersMatch = ((hotkeyModifiers & modifiers) == hotkeyModifiers); //allows other modifiers to be pressed
             else
                 bModifiersMatch = (hotkeyModifiers == modifiers);
