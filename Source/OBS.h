@@ -628,11 +628,13 @@ class OBS
     Texture         *mainRenderTextures[NUM_RENDER_BUFFERS];
     Texture         *yuvRenderTextures[NUM_RENDER_BUFFERS];
 
+    Texture *lastRenderTexture;
     Texture *transitionTexture;
+
     bool    bTransitioning;
     float   transitionAlpha;
 
-    Shader  *mainVertexShader, *mainPixelShader, *yuvScalePixelShader;
+    Shader  *mainVertexShader, *mainPixelShader, *yuvScalePixelShader, *transitionPixelShader;
     Shader  *solidVertexShader, *solidPixelShader;
 
     //---------------------------------------------------
