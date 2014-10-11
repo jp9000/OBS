@@ -68,10 +68,6 @@ public:
     virtual CTSTR GetSceneName() const=0;
     virtual XElement* GetSceneElement()=0;
 
-    virtual bool SetSceneCollection(CTSTR lpCollection, CTSTR lpScene)=0;
-    virtual CTSTR GetSceneCollectionName() const = 0;
-    virtual void GetSceneCollectionNames(StringList &list) const = 0;
-
     //low-order word is VK, high-order word is modifier.  equivalent to the value given by hotkey controls
     virtual UINT CreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARAM param)=0;
     virtual void DeleteHotkey(UINT hotkeyID)=0;
@@ -197,6 +193,10 @@ public:
     virtual void StartStopRecordingReplayBuffer() = 0;
     virtual bool GetRecordingReplayBuffer() const=0;
     virtual void SaveReplayBuffer() = 0;
+
+    virtual bool SetSceneCollection(CTSTR lpCollection, CTSTR lpScene) = 0;
+    virtual CTSTR GetSceneCollectionName() const = 0;
+    virtual void GetSceneCollectionNames(StringList &list) const = 0;
 };
 
 BASE_EXPORT extern APIInterface *API;

@@ -400,6 +400,9 @@ bool OBS::SetScene(CTSTR lpScene)
 }
 
 bool OBS::SetSceneCollection(CTSTR lpCollection) {
+    if (bRunning)
+        return false;
+
     App->scenesConfig.Save();
     CTSTR collection = GetCurrentSceneCollection();
     String strSceneCollectionPath;
@@ -561,7 +564,7 @@ public:
             return false;
 
         bool success = App->SetSceneCollection(lpCollection);
-        if (lpScene != NULL)
+        if (lpScene != NULL && success)
         {
             SetScene(lpScene, true);
         }
