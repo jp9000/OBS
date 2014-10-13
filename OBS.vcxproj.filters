@@ -216,6 +216,9 @@
     <ClInclude Include="Source\LogUploader.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClCompile Include="Source\DataPacketHelpers.h">
+      <Filter>Headers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="cursor1.cur">
@@ -268,6 +271,9 @@
     </None>
     <None Include="ui\test2\recording.ico">
       <Filter>Resources</Filter>
+    </None>
+    <None Include="rundir\shaders\SceneTransition.pShader">
+      <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

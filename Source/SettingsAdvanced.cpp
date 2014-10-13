@@ -564,6 +564,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 case IDC_SCENEBUFFERTIME_EDIT:
                 case IDC_AUDIOTIMEADJUST_EDIT:
                 case IDC_VIDEOENCODERSETTINGS:
+                case IDC_QSVVIDEOENCODERSETTINGS:
                 case IDC_LATENCYTUNE:
                     if(HIWORD(wParam) == EN_CHANGE)
                     {

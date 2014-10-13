@@ -572,11 +572,16 @@ retryHookTestV2:
     solidVertexShader   = CreateVertexShaderFromFile(TEXT("shaders/DrawSolid.vShader"));
     solidPixelShader    = CreatePixelShaderFromFile(TEXT("shaders/DrawSolid.pShader"));
 
+    transitionPixelShader = CreatePixelShaderFromFile(TEXT("shaders/SceneTransition.pShader"));
+
     if(!mainVertexShader || !mainPixelShader)
         CrashError(TEXT("Unable to load DrawTexture shaders"));
 
     if(!solidVertexShader || !solidPixelShader)
         CrashError(TEXT("Unable to load DrawSolid shaders"));
+
+    if (!transitionPixelShader)
+        CrashError(TEXT("Unable to load SceneTransition shader"));
 
     //------------------------------------------------------------------
 
@@ -608,6 +613,8 @@ retryHookTestV2:
         mainRenderTextures[i] = CreateRenderTarget(baseCX, baseCY, GS_BGRA, FALSE);
         yuvRenderTextures[i]  = CreateRenderTarget(outputCX, outputCY, GS_BGRA, FALSE);
     }
+
+    transitionTexture = CreateRenderTarget(baseCX, baseCY, GS_BGRA, FALSE); 
 
     //-------------------------------------------------------------
 
@@ -1098,11 +1105,15 @@ void OBS::Stop(bool overrideKeepRecording, bool stopReplayBuffer)
     delete transitionTexture;
     transitionTexture = NULL;
 
+    delete lastRenderTexture;
+    lastRenderTexture = NULL;
+
     //-------------------------------------------------------------
 
     delete mainVertexShader;
     delete mainPixelShader;
     delete yuvScalePixelShader;
+    delete transitionPixelShader;
 
     delete solidVertexShader;
     delete solidPixelShader;
@@ -1110,6 +1121,7 @@ void OBS::Stop(bool overrideKeepRecording, bool stopReplayBuffer)
     mainVertexShader = NULL;
     mainPixelShader = NULL;
     yuvScalePixelShader = NULL;
+    transitionPixelShader = NULL;
 
     solidVertexShader = NULL;
     solidPixelShader = NULL;

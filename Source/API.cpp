@@ -762,13 +762,17 @@ void OBSAPIInterface::HandleHotkeys()
 {
     List<DWORD> hitKeys;
 
+    bool allow_other_hotkey_modifiers = !!GlobalConfig->GetInt(TEXT("General"), TEXT("AllowOtherHotkeyModifiers"), true);
+    bool uplay_overlay_compatibility  = !!GlobalConfig->GetInt(L"General", L"UplayOverlayCompatibility", false);
+
     DWORD modifiers = 0;
     if(GetAsyncKeyState(VK_MENU) & 0x8000)
         modifiers |= HOTKEYF_ALT;
     if(GetAsyncKeyState(VK_CONTROL) & 0x8000)
         modifiers |= HOTKEYF_CONTROL;
-    if(GetAsyncKeyState(VK_SHIFT) & 0x8000)
-        modifiers |= HOTKEYF_SHIFT;
+    if (!uplay_overlay_compatibility)
+        if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
+            modifiers |= HOTKEYF_SHIFT;
 
     OSEnterMutex(App->hHotkeyMutex);
 
@@ -808,7 +812,7 @@ void OBSAPIInterface::HandleHotkeys()
         else
         {
             bool bModifiersMatch = false;
-            if(GlobalConfig->GetInt(TEXT("General"), TEXT("AllowOtherHotkeyModifiers"), true))
+            if(allow_other_hotkey_modifiers)
                 bModifiersMatch = ((hotkeyModifiers & modifiers) == hotkeyModifiers); //allows other modifiers to be pressed
             else
                 bModifiersMatch = (hotkeyModifiers == modifiers);
@@ -829,7 +833,7 @@ void OBSAPIInterface::HandleHotkeys()
             }
             else
             {
-                if(bModifiersMatch)
+                if (bModifiersMatch && !(uplay_overlay_compatibility && hotkeyVK == VK_F2))
                 {
                     short keyState = GetAsyncKeyState(hotkeyVK);
                     bool bDown = (keyState & 0x8000) != 0;

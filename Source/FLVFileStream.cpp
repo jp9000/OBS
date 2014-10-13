@@ -20,6 +20,8 @@
 #include "Main.h"
 #include "RTMPStuff.h"
 
+#include "DataPacketHelpers.h"
+
 
 
 class FLVFileStream : public VideoFileStream
@@ -30,14 +32,15 @@ class FLVFileStream : public VideoFileStream
     UINT64 metaDataPos;
     DWORD lastTimeStamp, initialTimestamp;
 
+    decltype(GetBufferedSEIPacket()) sei = GetBufferedSEIPacket();
+    decltype(GetBufferedAudioHeadersPacket()) audioHeaders = GetBufferedAudioHeadersPacket();
+    decltype(GetBufferedVideoHeadersPacket()) videoHeaders = GetBufferedVideoHeadersPacket();
+
     bool bSentFirstPacket, bSentSEI;
 
     void AppendFLVPacket(const BYTE *lpData, UINT size, BYTE type, DWORD timestamp)
     {
         if (!bSentSEI && type == 9 && lpData[0] == 0x17 && lpData[1] == 0x1) { //send SEI with first keyframe packet
-            DataPacket sei;
-            App->GetVideoEncoder()->GetSEI(sei);
-
             UINT networkDataSize  = fastHtonl(size+sei.size);
             UINT networkTimestamp = fastHtonl(timestamp);
             UINT streamID = 0;
@@ -124,15 +127,20 @@ public:
         }
     }
 
+    void InitBufferedPackets()
+    {
+        sei.InitBuffer();
+        audioHeaders.InitBuffer();
+        videoHeaders.InitBuffer();
+    }
+
     virtual void AddPacket(const BYTE *data, UINT size, DWORD timestamp, DWORD /*pts*/, PacketType type) override
     {
+        InitBufferedPackets();
+
         if(!bSentFirstPacket)
         {
             bSentFirstPacket = true;
-
-            DataPacket audioHeaders, videoHeaders;//, videoSEI;
-            App->GetAudioHeaders(audioHeaders);
-            App->GetVideoHeaders(videoHeaders);
 
             AppendFLVPacket(audioHeaders.lpPacket, audioHeaders.size, 8, 0);
             AppendFLVPacket(videoHeaders.lpPacket, videoHeaders.size, 9, 0);
