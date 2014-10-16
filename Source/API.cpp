@@ -556,6 +556,24 @@ public:
     virtual CTSTR GetSceneName() const          {return App->GetSceneElement()->GetName();}
     virtual XElement* GetSceneElement()         {return App->GetSceneElement();}
 
+    virtual bool SetSceneCollection(CTSTR lpCollection, CTSTR lpScene)
+    {
+        assert(lpCollection && *lpCollection);
+
+        if (!lpCollection || !*lpCollection)
+            return false;
+
+        bool success = App->SetSceneCollection(lpCollection);
+        if (lpScene != NULL && success)
+        {
+            SetScene(lpScene, true);
+        }
+
+        return success;
+    }
+    virtual CTSTR GetSceneCollectionName() const { return App->GetCurrentSceneCollection(); }
+    virtual void GetSceneCollectionNames(StringList &list) const { return App->GetSceneCollection(list); }
+
     virtual UINT CreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARAM param);
     virtual void DeleteHotkey(UINT hotkeyID);
 
