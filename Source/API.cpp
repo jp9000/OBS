@@ -399,6 +399,34 @@ bool OBS::SetScene(CTSTR lpScene)
     return true;
 }
 
+bool OBS::SetSceneCollection(CTSTR lpCollection) {
+    if (bRunning)
+        return false;
+
+    App->scenesConfig.Save();
+    CTSTR collection = GetCurrentSceneCollection();
+    String strSceneCollectionPath;
+    strSceneCollectionPath = FormattedString(L"%s\\sceneCollection\\%s.xconfig", lpAppDataPath, collection);
+
+    if (!App->scenesConfig.Open(strSceneCollectionPath))
+    {
+        return false;
+    }
+
+    GlobalConfig->SetString(TEXT("General"), TEXT("SceneCollection"), lpCollection);
+    App->scenesConfig.Close();
+    App->ReloadSceneCollection();
+    ResetSceneCollectionMenu();
+    ResetApplicationName();
+    App->UpdateNotificationAreaIcon();
+    App->scenesConfig.SaveTo(String() << lpAppDataPath << "\\scenes.xconfig");
+
+    if (API != NULL)
+        ReportSwitchSceneCollections(lpCollection);
+
+    return true;
+}
+
 struct HotkeyInfo
 {
     DWORD hotkeyID;
@@ -633,6 +661,24 @@ public:
     virtual UINT GetFramesDropped() const     {return App->curFramesDropped;}
     virtual UINT GetTotalStreamTime() const   {return App->totalStreamTime;}
     virtual UINT GetBytesPerSec() const       {return App->bytesPerSec;}
+
+    virtual bool SetSceneCollection(CTSTR lpCollection, CTSTR lpScene)
+    {
+        assert(lpCollection && *lpCollection);
+
+        if (!lpCollection || !*lpCollection)
+            return false;
+
+        bool success = App->SetSceneCollection(lpCollection);
+        if (lpScene != NULL && success)
+        {
+            SetScene(lpScene, true);
+        }
+
+        return success;
+    }
+    virtual CTSTR GetSceneCollectionName() const { return App->GetCurrentSceneCollection(); }
+    virtual void GetSceneCollectionNames(StringList &list) const { return App->GetSceneCollection(list); }
 };
 
 APIInterface* CreateOBSApiInterface()

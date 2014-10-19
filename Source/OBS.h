@@ -359,9 +359,15 @@ struct PluginInfo
 
     /* called when scenes are switched */
     OBS_SCENE_SWITCH_CALLBACK sceneSwitchCallback;
-    
+
+    /* called when scene collections are switched */
+    OBS_SCENE_SWITCH_CALLBACK sceneCollectionSwitchCallback;
+
     /* called when a scene is renamed, added, removed, or moved */
     OBS_CALLBACK scenesChangedCallback;
+
+    /* called when a scene collection is renamed, added, removed, or moved */
+    OBS_CALLBACK sceneCollectionsChangedCallback;
 
     /* called when the source order is changed */
     OBS_CALLBACK sourceOrderChangedCallback;
@@ -607,6 +613,12 @@ void ResetWASAPIAudioDevice(AudioSource *source);
 struct FrameProcessInfo;
 
 enum class SceneCollectionAction {
+    Add,
+    Rename,
+    Clone
+};
+
+enum class ProfileAction {
     Add,
     Rename,
     Clone
@@ -1110,6 +1122,11 @@ private:
     void CallHotkey(DWORD hotkeyID, bool bDown);
 
     static void AddProfilesToMenu(HMENU menu);
+    static INT_PTR CALLBACK EnterProfileDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+    void AddProfile(ProfileAction action);
+    void RemoveProfile();
+    void ImportProfile();
+    void ExportProfile();
     static void ResetProfileMenu();
     static void ResetLogUploadMenu();
     static void DisableMenusWhileStreaming(bool disable);
@@ -1248,6 +1265,8 @@ public:
     virtual bool SetScene(CTSTR lpScene);
     virtual void InsertSourceItem(UINT index, LPWSTR name, bool checked);
 
+    virtual bool SetSceneCollection(CTSTR lpCollection);
+
     //---------------------------------------------------------------------------
     // volume stuff
     virtual void SetDesktopVolume(float val, bool finalValue);
@@ -1279,7 +1298,9 @@ public:
                                    UINT totalStreamtime = 0, UINT numTotalFrames = 0,
                                    UINT numDroppedFrames = 0, UINT fps = 0);
     virtual void ReportSwitchScenes(CTSTR scene);
+    virtual void ReportSwitchSceneCollections(CTSTR collection);
     virtual void ReportScenesChanged();
+    virtual void ReportSceneCollectionsChanged();
     virtual void ReportSourceOrderChanged();
     virtual void ReportSourceChanged(CTSTR sourceName, XElement* source);
     virtual void ReportSourcesAddedOrRemoved();

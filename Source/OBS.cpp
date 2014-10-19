@@ -744,7 +744,9 @@ OBS::OBS()
                         pluginInfo->statusCallback                     = (OBS_STATUS_CALLBACK)GetProcAddress(hPlugin, "OnOBSStatus");
                         pluginInfo->streamStatusCallback               = (OBS_STREAM_STATUS_CALLBACK)GetProcAddress(hPlugin, "OnStreamStatus");
                         pluginInfo->sceneSwitchCallback                = (OBS_SCENE_SWITCH_CALLBACK)GetProcAddress(hPlugin, "OnSceneSwitch");
+                        pluginInfo->sceneCollectionSwitchCallback      = (OBS_SCENE_SWITCH_CALLBACK)GetProcAddress(hPlugin, "OnSceneCollectionSwitch");
                         pluginInfo->scenesChangedCallback              = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnScenesChanged");
+                        pluginInfo->sceneCollectionsChangedCallback    = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnSceneCollectionsChanged");
                         pluginInfo->sourceOrderChangedCallback         = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnSourceOrderChanged");
                         pluginInfo->sourceChangedCallback              = (OBS_SOURCE_CHANGED_CALLBACK)GetProcAddress(hPlugin, "OnSourceChanged");
                         pluginInfo->sourcesAddedOrRemovedCallback      = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnSourcesAddedOrRemoved");
