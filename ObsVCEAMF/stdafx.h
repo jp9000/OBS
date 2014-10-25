@@ -13,6 +13,7 @@
 #include <Windows.h>
 #include <d3d9.h>
 #include <d3d9types.h>
+#include <dxva2api.h>
 
 #include "targetver.h"
 #include <cstdint>

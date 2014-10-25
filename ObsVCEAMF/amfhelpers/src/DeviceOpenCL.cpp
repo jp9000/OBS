@@ -332,8 +332,8 @@ bool DeviceOpenCL::RunKernels(cl_mem inTex, cl_mem yTex, cl_mem uvTex, size_t wi
 	}
 
 	//TODO off by one probably
-	globalThreads[0] /= 2;
-	globalThreads[1] /= 2;
+	globalThreads[0] = width & 1 ? (width + 1) / 2 : width / 2;
+	globalThreads[1] = height & 1 ? (height - 1) / 2 : height / 2;
 
 	status = clEnqueueNDRangeKernel(m_hCommandQueue, m_kernel_uv, 2, nullptr, globalThreads, nullptr, 0, nullptr, nullptr);
 	if (status != CL_SUCCESS)
@@ -342,12 +342,13 @@ bool DeviceOpenCL::RunKernels(cl_mem inTex, cl_mem yTex, cl_mem uvTex, size_t wi
 		return false;
 	}
 
+	//FIXME Sub 1ms can't be right...
+	clFlush(m_hCommandQueue);
 	//Finishing here so that it would count toward "GPU download and conversion" profile
 	//clFinish(m_hCommandQueue);
 	return true;
 }
 
-//TODO Save/load binary, maybe
 bool DeviceOpenCL::BuildKernels()
 {
 	if (m_hDeviceIDs.empty())
@@ -357,7 +358,7 @@ bool DeviceOpenCL::BuildKernels()
 	cl_int status = 0, err = 0;
 	bool usingBinary = false;
 
-	//But kernels are pretty simple so maybe not much speed up
+	//Even when kernels are pretty simple, there is some speed up
 #pragma region Load program binary
 #ifdef USE_CL_BINARY
 	std::hash<std::string> hash_fn;
@@ -416,10 +417,11 @@ bool DeviceOpenCL::BuildKernels()
 	if (status != CL_SUCCESS)
 	{
 		Log(TEXT("clBuildProgram failed."));
-		if (status == CL_BUILD_PROGRAM_FAILURE)
+
+		size_t size = 0;
+		if (status == CL_BUILD_PROGRAM_FAILURE && 
+			(clGetProgramBuildInfo(m_program, m_hDeviceIDs[0], CL_PROGRAM_BUILD_LOG, 0, nullptr, &size) == CL_SUCCESS))
 		{
-			size_t size = 0;
-			clGetProgramBuildInfo(m_program, m_hDeviceIDs[0], CL_PROGRAM_BUILD_LOG, 0, nullptr, &size);
 			char* log = new char[size];
 			status = clGetProgramBuildInfo(m_program, m_hDeviceIDs[0], CL_PROGRAM_BUILD_LOG, size, log, &size);
 			if (!status)

@@ -2,6 +2,8 @@
 #include "stdafx.h"
 #include <bcrypt.h>
 #include "OBS-min.h"
+#include <amf\components\VideoEncoderVCECaps.h>
+#include <amf\components\ComponentCaps.h>
 #include <amf\components\VideoEncoderVCE.h>
 #ifdef AMF_CORE_STATIC
 #include "DynAMF.h"
@@ -33,6 +35,12 @@ extern decltype(&AMFCreateComponent) pAMFCreateComponent;
 		VCELog(TEXT(msg) TEXT(" HRESULT: %08X"), hresult);\
 		return false;\
 	}}while(0)
+
+struct VideoPacket
+{
+	List<BYTE> Packet;
+	inline void FreeData() { Packet.Clear(); }
+};
 
 struct AMF_SETTINGS
 {
@@ -131,16 +139,20 @@ public:
 	bool HasBufferedFrames() { return !mEOF;/* mOutputQueue.size() > 0;*/ }
 	VideoEncoder_Features GetFeatures()
 	{
-		return VideoEncoder_D3D10Interop;
+		if(mCanInterop)
+			return VideoEncoder_D3D10Interop;
+		return VideoEncoder_Unknown;
 	}
 	void ConvertD3D10(ID3D10Texture2D *d3dtex, void *data, void **state);
 
 private:
 	void ProcessBitstream(amf::AMFBufferPtr &buff, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp);
-	bool VCEEncoder::RequestBuffersCL(LPVOID buffers);
-	bool VCEEncoder::RequestBuffersDX11(LPVOID buffers);
-	bool VCEEncoder::RequestBuffersHost(LPVOID buffers);
+	bool RequestBuffersCL(LPVOID buffers);
+	bool RequestBuffersDX11(LPVOID buffers);
+	bool RequestBuffersDX9(LPVOID buffers);
+	bool RequestBuffersHost(LPVOID buffers);
 	void ClearInputBuffer(int idx);
+	bool AllocateSurface(InputBuffer &inBuf, mfxFrameData &data);
 
 	amf::AMFContextPtr   mContext;
 	amf::AMFComponentPtr mEncoder;
@@ -148,6 +160,10 @@ private:
 	DeviceDX11   mDX11Device;
 	DeviceOpenCL mOCLDevice;
 	ATL::CComPtr<ID3D10Device> mD3D10device;
+	//ATL::CComPtr<IDirectXVideoDecoderService> mDxvaService;
+	List<VideoPacket> mCurrPackets;
+	std::queue<DWORD> mTSqueue;
+	std::queue<amf::AMFSurfacePtr> mSurfaces;
 
 	cl_command_queue mCmdQueue;
 	cl_context       mCLContext;
@@ -159,13 +175,18 @@ private:
 	bool mAlive;
 	bool mEOF;
 	bool mIsWin8OrGreater;
+	// Currently only for D3D10 > OpenCL > AMF
 	bool mCanInterop;
+	uint32_t   mEngine;
 	uint8_t    *mHdrPacket;
 	size_t     mHdrSize;
-	uint32_t   mInBuffSize;
-	uint32_t   mCurrFrame;
+	size_t     mInBuffSize;
+	int32_t    mCurrFrame;
 	uint32_t   mIDRPeriod;
+	uint32_t   mIntraMBs;
+	int32_t    mLowLatencyKeyInt;
 	bool       mReqKeyframe;
+	//TODO is CFR not Constant Rate Factor, uh
 	bool       mUseCFR;
 	bool       mUseCBR;
 	int32_t    mKeyint;
@@ -186,6 +207,7 @@ private:
 	int32_t  frameShift;
 
 	std::queue<OutputList*> mOutputQueue;
+	std::queue<OutputList*> mOutputReadyQueue;
 	InputBuffer             mInputBuffers[MAX_INPUT_BUFFERS];
 
 };

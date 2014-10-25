@@ -36,6 +36,7 @@ private:
 typedef struct InputBuffer
 {
 	uint8_t *pBuffer;
+	amf::AMFBufferPtr pAMFBuffer;
 	size_t size;
 	//bool locked;
 	LONG locked;
@@ -54,11 +55,10 @@ typedef struct InputBuffer
 	//Observer observer;
 	amf::AMF_MEMORY_TYPE mem_type;
 
-#ifdef USE_DX11
-	D3D11_MAPPED_SUBRESOURCE d3dMap;
+	IDirect3DSurface9 *pSurface9;
 	ID3D11Texture2D *pTex;
 	LONG inUse;
-#endif
+
 } InputBuffer;
 
 typedef struct OutputBuffer

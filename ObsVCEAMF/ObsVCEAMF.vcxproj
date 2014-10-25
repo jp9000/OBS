@@ -85,13 +85,13 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>AMF_CORE_NOT_STATIC;WIN32;_DEBUG;_WINDOWS;_USRDLL;OBSVCEAMF_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(USERPROFILE)\AMD Media SDK\1.1 Beta\inc;$(SolutionDir)\OBSApi;$(SolutionDir)\Source;$(SolutionDir)\extras;$(SolutionDir);C:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\AMD Media SDK\1.1 Beta\inc\amf\core;$(SolutionDir)..\AMD Media SDK\1.1 Beta\inc;$(USERPROFILE)\AMD Media SDK\1.1 Beta\inc\amf\core;$(USERPROFILE)\AMD Media SDK\1.1 Beta\inc;$(ProjectDir);$(SolutionDir)\OBSApi;$(SolutionDir)\Source;$(SolutionDir)\extras;$(SolutionDir);C:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)\OBSApi\$(Configuration);$(AMDAPPSDKROOT)\lib\x86;$(SolutionDir)\..\AMD Media SDK\1.1 Beta\lib\amf\x86\$(Configuration)\vs12;$(USERPROFILE)\AMD Media SDK\1.1 Beta\lib\amf\x86\$(Configuration)\vs12;C:\Program Files (x86)\Visual Leak Detector\lib\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>OBSApi.lib;amf-core-windesktop$(PlatformArchitecture).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OBSApi.lib;amf-core-windesktop$(PlatformArchitecture).lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(SolutionDir)\rundir\pdb32\$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
     <PostBuildEvent>
@@ -105,13 +105,13 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>AMF_CORE_NOT_STATIC;WIN32;_DEBUG;_WINDOWS;_USRDLL;OBSVCEAMF_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(USERPROFILE)\AMD Media SDK\1.1 Beta\inc;$(SolutionDir)\OBSApi;$(SolutionDir)\Source;$(SolutionDir)\extras;$(SolutionDir);C:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\AMD Media SDK\1.1 Beta\inc\amf\core;$(SolutionDir)..\AMD Media SDK\1.1 Beta\inc;$(USERPROFILE)\AMD Media SDK\1.1 Beta\inc\amf\core;$(USERPROFILE)\AMD Media SDK\1.1 Beta\inc;$(ProjectDir);$(SolutionDir)\OBSApi;$(SolutionDir)\Source;$(SolutionDir)\extras;$(SolutionDir);C:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)\..\AMD Media SDK\1.1 Beta\lib\amf\x86_64\$(Configuration)\vs12;$(USERPROFILE)\AMD Media SDK\1.1 Beta\lib\amf\x86_64\$(Configuration)\vs12;$(AMDAPPSDKROOT)\lib\x86_64;$(SolutionDir)\OBSApi\$(Platform)\$(Configuration);C:\Program Files (x86)\Visual Leak Detector\lib\Win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>OBSApi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OBSApi.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(SolutionDir)\rundir\pdb64\$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
     <PostBuildEvent>
@@ -127,7 +127,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>AMF_CORE_NOT_STATIC;WIN32;NDEBUG;_WINDOWS;_USRDLL;OBSVCEAMF_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(USERPROFILE)\AMD Media SDK\1.1 Beta\inc;$(SolutionDir)\OBSApi;$(SolutionDir)\Source;$(SolutionDir)\extras;$(SolutionDir);C:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\AMD Media SDK\1.1 Beta\inc\amf\core;$(SolutionDir)..\AMD Media SDK\1.1 Beta\inc;$(USERPROFILE)\AMD Media SDK\1.1 Beta\inc\amf\core;$(USERPROFILE)\AMD Media SDK\1.1 Beta\inc;$(ProjectDir);$(SolutionDir)\OBSApi;$(SolutionDir)\Source;$(SolutionDir)\extras;$(SolutionDir);C:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -135,7 +135,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)\OBSApi\$(Configuration);$(AMDAPPSDKROOT)\lib\x86;$(SolutionDir)\..\AMD Media SDK\1.1 Beta\lib\amf\x86\$(Configuration)\vs12;$(USERPROFILE)\AMD Media SDK\1.1 Beta\lib\amf\x86\$(Configuration)\vs12;C:\Program Files (x86)\Visual Leak Detector\lib\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>OBSApi.lib;amf-core-windesktop$(PlatformArchitecture).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OBSApi.lib;amf-core-windesktop$(PlatformArchitecture).lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <StripPrivateSymbols>$(SolutionDir)\rundir\pdb32\stripped\$(TargetName).pdb</StripPrivateSymbols>
     </Link>
     <PostBuildEvent>
@@ -151,7 +151,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>AMF_CORE_NOT_STATIC;WIN32;NDEBUG;_WINDOWS;_USRDLL;OBSVCEAMF_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(USERPROFILE)\AMD Media SDK\1.1 Beta\inc;$(SolutionDir)\OBSApi;$(SolutionDir)\Source;$(SolutionDir)\extras;$(SolutionDir);C:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\AMD Media SDK\1.1 Beta\inc\amf\core;$(SolutionDir)..\AMD Media SDK\1.1 Beta\inc;$(USERPROFILE)\AMD Media SDK\1.1 Beta\inc\amf\core;$(USERPROFILE)\AMD Media SDK\1.1 Beta\inc;$(ProjectDir);$(SolutionDir)\OBSApi;$(SolutionDir)\Source;$(SolutionDir)\extras;$(SolutionDir);C:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -159,7 +159,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)\..\AMD Media SDK\1.1 Beta\lib\amf\x86_64\$(Configuration)\vs12;$(USERPROFILE)\AMD Media SDK\1.1 Beta\lib\amf\x86_64\$(Configuration)\vs12;$(AMDAPPSDKROOT)\lib\x86_64;$(SolutionDir)\OBSApi\$(Platform)\$(Configuration);C:\Program Files (x86)\Visual Leak Detector\lib\Win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>OBSApi.lib;amf-core-windesktop$(PlatformArchitecture).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OBSApi.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <StripPrivateSymbols>$(SolutionDir)\rundir\pdb64\stripped\$(TargetName).pdb</StripPrivateSymbols>
     </Link>
     <PostBuildEvent>
