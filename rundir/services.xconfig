@@ -14,7 +14,6 @@ services : {
       "US East: Ashburn, VA"                 : rtmp://live-iad.twitch.tv/app
       "US East: Miami, FL"                   : rtmp://live-mia.twitch.tv/app
       "US East: New York, NY"                : rtmp://live-jfk.twitch.tv/app
-      "US Midwest: Chicago, IL"              : rtmp://live-ord.twitch.tv/app
       "US West: Los Angeles, CA"             : rtmp://live-lax.twitch.tv/app
     }
     recommended : {
