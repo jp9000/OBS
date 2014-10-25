@@ -342,6 +342,7 @@ Settings.VCE.PredBits2="10: 16x16 Prediction Modes Only\n11: Disable Vertical Pr
 Settings.VCE.DevIdx="Device index"
 Settings.VCE.DevTopoId="Device topology id"
 Settings.VCE.DevTopoTooltip="For more accurate device selection, check the logs for device's topology id and enter that hexadecimal value here.\nTopology id is composed of device's PCI-Ex bus, device and function number."
+Settings.VCE.FrameSkip="Frame skip (for extra bitrate control)"
 
 Settings.General.Add="Add New"
 Settings.General.ConfirmDelete="Are you sure you wish to remove the profile '$1'?"

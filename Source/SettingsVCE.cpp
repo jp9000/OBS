@@ -67,7 +67,7 @@ static void ToggleControls(HWND hwnd, BOOL enabled)
         IDC_VCE_B,
         IDC_VCE_Q,
         IDC_VCE_AMF_PRESET,
-        //IDC_VCE_AMF_ENGINE
+        IDC_VCE_FRAMESKIP
     };
     for (auto id : ids)
         EnableWindow(GetDlgItem(hwnd, id), enabled);
@@ -195,6 +195,9 @@ void SettingsVCE::ApplySettings()
 
     bBool = SendMessage(GetDlgItem(hwnd, IDC_VCE_LOWLATENCY), BM_GETCHECK, 0, 0) == BST_CHECKED;
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("LowLatency"), bBool);
+
+    bBool = SendMessage(GetDlgItem(hwnd, IDC_VCE_FRAMESKIP), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    AppConfig->SetInt(TEXT("VCE Settings"), TEXT("FrameDrop"), bBool);
 
     iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_GOP)).ToInt();
     iInt = checkRange(iInt, 0, 0xFFFF, 30);
@@ -430,6 +433,9 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
         iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("LowLatency"), 0);
         SendMessage(GetDlgItem(hwnd, IDC_VCE_LOWLATENCY), BM_SETCHECK, iInt, 0);
 
+        iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("FrameDrop"), 0);
+        SendMessage(GetDlgItem(hwnd, IDC_VCE_FRAMESKIP), BM_SETCHECK, iInt, 0);
+
         iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("NoInterop"), 0);
         SendMessage(GetDlgItem(hwnd, IDC_VCE_INTEROP), BM_SETCHECK, iInt, 0);
 
@@ -490,6 +496,7 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
         case IDC_VCE_CONSTINTRAPRED:
         case IDC_VCE_SATD:
         case IDC_VCE_LOWLATENCY:
+        case IDC_VCE_FRAMESKIP:
         case IDC_VCE_INTEROP:
             if (HIWORD(wParam) == BN_CLICKED)
             {

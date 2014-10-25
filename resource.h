@@ -156,6 +156,7 @@
 #define IDC_VCE_INTEROP                 1054
 #define IDC_REMOVE                      1055
 #define IDC_PLUGINS                     1055
+#define IDC_VCE_FRAMESKIP               1055
 #define IDC_MOVEUP                      1056
 #define IDC_REPLACE                     1056
 #define IDC_ADD2                        1056
