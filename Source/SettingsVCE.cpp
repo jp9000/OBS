@@ -67,7 +67,11 @@ static void ToggleControls(HWND hwnd, BOOL enabled)
         IDC_VCE_B,
         IDC_VCE_Q,
         IDC_VCE_AMF_PRESET,
-        IDC_VCE_FRAMESKIP
+        IDC_VCE_FRAMESKIP,
+        IDC_VCE_MINQP,
+        IDC_VCE_MAXQP,
+        IDC_VCE_SPIN2,
+        IDC_VCE_SPIN3
     };
     for (auto id : ids)
         EnableWindow(GetDlgItem(hwnd, id), enabled);
@@ -277,6 +281,14 @@ void SettingsVCE::ApplySettings()
     bBool = SendMessage(GetDlgItem(hwnd, IDC_VCE_INTEROP), BM_GETCHECK, 0, 0) == BST_CHECKED;
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("NoInterop"), bBool);
 
+    iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_MINQP)).ToInt();
+    iInt = checkRange(iInt, 0, 51, 18);
+    AppConfig->SetInt(TEXT("VCE Settings"), TEXT("MinQP"), iInt);
+
+    iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_MAXQP)).ToInt();
+    iInt = checkRange(iInt, 0, 51, 51);
+    AppConfig->SetInt(TEXT("VCE Settings"), TEXT("MaxQP"), iInt);
+
 }
 
 void SettingsVCE::CancelSettings()
@@ -354,10 +366,10 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
         SendMessage(GetDlgItem(hwnd, IDC_VCE_AMF_PRESET), CB_ADDSTRING, 0, (LPARAM)Str("Settings.VCE.Quality"));
         LoadSettingComboInt(GetDlgItem(hwnd, IDC_VCE_AMF_PRESET), TEXT("VCE Settings"), TEXT("AMFPreset"), 1, 2);
 
-        SendMessage(GetDlgItem(hwnd, IDC_VCE_AMF_ENGINE), CB_ADDSTRING, 0, (LPARAM)TEXT("Auto Internal"));
+        SendMessage(GetDlgItem(hwnd, IDC_VCE_AMF_ENGINE), CB_ADDSTRING, 0, (LPARAM)TEXT("Host"));
         SendMessage(GetDlgItem(hwnd, IDC_VCE_AMF_ENGINE), CB_ADDSTRING, 0, (LPARAM)TEXT("DX9"));
         SendMessage(GetDlgItem(hwnd, IDC_VCE_AMF_ENGINE), CB_ADDSTRING, 0, (LPARAM)TEXT("DX11"));
-        LoadSettingComboInt(GetDlgItem(hwnd, IDC_VCE_AMF_ENGINE), TEXT("VCE Settings"), TEXT("AMFEngine"), 0, 2);
+        LoadSettingComboInt(GetDlgItem(hwnd, IDC_VCE_AMF_ENGINE), TEXT("VCE Settings"), TEXT("AMFEngine"), 2, 2);
 
         hwndTemp = GetDlgItem(hwnd, IDC_VCE_QVSS);
         for (int i = 0; i <= 10; i++)
@@ -398,9 +410,27 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
         LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_REFS), TEXT("VCE Settings"), TEXT("NumRefs"), 3);
         LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_BFRAMES), TEXT("VCE Settings"), TEXT("BFrames"), 0);
         LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_DEVIDX), TEXT("VCE Settings"), TEXT("DevIndex"), 0);
-        int devIdx = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("DevIndex"), 0);
+        iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("DevIndex"), 0);
         SendMessage(GetDlgItem(hwnd, IDC_VCE_DEVSPIN), UDM_SETRANGE32, 0, 255);
-        SendMessage(GetDlgItem(hwnd, IDC_VCE_DEVSPIN), UDM_SETPOS32, 0, devIdx);
+        SendMessage(GetDlgItem(hwnd, IDC_VCE_DEVSPIN), UDM_SETPOS32, 0, iInt);
+
+        LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_MINQP), TEXT("VCE Settings"), TEXT("MinQP"), 18);
+        iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("MinQP"), 18);
+        SendMessage(GetDlgItem(hwnd, IDC_VCE_SPIN2), UDM_SETRANGE32, 0, 51);
+        SendMessage(GetDlgItem(hwnd, IDC_VCE_SPIN2), UDM_SETPOS32, 0, iInt);
+
+        LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_MAXQP), TEXT("VCE Settings"), TEXT("MaxQP"), 51);
+        iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("MaxQP"), 51);
+        SendMessage(GetDlgItem(hwnd, IDC_VCE_SPIN3), UDM_SETRANGE32, 0, 51);
+        SendMessage(GetDlgItem(hwnd, IDC_VCE_SPIN3), UDM_SETPOS32, 0, iInt);
+
+        ti.lpszText = (LPWSTR)Str("Settings.VCE.MinQPTooltip");
+        ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_MINQP);
+        SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+        ti.lpszText = (LPWSTR)Str("Settings.VCE.MaxQPTooltip");
+        ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_MAXQP);
+        SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+
         LoadSettingEditString(GetDlgItem(hwnd, IDC_VCE_DEVTOPOID), TEXT("VCE Settings"), TEXT("DevTopoId"), TEXT(""));
         ti.lpszText = (LPWSTR)Str("Settings.VCE.DevTopoTooltip");
         ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_DEVTOPOID);
@@ -523,6 +553,9 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
         case IDC_VCE_DEVTOPOID:
         case IDC_VCE_AMF_PRESET:
         case IDC_VCE_AMF_ENGINE:
+        case IDC_VCE_DEVIDX:
+        case IDC_VCE_MINQP:
+        case IDC_VCE_MAXQP:
             if (HIWORD(wParam) == EN_CHANGE ||
                 HIWORD(wParam) == CBN_SELCHANGE ||
                 HIWORD(wParam) == CBN_EDITCHANGE)
@@ -549,11 +582,24 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
         case UDN_DELTAPOS:
             LPNMUPDOWN lpnmud;
             lpnmud = (LPNMUPDOWN)lParam;
-            if (lpnmud->iPos + lpnmud->iDelta < 0)
-                break;
-            SendMessage(GetDlgItem(hwnd, IDC_VCE_DEVIDX), WM_SETTEXT, 0,
-                (LPARAM)IntString(lpnmud->iPos + lpnmud->iDelta).Array());
-            bDataChanged = true;
+            int val = lpnmud->iPos + lpnmud->iDelta;
+            if (val < 0)
+                val = 0;
+
+            int ctrl = 0;
+            switch (((LPNMHDR)lParam)->idFrom)
+            {
+            case IDC_VCE_DEVSPIN: ctrl = IDC_VCE_DEVIDX; break;
+            case IDC_VCE_SPIN2: ctrl = IDC_VCE_MINQP; val = val > 51 ? 51 : val; break;
+            case IDC_VCE_SPIN3: ctrl = IDC_VCE_MAXQP; val = val > 51 ? 51 : val; break;
+            }
+
+            if (ctrl > 0)
+            {
+                SendMessage(GetDlgItem(hwnd, ctrl), WM_SETTEXT, 0,
+                    (LPARAM)IntString(val).Array());
+                bDataChanged = true;
+            }
             break;
         }
         if (bDataChanged)

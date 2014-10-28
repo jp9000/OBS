@@ -330,6 +330,7 @@ bool VCEEncoder::Init()
 #endif
 
 	AMF_RESULT res = AMF_OK;
+	int iInt;
 	cl_int status = CL_SUCCESS;
 	VCELog(TEXT("Build date ") TEXT(__DATE__) TEXT(" ") TEXT(__TIME__));
 
@@ -491,6 +492,12 @@ bool VCEEncoder::Init()
 
 	mIDRPeriod = mFps * (mKeyint == 0 ? 2 : mKeyint);
 	USERCFG(mIDRPeriod, "IDRPeriod");
+
+	if (mIDRPeriod == 0)
+		mIDRPeriod = mFps * (mKeyint == 0 ? 2 : mKeyint);
+	else if (mIDRPeriod < 0) //Allow manual override
+		mIDRPeriod = 0;
+
 	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_IDR_PERIOD, static_cast<amf_int64>(mIDRPeriod));
 	RETURNIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_IDR_PERIOD);
 
@@ -501,7 +508,7 @@ bool VCEEncoder::Init()
 	else
 		mLowLatencyKeyInt = -1;
 
-	VCELog(TEXT("keyin: %d"), mLowLatencyKeyInt);
+	//VCELog(TEXT("keyin: %d"), mLowLatencyKeyInt);
 
 	VCELog(TEXT("Rate control method:"));
 	AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD_ENUM rcm = AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD_PEAK_CONSTRAINED_VBR;
@@ -549,9 +556,9 @@ bool VCEEncoder::Init()
 	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_QP_B, qp);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_QP_B);
 
-	int frameSkip = 0;
-	USERCFG(frameSkip, "FrameSkip");
-	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_RATE_CONTROL_SKIP_FRAME_ENABLE, !!frameSkip);
+	iInt = 0;
+	USERCFG(iInt, "FrameSkip");
+	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_RATE_CONTROL_SKIP_FRAME_ENABLE, !!iInt);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_RATE_CONTROL_SKIP_FRAME_ENABLE);
 
 	//B frames are not supported by Encode() yet
@@ -568,6 +575,16 @@ bool VCEEncoder::Init()
 	//res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_INTRA_REFRESH_NUM_MBS_PER_SLOT, ((mHeight + 15) & ~15) / 16);
 	//LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_INTRA_REFRESH_NUM_MBS_PER_SLOT);
 	mEncoder->SetProperty(AMF_VIDEO_ENCODER_DE_BLOCKING_FILTER, true);
+
+	iInt = 18;
+	USERCFG(iInt, "MinQP");
+	mEncoder->SetProperty(AMF_VIDEO_ENCODER_MIN_QP, iInt);
+	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_MIN_QP);
+
+	iInt = 51;
+	USERCFG(iInt, "MaxQP");
+	mEncoder->SetProperty(AMF_VIDEO_ENCODER_MAX_QP, iInt);
+	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_MAX_QP);
 
 	//------------------------
 	// Print few caps etc.
