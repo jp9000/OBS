@@ -182,7 +182,7 @@ private:
 	size_t     mHdrSize;
 	size_t     mInBuffSize;
 	int32_t    mCurrFrame;
-	uint32_t   mIDRPeriod;
+	int32_t    mIDRPeriod;
 	uint32_t   mIntraMBs;
 	int32_t    mLowLatencyKeyInt;
 	bool       mReqKeyframe;
