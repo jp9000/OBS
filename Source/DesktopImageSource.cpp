@@ -1753,7 +1753,7 @@ INT_PTR CALLBACK ConfigDesktopSourceProc(HWND hwnd, UINT message, WPARAM wParam,
 
                 case IDC_MONITOR:
                     {
-                        if (!lParam) {
+                        if (!lParam || HIWORD(wParam) == CBN_SELCHANGE) {
                             UINT id = (UINT) SendMessage(GetDlgItem(hwnd, IDC_MONITOR), CB_GETCURSEL, 0, 0);
                             const MonitorInfo &monitor = App->GetMonitor(id);
 
