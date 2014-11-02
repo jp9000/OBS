@@ -125,7 +125,7 @@ MainMenu.Settings.OpenConfigFolder="設定フォルダーを開く(&C)"
 MainMenu.Settings.OpenLogFolder="ログフォルダーを開く(&L)"
 MainMenu.Settings.ShowLogWindow="ログウィンドウを表示"
 
-MainWindow.BeginMessage="[ 配信停止中 ] - \"配信開始\"、\"録画開始\"、または\"配信プレビュー\"をクリックして開始して下さい\n\n※ニコニコ生放送の場合、OBSのアップデート時には自動化ツールの最新の対応版を確認してください"
+MainWindow.BeginMessage="[ 配信停止中 ] - \"配信開始\"、\"録画開始\"、または\"配信プレビュー\"をクリックして開始して下さい"
 MainWindow.PreviewDisabled="プレビューが無効化されました\n\n右クリックして「プレビュー」を選択し、再度有効にする場合は「ビューを有効にする」を選択してください。"
 MainWindow.Dashboard="ダッシュボード"
 MainWindow.DroppedFrames="処理落ちしたフレーム:"
