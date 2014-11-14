@@ -41,7 +41,7 @@ class GraphicsCaptureSource : public ImageSource
 
     HWND hwndTarget, hwndCapture, hwndNextTarget;
     HANDLE hTargetProcess;
-    bool bCapturing, bErrorAcquiring, bFlip, bStretch, bIgnoreAspect, bCaptureMouse;
+    bool bCapturing, bErrorAcquiring, bFlip, bStretch, bAlphaBlend, bIgnoreAspect, bCaptureMouse;
     UINT captureWaitCount;
     DWORD targetProcessID;
     DWORD targetThreadID;

@@ -302,6 +302,7 @@ void GraphicsCaptureSource::BeginScene()
     bUseDWMCapture = (scmpi(strWindowClass, TEXT("Dwm")) == 0);
 
     bStretch = data->GetInt(TEXT("stretchImage")) != 0;
+    bAlphaBlend = data->GetInt(TEXT("alphaBlend")) != 0;
     bIgnoreAspect = data->GetInt(TEXT("ignoreAspect")) != 0;
     bCaptureMouse = data->GetInt(TEXT("captureMouse"), 1) != 0;
 
@@ -949,7 +950,10 @@ void GraphicsCaptureSource::Render(const Vect2 &pos, const Vect2 &size)
 
             Vect2 center = totalSize*0.5f;
 
-            BlendFunction(GS_BLEND_ONE, GS_BLEND_ZERO);
+            if(!bAlphaBlend)
+                BlendFunction(GS_BLEND_ONE, GS_BLEND_ZERO);
+            else
+                BlendFunction(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA);
 
             if(bStretch)
             {

@@ -18,6 +18,7 @@
 #define IDC_CLEARHOTKEY                 1010
 #define IDC_INVERTMOUSEONCLICK2         1010
 #define IDC_USESAFEHOOK                 1010
+#define IDC_ALPHABLEND                  1011
 #define IDC_GAMMA                       1035
 #define IDC_STARTSTREAMHOTKEY           1097
 #define IDC_HOTKEY                      1097
