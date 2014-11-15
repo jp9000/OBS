@@ -398,6 +398,7 @@ Sources.GameCaptureSource.PluginName="Game Capture Plugin"
 Sources.GameCaptureSource.RequiresAdmin="These applications require administrator access to capture (start OBS as administrator to capture):"
 Sources.GameCaptureSource.SelectApplication="Select Application"
 Sources.GameCaptureSource.StretchToScreen="Stretch image to screen"
+Sources.GameCaptureSource.AlphaBlend="Enable alpha blending"
 Sources.GameCaptureSource.UseHotkey="Use Hotkey"
 Sources.GameCaptureSource.UseSafeHook="Anti-cheat compatibility hooking (use only if necessary)"
 
