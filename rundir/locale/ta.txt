@@ -41,6 +41,7 @@ MessageBoxWarningCaption="எச்சரிக்கை"
 
 
 
+
 BuildingMP4Dialog.Progress="எம்பி 4 உருவாகின்றது, தயவுசெய்து காத்திருக்கவும்..."
 
 Connection.CouldNotConnect="சேவையகத்துடன் இணைக்க முடியவில்லை"
@@ -60,6 +61,7 @@ Listbox.MoveBottom="கீழே நகர்த்து"
 Listbox.Config="பண்புகள்"
 Listbox.FitToScreen="திரைக்கு ஏற்றார் போல்  பொருத்து"
 Listbox.Positioning="நிலை/அளவு"
+
 
 
 

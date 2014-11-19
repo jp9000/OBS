@@ -59,6 +59,9 @@ CopyTo.Success.Title="Succes"
 CopyTo.CopyGlobalSourcesReferences="Doriţi să copiaţi, de asemenea, și sursele globale ale referinţelor? Dacă selectaţi Nu referinţele vor fi eliminate de pe scena copiată."
 CopyTo.CopyGlobalSourcesReferences.Title="Copiază Sursele Globale?"
 
+ImportProfileReplaceWarning.Title="Importă Profil"
+ImportProfileReplaceWarning.Text="Datele profilului actual vor fi pierdute. Sunteţi sigur că doriţi să importaţi?"
+
 DeleteCollection="Eliminați colecția de scene"
 DeleteCollection.Text="Sigur doriţi să eliminaţi colecția de scene curentă?"
 
@@ -103,6 +106,14 @@ MainMenu.File="&Fişier"
 MainMenu.Help="&Ajutor"
 MainMenu.Profiles="&Profiluri"
 MainMenu.Settings="&Setări"
+
+MainMenu.Profiles.New="&Nou"
+MainMenu.Profiles.Duplicate="&Duplicat"
+MainMenu.Profiles.Rename="&Redenumire"
+MainMenu.Profiles.Remove="&Elimină"
+MainMenu.Profiles.Import="&Importă"
+MainMenu.Profiles.Export="&Exportă"
+MainMenu.Profiles.ProfileExists="Un profil cu acelaşi nume există deja."
 
 MainMenu.Settings.AlwaysOnTop="Întotdeauna pe partea de sus (&A)"
 MainMenu.Settings.FullscreenMode="Modul de previzualizare pe tot ecranul (&F)"
@@ -276,6 +287,7 @@ Settings.Encoding.Video.QualityTooltip="Această setare va încerca să vizeze o
 Settings.Encoding.Video.EncoderQSVDisabledAfterApply="Opţiunea Codare \"Quick Sync\" va fi dezactivată pentru că hardware-ul nu pare să suporte Quick Sync."
 Settings.Encoding.Video.EncoderNVENCDisabledAfterApply="Opţiunea Codare \"Nvidia NVENC\" va fi dezactivată pentru că hardware-ul nu pare să suporte Nvidia NVENC."
 Settings.Encoding.Video.QSVConfigWarning="Pentru a activa opţiunea codare Quick Sync asiguraţi-vă că procesorul supportă Quick Sync şi adaptorul grafic Intel este activat în BIOS. Dacă tu foloseşti un laptop verifica thread-ul \"Laptop? Black screen when capturing? Read here first.\" în forumul Questions and Help."
+Settings.Encoding.Video.QSVWinVerWarning="Quick Sync necesită Windows 7 sau mai nou."
 
 Settings.General.Add="Adăuga Nou"
 Settings.General.ConfirmDelete="Sigur doriţi să eliminaţi profilul '$1'?"
@@ -386,6 +398,7 @@ Sources.GameCaptureSource.PluginName="Plugin de Captură a Jocului"
 Sources.GameCaptureSource.RequiresAdmin="Aceste aplicaţii necesită acces de administrator pentru a captura (pornește OBS ca administrator pentru a captura):"
 Sources.GameCaptureSource.SelectApplication="Selectaţi o aplicaţie"
 Sources.GameCaptureSource.StretchToScreen="Întinde imaginea pe tot ecranul"
+Sources.GameCaptureSource.AlphaBlend="Permite alpha blending"
 Sources.GameCaptureSource.UseHotkey="Folosește Tastă"
 Sources.GameCaptureSource.UseSafeHook="Utilizaţi anti-cheat pe modul compatibilitate (utilizaţi numai dacă este necesar)"
 

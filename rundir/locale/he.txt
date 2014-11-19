@@ -59,6 +59,9 @@ CopyTo.Success.Title="בוצע בהצלחה"
 CopyTo.CopyGlobalSourcesReferences="האם ברצונך להעתיק גם את המקורות הגלובליים אשר ההפניות מצביעות אליהם? במידה ותבחר ב'לא', ההפניות יוסרו מהסצינות שיועתקו."
 CopyTo.CopyGlobalSourcesReferences.Title="להעתיק את המקורות הגלובליים?"
 
+ImportProfileReplaceWarning.Title="יבא פרופיל"
+ImportProfileReplaceWarning.Text="נתוני הפרופיל הנוכחיים יאבדו. האם אתה בטוח שברצונך ליבא?"
+
 DeleteCollection="הסר אוסף סצינות"
 DeleteCollection.Text="הם אתה בטוח שברצונך להסיר את אוסף הסצינות הנוכחי?"
 
@@ -103,6 +106,14 @@ MainMenu.File="&קובץ"
 MainMenu.Help="&עזרה"
 MainMenu.Profiles="&פרופילים"
 MainMenu.Settings="&הגדרות"
+
+MainMenu.Profiles.New="&חדש"
+MainMenu.Profiles.Duplicate="ש&כפל"
+MainMenu.Profiles.Rename="&שנה שם"
+MainMenu.Profiles.Remove="ה&סר"
+MainMenu.Profiles.Import="י&בא"
+MainMenu.Profiles.Export="י&צא"
+MainMenu.Profiles.ProfileExists="כבר קיים פרופיל בעל שם זהה."
 
 MainMenu.Settings.AlwaysOnTop="&תמיד עליון"
 MainMenu.Settings.FullscreenMode="&מצב תצוגה מקדימה לסטרים במסך מלא"
@@ -276,6 +287,7 @@ Settings.Encoding.Video.QualityTooltip="הגדרה זו תנסה להחיל את
 Settings.Encoding.Video.EncoderQSVDisabledAfterApply="אפשרות מקודד 'Quick Sync' תבוטל, מכיוון שלא נראה כי החומרה שברשותך תומכת ב Quick Sync."
 Settings.Encoding.Video.EncoderNVENCDisabledAfterApply="אפשרות מקודד 'Nvidia NVENC' תבוטל, מכיוון שלא נראה כי החומרה שברשותך תומכת ב Nvidia NVENC."
 Settings.Encoding.Video.QSVConfigWarning="בכדי להפעיל את אפשרות מקודד Quick Sync, עליך לוודא שהמעבד שלך תומך ב Quick Sync ושמתאם התצוגה מסוג Intel Graphics מופעל ב BIOS. במידה והינך משתמש במחשב נייד אנא בקר בדיון הנעוץ בשם 'Laptop? Black screen when capturing? Read here first.' שבפורום Questions and Help."
+Settings.Encoding.Video.QSVWinVerWarning="Quick Sync דורש מערכת הפעלה Windows 7 ומעלה."
 
 Settings.General.Add="הוסף חדש"
 Settings.General.ConfirmDelete="האם אתה בטוח שברצונך להסיר את הפרופיל '$1'?"
@@ -386,6 +398,7 @@ Sources.GameCaptureSource.PluginName="תוסף לכידת משחק"
 Sources.GameCaptureSource.RequiresAdmin="אפליקציות אלו דורשות גישה ברמת מנהל בכדי לבצע לכידה (התחל את OBS כמנהל בכדי ללכוד):"
 Sources.GameCaptureSource.SelectApplication="בחר ביישום"
 Sources.GameCaptureSource.StretchToScreen="מתח את התמונה למסך"
+Sources.GameCaptureSource.AlphaBlend="אפשר מיזוג שכבת אלפא (שקיפות)"
 Sources.GameCaptureSource.UseHotkey="השתמש במקש קיצור"
 Sources.GameCaptureSource.UseSafeHook="מצב תאימות לישומי אנטי צ'יט (בצע שימוש רק אם הכרחי)"
 

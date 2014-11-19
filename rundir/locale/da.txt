@@ -57,6 +57,7 @@ CopyTo.Success.Text="Scenen '$1' er blevet succesfuldt kopieret til den valgte s
 CopyTo.Success.Title="Succes"
 
 
+
 BuildingMP4Dialog.Progress="Bygger MP4, vent venligst..."
 
 Connection.CouldNotConnect="Kunne ikke oprette forbindelse til serveren"
@@ -93,6 +94,7 @@ MainMenu.File="&Fil"
 MainMenu.Help="&Hjælp"
 MainMenu.Profiles="&Profiler"
 MainMenu.Settings="&Indstillinger"
+
 
 MainMenu.Settings.AlwaysOnTop="&Altid Øverst"
 MainMenu.Settings.FullscreenMode="Fuldskærms visningstilstand"
@@ -156,7 +158,14 @@ Settings.Publish="Broadcast Indstillinger"
 Settings.SaveChangesPrompt="Vil du gerne gemme og anvende dine ændringer?"
 Settings.SaveChangesTitle="Anvend indstillinger?"
 Settings.Video="Video"
+Settings.Hotkeys="Genvejstaster"
 
+Settings.QSV.BitrateParameters="Parametre"
+Settings.QSV.Accuracy="Nøjagtighed (%):"
+Settings.QSV.QPI="QPI:"
+Settings.QSV.QPP="QPP:"
+Settings.QSV.QPB="QPB:"
+Settings.QSV.ICQQuality="ICQQuality:"
 
 Settings.Hotkeys.Audio="Lyd"
 
@@ -257,9 +266,18 @@ Settings.Publish.SavePath="Filsti:"
 Settings.Publish.SaveToFile="Automatisk gemning af stream til fil:"
 Settings.Publish.Server="Server:"
 Settings.Publish.Service="Streaming tjeneste:"
+Settings.Publish.StartStreamHotkey="Start stream:"
+Settings.Publish.StopStreamHotkey="Stop stream:"
+Settings.Publish.StartRecordingHotkey="Start optagelse:"
+Settings.Publish.StopRecordingHotkey="Stop optagelse:"
+Settings.Publish.StartReplayBufferHotkey="Start replay buffer:"
+Settings.Publish.StopReplayBufferHotkey="Stop replay buffer:"
 Settings.Publish.Username="Brugernavn (hvis noget):"
 Settings.Publish.InvalidSavePath="Stien til filen er ugyldig, standard sti '$1' vil blive brugt i stedet"
 Settings.Publish.InvalidSavePathCaption="Ugyldig filsti"
+Settings.Publish.SavePathDoesNotExistCaption="Stien findes ikke"
+Settings.Publish.InvalidReplayBufferSavePath="Replay buffer stien er ugyldig, standard stien '$1' vil blive brugt i stedet for"
+Settings.Publish.InvalidReplayBufferSavePathCaption="Ugyldig replay buffer filsti"
 
 
 Settings.Publish.Mode.FileOnly="Kun Output til Fil"

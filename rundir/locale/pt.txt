@@ -48,6 +48,7 @@ NoSourcesFound="Você não adicionou nenhuma fonte! Tem certeza de que deseja tr
 CopyTo="Copiar para"
 
 
+
 BuildingMP4Dialog.Progress="A criar MP4, por favor aguarde..."
 
 Connection.CouldNotConnect="Não foi possível conectar ao servidor"
@@ -81,6 +82,7 @@ MainMenu.File="&Ficheiro"
 MainMenu.Help="&Ajuda"
 MainMenu.Profiles="&Perfis"
 MainMenu.Settings="&Definições"
+
 
 MainMenu.Settings.AlwaysOnTop="&Sempre em cima"
 MainMenu.Settings.FullscreenMode="& Modo de visualização de tela cheia"

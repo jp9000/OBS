@@ -42,6 +42,7 @@ StreamReport="Informe da transmisión"
 
 
 
+
 BuildingMP4Dialog.Progress="Creando MP4, agarda..."
 
 Connection.CouldNotConnect="Non se pode conectar ó servidor"
@@ -75,6 +76,7 @@ MainMenu.File="&Arquivo"
 MainMenu.Help="&Axuda"
 MainMenu.Profiles="&Perfís"
 MainMenu.Settings="&Configuración"
+
 
 MainMenu.Settings.AlwaysOnTop="&Sempre en primeiro plano"
 MainMenu.Settings.FullscreenMode="&Previsualización a pantalla completa"

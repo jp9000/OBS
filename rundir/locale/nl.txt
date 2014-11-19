@@ -59,6 +59,9 @@ CopyTo.Success.Title="Succes"
 CopyTo.CopyGlobalSourcesReferences="Wil je de globale bronnen waar de referenties naar verwijzen ook kopiëren? Als je Nee kiest zullen de referenties uit de gekopieerde scène verwijderd worden."
 CopyTo.CopyGlobalSourcesReferences.Title="De Globale Bronnen Kopiëren?"
 
+ImportProfileReplaceWarning.Title="Importeer profiel"
+ImportProfileReplaceWarning.Text="De huidige profieldata zal verloren gaan. Weet je zeker dat je wil importeren?"
+
 DeleteCollection="Verwijder scènecollectie"
 DeleteCollection.Text="Weet je zeker dat je de huidige scènecollectie wil verwijderen?"
 
@@ -103,6 +106,14 @@ MainMenu.File="&Bestand"
 MainMenu.Help="&Help"
 MainMenu.Profiles="&Profielen"
 MainMenu.Settings="&Instellingen"
+
+MainMenu.Profiles.New="&Nieuw"
+MainMenu.Profiles.Duplicate="&Dupliceren"
+MainMenu.Profiles.Rename="Hernoemen (&R)"
+MainMenu.Profiles.Remove="Verwijderen (&M)"
+MainMenu.Profiles.Import="&Importeren"
+MainMenu.Profiles.Export="&Exporteren"
+MainMenu.Profiles.ProfileExists="Een profiel met dezelfde naam bestaat al."
 
 MainMenu.Settings.AlwaysOnTop="&Altijd op voorgrond"
 MainMenu.Settings.FullscreenMode="&Volledig-schermmodus"
@@ -276,6 +287,7 @@ Settings.Encoding.Video.QualityTooltip="Deze instelling zal proberen een bepaald
 Settings.Encoding.Video.EncoderQSVDisabledAfterApply="De 'Quick Sync' Encoder optie zal uitgeschakeld worden omdat je hardware Quick Sync niet lijkt te ondersteunen."
 Settings.Encoding.Video.EncoderNVENCDisabledAfterApply="De 'Nvidia NENC' Encoder optie zal uitgeschakeld worden omdat je hardware Nvidia NVENC niet lijkt te ondersteunen."
 Settings.Encoding.Video.QSVConfigWarning="Om de Quick Sync Encoder optie te activeren, zorg ervoor dat je processor Quick Sync ondersteunt en dat de Intel grafische kaart is ingeschakeld in de BIOS. Als je een laptop gebruikt, bekijk dan de sticky thread 'Laptop? Black screen when capturing? Read here first.' in het Questions and Help forum."
+Settings.Encoding.Video.QSVWinVerWarning="Quick Sync vereist Windows 7 of hoger."
 
 Settings.General.Add="Nieuw Toevoegen"
 Settings.General.ConfirmDelete="Weet je zeker dat je het profiel '$1' wil verwijderen?"
@@ -386,6 +398,7 @@ Sources.GameCaptureSource.PluginName="Game Capture Plug-in"
 Sources.GameCaptureSource.RequiresAdmin="Deze programma's vereisen administrator-rechten om op te nemen (start OBS op als administrator om op te nemen):"
 Sources.GameCaptureSource.SelectApplication="Selecteer Programma"
 Sources.GameCaptureSource.StretchToScreen="Beeld naar schermgrootte uitrekken"
+Sources.GameCaptureSource.AlphaBlend="Alpha blending inschakelen"
 Sources.GameCaptureSource.UseHotkey="Sneltoets gebruiken"
 Sources.GameCaptureSource.UseSafeHook="Hook met anti-cheat compatibiliteit (gebruik alleen indien nodig)"
 

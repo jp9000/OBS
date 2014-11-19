@@ -46,6 +46,7 @@ MessageBoxWarningCaption="Avís"
 
 
 
+
 BuildingMP4Dialog.Progress="Creant el fitxer MP4, espera si-us-plau..."
 
 Connection.CouldNotConnect="No s'ha pogut connectar al servidor"
@@ -79,6 +80,7 @@ MainMenu.File="&Fitxer"
 MainMenu.Help="&Ajuda"
 MainMenu.Profiles="&Perfils"
 MainMenu.Settings="&Paràmetres"
+
 
 MainMenu.Settings.AlwaysOnTop="&Sempre al davant"
 MainMenu.Settings.FullscreenMode="&Visualització prèvia a pantalla completa"

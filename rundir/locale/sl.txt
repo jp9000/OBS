@@ -57,6 +57,7 @@ CopyTo.Success.Text="Scena '$1' je bila uspreško kopirana v zbirko scen."
 CopyTo.Success.Title="Uspešno"
 CopyTo.CopyGlobalSourcesReferences.Title="Kopiram globalne vire?"
 
+
 DeleteCollection="Odstranite zbirko scen"
 DeleteCollection.Text="Ali ste prepričani, da želite odstraniti trenutno zbirko scene?"
 
@@ -101,6 +102,7 @@ MainMenu.File="&Datoteka"
 MainMenu.Help="&Pomoč"
 MainMenu.Profiles="&Profili"
 MainMenu.Settings="&Nastavitve"
+
 
 MainMenu.Settings.AlwaysOnTop="&Vedno na Vrhu"
 MainMenu.Settings.FullscreenMode="&Celozaslonski Predogled"

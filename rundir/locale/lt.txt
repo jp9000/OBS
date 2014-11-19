@@ -46,6 +46,7 @@ MessageBoxWarningCaption="Įspėjimas"
 
 
 
+
 BuildingMP4Dialog.Progress="Kuriamas MP4, prašome palaukti..."
 
 Connection.CouldNotConnect="Nepavyko prisijungti prie serverio"
@@ -79,6 +80,7 @@ MainMenu.File="&Failas"
 MainMenu.Help="&Pagalba"
 MainMenu.Profiles="&Profiliai"
 MainMenu.Settings="&Nustatymai"
+
 
 MainMenu.Settings.AlwaysOnTop="&Visada viršuje"
 MainMenu.Settings.FullscreenMode="&Viso ekrano peržiūra"

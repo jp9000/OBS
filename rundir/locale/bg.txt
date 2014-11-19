@@ -45,6 +45,7 @@ MessageBoxWarningCaption="Внимание"
 
 
 
+
 BuildingMP4Dialog.Progress="Създаване на MP4, моля изчакайте..."
 
 Connection.CouldNotConnect="Не може да се свърже със сървъра"
@@ -78,6 +79,7 @@ MainMenu.File="&Файл"
 MainMenu.Help="&Помощ"
 MainMenu.Profiles="&Профили"
 MainMenu.Settings="&Настройки"
+
 
 MainMenu.Settings.AlwaysOnTop="Винаги видим"
 MainMenu.Settings.FullscreenMode="&Преглед на Цял Екран"
