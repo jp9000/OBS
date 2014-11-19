@@ -24,7 +24,7 @@
 #ifdef USE_D3D9_GL_INTEROP
 #include <D3D9.h>
 #else
-#include <D3D10_1.h>
+#include <D3D11.h>
 #endif
 
 
@@ -228,8 +228,9 @@ static IDirect3DDevice9Ex *d3d9exDevice  = NULL;
 static IDirect3DTexture9  *d3d9exTexture = NULL;
 extern bool               bD3D9Hooked;
 #else
-extern ID3D10Device1    *shareDevice;
-extern ID3D10Resource   *copyTextureIntermediary;
+extern ID3D11Device     *shareDevice;
+extern ID3D11DeviceContext *shareContext;
+extern ID3D11Resource   *copyTextureIntermediary;
 IDXGISwapChain          *swapChain = NULL;
 extern bool             bDXGIHooked;
 #endif
@@ -503,8 +504,18 @@ finishGPUHook:
 
 typedef HRESULT (WINAPI *CREATEDXGIFACTORY1PROC)(REFIID riid, void **ppFactory);
 
+const static D3D_FEATURE_LEVEL featureLevels[] =
+{
+	D3D_FEATURE_LEVEL_11_0,
+	D3D_FEATURE_LEVEL_10_1,
+	D3D_FEATURE_LEVEL_10_0,
+	D3D_FEATURE_LEVEL_9_3,
+};
+
 static bool DoGLGPUHook(RECT &rc)
 {
+    D3D_FEATURE_LEVEL level;
+
     bUseSharedTextures = true;
     glcaptureInfo.cx = rc.right;
     glcaptureInfo.cy = rc.bottom;
@@ -526,10 +537,10 @@ static bool DoGLGPUHook(RECT &rc)
 	swapDesc.Windowed = TRUE;
     swapDesc.OutputWindow = hwndD3DDummyWindow;
 
-    HMODULE hD3D10_1 = LoadLibrary(TEXT("d3d10_1.dll"));
-    if(!hD3D10_1)
+    HMODULE hD3D11 = LoadLibrary(TEXT("d3d11.dll"));
+    if(!hD3D11)
     {
-        RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: Could not load D3D10.1" << endl;
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: Could not load D3D11" << endl;
         goto finishGPUHook;
     }
 
@@ -547,10 +558,10 @@ static bool DoGLGPUHook(RECT &rc)
         goto finishGPUHook;
     }
 
-    PFN_D3D10_CREATE_DEVICE_AND_SWAP_CHAIN1 d3d10CreateDeviceAndSwapChain1 = (PFN_D3D10_CREATE_DEVICE_AND_SWAP_CHAIN1)GetProcAddress(hD3D10_1, "D3D10CreateDeviceAndSwapChain1");
-    if(!d3d10CreateDeviceAndSwapChain1)
+    PFN_D3D11_CREATE_DEVICE_AND_SWAP_CHAIN d3d11CreateDeviceAndSwapChain = (PFN_D3D11_CREATE_DEVICE_AND_SWAP_CHAIN)GetProcAddress(hD3D11, "D3D11CreateDeviceAndSwapChain");
+    if(!d3d11CreateDeviceAndSwapChain)
     {
-        RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: Could not load 'D3D10CreateDeviceAndSwapChain1'" << endl;
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: Could not load 'D3D11CreateDeviceAndSwapChain'" << endl;
         goto finishGPUHook;
     }
 
@@ -569,15 +580,12 @@ static bool DoGLGPUHook(RECT &rc)
         goto finishGPUHook;
     }
 
-    if(FAILED(hErr = (*d3d10CreateDeviceAndSwapChain1)(adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_FEATURE_LEVEL_10_1, D3D10_1_SDK_VERSION, &swapDesc, &swapChain, &shareDevice)))
+    if(FAILED(hErr = (*d3d11CreateDeviceAndSwapChain)(adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, 0, featureLevels, sizeof(featureLevels) / sizeof(featureLevels[0]), D3D11_SDK_VERSION, &swapDesc, &swapChain, &shareDevice, &level, &shareContext)))
     {
-        if(FAILED(hErr = (*d3d10CreateDeviceAndSwapChain1)(adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_FEATURE_LEVEL_9_3, D3D10_1_SDK_VERSION, &swapDesc, &swapChain, &shareDevice)))
-        {
-            RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: Could not create D3D10.1 device, result = " << (UINT)hErr << endl;
-            adapter->Release();
-            factory->Release();
-            goto finishGPUHook;
-        }
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: Could not create D3D10.1 device, result = " << (UINT)hErr << endl;
+        adapter->Release();
+        factory->Release();
+        goto finishGPUHook;
     }
 
     adapter->Release();
@@ -585,7 +593,7 @@ static bool DoGLGPUHook(RECT &rc)
 
     //------------------------------------------------
 
-    D3D10_TEXTURE2D_DESC texGameDesc;
+    D3D11_TEXTURE2D_DESC texGameDesc;
     ZeroMemory(&texGameDesc, sizeof(texGameDesc));
     texGameDesc.Width               = glcaptureInfo.cx;
     texGameDesc.Height              = glcaptureInfo.cy;
@@ -593,36 +601,36 @@ static bool DoGLGPUHook(RECT &rc)
     texGameDesc.ArraySize           = 1;
     texGameDesc.Format              = DXGI_FORMAT_B8G8R8X8_UNORM;
     texGameDesc.SampleDesc.Count    = 1;
-    texGameDesc.BindFlags           = D3D10_BIND_RENDER_TARGET|D3D10_BIND_SHADER_RESOURCE;
-    texGameDesc.Usage               = D3D10_USAGE_DEFAULT;
-    texGameDesc.MiscFlags           = D3D10_RESOURCE_MISC_SHARED;
+    texGameDesc.BindFlags           = D3D11_BIND_RENDER_TARGET|D3D11_BIND_SHADER_RESOURCE;
+    texGameDesc.Usage               = D3D11_USAGE_DEFAULT;
+    texGameDesc.MiscFlags           = D3D11_RESOURCE_MISC_SHARED;
 
-    ID3D10Texture2D *d3d101Tex;
-    if(FAILED(hErr = shareDevice->CreateTexture2D(&texGameDesc, NULL, &d3d101Tex)))
+    ID3D11Texture2D *d3d11Tex;
+    if(FAILED(hErr = shareDevice->CreateTexture2D(&texGameDesc, NULL, &d3d11Tex)))
     {
         RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: shareDevice->CreateTexture2D failed, result = " << (UINT)hErr << endl;
         goto finishGPUHook;
     }
 
-    if(FAILED(hErr = d3d101Tex->QueryInterface(__uuidof(ID3D10Resource), (void**)&copyTextureIntermediary)))
+    if(FAILED(hErr = d3d11Tex->QueryInterface(__uuidof(ID3D10Resource), (void**)&copyTextureIntermediary)))
     {
-        RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: d3d101Tex->QueryInterface(ID3D10Resource) failed, result = " << (UINT)hErr << endl;
-        d3d101Tex->Release();
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: d3d11Tex->QueryInterface(ID3D10Resource) failed, result = " << (UINT)hErr << endl;
+        d3d11Tex->Release();
         goto finishGPUHook;
     }
 
     IDXGIResource *res;
-    if(FAILED(hErr = d3d101Tex->QueryInterface(IID_IDXGIResource, (void**)&res)))
+    if(FAILED(hErr = d3d11Tex->QueryInterface(IID_IDXGIResource, (void**)&res)))
     {
-        RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: d3d101Tex->QueryInterface(IDXGIResource) failed, result = " << (UINT)hErr << endl;
-        d3d101Tex->Release();
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: d3d11Tex->QueryInterface(IDXGIResource) failed, result = " << (UINT)hErr << endl;
+        d3d11Tex->Release();
         goto finishGPUHook;
     }
 
     if(FAILED(res->GetSharedHandle(&sharedHandle)))
     {
         RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: res->GetSharedHandle failed, result = " << (UINT)hErr << endl;
-        d3d101Tex->Release();
+        d3d11Tex->Release();
         res->Release();
         goto finishGPUHook;
     }
@@ -631,7 +639,7 @@ static bool DoGLGPUHook(RECT &rc)
         gl_dxDevice = wglDXOpenDeviceNV(shareDevice);
         if (gl_dxDevice == NULL) {
             RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: wglDXOpenDeviceNV failed" << endl;
-            d3d101Tex->Release();
+            d3d11Tex->Release();
             res->Release();
             goto finishGPUHook;
         }
@@ -641,7 +649,7 @@ static bool DoGLGPUHook(RECT &rc)
 
         if (gl_handle == NULL) {
             RUNEVERYRESET logOutput << CurrentTimeString() << "DoGLGPUHook: wglDXRegisterObjectNV failed" << endl;
-            d3d101Tex->Release();
+            d3d11Tex->Release();
             res->Release();
             goto finishGPUHook;
         }
@@ -654,7 +662,7 @@ static bool DoGLGPUHook(RECT &rc)
 
     glGenFramebuffers(1, &gl_fbo);
 
-    d3d101Tex->Release();
+    d3d11Tex->Release();
     res->Release();
     res = NULL;
 
