@@ -102,11 +102,18 @@ bool CompareMemory(const LPVOID lpVal1, const LPVOID lpVal2, UINT nBytes)
     return false;
 }
 
+struct PatchInfo {
+    size_t patchSize;
+    const BYTE *patchData;
+};
+
+#define NewPatch(x) {sizeof(x), (x)}
+
 #ifdef _WIN64
 
-#define NUM_KNOWN_PATCHES 9
+#define NUM_KNOWN_PATCHES 10
 #define PATCH_COMPARE_SIZE 13
-UPARAM patch_offsets[NUM_KNOWN_PATCHES] = {/*0x4B55F,*/ 0x54FE6, 0x55095, 0x550C5, 0x8BDB5, 0x90352, 0x9038A, 0x93AFA, 0x93B8A, 0x1841E5};
+UPARAM patch_offsets[NUM_KNOWN_PATCHES] = {/*0x4B55F,*/ 0x54FE6, 0x55095, 0x550C5, 0x8BDB5, 0x8E635, 0x90352, 0x9038A, 0x93AFA, 0x93B8A, 0x1841E5};
 BYTE patch_compare[NUM_KNOWN_PATCHES][PATCH_COMPARE_SIZE] =
 {
     //{0x48, 0x8b, 0x81, 0xc8, 0x38, 0x00, 0x00, 0x39, 0x98, 0x68, 0x50, 0x00, 0x00},  //winvis - 6.0.6002.18005
@@ -114,6 +121,7 @@ BYTE patch_compare[NUM_KNOWN_PATCHES][PATCH_COMPARE_SIZE] =
     {0x48, 0x8b, 0x81, 0xb8, 0x3d, 0x00, 0x00, 0x39, 0x98, 0x68, 0x50, 0x00, 0x00},  //win7   - 6.1.7601.16562
     {0x48, 0x8b, 0x81, 0xb8, 0x3d, 0x00, 0x00, 0x39, 0x98, 0x68, 0x50, 0x00, 0x00},  //win7   - 6.1.7601.17514
     {0x48, 0x8b, 0x81, 0xb8, 0x3d, 0x00, 0x00, 0x39, 0xB0, 0x28, 0x51, 0x00, 0x00},  //win8.1 - 6.3.9431.00000
+    {0x48, 0x8b, 0x81, 0xb8, 0x3d, 0x00, 0x00, 0x39, 0xA8, 0x28, 0x51, 0x00, 0x00},  //win8.1 - 6.3.9600.17415
     {0x8b, 0x81, 0xb8, 0x3d, 0x00, 0x00, 0x44, 0x39, 0xA0, 0x28, 0x51, 0x00, 0x00},  //win8.1 - 6.3.9600.17085
     {0x8b, 0x81, 0xb8, 0x3d, 0x00, 0x00, 0x44, 0x39, 0xA0, 0x28, 0x51, 0x00, 0x00},  //win8.1 - 6.3.9600.17095
     {0x8b, 0x81, 0xb8, 0x3d, 0x00, 0x00, 0x44, 0x39, 0xA0, 0x28, 0x51, 0x00, 0x00},  //win8.1 - 6.3.9600.16384
@@ -121,26 +129,29 @@ BYTE patch_compare[NUM_KNOWN_PATCHES][PATCH_COMPARE_SIZE] =
     {0x49, 0x8b, 0x85, 0xb8, 0x3d, 0x00, 0x00, 0x39, 0x88, 0xc8, 0x50, 0x00, 0x00},  //win8   - 6.2.9200.16384
 };
 
-#define PATCH_SIZE 2
-BYTE patch[NUM_KNOWN_PATCHES][PATCH_SIZE] =
+static const BYTE forceJump[] = {0xEB};
+static const BYTE ignoreJump[] = {0x90, 0x90};
+
+PatchInfo patch[NUM_KNOWN_PATCHES] =
 {
     //{0xEB, 0x12},
-    {0xEB, 0x12},
-    {0xEB, 0x12},
-    {0xEB, 0x12},
-    {0x90, 0x90},
-    {0x90, 0x90},
-    {0x90, 0x90},
-    {0x90, 0x90},
-    {0x90, 0x90},
-    {0x90, 0x90},
+    NewPatch(forceJump),
+    NewPatch(forceJump),
+    NewPatch(forceJump),
+    NewPatch(ignoreJump),
+    NewPatch(ignoreJump),
+    NewPatch(ignoreJump),
+    NewPatch(ignoreJump),
+    NewPatch(ignoreJump),
+    NewPatch(ignoreJump),
+    NewPatch(ignoreJump),
 };
 
 #else
 
-#define NUM_KNOWN_PATCHES 9
+#define NUM_KNOWN_PATCHES 10
 #define PATCH_COMPARE_SIZE 12
-UPARAM patch_offsets[NUM_KNOWN_PATCHES] = {/*0x4BDA1,*/ 0x79AA6, 0x79C9E, 0x79D96, 0x7F9BD, 0x8A3F4, 0x8E9F7, 0x8F00F, 0x8FBB1, 0x166A08};
+UPARAM patch_offsets[NUM_KNOWN_PATCHES] = {/*0x4BDA1,*/ 0x79AA6, 0x79C9E, 0x79D96, 0x7F9BD, 0x8A3F4, 0x8E9F7, 0x8F00F, 0x8FBB1, 0x90264, 0x166A08};
 BYTE patch_compare[NUM_KNOWN_PATCHES][PATCH_COMPARE_SIZE] =
 {
     //{0x8b, 0x89, 0x6c, 0x27, 0x00, 0x00, 0x39, 0xb9, 0x80, 0x4b, 0x00, 0x00},  //winvis - 6.0.6002.18005
@@ -152,22 +163,26 @@ BYTE patch_compare[NUM_KNOWN_PATCHES][PATCH_COMPARE_SIZE] =
     {0x80, 0xe8, 0x29, 0x00, 0x00, 0x83, 0xb8, 0x40, 0x4c, 0x00, 0x00, 0x00},  //win8.1 - 6.3.9600.17095
     {0x80, 0xe8, 0x29, 0x00, 0x00, 0x83, 0xb8, 0x40, 0x4c, 0x00, 0x00, 0x00},  //win8.1 - 6.3.9600.17085
     {0x80, 0xe8, 0x29, 0x00, 0x00, 0x83, 0xb8, 0x40, 0x4c, 0x00, 0x00, 0x00},  //win8.1 - 6.3.9600.16384
+    {0x87, 0xe8, 0x29, 0x00, 0x00, 0x83, 0xb8, 0x40, 0x4c, 0x00, 0x00, 0x00},  //win8.1 - 6.3.9600.17415
     {0x8b, 0x80, 0xe8, 0x29, 0x00, 0x00, 0x39, 0x90, 0xb0, 0x4b, 0x00, 0x00},  //win8   - 6.2.9200.16384
 };
 
-#define PATCH_SIZE 1
-BYTE patch[NUM_KNOWN_PATCHES][PATCH_SIZE] =
+static const BYTE forceJump[] = {0xEB};
+static const BYTE ignoreJump[] = {0x90, 0x90};
+
+PatchInfo patch[NUM_KNOWN_PATCHES] =
 {
     //{0xEB, 0x02},
-    {0xEB},
-    {0xEB},
-    {0xEB},
-    {0xEB},
-    {0xEB},
-    {0xEB},
-    {0xEB},
-    {0xEB},
-    {0xEB},
+    NewPatch(forceJump),
+    NewPatch(forceJump),
+    NewPatch(forceJump),
+    NewPatch(forceJump),
+    NewPatch(forceJump),
+    NewPatch(forceJump),
+    NewPatch(forceJump),
+    NewPatch(forceJump),
+    NewPatch(ignoreJump),
+    NewPatch(forceJump),
 };
 
 #endif
@@ -297,6 +312,7 @@ typedef HRESULT (WINAPI *CREATEDXGIFACTORY1PROC)(REFIID riid, void **ppFactory);
 
 void DoD3D9GPUHook(IDirect3DDevice9 *device)
 {
+    BYTE *savedData = nullptr;
     BOOL bSuccess = false;
 
     bDXGIHooked = true;
@@ -411,15 +427,17 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
     //------------------------------------------------
 
     LPBYTE patchAddress = (patchType != 0) ? GetD3D9PatchAddress() : NULL;
-    BYTE savedData[PATCH_SIZE];
     DWORD dwOldProtect;
+    size_t patch_size;
 
     if(patchAddress)
     {
-        if(VirtualProtect(patchAddress, PATCH_SIZE, PAGE_EXECUTE_READWRITE, &dwOldProtect))
+        patch_size = patch[patchType-1].patchSize;
+        savedData = (BYTE*)malloc(patch_size);
+        if(VirtualProtect(patchAddress, patch_size, PAGE_EXECUTE_READWRITE, &dwOldProtect))
         {
-            memcpy(savedData, patchAddress, PATCH_SIZE);
-            memcpy(patchAddress, patch[patchType-1], PATCH_SIZE);
+            memcpy(savedData, patchAddress, patch_size);
+            memcpy(patchAddress, patch[patchType-1].patchData, patch_size);
         }
         else
         {
@@ -437,8 +455,8 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
 
     if(patchAddress)
     {
-        memcpy(patchAddress, savedData, PATCH_SIZE);
-        VirtualProtect(patchAddress, PATCH_SIZE, dwOldProtect, &dwOldProtect);
+        memcpy(patchAddress, savedData, patch_size);
+        VirtualProtect(patchAddress, patch_size, dwOldProtect, &dwOldProtect);
     }
 
     if(FAILED(hErr = d3d9Tex->GetSurfaceLevel(0, &copyD3D9TextureGame)))
@@ -460,6 +478,9 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
     bSuccess = IsWindow(hwndOBS);
 
 finishGPUHook:
+
+    if (savedData)
+        free(savedData);
 
     if(bSuccess)
     {
