@@ -47,11 +47,11 @@ class D3D10VertexBuffer : public VertexBuffer
     friend class D3D10System;
     friend class OBS;
 
-    ID3D10Buffer *vertexBuffer;
-    ID3D10Buffer *normalBuffer;
-    ID3D10Buffer *colorBuffer;
-    ID3D10Buffer *tangentBuffer;
-    List<ID3D10Buffer*> UVBuffers;
+    ID3D11Buffer *vertexBuffer;
+    ID3D11Buffer *normalBuffer;
+    ID3D11Buffer *colorBuffer;
+    ID3D11Buffer *tangentBuffer;
+    List<ID3D11Buffer*> UVBuffers;
 
     UINT vertexSize;
     UINT normalSize;
@@ -65,7 +65,7 @@ class D3D10VertexBuffer : public VertexBuffer
 
     static VertexBuffer* CreateVertexBuffer(VBData *vbData, BOOL bStatic);
 
-    void MakeBufferList(D3D10VertexShader *vShader, List<ID3D10Buffer*> &bufferList, List<UINT> &strides) const;
+    void MakeBufferList(D3D10VertexShader *vShader, List<ID3D11Buffer*> &bufferList, List<UINT> &strides) const;
 
 public:
     ~D3D10VertexBuffer();
@@ -81,7 +81,7 @@ class D3D10SamplerState : public SamplerState
     friend class D3D10System;
     friend class OBS;
 
-    ID3D10SamplerState *state;
+    ID3D11SamplerState *state;
 
     static SamplerState* CreateSamplerState(SamplerInfo &info);
 
@@ -97,9 +97,9 @@ class D3D10Texture : public Texture
     friend class D3D10System;
     friend class OBS;
 
-    ID3D10Texture2D          *texture;
-    ID3D10ShaderResourceView *resource;
-    ID3D10RenderTargetView   *renderTarget;
+    ID3D11Texture2D          *texture;
+    ID3D11ShaderResourceView *resource;
+    ID3D11RenderTargetView   *renderTarget;
 
     UINT width, height;
     GSColorFormat format;
@@ -183,7 +183,7 @@ struct ShaderProcessor : CodeTokenizer
     List<ShaderSampler> Samplers;
     List<ShaderParam>   Params;
 
-    List<D3D10_INPUT_ELEMENT_DESC> generatedLayout;
+    List<D3D11_INPUT_ELEMENT_DESC> generatedLayout;
 
     bool bHasNormals;
     bool bHasColors;
@@ -226,7 +226,7 @@ class D3D10Shader : public Shader
     List<ShaderParam>   Params;
     List<ShaderSampler> Samplers;
 
-    ID3D10Buffer *constantBuffer;
+    ID3D11Buffer *constantBuffer;
     UINT constantSize;
 
 protected:
@@ -263,8 +263,8 @@ class D3D10VertexShader : public D3D10Shader
     friend class D3D10VertexBuffer;
     friend class OBS;
 
-    ID3D10VertexShader *vertexShader;
-    ID3D10InputLayout  *inputLayout;
+    ID3D11VertexShader *vertexShader;
+    ID3D11InputLayout  *inputLayout;
 
     bool bHasNormals;
     bool bHasColors;
@@ -298,7 +298,7 @@ class D3D10PixelShader : public D3D10Shader
 {
     friend class D3D10System;
 
-    ID3D10PixelShader *pixelShader;
+    ID3D11PixelShader *pixelShader;
 
     static Shader* CreatePixelShaderFromBlob(ShaderBlob const &blob, CTSTR lpShader, CTSTR lpFileName);
     static Shader* CreatePixelShader(CTSTR lpShader, CTSTR lpFileName);
@@ -336,7 +336,7 @@ public:
 struct SavedBlendState
 {
     GSBlendType srcFactor, destFactor;
-    ID3D10BlendState *blendState;
+    ID3D11BlendState *blendState;
 };
 
 class D3D10System : public GraphicsSystem
@@ -346,13 +346,14 @@ class D3D10System : public GraphicsSystem
     friend class D3D10PixelShader;
 
     IDXGIFactory1           *factory;
-    ID3D10Device1           *d3d;
+    ID3D11Device            *d3d;
+    ID3D11DeviceContext     *context;
     IDXGISwapChain          *swap;
-    ID3D10RenderTargetView  *swapRenderView;
+    ID3D11RenderTargetView  *swapRenderView;
 
-    ID3D10DepthStencilState *depthState;
-    ID3D10RasterizerState   *rasterizerState;
-    ID3D10RasterizerState   *scissorState;
+    ID3D11DepthStencilState *depthState;
+    ID3D11RasterizerState   *rasterizerState;
+    ID3D11RasterizerState   *scissorState;
 
     bool bDisableCompatibilityMode;
 
@@ -368,8 +369,8 @@ class D3D10System : public GraphicsSystem
     D3D10_PRIMITIVE_TOPOLOGY curTopology;
 
     List<SavedBlendState>   blends;
-    ID3D10BlendState        *curBlendState;
-    ID3D10BlendState        *disabledBlend;
+    ID3D11BlendState        *curBlendState;
+    ID3D11BlendState        *disabledBlend;
     BOOL                    bBlendingEnabled;
 
     //---------------------------
@@ -474,6 +475,12 @@ public:
 
     // To prevent breaking the API, put this at the end instead of with the other Texture functions
     virtual Texture*        CreateSharedTexture(unsigned int width, unsigned int height);
+
+    virtual LPVOID GetContext();
+
+    inline ID3D11Device *GetDeviceInline() const {return d3d;}
+    inline ID3D11DeviceContext *GetContextInline() const {return context;}
 };
 
-inline ID3D10Device*        GetD3D()        {return static_cast<ID3D10Device*>(GS->GetDevice());}
+inline ID3D11Device*        GetD3D()        {return static_cast<D3D10System*>(GS)->GetDeviceInline();}
+inline ID3D11DeviceContext* GetD3DCtx()     {return static_cast<D3D10System*>(GS)->GetContextInline();}

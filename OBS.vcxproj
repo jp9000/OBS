@@ -120,7 +120,7 @@
     </ClCompile>
     <Link>
       <AdditionalOptions>/ignore:4049 /ignore:4217 /ignore:4099 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>Avrt.lib;dwmapi.lib;comctl32.lib;dxgi.lib;dxguid.lib;d3d10_1.lib;d3dx10.lib;ws2_32.lib;Iphlpapi.lib;Winmm.lib;librtmp.lib;libmp3lame-static.lib;libfaac.lib;dsound.lib;obsapi.lib;shell32.lib;gdiplus.lib;mfplat.lib;Mfuuid.lib;Winhttp.lib;libx264.lib;UxTheme.lib;Xinput9_1_0.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Avrt.lib;dwmapi.lib;comctl32.lib;dxgi.lib;dxguid.lib;d3d11.lib;d3dx11.lib;ws2_32.lib;Iphlpapi.lib;Winmm.lib;librtmp.lib;libmp3lame-static.lib;libfaac.lib;dsound.lib;obsapi.lib;shell32.lib;gdiplus.lib;mfplat.lib;Mfuuid.lib;Winhttp.lib;libx264.lib;UxTheme.lib;Xinput9_1_0.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Version>
       </Version>
       <AdditionalLibraryDirectories>OBSApi/Debug;x264/libs/32bit;librtmp/debug;lame/output/32bit;libfaac/debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -160,7 +160,7 @@
       <PrecompiledHeaderFile>Main.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Avrt.lib;dwmapi.lib;comctl32.lib;dxgi.lib;dxguid.lib;d3d10_1.lib;d3dx10.lib;ws2_32.lib;Iphlpapi.lib;Winmm.lib;librtmp.lib;libmp3lame-static.lib;libfaac.lib;dsound.lib;obsapi.lib;shell32.lib;gdiplus.lib;mfplat.lib;Mfuuid.lib;Winhttp.lib;libx264.lib;UxTheme.lib;Xinput9_1_0.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Avrt.lib;dwmapi.lib;comctl32.lib;dxgi.lib;dxguid.lib;d3d11.lib;d3dx11.lib;ws2_32.lib;Iphlpapi.lib;Winmm.lib;librtmp.lib;libmp3lame-static.lib;libfaac.lib;dsound.lib;obsapi.lib;shell32.lib;gdiplus.lib;mfplat.lib;Mfuuid.lib;Winhttp.lib;libx264.lib;UxTheme.lib;Xinput9_1_0.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Version>
       </Version>
       <AdditionalLibraryDirectories>OBSApi/x64/Debug;x264/libs/64bit;librtmp/x64/debug;lame/output/64bit;libfaac/x64/debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -197,7 +197,7 @@
     </ClCompile>
     <Link>
       <AdditionalOptions>/ignore:4049 /ignore:4217 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>Avrt.lib;dwmapi.lib;comctl32.lib;dxgi.lib;dxguid.lib;d3d10_1.lib;d3dx10.lib;ws2_32.lib;Iphlpapi.lib;Winmm.lib;librtmp.lib;libmp3lame-static.lib;libfaac.lib;dsound.lib;obsapi.lib;shell32.lib;gdiplus.lib;mfplat.lib;Mfuuid.lib;Winhttp.lib;libx264.lib;UxTheme.lib;Xinput9_1_0.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Avrt.lib;dwmapi.lib;comctl32.lib;dxgi.lib;dxguid.lib;d3d11.lib;d3dx11.lib;ws2_32.lib;Iphlpapi.lib;Winmm.lib;librtmp.lib;libmp3lame-static.lib;libfaac.lib;dsound.lib;obsapi.lib;shell32.lib;gdiplus.lib;mfplat.lib;Mfuuid.lib;Winhttp.lib;libx264.lib;UxTheme.lib;Xinput9_1_0.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Version>
       </Version>
       <AdditionalLibraryDirectories>OBSApi/Release;x264/libs/32bit;librtmp/release;lame/output/32bit;libfaac/release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -239,7 +239,7 @@
       <AdditionalOptions>/d2Zi+ %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Avrt.lib;dwmapi.lib;comctl32.lib;dxgi.lib;dxguid.lib;d3d10_1.lib;d3dx10.lib;ws2_32.lib;Iphlpapi.lib;Winmm.lib;librtmp.lib;libmp3lame-static.lib;libfaac.lib;dsound.lib;obsapi.lib;shell32.lib;gdiplus.lib;mfplat.lib;Mfuuid.lib;Winhttp.lib;libx264.lib;UxTheme.lib;Xinput9_1_0.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Avrt.lib;dwmapi.lib;comctl32.lib;dxgi.lib;dxguid.lib;d3d11.lib;d3dx11.lib;ws2_32.lib;Iphlpapi.lib;Winmm.lib;librtmp.lib;libmp3lame-static.lib;libfaac.lib;dsound.lib;obsapi.lib;shell32.lib;gdiplus.lib;mfplat.lib;Mfuuid.lib;Winhttp.lib;libx264.lib;UxTheme.lib;Xinput9_1_0.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Version>
       </Version>
       <AdditionalLibraryDirectories>OBSApi/x64/Release;x264/libs/64bit;librtmp/x64/release;lame/output/64bit;libfaac/x64/release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -320,7 +320,7 @@
     <ClInclude Include="Source\CodeTokenizer.h" />
     <ClInclude Include="Source\CrashDumpHandler.h" />
     <ClInclude Include="Source\D3D10System.h" />
-    <ClInclude Include="Source\DataPacketHelpers.h"/>
+    <ClInclude Include="Source\DataPacketHelpers.h" />
     <ClInclude Include="Source\HTTPClient.h" />
     <ClInclude Include="Source\libnsgif.h" />
     <ClInclude Include="Source\LogUploader.h" />

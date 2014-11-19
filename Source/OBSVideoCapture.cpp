@@ -923,7 +923,7 @@ void OBS::MainCaptureLoop()
                 {
                     D3D10Texture *d3dTransitionTex = static_cast<D3D10Texture*>(lastRenderTexture);
                     D3D10Texture *d3dSceneTex = static_cast<D3D10Texture*>(mainRenderTextures[lastRenderTarget]);
-                    GetD3D()->CopyResource(d3dTransitionTex->texture, d3dSceneTex->texture);
+                    GetD3DCtx()->CopyResource(d3dTransitionTex->texture, d3dSceneTex->texture);
                 }
                 else
                     bTransitioning = false;
@@ -1121,28 +1121,28 @@ void OBS::MainCaptureLoop()
         {
             UINT prevCopyTexture = (curCopyTexture == 0) ? NUM_RENDER_BUFFERS-1 : curCopyTexture-1;
 
-            ID3D10Texture2D *copyTexture = copyTextures[curCopyTexture];
+            ID3D11Texture2D *copyTexture = copyTextures[curCopyTexture];
             profileIn("CopyResource");
 
             if(!bFirstEncode && bUseThreaded420)
             {
                 WaitForMultipleObjects(completeEvents.Num(), completeEvents.Array(), TRUE, INFINITE);
-                copyTexture->Unmap(0);
+                GetD3DCtx()->Unmap(copyTexture, 0);
             }
 
             D3D10Texture *d3dYUV = static_cast<D3D10Texture*>(yuvRenderTextures[curYUVTexture]);
-            GetD3D()->CopyResource(copyTexture, d3dYUV->texture);
+            GetD3DCtx()->CopyResource(copyTexture, d3dYUV->texture);
             profileOut;
 
-            ID3D10Texture2D *prevTexture = copyTextures[prevCopyTexture];
+            ID3D11Texture2D *prevTexture = copyTextures[prevCopyTexture];
 
             if(bFirstImage) //ignore the first frame
                 bFirstImage = false;
             else
             {
                 HRESULT result;
-                D3D10_MAPPED_TEXTURE2D map;
-                if(SUCCEEDED(result = prevTexture->Map(0, D3D10_MAP_READ, 0, &map)))
+                D3D11_MAPPED_SUBRESOURCE map;
+                if(SUCCEEDED(result = GetD3DCtx()->Map(prevTexture, 0, D3D11_MAP_READ, 0, &map)))
                 {
                     int prevOutBuffer = (curOutBuffer == 0) ? NUM_OUT_BUFFERS-1 : curOutBuffer-1;
                     int nextOutBuffer = (curOutBuffer == NUM_OUT_BUFFERS-1) ? 0 : curOutBuffer+1;
@@ -1192,7 +1192,7 @@ void OBS::MainCaptureLoop()
                             }
                             else
                                 Convert444toNV12((LPBYTE)map.pData, outputCX, map.RowPitch, outputCX, outputCY, 0, outputCY, picOut.picOut->img.plane);
-                            prevTexture->Unmap(0);
+                            GetD3DCtx()->Unmap(prevTexture, 0);
                         }
 
                         profileOut;
@@ -1322,7 +1322,7 @@ void OBS::MainCaptureLoop()
         //------------------------------------
         // we're about to sleep so we should flush the d3d command queue
         profileIn("flush");
-        GetD3D()->Flush();
+        GetD3DCtx()->Flush();
         profileOut;
         profileOut;
         profileOut; //frame
@@ -1378,8 +1378,8 @@ void OBS::MainCaptureLoop()
 
             if(!bFirstEncode)
             {
-                ID3D10Texture2D *copyTexture = copyTextures[curCopyTexture];
-                copyTexture->Unmap(0);
+                ID3D11Texture2D *copyTexture = copyTextures[curCopyTexture];
+                GetD3DCtx()->Unmap(copyTexture, 0);
             }
         }
 

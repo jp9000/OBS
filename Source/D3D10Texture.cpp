@@ -29,8 +29,8 @@ inline bool IsPow2(UINT num)
 const DXGI_FORMAT convertFormat[] = {DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_A8_UNORM, DXGI_FORMAT_R8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_B8G8R8X8_UNORM, DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_R16G16B16A16_FLOAT, DXGI_FORMAT_R32G32B32A32_FLOAT, DXGI_FORMAT_B5G5R5A1_UNORM, DXGI_FORMAT_B5G6R5_UNORM, DXGI_FORMAT_R10G10B10A2_UNORM, DXGI_FORMAT_BC1_UNORM, DXGI_FORMAT_BC3_UNORM, DXGI_FORMAT_BC5_UNORM};
 const UINT formatPitch[] = {0, 1, 1, 4, 4, 4, 4, 8, 16, 0, 0, 0};
 
-const D3D10_TEXTURE_ADDRESS_MODE convertAddressMode[] = {D3D10_TEXTURE_ADDRESS_CLAMP, D3D10_TEXTURE_ADDRESS_WRAP, D3D10_TEXTURE_ADDRESS_MIRROR, D3D10_TEXTURE_ADDRESS_BORDER, D3D10_TEXTURE_ADDRESS_MIRROR_ONCE};
-const D3D10_FILTER convertFilter[] = {D3D10_FILTER_MIN_MAG_MIP_LINEAR, D3D10_FILTER_MIN_MAG_MIP_POINT, D3D10_FILTER_ANISOTROPIC, D3D10_FILTER_MIN_MAG_POINT_MIP_LINEAR, D3D10_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT, D3D10_FILTER_MIN_POINT_MAG_MIP_LINEAR, D3D10_FILTER_MIN_LINEAR_MAG_MIP_POINT, D3D10_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR, D3D10_FILTER_MIN_MAG_LINEAR_MIP_POINT};
+const D3D11_TEXTURE_ADDRESS_MODE convertAddressMode[] = {D3D11_TEXTURE_ADDRESS_CLAMP, D3D11_TEXTURE_ADDRESS_WRAP, D3D11_TEXTURE_ADDRESS_MIRROR, D3D11_TEXTURE_ADDRESS_BORDER, D3D11_TEXTURE_ADDRESS_MIRROR_ONCE};
+const D3D11_FILTER convertFilter[] = {D3D11_FILTER_MIN_MAG_MIP_LINEAR, D3D11_FILTER_MIN_MAG_MIP_POINT, D3D11_FILTER_ANISOTROPIC, D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR, D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT, D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR, D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT, D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR, D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT};
 
 inline GSColorFormat GetGSFormatFromDXGIFormat(DXGI_FORMAT dxgiFormat)
 {
@@ -46,18 +46,18 @@ inline GSColorFormat GetGSFormatFromDXGIFormat(DXGI_FORMAT dxgiFormat)
 
 SamplerState* D3D10SamplerState::CreateSamplerState(SamplerInfo &info)
 {
-    D3D10_SAMPLER_DESC sampDesc;
+    D3D11_SAMPLER_DESC sampDesc;
     zero(&sampDesc, sizeof(sampDesc));
     sampDesc.AddressU       = convertAddressMode[(UINT)info.addressU];
     sampDesc.AddressV       = convertAddressMode[(UINT)info.addressV];
     sampDesc.AddressW       = convertAddressMode[(UINT)info.addressW];
-    sampDesc.ComparisonFunc = D3D10_COMPARISON_ALWAYS;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
     sampDesc.Filter         = convertFilter[(UINT)info.filter];
     sampDesc.MaxAnisotropy  = 1;//info.maxAnisotropy;
     sampDesc.MaxLOD         = FLT_MAX;
     mcpy(sampDesc.BorderColor, info.borderColor.ptr, sizeof(Color4));
 
-    ID3D10SamplerState *state;
+    ID3D11SamplerState *state;
     HRESULT err = GetD3D()->CreateSamplerState(&sampDesc, &state);
     if(FAILED(err))
     {
@@ -90,15 +90,15 @@ Texture* D3D10Texture::CreateFromSharedHandle(unsigned int width, unsigned int h
         return NULL;
     }
 
-    ID3D10Resource *tempResource;
-    if(FAILED(err = GetD3D()->OpenSharedResource(handle, __uuidof(ID3D10Resource), (void**)&tempResource)))
+    ID3D11Resource *tempResource;
+    if(FAILED(err = GetD3D()->OpenSharedResource(handle, __uuidof(ID3D11Resource), (void**)&tempResource)))
     {
         AppWarning(TEXT("D3D10Texture::CreateFromSharedHandle: Failed to open shared handle, result = 0x%08lX"), err);
         return NULL;
     }
 
-    ID3D10Texture2D *texVal;
-    if(FAILED(err = tempResource->QueryInterface(__uuidof(ID3D10Texture2D), (void**)&texVal)))
+    ID3D11Texture2D *texVal;
+    if(FAILED(err = tempResource->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&texVal)))
     {
         SafeRelease(tempResource);
         AppWarning(TEXT("D3D10Texture::CreateFromSharedHandle: could not query interface, result = 0x%08lX"), err);
@@ -109,18 +109,18 @@ Texture* D3D10Texture::CreateFromSharedHandle(unsigned int width, unsigned int h
 
     //------------------------------------------
 
-    D3D10_TEXTURE2D_DESC td;
+    D3D11_TEXTURE2D_DESC td;
     texVal->GetDesc(&td);
 
     //------------------------------------------
 
-    D3D10_SHADER_RESOURCE_VIEW_DESC resourceDesc;
+    D3D11_SHADER_RESOURCE_VIEW_DESC resourceDesc;
     zero(&resourceDesc, sizeof(resourceDesc));
     resourceDesc.Format              = td.Format;
-    resourceDesc.ViewDimension       = D3D10_SRV_DIMENSION_TEXTURE2D;
+    resourceDesc.ViewDimension       = D3D11_SRV_DIMENSION_TEXTURE2D;
     resourceDesc.Texture2D.MipLevels = 1;
 
-    ID3D10ShaderResourceView *resource = NULL;
+    ID3D11ShaderResourceView *resource = NULL;
     if(FAILED(err = GetD3D()->CreateShaderResourceView(texVal, &resourceDesc, &resource)))
     {
         SafeRelease(texVal);
@@ -159,20 +159,20 @@ Texture* D3D10Texture::CreateTexture(unsigned int width, unsigned int height, GS
         bGenMipMaps = FALSE;
     }
 
-    D3D10_TEXTURE2D_DESC td;
+    D3D11_TEXTURE2D_DESC td;
     zero(&td, sizeof(td));
     td.Width            = width;
     td.Height           = height;
     td.MipLevels        = bGenMipMaps ? 0 : 1;
     td.ArraySize        = 1;
     td.Format           = format;
-    td.BindFlags        = D3D10_BIND_SHADER_RESOURCE;
+    td.BindFlags        = D3D11_BIND_SHADER_RESOURCE;
     td.SampleDesc.Count = 1;
-    td.Usage            = bStatic ? D3D10_USAGE_DEFAULT : D3D10_USAGE_DYNAMIC;
-    td.CPUAccessFlags   = bStatic ? 0 : D3D10_CPU_ACCESS_WRITE;
+    td.Usage            = bStatic ? D3D11_USAGE_DEFAULT : D3D11_USAGE_DYNAMIC;
+    td.CPUAccessFlags   = bStatic ? 0 : D3D11_CPU_ACCESS_WRITE;
 
-    D3D10_SUBRESOURCE_DATA srd;
-    D3D10_SUBRESOURCE_DATA *lpSRD;
+    D3D11_SUBRESOURCE_DATA srd;
+    D3D11_SUBRESOURCE_DATA *lpSRD;
     if(lpData)
     {
         srd.pSysMem = lpData;
@@ -183,7 +183,7 @@ Texture* D3D10Texture::CreateTexture(unsigned int width, unsigned int height, GS
     else
         lpSRD = NULL;
 
-    ID3D10Texture2D *texVal;
+    ID3D11Texture2D *texVal;
     if(FAILED(err = GetD3D()->CreateTexture2D(&td, lpSRD, &texVal)))
     {
         AppWarning(TEXT("D3D10Texture::CreateTexture: CreateTexture2D failed, result = 0x%08lX"), err);
@@ -192,13 +192,13 @@ Texture* D3D10Texture::CreateTexture(unsigned int width, unsigned int height, GS
 
     //------------------------------------------
 
-    D3D10_SHADER_RESOURCE_VIEW_DESC resourceDesc;
+    D3D11_SHADER_RESOURCE_VIEW_DESC resourceDesc;
     zero(&resourceDesc, sizeof(resourceDesc));
     resourceDesc.Format              = format;
-    resourceDesc.ViewDimension       = D3D10_SRV_DIMENSION_TEXTURE2D;
+    resourceDesc.ViewDimension       = D3D11_SRV_DIMENSION_TEXTURE2D;
     resourceDesc.Texture2D.MipLevels = bGenMipMaps ? -1 : 1;
 
-    ID3D10ShaderResourceView *resource;
+    ID3D11ShaderResourceView *resource;
     if(FAILED(err = GetD3D()->CreateShaderResourceView(texVal, &resourceDesc, &resource)))
     {
         SafeRelease(texVal);
@@ -223,8 +223,8 @@ Texture* D3D10Texture::CreateFromFile(CTSTR lpFile, BOOL bBuildMipMaps)
 {
     HRESULT err;
 
-    D3DX10_IMAGE_INFO ii;
-    if(FAILED(D3DX10GetImageInfoFromFile(lpFile, NULL, &ii, NULL)))
+    D3DX11_IMAGE_INFO ii;
+    if(FAILED(D3DX11GetImageInfoFromFile(lpFile, NULL, &ii, NULL)))
     {
         AppWarning(TEXT("D3D10Texture::CreateFromFile: Could not get information about texture file '%s'"), lpFile);
         return NULL;
@@ -235,23 +235,23 @@ Texture* D3D10Texture::CreateFromFile(CTSTR lpFile, BOOL bBuildMipMaps)
     if(bBuildMipMaps && (!IsPow2(ii.Width) || !IsPow2(ii.Height)))
         bBuildMipMaps = FALSE;
 
-    D3DX10_IMAGE_LOAD_INFO ili;
-    ili.Width           = D3DX10_DEFAULT;
-    ili.Height          = D3DX10_DEFAULT;
-    ili.Depth           = D3DX10_DEFAULT;
-    ili.FirstMipLevel   = D3DX10_DEFAULT;
+    D3DX11_IMAGE_LOAD_INFO ili;
+    ili.Width           = D3DX11_DEFAULT;
+    ili.Height          = D3DX11_DEFAULT;
+    ili.Depth           = D3DX11_DEFAULT;
+    ili.FirstMipLevel   = D3DX11_DEFAULT;
     ili.MipLevels       = bBuildMipMaps ? 0 : 1;
-    ili.Usage           = (D3D10_USAGE)D3DX10_DEFAULT;
-    ili.BindFlags       = D3DX10_DEFAULT;
-    ili.CpuAccessFlags  = D3DX10_DEFAULT;
-    ili.MiscFlags       = D3DX10_DEFAULT;
-    ili.Format          = (DXGI_FORMAT)D3DX10_DEFAULT;
-    ili.Filter          = D3DX10_DEFAULT;
-    ili.MipFilter       = D3DX10_DEFAULT;
+    ili.Usage           = (D3D11_USAGE)D3DX11_DEFAULT;
+    ili.BindFlags       = D3DX11_DEFAULT;
+    ili.CpuAccessFlags  = D3DX11_DEFAULT;
+    ili.MiscFlags       = D3DX11_DEFAULT;
+    ili.Format          = (DXGI_FORMAT)D3DX11_DEFAULT;
+    ili.Filter          = D3DX11_DEFAULT;
+    ili.MipFilter       = D3DX11_DEFAULT;
     ili.pSrcInfo        = NULL;
 
-    ID3D10Resource *texResource;
-    if(FAILED(err = D3DX10CreateTextureFromFile(GetD3D(), lpFile, &ili, NULL, &texResource, NULL)))
+    ID3D11Resource *texResource;
+    if(FAILED(err = D3DX11CreateTextureFromFile(GetD3D(), lpFile, &ili, NULL, &texResource, NULL)))
     {
         AppWarning(TEXT("D3D10Texture::CreateFromFile: failed to load '%s'"), lpFile);
         return NULL;
@@ -259,13 +259,13 @@ Texture* D3D10Texture::CreateFromFile(CTSTR lpFile, BOOL bBuildMipMaps)
 
     //------------------------------------------
 
-    D3D10_SHADER_RESOURCE_VIEW_DESC resourceDesc;
+    D3D11_SHADER_RESOURCE_VIEW_DESC resourceDesc;
     zero(&resourceDesc, sizeof(resourceDesc));
     resourceDesc.Format              = ii.Format;
-    resourceDesc.ViewDimension       = D3D10_SRV_DIMENSION_TEXTURE2D;
+    resourceDesc.ViewDimension       = D3D11_SRV_DIMENSION_TEXTURE2D;
     resourceDesc.Texture2D.MipLevels = bBuildMipMaps ? -1 : 1;
 
-    ID3D10ShaderResourceView *resource;
+    ID3D11ShaderResourceView *resource;
     if(FAILED(err = GetD3D()->CreateShaderResourceView(texResource, &resourceDesc, &resource)))
     {
         SafeRelease(texResource);
@@ -275,8 +275,8 @@ Texture* D3D10Texture::CreateFromFile(CTSTR lpFile, BOOL bBuildMipMaps)
 
     //------------------------------------------
 
-    ID3D10Texture2D *tex2D;
-    err = texResource->QueryInterface(__uuidof(ID3D10Texture2D), (void**)&tex2D);
+    ID3D11Texture2D *tex2D;
+    err = texResource->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&tex2D);
     if(FAILED(err))
     {
         SafeRelease(texResource);
@@ -326,18 +326,18 @@ Texture* D3D10Texture::CreateRenderTarget(unsigned int width, unsigned int heigh
 
     DXGI_FORMAT format = convertFormat[(UINT)colorFormat];
 
-    D3D10_TEXTURE2D_DESC td;
+    D3D11_TEXTURE2D_DESC td;
     zero(&td, sizeof(td));
     td.Width            = width;
     td.Height           = height;
     td.MipLevels        = bGenMipMaps ? 0 : 1;
     td.ArraySize        = 1;
     td.Format           = format;
-    td.BindFlags        = D3D10_BIND_SHADER_RESOURCE|D3D10_BIND_RENDER_TARGET;
+    td.BindFlags        = D3D11_BIND_SHADER_RESOURCE|D3D11_BIND_RENDER_TARGET;
     td.SampleDesc.Count = 1;
-    td.Usage            = D3D10_USAGE_DEFAULT;
+    td.Usage            = D3D11_USAGE_DEFAULT;
 
-    ID3D10Texture2D *texVal;
+    ID3D11Texture2D *texVal;
     if(FAILED(err = GetD3D()->CreateTexture2D(&td, NULL, &texVal)))
     {
         AppWarning(TEXT("D3D10Texture::CreateRenderTarget: CreateTexture2D failed, result = 0x%08lX"), err);
@@ -346,13 +346,13 @@ Texture* D3D10Texture::CreateRenderTarget(unsigned int width, unsigned int heigh
 
     //------------------------------------------
 
-    D3D10_SHADER_RESOURCE_VIEW_DESC resourceDesc;
+    D3D11_SHADER_RESOURCE_VIEW_DESC resourceDesc;
     zero(&resourceDesc, sizeof(resourceDesc));
     resourceDesc.Format              = format;
-    resourceDesc.ViewDimension       = D3D10_SRV_DIMENSION_TEXTURE2D;
+    resourceDesc.ViewDimension       = D3D11_SRV_DIMENSION_TEXTURE2D;
     resourceDesc.Texture2D.MipLevels = bGenMipMaps ? -1 : 1;
 
-    ID3D10ShaderResourceView *resource;
+    ID3D11ShaderResourceView *resource;
     if(FAILED(err = GetD3D()->CreateShaderResourceView(texVal, &resourceDesc, &resource)))
     {
         SafeRelease(texVal);
@@ -362,7 +362,7 @@ Texture* D3D10Texture::CreateRenderTarget(unsigned int width, unsigned int heigh
 
     //------------------------------------------
 
-    ID3D10RenderTargetView *view;
+    ID3D11RenderTargetView *view;
     err = GetD3D()->CreateRenderTargetView(texVal, NULL, &view);
     if(FAILED(err))
     {
@@ -389,22 +389,22 @@ Texture* D3D10Texture::CreateGDITexture(unsigned int width, unsigned int height)
 {
     HRESULT err;
 
-    D3D10_TEXTURE2D_DESC td;
+    D3D11_TEXTURE2D_DESC td;
     zero(&td, sizeof(td));
     td.Width            = width;
     td.Height           = height;
     td.MipLevels        = 1;
     td.ArraySize        = 1;
     td.Format           = DXGI_FORMAT_B8G8R8A8_UNORM;
-    td.BindFlags        = D3D10_BIND_SHADER_RESOURCE|D3D10_BIND_RENDER_TARGET;
+    td.BindFlags        = D3D11_BIND_SHADER_RESOURCE|D3D11_BIND_RENDER_TARGET;
     td.SampleDesc.Count = 1;
-    td.Usage            = D3D10_USAGE_DEFAULT;
-    td.MiscFlags        = D3D10_RESOURCE_MISC_GDI_COMPATIBLE;
+    td.Usage            = D3D11_USAGE_DEFAULT;
+    td.MiscFlags        = D3D11_RESOURCE_MISC_GDI_COMPATIBLE;
 
-    D3D10_SUBRESOURCE_DATA srd;
+    D3D11_SUBRESOURCE_DATA srd;
     zero(&srd, sizeof(srd));
 
-    ID3D10Texture2D *texVal;
+    ID3D11Texture2D *texVal;
     if(FAILED(err = GetD3D()->CreateTexture2D(&td, NULL, &texVal)))
     {
         AppWarning(TEXT("D3D10Texture::CreateGDITexture: CreateTexture2D failed, result = 0x%08lX"), err);
@@ -413,13 +413,13 @@ Texture* D3D10Texture::CreateGDITexture(unsigned int width, unsigned int height)
 
     //------------------------------------------
 
-    D3D10_SHADER_RESOURCE_VIEW_DESC resourceDesc;
+    D3D11_SHADER_RESOURCE_VIEW_DESC resourceDesc;
     zero(&resourceDesc, sizeof(resourceDesc));
     resourceDesc.Format              = DXGI_FORMAT_B8G8R8A8_UNORM;
-    resourceDesc.ViewDimension       = D3D10_SRV_DIMENSION_TEXTURE2D;
+    resourceDesc.ViewDimension       = D3D11_SRV_DIMENSION_TEXTURE2D;
     resourceDesc.Texture2D.MipLevels = 1;
 
-    ID3D10ShaderResourceView *resource;
+    ID3D11ShaderResourceView *resource;
     if(FAILED(err = GetD3D()->CreateShaderResourceView(texVal, &resourceDesc, &resource)))
     {
         SafeRelease(texVal);
@@ -444,20 +444,20 @@ Texture* D3D10Texture::CreateShared(unsigned int width, unsigned int height)
 {
     HRESULT err;
 
-    D3D10_TEXTURE2D_DESC td;
+    D3D11_TEXTURE2D_DESC td;
     zero(&td, sizeof(td));
     td.Width            = width;
     td.Height           = height;
     td.MipLevels        = 1;
     td.ArraySize        = 1;
     td.Format           = DXGI_FORMAT_B8G8R8A8_UNORM;
-    td.BindFlags        = D3D10_BIND_SHADER_RESOURCE|D3D10_BIND_RENDER_TARGET;
+    td.BindFlags        = D3D11_BIND_SHADER_RESOURCE|D3D11_BIND_RENDER_TARGET;
     td.SampleDesc.Count = 1;
-    td.Usage            = D3D10_USAGE_DEFAULT;
+    td.Usage            = D3D11_USAGE_DEFAULT;
     td.CPUAccessFlags   = 0;
-    td.MiscFlags		= D3D10_RESOURCE_MISC_SHARED;
+    td.MiscFlags		= D3D11_RESOURCE_MISC_SHARED;
 
-    ID3D10Texture2D *texVal;
+    ID3D11Texture2D *texVal;
     if(FAILED(err = GetD3D()->CreateTexture2D(&td, NULL, &texVal)))
     {
         AppWarning(TEXT("D3D10Texture::CreateShared: CreateTexture2D failed, result = 0x%08lX"), err);
@@ -466,13 +466,13 @@ Texture* D3D10Texture::CreateShared(unsigned int width, unsigned int height)
 
     //------------------------------------------
 
-    D3D10_SHADER_RESOURCE_VIEW_DESC resourceDesc;
+    D3D11_SHADER_RESOURCE_VIEW_DESC resourceDesc;
     zero(&resourceDesc, sizeof(resourceDesc));
     resourceDesc.Format              = DXGI_FORMAT_B8G8R8A8_UNORM;
-    resourceDesc.ViewDimension       = D3D10_SRV_DIMENSION_TEXTURE2D;
+    resourceDesc.ViewDimension       = D3D11_SRV_DIMENSION_TEXTURE2D;
     resourceDesc.Texture2D.MipLevels = 1;
 
-    ID3D10ShaderResourceView *resource;
+    ID3D11ShaderResourceView *resource;
     if(FAILED(err = GetD3D()->CreateShaderResourceView(texVal, &resourceDesc, &resource)))
     {
         SafeRelease(texVal);
@@ -482,7 +482,7 @@ Texture* D3D10Texture::CreateShared(unsigned int width, unsigned int height)
 
     //------------------------------------------
 
-    ID3D10RenderTargetView *view;
+    ID3D11RenderTargetView *view;
     err = GetD3D()->CreateRenderTargetView(texVal, NULL, &view);
     if(FAILED(err))
     {
@@ -651,8 +651,8 @@ void D3D10Texture::SetImage(void *lpData, GSImageFormat imageFormat, UINT pitch)
 
     HRESULT err;
 
-    D3D10_MAPPED_TEXTURE2D map;
-    if(FAILED(err = texture->Map(0, D3D10_MAP_WRITE_DISCARD, 0, &map)))
+    D3D11_MAPPED_SUBRESOURCE map;
+    if(FAILED(err = GetD3DCtx()->Map(texture, 0, D3D11_MAP_WRITE_DISCARD, 0, &map)))
     {
         AppWarning(TEXT("D3D10Texture::SetImage: map failed, result = %08lX"), err);
         return;
@@ -693,15 +693,15 @@ void D3D10Texture::SetImage(void *lpData, GSImageFormat imageFormat, UINT pitch)
         }
     }
 
-    texture->Unmap(0);
+    GetD3DCtx()->Unmap(texture, 0);
 }
 
 bool D3D10Texture::Map(BYTE *&lpData, UINT &pitch)
 {
     HRESULT err;
-    D3D10_MAPPED_TEXTURE2D map;
+    D3D11_MAPPED_SUBRESOURCE map;
 
-    if(FAILED(err = texture->Map(0, D3D10_MAP_WRITE_DISCARD, 0, &map)))
+    if(FAILED(err = GetD3DCtx()->Map(texture, 0, D3D11_MAP_WRITE_DISCARD, 0, &map)))
     {
         AppWarning(TEXT("D3D10Texture::Map: map failed, result = %08lX"), err);
         return false;
@@ -715,7 +715,7 @@ bool D3D10Texture::Map(BYTE *&lpData, UINT &pitch)
 
 void D3D10Texture::Unmap()
 {
-    texture->Unmap(0);
+    GetD3DCtx()->Unmap(texture, 0);
 }
 
 HANDLE D3D10Texture::GetSharedHandle()

@@ -448,8 +448,8 @@ INT_PTR CALLBACK ConfigureBitmapTransitionProc(HWND hwnd, UINT message, WPARAM w
 
                         ConfigBitmapInfo *configInfo = (ConfigBitmapInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
 
-                        D3DX10_IMAGE_INFO ii;
-                        if(SUCCEEDED(D3DX10GetImageInfoFromFile(bitmapList[0], NULL, &ii, NULL)))
+                        D3DX11_IMAGE_INFO ii;
+                        if(SUCCEEDED(D3DX11GetImageInfoFromFile(bitmapList[0], NULL, &ii, NULL)))
                         {
                             configInfo->cx = ii.Width;
                             configInfo->cy = ii.Height;

@@ -161,12 +161,12 @@ BOOL ShaderProcessor::ProcessShader(CTSTR input, CTSTR filename)
                             break;
                         }
 
-                        D3D10_INPUT_ELEMENT_DESC inputElement;
+                        D3D11_INPUT_ELEMENT_DESC inputElement;
                         inputElement.SemanticName           = semanticInfo.lpName;
                         inputElement.SemanticIndex          = semanticInfo.index;
                         inputElement.InputSlot              = 0;
                         inputElement.AlignedByteOffset      = 0;
-                        inputElement.InputSlotClass         = D3D10_INPUT_PER_VERTEX_DATA;
+                        inputElement.InputSlotClass         = D3D11_INPUT_PER_VERTEX_DATA;
                         inputElement.InstanceDataStepRate   = 0;
 
                         if(strSemantic.CompareI(TEXT("color")))

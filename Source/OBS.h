@@ -636,7 +636,7 @@ class OBS
     // graphics stuff
 
     IDXGISwapChain  *projectorSwap;
-    ID3D10Texture2D *copyTextures[NUM_RENDER_BUFFERS];
+    ID3D11Texture2D *copyTextures[NUM_RENDER_BUFFERS];
     Texture         *mainRenderTextures[NUM_RENDER_BUFFERS];
     Texture         *yuvRenderTextures[NUM_RENDER_BUFFERS];
 

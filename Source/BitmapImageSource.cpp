@@ -507,8 +507,8 @@ bool STDCALL ConfigureBitmapSource(XElement *element, bool bCreating)
     {
         CTSTR lpBitmap = data->GetString(TEXT("path"));
 
-        D3DX10_IMAGE_INFO ii;
-        if(SUCCEEDED(D3DX10GetImageInfoFromFile(lpBitmap, NULL, &ii, NULL)))
+        D3DX11_IMAGE_INFO ii;
+        if(SUCCEEDED(D3DX11GetImageInfoFromFile(lpBitmap, NULL, &ii, NULL)))
         {
             element->SetInt(TEXT("cx"), ii.Width);
             element->SetInt(TEXT("cy"), ii.Height);
