@@ -956,13 +956,13 @@ BEGIN
     END
     POPUP "MainMenu.Profiles"
     BEGIN
-        MENUITEM "MainMenu.Profiles.New", ID_PROFILE_NEW
+        MENUITEM "MainMenu.Profiles.New",       ID_PROFILE_NEW
         MENUITEM "MainMenu.Profiles.Duplicate", ID_PROFILE_CLONE
-        MENUITEM "MainMenu.Profiles.Rename", ID_PROFILE_RENAME
-        MENUITEM "MainMenu.Profiles.Remove", ID_PROFILE_REMOVE
+        MENUITEM "MainMenu.Profiles.Rename",    ID_PROFILE_RENAME
+        MENUITEM "MainMenu.Profiles.Remove",    ID_PROFILE_REMOVE
         MENUITEM SEPARATOR
-        MENUITEM "MainMenu.Profiles.Import", ID_PROFILE_IMPORT
-        MENUITEM "MainMenu.Profiles.Export", ID_PROFILE_EXPORT
+        MENUITEM "MainMenu.Profiles.Import",    ID_PROFILE_IMPORT
+        MENUITEM "MainMenu.Profiles.Export",    ID_PROFILE_EXPORT
         MENUITEM SEPARATOR
         MENUITEM "nothing here",                ID_MAINMENU_NOTHINGHERE
     END
