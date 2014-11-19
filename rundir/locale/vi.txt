@@ -48,6 +48,7 @@ MessageBoxWarningCaption="Chú ý"
 CopyTo="Sao chép vào"
 CopyTo.Success.Title="Hoàn thành"
 
+
 DeleteCollection="Loại bỏ cảnh bộ sưu tập"
 DeleteCollection.Text="Bạn có chắc bạn muốn loại bỏ các bộ sưu tập cảnh hiện tại không?"
 
@@ -92,6 +93,7 @@ MainMenu.File="&Tập tin"
 MainMenu.Help="&Trợ giúp"
 MainMenu.Profiles="&Hồ sơ"
 MainMenu.Settings="&Cài đặt"
+
 
 MainMenu.Settings.AlwaysOnTop="&Luôn trên đầu trang"
 MainMenu.Settings.FullscreenMode="&Chế độ xem trước toàn màn hình"

@@ -57,6 +57,7 @@ CopyTo.Success.Text="「$1」的場景已被成功複製到所選的場景集。
 CopyTo.Success.Title="成功"
 CopyTo.CopyGlobalSourcesReferences.Title="複製全域來源？"
 
+
 DeleteCollection="移除場景集"
 DeleteCollection.Text="您確定要刪除當前的場景集嗎？"
 
@@ -101,6 +102,7 @@ MainMenu.File="檔案(&F)"
 MainMenu.Help="幫助(&H)"
 MainMenu.Profiles="設定檔(&P)"
 MainMenu.Settings="設定(&S)"
+
 
 MainMenu.Settings.AlwaysOnTop="總是在最上層(&A)"
 MainMenu.Settings.FullscreenMode="全螢幕預覽模式(&F)"

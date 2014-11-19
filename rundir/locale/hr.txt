@@ -49,6 +49,7 @@ ImportCollectionReplaceWarning.Title="Uvezi zbirku scena"
 ImportCollectionReplaceWarning.Text="Podaci trenutačne scene će biti izgubljeni. Jeste li sigurni da želite uvesti?"
 
 
+
 DeleteCollection="Ukloni zbirku scena"
 DeleteCollection.Text="Jeste li sigurni da želite ukloniti trenutačnu zbirku scena?"
 
@@ -92,6 +93,7 @@ MainMenu.File="&Datoteka"
 MainMenu.Help="&pomoć"
 MainMenu.Profiles="&Profili"
 MainMenu.Settings="&Postavke"
+
 
 MainMenu.Settings.AlwaysOnTop="&Uvijek Na Vrhu"
 MainMenu.Settings.FullscreenMode="&Pogled preko punog ekrana"

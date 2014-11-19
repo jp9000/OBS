@@ -59,6 +59,9 @@ CopyTo.Success.Title="Onnistui"
 CopyTo.CopyGlobalSourcesReferences="Haluatko kopioida myös yleiset lähteet joihin viitataan? Jos valitset 'Ei', viittaukset poistetaan kopioidusta skenestä."
 CopyTo.CopyGlobalSourcesReferences.Title="Kopioi yleiset lähteet?"
 
+ImportProfileReplaceWarning.Title="Tuo profiili"
+ImportProfileReplaceWarning.Text="Tämänhetkisen profiilin tiedot häviävät. Haluatko varmasti tuoda?"
+
 DeleteCollection="Poista skenekokoelma"
 DeleteCollection.Text="Haluatko varmasti poistaa tämänhetkisen skenekokoelman?"
 
@@ -103,6 +106,14 @@ MainMenu.File="&Tiedosto"
 MainMenu.Help="&Ohje"
 MainMenu.Profiles="&Profiilit"
 MainMenu.Settings="&Asetukset"
+
+MainMenu.Profiles.New="&Uusi"
+MainMenu.Profiles.Duplicate="&Monista"
+MainMenu.Profiles.Rename="Uudelleen&nimeä"
+MainMenu.Profiles.Remove="&Poista"
+MainMenu.Profiles.Import="T&uo"
+MainMenu.Profiles.Export="&Vie"
+MainMenu.Profiles.ProfileExists="Samanniminen profiili on jo olemassa."
 
 MainMenu.Settings.AlwaysOnTop="Aina &päällimmäisenä"
 MainMenu.Settings.FullscreenMode="&Kokoruudun esikatselutila"
@@ -459,7 +470,7 @@ Sources.TransitionSource.Randomize="Näytä satunnaisesti:"
 
 Stats="Tilastot"
 Stats.TotalFramesEncoded="Frameja enkoodattu yhteensä:"
-Stats.TotalFramesRendered="Frameja renderöity yhteensä:"
+Stats.TotalFramesRendered="Frameja renderoity yhteensä:"
 Stats.TotalBytesTransferred="Bittejä siirretty yhteensä:"
 Stats.LateFrames="Frameja myöhässä:"
 Stats.SkippedFrames="Väliin jääneitä frameja enkoodauksen latenssin vuoksi:"

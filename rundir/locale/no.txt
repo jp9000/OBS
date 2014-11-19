@@ -47,6 +47,7 @@ NoSourcesFound="Du har ikke lagt til noen kilder! Er du sikker du vil direkteavs
 
 
 
+
 BuildingMP4Dialog.Progress="Oppretter MP4, vennligst vent ..."
 
 Connection.CouldNotConnect="Klarte ikke å koble til server"
@@ -80,6 +81,7 @@ MainMenu.File="&Fil"
 MainMenu.Help="&Hjelp"
 MainMenu.Profiles="&Profiler"
 MainMenu.Settings="&Instillinger"
+
 
 MainMenu.Settings.AlwaysOnTop="&Alltid øverst"
 MainMenu.Settings.FullscreenMode="&Fullskjerm Forhåndsvisning Modus"

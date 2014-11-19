@@ -47,6 +47,7 @@ NoSourcesFound="Нисте додали ни један извор за сним
 
 
 
+
 BuildingMP4Dialog.Progress="Прављење MP4, молимо сачекајте..."
 
 Connection.CouldNotConnect="Не могу да се повежем на сервер"
@@ -80,6 +81,7 @@ MainMenu.File="&Фајл"
 MainMenu.Help="&Помоћ"
 MainMenu.Profiles="&Профили"
 MainMenu.Settings="&Подешавања"
+
 
 MainMenu.Settings.AlwaysOnTop="&Увек на врху"
 MainMenu.Settings.FullscreenMode="&Прегледај у пуној величини"

@@ -58,6 +58,7 @@ CopyTo.Success.Title="Vellykket"
 CopyTo.CopyGlobalSourcesReferences="Vil du også kopiere de globale kildene referansene peker til? Hvis du velger Nei, vil referansene fjernes fra den kopierte scenen."
 CopyTo.CopyGlobalSourcesReferences.Title="Kopiere de globale kildene?"
 
+
 DeleteCollection="Fjern scenesamling"
 DeleteCollection.Text="Er du sikker du vil fjerne den gjeldende scenesamlingen?"
 
@@ -102,6 +103,7 @@ MainMenu.File="&Fil"
 MainMenu.Help="&Hjelp"
 MainMenu.Profiles="&Profiler"
 MainMenu.Settings="&Innstillinger"
+
 
 MainMenu.Settings.AlwaysOnTop="&Alltid Synlig"
 MainMenu.Settings.FullscreenMode="&Modus for forhåndsvisning i fullskjerm"
