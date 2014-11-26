@@ -47,6 +47,7 @@ NoSourcesFound="Hiçbir kaynak eklenmedi! Siyah bir ekran yayınlamak istediğin
 
 
 
+
 BuildingMP4Dialog.Progress="MP4 Oluşturuluyor, lütfen bekleyin..."
 
 Connection.CouldNotConnect="Sunucuya bağlanılamadı"
@@ -81,6 +82,7 @@ MainMenu.File="&Dosya"
 MainMenu.Help="&Yardım"
 MainMenu.Profiles="&Profiller"
 MainMenu.Settings="&Ayarlar"
+
 
 MainMenu.Settings.AlwaysOnTop="&Her Zaman Üstte"
 MainMenu.Settings.FullscreenMode="&Tam Ekran Önizleme Modu"

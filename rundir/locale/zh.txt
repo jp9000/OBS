@@ -59,6 +59,9 @@ CopyTo.Success.Title="成功"
 CopyTo.CopyGlobalSourcesReferences="你也想要复制\"引用\"所指向的全局源么?如果你选择\"否\",\"引用\"将从复制的场景中删除."
 CopyTo.CopyGlobalSourcesReferences.Title="复制全局源?"
 
+ImportProfileReplaceWarning.Title="导入配置文件"
+ImportProfileReplaceWarning.Text="当前的配置文件数据将会丢失.你确定你想要导入?"
+
 DeleteCollection="删除场景收藏"
 DeleteCollection.Text="你确定要删除当前场景收藏吗？"
 
@@ -103,6 +106,14 @@ MainMenu.File="档案(&F)"
 MainMenu.Help="帮助(&H)"
 MainMenu.Profiles="设定档(&P)"
 MainMenu.Settings="设定(&S)"
+
+MainMenu.Profiles.New="新增(&N)"
+MainMenu.Profiles.Duplicate="复制一份(&D)"
+MainMenu.Profiles.Rename="重命名(&R)"
+MainMenu.Profiles.Remove="删除(&M)"
+MainMenu.Profiles.Import="导入(&I)"
+MainMenu.Profiles.Export="导出(&E)"
+MainMenu.Profiles.ProfileExists="已存在同名配置。"
 
 MainMenu.Settings.AlwaysOnTop="总是在最上层(&A)"
 MainMenu.Settings.FullscreenMode="全屏预览模式(&F)"
@@ -276,6 +287,7 @@ Settings.Encoding.Video.QualityTooltip="此设定将从您的比特率和缓冲�
 Settings.Encoding.Video.EncoderQSVDisabledAfterApply="Quick Sync编码器选项将被禁用，因为您的硬件似乎不支持Quick Sync。"
 Settings.Encoding.Video.EncoderNVENCDisabledAfterApply="Nvidia NVENC 编码器选项将被禁用，因为您的硬件似乎不支持Nvidia NVENC。"
 Settings.Encoding.Video.QSVConfigWarning="若要启用Quick Sync选项,确保你的 CPU 支持快速同步和在 BIOS 中启用了英特尔 ® 图形适配器。如果您使用的便携式计算机查阅论坛 'Laptop? Black screen when capturing? Read here first.' 此文章在论坛的Questions and Help中。"
+Settings.Encoding.Video.QSVWinVerWarning="快速同步功能需要 Windows 7 或更高版本."
 
 Settings.General.Add="添加"
 Settings.General.ConfirmDelete="确定要删除这些设定？ '$1'?"
@@ -307,6 +319,10 @@ Settings.Publish.SavePathTooltip="下面字符会自动被替换成这种格式:
 Settings.Publish.SaveToFile="自动把媒体流保存到文件:"
 Settings.Publish.Server="伺服器："
 Settings.Publish.Service="串流服务："
+Settings.Publish.StartStreamHotkey="开始媒体流:"
+Settings.Publish.StopStreamHotkey="停止媒体流:"
+Settings.Publish.StartRecordingHotkey="开始录制:"
+Settings.Publish.StopRecordingHotkey="停止录制:"
 Settings.Publish.StartReplayBufferHotkey="开始播放缓冲区的快捷键:"
 Settings.Publish.StopReplayBufferHotkey="停止播放缓冲区的快捷键:"
 Settings.Publish.Username="用户名 (如果存在)："

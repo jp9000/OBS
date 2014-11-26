@@ -51,6 +51,7 @@ ImportCollectionReplaceWarning.Title="Importa un insieme di sceme"
 
 
 
+
 BuildingMP4Dialog.Progress="Creazione MP4 in corso, attendere prego..."
 
 Connection.CouldNotConnect="Impossibile connettersi al server"
@@ -85,6 +86,7 @@ MainMenu.File="&File"
 MainMenu.Help="Ai&uto"
 MainMenu.Profiles="&Profili"
 MainMenu.Settings="&Impostazioni"
+
 
 MainMenu.Settings.AlwaysOnTop="Sempre in primo piano"
 MainMenu.Settings.FullscreenMode="Modalità &Anteprima a schermo intero"

@@ -39,6 +39,7 @@ MessageBoxWarningCaption="คำเตือน"
 CopyTo="คัดลอกไป"
 
 
+
 BuildingMP4Dialog.Progress="กำลังสร้าง MP4, กรุณารอสักครู่..."
 
 Connection.CouldNotConnect="ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์"
@@ -63,6 +64,7 @@ MainMenu.File="& ไฟล์"
 MainMenu.Help="&ช่วยเหลือ"
 MainMenu.Profiles="&โปรไฟล์"
 MainMenu.Settings="&ตั้งค่า"
+
 
 MainMenu.Settings.FullscreenMode="&โหมดแสดงตัวอย่างแบบเต็มหน้าจอ"
 

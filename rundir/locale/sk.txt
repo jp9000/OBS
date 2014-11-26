@@ -46,6 +46,7 @@ NoSourcesFound="Nepridali ste žiadne zdroje! Chcete streamovať čiernu plochu?
 CopyTo="Kopírovať do"
 
 
+
 BuildingMP4Dialog.Progress="Vytváram MP4, čakajte prosím..."
 
 Connection.CouldNotConnect="Nedá sa pripojiť k serveru"
@@ -87,6 +88,7 @@ MainMenu.File="&Súbor"
 MainMenu.Help="Pom&oc"
 MainMenu.Profiles="P&rofily"
 MainMenu.Settings="Na&stavenia"
+
 
 MainMenu.Settings.AlwaysOnTop="Vždy n&avrchu"
 MainMenu.Settings.FullscreenMode="&Celoobrazovkový režim"

@@ -33,14 +33,14 @@ VertexBuffer* D3D10VertexBuffer::CreateVertexBuffer(VBData *vbData, BOOL bStatic
     D3D10VertexBuffer *buf = new D3D10VertexBuffer;
     buf->numVerts = vbData->VertList.Num();
 
-    D3D10_BUFFER_DESC bd;
-    D3D10_SUBRESOURCE_DATA srd;
+    D3D11_BUFFER_DESC bd;
+    D3D11_SUBRESOURCE_DATA srd;
     zero(&bd, sizeof(bd));
     zero(&srd, sizeof(srd));
 
-    bd.Usage = bStatic ? D3D10_USAGE_DEFAULT : D3D10_USAGE_DYNAMIC;
-    bd.CPUAccessFlags = bStatic ? 0 : D3D10_CPU_ACCESS_WRITE;
-    bd.BindFlags = D3D10_BIND_VERTEX_BUFFER;
+    bd.Usage = bStatic ? D3D11_USAGE_DEFAULT : D3D11_USAGE_DYNAMIC;
+    bd.CPUAccessFlags = bStatic ? 0 : D3D11_CPU_ACCESS_WRITE;
+    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
     //----------------------------------------
 
@@ -119,7 +119,7 @@ VertexBuffer* D3D10VertexBuffer::CreateVertexBuffer(VBData *vbData, BOOL bStatic
             bd.ByteWidth = buf->UVSizes[i]*buf->numVerts;
             srd.pSysMem = textureVerts.Array();
 
-            ID3D10Buffer *tvBuffer;
+            ID3D11Buffer *tvBuffer;
             err = GetD3D()->CreateBuffer(&bd, &srd, &tvBuffer);
             if(FAILED(err))
             {
@@ -173,57 +173,58 @@ void D3D10VertexBuffer::FlushBuffers()
 
     //---------------------------------------------------
 
-    BYTE *outData;
-    if(FAILED(err = vertexBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, (void**)&outData)))
+    D3D11_MAPPED_SUBRESOURCE map;
+
+    if(FAILED(err = GetD3DCtx()->Map(vertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map)))
     {
         AppWarning(TEXT("D3D10VertexBuffer::FlushBuffers: failed to map vertex buffer, result = %08lX"), err);
         return;
     }
 
-    mcpy(outData, data->VertList.Array(), sizeof(Vect)*numVerts);
+    mcpy(map.pData, data->VertList.Array(), sizeof(Vect)*numVerts);
 
-    vertexBuffer->Unmap();
+    GetD3DCtx()->Unmap(vertexBuffer, 0);
 
     //---------------------------------------------------
 
     if(normalBuffer)
     {
-        if(FAILED(err = normalBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, (void**)&outData)))
+        if(FAILED(err = GetD3DCtx()->Map(normalBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map)))
         {
             AppWarning(TEXT("D3D10VertexBuffer::FlushBuffers: failed to map normal buffer, result = %08lX"), err);
             return;
         }
 
-        mcpy(outData, data->NormalList.Array(), sizeof(Vect)*numVerts);
-        normalBuffer->Unmap();
+        mcpy(map.pData, data->NormalList.Array(), sizeof(Vect)*numVerts);
+        GetD3DCtx()->Unmap(normalBuffer, 0);
     }
 
     //---------------------------------------------------
 
     if(colorBuffer)
     {
-        if(FAILED(err = colorBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, (void**)&outData)))
+        if(FAILED(err = GetD3DCtx()->Map(colorBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map)))
         {
             AppWarning(TEXT("D3D10VertexBuffer::FlushBuffers: failed to map color buffer, result = %08lX"), err);
             return;
         }
 
-        mcpy(outData, data->ColorList.Array(), sizeof(Vect)*numVerts);
-        colorBuffer->Unmap();
+        mcpy(map.pData, data->ColorList.Array(), sizeof(Vect)*numVerts);
+        GetD3DCtx()->Unmap(colorBuffer, 0);
     }
 
     //---------------------------------------------------
 
     if(tangentBuffer)
     {
-        if(FAILED(err = tangentBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, (void**)&outData)))
+        if(FAILED(err = GetD3DCtx()->Map(tangentBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map)))
         {
             AppWarning(TEXT("D3D10VertexBuffer::FlushBuffers: failed to map tangent buffer, result = %08lX"), err);
             return;
         }
 
-        mcpy(outData, data->TangentList.Array(), sizeof(Vect)*numVerts);
-        tangentBuffer->Unmap();
+        mcpy(map.pData, data->TangentList.Array(), sizeof(Vect)*numVerts);
+        GetD3DCtx()->Unmap(tangentBuffer, 0);
     }
 
     //---------------------------------------------------
@@ -234,16 +235,16 @@ void D3D10VertexBuffer::FlushBuffers()
         {
             List<UVCoord> &textureVerts = data->UVList[i];
 
-            ID3D10Buffer *buffer = UVBuffers[i];
+            ID3D11Buffer *buffer = UVBuffers[i];
 
-            if(FAILED(err = buffer->Map(D3D10_MAP_WRITE_DISCARD, 0, (void**)&outData)))
+            if(FAILED(err = GetD3DCtx()->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map)))
             {
                 AppWarning(TEXT("D3D10VertexBuffer::FlushBuffers: failed to map texture vertex buffer %d, result = %08lX"), i, err);
                 return;
             }
 
-            mcpy(outData, textureVerts.Array(), sizeof(UVCoord)*numVerts);
-            buffer->Unmap();
+            mcpy(map.pData, textureVerts.Array(), sizeof(UVCoord)*numVerts);
+            GetD3DCtx()->Unmap(buffer, 0);
         }
     }
 }
@@ -259,7 +260,7 @@ VBData* D3D10VertexBuffer::GetData()
     return data;
 }
 
-void D3D10VertexBuffer::MakeBufferList(D3D10VertexShader *vShader, List<ID3D10Buffer*> &bufferList, List<UINT> &strides) const
+void D3D10VertexBuffer::MakeBufferList(D3D10VertexShader *vShader, List<ID3D11Buffer*> &bufferList, List<UINT> &strides) const
 {
     assert(vShader);
 

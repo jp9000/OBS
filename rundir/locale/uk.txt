@@ -46,6 +46,7 @@ MessageBoxWarningCaption="АААААА"
 
 
 
+
 BuildingMP4Dialog.Progress="Йде збірка MP4, будь ласка зачекайте..."
 
 Connection.CouldNotConnect="Не вдалося підключитися до сервера"
@@ -79,6 +80,7 @@ MainMenu.File="&Файл"
 MainMenu.Help="&Допомога"
 MainMenu.Profiles="&Профілі"
 MainMenu.Settings="&Налаштування"
+
 
 MainMenu.Settings.AlwaysOnTop="&Завжди зверху"
 MainMenu.Settings.FullscreenMode="&Повноекранний режим перегляду"

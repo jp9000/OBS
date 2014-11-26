@@ -101,8 +101,8 @@ DuplicatorInfo D3D10OutputDuplicator::AcquireNextFrame(UINT timeout)
 
     //------------------------------------------
 
-    ID3D10Texture2D *texVal;
-    if(FAILED(hRes = tempResource->QueryInterface(__uuidof(ID3D10Texture2D), (void**)&texVal)))
+    ID3D11Texture2D *texVal;
+    if(FAILED(hRes = tempResource->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&texVal)))
     {
         SafeRelease(tempResource);
         AppWarning(TEXT("D3D10OutputDuplicator::AcquireNextFrame: could not query interface, result = 0x%08lX"), hRes);
@@ -113,7 +113,7 @@ DuplicatorInfo D3D10OutputDuplicator::AcquireNextFrame(UINT timeout)
 
     //------------------------------------------
 
-    D3D10_TEXTURE2D_DESC texDesc;
+    D3D11_TEXTURE2D_DESC texDesc;
     texVal->GetDesc(&texDesc);
 
     if(!copyTex || copyTex->Width() != texDesc.Width || copyTex->Height() != texDesc.Height)
@@ -127,7 +127,7 @@ DuplicatorInfo D3D10OutputDuplicator::AcquireNextFrame(UINT timeout)
     if(copyTex)
     {
         D3D10Texture *d3dCopyTex = (D3D10Texture*)copyTex;
-        GetD3D()->CopyResource(d3dCopyTex->texture, texVal);
+        GetD3DCtx()->CopyResource(d3dCopyTex->texture, texVal);
     }
 
     SafeRelease(texVal);

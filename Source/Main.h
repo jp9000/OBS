@@ -39,10 +39,10 @@
 #pragma warning(default : 4265)
 
 //-------------------------------------------
-// direct3d 10.1
+// direct3d 11
 
-#include <D3D10_1.h>
-#include <D3DX10.h>
+#include <D3D11.h>
+#include <D3DX11.h>
 #include <DXGI.h>
 
 #define USE_DXGI1_2 1
@@ -81,8 +81,8 @@ extern TCHAR        lpAppDataPath[MAX_PATH];
 #define OBS_VERSION_SUFFIX ""
 #endif
 
-#define OBS_VERSION             0x006307 //version number is 0xMMmmtt (super-major.major.minor - hex)
-#define OBS_VERSION_STRING_RAW  "Open Broadcaster Software v0.637b"
+#define OBS_VERSION             0x006308 //version number is 0xMMmmtt (super-major.major.minor - hex)
+#define OBS_VERSION_STRING_RAW  "Open Broadcaster Software v0.638b"
 //#define OBS_TEST_BUILD          1 //define this if releasing a test build to disable the auto updater
 
 #define OBS_VERSION_STRING_ANSI OBS_VERSION_STRING_RAW OBS_VERSION_SUFFIX

@@ -59,6 +59,9 @@ CopyTo.Success.Title="Correcto"
 CopyTo.CopyGlobalSourcesReferences="Quiere copiar también las fuentes globales a las que apuntan las referencias ? Si selecciona No esas referencias serán removidas de la escena copiada."
 CopyTo.CopyGlobalSourcesReferences.Title="Copiar las fuentes globales ?"
 
+ImportProfileReplaceWarning.Title="Importar Perfil"
+ImportProfileReplaceWarning.Text="Se perderán los datos del perfil actual.  ¿Está seguro que desea importar?"
+
 DeleteCollection="Eliminar conjunto de escenas"
 DeleteCollection.Text="¿Seguro que desea eliminar el conjunto de escenas actual?"
 
@@ -103,6 +106,14 @@ MainMenu.File="&Archivo"
 MainMenu.Help="A&yuda"
 MainMenu.Profiles="&Perfiles"
 MainMenu.Settings="&Configuración"
+
+MainMenu.Profiles.New="&Nuevo"
+MainMenu.Profiles.Duplicate="&Duplicar"
+MainMenu.Profiles.Rename="&Renombrar"
+MainMenu.Profiles.Remove="Eli&minar"
+MainMenu.Profiles.Import="&Importar"
+MainMenu.Profiles.Export="&Exportar"
+MainMenu.Profiles.ProfileExists="Ya existe un perfil con el mismo nombre."
 
 MainMenu.Settings.AlwaysOnTop="&Siempre en primer plano"
 MainMenu.Settings.FullscreenMode="&Preview pantalla completa"
@@ -276,6 +287,7 @@ Settings.Encoding.Video.QualityTooltip="Este valor intentará llegar a determina
 Settings.Encoding.Video.EncoderQSVDisabledAfterApply="Se deshabilitará la opción de 'Quick Sync' porque su hardware no parece soportarlo."
 Settings.Encoding.Video.EncoderNVENCDisabledAfterApply="Se deshabilitará la opción de 'Nvidia NVENC' porque su hardware no parece soportarlo."
 Settings.Encoding.Video.QSVConfigWarning="Para habilitar QuickSync, debe asegurarse que su CPU lo soporta, además, debe estar habilitado desde BIOS el adaptador gráfico integrado. Si se trata de un equipo portátil, por favor revise el hilo 'Laptop? Black screen when capturing? Read here first'. en el foro de OBS, sección 'Questions and Help'."
+Settings.Encoding.Video.QSVWinVerWarning="Quick Sync requiere Windows 7 o posterior."
 
 Settings.General.Add="Agregar nuevo"
 Settings.General.ConfirmDelete="Está seguro de eliminar el perfil '$1'?"
@@ -386,6 +398,7 @@ Sources.GameCaptureSource.PluginName="Plugin de captura de juego"
 Sources.GameCaptureSource.RequiresAdmin="Esas aplicaciones requieren acceso de administrador para poder capturar (inicie OBS como administrador):"
 Sources.GameCaptureSource.SelectApplication="Seleccione la aplicación"
 Sources.GameCaptureSource.StretchToScreen="Estirar la imagen a la pantalla"
+Sources.GameCaptureSource.AlphaBlend="Habilitar mezclado alfa"
 Sources.GameCaptureSource.UseHotkey="Usar Hotkey"
 Sources.GameCaptureSource.UseSafeHook="Compatibilidad con sistemas anti-cheat (Usar solamente de ser necesario)"
 

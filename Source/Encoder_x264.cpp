@@ -475,12 +475,11 @@ public:
 
         packetTypes << bestType;
 
-        packets.SetSize(CurrentPackets.Num());
-        for(UINT i=0; i<packets.Num(); i++)
-        {
-            packets[i].lpPacket = CurrentPackets[i].Packet.Array();
-            packets[i].size     = CurrentPackets[i].Packet.Num();
-        }
+	if (CurrentPackets.Num()) {
+		packets.SetSize(1);
+		packets[0].lpPacket = CurrentPackets[0].Packet.Array();
+		packets[0].size     = CurrentPackets[0].Packet.Num();
+	}
 
         return true;
     }

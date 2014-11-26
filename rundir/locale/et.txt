@@ -47,6 +47,7 @@ NoSourcesFound="Te pole lisanud ühtegi allikat! Oled sa kindel, et tahad striim
 
 
 
+
 BuildingMP4Dialog.Progress="MP4 ehitamine, palun oodake..."
 
 Connection.CouldNotConnect="Ei saanud ühendust serveriga"
@@ -81,6 +82,7 @@ MainMenu.File="& Faili"
 MainMenu.Help="& Abi"
 MainMenu.Profiles="& Profiilid"
 MainMenu.Settings="& Seaded"
+
 
 MainMenu.Settings.AlwaysOnTop="&Alati pealmine"
 MainMenu.Settings.FullscreenMode="& Täiskuva eelvaate režiim"

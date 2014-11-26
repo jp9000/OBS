@@ -42,6 +42,7 @@ MessageBoxWarningCaption="تحذير"
 
 
 
+
 BuildingMP4Dialog.Progress="انشاء mp4 , الرجاء الانتظار..."
 
 Connection.CouldNotConnect="غير قادر على الاتصال بالسيرفر"
@@ -75,6 +76,7 @@ MainMenu.File="&ملف"
 MainMenu.Help="م&ساعدة"
 MainMenu.Profiles="ال&بروفايل"
 MainMenu.Settings="ا&لاعدادات"
+
 
 MainMenu.Settings.AlwaysOnTop="الب&قاء فوق النوافذ الاخرى"
 MainMenu.Settings.FullscreenMode="المعاي&نة في وضع ملء الشاشة"

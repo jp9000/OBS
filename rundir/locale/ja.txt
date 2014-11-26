@@ -59,6 +59,9 @@ CopyTo.Success.Title="成功"
 CopyTo.CopyGlobalSourcesReferences="グローバルソースも参照ポイントにコピーしますか？いいえを選択した場合、参照はコピーされたシーンから削除されます。"
 CopyTo.CopyGlobalSourcesReferences.Title="グローバルソースをコピーしますか？"
 
+ImportProfileReplaceWarning.Title="プロファイルをインポート"
+ImportProfileReplaceWarning.Text="現在のプロファイル データは失われます。インポートしてもよろしいですか？"
+
 DeleteCollection="シーンコレクションを削除"
 DeleteCollection.Text="現在のシーンコレクションを削除してもよろしいですか？"
 
@@ -103,6 +106,14 @@ MainMenu.File="ファイル(&F)"
 MainMenu.Help="ヘルプ(&H)"
 MainMenu.Profiles="プロファイル(&P)"
 MainMenu.Settings="設定(&S)"
+
+MainMenu.Profiles.New="新規(&N)"
+MainMenu.Profiles.Duplicate="複製(&D)"
+MainMenu.Profiles.Rename="名前の変更(&R)"
+MainMenu.Profiles.Remove="削除(&m)"
+MainMenu.Profiles.Import="インポート(&I)"
+MainMenu.Profiles.Export="エクスポート(&E)"
+MainMenu.Profiles.ProfileExists="同じ名前のプロファイルが既に存在します。"
 
 MainMenu.Settings.AlwaysOnTop="常に手前に表示"
 MainMenu.Settings.FullscreenMode="全画面プレビュー"
@@ -387,6 +398,7 @@ Sources.GameCaptureSource.PluginName="ゲームキャプチャプラグイン"
 Sources.GameCaptureSource.RequiresAdmin="次のプログラムをキャプチャするには管理者としてOBSを実行してください。:"
 Sources.GameCaptureSource.SelectApplication="アプリを選択"
 Sources.GameCaptureSource.StretchToScreen="映像を拡大縮小させる"
+Sources.GameCaptureSource.AlphaBlend="アルファブレンディングを有効にする"
 Sources.GameCaptureSource.UseHotkey="ホットキーを使用"
 Sources.GameCaptureSource.UseSafeHook="アンチチート互換性フック (必要な場合にのみ使用)"
 
