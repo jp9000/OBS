@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include <../libmfx/include/msdk/include/mfxstructures.h>
 
+#undef profileIn
+#define profileIn(x) {
+
 //#pragma comment(lib, "dxva2")
 #ifndef AMF_CORE_STATIC
 #if _WIN64
@@ -9,10 +12,6 @@
 #pragma comment(lib, "amf-core-windesktop32")
 #endif
 #endif
-
-#define USE_DX11 1
-/// Use D3D10 interop with OpenCL
-//#define NO_CL_INTEROP 1
 
 #include "ObsVCEAMF.h"
 #include "VCECL.h"
@@ -80,9 +79,9 @@ extern "C" __declspec(dllexport) bool __cdecl CheckVCEHardwareSupport(bool log)
 	return true;
 }
 
-extern "C" __declspec(dllexport) VideoEncoder* __cdecl CreateVCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, ID3D10Device *d3d10device)
+extern "C" __declspec(dllexport) VideoEncoder* __cdecl CreateVCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, ID3D11Device *d3ddevice)
 {
-	VCEEncoder *enc = new VCEEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR, d3d10device);
+	VCEEncoder *enc = new VCEEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR, d3ddevice);
 
 	encoderRefs += 1; //Lock?
 
@@ -178,7 +177,7 @@ void PrintProps(amf::AMFPropertyStorage *props)
 }
 
 VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, const TCHAR* preset, bool bUse444, 
-	ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, ID3D10Device *d3d10device)
+	ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, ID3D11Device *d3ddevice)
 	: mAlive(false)
 	, mFps(fps)
 	, mWidth(width)
@@ -200,19 +199,31 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, const TCHAR*
 	, mPlatformId(nullptr)
 	, mClDevice(nullptr)
 	, mCurrFrame(0)
-	, mD3D10device(d3d10device)
-	, mCanInterop(true)
+	, mD3Ddevice(d3ddevice)
+	, mCanInterop(false)
+	, mTmpFile(nullptr)
+	, mOutPollThread(nullptr)
+	, mSubmitThread(nullptr)
+	, mSubmitMutex(nullptr)
+	, mSubmitEvent(nullptr)
+	, mClosing(false)
+	, mPrevTS(0)
+	, mOffsetTS(0)
 {
 	mFrameMutex = OSCreateMutex();
+	mOutQueueMutex = OSCreateMutex();
+	mSubmitMutex = OSCreateMutex();
+	mSubmitEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+
 	mIsWin8OrGreater = IsWindows8OrGreater();
 	mUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
 	mKeyint = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 0);
 
 	if (AppConfig->GetInt(TEXT("VCE Settings"), TEXT("NoInterop"), 0) != 0)
 	{
-		mD3D10device.Release();
+		mD3Ddevice.Release();
 		//TODO nulling unnecessery?
-		mD3D10device = nullptr;
+		mD3Ddevice = nullptr;
 		mCanInterop = false;
 	}
 
@@ -223,10 +234,17 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, const TCHAR*
 	mInBuffSize = mAlignedSurfaceWidth * mAlignedSurfaceHeight * 3 / 2;
 
 	memset(mInputBuffers, 0, sizeof(mInputBuffers));
+
+#ifdef _DEBUG
+	errno_t err = fopen_s(&mTmpFile, "obs_times.bin", "wb");
+	if (err) OSDebugOut(TEXT("Couldn't open profiling file. Ignored.\n"));
+#endif
 }
 
 VCEEncoder::~VCEEncoder()
 {
+	Stop();
+
 	while (!mOutputQueue.empty())
 	{
 		OutputList *out = mOutputQueue.front();
@@ -234,14 +252,24 @@ VCEEncoder::~VCEEncoder()
 		delete out; //dtor should call Clear()
 	}
 
+	while (!mOutputReadyQueue.empty())
+	{
+		OutputList *out = mOutputReadyQueue.front();
+		mOutputReadyQueue.pop();
+		delete out;
+	}
+
+	while (!mOutputProcessedQueue.empty())
+	{
+		OutputList *out = mOutputProcessedQueue.front();
+		mOutputProcessedQueue.pop();
+		delete out;
+	}
+
 	for (int i = 0; i < MAX_INPUT_BUFFERS; i++)
 	{
 		ClearInputBuffer(i);
 	}
-
-	/*clReleaseDevice(mClDevice);
-	clReleaseCommandQueue(mCmdQueue);
-	clReleaseContext(mCLContext);*/
 
 	if (mEncoder) mEncoder->Terminate();
 	////mContext->Terminate();
@@ -254,8 +282,14 @@ VCEEncoder::~VCEEncoder()
 	mOCLDevice.Terminate();
 	mDX11Device.Terminate();
 	mDX9Device.Terminate();
-	mD3D10device.Release();
+	mD3Ddevice.Release();
+
 	OSCloseMutex(mFrameMutex);
+	OSCloseMutex(mOutQueueMutex);
+	OSCloseMutex(mSubmitMutex);
+	OSCloseEvent(mSubmitEvent);
+
+	if(mTmpFile) fclose(mTmpFile);
 #ifdef AMF_CORE_STATIC
 	UnbindAMF();
 #endif
@@ -266,7 +300,6 @@ void VCEEncoder::ClearInputBuffer(int i)
 	OSDebugOut(TEXT("Clearing buffer %d type %d\n"), i, mInputBuffers[i].mem_type);
 	if (mInputBuffers[i].pBuffer)
 	{
-		//unmapBuffer(mCmdQueue, mInputBuffers[i]);
 		if (mInputBuffers[i].mem_type == amf::AMF_MEMORY_DX11)
 		{
 			ID3D11DeviceContext *d3dcontext = nullptr;
@@ -304,18 +337,14 @@ void VCEEncoder::ClearInputBuffer(int i)
 
 	for (int k = 0; k < 2; k++)
 	{
-#ifdef NO_CL_INTEROP
-		if (mInputBuffers[i].isMapped)
-			unmapImage(mCmdQueue, mInputBuffers[i], k);
-#endif
 		if (mInputBuffers[i].yuv_surfaces[k])
 		{
 			clReleaseMemObject(mInputBuffers[i].yuv_surfaces[k]);
 			mInputBuffers[i].yuv_surfaces[k] = nullptr;
 		}
 	}
-	if (mInputBuffers[i].amf_surface)
-		mInputBuffers[i].amf_surface = nullptr;
+	mInputBuffers[i].isMapped = false;
+
 	mInputBuffers[i].mem_type = amf::AMF_MEMORY_UNKNOWN;
 }
 
@@ -345,16 +374,23 @@ bool VCEEncoder::Init()
 	res = pAMFCreateContext(&mContext);
 	RETURNIFFAILED(res, TEXT("AMFCreateContext failed. %d"), res);
 
-	// Select engine. DX11 looks be best for D3D10 -> OpenCL -> AMF interop.
+	// Select engine. DX11 looks be best for D3D11 -> OpenCL -> AMF interop.
 	mEngine = (uint32_t)AppConfig->GetInt(TEXT("VCE Settings"), TEXT("AMFEngine"), 2);
 	if (mEngine > 2) mEngine = 2;
 
-	if (mEngine == 2) //TODO Maybe default to DX11 on Win8+
+	if (mEngine == 2)
 	{
-		res = mDX11Device.Init(adapterId, false);
-		RETURNIFFAILED(res, TEXT("D3D11 device init failed. %d\n"), res);
-		res = mContext->InitDX11(mDX11Device.GetDevice(), amf::AMF_DX11_0);
+		//if (!mD3Ddevice)
+		//{
+			res = mDX11Device.Init(adapterId, false);
+			RETURNIFFAILED(res, TEXT("D3D11 device init failed. %d\n"), res);
+		//}
+		//TODO Cannot find encoder with mD3Ddevice because "Device removed"
+		res = mContext->InitDX11(/*mD3Ddevice ? mD3Ddevice : */mDX11Device.GetDevice(), amf::AMF_DX11_0);
 		RETURNIFFAILED(res, TEXT("AMF context init with D3D11 failed. %d\n"), res);
+		mCanInterop = true;
+		if (userCfg && AppConfig->GetInt(TEXT("VCE Settings"), TEXT("NoInterop"), 0) != 0)
+			mCanInterop = false;
 	}
 	else if (mEngine == 1)
 	{
@@ -370,17 +406,21 @@ bool VCEEncoder::Init()
 		}*/
 	}
 
-	res = mOCLDevice.Init(mDX9Device.GetDevice(), mD3D10device, mDX11Device.GetDevice());
-	RETURNIFFAILED(res, TEXT("OpenCL device init failed. %d"), res);
+	//Only with DX11
+	if (mCanInterop)
+	{
+		res = mOCLDevice.Init(nullptr, nullptr, /*mD3Ddevice ? mD3Ddevice :*/ mDX11Device.GetDevice());
+		RETURNIFFAILED(res, TEXT("OpenCL device init failed. %d"), res);
 
-	mCmdQueue = mOCLDevice.GetCommandQueue();
-	status = clGetCommandQueueInfo(mCmdQueue, CL_QUEUE_CONTEXT,
-		sizeof(mCLContext), &mCLContext, nullptr);
-	if (status != CL_SUCCESS)
-		VCELog(TEXT("Failed to get CL context from command queue."));
+		mCmdQueue = mOCLDevice.GetCommandQueue();
+		status = clGetCommandQueueInfo(mCmdQueue, CL_QUEUE_CONTEXT,
+			sizeof(mCLContext), &mCLContext, nullptr);
+		if (status != CL_SUCCESS)
+			VCELog(TEXT("Failed to get CL context from command queue."));
 
-	res = mContext->InitOpenCL(mOCLDevice.GetCommandQueue());
-	RETURNIFFAILED(res, TEXT("AMF context init with OpenCL failed. %d\n"), res);
+		res = mContext->InitOpenCL(mOCLDevice.GetCommandQueue());
+		RETURNIFFAILED(res, TEXT("AMF context init with OpenCL failed. %d\n"), res);
+	}
 
 	//-----------------------
 	if (mCanInterop && mCmdQueue)
@@ -561,10 +601,8 @@ bool VCEEncoder::Init()
 	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_RATE_CONTROL_SKIP_FRAME_ENABLE, !!iInt);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_RATE_CONTROL_SKIP_FRAME_ENABLE);
 
-	//B frames are not supported by Encode() yet
-	//because encoder may need more than one input frame
-	//before it returns anything, causing A/V sync issues.
-	mEncoder->SetProperty(AMF_VIDEO_ENCODER_B_REFERENCE_ENABLE, false);
+	//B frames are not supported yet. Needs Composition Time fix.
+	mEncoder->SetProperty(AMF_VIDEO_ENCODER_B_REFERENCE_ENABLE, true);
 	mEncoder->SetProperty(AMF_VIDEO_ENCODER_B_PIC_PATTERN, 0);
 
 	//No point for now
@@ -588,6 +626,7 @@ bool VCEEncoder::Init()
 
 	//------------------------
 	// Print few caps etc.
+#pragma region Print few caps etc.
 	amf::H264EncoderCapsPtr encCaps;
 	if (mEncoder->QueryInterface(amf::AMFH264EncoderCaps::IID(), (void**)&encCaps) == AMF_OK)
 	{
@@ -605,7 +644,7 @@ bool VCEEncoder::Init()
 		String str;
 		for (int i = 0; i < encCaps->GetNumOfSupportedLevels(); i++)
 		{
-			str << encCaps->GetLevel(i) << " ";
+			str << encCaps->GetLevel(i) << L" ";
 		}
 		VCELog(TEXT("  Levels: %s"), str.Array());
 
@@ -635,13 +674,27 @@ bool VCEEncoder::Init()
 	}
 
 	PrintProps(mEncoder);
+#pragma endregion
+
+	if (!(mOutPollThread = OSCreateThread((XTHREAD)VCEEncoder::OutputPollThread, this)))
+	{
+		VCELog(TEXT("Failed to create output polling thread!"));
+		return false;
+	}
+
+	if(!(mSubmitThread = OSCreateThread((XTHREAD)VCEEncoder::SubmitThread, this)))
+	{
+		VCELog(TEXT("Failed to create buffer submitter thread!"));
+		Stop();
+		return false;
+	}
 
 	mReqKeyframe = true;
 	mAlive = true;
 	return true;
 }
 
-void VCEEncoder::ConvertD3D10(ID3D10Texture2D *d3dtex, void *data, void **state)
+void VCEEncoder::ConvertD3D11(ID3D11Texture2D *d3dtex, void *data, void **state)
 {
 	assert(data);
 	assert(state);
@@ -666,68 +719,107 @@ void VCEEncoder::ConvertD3D10(ID3D10Texture2D *d3dtex, void *data, void **state)
 		mCLMemObjs.push_back(clD3D);
 	}
 
-	mOCLDevice.AcquireD3D10(clD3D);
+	mOCLDevice.AcquireD3D11(clD3D);
 	mOCLDevice.RunKernels(clD3D, inBuf.yuv_surfaces[0], inBuf.yuv_surfaces[1], mWidth, mHeight);
-	mOCLDevice.ReleaseD3D10(clD3D);
+	mOCLDevice.ReleaseD3D11(clD3D);
 	clFinish(mOCLDevice.GetCommandQueue());
 
-	amf::AMFSurfacePtr pSurf;
-	mContext->CreateSurfaceFromOpenCLNative(amf::AMF_SURFACE_NV12, mWidth, mHeight, 
-		(void**)&inBuf.yuv_surfaces, &pSurf, nullptr);
-	mSurfaces.push(pSurf);
+	//amf::AMFSurfacePtr pSurf;
+	//mContext->CreateSurfaceFromOpenCLNative(amf::AMF_SURFACE_NV12, mWidth, mHeight, 
+	//	(void**)&inBuf.yuv_surfaces, &pSurf, nullptr);
+	//mSurfaces.push(pSurf);
 }
 
 bool VCEEncoder::Stop()
 {
-	mEncoder->Drain();
+	mClosing = true;
+	if (mSubmitThread)
+	{
+		SetEvent(mSubmitEvent);
+		OSTerminateThread(mSubmitThread, 15000);
+		mSubmitThread = nullptr;
+	}
+
+	if (mOutPollThread)
+	{
+		OSTerminateThread(mOutPollThread, 15001);
+		mOutPollThread = nullptr;
+	}
+
+	if (mEncoder) mEncoder->Drain();
 	return true;
+}
+
+void VCEEncoder::CopyOutput(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD &out_pts)
+{
+	profileIn("CopyOutput")
+	OSMutexLocker lock(mOutQueueMutex);
+	if (!mOutputProcessedQueue.empty())
+	{
+		OutputList *out = mOutputProcessedQueue.front();
+		mOutputProcessedQueue.pop();
+
+		DataPacket packet;
+		packet.lpPacket = out->pBuffer.Array();
+		packet.size = out->pBuffer.Num();
+		packets << packet;
+		packetTypes << out->type;
+		out_pts = out->timestamp;
+		mOutputReadyQueue.push(out);
+	}
+	profileOut
 }
 
 bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, DWORD &out_pts)
 {
-	AMF_RESULT res = AMF_OK, inRes = AMF_OK;
-	amf::AMFSurfacePtr pSurface;
-	amf::AMFDataPtr amfdata;
-
 	OSMutexLocker locker(mFrameMutex);
 
 	packets.Clear();
 	packetTypes.Clear();
 
-	profileIn("Encode")
-
+	OSEnterMutex(mOutQueueMutex);
 	while (!mOutputReadyQueue.empty())
 	{
 		auto q = mOutputReadyQueue.front();
 		mOutputReadyQueue.pop();
 		mOutputQueue.push(q);
 	}
+	OSLeaveMutex(mOutQueueMutex);
 
 	if (!picIn)
 	{
+		AMF_RESULT res = AMF_REPEAT;
+		amf::AMFDataPtr amfdata;
+
 		Stop();
-
-		res = AMF_REPEAT;
-		do
+		if (!mOutputProcessedQueue.empty())
 		{
-			OSSleep(1);
-			res = mEncoder->QueryOutput(&amfdata);
-		} while (res == AMF_REPEAT);
-
-		if (res == AMF_OK)
-		{
-			amf::AMFBufferPtr buf(amfdata);
-			ProcessBitstream(buf, packets, packetTypes, outputTimestamp);
+			CopyOutput(packets, packetTypes, out_pts);
 		}
 		else
-			mEOF = true;
+		{
+			do
+			{
+				OSSleep(1);
+				res = mEncoder->QueryOutput(&amfdata);
+			} while (res == AMF_REPEAT);
+
+			if (res == AMF_OK)
+			{
+				amf::AMFBufferPtr buf(amfdata);
+				ProcessBitstream(buf);
+				CopyOutput(packets, packetTypes, out_pts);
+			}
+			else
+				mEOF = true;
+		}
 		OSDebugOut(TEXT("Drained %d frame(s)\n"), packets.Num());
 		return true;
 	}
 
-#ifdef _DEBUG
+//#ifdef _DEBUG
 	QWORD start = GetQPCTime100NS();
-#endif
+//#endif
 
 	mfxFrameSurface1 *inputSurface = (mfxFrameSurface1*)picIn;
 	mfxFrameData &data = inputSurface->Data;
@@ -735,34 +827,177 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
 
 	unsigned int idx = (unsigned int)data.MemId - 1;
 #ifdef _DEBUG
-	//OSDebugOut(TEXT("Encoding buffer: %d\n"), idx + 1);
+	OSDebugOut(TEXT("Encoding buffer: %d\n"), idx + 1);
 #endif
 
 	InputBuffer &inBuf = mInputBuffers[idx];
+	inBuf.frameData = &(inputSurface->Data);
 	_InterlockedCompareExchange(&(inBuf.locked), 1, 0);
-	//inBuf.timestamp = data.TimeStamp;
+	//TODO what about outputTimestamp
+	inBuf.timestamp = data.TimeStamp;
+	inBuf.outputTimestamp = data.TimeStamp - mPrevTS;
+	mPrevTS = data.TimeStamp;
+	mTSqueue.push(data.TimeStamp);
 
-	//amf::AMFSurface * pSurface = inBuf.amf_surface;
-#ifdef NO_CL_INTEROP
-	if (inBuf.mem_type == amf::AMF_MEMORY_OPENCL)
-	{
-		profileIn("Unmap")
-		//unmapBuffer(mCmdQueue, inBuf);
-		unmapImage(mCmdQueue, inBuf, 0);
-		unmapImage(mCmdQueue, inBuf, 1);
-		profileOut
-	}
+	OSEnterMutex(mSubmitMutex);
+	mSubmitQueue.push(&mInputBuffers[idx]);
+	OSLeaveMutex(mSubmitMutex);
+	SetEvent(mSubmitEvent);
+
+	CopyOutput(packets, packetTypes, out_pts);
+	/*OSDebugOut(TEXT("Output queues: Sent %d, Ready: %d, Unused: %d, submit: %d\n"),
+		mOutputReadyQueue.size(),
+		mOutputProcessedQueue.size(),
+		mOutputQueue.size(), mSubmitQueue.size());*/
+
+	//OSDebugOut(TEXT("TS %d: %lld %d %d\n"), packets.Num(), data.TimeStamp, outputTimestamp, out_pts);
+
+#ifdef _DEBUG
+	start = GetQPCTime100NS() - start;
+	//OSDebugOut(TEXT("Process time: %fms\n"), float(start) / MS_TO_100NS);
 #endif
 
-#pragma region Allocate surface and submit
-	//clFinish(mOCLDevice.GetCommandQueue());
+	if (mTmpFile)
+	{
+#ifndef _DEBUG
+		start = GetQPCTime100NS() - start;
+#endif
+		fwrite(&start, sizeof(start), 1, mTmpFile);
+	}
 
-	if (mSurfaces.empty() && !AllocateSurface(inBuf, data))
-		return false;
+	return true;
+}
 
-	//TODO On win8, creating buffer from OpenCL is sub-millisecond, so no need.
-	pSurface = mSurfaces.front();
-	mSurfaces.pop();
+
+DWORD VCEEncoder::OutputPollThread(VCEEncoder* enc)
+{
+	enc->OutputPoll();
+	return 0;
+}
+
+void VCEEncoder::OutputPoll()
+{
+	amf::AMFDataPtr data;
+	AMF_RESULT res = AMF_REPEAT;
+
+	while (mSubmitThread)
+	{
+		res = mEncoder->QueryOutput(&data);
+		if (res == AMF_OK)
+		{
+			profileIn("Query output")
+			OSEnterMutex(mOutQueueMutex);
+			amf::AMFBufferPtr buffer(data);
+			ProcessBitstream(buffer);
+			OSLeaveMutex(mOutQueueMutex);
+			profileOut
+		}
+		OSSleep(5);
+	}
+}
+
+DWORD VCEEncoder::SubmitThread(VCEEncoder* enc)
+{
+	enc->Submit();
+	return 0;
+}
+
+void VCEEncoder::Submit()
+{
+	int resubmitCount = 0;
+	while (!mClosing || (mClosing && !mSubmitQueue.empty()))
+	{
+		//TODO .empty() thread-safetying
+		bool empty = true;
+		OSEnterMutex(mSubmitMutex);
+		empty = mSubmitQueue.empty();
+		OSLeaveMutex(mSubmitMutex);
+
+		if (!empty)
+		{
+			profileIn("Submit buffer")
+			OSEnterMutex(mSubmitMutex);
+			InputBuffer *inBuf = mSubmitQueue.front();
+
+			AMF_RESULT res = SubmitBuffer(inBuf);
+			if (res != AMF_INPUT_FULL)
+			{
+				mSubmitQueue.pop();
+				resubmitCount = 0;
+			}
+			else
+			{
+				resubmitCount++;
+				OSSleep(1);
+			}
+
+			OSLeaveMutex(mSubmitMutex);
+			profileOut
+
+			if (resubmitCount >= 5)
+			{
+				VCELog(TEXT("Failed to submit input buffer for 5 times already. VCE is too slow?"));
+				resubmitCount = 0;
+			}
+		}
+		else if (!mClosing)
+			WaitForSingleObject(mSubmitEvent, INFINITE);
+	}
+}
+
+AMF_RESULT VCEEncoder::SubmitBuffer(InputBuffer *inBuf)
+{
+	AMF_RESULT res = AMF_FAIL, inRes = AMF_FAIL;
+	amf::AMFSurfacePtr pSurface;
+	amf::AMFDataPtr amfdata;
+	amf::AMFPlanePtr plane;
+
+	switch (inBuf->mem_type)
+	{
+	case amf::AMF_MEMORY_DX11:
+	{
+		res = mContext->AllocSurface(amf::AMF_MEMORY_DX11, amf::AMF_SURFACE_NV12, mWidth, mHeight, &pSurface);
+		if(res != AMF_OK)
+			VCELog(TEXT("Failed to allocate surface: %s"), amf::AMFGetResultText(res));
+
+		profileIn("CopyResource (dx11)")
+		amf::AMFPlanePtr plane = pSurface->GetPlaneAt(0);
+		//Not ref incremented
+		ID3D11Texture2D *pTex = (ID3D11Texture2D *)plane->GetNative();
+		ID3D11Device *pDevice;
+		pTex->GetDevice(&pDevice);
+		ID3D11DeviceContext *pD3Dcontext;
+		pDevice->GetImmediateContext(&pD3Dcontext);
+		pD3Dcontext->Unmap(inBuf->pTex, 0);
+		inBuf->isMapped = false;
+		pD3Dcontext->CopyResource(pTex, inBuf->pTex);
+		pD3Dcontext->Release();
+		pDevice->Release();
+		profileOut
+	}
+		break;
+
+	case amf::AMF_MEMORY_OPENCL:
+		res = mContext->CreateSurfaceFromOpenCLNative(amf::AMF_SURFACE_NV12,
+			mWidth, mHeight, (void**)&inBuf->yuv_surfaces, &pSurface, nullptr);
+		break;
+
+	case amf::AMF_MEMORY_HOST:
+
+		//TODO doesn't work with NV12?
+		res = mContext->CreateSurfaceFromHostNative(amf::AMF_SURFACE_NV12,
+			mWidth, mHeight, mWidth, mHeight,
+			inBuf->pBuffer, &pSurface, nullptr);
+		break;
+	default:
+		//return AMF_FAIL; //commented, crash here instead
+		break;
+	}
+
+	if (res != AMF_OK)
+		VCELog(TEXT("Failed to allocate surface: %s"), amf::AMFGetResultText(res));
+
+	assert(pSurface);
 
 	if (mReqKeyframe || (mLowLatencyKeyInt > 0 && mCurrFrame >= mLowLatencyKeyInt))
 	{
@@ -779,14 +1014,17 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
 
 	mCurrFrame++;
 	pSurface->SetFrameType(amf::AMF_FRAME_PROGRESSIVE);
-	pSurface->SetDuration(1000 * MS_TO_100NS / mFps);
-	pSurface->SetPts(data.TimeStamp * MS_TO_100NS);
+	pSurface->SetDuration(1000 * MS_TO_100NS / mFps); //TODO precalc
+	pSurface->SetPts(inBuf->timestamp * MS_TO_100NS);
+	pSurface->SetProperty(L"OUTPUTTS", inBuf->outputTimestamp);
 	//mTSqueue.push(data.TimeStamp);
 
-	profileIn("Query output")
 	inRes = mEncoder->SubmitInput(pSurface);
-	LOGIFFAILED(inRes, TEXT("Failed to sumbit data to encoder: %d %s"), inRes, amf::AMFGetResultText(inRes));
-#pragma endregion
+
+#ifdef _DEBUG
+	if (inRes != AMF_OK)
+		OSDebugOut(TEXT("Failed to submit data to encoder: %d %s\n"), inRes, amf::AMFGetResultText(inRes));
+#endif
 
 	if (mReqKeyframe)
 	{
@@ -794,213 +1032,25 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
 		//res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_INTRA_REFRESH_NUM_MBS_PER_SLOT, mIntraMBs);
 	}
 
-	static bool process = true; //simulate slow encode
-	//if (process)
-	{
-		res = mEncoder->QueryOutput(&amfdata);
+	// Try again
+	if (inRes == AMF_INPUT_FULL)
+		return AMF_INPUT_FULL;
+	
+	_InterlockedCompareExchange(&(inBuf->locked), 0, 1);
+	
+	/*InputBuffer &in = mInputBuffers[(int)inBuf->frameData->MemId - 1];
+	assert(in.locked == 0);*/
 
-		//Really need to empty some queues
-		if (res == AMF_REPEAT && inRes == AMF_INPUT_FULL)
-		{
-			OSDebugOut(TEXT("Input queue is full\n"));
-			while (res == AMF_REPEAT)
-			{
-				//OSSleepMicrosecond(100);
-				//OSSleep(1);// 1561 calls per frame my ass
-				profileIn("Query output (single)")
-				res = mEncoder->QueryOutput(&amfdata);
-				profileOut
-				if (amfdata) break;
-			}
-		}
-
-		if (inRes == AMF_INPUT_FULL)
-		{
-			inRes = mEncoder->SubmitInput(pSurface);
-			//TODO possible A/V sync issue then or just dropped frame?
-			LOGIFFAILED(inRes, TEXT("Failed to resumbit data to encoder: %d (%s)"), inRes, amf::AMFGetResultText(inRes));
-			LOGIFFAILED(inRes, TEXT("Possible A/V sync issues. Try lowering resolution, fps or encoding quality."));
-		}
-
-		if (res == AMF_OK)
-		{
-			amf::AMFBufferPtr buf(amfdata);
-			//OSDebugOut(TEXT("Buffer size: %d\n"), buf->GetSize());
-			out_pts = buf->GetPts() / MS_TO_100NS;
-			ProcessBitstream(buf, packets, packetTypes, outputTimestamp);
-		}
-		else
-			OSDebugOut(TEXT("***********   No output   ***********\n"));
-		//OSDebugOut(TEXT("Ready %d %d\n"), mOutputReadyQueue.size(), packets.Num());
-	}
-	//process = !process;
-
-	profileOut
-
-#ifdef NO_CL_INTEROP
-	if (inBuf.mem_type == amf::AMF_MEMORY_OPENCL)
-	{
-		profileIn("Map")
-		mapImage(mCmdQueue, inBuf, 0, mWidth, mHeight);
-		mapImage(mCmdQueue, inBuf, 1, inBuf.uv_width, inBuf.uv_height);
-		profileOut
-	}
-#endif
-
-	_InterlockedCompareExchange(&(inBuf.locked), 0, 1);
-
-#ifdef _DEBUG
-	start = GetQPCTime100NS() - start;
-	OSDebugOut(TEXT("Process time: %fms\n"), float(start) / MS_TO_100NS);
-#endif
-
-	profileOut
-	return true;
+	return inRes;
 }
 
-inline bool VCEEncoder::AllocateSurface(InputBuffer &inBuf, mfxFrameData &data)
-{
-	AMF_RESULT res = AMF_FAIL;
-	amf::AMFSurfacePtr pSurface;
-	amf::AMFPlanePtr plane;
-
-	profileIn("Alloc surface")
-	switch (inBuf.mem_type)
-	{
-		case amf::AMF_MEMORY_DX11:
-		{
-			res = mContext->AllocSurface(amf::AMF_MEMORY_DX11, amf::AMF_SURFACE_NV12, mWidth, mHeight, &pSurface);
-			RETURNIFFAILED(res, TEXT("Failed to allocate surface: %s"), amf::AMFGetResultText(res));
-#ifdef _DEBUG
-			OSDebugOut(TEXT("AMF_MEMORY_DX11\n"));
-#endif
-			profileIn("CopyResource (dx11)")
-			amf::AMFPlanePtr plane = pSurface->GetPlaneAt(0);
-			//Not ref incremented
-			ID3D11Texture2D *pTex = (ID3D11Texture2D *)plane->GetNative();
-			ID3D11Device *pDevice;
-			pTex->GetDevice(&pDevice);
-			ID3D11DeviceContext *pD3Dcontext;
-			pDevice->GetImmediateContext(&pD3Dcontext);
-			pD3Dcontext->Unmap(inBuf.pTex, 0);
-			pD3Dcontext->CopyResource(pTex, inBuf.pTex);
-
-			D3D11_MAPPED_SUBRESOURCE map;
-			HRESULT hres = pD3Dcontext->Map(inBuf.pTex, 0, D3D11_MAP::D3D11_MAP_WRITE/*_DISCARD*/, 0, &map);
-			//TODO remap failure handling
-			if (FAILED(hres))
-				VCELog(TEXT("Failed to remap D3D11 texture."));
-
-			data.Pitch = map.RowPitch;
-			data.Y = (mfxU8*)map.pData;
-			data.UV = data.Y + (mHeight * map.RowPitch);
-
-			pD3Dcontext->Release();
-			pDevice->Release();
-			profileOut
-		}
-			break;
-
-		case amf::AMF_MEMORY_DX9:
-
-			res = mContext->AllocSurface(amf::AMF_MEMORY_DX9, amf::AMF_SURFACE_NV12, mWidth, mHeight, &pSurface);
-			plane = pSurface->GetPlaneAt(0);
-
-			// Copy preallocated surface to AMF. Note: AMF surface has different byte layout :S
-			// FIXME Is this IDirect3DSurface9?
-			IDirect3DSurface9 *dst;
-			dst = static_cast<IDirect3DSurface9*>(plane->GetNative());
-
-			D3DSURFACE_DESC desc;
-			dst->GetDesc(&desc);
-
-			//IDirect3DDevice9Ex *container;
-			//dst->GetContainer(__uuidof(IDirect3DDevice9Ex), reinterpret_cast<void**>(&container));
-
-			OSDebugOut(TEXT("Dst plane pitch: %dx%d\n"), plane->GetHPitch(), plane->GetVPitch());
-
-			HRESULT hres;
-			RECT rct;
-			rct.top = 0; rct.left = 0; rct.right = mWidth; rct.bottom = mHeight;
-			inBuf.pSurface9->UnlockRect();
-			hres = mDX9Device.GetDevice()->UpdateSurface(inBuf.pSurface9, &rct, dst, nullptr);
-			if (FAILED(hres))
-			{
-				VCELog(TEXT("UpdateSurface failed with %08X."), hres);
-			}
-
-			D3DLOCKED_RECT lock;
-			hres = inBuf.pSurface9->LockRect(&lock, nullptr, 0 /*D3DLOCK_DISCARD*/);
-			if (SUCCEEDED(hres))
-			{
-				data.Pitch = lock.Pitch;
-				data.Y = (mfxU8*)lock.pBits;
-				data.UV = data.Y;// +(mHeight * data.Pitch);
-			}
-			else
-				VCELog(TEXT("LockRect failed with %08X."), hres);
-
-			//D3DSURFACE_DESC desc;
-			//D3DLOCKED_RECT rect;
-			//IDirect3DSurface9 *surf;
-			//HRESULT hr;
-			//surf = static_cast<IDirect3DSurface9*>(plane->GetNative());
-			//surf->GetDesc(&desc);
-			//hr = surf->LockRect(&rect, nullptr, D3DLOCK_DISCARD /* 0 */);
-			//if (FAILED(hr))
-			//{
-			//	VCELog(TEXT("Failed to lock D3D9 surface: %08X"), hr);
-			//	return false;
-			//}
-
-			//uint8_t *dst, *src;
-			//dst = (uint8_t *)rect.pBits;
-			//src = inBuf.pBuffer;
-
-			//for (int i = 0; i < plane->GetHeight(); i++)
-			//{
-			//	memcpy(dst, src, mWidth);
-			//	dst += rect.Pitch;
-			//	src += mWidth;
-			//}
-
-			//// TODO How come no 0xC0000005?
-			//for (int i = 0; i < plane->GetHeight() / 2; i++)
-			//{
-			//	memcpy(dst, src, mWidth);
-			//	dst += rect.Pitch;
-			//	src += mWidth;
-			//}
-
-			//surf->UnlockRect();
-			break;
-
-		case amf::AMF_MEMORY_OPENCL:
-			res = mContext->CreateSurfaceFromOpenCLNative(amf::AMF_SURFACE_NV12,
-				mWidth, mHeight, (void**)&inBuf.yuv_surfaces, &pSurface, nullptr);
-			break;
-
-		case amf::AMF_MEMORY_HOST:
-
-			//TODO doesn't work with NV12?
-			res = mContext->CreateSurfaceFromHostNative(amf::AMF_SURFACE_NV12,
-				mWidth, mHeight, mWidth, mHeight,
-				inBuf.pBuffer, &pSurface, nullptr);
-			break;
-		default:
-			break;
-	}
-
-	RETURNIFFAILED(res, TEXT("Failed to allocate surface: %s"), amf::AMFGetResultText(res));
-	mSurfaces.push(pSurface);
-	profileOut
-
-	return true;
-}
-
-void VCEEncoder::ProcessBitstream(amf::AMFBufferPtr &buff, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp)
+void VCEEncoder::ProcessBitstream(amf::AMFBufferPtr &buff)
 {
 	profileIn("ProcessBitstream")
+
+	int frameType = 0;
+	buff->GetProperty(L"OutputDataType", &frameType);
+	static TCHAR *frameTypes[] = { TEXT("IDR"), TEXT("I"), TEXT("P"), TEXT("B") };
 
 	OutputList *bufferedOut = nullptr;
 
@@ -1018,6 +1068,10 @@ void VCEEncoder::ProcessBitstream(amf::AMFBufferPtr &buff, List<DataPacket> &pac
 	const static uint8_t start_seq[] = { 0, 0, 1 };
 	start = std::search(start, end, start_seq, start_seq + 3);
 
+	//FIXME
+	uint64_t dts = 0;// outputTimestamp;
+	uint64_t out_pts = buff->GetPts() / MS_TO_100NS;
+
 	List<x264_nal_t> nalOut;
 	while (start != end)
 	{
@@ -1032,37 +1086,39 @@ void VCEEncoder::ProcessBitstream(amf::AMFBufferPtr &buff, List<DataPacket> &pac
 		nal.i_payload = int(next - start);
 		nalOut << nal;
 		start = next;
-		//OSDebugOut(TEXT("nal type: %d\n"), nal.i_type);
+		//OSDebugOut(TEXT("nal type: %d ref_idc: %d\n"), nal.i_type, nal.i_ref_idc);
 	}
 	size_t nalNum = nalOut.Num();
 
-	//FIXME
-	uint64_t dts = outputTimestamp;
-	uint64_t out_pts = buff->GetPts() / MS_TO_100NS;
-	//mTSqueue.pop();
+	assert(!mTSqueue.empty());
 
-	int32_t timeOffset = 0;// int(out_pts - dts);
-	/*if (timeOffset == 0)
-		frameShift = 0;
-	else if (timeOffset < 0)
-	{
-		timeOffset = frameShift;
-		frameShift -= int(out_pts - dts);
-	}
-	else
-	{
-		frameShift = 0;
-	}*/
-	timeOffset += frameShift;
+	if (!mOffsetTS)
+		mOffsetTS = mTSqueue.back();
 
-	if (nalNum && timeOffset < 0)
+	uint64_t ts = mTSqueue.front();
+	mTSqueue.pop();
+
+	uint32_t diff = 0;
+	//buff->GetProperty(L"OUTPUTTS", &diff);
+
+	dts = (ts - mOffsetTS);
+	int32_t timeOffset = 0;// int(out_pts - dts);// int(out_pts - dts);
+	/*if (frameType == AMF_VIDEO_ENCODER_OUTPUT_DATA_TYPE_IDR)
+		timeOffset = 0;
+	if (frameType == AMF_VIDEO_ENCODER_OUTPUT_DATA_TYPE_P)
+		timeOffset = 16;
+	if (frameType == AMF_VIDEO_ENCODER_OUTPUT_DATA_TYPE_B)
+		timeOffset = -17;*/
+	/*timeOffset += frameShift;
+
+	if (nalNum && timeOffset > 0)
 	{
 		frameShift -= timeOffset;
 		timeOffset = 0;
-	}
+	}*/
 
-	/*OSDebugOut(TEXT("Frame dts: %lld pts: %lld ts: %d offset: %d shift: %d\n"), 
-					dts, out_pts, outputTimestamp, timeOffset, frameShift);*/
+	/*OSDebugOut(TEXT("%s ts: %lld pts: %lld dts: %lld toff: %d pts-dts: %d\n"),
+		frameTypes[frameType], mOffsetTS, out_pts, dts, timeOffset, int(out_pts - dts));*/
 
 	timeOffset = htonl(timeOffset);
 	BYTE *timeOffsetAddr = ((BYTE*)&timeOffset) + 1;
@@ -1281,17 +1337,14 @@ void VCEEncoder::ProcessBitstream(amf::AMFBufferPtr &buff, List<DataPacket> &pac
 			continue;
 	}
 
-	DataPacket packet;
-	packet.lpPacket = bufferedOut->pBuffer.Array();
-	packet.size = (UINT)pos; // bufferedOut->pBuffer.Num();
-	bufferedOut->timestamp = buff->GetPts() / MS_TO_100NS;
+	//DataPacket packet;
+	//packet.lpPacket = bufferedOut->pBuffer.Array();
+	//packet.size = (UINT)pos; // bufferedOut->pBuffer.Num();
+	bufferedOut->pBuffer.SetSize(pos); //FIXME extra size var or might as well use new pBuffer every time then
+	bufferedOut->type = bestType;
+	bufferedOut->timestamp = out_pts;//buff->GetPts() / MS_TO_100NS;
 
-	//if (mOutputQueue.empty())
-	//	mOutputQueue.push(bufferedOut);
-	mOutputReadyQueue.push(bufferedOut);
-
-	packetTypes << bestType;
-	packets << packet;
+	mOutputProcessedQueue.push(bufferedOut);
 	nalOut.Clear();
 
 	profileOut
@@ -1304,19 +1357,54 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
 		return;
 
 	OSMutexLocker locker(mFrameMutex);
+
 	mfxFrameData *buff = (mfxFrameData*)buffers;
 	int idx = (int)buff->MemId - 1;
 	bool ret = false;
 	amf::AMF_MEMORY_TYPE mem_type = amf::AMF_MEMORY_UNKNOWN;
 //#ifdef _DEBUG
-//	OSDebugOut(TEXT("RequestBuffers: %d\n"), (unsigned int)buff->MemId - 1);
+	//OSDebugOut(TEXT("RequestBuffers: %d\n"), (unsigned int)buff->MemId - 1);
 //#endif
 
 	if (idx >= 0)
 		mem_type = mInputBuffers[idx].mem_type;
 
+	// Encoder is too slow, stall OBS some
+	static UINT msgID = 0;
+	static UINT msgCount = 0;
+
+	if (msgID)
+	{
+		msgCount++;
+		if (msgCount > 100)
+		{
+			OBSRemoveStreamInfo(msgID);
+			msgID = 0;
+			msgCount = 0;
+		}
+	}
+
+	while (true)
+	{
+		//Scope the lock
+		{
+			OSMutexLocker lock(mSubmitMutex);
+			if (mSubmitQueue.size() < MAX_INPUT_BUFFERS)
+				break;
+		}
+
+		if (!msgID)
+		{
+			//But statusbar usually fails to update
+			msgID = OBSAddStreamInfo(TEXT("VCE is too slow."), StreamInfoPriority::StreamInfoPriority_Critical);
+			msgCount = 0;
+			OSDebugOut(TEXT("VCE is too slow."));
+		}
+		OSSleep(5);
+	}
+
 	//TODO CL kernels are only usable with interop currently
-	//if (GetFeatures() & VideoEncoder_D3D10Interop)
+	//if (GetFeatures() & VideoEncoder_D3D11Interop)
 	if (mCanInterop && mCmdQueue)
 	{
 		if (mem_type == amf::AMF_MEMORY_UNKNOWN ||
@@ -1324,7 +1412,7 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
 			if (RequestBuffersCL(buffers))
 				return;
 
-		if (mem_type == amf::AMF_MEMORY_OPENCL)
+		if (mem_type == amf::AMF_MEMORY_OPENCL && !mInputBuffers[idx].inUse)
 			ClearInputBuffer(idx);
 	}
 
@@ -1338,7 +1426,7 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
 				return;
 		}
 
-		if (mem_type == amf::AMF_MEMORY_DX11)
+		if (mem_type == amf::AMF_MEMORY_DX11 && !mInputBuffers[idx].inUse)
 			ClearInputBuffer(idx);
 	}
 
@@ -1352,7 +1440,7 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
 				return;
 		}
 
-		if (mem_type == amf::AMF_MEMORY_DX9)
+		if (mem_type == amf::AMF_MEMORY_DX9 && !mInputBuffers[idx].inUse)
 			ClearInputBuffer(idx);
 	}
 
@@ -1360,6 +1448,12 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
 		mem_type == amf::AMF_MEMORY_HOST)
 	{
 		RequestBuffersHost(buffers);
+	}
+	else
+	{
+		//Failed
+		mInputBuffers[idx].mem_type = amf::AMF_MEMORY_UNKNOWN;
+		assert(false && "Out of unused buffers!");
 	}
 }
 
@@ -1374,11 +1468,13 @@ bool VCEEncoder::RequestBuffersHost(LPVOID buffers)
 
 	//*buff = { { 0 } }; //maybe
 	//memset(buff, 0, sizeof(*buff));
-	buff->Y = nullptr;
+	//buff->Y = nullptr;
 	for (int i = 0; i < MAX_INPUT_BUFFERS; i++)
 	{
 		InputBuffer& inBuf = mInputBuffers[i];
-		if (inBuf.locked || inBuf.pBuffer)
+		if (inBuf.locked
+			//|| inBuf.pBuffer
+			)
 			continue;
 
 		if (!inBuf.pBuffer)
@@ -1416,15 +1512,14 @@ bool VCEEncoder::RequestBuffersDX11(LPVOID buffers)
 	mfxFrameData *buff = (mfxFrameData*)buffers;
 
 	if (buff->MemId && 
-		mInputBuffers[(unsigned int)buff->MemId - 1].pBuffer
-		/*&& mInputBuffers[(unsigned int)buff->MemId - 1].locked*/)
+		mInputBuffers[(unsigned int)buff->MemId - 1].isMapped
+		&& !mInputBuffers[(unsigned int)buff->MemId - 1].locked)
 		return true;
 
-	buff->Y = nullptr;
 	for (int i = 0; i < MAX_INPUT_BUFFERS; i++)
 	{
 		InputBuffer& inBuf = mInputBuffers[i];
-		if (inBuf.locked || inBuf.pBuffer)
+		if (inBuf.locked || inBuf.isMapped)
 			continue;
 
 		HRESULT hres = S_OK;
@@ -1457,22 +1552,28 @@ bool VCEEncoder::RequestBuffersDX11(LPVOID buffers)
 			return false;
 		}
 
-		hres = mDX11Device.GetDevice()->CreateTexture2D(&desc, 0, &inBuf.pTex);
-		HRETURNIFFAILED(hres, "Failed to create D3D11 texture.");
+		if (!inBuf.pTex)
+		{
+			hres = mDX11Device.GetDevice()->CreateTexture2D(&desc, 0, &inBuf.pTex);
+			HRETURNIFFAILED(hres, "Failed to create D3D11 texture.");
+		}
+
 		D3D11_MAPPED_SUBRESOURCE map;
 		hres = d3dcontext->Map(inBuf.pTex, 0, D3D11_MAP::D3D11_MAP_WRITE/*_DISCARD*/, 0, &map);
+		if (hres == E_OUTOFMEMORY)
+			CrashError(TEXT("Failed to map D3D11 texture: Out of memory."));
 		HRETURNIFFAILED(hres, "Failed to map D3D11 texture.");
-
-		hres = d3dcontext->Release();
-		HRETURNIFFAILED(hres, "Failed to release D3D11 immediate context.");
 
 		inBuf.mem_type = amf::AMF_MEMORY_DX11;
 		inBuf.pBuffer = (uint8_t*)1;
+		inBuf.isMapped = true;
 		buff->Pitch = map.RowPitch;
 		buff->Y = (mfxU8*)map.pData;
 		buff->UV = buff->Y + (mHeight * buff->Pitch);
-
 		buff->MemId = mfxMemId(i + 1);
+
+		hres = d3dcontext->Release();
+		HRETURNIFFAILED(hres, "Failed to release D3D11 immediate context.");
 
 		inBuf.inUse = 1;
 		_InterlockedCompareExchange(&(inBuf.locked), 0, 1);
@@ -1489,12 +1590,12 @@ bool VCEEncoder::RequestBuffersDX9(LPVOID buffers)
 	mfxFrameData *buff = (mfxFrameData*)buffers;
 	HRESULT hr = S_OK;
 
-	if (buff->MemId &&
+	/*if (buff->MemId &&
 		mInputBuffers[(unsigned int)buff->MemId - 1].pBuffer
 		&& !mInputBuffers[(unsigned int)buff->MemId - 1].locked)
 		return true;
 
-	buff->Y = nullptr;
+	buff->Y = nullptr;*/
 	for (int i = 0; i < MAX_INPUT_BUFFERS; i++)
 	{
 		InputBuffer& inBuf = mInputBuffers[i];
@@ -1571,46 +1672,35 @@ bool VCEEncoder::RequestBuffersCL(LPVOID buffers)
 		)
 		return true;
 
-	buff->Y = nullptr;
+	//buff->Y = nullptr;
 	for (int i = 0; i < MAX_INPUT_BUFFERS; ++i)
 	{
 		InputBuffer &inBuf = mInputBuffers[i];
-		if (inBuf.isMapped ||
+		if (/*inBuf.isMapped ||*/
 			inBuf.locked ||
 			!inBuf.yuv_surfaces[0]) //Out of memory?
 			continue;
-
-#ifdef NO_CL_INTEROP
-		mapImage(mCmdQueue, inBuf, 0, mWidth, mHeight);
-		mapImage(mCmdQueue, inBuf, 1, inBuf.uv_width, inBuf.uv_height);
-		if (!inBuf.yuv_host_ptr[0])
-			continue;
-#endif
 
 		//OSDebugOut(TEXT("Pitches: %d %d\n"), inBuf.yuv_row_pitches[0], inBuf.yuv_row_pitches[1]);
 
 		inBuf.mem_type = amf::AMF_MEMORY_OPENCL;
 		buff->Pitch = (mfxU16)inBuf.yuv_row_pitches[0];
-#ifdef NO_CL_INTEROP
-		buff->Y = (mfxU8*)inBuf.yuv_host_ptr[0];
-		buff->UV = (mfxU8*)inBuf.yuv_host_ptr[1];
-#else
+
 		buff->Y = (mfxU8*)inBuf.yuv_surfaces[0];
 		buff->UV = (mfxU8*)inBuf.yuv_surfaces[1];
 		inBuf.isMapped = true;
-#endif
+		inBuf.inUse = 1;
 		buff->MemId = mfxMemId(i + 1);
 		_InterlockedCompareExchange(&(inBuf.locked), 0, 1);
 
-//#ifdef _DEBUG
+#ifdef _DEBUG
 		OSDebugOut(TEXT("Send buffer %d\n"), i + 1);
-//#endif
-
+#endif
 		return true;
 	}
 
-	VCELog(TEXT("Max number of input buffers reached."));
-	OSDebugOut(TEXT("Max number of input buffers reached.\n"));
+	VCELog(TEXT("Max number of input buffers reached. Meet your doom!"));
+	OSDebugOut(TEXT("Max number of input buffers reached. Meet your doom!\n"));
 	return false;
 }
 

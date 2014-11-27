@@ -1,4 +1,7 @@
+#pragma once
+
 #include <amf\core\Surface.h>
+#include <../libmfx/include/msdk/include/mfxstructures.h>
 
 class Observer : public amf::AMFSurfaceObserver
 {
@@ -33,14 +36,17 @@ private:
 	LONG refCount;
 };
 
+//TODO reduce
 typedef struct InputBuffer
 {
 	uint8_t *pBuffer;
-	amf::AMFBufferPtr pAMFBuffer;
+	//amf::AMFBufferPtr pAMFBuffer;
 	size_t size;
 	//bool locked;
 	LONG locked;
-	uint32_t timestamp;
+	uint64_t timestamp;
+	uint64_t outputTimestamp;
+	mfxFrameData *frameData; //< For updating DX11 texture remapped pointers
 
 	//TODO separate bools for yuv planes maybe
 	bool isMapped;
@@ -51,7 +57,7 @@ typedef struct InputBuffer
 	size_t yuv_row_pitches[2];
 	size_t uv_width;
 	size_t uv_height;
-	amf::AMFSurfacePtr amf_surface;
+	//amf::AMFSurfacePtr amf_surface;
 	//Observer observer;
 	amf::AMF_MEMORY_TYPE mem_type;
 
@@ -72,4 +78,5 @@ typedef struct OutputList
 {
 	List<BYTE> pBuffer;
 	uint64_t timestamp;
+	PacketType type;
 } OutputList;

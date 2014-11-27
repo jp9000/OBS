@@ -114,8 +114,10 @@ AMF_RESULT DeviceDX11::Init(amf_uint32 adapterID, bool onlyWithOutputs)
     D3D_DRIVER_TYPE eDriverType = pAdapter != NULL ? D3D_DRIVER_TYPE_UNKNOWN : D3D_DRIVER_TYPE_HARDWARE;
     hr = D3D11CreateDevice(pAdapter, eDriverType, NULL, createDeviceFlags, featureLevels, _countof(featureLevels),
                 D3D11_SDK_VERSION, &pD3D11Device, &featureLevel, &pD3D11Context);
+	bool isDx111 = true;
     if(FAILED(hr))
     {
+		isDx111 = false;
         Log(L"InitDX11() failed to create HW DX11.1 device ");
         hr = D3D11CreateDevice(pAdapter, eDriverType, NULL, createDeviceFlags, featureLevels + 1, _countof(featureLevels) - 1,
                     D3D11_SDK_VERSION, &pD3D11Device, &featureLevel, &pD3D11Context);
@@ -130,7 +132,7 @@ AMF_RESULT DeviceDX11::Init(amf_uint32 adapterID, bool onlyWithOutputs)
         hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_SOFTWARE, NULL, createDeviceFlags, featureLevels, _countof(featureLevels),
                     D3D11_SDK_VERSION, &pD3D11Device, &featureLevel, &pD3D11Context);
     }
-    else
+	else if (!isDx111)
     {
         Log(L"InitDX11() created HW DX11 device");
     }

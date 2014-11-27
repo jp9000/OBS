@@ -19,7 +19,7 @@ extern decltype(&AMFCreateComponent) pAMFCreateComponent;
 #define VCELog(...) Log(__VA_ARGS__)
 #define AppConfig (*VCEAppConfig)
 
-#define MAX_INPUT_BUFFERS 3
+#define MAX_INPUT_BUFFERS 20
 //Sample timestamp is in 100-nanosecond units
 #define SEC_TO_100NS     10000000
 #define MS_TO_100NS      10000
@@ -120,7 +120,7 @@ void AMF_STD_CALL amf_increase_timer_precision()
 
 class VCEEncoder : public VideoEncoder {
 public:
-	VCEEncoder(int fps, int width, int height, int quality, const TCHAR* preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, ID3D10Device *d3d10device);
+	VCEEncoder(int fps, int width, int height, int quality, const TCHAR* preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, ID3D11Device *d3ddevice);
 	~VCEEncoder();
 
 	bool Init();
@@ -140,29 +140,35 @@ public:
 	VideoEncoder_Features GetFeatures()
 	{
 		if(mCanInterop)
-			return VideoEncoder_D3D10Interop;
+			return VideoEncoder_D3D11Interop;
 		return VideoEncoder_Unknown;
 	}
-	void ConvertD3D10(ID3D10Texture2D *d3dtex, void *data, void **state);
+	void ConvertD3D11(ID3D11Texture2D *d3dtex, void *data, void **state);
 
 private:
-	void ProcessBitstream(amf::AMFBufferPtr &buff, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp);
+	void ProcessBitstream(amf::AMFBufferPtr &buff/*, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp*/);
+	void CopyOutput(List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD &out_pts);
 	bool RequestBuffersCL(LPVOID buffers);
 	bool RequestBuffersDX11(LPVOID buffers);
 	bool RequestBuffersDX9(LPVOID buffers);
 	bool RequestBuffersHost(LPVOID buffers);
 	void ClearInputBuffer(int idx);
 	bool AllocateSurface(InputBuffer &inBuf, mfxFrameData &data);
+	void OutputPoll();
+	void Submit();
+	AMF_RESULT SubmitBuffer(InputBuffer*);
+	static DWORD OutputPollThread(VCEEncoder*);
+	static DWORD SubmitThread(VCEEncoder* enc);
 
 	amf::AMFContextPtr   mContext;
 	amf::AMFComponentPtr mEncoder;
 	DeviceDX9    mDX9Device;
 	DeviceDX11   mDX11Device;
 	DeviceOpenCL mOCLDevice;
-	ATL::CComPtr<ID3D10Device> mD3D10device;
+	ATL::CComPtr<ID3D11Device> mD3Ddevice;
 	//ATL::CComPtr<IDirectXVideoDecoderService> mDxvaService;
 	List<VideoPacket> mCurrPackets;
-	std::queue<DWORD> mTSqueue;
+	std::queue<uint64_t> mTSqueue;
 	std::queue<amf::AMFSurfacePtr> mSurfaces;
 
 	cl_command_queue mCmdQueue;
@@ -175,7 +181,7 @@ private:
 	bool mAlive;
 	bool mEOF;
 	bool mIsWin8OrGreater;
-	// Currently only for D3D10 > OpenCL > AMF
+	// Currently only for D3D11 > OpenCL > AMF
 	bool mCanInterop;
 	uint32_t   mEngine;
 	uint8_t    *mHdrPacket;
@@ -200,14 +206,24 @@ private:
 	size_t     mAlignedSurfaceHeight;
 
 	List<BYTE> headerPacket, seiData;
-	const TCHAR*    mPreset;
-	bool     mUse444;
+	const TCHAR*     mPreset;
+	bool             mUse444;
 	ColorDescription mColorDesc;
-	bool     mFirstFrame;
-	int32_t  frameShift;
+	bool             mFirstFrame;
+	uint64_t         frameShift;
+	uint64_t         mPrevTS;
+	uint64_t         mOffsetTS;
 
-	std::queue<OutputList*> mOutputQueue;
-	std::queue<OutputList*> mOutputReadyQueue;
+	HANDLE                  mOutPollThread;
+	bool                    mClosing;
+	HANDLE                  mSubmitThread;
+	HANDLE                  mOutQueueMutex;
+	HANDLE                  mSubmitEvent;
+	HANDLE                  mSubmitMutex;
+	std::queue<OutputList*> mOutputQueue; //< Preallocated(-ish)
+	std::queue<OutputList*> mOutputProcessedQueue; //< NAL parsed
+	std::queue<OutputList*> mOutputReadyQueue; //< OBS has copied the buffer
 	InputBuffer             mInputBuffers[MAX_INPUT_BUFFERS];
-
+	std::queue<InputBuffer*> mSubmitQueue;
+	FILE*    mTmpFile;
 };
