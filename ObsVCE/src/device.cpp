@@ -26,6 +26,7 @@ int GetTopologyId(cl_device_id devId)
 	return -1;
 }
 
+// As per AMD SDK sample, but why not clWaitForEvents, too blocking?
 void waitForEvent(cl_event inMapEvt)
 {
     cl_int eventStatus = CL_QUEUED;

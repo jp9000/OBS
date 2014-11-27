@@ -138,46 +138,46 @@ bool VCEEncoder::encodeCreate(uint32_t deviceId)
     props.push_back(CL_CONTEXT_PLATFORM);
     props.push_back((cl_context_properties)mDeviceHandle.platform);
 
-    if (mD3D10Device)
+    if (mD3D11Device)
     {
         do
         {
-            clGetDeviceIDsFromD3D10KHR_fn pClGetDeviceIDsFromD3D10KHR = static_cast<clGetDeviceIDsFromD3D10KHR_fn>(f_clGetExtensionFunctionAddressForPlatform(mDeviceHandle.platform, "clGetDeviceIDsFromD3D10KHR"));
-            if (pClGetDeviceIDsFromD3D10KHR == NULL)
+            clGetDeviceIDsFromD3D11KHR_fn pClGetDeviceIDsFromD3D11KHR = static_cast<clGetDeviceIDsFromD3D11KHR_fn>(f_clGetExtensionFunctionAddressForPlatform(mDeviceHandle.platform, "clGetDeviceIDsFromD3D11KHR"));
+            if (pClGetDeviceIDsFromD3D11KHR == NULL)
             {
-                VCELog(TEXT("Cannot resolve ClGetDeviceIDsFromD3D10KHR function"));
+                VCELog(TEXT("Cannot resolve ClGetDeviceIDsFromD3D11KHR function"));
                 break;
             }
 
-            INITPFN(mDeviceHandle.platform, clCreateFromD3D10Texture2DKHR);
-            INITPFN(mDeviceHandle.platform, clEnqueueAcquireD3D10ObjectsKHR);
-            INITPFN(mDeviceHandle.platform, clEnqueueReleaseD3D10ObjectsKHR);
+            INITPFN(mDeviceHandle.platform, clCreateFromD3D11Texture2DKHR);
+            INITPFN(mDeviceHandle.platform, clEnqueueAcquireD3D11ObjectsKHR);
+            INITPFN(mDeviceHandle.platform, clEnqueueReleaseD3D11ObjectsKHR);
 
-            cl_device_id deviceDX10 = 0;
-            cl_int err = (*pClGetDeviceIDsFromD3D10KHR)(mDeviceHandle.platform, CL_D3D10_DEVICE_KHR, (void*)mD3D10Device, CL_PREFERRED_DEVICES_FOR_D3D10_KHR, 1, &deviceDX10, NULL);
+            cl_device_id deviceDX11 = 0;
+            cl_int err = (*pClGetDeviceIDsFromD3D11KHR)(mDeviceHandle.platform, CL_D3D11_DEVICE_KHR, (void*)mD3D11Device, CL_PREFERRED_DEVICES_FOR_D3D11_KHR, 1, &deviceDX11, NULL);
             if (err)
             {
-                VCELog(TEXT("clGetDeviceIDsFromD3D10KHR failed"));
+                VCELog(TEXT("clGetDeviceIDsFromD3D11KHR failed"));
                 break;
             }
 
-            if (deviceDX10 != clDeviceID)
+            if (deviceDX11 != clDeviceID)
             {
                 //Well, can do but kind of pointless
                 mCanInterop = false;
-                VCELog(TEXT("D3D10 and OpenCL device do not match. Disabling interoperability."));
+                VCELog(TEXT("D3D11 and OpenCL device do not match. Disabling interoperability."));
                 break;
             }
 
-            props.push_back(CL_CONTEXT_D3D10_DEVICE_KHR);
-            props.push_back((cl_context_properties)mD3D10Device);
+            props.push_back(CL_CONTEXT_D3D11_DEVICE_KHR);
+            props.push_back((cl_context_properties)mD3D11Device);
             mCanInterop = true;
         } while (0);
 
         if (!mCanInterop)
-            VCELog(TEXT("NOT USING D3D10 INTEROP"));
+            VCELog(TEXT("NOT USING D3D11 INTEROP"));
         else
-            VCELog(TEXT("Using D3D10 interop"));
+            VCELog(TEXT("Using D3D11 interop"));
     }
 
     props.push_back(0);
@@ -281,9 +281,9 @@ bool VCEEncoder::encodeCreate(uint32_t deviceId)
         mInputBufSize = mAlignedSurfaceHeight * mAlignedSurfaceWidth * 3 / 2;
 	/*
 	Somewhat confusing part how buffers are used currently:
-	1.) Interopped: D3D10 -> image2d_t from tex -> convert to NV12 with CL (inputSurfaces) -> VCE
-	2.) No interop, no CL conv: D3D10 -> ConvertY444ToNV12 to mapped 'inputSurfaces' -> VCE
-	3.) CL conv: D3D10 -> memcpy texture to mapped 'inputSurfaces' -> convert to NV12 with CL (mOutput) -> VCE
+	1.) Interopped: D3D11 -> image2d_t from tex -> convert to NV12 with CL (inputSurfaces) -> VCE
+	2.) No interop, no CL conv: D3D11 -> ConvertY444ToNV12 to mapped 'inputSurfaces' -> VCE
+	3.) CL conv: D3D11 -> memcpy texture to mapped 'inputSurfaces' -> convert to NV12 with CL (mOutput) -> VCE
 	*/
     for (int32_t i = 0; i<MAX_INPUT_SURFACE; i++)
     {
@@ -392,32 +392,32 @@ bool VCEEncoder::encodeClose()
     return true;
 }
 
-cl_mem VCEEncoder::CreateTexture2D(ID3D10Texture2D *tex)
+cl_mem VCEEncoder::CreateTexture2D(ID3D11Texture2D *tex)
 {
     cl_int status = 0;
-    cl_mem clTex2D = clCreateFromD3D10Texture2DKHR((cl_context)mOveContext, CL_MEM_READ_ONLY, tex, 0, &status);
+    cl_mem clTex2D = clCreateFromD3D11Texture2DKHR((cl_context)mOveContext, CL_MEM_READ_ONLY, tex, 0, &status);
     if (status != CL_SUCCESS)
-        Log(L"Failed to create CL texture from D3D10 texture2D.");
+        Log(L"Failed to create CL texture from D3D11 texture2D.");
 
     assert(clTex2D);
     return clTex2D;
 }
 
-cl_int VCEEncoder::AcquireD3D10(cl_mem tex)
+cl_int VCEEncoder::AcquireD3D11(cl_mem tex)
 {
-    assert(clEnqueueAcquireD3D10ObjectsKHR);
-    cl_int status = clEnqueueAcquireD3D10ObjectsKHR(mEncodeHandle.clCmdQueue[0], 1, &tex, 0, nullptr, nullptr);
+    assert(clEnqueueAcquireD3D11ObjectsKHR);
+    cl_int status = clEnqueueAcquireD3D11ObjectsKHR(mEncodeHandle.clCmdQueue[0], 1, &tex, 0, nullptr, nullptr);
     if (status != CL_SUCCESS)
-        Log(TEXT("Failed to acquire D3D10 object."));
+        Log(TEXT("Failed to acquire D3D11 object."));
     return status;
 }
 
-cl_int VCEEncoder::ReleaseD3D10(cl_mem tex)
+cl_int VCEEncoder::ReleaseD3D11(cl_mem tex)
 {
-    assert(clEnqueueReleaseD3D10ObjectsKHR);
-    cl_int status = clEnqueueReleaseD3D10ObjectsKHR(mEncodeHandle.clCmdQueue[0], 1, &tex, 0, nullptr, nullptr);
+    assert(clEnqueueReleaseD3D11ObjectsKHR);
+    cl_int status = clEnqueueReleaseD3D11ObjectsKHR(mEncodeHandle.clCmdQueue[0], 1, &tex, 0, nullptr, nullptr);
     if (status != CL_SUCCESS)
-        Log(TEXT("Failed to release D3D10 object."));
+        Log(TEXT("Failed to release D3D11 object."));
     return status;
 }
 

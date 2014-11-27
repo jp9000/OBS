@@ -29,6 +29,9 @@ extern "C"
 #undef _STDINT_H
 }
 
+#undef profileIn
+#define profileIn(x) {
+
 ConfigFile **VCEAppConfig = 0;
 unsigned int encoderRefs = 0;
 
@@ -70,12 +73,12 @@ extern "C" __declspec(dllexport) bool __cdecl CheckVCEHardwareSupport(bool log)
 }
 
 //Keeping it like x264/qsv/nvenc (for now atleast)
-extern "C" __declspec(dllexport) VideoEncoder* __cdecl CreateVCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, ID3D10Device *d3d10)
+extern "C" __declspec(dllexport) VideoEncoder* __cdecl CreateVCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, ID3D11Device *d3d11)
 {
     if (!initOVE())
         return 0;
 
-    VCEEncoder *enc = new VCEEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR, d3d10);
+    VCEEncoder *enc = new VCEEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR, d3d11);
 
     encoderRefs += 1; //Lock?
 
@@ -340,7 +343,7 @@ bool VCEEncoder::init()
     return true;
 }
 
-VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, ID3D10Device *d3d10)
+VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, ID3D11Device *d3d11)
     : mFps(fps)
     , mWidth(width)
     , mHeight(height)
@@ -368,7 +371,7 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset
     , mMaxBucketSize(0)
     , mDesiredPacketSize(0)
     , mCurrFrame(0)
-    , mD3D10Device(d3d10)
+    , mD3D11Device(d3d11)
     , mCanInterop(false)
 {
     frameMutex = OSCreateMutex();
@@ -379,7 +382,7 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset
     mUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
     mKeyint = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 0);
     if(AppConfig->GetInt(TEXT("VCE Settings"), TEXT("NoInterop"), 0) != 0)
-        mD3D10Device = nullptr;
+        mD3D11Device = nullptr;
 
     headerPacket.SetSize(128);
     memset(&mDeviceHandle, 0, sizeof(mDeviceHandle));
@@ -410,7 +413,7 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, CTSTR preset
         mDesiredPacketSize = mMaxBucketSize / mFps;
     }
 
-    if (mD3D10Device) mD3D10Device->AddRef();
+    if (mD3D11Device) mD3D11Device->AddRef();
 }
 
 VCEEncoder::~VCEEncoder()
@@ -440,8 +443,8 @@ VCEEncoder::~VCEEncoder()
     encoderRefDec();
     OSCloseMutex(frameMutex);
 
-    if (mD3D10Device)
-        mD3D10Device->Release();
+    if (mD3D11Device)
+        mD3D11Device->Release();
 }
 
 void VCEEncoder::Warmup()
@@ -501,7 +504,7 @@ void VCEEncoder::Warmup()
     mFirstFrame = true;
 }
 
-void VCEEncoder::ConvertD3D10(ID3D10Texture2D *d3dtex, void *data, void **state)
+void VCEEncoder::ConvertD3D11(ID3D11Texture2D *d3dtex, void *data, void **state)
 {
     assert(data);
     assert(state);
@@ -519,9 +522,9 @@ void VCEEncoder::ConvertD3D10(ID3D10Texture2D *d3dtex, void *data, void **state)
         mCLMemObjs.push_back(clD3D);
     }
 
-    AcquireD3D10(clD3D);
+    AcquireD3D11(clD3D);
     RunKernels(clD3D, (cl_mem)inBuf.surface, mWidth, mHeight);
-    ReleaseD3D10(clD3D);
+    ReleaseD3D11(clD3D);
     f_clFinish(mEncodeHandle.clCmdQueue[0]);
 }
 
