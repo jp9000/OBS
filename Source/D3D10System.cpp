@@ -197,9 +197,25 @@ D3D10System::D3D10System()
     if(FAILED(err = CreateDXGIFactory1(iidVal, (void**)&factory)))
         CrashError(TEXT("Could not create DXGI factory"));
 
+    UINT numAdapters = 0, i = 0;
+    IDXGIAdapter1 *giAdapter;
+
+    while (factory->EnumAdapters1(i++, &giAdapter) == S_OK)
+    {
+        numAdapters++;
+        giAdapter->Release();
+    }
+
+    if (adapterID >= numAdapters)
+    {
+        Log(TEXT("Invalid adapter id %d, only %d adapters on system. Resetting to 0."), adapterID, numAdapters);
+        GlobalConfig->SetInt(TEXT("Video"), TEXT("Adapter"), 0);
+        adapterID = 0;
+    }
+
     IDXGIAdapter1 *adapter;
     if(FAILED(err = factory->EnumAdapters1(adapterID, &adapter)))
-        CrashError(TEXT("Could not get DXGI adapter"));
+        CrashError(TEXT("Could not get DXGI adapter %d"), adapterID);
 
     HandleNvidiaOptimus(factory, adapter, adapterID);
 
