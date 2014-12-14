@@ -17,7 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 ********************************************************************************/
 
-//XXX MFT probably becomes the one and only
+//XXX AMF probably becomes the one and only
 #include "Main.h"
 
 typedef bool(__cdecl *PVCEINITFUNC)(ConfigFile **appConfig, VideoEncoder*);
@@ -30,13 +30,23 @@ static PCREATEVCEENCODER p_createVCEEncoder = NULL;
 static PVCEINITFUNC initFunction = NULL;
 static bool bUsingMFT = false;
 
+static void UnloadModule()
+{
+    if (p_vceModule)
+        FreeLibrary(p_vceModule);
+    p_vceModule = NULL;
+    p_checkVCEHardwareSupport = NULL;
+    p_createVCEEncoder = NULL;
+    initFunction = NULL;
+}
+
 void InitVCEEncoder(bool log = true, bool useMFT = false)
 {
-    if (p_vceModule != NULL)
+    TCHAR *modName = useMFT ? TEXT("ObsVCEAMF.dll") /*TEXT("ObsVCEMFT.dll")*/ : TEXT("ObsVCE.dll");
+
+    if ((p_vceModule != NULL) && (useMFT != bUsingMFT))
     {
-        if (useMFT != bUsingMFT)
-            OBSMessageBox(NULL, TEXT("To change between OpenVideo and Media Foundation codec,\r\nplease restart OBS."), TEXT("Warning"), 0);
-        return;
+        UnloadModule();
     }
 
 #ifdef _WIN64
@@ -45,14 +55,12 @@ void InitVCEEncoder(bool log = true, bool useMFT = false)
     p_vceModule = LoadLibrary(useMFT ? TEXT("ObsVCEMFT32.dll") : TEXT("ObsVCE32.dll"));
 #endif
 
-	TCHAR *modName = useMFT ? TEXT("ObsVCEAMF.dll") /*TEXT("ObsVCEMFT.dll")*/ : TEXT("ObsVCE.dll");
     if (p_vceModule == NULL)
         p_vceModule = LoadLibrary(modName);
 
     if (p_vceModule == NULL)
     {
-        if (log)
-            Log(TEXT("Failed loading %s"), modName);
+        Log(TEXT("Failed to load %s"), modName);
         goto error;
     }
 
@@ -84,15 +92,7 @@ void InitVCEEncoder(bool log = true, bool useMFT = false)
 
 error:
 
-    p_checkVCEHardwareSupport = NULL;
-    p_createVCEEncoder = NULL;
-
-    if (p_vceModule != NULL)
-    {
-        FreeLibrary(p_vceModule);
-        p_vceModule = NULL;
-    }
-
+    UnloadModule();
     if (log)
         Log(TEXT("%s initialization failed"), modName);
 }
@@ -100,7 +100,7 @@ error:
 bool CheckVCEHardwareSupport(bool log = true, bool useMFT = false)
 {
     if(useMFT)
-        Log(TEXT("VCE encoding with MFT."));
+        Log(TEXT("VCE encoding with AMF."));
     InitVCEEncoder(log, useMFT);
 
     if (p_checkVCEHardwareSupport == NULL)
@@ -111,6 +111,11 @@ bool CheckVCEHardwareSupport(bool log = true, bool useMFT = false)
 
 VideoEncoder* CreateVCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, String &errors, bool useMFT)
 {
+    if (useMFT != bUsingMFT)
+    {
+        InitVCEEncoder(true, useMFT);
+    }
+
     if (!CheckVCEHardwareSupport(true, useMFT))
     {
         if (p_vceModule)
@@ -135,12 +140,6 @@ VideoEncoder* CreateVCEEncoder(int fps, int width, int height, int quality, CTST
 
     if (p_createVCEEncoder == NULL || initFunction == NULL)
         return NULL;
-
-    if (useMFT != bUsingMFT)
-    {
-        OBSMessageBox(GetForegroundWindow(), TEXT("To change between OpenVideo and Media Foundation codec,\r\nplease restart OBS."), TEXT("Warning"), 0);
-        return NULL;
-    }
 
     VideoEncoder *encoder = p_createVCEEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR, GetD3D());
     if (!initFunction(&AppConfig, encoder))
