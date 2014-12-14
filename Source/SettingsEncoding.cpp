@@ -170,7 +170,7 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 //--------------------------------------------
 
                 bool showQSVConfigurationWarning = false;
-                int bUseMFT = AppConfig->GetInt(L"Video Encoding", L"MFT", 0);
+                int bUseMFT = AppConfig->GetInt(L"Video Encoding", L"MFT", 1);
 
                 hasQSV = CheckQSVHardwareSupport(false, &showQSVConfigurationWarning);
                 hasNVENC = CheckNVENCHardwareSupport(false);
