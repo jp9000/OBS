@@ -627,7 +627,7 @@ void OBS::MainCaptureLoop()
 
     bool bUsingQSV = videoEncoder->isQSV();//GlobalConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
     bool bUsingVCE = (AppConfig->GetString(L"Video Encoding", L"Encoder") == L"VCE") == TRUE;
-    bool bUsingVCEMFT = (AppConfig->GetInt(TEXT("Video Encoding"), TEXT("MFT"), 0) != 0);
+    bool bUsingVCEMFT = (AppConfig->GetInt(TEXT("Video Encoding"), TEXT("MFT"), 1) != 0);
     bool bUsingCL = (AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCL"), 0) == 1);
     bool bUsingInterop = !!(videoEncoder->GetFeatures() & VideoEncoder_D3D11Interop);
     bUsing444 = false || (bUsingVCE && bUsingCL && !bUsingVCEMFT);
