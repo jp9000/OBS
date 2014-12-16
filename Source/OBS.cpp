@@ -130,6 +130,8 @@ OBS::OBS()
 {
     App = this;
 
+    performTransition = true;        //Default to true and don't set the conf. 
+                                     //We don't want to let plugins disable standard behavior permanently.
     hSceneMutex = OSCreateMutex();
     hAuxAudioMutex = OSCreateMutex();
     hVideoEvent = CreateEvent(NULL, FALSE, FALSE, NULL);

@@ -643,6 +643,7 @@ class OBS
     Texture *lastRenderTexture;
     Texture *transitionTexture;
 
+    bool    performTransition;
     bool    bTransitioning;
     float   transitionAlpha;
 
