@@ -231,6 +231,10 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 bool bUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
                 bool bPadCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 1) != 0;
                 bool bUseCL = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCL"), 1) != 0;
+                bool bVCECustom = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("UseCustom"), 0) != 0;
+                bool bVCEUsesBR = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("RCM"), 0) < 3;
+                if (bVCECustom)
+                    bUseCBR = bVCEUsesBR;
                 SendMessage(GetDlgItem(hwnd, IDC_USECBR), BM_SETCHECK, bUseCBR ? BST_CHECKED : BST_UNCHECKED, 0);
                 SendMessage(GetDlgItem(hwnd, IDC_PADCBR), BM_SETCHECK, bPadCBR ? BST_CHECKED : BST_UNCHECKED, 0);
                 SendMessage(GetDlgItem(hwnd, IDC_CLCONV), BM_SETCHECK, bUseCL ? BST_CHECKED : BST_UNCHECKED, 0);

@@ -71,7 +71,11 @@ static void ToggleControls(HWND hwnd, BOOL enabled)
         IDC_VCE_MINQP,
         IDC_VCE_MAXQP,
         IDC_VCE_SPIN2,
-        IDC_VCE_SPIN3
+        IDC_VCE_SPIN3,
+        IDC_VCE_RC_CBR,
+        IDC_VCE_RC_VBR,
+        IDC_VCE_RC_FQP,
+        IDC_VCE_RC_LCVBR,
     };
     for (auto id : ids)
         EnableWindow(GetDlgItem(hwnd, id), enabled);
@@ -289,6 +293,15 @@ void SettingsVCE::ApplySettings()
     iInt = checkRange(iInt, 0, 51, 51);
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("MaxQP"), iInt);
 
+    // Rate control methods
+    bBool = SendMessage(GetDlgItem(hwnd, IDC_VCE_RC_CBR), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    if (bBool) AppConfig->SetInt(TEXT("VCE Settings"), TEXT("RCM"), 0);
+    bBool = SendMessage(GetDlgItem(hwnd, IDC_VCE_RC_VBR), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    if (bBool) AppConfig->SetInt(TEXT("VCE Settings"), TEXT("RCM"), 1);
+    bBool = SendMessage(GetDlgItem(hwnd, IDC_VCE_RC_LCVBR), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    if (bBool) AppConfig->SetInt(TEXT("VCE Settings"), TEXT("RCM"), 2);
+    bBool = SendMessage(GetDlgItem(hwnd, IDC_VCE_RC_FQP), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    if (bBool) AppConfig->SetInt(TEXT("VCE Settings"), TEXT("RCM"), 3);
 }
 
 void SettingsVCE::CancelSettings()
@@ -339,6 +352,22 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
         iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("AMD"), 0);
         SendMessage(GetDlgItem(hwnd, IDC_VCE_AMD), BM_SETCHECK, iInt, 0);
+
+        iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("RCM"), 0);
+        switch (iInt)
+        {
+        case 1:
+            SendMessage(GetDlgItem(hwnd, IDC_VCE_RC_VBR), BM_SETCHECK, 1, 0);
+            break;
+        case 2:
+            SendMessage(GetDlgItem(hwnd, IDC_VCE_RC_LCVBR), BM_SETCHECK, 1, 0);
+            break;
+        case 3:
+            SendMessage(GetDlgItem(hwnd, IDC_VCE_RC_FQP), BM_SETCHECK, 1, 0);
+            break;
+        default:
+            SendMessage(GetDlgItem(hwnd, IDC_VCE_RC_CBR), BM_SETCHECK, 1, 0);
+        }
 
         ti.lpszText = (LPWSTR)Str("Settings.VCE.AMDTooltip");
         ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_AMD);
@@ -528,6 +557,10 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
         case IDC_VCE_LOWLATENCY:
         case IDC_VCE_FRAMESKIP:
         case IDC_VCE_INTEROP:
+        case IDC_VCE_RC_CBR:
+        case IDC_VCE_RC_VBR:
+        case IDC_VCE_RC_FQP:
+        case IDC_VCE_RC_LCVBR:
             if (HIWORD(wParam) == BN_CLICKED)
             {
                 bDataChanged = true;
