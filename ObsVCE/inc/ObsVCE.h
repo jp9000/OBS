@@ -209,6 +209,7 @@ private:
     bool     mUse444; //Max VCE 2.0 can do is 422 probably
     ColorDescription mColorDesc;
     bool     mFirstFrame;
+    RateControlMode mRCM;
 
     int32_t mCurrBucketSize;
     int32_t mMaxBucketSize;

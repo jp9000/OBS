@@ -105,7 +105,10 @@ bool VCEEncoder::init()
         return false;
 
     VCELog(TEXT("Build date ") TEXT(__DATE__) TEXT(" ") TEXT(__TIME__));
+#define APPCFG(var,cfg) \
+    var = static_cast<decltype(var)>(AppConfig->GetInt(TEXT("VCE Settings"), TEXT(cfg), var))
     bool bPadCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 0) != 0;
+    bool userCfg = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("UseCustom"), 0) != 0;
     int numH = ((mHeight + 15) / 16);
 
     prepareConfigMap(mConfigTable, false);
@@ -140,7 +143,36 @@ bool VCEEncoder::init()
     //Probably forces 1 ref frame only
     mConfigCtrl.priority = OVE_ENCODE_TASK_PRIORITY_LEVEL2;
 
-    if (mUseCBR)
+    mRCM = RCM_CBR;
+    if (!userCfg)
+    {
+        if (!mUseCBR)
+            mRCM = RCM_FQP;
+    }
+    else
+    {
+        int iInt = 0;
+        APPCFG(iInt, "RCM");
+        switch (iInt)
+        {
+        case 1:
+        case 2:
+            mRCM = RCM_VBR;
+            VCELog(TEXT("Using VBR"));
+            mUseCBR = false;
+            break;
+        case 3:
+            mRCM = RCM_FQP;
+            VCELog(TEXT("Using Fixed QP"));
+            mUseCBR = false;
+            break;
+        default:
+            mRCM = RCM_CBR;
+            VCELog(TEXT("Using CBR"));
+        }
+    }
+
+    if (mRCM == RCM_CBR)
     {
         int bitRateWindow = 50;
         int gopSize = mFps * (mKeyint == 0 ? 2 : mKeyint);
@@ -199,12 +231,7 @@ bool VCEEncoder::init()
         mConfigCtrl.rateControl.encQP_I = mConfigCtrl.rateControl.encQP_P = QP;
         mConfigCtrl.rateControl.encQP_B = QP;
 
-        if (mUseCBR)
-            mConfigCtrl.rateControl.encRateControlMethod = RCM_CBR;
-        else if (mUseCFR) //Not really
-            mConfigCtrl.rateControl.encRateControlMethod = RCM_FQP;
-        else
-            mConfigCtrl.rateControl.encRateControlMethod = RCM_VBR;
+        mConfigCtrl.rateControl.encRateControlMethod = (unsigned int)mRCM;
 
         int numMBs = ((mWidth + 15) / 16) * numH;
 		mConfigCtrl.pictControl.encNumMBsPerSlice = 0;// numMBs;
@@ -216,9 +243,8 @@ bool VCEEncoder::init()
     mConfigCtrl.pictControl.encCropBottomOffset = (numH * 16 - mHeight) >> 1;
 
     //Apply user's custom setting
-    if (AppConfig->GetInt(TEXT("VCE Settings"), TEXT("UseCustom"), 0))
+    if (userCfg)
     {
-#define APPCFG(x,y) x = AppConfig->GetInt(TEXT("VCE Settings"), TEXT(y), x)
         int iOpposite = !mConfigCtrl.meControl.disableFavorPMVPoint;
         APPCFG(iOpposite, "FavorPMV");
         mConfigCtrl.meControl.disableFavorPMVPoint = !iOpposite;
@@ -249,8 +275,6 @@ bool VCEEncoder::init()
         APPCFG(mConfigCtrl.pictControl.useConstrainedIntraPred, "ConstIntraPred");
 
         APPCFG(mConfigCtrl.rateControl.encGOPSize, "GOPSize");
-
-#undef APPCFG
     }
 
     delete[] mDeviceHandle.deviceInfo;
@@ -276,7 +300,7 @@ bool VCEEncoder::init()
     if (devIdx >= mDeviceHandle.numDevices)
         devIdx = 0;
     uint32_t device = mDeviceHandle.deviceInfo[devIdx].device_id;
-    for (int i = 0; i < mDeviceHandle.numDevices; i++)
+    for (uint32_t i = 0; i < mDeviceHandle.numDevices; i++)
     {
         cl_device_id clDeviceID = 
             reinterpret_cast<cl_device_id>(mDeviceHandle.deviceInfo[i].device_id);
