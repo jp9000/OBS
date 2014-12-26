@@ -192,7 +192,7 @@ private:
 	uint32_t   mIntraMBs;
 	int32_t    mLowLatencyKeyInt;
 	bool       mReqKeyframe;
-	//TODO is CFR not Constant Rate Factor, uh
+
 	bool       mUseCFR;
 	bool       mUseCBR;
 	int32_t    mKeyint;

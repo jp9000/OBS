@@ -446,8 +446,7 @@ bool VCEEncoder::Init()
 		imgf.image_channel_data_type = CL_UNSIGNED_INT8;
 
 		inBuf.uv_width = mAlignedSurfaceWidth / 2;
-		inBuf.uv_height = mAlignedSurfaceHeight % 2 ? (mAlignedSurfaceHeight + 1) / 2 :
-			mAlignedSurfaceHeight / 2;
+		inBuf.uv_height = (mAlignedSurfaceHeight + 1) / 2;
 		OSDebugOut(TEXT("UV size: %dx%d\n"), inBuf.uv_width, inBuf.uv_height);
 
 		mInputBuffers[i].yuv_surfaces[1] = clCreateImage2D(mCLContext,
@@ -511,24 +510,14 @@ bool VCEEncoder::Init()
 	res = mEncoder->Init(amf::AMF_SURFACE_NV12, mWidth, mHeight);
 	RETURNIFFAILED(res, TEXT("Encoder init failed. %d"), res);
 
-	if (mUseCBR)
-	{
-		res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_ENFORCE_HRD, true);
-		LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_ENFORCE_HRD);
-	}
-
-	bool bUsePad = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 0) != 0;
-	if (bUsePad && (mUseCBR || !mUseCFR))
-	{
-		mEncoder->SetProperty(AMF_VIDEO_ENCODER_FILLER_DATA_ENABLE, true);
-		LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_FILLER_DATA_ENABLE);
-	}
-
 	int gopSize = mFps * (mKeyint == 0 ? 2 : mKeyint);
 	//gopSize -= gopSize % 6;
 	USERCFG(gopSize, "GOPSize");
 	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_GOP_SIZE, gopSize);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_GOP_SIZE);
+
+	//res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_SLICES_PER_FRAME, 1);
+	//LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_SLICES_PER_FRAME);
 
 	mIDRPeriod = mFps * (mKeyint == 0 ? 2 : mKeyint);
 	USERCFG(mIDRPeriod, "IDRPeriod");
@@ -551,22 +540,65 @@ bool VCEEncoder::Init()
 	//VCELog(TEXT("keyin: %d"), mLowLatencyKeyInt);
 
 	VCELog(TEXT("Rate control method:"));
-	AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD_ENUM rcm = AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD_PEAK_CONSTRAINED_VBR;
-	if (mUseCBR)
+	iInt = 0;
+	USERCFG(iInt, "RCM");
+
+	AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD_ENUM rcm = AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD_CBR;
+	if (!userCfg)
 	{
-		rcm = AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD_CBR;
-		VCELog(TEXT("    CBR (%d)"), rcm);
-	}
-	else if (mUseCFR)
-	{
-		rcm = AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD_CONSTRAINED_QP;
-		VCELog(TEXT("    Constrained QP (%d)"), rcm);
+		if (!mUseCBR)
+			rcm = AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD_CONSTRAINED_QP;
 	}
 	else
 	{
-		VCELog(TEXT("    Peak constrained VBR (%d)"), rcm);
+		switch (iInt)
+		{
+		case 1:
+			rcm = AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD_PEAK_CONSTRAINED_VBR;
+			break;
+		case 2:
+			rcm = AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD_LATENCY_CONSTRAINED_VBR;
+			break;
+		case 3:
+			rcm = AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD_CONSTRAINED_QP;
+			break;
+		default:
+			rcm = AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD_CBR;
+			break;
+		}
 	}
 
+	if (rcm == AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD_CBR)
+	{
+		res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_ENFORCE_HRD, true);
+		LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_ENFORCE_HRD);
+
+		bool bUsePad = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 0) != 0;
+		if (bUsePad)
+		{
+			mEncoder->SetProperty(AMF_VIDEO_ENCODER_FILLER_DATA_ENABLE, true);
+			LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_FILLER_DATA_ENABLE);
+		}
+	}
+
+	switch (rcm)
+	{
+	case AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD_CONSTRAINED_QP:
+		VCELog(TEXT("    Constrained QP (%d)"), rcm);
+		break;
+	case AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD_CBR:
+		VCELog(TEXT("    CBR (%d)"), rcm);
+		break;
+	case AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD_PEAK_CONSTRAINED_VBR:
+		VCELog(TEXT("    Peak constrained VBR (%d)"), rcm);
+		break;
+	case AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD_LATENCY_CONSTRAINED_VBR:
+		VCELog(TEXT("    Latency constrained VBR (%d)"), rcm);
+		break;
+	default:
+		VCELog(TEXT("    <unknown> (%d)"), rcm);
+		break;
+	}
 	//-----------------------
 	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD, rcm);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD);
@@ -696,8 +728,7 @@ bool VCEEncoder::Init()
 
 void VCEEncoder::ConvertD3D11(ID3D11Texture2D *d3dtex, void *data, void **state)
 {
-	assert(data);
-	assert(state);
+	assert(d3dtex && data && state);
 	mfxFrameData *mfx = static_cast<mfxFrameData*>(data);
 	int idx = (int)(mfx->MemId);
 	assert(idx);
@@ -837,7 +868,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
 	inBuf.timestamp = data.TimeStamp;
 	inBuf.outputTimestamp = data.TimeStamp - mPrevTS;
 	mPrevTS = data.TimeStamp;
-	mTSqueue.push(data.TimeStamp);
+	//mTSqueue.push(data.TimeStamp);
 
 	OSEnterMutex(mSubmitMutex);
 	mSubmitQueue.push(&mInputBuffers[idx]);
@@ -845,10 +876,15 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
 	SetEvent(mSubmitEvent);
 
 	CopyOutput(packets, packetTypes, out_pts);
-	/*OSDebugOut(TEXT("Output queues: Sent %d, Ready: %d, Unused: %d, submit: %d\n"),
+
+#ifdef _DEBUG
+	OSEnterMutex(mOutQueueMutex);
+	OSDebugOut(TEXT("Output queues: Sent %d, Ready: %d, Unused: %d, submit: %d\n"),
 		mOutputReadyQueue.size(),
 		mOutputProcessedQueue.size(),
-		mOutputQueue.size(), mSubmitQueue.size());*/
+		mOutputQueue.size(), mSubmitQueue.size());
+	OSLeaveMutex(mOutQueueMutex);
+#endif
 
 	//OSDebugOut(TEXT("TS %d: %lld %d %d\n"), packets.Num(), data.TimeStamp, outputTimestamp, out_pts);
 
@@ -886,10 +922,8 @@ void VCEEncoder::OutputPoll()
 		if (res == AMF_OK)
 		{
 			profileIn("Query output")
-			OSEnterMutex(mOutQueueMutex);
 			amf::AMFBufferPtr buffer(data);
 			ProcessBitstream(buffer);
-			OSLeaveMutex(mOutQueueMutex);
 			profileOut
 		}
 		OSSleep(5);
@@ -905,43 +939,47 @@ DWORD VCEEncoder::SubmitThread(VCEEncoder* enc)
 void VCEEncoder::Submit()
 {
 	int resubmitCount = 0;
-	while (!mClosing || (mClosing && !mSubmitQueue.empty()))
+	QWORD sleep = QWORD((1000.f / mFps / 5) * 1000);
+	QWORD lastTime = GetQPCTimeMS();
+	while (true)
 	{
 		//TODO .empty() thread-safetying
 		bool empty = true;
 		OSEnterMutex(mSubmitMutex);
 		empty = mSubmitQueue.empty();
-		OSLeaveMutex(mSubmitMutex);
 
-		if (!empty)
+		if (empty)
+		{
+			OSLeaveMutex(mSubmitMutex);
+			if (mClosing)
+				break;
+			else
+				WaitForSingleObject(mSubmitEvent, INFINITE);
+		}
+		else
 		{
 			profileIn("Submit buffer")
-			OSEnterMutex(mSubmitMutex);
 			InputBuffer *inBuf = mSubmitQueue.front();
 
 			AMF_RESULT res = SubmitBuffer(inBuf);
 			if (res != AMF_INPUT_FULL)
 			{
 				mSubmitQueue.pop();
+				if (resubmitCount > 0 && (GetQPCTimeMS() - lastTime) > 500)
+				{
+					VCELog(TEXT("Failed to submit input buffer multiple times already. VCE is probably too slow for current settings."));
+					lastTime = GetQPCTimeMS();
+				}
 				resubmitCount = 0;
 			}
 			else
 			{
 				resubmitCount++;
-				OSSleep(1);
+				OSSleepMicrosecond(sleep);
 			}
-
 			OSLeaveMutex(mSubmitMutex);
 			profileOut
-
-			if (resubmitCount >= 5)
-			{
-				VCELog(TEXT("Failed to submit input buffer for 5 times already. VCE is too slow?"));
-				resubmitCount = 0;
-			}
 		}
-		else if (!mClosing)
-			WaitForSingleObject(mSubmitEvent, INFINITE);
 	}
 }
 
@@ -1054,6 +1092,8 @@ void VCEEncoder::ProcessBitstream(amf::AMFBufferPtr &buff)
 
 	OutputList *bufferedOut = nullptr;
 
+	OSMutexLocker lock(mOutQueueMutex);
+
 	//TODO Only using 1 output buffer so remove this probably
 	if (!mOutputQueue.empty())
 	{
@@ -1090,18 +1130,19 @@ void VCEEncoder::ProcessBitstream(amf::AMFBufferPtr &buff)
 	}
 	size_t nalNum = nalOut.Num();
 
-	assert(!mTSqueue.empty());
+	//XXX mTSqueue is not thread-safe
+	/*assert(!mTSqueue.empty());
 
 	if (!mOffsetTS)
 		mOffsetTS = mTSqueue.back();
 
 	uint64_t ts = mTSqueue.front();
-	mTSqueue.pop();
+	mTSqueue.pop();*/
 
 	uint32_t diff = 0;
 	//buff->GetProperty(L"OUTPUTTS", &diff);
 
-	dts = (ts - mOffsetTS);
+	//dts = (ts - mOffsetTS);
 	int32_t timeOffset = 0;// int(out_pts - dts);// int(out_pts - dts);
 	/*if (frameType == AMF_VIDEO_ENCODER_OUTPUT_DATA_TYPE_IDR)
 		timeOffset = 0;
@@ -1384,7 +1425,7 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
 		}
 	}
 
-	while (true)
+	while (mSubmitThread)
 	{
 		//Scope the lock
 		{
@@ -1571,12 +1612,12 @@ bool VCEEncoder::RequestBuffersDX11(LPVOID buffers)
 		buff->Y = (mfxU8*)map.pData;
 		buff->UV = buff->Y + (mHeight * buff->Pitch);
 		buff->MemId = mfxMemId(i + 1);
-
-		hres = d3dcontext->Release();
-		HRETURNIFFAILED(hres, "Failed to release D3D11 immediate context.");
-
 		inBuf.inUse = 1;
 		_InterlockedCompareExchange(&(inBuf.locked), 0, 1);
+
+		hres = d3dcontext->Release();
+		if(FAILED(hres))
+			VCELog(TEXT("Failed to release D3D11 immediate context."));
 		return true;
 	}
 
