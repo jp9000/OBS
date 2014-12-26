@@ -30,7 +30,7 @@ int GetTopologyId(cl_device_id devId)
 void waitForEvent(cl_event inMapEvt)
 {
     cl_int eventStatus = CL_QUEUED;
-    cl_int status;
+    /*cl_int status;
 
     while (eventStatus > CL_COMPLETE)
     {
@@ -44,6 +44,11 @@ void waitForEvent(cl_event inMapEvt)
 #ifdef _DEBUG
     if (eventStatus < 0)
         VCELog(TEXT("clGetEventInfo error %d"), eventStatus);
+#endif*/
+	eventStatus = f_clWaitForEvents(1, &inMapEvt);
+#ifdef _DEBUG
+	if (eventStatus != CL_SUCCESS)
+		VCELog(TEXT("clWaitForEvents error %d"), eventStatus);
 #endif
 }
 
