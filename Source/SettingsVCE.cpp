@@ -72,10 +72,12 @@ static void ToggleControls(HWND hwnd, BOOL enabled)
         IDC_VCE_MAXQP,
         IDC_VCE_SPIN2,
         IDC_VCE_SPIN3,
+        IDC_VCE_SPIN4,
         IDC_VCE_RC_CBR,
         IDC_VCE_RC_VBR,
         IDC_VCE_RC_FQP,
         IDC_VCE_RC_LCVBR,
+        IDC_VCE_BFRAMES2,
     };
     for (auto id : ids)
         EnableWindow(GetDlgItem(hwnd, id), enabled);
@@ -266,7 +268,7 @@ void SettingsVCE::ApplySettings()
     iInt = checkRange(iInt, 0, 255, 0);
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("DevIndex"), iInt);
 
-    iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_BFRAMES)).ToInt();
+    iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_BFRAMES2)).ToInt();
     iInt = checkRange(iInt, 0, 16, 0);
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("BFrames"), iInt);
 
@@ -438,6 +440,12 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
         LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_REFS), TEXT("VCE Settings"), TEXT("NumRefs"), 3);
         LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_BFRAMES), TEXT("VCE Settings"), TEXT("BFrames"), 0);
+
+        LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_BFRAMES2), TEXT("VCE Settings"), TEXT("BFrames"), 0);
+        iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("BFrames"), 0);
+        SendMessage(GetDlgItem(hwnd, IDC_VCE_SPIN4), UDM_SETRANGE32, 0, 16); //TODO Maximum B-frames
+        SendMessage(GetDlgItem(hwnd, IDC_VCE_SPIN4), UDM_SETPOS32, 0, iInt);
+
         LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_DEVIDX), TEXT("VCE Settings"), TEXT("DevIndex"), 0);
         iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("DevIndex"), 0);
         SendMessage(GetDlgItem(hwnd, IDC_VCE_DEVSPIN), UDM_SETRANGE32, 0, 255);
@@ -625,6 +633,7 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
             case IDC_VCE_DEVSPIN: ctrl = IDC_VCE_DEVIDX; break;
             case IDC_VCE_SPIN2: ctrl = IDC_VCE_MINQP; val = val > 51 ? 51 : val; break;
             case IDC_VCE_SPIN3: ctrl = IDC_VCE_MAXQP; val = val > 51 ? 51 : val; break;
+            case IDC_VCE_SPIN4: ctrl = IDC_VCE_BFRAMES2; val = val > 16 ? 16 : val; break;
             }
 
             if (ctrl > 0)

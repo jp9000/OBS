@@ -254,6 +254,8 @@
 #define IDC_CLEARHOTKEY                 1094
 #define IDC_VCE_MAXQP                   1094
 #define IDC_STOPSTREAMHOTKEY_STATIC     1095
+#define IDC_VCE_MINQP2                  1095
+#define IDC_VCE_BFRAMES2                1095
 #define IDC_STARTSTREAMHOTKEY_STATIC    1096
 #define IDC_STARTSTREAMHOTKEY           1097
 #define IDC_CLEARHOTKEY_STARTSTREAM     1098
@@ -390,6 +392,7 @@
 #define IDC_VCE_SPIN3                   1184
 #define IDC_QSVAVBR                     1185
 #define IDC_RECORDFROMREPLAYBUFFERHOTKEY_STATIC 1185
+#define IDC_VCE_SPIN4                   1185
 #define IDC_TARGETKBPS                  1186
 #define IDC_RECORDFROMREPLAYBUFFERHOTKEY 1186
 #define IDC_QSVCQP                      1187
