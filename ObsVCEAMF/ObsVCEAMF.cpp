@@ -635,11 +635,13 @@ bool VCEEncoder::Init()
 
 	//B frames are not supported yet. Needs Composition Time fix.
 	mEncoder->SetProperty(AMF_VIDEO_ENCODER_B_REFERENCE_ENABLE, true);
-	mEncoder->SetProperty(AMF_VIDEO_ENCODER_B_PIC_PATTERN, 0);
+	iInt = 0;
+	USERCFG(iInt, "BFrames");
+	mEncoder->SetProperty(AMF_VIDEO_ENCODER_B_PIC_PATTERN, iInt);
 
 	//No point for now
-	//res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_HEADER_INSERTION_SPACING, mIDRPeriod < 1001 ? mIDRPeriod : 0);
-	//LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_HEADER_INSERTION_SPACING);
+	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_HEADER_INSERTION_SPACING, gopSize < 1001 ? gopSize : 0);
+	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_HEADER_INSERTION_SPACING);
 
 	mEncoder->GetProperty(AMF_VIDEO_ENCODER_INTRA_REFRESH_NUM_MBS_PER_SLOT, &mIntraMBs);
 	//res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_INTRA_REFRESH_NUM_MBS_PER_SLOT, ((mHeight + 15) & ~15) / 16);
@@ -1318,7 +1320,7 @@ void VCEEncoder::ProcessBitstream(amf::AMFBufferPtr &buff)
 			case NAL_PRIORITY_HIGHEST:      bestType = MAX(bestType, PacketType_VideoHighest);     break;
 			}
 		}
-		else if(false && nal.i_type == NAL_SPS)
+		else if(nal.i_type == NAL_SPS)
 		{
 			BYTE *skip = nal.p_payload;
 			while (*(skip++) != 0x1);
@@ -1374,8 +1376,6 @@ void VCEEncoder::ProcessBitstream(amf::AMFBufferPtr &buff)
 			pos = 5;
 			mOutputQueue.push(tmp);*/
 		}
-		else
-			continue;
 	}
 
 	//DataPacket packet;
@@ -1775,7 +1775,7 @@ void VCEEncoder::GetHeaders(DataPacket &packet)
 		{
 			decltype(start) next = std::search(start + 1, end, start_seq, start_seq + 3);
 
-			x264_nal_t nal;
+			x264_nal_t nal = { 0 };
 
 			nal.i_ref_idc = (start[3] >> 5) & 3;
 			nal.i_type = start[3] & 0x1f;
