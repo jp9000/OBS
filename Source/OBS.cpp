@@ -1390,7 +1390,7 @@ void OBS::ConfigureStreamButtons()
         return PostConfigureStreamButtons();
 
     RefreshStreamButtons();
-    SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), bStreaming ? Str("MainWindow.StopStream") : Str("MainWindow.StartStream"));
+    SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), (bStreaming && !bTestStream) ? Str("MainWindow.StopStream") : Str("MainWindow.StartStream"));
     SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), bRecording ? Str("MainWindow.StopRecording") : Str("MainWindow.StartRecording"));
     SetWindowText(GetDlgItem(hwndMain, ID_TESTSTREAM), bTestStream ? Str("MainWindow.StopTest") : Str("MainWindow.TestStream"));
 }
