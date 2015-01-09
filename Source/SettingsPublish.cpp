@@ -250,121 +250,118 @@ void SettingsPublish::SetWarningInfo()
         auto service = serviceData.second;
         if (service)
         {
-            if (service->GetInt(TEXT("id")) == serviceID)
+            strWarnings = FormattedString(Str("Settings.Publish.Warning.BadSettings"), service->GetName());
+
+            //check to see if the service we're using has recommendations
+            if (!service->HasItem(TEXT("recommended")))
             {
-                strWarnings = FormattedString(Str("Settings.Publish.Warning.BadSettings"), service->GetName());
+                SetDlgItemText(hwnd, IDC_WARNINGS, TEXT(""));
+                return;
+            }
 
-                //check to see if the service we're using has recommendations
-                if (!service->HasItem(TEXT("recommended")))
+            XElement *r = service->GetElement(TEXT("recommended"));
+
+            if (r->HasItem(TEXT("ratecontrol")))
+            {
+                CTSTR rc = r->GetString(TEXT("ratecontrol"));
+                if (!scmp(rc, TEXT("cbr")) && !bUseCBR)
                 {
-                    SetDlgItemText(hwnd, IDC_WARNINGS, TEXT(""));
-                    return;
+                    hasErrors = true;
+                    canOptimize = true;
+                    strWarnings << Str("Settings.Publish.Warning.UseCBR");
                 }
+            }
 
-                XElement *r = service->GetElement(TEXT("recommended"));
-
-                if (r->HasItem(TEXT("ratecontrol")))
+            if (r->HasItem(TEXT("max bitrate")))
+            {
+                int max_bitrate = r->GetInt(TEXT("max bitrate"));
+                if (maxBitRate > max_bitrate)
                 {
-                    CTSTR rc = r->GetString(TEXT("ratecontrol"));
-                    if (!scmp(rc, TEXT("cbr")) && !bUseCBR)
-                    {
-                        hasErrors = true;
-                        canOptimize = true;
-                        strWarnings << Str("Settings.Publish.Warning.UseCBR");
-                    }
+                    hasErrors = true;
+                    canOptimize = true;
+                    strWarnings << FormattedString(Str("Settings.Publish.Warning.Maxbitrate"), max_bitrate);
                 }
+            }
 
-                if (r->HasItem(TEXT("max bitrate")))
+            if (r->HasItem(L"supported audio codec"))
+            {
+                StringList codecs;
+                r->GetStringList(L"supported audio codec", codecs);
+                if (codecs.FindValueIndex(currentAudioCodec) == INVALID)
                 {
-                    int max_bitrate = r->GetInt(TEXT("max bitrate"));
-                    if (maxBitRate > max_bitrate)
-                    {
-                        hasErrors = true;
-                        canOptimize = true;
-                        strWarnings << FormattedString(Str("Settings.Publish.Warning.Maxbitrate"), max_bitrate);
-                    }
+                    String msg = Str("Settings.Publish.Warning.UnsupportedAudioCodec"); //good thing OBS only supports MP3 (and AAC), otherwise I'd have to come up with a better translation solution
+                    msg.FindReplace(L"$1", codecs[0].Array());
+                    msg.FindReplace(L"$2", currentAudioCodec.Array());
+                    hasErrors = true;
+                    canOptimize = true;
+                    strWarnings << msg;
                 }
+            }
 
-                if (r->HasItem(L"supported audio codec"))
+            if (r->HasItem(TEXT("max audio bitrate aac")) && (!scmp(currentAudioCodec, TEXT("AAC"))))
+            {
+                int maxaudioaac = r->GetInt(TEXT("max audio bitrate aac"));
+                if (audioBitRate > maxaudioaac)
                 {
-                    StringList codecs;
-                    r->GetStringList(L"supported audio codec", codecs);
-                    if (codecs.FindValueIndex(currentAudioCodec) == INVALID)
+                    hasErrors = true;
+                    canOptimize = true;
+                    strWarnings << FormattedString(Str("Settings.Publish.Warning.MaxAudiobitrate"), maxaudioaac);
+                }
+            }
+
+            if (r->HasItem(TEXT("max audio bitrate mp3")) && (!scmp(currentAudioCodec, TEXT("MP3"))))
+            {
+                int maxaudiomp3 = r->GetInt(TEXT("max audio bitrate mp3"));
+                if (audioBitRate > maxaudiomp3)
+                {
+                    hasErrors = true;
+                    canOptimize = true;
+                    strWarnings << FormattedString(Str("Settings.Publish.Warning.MaxAudiobitrate"), maxaudiomp3);
+                }
+            }
+
+            if (r->HasItem(L"video aspect ratio"))
+            {
+                String aspectRatio = r->GetString(L"video aspect ratio");
+                StringList numbers;
+                aspectRatio.GetTokenList(numbers, ':');
+                if (numbers.Num() == 2)
+                {
+                    float aspect = numbers[0].ToInt() / max(1.f, numbers[1].ToFloat());
+                    if (!CloseFloat(aspect, currentAspect))
                     {
-                        String msg = Str("Settings.Publish.Warning.UnsupportedAudioCodec"); //good thing OBS only supports MP3 (and AAC), otherwise I'd have to come up with a better translation solution
-                        msg.FindReplace(L"$1", codecs[0].Array());
-                        msg.FindReplace(L"$2", currentAudioCodec.Array());
-                        hasErrors = true;
-                        canOptimize = true;
+                        String aspectLocalized = Str("Settings.Video.AspectRatioFormat");
+                        aspectLocalized.FindReplace(L"$1", UIntString(numbers[0].ToInt()));
+                        aspectLocalized.FindReplace(L"$2", UIntString(numbers[1].ToInt()));
+
+                        String msg = Str("Settings.Publish.Warning.VideoAspectRatio");
+                        msg.FindReplace(L"$1", aspectLocalized);
                         strWarnings << msg;
-                    }
-                }
-
-                if (r->HasItem(TEXT("max audio bitrate aac")) && (!scmp(currentAudioCodec, TEXT("AAC"))))
-                {
-                    int maxaudioaac = r->GetInt(TEXT("max audio bitrate aac"));
-                    if (audioBitRate > maxaudioaac)
-                    {
                         hasErrors = true;
-                        canOptimize = true;
-                        strWarnings << FormattedString(Str("Settings.Publish.Warning.MaxAudiobitrate"), maxaudioaac);
                     }
                 }
+            }
 
-                if (r->HasItem(TEXT("max audio bitrate mp3")) && (!scmp(currentAudioCodec, TEXT("MP3"))))
+            if (r->HasItem(TEXT("profile")))
+            {
+                String expectedProfile = r->GetString(TEXT("profile"));
+
+                if (!expectedProfile.CompareI(currentx264Profile))
                 {
-                    int maxaudiomp3 = r->GetInt(TEXT("max audio bitrate mp3"));
-                    if (audioBitRate > maxaudiomp3)
-                    {
-                        hasErrors = true;
-                        canOptimize = true;
-                        strWarnings << FormattedString(Str("Settings.Publish.Warning.MaxAudiobitrate"), maxaudiomp3);
-                    }
+                    hasErrors = true;
+                    canOptimize = true;
+                    strWarnings << Str("Settings.Publish.Warning.RecommendMainProfile");
                 }
+            }
 
-                if (r->HasItem(L"video aspect ratio"))
+            if (r->HasItem(TEXT("keyint")))
+            {
+                int keyint = r->GetInt(TEXT("keyint"));
+                if (!keyframeInt || keyframeInt * 1000 > keyint)
                 {
-                    String aspectRatio = r->GetString(L"video aspect ratio");
-                    StringList numbers;
-                    aspectRatio.GetTokenList(numbers, ':');
-                    if (numbers.Num() == 2)
-                    {
-                        float aspect = numbers[0].ToInt() / max(1.f, numbers[1].ToFloat());
-                        if (!CloseFloat(aspect, currentAspect))
-                        {
-                            String aspectLocalized = Str("Settings.Video.AspectRatioFormat");
-                            aspectLocalized.FindReplace(L"$1", UIntString(numbers[0].ToInt()));
-                            aspectLocalized.FindReplace(L"$2", UIntString(numbers[1].ToInt()));
-
-                            String msg = Str("Settings.Publish.Warning.VideoAspectRatio");
-                            msg.FindReplace(L"$1", aspectLocalized);
-                            strWarnings << msg;
-                            hasErrors = true;
-                        }
-                    }
-                }
-
-                if (r->HasItem(TEXT("profile")))
-                {
-                    String expectedProfile = r->GetString(TEXT("profile"));
-
-                    if (!expectedProfile.CompareI(currentx264Profile))
-                    {
-                        hasErrors = true;
-                        canOptimize = true;
-                        strWarnings << Str("Settings.Publish.Warning.RecommendMainProfile");
-                    }
-                }
-
-                if (r->HasItem(TEXT("keyint")))
-                {
-                    int keyint = r->GetInt(TEXT("keyint"));
-                    if (!keyframeInt || keyframeInt * 1000 > keyint)
-                    {
-                        hasErrors = true;
-                        canOptimize = true;
-                        strWarnings << FormattedString(Str("Settings.Publish.Warning.Keyint"), keyint / 1000);
-                    }
+                    hasErrors = true;
+                    canOptimize = true;
+                    strWarnings << FormattedString(Str("Settings.Publish.Warning.Keyint"), keyint / 1000);
                 }
             }
         }
@@ -964,9 +961,9 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                             SetWindowText(GetDlgItem(hwnd, IDC_PLAYPATH), NULL);
 
                             bDataChanged = true;
-                        }
 
-                        SetWarningInfo();
+                            SetWarningInfo();
+                        }
 
                         break;
 
