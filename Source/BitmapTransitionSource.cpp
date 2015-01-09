@@ -22,7 +22,7 @@
 
 #include "BitmapImage.h"
 
-#define MIN_TRANSITION_TIME 3
+#define MIN_TRANSITION_TIME 1
 #define MAX_TRANSITION_TIME 600
 
 const float fadeTime = 1.5f;
