@@ -377,6 +377,8 @@ void NVENCEncoder::init()
             encodeConfig.frameIntervalP = 3;
         }
 
+        encodeConfig.encodeCodecConfig.h264Config.outputBufferingPeriodSEI = 1;
+        encodeConfig.encodeCodecConfig.h264Config.outputPictureTimingSEI = 1;
         encodeConfig.encodeCodecConfig.h264Config.disableSPSPPS = 1;
 
         encodeConfig.encodeCodecConfig.h264Config.enableVFR = bUseCFR ? 0 : 1;
