@@ -349,11 +349,11 @@ bool DeviceOpenCL::RunKernels(cl_mem inTex, cl_mem yTex, cl_mem uvTex, size_t wi
 	status = clEnqueueNDRangeKernel(m_hCommandQueue, m_kernel_uv, 2, nullptr, globalThreads, nullptr, 0, nullptr, nullptr);
 	if (status != CL_SUCCESS)
 	{
-		Log(L"Failed to enqueue Y kernel.");
+		Log(L"Failed to enqueue UV kernel.");
 		return false;
 	}
 
-	//FIXME Sub 1ms can't be right...
+	//FIXME Sub 1ms can't be right...clFlush on AMD is/used to be noop I think
 	clFlush(m_hCommandQueue);
 	//Finishing here so that it would count toward "GPU download and conversion" profile
 	//clFinish(m_hCommandQueue);
