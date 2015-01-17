@@ -28,6 +28,16 @@ static int checkRange(int val, int min, int max, int def)
     return def;
 }
 
+typedef struct SpinnerInts
+{
+	TCHAR *param;
+	int editCtrl;
+	int spinCtrl;
+	int def;
+	int min;
+	int max;
+} SpinnerInts;
+
 //============================================================================
 // SettingsVCE class
 
@@ -39,7 +49,6 @@ static void ToggleControls(HWND hwnd, BOOL enabled)
         //IDC_VCE_LOWLATENCY,
         //IDC_VCE_QVSS,
         //IDC_VCE_REFS,
-        //IDC_VCE_BFRAMES,
         IDC_VCE_CABAC,
         IDC_VCE_AMD,
         IDC_VCE_ME_HALF,
@@ -77,7 +86,18 @@ static void ToggleControls(HWND hwnd, BOOL enabled)
         IDC_VCE_RC_VBR,
         IDC_VCE_RC_FQP,
         IDC_VCE_RC_LCVBR,
-        IDC_VCE_BFRAMES2,
+        IDC_VCE_BFRAMES,
+        IDC_VCE_QPI,
+        IDC_VCE_QPP,
+        IDC_VCE_QPB,
+        IDC_VCE_QPBDELTA,
+        IDC_VCE_SPIN_I,
+        IDC_VCE_SPIN_P,
+        IDC_VCE_SPIN_B,
+        IDC_VCE_SPIN_BD,
+        IDC_VCE_SPIN_IDR,
+        IDC_VCE_SPIN_GOP,
+        IDC_VCE_DFILLER,
     };
     for (auto id : ids)
         EnableWindow(GetDlgItem(hwnd, id), enabled);
@@ -207,14 +227,17 @@ void SettingsVCE::ApplySettings()
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("LowLatency"), bBool);
 
     bBool = SendMessage(GetDlgItem(hwnd, IDC_VCE_FRAMESKIP), BM_GETCHECK, 0, 0) == BST_CHECKED;
-    AppConfig->SetInt(TEXT("VCE Settings"), TEXT("FrameDrop"), bBool);
+    AppConfig->SetInt(TEXT("VCE Settings"), TEXT("FrameSkip"), bBool);
+
+    bBool = SendMessage(GetDlgItem(hwnd, IDC_VCE_DFILLER), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    AppConfig->SetInt(TEXT("VCE Settings"), TEXT("DiscardFiller"), bBool);
 
     iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_GOP)).ToInt();
-    iInt = checkRange(iInt, 0, 0xFFFF, 30);
+    iInt = checkRange(iInt, 0, 1000, 30);
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("GOPSize"), iInt);
 
     iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_IDR)).ToInt();
-    iInt = checkRange(iInt, 0, 0xFFFF, 60);
+    iInt = checkRange(iInt, 0, 1000, 60);
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("IDRPeriod"), iInt);
 
     iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_IPIC)).ToInt();
@@ -268,7 +291,7 @@ void SettingsVCE::ApplySettings()
     iInt = checkRange(iInt, 0, 255, 0);
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("DevIndex"), iInt);
 
-    iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_BFRAMES2)).ToInt();
+    iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_BFRAMES)).ToInt();
     iInt = checkRange(iInt, 0, 16, 0);
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("BFrames"), iInt);
 
@@ -294,6 +317,26 @@ void SettingsVCE::ApplySettings()
     iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_MAXQP)).ToInt();
     iInt = checkRange(iInt, 0, 51, 51);
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("MaxQP"), iInt);
+
+    iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_QPI)).ToInt();
+    iInt = checkRange(iInt, 0, 51, 51);
+    AppConfig->SetInt(TEXT("VCE Settings"), TEXT("QPI"), iInt);
+
+    iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_QPI)).ToInt();
+    iInt = checkRange(iInt, 0, 51, 51);
+    AppConfig->SetInt(TEXT("VCE Settings"), TEXT("QPP"), iInt);
+
+    iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_QPP)).ToInt();
+    iInt = checkRange(iInt, 0, 51, 51);
+    AppConfig->SetInt(TEXT("VCE Settings"), TEXT("QPP"), iInt);
+
+    iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_QPB)).ToInt();
+    iInt = checkRange(iInt, 0, 51, 51);
+    AppConfig->SetInt(TEXT("VCE Settings"), TEXT("QPB"), iInt);
+
+    iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_QPBDELTA)).ToInt();
+    iInt = checkRange(iInt, 0, 51, 51);
+    AppConfig->SetInt(TEXT("VCE Settings"), TEXT("QPBDelta"), iInt);
 
     // Rate control methods
     bBool = SendMessage(GetDlgItem(hwnd, IDC_VCE_RC_CBR), BM_GETCHECK, 0, 0) == BST_CHECKED;
@@ -375,8 +418,6 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
         ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_AMD);
         SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
-        LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_GOP), TEXT("VCE Settings"), TEXT("GOPSize"), 120);
-        LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_IDR), TEXT("VCE Settings"), TEXT("IDRPeriod"), 120);
         LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_IPIC), TEXT("VCE Settings"), TEXT("IPicPeriod"), 0);
 
         ti.lpszText = (LPWSTR)Str("Settings.VCE.PeriodTooltip");
@@ -439,34 +480,34 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
         SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
         LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_REFS), TEXT("VCE Settings"), TEXT("NumRefs"), 3);
-        LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_BFRAMES), TEXT("VCE Settings"), TEXT("BFrames"), 0);
 
-        LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_BFRAMES2), TEXT("VCE Settings"), TEXT("BFrames"), 0);
-        iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("BFrames"), 0);
-        SendMessage(GetDlgItem(hwnd, IDC_VCE_SPIN4), UDM_SETRANGE32, 0, 16); //TODO Maximum B-frames
-        SendMessage(GetDlgItem(hwnd, IDC_VCE_SPIN4), UDM_SETPOS32, 0, iInt);
+		ti.lpszText = (LPWSTR)Str("Settings.VCE.MinQPTooltip");
+		ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_MINQP);
+		SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+		ti.lpszText = (LPWSTR)Str("Settings.VCE.MaxQPTooltip");
+		ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_MAXQP);
+		SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
-        LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_DEVIDX), TEXT("VCE Settings"), TEXT("DevIndex"), 0);
-        iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("DevIndex"), 0);
-        SendMessage(GetDlgItem(hwnd, IDC_VCE_DEVSPIN), UDM_SETRANGE32, 0, 255);
-        SendMessage(GetDlgItem(hwnd, IDC_VCE_DEVSPIN), UDM_SETPOS32, 0, iInt);
+		const std::vector<SpinnerInts> spinners = {
+			{ TEXT("GOPSize"), IDC_VCE_GOP, IDC_VCE_SPIN_GOP, 20, 0, 1000 }, //1000 to keep in range for header insertion
+			{ TEXT("IDRPeriod"), IDC_VCE_IDR, IDC_VCE_SPIN_IDR, 120, 0, 1000 },
+			{ TEXT("BFrames"), IDC_VCE_BFRAMES, IDC_VCE_SPIN4, 0, 0, 16 }, //TODO Maximum B-frames
+			{ TEXT("DevIndex"), IDC_VCE_DEVIDX, IDC_VCE_DEVSPIN, 0, 0, 255 },
+			{ TEXT("MinQP"), IDC_VCE_MINQP, IDC_VCE_SPIN2, 18, 0, 51 },
+			{ TEXT("MaxQP"), IDC_VCE_MAXQP, IDC_VCE_SPIN3, 51, 0, 51 },
+			{ TEXT("QPI"), IDC_VCE_QPI, IDC_VCE_SPIN_I, 25, 0, 51 },
+			{ TEXT("QPP"), IDC_VCE_QPP, IDC_VCE_SPIN_P, 25, 0, 51 },
+			{ TEXT("QPB"), IDC_VCE_QPB, IDC_VCE_SPIN_B, 25, 0, 51 },
+			{ TEXT("QPBDelta"), IDC_VCE_QPBDELTA, IDC_VCE_SPIN_BD, 4, 0, 51 },
+		};
 
-        LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_MINQP), TEXT("VCE Settings"), TEXT("MinQP"), 18);
-        iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("MinQP"), 18);
-        SendMessage(GetDlgItem(hwnd, IDC_VCE_SPIN2), UDM_SETRANGE32, 0, 51);
-        SendMessage(GetDlgItem(hwnd, IDC_VCE_SPIN2), UDM_SETPOS32, 0, iInt);
-
-        LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_MAXQP), TEXT("VCE Settings"), TEXT("MaxQP"), 51);
-        iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("MaxQP"), 51);
-        SendMessage(GetDlgItem(hwnd, IDC_VCE_SPIN3), UDM_SETRANGE32, 0, 51);
-        SendMessage(GetDlgItem(hwnd, IDC_VCE_SPIN3), UDM_SETPOS32, 0, iInt);
-
-        ti.lpszText = (LPWSTR)Str("Settings.VCE.MinQPTooltip");
-        ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_MINQP);
-        SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
-        ti.lpszText = (LPWSTR)Str("Settings.VCE.MaxQPTooltip");
-        ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_MAXQP);
-        SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+		for (auto v : spinners)
+		{
+			LoadSettingEditInt(GetDlgItem(hwnd, v.editCtrl), TEXT("VCE Settings"), v.param, v.def);
+			iInt = AppConfig->GetInt(TEXT("VCE Settings"), v.param, v.def);
+			SendMessage(GetDlgItem(hwnd, v.spinCtrl), UDM_SETRANGE32, v.min, v.max);
+			SendMessage(GetDlgItem(hwnd, v.spinCtrl), UDM_SETPOS32, 0, iInt);
+		}
 
         LoadSettingEditString(GetDlgItem(hwnd, IDC_VCE_DEVTOPOID), TEXT("VCE Settings"), TEXT("DevTopoId"), TEXT(""));
         ti.lpszText = (LPWSTR)Str("Settings.VCE.DevTopoTooltip");
@@ -500,8 +541,11 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
         iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("LowLatency"), 0);
         SendMessage(GetDlgItem(hwnd, IDC_VCE_LOWLATENCY), BM_SETCHECK, iInt, 0);
 
-        iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("FrameDrop"), 0);
+        iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("FrameSkip"), 0);
         SendMessage(GetDlgItem(hwnd, IDC_VCE_FRAMESKIP), BM_SETCHECK, iInt, 0);
+
+        iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("DiscardFiller"), 0);
+        SendMessage(GetDlgItem(hwnd, IDC_VCE_DFILLER), BM_SETCHECK, iInt, 0);
 
         iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("NoInterop"), 0);
         SendMessage(GetDlgItem(hwnd, IDC_VCE_INTEROP), BM_SETCHECK, iInt, 0);
@@ -569,6 +613,7 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
         case IDC_VCE_RC_VBR:
         case IDC_VCE_RC_FQP:
         case IDC_VCE_RC_LCVBR:
+        case IDC_VCE_DFILLER:
             if (HIWORD(wParam) == BN_CLICKED)
             {
                 bDataChanged = true;
@@ -597,6 +642,11 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
         case IDC_VCE_DEVIDX:
         case IDC_VCE_MINQP:
         case IDC_VCE_MAXQP:
+        case IDC_VCE_BFRAMES:
+        case IDC_VCE_QPI:
+        case IDC_VCE_QPP:
+        case IDC_VCE_QPB:
+        case IDC_VCE_QPBDELTA:
             if (HIWORD(wParam) == EN_CHANGE ||
                 HIWORD(wParam) == CBN_SELCHANGE ||
                 HIWORD(wParam) == CBN_EDITCHANGE)
@@ -631,9 +681,32 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
             switch (((LPNMHDR)lParam)->idFrom)
             {
             case IDC_VCE_DEVSPIN: ctrl = IDC_VCE_DEVIDX; break;
-            case IDC_VCE_SPIN2: ctrl = IDC_VCE_MINQP; val = val > 51 ? 51 : val; break;
-            case IDC_VCE_SPIN3: ctrl = IDC_VCE_MAXQP; val = val > 51 ? 51 : val; break;
-            case IDC_VCE_SPIN4: ctrl = IDC_VCE_BFRAMES2; val = val > 16 ? 16 : val; break;
+            case IDC_VCE_SPIN2: ctrl = IDC_VCE_MINQP; break;
+            case IDC_VCE_SPIN3: ctrl = IDC_VCE_MAXQP; break;
+            case IDC_VCE_SPIN4: ctrl = IDC_VCE_BFRAMES; break;
+            case IDC_VCE_SPIN_I: ctrl = IDC_VCE_QPI; break;
+            case IDC_VCE_SPIN_P: ctrl = IDC_VCE_QPP; break;
+            case IDC_VCE_SPIN_B: ctrl = IDC_VCE_QPB; break;
+            case IDC_VCE_SPIN_BD: ctrl = IDC_VCE_QPBDELTA; break;
+            case IDC_VCE_SPIN_GOP: ctrl = IDC_VCE_GOP; break;
+            case IDC_VCE_SPIN_IDR: ctrl = IDC_VCE_IDR; break;
+            }
+
+            switch (((LPNMHDR)lParam)->idFrom)
+            {
+            case IDC_VCE_SPIN2:
+            case IDC_VCE_SPIN3:
+            case IDC_VCE_SPIN_I:
+            case IDC_VCE_SPIN_P:
+            case IDC_VCE_SPIN_B:
+            case IDC_VCE_SPIN_BD:
+                val = val > 51 ? 51 : val;
+                break;
+            case IDC_VCE_SPIN4: val = val > 16 ? 16 : val; break;
+            case IDC_VCE_SPIN_IDR:
+            case IDC_VCE_SPIN_GOP:
+                val = val > 1000 ? 1000 : val;
+                break;
             }
 
             if (ctrl > 0)
