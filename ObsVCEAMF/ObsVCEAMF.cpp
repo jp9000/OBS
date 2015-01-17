@@ -209,6 +209,7 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, const TCHAR*
 	, mClosing(false)
 	, mPrevTS(0)
 	, mOffsetTS(0)
+	, mDiscardFiller(false)
 {
 	mFrameMutex = OSCreateMutex();
 	mOutQueueMutex = OSCreateMutex();
@@ -218,6 +219,7 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, const TCHAR*
 	mIsWin8OrGreater = IsWindows8OrGreater();
 	mUseCBR = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCBR"), 1) != 0;
 	mKeyint = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("KeyframeInterval"), 0);
+	mDiscardFiller = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("DiscardFiller"), 0) != 0;
 
 	if (AppConfig->GetInt(TEXT("VCE Settings"), TEXT("NoInterop"), 0) != 0)
 	{
@@ -236,8 +238,9 @@ VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, const TCHAR*
 	memset(mInputBuffers, 0, sizeof(mInputBuffers));
 
 #ifdef _DEBUG
-	errno_t err = fopen_s(&mTmpFile, "obs_times.bin", "wb");
-	if (err) OSDebugOut(TEXT("Couldn't open profiling file. Ignored.\n"));
+	//errno_t err = fopen_s(&mTmpFile, "obs_times.bin", "wb");
+	/*errno_t err = fopen_s(&mTmpFile, "amf.h264", "wb");
+	if (err) OSDebugOut(TEXT("Couldn't open profiling file. Ignored.\n"));*/
 #endif
 }
 
@@ -389,7 +392,7 @@ bool VCEEncoder::Init()
 		res = mContext->InitDX11(/*mD3Ddevice ? mD3Ddevice : */mDX11Device.GetDevice(), amf::AMF_DX11_0);
 		RETURNIFFAILED(res, TEXT("AMF context init with D3D11 failed. %d\n"), res);
 		mCanInterop = true;
-		if (userCfg && AppConfig->GetInt(TEXT("VCE Settings"), TEXT("NoInterop"), 0) != 0)
+		if (AppConfig->GetInt(TEXT("VCE Settings"), TEXT("NoInterop"), 0) != 0)
 			mCanInterop = false;
 	}
 	else if (mEngine == 1)
@@ -469,7 +472,7 @@ bool VCEEncoder::Init()
 	RETURNIFFAILED(res, TEXT("AMFCreateComponent(encoder) failed. %d"), res);
 
 	// USAGE is a "preset" property so set before anything else
-	amf_int64 usage = 0; // AMF_VIDEO_ENCODER_USAGE_ENUM::AMF_VIDEO_ENCODER_USAGE_LOW_LATENCY;//AMF_VIDEO_ENCODER_USAGE_TRANSCONDING; // typos
+	amf_int64 usage = 0; //AMF_VIDEO_ENCODER_USAGE_ENUM::AMF_VIDEO_ENCODER_USAGE_LOW_LATENCY;//AMF_VIDEO_ENCODER_USAGE_TRANSCONDING; // typos
 	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_USAGE, usage);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_USAGE);
 
@@ -483,9 +486,13 @@ bool VCEEncoder::Init()
 	else if (x264prof.Compare(TEXT("base")))
 		profile = AMF_VIDEO_ENCODER_PROFILE_BASELINE;
 
-	//-----------------------
 	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_PROFILE, (amf_int64)profile);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_PROFILE);
+
+	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_PROFILE_LEVEL, (amf_int64)41);
+	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_PROFILE_LEVEL);
+
+	//-----------------------
 	/*res = mEncoder->SetProperty(L"QualityEnhancementMode", 0);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, L"QualityEnhancementMode");*/
 
@@ -603,7 +610,7 @@ bool VCEEncoder::Init()
 	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD, rcm);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD);
 
-	int window = 50;
+	int window = 0;// 50;
 	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_TARGET_BITRATE, mMaxBitrate * 1000);
 	RETURNIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_TARGET_BITRATE);
 
@@ -617,16 +624,37 @@ bool VCEEncoder::Init()
 	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_FRAMERATE, fps);
 	RETURNIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_FRAMERATE);
 
-	int qp = 23;
+	int qp = 23, qpI, qpP, qpB, qpBDelta = 4;
 	qp = 40 - (mQuality * 5) / 2; // 40 .. 15
 	//qp = 22 + (10 - mQuality); //Matching x264 CRF
-	VCELog(TEXT("Quality: %d => QP %d"), mQuality, qp);
-	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_QP_I, qp);
+	qpI = qpP = qpB = qp;
+	USERCFG(qpI, "QPI");
+	USERCFG(qpP, "QPP");
+	USERCFG(qpB, "QPB");
+	USERCFG(qpBDelta, "QPBDelta");
+
+	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_QP_I, qpI);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_QP_I);
-	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_QP_P, qp);
+	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_QP_P, qpP);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_QP_P);
-	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_QP_B, qp);
+	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_QP_B, qpB);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_QP_B);
+
+	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_B_PIC_DELTA_QP, qpBDelta);
+	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_B_PIC_DELTA_QP);
+
+	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_REF_B_PIC_DELTA_QP, qpBDelta);
+	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_REF_B_PIC_DELTA_QP);
+
+	qp = 18;
+	USERCFG(qp, "MinQP");
+	mEncoder->SetProperty(AMF_VIDEO_ENCODER_MIN_QP, qp);
+	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_MIN_QP);
+
+	qp = 51;
+	USERCFG(qp, "MaxQP");
+	mEncoder->SetProperty(AMF_VIDEO_ENCODER_MAX_QP, qp);
+	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_MAX_QP);
 
 	iInt = 0;
 	USERCFG(iInt, "FrameSkip");
@@ -634,29 +662,23 @@ bool VCEEncoder::Init()
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_RATE_CONTROL_SKIP_FRAME_ENABLE);
 
 	//B frames are not supported yet. Needs Composition Time fix.
-	mEncoder->SetProperty(AMF_VIDEO_ENCODER_B_REFERENCE_ENABLE, true);
+	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_B_REFERENCE_ENABLE, true);
+	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_B_REFERENCE_ENABLE);
 	iInt = 0;
 	USERCFG(iInt, "BFrames");
-	mEncoder->SetProperty(AMF_VIDEO_ENCODER_B_PIC_PATTERN, iInt);
+	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_B_PIC_PATTERN, iInt);
+	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_B_PIC_PATTERN);
 
-	//No point for now
-	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_HEADER_INSERTION_SPACING, gopSize < 1001 ? gopSize : 0);
-	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_HEADER_INSERTION_SPACING);
+	if (iInt > 0)
+	{
+		res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_HEADER_INSERTION_SPACING, gopSize < 1001 ? gopSize : 1000);
+		LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_HEADER_INSERTION_SPACING);
+	}
 
 	mEncoder->GetProperty(AMF_VIDEO_ENCODER_INTRA_REFRESH_NUM_MBS_PER_SLOT, &mIntraMBs);
 	//res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_INTRA_REFRESH_NUM_MBS_PER_SLOT, ((mHeight + 15) & ~15) / 16);
 	//LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_INTRA_REFRESH_NUM_MBS_PER_SLOT);
 	mEncoder->SetProperty(AMF_VIDEO_ENCODER_DE_BLOCKING_FILTER, true);
-
-	iInt = 18;
-	USERCFG(iInt, "MinQP");
-	mEncoder->SetProperty(AMF_VIDEO_ENCODER_MIN_QP, iInt);
-	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_MIN_QP);
-
-	iInt = 51;
-	USERCFG(iInt, "MaxQP");
-	mEncoder->SetProperty(AMF_VIDEO_ENCODER_MAX_QP, iInt);
-	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_MAX_QP);
 
 	//------------------------
 	// Print few caps etc.
@@ -900,7 +922,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
 #ifndef _DEBUG
 		start = GetQPCTime100NS() - start;
 #endif
-		fwrite(&start, sizeof(start), 1, mTmpFile);
+		//fwrite(&start, sizeof(start), 1, mTmpFile);
 	}
 
 	return true;
@@ -1110,6 +1132,9 @@ void VCEEncoder::ProcessBitstream(amf::AMFBufferPtr &buff)
 	const static uint8_t start_seq[] = { 0, 0, 1 };
 	start = std::search(start, end, start_seq, start_seq + 3);
 
+	if (mTmpFile)
+		fwrite(start, 1, buff->GetSize(), mTmpFile);
+
 	//FIXME
 	uint64_t dts = 0;// outputTimestamp;
 	uint64_t out_pts = buff->GetPts() / MS_TO_100NS;
@@ -1274,7 +1299,7 @@ void VCEEncoder::ProcessBitstream(amf::AMFBufferPtr &buff)
 					break;
 			}
 		}
-		else if (nal.i_type == NAL_AUD || nal.i_type == NAL_FILLER)
+		else if (nal.i_type == NAL_AUD || (!mDiscardFiller && nal.i_type == NAL_FILLER))
 		{
 			BYTE *skip = nal.p_payload;
 			while (*(skip++) != 0x1);

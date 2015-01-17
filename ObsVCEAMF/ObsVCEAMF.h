@@ -195,6 +195,7 @@ private:
 
 	bool       mUseCFR;
 	bool       mUseCBR;
+	bool       mDiscardFiller;
 	int32_t    mKeyint;
 	int32_t    mMaxBitrate;
 	int32_t    mBufferSize;
