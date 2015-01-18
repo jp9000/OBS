@@ -357,11 +357,6 @@ void NVENCEncoder::init()
                 encodeConfig.rcParams.rateControlMode = filler ? NV_ENC_PARAMS_RC_CBR : NV_ENC_PARAMS_RC_VBR;
             }
 
-            encodeConfig.rcParams.enableMaxQP = 1;
-            encodeConfig.rcParams.maxQP.qpInterP = 42;
-            encodeConfig.rcParams.maxQP.qpInterB = 42;
-            encodeConfig.rcParams.maxQP.qpIntra = 27;
-
             encodeConfig.frameIntervalP = 1;
 
             encodeConfig.encodeCodecConfig.h264Config.adaptiveTransformMode = NV_ENC_H264_ADAPTIVE_TRANSFORM_ENABLE;
