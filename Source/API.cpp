@@ -264,7 +264,7 @@ bool OBS::SetScene(CTSTR lpScene)
     bChangingSources = true;
     ListView_DeleteAllItems(hwndSources);
 
-    bool bSkipTransition = false;
+    bool bSkipTransition = !performTransition;
 
     XElement *sources = sceneElement->GetElement(TEXT("sources"));
     if(sources)
@@ -679,6 +679,9 @@ public:
     }
     virtual CTSTR GetSceneCollectionName() const { return App->GetCurrentSceneCollection(); }
     virtual void GetSceneCollectionNames(StringList &list) const { return App->GetSceneCollection(list); }
+    virtual void DisableTransitions()          { App->performTransition = false; }
+    virtual void EnableTransitions()           { App->performTransition = true; }
+    virtual bool TransitionsEnabled() const    { return App->performTransition; }
 };
 
 APIInterface* CreateOBSApiInterface()
