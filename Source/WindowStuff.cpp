@@ -3025,6 +3025,14 @@ void OBS::RemoveProfile()
 
         GlobalConfig->SetString(L"General", L"Profile", GetPathWithoutExtension(nextFile));
 
+        strCurProfilePath.Clear();
+        strCurProfilePath << strCurProfileDir << nextFile;
+        if (!AppConfig->Open(strCurProfilePath))
+        {
+            OBSMessageBox(hwndMain, TEXT("Error - unable to open ini file"), NULL, 0);
+            return;
+        }
+
         App->ReloadIniSettings();
         App->ResetApplicationName();
         App->ResetProfileMenu();
