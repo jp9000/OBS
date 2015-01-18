@@ -347,13 +347,14 @@ void NVENCEncoder::init()
 
         if (bUseCBR)
         {
+            auto filler = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 1) != 0;
             if (is2PassRC)
             {
-                encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_2_PASS_QUALITY;
+                encodeConfig.rcParams.rateControlMode = filler ? NV_ENC_PARAMS_RC_2_PASS_FRAMESIZE_CAP : NV_ENC_PARAMS_RC_2_PASS_VBR;
             }
             else
             {
-                encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
+                encodeConfig.rcParams.rateControlMode = filler ? NV_ENC_PARAMS_RC_CBR : NV_ENC_PARAMS_RC_VBR;
             }
 
             encodeConfig.rcParams.enableMaxQP = 1;
@@ -1032,14 +1033,18 @@ String NVENCEncoder::GetInfoString() const
         profile = "constrained high";
 
     String cbr = "no";
-    if (encodeConfig.rcParams.rateControlMode == NV_ENC_PARAMS_RC_CBR)
+    switch (encodeConfig.rcParams.rateControlMode)
     {
+    case NV_ENC_PARAMS_RC_CBR:
         cbr = "yes";
-    }
-    else if (encodeConfig.rcParams.rateControlMode == NV_ENC_PARAMS_RC_2_PASS_QUALITY
-          || encodeConfig.rcParams.rateControlMode == NV_ENC_PARAMS_RC_2_PASS_FRAMESIZE_CAP)
-    {
+        break;
+    case NV_ENC_PARAMS_RC_2_PASS_QUALITY:
+    case NV_ENC_PARAMS_RC_2_PASS_FRAMESIZE_CAP:
         cbr = "yes (2pass)";
+        break;
+    case NV_ENC_PARAMS_RC_2_PASS_VBR:
+        cbr = "no (2pass)";
+        break;
     }
 
     String cfr = "yes";
