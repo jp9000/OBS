@@ -347,19 +347,15 @@ void NVENCEncoder::init()
 
         if (bUseCBR)
         {
+            auto filler = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 1) != 0;
             if (is2PassRC)
             {
-                encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_2_PASS_QUALITY;
+                encodeConfig.rcParams.rateControlMode = filler ? NV_ENC_PARAMS_RC_2_PASS_FRAMESIZE_CAP : NV_ENC_PARAMS_RC_2_PASS_VBR;
             }
             else
             {
-                encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
+                encodeConfig.rcParams.rateControlMode = filler ? NV_ENC_PARAMS_RC_CBR : NV_ENC_PARAMS_RC_VBR;
             }
-
-            encodeConfig.rcParams.enableMaxQP = 1;
-            encodeConfig.rcParams.maxQP.qpInterP = 42;
-            encodeConfig.rcParams.maxQP.qpInterB = 42;
-            encodeConfig.rcParams.maxQP.qpIntra = 27;
 
             encodeConfig.frameIntervalP = 1;
 
@@ -377,6 +373,8 @@ void NVENCEncoder::init()
             encodeConfig.frameIntervalP = 3;
         }
 
+        encodeConfig.encodeCodecConfig.h264Config.outputBufferingPeriodSEI = 1;
+        encodeConfig.encodeCodecConfig.h264Config.outputPictureTimingSEI = 1;
         encodeConfig.encodeCodecConfig.h264Config.disableSPSPPS = 1;
 
         encodeConfig.encodeCodecConfig.h264Config.enableVFR = bUseCFR ? 0 : 1;
@@ -1030,14 +1028,18 @@ String NVENCEncoder::GetInfoString() const
         profile = "constrained high";
 
     String cbr = "no";
-    if (encodeConfig.rcParams.rateControlMode == NV_ENC_PARAMS_RC_CBR)
+    switch (encodeConfig.rcParams.rateControlMode)
     {
+    case NV_ENC_PARAMS_RC_CBR:
         cbr = "yes";
-    }
-    else if (encodeConfig.rcParams.rateControlMode == NV_ENC_PARAMS_RC_2_PASS_QUALITY
-          || encodeConfig.rcParams.rateControlMode == NV_ENC_PARAMS_RC_2_PASS_FRAMESIZE_CAP)
-    {
+        break;
+    case NV_ENC_PARAMS_RC_2_PASS_QUALITY:
+    case NV_ENC_PARAMS_RC_2_PASS_FRAMESIZE_CAP:
         cbr = "yes (2pass)";
+        break;
+    case NV_ENC_PARAMS_RC_2_PASS_VBR:
+        cbr = "no (2pass)";
+        break;
     }
 
     String cfr = "yes";
