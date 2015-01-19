@@ -65,6 +65,8 @@ BOOL ConfigFile::LoadFile(DWORD dwOpenMode)
         return 0;
     }
 
+    OSEnterMutex(hHorribleThreadSafetyMutex);
+
     if(bOpen)
         Close();
 
@@ -93,11 +95,14 @@ BOOL ConfigFile::LoadFile(DWORD dwOpenMode)
 
     bOpen = 1;
 
+    OSLeaveMutex(hHorribleThreadSafetyMutex);
+
     return 1;
 }
 
 void ConfigFile::LoadData()
 {
+    OSEnterMutex(hHorribleThreadSafetyMutex);
     TSTR lpCurLine = lpFileData, lpNextLine;
     ConfigSection *lpCurSection=NULL;
     DWORD i;
@@ -156,10 +161,13 @@ void ConfigFile::LoadData()
 
         *lpNextLine = '\r';
     }
+
+    OSLeaveMutex(hHorribleThreadSafetyMutex);
 }
 
 void ConfigFile::Close()
 {
+    OSEnterMutex(hHorribleThreadSafetyMutex);
     DWORD i,j,k;
 
     for(i=0; i<Sections.Num(); i++)
@@ -188,10 +196,13 @@ void ConfigFile::Close()
     }
 
     bOpen = 0;
+
+    OSLeaveMutex(hHorribleThreadSafetyMutex);
 }
 
 BOOL ConfigFile::SaveAs(CTSTR lpPath)
 {
+    OSEnterMutex(hHorribleThreadSafetyMutex);
     XFile newFile;
     
     String tmpPath = lpPath;
@@ -200,17 +211,27 @@ BOOL ConfigFile::SaveAs(CTSTR lpPath)
     if (newFile.Open(tmpPath, XFILE_WRITE, XFILE_CREATEALWAYS))
     {
         if (newFile.Write("\xEF\xBB\xBF", 3) != 3)
+        {
+            OSLeaveMutex(hHorribleThreadSafetyMutex);
             return FALSE;
+        }
+
         if (!newFile.WriteAsUTF8(lpFileData))
+        {
+            OSLeaveMutex(hHorribleThreadSafetyMutex);
             return FALSE;
+        }
 
         newFile.Close();
         if (!OSRenameFile(tmpPath, lpPath))
             Log(TEXT("ConfigFile::SaveAs: Unable to move new config file %s to %s"), tmpPath.Array(), lpPath);
 
         strFileName = lpPath;
+        OSLeaveMutex(hHorribleThreadSafetyMutex);
         return TRUE;
     }
+
+    OSLeaveMutex(hHorribleThreadSafetyMutex);
 
     return FALSE;
 }
@@ -222,6 +243,7 @@ void ConfigFile::SetFilePath(CTSTR lpPath)
 
 String ConfigFile::GetString(CTSTR lpSection, CTSTR lpKey, CTSTR def)
 {
+    OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
 
@@ -236,10 +258,15 @@ String ConfigFile::GetString(CTSTR lpSection, CTSTR lpKey, CTSTR def)
             {
                 ConfigKey &key = section.Keys[j];
                 if(scmpi(lpKey, key.name) == 0)
+                {
+                    OSLeaveMutex(hHorribleThreadSafetyMutex);
                     return String(key.ValueList[0]);
+                }
             }
         }
     }
+
+    OSLeaveMutex(hHorribleThreadSafetyMutex);
 
     if(def)
         return String(def);
@@ -249,6 +276,7 @@ String ConfigFile::GetString(CTSTR lpSection, CTSTR lpKey, CTSTR def)
 
 CTSTR ConfigFile::GetStringPtr(CTSTR lpSection, CTSTR lpKey, CTSTR def)
 {
+    OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
 
@@ -263,10 +291,15 @@ CTSTR ConfigFile::GetStringPtr(CTSTR lpSection, CTSTR lpKey, CTSTR def)
             {
                 ConfigKey &key = section.Keys[j];
                 if(scmpi(lpKey, key.name) == 0)
+                {
+                    OSLeaveMutex(hHorribleThreadSafetyMutex);
                     return key.ValueList[0];
+                }
             }
         }
     }
+
+    OSLeaveMutex(hHorribleThreadSafetyMutex);
 
     if(def)
         return def;
@@ -276,6 +309,7 @@ CTSTR ConfigFile::GetStringPtr(CTSTR lpSection, CTSTR lpKey, CTSTR def)
 
 int ConfigFile::GetInt(CTSTR lpSection, CTSTR lpKey, int def)
 {
+    OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
 
@@ -292,24 +326,35 @@ int ConfigFile::GetInt(CTSTR lpSection, CTSTR lpKey, int def)
                 if(scmpi(lpKey, key.name) == 0)
                 {
                     if(scmpi(key.ValueList[0], TEXT("true")) == 0)
+                    {
+                        OSLeaveMutex(hHorribleThreadSafetyMutex);
                         return 1;
+                    }
                     else if(scmpi(key.ValueList[0], TEXT("false")) == 0)
+                    {
+                        OSLeaveMutex(hHorribleThreadSafetyMutex);
                         return 0;
+                    }
                     else
                     {
                         if(ValidIntString(key.ValueList[0]))
+                        {
+                            OSLeaveMutex(hHorribleThreadSafetyMutex);
                             return tstring_base_to_int(key.ValueList[0], NULL, 0);
+                        }
                     }
                 }
             }
         }
     }
 
+    OSLeaveMutex(hHorribleThreadSafetyMutex);
     return def;
 }
 
 DWORD ConfigFile::GetHex(CTSTR lpSection, CTSTR lpKey, DWORD def)
 {
+    OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
 
@@ -324,16 +369,21 @@ DWORD ConfigFile::GetHex(CTSTR lpSection, CTSTR lpKey, DWORD def)
             {
                 ConfigKey &key = section.Keys[j];
                 if(scmpi(lpKey, key.name) == 0)
+                {
+                    OSLeaveMutex(hHorribleThreadSafetyMutex);
                     return tstring_base_to_int(key.ValueList[0], NULL, 0);
+                }
             }
         }
     }
 
+    OSLeaveMutex(hHorribleThreadSafetyMutex);
     return def;
 }
 
 float ConfigFile::GetFloat(CTSTR lpSection, CTSTR lpKey, float def)
 {
+    OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
 
@@ -348,16 +398,21 @@ float ConfigFile::GetFloat(CTSTR lpSection, CTSTR lpKey, float def)
             {
                 ConfigKey &key = section.Keys[j];
                 if(scmpi(lpKey, key.name) == 0)
+                {
+                    OSLeaveMutex(hHorribleThreadSafetyMutex);
                     return (float)tstof(key.ValueList[0]);
+                }
             }
         }
     }
 
+    OSLeaveMutex(hHorribleThreadSafetyMutex);
     return def;
 }
 
 Color4 ConfigFile::GetColor(CTSTR lpSection, CTSTR lpKey)
 {
+    OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
 
@@ -391,10 +446,12 @@ Color4 ConfigFile::GetColor(CTSTR lpSection, CTSTR lpKey)
                         if(!(strValue = schr(strValue, ',')))
                         {
                             ret.w = 1.0f;
+                            OSLeaveMutex(hHorribleThreadSafetyMutex);
                             return ret;
                         }
                         ret.w = float(tstof(++strValue));
 
+                        OSLeaveMutex(hHorribleThreadSafetyMutex);
                         return ret;
                     }
                     else if(*strValue == '[')
@@ -414,15 +471,18 @@ Color4 ConfigFile::GetColor(CTSTR lpSection, CTSTR lpKey)
                         if(!(strValue = schr(strValue, ',')))
                         {
                             ret.w = 1.0f;
+                            OSLeaveMutex(hHorribleThreadSafetyMutex);
                             return ret;
                         }
                         ret.w = (float(tstoi(++strValue))/255.0f)+0.001f;
 
+                        OSLeaveMutex(hHorribleThreadSafetyMutex);
                         return ret;
                     }
                     else if( (*LPWORD(strValue) == 'x0') ||
                         (*LPWORD(strValue) == 'X0') )
                     {
+                        OSLeaveMutex(hHorribleThreadSafetyMutex);
                         return RGBA_to_Vect4(tstring_base_to_int(strValue+2, NULL, 16));
                     }
                 }
@@ -430,11 +490,13 @@ Color4 ConfigFile::GetColor(CTSTR lpSection, CTSTR lpKey)
         }
     }
 
+    OSLeaveMutex(hHorribleThreadSafetyMutex);
     return Color4(0.0f, 0.0f, 0.0f, 0.0f);
 }
 
 BOOL ConfigFile::GetStringList(CTSTR lpSection, CTSTR lpKey, StringList &StrList)
 {
+    OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
 
@@ -461,11 +523,13 @@ BOOL ConfigFile::GetStringList(CTSTR lpSection, CTSTR lpKey, StringList &StrList
         }
     }
 
+    OSLeaveMutex(hHorribleThreadSafetyMutex);
     return bFoundKey;
 }
 
 BOOL ConfigFile::GetIntList(CTSTR lpSection, CTSTR lpKey, List<int> &IntList)
 {
+    OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
 
@@ -501,11 +565,13 @@ BOOL ConfigFile::GetIntList(CTSTR lpSection, CTSTR lpKey, List<int> &IntList)
         }
     }
 
+    OSLeaveMutex(hHorribleThreadSafetyMutex);
     return bFoundKey;
 }
 
 BOOL ConfigFile::GetFloatList(CTSTR lpSection, CTSTR lpKey, List<float> &FloatList)
 {
+    OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
 
@@ -531,11 +597,13 @@ BOOL ConfigFile::GetFloatList(CTSTR lpSection, CTSTR lpKey, List<float> &FloatLi
         }
     }
 
+    OSLeaveMutex(hHorribleThreadSafetyMutex);
     return bFoundKey;
 }
 
 BOOL ConfigFile::GetColorList(CTSTR lpSection, CTSTR lpKey, List<Color4> &ColorList)
 {
+    OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
 
@@ -609,6 +677,7 @@ BOOL ConfigFile::GetColorList(CTSTR lpSection, CTSTR lpKey, List<Color4> &ColorL
         }
     }
 
+    OSLeaveMutex(hHorribleThreadSafetyMutex);
     return bFoundKey;
 }
 
@@ -751,6 +820,7 @@ void ConfigFile::SetColorList(CTSTR lpSection, CTSTR lpKey, List<Color4> &ColorL
 
 BOOL  ConfigFile::HasKey(CTSTR lpSection, CTSTR lpKey)
 {
+    OSEnterMutex(hHorribleThreadSafetyMutex);
     for(unsigned int i=0; i<Sections.Num(); i++)
     {
         ConfigSection &section = Sections[i];
@@ -759,11 +829,15 @@ BOOL  ConfigFile::HasKey(CTSTR lpSection, CTSTR lpKey)
             for(unsigned int j=0; j<section.Keys.Num(); j++)
             {
                 if(scmpi(section.Keys[j].name, lpKey) == 0)
+                {
+                    OSLeaveMutex(hHorribleThreadSafetyMutex);
                     return TRUE;
+                }
             }
         }
     }
 
+    OSLeaveMutex(hHorribleThreadSafetyMutex);
     return FALSE;
 }
 
@@ -771,6 +845,7 @@ BOOL  ConfigFile::HasKey(CTSTR lpSection, CTSTR lpKey)
 
 void  ConfigFile::SetKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
 {
+    OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
     TSTR lpTemp = lpFileData, lpEnd = &lpFileData[dwLength], lpSectionStart;
@@ -810,6 +885,8 @@ void  ConfigFile::SetKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
 
         if(LoadFile(XFILE_OPENEXISTING))
             LoadData();
+
+        OSLeaveMutex(hHorribleThreadSafetyMutex);
         return;
     }
 
@@ -829,6 +906,8 @@ void  ConfigFile::SetKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
 
             if(LoadFile(XFILE_OPENEXISTING))
                 LoadData();
+
+            OSLeaveMutex(hHorribleThreadSafetyMutex);
             return;
         }
         else if(*(LPWORD)lpTemp == '//')
@@ -846,7 +925,10 @@ void  ConfigFile::SetKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
                 int newlen = slen(newvalue);
 
                 if ((*lpTemp == '\r' && *newvalue == '\0') || (lpNextLine - lpTemp == newlen && !scmp_n(lpTemp, newvalue, newlen)))
+                {
+                    OSLeaveMutex(hHorribleThreadSafetyMutex);
                     return;
+                }
 
                 String tmpFileName = strFileName;
                 tmpFileName += TEXT(".tmp");
@@ -855,13 +937,25 @@ void  ConfigFile::SetKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
                 if (file.Open(tmpFileName, XFILE_WRITE, XFILE_CREATEALWAYS))
                 {
                     if (file.Write("\xEF\xBB\xBF", 3) != 3)
+                    {
+                        OSLeaveMutex(hHorribleThreadSafetyMutex);
                         return;
+                    }
                     if (!file.WriteAsUTF8(&lpFileData[2], DWORD(lpTemp - lpFileData - 2)))
+                    {
+                        OSLeaveMutex(hHorribleThreadSafetyMutex);
                         return;
+                    }
                     if (!file.WriteAsUTF8(newvalue, slen(newvalue)))
+                    {
+                        OSLeaveMutex(hHorribleThreadSafetyMutex);
                         return;
+                    }
                     if (!file.WriteAsUTF8(lpNextLine, slen(lpNextLine) - 2))
+                    {
+                        OSLeaveMutex(hHorribleThreadSafetyMutex);
                         return;
+                    }
 
                     file.Close();
                     if (!OSRenameFile(tmpFileName, strFileName))
@@ -870,6 +964,8 @@ void  ConfigFile::SetKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
 
                 if(LoadFile(XFILE_OPENEXISTING))
                     LoadData();
+
+                OSLeaveMutex(hHorribleThreadSafetyMutex);
                 return;
             }
         }
@@ -889,10 +985,13 @@ void  ConfigFile::SetKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
 
     if(LoadFile(XFILE_OPENEXISTING))
         LoadData();
+
+    OSLeaveMutex(hHorribleThreadSafetyMutex);
 }
 
 void  ConfigFile::Remove(CTSTR lpSection, CTSTR lpKey)
 {
+    OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
     TSTR lpTemp = lpFileData, lpEnd = &lpFileData[dwLength], lpSectionStart;
@@ -915,12 +1014,18 @@ void  ConfigFile::Remove(CTSTR lpSection, CTSTR lpKey)
     }while(lpTemp < lpEnd);
 
     if(!bInSection)
+    {
+        OSLeaveMutex(hHorribleThreadSafetyMutex);
         return;  //not possible, usually.
+    }
 
     do
     {
         if(*lpTemp == '[')
+        {
+            OSLeaveMutex(hHorribleThreadSafetyMutex);
             return;
+        }
         else if(bInSection && (*(LPWORD)lpTemp != '//'))
         {
             if((scmpi_n(lpTemp, lpKey, dwKeyNameSize) == 0) && (lpTemp[dwKeyNameSize] == '='))
@@ -934,12 +1039,16 @@ void  ConfigFile::Remove(CTSTR lpSection, CTSTR lpKey)
 
                 if(LoadFile(XFILE_OPENEXISTING))
                     LoadData();
+
+                OSLeaveMutex(hHorribleThreadSafetyMutex);
                 return;
             }
         }
 
         lpTemp = schr(lpTemp, '\n')+1;
     }while(lpTemp < lpEnd);
+
+    OSLeaveMutex(hHorribleThreadSafetyMutex);
 }
 
 void  ConfigFile::AddKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
@@ -981,6 +1090,8 @@ void  ConfigFile::AddKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
 
         if(LoadFile(XFILE_OPENEXISTING))
             LoadData();
+
+        OSLeaveMutex(hHorribleThreadSafetyMutex);
         return;
     }
 
@@ -1002,6 +1113,8 @@ void  ConfigFile::AddKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
 
             if(LoadFile(XFILE_OPENEXISTING))
                 LoadData();
+
+            OSLeaveMutex(hHorribleThreadSafetyMutex);
             return;
         }
         else if(*(LPWORD)lpTemp == '//')
@@ -1030,6 +1143,8 @@ void  ConfigFile::AddKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
 
                 if(LoadFile(XFILE_OPENEXISTING))
                     LoadData();
+
+                OSLeaveMutex(hHorribleThreadSafetyMutex);
                 return;
             }
         }
@@ -1049,4 +1164,6 @@ void  ConfigFile::AddKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
 
     if(LoadFile(XFILE_OPENEXISTING))
         LoadData();
+
+    OSLeaveMutex(hHorribleThreadSafetyMutex);
 }
