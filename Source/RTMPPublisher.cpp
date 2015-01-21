@@ -787,7 +787,7 @@ void RTMPPublisher::BeginPublishing()
 void LogInterfaceType (RTMP *rtmp)
 {
     MIB_IPFORWARDROW    route;
-    DWORD               destAddr;
+    DWORD               destAddr, sourceAddr;
     CHAR                hostname[256];
 
     if (rtmp->Link.hostname.av_len >= sizeof(hostname)-1)
@@ -802,7 +802,14 @@ void LogInterfaceType (RTMP *rtmp)
 
     destAddr = *(DWORD *)h->h_addr_list[0];
 
-    if (!GetBestRoute (destAddr, rtmp->m_bindIP.addr.sin_addr.S_un.S_addr, &route))
+    if (rtmp->m_bindIP.addrLen == 0)
+        sourceAddr = 0;
+    else if (rtmp->m_bindIP.addr.ss_family == AF_INET)
+        sourceAddr = (*(struct sockaddr_in *)&rtmp->m_bindIP).sin_addr.S_un.S_addr;
+    else
+        return; // getting route for IPv6 is far more complex, ignore for now
+
+    if (!GetBestRoute (destAddr, sourceAddr, &route))
     {
         MIB_IFROW row;
         zero (&row, sizeof(row));
@@ -1041,9 +1048,14 @@ DWORD WINAPI RTMPPublisher::CreateConnectionThread(RTMPPublisher *publisher)
     if (scmp(strBindIP, TEXT("Default")))
     {
         Log(TEXT("  Binding to non-default IP %s"), strBindIP.Array());
-        rtmp->m_bindIP.addr.sin_family = AF_INET;
+
+        if (schr(strBindIP.Array(), ':'))
+            rtmp->m_bindIP.addr.ss_family = AF_INET6;
+        else
+            rtmp->m_bindIP.addr.ss_family = AF_INET;
         rtmp->m_bindIP.addrLen = sizeof(rtmp->m_bindIP.addr);
-        if (WSAStringToAddress(strBindIP.Array(), AF_INET, NULL, (LPSOCKADDR)&rtmp->m_bindIP.addr, &rtmp->m_bindIP.addrLen) == SOCKET_ERROR)
+
+        if (WSAStringToAddress(strBindIP.Array(), rtmp->m_bindIP.addr.ss_family, NULL, (LPSOCKADDR)&rtmp->m_bindIP.addr, &rtmp->m_bindIP.addrLen) == SOCKET_ERROR)
         {
             // no localization since this should rarely/never happen
             failReason = TEXT("WSAStringToAddress: Could not parse address");

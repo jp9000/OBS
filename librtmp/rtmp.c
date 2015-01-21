@@ -1087,7 +1087,7 @@ int RTMP_SetupURL2(RTMP *r, char *url, char *playpath)
 }
 
 static int
-add_addr_info(struct sockaddr_in *service, AVal *host, int port)
+add_addr_info(struct sockaddr_storage *service, AVal *host, int port)
 {
     char *hostname;
     int ret = TRUE;
@@ -1102,20 +1102,50 @@ add_addr_info(struct sockaddr_in *service, AVal *host, int port)
         hostname = host->av_val;
     }
 
-    service->sin_addr.s_addr = inet_addr(hostname);
-    if (service->sin_addr.s_addr == INADDR_NONE)
+    struct addrinfo hints;
+    struct addrinfo *result = NULL;
+    struct addrinfo *ptr = NULL;
+
+    memset(&hints, 0, sizeof(hints));
+
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    service->ss_family = AF_UNSPEC;
+
+    char portStr[8];
+
+    itoa(port, portStr, 10);
+
+    int err = getaddrinfo(hostname, portStr, &hints, &result);
+
+    if (err)
     {
-        struct hostent *host = gethostbyname(hostname);
-        if (host == NULL || host->h_addr == NULL)
-        {
-            RTMP_Log(RTMP_LOGERROR, "Problem accessing the DNS. (addr: %s, error: %d)", hostname, GetSockError());
-            ret = FALSE;
-            goto finish;
-        }
-        service->sin_addr = *(struct in_addr *)host->h_addr;
+        RTMP_Log(RTMP_LOGERROR, "Could not resolve %s: %s (%d)", hostname, gai_strerrorA(GetSockError()), GetSockError());
+        ret = FALSE;
+        goto finish;
     }
 
-    service->sin_port = htons(port);
+    // they should come back in OS preferred order
+    for (ptr = result; ptr != NULL; ptr = ptr->ai_next)
+    {
+        if (ptr->ai_family == AF_INET || ptr->ai_family == AF_INET6)
+        {
+            memcpy(service, ptr->ai_addr, ptr->ai_addrlen);
+            break;
+        }
+    }
+
+    freeaddrinfo(result);
+
+    if (service->ss_family == AF_UNSPEC)
+    {
+        RTMP_Log(RTMP_LOGERROR, "Could not resolve server '%s': no valid address found", hostname);
+        ret = FALSE;
+        goto finish;
+    }
+
 finish:
     if (hostname != host->av_val)
         free(hostname);
@@ -1132,7 +1162,7 @@ RTMP_Connect0(RTMP *r, struct sockaddr * service)
 
     //best to be explicit, we need overlapped socket
     //r->m_sb.sb_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    r->m_sb.sb_socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
+    r->m_sb.sb_socket = WSASocket(service->sa_family, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
 
     if (r->m_sb.sb_socket != -1)
     {
@@ -1148,7 +1178,7 @@ RTMP_Connect0(RTMP *r, struct sockaddr * service)
             }
         }
 
-        if (connect(r->m_sb.sb_socket, service, sizeof(struct sockaddr)) < 0)
+        if (connect(r->m_sb.sb_socket, service, sizeof(struct sockaddr_storage)) < 0)
         {
             int err = GetSockError();
             if (err == 10061)
@@ -1274,7 +1304,7 @@ int
 RTMP_Connect(RTMP *r, RTMPPacket *cp)
 {
     HOSTENT *h;
-    struct sockaddr_in service;
+    struct sockaddr_storage service;
     if (!r->Link.hostname.av_len)
         return FALSE;
 
@@ -1286,8 +1316,7 @@ RTMP_Connect(RTMP *r, RTMPPacket *cp)
         return FALSE;
     }
 
-    memset(&service, 0, sizeof(struct sockaddr_in));
-    service.sin_family = AF_INET;
+    memset(&service, 0, sizeof(service));
 
     if (r->Link.socksport)
     {
@@ -1314,11 +1343,16 @@ static int
 SocksNegotiate(RTMP *r)
 {
     unsigned long addr;
-    struct sockaddr_in service;
-    memset(&service, 0, sizeof(struct sockaddr_in));
+    struct sockaddr_storage service;
+    memset(&service, 0, sizeof(service));
 
     add_addr_info(&service, &r->Link.hostname, r->Link.port);
-    addr = htonl(service.sin_addr.s_addr);
+
+    // not doing IPv6 socks
+    if (service.ss_family == AF_INET6)
+        return FALSE;
+
+    addr = htonl((*(struct sockaddr_in *)&service).sin_addr.s_addr);
 
     {
         char packet[] =
