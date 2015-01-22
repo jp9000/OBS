@@ -285,7 +285,7 @@
 #define IDC_PLAYBACKDEVICES             1142
 #define IDC_AUDIOTIMEADJUST_EDIT        1144
 #define IDC_LATENCYMETHOD               1145
-#define IDC_EDIT2                       1147
+#define IDC_DISABLETCPOPTIMIZATIONS     1146
 #define IDC_LATENCYTUNE                 1147
 #define IDC_SETSTREAMSIZE               1148
 #define IDC_GAMMAVAL                    1151

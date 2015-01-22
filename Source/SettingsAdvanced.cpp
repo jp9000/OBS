@@ -211,6 +211,9 @@ void SettingsAdvanced::ApplySettings()
     AppConfig->SetInt   (TEXT("Publish"),        TEXT("LatencyFactor"),     latencyFactor);
     AppConfig->SetInt   (TEXT("Publish"),        TEXT("LowLatencyMethod"),  bLowLatencyAutoMode);
 
+    BOOL bDisableTCPOptimizations = SendDlgItemMessage(hwnd, IDC_DISABLETCPOPTIMIZATIONS, BM_GETCHECK, 0, 0) == BST_CHECKED;
+    AppConfig->SetInt(TEXT("Publish"), TEXT("DisableSendWindowOptimization"), bDisableTCPOptimizations);
+
     //--------------------------------------------------
 
     strTemp = GetCBText(GetDlgItem(hwnd, IDC_BINDIP));
@@ -257,6 +260,7 @@ void SettingsAdvanced::SetDefaults()
     SendMessage(GetDlgItem(hwnd, IDC_BINDIP), CB_SETCURSEL, 0, 0);
     SendMessage(GetDlgItem(hwnd, IDC_DISABLEPREVIEWENCODING), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_ALLOWOTHERHOTKEYMODIFIERS), BM_SETCHECK, BST_CHECKED, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_DISABLETCPOPTIMIZATIONS), BM_SETCHECK, BST_UNCHECKED, 0);
 
     ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
     SetChangedSettings(true);
@@ -482,6 +486,9 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 int bLowLatencyAutoMethod = AppConfig->GetInt(TEXT("Publish"), TEXT("LowLatencyMethod"), 0);
                 SendMessage(GetDlgItem(hwnd, IDC_LATENCYMETHOD), BM_SETCHECK, bLowLatencyAutoMethod ? BST_CHECKED : BST_UNCHECKED, 0);
 
+                BOOL bDisableTCPOptimizations = AppConfig->GetInt(TEXT("Publish"), TEXT("DisableSendWindowOptimization"), 0);
+                SendMessage(GetDlgItem(hwnd, IDC_DISABLETCPOPTIMIZATIONS), BM_SETCHECK, bDisableTCPOptimizations ? BST_CHECKED : BST_UNCHECKED, 0);
+
                 //------------------------------------
 
                 IP_ADAPTER_ADDRESSES *ipTable;
@@ -640,6 +647,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 case IDC_USEMULTITHREADEDOPTIMIZATIONS:
                 case IDC_UNLOCKHIGHFPS:
                 case IDC_LATENCYMETHOD:
+                case IDC_DISABLETCPOPTIMIZATIONS:
                     if(HIWORD(wParam) == BN_CLICKED)
                     {
                         if (App->GetVideoEncoder())
