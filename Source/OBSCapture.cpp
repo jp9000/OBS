@@ -838,7 +838,7 @@ retryHookTestV2:
 
     //-------------------------------------------------------------
 
-    colorDesc.fullRange = false;
+    colorDesc.fullRange = AppConfig->GetInt(L"Video", L"FullRange") != 0;
     colorDesc.primaries = ColorPrimaries_BT709;
     colorDesc.transfer  = ColorTransfer_IEC6196621;
     colorDesc.matrix    = outputCX >= 1280 || outputCY > 576 ? ColorMatrix_BT709 : ColorMatrix_SMPTE170M;

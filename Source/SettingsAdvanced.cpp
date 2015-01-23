@@ -162,7 +162,9 @@ void SettingsAdvanced::ApplySettings()
     //--------------------------------------------------
 
     BOOL bUnlockFPS = SendMessage(GetDlgItem(hwnd, IDC_UNLOCKHIGHFPS), BM_GETCHECK, 0, 0) == BST_CHECKED;
-    AppConfig->SetInt   (TEXT("Video"), TEXT("UnlockFPS"), bUnlockFPS);
+    BOOL bFullRange = SendMessage(GetDlgItem(hwnd, IDC_ENCODEFULLRANGE), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    AppConfig->SetInt(TEXT("Video"), TEXT("UnlockFPS"), bUnlockFPS);
+    AppConfig->SetInt(TEXT("Video"), TEXT("FullRange"), bFullRange);
 
     //------------------------------------
 
@@ -247,6 +249,7 @@ void SettingsAdvanced::SetDefaults()
     SendMessage(GetDlgItem(hwnd, IDC_USEVIDEOENCODERSETTINGS), BM_SETCHECK, BST_UNCHECKED, 0);
     EnableWindow(GetDlgItem(hwnd, IDC_VIDEOENCODERSETTINGS), FALSE);
     SendMessage(GetDlgItem(hwnd, IDC_UNLOCKHIGHFPS), BM_SETCHECK, BST_UNCHECKED, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_ENCODEFULLRANGE), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_NVENCPRESET), CB_SETCURSEL, 0, 0);
     SendMessage(GetDlgItem(hwnd, IDC_QSVPRESET), CB_SETCURSEL, 0, 0);
@@ -384,7 +387,9 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 //--------------------------------------------
 
                 bool bUnlockFPS = AppConfig->GetInt(TEXT("Video"), TEXT("UnlockFPS")) != 0;
+                bool bFullRange = AppConfig->GetInt(TEXT("Video"), TEXT("FullRange")) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_UNLOCKHIGHFPS), BM_SETCHECK, bUnlockFPS ? BST_CHECKED : BST_UNCHECKED, 0);
+                SendMessage(GetDlgItem(hwnd, IDC_ENCODEFULLRANGE), BM_SETCHECK, bFullRange ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 //------------------------------------
 
@@ -644,6 +649,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 case IDC_USEMICQPC:
                 case IDC_SYNCTOVIDEOTIME:
                 case IDC_USECFR:
+                case IDC_ENCODEFULLRANGE:
                 case IDC_USEMULTITHREADEDOPTIMIZATIONS:
                 case IDC_UNLOCKHIGHFPS:
                 case IDC_LATENCYMETHOD:

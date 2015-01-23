@@ -271,6 +271,7 @@
 #define IDC_TIMELEFT                    1127
 #define IDC_REPLAYBUFFERLENGTH_STATIC   1127
 #define IDC_UNLOCKHIGHFPS               1128
+#define IDC_ENCODEFULLRANGE             1129
 #define IDC_CANCEL                      1130
 #define IDC_UNLOCKHIGHFPS2              1130
 #define IDC_USEQSV                      1130
