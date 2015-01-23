@@ -25,6 +25,13 @@ struct ResSize
     UINT cy;
 };
 
+enum
+{
+    COLORSPACE_AUTO,
+    COLORSPACE_709,
+    COLORSPACE_601
+};
+
 #undef DEFINE_GUID
 #define DEFINE_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
         EXTERN_C const GUID DECLSPEC_SELECTANY name \
@@ -184,6 +191,37 @@ const float yuvMat[16] = {0.256788f,  0.504129f,  0.097906f, 0.062745f,
                           0.439216f, -0.367788f, -0.071427f, 0.501961f,
                           0.000000f,  0.000000f,  0.000000f, 1.000000f};
 
+const float yuvToRGB601[2][16] =
+{
+    {
+        1.164384f,  0.000000f,  1.596027f, -0.874202f,
+        1.164384f, -0.391762f, -0.812968f,  0.531668f,
+        1.164384f,  2.017232f,  0.000000f, -1.085631f,
+        0.000000f,  0.000000f,  0.000000f,  1.000000f
+    },
+    {
+        1.000000f,  0.000000f,  1.407520f, -0.706520f,
+        1.000000f, -0.345491f, -0.716948f,  0.533303f,
+        1.000000f,  1.778976f,  0.000000f, -0.892976f,
+        0.000000f,  0.000000f,  0.000000f,  1.000000f
+    }
+};
+
+const float yuvToRGB709[2][16] = {
+    {
+        1.164384f, 0.000000f, 1.792741f, -0.972945f,
+        1.164384f, -0.213249f, -0.532909f, 0.301483f,
+        1.164384f, 2.112402f, 0.000000f, -1.133402f,
+        0.000000f, 0.000000f, 0.000000f, 1.000000f
+    },
+    {
+        1.000000f, 0.000000f, 1.581000f, -0.793600f,
+        1.000000f, -0.188062f, -0.469967f, 0.330305f,
+        1.000000f, 1.862906f, 0.000000f, -0.935106f,
+        0.000000f, 0.000000f, 0.000000f, 1.000000f
+    }
+};
+
 void DeviceSource::SetAudioInfo(AM_MEDIA_TYPE *audioMediaType, GUID &expectedAudioType)
 {
     expectedAudioType = audioMediaType->subtype;
@@ -268,6 +306,8 @@ bool DeviceSource::LoadFilters()
     strAudioDevice = data->GetString(TEXT("audioDevice"));
     strAudioName = data->GetString(TEXT("audioDeviceName"));
     strAudioID = data->GetString(TEXT("audioDeviceID"));
+    fullRange = data->GetInt(TEXT("fullrange")) != 0;
+    use709 = false;
 
     bFlipVertical = data->GetInt(TEXT("flipImage")) != 0;
     bFlipHorizontal = data->GetInt(TEXT("flipImageHorizontal")) != 0;
@@ -519,7 +559,10 @@ bool DeviceSource::LoadFilters()
     else if(bestOutput->videoType == VideoOutputType_UYVY)
         colorType = DeviceOutputType_UYVY;
     else if(bestOutput->videoType == VideoOutputType_HDYC)
+    {
         colorType = DeviceOutputType_HDYC;
+        use709 = true;
+    }
     else
     {
         colorType = DeviceOutputType_RGB;
@@ -1659,6 +1702,16 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
                 colorConvertShader->SetFloat  (colorConvertShader->GetParameterByName(TEXT("keySpill")),        fSpillVal);
             }
             colorConvertShader->SetFloat  (colorConvertShader->GetParameterByName(TEXT("gamma")),           fGamma);
+
+            float mat[16];
+            bool actuallyUse709 = (colorSpace == COLORSPACE_AUTO) ? !!use709 : (colorSpace == COLORSPACE_709);
+
+            if (actuallyUse709)
+                memcpy(mat, yuvToRGB709[fullRange ? 1 : 0], sizeof(float) * 16);
+            else
+                memcpy(mat, yuvToRGB601[fullRange ? 1 : 0], sizeof(float) * 16);
+
+            colorConvertShader->SetValue  (colorConvertShader->GetParameterByName(TEXT("yuvMat")), mat, sizeof(float) * 16);
         }
         else {
             if(fGamma != 1.0f && bFiltersLoaded) {
@@ -1753,6 +1806,9 @@ void DeviceSource::UpdateSettings()
         frameIntervalDiff = newFrameInterval - frameInterval;
     else
         frameIntervalDiff = frameInterval - newFrameInterval;
+
+    fullRange = data->GetInt(TEXT("fullrange")) != 0;
+    colorSpace = data->GetInt(TEXT("colorspace"));
 
     if(strNewAudioDevice == "Disable" && strAudioDevice == "Disable")
         bCheckSoundOutput = false;

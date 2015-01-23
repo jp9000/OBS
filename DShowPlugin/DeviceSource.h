@@ -141,6 +141,9 @@ class DeviceSource : public ImageSource
     UINT            linePitch, lineShift, lineSize;
     BOOL            bUseCustomResolution;
     UINT            preferredOutputType;
+    BOOL            fullRange;
+    int             colorSpace;
+    BOOL            use709;
 
     struct {
         int                         type; //DeinterlacingType

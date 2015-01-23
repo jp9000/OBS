@@ -42,6 +42,7 @@
 #define IDC_OPACITY                     1028
 #define IDC_OUTPUTSOUND                 1029
 #define IDC_PLAYDESKTOPSOUND            1030
+#define IDC_FULLRANGE                   1031
 #define IDC_EDIT1                       1032
 #define IDC_TIMEOFFSET_EDIT             1032
 #define IDC_TIMEOFFSET                  1033
@@ -59,6 +60,8 @@
 #define IDC_PRESERVESIZE                1042
 #define IDC_64BIT_WARNING               1043
 #define IDC_USEAUDIORENDER              1044
+#define IDC_PREFERREDOUTPUT2            1046
+#define IDC_COLORSPACE                  1046
 #define IDC_GAMMAVAL                    1151
 
 // Next default values for new objects
