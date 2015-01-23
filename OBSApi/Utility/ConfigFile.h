@@ -39,7 +39,7 @@ struct ConfigSection
 class BASE_EXPORT ConfigFile
 {
 public:
-    ConfigFile() : bOpen(0), strFileName(), lpFileData(NULL), dwLength(0) { hHorribleThreadSafetyMutex = OSCreateMutex(); }
+    ConfigFile() : bOpen(0), strFileName(), lpFileData(NULL), dwLength(0) {}
     ~ConfigFile() {Close();}
 
     BOOL  Create(CTSTR lpConfigFile);
@@ -105,5 +105,4 @@ private:
     String strFileName;
     TSTR lpFileData;
     DWORD dwLength;
-    HANDLE hHorribleThreadSafetyMutex;
 };
