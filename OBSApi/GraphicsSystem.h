@@ -608,9 +608,6 @@ public:
 private:
     virtual void CreateVertexShaderBlob(ShaderBlob &blob, CTSTR lpShader, CTSTR lpFileName) = 0;
     virtual void CreatePixelShaderBlob(ShaderBlob &blob, CTSTR lpShader, CTSTR lpFileName) = 0;
-
-public:
-    virtual LPVOID GetContext()=0;
 };
 
 

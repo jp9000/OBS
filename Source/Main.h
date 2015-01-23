@@ -39,10 +39,10 @@
 #pragma warning(default : 4265)
 
 //-------------------------------------------
-// direct3d 11
+// direct3d 10.1
 
-#include <D3D11.h>
-#include <D3DX11.h>
+#include <D3D10_1.h>
+#include <D3DX10.h>
 #include <DXGI.h>
 
 #define USE_DXGI1_2 1

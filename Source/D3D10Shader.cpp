@@ -58,13 +58,13 @@ bool D3D10Shader::ProcessData(ShaderProcessor &processor, CTSTR lpFileName)
 
     if(constantSize)
     {
-        D3D11_BUFFER_DESC bd;
+        D3D10_BUFFER_DESC bd;
         zero(&bd, sizeof(bd));
 
         bd.ByteWidth        = (constantSize+15)&0xFFFFFFF0; //align to 128bit boundry
-        bd.Usage            = D3D11_USAGE_DYNAMIC;
-        bd.BindFlags        = D3D11_BIND_CONSTANT_BUFFER;
-        bd.CPUAccessFlags   = D3D11_CPU_ACCESS_WRITE;
+        bd.Usage            = D3D10_USAGE_DYNAMIC;
+        bd.BindFlags        = D3D10_BIND_CONSTANT_BUFFER;
+        bd.CPUAccessFlags   = D3D10_CPU_ACCESS_WRITE;
 
         HRESULT err = GetD3D()->CreateBuffer(&bd, NULL, &constantBuffer);
         if(FAILED(err))
@@ -89,7 +89,7 @@ void D3D10VertexShader::CreateVertexShaderBlob(ShaderBlob &blob, CTSTR lpShader,
     LPSTR lpAnsiShader = tstr_createUTF8(lpShader);
     LPSTR lpAnsiFileName = tstr_createUTF8(lpFileName);
 
-    HRESULT err = D3DX11CompileFromMemory(lpAnsiShader, strlen(lpAnsiShader), lpAnsiFileName, NULL, NULL, "main", lpVSType, D3D10_SHADER_OPTIMIZATION_LEVEL3, 0, NULL, shaderBlob.Assign(), errorMessages.Assign(), NULL);
+    HRESULT err = D3DX10CompileFromMemory(lpAnsiShader, strlen(lpAnsiShader), lpAnsiFileName, NULL, NULL, "main", lpVSType, D3D10_SHADER_OPTIMIZATION_LEVEL3, 0, NULL, shaderBlob.Assign(), errorMessages.Assign(), NULL);
 
     Free(lpAnsiFileName);
     Free(lpAnsiShader);
@@ -123,10 +123,10 @@ Shader* D3D10VertexShader::CreateVertexShaderFromBlob(ShaderBlob const &blob, CT
     if (!blob.size())
         return nullptr;
 
-    ComPtr<ID3D11VertexShader> vShader;
-    ID3D11InputLayout *vShaderLayout;
+    ComPtr<ID3D10VertexShader> vShader;
+    ID3D10InputLayout *vShaderLayout;
 
-    HRESULT err = GetD3D()->CreateVertexShader(&blob.front(), blob.size(), NULL, vShader.Assign());
+    HRESULT err = GetD3D()->CreateVertexShader(&blob.front(), blob.size(), vShader.Assign());
     if (FAILED(err))
     {
         CrashError(TEXT("Unable to create vertex shader '%s', result = %08lX"), lpFileName, err);
@@ -177,7 +177,7 @@ void D3D10PixelShader::CreatePixelShaderBlob(ShaderBlob &blob, CTSTR lpShader, C
     LPSTR lpAnsiShader = tstr_createUTF8(lpShader);
     LPSTR lpAnsiFileName = tstr_createUTF8(lpFileName);
 
-    HRESULT err = D3DX11CompileFromMemory(lpAnsiShader, strlen(lpAnsiShader), lpAnsiFileName, NULL, NULL, "main", lpPSType, D3D10_SHADER_OPTIMIZATION_LEVEL3, 0, NULL, shaderBlob.Assign(), errorMessages.Assign(), NULL);
+    HRESULT err = D3DX10CompileFromMemory(lpAnsiShader, strlen(lpAnsiShader), lpAnsiFileName, NULL, NULL, "main", lpPSType, D3D10_SHADER_OPTIMIZATION_LEVEL3, 0, NULL, shaderBlob.Assign(), errorMessages.Assign(), NULL);
 
     Free(lpAnsiFileName);
     Free(lpAnsiShader);
@@ -211,9 +211,9 @@ Shader *D3D10PixelShader::CreatePixelShaderFromBlob(ShaderBlob const &blob, CTST
     if (!blob.size())
         return nullptr;
 
-    ID3D11PixelShader *pShader;
+    ID3D10PixelShader *pShader;
 
-    HRESULT err = GetD3D()->CreatePixelShader(&blob.front(), blob.size(), NULL, &pShader);
+    HRESULT err = GetD3D()->CreatePixelShader(&blob.front(), blob.size(), &pShader);
     if (FAILED(err))
     {
         CrashError(TEXT("Unable to create pixel shader '%s', result = %08lX"), lpFileName, err);
@@ -442,16 +442,16 @@ void  D3D10Shader::UpdateParams()
 
     if(bUpload)
     {
-        D3D11_MAPPED_SUBRESOURCE map;
+        BYTE *outData;
 
         HRESULT err;
-        if(FAILED(err = GetD3DCtx()->Map(constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map)))
+        if(FAILED(err = constantBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, (void**)&outData)))
         {
             AppWarning(TEXT("D3D10Shader::UpdateParams: could not map constant buffer, result = %08lX"), err);
             return;
         }
 
-        mcpy(map.pData, shaderConstantData.Array(), shaderConstantData.Num());
-        GetD3DCtx()->Unmap(constantBuffer, 0);
+        mcpy(outData, shaderConstantData.Array(), shaderConstantData.Num());
+        constantBuffer->Unmap();
     }
 }

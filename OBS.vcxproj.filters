@@ -210,9 +210,9 @@
     <ClInclude Include="Source\LogUploader.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="Source\DataPacketHelpers.h">
+    <ClCompile Include="Source\DataPacketHelpers.h">
       <Filter>Headers</Filter>
-    </ClInclude>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="cursor1.cur">
