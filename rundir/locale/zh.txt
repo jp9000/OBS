@@ -398,6 +398,7 @@ Sources.GameCaptureSource.PluginName="游戏录屏插件"
 Sources.GameCaptureSource.RequiresAdmin="这些应用程序需要系统管理员允许来获取 (以系统管理员来启动应用程序来获取)："
 Sources.GameCaptureSource.SelectApplication="选择程序"
 Sources.GameCaptureSource.StretchToScreen="延展画面"
+Sources.GameCaptureSource.AlphaBlend="启用alpha混合"
 Sources.GameCaptureSource.UseHotkey="使用快捷键"
 Sources.GameCaptureSource.UseSafeHook="反作弊兼容性（必要时使用）"
 
