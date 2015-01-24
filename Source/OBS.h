@@ -208,7 +208,7 @@ public:
 
     //WIP ugly names
     virtual VideoEncoder_Features GetFeatures() { return VideoEncoder_Unknown; }
-    virtual void ConvertD3D10(ID3D10Texture2D *d3dtex, void *data, void **state) { }
+    virtual void ConvertD3DTex(ID3D10Texture2D *d3dtex, void *data, void **state) { }
 };
 
 //-------------------------------------------------------------------

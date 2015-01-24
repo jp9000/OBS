@@ -1161,7 +1161,7 @@ void OBS::MainCaptureLoop()
                     mfxFrameData &data = picOut.mfxOut->Data;
                     profileIn("Conversion");
                     videoEncoder->RequestBuffers(&data);
-                    videoEncoder->ConvertD3D10(d3dYUV->texture, &data, &d3dYUV->convState);
+                    videoEncoder->ConvertD3DTex(d3dYUV->texture, &data, &d3dYUV->convState);
                     profileOut
 
                     if (bEncode)
