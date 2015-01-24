@@ -811,8 +811,17 @@ void OBSAPIInterface::HandleHotkeys()
 {
     List<DWORD> hitKeys;
 
-    bool allow_other_hotkey_modifiers = !!GlobalConfig->GetInt(TEXT("General"), TEXT("AllowOtherHotkeyModifiers"), true);
-    bool uplay_overlay_compatibility  = !!GlobalConfig->GetInt(L"General", L"UplayOverlayCompatibility", false);
+    static bool allow_other_hotkey_modifiers;
+    static bool uplay_overlay_compatibility;
+    static bool set_vars = false;
+
+    /* only query these config variables once */
+    if (!set_vars)
+    {
+        allow_other_hotkey_modifiers = !!GlobalConfig->GetInt(TEXT("General"), TEXT("AllowOtherHotkeyModifiers"), true);
+        uplay_overlay_compatibility = !!GlobalConfig->GetInt(L"General", L"UplayOverlayCompatibility", false);
+        set_vars = true;
+    }
 
     DWORD modifiers = 0;
     if(GetAsyncKeyState(VK_MENU) & 0x8000)
