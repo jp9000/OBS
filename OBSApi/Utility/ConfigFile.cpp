@@ -27,17 +27,6 @@
 //
 // ...yes, I really need to rewrite this file, I know.
 
-struct InternalUselessStuff
-{
-    TSTR lpActualFileData;
-    HANDLE hHorribleThreadSafetyMutex;
-
-    inline InternalUselessStuff() {hHorribleThreadSafetyMutex = OSCreateMutex();}
-    inline ~InternalUselessStuff() {OSCloseMutex(hHorribleThreadSafetyMutex);}
-};
-
-#define InternalStuff reinterpret_cast<InternalUselessStuff*>(lpFileData)
-
 
 /*=========================================================
     Config
@@ -46,9 +35,6 @@ struct InternalUselessStuff
 BOOL ConfigFile::Create(CTSTR lpConfigFile)
 {
     strFileName = lpConfigFile;
-
-    if (!lpFileData)
-        lpFileData = (TSTR)new InternalUselessStuff;
 
     if(LoadFile(XFILE_CREATEALWAYS))
         LoadData();
@@ -62,19 +48,13 @@ BOOL ConfigFile::Open(CTSTR lpConfigFile, BOOL bOpenAlways)
 {
     strFileName = lpConfigFile;
 
-    if (!lpFileData)
-        lpFileData = (TSTR)new InternalUselessStuff;
-
-    if (LoadFile(bOpenAlways ? XFILE_OPENALWAYS : XFILE_OPENEXISTING))
+    if(LoadFile(bOpenAlways ? XFILE_OPENALWAYS : XFILE_OPENEXISTING))
         LoadData();
     else
         return 0;
 
     return 1;
 }
-
-#define hHorribleThreadSafetyMutex reinterpret_cast<InternalUselessStuff*>(lpFileData)->hHorribleThreadSafetyMutex
-#define lpActualFileData reinterpret_cast<InternalUselessStuff*>(lpFileData)->lpActualFileData
 
 BOOL ConfigFile::LoadFile(DWORD dwOpenMode)
 {
@@ -109,8 +89,8 @@ BOOL ConfigFile::LoadFile(DWORD dwOpenMode)
     lpTempFileData[dwLength+4] = 0;
     file.Close();
 
-    lpActualFileData = utf8_createTstr(lpTempFileData);
-    dwLength = slen(lpActualFileData);
+    lpFileData = utf8_createTstr(lpTempFileData);
+    dwLength = slen(lpFileData);
     Free(lpTempFileData);
 
     bOpen = 1;
@@ -123,7 +103,7 @@ BOOL ConfigFile::LoadFile(DWORD dwOpenMode)
 void ConfigFile::LoadData()
 {
     OSEnterMutex(hHorribleThreadSafetyMutex);
-    TSTR lpCurLine = lpActualFileData, lpNextLine;
+    TSTR lpCurLine = lpFileData, lpNextLine;
     ConfigSection *lpCurSection=NULL;
     DWORD i;
 
@@ -187,9 +167,6 @@ void ConfigFile::LoadData()
 
 void ConfigFile::Close()
 {
-    if (!bOpen)
-        return;
-
     OSEnterMutex(hHorribleThreadSafetyMutex);
     DWORD i,j,k;
 
@@ -212,21 +189,15 @@ void ConfigFile::Close()
     }
     Sections.Clear();
 
-    if(lpActualFileData)
+    if(lpFileData)
     {
-        Free(lpActualFileData);
-        lpActualFileData      = NULL;
+        Free(lpFileData);
+        lpFileData      = NULL;
     }
 
     bOpen = 0;
 
     OSLeaveMutex(hHorribleThreadSafetyMutex);
-
-    if (lpFileData)
-    {
-        delete reinterpret_cast<InternalUselessStuff*>(lpFileData);
-        lpFileData = NULL;
-    }
 }
 
 BOOL ConfigFile::SaveAs(CTSTR lpPath)
@@ -245,7 +216,7 @@ BOOL ConfigFile::SaveAs(CTSTR lpPath)
             return FALSE;
         }
 
-        if (!newFile.WriteAsUTF8(lpActualFileData))
+        if (!newFile.WriteAsUTF8(lpFileData))
         {
             OSLeaveMutex(hHorribleThreadSafetyMutex);
             return FALSE;
@@ -877,7 +848,7 @@ void  ConfigFile::SetKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
     OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
-    TSTR lpTemp = lpActualFileData, lpEnd = &lpActualFileData[dwLength], lpSectionStart;
+    TSTR lpTemp = lpFileData, lpEnd = &lpFileData[dwLength], lpSectionStart;
     DWORD dwSectionNameSize = slen(lpSection), dwKeyNameSize = slen(lpKey);
     BOOL  bInSection = 0;
 
@@ -902,7 +873,7 @@ void  ConfigFile::SetKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
 
         XFile file(strFileName, XFILE_WRITE, XFILE_CREATEALWAYS);
         file.Write("\xEF\xBB\xBF", 3);
-        file.WriteAsUTF8(&lpActualFileData[2], dwLength-4);
+        file.WriteAsUTF8(&lpFileData[2], dwLength-4);
         file.Write("\r\n[", 3);
         file.WriteAsUTF8(lpSection, dwSectionNameSize);
         file.Write("]\r\n", 3);
@@ -925,7 +896,7 @@ void  ConfigFile::SetKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
         {
             XFile file(strFileName, XFILE_WRITE, XFILE_CREATEALWAYS);
             file.Write("\xEF\xBB\xBF", 3);
-            file.WriteAsUTF8(&lpActualFileData[2], DWORD(lpSectionStart-lpActualFileData-2));
+            file.WriteAsUTF8(&lpFileData[2], DWORD(lpSectionStart-lpFileData-2));
             file.WriteAsUTF8(lpKey, dwKeyNameSize);
             file.Write("=", 1);
             file.WriteAsUTF8(newvalue, slen(newvalue));
@@ -970,7 +941,7 @@ void  ConfigFile::SetKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
                         OSLeaveMutex(hHorribleThreadSafetyMutex);
                         return;
                     }
-                    if (!file.WriteAsUTF8(&lpActualFileData[2], DWORD(lpTemp - lpActualFileData - 2)))
+                    if (!file.WriteAsUTF8(&lpFileData[2], DWORD(lpTemp - lpFileData - 2)))
                     {
                         OSLeaveMutex(hHorribleThreadSafetyMutex);
                         return;
@@ -1004,7 +975,7 @@ void  ConfigFile::SetKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
 
     XFile file(strFileName, XFILE_WRITE, XFILE_CREATEALWAYS);
     file.Write("\xEF\xBB\xBF", 3);
-    file.WriteAsUTF8(&lpActualFileData[2], DWORD(lpSectionStart-lpActualFileData-2));
+    file.WriteAsUTF8(&lpFileData[2], DWORD(lpSectionStart-lpFileData-2));
     file.WriteAsUTF8(lpKey, dwKeyNameSize);
     file.Write("=", 1);
     file.WriteAsUTF8(newvalue, slen(newvalue));
@@ -1023,7 +994,7 @@ void  ConfigFile::Remove(CTSTR lpSection, CTSTR lpKey)
     OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
-    TSTR lpTemp = lpActualFileData, lpEnd = &lpActualFileData[dwLength], lpSectionStart;
+    TSTR lpTemp = lpFileData, lpEnd = &lpFileData[dwLength], lpSectionStart;
     DWORD dwSectionNameSize = slen(lpSection), dwKeyNameSize = slen(lpKey);
     BOOL  bInSection = 0;
 
@@ -1062,7 +1033,7 @@ void  ConfigFile::Remove(CTSTR lpSection, CTSTR lpKey)
                 TSTR lpNextLine = schr(lpTemp, '\n')+1;
                 XFile file(strFileName, XFILE_WRITE, XFILE_CREATEALWAYS);
                 file.Write("\xEF\xBB\xBF", 3);
-                file.WriteAsUTF8(&lpActualFileData[2], DWORD(lpTemp-lpActualFileData-2));
+                file.WriteAsUTF8(&lpFileData[2], DWORD(lpTemp-lpFileData-2));
                 file.WriteAsUTF8(lpNextLine, slen(lpNextLine)-2);
                 file.Close();
 
@@ -1084,7 +1055,7 @@ void  ConfigFile::AddKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
 {
     assert(lpSection);
     assert(lpKey);
-    TSTR lpTemp = lpActualFileData, lpEnd = &lpActualFileData[dwLength], lpSectionStart;
+    TSTR lpTemp = lpFileData, lpEnd = &lpFileData[dwLength], lpSectionStart;
     DWORD dwSectionNameSize = slen(lpSection), dwKeyNameSize = slen(lpKey);
     BOOL  bInSection = 0;
 
@@ -1107,7 +1078,7 @@ void  ConfigFile::AddKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
     {
         XFile file(strFileName, XFILE_WRITE, XFILE_CREATEALWAYS);
         file.Write("\xEF\xBB\xBF", 3);
-        file.WriteAsUTF8(&lpActualFileData[2], dwLength-4);
+        file.WriteAsUTF8(&lpFileData[2], dwLength-4);
         file.Write("\r\n[", 3);
         file.WriteAsUTF8(lpSection, dwSectionNameSize);
         file.Write("]\r\n", 3);
@@ -1132,7 +1103,7 @@ void  ConfigFile::AddKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
         {
             XFile file(strFileName, XFILE_WRITE, XFILE_CREATEALWAYS);
             file.Write("\xEF\xBB\xBF", 3);
-            file.WriteAsUTF8(&lpActualFileData[2], DWORD(lpSectionStart-lpActualFileData-2));
+            file.WriteAsUTF8(&lpFileData[2], DWORD(lpSectionStart-lpFileData-2));
             file.WriteAsUTF8(lpKey, dwKeyNameSize);
             file.Write("=", 1);
             file.WriteAsUTF8(newvalue, slen(newvalue));
@@ -1162,7 +1133,7 @@ void  ConfigFile::AddKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
                 lpTemp = lpLastItem;
                 XFile file(strFileName, XFILE_WRITE, XFILE_CREATEALWAYS);
                 file.Write("\xEF\xBB\xBF", 3);
-                file.WriteAsUTF8(&lpActualFileData[2], DWORD(lpTemp-lpActualFileData-2));
+                file.WriteAsUTF8(&lpFileData[2], DWORD(lpTemp-lpFileData-2));
                 file.WriteAsUTF8(lpKey, dwKeyNameSize);
                 file.Write("=", 1);
                 file.WriteAsUTF8(newvalue, slen(newvalue));
@@ -1183,7 +1154,7 @@ void  ConfigFile::AddKey(CTSTR lpSection, CTSTR lpKey, CTSTR newvalue)
 
     XFile file(strFileName, XFILE_WRITE, XFILE_CREATEALWAYS);
     file.Write("\xEF\xBB\xBF", 3);
-    file.WriteAsUTF8(&lpActualFileData[2], DWORD(lpSectionStart-lpActualFileData-2));
+    file.WriteAsUTF8(&lpFileData[2], DWORD(lpSectionStart-lpFileData-2));
     file.WriteAsUTF8(lpKey, dwKeyNameSize);
     file.Write("=", 1);
     file.WriteAsUTF8(newvalue, slen(newvalue));
