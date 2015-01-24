@@ -175,7 +175,7 @@ public:
 enum VideoEncoder_Features
 {
     VideoEncoder_Unknown           = 0x00000000,
-    VideoEncoder_D3D11Interop      = 0x00000001
+    VideoEncoder_D3D10Interop      = 0x00000001
 };
 
 class VideoEncoder
@@ -208,7 +208,7 @@ public:
 
     //WIP ugly names
     virtual VideoEncoder_Features GetFeatures() { return VideoEncoder_Unknown; }
-    virtual void ConvertD3D11(ID3D11Texture2D *d3dtex, void *data, void **state) { }
+    virtual void ConvertD3D10(ID3D10Texture2D *d3dtex, void *data, void **state) { }
 };
 
 //-------------------------------------------------------------------

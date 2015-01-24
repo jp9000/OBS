@@ -629,7 +629,7 @@ void OBS::MainCaptureLoop()
     bool bUsingVCE = (AppConfig->GetString(L"Video Encoding", L"Encoder") == L"VCE") == TRUE;
     bool bUsingVCEMFT = (AppConfig->GetInt(TEXT("Video Encoding"), TEXT("MFT"), 1) != 0);
     bool bUsingCL = (AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCL"), 0) == 1);
-    bool bUsingInterop = !!(videoEncoder->GetFeatures() & VideoEncoder_D3D11Interop);
+    bool bUsingInterop = !!(videoEncoder->GetFeatures() & VideoEncoder_D3D10Interop);
     bUsing444 = false || (bUsingVCE && bUsingCL && !bUsingVCEMFT);
 
     EncoderPicture lastPic;
@@ -1161,7 +1161,7 @@ void OBS::MainCaptureLoop()
                     mfxFrameData &data = picOut.mfxOut->Data;
                     profileIn("Conversion");
                     videoEncoder->RequestBuffers(&data);
-                    videoEncoder->ConvertD3D11(d3dYUV->texture, &data, &d3dYUV->convState);
+                    videoEncoder->ConvertD3D10(d3dYUV->texture, &data, &d3dYUV->convState);
                     profileOut
 
                     if (bEncode)
@@ -1241,7 +1241,7 @@ void OBS::MainCaptureLoop()
                                 memcpy(DY, SY, pitch);
                             }
                         }
-                        GetD3DCtx()->Unmap(prevTexture, 0);
+                        prevTexture->Unmap(0);
                     }
 
                     if(bEncode)
