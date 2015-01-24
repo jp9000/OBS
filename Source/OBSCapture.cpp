@@ -618,7 +618,7 @@ retryHookTestV2:
 
     //-------------------------------------------------------------
 
-    D3D11_TEXTURE2D_DESC td;
+    D3D10_TEXTURE2D_DESC td;
     zero(&td, sizeof(td));
     td.Width            = outputCX;
     td.Height           = outputCY;
@@ -627,8 +627,8 @@ retryHookTestV2:
     td.ArraySize        = 1;
     td.SampleDesc.Count = 1;
     td.ArraySize        = 1;
-    td.Usage            = D3D11_USAGE_STAGING;
-    td.CPUAccessFlags   = D3D11_CPU_ACCESS_READ;
+    td.Usage            = D3D10_USAGE_STAGING;
+    td.CPUAccessFlags   = D3D10_CPU_ACCESS_READ;
 
     for(UINT i=0; i<NUM_RENDER_BUFFERS; i++)
     {
@@ -841,7 +841,7 @@ retryHookTestV2:
 
     //-------------------------------------------------------------
 
-    colorDesc.fullRange = false;
+    colorDesc.fullRange = AppConfig->GetInt(L"Video", L"FullRange") != 0;
     colorDesc.primaries = ColorPrimaries_BT709;
     colorDesc.transfer  = ColorTransfer_IEC6196621;
     colorDesc.matrix    = outputCX >= 1280 || outputCY > 576 ? ColorMatrix_BT709 : ColorMatrix_SMPTE170M;

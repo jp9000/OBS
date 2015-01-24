@@ -26,6 +26,9 @@
 #include <windows.h>
 #include <shlobj.h>
 
+#define PSAPI_VERSION 1
+#include <psapi.h>
+
 #pragma intrinsic(memcpy, memset, memcmp)
 
 #include <xmmintrin.h>
@@ -58,6 +61,9 @@ typedef unsigned __int64 UPARAM;
 #else
 typedef unsigned long UPARAM;
 #endif
+
+extern fstream logOutput;
+extern string CurrentTimeString();
 
 class HookData
 {
@@ -101,6 +107,54 @@ public:
         DWORD oldProtect;
         if(!VirtualProtect((LPVOID)func, 14, PAGE_EXECUTE_READWRITE, &oldProtect))
             return false;
+
+#ifndef _WIN64
+        // FIXME: check 64 bit instructions too
+        if (*(BYTE *)func == 0xE9 || *(BYTE *)func == 0xE8)
+        {
+            CHAR		*modName, *ourName;
+            CHAR		szModName[MAX_PATH];
+            CHAR		szOurName[MAX_PATH];
+            DWORD		memAddress;
+
+            MEMORY_BASIC_INFORMATION mem;
+
+            INT_PTR jumpAddress = *(DWORD *)((BYTE *)func + 1) + (DWORD)func;
+
+            // try to identify target
+            if (VirtualQueryEx(GetCurrentProcess(), (LPVOID)jumpAddress, &mem, sizeof(mem)) && mem.State == MEM_COMMIT)
+                memAddress = (DWORD)mem.AllocationBase;
+            else
+                memAddress = jumpAddress;
+
+            if (GetMappedFileNameA(GetCurrentProcess(), (LPVOID)memAddress, szModName, _countof(szModName) - 1))
+                modName = szModName;
+            else if (GetModuleFileNameA((HMODULE)memAddress, szModName, _countof(szModName) - 1))
+                modName = szModName;
+            else
+                modName = "unknown";
+
+            // and ourselves
+            if (VirtualQueryEx(GetCurrentProcess(), (LPVOID)func, &mem, sizeof(mem)) && mem.State == MEM_COMMIT)
+                memAddress = (DWORD)mem.AllocationBase;
+            else
+                memAddress = (DWORD)func;
+
+            if (GetMappedFileNameA(GetCurrentProcess(), (LPVOID)memAddress, szOurName, _countof(szOurName) - 1))
+                ourName = szOurName;
+            else if (GetModuleFileNameA((HMODULE)memAddress, szOurName, _countof(szOurName) - 1))
+                ourName = szOurName;
+            else
+                ourName = "unknown";
+
+            CHAR *p = strrchr(ourName, '\\');
+            if (p)
+                ourName = p + 1;
+
+            logOutput << CurrentTimeString() << "WARNING: Another hook is already present while trying to hook " << ourName << ", hook target is " << modName <<
+                ". If you experience crashes, try disabling the other hooking application" << endl;
+        }
+#endif
 
         memcpy(data, (const void*)func, 14);
         //VirtualProtect((LPVOID)func, 14, oldProtect, &oldProtect);

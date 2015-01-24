@@ -243,7 +243,7 @@ extern "C"
 
     typedef struct RTMP_BINDINFO
     {
-        struct sockaddr_in addr;
+        struct sockaddr_storage addr;
         int addrLen;
     } RTMP_BINDINFO;
 

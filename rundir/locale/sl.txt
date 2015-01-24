@@ -43,6 +43,7 @@ LogWindow="Okno zapisov"
 StreamReport="Poročilo o Streamu"
 MessageBoxWarningCaption="Opozorilo"
 NoSourcesFound="Niste dodali nobenih virov! Ali ste prepričani da, želite oddajati črn zaslon?"
+StreamClosePending="Oddajanje ali snemanje v datoteko je nedokončano, če zaprete OBS se bo oddajanje končalo predčasno ali pa se bo datokega pokvarila. Hočete počakati 15 sekund, da se oddajanje ali zapisovanje konča?"
 
 ImportGlobalSourceNameExists="Globalni vir '$1' že obstaja v trenutni zbirki scen."
 ImportGlobalSources="Uvozi Globalni Vir"
@@ -57,6 +58,8 @@ CopyTo.Success.Text="Scena '$1' je bila uspreško kopirana v zbirko scen."
 CopyTo.Success.Title="Uspešno"
 CopyTo.CopyGlobalSourcesReferences.Title="Kopiram globalne vire?"
 
+ImportProfileReplaceWarning.Title="Uvoz profila"
+ImportProfileReplaceWarning.Text="Trenutni profil bo izbrisan. Ali res hočete uvoziti?"
 
 DeleteCollection="Odstranite zbirko scen"
 DeleteCollection.Text="Ali ste prepričani, da želite odstraniti trenutno zbirko scene?"
@@ -103,6 +106,13 @@ MainMenu.Help="&Pomoč"
 MainMenu.Profiles="&Profili"
 MainMenu.Settings="&Nastavitve"
 
+MainMenu.Profiles.New="&Novo"
+MainMenu.Profiles.Duplicate="&Podvojeno"
+MainMenu.Profiles.Rename="&Preimenuj"
+MainMenu.Profiles.Remove="Do&strani"
+MainMenu.Profiles.Import="&Uvozi"
+MainMenu.Profiles.Export="&Izvozi"
+MainMenu.Profiles.ProfileExists="Profil z istim imenom že obstaja."
 
 MainMenu.Settings.AlwaysOnTop="&Vedno na Vrhu"
 MainMenu.Settings.FullscreenMode="&Celozaslonski Predogled"
@@ -440,6 +450,7 @@ Encoder.QSV.ExceededResolutionHelp="Zmanjšajte vašo izhodno ločljivost v Nast
 Encoder.QSV.SNBIVBMaximumResolutionWidthHeightExceeded="Vaša izhodna ločljivost %ux%u presega maximalno ločljivost, ki je 1920x1200 in je podprta z strani Quick Sync na Sandy Bridge in Ivy Bridge procesorjih!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionWidthExceeded="Vaša izhodna širina v ločljivosti %u presega maximalno ločljivost, ki je 1920x1200 in je podprta z strani Quick Sync na Sandy Bridge in Ivy Bridge procesorjih!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionHeightExceeded="Vaša izhodna višina v ločljivosti %u presega maximalno ločljivost, ki je 1920x1200 in je podprta z strani Quick Sync na Sandy Bridge in Ivy Bridge procesorjih!\r\n"
+Encoder.QSV.HelperEarlyExit="QSVHelper.exe se je zaprl."
 Encoder.QSV.IPCInit="Napak pri inicializaciji Quick Sync IPC"
 
 Updater.DownloadNow="Ali jih želite prenesti sedaj?"

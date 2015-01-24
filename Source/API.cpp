@@ -264,7 +264,7 @@ bool OBS::SetScene(CTSTR lpScene)
     bChangingSources = true;
     ListView_DeleteAllItems(hwndSources);
 
-    bool bSkipTransition = false;
+    bool bSkipTransition = !performTransition;
 
     XElement *sources = sceneElement->GetElement(TEXT("sources"));
     if(sources)
@@ -679,6 +679,9 @@ public:
     }
     virtual CTSTR GetSceneCollectionName() const { return App->GetCurrentSceneCollection(); }
     virtual void GetSceneCollectionNames(StringList &list) const { return App->GetSceneCollection(list); }
+    virtual void DisableTransitions()          { App->performTransition = false; }
+    virtual void EnableTransitions()           { App->performTransition = true; }
+    virtual bool TransitionsEnabled() const    { return App->performTransition; }
 };
 
 APIInterface* CreateOBSApiInterface()
@@ -808,8 +811,17 @@ void OBSAPIInterface::HandleHotkeys()
 {
     List<DWORD> hitKeys;
 
-    bool allow_other_hotkey_modifiers = !!GlobalConfig->GetInt(TEXT("General"), TEXT("AllowOtherHotkeyModifiers"), true);
-    bool uplay_overlay_compatibility  = !!GlobalConfig->GetInt(L"General", L"UplayOverlayCompatibility", false);
+    static bool allow_other_hotkey_modifiers;
+    static bool uplay_overlay_compatibility;
+    static bool set_vars = false;
+
+    /* only query these config variables once */
+    if (!set_vars)
+    {
+        allow_other_hotkey_modifiers = !!GlobalConfig->GetInt(TEXT("General"), TEXT("AllowOtherHotkeyModifiers"), true);
+        uplay_overlay_compatibility = !!GlobalConfig->GetInt(L"General", L"UplayOverlayCompatibility", false);
+        set_vars = true;
+    }
 
     DWORD modifiers = 0;
     if(GetAsyncKeyState(VK_MENU) & 0x8000)

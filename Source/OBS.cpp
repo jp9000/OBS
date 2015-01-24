@@ -130,6 +130,8 @@ OBS::OBS()
 {
     App = this;
 
+    performTransition = true;        //Default to true and don't set the conf. 
+                                     //We don't want to let plugins disable standard behavior permanently.
     hSceneMutex = OSCreateMutex();
     hAuxAudioMutex = OSCreateMutex();
     hVideoEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -1390,7 +1392,7 @@ void OBS::ConfigureStreamButtons()
         return PostConfigureStreamButtons();
 
     RefreshStreamButtons();
-    SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), bStreaming ? Str("MainWindow.StopStream") : Str("MainWindow.StartStream"));
+    SetWindowText(GetDlgItem(hwndMain, ID_STARTSTOP), (bStreaming && !bTestStream) ? Str("MainWindow.StopStream") : Str("MainWindow.StartStream"));
     SetWindowText(GetDlgItem(hwndMain, ID_TOGGLERECORDING), bRecording ? Str("MainWindow.StopRecording") : Str("MainWindow.StartRecording"));
     SetWindowText(GetDlgItem(hwndMain, ID_TESTSTREAM), bTestStream ? Str("MainWindow.StopTest") : Str("MainWindow.TestStream"));
 }
@@ -2070,15 +2072,15 @@ void OBS::ActuallyEnableProjector()
     if (!bShutdownEncodeThread)
         SetWindowPos(hwndProjector, NULL, projectorX, projectorY, projectorWidth, projectorHeight, SWP_SHOWWINDOW);
 
-    ID3D11Texture2D *backBuffer = NULL;
-    ID3D11RenderTargetView *target = NULL;
+    ID3D10Texture2D *backBuffer = NULL;
+    ID3D10RenderTargetView *target = NULL;
 
     if (FAILED(sys->factory->CreateSwapChain(sys->d3d, &swapDesc, &projectorSwap))) {
         AppWarning(L"Could not create projector swap chain");
         goto exit;
     }
 
-    if (FAILED(projectorSwap->GetBuffer(0, IID_ID3D11Texture2D, (void**)&backBuffer))) {
+    if (FAILED(projectorSwap->GetBuffer(0, IID_ID3D10Texture2D, (void**)&backBuffer))) {
         AppWarning(TEXT("Unable to get projector back buffer"));
         goto exit;
     }

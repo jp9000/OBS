@@ -162,7 +162,9 @@ void SettingsAdvanced::ApplySettings()
     //--------------------------------------------------
 
     BOOL bUnlockFPS = SendMessage(GetDlgItem(hwnd, IDC_UNLOCKHIGHFPS), BM_GETCHECK, 0, 0) == BST_CHECKED;
-    AppConfig->SetInt   (TEXT("Video"), TEXT("UnlockFPS"), bUnlockFPS);
+    BOOL bFullRange = SendMessage(GetDlgItem(hwnd, IDC_ENCODEFULLRANGE), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    AppConfig->SetInt(TEXT("Video"), TEXT("UnlockFPS"), bUnlockFPS);
+    AppConfig->SetInt(TEXT("Video"), TEXT("FullRange"), bFullRange);
 
     //------------------------------------
 
@@ -211,6 +213,9 @@ void SettingsAdvanced::ApplySettings()
     AppConfig->SetInt   (TEXT("Publish"),        TEXT("LatencyFactor"),     latencyFactor);
     AppConfig->SetInt   (TEXT("Publish"),        TEXT("LowLatencyMethod"),  bLowLatencyAutoMode);
 
+    BOOL bDisableTCPOptimizations = SendDlgItemMessage(hwnd, IDC_DISABLETCPOPTIMIZATIONS, BM_GETCHECK, 0, 0) == BST_CHECKED;
+    AppConfig->SetInt(TEXT("Publish"), TEXT("DisableSendWindowOptimization"), bDisableTCPOptimizations);
+
     //--------------------------------------------------
 
     strTemp = GetCBText(GetDlgItem(hwnd, IDC_BINDIP));
@@ -244,6 +249,7 @@ void SettingsAdvanced::SetDefaults()
     SendMessage(GetDlgItem(hwnd, IDC_USEVIDEOENCODERSETTINGS), BM_SETCHECK, BST_UNCHECKED, 0);
     EnableWindow(GetDlgItem(hwnd, IDC_VIDEOENCODERSETTINGS), FALSE);
     SendMessage(GetDlgItem(hwnd, IDC_UNLOCKHIGHFPS), BM_SETCHECK, BST_UNCHECKED, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_ENCODEFULLRANGE), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_NVENCPRESET), CB_SETCURSEL, 0, 0);
     SendMessage(GetDlgItem(hwnd, IDC_QSVPRESET), CB_SETCURSEL, 0, 0);
@@ -257,6 +263,7 @@ void SettingsAdvanced::SetDefaults()
     SendMessage(GetDlgItem(hwnd, IDC_BINDIP), CB_SETCURSEL, 0, 0);
     SendMessage(GetDlgItem(hwnd, IDC_DISABLEPREVIEWENCODING), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_ALLOWOTHERHOTKEYMODIFIERS), BM_SETCHECK, BST_CHECKED, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_DISABLETCPOPTIMIZATIONS), BM_SETCHECK, BST_UNCHECKED, 0);
 
     ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
     SetChangedSettings(true);
@@ -380,7 +387,9 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 //--------------------------------------------
 
                 bool bUnlockFPS = AppConfig->GetInt(TEXT("Video"), TEXT("UnlockFPS")) != 0;
+                bool bFullRange = AppConfig->GetInt(TEXT("Video"), TEXT("FullRange")) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_UNLOCKHIGHFPS), BM_SETCHECK, bUnlockFPS ? BST_CHECKED : BST_UNCHECKED, 0);
+                SendMessage(GetDlgItem(hwnd, IDC_ENCODEFULLRANGE), BM_SETCHECK, bFullRange ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 //------------------------------------
 
@@ -482,50 +491,52 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 int bLowLatencyAutoMethod = AppConfig->GetInt(TEXT("Publish"), TEXT("LowLatencyMethod"), 0);
                 SendMessage(GetDlgItem(hwnd, IDC_LATENCYMETHOD), BM_SETCHECK, bLowLatencyAutoMethod ? BST_CHECKED : BST_UNCHECKED, 0);
 
+                BOOL bDisableTCPOptimizations = AppConfig->GetInt(TEXT("Publish"), TEXT("DisableSendWindowOptimization"), 0);
+                SendMessage(GetDlgItem(hwnd, IDC_DISABLETCPOPTIMIZATIONS), BM_SETCHECK, bDisableTCPOptimizations ? BST_CHECKED : BST_UNCHECKED, 0);
+
                 //------------------------------------
 
-                MIB_IPADDRTABLE tempTable;
-                DWORD dwSize = 0;
-                if (GetIpAddrTable (&tempTable, &dwSize, TRUE) == ERROR_INSUFFICIENT_BUFFER)
+                IP_ADAPTER_ADDRESSES *ipTable;
+
+                DWORD dwSize = 65536;
+                ipTable = (IP_ADAPTER_ADDRESSES *)Allocate(dwSize);
+
+                DWORD flags = GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_DNS_SERVER;
+
+                hwndTemp = GetDlgItem(hwnd, IDC_BINDIP);
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("Default"));
+
+                if (!GetAdaptersAddresses(AF_UNSPEC, flags, NULL, ipTable, &dwSize))
                 {
-                    PMIB_IPADDRTABLE ipTable;
+                    IP_ADAPTER_ADDRESSES *pCurrAddresses = ipTable;
 
-                    ipTable = (PMIB_IPADDRTABLE)Allocate(dwSize);
-
-                    if (GetIpAddrTable (ipTable, &dwSize, TRUE) == NO_ERROR)
+                    while (pCurrAddresses)
                     {
-                        DWORD i;
-
-                        hwndTemp = GetDlgItem(hwnd, IDC_BINDIP);
-                        SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("Default"));
-
-                        for (i=0; i < ipTable->dwNumEntries; i++)
+                        if (pCurrAddresses->OperStatus == IfOperStatusUp && pCurrAddresses->IfType != IF_TYPE_SOFTWARE_LOOPBACK)
                         {
-                            String strAddress;
-                            DWORD strLength = 32;
-
-                            // don't allow binding to localhost
-                            if ((ipTable->table[i].dwAddr & 0xFF) == 127)
-                                continue;
-
-                            strAddress.SetLength(strLength);
-
-                            SOCKADDR_IN IP;
-
-                            IP.sin_addr.S_un.S_addr = ipTable->table[i].dwAddr;
-                            IP.sin_family = AF_INET;
-                            IP.sin_port = 0;
-                            zero(&IP.sin_zero, sizeof(IP.sin_zero));
-
-                            WSAAddressToString ((LPSOCKADDR)&IP, sizeof(IP), NULL, strAddress.Array(), &strLength);
-                            SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)strAddress.Array());
+                            PIP_ADAPTER_UNICAST_ADDRESS pUnicast = pCurrAddresses->FirstUnicastAddress;
+                            while (pUnicast)
+                            {
+                                if (pUnicast->Address.lpSockaddr->sa_family == AF_INET || pUnicast->Address.lpSockaddr->sa_family == AF_INET6)
+                                {
+                                    TCHAR friendlyAddress[256];
+                                    DWORD friendlyAddressLen = _countof(friendlyAddress);
+                                    if (!WSAAddressToString(pUnicast->Address.lpSockaddr, pUnicast->Address.iSockaddrLength, NULL, friendlyAddress, &friendlyAddressLen))
+                                    {
+                                        SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)friendlyAddress);
+                                    }
+                                }
+                                pUnicast = pUnicast->Next;
+                            }
                         }
 
-                        LoadSettingComboString(hwndTemp, TEXT("Publish"), TEXT("BindToIP"), TEXT("Default"));
+                        pCurrAddresses = pCurrAddresses->Next;
                     }
 
                     Free(ipTable);
                 }
+
+                LoadSettingComboString(hwndTemp, TEXT("Publish"), TEXT("BindToIP"), TEXT("Default"));
 
                 //need this as some of the dialog item sets above trigger the notifications
                 ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_HIDE);
@@ -638,9 +649,11 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 case IDC_USEMICQPC:
                 case IDC_SYNCTOVIDEOTIME:
                 case IDC_USECFR:
+                case IDC_ENCODEFULLRANGE:
                 case IDC_USEMULTITHREADEDOPTIMIZATIONS:
                 case IDC_UNLOCKHIGHFPS:
                 case IDC_LATENCYMETHOD:
+                case IDC_DISABLETCPOPTIMIZATIONS:
                     if(HIWORD(wParam) == BN_CLICKED)
                     {
                         if (App->GetVideoEncoder())

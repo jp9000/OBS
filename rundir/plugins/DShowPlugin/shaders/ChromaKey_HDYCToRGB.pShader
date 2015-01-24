@@ -18,6 +18,7 @@
 
 
 uniform Texture2D diffuseTexture;
+uniform float4x4 yuvMat;
 uniform float4 outputColor;
 uniform float4 keyBaseColor;
 uniform float4 chromaKey;
@@ -72,11 +73,6 @@ float4 main(VertData input) : SV_Target
     float spillVal = pow(saturate(baseMask/keySpill), 1.5);
 
     //-----------------------------
-
-    const float4x4 yuvMat = {1.164384,  1.164384,  1.164384, 0.0,
-                             0.000000, -0.213249,  2.112402, 0.0,
-                             1.792741, -0.532909,  0.000000, 0.0,
-                            -0.972945,  0.301483, -1.133402, 1.0};
 
     float4 rgbx = mul(float4(yuvx.xyz, 1.0), yuvMat);
 

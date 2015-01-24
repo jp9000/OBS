@@ -1211,6 +1211,16 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 SendMessage(hwndTemp, CB_SETCURSEL, deinterlacingConfig.type, 0);
 
+                bool fullrange = configData->data->GetInt(L"fullrange") != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_FULLRANGE), BM_SETCHECK, fullrange ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                int colorSpace = configData->data->GetInt(L"colorspace");
+                hwndTemp = GetDlgItem(hwnd, IDC_COLORSPACE);
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)PluginStr("DeviceSelection.ColorSpace.Auto"));
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)L"709");
+                SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)L"601");
+                SendMessage(hwndTemp, CB_SETCURSEL, colorSpace, 0);
+
                 //------------------------------------------
 
                 BOOL bCustomResolution = configData->data->GetInt(TEXT("customResolution"));
@@ -2108,6 +2118,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         BOOL bCustomResolution = SendMessage(GetDlgItem(hwnd, IDC_CUSTOMRESOLUTION), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         BOOL bUsePointFiltering = SendMessage(GetDlgItem(hwnd, IDC_POINTFILTERING), BM_GETCHECK, 0, 0) == BST_CHECKED;
                         BOOL bPreserveSourceSize = SendMessage(GetDlgItem(hwnd, IDC_PRESERVESIZE), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        BOOL fullRange = SendMessage(GetDlgItem(hwnd, IDC_FULLRANGE), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        int colorSpace = SendMessage(GetDlgItem(hwnd, IDC_COLORSPACE), CB_GETCURSEL, 0, 0);
 
                         int deintId = (int)SendMessage(GetDlgItem(hwnd, IDC_DEINTERLACELIST), CB_GETCURSEL, 0, 0);
                         deinterlacingConfig = deinterlacerConfigs[deintId];
@@ -2139,6 +2151,9 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         configData->data->SetInt(TEXT("deinterlacingFieldOrder"), deinterlacingConfig.fieldOrder);
                         configData->data->SetInt(TEXT("deinterlacingProcessor"), deinterlacingConfig.processor);
                         configData->data->SetInt(TEXT("deinterlacingDoublesFramerate"), deinterlacingConfig.doublesFramerate);
+
+                        configData->data->SetInt(TEXT("fullrange"), fullRange ? 1 : 0);
+                        configData->data->SetInt(TEXT("colorspace"), colorSpace);
 
                         //------------------------------------------
 

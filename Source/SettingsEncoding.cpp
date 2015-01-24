@@ -240,7 +240,7 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 SendMessage(GetDlgItem(hwnd, IDC_CLCONV), BM_SETCHECK, bUseCL ? BST_CHECKED : BST_UNCHECKED, 0);
                 SendMessage(GetDlgItem(hwnd, IDC_VCEMFT), BM_SETCHECK, bUseMFT && !bUseCL ? BST_CHECKED : BST_UNCHECKED, 0);
                 EnableWindow(GetDlgItem(hwnd, IDC_QUALITY), !bUseCBR && (usex264 || useNVENC || useVCE));
-                EnableWindow(GetDlgItem(hwnd, IDC_PADCBR), bUseCBR && (usex264 || useVCE));
+                EnableWindow(GetDlgItem(hwnd, IDC_PADCBR), bUseCBR && (usex264 || useNVENC|| useVCE));
                 EnableWindow(GetDlgItem(hwnd, IDC_CLCONV), useVCE);
 
                 ti.lpszText = (LPWSTR)Str("Settings.Advanced.PadCBRToolTip");
@@ -470,7 +470,7 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                             bDataChanged = true;
 
                         EnableWindow(GetDlgItem(hwnd, IDC_QUALITY), !useCBR && (usex264 || useNVENC || useVCE));
-                        EnableWindow(GetDlgItem(hwnd, IDC_PADCBR), useCBR && (usex264 || useVCE));
+                        EnableWindow(GetDlgItem(hwnd, IDC_PADCBR), useCBR && (usex264 || useNVENC || useVCE));
                         EnableWindow(GetDlgItem(hwnd, IDC_CLCONV), useVCE);
                         break;
 
@@ -487,7 +487,7 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                             else if(LOWORD(wParam) == IDC_USECBR)
                             {
                                 EnableWindow(GetDlgItem(hwnd, IDC_QUALITY), !bChecked && (usex264 || useNVENC || useVCE));
-                                EnableWindow(GetDlgItem(hwnd, IDC_PADCBR), bChecked && (usex264 || useVCE));
+                                EnableWindow(GetDlgItem(hwnd, IDC_PADCBR), bChecked && (usex264 || useNVENC || useVCE));
                             }
 
                             if (bChecked && (LOWORD(wParam) == IDC_VCEMFT || LOWORD(wParam) == IDC_CLCONV))

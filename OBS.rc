@@ -397,7 +397,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,56,375,10
     CONTROL         "Settings.Advanced.AllowOtherHotkeyModifiers",IDC_ALLOWOTHERHOTKEYMODIFIERS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,67,377,10
-    GROUPBOX        "Settings.Video",IDC_STATIC,4,84,413,106
+    GROUPBOX        "Settings.Video",IDC_STATIC,4,84,413,122
     RTEXT           "Settings.Advanced.VideoEncoderCPUTradeoff",IDC_X264PRESET_LABEL,7,94,160,8
     COMBOBOX        IDC_PRESET,170,91,82,62,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Settings.Advanced.X264Profile",IDC_STATIC,7,109,160,8
@@ -413,26 +413,30 @@ BEGIN
     CONTROL         "Settings.Advanced.VideoEncoderSettings",IDC_USEVIDEOENCODERSETTINGS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,147,258,10
     EDITTEXT        IDC_VIDEOENCODERSETTINGS,27,159,373,14,ES_AUTOHSCROLL
+    CONTROL         "Settings.Advanced.EncodeFullRange",IDC_ENCODEFULLRANGE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,179,217,10
+    CONTROL         "Settings.Advanced.UnlockHigherFPS",IDC_UNLOCKHIGHFPS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,191,217,10
     CONTROL         "Settings.Advanced.QSVUseVideoEncoderSettings",IDC_QSVUSEVIDEOENCODERSETTINGS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,147,258,10
     EDITTEXT        IDC_QSVVIDEOENCODERSETTINGS,27,159,373,14,ES_AUTOHSCROLL
-    CONTROL         "Settings.Advanced.UnlockHigherFPS",IDC_UNLOCKHIGHFPS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,176,217,10
-    GROUPBOX        "Settings.Audio",IDC_STATIC,4,194,413,51
+    GROUPBOX        "Settings.Audio",IDC_STATIC,4,211,413,51
     CONTROL         "Settings.Advanced.SyncToVideoTime",IDC_SYNCTOVIDEOTIME,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,206,390,10
-    LTEXT           "Settings.Advanced.GlobalAudioTimeAdjust",IDC_STATIC,7,219,160,8,0,WS_EX_RIGHT
-    EDITTEXT        IDC_AUDIOTIMEADJUST_EDIT,170,216,40,14,ES_AUTOHSCROLL
-    CONTROL         "",IDC_AUDIOTIMEADJUST,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,210,216,11,14
-    CONTROL         "Settings.Audio.UseMicQPC",IDC_USEMICQPC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,231,332,10
-    GROUPBOX        "Settings.Advanced.Network",IDC_STATIC,4,248,413,53
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,223,390,10
+    LTEXT           "Settings.Advanced.GlobalAudioTimeAdjust",IDC_STATIC,7,236,160,8,0,WS_EX_RIGHT
+    EDITTEXT        IDC_AUDIOTIMEADJUST_EDIT,170,233,40,14,ES_AUTOHSCROLL
+    CONTROL         "",IDC_AUDIOTIMEADJUST,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,210,233,11,14
+    CONTROL         "Settings.Audio.UseMicQPC",IDC_USEMICQPC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,248,332,10
+    GROUPBOX        "Settings.Advanced.Network",IDC_STATIC,4,265,413,68
     CONTROL         "Settings.Advanced.AutomaticLatency",IDC_LATENCYMETHOD,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,259,169,10
-    RTEXT           "Settings.Advanced.BindToIP",IDC_STATIC,7,272,160,8
-    COMBOBOX        IDC_BINDIP,170,269,150,62,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Settings.Advanced.LatencyTuning",IDC_STATIC,7,286,160,8
-    EDITTEXT        IDC_LATENCYTUNE,170,283,40,14,ES_AUTOHSCROLL | ES_NUMBER
-    LTEXT           "Settings.Info",IDC_INFO,7,309,418,21,NOT WS_VISIBLE
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,276,169,10
+    RTEXT           "Settings.Advanced.BindToIP",IDC_STATIC,7,289,160,8
+    COMBOBOX        IDC_BINDIP,170,286,150,62,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Settings.Advanced.LatencyTuning",IDC_STATIC,7,303,160,8
+    EDITTEXT        IDC_LATENCYTUNE,170,300,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Settings.Info",IDC_INFO,7,344,418,21,NOT WS_VISIBLE
+    CONTROL         "Settings.Advanced.DisableTCPOptimizations",IDC_DISABLETCPOPTIMIZATIONS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,316,169,10
 END
 
 IDD_CONFIGURETRANSITIONSOURCE DIALOGEX 0, 0, 338, 216

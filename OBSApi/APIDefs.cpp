@@ -64,6 +64,10 @@ Scene* OBSGetScene()            {return API->GetScene();}
 CTSTR OBSGetSceneName()         {return API->GetSceneName();}
 XElement* OBSGetSceneElement()  {return API->GetSceneElement();}
 
+void OBSDisableTransitions()    { API->DisableTransitions(); }
+void OBSEnableTransitions()     { API->EnableTransitions(); }
+bool OBSTransitionsEnabled()    { return API->TransitionsEnabled(); }
+
 bool OBSSetSceneCollection(CTSTR lpCollection, CTSTR lpScene)
 {
     return API->SetSceneCollection(lpCollection, lpScene);

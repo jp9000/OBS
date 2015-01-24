@@ -398,6 +398,7 @@ Sources.GameCaptureSource.PluginName="Plugin pro snímání hry"
 Sources.GameCaptureSource.RequiresAdmin="Ke snímání těchto aplikací jsou potřebná práva administrátora (restartujte OBS s právy administrátora):"
 Sources.GameCaptureSource.SelectApplication="Výběr aplikace"
 Sources.GameCaptureSource.StretchToScreen="Roztáhnout obrázek na obrazovku"
+Sources.GameCaptureSource.AlphaBlend="Zapnout alpha blending"
 Sources.GameCaptureSource.UseHotkey="Použít klávesovou zkratku"
 Sources.GameCaptureSource.UseSafeHook="Kompatibilita s Anti-cheatem (pouze pokud je potřeba)"
 

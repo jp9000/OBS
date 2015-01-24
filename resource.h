@@ -312,6 +312,7 @@
 #define IDC_TIMELEFT                    1127
 #define IDC_REPLAYBUFFERLENGTH_STATIC   1127
 #define IDC_UNLOCKHIGHFPS               1128
+#define IDC_ENCODEFULLRANGE             1129
 #define IDC_CANCEL                      1130
 #define IDC_UNLOCKHIGHFPS2              1130
 #define IDC_USEQSV                      1130
@@ -328,7 +329,7 @@
 #define IDC_PLAYBACKDEVICES             1142
 #define IDC_AUDIOTIMEADJUST_EDIT        1144
 #define IDC_LATENCYMETHOD               1145
-#define IDC_EDIT2                       1147
+#define IDC_DISABLETCPOPTIMIZATIONS     1146
 #define IDC_LATENCYTUNE                 1147
 #define IDC_SETSTREAMSIZE               1148
 #define IDC_GAMMAVAL                    1151

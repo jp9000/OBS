@@ -174,14 +174,6 @@ static void HandleNvidiaOptimus(IDXGIFactory1 *factory, IDXGIAdapter1 *&adapter,
     }
 }
 
-const static D3D_FEATURE_LEVEL featureLevels[] =
-{
-	D3D_FEATURE_LEVEL_11_0,
-	D3D_FEATURE_LEVEL_10_1,
-	D3D_FEATURE_LEVEL_10_0,
-	D3D_FEATURE_LEVEL_9_3,
-};
-
 D3D10System::D3D10System()
 {
     HRESULT err;
@@ -234,11 +226,11 @@ D3D10System::D3D10System()
 
     bDisableCompatibilityMode = 1;//AppConfig->GetInt(TEXT("Video"), TEXT("DisableD3DCompatibilityMode"), 1) != 0;
 
-    UINT createFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+    UINT createFlags = D3D10_CREATE_DEVICE_BGRA_SUPPORT;
     if(GlobalConfig->GetInt(TEXT("General"), TEXT("UseDebugD3D")))
-        createFlags |= D3D11_CREATE_DEVICE_DEBUG;
+        createFlags |= D3D10_CREATE_DEVICE_DEBUG;
 
-    D3D_FEATURE_LEVEL level;
+    D3D10_FEATURE_LEVEL1 level = bDisableCompatibilityMode ? D3D10_FEATURE_LEVEL_10_1 : D3D10_FEATURE_LEVEL_9_3;
 
     String adapterName;
     DXGI_ADAPTER_DESC desc;
@@ -249,22 +241,31 @@ D3D10System::D3D10System()
 
     adapterName.KillSpaces();
 
-    Log(TEXT("Loading up D3D11 on %s (Adapter %u)..."), adapterName.Array(), adapterID+1);
+    Log(TEXT("Loading up D3D10 on %s (Adapter %u)..."), adapterName.Array(), adapterID+1);
 
-    //D3D11_CREATE_DEVICE_DEBUG
+    //D3D10_CREATE_DEVICE_DEBUG
     //D3D11_DRIVER_TYPE_REFERENCE, D3D11_DRIVER_TYPE_HARDWARE
-    err = D3D11CreateDeviceAndSwapChain(adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, createFlags, featureLevels, sizeof(featureLevels) / sizeof(featureLevels[0]), D3D11_SDK_VERSION, &swapDesc, &swap, &d3d, &level, &context);
+    err = D3D10CreateDeviceAndSwapChain1(adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, createFlags, level, D3D10_1_SDK_VERSION, &swapDesc, &swap, &d3d);
     if(FAILED(err))
     {
-        Log (TEXT("D3D11CreateDeviceAndSwapChain: Failed on %s: 0x%08x"), adapterName.Array(), err);
-        CrashError(TEXT("Could not initialize DirectX 11 on %s.  This error can happen for one of the following reasons:\r\n\r\n1.) Your GPU is not supported (DirectX 11 is required - note that many integrated laptop GPUs do not support DX11)\r\n2.) You're running Windows Vista without the \"Platform Update\"\r\n3.) Your video card drivers are out of date\r\n\r\nIf you are using a laptop with NVIDIA Optimus or AMD Switchable Graphics, make sure OBS is set to run on the high performance GPU in your driver settings."), adapterName.Array());
+        Log (TEXT("D3D10CreateDeviceAndSwapChain1: Failed on %s: 0x%08x. Trying compatibility mode"), adapterName.Array(), err);
+
+        bDisableCompatibilityMode = !bDisableCompatibilityMode;
+        level = bDisableCompatibilityMode ? D3D10_FEATURE_LEVEL_10_1 : D3D10_FEATURE_LEVEL_9_3;
+        err = D3D10CreateDeviceAndSwapChain1(adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, createFlags, level, D3D10_1_SDK_VERSION, &swapDesc, &swap, &d3d);
+    }
+
+    if(FAILED(err))
+    {
+        Log (TEXT("D3D10CreateDeviceAndSwapChain1: Failed on %s: 0x%08x"), adapterName.Array(), err);
+        CrashError(TEXT("Could not initialize DirectX 10 on %s.  This error can happen for one of the following reasons:\r\n\r\n1.) Your GPU is not supported (DirectX 10 is required - note that many integrated laptop GPUs do not support DX10)\r\n2.) You're running Windows Vista without the \"Platform Update\"\r\n3.) Your video card drivers are out of date\r\n\r\nIf you are using a laptop with NVIDIA Optimus or AMD Switchable Graphics, make sure OBS is set to run on the high performance GPU in your driver settings."), adapterName.Array());
     }
 
     adapter->Release();
 
     //------------------------------------------------------------------
 
-    D3D11_DEPTH_STENCIL_DESC depthDesc;
+    D3D10_DEPTH_STENCIL_DESC depthDesc;
     zero(&depthDesc, sizeof(depthDesc));
     depthDesc.DepthEnable = FALSE;
 
@@ -272,14 +273,14 @@ D3D10System::D3D10System()
     if(FAILED(err))
         CrashError(TEXT("Unable to create depth state"));
 
-    context->OMSetDepthStencilState(depthState, 0);
+    d3d->OMSetDepthStencilState(depthState, 0);
 
     //------------------------------------------------------------------
 
-    D3D11_RASTERIZER_DESC rasterizerDesc;
+    D3D10_RASTERIZER_DESC rasterizerDesc;
     zero(&rasterizerDesc, sizeof(rasterizerDesc));
-    rasterizerDesc.FillMode = D3D11_FILL_SOLID;
-    rasterizerDesc.CullMode = D3D11_CULL_NONE;
+    rasterizerDesc.FillMode = D3D10_FILL_SOLID;
+    rasterizerDesc.CullMode = D3D10_CULL_NONE;
     rasterizerDesc.FrontCounterClockwise = FALSE;
     rasterizerDesc.DepthClipEnable = TRUE;
 
@@ -287,7 +288,7 @@ D3D10System::D3D10System()
     if(FAILED(err))
         CrashError(TEXT("Unable to create rasterizer state"));
 
-    context->RSSetState(rasterizerState);
+    d3d->RSSetState(rasterizerState);
 
     //------------------------------------------------------------------
 
@@ -299,8 +300,8 @@ D3D10System::D3D10System()
 
     //------------------------------------------------------------------
 
-    ID3D11Texture2D *backBuffer = NULL;
-    err = swap->GetBuffer(0, IID_ID3D11Texture2D, (void**)&backBuffer);
+    ID3D10Texture2D *backBuffer = NULL;
+    err = swap->GetBuffer(0, IID_ID3D10Texture2D, (void**)&backBuffer);
     if(FAILED(err))
         CrashError(TEXT("Unable to get back buffer from swap chain"));
 
@@ -312,19 +313,19 @@ D3D10System::D3D10System()
 
     //------------------------------------------------------------------
 
-    D3D11_BLEND_DESC disabledBlendDesc;
+    D3D10_BLEND_DESC disabledBlendDesc;
     zero(&disabledBlendDesc, sizeof(disabledBlendDesc));
     for(int i=0; i<8; i++)
     {
-        disabledBlendDesc.RenderTarget[i].BlendEnable           = TRUE;
-        disabledBlendDesc.RenderTarget[i].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-        disabledBlendDesc.RenderTarget[i].BlendOpAlpha          = D3D11_BLEND_OP_ADD;
-        disabledBlendDesc.RenderTarget[i].BlendOp               = D3D11_BLEND_OP_ADD;
-        disabledBlendDesc.RenderTarget[i].SrcBlendAlpha         = D3D11_BLEND_ONE;
-        disabledBlendDesc.RenderTarget[i].DestBlendAlpha        = D3D11_BLEND_ZERO;
-        disabledBlendDesc.RenderTarget[i].SrcBlend              = D3D11_BLEND_ONE;
-        disabledBlendDesc.RenderTarget[i].DestBlend             = D3D11_BLEND_ZERO;
+        disabledBlendDesc.BlendEnable[i]        = TRUE;
+        disabledBlendDesc.RenderTargetWriteMask[i] = D3D10_COLOR_WRITE_ENABLE_ALL;
     }
+    disabledBlendDesc.BlendOpAlpha          = D3D10_BLEND_OP_ADD;
+    disabledBlendDesc.BlendOp               = D3D10_BLEND_OP_ADD;
+    disabledBlendDesc.SrcBlendAlpha         = D3D10_BLEND_ONE;
+    disabledBlendDesc.DestBlendAlpha        = D3D10_BLEND_ZERO;
+    disabledBlendDesc.SrcBlend              = D3D10_BLEND_ONE;
+    disabledBlendDesc.DestBlend             = D3D10_BLEND_ZERO;
 
     err = d3d->CreateBlendState(&disabledBlendDesc, &disabledBlend);
     if(FAILED(err))
@@ -348,7 +349,6 @@ D3D10System::~D3D10System()
     SafeRelease(disabledBlend);
     SafeRelease(swapRenderView);
     SafeRelease(swap);
-    SafeRelease(context);
     SafeRelease(d3d);
     SafeRelease(factory);
 }
@@ -370,29 +370,24 @@ void D3D10System::UnloadAllData()
 
     zero(nullBuff, sizeof(nullBuff));
 
-    context->VSSetConstantBuffers(0, 1, (ID3D11Buffer**)nullBuff);
-    context->PSSetConstantBuffers(0, 1, (ID3D11Buffer**)nullBuff);
-    context->OMSetDepthStencilState(NULL, 0);
-    context->PSSetSamplers(0, 1, (ID3D11SamplerState**)nullBuff);
-    context->OMSetBlendState(NULL, bla, 0xFFFFFFFF);
-    context->OMSetRenderTargets(1, (ID3D11RenderTargetView**)nullBuff, NULL);
-    context->IASetVertexBuffers(0, 8, (ID3D11Buffer**)nullBuff, &zeroVal, &zeroVal);
-    context->PSSetShaderResources(0, 8, (ID3D11ShaderResourceView**)nullBuff);
-    context->IASetInputLayout(NULL);
-    context->PSSetShader(NULL, NULL, 0);
-    context->VSSetShader(NULL, NULL, 0);
-    context->RSSetState(NULL);
-    context->RSSetScissorRects(0, NULL);
+    d3d->VSSetConstantBuffers(0, 1, (ID3D10Buffer**)nullBuff);
+    d3d->PSSetConstantBuffers(0, 1, (ID3D10Buffer**)nullBuff);
+    d3d->OMSetDepthStencilState(NULL, 0);
+    d3d->PSSetSamplers(0, 1, (ID3D10SamplerState**)nullBuff);
+    d3d->OMSetBlendState(NULL, bla, 0xFFFFFFFF);
+    d3d->OMSetRenderTargets(1, (ID3D10RenderTargetView**)nullBuff, NULL);
+    d3d->IASetVertexBuffers(0, 8, (ID3D10Buffer**)nullBuff, &zeroVal, &zeroVal);
+    d3d->PSSetShaderResources(0, 8, (ID3D10ShaderResourceView**)nullBuff);
+    d3d->IASetInputLayout(NULL);
+    d3d->PSSetShader(NULL);
+    d3d->VSSetShader(NULL);
+    d3d->RSSetState(NULL);
+    d3d->RSSetScissorRects(0, NULL);
 }
 
 LPVOID D3D10System::GetDevice()
 {
     return (LPVOID)d3d;
-}
-
-LPVOID D3D10System::GetContext()
-{
-    return (LPVOID)context;
 }
 
 
@@ -452,8 +447,8 @@ Texture* D3D10System::CreateGDITexture(unsigned int width, unsigned int height)
 
 bool D3D10System::GetTextureFileInfo(CTSTR lpFile, TextureInfo &info)
 {
-    D3DX11_IMAGE_INFO ii;
-    if(SUCCEEDED(D3DX11GetImageInfoFromFile(lpFile, NULL, &ii, NULL)))
+    D3DX10_IMAGE_INFO ii;
+    if(SUCCEEDED(D3DX10GetImageInfoFromFile(lpFile, NULL, &ii, NULL)))
     {
         info.width = ii.Width;
         info.height = ii.Height;
@@ -573,7 +568,7 @@ void D3D10System::LoadVertexBuffer(VertexBuffer* vb)
         D3D10VertexBuffer *d3dVB = static_cast<D3D10VertexBuffer*>(vb);
         if(curVertexShader)
         {
-            List<ID3D11Buffer*> buffers;
+            List<ID3D10Buffer*> buffers;
             List<UINT> strides;
             List<UINT> offsets;
 
@@ -587,7 +582,7 @@ void D3D10System::LoadVertexBuffer(VertexBuffer* vb)
             }
 
             offsets.SetSize(buffers.Num());
-            context->IASetVertexBuffers(0, buffers.Num(), buffers.Array(), strides.Array(), offsets.Array());
+            d3d->IASetVertexBuffers(0, buffers.Num(), buffers.Array(), strides.Array(), offsets.Array());
         }
 
         curVertexBuffer = d3dVB;
@@ -600,11 +595,11 @@ void D3D10System::LoadTexture(Texture *texture, UINT idTexture)
     {
         D3D10Texture *d3dTex = static_cast<D3D10Texture*>(texture);
         if(d3dTex)
-            context->PSSetShaderResources(idTexture, 1, &d3dTex->resource);
+            d3d->PSSetShaderResources(idTexture, 1, &d3dTex->resource);
         else
         {
             LPVOID lpNull = NULL;
-            context->PSSetShaderResources(idTexture, 1, (ID3D11ShaderResourceView**)&lpNull);
+            d3d->PSSetShaderResources(idTexture, 1, (ID3D10ShaderResourceView**)&lpNull);
         }
 
         curTextures[idTexture] = d3dTex;
@@ -617,11 +612,11 @@ void D3D10System::LoadSamplerState(SamplerState *sampler, UINT idSampler)
     {
         D3D10SamplerState *d3dSampler = static_cast<D3D10SamplerState*>(sampler);
         if(d3dSampler)
-            context->PSSetSamplers(idSampler, 1, &d3dSampler->state);
+            d3d->PSSetSamplers(idSampler, 1, &d3dSampler->state);
         else
         {
             LPVOID lpNull = NULL;
-            context->PSSetSamplers(idSampler, 1, (ID3D11SamplerState**)&lpNull);
+            d3d->PSSetSamplers(idSampler, 1, (ID3D10SamplerState**)&lpNull);
         }
         curSamplers[idSampler] = d3dSampler;
     }
@@ -639,9 +634,9 @@ void D3D10System::LoadVertexShader(Shader *vShader)
 
             D3D10VertexShader *shader = static_cast<D3D10VertexShader*>(vShader);
 
-            context->VSSetShader(shader->vertexShader, NULL, 0);
-            context->IASetInputLayout(shader->inputLayout);
-            context->VSSetConstantBuffers(0, 1, &shader->constantBuffer);
+            d3d->VSSetShader(shader->vertexShader);
+            d3d->IASetInputLayout(shader->inputLayout);
+            d3d->VSSetConstantBuffers(0, 1, &shader->constantBuffer);
 
             if(lastVertexBuffer)
                 LoadVertexBuffer(lastVertexBuffer);
@@ -650,8 +645,8 @@ void D3D10System::LoadVertexShader(Shader *vShader)
         {
             LPVOID lpNULL = NULL;
 
-            context->VSSetShader(NULL, NULL, 0);
-            context->VSSetConstantBuffers(0, 1, (ID3D11Buffer**)&lpNULL);
+            d3d->VSSetShader(NULL);
+            d3d->VSSetConstantBuffers(0, 1, (ID3D10Buffer**)&lpNULL);
         }
 
         curVertexShader = static_cast<D3D10VertexShader*>(vShader);
@@ -666,8 +661,8 @@ void D3D10System::LoadPixelShader(Shader *pShader)
         {
             D3D10PixelShader *shader = static_cast<D3D10PixelShader*>(pShader);
 
-            context->PSSetShader(shader->pixelShader, NULL, 0);
-            context->PSSetConstantBuffers(0, 1, &shader->constantBuffer);
+            d3d->PSSetShader(shader->pixelShader);
+            d3d->PSSetConstantBuffers(0, 1, &shader->constantBuffer);
 
             for(UINT i=0; i<shader->Samplers.Num(); i++)
                 LoadSamplerState(shader->Samplers[i].sampler, i);
@@ -676,15 +671,15 @@ void D3D10System::LoadPixelShader(Shader *pShader)
         {
             LPVOID lpNULL = NULL;
 
-            context->PSSetShader(NULL, NULL, 0);
-            context->PSSetConstantBuffers(0, 1, (ID3D11Buffer**)&lpNULL);
+            d3d->PSSetShader(NULL);
+            d3d->PSSetConstantBuffers(0, 1, (ID3D10Buffer**)&lpNULL);
 
             for(UINT i=0; i<8; i++)
                 curSamplers[i] = NULL;
 
-            ID3D11SamplerState *states[8];
+            ID3D10SamplerState *states[8];
             zero(states, sizeof(states));
-            context->PSSetSamplers(0, 8, states);
+            d3d->PSSetSamplers(0, 8, states);
         }
 
         curPixelShader = static_cast<D3D10PixelShader*>(pShader);
@@ -707,23 +702,23 @@ void D3D10System::SetRenderTarget(Texture *texture)
     {
         if(texture)
         {
-            ID3D11RenderTargetView *view = static_cast<D3D10Texture*>(texture)->renderTarget;
+            ID3D10RenderTargetView *view = static_cast<D3D10Texture*>(texture)->renderTarget;
             if(!view)
             {
                 AppWarning(TEXT("tried to set a texture that wasn't a render target as a render target"));
                 return;
             }
 
-            context->OMSetRenderTargets(1, &view, NULL);
+            d3d->OMSetRenderTargets(1, &view, NULL);
         }
         else
-            context->OMSetRenderTargets(1, &swapRenderView, NULL);
+            d3d->OMSetRenderTargets(1, &swapRenderView, NULL);
 
         curRenderTarget = static_cast<D3D10Texture*>(texture);
     }
 }
 
-const D3D11_PRIMITIVE_TOPOLOGY topologies[] = {D3D11_PRIMITIVE_TOPOLOGY_POINTLIST, D3D11_PRIMITIVE_TOPOLOGY_LINELIST, D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP};
+const D3D10_PRIMITIVE_TOPOLOGY topologies[] = {D3D10_PRIMITIVE_TOPOLOGY_POINTLIST, D3D10_PRIMITIVE_TOPOLOGY_LINELIST, D3D10_PRIMITIVE_TOPOLOGY_LINESTRIP, D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST, D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP};
 
 void D3D10System::Draw(GSDrawMode drawMode, DWORD startVert, DWORD nVerts)
 {
@@ -750,33 +745,33 @@ void D3D10System::Draw(GSDrawMode drawMode, DWORD startVert, DWORD nVerts)
     curVertexShader->UpdateParams();
     curPixelShader->UpdateParams();
 
-    D3D11_PRIMITIVE_TOPOLOGY newTopology = topologies[(int)drawMode];
+    D3D10_PRIMITIVE_TOPOLOGY newTopology = topologies[(int)drawMode];
     if(newTopology != curTopology)
     {
-        context->IASetPrimitiveTopology(newTopology);
+        d3d->IASetPrimitiveTopology(newTopology);
         curTopology = newTopology;
     }
 
     if(nVerts == 0)
         nVerts = static_cast<D3D10VertexBuffer*>(curVertexBuffer)->numVerts;
 
-    context->Draw(nVerts, startVert);
+    d3d->Draw(nVerts, startVert);
 }
 
 
 ////////////////////////////
 //Drawing mode functions
 
-const D3D11_BLEND blendConvert[] = {D3D11_BLEND_ZERO, D3D11_BLEND_ONE, D3D11_BLEND_SRC_COLOR, D3D11_BLEND_INV_SRC_COLOR, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_DEST_COLOR, D3D11_BLEND_INV_DEST_COLOR, D3D11_BLEND_DEST_ALPHA, D3D11_BLEND_INV_DEST_ALPHA, D3D11_BLEND_BLEND_FACTOR, D3D11_BLEND_INV_BLEND_FACTOR};
+const D3D10_BLEND blendConvert[] = {D3D10_BLEND_ZERO, D3D10_BLEND_ONE, D3D10_BLEND_SRC_COLOR, D3D10_BLEND_INV_SRC_COLOR, D3D10_BLEND_SRC_ALPHA, D3D10_BLEND_INV_SRC_ALPHA, D3D10_BLEND_DEST_COLOR, D3D10_BLEND_INV_DEST_COLOR, D3D10_BLEND_DEST_ALPHA, D3D10_BLEND_INV_DEST_ALPHA, D3D10_BLEND_BLEND_FACTOR, D3D10_BLEND_INV_BLEND_FACTOR};
 
 void  D3D10System::EnableBlending(BOOL bEnable)
 {
     if(bBlendingEnabled != bEnable)
     {
         if(bBlendingEnabled = bEnable)
-            context->OMSetBlendState(curBlendState, curBlendFactor, 0xFFFFFFFF);
+            d3d->OMSetBlendState(curBlendState, curBlendFactor, 0xFFFFFFFF);
         else
-            context->OMSetBlendState(disabledBlend, curBlendFactor, 0xFFFFFFFF);
+            d3d->OMSetBlendState(disabledBlend, curBlendFactor, 0xFFFFFFFF);
     }
 }
 
@@ -794,7 +789,7 @@ void D3D10System::BlendFunction(GSBlendType srcFactor, GSBlendType destFactor, f
         {
             if(bUseFactor || curBlendState != blendInfo.blendState)
             {
-                context->OMSetBlendState(blendInfo.blendState, curBlendFactor, 0xFFFFFFFF);
+                d3d->OMSetBlendState(blendInfo.blendState, curBlendFactor, 0xFFFFFFFF);
                 curBlendState = blendInfo.blendState;
             }
             return;
@@ -802,19 +797,19 @@ void D3D10System::BlendFunction(GSBlendType srcFactor, GSBlendType destFactor, f
     }
 
     //blend wasn't found, create a new one and save it for later
-    D3D11_BLEND_DESC blendDesc;
+    D3D10_BLEND_DESC blendDesc;
     zero(&blendDesc, sizeof(blendDesc));
     for(int i=0; i<8; i++)
     {
-        blendDesc.RenderTarget[i].BlendEnable               = TRUE;
-        blendDesc.RenderTarget[i].RenderTargetWriteMask     = D3D11_COLOR_WRITE_ENABLE_ALL;
-        blendDesc.RenderTarget[i].BlendOpAlpha              = D3D11_BLEND_OP_ADD;
-        blendDesc.RenderTarget[i].BlendOp                   = D3D11_BLEND_OP_ADD;
-        blendDesc.RenderTarget[i].SrcBlendAlpha             = D3D11_BLEND_ONE;
-        blendDesc.RenderTarget[i].DestBlendAlpha            = D3D11_BLEND_ZERO;
-        blendDesc.RenderTarget[i].SrcBlend                  = blendConvert[srcFactor];
-        blendDesc.RenderTarget[i].DestBlend                 = blendConvert[destFactor];
+        blendDesc.BlendEnable[i]            = TRUE;
+        blendDesc.RenderTargetWriteMask[i]  = D3D10_COLOR_WRITE_ENABLE_ALL;
     }
+    blendDesc.BlendOpAlpha              = D3D10_BLEND_OP_ADD;
+    blendDesc.BlendOp                   = D3D10_BLEND_OP_ADD;
+    blendDesc.SrcBlendAlpha             = D3D10_BLEND_ONE;
+    blendDesc.DestBlendAlpha            = D3D10_BLEND_ZERO;
+    blendDesc.SrcBlend                  = blendConvert[srcFactor];
+    blendDesc.DestBlend                 = blendConvert[destFactor];
 
     SavedBlendState *savedBlend = blends.CreateNew();
     savedBlend->destFactor      = destFactor;
@@ -824,7 +819,7 @@ void D3D10System::BlendFunction(GSBlendType srcFactor, GSBlendType destFactor, f
         CrashError(TEXT("Could not set blend state"));
 
     if(bBlendingEnabled)
-        context->OMSetBlendState(savedBlend->blendState, curBlendFactor, 0xFFFFFFFF);
+        d3d->OMSetBlendState(savedBlend->blendState, curBlendFactor, 0xFFFFFFFF);
 
     curBlendState = savedBlend->blendState;
 }
@@ -836,9 +831,9 @@ void D3D10System::ClearColorBuffer(DWORD color)
 
     D3D10Texture *d3dTex = static_cast<D3D10Texture*>(curRenderTarget);
     if(d3dTex)
-        context->ClearRenderTargetView(d3dTex->renderTarget, floatColor.ptr);
+        d3d->ClearRenderTargetView(d3dTex->renderTarget, floatColor.ptr);
     else
-        context->ClearRenderTargetView(swapRenderView, floatColor.ptr);
+        d3d->ClearRenderTargetView(swapRenderView, floatColor.ptr);
 }
 
 
@@ -859,28 +854,28 @@ void D3D10System::Frustum(float left, float right, float top, float bottom, floa
 
 void D3D10System::SetViewport(float x, float y, float width, float height)
 {
-    D3D11_VIEWPORT vp;
+    D3D10_VIEWPORT vp;
     zero(&vp, sizeof(vp));
     vp.MaxDepth = 1.0f;
-    vp.TopLeftX = FLOAT(x);
-    vp.TopLeftY = FLOAT(y);
-    vp.Width    = FLOAT(width);
-    vp.Height   = FLOAT(height);
-    context->RSSetViewports(1, &vp);
+    vp.TopLeftX = INT(x);
+    vp.TopLeftY = INT(y);
+    vp.Width    = UINT(width);
+    vp.Height   = UINT(height);
+    d3d->RSSetViewports(1, &vp);
 }
 
 void D3D10System::SetScissorRect(XRect *pRect)
 {
     if(pRect)
     {
-        context->RSSetState(scissorState);
-        D3D11_RECT rc = {pRect->x, pRect->y, pRect->x+pRect->cx, pRect->y+pRect->cy};
-        context->RSSetScissorRects(1, &rc);
+        d3d->RSSetState(scissorState);
+        D3D10_RECT rc = {pRect->x, pRect->y, pRect->x+pRect->cx, pRect->y+pRect->cy};
+        d3d->RSSetScissorRects(1, &rc);
     }
     else
     {
-        context->RSSetState(rasterizerState);
-        context->RSSetScissorRects(0, NULL);
+        d3d->RSSetState(rasterizerState);
+        d3d->RSSetScissorRects(0, NULL);
     }
 }
 
@@ -1049,14 +1044,14 @@ void D3D10System::ResetViewMatrix()
 void D3D10System::ResizeView()
 {
     LPVOID nullVal = NULL;
-    context->OMSetRenderTargets(1, (ID3D11RenderTargetView**)&nullVal, NULL);
+    d3d->OMSetRenderTargets(1, (ID3D10RenderTargetView**)&nullVal, NULL);
 
     SafeRelease(swapRenderView);
 
     swap->ResizeBuffers(2, 0, 0, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
 
-    ID3D11Texture2D *backBuffer = NULL;
-    HRESULT err = swap->GetBuffer(0, IID_ID3D11Texture2D, (void**)&backBuffer);
+    ID3D10Texture2D *backBuffer = NULL;
+    HRESULT err = swap->GetBuffer(0, IID_ID3D10Texture2D, (void**)&backBuffer);
     if(FAILED(err))
         CrashError(TEXT("Unable to get back buffer from swap chain"));
 
@@ -1072,5 +1067,5 @@ void D3D10System::CopyTexture(Texture *texDest, Texture *texSrc)
     D3D10Texture *d3d10Dest = static_cast<D3D10Texture*>(texDest);
     D3D10Texture *d3d10Src  = static_cast<D3D10Texture*>(texSrc);
 
-    context->CopyResource(d3d10Dest->texture, d3d10Src->texture);
+    d3d->CopyResource(d3d10Dest->texture, d3d10Src->texture);
 }
