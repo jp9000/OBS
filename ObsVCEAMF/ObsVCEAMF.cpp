@@ -79,9 +79,9 @@ extern "C" __declspec(dllexport) bool __cdecl CheckVCEHardwareSupport(bool log)
 	return true;
 }
 
-extern "C" __declspec(dllexport) VideoEncoder* __cdecl CreateVCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, ID3D11Device *d3ddevice)
+extern "C" __declspec(dllexport) VideoEncoder* __cdecl CreateVCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, ID3D10Device *d3d10device)
 {
-	VCEEncoder *enc = new VCEEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR, d3ddevice);
+	VCEEncoder *enc = new VCEEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR, d3d10device);
 
 	encoderRefs += 1; //Lock?
 
@@ -177,7 +177,7 @@ void PrintProps(amf::AMFPropertyStorage *props)
 }
 
 VCEEncoder::VCEEncoder(int fps, int width, int height, int quality, const TCHAR* preset, bool bUse444, 
-	ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, ID3D11Device *d3ddevice)
+	ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, ID3D10Device *d3ddevice)
 	: mAlive(false)
 	, mFps(fps)
 	, mWidth(width)
@@ -383,13 +383,10 @@ bool VCEEncoder::Init()
 
 	if (mEngine == 2)
 	{
-		//if (!mD3Ddevice)
-		//{
-			res = mDX11Device.Init(adapterId, false);
-			RETURNIFFAILED(res, TEXT("D3D11 device init failed. %d\n"), res);
-		//}
+		res = mDX11Device.Init(adapterId, false);
+		RETURNIFFAILED(res, TEXT("D3D11 device init failed. %d\n"), res);
 		//TODO Cannot find encoder with mD3Ddevice because "Device removed"
-		res = mContext->InitDX11(/*mD3Ddevice ? mD3Ddevice : */mDX11Device.GetDevice(), amf::AMF_DX11_0);
+		res = mContext->InitDX11(mDX11Device.GetDevice(), amf::AMF_DX11_0);
 		RETURNIFFAILED(res, TEXT("AMF context init with D3D11 failed. %d\n"), res);
 		mCanInterop = true;
 		if (AppConfig->GetInt(TEXT("VCE Settings"), TEXT("NoInterop"), 0) != 0)
@@ -412,7 +409,7 @@ bool VCEEncoder::Init()
 	//Only with DX11
 	if (mCanInterop)
 	{
-		res = mOCLDevice.Init(nullptr, nullptr, /*mD3Ddevice ? mD3Ddevice :*/ mDX11Device.GetDevice());
+		res = mOCLDevice.Init(nullptr, mD3Ddevice, mDX11Device.GetDevice());
 		RETURNIFFAILED(res, TEXT("OpenCL device init failed. %d"), res);
 
 		mCmdQueue = mOCLDevice.GetCommandQueue();
@@ -750,7 +747,7 @@ bool VCEEncoder::Init()
 	return true;
 }
 
-void VCEEncoder::ConvertD3D11(ID3D11Texture2D *d3dtex, void *data, void **state)
+void VCEEncoder::ConvertD3DTex(ID3D10Texture2D *d3dtex, void *data, void **state)
 {
 	assert(d3dtex && data && state);
 	mfxFrameData *mfx = static_cast<mfxFrameData*>(data);
@@ -774,9 +771,9 @@ void VCEEncoder::ConvertD3D11(ID3D11Texture2D *d3dtex, void *data, void **state)
 		mCLMemObjs.push_back(clD3D);
 	}
 
-	mOCLDevice.AcquireD3D11(clD3D);
+	mOCLDevice.AcquireD3DObj(clD3D);
 	mOCLDevice.RunKernels(clD3D, inBuf.yuv_surfaces[0], inBuf.yuv_surfaces[1], mWidth, mHeight);
-	mOCLDevice.ReleaseD3D11(clD3D);
+	mOCLDevice.ReleaseD3DObj(clD3D);
 	clFinish(mOCLDevice.GetCommandQueue());
 
 	//amf::AMFSurfacePtr pSurf;

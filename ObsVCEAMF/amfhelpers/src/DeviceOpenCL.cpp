@@ -88,9 +88,6 @@ AMF_RESULT DeviceOpenCL::Init(IDirect3DDevice9* pD3DDevice9, ID3D10Device *pD3DD
 			Log(L"Cannot resolve ClGetDeviceIDsFromD3D11KHR function");
 			return AMF_FAIL;
 		}
-		INITPFN(clCreateFromD3D11Texture2DKHR);
-		INITPFN(clEnqueueAcquireD3D11ObjectsKHR);
-		INITPFN(clEnqueueReleaseD3D11ObjectsKHR);
 
 		cl_device_id deviceDX11 = 0;
 		status = (*pClGetDeviceIDsFromD3D11KHR)(platformID, CL_D3D11_DEVICE_KHR, (void*)pD3DDevice11, CL_PREFERRED_DEVICES_FOR_D3D11_KHR, 1,&deviceDX11,NULL);
@@ -108,7 +105,7 @@ AMF_RESULT DeviceOpenCL::Init(IDirect3DDevice9* pD3DDevice9, ID3D10Device *pD3DD
 			delete[] exts;
 		}
 	}
-	/*if (pD3DDevice10 != NULL)
+	if (pD3DDevice10 != NULL)
 	{
 		clGetDeviceIDsFromD3D10KHR_fn pClGetDeviceIDsFromD3D10KHR = static_cast<clGetDeviceIDsFromD3D10KHR_fn>(clGetExtensionFunctionAddressForPlatform(platformID, "clGetDeviceIDsFromD3D10KHR"));
 		if (pClGetDeviceIDsFromD3D10KHR == NULL)
@@ -138,7 +135,7 @@ AMF_RESULT DeviceOpenCL::Init(IDirect3DDevice9* pD3DDevice9, ID3D10Device *pD3DD
 			delete[] exts;
 		}
 
-	}*/
+	}
 	if(pD3DDevice9 != NULL)
 	{
 		clGetDeviceIDsFromDX9MediaAdapterKHR_fn pclGetDeviceIDsFromDX9MediaAdapterKHR = static_cast<clGetDeviceIDsFromDX9MediaAdapterKHR_fn>(clGetExtensionFunctionAddressForPlatform(platformID, "clGetDeviceIDsFromDX9MediaAdapterKHR"));
@@ -285,10 +282,10 @@ AMF_RESULT DeviceOpenCL::FindPlatformID(cl_platform_id &platform)
 	return AMF_FAIL;
 }
 
-cl_mem DeviceOpenCL::CreateTexture2D(ID3D11Texture2D *tex)
+cl_mem DeviceOpenCL::CreateTexture2D(ID3D10Texture2D *tex)
 {
 	cl_int status = 0;
-	cl_mem clTex2D = clCreateFromD3D11Texture2DKHR(m_hContext, CL_MEM_READ_ONLY, tex, 0, &status);
+	cl_mem clTex2D = clCreateFromD3D10Texture2DKHR(m_hContext, CL_MEM_READ_ONLY, tex, 0, &status);
 	if (status != CL_SUCCESS)
 		Log(L"Failed to create CL texture from D3D10 texture2D.");
 
@@ -296,21 +293,21 @@ cl_mem DeviceOpenCL::CreateTexture2D(ID3D11Texture2D *tex)
 	return clTex2D;
 }
 
-cl_int DeviceOpenCL::AcquireD3D11(cl_mem tex)
+cl_int DeviceOpenCL::AcquireD3DObj(cl_mem tex)
 {
-	assert(clEnqueueAcquireD3D11ObjectsKHR);
-	cl_int status = clEnqueueAcquireD3D11ObjectsKHR(m_hCommandQueue, 1, &tex, 0, nullptr, nullptr);
+	assert(clEnqueueAcquireD3D10ObjectsKHR);
+	cl_int status = clEnqueueAcquireD3D10ObjectsKHR(m_hCommandQueue, 1, &tex, 0, nullptr, nullptr);
 	if (status != CL_SUCCESS)
-		Log(TEXT("Failed to acquire D3D11 object"));
+		Log(TEXT("Failed to acquire D3D10 object"));
 	return status;
 }
 
-cl_int DeviceOpenCL::ReleaseD3D11(cl_mem tex)
+cl_int DeviceOpenCL::ReleaseD3DObj(cl_mem tex)
 {
-	assert(clEnqueueReleaseD3D11ObjectsKHR);
-	cl_int status = clEnqueueReleaseD3D11ObjectsKHR(m_hCommandQueue, 1, &tex, 0, nullptr, nullptr);
+	assert(clEnqueueReleaseD3D10ObjectsKHR);
+	cl_int status = clEnqueueReleaseD3D10ObjectsKHR(m_hCommandQueue, 1, &tex, 0, nullptr, nullptr);
 	if (status != CL_SUCCESS)
-		Log(TEXT("Failed to release D3D11 object"));
+		Log(TEXT("Failed to release D3D10 object"));
 	return status;
 }
 

@@ -7,7 +7,6 @@
 //#include <gl/glext.h>
 #include <CL/cl.h>
 #include <CL\cl_d3d10.h>
-#include <CL\cl_d3d11.h>
 #include <amf\core\Result.h>
 #include <vector>
 
@@ -21,9 +20,9 @@ public:
     AMF_RESULT Terminate();
 
     cl_command_queue            GetCommandQueue() { return m_hCommandQueue; }
-	cl_mem CreateTexture2D(ID3D11Texture2D *tex);
-	cl_int AcquireD3D11(cl_mem tex);
-	cl_int ReleaseD3D11(cl_mem tex);
+	cl_mem CreateTexture2D(ID3D10Texture2D *tex);
+	cl_int AcquireD3DObj(cl_mem tex);
+	cl_int ReleaseD3DObj(cl_mem tex);
 	bool RunKernels(cl_mem inTex, cl_mem yTex, cl_mem uvTex, size_t width, size_t height);
 private:
     AMF_RESULT FindPlatformID(cl_platform_id &platform);
@@ -36,7 +35,7 @@ private:
     cl_program                  m_program;
     std::vector<cl_device_id>   m_hDeviceIDs;
 
-	clCreateFromD3D11Texture2DKHR_fn   clCreateFromD3D11Texture2DKHR;
-	clEnqueueAcquireD3D11ObjectsKHR_fn clEnqueueAcquireD3D11ObjectsKHR;
-	clEnqueueReleaseD3D11ObjectsKHR_fn clEnqueueReleaseD3D11ObjectsKHR;
+	clCreateFromD3D10Texture2DKHR_fn   clCreateFromD3D10Texture2DKHR;
+	clEnqueueAcquireD3D10ObjectsKHR_fn clEnqueueAcquireD3D10ObjectsKHR;
+	clEnqueueReleaseD3D10ObjectsKHR_fn clEnqueueReleaseD3D10ObjectsKHR;
 };
