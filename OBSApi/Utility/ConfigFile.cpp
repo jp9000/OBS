@@ -109,9 +109,6 @@ BOOL ConfigFile::LoadFile(DWORD dwOpenMode)
     lpTempFileData[dwLength+4] = 0;
     file.Close();
 
-    if (!lpFileData)
-        lpFileData = (TSTR)new InternalUselessStuff;
-
     lpActualFileData = utf8_createTstr(lpTempFileData);
     dwLength = slen(lpActualFileData);
     Free(lpTempFileData);
@@ -234,9 +231,6 @@ void ConfigFile::Close()
 
 BOOL ConfigFile::SaveAs(CTSTR lpPath)
 {
-    if (!bOpen || !lpFileData)
-        return false;
-
     OSEnterMutex(hHorribleThreadSafetyMutex);
     XFile newFile;
     
@@ -278,9 +272,6 @@ void ConfigFile::SetFilePath(CTSTR lpPath)
 
 String ConfigFile::GetString(CTSTR lpSection, CTSTR lpKey, CTSTR def)
 {
-    if (!bOpen || !lpFileData)
-        return String(def);
-
     OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
@@ -314,9 +305,6 @@ String ConfigFile::GetString(CTSTR lpSection, CTSTR lpKey, CTSTR def)
 
 CTSTR ConfigFile::GetStringPtr(CTSTR lpSection, CTSTR lpKey, CTSTR def)
 {
-    if (!bOpen || !lpFileData)
-        return def;
-
     OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
@@ -350,9 +338,6 @@ CTSTR ConfigFile::GetStringPtr(CTSTR lpSection, CTSTR lpKey, CTSTR def)
 
 int ConfigFile::GetInt(CTSTR lpSection, CTSTR lpKey, int def)
 {
-    if (!bOpen || !lpFileData)
-        return def;
-
     OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
@@ -398,9 +383,6 @@ int ConfigFile::GetInt(CTSTR lpSection, CTSTR lpKey, int def)
 
 DWORD ConfigFile::GetHex(CTSTR lpSection, CTSTR lpKey, DWORD def)
 {
-    if (!bOpen || !lpFileData)
-        return def;
-
     OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
@@ -430,9 +412,6 @@ DWORD ConfigFile::GetHex(CTSTR lpSection, CTSTR lpKey, DWORD def)
 
 float ConfigFile::GetFloat(CTSTR lpSection, CTSTR lpKey, float def)
 {
-    if (!bOpen || !lpFileData)
-        return def;
-
     OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
@@ -462,9 +441,6 @@ float ConfigFile::GetFloat(CTSTR lpSection, CTSTR lpKey, float def)
 
 Color4 ConfigFile::GetColor(CTSTR lpSection, CTSTR lpKey)
 {
-    if (!bOpen || !lpFileData)
-        return Color4(0.0f, 0.0f, 0.0f, 0.0f);
-
     OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
@@ -549,9 +525,6 @@ Color4 ConfigFile::GetColor(CTSTR lpSection, CTSTR lpKey)
 
 BOOL ConfigFile::GetStringList(CTSTR lpSection, CTSTR lpKey, StringList &StrList)
 {
-    if (!bOpen || !lpFileData)
-        return false;
-
     OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
@@ -585,9 +558,6 @@ BOOL ConfigFile::GetStringList(CTSTR lpSection, CTSTR lpKey, StringList &StrList
 
 BOOL ConfigFile::GetIntList(CTSTR lpSection, CTSTR lpKey, List<int> &IntList)
 {
-    if (!bOpen || !lpFileData)
-        return false;
-
     OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
@@ -630,9 +600,6 @@ BOOL ConfigFile::GetIntList(CTSTR lpSection, CTSTR lpKey, List<int> &IntList)
 
 BOOL ConfigFile::GetFloatList(CTSTR lpSection, CTSTR lpKey, List<float> &FloatList)
 {
-    if (!bOpen || !lpFileData)
-        return false;
-
     OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
@@ -665,9 +632,6 @@ BOOL ConfigFile::GetFloatList(CTSTR lpSection, CTSTR lpKey, List<float> &FloatLi
 
 BOOL ConfigFile::GetColorList(CTSTR lpSection, CTSTR lpKey, List<Color4> &ColorList)
 {
-    if (!bOpen || !lpFileData)
-        return false;
-
     OSEnterMutex(hHorribleThreadSafetyMutex);
     assert(lpSection);
     assert(lpKey);
