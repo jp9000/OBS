@@ -112,4 +112,14 @@ services : {
       "API" : https://web-api.azubu.tv/stream/broadcaster-key/
     }
   }
+  Joicaster : {
+    id : 14
+    servers : {
+      "US Central" : rtmp://cmedia1.joicaster.co/live
+      "EU West" : rtmp://eumedia1.joicaster.co/live
+    }
+    recommended : {
+      "keyint"      : 2000
+    }
+  }
 }
