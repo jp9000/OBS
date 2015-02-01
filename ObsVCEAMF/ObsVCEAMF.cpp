@@ -141,6 +141,9 @@ void PrintProps(amf::AMFPropertyStorage *props)
 		{
 			switch (var.type)
 			{
+			case amf::AMF_VARIANT_TYPE::AMF_VARIANT_EMPTY:
+				VCELog(TEXT("%s = <empty>"), name);
+				break;
 			case amf::AMF_VARIANT_TYPE::AMF_VARIANT_BOOL:
 				VCELog(TEXT("%s = <bool>%d"), name, var.boolValue);
 				break;
@@ -574,7 +577,9 @@ bool VCEEncoder::Init()
 
 	if (rcm == AMF_VIDEO_ENCODER_RATE_CONTROL_METHOD_CBR)
 	{
-		res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_ENFORCE_HRD, true);
+		iInt = 1;
+		USERCFG(iInt, "EnforceHRD");
+		res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_ENFORCE_HRD, !!iInt);
 		LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_ENFORCE_HRD);
 
 		bool bUsePad = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 0) != 0;
@@ -658,6 +663,11 @@ bool VCEEncoder::Init()
 	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_RATE_CONTROL_SKIP_FRAME_ENABLE, !!iInt);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_RATE_CONTROL_SKIP_FRAME_ENABLE);
 
+	iInt = 1;
+	USERCFG(iInt, "CABAC");
+	res = mEncoder->SetProperty(L"CABACEnable", !!iInt);
+	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, L"CABACEnable");
+
 	//B frames are not supported yet. Needs Composition Time fix.
 	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_B_REFERENCE_ENABLE, true);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_B_REFERENCE_ENABLE);
@@ -668,7 +678,7 @@ bool VCEEncoder::Init()
 
 	if (iInt > 0)
 	{
-		res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_HEADER_INSERTION_SPACING, gopSize < 1001 ? gopSize : 1000);
+		res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_HEADER_INSERTION_SPACING, mIDRPeriod < 1001 ? mIDRPeriod : 1000);
 		LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_HEADER_INSERTION_SPACING);
 	}
 
@@ -879,7 +889,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
 
 	unsigned int idx = (unsigned int)data.MemId - 1;
 #ifdef _DEBUG
-	OSDebugOut(TEXT("Encoding buffer: %d\n"), idx + 1);
+	OSDebugOut(TEXT("Encoding buffer: %d\n"), idx);
 #endif
 
 	InputBuffer &inBuf = mInputBuffers[idx];
@@ -900,10 +910,10 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
 
 #ifdef _DEBUG
 	OSEnterMutex(mOutQueueMutex);
-	OSDebugOut(TEXT("Output queues: Sent %d, Ready: %d, Unused: %d, submit: %d\n"),
+	OSDebugOut(TEXT("Output queues: Sent %d, Ready: %d, Unused: %d, submit: %d out: %d\n"),
 		mOutputReadyQueue.size(),
 		mOutputProcessedQueue.size(),
-		mOutputQueue.size(), mSubmitQueue.size());
+		mOutputQueue.size(), mSubmitQueue.size(), packets.Num());
 	OSLeaveMutex(mOutQueueMutex);
 #endif
 
@@ -961,6 +971,7 @@ void VCEEncoder::Submit()
 {
 	int resubmitCount = 0;
 	QWORD sleep = QWORD((1000.f / mFps / 5) * 1000);
+	//QWORD sleep = QWORD(200000 / mFps);
 	QWORD lastTime = GetQPCTimeMS();
 	while (true)
 	{
@@ -1015,30 +1026,17 @@ AMF_RESULT VCEEncoder::SubmitBuffer(InputBuffer *inBuf)
 	{
 	case amf::AMF_MEMORY_DX11:
 	{
-		res = mContext->AllocSurface(amf::AMF_MEMORY_DX11, amf::AMF_SURFACE_NV12, mWidth, mHeight, &pSurface);
-		if(res != AMF_OK)
-			VCELog(TEXT("Failed to allocate surface: %s"), amf::AMFGetResultText(res));
-
 		profileIn("CopyResource (dx11)")
-		amf::AMFPlanePtr plane = pSurface->GetPlaneAt(0);
-		//Not ref incremented
-		ID3D11Texture2D *pTex = (ID3D11Texture2D *)plane->GetNative();
-		ID3D11Device *pDevice;
-		pTex->GetDevice(&pDevice);
-		ID3D11DeviceContext *pD3Dcontext;
-		pDevice->GetImmediateContext(&pD3Dcontext);
-		pD3Dcontext->Unmap(inBuf->pTex, 0);
-		inBuf->isMapped = false;
-		pD3Dcontext->CopyResource(pTex, inBuf->pTex);
-		pD3Dcontext->Release();
-		pDevice->Release();
+		res = mContext->CreateSurfaceFromDX11Native(inBuf->pTex, &pSurface, &mObserver);
+		if(res != AMF_OK)
+			VCELog(TEXT("Failed to create surface from DX11 texture: %s"), amf::AMFGetResultText(res));
 		profileOut
 	}
 		break;
 
 	case amf::AMF_MEMORY_OPENCL:
 		res = mContext->CreateSurfaceFromOpenCLNative(amf::AMF_SURFACE_NV12,
-			mWidth, mHeight, (void**)&inBuf->yuv_surfaces, &pSurface, nullptr);
+			mWidth, mHeight, (void**)&inBuf->yuv_surfaces, &pSurface, &mObserver);
 		break;
 
 	case amf::AMF_MEMORY_HOST:
@@ -1046,7 +1044,7 @@ AMF_RESULT VCEEncoder::SubmitBuffer(InputBuffer *inBuf)
 		//TODO doesn't work with NV12?
 		res = mContext->CreateSurfaceFromHostNative(amf::AMF_SURFACE_NV12,
 			mWidth, mHeight, mWidth, mHeight,
-			inBuf->pBuffer, &pSurface, nullptr);
+			inBuf->pBuffer, &pSurface, &mObserver);
 		break;
 	default:
 		//return AMF_FAIL; //commented, crash here instead
@@ -1057,6 +1055,7 @@ AMF_RESULT VCEEncoder::SubmitBuffer(InputBuffer *inBuf)
 		VCELog(TEXT("Failed to allocate surface: %s"), amf::AMFGetResultText(res));
 
 	assert(pSurface);
+	pSurface->SetProperty(L"InputBuffer", (amf_int64)inBuf);
 
 	if (mReqKeyframe || (mLowLatencyKeyInt > 0 && mCurrFrame >= mLowLatencyKeyInt))
 	{
@@ -1065,17 +1064,26 @@ AMF_RESULT VCEEncoder::SubmitBuffer(InputBuffer *inBuf)
 		mReqKeyframe = true;
 		if (mCurrFrame >= mLowLatencyKeyInt)
 			mCurrFrame = 0;
-		//res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_INTRA_REFRESH_NUM_MBS_PER_SLOT, 0);
+		if(mLowLatencyKeyInt > 0)
+			res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_INTRA_REFRESH_NUM_MBS_PER_SLOT, 0);
 		OSDebugOut(TEXT("Keyframe requested %d\n"), res);
 	}
 	else
 		res = pSurface->SetProperty(AMF_VIDEO_ENCODER_FORCE_PICTURE_TYPE, AMF_VIDEO_ENCODER_PICTURE_TYPE_NONE);
 
+	// Copy one set of SPS/PPS NALs and disable them now.
+	// Works with local recordings, not so much when streaming
+	/*if (mCurrFrame == 0)
+	{
+		res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_HEADER_INSERTION_SPACING, 0);
+		LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_HEADER_INSERTION_SPACING);
+	}*/
+
 	mCurrFrame++;
 	pSurface->SetFrameType(amf::AMF_FRAME_PROGRESSIVE);
 	pSurface->SetDuration(1000 * MS_TO_100NS / mFps); //TODO precalc
 	pSurface->SetPts(inBuf->timestamp * MS_TO_100NS);
-	pSurface->SetProperty(L"OUTPUTTS", inBuf->outputTimestamp);
+	//pSurface->SetProperty(L"OUTPUTTS", inBuf->outputTimestamp);
 	//mTSqueue.push(data.TimeStamp);
 
 	inRes = mEncoder->SubmitInput(pSurface);
@@ -1085,17 +1093,19 @@ AMF_RESULT VCEEncoder::SubmitBuffer(InputBuffer *inBuf)
 		OSDebugOut(TEXT("Failed to submit data to encoder: %d %s\n"), inRes, amf::AMFGetResultText(inRes));
 #endif
 
-	if (mReqKeyframe)
-	{
-		mReqKeyframe = false;
-		//res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_INTRA_REFRESH_NUM_MBS_PER_SLOT, mIntraMBs);
-	}
-
 	// Try again
 	if (inRes == AMF_INPUT_FULL)
 		return AMF_INPUT_FULL;
-	
-	_InterlockedCompareExchange(&(inBuf->locked), 0, 1);
+
+	if (mReqKeyframe)
+	{
+		mReqKeyframe = false;
+		if (mLowLatencyKeyInt > 0)
+			res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_INTRA_REFRESH_NUM_MBS_PER_SLOT, mIntraMBs);
+	}
+
+	_InterlockedCompareExchange(&(inBuf->inUse), 0, 1);
+	//_InterlockedCompareExchange(&(inBuf->locked), 0, 1);
 	
 	/*InputBuffer &in = mInputBuffers[(int)inBuf->frameData->MemId - 1];
 	assert(in.locked == 0);*/
@@ -1419,8 +1429,6 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
 	if (!buffers || !mAlive)
 		return;
 
-	OSMutexLocker locker(mFrameMutex);
-
 	mfxFrameData *buff = (mfxFrameData*)buffers;
 	int idx = (int)buff->MemId - 1;
 	bool ret = false;
@@ -1493,7 +1501,7 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
 			ClearInputBuffer(idx);
 	}
 
-	//FIXME IDirect3DSurface9: memory access fail when copying UV bytes
+	//FIXME IDirect3DSurface9: memory access fail when copying UV bytes, doesn't like odd positions?
 	if (false && mEngine == 1)
 	{
 		if ((mem_type == amf::AMF_MEMORY_UNKNOWN ||
@@ -1510,14 +1518,14 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
 	if (mem_type == amf::AMF_MEMORY_UNKNOWN ||
 		mem_type == amf::AMF_MEMORY_HOST)
 	{
-		RequestBuffersHost(buffers);
+		if (RequestBuffersHost(buffers))
+			return;
 	}
-	else
-	{
-		//Failed
-		mInputBuffers[idx].mem_type = amf::AMF_MEMORY_UNKNOWN;
-		assert(false && "Out of unused buffers!");
-	}
+
+	//Failed
+	mInputBuffers[idx].mem_type = amf::AMF_MEMORY_UNKNOWN;
+	assert(false && "Out of unused buffers!");
+
 }
 
 bool VCEEncoder::RequestBuffersHost(LPVOID buffers)
@@ -1535,7 +1543,7 @@ bool VCEEncoder::RequestBuffersHost(LPVOID buffers)
 	for (int i = 0; i < MAX_INPUT_BUFFERS; i++)
 	{
 		InputBuffer& inBuf = mInputBuffers[i];
-		if (inBuf.locked
+		if (inBuf.locked || inBuf.inUse
 			//|| inBuf.pBuffer
 			)
 			continue;
@@ -1560,7 +1568,7 @@ bool VCEEncoder::RequestBuffersHost(LPVOID buffers)
 #if _DEBUG
 		OSDebugOut(TEXT("Giving buffer id %d\n"), i + 1);
 #endif
-		inBuf.inUse = 1;
+		_InterlockedCompareExchange(&(inBuf.inUse), 1, 0);
 		_InterlockedCompareExchange(&(inBuf.locked), 0, 1);
 		return true;
 	}
@@ -1582,7 +1590,7 @@ bool VCEEncoder::RequestBuffersDX11(LPVOID buffers)
 	for (int i = 0; i < MAX_INPUT_BUFFERS; i++)
 	{
 		InputBuffer& inBuf = mInputBuffers[i];
-		if (inBuf.locked || inBuf.isMapped)
+		if (inBuf.locked || inBuf.isMapped || inBuf.inUse)
 			continue;
 
 		HRESULT hres = S_OK;
@@ -1634,7 +1642,7 @@ bool VCEEncoder::RequestBuffersDX11(LPVOID buffers)
 		buff->Y = (mfxU8*)map.pData;
 		buff->UV = buff->Y + (mHeight * buff->Pitch);
 		buff->MemId = mfxMemId(i + 1);
-		inBuf.inUse = 1;
+		_InterlockedCompareExchange(&(inBuf.inUse), 1, 0);
 		_InterlockedCompareExchange(&(inBuf.locked), 0, 1);
 
 		hres = d3dcontext->Release();
@@ -1741,6 +1749,7 @@ bool VCEEncoder::RequestBuffersCL(LPVOID buffers)
 		InputBuffer &inBuf = mInputBuffers[i];
 		if (/*inBuf.isMapped ||*/
 			inBuf.locked ||
+			inBuf.inUse ||
 			!inBuf.yuv_surfaces[0]) //Out of memory?
 			continue;
 
@@ -1752,8 +1761,8 @@ bool VCEEncoder::RequestBuffersCL(LPVOID buffers)
 		buff->Y = (mfxU8*)inBuf.yuv_surfaces[0];
 		buff->UV = (mfxU8*)inBuf.yuv_surfaces[1];
 		inBuf.isMapped = true;
-		inBuf.inUse = 1;
 		buff->MemId = mfxMemId(i + 1);
+		_InterlockedCompareExchange(&(inBuf.inUse), 1, 0);
 		_InterlockedCompareExchange(&(inBuf.locked), 0, 1);
 
 #ifdef _DEBUG

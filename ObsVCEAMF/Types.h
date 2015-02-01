@@ -3,39 +3,6 @@
 #include <amf\core\Surface.h>
 #include <../libmfx/include/msdk/include/mfxstructures.h>
 
-class Observer : public amf::AMFSurfaceObserver
-{
-public:
-	/**
-	********************************************************************************
-	* @brief ReleaseResources is called before internal release resources.
-	* The callback is called once, automatically removed after call.
-	* those are done in specific Surface ReleasePlanes
-	********************************************************************************
-	*/
-	virtual void AMF_STD_CALL OnSurfaceDataRelease(amf::AMFSurface* pSurface)
-	{
-		OSDebugOut(TEXT("Release surface %p\n"), pSurface);
-		InterlockedDecrement(&refCount);
-	}
-
-	Observer() : refCount(0) {}
-	virtual ~Observer() {}
-
-	Observer *IncRef()
-	{
-		InterlockedIncrement(&refCount);
-		return this;
-	}
-
-	bool Unused()
-	{
-		return refCount == 0;
-	}
-private:
-	LONG refCount;
-};
-
 //TODO reduce
 typedef struct InputBuffer
 {
@@ -43,7 +10,8 @@ typedef struct InputBuffer
 	//amf::AMFBufferPtr pAMFBuffer;
 	size_t size;
 	//bool locked;
-	LONG locked;
+	LONG locked; //< buffer is sent to encoder, no touching
+	LONG inUse; //< buffer was allocated and in use by OBS, but may touch, maybe
 	uint64_t timestamp;
 	uint64_t outputTimestamp;
 	mfxFrameData *frameData; //< For updating DX11 texture remapped pointers
@@ -63,7 +31,6 @@ typedef struct InputBuffer
 
 	IDirect3DSurface9 *pSurface9;
 	ID3D11Texture2D *pTex;
-	LONG inUse;
 
 } InputBuffer;
 
@@ -80,3 +47,41 @@ typedef struct OutputList
 	uint64_t timestamp;
 	PacketType type;
 } OutputList;
+
+class Observer : public amf::AMFSurfaceObserver
+{
+public:
+	/**
+	********************************************************************************
+	* @brief ReleaseResources is called before internal release resources.
+	* The callback is called once, automatically removed after call.
+	* those are done in specific Surface ReleasePlanes
+	********************************************************************************
+	*/
+	virtual void AMF_STD_CALL OnSurfaceDataRelease(amf::AMFSurface* pSurface)
+	{
+		InputBuffer *inBuf = nullptr;
+		if(pSurface->GetProperty(L"InputBuffer", (amf_int64*)&inBuf) == AMF_OK)
+			_InterlockedCompareExchange(&(inBuf->locked), 0, 1);
+		else
+			OSDebugOut(TEXT("Failed to get buffer property\n"));
+		//OSDebugOut(TEXT("Release buffer %p\n"), inBuf);
+		//InterlockedDecrement(&refCount);
+	}
+
+	Observer() : refCount(0) {}
+	virtual ~Observer() {}
+
+	Observer *IncRef()
+	{
+		InterlockedIncrement(&refCount);
+		return this;
+	}
+
+	bool Unused()
+	{
+		return refCount == 0;
+	}
+private:
+	LONG refCount;
+};

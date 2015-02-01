@@ -1,6 +1,5 @@
 #pragma once
 #include "stdafx.h"
-#include <bcrypt.h>
 #include "OBS-min.h"
 #include <amf\components\VideoEncoderVCECaps.h>
 #include <amf\components\ComponentCaps.h>
@@ -90,6 +89,7 @@ amf_pts AMF_STD_CALL amf_high_precision_clock()
 
 void AMF_STD_CALL amf_increase_timer_precision()
 {
+	typedef LONG NTSTATUS;
 	typedef NTSTATUS(CALLBACK * NTSETTIMERRESOLUTION)(IN ULONG DesiredTime, IN BOOLEAN SetResolution, OUT PULONG ActualTime);
 	typedef NTSTATUS(CALLBACK * NTQUERYTIMERRESOLUTION)(OUT PULONG MaximumTime, OUT PULONG MinimumTime, OUT PULONG CurrentTime);
 
@@ -170,6 +170,7 @@ private:
 	List<VideoPacket> mCurrPackets;
 	std::queue<uint64_t> mTSqueue;
 	std::queue<amf::AMFSurfacePtr> mSurfaces;
+	Observer mObserver;
 
 	cl_command_queue mCmdQueue;
 	cl_context       mCLContext;
