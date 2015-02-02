@@ -18,6 +18,7 @@
 
 
 #include "DShowPlugin.h"
+#include "IVideoCaptureFilter.h" // for Elgato GameCapture
 
 //todo: super long file.  this is another one of those abominations.
 //fix it jim
@@ -122,6 +123,21 @@ bool CurrentDeviceExists(CTSTR lpDevice, bool bGlobal, bool &isGlobal)
     return false;
 }
 
+// FMB NOTE: similar functions already in OBSNVEnc\src\nvmain (guidToString(), stringToGuid())
+String GUIDToString(const GUID& guid)
+{
+    LPOLESTR resStr;
+    String res;
+
+    if (StringFromCLSID(guid, &resStr) == S_OK)
+    {
+        res = resStr;
+        CoTaskMemFree(resStr);
+    }
+
+    return res;
+}
+
 bool GetGUIDFromString(CTSTR lpGUID, GUID &targetGUID)
 {
     String strGUID = lpGUID;
@@ -159,17 +175,22 @@ bool GetGUIDFromString(CTSTR lpGUID, GUID &targetGUID)
     return true;
 }
 
+IBaseFilter* GetExceptionDevice(REFGUID targetGUID)
+{
+    IBaseFilter *filter;
+    if(SUCCEEDED(CoCreateInstance(targetGUID, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter, (void**)&filter)))
+        return filter;
+
+    return NULL;
+}
+
 IBaseFilter* GetExceptionDevice(CTSTR lpGUID)
 {
     GUID targetGUID;
     if (!GetGUIDFromString(lpGUID, targetGUID))
         return NULL;
 
-    IBaseFilter *filter;
-    if(SUCCEEDED(CoCreateInstance(targetGUID, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter, (void**)&filter)))
-        return filter;
-
-    return NULL;
+    return GetExceptionDevice(targetGUID);
 }
 
 IBaseFilter* GetDeviceByValue(const IID &enumType, WSTR lpType, CTSTR lpName, WSTR lpType2, CTSTR lpName2)
@@ -762,7 +783,7 @@ struct ConfigDialogData
 
 #define DEV_EXCEPTION_COUNT 1
 CTSTR lpExceptionNames[DEV_EXCEPTION_COUNT] = {TEXT("Elgato Game Capture HD")};
-CTSTR lpExceptionGUIDs[DEV_EXCEPTION_COUNT] = {TEXT("{39F50F4C-99E1-464a-B6F9-D605B4FB5918}")};
+const GUID lpExceptionGUIDs[DEV_EXCEPTION_COUNT] = {CLSID_ElgatoVideoCaptureFilter};
 
 bool FillOutListOfDevices(HWND hwndCombo, GUID matchGUID, StringList *deviceList, StringList *deviceIDList)
 {
@@ -778,7 +799,9 @@ bool FillOutListOfDevices(HWND hwndCombo, GUID matchGUID, StringList *deviceList
         if(exceptionFilter)
         {
             deviceList->Add(lpExceptionNames[i]);
-            deviceIDList->Add(lpExceptionGUIDs[i]);
+
+            String exceptionGUIDString = GUIDToString(lpExceptionGUIDs[i]);
+            deviceIDList->Add(exceptionGUIDString);
 
             if(hwndCombo != NULL) SendMessage(hwndCombo, CB_ADDSTRING, 0, (LPARAM)lpExceptionNames[i]);
 
