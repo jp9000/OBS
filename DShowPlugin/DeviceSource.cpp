@@ -37,7 +37,7 @@ enum
         EXTERN_C const GUID DECLSPEC_SELECTANY name \
                 = { l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } }
 
-#include "IVideoCaptureFilter.h"
+#include "IVideoCaptureFilter.h" // for Elgato GameCapture
 
 DWORD STDCALL PackPlanarThread(ConvertData *data);
 
@@ -1813,9 +1813,9 @@ void DeviceSource::UpdateSettings()
     if(strNewAudioDevice == "Disable" && strAudioDevice == "Disable")
         bCheckSoundOutput = false;
 
-    bool eglato = sstri(strNewDevice.Array(), L"elgato") != nullptr;
+    bool elgato = sstri(strNewDevice.Array(), L"elgato") != nullptr;
 
-    if(eglato || (bNewUseAudioRender != bUseAudioRender && bCheckSoundOutput) ||
+    if(elgato || (bNewUseAudioRender != bUseAudioRender && bCheckSoundOutput) ||
        (newSoundOutputType != soundOutputType && bCheckSoundOutput) || imageCX != newCX || imageCY != newCY ||
        frameIntervalDiff >= 10 || newPreferredType != preferredOutputType ||
        !strDevice.CompareI(strNewDevice) || !strAudioDevice.CompareI(strNewAudioDevice) ||
