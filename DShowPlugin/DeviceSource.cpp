@@ -67,6 +67,7 @@ void ElgatoCheckBuffering(IBaseFilter* deviceFilter, bool& argUseBuffering, UINT
             {
                 argUseBuffering = true;
                 argBufferTime = elgatoHD60MinBufferTime;
+                Log(TEXT("    Elgato Game Capture HD60: force buffering with %d msec"), elgatoHD60MinBufferTime / 10000);
             }
         }
         elgatoFilterInterface4->Release();
