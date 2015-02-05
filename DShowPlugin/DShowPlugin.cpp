@@ -326,7 +326,7 @@ bool PinHasMajorType(IPin *pin, const GUID *majorType)
             int priority = -1;
             for(int i=0; i<count; i++)
             {
-                AM_MEDIA_TYPE *pMT;
+                AM_MEDIA_TYPE *pMT = nullptr;
                 if(SUCCEEDED(config->GetStreamCaps(i, &pMT, capsData)))
                 {
                     BOOL bDesiredMediaType = (pMT->majortype == *majorType);
@@ -543,7 +543,7 @@ void GetOutputList(IPin *curPin, List<MediaOutputInfo> &outputInfoList)
             int priority = -1;
             for(int i=0; i<count; i++)
             {
-                AM_MEDIA_TYPE *pMT;
+                AM_MEDIA_TYPE *pMT = nullptr;
                 if(SUCCEEDED(config->GetStreamCaps(i, &pMT, capsData)))
                     AddOutput(pMT, capsData, false, outputInfoList);
             }
