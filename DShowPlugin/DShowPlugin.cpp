@@ -1917,6 +1917,17 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                             double minFPS = 10000000.0/double(fpsInfo.supportedIntervals[i].maxFrameInterval);
                             double maxFPS = 10000000.0/double(fpsInfo.supportedIntervals[i].minFrameInterval);
 
+#if 1 // FMB NOTE 05-Feb-15: Override some common fps values to avoid rounding errors (60.002 was displayed instead of 60 fps for the Elgato GCHD60)
+                            if (fpsInfo.supportedIntervals[i].maxFrameInterval == 400000) minFPS = 25.0;
+                            if (fpsInfo.supportedIntervals[i].minFrameInterval == 400000) maxFPS = 25.0;
+                            if (fpsInfo.supportedIntervals[i].maxFrameInterval == 200000) minFPS = 50.0;
+                            if (fpsInfo.supportedIntervals[i].minFrameInterval == 200000) maxFPS = 50.0;
+                            if (fpsInfo.supportedIntervals[i].maxFrameInterval == 333333) minFPS = 30.0;
+                            if (fpsInfo.supportedIntervals[i].minFrameInterval == 333333) maxFPS = 30.0;
+                            if (fpsInfo.supportedIntervals[i].maxFrameInterval == 166666) minFPS = 60.0;
+                            if (fpsInfo.supportedIntervals[i].minFrameInterval == 166666) maxFPS = 60.0;
+#endif
+
                             String strFPS;
                             if(CloseDouble(minFPS, maxFPS))
                                 strFPS << FloatString(float(minFPS));
