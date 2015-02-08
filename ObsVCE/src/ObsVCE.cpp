@@ -190,10 +190,12 @@ bool VCEEncoder::init()
         mConfigCtrl.rateControl.encQP_P = 0;
         mConfigCtrl.rateControl.encQP_B = 0;
         mConfigCtrl.rateControl.encRCOptions = bPadCBR ? 3 : 0;
+        mConfigCtrl.pictControl.encInsertSEIMsg = 7;
+        mConfigCtrl.pictControl.encInsertVUIParam = 1;
 
 		//TODO SPS/PPS are not copied
         mConfigCtrl.pictControl.encHeaderInsertionSpacing = mManKeyInt;
-		mConfigCtrl.pictControl.encIDRPeriod = 0;// IDR every 30 frames, engage manual override
+		mConfigCtrl.pictControl.encIDRPeriod = 0;// New drivers add IDR every 30 frames, engage manual override
         mConfigCtrl.pictControl.encNumMBsPerSlice = 0;
 
         /*mConfigCtrl.meControl.encSearchRangeX = 16;
@@ -262,6 +264,9 @@ bool VCEEncoder::init()
         APPCFG(mConfigCtrl.meControl.lsmVert, "LSMVert");
         APPCFG(mConfigCtrl.meControl.motionEstHalfPixel, "MEHalf");
         APPCFG(mConfigCtrl.meControl.motionEstQuarterPixel, "MEQuarter");
+        APPCFG(mConfigCtrl.rateControl.encQP_I, "QPI");
+        APPCFG(mConfigCtrl.rateControl.encQP_P, "QPP");
+        APPCFG(mConfigCtrl.rateControl.encQP_B, "QPB");
 
         APPCFG(mConfigCtrl.rdoControl.encDisableTbePredIFrame, "IPred");
         APPCFG(mConfigCtrl.rdoControl.encDisableTbePredPFrame, "PPred");
