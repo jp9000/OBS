@@ -350,6 +350,8 @@ void VCEEncoder::ClearInputBuffer(int i)
 		}
 	}
 	mInputBuffers[i].isMapped = false;
+	mInputBuffers[i].locked = 0;
+	mInputBuffers[i].inUse = 0;
 
 	mInputBuffers[i].mem_type = amf::AMF_MEMORY_UNKNOWN;
 }
@@ -423,44 +425,6 @@ bool VCEEncoder::Init()
 
 		res = mContext->InitOpenCL(mOCLDevice.GetCommandQueue());
 		RETURNIFFAILED(res, TEXT("AMF context init with OpenCL failed. %d\n"), res);
-	}
-
-	//-----------------------
-	if (mCanInterop && mCmdQueue)
-	for (int i = 0; i < MAX_INPUT_BUFFERS; i++)
-	{
-		InputBuffer &inBuf = mInputBuffers[i];
-		cl_image_format imgf;
-		imgf.image_channel_order = CL_R;
-		imgf.image_channel_data_type = CL_UNSIGNED_INT8;
-
-		//Maybe use clCreateImage
-		inBuf.yuv_surfaces[0] = clCreateImage2D(mCLContext,
-			//TODO tweak these
-			CL_MEM_WRITE_ONLY, //CL_MEM_WRITE_ONLY | CL_MEM_USE_PERSISTENT_MEM_AMD,
-			&imgf, mAlignedSurfaceWidth, mAlignedSurfaceHeight, 0, nullptr, &status);
-		if (status != CL_SUCCESS)
-		{
-			VCELog(TEXT("Failed to create Y CL image"));
-			return false;
-		}
-
-		imgf.image_channel_order = CL_RG;
-		imgf.image_channel_data_type = CL_UNSIGNED_INT8;
-
-		inBuf.uv_width = mAlignedSurfaceWidth / 2;
-		inBuf.uv_height = (mAlignedSurfaceHeight + 1) / 2;
-		OSDebugOut(TEXT("UV size: %dx%d\n"), inBuf.uv_width, inBuf.uv_height);
-
-		mInputBuffers[i].yuv_surfaces[1] = clCreateImage2D(mCLContext,
-			CL_MEM_WRITE_ONLY /*| CL_MEM_USE_PERSISTENT_MEM_AMD*/,
-			&imgf, inBuf.uv_width, inBuf.uv_height,
-			0, nullptr, &status);
-		if (status != CL_SUCCESS)
-		{
-			VCELog(TEXT("Failed to create UV CL image"));
-			return false;
-		}
 	}
 
 	/*************************************************
@@ -676,7 +640,7 @@ bool VCEEncoder::Init()
 	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_B_PIC_PATTERN, iInt);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_B_PIC_PATTERN);
 
-	if (iInt > 0)
+	if (false && iInt > 0)
 	{
 		res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_HEADER_INSERTION_SPACING, mIDRPeriod < 1001 ? mIDRPeriod : 1000);
 		LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_HEADER_INSERTION_SPACING);
@@ -834,6 +798,11 @@ void VCEEncoder::CopyOutput(List<DataPacket> &packets, List<PacketType> &packetT
 
 bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD outputTimestamp, DWORD &out_pts)
 {
+	if (!picIn)
+	{
+		mClosing = true;
+	}
+
 	OSMutexLocker locker(mFrameMutex);
 
 	packets.Clear();
@@ -1206,6 +1175,14 @@ void VCEEncoder::ProcessBitstream(amf::AMFBufferPtr &buff)
 	for (unsigned int i = 0; i < nalNum; i++)
 	{
 		x264_nal_t &nal = nalOut[i];
+		//TODO Check if B-frames really want SPS/PPS from IDR or if there's any diff at all.
+		if (!mHdrPacket && nal.i_type == NAL_SLICE_IDR)
+		{
+			mHdrSize = buff->GetSize();
+			mHdrPacket = new uint8_t[mHdrSize];
+			memcpy(mHdrPacket, buff->GetNative(), mHdrSize);
+		}
+
 		if (nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE)
 		{
 			BYTE *skip = nal.p_payload;
@@ -1749,9 +1726,41 @@ bool VCEEncoder::RequestBuffersCL(LPVOID buffers)
 		InputBuffer &inBuf = mInputBuffers[i];
 		if (/*inBuf.isMapped ||*/
 			inBuf.locked ||
-			inBuf.inUse ||
-			!inBuf.yuv_surfaces[0]) //Out of memory?
+			inBuf.inUse)// ||
+			//!inBuf.yuv_surfaces[0]) //Out of memory?
 			continue;
+
+		cl_int status = CL_SUCCESS;
+		cl_image_format imgf;
+		imgf.image_channel_order = CL_R;
+		imgf.image_channel_data_type = CL_UNSIGNED_INT8;
+
+		//Maybe use clCreateImage
+		inBuf.yuv_surfaces[0] = clCreateImage2D(mCLContext,
+			//TODO tweak these
+			CL_MEM_WRITE_ONLY, //CL_MEM_WRITE_ONLY | CL_MEM_USE_PERSISTENT_MEM_AMD,
+			&imgf, mAlignedSurfaceWidth, mAlignedSurfaceHeight, 0, nullptr, &status);
+		if (status != CL_SUCCESS)
+		{
+			VCELog(TEXT("Failed to create Y CL image"));
+			return false;
+		}
+
+		imgf.image_channel_order = CL_RG;
+		imgf.image_channel_data_type = CL_UNSIGNED_INT8;
+
+		inBuf.uv_width = mAlignedSurfaceWidth / 2;
+		inBuf.uv_height = (mAlignedSurfaceHeight + 1) / 2;
+
+		mInputBuffers[i].yuv_surfaces[1] = clCreateImage2D(mCLContext,
+			CL_MEM_WRITE_ONLY /*| CL_MEM_USE_PERSISTENT_MEM_AMD*/,
+			&imgf, inBuf.uv_width, inBuf.uv_height,
+			0, nullptr, &status);
+		if (status != CL_SUCCESS)
+		{
+			VCELog(TEXT("Failed to create UV CL image"));
+			return false;
+		}
 
 		//OSDebugOut(TEXT("Pitches: %d %d\n"), inBuf.yuv_row_pitches[0], inBuf.yuv_row_pitches[1]);
 
@@ -1778,6 +1787,13 @@ bool VCEEncoder::RequestBuffersCL(LPVOID buffers)
 
 void VCEEncoder::GetHeaders(DataPacket &packet)
 {
+	OSMutexLocker locker(mFrameMutex);
+
+	x264_nal_t nalSPS = { 0 }, nalPPS = { 0 };
+	const static uint8_t start_seq[] = { 0, 0, 1 };
+
+	// Might be incorrect SPS/PPS? http://devgurus.amd.com/thread/169647
+#if 0
 	amf::AMFBufferPtr buffer;
 	amf::AMFVariant var;
 	if (mEncoder->GetProperty(AMF_VIDEO_ENCODER_EXTRADATA, &var) != AMF_OK)
@@ -1792,11 +1808,52 @@ void VCEEncoder::GetHeaders(DataPacket &packet)
 		//UINT id = OBSAddStreamInfo(TEXT("Failed to get header buffer."), StreamInfoPriority::StreamInfoPriority_Critical);
 		//PostMessage(OBSGetMainWindow(), OBS_REQUESTSTOP, 1, 0);
 	}
+#endif
 
-	x264_nal_t nalSPS = { 0 }, nalPPS = { 0 };
-	uint8_t *start = (buffer ? (uint8_t *)buffer->GetNative() : 0);
-	uint8_t *end = start + (buffer ? buffer->GetSize() : 0);
-	const static uint8_t start_seq[] = { 0, 0, 1 };
+	if (!mHdrPacket)
+	{
+		List<DataPacket> packets;
+		List<PacketType> types;
+		DWORD pts = 0;
+		mfxFrameData tmpBuf = { 0 };
+		RequestBuffers(&tmpBuf);
+		InputBuffer &inBuf = mInputBuffers[(int)tmpBuf.MemId - 1];
+		inBuf.frameData = &tmpBuf;
+		amf::AMFDataPtr data;
+		AMF_RESULT res = AMF_REPEAT;
+
+		do
+		{
+			SubmitBuffer(&inBuf);
+			OSSleep(15);
+			CopyOutput(packets, types, pts);
+		} while (!mClosing && !mHdrPacket);
+
+		// Clear output for re-init
+		do
+		{
+			amf::AMFDataPtr data;
+			res = mEncoder->QueryOutput(&data);
+		} while (res == AMF_OK);
+
+		do
+		{
+			packets.Clear();
+			types.Clear();
+			CopyOutput(packets, types, pts);
+		} while (packets.Num());
+
+		if (!mClosing) // User clicking start/stop too fast
+		{
+			res = mEncoder->ReInit(mWidth, mHeight);
+			LOGIFFAILED(res, TEXT("Failed to reinit encoder."));
+			ClearInputBuffer((int)tmpBuf.MemId - 1);
+			mReqKeyframe = true;
+		}
+	}
+
+	uint8_t *start = mHdrPacket;
+	uint8_t *end = start + mHdrSize;
 
 	if (start)
 	{
