@@ -630,7 +630,7 @@ void OBS::MainCaptureLoop()
     bool bUsingVCEMFT = (AppConfig->GetInt(TEXT("Video Encoding"), TEXT("MFT"), 1) != 0);
     bool bUsingCL = (AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCL"), 0) == 1);
     bool bUsingInterop = !!(videoEncoder->GetFeatures() & VideoEncoder_D3D10Interop);
-    bUsing444 = false || (bUsingVCE && bUsingCL && !bUsingVCEMFT);
+    bUsing444 = false || (bUsingVCE && bUsingCL && !bUsingVCEMFT) || (bUsingVCE && bUsingInterop);
 
     EncoderPicture lastPic;
     EncoderPicture outPics[NUM_OUT_BUFFERS];
