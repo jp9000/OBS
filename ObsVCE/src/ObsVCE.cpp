@@ -740,8 +740,21 @@ fail:
     profileOut
 
 #ifdef _DEBUG
+    static int logCount = 0;
+    static QWORD logAvg = 0;
+    static QWORD logMax = 0;
+    logCount++;
     start = GetQPCTime100NS() - start;
-    OSDebugOut(TEXT("In Encode for %lld\n"), start);
+    if (start > logMax)
+        logMax = start;
+    logAvg += start;
+    if (logCount >= 5)
+    {
+        OSDebugOut(TEXT("In Encode for avg %lld, max %lld\n"), logAvg/logCount, logMax);
+        logMax = 0;
+        logAvg = 0;
+        logCount = 0;
+    }
 #endif
 
     return ret;
