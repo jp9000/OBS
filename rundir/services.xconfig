@@ -79,19 +79,20 @@ services : {
   hitbox.tv : {
     id : 11
     servers : {
-      "Default"                 : rtmp://live.hitbox.tv/push
-      "Asia: Hong Kong"         : rtmp://live.hkg.hitbox.tv/push
-      "Asia: South Korea"       : rtmp://live.icn.hitbox.tv/push
-      "EU: Austria"             : rtmp://live.vie.hitbox.tv/push
-      "EU: Germany 1"           : rtmp://live.fra.hitbox.tv/push
-      "EU: Germany 2"           : rtmp://live.nbg.hitbox.tv/push
-      "EU: Russia"              : rtmp://live.dme.hitbox.tv/push
-      "EU: UK"                  : rtmp://live.lhr.hitbox.tv/push
-      "Oceania: Australia"      : rtmp://live.syd.hitbox.tv/push
-      "South America: Brazil"   : rtmp://live.gru.hitbox.tv/push
-      "US Central: Colorado"    : rtmp://live.den.hitbox.tv/push
-      "US East: Virginia"       : rtmp://live.vgn.hitbox.tv/push
-      "US West: California"     : rtmp://live.lax.hitbox.tv/push
+      "Default"                           : rtmp://live.hitbox.tv/push
+      "Asia: Singapore"                   : rtmp://live.lax.hitbox.tv/push
+      "China: Hong Kong"                  : rtmp://live.hkg.hitbox.tv/push
+      "EU-Central: Nurnberg, Germany"     : rtmp://live.nbg.hitbox.tv/push
+      "EU-East: Vienna, Austria"          : rtmp://live.vie.hitbox.tv/push
+      "EU-North: London, United Kingdom"  : rtmp://live.lhr.hitbox.tv/push
+      "EU-West: Frankfurt, Germany"       : rtmp://live.fra.hitbox.tv/push
+      "Oceania: Sydney, Australia"        : rtmp://live.syd.hitbox.tv/push
+      "Russia: Moscow"                    : rtmp://live.dme.hitbox.tv/push
+      "South America: Sao Paulo, Brazil"  : rtmp://live.gru.hitbox.tv/push
+      "South Korea: Seoul"                : rtmp://live.icn.hitbox.tv/push
+      "US-Central: Denver"                : rtmp://live.den.hitbox.tv/push
+      "US-East: Washington"               : rtmp://live.vgn.hitbox.tv/push
+      "US-West: Los Angeles"              : rtmp://live.lax.hitbox.tv/push
     }
     recommended : {
       "keyint" : 2000
