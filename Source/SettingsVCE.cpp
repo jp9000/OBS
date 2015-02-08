@@ -392,12 +392,6 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
         SendMessage(GetDlgItem(hwnd, IDC_VCE_USE_CUSTOM), BM_SETCHECK, iInt, 0);
         ToggleControls(hwnd, iInt);
 
-        iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("CABAC"), 0);
-        SendMessage(GetDlgItem(hwnd, IDC_VCE_CABAC), BM_SETCHECK, iInt, 0);
-
-        iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("AMD"), 0);
-        SendMessage(GetDlgItem(hwnd, IDC_VCE_AMD), BM_SETCHECK, iInt, 0);
-
         iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("RCM"), 0);
         switch (iInt)
         {
@@ -413,10 +407,6 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
         default:
             SendMessage(GetDlgItem(hwnd, IDC_VCE_RC_CBR), BM_SETCHECK, 1, 0);
         }
-
-        ti.lpszText = (LPWSTR)Str("Settings.VCE.AMDTooltip");
-        ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_AMD);
-        SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
         LoadSettingEditInt(GetDlgItem(hwnd, IDC_VCE_IPIC), TEXT("VCE Settings"), TEXT("IPicPeriod"), 0);
 
@@ -512,6 +502,16 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
         LoadSettingEditString(GetDlgItem(hwnd, IDC_VCE_DEVTOPOID), TEXT("VCE Settings"), TEXT("DevTopoId"), TEXT(""));
         ti.lpszText = (LPWSTR)Str("Settings.VCE.DevTopoTooltip");
         ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_DEVTOPOID);
+        SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+
+        iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("CABAC"), 1);
+        SendMessage(GetDlgItem(hwnd, IDC_VCE_CABAC), BM_SETCHECK, iInt, 0);
+
+        iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("AMD"), 1);
+        SendMessage(GetDlgItem(hwnd, IDC_VCE_AMD), BM_SETCHECK, iInt, 0);
+
+        ti.lpszText = (LPWSTR)Str("Settings.VCE.AMDTooltip");
+        ti.uId = (UINT_PTR)GetDlgItem(hwnd, IDC_VCE_AMD);
         SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
         iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("MEHalf"), 1);
