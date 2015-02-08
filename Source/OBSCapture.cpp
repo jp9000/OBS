@@ -524,6 +524,8 @@ retryHookTest:
     Log(TEXT("  Multithreaded optimizations: %s"), (CTSTR)(bUseMultithreadedOptimizations ? TEXT("On") : TEXT("Off")));
 
     encoderSkipThreshold = GlobalConfig->GetInt(TEXT("Video"), TEXT("EncoderSkipThreshold"), fps/4);
+    if (encoderSkipThreshold < 1)
+        encoderSkipThreshold = 1;
 
     //------------------------------------------------------------------
 
