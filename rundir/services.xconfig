@@ -55,11 +55,11 @@ services : {
   Dailymotion / Dailymotion Games : {
     id : 6
     servers : {
-      "Default (recommended)" : rtmp//publish.dailymotion.com/publish-dm
-      "France (PAR)"          : rtmp//fr.publish.dailymotion.com/publish-dm
-      "Singapore"             : rtmp//sg.publish.dailymotion.com/publish-dm
-      "USA East (NYC)"        : rtmp//use.publish.dailymotion.com/publish-dm
-      "USA West (SJC)"        : rtmp//usw.publish.dailymotion.com/publish-dm
+      "Default (recommended)" : rtmp://publish.dailymotion.com/publish-dm
+      "France (PAR)"          : rtmp://fr.publish.dailymotion.com/publish-dm
+      "Singapore"             : rtmp://sg.publish.dailymotion.com/publish-dm
+      "USA East (NYC)"        : rtmp://use.publish.dailymotion.com/publish-dm
+      "USA West (SJC)"        : rtmp://usw.publish.dailymotion.com/publish-dm
     }
   }
   Youtube : {
