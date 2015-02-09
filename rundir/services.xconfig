@@ -52,10 +52,14 @@ services : {
       "Моscow М10-3" : rtmp://stream4.goodgame.ru:1940/live
     }
   }
-  DailyMotion : {
+  Dailymotion / Dailymotion Games : {
     id : 6
     servers : {
-      "Primary" :    rtmp://publish.dailymotion.com/publish-dm
+      "Default (recommended)" : rtmp//publish.dailymotion.com/publish-dm
+      "France (PAR)"          : rtmp//fr.publish.dailymotion.com/publish-dm
+      "Singapore"             : rtmp//sg.publish.dailymotion.com/publish-dm
+      "USA East (NYC)"        : rtmp//use.publish.dailymotion.com/publish-dm
+      "USA West (SJC)"        : rtmp//usw.publish.dailymotion.com/publish-dm
     }
   }
   Youtube : {
