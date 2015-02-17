@@ -376,6 +376,10 @@ bool VCEEncoder::Init()
 
 	bool userCfg = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("UseCustom"), 0) != 0;
 	int adapterId = AppConfig->GetInt(TEXT("Video"), TEXT("Adapter"), 0);
+	int customAdapterId = -1;
+	USERCFG(customAdapterId, "AdapterID");
+	if (customAdapterId != -1)
+		adapterId = customAdapterId;
 	// OBS sets timer to 1ms interval
 	//amf_increase_timer_precision();
 
