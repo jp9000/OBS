@@ -174,7 +174,7 @@ void PrintProps(amf::AMFPropertyStorage *props)
 		}
 		else
 		{
-			VCELog(TEXT("%s = <failed>"), name, i);
+			VCELog(TEXT("Failed to get property at index %d"), i);
 		}
 	}
 }
@@ -349,7 +349,7 @@ void VCEEncoder::ClearInputBuffer(int i)
 			mInputBuffers[i].yuv_surfaces[k] = nullptr;
 		}
 	}
-	mInputBuffers[i].isMapped = false;
+	//mInputBuffers[i].isMapped = false;
 	mInputBuffers[i].locked = 0;
 	mInputBuffers[i].inUse = 0;
 
@@ -772,6 +772,7 @@ bool VCEEncoder::Stop()
 		mOutPollThread = nullptr;
 	}
 
+	//TODO Drain() returns AMF_INPUT_FULL if there's anything to encode still?
 	if (mEncoder) mEncoder->Drain();
 	return true;
 }
@@ -871,7 +872,7 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
 	//mTSqueue.push(data.TimeStamp);
 
 	OSEnterMutex(mSubmitMutex);
-	mSubmitQueue.push(&mInputBuffers[idx]);
+	mSubmitQueue.push(idx);
 	OSLeaveMutex(mSubmitMutex);
 	SetEvent(mSubmitEvent);
 
@@ -960,9 +961,9 @@ void VCEEncoder::Submit()
 		else
 		{
 			profileIn("Submit buffer")
-			InputBuffer *inBuf = mSubmitQueue.front();
+			int idx = mSubmitQueue.front();
 
-			AMF_RESULT res = SubmitBuffer(inBuf);
+			AMF_RESULT res = SubmitBuffer(idx);
 			if (res != AMF_INPUT_FULL)
 			{
 				mSubmitQueue.pop();
@@ -984,19 +985,20 @@ void VCEEncoder::Submit()
 	}
 }
 
-AMF_RESULT VCEEncoder::SubmitBuffer(InputBuffer *inBuf)
+AMF_RESULT VCEEncoder::SubmitBuffer(int idx)
 {
+	InputBuffer &inBuf = mInputBuffers[idx];
 	AMF_RESULT res = AMF_FAIL, inRes = AMF_FAIL;
 	amf::AMFSurfacePtr pSurface;
 	amf::AMFDataPtr amfdata;
 	amf::AMFPlanePtr plane;
 
-	switch (inBuf->mem_type)
+	switch (inBuf.mem_type)
 	{
 	case amf::AMF_MEMORY_DX11:
 	{
 		profileIn("CopyResource (dx11)")
-		res = mContext->CreateSurfaceFromDX11Native(inBuf->pTex, &pSurface, &mObserver);
+		res = mContext->CreateSurfaceFromDX11Native(inBuf.pTex, &pSurface, &mObserver);
 		if(res != AMF_OK)
 			VCELog(TEXT("Failed to create surface from DX11 texture: %s"), amf::AMFGetResultText(res));
 		profileOut
@@ -1005,7 +1007,7 @@ AMF_RESULT VCEEncoder::SubmitBuffer(InputBuffer *inBuf)
 
 	case amf::AMF_MEMORY_OPENCL:
 		res = mContext->CreateSurfaceFromOpenCLNative(amf::AMF_SURFACE_NV12,
-			mWidth, mHeight, (void**)&inBuf->yuv_surfaces, &pSurface, &mObserver);
+			mWidth, mHeight, (void**)&inBuf.yuv_surfaces, &pSurface, &mObserver);
 		break;
 
 	case amf::AMF_MEMORY_HOST:
@@ -1013,7 +1015,7 @@ AMF_RESULT VCEEncoder::SubmitBuffer(InputBuffer *inBuf)
 		//TODO doesn't work with NV12?
 		res = mContext->CreateSurfaceFromHostNative(amf::AMF_SURFACE_NV12,
 			mWidth, mHeight, mWidth, mHeight,
-			inBuf->pBuffer, &pSurface, &mObserver);
+			inBuf.pBuffer, &pSurface, &mObserver);
 		break;
 	default:
 		//return AMF_FAIL; //commented, crash here instead
@@ -1021,10 +1023,15 @@ AMF_RESULT VCEEncoder::SubmitBuffer(InputBuffer *inBuf)
 	}
 
 	if (res != AMF_OK)
+	{
 		VCELog(TEXT("Failed to allocate surface: %s"), amf::AMFGetResultText(res));
+#ifndef _DEBUG
+		return res;
+#endif
+	}
 
 	assert(pSurface);
-	pSurface->SetProperty(L"InputBuffer", (amf_int64)inBuf);
+	pSurface->SetProperty(L"InputBuffer", (amf_int64)&inBuf);
 
 	if (mReqKeyframe || (mLowLatencyKeyInt > 0 && mCurrFrame >= mLowLatencyKeyInt))
 	{
@@ -1051,7 +1058,8 @@ AMF_RESULT VCEEncoder::SubmitBuffer(InputBuffer *inBuf)
 	mCurrFrame++;
 	pSurface->SetFrameType(amf::AMF_FRAME_PROGRESSIVE);
 	pSurface->SetDuration(1000 * MS_TO_100NS / mFps); //TODO precalc
-	pSurface->SetPts(inBuf->timestamp * MS_TO_100NS);
+	pSurface->SetPts(inBuf.timestamp * MS_TO_100NS);
+	//pSurface->SetCrop(0, 0, mWidth, mHeight);
 	//pSurface->SetProperty(L"OUTPUTTS", inBuf->outputTimestamp);
 	//mTSqueue.push(data.TimeStamp);
 
@@ -1073,7 +1081,7 @@ AMF_RESULT VCEEncoder::SubmitBuffer(InputBuffer *inBuf)
 			res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_INTRA_REFRESH_NUM_MBS_PER_SLOT, mIntraMBs);
 	}
 
-	_InterlockedCompareExchange(&(inBuf->inUse), 0, 1);
+	_InterlockedCompareExchange(&(inBuf.inUse), 0, 1);
 	//_InterlockedCompareExchange(&(inBuf->locked), 0, 1);
 	
 	/*InputBuffer &in = mInputBuffers[(int)inBuf->frameData->MemId - 1];
@@ -1432,6 +1440,12 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
 		}
 	}
 
+	if (mClosing)
+	{
+		OSDebugOut(TEXT("Closing. Why are you asking for buffers?\n"));
+		return;
+	}
+
 	while (mSubmitThread)
 	{
 		//Scope the lock
@@ -1559,15 +1573,15 @@ bool VCEEncoder::RequestBuffersDX11(LPVOID buffers)
 {
 	mfxFrameData *buff = (mfxFrameData*)buffers;
 
-	if (buff->MemId && 
-		mInputBuffers[(unsigned int)buff->MemId - 1].isMapped
+	if (buff->MemId
+		//&& mInputBuffers[(unsigned int)buff->MemId - 1].isMapped
 		&& !mInputBuffers[(unsigned int)buff->MemId - 1].locked)
 		return true;
 
 	for (int i = 0; i < MAX_INPUT_BUFFERS; i++)
 	{
 		InputBuffer& inBuf = mInputBuffers[i];
-		if (inBuf.locked || inBuf.isMapped || inBuf.inUse)
+		if (inBuf.locked || /*inBuf.isMapped ||*/ inBuf.inUse)
 			continue;
 
 		HRESULT hres = S_OK;
@@ -1614,7 +1628,7 @@ bool VCEEncoder::RequestBuffersDX11(LPVOID buffers)
 
 		inBuf.mem_type = amf::AMF_MEMORY_DX11;
 		inBuf.pBuffer = (uint8_t*)1;
-		inBuf.isMapped = true;
+		//inBuf.isMapped = true;
 		buff->Pitch = map.RowPitch;
 		buff->Y = (mfxU8*)map.pData;
 		buff->UV = buff->Y + (mHeight * buff->Pitch);
@@ -1715,7 +1729,8 @@ bool VCEEncoder::RequestBuffersCL(LPVOID buffers)
 {
 	mfxFrameData *buff = (mfxFrameData*)buffers;
 
-	if (buff->MemId && mInputBuffers[(unsigned int)buff->MemId - 1].isMapped
+	if (buff->MemId
+		//&& mInputBuffers[(unsigned int)buff->MemId - 1].isMapped
 		&& !mInputBuffers[(unsigned int)buff->MemId - 1].locked
 		)
 		return true;
@@ -1769,7 +1784,7 @@ bool VCEEncoder::RequestBuffersCL(LPVOID buffers)
 
 		buff->Y = (mfxU8*)inBuf.yuv_surfaces[0];
 		buff->UV = (mfxU8*)inBuf.yuv_surfaces[1];
-		inBuf.isMapped = true;
+		//inBuf.isMapped = true;
 		buff->MemId = mfxMemId(i + 1);
 		_InterlockedCompareExchange(&(inBuf.inUse), 1, 0);
 		_InterlockedCompareExchange(&(inBuf.locked), 0, 1);
@@ -1817,14 +1832,15 @@ void VCEEncoder::GetHeaders(DataPacket &packet)
 		DWORD pts = 0;
 		mfxFrameData tmpBuf = { 0 };
 		RequestBuffers(&tmpBuf);
-		InputBuffer &inBuf = mInputBuffers[(int)tmpBuf.MemId - 1];
+		int idx = (int)tmpBuf.MemId - 1;
+		InputBuffer &inBuf = mInputBuffers[idx];
 		inBuf.frameData = &tmpBuf;
 		amf::AMFDataPtr data;
 		AMF_RESULT res = AMF_REPEAT;
 
 		do
 		{
-			SubmitBuffer(&inBuf);
+			SubmitBuffer(idx);
 			OSSleep(15);
 			CopyOutput(packets, types, pts);
 		} while (!mClosing && !mHdrPacket);
@@ -1847,7 +1863,7 @@ void VCEEncoder::GetHeaders(DataPacket &packet)
 		{
 			res = mEncoder->ReInit(mWidth, mHeight);
 			LOGIFFAILED(res, TEXT("Failed to reinit encoder."));
-			ClearInputBuffer((int)tmpBuf.MemId - 1);
+			ClearInputBuffer(idx);
 			mReqKeyframe = true;
 		}
 	}

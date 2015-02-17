@@ -33,7 +33,7 @@ private:
     cl_kernel                   m_kernel_y;
     cl_kernel                   m_kernel_uv;
     cl_program                  m_program;
-    std::vector<cl_device_id>   m_hDeviceIDs;
+	std::vector<cl_device_id>   m_hDeviceIDs;
 
 	clCreateFromD3D10Texture2DKHR_fn   clCreateFromD3D10Texture2DKHR;
 	clEnqueueAcquireD3D10ObjectsKHR_fn clEnqueueAcquireD3D10ObjectsKHR;

@@ -9,7 +9,6 @@ typedef struct InputBuffer
 	uint8_t *pBuffer;
 	//amf::AMFBufferPtr pAMFBuffer;
 	size_t size;
-	//bool locked;
 	LONG locked; //< buffer is sent to encoder, no touching
 	LONG inUse; //< buffer was allocated and in use by OBS, but may touch, maybe
 	uint64_t timestamp;
@@ -17,7 +16,7 @@ typedef struct InputBuffer
 	mfxFrameData *frameData; //< For updating DX11 texture remapped pointers
 
 	//TODO separate bools for yuv planes maybe
-	bool isMapped;
+	//bool isMapped;
 	cl_mem surface;
 
 	uint8_t *yuv_host_ptr[2];
@@ -25,8 +24,7 @@ typedef struct InputBuffer
 	size_t yuv_row_pitches[2];
 	size_t uv_width;
 	size_t uv_height;
-	//amf::AMFSurfacePtr amf_surface;
-	//Observer observer;
+
 	amf::AMF_MEMORY_TYPE mem_type;
 
 	IDirect3DSurface9 *pSurface9;

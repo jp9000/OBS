@@ -153,10 +153,9 @@ private:
 	bool RequestBuffersDX9(LPVOID buffers);
 	bool RequestBuffersHost(LPVOID buffers);
 	void ClearInputBuffer(int idx);
-	bool AllocateSurface(InputBuffer &inBuf, mfxFrameData &data);
 	void OutputPoll();
 	void Submit();
-	AMF_RESULT SubmitBuffer(InputBuffer*);
+	AMF_RESULT SubmitBuffer(int);
 	static DWORD OutputPollThread(VCEEncoder*);
 	static DWORD SubmitThread(VCEEncoder* enc);
 
@@ -226,6 +225,6 @@ private:
 	std::queue<OutputList*> mOutputProcessedQueue; //< NAL parsed
 	std::queue<OutputList*> mOutputReadyQueue; //< OBS has copied the buffer
 	InputBuffer             mInputBuffers[MAX_INPUT_BUFFERS];
-	std::queue<InputBuffer*> mSubmitQueue;
+	std::queue<int> mSubmitQueue;
 	FILE*    mTmpFile;
 };

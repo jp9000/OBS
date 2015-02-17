@@ -96,14 +96,14 @@ AMF_RESULT DeviceOpenCL::Init(IDirect3DDevice9* pD3DDevice9, ID3D10Device *pD3DD
 		m_hDeviceIDs.push_back(deviceDX11);
 		cps.push_back(CL_CONTEXT_D3D11_DEVICE_KHR);
 		cps.push_back((cl_context_properties)pD3DDevice11);
-		status = clGetDeviceInfo(deviceDX11, CL_DEVICE_EXTENSIONS, 0, nullptr, &extSize);
+		/*status = clGetDeviceInfo(deviceDX11, CL_DEVICE_EXTENSIONS, 0, nullptr, &extSize);
 		if (!status)
 		{
 			exts = new char[extSize];
 			status = clGetDeviceInfo(deviceDX11, CL_DEVICE_EXTENSIONS, extSize, exts, nullptr);
 			Log(L"CL Device Extensions: %S", exts);
 			delete[] exts;
-		}
+		}*/
 	}
 	if (pD3DDevice10 != NULL)
 	{
@@ -237,9 +237,9 @@ AMF_RESULT DeviceOpenCL::Terminate()
 	}
 	if(m_hDeviceIDs.size() != 0)
 	{
-		for(std::vector<cl_device_id>::iterator it= m_hDeviceIDs.begin(); it != m_hDeviceIDs.end(); it++)
+		for(auto id : m_hDeviceIDs)
 		{
-			clReleaseDevice(*it);
+			clReleaseDevice(id);
 		}
 		m_hDeviceIDs.clear();
 	}
@@ -351,7 +351,7 @@ bool DeviceOpenCL::RunKernels(cl_mem inTex, cl_mem yTex, cl_mem uvTex, size_t wi
 	}
 
 	//FIXME Sub 1ms can't be right...clFlush on AMD is/used to be noop I think
-	clFlush(m_hCommandQueue);
+	//clFlush(m_hCommandQueue);
 	//Finishing here so that it would count toward "GPU download and conversion" profile
 	//clFinish(m_hCommandQueue);
 	return true;
