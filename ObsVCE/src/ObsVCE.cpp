@@ -559,12 +559,10 @@ void VCEEncoder::ConvertD3DTex(ID3D10Texture2D *d3dtex, void *data, void **state
 
 bool VCEEncoder::ConvertYUV444(int idx)
 {
-    bool ret = false;
     profileIn("YUV444 conversion")
-    ret = RunKernels((cl_mem)mEncodeHandle.inputSurfaces[idx].surface,
+    return RunKernels((cl_mem)mEncodeHandle.inputSurfaces[idx].surface,
                     mOutput, mWidth, mHeight);
     profileOut
-    return ret;
 }
 
 bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType> &packetTypes, DWORD timestamp, DWORD &out_pts)
