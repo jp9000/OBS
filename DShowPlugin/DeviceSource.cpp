@@ -50,27 +50,19 @@ DWORD STDCALL PackPlanarThread(ConvertData *data);
 #if ELGATO_FORCE_BUFFERING
 // FMB NOTE 03-Feb-15: Workaround for Elgato Game Capture HD60 which plays jerky unless we add a little buffering.
 // The buffer time for this workaround is so small that it shouldn't affect sync with other sources.
+// FMB NOTE 18-Feb-15: Enable buffering for every Elgato device to make sure device timestamps are used.
+//                     Should improve sync issues.
 
 // param argBufferTime - 100-nsec unit (same as REFERENCE_TIME)
 void ElgatoCheckBuffering(IBaseFilter* deviceFilter, bool& argUseBuffering, UINT& argBufferTime)
 {
-    const int elgatoHD60MinBufferTime = 1 * 10000;	// 1 msec
+    const int elgatoMinBufferTime = 1 * 10000;	// 1 msec
 
-    IElgatoVideoCaptureFilter4* elgatoFilterInterface4 = nullptr;
-    if (SUCCEEDED(deviceFilter->QueryInterface(IID_IElgatoVideoCaptureFilter4, (void**)&elgatoFilterInterface4)))
+    if (!argUseBuffering || argBufferTime < elgatoMinBufferTime)
     {
-        VIDEO_CAPTURE_FILTER_DEVICE_TYPE deviceType;
-        if (SUCCEEDED(elgatoFilterInterface4->GetDeviceType(&deviceType))
-            && (VIDEO_CAPTURE_FILTER_DEVICE_TYPE_GAME_CAPTURE_HD60 == deviceType))
-        {
-            if (!argUseBuffering || argBufferTime < elgatoHD60MinBufferTime)
-            {
-                argUseBuffering = true;
-                argBufferTime = elgatoHD60MinBufferTime;
-                Log(TEXT("    Elgato Game Capture HD60: force buffering with %d msec"), elgatoHD60MinBufferTime / 10000);
-            }
-        }
-        elgatoFilterInterface4->Release();
+        argUseBuffering = true;
+        argBufferTime = elgatoMinBufferTime;
+        Log(TEXT("    Elgato Game Capture: force buffering with %d msec"), elgatoMinBufferTime / 10000);
     }
 }
 #endif // ELGATO_FORCE_BUFFERING
