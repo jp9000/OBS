@@ -18,6 +18,7 @@
 
 
 #include "DShowPlugin.h"
+#include "IVideoCaptureFilter.h" // for Elgato GameCapture
 
 //todo: super long file.  this is another one of those abominations.
 //fix it jim
@@ -122,6 +123,21 @@ bool CurrentDeviceExists(CTSTR lpDevice, bool bGlobal, bool &isGlobal)
     return false;
 }
 
+// FMB NOTE: similar functions already in OBSNVEnc\src\nvmain (guidToString(), stringToGuid())
+String GUIDToString(const GUID& guid)
+{
+    LPOLESTR resStr;
+    String res;
+
+    if (StringFromCLSID(guid, &resStr) == S_OK)
+    {
+        res = resStr;
+        CoTaskMemFree(resStr);
+    }
+
+    return res;
+}
+
 bool GetGUIDFromString(CTSTR lpGUID, GUID &targetGUID)
 {
     String strGUID = lpGUID;
@@ -159,17 +175,22 @@ bool GetGUIDFromString(CTSTR lpGUID, GUID &targetGUID)
     return true;
 }
 
+IBaseFilter* GetExceptionDevice(REFGUID targetGUID)
+{
+    IBaseFilter *filter;
+    if(SUCCEEDED(CoCreateInstance(targetGUID, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter, (void**)&filter)))
+        return filter;
+
+    return NULL;
+}
+
 IBaseFilter* GetExceptionDevice(CTSTR lpGUID)
 {
     GUID targetGUID;
     if (!GetGUIDFromString(lpGUID, targetGUID))
         return NULL;
 
-    IBaseFilter *filter;
-    if(SUCCEEDED(CoCreateInstance(targetGUID, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter, (void**)&filter)))
-        return filter;
-
-    return NULL;
+    return GetExceptionDevice(targetGUID);
 }
 
 IBaseFilter* GetDeviceByValue(const IID &enumType, WSTR lpType, CTSTR lpName, WSTR lpType2, CTSTR lpName2)
@@ -305,7 +326,7 @@ bool PinHasMajorType(IPin *pin, const GUID *majorType)
             int priority = -1;
             for(int i=0; i<count; i++)
             {
-                AM_MEDIA_TYPE *pMT;
+                AM_MEDIA_TYPE *pMT = nullptr;
                 if(SUCCEEDED(config->GetStreamCaps(i, &pMT, capsData)))
                 {
                     BOOL bDesiredMediaType = (pMT->majortype == *majorType);
@@ -415,6 +436,11 @@ IPin* GetOutputPin(IBaseFilter *filter, const GUID *majorType)
     return foundPin;
 }
 
+// ELGATO_WORKAROUND: Not necessary anymore since Elgato Game Capture v.2.20 which implements IAMStreamConfig
+//                    !!! Keep this enabled nonetheless for backwards compatibility !!!
+#define ELGATO_WORKAROUND 1
+
+#if ELGATO_WORKAROUND
 static void AddElgatoRes(AM_MEDIA_TYPE *pMT, int cx, int cy, VideoOutputType type, List<MediaOutputInfo> &outputInfoList)
 {
     MediaOutputInfo *outputInfo = outputInfoList.CreateNew();
@@ -433,6 +459,7 @@ static void AddElgatoRes(AM_MEDIA_TYPE *pMT, int cx, int cy, VideoOutputType typ
     outputInfo->videoType = type;
     outputInfo->bUsingFourCC = false;
 }
+#endif
 
 void AddOutput(AM_MEDIA_TYPE *pMT, BYTE *capsData, bool bAllowV2, List<MediaOutputInfo> &outputInfoList)
 {
@@ -453,7 +480,8 @@ void AddOutput(AM_MEDIA_TYPE *pMT, BYTE *capsData, bool bAllowV2, List<MediaOutp
 
         if(type != VideoOutputType_None)
         {
-            if (!pVSCC && bAllowV2)
+#if ELGATO_WORKAROUND // FMB NOTE 18-Feb-14: Not necessary anymore since Elgato Game Capture v.2.20 which implements IAMStreamConfig
+            if (!pVSCC && bAllowV2)	 
             {
                 AddElgatoRes(pMT, 480,  360,  type, outputInfoList);
                 AddElgatoRes(pMT, 640,  480,  type, outputInfoList);
@@ -462,6 +490,7 @@ void AddOutput(AM_MEDIA_TYPE *pMT, BYTE *capsData, bool bAllowV2, List<MediaOutp
                 DeleteMediaType(pMT);
                 return;
             }
+#endif
 
             MediaOutputInfo *outputInfo = outputInfoList.CreateNew();
 
@@ -491,7 +520,7 @@ void AddOutput(AM_MEDIA_TYPE *pMT, BYTE *capsData, bool bAllowV2, List<MediaOutp
                 if(pVih->AvgTimePerFrame != 0)
                     outputInfo->minFrameInterval = outputInfo->maxFrameInterval = pVih->AvgTimePerFrame;
                 else
-                    outputInfo->minFrameInterval = outputInfo->maxFrameInterval = 10000000/30; //elgato hack
+                    outputInfo->minFrameInterval = outputInfo->maxFrameInterval = 10000000/30; //elgato hack // FMB NOTE 18-Feb-14: Not necessary anymore since Elgato Game Capture v.2.20 which implements IAMStreamConfig
 
                 outputInfo->xGranularity = outputInfo->yGranularity = 1;
             }
@@ -522,7 +551,7 @@ void GetOutputList(IPin *curPin, List<MediaOutputInfo> &outputInfoList)
             int priority = -1;
             for(int i=0; i<count; i++)
             {
-                AM_MEDIA_TYPE *pMT;
+                AM_MEDIA_TYPE *pMT = nullptr;
                 if(SUCCEEDED(config->GetStreamCaps(i, &pMT, capsData)))
                     AddOutput(pMT, capsData, false, outputInfoList);
             }
@@ -762,7 +791,7 @@ struct ConfigDialogData
 
 #define DEV_EXCEPTION_COUNT 1
 CTSTR lpExceptionNames[DEV_EXCEPTION_COUNT] = {TEXT("Elgato Game Capture HD")};
-CTSTR lpExceptionGUIDs[DEV_EXCEPTION_COUNT] = {TEXT("{39F50F4C-99E1-464a-B6F9-D605B4FB5918}")};
+const GUID lpExceptionGUIDs[DEV_EXCEPTION_COUNT] = {CLSID_ElgatoVideoCaptureFilter};
 
 bool FillOutListOfDevices(HWND hwndCombo, GUID matchGUID, StringList *deviceList, StringList *deviceIDList)
 {
@@ -778,7 +807,9 @@ bool FillOutListOfDevices(HWND hwndCombo, GUID matchGUID, StringList *deviceList
         if(exceptionFilter)
         {
             deviceList->Add(lpExceptionNames[i]);
-            deviceIDList->Add(lpExceptionGUIDs[i]);
+
+            String exceptionGUIDString = GUIDToString(lpExceptionGUIDs[i]);
+            deviceIDList->Add(exceptionGUIDString);
 
             if(hwndCombo != NULL) SendMessage(hwndCombo, CB_ADDSTRING, 0, (LPARAM)lpExceptionNames[i]);
 
@@ -1893,6 +1924,17 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         {
                             double minFPS = 10000000.0/double(fpsInfo.supportedIntervals[i].maxFrameInterval);
                             double maxFPS = 10000000.0/double(fpsInfo.supportedIntervals[i].minFrameInterval);
+
+#if 1 // FMB NOTE 05-Feb-15: Override some common fps values to avoid rounding errors (60.002 was displayed instead of 60 fps for the Elgato GCHD60)
+                            if (fpsInfo.supportedIntervals[i].maxFrameInterval == 400000) minFPS = 25.0;
+                            if (fpsInfo.supportedIntervals[i].minFrameInterval == 400000) maxFPS = 25.0;
+                            if (fpsInfo.supportedIntervals[i].maxFrameInterval == 200000) minFPS = 50.0;
+                            if (fpsInfo.supportedIntervals[i].minFrameInterval == 200000) maxFPS = 50.0;
+                            if (fpsInfo.supportedIntervals[i].maxFrameInterval == 333333) minFPS = 30.0;
+                            if (fpsInfo.supportedIntervals[i].minFrameInterval == 333333) maxFPS = 30.0;
+                            if (fpsInfo.supportedIntervals[i].maxFrameInterval == 166666) minFPS = 60.0;
+                            if (fpsInfo.supportedIntervals[i].minFrameInterval == 166666) maxFPS = 60.0;
+#endif
 
                             String strFPS;
                             if(CloseDouble(minFPS, maxFPS))

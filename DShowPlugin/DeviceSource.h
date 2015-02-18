@@ -177,7 +177,7 @@ class DeviceSource : public ImageSource
     HANDLE          hStopSampleEvent;
     HANDLE          hSampleMutex;
     HANDLE          hSampleThread;
-    UINT            bufferTime;
+    UINT            bufferTime;				// 100-nsec units (same as REFERENCE_TIME)
     SampleData      *latestVideoSample;
     List<SampleData*> samples;
 
