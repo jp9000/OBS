@@ -50,7 +50,7 @@ DWORD STDCALL PackPlanarThread(ConvertData *data);
 #if ELGATO_FORCE_BUFFERING
 // FMB NOTE 03-Feb-15: Workaround for Elgato Game Capture HD60 which plays jerky unless we add a little buffering.
 // The buffer time for this workaround is so small that it shouldn't affect sync with other sources.
-// FMB NOTE 18-Feb-15: Enable buffering for every Elgato device because to make sure device timestamps are used.
+// FMB NOTE 18-Feb-15: Enable buffering for every Elgato device to make sure device timestamps are used.
 //                     Should improve sync issues.
 
 // param argBufferTime - 100-nsec unit (same as REFERENCE_TIME)
