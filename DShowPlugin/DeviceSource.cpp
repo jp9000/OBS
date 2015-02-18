@@ -463,6 +463,12 @@ bool DeviceSource::LoadFilters()
     renderCX = renderCY = newCX = newCY = 0;
     frameInterval = 0;
 
+    IElgatoVideoCaptureFilter6* elgatoFilterInterface6 = nullptr; // FMB NOTE: IElgatoVideoCaptureFilter6 available since EGC v.2.20
+    if (SUCCEEDED(deviceFilter->QueryInterface(IID_IElgatoVideoCaptureFilter6, (void**)&elgatoFilterInterface6)))
+         elgatoFilterInterface6->Release();
+    bool elgatoSupportsIAMStreamConfig = (nullptr != elgatoFilterInterface6);
+    bool elgatoCanRenderFromPin        = (nullptr != elgatoFilterInterface6);
+
     UINT elgatoCX = 1280;
     UINT elgatoCY = 720;
 
@@ -500,6 +506,7 @@ bool DeviceSource::LoadFilters()
                 }
 
                 /* ..........elgato */
+                _ASSERTE(elgato &&!elgatoSupportsIAMStreamConfig);
                 size.cx = outputList[0].maxCX;
                 size.cy = outputList[0].maxCY;
                 frameInterval = outputList[0].minFrameInterval;
@@ -510,8 +517,9 @@ bool DeviceSource::LoadFilters()
         renderCY = newCY = size.cy;
     }
 
+
     /* elgato always starts off at 720p and changes after. */
-    if (elgato)
+    if (elgato && !elgatoSupportsIAMStreamConfig)
     {
         elgatoCX = renderCX;
         elgatoCY = renderCY;
@@ -771,7 +779,7 @@ bool DeviceSource::LoadFilters()
 
     //------------------------------------------------
     // change elgato resolution
-    if (elgato)
+    if (elgato && !elgatoSupportsIAMStreamConfig)
     {
         /* choose closest matching elgato resolution */
         if (!bUseCustomResolution)
@@ -812,17 +820,18 @@ bool DeviceSource::LoadFilters()
 
             elgatoFilter->Release();
         }
+    }
 
 #if ELGATO_FORCE_BUFFERING
+    if (elgato)
         ElgatoCheckBuffering(deviceFilter, bUseBuffering, bufferTime);
 #endif
-	}
 
     //------------------------------------------------
     // connect all pins and set up the whole capture thing
 
     bool bConnected = false;
-    if (elgato)
+    if (elgato && !elgatoCanRenderFromPin)
     {
         bConnected = SUCCEEDED(err = graph->ConnectDirect(devicePin, captureFilter->GetCapturePin(), nullptr));
         if (!bConnected)
@@ -846,7 +855,7 @@ bool DeviceSource::LoadFilters()
 
     if(soundOutputType != 0)
     {
-        if (elgato && bDeviceHasAudio)
+        if (elgato && bDeviceHasAudio && !elgatoCanRenderFromPin)
         {
             bConnected = false;
 

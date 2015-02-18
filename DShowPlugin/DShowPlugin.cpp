@@ -436,6 +436,11 @@ IPin* GetOutputPin(IBaseFilter *filter, const GUID *majorType)
     return foundPin;
 }
 
+// ELGATO_WORKAROUND: Not necessary anymore since Elgato Game Capture v.2.20 which implements IAMStreamConfig
+//                    !!! Keep this enabled nonetheless for backwards compatibility !!!
+#define ELGATO_WORKAROUND 1
+
+#if ELGATO_WORKAROUND
 static void AddElgatoRes(AM_MEDIA_TYPE *pMT, int cx, int cy, VideoOutputType type, List<MediaOutputInfo> &outputInfoList)
 {
     MediaOutputInfo *outputInfo = outputInfoList.CreateNew();
@@ -454,6 +459,7 @@ static void AddElgatoRes(AM_MEDIA_TYPE *pMT, int cx, int cy, VideoOutputType typ
     outputInfo->videoType = type;
     outputInfo->bUsingFourCC = false;
 }
+#endif
 
 void AddOutput(AM_MEDIA_TYPE *pMT, BYTE *capsData, bool bAllowV2, List<MediaOutputInfo> &outputInfoList)
 {
@@ -474,6 +480,7 @@ void AddOutput(AM_MEDIA_TYPE *pMT, BYTE *capsData, bool bAllowV2, List<MediaOutp
 
         if(type != VideoOutputType_None)
         {
+#if ELGATO_WORKAROUND // FMB NOTE 18-Feb-14: Not necessary anymore since Elgato Game Capture v.2.20 which implements IAMStreamConfig
             if (!pVSCC && bAllowV2)
             {
                 AddElgatoRes(pMT, 480,  360,  type, outputInfoList);
@@ -483,6 +490,7 @@ void AddOutput(AM_MEDIA_TYPE *pMT, BYTE *capsData, bool bAllowV2, List<MediaOutp
                 DeleteMediaType(pMT);
                 return;
             }
+#endif
 
             MediaOutputInfo *outputInfo = outputInfoList.CreateNew();
 
@@ -512,7 +520,7 @@ void AddOutput(AM_MEDIA_TYPE *pMT, BYTE *capsData, bool bAllowV2, List<MediaOutp
                 if(pVih->AvgTimePerFrame != 0)
                     outputInfo->minFrameInterval = outputInfo->maxFrameInterval = pVih->AvgTimePerFrame;
                 else
-                    outputInfo->minFrameInterval = outputInfo->maxFrameInterval = 10000000/30; //elgato hack
+                    outputInfo->minFrameInterval = outputInfo->maxFrameInterval = 10000000/30; //elgato hack // FMB NOTE 18-Feb-14: Not necessary anymore since Elgato Game Capture v.2.20 which implements IAMStreamConfig
 
                 outputInfo->xGranularity = outputInfo->yGranularity = 1;
             }
