@@ -1310,7 +1310,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 EnableWindow(GetDlgItem(hwnd, IDC_DELAY_EDIT), bUseBuffering);
                 EnableWindow(GetDlgItem(hwnd, IDC_DELAY),      bUseBuffering);
 
-                SendMessage(GetDlgItem(hwnd, IDC_USEBUFFERING), BM_SETCHECK, bUseBuffering ? BST_CHECKED : BST_UNCHECKED, 0);
+                if (strDevice.IsValid())
+                    SendMessage(GetDlgItem(hwnd, IDC_USEBUFFERING), BM_SETCHECK, bUseBuffering ? BST_CHECKED : BST_UNCHECKED, 0);
 
                 DWORD bufferTime = configData->data->GetInt(TEXT("bufferTime"));
                 SendMessage(GetDlgItem(hwnd, IDC_DELAY), UDM_SETRANGE32, 0, 8000);
