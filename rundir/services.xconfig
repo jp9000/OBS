@@ -117,4 +117,24 @@ services : {
       "API" : https://web-api.azubu.tv/stream/broadcaster-key/
     }
   }
+  Twitch : {
+    id : 14
+    servers : {
+      "Dallas"                               : rtmp://ingest.dal07.beam.pro:1935/beam
+      "Toronto"                              : rtmp://ingest.tor01.beam.pro:1935/beam
+      "Amsterdam"                            : rtmp://ingest.ams01.beam.pro:1935/beam
+      "San Jose"                             : rtmp://ingest.sjc01.beam.pro:1935/beam
+      "Washington DC"                        : rtmp://ingest.wdc01.beam.pro:1935/beam
+      "London"                               : rtmp://ingest.lon02.beam.pro:1935/beam
+      "Melbourne"                            : rtmp://ingest.mel01.beam.pro:1935/beam
+    }
+    recommended : {
+      "keyint" : 2000
+      "ratecontrol" : "cbr"
+      "max bitrate" : 2000
+      "max audio bitrate aac" : 160
+      "max audio bitrate mp3" : 128
+      "video aspect ratio" : "16:9"
+    }
+  }
 }
