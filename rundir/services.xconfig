@@ -117,7 +117,7 @@ services : {
       "API" : https://web-api.azubu.tv/stream/broadcaster-key/
     }
   }
-  Twitch : {
+  Beam : {
     id : 14
     servers : {
       "Dallas"                               : rtmp://ingest.dal07.beam.pro:1935/beam
