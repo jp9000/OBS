@@ -371,7 +371,9 @@
 #define IDC_USECUSTOMPARAMS             1207
 #define IDC_USEGLOBALBITRATE            1208
 #define IDC_USEGLOBALBUFFERSIZE         1209
+#define IDC_TSRCOPACITY_EDIT            1209
 #define IDC_IMPORT                      1210
+#define IDC_TSRCOPACITY                 1210
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020
@@ -447,7 +449,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        152
 #define _APS_NEXT_COMMAND_VALUE         40088
-#define _APS_NEXT_CONTROL_VALUE         1209
+#define _APS_NEXT_CONTROL_VALUE         1211
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
