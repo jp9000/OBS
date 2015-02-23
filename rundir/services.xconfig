@@ -117,4 +117,19 @@ services : {
       "API" : https://web-api.azubu.tv/stream/broadcaster-key/
     }
   }
+  Beam.pro : {
+    id : 14
+    servers : {
+      "Dallas"        : rtmp://ingest.dal07.beam.pro:1935/beam
+      "Washington DC" : rtmp://ingest.wdc01.beam.pro:1935/beam
+      "Toronto"       : rtmp://ingest.tor01.beam.pro:1935/beam
+      "London"        : rtmp://ingest.lon02.beam.pro:1935/beam
+      "Amsterdam"     : rtmp://ingest.ams01.beam.pro:1935/beam
+      "Melbourne"     : rtmp://ingest.mel01.beam.pro:1935/beam
+      "San Jose"      : rtmp://ingest.sjc01.beam.pro:1935/beam
+    }
+    recommended : {
+      "ratecontrol" : "cbr"
+    }
+  }
 }
