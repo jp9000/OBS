@@ -7,6 +7,7 @@ copy ..\graphicscapture\graphicscapturehook\release\graphicscapturehook.dll .\pl
 copy ..\graphicscapture\graphicscapturehook\x64\release\graphicscapturehook64.dll .\plugins\graphicscapture
 copy ..\noisegate\release\noisegate.dll .\plugins
 copy ..\psvplugin\release\psvplugin.dll .\plugins
+copy ..\scenesw\release\scenesw.dll .\plugins
 copy ..\x264\libs\32bit\libx264-142.dll .\
 copy ..\injectHelper\Release\injectHelper.exe .\plugins\graphicscapture
 copy ..\injectHelper\x64\Release\injectHelper64.exe .\plugins\graphicscapture
