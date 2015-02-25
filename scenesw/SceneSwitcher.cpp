@@ -146,13 +146,39 @@ DWORD SceneSwitcher::Run()
 		bool found = false;
 		for (int i = 0; i < nWindowsDefined; i++)
 		{
-			bool match = false;
 			String toCheck = GetWindow(i);
-			if (currentWindowText == toCheck) match = true;
-			TCHAR *cwt = currentWindowText.Array();
-			TCHAR *tch = toCheck.Array();
-			if (cwt && tch)
-				if (!IsMatchExact() && sstr(cwt, tch)) match = true;
+			BOOL match = currentWindowText == toCheck;
+
+			if (!toCheck.IsEmpty())
+			{
+				// Check for wildcards.
+				BOOL matchStart = toCheck.Left(1) != "%";
+				BOOL matchEnd = toCheck.Right(1) != "%";
+
+				// Remove the wildcards.
+				if (!matchStart)
+					toCheck = toCheck.Right(toCheck.Length() - 1);
+				// Single character % toCheck is handled by this.
+				if (!matchEnd && !toCheck.IsEmpty())
+					toCheck = toCheck.Left(toCheck.Length() - 1);
+
+				if (!matchStart &&
+					!toCheck.IsEmpty() &&
+					currentWindowText.Length() >= toCheck.Length() &&
+					currentWindowText.Right(toCheck.Length()) == toCheck)
+					match = TRUE;
+
+				if (!matchEnd &&
+					!toCheck.IsEmpty() &&
+					currentWindowText.Length() >= toCheck.Length() &&
+					currentWindowText.Left(toCheck.Length()) == toCheck)
+					match = TRUE;
+				
+				// Empty string does not match anything, even if one or more wildcards are used.
+				if (!matchStart && !matchEnd && !toCheck.IsEmpty() &&
+					sstr(currentWindowText.Array(), toCheck.Array()))
+					match = TRUE;
+			}
 
 			if (match)
 			{
@@ -164,7 +190,7 @@ DWORD SceneSwitcher::Run()
 		if (!found) // Otherwise, take the alternate scene
 			sceneToSwitch = altSceneName;
 
-		// Make the switch if it isnt already selected
+		// Make the switch if it isn't already selected
 		if (sceneToSwitch != currentScene && (found || altDoSwitch != 0))
 			OBSSetScene(sceneToSwitch, true);
 
@@ -280,12 +306,14 @@ void SceneSwitcher::ApplyConfig(HWND hDialog)
 		String wnd;
 		wnd.SetLength(256);
 		ListView_GetItemText(hwndWSMap, i, 0, wnd, 256);
+		wnd = String(wnd.Array());
 		windows.Add(wnd);
 			
 		// Get the scene name
 		String scn;
 		scn.SetLength(256);
 		ListView_GetItemText(hwndWSMap, i, 1, scn, 256);
+		scn = String(scn.Array());
 		scenes.Add(scn);
 	}
 
