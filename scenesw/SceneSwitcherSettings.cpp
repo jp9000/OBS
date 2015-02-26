@@ -152,9 +152,6 @@ void SceneSwitcherSettings::MsgInitDialog()
 	SendMessage(hwndSwButton, BM_SETCHECK, (thePlugin->IsAltDoSwitch() ? BST_CHECKED : BST_UNCHECKED), 0);
 	SendMessage(hwndNoswButton, BM_SETCHECK, (thePlugin->IsAltDoSwitch() ? BST_UNCHECKED : BST_CHECKED), 0);
 	EnableWindow(hwndAltScn, thePlugin->IsAltDoSwitch());
-			
-	if(thePlugin->IsMatchExact()) // Match exact window name checkbox
-		CheckDlgButton(hwnd, IDC_EXACT, BST_CHECKED);
 
 	do
 	{
@@ -386,15 +383,6 @@ INT_PTR SceneSwitcherSettings::MsgClicked(int controlId, int code, HWND controlH
             HWND control = GetDlgItem(hwnd, IDC_STARTAUTO);
             bool newState = (SendMessage(control, BM_GETSTATE, 0, 0) & BST_CHECKED) != 0;
             pChange = pChange || (newState != thePlugin->IsStartAuto());
-            SetChangedSettings(pChange);
-            return TRUE;
-        }
-        break;
-    case IDC_EXACT:
-        {
-            HWND control = GetDlgItem(hwnd, IDC_EXACT);
-            bool newState = (SendMessage(control, BM_GETSTATE, 0, 0) & BST_CHECKED) != 0;
-            pChange = pChange || (newState != thePlugin->IsMatchExact());
             SetChangedSettings(pChange);
             return TRUE;
         }
