@@ -46,7 +46,6 @@ SceneSwitcher::SceneSwitcher(HINSTANCE hinstMain, OBSHOTKEYPROC ToggleHotkeyProc
 	altSceneName.Clear();
 	mainWndName.Clear();
 	altDoSwitch = 1;
-	matchExact = 1;
 
 	// Start with an empty list of window-scene assignments
 	nWindowsDefined = 0;
@@ -90,7 +89,6 @@ void SceneSwitcher::ReadSettings()
 	nWindowsDefined = config.GetInt(TEXT("GENERAL"), TEXT("nWindows"));
 	altDoSwitch = config.GetInt(TEXT("GENERAL"), TEXT("AltDoSwitch"));
 	toggleHotkey = (DWORD)config.GetInt(TEXT("GENERAL"), TEXT("ToggleHotkey"));
-	matchExact = config.GetInt(TEXT("GENERAL"), TEXT("MatchExact"), 1);
 	scenes.Clear();
 	windows.Clear();
 	config.GetStringList(TEXT("SceneDef"), TEXT("window"), windows);
@@ -115,7 +113,6 @@ void SceneSwitcher::WriteSettings()
 	config.SetInt(TEXT("General"), TEXT("nWindows"), nWindowsDefined);
 	config.SetInt(TEXT("General"), TEXT("AltDoSwitch"), altDoSwitch);
 	config.SetInt(TEXT("General"), TEXT("ToggleHotkey"), toggleHotkey);
-	config.SetInt(TEXT("General"), TEXT("MatchExact"), matchExact);
 	config.SetStringList(TEXT("SceneDef"), TEXT("window"), windows);
 	config.SetStringList(TEXT("SceneDef"), TEXT("scene"), scenes);
 }
@@ -283,7 +280,6 @@ void SceneSwitcher::ApplyConfig(HWND hDialog)
 
 	// Get the checkboxes state
 	altDoSwitch = IsDlgButtonChecked(hDialog, IDC_ALTSWITCH);
-	matchExact  = IsDlgButtonChecked(hDialog, IDC_EXACT);
 	startAuto   = IsDlgButtonChecked(hDialog, IDC_STARTAUTO);
 
 	if(newAltSceneName.IsEmpty() && IsAltDoSwitch())

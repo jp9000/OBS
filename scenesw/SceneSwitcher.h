@@ -85,7 +85,6 @@ class SceneSwitcher
 	String altSceneName;
 	String mainWndName;
 	int startAuto;
-	int matchExact;
 	bool bKillThread;
 	ConfigFile config;
 	int altDoSwitch;
@@ -116,7 +115,6 @@ public:
 	inline bool IsRunning()		    const {return thread!=0;}
 	inline bool IsStartAuto()	    const {return startAuto!=0;}
 	inline bool IsAltDoSwitch()     const {return altDoSwitch!=0;}
-	inline bool IsMatchExact()      const {return matchExact!=0;}
 	inline int GetToggleHotkey()	const {return toggleHotkey;}
 
 	inline int GetnWindowsDefined() const {return nWindowsDefined;}
