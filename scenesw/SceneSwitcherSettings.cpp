@@ -406,7 +406,7 @@ INT_PTR SceneSwitcherSettings::MsgClicked(int controlId, int code, HWND controlH
         case IDC_APPLIST:
         case IDC_MAINSCN:
             if (code == CBN_SELCHANGE || code == CBN_EDITCHANGE) {
-                EditItem(code == CBN_SELCHANGE);
+                EditItem(code == CBN_SELCHANGE && controlId == IDC_APPLIST);
                 return TRUE;
             }
             break;
