@@ -45,6 +45,7 @@ class BitmapTransitionSource : public ImageSource
 
     float curTransitionTime;
     float curFadeValue;
+    UINT  opacity;
     bool  bTransitioning;
 
     bool  bFadeInOnly;
@@ -152,18 +153,20 @@ public:
     {
         if(bitmapImages.Num())
         {
+            float fOpacity = (float)opacity / 100.0f;
+
             if(bTransitioning && bitmapImages.Num() > 1)
             {
                 float curAlpha = MIN(curFadeValue/fadeTime, 1.0f);
                 if(bFadeInOnly)
-                    DrawBitmap(curTexture, 1.0f, pos, size);
+                    DrawBitmap(curTexture, fOpacity, pos, size);
                 else
-                    DrawBitmap(curTexture, 1.0f-curAlpha, pos, size);
+                    DrawBitmap(curTexture, fOpacity * (1.0f - curAlpha), pos, size);
 
-                DrawBitmap(nextTexture, curAlpha, pos, size);
+                DrawBitmap(nextTexture, fOpacity * curAlpha, pos, size);
             }
             else
-                DrawBitmap(curTexture, 1.0f, pos, size);
+                DrawBitmap(curTexture, fOpacity, pos, size);
         }
     }
 
@@ -211,6 +214,10 @@ public:
         else if(transitionTime > MAX_TRANSITION_TIME)
             transitionTime = MAX_TRANSITION_TIME;
 
+
+        opacity = data->GetInt(TEXT("opacity"),100);
+        if(opacity > 100)
+             opacity = 100;
         //------------------------------------
 
         bFadeInOnly = data->GetInt(TEXT("fadeInOnly"), 1) != 0;
@@ -252,6 +259,7 @@ ImageSource* STDCALL CreateBitmapTransitionSource(XElement *data)
 
 struct ConfigBitmapInfo
 {
+    CTSTR lpName;
     XElement *data;
     UINT cx, cy;
 };
@@ -305,7 +313,13 @@ INT_PTR CALLBACK ConfigureBitmapTransitionProc(HWND hwnd, UINT message, WPARAM w
                 SendMessage(GetDlgItem(hwnd, IDC_FADEINONLY), BM_SETCHECK, bFadeInOnly ? BST_CHECKED : BST_UNCHECKED, 0);
                 SendMessage(GetDlgItem(hwnd, IDC_DISABLEFADING), BM_SETCHECK, bDisableFading ? BST_CHECKED : BST_UNCHECKED, 0);
                 SendMessage(GetDlgItem(hwnd, IDC_RANDOMIZE), BM_SETCHECK, bRandomize ? BST_CHECKED : BST_UNCHECKED, 0);
-                
+
+                UINT opacity = configInfo->data->GetInt(TEXT("opacity"), 100);
+                if(opacity > 100)
+	                opacity = 100;
+
+                SendMessage(GetDlgItem(hwnd, IDC_TSRCOPACITY), UDM_SETRANGE32, 0, 100);
+                SendMessage(GetDlgItem(hwnd, IDC_TSRCOPACITY), UDM_SETPOS32, 0, opacity);
                 
                 EnableWindow(GetDlgItem(hwnd, IDC_FADEINONLY), !bDisableFading);
 
@@ -429,6 +443,28 @@ INT_PTR CALLBACK ConfigureBitmapTransitionProc(HWND hwnd, UINT message, WPARAM w
                     }
                     break;
 
+                case IDC_TSRCOPACITY_EDIT:
+                    if(HIWORD(wParam) == EN_CHANGE)
+                    {
+                        ConfigBitmapInfo *configData = (ConfigBitmapInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
+                        if(configData)
+                        {
+                            ImageSource *source = API->GetSceneImageSource(configData->lpName);
+                            if(source)
+                            {
+                                HWND hwndVal = NULL;
+                                hwndVal = GetDlgItem(hwnd, IDC_TSRCOPACITY);
+
+                                if(hwndVal)
+                                {
+                                    int val = (int)SendMessage(hwndVal, UDM_GETPOS32, 0, 0);
+                                    source->SetInt(TEXT("opacity"), val);
+                                }
+                            }
+                        }
+                    }
+                    break;
+
                 case IDOK:
                     {
                         HWND hwndBitmaps = GetDlgItem(hwnd, IDC_BITMAPS);
@@ -471,6 +507,7 @@ INT_PTR CALLBACK ConfigureBitmapTransitionProc(HWND hwnd, UINT message, WPARAM w
                         configInfo->data->SetInt(TEXT("fadeInOnly"), bFadeInOnly);
                         configInfo->data->SetInt(TEXT("disableFading"), bDisableFading);
                         configInfo->data->SetInt(TEXT("randomize"), bRandomize);
+                        configInfo->data->SetInt(TEXT("opacity"), (UINT)SendMessage(GetDlgItem(hwnd, IDC_TSRCOPACITY), UDM_GETPOS32, 0, 0));
                     }
 
                 case IDCANCEL:
@@ -497,6 +534,7 @@ bool STDCALL ConfigureBitmapTransitionSource(XElement *element, bool bCreating)
 
     ConfigBitmapInfo configInfo;
     configInfo.data = data;
+    configInfo.lpName = element->GetName();
 
     if (OBSDialogBox(hinstMain, MAKEINTRESOURCE(IDD_CONFIGURETRANSITIONSOURCE), hwndMain, ConfigureBitmapTransitionProc, (LPARAM)&configInfo) == IDOK)
     {
