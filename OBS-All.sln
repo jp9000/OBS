@@ -59,6 +59,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ObsNvenc", "ObsNvenc\ObsNve
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libMinHook", "minhook\build\libMinHook.vcxproj", "{65021938-D251-46FA-BC3D-85C385D4C06D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "scenesw", "scenesw\scenesw.vcxproj", "{6AC307E3-7D59-4DB2-944F-961E299F063A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{11A35235-DD48-41E2-8F40-825C78024BC0} = {11A35235-DD48-41E2-8F40-825C78024BC0}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -187,6 +192,14 @@ Global
 		{65021938-D251-46FA-BC3D-85C385D4C06D}.Release|Win32.Build.0 = Release|Win32
 		{65021938-D251-46FA-BC3D-85C385D4C06D}.Release|x64.ActiveCfg = Release|x64
 		{65021938-D251-46FA-BC3D-85C385D4C06D}.Release|x64.Build.0 = Release|x64
+		{6AC307E3-7D59-4DB2-944F-961E299F063A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6AC307E3-7D59-4DB2-944F-961E299F063A}.Debug|Win32.Build.0 = Debug|Win32
+		{6AC307E3-7D59-4DB2-944F-961E299F063A}.Debug|x64.ActiveCfg = Debug|x64
+		{6AC307E3-7D59-4DB2-944F-961E299F063A}.Debug|x64.Build.0 = Debug|x64
+		{6AC307E3-7D59-4DB2-944F-961E299F063A}.Release|Win32.ActiveCfg = Release|Win32
+		{6AC307E3-7D59-4DB2-944F-961E299F063A}.Release|Win32.Build.0 = Release|Win32
+		{6AC307E3-7D59-4DB2-944F-961E299F063A}.Release|x64.ActiveCfg = Release|x64
+		{6AC307E3-7D59-4DB2-944F-961E299F063A}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
