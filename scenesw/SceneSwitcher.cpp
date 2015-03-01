@@ -149,8 +149,8 @@ DWORD SceneSwitcher::Run()
 			if (!toCheck.IsEmpty())
 			{
 				// Check for wildcards.
-				BOOL matchStart = toCheck.Left(1) != "%";
-				BOOL matchEnd = toCheck.Right(1) != "%";
+				BOOL matchStart = toCheck.Left(1) != "*";
+				BOOL matchEnd = toCheck.Right(1) != "*";
 
 				// Remove the wildcards.
 				if (!matchStart)
