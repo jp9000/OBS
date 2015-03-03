@@ -133,10 +133,15 @@ DWORD SceneSwitcher::Run()
 	while(!bKillThread)
 	{
 		HWND hwndCurrent = GetForegroundWindow();
-		currentWindowText.SetLength(GetWindowTextLength(hwndCurrent));
-		GetWindowText(hwndCurrent, currentWindowText, currentWindowText.Length() + 1);
-	
-		String currentScene = OBSGetSceneName();
+        DWORD_PTR textLength;
+        if (!SendMessageTimeout(hwndCurrent, WM_GETTEXTLENGTH, 0, 0, SMTO_ABORTIFHUNG, 1000, &textLength))
+            continue;
+		currentWindowText.SetLength((UINT)textLength);
+		//GetWindowText(hwndCurrent, currentWindowText, currentWindowText.Length() + 1);
+        if (!SendMessageTimeout(hwndCurrent, WM_GETTEXT, currentWindowText.Length() + 1, (LPARAM)currentWindowText.Array(), SMTO_ABORTIFHUNG, 1000, NULL))
+            continue;
+
+        String currentScene = OBSGetSceneName();
 		String sceneToSwitch;
 
 		// See if we  get matches
@@ -221,23 +226,9 @@ void SceneSwitcher::StopThread(HWND hDialog)
 	{
 		bKillThread = true;
 
-		DWORD retv;
-		MSG msg;
-		HANDLE handles[] = {thread};
-		SetEvent(stopReq);
-		//process messages while waiting for the thread to complete, otherwise the thread will be locked forever
-		while((retv = MsgWaitForMultipleObjects(1, handles, FALSE, INFINITE, QS_ALLINPUT)) != WAIT_FAILED)
-		{
-			if(retv == WAIT_OBJECT_0)
-				break;
-			else if(retv == WAIT_OBJECT_0+1)
-				while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-				{
-					TranslateMessage(&msg);
-					DispatchMessage(&msg);
-				}
-		}
-		ResetEvent(stopReq);
+        SetEvent(stopReq);
+        WaitForSingleObject(thread, INFINITE);
+        ResetEvent(stopReq);
 
 		if(thread)
 		{
