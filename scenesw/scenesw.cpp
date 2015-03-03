@@ -58,12 +58,12 @@ bool LoadPlugin()
 
 void UnloadPlugin()
 {
-	if (thePlugin->GetSettings()->hotkeyID)
-		OBSDeleteHotkey(thePlugin->GetSettings()->hotkeyID);
-
 	if(thePlugin)
 	{
-		delete thePlugin;
+        if (thePlugin->GetSettings()->hotkeyID)
+            OBSDeleteHotkey(thePlugin->GetSettings()->hotkeyID);
+        
+        delete thePlugin;
 		thePlugin = NULL;
 	}
 }
