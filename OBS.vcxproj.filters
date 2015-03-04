@@ -55,9 +55,6 @@
     <ClCompile Include="Source\GlobalSource.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Hacks.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Source\HTTPClient.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -210,9 +207,9 @@
     <ClInclude Include="Source\LogUploader.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClCompile Include="Source\DataPacketHelpers.h">
+    <ClInclude Include="Source\DataPacketHelpers.h">
       <Filter>Headers</Filter>
-    </ClCompile>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="cursor1.cur">

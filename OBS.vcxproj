@@ -284,7 +284,6 @@
     <ClCompile Include="Source\FLVFileStream.cpp" />
     <ClCompile Include="Source\GetAudioDevices.cpp" />
     <ClCompile Include="Source\GlobalSource.cpp" />
-    <ClCompile Include="Source\Hacks.cpp" />
     <ClCompile Include="Source\HTTPClient.cpp" />
     <ClCompile Include="Source\ImageProcessing.cpp" />
     <ClCompile Include="Source\ReplayBuffer.cpp" />
@@ -320,7 +319,7 @@
     <ClInclude Include="Source\CodeTokenizer.h" />
     <ClInclude Include="Source\CrashDumpHandler.h" />
     <ClInclude Include="Source\D3D10System.h" />
-    <ClInclude Include="Source\DataPacketHelpers.h"/>
+    <ClInclude Include="Source\DataPacketHelpers.h" />
     <ClInclude Include="Source\HTTPClient.h" />
     <ClInclude Include="Source\libnsgif.h" />
     <ClInclude Include="Source\LogUploader.h" />
