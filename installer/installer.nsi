@@ -2,7 +2,7 @@
 
 ; Define your application name
 !define APPNAME "Open Broadcaster Software"
-!define APPNAMEANDVERSION "Open Broadcaster Software 0.637b"
+!define APPNAMEANDVERSION "Open Broadcaster Software 0.641b"
 
 ; Additional script dependencies
 !include WinVer.nsh
@@ -137,7 +137,7 @@ Section "Open Broadcaster Software" Section1
 	SetOutPath "$PROGRAMFILES32\OBS"
 	File "/oname=LICENSE" "..\COPYING"
 	File "32bit\OBS.exe"
-	File "32bit\libx264-142.dll"
+	File "32bit\libx264-144.dll"
 	File "32bit\QSVHelper.exe"
 	File "32bit\OBSApi.dll"
 	File "32bit\services.xconfig"
@@ -178,7 +178,7 @@ Section "Open Broadcaster Software" Section1
 		SetOutPath "$PROGRAMFILES64\OBS"
 		File "/oname=LICENSE" "..\COPYING"
 		File "64bit\OBS.exe"
-		File "64bit\libx264-142.dll"
+		File "64bit\libx264-144.dll"
 		File "64bit\QSVHelper.exe"
 		File "64bit\OBSApi.dll"
 		File "64bit\services.xconfig"
@@ -272,7 +272,7 @@ Section "un.OBS Program Files"
 	; Clean up Open Broadcaster Software
 	Delete "$PROGRAMFILES32\OBS\OBS.exe"
 	Delete "$PROGRAMFILES32\LICENSE"
-	Delete "$PROGRAMFILES32\OBS\libx264-142.dll"
+	Delete "$PROGRAMFILES32\OBS\libx264-144.dll"
 	Delete "$PROGRAMFILES32\OBS\QSVHelper.exe"
 	Delete "$PROGRAMFILES32\OBS\OBSApi.dll"
 	Delete "$PROGRAMFILES32\OBS\services.xconfig"
@@ -295,7 +295,7 @@ Section "un.OBS Program Files"
 	${if} ${RunningX64}
 		Delete "$PROGRAMFILES64\OBS\OBS.exe"
 		Delete "$PROGRAMFILES64\LICENSE"
-		Delete "$PROGRAMFILES64\OBS\libx264-142.dll"
+		Delete "$PROGRAMFILES64\OBS\libx264-144.dll"
 		Delete "$PROGRAMFILES64\OBS\QSVHelper.exe"
 		Delete "$PROGRAMFILES64\OBS\OBSApi.dll"
 		Delete "$PROGRAMFILES64\OBS\services.xconfig"
