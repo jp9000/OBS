@@ -1916,8 +1916,6 @@ void OBS::MoveItemsByPixels(int dx, int dy)
     }
 }
 
-extern "C" double round(double val);
-
 void OBS::FitItemsToScreen()
 {
     if(App->bRunning)
