@@ -15,6 +15,7 @@ Defaults="Pradiniai nustatymai"
 DeleteConfirm="Ar tikrai norite ištrinti pasirinktus elementus?"
 Desktop="Darbalaukis"
 Disable="Išjungti"
+EncoderLag="ĮSPĖJIMAS: Aukštas CPU sunaudojimas! Apsvarstykite keisdami nustatymus."
 EndingDelay="Baigiama pavėlinta transliacija..."
 EnterName="Įveskite pavadinimą"
 Gamma="Gama:"
@@ -41,9 +42,12 @@ Settings="Nustatymai..."
 LogWindow="Žurnalo langas"
 StreamReport="Transliacijos ataskaita"
 MessageBoxWarningCaption="Įspėjimas"
+NoSourcesFound="Jūs nepridėjote jokių šaltinių! Ar jūs norite transliuoti juodu ekranu?"
 
 
 
+CopyTo="Kopijuoti į"
+CopyTo.Success.Title="Pavyko"
 
 
 
@@ -74,13 +78,27 @@ Listbox.Positioning="Vieta/Dydis"
 Listbox.ResetSize="Atstatyti dydį"
 Listbox.SetHotkey="Nustatyti spartųjį klavišą"
 ListBox.ResetCrop="Anuliuoti apkarpymą"
+Listbox.ImportButton="Importuoti"
 
+MainMenu.SceneCollection="&Scenos kolekcija"
+MainMenu.SceneCollection.New="&Naujas"
+MainMenu.SceneCollection.Duplicate="&Dubliuoti"
+MainMenu.SceneCollection.Rename="&Pervadinti"
+MainMenu.SceneCollection.Remove="Iš&trinti"
+MainMenu.SceneCollection.Import="&Importuoti"
+MainMenu.SceneCollection.Export="&Eksportuoti"
 
 MainMenu.File="&Failas"
 MainMenu.Help="&Pagalba"
 MainMenu.Profiles="&Profiliai"
 MainMenu.Settings="&Nustatymai"
 
+MainMenu.Profiles.New="&Naujas"
+MainMenu.Profiles.Duplicate="&Dubliuoti"
+MainMenu.Profiles.Rename="&Pervadinti"
+MainMenu.Profiles.Remove="Iš&trinti"
+MainMenu.Profiles.Import="&Importuoti"
+MainMenu.Profiles.Export="&Eksportuoti"
 
 MainMenu.Settings.AlwaysOnTop="&Visada viršuje"
 MainMenu.Settings.FullscreenMode="&Viso ekrano peržiūra"
@@ -142,6 +160,7 @@ Settings.Publish="Transliavimo parametrai"
 Settings.SaveChangesPrompt="Ar norėtumėte išsaugoti ir taikyti savo pakeitimus?"
 Settings.SaveChangesTitle="Taikyti nustatymus?"
 Settings.Video="Vaizdas"
+Settings.Hotkeys="Spartieji klavišai"
 
 
 
