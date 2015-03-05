@@ -40,6 +40,15 @@ HWND SceneSwitcherSettings::CreatePane(HWND parentHwnd)
 {
     hwnd = CreateDialogParam(thePlugin->hinstDll, MAKEINTRESOURCE(IDD_SETTINGS_SCENESW),
                              parentHwnd, (DLGPROC)DialogProc, (LPARAM)this);
+
+	//EM_SETCUEBANNER
+
+
+	HWND hwndAppList = GetDlgItem(hwnd, IDC_APPLIST);
+	HWND hwndMainScn = GetDlgItem(hwnd, IDC_MAINSCN);
+
+	ComboBox_SetCueBannerText(hwndMainScn, PluginStr("Settings.Scene"));
+	ComboBox_SetCueBannerText(hwndAppList, PluginStr("Settings.WindowTitle"));
     return hwnd;
 }
 
@@ -115,16 +124,16 @@ void SceneSwitcherSettings::MsgInitDialog()
 	HWND hwndCurrent = GetWindow(GetDesktopWindow(), GW_CHILD); // The top child of the desktop
 
 	// let's fill the listcontrol
-	SendMessage(hwndWSMap, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_FULLROWSELECT, LVS_EX_FULLROWSELECT);
+	SendMessage(hwndWSMap, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_FULLROWSELECT | LVS_EX_LABELTIP, LVS_EX_FULLROWSELECT | LVS_EX_LABELTIP);
 	LVCOLUMN col1;
 	col1.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
 	col1.fmt = LVCFMT_RIGHT | LVCFMT_FIXED_WIDTH;
-	col1.cx = 307;
+	col1.cx = 204+205;
 	col1.pszText = (LPWSTR)PluginStr("Settings.WindowTitle");
 	LVCOLUMN col2;
 	col2.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
 	col2.fmt = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH;
-	col2.cx = 307;
+	col2.cx = 205;
 	col2.pszText = (LPWSTR)PluginStr("Settings.Scene");
 	SendMessage(hwndWSMap, LVM_INSERTCOLUMN, 0, (LPARAM) (LPLVCOLUMN) &col1);
 	SendMessage(hwndWSMap, LVM_INSERTCOLUMN, 1, (LPARAM) (LPLVCOLUMN) &col2);

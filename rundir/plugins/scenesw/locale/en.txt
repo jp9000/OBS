@@ -1,5 +1,3 @@
-Settings.MainWndTitle="Window title to check for:"
-Settings.MainWndScene="Scene to switch to on window title:"
 Settings.WindowTitle="Window Title"
 Settings.Scene="Scene"
 Settings.SetToggleHotkey="Set a hotkey to toggle Scene Switcher:"
