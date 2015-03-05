@@ -241,6 +241,7 @@ Settings.Advanced.VideoEncoderSettingsTooltip="Hiermee kan je aangepaste x264 en
 Settings.Advanced.X264Profile="Encoding profiel:"
 Settings.Advanced.NVENCPreset="NVENC Preset:"
 Settings.Advanced.QSVPreset="Quick Sync Preset:"
+Settings.Advanced.EncodeFullRange="Encoden in Full Range"
 
 Settings.Advanced.Priority.Idle="Laagst"
 Settings.Advanced.Priority.Normal="Normaal"

@@ -241,6 +241,7 @@ Settings.Advanced.VideoEncoderSettingsTooltip="x264のカスタムエンコー�
 Settings.Advanced.X264Profile="エンコード プロファイル:"
 Settings.Advanced.NVENCPreset="NVENC のプリセット:"
 Settings.Advanced.QSVPreset="Quick Sync プリセット:"
+Settings.Advanced.EncodeFullRange="フルレンジでエンコードする"
 
 Settings.Advanced.Priority.Idle="低"
 Settings.Advanced.Priority.Normal="通常"

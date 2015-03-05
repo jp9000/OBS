@@ -58,6 +58,9 @@ DeviceSelection.UseBuffering="Použití ukládání do vyrovnávací paměti (v 
 DeviceSelection.UseChromaKey="Použít Chroma klíč"
 DeviceSelection.UseDeviceAudio="(Použít Audio zařízení)"
 DeviceSelection.Video="Video"
+DeviceSelection.ColorSpace="Barevný prostor"
+DeviceSelection.ColorSpace.Auto="Automatické"
+DeviceSelection.UseFullRange="Použít celé spektrum"
 
 Plugin.Description="Tento modul umožňuje přidat DirectShow video zařízení (webkamery, zachytávací karty, atd.) na scénu"
 Plugin.Name="Modul DirectShow Video zařízení"

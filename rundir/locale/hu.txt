@@ -241,6 +241,7 @@ Settings.Advanced.VideoEncoderSettingsTooltip="Ez engedélyezi egyedi x264 kódo
 Settings.Advanced.X264Profile="Kódolási Profil:"
 Settings.Advanced.NVENCPreset="NVENC Készlet:"
 Settings.Advanced.QSVPreset="Quick Sync Készlet:"
+Settings.Advanced.EncodeFullRange="Teljes táv kódolása"
 
 Settings.Advanced.Priority.Idle="Tétlen"
 Settings.Advanced.Priority.Normal="Normál"
