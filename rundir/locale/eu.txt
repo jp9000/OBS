@@ -241,6 +241,7 @@ Settings.Advanced.VideoEncoderSettingsTooltip="Honek norbere x264 kodeaketa ezar
 Settings.Advanced.X264Profile="Kodeaketa Profila:"
 Settings.Advanced.NVENCPreset="NVENC Aurrezarpena:"
 Settings.Advanced.QSVPreset="Quick Sync Aurrezarpena:"
+Settings.Advanced.EncodeFullRange="Kodeatu Maila Osoan"
 
 Settings.Advanced.Priority.Idle="Idle"
 Settings.Advanced.Priority.Normal="Arrunta"

@@ -182,6 +182,7 @@ Settings.QSV.UseCustomParams="Quick Sync kodlaması için özel parametreler kul
 Settings.QSV.RateControlMethod="Oran Kontrol Metodu"
 Settings.QSV.BitrateParameters="Parametreler"
 Settings.QSV.TargetKbps="Hedef Kbps:"
+Settings.QSV.UseGlobalBitrate="Global maksimum bitdeğeri kullan"
 Settings.QSV.MaxKbps="MaksimumKbps:"
 Settings.QSV.UseGlobalBufferSize="Global arabellek boyutunu kullan"
 Settings.QSV.Accuracy="Doğruluk (%):"
@@ -222,6 +223,7 @@ Settings.Advanced.VideoEncoderSettingsTooltip="Bu, özel x264 kodlayıcı ayarla
 Settings.Advanced.X264Profile="Kodlama Profili:"
 Settings.Advanced.NVENCPreset="NCENC Önceden Hazırlanmış:"
 Settings.Advanced.QSVPreset="Quick Sync Öntanımı:"
+Settings.Advanced.EncodeFullRange="Tam aralıkta kodlama yap"
 
 Settings.Advanced.Priority.Idle="Boşta"
 Settings.Advanced.Priority.Normal="Normal"

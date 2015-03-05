@@ -30,5 +30,6 @@ for /D /r %%d in (crowdin\*) do (
 		copy crowdin\!longlocale!\Main\!shortlocale!.ini locale\!localename!.txt
 		copy crowdin\!longlocale!\plugins\DShowPlugin\!shortlocale!.ini plugins\DShowPlugin\locale\!localename!.txt
 		copy crowdin\!longlocale!\plugins\PSVPlugin\!shortlocale!.ini plugins\PSVPlugin\locale\!localename!.txt
+		copy crowdin\!longlocale!\plugins\scenesw\!shortlocale!.ini plugins\scenesw\locale\!localename!.txt
 	)
 )

@@ -241,6 +241,7 @@ Settings.Advanced.VideoEncoderSettingsTooltip="x264 인코더에 관련된 추�
 Settings.Advanced.X264Profile="인코딩 프로파일:"
 Settings.Advanced.NVENCPreset="NVENC 프레셋:"
 Settings.Advanced.QSVPreset="Quick Sync 프레셋:"
+Settings.Advanced.EncodeFullRange="전체 범위(0-255)에서 인코딩"
 
 Settings.Advanced.Priority.Idle="낮음"
 Settings.Advanced.Priority.Normal="보통"

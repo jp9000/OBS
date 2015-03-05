@@ -241,6 +241,7 @@ Settings.Advanced.VideoEncoderSettingsTooltip="Esto permite ingresar parámetros
 Settings.Advanced.X264Profile="Perfil de codificación:"
 Settings.Advanced.NVENCPreset="Preajuste NVENC:"
 Settings.Advanced.QSVPreset="Preset de QuickSync:"
+Settings.Advanced.EncodeFullRange="Codificar en gama completa"
 
 Settings.Advanced.Priority.Idle="Inactivo"
 Settings.Advanced.Priority.Normal="Normal"
