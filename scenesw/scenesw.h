@@ -1,5 +1,6 @@
 /********************************************************************************
- Copyright (C) 2012 Hugh Bailey <obs.jim@gmail.com>
+ Copyright (C) 2013 Christophe Jeannin <chris.j84@free.fr>
+                    Eric Bataille <e.c.p.bataille@gmail.com>
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -16,18 +17,9 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 ********************************************************************************/
 
-#include "Main.h"
+#pragma once
 
-extern "C"
-{
-    double round(double val)
-    {
-        if(!_isnan(val) || !_finite(val))
-            return val;
+#include "OBSApi.h"
+#include "SceneSwitcher.h"
 
-        if(val > 0.0f)
-            return floor(val+0.5);
-        else
-            return floor(val-0.5);
-    }
-}
+#include "resource.h"

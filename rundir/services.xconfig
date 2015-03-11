@@ -87,14 +87,15 @@ services : {
       "Asia: Singapore"                   : rtmp://live.lax.hitbox.tv/push
       "China: Hong Kong"                  : rtmp://live.hkg.hitbox.tv/push
       "EU-Central: Nurnberg, Germany"     : rtmp://live.nbg.hitbox.tv/push
-      "EU-East: Vienna, Austria"          : rtmp://live.vie.hitbox.tv/push
       "EU-North: London, United Kingdom"  : rtmp://live.lhr.hitbox.tv/push
       "EU-West: Frankfurt, Germany"       : rtmp://live.fra.hitbox.tv/push
+      "EU-West: Paris, France"            : rtmp://live.cdg.hitbox.tv/push
       "Oceania: Sydney, Australia"        : rtmp://live.syd.hitbox.tv/push
       "Russia: Moscow"                    : rtmp://live.dme.hitbox.tv/push
       "South America: Sao Paulo, Brazil"  : rtmp://live.gru.hitbox.tv/push
       "South Korea: Seoul"                : rtmp://live.icn.hitbox.tv/push
       "US-Central: Denver"                : rtmp://live.den.hitbox.tv/push
+      "US-East: New York"                 : rtmp://live.jfk.hitbox.tv/push
       "US-East: Washington"               : rtmp://live.vgn.hitbox.tv/push
       "US-West: Los Angeles"              : rtmp://live.lax.hitbox.tv/push
     }

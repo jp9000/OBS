@@ -27,8 +27,6 @@
 
 const float fadeTime = 1.5f;
 
-extern "C" double round(double val);
-
 class BitmapTransitionSource : public ImageSource
 {
     List<BitmapImage*> bitmapImages;

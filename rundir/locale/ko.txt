@@ -241,6 +241,7 @@ Settings.Advanced.VideoEncoderSettingsTooltip="x264 인코더에 관련된 추�
 Settings.Advanced.X264Profile="인코딩 프로파일:"
 Settings.Advanced.NVENCPreset="NVENC 프레셋:"
 Settings.Advanced.QSVPreset="Quick Sync 프레셋:"
+Settings.Advanced.EncodeFullRange="전체 범위(0-255)에서 인코딩"
 
 Settings.Advanced.Priority.Idle="낮음"
 Settings.Advanced.Priority.Normal="보통"
@@ -302,7 +303,7 @@ Settings.General.NotificationMinimize="알림 영역으로 최소화"
 Settings.General.ShowObs="OBS 보이기"
 Settings.General.HideObs="OBS 감추기"
 Settings.General.Restart="언어를 변경하면 프로그램을 재시작해야 합니다. Changing the language will require restarting OBS. "
-Settings.General.ShowLogWindowOnLaunch="OBS 시작 시 기록창 표시"
+Settings.General.ShowLogWindowOnLaunch="OBS 시작 시 기록 창 표시"
 
 Settings.Publish.AutoReconnect="자동 재접속 시도:"
 Settings.Publish.AutoReconnectTimeout="자동 재접속 시간 초과:"

@@ -2,7 +2,7 @@ RightToLeft="false"
 
 Add="Добавить"
 Preview="Предпросмотр"
-Order="Переместить"
+Order="Порядок сортировки"
 Apply="Применить"
 Browse="Обзор"
 BuildingMP4Dialog="Создаю MP4"
@@ -241,6 +241,7 @@ Settings.Advanced.VideoEncoderSettingsTooltip="Позволяет установ
 Settings.Advanced.X264Profile="Профиль кодирования:"
 Settings.Advanced.NVENCPreset="Предустановка NVENC:"
 Settings.Advanced.QSVPreset="Предустановка Quick Sync:"
+Settings.Advanced.EncodeFullRange="Кодировать в полном спектре"
 
 Settings.Advanced.Priority.Idle="Низкий"
 Settings.Advanced.Priority.Normal="Средний"

@@ -1,7 +1,7 @@
 /*****************************************************************************
  * x264.h: x264 public header
  *****************************************************************************
- * Copyright (C) 2003-2014 x264 project
+ * Copyright (C) 2003-2015 x264 project
  *
  * Authors: Laurent Aimar <fenrir@via.ecp.fr>
  *          Loren Merritt <lorenm@u.washington.edu>
@@ -41,7 +41,7 @@
 
 #include "x264_config.h"
 
-#define X264_BUILD 142
+#define X264_BUILD 146
 
 /* Application developers planning to link against a shared library version of
  * libx264 from a Microsoft Visual Studio or similar development environment
@@ -129,8 +129,8 @@ typedef struct
 #define X264_CPU_AVX             0x0000400  /* AVX support: requires OS support even if YMM registers aren't used. */
 #define X264_CPU_XOP             0x0000800  /* AMD XOP */
 #define X264_CPU_FMA4            0x0001000  /* AMD FMA4 */
-#define X264_CPU_AVX2            0x0002000  /* AVX2 */
-#define X264_CPU_FMA3            0x0004000  /* Intel FMA3 */
+#define X264_CPU_FMA3            0x0002000  /* FMA3 */
+#define X264_CPU_AVX2            0x0004000  /* AVX2 */
 #define X264_CPU_BMI1            0x0008000  /* BMI1 */
 #define X264_CPU_BMI2            0x0010000  /* BMI2 */
 /* x86 modifiers */
@@ -183,6 +183,7 @@ typedef struct
 #define X264_AQ_NONE                 0
 #define X264_AQ_VARIANCE             1
 #define X264_AQ_AUTOVARIANCE         2
+#define X264_AQ_AUTOVARIANCE_BIASED  3
 #define X264_B_ADAPT_NONE            0
 #define X264_B_ADAPT_FAST            1
 #define X264_B_ADAPT_TRELLIS         2
