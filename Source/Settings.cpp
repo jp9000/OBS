@@ -157,6 +157,7 @@ void OBS::AddEncoderSettingsPanes()
 {
     SettingsPane *panes[] = {
         new SettingsQSV(),
+        new SettingsVCE(),
     };
 
     for (auto pane : panes)

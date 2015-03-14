@@ -108,7 +108,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>OBSApi;extras;libmfx/include/msdk/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;$(OBS_VERSION_SUFFIX);$(DynamicDefines);_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>OBS_DISABLE_AUTOUPDATE;WIN32;$(OBS_VERSION_SUFFIX);$(DynamicDefines);_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>false</ExceptionHandling>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -148,7 +148,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>OBSApi;extras;libmfx/include/msdk/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;$(OBS_VERSION_SUFFIX);$(DynamicDefines);_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>OBS_DISABLE_AUTOUPDATE;WIN32;$(OBS_VERSION_SUFFIX);$(DynamicDefines);_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -183,7 +183,7 @@
       <Optimization>Full</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalIncludeDirectories>OBSApi;extras;libmfx/include/msdk/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;$(OBS_VERSION_SUFFIX);$(DynamicDefines);NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>OBS_DISABLE_AUTOUPDATE;WIN32;$(OBS_VERSION_SUFFIX);$(DynamicDefines);NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>false</ExceptionHandling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -226,7 +226,7 @@
       <Optimization>Full</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalIncludeDirectories>OBSApi;extras;libmfx/include/msdk/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;$(OBS_VERSION_SUFFIX);$(DynamicDefines);NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>OBS_DISABLE_AUTOUPDATE;WIN32;$(OBS_VERSION_SUFFIX);$(DynamicDefines);NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>false</ExceptionHandling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -280,6 +280,7 @@
     <ClCompile Include="Source\Encoder_MP3.cpp" />
     <ClCompile Include="Source\Encoder_NVENC.cpp" />
     <ClCompile Include="Source\Encoder_QSV.cpp" />
+    <ClCompile Include="Source\Encoder_VCE.cpp" />
     <ClCompile Include="Source\Encoder_x264.cpp" />
     <ClCompile Include="Source\FLVFileStream.cpp" />
     <ClCompile Include="Source\GetAudioDevices.cpp" />
@@ -309,6 +310,7 @@
     <ClCompile Include="Source\SettingsHotkeys.cpp" />
     <ClCompile Include="Source\SettingsPublish.cpp" />
     <ClCompile Include="Source\SettingsQSV.cpp" />
+    <ClCompile Include="Source\SettingsVCE.cpp" />
     <ClCompile Include="Source\SettingsVideo.cpp" />
     <ClCompile Include="Source\TextOutputSource.cpp" />
     <ClCompile Include="Source\Updater.cpp" />

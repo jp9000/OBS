@@ -53,8 +53,8 @@ LRESULT WINAPI ResolutionEditSubclassProc(HWND hwnd, UINT message, WPARAM wParam
     return CallWindowProc((WNDPROC)editProc, hwnd, message, wParam, lParam);
 }
 
-const int multiplierCount = 9;
-const float downscaleMultipliers[multiplierCount] = {1.0f, 1.25f, 1.5f, 1.75f, 2.0f, 2.25f, 2.5f, 2.75f, 3.0f};
+const int multiplierCount = 10;
+const float downscaleMultipliers[multiplierCount] = {1.0f, 1.25f, 1.3333f, 1.5f, 1.75f, 2.0f, 2.25f, 2.5f, 2.75f, 3.0f};
 
 //============================================================================
 // SettingsVideo class

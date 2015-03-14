@@ -1,0 +1,211 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{BB9A0071-412E-4B72-8A5F-F09F4F19425B}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>ObsVCEAMF</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>AMF_CORE_NOT_STATIC;WIN32;_DEBUG;_WINDOWS;_USRDLL;OBSVCEAMF_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\AMD Media SDK\1.1\inc\amf\core;$(SolutionDir)..\AMD Media SDK\1.1\inc;$(USERPROFILE)\AMD Media SDK\1.1\inc\amf\core;$(USERPROFILE)\AMD Media SDK\1.1\inc;$(ProjectDir);$(SolutionDir)\OBSApi;$(SolutionDir)\Source;$(SolutionDir)\extras;$(SolutionDir);C:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)\OBSApi\$(Configuration);$(AMDAPPSDKROOT)\lib\x86;$(SolutionDir)\..\AMD Media SDK\1.1\lib\amf\x86\$(Configuration)\vs12;$(USERPROFILE)\AMD Media SDK\1.1\lib\amf\x86\$(Configuration)\vs12;C:\Program Files (x86)\Visual Leak Detector\lib\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OBSApi.lib;amf-core-windesktop$(PlatformArchitecture).lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ProgramDatabaseFile>$(SolutionDir)\rundir\pdb32\$(TargetName).pdb</ProgramDatabaseFile>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy "$(OutDir)$(TargetFileName)" "$(SolutionDir)rundir\$(TargetFileName)"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>AMF_CORE_NOT_STATIC;WIN32;_DEBUG;_WINDOWS;_USRDLL;OBSVCEAMF_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\AMD Media SDK\1.1\inc\amf\core;$(SolutionDir)..\AMD Media SDK\1.1\inc;$(USERPROFILE)\AMD Media SDK\1.1\inc\amf\core;$(USERPROFILE)\AMD Media SDK\1.1\inc;$(ProjectDir);$(SolutionDir)\OBSApi;$(SolutionDir)\Source;$(SolutionDir)\extras;$(SolutionDir);C:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\AMD Media SDK\1.1\lib\amf\x86_64\$(Configuration)\vs12;$(USERPROFILE)\AMD Media SDK\1.1\lib\amf\x86_64\$(Configuration)\vs12;$(AMDAPPSDKROOT)\lib\x86_64;$(SolutionDir)\OBSApi\$(Platform)\$(Configuration);C:\Program Files (x86)\Visual Leak Detector\lib\Win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OBSApi.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ProgramDatabaseFile>$(SolutionDir)\rundir\pdb64\$(TargetName).pdb</ProgramDatabaseFile>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy "$(OutDir)$(TargetFileName)" "$(SolutionDir)rundir\$(TargetFileName)"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>AMF_CORE_NOT_STATIC;WIN32;NDEBUG;_WINDOWS;_USRDLL;OBSVCEAMF_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\AMD Media SDK\1.1\inc\amf\core;$(SolutionDir)..\AMD Media SDK\1.1\inc;$(USERPROFILE)\AMD Media SDK\1.1\inc\amf\core;$(USERPROFILE)\AMD Media SDK\1.1\inc;$(ProjectDir);$(SolutionDir)\OBSApi;$(SolutionDir)\Source;$(SolutionDir)\extras;$(SolutionDir);C:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(SolutionDir)\OBSApi\$(Configuration);$(AMDAPPSDKROOT)\lib\x86;$(SolutionDir)\..\AMD Media SDK\1.1\lib\amf\x86\$(Configuration)\vs12;$(USERPROFILE)\AMD Media SDK\1.1\lib\amf\x86\$(Configuration)\vs12;C:\Program Files (x86)\Visual Leak Detector\lib\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OBSApi.lib;amf-core-windesktop$(PlatformArchitecture).lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <StripPrivateSymbols>$(SolutionDir)\rundir\pdb32\stripped\$(TargetName).pdb</StripPrivateSymbols>
+      <ProgramDatabaseFile>$(SolutionDir)\rundir\pdb32\$(TargetName).pdb</ProgramDatabaseFile>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy "$(OutDir)$(TargetFileName)" "$(SolutionDir)rundir\$(TargetFileName)"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>AMF_CORE_NOT_STATIC;WIN32;NDEBUG;_WINDOWS;_USRDLL;OBSVCEAMF_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\AMD Media SDK\1.1\inc\amf\core;$(SolutionDir)..\AMD Media SDK\1.1\inc;$(USERPROFILE)\AMD Media SDK\1.1\inc\amf\core;$(USERPROFILE)\AMD Media SDK\1.1\inc;$(ProjectDir);$(SolutionDir)\OBSApi;$(SolutionDir)\Source;$(SolutionDir)\extras;$(SolutionDir);C:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\AMD Media SDK\1.1\lib\amf\x86_64\$(Configuration)\vs12;$(USERPROFILE)\AMD Media SDK\1.1\lib\amf\x86_64\$(Configuration)\vs12;$(AMDAPPSDKROOT)\lib\x86_64;$(SolutionDir)\OBSApi\$(Platform)\$(Configuration);C:\Program Files (x86)\Visual Leak Detector\lib\Win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OBSApi.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <StripPrivateSymbols>$(SolutionDir)\rundir\pdb64\stripped\$(TargetName).pdb</StripPrivateSymbols>
+      <ProgramDatabaseFile>$(SolutionDir)\rundir\pdb64\$(TargetName).pdb</ProgramDatabaseFile>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy "$(OutDir)$(TargetFileName)" "$(SolutionDir)rundir\$(TargetFileName)"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="amfhelpers\inc\AMFPlatform.h" />
+    <ClInclude Include="amfhelpers\inc\CmdLogger.h" />
+    <ClInclude Include="amfhelpers\inc\DeviceDX11.h" />
+    <ClInclude Include="amfhelpers\inc\DeviceDX9.h" />
+    <ClInclude Include="amfhelpers\inc\DeviceOpenCL.h" />
+    <ClInclude Include="amfhelpers\inc\PlatformWindows.h" />
+    <ClInclude Include="amfhelpers\inc\Thread.h" />
+    <ClInclude Include="DynAMF.h" />
+    <ClInclude Include="OBS-min.h" />
+    <ClInclude Include="ObsVCEAMF.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="Types.h" />
+    <ClInclude Include="VCECL.h" />
+    <ClInclude Include="VersionHelpers.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="amfhelpers\src\DeviceDX11.cpp" />
+    <ClCompile Include="amfhelpers\src\DeviceDX9.cpp" />
+    <ClCompile Include="amfhelpers\src\DeviceOpenCL.cpp" />
+    <ClCompile Include="dllmain.cpp">
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </PrecompiledHeader>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="DynAMF.cpp" />
+    <ClCompile Include="ObsVCEAMF.cpp" />
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="VCECL.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

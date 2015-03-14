@@ -1,6 +1,8 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OBS", "OBS.vcxproj", "{221C92F4-3416-43F1-8E4E-78657AFD0111}"
 	ProjectSection(ProjectDependencies) = postProject
 		{9E7B3527-11AA-46BA-A82F-C58761F9B56F} = {9E7B3527-11AA-46BA-A82F-C58761F9B56F}
@@ -60,6 +62,21 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libMinHook", "minhook\build\libMinHook.vcxproj", "{65021938-D251-46FA-BC3D-85C385D4C06D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "scenesw", "scenesw\scenesw.vcxproj", "{6AC307E3-7D59-4DB2-944F-961E299F063A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{11A35235-DD48-41E2-8F40-825C78024BC0} = {11A35235-DD48-41E2-8F40-825C78024BC0}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ObsVCEMFT", "ObsVCEMFT\ObsVCEMFT.vcxproj", "{29588C0E-1C10-4CC7-A056-2E491595AA04}"
+	ProjectSection(ProjectDependencies) = postProject
+		{11A35235-DD48-41E2-8F40-825C78024BC0} = {11A35235-DD48-41E2-8F40-825C78024BC0}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ObsVCEAMF", "ObsVCEAMF\ObsVCEAMF.vcxproj", "{BB9A0071-412E-4B72-8A5F-F09F4F19425B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{11A35235-DD48-41E2-8F40-825C78024BC0} = {11A35235-DD48-41E2-8F40-825C78024BC0}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ObsVCE", "ObsVCE\ObsVCE.vcxproj", "{13FDD845-1592-4C0A-8786-3C9046B4D3D7}"
 	ProjectSection(ProjectDependencies) = postProject
 		{11A35235-DD48-41E2-8F40-825C78024BC0} = {11A35235-DD48-41E2-8F40-825C78024BC0}
 	EndProjectSection
@@ -200,6 +217,30 @@ Global
 		{6AC307E3-7D59-4DB2-944F-961E299F063A}.Release|Win32.Build.0 = Release|Win32
 		{6AC307E3-7D59-4DB2-944F-961E299F063A}.Release|x64.ActiveCfg = Release|x64
 		{6AC307E3-7D59-4DB2-944F-961E299F063A}.Release|x64.Build.0 = Release|x64
+		{29588C0E-1C10-4CC7-A056-2E491595AA04}.Debug|Win32.ActiveCfg = Debug|Win32
+		{29588C0E-1C10-4CC7-A056-2E491595AA04}.Debug|Win32.Build.0 = Debug|Win32
+		{29588C0E-1C10-4CC7-A056-2E491595AA04}.Debug|x64.ActiveCfg = Debug|x64
+		{29588C0E-1C10-4CC7-A056-2E491595AA04}.Debug|x64.Build.0 = Debug|x64
+		{29588C0E-1C10-4CC7-A056-2E491595AA04}.Release|Win32.ActiveCfg = Release|Win32
+		{29588C0E-1C10-4CC7-A056-2E491595AA04}.Release|Win32.Build.0 = Release|Win32
+		{29588C0E-1C10-4CC7-A056-2E491595AA04}.Release|x64.ActiveCfg = Release|x64
+		{29588C0E-1C10-4CC7-A056-2E491595AA04}.Release|x64.Build.0 = Release|x64
+		{BB9A0071-412E-4B72-8A5F-F09F4F19425B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BB9A0071-412E-4B72-8A5F-F09F4F19425B}.Debug|Win32.Build.0 = Debug|Win32
+		{BB9A0071-412E-4B72-8A5F-F09F4F19425B}.Debug|x64.ActiveCfg = Debug|x64
+		{BB9A0071-412E-4B72-8A5F-F09F4F19425B}.Debug|x64.Build.0 = Debug|x64
+		{BB9A0071-412E-4B72-8A5F-F09F4F19425B}.Release|Win32.ActiveCfg = Release|Win32
+		{BB9A0071-412E-4B72-8A5F-F09F4F19425B}.Release|Win32.Build.0 = Release|Win32
+		{BB9A0071-412E-4B72-8A5F-F09F4F19425B}.Release|x64.ActiveCfg = Release|x64
+		{BB9A0071-412E-4B72-8A5F-F09F4F19425B}.Release|x64.Build.0 = Release|x64
+		{13FDD845-1592-4C0A-8786-3C9046B4D3D7}.Debug|Win32.ActiveCfg = Debug|Win32
+		{13FDD845-1592-4C0A-8786-3C9046B4D3D7}.Debug|Win32.Build.0 = Debug|Win32
+		{13FDD845-1592-4C0A-8786-3C9046B4D3D7}.Debug|x64.ActiveCfg = Debug|x64
+		{13FDD845-1592-4C0A-8786-3C9046B4D3D7}.Debug|x64.Build.0 = Debug|x64
+		{13FDD845-1592-4C0A-8786-3C9046B4D3D7}.Release|Win32.ActiveCfg = Release|Win32
+		{13FDD845-1592-4C0A-8786-3C9046B4D3D7}.Release|Win32.Build.0 = Release|Win32
+		{13FDD845-1592-4C0A-8786-3C9046B4D3D7}.Release|x64.ActiveCfg = Release|x64
+		{13FDD845-1592-4C0A-8786-3C9046B4D3D7}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

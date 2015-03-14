@@ -62,7 +62,7 @@ public:
 
 class SettingsEncoding : public SettingsPane
 {
-    bool hasQSV, hasNVENC;
+    bool hasQSV, hasNVENC, hasVCE;
     //-----------------------------------------------------------------------
     // Constructor/destructor
 
@@ -292,3 +292,29 @@ private:
     void RateControlMethodChanged();
 };
 
+//============================================================================
+// SettingsVCE class
+
+class SettingsVCE : public SettingsPane
+{
+    bool hasVCE;
+    //-----------------------------------------------------------------------
+    // Constructor/destructor
+
+public:
+    SettingsVCE();
+    virtual ~SettingsVCE() override;
+
+    //-----------------------------------------------------------------------
+    // Methods
+
+public:
+    // Interface
+    virtual CTSTR GetCategory() const override;
+    virtual HWND CreatePane(HWND parentHwnd) override;
+    virtual void DestroyPane() override;
+    virtual INT_PTR ProcMessage(UINT message, WPARAM wParam, LPARAM lParam) override;
+    virtual void ApplySettings() override;
+    virtual void CancelSettings() override;
+    virtual bool HasDefaults() const override;
+};

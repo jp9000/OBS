@@ -1,0 +1,1 @@
+Ripped from AMD Media SDK 1.1 Beta.

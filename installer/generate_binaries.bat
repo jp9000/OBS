@@ -53,6 +53,10 @@ copy ..\x264\libs\32bit\libx264-146.dll .\32bit
 copy ..\QSVHelper\Release\QSVHelper.exe .\32bit
 copy ..\ObsNvenc\Release\ObsNvenc.dll .\32bit
 copy "%WindowsSDK80Path%Debuggers\x86\dbghelp.dll" .\32bit
+copy ..\rundir\amf-component-vce-windesktop32.dll .\32bit\
+copy ..\rundir\amf-core-windesktop32.dll .\32bit\
+copy ..\ObsVCE\Release\ObsVCE.dll .\32bit
+copy ..\ObsVCEAMF\Release\ObsVCEAMF.dll .\32bit
 
 copy ..\COPYING .\64bit\LICENSE
 copy ..\x64\release\obs.exe .\64bit\
@@ -78,10 +82,16 @@ copy ..\x264\libs\64bit\libx264-146.dll .\64bit
 copy ..\QSVHelper\Release\QSVHelper.exe .\64bit
 copy ..\ObsNvenc\x64\Release\ObsNvenc.dll .\64bit
 copy "%WindowsSDK80Path%Debuggers\x64\dbghelp.dll" .\64bit
+copy ..\rundir\amf-component-vce-windesktop64.dll .\64bit
+copy ..\rundir\amf-core-windesktop64.dll .\64bit
+copy ..\ObsVCE\x64\Release\ObsVCE.dll .\64bit
+copy ..\ObsVCEAMF\x64\Release\ObsVCEAMF.dll .\64bit
 
 copy ..\rundir\pdb32\*.pdb .\pdbs\32bit
 copy ..\rundir\pdb64\*.pdb .\pdbs\64bit
 
+"%ProgramFiles%\7-Zip\7z.exe" a obsvce_32bit.7z 32bit
+"%ProgramFiles%\7-Zip\7z.exe" a obsvce_64bit.7z 64bit
 pause
 
 mkdir upload
