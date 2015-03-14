@@ -196,6 +196,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalLibraryDirectories>../../minhook/build/$(Configuration)</AdditionalLibraryDirectories>
+      <SetChecksum>true</SetChecksum>
     </Link>
     <PostBuildEvent>
       <Command>copy $(OutDir)$(ProjectName).dll ..\..\rundir\plugins\GraphicsCapture</Command>

@@ -213,6 +213,7 @@
       <MinimumRequiredVersion>6.0</MinimumRequiredVersion>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
+      <SetChecksum>true</SetChecksum>
     </Link>
     <PostBuildEvent>
       <Command>copy $(OutDir)$(ProjectName).exe rundir</Command>

@@ -145,6 +145,7 @@
       <AdditionalDependencies>OBSApi.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(SolutionDir)\rundir\pdb32\$(TargetName).pdb</ProgramDatabaseFile>
       <StripPrivateSymbols>$(SolutionDir)\rundir\pdb32\stripped\$(TargetName).pdb</StripPrivateSymbols>
+      <SetChecksum>true</SetChecksum>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(OutDir)$(TargetFileName)" "$(SolutionDir)rundir\$(TargetFileName)"</Command>

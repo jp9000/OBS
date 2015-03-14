@@ -95,6 +95,7 @@
       <AdditionalDependencies>../libmfx/$(Platform)/$(Configuration)/libmfx.lib;dxgi.lib;d3d11.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>..\rundir\pdb32\$(TargetName).pdb</ProgramDatabaseFile>
       <StripPrivateSymbols>..\rundir\pdb32\stripped\$(TargetName).pdb</StripPrivateSymbols>
+      <SetChecksum>true</SetChecksum>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(OutDir)$(TargetName).exe" ..\rundir\</Command>
