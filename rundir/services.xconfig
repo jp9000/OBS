@@ -96,6 +96,7 @@ services : {
       "US-East: New York"                 : rtmp://live.jfk.hitbox.tv/push
       "US-East: Washington"               : rtmp://live.vgn.hitbox.tv/push
       "US-West: Los Angeles"              : rtmp://live.lax.hitbox.tv/push
+      "US-West: San Francisco"            : rtmp://live.sfo.hitbox.tv/push
     }
     recommended : {
       "keyint" : 2000
