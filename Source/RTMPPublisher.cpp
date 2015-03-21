@@ -1310,33 +1310,16 @@ void RTMPPublisher::SocketLoop()
 
             if (networkEvents.lNetworkEvents & FD_READ)
             {
-                BYTE discard[16384];
-                int ret, errorCode;
-                BOOL fatalError = FALSE;
-
-                for (;;)
+                RTMPPacket packet = { 0 };
+                while (RTMP_IsConnected(rtmp) && RTMP_ReadPacket(rtmp, &packet))
                 {
-                    ret = recv(rtmp->m_sb.sb_socket, (char *)discard, sizeof(discard), 0);
-                    if (ret == -1)
+                    if (RTMPPacket_IsReady(&packet))
                     {
-                        errorCode = WSAGetLastError();
+                        if (!packet.m_nBodySize)
+                            continue;
 
-                        if (errorCode == WSAEWOULDBLOCK)
-                            break;
-
-                        fatalError = TRUE;
-                    }
-                    else if (ret == 0)
-                    {
-                        errorCode = 0;
-                        fatalError = TRUE;
-                    }
-
-                    if (fatalError)
-                    {
-                        Log(TEXT("RTMPPublisher::SocketLoop: Socket error, recv() returned %d, GetLastError() %d"), ret, errorCode);
-                        FatalSocketShutdown ();
-                        return;
+                        RTMP_ClientPacket(rtmp, &packet);
+                        RTMPPacket_Free(&packet);
                     }
                 }
             }
