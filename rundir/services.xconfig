@@ -126,7 +126,7 @@ services : {
       "US: San Jose" : rtmp://ingest.sjc01.beam.pro:1935/beam
       "EU: London" : rtmp://ingest.lon02.beam.pro:1935/beam
       "EU: Amsterdam" : rtmp://ingest.ams01.beam.pro:1935/beam
-      "Australia: Melbourne" : rtmp://ingest.mel01.beam.pro:1935/beam
+      "AUS: Melbourne" : rtmp://ingest.mel01.beam.pro:1935/beam
     }
     recommended : {
       "keyint" : 2000
