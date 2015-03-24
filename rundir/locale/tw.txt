@@ -57,6 +57,8 @@ CopyTo.Success.Text="「$1」的場景已被成功複製到所選的場景集。
 CopyTo.Success.Title="成功"
 CopyTo.CopyGlobalSourcesReferences.Title="複製全域來源？"
 
+ImportProfileReplaceWarning.Title="匯入個人設定檔"
+ImportProfileReplaceWarning.Text="目前的設定檔會被覆蓋，確定要匯入設定檔嗎？"
 
 DeleteCollection="移除場景集"
 DeleteCollection.Text="您確定要刪除當前的場景集嗎？"
@@ -103,6 +105,13 @@ MainMenu.Help="幫助(&H)"
 MainMenu.Profiles="設定檔(&P)"
 MainMenu.Settings="設定(&S)"
 
+MainMenu.Profiles.New="新增(&N)"
+MainMenu.Profiles.Duplicate="重製(&D)"
+MainMenu.Profiles.Rename="重新命名(&R)"
+MainMenu.Profiles.Remove="移除(m)"
+MainMenu.Profiles.Import="匯入(&I)"
+MainMenu.Profiles.Export="匯出(&E)"
+MainMenu.Profiles.ProfileExists="已經有一個相同檔名的設定檔了"
 
 MainMenu.Settings.AlwaysOnTop="總是在最上層(&A)"
 MainMenu.Settings.FullscreenMode="全螢幕預覽模式(&F)"

@@ -329,6 +329,7 @@ Settings.Publish.Username="Brukernavn (valgfritt):"
 Settings.Publish.InvalidSavePath="Denne filbanen er ugyldig, Standardbanen '$1' vil bli brukt i stedet"
 Settings.Publish.InvalidSavePathCaption="Filbanen er ugyldig"
 Settings.Publish.SavePathDoesNotExist="Filbanen \"$1\" eksisterer ikke, innspilling (fra Replay Buffer) virker ikke.\n\nEr du sikker på at du vil bruke \"$1\" som bane?"
+Settings.Publish.SavePathDoesNotExistCaption="Filbanen finnes ikke"
 
 Settings.Publish.SaveReplayBufferHotkey="Lagre Replay Buffer:"
 
@@ -480,7 +481,9 @@ Encoder.QSV.SNBIVBMaximumResolutionWidthHeightExceeded="Utgangsoppløsningen av 
 Encoder.QSV.SNBIVBMaximumResolutionWidthExceeded="Utgangsoppløsningen av bredde %u overskrider maks bredden på 1920 som er støttet av Quick Sync på Sandy Bridge og Ivy Bridge baserte prosessorer!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionHeightExceeded="Utgangsoppløsningen av høyde %u overskrider maks høyden på 1200 som er støttet av Quick Sync på Sandy Bridge og Ivy Bridge baserte prosessorer!\r\n"
 Encoder.QSV.HelperEarlyExit="QSVHelper.exe avsluttet."
+Encoder.QSV.IncompatibleImpl="QVSHelper.exe har avsluttet på grunn av en ugyldig 'qsvimpl' enkoderinnstilling; prøv å fjerne 'qsvimpl' parametere fra dine egendefinerte Quick Sync enkoderinnstillinger"
 Encoder.QSV.NoValidConfig="Rask Sync kunne ikke finne en gyldig konfigurasjon; Prøv å koble en (virtuell) skjerm til Intel GPU"
+Encoder.QSV.IPCInit="En feil oppstod under initialisering av Quick Sync IPC"
 
 Updater.DownloadNow="Vil du laste de ned nå?"
 Updater.NewUpdates="Følgende oppdateringer er tilgjengelige:\r\n\r\n"
