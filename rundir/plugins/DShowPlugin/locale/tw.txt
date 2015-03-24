@@ -58,6 +58,7 @@ DeviceSelection.UseBuffering="使用緩衝 (毫秒)："
 DeviceSelection.UseChromaKey="使用色鍵"
 DeviceSelection.UseDeviceAudio="(使用裝置音訊)"
 DeviceSelection.Video="影像"
+DeviceSelection.ColorSpace.Auto="自動"
 
 Plugin.Description="這個插件可以讓您將 DirectShow 視訊裝置 (網路攝影機、擷取卡...等) 加入到場景中。"
 Plugin.Name="DirectShow 視訊裝置插件"

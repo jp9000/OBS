@@ -1,6 +1,6 @@
 Settings.WindowTitle="Vindue titel"
 Settings.Scene="Scene"
-Settings.SetToggleHotkey="Angiv en hotkey til at skifte scene skifter:"
+Settings.SetToggleHotkey="Angiv en genvejstast til at slå Scene Switcher til og fra:"
 Settings.NoMatch="Når ingen vindue titler matcher"
 Settings.SwitchTo="Skift til:"
 Settings.DontSwitch="Skift ikke"

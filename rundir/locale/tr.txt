@@ -467,7 +467,9 @@ Encoder.QSV.SNBIVBMaximumResolutionWidthHeightExceeded="Çıkış çözünürlü
 Encoder.QSV.SNBIVBMaximumResolutionWidthExceeded="Çıkış çözünürlük genişliğiniz olan %u, Sandy Bridge ve Ivy Bridge temelli işlemciler için Quick Sync tarafından desteklenen 1920 değerini aşmaktadır!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionHeightExceeded="Çıkış çözünürlük yüksekliğiniz olan %u, Sandy Bridge ve Ivy Bridge temelli işlemciler için Quick Sync tarafından desteklenen 1200 değerini aşmaktadır!\r\n"
 Encoder.QSV.HelperLaunchFailed="QSVHelper.exe başlatılamadı!"
+Encoder.QSV.HelperLaunchFailedVista="Vista 'da Quick Sync Artık desteklenmiyor."
 Encoder.QSV.HelperEarlyExit="QSVHelper.exe den çıkıldı."
+Encoder.QSV.IncompatibleImpl="QSVHelper.exe geçersiz 'qsvimpl' kodlayıcı ayarı nedeniyle kapatıldı; Quick Sync Kodlama Ayarlarından 'qsvimpl' parametresini silmeyi deneyin"
 Encoder.QSV.NoValidConfig="Quick Sync geçerli bir yapılandırma bulamadı; Intel GPU'nuza (sanal) monitör bağlamayı deneyin"
 Encoder.QSV.IPCInit="Quick Sync IPC başlatılırken hata oluştu"
 

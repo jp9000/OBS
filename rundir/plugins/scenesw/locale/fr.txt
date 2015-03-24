@@ -1,5 +1,6 @@
 Settings.WindowTitle="Titre de la Fenêtre"
 Settings.Scene="Scène"
+Settings.SetToggleHotkey="Définir un raccourci pour Activer le Basculeur de Scènes:"
 Settings.NoMatch="Dans le cas où aucune fenêtre ne correspond"
 Settings.SwitchTo="basculer sur:"
 Settings.DontSwitch="ne pas basculer"
