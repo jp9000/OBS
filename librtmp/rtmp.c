@@ -3265,6 +3265,8 @@ static const AVal av_NetStream_Play_StreamNotFound =
     AVC("NetStream.Play.StreamNotFound");
 static const AVal av_NetConnection_Connect_InvalidApp =
     AVC("NetConnection.Connect.InvalidApp");
+static const AVal av_NetConnection_Connect_Closed =
+    AVC("NetConnection.Connect.Closed");
 static const AVal av_NetStream_Play_Start = AVC("NetStream.Play.Start");
 static const AVal av_NetStream_Play_Complete = AVC("NetStream.Play.Complete");
 static const AVal av_NetStream_Play_Stop = AVC("NetStream.Play.Stop");
@@ -3505,6 +3507,7 @@ HandleInvoke(RTMP *r, const char *body, unsigned int nBodySize)
                 || AVMATCH(&code, &av_NetStream_Play_Failed)
                 || AVMATCH(&code, &av_NetStream_Play_StreamNotFound)
                 || AVMATCH(&code, &av_NetConnection_Connect_InvalidApp)
+                || AVMATCH(&code, &av_NetConnection_Connect_Closed)
                 || AVMATCH(&code, &av_NetStream_Publish_Rejected)
                 || AVMATCH(&code, &av_NetStream_Publish_Denied))
         {
