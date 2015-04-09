@@ -103,7 +103,7 @@ public:
         }
 
         curTransitionTime += fSeconds;
-        if(curTransitionTime >= transitionTime)
+        if (!bTransitioning && curTransitionTime >= transitionTime)
         {
             curTransitionTime = 0.0f;
 
