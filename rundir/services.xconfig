@@ -115,4 +115,13 @@ services : {
       "API" : https://web-api.azubu.tv/stream/broadcaster-key/
     }
   }
+  Restream.io : {
+    id : 14
+    servers : {
+      "EU-primary" : rtmp://eu.restream.io/live
+      "EU-secondary" : rtmp://eu-secondary.restream.io/live
+      "EU-west" : rtmp://us-west.restream.io/live
+      "EU-east" : rtmp://us-east.restream.io/live
+    }
+  }
 }
