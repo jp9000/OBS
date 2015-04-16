@@ -120,8 +120,8 @@ services : {
     servers : {
       "EU-primary" : rtmp://eu.restream.io/live
       "EU-secondary" : rtmp://eu-secondary.restream.io/live
-      "EU-west" : rtmp://us-west.restream.io/live
-      "EU-east" : rtmp://us-east.restream.io/live
+      "US-west" : rtmp://us-west.restream.io/live
+      "US-east" : rtmp://us-east.restream.io/live
     }
   }
 }
