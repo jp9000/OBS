@@ -201,6 +201,8 @@ public:
     virtual void DisableTransitions() = 0;
     virtual void EnableTransitions() = 0;
     virtual bool TransitionsEnabled() const = 0;
+
+	virtual void SetProfile(CTSTR profileName) = 0;
 };
 
 BASE_EXPORT extern APIInterface *API;
@@ -233,6 +235,8 @@ BASE_EXPORT void OBSGetSceneCollectionNames(StringList &list);
 BASE_EXPORT void OBSDisableTransitions();
 BASE_EXPORT void OBSEnableTransitions();
 BASE_EXPORT bool OBSTransitionsEnabled();
+
+BASE_EXPORT void OBSSetProfile(CTSTR profileName);
 
 //low-order word is VK, high-order word is modifier.  equivalent to the value given by hotkey controls
 BASE_EXPORT UINT OBSCreateHotkey(DWORD hotkey, OBSHOTKEYPROC hotkeyProc, UPARAM param);

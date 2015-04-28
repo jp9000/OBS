@@ -611,6 +611,8 @@ public:
     virtual float GetMicVolume()                                     {return App->GetMicVolume();}
     virtual void ToggleMicMute()                                     {App->ToggleMicMute();}
     virtual bool GetMicMuted()                                       {return App->GetMicMuted();}
+	
+	virtual void SetProfile(CTSTR profileName)						 { App->SetProfile(profileName); }
 
     virtual DWORD GetOBSVersion() const {return OBS_VERSION;}
 
@@ -1085,4 +1087,23 @@ void OBS::ToggleMicMute()
 bool OBS::GetMicMuted()
 {
     return GetMicVolume() < VOLN_MUTELEVEL;
+}
+
+void OBS::SetProfile(CTSTR profileName)
+{
+	if (App->bRunning)
+		return;
+	String strProfilePath;
+	strProfilePath << lpAppDataPath << TEXT("\\profiles\\") << profileName << TEXT(".ini");
+
+	if (!AppConfig->Open(strProfilePath))
+	{
+		return;
+	}
+
+	GlobalConfig->SetString(TEXT("General"), TEXT("Profile"), profileName);
+	App->ReloadIniSettings();
+	ResetProfileMenu();
+	ResetApplicationName();
+	return;
 }
