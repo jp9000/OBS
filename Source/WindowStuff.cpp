@@ -4085,8 +4085,8 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                                     iconRect.top  = textRect.top + 2;
                                     iconRect.bottom = textRect.bottom - 2;
 
-                                    gsVIRect.left = 1;
-                                    gsVIRect.right = 2;
+                                    gsVIRect.left = itemRect.left + 1;
+                                    gsVIRect.right = itemRect.left + 2;
                                     gsVIRect.top = iconRect.top + 1;
                                     gsVIRect.bottom = iconRect.bottom - 1;
 
