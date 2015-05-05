@@ -171,4 +171,4 @@ UINT OBSGetAPIVersion()                         {return 0x0103;}
 
 UINT OBSGetSampleRateHz()                       {return API->GetSampleRateHz();}
 
-void OBSSetProfile(CTSTR profileName)					{ API->SetProfile(profileName); }
+void OBSSetProfile(CTSTR profileName)					{ API->SetProfile(profileName);}

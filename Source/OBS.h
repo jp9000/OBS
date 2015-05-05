@@ -432,6 +432,7 @@ enum
     OBS_CALLHOTKEY,
     OBS_RECONNECT,
     OBS_SETSCENE,
+	OBS_SETPROFILE,
     OBS_SETSOURCEORDER,
     OBS_SETSOURCERENDER,
     OBS_UPDATESTATUSBAR,
@@ -1236,9 +1237,8 @@ public:
 
     inline static CTSTR GetCurrentProfile() {return GlobalConfig->GetStringPtr(TEXT("General"), TEXT("Profile"));}
     static void GetProfiles(StringList &profileList);
-	virtual void SetProfile(CTSTR profileName);
 
-//---------------------------------------------------------------------------
+	//---------------------------------------------------------------------------
 
     inline static CTSTR GetCurrentSceneCollection() { return GlobalConfig->GetStringPtr(TEXT("General"), TEXT("SceneCollection")); }
     static void GetSceneCollection(StringList &sceneCollectionList);
