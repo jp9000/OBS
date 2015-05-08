@@ -3648,7 +3648,7 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                     break;
 
                 case ID_HELP_VISITWEBSITE:
-                    ShellExecute(NULL, TEXT("open"), TEXT("http://www.obsproject.com"), 0, 0, SW_SHOWNORMAL);
+                    ShellExecute(NULL, TEXT("open"), TEXT("https://obsproject.com"), 0, 0, SW_SHOWNORMAL);
                     break;
 
                 case ID_HELP_OPENHELP:
