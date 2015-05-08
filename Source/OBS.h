@@ -556,6 +556,9 @@ std::pair<std::unique_ptr<XConfig>, XElement*> LoadService(const ServiceIdentifi
 std::pair<std::unique_ptr<XConfig>, XElement*> LoadService(String *failReason=nullptr);
 ServiceIdentifier GetCurrentService();
 
+bool InstallUserService(TCHAR *path);
+void RegisterServiceFileHandler(void);
+
 //----------------------------
 
 struct StatusBarDrawData

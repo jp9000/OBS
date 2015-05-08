@@ -471,6 +471,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     LPWSTR *args = CommandLineToArgvW(GetCommandLineW(), &numArgs);
     LPWSTR profile = NULL;
     LPWSTR sceneCollection = NULL;
+    LPWSTR userService = NULL;
 
     bool bDisableMutex = false;
 
@@ -491,6 +492,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         {
             if (++i < numArgs)
                 sceneCollection = args[i];
+        }
+        else if (scmpi(args[i], L"-installservice") == 0)
+        {
+            if (++i < numArgs)
+            {
+                bDisableMutex = true;
+                userService = args[i];
+            }
         }
     }
 
@@ -601,6 +610,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 lpAllocator = (TSTR)malloc(size);
                 mcpy(lpAllocator, strAllocator.Array(), size);
             }
+
+            RegisterServiceFileHandler();
         }
 
         if(lpAllocator)
@@ -614,6 +625,30 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
 
         //EnableMemoryTracking(true, 8961);
+
+        //-----------------------------------------------------
+        // load locale
+
+        if (!locale->LoadStringFile(TEXT("locale/en.txt")))
+            AppWarning(TEXT("Could not open locale string file '%s'"), TEXT("locale/en.txt"));
+
+        String strLanguage = GlobalConfig->GetString(TEXT("General"), TEXT("Language"), TEXT("en"));
+        if (!strLanguage.CompareI(TEXT("en")))
+        {
+            String langFile;
+            langFile << TEXT("locale/") << strLanguage << TEXT(".txt");
+
+            if (!locale->LoadStringFile(langFile))
+                AppWarning(TEXT("Could not open locale string file '%s'"), langFile.Array());
+        }
+
+        // install user service here after we've loaded XT and locale
+        if (userService)
+        {
+            if (!InstallUserService(userService))
+                return 1;
+            return 0;
+        }
 
         //--------------------------------------------
 
