@@ -496,8 +496,7 @@ public:
             return;
         }
 
-		Data.SetSize((size + 31) / 32);
-
+        Data.SetSize((size + 31) / 32);
         bitSize = size;
     }
 

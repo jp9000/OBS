@@ -1640,7 +1640,7 @@ void OBS::ClosePendingStreams()
             if (res != IDYES)
                 return;
 
-			if (WaitForMultipleObjects(static_cast<DWORD>(handles.size()), handles.data(), true, 15 * 1000) == WAIT_OBJECT_0)
+            if (WaitForMultipleObjects(static_cast<DWORD>(handles.size()), handles.data(), true, 15 * 1000) == WAIT_OBJECT_0)
                 return;
 
         } while (res == IDYES);

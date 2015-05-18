@@ -125,8 +125,8 @@ public:
     void MoveToTop();
     void MoveToBottom();
 
-	void* SceneItem::operator new(size_t size);
-	void SceneItem::operator delete(void* ptr);
+    void* SceneItem::operator new(size_t size);
+    void SceneItem::operator delete(void *ptr);
 };
 
 //====================================================================================

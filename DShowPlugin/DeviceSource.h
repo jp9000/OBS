@@ -255,6 +255,5 @@ public:
     Vect2 GetSize() const {return Vect2(float(imageCX), float(imageCY));}
 
     void* DeviceSource::operator new(size_t size);
-    void  DeviceSource::operator delete(void *ptr);
+    void DeviceSource::operator delete(void *ptr);
 };
-

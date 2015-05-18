@@ -1972,7 +1972,7 @@ void* DeviceSource::operator new(size_t size)
     return _aligned_malloc(size, 16);
 }
 
-void  DeviceSource::operator delete(void *ptr)
+void DeviceSource::operator delete(void *ptr)
 {
     _aligned_free(ptr);
 }
