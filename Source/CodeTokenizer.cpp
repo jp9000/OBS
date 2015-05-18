@@ -92,7 +92,7 @@ BOOL CodeTokenizer::GetNextToken(String &token, BOOL bPeek)
                 if( ((*lpTokenStart == '=') && (*lpTemp != '=')) ||
                     (*lpTokenStart == ';') ||
                     (*lpTemp == ' ')   ||
-                    (*lpTemp == L'Å@') ||
+                    (*lpTemp == static_cast<wchar_t>('Å@')) ||
                     (*lpTemp == '\'')  ||
                     (*lpTemp == '"')   ||
                     (*lpTemp == ';')   ||
@@ -170,7 +170,7 @@ BOOL CodeTokenizer::GetNextToken(String &token, BOOL bPeek)
                 }
 
                 if( (*lpTemp != ' ')   &&
-                    (*lpTemp != L'Å@') &&
+                    (*lpTemp != static_cast<wchar_t>('@')) &&
                     (*lpTemp != '\r')  &&
                     (*lpTemp != '\t')  &&
                     (*lpTemp != '\n')  )
