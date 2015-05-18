@@ -150,21 +150,8 @@ OBS::OBS()
     InitVolumeControl(hinstMain);
     InitVolumeMeter(hinstMain);
 
-    //-----------------------------------------------------
-    // load locale
-
-    if(!locale->LoadStringFile(TEXT("locale/en.txt")))
-        AppWarning(TEXT("Could not open locale string file '%s'"), TEXT("locale/en.txt"));
-
+    // still need this here for API
     strLanguage = GlobalConfig->GetString(TEXT("General"), TEXT("Language"), TEXT("en"));
-    if(!strLanguage.CompareI(TEXT("en")))
-    {
-        String langFile;
-        langFile << TEXT("locale/") << strLanguage << TEXT(".txt");
-
-        if(!locale->LoadStringFile(langFile))
-            AppWarning(TEXT("Could not open locale string file '%s'"), langFile.Array());
-    }
 
     //-----------------------------------------------------
     // load classes

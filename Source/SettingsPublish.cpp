@@ -543,6 +543,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 data.mode = mode;
 
                 //--------------------------------------------
+                services.empty();
 
                 hwndTemp = GetDlgItem(hwnd, IDC_SERVICE);
                 int itemId = (int)SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("Custom"));
@@ -554,6 +555,9 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 
                 EnumerateServices([&](ServiceIdentifier sid, XElement *service)
                 {
+                    if (!service)
+                        return true;
+
                     services.emplace_back(sid);
                     auto pos = duplicates.find(service->GetName());
                     int id;

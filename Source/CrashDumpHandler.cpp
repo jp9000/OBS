@@ -221,7 +221,7 @@ LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo)
     crashMessage << 
         TEXT("OBS has encountered an unhandled exception and has terminated. If you are able to\r\n")
         TEXT("reproduce this crash, please submit this crash report on the forums at\r\n")
-        TEXT("http://www.obsproject.com/ - include the contents of this crash log and the\r\n")
+        TEXT("https://obsproject.com/ - include the contents of this crash log and the\r\n")
         TEXT("minidump .dmp file (if available) as well as your regular OBS log files and\r\n")
         TEXT("a description of what you were doing at the time of the crash.\r\n")
         TEXT("\r\n")
