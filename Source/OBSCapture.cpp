@@ -586,7 +586,7 @@ retryHookTestV2:
 
     //------------------------------------------------------------------
 
-    CTSTR lpShader;
+    CTSTR lpShader = NULL;
     if(CloseFloat(downscale, 1.0))
         lpShader = TEXT("shaders/DrawYUVTexture.pShader");
     else if(downscale < 2.01)
