@@ -202,7 +202,7 @@ public:
     virtual void EnableTransitions() = 0;
     virtual bool TransitionsEnabled() const = 0;
 
-	virtual void SetProfile(CTSTR profileName) = 0;
+ virtual void SetProfile(CTSTR profileName) = 0;
 };
 
 BASE_EXPORT extern APIInterface *API;
