@@ -1629,7 +1629,7 @@ void OBS::ClosePendingStreams()
     for (auto &pendingStream : pendingStreams.streams)
         handles.push_back(pendingStream.get());
 
-    if (WaitForMultipleObjects(handles.size(), handles.data(), true, 5) != WAIT_OBJECT_0)
+    if (WaitForMultipleObjects(static_cast<DWORD>(handles.size()), handles.data(), true, 5) != WAIT_OBJECT_0)
     {
         using ::locale;
         int res = IDNO;
@@ -1640,7 +1640,7 @@ void OBS::ClosePendingStreams()
             if (res != IDYES)
                 return;
 
-            if (WaitForMultipleObjects(handles.size(), handles.data(), true, 15 * 1000) == WAIT_OBJECT_0)
+			if (WaitForMultipleObjects(static_cast<DWORD>(handles.size()), handles.data(), true, 15 * 1000) == WAIT_OBJECT_0)
                 return;
 
         } while (res == IDYES);
