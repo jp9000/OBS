@@ -87,6 +87,8 @@ class D3D10SamplerState : public SamplerState
 
 public:
     ~D3D10SamplerState();
+	void* D3D10SamplerState::operator new(size_t size);
+	void D3D10SamplerState::operator delete(void* ptr);
 };
 
 //--------------------------------------------------

@@ -79,6 +79,16 @@ D3D10SamplerState::~D3D10SamplerState()
     SafeRelease(state);
 }
 
+void* D3D10SamplerState::operator new(size_t size)
+{
+	return _aligned_malloc(size, 16);
+}
+
+void D3D10SamplerState::operator delete(void* ptr)
+{
+	_aligned_free(ptr);
+}
+
 
 Texture* D3D10Texture::CreateFromSharedHandle(unsigned int width, unsigned int height, HANDLE handle)
 {
