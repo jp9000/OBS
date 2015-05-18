@@ -4431,25 +4431,25 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 Free(lpScene);
                 break;
             }
-		case OBS_SETPROFILE:
-			{				
-				if (App->bRunning)
-					break;
-				TSTR profileName = (TSTR)lParam;
-				String strProfilePath;
-				strProfilePath << lpAppDataPath << TEXT("\\profiles\\") << profileName << TEXT(".ini");
+        case OBS_SETPROFILE:
+            {
+                if (App->bRunning)
+                    break;
+                TSTR profileName = (TSTR)lParam;
+                String strProfilePath;
+                strProfilePath << lpAppDataPath << TEXT("\\profiles\\") << profileName << TEXT(".ini");
 
-				if (!AppConfig->Open(strProfilePath))
-				{
-					break;
-				}
+                if (!AppConfig->Open(strProfilePath))
+                {
+                    break;
+                }
 
-				GlobalConfig->SetString(TEXT("General"), TEXT("Profile"), profileName);
-				App->ReloadIniSettings();
-				ResetProfileMenu();
-				ResetApplicationName();
-				break;
-			}
+                GlobalConfig->SetString(TEXT("General"), TEXT("Profile"), profileName);
+                App->ReloadIniSettings();
+                ResetProfileMenu();
+                ResetApplicationName();
+                break;
+            }
         case OBS_SETSOURCEORDER:
             {
                 StringList *order = (StringList*)lParam;

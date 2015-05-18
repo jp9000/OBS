@@ -552,11 +552,11 @@ public:
         return App->SetScene(lpScene);
     }
 
-	virtual void SetProfile(CTSTR profileName)
-	{
-		PostMessage(hwndMain, OBS_SETPROFILE, 0, (LPARAM)sdup(profileName));
-		return;
-	}
+    virtual void SetProfile(CTSTR profileName)
+    {
+        PostMessage(hwndMain, OBS_SETPROFILE, 0, (LPARAM)sdup(profileName));
+        return;
+    }
 
     virtual Scene* GetScene() const             {return App->scene;}
 
@@ -1028,10 +1028,10 @@ void OBS::SetDesktopVolume(float val, bool finalValue)
     val = min(1.0f, max(0, val));
     HWND desktop = GetDlgItem(hwndMain, ID_DESKTOPVOLUME);
     
-	/* float in lParam hack */
+    /* float in lParam hack */
     LPARAM temp;
-	float* tempFloatPointer = (float*)&temp;
-	*tempFloatPointer = val;
+    float* tempFloatPointer = (float*)&temp;
+    *tempFloatPointer = val;
     
     /*Send message to desktop volume control and have it handle it*/
     PostMessage(desktop, WM_COMMAND, 
@@ -1063,10 +1063,10 @@ void OBS::SetMicVolume(float val, bool finalValue)
     val = min(1.0f, max(0, val));
     HWND mic = GetDlgItem(hwndMain, ID_MICVOLUME);
     
-	/* float in lParam hack */
+    /* float in lParam hack */
     LPARAM temp;
-	float* tempFloatPointer = (float*)&temp;
-	*tempFloatPointer = val;
+    float* tempFloatPointer = (float*)&temp;
+    *tempFloatPointer = val;
 
     /*Send message to microphone volume control and have it handle it*/
     PostMessage(mic, WM_COMMAND ,
