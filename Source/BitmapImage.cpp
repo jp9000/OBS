@@ -138,6 +138,14 @@ void BitmapImage::Init(void)
             return;
         }
 
+		unsigned long long max_size = (unsigned long long)gif.width * (unsigned long long)gif.height * 4LLU * (unsigned long long)gif.frame_count;
+		if (gif.width * gif.height * 4 * gif.frame_count != max_size)
+		{
+			Log(TEXT("BitmapImage: Warning, gif %s overflowed maximum pointer size and was not loaded (%llu > %u)"), lpBitmap, max_size, gif.width * gif.height * 4 * gif.frame_count);
+			CreateErrorTexture();
+			return;
+		}
+
         if(gif.frame_count > 1)
         {
             if(result == GIF_OK || result == GIF_WORKING)
