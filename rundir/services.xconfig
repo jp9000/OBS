@@ -79,7 +79,7 @@ services : {
     id : 11
     servers : {
       "Default"                           : rtmp://live.hitbox.tv/push
-      "Asia: Singapore"                   : rtmp://live.lax.hitbox.tv/push
+      "Asia: Singapore"                   : rtmp://live.sin.hitbox.tv/push
       "China: Hong Kong"                  : rtmp://live.hkg.hitbox.tv/push
       "EU-Central: Nurnberg, Germany"     : rtmp://live.nbg.hitbox.tv/push
       "EU-North: London, United Kingdom"  : rtmp://live.lhr.hitbox.tv/push
