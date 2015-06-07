@@ -419,7 +419,7 @@ void OBS::EncodeLoop()
 
     CircularList<QWORD> bufferedTimes;
 
-    while(!bShutdownEncodeThread || (bufferedFrames && !bTestStream)) {
+    while (!bShutdownEncodeThread || (bufferedFrames && (!bTestStream || bUsingQSV))) {
         if (!SleepToNS(sleepTargetTime += (frameTimeNS/2)))
             no_sleep_counter++;
         else
