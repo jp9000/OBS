@@ -20,6 +20,8 @@ services : {
       "US East: Miami, FL"                   : rtmp://live-mia.twitch.tv/app
       "US East: New York, NY"                : rtmp://live-jfk.twitch.tv/app
       "US West: Los Angeles, CA"             : rtmp://live-lax.twitch.tv/app
+      "US West: San Jose, CA"                : rtmp://live-sjc.twitch.tv/app
+      "US West: Seattle, WA"                 : rtmp://live-sea.twitch.tv/app
     }
     recommended : {
       "keyint" : 2000
