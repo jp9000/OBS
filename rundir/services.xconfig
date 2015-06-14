@@ -66,7 +66,7 @@ services : {
       "Backup Youtube ingest server" : rtmp://b.rtmp.youtube.com/live2?backup=1
     }
     recommended : {
-      "keyint"      : 2000
+      "keyint"      : 4000
     }
   }
   CyberGame.TV : {
