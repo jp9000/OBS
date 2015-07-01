@@ -165,6 +165,8 @@ IDXGISwapChain* CreateDummySwap()
 
     IDXGISwapChain *swap = NULL;
     IUnknown *device = NULL;
+    D3D_DRIVER_TYPE driverType = D3D_DRIVER_TYPE_NULL;
+    D3D10_DRIVER_TYPE driverType10 = D3D10_DRIVER_TYPE_NULL;
 
     HRESULT hErr;
 
@@ -174,9 +176,16 @@ IDXGISwapChain* CreateDummySwap()
     //------------------------------------------------------
     // d3d10
 
+    if (_strcmpi(processName, "witcher3.exe") == 0)
+    {
+        driverType = D3D_DRIVER_TYPE_HARDWARE;
+        driverType10 = D3D10_DRIVER_TYPE_HARDWARE;
+    }
+
     /* CoD: ghosts hack because apparently on nvidia GPUs it has some d3d10 context open */
     if (_strcmpi(processName, "iw6sp64_ship.exe") == 0 ||
-        _strcmpi(processName, "iw6mp64_ship.exe") == 0)
+        _strcmpi(processName, "iw6mp64_ship.exe") == 0 ||
+        _strcmpi(processName, "witcher3.exe") == 0)
         goto d3d11_only;
 
     SHGetFolderPath(NULL, CSIDL_SYSTEM, NULL, SHGFP_TYPE_CURRENT, lpDllPath);
@@ -189,7 +198,7 @@ IDXGISwapChain* CreateDummySwap()
 
         if(d3d10Create)
         {
-            hErr = (*d3d10Create)(NULL, D3D10_DRIVER_TYPE_NULL, NULL, 0, D3D10_SDK_VERSION, &swapDesc, &swap, &device);
+            hErr = (*d3d10Create)(NULL, driverType10, NULL, 0, D3D10_SDK_VERSION, &swapDesc, &swap, &device);
 
             if(SUCCEEDED(hErr))
             {
@@ -217,7 +226,7 @@ IDXGISwapChain* CreateDummySwap()
         D3D101CREATEPROC d3d101Create = (D3D101CREATEPROC)GetProcAddress(hDll, "D3D10CreateDeviceAndSwapChain1");
         if(d3d101Create)
         {
-            hErr = (*d3d101Create)(NULL, D3D10_DRIVER_TYPE_NULL, NULL, 0, D3D10_FEATURE_LEVEL_10_1, D3D10_1_SDK_VERSION, &swapDesc, &swap, &device);
+            hErr = (*d3d101Create)(NULL, driverType10, NULL, 0, D3D10_FEATURE_LEVEL_10_1, D3D10_1_SDK_VERSION, &swapDesc, &swap, &device);
 
             if(SUCCEEDED(hErr))
             {
@@ -259,7 +268,7 @@ d3d11_only:
             D3D_FEATURE_LEVEL receivedLevel;
 
             IUnknown *context;
-            hErr = (*d3d11Create)(NULL, D3D_DRIVER_TYPE_NULL, NULL, 0, desiredLevels, 6, D3D11_SDK_VERSION, &swapDesc, &swap, &device, &receivedLevel, &context);
+            hErr = (*d3d11Create)(NULL, driverType, NULL, 0, desiredLevels, 6, D3D11_SDK_VERSION, &swapDesc, &swap, &device, &receivedLevel, &context);
             if(SUCCEEDED(hErr))
             {
                 context->Release();
