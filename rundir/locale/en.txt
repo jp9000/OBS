@@ -1,6 +1,8 @@
 RightToLeft="false"
 
 Add="Add"
+AddFile="Add File"
+AddFolder="Add Folder"
 Preview="Preview"
 Order="Order"
 Apply="Apply"

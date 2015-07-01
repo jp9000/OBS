@@ -19,6 +19,7 @@
 
 #include "Main.h"
 #include <time.h>
+#include <Shlobj.h>
 
 #include "BitmapImage.h"
 
@@ -189,19 +190,62 @@ public:
                 continue;
             }
 
-            BitmapImage *bitmapImage = new BitmapImage;
-            bitmapImage->SetPath(strBitmap);
-            bitmapImage->EnableFileMonitor(false);
-            bitmapImage->Init();
-
-            if(bFirst)
+            if (OSFileIsDirectory(strBitmap))
             {
-                fullSize = bitmapImage->GetSize();
-                baseAspect = double(fullSize.x)/double(fullSize.y);
-                bFirst = false;
-            }
+                OSFindData fd;
 
-            bitmapImages << bitmapImage;
+                String searchPath = strBitmap;
+                searchPath.AppendString(TEXT("\\*"));
+
+                HANDLE hFind = OSFindFirstFile(searchPath, fd);
+
+                if (hFind)
+                {
+                    do
+                    {
+                        if (fd.bDirectory)
+                            continue;
+
+                        String fullPath = strBitmap + "\\" + fd.fileName;
+
+                        CTSTR ext = GetPathExtension(fullPath.Array());
+                        if (!scmp(ext, TEXT("jpg")) || !scmp(ext, TEXT("png")) || !scmp(ext, TEXT("gif")) || !scmp(ext, TEXT("bmp")) || !scmp(ext, TEXT("dds")))
+                        {
+                            BitmapImage *bitmapImage = new BitmapImage;
+                            bitmapImage->SetPath(fullPath);
+                            bitmapImage->EnableFileMonitor(false);
+                            bitmapImage->Init();
+
+                            if (bFirst)
+                            {
+                                fullSize = bitmapImage->GetSize();
+                                baseAspect = double(fullSize.x) / double(fullSize.y);
+                                bFirst = false;
+                            }
+
+                            bitmapImages << bitmapImage;
+                        }
+                    } while (OSFindNextFile(hFind, fd));
+
+                    OSFindClose(hFind);
+                }
+            }
+            else
+            {
+                BitmapImage *bitmapImage = new BitmapImage;
+                bitmapImage->SetPath(strBitmap);
+                bitmapImage->EnableFileMonitor(false);
+                bitmapImage->Init();
+
+                if(bFirst)
+                {
+                    fullSize = bitmapImage->GetSize();
+                    baseAspect = double(fullSize.x)/double(fullSize.y);
+                    bFirst = false;
+                }
+
+                bitmapImages << bitmapImage;
+            }
         }
 
         //------------------------------------
@@ -241,6 +285,66 @@ public:
 
         bTransitioning = false;
         curFadeValue = 0.0f;
+    }
+
+    static Vect2 GetFirstBitmapSize(StringList &bitmapList)
+    {
+        String firstBitmapFile;
+
+        for (UINT i = 0; i<bitmapList.Num(); i++)
+        {
+            String &strBitmap = bitmapList[i];
+            if (strBitmap.IsEmpty())
+            {
+                AppWarning(TEXT("BitmapTransitionSource::GetFirstBitmapSize: Empty path"));
+                continue;
+            }
+
+            if (OSFileIsDirectory(strBitmap))
+            {
+                OSFindData fd;
+
+                String searchPath = strBitmap;
+                searchPath.AppendString(TEXT("\\*"));
+
+                HANDLE hFind = OSFindFirstFile(searchPath, fd);
+
+                if (hFind)
+                {
+                    do
+                    {
+                        if (fd.bDirectory)
+                            continue;
+
+                        String fullPath = strBitmap + "\\" + fd.fileName;
+
+                        CTSTR ext = GetPathExtension(fullPath.Array());
+                        if (!scmp(ext, TEXT("jpg")) || !scmp(ext, TEXT("png")) || !scmp(ext, TEXT("gif")) || !scmp(ext, TEXT("bmp")) || !scmp(ext, TEXT("dds")))
+                        {
+                            firstBitmapFile = fullPath;
+                            break;
+                        }
+                    } while (OSFindNextFile(hFind, fd));
+
+                    OSFindClose(hFind);
+                }
+            }
+            else
+            {
+                firstBitmapFile = strBitmap;
+            }
+
+            if (!firstBitmapFile.IsEmpty())
+                break;
+        }
+
+        D3DX10_IMAGE_INFO ii;
+        if (SUCCEEDED(D3DX10GetImageInfoFromFile(firstBitmapFile.Array(), NULL, &ii, NULL)))
+        {
+            return Vect2((float)ii.Width, (float)ii.Height);
+        }
+
+        return Vect2(0, 0);
     }
 
     Vect2 GetSize() const {return fullSize;}
@@ -338,9 +442,9 @@ INT_PTR CALLBACK ConfigureBitmapTransitionProc(HWND hwnd, UINT message, WPARAM w
                         ofn.lpstrFile = lpFile;
                         ofn.hwndOwner = hwnd;
                         ofn.nMaxFile = 32*1024*sizeof(TCHAR);
-                        ofn.lpstrFilter = TEXT("All Formats (*.bmp;*.dds;*.jpg;*.png;*.gif)\0*.bmp;*.dds;*.jpg;*.png;*.gif\0");
+                        ofn.lpstrFilter = TEXT("All Formats (*.jpg;*.png;*.gif;*.bmp;*.dds)\0*.bmp;*.dds;*.jpg;*.png;*.gif\0");
                         ofn.nFilterIndex = 1;
-                        ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT | OFN_EXPLORER;
+                        ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT | OFN_EXPLORER | OFN_HIDEREADONLY;
 
                         TCHAR curDirectory[MAX_PATH+1];
                         GetCurrentDirectory(MAX_PATH, curDirectory);
@@ -368,6 +472,29 @@ INT_PTR CALLBACK ConfigureBitmapTransitionProc(HWND hwnd, UINT message, WPARAM w
                         }
 
                         Free(lpFile);
+
+                        break;
+                    }
+
+                case IDC_ADDFOLDER:
+                    {
+                        BROWSEINFO bi = { 0 };
+                        bi.lpszTitle = Str("Browse");
+                        bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
+
+                        LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
+                        if (pidl)
+                        {
+                            String path;
+                            path.SetLength(MAX_PATH);
+
+                            if (SHGetPathFromIDList(pidl, path.Array()))
+                            {
+                                SendMessage(GetDlgItem(hwnd, IDC_BITMAPS), LB_ADDSTRING, 0, (LPARAM)path.Array());
+                            }
+
+                            CoTaskMemFree(pidl);
+                        }
 
                         break;
                     }
@@ -482,11 +609,12 @@ INT_PTR CALLBACK ConfigureBitmapTransitionProc(HWND hwnd, UINT message, WPARAM w
 
                         ConfigBitmapInfo *configInfo = (ConfigBitmapInfo*)GetWindowLongPtr(hwnd, DWLP_USER);
 
-                        D3DX10_IMAGE_INFO ii;
-                        if(SUCCEEDED(D3DX10GetImageInfoFromFile(bitmapList[0], NULL, &ii, NULL)))
+                        Vect2 size = BitmapTransitionSource::GetFirstBitmapSize(bitmapList);
+
+                        if (size.x && size.y)
                         {
-                            configInfo->cx = ii.Width;
-                            configInfo->cy = ii.Height;
+                            configInfo->cx = (UINT)size.x;
+                            configInfo->cy = (UINT)size.y;
                         }
                         else
                         {
