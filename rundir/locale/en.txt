@@ -549,3 +549,8 @@ Plugins.NoiseGate.AttackTime="Attack time (milliseconds):"
 Plugins.NoiseGate.HoldTime="Hold time (milliseconds):"
 Plugins.NoiseGate.ReleaseTime="Release time (milliseconds):"
 
+CloseStreamingWarning.Title="OBS is currently sending a live stream."
+CloseStreamingWarning.Message="Do you want to stop the live stream and exit OBS?"
+
+CloseRecordingWarning.Title="OBS is currently recording."
+CloseRecordingWarning.Message="Do you want to stop recording and exit OBS?"
