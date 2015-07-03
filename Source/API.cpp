@@ -682,6 +682,18 @@ public:
     virtual void DisableTransitions()          { App->performTransition = false; }
     virtual void EnableTransitions()           { App->performTransition = true; }
     virtual bool TransitionsEnabled() const    { return App->performTransition; }
+    
+    virtual CTSTR GetStreamKey() const		   { return AppConfig->GetStringPtr(TEXT("Publish"), TEXT("PlayPath")); }
+    virtual CTSTR GetStreamURL() const		   { return AppConfig->GetStringPtr(TEXT("Publish"), TEXT("URL")); }
+    virtual int GetStreamServiceID() const	   { return AppConfig->GetInt(TEXT("Publish"), TEXT("Service")); }
+    virtual CTSTR GetStreamServiceFile() const { return AppConfig->GetStringPtr(TEXT("Publish"), TEXT("ServiceFile")); }
+
+    virtual void SetStreamKey(CTSTR key) 	   { AppConfig->SetString(TEXT("Publish"), TEXT("PlayPath"), key); }
+    virtual void SetStreamURL(CTSTR url)	   { AppConfig->SetString(TEXT("Publish"), TEXT("URL"), url); }
+    virtual void SetStreamService(int id, CTSTR file)	   { 
+        AppConfig->SetInt(TEXT("Publish"), TEXT("Service"), id);
+        AppConfig->SetString(TEXT("Publish"), TEXT("ServiceFile"), file);
+    }
 };
 
 APIInterface* CreateOBSApiInterface()

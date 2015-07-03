@@ -201,6 +201,15 @@ public:
     virtual void DisableTransitions() = 0;
     virtual void EnableTransitions() = 0;
     virtual bool TransitionsEnabled() const = 0;
+
+    virtual CTSTR GetStreamKey() const = 0;
+    virtual CTSTR GetStreamURL() const = 0;
+    virtual int GetStreamServiceID() const = 0;
+    virtual CTSTR GetStreamServiceFile() const = 0;
+
+    virtual void SetStreamKey(CTSTR key) = 0;
+    virtual void SetStreamURL(CTSTR url) = 0;
+    virtual void SetStreamService(int id, CTSTR file) = 0;
 };
 
 BASE_EXPORT extern APIInterface *API;
@@ -289,6 +298,15 @@ BASE_EXPORT bool OBSGetKeepRecording();
 BASE_EXPORT void OBSStartStopRecordingReplayBuffer();
 BASE_EXPORT bool OBSGetRecordingReplayBuffer();
 BASE_EXPORT void OBSSaveReplayBuffer();
+
+BASE_EXPORT CTSTR OBSGetStreamKey();
+BASE_EXPORT CTSTR OBSGetStreamURL();
+BASE_EXPORT int OBSGetStreamServiceID();
+BASE_EXPORT CTSTR OBSGetStreamServiceFile();
+
+BASE_EXPORT void OBSSetStreamKey(CTSTR key);
+BASE_EXPORT void OBSSetStreamURL(CTSTR url);
+BASE_EXPORT void OBSSetStreamService(int id, CTSTR file);
 
 BASE_EXPORT void OBSSetSourceOrder(StringList &sourceNames);
 BASE_EXPORT void OBSSetSourceRender(CTSTR lpSource, bool render);
