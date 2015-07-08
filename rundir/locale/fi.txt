@@ -1,6 +1,8 @@
 RightToLeft="false"
 
 Add="Lisää"
+AddFile="Lisää tiedosto"
+AddFolder="Lisää kansio"
 Preview="Esikatselu"
 Order="Järjestä"
 Apply="Käytä"
@@ -44,6 +46,9 @@ StreamReport="Lähetysraportti"
 MessageBoxWarningCaption="Varoitus"
 NoSourcesFound="Olet ole lisännyt yhtään lähdettä! Haluatko striimata pelkkää mustaa?"
 StreamClosePending="Lähetys tai tiedostoon tallennus on kesken. OBS:n sulkeminen saattaa pysäyttää lähetyksen ennenaikaisesti tai tiedosto saattaa vioittua. Haluatko odottaa seuraavat 15 sekuntia ulostulon viimeistelyyn?"
+InstallServiceConfirm="Haluatko lisätä palvelun '$1' OBS:n palvelu-luetteloon?"
+InstallServiceAlreadyInstalled="Palvelu '$1' on jo asennettu. Haluatko poistaa sen?"
+InstallServiceInstalled="Palvelu on asennettu. Löydät sen Lähetysasetuksista."
 
 ImportGlobalSourceNameExists="Yleinen lähde '$1' on jo olemassa nykyisessä skene-kokoelmassa."
 ImportGlobalSources="Tuo yleiset lähteet"
