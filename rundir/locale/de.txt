@@ -1,6 +1,8 @@
 RightToLeft="false"
 
 Add="Hinzufügen"
+AddFile="Datei hinzufügen"
+AddFolder="Ordner hinzufügen"
 Preview="Vorschau"
 Order="Reihenfolge"
 Apply="Übernehmen"
@@ -44,6 +46,9 @@ StreamReport="Streambericht"
 MessageBoxWarningCaption="Warnung"
 NoSourcesFound="Sie haben keine Quellen hinzugefügt! Sind Sie sicher, dass Sie einen schwarzen Bildschirm streamen möchten?"
 StreamClosePending="Stream oder Dateiausgabe unvollendet. Das schließen von OBS kann den Stream vorzeitig beenden oder die Datei beschädigen. Möchten Sie weitere 15 Sekunden warten, um die Ausgabe zu beenden?"
+InstallServiceConfirm="Möchten Sie Streaming-Dienst '$ 1' zu der OBS Dienstliste hinzufügen?"
+InstallServiceAlreadyInstalled="Streaming-Dienst '$1' ist bereits installiert. Möchten Sie ihn deinstallieren?"
+InstallServiceInstalled="Der Streaming-Dienst wurde installiert. Sie können ihn unter Einstellungen / Broadcast Einstellungen finden."
 
 ImportGlobalSourceNameExists="Die globale Quelle '$1' existiert bereits in der aktuellen Szenen-Sammlung."
 ImportGlobalSources="Globale Quellen importieren"

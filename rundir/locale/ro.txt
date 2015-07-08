@@ -1,6 +1,8 @@
 RightToLeft="false"
 
 Add="Adaugă"
+AddFile="Adăugați fişier"
+AddFolder="Adăugați folder"
 Preview="Previzualizaţi"
 Order="Ordine"
 Apply="Aplică"
@@ -44,6 +46,9 @@ StreamReport="Raport de flux"
 MessageBoxWarningCaption="Atenție"
 NoSourcesFound="Nu aţi adăugat nici o sursă! Sunteţi sigur că doriţi să faceţi stream cu ecranul negru?"
 StreamClosePending="Stream-ul sau fişierul output este neterminat, închiderea OBS-ului poate provoca oprirea stream-ului prematură sau ca fișierul să fie deteriorat. Vrei să aştepți încă 15 secunde pentru a termina output-ul?"
+InstallServiceConfirm="Doriţi să adăugaţi de serviciu de streaming \"$1\" la lista de servicii OBS?"
+InstallServiceAlreadyInstalled="Serviciul de stream \"$1\" este deja instalat. Doriţi să-l dezinstalaţi?"
+InstallServiceInstalled="Serviciul de streaming a fost instalat. Il puteţi găsi în Setări / Setările de difuzare."
 
 ImportGlobalSourceNameExists="Sursa globală '$1' există deja în colecția de scene curentă."
 ImportGlobalSources="Importaţi Sursele Globale"

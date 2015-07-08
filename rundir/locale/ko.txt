@@ -1,6 +1,8 @@
 RightToLeft="false"
 
 Add="추가"
+AddFile="파일 추가"
+AddFolder="폴더 추가"
 Preview="미리보기"
 Order="순서"
 Apply="적용"
@@ -44,6 +46,9 @@ StreamReport="방송 상태"
 MessageBoxWarningCaption="경고"
 NoSourcesFound="소스가 하나도 추가되어 있지 않습니다! 검은 화면을 송출하겠습니까?"
 StreamClosePending="방송 혹은 파일 녹화가 정상적으로 마무리 되지 않았습니다. 이대로 OBS를 종료하면 방송이 의도하지 않은 상태에서 끝나거나 파일이 손상될 수 있습니다. 출력을 마무리할 때까지 15초를 더 기다리시겠습니까?"
+InstallServiceConfirm="방송 서비스 '$1'를 OBS 목록에 추가하겠습니까?"
+InstallServiceAlreadyInstalled="방송 서비스 '$1'가 이미 설치되어 있습니다. 제거하겠습니까?"
+InstallServiceInstalled="방송 서비스 '$1'가 설치되었습니다. 설정 / 방송 설정 탭에서 확인할 수 있습니다."
 
 ImportGlobalSourceNameExists="전역 소스 '$1'은 현재 장면 모음에 이미 존재하고 있습니다."
 ImportGlobalSources="전역 소스 가져오기"

@@ -43,9 +43,13 @@ StreamReport="Striimi statistika"
 MessageBoxWarningCaption="Hoiatus"
 NoSourcesFound="Te pole lisanud ühtegi allikat! Oled sa kindel, et tahad striimida musta ekraani?"
 
+ImportGlobalSources="Impordi globaalsed allikad"
 
+ImportCollectionReplaceWarning.Title="Impordi stseeni kogumikud"
 
+CopyTo="Kopeeri kohta"
 
+ImportProfileReplaceWarning.Title="Impordi profiil"
 
 
 BuildingMP4Dialog.Progress="MP4 ehitamine, palun oodake..."
@@ -75,14 +79,27 @@ Listbox.Positioning="Positsioon/suurus"
 Listbox.ResetSize="Algseadista suurus"
 Listbox.SetHotkey="Sea kiirklahv"
 ListBox.ResetCrop="Lähtesta kärpimine"
+Listbox.ImportButton="Impordi"
 
 MainMenu.SceneCollection="&Stseenide kollektsioon"
+MainMenu.SceneCollection.New="&Uus"
+MainMenu.SceneCollection.Duplicate="&Duplikaat"
+MainMenu.SceneCollection.Rename="&Nimeta ümber"
+MainMenu.SceneCollection.Remove="Re &liikuda"
+MainMenu.SceneCollection.Import="&Impordi"
+MainMenu.SceneCollection.Export="&Ekspordi"
 
 MainMenu.File="& Faili"
 MainMenu.Help="& Abi"
 MainMenu.Profiles="& Profiilid"
 MainMenu.Settings="& Seaded"
 
+MainMenu.Profiles.New="&Uus"
+MainMenu.Profiles.Duplicate="&Duplikaat"
+MainMenu.Profiles.Rename="&Nimeta ümber"
+MainMenu.Profiles.Remove="Re &liikuda"
+MainMenu.Profiles.Import="&Impordi"
+MainMenu.Profiles.Export="&Ekspordi"
 
 MainMenu.Settings.AlwaysOnTop="&Alati pealmine"
 MainMenu.Settings.FullscreenMode="& Täiskuva eelvaate režiim"
@@ -92,6 +109,7 @@ MainMenu.File.Exit="E& välju"
 MainMenu.File.Save="& Salvestada"
 
 
+MainMenu.Help.OpenHelp="Ava abi lehekülg"
 MainMenu.Help.VisitWebsite="Külasta Kodulehte"
 MainMenu.Help.CheckForUpdates="Kontrolli uuendusi"
 
@@ -145,6 +163,7 @@ Settings.Publish="Eetrisätted"
 Settings.SaveChangesPrompt="Soovid muutused salvestada ja rakendada?"
 Settings.SaveChangesTitle="Rakenda muutused?"
 Settings.Video="Video"
+Settings.Hotkeys="Kiirklahvid"
 
 
 
@@ -186,8 +205,13 @@ Settings.Audio.ForceMicMono="Sunni mikrofoni kasutama Mono seadeid"
 Settings.Audio.MicBoost="Mic/Aux tõste (mitu):"
 Settings.Audio.MicTimeOffset="Mikrofoni sünkroonimise nihe (millisekundites):"
 Settings.Audio.MicSyncFix="Mikrofoni sünkroonimise parandus häkk"
+Settings.Audio.MuteDesktopHotkey="Töölaua heli sisse/välja:"
+Settings.Audio.MuteMicHotkey="Mikrofoni heli sisse/välja:"
 Settings.Audio.PlaybackDevice="Töölaua heliseade:"
 Settings.Audio.PushToTalkDelay="Push-to-talk viivitus (millisekundites):"
+Settings.Audio.UsePTT="Kasuta vajuta-et-rääkida funktsiooni"
+Settings.Audio.PushToTalkHotkey="Vajuta-et-rääkida:"
+Settings.Audio.PushToTalkHotkey2="Vajuta-et-rääkida 2:"
 Settings.Audio.ShowOnlyConnectedDevices="Näita ainult ühendatud seadmed"
 Settings.Audio.UseInputDevices="Kasuta sisend audioseadet"
 Settings.Audio.UseMicQPC="Kasutage Mic QPC ajatemplit"
@@ -244,7 +268,12 @@ Settings.Publish.SavePath="Failitee:"
 Settings.Publish.SaveToFile="Salvesta striimi fail automaatselt:"
 Settings.Publish.Server="Server:"
 Settings.Publish.Service="Striimimise teenus:"
+Settings.Publish.StartStreamHotkey="Alusta striimimist:"
+Settings.Publish.StopStreamHotkey="Lõpeta striimimine:"
+Settings.Publish.StartRecordingHotkey="Alusta salvestamist:"
+Settings.Publish.StopRecordingHotkey="Lõpeta salvestamine:"
 Settings.Publish.Username="Kasutajanimi:"
+Settings.Publish.SavePathDoesNotExistCaption="Faili asukohta ei eksisteeri"
 
 
 Settings.Publish.Mode.FileOnly="Faili väljund ainult"
@@ -392,6 +421,7 @@ Encoder.QSV.ExceededResolutionHelp="Kas vähendad oma väljundi resolutsiooni va
 Encoder.QSV.SNBIVBMaximumResolutionWidthHeightExceeded="Teie väljundi resolutsioon %ux%u ületab maksimaalse 1920x1200 resolutsiooni mida toetab Quick Sync - Sandy Bridge ja Ivy Bridge tehnoloogial põhinevad protsessorid! \r\n"
 Encoder.QSV.SNBIVBMaximumResolutionWidthExceeded="Teie väljundi resolutsiooni laius %u ületab 1200, mis on maksimaalne arv Quick Sync'i jaoks Sandy Bridge ja Ivy Bridge protsessoritel!\r\n"
 Encoder.QSV.SNBIVBMaximumResolutionHeightExceeded="Teie väljundi resolutsiooni kõrgus %u ületab 1200, mis on maksimaalne arv Quick Sync'i jaoks Sandy Bridge ja Ivy Bridge protsessoritel!\r\n"
+Encoder.QSV.HelperEarlyExit="QSVHelper.exe lakkas töötamast."
 
 Updater.DownloadNow="Kas soovite neid alla laadida?"
 Updater.NewUpdates="Järgmised värskendused on saadaval: \r\n\r\n"

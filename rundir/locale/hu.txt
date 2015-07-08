@@ -1,6 +1,8 @@
 RightToLeft="false"
 
 Add="Hozzáadás"
+AddFile="Fájl hozzáadása"
+AddFolder="Mappa hozzáadása"
 Preview="Előnézet"
 Order="Sorrend"
 Apply="Alkalmaz"
@@ -44,6 +46,9 @@ StreamReport="Stream Összefoglaló"
 MessageBoxWarningCaption="Figyelem"
 NoSourcesFound="Nem adott hozzá forrást! Biztos benne, hogy fekete képernyőt szeretne adásba küldeni?"
 StreamClosePending="A stream vagy a kimeneti fájl befejezetlen, a program bezárásával a stream vagy a fájl sérülését okozhatja. Szeretne várni 15 másodpercet a kimeneti forrás befejezéséra?"
+InstallServiceConfirm="Hozzá kívánja adni a '$1' szolgáltatást az OBS szolgáltatások listájához?"
+InstallServiceAlreadyInstalled="A \"$1\" Streaming szolgáltatás már telepítve van. Szeretne eltávolítani?"
+InstallServiceInstalled="A streaming szolgáltatás telepítve van. A Beállítások / Adás beállítások menüpont alatt találja meg."
 
 ImportGlobalSourceNameExists="A \"$1\" nevű globális forrás már létezik az aktuális jelenet gyűjteményben."
 ImportGlobalSources="Globális Források Importálása"

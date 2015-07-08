@@ -1,6 +1,8 @@
 RightToLeft="false"
 
 Add="Ajouter"
+AddFile="Ajouter un fichier"
+AddFolder="Ajouter un dossier"
 Preview="Aperçu"
 Order="Ordre"
 Apply="Appliquer"
@@ -44,6 +46,9 @@ StreamReport="Rapport de flux"
 MessageBoxWarningCaption="Attention"
 NoSourcesFound="Vous n'avez ajouté aucune source ! Êtes-vous sûr de vouloir streamer un écran noir ?"
 StreamClosePending="Le flux ou le fichier de sortie n'est pas achevé, fermer OBS peut clore le flux prématurément ou corrompre le fichier. Voulez-vous patienter 15 secondes afin de pouvoir finir correctement ?"
+InstallServiceConfirm="Voulez-vous ajouter le service de streaming '$1' à la liste de services d'OBS ?"
+InstallServiceAlreadyInstalled="Le service de streaming '$1' est déjà installé. Souhaitez-vous le désinstaller ?"
+InstallServiceInstalled="Le service de streaming a été installé. Vous pouvez le retrouver dans Paramètres / Paramètres de diffusion."
 
 ImportGlobalSourceNameExists="La source globale '$1' existe déjà dans la liste actuelle des scènes."
 ImportGlobalSources="Importer des sources globales"

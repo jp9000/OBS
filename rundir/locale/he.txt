@@ -1,6 +1,8 @@
 RightToLeft="true"
 
 Add="הוסף"
+AddFile="הוסף קובץ"
+AddFolder="הוסף תיקיה"
 Preview="תצוגה מקדימה"
 Order="סדר"
 Apply="החל"
@@ -44,6 +46,9 @@ StreamReport="דו\"ח סטרים"
 MessageBoxWarningCaption="אזהרה"
 NoSourcesFound="עדיין לא הוספת מקורות כל שהם! האם אתה בטוח שברצונך להתחיל סטרים במסך שחור?"
 StreamClosePending="סטרים או כתיבה לקובץ עדיין לא הסתיימה. סגירת OBS עלולה לגרום לסטרים להסתיים באופן פתאומי או לפגום את הקובץ. האם ברצונך להמתין 15 שניות נוספות ולאפשר לכתיבה להסתיים?"
+InstallServiceConfirm="האם ברצונך להוסיף את שירות ההזרמה '$1' לרשימת השירותים של OBS?"
+InstallServiceAlreadyInstalled="שירות ההזרמה '$1' כבר מותקן. האם ברצונך להסירו?"
+InstallServiceInstalled="שירות הזרמה הותקן בהצלחה. באפשרותך למצוא אותו תחת הגדרות / הגדרות שידור."
 
 ImportGlobalSourceNameExists="המקור הגלובלי '$1' כבר קיים באוסף הסצינות הנוכחי."
 ImportGlobalSources="יבא מקורות גלובליים"

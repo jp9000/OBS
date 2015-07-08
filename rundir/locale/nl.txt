@@ -1,6 +1,8 @@
 RightToLeft="false"
 
 Add="Toevoegen"
+AddFile="Bestand toevoegen"
+AddFolder="Map toevoegen"
 Preview="Preview"
 Order="Volgorde"
 Apply="Toepassen"
@@ -44,6 +46,9 @@ StreamReport="Streamrapport"
 MessageBoxWarningCaption="Waarschuwing"
 NoSourcesFound="Je hebt geen bronnen toegevoegd! Weet je zeker dat je een zwart scherm wilt streamen?"
 StreamClosePending="Stream of bestandsuitvoer nog niet voltooid. Als je OBS nu afsluit kan de stream vroegtijdig beëindigd worden of het bestand beschadigen. Wil je 15 seconden wachten tot de uitvoer voltooid is?"
+InstallServiceConfirm="Wil je de streaming service '$1' toevoegen aan de OBS services lijst?"
+InstallServiceAlreadyInstalled="Streaming service '$1' is al geïnstalleerd . Wil je hem verwijderen?"
+InstallServiceInstalled="De streaming service is geïnstalleerd. Je kunt hem vinden in Instellingen / Broadcastinstellingen."
 
 ImportGlobalSourceNameExists="De globale bron '$1' bestaat al in de huidige scènecollectie."
 ImportGlobalSources="Globale Bronnen Importeren"

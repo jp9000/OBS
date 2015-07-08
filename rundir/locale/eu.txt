@@ -1,6 +1,8 @@
 RightToLeft="false"
 
 Add="Gehitu"
+AddFile="Gehitu Agiria"
+AddFolder="Gehitu Agiritegia"
 Preview="Aurreikuspena"
 Order="Antolatu"
 Apply="Ezarri"
@@ -44,6 +46,9 @@ StreamReport="Jario Jakinarazpena"
 MessageBoxWarningCaption="Kontuz"
 NoSourcesFound="Ez duzu iturbururik gehitu! Zihur zaude ikusleiho beltz bat jariotzea nahi duzula?"
 StreamClosePending="Jario edo agiri irteera amaitugabe, OBS isteak jario goizegi amaitzea edo agiria hondatzea eragin dezake. Nahi duzu beste 15 segundu itxarotea irteerak amaitu arte?"
+InstallServiceConfirm="'$1' jario zerbitzua OBS zerbitzu zerrendara gehitzea nahi duzu?"
+InstallServiceAlreadyInstalled="'$1' jario zerbittzua jadanik ezarrita dago. Kentzea nahi duzu?"
+InstallServiceInstalled="Jario zerbitzua ezarri da. Ezarpenak / Igorpen-orokorra Ezarpenak-en aurkitu dezakezu."
 
 ImportGlobalSourceNameExists="'$1' iturburu orokorra jadanik badago oraingo agerraldi bilduman."
 ImportGlobalSources="Inportatu Iturburu Orokorrak"

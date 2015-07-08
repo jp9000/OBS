@@ -1,6 +1,8 @@
 RightToLeft="false"
 
 Add="添加"
+AddFile="添加文件"
+AddFolder="添加文件夹"
 Preview="预览"
 Order="顺序"
 Apply="应用"
@@ -44,6 +46,9 @@ StreamReport="串流报告"
 MessageBoxWarningCaption="警告"
 NoSourcesFound="您还没有添加任何来源！你确定你要串流黑屏吗？"
 StreamClosePending="媒体流或文件输出还没有完成,关闭本软件可能会导致媒体流过早结束,或文件损坏.你想要再等15秒到输出结束么?"
+InstallServiceConfirm="你想要把串流服务'$1'加入到OBS服务类表中么?"
+InstallServiceAlreadyInstalled="串流服务'$1'已经安装好了.你想要卸载它么?"
+InstallServiceInstalled="这个串流服务已经安装好了.你可以在 设定 / 广播 设定中找到它"
 
 ImportGlobalSourceNameExists="在当前的场景集合中已经存在全局源'$1'."
 ImportGlobalSources="导入全局源"
