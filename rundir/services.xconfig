@@ -7,6 +7,7 @@ services : {
       "Asia: Seoul, South Korea"               : rtmp://live-sel.twitch.tv/app
       "Asia: Singapore"                        : rtmp://live-sin.twitch.tv/app
       "Asia: Taipei, Taiwan"                   : rtmp://live-tpe.twitch.tv/app
+      "Asia: Tokyo (2), Japan"                 : rtmp://live-tyo-2.twitch.tv/app
       "Asia: Tokyo, Japan"                     : rtmp://live-tyo.twitch.tv/app
       "Australia: Sydney"                      : rtmp://live-syd.twitch.tv/app
       "EU: Amsterdam, NL"                      : rtmp://live-ams.twitch.tv/app
@@ -19,6 +20,7 @@ services : {
       "South America: Sao Paulo, Brazil"       : rtmp://live-gru.twitch.tv/app
       "US Central: Dallas, TX"                 : rtmp://live-dfw.twitch.tv/app
       "US East: Ashburn, VA"                   : rtmp://live-iad.twitch.tv/app
+      "US East: Chicago"                       : rtmp://live-ord.twitch.tv/app
       "US East: Miami, FL"                     : rtmp://live-mia.twitch.tv/app
       "US East: New York, NY"                  : rtmp://live-jfk.twitch.tv/app
       "US West: Los Angeles, CA"               : rtmp://live-lax.twitch.tv/app
