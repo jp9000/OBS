@@ -208,7 +208,8 @@ public:
 
                         String fullPath = strBitmap + "\\" + fd.fileName;
 
-                        CTSTR ext = GetPathExtension(fullPath.Array());
+                        String extStr = GetPathExtension(fullPath.Array());
+                        CTSTR ext = extStr.Array();
                         if (!scmp(ext, TEXT("jpg")) || !scmp(ext, TEXT("png")) || !scmp(ext, TEXT("gif")) || !scmp(ext, TEXT("bmp")) || !scmp(ext, TEXT("dds")))
                         {
                             BitmapImage *bitmapImage = new BitmapImage;
@@ -318,7 +319,8 @@ public:
 
                         String fullPath = strBitmap + "\\" + fd.fileName;
 
-                        CTSTR ext = GetPathExtension(fullPath.Array());
+                        String extStr = GetPathExtension(fullPath.Array());
+                        CTSTR ext = extStr.Array();
                         if (!scmp(ext, TEXT("jpg")) || !scmp(ext, TEXT("png")) || !scmp(ext, TEXT("gif")) || !scmp(ext, TEXT("bmp")) || !scmp(ext, TEXT("dds")))
                         {
                             firstBitmapFile = fullPath;
