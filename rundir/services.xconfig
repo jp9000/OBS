@@ -6,6 +6,7 @@ services : {
       "Asia: Hong Kong"                        : rtmp://live-hkg.twitch.tv/app
       "Asia: Hong Kong (2)"                    : rtmp://live-hkg-2.twitch.tv/app
       "Asia: Seoul, South Korea"               : rtmp://live-sel.twitch.tv/app
+      "Asia: Seoul, South Korea (2)"           : rtmp://live-sel-2.twitch.tv/app
       "Asia: Singapore"                        : rtmp://live-sin.twitch.tv/app
       "Asia: Taipei, Taiwan"                   : rtmp://live-tpe.twitch.tv/app
       "Asia: Tokyo (2), Japan"                 : rtmp://live-tyo-2.twitch.tv/app
