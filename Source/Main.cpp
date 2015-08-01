@@ -99,9 +99,9 @@ static void LogModule(CTSTR lpModuleName, HMODULE addr)
 #endif
 }
 
-typedef DWORD (WINAPI *GETFILEVERSIONINFOSIZEWPROC)(LPCWSTR module, DWORD unused);
-typedef DWORD (WINAPI *GETFILEVERSIONINFOWPROC)(LPCWSTR module, DWORD unused, DWORD len, LPVOID data);
-typedef DWORD (WINAPI *VERQUERYVALUEWPROC)(LPVOID data, LPCWSTR subblock, LPVOID *buf, PUINT sizeout);
+typedef DWORD (WINAPI *GETFILEVERSIONINFOSIZEWPROC)(LPCWSTR module, LPDWORD unused);
+typedef BOOL (WINAPI *GETFILEVERSIONINFOWPROC)(LPCWSTR module, DWORD unused, DWORD len, LPVOID data);
+typedef BOOL (WINAPI *VERQUERYVALUEWPROC)(LPVOID data, LPCWSTR subblock, LPVOID *buf, PUINT sizeout);
 
 static void LogWindowsVersion()
 {
