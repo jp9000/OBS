@@ -5488,7 +5488,7 @@ LRESULT CALLBACK OBS::RenderFrameProc(HWND hwnd, UINT message, WPARAM wParam, LP
                     Vect2 framePos = MapWindowToFramePos(mousePos);
                     App->scene->GetItemsOnPoint(framePos, items);
 
-                    if(bControlDown && App->bItemWasSelected)
+                    if(bControlDown && App->bItemWasSelected && items.Num())
                     {
                         SceneItem *lastItem = items.Last();
                         lastItem->Select(false);
