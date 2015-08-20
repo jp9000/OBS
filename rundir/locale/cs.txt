@@ -1,6 +1,8 @@
 RightToLeft="false"
 
 Add="Přidat"
+AddFile="Přidat soubor"
+AddFolder="Přidat složku"
 Preview="Náhled"
 Order="Pořadí"
 Apply="Použít"

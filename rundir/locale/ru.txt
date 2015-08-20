@@ -293,7 +293,7 @@ Settings.Encoding.Video.Quality="Качество:"
 Settings.Encoding.Video.QualityTooltip="Эта опция будет подстраивать качество в зависимости от установленных битрейта и буфера.  При установки высокого значения и низкого битрейта будет жертвоваться качеством в динамичных сценах в пользу статичных."
 Settings.Encoding.Video.EncoderQSVDisabledAfterApply="Кодировщик Quick Sync будет отключен, поскольку ваше оборудование, по всей видимости, не поддерживает данную технологию."
 Settings.Encoding.Video.EncoderNVENCDisabledAfterApply="Кодировщик Nvidia NVENC будет отключен, поскольку ваше оборудование, по всей видимости, не поддерживает данную технологию."
-Settings.Encoding.Video.QSVConfigWarning="Чтобы включить кодировщик Quick Sync убедитесь что ваш процессор поддерживает технологию Quick Sync, а так же в BIOS должен быть включен графический адаптер Intel. Если вы используете ноутбук, проверьте тему 'Laptop? Black screen when capturing? Read here first.' на форуме в разделе Questions and Help."
+Settings.Encoding.Video.QSVConfigWarning="Чтобы включить кодировщик Quick Sync убедитесь, что ваш процессор поддерживает технологию Quick Sync (кроме того, в BIOS должен быть включен графический адаптер Intel). Если вы используете ноутбук, проверьте тему 'Laptop? Black screen when capturing? Read here first.' на форуме в разделе Questions and Help."
 Settings.Encoding.Video.QSVWinVerWarning="Quick Sync требует Windows 7 или более поздней версии."
 
 Settings.General.Add="Добавить"
