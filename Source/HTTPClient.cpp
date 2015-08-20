@@ -20,7 +20,7 @@
 #include "Main.h"
 #include <winhttp.h>
 
-BOOL HTTPGetFile (CTSTR url, CTSTR outputPath, CTSTR extraHeaders, int *responseCode)
+BOOL HTTPGetFile (CTSTR url, CTSTR outputPath, CTSTR extraHeaders, int *responseCode, TCHAR *sigOut, DWORD *sigOutLen)
 {
     HINTERNET hSession = NULL;
     HINTERNET hConnect = NULL;
@@ -83,6 +83,24 @@ BOOL HTTPGetFile (CTSTR url, CTSTR outputPath, CTSTR extraHeaders, int *response
 
     *responseCode = wcstoul(statusCode, NULL, 10);
 
+    if (sigOut)
+    {
+        if (!WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_CUSTOM, TEXT("X-Signature"), sigOut, sigOutLen, WINHTTP_NO_HEADER_INDEX))
+        {
+            if (GetLastError() == ERROR_WINHTTP_HEADER_NOT_FOUND)
+                *sigOutLen = 0;
+            else if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+                *sigOutLen = 0;
+            else
+                goto failure;
+        }
+        else
+        {
+            // We need character count, not byte count.
+            *sigOutLen /= 2;
+        }
+    }
+
     if (bResults && *responseCode == 200)
     {
         BYTE buffer[16384];
@@ -126,6 +144,9 @@ failure:
         WinHttpCloseHandle(hConnect);
     if (hRequest)
         WinHttpCloseHandle(hRequest);
+
+    if (sigOutLen && !ret)
+        *sigOutLen = 0;
 
     return ret;
 }

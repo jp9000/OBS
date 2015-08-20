@@ -19,7 +19,7 @@
 
 #pragma once
 
-BOOL HTTPGetFile (CTSTR url, CTSTR outputPath, CTSTR extraHeaders, int *responseCode);
+BOOL HTTPGetFile(CTSTR url, CTSTR outputPath, CTSTR extraHeaders, int *responseCode, TCHAR *sigOut, DWORD *sigOutLen);
 
 String HTTPGetString (CTSTR url, CTSTR extraHeaders, int *responseCode);
 
