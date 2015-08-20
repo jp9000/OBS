@@ -1,6 +1,8 @@
 RightToLeft="false"
 
 Add="Tilføj"
+AddFile="Tilføj fil"
+AddFolder="Tilføj mappe"
 Preview="Forhåndsvisning"
 Order="Rækkefølge"
 Apply="Anvend"

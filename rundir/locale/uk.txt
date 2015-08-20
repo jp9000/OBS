@@ -1,6 +1,8 @@
 RightToLeft="false"
 
 Add="Додати"
+AddFile="Додати файл"
+AddFolder="Додати папку"
 Preview="Преперегляд"
 Order="Порядок"
 Apply="Прийняти"
@@ -15,6 +17,7 @@ Defaults="Типові"
 DeleteConfirm="Ви дійсно бажаєте видалити виділені елементи?"
 Desktop="Робочий стіл"
 Disable="Вимкнути"
+EncoderLag="ПОПЕРЕДЖЕННЯ: Високе навантаження на центральний процесор при кодуванні!  Змініть налаштування."
 EndingDelay="Завершення затриманого потоку..."
 EnterName="Будь ласка, введіть ім'я"
 Gamma="Гамма:"
@@ -41,11 +44,27 @@ Settings="Налаштування..."
 LogWindow="Лог викна"
 StreamReport="Звіт потоку"
 MessageBoxWarningCaption="АААААА"
+NoSourcesFound="Ви ще не додали будь-яких джерел! Ви впевнені, що ви хочете передавати чорний екран?"
+StreamClosePending="Трансляцію або виведення до файлу не завершено, закриття OBS може спричинити до переривання трансляції або пошкодження файлу. Хочете зачекати ще 15 секунд для перед завершенням?"
+InstallServiceConfirm="Додати трансляцію '$1' до списку послуг OBS?"
+InstallServiceAlreadyInstalled="Сервіс трансляції '$1' вже інстальовано. Ви хотіли б видалити його?"
+InstallServiceInstalled="Сервіс трансляцій встановлено. Ви можете його вибрати в Налаштування / Трансляція."
 
+ImportGlobalSourceNameExists="Глобальне джерело '$1' вже існує в колекції поточної сцени."
+ImportGlobalSources="Імпорт глобальних джерел"
 
+ImportCollectionReplaceWarning.Title="Імпорт колекції сцен"
+ImportCollectionReplaceWarning.Text="Поточні дані сцени буде втрачено.  Ви впевнені, що слід імпортувати?"
 
+CopyTo="Копіювати до"
+CopyTo.SceneNameExists="Сцена '$1' вже існує в вибрані колекції сцен."
+CopyTo.GlobalSourcesExists="Глобальне джерело '$1' вже існує у вибрані колекції сцен."
+CopyTo.Success.Title="Успішно"
+CopyTo.CopyGlobalSourcesReferences.Title="Скопіювати глобальні джерела?"
 
+ImportProfileReplaceWarning.Title="Імпортування профілю"
 
+DeleteCollection="Видалити колекцію сцен"
 
 BuildingMP4Dialog.Progress="Йде збірка MP4, будь ласка зачекайте..."
 
@@ -74,7 +93,11 @@ Listbox.Positioning="Позиція та розмір"
 Listbox.ResetSize="Скинути розмір"
 Listbox.SetHotkey="Встановити гарячу клавішу"
 ListBox.ResetCrop="Скинути кадрування"
+Listbox.ImportButton="Імпортувати"
 
+MainMenu.SceneCollection="Колекція сцен"
+MainMenu.SceneCollection.Duplicate="Дублювати"
+MainMenu.SceneCollection.Rename="Перейменувати"
 
 MainMenu.File="&Файл"
 MainMenu.Help="&Допомога"
@@ -90,6 +113,7 @@ MainMenu.File.Exit="&Вихід"
 MainMenu.File.Save="&Зберегти"
 
 
+MainMenu.Help.OpenHelp="Відкрити сторінку допомоги"
 MainMenu.Help.VisitWebsite="Відвідати сайт"
 MainMenu.Help.CheckForUpdates="Перевірити &оновлення"
 
@@ -138,6 +162,8 @@ Settings.Publish="Параметри трансляції"
 Settings.SaveChangesPrompt="Зберегти і застосувати зміни?"
 Settings.SaveChangesTitle="Застосувати параметри?"
 Settings.Video="Відео"
+Settings.Hotkeys="Гарячі клавіші"
+Settings.QSV="Кодувальник Quick Sync"
 
 
 
