@@ -123,4 +123,10 @@ services : {
       "API" : https://web-api.azubu.tv/stream/broadcaster-key/
     }
   }
+  ReAll.tv : {
+    id : 14
+    servers : {
+      "RU Moscow Server" : rtmp://live.reall.tv:9999/live
+    }
+  }
 }
