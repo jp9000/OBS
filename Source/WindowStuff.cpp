@@ -4525,6 +4525,15 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
             PostQuitMessage(0);
             break;
 
+        case WM_ENDSESSION:
+            if (wParam == TRUE)
+            {
+                // AppConfig / GlobalConfig should already save most important changes. A few UI
+                // things like last window size / position and other UI state gets lost though.
+                App->scenesConfig.Save();
+                return TRUE;
+            }
+
         default:
             if (App && message == App->wmExplorerRestarted)
             {
