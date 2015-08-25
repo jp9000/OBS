@@ -121,6 +121,40 @@ BOOL IsWebrootLoaded()
     return ret;
 }
 
+// Checks the AppData path is writable and the disk has enough space
+VOID CheckPermissionsAndDiskSpace()
+{
+    ULARGE_INTEGER   freeSpace;
+
+    if (GetDiskFreeSpaceEx (lpAppDataPath, &freeSpace, NULL, NULL))
+    {
+        // 1MB ought to be enough for anybody...
+        if (freeSpace.QuadPart < 1048576)
+        {
+            OBSMessageBox(OBSGetMainWindow(), Str("DiskFull"), NULL, MB_ICONERROR);
+        }
+    }
+
+    HANDLE tempFile;
+    String testPath;
+
+    testPath = lpAppDataPath;
+    testPath += TEXT("\\.test");
+
+    tempFile = CreateFile(testPath.Array(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, NULL);
+    if (tempFile == INVALID_HANDLE_VALUE)
+    {
+        DWORD err = GetLastError();
+        if (err == ERROR_ACCESS_DENIED || err == ERROR_FILE_READ_ONLY)
+            OBSMessageBox(OBSGetMainWindow(), Str("BadAppDataPermissions"), NULL, MB_ICONERROR);
+
+        // TODO: extra handling for unknown errors (maybe some av returns weird codes?)
+    }
+    else
+    {
+        CloseHandle(tempFile);
+    }
+}
 
 
 //---------------------------------------------------------------------------
@@ -780,6 +814,8 @@ OBS::OBS()
 
         OSFindClose(hFind);
     }
+
+    CheckPermissionsAndDiskSpace();
 
     ConfigureStreamButtons();
 

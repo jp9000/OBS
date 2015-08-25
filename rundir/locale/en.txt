@@ -50,6 +50,9 @@ InstallServiceConfirm="Do you want to add streaming service '$1' to the OBS serv
 InstallServiceAlreadyInstalled="Streaming service '$1' is already installed. Would you like to uninstall it?"
 InstallServiceInstalled="The streaming service has been installed. You can find it in Settings / Broadcast Settings."
 
+DiskFull="Your disk is full. Configuration files, scenes and sources will not be able to be saved correctly. Please free up some disk space."
+BadAppDataPermissions="The OBS configuration folder is not writable, any settings changed will be not be saved.\r\n\r\nCheck that any firewall, anti-virus or other security software is not blocking OBS and that permissions on your AppData\\OBS folder are set correctly."
+
 ImportGlobalSourceNameExists="The global source '$1' already exists in the current scene collection."
 ImportGlobalSources="Import Global Sources"
 
