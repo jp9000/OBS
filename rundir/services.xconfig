@@ -65,11 +65,11 @@ services : {
       "USA West (SJC)"        : rtmp://usw.publish.dailymotion.com/publish-dm
     }
   }
-  Youtube : {
+  YouTube / YouTube Gaming : {
     id : 9
     servers : {
-      "Primary Youtube ingest server" : rtmp://a.rtmp.youtube.com/live2
-      "Backup Youtube ingest server" : rtmp://b.rtmp.youtube.com/live2?backup=1
+      "Primary YouTube ingest server" : rtmp://a.rtmp.youtube.com/live2
+      "Backup YouTube ingest server" : rtmp://b.rtmp.youtube.com/live2?backup=1
     }
     recommended : {
       "keyint"      : 4000
