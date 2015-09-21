@@ -41,6 +41,7 @@ namespace {
         QSV_CPU_PLATFORM_SNB_BNL     = 1 << 0,
         QSV_CPU_PLATFORM_IVB_SLM_CHT = 1 << 1,
         QSV_CPU_PLATFORM_HSW         = 1 << 2,
+        QSV_CPU_PLATFORM_INTEL       = 1 << 3
     };
 
     qsv_cpu_platform qsv_get_cpu_platform()
@@ -102,7 +103,7 @@ namespace {
             return QSV_CPU_PLATFORM_HSW;
         }
 
-        return QSV_CPU_PLATFORM_UNKNOWN;
+        return QSV_CPU_PLATFORM_INTEL; //assume newer revisions are at least as capable as haswell
     }
 
     const struct impl_parameters
@@ -112,13 +113,13 @@ namespace {
         mfxVersion version;
         int platforms;
     } valid_impl[] = {
-        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D11, {8, 1},  QSV_CPU_PLATFORM_IVB_SLM_CHT | QSV_CPU_PLATFORM_HSW },
-        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {8, 1},  QSV_CPU_PLATFORM_IVB_SLM_CHT | QSV_CPU_PLATFORM_HSW }, //Ivy Bridge+ with non-functional D3D11 support?
-        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D11, {7, 1},  QSV_CPU_PLATFORM_IVB_SLM_CHT | QSV_CPU_PLATFORM_HSW },
-        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {7, 1},  QSV_CPU_PLATFORM_IVB_SLM_CHT | QSV_CPU_PLATFORM_HSW }, //Ivy Bridge+ with non-functional D3D11 support?
-        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D11, {6, 1},  QSV_CPU_PLATFORM_IVB_SLM_CHT | QSV_CPU_PLATFORM_HSW },
-        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {6, 1},  QSV_CPU_PLATFORM_IVB_SLM_CHT | QSV_CPU_PLATFORM_HSW }, //Ivy Bridge+ with non-functional D3D11 support?
-        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {4, 1},  QSV_CPU_PLATFORM_IVB_SLM_CHT | QSV_CPU_PLATFORM_HSW | QSV_CPU_PLATFORM_SNB_BNL }, //Sandy Bridge
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D11, {8, 1},  QSV_CPU_PLATFORM_INTEL | QSV_CPU_PLATFORM_IVB_SLM_CHT | QSV_CPU_PLATFORM_HSW },
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {8, 1},  QSV_CPU_PLATFORM_INTEL | QSV_CPU_PLATFORM_IVB_SLM_CHT | QSV_CPU_PLATFORM_HSW }, //Ivy Bridge+ with non-functional D3D11 support?
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D11, {7, 1},  QSV_CPU_PLATFORM_INTEL | QSV_CPU_PLATFORM_IVB_SLM_CHT | QSV_CPU_PLATFORM_HSW },
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {7, 1},  QSV_CPU_PLATFORM_INTEL | QSV_CPU_PLATFORM_IVB_SLM_CHT | QSV_CPU_PLATFORM_HSW }, //Ivy Bridge+ with non-functional D3D11 support?
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D11, {6, 1},  QSV_CPU_PLATFORM_INTEL | QSV_CPU_PLATFORM_IVB_SLM_CHT | QSV_CPU_PLATFORM_HSW },
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {6, 1},  QSV_CPU_PLATFORM_INTEL | QSV_CPU_PLATFORM_IVB_SLM_CHT | QSV_CPU_PLATFORM_HSW }, //Ivy Bridge+ with non-functional D3D11 support?
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {4, 1},  QSV_CPU_PLATFORM_INTEL | QSV_CPU_PLATFORM_IVB_SLM_CHT | QSV_CPU_PLATFORM_HSW | QSV_CPU_PLATFORM_SNB_BNL }, //Sandy Bridge
     };
 
     std::wofstream log_file;

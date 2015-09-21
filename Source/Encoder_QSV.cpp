@@ -187,6 +187,7 @@ namespace
         QSV_CPU_PLATFORM_SLM,
         QSV_CPU_PLATFORM_CHT,
         QSV_CPU_PLATFORM_HSW,
+        QSV_CPU_PLATFORM_INTEL
     };
 
     qsv_cpu_platform qsv_get_cpu_platform()
@@ -246,7 +247,7 @@ namespace
             return QSV_CPU_PLATFORM_HSW;
         }
 
-        return QSV_CPU_PLATFORM_UNKNOWN;
+        return QSV_CPU_PLATFORM_INTEL; //assume newer revisions are at least as capable as haswell
     }
 
     struct DTSGenerator
