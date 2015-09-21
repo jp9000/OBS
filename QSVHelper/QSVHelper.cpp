@@ -38,9 +38,9 @@ namespace {
     enum qsv_cpu_platform
     {
         QSV_CPU_PLATFORM_UNKNOWN,
-        QSV_CPU_PLATFORM_SNB = 1 << 0,
-        QSV_CPU_PLATFORM_IVB = 1 << 1,
-        QSV_CPU_PLATFORM_HSW = 1 << 2,
+        QSV_CPU_PLATFORM_SNB_BNL     = 1 << 0,
+        QSV_CPU_PLATFORM_IVB_SLM_CHT = 1 << 1,
+        QSV_CPU_PLATFORM_HSW         = 1 << 2,
     };
 
     qsv_cpu_platform qsv_get_cpu_platform()
@@ -68,15 +68,35 @@ namespace {
 
         switch (model)
         {
+        case 0x1C:
+        case 0x26:
+        case 0x27:
+        case 0x35:
+        case 0x36:
+            //BNL
+
         case 0x2a:
         case 0x2d:
-            return QSV_CPU_PLATFORM_SNB;
+            //SNB
+            return QSV_CPU_PLATFORM_SNB_BNL;
 
         case 0x3a:
         case 0x3e:
-            return QSV_CPU_PLATFORM_IVB;
+            //IVB
+
+        case 0x37:
+        case 0x4A:
+        case 0x4D:
+        case 0x5A:
+        case 0x5D:
+            //SLM
+
+        case 0x4C:
+            //CHT
+            return QSV_CPU_PLATFORM_IVB_SLM_CHT;
 
         case 0x3c:
+        case 0x3f:
         case 0x45:
         case 0x46:
             return QSV_CPU_PLATFORM_HSW;
@@ -92,13 +112,13 @@ namespace {
         mfxVersion version;
         int platforms;
     } valid_impl[] = {
-        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D11, {8, 1},  QSV_CPU_PLATFORM_IVB | QSV_CPU_PLATFORM_HSW },
-        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {8, 1},  QSV_CPU_PLATFORM_IVB | QSV_CPU_PLATFORM_HSW }, //Ivy Bridge+ with non-functional D3D11 support?
-        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D11, {7, 1},  QSV_CPU_PLATFORM_IVB | QSV_CPU_PLATFORM_HSW },
-        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {7, 1},  QSV_CPU_PLATFORM_IVB | QSV_CPU_PLATFORM_HSW }, //Ivy Bridge+ with non-functional D3D11 support?
-        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D11, {6, 1},  QSV_CPU_PLATFORM_IVB | QSV_CPU_PLATFORM_HSW },
-        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {6, 1},  QSV_CPU_PLATFORM_IVB | QSV_CPU_PLATFORM_HSW }, //Ivy Bridge+ with non-functional D3D11 support?
-        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {4, 1},  QSV_CPU_PLATFORM_IVB | QSV_CPU_PLATFORM_HSW | QSV_CPU_PLATFORM_SNB }, //Sandy Bridge
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D11, {8, 1},  QSV_CPU_PLATFORM_IVB_SLM_CHT | QSV_CPU_PLATFORM_HSW },
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {8, 1},  QSV_CPU_PLATFORM_IVB_SLM_CHT | QSV_CPU_PLATFORM_HSW }, //Ivy Bridge+ with non-functional D3D11 support?
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D11, {7, 1},  QSV_CPU_PLATFORM_IVB_SLM_CHT | QSV_CPU_PLATFORM_HSW },
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {7, 1},  QSV_CPU_PLATFORM_IVB_SLM_CHT | QSV_CPU_PLATFORM_HSW }, //Ivy Bridge+ with non-functional D3D11 support?
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D11, {6, 1},  QSV_CPU_PLATFORM_IVB_SLM_CHT | QSV_CPU_PLATFORM_HSW },
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {6, 1},  QSV_CPU_PLATFORM_IVB_SLM_CHT | QSV_CPU_PLATFORM_HSW }, //Ivy Bridge+ with non-functional D3D11 support?
+        { MFX_IMPL_HARDWARE_ANY,    MFX_IMPL_VIA_D3D9,  {4, 1},  QSV_CPU_PLATFORM_IVB_SLM_CHT | QSV_CPU_PLATFORM_HSW | QSV_CPU_PLATFORM_SNB_BNL }, //Sandy Bridge
     };
 
     std::wofstream log_file;
