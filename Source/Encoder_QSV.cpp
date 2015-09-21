@@ -181,9 +181,12 @@ namespace
     enum qsv_cpu_platform
     {
         QSV_CPU_PLATFORM_UNKNOWN,
+        QSV_CPU_PLATFORM_BNL,
         QSV_CPU_PLATFORM_SNB,
         QSV_CPU_PLATFORM_IVB,
-        QSV_CPU_PLATFORM_HSW
+        QSV_CPU_PLATFORM_SLM,
+        QSV_CPU_PLATFORM_CHT,
+        QSV_CPU_PLATFORM_HSW,
     };
 
     qsv_cpu_platform qsv_get_cpu_platform()
@@ -211,6 +214,13 @@ namespace
 
         switch (model)
         {
+        case 0x1C:
+        case 0x26:
+        case 0x27:
+        case 0x35:
+        case 0x36:
+            return QSV_CPU_PLATFORM_BNL;
+
         case 0x2a:
         case 0x2d:
             return QSV_CPU_PLATFORM_SNB;
@@ -219,7 +229,18 @@ namespace
         case 0x3e:
             return QSV_CPU_PLATFORM_IVB;
 
+        case 0x37:
+        case 0x4A:
+        case 0x4D:
+        case 0x5A:
+        case 0x5D:
+            return QSV_CPU_PLATFORM_SLM;
+
+        case 0x4C:
+            return QSV_CPU_PLATFORM_CHT;
+
         case 0x3c:
+        case 0x3f:
         case 0x45:
         case 0x46:
             return QSV_CPU_PLATFORM_HSW;
@@ -364,8 +385,11 @@ bool IsKnownQSVCPUPlatform()
     static qsv_cpu_platform plat = qsv_get_cpu_platform();
     switch (plat)
     {
+    case QSV_CPU_PLATFORM_BNL:
     case QSV_CPU_PLATFORM_SNB:
     case QSV_CPU_PLATFORM_IVB:
+    case QSV_CPU_PLATFORM_SLM:
+    case QSV_CPU_PLATFORM_CHT:
     case QSV_CPU_PLATFORM_HSW:
         return true;
     }
