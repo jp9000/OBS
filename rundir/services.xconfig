@@ -73,6 +73,7 @@ services : {
     }
     recommended : {
       "keyint"      : 4000
+      "ratecontrol" : "cbr"
     }
   }
   CyberGame.TV : {
