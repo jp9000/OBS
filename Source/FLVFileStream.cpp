@@ -52,7 +52,7 @@ class FLVFileStream : public VideoFileStream
             fileOut.Serialize(lpData, 5);
             fileOut.Serialize(sei.lpPacket, sei.size);
             fileOut.Serialize(lpData+5, size-5);
-            fileOut.OutputDword(fastHtonl(size+sei.size+14));
+            fileOut.OutputDword(fastHtonl(size+sei.size+11));
 
             bSentSEI = true;
         } else {
@@ -65,7 +65,7 @@ class FLVFileStream : public VideoFileStream
             fileOut.Serialize(&networkTimestamp, 1);
             fileOut.Serialize(&streamID, 3);
             fileOut.Serialize(lpData, size);
-            fileOut.OutputDword(fastHtonl(size+14));
+            fileOut.OutputDword(fastHtonl(size+11));
         }
 
         lastTimeStamp = timestamp;
