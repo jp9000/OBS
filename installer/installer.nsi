@@ -90,7 +90,7 @@ Function PreReqCheck
 	dxMissing:
 		MessageBox MB_YESNO|MB_ICONEXCLAMATION "Your system is missing DirectX components that ${APPNAME} requires. Would you like to download them?" IDYES dxtrue IDNO dxfalse
 		dxtrue:
-			ExecShell "open" "http://www.microsoft.com/en-us/download/details.aspx?id=35"
+			ExecShell "open" "https://obsproject.com/go/dxwebsetup"
 		dxfalse:
 		Quit
 	dxOK:
