@@ -50,6 +50,7 @@ InstallServiceConfirm="Vil du tilføje streaming service '$1' til listen med OBS
 InstallServiceAlreadyInstalled="Streamingtjeneste '$1' er allerede installeret. Ønsker du at afinstallere den?"
 InstallServiceInstalled="Streamingtjenesten er installeret. Du kan finde den under Indstillingerne / Broadcast Indstillinger."
 
+
 ImportGlobalSourceNameExists="Den globale kilde '$1' findes allerede i den aktuelle scene samling."
 ImportGlobalSources="Importer global kilder"
 

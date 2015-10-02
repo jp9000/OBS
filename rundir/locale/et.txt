@@ -43,6 +43,7 @@ StreamReport="Striimi statistika"
 MessageBoxWarningCaption="Hoiatus"
 NoSourcesFound="Te pole lisanud ühtegi allikat! Oled sa kindel, et tahad striimida musta ekraani?"
 
+
 ImportGlobalSources="Impordi globaalsed allikad"
 
 ImportCollectionReplaceWarning.Title="Impordi stseeni kogumikud"

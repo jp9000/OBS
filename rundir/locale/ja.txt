@@ -50,6 +50,9 @@ InstallServiceConfirm="配信サービス '$1' をOBSのサービスリストに
 InstallServiceAlreadyInstalled="配信サービス '$1' は既にインストールされています。アンインストールしますか？"
 InstallServiceInstalled="配信サービスがインストールされています。設定/配信設定で確認することができます。"
 
+DiskFull="ディスクがいっぱいです。構成ファイル、シーン、ソースを正常に保存することができません。ディスク領域を解放してください。"
+BadAppDataPermissions="OBS 構成フォルダーが書き込み可能ではなく、設定の変更が保存出来ません。 \r\n\r\nファイアウォール、アンチウイルスまたは他のセキュリティ ソフトウェアがOBSをブロックしていないことと、 AppData\\OBS フォルダーのアクセス許可が正しく設定されていることを確認してください。"
+
 ImportGlobalSourceNameExists="グローバルソース '$1' は、現在のシーンコレクションに既に存在します。"
 ImportGlobalSources="グローバルソースをインポート"
 

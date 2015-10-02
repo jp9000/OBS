@@ -1,6 +1,8 @@
 RightToLeft="false"
 
 Add="Ekle"
+AddFile="Dosya Ekle"
+AddFolder="Klasör Ekle"
 Preview="Önizleme"
 Order="Düzen"
 Apply="Uygula"
@@ -43,6 +45,7 @@ LogWindow="Günlük Penceresi"
 StreamReport="Yayın Raporu"
 MessageBoxWarningCaption="Uyarı"
 NoSourcesFound="Hiçbir kaynak eklenmedi! Siyah bir ekran yayınlamak istediğinize emin misiniz?"
+
 
 ImportGlobalSources="Global Kaynakları İçeri Al"
 

@@ -1,6 +1,8 @@
 RightToLeft="false"
 
 Add="新增"
+AddFile="添加檔案"
+AddFolder="添加資料夾"
 Preview="預覽"
 Order="排列"
 Apply="套用"
@@ -47,6 +49,9 @@ StreamClosePending="串流或檔案的輸出尚未完成，這時關閉 Open Bro
 InstallServiceConfirm="你想要把 '$1' 串流服務加入到OBS服務列表嗎？"
 InstallServiceAlreadyInstalled="串流服務 '$1' 已經安裝過，是否想要解除安裝？"
 InstallServiceInstalled="串流服務已經安裝，你可以在設定 / 廣播設定 裡面找到他。"
+
+DiskFull="您的硬碟容量已經用罄。設定檔、場景、來源將不能正確的儲存。請釋放一些硬碟空間。"
+BadAppDataPermissions="OBS 設置資料夾為不可寫入，任何更改的設置將不會儲存。\r\n\r\n請檢查所有防火牆、 防毒軟體或其他安全軟體確保沒有阻擋 OBS 和您的 AppData\\OBS 資料夾上的權限有正確設置。"
 
 ImportGlobalSourceNameExists="當前的場景集中已經存在全域來源 「$1」。"
 ImportGlobalSources="匯入全域來源"

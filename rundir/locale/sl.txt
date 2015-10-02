@@ -45,6 +45,7 @@ MessageBoxWarningCaption="Opozorilo"
 NoSourcesFound="Niste dodali nobenih virov! Ali ste prepričani da, želite oddajati črn zaslon?"
 StreamClosePending="Oddajanje ali snemanje v datoteko je nedokončano, če zaprete OBS se bo oddajanje končalo predčasno ali pa se bo datokega pokvarila. Hočete počakati 15 sekund, da se oddajanje ali zapisovanje konča?"
 
+
 ImportGlobalSourceNameExists="Globalni vir '$1' že obstaja v trenutni zbirki scen."
 ImportGlobalSources="Uvozi Globalni Vir"
 

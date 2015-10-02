@@ -50,6 +50,7 @@ InstallServiceConfirm="Quer adicionar o serviço de streaming '$1' para a lista 
 InstallServiceAlreadyInstalled="O serviço de streaming '$1' já está instalado. Gostaria de desinstalá-lo?"
 InstallServiceInstalled="O serviço de streaming ja foi instalado. Você pode encontrá-lo em Configurações / Configurações de Broadcast."
 
+
 ImportGlobalSourceNameExists="A fonte global '$1' já existe na cena atual."
 ImportGlobalSources="Importar Fontes Globais"
 

@@ -50,6 +50,7 @@ InstallServiceConfirm="האם ברצונך להוסיף את שירות ההזר
 InstallServiceAlreadyInstalled="שירות ההזרמה '$1' כבר מותקן. האם ברצונך להסירו?"
 InstallServiceInstalled="שירות הזרמה הותקן בהצלחה. באפשרותך למצוא אותו תחת הגדרות / הגדרות שידור."
 
+
 ImportGlobalSourceNameExists="המקור הגלובלי '$1' כבר קיים באוסף הסצינות הנוכחי."
 ImportGlobalSources="יבא מקורות גלובליים"
 

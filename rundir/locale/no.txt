@@ -48,6 +48,7 @@ NoSourcesFound="Du har ikke lagt til noen kilder! Er du sikker du vil direkteavs
 
 
 
+
 BuildingMP4Dialog.Progress="Oppretter MP4, vennligst vent ..."
 
 Connection.CouldNotConnect="Klarte ikke å koble til server"

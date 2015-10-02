@@ -50,6 +50,7 @@ InstallServiceConfirm="방송 서비스 '$1'를 OBS 목록에 추가하겠습니
 InstallServiceAlreadyInstalled="방송 서비스 '$1'가 이미 설치되어 있습니다. 제거하겠습니까?"
 InstallServiceInstalled="방송 서비스 '$1'가 설치되었습니다. 설정 / 방송 설정 탭에서 확인할 수 있습니다."
 
+
 ImportGlobalSourceNameExists="전역 소스 '$1'은 현재 장면 모음에 이미 존재하고 있습니다."
 ImportGlobalSources="전역 소스 가져오기"
 

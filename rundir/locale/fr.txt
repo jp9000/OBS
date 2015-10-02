@@ -50,6 +50,9 @@ InstallServiceConfirm="Voulez-vous ajouter le service de streaming '$1' à la li
 InstallServiceAlreadyInstalled="Le service de streaming '$1' est déjà installé. Souhaitez-vous le désinstaller ?"
 InstallServiceInstalled="Le service de streaming a été installé. Vous pouvez le retrouver dans Paramètres / Paramètres de diffusion."
 
+DiskFull="Votre disque est plein. Les fichiers de configuration, scènes et sources ne pourront pas être enregistrés correctement. Veuillez libérer de l'espace disque."
+BadAppDataPermissions="Le dossier de configuration d'OBS n'est pas autorisé en écriture, tout paramètre modifié ne sera pas enregistré.\r\n\r\nVérifiez qu'aucun pare-feu, anti-virus ou autre logiciel de sécurité ne bloque OBS et que ses droits sur votre dossier AppData\\OBS soient correctement définis."
+
 ImportGlobalSourceNameExists="La source globale '$1' existe déjà dans la liste actuelle des scènes."
 ImportGlobalSources="Importer des sources globales"
 
