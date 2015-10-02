@@ -48,6 +48,7 @@ InstallServiceConfirm="Vil du legge til strømmetjenesten '$1' til OBS sin tjene
 InstallServiceAlreadyInstalled="Strømmetjenesten '$1' er allerede installert. Ønsker du å avinstallere den?"
 InstallServiceInstalled="Strømmetjenesten har blitt installert. Du kan finne den under Innstilinger / Kringkastingsinnstillinger."
 
+
 ImportGlobalSourceNameExists="Den globale kilden '$1' finnes allerede i den gjeldende scenesamlingen."
 ImportGlobalSources="Importer globale kilder"
 

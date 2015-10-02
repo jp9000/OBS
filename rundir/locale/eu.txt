@@ -50,6 +50,10 @@ InstallServiceConfirm="'$1' jario zerbitzua OBS zerbitzu zerrendara gehitzea nah
 InstallServiceAlreadyInstalled="'$1' jario zerbittzua jadanik ezarrita dago. Kentzea nahi duzu?"
 InstallServiceInstalled="Jario zerbitzua ezarri da. Ezarpenak / Igorpen-orokorra Ezarpenak-en aurkitu dezakezu."
 
+DiskFull="Zure diskak beteta dago. Itxurapen agiriak, agerraldiak eta iturburuak ezingo dira zuzen gorde.
+Mesedez askatu tokia diskan."
+BadAppDataPermissions="OBS itxurapen agiritegia ez da idazgarria, aldatutako edozein ezarpen ez da gordeko\r\n\r\nEgiaztatu suhesi, birus-aurkako edo beste segurtasun softwareek ez dutela OBS blokeatzen eta zure AppDataz\\OBS agiritegi baimenak zuzen ezarrita daudela."
+
 ImportGlobalSourceNameExists="'$1' iturburu orokorra jadanik badago oraingo agerraldi bilduman."
 ImportGlobalSources="Inportatu Iturburu Orokorrak"
 

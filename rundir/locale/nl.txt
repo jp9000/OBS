@@ -50,6 +50,9 @@ InstallServiceConfirm="Wil je de streaming service '$1' toevoegen aan de OBS ser
 InstallServiceAlreadyInstalled="Streaming service '$1' is al geïnstalleerd . Wil je hem verwijderen?"
 InstallServiceInstalled="De streaming service is geïnstalleerd. Je kunt hem vinden in Instellingen / Broadcastinstellingen."
 
+DiskFull="Je harde schijf is vol. Configuratiebestanden, scènes en bronnen zullen niet opgeslagen kunnen worden. Maak a.u.b. wat schijfruimte vrij."
+BadAppDataPermissions="De OBS configuratiefolder is niet schrijfbaar, aangepaste instellingen zullen niet worden opgeslagen.\r\n\r\nControleer of er een firewall, anti-virus of andere beveiligingssoftware actief is en OBS blokkeert, en dat de toegangsinstellingen van je AppData\\OBS folder correct zijn."
+
 ImportGlobalSourceNameExists="De globale bron '$1' bestaat al in de huidige scènecollectie."
 ImportGlobalSources="Globale Bronnen Importeren"
 

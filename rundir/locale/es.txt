@@ -45,6 +45,7 @@ MessageBoxWarningCaption="Advertencia"
 NoSourcesFound="¡No ha agregado ninguna fuente! ¿Está seguro que desea transmitir una pantalla negra?"
 StreamClosePending="El stream o la grabación están incompletos, si cierra OBS ahora quedará corrupto el archivo. Quiere esperar 15 segundos para darle tiempo a la grabación que finalice ?"
 
+
 ImportGlobalSourceNameExists="La fuente global '$1' ya existe en el conjunto de escenas actual."
 ImportGlobalSources="Importar fuentes globales"
 

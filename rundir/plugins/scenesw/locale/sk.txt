@@ -1,1 +1,10 @@
+Settings.WindowTitle="Názov okna"
+Settings.Scene="Scéna"
+Settings.Add="Pridať"
+Settings.Remove="Odstrániť"
+Settings.Milliseconds="milisekúnd."
+Settings.Running="spustený"
+Settings.NotRunning="nie je spustený"
+Settings.Start="Spustiť"
+Settings.Stop="Zastaviť"
 

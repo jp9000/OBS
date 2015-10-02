@@ -50,6 +50,9 @@ InstallServiceConfirm="Möchten Sie Streaming-Dienst '$ 1' zu der OBS Dienstlist
 InstallServiceAlreadyInstalled="Streaming-Dienst '$1' ist bereits installiert. Möchten Sie ihn deinstallieren?"
 InstallServiceInstalled="Der Streaming-Dienst wurde installiert. Sie können ihn unter Einstellungen / Broadcast Einstellungen finden."
 
+DiskFull="Ihre Festplatte ist voll. Konfigurationsdateien, Szenen und Quellen werden nicht richtig gespeichert werden können. Bitte machen Sie Speicherplatz frei."
+BadAppDataPermissions="Der OBS Konfigurationsordner ist nicht beschreibbar. Alle geänderten Einstellungen werden verloren gehen.\r\n\r\nÜberprüfen Sie ob Ihre Firewall, Antivirus Software oder andere Sicherheitssoftware OBS nicht blockiert und die Berechtigungen Ihres AppData\\OBS Ordners korrekt gesetzt sind."
+
 ImportGlobalSourceNameExists="Die globale Quelle '$1' existiert bereits in der aktuellen Szenen-Sammlung."
 ImportGlobalSources="Globale Quellen importieren"
 

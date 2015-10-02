@@ -45,6 +45,7 @@ MessageBoxWarningCaption="Upozorenje"
 NoSourcesFound="Niste dodali nikakve izvore, Jeste li sigurni da želite streamati crni ekran?"
 StreamClosePending="Stream ili ispis u datoteku nije završen, zatvaranje OBS-a može uzrokovati prijevremeni kraj stream-a ili koruptiranje datoteke. Želite li pričekati još 15 sekundi?"
 
+
 ImportGlobalSourceNameExists="Globalni izvor '$1' već postoji u trenutnoj kolekciji scena."
 ImportGlobalSources="Uvezi globalne izvore"
 

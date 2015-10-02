@@ -50,6 +50,9 @@ InstallServiceConfirm="Haluatko lisätä palvelun '$1' OBS:n palvelu-luetteloon?
 InstallServiceAlreadyInstalled="Palvelu '$1' on jo asennettu. Haluatko poistaa sen?"
 InstallServiceInstalled="Palvelu on asennettu. Löydät sen Lähetysasetuksista."
 
+DiskFull="Levy on täynnä. Asetustiedostoja, skenejä ja lähteitä ei voi välttämättä tallentaa oikein ellet vapauta levytilaa."
+BadAppDataPermissions="OBS:n asetuskansioon ei voi kirjoittaa, jonka vuoksi muutettuja asetuksia ei voi tallentaa.\r\n\r\nTarkista, ettei palomuuri, virusturva tai jokin muu tietoturvasovellus estä OBS:n toimintaa ja AppData\\OBS-kansioiden käyttöoikeudet on määritetty oikein."
+
 ImportGlobalSourceNameExists="Yleinen lähde '$1' on jo olemassa nykyisessä skene-kokoelmassa."
 ImportGlobalSources="Tuo yleiset lähteet"
 

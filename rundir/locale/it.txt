@@ -46,6 +46,7 @@ StreamReport="Riepilogo Stream"
 MessageBoxWarningCaption="Attenzione"
 NoSourcesFound="Non hai aggiunto le fonti! Sei sicuro di che voler trasmettere una schermata nera?"
 
+
 ImportGlobalSourceNameExists="'$1' origine globale esiste già nella raccolta scena corrente."
 ImportGlobalSources="Importa una scena globale"
 

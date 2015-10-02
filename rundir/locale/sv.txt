@@ -50,6 +50,9 @@ InstallServiceConfirm="Vill du lägga till strömningstjänsten '$1' till listan
 InstallServiceAlreadyInstalled="Strömningstjänsten '$1' är redan installerad. Vill du avinstallera den?"
 InstallServiceInstalled="Strömningstjänsten är installerad. DU kan hitta den i inställningar Sändningsinställningar."
 
+DiskFull="Hårddisken är full. Konfigurationsfiler, scener och källor kommer inte att kunna sparas. Frigör diskutrymme."
+BadAppDataPermissions="Konfigurationsmappen OBS är inte skrivbar, inga inställningar kommer sparas.\r\n\r\nSe till att ingen brandvägg, antivirusprogram eller annan säkerhetsprogramvara blockerar OBS och att behörigheter för mappen AppData\\OBS är korrekta."
+
 ImportGlobalSourceNameExists="Den globala källan '$1' finns redan i den nuvarande scensamlingen."
 ImportGlobalSources="Importera globala källor"
 

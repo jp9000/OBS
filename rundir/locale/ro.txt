@@ -50,6 +50,9 @@ InstallServiceConfirm="Doriţi să adăugaţi de serviciu de streaming \"$1\" la
 InstallServiceAlreadyInstalled="Serviciul de stream \"$1\" este deja instalat. Doriţi să-l dezinstalaţi?"
 InstallServiceInstalled="Serviciul de streaming a fost instalat. Il puteţi găsi în Setări / Setările de difuzare."
 
+DiskFull="Spatiul de stocare este plin. Fişierele de configurare, scenele şi sursele nu vor putea fi salvate corect. Vă rugăm să eliberaţi spaţiu pe disc."
+BadAppDataPermissions="Folderul de configurare OBS nu este inscriptibil, orice setări schimbate nu vor fi salvate.\r\n\r\nVerificati că firewall-ul, anti-virusul sau orice alt software de securitate nu blochează OBS şi că permisiunile pe folderul AppData\\OBS sunt setate corect."
+
 ImportGlobalSourceNameExists="Sursa globală '$1' există deja în colecția de scene curentă."
 ImportGlobalSources="Importaţi Sursele Globale"
 

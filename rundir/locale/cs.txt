@@ -50,6 +50,7 @@ InstallServiceConfirm="Přejete si přidat streamovací službu '$1' do seznamu 
 InstallServiceAlreadyInstalled="Streamovací služba '$1' je již nainstalována. Přejete si ji odinstalovat ?"
 InstallServiceInstalled="Streamovací služby byla nainstalována. Můžete ji najít v Nastavení pod Nastavením vysílání."
 
+
 ImportGlobalSourceNameExists="Globální zdroj '$1' již existuje v aktuální kolekci scény."
 ImportGlobalSources="Importovat globální zdroje"
 

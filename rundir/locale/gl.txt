@@ -43,6 +43,7 @@ StreamReport="Informe da transmisión"
 
 
 
+
 BuildingMP4Dialog.Progress="Creando MP4, agarda..."
 
 Connection.CouldNotConnect="Non se pode conectar ó servidor"

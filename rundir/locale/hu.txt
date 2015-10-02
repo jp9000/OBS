@@ -50,6 +50,9 @@ InstallServiceConfirm="Hozzá kívánja adni a '$1' szolgáltatást az OBS szolg
 InstallServiceAlreadyInstalled="A \"$1\" Streaming szolgáltatás már telepítve van. Szeretne eltávolítani?"
 InstallServiceInstalled="A streaming szolgáltatás telepítve van. A Beállítások / Adás beállítások menüpont alatt találja meg."
 
+DiskFull="A lemeze megtelt. A konfigurációs fájlok, jelenetek és források nem lesznek helyesen elmentve. Szabadítson fel helyet a lemezen."
+BadAppDataPermissions="Az OBS konfigurációs mappája nem írható, a változtatott beállítások nem lesznek elmentve.\r\n\r\nEllenőrizze, hogy a tűzfala, víruskeresője vagy bármely más biztonsági szoftvere blokkolja e a programot vagy vont vissza engedélyeket az AppData mappa hozzáférésétől\\Az OBS mappa engedélyei megfelelőek."
+
 ImportGlobalSourceNameExists="A \"$1\" nevű globális forrás már létezik az aktuális jelenet gyűjteményben."
 ImportGlobalSources="Globális Források Importálása"
 

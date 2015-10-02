@@ -50,6 +50,9 @@ InstallServiceConfirm="你想要把串流服务'$1'加入到OBS服务类表中�
 InstallServiceAlreadyInstalled="串流服务'$1'已经安装好了.你想要卸载它么?"
 InstallServiceInstalled="这个串流服务已经安装好了.你可以在 设定 / 广播 设定中找到它"
 
+DiskFull="你的硬盘已经满了. 配置文件, 场景和源不能正确的被保存. 请释放一些硬盘空间."
+BadAppDataPermissions="OBS的配置文件夹不能写入, 任何改变的设置不会被保存.\r\n\r\n请检查防火墙, 反病毒软或其他安全软件, 确保他们没有阻止OBS, 而且AppData\\OBS文件夹的权限设置正确."
+
 ImportGlobalSourceNameExists="在当前的场景集合中已经存在全局源'$1'."
 ImportGlobalSources="导入全局源"
 

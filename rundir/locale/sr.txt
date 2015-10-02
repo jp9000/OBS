@@ -48,6 +48,7 @@ NoSourcesFound="Нисте додали ни један извор за сним
 
 
 
+
 BuildingMP4Dialog.Progress="Прављење MP4, молимо сачекајте..."
 
 Connection.CouldNotConnect="Не могу да се повежем на сервер"

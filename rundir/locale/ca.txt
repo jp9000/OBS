@@ -47,6 +47,7 @@ MessageBoxWarningCaption="Avís"
 
 
 
+
 BuildingMP4Dialog.Progress="Creant el fitxer MP4, espera si-us-plau..."
 
 Connection.CouldNotConnect="No s'ha pogut connectar al servidor"
