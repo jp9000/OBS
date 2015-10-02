@@ -81,8 +81,8 @@ extern TCHAR        lpAppDataPath[MAX_PATH];
 #define OBS_VERSION_SUFFIX ""
 #endif
 
-#define OBS_VERSION             0x006505 //version number is 0xMMmmtt (super-major.major.minor - hex)
-#define OBS_VERSION_STRING_RAW  "Open Broadcaster Software v0.655b"
+#define OBS_VERSION             0x006506 //version number is 0xMMmmtt (super-major.major.minor - hex)
+#define OBS_VERSION_STRING_RAW  "Open Broadcaster Software v0.656b"
 //#define OBS_TEST_BUILD          1 //define this if releasing a test build to disable the auto updater
 
 #define OBS_VERSION_STRING_ANSI OBS_VERSION_STRING_RAW OBS_VERSION_SUFFIX
