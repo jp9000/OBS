@@ -288,6 +288,10 @@ class TextOutputSource : public ImageSource
 
         if(strCurrentText.IsValid())
         {
+            // Apparently, \0 is not always a zero-width character?
+            // Not including it as part of the string measurement may cut off the final word
+            // on the line when using certain fonts together with outlines and wrapping.
+            INT strLength = strCurrentText.Length() + 1;
             if(bUseExtents && bWrap)
             {
                 layoutBox.X = layoutBox.Y = 0;
@@ -312,14 +316,14 @@ class TextOutputSource : public ImageSource
                 }
                 else
                 {
-                    stat = graphics->MeasureString(strCurrentText, -1, &font, layoutBox, &format, &boundingBox);
+                    stat = graphics->MeasureString(strCurrentText, strLength, &font, layoutBox, &format, &boundingBox);
                     if(stat != Gdiplus::Ok)
                         AppWarning(TEXT("TextSource::UpdateTexture: Gdiplus::Graphics::MeasureString failed: %u"), (int)stat);
                 }
             }
             else
             {
-                stat = graphics->MeasureString(strCurrentText, -1, &font, Gdiplus::PointF(0.0f, 0.0f), &format, &boundingBox);
+                stat = graphics->MeasureString(strCurrentText, strLength, &font, Gdiplus::PointF(0.0f, 0.0f), &format, &boundingBox);
                 if(stat != Gdiplus::Ok)
                     AppWarning(TEXT("TextSource::UpdateTexture: Gdiplus::Graphics::MeasureString failed: %u"), (int)stat);
                 if(bUseOutline)
