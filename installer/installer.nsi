@@ -100,9 +100,7 @@ Function PreReqCheck
 	GetDLLVersion "xinput9_1_0.dll" $R0 $R1
 	IfErrors xinputMissing xinputOK
 	xinputMissing:
-		MessageBox MB_YESNO|MB_ICONEXCLAMATION "Your system is missing XINPUT components (xinput_9_1_0.dll). This may happen if you are running on a Windows Server OS. Would you like to download the required files from a 3rd party website?" IDYES xinputtrue IDNO xinputfalse
-		xinputtrue:
-			ExecShell "open" "http://www.win2012workstation.com/xinput-and-xaudio-dlls/"
+		MessageBox MB_YESNO|MB_ICONEXCLAMATION "Your system is missing XINPUT components (xinput_9_1_0.dll). This may happen if you are running on a Windows Server OS. You may install OBS anyway, but it will not function correctly until you acquire the XINPUT components. Would you like to continue?" IDYES xinputOK IDNO xinputfalse
 		xinputfalse:
 		Quit
 	xinputOK:
