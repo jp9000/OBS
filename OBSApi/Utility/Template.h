@@ -19,6 +19,8 @@
 
 #pragma once
 
+#pragma warning(push)
+#pragma warning( disable : 4702 )
 template<typename T> class List
 {
 private:
@@ -470,7 +472,7 @@ public:
         return s;
     }
 };
-
+#pragma warning(pop)
 
 class BitList
 {
