@@ -54,7 +54,7 @@ services : {
     servers : {
       "Моscow"                : rtmp://msk.goodgame.ru:1940/live
     }
-	recommended : {
+    recommended : {
       "keyint" : 2000
       "profile" : "main"
       "ratecontrol" : "cbr"
