@@ -3593,7 +3593,25 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
                 case ID_FILE_EXIT:
                 case ID_EXIT:
-                    PostQuitMessage(0);
+                    if (App->bRunning)
+                    {
+                        if (App->bRecording)
+                        {
+                            if (OBSMessageBox(hwnd, Str("CloseRecordingWarning.Message"), Str("CloseRecordingWarning.Title"), MB_ICONQUESTION | MB_YESNO) == IDYES)
+                            {
+                                PostQuitMessage(0);
+                            }
+                        }
+                        else if (App->bStreaming)
+                        {
+                            if (OBSMessageBox(hwnd, Str("CloseStreamingWarning.Message"), Str("CloseStreamingWarning.Title"), MB_ICONQUESTION | MB_YESNO) == IDYES)
+                            {
+                                PostQuitMessage(0);
+                            }
+                        }
+                    }
+                    else
+                        PostQuitMessage(0);
                     break;
 
                 case ID_RECORDINGSFOLDER:
@@ -4503,7 +4521,25 @@ LRESULT CALLBACK OBS::OBSProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
             break;
 
         case WM_CLOSE:
-            PostQuitMessage(0);
+            if (App->bRunning)
+            {
+                if (App->bRecording)
+                {
+                    if (OBSMessageBox(hwnd, Str("CloseRecordingWarning.Message"), Str("CloseRecordingWarning.Title"), MB_ICONQUESTION | MB_YESNO) == IDYES)
+                    {
+                        PostQuitMessage(0);
+                    }
+                }
+                else if (App->bStreaming)
+                {
+                    if (OBSMessageBox(hwnd, Str("CloseStreamingWarning.Message"), Str("CloseStreamingWarning.Title"), MB_ICONQUESTION | MB_YESNO) == IDYES)
+                    {
+                        PostQuitMessage(0);
+                    }
+                }
+            }
+            else
+                PostQuitMessage(0);
             break;
 
         case WM_ENDSESSION:
