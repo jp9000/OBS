@@ -199,7 +199,7 @@ BOOL VerifyDigitalSignature(BYTE *buff, DWORD len, BYTE *signature, DWORD signat
     DWORD iPBLOBSize;
 
     // RSA BLOB info from X509 public key
-    PUBLICKEYHEADER *rsaPublicBLOB;
+    PUBLICKEYHEADER *rsaPublicBLOB = NULL;
     DWORD rsaPublicBLOBSize;
 
     // Handle to public key

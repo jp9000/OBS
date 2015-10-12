@@ -543,7 +543,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 data.mode = mode;
 
                 //--------------------------------------------
-                services.empty();
+                services.clear();
 
                 hwndTemp = GetDlgItem(hwnd, IDC_SERVICE);
                 int itemId = (int)SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)TEXT("Custom"));
