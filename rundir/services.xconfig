@@ -3,6 +3,7 @@ services : {
     id : 1
     servers : {
       "US West: San Francisco, CA"             : rtmp://live.twitch.tv/app
+      "Argentina"                              : rtmp://live-eze.twitch.tv/app
       "Asia: Hong Kong"                        : rtmp://live-hkg.twitch.tv/app
       "Asia: Hong Kong (2)"                    : rtmp://live-hkg-2.twitch.tv/app
       "Asia: Seoul, South Korea"               : rtmp://live-sel.twitch.tv/app
@@ -12,6 +13,7 @@ services : {
       "Asia: Tokyo (2), Japan"                 : rtmp://live-tyo-2.twitch.tv/app
       "Asia: Tokyo, Japan"                     : rtmp://live-tyo.twitch.tv/app
       "Australia: Sydney"                      : rtmp://live-syd.twitch.tv/app
+      "Chile"                                  : rtmp://live-scl.twitch.tv/app
       "EU: Amsterdam, NL"                      : rtmp://live-ams.twitch.tv/app
       "EU: Frankfurt, DE"                      : rtmp://live-fra.twitch.tv/app
       "EU: London, UK"                         : rtmp://live-lhr.twitch.tv/app
