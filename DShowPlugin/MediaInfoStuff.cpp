@@ -111,6 +111,8 @@ VideoOutputType GetVideoOutputType(const AM_MEDIA_TYPE &media_type)
             type = VideoOutputType_RGB32;
         else if(media_type.subtype == MEDIASUBTYPE_ARGB32)
             type = VideoOutputType_ARGB32;
+        else if(media_type.subtype == MEDIASUBTYPE_r210)
+            type = VideoOutputType_r210;
 
         // Planar YUV formats
         else if(media_type.subtype == MEDIASUBTYPE_I420)
@@ -163,6 +165,7 @@ const int inputPriority[] =
     6,
     7,
     7,
+    4,
 
     12,
     12,

@@ -18,6 +18,10 @@
 
 
 #include "DShowPlugin.h"
+#include "d3d10_1.h"
+#include "dxgi1_2.h"
+#include "../source/CodeTokenizer.h"
+#include "../source/D3D10System.h"
 
 struct ResSize
 {
@@ -56,7 +60,7 @@ DWORD STDCALL PackPlanarThread(ConvertData *data);
 // param argBufferTime - 100-nsec unit (same as REFERENCE_TIME)
 void ElgatoCheckBuffering(IBaseFilter* deviceFilter, bool& argUseBuffering, UINT& argBufferTime)
 {
-    const int elgatoMinBufferTime = 1 * 10000;	// 1 msec
+    const int elgatoMinBufferTime = 1 * 10000;    // 1 msec
 
     if (!argUseBuffering || argBufferTime < elgatoMinBufferTime)
     {
@@ -79,6 +83,101 @@ DeinterlacerConfig deinterlacerConfigs[DEINTERLACING_TYPE_LAST] = {
     {DEINTERLACING_YADIF2x,     FIELD_ORDER_TFF | FIELD_ORDER_BFF,  DEINTERLACING_PROCESSOR_GPU,                                true},
     {DEINTERLACING__DEBUG,      FIELD_ORDER_TFF | FIELD_ORDER_BFF,  DEINTERLACING_PROCESSOR_GPU},
 };
+
+class D3D10Texture2 : public Texture
+{
+    ID3D10Texture2D          *texture;
+    ID3D10ShaderResourceView *resource;
+
+    UINT width, height;
+    bool bDynamic;
+public:
+    ~D3D10Texture2() { SafeRelease(texture); SafeRelease(resource); };
+
+    virtual DWORD Width() const { return width; };
+    virtual DWORD Height() const { return height; };
+    virtual BOOL HasAlpha() const { return true; };
+    virtual void SetImage(void *lpData, GSImageFormat imageFormat, UINT pitch) {};
+    virtual bool Map(BYTE *&lpData, UINT &pitch);
+    virtual void Unmap() { texture->Unmap(0); };
+    virtual GSColorFormat GetFormat() const { return GS_UNKNOWNFORMAT; };
+
+    virtual bool GetDC(HDC &hDC) { return false; };
+    virtual void ReleaseDC() { };
+
+    LPVOID GetD3DTexture() { return texture; }
+    virtual HANDLE GetSharedHandle() { return NULL; };
+
+    static Texture* CreateTexture2(unsigned int width, unsigned int height, DXGI_FORMAT format, BOOL bStatic);
+};
+Texture* D3D10Texture2::CreateTexture2(unsigned int width, unsigned int height, DXGI_FORMAT format, BOOL bStatic)
+{
+    HRESULT err;
+
+    D3D10_TEXTURE2D_DESC td;
+    zero(&td, sizeof(td));
+    td.Width = width;
+    td.Height = height;
+    td.MipLevels = 1;
+    td.ArraySize = 1;
+    td.Format = format;
+    td.BindFlags = D3D10_BIND_SHADER_RESOURCE;
+    td.SampleDesc.Count = 1;
+    td.Usage = bStatic ? D3D10_USAGE_DEFAULT : D3D10_USAGE_DYNAMIC;
+    td.CPUAccessFlags = bStatic ? 0 : D3D10_CPU_ACCESS_WRITE;
+
+    D3D10_SUBRESOURCE_DATA *lpSRD = NULL;
+
+    ID3D10Texture2D *texVal;
+    if (FAILED(err = GetD3D()->CreateTexture2D(&td, lpSRD, &texVal)))
+    {
+        AppWarning(TEXT("D3D10Texture2::CreateTexture: CreateTexture2D failed, result = 0x%08lX"), err);
+        return NULL;
+    }
+
+    //------------------------------------------
+
+    D3D10_SHADER_RESOURCE_VIEW_DESC resourceDesc;
+    zero(&resourceDesc, sizeof(resourceDesc));
+    resourceDesc.Format = format;
+    resourceDesc.ViewDimension = D3D10_SRV_DIMENSION_TEXTURE2D;
+    resourceDesc.Texture2D.MipLevels = 1;
+
+    ID3D10ShaderResourceView *resource;
+    if (FAILED(err = GetD3D()->CreateShaderResourceView(texVal, &resourceDesc, &resource)))
+    {
+        SafeRelease(texVal);
+        AppWarning(TEXT("D3D10Texture2::CreateTexture: CreateShaderResourceView failed, result = 0x%08lX"), err);
+        return NULL;
+    }
+
+    //------------------------------------------
+
+    D3D10Texture2 *newTex = new D3D10Texture2;
+    newTex->resource = resource;
+    newTex->texture = texVal;
+    newTex->bDynamic = !bStatic;
+    newTex->width = width;
+    newTex->height = height;
+
+    return newTex;
+}
+bool D3D10Texture2::Map(BYTE *&lpData, UINT &pitch)
+{
+    HRESULT err;
+    D3D10_MAPPED_TEXTURE2D map;
+
+    if (FAILED(err = texture->Map(0, D3D10_MAP_WRITE_DISCARD, 0, &map)))
+    {
+        AppWarning(TEXT("D3D10Texture2::Map: map failed, result = %08lX"), err);
+        return false;
+    }
+
+    lpData = (BYTE*)map.pData;
+    pitch = map.RowPitch;
+
+    return true;
+}
 
 bool DeviceSource::Init(XElement *data)
 {
@@ -148,10 +247,10 @@ DeviceSource::~DeviceSource()
 
 String DeviceSource::ChooseShader()
 {
-    if(colorType == DeviceOutputType_RGB && !bUseChromaKey)
+    if((colorType == DeviceOutputType_RGB) && !bUseChromaKey)
         return String();
 
-    String strShader;
+     String strShader;
     strShader << SHADER_PATH;
 
     if(bUseChromaKey)
@@ -161,14 +260,10 @@ String DeviceSource::ChooseShader()
         strShader << TEXT("YUVToRGB.pShader");
     else if(colorType == DeviceOutputType_YV12)
         strShader << TEXT("YVUToRGB.pShader");
-    else if(colorType == DeviceOutputType_YVYU)
-        strShader << TEXT("YVXUToRGB.pShader");
-    else if(colorType == DeviceOutputType_YUY2)
-        strShader << TEXT("YUXVToRGB.pShader");
-    else if(colorType == DeviceOutputType_UYVY)
+    else if(colorType == DeviceOutputType_YVYU || colorType == DeviceOutputType_YUY2 || colorType == DeviceOutputType_UYVY || colorType == DeviceOutputType_HDYC)
         strShader << TEXT("UYVToRGB.pShader");
-    else if(colorType == DeviceOutputType_HDYC)
-        strShader << TEXT("HDYCToRGB.pShader");
+    else if(colorType == DeviceOutputType_r210)
+        strShader << TEXT("r210.pShader");
     else
         strShader << TEXT("RGB.pShader");
 
@@ -554,7 +649,7 @@ bool DeviceSource::LoadFilters()
             bestOutput->bUsingFourCC ? TEXT("true") : TEXT("false"),
             bestOutput->minCX, bestOutput->minCY, bestOutput->maxCX, bestOutput->maxCY,
             bestOutput->minFrameInterval, bestOutput->maxFrameInterval,
-	    bUseBuffering ? L"true" : L"false", bufferTime);
+        bUseBuffering ? L"true" : L"false", bufferTime);
 
         BITMAPINFOHEADER *bmiHeader = GetVideoBMIHeader(bestOutput->mediaType);
 
@@ -594,6 +689,8 @@ bool DeviceSource::LoadFilters()
         colorType = DeviceOutputType_HDYC;
         use709 = true;
     }
+    else if(bestOutput->videoType == VideoOutputType_r210)
+        colorType = DeviceOutputType_r210;
     else
     {
         colorType = DeviceOutputType_RGB;
@@ -604,7 +701,7 @@ bool DeviceSource::LoadFilters()
     if(strShader.IsValid())
         colorConvertShader = CreatePixelShaderFromFile(strShader);
 
-    if(colorType != DeviceOutputType_RGB && !colorConvertShader)
+    if((colorType != DeviceOutputType_RGB && colorType != DeviceOutputType_r210) && !colorConvertShader)
     {
         AppWarning(TEXT("DShowPlugin: Could not create color space conversion pixel shader"));
         goto cleanFinish;
@@ -616,6 +713,10 @@ bool DeviceSource::LoadFilters()
     keyBaseColor = Color4().MakeFromRGBA(keyColor);
     Matrix4x4TransformVect(keyChroma, (colorType == DeviceOutputType_HDYC || colorType == DeviceOutputType_RGB) ? (float*)yuv709Mat : (float*)yuvMat, keyBaseColor);
     keyChroma *= 2.0f;
+    if (colorType == DeviceOutputType_YVYU)
+    {
+        float a = keyChroma.y; keyChroma.y = keyChroma.z; keyChroma.z = a;
+    }
 
     //------------------------------------------------
     // configure video pin
@@ -987,8 +1088,8 @@ cleanFinish:
 
     // Updated check to ensure that the source actually turns red instead of
     // screwing up the size when SetFormat fails.
-    if (renderCX <= 0 || renderCX >= 8192) { newCX = renderCX = 32; imageCX = renderCX; }
-    if (renderCY <= 0 || renderCY >= 8192) { newCY = renderCY = 32; imageCY = renderCY; }
+    if (renderCX <= 0 || renderCX > 65536) { newCX = renderCX = 32; imageCX = renderCX; }
+    if (renderCY <= 0 || renderCY > 65536) { newCY = renderCY = 32; imageCY = renderCY; }
 
     ChangeSize(bSucceeded, true);
 
@@ -1303,6 +1404,7 @@ void DeviceSource::ChangeSize(bool bSucceeded, bool bForce)
 
     switch(colorType) {
     case DeviceOutputType_RGB:
+    case DeviceOutputType_r210:
         lineSize = renderCX * 4;
         break;
     case DeviceOutputType_I420:
@@ -1421,9 +1523,32 @@ void DeviceSource::ChangeSize(bool bSucceeded, bool bForce)
     else //if we're working with planar YUV, we can just use regular RGB textures instead
     {
         msetd(textureData, 0xFF0000FF, renderCX*renderCY*4);
-        texture = CreateTexture(renderCX, renderCY, GS_RGB, textureData, FALSE, FALSE);
-        if(bSucceeded && deinterlacer.needsPreviousFrame)
-            previousTexture = CreateTexture(renderCX, renderCY, GS_RGB, textureData, FALSE, FALSE);
+        BOOL statictexture = false;
+        if (colorType == DeviceOutputType_YVYU || colorType == DeviceOutputType_YUY2 || colorType == DeviceOutputType_UYVY || colorType == DeviceOutputType_HDYC || colorType == DeviceOutputType_r210)
+        {
+            DXGI_FORMAT format;
+            if (colorType == DeviceOutputType_r210){
+                statictexture = false;
+                format = DXGI_FORMAT_R10G10B10A2_UNORM;
+            }else if (colorType == DeviceOutputType_YVYU || colorType == DeviceOutputType_YUY2){
+                statictexture = true;
+                format = DXGI_FORMAT_G8R8_G8B8_UNORM;
+            }
+            else /*if (colorType == DeviceOutputType_UYVY || colorType == DeviceOutputType_HDYC)*/{
+                statictexture = true;
+                format = DXGI_FORMAT_R8G8_B8G8_UNORM;
+            }
+
+            texture = D3D10Texture2::CreateTexture2(renderCX, renderCY, format, statictexture);
+            if (bSucceeded && deinterlacer.needsPreviousFrame)
+                previousTexture = D3D10Texture2::CreateTexture2(renderCX, renderCY, format, statictexture);
+        }
+        else
+        {
+            texture = CreateTexture(renderCX, renderCY, GS_RGB, textureData, FALSE, statictexture);
+            if (bSucceeded && deinterlacer.needsPreviousFrame)
+                previousTexture = CreateTexture(renderCX, renderCY, GS_RGB, textureData, FALSE, statictexture);
+        }
         if(bSucceeded && deinterlacer.processor == DEINTERLACING_PROCESSOR_GPU)
             deinterlacer.texture.reset(CreateRenderTarget(deinterlacer.imageCX, deinterlacer.imageCY, GS_BGRA, FALSE));
     }
@@ -1640,35 +1765,45 @@ void DeviceSource::Preprocess()
                 bReadyToDraw = true;
             }
         }
-        else if(colorType == DeviceOutputType_YVYU || colorType == DeviceOutputType_YUY2)
+        else if(colorType == DeviceOutputType_YVYU || colorType == DeviceOutputType_YUY2
+            || colorType == DeviceOutputType_UYVY || colorType == DeviceOutputType_HDYC)
         {
-            LPBYTE lpData;
-            UINT pitch;
 
             ChangeSize();
 
-            if(texture->Map(lpData, pitch))
-            {
-                Convert422To444(lpData, lastSample->lpData, pitch, true);
-                texture->Unmap();
-            }
+            //// AMD Radeon HD 7350 have texture corruption problem with dynamic texture map/unmap DXGI_FORMAT_R8G8_B8G8_UNORM
+            //LPBYTE lpData;
+            //UINT pitch;
+            //if(texture->Map(lpData, pitch))
+            //{
+                //Convert422To444(lpData, lastSample->lpData, pitch, true);
+                //for (UINT y = 0; y < renderCY; y++)
+                //    memcpy(&lpData[y*pitch], &lastSample->lpData[y*linePitch], renderCX * 2);
+                //texture->Unmap();
+            //}
+
+            ID3D10Texture2D *texture1 = (ID3D10Texture2D*)((D3D10Texture*)texture)->GetD3DTexture();
+            GetD3D()->UpdateSubresource(texture1, 0, NULL, lastSample->lpData, linePitch, linePitch);
 
             bReadyToDraw = true;
         }
-        else if(colorType == DeviceOutputType_UYVY || colorType == DeviceOutputType_HDYC)
+        else if(colorType == DeviceOutputType_r210)
         {
+            ChangeSize();
             LPBYTE lpData;
             UINT pitch;
-
-            ChangeSize();
-
             if(texture->Map(lpData, pitch))
             {
-                Convert422To444(lpData, lastSample->lpData, pitch, false);
+                for(UINT y = 0; y < renderCY; y++)
+                {
+                    UINT *out = (UINT*)(&lpData[y*pitch]);
+                    UINT *in = (UINT*)(&lastSample->lpData[y*linePitch]);
+                    for(UINT x = 0; x < renderCX; x++)
+                        out[x] = _byteswap_ulong(in[x]);
+                }
                 texture->Unmap();
+                bReadyToDraw = true;
             }
-
-            bReadyToDraw = true;
         }
 
         lastSample->Release();
@@ -1747,7 +1882,15 @@ void DeviceSource::Render(const Vect2 &pos, const Vect2 &size)
             else
                 memcpy(mat, yuvToRGB601[fullRange ? 1 : 0], sizeof(float) * 16);
 
-            colorConvertShader->SetValue  (colorConvertShader->GetParameterByName(TEXT("yuvMat")), mat, sizeof(float) * 16);
+            if (colorType == DeviceOutputType_YVYU)
+            {
+                float a = mat[1]; mat[1] = mat[2]; mat[2] = a;
+                a = mat[5]; mat[5] = mat[6]; mat[6] = a;
+                a = mat[9]; mat[9] = mat[10]; mat[10] = a;
+                a = mat[13]; mat[13] = mat[14]; mat[14] = a;
+            }
+
+            colorConvertShader->SetValue(colorConvertShader->GetParameterByName(TEXT("yuvMat")), mat, sizeof(float) * 16);
         }
         else {
             if(fGamma != 1.0f && bFiltersLoaded) {
@@ -1919,6 +2062,10 @@ void DeviceSource::SetInt(CTSTR lpName, int iVal)
             keyBaseColor = Color4().MakeFromRGBA(keyColor);
             Matrix4x4TransformVect(keyChroma, (colorType == DeviceOutputType_HDYC || colorType == DeviceOutputType_RGB) ? (float*)yuv709Mat : (float*)yuvMat, keyBaseColor);
             keyChroma *= 2.0f;
+            if (colorType == DeviceOutputType_YVYU)
+            {
+                float a = keyChroma.y; keyChroma.y = keyChroma.z; keyChroma.z = a;
+            }
 
             if(keyBaseColor.x < keyBaseColor.y && keyBaseColor.x < keyBaseColor.z)
                 keyBaseColor -= keyBaseColor.x;
