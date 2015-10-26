@@ -1522,19 +1522,21 @@ void DeviceSource::ChangeSize(bool bSucceeded, bool bForce)
     }
     else //if we're working with planar YUV, we can just use regular RGB textures instead
     {
-        msetd(textureData, 0xFF0000FF, renderCX*renderCY*4);
         BOOL statictexture = false;
         if (colorType == DeviceOutputType_YVYU || colorType == DeviceOutputType_YUY2 || colorType == DeviceOutputType_UYVY || colorType == DeviceOutputType_HDYC || colorType == DeviceOutputType_r210)
         {
             DXGI_FORMAT format;
             if (colorType == DeviceOutputType_r210){
+                msetd(textureData, 0x000000FF, renderCX*renderCY*4);
                 statictexture = false;
                 format = DXGI_FORMAT_R10G10B10A2_UNORM;
             }else if (colorType == DeviceOutputType_YVYU || colorType == DeviceOutputType_YUY2){
+                msetd(textureData, (colorType == DeviceOutputType_YVYU) ? 0x0000FF00 : 0xFF000000, renderCX*renderCY*2);
                 statictexture = true;
                 format = DXGI_FORMAT_G8R8_G8B8_UNORM;
             }
             else /*if (colorType == DeviceOutputType_UYVY || colorType == DeviceOutputType_HDYC)*/{
+                msetd(textureData, 0x00FF0000, renderCX*renderCY*2);
                 statictexture = true;
                 format = DXGI_FORMAT_R8G8_B8G8_UNORM;
             }
@@ -1542,9 +1544,13 @@ void DeviceSource::ChangeSize(bool bSucceeded, bool bForce)
             texture = D3D10Texture2::CreateTexture2(renderCX, renderCY, format, statictexture);
             if (bSucceeded && deinterlacer.needsPreviousFrame)
                 previousTexture = D3D10Texture2::CreateTexture2(renderCX, renderCY, format, statictexture);
+
+			ID3D10Texture2D *texture1 = (ID3D10Texture2D*)((D3D10Texture*)texture)->GetD3DTexture();
+            GetD3D()->UpdateSubresource(texture1, 0, NULL, textureData, 0, 0);
         }
         else
         {
+            msetd(textureData, 0xFF0000FF, renderCX*renderCY*4);
             texture = CreateTexture(renderCX, renderCY, GS_RGB, textureData, FALSE, statictexture);
             if (bSucceeded && deinterlacer.needsPreviousFrame)
                 previousTexture = CreateTexture(renderCX, renderCY, GS_RGB, textureData, FALSE, statictexture);
