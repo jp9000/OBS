@@ -18,6 +18,8 @@ services : {
       "EU: Paris, FR"                          : rtmp://live-cdg.twitch.tv/app
       "EU: Prague, CZ"                         : rtmp://live-prg.twitch.tv/app
       "EU: Stockholm, SE"                      : rtmp://live-arn.twitch.tv/app
+      "South America: Argentina"               : rtmp://live-eze.twitch.tv/app
+      "South America: Chile"                   : rtmp://live-scl.twitch.tv/app
       "South America: Rio de Janeiro, Brazil"  : rtmp://live-gig.twitch.tv/app
       "South America: Sao Paulo, Brazil"       : rtmp://live-gru.twitch.tv/app
       "US Central: Dallas, TX"                 : rtmp://live-dfw.twitch.tv/app
@@ -46,13 +48,21 @@ services : {
       "US: San Jose, CA"      : rtmp://live-sjc.vaughnsoft.net:443/live
       "US: New York, NY"      : rtmp://live-nyc.vaughnsoft.net:443/live
       "US: New York 2, NY"    : rtmp://live-nyc2.vaughnsoft.net:443/live
-      "EU: Amsterdam, NL"     : rtmp://live-nl.vaughnsoft.net:443/live
     }
   }
   GoodGame.ru : {
     id : 5
     servers : {
       "Моscow"                : rtmp://msk.goodgame.ru:1940/live
+    }
+    recommended : {
+      "keyint" : 2000
+      "profile" : "main"
+      "ratecontrol" : "cbr"
+      "max bitrate" : 3500
+      "max audio bitrate aac" : 192
+      "max audio bitrate mp3" : 128
+      "video aspect ratio" : "16:9"
     }
   }
   Dailymotion / Dailymotion Games : {
