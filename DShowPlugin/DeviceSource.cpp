@@ -260,7 +260,7 @@ String DeviceSource::ChooseShader()
         strShader << TEXT("YUVToRGB.pShader");
     else if(colorType == DeviceOutputType_YV12)
         strShader << TEXT("YVUToRGB.pShader");
-    else if(colorType == DeviceOutputType_YVYU || colorType == DeviceOutputType_YUY2 || colorType == DeviceOutputType_UYVY || colorType == DeviceOutputType_HDYC)
+    else if(colorType == DeviceOutputType_YVYU || colorType == DeviceOutputType_YUY2 || colorType == DeviceOutputType_UYVY || colorType == DeviceOutputType_HDYC || colorType == DeviceOutputType_v210)
         strShader << TEXT("UYVToRGB.pShader");
     else if(colorType == DeviceOutputType_r210)
         strShader << TEXT("r210.pShader");
@@ -691,6 +691,8 @@ bool DeviceSource::LoadFilters()
     }
     else if(bestOutput->videoType == VideoOutputType_r210)
         colorType = DeviceOutputType_r210;
+    else if(bestOutput->videoType == VideoOutputType_v210)
+        colorType = DeviceOutputType_v210;
     else
     {
         colorType = DeviceOutputType_RGB;
@@ -1404,8 +1406,13 @@ void DeviceSource::ChangeSize(bool bSucceeded, bool bForce)
 
     switch(colorType) {
     case DeviceOutputType_RGB:
+        lineSize = (renderCX * 4);
+        break;
     case DeviceOutputType_r210:
-        lineSize = renderCX * 4;
+        lineSize = ((renderCX + 63) / 64) * 256;
+        break;
+    case DeviceOutputType_v210:
+        lineSize = ((renderCX + 47) / 48) * 128;
         break;
     case DeviceOutputType_I420:
     case DeviceOutputType_YV12:
@@ -1523,10 +1530,10 @@ void DeviceSource::ChangeSize(bool bSucceeded, bool bForce)
     else //if we're working with planar YUV, we can just use regular RGB textures instead
     {
         BOOL statictexture = false;
-        if (colorType == DeviceOutputType_YVYU || colorType == DeviceOutputType_YUY2 || colorType == DeviceOutputType_UYVY || colorType == DeviceOutputType_HDYC || colorType == DeviceOutputType_r210)
+        if (colorType == DeviceOutputType_YVYU || colorType == DeviceOutputType_YUY2 || colorType == DeviceOutputType_UYVY || colorType == DeviceOutputType_HDYC || colorType == DeviceOutputType_r210 || colorType == DeviceOutputType_v210)
         {
             DXGI_FORMAT format;
-            if (colorType == DeviceOutputType_r210){
+            if (colorType == DeviceOutputType_r210 || colorType == DeviceOutputType_v210){
                 msetd(textureData, 0x000000FF, renderCX*renderCY*4);
                 statictexture = false;
                 format = DXGI_FORMAT_R10G10B10A2_UNORM;
@@ -1778,6 +1785,7 @@ void DeviceSource::Preprocess()
             ChangeSize();
 
             //// AMD Radeon HD 7350 have texture corruption problem with dynamic texture map/unmap DXGI_FORMAT_R8G8_B8G8_UNORM
+			// for intel HD graphics 2000, UpdateSubresource runs faster then lock + memcpy + unlock?
             //LPBYTE lpData;
             //UINT pitch;
             //if(texture->Map(lpData, pitch))
@@ -1789,7 +1797,7 @@ void DeviceSource::Preprocess()
             //}
 
             ID3D10Texture2D *texture1 = (ID3D10Texture2D*)((D3D10Texture*)texture)->GetD3DTexture();
-            GetD3D()->UpdateSubresource(texture1, 0, NULL, lastSample->lpData, linePitch, linePitch);
+            GetD3D()->UpdateSubresource(texture1, 0, NULL, lastSample->lpData, linePitch, linePitch); // needs statictexture = true to work
 
             bReadyToDraw = true;
         }
@@ -1806,6 +1814,64 @@ void DeviceSource::Preprocess()
                     UINT *in = (UINT*)(&lastSample->lpData[y*linePitch]);
                     for(UINT x = 0; x < renderCX; x++)
                         out[x] = _byteswap_ulong(in[x]);
+                }
+                texture->Unmap();
+                bReadyToDraw = true;
+            }
+        }
+        else if(colorType == DeviceOutputType_v210)
+        {
+            ChangeSize();
+            LPBYTE lpData;
+            UINT pitch;
+            if(texture->Map(lpData, pitch))
+            {
+                for(UINT y = 0; y < renderCY; y++)
+                {
+                    UINT *out = (UINT*)(&lpData[y*pitch]);
+                    UINT *in = (UINT*)(&lastSample->lpData[y*linePitch]);
+					UINT x = 0;
+                    while(x+5 < renderCX)
+					{
+						UINT in1 = in[0];
+						UINT in2 = in[1];
+						UINT in3 = in[2];
+						UINT in4 = in[3];
+						in += 4;
+                        out[x] = in1;
+						out[x+1] = (in1 & 0xFFF003FF) | ((in2 << 10) & 0x000FFC00);
+						out[x+2] = ((in2 >> 10) & 0x000FFFFF) | (in3 << 20);
+						out[x+3] = ((in2 >> 10) & 0x000003FF) | (in3 << 20) | (in3 & 0x000FFC00);
+						out[x+4] = (in3 >> 20) | (in4 << 10);
+						out[x+5] = (in3 >> 20) | ((in4 << 10) & 0x3FF00000) | ((in4 >> 10) & 0xFFC00);
+						x += 6;
+					}
+                    if(x < renderCX)
+					{
+						UINT in1 = in[0];
+                        out[x] = in1;
+						if(x+1 < renderCX)
+						{
+							UINT in2 = in[1];
+							out[x+1] = (in1 & 0xFFF003FF) | ((in2 << 10) & 0x000FFC00);
+							if(x+2 < renderCX)
+							{
+								UINT in3 = in[2];
+								out[x+2] = ((in2 >> 10) & 0x000FFFFF) | (in3 << 20);
+								if(x+3 < renderCX)
+								{
+									out[x+3] = ((in2 >> 10) & 0x000003FF) | (in3 << 20) | (in3 & 0x000FFC00);
+									if(x+4 < renderCX)
+									{
+										UINT in4 = in[3];
+										out[x+4] = (in3 >> 20) | (in4 << 10);
+										if(x+5 < renderCX)
+											out[x+5] = (in3 >> 20) | ((in4 << 10) & 0x3FF00000) | ((in4 >> 10) & 0xFFC00);
+									}
+								}
+							}
+						}
+					}
                 }
                 texture->Unmap();
                 bReadyToDraw = true;
@@ -2066,7 +2132,7 @@ void DeviceSource::SetInt(CTSTR lpName, int iVal)
             keyColor = (DWORD)iVal;
 
             keyBaseColor = Color4().MakeFromRGBA(keyColor);
-            Matrix4x4TransformVect(keyChroma, (colorType == DeviceOutputType_HDYC || colorType == DeviceOutputType_RGB) ? (float*)yuv709Mat : (float*)yuvMat, keyBaseColor);
+            Matrix4x4TransformVect(keyChroma, (colorType == DeviceOutputType_HDYC || colorType == DeviceOutputType_RGB || colorType == DeviceOutputType_r210) ? (float*)yuv709Mat : (float*)yuvMat, keyBaseColor);
             keyChroma *= 2.0f;
             if (colorType == DeviceOutputType_YVYU)
             {
