@@ -26,6 +26,8 @@ void PackPlanar(LPBYTE convertBuffer, LPBYTE lpPlanar, UINT renderCX, UINT rende
 enum DeviceColorType
 {
     DeviceOutputType_RGB,
+    DeviceOutputType_r210,
+    DeviceOutputType_v210,
 
     //planar 4:2:0
     DeviceOutputType_I420,

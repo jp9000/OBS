@@ -34,6 +34,8 @@ inline void DeleteMediaType(AM_MEDIA_TYPE *pmt)
 
 
 const GUID MEDIASUBTYPE_I420 = {0x30323449, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
+const GUID MEDIASUBTYPE_r210 = {0x30313272, 0x0000, 0x0010, { 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
+const GUID MEDIASUBTYPE_v210 = {'012v', 0x0000, 0x0010, { 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
 
 enum VideoOutputType
 {
@@ -41,6 +43,8 @@ enum VideoOutputType
     VideoOutputType_RGB24,
     VideoOutputType_RGB32,
     VideoOutputType_ARGB32,
+    VideoOutputType_r210,
+    VideoOutputType_v210,
 
     VideoOutputType_I420,
     VideoOutputType_YV12,
@@ -69,6 +73,8 @@ static const CTSTR EnumToName[] =
     TEXT("RGB24"),
     TEXT("RGB32"),
     TEXT("RGBA32"),
+    TEXT("r210"),
+    TEXT("v210"),
 
     TEXT("I420"),
     TEXT("YV12"),
