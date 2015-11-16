@@ -50,6 +50,8 @@ InstallServiceConfirm="방송 서비스 '$1'를 OBS 목록에 추가하겠습니
 InstallServiceAlreadyInstalled="방송 서비스 '$1'가 이미 설치되어 있습니다. 제거하겠습니까?"
 InstallServiceInstalled="방송 서비스 '$1'가 설치되었습니다. 설정 / 방송 설정 탭에서 확인할 수 있습니다."
 
+DiskFull="디스크가 꽉 찼습니다. 설정 파일, 장면 및 소스가 정상적으로 저장되지 않을 것입니다. 여유 공간을 확보하십시오."
+BadAppDataPermissions="OBS 설정 폴더에 쓰기가 금지되어 있습니다. 어떠한 설정 변경도 저장되지 않을 것입니다.\r\n\r\n방화벽, 백신 혹은 기타 보안 소프트웨어를 확인하여, OBS가 AppData\\OBS 폴더에 접근할 수 있도록 허용하십시오."
 
 ImportGlobalSourceNameExists="전역 소스 '$1'은 현재 장면 모음에 이미 존재하고 있습니다."
 ImportGlobalSources="전역 소스 가져오기"
@@ -550,4 +552,6 @@ Plugins.NoiseGate.AttackTime="어택 타임 (밀리세컨드):"
 Plugins.NoiseGate.HoldTime="홀드 타임 (밀리세컨드):"
 Plugins.NoiseGate.ReleaseTime="릴리즈 타임 (밀리세컨드):"
 
+CloseWhileActiveWarning.Title="OBS가 현재 작동 중입니다."
+CloseWhileActiveWarning.Message="OBS가 현재 작동 중입니다. 작업을 중단하고 종료하시겠습니까?"
 

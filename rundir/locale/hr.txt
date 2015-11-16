@@ -1,6 +1,8 @@
 RightToLeft="false"
 
 Add="Dodaj"
+AddFile="Dodaj datoteku"
+AddFolder="Dodaj mapu"
 Preview="Pregled"
 Order="Red"
 Apply="Primjeni"
@@ -44,7 +46,12 @@ StreamReport="Izvještaj stream-a"
 MessageBoxWarningCaption="Upozorenje"
 NoSourcesFound="Niste dodali nikakve izvore, Jeste li sigurni da želite streamati crni ekran?"
 StreamClosePending="Stream ili ispis u datoteku nije završen, zatvaranje OBS-a može uzrokovati prijevremeni kraj stream-a ili koruptiranje datoteke. Želite li pričekati još 15 sekundi?"
+InstallServiceConfirm="Želite li dodati streaming uslugu '$1' na popis usluga OBS-a?"
+InstallServiceAlreadyInstalled="Streaming usluga '$1' već je instalirana. Želite li je deinstalirati?"
+InstallServiceInstalled="Streaming usluga je instalirana. Možete je pronaći pod Postavke / Postavke emitiranja."
 
+DiskFull="Disk je pun. Konfiguracijske datoteke, scene i izvori se neće moći ispravno spremiti. Molimo Vas oslobodite nešto prostora na disku."
+BadAppDataPermissions="U OBS mapu s konfiguracijskim datotekama nije moguće pisati, bilo koje postavke koje promjenite neće biti spremljene.\r\n\r\nProvjerite da firewall, antivirus ili nešto slično ne spriječava OBS da piše u AppData\\OBS folder."
 
 ImportGlobalSourceNameExists="Globalni izvor '$1' već postoji u trenutnoj kolekciji scena."
 ImportGlobalSources="Uvezi globalne izvore"
@@ -545,4 +552,6 @@ Plugins.NoiseGate.AttackTime="Vrijeme napada (u milisekundama):"
 Plugins.NoiseGate.HoldTime="Vrijeme zadržavanja (u milisekundama):"
 Plugins.NoiseGate.ReleaseTime="Vrijeme puštanje (u milisekundama):"
 
+CloseWhileActiveWarning.Title="OBS je trenutačno aktivan."
+CloseWhileActiveWarning.Message="OBS je trenutačno aktivan. Želite li zaustaviti i izaći iz OBS-a?"
 

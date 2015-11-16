@@ -50,6 +50,8 @@ InstallServiceConfirm="האם ברצונך להוסיף את שירות ההזר
 InstallServiceAlreadyInstalled="שירות ההזרמה '$1' כבר מותקן. האם ברצונך להסירו?"
 InstallServiceInstalled="שירות הזרמה הותקן בהצלחה. באפשרותך למצוא אותו תחת הגדרות / הגדרות שידור."
 
+DiskFull="הכונן שלך מלא. לא יהיה ניתן לשמור כראוי קבצי הגדרות, סצינות ומקורות. עליך לפנות מקום פנוי בדיסק."
+BadAppDataPermissions="לא ניתן לכתוב לתיקיית ההגדרות של OBS. כל שינויי ההגדרות לא יישמרו.\r\n\r\nבדוק שאין חומת-אש, אנטי-וירוס או תוכנת אבטחה אחרת שחוסמת את OBS ושההרשאות בתיקית AppData\OBS מוגדרות כראוי."
 
 ImportGlobalSourceNameExists="המקור הגלובלי '$1' כבר קיים באוסף הסצינות הנוכחי."
 ImportGlobalSources="יבא מקורות גלובליים"
@@ -550,4 +552,6 @@ Plugins.NoiseGate.AttackTime="פרק זמן ל'התקפה' (אלפיות השנ�
 Plugins.NoiseGate.HoldTime="פרק זמן להחזקה (אלפיות השניה)"
 Plugins.NoiseGate.ReleaseTime="פרק זמן לשחרור (אלפיות השניה)"
 
+CloseWhileActiveWarning.Title="OBS פעיל כעת."
+CloseWhileActiveWarning.Message="OBS פעיל כעת. האם ברצונך לעצור ולצאת מ OBS?"
 

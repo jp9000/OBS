@@ -552,4 +552,6 @@ Plugins.NoiseGate.AttackTime="Czas ataku (milisekundy):"
 Plugins.NoiseGate.HoldTime="Czas wstrzymania (milisekundy):"
 Plugins.NoiseGate.ReleaseTime="Czas zwolnienia (milisekundy):"
 
+CloseWhileActiveWarning.Title="OBS jest obecnie włączony."
+CloseWhileActiveWarning.Message="OBS jest obecnie włączony. Czy chcesz go zatrzymać i wyjść z programu?"
 

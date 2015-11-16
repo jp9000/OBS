@@ -50,6 +50,8 @@ InstallServiceConfirm="Quer adicionar o serviço de streaming '$1' para a lista 
 InstallServiceAlreadyInstalled="O serviço de streaming '$1' já está instalado. Gostaria de desinstalá-lo?"
 InstallServiceInstalled="O serviço de streaming ja foi instalado. Você pode encontrá-lo em Configurações / Configurações de Broadcast."
 
+DiskFull="Seu disco está cheio. Não será possível salvar arquivos de configurações, cenários e fontes. Por favor, libere algum espaço em disco."
+BadAppDataPermissions="A pasta de configuração do OBS não é gravável, quaisquer configurações alteradas não será salva.\r\n\r\nTenha certeza que seu firewall, antivírus ou outro software de segurança não esteja bloqueando OBS e que as permissões na pasta AppData\\OBS estejam definidas corretamente."
 
 ImportGlobalSourceNameExists="A fonte global '$1' já existe na cena atual."
 ImportGlobalSources="Importar Fontes Globais"
@@ -550,4 +552,6 @@ Plugins.NoiseGate.AttackTime="Tempo de ataque (milissegundos):"
 Plugins.NoiseGate.HoldTime="Tempo de espera (milissegundos):"
 Plugins.NoiseGate.ReleaseTime="Tempo de liberação (milissegundos):"
 
+CloseWhileActiveWarning.Title="OBS está ativo num momento."
+CloseWhileActiveWarning.Message="OBS está ativo no momento. Você deseja parar e sair do OBS?"
 

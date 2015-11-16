@@ -1,5 +1,8 @@
+RightToLeft="false"
 
 Add="Engadir"
+AddFile="Engadir ficheiro"
+AddFolder="Engadir cartafol"
 Preview="Vista previa"
 Order="Orde"
 Apply="Aplicar"
@@ -28,6 +31,7 @@ MoveUp="Mover arriba"
 NameExists="'$1' xa existe. Escribe un nome diferente"
 None="Ningún"
 OK="Aceptar"
+Optimize="Optimizar"
 Plugins="Plugins..."
 Reconnecting="Reconectando..."
 Refresh="Actualizar"
@@ -41,7 +45,9 @@ StreamReport="Informe da transmisión"
 
 
 
+CopyTo="Copiar a"
 
+ImportProfileReplaceWarning.Title="Importar perfil"
 
 
 BuildingMP4Dialog.Progress="Creando MP4, agarda..."
@@ -71,7 +77,10 @@ Listbox.Positioning="Posición/Tamaño"
 Listbox.ResetSize="Tamaño por defecto"
 Listbox.SetHotkey="Definir tecla rápida"
 ListBox.ResetCrop="Recorte por defecto"
+Listbox.ImportButton="Importar"
 
+MainMenu.SceneCollection.Import="&Importar"
+MainMenu.SceneCollection.Export="&Exportar"
 
 MainMenu.File="&Arquivo"
 MainMenu.Help="&Axuda"
@@ -137,6 +146,8 @@ Settings.SaveChangesTitle="Gardar axustes?"
 Settings.Video="Vídeo"
 
 
+Settings.Hotkeys.Audio="Audio"
+Settings.Hotkeys.Publish="Transmisión"
 
 Settings.Advanced.AllowOtherHotkeyModifiers="Permitir outros modificadores nas teclas rápidas"
 Settings.Advanced.BindToIP="Empregar só esta interface:"
@@ -181,7 +192,9 @@ Settings.Encoding.Video="Codificación de vídeo"
 Settings.Encoding.Audio.Bitrate="Bitrate:"
 Settings.Encoding.Audio.Codec="Códec:"
 Settings.Encoding.Audio.Format="Formato:"
+Settings.Encoding.Audio.Channel="Canle:"
 
+Settings.Encoding.Video.Encoder="Codificador:"
 Settings.Encoding.Video.BufferSize="Tamaño de buffer (kbit/s):"
 Settings.Encoding.Video.BufferSizeTooltip="O tamaño de buffer determina canta información se almacena, este valor afecta particularmente ás escenas con movementos rápidos. Se tes dudas sobre este valor, ponlle o mesmo que para o bitrate. Consulta a axuda para mais detalles."
 Settings.Encoding.Video.CustomBuffer="Usar tamaño de buffer personalizado"

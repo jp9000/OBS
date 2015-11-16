@@ -552,4 +552,6 @@ Plugins.NoiseGate.AttackTime="Attack-tijd (milliseconden):"
 Plugins.NoiseGate.HoldTime="Hold-tijd (milliseconden):"
 Plugins.NoiseGate.ReleaseTime="Release-tijd (milliseconden):"
 
+CloseWhileActiveWarning.Title="OBS is momenteel actief."
+CloseWhileActiveWarning.Message="OBS is momenteel actief. Wil je stoppen en OBS afsluiten?"
 

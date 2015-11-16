@@ -552,4 +552,6 @@ Plugins.NoiseGate.AttackTime="Reagointiviive (millisekuntia):"
 Plugins.NoiseGate.HoldTime="Pitoaika (millisekuntia):"
 Plugins.NoiseGate.ReleaseTime="Vapautumisaika (millisekuntia):"
 
+CloseWhileActiveWarning.Title="OBS on aktivinen."
+CloseWhileActiveWarning.Message="OBS on aktiivinen. Haluatko pysäyttää ja sulkea sen?"
 

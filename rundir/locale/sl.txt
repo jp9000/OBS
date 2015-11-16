@@ -1,6 +1,8 @@
 RightToLeft="false"
 
 Add="Dodaj"
+AddFile="Dodaj Datoteko"
+AddFolder="Dodaj Mapo"
 Preview="Predogled"
 Order="Vrstni red"
 Apply="Uporabi"

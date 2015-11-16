@@ -553,4 +553,6 @@ Plugins.NoiseGate.AttackTime="Eraso denbora (segundumilaen):"
 Plugins.NoiseGate.HoldTime="Heuste denbora (segundumilaen):"
 Plugins.NoiseGate.ReleaseTime="Askapen denbora (segundumilaen):"
 
+CloseWhileActiveWarning.Title="OBS gaituta dago une honetan."
+CloseWhileActiveWarning.Message="OBS gaituta dago une honetan. Gelditzea eta OBS-tik irtetzea nahi duzu?"
 
