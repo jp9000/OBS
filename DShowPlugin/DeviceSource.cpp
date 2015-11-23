@@ -557,7 +557,7 @@ bool DeviceSource::LoadFilters()
             bestOutput->bUsingFourCC ? TEXT("true") : TEXT("false"),
             bestOutput->minCX, bestOutput->minCY, bestOutput->maxCX, bestOutput->maxCY,
             bestOutput->minFrameInterval, bestOutput->maxFrameInterval,
-	    bUseBuffering ? L"true" : L"false", bufferTime);
+            bUseBuffering ? L"true" : L"false", bufferTime);
 
         BITMAPINFOHEADER *bmiHeader = GetVideoBMIHeader(bestOutput->mediaType);
 
