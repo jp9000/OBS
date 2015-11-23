@@ -541,6 +541,9 @@ bool DeviceSource::LoadFilters()
             goto cleanFinish;
         } else { /* エルガット＝自殺 */
             bestOutput = &outputList[0];
+            renderCX = newCX = bestOutput->minCX;
+            renderCY = newCY = bestOutput->minCY;
+            frameInterval =  bestOutput->minFrameInterval;
         }
     }
 
