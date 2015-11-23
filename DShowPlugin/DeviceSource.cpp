@@ -822,6 +822,9 @@ bool DeviceSource::LoadFilters()
         ElgatoCheckBuffering(deviceFilter, bUseBuffering, bufferTime);
 #endif
 
+    lastSampleCX = renderCX;
+    lastSampleCY = renderCY;
+
     //------------------------------------------------
     // connect all pins and set up the whole capture thing
 
@@ -1468,8 +1471,8 @@ void DeviceSource::ReceiveMediaSample(IMediaSample *sample, bool bAudio)
             if (sample->GetMediaType(&mt) == S_OK)
             {
                 BITMAPINFOHEADER *bih = GetVideoBMIHeader(mt);
-                newCX = bih->biWidth;
-                newCY = bih->biHeight;
+                lastSampleCX = bih->biWidth;
+                lastSampleCY = bih->biHeight;
                 DeleteMediaType(mt);
             }
 
@@ -1478,8 +1481,8 @@ void DeviceSource::ReceiveMediaSample(IMediaSample *sample, bool bAudio)
                 data->bAudio = bAudio;
                 data->dataLength = sample->GetActualDataLength();
                 data->lpData = (LPBYTE)Allocate(data->dataLength);//pointer; //
-                data->cx = newCX;
-                data->cy = newCY;
+                data->cx = lastSampleCX;
+                data->cy = lastSampleCY;
                 /*data->sample = sample;
                 sample->AddRef();*/
 
@@ -1567,6 +1570,8 @@ void DeviceSource::Preprocess()
 
     if(lastSample)
     {
+        newCX = lastSample->cx;
+        newCY = lastSample->cy;
         /*REFERENCE_TIME refTimeStart, refTimeFinish;
         lastSample->GetTime(&refTimeStart, &refTimeFinish);
 

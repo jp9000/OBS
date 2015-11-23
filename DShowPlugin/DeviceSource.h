@@ -137,6 +137,7 @@ class DeviceSource : public ImageSource
     UINT64          frameInterval;
     UINT            renderCX, renderCY;
     UINT            newCX, newCY;
+    UINT            lastSampleCX, lastSampleCY;
     UINT            imageCX, imageCY;
     UINT            linePitch, lineShift, lineSize;
     BOOL            bUseCustomResolution;
