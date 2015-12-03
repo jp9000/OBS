@@ -59,7 +59,8 @@ void SetupDXGIStuff(IDXGISwapChain *swap)
 
         /* CoD: ghosts hack because apparently on nvidia GPUs it has some d3d10 context open */
         if (_strcmpi(processName, "iw6sp64_ship.exe") == 0 ||
-            _strcmpi(processName, "iw6mp64_ship.exe") == 0)
+            _strcmpi(processName, "iw6mp64_ship.exe") == 0 ||
+            _strcmpi(processName, "justcause3.exe") == 0)
             d3d11only = true;
 
         if(!d3d11only && SUCCEEDED(deviceUnk->QueryInterface(__uuidof(ID3D10Device), (void**)&device)))
