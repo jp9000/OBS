@@ -18,7 +18,6 @@
 
 #include "nvmain.h"
 #include "NVENCEncoder.h"
-#include "license.h"
 
 #include <ws2tcpip.h>
 
@@ -153,7 +152,6 @@ void NVENCEncoder::init()
 {
     NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS stEncodeSessionParams = {0};
     NV_ENC_PRESET_CONFIG presetConfig = {0};
-    GUID clientKey = NV_CLIENT_KEY;
     CUcontext cuContextCurr;
     NVENCSTATUS nvStatus = NV_ENC_SUCCESS;
     int surfaceCount = 0;
@@ -222,13 +220,11 @@ void NVENCEncoder::init()
     else if (presetString == TEXT("Streaming"))
     {
         encoderPreset = NV_ENC_PRESET_STREAMING;
-        clientKey = NV_ENC_KEY_STREAMING;
     }
     else if (presetString == TEXT("Streaming (2pass)"))
     {
         encoderPreset = NV_ENC_PRESET_STREAMING;
         is2PassRC = true;
-        clientKey = NV_ENC_KEY_STREAMING;
     }
     else
     {
@@ -247,20 +243,6 @@ void NVENCEncoder::init()
         }
     }
 
-    TCHAR envClientKey[128] = {0};
-    DWORD envRes = GetEnvironmentVariable(TEXT("NVENC_KEY"), envClientKey, 128);
-    if (envRes > 0 && envRes <= 128)
-    {
-        if (stringToGuid(envClientKey, &clientKey))
-        {
-            NvLog(TEXT("Got NVENC key from environment"));
-        }
-        else
-        {
-            NvLog(TEXT("NVENC_KEY environment variable has invalid format"));
-        }
-    }
-
     mset(&initEncodeParams, 0, sizeof(NV_ENC_INITIALIZE_PARAMS));
     mset(&encodeConfig, 0, sizeof(NV_ENC_CONFIG));
 
@@ -271,7 +253,6 @@ void NVENCEncoder::init()
 
     stEncodeSessionParams.version = NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER;
     stEncodeSessionParams.apiVersion = NVENCAPI_VERSION;
-    stEncodeSessionParams.clientKeyPtr = &clientKey;
 
     cuContext = 0;
     checkCudaErrors(cuCtxCreate(&cuContext, 0, pNvencDevices[iNvencUseDeviceID]));
@@ -416,7 +397,7 @@ void NVENCEncoder::init()
         allocSurf.height = (height + 31) & ~31;
 
         allocSurf.memoryHeap = NV_ENC_MEMORY_HEAP_SYSMEM_CACHED;
-        allocSurf.bufferFmt = NV_ENC_BUFFER_FORMAT_NV12_PL;
+        allocSurf.bufferFmt = NV_ENC_BUFFER_FORMAT_NV12;
 
         nvStatus = pNvEnc->nvEncCreateInputBuffer(encoder, &allocSurf);
 
@@ -578,7 +559,7 @@ bool NVENCEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketTy
         outputSurfaces[i].inSurf = surf;
 
         picParams.inputBuffer = surf->inputSurface;
-        picParams.bufferFmt = NV_ENC_BUFFER_FORMAT_NV12_PL;
+        picParams.bufferFmt = NV_ENC_BUFFER_FORMAT_NV12;
         picParams.inputWidth = width;
         picParams.inputHeight = height;
         picParams.outputBitstream = outputSurfaces[i].outputSurface;
@@ -589,7 +570,6 @@ bool NVENCEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketTy
         picParams.inputDuration = 0;
         picParams.codecPicParams.h264PicParams.sliceMode = encodeConfig.encodeCodecConfig.h264Config.sliceMode;
         picParams.codecPicParams.h264PicParams.sliceModeData = encodeConfig.encodeCodecConfig.h264Config.sliceModeData;
-        memcpy(&picParams.rcParams, &encodeConfig.rcParams, sizeof(NV_ENC_RC_PARAMS));
     }
     else
     {
