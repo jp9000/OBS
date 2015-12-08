@@ -336,7 +336,10 @@ void NVENCEncoder::init()
         }
         else
         {
-            encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_VBR_MINQP;
+            if (is2PassRC)
+                encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_2_PASS_VBR;
+            else
+                encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_VBR_MINQP;
             encodeConfig.rcParams.enableMinQP = 1;
             encodeConfig.rcParams.minQP.qpInterB = 32 - quality;
             encodeConfig.rcParams.minQP.qpInterP = 32 - quality;
