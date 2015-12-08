@@ -990,17 +990,32 @@ String NVENCEncoder::GetInfoString() const
         profile = "constrained high";
 
     String cbr = "no";
+    String rcMode = "unknown";
     switch (encodeConfig.rcParams.rateControlMode)
     {
+    case NV_ENC_PARAMS_RC_CONSTQP:
+        rcMode = "constQP";
+        break;
+    case NV_ENC_PARAMS_RC_VBR:
+        rcMode = "vbr";
+        break;
     case NV_ENC_PARAMS_RC_CBR:
+        rcMode = "cbr";
         cbr = "yes";
         break;
+    case NV_ENC_PARAMS_RC_VBR_MINQP:
+        rcMode = "minQP";
+        break;
     case NV_ENC_PARAMS_RC_2_PASS_QUALITY:
+        rcMode = "2pass quality";
+        cbr = "yes";
+        break;
     case NV_ENC_PARAMS_RC_2_PASS_FRAMESIZE_CAP:
-        cbr = "yes (2pass)";
+        rcMode = "2pass framesize cap";
+        cbr = "yes";
         break;
     case NV_ENC_PARAMS_RC_2_PASS_VBR:
-        cbr = "no (2pass)";
+        rcMode = "2pass vbr";
         break;
     }
 
@@ -1027,6 +1042,7 @@ String NVENCEncoder::GetInfoString() const
         TEXT("\r\n    profile: ") << profile <<
         TEXT("\r\n    level: ") << level <<
         TEXT("\r\n    keyint: ") << IntString(encodeConfig.gopLength) <<
+        TEXT("\r\n    rcMode: ") << rcMode <<
         TEXT("\r\n    CBR: ") << cbr <<
         TEXT("\r\n    CFR: ") << cfr <<
         TEXT("\r\n    max bitrate: ") << IntString(encodeConfig.rcParams.maxBitRate / 1000) <<
