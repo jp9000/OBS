@@ -233,7 +233,7 @@ void NVENCEncoder::init()
     stEncodeSessionParams.apiVersion = NVENCAPI_VERSION;
 
     cuContext = 0;
-    checkCudaErrors(cuCtxCreate(&cuContext, 0, pNvencDevices[iNvencUseDeviceID]));
+    checkCudaErrors(cuCtxCreate(&cuContext, 4, pNvencDevices[iNvencUseDeviceID]));
     checkCudaErrors(cuCtxPopCurrent(&cuContextCurr));
 
     stEncodeSessionParams.device = (void*)cuContext;
