@@ -306,10 +306,10 @@ void NVENCEncoder::init()
 
         if (bUseCBR)
         {
-            auto filler = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 1) != 0;
+            bool filler = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 1) != 0;
             if (is2PassRC)
             {
-                encodeConfig.rcParams.rateControlMode = filler ? NV_ENC_PARAMS_RC_2_PASS_FRAMESIZE_CAP : NV_ENC_PARAMS_RC_2_PASS_QUALITY;
+                encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_2_PASS_QUALITY;
             }
             else
             {
