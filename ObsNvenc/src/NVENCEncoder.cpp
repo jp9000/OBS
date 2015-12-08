@@ -378,6 +378,9 @@ void NVENCEncoder::init()
         encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.videoFormat = 5;
         encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.colourPrimaries = colorDesc.primaries;
         encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.transferCharacteristics = colorDesc.transfer;
+
+        encodeConfig.encodeCodecConfig.h264Config.sliceMode = 3;
+        encodeConfig.encodeCodecConfig.h264Config.sliceModeData = 1;
     }
 
     nvStatus = pNvEnc->nvEncInitializeEncoder(encoder, &initEncodeParams);
