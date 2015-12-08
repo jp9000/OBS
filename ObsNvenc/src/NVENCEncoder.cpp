@@ -158,11 +158,11 @@ void NVENCEncoder::init()
 
     GUID encoderPreset = NV_ENC_PRESET_HQ_GUID;
     dontTouchConfig = false;
-    bool is2PassRC = false;
+    bool is2PassRC = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("NVENC2Pass"), 1) != 0;
 
     String profileString = AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"), TEXT("high"));
 
-    String presetString = AppConfig->GetString(TEXT("Video Encoding"), TEXT("NVENCPreset"), TEXT("High Quality"));
+    String presetString = AppConfig->GetString(TEXT("Video Encoding"), TEXT("NVENCPreset"), TEXT("Automatic"));
 
     if (presetString == TEXT("High Performance"))
     {
@@ -175,21 +175,6 @@ void NVENCEncoder::init()
     else if (presetString == TEXT("Bluray Disk"))
     {
         encoderPreset = NV_ENC_PRESET_BD_GUID;
-    }
-    else if (presetString == TEXT("Low Latency (2pass)"))
-    {
-        encoderPreset = NV_ENC_PRESET_LOW_LATENCY_DEFAULT_GUID;
-        is2PassRC = true;
-    }
-    else if (presetString == TEXT("High Performance Low Latency (2pass)"))
-    {
-        encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HP_GUID;
-        is2PassRC = true;
-    }
-    else if (presetString == TEXT("High Quality Low Latency (2pass)"))
-    {
-        encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HQ_GUID;
-        is2PassRC = true;
     }
     else if (presetString == TEXT("Low Latency"))
     {
@@ -222,10 +207,12 @@ void NVENCEncoder::init()
         if (height > 1080 || (height == 1080 && fps > 30))
         {
             encoderPreset = NV_ENC_PRESET_HQ_GUID;
+            is2PassRC = false;
         }
         if (height > 720 || (height == 720 && fps > 30))
         {
             encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HQ_GUID;
+            is2PassRC = false;
         }
         else
         {

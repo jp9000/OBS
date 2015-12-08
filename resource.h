@@ -374,6 +374,7 @@
 #define IDC_TSRCOPACITY_EDIT            1209
 #define IDC_IMPORT                      1210
 #define IDC_TSRCOPACITY                 1210
+#define IDC_NVENC2PASS                  1211
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020

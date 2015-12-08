@@ -79,6 +79,10 @@ void SettingsAdvanced::SelectPresetDialog(bool useQSV, bool useNVENC)
     ShowWindow(hwndTemp, useNVENC ? SW_SHOW : SW_HIDE);
     EnableWindow(hwndTemp, true);
 
+    hwndTemp = GetDlgItem(hwnd, IDC_NVENC2PASS);
+    ShowWindow(hwndTemp, useNVENC ? SW_SHOW : SW_HIDE);
+    EnableWindow(hwndTemp, true);
+
     hwndTemp = GetDlgItem(hwnd, IDC_QSVPRESET);
     ShowWindow(hwndTemp, useQSV ? SW_SHOW : SW_HIDE);
     EnableWindow(hwndTemp, true);
@@ -187,6 +191,11 @@ void SettingsAdvanced::ApplySettings()
 
     //------------------------------------
 
+    BOOL bNvencUse2Pass = SendMessage(GetDlgItem(hwnd, IDC_NVENC2PASS), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    AppConfig->SetInt   (TEXT("Video Encoding"), TEXT("NVENC2Pass"), bNvencUse2Pass);
+
+    //------------------------------------
+
     BOOL bSyncToVideoTime = SendMessage(GetDlgItem(hwnd, IDC_SYNCTOVIDEOTIME), BM_GETCHECK, 0, 0) == BST_CHECKED;
     AppConfig->SetInt   (TEXT("Audio"), TEXT("SyncToVideoTime"), bSyncToVideoTime);
 
@@ -252,6 +261,8 @@ void SettingsAdvanced::SetDefaults()
     SendMessage(GetDlgItem(hwnd, IDC_ENCODEFULLRANGE), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS), BM_SETCHECK, BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_NVENCPRESET), CB_SETCURSEL, 0, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_NVENC2PASS), BM_SETCHECK, BST_CHECKED, 0);
+    EnableWindow(GetDlgItem(hwnd, IDC_NVENC2PASS), FALSE);
     SendMessage(GetDlgItem(hwnd, IDC_QSVPRESET), CB_SETCURSEL, 0, 0);
     EnableWindow(GetDlgItem(hwnd, IDC_QSVVIDEOENCODERSETTINGS), FALSE);
     SendMessage(GetDlgItem(hwnd, IDC_SYNCTOVIDEOTIME), BM_SETCHECK, BST_UNCHECKED, 0);
@@ -423,9 +434,6 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                     TEXT("Low Latency"),
                     TEXT("High Performance Low Latency"),
                     TEXT("High Quality Low Latency"),
-                    TEXT("Low Latency (2pass)"),
-                    TEXT("High Performance Low Latency (2pass)"),
-                    TEXT("High Quality Low Latency (2pass)"),
                     TEXT("Lossless"),
                     TEXT("High Performance Lossless"),
                     TEXT("NVDefault"),
@@ -435,6 +443,12 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                     SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)nv_preset_names[i]);
 
                 LoadSettingComboString(hwndTemp, TEXT("Video Encoding"), TEXT("NVENCPreset"), nv_preset_names[0]);
+
+                bool bNvencUse2Pass = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("NVENC2Pass"), 1) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_NVENC2PASS), BM_SETCHECK, bNvencUse2Pass ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                String strNvencPreset = AppConfig->GetString(TEXT("Video Encoding"), TEXT("NVENCPreset"), nv_preset_names[0]);
+                EnableWindow(GetDlgItem(hwnd, IDC_NVENC2PASS), scmp(strNvencPreset.Array(), nv_preset_names[0]) ? TRUE : FALSE);
 
                 hwndTemp = GetDlgItem(hwnd, IDC_QSVPRESET);
                 static const struct {
@@ -631,10 +645,26 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 case IDC_SENDBUFFERSIZE:
                 case IDC_PRIORITY:
                 case IDC_BINDIP:
-                case IDC_NVENCPRESET:
                 case IDC_QSVPRESET:
                     if(HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == CBN_EDITCHANGE)
                     {
+                        if (App->GetVideoEncoder())
+                            ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
+                        SetChangedSettings(true);
+                    }
+                    break;
+
+                case IDC_NVENCPRESET:
+                    if (HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == CBN_EDITCHANGE)
+                    {
+                        HWND hwndTemp = (HWND)lParam;
+
+                        String strNewPreset = GetCBText(hwndTemp);
+                        if (scmp(strNewPreset.Array(), TEXT("Automatic")))
+                            EnableWindow(GetDlgItem(hwnd, IDC_NVENC2PASS), TRUE);
+                        else
+                            EnableWindow(GetDlgItem(hwnd, IDC_NVENC2PASS), FALSE);
+
                         if (App->GetVideoEncoder())
                             ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
                         SetChangedSettings(true);
@@ -652,6 +682,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 case IDC_UNLOCKHIGHFPS:
                 case IDC_LATENCYMETHOD:
                 case IDC_DISABLETCPOPTIMIZATIONS:
+                case IDC_NVENC2PASS:
                     if(HIWORD(wParam) == BN_CLICKED)
                     {
                         if (App->GetVideoEncoder())
