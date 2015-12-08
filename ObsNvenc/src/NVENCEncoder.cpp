@@ -217,15 +217,6 @@ void NVENCEncoder::init()
     {
         encoderPreset = NV_ENC_PRESET_DEFAULT_GUID;
     }
-    else if (presetString == TEXT("Streaming"))
-    {
-        encoderPreset = NV_ENC_PRESET_STREAMING;
-    }
-    else if (presetString == TEXT("Streaming (2pass)"))
-    {
-        encoderPreset = NV_ENC_PRESET_STREAMING;
-        is2PassRC = true;
-    }
     else
     {
         if (height > 1080 || (height == 1080 && fps > 30))
@@ -989,8 +980,6 @@ String NVENCEncoder::GetInfoString() const
         preset = "losslesshp";
     else if (dataEqual(initEncodeParams.presetGUID, NV_ENC_PRESET_DEFAULT_GUID))
         preset = "default";
-    else if (dataEqual(initEncodeParams.presetGUID, NV_ENC_PRESET_STREAMING))
-        preset = "streaming";
 
     String profile = "unknown";
     if (dataEqual(encodeConfig.profileGUID, NV_ENC_CODEC_PROFILE_AUTOSELECT_GUID))

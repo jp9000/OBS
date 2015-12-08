@@ -417,8 +417,6 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                 hwndTemp = GetDlgItem(hwnd, IDC_NVENCPRESET);
                 static const CTSTR nv_preset_names[16] = {
                     TEXT("Automatic"),
-                    TEXT("Streaming"),
-                    TEXT("Streaming (2pass)"),
                     TEXT("High Quality"),
                     TEXT("High Performance"),
                     TEXT("Bluray Disk"),
