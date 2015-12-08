@@ -209,7 +209,7 @@ void NVENCEncoder::init()
             encoderPreset = NV_ENC_PRESET_HQ_GUID;
             is2PassRC = false;
         }
-        if (height > 720 || (height == 720 && fps > 30))
+        if (height > 720 || (height == 720 && fps > 60))
         {
             encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HQ_GUID;
             is2PassRC = false;
