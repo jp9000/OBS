@@ -590,7 +590,7 @@ bool NVENCEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketTy
         }
     }
 
-    if (!outputSurfaceQueueReady.empty())
+    if (!outputSurfaceQueueReady.empty() && (!picIn || outputSurfaceQueue.size() + outputSurfaceQueueReady.size() >= maxSurfaceCount - 1))
     {
         NVENCEncoderOutputSurface *qSurf = outputSurfaceQueueReady.front();
         outputSurfaceQueueReady.pop();
