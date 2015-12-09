@@ -18,7 +18,6 @@
 
 #include "nvmain.h"
 #include "NVENCEncoder.h"
-#include "license.h"
 
 #include <ws2tcpip.h>
 
@@ -153,18 +152,17 @@ void NVENCEncoder::init()
 {
     NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS stEncodeSessionParams = {0};
     NV_ENC_PRESET_CONFIG presetConfig = {0};
-    GUID clientKey = NV_CLIENT_KEY;
     CUcontext cuContextCurr;
     NVENCSTATUS nvStatus = NV_ENC_SUCCESS;
     int surfaceCount = 0;
 
     GUID encoderPreset = NV_ENC_PRESET_HQ_GUID;
     dontTouchConfig = false;
-    bool is2PassRC = false;
+    bool is2PassRC = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("NVENC2Pass"), 1) != 0;
 
     String profileString = AppConfig->GetString(TEXT("Video Encoding"), TEXT("X264Profile"), TEXT("high"));
 
-    String presetString = AppConfig->GetString(TEXT("Video Encoding"), TEXT("NVENCPreset"), TEXT("High Quality"));
+    String presetString = AppConfig->GetString(TEXT("Video Encoding"), TEXT("NVENCPreset"), TEXT("Automatic"));
 
     if (presetString == TEXT("High Performance"))
     {
@@ -177,21 +175,6 @@ void NVENCEncoder::init()
     else if (presetString == TEXT("Bluray Disk"))
     {
         encoderPreset = NV_ENC_PRESET_BD_GUID;
-    }
-    else if (presetString == TEXT("Low Latency (2pass)"))
-    {
-        encoderPreset = NV_ENC_PRESET_LOW_LATENCY_DEFAULT_GUID;
-        is2PassRC = true;
-    }
-    else if (presetString == TEXT("High Performance Low Latency (2pass)"))
-    {
-        encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HP_GUID;
-        is2PassRC = true;
-    }
-    else if (presetString == TEXT("High Quality Low Latency (2pass)"))
-    {
-        encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HQ_GUID;
-        is2PassRC = true;
     }
     else if (presetString == TEXT("Low Latency"))
     {
@@ -219,45 +202,22 @@ void NVENCEncoder::init()
     {
         encoderPreset = NV_ENC_PRESET_DEFAULT_GUID;
     }
-    else if (presetString == TEXT("Streaming"))
-    {
-        encoderPreset = NV_ENC_PRESET_STREAMING;
-        clientKey = NV_ENC_KEY_STREAMING;
-    }
-    else if (presetString == TEXT("Streaming (2pass)"))
-    {
-        encoderPreset = NV_ENC_PRESET_STREAMING;
-        is2PassRC = true;
-        clientKey = NV_ENC_KEY_STREAMING;
-    }
     else
     {
         if (height > 1080 || (height == 1080 && fps > 30))
         {
             encoderPreset = NV_ENC_PRESET_HQ_GUID;
+            is2PassRC = false;
         }
         if (height > 720 || (height == 720 && fps > 30))
         {
             encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HQ_GUID;
+            is2PassRC = false;
         }
         else
         {
             encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HQ_GUID;
             is2PassRC = true;
-        }
-    }
-
-    TCHAR envClientKey[128] = {0};
-    DWORD envRes = GetEnvironmentVariable(TEXT("NVENC_KEY"), envClientKey, 128);
-    if (envRes > 0 && envRes <= 128)
-    {
-        if (stringToGuid(envClientKey, &clientKey))
-        {
-            NvLog(TEXT("Got NVENC key from environment"));
-        }
-        else
-        {
-            NvLog(TEXT("NVENC_KEY environment variable has invalid format"));
         }
     }
 
@@ -271,10 +231,9 @@ void NVENCEncoder::init()
 
     stEncodeSessionParams.version = NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER;
     stEncodeSessionParams.apiVersion = NVENCAPI_VERSION;
-    stEncodeSessionParams.clientKeyPtr = &clientKey;
 
     cuContext = 0;
-    checkCudaErrors(cuCtxCreate(&cuContext, 0, pNvencDevices[iNvencUseDeviceID]));
+    checkCudaErrors(cuCtxCreate(&cuContext, 4, pNvencDevices[iNvencUseDeviceID]));
     checkCudaErrors(cuCtxPopCurrent(&cuContextCurr));
 
     stEncodeSessionParams.device = (void*)cuContext;
@@ -347,10 +306,10 @@ void NVENCEncoder::init()
 
         if (bUseCBR)
         {
-            auto filler = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 1) != 0;
+            bool filler = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("PadCBR"), 1) != 0;
             if (is2PassRC)
             {
-                encodeConfig.rcParams.rateControlMode = filler ? NV_ENC_PARAMS_RC_2_PASS_FRAMESIZE_CAP : NV_ENC_PARAMS_RC_2_PASS_VBR;
+                encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_2_PASS_QUALITY;
             }
             else
             {
@@ -364,7 +323,10 @@ void NVENCEncoder::init()
         }
         else
         {
-            encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_VBR_MINQP;
+            if (is2PassRC)
+                encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_2_PASS_VBR;
+            else
+                encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_VBR_MINQP;
             encodeConfig.rcParams.enableMinQP = 1;
             encodeConfig.rcParams.minQP.qpInterB = 32 - quality;
             encodeConfig.rcParams.minQP.qpInterP = 32 - quality;
@@ -397,6 +359,9 @@ void NVENCEncoder::init()
         encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.videoFormat = 5;
         encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.colourPrimaries = colorDesc.primaries;
         encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.transferCharacteristics = colorDesc.transfer;
+
+        encodeConfig.encodeCodecConfig.h264Config.sliceMode = 3;
+        encodeConfig.encodeCodecConfig.h264Config.sliceModeData = 1;
     }
 
     nvStatus = pNvEnc->nvEncInitializeEncoder(encoder, &initEncodeParams);
@@ -416,7 +381,7 @@ void NVENCEncoder::init()
         allocSurf.height = (height + 31) & ~31;
 
         allocSurf.memoryHeap = NV_ENC_MEMORY_HEAP_SYSMEM_CACHED;
-        allocSurf.bufferFmt = NV_ENC_BUFFER_FORMAT_NV12_PL;
+        allocSurf.bufferFmt = NV_ENC_BUFFER_FORMAT_NV12;
 
         nvStatus = pNvEnc->nvEncCreateInputBuffer(encoder, &allocSurf);
 
@@ -578,7 +543,7 @@ bool NVENCEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketTy
         outputSurfaces[i].inSurf = surf;
 
         picParams.inputBuffer = surf->inputSurface;
-        picParams.bufferFmt = NV_ENC_BUFFER_FORMAT_NV12_PL;
+        picParams.bufferFmt = NV_ENC_BUFFER_FORMAT_NV12;
         picParams.inputWidth = width;
         picParams.inputHeight = height;
         picParams.outputBitstream = outputSurfaces[i].outputSurface;
@@ -589,7 +554,6 @@ bool NVENCEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketTy
         picParams.inputDuration = 0;
         picParams.codecPicParams.h264PicParams.sliceMode = encodeConfig.encodeCodecConfig.h264Config.sliceMode;
         picParams.codecPicParams.h264PicParams.sliceModeData = encodeConfig.encodeCodecConfig.h264Config.sliceModeData;
-        memcpy(&picParams.rcParams, &encodeConfig.rcParams, sizeof(NV_ENC_RC_PARAMS));
     }
     else
     {
@@ -1006,8 +970,6 @@ String NVENCEncoder::GetInfoString() const
         preset = "losslesshp";
     else if (dataEqual(initEncodeParams.presetGUID, NV_ENC_PRESET_DEFAULT_GUID))
         preset = "default";
-    else if (dataEqual(initEncodeParams.presetGUID, NV_ENC_PRESET_STREAMING))
-        preset = "streaming";
 
     String profile = "unknown";
     if (dataEqual(encodeConfig.profileGUID, NV_ENC_CODEC_PROFILE_AUTOSELECT_GUID))
@@ -1028,17 +990,32 @@ String NVENCEncoder::GetInfoString() const
         profile = "constrained high";
 
     String cbr = "no";
+    String rcMode = "unknown";
     switch (encodeConfig.rcParams.rateControlMode)
     {
+    case NV_ENC_PARAMS_RC_CONSTQP:
+        rcMode = "constQP";
+        break;
+    case NV_ENC_PARAMS_RC_VBR:
+        rcMode = "vbr";
+        break;
     case NV_ENC_PARAMS_RC_CBR:
+        rcMode = "cbr";
         cbr = "yes";
         break;
+    case NV_ENC_PARAMS_RC_VBR_MINQP:
+        rcMode = "minQP";
+        break;
     case NV_ENC_PARAMS_RC_2_PASS_QUALITY:
+        rcMode = "2pass quality";
+        cbr = "yes";
+        break;
     case NV_ENC_PARAMS_RC_2_PASS_FRAMESIZE_CAP:
-        cbr = "yes (2pass)";
+        rcMode = "2pass framesize cap";
+        cbr = "yes";
         break;
     case NV_ENC_PARAMS_RC_2_PASS_VBR:
-        cbr = "no (2pass)";
+        rcMode = "2pass vbr";
         break;
     }
 
@@ -1065,6 +1042,7 @@ String NVENCEncoder::GetInfoString() const
         TEXT("\r\n    profile: ") << profile <<
         TEXT("\r\n    level: ") << level <<
         TEXT("\r\n    keyint: ") << IntString(encodeConfig.gopLength) <<
+        TEXT("\r\n    rcMode: ") << rcMode <<
         TEXT("\r\n    CBR: ") << cbr <<
         TEXT("\r\n    CFR: ") << cfr <<
         TEXT("\r\n    max bitrate: ") << IntString(encodeConfig.rcParams.maxBitRate / 1000) <<
