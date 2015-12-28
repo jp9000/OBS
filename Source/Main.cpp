@@ -777,6 +777,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         App = new OBS;
 
+        App->LoadAllPlugins();
+
         HACCEL hAccel = LoadAccelerators(hinstMain, MAKEINTRESOURCE(IDR_ACCELERATOR1));
 
         MSG msg;

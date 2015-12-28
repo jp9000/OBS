@@ -159,6 +159,100 @@ VOID CheckPermissionsAndDiskSpace()
 
 //---------------------------------------------------------------------------
 
+VOID OBS::LoadAllPlugins()
+{
+    //-----------------------------------------------------
+    // load plugins
+
+    OSFindData ofd;
+    HANDLE hFind = OSFindFirstFile(TEXT("plugins/*.dll"), ofd);
+    if (hFind)
+    {
+        do
+        {
+            if (!ofd.bDirectory) //why would someone give a directory a .dll extension in the first place?  pranksters.
+            {
+                String strLocation;
+                strLocation << TEXT("plugins/") << ofd.fileName;
+
+                HMODULE hPlugin = LoadLibrary(strLocation);
+                if (hPlugin)
+                {
+                    bool bLoaded = false;
+
+                    //slightly redundant I suppose seeing as both these things are being added at the same time
+                    LOADPLUGINEXPROC loadPluginEx = (LOADPLUGINEXPROC)GetProcAddress(hPlugin, "LoadPluginEx");
+                    if (loadPluginEx) {
+                        bLoaded = loadPluginEx(OBSGetAPIVersion());
+                    }
+                    else {
+                        LOADPLUGINPROC loadPlugin = (LOADPLUGINPROC)GetProcAddress(hPlugin, "LoadPlugin");
+                        bLoaded = loadPlugin && loadPlugin();
+                    }
+
+                    if (bLoaded) {
+                        PluginInfo *pluginInfo = plugins.CreateNew();
+                        pluginInfo->hModule = hPlugin;
+                        pluginInfo->strFile = ofd.fileName;
+
+                        /* get event callbacks for the plugin */
+                        pluginInfo->startStreamCallback = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartStream");
+                        pluginInfo->stopStreamCallback = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopStream");
+                        pluginInfo->startStreamingCallback = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartStreaming");
+                        pluginInfo->stopStreamingCallback = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopStreaming");
+                        pluginInfo->startRecordingCallback = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartRecording");
+                        pluginInfo->stopRecordingCallback = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopRecording");
+                        pluginInfo->statusCallback = (OBS_STATUS_CALLBACK)GetProcAddress(hPlugin, "OnOBSStatus");
+                        pluginInfo->streamStatusCallback = (OBS_STREAM_STATUS_CALLBACK)GetProcAddress(hPlugin, "OnStreamStatus");
+                        pluginInfo->sceneSwitchCallback = (OBS_SCENE_SWITCH_CALLBACK)GetProcAddress(hPlugin, "OnSceneSwitch");
+                        pluginInfo->sceneCollectionSwitchCallback = (OBS_SCENE_SWITCH_CALLBACK)GetProcAddress(hPlugin, "OnSceneCollectionSwitch");
+                        pluginInfo->scenesChangedCallback = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnScenesChanged");
+                        pluginInfo->sceneCollectionsChangedCallback = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnSceneCollectionsChanged");
+                        pluginInfo->sourceOrderChangedCallback = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnSourceOrderChanged");
+                        pluginInfo->sourceChangedCallback = (OBS_SOURCE_CHANGED_CALLBACK)GetProcAddress(hPlugin, "OnSourceChanged");
+                        pluginInfo->sourcesAddedOrRemovedCallback = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnSourcesAddedOrRemoved");
+                        pluginInfo->micVolumeChangeCallback = (OBS_VOLUME_CHANGED_CALLBACK)GetProcAddress(hPlugin, "OnMicVolumeChanged");
+                        pluginInfo->desktopVolumeChangeCallback = (OBS_VOLUME_CHANGED_CALLBACK)GetProcAddress(hPlugin, "OnDesktopVolumeChanged");
+                        pluginInfo->logUpdateCallback = (OBS_LOG_UPDATE_CALLBACK)GetProcAddress(hPlugin, "OnLogUpdate");
+                        pluginInfo->startRecordingReplayBufferCallback = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartRecordingReplayBuffer");
+                        pluginInfo->stopRecordingReplayBufferCallback = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopRecordingReplayBuffer");
+                        pluginInfo->replayBufferSavedCallback = (OBS_REPLAY_BUFFER_SAVED_CALLBACK)GetProcAddress(hPlugin, "OnReplayBufferSaved");
+
+                        //GETPLUGINNAMEPROC getName = (GETPLUGINNAMEPROC)GetProcAddress(hPlugin, "GetPluginName");
+
+                        //CTSTR lpName = (getName) ? getName() : TEXT("<unknown>");
+
+                        //FIXME: TODO: log this somewhere else, it comes before the OBS version info and looks weird.
+                        //Log(TEXT("Loaded plugin '%s', %s"), lpName, strLocation);
+                    }
+                    else
+                    {
+                        Log(TEXT("Failed to initialize plugin %s"), strLocation.Array());
+                        FreeLibrary(hPlugin);
+                    }
+                }
+                else
+                {
+                    DWORD err = GetLastError();
+                    Log(TEXT("Failed to load plugin %s, %d"), strLocation.Array(), err);
+#ifndef _DEBUG
+                    if (err == 193)
+                    {
+#ifdef _M_X64
+                        String message = FormattedString(Str("Plugins.InvalidVersion"), ofd.fileName, 32);
+#else
+                        String message = FormattedString(Str("Plugins.InvalidVersion"), ofd.fileName, 64);
+#endif
+                        OBSMessageBox(hwndMain, message.Array(), NULL, MB_ICONEXCLAMATION);
+                    }
+#endif
+                }
+            }
+        } while (OSFindNextFile(hFind, ofd));
+
+        OSFindClose(hFind);
+    }
+}
 
 OBS::OBS()
 {
@@ -723,97 +817,6 @@ OBS::OBS()
 
     if(GlobalConfig->GetInt(TEXT("General"), TEXT("ShowWebrootWarning"), TRUE) && IsWebrootLoaded())
         OBSMessageBox(hwndMain, TEXT("Webroot Secureanywhere appears to be active.  This product will cause problems with OBS as the security features block OBS from accessing Windows GDI functions.  It is highly recommended that you disable Secureanywhere and restart OBS.\r\n\r\nOf course you can always just ignore this message if you want, but it may prevent you from being able to stream certain things. Please do not report any bugs you may encounter if you leave Secureanywhere enabled."), TEXT("Just a slight issue you might want to be aware of"), MB_OK);
-
-    //-----------------------------------------------------
-    // load plugins
-
-    OSFindData ofd;
-    HANDLE hFind = OSFindFirstFile(TEXT("plugins/*.dll"), ofd);
-    if(hFind)
-    {
-        do
-        {
-            if(!ofd.bDirectory) //why would someone give a directory a .dll extension in the first place?  pranksters.
-            {
-                String strLocation;
-                strLocation << TEXT("plugins/") << ofd.fileName;
-
-                HMODULE hPlugin = LoadLibrary(strLocation);
-                if(hPlugin)
-                {
-                    bool bLoaded = false;
-
-                    //slightly redundant I suppose seeing as both these things are being added at the same time
-                    LOADPLUGINEXPROC loadPluginEx = (LOADPLUGINEXPROC)GetProcAddress(hPlugin, "LoadPluginEx");
-                    if (loadPluginEx) {
-                        bLoaded = loadPluginEx(OBSGetAPIVersion());
-                    } else {
-                        LOADPLUGINPROC loadPlugin = (LOADPLUGINPROC)GetProcAddress(hPlugin, "LoadPlugin");
-                        bLoaded = loadPlugin && loadPlugin();
-                    }
-
-                    if (bLoaded) {
-                        PluginInfo *pluginInfo = plugins.CreateNew();
-                        pluginInfo->hModule = hPlugin;
-                        pluginInfo->strFile = ofd.fileName;
-
-                        /* get event callbacks for the plugin */
-                        pluginInfo->startStreamCallback                = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartStream");
-                        pluginInfo->stopStreamCallback                 = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopStream");
-                        pluginInfo->startStreamingCallback             = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartStreaming");
-                        pluginInfo->stopStreamingCallback              = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopStreaming");
-                        pluginInfo->startRecordingCallback             = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartRecording");
-                        pluginInfo->stopRecordingCallback              = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopRecording");
-                        pluginInfo->statusCallback                     = (OBS_STATUS_CALLBACK)GetProcAddress(hPlugin, "OnOBSStatus");
-                        pluginInfo->streamStatusCallback               = (OBS_STREAM_STATUS_CALLBACK)GetProcAddress(hPlugin, "OnStreamStatus");
-                        pluginInfo->sceneSwitchCallback                = (OBS_SCENE_SWITCH_CALLBACK)GetProcAddress(hPlugin, "OnSceneSwitch");
-                        pluginInfo->sceneCollectionSwitchCallback      = (OBS_SCENE_SWITCH_CALLBACK)GetProcAddress(hPlugin, "OnSceneCollectionSwitch");
-                        pluginInfo->scenesChangedCallback              = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnScenesChanged");
-                        pluginInfo->sceneCollectionsChangedCallback    = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnSceneCollectionsChanged");
-                        pluginInfo->sourceOrderChangedCallback         = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnSourceOrderChanged");
-                        pluginInfo->sourceChangedCallback              = (OBS_SOURCE_CHANGED_CALLBACK)GetProcAddress(hPlugin, "OnSourceChanged");
-                        pluginInfo->sourcesAddedOrRemovedCallback      = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnSourcesAddedOrRemoved");
-                        pluginInfo->micVolumeChangeCallback            = (OBS_VOLUME_CHANGED_CALLBACK)GetProcAddress(hPlugin, "OnMicVolumeChanged");
-                        pluginInfo->desktopVolumeChangeCallback        = (OBS_VOLUME_CHANGED_CALLBACK)GetProcAddress(hPlugin, "OnDesktopVolumeChanged");
-                        pluginInfo->logUpdateCallback                  = (OBS_LOG_UPDATE_CALLBACK)GetProcAddress(hPlugin, "OnLogUpdate");
-                        pluginInfo->startRecordingReplayBufferCallback = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStartRecordingReplayBuffer");
-                        pluginInfo->stopRecordingReplayBufferCallback  = (OBS_CALLBACK)GetProcAddress(hPlugin, "OnStopRecordingReplayBuffer");
-                        pluginInfo->replayBufferSavedCallback          = (OBS_REPLAY_BUFFER_SAVED_CALLBACK)GetProcAddress(hPlugin, "OnReplayBufferSaved");
-
-                        //GETPLUGINNAMEPROC getName = (GETPLUGINNAMEPROC)GetProcAddress(hPlugin, "GetPluginName");
-
-                        //CTSTR lpName = (getName) ? getName() : TEXT("<unknown>");
-
-                        //FIXME: TODO: log this somewhere else, it comes before the OBS version info and looks weird.
-                        //Log(TEXT("Loaded plugin '%s', %s"), lpName, strLocation);
-                    }
-                    else
-                    {
-                        Log(TEXT("Failed to initialize plugin %s"), strLocation.Array());
-                        FreeLibrary(hPlugin);
-                    }
-                }
-                else
-                {
-                    DWORD err = GetLastError();
-                    Log(TEXT("Failed to load plugin %s, %d"), strLocation.Array(), err);
-#ifndef _DEBUG
-                    if (err == 193)
-                    {
-#ifdef _M_X64
-                        String message = FormattedString(Str("Plugins.InvalidVersion"), ofd.fileName, 32);
-#else
-                        String message = FormattedString(Str("Plugins.InvalidVersion"), ofd.fileName, 64);
-#endif
-                        OBSMessageBox(hwndMain, message.Array(), NULL, MB_ICONEXCLAMATION);
-                    }
-#endif
-                }
-            }
-        } while (OSFindNextFile(hFind, ofd));
-
-        OSFindClose(hFind);
-    }
 
     CheckPermissionsAndDiskSpace();
 
