@@ -1399,3 +1399,68 @@ void OBS::MainCaptureLoop()
 
     Log(TEXT("Total frames rendered: %d, number of late frames: %d (%0.2f%%) (it's okay for some frames to be late)"), numTotalFrames, numLongFrames, (numTotalFrames > 0) ? (double(numLongFrames)/double(numTotalFrames))*100.0 : 0.0f);
 }
+
+
+
+DWORD OBS::_time_to_epoch(_time_t* _time)
+{
+	unsigned int second = _time->second;  // 0-59
+	unsigned int minute = _time->minute;  // 0-59
+	unsigned int hour = _time->hour;    // 0-23
+
+	return ((hour * 60 + minute) * 60 + second);
+
+}
+_time_t OBS::_epoch_to_time(DWORD seconds)
+{
+	_time_t tm;
+
+	int days = seconds / (60 * 60 * 24);
+
+	tm.hour = seconds / 3600;
+	int remainder = seconds % 3600;
+	tm.minute = remainder / 60;
+	tm.second = remainder % 60;
+
+	return tm;
+
+}
+
+DWORD OBS::getCurrentTimestamp()
+{
+	char *array = (char*)malloc(sizeof(char) * 64);
+	time_t rawtime;
+	time(&rawtime);
+	struct tm  *timeinfo = localtime(&rawtime);
+	strftime(array, sizeof(array) - 1, "%d.%m.%y_%H:%M:%S", timeinfo);
+
+	_time_t dt;
+	dt.hour = timeinfo->tm_hour;
+	dt.minute = timeinfo->tm_min;
+	dt.second = timeinfo->tm_sec;
+
+	DWORD value = _time_to_epoch(&dt);
+
+	return value;
+
+}
+DWORD OBS::getOffsetTimestamp(char * gBaseTime)
+{
+	//BaseTime shall be given as a cli argument 
+	// cli format(hh:mm) - "20:00"
+	//	char cli[20] = "08:00";
+	int hh, mm;
+	sscanf(gBaseTime, "%d:%d", &hh, &mm);
+
+	_time_t offset;
+	offset.hour = hh;
+	offset.minute = mm;
+	offset.second = 0;
+
+	DWORD value = _time_to_epoch(&offset);
+
+	return value;
+
+}
+
+
