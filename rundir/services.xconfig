@@ -132,4 +132,19 @@ services : {
       "API" : https://web-api.azubu.tv/stream/broadcaster-key/
     }
   }
+    Vidi.Tv : {
+    id : 14
+    servers : {
+      "Russia-MSK"                : rtmp://rtmp.vidi.tv:1940/live
+    }
+	recommended : {
+      "keyint" : 2000
+      "profile" : "main"
+      "ratecontrol" : "cbr"
+      "max bitrate" : 3500
+      "max audio bitrate aac" : 192
+      "supported audio codec" : "AAC"
+      "video aspect ratio" : "16:9"
+    }
+  }
 }
