@@ -15,6 +15,7 @@ services : {
       "EU: Paris, FR"                          : rtmp://live-cdg.twitch.tv/app
       "EU: Prague, CZ"                         : rtmp://live-prg.twitch.tv/app
       "EU: Stockholm, SE"                      : rtmp://live-arn.twitch.tv/app
+      "EU: Warsaw, PL"                         : rtmp://live-waw.twitch.tv/app
       "South America: Argentina"               : rtmp://live-eze.twitch.tv/app
       "South America: Chile"                   : rtmp://live-scl.twitch.tv/app
       "South America: Rio de Janeiro, Brazil"  : rtmp://live-gig.twitch.tv/app
