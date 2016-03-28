@@ -87,13 +87,13 @@ void SettingsPublish::ApplySettings()
     //------------------------------------------
 
     String strSavePath = GetEditText(GetDlgItem(hwnd, IDC_SAVEPATH));
-    String defaultPath = OSGetDefaultVideoSavePath(L"\\.flv");
+    String defaultPath = OSGetDefaultVideoSavePath(L"\\$T.flv");
     String actualPath = strSavePath;
     if (!strSavePath.IsValid() && defaultPath.IsValid())
     {
         String text = Str("Settings.Publish.InvalidSavePath");
         text.FindReplace(L"$1", defaultPath);
-        if (OBSMessageBox(nullptr, text, Str("Settings.Publish.InvalidSavePathCaption"), MB_ICONEXCLAMATION | MB_OKCANCEL) != IDOK)
+        if (OBSMessageBox(hwnd, text, Str("Settings.Publish.InvalidSavePathCaption"), MB_ICONEXCLAMATION | MB_OKCANCEL) != IDOK)
         {
             SetAbortApplySettings(true);
             return;
@@ -114,7 +114,7 @@ void SettingsPublish::ApplySettings()
     {
         String text = Str("Settings.Publish.InvalidReplayBufferSavePath");
         text.FindReplace(L"$1", defaultPath);
-        if (OBSMessageBox(nullptr, text, Str("Settings.Publish.InvalidReplayBufferSavePathCaption"), MB_ICONEXCLAMATION | MB_OKCANCEL) != IDOK)
+        if (OBSMessageBox(hwnd, text, Str("Settings.Publish.InvalidReplayBufferSavePathCaption"), MB_ICONEXCLAMATION | MB_OKCANCEL) != IDOK)
         {
             SetAbortApplySettings(true);
             return;
@@ -720,7 +720,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 BOOL bSaveToFile = AppConfig->GetInt(TEXT("Publish"), TEXT("SaveToFile"));
                 SendMessage(GetDlgItem(hwnd, IDC_SAVETOFILE), BM_SETCHECK, bSaveToFile ? BST_CHECKED : BST_UNCHECKED, 0);
 
-                String path = OSGetDefaultVideoSavePath(L"\\.flv");
+                String path = OSGetDefaultVideoSavePath(L"\\$T.flv");
                 CTSTR lpSavePath = AppConfig->GetStringPtr(TEXT("Publish"), TEXT("SavePath"), path.IsValid() ? path.Array() : nullptr);
                 SetWindowText(GetDlgItem(hwnd, IDC_SAVEPATH), lpSavePath);
 
@@ -1023,7 +1023,7 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                             ofn.lpstrFile = lpFile;
                             ofn.nMaxFile = 511;
                             ofn.lpstrFile[0] = 0;
-                            ofn.lpstrFilter = TEXT("MP4 File (*.mp4)\0*.mp4\0Flash Video File (*.flv)\0*.flv\0");
+                            ofn.lpstrFilter = TEXT("Flash Video File (*.flv)\0*.flv\0MP4 File (*.mp4)\0*.mp4\0");
                             ofn.lpstrFileTitle = NULL;
                             ofn.nMaxFileTitle = 0;
                             ofn.nFilterIndex = 1;
@@ -1050,9 +1050,9 @@ INT_PTR SettingsPublish::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                                     switch(ofn.nFilterIndex)
                                     {
                                         case 1:
-                                            strFile << TEXT(".mp4"); break;
-                                        case 2:
                                             strFile << TEXT(".flv"); break;
+                                        case 2:
+                                            strFile << TEXT(".mp4"); break; 
                                         /*case 3:
                                             strFile << TEXT(".avi"); break;*/
                                     }

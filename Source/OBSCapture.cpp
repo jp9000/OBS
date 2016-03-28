@@ -183,7 +183,7 @@ String GetExpandedRecordingDirectoryBase(String path)
 
 String GetOutputFilename(bool replayBuffer=false)
 {
-    String path = OSGetDefaultVideoSavePath(replayBuffer ? L"\\Replay-$T.flv" : L"\\.flv");
+    String path = OSGetDefaultVideoSavePath(replayBuffer ? L"\\Replay-$T.flv" : L"\\$T.flv");
     String strOutputFile = AppConfig->GetString(TEXT("Publish"), replayBuffer ? L"ReplayBufferSavePath" : L"SavePath", path.IsValid() ? path.Array() : nullptr);
     strOutputFile.FindReplace(TEXT("\\"), TEXT("/"));
 
@@ -239,7 +239,7 @@ String GetOutputFilename(bool replayBuffer=false)
                 extension = GetPathExtension(file.Array());
 
             if (extension.IsEmpty())
-                extension = TEXT("mp4");
+                extension = TEXT("flv");
             strOutputFile = FormattedString(TEXT("%s/%u-%02u-%02u-%02u%02u-%02u.%s"), strDirectory.Array(), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, extension.Array());
         }
     }
