@@ -3,6 +3,7 @@
 ; Define your application name
 !define APPNAME "Open Broadcaster Software"
 !define APPNAMEANDVERSION "Open Broadcaster Software 0.657b"
+!define SETUPVERSIONINFO "0.6.5.7"
 
 ; Additional script dependencies
 !include WinVer.nsh
@@ -362,5 +363,14 @@ SectionEnd
 	!insertmacro MUI_DESCRIPTION_TEXT ${Section2} "Removes any 3rd party plugins that may be installed."
 	!insertmacro MUI_DESCRIPTION_TEXT ${Section3} "Removes all settings, scenes and sources, profiles, log files and other application data."
 !insertmacro MUI_UNFUNCTION_DESCRIPTION_END
+
+; Version information
+VIProductVersion ${SETUPVERSIONINFO}
+VIAddVersionKey /LANG=${LANG_ENGLISH} "ProductName" "Open Broadcaster Software"
+VIAddVersionKey /LANG=${LANG_ENGLISH} "CompanyName" "obsproject.com"
+VIAddVersionKey /LANG=${LANG_ENGLISH} "LegalCopyright" "(c) 2012-2016"
+; FileDescription is what shows in the UAC elevation prompt when signed
+VIAddVersionKey /LANG=${LANG_ENGLISH} "FileDescription" "Open Broadcaster Software"
+VIAddVersionKey /LANG=${LANG_ENGLISH} "FileVersion" "1.0"
 
 ; eof
