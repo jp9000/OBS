@@ -78,8 +78,8 @@ RTMPPublisher::RTMPPublisher()
 
     bFirstKeyframe = true;
 
-    hSendSempahore = CreateSemaphore(NULL, 0, 0x7FFFFFFFL, NULL);
-    if(!hSendSempahore)
+    hSendSemaphore = CreateSemaphore(NULL, 0, 0x7FFFFFFFL, NULL);
+    if(!hSendSemaphore)
         CrashError(TEXT("RTMPPublisher: Could not create semaphore"));
 
     hDataMutex = OSCreateMutex();
@@ -264,7 +264,7 @@ RTMPPublisher::~RTMPPublisher()
         SetEvent(hSendLoopExit);
 
         //these wake up the thread
-        ReleaseSemaphore(hSendSempahore, 1, NULL);
+        ReleaseSemaphore(hSendSemaphore, 1, NULL);
         SetEvent(hBufferSpaceAvailableEvent);
 
         //wait 50 sec for all data to finish sending
@@ -274,7 +274,7 @@ RTMPPublisher::~RTMPPublisher()
             FatalSocketShutdown();
 
             //this will wake up and flush the sendloop if it's still trying to send out stuff
-            ReleaseSemaphore(hSendSempahore, 1, NULL);
+            ReleaseSemaphore(hSendSemaphore, 1, NULL);
             SetEvent(hBufferSpaceAvailableEvent);
         }
 
@@ -283,8 +283,8 @@ RTMPPublisher::~RTMPPublisher()
         Log(TEXT("~RTMPPublisher: Send thread terminated in %d ms"), OSGetTime() - startTime);
     }
 
-    if(hSendSempahore)
-        CloseHandle(hSendSempahore);
+    if(hSendSemaphore)
+        CloseHandle(hSendSemaphore);
 
     //OSDebugOut (TEXT("*** ~RTMPPublisher hSendThread terminated (%d queued, %d buffered, %d data)\n"), queuedPackets.Num(), bufferedPackets.Num(), curDataBufferLen);
 
@@ -538,7 +538,7 @@ void RTMPPublisher::ProcessPackets()
     }
 
     if(queuedPackets.Num())
-        ReleaseSemaphore(hSendSempahore, 1, NULL);
+        ReleaseSemaphore(hSendSemaphore, 1, NULL);
 }
 
 void RTMPPublisher::SendPacket(BYTE *data, UINT size, DWORD timestamp, PacketType type)
@@ -1471,7 +1471,7 @@ void RTMPPublisher::SocketLoop()
 void RTMPPublisher::SendLoop()
 {
     SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
-    while(WaitForSingleObject(hSendSempahore, INFINITE) == WAIT_OBJECT_0)
+    while(WaitForSingleObject(hSendSemaphore, INFINITE) == WAIT_OBJECT_0)
     {
         while(true)
         {
