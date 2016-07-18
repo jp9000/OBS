@@ -1063,14 +1063,27 @@ HRESULT STDMETHODCALLTYPE D3D9PresentEx(IDirect3DDevice9Ex *device, CONST RECT* 
 
 HRESULT STDMETHODCALLTYPE D3D9SwapPresent(IDirect3DSwapChain9 *swap, CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion, DWORD dwFlags)
 {
+    IDirect3DDevice9 *device = nullptr;
 #if OLDHOOKS
     d3d9SwapPresent.Unhook();
 #endif
 
     RUNEVERYRESET logOutput << CurrentTimeString() << "D3D9SwapPresent called" << endl;
 
-    if(!presentRecurse)
-        DoD3D9DrawStuff((IDirect3DDevice9*)lpCurrentDevice);
+    if(!presentRecurse) {
+        HRESULT hr = swap->GetDevice(&device);
+        if (SUCCEEDED(hr))
+            device->Release();
+
+        if(lpCurrentDevice == NULL && !bTargetAcquired)
+        {
+            lpCurrentDevice = device;
+            bTargetAcquired = true;
+        }
+
+        if(lpCurrentDevice == device)
+            DoD3D9DrawStuff(device);
+    }
 
     presentRecurse++;
 
