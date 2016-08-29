@@ -209,7 +209,7 @@ void NVENCEncoder::init()
             encoderPreset = NV_ENC_PRESET_HQ_GUID;
             is2PassRC = false;
         }
-        if (height > 720 || (height == 720 && fps > 60))
+        if (height > 720 || (height == 720 && fps > 30))
         {
             encoderPreset = NV_ENC_PRESET_LOW_LATENCY_HQ_GUID;
             is2PassRC = false;
@@ -590,7 +590,7 @@ bool NVENCEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketTy
         }
     }
 
-    if (!outputSurfaceQueueReady.empty() && (!picIn || outputSurfaceQueue.size() + outputSurfaceQueueReady.size() >= maxSurfaceCount - 1))
+    if (!outputSurfaceQueueReady.empty())
     {
         NVENCEncoderOutputSurface *qSurf = outputSurfaceQueueReady.front();
         outputSurfaceQueueReady.pop();
