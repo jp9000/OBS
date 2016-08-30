@@ -104,7 +104,7 @@ protected:
 
     RTMP *rtmp;
 
-    HANDLE hSendSempahore;
+    HANDLE hSendSemaphore;
     HANDLE hDataMutex;
     HANDLE hSendThread;
     HANDLE hSocketThread;
