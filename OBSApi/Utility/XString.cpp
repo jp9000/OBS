@@ -1661,7 +1661,7 @@ TCHAR *STDCALL sfix(TCHAR *str)
     TCHAR *lpTemp = str;
 
     //get rid of leading spaces
-    while(*lpTemp == ' ' || *lpTemp == '\t' || *lpTemp == L'　') ++lpTemp;
+    while(*lpTemp == ' ' || *lpTemp == '\t' || *lpTemp == static_cast<wchar_t>('　')) ++lpTemp;
     UINT len = slen(lpTemp);
     if(lpTemp != str)
         mcpy(str, lpTemp, (len+1)*sizeof(TCHAR));
@@ -1670,7 +1670,7 @@ TCHAR *STDCALL sfix(TCHAR *str)
     {
         //get rid of ending spaces
         lpTemp = str+(len-1);
-        while(*lpTemp == ' ' || *lpTemp == '\t' || *lpTemp == L'　') *(lpTemp--) = 0;
+        while(*lpTemp == ' ' || *lpTemp == '\t' || *lpTemp == static_cast<wchar_t>('　')) *(lpTemp--) = 0;
     }
 
     return str;

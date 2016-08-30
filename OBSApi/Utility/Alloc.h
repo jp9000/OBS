@@ -41,13 +41,13 @@ public:
         free(lpData);
     }
 
-#ifdef _DEBUG
-    inline void *operator new(size_t dwSize, TCHAR *lpFile, unsigned int lpLine)
+#ifdef _DEBUG 
+    inline void *operator new(size_t dwSize, TCHAR*, unsigned int)
     {
         return malloc(dwSize);
     }
 
-    inline void operator delete(void *lpData, TCHAR *lpFile, unsigned int lpLine)
+    inline void operator delete(void *lpData, TCHAR*, unsigned int)
     {
         free(lpData);
     }

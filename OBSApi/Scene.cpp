@@ -188,6 +188,16 @@ void SceneItem::MoveToBottom()
     }
 }
 
+void* SceneItem::operator new(size_t size)
+{
+    return _aligned_malloc(size, 16);
+}
+
+void SceneItem::operator delete(void *ptr)
+{
+    _aligned_free(ptr);
+}
+
 //====================================================================================
 
 Scene::~Scene()

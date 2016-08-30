@@ -734,7 +734,7 @@ void RTMPPublisher::BeginPublishingInternal()
     packet.m_hasAbsTimestamp = TRUE;
     packet.m_body = metaDataPacketBuffer.data() + RTMP_MAX_HEADER_SIZE;
 
-    packet.m_nBodySize = metaDataPacketBuffer.size() - RTMP_MAX_HEADER_SIZE;
+    packet.m_nBodySize = static_cast<uint32_t>(metaDataPacketBuffer.size() - RTMP_MAX_HEADER_SIZE);
     if(!RTMP_SendPacket(rtmp, &packet, FALSE))
     {
         App->PostStopMessage();

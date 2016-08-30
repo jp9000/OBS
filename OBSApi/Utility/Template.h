@@ -488,7 +488,7 @@ public:
 
     inline void SetSize(int size)
     {
-        if(size == bitSize)
+        if(static_cast<UINT>(size) == bitSize)
             return;
         else if(size == 0)
         {
@@ -496,9 +496,7 @@ public:
             return;
         }
 
-        int adjSize = ((size+31)/32);
-        Data.SetSize(adjSize);
-
+        Data.SetSize((size + 31) / 32);
         bitSize = size;
     }
 

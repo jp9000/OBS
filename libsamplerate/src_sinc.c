@@ -470,8 +470,8 @@ calc_output_stereo (SINC_FILTER *filter, increment_t increment, increment_t star
 		}
 	while (filter_index > MAKE_INCREMENT_T (0)) ;
 
-	output [0] = scale * (left [0] + right [0]) ;
-	output [1] = scale * (left [1] + right [1]) ;
+	output [0] = (float)(scale * (left [0] + right [0])) ;
+	output [1] = (float)(scale * (left [1] + right [1])) ;
 } /* calc_output_stereo */
 
 static int
@@ -622,10 +622,10 @@ calc_output_quad (SINC_FILTER *filter, increment_t increment, increment_t start_
 		}
 	while (filter_index > MAKE_INCREMENT_T (0)) ;
 
-	output [0] = scale * (left [0] + right [0]) ;
-	output [1] = scale * (left [1] + right [1]) ;
-	output [2] = scale * (left [2] + right [2]) ;
-	output [3] = scale * (left [3] + right [3]) ;
+	output [0] = (float)(scale * (left [0] + right [0])) ;
+	output [1] = (float)(scale * (left [1] + right [1])) ;
+	output [2] = (float)(scale * (left [2] + right [2])) ;
+	output [3] = (float)(scale * (left [3] + right [3])) ;
 } /* calc_output_quad */
 
 static int
@@ -780,12 +780,12 @@ calc_output_hex (SINC_FILTER *filter, increment_t increment, increment_t start_f
 		}
 	while (filter_index > MAKE_INCREMENT_T (0)) ;
 
-	output [0] = scale * (left [0] + right [0]) ;
-	output [1] = scale * (left [1] + right [1]) ;
-	output [2] = scale * (left [2] + right [2]) ;
-	output [3] = scale * (left [3] + right [3]) ;
-	output [4] = scale * (left [4] + right [4]) ;
-	output [5] = scale * (left [5] + right [5]) ;
+	output [0] = (float)(scale * (left [0] + right [0])) ;
+	output [1] = (float)(scale * (left [1] + right [1])) ;
+	output [2] = (float)(scale * (left [2] + right [2])) ;
+	output [3] = (float)(scale * (left [3] + right [3])) ;
+	output [4] = (float)(scale * (left [4] + right [4])) ;
+	output [5] = (float)(scale * (left [5] + right [5])) ;
 } /* calc_output_hex */
 
 static int
@@ -1006,28 +1006,28 @@ calc_output_multi (SINC_FILTER *filter, increment_t increment, increment_t start
 		switch (ch % 8)
 		{	default :
 				ch -- ;
-				output [ch] = scale * (left [ch] + right [ch]) ;
+				output [ch] = (float)(scale * (left [ch] + right [ch])) ;
 			case 7 :
 				ch -- ;
-				output [ch] = scale * (left [ch] + right [ch]) ;
+				output [ch] = (float)(scale * (left [ch] + right [ch])) ;
 			case 6 :
 				ch -- ;
-				output [ch] = scale * (left [ch] + right [ch]) ;
+				output [ch] = (float)(scale * (left [ch] + right [ch])) ;
 			case 5 :
 				ch -- ;
-				output [ch] = scale * (left [ch] + right [ch]) ;
+				output [ch] = (float)(scale * (left [ch] + right [ch])) ;
 			case 4 :
 				ch -- ;
-				output [ch] = scale * (left [ch] + right [ch]) ;
+				output [ch] = (float)(scale * (left [ch] + right [ch])) ;
 			case 3 :
 				ch -- ;
-				output [ch] = scale * (left [ch] + right [ch]) ;
+				output [ch] = (float)(scale * (left [ch] + right [ch])) ;
 			case 2 :
 				ch -- ;
-				output [ch] = scale * (left [ch] + right [ch]) ;
+				output [ch] = (float)(scale * (left [ch] + right [ch])) ;
 			case 1 :
 				ch -- ;
-				output [ch] = scale * (left [ch] + right [ch]) ;
+				output [ch] = (float)(scale * (left [ch] + right [ch])) ;
 			} ;
 		}
 	while (ch > 0) ;
