@@ -133,4 +133,69 @@ services : {
       "API" : https://web-api.azubu.tv/stream/broadcaster-key/
     }
   }
+  Afreeca.TV : {
+    id : 14 
+    servers : { 
+        "US : East"             : rtmpmanager-aws-en-east.afreeca.tv
+        "US : West"             : rtmpmanager-aws-en-west.afreeca.tv
+        "Asia : Thailand"       : rtmpmanager-aws-sg.afreeca.tv
+        "Asia : Korea"          : rtmpmanager-en-ko.afreeca.tv
+    } 
+    recommended : { 
+      "keyint" : 1000 
+      "profile" : "main" 
+      "ratecontrol" : "cbr" 
+      "max bitrate" : 5000 
+      "supported audio codec" : "AAC"
+      "max audio bitrate aac" : 192
+      "video aspect ratio" : "16:9"
+    }
+  }
+  アフリカTV : { 
+    id : 15 
+    servers : { 
+      "Japan"                : rtmp://rtmpmanager-aws-jp.afreeca.tv/live/
+      "South Korea"          : rtmp://rtmpmanager-jp.afreeca.tv/live/
+    } 
+    recommended : { 
+      "keyint" : 1000 
+      "profile" : "main" 
+      "ratecontrol" : "cbr" 
+      "max bitrate" : 5000 
+      "supported audio codec" : "AAC"
+      "max audio bitrate aac" : 192
+      "video aspect ratio" : "16:9"
+    } 
+  }
+  艾菲卡TV : { 
+    id : 16 
+    servers : { 
+      "Taiwan"               : rtmp://rtmpmanager-gcp-tw.afreeca.tv/live/
+      "South Korea"          : rtmp://rtmpmanager-tw-ko.afreeca.tv/live/
+    } 
+    recommended : { 
+      "keyint" : 1000 
+      "profile" : "main" 
+      "ratecontrol" : "cbr" 
+      "max bitrate" : 5000 
+      "supported audio codec" : "AAC"
+      "max audio bitrate aac" : 192
+      "video aspect ratio" : "16:9"
+    } 
+  } 
+  아프리카TV : { 
+    id : 17 
+    servers : { 
+      "South Korea"          : rtmp://rtmpmanager-freecat.afreeca.tv/app/
+    } 
+    recommended : { 
+      "keyint" : 1000 
+      "profile" : "main" 
+      "ratecontrol" : "cbr" 
+      "max bitrate" : 5000 
+      "supported audio codec" : "AAC"
+      "max audio bitrate aac" : 192
+      "video aspect ratio" : "16:9"
+    } 
+  } 
 }
