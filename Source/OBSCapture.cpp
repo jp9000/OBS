@@ -328,6 +328,8 @@ void OBS::StopRecording(bool immediate)
     fileStreamStop.time = (DWORD)(GetVideoTime() - firstFrameTimestamp);
 }
 
+#pragma warning(push)
+#pragma warning( disable : 4703 )
 void OBS::Start(bool recordingOnly, bool replayBufferOnly)
 {
     if(bRunning && !bRecording && !bRecordingReplayBuffer) return;
@@ -915,6 +917,7 @@ retryHookTestV2:
 
     ConfigureStreamButtons();
 }
+#pragma warning(pop)
 
 void OBS::Stop(bool overrideKeepRecording, bool stopReplayBuffer)
 {
