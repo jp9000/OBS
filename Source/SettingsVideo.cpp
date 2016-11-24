@@ -400,7 +400,7 @@ INT_PTR SettingsVideo::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
                 //--------------------------------------------
 
                 BOOL bUnlockFPS = AppConfig->GetInt(TEXT("Video"), TEXT("UnlockFPS"));
-                int topFPS = bUnlockFPS ? 120 : 60;
+                int topFPS = bUnlockFPS ? 144 : 60;
 
                 hwndTemp = GetDlgItem(hwnd, IDC_FPS);
                 SendMessage(hwndTemp, UDM_SETRANGE32, 1, topFPS);
