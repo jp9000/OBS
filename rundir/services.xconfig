@@ -133,4 +133,22 @@ services : {
       "API" : https://web-api.azubu.tv/stream/broadcaster-key/
     }
   }
+  Beam : {
+    id : 14
+    servers : {
+      "US - Dallas"                      : rtmp://ingest.dal07.beam.pro/beam
+      "US - San Jose"                    : rtmp://ingest.sjc01.beam.pro/beam
+      "US - Washington D.C."             : rtmp://ingest.wdc01.beam.pro/beam
+      "CA - Toronto"                     : rtmp://ingest.tor01.beam.pro/beam
+      "AU - Melbourne"                   : rtmp://ingest.mel01.beam.pro/beam
+      "EU - Amsterdam"                   : rtmp://ingest.ams01.beam.pro/beam
+      "EU - London"                      : rtmp://ingest.lon02.beam.pro/beam
+    }
+    recommended : {
+      "keyint" : 2000
+      "max bitrate" : 3500
+      "ratecontrol" : "cbr"
+      "video aspect ratio" : "16:9"
+    }
+  }
 }
