@@ -133,4 +133,12 @@ services : {
       "API" : https://web-api.azubu.tv/stream/broadcaster-key/
     }
   }
+  GamingLive.tv : {
+    id : 14
+    servers: {
+      "Europe"        : rtmp://broadcastEU.gaminglive.tv/push/
+      "North America" : rtmp://broadcastNA.gaminglive.tv/push/
+      "Asia"          : rtmp://broadcastAS.gaminglive.tv/push/
+    }
+  }
 }
