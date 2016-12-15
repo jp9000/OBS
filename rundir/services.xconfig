@@ -133,4 +133,19 @@ services : {
       "API" : https://web-api.azubu.tv/stream/broadcaster-key/
     }
   }
+  Streamup.com : {
+    id : 14
+    servers : {
+      "Default"     : rtmp://live.streamup.com/app
+    }
+    recommended : {
+      "keyint" : 2000
+      "profile" : "main"
+      "ratecontrol" : "cbr"
+      "max bitrate" : 4000
+      "max audio bitrate aac" : 160
+      "max audio bitrate mp3" : 128
+      "video aspect ratio" : "16:9"
+    }
+  }
 }
