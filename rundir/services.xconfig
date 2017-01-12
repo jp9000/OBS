@@ -133,4 +133,14 @@ services : {
       "API" : https://web-api.azubu.tv/stream/broadcaster-key/
     }
   }
+  Disco Melee : {
+    id : 15
+    servers : {
+      "Primary Ingest" : https://edge.discomelee.com/live
+    }
+    recommended : {
+      "keyint" : 2000
+      "ratecontrol" : "cbr"
+    }
+  }
 }
