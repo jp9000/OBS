@@ -39,13 +39,42 @@ services : {
       "video aspect ratio" : "16:9"
     }
   }
-  "Vaughn Live / iNSTAGIB.tv" : {
+  "Vaughn Live / iNSTAGIB" : {
     id : 3
     servers : {
-      "US: Primary"           : rtmp://live.vaughnsoft.net:443/live
-      "US: San Jose, CA"      : rtmp://live-sjc.vaughnsoft.net:443/live
-      "US: New York, NY"      : rtmp://live-nyc.vaughnsoft.net:443/live
-      "US: New York 2, NY"    : rtmp://live-nyc2.vaughnsoft.net:443/live
+      "US: Primary"         : rtmp://live.vaughnsoft.net/live
+      "US: Chicago, IL"     : rtmp://live-ord.vaughnsoft.net/live
+      "US: Denver, CO"      : rtmp://live-den.vaughnsoft.net/live
+      "US: Los Angeles, CA" : rtmp://live-lax.vaughnsoft.net/live
+      "EU: Amsterdam, NL"   : rtmp://live-ams.vaughnsoft.net/live
+    }
+    recommended : {
+      "keyint" : 2000
+      "profile" : "baseline"
+      "ratecontrol" : "vbr"
+      "max bitrate" : 3500
+      "max audio bitrate aac" : 160
+      "max audio bitrate mp3" : 320
+      "video aspect ratio" : "16:9"
+    }
+  }
+  "Breakers.TV" : {
+    id : 4
+    servers : {
+      "US: Primary"         : rtmp://live.vaughnsoft.net/live
+      "US: Chicago, IL"     : rtmp://live-ord.vaughnsoft.net/live
+      "US: Denver, CO"      : rtmp://live-den.vaughnsoft.net/live
+      "US: Los Angeles, CA" : rtmp://live-lax.vaughnsoft.net/live
+      "EU: Amsterdam, NL"   : rtmp://live-ams.vaughnsoft.net/live
+    }
+    recommended : {
+      "keyint" : 2000
+      "profile" : "baseline"
+      "ratecontrol" : "vbr"
+      "max bitrate" : 3500
+      "max audio bitrate aac" : 160
+      "max audio bitrate mp3" : 320
+      "video aspect ratio" : "16:9"
     }
   }
   GoodGame.ru : {
