@@ -723,13 +723,13 @@ HANDLE D3D10Texture::GetSharedHandle()
     HRESULT err;
     HANDLE handle = NULL;
     IDXGIResource *pDXGIResource;
-    if FAILED(err = texture->QueryInterface(__uuidof(IDXGIResource), (void **)&pDXGIResource))
+    if (FAILED(err = texture->QueryInterface(__uuidof(IDXGIResource), (void **)&pDXGIResource)))
     {
         AppWarning(TEXT("D3D10Texture::GetSharedHandle: QueryInterface failed, result = %08lX"), err);
         return handle;
     }
     
-    if FAILED(err = pDXGIResource->GetSharedHandle(&handle))
+    if (FAILED(err = pDXGIResource->GetSharedHandle(&handle)))
     {
         AppWarning(TEXT("D3D10Texture::GetSharedHandle: GetSharedHandle failed, result = %08lX"), err);
     }
