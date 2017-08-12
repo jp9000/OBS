@@ -264,6 +264,8 @@ OBS::OBS()
     hAuxAudioMutex = OSCreateMutex();
     hVideoEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
+    hVideoFrameReadyToEncode = CreateSemaphore(NULL, 0, 30, NULL);
+
     monitors.Clear();
     EnumDisplayMonitors(NULL, NULL, (MONITORENUMPROC)MonitorInfoEnumProc, (LPARAM)&monitors);
 

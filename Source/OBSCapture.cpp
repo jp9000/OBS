@@ -974,6 +974,8 @@ void OBS::Stop(bool overrideKeepRecording, bool stopReplayBuffer)
     bShutdownEncodeThread = true;
     ShowWindow(hwndProjector, SW_HIDE);
 
+    ReleaseSemaphore(hVideoFrameReadyToEncode, 1, nullptr);
+
     if(hEncodeThread)
     {
         OSTerminateThread(hEncodeThread, 30001);

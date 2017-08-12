@@ -26,6 +26,7 @@ class SettingsPane;
 struct EncoderPicture;
 
 #define NUM_RENDER_BUFFERS 2
+#define MAX_ENCODER_PICTURES 100
 
 static const int minClientWidth  = 640;
 static const int minClientHeight = 275;
@@ -878,6 +879,11 @@ private:
     QWORD firstFrameTimestamp;
     EncoderPicture * volatile curFramePic;
     HANDLE hVideoEvent;
+    HANDLE hVideoFrameReadyToEncode;
+
+    int inputIndex;
+    int encodeIndex;
+    EncoderPicture *picturesToEncode;
 
     static DWORD STDCALL EncodeThread(LPVOID lpUnused);
     static DWORD STDCALL MainCaptureThread(LPVOID lpUnused);
