@@ -85,7 +85,7 @@ struct ReplayBuffer : VideoFileStream
             CreateRecordingHelper(App->fileStream, packets);
         }
 
-        if ((*data)[0] != 0x17)
+        if (!((*data)[0] == 0x17 || (*data)[0] == 0x1c))
             return;
 
         HandleSaveTimes(pts);
@@ -213,7 +213,7 @@ static DWORD STDCALL SaveReplayBufferThread(void *arg)
         auto &buf = get<3>(*packet);
         out->AddPacket(buf, timestamp, get<2>(*packet), get<0>(*packet));
 
-        if (buf->front() == 0x17)
+        if ((buf->front() == 0x17) || (buf->front() == 0x1c))
             signal();
 
         packets.pop_front();

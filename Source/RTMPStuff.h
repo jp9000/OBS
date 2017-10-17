@@ -97,6 +97,7 @@ static const AVal av_escdquote = AVC("\\\"");
 
 static const AVal av_OBSVersion = AVC(OBS_VERSION_STRING_ANSI);
 SAVC(avc1);
+SAVC(hevc);
 SAVC(mp4a);
 static const AVal av_mp3 = AVC("mp3 ");
 

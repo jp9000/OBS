@@ -52,9 +52,9 @@ void SettingsAdvanced::DestroyPane()
     hwnd = NULL;
 }
 
-void SettingsAdvanced::SelectPresetDialog(bool useQSV, bool useNVENC)
+void SettingsAdvanced::SelectPresetDialog(bool useQSV, bool useNVENC, bool useQy265)
 {
-    bool usex264 = !useQSV && !useNVENC;
+    bool usex264 = !useQSV && !useNVENC && !useQy265;
 
     HWND hwndTemp = GetDlgItem(hwnd, IDC_PRESET);
     ShowWindow(hwndTemp, usex264 ? SW_SHOW : SW_HIDE);
@@ -64,9 +64,36 @@ void SettingsAdvanced::SelectPresetDialog(bool useQSV, bool useNVENC)
     ShowWindow(hwndTemp, usex264 ? SW_SHOW : SW_HIDE);
     EnableWindow(hwndTemp, true);
 
+    hwndTemp = GetDlgItem(hwnd, IDC_X264PROFILE);
+    ShowWindow(hwndTemp, usex264 ? SW_SHOW : SW_HIDE);
+    EnableWindow(hwndTemp, true);
+
     hwndTemp = GetDlgItem(hwnd, IDC_USEVIDEOENCODERSETTINGS);
-    ShowWindow(hwndTemp, !useQSV ? SW_SHOW : SW_HIDE);
+    ShowWindow(hwndTemp, !useQSV && !useQy265 ? SW_SHOW : SW_HIDE);
     EnableWindow(hwndTemp, usex264);
+
+    hwndTemp = GetDlgItem(hwnd, IDC_PRESET_QY265);
+    ShowWindow(hwndTemp, useQy265 ? SW_SHOW : SW_HIDE);
+    EnableWindow(hwndTemp, true);
+
+    hwndTemp = GetDlgItem(hwnd, IDC_QY265PRESET_LABEL);
+    ShowWindow(hwndTemp, useQy265 ? SW_SHOW : SW_HIDE);
+    EnableWindow(hwndTemp, true);
+    
+    hwndTemp = GetDlgItem(hwnd, IDC_QY265_TUNE_LABEL);
+    ShowWindow(hwndTemp, useQy265 ? SW_SHOW : SW_HIDE);
+    EnableWindow(hwndTemp, true);
+
+    hwndTemp = GetDlgItem(hwnd, IDC_QY265TUNE);
+    ShowWindow(hwndTemp, useQy265 ? SW_SHOW : SW_HIDE);
+    EnableWindow(hwndTemp, true);
+
+    hwndTemp = GetDlgItem(hwnd, IDC_USEVIDEOENCODERQY265SETTINGS);
+    ShowWindow(hwndTemp, useQy265 ? SW_SHOW : SW_HIDE);
+    EnableWindow(hwndTemp, useQy265);
+
+    hwndTemp = GetDlgItem(hwnd, IDC_VIDEOENCODERQY265SETTINGS);
+    ShowWindow(hwndTemp, useQy265 ? SW_SHOW : SW_HIDE);
 
     hwndTemp = GetDlgItem(hwnd, IDC_VIDEOENCODERSETTINGS);
     ShowWindow(hwndTemp, !useQSV ? SW_SHOW : SW_HIDE);
@@ -110,6 +137,14 @@ void SettingsAdvanced::ApplySettings()
 
     strTemp = GetCBText(GetDlgItem(hwnd, IDC_X264PROFILE));
     AppConfig->SetString(TEXT("Video Encoding"), TEXT("X264Profile"), strTemp);
+
+    strTemp = GetCBText(GetDlgItem(hwnd, IDC_PRESET_QY265));
+    AppConfig->SetString(TEXT("Video Encoding"), TEXT("Qy265Preset"), strTemp);
+
+    //------------------------------------
+
+    strTemp = GetCBText(GetDlgItem(hwnd, IDC_QY265TUNE));
+    AppConfig->SetString(TEXT("Video Encoding"), TEXT("QY265Tune"), strTemp);
 
     //--------------------------------------------------
 
@@ -164,6 +199,14 @@ void SettingsAdvanced::ApplySettings()
     AppConfig->SetString(L"Video Encoding", L"CustomQSVSettings", GetEditText(GetDlgItem(hwnd, IDC_QSVVIDEOENCODERSETTINGS)));
 
     //--------------------------------------------------
+    BOOL bUseCustomQY265Settings = SendMessage(GetDlgItem(hwnd, IDC_USEVIDEOENCODERQY265SETTINGS), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    String strCustomQY265Settings = GetEditText(GetDlgItem(hwnd, IDC_VIDEOENCODERQY265SETTINGS));
+
+    AppConfig->SetInt(TEXT("Video Encoding"), TEXT("UseCustomQY265Settings"), bUseCustomQY265Settings);
+    AppConfig->SetString(TEXT("Video Encoding"), TEXT("CustomQY265Settings"), strCustomQY265Settings);
+
+    //--------------------------------------------------
+
 
     BOOL bUnlockFPS = SendMessage(GetDlgItem(hwnd, IDC_UNLOCKHIGHFPS), BM_GETCHECK, 0, 0) == BST_CHECKED;
     BOOL bFullRange = SendMessage(GetDlgItem(hwnd, IDC_ENCODEFULLRANGE), BM_GETCHECK, 0, 0) == BST_CHECKED;
@@ -246,13 +289,18 @@ void SettingsAdvanced::SetDefaults()
     String vencoder = AppConfig->GetString(L"Video Encoding", L"Encoder");
     bool useQSV = !!(vencoder == L"QSV");
     bool useNVENC = !!(vencoder == L"NVENC");
-    SelectPresetDialog(useQSV, useNVENC);
+    bool useQy265 = !!(vencoder == L"QY265");
+    SelectPresetDialog(useQSV, useNVENC,useQy265);
 
     SendMessage(GetDlgItem(hwnd, IDC_SCENEBUFFERTIME), UDM_SETPOS32, 0, 700);
     SendMessage(GetDlgItem(hwnd, IDC_USEMULTITHREADEDOPTIMIZATIONS), BM_SETCHECK, BST_CHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_PRIORITY), CB_SETCURSEL, 2, 0);
     SendMessage(GetDlgItem(hwnd, IDC_PRESET), CB_SETCURSEL, 2, 0);
     SendMessage(GetDlgItem(hwnd, IDC_X264PROFILE), CB_SETCURSEL, 1, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_PRESET_QY265), CB_SETCURSEL, 2, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_QY265TUNE), CB_SETCURSEL, 1, 0);
+    SendMessage(GetDlgItem(hwnd, IDC_USEVIDEOENCODERQY265SETTINGS), BM_SETCHECK, BST_UNCHECKED, 0);
+    EnableWindow(GetDlgItem(hwnd, IDC_VIDEOENCODERQY265SETTINGS), FALSE);
     SendMessage(GetDlgItem(hwnd, IDC_KEYFRAMEINTERVAL), UDM_SETPOS32, 0, 0);
     SendMessage(GetDlgItem(hwnd, IDC_USECFR), BM_SETCHECK, BST_CHECKED, 0);
     SendMessage(GetDlgItem(hwnd, IDC_USEVIDEOENCODERSETTINGS), BM_SETCHECK, BST_UNCHECKED, 0);
@@ -410,7 +458,8 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 bool bUseNVENC = !!(vencoder == L"NVENC");
 
-                SelectPresetDialog(bUseQSV, bUseNVENC);
+                bool useQy265 = !!(vencoder == L"QY265");
+                SelectPresetDialog(bUseQSV, bUseNVENC,useQy265);
 
                 bool bQSVUseVideoEncoderSettings = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("QSVUseVideoEncoderSettings")) != 0;
                 SendMessage(GetDlgItem(hwnd, IDC_QSVUSEVIDEOENCODERSETTINGS), BM_SETCHECK, bQSVUseVideoEncoderSettings ? BST_CHECKED : BST_UNCHECKED, 0);
@@ -449,6 +498,38 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 String strNvencPreset = AppConfig->GetString(TEXT("Video Encoding"), TEXT("NVENCPreset"), nv_preset_names[0]);
                 EnableWindow(GetDlgItem(hwnd, IDC_NVENC2PASS), scmp(strNvencPreset.Array(), nv_preset_names[0]) ? TRUE : FALSE);
+
+                bool bQY265UseVideoEncoderSettings = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCustomQY265Settings")) != 0;
+                SendMessage(GetDlgItem(hwnd, IDC_USEVIDEOENCODERQY265SETTINGS), BM_SETCHECK, bQY265UseVideoEncoderSettings ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                String qy265Settings = AppConfig->GetString(TEXT("Video Encoding"), TEXT("CustomQY265Settings"));
+                SetWindowText(GetDlgItem(hwnd, IDC_VIDEOENCODERQY265SETTINGS), qy265Settings);
+                EnableWindow(GetDlgItem(hwnd, IDC_VIDEOENCODERQY265SETTINGS), bQY265UseVideoEncoderSettings);
+
+                hwndTemp = GetDlgItem(hwnd, IDC_PRESET_QY265);
+                static const CTSTR qy265_preset_names[16] = {
+                    TEXT("veryfast"),
+                    TEXT("fast"),
+                    TEXT("medium"),
+                    TEXT("slow"),
+                };
+                for (int i = 0; qy265_preset_names[i]; i++)
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)qy265_preset_names[i]);
+
+                LoadSettingComboString(hwndTemp, TEXT("Video Encoding"), TEXT("QY265Preset"), qy265_preset_names[0]);
+
+                hwndTemp = GetDlgItem(hwnd, IDC_QY265TUNE);
+                static const CTSTR qy265_tune_names[16] = {
+                    TEXT("default"),
+                    TEXT("selfshow"),
+                    TEXT("game"),
+                    TEXT("movie"),
+                    TEXT("screen"),
+                };
+                for (int i = 0; qy265_tune_names[i]; i++)
+                    SendMessage(hwndTemp, CB_ADDSTRING, 0, (LPARAM)qy265_tune_names[i]);
+
+                LoadSettingComboString(hwndTemp, TEXT("Video Encoding"), TEXT("QY265Tune"), qy265_tune_names[1]);
 
                 hwndTemp = GetDlgItem(hwnd, IDC_QSVPRESET);
                 static const struct {
@@ -582,11 +663,22 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                         SetChangedSettings(true);
                     }
                     break;
+                case IDC_USEVIDEOENCODERQY265SETTINGS:
+                    if (HIWORD(wParam) == BN_CLICKED)
+                    {
+                        BOOL bUseVideoEncoderQY265Settings = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        EnableWindow(GetDlgItem(hwnd, IDC_VIDEOENCODERQY265SETTINGS), bUseVideoEncoderQY265Settings);
 
+                        if (App->GetVideoEncoder())
+                            ShowWindow(GetDlgItem(hwnd, IDC_INFO), SW_SHOW);
+                        SetChangedSettings(true);
+                    }
+                    break;
                 case IDC_KEYFRAMEINTERVAL_EDIT:
                 case IDC_SCENEBUFFERTIME_EDIT:
                 case IDC_AUDIOTIMEADJUST_EDIT:
                 case IDC_VIDEOENCODERSETTINGS:
+                case IDC_VIDEOENCODERQY265SETTINGS:
                 case IDC_QSVVIDEOENCODERSETTINGS:
                 case IDC_LATENCYTUNE:
                     if(HIWORD(wParam) == EN_CHANGE)
@@ -642,6 +734,7 @@ INT_PTR SettingsAdvanced::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                     break;
 
                 case IDC_X264PROFILE:
+                case IDC_QY265TUNE:
                 case IDC_SENDBUFFERSIZE:
                 case IDC_PRIORITY:
                 case IDC_BINDIP:

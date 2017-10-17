@@ -1645,7 +1645,8 @@ void OBS::ReloadIniSettings()
     // Update old config, transition old encoder selection
     int qsv = AppConfig->GetInt(L"Video Encoding", L"UseQSV", -1);
     int nvenc = AppConfig->GetInt(L"Video Encoding", L"UseNVENC", -1);
-    if (qsv != -1 || nvenc != -1)
+    int qy265 = AppConfig->GetInt(L"Video Encoding", L"UseQY265", -1);
+    if (qsv != -1 || nvenc != -1 || qy265 != -1)
     {
         AppConfig->SetString(L"Video Encoding", L"Encoder", (qsv > 0) ? L"QSV" : (nvenc > 0) ? L"NVENC" : L"x264");
         AppConfig->Remove(L"Video Encoding", L"UseQSV");

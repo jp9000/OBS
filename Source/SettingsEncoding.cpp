@@ -57,12 +57,15 @@ void SettingsEncoding::ApplySettings()
 {
     bool useQSV   = SendMessage(GetDlgItem(hwnd, IDC_ENCODERQSV), BM_GETCHECK, 0, 0) == BST_CHECKED;
     bool useNVENC = SendMessage(GetDlgItem(hwnd, IDC_ENCODERNVENC), BM_GETCHECK, 0, 0) == BST_CHECKED;
-    bool usex264 = !useQSV && !useNVENC;
+    bool useQY265 = SendMessage(GetDlgItem(hwnd, IDC_ENCODERQY265), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    bool usex264 = !useQSV && !useNVENC && !useQY265;
+    
 
     String vcodec = AppConfig->GetString(L"Video Encoding", L"Encoder");
 
     bool useQSV_prev   = !!(vcodec == L"QSV");
     bool useNVENC_prev = !!(vcodec == L"NVENC");
+    bool useQY265_prev = !!(vcodec == L"QY265");
 
     if (!hasQSV && !useQSV && useQSV_prev &&
         OBSMessageBox(hwnd, Str("Settings.Encoding.Video.EncoderQSVDisabledAfterApply"), Str("MessageBoxWarningCaption"), MB_ICONEXCLAMATION | MB_OKCANCEL) != IDOK)
@@ -80,8 +83,9 @@ void SettingsEncoding::ApplySettings()
 
     EnableWindow(GetDlgItem(hwnd, IDC_ENCODERQSV), hasQSV || useQSV);
     EnableWindow(GetDlgItem(hwnd, IDC_ENCODERNVENC), hasNVENC || useNVENC);
+    EnableWindow(GetDlgItem(hwnd, IDC_ENCODERQY265),  useQY265);
 
-    AppConfig->SetString(L"Video Encoding", L"Encoder", useQSV ? L"QSV" : useNVENC ? L"NVENC" : L"x264");
+    AppConfig->SetString(L"Video Encoding", L"Encoder", useQSV ? L"QSV" : useNVENC ? L"NVENC" : useQY265 ? L"QY265": L"x264");
 
     int quality = (int)SendMessage(GetDlgItem(hwnd, IDC_QUALITY), CB_GETCURSEL, 0, 0);
     if(quality != CB_ERR)
@@ -160,14 +164,17 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 bool useQSV   = !!(vcodec == L"QSV");
                 bool useNVENC = !!(vcodec == L"NVENC");
-                bool usex264  = !useQSV && !useNVENC;
+                bool useqy265 = !!(vcodec == L"QY265");
+                bool usex264 = !useQSV && !useNVENC && !useqy265;
 
                 SendMessage(GetDlgItem(hwnd, IDC_ENCODERX264),  BM_SETCHECK, usex264,  0);
                 SendMessage(GetDlgItem(hwnd, IDC_ENCODERQSV),   BM_SETCHECK, useQSV,   0);
                 SendMessage(GetDlgItem(hwnd, IDC_ENCODERNVENC), BM_SETCHECK, useNVENC, 0);
+                SendMessage(GetDlgItem(hwnd, IDC_ENCODERQY265), BM_SETCHECK, useqy265, 0);
 
                 EnableWindow(GetDlgItem(hwnd, IDC_ENCODERQSV), hasQSV || useQSV);
                 EnableWindow(GetDlgItem(hwnd, IDC_ENCODERNVENC), hasNVENC || useNVENC);
+
 
                 bool QSVOnUnsupportedWinVer = OSGetVersion() < 7 && IsKnownQSVCPUPlatform() && !hasQSV;
                 ShowWindow(GetDlgItem(hwnd, IDC_QSV_WINVER_WARNING), QSVOnUnsupportedWinVer ? SW_SHOW : SW_HIDE);
@@ -323,7 +330,8 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
 
                 bool useQSV = SendMessage(GetDlgItem(hwnd, IDC_ENCODERQSV), BM_GETCHECK, 0, 0) == BST_CHECKED;
                 bool useNVENC = SendMessage(GetDlgItem(hwnd, IDC_ENCODERNVENC), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                bool usex264 = !useQSV && !useNVENC;
+                bool useQY265 = SendMessage(GetDlgItem(hwnd, IDC_ENCODERQY265), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                bool usex264 = !useQSV && !useNVENC && !useQY265;
 
                 bool useCBR = SendMessage(GetDlgItem(hwnd, IDC_USECBR), BM_GETCHECK, 0, 0) == BST_CHECKED;
 
@@ -431,13 +439,16 @@ INT_PTR SettingsEncoding::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam
                         break;
 
                     case IDC_ENCODERX264:
+                    case IDC_ENCODERQY265:
                     case IDC_ENCODERQSV:
                     case IDC_ENCODERNVENC:
                         if (HIWORD(wParam) == BN_CLICKED)
                             bDataChanged = true;
 
-                        EnableWindow(GetDlgItem(hwnd, IDC_QUALITY), !useCBR && (usex264 || useNVENC));
-                        EnableWindow(GetDlgItem(hwnd, IDC_PADCBR), useCBR && (usex264 || useNVENC));
+                        EnableWindow(GetDlgItem(hwnd, IDC_QUALITY), !useCBR && (usex264 || useNVENC) && !useQY265);
+                        EnableWindow(GetDlgItem(hwnd, IDC_PADCBR), useCBR && (usex264 || useNVENC) && !useQY265);
+                        EnableWindow(GetDlgItem(hwnd, IDC_CUSTOMBUFFER), !useQY265);
+                        EnableWindow(GetDlgItem(hwnd, IDC_BUFFERSIZE), !useQY265);
                         break;
 
                     case IDC_CUSTOMBUFFER:

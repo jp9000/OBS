@@ -234,7 +234,7 @@ public:
     virtual bool HasDefaults() const;
     virtual void SetDefaults();
 private:
-    void SelectPresetDialog(bool useQSV, bool useNVENC);
+    void SelectPresetDialog(bool useQSV, bool useNVENC, bool useQy265);
 };
 
 //============================================================================

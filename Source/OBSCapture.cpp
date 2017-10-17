@@ -22,6 +22,7 @@
 #include <Avrt.h>
 
 VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR);
+VideoEncoder* CreateQY265Encoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR);
 VideoEncoder* CreateQSVEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, String &errors);
 VideoEncoder* CreateNVENCEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, String &errors);
 AudioEncoder* CreateMP3Encoder(UINT bitRate);
@@ -816,6 +817,7 @@ retryHookTestV2:
         bufferSize = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("BufferSize"), 1000);
     int quality    = AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Quality"),    8);
     String preset  = AppConfig->GetString(TEXT("Video Encoding"), TEXT("Preset"),     TEXT("veryfast"));
+    String qy265preset = AppConfig->GetString(TEXT("Video Encoding"), TEXT("QY265Preset"), TEXT("veryfast"));
     bUsing444      = false;//AppConfig->GetInt   (TEXT("Video Encoding"), TEXT("Use444"),     0) != 0;
     bUseCFR        = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("UseCFR"), 1) != 0;
 
@@ -854,6 +856,8 @@ retryHookTestV2:
         videoEncoder = CreateQSVEncoder(fps, outputCX, outputCY, quality, preset, bUsing444, colorDesc, maxBitRate, bufferSize, bUseCFR, videoEncoderErrors);
     else if(vencoder == L"NVENC")
         videoEncoder = CreateNVENCEncoder(fps, outputCX, outputCY, quality, preset, bUsing444, colorDesc, maxBitRate, bufferSize, bUseCFR, videoEncoderErrors);
+    else if(vencoder == L"QY265")
+        videoEncoder = CreateQY265Encoder(fps, outputCX, outputCY, quality, qy265preset, bUsing444, colorDesc, maxBitRate, bufferSize, bUseCFR);
     else
         videoEncoder = CreateX264Encoder(fps, outputCX, outputCY, quality, preset, bUsing444, colorDesc, maxBitRate, bufferSize, bUseCFR);
 
