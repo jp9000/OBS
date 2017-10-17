@@ -254,7 +254,7 @@ char* OBS::EncMetaData(char *enc, char *pend, bool bFLVFile)
     /*if(bFLVFile)
         enc = AMF_EncodeNamedNumber(enc, pend, &av_videocodecid,    7.0);//&av_avc1);//
     else*/
-        enc = AMF_EncodeNamedString(enc, pend, &av_videocodecid,    &av_avc1);//7.0);//
+    enc = AMF_EncodeNamedString(enc, pend, &av_videocodecid, GetVideoEncoder()->isQY265() ? &av_hevc : &av_avc1);//7.0);//
 
     enc = AMF_EncodeNamedNumber(enc, pend, &av_videodatarate,   double(maxBitRate));
     enc = AMF_EncodeNamedNumber(enc, pend, &av_framerate,       double(fps));

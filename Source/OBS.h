@@ -196,6 +196,7 @@ public:
     virtual String GetInfoString() const=0;
 
     virtual bool isQSV() { return false; }
+    virtual bool isQY265() { return false; }
 
     virtual int GetBufferedFrames() { if(HasBufferedFrames()) return -1; return 0; }
     virtual bool HasBufferedFrames() { return false; }

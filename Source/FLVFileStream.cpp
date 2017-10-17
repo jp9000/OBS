@@ -40,7 +40,7 @@ class FLVFileStream : public VideoFileStream
 
     void AppendFLVPacket(const BYTE *lpData, UINT size, BYTE type, DWORD timestamp)
     {
-        if (!bSentSEI && type == 9 && lpData[0] == 0x17 && lpData[1] == 0x1) { //send SEI with first keyframe packet
+        if (!bSentSEI && type == 9 && (lpData[0] == 0x17 || lpData[0] == 0x1c )&& lpData[1] == 0x1) { //send SEI with first keyframe packet
             UINT networkDataSize  = fastHtonl(size+sei.size);
             UINT networkTimestamp = fastHtonl(timestamp);
             UINT streamID = 0;
@@ -146,9 +146,9 @@ public:
             AppendFLVPacket(videoHeaders.lpPacket, videoHeaders.size, 9, 0);
         }
 
-        if(initialTimestamp == -1 && data[0] != 0x17)
+        if (initialTimestamp == -1 && !(data[0] == 0x17 || data[0] == 0x1c))
             return;
-        else if(initialTimestamp == -1 && data[0] == 0x17) {
+        else if (initialTimestamp == -1 && (data[0] == 0x17 || data[0] == 0x1c)) {
             initialTimestamp = timestamp;
         }
 

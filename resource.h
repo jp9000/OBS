@@ -66,8 +66,12 @@
 #define IDC_BUFFERSIZE                  1016
 #define IDC_FILTER2                     1016
 #define IDC_DEVICE                      1016
+#define IDC_PRESETQY265                 1016
+#define IDC_PRESET_QY265                1016
 #define IDC_AUDIOCODEC                  1017
 #define IDC_USECOLORKEY                 1017
+#define IDC_X264PROFILE2                1017
+#define IDC_QY265TUNE                   1017
 #define IDC_AUDIOFORMAT                 1018
 #define IDC_AUDIOBITRATE                1019
 #define IDC_MONITOR                     1019
@@ -128,6 +132,7 @@
 #define IDC_EXTENTHEIGHT_EDIT           1044
 #define IDC_USERNAME_STATIC             1045
 #define IDC_SAVETOFILE                  1045
+#define IDC_USEVIDEOENCODERQY265SETTINGS 1045
 #define IDC_SERVER_STATIC               1046
 #define IDC_SERVICE_STATIC              1047
 #define IDC_NAME                        1048
@@ -197,6 +202,7 @@
 #define IDC_EXTENTWIDTH                 1082
 #define IDC_MICBOOST_EDIT2              1082
 #define IDC_MICTIMEOFFSET_EDIT          1082
+#define IDC_VIDEOENCODERQY265SETTINGS   1082
 #define IDC_EXTENTHEIGHT                1083
 #define IDC_DELAY_EDIT                  1083
 #define IDC_MICTIMEOFFSET               1083
@@ -328,9 +334,11 @@
 #define IDC_SAVEREPLAYBUFFERHOTKEY_STATIC 1176
 #define IDC_ENCODERNVENC                1177
 #define IDC_SAVEREPLAYBUFFERHOTKEY      1177
+#define IDC_QY265PRESET_LABEL           1177
 #define IDC_SCENECOLLECTION             1178
 #define IDC_CLEARHOTKEY_SAVEREPLAYBUFFER 1178
 #define IDC_FILEOUTPUTMODE              1178
+#define IDC_ENCODERQY265                1178
 #define IDC_FILEOUTPUTNORMAL            1179
 #define IDC_STARTREPLAYBUFFERHOTKEY_STATIC 1179
 #define IDC_FILEOUTPUTREPLAYBUFFER      1180
@@ -375,6 +383,7 @@
 #define IDC_IMPORT                      1210
 #define IDC_TSRCOPACITY                 1210
 #define IDC_NVENC2PASS                  1211
+#define IDC_QY265_TUNE_LABEL            1212
 #define IDA_SOURCE_MOVEUP               40018
 #define IDA_SOURCE_MOVEDOWN             40019
 #define IDA_SOURCE_MOVETOTOP            40020

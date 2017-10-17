@@ -51,6 +51,7 @@ struct Convert444Data
     LPBYTE input;
     LPBYTE output[3];
     bool bNV12;
+    bool bI420;
     bool bKillThread;
     HANDLE hSignalConvert, hSignalComplete;
     int width, height, inPitch, outPitch, startY, endY;
@@ -64,7 +65,9 @@ DWORD STDCALL Convert444Thread(Convert444Data *data)
         WaitForSingleObject(data->hSignalConvert, INFINITE);
         if(data->bKillThread) break;
         profileParallelSegment("Convert444Thread", "Convert444Threads", data->numThreads);
-        if(data->bNV12)
+        if (data->bI420)
+            Convert444toI420(data->input, data->width, data->inPitch, data->height, data->startY, data->endY, data->output);
+        else if(data->bNV12)
             Convert444toNV12(data->input, data->width, data->inPitch, data->outPitch, data->height, data->startY, data->endY, data->output);
         else
             Convert444toNV12(data->input, data->width, data->inPitch, data->width, data->height, data->startY, data->endY, data->output);
@@ -144,7 +147,7 @@ void OBS::SendFrame(VideoSegment &curSegment, QWORD firstFrameTime)
 {
     if(!bSentHeaders)
     {
-        if(network && curSegment.packets[0].data[0] == 0x17) {
+        if (network && (curSegment.packets[0].data[0] == 0x17 || curSegment.packets[0].data[0] == 0x1c)) {
             network->BeginPublishing();
             bSentHeaders = true;
         }
@@ -626,6 +629,7 @@ void OBS::MainCaptureLoop()
     int curOutBuffer = 0;
 
     bool bUsingQSV = videoEncoder->isQSV();//GlobalConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
+    bool bUsingQY265 = videoEncoder->isQY265();//GlobalConfig->GetInt(TEXT("Video Encoding"), TEXT("UseQSV")) != 0;
     bUsing444 = false;
 
     EncoderPicture lastPic;
@@ -657,9 +661,15 @@ void OBS::MainCaptureLoop()
     }
     else
     {
-        if(!bUsingQSV)
+        if(!bUsingQSV && !bUsingQY265)
             for(int i=0; i<NUM_OUT_BUFFERS; i++)
                 x264_picture_alloc(outPics[i].picOut, X264_CSP_NV12, outputCX, outputCY);
+        else if (bUsingQY265)
+        {
+            for (int i = 0; i < NUM_OUT_BUFFERS; i++)
+                x264_picture_alloc(outPics[i].picOut, X264_CSP_I420, outputCX, outputCY);
+        }
+        
     }
 
     int bCongestionControl = AppConfig->GetInt (TEXT("Video Encoding"), TEXT("CongestionControl"), 0);
@@ -723,6 +733,7 @@ void OBS::MainCaptureLoop()
         convertInfo[i].hSignalConvert  = CreateEvent(NULL, FALSE, FALSE, NULL);
         convertInfo[i].hSignalComplete = CreateEvent(NULL, FALSE, FALSE, NULL);
         convertInfo[i].bNV12 = bUsingQSV;
+        convertInfo[i].bI420 = bUsingQY265;
         convertInfo[i].numThreads = numThreads;
 
         if(i == 0)
@@ -1183,15 +1194,21 @@ void OBS::MainCaptureLoop()
                         }
                         else
                         {
-                            if(bUsingQSV)
+                            if (bUsingQY265)
                             {
-                                mfxFrameData& data = picOut.mfxOut->Data;
-                                videoEncoder->RequestBuffers(&data);
-                                LPBYTE output[] = {data.Y, data.UV};
-                                Convert444toNV12((LPBYTE)map.pData, outputCX, map.RowPitch, data.Pitch, outputCY, 0, outputCY, output);
+                                Convert444toI420((LPBYTE)map.pData, outputCX, map.RowPitch, outputCY, 0, outputCY, picOut.picOut->img.plane);
                             }
-                            else
-                                Convert444toNV12((LPBYTE)map.pData, outputCX, map.RowPitch, outputCX, outputCY, 0, outputCY, picOut.picOut->img.plane);
+                            else{
+                                if (bUsingQSV)
+                                {
+                                    mfxFrameData& data = picOut.mfxOut->Data;
+                                    videoEncoder->RequestBuffers(&data);
+                                    LPBYTE output[] = { data.Y, data.UV };
+                                    Convert444toNV12((LPBYTE)map.pData, outputCX, map.RowPitch, data.Pitch, outputCY, 0, outputCY, output);
+                                }
+                                else
+                                    Convert444toNV12((LPBYTE)map.pData, outputCX, map.RowPitch, outputCX, outputCY, 0, outputCY, picOut.picOut->img.plane);
+                            }
                             prevTexture->Unmap(0);
                         }
 

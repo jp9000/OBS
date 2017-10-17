@@ -284,6 +284,7 @@ Settings.Encoding.Audio.Channel="Kanál:"
 
 Settings.Encoding.Video.Encoder="Kodér:"
 Settings.Encoding.Video.Encoderx264="x264"
+Settings.Encoding.Video.Encoderqy265="qy265"
 Settings.Encoding.Video.EncoderQSV="Quick Sync"
 Settings.Encoding.Video.EncoderNVENC="Nvidia NVENC"
 Settings.Encoding.Video.BufferSize="Velikost vyrovnávací paměti (kb):"

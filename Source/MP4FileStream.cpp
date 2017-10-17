@@ -830,9 +830,9 @@ public:
 
         UINT64 offset = fileOut.GetPos();
 
-        if(initialTimeStamp == -1 && data[0] != 0x17)
+        if (initialTimeStamp == -1 && !(data[0] == 0x17 || data[0] == 0x1c))
             return;
-        else if(initialTimeStamp == -1 && data[0] == 0x17) {
+        else if (initialTimeStamp == -1 && (data[0] == 0x17 && data[0] == 0x1c)) {
             initialTimeStamp = timestamp;
         }
 
@@ -868,7 +868,7 @@ public:
         {
             UINT totalCopied = 0;
 
-            if(data[0] == 0x17 && data[1] == 0) //if SPS/PPS
+            if ((data[0] == 0x17 || data[0] == 0x1c) && data[1] == 0) //if SPS/PPS
             {
                 const BYTE *lpData = data+11;
 
@@ -908,7 +908,7 @@ public:
                     timeOffset |= 0xFF;
                 timeOffset = (INT)fastHtonl(DWORD(timeOffset));
 
-                if(data[0] == 0x17) //i-frame
+                if (data[0] == 0x17 || data[0] == 0x1c) //i-frame
                     IFrameIDs << fastHtonl(videoFrames.Num()+1);
 
                 MP4VideoFrameInfo frameInfo;

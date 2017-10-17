@@ -404,6 +404,9 @@ void SetupIni(CTSTR profile)
 
     AppConfig->SetInt   (TEXT("Publish"),        TEXT("Service"),       0);
     AppConfig->SetInt   (TEXT("Publish"),        TEXT("Mode"),          0);
+
+    AppConfig->SetString(TEXT("Video Encoding"), TEXT("QY265Preset"), TEXT("veryfast"));
+    AppConfig->SetString(TEXT("Video Encoding"), TEXT("QY265Tune"), TEXT("delfault"));
 };
 
 void LoadGlobalIni()
