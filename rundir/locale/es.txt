@@ -277,6 +277,7 @@ Settings.Encoding.Audio.Channel="Canales:"
 
 Settings.Encoding.Video.Encoder="Codificador:"
 Settings.Encoding.Video.Encoderx264="x264"
+Settings.Encoding.Video.Encoderqy265="qy265"
 Settings.Encoding.Video.EncoderQSV="Quick Sync"
 Settings.Encoding.Video.EncoderNVENC="Nvidia NVENC"
 Settings.Encoding.Video.BufferSize="Tamaño de caché (kbit):"
