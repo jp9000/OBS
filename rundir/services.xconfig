@@ -133,4 +133,10 @@ services : {
       "API" : https://web-api.azubu.tv/stream/broadcaster-key/
     }
   }
+  lahzenegar.com : {
+    id : 14
+    servers : {
+      "Default" : rtmp://live.lahzenegar.com:80/pro
+    }
+  }
 }
